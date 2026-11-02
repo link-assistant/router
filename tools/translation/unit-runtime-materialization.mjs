@@ -121,8 +121,8 @@ export function planUnitSynchronization({root,manifestPath}={}){
 }
 // Shared guarded source installer. Node offers no conditional inode CAS: callers
 // require exclusive/cooperating writers. Unknown captured replacements are kept.
-function sourceInstallation(fresh,{checkHead=false}={}){
- const root=fs.realpathSync(resolve(fresh.root)),rows=fresh.outputs,originals=new Map(),states=new Map(),written=[],installed=new Map(),artifacts=new Map(),external=[],unknownQuarantines=new Set();let directory=null,directoryIdentity=null,total=0;
+function sourceInstallation(fresh,{checkHead=false,policy}={}){
+ const root=fs.realpathSync(resolve(fresh.root)),rows=fresh.outputs,originals=new Map(),states=new Map(),written=[],installed=new Map(),artifacts=new Map(),external=[],unknownQuarantines=new Set();let directory=null,directoryIdentity=null,total=policy.retainedBytes;
  const id=stat=>[stat.dev,stat.ino,stat.mode],same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
  const current=name=>{const before=source(root,name);if(before===null)return null;const stat=fs.lstatSync(physical(root,name));if(source(root,name)!==before)fail('source changed during installer identity capture');return {source:before,mode:stat.mode&0o777,identity:id(stat)};};
  const matches=(actual,expected)=>actual===null||expected===null?actual===expected:actual.source===expected.source&&actual.mode===expected.mode&&same(actual.identity,expected.identity);
@@ -130,8 +130,9 @@ function sourceInstallation(fresh,{checkHead=false}={}){
  const ownDirectory=()=>{const stat=fs.lstatSync(directory);if(!stat.isDirectory()||stat.isSymbolicLink()||!same(id(stat),directoryIdentity))fail('owned installation directory changed');};
  const privateRead=name=>{ownDirectory();return current(name);};
  const externalCheck=row=>{if(source(row.root,row.path)!==row.source)fail('external receiving producer source changed');const stat=row.source===null?null:fs.lstatSync(physical(row.root,row.path));if(stat&&!same(id(stat),row.identity))fail('external receiving producer source identity/mode changed');};
- const originalCheck=()=>{if(checkHead&&git(root,['rev-parse','HEAD']).trim()!==fresh.baseRevision)fail('Git baseline changed during source installation');for(const [name,expected]of originals)exact(name,installed.has(name)?installed.get(name):expected);for(const row of external)externalCheck(row);};
+ const originalCheck=()=>{policy.verify();if(checkHead&&git(root,['rev-parse','HEAD']).trim()!==fresh.baseRevision)fail('Git baseline changed during source installation');for(const [name,expected]of originals)exact(name,installed.has(name)?installed.get(name):expected);for(const row of external)externalCheck(row);};
  if(!Array.isArray(rows)||rows.length>4096||!Array.isArray(fresh.inputs)||fresh.inputs.length>4096)fail('bounded complete source installation required');
+ policy.allow(fresh);
  for(const row of fresh.inputs){relative(row.path);const actual=current(row.path);if((actual?.source??null)!==row.source||originals.has(row.path)&&!matches(originals.get(row.path),actual))fail('inconsistent original source snapshots');originals.set(row.path,actual);total+=Buffer.byteLength(row.source??'');}
  for(const group of fresh.externalInputs??[]){if(!group||typeof group.root!=='string'||!Array.isArray(group.inputs)||external.length+group.inputs.length>4096)fail('bounded complete receiving source groups required');for(const row of group.inputs){relative(row.path);const sourceRoot=resolve(group.root),value=source(sourceRoot,row.path);if(value!==row.source)fail('external receiving source baseline differs');const stat=value===null?null:fs.lstatSync(physical(sourceRoot,row.path));if((stat?stat.mode&0o777:null)!==row.mode)fail('external receiving source mode differs');external.push({root:sourceRoot,path:row.path,source:value,identity:stat?id(stat):null});total+=Buffer.byteLength(value??'');}}
  for(const row of rows){relative(row.path);if(states.has(row.path)||row.after!==null&&typeof row.after!=='string'||row.before!==null&&typeof row.before!=='string'||!Number.isInteger(row.mode)||row.mode<0||row.mode>0o777||row.after===null&&(row.before===null||row.inverse!==row.before))fail('complete unique output source/mode operation required');const actual=current(row.path);if((actual?.source??null)!==row.before||actual&&actual.mode!==row.mode)fail('complete original output bytes/mode differ');if(row.after!==null&&Buffer.byteLength(row.after)>FILE_LIMIT)fail('generated output source bound');states.set(row.path,{row,before:actual,after:null});total+=Buffer.byteLength(row.before??'')+Buffer.byteLength(row.after??'');}if(total>LIMIT)fail('whole guarded installation source byte bound');
@@ -171,6 +172,7 @@ function sourceInstallation(fresh,{checkHead=false}={}){
   }catch(error){secondary.push(error);}
  }
  // Attempt every source closer even when one input changed or failure is falsy.
+ try{policy.verify();}catch(error){secondary.push(error);}
  for(const [name,expected]of originals)try{exact(name,installed.has(name)?installed.get(name):expected);}catch(error){secondary.push(error);}
  for(const row of external)try{externalCheck(row);}catch(error){secondary.push(error);}
  for(const state of states.values())try{exact(state.row.path,installed.has(state.row.path)?installed.get(state.row.path):state.before);}catch(error){secondary.push(error);}
@@ -183,7 +185,9 @@ function sourceInstallation(fresh,{checkHead=false}={}){
  if(secondary.length){const error=new AggregateError(secondary,'Guarded source installation closing/cleanup failures');error.recoveryPaths=recoveryPaths;throw error;}return {schema:fresh.schema,baseRevision:fresh.baseRevision,changed:changed.map(state=>state.row.path),sourceAuthority:false,runtimeParity:false,rustExecuted:false};
 }
 function installFreshUnitProposal(serialized,produce){
- if(typeof serialized!=='string'||Buffer.byteLength(serialized)>LIMIT*3)fail('bounded serialized complete proposal required');const received=JSON.parse(serialized),fresh=produce();if(JSON.stringify(received)!==JSON.stringify(fresh))fail('proposal differs from complete fresh source translation');return sourceInstallation(fresh);
+ if(typeof serialized!=='string'||Buffer.byteLength(serialized)>LIMIT*3)fail('bounded serialized complete proposal required');const received=JSON.parse(serialized),policy=captureProtectedSourcePolicy(received.root);let result,primary,failed=false;
+ try{const fresh=produce();if(JSON.stringify(received)!==JSON.stringify(fresh))fail('proposal differs from complete fresh source translation');result=sourceInstallation(fresh,{policy});}catch(error){failed=true;primary=error;}
+ try{policy.close();}catch(error){if(!failed)throw error;recordProtectedPolicyClosingFailure(primary,error);}if(failed)throw primary;return result;
 }
 
 export function applyUnitSynchronization(serialized,{root,manifestPath}={}){
@@ -223,8 +227,39 @@ export {installFreshUnitProposal as installFreshSourceProposal,source as readCur
 
 // Separate complete asynchronous fresh-producer transaction. Legacy sync API stays intact.
 export async function installFreshAsyncSourceProposal(serialized,produce){
- if(typeof serialized!=='string'||Buffer.byteLength(serialized)>LIMIT*3)fail('bounded serialized complete proposal required');const received=JSON.parse(serialized),fresh=await produce();if(JSON.stringify(received)!==JSON.stringify(fresh))fail('proposal differs from complete fresh source translation');return sourceInstallation(fresh,{checkHead:true});
+ if(typeof serialized!=='string'||Buffer.byteLength(serialized)>LIMIT*3)fail('bounded serialized complete proposal required');const received=JSON.parse(serialized),policy=captureProtectedSourcePolicy(received.root);let result,primary,failed=false;
+ try{const fresh=await produce();if(JSON.stringify(received)!==JSON.stringify(fresh))fail('proposal differs from complete fresh source translation');result=sourceInstallation(fresh,{checkHead:true,policy});}catch(error){failed=true;primary=error;}
+ try{policy.close();}catch(error){if(!failed)throw error;recordProtectedPolicyClosingFailure(primary,error);}if(failed)throw primary;return result;
 }
 
 import {sourceUnitPrimitiveOperators} from './primitive-source-unit-options.mjs';
 import {relocateSourceUnitRuntimeTarget} from './source-unit-runtime-relocation.mjs';
+
+// Private operational ownership snapshot. It grants no compiler permission.
+// Capture precedes fresh production so a producer cannot remove the policy
+// before installation. A restored present file retains changed ctimeNs.
+function captureProtectedSourcePolicy(requestedRoot){
+ if(typeof requestedRoot!=='string')fail('explicit source installation root required');
+ const root=fs.realpathSync(resolve(requestedRoot)),policyPath='translation/source-ownership.json',schema='router-explicit-source-ownership-v1';
+ const rootStamp=()=>{const stat=fs.lstatSync(root,{bigint:true});if(!stat.isDirectory()||stat.isSymbolicLink())fail('ordinary protected-policy root required');return [stat.dev,stat.ino,stat.mode].map(String);};
+ const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b),rootIdentity=rootStamp();let revoked=false,closed=false;
+ const parentStamp=()=>{let stat;try{stat=fs.lstatSync(resolve(root,'translation'),{bigint:true});}catch(error){if(error.code==='ENOENT')return null;throw error;}if(!stat.isDirectory()||stat.isSymbolicLink())fail('ordinary protected-policy parent required');return [stat.dev,stat.ino,stat.mode].map(String);},parentIdentity=parentStamp();
+ const fileStamp=()=>{let stat;try{stat=fs.lstatSync(physical(root,policyPath),{bigint:true});}catch(error){if(error.code==='ENOENT')return null;throw error;}if(!stat.isFile()||stat.isSymbolicLink()||stat.size>BigInt(FILE_LIMIT))fail('bounded ordinary protected-source policy required');return [stat.dev,stat.ino,stat.mode,stat.size,stat.mtimeNs,stat.ctimeNs].map(String);};
+ const read=()=>{const before=fileStamp(),body=source(root,policyPath),after=fileStamp();if(!same(before,after)||(body===null)!==(after===null))fail('protected-source policy changed during capture');return {body,identity:after};};
+ const initial=read(),protectedPaths=new Set();if(!same(rootStamp(),rootIdentity)||!same(parentStamp(),parentIdentity))fail('protected-source policy ancestors changed during capture');
+ if(initial.body!==null){const value=JSON.parse(initial.body);if(!value||Array.isArray(value)||Object.keys(value).sort().join(',')!=='authored,schema,unmanaged'||value.schema!==schema)fail('closed explicit source ownership policy required');
+  for(const names of [value.authored,value.unmanaged]){if(!Array.isArray(names)||names.length>4096)fail('bounded explicit protected-source list required');for(const name of names){relative(name);if(protectedPaths.has(name))fail('duplicate explicit protected-source path');protectedPaths.add(name);}}
+ }
+ const verify=()=>{try{if(closed||revoked)fail('protected-source policy scope expired or revoked');if(!same(rootStamp(),rootIdentity)||parentIdentity!==null&&!same(parentStamp(),parentIdentity))fail('protected-source root or parent changed');const next=read();if(next.body!==initial.body||!same(next.identity,initial.identity))fail('protected-source policy changed or was restored');}catch(error){revoked=true;throw error;}};
+ return Object.freeze({retainedBytes:initial.body===null?0:4*Buffer.byteLength(initial.body)+256,verify,
+  allow(fresh){verify();if(fs.realpathSync(resolve(fresh.root))!==root)fail('fresh producer root differs from protected-source policy');for(const row of fresh.outputs){relative(row.path);if(row.path===policyPath||protectedPaths.has(row.path)){if(row.before!==row.after)fail('explicit authored/unmanaged source or policy retained: '+row.path);if(row.before!==null){const stat=fs.lstatSync(physical(root,row.path));if((stat.mode&0o777)!==row.mode)fail('explicit protected-source mode retained: '+row.path);}}}},
+  close(){if(closed)fail('protected-source policy already closed');try{verify();}finally{closed=true;protectedPaths.clear();}},
+ });
+}
+function recordProtectedPolicyClosingFailure(primary,error){
+ if(primary!==null&&(typeof primary==='object'||typeof primary==='function'))try{Object.defineProperty(primary,'protectedSourcePolicyClosingFailure',{value:error,enumerable:true});return;}catch{}
+ try{process.stderr.write(JSON.stringify({schema:'router-protected-source-policy-closing-v1',policy:'translation/source-ownership.json',closingFailed:true})+'\n');}catch{}
+}
+// Shared operational veto/closing scope for fixed specialized writers. Its
+// methods can restrict source mutations; they issue no compiler permission.
+export {captureProtectedSourcePolicy as captureExplicitSourceMutationPolicy};

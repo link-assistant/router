@@ -1,7 +1,8 @@
 # Issues #759 / #772: checkpoint handoff
 
 Updated 2026-11-02 (Asia/Ho_Chi_Minh). The user explicitly resumed bulk drafting
-after the 2026-10-31 paused checkpoint. Work continues source-only;
+after the 2026-10-31 paused checkpoint. The latest user instruction authorizes
+two new source-drafting workers while Root also drafts. Work continues source-only;
 no tests, compilation, trial translation or CI-feedback inspection are authorized.
 
 ## Repository and publication
@@ -10,8 +11,8 @@ no tests, compilation, trial translation or CI-feedback inspection are authorize
 - Draft PR: https://github.com/link-assistant/router/pull/775
 - Branch: `issue-772-translator-throughput`
 - Integration worktree: `.worktrees/issue-759-storage-repair-20261021`
-- Current coordinated source checkpoint: the commit containing this handoff; implementation baseline `2c3995c574a1182e81995802b7b186837329ba75`. The PR description records the exact pushed HEAD.
-- Previous published checkpoint: `b23c63ca0cd4f5d0de8aaab11f83ad425a48be6b`, approximately20:17 UTC on2026-11-01. The current source push is prepared around22:10 UTC.
+- Current coordinated source checkpoint: the commit containing this handoff; implementation baseline `2e77f19536a2693c3f2fc88bed38cc11142c9e72`. The PR description records the exact pushed HEAD.
+- Previous published checkpoint: `2e56446e4256d97bc5ec21867d3f6dadbb99dde9`, approximately22:06 UTC on2026-11-01. The resumed source checkpoint is prepared around09:50 UTC on2026-11-02.
 - Earlier published checkpoint before the stop/resume cycle: `19074cc30`.
 - Subsequent checkpoints included in this handoff: `4895f51aa` (join kernel),
   `db901a224` (complete additive caller/interpreter/inverse profiles), and
@@ -25,7 +26,9 @@ no tests, compilation, trial translation or CI-feedback inspection are authorize
 
 ## Objective and honest status
 
-The [countable draft checklist](issue-759-draft-checklist.md) now splits the
+The [current two-worker journal](issue-759-handoff-20261102-cycles.md) records
+new physical scope/collectors, common source-policy protection and active
+map caller integration. The [countable draft checklist](issue-759-draft-checklist.md) now splits the
 14 broad ledger areas into 70 stable source-draft acceptance bundles. Initial
 accounting was **0/70 closed with complete source-review receipts; 70/70 OPEN**.
 This is a conservative tracking baseline, not 0% implementation: existing

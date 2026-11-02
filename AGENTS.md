@@ -39,6 +39,14 @@ Local commit hooks must not invoke Rust tools or automatically remove build cach
 
 ## Coordination and publication
 
+The latest2026-11-02 user instruction explicitly authorizes up to two new
+GPT-6.1-sol medium source-drafting workers while Root also drafts. This overrides
+the wind-down paragraphs below for this cycle. Use only the shared integration
+worktree with disjoint assigned paths, no tests/compilation/experiments or CI
+feedback inspection, and no new dependency trees. Root serializes index/commit
+slots, integrates complete source batches and remains the sole publisher.
+Do not restart historical workers or exceed two current subagents.
+
 The latest 2026-11-01 instruction winds down the three current drafting workers.
 All three have finished and handed off; Root now continues alone. Do not spawn,
 replace or restart workers without a new explicit user instruction. This

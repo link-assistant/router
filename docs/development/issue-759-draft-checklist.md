@@ -779,3 +779,16 @@ retain whole source/inverses, with no compiler authority from these DATA records
 All audit/case/native/runtime/strict TS/CI evidence remains UNRUN/uninspected.
 J04 and every broader application/export/parity obligation stay OPEN. Current
 source receipt accounting: **11/70 DRAFTED,59/70 OPEN**, not verified coverage.
+
+
+## 2026-11-02 active source batches, not closure receipts
+
+The user explicitly requests up to two new source workers while Root drafts.
+The [current journal](issue-759-handoff-20261102-cycles.md) records actual
+commits, unchanged11/70 accounting and all-UNRUN verification. New physical
+scope/reconciliation and Rust/JS/TS original-source observer implementations
+advance L01/L02 without asserting a denominator or complete producer closure.
+The common explicit authored-policy installer/ancestry batch advances L04/S03
+and their independent case source. Actual map caller/Host/meta/reverse hooks
+and specialized leaf/durable writer protection are the active next batches.
+None of these partial observations closes a row by metadata/name/hash alone.
