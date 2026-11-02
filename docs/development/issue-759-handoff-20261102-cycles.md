@@ -209,3 +209,32 @@ serial receiving child modes. Proposed parents are NOT installed in the active
 compiler; no current predicate/denominator qualification is claimed. All original
 source bytes, complete source substitutions/CST/inverses and actual helper bindings
 are retained. All execution remains UNRUN and CI feedback NOT_INSPECTED.
+
+## Current source publication preparation and cold meta reconstruction
+
+`6da755e71` commits the proposed target native export/container/value birth scope,
+complete three-parent source/provenance equations and independent cold native
+receiving cases. Original active loader/collector parents remain unchanged.
+`51f2894d3a79d457e8cd106b51fee46eeca59329` commits the worker's three independent
+unit transactions and finite bridge/case correction. `69c5c82ebb3c7fc97fbdd1a6e59df50a5c08845a`
+commits the14-parent monomorphic map source-model ABI: genuine original parser/
+Cargo/unit/std/alloc/prelude/private nominal/signature joins replace the prior
+unconditional guard. Source-model authority is distinct from observed rustc/
+sysroot/runtime conformance, which remains UNRUN. Exact native oracle and case
+renames preserve Windows `_test.rs` discovery and explicit installed-profile test
+execution without assuming new parent exports in the unmodified compiler.
+
+Root next drafted [cold source/meta capsules](ordered-map-cold-capsule-20261102.md).
+They retain whole source/Cargo/runtime inputs as DATA, reconstruct original forward
+or reverse contexts in fresh processes, compare independent saved meta and reissue
+actual private source/checker facts before emission. Four boundary cases, two
+receiving cases and five cold child probes are UNRUN. Complete map-profile driver
+scheduling is a worker followup; strict TS/native/full gate obligations remain.
+
+Root prepares the next source-only publication around12:50UTC after the09:50UTC
+e039 checkpoint, with exact published SHA in the PR description. Work continues
+with only the same two workers: actual keys projection and source custody on the
+map lane, plus entry-aware staged source protection with shared unit afterimages
+proposed before integration. All prior source packets stay immutable. No tests,
+Node/Bun/parser/compiler/translator trials, installs, Rust tools or CI feedback
+inspection occurred. Accounting remains11/70 DRAFTED,59 OPEN, denominator UNKNOWN.

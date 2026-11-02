@@ -11,8 +11,8 @@ no tests, compilation, trial translation or CI-feedback inspection are authorize
 - Draft PR: https://github.com/link-assistant/router/pull/775
 - Branch: `issue-772-translator-throughput`
 - Integration worktree: `.worktrees/issue-759-storage-repair-20261021`
-- Current coordinated source checkpoint: the commit containing this handoff; implementation baseline `2e77f19536a2693c3f2fc88bed38cc11142c9e72`. The PR description records the exact pushed HEAD.
-- Previous published checkpoint: `2e56446e4256d97bc5ec21867d3f6dadbb99dde9`, approximately22:06 UTC on2026-11-01. The resumed source checkpoint is prepared around09:50 UTC on2026-11-02.
+- Current coordinated source checkpoint: the commit containing this handoff; implementation baseline `69c5c82ebb3c7fc97fbdd1a6e59df50a5c08845a`. The PR description records the exact pushed HEAD.
+- Previous published checkpoint: `e03938ec393b284d3ea833055d2c6b6aab437a56`, approximately09:50 UTC on2026-11-02. The next source checkpoint is prepared around12:50 UTC on2026-11-02.
 - Earlier published checkpoint before the stop/resume cycle: `19074cc30`.
 - Subsequent checkpoints included in this handoff: `4895f51aa` (join kernel),
   `db901a224` (complete additive caller/interpreter/inverse profiles), and
