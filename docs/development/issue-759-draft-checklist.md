@@ -823,3 +823,13 @@ See [the current source journal](issue-759-handoff-20261102-cycles.md) and linke
 contracts for exact source packets, remaining domains, resource profiles and
 full independent case/oracle obligations. Broad optional DATA collection alone
 cannot close an original acceptance criterion.
+
+Further partial source drafts (all UNRUN): the ordered-map caller profile now
+contains ten direct operations in both directions, including genuine owned
+String-pair vectors, independent tagged-tuple/runtime adaptation and native
+borrowed-pair entry accounting. Full application adoption, locals/aliases and
+most inventoried families remain OPEN. The actual serialization producers now
+share protected staging/rename/async scopes and the js/src native import patch
+with exact original/already-imported handling; see
+[the serialization source contract](serialization-writer-layout-20261102.md).
+These advance L03/L04/C05/O05/S03 but do not close their complete-domain clauses.

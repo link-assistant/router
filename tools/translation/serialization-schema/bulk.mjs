@@ -1,8 +1,9 @@
+import {withSerializationWriterSync} from '../serialization-writer-layout-20261102.mjs';
 import {rustPackageSourcePath} from '../repository-layout.mjs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync, mkdirSync, renameSync, existsSync } from 'node:fs';
-import { resolve, join, dirname } from 'node:path';
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { captureSerializationContext, discoverSerializationCorpus, SerializationRefusal, freeze } from './extract.mjs';
 import { canonicalSerializationMeta, serializeSerializationMeta, parseSerializationMeta } from './meta.mjs';
@@ -64,19 +65,22 @@ export function buildBulkSerialization({root,paths,entry=rustPackageSourcePath(r
   const context=captureSerializationContext({root,paths,entry,compilationProfile}),bulk=draftBulkSerialization(context);
   return {context,bulk,meta:canonicalSerializationMeta(bulk)+'\n',javascript:emitBulkSerializationRegistry(bulk),typescript:emitBulkSerializationRegistry(bulk,{language:'typescript'})};
 }
-const paths={meta:'tools/translation/serialization-schema/bulk-generated/router-serialization.meta.json',javascript:'tools/translation/serialization-schema/bulk-generated/router-serialization.mjs',typescript:'tools/translation/serialization-schema/bulk-generated/router-serialization.ts',inventory:'tools/translation/serialization-schema/bulk-generated/router-serialization-inventory.json'};
+const paths=Object.freeze({meta:'tools/translation/serialization-schema/bulk-generated/router-serialization.meta.json',javascript:'tools/translation/serialization-schema/bulk-generated/router-serialization.mjs',typescript:'tools/translation/serialization-schema/bulk-generated/router-serialization.ts',inventory:'tools/translation/serialization-schema/bulk-generated/router-serialization-inventory.json'});
 export function produceBulkSerialization({root,write=false}={}) {
-  root=resolve(root);
+  return withSerializationWriterSync(root,write,(writer,capturedRoot)=>produceBulkSerializationInScope({root:capturedRoot,write,writer}));
+}
+function produceBulkSerializationInScope({root,write,writer}) {
   const sources=execFileSync('git',['ls-files','-z','--',rustPackageSourcePath(root,'src/*.rs')],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean);
   const result=buildBulkSerialization({root,paths:sources,compilationProfile:{flags:{test:false,unix:true,windows:false}}});
   const inventory={schema:'bulk-original-serialization-inventory-v1',sourceSetSha256:result.bulk.sourceSetSha256,dependenciesDigest:result.bulk.dependenciesDigest,supported:result.bulk.supported.map(({meta,...entry})=>entry),refused:result.bulk.refused,excluded:result.bulk.excluded,manualTraitImplementations:result.bulk.discovery.manualTraitImplementations,sourceCoverage:result.bulk.discovery.sourceCoverage,graphDiagnostics:result.bulk.discovery.graphDiagnostics,artifacts:{metaSha256:hash(result.meta),javascriptSha256:hash(result.javascript),typescriptSha256:hash(result.typescript)},runtimeAuthority:false,generatedTraitBehavior:false};
   const artifacts={meta:result.meta,javascript:result.javascript,typescript:result.typescript,inventory:canonicalSerializationMeta(inventory)+'\n'};
+  if(write)writer.preflight(Object.values(paths).map(path=>join(root,path)));
   for(const [kind,path]of Object.entries(paths)) {
     const target=join(root,path),text=artifacts[kind];
     if(!write){if(!existsSync(target)||readFileSync(target,'utf8')!==text)throw new SerializationRefusal('Bulk generated artifact is missing or has drift: '+path);}
-    else {mkdirSync(dirname(target),{recursive:true});const temporary=target+'.schema-tmp-'+process.pid;writeFileSync(temporary,text,{flag:'wx'});renameSync(temporary,target);if(readFileSync(target,'utf8')!==text)throw new SerializationRefusal('Bulk artifact reopen mismatch: '+path);}
+    else {writer.writeArtifact(target,text,'.schema-tmp-');if(readFileSync(target,'utf8')!==text)throw new SerializationRefusal('Bulk artifact reopen mismatch: '+path);}
   }
-  return {written:write,checked:true,supported:result.bulk.supported.length,refused:result.bulk.refused.length,excluded:result.bulk.excluded.length,outputs:paths,runtimeAuthority:false};
+  return {written:write,checked:true,supported:result.bulk.supported.length,refused:result.bulk.refused.length,excluded:result.bulk.excluded.length,outputs:{...paths},runtimeAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   const args=process.argv.slice(2);if(args.some(value=>!['--write','--check'].includes(value))||args.includes('--write')&&args.includes('--check'))throw new SerializationRefusal('Usage: bulk.mjs [--check | --write]');

@@ -1,5 +1,5 @@
---- a/packages/javascript/native/affinity-schema.mjs
-+++ b/packages/javascript/native/affinity-schema.mjs
+--- a/js/src/affinity-schema.mjs
++++ b/js/src/affinity-schema.mjs
 @@ -1,25 +1,8 @@
  import { decodeLino } from './storage.mjs';
  

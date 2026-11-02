@@ -280,3 +280,41 @@ staged/git-apply sinks. The second worker drafts contained-native path-domain
 compatibility without restoring the old Windows escape defect. No tests, local
 Rust/Node/compiler/translator execution or CI/review inspection occurred.
 Current11/70 DRAFTED,59 OPEN and unknown function denominator are unchanged.
+
+## Reverse pairs and serialization writer source checkpoint
+
+`6a7708ec88553ae049db849139cddd894f6e6cb3` drafts actual forward pair-vector
+construction/projection and the separate tagged tuple/runtime adapter.
+`ea78ed3198cf9d0fff03853c18ad5550303d302e` adds both reverse pair operations,
+native TS witnesses, borrowed-pair Rust entry bounds/copy behavior, owned direct
+results, strict/native case sources and complete two-parent private histories.
+All ten map operations now have narrow source drafts in both directions; pair
+locals/inference, general aliases and genuine application adoption remain OPEN.
+The worker next drafts const-owned-map locals with actual lexical source roots;
+native Rust variable operands must borrow their existing owner rather than a
+dropped intermediate. Returned loans remain tied to actual input map roots.
+
+Root drafted the actual native/bulk serialization writers with pre-production
+policy capture, per-mutation staging/rename guards and invocation-local async
+same-root poison/closure. The native import patch now targets js/src and skips
+reapplication for the exact already imported module, preserving original plan
+pins and the complete old native module source. Fixed guarded Git operations
+remove inherited repository redirection and verify the actual admitted root.
+Original artifact bounds, creation umask and stage behavior remain; returned
+destination maps cannot redirect future writes. No all-output transaction,
+source-cache independence or complete serde translation is claimed.
+
+See [the complete serialization source contract](serialization-writer-layout-20261102.md).
+The105841-byte/13642-byte compressed full packet SHA256 is
+`b908eeec0260d86f3a64deb25d34e8aac7706bd08130a6c27309d16ec040bf63`.
+Three original source pairs, four new helper/case sources and the exact native
+module inverse are retained. The producer drafts language/repository rules,
+actual lossless JavaScript CST equations and a separate raw patch equation.
+Independent operational and full-original receiving case sources are UNRUN.
+Root removed18428 bytes of its redundant temporary preimage copies after full
+packet retention. Source-only disk observation showed63GiB available. No new
+dependency trees, builds, test execution or CI-feedback inspection occurred.
+The two workers continue disjoint map-local and contained-native path work.
+Counts remain11/70 DRAFTED,59 OPEN; no complete function denominator or verified
+coverage percentage exists. Last published source remains36acd26fe; Root is
+the sole publisher and the next ordinary checkpoint target remains15:53 UTC.
