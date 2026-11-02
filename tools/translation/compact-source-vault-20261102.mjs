@@ -56,5 +56,24 @@ export function withCompactSourceVault(input,run){
  try{return withCompleteSourceClosingFence(()=>run(Object.freeze({read,describe(){guard();return {files:original.metadata.files.map(row=>({...row})),logicalBytes:original.metadata.logicalBytes,encodedBytes:original.metadata.encodedBytes,decodedReadBytes:decodedBytes,sourceAuthority:false,semanticAuthority:false};}})),[close]);}finally{active=false;retained.length=0;byPath.clear();original.volumes.length=0;original.metadata.files.length=0;original.metadata.objects.length=0;original.metadata=null;original.wire='';}
 }
 
+// Additive explicit DATA lease. No compiler/source-origin facts are issued.
+// The source owner must close it in its SAME live invocation on every outcome.
+const compactSourceReadLeases=new WeakMap();
+function compactReadLease(token){const frame=compactSourceReadLeases.get(token);if(!frame||!frame.active)fail('foreign or expired explicit source DATA lease');if(frame.failed)throw frame.primary;return frame;}
+export function createCompactSourceVaultReadLease(input){
+ return withSourceInputValidation(()=>{const original=snapshot(input),retained=original.volumes.map(raw=>Buffer.from(raw)),token=Object.freeze({});compactSourceReadLeases.set(token,{input,original,retained,byPath:new Map(original.metadata.files.map(row=>[row.path,row])),decodedBytes:0,active:true,failed:false,primary:undefined});return token;});
+}
+export function compactSourceVaultReadLeaseRemaining(token){return L.decodedReadBytes-compactReadLease(token).decodedBytes;}
+export function readCompactSourceVaultReadLease(token,name){
+ return withSourceInputValidation(()=>{const frame=compactReadLease(token);try{return (()=>{path(name);const row=frame.byPath.get(name);if(!row)fail('unknown complete explicit source DATA path');if(frame.decodedBytes+row.bytes>L.decodedReadBytes)fail('complete source decode occurrence budget');const object=frame.original.metadata.objects[row.object],raw=decodedObject(frame.original.volumes,object);if(row.gitBlob!==null&&blob(raw,row.gitBlob.length===40?'sha1':'sha256')!==row.gitBlob)fail('full decoded source differs from supplied original blob');frame.decodedBytes+=row.bytes;return raw;})();}catch(error){if(!frame.failed){frame.failed=true;frame.primary=error;}throw frame.primary;}});
+}
+export function recloseCompactSourceVaultReadLease(token){
+ const frame=compactSourceReadLeases.get(token);if(!frame||!frame.active)fail('foreign or expired explicit source DATA lease');let failed=frame.failed,primary=frame.primary;try{withSourceInputValidation(()=>{const current=snapshot(frame.input);if(current.wire!==frame.original.wire||current.volumes.length!==frame.retained.length||current.volumes.some((raw,at)=>!equal(raw,frame.retained[at])))fail('source DATA changed during explicit decode lease');});}catch(error){if(!failed){failed=true;primary=error;}}if(failed){if(!frame.failed){frame.failed=true;frame.primary=primary;}throw primary;}
+}
+export function closeCompactSourceVaultReadLease(token){
+ const frame=compactSourceReadLeases.get(token);if(!frame||!frame.active)fail('foreign or expired explicit source DATA lease');return withCompleteSourceClosingFence(()=>recloseCompactSourceVaultReadLease(token),[()=>{frame.active=false;frame.input=null;frame.retained.length=0;frame.byPath.clear();frame.original.volumes.length=0;frame.original.metadata.files.length=0;frame.original.metadata.objects.length=0;frame.original.metadata=null;frame.original.wire='';}]);
+}
+export function withCompactSourceVaultReadLease(input,run){requireSynchronousSourceCallback(run);const token=createCompactSourceVaultReadLease(input);return withCompleteSourceClosingFence(()=>run(token),[()=>closeCompactSourceVaultReadLease(token)]);}
+
 // Integrity inspection only. This authenticates no external source origin.
 export function inspectCompactSourceVault(input){return withSourceInputValidation(()=>{const value=snapshot(input);for(const object of value.metadata.objects){const hash=createHash('sha256');for(const part of object.segments)hash.update(value.volumes[part.volume].subarray(part.offset,part.offset+part.bytes));if(hash.digest('hex')!==object.packedSha256)fail('complete physical source object digest differs');}return {metadata:value.metadata,volumeBytes:value.volumes.map(row=>row.length),sourceAuthority:false,semanticAuthority:false};});}

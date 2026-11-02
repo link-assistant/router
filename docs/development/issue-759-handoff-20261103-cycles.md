@@ -436,3 +436,7 @@ those domains. All verification UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
 ## Source checkpoint: shared reconcile and stream composition
 
 Installed the shared reconcile reader and byte-only unit reader, preserving the existing native stream policy API. Retained both frozen predecessor branches and complete joins, plus the named finite current-source continuation used by stream-history reconstruction. Original physical mutation identity checks remain separate from cold source bytes. All new cases and receiving programs remain UNRUN; CI NOT_INSPECTED. Acceptance remains 11/70 DRAFTED, 59 OPEN; executable translation coverage UNKNOWN.
+
+## Source checkpoint: storage leases and authored current sources
+
+Installed additive compact-vault DATA leases, actual no-follow FD ranges, invocation-root-chain reuse and explicit resource admission in the compressed source backend. Original callback vault API and full closing checks remain. A separate complete source continuation now preserves and transfers actual reviewed current bytes for the original 31 authored source rows, retaining original creation/inverse DATA. Resource accounting followup and SDK scheduling/current-epoch joins are being drafted. No source programs or tests were executed; CI NOT_INSPECTED. Acceptance remains 11/70 DRAFTED, 59 OPEN, with executable translation coverage UNKNOWN.
