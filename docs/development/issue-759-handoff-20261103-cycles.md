@@ -264,3 +264,17 @@ invalidating the enclosing positive receiver's source scope. These gaps remain
 OPEN; no resource or semantic qualification is claimed. Frozen documents retain
 their proposal status; this journal records actual installation. All execution
 UNRUN; CI NOT_INSPECTED; checklist remains11/70 DRAFTED,59 OPEN.
+
+## Actual production own-crate alias source blocker
+
+Root found the actual root's extern crate self alias was already resolved by
+the genuine namespace resolver but rejected by both native map contexts. Both
+actual contexts now join that exact source/declaration/binding to the tracked
+crate root through a shared helper. Unknown producers, external dependencies,
+standard/prelude shadowing and copied scope/item objects remain refused;
+independent original scope/body/standard-owner checks are retained. Complete
+source/inverse histories and genuine grammar/refusal cases are drafted. This
+removes a concrete source-level obstruction without claiming whole production
+qualification; configuration/macro/owner gaps remain independently OPEN. See
+[the actual alias source contract](original-self-crate-alias-20261103.md). All
+execution UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.

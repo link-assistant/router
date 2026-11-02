@@ -1,3 +1,4 @@
+import {requireOriginalSelfCrateAlias} from './original-self-crate-alias-20261103.mjs';
 // Native source context, privately associated with the actual original scope
 // array and Cargo inputs. This does not establish an invoked rustc sysroot.
 import {createHash} from 'node:crypto';
@@ -26,7 +27,7 @@ export function proveBorrowedStandardMapNativeSourceContext({modules,sourceScope
    if(condition.attributes.some(attribute=>['no_core','no_std','no_implicit_prelude','prelude_import'].includes(attribute.name)))fail('ordinary canonical std/prelude source domain required');
    // Explicit external identities may depend on an invocation's --extern. The
    // ordinary injected std route accepts no source replacement/rename here.
-   if(item.term==='extern'&&item.tokens.some(token=>token.text==='crate'))fail('explicit external source crate requires separate unit resolution');
+   if(item.term==='extern'&&item.tokens.some(token=>token.text==='crate'))requireOriginalSelfCrateAlias({modules,sourceScopes,compilationProfile,module,scope,item});
   }
   return scope;
  });
