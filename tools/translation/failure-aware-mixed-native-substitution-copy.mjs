@@ -1,3 +1,5 @@
+import {withProtectedPreparerWriter,allowPreparerSourceWrites,writePreparerSource} from './protected-preparer-writers-20261102.mjs';
+import {knownProtectedCopyVariantSuccessor} from './protected-copy-variants-20261102-history.mjs';
 import {invalidateActiveSourceOperations,withSourceFailureOperation,withSourceInputValidation} from './source-failure-operations.mjs';
 // Reusable source construction, never a semantic or original-owner issuer.
 import {readFileSync,writeFileSync} from 'node:fs';
@@ -81,7 +83,9 @@ function prepareMixedNativeSubstitutionCopyValidation({root,archive,pin,id,later
    laterHistories.push({id:later.id,before:currentAfter,after:end,equation,stages:next.stages,laterHistories:next.laterHistories??[],parallelHistories:next.parallelHistories??[],sourceDependencies:next.sourceDependencies??[],path:next.path,...(next.originalPath?{originalPath:next.originalPath,originalSource:next.before}:{}),sourceAuthority:false,semanticAuthority:false});currentAfter=end;
   }
   if(sourceLanguage==='Rust')need((row.completeSourceDependencies??[]).length===0,'Rust copied declarations require their separate selected-source dependency path');const sourceDependencies=sourceLanguage==='Rust'?[]:collectNativeCopiedFunctionDependencies(ts,root,path,after,row.completeSourceDependencies??[],originalGuards);
-  const current=currentSource(path,Boolean(row.originalPath&&row.originalPath!==row.path));need(current===null||current===before||current===after||current===currentAfter,'unknown physical copied implementation');
+  const current=currentSource(path,Boolean(row.originalPath&&row.originalPath!==row.path));
+  if(current!==null&&current!==before&&current!==after&&current!==currentAfter){const successor=knownProtectedCopyVariantSuccessor({root,path:row.path,before:currentAfter});if(successor){need(successor.currentAfter===current,'unknown physical copy-variant policy successor');const equation=transportConcreteSourceEquations([{before:currentAfter,after:successor.currentAfter,language:sourceLanguage}])[0];need(equation.inverse===currentAfter,'complete named copy-variant inverse');laterHistories.push({...successor,equation,laterHistories:successor.laterHistories??[],parallelHistories:[],sourceDependencies:[],sourceAuthority:false,semanticAuthority:false});currentAfter=successor.currentAfter;}}
+  need(current===null||current===before||current===after||current===currentAfter,'unknown physical copied implementation');
   files.push({path:row.path,...(row.originalPath?{originalPath:row.originalPath}:{}),before,language:language.after,after,current,currentAfter,laterHistories,parallelHistories,sourceDependencies,stages,trace:run.trace,nativeSelections:{language:language.selections,repository:repository.selections},inverse:before});
  }
  const bindings=verifyMixedNativeCopiedSourceBindings(ts,files.map(row=>({path:resolve(root,row.path),source:row.currentAfter})));
@@ -97,8 +101,12 @@ function prepareMixedNativeSubstitutionCopyValidation({root,archive,pin,id,later
 function writeMixedNativeSubstitutionCopyValidation(plan,{root}={}){
  // The producer must be called again by the caller immediately before applying.
  // This low-level writer is a development operation; it issues no gate stamp.
- root=resolve(root);for(const row of plan.files)need(currentSource(localPath(root,row.path),Boolean(row.originalPath&&row.originalPath!==row.path))===row.current,'stale copy proposal');
- for(const row of plan.files)writeFileSync(localPath(root,row.path),row.currentAfter??row.after);
+ return withProtectedPreparerWriter(root,()=>{root=resolve(root);for(const row of plan.files)need(currentSource(localPath(root,row.path),Boolean(row.originalPath&&row.originalPath!==row.path))===row.current,'stale copy proposal');
+ const writes=Array.from(plan.files,row=>({path:relative(root,localPath(root,row.path)),before:row.current,after:row.currentAfter??row.after}));allowPreparerSourceWrites(root,writes);
+ // The original byte-stale pass precedes all writes; duplicate and hard-link
+ // row order stays intact. Each actual write freshly rechecks physical aliases.
+ for(const row of writes)writePreparerSource(root,row,()=>writeFileSync(localPath(root,row.path),row.after));
+ });
 }
 
 // Private syntax trees live only inside one complete synchronous source
