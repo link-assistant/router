@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Share the existing authenticated rule operation; retain independent source
 // transports and the complete original fallback. No new runtime engine/cache.
 import {readFileSync,writeFileSync} from 'node:fs';
@@ -54,5 +55,5 @@ export function knownSingleRowProofByteSuccessor({root,path,source,original,prev
  if(path!==TARGET)return source;const current=readFileSync(resolve(root,path),'utf8');if(current===source||current===original||previous.includes(current))return source;const proposal=prepareSingleRowProofByteSource({root}),row=one(proposal.files.filter(row=>row.path===path),'complete known successor');if(row.before!==source||row.after!==current||row.current!==current)fail('unknown complete current successor');return row.after;
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--check','--write'].includes(mode))fail('use --emit|--check|--write');const plan=prepareSingleRowProofByteSource();if(mode==='--write')for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);else if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete generated source is stale');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),qualified:false}));
+ const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--check','--write'].includes(mode))fail('use --emit|--check|--write');const plan=mode==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareSingleRowProofByteSource();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)writer.write(row.path,row.after);return plan;}):prepareSingleRowProofByteSource();if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete generated source is stale');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),qualified:false}));
 }

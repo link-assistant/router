@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Extend existing source-history preparations through their genuine successors.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -54,8 +55,8 @@ export function prepareDefaultByteHistoryExtension({root=ROOT}={}){
  return {schema:'default-byte-known-source-history-extension-v1',files,originalInputs:originals.files,sourceAuthority:false,runtimeAuthority:false,runtimeSourceChanged:false,originalCaseBodiesChanged:false,originalDeadlinesChanged:false,newAcrossInvocationCache:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);need(args.length===1&&['--emit','--write','--check'].includes(args[0]),'use --emit|--write|--check');const plan=prepareDefaultByteHistoryExtension();
- if(args[0]==='--write')for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);
+ const args=process.argv.slice(2);need(args.length===1&&['--emit','--write','--check'].includes(args[0]),'use --emit|--write|--check');const plan=args[0]==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareDefaultByteHistoryExtension();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)writer.write(row.path,row.after);return plan;}):prepareDefaultByteHistoryExtension();
+ 
  if(args[0]==='--check')need(plan.files.every(row=>row.current===row.after),'source history preparations are stale');
  console.log(JSON.stringify(args[0]==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),qualified:false}));
 }

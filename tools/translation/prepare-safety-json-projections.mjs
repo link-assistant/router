@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
@@ -85,8 +86,8 @@ export function prepareSafetyJsonProjections({root=ROOT}={}){
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--write','--check'].includes(args[0]))fail('use --write|--check');
- const plan=prepareSafetyJsonProjections();
+ const plan=args[0]==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareSafetyJsonProjections();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('source changed before write');for(const row of plan.files)writer.write(row.path,row.after);return plan;}):prepareSafetyJsonProjections();
  if(args[0]==='--check'&&plan.files.some(row=>row.current!==row.after))fail('generated safety source is stale');
- if(args[0]==='--write'){for(const row of plan.files)if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('source changed before write');for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}
+ 
  console.log(JSON.stringify({schema:plan.schema,functions:plan.proposal.selections.map(row=>row.name),rustExecuted:false}));
 }

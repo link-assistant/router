@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Derive the opt-in tuple-struct Clone source path from complete originals.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -146,7 +147,7 @@ export function prepareTupleDerive({root=ROOT}={}){
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');
- const plan=prepareTupleDerive();if(mode==='--write')for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);
- else if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('generated sources are stale');
+ const plan=mode==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareTupleDerive();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)writer.write(row.path,row.after);return plan;}):prepareTupleDerive();
+ if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('generated sources are stale');
  console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),qualified:false}));
 }

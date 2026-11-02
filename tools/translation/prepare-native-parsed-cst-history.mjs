@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Complete SOURCE history joins. No parser-frame or semantic authority.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
@@ -35,5 +36,5 @@ export function prepareNativeParsedCstHistory({root=ROOT}={}){
  if(!readFileSync(resolve(root,ARCHIVE)).equals(packed))fail('complete archive changed');for(const row of files)if(readFileSync(resolve(root,row.path),'utf8')!==row.current)fail('complete physical source changed');return {schema:'native-parsed-cst-history-source-v1',files,originalInputs:original.files,oldSourceCountsPreserved:true,newAcrossInvocationCache:false,performanceQualified:false,sourceAuthority:false,runtimeAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=prepareNativeParsedCstHistory();if(mode==='--write')for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);else if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete generated source is stale');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),qualified:false}));
+ const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=mode==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareNativeParsedCstHistory();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)writer.write(row.path,row.after);return plan;}):prepareNativeParsedCstHistory();if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete generated source is stale');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),qualified:false}));
 }

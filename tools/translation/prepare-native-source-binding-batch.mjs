@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
@@ -44,5 +45,5 @@ export function verifyNativeCopiedSourceBindingBatch(ts,rows){
  if(!readFileSync(resolve(root,ARCHIVE)).equals(packed))fail('complete archive changed');for(const row of files)if(readFileSync(resolve(root,row.path),'utf8')!==row.current)fail('complete physical source changed');return {schema:'native-source-binding-batch-source-v1',files,originalInputs:originals.files,originalStandaloneCheckerUnchanged:true,newAcrossInvocationCache:false,performanceQualified:false,sourceAuthority:false,runtimeAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--check','--write'].includes(mode))fail('use --emit|--check|--write');const plan=prepareNativeSourceBindingBatch();if(mode==='--write')for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.installedAfter);else if(mode==='--check'&&plan.files.some(row=>row.current!==row.installedAfter))fail('complete generated source is stale');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),qualified:false}));
+ const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--check','--write'].includes(mode))fail('use --emit|--check|--write');const plan=mode==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareNativeSourceBindingBatch();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)writer.write(row.path,row.installedAfter);return plan;}):prepareNativeSourceBindingBatch();if(mode==='--check'&&plan.files.some(row=>row.current!==row.installedAfter))fail('complete generated source is stale');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),qualified:false}));
 }

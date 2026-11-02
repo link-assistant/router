@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Native-selected packaging copy; immutable original APIs remain inspectable.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -31,5 +32,5 @@ export function prepareUnitSyncExports({root=ROOT}={}){
  return {schema:'source-unit-complete-export-rules-v1',files,originalInputs:data.files,sourceAuthority:false,semanticAuthority:false,existingGateCommandsChanged:false,receivingExecuted:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);need(args.length===1&&['--emit','--write','--check'].includes(args[0]),'use --emit|--write|--check');const plan=prepareUnitSyncExports();if(args[0]==='--write')for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);if(args[0]==='--check')need(plan.files.every(row=>row.current===row.after),'current unit-sync export rules are stale');console.log(JSON.stringify(args[0]==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),qualified:false}));
+ const args=process.argv.slice(2);need(args.length===1&&['--emit','--write','--check'].includes(args[0]),'use --emit|--write|--check');const plan=args[0]==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareUnitSyncExports();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)writer.write(row.path,row.after);return plan;}):prepareUnitSyncExports();if(args[0]==='--check')need(plan.files.every(row=>row.current===row.after),'current unit-sync export rules are stale');console.log(JSON.stringify(args[0]==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),qualified:false}));
 }

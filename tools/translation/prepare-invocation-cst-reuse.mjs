@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Complete native-selected source substitutions; no retained source/result cache.
 import {readFileSync,writeFileSync,lstatSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -60,5 +61,5 @@ export function prepareInvocationCstReuse({root=ROOT}={}){
  if(!readFileSync(archive).equals(packed))fail('original archive changed');for(const row of files)if(readFileSync(resolve(root,row.path),'utf8')!==row.current)fail('complete physical source changed');return {schema:'invocation-cst-reuse-source-v1',files,originalInputs:packet.files,newAcrossInvocationCache:false,publicConcreteApisChanged:false,sourceAuthority:false,runtimeAuthority:false,performanceQualified:false,rustExecuted:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--write','--check','--emit'].includes(mode))fail('use --write|--check|--emit');const plan=prepareInvocationCstReuse();if(mode==='--write')for(const row of plan.files){if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('current source changed before write');writeFileSync(resolve(ROOT,row.path),row.installedAfter);}else if(mode==='--check'&&plan.files.some(row=>row.current!==row.installedAfter))fail('complete generated sources are stale');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),performanceQualified:false}));
+ const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--write','--check','--emit'].includes(mode))fail('use --write|--check|--emit');const plan=mode==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareInvocationCstReuse();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files){if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('current source changed before write');writer.write(row.path,row.installedAfter);}return plan;}):prepareInvocationCstReuse();if(mode==='--check'&&plan.files.some(row=>row.current!==row.installedAfter))fail('complete generated sources are stale');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),performanceQualified:false}));
 }

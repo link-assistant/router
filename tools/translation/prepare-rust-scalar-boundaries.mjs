@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Source construction only. Rust grammar/behavior must be checked in gated CI.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -57,7 +58,7 @@ export function prepareRustScalarBoundaries({root=ROOT}={}){
  return {schema:'rust-scalar-boundary-source-plan-v1',files,sourceAuthority:false,semanticAuthority:false,rustExecuted:false,receivingExecuted:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);need(args.length===1&&['--emit','--write','--check'].includes(args[0]),'use --emit|--write|--check');const plan=prepareRustScalarBoundaries();
- if(args[0]==='--write'){for(const row of plan.files)need(readFileSync(resolve(ROOT,row.path),'utf8')===row.current,'stale complete source proposal');for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}
+ const args=process.argv.slice(2);need(args.length===1&&['--emit','--write','--check'].includes(args[0]),'use --emit|--write|--check');const plan=args[0]==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareRustScalarBoundaries();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)need(readFileSync(resolve(ROOT,row.path),'utf8')===row.current,'stale complete source proposal');for(const row of plan.files)writer.write(row.path,row.after);return plan;}):prepareRustScalarBoundaries();
+ 
  if(args[0]==='--check')need(plan.files.every(row=>row.current===row.after),'boundary source draft is stale');console.log(JSON.stringify(args[0]==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),rustExecuted:false,receivingExecuted:false}));
 }

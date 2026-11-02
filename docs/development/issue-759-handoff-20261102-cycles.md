@@ -648,3 +648,18 @@ activation for the new cohort remain a separate drafting batch. The larger
 unrestricted borrowed standard-map application route and owned-state family
 remain OPEN. No project code was executed; verification UNRUN, CI
 NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+## Fourteen actual fixed preparer CLIs
+
+Root integrated all fourteen frozen fixed-preparer afterimages from the
+`protected-fixed-cli-writers-20261102` profile. Actual write-only policy capture
+precedes each producer and all destination preflights precede the first write.
+The original after/installedAfter payload distinctions, complete input checks,
+per-row stale checks, no-old-output-read paths, emit/check modes and silent
+write modes remain. Read-only exported producers retain their original bodies.
+The complete fourteen before/after/inverse source equations and drafted whole
+contracts cases are committed without execution. Finite currentAfter lineage
+for actual downstream historical producers is being drafted separately; those
+consumers must not reinstall an unguarded historical CLI.
+See [the fixed source profile](protected-fixed-cli-writers-20261102.md).
+All checks UNRUN, CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
