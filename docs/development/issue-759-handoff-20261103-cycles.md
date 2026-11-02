@@ -339,3 +339,15 @@ domain. Forged tags refuse through actual type observations; unrelated unknown
 types keep old behavior. Complete helper before/after/CST/inverse and independent
 forged-type/scalar/history case source are drafted. Full actual production
 receiving remains separate and UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+## Exact native context continuation for authored-source callers
+
+Root extended the operational source matcher with the two already-reviewed
+complete native-context alias histories, retaining the fixed198 index/engine
+and all old before/after images. Actual current bytes, full CST/inverse and the
+same16MiB charged source budget remain mandatory; native/body/type authority is
+independent. Exact context-current/unknown/mutated-current source cases are
+drafted. Source comparison also identified six later authored helper sources in
+the old main producer's31-row immutable batch; its actual complete continuation
+adoption is assigned separately, without rewriting those historical rows. Every
+verification UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.

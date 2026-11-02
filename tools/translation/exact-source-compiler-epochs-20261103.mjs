@@ -1,3 +1,4 @@
+import {knownOriginalSelfCrateAliasSuccessor} from './original-self-crate-alias-20261103-history.mjs';
 // Exact source continuation DATA only. Every private original issuer remains.
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
@@ -40,6 +41,7 @@ export function matchesExactSourceEpoch(row,current,{root=ROOT,retainedBytes=0}=
  if(!row||typeof row.path!=='string'||typeof row.before!=='string'||typeof row.after!=='string'||row.inverse!==row.before||typeof current!=='string'||!Number.isSafeInteger(retainedBytes)||retainedBytes<0||retainedBytes>16777216)throw TypeError('Complete original source equation/current byte reservation required');
  if(current===row.after)return true;
  if(row.path===ENGINE)return knownExactSourceCompilerEngineEpoch({root,before:row.after,current,retainedBytes})!==null;
+ if(['tools/translation/ordered-text-map-callers-20261102-native-context.mjs','tools/translation/borrowed-standard-map-20261103-native-context.mjs'].includes(row.path))return withExactSourceHistoryDataOperation(root,()=>withExactSourceHistoryDataReservation(retainedBytes+Buffer.byteLength(current)+Buffer.byteLength(row.after),()=>{const later=knownOriginalSelfCrateAliasSuccessor({root,path:row.path,before:row.after});return later!==null&&later.after===current;}));
  return withExactSourceHistoryDataOperation(root,()=>withExactSourceHistoryDataReservation(retainedBytes,()=>{
   const later=knownExactSourceSuccessor({path:row.path,before:row.after},{root});
   return later!==null&&later.currentIsTerminal===true&&later.after===current;
