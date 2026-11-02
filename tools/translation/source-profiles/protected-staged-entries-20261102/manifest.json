@@ -1,0 +1,154 @@
+{
+  "schema": "protected-staged-native-entries-source-history-20261102-v1",
+  "parents": [
+    {
+      "role": "unit",
+      "path": "tools/translation/unit-runtime-materialization.mjs",
+      "originalRevision": "aca7d0d0f8fd74ae6e2305607ec88a1662fd409b",
+      "originalBlob": "b05d92ee2798f793d9f7fb1b082480268e763169",
+      "before": "unit.before.txt",
+      "after": "unit.after.txt",
+      "beforeBytes": 40955,
+      "beforeSha256": "73949a581b487ac934cfa534e9e8fd20c35bbb5c5638bab06d90aea5c3ff240f",
+      "afterBytes": 42557,
+      "afterSha256": "1e9af646f3b6c9f393d0ca4d51a5a85457119f5082734701171472372f71795b",
+      "sequences": [
+        "language",
+        "repository"
+      ]
+    },
+    {
+      "role": "alias",
+      "path": "tools/translation/protected-preparer-writers-20261102-alias.mjs",
+      "originalRevision": "aca7d0d0f8fd74ae6e2305607ec88a1662fd409b",
+      "originalBlob": "abc752883a84a47837cd325d23ce2d31c5c78784",
+      "before": "alias.before.txt",
+      "after": "alias.after.txt",
+      "beforeBytes": 9662,
+      "beforeSha256": "bcbc2cd4dd58910d1b45da793efd170dacf02ed536f0e95b5aec6654bd35f218",
+      "afterBytes": 22726,
+      "afterSha256": "f80eb31a82dbdcfa62a5a50a9822014ca74dade757c844401e41210337ab0d78",
+      "sequences": [
+        "language",
+        "repository"
+      ]
+    },
+    {
+      "role": "direct-history",
+      "path": "tools/translation/protected-preparer-writers-20261102-direct-history.mjs",
+      "originalRevision": "aca7d0d0f8fd74ae6e2305607ec88a1662fd409b",
+      "originalBlob": "6592a98b79de5195ae5bbecc95b74333c0d993a7",
+      "before": "direct-history.before.txt",
+      "after": "direct-history.after.txt",
+      "beforeBytes": 4459,
+      "beforeSha256": "060bf820c69aab41b22a93937776544e2f7a949512e55f30644fa945c67964e4",
+      "afterBytes": 4916,
+      "afterSha256": "a26c7c9c529bc90fe91767a42feeb7d265bf71543437eaed51fb5033ca9b07d2",
+      "sequences": [
+        "language",
+        "repository"
+      ]
+    },
+    {
+      "role": "unit-history",
+      "path": "tools/translation/protected-unit-variants-20261102-history.mjs",
+      "originalRevision": "51f2894d3a79d457e8cd106b51fee46eeca59329",
+      "originalBlob": "135ba7904e9f754e1ec41d2f909657f7eb5d4dc3",
+      "before": "unit-history.before.txt",
+      "after": "unit-history.after.txt",
+      "beforeBytes": 3875,
+      "beforeSha256": "c09c378afc3897fdbdc76f1b9c95a74522f5d54ad54d7e484ba1a3cbd1d4de29",
+      "afterBytes": 4309,
+      "afterSha256": "f13ac78d16b9e650015456057f4c34f9958e629ee1c3bfc06323c169b22a00a8",
+      "sequences": [
+        "language",
+        "repository"
+      ]
+    },
+    {
+      "role": "direct-history-case",
+      "path": "tools/translation/test/protected-preparer-writers-20261102-direct-history.test.mjs",
+      "originalRevision": "c122772238d0acd9dd7ea9e1d27e0ceef99009ce",
+      "originalBlob": "3bb3e3170fa1c0b2743575626e5f3ed0e3ed4ae7",
+      "before": "direct-history-case.before.txt",
+      "after": "direct-history-case.after.txt",
+      "beforeBytes": 4044,
+      "beforeSha256": "e49fcc0bff379829bfa6aef38e54cb44a5e1e4185b7cabc82117c689033c96a8",
+      "afterBytes": 4320,
+      "afterSha256": "4129dcc26a88bdbb87de57c5067d2fe96d4e90f33d55812fd3ee9661e24957be",
+      "sequences": [
+        "language",
+        "repository"
+      ]
+    },
+    {
+      "role": "unit-generic",
+      "path": "tools/translation/owned-project-runtime-materialization.mjs",
+      "originalRevision": "51f2894d3a79d457e8cd106b51fee46eeca59329",
+      "originalBlob": "1bff1b6ec5b11538eac2ebd2ac970fb1d80503ad",
+      "before": "unit-generic.before.txt",
+      "after": "unit-generic.after.txt",
+      "beforeBytes": 28768,
+      "beforeSha256": "3f8edffb4ddfd24f81300d08c25535f30f01744922be15f9662c7dbd6726a38c",
+      "afterBytes": 28840,
+      "afterSha256": "6d3ac8c2483f8825cd4af4a783035121b7091f635f90e53740147169aa3eac49",
+      "sequences": [
+        "language",
+        "repository"
+      ]
+    },
+    {
+      "role": "unit-helper",
+      "path": "tools/translation/protected-unit-variants-20261102.mjs",
+      "originalRevision": "51f2894d3a79d457e8cd106b51fee46eeca59329",
+      "originalBlob": "070c63b5efc6e5bdc3e3280eebc932e2678d2bee",
+      "before": "unit-helper.before.txt",
+      "after": "unit-helper.after.txt",
+      "beforeBytes": 4628,
+      "beforeSha256": "d942dc1966748b40cf6e397884d11f8b0558efd5b789e33ff4add22ab032dc55",
+      "afterBytes": 4646,
+      "afterSha256": "33968a32e14ffc2f986c9439d0b30f0618fda1cb625dad5697a578811b8ef289",
+      "sequences": [
+        "language",
+        "repository"
+      ]
+    },
+    {
+      "role": "unit-history-case",
+      "path": "tools/translation/test/protected-unit-variants-20261102-history.test.mjs",
+      "originalRevision": "51f2894d3a79d457e8cd106b51fee46eeca59329",
+      "originalBlob": "09af3cdf96e4ed85fc4c4004c886d9f7b21d8055",
+      "before": "unit-history-case.before.txt",
+      "after": "unit-history-case.after.txt",
+      "beforeBytes": 5674,
+      "beforeSha256": "d72c3c9e5556c33f4c13d51440c7306fb8ae99cc2d5ed0d1b4b69b13b713d1f1",
+      "afterBytes": 5975,
+      "afterSha256": "d5b287ad4a42901c9374904f8f410932ef08bb16dacd1c1e1a0ce6ff6f4bbbc2",
+      "sequences": [
+        "language",
+        "repository"
+      ]
+    },
+    {
+      "role": "safe-error-case",
+      "path": "tools/translation/test/protected-source-errors-20261102.test.mjs",
+      "originalRevision": "aca7d0d0f8fd74ae6e2305607ec88a1662fd409b",
+      "originalBlob": "0799cafe68ff9113f92ef767492bbce240813bfb",
+      "before": "safe-error-case.before.txt",
+      "after": "safe-error-case.after.txt",
+      "beforeBytes": 3863,
+      "beforeSha256": "074e1356e29f1d77c4a29e5832b8dcd040b66b7cd98cc3c8b3b8fa2075c91b27",
+      "afterBytes": 4399,
+      "afterSha256": "5c31c9091cf10d14aef33d4c08ceef39cbee5e1a545022e7ec5ef6ec45c90bda",
+      "sequences": [
+        "language",
+        "repository"
+      ]
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN",
+  "proposalOnly": true,
+  "activeParentWritesByThisWorker": false
+}

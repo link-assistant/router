@@ -238,3 +238,45 @@ map lane, plus entry-aware staged source protection with shared unit afterimages
 proposed before integration. All prior source packets stay immutable. No tests,
 Node/Bun/parser/compiler/translator trials, installs, Rust tools or CI feedback
 inspection occurred. Accounting remains11/70 DRAFTED,59 OPEN, denominator UNKNOWN.
+
+Publication completed: source checkpoint
+`36acd26fef47832961dd812096f531231b6e7107` was pushed to the existing branch
+around12:53UTC on2026-11-02, and draft PR775 description was updated to that exact
+SHA. No returned CI/status/review details were inspected. The next normal active
+source checkpoint is around15:53UTC; continue drafting without waiting on CI.
+Root remains the sole publisher, with the same two source-only workers. The
+current uncommitted workers' keys/staged-entry proposals are not included in the
+published checkpoint. Native Rust remains entirely unexecuted locally.
+
+## Post-publication keys and staged-entry source integration
+
+`892bfd5c7773a273119f7381df19b6caea98d241` commits genuine keys projection as
+the8th map operation, actual Vec/String source joins, owned-vector flow, precise
+map-root Rust lifetime binders, strict/native case sources and complete caller
+ancestry. The receiving driver now includes Root's cold capsule entry, retaining
+all previous cases/deadlines. Exterior source ancestors use stable identity while
+actual source files/selected parents keep precise epochs; unrelated temporary
+sibling creation no longer claims a source change. All execution remains UNRUN.
+Pair construction/projection and remaining actual caller ownership are in progress.
+
+Root integrated the worker's nine frozen complete staged-entry afterimages,
+including common unit, additive native directory observer, finite direct/unit
+source history composition, generic actual-root/path intent capture and three
+whole history case successors. Original before/after bytes and named inverses
+are retained. Native Buffer entry spellings plus real parent identity preserve
+distinct hardlink entries while protecting declared symlink endpoints/ancestors.
+Every actual common mutation is separately admitted; direct byte changes keep
+the original inode-aware guard. Actual generic IO and guard intents use captured
+primitive targets rather than re-reading mutable public root/path fields.
+
+See [staged entry source contract](protected-staged-entries-20261102.md) and its
+complete13-file/nine-parent source packet. Three independent case files remain
+UNRUN. Alternate case/Unicode spelling, directory/alias/resource/platform domains,
+complete writer census and native receiving qualification remain OPEN. Original
+ACA/51/c122 snapshots and previous packets are immutable; the safe-error case
+retains each old historical after separately from the new nested currentAfter.
+Root is next drafting the schema writer's physical js/src patch and real async/
+staged/git-apply sinks. The second worker drafts contained-native path-domain
+compatibility without restoring the old Windows escape defect. No tests, local
+Rust/Node/compiler/translator execution or CI/review inspection occurred.
+Current11/70 DRAFTED,59 OPEN and unknown function denominator are unchanged.

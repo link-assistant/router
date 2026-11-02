@@ -1,7 +1,7 @@
 // Source-unit synchronization with fresh Git baselines and complete proposals.
 // No persisted source/hash/verdict cache supplies a translation decision.
 import * as fs from 'node:fs';
-import {assertProtectedMutationPaths,directMutationOutputPaths,assertProtectedDirectWriteTargets} from './protected-preparer-writers-20261102-alias.mjs';
+import {assertProtectedMutationPaths,directMutationOutputPaths,assertProtectedDirectWriteTargets,assertProtectedStagedMutationTargets} from './protected-preparer-writers-20261102-alias.mjs';
 import {ownSourceFailureField} from './source-error-fields-20261102.mjs';
 import {resolve,dirname,posix} from 'node:path';
 import {execFileSync} from 'node:child_process';
@@ -126,6 +126,11 @@ export function planUnitSynchronization({root,manifestPath}={}){
 function sourceInstallation(fresh,{checkHead=false,policy}={}){
  const root=fs.realpathSync(resolve(fresh.root)),rows=fresh.outputs,originals=new Map(),states=new Map(),written=[],installed=new Map(),artifacts=new Map(),external=[],unknownQuarantines=new Set();let directory=null,directoryIdentity=null,total=policy.retainedBytes;
  const id=stat=>[stat.dev,stat.ino,stat.mode],same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+ const mutate=(names,operation,direct=false)=>{
+  if(direct)policy.allowDirectWrites({root,outputs:names.map(path=>({path}))});else policy.allowMutationPaths(names);
+  let result,failed=false,primary;try{policy.verify();result=operation();}catch(error){failed=true;primary=error;}try{policy.verify();}catch(error){if(failed)recordProtectedPolicyClosingFailure(primary,error);else{failed=true;primary=error;}}if(failed)throw primary;return result;
+ };
+ const createParents=name=>{const full=physical(root,name),pieces=name.split('/').slice(0,-1),missing=[];let path='';for(const piece of pieces){path=path?path+'/'+piece:piece;try{fs.lstatSync(physical(root,path));}catch(error){if(ownSourceFailureField(error,'code')!=='ENOENT')throw error;missing.push(path);}}return mutate(missing,()=>fs.mkdirSync(dirname(full),{recursive:true}));};
  const current=name=>{const before=source(root,name);if(before===null)return null;const stat=fs.lstatSync(physical(root,name));if(source(root,name)!==before)fail('source changed during installer identity capture');return {source:before,mode:stat.mode&0o777,identity:id(stat)};};
  const matches=(actual,expected)=>actual===null||expected===null?actual===expected:actual.source===expected.source&&actual.mode===expected.mode&&same(actual.identity,expected.identity);
  const exact=(name,expected)=>{if(!matches(current(name),expected))fail('source identity/bytes/mode changed: '+name);};
@@ -134,34 +139,34 @@ function sourceInstallation(fresh,{checkHead=false,policy}={}){
  const externalCheck=row=>{if(source(row.root,row.path)!==row.source)fail('external receiving producer source changed');const stat=row.source===null?null:fs.lstatSync(physical(row.root,row.path));if(stat&&!same(id(stat),row.identity))fail('external receiving producer source identity/mode changed');};
  const originalCheck=()=>{policy.verify();if(checkHead&&git(root,['rev-parse','HEAD']).trim()!==fresh.baseRevision)fail('Git baseline changed during source installation');for(const [name,expected]of originals)exact(name,installed.has(name)?installed.get(name):expected);for(const row of external)externalCheck(row);};
  if(!Array.isArray(rows)||rows.length>4096||!Array.isArray(fresh.inputs)||fresh.inputs.length>4096)fail('bounded complete source installation required');
- policy.allow(fresh);
+ policy.allow({root,outputs:rows});
  for(const row of fresh.inputs){relative(row.path);const actual=current(row.path);if((actual?.source??null)!==row.source||originals.has(row.path)&&!matches(originals.get(row.path),actual))fail('inconsistent original source snapshots');originals.set(row.path,actual);total+=Buffer.byteLength(row.source??'');}
  for(const group of fresh.externalInputs??[]){if(!group||typeof group.root!=='string'||!Array.isArray(group.inputs)||external.length+group.inputs.length>4096)fail('bounded complete receiving source groups required');for(const row of group.inputs){relative(row.path);const sourceRoot=resolve(group.root),value=source(sourceRoot,row.path);if(value!==row.source)fail('external receiving source baseline differs');const stat=value===null?null:fs.lstatSync(physical(sourceRoot,row.path));if((stat?stat.mode&0o777:null)!==row.mode)fail('external receiving source mode differs');external.push({root:sourceRoot,path:row.path,source:value,identity:stat?id(stat):null});total+=Buffer.byteLength(value??'');}}
  for(const row of rows){relative(row.path);if(states.has(row.path)||row.after!==null&&typeof row.after!=='string'||row.before!==null&&typeof row.before!=='string'||!Number.isInteger(row.mode)||row.mode<0||row.mode>0o777||row.after===null&&(row.before===null||row.inverse!==row.before))fail('complete unique output source/mode operation required');const actual=current(row.path);if((actual?.source??null)!==row.before||actual&&actual.mode!==row.mode)fail('complete original output bytes/mode differ');if(row.after!==null&&Buffer.byteLength(row.after)>FILE_LIMIT)fail('generated output source bound');states.set(row.path,{row,before:actual,after:null});total+=Buffer.byteLength(row.before??'')+Buffer.byteLength(row.after??'');}if(total>LIMIT)fail('whole guarded installation source byte bound');
  const changed=[...states.values()].filter(state=>state.row.before!==state.row.after);originalCheck();for(const state of states.values())exact(state.row.path,state.before);if(!changed.length)return {schema:fresh.schema,baseRevision:fresh.baseRevision,changed:[],sourceAuthority:false,runtimeParity:false,rustExecuted:false};
  const privateName=name=>relative(fsRelative(directory)+'/'+name),fsRelative=full=>{const value=full.slice(root.length+1);relative(value);return value;};
  const remember=(name,expected)=>{artifacts.set(name,expected);exact(name,expected);};
- const removePrivate=name=>{ownDirectory();const expected=artifacts.get(name);if(!expected)fail('unknown private installation artifact');exact(name,expected);fs.unlinkSync(physical(root,name));artifacts.delete(name);};
+ const removePrivate=name=>{ownDirectory();const expected=artifacts.get(name);if(!expected)fail('unknown private installation artifact');exact(name,expected);mutate([name],()=>fs.unlinkSync(physical(root,name)));artifacts.delete(name);};
  const capturePublic=(state,suffix)=>{
-  ownDirectory();const name=privateName(suffix);if(current(name)!==null)fail('quarantine slot unexpectedly exists');fs.renameSync(physical(root,state.row.path),physical(root,name));unknownQuarantines.add(name);const actual=privateRead(name);
+  ownDirectory();const name=privateName(suffix),publicName=state.row.path;if(current(name)!==null)fail('quarantine slot unexpectedly exists');mutate([publicName,name],()=>fs.renameSync(physical(root,publicName),physical(root,name)));unknownQuarantines.add(name);const actual=privateRead(name);
   if(!matches(actual,state.before)&&!matches(actual,state.after)){
    // Restore only by no-overwrite link; unexpected captured data stays retained.
-   if(actual)try{fs.linkSync(physical(root,name),physical(root,state.row.path));}catch{}fail('unexpected public replacement captured and retained');
+   if(actual)try{mutate([publicName],()=>fs.linkSync(physical(root,name),physical(root,publicName)));}catch{}fail('unexpected public replacement captured and retained');
   }artifacts.set(name,actual);unknownQuarantines.delete(name);return name;
  };
  let primary,failed=false;const secondary=[];
  try{
-  directory=resolve(root,'.router-source-install-'+randomUUID());fs.mkdirSync(directory,{mode:0o700});directoryIdentity=id(fs.lstatSync(directory));
+  directory=resolve(root,'.router-source-install-'+randomUUID());mutate([fsRelative(directory)],()=>fs.mkdirSync(directory,{mode:0o700}));directoryIdentity=id(fs.lstatSync(directory));
   for(let index=0;index<changed.length;index++){
-   const state=changed[index],row=state.row;ownDirectory();fs.mkdirSync(dirname(physical(root,row.path)),{recursive:true});exact(row.path,state.before);
-   if(state.before){const backup=privateName('backup-'+index);fs.linkSync(physical(root,row.path),physical(root,backup));state.backup=backup;remember(backup,state.before);}
-   if(row.after!==null){const stage=privateName('stage-'+index);fs.writeFileSync(physical(root,stage),row.after,{flag:'wx',mode:row.mode});fs.chmodSync(physical(root,stage),row.mode);state.stage=stage;state.after=privateRead(stage);if(state.after.source!==row.after||state.after.mode!==row.mode)fail('complete prepared output readback differs');remember(stage,state.after);}
+   const state=changed[index],row=state.row;ownDirectory();createParents(row.path);exact(row.path,state.before);
+   if(state.before){const backup=privateName('backup-'+index),publicName=row.path;mutate([backup],()=>fs.linkSync(physical(root,publicName),physical(root,backup)));state.backup=backup;remember(backup,state.before);}
+   if(row.after!==null){const stage=privateName('stage-'+index);mutate([stage],()=>fs.writeFileSync(physical(root,stage),row.after,{flag:'wx',mode:row.mode}));mutate([stage],()=>fs.chmodSync(physical(root,stage),row.mode),true);state.stage=stage;state.after=privateRead(stage);if(state.after.source!==row.after||state.after.mode!==row.mode)fail('complete prepared output readback differs');remember(stage,state.after);}
   }
   originalCheck();for(const state of states.values())exact(state.row.path,state.before);
   for(let index=0;index<changed.length;index++){
    const state=changed[index],row=state.row;originalCheck();exact(row.path,state.before);written.push(state);
    if(state.before){state.quarantine=capturePublic(state,'quarantine-'+index);installed.set(row.path,null);}
-   if(row.after!==null){ownDirectory();fs.linkSync(physical(root,state.stage),physical(root,row.path));installed.set(row.path,state.after);}else installed.set(row.path,null);
+   if(row.after!==null){ownDirectory();const publicName=row.path;mutate([publicName],()=>fs.linkSync(physical(root,state.stage),physical(root,publicName)));installed.set(row.path,state.after);}else installed.set(row.path,null);
    exact(row.path,state.after);originalCheck();
   }
   originalCheck();for(const state of states.values())exact(state.row.path,state.row.before===state.row.after?state.before:state.after);
@@ -170,7 +175,7 @@ function sourceInstallation(fresh,{checkHead=false,policy}={}){
    const state=written[index],row=state.row,actual=current(row.path);ownDirectory();
    if(matches(actual,state.before)){installed.set(row.path,state.before);continue;}
    if(actual!==null){if(!matches(actual,state.after))fail('external output replacement retained during rollback');capturePublic(state,'rollback-'+index);}
-   if(state.before){exact(state.backup,state.before);fs.linkSync(physical(root,state.backup),physical(root,row.path));exact(row.path,state.before);}else exact(row.path,null);installed.set(row.path,state.before);
+   if(state.before){exact(state.backup,state.before);const publicName=row.path;mutate([publicName],()=>fs.linkSync(physical(root,state.backup),physical(root,publicName)));exact(row.path,state.before);}else exact(row.path,null);installed.set(row.path,state.before);
   }catch(error){secondary.push(error);}
  }
  // Attempt every source closer even when one input changed or failure is falsy.
@@ -181,7 +186,7 @@ function sourceInstallation(fresh,{checkHead=false,policy}={}){
  if(directory){for(const name of [...artifacts.keys()])try{
    // Keep recovery bytes whenever rollback/closing could not restore originals.
    if(secondary.length||unknownQuarantines.size)continue;removePrivate(name);
-  }catch(error){secondary.push(error);}try{ownDirectory();if(fs.readdirSync(directory).length===0)fs.rmdirSync(directory);}catch(error){secondary.push(error);}}
+  }catch(error){secondary.push(error);}try{ownDirectory();if(fs.readdirSync(directory).length===0)mutate([fsRelative(directory)],()=>fs.rmdirSync(directory));}catch(error){secondary.push(error);}}
  const recoveryPaths=[];if(directory)try{if(fs.existsSync(directory))recoveryPaths.push(directory);}catch(error){secondary.push(error);}
  if(failed){let attached=false;if(primary&&typeof primary==='object')try{Object.defineProperties(primary,{rollbackFailures:{value:secondary,enumerable:true},recoveryPaths:{value:recoveryPaths,enumerable:true}});attached=true;}catch{}if(recoveryPaths.length&&!attached)try{process.stderr.write(JSON.stringify({schema:'router-source-installation-recovery-paths-v1',recoveryPaths})+'\n');}catch{}throw primary;}
  if(secondary.length){const error=new AggregateError(secondary,'Guarded source installation closing/cleanup failures');error.recoveryPaths=recoveryPaths;throw error;}return {schema:fresh.schema,baseRevision:fresh.baseRevision,changed:changed.map(state=>state.row.path),sourceAuthority:false,runtimeParity:false,rustExecuted:false};
@@ -255,8 +260,8 @@ function captureProtectedSourcePolicy(requestedRoot){
  const verify=()=>{try{if(closed||revoked)fail('protected-source policy scope expired or revoked');if(!same(rootStamp(),rootIdentity)||parentIdentity!==null&&!same(parentStamp(),parentIdentity))fail('protected-source root or parent changed');const next=read();if(next.body!==initial.body||!same(next.identity,initial.identity))fail('protected-source policy changed or was restored');}catch(error){revoked=true;throw error;}};
  const veto=operation=>{let value,failed=false,primary;try{verify();value=operation();}catch(error){failed=true;primary=error;}try{verify();}catch(error){if(!failed){failed=true;primary=error;}else recordProtectedPolicyClosingFailure(primary,error);}if(failed){revoked=true;throw primary;}return value;};
  return Object.freeze({retainedBytes:initial.body===null?0:4*Buffer.byteLength(initial.body)+256,verify,
-  allow(fresh){return veto(()=>{if(fs.realpathSync(resolve(fresh.root))!==root)fail('fresh producer root differs from protected-source policy');for(const row of fresh.outputs){relative(row.path);if(row.path===policyPath||protectedPaths.has(row.path)){if(row.before!==row.after)fail('explicit authored/unmanaged source or policy retained: '+row.path);if(row.before!==null){const stat=fs.lstatSync(physical(root,row.path));if((stat.mode&0o777)!==row.mode)fail('explicit protected-source mode retained: '+row.path);}}}});},
-  allowMutationPaths(paths){return veto(()=>assertProtectedMutationPaths({protectedNames:[policyPath,...protectedPaths],paths}));},
+  allow(fresh){return veto(()=>{if(fs.realpathSync(resolve(fresh.root))!==root)fail('fresh producer root differs from protected-source policy');const protectedNames=[policyPath,...protectedPaths];let names=[];for(const row of fresh.outputs){relative(row.path);if(row.path===policyPath||protectedPaths.has(row.path)){if(row.before!==row.after)fail('explicit authored/unmanaged source or policy retained: '+row.path);if(row.before!==null){const stat=fs.lstatSync(physical(root,row.path));if((stat.mode&0o777)!==row.mode)fail('explicit protected-source mode retained: '+row.path);}}if(row.before!==row.after){names.push(row.path);if(names.length===256){assertProtectedStagedMutationTargets({root,protectedNames,paths:names});names=[];}}}if(names.length)assertProtectedStagedMutationTargets({root,protectedNames,paths:names});});},
+  allowMutationPaths(paths){return veto(()=>{const protectedNames=[policyPath,...protectedPaths];assertProtectedMutationPaths({protectedNames,paths});assertProtectedStagedMutationTargets({root,protectedNames,paths});});},
   allowDirectWrites(fresh){return veto(()=>{if(fs.realpathSync(resolve(fresh.root))!==root)fail('fresh direct-writer root differs from protected-source policy');const paths=directMutationOutputPaths(fresh.outputs),protectedNames=[policyPath,...protectedPaths];assertProtectedMutationPaths({protectedNames,paths});assertProtectedDirectWriteTargets({root,protectedNames,paths});});},
   close(){if(closed)fail('protected-source policy already closed');try{verify();}finally{closed=true;protectedPaths.clear();}},
  });

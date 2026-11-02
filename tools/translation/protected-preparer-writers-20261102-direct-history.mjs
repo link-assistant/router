@@ -1,3 +1,4 @@
+import {knownProtectedStagedEntrySuccessor} from './protected-staged-entries-20261102-history.mjs';
 // Exact named source chronology DATA. No native, source or mutation permission.
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
@@ -20,9 +21,9 @@ export function proposeProtectedPreparerDirectPolicyCopies(input,{root=ROOT}={})
  try{const rows=DIRECT_POLICY_SOURCE_PINS.map((pin,index)=>{const source=input[index],images=pair(capture,pin);need(source&&source.path===pin.path&&source.source===images.before,'complete exact direct-policy original path/source required');return equation(pin.path,images.before,images.after);});result={schema:'protected-preparer-direct-policy-source-proposal-20261102-v1',rows,sourceInstalled:false,sourceAuthority:false,semanticAuthority:false,verification:'UNRUN'};boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
 }
 export function knownProtectedPreparerDirectPolicySuccessor({root=ROOT,path,before}={}){
- const pin=DIRECT_POLICY_SOURCE_PINS.find(row=>row.path===path);if(!pin)return null;const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
- try{const images=pair(capture,pin),current=capture.capture(path).source;need(current===images.after,'actual exact direct-policy source successor differs');
-  if(before===images.before){result=equation(path,images.before,images.after);}else if(pin.role==='unit'&&before===capture.capture('tools/translation/source-profiles/protected-source-errors-20261102/unit-before.mjs.txt').source){result=knownProtectedSourceErrorSuccessor({root,path,before});need(result&&result.currentAfter===current,'complete earlier safe-error/direct-policy chronology differs');}else result=null;
+ const pin=DIRECT_POLICY_SOURCE_PINS.find(row=>row.path===path);if(!pin)return knownProtectedStagedEntrySuccessor({root,path,before});const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
+ try{const images=pair(capture,pin),current=capture.capture(path).source,next=current===images.after?null:knownProtectedStagedEntrySuccessor({root,path,before:images.after});need(current===images.after||next&&next.currentAfter===current,'actual exact direct-policy/staged-entry source successor differs');
+  if(before===images.before){result={...equation(path,images.before,images.after),current,currentAfter:current,laterHistories:next?[next]:[]};}else if(before===images.after){result=next;}else if(pin.role==='unit'&&before===capture.capture('tools/translation/source-profiles/protected-source-errors-20261102/unit-before.mjs.txt').source){result=knownProtectedSourceErrorSuccessor({root,path,before});need(result&&result.currentAfter===current,'complete earlier safe-error/direct-policy chronology differs');}else result=knownProtectedStagedEntrySuccessor({root,path,before});
   if(result)boundedReconcileWireBytes(result);
  }catch(error){failed=true;primary=error;}try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
 }

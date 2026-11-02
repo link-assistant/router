@@ -1,0 +1,11 @@
+{
+  "schema": "router-integrated-staged-native-entry-source-draft-20261102-v1",
+  "sha256": "ae8e155daa3d54a539ee99de18d74e4edb5753122602b7740fe849d59825fbec",
+  "decodedBytes": 714436,
+  "packedBytes": 105057,
+  "completeFiles": 13,
+  "completeParentEquations": 9,
+  "caseFiles": 3,
+  "execution": "UNRUN",
+  "CI": "NOT_INSPECTED"
+}

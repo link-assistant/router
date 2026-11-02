@@ -19,7 +19,7 @@ export function withProtectedUnitVariant(root,operation){
  const policy=captureExplicitSourceMutationPolicy(root),parent=active;let actual;try{actual=fs.realpathSync(resolve(root));}catch(primary){try{policy.close();}catch(error){secondary(primary,error);}throw primary;}const current={root:actual,policy,parent};active=current;
  let failed=false,primary,result;
  const around=run=>{let value,problem,broken=false;try{policy.verify();value=run();}catch(error){broken=true;problem=error;}try{policy.verify();}catch(error){if(broken)secondary(problem,error);else{broken=true;problem=error;}}if(broken)throw problem;return value;};
- const scope=Object.freeze({retainedBytes:policy.retainedBytes,verify:policy.verify,
+ const scope=Object.freeze({root:current.root,retainedBytes:policy.retainedBytes,verify:policy.verify,
   outputs(fresh){return policy.allow(fresh);},
   budget(fresh,limit){let bytes=0;const add=value=>{if(value!==null){if(typeof value!=='string')fail('original source budget requires full string/null bytes');bytes+=Buffer.byteLength(value);}if(bytes+protectedUnitVariantRetainedBytes(root)>limit)fail('complete source plus policy retention exceeds original byte budget');};for(const row of fresh.inputs)add(row.source);for(const row of fresh.outputs){add(row.before);add(row.after);}return bytes;},
   paths(names,run){policy.allowMutationPaths(names);return around(run);},
