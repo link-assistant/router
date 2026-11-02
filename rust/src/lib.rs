@@ -328,3 +328,8 @@ pub mod translation_primitive_vectors_core;
 pub mod translation_owned_text_vectors_core;
 
 pub mod translation_ordered_text_map_core;
+
+pub mod borrowed_standard_map_20261102;
+
+#[cfg(test)]
+mod borrowed_standard_map_application_20261103_tests;

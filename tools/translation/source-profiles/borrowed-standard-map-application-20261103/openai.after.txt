@@ -1,0 +1,510 @@
+//! OpenAI-compatible API surface.
+//!
+//! Issue #7 R5 / R12 require the router to expose:
+//!
+//! - `POST /v1/chat/completions` — `OpenAI` Chat Completions
+//! - `POST /v1/responses` — `OpenAI` Responses (newer agentic API)
+//! - `GET  /v1/models` — model discovery
+//!
+//! These translate to / from the upstream Anthropic Messages API so any
+//! client written for the `OpenAI` SDK can talk to Claude MAX through us.
+//!
+//! The translation surface is intentionally minimal but extensible:
+//!
+//! - `OpenAIChatCompletionRequest` mirrors the `OpenAI` request shape; we
+//!   convert it to an Anthropic `messages` payload and forward via the
+//!   existing proxy plumbing.
+//! - `to_chat_completion_response` converts the upstream Anthropic
+//!   response (whether streamed SSE chunks or a buffered JSON body) to
+//!   the `OpenAI` Chat Completions response shape.
+//!
+//! Streaming Anthropic SSE responses are translated incrementally into the
+//! matching `OpenAI` Chat Completions or Responses SSE event shape.
+
+use std::collections::BTreeMap;
+
+use serde::{Deserialize, Serialize};
+use serde_json::{Value, json};
+
+/// One chat message in the `OpenAI` request.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ChatMessage {
+    pub role: String,
+    /// `OpenAI` permits `content` as either a string or an array of parts.
+    /// We accept both via `Value` and normalise downstream.
+    #[serde(default)]
+    pub content: Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    /// Identifier of the tool call answered by a `role=tool` message.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool_call_id: Option<String>,
+    /// Function calls emitted by an assistant turn.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool_calls: Option<Value>,
+}
+
+/// `OpenAI` `POST /v1/chat/completions` request body.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OpenAIChatCompletionRequest {
+    pub model: String,
+    pub messages: Vec<ChatMessage>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_tokens: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_completion_tokens: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub temperature: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub top_p: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frequency_penalty: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub presence_penalty: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub logit_bias: Option<BTreeMap<String, f32>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub seed: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stream: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stop: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tools: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool_choice: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reasoning_effort: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reasoning: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub response_format: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parallel_tool_calls: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub n: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub modalities: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audio: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub logprobs: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub top_logprobs: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub safety_identifier: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stream_options: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub user: Option<String>,
+}
+
+/// Translate an `OpenAI` Chat Completions request to an Anthropic Messages
+/// request body (returned as a JSON value).
+#[must_use]
+pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value {
+    let mut system_chunks: Vec<String> = Vec::new();
+    let mut system_blocks: Vec<Value> = Vec::new();
+    let block_system = req.messages.iter().any(|message| {
+        matches!(message.role.as_str(), "system" | "developer")
+            && message.content.as_array().is_some_and(|parts| {
+                parts
+                    .iter()
+                    .any(|part| part.get("prompt_cache_breakpoint").is_some())
+            })
+    });
+    let mut messages: Vec<Value> = Vec::new();
+
+    for msg in &req.messages {
+        let role = msg.role.as_str();
+        match role {
+            "system" | "developer" => {
+                if block_system {
+                    if !system_blocks.is_empty() {
+                        system_blocks.push(json!({"type":"text", "text":"\n\n"}));
+                    }
+                    match &msg.content {
+                        Value::String(text) => {
+                            system_blocks.push(json!({"type":"text", "text":text}));
+                        }
+                        Value::Array(parts) => system_blocks.extend(translate_parts(parts)),
+                        _ => {}
+                    }
+                } else if let Some(text) = extract_text(&msg.content) {
+                    system_chunks.push(text);
+                }
+            }
+            "user" | "assistant" => {
+                let mut anthropic_content = match &msg.content {
+                    Value::String(s) => Value::String(s.clone()),
+                    Value::Array(parts) => Value::Array(translate_parts(parts)),
+                    _ => Value::String(extract_text(&msg.content).unwrap_or_default()),
+                };
+                if role == "assistant"
+                    && let Some(tool_calls) = msg.tool_calls.as_ref().and_then(Value::as_array)
+                {
+                    let mut blocks = match anthropic_content {
+                        Value::String(ref text) if text.is_empty() => Vec::new(),
+                        Value::String(text) => vec![json!({"type": "text", "text": text})],
+                        Value::Array(blocks) => blocks,
+                        _ => Vec::new(),
+                    };
+                    blocks.extend(tool_calls.iter().map(|call| {
+                        let function = call.get("function").unwrap_or(&Value::Null);
+                        let arguments = function
+                            .get("arguments")
+                            .and_then(Value::as_str)
+                            .and_then(|raw| serde_json::from_str::<Value>(raw).ok())
+                            .unwrap_or_else(|| json!({}));
+                        json!({
+                            "type": "tool_use",
+                            "id": call.get("id").and_then(Value::as_str).unwrap_or_default(),
+                            "name": function.get("name").and_then(Value::as_str).unwrap_or_default(),
+                            "input": arguments,
+                        })
+                    }));
+                    anthropic_content = Value::Array(blocks);
+                }
+                messages.push(json!({
+                    "role": role,
+                    "content": anthropic_content,
+                }));
+            }
+            "tool" => {
+                // OpenAI uses role=tool for tool results; Anthropic models
+                // these as a `tool_result` user content block.
+                let content = match &msg.content {
+                    Value::Array(parts) => Value::Array(translate_parts(parts)),
+                    _ => Value::String(extract_text(&msg.content).unwrap_or_default()),
+                };
+                messages.push(json!({
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": msg.tool_call_id.clone().unwrap_or_default(),
+                            "content": content
+                        }
+                    ]
+                }));
+            }
+            _ => {}
+        }
+    }
+
+    let explicit_max_tokens = req.max_completion_tokens.or(req.max_tokens);
+    let max_tokens = explicit_max_tokens.unwrap_or(4096);
+
+    let mut body = json!({
+        "model": map_model(&req.model),
+        "max_tokens": max_tokens,
+        "messages": messages,
+    });
+
+    if block_system && !system_blocks.is_empty() {
+        body["system"] = Value::Array(system_blocks);
+    } else if !system_chunks.is_empty() {
+        body["system"] = Value::String(system_chunks.join("\n\n"));
+    }
+    if let Some(identifier) = req.safety_identifier.as_ref().or(req.user.as_ref()) {
+        body["metadata"] = json!({"user_id": identifier});
+    }
+    // Anthropic rejects a request specifying both, and Gemini CLI sends both by
+    // default with no way to suppress either — so a valid Gemini request and a
+    // reachable Claude model combined into a permanent `400` (issue #216).
+    // `temperature` wins because it is the more commonly tuned knob and the one
+    // a caller is likelier to have set deliberately; `top_p` is carried only
+    // when it is the sole nucleus-sampling parameter, so a caller who tuned just
+    // that still gets the sampling they asked for.
+    match (req.temperature, req.top_p) {
+        (Some(t), _) => body["temperature"] = json!(t),
+        (None, Some(p)) => body["top_p"] = json!(p),
+        (None, None) => {}
+    }
+    if req.stream == Some(true) {
+        body["stream"] = json!(true);
+    }
+    if let Some(stops) = &req.stop {
+        body["stop_sequences"] = match stops {
+            Value::String(s) => json!([s]),
+            other => other.clone(),
+        };
+    }
+    if let Some(tools) = &req.tools {
+        body["tools"] = translate_tools(tools);
+    }
+    if let Some(choice) = &req.tool_choice {
+        body["tool_choice"] = translate_tool_choice(choice);
+    }
+    crate::structured_output::install_parallel_tool_policy(
+        &mut body,
+        req.parallel_tool_calls,
+        req.tools
+            .as_ref()
+            .and_then(Value::as_array)
+            .is_some_and(|tools| !tools.is_empty()),
+    );
+    crate::structured_output::install_format(
+        &mut body,
+        crate::structured_output::chat_format(req.response_format.as_ref())
+            .ok()
+            .flatten(),
+    );
+    if let Some(reasoning) = &req.reasoning {
+        body["reasoning"] = reasoning.clone();
+    } else if let Some(effort) = &req.reasoning_effort {
+        body["reasoning"] = json!({"effort": effort});
+    }
+    reconcile_subscription_parameters_with_limit_origin(
+        crate::subscription::SubscriptionProvider::Claude,
+        &mut body,
+        explicit_max_tokens.is_some(),
+    );
+    body
+}
+
+/// Reconcile only provider wire-shape requirements that are known from the
+/// selected protocol. Model names are never treated as capability metadata.
+pub(crate) fn reconcile_subscription_parameters(
+    provider: crate::subscription::SubscriptionProvider,
+    body: &mut Value,
+) {
+    reconcile_subscription_parameters_with_limit_origin(provider, body, true);
+}
+
+pub(crate) fn reconcile_subscription_parameters_with_limit_origin(
+    provider: crate::subscription::SubscriptionProvider,
+    body: &mut Value,
+    output_limit_was_explicit: bool,
+) {
+    let model = body.get("model").and_then(Value::as_str);
+    let adaptive_thinking =
+        crate::capabilities::claude_uses_adaptive_thinking(model.map(crate::thinking::base_model));
+    if provider == crate::subscription::SubscriptionProvider::Claude {
+        crate::thinking::anthropic::reconcile_claude_thinking(
+            body,
+            adaptive_thinking,
+            output_limit_was_explicit,
+        );
+    }
+}
+
+/// Translate the upstream Anthropic JSON response to an `OpenAI` Chat
+/// Completions response.
+#[must_use]
+pub fn anthropic_to_chat_completion(anthropic: &Value, _resolved_model: &str) -> Value {
+    let id = anthropic.get("id").and_then(Value::as_str).map_or_else(
+        || format!("chatcmpl-{}", uuid::Uuid::new_v4()),
+        String::from,
+    );
+
+    let (content, annotations) =
+        crate::bridge_response::anthropic_text_and_annotations(anthropic.get("content"));
+    let mut tool_calls: Vec<Value> = Vec::new();
+    if let Some(blocks) = anthropic.get("content").and_then(Value::as_array) {
+        for block in blocks {
+            if block.get("type").and_then(Value::as_str) == Some("tool_use") {
+                let name = block.get("name").and_then(Value::as_str).unwrap_or("");
+                let input = block.get("input").cloned().unwrap_or(Value::Null);
+                let id = block.get("id").and_then(Value::as_str).unwrap_or("");
+                tool_calls.push(json!({
+                    "id": id,
+                    "type": "function",
+                    "function": {
+                        "name": name,
+                        "arguments": serde_json::to_string(&input).unwrap_or_default(),
+                    }
+                }));
+            }
+        }
+    }
+
+    let stop = crate::bridge_response::stop_semantics(
+        anthropic.get("stop_reason").and_then(Value::as_str),
+    );
+    let mut message = if stop.refusal {
+        json!({"role": "assistant", "content": Value::Null, "refusal": content})
+    } else {
+        json!({"role": "assistant", "content": content})
+    };
+    if !stop.refusal && !annotations.is_empty() {
+        message["annotations"] =
+            Value::Array(crate::bridge_response::chat_annotations(&annotations));
+    }
+    if !tool_calls.is_empty() {
+        message["tool_calls"] = Value::Array(tool_calls);
+    }
+    let usage = crate::bridge_response::AnthropicUsage::from_value(anthropic.get("usage"));
+
+    let served_model = anthropic
+        .get("model")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+
+    let mut response = json!({
+        "id": id,
+        "object": "chat.completion",
+        "created": crate::operation_context::now().timestamp(),
+        "model": served_model,
+        "choices": [
+            {
+                "index": 0,
+                "message": message,
+                "finish_reason": stop.chat_finish_reason,
+            }
+        ],
+        "usage": usage.chat()
+    });
+    if let Some(tier) = usage.openai_service_tier() {
+        response["service_tier"] = Value::String(tier.into());
+    }
+    response
+}
+
+pub(crate) fn extract_sse_data(block: &str) -> String {
+    block
+        .lines()
+        .filter_map(|line| {
+            line.trim_end_matches('\r')
+                .strip_prefix("data:")
+                .map(str::trim_start)
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn sse_frame(value: &Value) -> String {
+    format!("data: {value}\n\n")
+}
+
+fn response_sse_frame(value: &Value) -> String {
+    let event = value
+        .get("type")
+        .and_then(Value::as_str)
+        .unwrap_or("message");
+    format!("event: {event}\ndata: {value}\n\n")
+}
+
+fn done_frame() -> String {
+    "data: [DONE]\n\n".to_string()
+}
+
+fn map_finish_reason(reason: &str) -> &'static str {
+    crate::bridge_response::stop_semantics(Some(reason)).chat_finish_reason
+}
+
+/// Resolve a model that the Anthropic-backed `OpenAI` surface can serve.
+///
+/// The router keeps **no built-in alias table**. A table of vendor names
+/// compiled into the binary inevitably points at models that are renamed,
+/// withdrawn or not entitled for the account (issue #192), so an alias is now
+/// purely operator configuration, checked against the live catalog by
+/// [`resolve_model_with`].
+///
+/// This form passes a request through only when the caller already named a
+/// model directly; anything else returns `None` so the handler answers
+/// `model_selection_required` rather than substituting a guess.
+#[must_use]
+pub fn resolve_model(requested: &str) -> Option<String> {
+    resolve_model_with(requested, &BTreeMap::new(), &[])
+}
+
+/// Resolve `requested` against operator aliases and a live catalog.
+///
+/// Order: an exact catalog entry wins, then an operator alias whose target the
+/// catalog still advertises. An alias pointing at a model the account no longer
+/// has resolves to `None` rather than routing somewhere unintended.
+///
+/// An empty `catalog` means "not discovered yet"; the request is then accepted
+/// only if an alias names it, so a router that has not finished its first
+/// discovery does not reject everything outright.
+#[must_use]
+pub fn resolve_model_with(
+    requested: &str,
+    aliases: &BTreeMap<String, String>,
+    catalog: &[String],
+) -> Option<String> {
+    let advertises = |id: &str| catalog.is_empty() || catalog.iter().any(|entry| entry == id);
+
+    if catalog.iter().any(|entry| entry == requested) {
+        return Some(requested.to_string());
+    }
+    let lower = requested.to_lowercase();
+    if let Some(target) = aliases
+        .get(requested)
+        .or_else(|| aliases.get(lower.as_str()))
+        && advertises(target)
+    {
+        return Some(target.clone());
+    }
+    // With no catalog to check against, a directly named model is taken at
+    // face value; the upstream is the authority on whether it exists.
+    (catalog.is_empty() && !requested.is_empty()).then(|| requested.to_string())
+}
+
+pub(crate) fn query_stream_requested(query: &BTreeMap<String, String>) -> bool {
+    crate::borrowed_standard_map_20261102::borrowed_text_map_matches_literals(
+        query,
+        "stream",
+        &["true", "1"],
+    )
+}
+
+/// Map an explicit `OpenAI` alias to its Anthropic model ID.
+///
+/// Unknown names remain unchanged; request handlers reject them with a model
+/// not-found response before forwarding. Keeping this infallible wrapper
+/// preserves the translation helper API for downstream library callers.
+#[must_use]
+pub fn map_model(requested: &str) -> String {
+    resolve_model(requested).unwrap_or_else(|| requested.to_string())
+}
+
+/// `/v1/models` listing in the `OpenAI` list-shape.
+///
+/// Takes the ids to advertise rather than embedding any: the router must never
+/// publish a model name that came from its own source code (issue #192).
+/// Callers pass a live catalog, so an account that has discovered nothing
+/// advertises nothing.
+#[must_use]
+pub fn list_models_from(models: &[String], owner: &str) -> Value {
+    let now = crate::operation_context::now().timestamp();
+    let data: Vec<Value> = models
+        .iter()
+        .map(|id| {
+            json!({
+                "id": id,
+                "object": "model",
+                "created": now,
+                "owned_by": owner,
+            })
+        })
+        .collect();
+    json!({"object": "list", "data": data})
+}
+
+#[path = "openai_tools.rs"]
+mod tools;
+
+#[path = "openai_stream.rs"]
+mod stream;
+
+pub use stream::{OpenAIStreamShape, OpenAIStreamTranslator};
+
+pub(crate) use tools::{extract_text, translate_parts, translate_tool_choice, translate_tools};
+pub use tools::{
+    invalid_anthropic_tool_definition, untranslatable_anthropic_tool_choice,
+    untranslatable_anthropic_tools, untranslatable_chat_tool_history,
+};
+
+#[cfg(test)]
+#[path = "openai_request_tests.rs"]
+mod request_tests;
+
+#[cfg(test)]
+#[path = "openai_tool_filter_tests.rs"]
+mod tool_filter_tests;
+
+#[cfg(test)]
+#[path = "openai_response_tests.rs"]
+mod tests;

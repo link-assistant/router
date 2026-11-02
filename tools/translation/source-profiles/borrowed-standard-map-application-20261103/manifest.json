@@ -1,0 +1,24 @@
+{
+  "schema": "borrowed-standard-map-application-complete-source-20261103-v1",
+  "files": [
+    {
+      "path": "rust/src/openai.rs",
+      "before": "openai.before.txt",
+      "after": "openai.after.txt"
+    },
+    {
+      "path": "rust/src/lib.rs",
+      "before": "lib.before.txt",
+      "after": "lib.after.txt"
+    }
+  ],
+  "packet": {
+    "path": "tools/translation/source-profiles/borrowed-standard-map-application-20261103/complete-source.json.gz",
+    "decodedBytes": 104192,
+    "packedBytes": 13711,
+    "sha256": "57e575bf22911307b6f5484db4a2082db09bc195da15bb3eb31ca6743cd0076c"
+  },
+  "verification": "UNRUN",
+  "ci": "NOT_INSPECTED",
+  "applicationTranslationQualified": false
+}

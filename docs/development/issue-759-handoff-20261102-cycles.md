@@ -663,3 +663,21 @@ for actual downstream historical producers is being drafted separately; those
 consumers must not reinstall an unguarded historical CLI.
 See [the fixed source profile](protected-fixed-cli-writers-20261102.md).
 All checks UNRUN, CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+## Actual unrestricted borrowed-map application adoption
+
+Root registered the borrowed standard-map native leaf in the real crate and
+changed the real `openai::query_stream_requested` body to call it. The original
+BTreeMap signature/domain remains unrestricted; no bounded opaque conversion
+or entry/value size guard was introduced. A registered native application
+case calls the actual function and compares its historical expression on
+large maps, long observed/unobserved values and exact alternatives; Rust
+execution remains CI-only after all JavaScript gates.
+
+A two-phase source proposer and complete Rust CST/inverse cases retain both
+whole original parents, actual afterimages, all authored source and original
+core prerequisites. See [the application contract](borrowed-standard-map-application-20261103.md).
+Compiler-side source/std/type registration, emitters, interpreters and reverse
+actual application synchronization remain OPEN. Native abstraction adoption
+is not executable translation coverage. Verification UNRUN, CI NOT_INSPECTED;
+11/70 acceptance bundles DRAFTED,59 OPEN.
