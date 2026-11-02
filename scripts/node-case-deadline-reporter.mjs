@@ -1,5 +1,6 @@
 // Forward every event to Node's own public TAP reporter, even after audit errors.
 import fs from 'node:fs';
+import {fileURLToPath} from 'node:url';
 import {captureProtectedNodeReporterWriter} from '../tools/translation/protected-node-evidence-writers-20261103.mjs';
 import {createHash} from 'node:crypto';
 import {tap} from 'node:test/reporters';
@@ -12,7 +13,7 @@ export default async function* deadlineReporter(source){
   if(raw.length>1024*1024||sha(raw)!==process.env.ROUTER_NODE_DEADLINE_REQUEST_SHA256)throw Error('Exact bounded deadline request changed');
   request=JSON.parse(raw);
   if(request.schema!=='complete-node-case-deadline-request-v1'||!Array.isArray(request.files)||!request.files.length||request.files.length>4096)throw Error('Invalid complete deadline request');
-  writer=captureProtectedNodeReporterWriter(request.root);
+  writer=captureProtectedNodeReporterWriter(request.root,fileURLToPath(new URL('../',import.meta.url)));
   audit=createCaseDeadlineAudit(request);
  }catch(error){initialError=error.stack??error.message;}
  async function* forwarded(){

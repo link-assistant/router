@@ -67,7 +67,7 @@ export async function runAuditedNodeTests({root,files,flags=[],outputDirectory,o
  const onInt=()=>terminate('SIGINT'),onTerm=()=>terminate('SIGTERM');process.on('SIGINT',onInt);process.on('SIGTERM',onTerm);
  async function retain(stream,name,destination){
   const filename=path.join(outputDirectory,name),fd=scope.open(filename,'wx+',0o600);let bytes=0,observedBytes=0,expected=null,readback=null,identity=null;const digest=createHash('sha256');
-  try{for await(const chunk of stream){observedBytes+=chunk.length;let offset=0;while(offset<chunk.length){const written=scope.descriptor(fd,actual=>fs.writeSync(actual,chunk,offset,chunk.length-offset));if(written<=0)throw Error('No raw log write progress');digest.update(chunk.subarray(offset,offset+written));offset+=written;bytes+=written;}if(!destination.write(chunk))await once(destination,'drain');if(bytes>RAW_LIMIT){outputError??='Raw stream exceeded256MiB stop threshold; full partial retained';terminate(outputError);}}}
+  try{for await(const chunk of stream){observedBytes+=chunk.length;let offset=0;while(offset<chunk.length){const written=scope.descriptor(fd,actual=>fs.writeSync(actual,chunk,offset,chunk.length-offset));if(written<=0)throw Error('No raw log write progress');digest.update(chunk.subarray(offset,offset+written));offset+=written;bytes+=written;}if(!scope.forward(destination,chunk))await once(destination,'drain');if(bytes>RAW_LIMIT){outputError??='Raw stream exceeded256MiB stop threshold; full partial retained';terminate(outputError);}}}
   catch(error){outputError??=error.stack??error.message;terminate('raw stream failure');}
   finally{
    try{
@@ -111,7 +111,7 @@ export async function runAuditedNodeTests({root,files,flags=[],outputDirectory,o
  write('terminal.json',result);
  if(result.exitCode===0)try{verify();}catch(error){result.exitCode=1;result.auditError='Final receipt boundary: '+(error.stack??error.message);write('finalization-refusal.json',result);}
  return result;
- });
+ },fileURLToPath(new URL('../',import.meta.url)));
 }
 async function main(){
  const args=process.argv.slice(2);let outerTimeoutMs=3600000;

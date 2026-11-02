@@ -412,3 +412,23 @@ full size/clock stamps may reject legitimate peer traffic; an additive stream
 identity correction is assigned, without changing the original regular-file API.
 Frozen documents record proposals; this records installation. All verification
 UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+## Actual Node inherited forwarding and independent script roots
+
+Root source-reviewed and installed all four Node forwarding successors and13
+frozen authored files. Each actual runner/reporter adds its private import.meta
+script root as an independent veto, retaining helper-root and public selected
+root with canonical coalescing. The runner's exact original stdout/stderr objects
+and inherited descriptors1/2 now use the new genuine stream API for actual
+forwarding calls. Original chunks, backpressure/drain, audit/raw evidence and
+owned raw-file FD lifetimes remain; borrowed inherited FDs are never closed.
+The original Node history preserves historical after/inverse and appends exact
+currentAfter. Full child/pipe/public-root-spoof/independently relocated-script
+source cases and CST/inverses are retained, not executed.
+
+Remaining direct/transitive domains are explicit: unsafe secondary stderr2
+diagnostics need the next caller-owned collector/guard route; regular shared
+stream traffic needs the identified additive identity correction. Native
+mkdtemp pre-creation negative-name proof, builtin TAP consumer, Python and
+arbitrary children remain OPEN. No wrapper or successful process exit qualifies
+those domains. All verification UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.

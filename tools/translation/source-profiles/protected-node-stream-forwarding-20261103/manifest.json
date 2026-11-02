@@ -1,0 +1,103 @@
+{
+  "schema": "protected-node-stream-forwarding-20261103-source-proposal-v1",
+  "predecessorProposal": "protected-node-evidence-writers-20261103",
+  "requiredApiProposal": "protected-native-stream-fds-20261103",
+  "files": [
+    {
+      "role": "helper",
+      "path": "tools/translation/protected-node-evidence-writers-20261103.mjs",
+      "physicalOrigin": {
+        "commit": "d70fc5c7a1f618873e16a7c866f5d9219594001a",
+        "path": "tools/translation/protected-node-evidence-writers-20261103.mjs",
+        "gitBlob": "dd4ca383ccef234de4c29126c78a129e8d98939e",
+        "actualInstalled": true,
+        "bindingStatus": "EXACT_ACTUAL_PREDECESSOR"
+      },
+      "before": {
+        "path": "helper.before.txt",
+        "bytes": 6607,
+        "sha256": "3416e7de699024a3d97d3a038fcb3031ddca2d9047b7ed676c5d89a54fcdab4e"
+      },
+      "after": {
+        "path": "helper.after.txt",
+        "bytes": 7077,
+        "sha256": "7c11d54f65757ae0bc7ac0b49ab86fdbf4ae54d75b14036557c4bfbf0f6781ad"
+      }
+    },
+    {
+      "role": "runner",
+      "path": "scripts/run-node-tests.mjs",
+      "physicalOrigin": {
+        "commit": "d70fc5c7a1f618873e16a7c866f5d9219594001a",
+        "path": "scripts/run-node-tests.mjs",
+        "gitBlob": "bfbc5995211a1a3b2ca46165705f7be4d7c12472",
+        "actualInstalled": true,
+        "bindingStatus": "EXACT_ACTUAL_PREDECESSOR"
+      },
+      "before": {
+        "path": "runner.before.txt",
+        "bytes": 13335,
+        "sha256": "8dd3db1ae49859d6cf62951db62355f1102bfba4fbd8e0e3fbcf068fc509092d"
+      },
+      "after": {
+        "path": "runner.after.txt",
+        "bytes": 13389,
+        "sha256": "5a14feda480a76bf1100e1236b319d49ee556bd07fa88c915ee5f1f986491184"
+      }
+    },
+    {
+      "role": "prior-history",
+      "path": "tools/translation/protected-node-evidence-writers-20261103-history.mjs",
+      "physicalOrigin": {
+        "commit": "d70fc5c7a1f618873e16a7c866f5d9219594001a",
+        "path": "tools/translation/protected-node-evidence-writers-20261103-history.mjs",
+        "gitBlob": "aa0d79f602a4e216afef8a986d9f5d24bae268d5",
+        "actualInstalled": true,
+        "bindingStatus": "EXACT_ACTUAL_PREDECESSOR"
+      },
+      "before": {
+        "path": "prior-history.before.txt",
+        "bytes": 4108,
+        "sha256": "5d5bd75c19d491dc6caeaa7ddd7af10642a8acb7a66bbf32a0f707d4f1c3f157"
+      },
+      "after": {
+        "path": "prior-history.after.txt",
+        "bytes": 4472,
+        "sha256": "8d59e1e5c838afd59abd93b9c2ef8322661d82703dbd38c657d054b355717dd6"
+      }
+    },
+    {
+      "role": "reporter",
+      "path": "scripts/node-case-deadline-reporter.mjs",
+      "physicalOrigin": {
+        "commit": "d70fc5c7a1f618873e16a7c866f5d9219594001a",
+        "path": "scripts/node-case-deadline-reporter.mjs",
+        "gitBlob": "b1ed556d6889a0b3481d4d19651f3c050c2eacaf",
+        "actualInstalled": true,
+        "bindingStatus": "EXACT_ACTUAL_PREDECESSOR"
+      },
+      "before": {
+        "path": "reporter.before.txt",
+        "bytes": 2628,
+        "sha256": "42a5e55ddab5772e74938ce883283755d277f23acfcc395fbc4cb87c1a0df05a"
+      },
+      "after": {
+        "path": "reporter.after.txt",
+        "bytes": 2714,
+        "sha256": "8a575a29c27575ec3c4705e32a3db1a0c5635b1204d29a8c4069f25046784a35"
+      }
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceInstalled": false,
+  "sourceAuthority": false,
+  "completeOriginalFunctionDenominator": "UNKNOWN",
+  "completeWriterDenominator": "UNKNOWN",
+  "open": [
+    "Existing secondary diagnostic stderr write sinks",
+    "Native mkdtemp precreation",
+    "Python/transitive children",
+    "Builtin TAP consumer writes"
+  ],
+  "predecessor": "d70fc5c7a1f618873e16a7c866f5d9219594001a"
+}
