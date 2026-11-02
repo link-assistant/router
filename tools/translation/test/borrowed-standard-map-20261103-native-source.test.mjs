@@ -9,7 +9,7 @@ import {proposeFixedBorrowedStandardMapNativeAbi} from '../borrowed-standard-map
 const read=path=>readFileSync(new URL('../../../'+path,import.meta.url),'utf8');
 test('the distinct native context is a complete counted source copy with a Rust-helper-specific owner',{timeout:60000},()=>{
  const result=proposeBorrowedStandardMapNativeContext();
- assert.equal(result.after,read(result.path));assert.equal(result.inverse,result.before);assert.equal(result.history.inverse,result.before);
+ assert.equal(result.currentAfter??result.after,read(result.path));assert.equal(result.inverse,result.before);assert.equal(result.history.inverse,result.before);
  assert.deepEqual(result.trace.map(step=>step.phase),['language','repository']);
  assert.ok(result.after.includes("module.path.join('::')==='borrowed_standard_map_20261102'"));
  assert.equal(result.after.includes("module.path.join('::')==='translation_ordered_text_map_core'"),false);

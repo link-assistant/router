@@ -300,3 +300,14 @@ correction is being drafted; the frozen15 remain unchanged. Actual delegated
 Node runner/reporter, Python and transitive receiving writes remain independently
 OPEN. The frozen document records proposal status; this journal records actual
 installation. All execution UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+## Original native context copy preserves later alias history
+
+Root updated the actual original complete borrowed-context copy producer and
+its original case to retain historical before/after/CST/trace separately from
+both new current context sources. A fixed named two-context lineage provider
+requires exact actual terminal bytes and complete source/inverse closing. No
+source hash, metadata or public result grants native/body/type permission.
+The complete two-parent successor and authored provider source are retained in
+a new independent source packet; the earlier native alias packet stays frozen.
+Every verification UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.

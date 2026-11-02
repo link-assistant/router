@@ -23,3 +23,12 @@ Other actual root/configuration/macro/native owner constraints may still refuse;
 no executable query, whole-library or source-scope closure is claimed.
 All tests/parsers/compilers/receiver execution UNRUN; CI NOT_INSPECTED. Checklist
 remains11/70 DRAFTED,59 OPEN.
+
+The original borrowed-context source-copy producer now retains its exact old
+before/after/trace while separately recognizing both native contexts' actual
+own-crate alias successors. A named fixed complete source-history provider
+checks current physical/compressed source bytes, CST/inverses and closing;
+currentAfter/inputLaterHistories/laterHistories carry these continuations. The
+original full source case now compares that separate currentAfter. No historical
+source was repinned and no private native/caller authority is issued by the
+lineage provider. This is source adoption only; all execution remains UNRUN.
