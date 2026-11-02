@@ -697,3 +697,19 @@ See [the native source contract](borrowed-standard-map-native-20261103.md).
 Actual caller/type/semantic/emitter/interpreter registration and complete
 positive native receiving/lifecycle cases remain OPEN; source-only cases do
 not qualify those paths. All checks UNRUN, CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+## Actual historical CLI current-source joins
+
+Root integrated four complete parent successors joining the original five-file
+native parsed-CST history to the guarded concrete-equation producer. Historical
+after/stages/inverse remain unchanged. A finite named successor supplies
+currentAfter, separately checks current native import bindings, and is the
+actual CLI write/check payload. The fixed fourteen-preparer history composes
+this exact later source epoch without repinning its original afterimages.
+Unknown paths/whole source continue to refuse. The proposal snapshots bounded
+ordinary source DATA before observing input fields; accessor/proxy refusal
+case source was added without running it. Original complete producer/case
+workloads and deadlines remain. See [the lineage contract](protected-cli-source-lineage-20261103.md).
+The separate private-parser-data-current-sources adapter still needs its own
+finite historical-CLI successor batch, now in progress. All verification UNRUN,
+CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.

@@ -17,6 +17,13 @@ export function proposeProtectedAfterCliWriterSources(input,{root=ROOT}={}){
  try{const files=FILES.map((name,index)=>{const pair=images(capture,name),row=input[index];need(row&&row.path==='tools/translation/'+name.name&&row.source===pair.before,'complete original after-cli-writer source/path required');return equation(name,pair.before,pair.after);});result={schema:'protected-after-cli-writer-source-proposal-20261102-v1',files,sourceInstalled:false,sourceAuthority:false,semanticAuthority:false,verification:'UNRUN'};boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}
  try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
 }
+// Exact source preparation DATA, not physical/native permission. The actual
+// producer retains its original before/after/previous/currentAfter admission.
+export function prepareProtectedAfterCliWriterSuccessor({root=ROOT,path,before}={}){
+ const name=FILES.find(name=>path==='tools/translation/'+name.name);if(!name)return null;const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
+ try{const pair=images(capture,name),current=capture.capture(path).source;result=before===pair.before?{...equation(name,pair.before,pair.after),current}:null;if(result)boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}
+ try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
+}
 export function knownProtectedAfterCliWriterSuccessor({root=ROOT,path,before}={}){
  const name=FILES.find(name=>path==='tools/translation/'+name.name);if(!name)return null;const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
  try{const pair=images(capture,name),current=capture.capture(path).source;need(current===pair.after,'actual full after-cli-writer source successor differs');result=before===pair.before?equation(name,pair.before,pair.after):null;if(result)boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}
