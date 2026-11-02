@@ -3,10 +3,12 @@
 SOURCE DRAFT ONLY. Every new implementation, producer, receiving case, strict
 TypeScript case and native oracle is UNRUN. CI/review feedback is NOT_INSPECTED.
 No application function, receiving acceptance row or bulk requirement is closed.
-The existing ten-operation core remains unchanged. This profile drafts eight
+The existing ten-operation core remains unchanged. This profile drafts ten
 caller operations in both directions: new, insert, remove, get, contains, len,
-copy and keys. Forward from_pairs and pairs additionally have a narrow actual
-Vec<(String,String)> signature path; their reverse caller routes remain OPEN.
+copy, keys, from_pairs and pairs. Pair support remains narrow: actual explicit
+Vec<(String,String)> signature contexts forward and actual imported raw runtime
+operation type witnesses reverse. Pair locals/literals and inferred forward
+product layouts remain OPEN.
 
 A narrow source-model native compatibility issuer is now drafted through actual
 private parser, Cargo, standard-unit, prelude, nominal and function-owner joins.
@@ -275,8 +277,15 @@ Tuple products to/from the raw dense-pair ABI; the raw API remains unchanged.
 The adapter is a value operation and issues no compiler type or call authority.
 Fresh whole-caller meta reconstruction carries the actual newly parsed generic
 tuple declarations rather than serialized private handles. Independent adapter
-and whole forward caller cases are source only and UNRUN. Reverse pair routes,
-inferred pair results without signature context, general tuple locals/literals,
+and whole forward caller cases are source only and UNRUN. Reverse pair routes now draft direct actual imported from_pairs/pairs calls,
+actual native TypeScript parameter/return witnesses, fresh complete-source/meta
+qualification and original Rust/JS/TS/interpreter paths. Borrowed native pair
+inputs receive count and checked aggregate byte guards before the explicit
+String-pair copy, including unused public pair inputs; JS and interpreter
+entries validate through the unchanged strict raw constructor. No arbitrary
+array annotation, tagged product or tuple literal issues that native domain.
+All corresponding cases and resource qualification remain UNRUN. Inferred
+pair results without signature context, general tuple locals/literals,
 and map locals/aliases in the reverse source checker, mutable bindings/assignments, loops, helper graphs,
 record/tuple/serde fields, borrowed map return values, and generalized shared-map
 Copy/lifetime patterns remain refused or OPEN. Ordinary forward owned map locals

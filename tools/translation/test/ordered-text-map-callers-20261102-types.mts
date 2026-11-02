@@ -24,3 +24,16 @@ names.push('changed');
 // @ts-expect-error Owned text projection elements are scalar strings.
 const projectedNumber: bigint = names[0];
 void projectedMap;void projectedNumber;
+
+import {router_text_map_from_pairs as fromPairs,router_text_map_pairs as pairs} from '../ordered-text-map-20261102-runtime.mjs';
+import {router_text_map_from_tuple_pairs as fromTuples,router_text_map_tuple_pairs as tuplePairs} from '../ordered-text-map-callers-20261102-pair-runtime.mjs';
+const rawPairs: ReturnType<typeof pairs> = pairs(fromPairs([['x','value']]));
+const taggedPairs: ReturnType<typeof tuplePairs> = tuplePairs(fromTuples([{$:'Tuple',field0:'x',field1:'value'}]));
+// @ts-expect-error Original tagged tuple representation differs from raw dense ABI.
+fromPairs(taggedPairs);
+// @ts-expect-error Raw dense pair ABI differs from the original Tuple emitter.
+fromTuples(rawPairs);
+// @ts-expect-error Both public pair vectors remain immutable.
+rawPairs.push(['x','changed']);
+// @ts-expect-error Pair fields remain immutable scalar strings.
+taggedPairs[0].field0 = 'changed';

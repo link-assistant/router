@@ -119,3 +119,25 @@ test('forward pairs use original Vec tuple String signatures and strict represen
  }});
  const refusal=forward('pub fn pair_alias(pairs: Vec<(String, String)>) -> crate::translation_ordered_text_map_core::OrderedTextMap { let first = crate::translation_ordered_text_map_core::text_map_from_pairs(pairs); crate::translation_ordered_text_map_core::text_map_from_pairs(pairs) }');assert.equal(refusal.meta.executable.some(row=>row.name==='pair_alias'),false);
 });
+
+// Raw pair-vector reverse ABI remains separate from tagged forward Tuple data.
+test('real reverse pair callers freshly reissue native source types meta and both targets',limits,async()=>{
+ const typescript=`import {router_text_map_from_pairs as fromPairs,router_text_map_pairs as pairs} from './runtime/ordered-text-map-20261102-runtime.mjs';
+ export function fromPairsCaller(value:Parameters<typeof fromPairs>[0]):ReturnType<typeof fromPairs>{return fromPairs(value);}
+ export function pairsCaller(map:Parameters<typeof pairs>[0]):ReturnType<typeof pairs>{return pairs(map);}
+ export function pairRoundTrip(map:Parameters<typeof pairs>[0]):ReturnType<typeof fromPairs>{return fromPairs(pairs(map));}`;
+ const javascript=`import {router_text_map_from_pairs as fromPairs,router_text_map_pairs as pairs} from './runtime/ordered-text-map-20261102-runtime.mjs';
+ export function fromPairsCaller(value){return fromPairs(value);}
+ export function pairsCaller(map){return pairs(map);}
+ export function pairRoundTrip(map){return fromPairs(pairs(map));}`;
+ const input=reverseInput(javascript,typescript),analysis=analyzeOrderedTextMapReverseModule(input,'caller.mjs');assert.equal(analysis.program.length,3,JSON.stringify(analysis.diagnostics));
+ const decoded=readOrderedTextMapReverseMeta(serializeOrderedTextMapReverseMeta(analysis.program),{input,path:'caller.mjs'}),rust=emitOrderedTextMapReverseProgram(decoded,'rust'),written=emitOrderedTextMapReverseProgram(decoded,'typescript',{outputPath:'caller.mts'}),token=await prepareOrderedTextMapReverseRuntime(decoded);
+ assert.match(rust,/::std::vec::Vec<\(::std::string::String, ::std::string::String\)>/u);assert.match(rust,/ordered text map input entry bound/u);assert.equal(rust.includes("'a"),false);assert.match(rust,/checked_add/u);assert.ok(rust.indexOf('input entry bound')<rust.indexOf('.to_vec()'));
+ const runtime=await import('../ordered-text-map-20261102-runtime.mjs'),source=[['x','before'],['',''],['x','after'],['\u{10000}','astral'],['\ue000','bmp']],expected=[['',''],['x','after'],['\ue000','bmp'],['\u{10000}','astral']],map=runtime.router_text_map_from_pairs(source),byName=name=>decoded.find(row=>row.javascript===name).name;
+ assert.deepEqual(runtime.router_text_map_pairs(evaluateOrderedTextMapReverseProgram(decoded,byName('fromPairsCaller'),[source],token)),expected);assert.deepEqual(evaluateOrderedTextMapReverseProgram(decoded,byName('pairsCaller'),[map],token),expected);assert.deepEqual(runtime.router_text_map_pairs(evaluateOrderedTextMapReverseProgram(decoded,byName('pairRoundTrip'),[map],token)),expected);
+ assert.throws(()=>evaluateOrderedTextMapReverseProgram(decoded,byName('fromPairsCaller'),[[{$:'Tuple',field0:'x',field1:'value'}]],token));assert.throws(()=>evaluateOrderedTextMapReverseProgram(decoded,byName('fromPairsCaller'),[Array.from({length:4097},()=>['x',''])],token));
+ await targets(javascript,written,'caller',(js,ts)=>{for(const module of [js,ts]){assert.deepEqual(runtime.router_text_map_pairs(module.fromPairsCaller(source)),expected);assert.deepEqual(module.pairsCaller(map),expected);assert.deepEqual(runtime.router_text_map_pairs(module.pairRoundTrip(map)),expected);}});
+ const reparsed=analyzeOrderedTextMapReverseModule(reverseInput('',written),'caller.mts');assert.equal(reparsed.program.length,3,JSON.stringify(reparsed.diagnostics));
+ const alias=`import {router_text_map_pairs as pairs} from './runtime/ordered-text-map-20261102-runtime.mjs';export function alias(map:Parameters<typeof pairs>[0]):ReturnType<typeof pairs>{const values=pairs(map);return values;}`;assert.equal(analyzeOrderedTextMapReverseModule(reverseInput('',alias),'caller.mts').program.length,0);
+ const structural=`import {router_text_map_from_pairs as fromPairs} from './runtime/ordered-text-map-20261102-runtime.mjs';export function structural(value:readonly (readonly [string,string])[]):ReturnType<typeof fromPairs>{return fromPairs(value);}`;assert.equal(analyzeOrderedTextMapReverseModule(reverseInput('',structural),'caller.mts').program.length,0);
+});

@@ -22,6 +22,10 @@ export function orderedTextMapReverseOperation(name){
   parameters:Object.freeze(row.parameters.map(role=>role==='text-map'?'text-map-input':role==='text-pairs-owned'?'text-pairs-input':role==='text-owned'?'str':role)),
   returns:row.returns==='text-list-owned'?'vec:text-owned':row.returns,loanRoot:row.returnedLoan?0:null,sourceAuthority:false,semanticAuthority:false});
 }
+export function orderedTextMapReversePairInputRust(value){
+ if(typeof value!=='string'||!/^(?:r#)?[A-Za-z_][A-Za-z0-9_]*$/u.test(value))fail();
+ return 'assert!('+value+'.len() <= 4096, "ordered text map input entry bound"); { let mut __ro_pair_bytes = 0usize; for (__ro_pair_key, __ro_pair_value) in '+value+'.iter() { __ro_pair_bytes = __ro_pair_bytes.checked_add(__ro_pair_key.len()).and_then(|n| n.checked_add(__ro_pair_value.len())).expect("ordered text map input byte overflow"); assert!(__ro_pair_bytes <= 1048576, "ordered text map input byte bound"); } }';
+}
 export function orderedTextMapReverseRustCall(name,arguments_,argumentTypes=null){
  const row=orderedTextMapContract(name),operation=orderedTextMapReverseOperation(name);
  if(!row||!operation||!Array.isArray(arguments_)||arguments_.length!==row.parameters.length||arguments_.some(value=>typeof value!=='string'||!/^__ro_arg_[0-9]+$/u.test(value)))fail();
@@ -29,7 +33,7 @@ export function orderedTextMapReverseRustCall(name,arguments_,argumentTypes=null
  const operands=arguments_.map((value,index)=>row.parameters[index]==='text-map'?'crate::translation_ordered_text_map_core::text_map_copy('+borrowed(value,index)+')':row.parameters[index]==='text-map-ref'?borrowed(value,index):row.parameters[index]==='text-pairs-owned'?value+'.to_vec()':row.parameters[index]==='text-owned'?value+'.to_owned()':value);
  // Locals are evaluated by the parent exactly once, left to right, before
  // this call equation. Copying an opaque map keeps its native invariants.
- const checks=arguments_.flatMap((value,index)=>['str','text-owned'].includes(row.parameters[index])?['assert!('+value+'.len() <= 1048576, "ordered text map input byte bound");']:[]);
+ const checks=arguments_.flatMap((value,index)=>['str','text-owned'].includes(row.parameters[index])?['assert!('+value+'.len() <= 1048576, "ordered text map input byte bound");']:row.parameters[index]==='text-pairs-owned'?[orderedTextMapReversePairInputRust(value)]:[]);
  const call=operation.rustPath+'('+operands.join(', ')+')';return checks.length?'{ '+checks.join(' ')+' '+call+' }':call;
 }
 export function orderedTextMapReverseTypeWitness(role){
@@ -49,13 +53,15 @@ export function orderedTextMapReverseTypeWitness(role){
 // Parameter ABI is borrowed; freshly returned maps are owned. Neither domain
 // is serde_json::Map, Vec<String>, a public record or an inferred Copy value.
 export function orderedTextMapReverseCompatible(actual,wanted){
- return actual===wanted||['text-map-input','text-map-ref'].includes(wanted)&&['text-map-input','text-map-ref','text-map'].includes(actual)||actual==='text-owned'&&wanted==='str';
+ return actual===wanted||['text-map-input','text-map-ref'].includes(wanted)&&['text-map-input','text-map-ref','text-map'].includes(actual)||actual==='text-owned'&&wanted==='str'||actual==='text-pairs-owned'&&wanted==='text-pairs-input';
 }
 export const ORDERED_MAP_REVERSE_TYPESCRIPT_TYPES=Object.freeze({
  'text-map-input':'Parameters<typeof __ro_router_text_map_len>[0]',
  'text-map-ref':'Parameters<typeof __ro_router_text_map_len>[0]',
  'text-map':'ReturnType<typeof __ro_router_text_map_new>',
  'vec:text-owned':'ReturnType<typeof __ro_router_text_map_keys>',
+ 'text-pairs-input':'Parameters<typeof __ro_router_text_map_from_pairs>[0]',
+ 'text-pairs-owned':'ReturnType<typeof __ro_router_text_map_pairs>',
 });
 // Header DATA only. The original emitter invokes this after fresh private whole
 // source/body checking. Only the actual returned map-loan root gets a binder;

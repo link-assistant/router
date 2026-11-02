@@ -82,3 +82,24 @@ fn pair_input_bounds_apply_before_duplicate_keys_are_collapsed() {
     let too_large = vec![("x".to_owned(), "a".repeat(524_288)), ("x".to_owned(), "b".repeat(524_288))];
     assert!(std::panic::catch_unwind(|| maps::text_map_from_pairs(too_large)).is_err());
 }
+
+// Independent borrowed-public-ABI oracle, not generated emitter output.
+fn from_borrowed_pairs(pairs: &[(String, String)]) -> OrderedTextMap {
+    assert!(pairs.len() <= 4096);
+    let mut total = 0usize;
+    for (key, value) in pairs {
+        total = total.checked_add(key.len()).and_then(|n| n.checked_add(value.len())).expect("pair byte overflow");
+        assert!(total <= 1_048_576);
+    }
+    maps::text_map_from_pairs(pairs.to_vec())
+}
+
+#[test]
+fn borrowed_pair_copy_boundary_preserves_source_and_counts_duplicate_bytes() {
+    let input = vec![("x".to_owned(), "before".to_owned()), ("x".to_owned(), "after".to_owned())];
+    let map = from_borrowed_pairs(&input);
+    assert_eq!(maps::text_map_get(&map, "x"), Some("after"));
+    assert_eq!(input[0].1, "before");
+    let rejected = vec![("x".to_owned(), "a".repeat(524_288)), ("x".to_owned(), "b".repeat(524_288))];
+    assert!(std::panic::catch_unwind(|| from_borrowed_pairs(&rejected)).is_err());
+}

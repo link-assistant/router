@@ -1,5 +1,6 @@
 // Complete native ABI/source equation for the existing private reverse context.
 // Returned DATA never registers a reverse source frame or checked function.
+import {orderedTextMapReversePairInputRust} from './ordered-text-map-callers-20261102-reverse.mjs';
 import {requireOrderedTextMapNativeLibraryOwners} from './ordered-text-map-callers-20261102-native-owner.mjs';
 import {captureOriginalCargoEdition} from './cargo-edition-context.mjs';
 import {loadDeriveDependencyProof} from './derive-dependencies.mjs';
@@ -27,23 +28,21 @@ export function requireOrderedTextMapReverseNativeSources(files){
  }}]},{phase:'repository',rules:[{id:'router:reverse-owned-map-native-ABI-cargo-source-join',apply:()=>{current();return {root,leaf,manifest,lock,sourceAuthority:false,semanticAuthority:false};}}]}]).run(null).value,[current]);
 }
 export function orderedTextMapReverseInputPrelude(item,rust,imports){
- if(rust)return '';const inputs=item.params.filter(parameter=>parameter.type==='text-map-input');if(!inputs.length)return '';imports.add('router_text_map_len');return inputs.map(parameter=>'    __ro_router_text_map_len('+parameter.name+');').join('\n');
+ if(rust)return item.params.filter(parameter=>parameter.type==='text-pairs-input').map(parameter=>'    '+orderedTextMapReversePairInputRust(parameter.rust??parameter.name)).join('\n');return item.params.flatMap(parameter=>{const name=parameter.type==='text-map-input'?'router_text_map_len':parameter.type==='text-pairs-input'?'router_text_map_from_pairs':null;if(!name)return [];imports.add(name);return ['    __ro_'+name+'('+parameter.name+');'];}).join('\n');
 }
 export function validateOrderedTextMapReverseInputs(item,scope,modules){
- for(const parameter of item.params)if(parameter.type==='text-map-input'){
-  if(typeof modules.orderedMap?.router_text_map_len!=='function')fail();modules.orderedMap.router_text_map_len(scope.get(parameter.name));
- }
+ for(const parameter of item.params){const name=parameter.type==='text-map-input'?'router_text_map_len':parameter.type==='text-pairs-input'?'router_text_map_from_pairs':null;if(name){if(typeof modules.orderedMap?.[name]!=='function')fail();modules.orderedMap[name](scope.get(parameter.name));}}
 }
 export function consumeOrderedTextMapReverseInputPrelude(analysis,declaration,params,resolveImport,statements){
- const {ts,checker}=analysis,inputs=params.filter(param=>param.type==='text-map-input');if(!inputs.length||!statements.length)return statements;
+ const {ts,checker}=analysis,inputs=params.filter(param=>['text-map-input','text-pairs-input'].includes(param.type));if(!inputs.length||!statements.length)return statements;
  const first=statements[0],candidate=ts.isExpressionStatement(first)&&ts.isCallExpression(first.expression)&&first.expression.arguments.length===1&&ts.isIdentifier(first.expression.arguments[0])&&inputs.some(param=>param.name===first.expression.arguments[0].text);
  if(!candidate)return statements;
- const firstBinding=resolveImport(first.expression.expression);if(firstBinding.target!==analysis.runtimeRoot+'/ordered-text-map-20261102-runtime.mjs'||firstBinding.name!=='router_text_map_len')return statements;
+ const firstBinding=resolveImport(first.expression.expression);if(firstBinding.target!==analysis.runtimeRoot+'/ordered-text-map-20261102-runtime.mjs'||firstBinding.name!==(inputs[0].type==='text-map-input'?'router_text_map_len':'router_text_map_from_pairs'))return statements;
  for(let index=0;index<inputs.length;index++){
   const parameter=inputs[index],statement=statements[index],call=statement&&ts.isExpressionStatement(statement)?statement.expression:null;
   if(!call||!ts.isCallExpression(call)||call.questionDotToken||call.typeArguments?.length||call.arguments.length!==1||!ts.isIdentifier(call.arguments[0])||call.arguments[0].text!==parameter.name)throw TypeError('Complete map input validation prefix required');
   const original=declaration.parameters.find(row=>ts.isIdentifier(row.name)&&row.name.text===parameter.name),symbol=original&&checker.getSymbolAtLocation(original.name),binding=resolveImport(call.expression);
-  if(!symbol||checker.getSymbolAtLocation(call.arguments[0])!==symbol||binding.typeOnly||binding.name!=='router_text_map_len'||binding.target!==analysis.runtimeRoot+'/ordered-text-map-20261102-runtime.mjs')throw TypeError('Map input prefix requires its actual parameter symbol and fixed runtime import');
+  if(!symbol||checker.getSymbolAtLocation(call.arguments[0])!==symbol||binding.typeOnly||binding.name!==(parameter.type==='text-map-input'?'router_text_map_len':'router_text_map_from_pairs')||binding.target!==analysis.runtimeRoot+'/ordered-text-map-20261102-runtime.mjs')throw TypeError('Map input prefix requires its actual parameter symbol and fixed runtime import');
  }
  return statements.slice(inputs.length);
 }
