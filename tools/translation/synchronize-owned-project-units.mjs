@@ -91,7 +91,8 @@ function translate(unit,language,text,runtime,dependencies=[],ownedStateInputs=n
  }else result=language==='TypeScript'?translateTypeScript(text,{sourcePath:unit.paths[language]}):translateJavaScript(text,{sourcePath:unit.paths[language]});
  return {Rust:result.rust,JavaScript:result.javascript??text,TypeScript:result.typescript,meta:result.moduleSourceHistory?{semanticMeta:result.meta,moduleSourceHistory:result.moduleSourceHistory}:result.meta,generatedFrom:unit.paths[language],runtimeBefore:unit.runtimes[language]};
 }
-export function planUnitSynchronization({root,manifestPath}={}){
+export function planUnitSynchronization({root,manifestPath}={}){return withOrderedMapUnitSourceScope(root,orderedMapScope=>planOriginalUnitSynchronization({root,manifestPath},orderedMapScope));}
+function planOriginalUnitSynchronization({root,manifestPath},orderedMapScope){
  root=resolve(root);if(!fs.lstatSync(root).isDirectory()||fs.lstatSync(root).isSymbolicLink())fail('ordinary repository root required');manifestPath=relative(manifestPath);const manifestSource=source(root,manifestPath);if(manifestSource===null)fail('source descriptor is missing');const manifest=descriptor(JSON.parse(manifestSource)),revision=git(root,['rev-parse','HEAD']).trim();if(!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/u.test(revision))fail('one full current Git revision required');const sourceBaselineRevision=resolveSourceUnitGitBaseline(root,revision,Object.hasOwn(manifest,'baselineRevision')?manifest.baselineRevision:undefined);
  const inputs=[{path:manifestPath,source:manifestSource}],outputs=new Map(),units=[],protectedSources=new Set(),runtime=effectRuntimeAssets(),assets=hostRuntimeAssets();assets.set('effects.mjs',runtime.javascript);assets.set('effects.d.mts',runtime.declarations);let retained=Buffer.byteLength(manifestSource);if(retained+protectedUnitVariantRetainedBytes(root)>LIMIT)fail('complete source plus policy retention exceeds original byte budget');
  const baselinePaths=[...new Set(manifest.units.flatMap(unit=>[...languages.map(language=>unit.paths[language]),...languages.flatMap(language=>unit.dependencies?.[language]??[]),...(unit.nativeSources??[]).map(row=>row.sourcePath)]))],previousSources=baselines(root,sourceBaselineRevision,baselinePaths),sourcePaths=new Set(baselinePaths);
@@ -104,7 +105,8 @@ export function planUnitSynchronization({root,manifestPath}={}){
   let ownedStateInputs=null;
   const owned=ownedUnitProfile(unit.profile);if(owned){
    const capture=path=>{const text=source(root,path);if(text===null)fail('complete actual owned-state input is missing: '+path);retained+=Buffer.byteLength(text);if(retained+protectedUnitVariantRetainedBytes(root)>LIMIT)fail('whole owned-state input byte budget exceeded');inputs.push({path,source:text});protectedSources.add(path);return text;};
-   const nativeSources=unit.nativeSources.map(row=>({path:row.path,source:capture(row.sourcePath)})),runtimeSources=owned.runtimeSources(unit).map(row=>{const actual=capture(row.path);if(actual!==row.source)fail('complete actual owned-state runtime differs: '+row.path);return {path:row.path,source:actual};});
+   let nativeSources=unit.nativeSources.map(row=>({path:row.path,source:capture(row.sourcePath)}));const runtimeSources=owned.runtimeSources(unit).map(row=>{const actual=capture(row.path);if(actual!==row.source)fail('complete actual owned-state runtime differs: '+row.path);return {path:row.path,source:actual};});
+   if(['owned-outcome','owned-project'].includes(unit.profile)&&orderedMapUnitReferences({unit,current,dependencies,runtimeSources})){const declaredPhysical=new Map(unit.nativeSources.map((row,index)=>[row.sourcePath,nativeSources[index].source]));nativeSources=orderedMapScope.captureNative(unit,nativeSources,path=>declaredPhysical.has(path)?declaredPhysical.get(path):capture(path));for(const row of orderedMapUnitRuntimeSources(unit)){const actual=capture(row.path);if(actual!==row.source)fail('complete original unit map runtime differs');runtimeSources.push({path:row.path,source:actual});}}
    ownedStateInputs={unit,language,current,nativeSources,runtimeSources,dependencies};
   }
   const run=createRulePipeline([
@@ -139,5 +141,5 @@ export function applyUnitSynchronization(serialized,{root,manifestPath}={}){
  });
 }
 
-import {sourceUnitPrimitiveOperators} from './primitive-source-unit-options.mjs';
+import {sourceUnitPrimitiveOperators} from './primitive-source-unit-options.mjs';import {orderedMapUnitReferences,orderedMapUnitRuntimeSources,withOrderedMapUnitSourceScope} from './ordered-text-map-callers-20261102-unit-inputs.mjs';
 import {relocateSourceUnitRuntimeTarget} from './source-unit-runtime-relocation.mjs';

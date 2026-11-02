@@ -621,3 +621,30 @@ Downstream historical producers must still retain finite named currentAfter
 successors so later generation cannot reinstall an old unguarded CLI; that
 lineage batch is being drafted separately. Verification remains UNRUN, CI
 NOT_INSPECTED;11/70 acceptance bundles DRAFTED and59 OPEN.
+
+## Active twelve-parent outcome/project map source cohort
+
+Root copied all twelve exact source successors into the actual outcome private
+checker/emitter, unit/project adapters, synchronizer and inverse readers. The
+separate private outcome context retains its own original checks. Actual map
+references select the native module graph and fixed runtime closure; unused
+assets do not force admission. Whole source custody closes on every outcome,
+with native physical containment and original planner/native context limits.
+The actual full compiler producer now includes tracked Rust production trees,
+Cargo/lock/build/config inputs and embedded source assets. Original exporter
+and declared larger profile limits remain. This transfers actual source; it
+does not establish runtime or native-tool conformance.
+
+The frozen unit packet preserves twelve full before/after/inverse programs,
+the previous main binary archive and exact producer ancestry:866411 compressed
+bytes,2214701 decoded, SHA-256
+`847cc830c50bcb80f83e3568d49e46ae8a8cca484df58f5bf2c159daa8d12d3e`.
+Refreshed main14 archive SHA-256
+`26c07d5c5555d0e3ddf719de5318aef0a837063d1785d09a304a21a68fd2f00f`;
+all prior fourteen map and three canonical afterimages are unchanged.
+The frozen unit document describes the pre-integration proposal; this entry
+records actual activation. Full receiving scheduling and exporter/fallback
+activation for the new cohort remain a separate drafting batch. The larger
+unrestricted borrowed standard-map application route and owned-state family
+remain OPEN. No project code was executed; verification UNRUN, CI
+NOT_INSPECTED;11/70 DRAFTED,59 OPEN.

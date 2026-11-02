@@ -1,6 +1,6 @@
 // Extensible normal-form substitutions produce proposals, never checked IR.
 // The consumer must independently reproduce the COMPLETE original Rust syntax.
-import {posix} from 'node:path';
+import {posix} from 'node:path';import {ORDERED_TEXT_MAP_CONTRACTS} from '../ordered-text-map-20261102-contracts.mjs';import {ORDERED_MAP_REVERSE_RUST_TYPES,orderedTextMapReverseTypeWitness} from '../ordered-text-map-callers-20261102-reverse.mjs';
 import {OWNED_OUTCOME_CONTRACTS} from '../owned-outcome-contracts.mjs';
 import {INTEGER_CONTRACTS} from '../integer-contracts.mjs';
 import {ownedRustIntegerOptionalType,ownedIntegerOptionalWitness} from './owned-integer-optional-types.mjs';
@@ -21,6 +21,7 @@ const fail=message=>{throw new UnsupportedOwnedRustSource(message);};
 const snake=name=>name.replace(/[A-Z]/gu,character=>'_'+character.toLowerCase());
 const ordinary=name=>typeof name==='string'&&/^[a-z][A-Za-z0-9_]*$/u.test(name)&&!name.startsWith('__ro');
 const families=[
+ ...ORDERED_TEXT_MAP_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'ordered-text-map-20261102',roles:row.parameters})),
  ...SSE_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'sse',roles:row.parameters})),
  ...HTTP_PROTOCOL_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'http-protocol',roles:row.parameters})),
  ...OWNED_RESULT_CONTRACTS.map(row=>({path:row.rustPath,name:row.javascriptName,runtime:'owned-result',roles:row.parameters})),
@@ -39,10 +40,10 @@ const families=[
 const readers={is_null:'serde_json_value_is_null',as_str:'serde_json_value_as_str',as_bool:'serde_json_value_as_bool',as_u64:'serde_json_value_as_u64',as_i64:'serde_json_value_as_i64',pointer:'serde_json_value_pointer',get:'serde_json_value_get_string'};
 const updates={json_index_str:'router_core_json_index_str',json_map_index:'router_core_json_map_index'};
 function unwrap(node){let steps=0;while(node?.kind==='temporary'){if(++steps>160)fail('original owned temporary-chain bound exceeded');node=node.value;}return node;}
-function adapter(node,role){
+function adapter(node,role){let mapCopy=false;
  for(let steps=0;steps<=160;steps++){
   node=unwrap(node);
-  if(node?.kind==='borrow'){node=node.value;continue;}
+  if(node?.kind==='borrow'){node=node.value;continue;}if(role==='text-map'&&!mapCopy&&node?.kind==='call'&&node.path==='crate::translation_ordered_text_map_core::text_map_copy'&&node.args.length===1){mapCopy=true;node=node.args[0];continue;}if(role==='text-pairs-owned'&&node?.kind==='method'&&node.name==='to_vec'&&node.args.length===0)return unwrap(node.value);
   if(node?.kind==='method'&&['clone','to_owned'].includes(node.name)&&node.args.length===0){node=node.value;continue;}
   if(node?.kind==='call'&&node.args.length===1&&(role==='owned-json'&&node.path==='__ro_copy'||role==='owned-json-list'&&node.path==='crate::translation_state_core::json_values_copy')){node=node.args[0];continue;}
   return node;
@@ -72,9 +73,10 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
  const tick=depth=>{if(++cells>100000||depth>160)fail('original owned projection node/depth budget exceeded');};
  const relative=name=>{const value=posix.relative(posix.dirname(javascriptPath),runtimeRoot+'/'+name+'-runtime.mjs');return value.startsWith('.')?value:'./'+value;};
  function imported(name,family){const key=family+':'+name;if(!imports.has(key))imports.set(key,{name,family,local:'original_'+name});return imports.get(key).local;}
- function type(text){const sharedVector=vectorTypes?ownedRustSharedPrimitiveVectorWitness(text):null;if(sharedVector)return 'Parameters<typeof '+imported(sharedVector,'primitive-owned-vector')+'>[0]';const vectorWitness=vectorTypes?(ownedRustPrimitiveVectorReturnWitness(text)??ownedRustPrimitiveVectorOptionalWitness(text)):null;if(vectorWitness)return 'ReturnType<typeof '+imported(vectorWitness,'primitive-owned-vector')+'>';const sequenceWitness=sequenceTypes?ownedRustPrimitiveSequenceOptionalWitness(text):null;if(sequenceWitness)return 'ReturnType<typeof '+imported(sequenceWitness,'primitive-sequence')+'>';if(text===OWNED_BASE64_RESULT_RUST_TYPE)return 'import('+JSON.stringify(relative('base64'))+').Base64Result';
+ const mapType=text=>Object.entries(ORDERED_MAP_REVERSE_RUST_TYPES).find(([role,native])=>['text-map-input','text-map','text-pairs-input','text-pairs-owned','text-list-owned'].includes(role)&&native.replace(/\s/gu,'').replaceAll("&'a",'&')===text.replaceAll("&'ro_map",'&').replaceAll("&'a",'&'))?.[0]??null;function mapWitness(role){const witness=orderedTextMapReverseTypeWitness(role);if(!witness)fail('actual fixed map source equation required');const name=imported(witness.name,'ordered-text-map-20261102');return witness.kind==='parameter'?'Parameters<typeof '+name+'>['+witness.index+']':'ReturnType<typeof '+name+'>'; }
+ function type(text){const map=mapType(text);if(map)return mapWitness(map);const sharedVector=vectorTypes?ownedRustSharedPrimitiveVectorWitness(text):null;if(sharedVector)return 'Parameters<typeof '+imported(sharedVector,'primitive-owned-vector')+'>[0]';const vectorWitness=vectorTypes?(ownedRustPrimitiveVectorReturnWitness(text)??ownedRustPrimitiveVectorOptionalWitness(text)):null;if(vectorWitness)return 'ReturnType<typeof '+imported(vectorWitness,'primitive-owned-vector')+'>';const sequenceWitness=sequenceTypes?ownedRustPrimitiveSequenceOptionalWitness(text):null;if(sequenceWitness)return 'ReturnType<typeof '+imported(sequenceWitness,'primitive-sequence')+'>';if(text===OWNED_BASE64_RESULT_RUST_TYPE)return 'import('+JSON.stringify(relative('base64'))+').Base64Result';
   const scalar=primitiveOperators&&text.startsWith('::core::primitive::')?ownedRustPrimitiveType(text):null;if(scalar)return 'import('+JSON.stringify(relative('primitive-operator'))+').'+scalar.alias;
-  text=text.replaceAll("&'a",'&');
+  text=text.replaceAll("&'ro_map",'&').replaceAll("&'a",'&');
   const integerOption=primitiveOperators?ownedRustIntegerOptionalType(text):null;if(integerOption)return 'ReturnType<typeof '+imported(ownedIntegerOptionalWitness(integerOption),'integer')+'>';
   const scalarSlice=/^&\[(?:(::core::primitive::)([ui](?:8|16|32|64|128))|(u64|i64|bool))\]$/u.exec(text);if(scalarSlice){if(scalarSlice[1]&&!primitiveOperators)fail('wide primitive slice needs the actual qualified primitive runtime');return 'readonly ('+type(scalarSlice[1]?scalarSlice[1]+scalarSlice[2]:scalarSlice[3])+')[]';}
   if(text==='&crate::translation_core::Json')return 'import('+JSON.stringify(relative('json-macro'))+').JsonValue';
@@ -91,7 +93,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
   if(text==='usize')return 'Parameters<typeof '+imported('router_core_json_index_usize','json-update')+'>[1]';
   fail('public Rust input needs a matching canonical owned ABI rule: '+text);
  }
- function returnType(text){if(vectorTypes&&(ownedRustPrimitiveVectorReturnWitness(text)||ownedRustPrimitiveVectorOptionalWitness(text)))return type(text);if(sequenceTypes&&ownedRustPrimitiveSequenceOptionalWitness(text))return type(text);if(text===OWNED_BASE64_RESULT_RUST_TYPE)return 'import('+JSON.stringify(relative('base64'))+').Base64Result';
+ function returnType(text){const map=mapType(text);if(map)return mapWitness(map);if(vectorTypes&&(ownedRustPrimitiveVectorReturnWitness(text)||ownedRustPrimitiveVectorOptionalWitness(text)))return type(text);if(sequenceTypes&&ownedRustPrimitiveSequenceOptionalWitness(text))return type(text);if(text===OWNED_BASE64_RESULT_RUST_TYPE)return 'import('+JSON.stringify(relative('base64'))+').Base64Result';
   const scalar=primitiveOperators&&text.startsWith('::core::primitive::')?ownedRustPrimitiveType(text):null;if(scalar)return 'import('+JSON.stringify(relative('primitive-operator'))+').'+scalar.alias;
   const integerOption=primitiveOperators?ownedRustIntegerOptionalType(text):null;if(integerOption)return type(text);
   const values={
@@ -99,7 +101,7 @@ export function projectOwnedRustFunctions(functions,{javascriptPath,runtimeRoot,
    '&crate::translation_core::Json':['serde_json_value_get_string','json'],
    '&str':['serde_json_value_as_str','json'],bool:['serde_json_value_as_bool','json'],u64:['serde_json_value_as_u64','json'],i64:['serde_json_value_as_i64','json'],
   };
-  const normalized=text.replaceAll("&'a",'&').replaceAll("&'static",'&');if(normalized.startsWith('::std::result::Result<')&&!normalized.includes('crate::translation_core::Json'))return type(normalized);if(normalized==='::std::option::Option<::std::string::String>')return type(normalized);if(normalized==='::std::result::Result<crate::translation_core::Json,::std::string::String>')return 'ReturnType<typeof '+imported('router_carrier_json_ok','owned-outcome')+'>';if(normalized==='i64')return 'Parameters<typeof '+imported('json_macro_i64','json-macro')+'>[0]';const match=/^::std::option::Option<(.+)>$/u.exec(normalized);if(!match)return null;
+  const normalized=text.replaceAll("&'ro_map",'&').replaceAll("&'a",'&').replaceAll("&'static",'&');if(normalized.startsWith('::std::result::Result<')&&!normalized.includes('crate::translation_core::Json'))return type(normalized);if(normalized==='::std::option::Option<::std::string::String>')return type(normalized);if(normalized==='::std::result::Result<crate::translation_core::Json,::std::string::String>')return 'ReturnType<typeof '+imported('router_carrier_json_ok','owned-outcome')+'>';if(normalized==='i64')return 'Parameters<typeof '+imported('json_macro_i64','json-macro')+'>[0]';const match=/^::std::option::Option<(.+)>$/u.exec(normalized);if(!match)return null;
   const row=values[match[1]];if(!row)fail('optional Rust return needs its original registered domain');return 'ReturnType<typeof '+imported(...row)+'>';
  }
  function expression(node,names,depth=0,lowering=false){

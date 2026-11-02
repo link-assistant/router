@@ -1,3 +1,4 @@
+import {orderedTextMapReverseOperation,orderedTextMapReverseRustCall,orderedTextMapReverseTypeWitness,orderedTextMapReverseLifetimeHeader,ORDERED_MAP_REVERSE_TYPESCRIPT_TYPES,ORDERED_MAP_REVERSE_RUST_TYPES} from '../ordered-text-map-callers-20261102-reverse.mjs';import {orderedTextMapReverseInputPrelude,validateOrderedTextMapReverseInputs} from '../ordered-text-map-callers-20261102-reverse-native.mjs';
 // Checked owned-core operations, separate from the legacy portable profile.
 // The body is always reconstructed from the current complete original source.
 import {isDeepStrictEqual,types} from 'node:util';
@@ -183,8 +184,8 @@ export function checkOwnedCoreProgram(program,context){return withPrimitiveSeque
 });}
 export function ownedCoreContext(item){return issued.get(checkOwnedCoreItem(item))?.context;}
 const rustString=value=>'"'+value.replace(/[\\"\x00-\x1f\x7f]/gu,c=>({'\\':'\\\\','"':'\\"','\n':'\\n','\r':'\\r','\t':'\\t'}[c]??'\\u{'+c.codePointAt(0).toString(16)+'}'))+'"';
-const TS_TYPES={...primitiveBitwiseTypeScriptTypes,...ownedCollectionTypeScriptTypes,...ownedBase64TypeScriptTypes,...ownedJsonTypeScriptTypes,'json-option-input':'Parameters<typeof __ro_router_core_json_option_as_str>[0]','json-text-result':'ReturnType<typeof __ro_router_carrier_json_ok>',json:'JsonValue','json-ref':'JsonValue','map-ref':"Extract<JsonValue,{readonly $:'Object'}>['field0']",str:'string',bool:'boolean',usize:'bigint'};
-const RUST_TYPES={...SHARED_PRIMITIVE_VECTOR_RUST_TYPES,...OWNED_PRIMITIVE_VECTOR_RUST_TYPES,...primitiveBitwiseRustTypes,...OWNED_PRIMITIVE_SLICE_RUST_TYPES,...ownedPrimitiveResultRustTypes,...ownedCollectionRustTypes,...ownedBase64RustTypes,...ownedJsonRustTypes,'json-option-input':"::std::option::Option<&'a crate::translation_core::Json>",'json-text-result':'::std::result::Result<crate::translation_core::Json,::std::string::String>',json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
+const TS_TYPES={...ORDERED_MAP_REVERSE_TYPESCRIPT_TYPES,...primitiveBitwiseTypeScriptTypes,...ownedCollectionTypeScriptTypes,...ownedBase64TypeScriptTypes,...ownedJsonTypeScriptTypes,'json-option-input':'Parameters<typeof __ro_router_core_json_option_as_str>[0]','json-text-result':'ReturnType<typeof __ro_router_carrier_json_ok>',json:'JsonValue','json-ref':'JsonValue','map-ref':"Extract<JsonValue,{readonly $:'Object'}>['field0']",str:'string',bool:'boolean',usize:'bigint'};
+const RUST_TYPES={...ORDERED_MAP_REVERSE_RUST_TYPES,'vec:text-owned':'::std::vec::Vec<::std::string::String>',...SHARED_PRIMITIVE_VECTOR_RUST_TYPES,...OWNED_PRIMITIVE_VECTOR_RUST_TYPES,...primitiveBitwiseRustTypes,...OWNED_PRIMITIVE_SLICE_RUST_TYPES,...ownedPrimitiveResultRustTypes,...ownedCollectionRustTypes,...ownedBase64RustTypes,...ownedJsonRustTypes,'json-option-input':"::std::option::Option<&'a crate::translation_core::Json>",'json-text-result':'::std::result::Result<crate::translation_core::Json,::std::string::String>',json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
 export function emitOwnedCoreProgram(input,target,{outputPath}={}){return withPrimitiveSequenceProgramSource(input,()=>{
  const program=checkOwnedCoreProgram(input),rust=target==='rust';if(!rust&&target!=='typescript')fail('unknown target');if(!program.length)return '';
  const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context),rustTypes=sourceData.primitiveOperators===true?{...RUST_TYPES,...primitiveBitwiseRustTypes}:RUST_TYPES;
@@ -192,7 +193,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){return withPr
  let sequence=0;const imports=new Set(),primitiveTypeImports=new Set();let resultTypePrefix=null;const resultTypeNamespace=()=>{if(resultTypePrefix!==null)return resultTypePrefix;if(!sourceData.files.some(row=>row.path==='src/translation_owned_results_core.rs'))return resultTypePrefix='router_result_';try{requireOwnedResultSources(new Map(sourceData.files.map(row=>[row.path,row.source])),sourceData);resultTypePrefix='router_owned_result_';}catch{resultTypePrefix='router_result_';}return resultTypePrefix;};
  const vectorTypes=program.some(item=>item.hostCalls.some(call=>primitiveOwnedVectorOperationShape(call.name)||primitiveVectorLiteralOperationShape(call.name,0)));const needsFieldOptionType=!rust&&program.some(item=>item.returns==='text-owned-option'||item.params.some(parameter=>parameter.type==='text-owned-option')),fieldTextOptionWitness=needsFieldOptionType?ownedFieldTextOptionTypeWitness(program,sourceData):null;
  const sequenceTypes=program.some(item=>item.hostCalls.some(call=>primitiveSequenceOperationShape(call.name)));
- function publicTypeScriptType(type,parameter=false){if(sourceData.primitiveOperators===true&&primitiveBitwiseType(type)){const row=primitiveBitwiseType(type);primitiveTypeImports.add(row.alias);return row.alias;}
+ function publicTypeScriptType(type,parameter=false){if(['text-map','text-map-input','text-map-ref','text-pairs-input','text-pairs-owned'].includes(type)||type==='vec:text-owned'&&program.some(item=>item.hostCalls.some(call=>call.name==='router_text_map_keys'))){const witness=orderedTextMapReverseTypeWitness(type);if(!witness)fail('actual map type witness required');imports.add(witness.name);return ORDERED_MAP_REVERSE_TYPESCRIPT_TYPES[type];}if(sourceData.primitiveOperators===true&&primitiveBitwiseType(type)){const row=primitiveBitwiseType(type);primitiveTypeImports.add(row.alias);return row.alias;}
   const sharedVector=ownedPrimitiveVectorSharedElement(type);if(sharedVector){const name='router_vec_'+sharedVector+'_len';imports.add(name);return 'Parameters<typeof __ro_'+name+'>[0]';}const vectorWitness=primitiveOwnedVectorTypeWitness(type)??(vectorTypes?primitiveOwnedVectorOptionalWitness(type):null);if(vectorWitness){imports.add(vectorWitness);return 'ReturnType<typeof __ro_'+vectorWitness+'>';}
   const sequenceWitness=sequenceTypes?primitiveSequenceOptionalWitness(type):null;if(sequenceWitness){imports.add(sequenceWitness);return 'ReturnType<typeof __ro_'+sequenceWitness+'>';}
   const integerOption=sourceData.primitiveOperators===true?ownedIntegerOptionalWitness(type):null;if(integerOption){imports.add(integerOption);return 'ReturnType<typeof __ro_'+integerOption+'>';}
@@ -275,6 +276,10 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){return withPr
     const names=value.args.map(()=> '__ro_arg_'+sequence++),bindings=value.args.map((argument,index)=>'let '+names[index]+' = '+expr(argument)+';');
     return '{ '+bindings.join(' ')+' '+ownedAsciiRustCall(value.name,names)+' }';
    }
+   case 'ordered-map-call':{
+    const op=orderedTextMapReverseOperation(value.name);if(!op||value.type!==op.returns||value.args.length!==op.parameters.length)fail('actual opaque map contract differs');imports.add(value.name);if(!rust)return '__ro_'+value.name+'('+value.args.map(argument=>expr(argument)).join(', ')+')';
+    const names=value.args.map(()=> '__ro_arg_'+sequence++),borrowed=value.args.map(argument=>argument.kind==='variable'&&argument.type==='text-map'),bindings=value.args.map((argument,index)=>'let '+names[index]+' = '+(borrowed[index]?'&':'')+expr(argument)+';');return '{ '+bindings.join(' ')+' '+orderedTextMapReverseRustCall(value.name,names,value.args.map((argument,index)=>borrowed[index]?'text-map-input':argument.type))+' }';
+   }
    case 'base64-call':{
     const op=ownedBase64Operation(value.name);if(!op||value.args.length!==1||value.copy!==op.copy||value.type!==op.ret)fail('checked base64 contract differs');imports.add(value.name);
     if(!rust)return '__ro_'+value.name+'('+expr(value.args[0])+')';
@@ -321,14 +326,14 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){return withPr
  }).join('\n');}
  const code=program.map(item=>{
   const rustTypes=item.hostCalls.some(call=>ownedAsciiOperation(call.name))?{...RUST_TYPES,str:"&'a crate::translation_core::Str"}:RUST_TYPES;
-  const borrowed=type=>['json-ref','map-ref','str','bytes-ref','base64-error-ref','json-option-input','json-list-ref'].includes(type)||ownedJsonBorrowed(type)||ownedPrimitiveSliceElement(type)!==null||ownedPrimitiveVectorSharedElement(type)!==null,loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
+  const mapLifetime=orderedTextMapReverseLifetimeHeader(item),borrowed=type=>['json-ref','map-ref','text-map-input','str','bytes-ref','base64-error-ref','json-option-input','json-list-ref'].includes(type)||ownedJsonBorrowed(type)||ownedPrimitiveSliceElement(type)!==null||ownedPrimitiveVectorSharedElement(type)!==null,loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
   const parameters=item.params.map(param=>{
-   const type=rust?rustTypes[param.type].replace("'a ",explicit&&param.name===item.resultRoot?"'a ":''):publicTypeScriptType(param.type,true);
+   const type=rust?rustTypes[param.type].replace("'a ",mapLifetime?(param.name===mapLifetime.root?mapLifetime.lifetime:''):explicit&&param.name===item.resultRoot?"'a ":''):publicTypeScriptType(param.type,true);
    return (rust?param.rust:param.name)+': '+type;
   }).join(', ');
-  const returns=rust?rustTypes[item.returns].replace("'a ",item.resultRoot===null?"'static ":explicit?"'a ":''):publicTypeScriptType(item.returns);
-  const signature=rust?'#[must_use]\n#[rustfmt::skip]\n'+(item.exported?'pub ':'')+'fn '+item.name+(explicit?"<'a>":'')+'(':(item.exported?'export ':'')+'function '+item.javascript+'(';
-  return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+(ownedBase64InputPrelude(item,rust)?ownedBase64InputPrelude(item,rust)+'\n':'')+(widePrimitiveSliceInputPrelude(item,rust)?widePrimitiveSliceInputPrelude(item,rust)+'\n':'')+body(item.body,4)+'\n}';
+  const returns=rust?rustTypes[item.returns].replace("'a ",mapLifetime?mapLifetime.lifetime:item.resultRoot===null?"'static ":explicit?"'a ":''):publicTypeScriptType(item.returns);
+  const signature=rust?'#[must_use]\n#[rustfmt::skip]\n'+(item.exported?'pub ':'')+'fn '+item.name+(mapLifetime?mapLifetime.binder:explicit?"<'a>":'')+'(':(item.exported?'export ':'')+'function '+item.javascript+'(';
+  return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+(ownedBase64InputPrelude(item,rust)?ownedBase64InputPrelude(item,rust)+'\n':'')+(widePrimitiveSliceInputPrelude(item,rust)?widePrimitiveSliceInputPrelude(item,rust)+'\n':'')+(orderedTextMapReverseInputPrelude(item,rust,imports)?orderedTextMapReverseInputPrelude(item,rust,imports)+'\n':'')+body(item.body,4)+'\n}';
  }).join('\n\n');
  requireOwnedCoreSourceCurrent(context);
  if(rust)return RUST_SUPPORT+'\n\n'+code+'\n';
@@ -338,8 +343,8 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){return withPr
  if(hasOwnedBase64Input(program)||[...imports].some(name=>ownedBase64Operation(name)))lines.push('import type {Base64Error,Base64Result} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
  if(hasWidePrimitiveSliceInput(program))lines.push('import {primitiveSliceInput as __ro_primitiveSliceInput} from '+JSON.stringify(relative('primitive-operator-runtime.mjs'))+';');
  if(hasOwnedBase64Input(program))lines.push('import {base64ResultInput as __ro_base64ResultInput} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
- for(const family of ['primitive-vector-literal','primitive-owned-vector','primitive-sequence','primitive-operator','json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state','json-fields','owned-outcome','integer','sse','text','primitive-option','primitive-option-callback','primitive-result','owned-result','http-protocol']){
-  const names=[...imports].filter(name=>(primitiveVectorLiteralOperationShape(name,0)?'primitive-vector-literal':primitiveOwnedVectorOperationShape(name)?'primitive-owned-vector':primitiveSequenceOperationShape(name)?'primitive-sequence':ownedPrimitiveOperatorOperation(name)?'primitive-operator':ownedPrimitiveResultOperation(name)?ownedPrimitiveResultOperation(name).runtimeModule.slice(0,-12):ownedPrimitiveOptionCallbackOperation(name)?'primitive-option-callback':ownedPrimitiveOptionOperation(name)?'primitive-option':ownedTextOperation(name)?'text':ownedSseOperation(name)?'sse':ownedIntegerOperation(name)?'integer':ownedOutcomeOperation(name)?'owned-outcome':ownedJsonFieldOperation(name)?'json-fields':ownedStateOperation(name)?'json-state':ownedIterationOnlyOperation(name)?'json-iteration':ownedCollectionOperation(name)?'json-collections':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
+ for(const family of ['ordered-text-map-20261102','primitive-vector-literal','primitive-owned-vector','primitive-sequence','primitive-operator','json-update','json-macro','base64','json','json-option','string-iterator','json-collections','json-iteration','json-state','json-fields','owned-outcome','integer','sse','text','primitive-option','primitive-option-callback','primitive-result','owned-result','http-protocol']){
+  const names=[...imports].filter(name=>(orderedTextMapReverseOperation(name)?'ordered-text-map-20261102':primitiveVectorLiteralOperationShape(name,0)?'primitive-vector-literal':primitiveOwnedVectorOperationShape(name)?'primitive-owned-vector':primitiveSequenceOperationShape(name)?'primitive-sequence':ownedPrimitiveOperatorOperation(name)?'primitive-operator':ownedPrimitiveResultOperation(name)?ownedPrimitiveResultOperation(name).runtimeModule.slice(0,-12):ownedPrimitiveOptionCallbackOperation(name)?'primitive-option-callback':ownedPrimitiveOptionOperation(name)?'primitive-option':ownedTextOperation(name)?'text':ownedSseOperation(name)?'sse':ownedIntegerOperation(name)?'integer':ownedOutcomeOperation(name)?'owned-outcome':ownedJsonFieldOperation(name)?'json-fields':ownedStateOperation(name)?'json-state':ownedIterationOnlyOperation(name)?'json-iteration':ownedCollectionOperation(name)?'json-collections':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
   if(names.length)lines.push('import { '+names.map(name=>name+' as __ro_'+name).join(', ')+' } from '+JSON.stringify(relative(family+'-runtime.mjs'))+';');
  }
  return lines.join('\n')+'\n\n'+code+'\n';
@@ -406,13 +411,14 @@ export async function prepareOwnedCoreRuntime(input){
  if(program.some(item=>['json-text-result','json-owned-option'].includes(item.returns)||item.params.some(param=>param.type==='json-text-result')||item.hostCalls.some(call=>ownedOutcomeOperation(call.name))))modules.outcome=await import('../owned-outcome-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedJsonFieldOperation(call.name))))modules.fields=await import('../json-fields-runtime.mjs');
  if(hasOwnedJsonLoop(program)||program.some(item=>item.hostCalls.some(call=>ownedStateOperation(call.name))))modules.state=await import('../json-state-runtime.mjs');
+ if(program.some(item=>item.params.some(parameter=>['text-map-input','text-pairs-input'].includes(parameter.type))||item.hostCalls.some(call=>orderedTextMapReverseOperation(call.name))))modules.orderedMap=await import('../ordered-text-map-20261102-runtime.mjs');
  checkOwnedCoreProgram(program);const token=Object.freeze({schema:'owned-core-runtime-v1'});runtimes.set(token,{program,modules});return token;
 }
 export function evaluateOwnedCoreProgram(input,name,args,token){
  const program=checkOwnedCoreProgram(input),state=runtimes.get(token);if(!state||!isDeepStrictEqual(state.program,program))fail('unissued runtime/program');
- const item=program.find(item=>item.name===name||item.javascript===name);if(!item||!Array.isArray(args)||args.length!==item.params.length)fail('actual arguments differ');
- const env=applyWidePrimitiveSliceInputs(item.params,ownedBase64InputEnvironment(item.params,args,state.modules),state.modules);
- const get=(value,scope)=>{
+ const item=program.find(item=>item.name===name||item.javascript===name),hasMapCalls=program.some(item=>item.hostCalls.some(call=>orderedTextMapReverseOperation(call.name)));let mapEvaluationNodes=0;if(!item||!Array.isArray(args)||args.length!==item.params.length)fail('actual arguments differ');
+ const env=applyWidePrimitiveSliceInputs(item.params,ownedBase64InputEnvironment(item.params,args,state.modules),state.modules);validateOrderedTextMapReverseInputs(item,env,state.modules);
+ const get=(value,scope)=>{if(hasMapCalls&&++mapEvaluationNodes>100000)fail('complete expanded map source work bound');
   switch(value.kind){
    case 'local-call':return evaluateOwnedCorePrepared(program,value.name,value.args.map(argument=>get(argument,scope)),state);
    case 'sse-call':return evaluateOwnedSseCall(value,{state,scope,get});
@@ -444,6 +450,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
    case 'json-array':return state.modules.macro.json_macro_array(value.items.map(child=>get(child,scope)));
    case 'json-object':return state.modules.macro.json_macro_object(value.entries.map(entry=>[entry.key,get(entry.value,scope)]));
    case 'ascii-call':{if(!state.modules.ascii||!ownedAsciiOperation(value.name))fail('unissued ASCII runtime');return Reflect.apply(state.modules.ascii[value.name],undefined,value.args.map(value=>get(value,scope)));}
+   case 'ordered-map-call':{const op=orderedTextMapReverseOperation(value.name);if(!op||!state.modules.orderedMap)fail('unissued opaque map runtime');return Reflect.apply(state.modules.orderedMap[value.name],undefined,value.args.map(argument=>get(argument,scope)));}
    case 'base64-call':{const op=ownedBase64Operation(value.name);if(!op||!state.modules.base64)fail('unissued base64 runtime');return Reflect.apply(state.modules.base64[value.name],undefined,value.args.map(value=>get(value,scope)));}
    case 'option-none':return {$:'None'};
    case 'option-some':if(value.type==='json-owned-option')return state.modules.outcome.router_carrier_json_some(get(value.value,scope));return {$:'Some',field0:get(value.value,scope)};
@@ -485,9 +492,9 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
 
 // GENERATED: bounded independent owned-core batch evaluation.
 function evaluateOwnedCorePrepared(program,name,args,state){
- const item=program.find(item=>item.name===name||item.javascript===name);if(!item||!Array.isArray(args)||args.length!==item.params.length)fail('actual arguments differ');
- const env=applyWidePrimitiveSliceInputs(item.params,ownedBase64InputEnvironment(item.params,args,state.modules),state.modules);
- const get=(value,scope)=>{
+ const item=program.find(item=>item.name===name||item.javascript===name),hasMapCalls=program.some(item=>item.hostCalls.some(call=>orderedTextMapReverseOperation(call.name)));let mapEvaluationNodes=0;if(!item||!Array.isArray(args)||args.length!==item.params.length)fail('actual arguments differ');
+ const env=applyWidePrimitiveSliceInputs(item.params,ownedBase64InputEnvironment(item.params,args,state.modules),state.modules);validateOrderedTextMapReverseInputs(item,env,state.modules);
+ const get=(value,scope)=>{if(hasMapCalls&&++mapEvaluationNodes>100000)fail('complete expanded map source work bound');
   switch(value.kind){
    case 'local-call':return evaluateOwnedCorePrepared(program,value.name,value.args.map(argument=>get(argument,scope)),state);
    case 'sse-call':return evaluateOwnedSseCall(value,{state,scope,get});
@@ -519,6 +526,7 @@ function evaluateOwnedCorePrepared(program,name,args,state){
    case 'json-array':return state.modules.macro.json_macro_array(value.items.map(child=>get(child,scope)));
    case 'json-object':return state.modules.macro.json_macro_object(value.entries.map(entry=>[entry.key,get(entry.value,scope)]));
    case 'ascii-call':{if(!state.modules.ascii||!ownedAsciiOperation(value.name))fail('unissued ASCII runtime');return Reflect.apply(state.modules.ascii[value.name],undefined,value.args.map(value=>get(value,scope)));}
+   case 'ordered-map-call':{const op=orderedTextMapReverseOperation(value.name);if(!op||!state.modules.orderedMap)fail('unissued opaque map runtime');return Reflect.apply(state.modules.orderedMap[value.name],undefined,value.args.map(argument=>get(argument,scope)));}
    case 'base64-call':{const op=ownedBase64Operation(value.name);if(!op||!state.modules.base64)fail('unissued base64 runtime');return Reflect.apply(state.modules.base64[value.name],undefined,value.args.map(value=>get(value,scope)));}
    case 'option-none':return {$:'None'};
    case 'option-some':if(value.type==='json-owned-option')return state.modules.outcome.router_carrier_json_some(get(value.value,scope));return {$:'Some',field0:get(value.value,scope)};

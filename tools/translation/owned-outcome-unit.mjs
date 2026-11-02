@@ -1,6 +1,6 @@
 // Adapter DATA is never a source permit. Actual native libraries, runtimes and
 // the authoritative whole caller re-enter the original private source checker.
-import {posix} from 'node:path';
+import {posix} from 'node:path';import {orderedMapUnitRuntimeSources,orderedMapUnitReferences} from './ordered-text-map-callers-20261102-unit-inputs.mjs';
 import {createOwnedStateContext,ownedStateRuntimeSources,translateOwnedStateJavaScript,translateOwnedStateTypeScript} from './js-to-rust/owned-outcome.mjs';
 import {ownedCoreSourceData,requireOwnedCoreSourceCurrent} from './js-to-rust/owned-outcome-source.mjs';
 import {translateOwnedStateRust} from './js-to-rust/owned-outcome-rust.mjs';
@@ -16,12 +16,12 @@ export function ownedStateUnitRuntimeSources(unit){
  if(javascript!==typescript)for(const row of rows){const root=row.path.startsWith(javascript+'/')?javascript:typescript,other=root===javascript?typescript:javascript;sources.set(other+row.path.slice(root.length),row.source);}
  return [...sources].map(([path,source])=>({path,source}));
 }
-export function ownedStateUnitContext({unit,current,nativeSources,runtimeSources}={}){
+export function ownedStateUnitContext({unit,current,nativeSources,runtimeSources,dependencies={}}={}){
  if(!Array.isArray(nativeSources)||!Array.isArray(runtimeSources))fail('complete current native/runtime source arrays required');
  const names=new Set(nativeSources.map(row=>row.path));if(OWNED_STATE_NATIVE_INPUTS.some(path=>!names.has(path)))fail('every actual native boundary and locked dependency input is required');
  const sourceRoot=posix.dirname(unit.runtimes.JavaScript),typedRoot=posix.dirname(unit.runtimes.TypeScript),suffix=(path,root)=>root==='.'?path:path.startsWith(root+'/')?path.slice(root.length+1):null;
  if(posix.basename(unit.runtimes.JavaScript)!==posix.basename(unit.runtimes.TypeScript)||suffix(unit.paths.JavaScript,sourceRoot)?.replace(/\.mjs$/u,'.ts')!==suffix(unit.paths.TypeScript,typedRoot))fail('owned state currently requires mirrored JS/TS source and runtime paths');
- const actual=new Map(runtimeSources.map(row=>[row.path,row.source]));for(const row of ownedStateUnitRuntimeSources(unit))if(actual.get(row.path)!==row.source)fail('complete actual current runtime mirror differs: '+row.path);
+ const actual=new Map(runtimeSources.map(row=>[row.path,row.source]));for(const row of [...ownedStateUnitRuntimeSources(unit),...(orderedMapUnitReferences({unit,current,dependencies,runtimeSources})?orderedMapUnitRuntimeSources(unit):[])])if(actual.get(row.path)!==row.source)fail('complete actual current runtime mirror differs: '+row.path);
  const files=[...nativeSources,...runtimeSources];for(const language of ['Rust','JavaScript','TypeScript'])if(current[language]!==null)files.push({path:unit.paths[language],source:current[language]});
  return createOwnedStateContext({runtimeRoot:unit.runtimes.JavaScript,declarationRoot:unit.runtimes.TypeScript,files,...(sourceUnitPrimitiveOperators(unit)?{primitiveOperators:true}:{})});
 }

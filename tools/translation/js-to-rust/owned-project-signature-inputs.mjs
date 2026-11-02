@@ -21,7 +21,7 @@ export function projectOwnedStateUnitJavaScript(source,{context,sourcePath,paire
  const checked=batch.forSource(sourcePath);
  const relative=family=>{const path=posix.relative(posix.dirname(sourcePath),data.runtimeRoot+'/'+family+'-runtime.mjs');return path.startsWith('.')?path:'./'+path;};
  function operation(name,family,index){const key=family+':'+name;if(!imports.has(key)){let local='paired_input_'+name,serial=0;while(allNames.has(local))local='paired_input_'+name+'_'+serial++;allNames.add(local);imports.set(key,{name,family,local});}return 'Parameters<typeof '+imports.get(key).local+'>['+index+']';}
- function type(domain){
+ function type(domain){if(['text-map-input','text-map-ref','text-map'].includes(domain))return operation('router_text_map_len','ordered-text-map-20261102',0);if(domain==='text-pairs-input')return operation('router_text_map_from_pairs','ordered-text-map-20261102',0);
   const scalar=data.primitiveOperators===true?primitiveBitwiseType(domain):null;if(scalar)return 'import('+JSON.stringify(relative('primitive-operator'))+').'+scalar.alias;
   const json='import('+JSON.stringify(relative('json-macro'))+').JsonValue';
   if(domain==='json-ref'||domain==='json')return json;if(domain==='json-list-ref'||domain==='json-list-owned')return 'readonly '+json+'[]';if(domain==='str'||domain==='text-owned')return 'string';if(domain==='bool')return 'boolean';if(domain==='bytes-ref')return 'readonly bigint[]';if(domain==='base64-error-ref')return operation('base64ErrorText','base64',0);
@@ -31,7 +31,7 @@ export function projectOwnedStateUnitJavaScript(source,{context,sourcePath,paire
   if(domain==='u64')return operation('router_state_json_with_index','json-state',1);if(domain==='usize')return operation('router_core_json_index_usize','json-update',1);if(domain==='map-ref')return operation('router_core_json_map_index','json-update',0);
   fail('paired public input needs its own source-bound signature rule: '+domain);
  }
- function returnType(domain){
+ function returnType(domain){const map={'text-map':'router_text_map_new','text-pairs-owned':'router_text_map_pairs','vec:text-owned':'router_text_map_keys'}[domain];if(map){operation(map,'ordered-text-map-20261102',0);return 'ReturnType<typeof '+imports.get('ordered-text-map-20261102:'+map).local+'>';} 
   const operations={'json-text-result':['router_carrier_json_ok','owned-outcome'],'json-owned-option':['router_carrier_json_some','owned-outcome'],'json-option-ref':['serde_json_value_get_string','json'],'str-option-ref':['serde_json_value_as_str','json'],'bool-option':['serde_json_value_as_bool','json'],'u64-option':['serde_json_value_as_u64','json'],'i64-option':['serde_json_value_as_i64','json']},row=operations[domain];if(!row)fail('constructor return requires its actual registered carrier domain');operation(row[0],row[1],0);return 'ReturnType<typeof '+imports.get(row[1]+':'+row[0]).local+'>';
  }
  for(const declaration of missing){
