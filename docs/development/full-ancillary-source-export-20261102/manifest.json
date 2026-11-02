@@ -1,0 +1,10 @@
+{
+  "schema": "full-ancillary-source-export-draft-20261102-v1",
+  "sha256": "04949813083f32eff351051b2c73dc9525667dc4498050b16d7a70074f99b087",
+  "decodedBytes": 14327,
+  "packedBytes": 5229,
+  "completeFiles": 3,
+  "caseSources": 4,
+  "execution": "UNRUN",
+  "CI": "NOT_INSPECTED"
+}

@@ -128,3 +128,24 @@ SHA256cc7c0230b5c0c408aca064aefbf1bd977484b62f07a49ae06180f8efded56c63
 retains61205 decoded/16867 packed bytes, seven complete source/notice files and
 notice ancestry. Neither this source export wrapper nor the catalogue closes E01,
 E02, E03 or E05. Accounting remains11/70 DRAFTED,59 OPEN.
+
+## Complete ancillary compiler-directory source selection
+
+`352dfb2c1cca3ac50795cdf8054d7b2903ca42fa` commits the initial map caller
+profile; genuine native owner issuance continues. `c35bdcbaa` freezes the exact
+source-error unit successor, and `8c49f1fd8` commits pinned provenance export.
+Root also drafted the new [full ancillary compiler export](full-ancillary-source-export-20261102.md):
+the original compact exporter is composed with complete actual committed/indexed
+nonexcluded compiler directories across all file suffixes. This retains compressed
+histories, Python helpers and license/notice data rather than assuming only code
+suffixes are dependencies. Four independent case sources include complete actual
+source export and independent byte enumeration. Full external/dynamic/receiving
+closure is still OPEN; all original exporter resource checks remain.
+
+Root's separate flat transaction policy/ancestry batch is in progress and awaits
+the worker's additive logical mutation-path API before committing coherent active
+imports. The original98-member source bank is unchanged; read-only source
+comparison found only Root's intentionally proposed flat installer successor
+differs from that bank. Disk metadata around11:25UTC reports62GiB available.
+No local tests, compilation, translator/generator trials or CI feedback inspection
+occurred. Current11/70 DRAFTED,59 OPEN and unknown function denominator persist.
