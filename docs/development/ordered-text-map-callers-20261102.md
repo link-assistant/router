@@ -338,3 +338,15 @@ membership, original source/native symbols, whole source/meta reconstruction
 and current source closers remain required. No local receipt is serialized.
 Original target emission and runtime interpretation handle the accepted const
 nodes; independent receiving and native oracle case source remains UNRUN.
+
+
+The separate canonical three-parent source packet now drafts actual original
+owned-core source/checker/target/runtime/corpus registration, preserving its
+newer original guards. The source-only canonical API, fixed DATA selectors,
+active root/module input capture and receiving obligations are described in
+[the canonical source profile](ordered-text-map-callers-20261102-canonical.md).
+No map enable flag or detached table can grant admission. Actual installation,
+unit-route registration, whole receiving qualification and app adoption remain
+OPEN. The full package producer now recognizes exact original17/installed14/
+installed17 inputs, rejects mixed/unknown cohorts, and skips equal after writes
+while preserving historical original source equations/inverses.

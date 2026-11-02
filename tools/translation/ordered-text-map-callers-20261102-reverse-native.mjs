@@ -1,6 +1,7 @@
 // Complete native ABI/source equation for the existing private reverse context.
 // Returned DATA never registers a reverse source frame or checked function.
 import {orderedTextMapReversePairInputRust} from './ordered-text-map-callers-20261102-reverse.mjs';
+import {requireOrderedTextMapNativeSourceABI} from './ordered-text-map-callers-20261102-native-abi.mjs';
 import {requireOrderedTextMapNativeLibraryOwners} from './ordered-text-map-callers-20261102-native-owner.mjs';
 import {captureOriginalCargoEdition} from './cargo-edition-context.mjs';
 import {loadDeriveDependencyProof} from './derive-dependencies.mjs';
@@ -14,6 +15,7 @@ import {ORDERED_TEXT_MAP_NATIVE_SOURCE} from './ordered-text-map-20261102-source
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {withCompleteSourceClosingFence} from './complete-source-closing-fence.mjs';
+const originalNativeFrames=new WeakMap();
 const fail=()=>{throw TypeError('Reverse ordered map requires complete actual root, opaque native leaf and receiving Cargo inputs');};
 export function requireOrderedTextMapReverseNativeSources(files){
  if(!(files instanceof Map))fail();const root=files.get('src/lib.rs'),leaf=files.get('src/translation_ordered_text_map_core.rs'),manifest=files.get('Cargo.toml'),lock=files.get('Cargo.lock');
@@ -24,8 +26,14 @@ export function requireOrderedTextMapReverseNativeSources(files){
   for(const source of [root,leaf]){const concrete=transportConcreteSyntaxSource(source,{language:'Rust'});if(concrete.source!==source||transportConcreteSyntaxMeta(concrete.meta).source!==source)fail();}
   const graph=resolveModuleGraph({entry:'src/lib.rs',paths:retained.filter(([path])=>path.endsWith('.rs')).map(([path])=>path),readSource:path=>{current();if(!files.has(path))fail();return files.get(path);},compilationProfile:PRODUCTION_PROFILE});if(graph.diagnostics.length)fail();
   const deriveDependencies=loadDeriveDependencyProof({manifest,lock}),cargoEditionContext=captureOriginalCargoEdition(manifest),context=createMatchesMacroContext({modules:graph.modules,deriveDependencies,cargoEditionContext,compilationProfile:PRODUCTION_PROFILE}),parser=new HostRustParser(tokenizeRust(root));parser.compilationProfile=PRODUCTION_PROFILE;configureMatchesMacroParser(parser,context,{file:'src/lib.rs'});
-  const state=matchesParserFacts(parser),modules=state.facts.modules,evidence=state.facts.evidence;selectOriginalOrderedTextMapCore({modules,sourceScopes:evidence.scopes,compilationProfile:evidence.compilationProfile});requireOrderedTextMapNativeLibraryOwners({modules,sourceScopes:evidence.scopes,compilationProfile:evidence.compilationProfile,cargoEditionContext,deriveDependencies,parser});return null;
- }}]},{phase:'repository',rules:[{id:'router:reverse-owned-map-native-ABI-cargo-source-join',apply:()=>{current();return {root,leaf,manifest,lock,sourceAuthority:false,semanticAuthority:false};}}]}]).run(null).value,[current]);
+  const state=matchesParserFacts(parser),modules=state.facts.modules,evidence=state.facts.evidence;selectOriginalOrderedTextMapCore({modules,sourceScopes:evidence.scopes,compilationProfile:evidence.compilationProfile});const abi=requireOrderedTextMapNativeLibraryOwners({modules,sourceScopes:evidence.scopes,compilationProfile:evidence.compilationProfile,cargoEditionContext,deriveDependencies,parser});return {abi,parser};
+ }}]},{phase:'repository',rules:[{id:'router:reverse-owned-map-native-ABI-cargo-source-join',apply:native=>{current();const value={root,leaf,manifest,lock,sourceAuthority:false,semanticAuthority:false};originalNativeFrames.set(value,{files,current,abi:native.abi,parser:native.parser});return value;}}]}]).run(null).value,[current]);
+}
+// Source custody, not a cached checked-body or native-owner verdict. The old
+// actual parser/physical source identities reclose before full fresh ABI issue.
+export function recloseOrderedTextMapReverseNativeSources(value,files){
+ const frame=originalNativeFrames.get(value);if(!frame||frame.files!==files)fail();if(frame.poisoned)throw frame.primary;
+ try{return withCompleteSourceClosingFence(()=>{frame.current();requireOrderedTextMapNativeSourceABI(frame.abi,{parser:frame.parser});return value;},[frame.current]);}catch(error){if(!frame.poisoned){frame.poisoned=true;frame.primary=error;}throw error;}
 }
 export function orderedTextMapReverseInputPrelude(item,rust,imports){
  if(rust)return item.params.filter(parameter=>parameter.type==='text-pairs-input').map(parameter=>'    '+orderedTextMapReversePairInputRust(parameter.rust??parameter.name)).join('\n');return item.params.flatMap(parameter=>{const name=parameter.type==='text-map-input'?'router_text_map_len':parameter.type==='text-pairs-input'?'router_text_map_from_pairs':null;if(!name)return [];imports.add(name);return ['    __ro_'+name+'('+parameter.name+');'];}).join('\n');

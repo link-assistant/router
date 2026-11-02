@@ -30,3 +30,8 @@ export function proposeOrderedTextMapCallerSourceSuccessors(){
 export function orderedTextMapCallerAuthoredSources(){
  const {value}=packet();if(!Array.isArray(value.authoredSources)||value.authoredSources.length>64)throw TypeError('Bounded complete authored map source additions required');return value.authoredSources;
 }
+// Detached source DATA for installed/predecessor selection only. No CST,
+// source, type, native-owner or checked-body authority is issued by these rows.
+export function orderedTextMapCallerParentSourceData(){
+ const {value}=packet();return value.rows.map(row=>{if(typeof row.before!=='string'||typeof row.after!=='string'||hash(row.before)!==row.beforeSha256||hash(row.after)!==row.afterSha256)throw TypeError('Complete map source DATA ancestry differs');return {path:row.path,before:row.before,after:row.after,inverse:row.before};});
+}
