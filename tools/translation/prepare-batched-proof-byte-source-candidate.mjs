@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Additive native-derived producer. Original standalone producer stays exact.
 import {readFileSync,writeFileSync,existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -149,7 +150,6 @@ function prepareBatchedProofByteSourceProfile({root=ROOT,upstreamBatchLayer=fals
 export function prepareBatchedProofByteSourceCandidate({root=ROOT}={}){return prepareBatchedProofByteSourceProfile({root});}
 export function prepareBatchedProofByteUpstreamSourceDraft({root=ROOT}={}){return prepareBatchedProofByteSourceProfile({root,upstreamBatchLayer:true});}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=prepareBatchedProofByteSourceCandidate();
- if(mode==='--write'){for(const row of plan.files){const current=existsSync(resolve(ROOT,row.path))?readFileSync(resolve(ROOT,row.path),'utf8'):null;if(current!==row.current)fail('complete current source changed');}for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}
- else if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete source proposal is stale');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),runtimeExecuted:false,performanceQualified:false}));
+ const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=mode==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareBatchedProofByteSourceCandidate();for(const row of plan.files){const current=existsSync(resolve(ROOT,row.path))?readFileSync(resolve(ROOT,row.path),'utf8'):null;if(current!==row.current)fail('complete current source changed');}writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)writer.write(row.path,row.after);return plan;}):prepareBatchedProofByteSourceCandidate();
+ if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete source proposal is stale');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),runtimeExecuted:false,performanceQualified:false}));
 }

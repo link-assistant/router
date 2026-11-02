@@ -58,3 +58,18 @@ drafted, but complete production parent hooks, semantic/meta reissue and
 positive whole-caller/receiving routes remain OPEN. Existing full source
 inventory and fresh collectors are reused; no regex function count or new
 coverage denominator substitutes for their unresolved scope/producer review.
+
+## Thirteen further actual residual preparer CLIs
+
+Root installed all thirteen frozen complete source successors in batched byte
+proofs, ASCII sources/assets/reverse, matches, sequence-stream, current/facade
+receiving history, executable source and whole-owner trial/proof preparers.
+The original full producer/import prefixes, complete layered parent guards,
+all-row stale checks, missing-source sentinels, payload order and stdout remain.
+The optional `--resolver` argument retains its original behavior. Six original
+two-mode stale branches remain explicitly check-only after writes move into
+the protected scope; writes do not fall through into stale checks or messages.
+Complete13 before/after/inverse images and whole contracts remain UNRUN.
+See [the residual source profile](protected-residual-cli-writers-20261103.md).
+Complex mkdir/receipt/async/delegated/wider forward writers and compressed-bank
+ancestry remain OPEN. CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.

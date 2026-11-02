@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-edges.mjs';
 import {composeOwnedStringOperations} from './prepare-owned-string-operations.mjs';
 // New ASCII base-source schedule; original builders and non-ASCII inputs stay exact.
@@ -142,7 +143,6 @@ export function composeCoreAsciiBaseAssets(prior,options={}){
 }
 export function prepareCurrentCoreAsciiBaseAssets(options={}){const birth=prepareCoreAsciiBaseAssets(options),runtime=composeOwnedRuntimeImportEdges(Object.fromEntries(birth.files.map(row=>[row.path,row])),options),strings=composeOwnedStringOperations(runtime.sources,options);return {schema:'current-owned-ascii-base-runtime-import-sources-v1',birth,layers:[birth,...runtime.layers,...strings.layers],files:Object.values(strings.sources),semanticAuthority:false};}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);if(args.length!==1||!['--write','--check'].includes(args[0]))fail('usage: --write|--check');const plan=prepareCurrentCoreAsciiBaseAssets();
- if(args[0]==='--write'){for(const row of plan.files)if(row.current!==null&&!plan.layers.flatMap(layer=>layer.files.filter(part=>part.path===row.path).flatMap(part=>[part.before,part.after])).includes(row.current))fail('physical complete parent differs: '+row.path);for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}
- else if(plan.files.some(row=>row.current!==row.after))fail('complete generated ASCII base assets are stale');console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),selectedAssets:plan.birth.closure.rows.length,fullBuilderCallbackParity:false,rustExecuted:false}));
+ const args=process.argv.slice(2);if(args.length!==1||!['--write','--check'].includes(args[0]))fail('usage: --write|--check');const plan=args[0]==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareCurrentCoreAsciiBaseAssets();for(const row of plan.files)if(row.current!==null&&!plan.layers.flatMap(layer=>layer.files.filter(part=>part.path===row.path).flatMap(part=>[part.before,part.after])).includes(row.current))fail('physical complete parent differs: '+row.path);writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)writer.write(row.path,row.after);return plan;}):prepareCurrentCoreAsciiBaseAssets();
+ if(args[0]==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete generated ASCII base assets are stale');console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),selectedAssets:plan.birth.closure.rows.length,fullBuilderCallbackParity:false,rustExecuted:false}));
 }

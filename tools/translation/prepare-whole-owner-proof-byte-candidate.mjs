@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 import {substituteWholeSourceRow} from './single-source-substitution-runtime.mjs';
 import {verifyNativeCopiedSourceBindingBatch} from './source-copy-native-bindings.mjs';
 // Explicit complete consumer closure. Old/default and existing bulk copies stay exact.
@@ -171,8 +172,7 @@ export function prepareWholeOwnerProofByteCandidate({root=ROOT}={}){
  return {schema:'whole-owner-operation-proof-byte-candidate-v1',typescriptVersion:ts.version,inputs:[...inputs.values()],prerequisiteInputs:prerequisites,files,physicalOverlays,serializerBindings,cycleEvidence,operationProducer:operation,resolverProducer:resolver,existingDefaultsUnchanged:true,existingBulkCopiesUnchanged:true,scope:'one qualified complete synchronous owner operation; no retained encoded bytes',newAcrossInvocationEncodedCache:false,originalHashCallsUnchanged:true,performanceQualified:false,runtimeExecuted:false,sourceAuthority:false,runtimeAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=prepareWholeOwnerProofByteCandidate();
- if(mode==='--write'){for(const row of plan.files){const current=existsSync(resolve(ROOT,row.path))?readFileSync(resolve(ROOT,row.path),'utf8'):null;if(current!==row.current)fail('current complete output changed');}for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}
- else if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('whole byte consumer closure stale or ungenerated');
+ const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=mode==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareWholeOwnerProofByteCandidate();for(const row of plan.files){const current=existsSync(resolve(ROOT,row.path))?readFileSync(resolve(ROOT,row.path),'utf8'):null;if(current!==row.current)fail('current complete output changed');}writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)writer.write(row.path,row.after);return plan;}):prepareWholeOwnerProofByteCandidate();
+ if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('whole byte consumer closure stale or ungenerated');
  console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),performanceQualified:false,runtimeExecuted:false}));
 }
