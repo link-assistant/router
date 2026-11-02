@@ -541,3 +541,23 @@ This prepares the core abstraction for actual query_stream_requested adoption
 while preserving its unrestricted BTreeMap input; it closes no app function or
 acceptance row. Source/type/namespace/caller registration and checked meta in
 both directions remain concrete followup work, not inferred from behavior names.
+
+## Two remaining fixed generator/core CLI source sinks
+
+Root source-integrated the complete whitespace generator and integer core CLI
+successors. The whitespace module retains its first hashbang, original default
+top-level import/write behavior, exact two source-derived artifacts, --check and
+report. Actual write mode enters the shared protected scope before production,
+preflights JS/meta destinations and preserves no-old-output-read behavior.
+Integer uses the existing core writer with its original local producer, all-row
+stale check, currentAfter value and unchanged read-only/output branches. This
+brings the reviewed CLI/generator batch group to35 actual modules; the complete
+writer/production-function denominator is still UNKNOWN.
+
+Full two-parent source pairs, named language/repository/CST/inverse source
+proposals and independent full-source/argv/hashbang case source are retained in
+[the generator source contract](protected-generator-cli-writers-20261102.md).
+Every execution, receiving/storage/platform/resource and Rust result is UNRUN.
+The external mutation/async reviewed-adoption seven-parent batch is being
+finalized separately, preserving prior actual FD ownership and policy limits.
+No new acceptance row closes:11/70 DRAFTED,59 OPEN; CI NOT_INSPECTED.
