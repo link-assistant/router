@@ -1,6 +1,7 @@
 // Source-unit synchronization with fresh Git baselines and complete proposals.
 // No persisted source/hash/verdict cache supplies a translation decision.
 import * as fs from 'node:fs';
+import {ownSourceFailureField} from './source-error-fields-20261102.mjs';
 import {resolve,dirname,posix} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {createHash,randomUUID} from 'node:crypto';
@@ -27,9 +28,9 @@ const languages=['Rust','JavaScript','TypeScript'];
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('Source unit synchronization: '+message);};
 function relative(value){if(typeof value!=='string'||!value||value.length>4096||value.startsWith('/')||value.includes('\\')||/[\0\r\n:]/u.test(value)||value.split('/').some(part=>!part||part==='.'||part==='..'))fail('ordinary repository-relative path required');return value;}
-function physical(root,name){relative(name);let parent=root;const parts=name.split('/');for(const part of parts.slice(0,-1)){parent=resolve(parent,part);try{const row=fs.lstatSync(parent);if(!row.isDirectory()||row.isSymbolicLink())fail('linked or non-directory source parent');}catch(error){if(error.code!=='ENOENT')throw error;}}return resolve(root,name);}
+function physical(root,name){relative(name);let parent=root;const parts=name.split('/');for(const part of parts.slice(0,-1)){parent=resolve(parent,part);try{const row=fs.lstatSync(parent);if(!row.isDirectory()||row.isSymbolicLink())fail('linked or non-directory source parent');}catch(error){if(ownSourceFailureField(error,'code')!=='ENOENT')throw error;}}return resolve(root,name);}
 function source(root,name){
- const full=physical(root,name);let row;try{row=fs.lstatSync(full);}catch(error){if(error.code==='ENOENT')return null;throw error;}
+ const full=physical(root,name);let row;try{row=fs.lstatSync(full);}catch(error){if(ownSourceFailureField(error,'code')==='ENOENT')return null;throw error;}
  if(!row.isFile()||row.isSymbolicLink()||row.size>FILE_LIMIT)fail('bounded ordinary source file required');const fd=fs.openSync(full,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);let readFailed=false;
  try{const before=fs.fstatSync(fd),chunks=[];let total=0;for(;;){const bytes=Buffer.alloc(Math.min(65536,FILE_LIMIT-total+1)),count=fs.readSync(fd,bytes,0,bytes.length,null);if(!count)break;total+=count;if(total>FILE_LIMIT)fail('source grew beyond its byte bound');chunks.push(bytes.subarray(0,count));}const raw=Buffer.concat(chunks,total),after=fs.fstatSync(fd),named=fs.lstatSync(full);if(!before.isFile()||row.dev!==before.dev||row.ino!==before.ino||before.dev!==after.dev||before.ino!==after.ino||before.size!==raw.length||before.size!==after.size||before.mtimeMs!==after.mtimeMs||before.ctimeMs!==after.ctimeMs||before.dev!==named.dev||before.ino!==named.ino||before.mode!==named.mode||after.size!==named.size||after.mtimeMs!==named.mtimeMs||after.ctimeMs!==named.ctimeMs)fail('complete source changed during capture');const text=raw.toString('utf8');if(!Buffer.from(text).equals(raw))fail('source must retain exact UTF8 bytes');return text;}catch(error){readFailed=true;throw error;}finally{try{fs.closeSync(fd);}catch(error){if(!readFailed)throw error;}}
 }
@@ -243,8 +244,8 @@ function captureProtectedSourcePolicy(requestedRoot){
  const root=fs.realpathSync(resolve(requestedRoot)),policyPath='translation/source-ownership.json',schema='router-explicit-source-ownership-v1';
  const rootStamp=()=>{const stat=fs.lstatSync(root,{bigint:true});if(!stat.isDirectory()||stat.isSymbolicLink())fail('ordinary protected-policy root required');return [stat.dev,stat.ino,stat.mode].map(String);};
  const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b),rootIdentity=rootStamp();let revoked=false,closed=false;
- const parentStamp=()=>{let stat;try{stat=fs.lstatSync(resolve(root,'translation'),{bigint:true});}catch(error){if(error.code==='ENOENT')return null;throw error;}if(!stat.isDirectory()||stat.isSymbolicLink())fail('ordinary protected-policy parent required');return [stat.dev,stat.ino,stat.mode].map(String);},parentIdentity=parentStamp();
- const fileStamp=()=>{let stat;try{stat=fs.lstatSync(physical(root,policyPath),{bigint:true});}catch(error){if(error.code==='ENOENT')return null;throw error;}if(!stat.isFile()||stat.isSymbolicLink()||stat.size>BigInt(FILE_LIMIT))fail('bounded ordinary protected-source policy required');return [stat.dev,stat.ino,stat.mode,stat.size,stat.mtimeNs,stat.ctimeNs].map(String);};
+ const parentStamp=()=>{let stat;try{stat=fs.lstatSync(resolve(root,'translation'),{bigint:true});}catch(error){if(ownSourceFailureField(error,'code')==='ENOENT')return null;throw error;}if(!stat.isDirectory()||stat.isSymbolicLink())fail('ordinary protected-policy parent required');return [stat.dev,stat.ino,stat.mode].map(String);},parentIdentity=parentStamp();
+ const fileStamp=()=>{let stat;try{stat=fs.lstatSync(physical(root,policyPath),{bigint:true});}catch(error){if(ownSourceFailureField(error,'code')==='ENOENT')return null;throw error;}if(!stat.isFile()||stat.isSymbolicLink()||stat.size>BigInt(FILE_LIMIT))fail('bounded ordinary protected-source policy required');return [stat.dev,stat.ino,stat.mode,stat.size,stat.mtimeNs,stat.ctimeNs].map(String);};
  const read=()=>{const before=fileStamp(),body=source(root,policyPath),after=fileStamp();if(!same(before,after)||(body===null)!==(after===null))fail('protected-source policy changed during capture');return {body,identity:after};};
  const initial=read(),protectedPaths=new Set();if(!same(rootStamp(),rootIdentity)||!same(parentStamp(),parentIdentity))fail('protected-source policy ancestors changed during capture');
  if(initial.body!==null){const value=JSON.parse(initial.body);if(!value||Array.isArray(value)||Object.keys(value).sort().join(',')!=='authored,schema,unmanaged'||value.schema!==schema)fail('closed explicit source ownership policy required');

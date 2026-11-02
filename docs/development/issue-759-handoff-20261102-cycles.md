@@ -79,3 +79,31 @@ assumed complete. Root reviews/integrates its finished source batch separately.
 All task-owned temporary preimages/equation authoring files for the committed
 Root batch are removed after packet/commit creation. No local execution, cache
 cleanup, Rust invocation, compiler experiment or CI feedback inspection occurred.
+
+## Continued actual writer and failure-source integration
+
+`e03938ec393b284d3ea833055d2c6b6aab437a56` was pushed around09:50 UTC,
+with the draft PR description updated. CI feedback remains NOT_INSPECTED.
+`344196239481420c5a84de6935214efbc6c7e51e` adds the specialized native
+mover/durable recovery policy with original source fences and case sources.
+Root then authored the [exact source-failure successor](protected-source-errors-20261102.md),
+including own-data error fields, complete immutable source equations and eight
+independent case sources. Its coherent commit is the commit containing this
+journal addition. Historical protected-source packet bytes remain unchanged.
+
+The next preparer/asset batch retains the fixed original producer operations,
+binary data, original output modes and bounds. Source review identified that
+identical final bytes do not authorize an actual truncate/create through a
+protected symlink/hardlink alias. The worker is drafting a separate private-policy
+alias-aware veto and full named unit successor before integration. Ordinary
+staged source installation keeps its original no-op/replacement semantics.
+
+Map caller proposals retain all eleven whole parent afterimages and actual
+source/private checker hooks, with a separately explicit complete-corpus transfer
+profile. Source metadata records8777 selected files/198911165 logical bytes;
+old64MiB/8192-file export APIs are unchanged. Actual native std/prelude/derive
+owner issuance is still OPEN; positive cases are obligations, not passed evidence.
+The map worker continues implementing that boundary after its source checkpoint.
+
+No tests, compilers, translator trials or CI feedback were read. Counts remain
+11/70 DRAFTED and59 OPEN. The complete production-function denominator is UNKNOWN.
