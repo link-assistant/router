@@ -765,3 +765,21 @@ See [the complete companion source contract](complete-typescript-receiving-20261
 The complete source packet retains the four authored files and both original
 composed implementations; execution UNRUN and CI NOT_INSPECTED. Counts remain
 11/70 acceptance bundles DRAFTED,59 OPEN; this is not native/compiler parity.
+
+## Actual private DATA historical/current producer lineage
+
+Root installed all ten complete private-current parent successors and the
+26 authored history/profile/case/document paths. The actual native adapter
+producer now preserves original historical after/inverse separately from four
+exact guarded CLI currentAfter successors, retains original native import
+joins and checks current native bindings. Its write/check routes select those
+complete successors; both actual current candidate CLIs capture protection
+before production. The separate third adoption route remains emit-only.
+The original full current consumer/cases and five-file native parsed history
+retain their original workloads, cases and deadlines while composing finite
+named later source epochs. Unknown full sources continue to refuse.
+See [the private current-source contract](protected-private-cli-lineage-20261103.md).
+No parser, producer, test or compiler ran; CI NOT_INSPECTED. Residual special
+external-output/Bun coordinator sinks are a separate in-progress source batch.
+Complete source/namespace/native/receiving qualification remains UNRUN;11/70
+acceptance bundles DRAFTED,59 OPEN.

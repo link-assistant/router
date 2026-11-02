@@ -29,3 +29,10 @@ export function knownProtectedCstCliSuccessor({root=ROOT,path,before}={}){
  const name=NAMES.find(name=>path==='tools/translation/'+name+'.mjs');if(!name)return null;
  return operate(root,capture=>{const source=pair(capture,name);need(capture.capture(path).source===source.after,'actual current protected CST CLI differs');return before===source.before?equation(name,source.before,source.after):null;});
 }
+
+// A finite historical producer may prepare this exact later CLI equation before
+// installation. This does not grant physical/source/native mutation authority.
+export function prepareProtectedCstCliSuccessor({root=ROOT,path,before}={}){
+ const name=NAMES.find(name=>path==='tools/translation/'+name+'.mjs');if(!name)return null;
+ return operate(root,capture=>{const source=pair(capture,name);return before===source.before?{...equation(name,source.before,source.after),current:capture.capture(path).source}:null;});
+}
