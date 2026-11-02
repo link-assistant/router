@@ -1,3 +1,4 @@
+import {withProtectedTrialVectorWriter} from './protected-trial-vector-writers-20261103.mjs';
 // Native TypeScript AST and serialized/reparsed CST source producer. No verdicts.
 import {createHash} from 'node:crypto';
 import {readFileSync, writeFileSync, mkdirSync, existsSync} from 'node:fs';
@@ -230,6 +231,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if ([3, 5].includes(args.length) && args[0] === '--root' && ['--check', '--refresh'].includes(args[2])) {
     if (args[2] === '--refresh' && (args.length !== 5 || args[3] !== '--receipt') || args[2] === '--check' && args.length !== 3) fail('usage: --root WORKTREE --check | --root WORKTREE --refresh --receipt NEW_FILE.json.gz');
     const root = resolve(args[1]);
+    const perform=async scope=>{
     // Complete historical SOURCE inputs are checked-in fixture data, not saved
     // programs or compiler verdicts. Regenerate every current output afresh.
     const packed = readFileSync(resolve(root, 'tools/translation/test/fixtures/owned-vector-original-inputs.json.gz'));
@@ -263,19 +265,20 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       const receipt = Buffer.from(JSON.stringify({schema: 'owned-vector-source-refresh-v1', originalFixtureSha256: hash(packed), current, proposal: result, composition}) + '\n');
       const compressed = gzipSync(receipt, {level: 6, mtime: 0});
       if (!gunzipSync(compressed, {maxOutputLength: 128 * 1024 * 1024}).equals(receipt)) fail('complete refresh receipt inverse differs');
-      writeFileSync(resolve(args[4]), compressed, {flag: 'wx'});
-      for (const [name, source] of Object.entries(generated)) {
-        if (readFileSync(resolve(root, name), 'utf8') !== current[name]) fail('actual current source changed before refresh: ' + name);
-        writeFileSync(resolve(root, name), source.after);
+      const receiptTarget=resolve(args[4]),rows=Object.entries(generated).map(([name,source])=>({name,target:resolve(root,name),after:source.after}));scope.preflightFiles([receiptTarget,...rows.map(row=>row.target)]);scope.write(receiptTarget,compressed,{flag:'wx'});
+      for (const row of rows) {
+        if (readFileSync(row.target, 'utf8') !== current[row.name]) fail('actual current source changed before refresh: ' + row.name);
+        scope.write(row.target,row.after);
       }
     }
     process.stdout.write(JSON.stringify({checked: Object.keys(generated), originalFixtureSha256: hash(packed), typescript: result.value.typescript,
       semanticAuthority: false, rustExecuted: false}) + '\n');
+    };if(args[2]==='--refresh')await withProtectedTrialVectorWriter(root,perform);else await perform(null);
     process.exit(0);
   }
   if (![7, 8].includes(args.length) || args[0] !== '--root' || args[2] !== '--facade-root' || args[4] !== '--receipt' || args[6] !== '--write' || args.length === 8 && args[7] !== '--extend-checker') fail('usage: --root WORKTREE --facade-root PHYSICAL_SOURCE_ROOT --receipt NEW_FILE --write [--extend-checker]');
   const root = resolve(args[1]), facadeRoot = resolve(args[3]);
-  const prepare = args.length === 8 ? prepareCoreVectorCheckerSources : prepareCoreVectorSources;
+  await withProtectedTrialVectorWriter(root,async scope=>{const prepare = args.length === 8 ? prepareCoreVectorCheckerSources : prepareCoreVectorSources;
   const result = prepare({facade: readFileSync(resolve(facadeRoot, 'rust/src/translation_core.rs'), 'utf8'),
     sourceData: readFileSync(resolve(root, 'tools/translation/router-core-source-data.mjs'), 'utf8'),
     hostSource: readFileSync(resolve(root, 'tools/translation/extensions/host-contracts.mjs'), 'utf8'),
@@ -283,9 +286,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     vectorSource: readFileSync(resolve(root, 'tools/translation/router-core-vectors.mjs'), 'utf8')});
   // The complete reviewable receipt is durable before installation. No original
   // source is selected from a previous invocation's saved proposal or verdict.
-  writeFileSync(resolve(args[5]), JSON.stringify(result) + '\n', {flag: 'wx'});
-  for (const [name, source] of Object.entries(result.value.sources)) {
-    const target = resolve(root, name); mkdirSync(dirname(target), {recursive: true}); writeFileSync(target, source.after);
-  }
-  process.stdout.write(JSON.stringify({receipt: resolve(args[5]), sources: Object.fromEntries(Object.entries(result.value.sources).map(([name, row]) => [name, {beforeSha256: row.beforeSha256, afterSha256: row.afterSha256}])), semanticAuthority: false, rustExecuted: false}) + '\n');
+  const receiptTarget=resolve(args[5]),receiptValue=JSON.stringify(result)+'\n',rows=Object.entries(result.value.sources).map(([name,source])=>({name,target:resolve(root,name),after:source.after}));scope.preflightFiles([receiptTarget,...rows.map(row=>row.target)]);scope.write(receiptTarget,receiptValue,{flag:'wx'});
+  for (const row of rows) {scope.mkdir(dirname(row.target),{recursive:true});scope.write(row.target,row.after);}
+  process.stdout.write(JSON.stringify({receipt: resolve(args[5]), sources: Object.fromEntries(Object.entries(result.value.sources).map(([name, row]) => [name, {beforeSha256: row.beforeSha256, afterSha256: row.afterSha256}])), semanticAuthority: false, rustExecuted: false}) + '\n');});
 }

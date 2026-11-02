@@ -1,0 +1,73 @@
+{
+  "schema": "protected-trial-vector-writers-20261103-source-proposal-v1",
+  "predecessor": "ce37e6e1fe863f234fe3c0c394cc346c693643a6",
+  "files": [
+    {
+      "role": "recursive-observer",
+      "path": "tools/translation/protected-recursive-cli-writers-20261103.mjs",
+      "physicalOrigin": {
+        "commit": "ce37e6e1fe863f234fe3c0c394cc346c693643a6",
+        "path": "tools/translation/protected-recursive-cli-writers-20261103.mjs",
+        "gitBlob": "240095ca2c415901675bcbb399f22779a4312342"
+      },
+      "before": {
+        "path": "recursive-observer.before.txt",
+        "bytes": 5357,
+        "sha256": "dce5dc53b8d9d9bf9ae11aa8f9651ca05cf4071a2065258c9d4825da7d6c2e41"
+      },
+      "after": {
+        "path": "recursive-observer.after.txt",
+        "bytes": 5565,
+        "sha256": "0a0be7d9c1f6578102d0d1b904b63788654c5532be42c6b3f8c1dcf16f8233cf"
+      }
+    },
+    {
+      "role": "physical-trial",
+      "path": "tools/translation/private-parser-data-physical-trial.mjs",
+      "physicalOrigin": {
+        "commit": "ce37e6e1fe863f234fe3c0c394cc346c693643a6",
+        "path": "tools/translation/private-parser-data-physical-trial.mjs",
+        "gitBlob": "dfa13c67a21f62ee0af9bba3c056e57e7ea8dc2e"
+      },
+      "before": {
+        "path": "physical-trial.before.txt",
+        "bytes": 19331,
+        "sha256": "89b5a3adc509e773db513fba83ec392a6e380a837966b6c87f050cc64bc0e47a"
+      },
+      "after": {
+        "path": "physical-trial.after.txt",
+        "bytes": 20095,
+        "sha256": "65a4c68ca2f3e95e9e49f74a54c9d6957c04890cd15767b1bd6a0784eac80c47"
+      }
+    },
+    {
+      "role": "core-vector",
+      "path": "tools/translation/prepare-core-vector-sources.mjs",
+      "physicalOrigin": {
+        "commit": "ce37e6e1fe863f234fe3c0c394cc346c693643a6",
+        "path": "tools/translation/prepare-core-vector-sources.mjs",
+        "gitBlob": "fe53a39d1396123806edfb8a0f96fcc981c7ae5c"
+      },
+      "before": {
+        "path": "core-vector.before.txt",
+        "bytes": 32251,
+        "sha256": "00b35f672fb3d5d78ecea8f199a3c5c9f100668b735e0d7c46609d0e4c134e03"
+      },
+      "after": {
+        "path": "core-vector.after.txt",
+        "bytes": 32852,
+        "sha256": "58964a7a2730ac01190d686692027715ba23c562e6fa7875b4550a31c53628d4"
+      }
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceInstalled": false,
+  "sourceAuthority": false,
+  "completeOriginalFunctionDenominator": "UNKNOWN",
+  "completeWriterDenominator": "UNKNOWN",
+  "requirements": {
+    "L04": "actual in-process trial/core-vector FS sink adaptations via genuine private async lease; delegated subprocess sinks OPEN",
+    "S03": "original per-file replacement/all-owned reverse restoration and row failure order retained; detected policy veto may require manual recovery; no atomicity/receiving qualification",
+    "L01_L02": "three finite actual source/producer/entrypoint mappings only; original function/writer denominators UNKNOWN"
+  }
+}

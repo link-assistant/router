@@ -18,13 +18,15 @@ function snapshotParents(root,target){
  for(;;){if(paths.length>=LIMITS.nodes)fail('complete parent observation count bound');retained+=2*Buffer.byteLength(at)+256;if(retained>LIMITS.rawBytes)fail('complete parent observation byte bound');paths.push(at);const next=dirname(at);if(next===at)break;at=next;}
  const rows=[],missing=[];for(const path of paths.reverse()){const row={path,...directoryState(path)};retained+=Buffer.byteLength(JSON.stringify(row));if(row.kind==='missing'){retained+=Buffer.byteLength(path)+32;missing.push(path);}if(retained>LIMITS.rawBytes)fail('complete parent observation byte bound');rows.push(row);}return {parent,rows,missing};
 }
-function verifyParents(root,snapshot,after){return withProtectedNativeSourceAdmission(root,()=>{
+function inspectProtectedRecursiveParents(snapshot,after){
  let failed=false,primary;
  // Observe every captured prefix even after an earlier mismatch. Parent entry
  // clocks may change because mkdir creates children; directory identity may not.
  for(const row of snapshot.rows)try{const current=directoryState(row.path),created=after&&row.kind==='missing'&&current.kind==='directory'&&!current.linked;if(!created&&(current.kind!==row.kind||current.identity!==row.identity||current.entry!==row.entry||current.linked!==row.linked||current.link!==row.link))fail('recursive parent namespace changed: '+row.path);}catch(error){if(!failed){failed=true;primary=error;}}
  if(failed)throw primary;
-});}
+}
+function verifyParents(root,snapshot,after){return withProtectedNativeSourceAdmission(root,()=>inspectProtectedRecursiveParents(snapshot,after));}
+export {snapshotParents as captureProtectedRecursiveParentSnapshot,inspectProtectedRecursiveParents};
 export function createProtectedRecursiveCliParents(root,target){
  const snapshot=withProtectedNativeSourceAdmission(root,()=>snapshotParents(root,target));
  return mutateProtectedNativeAbsoluteEntries(root,snapshot.missing,()=>{

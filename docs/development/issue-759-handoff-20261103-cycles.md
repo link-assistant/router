@@ -278,3 +278,25 @@ removes a concrete source-level obstruction without claiming whole production
 qualification; configuration/macro/owner gaps remain independently OPEN. See
 [the actual alias source contract](original-self-crate-alias-20261103.md). All
 execution UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+## Actual physical-trial and both vector writer modes
+
+Root reviewed and installed the three exact trial/vector parent afterimages
+and15 frozen authored sources/profiles/cases/docs. Real in-process file, directory,
+rename, chmod, unlink and receipt writes now use the genuine private general
+async lease. The original3-row all-owned validation and reverse restoration,
+byte/mode/readback/temp guards, physical input budget, engine/deadline/signal
+logic and both vector receipt-first payload/write modes remain. The real
+check-only vector route creates no mutation lease; process exit follows awaited
+closure. Existing recursive parent checks share one pure observer without
+replacing original synchronous admission. Ordinary FS failure restoration and
+policy-vetoed retained recovery are distinct, without a protection bypass.
+
+Source review identified a followup source-classification obligation: the
+facade must expose the underlying source/sourceAsync boundaries and actual
+fixed source validators/producers must call them so caught source failure
+remains sticky independently of an ordinary writer/child failure. That separate
+correction is being drafted; the frozen15 remain unchanged. Actual delegated
+Node runner/reporter, Python and transitive receiving writes remain independently
+OPEN. The frozen document records proposal status; this journal records actual
+installation. All execution UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
