@@ -60,3 +60,25 @@ fn return_loan_does_not_capture_key_or_unused_map_lifetime() {
     };
     assert_eq!(value, Some("true"));
 }
+
+#[test]
+fn pair_signatures_preserve_native_order_duplicates_and_owned_projection() {
+    let input: Vec<(String, String)> = [("\u{10000}", "astral"), ("\u{e000}", "bmp"), ("", ""), ("x", "before"), ("x", "after")]
+        .into_iter().map(|(key, value)| (key.to_owned(), value.to_owned())).collect();
+    let map = maps::text_map_from_pairs(input);
+    let pairs: Vec<(String, String)> = maps::text_map_pairs(&map);
+    let updated = maps::text_map_insert(map, "z".to_owned(), "next".to_owned());
+    let expected: Vec<(String, String)> = [("", ""), ("x", "after"), ("\u{e000}", "bmp"), ("\u{10000}", "astral")]
+        .into_iter().map(|(key, value)| (key.to_owned(), value.to_owned())).collect();
+    assert_eq!(pairs, expected);
+    assert_eq!(maps::text_map_pairs(&maps::text_map_from_pairs(pairs)), expected);
+    assert_eq!(maps::text_map_len(&updated), 5);
+}
+
+#[test]
+fn pair_input_bounds_apply_before_duplicate_keys_are_collapsed() {
+    let too_many = vec![("x".to_owned(), String::new()); 4097];
+    assert!(std::panic::catch_unwind(|| maps::text_map_from_pairs(too_many)).is_err());
+    let too_large = vec![("x".to_owned(), "a".repeat(524_288)), ("x".to_owned(), "b".repeat(524_288))];
+    assert!(std::panic::catch_unwind(|| maps::text_map_from_pairs(too_large)).is_err());
+}

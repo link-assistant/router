@@ -1,6 +1,7 @@
 // A conservative whole-body affine/lexical-loan receiving rule. The existing
 // Host issuer supplies both genuine current-body and genuine-call predicates.
 // A successful return is DATA; this module cannot issue an executable item.
+import {actualOrderedTextMapPairVector} from './ordered-text-map-callers-20261102-pair-types.mjs';
 import {actualOrderedTextMapKeysVector} from './ordered-text-map-callers-20261102-keys.mjs';
 import {orderedTextMapContract} from './ordered-text-map-20261102-contracts.mjs';
 import {isOrderedTextMapOpaqueType} from './ordered-text-map-callers-20261102-native-types.mjs';
@@ -24,6 +25,7 @@ export function validateOrderedTextMapCallerFlow(checker,entry,{current,genuine}
   if(isOrderedTextMapOpaqueType(type))return 'map';
   if(type?.kind==='routerOrderedTextMap'&&isOrderedTextMapOpaqueType(type,{shared:true}))return 'map-ref';
   if(type?.kind==='routerOrderedTextMap')refuse('opaque type lost its actual private parser association',node);
+  if(actualOrderedTextMapPairVector(checker,type))return 'pair-vector';
   if(actualOrderedTextMapKeysVector(checker,type,node,entry.modulePath??[]))return 'text-vector';
   if(forwardOwnedString(type))return 'owned-text';
   if(type?.kind==='string'){requireBorrowedString(type,node.span);return 'text';}
@@ -36,7 +38,7 @@ export function validateOrderedTextMapCallerFlow(checker,entry,{current,genuine}
   refuse('unknown type, Copy, Drop, tuple, vector or nested ownership',node);
  };
  const state={names:new Map(),pending:new Set(),impossible:false},inputRoots=new Set();
- for(const parameter of entry.params){const part=domain(parameter.type,parameter),root='parameter:'+parameter.name;if(['map','map-ref'].includes(part)){inputRoots.add(root);state.names.set(parameter.name,{moved:false,value:fact(part,new Set([root]))});}else if(['copy','text','owned-text'].includes(part))state.names.set(parameter.name,{moved:false,value:fact(part)});else refuse('borrowed result inputs require their separate entry theorem',parameter);}
+ for(const parameter of entry.params){const part=domain(parameter.type,parameter),root='parameter:'+parameter.name;if(['map','map-ref'].includes(part)){inputRoots.add(root);state.names.set(parameter.name,{moved:false,value:fact(part,new Set([root]))});}else if(['copy','text','owned-text','pair-vector'].includes(part))state.names.set(parameter.name,{moved:false,value:fact(part)});else refuse('borrowed result inputs require their separate entry theorem',parameter);}
  const live=(state,roots,node)=>{for(const root of roots){const owner=[...state.names.values()].find(row=>!row.moved&&row.value.roots.has(root));if(!owner)refuse('borrowed result outlives a moved map root',node);}};
  const movable=(state,roots,node)=>{
   for(const root of roots){if(state.pending.has(root)||[...state.names.values()].some(row=>!row.moved&&row.value.loans.has(root)))refuse('map move/write while its returned loan or earlier call argument remains live',node);}
@@ -55,7 +57,7 @@ export function validateOrderedTextMapCallerFlow(checker,entry,{current,genuine}
   const part=domain(node.type,node),read=(child,how='move')=>visit(child,state,how,depth+1);
   if(node.k==='var'){
    if(part==='map-ref'&&mode!=='borrow')refuse('shared map aliases/results require their separate original reference Copy theorem',node);const row=state.names.get(node.name);if(!row||row.moved)refuse('missing or already moved binding',node);if(row.value.domain!==part)refuse('binding changed its actual type domain',node);live(state,row.value.loans,node);
-   if(mode==='move'&&['map','owned-text','loan-option','text-vector'].includes(part)){movable(state,row.value.roots,node);row.moved=true;}
+   if(mode==='move'&&['map','owned-text','loan-option','text-vector','pair-vector'].includes(part)){movable(state,row.value.roots,node);row.moved=true;}
    return fact(part,new Set(row.value.roots),new Set(row.value.loans),row.value.tags&&new Set(row.value.tags));
   }
   if(node.k==='lit'){
@@ -111,17 +113,17 @@ export function validateOrderedTextMapCallerFlow(checker,entry,{current,genuine}
   }
   if(node.k==='routerHostCall'){
    const row=orderedTextMapContract(node.id);if(!row||!genuine(node,entry)||node.args.length!==row.parameters.length)refuse('operation needs the parent issuer current private source receipt',node);
-   if(['from_pairs','pairs'].includes(row.operation))refuse('pair-list tuple ownership has not been joined',node);
    const originalPending=new Set(state.pending),values=[];
    try{
     for(let index=0;index<row.parameters.length;index++){
      const role=row.parameters[index],value=read(node.args[index],row.shared.includes(index)?'borrow':'move');values.push(value);live(state,value.loans,node);
-     const wanted=role==='text-map-ref'?['map','map-ref']:role==='text-map'?['map']:role==='text-owned'?['owned-text']:role==='str'?['text']:[];
+     const wanted=role==='text-map-ref'?['map','map-ref']:role==='text-map'?['map']:role==='text-owned'?['owned-text']:role==='str'?['text']:role==='text-pairs-owned'?['pair-vector']:[];
      if(!wanted.includes(value.domain))refuse('checked operation argument domain differs from its actual native signature',node.args[index]);
      if(row.shared.includes(index))for(const root of union(value.roots,value.loans))state.pending.add(root);
     }
     for(const value of values)live(state,value.loans,node);
     if(row.returns==='text-map'){if(part!=='map')refuse('native map result lost opaque type identity',node);return fact('map',new Set(['temporary:'+serial++]));}
+    if(row.operation==='pairs'){if(part!=='pair-vector')refuse('pairs must retain actual original Vec<(String,String)> source type and tuple layout',node);return fact(part,new Set(['pairs-vector:'+serial++]));}
     if(row.operation==='keys'){if(part!=='text-vector')refuse('keys must retain its actual owned Vec<String> type',node);return fact(part,new Set(['keys-vector:'+serial++]));}
     if(row.operation==='get'){if(part!=='loan-option')refuse('lookup must return its genuine checked borrowed Option',node);const roots=values[0].roots;if(!roots.size)refuse('lookup needs a live map root',node);return fact(part,new Set(),new Set(roots),new Set(['Some','None']));}
     if(part!=='copy')refuse('membership/length must have its native scalar result',node);return fact(part);

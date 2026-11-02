@@ -25,7 +25,7 @@ const fail=message=>{throw TypeError('Ordered-map monomorphic native source ABI:
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
 const words=item=>item.tokens.filter(token=>token.type!=='comment').map(token=>token.text).join('');
 const originals=new URL('./source-profiles/ordered-text-map-callers-20261102-standard/ordered-text-map-callers-20261102-native-abi-originals.json.gz',import.meta.url);
-const originalPin='f381678fd9f6a6e84ceb3d1c3a7c176105f6a401f5d2873b3c376cc810341d69',originalDecodedPin='8aa03710a488c000e40b1327e1b58e0feb19f4e442870278bf44ef1f5e658bdb';
+const originalPin='83ded3e3a6fcfeb9ccfe26bd1bd085ba13035a06c208db998925b51a91349587',originalDecodedPin='c903be59a6c8ac9ad1cf13f317123d59b4f557ef37bd91993b2d7c3464d1d2d9';
 const selectedSourceRoots=['./','../../rust/src/','../../rust/tests/'].map(path=>fileURLToPath(new URL(path,import.meta.url))),stableDirectory=(left,right)=>['dev','ino','mode','uid','gid'].every(key=>left[key]===right[key]);
 const sameDirectory=(row,next)=>selectedSourceRoots.some(root=>row.path===root.slice(0,-1)||row.path.startsWith(root))?sameCompactPhysicalSourceStamp(row.stat,next):stableDirectory(row.stat,next);
 function artifacts(){
@@ -46,6 +46,8 @@ const signatureRows=[
  ['len','pubfntext_map_len(map:&OrderedTextMap)->u64',['map-shared'],'u64',null],
  ['copy','pubfntext_map_copy(map:&OrderedTextMap)->OrderedTextMap',['map-shared'],'map',null],
  ['keys','pubfntext_map_keys(map:&OrderedTextMap)->Vec<String>',['map-shared'],'Vec<String>-owned',null],
+ ['from_pairs','pubfntext_map_from_pairs(pairs:Vec<(String,String)>)->OrderedTextMap',['Vec<(String,String)>-owned'],'map',null],
+ ['pairs','pubfntext_map_pairs(map:&OrderedTextMap)->Vec<(String,String)>',['map-shared'],'Vec<(String,String)>-owned',null],
 ];
 function nativeMembers(module,sourceScopes){
  const items=originalSourceModuleItems(module),nominals=items.filter(item=>item.term==='struct'&&item.name==='OrderedTextMap');if(nominals.length!==1||words(nominals[0])!=='#[derive(Debug,Clone,PartialEq,Eq)]pubstructOrderedTextMap(BTreeMap<String,String>);')fail('actual original private nominal representation/derive input differs');

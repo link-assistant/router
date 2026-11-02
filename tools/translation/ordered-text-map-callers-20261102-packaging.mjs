@@ -4,7 +4,7 @@ import {readFileSync,lstatSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {emitOrderedTextMapDeclarations} from './ordered-text-map-20261102-contracts.mjs';
 import {withCompleteSourceClosingFence} from './complete-source-closing-fence.mjs';
-const paths=['ordered-text-map-20261102-runtime.mjs','ordered-text-map-20261102-runtime.d.mts'];
+const paths=['ordered-text-map-20261102-runtime.mjs','ordered-text-map-20261102-runtime.d.mts','ordered-text-map-callers-20261102-pair-runtime.mjs','ordered-text-map-callers-20261102-pair-runtime.d.mts'];
 function read(name){const path=fileURLToPath(new URL('./'+name,import.meta.url)),stat=lstatSync(path);if(!stat.isFile()||stat.isSymbolicLink()||stat.size>1048576)throw TypeError('Actual bounded regular ordered map asset source required');return readFileSync(path,'utf8');}
 export function orderedTextMapCallerRuntimeAssets(){
  const sources=paths.map(read);

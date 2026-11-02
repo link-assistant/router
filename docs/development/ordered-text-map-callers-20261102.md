@@ -4,12 +4,14 @@ SOURCE DRAFT ONLY. Every new implementation, producer, receiving case, strict
 TypeScript case and native oracle is UNRUN. CI/review feedback is NOT_INSPECTED.
 No application function, receiving acceptance row or bulk requirement is closed.
 The existing ten-operation core remains unchanged. This profile drafts eight
-caller operations: new, insert, remove, get, contains, len, copy and keys.
+caller operations in both directions: new, insert, remove, get, contains, len,
+copy and keys. Forward from_pairs and pairs additionally have a narrow actual
+Vec<(String,String)> signature path; their reverse caller routes remain OPEN.
 
 A narrow source-model native compatibility issuer is now drafted through actual
 private parser, Cargo, standard-unit, prelude, nominal and function-owner joins.
-It admits only the fixed Router-owned private map ABI and eight qualified caller
-operations. Full original BTreeMap/String internals remain native. Matching
+It admits only the fixed Router-owned private map ABI and ten actual monomorphic
+operation signatures; native signature custody alone grants no caller receipt. Full original BTreeMap/String internals remain native. Matching
 source constants, hashes, names, public flags or catalogue rows cannot issue a
 type or executable caller. Actual compiler invocation, installed sysroot/native
 conformance, independent native-oracle execution and receiving qualification
@@ -263,8 +265,19 @@ OPEN. The parent afterimages are proposed source, not current registered root
 compiler code. Complete export/profile/bank freshness is not established.
 The larger explicit transfer profile needs its own empirical receiving evidence.
 
-Pair-list construction, sorted pair projections, map locals/aliases in the
-reverse source checker, mutable bindings/assignments, loops, helper graphs,
+Forward pair-list construction and sorted pair projections are now drafted
+for actual explicit Vec<(String,String)> caller signature contexts. A private
+source capture rejoins original fn/type nodes, the genuine parser tuple table,
+actual standard Vec/String owners and the original checker-resolved owned
+String fields. General owned tuple inference remains unchanged and refused.
+A separate strict runtime adapter translates the original emitter’s tagged
+Tuple products to/from the raw dense-pair ABI; the raw API remains unchanged.
+The adapter is a value operation and issues no compiler type or call authority.
+Fresh whole-caller meta reconstruction carries the actual newly parsed generic
+tuple declarations rather than serialized private handles. Independent adapter
+and whole forward caller cases are source only and UNRUN. Reverse pair routes,
+inferred pair results without signature context, general tuple locals/literals,
+and map locals/aliases in the reverse source checker, mutable bindings/assignments, loops, helper graphs,
 record/tuple/serde fields, borrowed map return values, and generalized shared-map
 Copy/lifetime patterns remain refused or OPEN. Ordinary forward owned map locals
 and the closed Some/None consumer are drafted; this is lexical ownership, not

@@ -1,5 +1,6 @@
 // Private source observations, not a public structural type/owner registry.
 // Every observation is rejoined to its genuine original parser and full library.
+import {withOrderedTextMapPairSourceCapture} from './ordered-text-map-callers-20261102-pair-types.mjs';
 import {matchesParserFacts,originalMatchesDependencyProof} from './matches-macro-context.mjs';
 import {requireOrderedTextMapNativeSourceABI} from './ordered-text-map-callers-20261102-native-abi.mjs';
 import {requireOrderedTextMapNativeLibraryOwners} from './ordered-text-map-callers-20261102-native-owner.mjs';
@@ -109,7 +110,7 @@ export function withOrderedTextMapSourceTypeCapture(checker,surface,run){
  };
  const items=(rows,depth=0)=>{if(--cells<0||depth>160)fail();for(const item of rows)if(item.k==='module')items(item.items,depth+1);else if(['fn','data'].includes(item.k))capture(item);};
  const close=()=>{requireOriginalPrimitiveTryFromChecker(checker);if(capturedTypes.get(checker)!==records)fail();for(const row of sourceItems)if(!originalParsedDeclarationEvidence(row.item)||metadataDigest(row.item)!==row.snapshot)fail();};
- try{return withCompleteSourceClosingFence(()=>{items(surface.items);close();return run();},[close]);}finally{capturedTypes.delete(checker);sourceItems.length=0;}
+ try{return withCompleteSourceClosingFence(()=>{items(surface.items);close();return withOrderedTextMapPairSourceCapture(checker,surface,run);},[close]);}finally{capturedTypes.delete(checker);sourceItems.length=0;}
 }
 export function resolveOrderedTextMapOpaqueType(checker,type){
  if(type?.kind!=='routerOrderedTextMap')return null;

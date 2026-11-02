@@ -1,5 +1,6 @@
 // Receiving fragments for the existing private Host issuer. These functions
 // return ordinary checked-candidate IR; only that issuer can grant executable IR.
+import {actualOrderedTextMapPairVector} from './ordered-text-map-callers-20261102-pair-types.mjs';
 import {checkedOrderedTextMapKeysType} from './ordered-text-map-callers-20261102-keys.mjs';
 import {orderedTextMapContract} from './ordered-text-map-20261102-contracts.mjs';
 import {selectOriginalOrderedTextMapCore} from './ordered-text-map-20261102-interface.mjs';
@@ -16,7 +17,7 @@ import {requireOrderedTextMapOpaqueType,orderedTextMapResultType,orderedTextMapT
 import {unsupported,typeError} from './vendor/meta-language/translation/diagnostics.js';
 const calls=new WeakMap();
 const fail=()=>{throw TypeError('Ordered text map requires its original private parsed call and native owner');};
-const supported=new Set(['new','insert','remove','get','contains','len','copy','keys']);
+const supported=new Set(['new','insert','remove','get','contains','len','copy','keys','from_pairs','pairs']);
 function source(parser,row){
  const state=matchesParserFacts(parser),selected=selectOriginalOrderedTextMapCore({modules:state.facts.modules,sourceScopes:state.facts.evidence.scopes,compilationProfile:state.facts.compilationProfile}),module=state.facts.modules.find(module=>module.file===selected.file);
  const owners=originalSourceModuleItems(module).filter(item=>item.term==='fn'&&item.name===row.rustName);
@@ -62,11 +63,12 @@ export function checkForwardOrderedTextMap(checker,node,env,path,expected,{curre
    else if(role==='text-map-ref')requireOrderedTextMapOpaqueType(value.type,{shared:!borrow});
    else if(role==='text-owned'){if(!forwardOwnedString(value.type))throw unsupported('ordered text map owned text','requires actual owned standard String',syntax.span);checker.expectedOwnership(value.type,SOURCE_STRING,path,syntax.span);}
    else if(role==='str'){requireBorrowedString(value.type,syntax.span);if(value.type.patternOwnershipRefusal)throw unsupported('ordered text map key','requires actual borrowed standard scalar text',syntax.span);checker.expectedOwnership(value.type,SOURCE_STR,path,syntax.span);}
-   else throw unsupported('ordered text map argument','complete pair-list ownership integration remains open',syntax.span);
+   else if(role==='text-pairs-owned'){if(!actualOrderedTextMapPairVector(checker,value.type))throw unsupported('ordered map pair input','requires actual parsed Vec<(String,String)> signature and original checked tuple fields',syntax.span);}
+   else throw unsupported('ordered text map argument','complete argument ownership integration remains open',syntax.span);
    args.push(value);
   }
-  const type=row.returns==='text-map'?orderedTextMapResultType(parser):row.returns==='bool'?BOOL:row.returns==='u64'?integer():row.returns==='str-option-ref'?checker.instantiations.option(SOURCE_STR,node.span):row.operation==='keys'?checkedOrderedTextMapKeysType(checker,node,path):null;
-  if(!type)fail();compatible(checker,type,expected,path,node.span);close();
+  const type=row.returns==='text-map'?orderedTextMapResultType(parser):row.returns==='bool'?BOOL:row.returns==='u64'?integer():row.returns==='str-option-ref'?checker.instantiations.option(SOURCE_STR,node.span):row.operation==='keys'?checkedOrderedTextMapKeysType(checker,node,path):row.operation==='pairs'&&actualOrderedTextMapPairVector(checker,expected)?expected:null;
+  if(!type)throw unsupported('ordered map pair result','requires an actual parsed Vec<(String,String)> result context; inferred owned products remain refused',node.span);compatible(checker,type,expected,path,node.span);close();
   return {k:'routerHostCall',id:row.javascriptName,args,type,span:node.span,constEligible:false};
  },[close]);
 }
@@ -80,5 +82,5 @@ export function emitForwardOrderedTextMap(emitter,node,{requireCurrentPrivateCal
 }
 export function orderedTextMapForwardImports(names,runtimeModule='./runtime/ordered-text-map-20261102-runtime.mjs'){
  if(!names?.size)return [];const imports=[...names].sort();for(const name of imports){const row=orderedTextMapContract(name);if(!row||row.javascriptName!==name||!supported.has(row.operation))fail();}
- return ['import { '+imports.map(name=>name+' as ml_host_'+name).join(', ')+' } from '+JSON.stringify(runtimeModule)+';'];
+ const pairs=imports.filter(name=>['router_text_map_from_pairs','router_text_map_pairs'].includes(name)),raw=imports.filter(name=>!pairs.includes(name)),result=[];if(raw.length)result.push('import { '+raw.map(name=>name+' as ml_host_'+name).join(', ')+' } from '+JSON.stringify(runtimeModule)+';');if(pairs.length){const bridge=runtimeModule.replace(/ordered-text-map-20261102-runtime\.mjs$/u,'ordered-text-map-callers-20261102-pair-runtime.mjs');if(bridge===runtimeModule)fail();result.push('import { '+pairs.map(name=>(name==='router_text_map_pairs'?'router_text_map_tuple_pairs':'router_text_map_from_tuple_pairs')+' as ml_host_'+name).join(', ')+' } from '+JSON.stringify(bridge)+';');}return result;
 }

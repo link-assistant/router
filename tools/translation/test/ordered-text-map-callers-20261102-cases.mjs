@@ -31,7 +31,7 @@ test('written public shape and fake parser frame cannot issue opaque ownership',
  assert.throws(()=>parseOrderedTextMapOpaqueType(parser));assert.equal(parser.cursor.index,0);
 });
 test('packaging retains executable runtime and complete strict declarations together',()=>{
- const files=orderedTextMapCallerRuntimeAssets();assert.equal(files.size,2);assert.ok(files.get('runtime/ordered-text-map-20261102-runtime.mjs').includes('router_text_map_get'));assert.ok(files.get('runtime/ordered-text-map-20261102-runtime.d.mts').includes('unique symbol'));
+ const files=orderedTextMapCallerRuntimeAssets();assert.equal(files.size,4);assert.ok(files.get('runtime/ordered-text-map-20261102-runtime.mjs').includes('router_text_map_get'));assert.ok(files.get('runtime/ordered-text-map-20261102-runtime.d.mts').includes('unique symbol'));
 });
 
 test('source successors retain complete ordered phases and full CST inverses', {timeout:60000},async()=>{

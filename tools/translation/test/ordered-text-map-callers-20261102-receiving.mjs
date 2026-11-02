@@ -81,7 +81,7 @@ test('monomorphic native source ABI rejoins actual unit std prelude and leaf own
   const input=frame(physical),abi=requireOrderedTextMapNativeLibraryOwners(input);requireOrderedTextMapNativeSourceABI(abi,{parser:input.parser});
   assert.equal(abi.sourceCompatibilityBoundary,true);assert.equal(abi.actualInvocationObserved,false);assert.equal(abi.nativeSysrootConformance,false);assert.equal(abi.nativeOracleQualification,'UNRUN');assert.equal(abi.callerBodyQualified,false);assert.equal(abi.nativeInternalsUntranslated,true);
   assert.equal(abi.originalUnit.root.manifest,manifest);assert.equal(abi.originalUnit.root.target.path,'src/lib.rs');if(physical)assert.equal(abi.originalUnit.root.target.sourcePath,'rust/src/lib.rs');
-  assert.equal(abi.allocUnit.package.name,'alloc');assert.deepEqual(abi.operations.map(row=>row.operation),['new','insert','remove','get','contains','len','copy','keys']);assert.equal(abi.operations.find(row=>row.operation==='get').loanRoot,0);
+  assert.equal(abi.allocUnit.package.name,'alloc');assert.deepEqual(abi.operations.map(row=>row.operation),['new','insert','remove','get','contains','len','copy','keys','from_pairs','pairs']);assert.equal(abi.operations.find(row=>row.operation==='get').loanRoot,0);
   assert.throws(()=>requireOrderedTextMapNativeSourceABI(JSON.parse(JSON.stringify(abi)),{parser:input.parser}));assert.throws(()=>requireOrderedTextMapNativeSourceABI(abi,{parser:frame(physical).parser}));
  }
 });
@@ -102,4 +102,20 @@ test('Rust source binds only the genuine map return-loan root and keeps key and 
  const cases=await import('../ordered-text-map-callers-20261102-receiving-cases.mjs'),input=reverseInput(cases.ORDERED_MAP_LOAN_HEADER_JAVASCRIPT,cases.ORDERED_MAP_LOAN_HEADER_TYPESCRIPT),analysis=analyzeOrderedTextMapReverseModule(input,'caller.mjs');assert.equal(analysis.program.length,1,JSON.stringify(analysis.diagnostics));assert.equal(analysis.program[0].resultRoot,'map');
  const rust=emitOrderedTextMapReverseProgram(analysis.program,'rust');assert.match(rust,/fn independently_borrowed<'ro_map>\(map: &'ro_map crate::translation_ordered_text_map_core::OrderedTextMap, key: &str, unused: &crate::translation_ordered_text_map_core::OrderedTextMap\) -> ::std::option::Option<&'ro_map str>/u);assert.equal(rust.includes("key: &'ro_map"),false);assert.equal(rust.includes("unused: &'ro_map"),false);assert.equal(rust.includes("<'a>"),false);
  const meta=serializeOrderedTextMapReverseMeta(analysis.program),decoded=readOrderedTextMapReverseMeta(meta,{input,path:'caller.mjs'});assert.equal(emitOrderedTextMapReverseProgram(decoded,'rust'),rust);
+});
+
+// Genuine source signatures supply the tuple layout; no owned tuple inference
+// or raw dense-array reinterpretation is admitted by these forward cases.
+test('forward pairs use original Vec tuple String signatures and strict representation bridge',limits,async()=>{
+ const source=`pub fn pair_input(pairs: Vec<(String, String)>) -> crate::translation_ordered_text_map_core::OrderedTextMap { crate::translation_ordered_text_map_core::text_map_from_pairs(pairs) }
+ pub fn pair_output(map: &crate::translation_ordered_text_map_core::OrderedTextMap) -> Vec<(String, String)> { crate::translation_ordered_text_map_core::text_map_pairs(map) }`;
+ const result=forward(source);for(const name of ['pair_input','pair_output'])assert.ok(result.meta.executable.some(row=>row.name===name),JSON.stringify(result.meta.refused));
+ assert.match(result.javascript,/ordered-text-map-callers-20261102-pair-runtime\.mjs/u);
+ const raw=await import('../ordered-text-map-20261102-runtime.mjs');
+ await targets(result.javascript,result.typescript,'src/lib',(javascript,typescript)=>{for(const module of [javascript,typescript]){
+  const api=module.translated,input=[{$:'Tuple',field0:'x',field1:'before'},{$:'Tuple',field0:'',field1:''},{$:'Tuple',field0:'x',field1:'after'}],map=api.pair_input(input);
+  assert.deepEqual(raw.router_text_map_pairs(map),[['',''],['x','after']]);assert.deepEqual(api.pair_output(map),[{$:'Tuple',field0:'',field1:''},{$:'Tuple',field0:'x',field1:'after'}]);
+  assert.throws(()=>api.pair_input([['x','value']]));assert.throws(()=>raw.router_text_map_from_pairs(input));assert.deepEqual(input[0],{$:'Tuple',field0:'x',field1:'before'});
+ }});
+ const refusal=forward('pub fn pair_alias(pairs: Vec<(String, String)>) -> crate::translation_ordered_text_map_core::OrderedTextMap { let first = crate::translation_ordered_text_map_core::text_map_from_pairs(pairs); crate::translation_ordered_text_map_core::text_map_from_pairs(pairs) }');assert.equal(refusal.meta.executable.some(row=>row.name==='pair_alias'),false);
 });
