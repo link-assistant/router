@@ -351,3 +351,25 @@ drafted. Source comparison also identified six later authored helper sources in
 the old main producer's31-row immutable batch; its actual complete continuation
 adoption is assigned separately, without rewriting those historical rows. Every
 verification UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+## Actual complete SDK/cold-profile source receiving composition
+
+Root reviewed the frozen SDK10 packet and installed all ten exact parent
+afterimages, retaining the complete standalone physical driver and SDK ancestry.
+A separate complete driver now composes the copied physical SDK with the full
+compiler/native/profile source package. Every original six receiving cases and
+strict TS/version command/deadline remain; storage/correction cases are additive.
+Actual Git/source FD custody spans the complete setup, all original ancillary/
+fixture/oracle bytes are retained, the named full198 engine history is joined,
+and current known compiler sources are preserved. Actual whole-workspace stage
+reservations include the original nested full-raw re-export, SDK/vault/Git/TMP
+roots without assuming compression. Canonical source closer arrays group under
+4096, and descriptor mutation cases use separate complete packages.
+
+The new driver remains explicit; old standalone CLI domain is preserved. Shared
+reconcile readers, encoded-reader/FD-range performance and exact old31-authored
+source continuations still need their separate source epochs before this full
+receiving path can qualify. Full sources and original workloads are not reduced.
+Resource/retained-memory/deadline/type/body/receiving/native qualification UNRUN;
+CI NOT_INSPECTED. Frozen documents describe proposals; this records actual
+installation. Counts remain11/70 DRAFTED,59 OPEN.

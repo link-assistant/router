@@ -68,7 +68,7 @@ test('native platform containment uses native separators with POSIX logical sour
 });
 test('full compiler source transfer includes complete actual tracked production Rust/Cargo/build inputs',{timeout:60000},()=>{
  const parent=mkdtempSync(join(tmpdir(),'ordered-map-unit-transfer-'));try{
-  const receipt=produceOrderedTextMapCallerSources({sourceRoot:root,destination:join(parent,'package')}),paths=new Set(receipt.receivingNativeInputs.map(row=>row.path));
+  const receipt=produceOrderedTextMapCallerSources({sourceRoot:root,destination:join(parent,'package'),workspaceRoot:process.env.ROUTER_ORDERED_MAP_WORKSPACE_ROOT}),paths=new Set(receipt.receivingNativeInputs.map(row=>row.path));
   for(const logical of ['src/lib.rs','src/openai.rs','src/translation_ordered_text_map_core.rs','Cargo.toml','Cargo.lock','build.rs']){const path=rustPackageSourcePath(root,logical);assert.ok(paths.has(path),path);assert.equal(readFileSync(join(receipt.destination,path),'utf8'),readFileSync(join(root,path),'utf8'));}
   assert.ok(paths.has('Cargo.toml'));assert.equal(receipt.sourceExecuted,false);assert.equal(receipt.tests,'UNRUN');assert.equal(receipt.legacyRawLimitUnchanged,true);
  }finally{rmSync(parent,{recursive:true,force:true});}

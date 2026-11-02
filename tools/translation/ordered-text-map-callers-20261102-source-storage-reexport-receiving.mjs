@@ -2,6 +2,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync,readFileSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';import {fileURLToPath} from 'node:url';
 import {withReadonlySourceProfiles,readSourceProfileFileSync} from './ordered-text-map-callers-20261102-source-storage.mjs';
+import {readonlySourceProfileSdkSourceData} from './ordered-text-map-callers-20261102-source-storage-sdk-profile.mjs';
 import {readonlySourceProfileReexportSourceData,proposeReadonlySourceProfileReexportSuccessors} from './ordered-text-map-callers-20261102-source-storage-reexport-profile.mjs';
 import {transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url)),archive=join(root,'tools/translation/source-profiles/ordered-text-map-callers-20261102-source-storage-reexport/ordered-text-map-callers-20261102-source-storage-reexport-source-history.json.gz');
@@ -16,5 +17,5 @@ test('compressed read options are own DATA and accessor/proxy refusal does not i
 });
 test('complete source correction packet retains original sources, inverses and reparsed CST',{timeout:60000},()=>{
  const value=proposeReadonlySourceProfileReexportSuccessors(),rows=readonlySourceProfileReexportSourceData();assert.equal(value.files.length,6);assert.equal(rows.length,6);assert.equal(value.semanticAuthority,false);assert.equal(value.sourceInstalled,false);
- for(const row of value.files){assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const stage of row.stages){assert.equal(stage.history.inverse,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.history.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.history.afterMeta).source,stage.after);}assert.equal(readFileSync(join(root,row.path),'utf8'),row.after);}
+ const sdk=new Map(readonlySourceProfileSdkSourceData().map(row=>[row.path,row]));for(const row of value.files){assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const stage of row.stages){assert.equal(stage.history.inverse,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.history.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.history.afterMeta).source,stage.after);}const next=sdk.get(row.path);if(next)assert.equal(next.before,row.after);assert.equal(readFileSync(join(root,row.path),'utf8'),next?.after??row.after);}
 });

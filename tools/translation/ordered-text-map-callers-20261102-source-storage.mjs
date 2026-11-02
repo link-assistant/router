@@ -67,8 +67,8 @@ export function readSourceProfileFileSync(path,options){
 /** Retain actual compressed FD/metadata/index custody for strong original
  * readers. The returned source handle is DATA custody, never NodeStats or proof. */
 export function captureReadonlySourceProfile(path,{maximum=LIMITS.fileBytes,retainBytes=true}={}){
- const location=address(path);if(!location||HOT.includes(location.logical)||!active(location.root))return null;let original,bytes,poisoned=false,primary;
- withReadonlySourceProfiles(location.root,token=>{const value=frame(token);bytes=readReadonlySourceProfileBytes(token,location.logical,{maximum});original=value.sourceIdentitySnapshot??(value.sourceIdentitySnapshot={before:value.before,descriptor:Buffer.from(value.descriptorRaw),absentGit:value.gitCurrent.absentPaths.slice(),files:[...value.watch.files.map(row=>({path:row.path,name:row.name,stat:row.stat,sha256:hash(row.raw)})),...value.gitCurrent.identityRows,value.descriptorIdentity],directories:[...value.watch.directories.map(row=>({path:row.path,stat:row.stat})),...value.originDirectories]});});
+ const location=address(path);if(!location||HOT.includes(location.logical)||!active(location.root))return null;let original,bytes,mode,gitBlob,poisoned=false,primary;
+ withReadonlySourceProfiles(location.root,token=>{const value=frame(token);bytes=readReadonlySourceProfileBytes(token,location.logical,{maximum});mode=value.rows.get(location.logical).mode;gitBlob=value.rows.get(location.logical).gitBlob;original=value.sourceIdentitySnapshot??(value.sourceIdentitySnapshot={before:value.before,descriptor:Buffer.from(value.descriptorRaw),absentGit:value.gitCurrent.absentPaths.slice(),files:[...value.watch.files.map(row=>({path:row.path,name:row.name,stat:row.stat,sha256:hash(row.raw)})),...value.gitCurrent.identityRows,value.descriptorIdentity],directories:[...value.watch.directories.map(row=>({path:row.path,stat:row.stat})),...value.originDirectories]});});
  const originalDigest=hash(bytes),byteLength=bytes.length;if(!retainBytes)bytes=null;
  const current=()=>{if(poisoned)throw primary;try{return withReadonlySourceProfiles(location.root,token=>{const value=frame(token);if(JSON.stringify(value.before)!==JSON.stringify(original.before)||!value.descriptorRaw.equals(original.descriptor))fail('retained actual source/index/descriptor origin changed');
   // Original FD/ancestor snapshots are validated at first use and again at
@@ -76,7 +76,7 @@ export function captureReadonlySourceProfile(path,{maximum=LIMITS.fileBytes,reta
   // compressed parts, descriptor/Git controls and selected ancestors. This
   // invocation-only source census is discarded with the operation frame.
   if(!value.originScopes.has(original)){closeRetainedOrigin(value.root,original);value.originScopes.add(original);}const currentBytes=readReadonlySourceProfileBytes(token,location.logical,{maximum});if(currentBytes.length!==byteLength||hash(currentBytes)!==originalDigest)fail('complete retained original logical source changed');return currentBytes;});}catch(error){if(!poisoned){poisoned=true;primary=error;}throw primary;}};
- return Object.freeze({bytes:retainBytes?bytes:undefined,byteLength,sha256:originalDigest,read:current,requireCurrent:current,close:current,sourceAuthority:false,semanticAuthority:false});
+ return Object.freeze({bytes:retainBytes?bytes:undefined,byteLength,mode,gitBlob,sha256:originalDigest,read:current,requireCurrent:current,close:current,sourceAuthority:false,semanticAuthority:false});
 }
 
 function closeRetainedOrigin(root,original){

@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
+import {matchesExactSourceEpoch} from './exact-source-compiler-epochs-20261103.mjs';
 import {withCurrentCanonicalMapCompiler} from './ordered-map-canonical-activation-20261102.mjs';
 import {compactSparseGit} from './compact-sparse-git-io-20261102.mjs';
 import {orderedTextMapUnitParentSourceData} from './ordered-text-map-callers-20261102-unit-profile.mjs';
@@ -14,7 +15,7 @@ import {orderedTextMapCanonicalParentSourceData} from './ordered-text-map-canoni
 import {orderedTextMapCallerParentSourceData} from './ordered-text-map-callers-20261102-profile.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 test('complete current29 cohort uses original installed source without a compiler clone',{timeout:60000},()=>{
- const rows=[...orderedTextMapCallerParentSourceData(),...orderedTextMapCanonicalParentSourceData(),...orderedTextMapUnitParentSourceData()];assert.equal(rows.length,29);for(const row of rows)assert.equal(readFileSync(join(root,row.path),'utf8'),row.after);
+ const rows=[...orderedTextMapCallerParentSourceData(),...orderedTextMapCanonicalParentSourceData(),...orderedTextMapUnitParentSourceData()];assert.equal(rows.length,29);for(const row of rows)assert.equal(matchesExactSourceEpoch(row,readFileSync(join(root,row.path),'utf8'),{root}),true);
  let calls=0;const result=withCurrentCanonicalMapCompiler({sourceRoot:root,deadline:performance.now()+60000},(token,scope)=>{calls++;assert.equal(token,null);assert.equal(scope.installedSource,true);assert.equal(scope.root,root);assert.equal(scope.sourceAuthority,false);assert.equal(scope.semanticAuthority,false);return 'actual-source-only';});assert.equal(result,'actual-source-only');assert.equal(calls,1);
 });
 test('receiving package has its own actual committed source tree without inheriting original authority',{timeout:60000},()=>{
