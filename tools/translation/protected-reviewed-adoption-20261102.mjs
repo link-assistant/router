@@ -61,8 +61,8 @@ function observeNativeRoots(frame,borrowed,failed=false,primary){
 function nativeTargets(frame,borrowed,targets,descriptors,direct){
  let captured,stable,fds,failed=false,primary;
  try{captured=captureAbsoluteNativeMutationTargets({requestedRoot:frame.root,canonicalRoot:frame.root,targets});stable=Object.freeze(captured.map(row=>row.canonicalTarget));fds=direct?Object.freeze(captureProtectedNativeDescriptorNumbers(descriptors)):[];}catch(error){failed=true;primary=error;poison(frame,error);}
- if(!failed){for(const current of nativeFrames(frame))try{if(direct)current.policy.allowNativeDirectWrites({root:current.root,targets:stable,descriptors:fds});else current.policy.allowNativeMutationPaths({root:current.root,targets:stable});}catch(error){if(!failed){failed=true;primary=error;}else secondary();}
-  try{if(direct)borrowed.direct(frame.root,stable,fds);else borrowed.entries(frame.root,stable);}catch(error){if(!failed){failed=true;primary=error;}else secondary();}
+ if(!failed){for(const current of nativeFrames(frame))try{if(direct==='stream')current.policy.allowNativeStreamWrites({root:current.root,descriptors:fds});else if(direct)current.policy.allowNativeDirectWrites({root:current.root,targets:stable,descriptors:fds});else current.policy.allowNativeMutationPaths({root:current.root,targets:stable});}catch(error){if(!failed){failed=true;primary=error;}else secondary();}
+  try{if(direct==='stream')borrowed.streams(frame.root,fds);else if(direct)borrowed.direct(frame.root,stable,fds);else borrowed.entries(frame.root,stable);}catch(error){if(!failed){failed=true;primary=error;}else secondary();}
   if(failed)for(const current of nativeFrames(frame))poison(current,primary);
  }
  const observed=observeNativeRoots(frame,borrowed,failed,primary);if(observed.failed)throw observed.primary;return captured;
@@ -89,6 +89,7 @@ function nativeScope(context,borrowed){
   direct(targets,operation){return act(()=>nativeMutation(frame,vetoLease,targets,[],true,operation));},
   entries(targets,operation){return act(()=>nativeMutation(frame,vetoLease,targets,[],false,operation));},
   descriptor(fd,operation){return act(()=>{try{admit(frame,()=>nativeCallback(operation));}catch(error){const observed=observeNativeRoots(frame,vetoLease,true,error);throw observed.primary;}return nativeMutation(frame,vetoLease,[],[fd],true,()=>operation(fd));});},
+  streamDescriptor(fd,operation){return act(()=>{try{admit(frame,()=>nativeCallback(operation));}catch(error){const observed=observeNativeRoots(frame,vetoLease,true,error);throw observed.primary;}return nativeMutation(frame,vetoLease,[],[fd],'stream',()=>operation(fd));});},
   withOpen(target,flags,mode,operation){return act(()=>{
    let fd,acquired=false,value,failed=false,primary;
    try{admit(frame,()=>nativeCallback(operation));const captured=nativeTargets(frame,vetoLease,[target],[],true);fd=mode===undefined?openSync(captured[0].canonicalTarget,flags):openSync(captured[0].canonicalTarget,flags,mode);acquired=true;

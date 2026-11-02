@@ -28,7 +28,9 @@ function closingFailure(primary,error,count){
 function descriptorNumbers(value){if(!Array.isArray(value)||types.isProxy(value)||value.length>DIRECT_WRITE_ALIAS_LIMITS.paths)fail('bounded own descriptor array required');const fields=Object.getOwnPropertyDescriptors(value);if(Reflect.ownKeys(fields).length!==value.length+1)fail('dense own descriptor array required');const result=[];for(let at=0;at<value.length;at++){const field=fields[at];if(!field||!Object.hasOwn(field,'value')||!Number.isSafeInteger(field.value)||field.value<0)fail('primitive actual file descriptor required');result.push(field.value);}return [...new Set(result)];}
 export function assertProtectedDirectWriteTargets({root,protectedNames,paths}={}){return observeProtectedDirectWriteTargets({root,protectedNames,paths,descriptors:[]});}
 export function assertProtectedNativeDirectWriteTargets({root,protectedNames,paths,descriptors=[]}={}){return observeProtectedDirectWriteTargets({root,protectedNames,paths,descriptors});}
-function observeProtectedDirectWriteTargets({root,protectedNames,paths,descriptors}){
+export function assertProtectedNativeStreamWriteDescriptors({root,protectedNames,descriptors=[]}={}){return observeProtectedDirectWriteTargets({root,protectedNames,paths:[],descriptors,streamDescriptors:true});}
+function descriptorStamp(stat,streamDescriptors){return streamDescriptors&&!stat.isFile()?[stat.dev,stat.ino,stat.mode,stat.uid,stat.gid].map(String):stamp(stat);}
+function observeProtectedDirectWriteTargets({root,protectedNames,paths,descriptors,streamDescriptors=false}){
  protectedNames=strings(protectedNames,DIRECT_WRITE_ALIAS_LIMITS.protectedPaths);paths=strings(paths,DIRECT_WRITE_ALIAS_LIMITS.paths);
  const names=[...new Set(protectedNames)],destinations=[...new Set(paths)],fds=descriptorNumbers(descriptors);
  if(!destinations.length&&!fds.length)return {nodes:0,steps:0,retainedBytes:0,closingChecks:0,sourceAuthority:false,semanticAuthority:false};
@@ -65,7 +67,7 @@ function observeProtectedDirectWriteTargets({root,protectedNames,paths,descripto
   for(const name of names){const value=endpoint(resolve(root,name));protectedEndpoints.set(value.path,name);if(value.stat)protectedInodes.set(inode(value.stat),name);
    if(value.missing){const group=value.missing.parent+'\0'+value.missing.tail.length,list=missingByParent.get(group)??[];list.push({name,...value.missing});missingByParent.set(group,list);}
   }
-  for(const fd of fds){step();const stat=fs.fstatSync(fd,{bigint:true}),signature=stamp(stat);descriptorSnapshots.set(fd,signature);if(!stat.isFile())fail('ordinary actual file descriptor required');retained+=96+signature.reduce((sum,value)=>sum+Buffer.byteLength(value),0);if(retained>DIRECT_WRITE_ALIAS_LIMITS.rawBytes)fail('complete FD metadata raw-byte bound exceeded');const protectedName=protectedInodes.get(inode(stat));if(protectedName!==undefined)fail('authored/unmanaged or policy actual FD alias retained: '+fd+' -> '+protectedName);}
+  for(const fd of fds){step();const stat=fs.fstatSync(fd,{bigint:true}),signature=descriptorStamp(stat,streamDescriptors);descriptorSnapshots.set(fd,signature);if(!streamDescriptors&&!stat.isFile())fail('ordinary actual file descriptor required');retained+=96+signature.reduce((sum,value)=>sum+Buffer.byteLength(value),0);if(retained>DIRECT_WRITE_ALIAS_LIMITS.rawBytes)fail('complete FD metadata raw-byte bound exceeded');const protectedName=protectedInodes.get(inode(stat));if(protectedName!==undefined)fail('authored/unmanaged or policy actual FD alias retained: '+fd+' -> '+protectedName);}
   for(const path of destinations){const value=endpoint(resolve(root,path));let protectedName=protectedEndpoints.get(value.path)??(value.stat?protectedInodes.get(inode(value.stat)):null);
    if(value.missing){const peers=missingByParent.get(value.missing.parent+'\0'+value.missing.tail.length)??[];
     for(const peer of peers){if(missingKey(peer)===missingKey(value.missing)){protectedName=peer.name;break;}
@@ -84,7 +86,7 @@ function observeProtectedDirectWriteTargets({root,protectedNames,paths,descripto
   if(row.link!==null)checks.push(()=>{const link=fs.readlinkSync(row.path,{encoding:'buffer'});if(!Buffer.isBuffer(link)||!link.equals(row.link))fail('complete symlink source changed before closing');},()=>{if(!equal(stamp(fs.lstatSync(row.path,{bigint:true})),row.signature))fail('symlink epoch changed before closing');});
   for(const check of checks)try{closingChecks++;check();}catch(error){if(!closingCount)firstClosing=error;closingCount++;}
  }
- for(const [fd,signature]of descriptorSnapshots)try{closingChecks++;if(!equal(stamp(fs.fstatSync(fd,{bigint:true})),signature))fail('actual descriptor epoch changed before closing');}catch(error){if(!closingCount)firstClosing=error;closingCount++;}
+ for(const [fd,signature]of descriptorSnapshots)try{closingChecks++;if(!equal(descriptorStamp(fs.fstatSync(fd,{bigint:true}),streamDescriptors),signature))fail('actual descriptor epoch changed before closing');}catch(error){if(!closingCount)firstClosing=error;closingCount++;}
  if(answer)answer.closingChecks=closingChecks;
  descriptorSnapshots.clear();snapshots.clear();protectedInodes.clear();protectedEndpoints.clear();missingByParent.clear();
  if(failed){if(closingCount)closingFailure(primary,firstClosing,closingCount);throw primary;}if(closingCount){if(closingCount===1)throw firstClosing;const error=new AggregateError([firstClosing],'Alias metadata closing failures: '+closingCount);Object.defineProperty(error,'failureCount',{value:closingCount,enumerable:true});throw error;}return answer;

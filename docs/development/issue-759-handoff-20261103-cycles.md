@@ -393,3 +393,22 @@ mkdtemp still has an explicit pre-creation generated-name gap, and secondary
 stderr, Python and arbitrary child/TAP-consumer sinks remain OPEN. No wrapper
 qualifies them. Frozen documents describe proposals; this records installation.
 All verification UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+## Actual additive native stream FD source APIs
+
+Root reviewed and installed eight complete stream-FD parent successors and22
+frozen authored paths. Four operational parents add real native kind/identity/
+protected-inode checks, common fixed-root policy admission, every active/retained
+sync-root veto and general async streamDescriptor. The old regular-file-only
+API/ignored fields/refusals remain. Borrowed streams are never closed. Three
+named history providers and the original whole source-error case preserve all
+historical afterimages, currentAfter chains and complete CST/inverses.
+
+This is intermediate source adoption: actual Node stdout/stderr forwarding and
+independent script-root union are the next frozen successor. Secondary stderr2
+diagnostics, native generated-name admission, Python and arbitrary children
+remain independent OPEN sinks. Source review also identified that regular-stream
+full size/clock stamps may reject legitimate peer traffic; an additive stream
+identity correction is assigned, without changing the original regular-file API.
+Frozen documents record proposals; this records installation. All verification
+UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.

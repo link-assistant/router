@@ -1,3 +1,4 @@
+import {knownProtectedNativeStreamFdSuccessor} from './protected-native-stream-fds-20261103-history.mjs';
 import {knownProtectedSyncNativeCliSuccessor} from './protected-sync-native-cli-20261103-history.mjs';
 import {knownProtectedExternalMutationSuccessor} from './protected-external-mutations-20261102-history.mjs';
 // Complete named source equations DATA. Never native or mutation permission.
@@ -21,6 +22,6 @@ export function proposeProtectedContainedDirectSources(input,{root=ROOT}={}){
 }
 export function knownProtectedContainedDirectSuccessor({root=ROOT,path,before}={}){
  const name=FILES.find(name=>path==='tools/translation/'+name.name);if(!name){if(path==='tools/translation/protected-preparer-writers-20261102-alias.mjs'||path==='tools/translation/protected-contained-direct-20261102-history.mjs')return knownProtectedExternalMutationSuccessor({root,path,before});return null;}const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
- try{const pair=images(capture,name),current=capture.capture(path).source,later=current===pair.after?null:knownProtectedExternalMutationSuccessor({root,path,before:pair.after})??knownProtectedSyncNativeCliSuccessor({root,path,before:pair.after});need(current===pair.after||later&&later.currentAfter===current,'actual full contained-native/external-mutation source successor differs');result=before===pair.before?{...equation(name,pair.before,pair.after),current,currentAfter:current,laterHistories:later?[later]:[]}:before===pair.after?later:null;if(result)boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}
+ try{const pair=images(capture,name),current=capture.capture(path).source,later=current===pair.after?null:knownProtectedExternalMutationSuccessor({root,path,before:pair.after})??knownProtectedSyncNativeCliSuccessor({root,path,before:pair.after})??knownProtectedNativeStreamFdSuccessor({root,path,before:pair.after});need(current===pair.after||later&&later.currentAfter===current,'actual full contained-native/external-mutation source successor differs');result=before===pair.before?{...equation(name,pair.before,pair.after),current,currentAfter:current,laterHistories:later?[later]:[]}:before===pair.after?later:null;if(result)boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}
  try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
 }

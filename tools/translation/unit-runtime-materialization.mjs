@@ -3,7 +3,7 @@ import {captureContainedNativeDirectTargets} from './protected-contained-direct-
 // Source-unit synchronization with fresh Git baselines and complete proposals.
 // No persisted source/hash/verdict cache supplies a translation decision.
 import * as fs from 'node:fs';
-import {assertProtectedMutationPaths,directMutationOutputPaths,assertProtectedDirectWriteTargets,assertProtectedStagedMutationTargets,assertProtectedNativeStagedMutationTargets,assertProtectedNativeDirectWriteTargets} from './protected-preparer-writers-20261102-alias.mjs';
+import {assertProtectedMutationPaths,directMutationOutputPaths,assertProtectedDirectWriteTargets,assertProtectedStagedMutationTargets,assertProtectedNativeStagedMutationTargets,assertProtectedNativeDirectWriteTargets,assertProtectedNativeStreamWriteDescriptors} from './protected-preparer-writers-20261102-alias.mjs';
 import {ownSourceFailureField} from './source-error-fields-20261102.mjs';
 import {resolve,dirname,posix} from 'node:path';
 import {execFileSync} from 'node:child_process';
@@ -267,6 +267,7 @@ function captureProtectedSourcePolicy(requestedRoot){
   allowDirectWrites(fresh){return veto(()=>{if(fs.realpathSync(resolve(fresh.root))!==root)fail('fresh direct-writer root differs from protected-source policy');const paths=directMutationOutputPaths(fresh.outputs),protectedNames=[policyPath,...protectedPaths];assertProtectedMutationPaths({protectedNames,paths});assertProtectedDirectWriteTargets({root,protectedNames,paths});});},
   allowContainedDirectWrites(fresh){return veto(()=>{const captured=captureContainedNativeDirectTargets({requestedRoot:fresh.root,canonicalRoot:root,targets:fresh.targets});assertProtectedDirectWriteTargets({root,protectedNames:[policyPath,...protectedPaths],paths:captured.map(row=>row.canonicalTarget)});return captured;});},
   allowNativeDirectWrites(fresh){return veto(()=>{const captured=captureAbsoluteNativeMutationTargets({requestedRoot:fresh.root,canonicalRoot:root,targets:fresh.targets});assertProtectedNativeDirectWriteTargets({root,protectedNames:[policyPath,...protectedPaths],paths:captured.map(row=>row.canonicalTarget),descriptors:fresh.descriptors??[]});return captured;});},
+  allowNativeStreamWrites(fresh){return veto(()=>{captureAbsoluteNativeMutationTargets({requestedRoot:fresh.root,canonicalRoot:root,targets:[]});return assertProtectedNativeStreamWriteDescriptors({root,protectedNames:[policyPath,...protectedPaths],descriptors:fresh.descriptors??[]});});},
   allowNativeMutationPaths(fresh){return veto(()=>{const captured=captureAbsoluteNativeMutationTargets({requestedRoot:fresh.root,canonicalRoot:root,targets:fresh.targets});assertProtectedNativeStagedMutationTargets({root,protectedNames:[policyPath,...protectedPaths],paths:captured.map(row=>row.canonicalTarget)});return captured;});},
   close(){if(closed)fail('protected-source policy already closed');try{verify();}finally{closed=true;protectedPaths.clear();}},
  });

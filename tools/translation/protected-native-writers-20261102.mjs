@@ -129,7 +129,7 @@ export function captureActiveNativeSourceVetoLease(){
  const admission=(root,targets,descriptors,direct)=>{
   alive();const rows=roots();let result,failed=false,primary;
   try{const captured=captureAbsoluteNativeMutationTargets({requestedRoot:root,canonicalRoot:fs.realpathSync(resolve(root)),targets}),stable=Object.freeze(captured.map(row=>row.canonicalTarget)),fds=direct?Object.freeze(captureProtectedNativeDescriptorNumbers(descriptors)):[];result=captured;
-   for(const current of rows)try{if(direct)current.policy.allowNativeDirectWrites({root:current.root,targets:stable,descriptors:fds});else current.policy.allowNativeMutationPaths({root:current.root,targets:stable});}catch(error){if(!failed){failed=true;primary=error;}else secondary(primary,error);}
+   for(const current of rows)try{if(direct==='stream')current.policy.allowNativeStreamWrites({root:current.root,descriptors:fds});else if(direct)current.policy.allowNativeDirectWrites({root:current.root,targets:stable,descriptors:fds});else current.policy.allowNativeMutationPaths({root:current.root,targets:stable});}catch(error){if(!failed){failed=true;primary=error;}else secondary(primary,error);}
   }catch(error){failed=true;primary=error;}
   if(failed)record(rows,primary);try{observe(rows);}catch(error){if(!failed){failed=true;primary=error;}else secondary(primary,error);}if(failed)throw primary;return result;
  };
@@ -138,6 +138,7 @@ export function captureActiveNativeSourceVetoLease(){
   verify(){alive();return observe(roots());},
   source(operation){alive();const rows=roots();let value,failed=false,primary;try{observe(rows);value=invoke(operation);}catch(error){failed=true;primary=error;record(rows,error);}try{observe(rows);}catch(error){if(!failed){failed=true;primary=error;}else secondary(primary,error);}if(failed)throw primary;return value;},
   direct(root,targets,descriptors=[]){return admission(root,targets,descriptors,true);},
+  streams(root,descriptors){return admission(root,[],descriptors,'stream');},
   entries(root,targets){return admission(root,targets,[],false);},
   close(){alive();try{observe(roots());}finally{live=false;retained.length=0;}},
  });
