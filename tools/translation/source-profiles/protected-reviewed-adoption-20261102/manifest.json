@@ -1,0 +1,62 @@
+{
+  "schema": "protected-reviewed-adoption-20261102-manifest-v1",
+  "predecessor": "4721592204709a63c35b2fe00e0b63879e4ee54a",
+  "parents": [
+    {
+      "role": "adoption",
+      "path": "tools/translation/apply-reviewed-core-adoption.mjs",
+      "before": "adoption.before.txt",
+      "after": "adoption.after.txt",
+      "beforeBytes": 30941,
+      "afterBytes": 32359,
+      "beforeSha256": "aa4b6da248a93d86e5a64c6ebc0d456f5e309a4e82cba032674352374ec8a032",
+      "afterSha256": "c50cedbf5d03f28226c7687d3cfcfa6feadbe905f83165de9a47de91cf070ee3",
+      "physicalOrigin": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-storage-repair-20261021/tools/translation/apply-reviewed-core-adoption.mjs",
+      "committedBlob": "74f05fe982a854e9d1ded9f6a1ce053a0d74eb8c"
+    },
+    {
+      "role": "layout-producer",
+      "path": "tools/translation/prepare-core-adoption-application-layout.mjs",
+      "before": "layout-producer.before.txt",
+      "after": "layout-producer.after.txt",
+      "beforeBytes": 7328,
+      "afterBytes": 8128,
+      "beforeSha256": "69820a57331bf876a30261f9a2724fca7f77fb2d2e4b1de9dca4eefce591e3dd",
+      "afterSha256": "08019dd682664c7a073658304a26a0ef968298912d027d7913b254eef08342a0",
+      "physicalOrigin": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-storage-repair-20261021/tools/translation/prepare-core-adoption-application-layout.mjs",
+      "observedRevision": "861c380c4a038144907766f344e3e5645019439f",
+      "committedBlob": "043106d4be730bb058ec7c1a62fbc9fc9b18b5d9"
+    },
+    {
+      "role": "application-case",
+      "path": "tools/translation/test/core-adoption-application.test.mjs",
+      "before": "application-case.before.txt",
+      "after": "application-case.after.txt",
+      "beforeBytes": 23786,
+      "afterBytes": 25383,
+      "beforeSha256": "3f1cf62a0e7fdd232d5706e5d5ae2f8082c183a50839349478ea321e99c0cae7",
+      "afterSha256": "d2d997a96e1db781dd35dd2cb8105f4ab43a75324498bc6d03a564c2c501f1d9",
+      "physicalOrigin": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-storage-repair-20261021/tools/translation/test/core-adoption-application.test.mjs",
+      "observedRevision": "861c380c4a038144907766f344e3e5645019439f",
+      "committedBlob": "b41ecd5b2d5a1be58dca52d567d15de069d4c5b0"
+    },
+    {
+      "role": "layout-case",
+      "path": "tools/translation/test/core-adoption-application-layout.test.mjs",
+      "before": "layout-case.before.txt",
+      "after": "layout-case.after.txt",
+      "beforeBytes": 7149,
+      "afterBytes": 7628,
+      "beforeSha256": "7d00208b8c144ef012601a3c9a0839a20c3f684fbf9e3feabb7765a3a0aec0c9",
+      "afterSha256": "262dce0a62a7700b06759138969cb057b4280778579b13e330c3bf960a4825a5",
+      "physicalOrigin": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-storage-repair-20261021/tools/translation/test/core-adoption-application-layout.test.mjs",
+      "observedRevision": "861c380c4a038144907766f344e3e5645019439f",
+      "committedBlob": "9c9b6fa9360516a5aa8a46f515cb36bc07bde058"
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "requiresCommonProposal": "protected-external-mutations-20261102",
+  "currentSharedPredecessor": "861c380c4a038144907766f344e3e5645019439f"
+}

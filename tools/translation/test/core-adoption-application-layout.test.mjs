@@ -19,7 +19,7 @@ function git(root,...args){return execFileSync('git',['-C',root,'-c','core.hooks
 test('application layout is derived from complete native selections and both full CST inverses',{timeout:60000},()=>{
  const plan=prepareCoreAdoptionApplicationLayout();assert.equal(plan.semanticAuthority,false);assert.equal(plan.changedResourceBounds,false);assert.equal(plan.acrossInvocationCache,false);
  assert.equal(plan.files.length,1);
- for(const row of plan.files){assert.equal(row.current,row.after);assert.equal(row.inverse,row.before);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);
+ for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.after,fs.readFileSync(join(ROOT,'tools/translation/source-profiles/protected-reviewed-adoption-20261102/adoption.before.txt'),'utf8'));assert.equal(row.currentAfter,fs.readFileSync(join(ROOT,row.path),'utf8'));assert.equal(row.laterHistories[0].before,row.after);assert.equal(row.laterHistories[0].inverse,row.after);assert.equal(row.laterHistories[0].currentAfter,row.currentAfter);assert.equal(row.currentNativeBindings.nativeSemanticScopeChecked,true);assert.equal(row.inverse,row.before);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);
   for(const [index,stage]of row.stages.entries())assert.equal(stage.inverse,index?row.language:row.before);
   assert.deepEqual(row.nativeSelections.map(selection=>selection.id),['guard-all-tracked-nested-cargo','classify-exact-cargo-basenames','census-actual-rust-package','install-only-actual-production-prefix','bind-shared-operational-layout']);
  }

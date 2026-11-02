@@ -561,3 +561,45 @@ Every execution, receiving/storage/platform/resource and Rust result is UNRUN.
 The external mutation/async reviewed-adoption seven-parent batch is being
 finalized separately, preserving prior actual FD ownership and policy limits.
 No new acceptance row closes:11/70 DRAFTED,59 OPEN; CI NOT_INSPECTED.
+
+## External native mutations and actual reviewed apply/recovery
+
+Root integrated seven complete parent successors: common unit policy, native
+alias observer, finite contained-history bridge, actual reviewed applier,
+original layout producer and two complete existing application/receiving cases.
+The two prefixes retain26 authored helper/history/case/doc/full-image paths;
+all prior d01/4febb source epochs and ordinary-relative behavior remain intact.
+No project, parser, translator, compiler or case was executed while copying
+these source afterimages.
+
+Additive native absolute entry and live-FD admissions reuse the captured private
+protected set. The old direct observer still ignores unknown descriptors fields
+and never invokes their getters. The new explicit FD observer closes every
+captured descriptor metadata observation, including failure. Native namespace
+checks retain actual final-parent spelling/census and stable intermediate
+directory identities, avoiding unrelated exterior sibling clock changes. All
+original metadata/work/resource and ambiguous-name refusals remain explicit.
+
+Actual async apply/recover captures policy before fresh production and awaits.
+Every actual target is preflighted, both source and destination rename entries
+are admitted, and exact external journal child opens/writes/renames are guarded.
+An owned-open helper checks actual path then live FD and closes a successfully
+opened descriptor on failure before ownership transfer. Actual write/chmod
+checks use the FD, preserving legitimate writes to an unprotected open inode
+after its pathname changes. A nonmutating outside-root bracket does not pretend
+that the containing journal directory entry itself is renamed or removed.
+Nested async leases expire independently, and every owner checks/closes policy
+while preserving falsy/frozen primary errors. Original durable journaling,
+fsync, modes,384MiB accounting, interruption/manual recovery and ordinary error
+journal behavior remain; no all-files atomicity or crash-proof guarantee is made.
+
+The original layout producer now retains historical after/inverse separately
+from the named protected currentAfter and verifies actual copied native imports.
+Its actual CLI writes that currentAfter through existing source protection.
+Original whole application cases/deadlines, actual interrupted rename injection,
+all five imports and the protected sibling-journal fixture are retained.
+See [external mutation](protected-external-mutations-20261102.md) and
+[reviewed-adoption](protected-reviewed-adoption-20261102.md) source contracts.
+Platform/resource/native/case/receiving qualification remains UNRUN. Complete
+sink coverage and broad forward-custody wider-policy compatibility stay OPEN;
+counts remain11/70 DRAFTED,59 OPEN and CI NOT_INSPECTED.

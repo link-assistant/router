@@ -1,3 +1,4 @@
+import {withProtectedReviewedAdoption,guardReviewedAdoptionExternal,reviewedAdoptionRetainedPolicyBytes,withReviewedAdoptionClosing,guardReviewedAdoptionStaged,guardReviewedAdoptionDescriptor,openReviewedAdoptionDescriptor,withReviewedAdoptionOutside} from './protected-reviewed-adoption-20261102.mjs';
 // Operational application of explicitly selected independently reviewed bytes.
 // Report digests select data; they never issue parser/type/owner permissions.
 import * as fs from 'node:fs';
@@ -35,12 +36,11 @@ need(!st.isSymbolicLink(),'linked path: '+path);
 function read(path,max=128*M){const st=fs.lstatSync(path);
 need(st.isFile()&&!st.isSymbolicLink()&&st.size<=max,'bounded regular file: '+path);
 const fd=fs.openSync(path,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);
-try{need(same(st,fs.fstatSync(fd)),'named/open file changed');
+return withReviewedAdoptionClosing(()=>{need(same(st,fs.fstatSync(fd)),'named/open file changed');
 const bytes=fs.readFileSync(fd);
 need(bytes.length===st.size&&same(st,fs.fstatSync(fd))&&same(st,fs.lstatSync(path)),'complete file changed');
 return bytes;
-}finally{fs.closeSync(fd);
-}}
+},()=>fs.closeSync(fd));}
 function json(path,max){const raw=read(path,max);
 const text=raw.toString('utf8');
 need(Buffer.from(text).equals(raw),'strict UTF8 JSON');
@@ -72,7 +72,7 @@ need(!fs.existsSync(output)&&fs.realpathSync(dirname(output))===dirname(output),
 for(const a of [root,run])need(output!==a&&!output.startsWith(a+'/')&&!a.startsWith(output+'/'),'disjoint output');
 return {...input,root,run,output};
 }
-function byteBudget(roots){let total=0,entries=0;
+function byteBudget(roots){let total=reviewedAdoptionRetainedPolicyBytes(),entries=0;
 for(const root of roots){const stack=[root];
 while(stack.length){const p=stack.pop(),s=fs.lstatSync(p);
 need(++entries<=30000,'combined evidence entries');
@@ -92,27 +92,24 @@ need(Array.isArray(extra.paths),'review temporary census');
 for(const p of extra.paths)if(!roots.includes(p)&&fs.existsSync(p))roots.push(physicalRoot(p));
 }return roots;
 }
-function durable(path,bytes,mode=0o600){const fd=fs.openSync(path,'wx',mode);
-try{fs.fchmodSync(fd,mode);
-fs.writeFileSync(fd,bytes);
+function durable(path,bytes,mode=0o600){return guardReviewedAdoptionExternal(path,()=>{const fd=openReviewedAdoptionDescriptor(path,'wx',mode);
+withReviewedAdoptionClosing(()=>{guardReviewedAdoptionDescriptor(path,fd,actual=>fs.fchmodSync(actual,mode));
+guardReviewedAdoptionDescriptor(path,fd,actual=>fs.writeFileSync(actual,bytes));
 fs.fsyncSync(fd);
-}finally{fs.closeSync(fd);
-}need(read(path,MAX).equals(bytes),'full staged byte readback');
-}
+},()=>fs.closeSync(fd));need(read(path,MAX).equals(bytes),'full staged byte readback');
+});}
 function syncDir(path){const fd=fs.openSync(path,fs.constants.O_RDONLY);
-try{fs.fsyncSync(fd);
-}finally{fs.closeSync(fd);
-}}
-function journal(output,state){const raw=Buffer.from(wire(state)),pending=join(output,'state-'+state.events.length+'.pending.json');
+return withReviewedAdoptionClosing(()=>{fs.fsyncSync(fd);
+},()=>fs.closeSync(fd));}
+function journal(output,state){return withReviewedAdoptionOutside(output,()=>{const raw=Buffer.from(wire(state)),pending=join(output,'state-'+state.events.length+'.pending.json');
 durable(pending,raw);
-fs.renameSync(pending,join(output,'application-state.json'));
+guardReviewedAdoptionStaged([pending,join(output,'application-state.json')],(actualPending,actualState)=>fs.renameSync(actualPending,actualState));
 syncDir(output);
-const fd=fs.openSync(join(output,'events.jsonl'),'a');
-try{fs.writeSync(fd,wire({event:state.events.at(-1),stateSha256:hash(raw)}));
+const events=join(output,'events.jsonl'),fd=openReviewedAdoptionDescriptor(events,'a');
+withReviewedAdoptionClosing(()=>{guardReviewedAdoptionDescriptor(events,fd,actual=>fs.writeSync(actual,wire({event:state.events.at(-1),stateSha256:hash(raw)})));
 fs.fsyncSync(fd);
-}finally{fs.closeSync(fd);
-}return hash(raw);
-}
+},()=>fs.closeSync(fd));return hash(raw);
+});}
 function canonicalPacket(storage,ref){const raw=storage.read(ref),text=raw.toString('utf8');
 if(ref.kind==='rust-source')return text;
 need(ref.kind==='json','packet kind');
@@ -325,14 +322,15 @@ need(wire(row.storedPacket)===wire(expected)&&resolve(row.producerSource)===join
 return {storage,index,changes,original,sourceTree:sourceTree.rows};
 }
 
-export async function applyReviewedCoreAdoption(input){const o=options(input);
+export async function applyReviewedCoreAdoption(input){const o=options(input);return withProtectedReviewedAdoption(o.root,async protection=>{
 need(!git(o.root,['status','--porcelain']).length,'clean original worktree');
 const proof=receiptInputs(o);
 need(proof.report.capturedInputs===proof.captured.length,'complete report input count');
 await joinInputs(o.root,o.run,proof.captured,o.head);
 const checked=inspectPacket(o,proof.report,proof.plan);
 for(const [path,source]of checked.original)need(read(file(o.root,path)).equals(Buffer.from(source)),'full original Rust physical bytes');
-fs.mkdirSync(o.output,{mode:0o700});
+protection.preflight((function*(){for(const path of checked.changes.keys())yield file(o.root,path);})());
+protection.external(o.output,actual=>fs.mkdirSync(actual,{mode:0o700}));
 const roots=environment(o),state={schema:STATE,sourceHead:o.head,root:o.root,run:o.run,selection:{reviewDirectory:o.reviewDirectory,reviewMonitorDirectory:o.reviewMonitorDirectory,reviewSha256:o.reviewSha256,planSha256:o.planSha256,indexSha256:o.indexSha256},rows:[],events:[],complete:false,semanticAdmission:false,allFilesAtomic:false,sourceClosure:proof.report.sourceClosure};
 let sequence=0;
  const checkpoint=(kind,path=null)=>{state.events.push({sequence:sequence++,kind,path});
@@ -356,7 +354,7 @@ durable(pending,read(join(o.output,row.after)),row.mode);
 byteBudget(roots);
 row.status='intent';
 checkpoint('replace-intent',row.path);
-fs.renameSync(pending,target);
+protection.replace(pending,target,(actualPending,actualTarget)=>fs.renameSync(actualPending,actualTarget));
 syncDir(dirname(target));
 need(read(target).equals(read(join(o.output,row.after))),'full installed bytes');
 row.status='applied';
@@ -376,13 +374,13 @@ return {output:o.output,changedFiles:state.rows.length,stateSha256:hash(read(joi
 }catch(error){state.error=String(error);
 try{checkpoint('failed');
 }catch{}throw error;
-}}
+}});}
 
 export async function recoverReviewedCoreAdoption({application,output,stateSha256}){const old=physicalRoot(application),raw=read(file(old,'application-state.json'));
 need(hash(raw)===digest(stateSha256),'explicit reviewed recovery state digest');
 const state=JSON.parse(raw);
 need(state.schema===STATE&&typeof state.root==='string'&&typeof state.run==='string'&&Array.isArray(state.rows)&&state.rows.length<=1024,'recovery state');
-const o=options({...state.selection,root:state.root,run:state.run,head:state.sourceHead,output});
+const o=options({...state.selection,root:state.root,run:state.run,head:state.sourceHead,output});return withProtectedReviewedAdoption(o.root,async protection=>{
 const proof=receiptInputs(o),checked=inspectPacket(o,proof.report,proof.plan,true);
 statusPaths(o.root,new Set(checked.changes.keys()));
 need(state.rows.length===checked.changes.size&&new Set(state.rows.map(r=>r.path)).size===state.rows.length,'complete recoverable targets');
@@ -395,8 +393,8 @@ need(c&&hash(read(file(old,row.before)))===c.beforeSha256&&hash(read(file(old,ro
 const actual=read(file(o.root,row.path));
 need(actual.equals(Buffer.from(c.before))||actual.equals(Buffer.from(c.after)),'refuse unrecognized later source edit');
 if(actual.equals(Buffer.from(c.after)))replacements.set(row.path,c);
-}await joinInputs(o.root,o.run,proof.captured,o.head,replacements);
-fs.mkdirSync(o.output,{mode:0o700});
+}protection.preflight((function*(){for(const path of replacements.keys())yield file(o.root,path);})());await joinInputs(o.root,o.run,proof.captured,o.head,replacements);
+protection.external(o.output,actual=>fs.mkdirSync(actual,{mode:0o700}));
 const roots=[...environment(o),old];
 const receipt={schema:'reviewed-core-adoption-recovery-v1',sourceHead:o.head,application:old,stateSha256,restored:[],complete:false,automatic:false};
 try{for(const row of state.rows){const target=file(o.root,row.path),c=checked.changes.get(row.path);
@@ -406,7 +404,7 @@ const pending=join(o.output,'restore-'+receipt.restored.length+'.bin');
 durable(pending,Buffer.from(c.before),row.mode);
 need(fs.statSync(pending).dev===fs.statSync(dirname(target)).dev,'same-filesystem recovery');
 byteBudget(roots);
-fs.renameSync(pending,target);
+protection.replace(pending,target,(actualPending,actualTarget)=>fs.renameSync(actualPending,actualTarget));
 syncDir(dirname(target));
 need(read(target).equals(Buffer.from(c.before)),'full recovered source');
 receipt.restored.push(row.path);
@@ -421,7 +419,7 @@ return receipt;
 }catch(error){receipt.error=String(error);
 try{durable(join(o.output,'recovery-failed.json'),Buffer.from(wire(receipt)));
 }catch{}throw error;
-}}
+}});}
 
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){const args=process.argv.slice(2),mode=args.shift(),input={};
 need(['apply','recover'].includes(mode)&&args.length%2===0,'apply/recover with explicit named options');

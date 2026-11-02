@@ -1,3 +1,5 @@
+import {prepareProtectedReviewedAdoptionSuccessor} from './protected-reviewed-adoption-20261102-history.mjs';
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Operational layout substitutions; no parser, type or owner authority is added.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -53,14 +55,13 @@ export function prepareCoreAdoptionApplicationLayout({root=ROOT}={}){
  need(result.value===after,'ordered rule result');
  const stages=transportConcreteSourceEquations([{before,after:language,language:'JavaScript'},{before:language,after,language:'JavaScript'}]).map((stage,index)=>({...stage,phase:index?'repository':'language'}));
  need(stages[0].inverse===before&&stages[1].inverse===language,'whole serialized/reparsed CST inverses');
- const current=readFileSync(resolve(root,PATH),'utf8');need(current===before||current===after,'unknown complete current implementation');
- const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,PATH),after);
+ const current=readFileSync(resolve(root,PATH),'utf8'),successor=prepareProtectedReviewedAdoptionSuccessor({root,path:PATH,before:after});need(successor&&successor.before===after,'complete named reviewed-adoption source successor');const currentAfter=successor.currentAfter,laterHistories=[successor];need(current===before||current===after||current===currentAfter,'unknown complete current implementation');
+ const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,PATH),after),currentNativeBindings=currentAfter===after?nativeBindings:verifyNativeCopiedSourceBindings(ts,resolve(root,PATH),currentAfter);
  need(readFileSync(resolve(root,PATH),'utf8')===current&&readFileSync(resolve(root,ARCHIVE)).equals(packed),'physical inputs unchanged');
- return {schema:'core-adoption-application-layout-source-v1',files:[{path:PATH,before,language,after,current,inverse:before,nativeSelections:[...languageRows,...repositoryRows],stages,trace:result.trace,nativeBindings}],originalInputs:originals.files,semanticAuthority:false,changedResourceBounds:false,acrossInvocationCache:false};
+ return {schema:'core-adoption-application-layout-source-v1',files:[{path:PATH,before,language,after,current,currentAfter,laterHistories,inverse:before,currentNativeBindings,nativeSelections:[...languageRows,...repositoryRows],stages,trace:result.trace,nativeBindings}],originalInputs:originals.files,semanticAuthority:false,changedResourceBounds:false,acrossInvocationCache:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);need(args.length===1&&['--emit','--write','--check'].includes(args[0]),'use --emit|--write|--check');const plan=prepareCoreAdoptionApplicationLayout();
- if(args[0]==='--write')for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);
- if(args[0]==='--check')need(plan.files.every(row=>row.current===row.after),'generated source is stale');
+ const args=process.argv.slice(2);need(args.length===1&&['--emit','--write','--check'].includes(args[0]),'use --emit|--write|--check');const plan=args[0]==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareCoreAdoptionApplicationLayout();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)writer.write(row.path,row.currentAfter);return plan;}):prepareCoreAdoptionApplicationLayout();
+ if(args[0]==='--check')need(plan.files.every(row=>row.current===row.currentAfter),'generated source is stale');
  console.log(JSON.stringify(args[0]==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),qualified:false}));
 }

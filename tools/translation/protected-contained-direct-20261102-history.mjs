@@ -1,3 +1,4 @@
+import {knownProtectedExternalMutationSuccessor} from './protected-external-mutations-20261102-history.mjs';
 // Complete named source equations DATA. Never native or mutation permission.
 import {fileURLToPath} from 'node:url';
 import {createReconcileSourceCapture,boundedReconcileWireBytes,requireReconcile as need} from './paired-sync-reconcile-20261101-support.mjs';
@@ -18,7 +19,7 @@ export function proposeProtectedContainedDirectSources(input,{root=ROOT}={}){
  try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
 }
 export function knownProtectedContainedDirectSuccessor({root=ROOT,path,before}={}){
- const name=FILES.find(name=>path==='tools/translation/'+name.name);if(!name)return null;const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
- try{const pair=images(capture,name),current=capture.capture(path).source;need(current===pair.after,'actual full contained-native-direct source successor differs');result=before===pair.before?equation(name,pair.before,pair.after):null;if(result)boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}
+ const name=FILES.find(name=>path==='tools/translation/'+name.name);if(!name){if(path==='tools/translation/protected-preparer-writers-20261102-alias.mjs'||path==='tools/translation/protected-contained-direct-20261102-history.mjs')return knownProtectedExternalMutationSuccessor({root,path,before});return null;}const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
+ try{const pair=images(capture,name),current=capture.capture(path).source,later=current===pair.after?null:knownProtectedExternalMutationSuccessor({root,path,before:pair.after});need(current===pair.after||later&&later.currentAfter===current,'actual full contained-native/external-mutation source successor differs');result=before===pair.before?{...equation(name,pair.before,pair.after),current,currentAfter:current,laterHistories:later?[later]:[]}:before===pair.after?later:null;if(result)boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}
  try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
 }

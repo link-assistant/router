@@ -1,3 +1,5 @@
+import mutableFs from 'node:fs';
+import {syncBuiltinESMExports} from 'node:module';
 import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -122,6 +124,7 @@ try{fs.mkdirSync(root);
 fs.mkdirSync(run);
 fs.mkdirSync(temporary);
 write(join(root,'.gitignore'),'js/node_modules/\n');
+if(configuration.protectedJournalSibling){write(join(root,'translation/source-ownership.json'),{schema:'router-explicit-source-ownership-v1',authored:['protected-asset.mjs'],unmanaged:[]});fs.symlinkSync(join(home,'application','declared-protected-asset.mjs'),join(root,'protected-asset.mjs'));}
 for(const path of ['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs','src/translation_core/json_collections.rs','Cargo.toml','Cargo.lock'])write(join(root,path),fs.readFileSync(join(ROOT,repositorySourcePath(path,ROOT)),'utf8'));
 write(join(root,'src/lib.rs'),ORIGINAL+(configuration.twoTargets?'mod second;\n':''));
 if(configuration.twoTargets)write(join(root,'src/second.rs'),ORIGINAL.replace('pub mod translation_core;\n','').replace('fn picked(','fn second_picked('));
@@ -278,12 +281,12 @@ assert.equal(adapter.indexOf(expected,start+expected.length),-1);
 substitutions.push({before:[start,start+expected.length],after:[start,start+replacement.length],expected,replacement});
 adapter=adapter.slice(0,start)+replacement+adapter.slice(start+expected.length);
 };
-// Relocate the three genuine fixed imports without duplicating their helpers.
-for(const path of ['./core-adoption-packet-storage.mjs','./concrete-syntax-meta.mjs','./rule-pipeline.mjs']){
+// Relocate every actual fixed imported binding; retain complete source and inverse.
+for(const path of ['./core-adoption-packet-storage.mjs','./concrete-syntax-meta.mjs','./rule-pipeline.mjs','./repository-layout.mjs','./protected-reviewed-adoption-20261102.mjs']){
 replace("from '"+path+"'","from "+JSON.stringify(new URL(path,pathToFileURL(actualPath)).href));
 }
-const anchor="checkpoint('replace-intent',row.path);\nfs.renameSync(pending,target);";
-replace(anchor,"checkpoint('replace-intent',row.path);\nif(state.rows.some(other=>other.status==='applied'))throw Error('fixture interruption after durable second intent');\nfs.renameSync(pending,target);");
+const anchor="checkpoint('replace-intent',row.path);\nprotection.replace(pending,target,(actualPending,actualTarget)=>fs.renameSync(actualPending,actualTarget));";
+replace(anchor,"checkpoint('replace-intent',row.path);\nif(state.rows.some(other=>other.status==='applied'))throw Error('fixture interruption after durable second intent');\nprotection.replace(pending,target,(actualPending,actualTarget)=>fs.renameSync(actualPending,actualTarget));");
 let inverse=adapter;
 for(const row of [...substitutions].reverse()){
 assert.equal(inverse.slice(...row.after),row.replacement);
@@ -322,3 +325,10 @@ assert.ok(fs.readFileSync(join(f.options.output,'events.jsonl')).equals(journalB
 assert.ok(fs.readFileSync(join(f.options.output,pending[0])).equals(pendingBefore));
 assert.equal(fs.readFileSync(actualPath,'utf8'),original);
 },{twoTargets:true}));
+
+test('actual journal writes safe siblings in an output directory containing a declared protected alias target',{timeout:60000},t=>fixture(async f=>{
+ const asset=join(f.options.output,'declared-protected-asset.mjs'),original=mutableFs.mkdirSync;let populated=false;
+ const mock=t.mock.method(mutableFs,'mkdirSync',(path,...rest)=>{const result=original(path,...rest);if(path===f.options.output){fs.writeFileSync(asset,'protected external asset',{flag:'wx'});populated=true;}return result;});syncBuiltinESMExports();
+ let applied;try{applied=await applyReviewedCoreAdoption(f.options);}finally{mock.mock.restore();syncBuiltinESMExports();}
+ assert.equal(populated,true);assert.equal(applied.sourceInstalled,true);assert.equal(fs.readFileSync(asset,'utf8'),'protected external asset');assert.equal(JSON.parse(fs.readFileSync(join(applied.output,'application-state.json'))).complete,true);assert.ok(fs.existsSync(join(applied.output,'events.jsonl')));
+},{protectedJournalSibling:true}));

@@ -1,0 +1,45 @@
+{
+  "schema": "protected-external-mutations-20261102-source-manifest-v1",
+  "predecessor": "e284fdbe2f5a051c11790241857eae8199bfcb76",
+  "parents": [
+    {
+      "role": "unit",
+      "path": "tools/translation/unit-runtime-materialization.mjs",
+      "before": "unit.before.txt",
+      "after": "unit.after.txt",
+      "beforeBytes": 42986,
+      "afterBytes": 43879,
+      "beforeSha256": "a9470b5a2cd596a017d393cdfcd8ba2d18a3c334f025ba4633324feb6808920f",
+      "afterSha256": "4ad35d287dd2864ab46c758108413e0a16baa85fd73536d170dbdffd63af0617",
+      "physicalOrigin": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-storage-repair-20261021/tools/translation/unit-runtime-materialization.mjs",
+      "committedBlob": "dd87d66109905c98b2c281b159c0c1a788dd8718"
+    },
+    {
+      "role": "alias",
+      "path": "tools/translation/protected-preparer-writers-20261102-alias.mjs",
+      "before": "alias.before.txt",
+      "after": "alias.after.txt",
+      "beforeBytes": 22726,
+      "afterBytes": 26371,
+      "beforeSha256": "f80eb31a82dbdcfa62a5a50a9822014ca74dade757c844401e41210337ab0d78",
+      "afterSha256": "28b7c89773ae71ce228e0eb19fdd8945f956eb746222eeb4f3b6fc60cbf74086",
+      "physicalOrigin": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-storage-repair-20261021/tools/translation/protected-preparer-writers-20261102-alias.mjs",
+      "committedBlob": "abca18005808237b67c214e1bf97821a159334a1"
+    },
+    {
+      "role": "contained-history",
+      "path": "tools/translation/protected-contained-direct-20261102-history.mjs",
+      "before": "contained-history.before.txt",
+      "after": "contained-history.after.txt",
+      "beforeBytes": 5268,
+      "afterBytes": 5841,
+      "beforeSha256": "e8ca95fae8e7ef874eb42a389c54202325ceac766a29b55f0e13296a683babb3",
+      "afterSha256": "f7d4e365ecef85f820ccf1af3adf7b9041709b298db1936fabff6ef3aeb7b9bd",
+      "physicalOrigin": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-storage-repair-20261021/tools/translation/protected-contained-direct-20261102-history.mjs",
+      "committedBlob": "5eecc7cdea256e979e2b157f14439e83dee33462"
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceAuthority": false,
+  "semanticAuthority": false
+}
