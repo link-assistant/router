@@ -1,0 +1,11 @@
+{
+  "schema": "router-translation-provenance-source-draft-v1",
+  "sha256": "cc7c0230b5c0c408aca064aefbf1bd977484b62f07a49ae06180f8efded56c63",
+  "decodedBytes": 61205,
+  "packedBytes": 16867,
+  "completeSourceAndNoticeFiles": 7,
+  "declaredCopyFiles": 97,
+  "caseSources": 7,
+  "execution": "UNRUN",
+  "CI": "NOT_INSPECTED"
+}

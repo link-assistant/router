@@ -107,3 +107,24 @@ The map worker continues implementing that boundary after its source checkpoint.
 
 No tests, compilers, translator trials or CI feedback were read. Counts remain
 11/70 DRAFTED and59 OPEN. The complete production-function denominator is UNKNOWN.
+
+## Pinned provenance and fixed export composition
+
+Root drafted97 exact copied/project source, license and notice images across
+seven cohorts, keeping all three requested upstream reference pins and the
+relative-meta-logic design-only distinction. The reverse adapted translator now
+retains its own complete upstream license copy. The fixed original compact/physical
+export composition compares every declared original byte image, complete indexed
+vendor enumeration and all original closing fences. Unknown vendor additions or
+missing/changed notices refuse. See [provenance contract](translation-provenance-20261102.md).
+An invocation-local DATA index avoids repeated whole-catalogue copying and is
+cleared/expired on return; it grants no compiler or licensing permission.
+
+Seven independent case sources include a full current-corpus compact export,
+not a reduced fixture. All are UNRUN. Compact receiving bootstrap, complete
+external dependency resolution and source/resource/platform qualification remain
+OPEN; the old physical export limits are unchanged. The complete source packet
+SHA256cc7c0230b5c0c408aca064aefbf1bd977484b62f07a49ae06180f8efded56c63
+retains61205 decoded/16867 packed bytes, seven complete source/notice files and
+notice ancestry. Neither this source export wrapper nor the catalogue closes E01,
+E02, E03 or E05. Accounting remains11/70 DRAFTED,59 OPEN.
