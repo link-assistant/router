@@ -1,3 +1,4 @@
+import {emitProtectedSourceDiagnostic,retainProtectedSourceDiagnostic} from './protected-source-diagnostics-20261103.mjs';
 import {captureProtectedNativeDescriptorNumbers} from './protected-preparer-writers-20261102-alias.mjs';
 import {captureAbsoluteNativeMutationTargets} from './protected-external-mutations-20261102-addresses.mjs';
 // Operational source-mutation veto only. Never parser/compiler/type/owner proof.
@@ -8,10 +9,11 @@ import {captureExplicitSourceMutationPolicy} from './unit-runtime-materializatio
 import {requireReconcile as need, RECONCILE_LIMITS} from './paired-sync-reconcile-20261101-support.mjs';
 let active = null, operationDepth = 0;
 function secondary(primary, error) {
+  retainProtectedSourceDiagnostic('Native writer closing failure',{primary,secondary:error});
   if (primary !== null && (typeof primary === 'object' || typeof primary === 'function')) {
     try { Object.defineProperty(primary, 'protectedNativeWriterClosingFailure', {value: error, enumerable: true}); return; } catch {}
   }
-  try { process.stderr.write('{"schema":"protected-native-writer-closing-20261102","closingFailed":true}\n'); } catch {}
+  try { emitProtectedSourceDiagnostic('{"schema":"protected-native-writer-closing-20261102","closingFailed":true}\n',{primary,secondary:error}); } catch {}
 }
 function assertNativeSourceFramesHealthy(){for(let current=active;current;current=current.parent)if(current.sourceFailed)throw current.sourcePrimary;}
 function healthyNativeSourceFrame(current){if(current.sourceFailed)throw current.sourcePrimary;current.policy.verify();}
@@ -143,3 +145,9 @@ export function captureActiveNativeSourceVetoLease(){
   close(){alive();try{observe(roots());}finally{live=false;retained.length=0;}},
  });
 }
+
+export function guardProtectedSynchronousDiagnosticWrite(operation,requiredRoot){
+ need(active,'no active synchronous source diagnostic route');if(requiredRoot!==undefined)need(hasProtectedSynchronousDiagnosticRoot(requiredRoot),'fixed diagnostic executable root is absent from synchronous source route');const root=active.root,borrowed=captureActiveNativeSourceVetoLease();let value,failed=false,primary;try{borrowed.streams(root,[2]);value=invoke(operation);}catch(error){failed=true;primary=error;}try{borrowed.close();}catch(error){if(!failed){failed=true;primary=error;}else secondary(primary,error);}if(failed)throw primary;return value;
+}
+
+export function hasProtectedSynchronousDiagnosticRoot(requiredRoot){const root=fs.realpathSync(resolve(requiredRoot));for(let current=active;current;current=current.parent)if(current.root===root)return true;return false;}

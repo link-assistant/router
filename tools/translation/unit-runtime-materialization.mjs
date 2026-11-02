@@ -1,3 +1,4 @@
+import {emitProtectedSourceDiagnostic,retainProtectedSourceDiagnostic} from './protected-source-diagnostics-20261103.mjs';
 import {captureAbsoluteNativeMutationTargets} from './protected-external-mutations-20261102-addresses.mjs';
 import {captureContainedNativeDirectTargets} from './protected-contained-direct-20261102-paths.mjs';
 // Source-unit synchronization with fresh Git baselines and complete proposals.
@@ -130,7 +131,7 @@ function sourceInstallation(fresh,{checkHead=false,policy}={}){
  const id=stat=>[stat.dev,stat.ino,stat.mode],same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
  const mutate=(names,operation,direct=false)=>{
   if(direct)policy.allowDirectWrites({root,outputs:names.map(path=>({path}))});else policy.allowMutationPaths(names);
-  let result,failed=false,primary;try{policy.verify();result=operation();}catch(error){failed=true;primary=error;}try{policy.verify();}catch(error){if(failed)recordProtectedPolicyClosingFailure(primary,error);else{failed=true;primary=error;}}if(failed)throw primary;return result;
+  let result,failed=false,primary;try{policy.verify();result=operation();}catch(error){failed=true;primary=error;}try{policy.verify();}catch(error){if(failed)recordProtectedPolicyClosingFailure(primary,error,()=>policy.allowNativeStreamWrites({root,descriptors:[2]}));else{failed=true;primary=error;}}if(failed)throw primary;return result;
  };
  const createParents=name=>{const full=physical(root,name),pieces=name.split('/').slice(0,-1),missing=[];let path='';for(const piece of pieces){path=path?path+'/'+piece:piece;try{fs.lstatSync(physical(root,path));}catch(error){if(ownSourceFailureField(error,'code')!=='ENOENT')throw error;missing.push(path);}}return mutate(missing,()=>fs.mkdirSync(dirname(full),{recursive:true}));};
  const current=name=>{const before=source(root,name);if(before===null)return null;const stat=fs.lstatSync(physical(root,name));if(source(root,name)!==before)fail('source changed during installer identity capture');return {source:before,mode:stat.mode&0o777,identity:id(stat)};};
@@ -190,13 +191,13 @@ function sourceInstallation(fresh,{checkHead=false,policy}={}){
    if(secondary.length||unknownQuarantines.size)continue;removePrivate(name);
   }catch(error){secondary.push(error);}try{ownDirectory();if(fs.readdirSync(directory).length===0)mutate([fsRelative(directory)],()=>fs.rmdirSync(directory));}catch(error){secondary.push(error);}}
  const recoveryPaths=[];if(directory)try{if(fs.existsSync(directory))recoveryPaths.push(directory);}catch(error){secondary.push(error);}
- if(failed){let attached=false;if(primary&&typeof primary==='object')try{Object.defineProperties(primary,{rollbackFailures:{value:secondary,enumerable:true},recoveryPaths:{value:recoveryPaths,enumerable:true}});attached=true;}catch{}if(recoveryPaths.length&&!attached)try{process.stderr.write(JSON.stringify({schema:'router-source-installation-recovery-paths-v1',recoveryPaths})+'\n');}catch{}throw primary;}
+ if(failed){retainProtectedSourceDiagnostic('Source installation rollback/recovery',{primary,recoveryPaths});let attached=false;if(primary&&typeof primary==='object')try{Object.defineProperties(primary,{rollbackFailures:{value:secondary,enumerable:true},recoveryPaths:{value:recoveryPaths,enumerable:true}});attached=true;}catch{}if(recoveryPaths.length&&!attached)try{emitProtectedSourceDiagnostic(JSON.stringify({schema:'router-source-installation-recovery-paths-v1',recoveryPaths})+'\n',{primary,recoveryPaths,additionalVeto:()=>policy.allowNativeStreamWrites({root:fresh.root,descriptors:[2]})});}catch{}throw primary;}
  if(secondary.length){const error=new AggregateError(secondary,'Guarded source installation closing/cleanup failures');error.recoveryPaths=recoveryPaths;throw error;}return {schema:fresh.schema,baseRevision:fresh.baseRevision,changed:changed.map(state=>state.row.path),sourceAuthority:false,runtimeParity:false,rustExecuted:false};
 }
 function installFreshUnitProposal(serialized,produce){
  if(typeof serialized!=='string'||Buffer.byteLength(serialized)>LIMIT*3)fail('bounded serialized complete proposal required');const received=JSON.parse(serialized),policy=captureProtectedSourcePolicy(received.root);let result,primary,failed=false;
  try{const fresh=produce();if(JSON.stringify(received)!==JSON.stringify(fresh))fail('proposal differs from complete fresh source translation');result=sourceInstallation(fresh,{policy});}catch(error){failed=true;primary=error;}
- try{policy.close();}catch(error){if(!failed)throw error;recordProtectedPolicyClosingFailure(primary,error);}if(failed)throw primary;return result;
+ try{policy.close();}catch(error){if(!failed)throw error;recordProtectedPolicyClosingFailure(primary,error,()=>policy.allowNativeStreamWrites({root:received.root,descriptors:[2]}));}if(failed)throw primary;return result;
 }
 
 export function applyUnitSynchronization(serialized,{root,manifestPath}={}){
@@ -238,7 +239,7 @@ export {installFreshUnitProposal as installFreshSourceProposal,source as readCur
 export async function installFreshAsyncSourceProposal(serialized,produce){
  if(typeof serialized!=='string'||Buffer.byteLength(serialized)>LIMIT*3)fail('bounded serialized complete proposal required');const received=JSON.parse(serialized),policy=captureProtectedSourcePolicy(received.root);let result,primary,failed=false;
  try{const fresh=await produce();if(JSON.stringify(received)!==JSON.stringify(fresh))fail('proposal differs from complete fresh source translation');result=sourceInstallation(fresh,{checkHead:true,policy});}catch(error){failed=true;primary=error;}
- try{policy.close();}catch(error){if(!failed)throw error;recordProtectedPolicyClosingFailure(primary,error);}if(failed)throw primary;return result;
+ try{policy.close();}catch(error){if(!failed)throw error;recordProtectedPolicyClosingFailure(primary,error,()=>policy.allowNativeStreamWrites({root:received.root,descriptors:[2]}));}if(failed)throw primary;return result;
 }
 
 import {sourceUnitPrimitiveOperators} from './primitive-source-unit-options.mjs';
@@ -260,7 +261,8 @@ function captureProtectedSourcePolicy(requestedRoot){
   for(const names of [value.authored,value.unmanaged]){if(!Array.isArray(names)||names.length>4096)fail('bounded explicit protected-source list required');for(const name of names){relative(name);if(protectedPaths.has(name))fail('duplicate explicit protected-source path');protectedPaths.add(name);}}
  }
  const verify=()=>{try{if(closed||revoked)fail('protected-source policy scope expired or revoked');if(!same(rootStamp(),rootIdentity)||parentIdentity!==null&&!same(parentStamp(),parentIdentity))fail('protected-source root or parent changed');const next=read();if(next.body!==initial.body||!same(next.identity,initial.identity))fail('protected-source policy changed or was restored');}catch(error){revoked=true;throw error;}};
- const veto=operation=>{let value,failed=false,primary;try{verify();value=operation();}catch(error){failed=true;primary=error;}try{verify();}catch(error){if(!failed){failed=true;primary=error;}else recordProtectedPolicyClosingFailure(primary,error);}if(failed){revoked=true;throw primary;}return value;};
+ const veto=operation=>{let value,failed=false,primary;try{verify();value=operation();}catch(error){failed=true;primary=error;}try{verify();}catch(error){if(!failed){failed=true;primary=error;}else recordProtectedPolicyClosingFailure(primary,error,diagnosticVeto);}if(failed){revoked=true;throw primary;}return value;};
+ const diagnosticVeto=()=>veto(()=>assertProtectedNativeStreamWriteDescriptors({root,protectedNames:[policyPath,...protectedPaths],descriptors:[2]}));
  return Object.freeze({retainedBytes:initial.body===null?0:4*Buffer.byteLength(initial.body)+256,verify,
   allow(fresh){return veto(()=>{if(fs.realpathSync(resolve(fresh.root))!==root)fail('fresh producer root differs from protected-source policy');const protectedNames=[policyPath,...protectedPaths];let names=[];for(const row of fresh.outputs){relative(row.path);if(row.path===policyPath||protectedPaths.has(row.path)){if(row.before!==row.after)fail('explicit authored/unmanaged source or policy retained: '+row.path);if(row.before!==null){const stat=fs.lstatSync(physical(root,row.path));if((stat.mode&0o777)!==row.mode)fail('explicit protected-source mode retained: '+row.path);}}if(row.before!==row.after){names.push(row.path);if(names.length===256){assertProtectedStagedMutationTargets({root,protectedNames,paths:names});names=[];}}}if(names.length)assertProtectedStagedMutationTargets({root,protectedNames,paths:names});});},
   allowMutationPaths(paths){return veto(()=>{const protectedNames=[policyPath,...protectedPaths];assertProtectedMutationPaths({protectedNames,paths});assertProtectedStagedMutationTargets({root,protectedNames,paths});});},
@@ -272,9 +274,10 @@ function captureProtectedSourcePolicy(requestedRoot){
   close(){if(closed)fail('protected-source policy already closed');try{verify();}finally{closed=true;protectedPaths.clear();}},
  });
 }
-function recordProtectedPolicyClosingFailure(primary,error){
+function recordProtectedPolicyClosingFailure(primary,error,additionalVeto){
+ retainProtectedSourceDiagnostic('Protected source policy closing failure',{primary,secondary:error});
  if(primary!==null&&(typeof primary==='object'||typeof primary==='function'))try{Object.defineProperty(primary,'protectedSourcePolicyClosingFailure',{value:error,enumerable:true});return;}catch{}
- try{process.stderr.write(JSON.stringify({schema:'router-protected-source-policy-closing-v1',policy:'translation/source-ownership.json',closingFailed:true})+'\n');}catch{}
+ try{emitProtectedSourceDiagnostic(JSON.stringify({schema:'router-protected-source-policy-closing-v1',policy:'translation/source-ownership.json',closingFailed:true})+'\n',{primary,secondary:error,additionalVeto});}catch{}
 }
 // Shared operational veto/closing scope for fixed specialized writers. Its
 // methods can restrict source mutations; they issue no compiler permission.

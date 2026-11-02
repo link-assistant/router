@@ -1,3 +1,4 @@
+import {emitProtectedSourceDiagnostic,retainProtectedSourceDiagnostic} from './protected-source-diagnostics-20261103.mjs';
 import {captureAbsoluteNativeMutationTargets} from './protected-external-mutations-20261102-addresses.mjs';
 // Invocation-local filesystem alias DATA. This issues no source/compiler token.
 import fs from 'node:fs';
@@ -21,15 +22,16 @@ function strings(value,limit){
  const copied=[];for(let at=0;at<value.length;at++){if(!fields[at]||!Object.hasOwn(fields[at],'value')||typeof fields[at].value!=='string')fail('primitive own path required');copied.push(fields[at].value);}return copied;
 }
 const parts=text=>process.platform==='win32'?text.split(/[\\/]/u):text.split('/');
-function closingFailure(primary,error,count){
+function closingFailure(primary,error,count,additionalVeto){
+ retainProtectedSourceDiagnostic('Direct alias metadata closing failure',{primary,secondary:error});
  if(primary!==null&&['object','function'].includes(typeof primary))try{Object.defineProperties(primary,{directWriteAliasClosingFailure:{value:error,enumerable:true},directWriteAliasClosingFailureCount:{value:count,enumerable:true}});return;}catch{}
- try{process.stderr.write('{"schema":"direct-write-alias-closing-20261102","closingFailed":true}\n');}catch{}
+ try{emitProtectedSourceDiagnostic('{"schema":"direct-write-alias-closing-20261102","closingFailed":true}\n',{primary,secondary:error,additionalVeto});}catch{}
 }
 function descriptorNumbers(value){if(!Array.isArray(value)||types.isProxy(value)||value.length>DIRECT_WRITE_ALIAS_LIMITS.paths)fail('bounded own descriptor array required');const fields=Object.getOwnPropertyDescriptors(value);if(Reflect.ownKeys(fields).length!==value.length+1)fail('dense own descriptor array required');const result=[];for(let at=0;at<value.length;at++){const field=fields[at];if(!field||!Object.hasOwn(field,'value')||!Number.isSafeInteger(field.value)||field.value<0)fail('primitive actual file descriptor required');result.push(field.value);}return [...new Set(result)];}
 export function assertProtectedDirectWriteTargets({root,protectedNames,paths}={}){return observeProtectedDirectWriteTargets({root,protectedNames,paths,descriptors:[]});}
 export function assertProtectedNativeDirectWriteTargets({root,protectedNames,paths,descriptors=[]}={}){return observeProtectedDirectWriteTargets({root,protectedNames,paths,descriptors});}
 export function assertProtectedNativeStreamWriteDescriptors({root,protectedNames,descriptors=[]}={}){return observeProtectedDirectWriteTargets({root,protectedNames,paths:[],descriptors,streamDescriptors:true});}
-function descriptorStamp(stat,streamDescriptors){return streamDescriptors&&!stat.isFile()?[stat.dev,stat.ino,stat.mode,stat.uid,stat.gid].map(String):stamp(stat);}
+function descriptorStamp(stat,streamDescriptors){return streamDescriptors?[stat.dev,stat.ino,stat.mode,stat.uid,stat.gid].map(String):stamp(stat);}
 function observeProtectedDirectWriteTargets({root,protectedNames,paths,descriptors,streamDescriptors=false}){
  protectedNames=strings(protectedNames,DIRECT_WRITE_ALIAS_LIMITS.protectedPaths);paths=strings(paths,DIRECT_WRITE_ALIAS_LIMITS.paths);
  const names=[...new Set(protectedNames)],destinations=[...new Set(paths)],fds=descriptorNumbers(descriptors);
@@ -89,7 +91,7 @@ function observeProtectedDirectWriteTargets({root,protectedNames,paths,descripto
  for(const [fd,signature]of descriptorSnapshots)try{closingChecks++;if(!equal(descriptorStamp(fs.fstatSync(fd,{bigint:true}),streamDescriptors),signature))fail('actual descriptor epoch changed before closing');}catch(error){if(!closingCount)firstClosing=error;closingCount++;}
  if(answer)answer.closingChecks=closingChecks;
  descriptorSnapshots.clear();snapshots.clear();protectedInodes.clear();protectedEndpoints.clear();missingByParent.clear();
- if(failed){if(closingCount)closingFailure(primary,firstClosing,closingCount);throw primary;}if(closingCount){if(closingCount===1)throw firstClosing;const error=new AggregateError([firstClosing],'Alias metadata closing failures: '+closingCount);Object.defineProperty(error,'failureCount',{value:closingCount,enumerable:true});throw error;}return answer;
+ if(failed){if(closingCount)closingFailure(primary,firstClosing,closingCount,()=>assertProtectedNativeStreamWriteDescriptors({root,protectedNames:names,descriptors:[2]}));throw primary;}if(closingCount){if(closingCount===1)throw firstClosing;const error=new AggregateError([firstClosing],'Alias metadata closing failures: '+closingCount);Object.defineProperty(error,'failureCount',{value:closingCount,enumerable:true});throw error;}return answer;
 }
 
 function ordinary(name){if(typeof name!=='string'||!name||name.length>4096||name.startsWith('/')||name.includes('\\')||/[\0\r\n:]/u.test(name)||name.split('/').some(part=>!part||part==='.'||part==='..'))fail('ordinary repository-relative mutation path required');return name;}
@@ -111,9 +113,10 @@ export const STAGED_ENTRY_ALIAS_LIMITS=Object.freeze({paths:4096,protectedPaths:
  negativeBytes:65536,comparisonBytes:16777216,closingBytes:16777216});
 const stagedFailure=message=>{throw new TypeError('Protected staged source mutation: '+message);};
 const stagedStamp=stat=>[stat.dev,stat.ino,stat.mode,stat.size,stat.mtimeNs,stat.ctimeNs,stat.nlink,stat.uid,stat.gid].map(String);
-function stagedSecondary(primary,error,count){
+function stagedSecondary(primary,error,count,additionalVeto){
+ retainProtectedSourceDiagnostic('Staged entry metadata closing failure',{primary,secondary:error});
  if(primary!==null&&['object','function'].includes(typeof primary)&&!types.isProxy(primary))try{Object.defineProperties(primary,{stagedEntryClosingFailure:{value:error,enumerable:true},stagedEntryClosingFailureCount:{value:count,enumerable:true}});return;}catch{}
- try{process.stderr.write(JSON.stringify({schema:'staged-entry-alias-closing-20261102',closingFailed:true})+String.fromCharCode(10));}catch{}
+ try{emitProtectedSourceDiagnostic(JSON.stringify({schema:'staged-entry-alias-closing-20261102',closingFailed:true})+String.fromCharCode(10),{primary,secondary:error,additionalVeto});}catch{}
 }
 export function assertProtectedStagedMutationTargets({root,protectedNames,paths}={}){
  protectedNames=strings(protectedNames,STAGED_ENTRY_ALIAS_LIMITS.protectedPaths);paths=strings(paths,STAGED_ENTRY_ALIAS_LIMITS.paths);
@@ -155,7 +158,7 @@ function observeProtectedStagedMutationTargets({root,protectedNames,paths,native
   try{for(;;){step();const value=handle.readSync();if(value===null){row.complete=true;break;}if(++entries>STAGED_ENTRY_ALIAS_LIMITS.directoryEntries)stagedFailure('complete native directory entry bound exceeded');const raw=entryBytes(value),hex=raw.toString('hex');charge(2*raw.length+64);if(row.names.has(hex))stagedFailure('native directory enumeration repeated an entry');row.names.set(hex,row.names.size);}}
   catch(error){broken=true;problem=error;}
   // Always attempt handle close and the independent post-census path epoch.
-  for(const close of [()=>{captureClosingChecks++;handle.closeSync();},()=>{captureClosingChecks++;if(!equal(stagedStamp(fs.lstatSync(path,{bigint:true})),row.signature))stagedFailure('entry parent changed during native enumeration');}])try{close();}catch(error){if(broken)stagedSecondary(problem,error,1);else{broken=true;problem=error;}}
+  for(const close of [()=>{captureClosingChecks++;handle.closeSync();},()=>{captureClosingChecks++;if(!equal(stagedStamp(fs.lstatSync(path,{bigint:true})),row.signature))stagedFailure('entry parent changed during native enumeration');}])try{close();}catch(error){if(broken)stagedSecondary(problem,error,1,()=>assertProtectedNativeStreamWriteDescriptors({root,protectedNames:names,descriptors:[2]}));else{broken=true;problem=error;}}
   if(broken)throw problem;return row;
  }
  function inspect(full,followFinal,protect){
@@ -202,11 +205,11 @@ function observeProtectedStagedMutationTargets({root,protectedNames,paths,native
   closingChecks++;if(!equal(stagedStamp(fs.lstatSync(row.path,{bigint:true})),row.signature))stagedFailure('native entry parent changed before closing census');
   closingChecks++;const handle=fs.opendirSync(row.path,{encoding:'buffer',bufferSize:1}),seen=new Set();let broken=false,problem;
   try{for(let count=0;;count++){if(closingBytes>STAGED_ENTRY_ALIAS_LIMITS.closingBytes)stagedFailure('independent closing byte bound exceeded');closingChecks++;const value=handle.readSync();if(value===null)break;if(count>=row.names.size)stagedFailure('native closing directory census grew or was incomplete');const raw=entryBytes(value);closingBytes+=raw.length;if(closingBytes>STAGED_ENTRY_ALIAS_LIMITS.closingBytes)stagedFailure('independent closing byte bound exceeded');const index=row.names.get(raw.toString('hex'));if(index===undefined||seen.has(index))stagedFailure('native closing entry census differs');seen.add(index);}if(!row.complete||seen.size!==row.names.size)stagedFailure('native closing directory census lost an entry');}catch(error){broken=true;problem=error;}
-  for(const close of [()=>{closingChecks++;handle.closeSync();},()=>{closingChecks++;if(!equal(stagedStamp(fs.lstatSync(row.path,{bigint:true})),row.signature))stagedFailure('native entry parent changed around closing census');}])try{close();}catch(error){if(broken)stagedSecondary(problem,error,1);else{broken=true;problem=error;}}
+  for(const close of [()=>{closingChecks++;handle.closeSync();},()=>{closingChecks++;if(!equal(stagedStamp(fs.lstatSync(row.path,{bigint:true})),row.signature))stagedFailure('native entry parent changed around closing census');}])try{close();}catch(error){if(broken)stagedSecondary(problem,error,1,()=>assertProtectedNativeStreamWriteDescriptors({root,protectedNames:names,descriptors:[2]}));else{broken=true;problem=error;}}
   if(broken)throw problem;
  });
  if(answer){answer.closingChecks=closingChecks;answer.closingBytes=closingBytes;}snapshots.clear();directories.clear();protectedEntries.clear();protectedDirectories.clear();negativeGroups.clear();
- if(failed){if(closingCount)stagedSecondary(primary,firstClosing,closingCount);throw primary;}
+ if(failed){if(closingCount)stagedSecondary(primary,firstClosing,closingCount,()=>assertProtectedNativeStreamWriteDescriptors({root,protectedNames:names,descriptors:[2]}));throw primary;}
  if(closingCount){if(closingCount===1)throw firstClosing;const error=new AggregateError([firstClosing],'Staged entry closing failures: '+closingCount);Object.defineProperty(error,'failureCount',{value:closingCount,enumerable:true});throw error;}return answer;
 }
 

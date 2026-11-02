@@ -1,4 +1,5 @@
-import {captureActiveNativeSourceVetoLease} from './protected-native-writers-20261102.mjs';
+import {emitProtectedSourceDiagnostic} from './protected-source-diagnostics-20261103.mjs';
+import {captureActiveNativeSourceVetoLease,guardProtectedSynchronousDiagnosticWrite,hasProtectedSynchronousDiagnosticRoot} from './protected-native-writers-20261102.mjs';
 import {captureAbsoluteNativeMutationTargets} from './protected-external-mutations-20261102-addresses.mjs';
 import {captureProtectedNativeDescriptorNumbers} from './protected-preparer-writers-20261102-alias.mjs';
 // Async operational source veto for reviewed adoption. No native authority.
@@ -9,14 +10,14 @@ import {types} from 'node:util';
 import {captureExplicitSourceMutationPolicy} from './unit-runtime-materialization.mjs';
 const contexts=new AsyncLocalStorage();
 const fail=message=>{throw new TypeError('Protected reviewed adoption: '+message);};
-function secondary(){try{process.stderr.write('{"schema":"protected-reviewed-adoption-closing-20261102","closingFailed":true}\n');}catch{}}
+function secondary(error){try{emitProtectedSourceDiagnostic('{"schema":"protected-reviewed-adoption-closing-20261102","closingFailed":true}\n',{secondary:error});}catch{}}
 function poison(frame,error){for(let current=frame;current;current=current.parent)if(!current.failed){current.failed=true;current.primary=error;}}
 function checkPolicy(frame){let failed=frame.failed,primary=frame.primary;for(const check of [()=>{if(frame.closed)fail('expired source operation');},()=>frame.policy.verify()])try{check();}catch(error){if(!failed){failed=true;primary=error;}}if(failed)throw primary;}
 function verify(frame){try{checkPolicy(frame);}catch(error){poison(frame,error);throw error;}}
 function admit(frame,operation){try{verify(frame);return operation();}catch(error){poison(frame,error);throw error;}}
 function current(){const context=contexts.getStore();if(!context||!context.active)fail('expired or missing async reviewed source operation');verify(context.frame);return context.frame;}
 function ordinaryTarget(frame,target){if(typeof target!=='string'||!isAbsolute(target))fail('captured primitive absolute destination required');const actual=resolve(target),name=relative(frame.root,actual);if(!name||isAbsolute(name)||name==='..'||name.startsWith('..'+sep))fail('source destination must remain inside original physical root');return name.split(sep).join('/');}
-function around(frame,operation){let result,failed=false,primary;try{verify(frame);result=operation();if(types.isPromise(result))fail('primitive filesystem operation must be synchronous');}catch(error){failed=true;primary=error;}try{checkPolicy(frame);}catch(error){poison(frame,error);if(!failed){failed=true;primary=error;}else secondary();}if(failed)throw primary;return result;}
+function around(frame,operation){let result,failed=false,primary;try{verify(frame);result=operation();if(types.isPromise(result))fail('primitive filesystem operation must be synchronous');}catch(error){failed=true;primary=error;}try{checkPolicy(frame);}catch(error){poison(frame,error);if(!failed){failed=true;primary=error;}else secondary(error);}if(failed)throw primary;return result;}
 function externalTarget(frame,target){if(typeof target!=='string'||!isAbsolute(target))fail('captured primitive external destination required');const full=resolve(target),name=relative(frame.root,full);if(!name||!isAbsolute(name)&&name!=='..'&&!name.startsWith('..'+sep))fail('original external evidence must stay outside source root');return full;}
 function staged(frame,targets,operation){return around(frame,()=>{const captured=admit(frame,()=>{const paths=targets.map(target=>externalTarget(frame,target));return frame.policy.allowNativeMutationPaths({root:frame.root,targets:paths});});return operation(...captured.map(row=>row.canonicalTarget));});}
 function scope(context){const frame=context.frame,live=()=>{if(!context.active)fail('expired async reviewed writer object');};return Object.freeze({root:frame.root,retainedBytes:frame.policy.retainedBytes,verify:()=>{live();return verify(frame);},
@@ -27,16 +28,16 @@ function scope(context){const frame=context.frame,live=()=>{if(!context.active)f
 export function withReviewedAdoptionOutside(target,operation){const frame=current();return around(frame,()=>{const actual=admit(frame,()=>externalTarget(frame,target));return operation(actual);});}
 export function guardReviewedAdoptionExternal(target,operation){return staged(current(),[target],operation);}
 export function guardReviewedAdoptionStaged(targets,operation){return staged(current(),targets,operation);}
-export function openReviewedAdoptionDescriptor(target,flags,mode){const frame=current(),captured=admit(frame,()=>{if(flags!=='wx'&&flags!=='a')fail('original fixed reviewed writer open flags required');return frame.policy.allowNativeDirectWrites({root:frame.root,targets:[externalTarget(frame,target)]})[0].canonicalTarget;});let fd,acquired=false;try{return around(frame,()=>{fd=mode===undefined?openSync(captured,flags):openSync(captured,flags,mode);acquired=true;admit(frame,()=>frame.policy.allowNativeDirectWrites({root:frame.root,targets:[],descriptors:[fd]}));return fd;});}catch(primary){if(acquired)try{closeSync(fd);}catch(error){secondary();}throw primary;}}
+export function openReviewedAdoptionDescriptor(target,flags,mode){const frame=current(),captured=admit(frame,()=>{if(flags!=='wx'&&flags!=='a')fail('original fixed reviewed writer open flags required');return frame.policy.allowNativeDirectWrites({root:frame.root,targets:[externalTarget(frame,target)]})[0].canonicalTarget;});let fd,acquired=false;try{return around(frame,()=>{fd=mode===undefined?openSync(captured,flags):openSync(captured,flags,mode);acquired=true;admit(frame,()=>frame.policy.allowNativeDirectWrites({root:frame.root,targets:[],descriptors:[fd]}));return fd;});}catch(primary){if(acquired)try{closeSync(fd);}catch(error){secondary(error);}throw primary;}}
 export function guardReviewedAdoptionDescriptor(target,fd,operation){const frame=current();return around(frame,()=>{admit(frame,()=>{externalTarget(frame,target);frame.policy.allowNativeDirectWrites({root:frame.root,targets:[],descriptors:[fd]});});return operation(fd);});}
-export function withReviewedAdoptionClosing(operation,close){let result,failed=false,primary;try{result=operation();}catch(error){failed=true;primary=error;}try{close();}catch(error){if(failed)secondary();else{failed=true;primary=error;}}if(failed)throw primary;return result;}
+export function withReviewedAdoptionClosing(operation,close){let result,failed=false,primary;try{result=operation();}catch(error){failed=true;primary=error;}try{close();}catch(error){if(failed)secondary(error);else{failed=true;primary=error;}}if(failed)throw primary;return result;}
 export function reviewedAdoptionRetainedPolicyBytes(){return current().policy.retainedBytes;}
 async function withReviewedSourceContext(root,operation,makeScope,poisonOperationFailure){
  const previous=contexts.getStore(),parent=previous?.active?previous.frame:null;let actual;try{actual=realpathSync(resolve(root));}catch(error){if(parent)poison(parent,error);throw error;}let count=0,shared=null;for(let prior=parent;prior;prior=prior.parent){count+=prior.depth;verify(prior);if(prior.root===actual&&!shared)shared=prior;}if(count>=64){const error=new TypeError('Protected reviewed adoption: bounded complete async operation nesting');if(parent)poison(parent,error);throw error;}
  const owner=shared===null;let frame;try{frame=shared??{root:actual,policy:captureExplicitSourceMutationPolicy(actual),parent,failed:false,primary:undefined,closed:false,depth:0,nativeDepth:0};}catch(error){if(parent)poison(parent,error);throw error;}let result,failed=false,primary;const context={frame,active:true,parentContext:previous?.active?previous:null,children:0};if(context.parentContext)context.parentContext.children++;frame.depth++;
  try{verify(frame);result=await contexts.run(context,()=>operation(makeScope(context)));verify(frame);if(context.children!==0)admit(frame,()=>fail('unjoined nested source context'));if(owner&&frame.depth!==1)admit(frame,()=>fail('unjoined nested source operation'));}catch(error){failed=true;primary=error;if(poisonOperationFailure)poison(frame,error);}
  // Every owner attempts both checks, even after an exact falsy/frozen primary.
- const checks=[()=>{context.active=false;},()=>verify(frame),...(owner?[()=>{try{frame.policy.close();}finally{frame.closed=true;}}]:[])];for(const check of checks)try{check();}catch(error){if(!failed){failed=true;primary=error;}else secondary();}
+ const checks=[()=>{context.active=false;},()=>verify(frame),...(owner?[()=>{try{frame.policy.close();}finally{frame.closed=true;}}]:[])];for(const check of checks)try{check();}catch(error){if(!failed){failed=true;primary=error;}else secondary(error);}
  frame.depth--;if(context.parentContext){context.parentContext.children--;context.parentContext=null;}if(failed)throw primary;return result;
 }
 
@@ -53,16 +54,16 @@ function nativeCallback(operation){if(typeof operation!=='function'||types.isPro
 function nativeFrames(frame){const rows=[],seen=new Set();const collect=start=>{for(let current=start;current;current=current.parent)if(!seen.has(current)){seen.add(current);rows.push(current);}};collect(frame);let present=contexts.getStore(),depth=0;for(;present&&present.active;present=present.parentContext){if(++depth>64)fail('bounded current async context ancestry');collect(present.frame);}if(rows.length>128)fail('bounded retained/current async root union');return rows;}
 function observeNativeRoots(frame,borrowed,failed=false,primary){
  let sourceFailed=false,sourcePrimary;
- const note=error=>{if(!sourceFailed){sourceFailed=true;sourcePrimary=error;}if(!failed){failed=true;primary=error;}else secondary();};
+ const note=error=>{if(!sourceFailed){sourceFailed=true;sourcePrimary=error;}if(!failed){failed=true;primary=error;}else secondary(error);};
  for(const current of nativeFrames(frame))for(const check of [()=>{if(current.failed)throw current.primary;if(current.closed)fail('closed native async source frame');},()=>current.policy.verify()])try{check();}catch(error){note(error);}
  try{borrowed.verify();}catch(error){note(error);}
- if(sourceFailed){for(const current of nativeFrames(frame))poison(current,sourcePrimary);try{borrowed.source(()=>{throw sourcePrimary;});}catch(error){if(!failed){failed=true;primary=error;}else secondary();}}return {failed,primary};
+ if(sourceFailed){for(const current of nativeFrames(frame))poison(current,sourcePrimary);try{borrowed.source(()=>{throw sourcePrimary;});}catch(error){if(!failed){failed=true;primary=error;}else secondary(error);}}return {failed,primary};
 }
 function nativeTargets(frame,borrowed,targets,descriptors,direct){
  let captured,stable,fds,failed=false,primary;
  try{captured=captureAbsoluteNativeMutationTargets({requestedRoot:frame.root,canonicalRoot:frame.root,targets});stable=Object.freeze(captured.map(row=>row.canonicalTarget));fds=direct?Object.freeze(captureProtectedNativeDescriptorNumbers(descriptors)):[];}catch(error){failed=true;primary=error;poison(frame,error);}
- if(!failed){for(const current of nativeFrames(frame))try{if(direct==='stream')current.policy.allowNativeStreamWrites({root:current.root,descriptors:fds});else if(direct)current.policy.allowNativeDirectWrites({root:current.root,targets:stable,descriptors:fds});else current.policy.allowNativeMutationPaths({root:current.root,targets:stable});}catch(error){if(!failed){failed=true;primary=error;}else secondary();}
-  try{if(direct==='stream')borrowed.streams(frame.root,fds);else if(direct)borrowed.direct(frame.root,stable,fds);else borrowed.entries(frame.root,stable);}catch(error){if(!failed){failed=true;primary=error;}else secondary();}
+ if(!failed){for(const current of nativeFrames(frame))try{if(direct==='stream')current.policy.allowNativeStreamWrites({root:current.root,descriptors:fds});else if(direct)current.policy.allowNativeDirectWrites({root:current.root,targets:stable,descriptors:fds});else current.policy.allowNativeMutationPaths({root:current.root,targets:stable});}catch(error){if(!failed){failed=true;primary=error;}else secondary(error);}
+  try{if(direct==='stream')borrowed.streams(frame.root,fds);else if(direct)borrowed.direct(frame.root,stable,fds);else borrowed.entries(frame.root,stable);}catch(error){if(!failed){failed=true;primary=error;}else secondary(error);}
   if(failed)for(const current of nativeFrames(frame))poison(current,primary);
  }
  const observed=observeNativeRoots(frame,borrowed,failed,primary);if(observed.failed)throw observed.primary;return captured;
@@ -99,18 +100,23 @@ function nativeScope(context,borrowed){
    }catch(error){failed=true;primary=error;}
    // close never needs source permission. Always close the acquired FD once,
    // even after an exact falsy/frozen source/admission/callback failure.
-   if(acquired)try{closeSync(fd);}catch(error){poison(frame,error);if(!failed){failed=true;primary=error;}else secondary();}
+   if(acquired)try{closeSync(fd);}catch(error){poison(frame,error);if(!failed){failed=true;primary=error;}else secondary(error);}
    const observed=observeNativeRoots(frame,vetoLease,failed,primary);if(observed.failed)throw observed.primary;return value;
   });},
  });
- const expire=()=>{live=false;frame=null;ownerContext=null;vetoLease=null;};
- return {lease,expire,close(failed,primary){try{return observeNativeRoots(frame,vetoLease,failed,primary);}catch(error){poison(frame,error);try{vetoLease.source(()=>{throw error;});}catch(closing){secondary();}if(!failed){failed=true;primary=error;}else secondary();return {failed,primary};}finally{expire();}}};
+ context.nativeDiagnosticLease=lease;
+ const expire=()=>{if(ownerContext&&ownerContext.nativeDiagnosticLease===lease)delete ownerContext.nativeDiagnosticLease;live=false;frame=null;ownerContext=null;vetoLease=null;};
+ return {lease,expire,close(failed,primary){try{return observeNativeRoots(frame,vetoLease,failed,primary);}catch(error){poison(frame,error);try{vetoLease.source(()=>{throw error;});}catch(closing){secondary(closing);}if(!failed){failed=true;primary=error;}else secondary(error);return {failed,primary};}finally{expire();}}};
 }
 export async function withProtectedNativeAsyncWriter(root,operation){
  if(typeof operation!=='function'||types.isProxy(operation))fail('fixed general native async operation required');
  const borrowed=captureActiveNativeSourceVetoLease();let holder,result,failed=false,primary;
- try{const prior=contexts.getStore();if(prior?.active){const observed=observeNativeRoots(prior.frame,borrowed);if(observed.failed)throw observed.primary;}result=await withReviewedSourceContext(root,async value=>{let result,failed=false,primary;try{value.lease.verify();result=await operation(value.lease);}catch(error){failed=true;primary=error;}const observed=value.close(failed,primary);if(observed.failed)throw observed.primary;return result;},context=>{holder=nativeScope(context,borrowed);return holder;},false);}catch(error){failed=true;primary=error;if(!holder)try{borrowed.source(()=>{throw error;});}catch(closing){secondary();}}
+ try{const prior=contexts.getStore();if(prior?.active){const observed=observeNativeRoots(prior.frame,borrowed);if(observed.failed)throw observed.primary;}result=await withReviewedSourceContext(root,async value=>{let result,failed=false,primary;try{value.lease.verify();result=await operation(value.lease);}catch(error){failed=true;primary=error;}const observed=value.close(failed,primary);if(observed.failed)throw observed.primary;return result;},context=>{holder=nativeScope(context,borrowed);return holder;},false);}catch(error){failed=true;primary=error;if(!holder)try{borrowed.source(()=>{throw error;});}catch(closing){secondary(closing);}}
  // The shared context attempts its owner policy close; independently attempt
  // borrowed synchronous roots even when the shared owner has already failed.
- if(holder)holder.expire();try{borrowed.close();}catch(error){if(!failed){failed=true;primary=error;}else secondary();}if(failed)throw primary;return result;
+ if(holder)holder.expire();try{borrowed.close();}catch(error){if(!failed){failed=true;primary=error;}else secondary(error);}if(failed)throw primary;return result;
+}
+
+export function guardProtectedNativeSourceDiagnosticWrite(operation,requiredRoot){
+ const context=contexts.getStore();if(context){if(!context.active)fail('expired native source diagnostic context');if(!context.nativeDiagnosticLease)fail('no genuine native diagnostic route for legacy async source context');if(requiredRoot!==undefined){const expected=realpathSync(resolve(requiredRoot));if(!nativeFrames(context.frame).some(frame=>frame.root===expected)&&!hasProtectedSynchronousDiagnosticRoot(expected))fail('fixed diagnostic executable root absent from genuine source route');}return context.nativeDiagnosticLease.streamDescriptor(2,()=>operation());}return guardProtectedSynchronousDiagnosticWrite(operation,requiredRoot);
 }
