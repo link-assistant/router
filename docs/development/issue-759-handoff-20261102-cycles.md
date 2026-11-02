@@ -189,3 +189,23 @@ new case functions, not832 passing tests. The Rust filename retains the Windows
 CI `_test.rs` discovery suffix. Source scheduling review did not inspect CI
 feedback or execute any project code. Native oracles remain gated CI-only.
 No acceptance count changed:11/70 DRAFTED,59 OPEN, function denominator UNKNOWN.
+
+## Genuine original native export birth for target observations
+
+`a57c3013d` commits the independent native/target map oracles.
+`1440dd25fdb34de44654c76a2516e60b172b010e` commits the worker's three additional
+failure-aware/typed native-copy writer variants, full histories and case sources.
+The worker next drafts the three independent unit synchronization/runtime
+transactions and their finite history bridge; copied implementations do not
+inherit protection just by sharing public function names.
+
+Root drafted [native observer birth closure](target-scope-native-birth-20261102.md):
+complete proposed original loader/target observer/provenance afterimages retain
+a separately captured fresh native export/enum/sys identity scope, sticky observed
+failure, real original loader/source/allocator checks and own-data source arrays.
+The original selected guard's behavior is unchanged. Three independent case
+sources include a full copied compiler/profile/ancillary fixture and eight fresh
+serial receiving child modes. Proposed parents are NOT installed in the active
+compiler; no current predicate/denominator qualification is claimed. All original
+source bytes, complete source substitutions/CST/inverses and actual helper bindings
+are retained. All execution remains UNRUN and CI feedback NOT_INSPECTED.
