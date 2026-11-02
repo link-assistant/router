@@ -1,3 +1,4 @@
+import {knownProtectedUnitVariantSuccessor} from './protected-unit-variants-20261102-history.mjs';
 // Finite complete source chronology DATA. Never a path/hash permission bypass.
 import {fileURLToPath} from 'node:url';
 import {createReconcileSourceCapture,boundedReconcileWireBytes,requireReconcile as need} from './paired-sync-reconcile-20261101-support.mjs';
@@ -16,7 +17,7 @@ function originalProtectedInstallerStep(capture){
  need(row.path===PATHS[0]&&row.after===after,'complete original protected-source preparer epoch differs');return row;
 }
 export function knownProtectedPreparerWriterSuccessor({root=ROOT,path,before}={}){
- if(!PATHS.includes(path))return null;const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
+ if(!PATHS.includes(path))return knownProtectedUnitVariantSuccessor({root,path,before});const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
  try{
   const name=path.replaceAll('/','__'),original=capture.capture(BASE+name+'.before.txt').source,after=capture.capture(BASE+name+'.after.txt').source,current=capture.capture(path).source;
   need(original!==null&&after!==null&&current===after,'complete fixed protected preparer current source differs');

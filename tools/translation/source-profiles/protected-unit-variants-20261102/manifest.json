@@ -1,0 +1,115 @@
+{
+  "schema": "protected-unit-variants-source-history-20261102-v1",
+  "baselineRevision": "1440dd25fdb34de44654c76a2516e60b172b010e",
+  "files": [
+    {
+      "path": "tools/translation/synchronize-units.mjs",
+      "originalRevision": "1440dd25fdb34de44654c76a2516e60b172b010e",
+      "originalBlob": "f7a6305b094bea74e08b2c07f14a397a93d09def",
+      "mode": "100644",
+      "before": "synchronize-units.mjs.before.txt",
+      "after": "synchronize-units.mjs.after.txt",
+      "beforeBytes": 22927,
+      "afterBytes": 23984,
+      "beforeSha256": "1ca71ba7f34ab5161928d6cef198141f09730467078fa207f8312a0adc9bad49",
+      "afterSha256": "f9645ddf247ec7239762b7060812f176669b6dea9496197c20e4adf9c898cb2b",
+      "sequences": [
+        {
+          "phase": "language",
+          "purpose": "retain complete original producer, source, mode, rollback and public result behavior"
+        },
+        {
+          "phase": "repository",
+          "purpose": "compose actual captured policy before fresh production and all mutations; append exact finite source histories"
+        }
+      ]
+    },
+    {
+      "path": "tools/translation/synchronize-owned-project-units.mjs",
+      "originalRevision": "1440dd25fdb34de44654c76a2516e60b172b010e",
+      "originalBlob": "7911a87d4fae75cca0a7fcc16678f11e7f678bab",
+      "mode": "100644",
+      "before": "synchronize-owned-project-units.mjs.before.txt",
+      "after": "synchronize-owned-project-units.mjs.after.txt",
+      "beforeBytes": 24065,
+      "afterBytes": 25122,
+      "beforeSha256": "5d77924a4ec3ac57c9469a1c55934ffa194f2bd8e5b5caee91c9fff280a61022",
+      "afterSha256": "c50e241257718246fdebc4169a20326e0bef7df0c473a1c6d9bf6f23b8059131",
+      "sequences": [
+        {
+          "phase": "language",
+          "purpose": "retain complete original producer, source, mode, rollback and public result behavior"
+        },
+        {
+          "phase": "repository",
+          "purpose": "compose actual captured policy before fresh production and all mutations; append exact finite source histories"
+        }
+      ]
+    },
+    {
+      "path": "tools/translation/owned-project-runtime-materialization.mjs",
+      "originalRevision": "1440dd25fdb34de44654c76a2516e60b172b010e",
+      "originalBlob": "6c4889df30e9d196d12cc897a6ef36a79520077c",
+      "mode": "100644",
+      "before": "owned-project-runtime-materialization.mjs.before.txt",
+      "after": "owned-project-runtime-materialization.mjs.after.txt",
+      "beforeBytes": 27496,
+      "afterBytes": 28768,
+      "beforeSha256": "9aa44dbe6bafbbbb18001b947303fffb9c9395d2bd4c79aee83583b820756191",
+      "afterSha256": "3f8edffb4ddfd24f81300d08c25535f30f01744922be15f9662c7dbd6726a38c",
+      "sequences": [
+        {
+          "phase": "language",
+          "purpose": "retain complete original producer, source, mode, rollback and public result behavior"
+        },
+        {
+          "phase": "repository",
+          "purpose": "compose actual captured policy before fresh production and all mutations; append exact finite source histories"
+        }
+      ]
+    },
+    {
+      "path": "tools/translation/protected-preparer-writers-20261102-history.mjs",
+      "originalRevision": "c122772238d0acd9dd7ea9e1d27e0ceef99009ce",
+      "originalBlob": "65a810a2c940a948ea47505421e5c014782c280a",
+      "mode": "100644",
+      "before": "protected-preparer-writers-20261102-history.mjs.before.txt",
+      "after": "protected-preparer-writers-20261102-history.mjs.after.txt",
+      "beforeBytes": 4635,
+      "afterBytes": 4784,
+      "beforeSha256": "915924164cecd4daebd5a233028acff93d4417bcc5887b15e71b1927d37399b7",
+      "afterSha256": "9526b4d7d07ae2f3bc4e5e45f8ef7b9203df1ff38f2bf39dbe2659ce5d2aee46",
+      "sequences": [
+        {
+          "phase": "language",
+          "purpose": "retain complete original producer, source, mode, rollback and public result behavior"
+        },
+        {
+          "phase": "repository",
+          "purpose": "compose actual captured policy before fresh production and all mutations; append exact finite source histories"
+        }
+      ]
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN",
+  "priorCaseCorrection": {
+    "path": "tools/translation/test/protected-copy-variants-20261102.test.mjs",
+    "originalRevision": "1440dd25fdb34de44654c76a2516e60b172b010e",
+    "before": "prior-copy-case.before.txt",
+    "after": "prior-copy-case.after.txt",
+    "originalGrammar": "MALFORMED_REGEXP_DELIMITER",
+    "originalRetainedAs": "complete raw source DATA; no valid original CST claimed",
+    "sequences": [
+      "language",
+      "repository"
+    ],
+    "sourceAuthority": false,
+    "originalBlob": "aca31e1153e03a1d0f8b55aaac4bcddab2d4db51",
+    "beforeBytes": 5272,
+    "beforeSha256": "0f7e5314a023ec1946de9b6e7a0f1890bff74b52a7ac47cc770e7f866ed6c0d7",
+    "afterBytes": 5275,
+    "afterSha256": "36ec1ef673c5b531ae5d50340e764a50364055e8e7bb3440b1e7bf52609911cf"
+  }
+}
