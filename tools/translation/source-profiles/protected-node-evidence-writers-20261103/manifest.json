@@ -1,0 +1,55 @@
+{
+  "schema": "protected-node-evidence-writers-20261103-source-proposal-v1",
+  "predecessor": "10de89e46c9282c435de3d09eabd648ff493885f",
+  "files": [
+    {
+      "role": "runner",
+      "path": "scripts/run-node-tests.mjs",
+      "physicalOrigin": {
+        "commit": "10de89e46c9282c435de3d09eabd648ff493885f",
+        "path": "scripts/run-node-tests.mjs",
+        "gitBlob": "223690e7b866840f8d0437efdb1701d01df1bf46"
+      },
+      "before": {
+        "path": "runner.before.txt",
+        "bytes": 12768,
+        "sha256": "5d2fcf586868691fb6882c19370ae0f3dbfd1f6e0359229e9be07d31167b592b"
+      },
+      "after": {
+        "path": "runner.after.txt",
+        "bytes": 13335,
+        "sha256": "8dd3db1ae49859d6cf62951db62355f1102bfba4fbd8e0e3fbcf068fc509092d"
+      }
+    },
+    {
+      "role": "reporter",
+      "path": "scripts/node-case-deadline-reporter.mjs",
+      "physicalOrigin": {
+        "commit": "10de89e46c9282c435de3d09eabd648ff493885f",
+        "path": "scripts/node-case-deadline-reporter.mjs",
+        "gitBlob": "98b0fc6a89e3214ed686f5e47baf53b3b10fe351"
+      },
+      "before": {
+        "path": "reporter.before.txt",
+        "bytes": 2229,
+        "sha256": "f8ba7c0bf56dccae2f0e22b241c7b57d706c377362aaeffd86f8ce483dabd7b3"
+      },
+      "after": {
+        "path": "reporter.after.txt",
+        "bytes": 2628,
+        "sha256": "42a5e55ddab5772e74938ce883283755d277f23acfcc395fbc4cb87c1a0df05a"
+      }
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceInstalled": false,
+  "sourceAuthority": false,
+  "completeOriginalFunctionDenominator": "UNKNOWN",
+  "completeWriterDenominator": "UNKNOWN",
+  "open": [
+    "Native mkdtemp generated-name pre-creation exact admission",
+    "Python writes",
+    "Arbitrary transitive children",
+    "Inherited stdout/stderr and builtin TAP consumer stream FD writes"
+  ]
+}

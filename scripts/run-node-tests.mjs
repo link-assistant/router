@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Whole Node files, original case budgets/concurrency, independent duration audit.
 import fs from 'node:fs';
+import {withProtectedNodeRunnerWriter} from '../tools/translation/protected-node-evidence-writers-20261103.mjs';
 import path from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
@@ -24,23 +25,24 @@ export function nodeTestArguments(args){
 export async function runAuditedNodeTests({root,files,flags=[],outputDirectory,outerTimeoutMs=3600000,node=process.execPath}={}){
  const started=performance.now();
  root=canonicalCasePath(root);if(!Number.isSafeInteger(outerTimeoutMs)||outerTimeoutMs<1||outerTimeoutMs>3600000)throw Error('Finite original enclosing Node budget required');
+ return withProtectedNodeRunnerWriter(root,async scope=>{
  ({files,flags}=nodeTestArguments([...flags,...files]));
  const absoluteFiles=files.map(file=>canonicalCasePath(path.resolve(root,file)));
- for(const file of absoluteFiles){if(path.relative(root,file).startsWith('..')||!fs.statSync(file).isFile())throw Error('Whole Node source must be inside selected root');}
- const originalSources=absoluteFiles.map(file=>readCaseSource(file));
- if(originalSources.reduce((sum,row)=>sum+row.bytes,0)>64*1024*1024)throw Error('Complete original Node source bound exceeded');
+ scope.source(()=>{for(const file of absoluteFiles){if(path.relative(root,file).startsWith('..')||!fs.statSync(file).isFile())throw Error('Whole Node source must be inside selected root');}});
+ const originalSources=scope.source(()=>absoluteFiles.map(file=>readCaseSource(file)));
+ if(scope.retainedBytes+originalSources.reduce((sum,row)=>sum+row.bytes,0)>64*1024*1024)throw Error('Complete original Node source bound exceeded');
  const outputBase=path.join(root,'js/node_modules/.node-case-deadlines');
- if(!outputDirectory){plainDirectory(path.dirname(outputBase));fs.mkdirSync(outputBase,{recursive:true});plainDirectory(outputBase);outputDirectory=fs.mkdtempSync(path.join(outputBase,'complete-'));}
- else {outputDirectory=canonicalCasePath(outputDirectory);plainDirectory(path.dirname(outputDirectory));fs.mkdirSync(outputDirectory,{mode:0o700});}
+ if(!outputDirectory){plainDirectory(path.dirname(outputBase));scope.mkdir(outputBase,{recursive:true});plainDirectory(outputBase);scope.verify();outputDirectory=fs.mkdtempSync(path.join(outputBase,'complete-'));scope.entries([outputDirectory],()=>{});}
+ else {outputDirectory=canonicalCasePath(outputDirectory);plainDirectory(path.dirname(outputDirectory));scope.mkdir(outputDirectory,{mode:0o700});}
  const outputIdentity=fs.lstatSync(outputDirectory),guardOutput=()=>{plainDirectory(outputDirectory);const after=fs.lstatSync(outputDirectory);if(after.dev!==outputIdentity.dev||after.ino!==outputIdentity.ino||after.mode!==outputIdentity.mode)throw Error('Deadline output directory identity changed');};
  const receipt=path.join(outputDirectory,'case-deadlines.json');
- const codeSources=['node-case-deadlines.mjs','node-case-deadline-reporter.mjs','run-node-tests.mjs'].map(name=>readCaseSource(fileURLToPath(new URL(name,import.meta.url))));
+ const codeSources=scope.source(()=>['node-case-deadlines.mjs','node-case-deadline-reporter.mjs','run-node-tests.mjs'].map(name=>readCaseSource(fileURLToPath(new URL(name,import.meta.url)))));
  const request={schema:'complete-node-case-deadline-request-v1',root,files:absoluteFiles,receipt};
- const raw=Buffer.from(JSON.stringify(request,null,2)+'\n'),requestPath=path.join(outputDirectory,'request.json');fs.writeFileSync(requestPath,raw,{flag:'wx',mode:0o600});
+ const raw=Buffer.from(JSON.stringify(request,null,2)+'\n'),requestPath=path.join(outputDirectory,'request.json');scope.preflightFiles(['request.json','command.json','stdout.raw.tap','stderr.raw.log','case-deadlines.json','terminal.json','finalization-refusal.json'].map(name=>path.join(outputDirectory,name)));scope.write(requestPath,raw,{flag:'wx',mode:0o600});
  const requestFact=readCaseSource(requestPath);
  const reporter=fileURLToPath(new URL('./node-case-deadline-reporter.mjs',import.meta.url));
  const command=[node,'--test',...flags,'--test-reporter='+reporter,...files];
- const write=(name,value)=>fs.writeFileSync(path.join(outputDirectory,name),JSON.stringify(value,null,2)+'\n',{flag:'wx',mode:0o600});
+ const write=(name,value)=>scope.write(path.join(outputDirectory,name),JSON.stringify(value,null,2)+'\n',{flag:'wx',mode:0o600});
  write('command.json',{root,command,outerTimeoutMs,requestSha256:hash(raw),node:process.versions,codeSources,originalSources,typescriptOverride:process.env.ROUTER_TRANSLATION_TSC??null,caseLimitsChanged:false});
  const env={...process.env,ROUTER_NODE_DEADLINE_REQUEST:requestPath,ROUTER_NODE_DEADLINE_REQUEST_SHA256:hash(raw)};
  let child,killTimer,outerTimer,interrupted=null,outputError=null,launchError=null,shutdownStarted=null;
@@ -64,18 +66,18 @@ export async function runAuditedNodeTests({root,files,flags=[],outputDirectory,o
  }
  const onInt=()=>terminate('SIGINT'),onTerm=()=>terminate('SIGTERM');process.on('SIGINT',onInt);process.on('SIGTERM',onTerm);
  async function retain(stream,name,destination){
-  const filename=path.join(outputDirectory,name),fd=fs.openSync(filename,'wx+',0o600);let bytes=0,observedBytes=0,expected=null,readback=null,identity=null;const digest=createHash('sha256');
-  try{for await(const chunk of stream){observedBytes+=chunk.length;let offset=0;while(offset<chunk.length){const written=fs.writeSync(fd,chunk,offset,chunk.length-offset);if(written<=0)throw Error('No raw log write progress');digest.update(chunk.subarray(offset,offset+written));offset+=written;bytes+=written;}if(!destination.write(chunk))await once(destination,'drain');if(bytes>RAW_LIMIT){outputError??='Raw stream exceeded256MiB stop threshold; full partial retained';terminate(outputError);}}}
+  const filename=path.join(outputDirectory,name),fd=scope.open(filename,'wx+',0o600);let bytes=0,observedBytes=0,expected=null,readback=null,identity=null;const digest=createHash('sha256');
+  try{for await(const chunk of stream){observedBytes+=chunk.length;let offset=0;while(offset<chunk.length){const written=scope.descriptor(fd,actual=>fs.writeSync(actual,chunk,offset,chunk.length-offset));if(written<=0)throw Error('No raw log write progress');digest.update(chunk.subarray(offset,offset+written));offset+=written;bytes+=written;}if(!destination.write(chunk))await once(destination,'drain');if(bytes>RAW_LIMIT){outputError??='Raw stream exceeded256MiB stop threshold; full partial retained';terminate(outputError);}}}
   catch(error){outputError??=error.stack??error.message;terminate('raw stream failure');}
   finally{
-   expected=digest.digest('hex');
    try{
+    expected=digest.digest('hex');
     identity=fileIdentity(fs.fstatSync(fd));if(JSON.stringify(fileIdentity(fs.lstatSync(filename)))!==JSON.stringify(identity))throw Error('Retained raw fd/path identity differs');
     const verification=createHash('sha256'),buffer=Buffer.alloc(65536);let count=0,length;
     while((length=fs.readSync(fd,buffer,0,buffer.length,count))>0){count+=length;if(count>bytes)throw Error('Retained raw grew beyond complete stream');verification.update(buffer.subarray(0,length));}
     readback={bytes:count,sha256:verification.digest('hex')};
     if(count!==bytes||readback.sha256!==expected||JSON.stringify(fileIdentity(fs.fstatSync(fd)))!==JSON.stringify(identity)||JSON.stringify(fileIdentity(fs.lstatSync(filename)))!==JSON.stringify(identity))throw Error('Complete retained raw bytes or identity differ');
-   }catch(error){outputError??=error.stack??error.message;}finally{fs.closeSync(fd);}
+   }catch(error){outputError??=error.stack??error.message;}finally{scope.close(fd);}
   }
   return {path:name,bytes,observedBytes,sha256:expected,readback,identity};
  }
@@ -92,10 +94,10 @@ export async function runAuditedNodeTests({root,files,flags=[],outputDirectory,o
  const verify=()=>{
   guardOutput();if(groupCleanup.error||groupCleanup.supported&&!groupCleanup.complete)throw Error(groupCleanup.error??'Owned Node process group cleanup incomplete');if(performance.now()-started>outerTimeoutMs)throw Error('Complete Node execution and final audit exceeded unchanged outer deadline');
   if(JSON.stringify(readCaseSource(requestPath))!==JSON.stringify(requestFact))throw Error('Deadline request bytes/identity changed');
-  for(const before of codeSources)if(JSON.stringify(readCaseSource(before.path))!==JSON.stringify(before))throw Error('Deadline runner/reporter source changed during complete run');
+  scope.source(()=>{for(const before of codeSources)if(JSON.stringify(readCaseSource(before.path))!==JSON.stringify(before))throw Error('Deadline runner/reporter source changed during complete run');});
   let bytes=0;if(!Array.isArray(audit?.sourceRecords)||audit.sourceRecords.length>4096)throw Error('Complete bounded source records required');
   const byPath=new Map();
-  for(const before of audit.sourceRecords){if(typeof before.path!=='string'||path.relative(root,before.path).startsWith('..')||byPath.has(before.path)||!Number.isSafeInteger(before.bytes)||before.bytes<0||(bytes+=before.bytes)>64*1024*1024)throw Error('Deadline source bounds/root differ');if(JSON.stringify(readCaseSource(before.path))!==JSON.stringify(before))throw Error('Deadline test source changed after child completion');byPath.set(before.path,before);}
+  for(const before of audit.sourceRecords){if(typeof before.path!=='string'||path.relative(root,before.path).startsWith('..')||byPath.has(before.path)||!Number.isSafeInteger(before.bytes)||before.bytes<0||(bytes+=before.bytes)>64*1024*1024)throw Error('Deadline source bounds/root differ');scope.source(()=>{if(JSON.stringify(readCaseSource(before.path))!==JSON.stringify(before))throw Error('Deadline test source changed after child completion');});byPath.set(before.path,before);}
   for(const before of originalSources)if(JSON.stringify(byPath.get(before.path))!==JSON.stringify(before))throw Error('Complete original selected source has no exact audit join');
   if(JSON.stringify(readCaseSource(receipt,128*1024*1024))!==JSON.stringify(receiptFact))throw Error('Deadline audit receipt bytes/identity changed');
   for(const log of logs)if(JSON.stringify(fileIdentity(fs.lstatSync(path.join(outputDirectory,log.path))))!==JSON.stringify(log.identity))throw Error('Full retained raw identity changed after readback');
@@ -109,6 +111,7 @@ export async function runAuditedNodeTests({root,files,flags=[],outputDirectory,o
  write('terminal.json',result);
  if(result.exitCode===0)try{verify();}catch(error){result.exitCode=1;result.auditError='Final receipt boundary: '+(error.stack??error.message);write('finalization-refusal.json',result);}
  return result;
+ });
 }
 async function main(){
  const args=process.argv.slice(2);let outerTimeoutMs=3600000;

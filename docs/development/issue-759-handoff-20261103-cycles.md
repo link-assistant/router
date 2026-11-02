@@ -373,3 +373,23 @@ receiving path can qualify. Full sources and original workloads are not reduced.
 Resource/retained-memory/deadline/type/body/receiving/native qualification UNRUN;
 CI NOT_INSPECTED. Frozen documents describe proposals; this records actual
 installation. Counts remain11/70 DRAFTED,59 OPEN.
+
+## Actual independent Node evidence file writers
+
+Root reviewed the two complete Node runner/reporter parent equations and the
+frozen11 authored files, then installed both exact script afterimages. Parent
+and child independently capture fixed helper-root plus original selected-root
+policy; public request data cannot replace helper-root protection. All seven
+fixed files preflight before writes, successful raw opens are owned immediately,
+every chunk/receipt file descriptor is independently admitted, and all owned
+FDs close even after veto/expiry. The original Node command, source/deadline/raw
+evidence, process-group cleanup, TAP forwarding, flags/modes and workload remain.
+Fixed source capture/current comparisons use genuine source boundaries.
+
+This is intermediate source adoption: actual independently relocated script
+roots need the next explicit additional-root successor; inherited pipe/TTY
+forwarding needs the separate additive stream-FD API and caller bridge. Native
+mkdtemp still has an explicit pre-creation generated-name gap, and secondary
+stderr, Python and arbitrary child/TAP-consumer sinks remain OPEN. No wrapper
+qualifies them. Frozen documents describe proposals; this records installation.
+All verification UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
