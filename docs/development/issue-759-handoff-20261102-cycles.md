@@ -149,3 +149,23 @@ comparison found only Root's intentionally proposed flat installer successor
 differs from that bank. Disk metadata around11:25UTC reports62GiB available.
 No local tests, compilation, translator/generator trials or CI feedback inspection
 occurred. Current11/70 DRAFTED,59 OPEN and unknown function denominator persist.
+
+## Integrated shared policy and complete flat transaction ancestry
+
+Root integrated the worker's exact frozen unit/scope-adapter/safe-error-successor
+before/after pairs and their helper imports, private-policy poison, distinct
+logical mutation and physical alias vetoes. The actual flat source transaction
+now captures policy before both original producers and awaits, keeps its full
+source/TypeScript fences, and checks policy around every original stage/backup/
+quarantine/recovery mutation. Its original98-member source bank is unchanged;
+the finite two-parent adapter records complete old afterimages and new source
+inverses, including the adapter's own historical source. Root also retains a
+full named source-error case successor distinguishing historical after/currentAfter.
+
+See [the combined source contract](protected-flat-writer-20261102.md). The packet
+retains14 complete files and6 full equations;23 new independent operational/
+receiving case sources and1 historical case adaptation remain UNRUN. Direct
+alias metadata limits, case/Unicode/nonUTF8 compatibility boundaries and the
+cooperative writer interval are explicit OPEN domains. Specialized preparer/
+asset sinks and their six case files remain a separate worker checkpoint.
+All original source archives are unchanged. Counts remain11/70 DRAFTED,59 OPEN.

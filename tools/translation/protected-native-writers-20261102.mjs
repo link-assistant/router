@@ -62,3 +62,9 @@ export function withProtectedNativeWriter(root,operation){
  need(operationDepth<64,'complete protected native writer nesting bound');operationDepth++;
  try{return withProtectedNativeWriterBody(root,operation);}finally{operationDepth--;}
 }
+
+// Actual in-place creation/truncation additionally checks physical aliases.
+export function allowProtectedNativeDirectWrites(root,outputs){return frame(root).policy.allowDirectWrites({root,outputs});}
+export function mutateProtectedNativeDirectWriter(root,outputs,operation){
+ allowProtectedNativeDirectWrites(root,outputs);return mutateProtectedNativeWriter(root,outputs,operation);
+}

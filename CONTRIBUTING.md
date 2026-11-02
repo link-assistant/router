@@ -994,4 +994,4 @@ qualified application behavior. Preserve dated denominators and explicit
 scenario assumptions; never infer completion from commit/profile counts.
 See the [delivery audit](docs/case-studies/issue-759/current/translation-delivery-audit-20261101/README.md).
 
-Bulk source copying must preserve actual external import/export bindings and complete source/case ancestry; see [import closure](docs/development/source-copy-import-closure.md). Source review never waives the current no-execution phase or grants compiler authority.
+Bulk source copying must preserve actual external import/export bindings and complete source/case ancestry; see [import closure](docs/development/source-copy-import-closure.md). Source review never waives the current no-execution phase or grants compiler authority. Retain [upstream copy provenance](docs/development/translation-provenance-20261102.md), [all ancillary compiler source suffixes](docs/development/full-ancillary-source-export-20261102.md), and [exact source-failure ancestry](docs/development/protected-source-errors-20261102.md) when extending source export or installation; copied bytes never grant semantic authority.

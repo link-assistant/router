@@ -6,6 +6,7 @@ import {resolveForwardSourceEquation} from './forward-output-ownership-20261101-
 // Cooperative/exclusive writers only: Node offers no conditional inode CAS,
 // global atomic publication or durable crash-recovery guarantee here.
 import fs from 'node:fs';
+import {captureExplicitSourceMutationPolicy} from './unit-runtime-materialization.mjs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {randomUUID} from 'node:crypto';
@@ -38,20 +39,29 @@ function materialization(plan,scope){
  return {schema:'fresh-flat-original-source-installation-20261101',producerSchema:plan.schema,root:scope.root,inputs:[],outputs};
 }
 function sameOutputs(left,right){return left.outputs.length===right.outputs.length&&left.outputs.every((row,index)=>{const other=right.outputs[index];return row.path===other.path&&row.before===other.before&&row.after===other.after&&row.mode===other.mode;});}
+// Capture before either fixed producer or await. The policy only vetoes
+// mutations; the actual original producer/source scope remains mandatory.
 export async function installFreshFlatNativeOutputTextRetention({root=ROOT}={}){
- const scope=captureFlatSourceInstallationInputs(root);let failed=false,primary,value;
+ const policy=captureExplicitSourceMutationPolicy(root);let original,scope,failed=false,primary,value;const secondary=[];
+ const record=error=>{if(!failed){failed=true;primary=error;}else secondary.push(error);};
  try{
-  const first=materialization(await prepareFlatNativeOutputTextRetention({root:scope.root}),scope);scope.verify();
-  // Actual full private predecessor producer runs independently again. No
-  // arbitrary callback, saved verdict, public Map, hash or proposal can replace
-  // this invocation. After publication its own dependencies may be outputs,
-  // so subsequent checking uses only the exact private transition ledger.
-  const fresh=materialization(await prepareFlatNativeOutputTextRetention({root:scope.root}),scope);scope.verify();if(!sameOutputs(first,fresh))fail('complete fresh original producer output set differs');value={...sourceInstallation(fresh,scope),producerSchema:fresh.producerSchema,files:fresh.outputs.map(row=>row.path)};
- }catch(error){failed=true;primary=error;}
- // The transaction closes before deleting backup evidence. This outer closer
- // still runs for planning/reissue failures; it never masks a falsy primary.
- if(failed)try{scope.verify();}catch{}
- scope.release();if(failed)throw primary;return value;
+  original=captureFlatSourceInstallationInputs(root);
+  scope=Object.freeze({...original,
+   verify(){return io.closing(()=>{},[()=>original.verify(),()=>policy.verify()]);},
+   mutate(names,operation){policy.allowMutationPaths(names);return io.closing(()=>original.mutate(names,operation),[()=>policy.verify()]);},
+  });
+  const first=materialization(await prepareFlatNativeOutputTextRetention({root:scope.root}),scope);scope.verify();policy.allow(first);
+  // Independent original full production is retained. No public proposal,
+  // source hash or policy DATA can replace genuine original source checking.
+  const fresh=materialization(await prepareFlatNativeOutputTextRetention({root:scope.root}),scope);scope.verify();policy.allow(fresh);
+  if(!sameOutputs(first,fresh))fail('complete fresh original producer output set differs');
+  value={...sourceInstallation(fresh,scope),producerSchema:fresh.producerSchema,files:fresh.outputs.map(row=>row.path),protectedPolicyRetainedBytes:policy.retainedBytes};
+ }catch(error){record(error);}
+ // Attempt each independent closer, even after falsy/frozen primary failures.
+ // Keep backup evidence and the original transaction recovery behavior.
+ for(const close of [()=>scope?.verify(),()=>policy.close(),()=>original?.release()])try{close();}catch(error){record(error);}
+ if(failed){if(secondary.length){let attached=false;if(primary!==null&&(typeof primary==='object'||typeof primary==='function'))try{Object.defineProperty(primary,'protectedFlatSourceClosingFailures',{value:secondary,enumerable:true});attached=true;}catch{}if(!attached)try{process.stderr.write('{"schema":"router-protected-flat-source-closing-20261102","closingFailed":true}\n');}catch{}}throw primary;}
+ return value;
 }
 
 function sourceInstallation(fresh,scope){

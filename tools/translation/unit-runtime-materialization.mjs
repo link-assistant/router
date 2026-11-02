@@ -1,6 +1,7 @@
 // Source-unit synchronization with fresh Git baselines and complete proposals.
 // No persisted source/hash/verdict cache supplies a translation decision.
 import * as fs from 'node:fs';
+import {assertProtectedMutationPaths,directMutationOutputPaths,assertProtectedDirectWriteTargets} from './protected-preparer-writers-20261102-alias.mjs';
 import {ownSourceFailureField} from './source-error-fields-20261102.mjs';
 import {resolve,dirname,posix} from 'node:path';
 import {execFileSync} from 'node:child_process';
@@ -252,8 +253,11 @@ function captureProtectedSourcePolicy(requestedRoot){
   for(const names of [value.authored,value.unmanaged]){if(!Array.isArray(names)||names.length>4096)fail('bounded explicit protected-source list required');for(const name of names){relative(name);if(protectedPaths.has(name))fail('duplicate explicit protected-source path');protectedPaths.add(name);}}
  }
  const verify=()=>{try{if(closed||revoked)fail('protected-source policy scope expired or revoked');if(!same(rootStamp(),rootIdentity)||parentIdentity!==null&&!same(parentStamp(),parentIdentity))fail('protected-source root or parent changed');const next=read();if(next.body!==initial.body||!same(next.identity,initial.identity))fail('protected-source policy changed or was restored');}catch(error){revoked=true;throw error;}};
+ const veto=operation=>{let value,failed=false,primary;try{verify();value=operation();}catch(error){failed=true;primary=error;}try{verify();}catch(error){if(!failed){failed=true;primary=error;}else recordProtectedPolicyClosingFailure(primary,error);}if(failed){revoked=true;throw primary;}return value;};
  return Object.freeze({retainedBytes:initial.body===null?0:4*Buffer.byteLength(initial.body)+256,verify,
-  allow(fresh){verify();if(fs.realpathSync(resolve(fresh.root))!==root)fail('fresh producer root differs from protected-source policy');for(const row of fresh.outputs){relative(row.path);if(row.path===policyPath||protectedPaths.has(row.path)){if(row.before!==row.after)fail('explicit authored/unmanaged source or policy retained: '+row.path);if(row.before!==null){const stat=fs.lstatSync(physical(root,row.path));if((stat.mode&0o777)!==row.mode)fail('explicit protected-source mode retained: '+row.path);}}}},
+  allow(fresh){return veto(()=>{if(fs.realpathSync(resolve(fresh.root))!==root)fail('fresh producer root differs from protected-source policy');for(const row of fresh.outputs){relative(row.path);if(row.path===policyPath||protectedPaths.has(row.path)){if(row.before!==row.after)fail('explicit authored/unmanaged source or policy retained: '+row.path);if(row.before!==null){const stat=fs.lstatSync(physical(root,row.path));if((stat.mode&0o777)!==row.mode)fail('explicit protected-source mode retained: '+row.path);}}}});},
+  allowMutationPaths(paths){return veto(()=>assertProtectedMutationPaths({protectedNames:[policyPath,...protectedPaths],paths}));},
+  allowDirectWrites(fresh){return veto(()=>{if(fs.realpathSync(resolve(fresh.root))!==root)fail('fresh direct-writer root differs from protected-source policy');const paths=directMutationOutputPaths(fresh.outputs),protectedNames=[policyPath,...protectedPaths];assertProtectedMutationPaths({protectedNames,paths});assertProtectedDirectWriteTargets({root,protectedNames,paths});});},
   close(){if(closed)fail('protected-source policy already closed');try{verify();}finally{closed=true;protectedPaths.clear();}},
  });
 }

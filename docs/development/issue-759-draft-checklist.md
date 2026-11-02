@@ -792,3 +792,34 @@ The common explicit authored-policy installer/ancestry batch advances L04/S03
 and their independent case source. Actual map caller/Host/meta/reverse hooks
 and specialized leaf/durable writer protection are the active next batches.
 None of these partial observations closes a row by metadata/name/hash alone.
+
+## Continued source-only integration — 2026-11-02
+
+These are additional partial implementations, not closure receipts. All local
+execution is UNRUN; CI feedback is NOT_INSPECTED. Counts remain11/70 DRAFTED and
+59 OPEN. The complete application-function denominator is UNKNOWN.
+
+- L04/S03: common explicit policy capture and specialized native move/durable
+  recovery protect known source sinks; `c35bdcbaa` preserves exact source errors
+  and complete source-epoch history. The preparer/asset worker drafts separate
+  alias-aware direct byte-write and logical staged-mutation vetoes. Root drafts
+  the genuine flat transaction and original98-member bank successor. All
+  original source checks/recovery paths remain. Complete writer/domain coverage,
+  installation/freshness and resource/receiving evidence are still OPEN.
+- E01/E02/E03/E05: `8c49f1fd8` retains97 pinned copied/project source/license/
+  notice images and fixed original provenance export composition.
+  `7e99064d3` adds all-suffix ancillary compiler-directory source export. Original
+  raw/encoded/decode limits stay unchanged. Independent complete-corpus case
+  sources remain UNRUN. Full external/dynamic application/SDK/fixture/import
+  closure and native receiving qualification are not supplied by source hashes.
+- B01/B02/B03/C03/C04/O02/F01/V02: `352dfb2c1` and `7c47cf021` draft genuine
+  map source/checker/meta hooks and complete namespace/prelude source selections,
+  including full original source identity custody. A narrow source-model native
+  compatibility ABI is still in progress; actual invoked compiler/sysroot and
+  native runtime conformance are not assumed. No unconditional guard or public
+  namespace descriptor counts as application activation.
+
+See [the current source journal](issue-759-handoff-20261102-cycles.md) and linked
+contracts for exact source packets, remaining domains, resource profiles and
+full independent case/oracle obligations. Broad optional DATA collection alone
+cannot close an original acceptance criterion.
