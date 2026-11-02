@@ -518,3 +518,26 @@ Receiving resource/platform fit, strict TS/runtime/native results, all actual
 project/owned-unit routes, unrestricted BTreeMap application adoption and whole
 program coverage remain OPEN. The deferred A1 gaps remain unchanged and do not
 grant265 or body authority. Counts remain11/70 DRAFTED,59 OPEN; CI NOT_INSPECTED.
+
+## Unrestricted standard-map predicate core source
+
+Root drafted a separate native/JS/strict-TS boolean predicate core for borrowed
+standard text maps. Unlike conversion into the old bounded opaque carrier, this
+kernel performs one native lookup and literal equality without whole-map/value
+scanning, collection/copy, entry limit or value-byte cap. Its64 literal-choice
+bound is separate from the unbounded input map. It returns no borrowed string
+and cannot certify unobserved container contents or issue native source facts.
+The Rust leaf remains intentionally untranslated paired library code; no crate
+root export, source-rule/ABI registration or app signature/body is changed yet.
+
+See [borrowed standard map core](borrowed-standard-map-20261102.md). Independent
+JS/native cases include5000 entries, an unused value beyond1MiB, true/1/false/
+empty, Unicode normalization,64/65 choices, genuine/subclass/proxy map domains,
+effectful literal descriptors and no iteration. Six complete authored sources
+are retained in10825 decoded/4035 compressed bytes; SHA256
+`30794a90eadfa7629f923bab893f14996d2affb2a0970c3c982bf32bc6912c59`.
+Every case, strict TS/runtime/native observation and integration remains UNRUN.
+This prepares the core abstraction for actual query_stream_requested adoption
+while preserving its unrestricted BTreeMap input; it closes no app function or
+acceptance row. Source/type/namespace/caller registration and checked meta in
+both directions remain concrete followup work, not inferred from behavior names.
