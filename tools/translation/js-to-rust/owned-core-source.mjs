@@ -1,3 +1,4 @@
+import {requireBorrowedStandardMapReverseSources,borrowedStandardMapReverseWrittenInput,readBorrowedStandardMapReverseCall,consumeBorrowedStandardMapReverseInputPrelude} from '../borrowed-standard-map-20261103-reverse-calls.mjs';
 import {orderedTextMapContract} from '../ordered-text-map-20261102-contracts.mjs';import {orderedTextMapReverseOperation,orderedTextMapReverseCompatible} from '../ordered-text-map-callers-20261102-reverse.mjs';import {requireOrderedTextMapReverseNativeSources,recloseOrderedTextMapReverseNativeSources,readOrderedTextMapReverseImportType,consumeOrderedTextMapReverseInputPrelude} from '../ordered-text-map-callers-20261102-reverse-native.mjs';
 import {originalNamespaceTraversalIntrinsicsUnchanged,originalPrivateParserIngressUnchanged,originalDataFreezeIntrinsicsUnchanged,originalStaticSourceIntrinsicsUnchanged,originalCapturedFunctionSource} from '../original-json-intrinsics.mjs';
 import {ownershipCompilerRuntimeNativeCurrent} from './vendor/module-syntax.mjs';
@@ -304,7 +305,7 @@ function originalImportTarget(from,specifier,analysis,state){
  }
  // A paired TS import resolves its genuine .d.mts in declarationRoot. Its
  // fixed runtime counterpart remains the independently checked JS callee.
- if(traversals.get(analysis)?.paired&&posix.dirname(target)===state.data.declarationRoot&&['primitive-operator-runtime.mjs','json-update-runtime.mjs','json-macro-runtime.mjs','base64-runtime.mjs','json-runtime.mjs','json-option-runtime.mjs','string-iterator-runtime.mjs','ordered-text-map-20261102-runtime.mjs'].includes(posix.basename(target))){
+ if(traversals.get(analysis)?.paired&&posix.dirname(target)===state.data.declarationRoot&&['primitive-operator-runtime.mjs','json-update-runtime.mjs','json-macro-runtime.mjs','base64-runtime.mjs','json-runtime.mjs','json-option-runtime.mjs','string-iterator-runtime.mjs','ordered-text-map-20261102-runtime.mjs','borrowed-standard-map-20261102-runtime.mjs','borrowed-standard-map-20261103-input-runtime.mjs'].includes(posix.basename(target))){
   const runtime=state.data.runtimeRoot+'/'+posix.basename(target);
   if(state.files.has(target)&&state.files.get(target)!==state.files.get(runtime))fail('paired runtime counterpart differs');return runtime;
  }
@@ -322,7 +323,9 @@ function originalOwnedCoreImport(handle,path,node,analysis){
  let target=originalImportTarget(path,declaration.moduleSpecifier.text,analysis,state),name=(spec.propertyName??spec.name).text,ownerFile=file,ownerDeclaration=declaration;const links=[];
  for(let depth=0;depth<32;depth++){
   const source=state.files.get(target);if(source===undefined)fail('import target missing');links.push({path:target,name,source,from:{path:ownerFile.fileName,span:[ownerDeclaration.getStart(ownerFile),ownerDeclaration.end]}});
-  if(target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'||target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'||target===state.data.runtimeRoot+'/base64-runtime.mjs'||target===state.data.runtimeRoot+'/json-runtime.mjs'||target===state.data.runtimeRoot+'/json-option-runtime.mjs'||target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'||target===state.data.runtimeRoot+'/ordered-text-map-20261102-runtime.mjs'){
+  if(target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'||target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'||target===state.data.runtimeRoot+'/base64-runtime.mjs'||target===state.data.runtimeRoot+'/json-runtime.mjs'||target===state.data.runtimeRoot+'/json-option-runtime.mjs'||target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'||target===state.data.runtimeRoot+'/ordered-text-map-20261102-runtime.mjs'||target===state.data.runtimeRoot+'/borrowed-standard-map-20261102-runtime.mjs'||target===state.data.runtimeRoot+'/borrowed-standard-map-20261103-input-runtime.mjs'){
+   if(target===state.data.runtimeRoot+'/borrowed-standard-map-20261103-input-runtime.mjs'){requireBorrowedStandardMapReverseSources(state);if(name!=='borrowedStandardMapInput'||spec.isTypeOnly||declaration.importClause?.isTypeOnly)fail('actual native-map input-shape runtime required');}
+   if(target===state.data.runtimeRoot+'/borrowed-standard-map-20261102-runtime.mjs'){requireBorrowedStandardMapReverseSources(state);if(name!=='router_borrowed_text_map_matches_literals'||spec.isTypeOnly||declaration.importClause?.isTypeOnly)fail('actual standard-map runtime value import required');}
    if(target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&!ownedAsciiOperation(name))fail('unregistered ASCII runtime export');
    if(target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'&&(state.data.primitiveOperators!==true||!ownedPrimitiveOperatorOperation(name)&&!((spec.isTypeOnly||declaration.importClause?.isTypeOnly)&&primitiveBitwiseAlias(name))))fail('unregistered primitive operator context or export');
    if(target===state.data.runtimeRoot+'/ordered-text-map-20261102-runtime.mjs'){requireCanonicalOrderedMapSources(state);if(!orderedTextMapReverseOperation(name)&&!((spec.isTypeOnly||declaration.importClause?.isTypeOnly)&&name==='OrderedTextMap'))fail('actual registered opaque map export required');}
@@ -383,6 +386,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
   const query=type.objectType.typeArguments[0];
   if(ts.isTypeQueryNode(query)&&ts.isIdentifier(query.exprName)){
    const binding=originalOwnedCoreImport(handle,path,query.exprName,analysis);
+   const standardMap=borrowedStandardMapReverseWrittenInput(ts,analysis.checker,type,analysis,binding);if(standardMap){requireBorrowedStandardMapReverseSources(state);return standardMap;}
    const ascii=ownedAsciiOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'&&ascii)return ascii.args[Number(type.indexType.literal.text)];
    const base64=ownedBase64Operation(binding.name);if(binding.target===state.data.runtimeRoot+'/base64-runtime.mjs'&&base64&&type.indexType.literal.text==='0')return base64.input;
    const map=orderedTextMapReverseOperation(binding.name);if(binding.target===state.data.runtimeRoot+'/ordered-text-map-20261102-runtime.mjs'&&map&&Number(type.indexType.literal.text)<map.parameters.length){requireCanonicalOrderedMapSources(state);return map.parameters[Number(type.indexType.literal.text)];}
@@ -461,7 +465,7 @@ function checkFunction(context,path,declaration,analysis){
   if(ownedJsonOptionalPayload(type))fail('optional public parameters require an independently checked carrier boundary');
   if(type==='text-owned')type='str';if(['text-map','text-map-ref'].includes(type))type='text-map-input';if(type==='text-pairs-owned')type='text-pairs-input';if(type==='vec:text-owned')fail('map keys vector inputs require a separate original owned-vector entry theorem');
   const identifier=param.name;
-  const sourceName=bind(identifier,{type,root:['json-ref','map-ref','text-map-input','text-pairs-input','str','bytes-ref','base64-error-ref'].includes(type)||ownedJsonBorrowed(type)||type==='json-option-input'?identifier.text:null,input:true},environment);
+  const sourceName=bind(identifier,{type,root:['json-ref','map-ref','text-map-input','standard-text-map-input','text-pairs-input','str','bytes-ref','base64-error-ref'].includes(type)||ownedJsonBorrowed(type)||type==='json-option-input'?identifier.text:null,input:true},environment);
   params.push({name:sourceName,rust:rustName(sourceName),type});
  }
  // The complete available pair was selected before parameter domains.
@@ -573,6 +577,7 @@ function checkFunction(context,path,declaration,analysis){
     hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);
     return {kind:'json-reader-call',name:binding.name,args,type:reader.ret,root};
    }
+   const standardMap=readBorrowedStandardMapReverseCall({ts,node,binding,analysis,params,expression:argument=>expression(argument,scope,depth+1),current:()=>{requireBorrowedStandardMapReverseSources(traversals.get(analysis).state);requireOwnedCoreSourceCurrent(context);}});if(standardMap){hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});return standardMap;}
    const mapOperation=orderedTextMapReverseOperation(binding.name);
    if(mapOperation&&binding.target===analysis.runtimeRoot+'/ordered-text-map-20261102-runtime.mjs'){
     requireCanonicalOrderedMapSources(traversals.get(analysis).state);if(!['new','insert','remove','get','contains','len','copy','keys','from_pairs','pairs'].includes(orderedTextMapContract(binding.name)?.operation)||binding.typeOnly||node.arguments.length!==mapOperation.parameters.length)fail('qualified opaque map caller arity/domain required');
@@ -670,7 +675,7 @@ function checkFunction(context,path,declaration,analysis){
       }
      }
      const asciiLoan=value.type==='str'?asciiStringLoan(value,scope):undefined;
-     const orderedMapInitializer=value.kind==='ordered-map-call'&&value.type==='text-map'&&orderedTextMapReverseOperation(value.name)?.returns==='text-map';if(['text-map','text-map-input','text-map-ref'].includes(value.type)&&!orderedMapInitializer)fail('map local aliases need a separate private local root/ownership theorem');if(['text-pairs-input','text-pairs-owned','vec:text-owned'].includes(value.type))fail('map projection vector locals require a separate original ownership theorem');const name=bind(declaration.name,{type:value.type,root:orderedMapInitializer?declaration.name.text:value.root,...(asciiLoan?.root===null?{asciiStaticLoan:true}:{})},scope);if(orderedMapInitializer){const binding=scope.get(name);if(binding.symbol!==checker.getSymbolAtLocation(declaration.name)||binding.root!==name)fail('owned map local lost its actual original lexical symbol');orderedMapLocalRoots.set(name,{binding,symbol:binding.symbol});}body.push({kind:'let',name,value});
+     if(value.type==='standard-text-map-input')fail('standard-map aliases need a separate original lexical ownership theorem');const orderedMapInitializer=value.kind==='ordered-map-call'&&value.type==='text-map'&&orderedTextMapReverseOperation(value.name)?.returns==='text-map';if(['text-map','text-map-input','text-map-ref'].includes(value.type)&&!orderedMapInitializer)fail('map local aliases need a separate private local root/ownership theorem');if(['text-pairs-input','text-pairs-owned','vec:text-owned'].includes(value.type))fail('map projection vector locals require a separate original ownership theorem');const name=bind(declaration.name,{type:value.type,root:orderedMapInitializer?declaration.name.text:value.root,...(asciiLoan?.root===null?{asciiStaticLoan:true}:{})},scope);if(orderedMapInitializer){const binding=scope.get(name);if(binding.symbol!==checker.getSymbolAtLocation(declaration.name)||binding.root!==name)fail('owned map local lost its actual original lexical symbol');orderedMapLocalRoots.set(name,{binding,symbol:binding.symbol});}body.push({kind:'let',name,value});
     }
    }else if(ts.isReturnStatement(statement)&&statement.expression){
     const value=expression(statement.expression,scope,depth+1);if(nativeScalars)nativeOperatorHistory.retainCopy(statement.expression,file,value);
@@ -689,7 +694,7 @@ function checkFunction(context,path,declaration,analysis){
   }
   return {body,terminated};
  }
- const statements=consumeOrderedTextMapReverseInputPrelude(analysis,declaration,params,node=>originalOwnedCoreImport(context,path,node,analysis),consumeOwnedBase64InputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis)));const checked=block(statements,environment,0);if(!checked.terminated)fail('missing return');
+ const statements=consumeOrderedTextMapReverseInputPrelude(analysis,declaration,params,node=>originalOwnedCoreImport(context,path,node,analysis),consumeOwnedBase64InputPrelude(analysis,declaration,params,operand=>originalOwnedCoreImport(context,path,operand,analysis)));const standardStatements=consumeBorrowedStandardMapReverseInputPrelude(analysis,declaration,params,node=>originalOwnedCoreImport(context,path,node,analysis),statements);const checked=block(standardStatements,environment,0);if(!checked.terminated)fail('missing return');
  if(paired)for(let index=0;index<params.length;index++){
   const actual=originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis);
   if((actual==='text-owned'?'str':['text-map','text-map-ref'].includes(actual)?'text-map-input':actual)!==params[index].type)fail('paired written parameter ABI differs');
