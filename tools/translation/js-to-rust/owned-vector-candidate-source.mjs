@@ -1,3 +1,4 @@
+import {readBorrowedStandardMapReadonlyInput} from '../borrowed-standard-map-20261103-typescript-library.mjs';
 import {requireBorrowedStandardMapReverseSources,borrowedStandardMapReverseWrittenInput,readBorrowedStandardMapReverseCall,consumeBorrowedStandardMapReverseInputPrelude} from '../borrowed-standard-map-20261103-reverse-calls.mjs';
 import {orderedTextMapContract} from '../ordered-text-map-20261102-contracts.mjs';import {orderedTextMapReverseOperation,orderedTextMapReverseCompatible} from '../ordered-text-map-callers-20261102-reverse.mjs';import {requireOrderedTextMapReverseNativeSources,readOrderedTextMapReverseImportType,consumeOrderedTextMapReverseInputPrelude} from '../ordered-text-map-callers-20261102-reverse-native.mjs';
 import {captureOriginalOwnedVectorProfiles,checkOriginalOwnedVectorFunction} from './owned-vector-candidate-support.mjs';
@@ -209,7 +210,7 @@ function originalOwnedCoreImport(handle,path,node,analysis){
 
 function originalOwnedCoreType(handle,path,type,analysis){
  const {ts,file}=analysis,privateState=traversals.get(analysis);if(privateState?.handle!==handle)fail('foreign type traversal');const state=privateState.state;
- if(!type)fail('written input domain required');type=ownedParenthesizedType(ts,type);const mapImport=readOrderedTextMapReverseImportType(ts,analysis.checker,type,analysis,specifier=>originalImportTarget(path,specifier,analysis,state),state.data.declarationRoot);if(mapImport){requireOrderedTextMapReverseNativeSources(state.files);return mapImport;}
+ if(!type)fail('written input domain required');type=ownedParenthesizedType(ts,type);const standardReadonly=readBorrowedStandardMapReadonlyInput(type,analysis);if(standardReadonly){requireBorrowedStandardMapReverseSources(state);return standardReadonly;}const mapImport=readOrderedTextMapReverseImportType(ts,analysis.checker,type,analysis,specifier=>originalImportTarget(path,specifier,analysis,state),state.data.declarationRoot);if(mapImport){requireOrderedTextMapReverseNativeSources(state.files);return mapImport;}
  if(type.kind===ts.SyntaxKind.StringKeyword)return 'str';
  if(type.kind===ts.SyntaxKind.BooleanKeyword)return 'bool';
  if(type.kind===ts.SyntaxKind.VoidKeyword)return 'unit';

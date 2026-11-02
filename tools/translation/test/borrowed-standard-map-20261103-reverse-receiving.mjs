@@ -12,6 +12,7 @@ import * as vector from '../js-to-rust/owned-vector-candidate-operations.mjs';
 import {borrowedStandardMapReverseRuntimeSources} from '../borrowed-standard-map-20261103-reverse-calls.mjs';
 import {withBorrowedStandardMapReverseNativeSources} from '../borrowed-standard-map-20261103-reverse-native.mjs';
 import {proposeBorrowedStandardMapReverseSources} from '../borrowed-standard-map-20261103-reverse-profile.mjs';
+import {proposeBorrowedStandardMapLibrarySources} from '../borrowed-standard-map-20261103-library-profile.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url)),NAME='router_borrowed_text_map_matches_literals';
 function production(){
@@ -50,5 +51,5 @@ test('fresh complete native source operation has no copied or expired source per
 });
 test('complete reverse source recipes preserve independent phase CST and full inverses',()=>{
  const proposal=proposeBorrowedStandardMapReverseSources();assert.equal(proposal.files.length,4);assert.equal(proposal.semanticAuthority,false);
- for(const row of proposal.files){assert.equal(row.inverse,row.before);assert.equal(readFileSync(join(ROOT,row.path),'utf8'),row.after);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const stage of row.stages){assert.equal(stage.history.inverse,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.history.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.history.afterMeta).source,stage.after);}}
+ for(const row of proposal.files){assert.equal(row.inverse,row.before);const later=proposeBorrowedStandardMapLibrarySources().files.find(value=>value.path===row.path);if(later)assert.equal(later.before,row.after);assert.equal(readFileSync(join(ROOT,row.path),'utf8'),later?.after??row.after);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const stage of row.stages){assert.equal(stage.history.inverse,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.history.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.history.afterMeta).source,stage.after);}}
 });
