@@ -169,3 +169,23 @@ alias metadata limits, case/Unicode/nonUTF8 compatibility boundaries and the
 cooperative writer interval are explicit OPEN domains. Specialized preparer/
 asset sinks and their six case files remain a separate worker checkpoint.
 All original source archives are unchanged. Counts remain11/70 DRAFTED,59 OPEN.
+
+## Further committed integration and native/target edge oracle sources
+
+`aca7d0d0f` commits Root's combined shared policy/flat transaction integration,
+full source ancestry and23 new case sources. `c122772238d0acd9dd7ea9e1d27e0ceef99009ce`
+commits the worker's actual native/mixed preparer and binary asset sinks, original
+uncapped iterable/duplicate ordering, source histories and six independent case
+files. The worker continues the remaining actual writer/scope census; complete
+writer/domain coverage is not claimed. The map worker continues its narrow
+source-model ABI from7c47cf021 without requiring local Rust or generic std
+implementation translation. Actual invoked sysroot/runtime conformance remains
+UNRUN, with genuine private source/Cargo/unit checks still mandatory.
+
+Root added [independent finite-state oracles](ordered-text-map-state-space-20261102.md)
+for both actual map implementations:64 states and832 small-domain edit edges
+inside one case per language, plus exact UTF-8 boundary cases. There are four
+new case functions, not832 passing tests. The Rust filename retains the Windows
+CI `_test.rs` discovery suffix. Source scheduling review did not inspect CI
+feedback or execute any project code. Native oracles remain gated CI-only.
+No acceptance count changed:11/70 DRAFTED,59 OPEN, function denominator UNKNOWN.
