@@ -681,3 +681,19 @@ Compiler-side source/std/type registration, emitters, interpreters and reverse
 actual application synchronization remain OPEN. Native abstraction adoption
 is not executable translation coverage. Verification UNRUN, CI NOT_INSPECTED;
 11/70 acceptance bundles DRAFTED,59 OPEN.
+
+## Distinct unrestricted native source context and scoped ABI
+
+Root drafted the genuine original parser/module/scope/Cargo/std source boundary
+for the unrestricted borrowed-map helper. The complete native context is
+copied by five counted substitutions, retaining the old private source guards
+and full two-phase CST/inverse history; it selects the actual new helper rather
+than borrowing the opaque-map issuer or its caps/derive context. The scoped ABI
+checks original whole helper/runtime/declaration/oracle sources, actual member
+span/binding/signature, and original BTreeMap/String standard owners. It expires
+on all exits, retains independent closers and sticky private source failure
+propagation, and never treats application callbacks as source validators.
+See [the native source contract](borrowed-standard-map-native-20261103.md).
+Actual caller/type/semantic/emitter/interpreter registration and complete
+positive native receiving/lifecycle cases remain OPEN; source-only cases do
+not qualify those paths. All checks UNRUN, CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.

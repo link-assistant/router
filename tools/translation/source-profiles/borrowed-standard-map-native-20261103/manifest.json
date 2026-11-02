@@ -1,0 +1,9 @@
+{
+  "schema": "borrowed-standard-map-native-complete-source-20261103-v1",
+  "decodedBytes": 43080,
+  "packedBytes": 8359,
+  "sha256": "b93c4fb540da869891bbfb04452894e5bae423af59d57edd1a2210dffc65b212",
+  "verification": "UNRUN",
+  "ci": "NOT_INSPECTED",
+  "callerBodyQualified": false
+}
