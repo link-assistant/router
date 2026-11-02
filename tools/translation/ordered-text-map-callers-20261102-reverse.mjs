@@ -20,7 +20,7 @@ export function orderedTextMapReverseOperation(name){
  // native call boundaries. No application Clone/Copy/Vec trait is admitted.
  return Object.freeze({name:row.javascriptName,rustPath:row.rustPath,
   parameters:Object.freeze(row.parameters.map(role=>role==='text-map'?'text-map-input':role==='text-pairs-owned'?'text-pairs-input':role==='text-owned'?'str':role)),
-  returns:row.returns,loanRoot:row.returnedLoan?0:null,sourceAuthority:false,semanticAuthority:false});
+  returns:row.returns==='text-list-owned'?'vec:text-owned':row.returns,loanRoot:row.returnedLoan?0:null,sourceAuthority:false,semanticAuthority:false});
 }
 export function orderedTextMapReverseRustCall(name,arguments_,argumentTypes=null){
  const row=orderedTextMapContract(name),operation=orderedTextMapReverseOperation(name);
@@ -40,6 +40,7 @@ export function orderedTextMapReverseTypeWitness(role){
   'text-pairs-input':{name:'router_text_map_from_pairs',kind:'parameter',index:0},
   'text-pairs-owned':{name:'router_text_map_pairs',kind:'return'},
   'text-list-owned':{name:'router_text_map_keys',kind:'return'},
+  'vec:text-owned':{name:'router_text_map_keys',kind:'return'},
   'str-option-ref':{name:'router_text_map_get',kind:'return'},
  };
  const row=rows[role];return row?Object.freeze({...row,sourceAuthority:false,semanticAuthority:false}):null;
@@ -54,4 +55,14 @@ export const ORDERED_MAP_REVERSE_TYPESCRIPT_TYPES=Object.freeze({
  'text-map-input':'Parameters<typeof __ro_router_text_map_len>[0]',
  'text-map-ref':'Parameters<typeof __ro_router_text_map_len>[0]',
  'text-map':'ReturnType<typeof __ro_router_text_map_new>',
+ 'vec:text-owned':'ReturnType<typeof __ro_router_text_map_keys>',
 });
+// Header DATA only. The original emitter invokes this after fresh private whole
+// source/body checking. Only the actual returned map-loan root gets a binder;
+// key and unused map references keep their independent elided lifetimes.
+export function orderedTextMapReverseLifetimeHeader(item){
+ if(item.returns!=='str-option-ref'||item.resultRoot===null)return null;
+ const roots=item.params.filter(parameter=>parameter.name===item.resultRoot);if(roots.length!==1)fail();
+ if(roots[0].type!=='text-map-input')return null;
+ return Object.freeze({root:roots[0].name,lifetime:"'ro_map ",binder:"<'ro_map>",callerAuthority:false});
+}

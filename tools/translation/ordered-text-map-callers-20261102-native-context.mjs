@@ -20,7 +20,7 @@ export function proveOrderedTextMapNativeSourceContext({modules,sourceScopes,com
   if(!isSourceModuleView(module.sourceView)||module.configurationCondition!=='active'||module.sourceView.configurationCondition!=='active')fail('genuine active full source views required');
   const scope=sourceScopes.find(scope=>scope.file===module.file&&scope.path.join('::')===module.path.join('::'));
   if(!scope||scope.configurationCondition!=='active'||scope.unresolvedBangMacroScope!==false||scope.unresolvedTypeScope!==false||scope.unresolvedAttributeMacroScope!==false)fail('unknown native/parent producer refused');
-  for(const binding of scope.bindings)if(['std','core','alloc','String'].includes(binding.name)&&['type','macro'].includes(binding.namespace))fail('standard/prelude source shadow requires separate original ownership');
+  for(const binding of scope.bindings)if(['std','core','alloc','String','Vec'].includes(binding.name)&&['type','macro'].includes(binding.namespace))fail('standard/prelude source shadow requires separate original ownership');
   for(const item of originalSourceModuleItems(module)){
    const condition=itemConfiguration(item.tokens,compilationProfile);if(condition.status==='inactive')continue;
    if(condition.attributes.some(attribute=>['no_core','no_std','no_implicit_prelude','prelude_import'].includes(attribute.name)))fail('ordinary canonical std/prelude source domain required');

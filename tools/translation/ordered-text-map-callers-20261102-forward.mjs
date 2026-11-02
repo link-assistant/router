@@ -1,5 +1,6 @@
 // Receiving fragments for the existing private Host issuer. These functions
 // return ordinary checked-candidate IR; only that issuer can grant executable IR.
+import {checkedOrderedTextMapKeysType} from './ordered-text-map-callers-20261102-keys.mjs';
 import {orderedTextMapContract} from './ordered-text-map-20261102-contracts.mjs';
 import {selectOriginalOrderedTextMapCore} from './ordered-text-map-20261102-interface.mjs';
 import {matchesParserFacts} from './matches-macro-context.mjs';
@@ -15,7 +16,7 @@ import {requireOrderedTextMapOpaqueType,orderedTextMapResultType,orderedTextMapT
 import {unsupported,typeError} from './vendor/meta-language/translation/diagnostics.js';
 const calls=new WeakMap();
 const fail=()=>{throw TypeError('Ordered text map requires its original private parsed call and native owner');};
-const supported=new Set(['new','insert','remove','get','contains','len','copy']);
+const supported=new Set(['new','insert','remove','get','contains','len','copy','keys']);
 function source(parser,row){
  const state=matchesParserFacts(parser),selected=selectOriginalOrderedTextMapCore({modules:state.facts.modules,sourceScopes:state.facts.evidence.scopes,compilationProfile:state.facts.compilationProfile}),module=state.facts.modules.find(module=>module.file===selected.file);
  const owners=originalSourceModuleItems(module).filter(item=>item.term==='fn'&&item.name===row.rustName);
@@ -32,7 +33,7 @@ export function parseForwardOrderedTextMap(parser,path){
  const c=parser.cursor;
  if(!['crate','::','translation_ordered_text_map_core','::'].every((word,at)=>c.is(word,at)))return null;
  const row=orderedTextMapContract(c.peek(4)?.value);if(!row||row.rustName!==c.peek(4).value)return null;
- if(!supported.has(row.operation))throw unsupported('ordered text map caller','pair-list/vector result ownership integration remains open',c.peek());
+ if(!supported.has(row.operation))throw unsupported('ordered text map caller','pair-list tuple ownership integration remains open',c.peek());
  const before=source(parser,row),tokens=c.tokens,start=c.index,first=c.peek();let end=null;
  return withCompleteSourceClosingFence(()=>{
   c.index+=5;c.expect('(','ordered text map call');const args=[];
@@ -64,7 +65,7 @@ export function checkForwardOrderedTextMap(checker,node,env,path,expected,{curre
    else throw unsupported('ordered text map argument','complete pair-list ownership integration remains open',syntax.span);
    args.push(value);
   }
-  const type=row.returns==='text-map'?orderedTextMapResultType(parser):row.returns==='bool'?BOOL:row.returns==='u64'?integer():row.returns==='str-option-ref'?checker.instantiations.option(SOURCE_STR,node.span):null;
+  const type=row.returns==='text-map'?orderedTextMapResultType(parser):row.returns==='bool'?BOOL:row.returns==='u64'?integer():row.returns==='str-option-ref'?checker.instantiations.option(SOURCE_STR,node.span):row.operation==='keys'?checkedOrderedTextMapKeysType(checker,node,path):null;
   if(!type)fail();compatible(checker,type,expected,path,node.span);close();
   return {k:'routerHostCall',id:row.javascriptName,args,type,span:node.span,constEligible:false};
  },[close]);

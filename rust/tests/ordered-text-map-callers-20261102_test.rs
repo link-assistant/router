@@ -33,3 +33,30 @@ fn reverse_copy_boundary_preserves_the_original_input() {
     assert_eq!(maps::text_map_get(&removed, "stream"), None);
     assert!(stream_requested(&original));
 }
+
+#[test]
+fn owned_keys_keep_scalar_order_and_survive_consumed_map_update() {
+    let mut map = maps::text_map_new();
+    for (key, value) in [("\u{10000}", "astral"), ("\u{e000}", "bmp"), ("a", "first"), ("a", "replacement")] {
+        map = maps::text_map_insert(map, key.to_owned(), value.to_owned());
+    }
+    let keys: Vec<String> = maps::text_map_keys(&map);
+    let updated = maps::text_map_insert(map, "z".to_owned(), "next".to_owned());
+    assert_eq!(keys, ["a", "\u{e000}", "\u{10000}"]);
+    assert_eq!(maps::text_map_keys(&updated), ["a", "z", "\u{e000}", "\u{10000}"]);
+}
+
+fn independently_borrowed<'ro_map>(map: &'ro_map OrderedTextMap, key: &str, _unused: &OrderedTextMap) -> Option<&'ro_map str> {
+    maps::text_map_get(map, key)
+}
+
+#[test]
+fn return_loan_does_not_capture_key_or_unused_map_lifetime() {
+    let map = maps::text_map_insert(maps::text_map_new(), "stream".to_owned(), "true".to_owned());
+    let value = {
+        let key = String::from("stream");
+        let unused = maps::text_map_new();
+        independently_borrowed(&map, key.as_str(), &unused)
+    };
+    assert_eq!(value, Some("true"));
+}

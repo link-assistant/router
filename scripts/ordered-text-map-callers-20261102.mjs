@@ -21,7 +21,7 @@ if(mode==='--produce'){
  current();const env={...process.env,ROUTER_NATIVE_TS_SOURCE_ROOT:receipt.sourceRoot,ROUTER_ORDERED_MAP_CASE_SOURCE_ROOT:receipt.sourceRoot};let failed=false;
  try{
   const version=execFileSync(process.execPath,[join(receipt.sourceRoot,'js/node_modules/typescript/bin/tsc'),'--version'],{env,encoding:'utf8',timeout:20000,maxBuffer:4194304});process.stdout.write(version);
-  const casesOutput=execFileSync(process.execPath,['--test','--test-concurrency=1',join(root,'tools/translation/test/ordered-text-map-callers-20261102-receiving.mjs'),join(root,'tools/translation/test/ordered-text-map-callers-20261102-cases.mjs')],{cwd:root,env,timeout:60000,maxBuffer:4194304,stdio:'pipe'});
+  const casesOutput=execFileSync(process.execPath,['--test','--test-concurrency=1',join(root,'tools/translation/test/ordered-text-map-callers-20261102-receiving.mjs'),join(root,'tools/translation/test/ordered-text-map-callers-20261102-cases.mjs'),join(root,'tools/translation/ordered-map-cold-capsule-20261102-receiving.mjs')],{cwd:root,env,timeout:60000,maxBuffer:4194304,stdio:'pipe'});
   process.stdout.write(casesOutput);const typesOutput=execFileSync(process.execPath,[join(receipt.sourceRoot,'js/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--noEmit',join(root,'tools/translation/test/ordered-text-map-callers-20261102-types.mts')],{cwd:root,env,timeout:20000,maxBuffer:4194304,stdio:'pipe'});process.stdout.write(typesOutput);
  }catch(error){failed=true;throw error;}finally{try{current();}catch(error){if(!failed)throw error;}}
 }

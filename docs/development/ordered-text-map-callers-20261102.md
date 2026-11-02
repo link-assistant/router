@@ -3,12 +3,12 @@
 SOURCE DRAFT ONLY. Every new implementation, producer, receiving case, strict
 TypeScript case and native oracle is UNRUN. CI/review feedback is NOT_INSPECTED.
 No application function, receiving acceptance row or bulk requirement is closed.
-The existing ten-operation core remains unchanged. This profile drafts seven
-caller operations: new, insert, remove, get, contains, len and copy.
+The existing ten-operation core remains unchanged. This profile drafts eight
+caller operations: new, insert, remove, get, contains, len, copy and keys.
 
 A narrow source-model native compatibility issuer is now drafted through actual
 private parser, Cargo, standard-unit, prelude, nominal and function-owner joins.
-It admits only the fixed Router-owned private map ABI and seven qualified caller
+It admits only the fixed Router-owned private map ABI and eight qualified caller
 operations. Full original BTreeMap/String internals remain native. Matching
 source constants, hashes, names, public flags or catalogue rows cannot issue a
 type or executable caller. Actual compiler invocation, installed sysroot/native
@@ -45,7 +45,12 @@ and can emit its ordinary private call receipts only after the narrow native
 source compatibility issuer rejoins every required original owner. The new checker fragment is not a separate
 public issuer. Whole-function checking tracks affine owned map/String moves,
 map-rooted returned text loans, earlier shared arguments, lexical aliases and
-complete branch joins. Actual lowered Some/None tags and projections are checked
+complete branch joins. Keys uses the existing actual owned Vec<String> checker
+and type constructors, backed by original Vec/String declaration/export/prelude
+receipts and the actual native keys signature. Its fresh vector owns its text
+independently of map, so a later map move cannot capture a keys loan. Vector
+reuse after move and external unbounded vector parameters remain refused in
+this limited caller flow. Actual lowered Some/None tags and projections are checked
 against the registered Option layout. A lookup loan comes exclusively from map;
 temporary keys contribute no returned lifetime. Only explicit native copy creates
 an independent map; there is no application map Copy or general Clone rule.
@@ -143,7 +148,17 @@ it copies/installs no dependency. Cases run serially under their original
 60-second deadlines, with20-second strict compiler children and recorded compiler
 version. Native Rust is not invoked. Preflight/version and final strict-file
 checks are separately bounded work, not part of a claimed single60-second run.
-Neither command has been run during this drafting phase. The explicit case
+The outer receiving wrapper captures all fourteen original compiler parents
+and its packet before proposal production, with no-follow fd reads, exact full
+file identities, selected source-parent restoration clocks and stable exterior
+ancestry. Every closer is attempted; source-input failures poison the live
+operation even when caught. It retains at most16MiB. An unchanged byte restore
+does not recover an original source identity.
+
+The fixed child case list also schedules
+`tools/translation/ordered-map-cold-capsule-20261102-receiving.mjs`, retaining
+every earlier case and all original deadlines. Neither command has been run
+during this drafting phase. The explicit case
 entry is `ordered-text-map-callers-20261102-cases.mjs`; it keeps all cases but
 requires the dedicated installed-profile receiving driver. Default original
 compiler discovery does not import an uninstalled successor-only Host API.
@@ -178,15 +193,18 @@ private parser entry accepts only the genuine fixed alloc source receipt and
 parses the complete original alloc manifest. The std-to-alloc-to-core Cargo path
 edges and ordinary library unit identities are separately joined.
 
-The fixed standard source reader retains twelve complete original Rust1.89 files
-and the complete original alloc Cargo manifest: four newly pinned files and nine
+The fixed standard source reader retains thirteen complete original Rust1.89 files
+and the complete original alloc Cargo manifest: four newly pinned files and ten
 reused originals. It reconstructs std-to-alloc BTreeMap/String routes, the
 selected private btree-map glob, std/core2024 preludes and original compiler
 std/prelude injection. Rust files transport serialized/reparsed CST; the Cargo
 manifest uses its actual private original Cargo parser, never a Rust lexer.
 No-follow descriptor reads retain full BigInt file stamps and absolute ancestor
-identities. Every retained source/ancestor recloses after each read and final
-use; original snapshots remain required even when fresh bytes match. Failures
+identities. Actual source files keep full stamps; directories inside selected
+compiler/source roots retain restoration clocks. Outside those roots, ancestry
+checks stable dev/ino/mode/uid/gid and refuses symlinks, allowing unrelated temp
+or workspace sibling creation. Every retained source/ancestor recloses after
+each read and final use; original snapshots remain required even when fresh bytes match. Failures
 permanently poison a receipt, including falsy primaries. The actual registered
 namespace facts retain their original private source-custody association.
 
@@ -199,6 +217,14 @@ allocator implementation, Borrow/Ord inference and arbitrary native type
 registration are not prerequisites or newly granted capabilities. The existing
 builtin derive input/output and unknown-producer checks remain required.
 
+The original Vec declaration comes from the already retained complete
+alloc/vec/mod.rs, and its std/alloc exports plus actual edition-prelude leaf are
+rejoined. This extends the existing standard namespace issuer, never a map-to-Vec
+alias or generic JSON permission. Reverse keys emits the existing vec:text-owned
+domain from a genuine qualified source call. Only direct keys returns are
+newly admitted; reverse vector locals remain refused pending their complete
+existing-vector ownership theorem. Forward ordinary keys locals are affine.
+
 The ABI additionally reads fixed complete native, JavaScript runtime, strict
 declaration and independent native-oracle sources under no-follow identity and
 ancestor custody, serialized/reparsed CST and closing fences. Those sources are
@@ -207,7 +233,10 @@ unit and private nominal/function signature join must independently select the
 boundary. Saved ABI receipts rejoin their original identities and freshly
 reissue; copied or foreign receipts fail. Opaque types retain that original ABI
 custody and redo source qualification on use. No persistent caller verdict is
-cached. The narrow ABI still reports `actualInvocationObserved: false`,
+cached. Full ABI reissue is retained: existing original APIs do not expose a
+proven live operation covering all Cargo/std/artifact/source roots. A future
+invocation-local family receipt needs every original use/poison/closing join;
+no source/hash/verdict cache or benchmark-based qualification is introduced. The narrow ABI still reports `actualInvocationObserved: false`,
 `nativeSysrootConformance: false`, `nativeOracleQualification: 'UNRUN'` and
 `callerBodyQualified: false`; only the actual body checker issues caller receipts.
 
@@ -234,7 +263,7 @@ OPEN. The parent afterimages are proposed source, not current registered root
 compiler code. Complete export/profile/bank freshness is not established.
 The larger explicit transfer profile needs its own empirical receiving evidence.
 
-Pair-list construction, sorted pair/key projections, map locals/aliases in the
+Pair-list construction, sorted pair projections, map locals/aliases in the
 reverse source checker, mutable bindings/assignments, loops, helper graphs,
 record/tuple/serde fields, borrowed map return values, and generalized shared-map
 Copy/lifetime patterns remain refused or OPEN. Ordinary forward owned map locals
@@ -242,10 +271,15 @@ and the closed Some/None consumer are drafted; this is lexical ownership, not
 complete Rust non-lexical lifetime analysis. Get in reverse needs an actual map
 input root; returning a loan from a new/local map refuses.
 
-A standalone cold forward checked-meta import still needs the genuine original
-source graph to be reconstructed before decoding. Source contexts are not
-persisted permits. Named map lifetimes and source/tool-attribute reconstruction
-for reverse-emitted Rust headers remain OPEN. The paired inverse case proves
+The source-drafted cold capsule reconstructs the genuine whole original graph
+before accepting semantic meta and is scheduled by the explicit receiving
+driver; its source contexts are never persisted permits. Reverse Rust emission
+now derives an explicit ro_map binder from the actual checked map return-loan
+root. Key and unused additional map references retain independent elided
+lifetimes; no unbound or blanket shared map lifetime is emitted. Native oracle
+source independently allows key and unused map to expire first. Forward parsing
+of named map references in reverse-emitted headers and broader source/tool
+attribute reconstruction remain OPEN. The paired inverse case proves
 complete JS/TS erasure ancestry only; it does not claim original owned Rust
 parameter identity or full generated Rust-to-JS-to-Rust synchronization.
 Other reverse translator families are unchanged; this explicit receiving route

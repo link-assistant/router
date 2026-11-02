@@ -29,10 +29,12 @@ export function sameOrderedMapSourceData(actual,expected){
  const result=compare(actual,expected);requireOrderedMapSourceDataIngress();return result;
 }
 const base=new URL('./source-profiles/ordered-text-map-callers-20261102-standard/',import.meta.url),manifest=new URL('ordered-text-map-callers-20261102-standard.json',base);
+const selectedSourceRoot=fileURLToPath(new URL('./source-profiles/',import.meta.url)),stableDirectory=(left,right)=>['dev','ino','mode','uid','gid'].every(key=>left[key]===right[key]);
+const sameDirectory=(row,next)=>(row.path===selectedSourceRoot.slice(0,-1)||row.path.startsWith(selectedSourceRoot))?sameCompactPhysicalSourceStamp(row.stat,next):stableDirectory(row.stat,next);
 // Explicit supported standard SOURCE ABI; this is never an assertion about
 // unknown receiving compiler flags or an invocation's custom std replacement.
 const standardSourceProfile=sourceInitiallyQualified?compilationProfile({flags:{test:false,no_global_oom_handling:false,rustfmt:false}}):null;
-const manifestPin='52f6b85f7327805343e2c66007cbe907db678f109ed0c5daa34067b21a3edcaa';
+const manifestPin='f043032d02050b015812e595f3890c9be39addd885f3942b5cea3e3f68036aa2';
 const hash=value=>createHash('sha256').update(value).digest('hex'),issued=new WeakMap(),factOrigins=new WeakMap();
 const freeze=value=>{if(value&&typeof value==='object'){for(const field of Object.values(value))freeze(field);Object.freeze(value);}return value;};
 const fail=message=>{throw TypeError('Original ordered-map standard source: '+message);};
@@ -45,7 +47,7 @@ function protect(custody,run){
 function reclose(custody){
  let failed=false,primary;const check=run=>{try{run();}catch(error){if(!failed){failed=true;primary=error;}}};check(requireOrderedMapSourceDataIngress);
  for(const row of custody.files)check(()=>{if(!readCompactSparsePhysicalFile(row).equals(row.raw))fail('whole original source custody bytes changed');});
- for(const row of custody.directories)check(()=>{const current=lstatSync(row.path,{bigint:true});if(!current.isDirectory()||current.isSymbolicLink()||!sameCompactPhysicalSourceStamp(row.stat,current))fail('original source ancestor identity changed');});
+ for(const row of custody.directories)check(()=>{const current=lstatSync(row.path,{bigint:true});if(!current.isDirectory()||current.isSymbolicLink()||!sameDirectory(row,current))fail('original source ancestor identity changed');});
  if(failed){if(!custody.failed){custody.failed=true;custody.primary=primary;}throw primary;}
  if(custody.failed)throw custody.primary;
 }
@@ -53,14 +55,14 @@ function regular(url,max,custody){
  return protect(custody,()=>withCompleteSourceClosingFence(()=>{
   const path=fileURLToPath(url),ancestors=[];let parent=dirname(path);
   while(true){ancestors.push(parent);const next=dirname(parent);if(next===parent)break;parent=next;if(ancestors.length>128)fail('source ancestor bound');}
-  for(const name of ancestors.reverse()){const stat=lstatSync(name,{bigint:true});if(!stat.isDirectory()||stat.isSymbolicLink())fail('ordinary original source ancestor required');const previous=custody.directories.find(row=>row.path===name);if(previous){if(!sameCompactPhysicalSourceStamp(previous.stat,stat))fail('source ancestor replaced');}else custody.directories.push({path:name,stat});}
+  for(const name of ancestors.reverse()){const stat=lstatSync(name,{bigint:true});if(!stat.isDirectory()||stat.isSymbolicLink())fail('ordinary original source ancestor required');const previous=custody.directories.find(row=>row.path===name);if(previous){if(!sameDirectory(previous,stat))fail('source ancestor replaced');}else custody.directories.push({path:name,stat});}
   const stat=lstatSync(path,{bigint:true});if(!stat.isFile()||stat.isSymbolicLink()||stat.size<0n||stat.size>BigInt(max))fail('bounded regular source input required');
-  const row={path,stat},bytes=readCompactSparsePhysicalFile(row);row.raw=bytes;custody.files.push(row);if(custody.files.length>14||custody.directories.length>256)fail('source custody census bound');return bytes;
+  const row={path,stat},bytes=readCompactSparsePhysicalFile(row);row.raw=bytes;custody.files.push(row);if(custody.files.length>15||custody.directories.length>256)fail('source custody census bound');return bytes;
  },[()=>reclose(custody)]));
 }
 function inputs(custody){
  const bytes=regular(manifest,32768,custody);if(hash(bytes)!==manifestPin)fail('fixed source profile changed');const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);requireOrderedMapSourceDataIngress();if(hash(text)!==manifestPin)fail('complete decoded source profile differs');const profile=parseOrderedMapSourceData(text);
- if(profile.schema!=='ordered-text-map-original-standard-inputs-v1'||profile.rust!=='1.89.0'||profile.revision!=='29483883eed69d5fb4db01964cdf2af4d86e9cb2'||profile.sources.length!==13)fail('complete immutable profile required');
+ if(profile.schema!=='ordered-text-map-original-standard-inputs-v1'||profile.rust!=='1.89.0'||profile.revision!=='29483883eed69d5fb4db01964cdf2af4d86e9cb2'||profile.sources.length!==14)fail('complete immutable profile required');
  let total=0;const paths=new Set(),sources=profile.sources.map(row=>{
   if(paths.has(row.path))fail('duplicate source input');paths.add(row.path);const url=new URL(row.archive,base);if(!url.pathname.startsWith(new URL('./source-profiles/',import.meta.url).pathname))fail('source archive escapes retained originals');
   const packed=regular(url,131072,custody);if(packed.length!==row.archiveBytes||hash(packed)!==row.archiveSha256)fail('original packed bytes changed');
@@ -116,13 +118,14 @@ function captureStandardSources(){
   const privateBtree=spelling(allocCollections,item(allocCollections,'mod','btree'),'modbtree;'),privateMap=spelling(btree,item(btree,'mod','map'),'pub(super)modmap;'),mapModule=item(allocCollections,'mod','btree_map');
   const mapRoute={alias,stdModule:collections,stdExport:explicit(stdCollections,'alloc_crate::collections::BTreeMap','BTreeMap'),allocModule,allocExport:explicit(allocCollections,'btree_map::BTreeMap','BTreeMap'),selectedGlob:glob(allocCollections,mapModule,'super::btree::map'),privateBtree,privateMap,declaration:declaration(map,'BTreeMap'),declarationConfigurationAuthority:false,unknownGeneratedSiblingNamesAdmitted:false};
   const stringRoute={alias,stdExport:explicit(std,'alloc_crate::string','string'),allocModule:stringModule,declaration:declaration(string,'String')};
+  const vec=source('library/alloc/src/vec/mod.rs'),vecRoute={alias,stdExport:explicit(std,'alloc_crate::vec','vec'),allocModule:spelling(alloc,item(alloc,'mod','vec'),'pubmodvec;'),declaration:declaration(vec,'Vec'),declarationConfigurationAuthority:false};
   const associatedTraitSources={map:implementations(map,['impl<K:Clone,V:Clone,A:Allocator+Clone>CloneforBTreeMap<K,V,A>','impl<K,V>DefaultforBTreeMap<K,V>','impl<K:PartialEq,V:PartialEq,A:Allocator+Clone>PartialEqforBTreeMap<K,V,A>','impl<K:Eq,V:Eq,A:Allocator+Clone>EqforBTreeMap<K,V,A>','impl<K:Debug,V:Debug,A:Allocator+Clone>DebugforBTreeMap<K,V,A>']),String:implementations(string,['implCloneforString','implDefaultforString','implfmt::DebugforString']),StringComparisonDerives:declaration(string,'String'),traitSelectionAuthority:false,allocatorAndOrdBorrowJoinsClosed:false};
   const stdPrelude=source('library/std/src/prelude/mod.rs'),stdV1=source('library/std/src/prelude/v1.rs'),corePrelude=source('library/core/src/prelude/mod.rs');
-  return {snapshots,mapRoute,stringRoute,associatedTraitSources,prelude:{std2024:prelude(stdPrelude),core2024:prelude(corePrelude),String:explicit(stdV1,'crate::string::String','String'),injection:injection(source('compiler/rustc_builtin_macros/src/standard_library_imports.rs'))}};
+  return {snapshots,mapRoute,stringRoute,vecRoute,associatedTraitSources,prelude:{std2024:prelude(stdPrelude),core2024:prelude(corePrelude),String:explicit(stdV1,'crate::string::String','String'),Vec:explicit(stdV1,'crate::vec::Vec','Vec'),injection:injection(source('compiler/rustc_builtin_macros/src/standard_library_imports.rs'))}};
  }}]},{phase:'repository',rules:[{id:'router:original-registered-ordered-map-standard-namespace-candidates',apply:value=>{
   const fact=(name,target,route)=>{const evidence={schema:'original-ordered-map-standard-namespace-v1',name,target,kind:'struct',namespace:'type',route,profile:captured.profile,sourceProfileSha256:manifestPin,sourceInputsVerified:true,namespaceComplete:false,layoutAuthority:false,constructorAuthority:false,globAuthority:false,runtimeAuthority:false};// A stable label only; private origins and full original routes issue ownership.
  return {...evidence,digest:hash(manifestPin+'::'+name+'::'+target.join('::'))};};
-  const valueWithFacts=freeze({schema:'original-ordered-map-standard-sources-v1',profile:captured.profile,profileSha256:manifestPin,...value,facts:[fact('BTreeMap',['std','collections','BTreeMap'],value.mapRoute),fact('String',['std','string','String'],value.stringRoute)],supportedStandardSourceProfile:standardSourceProfile,nativeUnitAuthority:false,traitDispatchAuthority:false,runtimeParity:false});issued.set(valueWithFacts,{captured});for(const fact of valueWithFacts.facts)factOrigins.set(fact,valueWithFacts);return valueWithFacts;
+  const valueWithFacts=freeze({schema:'original-ordered-map-standard-sources-v1',profile:captured.profile,profileSha256:manifestPin,...value,facts:[fact('BTreeMap',['std','collections','BTreeMap'],value.mapRoute),fact('String',['std','string','String'],value.stringRoute),fact('Vec',['std','vec','Vec'],value.vecRoute)],supportedStandardSourceProfile:standardSourceProfile,nativeUnitAuthority:false,traitDispatchAuthority:false,runtimeParity:false});issued.set(valueWithFacts,{captured});for(const fact of valueWithFacts.facts)factOrigins.set(fact,valueWithFacts);return valueWithFacts;
  }}]}]).run(null).value,[close]));
 }
 export function requireOriginalOrderedTextMapStandardSources(value){

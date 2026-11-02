@@ -1,6 +1,7 @@
 // A conservative whole-body affine/lexical-loan receiving rule. The existing
 // Host issuer supplies both genuine current-body and genuine-call predicates.
 // A successful return is DATA; this module cannot issue an executable item.
+import {actualOrderedTextMapKeysVector} from './ordered-text-map-callers-20261102-keys.mjs';
 import {orderedTextMapContract} from './ordered-text-map-20261102-contracts.mjs';
 import {isOrderedTextMapOpaqueType} from './ordered-text-map-callers-20261102-native-types.mjs';
 import {forwardOwnedString,forwardOwnedCarrier} from './owned-forward-domain.mjs';
@@ -23,6 +24,7 @@ export function validateOrderedTextMapCallerFlow(checker,entry,{current,genuine}
   if(isOrderedTextMapOpaqueType(type))return 'map';
   if(type?.kind==='routerOrderedTextMap'&&isOrderedTextMapOpaqueType(type,{shared:true}))return 'map-ref';
   if(type?.kind==='routerOrderedTextMap')refuse('opaque type lost its actual private parser association',node);
+  if(actualOrderedTextMapKeysVector(checker,type,node,entry.modulePath??[]))return 'text-vector';
   if(forwardOwnedString(type))return 'owned-text';
   if(type?.kind==='string'){requireBorrowedString(type,node.span);return 'text';}
   if(type?.kind==='bool'&&!type.rustReference&&!type.rustOwnership)return 'copy';
@@ -53,7 +55,7 @@ export function validateOrderedTextMapCallerFlow(checker,entry,{current,genuine}
   const part=domain(node.type,node),read=(child,how='move')=>visit(child,state,how,depth+1);
   if(node.k==='var'){
    if(part==='map-ref'&&mode!=='borrow')refuse('shared map aliases/results require their separate original reference Copy theorem',node);const row=state.names.get(node.name);if(!row||row.moved)refuse('missing or already moved binding',node);if(row.value.domain!==part)refuse('binding changed its actual type domain',node);live(state,row.value.loans,node);
-   if(mode==='move'&&['map','owned-text','loan-option'].includes(part)){movable(state,row.value.roots,node);row.moved=true;}
+   if(mode==='move'&&['map','owned-text','loan-option','text-vector'].includes(part)){movable(state,row.value.roots,node);row.moved=true;}
    return fact(part,new Set(row.value.roots),new Set(row.value.loans),row.value.tags&&new Set(row.value.tags));
   }
   if(node.k==='lit'){
@@ -109,7 +111,7 @@ export function validateOrderedTextMapCallerFlow(checker,entry,{current,genuine}
   }
   if(node.k==='routerHostCall'){
    const row=orderedTextMapContract(node.id);if(!row||!genuine(node,entry)||node.args.length!==row.parameters.length)refuse('operation needs the parent issuer current private source receipt',node);
-   if(['from_pairs','pairs','keys'].includes(row.operation))refuse('pair-list/vector ownership has not been joined',node);
+   if(['from_pairs','pairs'].includes(row.operation))refuse('pair-list tuple ownership has not been joined',node);
    const originalPending=new Set(state.pending),values=[];
    try{
     for(let index=0;index<row.parameters.length;index++){
@@ -120,6 +122,7 @@ export function validateOrderedTextMapCallerFlow(checker,entry,{current,genuine}
     }
     for(const value of values)live(state,value.loans,node);
     if(row.returns==='text-map'){if(part!=='map')refuse('native map result lost opaque type identity',node);return fact('map',new Set(['temporary:'+serial++]));}
+    if(row.operation==='keys'){if(part!=='text-vector')refuse('keys must retain its actual owned Vec<String> type',node);return fact(part,new Set(['keys-vector:'+serial++]));}
     if(row.operation==='get'){if(part!=='loan-option')refuse('lookup must return its genuine checked borrowed Option',node);const roots=values[0].roots;if(!roots.size)refuse('lookup needs a live map root',node);return fact(part,new Set(),new Set(roots),new Set(['Some','None']));}
     if(part!=='copy')refuse('membership/length must have its native scalar result',node);return fact(part);
    }finally{state.pending=originalPending;}

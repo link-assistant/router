@@ -128,6 +128,16 @@
       "archiveBytes": 569,
       "archiveSha256": "8235a391592e13860fc95f5bea9904fca2356c61ac450d8353cb22defac3ade8",
       "reusedCompleteOriginal": true
+    },
+    {
+      "path": "library/alloc/src/vec/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/alloc/src/vec/mod.rs",
+      "archive": "../builtin-derive-bang/rust-1.89-library_alloc_src_vec_mod.rs.gz",
+      "bytes": 149006,
+      "sha256": "550d150a5f0a546ea94e6a3b29a70007980f42c930d042d044e2d03ae9e36ae5",
+      "archiveBytes": 31835,
+      "archiveSha256": "23c0282775cc91c9405559d55e8bbb5df1b87445e164ae7f9205b7161f434e70",
+      "reusedCompleteOriginal": true
     }
   ],
   "licenses": [

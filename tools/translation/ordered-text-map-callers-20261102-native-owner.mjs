@@ -15,7 +15,7 @@ const fail=message=>{throw TypeError('Ordered text map native owner boundary OPE
 export function requireOrderedTextMapNativeLibraryOwners({modules,sourceScopes,compilationProfile,cargoEditionContext,deriveDependencies,parser}={}){
  if(!isResolvedSourceScopeSet(sourceScopes))fail('genuine original source scopes required');assertResolvedSourceScopeOrigin(sourceScopes,{modules,compilationProfile});
  const leaves=modules.filter(module=>module.path.join('::')==='translation_ordered_text_map_core');if(leaves.length!==1)fail('actual native module required');const module=leaves[0],items=originalSourceModuleItems(module),owners=items.filter(item=>item.term==='struct'&&item.name==='OrderedTextMap');if(owners.length!==1)fail('actual original opaque declaration required');
- for(const path of [['std','collections','BTreeMap'],['std','string','String']]){
+ for(const path of [['std','collections','BTreeMap'],['std','string','String'],['std','vec','Vec']]){
   const facts=STANDARD_NAMESPACE_EVIDENCE.facts.filter(fact=>fact.target.join('::')===path.join('::'));
   if(facts.length!==1||!isStandardNamespaceEvidence(facts[0]))fail('no genuine registered original standard owner for '+path.join('::'));requireOriginalOrderedMapStandardNamespaceFact(facts[0]);
  }

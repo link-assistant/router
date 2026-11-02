@@ -71,8 +71,8 @@ test('full-profile fresh-output lstat retains null undefined and accessor primar
 test('new standard-source receipts are fixed original selections and reject copied carriers',{timeout:60000},async()=>{
  const {originalOrderedTextMapStandardSources,requireOriginalOrderedTextMapStandardSources}=await import('../ordered-text-map-callers-20261102-standard-source.mjs');
  const source=originalOrderedTextMapStandardSources();requireOriginalOrderedTextMapStandardSources(source);
- assert.deepEqual(source.facts.map(fact=>fact.target.join('::')),['std::collections::BTreeMap','std::string::String']);
- assert.equal(source.snapshots.length,13);assert.equal(source.mapRoute.selectedGlob.selectedOnly,true);
+ assert.deepEqual(source.facts.map(fact=>fact.target.join('::')),['std::collections::BTreeMap','std::string::String','std::vec::Vec']);
+ assert.equal(source.snapshots.length,14);assert.equal(source.mapRoute.selectedGlob.selectedOnly,true);
  assert.equal(source.prelude.injection.customCompilerInvocationProved,false);assert.equal(source.nativeUnitAuthority,false);assert.equal(source.traitDispatchAuthority,false);
  assert.throws(()=>requireOriginalOrderedTextMapStandardSources(JSON.parse(JSON.stringify(source))));
 });
@@ -94,4 +94,28 @@ test('original standard receipts revoke permanently on identity change and prese
   }finally{restore();}
  `;
  execFileSync(process.execPath,['--input-type=module','-e',source],{cwd:new URL('../../../',import.meta.url),timeout:50000,stdio:'pipe'});
+});
+
+test('compiler-source outer custody preserves falsy primaries, attempts later closers and poisons caught nested failures',{timeout:60000},async()=>{
+ const {execFileSync}=await import('node:child_process');
+ const source=`
+  import assert from 'node:assert/strict';import fs from 'node:fs';import {resolve,join} from 'node:path';import {tmpdir} from 'node:os';import {syncBuiltinESMExports} from 'node:module';
+  import {withOrderedTextMapCallerSources as scope} from './tools/translation/ordered-text-map-callers-20261102-project.mjs';
+  import {ORDERED_TEXT_MAP_CALLER_PARENT_PATHS as parents} from './tools/translation/ordered-text-map-callers-20261102-profile.mjs';
+  const original=fs.lstatSync,target=resolve('tools/translation/extensions/ownership.mjs'),last=resolve(parents.at(-1)),restore=()=>{fs.lstatSync=original;syncBuiltinESMExports();};
+  try{for(const primary of [null,undefined,false,0,'']){const later=[],closing=Error('closing');let threw=false,caught;
+   try{scope(()=>{fs.lstatSync=(path,...rest)=>{if(path===target)throw closing;if(path===last)later.push(path);return original(path,...rest);};syncBuiltinESMExports();throw primary;});}catch(error){threw=true;caught=error;}finally{restore();}
+   assert.equal(threw,true);assert.strictEqual(caught,primary);assert.ok(later.length>0);
+  }
+  let innerCaught=false,outerCaught=false;try{scope(()=>{fs.lstatSync=(path,...rest)=>path===target?(()=>{throw null;})():original(path,...rest);syncBuiltinESMExports();try{scope(()=>null);}catch(error){innerCaught=true;assert.strictEqual(error,null);}finally{restore();}return null;});}catch{outerCaught=true;}
+  assert.equal(innerCaught,true);assert.equal(outerCaught,true);
+  const sibling=fs.mkdtempSync(join(tmpdir(),'map-unrelated-'));try{scope(()=>{fs.writeFileSync(join(sibling,'unrelated'),'unrelated');return null;});}finally{fs.rmSync(sibling,{recursive:true,force:true});}
+  }finally{restore();}
+ `;
+ execFileSync(process.execPath,['--input-type=module','-e',source],{cwd:new URL('../../../',import.meta.url),timeout:50000,stdio:'pipe'});
+});
+
+test('standard source custody permits unrelated external sibling creation without losing original files',{timeout:60000},async()=>{
+ const {originalOrderedTextMapStandardSources,requireOriginalOrderedTextMapStandardSources}=await import('../ordered-text-map-callers-20261102-standard-source.mjs'),{mkdtempSync,writeFileSync,rmSync}=await import('node:fs'),{join}=await import('node:path'),{tmpdir}=await import('node:os');
+ const original=originalOrderedTextMapStandardSources(),directory=mkdtempSync(join(tmpdir(),'map-source-sibling-'));try{writeFileSync(join(directory,'new'),'unrelated');requireOriginalOrderedTextMapStandardSources(original);}finally{rmSync(directory,{recursive:true,force:true});}
 });

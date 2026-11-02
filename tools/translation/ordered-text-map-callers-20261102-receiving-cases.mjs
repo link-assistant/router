@@ -40,3 +40,28 @@ export function member(map){return contains(map,'stream');}
 export function value(map){return get(map,'stream');}
 export function updated(map,key,value){return insert(map,key,value);}
 `;
+
+export const ORDERED_MAP_KEYS_FORWARD_ACCEPTANCE_SOURCES=Object.freeze([
+ `pub fn projected_keys(map:&${map})->Vec<String>{${core}keys(map)}`,
+ `pub fn keys_after_update(map:${map},key:String,value:String)->Vec<String>{let keys=${core}keys(&map);let updated=${core}insert(map,key,value);keys}`,
+]);
+export const ORDERED_MAP_KEYS_FORWARD_REFUSAL_SOURCES=Object.freeze([
+ `pub fn reused_keys(map:&${map})->Vec<String>{let keys=${core}keys(map);let moved=keys;keys}`,
+ `pub fn external_vector(map:&${map},keys:Vec<String>)->Vec<String>{keys}`,
+]);
+export const ORDERED_MAP_KEYS_REVERSE_ACCEPTANCE_SOURCE=`
+import {router_text_map_keys as keys} from './runtime/ordered-text-map-20261102-runtime.mjs';
+export function projectedKeys(map:Parameters<typeof keys>[0]):ReturnType<typeof keys>{return keys(map);}
+`;
+export const ORDERED_MAP_KEYS_REVERSE_ACCEPTANCE_JAVASCRIPT=`
+import {router_text_map_keys as keys} from './runtime/ordered-text-map-20261102-runtime.mjs';
+export function projectedKeys(map){return keys(map);}
+`;
+export const ORDERED_MAP_LOAN_HEADER_TYPESCRIPT=`
+import {router_text_map_get as get} from './runtime/ordered-text-map-20261102-runtime.mjs';
+export function independentlyBorrowed(map:Parameters<typeof get>[0],key:Parameters<typeof get>[1],unused:Parameters<typeof get>[0]):ReturnType<typeof get>{return get(map,key);}
+`;
+export const ORDERED_MAP_LOAN_HEADER_JAVASCRIPT=`
+import {router_text_map_get as get} from './runtime/ordered-text-map-20261102-runtime.mjs';
+export function independentlyBorrowed(map,key,unused){return get(map,key);}
+`;
