@@ -1,3 +1,4 @@
+import {withProtectedNativeWriter,allowProtectedNativeAbsoluteDirectWrites,mutateProtectedNativeAbsoluteDirectWriter,mutateProtectedNativeAbsoluteEntries} from './protected-native-writers-20261102.mjs';
 // Test-only layout history, never source/type/owner/executable authority.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -84,8 +85,7 @@ export function prepareNativePortableHistoricalLayout({root=ROOT}={}){
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const [mode,...rest]=process.argv.slice(2);if(mode==='--capture-history'){if(rest.length!==1)fail('use --capture-history FRESH_OUTSIDE_DIRECTORY');console.log(JSON.stringify(captureNativePortableLayoutHistory({root:ROOT,output:rest[0]})));}else{
- if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=prepareNativePortableHistoricalLayout();
- if(mode==='--write'){fresh({root:ROOT,inputs:plan.inputs});for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}
- else if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete receiving layout adapter stale');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),performanceQualified:false}));
+ if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=mode==='--write'?withProtectedNativeWriter(ROOT,()=>{const plan=prepareNativePortableHistoricalLayout();fresh({root:ROOT,inputs:plan.inputs});const rows=plan.files.map(row=>{const target=resolve(ROOT,row.path),after=row.after;return {target,after};});allowProtectedNativeAbsoluteDirectWrites(ROOT,rows.map(row=>row.target));for(const row of rows)mutateProtectedNativeAbsoluteDirectWriter(ROOT,[row.target],captured=>writeFileSync(captured[0].canonicalTarget,row.after));return plan;}):prepareNativePortableHistoricalLayout();
+ if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete receiving layout adapter stale');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),performanceQualified:false}));
  }
 }

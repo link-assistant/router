@@ -131,3 +131,23 @@ whole-producer/finite-current/CST/empty-source case source are retained.
 See [the actual adoption contract](exact-source-successor-adoption-20261103.md).
 No source/namespace/type/body authority comes from this automation. All
 execution UNRUN and CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+## Six more actual recursive/vector/portable source writers
+
+Root reviewed and copied all six exact parent afterimages across the recursive
+three-CLI, owned-vector compilerFiles and portable layout/capture cohorts.
+The reusable recursive helper admits only missing directory entries, preserves
+existing/symlink directory no-op behavior, retains full parent entry/target
+identities, and separately preflights every final file target. The exact
+compilerFiles/currentAfter??after priority, typed payloads and original modes/
+order remain. The actual portable capture preserves all original physical-root/
+outside/fresh/SCM/gzip/notice bounds and admits all three wx children before
+creating its separate directory entry. Every actual callback uses the common
+multi-root native bridge. Original read-only producers and cases remain.
+The complete32 authored source/profile/case/document paths retain all six
+before/after/CST/inverse histories. The three frozen documents describe their
+pre-integration proposals; this journal records actual installation.
+All parser/capture/CLI/operational/receiving/resource qualification remains
+UNRUN; no local execution or CI feedback inspection occurred. Async/general
+lease, delegated/physical-trial/wider forward custody and full sink coverage
+remain OPEN. Counts stay11/70 DRAFTED,59 OPEN.

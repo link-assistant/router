@@ -1,0 +1,35 @@
+{
+  "schema": "protected-owned-vector-cli-20261103-source-proposal-v1",
+  "predecessor": "3d159dbb9c8bdc4794d93b7a409a3df86fcd000d",
+  "files": [
+    {
+      "role": "vector-cli",
+      "path": "tools/translation/js-to-rust/prepare-owned-vector-candidate.mjs",
+      "physicalOrigin": {
+        "commit": "3d159dbb9c8bdc4794d93b7a409a3df86fcd000d",
+        "path": "tools/translation/js-to-rust/prepare-owned-vector-candidate.mjs",
+        "gitBlob": "66311fc2c50d303f681b19188ccff9f3ed1066c9"
+      },
+      "before": {
+        "path": "vector-cli.before.txt",
+        "bytes": 9517,
+        "sha256": "64d78539229827faa03d9c0f5816aa25fd36a535fa61fbccaff5d62737171f32"
+      },
+      "after": {
+        "path": "vector-cli.after.txt",
+        "bytes": 9613,
+        "sha256": "97f1ee98215085b6f5499b26772ae5c873193cb452cac12e35dc86e851d5d280"
+      }
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceInstalled": false,
+  "sourceAuthority": false,
+  "completeOriginalFunctionDenominator": "UNKNOWN",
+  "completeWriterDenominator": "UNKNOWN",
+  "requirements": {
+    "L04": "actual current owned-vector compilerFiles CLI direct source sink guarded with all-active-root native policy",
+    "S03": "original direct sequential failures retained, no mkdir/transaction/atomicity claim",
+    "L01_L02": "one finite actual producer/entrypoint source mapping only; whole-corpus function/writer denominators UNKNOWN"
+  }
+}

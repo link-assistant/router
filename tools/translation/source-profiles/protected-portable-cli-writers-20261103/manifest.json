@@ -1,0 +1,54 @@
+{
+  "schema": "protected-portable-cli-writers-20261103-source-proposal-v1",
+  "predecessor": "fb085c4bd44fefc60813f0cfef02a9ea7fda2b0a",
+  "files": [
+    {
+      "role": "layout-cli",
+      "path": "tools/translation/prepare-native-portable-historical-layout.mjs",
+      "physicalOrigin": {
+        "commit": "fb085c4bd44fefc60813f0cfef02a9ea7fda2b0a",
+        "path": "tools/translation/prepare-native-portable-historical-layout.mjs",
+        "gitBlob": "3bae81d9acbe7f4e53b78a743f33249459587611"
+      },
+      "before": {
+        "path": "layout-cli.before.txt",
+        "bytes": 22677,
+        "sha256": "10a845a3feab5f03ba5169705e1b9d1d157d44bc2f680ce383a8f434efd7f669"
+      },
+      "after": {
+        "path": "layout-cli.after.txt",
+        "bytes": 23222,
+        "sha256": "f91ffcc25d3e16b62d74c4dec2e8fdf0a67bf7b8e7f5ea9a941b6b4100edf009"
+      }
+    },
+    {
+      "role": "capture-writer",
+      "path": "tools/translation/native-portable-layout-history.mjs",
+      "physicalOrigin": {
+        "commit": "fb085c4bd44fefc60813f0cfef02a9ea7fda2b0a",
+        "path": "tools/translation/native-portable-layout-history.mjs",
+        "gitBlob": "78f20c9cec8e3866fba20a2a6e2c4ea217801ad8"
+      },
+      "before": {
+        "path": "capture-writer.before.txt",
+        "bytes": 7976,
+        "sha256": "dfe451e929839af6b6235e5421268cc981fbeae5d38666224ffaa19a76435d31"
+      },
+      "after": {
+        "path": "capture-writer.after.txt",
+        "bytes": 8533,
+        "sha256": "5b99f98f38270a52aa56f01ae39c7102d2e099477fc2cfca9473aee5302f46b4"
+      }
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceInstalled": false,
+  "sourceAuthority": false,
+  "completeOriginalFunctionDenominator": "UNKNOWN",
+  "completeWriterDenominator": "UNKNOWN",
+  "requirements": {
+    "L04": "actual native portable layout CLI and public source capture writer protected through multi-root private bridge",
+    "S03": "original sequential source/capture partial failure unchanged; no atomicity claim",
+    "L01_L02": "finite two original producer/entrypoint mappings; complete original production function/writer denominators UNKNOWN"
+  }
+}

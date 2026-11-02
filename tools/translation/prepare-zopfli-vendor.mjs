@@ -1,3 +1,4 @@
+import {writeProtectedRecursiveCliPlan} from './protected-recursive-cli-writers-20261103.mjs';
 // Source preparation only. Compression supplies no compiler/source authority.
 import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
@@ -31,8 +32,8 @@ export function prepareZopfliVendor({root=ROOT}={}){
  return {schema:'complete-zopfli-source-vendor-proposal-v1',files,wasmBytes:manifest.wasmBytes,wasmSha256:manifest.wasmSha256,license:'Apache-2.0',precompiledC:true,rustExecuted:false,semanticAuthority:false,scope:'Node/Bun opaque compression only; closed embedded Wasm bytes retain their independent full-byte pin'};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('use --emit|--write|--check');const plan=prepareZopfliVendor();
+ const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('use --emit|--write|--check');const plan=args[0]==='--write'?writeProtectedRecursiveCliPlan(ROOT,()=>prepareZopfliVendor(),plan=>{for(const row of plan.files){if(row.current!==null&&row.current!==row.after)fail('unknown existing vendor source');}}):prepareZopfliVendor();
  if(args[0]==='--emit')console.log(JSON.stringify(plan));
  else if(args[0]==='--check'){if(plan.files.some(row=>row.current!==row.after))fail('complete current vendor differs');console.log('Complete pinned C/WebAssembly vendor is current.');}
- else{for(const row of plan.files){if(row.current!==null&&row.current!==row.after)fail('unknown existing vendor source');}for(const row of plan.files){mkdirSync(dirname(resolve(ROOT,row.path)),{recursive:true});writeFileSync(resolve(ROOT,row.path),row.after);}console.log('Wrote complete pinned C/WebAssembly vendor.');}
+ else{console.log('Wrote complete pinned C/WebAssembly vendor.');}
 }
