@@ -21,7 +21,7 @@ export const json = value => JSON.stringify(value, (_, item) => typeof item === 
 export const typeParameterName = (name, index) => /^[A-Za-z_$][A-Za-z0-9_$]*$/u.test(name) && !new Set('break case catch class const continue debugger default delete do else enum export extends false finally for function if import in instanceof new null return super switch this throw true try typeof var void while with yield await let static implements interface package private protected public arguments eval'.split(' ')).has(name) ? name : `arg${index}`;
 export const tsType = (type, dataTypes = [], {nativeScalarModule=null}={}) => {
   if (type.kind === 'routerFuture') return `PromiseLike<${tsType(type.value, dataTypes,{nativeScalarModule})}>`;
-  if (['array','data','named'].includes(type.kind))return typeScriptType(type,new Map(dataTypes.map(entry=>[entry.fullName,entry])),{nativeScalarModule});
+  if (['array','data','named','routerOrderedTextMap','routerStandardTextMap'].includes(type.kind))return typeScriptType(type,new Map(dataTypes.map(entry=>[entry.fullName,entry])),{nativeScalarModule});
   const scalar=nativeScalarTypeScriptType(type,nativeScalarModule);if(scalar!==null)return scalar;
   return ({ fixed: 'bigint', nat: 'bigint', int: 'bigint', bool: 'boolean', string: 'string', char: 'string', unit: 'null', float: 'number' })[type.kind] ?? 'unknown';
 };

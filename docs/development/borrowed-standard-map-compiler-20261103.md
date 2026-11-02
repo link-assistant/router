@@ -43,3 +43,12 @@ The actual production case may expose additional unsupported source/configuratio
 or standard-owner constraints; no executable query or full translation claim is
 made until independent future qualification. All execution UNRUN; CI
 NOT_INSPECTED. Checklist remains11/70 DRAFTED,59 OPEN.
+
+A later actual target-annotation successor fixes a separate source-review gap:
+translate.mjs tsType now routes both checked opaque-map and checked shared
+standard-map kinds through their existing genuine type-layout checks. Project
+export signatures and annotateRuntimeTypes use this same helper; returning
+unknown there would discard the newly checked map domain and break strict
+helper calls. Copied map tags still refuse rather than create type authority.
+Complete original helper source/inverse and independent forged-type/CST case
+source are retained separately. Actual whole-tree receiving remains UNRUN.

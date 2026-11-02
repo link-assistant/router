@@ -328,3 +328,14 @@ currentAfter. The frozen document describes proposal status; this records actual
 installation. Node/reporter, Python/transitive sinks and original complete
 writer/function scope stay OPEN/UNKNOWN. All verification UNRUN; CI NOT_INSPECTED;
 11/70 DRAFTED,59 OPEN.
+
+## Actual map TypeScript target signature bridge
+
+Source review found the project export/annotation tsType helper still fell back
+to unknown for both map kinds, despite the checked type-layout support. Root
+connected both actual kinds to that existing private-checked layout path, so
+project exported signatures and function/local annotations retain their map
+domain. Forged tags refuse through actual type observations; unrelated unknown
+types keep old behavior. Complete helper before/after/CST/inverse and independent
+forged-type/scalar/history case source are drafted. Full actual production
+receiving remains separate and UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
