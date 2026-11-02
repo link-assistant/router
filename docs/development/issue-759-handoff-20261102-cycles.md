@@ -741,3 +741,27 @@ Original source inventory and its fresh Rust and JS/TS collectors are reused;
 no duplicate regex inventory or invented function denominator is introduced.
 L01/L02 and counts remain OPEN/11 of70 DRAFTED; verification UNRUN and CI
 NOT_INSPECTED. Full SDK transfer/adoption and all receiving gates remain open.
+
+## Complete standalone installed TypeScript source companion
+
+Root drafted a complete SDK receiving source producer by composing the existing
+installed-package exporter and original64MiB compact materializer. Full package
+members, nested resources, notices/licenses, original package/lock and receipt
+travel into a fresh standalone SDK root; the producer never loads or installs
+the SDK. A private source policy preflights the complete fresh external subtree
+before creation; original exclusive/no-follow writers create all children.
+Full vault bytes, every raw file against the original vault, namespace/identity,
+policy and deadline close independently, preserving primary errors. Retained
+raw output does not require a second complete package byte buffer.
+
+The additive SDK companion has a declared192MiB aggregate/60-second profile;
+old64MiB lease/raw and8192 selection limits remain. Combining it with a full
+compiler remains subject to that caller's entire original resource limits.
+Storage cases contain SDK-shaped DATA that throws if evaluated. A separate
+actual copied-SDK/copied-compiler fresh-process receiving case is drafted;
+full driver scheduling/coexistence and translation qualification remain OPEN.
+No SDK source package was actually created or evaluated during drafting.
+See [the complete companion source contract](complete-typescript-receiving-20261103.md).
+The complete source packet retains the four authored files and both original
+composed implementations; execution UNRUN and CI NOT_INSPECTED. Counts remain
+11/70 acceptance bundles DRAFTED,59 OPEN; this is not native/compiler parity.
