@@ -440,3 +440,7 @@ Installed the shared reconcile reader and byte-only unit reader, preserving the 
 ## Source checkpoint: storage leases and authored current sources
 
 Installed additive compact-vault DATA leases, actual no-follow FD ranges, invocation-root-chain reuse and explicit resource admission in the compressed source backend. Original callback vault API and full closing checks remain. A separate complete source continuation now preserves and transfers actual reviewed current bytes for the original 31 authored source rows, retaining original creation/inverse DATA. Resource accounting followup and SDK scheduling/current-epoch joins are being drafted. No source programs or tests were executed; CI NOT_INSPECTED. Acceptance remains 11/70 DRAFTED, 59 OPEN, with executable translation coverage UNKNOWN.
+
+## Source checkpoint: operational SDK source continuations
+
+Published source checkpoint 464fa399238135354b0ef3682be4cc5282b33f1c and updated draft PR775 on 2026-11-02 around21:11UTC; next ordinary push around00:11UTC. CI/review feedback remains NOT_INSPECTED. Installed six actual producer/SDK/driver/receiving parent successors: fixed complete source chains recognize reviewed newer bytes, preserve the original cohorts and avoid historical overwrites. All original receiving commands and deadlines remain; lease/reconcile/composed/authored/operational cases are additive. No tests, compiler or Rust tools ran. Last disk observation61GiB free. Full draft/qualification remains open:11/70 DRAFTED,59 OPEN; executable translation coverage UNKNOWN.
