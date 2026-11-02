@@ -603,3 +603,21 @@ See [external mutation](protected-external-mutations-20261102.md) and
 Platform/resource/native/case/receiving qualification remains UNRUN. Complete
 sink coverage and broad forward-custody wider-policy compatibility stay OPEN;
 counts remain11/70 DRAFTED,59 OPEN and CI NOT_INSPECTED.
+
+## Seven actual CST producer CLI writers
+
+Root installed seven full CLI successors in the whole-owner candidate, four
+CST producers and two historical data producers. Write-only policy capture now
+precedes actual production; complete destination admission precedes writes.
+The original candidate stale loop, source payloads, arguments, output and
+check/emit behavior remain. Producers without an old-output read gain none.
+
+The fixed seven-source proposer retains full before/after/inverse images and
+the two language/repository CST sequences. Its complete source packet is
+309082 decoded bytes,27286 compressed, SHA-256
+`3ecefd5a280ad50500f9711bbdaa985a5f973d52609d297c593a4ad83b8f39b2`.
+See [the source contract](protected-cst-cli-writers-20261102.md).
+Downstream historical producers must still retain finite named currentAfter
+successors so later generation cannot reinstall an old unguarded CLI; that
+lineage batch is being drafted separately. Verification remains UNRUN, CI
+NOT_INSPECTED;11/70 acceptance bundles DRAFTED and59 OPEN.
