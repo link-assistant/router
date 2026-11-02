@@ -331,5 +331,7 @@ pub mod translation_ordered_text_map_core;
 
 pub mod borrowed_standard_map_20261102;
 
+pub mod borrowed_json_tool_predicate_20261103;
+
 #[cfg(test)]
 mod borrowed_standard_map_application_20261103_tests;

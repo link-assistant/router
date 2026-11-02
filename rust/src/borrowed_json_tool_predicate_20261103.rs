@@ -1,4 +1,4 @@
-//! Read-only compatibility leaf; intentionally unregistered source draft.
+//! Read-only compatibility leaf; source draft, verification UNRUN.
 //! No entry, text, depth, or whole-tree validation bound narrows `&Value`.
 use serde_json::Value;
 pub fn borrowed_json_tool_is_translatable(tool: &Value) -> bool {
