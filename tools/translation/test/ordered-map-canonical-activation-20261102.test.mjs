@@ -7,16 +7,16 @@ import {join,dirname} from 'node:path';
 import {tmpdir} from 'node:os';
 import {withCurrentCanonicalMapCompiler} from '../ordered-map-canonical-activation-20261102.mjs';
 import {orderedTextMapCallerParentSourceData} from '../ordered-text-map-callers-20261102-profile.mjs';
-import {orderedTextMapCanonicalParentSourceData} from '../ordered-text-map-canonical-20261102-profile.mjs';
+import {orderedTextMapCanonicalParentSourceData} from '../ordered-text-map-canonical-20261102-profile.mjs';import {orderedTextMapUnitParentSourceData} from '../ordered-text-map-callers-20261102-unit-profile.mjs';
 const options={timeout:30000,concurrency:false};
 function fixture(t){
  const root=fs.realpathSync(fs.mkdtempSync(join(tmpdir(),'canonical-map-source-state-')));
  t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
- const rows=[...orderedTextMapCallerParentSourceData(),...orderedTextMapCanonicalParentSourceData()];
+ const rows=[...orderedTextMapCallerParentSourceData(),...orderedTextMapCanonicalParentSourceData(),...orderedTextMapUnitParentSourceData()];
  for(const row of rows){fs.mkdirSync(dirname(join(root,row.path)),{recursive:true});fs.writeFileSync(join(root,row.path),row.after);}
  return {root,rows};
 }
-test('all17 exact installed sources select original execution without creating a compiler copy',options,t=>{
+test('all29 exact installed sources select original execution without creating a compiler copy',options,t=>{
  const {root}=fixture(t);let invoked=false;
  const result=withCurrentCanonicalMapCompiler({sourceRoot:root},(token,report)=>{
   invoked=true;assert.equal(token,null);assert.equal(report.root,root);assert.equal(report.installedSource,true);

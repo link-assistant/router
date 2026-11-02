@@ -819,3 +819,32 @@ Source/refusal cases and full original prerequisite sources are retained in
 the complete compressed packet. All execution UNRUN, CI NOT_INSPECTED;11/70
 DRAFTED,59 OPEN. The native-adopted stream-query function is not yet fully
 translated and no function-coverage percentage is reported.
+
+## Actual complete29 source selection and unit receiving scheduling
+
+Root installed the four exact unit-activation parent afterimages and refreshed
+main source archive, retaining complete prior main/unit binary archives in the
+separate frozen epoch. Fully installed29 sources now take the actual no-copy
+route; supported original unit predecessors take the full fresh compiler/native
+source wrapper. Mixed/unknown source cohorts refuse. The original activation
+case suite retains all cases/deadlines and now supplies all29 source DATA rows.
+
+The fixed wrapper closes all selected original source bytes, actual index/HEAD,
+file/ancestor identities and unchanged source vault; final rereads use bounded
+64MiB leases rather than per-file full-corpus walks. Actual source/target/Git
+object closures and setup/closing costs retain the original deadlines and full
+256MiB logical/384MiB aggregate profile. A real local source DATA commit from
+the complete materialized index supports nested committed-source re-export.
+It changes no original repository ref and supplies no compiler/semantic proof.
+The original borrowed-map native oracle also travels as an explicit full extra.
+
+The actual dedicated driver retains every original case/strict TS command and
+adds the complete canonical/outcome/project unit receiving aggregate. The
+TypeScript SDK is still the original separately declared pinned dependency;
+standalone SDK composition is the next separate worker batch. The frozen
+[unit activation document](ordered-text-map-callers-20261102-unit-activation.md)
+records the proposal; this journal records actual integration. Packet SHA-256
+`f1e2e4b273c88bcc73f07590ce5cd8f61b47b64bcb9cb30481c32236b05d174d`;
+main-after SHA-256
+`127c700785d193aad561163c8eebe8edc493a2e880f906a2a9f9c419315039d2`.
+All execution UNRUN and CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.

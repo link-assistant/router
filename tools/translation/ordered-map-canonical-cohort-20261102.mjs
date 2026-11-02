@@ -7,7 +7,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {types} from 'node:util';
 import {createHash} from 'node:crypto';
 import {performance} from 'node:perf_hooks';
-import {produceOrderedTextMapCallerSources} from './ordered-text-map-callers-20261102-producer.mjs';
+import {produceOrderedMapUnitCompilerSources as produceOrderedTextMapCallerSources} from './ordered-text-map-callers-20261102-unit-activation-producer.mjs';
 import {proposeOrderedTextMapCanonicalSourceSuccessors} from './ordered-text-map-canonical-20261102-profile.mjs';
 import {ORDERED_MAP_FULL_SOURCE_TRANSFER_LIMITS as LIMITS} from './ordered-text-map-callers-20261102-full-materialization.mjs';
 import {compactSparsePhysicalCensus,readCompactSparsePhysicalFile,sameCompactPhysicalSourceStamp,compactSparseGit,releaseCompactSparsePhysicalCensus} from './compact-sparse-git-io-20261102.mjs';
@@ -81,14 +81,14 @@ export function withCanonicalMapCompilerCohort({sourceRoot=ROOT,deadline}={},ope
   let originalBefore=true,originalAfter=true;
   const originals=canonical.files.map(row=>{const physical=ordinary(sourceRoot,row.path),bytes=readCompactSparsePhysicalFile(physical);originalBefore&&=bytes.equals(Buffer.from(row.before));originalAfter&&=bytes.equals(Buffer.from(row.after));return {...physical,bytes};});
   if(!originalBefore&&!originalAfter)fail('actual canonical sources are mixed or outside complete original equations');
-  const receipt=produceOrderedTextMapCallerSources({sourceRoot,destination:join(parent,'package')});tick();
+  const receipt=produceOrderedTextMapCallerSources({sourceRoot,destination:join(parent,'package'),deadline});tick();
   const root=receipt.destination;
   withProtectedNativeWriter(root,()=>{
    const targets=canonical.files.map(row=>ordinary(root,row.path).path);
-   for(let at=0;at<targets.length;at++)if(!fs.readFileSync(targets[at]).equals(originals[at].bytes))fail('complete copied canonical source differs');
-   const changes=targets.filter((target,at)=>!originals[at].bytes.equals(Buffer.from(canonical.files[at].after)));
+   for(let at=0;at<targets.length;at++)if(!fs.readFileSync(targets[at]).equals(originals[at].bytes)&&!fs.readFileSync(targets[at]).equals(Buffer.from(canonical.files[at].after)))fail('complete copied canonical source differs');
+   const changes=targets.filter((target,at)=>!fs.readFileSync(target).equals(Buffer.from(canonical.files[at].after)));
    allowProtectedNativeContainedDirectWrites(root,changes);
-   for(let at=0;at<targets.length;at++){tick();if(originals[at].bytes.equals(Buffer.from(canonical.files[at].after)))continue;mutateProtectedNativeContainedDirectWriter(root,[targets[at]],captured=>fs.writeFileSync(captured[0].canonicalTarget,canonical.files[at].after));}
+   for(let at=0;at<targets.length;at++){tick();if(fs.readFileSync(targets[at]).equals(Buffer.from(canonical.files[at].after)))continue;mutateProtectedNativeContainedDirectWriter(root,[targets[at]],captured=>fs.writeFileSync(captured[0].canonicalTarget,canonical.files[at].after));}
   });
   const index=[];for(const row of canonical.files){tick();const actual=ordinary(root,row.path),bytes=readCompactSparsePhysicalFile(actual);if(bytes.toString('utf8')!==row.after)fail('installed canonical source readback differs');const oid=compactSparseGit(root,['hash-object','-w','--stdin-paths','--no-filters'],{input:row.path+'\n',maxBytes:1048576}).trim();index.push(String(Number(actual.stat.mode&0o111n)?100755:100644)+' '+oid+'\t'+row.path+'\0');}
   compactSparseGit(root,['update-index','-z','--index-info'],{input:index.join(''),maxBytes:1048576});
