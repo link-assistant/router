@@ -207,3 +207,6 @@ function observeProtectedStagedMutationTargets({root,protectedNames,paths,native
  if(failed){if(closingCount)stagedSecondary(primary,firstClosing,closingCount);throw primary;}
  if(closingCount){if(closingCount===1)throw firstClosing;const error=new AggregateError([firstClosing],'Staged entry closing failures: '+closingCount);Object.defineProperty(error,'failureCount',{value:closingCount,enumerable:true});throw error;}return answer;
 }
+
+// Additive inert numeric snapshot; no descriptor ownership or mutation authority.
+export {descriptorNumbers as captureProtectedNativeDescriptorNumbers};

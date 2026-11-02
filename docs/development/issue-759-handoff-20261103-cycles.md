@@ -184,3 +184,20 @@ substitutions with complete inverse ancestry. See
 [the actual compiler source contract](borrowed-standard-map-compiler-20261103.md).
 Reverse/interpreters/full positive receiving and historical cohort/catalogue
 adoption remain OPEN. All execution UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+## Actual common general async source mutation lease
+
+Root reviewed the five full parent equations and installed their exact
+afterimages: the common synchronous veto borrower, shared private async context,
+original numeric FD snapshot export and two finite source-history providers.
+The old outside-only API keeps its fixed scope; around now retains the actual
+first source-validator cause separately from an exact ordinary callback primary.
+The general lease joins all retained/current sync and async root vetoes, owns
+and closes its successful opens before transfer, expires on every exit, and
+keeps caller-owned FDs borrowed. All original alias/source/resource checks stay.
+The18 frozen authored source/profile/case/document paths retain complete
+before/after, CST and inverse ancestry. The frozen document describes proposal
+status; this journal records installation. Actual physical-trial/vector adapters
+and delegated child-process sink coverage remain separately OPEN. No parent
+wrapper qualifies child writes. Every verification UNRUN; CI NOT_INSPECTED;
+checklist remains11/70 DRAFTED,59 OPEN.

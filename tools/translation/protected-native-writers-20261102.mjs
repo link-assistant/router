@@ -1,3 +1,4 @@
+import {captureProtectedNativeDescriptorNumbers} from './protected-preparer-writers-20261102-alias.mjs';
 import {captureAbsoluteNativeMutationTargets} from './protected-external-mutations-20261102-addresses.mjs';
 // Operational source-mutation veto only. Never parser/compiler/type/owner proof.
 import fs from 'node:fs';
@@ -115,3 +116,29 @@ function mutateProtectedNativeAbsolute(root,targets,operation,admit){
 }
 export function mutateProtectedNativeAbsoluteDirectWriter(root,targets,operation){return mutateProtectedNativeAbsolute(root,targets,operation,allowProtectedNativeAbsoluteDirectWrites);}
 export function mutateProtectedNativeAbsoluteEntries(root,targets,operation){return mutateProtectedNativeAbsolute(root,targets,operation,allowProtectedNativeAbsoluteMutationPaths);}
+
+// Borrow actual active synchronous roots across an async lexical operation.
+// Closed owners revoke the borrowed view; this never owns/closes their policies.
+export function captureActiveNativeSourceVetoLease(){
+ let retained=[];for(let current=active;current;current=current.parent)retained.push(current);
+ let live=true,revoked=false,sourcePrimary;
+ const alive=()=>need(live,'expired borrowed native source veto lease');
+ const roots=()=>{const rows=[...retained],seen=new Set(rows);for(let current=active;current;current=current.parent)if(!seen.has(current)){seen.add(current);rows.push(current);}need(rows.length<=128,'bounded captured/current synchronous root union');return rows;};
+ const record=(rows,error)=>{if(!revoked){revoked=true;sourcePrimary=error;}for(const current of rows)if(!current.sourceFailed){current.sourceFailed=true;current.sourcePrimary=sourcePrimary;}};
+ const observe=rows=>{let failed=revoked,primary=sourcePrimary;for(const current of rows)for(const check of [()=>{if(current.sourceFailed)throw current.sourcePrimary;},()=>current.policy.verify()])try{check();}catch(error){if(!failed){failed=true;primary=error;}else secondary(primary,error);}if(failed){record(rows,primary);throw primary;}};
+ const admission=(root,targets,descriptors,direct)=>{
+  alive();const rows=roots();let result,failed=false,primary;
+  try{const captured=captureAbsoluteNativeMutationTargets({requestedRoot:root,canonicalRoot:fs.realpathSync(resolve(root)),targets}),stable=Object.freeze(captured.map(row=>row.canonicalTarget)),fds=direct?Object.freeze(captureProtectedNativeDescriptorNumbers(descriptors)):[];result=captured;
+   for(const current of rows)try{if(direct)current.policy.allowNativeDirectWrites({root:current.root,targets:stable,descriptors:fds});else current.policy.allowNativeMutationPaths({root:current.root,targets:stable});}catch(error){if(!failed){failed=true;primary=error;}else secondary(primary,error);}
+  }catch(error){failed=true;primary=error;}
+  if(failed)record(rows,primary);try{observe(rows);}catch(error){if(!failed){failed=true;primary=error;}else secondary(primary,error);}if(failed)throw primary;return result;
+ };
+ try{observe(roots());}catch(error){live=false;retained.length=0;throw error;}
+ return Object.freeze({
+  verify(){alive();return observe(roots());},
+  source(operation){alive();const rows=roots();let value,failed=false,primary;try{observe(rows);value=invoke(operation);}catch(error){failed=true;primary=error;record(rows,error);}try{observe(rows);}catch(error){if(!failed){failed=true;primary=error;}else secondary(primary,error);}if(failed)throw primary;return value;},
+  direct(root,targets,descriptors=[]){return admission(root,targets,descriptors,true);},
+  entries(root,targets){return admission(root,targets,[],false);},
+  close(){alive();try{observe(roots());}finally{live=false;retained.length=0;}},
+ });
+}
