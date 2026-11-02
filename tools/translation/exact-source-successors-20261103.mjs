@@ -17,7 +17,7 @@ import {withCompleteSourceClosingFence,requireSynchronousSourceCallback} from '.
 import {withSourceFailureOperation,withSourceInputValidation} from './source-failure-operations.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const INDEX='tools/translation/source-profiles/exact-source-successor-adoption-20261103/index.json';
-const INDEX_SHA256='a2d7f40d2319ec8062e987fd84b86e633fdff5878ba75839d477c149dbfacd50';
+const INDEX_SHA256='e720c5793893b8587b7b800fc0b3c10d62ac96e4b21c0c9d8bd7bf366923bacd';
 const hash=raw=>createHash('sha256').update(raw).digest('hex'),fail=message=>{throw TypeError('Fixed exact source successors: '+message);};
 let active=null,operationDepth=0,retainedSourceBytes=0;
 function retain(frame,bytes){if(!Number.isSafeInteger(bytes)||bytes<0||retainedSourceBytes+bytes>16777216)fail('aggregate invocation-local source DATA retention bound');retainedSourceBytes+=bytes;frame.retainedBytes+=bytes;}
@@ -35,7 +35,7 @@ function close(frame){return withSourceInputValidation(()=>withCompleteSourceClo
 function sourceIndex(frame){
  if(frame.index)return frame.index;
  const source=read(frame,INDEX,1048576);if(hash(source)!==INDEX_SHA256)fail('complete fixed reviewed source index differs');
- const value=parseOrderedMapSourceData(source);if(value.schema!=='fixed-reviewed-source-successor-index-20261103-v1'||!Array.isArray(value.rows)||value.rows.length!==127||new Set(value.rows.map(row=>row.id)).size!==127)fail('complete fixed source-index census differs');
+ const value=parseOrderedMapSourceData(source);if(value.schema!=='fixed-reviewed-source-successor-index-20261103-v1'||!Array.isArray(value.rows)||value.rows.length!==198||new Set(value.rows.map(row=>row.id)).size!==198)fail('complete fixed source-index census differs');
  for(const row of value.rows){if(!fixedPath(row.path)||!['JavaScript','TypeScript','Rust'].includes(row.language))fail('fixed original source path/language required');for(const side of ['before','after']){const image=row[side];if(!image||!fixedPath(image.path)||!image.path.startsWith('tools/translation/source-profiles/')||!Number.isSafeInteger(image.bytes)||image.bytes<0||image.bytes>4194304||!/^[a-f0-9]{64}$/u.test(image.sha256))fail('complete fixed original source image required');}}
  retain(frame,Buffer.byteLength(source));frame.index=value;return value;
 }
@@ -77,3 +77,10 @@ function prepare(input,root,known){
 export function prepareExactSourceSuccessor(input,{root=ROOT}={}){return prepare(input,root,false);}
 /** Current means the complete physical terminal afterimage, not a prefix/hash. */
 export function knownExactSourceSuccessor(input,{root=ROOT}={}){return prepare(input,root,true);}
+
+/** Charge caller-retained whole source bytes to the SAME invocation DATA cap.
+ * A reservation is a restriction, never source/type/body/mutation permission. */
+export function withExactSourceHistoryDataReservation(bytes,run){
+ requireSynchronousSourceCallback(run);withSourceInputValidation(()=>{if(!active||!Number.isSafeInteger(bytes)||bytes<0||retainedSourceBytes+bytes>16777216)fail('active complete source-history byte reservation required');retainedSourceBytes+=bytes;});
+ try{return withCompleteSourceClosingFence(run,[]);}finally{retainedSourceBytes-=bytes;}
+}

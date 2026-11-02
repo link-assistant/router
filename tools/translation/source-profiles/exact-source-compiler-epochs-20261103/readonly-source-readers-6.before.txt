@@ -1,0 +1,23 @@
+// Pinned syntax-only condition program. This never resolves a pattern or caller.
+import {readFileSync} from 'node:fs';
+import {gunzipSync} from 'node:zlib';
+import {createHash} from 'node:crypto';
+import {originalMacroTrees,freezeMacroTree} from './macro-token-trees.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
+import {originalNamespaceTraversalIntrinsicsUnchanged,originalStaticSourceIntrinsicsUnchanged,originalPrivateParserIngressUnchanged,originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+const ROOT=new URL('./',import.meta.url),MANIFEST=new URL('./source-profiles/namespace-condition/manifest.json',ROOT),PROFILE='cf0aee1cd02ad98f58d3b2f6ada6fa121e04db32dfd29e07543f82dd84f9e1f7',programs=new WeakMap();
+const parseOwner=JSON,descriptor=Object.getOwnPropertyDescriptor,has=Object.hasOwn,apply=Reflect.apply,text=Function.prototype.toString,parsePin=descriptor(parseOwner,'parse');
+const nativeParse=!!(parsePin&&has(parsePin,'value')&&typeof parsePin.value==='function'&&apply(text,parsePin.value,[])==='function parse() { [native code] }');
+const fail=message=>{throw new TypeError('Original namespace condition source: '+message);};
+function guard(){const now=descriptor(parseOwner,'parse');if(!nativeParse||!now||!has(now,'value')||now.value!==parsePin.value||now.writable!==parsePin.writable||now.enumerable!==parsePin.enumerable||now.configurable!==parsePin.configurable||!originalNamespaceTraversalIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||!originalPrivateParserIngressUnchanged()||!originalDataFreezeIntrinsicsUnchanged())fail('native source operations changed');}
+const hash=value=>{const result=createHash('sha256').update(value).digest('hex');guard();return result;};
+export function originalNamespaceConditionalSourcePlan(){
+ guard();const bytes=readFileSync(MANIFEST);if(hash(bytes)!==PROFILE)fail('complete manifest differs');const profile=JSON.parse(new TextDecoder('utf8',{fatal:true,ignoreBOM:true}).decode(bytes)),inputs=[];
+ for(const pin of profile.licenses){const url=new URL(pin.path,ROOT),raw=readFileSync(url);if(raw.length!==pin.bytes||hash(raw)!==pin.sha256)fail('complete license differs');inputs.push({url,bytes:raw});}
+ const pin=profile.source,url=new URL(pin.archive,ROOT),packed=readFileSync(url);if(packed.length!==pin.archiveBytes||hash(packed)!==pin.archiveSha256)fail('complete compiler archive differs');const raw=gunzipSync(packed,{maxOutputLength:256000}),source=new TextDecoder('utf8',{fatal:true,ignoreBOM:true}).decode(raw);if(raw.length!==pin.bytes||hash(raw)!==pin.sha256)fail('complete compiler source differs');inputs.push({url,bytes:packed});
+ const concrete=transportConcreteSyntaxSource(source,{language:'Rust'});if(transportConcreteSyntaxMeta(concrete.meta).source!==source)fail('whole compiler CST differs');
+ const callbacks=profile.callbacks.map(row=>{const original=source.slice(row.span.start,row.span.end);if(Buffer.byteLength(original)!==row.bytes||hash(original)!==row.sha256)fail('complete condition callback differs');const syntax=originalMacroTrees(original,{maxBytes:256000,maxTokens:32000,maxDepth:64});if(syntax[0]?.text!=='fn'||syntax[1]?.text!==row.name||syntax.at(-1)?.delimiter!=='{'||syntax[0].span.start!==0||syntax.at(-1).span.end!==original.length)fail('complete condition callback grammar differs');return {...row,original,syntax};});
+ const result=freezeMacroTree({schema:profile.schema,profileSha256:PROFILE,rustVersion:profile.rustVersion,source:{...pin,source,concrete:concrete.meta},callbacks,licenses:profile.licenses,scope:'syntax-only conservative primary/postfix let initializer subset',leftToRightSyntaxOrderPreserved:true,letChainRequiresOriginalEdition2024:true,patternBindingResolved:false,callerOwnerResolved:false,wholeCompilerExecuted:false,typeAuthority:false,namespaceAuthority:false,runtimeAuthority:false});
+ for(const input of inputs)if(!readFileSync(input.url).equals(input.bytes))fail('complete input changed at EOF');if(!readFileSync(MANIFEST).equals(bytes))fail('manifest changed at EOF');guard();programs.set(result,{bytes,inputs});return result;
+}
+export function requireOriginalNamespaceConditionalSourcePlan(plan){guard();const state=programs.get(plan);if(!state)fail('copied or foreign condition source program');for(const input of state.inputs)if(!readFileSync(input.url).equals(input.bytes))fail('complete source input changed');if(!readFileSync(MANIFEST).equals(state.bytes))fail('manifest changed');const fresh=originalNamespaceConditionalSourcePlan();if(fresh.source.source!==plan.source.source)fail('complete source program changed');return plan;}

@@ -1,5 +1,5 @@
 // Source-state routing and operational closure only. Never a compiler permit.
-import fs from 'node:fs';
+import fs from 'node:fs';import {matchesExactSourceEpoch} from './exact-source-compiler-epochs-20261103.mjs';
 import {resolve,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {withCanonicalMapCompilerCohort} from './ordered-map-canonical-cohort-20261102.mjs';
@@ -35,7 +35,7 @@ function capture(sourceRoot){
    let current=root;for(const part of row.path.split('/').slice(0,-1)){current=join(current,part);parent(current);}
    const path=join(root,row.path),stat=fs.lstatSync(path,{bigint:true});if(!stat.isFile()||stat.isSymbolicLink()||stat.size>4194304n)fail('bounded ordinary compiler source required');
    const file={path,stat},raw=readCompactSparsePhysicalFile(file);retained+=raw.length;if(retained>16777216)fail('existing sixteen-MiB selected compiler source budget');
-   files.push({...file,raw});if(unitPaths.has(row.path)){unitBefore&&=raw.equals(Buffer.from(row.before));unitAfter&&=raw.equals(Buffer.from(row.after));}else{before&&=raw.equals(Buffer.from(row.before));after&&=raw.equals(Buffer.from(row.after));}
+   files.push({...file,raw});if(unitPaths.has(row.path)){unitBefore&&=raw.equals(Buffer.from(row.before));unitAfter&&=raw.equals(Buffer.from(row.after));}else{before&&=raw.equals(Buffer.from(row.before));after&&=raw.equals(Buffer.from(row.after))||matchesExactSourceEpoch(row,raw.toString('utf8'),{root,retainedBytes:retained});}
   }
   if((!before&&!after)||(!unitBefore&&!unitAfter)||before&&unitAfter)fail('mixed or unknown compiler epoch; complete source-author integration required');
   result={root,installed:after&&unitAfter,verify:close,dispose(){closed=true;for(const row of files)row.raw=null;files.length=0;directories.clear();}};

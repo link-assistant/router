@@ -225,3 +225,19 @@ physical API domains and full workloads remain; resource/receiving qualification
 UNRUN, all local execution UNRUN and CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
 The frozen storage document records pre-installation proposal status; this
 journal records the thirteen actual source integrations.
+
+## Shared exact compiler source epoch continuation
+
+Root extended the fixed catalogue to198 whole equations/175paths while retaining
+the complete original127 index and every original image. The actual14-parent
+source wrapper and29-parent canonical activation now recognize exact reviewed
+current terminals without rewriting historical afterimages. Unknown/mixed
+source, original16MiB retention, all source closers and independent private
+semantic checks remain. The separate physical127/cold127/current198 engine
+history avoids index self-reference and exposes a named complete source helper
+for the pending compressed producer. A reusable language/repository source-index
+DATA authoring module and independent full-source/lifecycle/bounds cases are
+drafted. See [the source continuation contract](exact-source-compiler-epochs-20261103.md).
+No local execution, corpus trials, compiler work or CI inspection occurred.
+Complete translation/receiving/resource acceptance remains OPEN;11/70 DRAFTED,
+59 OPEN. Catalogue path/equation counts are not executable coverage.

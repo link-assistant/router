@@ -1,6 +1,6 @@
 // Additive receiving entry points. Physical custody can only restrict a source
 // operation; the actual original Host issuers still establish every body/type.
-import {lstatSync} from 'node:fs';
+import {lstatSync} from 'node:fs';import {matchesExactSourceEpoch} from './exact-source-compiler-epochs-20261103.mjs';
 import {dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {translateProject,translateProjectWithFlatEnclosingSemanticMeta} from './project.mjs';
@@ -31,7 +31,7 @@ export function withOrderedTextMapCallerSources(run){return withSourceFailureOpe
  const captured=capture();
  try{return withCompleteSourceClosingFence(()=>{
   const proposal=withSourceInputValidation(()=>proposeOrderedTextMapCallerSourceSuccessors());captured.close();
-  for(const row of proposal.files){const original=captured.files.find(value=>value.relative===row.path);if(!original||!original.raw.equals(Buffer.from(row.after)))throw TypeError('Complete map source successors must be independently reviewed, installed and freshly imported: '+row.path);}
+  for(const row of proposal.files){const original=captured.files.find(value=>value.relative===row.path);if(!original||!matchesExactSourceEpoch(row,original.raw.toString('utf8'),{root:fileURLToPath(root),retainedBytes:captured.files.reduce((sum,file)=>sum+file.raw.length,0)}))throw TypeError('Complete map source successors must be independently reviewed, installed and freshly imported: '+row.path);}
   return withCurrentStandardCopySourceOperation(run);
  },[captured.close]);}finally{captured.dispose();}
 });}
