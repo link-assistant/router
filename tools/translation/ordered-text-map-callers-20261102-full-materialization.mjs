@@ -5,6 +5,7 @@ import {resolve,dirname,basename,join} from 'node:path';
 import {inspectCompactSourceVault,withCompactSourceVault} from './compact-source-vault-20261102.mjs';
 import {compactSparsePhysicalCensus,readCompactSparsePhysicalFile,writeCompactSparseHotPhysicalFile,sameCompactPhysicalSourceStamp} from './compact-sparse-git-io-20261102.mjs';
 import {withSourceInputValidation} from './source-failure-operations.mjs';
+import {ownSourceFailureField} from './source-error-fields-20261102.mjs';
 import {withCompleteSourceClosingFence} from './complete-source-closing-fence.mjs';
 export const ORDERED_MAP_FULL_SOURCE_TRANSFER_LIMITS=Object.freeze({files:16384,domainFiles:8192,fileBytes:4194304,logicalBytes:268435456,encodedBytes:67108864,decodedLeaseBytes:67108864,aggregateBytes:402653184});
 const L=ORDERED_MAP_FULL_SOURCE_TRANSFER_LIMITS,fail=message=>{throw TypeError('Full ordered-map compiler source DATA transfer: '+message);};
@@ -18,7 +19,7 @@ export function materializeOrderedTextMapFullCompilerSources({model,output}={}){
   if(typeof output!=='string'||!output)fail('explicit fresh output required');
   const inspected=inspectCompactSourceVault(model),rows=inspected.metadata.files.slice().sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
   if(!rows.length||rows.length>L.files||rows.reduce((sum,row)=>sum+row.bytes,0)>L.logicalBytes||rows.some(row=>row.bytes>L.fileBytes||row.path.split('/').includes('.git')))fail('complete compiler/profile source capacity exceeded');
-  const requested=resolve(output),root=join(realpathSync(dirname(requested)),basename(requested));try{lstatSync(root);fail('fresh full source output already exists');}catch(error){if(error.code!=='ENOENT')throw error;}
+  const requested=resolve(output),root=join(realpathSync(dirname(requested)),basename(requested));try{lstatSync(root);fail('fresh full source output already exists');}catch(error){if(ownSourceFailureField(error,'code')!=='ENOENT')throw error;}
   const batches=groups(rows),written=new Map();let census=null;
   const close=()=>{
    let failed=false,primary;const check=run=>{try{run();}catch(error){if(!failed){failed=true;primary=error;}}};

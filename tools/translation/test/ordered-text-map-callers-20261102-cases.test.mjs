@@ -45,3 +45,53 @@ test('shared source closing protocol retains falsy primary errors and every clos
  const {withCompleteSourceClosingFence}=await import('../complete-source-closing-fence.mjs');
  for(const primary of [false,0,'',null,undefined]){const seen=[];let threw=false,caught;try{withCompleteSourceClosingFence(()=>{throw primary;},[()=>{seen.push(1);throw Error('closing error');},()=>{seen.push(2);}]);}catch(error){threw=true;caught=error;}assert.equal(threw,true);assert.equal(caught,primary);assert.deepEqual(seen,[1,2]);}
 });
+
+// Future isolated filesystem fault source: no test/child was executed.
+test('full-profile fresh-output lstat retains null undefined and accessor primaries',{timeout:30000},async()=>{
+ const {execFileSync}=await import('node:child_process');
+ const source=`
+  import assert from 'node:assert/strict';
+  import fs from 'node:fs';
+  import {tmpdir} from 'node:os';
+  import {join} from 'node:path';
+  import {syncBuiltinESMExports} from 'node:module';
+  import {createCompactSourceVault} from './tools/translation/compact-source-vault-20261102.mjs';
+  import {materializeOrderedTextMapFullCompilerSources} from './tools/translation/ordered-text-map-callers-20261102-full-materialization.mjs';
+  const parent=fs.mkdtempSync(join(tmpdir(),'ordered-map-falsy-')),output=join(fs.realpathSync(parent),'out'),original=fs.lstatSync;
+  let invoked=false;const accessor=Object.defineProperty({},'code',{get(){invoked=true;throw Error('must not inspect getter');}});
+  try{for(const primary of [null,undefined,false,0,'',accessor]){
+   const builder=createCompactSourceVault();builder.add({path:'tools/translation/example.mjs',domain:'compiler',mode:'100644',bytes:Buffer.from('export const example=1;\\n'),gitBlob:null});const model=builder.finish();
+   fs.lstatSync=(path,...rest)=>path===output?(()=>{throw primary;})():original(path,...rest);syncBuiltinESMExports();
+   let caught=false,error;try{materializeOrderedTextMapFullCompilerSources({model,output});}catch(value){caught=true;error=value;}
+   assert.equal(caught,true);assert.strictEqual(error,primary);assert.equal(invoked,false);
+  }}finally{fs.lstatSync=original;syncBuiltinESMExports();fs.rmSync(parent,{recursive:true,force:true});}
+ `;
+ execFileSync(process.execPath,['--input-type=module','-e',source],{cwd:new URL('../../../',import.meta.url),timeout:20000,stdio:'pipe'});
+});
+test('new standard-source receipts are fixed original selections and reject copied carriers',{timeout:60000},async()=>{
+ const {originalOrderedTextMapStandardSources,requireOriginalOrderedTextMapStandardSources}=await import('../ordered-text-map-callers-20261102-standard-source.mjs');
+ const source=originalOrderedTextMapStandardSources();requireOriginalOrderedTextMapStandardSources(source);
+ assert.deepEqual(source.facts.map(fact=>fact.target.join('::')),['std::collections::BTreeMap','std::string::String']);
+ assert.equal(source.snapshots.length,12);assert.equal(source.mapRoute.selectedGlob.selectedOnly,true);
+ assert.equal(source.prelude.injection.customCompilerInvocationProved,false);assert.equal(source.nativeUnitAuthority,false);assert.equal(source.traitDispatchAuthority,false);
+ assert.throws(()=>requireOriginalOrderedTextMapStandardSources(JSON.parse(JSON.stringify(source))));
+});
+test('original standard receipts revoke permanently on identity change and preserve falsy read failures',{timeout:60000},async()=>{
+ const {execFileSync}=await import('node:child_process');
+ const source=`
+  import assert from 'node:assert/strict';
+  import fs from 'node:fs';
+  import {resolve} from 'node:path';
+  import {syncBuiltinESMExports} from 'node:module';
+  import {originalOrderedTextMapStandardSources as capture,requireOriginalOrderedTextMapStandardSources as requireSource} from './tools/translation/ordered-text-map-callers-20261102-standard-source.mjs';
+  const original=fs.lstatSync,target=resolve('tools/translation/source-profiles/ordered-text-map-callers-20261102-standard/ordered-text-map-callers-20261102-standard.json');
+  const restore=()=>{fs.lstatSync=original;syncBuiltinESMExports();};
+  try{
+   const receipt=capture();fs.lstatSync=(path,...rest)=>{const stat=original(path,...rest);if(path!==target)return stat;const next=Object.create(Object.getPrototypeOf(stat),Object.getOwnPropertyDescriptors(stat));Object.defineProperty(next,'ino',{value:stat.ino+1n});return next;};syncBuiltinESMExports();
+   let first,caught=false;try{requireSource(receipt);}catch(error){caught=true;first=error;}assert.equal(caught,true);restore();
+   let second,revoked=false;try{requireSource(receipt);}catch(error){revoked=true;second=error;}assert.equal(revoked,true);assert.strictEqual(second,first);
+   for(const primary of [null,undefined,false,0,'']){const next=capture();fs.lstatSync=(path,...rest)=>path===target?(()=>{throw primary;})():original(path,...rest);syncBuiltinESMExports();let observed=false,error;try{requireSource(next);}catch(value){observed=true;error=value;}restore();assert.equal(observed,true);assert.strictEqual(error,primary);let again=false;try{requireSource(next);}catch(value){again=true;assert.strictEqual(value,primary);}assert.equal(again,true);}
+  }finally{restore();}
+ `;
+ execFileSync(process.execPath,['--input-type=module','-e',source],{cwd:new URL('../../../',import.meta.url),timeout:50000,stdio:'pipe'});
+});

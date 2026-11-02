@@ -7,9 +7,10 @@ The existing ten-operation core remains unchanged. This profile drafts seven
 caller operations: new, insert, remove, get, contains, len and copy.
 
 Activation is currently blocked before opaque type issuance in BOTH directions.
-The existing genuine standard namespace registry has no BTreeMap/String owner
-chain for this new ABI, and actual native Cargo-unit/extern-std, implicit-prelude
-and generated trait-owner receipts are not issued. The new native-owner guard
+The proposed namespace successor adds original BTreeMap/String source candidates
+through its existing private issuer. New complete standard/prelude source routes
+and actual native root/leaf/Cargo source joins are drafted. Invoked native
+Cargo-unit/extern-std identity and generated trait dispatch owners are not issued. The new native-owner guard
 refuses this boundary explicitly; there is no name/hash/flag/table bypass. The
 complete compiler afterimages below are source drafts for the limited caller
 route, not completed activation. Positive receiving expectations remain failing
@@ -20,13 +21,15 @@ into successful caller coverage.
 ## Actual source path
 
 `tools/translation/ordered-text-map-callers-20261102-source-history.json.gz`
-retains complete before/after sources for eleven actual parent modules, their
+retains complete before/after sources for twelve actual parent modules, their
 ordered language then repository substitutions, complete inverse preimages,
 authored additions, unchanged production review sources and reference sources.
 `ordered-text-map-callers-20261102-profile.mjs` proposes both full CST stages;
 each transports serialized/reparsed lossless syntax and checks the inverse.
 It never imports or executes proposed source. Parent sources are not installed
-by this source batch. Existing APIs and historical archives remain unchanged.
+by this source batch. Existing APIs remain unchanged. A separate complete
+checkpoint history retains the full prior packet and every changed authored
+source preimage; historical archive bytes remain recoverable exactly.
 
 The proposed Host/parser/checker/source-link hooks use the actual original
 classes and their definition-time identity guards. They introduce the distinct
@@ -62,7 +65,10 @@ validation and relative TypeScript imports. The core retains4096 entries and
 1048576 aggregate UTF-8 bytes. The caller flow retains100000 visited cells and
 depth160; source custody retains200000 cells/depth160. Shared closing fences run
 all registered closers and preserve the first primary error, including falsy
-throws. These authored bounds are not timing/memory qualification results.
+throws. Full-transfer and producer filesystem catches use the shared own-data
+error-field reader; independent future child cases retain null/undefined and
+accessor-bearing primary values without invoking getters. Producer physical
+reads use the original no-follow identity-checked source reader. These authored bounds are not timing/memory qualification results.
 
 ## Reverse source path
 
@@ -108,7 +114,7 @@ No guessed hot catalogue or tiny receiving fixture replaces the full closure;
 every vault path is hot so direct filesystem readers keep their original APIs.
 Compression fit and the resulting physical working set are UNRUN.
 
-The producer then composes all eleven complete afterimages, checks readbacks,
+The producer then composes all twelve complete afterimages, checks readbacks,
 creates an actual producer-owned unborn Git index without filters/hooks, and
 retains original/current inventories and full inverses. Original application
 HEAD/index and every selected original source are reclosed; the source index is
@@ -149,12 +155,43 @@ for gated CI only. Test source is not passing evidence or production coverage.
 
 ## Exact remaining scope
 
-Genuine native standard-library/prelude/derive/Cargo owner issuance is OPEN and
-currently refuses before any map type or executable caller is issued. The guard
-requires private original standard facts, actual source/import scopes, private
-Cargo-edition and builtin-derive input/output joins; even those observations do
-not replace the still-unissued native unit/prelude/trait-owner closure. Native
-BTreeMap internals may remain untranslated after that real ABI boundary closes.
+Genuine native unit/trait owner issuance remains OPEN and refuses before any
+map type or executable caller is issued. The new fixed standard source reader
+retains twelve complete Rust1.89 originals, including four newly pinned files
+and eight reused originals. It reconstructs std-to-alloc BTreeMap/String routes,
+including the selected private btree-map glob, std/core2024 preludes and original
+compiler std/prelude injection. Every source transports serialized/reparsed CST;
+every receipt is privately associated. No-follow descriptor reads retain full
+BigInt file stamps and absolute ancestor identities. Every retained file and
+ancestor reclose after each read and on final use; the original identity
+snapshots remain required even when byte contents match a fresh receipt.
+A detected failure permanently poisons that receipt, including falsy primaries.
+Independent isolated child case source covers changed inode and restored/falsy
+failures without editing physical originals. A copied receipt fails. No arbitrary
+host can register an owner.
+
+The explicit supported standard SOURCE profile selects ordinary allocation with
+`test`, `no_global_oom_handling` and `rustfmt` false. This declares a source model;
+it does not infer any receiving compiler flags or custom sysroot identity.
+The original BTreeMap declaration's conditional diagnostic attribute remains
+visible and its compiler configuration authority is false. Original complete
+Clone/Default/PartialEq/Eq/Debug implementation bodies and String comparison
+derives are retained as source observations; generic obligations and dispatch
+are not silently solved. The proposed existing standard namespace issuer adds
+only selected type candidates; it grants no layout, constructor, glob, runtime
+or whole-namespace authority.
+
+Native source context additionally joins the same private Cargo source to both
+edition and dependency proofs, actual root/leaf source scopes, absence of std
+or String shadows, unavailable/unknown parent producers and no_std/no_core/
+no_implicit_prelude refusals. Reverse now reconstructs its full supplied native
+module graph with the actual original graph resolver and genuine derive/tool/
+bang frames before resolving imports. Those source joins still cannot identify
+an invoked compiler unit or solve the generated methods' trait dispatch. The
+native owner guard retains that exact refusal. BTreeMap allocation, Borrow/Ord,
+drop and comparison internals remain untranslated; original source observations
+alone do not waive that ABI boundary. The full source-context and std routes
+are UNRUN, including any earlier independent unsupported-scope refusal.
 
 Installation, fresh producer/receiving execution, strict compiler results,
 resource/platform qualification, native CI oracles and all original gates are
