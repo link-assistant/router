@@ -798,3 +798,24 @@ receiving cases remain OPEN; the new source cases cover foreign/fake boundaries.
 See [the private type helper source contract](borrowed-standard-map-native-types-20261103.md).
 No tests or source code ran; verification UNRUN, CI NOT_INSPECTED;11/70 DRAFTED,
 59 OPEN and no translated-function denominator or coverage claim.
+
+## Borrowed-map parser/checker/emitter/interpreter/reverse helper draft
+
+Root drafted the shared operation contract and private source parser/checker
+fragments for the real native helper, plus target emission, shared interpreter
+adapter, reverse native call/type-witness proposals and complete runtime/strict
+declaration packaging. Only actual qualified calls, genuine shared standard-map
+inputs and written pure scalar literal slices are selected. Checked literals
+share one complete closing boundary; no full standard-source reparse per
+literal is introduced. Target operands evaluate left to right once and no
+map/text loan escapes. Reverse proposals use hygienic temporaries, preserve
+Unicode/control-byte Rust escapes, and add no opaque map copy or size cap.
+
+Complete production parent registration, semantic/meta reissue and positive
+whole actual caller/receiving cases remain OPEN. Public fragments produce
+candidates/source strings, not an executable program or private caller permit.
+See [the caller fragment contract](borrowed-standard-map-callers-20261103.md).
+Source/refusal cases and full original prerequisite sources are retained in
+the complete compressed packet. All execution UNRUN, CI NOT_INSPECTED;11/70
+DRAFTED,59 OPEN. The native-adopted stream-query function is not yet fully
+translated and no function-coverage percentage is reported.
