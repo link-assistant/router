@@ -18,7 +18,7 @@ function mkdir(lease,directory,options){
 export function withProtectedTrialVectorWriter(root,operation){
  if(typeof operation!=='function'||types.isProxy(operation))throw new TypeError('Fixed trial/vector source writer operation required');
  return withProtectedNativeAsyncWriter(root,async lease=>{
-  const scope=Object.freeze({root:lease.root,retainedBytes:lease.retainedBytes,verify:()=>lease.verify(),
+  const scope=Object.freeze({root:lease.root,retainedBytes:lease.retainedBytes,verify:()=>lease.verify(),source:callback=>lease.source(callback),sourceAsync:callback=>lease.sourceAsync(callback),
    preflightFiles:targets=>preflight(lease,targets),preflightEntries:targets=>lease.preflightEntries(targets),
    direct:(targets,callback)=>lease.direct(targets,callback),entries:(targets,callback)=>lease.entries(targets,callback),
    descriptor:(fd,callback)=>lease.descriptor(fd,callback),withOpen:(target,flags,mode,callback)=>lease.withOpen(target,flags,mode,callback),

@@ -311,3 +311,20 @@ source hash, metadata or public result grants native/body/type permission.
 The complete two-parent successor and authored provider source are retained in
 a new independent source packet; the earlier native alias packet stays frozen.
 Every verification UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+## Actual fixed trial/vector source-failure boundaries
+
+Root source-reviewed and installed the five exact source-boundary successors
+plus15 frozen authored files. The genuine facade forwards source/sourceAsync;
+actual compiler acquisition, fixed source producers/CST/inverse/current-input
+checks and all-owned restoration validation use them. Ordinary write/rename and
+child engine/test outcomes remain outside source classification so healthy-policy
+restoration retains original behavior. A caught source edit now revokes the
+actual lease independently of an ordinary failure. The prior whole restoration
+case explicitly expects that outer rejection while retaining all no-write
+assertions; original ordinary-rename restoration source remains unchanged.
+The original writer history keeps historical after/inverses and adds finite
+currentAfter. The frozen document describes proposal status; this records actual
+installation. Node/reporter, Python/transitive sinks and original complete
+writer/function scope stay OPEN/UNKNOWN. All verification UNRUN; CI NOT_INSPECTED;
+11/70 DRAFTED,59 OPEN.

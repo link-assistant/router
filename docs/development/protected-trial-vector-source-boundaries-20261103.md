@@ -1,0 +1,13 @@
+# Fixed trial/vector source boundaries — source proposal
+
+This separate five-parent proposal follows c562855f10e80ecc1c0f728633f7327e741847d8. It retains that entire frozen writer packet. No active parent is installed by this proposal. Verification is UNRUN.
+
+The genuine trial/vector facade exposes the existing private general lease's source and sourceAsync operations. Actual physical-trial native compiler acquisition, fixed producer, proposal/CST/inverse checks, selected source snapshots, source case census and current-source comparisons use those methods. Actual replacement/readback and complete all-owned restoration validation use source admission. An observed source failure remains sticky even when caught. The immediate ordinary falsy/frozen operation primary remains distinct from a later source-closing cause in the underlying general lease.
+
+The core-vector refresh uses source admission for its fixed fixture/current reads and native producer, and sourceAsync for each original fixed async source composer. Its check mode still performs those original expressions without capturing a write policy. The other original write mode admits its fixed producer and source reads together. Original payload priorities, receipt-first order, late per-row checks, modes, limits and flags remain intact.
+
+Filesystem mutation callbacks, engine/bootstrap/subprocess results, runtime test outcomes and whole writer operations are not classified as source validators. Ordinary write/rename/engine failures with healthy source policy can still use the original restoration. Detected source edits revoke admission and can require manual recovery using the original durable evidence; no restoration bypass is introduced.
+
+The manifest records exact physical origins and complete before/after images for facade, physical trial, vector CLI, prior named history and the prior restoration case. The old history retains historical after and appends a finite currentAfter successor. The restoration case successor changes its outer expectation for unknown owned source edits to sticky rejection, retaining the all-row no-write assertions. Independent case sources cover exact sync/async falsy/frozen causes, ordinary failure restoration, lexical expiration, full language-then-repository CST equations and inverses, and inert DATA rejection.
+
+These are source drafts, not executed trial qualification. Node runner/reporter, Python and transitive arbitrary subprocess writes are separate sinks. Their protection is not supplied by parent async context. L04/S03 and the original complete writer/function denominators remain OPEN/UNKNOWN.
