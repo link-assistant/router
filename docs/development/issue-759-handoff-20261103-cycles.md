@@ -241,3 +241,26 @@ drafted. See [the source continuation contract](exact-source-compiler-epochs-202
 No local execution, corpus trials, compiler work or CI inspection occurred.
 Complete translation/receiving/resource acceptance remains OPEN;11/70 DRAFTED,
 59 OPEN. Catalogue path/equation counts are not executable coverage.
+
+## Actual compressed source callback/resource corrections and raw re-export
+
+Root reviewed and installed the six exact correction afterimages plus five
+frozen authored source/profile/case/document files. Reused/absent storage scopes
+now reject async/thenable results; cold read options use own DATA fields. Backend
+ancestor/origin and complete producer target closes group under4096 callbacks.
+Bank/producer targets retain identity+digest and reread original full bytes one
+file at a time, removing a duplicate384MiB raw corpus. Mixed physical/cold
+custody uses the original complete32768 count in both read orders. The actual
+original main producer can read a cold profile source scope while preserving
+its complete original physical receiving output and old domain/workload.
+
+Remaining source obligations identified during review: canonical custody's
+complete physical/directory and stored-handle close arrays also need grouping;
+its next source epoch is being drafted. Main/unit/SDK producer selection must
+join the new198 source continuations and include all original receiving cases,
+then schedule complete workloads inside the original all-owned-root cap. The
+mutating descriptor case must own a separate complete package rather than
+invalidating the enclosing positive receiver's source scope. These gaps remain
+OPEN; no resource or semantic qualification is claimed. Frozen documents retain
+their proposal status; this journal records actual installation. All execution
+UNRUN; CI NOT_INSPECTED; checklist remains11/70 DRAFTED,59 OPEN.

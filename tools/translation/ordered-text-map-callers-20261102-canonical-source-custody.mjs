@@ -20,7 +20,7 @@ export function createOrderedMapCanonicalSourceCustody(root){
   const selected=[];let row;return withCompleteSourceClosingFence(()=>{
    if(!Number.isSafeInteger(maximum)||maximum<0||maximum>33554432)fail();path=actual(path);if(!path.startsWith(root+sep))fail();const logical=captureReadonlySourceProfile(path,{maximum,retainBytes:false});if(logical){const old=stored.get(path);if(old){old.requireCurrent();if(old.sha256!==logical.sha256||old.byteLength!==logical.byteLength)fail();}else{if(files.size+stored.size>=32768||total+logical.byteLength>268435456)fail();total+=logical.byteLength;stored.set(path,logical);}return logical.read();}ancestors(dirname(path),selected);
    const stat=lstatSync(path,{bigint:true});if(!stat.isFile()||stat.isSymbolicLink()||stat.size>BigInt(maximum))fail();const old=files.get(path);if(old&&!sameCompactPhysicalSourceStamp(old.stat,stat))fail();
-   if(!old&&(files.size>=32768||total+Number(stat.size)>268435456))fail();row=old??{path,stat};const raw=readCompactSparsePhysicalFile(row);if(!old){total+=raw.length;files.set(path,row);}return raw;
+   if(!old&&(files.size+stored.size>=32768||total+Number(stat.size)>268435456))fail();row=old??{path,stat};const raw=readCompactSparsePhysicalFile(row);if(!old){total+=raw.length;files.set(path,row);}return raw;
   },[()=>closeSelected(row?[row]:[],selected)]);
  });
  const read=path=>protect(()=>{const raw=readBytes(path),source=raw.toString('utf8');if(!Buffer.from(source).equals(raw))fail();return source;});

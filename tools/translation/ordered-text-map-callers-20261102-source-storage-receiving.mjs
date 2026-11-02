@@ -9,7 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {openReadonlySourceProfiles,closeReadonlySourceProfiles,withReadonlySourceProfiles,readReadonlySourceProfileBytes,readSourceProfileFileSync,captureReadonlySourceProfile} from './ordered-text-map-callers-20261102-source-storage.mjs';
 import {compactSparseGit,compactSparsePhysicalCensus} from './compact-sparse-git-io-20261102.mjs';
-import {readonlySourceProfileConsumerSourceData} from './ordered-text-map-callers-20261102-source-storage-profile.mjs';
+import {readonlySourceProfileConsumerSourceData} from './ordered-text-map-callers-20261102-source-storage-profile.mjs';import {readonlySourceProfileReexportSourceData} from './ordered-text-map-callers-20261102-source-storage-reexport-profile.mjs';
 import {withCompleteSourceClosingFence} from './complete-source-closing-fence.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url)),receiptPath=join(root,'ordered-text-map-callers-20261102-source-storage-package.json');
 const profile='tools/translation/source-profiles/ordered-text-map-callers-20261102-source-storage/ordered-text-map-callers-20261102-source-storage-source-history.json.gz';
@@ -18,7 +18,7 @@ test('complete receiving source profile is actual committed cold DATA; code and 
  assert.equal(compactSparseGit(root,['rev-parse','--verify','HEAD'],{maxBytes:1024}).trim(),receipt.localPackageSourceCommit);assert.equal(compactSparseGit(root,['rev-parse','HEAD^{tree}'],{maxBytes:1024}).trim(),receipt.localPackageSourceTree);
  assert.equal(compactSparseGit(root,['ls-files','-v','--',profile],{maxBytes:8192}),'S '+profile+'\n');assert.throws(()=>lstatSync(join(root,profile)),{code:'ENOENT'});assert.ok(lstatSync(join(root,'tools/translation/source-profiles/exact-source-successor-adoption-20261103/index.json')).isFile());
  for(const path of ['rust/src/lib.rs','rust/src/openai.rs','rust/src/translation_ordered_text_map_core.rs','rust/tests/borrowed_standard_map_20261102_test.rs','rust/tests/ordered-text-map-callers-20261102_test.rs','tools/translation/extensions/host-contracts.mjs','tools/translation/exact-source-successors-20261103.mjs'])assert.ok(lstatSync(join(root,path)).isFile(),path);
- const rows=readonlySourceProfileConsumerSourceData();assert.equal(rows.length,13);for(const row of rows)assert.equal(readFileSync(join(root,row.path),'utf8'),row.after);assert.ok(compactSparsePhysicalCensus(receipt.container,{maximum:402653184}).total<=402653184);
+ const rows=readonlySourceProfileConsumerSourceData();assert.equal(rows.length,13);const corrections=new Map(readonlySourceProfileReexportSourceData().map(row=>[row.path,row]));for(const row of rows){const correction=corrections.get(row.path);if(correction)assert.equal(correction.before,row.after);assert.equal(readFileSync(join(root,row.path),'utf8'),correction?.after??row.after);}assert.ok(compactSparsePhysicalCensus(receipt.container,{maximum:402653184}).total<=402653184);
 });
 test('byte adapter preserves binary/text behavior and original read bounds; private receipts do not serialize',{timeout:60000},()=>{
  const bytes=readSourceProfileFileSync(join(root,profile));assert.ok(Buffer.isBuffer(bytes));assert.deepEqual(readSourceProfileFileSync(new URL('./source-profiles/ordered-text-map-callers-20261102-source-storage/ordered-text-map-callers-20261102-source-storage-source-history.json.gz',import.meta.url)),bytes);
