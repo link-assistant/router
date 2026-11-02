@@ -1,3 +1,4 @@
+import {writeProtectedAfterCliPlan} from './protected-after-cli-writers-20261102.mjs';
 import {knownSingleRowProofByteSuccessor} from './prepare-single-row-proof-byte-source.mjs';
 // Source-only equations. Existing public concrete transports stay unchanged.
 import {readFileSync,writeFileSync} from 'node:fs';
@@ -29,5 +30,5 @@ export function prepareSourcePhaseTransports({root=ROOT}={}){
  if(!readFileSync(resolve(root,ARCHIVE)).equals(packed))fail('complete original archive changed');for(const row of files)if(readFileSync(resolve(root,row.path),'utf8')!==row.current)fail('complete physical source changed');return {schema:'source-phase-transports-source-v1',files,originalInputs:originals.files,newAcrossInvocationCache:false,publicConcreteApisChanged:false,performanceQualified:false,sourceAuthority:false,runtimeAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=prepareSourcePhaseTransports();if(mode==='--write')for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);else if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete generated sources are stale');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),qualified:false}));
+ const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=mode==='--write'?writeProtectedAfterCliPlan(ROOT,()=>prepareSourcePhaseTransports(),plan=>{}):prepareSourcePhaseTransports();if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete generated sources are stale');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),qualified:false}));
 }

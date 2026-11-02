@@ -393,3 +393,27 @@ These use one scoped full source package per sync, fresh producer processes,
 unchanged workload IDs/flags and original deadlines including setup/closure.
 No launcher, parser, child, test, compiler or CI feedback has been executed.
 Acceptance-bundle counts remain11/70 DRAFTED,59 OPEN; work continues.
+
+## Eleven further CLI writers with actual after values
+
+Root source-integrated eleven more reviewed writer afterimages using an additive
+after-value adapter over the existing guarded core sink. Original plan objects,
+producer aliases, flags, messages and check/emit branches remain intact. The
+row list and each path/current/after value are observed only after the original
+stale callback, including when an observer replaces the public plan.files list.
+The same captured values feed all-row admission and actual canonical writes.
+No previous frozen13 helper/history is rewritten. Full original source pairs,
+two-phase CST/inverses and independent actual helper/history cases are retained;
+execution is UNRUN. Nine complex source-writer contracts remain unedited:
+extension/currentFiles variants, sequential/interleaved producer-writes,
+installationSource/fixed-output variants and missing-current/empty fallback
+domains require their own exact adapters rather than silently narrowed inputs.
+
+See [the after-value CLI source contract](protected-after-cli-writers-20261102.md).
+Its complete integration packet retains11 parent pairs and five authored sources.
+Source-copy/canonical ancestry integration is still OPEN across the full older
+compressed banks. The worker next drafts actual reviewed-adoption async apply
+and recovery with complete old durable journals, source checks and mode/budget
+behavior. Root continues fixed canonical activation with the other worker's
+three original reverse parents. All verification stays UNRUN/NOT_INSPECTED;
+source-bundle accounting remains11/70 DRAFTED,59 OPEN.

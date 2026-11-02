@@ -1,3 +1,4 @@
+import {writeProtectedAfterCliPlan} from './protected-after-cli-writers-20261102.mjs';
 // Eliminate standalone body results overwritten by the existing project join.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -59,8 +60,7 @@ export function prepareProjectBodyReuse({root=ROOT}={}){
  return {schema:'project-body-reuse-source-v1',files,originalInputs:originals.files,ordinarySourceEntriesChanged:false,newAcrossInvocationCache:false,sourceAuthority:false,runtimeAuthority:false,performanceQualified:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=prepareProjectBodyReuse();
- if(mode==='--write')for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);
- else if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete generated sources stale');
+ const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=mode==='--write'?writeProtectedAfterCliPlan(ROOT,()=>prepareProjectBodyReuse(),plan=>{}):prepareProjectBodyReuse();
+ if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete generated sources stale');
  console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),qualified:false}));
 }

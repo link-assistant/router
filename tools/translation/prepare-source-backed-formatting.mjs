@@ -1,3 +1,4 @@
+import {writeProtectedAfterCliPlan} from './protected-after-cli-writers-20261102.mjs';
 // Copy complete original producer functions; copied syntax grants no authority.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -37,6 +38,6 @@ export function prepareSourceBackedFormatting({root=ROOT}={}){
  return {schema:'source-backed-formatting-source-preparation-v1',typescriptVersion:ts.version,nativeBindings,inputs:[{path:FORMAT,source:formatter,selectedDeclarations:formatterNames},{path:CORPUS,source:corpus,selectedDeclarations:corpusNames},{path:'tools/translation/macro-adoption-function-boundary.mjs',source:readFileSync(resolve(root,'tools/translation/macro-adoption-function-boundary.mjs'),'utf8')}],files:[{path:OUTPUT,current,original,language,after,beforeMeta:before.meta,afterMeta,inverse:original,trace:run.trace}],originalPublicAPIsUnchanged:true,semanticAuthority:false,executableAdmission:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);if(args.length!==1||!['--emit','--check','--write'].includes(args[0]))fail('usage: prepare-source-backed-formatting.mjs --emit|--check|--write');const plan=prepareSourceBackedFormatting();
- if(args[0]==='--emit')console.log(JSON.stringify(plan));else if(args[0]==='--write'){for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);console.log('Prepared complete original source-backed formatting producers.');}else{if(plan.files.some(row=>row.current!==row.after))fail('generated source-backed formatting producer is stale');console.log('Source-backed formatting producer is current.');}
+ const args=process.argv.slice(2);if(args.length!==1||!['--emit','--check','--write'].includes(args[0]))fail('usage: prepare-source-backed-formatting.mjs --emit|--check|--write');const plan=args[0]==='--write'?writeProtectedAfterCliPlan(ROOT,()=>prepareSourceBackedFormatting(),plan=>{}):prepareSourceBackedFormatting();
+ if(args[0]==='--emit')console.log(JSON.stringify(plan));else if(args[0]==='--write'){console.log('Prepared complete original source-backed formatting producers.');}else{if(plan.files.some(row=>row.current!==row.after))fail('generated source-backed formatting producer is stale');console.log('Source-backed formatting producer is current.');}
 }

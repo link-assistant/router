@@ -1,3 +1,4 @@
+import {writeProtectedAfterCliPlan} from './protected-after-cli-writers-20261102.mjs';
 // UNREVIEWED draft. Preserve ordinary and flat DATA entries; add closed enclosing entry.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -53,6 +54,6 @@ export function prepareProjectFlatSemanticEntry({root=ROOT}={}){
  return {schema:'original-project-flat-semantic-entry-v1',files:rows,inputs,allOriginalPublicEntriesDefaultToOriginalStorage:true,privateIssuersNotCopied:true,callerCannotSupplySemanticStorage:true,newAcrossInvocationCache:false,semanticAuthority:false,rustExecuted:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--check','--write'].includes(mode))fail('use --emit|--check|--write');const plan=prepareProjectFlatSemanticEntry();
- if(mode==='--emit')console.log(JSON.stringify(plan));else if(mode==='--check'){if(plan.files.some(row=>row.current!==row.after))fail('complete source output stale');console.log('Original-issuer flat project entry current.');}else{for(const row of plan.files)if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('current output changed');for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);console.log('Wrote original-issuer project storage entry and adapter.');}
+ const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--check','--write'].includes(mode))fail('use --emit|--check|--write');const plan=mode==='--write'?writeProtectedAfterCliPlan(ROOT,()=>prepareProjectFlatSemanticEntry(),plan=>{for(const row of plan.files)if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('current output changed');}):prepareProjectFlatSemanticEntry();
+ if(mode==='--emit')console.log(JSON.stringify(plan));else if(mode==='--check'){if(plan.files.some(row=>row.current!==row.after))fail('complete source output stale');console.log('Original-issuer flat project entry current.');}else{console.log('Wrote original-issuer project storage entry and adapter.');}
 }

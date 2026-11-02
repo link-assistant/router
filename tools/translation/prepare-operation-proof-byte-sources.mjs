@@ -1,3 +1,4 @@
+import {writeProtectedAfterCliPlan} from './protected-after-cli-writers-20261102.mjs';
 import {guardedProofConsumerHistory} from './guarded-proof-consumer-history.mjs';
 // Explicit operation-local byte composition. No default or proof issuer edits.
 import {readFileSync,writeFileSync} from 'node:fs';
@@ -85,8 +86,8 @@ export function prepareOperationProofByteSources({root=ROOT}={}){
  return {schema:'operation-proof-byte-source-v1',typescriptVersion:ts.version,input:{path:INPUT,source:before,sha256:hash(before),historicalSha256:PIN},files:[{path:OUTPUT,before,language,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:first.meta,afterMeta:serializeConcreteSyntaxMeta(document),inverse:before,sequence,stages,removals,fallbackEdits,nativeBindings}],existingDefaultsUnchanged:true,arithmeticScopeUnchanged:true,newAcrossInvocationEncodedCache:false,semanticAuthority:false,performanceQualified:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);if(args.length!==1||!['--write','--check','--emit'].includes(args[0]))fail('use --write|--check|--emit');const plan=prepareOperationProofByteSources();
- if(args[0]==='--write'){for(const row of plan.files){let current=null;try{current=readFileSync(resolve(ROOT,row.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}if(current!==row.current)fail('current whole output changed');}for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}
- else if(args[0]==='--check'&&plan.files.some(row=>row.current!==row.after))fail('whole generated operation source is stale');
+ const args=process.argv.slice(2);if(args.length!==1||!['--write','--check','--emit'].includes(args[0]))fail('use --write|--check|--emit');const plan=args[0]==='--write'?writeProtectedAfterCliPlan(ROOT,()=>prepareOperationProofByteSources(),plan=>{for(const row of plan.files){let current=null;try{current=readFileSync(resolve(ROOT,row.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}if(current!==row.current)fail('current whole output changed');}}):prepareOperationProofByteSources();
+ 
+ if(args[0]==='--check'&&plan.files.some(row=>row.current!==row.after))fail('whole generated operation source is stale');
  console.log(JSON.stringify(args[0]==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),semanticAuthority:false,performanceQualified:false}));
 }

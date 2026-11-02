@@ -1,3 +1,4 @@
+import {writeProtectedAfterCliPlan} from './protected-after-cli-writers-20261102.mjs';
 // Extend the existing checked reverse string family through complete CST meta.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -23,8 +24,8 @@ export function composeOwnedStringOperations(prior,{root=ROOT}={}){
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--check','--write'].includes(args[0]))fail('use --check|--write');
- const plan=prepareCurrentCoreAsciiReverseAssets();
+ const plan=args[0]==='--write'?writeProtectedAfterCliPlan(ROOT,()=>prepareCurrentCoreAsciiReverseAssets(),plan=>{for(const row of plan.files)if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('source changed before write');}):prepareCurrentCoreAsciiReverseAssets();
  if(args[0]==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete generated sources are stale');
- if(args[0]==='--write'){for(const row of plan.files)if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('source changed before write');for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}
+ 
  console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),rustExecuted:false}));
 }
