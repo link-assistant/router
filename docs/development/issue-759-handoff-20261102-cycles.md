@@ -719,3 +719,25 @@ compatibility source identities and actual member declaration association.
 Its full preceding source/inverse and later two-phase CST source proposer are
 retained separately from the immutable initial packet. Fingerprints select
 source identity; they do not qualify caller semantics or observed Rust.
+
+## Actual target-observer native export birth integration
+
+Root reviewed and installed the three existing complete native-birth source
+afterimages in the actual private TypeScript loader, JS/TS scope observer and
+copied-source provenance metadata. All three actual whole predecessors still
+matched the frozen proposal. The optional new source-scope frame captures
+original export/container descriptors and getter-returned bindings at the same
+fresh official SDK load. Consumers require that original frame, and observed
+changes permanently revoke it. The old selected native loader/guard API and
+allowed Debug lazy transitions remain separate. Source-array own-data capture
+also precedes native acquisition, refusing effectful arrays without iteration.
+The full frozen three-source CST/inverse proposals and eight fresh-child
+receiving cases remain unchanged and UNRUN. The earlier
+[target birth document](target-scope-native-birth-20261102.md) records the
+pre-integration proposal; this journal records actual source installation.
+This removes an undrafted active integration step; it does not execute the
+collector or establish complete native SDK/project/role/producer qualification.
+Original source inventory and its fresh Rust and JS/TS collectors are reused;
+no duplicate regex inventory or invented function denominator is introduced.
+L01/L02 and counts remain OPEN/11 of70 DRAFTED; verification UNRUN and CI
+NOT_INSPECTED. Full SDK transfer/adoption and all receiving gates remain open.

@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {types} from 'node:util';
 import {draftInventoryPath} from './draft-inventory-reconciliation.mjs';
 import {ownershipCompiler, ownershipCompilerRuntimeNativeCurrent,
-  ownershipCompilerRuntimeOriginData} from './js-to-rust/vendor/module-syntax.mjs';
+  ownershipCompilerRuntimeOriginData, ownershipCompilerRuntimeSourceScopeCurrent} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 import {transportConcreteSyntaxSource, transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 const MAX_FILES = 4096, MAX_BYTES = 32 * 1024 * 1024, MAX_FILE_BYTES = 1_048_576;
@@ -42,20 +42,26 @@ function scalarOffsets(source) {
   }
   return offsets;
 }
+function originalTargetObservationRows(value){
+ if(!Array.isArray(value)||types.isProxy(value))fail('ordinary bounded own-data target array required');
+ const fields=Object.getOwnPropertyDescriptors(value),size=fields.length?.value;
+ if(!Number.isSafeInteger(size)||size<0||size>MAX_FILES||Reflect.ownKeys(fields).length!==size+1)fail('bounded dense own-data target array required');
+ const rows=[];for(let at=0;at<size;at++){const field=fields[at];if(!field||!Object.hasOwn(field,'value')||!field.enumerable)fail('own-data target source row required');rows.push(field.value);}return rows;
+}
 export function collectDraftScopeTargetObservations({files} = {}) {
-  if (!Array.isArray(files) || files.length > MAX_FILES) fail('bounded complete target source array required');
+  files=originalTargetObservationRows(files);
   const sources = [], observations = [], diagnostics = [], paths = new Set();
   let revision = null, bytes = 0;
   // Always obtain the actual original compiler through its existing loader.
   // No caller compiler, SourceFile, symbol table, parser frame or callback enters.
   const ts = ownershipCompiler();
-  if (ts.version !== '5.9.3' || !ownershipCompilerRuntimeNativeCurrent(ts)) fail('actual original pinned native compiler unavailable');
+  if (ts.version !== '5.9.3' || !ownershipCompilerRuntimeNativeCurrent(ts) || !ownershipCompilerRuntimeSourceScopeCurrent(ts)) fail('actual original pinned native compiler unavailable');
   const epoch = ownershipCompilerRuntimeOriginData(ts);
   if (epoch === null) fail('original private native compiler physical load origin is unknown');
   const originalEpoch = JSON.stringify(epoch);
   // Lifecycle pins for all public exports used by AST classification/checking.
-  // These do NOT extend the original private issuer's selected birth snapshot;
-  // complete native predicate/checker export qualification remains UNPROVED.
+  // The separate original fresh-loader source-scope birth frame above is
+  // mandatory; operation-time pins alone cannot admit unknown predicates.
   const exportPins = Object.getOwnPropertyDescriptors(ts);
   const exportNames = Reflect.ownKeys(exportPins);
   const exportCurrent = () => {
@@ -70,10 +76,11 @@ export function collectDraftScopeTargetObservations({files} = {}) {
   };
   const current = () => {
     exportCurrent();
-    if (!ownershipCompilerRuntimeNativeCurrent(ts) || ts.version !== '5.9.3' ||
+    if (!ownershipCompilerRuntimeNativeCurrent(ts) || !ownershipCompilerRuntimeSourceScopeCurrent(ts) || ts.version !== '5.9.3' ||
         JSON.stringify(ownershipCompilerRuntimeOriginData(ts)) !== originalEpoch) fail('original private native compiler/source epoch changed');
   };
-  for (const row of files) {
+  for (let inputIndex=0;inputIndex<files.length;inputIndex++) {
+    const row=files[inputIndex];
     const {source, origin} = input(row);
     if (paths.has(origin.path) || revision !== null && origin.revision !== revision) fail('unique original target files at one revision required');
     paths.add(origin.path); revision = origin.revision; bytes += origin.bytes;
@@ -81,8 +88,7 @@ export function collectDraftScopeTargetObservations({files} = {}) {
     const language = /\.(?:[cm]?ts|tsx)$/u.test(origin.path) ? 'TypeScript' : 'JavaScript';
     const record = {origin, language, status: 'OPEN', nativeScope: 'UNRUN',
       originScope: 'whole bytes match claimed Git content; source reader must establish immutable tree association',
-      unresolved: ['authored-generated-test-application-dependency-role-review', 'actual-import-export-entrypoint-and-adoption-closure',
-        'complete-private-native-predicate-and-checker-export-closure-unproved']};
+      unresolved: ['authored-generated-test-application-dependency-role-review', 'actual-import-export-entrypoint-and-adoption-closure']};
     sources.push(record);
     if (origin.bytes > MAX_FILE_BYTES) {
       diagnostics.push({origin, kind: 'native-source-domain', gap: 'complete-source-exceeds-explicit-target-observation-domain'});
@@ -185,7 +191,7 @@ export function collectDraftScopeTargetObservations({files} = {}) {
   }
   current();
   return {schema: 'router-native-target-scope-observations-20261102-v1', revision,
-    compilerOrigin: epoch, nativeExportClosure: 'UNPROVED', sources, observations, diagnostics, authority,
+    compilerOrigin: epoch, nativeExportClosure: 'original-private-source-scope-birth', sources, observations, diagnostics, authority,
     productionFunctionDenominator: null, translationCoverage: null, verification: 'UNRUN',
     remainingScope: ['complete-source-root-and-export-closure', 'all-production-role-and-entrypoint-review',
       'native-dependency-and-producer-boundaries', 'actual-requirement-and-receiving-adoption-mappings']};

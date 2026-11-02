@@ -54,8 +54,49 @@ function ownershipRuntimeCapture(value){
  const names=['getNodeConstructor','getTokenConstructor','getIdentifierConstructor','getPrivateIdentifierConstructor','getSourceFileConstructor'];
  for(let at=0;at<names.length;at++){const field=o.get(value.objectAllocator,names[at]);if(!field||!o.own(field,'value')||typeof field.value!=='function'||o.proxy(field.value))return null;let ctor=o.apply(field.value,value.objectAllocator,[]),depth=0;if(typeof ctor!=='function'||!capture(ctor))return null;let owner=ctor.prototype;while(owner!==null){if(++depth>8||!capture(owner))return null;owner=o.parent(owner);}owner=o.parent(ctor);depth=0;while(owner!==null){if(++depth>8||!capture(owner))return null;owner=o.parent(owner);}}
  const noop=value.noop,level=o.get(value.Debug,'getAssertionLevel');if(typeof noop!=='function'||o.proxy(noop)||!level||!o.own(level,'value')||typeof level.value!=='function'||o.proxy(level.value))return null;
- return {value,rows,noop,debug:value.Debug,getLevel:level.value};
+ let sourceScopeBirth=null;try{sourceScopeBirth=ownershipRuntimeCaptureSourceScopeBirth(value);}catch{}
+ return {value,rows,noop,debug:value.Debug,getLevel:level.value,sourceScopeBirth};
 }
+// Extended source-scope identities are captured at the same genuine private
+// fresh module birth, before its first caller can mutate exported predicates.
+// This separate optional frame never changes the original selected guard/API.
+function ownershipRuntimeCaptureSourceScopeBirth(value){
+ const o=ownershipRuntimeOps,rows=[],bindings=[];let fields=0;
+ const append=item=>o.define(rows,''+rows.length,{value:item,writable:true,enumerable:true,configurable:true});
+ const capture=owner=>{
+  if(!owner||typeof owner!=='object'&&typeof owner!=='function'||o.proxy(owner))return false;
+  for(let at=0;at<rows.length;at++)if(rows[at].owner===owner)return true;
+  const names=o.keys(owner);if(names.length>8192||fields+names.length>65536)return false;
+  const descriptors=[];for(let at=0;at<names.length;at++)o.define(descriptors,''+descriptors.length,{value:o.get(owner,names[at]),writable:true,enumerable:true,configurable:true});
+  fields+=names.length;append({owner,names,descriptors,parent:o.parent(owner)});return true;
+ };
+ if(!capture(value))return null;
+ const root=rows[0];for(let at=0;at<root.names.length;at++){const field=root.descriptors[at];if(!field)return null;let original;if(o.own(field,'value'))original=field.value;else{if(typeof field.get!=='function'||o.proxy(field.get))return null;original=o.apply(field.get,value,[]);}o.define(bindings,''+bindings.length,{value:{name:root.names[at],value:original},writable:true,enumerable:true,configurable:true});}
+ const names=['SyntaxKind','ScriptKind','ScriptTarget','ModuleKind','ModuleResolutionKind','NodeFlags','ModifierFlags','SymbolFlags','TypeFlags','ObjectFlags','sys','factory'];
+ for(let at=0;at<names.length;at++)if(!capture(value[names[at]]))return null;
+ return {rows,fields,bindings,revoked:false};
+}
+export function ownershipCompilerRuntimeSourceScopeCurrent(value){
+ const n=ownershipRuntimeNative,o=ownershipRuntimeOps;
+ if(!n||n.value!==value||!n.sourceScopeBirth)return false;
+ const scope=n.sourceScopeBirth;if(scope.revoked)return false;
+ try{
+  if(!ownershipCompilerRuntimeNativeCurrent(value))throw TypeError('Original native selected birth differs');
+  for(let at=0;at<scope.rows.length;at++){
+   const row=scope.rows[at];if(o.proxy(row.owner)||o.parent(row.owner)!==row.parent)throw TypeError('Original source-scope export owner differs');
+   const names=o.keys(row.owner);if(names.length!==row.names.length)throw TypeError('Original source-scope export membership differs');
+   for(let index=0;index<names.length;index++)if(names[index]!==row.names[index]||!ownershipRuntimeSame(o.get(row.owner,names[index]),row.descriptors[index]))throw TypeError('Original source-scope export descriptor differs');
+  }
+  // Original getters can retain identity while an official SDK setter changes
+  // their private exported binding. Rejoin actual values, not descriptor names.
+  for(let at=0;at<scope.bindings.length;at++){
+   const binding=scope.bindings[at],field=o.get(value,binding.name),actual=o.own(field,'value')?field.value:o.apply(field.get,value,[]),original=binding.value;
+   if(actual!==original&&!(actual!==actual&&original!==original))throw TypeError('Original source-scope exported binding differs');
+  }
+  return true;
+ }catch{scope.revoked=true;return false;}
+}
+
 // Only original source-selected native require functions enter this private
 // loader. No public callback or caller-supplied compiler can issue identities.
 function ownershipRuntimeRequire(load,root=sourceRoot){
