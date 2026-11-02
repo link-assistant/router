@@ -1,6 +1,8 @@
 // Fixed original Rust source selections. Public descriptors never accept an
 // arbitrary host/type owner; fresh source receipts retain all complete inputs.
 import {lstatSync} from 'node:fs';
+import {types} from 'node:util';
+import {originalPrivateParserIngressUnchanged,originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,originalCapturedFunctionSource} from './original-json-intrinsics.mjs';
 import {dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {readCompactSparsePhysicalFile,sameCompactPhysicalSourceStamp} from './compact-sparse-git-io-20261102.mjs';
@@ -13,11 +15,24 @@ import {itemConfiguration,compilationProfile} from './cfg-profile.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {withCompleteSourceClosingFence} from './complete-source-closing-fence.mjs';
+const initialSourceIngress=originalPrivateParserIngressUnchanged()&&originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged();
+const sourceJSON=initialSourceIngress?Object.getOwnPropertyDescriptor(globalThis,'JSON')?.value:null,sourceParse=sourceJSON?Object.getOwnPropertyDescriptor(sourceJSON,'parse'):null;
+const sourceInitiallyQualified=!!(sourceParse&&Object.hasOwn(sourceParse,'value')&&originalCapturedFunctionSource(sourceParse.value)==='function parse() { [native code] }');
+export function requireOrderedMapSourceDataIngress(){
+ if(!sourceInitiallyQualified||!originalPrivateParserIngressUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged()||Object.getOwnPropertyDescriptor(globalThis,'JSON')?.value!==sourceJSON)throw TypeError('Ordered map original source DATA ingress changed');const now=Object.getOwnPropertyDescriptor(sourceJSON,'parse');if(!now||!Object.hasOwn(now,'value')||now.value!==sourceParse.value||now.writable!==sourceParse.writable||now.enumerable!==sourceParse.enumerable||now.configurable!==sourceParse.configurable)throw TypeError('Ordered map original source JSON parser changed');
+}
+export function parseOrderedMapSourceData(text){requireOrderedMapSourceDataIngress();if(typeof text!=='string'||Buffer.byteLength(text)>4194304)throw TypeError('Bounded complete map source JSON required');const value=sourceParse.value(text);requireOrderedMapSourceDataIngress();return value;}
+// Equality never invokes toJSON, accessors or caller serialization machinery.
+export function sameOrderedMapSourceData(actual,expected){
+ requireOrderedMapSourceDataIngress();let cells=300000,bytes=0;
+ const compare=(left,right,depth=0)=>{if(--cells<0||depth>256)throw TypeError('Bounded original map source DATA comparison required');if(left===null||typeof left!=='object'){if(['function','symbol'].includes(typeof left)||['function','symbol'].includes(typeof right))return false;if(typeof left==='string'&&(bytes+=Buffer.byteLength(left))>16777216)throw TypeError('Original map source DATA byte budget');return left===right?(left!==0||1/left===1/right):(left!==left&&right!==right);}if(!right||typeof right!=='object'||types.isProxy(left)||types.isProxy(right)||Array.isArray(left)!==Array.isArray(right))return false;for(const value of [left,right]){const parent=Object.getPrototypeOf(value);if(parent!==null&&parent!==Object.prototype&&parent!==Array.prototype)return false;}const keys=Reflect.ownKeys(left),other=Reflect.ownKeys(right);if(keys.length!==other.length)return false;for(let at=0;at<keys.length;at++){const key=keys[at];if(typeof key!=='string'||key!==other[at])return false;const a=Object.getOwnPropertyDescriptor(left,key),b=Object.getOwnPropertyDescriptor(right,key);if(!a||!b||!Object.hasOwn(a,'value')||!Object.hasOwn(b,'value')||a.enumerable!==b.enumerable||!compare(a.value,b.value,depth+1))return false;}return true;};
+ const result=compare(actual,expected);requireOrderedMapSourceDataIngress();return result;
+}
 const base=new URL('./source-profiles/ordered-text-map-callers-20261102-standard/',import.meta.url),manifest=new URL('ordered-text-map-callers-20261102-standard.json',base);
 // Explicit supported standard SOURCE ABI; this is never an assertion about
 // unknown receiving compiler flags or an invocation's custom std replacement.
-const standardSourceProfile=compilationProfile({flags:{test:false,no_global_oom_handling:false,rustfmt:false}});
-const manifestPin='a868a918e3f9bbe39f78a827645c5f6316c4c502a608cc45da9393ebd56e58c1';
+const standardSourceProfile=sourceInitiallyQualified?compilationProfile({flags:{test:false,no_global_oom_handling:false,rustfmt:false}}):null;
+const manifestPin='52f6b85f7327805343e2c66007cbe907db678f109ed0c5daa34067b21a3edcaa';
 const hash=value=>createHash('sha256').update(value).digest('hex'),issued=new WeakMap(),factOrigins=new WeakMap();
 const freeze=value=>{if(value&&typeof value==='object'){for(const field of Object.values(value))freeze(field);Object.freeze(value);}return value;};
 const fail=message=>{throw TypeError('Original ordered-map standard source: '+message);};
@@ -25,10 +40,10 @@ const one=(rows,name)=>{if(rows.length!==1)fail('one complete original '+name+' 
 const tokens=item=>item.tokens.filter(token=>token.type!=='comment'),words=input=>input.map(token=>token.text).join('');
 function protect(custody,run){
  if(custody.failed)throw custody.primary;
- try{return withSourceInputValidation(run);}catch(error){if(!custody.failed){custody.failed=true;custody.primary=error;}throw error;}
+ try{requireOrderedMapSourceDataIngress();const value=withSourceInputValidation(run);requireOrderedMapSourceDataIngress();return value;}catch(error){if(!custody.failed){custody.failed=true;custody.primary=error;}throw error;}
 }
 function reclose(custody){
- let failed=false,primary;const check=run=>{try{run();}catch(error){if(!failed){failed=true;primary=error;}}};
+ let failed=false,primary;const check=run=>{try{run();}catch(error){if(!failed){failed=true;primary=error;}}};check(requireOrderedMapSourceDataIngress);
  for(const row of custody.files)check(()=>{if(!readCompactSparsePhysicalFile(row).equals(row.raw))fail('whole original source custody bytes changed');});
  for(const row of custody.directories)check(()=>{const current=lstatSync(row.path,{bigint:true});if(!current.isDirectory()||current.isSymbolicLink()||!sameCompactPhysicalSourceStamp(row.stat,current))fail('original source ancestor identity changed');});
  if(failed){if(!custody.failed){custody.failed=true;custody.primary=primary;}throw primary;}
@@ -40,12 +55,12 @@ function regular(url,max,custody){
   while(true){ancestors.push(parent);const next=dirname(parent);if(next===parent)break;parent=next;if(ancestors.length>128)fail('source ancestor bound');}
   for(const name of ancestors.reverse()){const stat=lstatSync(name,{bigint:true});if(!stat.isDirectory()||stat.isSymbolicLink())fail('ordinary original source ancestor required');const previous=custody.directories.find(row=>row.path===name);if(previous){if(!sameCompactPhysicalSourceStamp(previous.stat,stat))fail('source ancestor replaced');}else custody.directories.push({path:name,stat});}
   const stat=lstatSync(path,{bigint:true});if(!stat.isFile()||stat.isSymbolicLink()||stat.size<0n||stat.size>BigInt(max))fail('bounded regular source input required');
-  const row={path,stat},bytes=readCompactSparsePhysicalFile(row);row.raw=bytes;custody.files.push(row);if(custody.files.length>13||custody.directories.length>256)fail('source custody census bound');return bytes;
+  const row={path,stat},bytes=readCompactSparsePhysicalFile(row);row.raw=bytes;custody.files.push(row);if(custody.files.length>14||custody.directories.length>256)fail('source custody census bound');return bytes;
  },[()=>reclose(custody)]));
 }
 function inputs(custody){
- const bytes=regular(manifest,32768,custody);if(hash(bytes)!==manifestPin)fail('fixed source profile changed');const profile=JSON.parse(bytes.toString('utf8'));
- if(profile.schema!=='ordered-text-map-original-standard-inputs-v1'||profile.rust!=='1.89.0'||profile.revision!=='29483883eed69d5fb4db01964cdf2af4d86e9cb2'||profile.sources.length!==12)fail('complete immutable profile required');
+ const bytes=regular(manifest,32768,custody);if(hash(bytes)!==manifestPin)fail('fixed source profile changed');const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);requireOrderedMapSourceDataIngress();if(hash(text)!==manifestPin)fail('complete decoded source profile differs');const profile=parseOrderedMapSourceData(text);
+ if(profile.schema!=='ordered-text-map-original-standard-inputs-v1'||profile.rust!=='1.89.0'||profile.revision!=='29483883eed69d5fb4db01964cdf2af4d86e9cb2'||profile.sources.length!==13)fail('complete immutable profile required');
  let total=0;const paths=new Set(),sources=profile.sources.map(row=>{
   if(paths.has(row.path))fail('duplicate source input');paths.add(row.path);const url=new URL(row.archive,base);if(!url.pathname.startsWith(new URL('./source-profiles/',import.meta.url).pathname))fail('source archive escapes retained originals');
   const packed=regular(url,131072,custody);if(packed.length!==row.archiveBytes||hash(packed)!==row.archiveSha256)fail('original packed bytes changed');
@@ -93,8 +108,8 @@ function injection(source){
 export function originalOrderedTextMapStandardSources(){return withSourceFailureOperation(()=>captureStandardSources());}
 function captureStandardSources(){
  const custody={files:[],directories:[],failed:false,primary:undefined},captured=protect(custody,()=>withCompleteSourceClosingFence(()=>inputs(custody),[()=>reclose(custody)])),source=path=>one(captured.sources.filter(row=>row.path===path),path),close=()=>reclose(custody);
- return withCompleteSourceClosingFence(()=>createRulePipeline([{phase:'language',rules:[{id:'ordered-map:original-selected-standard-source-and-lossless-CST',apply:()=>{
-  const snapshots=captured.sources.map(row=>{const concrete=transportConcreteSyntaxSource(row.source,{language:'Rust'});if(concrete.source!==row.source||transportConcreteSyntaxMeta(concrete.meta).source!==row.source)fail('serialized/reparsed full standard CST differs');return {...row,concreteMeta:concrete.meta};});
+ return protect(custody,()=>withCompleteSourceClosingFence(()=>createRulePipeline([{phase:'language',rules:[{id:'ordered-map:original-selected-standard-source-and-lossless-CST',apply:()=>{
+  const snapshots=captured.sources.map(row=>{if(!row.path.endsWith('.rs'))return {...row,concreteMeta:null,privateOriginalCargoParserRequired:true};const concrete=transportConcreteSyntaxSource(row.source,{language:'Rust'});if(concrete.source!==row.source||transportConcreteSyntaxMeta(concrete.meta).source!==row.source)fail('serialized/reparsed full standard CST differs');return {...row,concreteMeta:concrete.meta};});
   const std=source('library/std/src/lib.rs'),alloc=source('library/alloc/src/lib.rs'),stdCollections=source('library/std/src/collections/mod.rs'),allocCollections=source('library/alloc/src/collections/mod.rs'),btree=source('library/alloc/src/collections/btree/mod.rs'),map=source('library/alloc/src/collections/btree/map.rs'),string=source('library/alloc/src/string.rs');
   const alias=originalExternAliasCandidate(std.source,'alloc','alloc_crate');if(!alias)fail('actual alloc external alias required');
   const collections=originalPublicModuleCandidate(std.source,'collections'),allocModule=originalPublicModuleCandidate(alloc.source,'collections'),stringModule=originalPublicModuleCandidate(alloc.source,'string');if(!collections||!allocModule||!stringModule)fail('actual complete external module declarations required');
@@ -105,12 +120,13 @@ function captureStandardSources(){
   const stdPrelude=source('library/std/src/prelude/mod.rs'),stdV1=source('library/std/src/prelude/v1.rs'),corePrelude=source('library/core/src/prelude/mod.rs');
   return {snapshots,mapRoute,stringRoute,associatedTraitSources,prelude:{std2024:prelude(stdPrelude),core2024:prelude(corePrelude),String:explicit(stdV1,'crate::string::String','String'),injection:injection(source('compiler/rustc_builtin_macros/src/standard_library_imports.rs'))}};
  }}]},{phase:'repository',rules:[{id:'router:original-registered-ordered-map-standard-namespace-candidates',apply:value=>{
-  const fact=(name,target,route)=>{const evidence={schema:'original-ordered-map-standard-namespace-v1',name,target,kind:'struct',namespace:'type',route,profile:captured.profile,sourceProfileSha256:manifestPin,sourceInputsVerified:true,namespaceComplete:false,layoutAuthority:false,constructorAuthority:false,globAuthority:false,runtimeAuthority:false};return {...evidence,digest:hash(JSON.stringify(evidence))};};
+  const fact=(name,target,route)=>{const evidence={schema:'original-ordered-map-standard-namespace-v1',name,target,kind:'struct',namespace:'type',route,profile:captured.profile,sourceProfileSha256:manifestPin,sourceInputsVerified:true,namespaceComplete:false,layoutAuthority:false,constructorAuthority:false,globAuthority:false,runtimeAuthority:false};// A stable label only; private origins and full original routes issue ownership.
+ return {...evidence,digest:hash(manifestPin+'::'+name+'::'+target.join('::'))};};
   const valueWithFacts=freeze({schema:'original-ordered-map-standard-sources-v1',profile:captured.profile,profileSha256:manifestPin,...value,facts:[fact('BTreeMap',['std','collections','BTreeMap'],value.mapRoute),fact('String',['std','string','String'],value.stringRoute)],supportedStandardSourceProfile:standardSourceProfile,nativeUnitAuthority:false,traitDispatchAuthority:false,runtimeParity:false});issued.set(valueWithFacts,{captured});for(const fact of valueWithFacts.facts)factOrigins.set(fact,valueWithFacts);return valueWithFacts;
- }}]}]).run(null).value,[close]);
+ }}]}]).run(null).value,[close]));
 }
 export function requireOriginalOrderedTextMapStandardSources(value){
- const record=issued.get(value);if(!record)fail('copied/foreign original source receipt');const custody=record.captured.custody;return protect(custody,()=>withCompleteSourceClosingFence(()=>{reclose(custody);const fresh=originalOrderedTextMapStandardSources();if(JSON.stringify(fresh)!==JSON.stringify(value))fail('fresh complete original source receipt differs');return value;},[()=>reclose(custody)]));
+ const record=issued.get(value);if(!record)fail('copied/foreign original source receipt');const custody=record.captured.custody;return protect(custody,()=>withCompleteSourceClosingFence(()=>{reclose(custody);const fresh=originalOrderedTextMapStandardSources();if(!sameOrderedMapSourceData(fresh,value))fail('fresh complete original source receipt differs');return value;},[()=>reclose(custody)]));
 }
 
 export function requireOriginalOrderedMapStandardNamespaceFact(fact){const source=factOrigins.get(fact);if(!source)fail('foreign registered source candidate');requireOriginalOrderedTextMapStandardSources(source);return fact;}

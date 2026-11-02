@@ -5,11 +5,9 @@ import {captureOriginalCargoEdition} from './cargo-edition-context.mjs';
 import {loadDeriveDependencyProof} from './derive-dependencies.mjs';
 import {resolveModuleGraph} from './project.mjs';
 import {PRODUCTION_PROFILE} from './cfg-profile.mjs';
-import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
-import {createDeriveFootprintContext,deriveFootprintExternalModules} from './derive-footprints.mjs';
-import {createDeriveBangContext} from './derive-bang-context.mjs';
-import {createToolAttributeContext} from './tool-attributes.mjs';
-import {resolveModuleBindings} from './module-bindings.mjs';
+import {HostRustParser} from './extensions/host-contracts.mjs';
+import {tokenizeRust} from './extensions/lexical.mjs';
+import {createMatchesMacroContext,configureMatchesMacroParser,matchesParserFacts} from './matches-macro-context.mjs';
 import {selectOriginalOrderedTextMapCore} from './ordered-text-map-20261102-interface.mjs';
 import {ORDERED_TEXT_MAP_NATIVE_SOURCE} from './ordered-text-map-20261102-source.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
@@ -24,8 +22,8 @@ export function requireOrderedTextMapReverseNativeSources(files){
  return withCompleteSourceClosingFence(()=>createRulePipeline([{phase:'language',rules:[{id:'ordered-map:reverse-complete-root-and-native-leaf-lossless-CST',apply:()=>{
   for(const source of [root,leaf]){const concrete=transportConcreteSyntaxSource(source,{language:'Rust'});if(concrete.source!==source||transportConcreteSyntaxMeta(concrete.meta).source!==source)fail();}
   const graph=resolveModuleGraph({entry:'src/lib.rs',paths:retained.filter(([path])=>path.endsWith('.rs')).map(([path])=>path),readSource:path=>{current();if(!files.has(path))fail();return files.get(path);},compilationProfile:PRODUCTION_PROFILE});if(graph.diagnostics.length)fail();
-  const modules=graph.modules,deriveDependencies=loadDeriveDependencyProof({manifest,lock}),cargoEditionContext=captureOriginalCargoEdition(manifest),externalModules=registeredStandardHostBindings(),deriveContext=createDeriveFootprintContext({modules,dependencies:deriveDependencies,compilationProfile:PRODUCTION_PROFILE,externalModules}),resolvedExternal=deriveFootprintExternalModules(deriveContext),deriveBangContext=createDeriveBangContext({deriveContext}),toolContext=createToolAttributeContext({modules,externalModules:resolvedExternal,deriveContext,compilationProfile:PRODUCTION_PROFILE});
-  const evidence=resolveModuleBindings({modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:PRODUCTION_PROFILE});selectOriginalOrderedTextMapCore({modules,sourceScopes:evidence.scopes,compilationProfile:evidence.compilationProfile});requireOrderedTextMapNativeLibraryOwners({modules,sourceScopes:evidence.scopes,compilationProfile:evidence.compilationProfile,cargoEditionContext,deriveDependencies});return null;
+  const deriveDependencies=loadDeriveDependencyProof({manifest,lock}),cargoEditionContext=captureOriginalCargoEdition(manifest),context=createMatchesMacroContext({modules:graph.modules,deriveDependencies,cargoEditionContext,compilationProfile:PRODUCTION_PROFILE}),parser=new HostRustParser(tokenizeRust(root));parser.compilationProfile=PRODUCTION_PROFILE;configureMatchesMacroParser(parser,context,{file:'src/lib.rs'});
+  const state=matchesParserFacts(parser),modules=state.facts.modules,evidence=state.facts.evidence;selectOriginalOrderedTextMapCore({modules,sourceScopes:evidence.scopes,compilationProfile:evidence.compilationProfile});requireOrderedTextMapNativeLibraryOwners({modules,sourceScopes:evidence.scopes,compilationProfile:evidence.compilationProfile,cargoEditionContext,deriveDependencies,parser});return null;
  }}]},{phase:'repository',rules:[{id:'router:reverse-owned-map-native-ABI-cargo-source-join',apply:()=>{current();return {root,leaf,manifest,lock,sourceAuthority:false,semanticAuthority:false};}}]}]).run(null).value,[current]);
 }
 export function orderedTextMapReverseInputPrelude(item,rust,imports){

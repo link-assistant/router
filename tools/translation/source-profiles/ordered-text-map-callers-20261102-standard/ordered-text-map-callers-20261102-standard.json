@@ -118,6 +118,16 @@
       "archiveBytes": 951,
       "archiveSha256": "20124f5d1a3b096547fc29f8d21fb64541b9b08d77de6e43b881926b4a2cff58",
       "reusedCompleteOriginal": true
+    },
+    {
+      "path": "library/alloc/Cargo.toml",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/alloc/Cargo.toml",
+      "archive": "../standard-bang-output/alloc-Cargo.toml.gz",
+      "bytes": 1188,
+      "sha256": "d2e8625ca4301addbb3ee11fc4e944260a54f8ba178d83a133bd8cc74d7a85a9",
+      "archiveBytes": 569,
+      "archiveSha256": "8235a391592e13860fc95f5bea9904fca2356c61ac450d8353cb22defac3ade8",
+      "reusedCompleteOriginal": true
     }
   ],
   "licenses": [

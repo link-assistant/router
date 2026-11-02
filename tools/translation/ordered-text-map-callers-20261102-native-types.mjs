@@ -1,13 +1,14 @@
 // Private source observations, not a public structural type/owner registry.
 // Every observation is rejoined to its genuine original parser and full library.
 import {matchesParserFacts,originalMatchesDependencyProof} from './matches-macro-context.mjs';
+import {requireOrderedTextMapNativeSourceABI} from './ordered-text-map-callers-20261102-native-abi.mjs';
 import {requireOrderedTextMapNativeLibraryOwners} from './ordered-text-map-callers-20261102-native-owner.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
 import {selectOriginalOrderedTextMapCore} from './ordered-text-map-20261102-interface.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {copyMetadata,metadataDigest,originalParsedDeclarationEvidence,originalParsedSyntaxNode} from './extensions/source-links.mjs';
-import {requireOriginalPrimitiveTryFromChecker,originalJsonCaptureCheckerEligible} from './extensions/host-contracts.mjs';
+import {requireOriginalPrimitiveTryFromChecker,originalJsonCaptureCheckerEligible,requireOriginalFromNamespaceCallbacks} from './extensions/host-contracts.mjs';
 import {withCompleteSourceClosingFence} from './complete-source-closing-fence.mjs';
 import {freshlyCheckOrderedTextMapCaller,hasOrderedTextMapCaller} from './ordered-text-map-callers-20261102-requalification.mjs';
 import {unsupported} from './vendor/meta-language/translation/diagnostics.js';
@@ -16,6 +17,7 @@ const kind='routerOrderedTextMap';
 const words=['crate','::','translation_ordered_text_map_core','::','OrderedTextMap'];
 const fail=()=>{throw TypeError('Ordered text map requires its genuine current opaque source type');};
 function library(parser){
+ requireOriginalFromNamespaceCallbacks(parser);
  const state=matchesParserFacts(parser),selected=selectOriginalOrderedTextMapCore({modules:state.facts.modules,sourceScopes:state.facts.evidence.scopes,compilationProfile:state.facts.compilationProfile});
  const module=state.facts.modules.find(row=>row.file===selected.file),owners=originalSourceModuleItems(module).filter(item=>item.term==='struct'&&item.name==='OrderedTextMap');
  const scope=state.facts.evidence.scopes.find(row=>row.file===module.file&&row.path.join('::')==='translation_ordered_text_map_core');
@@ -26,14 +28,15 @@ function library(parser){
  // The complete library transports its serialized/reparsed lossless CST on
  // each call. A pin, registered spelling or catalogue entry is never enough.
  const view=module.sourceView,closeSource=()=>{const next=selectOriginalOrderedTextMapCore({modules:state.facts.modules,sourceScopes:state.facts.evidence.scopes,compilationProfile:state.facts.compilationProfile});if(next.source!==selected.source||next.file!==selected.file||next.rootFile!==selected.rootFile||next.span[0]!==selected.span[0]||next.span[1]!==selected.span[1])fail();},closeParser=()=>{if(matchesParserFacts(parser)!==state)fail();},closeOwner=()=>{if(module.sourceView!==view||!originalSourceModuleItems(module).includes(owner)||!scope.bindings.includes(binding))fail();};
- return withCompleteSourceClosingFence(()=>{requireOrderedTextMapNativeLibraryOwners({modules:state.facts.modules,sourceScopes:state.facts.evidence.scopes,compilationProfile:state.facts.compilationProfile,cargoEditionContext:state.facts.cargoEditionContext,deriveDependencies:originalMatchesDependencyProof(state.facts)});const stage=createRulePipeline([{phase:'language',rules:[{id:'ordered-map:complete-native-source-CST-roundtrip',apply:()=>{
+ return withCompleteSourceClosingFence(()=>{const nativeAbi=requireOrderedTextMapNativeLibraryOwners({modules:state.facts.modules,sourceScopes:state.facts.evidence.scopes,compilationProfile:state.facts.compilationProfile,cargoEditionContext:state.facts.cargoEditionContext,deriveDependencies:originalMatchesDependencyProof(state.facts),parser});const stage=createRulePipeline([{phase:'language',rules:[{id:'ordered-map:complete-native-source-CST-roundtrip',apply:()=>{
   const concrete=transportConcreteSyntaxSource(selected.source,{language:'Rust'});
   if(concrete.source!==selected.source||transportConcreteSyntaxMeta(concrete.meta).source!==selected.source)fail();return concrete;
  }}]},{phase:'repository',rules:[{id:'router:actual-private-field-newtype-owner',apply:value=>value}]}]).run(null);
- return {state,selected,module,view,owner,binding,stage};},[closeSource,closeParser,closeOwner]);
+ return {state,selected,module,view,owner,binding,stage,nativeAbi};},[closeSource,closeParser,closeOwner]);
 }
 function current(row){
  if(row.sourceJoin)row.sourceJoin();
+ requireOrderedTextMapNativeSourceABI(row.library.nativeAbi,{parser:row.parser});
  const next=library(row.parser);
  if(next.state!==row.library.state||next.module!==row.library.module||next.view!==row.library.view||next.owner!==row.library.owner||next.binding!==row.library.binding||next.selected.source!==row.library.selected.source||next.selected.rootFile!==row.library.selected.rootFile||metadataDigest(row.type)!==row.snapshot)fail();
  return row;

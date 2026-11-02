@@ -6,22 +6,21 @@ No application function, receiving acceptance row or bulk requirement is closed.
 The existing ten-operation core remains unchanged. This profile drafts seven
 caller operations: new, insert, remove, get, contains, len and copy.
 
-Activation is currently blocked before opaque type issuance in BOTH directions.
-The proposed namespace successor adds original BTreeMap/String source candidates
-through its existing private issuer. New complete standard/prelude source routes
-and actual native root/leaf/Cargo source joins are drafted. Invoked native
-Cargo-unit/extern-std identity and generated trait dispatch owners are not issued. The new native-owner guard
-refuses this boundary explicitly; there is no name/hash/flag/table bypass. The
-complete compiler afterimages below are source drafts for the limited caller
-route, not completed activation. Positive receiving expectations remain failing
-obligations until those genuine owners are implemented; an independent case
-requires the actual route to report this refusal. No skip turns that refusal
-into successful caller coverage.
+A narrow source-model native compatibility issuer is now drafted through actual
+private parser, Cargo, standard-unit, prelude, nominal and function-owner joins.
+It admits only the fixed Router-owned private map ABI and seven qualified caller
+operations. Full original BTreeMap/String internals remain native. Matching
+source constants, hashes, names, public flags or catalogue rows cannot issue a
+type or executable caller. Actual compiler invocation, installed sysroot/native
+conformance, independent native-oracle execution and receiving qualification
+remain UNRUN. The source-model boundary does not claim any of those observations.
+The complete compiler afterimages remain proposed source: none is installed by
+this drafting phase, and positive cases are obligations rather than evidence.
 
 ## Actual source path
 
 `tools/translation/ordered-text-map-callers-20261102-source-history.json.gz`
-retains complete before/after sources for twelve actual parent modules, their
+retains complete before/after sources for fourteen actual parent modules, their
 ordered language then repository substitutions, complete inverse preimages,
 authored additions, unchanged production review sources and reference sources.
 `ordered-text-map-callers-20261102-profile.mjs` proposes both full CST stages;
@@ -42,8 +41,8 @@ observations are freshly reissued from the actual original parser nodes.
 A copied type object without that source join refuses.
 
 The proposed existing private core-call issuer authenticates relocated calls
-and can emit its ordinary private call receipts only after the native owner
-boundary is actually closed. The new checker fragment is not a separate
+and can emit its ordinary private call receipts only after the narrow native
+source compatibility issuer rejoins every required original owner. The new checker fragment is not a separate
 public issuer. Whole-function checking tracks affine owned map/String moves,
 map-rooted returned text loans, earlier shared arguments, lexical aliases and
 complete branch joins. Actual lowered Some/None tags and projections are checked
@@ -114,7 +113,7 @@ No guessed hot catalogue or tiny receiving fixture replaces the full closure;
 every vault path is hot so direct filesystem readers keep their original APIs.
 Compression fit and the resulting physical working set are UNRUN.
 
-The producer then composes all twelve complete afterimages, checks readbacks,
+The producer then composes all fourteen complete afterimages, checks readbacks,
 creates an actual producer-owned unborn Git index without filters/hooks, and
 retains original/current inventories and full inverses. Original application
 HEAD/index and every selected original source are reclosed; the source index is
@@ -144,7 +143,10 @@ it copies/installs no dependency. Cases run serially under their original
 60-second deadlines, with20-second strict compiler children and recorded compiler
 version. Native Rust is not invoked. Preflight/version and final strict-file
 checks are separately bounded work, not part of a claimed single60-second run.
-Neither command has been run during this drafting phase.
+Neither command has been run during this drafting phase. The explicit case
+entry is `ordered-text-map-callers-20261102-cases.mjs`; it keeps all cases but
+requires the dedicated installed-profile receiving driver. Default original
+compiler discovery does not import an uninstalled successor-only Host API.
 
 The dedicated receiving case source reaches actual forward calls, semantic-meta
 round trips, strict generated targets, genuine reverse imports and paired types,
@@ -155,43 +157,76 @@ for gated CI only. Test source is not passing evidence or production coverage.
 
 ## Exact remaining scope
 
-Genuine native unit/trait owner issuance remains OPEN and refuses before any
-map type or executable caller is issued. The new fixed standard source reader
-retains twelve complete Rust1.89 originals, including four newly pinned files
-and eight reused originals. It reconstructs std-to-alloc BTreeMap/String routes,
-including the selected private btree-map glob, std/core2024 preludes and original
-compiler std/prelude injection. Every source transports serialized/reparsed CST;
-every receipt is privately associated. No-follow descriptor reads retain full
-BigInt file stamps and absolute ancestor identities. Every retained file and
-ancestor reclose after each read and on final use; the original identity
-snapshots remain required even when byte contents match a fresh receipt.
-A detected failure permanently poisons that receipt, including falsy primaries.
-Independent isolated child case source covers changed inode and restored/falsy
-failures without editing physical originals. A copied receipt fails. No arbitrary
-host can register an owner.
+The source-model ABI issuer is implemented in
+`ordered-text-map-callers-20261102-native-abi.mjs`. It requires the actual private
+Host namespace callbacks and parser frame, same original module/scope/Cargo
+objects, qualified facade selector, complete private nominal field/derive input,
+and real value/type declaration bindings with exact complete native signatures.
+It composes the existing genuine `planOriginalCargoInvocation` and
+`captureOriginalStandardMacroProviderABI`: actual supplied package manifest and
+lock, registered private TOML parser, modeled root Check library unit, original
+std/core unit manifests, full Cargo/compiler callback source, original standard
+macro defining slots and actual prelude source routes remain required.
 
-The explicit supported standard SOURCE profile selects ordinary allocation with
-`test`, `no_global_oom_handling` and `rustfmt` false. This declares a source model;
-it does not infer any receiving compiler flags or custom sysroot identity.
-The original BTreeMap declaration's conditional diagnostic attribute remains
-visible and its compiler configuration authority is false. Original complete
-Clone/Default/PartialEq/Eq/Debug implementation bodies and String comparison
-derives are retained as source observations; generic obligations and dispatch
-are not silently solved. The proposed existing standard namespace issuer adds
-only selected type candidates; it grants no layout, constructor, glob, runtime
-or whole-namespace authority.
+The private Cargo parser afterimage retains its complete old source/pin checks.
+Only its actual supplied project manifest may alternatively match the complete
+existing README/profile-extraction layout equation and inverse; it still parses
+the original actual manifest. The modeled invocation afterimage retains the
+logical `src/lib.rs` path and joins its actual captured physical source, including
+`rust/src/lib.rs`, using the existing exact repository mapping. A specialized
+private parser entry accepts only the genuine fixed alloc source receipt and
+parses the complete original alloc manifest. The std-to-alloc-to-core Cargo path
+edges and ordinary library unit identities are separately joined.
 
-Native source context additionally joins the same private Cargo source to both
-edition and dependency proofs, actual root/leaf source scopes, absence of std
-or String shadows, unavailable/unknown parent producers and no_std/no_core/
-no_implicit_prelude refusals. Reverse now reconstructs its full supplied native
-module graph with the actual original graph resolver and genuine derive/tool/
-bang frames before resolving imports. Those source joins still cannot identify
-an invoked compiler unit or solve the generated methods' trait dispatch. The
-native owner guard retains that exact refusal. BTreeMap allocation, Borrow/Ord,
-drop and comparison internals remain untranslated; original source observations
-alone do not waive that ABI boundary. The full source-context and std routes
-are UNRUN, including any earlier independent unsupported-scope refusal.
+The fixed standard source reader retains twelve complete original Rust1.89 files
+and the complete original alloc Cargo manifest: four newly pinned files and nine
+reused originals. It reconstructs std-to-alloc BTreeMap/String routes, the
+selected private btree-map glob, std/core2024 preludes and original compiler
+std/prelude injection. Rust files transport serialized/reparsed CST; the Cargo
+manifest uses its actual private original Cargo parser, never a Rust lexer.
+No-follow descriptor reads retain full BigInt file stamps and absolute ancestor
+identities. Every retained source/ancestor recloses after each read and final
+use; original snapshots remain required even when fresh bytes match. Failures
+permanently poison a receipt, including falsy primaries. The actual registered
+namespace facts retain their original private source-custody association.
+
+The supported standard SOURCE profile selects ordinary allocation with `test`,
+`no_global_oom_handling` and `rustfmt` false. Its original conditional diagnostic
+attribute remains visible. Complete Clone/Default/PartialEq/Eq/Debug source
+implementations and String comparison derives are retained as source material.
+This is a deliberate monomorphic library boundary; general generic obligations,
+allocator implementation, Borrow/Ord inference and arbitrary native type
+registration are not prerequisites or newly granted capabilities. The existing
+builtin derive input/output and unknown-producer checks remain required.
+
+The ABI additionally reads fixed complete native, JavaScript runtime, strict
+declaration and independent native-oracle sources under no-follow identity and
+ancestor custody, serialized/reparsed CST and closing fences. Those sources are
+identity prerequisites rather than source/owner permits. A real original scope,
+unit and private nominal/function signature join must independently select the
+boundary. Saved ABI receipts rejoin their original identities and freshly
+reissue; copied or foreign receipts fail. Opaque types retain that original ABI
+custody and redo source qualification on use. No persistent caller verdict is
+cached. The narrow ABI still reports `actualInvocationObserved: false`,
+`nativeSysrootConformance: false`, `nativeOracleQualification: 'UNRUN'` and
+`callerBodyQualified: false`; only the actual body checker issues caller receipts.
+
+Native source context rejoins the same private Cargo source for edition and
+dependency proofs, actual active root/leaf scopes, absence of std/String shadows,
+unknown parent producers and no_std/no_core/no_implicit_prelude refusals. Reverse
+constructs the complete supplied native graph and actual original Host parser
+with its original derive/tool/bang context. The receiving fixture retains every
+original core facade leaf, including base64. Native BTreeMap internals remain
+untranslated under the explicitly supported native compatibility abstraction.
+All new source-model and receiving paths remain UNRUN; earlier independent scope
+or parser refusals remain possible and no passing activation is asserted.
+
+The native oracle now has the source-owned canonical name
+`rust/tests/ordered-text-map-callers-20261102_test.rs`. Its complete old source,
+rename/deletion inverse and new source are retained. The existing Windows
+`*_test.rs` enumeration and Unix all-tests selection both schedule that same
+independent oracle without narrowing other cases or changing the JavaScript
+gates. No Rust command or workflow was executed during drafting.
 
 Installation, fresh producer/receiving execution, strict compiler results,
 resource/platform qualification, native CI oracles and all original gates are

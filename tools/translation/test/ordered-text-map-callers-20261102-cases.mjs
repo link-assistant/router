@@ -72,7 +72,7 @@ test('new standard-source receipts are fixed original selections and reject copi
  const {originalOrderedTextMapStandardSources,requireOriginalOrderedTextMapStandardSources}=await import('../ordered-text-map-callers-20261102-standard-source.mjs');
  const source=originalOrderedTextMapStandardSources();requireOriginalOrderedTextMapStandardSources(source);
  assert.deepEqual(source.facts.map(fact=>fact.target.join('::')),['std::collections::BTreeMap','std::string::String']);
- assert.equal(source.snapshots.length,12);assert.equal(source.mapRoute.selectedGlob.selectedOnly,true);
+ assert.equal(source.snapshots.length,13);assert.equal(source.mapRoute.selectedGlob.selectedOnly,true);
  assert.equal(source.prelude.injection.customCompilerInvocationProved,false);assert.equal(source.nativeUnitAuthority,false);assert.equal(source.traitDispatchAuthority,false);
  assert.throws(()=>requireOriginalOrderedTextMapStandardSources(JSON.parse(JSON.stringify(source))));
 });

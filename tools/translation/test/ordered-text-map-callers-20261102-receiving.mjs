@@ -15,7 +15,7 @@ import {prepareOwnedCorePairedTypes} from '../js-to-rust/owned-core-paired-types
 import {hostRuntimeAssets} from '../host-assets.mjs';
 import {effectRuntimeAssets} from '../effect-assets.mjs';
 import {ORDERED_TEXT_MAP_NATIVE_SOURCE} from '../ordered-text-map-20261102-source.mjs';
-import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_RANGES_SOURCE,ROUTER_CORE_JSON_COLLECTIONS_SOURCE} from '../router-core-source-data.mjs';
+import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_RANGES_SOURCE,ROUTER_CORE_JSON_COLLECTIONS_SOURCE,ROUTER_CORE_BASE64_SOURCE} from '../router-core-source-data.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {loadJsonMacroSourceProof} from '../json-macro-sources.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
@@ -27,6 +27,7 @@ const native={
  'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,
  'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE,
  'src/translation_core/json_collections.rs':ROUTER_CORE_JSON_COLLECTIONS_SOURCE,
+ 'src/translation_core/base64.rs':ROUTER_CORE_BASE64_SOURCE,
  'src/translation_ordered_text_map_core.rs':ORDERED_TEXT_MAP_NATIVE_SOURCE,
 };
 function forward(source,leaf=ORDERED_TEXT_MAP_NATIVE_SOURCE,prefix=''){const files={...native,'src/lib.rs':prefix+native['src/lib.rs']+source,'src/translation_ordered_text_map_core.rs':leaf};return translateProjectOrderedTextMaps({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],cargoManifest:manifest,jsonMacroDependencies:loadJsonMacroSourceProof({manifest,lock}),deriveDependencies:loadDeriveDependencyProof({manifest,lock}),compilationProfile:PRODUCTION_PROFILE});}
@@ -67,4 +68,20 @@ test('actual caller paths refuse a crate with unavailable standard/prelude owner
 
 test('independent paired CST inverse preserves the whole authored TypeScript source',limits,()=>{
  const pair=prepareOwnedCorePairedTypes('caller.mjs',ORDERED_MAP_REVERSE_ACCEPTANCE_JAVASCRIPT,'caller.mts',ORDERED_MAP_REVERSE_ACCEPTANCE_SOURCE);let inverse=pair.erasure.source;for(const edit of [...pair.erasure.edits].reverse())inverse=inverse.slice(0,edit.afterSpan[0])+edit.expected+inverse.slice(edit.afterSpan[1]);assert.equal(inverse,ORDERED_MAP_REVERSE_ACCEPTANCE_SOURCE);
+});
+
+test('monomorphic native source ABI rejoins actual unit std prelude and leaf owners without native execution',limits,async()=>{
+ const {resolveModuleGraph}=await import('../project.mjs'),{captureOriginalCargoEdition}=await import('../cargo-edition-context.mjs'),{createMatchesMacroContext,configureMatchesMacroParser,matchesParserFacts}=await import('../matches-macro-context.mjs'),{HostRustParser}=await import('../extensions/host-contracts.mjs'),{tokenizeRust}=await import('../extensions/lexical.mjs'),{requireOrderedTextMapNativeLibraryOwners}=await import('../ordered-text-map-callers-20261102-native-owner.mjs'),{requireOrderedTextMapNativeSourceABI}=await import('../ordered-text-map-callers-20261102-native-abi.mjs');
+ const frame=(physical=false)=>{
+  const prefix=physical?'rust/':'',files=new Map(Object.entries(native).map(([path,source])=>[prefix+path,source])),entry=prefix+'src/lib.rs',graph=resolveModuleGraph({entry,paths:[...files.keys()],readSource:path=>files.get(path),compilationProfile:PRODUCTION_PROFILE});assert.deepEqual(graph.diagnostics,[]);
+  const deriveDependencies=loadDeriveDependencyProof({manifest,lock}),cargoEditionContext=captureOriginalCargoEdition(manifest,{sourcePath:physical?'rust/Cargo.toml':'Cargo.toml'}),context=createMatchesMacroContext({modules:graph.modules,deriveDependencies,cargoEditionContext,compilationProfile:PRODUCTION_PROFILE}),parser=new HostRustParser(tokenizeRust(files.get(entry)));parser.compilationProfile=PRODUCTION_PROFILE;configureMatchesMacroParser(parser,context,{file:entry});const state=matchesParserFacts(parser);
+  return {parser,modules:state.facts.modules,sourceScopes:state.facts.evidence.scopes,compilationProfile:state.facts.compilationProfile,cargoEditionContext,deriveDependencies};
+ };
+ for(const physical of [false,true]){
+  const input=frame(physical),abi=requireOrderedTextMapNativeLibraryOwners(input);requireOrderedTextMapNativeSourceABI(abi,{parser:input.parser});
+  assert.equal(abi.sourceCompatibilityBoundary,true);assert.equal(abi.actualInvocationObserved,false);assert.equal(abi.nativeSysrootConformance,false);assert.equal(abi.nativeOracleQualification,'UNRUN');assert.equal(abi.callerBodyQualified,false);assert.equal(abi.nativeInternalsUntranslated,true);
+  assert.equal(abi.originalUnit.root.manifest,manifest);assert.equal(abi.originalUnit.root.target.path,'src/lib.rs');if(physical)assert.equal(abi.originalUnit.root.target.sourcePath,'rust/src/lib.rs');
+  assert.equal(abi.allocUnit.package.name,'alloc');assert.deepEqual(abi.operations.map(row=>row.operation),['new','insert','remove','get','contains','len','copy']);assert.equal(abi.operations.find(row=>row.operation==='get').loanRoot,0);
+  assert.throws(()=>requireOrderedTextMapNativeSourceABI(JSON.parse(JSON.stringify(abi)),{parser:input.parser}));assert.throws(()=>requireOrderedTextMapNativeSourceABI(abi,{parser:frame(physical).parser}));
+ }
 });
