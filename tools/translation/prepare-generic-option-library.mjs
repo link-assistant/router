@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Fresh complete library source proposal only. No native compilation or admission.
 import {readFileSync,writeFileSync,lstatSync,realpathSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
@@ -23,5 +24,5 @@ export function prepareGenericOptionLibrary({root=ROOT}={}){
  if(!readLibrary(root,ARCHIVE).equals(packed)||files.some(row=>readLibrary(root,row.path).toString('utf8')!==row.current))throw new TypeError('Complete original library inputs changed');return {schema:'generic-option-complete-library-source-proposal-v1',files,sourceAuthority:false,semanticAuthority:false,rustExecuted:false,receivingExecuted:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))throw new TypeError('Use --emit|--write|--check');const proposal=prepareGenericOptionLibrary();if(args[0]==='--write')for(const row of proposal.files)writeFileSync(resolve(ROOT,row.path),row.after);if(args[0]==='--check'&&proposal.files.some(row=>row.current!==row.after))throw new TypeError('Complete generic Option library source differs');console.log(JSON.stringify(args[0]==='--emit'?proposal:{schema:proposal.schema,files:proposal.files.map(row=>row.path),receivingExecuted:false}));
+ const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))throw new TypeError('Use --emit|--write|--check');const proposal=args[0]==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const proposal=prepareGenericOptionLibrary();writer.preflight(proposal.files.map(row=>row.path));for(const row of proposal.files)writer.write(row.path,row.after);return proposal;}):prepareGenericOptionLibrary();if(args[0]==='--check'&&proposal.files.some(row=>row.current!==row.after))throw new TypeError('Complete generic Option library source differs');console.log(JSON.stringify(args[0]==='--emit'?proposal:{schema:proposal.schema,files:proposal.files.map(row=>row.path),receivingExecuted:false}));
 }

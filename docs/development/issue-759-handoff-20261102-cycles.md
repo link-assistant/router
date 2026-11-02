@@ -848,3 +848,19 @@ records the proposal; this journal records actual integration. Packet SHA-256
 main-after SHA-256
 `127c700785d193aad561163c8eebe8edc493a2e880f906a2a9f9c419315039d2`.
 All execution UNRUN and CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+## Twelve further actual ordinary preparer CLIs
+
+Root installed the twelve frozen ordinary CLI source successors in canonical
+tables/definition positions/default adoption, enclosing primitives, generic
+Option/Result, formatting/filesystem and whole-owner candidate producers.
+Write-only policy capture precedes each actual producer. All target preflights
+precede writes; original canonical assertFresh-before/after, per-row stale/write
+interleaving, payload order, typed values, modes, stdout and no-old-output-read
+behavior remain. Every original producer/import body remains byte exact except
+its new actual writer-helper import. Full twelve before/after/inverse sources
+and independent contracts are retained without execution.
+See [the ordinary source profile](protected-ordinary-cli-writers-20261103.md).
+Remaining historical compressed-bank ancestry and residual complex writers
+stay explicit OPEN work. Verification UNRUN, CI NOT_INSPECTED;11/70 DRAFTED,
+59 OPEN; source-writer counts are not production-function coverage.
