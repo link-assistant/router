@@ -7,6 +7,7 @@ import {join,dirname} from 'node:path';
 import {tmpdir} from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {produceCompleteTypeScriptReceivingSourcePackage} from '../complete-typescript-receiving-20261103.mjs';
+import {withProtectedNativeWriter} from '../protected-native-writers-20261102.mjs';
 const integrity='sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==';
 const options={timeout:60000,concurrency:false};
 function fixture(t){
@@ -51,4 +52,11 @@ test('source and destination accessors and proxy options cannot run before sourc
  assert.throws(()=>produceCompleteTypeScriptReceivingSourcePackage(input),/own source\/destination/u);assert.equal(invoked,0);
  const proxy=new Proxy({},{get(){invoked++;},getOwnPropertyDescriptor(){invoked++;},getPrototypeOf(){invoked++;}});
  assert.throws(()=>produceCompleteTypeScriptReceivingSourcePackage(proxy),/ordinary own/u);assert.equal(invoked,0);
+});
+test('a nested different-root SDK producer cannot create a subtree inside an outer protected directory',options,t=>{
+ const f=fixture(t),outer=join(f.base,'outer'),protectedDirectory=join(outer,'protected');
+ fs.mkdirSync(protectedDirectory,{recursive:true});f.put(join(outer,'translation/source-ownership.json'),JSON.stringify({schema:'router-explicit-source-ownership-v1',authored:['protected'],unmanaged:[]}));
+ const destination=join(protectedDirectory,'new-sdk-package');let entered=false;
+ assert.throws(()=>withProtectedNativeWriter(outer,()=>{entered=true;return produceCompleteTypeScriptReceivingSourcePackage({sourceRoot:f.root,destination});}));
+ assert.equal(entered,true);assert.equal(fs.existsSync(destination),false);assert.deepEqual(fs.readdirSync(protectedDirectory),[]);
 });

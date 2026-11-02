@@ -45,3 +45,13 @@ Complete driver scheduling, SDK/compiler coexistence resource closure, all
 original translation/strict-TS/reverse/sync receiving workloads and independent
 native qualification remain open. All local checks are UNRUN, CI NOT_INSPECTED;
 no checklist bundle or executable coverage claim closes here.
+
+The later complete source-frame successor uses the common synchronous native
+writer frame and its absolute mutation bridge around the entire private fresh
+subtree operation, including owned empty-directory cleanup. Every active root's
+policy can veto before creation and verifies afterward. A nested producer for a
+different source root cannot bypass an outer protected directory. The common
+frame supplies the existing policy footprint once; no duplicate private policy
+snapshot is retained. A final deadline fence also charges policy closing work.
+The full preceding SDK source/test/document epoch and exact two-phase CST
+inverses remain separately retained. These additional cases remain UNRUN.

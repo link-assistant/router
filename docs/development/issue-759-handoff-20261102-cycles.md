@@ -885,3 +885,6 @@ Bun CLI and whole-source/CST cases remain UNRUN; no child was executed.
 See [the synchronous native contract](protected-sync-native-cli-20261103.md).
 Residual complex writers/native race/platform qualification remain OPEN;
 verification UNRUN, CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.
+
+Continue in [the2026-11-03 cycle journal](issue-759-handoff-20261103-cycles.md);
+all preceding source epochs and historical publication records remain retained.

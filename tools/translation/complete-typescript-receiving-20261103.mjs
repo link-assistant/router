@@ -7,7 +7,7 @@ import {readCompactSourceVaultDirectory} from './compact-source-vault-store-2026
 import {inspectCompactSourceVault,withCompactSourceVault} from './compact-source-vault-20261102.mjs';
 import {materializeCompactSourceSelection} from './compact-source-materialization-20261102.mjs';
 import {compactSparsePhysicalCensus,recloseCompactSparsePhysicalCensus,releaseCompactSparsePhysicalCensus,readCompactSparsePhysicalFile,sameCompactPhysicalSourceStamp} from './compact-sparse-git-io-20261102.mjs';
-import {captureExplicitSourceMutationPolicy} from './unit-runtime-materialization.mjs';
+import {withProtectedNativeWriter,mutateProtectedNativeAbsoluteEntries,verifyProtectedNativeWriter,protectedNativeWriterRetainedBytes} from './protected-native-writers-20261102.mjs';
 import {ownSourceFailureField} from './source-error-fields-20261102.mjs';
 import {withCompleteSourceClosingFence} from './complete-source-closing-fence.mjs';
 import {withSourceInputValidation,withSourceFailureOperation} from './source-failure-operations.mjs';
@@ -30,9 +30,12 @@ export function produceCompleteTypeScriptReceivingSourcePackage(input={}){
   const root=realpathSync(resolve(sourceRoot)),requested=resolve(destination),container=join(realpathSync(dirname(requested)),basename(requested));
   if(container===root||container.startsWith(root+sep)||root.startsWith(container+sep))fail('separate fresh SDK container required');
   try{lstatSync(container);fail('SDK source container already exists');}catch(error){if(ownSourceFailureField(error,'code')!=='ENOENT')throw error;}
-  const policy=captureExplicitSourceMutationPolicy(root),start=Date.now();let created=null,vaultCensus=null,rawCensus=null,model=null;
+  const start=Date.now();
+  return withCompleteSourceClosingFence(()=>withProtectedNativeWriter(root,()=>mutateProtectedNativeAbsoluteEntries(root,[container],captured=>{
+  if(captured.length!==1||captured[0].canonicalTarget!==container)fail('actual canonical fresh SDK destination differs');
+  const policyRetainedBytes=protectedNativeWriterRetainedBytes(root);let created=null,vaultCensus=null,rawCensus=null,model=null;
   const withinDeadline=()=>{if(Date.now()-start>L.deadlineMs)fail('complete SDK source operation deadline exceeded');};
-  const policyCurrent=()=>withSourceInputValidation(()=>{policy.verify();withinDeadline();});
+  const policyCurrent=()=>withSourceInputValidation(()=>{verifyProtectedNativeWriter(root);withinDeadline();});
   const capacity=()=>{withinDeadline();if(created&&compactSparsePhysicalCensus(container,{maximum:L.aggregateBytes}).total>L.aggregateBytes)fail('complete SDK source aggregate exceeds declared192MiB profile');};
   const rawCurrent=()=>{
    const namespace=()=>{const actual=compactSparsePhysicalCensus(rawCensus.root,{maximum:L.rawBytes});if(JSON.stringify(actual.files.map(row=>row.name))!==JSON.stringify(rawCensus.files.map(row=>row.name))||JSON.stringify(actual.directories.map(row=>row.name))!==JSON.stringify(rawCensus.directories.map(row=>row.name)))fail('complete raw SDK namespace differs');for(let at=0;at<rawCensus.directories.length;at++)if(!sameCompactPhysicalSourceStamp(rawCensus.directories[at].stat,actual.directories[at].stat))fail('complete raw SDK directory identity differs');};
@@ -46,19 +49,17 @@ export function produceCompleteTypeScriptReceivingSourcePackage(input={}){
   });
   try{return withCompleteSourceClosingFence(()=>{
    policyCurrent();
-   if(!Number.isSafeInteger(policy.retainedBytes)||policy.retainedBytes<0||policy.retainedBytes>L.rawBytes)fail('complete source policy retention exceeds original raw domain');
+   if(!Number.isSafeInteger(policyRetainedBytes)||policyRetainedBytes<0||policyRetainedBytes>L.rawBytes)fail('complete source policy retention exceeds original raw domain');
    // One admission protects the complete private fresh subtree. Every child is
    // subsequently created by existing no-follow/exclusive source writers.
    // Existing output roots, linked trees and protected descendant entries refuse.
-   const captured=withSourceInputValidation(()=>policy.allowNativeMutationPaths({root,targets:[container]}));
-   if(captured.length!==1||captured[0].canonicalTarget!==container)fail('actual canonical fresh SDK destination differs');
    mkdirSync(container,{mode:0o700});created=lstatSync(container,{bigint:true});policyCurrent();
    const vault=join(container,'vault'),exported=exportCompactInstalledTypeScriptVault({sourceRoot:root,output:vault});policyCurrent();
    vaultCensus=compactSparsePhysicalCensus(vault,{retainBytes:true,maximum:L.aggregateBytes});capacity();
    model=readCompactSourceVaultDirectory(vault);sourcesCurrent();
    const rows=inspectCompactSourceVault(model).metadata.files,selectedPaths=rows.map(row=>row.path);
    const allowed=path=>path.startsWith(PREFIX)||['js/package.json','js/package-lock.json','translator-export/typescript-source-receipt.json'].includes(path);
-   if(!rows.length||rows.length>L.files||new Set(selectedPaths).size!==rows.length||rows.some(row=>!allowed(row.path))||rows.reduce((sum,row)=>sum+row.bytes,0)+policy.retainedBytes>L.rawBytes)fail('complete SDK source selection or original64MiB raw-plus-policy bound differs');
+   if(!rows.length||rows.length>L.files||new Set(selectedPaths).size!==rows.length||rows.some(row=>!allowed(row.path))||rows.reduce((sum,row)=>sum+row.bytes,0)+policyRetainedBytes>L.rawBytes)fail('complete SDK source selection or original64MiB raw-plus-policy bound differs');
    const original=withCompactSourceVault(model,reader=>JSON.parse(reader.read('translator-export/typescript-source-receipt.json').toString('utf8')));
    const actualPackage=selectedPaths.filter(path=>path.startsWith(PREFIX)).map(path=>path.slice(PREFIX.length)).sort();
    if(original.schema!=='complete-installed-typescript-source-data-v1'||original.version!=='5.9.3'||!Array.isArray(original.installedFiles)||JSON.stringify(original.installedFiles.slice().sort())!==JSON.stringify(actualPackage))fail('complete SDK original package census differs');
@@ -66,10 +67,10 @@ export function produceCompleteTypeScriptReceivingSourcePackage(input={}){
    rawCensus=compactSparsePhysicalCensus(materialized.root,{maximum:L.rawBytes});policyCurrent();sourcesCurrent();
    return {schema:'complete-typescript-receiving-source-package-20261103-v1',container,root:materialized.root,nativeTypeScriptSourceRoot:materialized.root,
     vault,files:materialized.files,rawBytes:materialized.rawBytes,packageFiles:actualPackage,packageVersion:'5.9.3',lockIntegrity:exported.lockIntegrity,
-    originalInstalledSnapshotClosed:true,completeInstalledPackage:true,tarballIntegrityVerified:false,policyRetainedBytes:policy.retainedBytes,
+    originalInstalledSnapshotClosed:true,completeInstalledPackage:true,tarballIntegrityVerified:false,policyRetainedBytes,
     aggregateProfile:'standalone-sdk-source-192MiB-v1',legacyVaultAndRawLimitsUnchanged:true,
     sourceAuthority:false,semanticAuthority:false,compilerExecuted:false,compilerQualified:false,receivingQualified:false,verification:'UNRUN'};
-  },[policyCurrent,sourcesCurrent,()=>withSourceInputValidation(policy.close)]);}
+  },[policyCurrent,sourcesCurrent]);}
   finally{
    releaseCompactSparsePhysicalCensus(vaultCensus);releaseCompactSparsePhysicalCensus(rawCensus);
    if(model){model.volumes.length=0;model.metadata.files.length=0;model.metadata.objects.length=0;}
@@ -77,5 +78,6 @@ export function produceCompleteTypeScriptReceivingSourcePackage(input={}){
    // or changed subtree; only our still-identical empty outer directory can go.
    if(created)try{const next=lstatSync(container,{bigint:true});if(next.isDirectory()&&!next.isSymbolicLink()&&sameIdentity(created,next))rmdirSync(container);}catch{}
   }
+  })),[()=>{if(Date.now()-start>L.deadlineMs)fail('complete SDK source operation deadline exceeded');}]);
  });
 }
