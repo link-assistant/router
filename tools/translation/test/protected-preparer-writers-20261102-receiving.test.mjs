@@ -13,7 +13,7 @@ const read=name=>fs.readFileSync(new URL('../../../'+name,import.meta.url),'utf8
 function fixture(t,{old=false,foreign=false,changed=false}={}){
  const root=fs.realpathSync(fs.mkdtempSync(join(tmpdir(),'protected-preparer-receiving-')));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));const put=(name,value)=>{fs.mkdirSync(dirname(join(root,name)),{recursive:true});fs.writeFileSync(join(root,name),value);};
  const target=foreign?'tools/translation/unassigned-preparer.mjs':path,before=read(old?oldBase+'preparer-before.mjs.txt':base+path.replaceAll('/','__')+'.before.txt')+(changed?'\n// independent changed original\n':''),after=read(path);
- put(target,after);for(const suffix of ['before','after']){const name=path.replaceAll('/','__')+'.'+suffix+'.txt';put(base+name,read(base+name));}
+ put(target,after);for(const suffix of ['before','after']){const name=path.replaceAll('/','__')+'.'+suffix+'.txt';put(base+name,read(base+name));}const contained='tools/translation/source-profiles/protected-contained-direct-20261102/';for(const suffix of ['before','after'])put(contained+'preparer-native.'+suffix+'.txt',read(contained+'preparer-native.'+suffix+'.txt'));
  for(const name of ['unit-before.mjs.txt','successor-before.mjs.txt','preparer-before.mjs.txt','preparer-after.mjs.txt'])put(oldBase+name,read(oldBase+name));
  const id='independent:protected-preparer-current-source',archive='profile/source.json.gz',packed=gzipSync(JSON.stringify({schema:'native-substitution-source-copy-v1',id,files:[{path:target,source:before,bytes:Buffer.byteLength(before),sha256:hash(before),languageEdits:[],repositoryEdits:[]}]}));put(archive,packed);return {root,archive,id,pin:hash(packed),before,after};
 }

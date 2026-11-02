@@ -1,9 +1,9 @@
 // Reusable source construction, never a semantic or original-owner issuer.
-import {withProtectedPreparerWriter,allowPreparerSourceWrites,writePreparerSource} from './protected-preparer-writers-20261102.mjs';
+import {withProtectedPreparerWriter,allowContainedPreparerSourceWrites,writeContainedPreparerSource} from './protected-preparer-writers-20261102.mjs';
 import {knownProtectedPreparerDirectPolicySuccessor} from './protected-preparer-writers-20261102-direct-history.mjs';
 import {knownProtectedPreparerWriterSuccessor} from './protected-preparer-writers-20261102-history.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
-import {resolve,relative,isAbsolute} from 'node:path';
+import {resolve,relative,isAbsolute,sep} from 'node:path';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {ownershipCompiler,ownershipCompilerRuntimeNativeCurrent} from './js-to-rust/vendor/module-syntax.mjs';
@@ -20,7 +20,7 @@ function currentSource(path,allowMissing=false){try{return readFileSync(path,'ut
 function localPath(root,path){
  need(typeof path==='string'&&path.length>0&&!isAbsolute(path),'relative source path');
  const absolute=resolve(root,path),local=relative(root,absolute);
- need(local!==''&&!local.startsWith('../')&&!isAbsolute(local),'source remains inside repository');return absolute;
+ need(local!==''&&local!=='..'&&!local.startsWith('..'+sep)&&!isAbsolute(local),'source remains inside repository');return absolute;
 }
 function parsed(ts,path,source){
  need(typeof source==='string'&&Buffer.byteLength(source)<=8388608,'bounded complete primitive source');
@@ -106,11 +106,11 @@ export function writeNativeSubstitutionCopy(plan,{root}={}){
  // The producer must be called again by the caller immediately before applying.
  // This low-level writer is a development operation; it issues no gate stamp.
  return withProtectedPreparerWriter(root,()=>{root=resolve(root);for(const row of plan.files)need(currentSource(localPath(root,row.path),Boolean(row.originalPath&&row.originalPath!==row.path))===row.current,'stale copy proposal');
- const writes=Array.from(plan.files,row=>({path:relative(root,localPath(root,row.path)),before:row.current,after:row.currentAfter??row.after}));allowPreparerSourceWrites(root,writes);
+ const writes=Array.from(plan.files,row=>({path:relative(root,localPath(root,row.path)),before:row.current,after:row.currentAfter??row.after}));allowContainedPreparerSourceWrites(root,writes);
  // Recheck actual path/physical aliases for each write. Keep the original all-row
  // source check above: repeating it after our own writes would reject original
  // duplicate-path and unprotected hard-link row sequences.
- for(const row of writes)writePreparerSource(root,row,()=>writeFileSync(localPath(root,row.path),row.after));
+ for(const row of writes)writeContainedPreparerSource(root,row,target=>writeFileSync(target,row.after));
  });
 }
 

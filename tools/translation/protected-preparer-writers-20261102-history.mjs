@@ -20,14 +20,14 @@ export function knownProtectedPreparerWriterSuccessor({root=ROOT,path,before}={}
  if(!PATHS.includes(path))return knownProtectedUnitVariantSuccessor({root,path,before});const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
  try{
   const name=path.replaceAll('/','__'),original=capture.capture(BASE+name+'.before.txt').source,after=capture.capture(BASE+name+'.after.txt').source,current=capture.capture(path).source;
-  need(original!==null&&after!==null&&current===after,'complete fixed protected preparer current source differs');
-  let predecessor=null;if(before!==original&&path===PATHS[0]){const old=originalProtectedInstallerStep(capture);if(before===old.before){need(old.after===original,'original preparer-after must precede its new protection successor');predecessor=old;}}
-  if(before!==original&&!predecessor)result=null;else{
+  const later=current===after?null:knownProtectedUnitVariantSuccessor({root,path,before:after});need(original!==null&&after!==null&&(current===after||later&&later.currentAfter===current),'complete fixed protected preparer/contained-native current source differs');
+  let predecessor=null;if(before!==original&&before!==after&&path===PATHS[0]){const old=originalProtectedInstallerStep(capture);if(before===old.before){need(old.after===original,'original preparer-after must precede its new protection successor');predecessor=old;}}
+  if(before===after)result=later;else if(before!==original&&!predecessor)result=null;else{
    const concrete=transportConcreteSyntaxSource(original,{language:'JavaScript'});need(transportConcreteSyntaxMeta(concrete.meta).source===original,'whole original preparer CST differs');
    const run=applyConcreteSyntaxSubstitutions(concrete.meta,{languageRules:[{id:'javascript:retain-all-original-native-source-checks-and-byte-writers',edits:[]}],repositoryRules:[{id:'router:attach-fixed-source-policy-to-actual-preparer-and-asset-sinks',edits:[{span:[0,original.length],expected:original,replacement:after}]}]});need(run.value.source===after,'complete fixed preparer policy source equation differs');
    const history=transportConcreteSourceEquations([{before:original,after,language:'JavaScript'}])[0];need(history.inverse===original&&transportConcreteSyntaxMeta(history.afterMeta).source===after,'complete preparer source inverse differs');
    const stages=transportConcreteSourceEquations([{before:original,after:original,language:'JavaScript'},{before:original,after,language:'JavaScript'}]).map((stage,index)=>({...stage,phase:index?'repository':'language'}));
-   const next={id:'protected-preparer-writers-20261102:'+name,path,before:original,language:original,after,current,currentAfter:current,inverse:original,history,stages,trace:run.trace,laterHistories:[],sourceAuthority:false,semanticAuthority:false};
+   const next={id:'protected-preparer-writers-20261102:'+name,path,before:original,language:original,after,current,currentAfter:current,inverse:original,history,stages,trace:run.trace,laterHistories:later?[later]:[],sourceAuthority:false,semanticAuthority:false};
    result=predecessor?{id:'protected-preparer-writers-20261102:original-protected-installer-epoch',path,before:predecessor.before,language:predecessor.before,after:original,current,currentAfter:current,inverse:predecessor.before,history:predecessor.history,stages:[{phase:'language',...transportConcreteSourceEquations([{before:predecessor.before,after:predecessor.before,language:'JavaScript'}])[0]},{phase:'repository',...predecessor.history}],trace:predecessor.ruleTrace,laterHistories:[next],sourceAuthority:false,semanticAuthority:false}:next;
    boundedReconcileWireBytes(result);
   }

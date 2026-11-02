@@ -1,3 +1,4 @@
+import {knownProtectedContainedDirectSuccessor} from './protected-contained-direct-20261102-history.mjs';
 // Complete named source equations DATA. Never native or mutation permission.
 import {fileURLToPath} from 'node:url';
 import {createReconcileSourceCapture,boundedReconcileWireBytes,requireReconcile as need} from './paired-sync-reconcile-20261101-support.mjs';
@@ -18,7 +19,7 @@ export function proposeProtectedStagedEntrySources(input,{root=ROOT}={}){
  try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
 }
 export function knownProtectedStagedEntrySuccessor({root=ROOT,path,before}={}){
- const name=FILES.find(name=>path==='tools/translation/'+name.name);if(!name)return null;const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
- try{const pair=images(capture,name),current=capture.capture(path).source;need(current===pair.after,'actual full staged-entry source successor differs');result=before===pair.before?equation(name,pair.before,pair.after):null;if(result)boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}
+ const name=FILES.find(name=>path==='tools/translation/'+name.name);if(!name)return knownProtectedContainedDirectSuccessor({root,path,before});const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
+ try{const pair=images(capture,name),current=capture.capture(path).source,later=current===pair.after?null:knownProtectedContainedDirectSuccessor({root,path,before:pair.after});need(current===pair.after||later&&later.currentAfter===current,'actual full staged-entry/contained-native source successor differs');result=before===pair.before?{...equation(name,pair.before,pair.after),current,currentAfter:current,laterHistories:later?[later]:[]}:before===pair.after?later:knownProtectedContainedDirectSuccessor({root,path,before});if(result)boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}
  try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
 }

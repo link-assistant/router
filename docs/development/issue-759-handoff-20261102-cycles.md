@@ -318,3 +318,38 @@ The two workers continue disjoint map-local and contained-native path work.
 Counts remain11/70 DRAFTED,59 OPEN; no complete function denominator or verified
 coverage percentage exists. Last published source remains36acd26fe; Root is
 the sole publisher and the next ordinary checkpoint target remains15:53 UTC.
+
+## Const map locals and contained native writers
+
+`df08a1c91ce46094a999f61ea833b096824dfa0a` drafts actual private const-owned-map
+roots and both native reverse emitters' variable borrowing. Native oracle and
+whole JS/TS/meta/interpreter case sources distinguish valid local ownership from
+plain aliases, mutable declarations and escaped local loans. Main map packet
+is4013918 decoded bytes, within its unchanged4MiB bound. Original app query and
+canonical-driver activation still need their own source joins and registration.
+
+Root installed the worker's frozen17 complete contained-native afterimages as
+source authoring. Separate native-path admission preserves ordinary policy JSON
+grammar while restoring contained POSIX colon/backslash/CRLF names and long-path
+address domains. Three native localPath functions now reject Windows parent
+traversal. Five actual writer callbacks use captured canonical primitive targets,
+and all canonical-byte expectations are preflighted before earlier writes.
+Observed source/admission failures now poison actual active native frames;
+policy closure still runs independently after falsy/frozen failures. Ordinary
+callback error behavior and uncapped plan row/duplicate/byte/mode domains remain.
+
+The complete source integration packet retains17 original/after/inverse files
+and six authored sources,569110 decoded/58217 compressed bytes, SHA256
+`0b390b7faff40f56f0fd9b74e1cfc672e7c876b6d484dbe5fdfbd7a63508b837`.
+See [native-path source contract](protected-contained-direct-20261102.md).
+The source proposer itself remains non-installing; this journal records Root's
+explicit active source integration. All17 original d01 origins and earlier
+ACA/51/c122/144/d01 histories remain immutable. All execution is UNRUN; platform,
+ambiguous-name, nonUTF8, alias-resource and complete-writer domains remain OPEN.
+
+Next: the map worker drafts three actual canonical reverse parent successors,
+including the corpus's genuine original Rust source closure. Root drafts a fixed
+fresh compiler-cohort launcher and default synchronization integration; candidate
+profile support alone is not canonical activation. The other worker completes
+the active writer census. Counts remain11/70 DRAFTED,59 OPEN, with no verified
+function denominator. No tests, compilation or CI feedback were inspected.

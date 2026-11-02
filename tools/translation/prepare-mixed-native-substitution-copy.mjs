@@ -1,5 +1,5 @@
 // Reusable source construction, never a semantic or original-owner issuer.
-import {withProtectedPreparerWriter,allowPreparerSourceWrites,writePreparerSource} from './protected-preparer-writers-20261102.mjs';
+import {withProtectedPreparerWriter,allowContainedPreparerSourceWrites,writeContainedPreparerSource} from './protected-preparer-writers-20261102.mjs';
 import {knownProtectedPreparerWriterSuccessor} from './protected-preparer-writers-20261102-history.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve,relative,isAbsolute,sep} from 'node:path';
@@ -100,11 +100,11 @@ export function writeMixedNativeSubstitutionCopy(plan,{root}={}){
  // The producer must be called again by the caller immediately before applying.
  // This low-level writer is a development operation; it issues no gate stamp.
  return withProtectedPreparerWriter(root,()=>{root=resolve(root);for(const row of plan.files)need(currentSource(localPath(root,row.path),Boolean(row.originalPath&&row.originalPath!==row.path))===row.current,'stale copy proposal');
- const writes=Array.from(plan.files,row=>({path:relative(root,localPath(root,row.path)),before:row.current,after:row.currentAfter??row.after}));allowPreparerSourceWrites(root,writes);
+ const writes=Array.from(plan.files,row=>({path:relative(root,localPath(root,row.path)),before:row.current,after:row.currentAfter??row.after}));allowContainedPreparerSourceWrites(root,writes);
  // Recheck actual path/physical aliases for each write. Keep the original all-row
  // source check above: repeating it after our own writes would reject original
  // duplicate-path and unprotected hard-link row sequences.
- for(const row of writes)writePreparerSource(root,row,()=>writeFileSync(localPath(root,row.path),row.after));
+ for(const row of writes)writeContainedPreparerSource(root,row,target=>writeFileSync(target,row.after));
  });
 }
 

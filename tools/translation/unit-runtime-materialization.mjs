@@ -1,3 +1,4 @@
+import {captureContainedNativeDirectTargets} from './protected-contained-direct-20261102-paths.mjs';
 // Source-unit synchronization with fresh Git baselines and complete proposals.
 // No persisted source/hash/verdict cache supplies a translation decision.
 import * as fs from 'node:fs';
@@ -263,6 +264,7 @@ function captureProtectedSourcePolicy(requestedRoot){
   allow(fresh){return veto(()=>{if(fs.realpathSync(resolve(fresh.root))!==root)fail('fresh producer root differs from protected-source policy');const protectedNames=[policyPath,...protectedPaths];let names=[];for(const row of fresh.outputs){relative(row.path);if(row.path===policyPath||protectedPaths.has(row.path)){if(row.before!==row.after)fail('explicit authored/unmanaged source or policy retained: '+row.path);if(row.before!==null){const stat=fs.lstatSync(physical(root,row.path));if((stat.mode&0o777)!==row.mode)fail('explicit protected-source mode retained: '+row.path);}}if(row.before!==row.after){names.push(row.path);if(names.length===256){assertProtectedStagedMutationTargets({root,protectedNames,paths:names});names=[];}}}if(names.length)assertProtectedStagedMutationTargets({root,protectedNames,paths:names});});},
   allowMutationPaths(paths){return veto(()=>{const protectedNames=[policyPath,...protectedPaths];assertProtectedMutationPaths({protectedNames,paths});assertProtectedStagedMutationTargets({root,protectedNames,paths});});},
   allowDirectWrites(fresh){return veto(()=>{if(fs.realpathSync(resolve(fresh.root))!==root)fail('fresh direct-writer root differs from protected-source policy');const paths=directMutationOutputPaths(fresh.outputs),protectedNames=[policyPath,...protectedPaths];assertProtectedMutationPaths({protectedNames,paths});assertProtectedDirectWriteTargets({root,protectedNames,paths});});},
+  allowContainedDirectWrites(fresh){return veto(()=>{const captured=captureContainedNativeDirectTargets({requestedRoot:fresh.root,canonicalRoot:root,targets:fresh.targets});assertProtectedDirectWriteTargets({root,protectedNames:[policyPath,...protectedPaths],paths:captured.map(row=>row.canonicalTarget)});return captured;});},
   close(){if(closed)fail('protected-source policy already closed');try{verify();}finally{closed=true;protectedPaths.clear();}},
  });
 }
