@@ -186,7 +186,7 @@ function rangeSyntaxOrigin(parser,syntax,semantic,offset){
   let nodes=null,cells=200000;const path=[];
   const visit=(original,actual,depth=0)=>{
     if(--cells<0||depth>160||!original||typeof original!=='object'||!actual||typeof actual!=='object'||types.isProxy(original)||types.isProxy(actual))return;
-    const nativeType=Object.getOwnPropertyDescriptor(original,'kind');if(nativeType&&Object.hasOwn(nativeType,'value')&&nativeType.value==='routerOrderedTextMap'){nodes??=new WeakMap();nodes.set(actual,{original,path:[...path]});}
+    const nativeType=Object.getOwnPropertyDescriptor(original,'kind');if(nativeType&&Object.hasOwn(nativeType,'value')&&['routerOrderedTextMap','routerStandardTextMap'].includes(nativeType.value)){nodes??=new WeakMap();nodes.set(actual,{original,path:[...path]});}
     const kind=Object.getOwnPropertyDescriptor(original,'k');
     const readerKey=kind&&Object.hasOwn(kind,'value')?(kind.value==='routerStringOwnership'?'operation':kind.value==='routerDispatchMethod'?'method':null):null,readerField=readerKey?Object.getOwnPropertyDescriptor(original,readerKey):null;
     if(readerField&&Object.hasOwn(readerField,'value')&&readerField.value==='as_str'){nodes??=new WeakMap();nodes.set(actual,{original,path:[...path]});}

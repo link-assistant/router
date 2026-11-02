@@ -33,7 +33,7 @@ test('public parser and checked-looking IR cannot grant a borrowed native map ty
  assert.throws(()=>interpretForwardBorrowedStandardMap(node,()=>null,{requireCurrentPrivateCall:()=>{}}),/copied or unissued/u);
 });
 test('runtime and strict target declarations travel together through complete source CST',{timeout:60000},()=>{
- const files=borrowedStandardMapRuntimeAssets();assert.equal(files.size,2);
+ const files=borrowedStandardMapRuntimeAssets();assert.equal(files.size,4);
  assert.ok(files.get('runtime/borrowed-standard-map-20261102-runtime.mjs').includes('router_borrowed_text_map_matches_literals'));
  assert.ok(files.get('runtime/borrowed-standard-map-20261102-runtime.d.mts').includes('ReadonlyMap<string, string>'));
 });

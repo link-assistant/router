@@ -6,6 +6,7 @@ import {originalParsedDeclarationEvidence,originalParsedSyntaxNode,metadataDiges
 import {withBorrowedStandardMapNativeSourceABI,requireBorrowedStandardMapNativeSourceABI} from './borrowed-standard-map-20261103-native-abi.mjs';
 import {withCompleteSourceClosingFence} from './complete-source-closing-fence.mjs';
 import {withSourceInputValidation,withSourceFailureOperation} from './source-failure-operations.mjs';
+import {hasBorrowedStandardMapCaller,freshlyCheckBorrowedStandardMapCaller} from './borrowed-standard-map-20261103-requalification.mjs';
 const observed=new WeakMap(),captured=new WeakMap(),KIND='routerStandardTextMap';
 const NATIVE='::std::collections::BTreeMap<::std::string::String,::std::string::String>';
 const fail=message=>{throw TypeError('Borrowed original standard-map type: '+message);};
@@ -96,4 +97,38 @@ export function resolveBorrowedStandardTextMapType(checker,type){
  const sourceJoin=()=>{requireOriginalPrimitiveTryFromChecker(checker);const origin=originalParsedSyntaxNode(row.item,row.node);if(!originalParsedDeclarationEvidence(row.item)||!origin||origin.actual!==row.node||origin.original!==row.origin.original||origin.parser!==row.source.parser||metadataDigest(origin.relocated)!==row.snapshot||metadataDigest(row.node)!==row.snapshot)fail('original linked type/source association changed');current(row.source);};
  sourceJoin();let result=copyMetadata(type);if(result.rustReference)result={...result,rustReference:Object.freeze({...result.rustReference,pointee:resolveBorrowedStandardTextMapType(checker,type.rustReference.pointee)})};
  const value=remember(Object.freeze(result),row.source.parser,row.source.origin,row.source.role,sourceJoin);current(observed.get(value));return value;
+}
+
+/** Private pointees are checked only inside ownership/source reconstruction. */
+export function requireBorrowedStandardMapOwnership(type){
+ const row=current(observed.get(type));
+ if(row.role==='shared')requireBorrowedStandardTextMapType(type);
+ else if(row.role!=='pointee'||type.rustReference||type.rustOwnership?.kind!=='owned')fail('actual internal standard-map pointee required');
+ return type;
+}
+export function assertBorrowedStandardMapBoundary(actual,expected){
+ if(actual?.kind!==KIND&&expected?.kind!==KIND)return false;
+ requireBorrowedStandardTextMapType(actual);
+ if(expected){requireBorrowedStandardTextMapType(expected);if(borrowedStandardTextMapTypeKey(actual)!==borrowedStandardTextMapTypeKey(expected))fail('shared standard-map boundary differs');}
+ return true;
+}
+export function preserveBorrowedStandardMapResult(value){
+ if(value?.type?.kind!==KIND)return null;requireBorrowedStandardTextMapType(value.type);return value;
+}
+/** Decoded public tags regain no authority until the WHOLE caller is rechecked. */
+export function reissueBorrowedStandardMapFunction(candidate,program=null){
+ if(!hasBorrowedStandardMapCaller(candidate))return candidate;
+ const checked=freshlyCheckBorrowedStandardMapCaller(candidate,{program});if(!checked)fail('whole original caller reconstruction required');
+ let cells=200000;
+ const visit=(actual,fresh,depth=0)=>{
+  if(!actual||typeof actual!=='object')return;if(--cells<0||depth>160||!fresh||typeof fresh!=='object')fail('complete type correspondence bound');
+  if(actual.kind===KIND){const source=observed.get(fresh);if(!source||metadataDigest(actual)!==metadataDigest(fresh))fail('whole checked type differs');current(source);remember(actual,source.parser,source.origin,source.role,()=>current(source));}
+  for(const [name,value]of Object.entries(actual))if(value&&typeof value==='object')visit(value,fresh[name],depth+1);
+ };
+ visit(candidate.params,checked.fresh.params);visit(candidate.ret,checked.fresh.ret);visit(candidate.body,checked.fresh.body);return candidate;
+}
+export function reissueBorrowedStandardMapProgram(program){
+ if(!(program?.declarations instanceof Map)||!Array.isArray(program.items))fail('whole original program required');
+ const qualified=new Set();for(const [name,entry]of program.declarations)if(entry.k==='fn'&&hasBorrowedStandardMapCaller(entry)){reissueBorrowedStandardMapFunction(entry,program);qualified.add(name);}
+ for(const entry of program.items)if(entry.k==='fn'&&hasBorrowedStandardMapCaller(entry)){if(!qualified.has(entry.fullName))fail('item missing original checked declaration');reissueBorrowedStandardMapFunction(entry,program);}return program;
 }

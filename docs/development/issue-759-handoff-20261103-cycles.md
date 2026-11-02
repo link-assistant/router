@@ -169,3 +169,18 @@ storage and full receiving adoption remain separately OPEN. No workload or cap
 was reduced. Tests/compilers/translation UNRUN; CI NOT_INSPECTED. Counts remain
 11/70 DRAFTED,59 OPEN. The frozen companion document describes pre-integration
 proposal status; this journal records installation.
+
+## Actual shared standard-map compiler source hooks
+
+Root drafted and installed eleven actual original parent successors for private
+source type origins, Host parse/resolve/check and whole caller flow, ownership,
+checked keys, both semantic-meta readers, strict layouts, target emission and
+both runtime asset assemblers. Separate shared native Map inputs gain no entry/
+value cap or scan; map alias/mutable/helper/escape cases retain explicit refusals.
+Whole source reconstruction precedes private decoded type reissue. Full actual
+Rust tree receiving source and independent forged-type/domain/CST cases are
+drafted, not run. Full original caller algorithm is copied through counted
+substitutions with complete inverse ancestry. See
+[the actual compiler source contract](borrowed-standard-map-compiler-20261103.md).
+Reverse/interpreters/full positive receiving and historical cohort/catalogue
+adoption remain OPEN. All execution UNRUN; CI NOT_INSPECTED;11/70 DRAFTED,59 OPEN.

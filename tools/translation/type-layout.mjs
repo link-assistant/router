@@ -1,4 +1,4 @@
-import {requireOrderedTextMapOpaqueType} from './ordered-text-map-callers-20261102-native-types.mjs';
+import {requireBorrowedStandardTextMapType} from './borrowed-standard-map-20261103-native-types.mjs';import {requireOrderedTextMapOpaqueType} from './ordered-text-map-callers-20261102-native-types.mjs';
 // Stable recursive algebraic layouts for target types and runtime domains.
 import {fixedArrayLength} from './checked-types.mjs';
 const PRIMITIVES=new Set(['bool','string','char','unit','float','nat','int']);
@@ -9,6 +9,7 @@ function dataEntries(declarations) {
 }
 function normalizeType(type,declarations,nativeScalarModule=null) {
   if(!type || typeof type !== 'object')throw new TypeError('Checked type layout is missing');
+  if(type.kind==='routerStandardTextMap'){requireBorrowedStandardTextMapType(type);return {kind:'routerStandardTextMap'};}
   if(type.kind==='routerOrderedTextMap'){requireOrderedTextMapOpaqueType(type,{shared:Boolean(type.rustReference)});return {kind:'routerOrderedTextMap',orderedMapTypeScript:'import('+JSON.stringify((nativeScalarModule??'./runtime/primitive-operator-runtime.mjs').replace(/primitive-operator-runtime\.mjs$/u,'ordered-text-map-20261102-runtime.mjs'))+').OrderedTextMap'};}
   if(PRIMITIVES.has(type.kind))return {kind:type.kind};
   if(type.kind === 'fixed') {
@@ -63,6 +64,7 @@ export function recursiveDataNames(declarations) {
 }
 function render(type,schema,aliases,active=new Set()) {
   switch(type.kind) {
+    case 'routerStandardTextMap':return 'ReadonlyMap<string, string>';
     case 'routerOrderedTextMap':return type.orderedMapTypeScript;
     case 'fixed':return type.nativeScalarTypeScript??'bigint';
     case 'nat':case 'int':return 'bigint';
