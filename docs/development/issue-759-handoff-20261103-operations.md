@@ -121,6 +121,19 @@ appends16:482equations/276paths, with26combined guarded input sources. The old
 normalizer and seven-input archive remain intact. All verification remains UNRUN.
 Counts remain12/70 DRAFTED,58 OPEN; loops, wider ownership/effects/interfaces,
 recursive emission and actual production adoption remain unfinished.
+The [physical source-role/producer draft](physical-language-output-layout-draft-20261104.md)
+now declares canonical authored/mixed/generated-candidate trees and metadata
+destinations without granting overwrite permission. A complete separate copy
+of the original producer planner adds observed Rust-root checks inside its same
+capture, artifact/stale loops and limits. It preserves original installers,
+explicit protection, genuine replay and empty-receiver behavior. Other-root
+stale ownership refuses deletion unless explicit protection retires it safely.
+Actual JS-first/native-TypeScript caller import successors remain proposals;
+complete producer/source-history adoption is next. Independent operational and
+whole CST/copy/declaration cases remain UNRUN. Packet
+SHAecd4343196a4bfd1f3bbd6b49919a7866687d208eed2f46821b9c13e420ecf9b,
+36963compressed bytes. Native graph remains482/276; L03/L04/L05 remain OPEN,
+and counts remain12/70 DRAFTED,58 OPEN. Contribution guidance links the contract.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 

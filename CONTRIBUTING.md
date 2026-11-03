@@ -769,7 +769,7 @@ For the explicit checked-definition receiving lane, prepare and review the compl
 ### Language source layout
 
 Maintain physical `js/src`, `ts/src` and `rust/src` directories; see
-[the language layout and commands](docs/development/language-layout.md).
+[the language layout and commands](docs/development/language-layout.md). Follow the [physical source-role contract and producer protections](docs/development/physical-language-output-layout-draft-20261104.md); role labels do not grant overwrite permission, and observed crate roots must govern generated policy destinations and stale ownership.
 JavaScript changes and checks run first. Generate TypeScript with the checked
 CST/meta producer; keep forward and reverse translation rules in separate
 ordered language and repository sequences. Do not hand edit generated files.
