@@ -799,3 +799,24 @@ implementation and all clauses. Until that receipt exists, accounting remains
 11/70 DRAFTED,59 OPEN. Full inventory, all other operations/bindings/production
 features, synchronization/export/receiving/parity and every actual verification
 remain unfinished. Root continues alone toward all70 source receipts.
+
+The registry/source-composition implementation is committed as
+73e91261903779b3790aacf1e893cd0f0b3f0d72. Clause review then identified that
+the immutable original-span plan retained full final inverses but not a full
+intermediate source history for every applied rule. The follow-up now materializes
+each selected prefix, retaining every file's previous/current whole source,
+rule ID/phase, complete serialized/reparsed CST history and inverse. Both replay
+directions validate all intermediate cohorts, exact trace chronology and a
+continuous chain ending at the final source. Removed/reordered phases and
+changed intermediate text or meta refuse, under the existing aggregate limits.
+Original inputs/proposals remain immutable; no callback loses another rule's
+source evidence, and actual private semantic qualification is still separate.
+
+Complete four-parent successor packet
+83d5490b2ca8ac6e830f325dce0090c53df3ab37b2d17b08fdcce1e741fb5149
+retains the original adapter/cases, current complete successors and original
+creation image joins. Its source proposer and new ancestry case are drafted.
+The old archive and afterimages remain immutable. Every new execution is UNRUN;
+no local tests, parsers, collectors, compilers, translators, preparers, Rust
+tools, installs or CI feedback inspection ran. Formal R05 receipt review follows
+this committed chronology implementation; the full all70 objective stays active.

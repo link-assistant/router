@@ -73,6 +73,16 @@ project command, parser domain, pipeline or deadline is reduced. No writer,
 installer, evaluator or persistent semantic cache is introduced. Every returned
 source/namespace/semantic/runtime/installation authority field is false.
 
+Every selected rule also retains a complete intermediate version of every
+cohort file, with its actual rule ID/phase, previous-prefix before text,
+current-prefix after text, exact inverse and full CST history. Original-span
+planning still reads immutable originals; these materialized prefix versions
+preserve the actual chronology instead of flattening it into only a final
+equation. Both replay directions validate every stage, complete cohort,
+phase/ID trace and continuous before/after chain through the final source.
+Dropped/reordered stages or altered intermediate text/meta refuse. The existing
+aggregate DATA limits account for all intermediate histories as well.
+
 ## Independent source evidence
 
 - [Registry cases](../../tools/translation/test/rule-registry.test.mjs):
@@ -108,3 +118,9 @@ with complete before/after CST/inverses and whole created-source CST. The
 independent source-ancestry case is also UNRUN. Source integrity is not a
 private semantic receipt. No original compiler afterimage or source-index pin
 was replaced for this additive adoption.
+
+Source review found and completed the intermediate-history clause before the
+R05 receipt. Its separate full four-parent successor packet preserves the
+original creation images and extends their case joins; archive SHA is
+83d5490b2ca8ac6e830f325dce0090c53df3ab37b2d17b08fdcce1e741fb5149.
+The source-chronology proposer and independent ancestry case remain UNRUN.

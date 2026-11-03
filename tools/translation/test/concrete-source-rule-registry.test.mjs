@@ -25,6 +25,9 @@ test('selected rule discovery composes nested original spans across both phases 
  assert.deepEqual(plan.trace.map(row=>row.phase),['language','language','repository','repository']);assert.deepEqual(calls,['array','child']);
  assert.deepEqual(plan.files.map(row=>row.after),['pub fn pick()->bool{false}\r\n','// 😀 unchanged\r\nconst value = wrap(length(first), next);\r\n','export const active: boolean = false;\n']);
  assert.equal(plan.files[1].composition.nestedEdits,1);for(const row of plan.files){assert.equal(row.inverse,row.before);assert.equal(row.history.inverse,row.before);assert.equal(transportConcreteSyntaxMeta(row.history.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.history.afterMeta).source,row.after);}
+ assert.deepEqual(plan.stages.map(({id,phase})=>({id,phase})),plan.trace);assert.equal(plan.stages.length,4);
+ assert.equal(plan.stages[0].files[1].after,'// 😀 unchanged\r\nconst value = wrap(first.length, next);\r\n');assert.equal(plan.stages[2].files[1].after,'// 😀 unchanged\r\nconst value = wrap(length(first), next);\r\n');
+ for(let stage=0;stage<plan.stages.length;stage++)for(let file=0;file<before.length;file++){const row=plan.stages[stage].files[file];assert.equal(row.before,stage===0?before[file].source:plan.stages[stage-1].files[file].after);assert.equal(row.history.inverse,row.before);assert.equal(transportConcreteSyntaxMeta(row.history.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.history.afterMeta).source,row.after);}
  for(const flag of ['sourceAuthority','semanticAuthority','namespaceAuthority','runtimeAuthority','installationAuthority'])assert.equal(plan[flag],false);
  assert.equal(Object.isFrozen(before),false);assert.equal(Object.isFrozen(before[1]),false);
 });
@@ -42,6 +45,7 @@ test('stale/mixed/missing/wrong-language cohorts and tampered full inverses refu
  const variants=[before.slice(1),before.map((row,at)=>at===0?{...row,source:plan.files[0].after}:row),before.map((row,at)=>at===0?{...row,source:row.source+'// stale'}:row),before.map((row,at)=>at===0?{...row,language:'JavaScript'}:row)];
  for(const rows of variants){assert.throws(()=>applyConcreteSourceRulePlan(rows,plan));assert.throws(()=>restoreConcreteSourceRulePlan(rows,plan));}const changed=JSON.parse(JSON.stringify(plan));changed.files[0].inverse='wrong original';assert.throws(()=>applyConcreteSourceRulePlan(before,changed));assert.throws(()=>restoreConcreteSourceRulePlan(before,changed));
  const retained=JSON.parse(JSON.stringify(plan));retained.files[0].history.afterMeta=retained.files[0].history.beforeMeta;assert.throws(()=>applyConcreteSourceRulePlan(before,retained),/retained complete source history/u);
+ for(const mutate of [value=>value.stages.shift(),value=>value.stages[0].files[0].after='changed intermediate source',value=>value.stages[0].phase='repository']){const changed=JSON.parse(JSON.stringify(plan));mutate(changed);assert.throws(()=>applyConcreteSourceRulePlan(before,changed));assert.throws(()=>restoreConcreteSourceRulePlan(before,changed));}
 });
 test('a parent rule cannot erase a child rule source reference and crossing/duplicate edits cannot last-write-win',{timeout:60000},()=>{
  const source=[{path:'js/src/a.mjs',language:'JavaScript',source:'const value = [a, b];\n'}],text=source[0].source,start=text.indexOf('['),end=text.indexOf(']')+1,child=text.indexOf('a,');

@@ -27,6 +27,12 @@ function sources(input){
   seen.add(row.path);return row;
  }));
 }
+function composedSources(original,proposals){return original.map(row=>{
+ const templates=proposals.filter(proposal=>proposal.path===row.path).flatMap(proposal=>proposal.templates),composition=composeConcreteSourceEditTemplates(row.source,templates);
+ const before=transportConcreteSyntaxSource(row.source,{language:row.language});if(before.source!==row.source||transportConcreteSyntaxMeta(before.meta).source!==row.source)fail('whole original CST serialization/reparse differs');
+ const run=applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:'language:compose-registered-original-span-templates',edits:composition.edits}],repositoryRules:[]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(run.value)).source;
+ return {path:row.path,language:row.language,before:row.source,after,inverse:row.source,composition,concreteTrace:run.trace};
+});}
 /** Definition callbacks propose templates over immutable original spans. They
  * cannot overwrite or remove another rule's original evidence or private proof. */
 export function createConcreteSourceRuleRegistry(input){
@@ -42,23 +48,23 @@ export function createConcreteSourceRuleRegistry(input){
     return {rule:id,phase,path:row.path,templates:row.templates};
    });
    const proposals=freeze([...state.proposals,...rows]);if(proposals.length>8192)fail('aggregate original-span proposal count bound');accountData(proposals);
-   return Object.freeze({sources:state.sources,proposals});
+   const rendered=composedSources(state.sources,proposals),files=rendered.map((row,at)=>{
+    const before=state.current[at].source,history=transportConcreteSourceEquations([{before,after:row.after,language:row.language}])[0];if(history.inverse!==before)fail('complete intermediate source inverse differs');
+    return {path:row.path,language:row.language,before,after:row.after,inverse:before,history};
+   }),current=freeze(rendered.map(({path,language,after})=>({path,language,source:after}))),stages=freeze([...state.stages,{id,phase,files}]);
+   const next={sources:state.sources,proposals,current,stages,rendered};accountData(next);return freeze(next);
   }};
  });
  const registry=createRuleRegistry(registrations);
  function plan(inputSources,selection,context,discover){
    const original=sources(inputSources);if(!original.length)fail('at least one complete original file required');
-   const pipeline=discover?registry.discover(original,context):registry.compile(selection),result=pipeline.run(Object.freeze({sources:original,proposals:Object.freeze([])}),context);
-   const files=original.map(row=>{
-    const templates=result.value.proposals.filter(proposal=>proposal.path===row.path).flatMap(proposal=>proposal.templates),composition=composeConcreteSourceEditTemplates(row.source,templates);
-    const before=transportConcreteSyntaxSource(row.source,{language:row.language});
-    if(before.source!==row.source||transportConcreteSyntaxMeta(before.meta).source!==row.source)fail('whole original CST serialization/reparse differs');
-    const run=applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:'language:compose-registered-original-span-templates',edits:composition.edits}],repositoryRules:[]});
-    const after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(run.value)).source,history=transportConcreteSourceEquations([{before:row.source,after,language:row.language}])[0];
-    if(history.inverse!==row.source||transportConcreteSyntaxMeta(history.beforeMeta).source!==row.source||transportConcreteSyntaxMeta(history.afterMeta).source!==after)fail('complete composed source/CST/inverse differs');
-    return {path:row.path,language:row.language,before:row.source,after,inverse:row.source,composition,history,concreteTrace:run.trace};
+   const pipeline=discover?registry.discover(original,context):registry.compile(selection),result=pipeline.run(Object.freeze({sources:original,proposals:Object.freeze([]),current:original,stages:Object.freeze([])}),context);
+   const files=(result.value.rendered??composedSources(original,result.value.proposals)).map(row=>{
+    const history=transportConcreteSourceEquations([{before:row.before,after:row.after,language:row.language}])[0];
+    if(history.inverse!==row.before||transportConcreteSyntaxMeta(history.beforeMeta).source!==row.before||transportConcreteSyntaxMeta(history.afterMeta).source!==row.after)fail('complete composed source/CST/inverse differs');
+    return {...row,history};
    });
-   const answer={schema:'registered-concrete-source-rule-plan-v1',files,proposals:result.value.proposals,description:pipeline.description,discovery:pipeline.discovery,trace:result.trace,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,runtimeAuthority:false,installationAuthority:false};accountData(answer);return freeze(answer);
+   const answer={schema:'registered-concrete-source-rule-plan-v1',files,stages:result.value.stages,proposals:result.value.proposals,description:pipeline.description,discovery:pipeline.discovery,trace:result.trace,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,runtimeAuthority:false,installationAuthority:false};accountData(answer);return freeze(answer);
  }
  return Object.freeze({description:registry.description,plan(inputSources,selection,context){return plan(inputSources,selection,context,false);},planDiscovered(inputSources,context){return plan(inputSources,undefined,context,true);}});
 }
@@ -74,6 +80,15 @@ function replay(inputSources,plan,reverse){
   allBefore&&=actual.source===row.before;allAfter&&=actual.source===row.after;changed||=row.before!==row.after;
  }
  if(!allBefore&&!allAfter)fail('stale or mixed original/final source cohort');
+ const stages=dense(plan.stages,4096),trace=dense(plan.trace,4096),previous=new Map(files.map(row=>[row.path,row.before]));if(stages.length!==trace.length)fail('complete per-rule source chronology required');let repository=false;
+ for(let at=0;at<stages.length;at++){
+  const stage=stages[at];if(stage.id!==trace[at].id||stage.phase!==trace[at].phase||!['language','repository'].includes(stage.phase)||repository&&stage.phase==='language')fail('original language/repository rule chronology differs');if(stage.phase==='repository')repository=true;
+  const rows=dense(stage.files,128);if(rows.length!==files.length)fail('complete intermediate source cohort required');const seenStage=new Set();
+  for(const row of rows){const expected=files.find(file=>file.path===row.path);if(!expected||seenStage.has(row.path)||row.language!==expected.language||row.before!==previous.get(row.path)||typeof row.after!=='string'||row.inverse!==row.before||row.history?.inverse!==row.before)fail('continuous complete intermediate source/inverse required');seenStage.add(row.path);
+   const before=transportConcreteSyntaxMeta(row.history.beforeMeta),after=transportConcreteSyntaxMeta(row.history.afterMeta);if(before.source!==row.before||after.source!==row.after||before.document.language!==row.language||after.document.language!==row.language)fail('intermediate source CST history differs');previous.set(row.path,row.after);
+  }
+ }
+ for(const row of files)if(previous.get(row.path)!==row.after)fail('intermediate history does not reach the final source');
  const result=files.map(row=>{
   if(!row.history||row.history.inverse!==row.before)fail('retained original source history required');
   const retainedBefore=transportConcreteSyntaxMeta(row.history.beforeMeta),retainedAfter=transportConcreteSyntaxMeta(row.history.afterMeta);
