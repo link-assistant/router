@@ -30,6 +30,10 @@ for Boolean and all ten native integer widths. Their
 [source adoption](copy-scalar-helper-adoption-20261103.md) now installs the full
 cohort with original and added source restrictions;
 all source cases and execution remain UNRUN, and the count stays12/70.
+The [original-source reconciliation adapter](copy-scalar-source-reconciliation-draft-20261103.md)
+now drafts changed-function body edits while retaining unchanged helper calls,
+imports/comments and paired TypeScript signatures. Full source requalification
+and whole Rust reproduction remain mandatory; all receiving is UNRUN.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 
