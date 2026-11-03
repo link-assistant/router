@@ -9,6 +9,21 @@ are authorized during this drafting phase. All new execution UNRUN; CI
 NOT_INSPECTED. Source reading/writing, lightweight DATA authoring and SCM remain
 allowed. Preserve all eight same-SHA JavaScript gates before fatal Rust CI.
 
+New shared translator source batch:
+[ordered mutable scalar locals](ordered-mutable-scalars-draft-20261104.md) drafts
+a complete early-return normalizer copy, both original native reader successors
+and the fresh nine-input fence. Actual scalar-symbol/type/root checks retain
+source authority; branch continuations carry only outer mutable state and emit
+existing immutable let/if/return IR. Original APIs/archives/readers remain intact;
+reader proposals are not yet installed. All receiving and source cases UNRUN.
+Packet SHAb1e1e2c83ec432d3072b0d410e08a42689c9e103875c47f0db2a9694521097a9
+(198602 compressed bytes); input archive
+SHA8d6d8c4912bad515f11694a9443221fa276ea048b26e707ac50dcf8326810055.
+Next: compose original reader/case source-history joins and adopt the complete
+mutable cohort without repinning prior sources or raising the512-row hot-index
+bound. General loops/owned writes/recursion and actual application receiving
+remain unfinished; counts stay12/70 DRAFTED,58 OPEN; graph482/276 unchanged.
+
 The existing layout guide was absent from the sparse checkout, but its complete
 tracked source is retained and now links a separate
 [physical adoption guide](physical-language-receiving-adoption-20261104.md).
