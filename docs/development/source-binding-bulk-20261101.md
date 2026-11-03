@@ -59,7 +59,13 @@ UTF8, byte bounds and synchronous/own-data refusals. All cases remain UNRUN.
 
 ## Integration and open scope
 
-The implementation is directly callable as an additive synchronous API; no core
+The later [binding-gap worklist](source-binding-gap-plan-20261103.md) is now an
+actual source consumer of this operation. It adds detached original inspection
+and a separate4096-file inspection-only facade while preserving this API's512-
+file configuration domain and original source/type/namespace refusals. All new
+cases remain UNRUN; this does not add parser/body admission or verified coverage.
+
+The initial implementation was directly callable as an additive synchronous API; no core
 source, translator dispatch, source-profile archive, original issuer or gate
 partition was edited. This batch therefore does not itself change production
 translation coverage or add a new binding spelling/domain to the original

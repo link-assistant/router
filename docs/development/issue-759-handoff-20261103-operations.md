@@ -96,3 +96,33 @@ new374-index authoring metadata as needed for source handoff, but do not rerun
 the old recipes against a newer baseline. All older packets remain immutable.
 Root remains active on the full objective; this document is a continuation
 checkpoint, not draft completion, a pause or a verification result.
+
+## Original binding gap report source adopter
+
+The [native binding-gap worklist](source-binding-gap-plan-20261103.md) now uses
+the actual complete physical source operation, graph and original conservative
+binder. New `inspectBindings()` returns detached DATA inside fresh original
+source/origin fences. A separate4096-file inspection-only facade preserves the
+old512-file configuration API and all byte/directory/depth/nesting limits; it
+exposes no configuration or original scope array. Both profiles share the same
+source-failure stack and each closure keeps its own fixed census limits.
+
+The actual consumer retains native graph/binding diagnostics, unresolved scope
+flags and bindings, nonactive conditions and physical sources outside the
+binding closure. Every row maps to L02/B05 with OPEN status; full source/profile
+locators, exact native fields and sparse UTF16/UTF8 span coordinates remain
+DATA. No success, production denominator, body/type proof or reviewed assignment
+is inferred. Unknown location/producer/feature facts remain gaps, not waivers.
+
+Complete one-parent/two-creation-image packet SHA
+f31eea1305d4464ec0c364d5e1419674d5abd72ee01a085428dfb768791d5594
+retains original/full final sources and both substitution histories. Independent
+receiving source covers physical mutations/poisoning, ambiguity/unknown macros,
+detached scope identities, Unicode positions, old512/new513/4097 boundaries and
+the actual whole Router source census. All execution UNRUN. No parent hot-graph
+change is needed; graph remains374/264. B05/L02 remain OPEN for complete target/
+Cargo/owner/assignment/receiving scope; counts stay12/70 DRAFTED,58 OPEN. Continue
+all58 remaining acceptance bundles alone without local execution or CI reads.
+
+The checklist is now981lines; use linked child receipts for further detailed
+increments and keep the root below the repository's1000-line limit.

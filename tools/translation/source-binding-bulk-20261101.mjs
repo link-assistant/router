@@ -11,8 +11,10 @@ import {configureParserSourceScope} from './source-scopes.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {withSourceInputValidation,invalidateActiveSourceOperations,withSourceFailureOperation} from './source-failure-operations.mjs';
+import {accountPrimitiveVectorIteratorBulkData as accountBindingInspectionData} from './primitive-vector-iterator-bulk-20261101-accounting.mjs';
 
 const LIMITS=Object.freeze({files:512,directoryEntries:8192,directoryDepth:32,sourceBytes:32000000,fileBytes:2097152,parsers:512,nesting:16});
+const GAP_INPUT_LIMITS=Object.freeze({...LIMITS,files:4096});
 const active=[]; // Invocation-local stack only, cleared on every exit.
 const fail=message=>{throw new TypeError('Complete source binding batch: '+message);};
 function record(value,fields){
@@ -31,7 +33,7 @@ function identity(stat,stable=false){
  return Object.fromEntries(keys.map(key=>{if(typeof stat[key]!=='bigint')fail('complete bigint filesystem identity required');return [key,String(stat[key])];}));
 }
 function exactIdentity(before,after){if(JSON.stringify(before)!==JSON.stringify(after))fail('complete physical source input identity changed');}
-function census(root,directory,declaredRoot){
+function census(root,directory,declaredRoot,limits=LIMITS){
  const rows=[],directories=[],ancestors=[],leaves=[];let bytes=0,entries=0;
  if(typeof constants.O_NOFOLLOW!=='number')fail('physical source reads require native no-follow support');
  if(realpathSync(declaredRoot)!==root)fail('physical root identity changed');
@@ -49,10 +51,10 @@ function census(root,directory,declaredRoot){
  let component=root;
  for(const part of directory.split('/')){component=join(component,part);const stat=lstatSync(component,{bigint:true});if(stat.isSymbolicLink()||!stat.isDirectory())fail('source directory components must be physical directories');const stable=component!==join(root,directory);ancestors.push({path:component,stable,identity:identity(stat,stable),link:null});}
  function visit(path,depth){
-  if(depth>LIMITS.directoryDepth)fail('complete source directory depth bound');const physical=join(root,path),before=lstatSync(physical,{bigint:true});
+  if(depth>limits.directoryDepth)fail('complete source directory depth bound');const physical=join(root,path),before=lstatSync(physical,{bigint:true});
   if(before.isSymbolicLink()||!before.isDirectory())fail('source directories must retain their physical identity');
   const names=[],handle=opendirSync(physical);let primaryDirectoryFailed=false;
-  try{for(let child;(child=handle.readSync())!==null;){if(++entries>LIMITS.directoryEntries)fail('complete source directory entry bound');names.push(child.name);}}
+  try{for(let child;(child=handle.readSync())!==null;){if(++entries>limits.directoryEntries)fail('complete source directory entry bound');names.push(child.name);}}
   catch(error){primaryDirectoryFailed=true;throw error;}finally{try{handle.closeSync();}catch(error){if(!primaryDirectoryFailed)throw error;}}
   names.sort();directories.push({path,identity:identity(before),names});
   for(const name of names){const child=path+'/'+name,leaf=join(root,child),stat=lstatSync(leaf,{bigint:true}),original=identity(stat);
@@ -62,18 +64,18 @@ function census(root,directory,declaredRoot){
    leaves.push({path:child,identity:original});
    if(!name.endsWith('.rs')){exactIdentity(original,identity(lstatSync(leaf,{bigint:true})));continue;}
    if(!stat.isFile())fail('Rust source inputs must be ordinary files');
-   if(rows.length>=LIMITS.files||stat.size>BigInt(LIMITS.fileBytes))fail('complete Rust source count/byte bound');
+   if(rows.length>=limits.files||stat.size>BigInt(limits.fileBytes))fail('complete Rust source count/byte bound');
    const fd=openSync(leaf,constants.O_RDONLY|constants.O_NOFOLLOW);let raw,primaryReadFailed=false;
    try{
     const opened=fstatSync(fd,{bigint:true});if(!opened.isFile())fail('Rust source descriptor must remain an ordinary file');exactIdentity(original,identity(opened));
-    if(opened.size<0n||opened.size>BigInt(LIMITS.fileBytes))fail('complete Rust source byte bound');
+    if(opened.size<0n||opened.size>BigInt(limits.fileBytes))fail('complete Rust source byte bound');
     const expected=Number(opened.size),buffer=Buffer.alloc(expected+1);let count=0;
     while(count<buffer.length){const read=readSync(fd,buffer,count,Math.min(65536,buffer.length-count),null);if(read===0)break;count+=read;}
     if(count!==expected)fail('physical Rust source grew or reached early EOF');raw=buffer.subarray(0,count);
     exactIdentity(original,identity(fstatSync(fd,{bigint:true})));exactIdentity(original,identity(lstatSync(leaf,{bigint:true})));
    }catch(error){primaryReadFailed=true;throw error;}finally{try{closeSync(fd);}catch(error){if(!primaryReadFailed)throw error;}}
    const source=raw.toString('utf8');if(!Buffer.from(source,'utf8').equals(raw))fail('physical Rust source must be exact UTF8');
-   bytes+=raw.length;if(bytes>LIMITS.sourceBytes)fail('combined complete Rust source byte bound');rows.push({path:child,source});
+   bytes+=raw.length;if(bytes>limits.sourceBytes)fail('combined complete Rust source byte bound');rows.push({path:child,source});
   }
   exactIdentity(identity(before),identity(lstatSync(physical,{bigint:true})));
  }
@@ -94,19 +96,19 @@ function synchronous(value){
  const then=Object.getOwnPropertyDescriptor(value,'then');if(then&&(!Object.hasOwn(then,'value')||typeof then.value==='function'))fail('source binding operation must complete synchronously');return value;
 }
 /** All parser configurations share one fresh complete original namespace closure. */
-function sourceBindingBulk(input,operation){
+function sourceBindingBulk(input,operation,limits=LIMITS){
  record(input,['root','sourceDirectory','entry','compilationProfile']);
  for(const key of ['root','sourceDirectory','entry'])if(!Object.hasOwn(input,key))fail('complete own source option required: '+key);
  if(typeof operation!=='function'||types.isProxy(operation)||types.isAsyncFunction(operation))fail('one synchronous callback required');
- if(active.length>=LIMITS.nesting)fail('nested complete source operation bound');
+ if(active.length>=limits.nesting)fail('nested complete source operation bound');
  if(typeof input.root!=='string'||!isAbsolute(input.root))fail('absolute physical root required');
  const declaredRoot=resolve(input.root),directory=relative(input.sourceDirectory),entry=relative(input.entry);if(!entry.endsWith('.rs')||!entry.startsWith(directory+'/'))fail('entry must be Rust source inside the complete source directory');
- if(directory.split('/').length>LIMITS.directoryDepth)fail('source directory ancestor bound');
+ if(directory.split('/').length>limits.directoryDepth)fail('source directory ancestor bound');
  const frame={active:true,failed:false,error:undefined};active.push(frame);
  let snapshot=null,root=null,graph=null,binding=null,profile=null,result,primary=false,primaryError;
- const current=()=>sourceGuard(()=>{if(!frame.active)fail('source binding operation expired');sameCensus(snapshot,census(root,directory,declaredRoot));if(frame.failed)throw frame.error;});
+ const current=()=>sourceGuard(()=>{if(!frame.active)fail('source binding operation expired');sameCensus(snapshot,census(root,directory,declaredRoot,limits));if(frame.failed)throw frame.error;});
  try{
-  sourceGuard(()=>{root=realpathSync(declaredRoot);profile=compilationProfile(input.compilationProfile);snapshot=census(root,directory,declaredRoot);});
+  sourceGuard(()=>{root=realpathSync(declaredRoot);profile=compilationProfile(input.compilationProfile);snapshot=census(root,directory,declaredRoot,limits);});
   const run=createRulePipeline([
    {phase:'language',rules:[
     {id:'language:serialize-reparse-every-complete-physical-Rust-source',apply:()=>snapshot.rows.map(row=>{const concrete=transportConcreteSyntaxSource(row.source,{language:'Rust'});if(transportConcreteSyntaxMeta(concrete.meta).source!==row.source)fail('whole physical source CST inverse differs');return {path:row.path,source:row.source,concreteSyntax:concrete.meta};})},
@@ -147,9 +149,17 @@ function sourceBindingBulk(input,operation){
   }
   const api=Object.freeze({
    evidence:prepared.value,trace:prepared.trace,
+   inspectBindings(){return fencedBatch(()=>{
+    assertResolvedSourceScopeOrigin(binding.scopes,{modules:graph.modules,compilationProfile:profile});
+    for(const module of graph.modules)originalSourceModuleItems(module);
+    const observation={schema:'original-source-binding-inspection-20261103-v1',scopes:binding.scopes,diagnostics:binding.diagnostics,externPrelude:binding.externPrelude,compilationProfile:profile,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,runtimeAuthority:false};
+    // Account the complete original before allocating a detached DATA clone.
+    // The clone deliberately loses the original scope-array WeakSet identity.
+    accountBindingInspectionData(observation);return structuredClone(observation);
+   });},
    configure(parser,modulePath){return fencedBatch(()=>configureOne(parser,modulePath));},
    configureMany(requests){return fencedBatch(()=>{
-    if(!Array.isArray(requests)||types.isProxy(requests)||Object.getPrototypeOf(requests)!==Array.prototype||requests.length<1||requests.length>LIMITS.parsers||Reflect.ownKeys(requests).length!==requests.length+1)fail('dense bounded parser configuration batch required');
+    if(!Array.isArray(requests)||types.isProxy(requests)||Object.getPrototypeOf(requests)!==Array.prototype||requests.length<1||requests.length>limits.parsers||Reflect.ownKeys(requests).length!==requests.length+1)fail('dense bounded parser configuration batch required');
     const selected=Array.from({length:requests.length},(_,index)=>{
      const field=Object.getOwnPropertyDescriptor(requests,String(index));if(!field||!Object.hasOwn(field,'value'))fail('own parser configuration required');
      const row=record(field.value,['parser','modulePath']);for(const key of ['parser','modulePath'])if(!Object.hasOwn(row,key))fail('complete parser configuration required');
@@ -167,7 +177,7 @@ function sourceBindingBulk(input,operation){
   // Keep the first caught source failure while still doing complete closure.
   if(!primary&&frame.failed){primary=true;primaryError=frame.error;}
   // Even callback/source failures replay the complete physical closing check.
-  try{if(snapshot&&root)sourceGuard(()=>sameCensus(snapshot,census(root,directory,declaredRoot)));}catch(error){if(!primary){primary=true;primaryError=error;}}
+  try{if(snapshot&&root)sourceGuard(()=>sameCensus(snapshot,census(root,directory,declaredRoot,limits)));}catch(error){if(!primary){primary=true;primaryError=error;}}
   if(!primary&&frame.failed){primary=true;primaryError=frame.error;}
   frame.active=false;frame.error=undefined;active.pop();snapshot=null;graph=null;binding=null;profile=null;root=null;
  }
@@ -176,4 +186,14 @@ function sourceBindingBulk(input,operation){
 
 export function withSourceBindingBulk20261101(input,operation){
  return withSourceFailureOperation(()=>sourceBindingBulk(input,operation));
+}
+
+// Explicit wider inspection domain. The old512-file parser configuration API
+// and every original source/directory/byte/depth/deadline bound remain intact.
+// This facade intentionally exposes no parser configuration or private scopes.
+export function withSourceBindingGapInputs20261103(input,operation){
+ if(typeof operation!=='function'||types.isProxy(operation)||types.isAsyncFunction(operation))fail('one synchronous inspection callback required');
+ return withSourceFailureOperation(()=>sourceBindingBulk(input,api=>operation(Object.freeze({
+  evidence:api.evidence,trace:api.trace,inspectBindings:api.inspectBindings,assertCurrent:api.assertCurrent,
+ })),GAP_INPUT_LIMITS));
 }

@@ -972,3 +972,10 @@ Its seven full adoption parents and six older case continuations preserve the
 original361 graph and draft374 equations/264paths. This closes that cohort's
 uninstalled-source gap only: R04 OPEN,12/70 DRAFTED,58 OPEN and all execution
 UNRUN remain. The operation-source handoff records the current images and gaps.
+
+The [original binding-gap source adopter](source-binding-gap-plan-20261103.md)
+retains all native diagnostics/flags/binding and physical-closure gaps under
+L02/B05. Detached inspection and a separate4096-file report domain preserve the
+old512-file configuration API, private source proofs and all other limits.
+Full source/receiving case images are drafted; no parser trial ran. Complete
+target/Cargo/owner/assignment/receiving scope remains OPEN;12/70 and58 OPEN stay.

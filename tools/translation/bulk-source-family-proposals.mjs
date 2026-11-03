@@ -8,6 +8,9 @@ export {proposeAsyncControlBulk20261101 as proposeAsyncControlBulk,
 export {inspectPairedSyncEdits,planPairedSyncBulk,applyPairedSyncBulk} from './paired-sync-bulk-20261101.mjs';
 export {proposeCollectionCallbackBulk} from './collection-callback-bulk-20261101.mjs';
 export {withSourceBindingBulk20261101 as withSourceBindingBulk} from './source-binding-bulk-20261101.mjs';
+export {withSourceBindingGapInputs20261103} from './source-binding-bulk-20261101.mjs';
+export {collectSourceBindingGapPlan20261103} from './source-binding-gap-plan-20261103.mjs';
+export {proposeSourceBindingGapPlanSources} from './source-binding-gap-plan-20261103-profile.mjs';
 export {planPairedSyncReconciliation,applyPairedSyncReconciliation} from './paired-sync-reconcile-20261101.mjs';
 export {proposeScalarChainBulk} from './scalar-chain-bulk-20261101.mjs';
 export {translateNetworkControlBulkJavaScript,translateNetworkControlBulkTypeScript} from './network-control-bulk-20261101.mjs';
