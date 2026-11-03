@@ -46,6 +46,12 @@ receiving sources are proposed together with a new eight-input source fence.
 The complete cohort is now [source adopted](scalar-helper-arguments-adoption-20261103.md),
 with all412 prior equations retained and12 appended:424 equations/272 paths.
 The original seven-input archive remains intact. All execution remains UNRUN.
+The [total primitive helper draft](copy-scalar-helper-total-primitives-draft-20261103.md)
+adds canonical bitwise, complement, cast, wrapping/saturating and min/max rules,
+both complete original reader/import/provenance successors, a separate copied
+Rust inverse, native receiving matrices and independent Rust oracle source.
+The two reader successors and fourteen-input fence remain uninstalled; append
+their full source-history adoption next. All execution remains UNRUN.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 
