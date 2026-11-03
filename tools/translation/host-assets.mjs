@@ -1,4 +1,4 @@
-import {borrowedJsonToolPredicateRuntimeAssets,relocateBorrowedJsonRuntimeSource} from './borrowed-json-tool-predicate-20261103-packaging.mjs';
+import {borrowedJsonToolPredicateRuntimeAssets,relocateBorrowedJsonRuntimeSource,appendBorrowedJsonFacadeDeclaration} from './borrowed-json-tool-predicate-20261103-packaging.mjs';
 import {borrowedStandardMapRuntimeAssets} from './borrowed-standard-map-20261103-packaging.mjs';import {orderedTextMapCallerRuntimeAssets} from './ordered-text-map-callers-20261102-packaging.mjs';
 import {jsonRetentionRuntimeAssets} from './json-retention-runtime-assets.mjs';
 import {readFileSync} from 'node:fs';
@@ -76,7 +76,7 @@ ${['checked_add','checked_sub','checked_mul','checked_neg','wrapping_add','wrapp
   files.set('type-layout-runtime.d.mts','export declare function validateRustValue(value: unknown, type: unknown, schema: unknown, options?: unknown): true;\n');
   for(const family of ['json','time','integer','float']) {
     const declarations=HOST_CONTRACTS.filter(contract=>contract.family===family).map(contract=>`export declare function ${contract.jsExport}(${contract.params.map((type,index)=>`arg${index}: ${typeScriptType(checker.hostType(type,[],{start:0,end:0}),types)}`).join(', ')}): ${typeScriptType(checker.hostType(contract.ret,[],{start:0,end:0}),types)};`).join('\n');
-    files.set(family+'-runtime.d.mts',aliases+'\n'+declarations+'\n');
+    files.set(family+'-runtime.d.mts',appendBorrowedJsonFacadeDeclaration(family,aliases+'\n'+declarations+'\n'));
   }
   const parseError=typeScriptType(checker.hostType({kind:'named',path:['std','num','ParseIntError']},[],{start:0,end:0}),types);
   files.set('integer-runtime.d.mts',files.get('integer-runtime.d.mts')+`export declare function createIntegerRuntime(type: Readonly<{kind:'fixed';bits:8|16|32|64|128;signed:boolean}>): Readonly<{
@@ -168,7 +168,7 @@ ${['checked_add','checked_sub','checked_mul','checked_neg','wrapping_add','wrapp
   files.set('type-layout-runtime.d.mts','export declare function validateRustValue(value: unknown, type: unknown, schema: unknown, options?: unknown): true;\n');
   for(const family of ['json','time','integer','float']) {
     const declarations=HOST_CONTRACTS.filter(contract=>contract.family===family).map(contract=>`export declare function ${contract.jsExport}(${contract.params.map((type,index)=>`arg${index}: ${typeScriptType(checker.hostType(type,[],{start:0,end:0}),types,{aliases:namedAliases})}`).join(', ')}): ${typeScriptType(checker.hostType(contract.ret,[],{start:0,end:0}),types,{aliases:namedAliases})};`).join('\n');
-    files.set(family+'-runtime.d.mts',aliases+'\n'+declarations+'\n');
+    files.set(family+'-runtime.d.mts',appendBorrowedJsonFacadeDeclaration(family,aliases+'\n'+declarations+'\n'));
   }
   const parseError=typeScriptType(checker.hostType({kind:'named',path:['std','num','ParseIntError']},[],{start:0,end:0}),types,{aliases:namedAliases});
   files.set('integer-runtime.d.mts',files.get('integer-runtime.d.mts')+`export declare function createIntegerRuntime(type: Readonly<{kind:'fixed';bits:8|16|32|64|128;signed:boolean}>): Readonly<{

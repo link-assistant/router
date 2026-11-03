@@ -8,6 +8,7 @@ import {withCompleteSourceClosingFence} from './complete-source-closing-fence.mj
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
 import {exactSourceHistoryEpoch} from './exact-source-history-epoch-20261103.mjs';
+import {knownExactSourceSuccessor} from './exact-source-successors-20261103.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),PACKET='tools/translation/source-profiles/borrowed-json-tool-packaging-installed-20261103/complete-source.json.gz';
 const SHA='4e796493d01ef8d87c4be87efde83c2eed3b74b7c251a5bae540526a70c9c640';
 const PATHS=["tools/translation/extensions/json-runtime.mjs","tools/translation/host-assets.mjs","tools/translation/borrowed-json-tool-predicate-20261103-packaging.mjs","tools/translation/borrowed-json-tool-predicate-20261103-profile.mjs"];
@@ -31,5 +32,5 @@ export function proposeBorrowedJsonToolPackagingInstalledSources({root=ROOT}={})
 }
 export function knownBorrowedJsonToolPackagingInstalledSuccessor({root=ROOT,path,before}={}){
  if(!PATHS.includes(path)||typeof before!=='string')return null;const row=proposeBorrowedJsonToolPackagingInstalledSources({root}).files.find(row=>row.path===path);if(row.before!==before)return null;const custody=createOrderedMapCanonicalSourceCustody(root);
- return withCompleteSourceClosingFence(()=>{const current=custody.read(join(root,path));if(current!==row.after)fail('actual complete installed JSON packaging source differs');const history=exactSourceHistoryEpoch({path,before,after:row.after,current,language:'JavaScript'});return {...history,currentAfter:current,installationEquation:row,laterHistories:[],sourceAuthority:false,semanticAuthority:false,verification:'UNRUN'};},[custody.close]);
+ return withCompleteSourceClosingFence(()=>{const current=custody.read(join(root,path)),later=current===row.after?null:knownExactSourceSuccessor({path,before:row.after},{root});if(current!==row.after&&(!later||later.currentIsTerminal!==true||later.after!==current))fail('actual complete installed JSON packaging source differs');const history=exactSourceHistoryEpoch({path,before,after:row.after,current,language:'JavaScript'});return {...history,currentAfter:current,installationEquation:row,laterHistories:later?[later]:[],sourceAuthority:false,semanticAuthority:false,verification:'UNRUN'};},[custody.close]);
 }

@@ -4,6 +4,10 @@ import {createReconcileSourceCapture,requireReconcile as need} from './paired-sy
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {withCompleteSourceClosingFence} from './complete-source-closing-fence.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
+export function appendBorrowedJsonFacadeDeclaration(family,source){
+ need(typeof family==='string'&&typeof source==='string','primitive declaration family and full source required');
+ return family==='json'?source+"export {borrowedJsonToolIsTranslatable} from './borrowed-json-tool-predicate-20261103-runtime.mjs';\n":source;
+}
 export function relocateBorrowedJsonRuntimeSource(name,source){
  need(typeof name==='string'&&typeof source==='string','primitive asset name and complete source required');
  return name==='json-runtime.mjs'?source.replace("'../borrowed-json-tool-predicate-20261103-runtime.mjs'","'./borrowed-json-tool-predicate-20261103-runtime.mjs'"):source;

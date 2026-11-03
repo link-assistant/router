@@ -11,7 +11,7 @@ const root=fileURLToPath(new URL('../../',import.meta.url));
 export function withBorrowedStandardMapCompilerSources(run){return withSourceFailureOperation(()=>{
  const custody=createOrderedMapCanonicalSourceCustody(root);
  return withCompleteSourceClosingFence(()=>{
-  withSourceInputValidation(()=>{for(const row of proposeBorrowedStandardMapCompilerSourceSuccessors().files){const current=custody.read(root+row.path);if(current===row.after)continue;const later=row.path==='tools/translation/host-assets.mjs'?knownBorrowedJsonToolPackagingInstalledSuccessor({root,path:row.path,before:row.after}):null;if(later?later.currentAfter!==current:!matchesExactSourceEpoch(row,current,{root}))throw TypeError('Complete original standard-map compiler successor must be installed and freshly imported: '+row.path);}});
+  withSourceInputValidation(()=>{for(const row of proposeBorrowedStandardMapCompilerSourceSuccessors().files){const current=custody.read(root+row.path);if(matchesExactSourceEpoch(row,current,{root}))continue;const later=row.path==='tools/translation/host-assets.mjs'?knownBorrowedJsonToolPackagingInstalledSuccessor({root,path:row.path,before:row.after}):null;if(!later||later.currentAfter!==current)throw TypeError('Complete original standard-map compiler successor must be installed and freshly imported: '+row.path);}});
   return run();
  },[custody.close]);
 });}
