@@ -111,11 +111,14 @@ return trees delegate to the old normalizer with its exact callback work.
 New continuations preserve caller resumption, skipped failing tails and branch
 local scopes. An eight-input archive adds the new rule without changing the old
 seven sources. Full CST/copy/source histories and independent JS/Rust/paired
-receiving source remain UNRUN; both reader successors are uninstalled.
+receiving source remain UNRUN; both reader successors are now
+[source adopted](scalar-early-return-adoption-20261104.md).
 Packet SHA03b21f5032afa488df4992a1b43443d28162f37556e9a840c711376a4f8b6a0a,
 195722compressed bytes; archive
 SHA13f81110bb0782ad05c47126c1bd478f68a7a33816f34442ee2cd5b21083abbe.
-Append the complete native source/case adoption next, retaining466 equations.
+The complete native source/case adoption retains466 previous equations and
+appends16:482equations/276paths, with26combined guarded input sources. The old
+normalizer and seven-input archive remain intact. All verification remains UNRUN.
 Counts remain12/70 DRAFTED,58 OPEN; loops, wider ownership/effects/interfaces,
 recursive emission and actual production adoption remain unfinished.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains

@@ -3,9 +3,9 @@
 This source draft extends the [adopted helper graph lane](ordered-helper-graph-adoption-20261104.md)
 with ordinary early returns, missing else arms, nonterminating branch bodies,
 unbraced branches and else-if chains. Both complete original reader successors
-remain proposals, not installed. All execution is UNRUN, CI NOT_INSPECTED,
+are now [source adopted](scalar-early-return-adoption-20261104.md). All execution is UNRUN, CI NOT_INSPECTED,
 counts12/70 DRAFTED,58 OPEN and actual production coverage UNKNOWN. The installed
-source-history graph remains466/275.
+source-history graph now retains482/276.
 
 ## Preserve original native lexical/type proof
 
@@ -82,7 +82,8 @@ SHA13f81110bb0782ad05c47126c1bd478f68a7a33816f34442ee2cd5b21083abbe.
 Whole original/copy/final source images retain separate language/repository
 substitutions, full intermediate CST serialization/reparse and exact inverses.
 The proposer reads source DATA and issues no compiler authority or installation.
-Next adopt the complete native source cohort and receiving cases while retaining
-all466 existing equations. Loops/assignment, recursive function emission, wider
+The complete native source cohort and receiving cases now retain
+all466 prior equations with16continuations appended. Qualification remains unrun.
+Loops/assignment, recursive function emission, wider
 ownership/effects/types/interfaces and actual production adoption remain open.
 This partial R02/F01/V02/B04 increment closes no acceptance bundle.

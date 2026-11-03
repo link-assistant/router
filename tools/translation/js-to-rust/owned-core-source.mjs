@@ -4,7 +4,7 @@ import {createOrderedMapCanonicalSourceCustody as booleanHelperSourceCustody} fr
 import {withSourceInputValidation as booleanHelperSourceInput,withSourceFailureOperation as booleanHelperSourceFailure} from '../source-failure-operations.mjs';
 import {requireSynchronousSourceCallback as booleanHelperSourceCallback} from '../complete-source-closing-fence.mjs';
 import {createOrderedScalarHelperLayoutGraph20261104,inspectOrderedScalarHelperModule20261104} from '../ordered-scalar-helper-layout-graph-20261104.mjs';
-import {lowerOrderedScalarHelperStatements20261103} from '../ordered-scalar-helper-statements-20261103.mjs';
+import {lowerOrderedScalarEarlyReturnStatements20261104 as lowerOrderedScalarHelperStatements20261103} from '../ordered-scalar-early-return-statements-20261104.mjs';
 import {substituteCopyScalarHelperTotalPrimitives20261103 as substituteCopyScalarHelperExpression20261103} from '../copy-scalar-helper-total-primitives-20261103.mjs';
 import {substituteBooleanHelperExpression20261103} from '../boolean-helper-substitution-20261103.mjs';
 import {withBorrowedJsonToolReverseNativeSources} from '../borrowed-json-tool-20261103-reverse-native.mjs';
@@ -532,9 +532,9 @@ function withOwnedOrderedScalarHelperSourceOperationBody(run,{root=booleanHelper
   const current=()=>booleanHelperSourceInput(()=>{if(rows)for(const row of rows)if(custody.read(root.replace(/\/$/u,'')+'/'+row.path)!==row.source)fail('complete Boolean helper implementation source changed: '+row.path);});
   try{return withCompleteSourceClosingFence(()=>{
    booleanHelperSourceInput(()=>{
-    const encoded=custody.readBytes(root.replace(/\/$/u,'')+'/tools/translation/source-profiles/ordered-scalar-helper-graph-20261104/helper-inputs.json.gz',1048576);if(digest(encoded)!=='17de382051744162b2e88ab82c4172eb08b3188aa255350c78ddbcb69f84598f')fail('fixed complete helper source input archive differs');
+    const encoded=custody.readBytes(root.replace(/\/$/u,'')+'/tools/translation/source-profiles/ordered-scalar-early-return-20261104/helper-inputs.json.gz',1048576);if(digest(encoded)!=='13f81110bb0782ad05c47126c1bd478f68a7a33816f34442ee2cd5b21083abbe')fail('fixed complete helper source input archive differs');
     const raw=booleanHelperSourceGunzip(encoded,{maxOutputLength:1048576}),text=raw.toString('utf8');if(!Buffer.from(text).equals(raw))fail('complete helper source UTF8 differs');const input=JSON.parse(text);
-    const paths=["tools/translation/ordered-scalar-helper-statements-20261103.mjs","tools/translation/js-to-rust/owned-core-ordered-scalar-helper-document-20261104.mjs","tools/translation/js-to-rust/owned-vector-candidate-ordered-scalar-helper-document-20261104.mjs","tools/translation/js-to-rust/owned-ordered-scalar-helper-profile-20261104.mjs","tools/translation/js-to-rust/owned-ordered-scalar-helper-rust-20261104.mjs","tools/translation/js-to-rust/ordered-scalar-helper-source-reconciliation-20261104.mjs","tools/translation/ordered-scalar-helper-layout-graph-20261104.mjs"];if(input.schema!=='original-ordered-scalar-helper-graph-input-sources-20261104-v1'||input.rows.length!==7||new Set(input.rows.map(row=>row.path)).size!==7||input.rows.some(row=>!paths.includes(row.path)||typeof row.source!=='string'||digest(row.source)!==row.sha256))fail('all seven original complete ordered helper graph input sources required');
+    const paths=["tools/translation/ordered-scalar-helper-statements-20261103.mjs","tools/translation/js-to-rust/owned-core-ordered-scalar-helper-document-20261104.mjs","tools/translation/js-to-rust/owned-vector-candidate-ordered-scalar-helper-document-20261104.mjs","tools/translation/js-to-rust/owned-ordered-scalar-helper-profile-20261104.mjs","tools/translation/js-to-rust/owned-ordered-scalar-helper-rust-20261104.mjs","tools/translation/js-to-rust/ordered-scalar-helper-source-reconciliation-20261104.mjs","tools/translation/ordered-scalar-helper-layout-graph-20261104.mjs","tools/translation/ordered-scalar-early-return-statements-20261104.mjs"];if(input.schema!=='original-ordered-scalar-early-return-input-sources-20261104-v1'||input.rows.length!==8||new Set(input.rows.map(row=>row.path)).size!==8||input.rows.some(row=>!paths.includes(row.path)||typeof row.source!=='string'||digest(row.source)!==row.sha256))fail('all eight original complete ordered early-return input sources required');
     rows=input.rows;current();
    });return run();
   },[current,custody.close]);}finally{if(rows)rows.length=0;rows=null;}
@@ -575,7 +575,7 @@ function analyzeOriginalOwnedBooleanHelperSourceBody(context,path){
 function checkFunction(context,path,declaration,analysis){
  const {ts,file,source,checker}=analysis,nativeScalars=contexts.get(context).data.primitiveOperators===true;
  if(!declaration.name||!declaration.body||declaration.asteriskToken||declaration.typeParameters||declaration.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary original named function required');
- let orderedScalarCalls=false;
+ let orderedScalarCalls=false,orderedScalarFlow=false;
  const booleanHelperCalls=[],copyHelperCalls=[],copyHelperRoots=contexts.get(context).copyHelperSyntax===true?new WeakSet():null;const name=rustName(declaration.name.text),params=[],environment=new Map(),orderedMapLocalRoots=new Map();let cells=0,paired=pairedFunction(context,path,declaration,analysis);
  const tick=depth=>{if(++cells>100000||depth>160)fail('whole function flow budget');};
  function bind(identifier,value,scope){
@@ -836,6 +836,10 @@ function checkFunction(context,path,declaration,analysis){
     const loan=value.type==='str'?(stringResultLoan===null?stringLoan(value):meetStringLoans(stringResultLoan,stringLoan(value))):undefined,effectiveRoot=loan?loan.root:value.root;
     if(value.type==='str'&&!loan)fail('returned str requires an actual literal or live input origin');
     if(resultType!==null&&(resultType!==value.type||resultRoot!==effectiveRoot&&!(value.type==='str'&&loan)&&!(ownedJsonOptionalPayload(value.type)&&(value.kind==='option-none'||resultOnlyAbsent))))fail('return domains differ');resultType=value.type;if(value.kind!=='option-none'){resultRoot=effectiveRoot;resultOnlyAbsent=false;}if(value.type==='str')stringResultLoan=loan;scalarReturnValues.push(value);body.push({kind:'return',value});terminated=true;
+   }else if(contexts.get(context).orderedScalarHelperSyntax===true&&ts.isIfStatement(statement)){
+    const cond=expression(statement.expression,scope,depth+1);if(cond.type!=='bool')fail('nonboolean condition');
+    const a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=block(ts.isBlock(statement.thenStatement)?statement.thenStatement.statements:[statement.thenStatement],a,depth+1),no=statement.elseStatement?block(ts.isBlock(statement.elseStatement)?statement.elseStatement.statements:[statement.elseStatement],b,depth+1):{body:[],terminated:false};
+    if(!yes.terminated||!no.terminated)orderedScalarFlow=true;mergeMoves(scope,a,b);body.push({kind:'if',cond,then:yes.body,else:no.body});terminated=yes.terminated&&no.terminated;
    }else if(ts.isIfStatement(statement)&&ts.isBlock(statement.thenStatement)&&statement.elseStatement&&ts.isBlock(statement.elseStatement)){
     const cond=expression(statement.expression,scope,depth+1);if(cond.type!=='bool')fail('nonboolean condition');
     const a=refine(branchScope(scope),cond,true),b=refine(branchScope(scope),cond,false),yes=block(statement.thenStatement.statements,a,depth+1),no=block(statement.elseStatement.statements,b,depth+1);
@@ -849,7 +853,7 @@ function checkFunction(context,path,declaration,analysis){
   const actual=originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis);
   if((actual==='text-owned'?'str':['text-map','text-map-ref'].includes(actual)?'text-map-input':actual)!==params[index].type)fail('paired written parameter ABI differs');
  }
- if(contexts.get(context).orderedScalarHelperSyntax===true){if(resultRoot!==null||resultType!=='bool'&&!primitiveBitwiseType(resultType)||params.some(param=>param.type!=='bool'&&!primitiveBitwiseType(param.type)))fail('ordered helper profile requires complete root-free scalar callers');if(orderedScalarCalls)checked.body=lowerOrderedScalarHelperStatements20261103({params,returns:resultType,body:checked.body},level=>tick(level)).body;}
+ if(contexts.get(context).orderedScalarHelperSyntax===true){if(resultRoot!==null||resultType!=='bool'&&!primitiveBitwiseType(resultType)||params.some(param=>param.type!=='bool'&&!primitiveBitwiseType(param.type)))fail('ordered helper profile requires complete root-free scalar callers');if(orderedScalarCalls||orderedScalarFlow)checked.body=lowerOrderedScalarHelperStatements20261103({params,returns:resultType,body:checked.body},level=>tick(level)).body;}
  validateBorrowedJsonToolReverseBody(params,resultType,checked.body);
  const writtenReturn=declaration.type??ts.getJSDocReturnType(declaration);
  if(writtenReturn){
