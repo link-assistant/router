@@ -49,3 +49,24 @@ test('actual nonstream adoption composes complete original oracle and uninstalle
  assert.equal(caller.sourceInstalled,false);
  assert.equal(caller.wholeFunctionAdmitted,false);
 });
+
+test('object rebuild correction preserves the original runtime source equation and exact successor',{timeout:900000},()=>{
+ const proposal=proposeModelAliasJsonCoreSources20261104(),runtime=proposal.files.find(row=>row.path==='tools/translation/json-state-runtime.mjs');
+ assert.equal(proposal.runtimeCorrections.length,1);
+ const correction=proposal.runtimeCorrections[0];
+ assert.equal(correction.before,runtime.after);
+ assert.equal(correction.after,runtime.currentAfter);
+ assert.equal(correction.inverse,runtime.after);
+ assert.deepEqual(runtime.laterHistories,[correction]);
+ assert.ok(runtime.after.includes('return changed?object(rows):value;'));
+ assert.ok(runtime.currentAfter.includes('return changed?json_macro_object(rows):value;'));
+ assert.deepEqual(correction.stages.map(stage=>stage.phase),['language','repository']);
+ for(const stage of correction.stages){
+  assert.equal(transportConcreteSyntaxMeta(stage.history.beforeMeta).source,stage.before);
+  assert.equal(transportConcreteSyntaxMeta(stage.history.afterMeta).source,stage.after);
+  assert.equal(stage.history.inverse,stage.before);
+ }
+ for(const file of proposal.files.filter(row=>row!==runtime))assert.deepEqual(file.laterHistories,[]);
+ assert.equal(proposal.semanticAuthority,false);
+ assert.equal(proposal.nativeBindingQualified,false);
+});

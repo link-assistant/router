@@ -47,3 +47,23 @@ and reverse private checks must still independently qualify the enlarged family.
 The full async response, mutable Json wrapper, streaming buffer/backpressure/
 cancellation/EOF/error behavior, broader JSON domain and all other open bundles
 remain unfinished. New full-source/CST continuation cases are drafted, UNRUN.
+
+## Source-reviewed paired runtime correction
+
+Reading the new policy helper exposed a constructor mismatch: its `at` helper
+constructs `[key, value]` pairs, while the older local `object` helper expects
+`{key, value}` records. Changed ancestors now go directly to the existing
+`json_macro_object` pair constructor. Its original validation, ordering and
+storage limits remain. The other state operations still use their original
+record/pair conventions. This correction was found by source review, without
+executing tests or experiments.
+
+A separate immutable one-row JavaScript successor packet, SHA
+`83ef531a2489c59b5c85fba745bb08c6b096d218912a2b91920dc2a0938b7e8d`,
+2017 bytes, retains the original runtime image, corrected image, two phases and
+exact CST inverse. The original five-parent core packet remains unchanged;
+its runtime row exposes its later history/current source while all other
+library rows retain their original current sources. Custody and closing checks
+remain shared with the native/response source operation. Source-only nested
+rebuild cases retain actual `key`/`value` fields, sibling text and arrays,
+unchanged input and repeat application. Every original/new case is UNRUN.

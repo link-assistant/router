@@ -44,7 +44,7 @@ export function router_state_json_rewrite_model_alias(base,upstream,visible){
  function at(value,path,index){
   if(value.$!=='Object')return value;let changed=false;
   const rows=value.field0.entries.map(row=>{if(row.key!==path[index])return [row.key,row.value];const next=index+1===path.length?replace(row.value):at(row.value,path,index+1);if(next!==row.value)changed=true;return [row.key,next];});
-  return changed?object(rows):value;
+  return changed?json_macro_object(rows):value;
  }
  for(const path of [['model'],['message','model'],['response','model'],['modelVersion'],['response','modelVersion']])result=at(result,path,0);
  return result;

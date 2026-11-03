@@ -9,6 +9,15 @@ are authorized during this drafting phase. All new execution UNRUN; CI
 NOT_INSPECTED. Source reading/writing, lightweight DATA authoring and SCM remain
 allowed. Preserve all eight same-SHA JavaScript gates before fatal Rust CI.
 
+Source-reviewed follow-up: corrected the new JS policy helper's pair/record
+constructor mismatch by calling the existing pair-based json_macro_object for
+rebuilt ancestors. Retained the immutable original core/runtime source with one
+exact JavaScript successor (SHA83ef531a2489c59b5c85fba745bb08c6b096d218912a2b91920dc2a0938b7e8d,
+2017 bytes), full phases/CST/inverse and canonical custody. Added independent
+nested/key/value/sibling/input-preservation case source and source chronology
+cases. All UNRUN; CI NOT_INSPECTED. Response adoption checkpoint bfb747948 is
+local, following local0c682683a; published head remains86059e36a.
+
 Latest source increment: [non-streaming model-alias response adoption](model-alias-response-adoption-20261104.md)
 installs the existing owned JSON operation in the real successful JSON response
 branch, retaining its serialization/fallback and the original streaming mutable
