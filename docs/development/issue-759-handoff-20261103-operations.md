@@ -34,6 +34,10 @@ The [original-source reconciliation adapter](copy-scalar-source-reconciliation-d
 now drafts changed-function body edits while retaining unchanged helper calls,
 imports/comments and paired TypeScript signatures. Full source requalification
 and whole Rust reproduction remain mandatory; all receiving is UNRUN.
+The [scalar local-binding draft](copy-scalar-helper-locals-draft-20261103.md)
+adds ordered pure local normalization and separate branch environments. Both
+reader source successors and the seven-input source fence await source adoption;
+the installed six-input implementation remains intact. All execution UNRUN.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 
