@@ -9,6 +9,17 @@ are authorized during this drafting phase. All new execution UNRUN; CI
 NOT_INSPECTED. Source reading/writing, lightweight DATA authoring and SCM remain
 allowed. Preserve all eight same-SHA JavaScript gates before fatal Rust CI.
 
+Latest source checkpoint: physical-layout planner imports are now adopted in
+`scripts/regenerate-js-first.mjs` and `js-to-rust/native-typescript.mjs`. Their
+complete forward source-history continuations are appended through the existing
+dispatch API; immutable historical archives/afterimages remain unchanged. The
+[layout source receipt](physical-language-output-layout-draft-20261104.md) records
+the three-parent 181424-byte packet SHA
+52f7de0dbf0f366a795fa98f5e07b315c473012d825e1ac16d951994866f1f02.
+Independent source/forward-chronology/refusal cases are drafted, all UNRUN.
+Broader copied-repository/package/import coverage remains unfinished under
+L03/L04/L05. Native hot-history accounting remains482 equations/276 paths.
+
 Accounting remains **12/70 DRAFTED,58 OPEN** in the
 [authoritative checklist](issue-759-draft-checklist.md). The full production
 function denominator and executable translation coverage remain UNKNOWN.

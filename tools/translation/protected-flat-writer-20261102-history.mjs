@@ -1,5 +1,6 @@
 // Fixed whole-source successor DATA. The caller independently captures/closes
 // actual source inputs; no parser, binding, type or executable permission here.
+import {capturePhysicalLanguageProducerSourceSuccessor20261104} from './physical-language-output-layout-20261104-history.mjs';
 import {createHash} from 'node:crypto';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {countedLiteralSubstitutionRule} from './counted-literal-substitution-20261102.mjs';
@@ -13,7 +14,7 @@ const PATHS=Object.freeze([
 ]);
 const fail=message=>{throw TypeError('Protected flat writer source succession: '+message);};
 export function captureProtectedFlatWriterSourceSuccessor(capture,path,before){
- if(!PATHS.includes(path))return null;
+ if(!PATHS.includes(path))return capturePhysicalLanguageProducerSourceSuccessor20261104(capture,path,before);
  if(typeof capture!=='function'||typeof before!=='string')fail('complete source-capture operation and predecessor required');
  const raw=capture(BASE+'equations.json').source;
  if(typeof raw!=='string'||Buffer.byteLength(raw)>1048576)fail('bounded complete source equation document required');

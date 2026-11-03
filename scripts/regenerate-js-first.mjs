@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import {captureProducerInputs,planExactProducerOutputs,installExactProducerOutputs} from '../tools/translation/layout-ownership-bulk-20261101.mjs';
+import {captureProducerInputs,installExactProducerOutputs} from '../tools/translation/layout-ownership-bulk-20261101.mjs';
+import {planPhysicalLanguageProducerOutputs20261104 as planExactProducerOutputs} from '../tools/translation/physical-language-output-layout-20261104.mjs';
 import {withOwnedRuntimeImportEdges} from '../tools/translation/js-to-rust/owned-core-source.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';

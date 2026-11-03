@@ -2,8 +2,8 @@
 
 This source batch declares canonical roles across `js/src`, `ts/src`, `rust/src`
 and meta/source assets, and drafts an observed-layout planner for real JS-first
-outputs. It does not close L03/L04/L05: actual producer import/source-history
-adoption, broader receiving/export coverage and verification remain unfinished.
+outputs. It does not close L03/L04/L05: broader receiving/export coverage and verification remain unfinished; actual
+producer import/source-history adoption is now source drafted.
 All execution is UNRUN and CI NOT_INSPECTED. Counts stay12/70 DRAFTED,58 OPEN;
 production coverage remains UNKNOWN. The native source-history graph stays482/276.
 
@@ -62,9 +62,11 @@ Complete source equations retain the original planner and its additive copy.
 Repository-only import substitutions are drafted for both actual callers:
 `scripts/regenerate-js-first.mjs` and `js-to-rust/native-typescript.mjs`. The actual
 artifact builders, source/native checks, compiler emission, installer and CLI
-behavior remain their original implementations. Both import successors remain
-uninstalled; source-history/producer-boundary joins must be adopted before
-claiming working regeneration or export qualification.
+behavior remain their original implementations. Both import successors are now
+installed in source. The existing forward chronology dispatch appends their full
+original-afterimage → physical-import-successor equations. It preserves the old
+fixed archive and originals, old protected flat-writer continuations, and unknown
+coordinate null behavior. Regeneration and export qualification remain unverified.
 
 Independent unrun cases draft nested/standalone wrong-root refusal, fresh exact
 enrollment through the original installer, edited-peer protection, empty receiver
@@ -80,3 +82,29 @@ Language/repository source sequences retain complete intermediate JS CST
 serialization/reparse and exact inverses. The declaration remains separately
 parsed JSON DATA. No source profile, producer, installer, compiler, test or
 CI feedback was executed while authoring these files.
+
+## Producer source adoption
+
+The adoption packet
+`source-profiles/physical-language-output-adoption-20261104/equations.json`
+retains all three complete predecessor/successor/inverse images: both producers
+and the existing source-history dispatch helper. SHA
+`52f7de0dbf0f366a795fa98f5e07b315c473012d825e1ac16d951994866f1f02`,
+181424 bytes. Historical snapshots and archive pins are unchanged. The helper
+keeps its original protected-writer implementation and delegates only the two
+new exact coordinates; every unrelated coordinate still returns null without
+reading the source callback.
+
+The new continuation checks the full fixed packet and original predecessor,
+replays language then repository substitutions with complete intermediate CST
+serialization/reparse and inverse, and compares actual producer and dispatch
+sources through the original caller's capture/closing operation. No result is
+cached across calls. Native parser/type/ownership checks and the original
+installer remain mandatory and unchanged. The metadata declaration never grants
+write permission.
+
+Independent case source covers the actual complete forward chronology, exact
+dispatch joins, both source phases/inverses, unknown path behavior, edited
+producer/dispatch/predecessor/packet refusal and rereading after an earlier
+success. All cases are UNRUN. These source changes advance L03/L04/L05 but do not
+close their complete receiving, publication and physical-tree scope.

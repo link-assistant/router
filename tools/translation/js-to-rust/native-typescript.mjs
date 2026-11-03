@@ -1,4 +1,5 @@
-import {captureProducerInputs,planExactProducerOutputs,installExactProducerOutputs} from '../layout-ownership-bulk-20261101.mjs';
+import {captureProducerInputs,installExactProducerOutputs} from '../layout-ownership-bulk-20261101.mjs';
+import {planPhysicalLanguageProducerOutputs20261104 as planExactProducerOutputs} from '../physical-language-output-layout-20261104.mjs';
 import {ownershipCompilerRuntimeLoad} from './vendor/module-syntax.mjs';
 // Full JavaScript/TypeScript identity lowering through a structured syntax AST.
 // Each meta node records SyntaxKind and children. Only lexical leaf tokens
