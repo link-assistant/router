@@ -55,6 +55,13 @@ are now [source adopted](scalar-helper-total-primitives-adoption-20261103.md).
 All424 previous equations remain, with13 appended:437 equations/273 paths.
 The original no-runtime-call scalar inverse remains unchanged; the new total
 primitive inverse is additive. All execution remains UNRUN.
+The [total primitive reconciliation adapter](copy-scalar-total-primitive-reconciliation-20261103.md)
+now drafts changed-body-only canonical import selection, alias conflict refusal,
+original JS/paired TS import/body composition and complete fresh Rust reproduction.
+It preserves unchanged primitive helpers and the original scalar adapter/API.
+Full two-copy/two-creation CST ancestry and receiving source remain UNRUN.
+No guarded parent changed; graph remains437 equations/273 paths. General helper
+decomposition, interface edits and actual application adoption remain unfinished.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 
