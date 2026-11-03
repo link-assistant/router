@@ -96,7 +96,7 @@ function makeNativeTemporaryDirectory(frame,borrowed,prefix){
  for(const observer of observers)try{observer.close(created);}catch(error){source(error);}
  if(created!==null)try{inspectCreated();}catch(error){source(error);}
  const observed=observeNativeRoots(frame,borrowed,failed,primary);failed=observed.failed;primary=observed.primary;
- if(failed){if(created!==null){retainProtectedSourceDiagnostic('Native temporary directory retained for explicit recovery',{primary,createdDirectory:created,sourceFailed,sourcePrimary});if(primary!==null&&['object','function'].includes(typeof primary)&&!types.isProxy(primary))try{Object.defineProperty(primary,'protectedTemporaryDirectoryRecovery',{value:created,enumerable:true});}catch{}}
+ if(failed){if(created!==null){retainProtectedSourceDiagnostic('Native temporary directory retained for explicit recovery',{primary,secondary:sourceFailed?sourcePrimary:undefined,recoveryPaths:[created]});if(primary!==null&&['object','function'].includes(typeof primary)&&!types.isProxy(primary))try{Object.defineProperty(primary,'protectedTemporaryDirectoryRecovery',{value:created,enumerable:true});}catch{}}
   // Do not delete through a veto or remove an entry that another actor replaced.
   throw primary;
  }return created;

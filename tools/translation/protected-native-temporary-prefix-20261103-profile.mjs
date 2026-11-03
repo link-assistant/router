@@ -8,6 +8,7 @@ import {withCompleteSourceClosingFence} from './complete-source-closing-fence.mj
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
 import {exactSourceHistoryEpoch} from './exact-source-history-epoch-20261103.mjs';
+import {knownExactSourceSuccessor} from './exact-source-successors-20261103.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),PACKET='tools/translation/source-profiles/protected-native-temporary-prefix-20261103/complete-source.json.gz';
 const SHA='6a1c904e8ee4da15c7b8b0ce9762eb022e5f6ab5da6004dfce5af9aef4796eb8';
 const PATHS=['tools/translation/unit-runtime-materialization.mjs','tools/translation/protected-native-writers-20261102.mjs','tools/translation/protected-reviewed-adoption-20261102.mjs','tools/translation/protected-node-evidence-writers-20261103.mjs','scripts/run-node-tests.mjs'];
@@ -30,5 +31,5 @@ export function proposeProtectedNativeTemporaryPrefixSources({root=ROOT}={}){
 }
 export function knownProtectedNativeTemporaryPrefixSuccessor({root=ROOT,path,before}={}){
  if(!PATHS.includes(path)||typeof before!=='string')return null;const row=proposeProtectedNativeTemporaryPrefixSources({root}).files.find(row=>row.path===path);if(row.before!==before)return null;const custody=createOrderedMapCanonicalSourceCustody(root);
- return withCompleteSourceClosingFence(()=>{const current=custody.read(join(root,path));if(current!==row.after)fail('actual fixed current native temporary source differs');const history=exactSourceHistoryEpoch({path,before,after:row.after,current,language:'JavaScript'});return {...history,currentAfter:current,installationEquation:row,laterHistories:[],sourceAuthority:false,semanticAuthority:false,verification:'UNRUN'};},[custody.close]);
+ return withCompleteSourceClosingFence(()=>{const current=custody.read(join(root,path)),later=current===row.after?null:knownExactSourceSuccessor({path,before:row.after},{root});if(current!==row.after&&(!later||later.currentIsTerminal!==true||later.after!==current))fail('actual fixed current native temporary source differs');const history=exactSourceHistoryEpoch({path,before,after:row.after,current,language:'JavaScript'});return {...history,currentAfter:current,installationEquation:row,laterHistories:later?[later]:[],sourceAuthority:false,semanticAuthority:false,verification:'UNRUN'};},[custody.close]);
 }
