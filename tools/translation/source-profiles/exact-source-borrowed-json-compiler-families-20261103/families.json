@@ -1,0 +1,34 @@
+{
+  "schema": "fixed-borrowed-json-compiler-source-family-census-20261103-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-borrowed-json-compiler-families-20261103/index315.before.json.gz",
+    "encodedSha256": "4917d742efd865f52390556b3d09edcae46b3c914ac7452cf0d557e646dac767",
+    "sourceSha256": "9b0509ab9536d561c90f526fec601f0706f02c42abcdd62432c874d9020b6c43",
+    "rows": 315
+  },
+  "families": [
+    {
+      "id": "exact-borrowed-json-compiler-compiler-20261103",
+      "manifest": "tools/translation/source-profiles/borrowed-json-tool-compiler-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "borrowed-json-tool-compiler-source-20261103-v1",
+      "sha256": "92ad73defed114f66762532ce933f35053af754012eadcded0d3968c9076b3af",
+      "rows": 16,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-borrowed-json-compiler-cases-20261103",
+      "manifest": "tools/translation/source-profiles/exact-source-borrowed-json-compiler-families-20261103/joins.json.gz",
+      "kind": "archive",
+      "schema": "borrowed-json-compiler-index-joins-20261103-v1",
+      "sha256": "c2ca8e9ebfd28dbb9b3cb75a578f7b1ab7a018590f033997d6fd03ed2eac3bd7",
+      "rows": 2,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 18,
+  "totalRows": 333,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

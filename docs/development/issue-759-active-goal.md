@@ -54,3 +54,8 @@ claim that the thread's stored state was changed. Root continues the authorized
 source work. The app's user-controlled goal surface must apply the new
 objective and resume automatic continuation. Official lifecycle guidance:
 [Using Goals in Codex](https://developers.openai.com/cookbook/examples/codex/using_goals_in_codex).
+
+The user subsequently set the thread goal to **active**. Automatic continuation
+is enabled again; this supersedes the paused-state observation above. The full
+all70 source-draft objective and every constraint in this document still apply
+to the short stored objective `finish unfinished.`.

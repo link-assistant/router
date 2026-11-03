@@ -1,3 +1,5 @@
+import {borrowedJsonToolReverseOperation,borrowedJsonToolReverseRustCall,borrowedJsonToolReverseDirectRootCall} from '../borrowed-json-tool-20261103-reverse.mjs';
+import {borrowedJsonToolReverseInputPrelude} from '../borrowed-json-tool-20261103-reverse-calls.mjs';
 import {borrowedStandardMapReverseOperation,borrowedStandardMapReverseRustCall} from '../borrowed-standard-map-20261103-reverse.mjs';
 import {borrowedStandardMapReverseInputPrelude} from '../borrowed-standard-map-20261103-reverse-calls.mjs';
 import {orderedTextMapReverseOperation,orderedTextMapReverseRustCall,orderedTextMapReverseTypeWitness,orderedTextMapReverseLifetimeHeader,ORDERED_MAP_REVERSE_TYPESCRIPT_TYPES,ORDERED_MAP_REVERSE_RUST_TYPES} from '../ordered-text-map-callers-20261102-reverse.mjs';import {orderedTextMapReverseInputPrelude,validateOrderedTextMapReverseInputs} from '../ordered-text-map-callers-20261102-reverse-native.mjs';
@@ -158,13 +160,13 @@ export function checkOwnedCoreProgram(program,context){
 export function ownedCoreContext(item){return issued.get(checkOwnedCoreItem(item))?.context;}
 const rustString=value=>'"'+value.replace(/[\\"\x00-\x1f\x7f]/gu,c=>({'\\':'\\\\','"':'\\"','\n':'\\n','\r':'\\r','\t':'\\t'}[c]??'\\u{'+c.codePointAt(0).toString(16)+'}'))+'"';
 const TS_TYPES={...ORDERED_MAP_REVERSE_TYPESCRIPT_TYPES,...primitiveBitwiseTypeScriptTypes,...ownedBase64TypeScriptTypes,...ownedJsonTypeScriptTypes,'json-option-input':'Parameters<typeof __ro_router_core_json_option_as_str>[0]',json:'JsonValue','json-ref':'JsonValue','map-ref':"Extract<JsonValue,{readonly $:'Object'}>['field0']",str:'string',bool:'boolean',usize:'bigint'};
-const RUST_TYPES={'standard-text-map-input':"&'a ::std::collections::BTreeMap<::std::string::String, ::std::string::String>",...ORDERED_MAP_REVERSE_RUST_TYPES,'vec:text-owned':'::std::vec::Vec<::std::string::String>',...primitiveBitwiseRustTypes,...ownedBase64RustTypes,...ownedJsonRustTypes,'json-option-input':"::std::option::Option<&'a crate::translation_core::Json>",json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
+const RUST_TYPES={'borrowed-json-tool-input':"&'a ::serde_json::Value",'standard-text-map-input':"&'a ::std::collections::BTreeMap<::std::string::String, ::std::string::String>",...ORDERED_MAP_REVERSE_RUST_TYPES,'vec:text-owned':'::std::vec::Vec<::std::string::String>',...primitiveBitwiseRustTypes,...ownedBase64RustTypes,...ownedJsonRustTypes,'json-option-input':"::std::option::Option<&'a crate::translation_core::Json>",json:'crate::translation_core::Json','json-ref':"&'a crate::translation_core::Json",'map-ref':"&'a ::serde_json::Map<::std::string::String,crate::translation_core::Json>",str:"&'a str",bool:'bool',usize:'u64'};
 export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const program=checkOwnedCoreProgram(input),rust=target==='rust';if(!rust&&target!=='typescript')fail('unknown target');if(!program.length)return '';
  const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context),rustTypes=sourceData.primitiveOperators===true?{...RUST_TYPES,...primitiveBitwiseRustTypes}:RUST_TYPES;
  if(program.some(item=>issued.get(item).context!==context))fail('mixed receiving contexts');
  let sequence=0;const imports=new Set(),primitiveTypeImports=new Set();
- function publicTypeScriptType(type){if(type==='standard-text-map-input'){imports.add('router_borrowed_text_map_matches_literals');return 'Parameters<typeof __ro_router_borrowed_text_map_matches_literals>[0]';}if(['text-map','text-map-input','text-map-ref','text-pairs-input','text-pairs-owned'].includes(type)||type==='vec:text-owned'&&program.some(item=>item.hostCalls.some(call=>call.name==='router_text_map_keys'))){const witness=orderedTextMapReverseTypeWitness(type);if(!witness)fail('actual map type witness required');imports.add(witness.name);return ORDERED_MAP_REVERSE_TYPESCRIPT_TYPES[type];}if(sourceData.primitiveOperators===true&&primitiveBitwiseType(type)){const row=primitiveBitwiseType(type);primitiveTypeImports.add(row.alias);return row.alias;}if(type==='json-option-input'){imports.add('router_core_json_option_as_str');return TS_TYPES[type];}const witness=ownedJsonReaderTypeWitness(type);if(witness){imports.add(witness);return 'ReturnType<typeof __ro_'+witness+'>';}return TS_TYPES[type];}
+ function publicTypeScriptType(type){if(type==='borrowed-json-tool-input'){imports.add('borrowedJsonToolIsTranslatable');return 'Parameters<typeof __ro_borrowedJsonToolIsTranslatable>[0]';}if(type==='standard-text-map-input'){imports.add('router_borrowed_text_map_matches_literals');return 'Parameters<typeof __ro_router_borrowed_text_map_matches_literals>[0]';}if(['text-map','text-map-input','text-map-ref','text-pairs-input','text-pairs-owned'].includes(type)||type==='vec:text-owned'&&program.some(item=>item.hostCalls.some(call=>call.name==='router_text_map_keys'))){const witness=orderedTextMapReverseTypeWitness(type);if(!witness)fail('actual map type witness required');imports.add(witness.name);return ORDERED_MAP_REVERSE_TYPESCRIPT_TYPES[type];}if(sourceData.primitiveOperators===true&&primitiveBitwiseType(type)){const row=primitiveBitwiseType(type);primitiveTypeImports.add(row.alias);return row.alias;}if(type==='json-option-input'){imports.add('router_core_json_option_as_str');return TS_TYPES[type];}const witness=ownedJsonReaderTypeWitness(type);if(witness){imports.add(witness);return 'ReturnType<typeof __ro_'+witness+'>';}return TS_TYPES[type];}
 
  function expr(value,borrowOwned=false){
   switch(value.kind){
@@ -208,6 +210,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
     const names=value.args.map(()=> '__ro_arg_'+sequence++),bindings=value.args.map((argument,index)=>'let '+names[index]+' = '+expr(argument)+';');
     return '{ '+bindings.join(' ')+' '+ownedAsciiRustCall(value.name,names)+' }';
    }
+   case 'borrowed-json-tool-predicate':{if(!borrowedJsonToolReverseOperation(value.name)||value.type!=='bool'||value.args.length!==1)fail('actual original JSON predicate required');imports.add(value.name);if(!rust)return '__ro_'+value.name+'('+expr(value.args[0])+')';if(value.args[0].kind!=='variable'||value.args[0].type!=='borrowed-json-tool-input')fail('original direct JSON parameter required');return borrowedJsonToolReverseDirectRootCall(value.name,expr(value.args[0]));}
    case 'standard-map-predicate':{
     if(!borrowedStandardMapReverseOperation(value.name)||value.type!=='bool'||value.args.length!==2)fail('actual standard-map predicate required');imports.add(value.name);if(!rust)return '__ro_'+value.name+'('+value.args.map(argument=>expr(argument)).join(', ')+', '+JSON.stringify(value.literals)+')';const names=value.args.map(()=> '__ro_arg_'+sequence++),bindings=value.args.map((argument,index)=>'let '+names[index]+' = '+expr(argument)+';');return '{ '+bindings.join(' ')+' '+borrowedStandardMapReverseRustCall(value.name,names,value.literals)+' }';
    }
@@ -247,23 +250,23 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
    default:fail('unissued expression kind');
   }
  }
- function body(statements,indent){return statements.map(statement=>{
+ function body(statements,indent,tailReturn=false){return statements.map(statement=>{
   const pad=' '.repeat(indent);
   if(statement.kind==='let')return pad+(rust?'let ':'const ')+(rust?rustName(statement.name):statement.name)+' = '+expr(statement.value)+';';
-  if(statement.kind==='return')return pad+'return '+expr(statement.value)+';';
-  return pad+'if '+(rust?'':'(')+expr(statement.cond)+(rust?'':')')+' {\n'+body(statement.then,indent+4)+'\n'+pad+'} else {\n'+body(statement.else,indent+4)+'\n'+pad+'}';
+  if(statement.kind==='return')return pad+(tailReturn?'':'return ')+expr(statement.value)+(tailReturn?'':';');
+  return pad+'if '+(rust?'':'(')+expr(statement.cond)+(rust?'':')')+' {\n'+body(statement.then,indent+4,tailReturn)+'\n'+pad+'} else {\n'+body(statement.else,indent+4,tailReturn)+'\n'+pad+'}';
  }).join('\n');}
  const code=program.map(item=>{
   const rustTypes=item.hostCalls.some(call=>ownedAsciiOperation(call.name))?{...RUST_TYPES,str:"&'a crate::translation_core::Str"}:RUST_TYPES;
-  const borrowed=type=>['json-ref','map-ref','text-map-input','standard-text-map-input','str','bytes-ref','base64-error-ref','json-option-input'].includes(type)||ownedJsonBorrowed(type),loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
+  const borrowed=type=>['json-ref','map-ref','text-map-input','standard-text-map-input','borrowed-json-tool-input','str','bytes-ref','base64-error-ref','json-option-input'].includes(type)||ownedJsonBorrowed(type),loan=borrowed(item.returns),explicit=loan&&item.resultRoot!==null&&item.params.filter(param=>borrowed(param.type)).length>1;
   const mapLifetime=orderedTextMapReverseLifetimeHeader(item);
   const parameters=item.params.map(param=>{
    const type=rust?rustTypes[param.type].replace("'a ",mapLifetime?(param.name===mapLifetime.root?mapLifetime.lifetime:''):explicit&&param.name===item.resultRoot?"'a ":''):publicTypeScriptType(param.type);
    return (rust?param.rust:param.name)+': '+type;
   }).join(', ');
   const returns=rust?rustTypes[item.returns].replace("'a ",mapLifetime?mapLifetime.lifetime:item.resultRoot===null?"'static ":explicit?"'a ":''):publicTypeScriptType(item.returns);
-  const signature=rust?'#[must_use]\n#[rustfmt::skip]\n'+(item.exported?'pub ':'')+'fn '+item.name+(mapLifetime?mapLifetime.binder:explicit?"<'a>":'')+'(':(item.exported?'export ':'')+'function '+item.javascript+'(';
-  return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+(ownedBase64InputPrelude(item,rust)?ownedBase64InputPrelude(item,rust)+'\n':'')+(borrowedStandardMapReverseInputPrelude(item,rust,imports)?borrowedStandardMapReverseInputPrelude(item,rust,imports)+'\n':'')+(orderedTextMapReverseInputPrelude(item,rust,imports)?orderedTextMapReverseInputPrelude(item,rust,imports)+'\n':'')+body(item.body,4)+'\n}';
+  const signature=rust?(item.params.some(parameter=>parameter.type==='borrowed-json-tool-input')?'':'#[must_use]\n#[rustfmt::skip]\n')+(item.exported?'pub ':'')+'fn '+item.name+(mapLifetime?mapLifetime.binder:explicit?"<'a>":'')+'(':(item.exported?'export ':'')+'function '+item.javascript+'(';
+  return signature+parameters+')'+(rust?' -> ':': ')+returns+' {\n'+(ownedBase64InputPrelude(item,rust)?ownedBase64InputPrelude(item,rust)+'\n':'')+(borrowedJsonToolReverseInputPrelude(item,rust,imports)?borrowedJsonToolReverseInputPrelude(item,rust,imports)+'\n':'')+(borrowedStandardMapReverseInputPrelude(item,rust,imports)?borrowedStandardMapReverseInputPrelude(item,rust,imports)+'\n':'')+(orderedTextMapReverseInputPrelude(item,rust,imports)?orderedTextMapReverseInputPrelude(item,rust,imports)+'\n':'')+body(item.body,4,rust&&item.params.some(parameter=>parameter.type==='borrowed-json-tool-input'))+'\n}';
  }).join('\n\n');
  requireOwnedCoreSourceCurrent(context);
  if(rust)return RUST_SUPPORT+'\n\n'+code+'\n';
@@ -272,8 +275,8 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  if(primitiveTypeImports.size){const location=posix.relative(posix.dirname(output),(sourceData.declarationRoot??sourceData.runtimeRoot)+'/primitive-operator-runtime.mjs');lines.push('import type { '+[...primitiveTypeImports].join(', ')+' } from '+JSON.stringify(location.startsWith('.')?location:'./'+location)+';');}
  if(hasOwnedBase64Input(program)||[...imports].some(name=>ownedBase64Operation(name)))lines.push('import type {Base64Error,Base64Result} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
  if(hasOwnedBase64Input(program))lines.push('import {base64ResultInput as __ro_base64ResultInput} from '+JSON.stringify(relative('base64-runtime.mjs'))+';');
- for(const family of ['borrowed-standard-map-20261103-input','borrowed-standard-map-20261102','ordered-text-map-20261102','primitive-operator','json-update','json-macro','base64','json','json-option','string-iterator']){
-  const names=[...imports].filter(name=>(name==='borrowedStandardMapInput'?'borrowed-standard-map-20261103-input':borrowedStandardMapReverseOperation(name)?'borrowed-standard-map-20261102':orderedTextMapReverseOperation(name)?'ordered-text-map-20261102':ownedPrimitiveOperatorOperation(name)?'primitive-operator':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
+ for(const family of ['borrowed-json-tool-20261103-input','borrowed-json-tool-predicate-20261103','borrowed-standard-map-20261103-input','borrowed-standard-map-20261102','ordered-text-map-20261102','primitive-operator','json-update','json-macro','base64','json','json-option','string-iterator']){
+  const names=[...imports].filter(name=>(name==='borrowedJsonToolInput'?'borrowed-json-tool-20261103-input':borrowedJsonToolReverseOperation(name)?'borrowed-json-tool-predicate-20261103':name==='borrowedStandardMapInput'?'borrowed-standard-map-20261103-input':borrowedStandardMapReverseOperation(name)?'borrowed-standard-map-20261102':orderedTextMapReverseOperation(name)?'ordered-text-map-20261102':ownedPrimitiveOperatorOperation(name)?'primitive-operator':ownedAsciiOperation(name)?'string-iterator':ownedJsonOptionalReaderOperation(name)?'json-option':ownedBase64Operation(name)?'base64':ownedJsonReaderOperation(name)?'json':name.startsWith('json_macro_')?'json-macro':'json-update')===family);
   if(names.length)lines.push('import { '+names.map(name=>name+' as __ro_'+name).join(', ')+' } from '+JSON.stringify(relative(family+'-runtime.mjs'))+';');
  }
  return lines.join('\n')+'\n\n'+code+'\n';
@@ -325,13 +328,14 @@ export async function prepareOwnedCoreRuntime(input){
  if(hasOwnedBase64Input(program)||program.some(item=>item.hostCalls.some(call=>ownedBase64Operation(call.name))))modules.base64=await import('../base64-runtime.mjs');
  if(program.some(item=>item.hostCalls.some(call=>ownedAsciiOperation(call.name))))modules.ascii=await import('../extensions/string-iterator-runtime.mjs');
  if(program.some(item=>item.params.some(parameter=>['text-map-input','text-pairs-input'].includes(parameter.type))||item.hostCalls.some(call=>orderedTextMapReverseOperation(call.name))))modules.orderedMap=await import('../ordered-text-map-20261102-runtime.mjs');
+ if(program.some(item=>item.params.some(parameter=>parameter.type==='borrowed-json-tool-input')||item.hostCalls.some(call=>borrowedJsonToolReverseOperation(call.name)))){modules.borrowedJson=await import('../borrowed-json-tool-predicate-20261103-runtime.mjs');modules.borrowedJsonInput=await import('../borrowed-json-tool-20261103-input-runtime.mjs');}
  if(program.some(item=>item.params.some(parameter=>parameter.type==='standard-text-map-input')||item.hostCalls.some(call=>borrowedStandardMapReverseOperation(call.name)))){modules.standardMap=await import('../borrowed-standard-map-20261102-runtime.mjs');modules.standardMapInput=await import('../borrowed-standard-map-20261103-input-runtime.mjs');}
  checkOwnedCoreProgram(program);const token=Object.freeze({schema:'owned-core-runtime-v1'});runtimes.set(token,{program,modules});return token;
 }
 export function evaluateOwnedCoreProgram(input,name,args,token){
  const program=checkOwnedCoreProgram(input),state=runtimes.get(token);if(!state||!isDeepStrictEqual(state.program,program))fail('unissued runtime/program');
  const item=program.find(item=>item.name===name||item.javascript===name),hasMapCalls=program.some(item=>item.hostCalls.some(call=>orderedTextMapReverseOperation(call.name)));let mapEvaluationNodes=0;if(!item||!Array.isArray(args)||args.length!==item.params.length)fail('actual arguments differ');
- const env=ownedBase64InputEnvironment(item.params,args,state.modules);validateOrderedTextMapReverseInputs(item,env,state.modules);for(const parameter of item.params)if(parameter.type==='standard-text-map-input'){if(!state.modules.standardMapInput)fail('unissued standard-map input runtime');state.modules.standardMapInput.borrowedStandardMapInput(env.get(parameter.name));}
+ const env=ownedBase64InputEnvironment(item.params,args,state.modules);validateOrderedTextMapReverseInputs(item,env,state.modules);for(const parameter of item.params)if(parameter.type==='borrowed-json-tool-input'){if(!state.modules.borrowedJsonInput)fail('unissued original JSON input runtime');state.modules.borrowedJsonInput.borrowedJsonToolInput(env.get(parameter.name));}for(const parameter of item.params)if(parameter.type==='standard-text-map-input'){if(!state.modules.standardMapInput)fail('unissued standard-map input runtime');state.modules.standardMapInput.borrowedStandardMapInput(env.get(parameter.name));}
  const get=(value,scope)=>{if(hasMapCalls&&++mapEvaluationNodes>100000)fail('complete expanded map source work bound');
   switch(value.kind){
    case 'variable':return scope.get(value.name);
@@ -343,6 +347,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
    case 'json-array':return state.modules.macro.json_macro_array(value.items.map(child=>get(child,scope)));
    case 'json-object':return state.modules.macro.json_macro_object(value.entries.map(entry=>[entry.key,get(entry.value,scope)]));
    case 'ascii-call':{if(!state.modules.ascii||!ownedAsciiOperation(value.name))fail('unissued ASCII runtime');return Reflect.apply(state.modules.ascii[value.name],undefined,value.args.map(value=>get(value,scope)));}
+   case 'borrowed-json-tool-predicate':{if(!borrowedJsonToolReverseOperation(value.name)||!state.modules.borrowedJson)fail('unissued original JSON runtime');const input=get(value.args[0],scope);return Reflect.apply(state.modules.borrowedJson[value.name],undefined,[input]);}
    case 'standard-map-predicate':{if(!borrowedStandardMapReverseOperation(value.name)||!state.modules.standardMap)fail('unissued standard-map runtime');const map=get(value.args[0],scope),key=get(value.args[1],scope);return Reflect.apply(state.modules.standardMap[value.name],undefined,[map,key,value.literals]);}
    case 'ordered-map-call':{const op=orderedTextMapReverseOperation(value.name);if(!op||!state.modules.orderedMap)fail('unissued opaque map runtime');return Reflect.apply(state.modules.orderedMap[value.name],undefined,value.args.map(argument=>get(argument,scope)));}
    case 'base64-call':{const op=ownedBase64Operation(value.name);if(!op||!state.modules.base64)fail('unissued base64 runtime');return Reflect.apply(state.modules.base64[value.name],undefined,value.args.map(value=>get(value,scope)));}
@@ -365,7 +370,7 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
 // GENERATED: bounded independent owned-core batch evaluation.
 function evaluateOwnedCorePrepared(program,name,args,state){
  const item=program.find(item=>item.name===name||item.javascript===name),hasMapCalls=program.some(item=>item.hostCalls.some(call=>orderedTextMapReverseOperation(call.name)));let mapEvaluationNodes=0;if(!item||!Array.isArray(args)||args.length!==item.params.length)fail('actual arguments differ');
- const env=ownedBase64InputEnvironment(item.params,args,state.modules);validateOrderedTextMapReverseInputs(item,env,state.modules);for(const parameter of item.params)if(parameter.type==='standard-text-map-input'){if(!state.modules.standardMapInput)fail('unissued standard-map input runtime');state.modules.standardMapInput.borrowedStandardMapInput(env.get(parameter.name));}
+ const env=ownedBase64InputEnvironment(item.params,args,state.modules);validateOrderedTextMapReverseInputs(item,env,state.modules);for(const parameter of item.params)if(parameter.type==='borrowed-json-tool-input'){if(!state.modules.borrowedJsonInput)fail('unissued original JSON input runtime');state.modules.borrowedJsonInput.borrowedJsonToolInput(env.get(parameter.name));}for(const parameter of item.params)if(parameter.type==='standard-text-map-input'){if(!state.modules.standardMapInput)fail('unissued standard-map input runtime');state.modules.standardMapInput.borrowedStandardMapInput(env.get(parameter.name));}
  const get=(value,scope)=>{if(hasMapCalls&&++mapEvaluationNodes>100000)fail('complete expanded map source work bound');
   switch(value.kind){
    case 'variable':return scope.get(value.name);
@@ -377,6 +382,7 @@ function evaluateOwnedCorePrepared(program,name,args,state){
    case 'json-array':return state.modules.macro.json_macro_array(value.items.map(child=>get(child,scope)));
    case 'json-object':return state.modules.macro.json_macro_object(value.entries.map(entry=>[entry.key,get(entry.value,scope)]));
    case 'ascii-call':{if(!state.modules.ascii||!ownedAsciiOperation(value.name))fail('unissued ASCII runtime');return Reflect.apply(state.modules.ascii[value.name],undefined,value.args.map(value=>get(value,scope)));}
+   case 'borrowed-json-tool-predicate':{if(!borrowedJsonToolReverseOperation(value.name)||!state.modules.borrowedJson)fail('unissued original JSON runtime');const input=get(value.args[0],scope);return Reflect.apply(state.modules.borrowedJson[value.name],undefined,[input]);}
    case 'standard-map-predicate':{if(!borrowedStandardMapReverseOperation(value.name)||!state.modules.standardMap)fail('unissued standard-map runtime');const map=get(value.args[0],scope),key=get(value.args[1],scope);return Reflect.apply(state.modules.standardMap[value.name],undefined,[map,key,value.literals]);}
    case 'ordered-map-call':{const op=orderedTextMapReverseOperation(value.name);if(!op||!state.modules.orderedMap)fail('unissued opaque map runtime');return Reflect.apply(state.modules.orderedMap[value.name],undefined,value.args.map(argument=>get(argument,scope)));}
    case 'base64-call':{const op=ownedBase64Operation(value.name);if(!op||!state.modules.base64)fail('unissued base64 runtime');return Reflect.apply(state.modules.base64[value.name],undefined,value.args.map(value=>get(value,scope)));}

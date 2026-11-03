@@ -1,3 +1,4 @@
+import {borrowedJsonToolTypeKey} from './borrowed-json-tool-20261103-native-types.mjs';
 import {orderedTextMapOpaqueTypeKey} from './ordered-text-map-callers-20261102-native-types.mjs';
 // Keep the pinned portable primitives and refine only source-sized arrays.
 export * from './vendor/meta-language/translation/types.js';
@@ -11,7 +12,7 @@ export function fixedArrayLength(type) {
   return length;
 }
 import {borrowedStandardTextMapTypeKey} from './borrowed-standard-map-20261103-native-types.mjs';
-export function typeKey(type) {const standardMap=borrowedStandardTextMapTypeKey(type);if(standardMap!==null)return standardMap;const opaque=orderedTextMapOpaqueTypeKey(type);if(opaque!==null)return opaque;
+export function typeKey(type) {const json=borrowedJsonToolTypeKey(type);if(json!==null)return json;const standardMap=borrowedStandardTextMapTypeKey(type);if(standardMap!==null)return standardMap;const opaque=orderedTextMapOpaqueTypeKey(type);if(opaque!==null)return opaque;
   if(type.kind==='array') {
     const length=fixedArrayLength(type);
     return `${length===null?'array':`fixed-array:${length}`}:${typeKey(type.element)}`;

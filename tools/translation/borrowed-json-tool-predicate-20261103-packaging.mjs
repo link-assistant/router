@@ -20,3 +20,13 @@ export function borrowedJsonToolPredicateRuntimeAssets({root=ROOT}={}){
   }return files;
  },[capture.close]);
 }
+
+// Additive compiler asset cohort; original two-asset API remains unchanged.
+export function borrowedJsonToolCompilerRuntimeAssets({root=ROOT}={}){
+ const capture=createReconcileSourceCapture(root);
+ return withCompleteSourceClosingFence(()=>{
+  const files=new Map();for(const [suffix,language] of [['mjs','JavaScript'],['d.mts','TypeScript'],['input.mjs','JavaScript'],['input.d.mts','TypeScript']]){
+   const name=suffix.startsWith('input.')?'borrowed-json-tool-20261103-input-runtime.'+suffix.slice(6):'borrowed-json-tool-predicate-20261103-runtime.'+suffix,source=capture.capture('tools/translation/'+name).source;need(typeof source==='string','complete original borrowed JSON runtime asset required');const concrete=transportConcreteSyntaxSource(source,{language});need(concrete.source===source&&transportConcreteSyntaxMeta(concrete.meta).source===source,'complete borrowed JSON runtime CST differs');files.set('runtime/'+name,source);
+  }return files;
+ },[capture.close]);
+}

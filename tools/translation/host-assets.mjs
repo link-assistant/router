@@ -1,4 +1,4 @@
-import {borrowedJsonToolPredicateRuntimeAssets,relocateBorrowedJsonRuntimeSource,appendBorrowedJsonFacadeDeclaration} from './borrowed-json-tool-predicate-20261103-packaging.mjs';
+import {borrowedJsonToolPredicateRuntimeAssets,borrowedJsonToolCompilerRuntimeAssets,relocateBorrowedJsonRuntimeSource,appendBorrowedJsonFacadeDeclaration} from './borrowed-json-tool-predicate-20261103-packaging.mjs';
 import {borrowedStandardMapRuntimeAssets} from './borrowed-standard-map-20261103-packaging.mjs';import {orderedTextMapCallerRuntimeAssets} from './ordered-text-map-callers-20261102-packaging.mjs';
 import {jsonRetentionRuntimeAssets} from './json-retention-runtime-assets.mjs';
 import {readFileSync} from 'node:fs';
@@ -10,7 +10,7 @@ export function hostRuntimeAssets() {
   const types=program.declarations,aliases=typeScriptAliases(types);
   const files=new Map();for(const [path,source]of orderedTextMapCallerRuntimeAssets())files.set(path.slice('runtime/'.length),source);
   for(const [path,source]of borrowedStandardMapRuntimeAssets())files.set(path.slice('runtime/'.length),source);
-  for(const [path,source]of borrowedJsonToolPredicateRuntimeAssets())files.set(path.slice('runtime/'.length),source);
+  for(const [path,source]of borrowedJsonToolCompilerRuntimeAssets())files.set(path.slice('runtime/'.length),source);
   files.set('string-bytes-runtime.mjs',readFileSync(new URL('./extensions/string-bytes-runtime.mjs',import.meta.url),'utf8'));
   files.set('string-bytes-runtime.d.mts','export declare function stringBytes(value: string): IterableIterator<bigint>;\n');
   files.set('reverse-string-runtime.mjs',readFileSync(new URL('./extensions/reverse-string-runtime.mjs',import.meta.url),'utf8'));
@@ -102,7 +102,7 @@ export function hostRuntimeAssetsNamedDataAliases() {
   const namedAliases=new Set([...types].filter(([,entry])=>entry.k==='data').map(([name])=>name));
   const files=new Map();for(const [path,source]of orderedTextMapCallerRuntimeAssets())files.set(path.slice('runtime/'.length),source);
   for(const [path,source]of borrowedStandardMapRuntimeAssets())files.set(path.slice('runtime/'.length),source);
-  for(const [path,source]of borrowedJsonToolPredicateRuntimeAssets())files.set(path.slice('runtime/'.length),source);
+  for(const [path,source]of borrowedJsonToolCompilerRuntimeAssets())files.set(path.slice('runtime/'.length),source);
   files.set('string-bytes-runtime.mjs',readFileSync(new URL('./extensions/string-bytes-runtime.mjs',import.meta.url),'utf8'));
   files.set('string-bytes-runtime.d.mts','export declare function stringBytes(value: string): IterableIterator<bigint>;\n');
   files.set('reverse-string-runtime.mjs',readFileSync(new URL('./extensions/reverse-string-runtime.mjs',import.meta.url),'utf8'));

@@ -540,3 +540,53 @@ The complete source cohort through9f9105ec1074f006d6f439650d6ba9d8aa4adeac is co
 The user clarified that unfinished translation and11/70 source receipts mean continue bulk drafting, and explicitly requires working until all70 requirements are drafted. The subsequent request is to update and re-enable the thread goal. The manager currently reports old objective finish unfinished. as paused. Available goal tools cannot edit/resume an unfinished goal, and it must not be falsely marked complete to replace it. The exact desired objective and durable constraints are now recorded in issue-759-active-goal.md. Root continues source work alone; checkpoints are not stopping conditions. Automatic continuation still needs the app's user-controlled goal resume surface. This is a goal-control limitation, not a source-work blocker or a completion claim.
 
 The current uncommitted application batch drafts a private unrestricted JSON input kind, genuine native/Cargo/source context, qualified parser/checker calls, whole bool-only direct-root flow, both semantic-meta readers, emitter/type/ownership hooks, invocation-local source requalification and all five original project entrypoints. Both original reverse source readers, emitters and ordinary/batch evaluators are being connected to the same operation. Independent cases, full source ancestry/current-profile joins, receiving and source review are still being drafted. No tests, compilation or CI feedback inspection occurred; do not mistake these pending sources for a closed checklist row.
+
+## Active goal and borrowed JSON compiler source checkpoint — around09:10UTC
+
+The user has explicitly reenabled the thread goal; its authoritative state is
+now active. The all70 objective in issue-759-active-goal.md applies to its short
+stored objective. Previous status-only turns did not advance implementation;
+this continuation authored actual compiler/source/case changes. Root remains
+alone and checkpoints are not completion or stopping conditions.
+
+The pending JSON batch now connects actual native/Cargo/source context and
+private shared types to the original forward parser/checker/emitter, ownership,
+both regular/flat meta readers, all five project entrypoints, both reverse
+source readers/emitters and ordinary/batch evaluators. Source review found
+deferred project lowering would outlive the new invocation-local facts. The
+additive withBorrowedJsonToolProject API keeps actual compilation, metadata
+requalification and deferred consumers inside one live original source scope.
+Original entrypoints remain. Cleanup expires new types, checked-call metadata
+and caller records on every outer exit; every close/cleanup runs and exact
+falsy/frozen primaries remain. Same-Map reverse nesting shares only the current
+live native receipt, rejoins all inputs and clears it on exit. No verdict cache
+crosses operations. A caught source veto is sticky, ordinary exceptions are not.
+
+Independent source-only cases now cover those lifetimes/refusals, actual unknown,
+imported Parameters and JSDoc reverse witnesses, both original receiving paths,
+whole native source input, Unicode/large names, null/missing fallback, forged
+meta/types, source mutation, target reanalysis and all five whole-project modes.
+All are UNRUN. No test, compiler, translator, preparer, SDK install, Rust command
+or CI/status/log/artifact/review inspection occurred. Native invocation/sysroot,
+runtime/native parity, full roundtrip and complete corpus/source freshness remain
+unqualified. See borrowed-json-tool-compiler-20261103.md for precise boundaries.
+
+Complete source packet SHA92ad73defed114f66762532ce933f35053af754012eadcded0d3968c9076b3af
+retains16 actual parent equations,17 created modules/cases and six full original
+module copies/inverses. Current source index preserves all original315 rows and
+adds18 complete compiler/prior-case equations,36 images and1781050 source bytes:
+333 equations/239 paths. Index SHA2aadf095e79e994c34a089524c0f13a877dd79c5606b08dd33ea5dd88904c299;
+census SHAaebeb77cf1a77dbf2d5536dbbd5a0cdee98c7a5bd12f2e722a592a4436392806;
+controls SHAdbf7aaceb93baf538b5edbfa7d0cfe5b9ce9b5ef3b6e011b53dee89e0106375f.
+Engine315→333 is outside its own hashed graph, with complete prior domains and
+case sources retained. No source count supplies private semantic or coverage
+authority. The dedicated complete-source adoption/index cases are also UNRUN.
+
+Checklist remains11/70 DRAFTED,59 OPEN. Full function/writer denominators and
+executable coverage remain UNKNOWN. Next source work must finish remaining
+JSON whole-caller domain nuances (including explicit lifetimes, independent
+Rust→JS→Rust receiving and old-domain non-narrowing), then common operation
+families and complete acceptance receipts. Do not stop at this checkpoint.
+Last disk observation45GiB free; no new dependency/build trees. Temporary
+original-before snapshots/authoring recipes remain until this coherent cohort
+is committed; complete source archives/images must be retained.
