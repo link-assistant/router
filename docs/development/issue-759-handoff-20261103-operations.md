@@ -9,6 +9,23 @@ are authorized during this drafting phase. All new execution UNRUN; CI
 NOT_INSPECTED. Source reading/writing, lightweight DATA authoring and SCM remain
 allowed. Preserve all eight same-SHA JavaScript gates before fatal Rust CI.
 
+Latest shared loop source batch:
+[fixed-width counted ranges](width-counted-ranges-draft-20261104.md) copies the
+complete actual counted-loop checker and extends its bound domain to all ten
+native integer widths plus original usize. Six complete outcome/cancellation/
+text-vector/join reader import proposals retain every original private check.
+They are uninstalled pending complete source/history adoption; old helper/API
+remains unchanged. Existing for-range emission, both interpreters, abrupt exits
+and canonical inverse forms remain the original paths. Full six-family direct
+JS/strict TS/interpreter/typed/inverse/refusal case source and ten independently
+written native width-boundary oracle tests are drafted, all UNRUN. Native tests
+use the existing Rust target and remain gated after all same-SHA JS stages.
+Packet SHA7de9bcc926672790f381ee8de0b9751d9f24e976b381f83b9b05d87936ef1fd1
+(713299 compressed bytes) retains6reader/1copy/2creation/1Rust-oracle full source
+equations and serialized/reparsed JS/Rust CST inverses. Hot graph499/277 and
+original512 cap unchanged; counts12/70 DRAFTED,58 OPEN. No local execution,
+compiler/parser/preparer trials, installs or CI/review inspection occurred.
+
 Latest source adoption: both mutable scalar reader proposals and their complete
 nine-input ordered fence are now installed, with chronological old-case joins.
 See [the source receipt](ordered-mutable-scalars-adoption-20261104.md). The exact

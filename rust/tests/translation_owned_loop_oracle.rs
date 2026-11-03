@@ -85,3 +85,57 @@ fn original_reversed_ranges_preserve_inclusive_extrema_and_source_item_order() {
     assert_eq!((0_u64..=0_u64).rev().collect::<Vec<_>>(),vec![0_u64]);
     assert_eq!((i64::MIN..=i64::MIN).rev().collect::<Vec<_>>(),vec![i64::MIN]);
 }
+
+// Independent fixed-width range expectations; Rust executes only in gated CI.
+macro_rules! fixed_width_counted_range_oracle {
+    ($case:ident, $width:ty) => {
+        #[test]
+        fn $case() {
+            fn ascending(lower: $width, upper: $width) -> core::Json {
+                let mut result = json!([]);
+                for index in lower..upper {
+                    if index == lower { continue; }
+                    result = state::json_append(result, json!(null));
+                    break;
+                }
+                result
+            }
+            fn descending(lower: $width, upper: $width) -> core::Json {
+                let mut result = json!([]);
+                for index in (lower..=upper).rev() {
+                    if index == upper { continue; }
+                    result = state::json_append(result, json!(null));
+                    break;
+                }
+                result
+            }
+            fn early(lower: $width, upper: $width) -> core::Json {
+                for index in lower..upper { if index == lower { return json!(null); } }
+                json!([])
+            }
+            let low = <$width>::MIN;
+            let high = <$width>::MAX;
+            assert_eq!(ascending(low, low), json!([]));
+            assert_eq!(ascending(high, low), json!([]));
+            assert_eq!(ascending(low, low + 1), json!([]));
+            assert_eq!(ascending(low, low + 2), json!([null]));
+            assert_eq!(ascending(high - 2, high), json!([null]));
+            assert_eq!(descending(low, low), json!([]));
+            assert_eq!(descending(high, low), json!([]));
+            assert_eq!(descending(low, low + 1), json!([null]));
+            assert_eq!(descending(high - 1, high), json!([null]));
+            assert_eq!(early(low, low), json!([]));
+            assert_eq!(early(low, low + 1), json!(null));
+        }
+    };
+}
+fixed_width_counted_range_oracle!(counted_ranges_u8, u8);
+fixed_width_counted_range_oracle!(counted_ranges_i8, i8);
+fixed_width_counted_range_oracle!(counted_ranges_u16, u16);
+fixed_width_counted_range_oracle!(counted_ranges_i16, i16);
+fixed_width_counted_range_oracle!(counted_ranges_u32, u32);
+fixed_width_counted_range_oracle!(counted_ranges_i32, i32);
+fixed_width_counted_range_oracle!(counted_ranges_u64, u64);
+fixed_width_counted_range_oracle!(counted_ranges_i64, i64);
+fixed_width_counted_range_oracle!(counted_ranges_u128, u128);
+fixed_width_counted_range_oracle!(counted_ranges_i128, i128);
