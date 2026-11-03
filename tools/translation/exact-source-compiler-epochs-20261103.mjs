@@ -27,7 +27,10 @@ export function knownExactSourceCompilerEngineEpoch({root=ROOT,before,current,re
   const chain=[original,cold,after];
   if(current!==after){const latest=custody.read(join(root,'tools/translation/source-profiles/exact-source-current-families-20261103/engine.after.txt'));if(hash(latest)!=='54007cd41b86cfe0cc380ef5a42903f1d607a6598cd217844723b8740ad25791')throw TypeError('Fixed complete current-family engine source differs');chain.push(latest);
    // Preserve the original282 root domain without requiring a newer companion.
-   if(current!==latest){const temporary=custody.read(join(root,'tools/translation/source-profiles/exact-source-temporary-families-20261103/engine.after.txt'));if(hash(temporary)!=='3b973f21fb906142e015fc2c8222e772fd2520a0d7e9de900cd3c80bf83db9dd')throw TypeError('Fixed complete native-temporary engine source differs');chain.push(temporary);}
+   if(current!==latest){const temporary=custody.read(join(root,'tools/translation/source-profiles/exact-source-temporary-families-20261103/engine.after.txt'));if(hash(temporary)!=='3b973f21fb906142e015fc2c8222e772fd2520a0d7e9de900cd3c80bf83db9dd')throw TypeError('Fixed complete native-temporary engine source differs');chain.push(temporary);
+    // A root still at292 needs no later JSON packaging source companion.
+    if(current!==temporary){const json=custody.read(join(root,'tools/translation/source-profiles/exact-source-json-packaging-families-20261103/engine.after.txt'));if(hash(json)!=='5018c06d2607e4c7d8f8b0121367a299e575b7186f3eec0db8a2eab71f8a7ee4')throw TypeError('Fixed complete JSON packaging engine source differs');chain.push(json);}
+   }
   }
   const first=chain.indexOf(before),last=chain.indexOf(current);
   if(first<0||last<2||first>last||custody.read(join(root,ENGINE))!==current)return null;
