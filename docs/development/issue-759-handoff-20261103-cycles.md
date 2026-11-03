@@ -1,5 +1,9 @@
 # Issue759/772 continuing source draft — 2026-11-03 local
 
+Current continuation state is in the
+[operation-source handoff](issue-759-handoff-20261103-operations.md).
+The entries below retain historical intermediate states; Root now works alone.
+
 Continue in the shared integration worktree
 `.worktrees/issue-759-storage-repair-20261021`, branch
 `issue-772-translator-throughput`, draft PR775. Root is the sole publisher and

@@ -138,3 +138,5 @@ export {proposeExactBorrowedPredicateSourceIndex,withExactBorrowedPredicateSourc
 export {proposeExactBorrowedPredicateControlSources} from './exact-source-borrowed-predicate-controls-20261103.mjs';
 export {PRIMITIVE_COLLECTION_DOMAINS,primitiveCollectionOperationShape,primitiveCollectionDeclarationType,emitPrimitiveCollectionDeclarations} from './primitive-collection-operation-descriptions-20261103.mjs';
 export {proposePrimitiveCollectionDescriptionSources} from './primitive-collection-descriptions-20261103-profile.mjs';
+export {VECTOR_LITERAL_MAX_SOURCE_ARGUMENTS,vectorOperationShape,emitVectorOperationDeclarations} from './vector-operation-descriptions-20261103.mjs';
+export {proposeVectorOperationDescriptionSources} from './vector-operation-descriptions-20261103-profile.mjs';

@@ -1,0 +1,85 @@
+# Issue759/772 operation-source drafting handoff
+
+Continue the active [all70 source-draft goal](issue-759-active-goal.md) in
+`.worktrees/issue-759-storage-repair-20261021`, branch
+`issue-772-translator-throughput`, draft PR775. Root works alone and is the sole
+publisher. No replacement workers, tests, compilation, Rust tools/hooks,
+translator/preparer/parser trials, benchmarks, installs or CI feedback inspection
+are authorized during this drafting phase. All new execution UNRUN; CI
+NOT_INSPECTED. Source reading/writing, lightweight DATA authoring and SCM remain
+allowed. Preserve all eight same-SHA JavaScript gates before fatal Rust CI.
+
+Accounting remains **12/70 DRAFTED,58 OPEN** in the
+[authoritative checklist](issue-759-draft-checklist.md). The full production
+function denominator and executable translation coverage remain UNKNOWN.
+Open IDs: L01–L05; R01–R04; C01–C05; O01–O05; B01–B05; F01–F05; V01–V05;
+S01–S05; P01–P05; T01–T05; Q01/Q02/Q04; J04; E01–E05. Continue drafting
+actual unfinished clauses; partial operation counts do not close parent rows.
+The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
+all old source history and its historical intermediate states.
+
+## Current source and publication
+
+Latest published checkpoint is4c2745c1bea50590151f9b42bfa0d9d35380ca07,
+2026-11-03 about11:10UTC. The next ordinary source publication target is14:10UTC.
+Standing push/PR-update authorization persists; do not ask again. During drafting
+publish coherent source checkpoints about every three hours without reading CI
+or review feedback. Commit coherent source at least every six hours, with Rust
+hooks disabled. This checkpoint cadence does not certify verification.
+
+Last local committed predecessor for this cohort is
+6fd50d8cba10bd82ea54e49b3affb32e37bc60d7. It drafts the121-row primitive
+collection description implementation and four-parent proposal. The preceding
+e109b48035ae460a8836759736cf848189cd3efb actually source-installs shared
+descriptions in both borrowed predicate adapter families and adds complete
+invocation-local source restrictions to the original private ABI operations.
+Every corresponding execution remains UNRUN. The current cohort is the linked
+20-wrapper vector description source below; find its exact commit through SCM.
+
+Hot source graph:361equations/256paths, all original347 equations preserved.
+Index SHA0440b3521451aed8335aaf5473dd0c66c9483c838a5ccc33966d1551d8128d69;
+engine SHA021ecb81e92cfe42da36fc3c462db212b8f014d4b37f5e75cc25f7e291d63533.
+The separate engine chronology preserves all original source images and old-root
+domains. No index/engine change is made by the current pending proposals.
+
+## Pending combined collection adoption
+
+1. [Primitive collection descriptions](primitive-collection-shared-descriptions-20261103.md):
+   existing33 slice and88 primitive vector rows; four complete source parents.
+   Packet SHA586764a3b8ae9f0103ebbe4acab52be15dd219893317f338ceb1ead86539da4a.
+2. [Owning-text/literal descriptions](vector-shared-descriptions-20261103.md):
+   existing8 owning-text methods and12 literal wrappers; six complete parents.
+   Packet SHAf8cef57db294762e326d4e6358f83d9f8877c8283ffa2eb9d4afbb43eee91a46.
+
+Both use actual registered language/repository source rules with complete
+original/intermediate/final CST and inverse replay. Together the141 existing
+operation descriptions target five real candidate modules and five unchanged
+strict declaration modules. Their implementation creation images are retained
+independently; public candidate APIs and original private proof checks remain.
+All APIs are exported from `tools/translation/bulk-source-family-proposals.mjs`.
+
+Independent case source uses explicit native signature/role/path/limit
+expectations, compares the original candidate APIs and entire declaration bytes,
+preserves all native type/optional witness exports, and covers result isolation,
+unknown input/domain/name refusal and stale/mixed/inverse source replay. The
+literal cases cover all780 wrapper/arity combinations, preserving64/4096 bounds,
+signed zero and owning String clone behavior without primitive Copy permission.
+No expected result depends on the new descriptor's verdict or a future wrapper.
+
+Next draft a single combined actual source adoption and full source-successor
+dependency closure; retain every old source image and original limits/deadlines.
+Keep original private native/source/caller/type/move/loan checks and actual full
+forward/reverse receiving. Do not fake completion by using unguarded copied
+adapters or counting descriptor rows as executable functions. The combined
+adoption and receiving source remain unfinished, R04 stays OPEN and all checks
+are UNRUN. Then continue the other remaining58 full acceptance bundles.
+
+## Resources and continuation
+
+Latest filesystem observation was about52GiB free. No new build/worktree or
+dependency tree was created; task-only authoring scratch files can be retired
+after their complete implementation/packet/SCM source is retained. Retain the
+new361-index authoring metadata as needed for source handoff, but do not rerun
+the old recipes against a newer baseline. All older packets remain immutable.
+Root remains active on the full objective; this document is a continuation
+checkpoint, not draft completion, a pause or a verification result.

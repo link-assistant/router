@@ -59,3 +59,7 @@ The user subsequently set the thread goal to **active**. Automatic continuation
 is enabled again; this supersedes the paused-state observation above. The full
 all70 source-draft objective and every constraint in this document still apply
 to the short stored objective `finish unfinished.`.
+
+Current source/publication/pending-adoption state is recorded in the
+[operation-source handoff](issue-759-handoff-20261103-operations.md); the earlier
+cycle journals retain their historical intermediate observations.

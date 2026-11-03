@@ -320,3 +320,9 @@ existing slice and88 owned-vector operation rows. Its whole-parent proposal
 preserves both original candidate APIs, declarations and private proof
 boundaries. Source-generation scope is separate from qualified installation,
 actual receiving and production executable coverage; these remain unfinished.
+
+The [owning-text/literal cohort](vector-shared-descriptions-20261103.md) adds
+contract-driven candidate/declaration source proposals for eight owning-text
+methods and twelve literal wrappers. Original64/4096 bounds and String clone
+semantics remain distinct from primitive Copy. Batch its actual adoption with
+the preceding collection cohort; every new receiving execution remains UNRUN.
