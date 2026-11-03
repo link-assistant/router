@@ -750,3 +750,52 @@ Rust tools, installs or CI/status/log/artifact/review feedback inspection ran.
 Root continues alone. Next ordinary source publication remains around12:16UTC;
 the last pushed head is0fa9f43c12918234ebf86db61e7a131eef8bb941. Newer lifetime,
 scope and context source commits await that coordinated checkpoint.
+
+## Registered discovery, dependency composition and complete source replay
+
+The previous source-context cohort is committed as
+82912b36654b1aa63cc9daffa05b59ded37b1fb7. This continuation adds an actual
+reusable rule registry over the unchanged original two-phase runner. It handles
+source inspection, explicit roots, transitive prerequisites, stable topological
+order, optional before/after ordering, conflicts/exclusive labels, missing
+registrations, cycles and impossible repository-before-language dependencies.
+All declaration/ref/selection payloads are bounded own DATA; callbacks remain
+synchronous. Descriptions/discovery are DATA and never source/type/body permits.
+Ready rules use an index heap, without repeated whole-list sorts or quadratic
+phase-barrier edges. No source/context/owner/result/verdict cache is added.
+
+The companion concrete-source registry keeps original source and earlier
+proposals immutable while each selected rule plans edits. The actual original
+nested-template composer refuses dropped, duplicated, crossing or stale child
+references. Complete actual CST serialization/reparse/substitution retains all
+three language before/after/inverse histories. Forward replay and exact inverse
+restore accept only a whole original/final cohort, are idempotent and reissue
+complete retained/current source histories; mixed/stale/wrong-language cohorts
+and altered retained CST refuse. No writer/installer or semantic issuer is added.
+
+The actual complete scope driver now discovers its language collector dependency
+from its repository reconciliation root, retaining the old actual phase/ID
+trace and private original collector behavior. New cases also discover/adopt a
+full actual openai_tools.rs caller, compose a boolean-local body and a nested
+input comment, compile the complete original Router/Cargo source universe and
+receive the actual emitted JS/TS in both reverse compilers. Independent expected
+tool vectors and a once-only native predicate call are drafted. Existing actual
+application Rust oracle source stays gated-CI evidence; no fabricated Rust port
+of this JS compiler orchestration is needed.
+
+Registry, source-replay, actual Router/collector receiving and complete source
+ancestry cases are UNRUN. Complete adoption archive
+a3a1f4ff2b68fd8fb31707f81682059184867ac55ba26bc9c6a1b67717758aa2
+retains two whole changed parent equations and five whole created sources.
+The proposer uses the existing full source/CST/inverse machinery. Contributing
+and rule-API guidance link registered discovery, private proof separation and
+original-span composition. See registered-translation-rules.md for full domains.
+
+No tests, parser/translator/preparer trials, compilation, Rust tools, installs
+or CI feedback inspection occurred. Shared source-history index remains347/247;
+the modified scope driver/case are outside the frozen compiler-parent graph.
+The formal R05 source-closure review is next, against the committed complete
+implementation and all clauses. Until that receipt exists, accounting remains
+11/70 DRAFTED,59 OPEN. Full inventory, all other operations/bindings/production
+features, synchronization/export/receiving/parity and every actual verification
+remain unfinished. Root continues alone toward all70 source receipts.

@@ -297,3 +297,12 @@ source failures invalidate every active selected scope; restoring bytes does
 not recover a cached verdict. Still execute every complete closing validator
 and preserve the primary thrown value. Keep legacy APIs available and introduce
 no across-operation source/owner/hash/verdict/result/failure cache.
+
+
+The additive [registered discovery/composition API](registered-translation-rules.md)
+keeps the original runner and its exactly two phases. It adds source inspection,
+transitive prerequisites, stable ordering, dependency/conflict/phase refusal,
+immutable original-span source plans and full CST-checked forward/inverse
+replay. Discovery, descriptions and source plans are DATA, not private semantic
+permission; actual application receiving must still reissue complete original
+source/type/owner/body checks. All new implementation/case execution is UNRUN.

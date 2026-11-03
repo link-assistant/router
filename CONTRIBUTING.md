@@ -876,7 +876,7 @@ retain explicit false original-equivalence and installation fields until their
 independent obligations are met. Never modify a copied proof or owns flag to
 permit a previously unsupported source path.
 
-Use [retained original-span templates](docs/development/primitive-vector-literal-bulk-source-draft.md)
+Use [retained original-span templates](docs/development/primitive-vector-literal-bulk-source-draft.md) and [registered discovery/composition](docs/development/registered-translation-rules.md)
 for nested source substitutions. A nested edit must occur exactly once within
 a retained original reference; reject crossing, stale, duplicate or dropped
 edits. Then apply actual serialized/reparsed CST substitutions under language

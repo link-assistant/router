@@ -11,7 +11,7 @@ import {collectedScopeEvidencePaths,reconcileCollectedScopeBatch} from '../tools
 import {accountPrimitiveVectorIteratorBulkData as accountData} from '../tools/translation/primitive-vector-iterator-bulk-20261101-accounting.mjs';
 import {withCompleteSourceClosingFence,requireSynchronousSourceCallback} from '../tools/translation/complete-source-closing-fence.mjs';
 import {withSourceFailureOperation,withSourceInputValidation} from '../tools/translation/source-failure-operations.mjs';
-import {createRulePipeline} from '../tools/translation/rule-pipeline.mjs';
+import {createDiscoveredRulePipeline} from '../tools/translation/rule-registry.mjs';
 import {draftInventoryPath} from '../tools/translation/draft-inventory-reconciliation.mjs';
 import {withProtectedNativeWriter,captureActiveNativeSourceVetoLease} from '../tools/translation/protected-native-writers-20261102.mjs';
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'..'),fail=message=>{throw TypeError('Collected Router draft scope: '+message);};
@@ -45,12 +45,12 @@ export function collectRouterDraftScope({revision,assignments=[],run=originalGit
   function processBatch(kind,origins){
    const files=origins.map(read),close=()=>withSourceInputValidation(()=>{for(const file of files)if(read(file.origin).source!==file.source)fail('closing complete original source body differs');});
    return withCompleteSourceClosingFence(()=>{
-    const pipeline=createRulePipeline([
-     {phase:'language',rules:[{id:'language:complete-original-CST-and-native-scope-observations',apply:()=>kind==='Rust'?collectDraftScopeRustObservations({files}):collectDraftScopeTargetObservations({files})}]},
-     {phase:'repository',rules:[{id:'repository:numbered-actual-adoptions-and-all-evidence-source-joins',apply:native=>{
+    const pipeline=createDiscoveredRulePipeline([
+     {phase:'language',id:'language:complete-original-CST-and-native-scope-observations',apply:()=>kind==='Rust'?collectDraftScopeRustObservations({files}):collectDraftScopeTargetObservations({files})},
+     {phase:'repository',id:'repository:numbered-actual-adoptions-and-all-evidence-source-joins',requires:['language:complete-original-CST-and-native-scope-observations'],apply:native=>{
       const reconciliation=reconcileCollectedScopeBatch({sources,observations:native.observations,assignments});return {native,reconciliation};
-     }}]},
-    ]),result=pipeline.run(null),value=result.value,trace=result.trace;
+     }},
+    ],['repository:numbered-actual-adoptions-and-all-evidence-source-joins']),result=pipeline.run(null),value=result.value,trace=result.trace;
     try{accountData(value);}
     catch(error){
      // Only the new complete DATA-output domain may refuse this batch here.
@@ -60,7 +60,7 @@ export function collectRouterDraftScope({revision,assignments=[],run=originalGit
     }
     for(const row of value.reconciliation.rows){if(seenIds.has(row.id))fail('observation repeated across complete batches');seenIds.add(row.id);observationIdBytes+=row.id.length;if(seenIds.size>200000||observationIdBytes>16*1024*1024)fail('aggregate observation locator retention bound');}
     observations+=value.reconciliation.observations;assigned+=value.reconciliation.assignedObservations;stale+=value.reconciliation.staleObservations;unresolved+=value.reconciliation.unresolvedObservations;
-    emit({kind:'native-observation-batch',revision,language:kind,trace,...value,sourceAuthority:false,semanticAuthority:false});
+    emit({kind:'native-observation-batch',revision,language:kind,trace,ruleDiscovery:pipeline.discovery,...value,sourceAuthority:false,semanticAuthority:false});
    },[close,()=>{files.length=0;}]);
   }
   return withCompleteSourceClosingFence(()=>{

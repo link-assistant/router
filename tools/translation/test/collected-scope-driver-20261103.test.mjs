@@ -23,6 +23,10 @@ function collect(data,assignments=[]){const events=[];const summary=collectRoute
 test('one complete committed selection reaches all three real language collectors and retains non-code package inputs',{timeout:120000},t=>{
  const data=fixture(t),result=collect(data);assert.equal(result.summary.collectionCompleted,true);assert.equal(result.summary.physicalSources,4);assert.equal(result.summary.refusedBatches,0);
  for(const name of ['rust_fun','js_fun','ts_fun'])assert.ok(result.rows.some(row=>row.observation.name===name),name);
+ for(const event of result.events.filter(row=>row.kind==='native-observation-batch')){
+  assert.deepEqual(event.trace,[{phase:'language',id:'language:complete-original-CST-and-native-scope-observations'},{phase:'repository',id:'repository:numbered-actual-adoptions-and-all-evidence-source-joins'}]);
+  assert.deepEqual(event.ruleDiscovery.roots,['repository:numbered-actual-adoptions-and-all-evidence-source-joins']);assert.deepEqual(event.ruleDiscovery.dependencies,['language:complete-original-CST-and-native-scope-observations']);assert.equal(event.ruleDiscovery.semanticAuthority,false);
+ }
  assert.ok(result.events.some(event=>event.kind==='physical-source-census'&&event.sources.some(row=>row.path==='js/package.json')));
  assert.equal(result.summary.productionFunctionDenominator,null);assert.equal(result.summary.translationCoverage,null);assert.equal(result.summary.completeProductionScope,false);assert.equal(result.summary.unassignedObservations,result.summary.observations);
  // Uncommitted edits cannot change an explicitly immutable source revision.
