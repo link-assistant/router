@@ -939,3 +939,18 @@ engine epoch. Independent lifecycle, source-history and old-root cases are
 drafted. This supersedes the immediately preceding uninstalled-source gap for
 these two families only; all receiving execution remains UNRUN, and R04 remains
 OPEN for the rest of its full scope. Counts stay12/70 DRAFTED,58 OPEN.
+
+### R04 primitive collection descriptor source increment
+
+[The four-parent collection proposal](primitive-collection-shared-descriptions-20261103.md)
+drafts one contract-derived candidate/declaration implementation for the
+existing33 slice and88 owned-vector operations. The original candidate API
+shapes and strict declarations are preserved, with independent all-domain and
+whole-source/inverse/refusal case source. Immutable complete packet SHA256
+586764a3b8ae9f0103ebbe4acab52be15dd219893317f338ceb1ead86539da4a
+retains both whole candidate modules, both declaration originals and the new
+implementation's creation image. Candidate/data authority remains false.
+Batch qualified installation into the actual guarded parents with later
+related operation work; the current hot graph stays361/256. This removes a
+source-draft duplication, not a verified translation gap. All execution UNRUN,
+CI NOT_INSPECTED; R04 remains OPEN and counts stay12/70 DRAFTED,58 OPEN.

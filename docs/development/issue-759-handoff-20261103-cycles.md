@@ -897,3 +897,28 @@ installation is drafted, receiving qualification is not complete. R04 stays
 OPEN,12/70 DRAFTED and58OPEN. Continue all70 source scope alone, then seek the
 separate authorization required before any local verification. About52GiB was
 free at the latest filesystem observation; no builds/dependencies were created.
+
+## Primitive collection descriptions:121 existing operation rows
+
+Root drafted the [slice/vector description cohort](primitive-collection-shared-descriptions-20261103.md):
+one contract-derived candidate-shape/declaration implementation for all33 slice
+and88 owned-vector operation rows, preserving the existing11 domains, both
+candidate APIs and entire original strict declaration sources. New four-parent
+source proposals use the registered language/repository rules with complete
+original/intermediate/final CST and inverse replay. The immutable5184byte
+packet SHA586764a3b8ae9f0103ebbe4acab52be15dd219893317f338ceb1ead86539da4a
+also retains the new implementation's complete creation source. Existing
+native/type/caller/move/loan checks and native/runtime limits are untouched.
+
+Independent case source compares all121 native and JavaScript candidate pairs
+with the actual old API implementations; it covers full declaration bytes,
+brand/readonly/Option roles, result isolation, invalid domains/names, no input
+coercion, full two-phase source ancestry, stale/mixed refusal, both source replay
+directions and preserved witness/native-type exports. Every case is UNRUN.
+The proposal is not yet installed into guarded compiler parents: batch that
+adoption with related operation work to avoid an engine transition per small
+signature change. Actual original forward/reverse receiving and freshness stay
+UNRUN. Graph remains361/256, R04 OPEN and12/70 DRAFTED,58 OPEN. The121 rows are
+existing-operation source-generation scope, not newly executable functions or
+a full production denominator. Root alone; no tests/compilation/translator
+trials/Rust tools/installs/CI feedback inspection ran. Continue all70 scope.

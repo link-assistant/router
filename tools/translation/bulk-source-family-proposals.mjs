@@ -136,3 +136,5 @@ export {proposeBorrowedPredicateDescriptionSources} from './borrowed-predicate-d
 export {proposeBorrowedPredicateDescriptionInstalledSources} from './borrowed-predicate-description-install-20261103-profile.mjs';
 export {proposeExactBorrowedPredicateSourceIndex,withExactBorrowedPredicateSourceFamilyData} from './exact-source-borrowed-predicate-families-20261103.mjs';
 export {proposeExactBorrowedPredicateControlSources} from './exact-source-borrowed-predicate-controls-20261103.mjs';
+export {PRIMITIVE_COLLECTION_DOMAINS,primitiveCollectionOperationShape,primitiveCollectionDeclarationType,emitPrimitiveCollectionDeclarations} from './primitive-collection-operation-descriptions-20261103.mjs';
+export {proposePrimitiveCollectionDescriptionSources} from './primitive-collection-descriptions-20261103-profile.mjs';

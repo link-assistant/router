@@ -313,3 +313,10 @@ adapter families and their strict declarations. Its six-parent registered rule
 proposal preserves original private guards, declaration pins and complete phase
 histories. Proposal availability is separate from qualified installation into
 the original guarded compiler graph; R04 remains OPEN and all new cases UNRUN.
+
+The [primitive collection cohort](primitive-collection-shared-descriptions-20261103.md)
+drafts descriptor-driven candidate shapes and strict declarations for all33
+existing slice and88 owned-vector operation rows. Its whole-parent proposal
+preserves both original candidate APIs, declarations and private proof
+boundaries. Source-generation scope is separate from qualified installation,
+actual receiving and production executable coverage; these remain unfinished.
