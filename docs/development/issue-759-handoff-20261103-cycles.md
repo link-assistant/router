@@ -590,3 +590,51 @@ families and complete acceptance receipts. Do not stop at this checkpoint.
 Last disk observation45GiB free; no new dependency/build trees. Temporary
 original-before snapshots/authoring recipes remain until this coherent cohort
 is committed; complete source archives/images must be retained.
+
+## Published JSON compiler checkpoint and lifetime/receiving continuation
+
+Published0fa9f43c12918234ebf86db61e7a131eef8bb941 to draft PR775 and updated its
+description with the actual new compiler scope and unrun evidence. No CI/review
+feedback was inspected. The active goal continues;11/70 remains a worklist,
+not completion. Root is still the sole worker and publisher.
+
+Source review found reverse Rust already emits a named input lifetime, while
+the initial JSON selector refused all generic delimiters. The next batch
+selects lifetime-only binder syntax and uses the genuine original named-lifetime
+parser, unchanged binder tokens and original source lifetime checker. Actual
+named/static/elided shared JSON types retain their full reference syntax; type
+and const generics, bounds and mutable inputs remain separate obligations.
+
+The actual owned-definition exporter now selects the new JSON family and
+exports its complete actual emitted function by original native AST span. It
+retains complete original parent/source signatures, body and guard, uses the
+original paired JS/TS CST/equivalence preparer, and grants no reverse authority.
+Source review also found the JSON parameter guard's implementation was bypassed
+by the ordinary non-data fallback; its actual parameter branch now reaches
+that guard. Other input branches/older definition handlers are preserved.
+
+Independent case source now drafts complete Rust→JS/TS→Rust→JS/TS receiving
+through both original reverse compilers, all supported input lifetime forms,
+invalid lifetime declarations and complete root/source substitutions. A separate
+Rust oracle includes the entire actual application module and exercises scoped,
+named/static inputs, unchanged values and boolean results without a returned
+loan. Native execution stays in CI after all eight same-SHA JS stages. All new
+source cases, parsers, compilation, translation, native/runtime/receiving and
+freshness checks remain UNRUN; no CI feedback was inspected.
+
+Complete lifetime packet SHAb9035a8426ac3c3d5f3f887a529e2bd062007a11b9ba99e517de46dd841e7997
+retains six actual changed parents and three complete created sources. The
+current source index preserves333 original rows and adds nine exact complete
+lifetime/prior-case equations:342 equations/245 paths,18 images,385750 source
+bytes. Index SHA9fd3206365e127c919372bb56e02d72c5282a1a483d92f4c59abb58e133f24f5;
+census SHA9e0cf9b7ca31cad98e7a7df99fb576f830a73294771b176d92a90c677aec44ae;
+controls SHAb3ab1bbe009e1ab0462e2e14fe596594ed71cbc02e5042882efb1b9a8318235d.
+Complete engine333→342 stays outside its own hashed index, old root domains
+stay intact and prior case sources retain explicit later joins. Source ancestry
+still supplies no native/semantic/body ownership or application coverage.
+
+Checklist remains11/70 DRAFTED,59 OPEN, full production/writer denominators and
+executable coverage UNKNOWN. Remaining work includes full inventory/acceptance
+receipts, old-domain non-narrowing, broader mixed/helper/control/effect families,
+all actual corpus receiving and independent full verification when authorized.
+Continue substantive drafting; do not treat this checkpoint as a stopping point.

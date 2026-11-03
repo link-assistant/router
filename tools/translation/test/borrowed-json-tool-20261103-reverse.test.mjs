@@ -45,7 +45,7 @@ for(const [api,operations,candidate]of [[coreSource,core,false],[vectorSource,ve
    const checked=operations.checkOwnedCoreProgram(JSON.parse(JSON.stringify(analyzed.program)),context);
    assert.equal(checked[0].params[0].type,'borrowed-json-tool-input');assert.equal(checked[0].returns,'bool');
    const rust=operations.emitOwnedCoreProgram(checked,'rust'),typescript=operations.emitOwnedCoreProgram(checked,'typescript');
-   assert.match(rust,/&::serde_json::Value/u);assert.match(rust,/crate::borrowed_json_tool_predicate_20261103::borrowed_json_tool_is_translatable\(tool\)/u);
+   assert.match(rust,/&(?:'a )?::serde_json::Value/u);assert.match(rust,/crate::borrowed_json_tool_predicate_20261103::borrowed_json_tool_is_translatable\(tool\)/u);
    assert.doesNotMatch(rust,/let __ro_arg_/u);assert.match(typescript,/Parameters<typeof __ro_borrowedJsonToolIsTranslatable>\[0\]/u);
    const runtime=await operations.prepareOwnedCoreRuntime(checked);
    for(const [value,expected]of examples){const before=JSON.stringify(value);assert.equal(operations.evaluateOwnedCoreProgram(checked,'query',[value],runtime),expected);assert.equal(JSON.stringify(value),before);}
@@ -59,7 +59,7 @@ for(const [api,operations,candidate]of [[coreSource,core,false],[vectorSource,ve
   const source="import {borrowedJsonToolIsTranslatable as predicate} from './runtime/borrowed-json-tool-predicate-20261103-runtime.mjs';\n/** @param {Parameters<typeof predicate>[0]} tool @returns {boolean} */\nexport function query(tool){return predicate(tool);}\n";
   const context=api.createOwnedCoreSourceContext(input(api,candidate,source,'caller.mjs'));
   const analyzed=operations.analyzeOwnedCoreModule(context,'caller.mjs');assert.equal(analyzed.program.length,1,JSON.stringify(analyzed.diagnostics));
-  assert.match(operations.emitOwnedCoreProgram(operations.checkOwnedCoreProgram(analyzed.program,context),'rust'),/&::serde_json::Value/u);
+  assert.match(operations.emitOwnedCoreProgram(operations.checkOwnedCoreProgram(analyzed.program,context),'rust'),/&(?:'a )?::serde_json::Value/u);
  });
  test(lane+' complete body checker refuses aliases, escapes, JSON equality and shadowed callees',{timeout:60000},()=>{
   for(const body of ['const alias=tool;return predicate(alias);','return tool;','return tool===tool;','return predicate(tool.name);','return predicate(tool,tool);','const predicate=(value: unknown)=>true;return predicate(tool);']){

@@ -1,4 +1,5 @@
 import {borrowedJsonToolTypeSelectionActive} from './borrowed-json-tool-20261103-type-selection.mjs';
+import {originalNamedSourceReferenceLifetime} from './extensions/named-lifetimes.mjs';
 // Original shared JSON type observations. Not a public type registry.
 import {matchesParserFacts} from './matches-macro-context.mjs';
 import {requireOriginalFromNamespaceCallbacks,requireOriginalPrimitiveTryFromChecker,originalJsonCaptureCheckerEligible} from './extensions/host-contracts.mjs';
@@ -34,7 +35,12 @@ function remember(type,parser,origin,role,sourceJoin=null){
 /** Only a genuine written shared monomorphic canonical JSON is selected. */
 export function parseBorrowedJsonToolType(parser){
  requireOriginalFromNamespaceCallbacks(parser);if(!borrowedJsonToolTypeSelectionActive(parser))return null;
- const c=parser.cursor;if(!c?.is('&')||c.is('mut',1))return null;const start=c.index;let offset=1;const valuePath=[];if(c.is('::',offset))offset++;
+ const c=parser.cursor;if(!c?.is('&')||c.is('mut',1))return null;const start=c.index;let offset=1;
+ if(c.is("'",offset)){
+  const quote=c.peek(offset),name=c.peek(offset+1);if(name?.kind!=='identifier'||quote.end!==name.start)fail('contiguous original reference lifetime tokens required');
+  if(name.value!=='static'&&!originalNamedSourceReferenceLifetime(parser))fail('actual original free-function lifetime binder required');offset+=2;
+ }
+ if(c.is('mut',offset))return null;const valuePath=[];if(c.is('::',offset))offset++;
  for(;;){const token=c.peek(offset);if(token?.kind!=='identifier'||valuePath.length>=16)return null;valuePath.push(token.value);offset++;if(!c.is('::',offset))break;offset++;}
  const modulePath=parser.modulePath?.slice();if(!Array.isArray(modulePath))fail('actual original JSON module path required');if(joined(parser.resolveSourceNamespace(valuePath,modulePath,'type'))!=='serde_json::Value')return null;
  const tokens=c.tokens,first=c.peek(),last=c.peek(offset-1),span=Object.freeze({start:first.start,end:last.end});

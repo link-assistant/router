@@ -5,13 +5,24 @@ import {matchesParserFacts} from './matches-macro-context.mjs';
 import {BORROWED_JSON_TOOL_PREDICATE as CONTRACT} from './borrowed-json-tool-20261103-contracts.mjs';
 import {withCompleteSourceClosingFence} from './complete-source-closing-fence.mjs';
 const active=new WeakMap(),words=CONTRACT.rustPath.split('::').flatMap((word,at)=>at?['::',word]:[word]);
+// Locate only a lifetime-only binder for selection. The original named-lifetime
+// parser independently checks its names, original token group and actual uses.
+function lifetimeBinderEnd(tokens,at){
+ if(tokens[at]?.value!=='<')return at;let count=0;at++;
+ for(;;){
+  if(tokens[at]?.value!=="'"||tokens[at+1]?.kind!=='identifier'||++count>32)return -1;at+=2;
+  if(tokens[at]?.value==='>')return at+1;if(tokens[at]?.value!==',')return -1;at++;
+  if(tokens[at]?.value==='>')return at+1;
+ }
+}
 export function borrowedJsonToolTypeSelectionActive(parser){return active.get(parser)===true;}
 export function withBorrowedJsonToolTypeSelection(parser,run){
  const cursor=parser.cursor,tokens=cursor.tokens,start=cursor.index,previous=active.get(parser);let selected=false,open=-1,level=0,end=-1;
  if(cursor.is('fn')){
-  // A declaration's first brace is its complete body in this monomorphic lane.
-  // Generic/where/associated functions keep their original routes/refusals.
-  for(let at=start+1;at<tokens.length;at++){const token=tokens[at],value=token.value;if(token.kind==='identifier'&&value==='where'||token.kind==='punct'&&['<',';'].includes(value))break;if(token.kind==='punct'&&value==='{'){open=at;break;}}
+  // Lifetime binders do not introduce type/const polymorphism. Generic types,
+  // where bounds and associated functions retain their original refusals.
+  const signature=lifetimeBinderEnd(tokens,start+2);
+  if(signature!==-1)for(let at=signature;at<tokens.length;at++){const token=tokens[at],value=token.value;if(token.kind==='identifier'&&value==='where'||token.kind==='punct'&&['<',';'].includes(value))break;if(token.kind==='punct'&&value==='{'){open=at;break;}}
   if(open!==-1)for(let at=open;at<tokens.length;at++){const token=tokens[at];if(token.kind!=='punct')continue;if(token.value==='{')level++;if(token.value==='}'&&!--level){end=at;break;}}
   if(end!==-1&&!tokens.slice(open+1,end).some(token=>token.kind==='macro'||token.kind==='identifier'&&token.value==='fn'||token.kind==='punct'&&token.value==='#'))for(let at=open+1;at+words.length<end;at++)if(words.every((word,offset)=>tokens[at+offset].kind===(word==='::'?'punct':'identifier')&&tokens[at+offset].value===word)&&tokens[at+words.length].kind==='punct'&&tokens[at+words.length].value==='('){selected=true;break;}
  }

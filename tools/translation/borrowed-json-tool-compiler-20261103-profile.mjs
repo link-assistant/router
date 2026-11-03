@@ -62,7 +62,10 @@ export function withBorrowedJsonToolCompilerSources(run,{root=ROOT}={}){
    withSourceInputValidation(()=>{
     const data=packet(custody,root);
     for(const row of data.rows){const current=custody.read(join(root,row.path));if(!matchesExactSourceEpoch(row,current,{root}))fail('complete installed parent differs: '+row.path);}
-    for(const row of data.newFiles)if(custody.read(join(root,row.path))!==row.after)fail('complete created module differs: '+row.path);
+    for(const row of data.newFiles){
+     const current=custody.read(join(root,row.path)),original={path:row.path,before:row.after,after:row.after,inverse:row.after};
+     if(!matchesExactSourceEpoch(original,current,{root}))fail('complete created module differs: '+row.path);
+    }
    });return run();
   },[custody.close]);
  });

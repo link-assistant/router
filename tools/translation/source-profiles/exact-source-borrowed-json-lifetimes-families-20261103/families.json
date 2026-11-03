@@ -1,0 +1,34 @@
+{
+  "schema": "fixed-borrowed-json-lifetimes-source-family-census-20261103-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-borrowed-json-lifetimes-families-20261103/index333.before.json.gz",
+    "encodedSha256": "c6483baa3e61ec491a246457aab84f8bcd0c27a04a901297317cc9523ad0501a",
+    "sourceSha256": "2aadf095e79e994c34a089524c0f13a877dd79c5606b08dd33ea5dd88904c299",
+    "rows": 333
+  },
+  "families": [
+    {
+      "id": "exact-borrowed-json-lifetimes-lifetimes-20261103",
+      "manifest": "tools/translation/source-profiles/borrowed-json-tool-lifetimes-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "borrowed-json-tool-lifetimes-source-20261103-v1",
+      "sha256": "b9035a8426ac3c3d5f3f887a529e2bd062007a11b9ba99e517de46dd841e7997",
+      "rows": 6,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-borrowed-json-lifetimes-cases-20261103",
+      "manifest": "tools/translation/source-profiles/exact-source-borrowed-json-lifetimes-families-20261103/joins.json.gz",
+      "kind": "archive",
+      "schema": "borrowed-json-lifetime-index-joins-20261103-v1",
+      "sha256": "bc34f78508a50ab3a7c7997d049a34947c48ccd94234e043cb8a5f91ac3fb877",
+      "rows": 3,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 9,
+  "totalRows": 342,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}
