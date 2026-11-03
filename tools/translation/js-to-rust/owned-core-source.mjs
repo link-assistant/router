@@ -3,7 +3,7 @@ import {gunzipSync as booleanHelperSourceGunzip} from 'node:zlib';
 import {createOrderedMapCanonicalSourceCustody as booleanHelperSourceCustody} from '../ordered-text-map-callers-20261102-canonical-source-custody.mjs';
 import {withSourceInputValidation as booleanHelperSourceInput,withSourceFailureOperation as booleanHelperSourceFailure} from '../source-failure-operations.mjs';
 import {requireSynchronousSourceCallback as booleanHelperSourceCallback} from '../complete-source-closing-fence.mjs';
-import {substituteCopyScalarHelperExpression20261103} from '../copy-scalar-helper-substitution-20261103.mjs';
+import {substituteCopyScalarHelperLocalExpression20261103 as substituteCopyScalarHelperExpression20261103} from '../copy-scalar-helper-local-substitution-20261103.mjs';
 import {substituteBooleanHelperExpression20261103} from '../boolean-helper-substitution-20261103.mjs';
 import {withBorrowedJsonToolReverseNativeSources} from '../borrowed-json-tool-20261103-reverse-native.mjs';
 import {withCompleteSourceClosingFence} from '../complete-source-closing-fence.mjs';
@@ -490,9 +490,9 @@ function withOwnedCopyHelperSourceOperationBody(run,{root=booleanHelperSourceRoo
   const current=()=>booleanHelperSourceInput(()=>{if(rows)for(const row of rows)if(custody.read(root.replace(/\/$/u,'')+'/'+row.path)!==row.source)fail('complete Boolean helper implementation source changed: '+row.path);});
   try{return withCompleteSourceClosingFence(()=>{
    booleanHelperSourceInput(()=>{
-    const encoded=custody.readBytes(root.replace(/\/$/u,'')+'/tools/translation/source-profiles/copy-scalar-helper-20261103/helper-inputs.json.gz',1048576);if(digest(encoded)!=='fc7224ee767ba0149c46b8a8600ee1b95dfa81fb9ff53089bda93ea1940818f7')fail('fixed complete helper source input archive differs');
+    const encoded=custody.readBytes(root.replace(/\/$/u,'')+'/tools/translation/source-profiles/copy-scalar-helper-locals-20261103/helper-inputs.json.gz',1048576);if(digest(encoded)!=='a5b2d132bf5710e646dc4b32b7123229c2a000e1727484b1410fc9d6eb2d02da')fail('fixed complete helper source input archive differs');
     const raw=booleanHelperSourceGunzip(encoded,{maxOutputLength:1048576}),text=raw.toString('utf8');if(!Buffer.from(text).equals(raw))fail('complete helper source UTF8 differs');const input=JSON.parse(text);
-    const paths=["tools/translation/copy-scalar-helper-substitution-20261103.mjs","tools/translation/primitive-bitwise-types.mjs","tools/translation/js-to-rust/owned-core-copy-scalar-helper-document.mjs","tools/translation/js-to-rust/owned-vector-candidate-copy-scalar-helper-document.mjs","tools/translation/js-to-rust/owned-copy-scalar-helper-profile-20261103.mjs","tools/translation/js-to-rust/owned-copy-scalar-helper-rust-20261103.mjs"];if(input.schema!=='original-Copy-scalar-helper-input-sources-20261103-v1'||input.rows.length!==6||new Set(input.rows.map(row=>row.path)).size!==6||input.rows.some(row=>!paths.includes(row.path)||typeof row.source!=='string'||digest(row.source)!==row.sha256))fail('all six original complete scalar helper input sources required');
+    const paths=["tools/translation/copy-scalar-helper-substitution-20261103.mjs","tools/translation/primitive-bitwise-types.mjs","tools/translation/js-to-rust/owned-core-copy-scalar-helper-document.mjs","tools/translation/js-to-rust/owned-vector-candidate-copy-scalar-helper-document.mjs","tools/translation/js-to-rust/owned-copy-scalar-helper-profile-20261103.mjs","tools/translation/js-to-rust/owned-copy-scalar-helper-rust-20261103.mjs","tools/translation/copy-scalar-helper-local-substitution-20261103.mjs"];if(input.schema!=='original-Copy-scalar-local-helper-input-sources-20261103-v1'||input.rows.length!==7||new Set(input.rows.map(row=>row.path)).size!==7||input.rows.some(row=>!paths.includes(row.path)||typeof row.source!=='string'||digest(row.source)!==row.sha256))fail('all seven original complete scalar helper input sources required');
     rows=input.rows;current();
    });return run();
   },[current,custody.close]);}finally{if(rows)rows.length=0;rows=null;}

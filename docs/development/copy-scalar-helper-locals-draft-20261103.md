@@ -3,8 +3,9 @@
 This drafts the next common limitation in the
 [adopted scalar helper family](copy-scalar-helper-adoption-20261103.md): ordered
 scalar locals before a return or complete `if/else` return tree. The two original
-reader changes are an **uninstalled source proposal**; their installed code and
-six-input source archive remain intact. All execution and CI feedback inspection
+reader changes were a **source proposal** at this checkpoint. Their
+[subsequent adoption](scalar-helper-locals-adoption-20261103.md) now installs the
+complete cohort; the old six-input archive remains intact. All execution and CI feedback inspection
 remain UNRUN. Counts stay12/70 DRAFTED,58 OPEN; coverage remains UNKNOWN.
 
 The [new substitution](../../tools/translation/copy-scalar-helper-local-substitution-20261103.mjs)
@@ -39,7 +40,7 @@ normalizer to the complete fixed source restriction using a separate seven-input
 archive. The original four-input Boolean restriction remains nested, and the old
 six-input Copy archive and every historical afterimage stay immutable. Whole
 intermediate source/CST serialization, reparse and exact inverses remain required.
-The installed source index is still401/270 until the subsequent adoption.
+The subsequent adoption advances401/270 to412/271 while retaining all old equations.
 
 The [pure case source](../../tools/translation/test/copy-scalar-helper-local-substitution-20261103.test.mjs)
 drafts all ten integer extrema, branch-local names, caller/local name collisions,

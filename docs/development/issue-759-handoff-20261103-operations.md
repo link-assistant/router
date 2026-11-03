@@ -36,8 +36,9 @@ imports/comments and paired TypeScript signatures. Full source requalification
 and whole Rust reproduction remain mandatory; all receiving is UNRUN.
 The [scalar local-binding draft](copy-scalar-helper-locals-draft-20261103.md)
 adds ordered pure local normalization and separate branch environments. Both
-reader source successors and the seven-input source fence await source adoption;
-the installed six-input implementation remains intact. All execution UNRUN.
+reader source successors and the seven-input source fence are now
+[source adopted](scalar-helper-locals-adoption-20261103.md); the old six-input
+archive/implementation remain intact. All execution UNRUN.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 
@@ -60,11 +61,12 @@ invocation-local source restrictions to the original private ABI operations.
 Every corresponding execution remains UNRUN. The current combined adoption is
 detailed below; find its exact commit through SCM.
 
-Hot source graph:401equations/270paths, all original391 equations preserved.
-Index SHA0af8c06eb7ad1acc294f7c88e62168e07fee9980649451c0df77fabefe8bf3b4;
-engine SHAb8b3d3a7aeccbad9f8013931d671233d16026d25d42f1d56af742dcaab1cf42e.
+Hot source graph:412equations/271paths, all original401 equations preserved.
+Index SHAf3cd672ae3fc363933166a3fe66ab30239b8766f8d20eebff9d6762cc99e80a9;
+engine SHAd97a527e7693ddfc5d836268ecc471cf50c43163b32770335b969736f2f53fd9.
 The separate engine chronology preserves all original source images and old-root
-domains. The latest adoption appends the complete391→401 scalar transition;
+domains. The latest adoption appends the complete401→412 local-binding transition;
+the preceding391→401 scalar transition remains intact, and
 the preceding374→391 helper transition remains intact, and
 the preceding361→374 collection transition remains intact below.
 
