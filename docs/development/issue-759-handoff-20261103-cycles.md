@@ -705,3 +705,48 @@ hooks, maintenance, lazy fetch and replacement objects. Independent malformed/
 truncated metadata refusal case source is added. These changes are also UNRUN.
 Last disk observation55GiB free. No source-generated output, CI feedback or
 executable coverage was inspected. Root continues alone under the active goal.
+
+## Original JSON source-context isolation — around10:10UTC
+
+Source review found the JSON caller locator hashed only file/module/name and
+function text. Independent complete module/Cargo/configuration contexts with
+those same bytes could replace one another's registry records. The actual
+registry now associates each genuine original namespace context with a private
+invocation-local WeakMap identity, includes that identity in its DATA locator
+and rejoins it with the actual original parser/context/source item at every
+use and closing check. Reconstructed parsers against the same original context
+reuse the identity, so metadata requalification does not consume new context
+slots each time. Separate project compilations retain distinct source slots.
+All identities/counts expire with the source registry on every outer exit.
+The4096 caller/source slots distinguish actual caller/context associations;
+context count uses the same bound. Public locators never grant semantic facts.
+
+Independent actual complete-project cases draft interleaved regular/flat/owned
+definition contexts, both meta readers, repeated original-parser reconstruction,
+same caller bytes, a whole changed-root source equation and expiry after outer
+exit. They use real original full Router/Cargo input and private issuers, not
+fake closed scopes or a miniature compiler. All are UNRUN; the context collision
+is established by source reading, not by a locally executed reproduction.
+
+Complete original/successor/inverse registry and receiving source packet SHA is
+f7d94cabcffb1477c9b35019172bd47efe550adbe26ad99c51c00033d354660c.
+Shared current source index preserves all342 old equations and appends five
+context/prior-case equations:347 equations/247 paths,10 images,61152 bytes.
+Index SHA0573a8d2e4f2ea284b9a7531d02c4fbf27fd10843781c13862841ca0a393a73c;
+census SHA18c317c94f48d719aba44704006352b3aea656d47712b2c2892ce65c66023731;
+controls SHA1d59743f19536c5a162c02a59fe05d70600df98133f4aaeacb5d5129230f0e84.
+The existing compact builder, exactly language/repository sequences and all
+original source/CST/inverse/retention bounds remain. Complete engine342→347
+history stays outside its hashed index; original342 roots need no new companion.
+Four independent complete source/current-control/old-root case sources are
+also UNRUN. No historical afterimage was repinned or replaced.
+
+This advances C04/B04/Q02 only for the new JSON family. Existing map/namespace/
+parser APIs are untouched; complete inventory, other application families,
+all receiving/freshness/resource/native/runtime verification and full delivery
+remain open.11/70 DRAFTED,59 OPEN; production/writer denominators and executable
+coverage UNKNOWN. No tests, parser/translator/preparer trials, compilation,
+Rust tools, installs or CI/status/log/artifact/review feedback inspection ran.
+Root continues alone. Next ordinary source publication remains around12:16UTC;
+the last pushed head is0fa9f43c12918234ebf86db61e7a131eef8bb941. Newer lifetime,
+scope and context source commits await that coordinated checkpoint.

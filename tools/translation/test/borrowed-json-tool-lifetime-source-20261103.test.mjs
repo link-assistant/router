@@ -1,3 +1,4 @@
+import {proposeExactBorrowedJsonContextControlSources} from '../exact-source-borrowed-json-context-controls-20261103.mjs';
 // Complete original lifetime source/adoption cases. All UNRUN.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -23,7 +24,7 @@ test('six complete original parents and all three created sources retain their o
 });
 test('the full original333 index precedes nine exact source successors',{timeout:60000},()=>{
  const proposal=proposeExactBorrowedJsonLifetimeSourceIndex(),previous=JSON.parse(gunzipSync(readFileSync(join(ROOT,BASE+'index333.before.json.gz'))));
- assert.equal(proposal.indexText,read(INDEX));assert.equal(proposal.index.rows.length,342);assert.equal(new Set(proposal.index.rows.map(row=>row.path)).size,245);assert.deepEqual(proposal.index.rows.slice(0,333),previous.rows);assert.equal(proposal.images.length,18);
+ assert.equal(proposal.indexText,gunzipSync(readFileSync(join(ROOT,'tools/translation/source-profiles/exact-source-borrowed-json-context-families-20261103/index342.before.json.gz'))).toString('utf8'));assert.equal(proposal.index.rows.length,342);assert.equal(new Set(proposal.index.rows.map(row=>row.path)).size,245);assert.deepEqual(proposal.index.rows.slice(0,333),previous.rows);assert.equal(proposal.images.length,18);
  for(const image of proposal.images)assert.equal(read(image.path),image.source);assert.deepEqual(proposal.trace.map(row=>row.phase),['language','repository']);assert.equal(proposal.semanticAuthority,false);
 });
 test('each current lifetime source is an exact terminal of its complete original equation',{timeout:60000},()=>{
@@ -32,6 +33,6 @@ test('each current lifetime source is an exact terminal of its complete original
  }));
 });
 test('all five complete controls and the separate333→342 engine transition remain retained',{timeout:60000},()=>{
- const controls=proposeExactBorrowedJsonLifetimeControlSources();assert.equal(controls.files.length,5);for(const row of controls.files){assert.equal(read(row.path),row.after);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}
- const before=read('tools/translation/source-profiles/exact-source-borrowed-json-compiler-families-20261103/engine.after.txt'),current=read(ENGINE),known=knownExactSourceCompilerEngineEpoch({root:ROOT,before,current});assert.ok(known);assert.equal(known.after,current);assert.equal(known.inverse,before);assert.equal(known.laterHistories.length,1);assert.equal(known.nativeBindingQualified,false);
+ const controls=proposeExactBorrowedJsonLifetimeControlSources();assert.equal(controls.files.length,5);for(const row of controls.files){const later=proposeExactBorrowedJsonContextControlSources().files.find(value=>value.path===row.path);if(later)assert.equal(later.before,row.after);assert.equal(read(row.path),later?.after??row.after);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}
+ const before=read('tools/translation/source-profiles/exact-source-borrowed-json-compiler-families-20261103/engine.after.txt'),current=read(ENGINE),known=knownExactSourceCompilerEngineEpoch({root:ROOT,before,current});assert.ok(known);assert.equal(known.after,current);assert.equal(known.inverse,before);assert.equal(known.laterHistories.length,2);assert.equal(known.nativeBindingQualified,false);
 });

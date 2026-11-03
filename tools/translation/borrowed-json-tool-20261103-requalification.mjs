@@ -2,7 +2,7 @@
 // reconstructs and checks the complete original caller again through real Host
 // classes. This registry cannot be populated from JSON, flags or source pins.
 import {HostRustParser,HostChecker,hostData,requireOriginalPrimitiveTryFromChecker} from './extensions/host-contracts.mjs';
-import {matchesParserFacts,configureMatchesMacroParser} from './matches-macro-context.mjs';
+import {matchesParserFacts,configureMatchesMacroParser,isMatchesMacroContext} from './matches-macro-context.mjs';
 import {tokenizeRust} from './extensions/lexical.mjs';
 import {originalParsedDeclarationEvidence,originalParsedDeclarationSource,originalParsedSyntaxNode,linkProjectDeclaration,metadataDigest,copyMetadata} from './extensions/source-links.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
@@ -11,7 +11,7 @@ import {createRulePipeline} from './rule-pipeline.mjs';
 import {alphaTree,retargetCheckedCallback} from './extensions/standard-body-checker.mjs';
 import {withCompleteSourceClosingFence,requireSynchronousSourceCallback} from './complete-source-closing-fence.mjs';
 import {withSourceFailureOperation,withSourceInputValidation} from './source-failure-operations.mjs';
-let sources=null,cleanups=null,sourceDepth=0;
+let sources=null,cleanups=null,sourceContexts=null,sourceContextCount=0,sourceDepth=0;
 export function borrowedJsonToolSourceScopeActive(){return sources!==null;}
 export function registerBorrowedJsonToolSourceCleanup(close){
  requireSynchronousSourceCallback(close);if(cleanups===null||!cleanups.has(close)&&cleanups.size>=4096)fail();cleanups.add(close);
@@ -20,10 +20,10 @@ export function registerBorrowedJsonToolSourceCleanup(close){
 export function withBorrowedJsonToolCallerSources(run){
  requireSynchronousSourceCallback(run);
  return withSourceFailureOperation(()=>{
- sourceDepth++;const owner=sources===null;if(owner){sources=new Map();cleanups=new Set();}
+ sourceDepth++;const owner=sources===null;if(owner){sources=new Map();cleanups=new Set();sourceContexts=new WeakMap();sourceContextCount=0;}
  const current=()=>withSourceInputValidation(()=>{for(const record of sources.values())sourceJoin(record);});
  const close=()=>{let failed=false,primary;for(const cleanup of cleanups)try{cleanup();}catch(error){if(!failed){failed=true;primary=error;}}if(failed)throw primary;};
- const clear=()=>{cleanups.clear();cleanups=null;sources.clear();sources=null;};
+ const clear=()=>{cleanups.clear();cleanups=null;sources.clear();sources=null;sourceContexts=null;sourceContextCount=0;};
  try{return withCompleteSourceClosingFence(run,owner?[current,close,clear]:[current]);}finally{sourceDepth--;}
  });
 }
@@ -34,7 +34,7 @@ export function hasBorrowedJsonToolCaller(entry){
 function sourceJoin(record){
  requireOriginalPrimitiveTryFromChecker(record.checker);
  const evidence=originalParsedDeclarationEvidence(record.item),source=originalParsedDeclarationSource(record.item),state=matchesParserFacts(record.parser);
- if(!evidence||!source||state!==record.state||source!==record.source||metadataDigest(record.item)!==record.snapshot||!originalSourceModuleItems(state.module).includes(record.owner)||state.module.source.slice(record.owner.start,record.owner.end)!==source)fail();
+ if(!evidence||!source||state!==record.state||state.context!==record.sourceContext||sourceContexts?.get(record.sourceContext)!==record.contextId||!isMatchesMacroContext(record.sourceContext)||source!==record.source||metadataDigest(record.item)!==record.snapshot||!originalSourceModuleItems(state.module).includes(record.owner)||state.module.source.slice(record.owner.start,record.owner.end)!==source)fail();
  return {evidence,source,state};
 }
 export function retainBorrowedJsonToolCallerSource(checker,item,entry){
@@ -43,7 +43,11 @@ export function retainBorrowedJsonToolCallerSource(checker,item,entry){
  let parser=null,cells=100000;
  const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return;if(--cells<0||depth>160)fail();const origin=originalParsedSyntaxNode(item,node);if(origin){if(parser&&parser!==origin.parser)fail();parser=origin.parser;}for(const [key,value]of Object.entries(node))if(key!=='span')for(const child of Array.isArray(value)?value:[value])visit(child,depth+1);};visit(item);
  if(!parser)fail();const state=matchesParserFacts(parser),owners=originalSourceModuleItems(state.module).filter(owner=>state.module.source.slice(owner.start,owner.end)===source);if(owners.length!==1)fail();
- const key=metadataDigest({file:state.module.file,path:state.module.path,name:item.name,source}),record={checker,item,parser,state,source,owner:owners[0],snapshot:metadataDigest(item)};
+ // Reconstructed parsers reuse this genuine original complete namespace
+ // context; independent project/Cargo/module contexts must never share a slot.
+ const sourceContext=state.context;if(!sourceContexts||!isMatchesMacroContext(sourceContext))fail();
+ let contextId=sourceContexts.get(sourceContext);if(contextId===undefined){if(sourceContextCount>=4096)fail();contextId=++sourceContextCount;sourceContexts.set(sourceContext,contextId);}
+ const key=metadataDigest({file:state.module.file,path:state.module.path,name:item.name,source,contextId}),record={checker,item,parser,state,source,sourceContext,contextId,owner:owners[0],snapshot:metadataDigest(item)};
  sourceJoin(record);if(!sources.has(key)&&sources.size>=4096)fail();sources.set(key,record);entry.borrowedJsonToolSourceKey=key;return key;
 }
 const evidenceKeys=new Set(['copyCertificate','sourceParameterPatterns','sourceParameterPattern','sourcePattern','constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceDisplayScope','sourceBoolFromScope','sourceConversionProof','sourceConversionScope']);
