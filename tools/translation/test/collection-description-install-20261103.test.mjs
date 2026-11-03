@@ -1,3 +1,4 @@
+import {proposeExactBooleanHelperControlSources} from '../exact-source-boolean-helper-controls-20261103.mjs';
 // Complete actual source adoption/history case SOURCE. All execution UNRUN.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -30,13 +31,13 @@ test('five actual candidate modules retain both complete proposals and all seven
  assert.equal(installed.semanticAuthority,false);assert.equal(installed.nativeBindingQualified,false);
 });
 test('the complete original361 index precedes thirteen current collection/case source equations',{timeout:60000},()=>{
- const proposal=proposeExactCollectionDescriptionSourceIndex(),old=JSON.parse(gunzipSync(fs.readFileSync(join(ROOT,BASE+'index361.before.json.gz'))));assert.equal(proposal.indexText,read(INDEX));assert.equal(proposal.index.rows.length,374);assert.equal(new Set(proposal.index.rows.map(row=>row.path)).size,264);assert.deepEqual(proposal.index.rows.slice(0,361),old.rows);assert.equal(proposal.images.length,26);
+ const proposal=proposeExactCollectionDescriptionSourceIndex(),old=JSON.parse(gunzipSync(fs.readFileSync(join(ROOT,BASE+'index361.before.json.gz'))));assert.equal(proposal.indexText,gunzipSync(fs.readFileSync(join(ROOT,'tools/translation/source-profiles/exact-source-boolean-helper-families-20261103/index374.before.json.gz'))).toString('utf8'));assert.equal(proposal.index.rows.length,374);assert.equal(new Set(proposal.index.rows.map(row=>row.path)).size,264);assert.deepEqual(proposal.index.rows.slice(0,361),old.rows);assert.equal(proposal.images.length,26);
  for(const image of proposal.images)assert.equal(read(image.path),image.source);assert.deepEqual(proposal.trace.map(row=>row.phase),['language','repository']);
  withExactCollectionDescriptionSourceFamilyData(input=>withExactSourceHistoryDataOperation(ROOT,()=>{for(const family of input.families)for(const row of family.rows){const known=knownExactSourceSuccessor({path:row.path,before:row.before},{root:ROOT});assert.ok(known,row.path);assert.equal(known.after,read(row.path));assert.equal(known.inverse,row.before);assert.equal(known.currentIsTerminal,true);assert.equal(known.nativeBindingQualified,false);}}));
 });
 test('eight complete controls retain the separate361 to374 engine transition',{timeout:60000},()=>{
- const controls=proposeExactCollectionDescriptionControlSources();assert.equal(controls.files.length,8);for(const row of controls.files){assert.equal(read(row.path),row.after);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}
- const before=read('tools/translation/source-profiles/exact-source-borrowed-predicate-families-20261103/engine.after.txt'),current=read(ENGINE),known=knownExactSourceCompilerEngineEpoch({root:ROOT,before,current});assert.ok(known);assert.equal(known.inverse,before);assert.equal(known.after,current);assert.equal(known.laterHistories.length,1);assert.equal(known.nativeBindingQualified,false);
+ const controls=proposeExactCollectionDescriptionControlSources();assert.equal(controls.files.length,8);for(const row of controls.files){const latest=proposeExactBooleanHelperControlSources().files.find(value=>value.path===row.path);if(latest)assert.equal(latest.before,row.after);assert.equal(read(row.path),latest?.after??row.after);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}
+ const before=read('tools/translation/source-profiles/exact-source-borrowed-predicate-families-20261103/engine.after.txt'),current=read(ENGINE),known=knownExactSourceCompilerEngineEpoch({root:ROOT,before,current});assert.ok(known);assert.equal(known.inverse,before);assert.equal(known.after,current);assert.equal(known.laterHistories.length,2);assert.equal(known.nativeBindingQualified,false);
 });
 test('an original361 root requires no later collection engine companion',{timeout:60000},t=>{
  const root=fs.realpathSync(fs.mkdtempSync(join(tmpdir(),'router-original361-collection-domain-')));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));

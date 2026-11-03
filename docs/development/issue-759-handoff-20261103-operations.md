@@ -16,18 +16,19 @@ Open IDs: L01–L05; R01–R04; C01–C05; O01–O05; B01–B05; F01–F05; V01�
 S01–S05; P01–P05; T01–T05; Q01/Q02/Q04; J04; E01–E05. Continue drafting
 actual unfinished clauses; partial operation counts do not close parent rows.
 The [imported Boolean helper source draft](boolean-helper-source-draft-20261103.md)
-adds uninstalled complete two-reader substitution recipes and receiving source.
+retains complete two-reader substitution recipes and receiving source.
 The [document continuation](boolean-helper-documents-draft-20261103.md) adds
 fresh meta read, provenance/CST and original target-emitter implementation
-copies. Native source-graph adoption, interpreter cases and Rust inverse APIs
-remain explicit gaps; all source proposals are uninstalled and UNRUN.
+copies. Their [actual source adoption](boolean-helper-source-adoption-20261103.md)
+now installs the complete guarded source cohort and interpreter/native oracle
+case source. Rust inverse APIs and full receiving remain gaps; all execution UNRUN.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 
 ## Current source and publication
 
-Latest published checkpoint is4c2745c1bea50590151f9b42bfa0d9d35380ca07,
-2026-11-03 about11:10UTC. The next ordinary source publication target is14:10UTC.
+Latest published implementation checkpoint is1de2dea069b05eb843c55aeeee7ce806feb7712c,
+2026-11-03 about14:01UTC. The next ordinary source publication target is17:01UTC.
 Standing push/PR-update authorization persists; do not ask again. During drafting
 publish coherent source checkpoints about every three hours without reading CI
 or review feedback. Commit coherent source at least every six hours, with Rust
@@ -43,11 +44,12 @@ invocation-local source restrictions to the original private ABI operations.
 Every corresponding execution remains UNRUN. The current combined adoption is
 detailed below; find its exact commit through SCM.
 
-Hot source graph:374equations/264paths, all original361 equations preserved.
-Index SHAdb59b28da6a04a01bf276a5baa126d121f86010b43802aa2b3200a583dcc0ecc;
-engine SHAa1f92121efdfd4d133d1f736e5d08689bf023d66a73f9b1dc5c0b080aae7c1ad.
+Hot source graph:391equations/269paths, all original374 equations preserved.
+Index SHA35a4314cd505a75f4215e10c797b7bd260b31668039c067038be95588ca8cbf2;
+engine SHA472d54fdb781a2d3cbeab8fa184a45717c0708942aeaeab7e17b74f632eef2e5.
 The separate engine chronology preserves all original source images and old-root
-domains. This adoption appends the complete361→374 transition.
+domains. The latest adoption appends the complete374→391 helper transition;
+the preceding361→374 collection transition remains intact below.
 
 ## Combined collection adoption source
 

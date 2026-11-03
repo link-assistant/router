@@ -1,8 +1,9 @@
 # Boolean helper document continuation
 
 This continues the [two-reader helper draft](boolean-helper-source-draft-20261103.md).
-It drafts actual source copies and operation APIs; installation and all receiving
-execution remain UNRUN. Counts stay12/70 DRAFTED,58 OPEN; application function
+It records actual source copies and operation APIs. Their
+[subsequent adoption](boolean-helper-source-adoption-20261103.md) installs the
+full source cohort; all receiving execution remains UNRUN. Counts stay12/70 DRAFTED,58 OPEN; application function
 coverage is UNKNOWN. The source packet SHA256 is
 79543e342e0a0b5e4903bed17979ada5f0157f362a79c4f1124539bfc94bcf02,
 173649 compressed bytes. Both preceding reader afterimages are immutable inputs;
@@ -58,15 +59,16 @@ two-stage CST/inverse history.
 
 ## Remaining adoption and synchronization work
 
-Install the full reader continuation, both new document copies, new operation
-module and both native receiving files through the genuine source graph and
-full helper source custody. The current installed graph374/264 is unchanged.
+The subsequent adoption installs the reader continuation, both document copies,
+operation module and native receiving files through the genuine source graph
+and full helper source custody, advancing374/264 to391/269.
 No native source guard is disabled to make these drafts run. The editable `.txt`
 files and immutable compressed creation images are implementation drafts; they
-are not installed exports yet.
+remain the immutable pre-adoption images; the final fenced copies now have
+installed source exports.
 
-Add original interpreter/evaluation cases and independent Rust edge-case oracle
-source. Implement the corresponding Rust-source inverse profile, which must
+The adoption also drafts original interpreter/evaluation cases and an
+independent Rust edge-case oracle; their execution remains UNRUN. Implement the corresponding Rust-source inverse profile, which must
 preserve or independently reconstruct helper identity and call structure rather
 than claiming that an inlined Boolean expression recovers the original graph.
 Extend the helper family to the remaining production types, effects, ownership,

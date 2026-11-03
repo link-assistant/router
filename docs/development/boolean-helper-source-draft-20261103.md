@@ -1,7 +1,8 @@
 # Imported Boolean helper source draft
 
-This is an **uninstalled source draft**, not newly executable application
-coverage. It advances the open B/F/R translation clauses; no whole acceptance
+This records the original **source proposal**, not newly executable application
+coverage. The [subsequent source adoption](boolean-helper-source-adoption-20261103.md)
+installs its reader/document cohort; all receiving remains unverified. It advances the open B/F/R translation clauses; no whole acceptance
 bundle closes. The authoritative count stays12/70 DRAFTED,58 OPEN. All cases and
 CST proposal execution are UNRUN; CI feedback is NOT_INSPECTED.
 
@@ -60,21 +61,21 @@ not installed as an active receiving test before the reader APIs exist.
 
 ## Work still required
 
-Install the two complete reader successors together with their genuine exact
-source graph continuation, helper implementation source custody and receiving
-case source. Do not skip the existing native source guards or treat this
-proposal's packet hash as semantic authority. The current graph374/264 and
-the installed reader files remain unchanged by this proposal.
+The subsequent adoption installs both complete reader successors with their
+genuine exact source graph continuation, helper implementation source custody
+and receiving case source. Do not skip the existing native source guards or treat this
+proposal's packet hash as semantic authority. The proposal itself never writes files. The later adoption advances the
+graph from374/264 to391/269 and preserves these complete source equations.
 
 The [document continuation](boolean-helper-documents-draft-20261103.md) now
 drafts separately declared document/meta APIs, original helper provenance and
-its independent round trip, plus checked target emission. Install those copies
-and their receiving cases together with the reader/source-guard continuation.
+its independent round trip, plus checked target emission. The later adoption installs those copies
+and their receiving cases with the reader/source-guard continuation.
 Old source-data decoding intentionally retains its old grammar. Inlining yields
 a canonical expression, not exact original call/trivia reconstruction. Current
 whole-source context receipts include the helper file but do not alone prove
-bidirectional helper reconstruction. Original interpreter cases and Rust-source
-inverse reconstruction of helper calls remain open.
+bidirectional helper reconstruction. Interpreter cases and a Rust oracle are now source drafted in the adoption;
+Rust-source inverse reconstruction of helper calls and all execution remain open.
 
 Expand qualified arguments and helper bodies with independent effect/ownership
 theorems rather than silently allowing effectful expressions. General nested

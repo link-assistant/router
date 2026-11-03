@@ -1,3 +1,4 @@
+import {matchesExactSourceEpoch} from './exact-source-compiler-epochs-20261103.mjs';
 // Uninstalled two-reader Boolean-helper source recipes. This DATA does not issue checked functions.
 import {fileURLToPath} from 'node:url';
 import {gunzipSync} from 'node:zlib';
@@ -19,7 +20,7 @@ export function proposeBooleanHelperSources20261103(){
   const raw=gunzipSync(packed,{maxOutputLength:8388608}),text=raw.toString('utf8');if(!Buffer.from(text).equals(raw))throw TypeError('Lossless reverse source UTF8 required');const document=JSON.parse(text);
   if(document.schema!=='boolean-helper-source-20261103-v1'||document.rows.length!==2||new Set(document.rows.map(row=>row.path)).size!==2||document.rows.some(row=>!PATHS.includes(row.path)))throw TypeError('Complete original reverse parent cohort required');
   const files=document.rows.map(row=>{
-   if(custody.read(ROOT+row.path)!==row.before)throw TypeError('Original whole reverse reader changed before proposal');
+   const current=custody.read(ROOT+row.path);if(current!==row.before&&!matchesExactSourceEpoch(row,current,{retainedBytes:Buffer.byteLength(row.before)+Buffer.byteLength(row.after)}))throw TypeError('Original whole reverse reader changed before proposal');
    if(typeof row.before!=='string'||typeof row.after!=='string'||row.inverse!==row.before||hash(row.before)!==row.beforeSha256||hash(row.after)!==row.afterSha256||row.sequences.length!==2||row.sequences[0].phase!=='language'||row.sequences[1].phase!=='repository')throw TypeError('Complete two-phase reverse source ancestry required');
    const rules=sequence=>sequence.rows.map(rule=>countedLiteralSubstitutionRule(rule.id,rule.before,rule.after,rule.count,'complete original reverse source occurrence differs'));
    const result=createRulePipeline(row.sequences.map(sequence=>({phase:sequence.phase,rules:rules(sequence)}))).run(row.before);if(result.value!==row.after)throw TypeError('Whole reverse source successor differs');

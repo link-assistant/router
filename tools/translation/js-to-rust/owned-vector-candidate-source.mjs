@@ -1,3 +1,9 @@
+import {fileURLToPath as booleanHelperSourceRoot} from 'node:url';
+import {gunzipSync as booleanHelperSourceGunzip} from 'node:zlib';
+import {createOrderedMapCanonicalSourceCustody as booleanHelperSourceCustody} from '../ordered-text-map-callers-20261102-canonical-source-custody.mjs';
+import {withSourceInputValidation as booleanHelperSourceInput,withSourceFailureOperation as booleanHelperSourceFailure} from '../source-failure-operations.mjs';
+import {requireSynchronousSourceCallback as booleanHelperSourceCallback} from '../complete-source-closing-fence.mjs';
+import {substituteBooleanHelperExpression20261103} from '../boolean-helper-substitution-20261103.mjs';
 import {withBorrowedJsonToolReverseNativeSources} from '../borrowed-json-tool-20261103-reverse-native.mjs';
 import {withCompleteSourceClosingFence} from '../complete-source-closing-fence.mjs';
 import {validateBorrowedJsonToolReverseBody} from '../borrowed-json-tool-20261103-reverse.mjs';
@@ -125,6 +131,10 @@ export function createOwnedCoreSourceContext(input){
  const handle=Object.freeze({schema:'owned-core-source-context-v1'});
  contexts.set(handle,{data,files,receipts,edge});requireOwnedCoreSourceCurrent(handle);return handle;
 }
+// Grammar selection only: all native declarations and bodies are checked anew.
+export function createOwnedCoreBooleanHelperSourceContext(input){
+ const handle=createOwnedCoreSourceContext(input);contexts.get(handle).booleanHelperSyntax=true;return handle;
+}
 export function requireOwnedCoreSourceCurrent(handle){
  assertReverseConcreteSourceHost();const state=contexts.get(handle);if(!state)fail('unissued source context');
  if(state.data.primitiveOperators===true||state.files.has(state.data.runtimeRoot+'/primitive-operator-runtime.mjs')||state.files.has(state.data.declarationRoot+'/primitive-operator-runtime.d.mts'))for(const row of ownedPrimitiveOperatorRuntimeSources(state.data.runtimeRoot,state.data.declarationRoot))if(state.files.get(row.path)!==row.source)fail('current primitive operator runtime differs');
@@ -186,7 +196,7 @@ function originalOwnedCoreImport(handle,path,node,analysis){
  if(!declarations||declarations.length!==1||!ts.isImportSpecifier(declarations[0]))fail('callee is not the actual import symbol');
  const spec=declarations[0],declaration=spec.parent.parent.parent;
  if(declaration.getSourceFile()!==file||!ts.isStringLiteral(declaration.moduleSpecifier))fail('foreign import declaration');
- let target=originalImportTarget(path,declaration.moduleSpecifier.text,analysis,state),name=(spec.propertyName??spec.name).text,ownerFile=file,ownerDeclaration=declaration;const links=[];
+ let target=originalImportTarget(path,declaration.moduleSpecifier.text,analysis,state),name=(spec.propertyName??spec.name).text,ownerFile=file,ownerDeclaration=declaration;let helperValuePath=!spec.isTypeOnly&&!declaration.importClause?.isTypeOnly&&!declaration.importClause?.name&&!declaration.attributes&&!declaration.assertClause;const links=[];
  for(let depth=0;depth<32;depth++){
   const source=state.files.get(target);if(source===undefined)fail('import target missing');links.push({path:target,name,source,from:{path:ownerFile.fileName,span:[ownerDeclaration.getStart(ownerFile),ownerDeclaration.end]}});
   if(target===state.data.runtimeRoot+'/string-iterator-runtime.mjs'||target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'||target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'||target===state.data.runtimeRoot+'/base64-runtime.mjs'||target===state.data.runtimeRoot+'/json-runtime.mjs'||target===state.data.runtimeRoot+'/json-option-runtime.mjs'||target===state.data.runtimeRoot+'/json-fields-runtime.mjs'||target===state.data.runtimeRoot+'/ordered-text-map-20261102-runtime.mjs'||target===state.data.runtimeRoot+'/borrowed-standard-map-20261102-runtime.mjs'||target===state.data.runtimeRoot+'/borrowed-standard-map-20261103-input-runtime.mjs'||target===state.data.runtimeRoot+'/borrowed-json-tool-predicate-20261103-runtime.mjs'||target===state.data.runtimeRoot+'/borrowed-json-tool-20261103-input-runtime.mjs'){
@@ -204,10 +214,27 @@ function originalOwnedCoreImport(handle,path,node,analysis){
    if(typesOnly&&target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs'&&primitiveBitwiseAlias(name)&&!ownedNativeScalarDeclaration(ts,checker,syntax,state.files,{canonicalPath:state.data.declarationRoot+'/primitive-operator-runtime.d.mts',mirrorPath:state.data.runtimeRoot+'/primitive-operator-runtime.d.mts',name,symbol}))fail('native scalar named import requires its actual current declaration symbol');
    if(!exported)fail('original runtime has no such export');return {target,name,links,local:node.text,typeOnly:!!typesOnly};
   }
+  const helperFile=syntax.get(target);
+  if(state.booleanHelperSyntax===true&&helperFile?.statements.some(ts.isFunctionDeclaration)){
+   if(!helperValuePath||helperFile.text!==source||helperFile.parseDiagnostics?.length)fail('actual complete helper value module required');
+   privateState.booleanHelperLayouts??=new Map();let layout=privateState.booleanHelperLayouts.get(helperFile);
+   if(!layout){
+    layout=new Map();const names=new Set();
+    for(const item of helperFile.statements){
+     if(ts.isEmptyStatement(item))continue;
+     if(!ts.isFunctionDeclaration(item)||!item.name||!item.body||item.asteriskToken||item.typeParameters||item.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword)||names.has(item.name.text))fail('helper modules require distinct ordinary functions without top-level evaluation');
+     names.add(item.name.text);if(item.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword))layout.set(item.name.text,item);
+    }
+    privateState.booleanHelperLayouts.set(helperFile,layout);
+   }
+   const helperDeclaration=layout.get(name),actual=checker.getAliasedSymbol(symbol)?.declarations;
+   if(!helperDeclaration||helperDeclaration.getSourceFile()!==helperFile||actual?.length!==1||actual[0]!==helperDeclaration)fail('actual imported helper declaration identity differs');
+   requireOwnedCoreSourceCurrent(handle);return {target,name,links,local:node.text,typeOnly:false,booleanHelper:{declaration:helperDeclaration,file:helperFile}};
+  }
   const next=syntax.get(target);if(!next||next.statements.length!==1)fail('only a single transparent reexport declaration');let selected=null;
   for(const item of next.statements){
    if(!ts.isExportDeclaration(item)||!item.moduleSpecifier||!item.exportClause||!ts.isNamedExports(item.exportClause))fail('nontransparent reexport module');
-   for(const leaf of item.exportClause.elements){if(leaf.name.text!==name)fail('extra reexport requires independent source closure');if(leaf.name.text===name){if(selected)fail('competing export');selected={target:relative(target,item.moduleSpecifier.text),name:(leaf.propertyName??leaf.name).text,owner:item,file:next};}}
+   for(const leaf of item.exportClause.elements){if(leaf.name.text!==name)fail('extra reexport requires independent source closure');if(leaf.name.text===name){if(selected)fail('competing export');helperValuePath=helperValuePath&&!item.isTypeOnly&&!leaf.isTypeOnly&&!item.attributes&&!item.assertClause;selected={target:relative(target,item.moduleSpecifier.text),name:(leaf.propertyName??leaf.name).text,owner:item,file:next};}}
   }
   if(!selected)fail('export not found');target=selected.target;name=selected.name;ownerDeclaration=selected.owner;ownerFile=selected.file;
  }
@@ -296,7 +323,27 @@ function rustName(name){
 }
 const json=type=>type==='json'||type==='json-ref';
 const compatible=(actual,wanted)=>wanted==='json'?json(actual):wanted==='i64'?actual==='i64'||actual==='usize':wanted==='u64'?actual==='usize':actual===wanted;
+// Invocation-local full sources only; no private checker or result survives.
+export function withOwnedBooleanHelperSourceOperation(run,{root=booleanHelperSourceRoot(new URL('../../../',import.meta.url))}={}){
+ booleanHelperSourceCallback(run);
+ return booleanHelperSourceFailure(()=>{
+  const custody=booleanHelperSourceCustody(root);let rows=null;
+  const current=()=>booleanHelperSourceInput(()=>{if(rows)for(const row of rows)if(custody.read(root.replace(/\/$/u,'')+'/'+row.path)!==row.source)fail('complete Boolean helper implementation source changed: '+row.path);});
+  try{return withCompleteSourceClosingFence(()=>{
+   booleanHelperSourceInput(()=>{
+    const encoded=custody.readBytes(root.replace(/\/$/u,'')+'/tools/translation/source-profiles/exact-source-boolean-helper-families-20261103/helper-inputs.json.gz',1048576);if(digest(encoded)!=='ba9c4a3d30de8a4a0422d82127fd23b94cf8652fe4f43d722732a4781e06d047')fail('fixed complete helper source input archive differs');
+    const raw=booleanHelperSourceGunzip(encoded,{maxOutputLength:1048576}),text=raw.toString('utf8');if(!Buffer.from(text).equals(raw))fail('complete helper source UTF8 differs');const input=JSON.parse(text);
+    const paths=["tools/translation/boolean-helper-substitution-20261103.mjs","tools/translation/js-to-rust/owned-core-boolean-helper-document.mjs","tools/translation/js-to-rust/owned-vector-candidate-boolean-helper-document.mjs","tools/translation/js-to-rust/owned-boolean-helper-profile-20261103.mjs"];if(input.schema!=='original-Boolean-helper-input-sources-20261103-v1'||input.rows.length!==4||new Set(input.rows.map(row=>row.path)).size!==4||input.rows.some(row=>!paths.includes(row.path)||typeof row.source!=='string'||digest(row.source)!==row.sha256))fail('all original complete helper input sources required');
+    rows=input.rows;current();
+   });return run();
+  },[current,custody.close]);}finally{if(rows)rows.length=0;rows=null;}
+ });
+}
 export function analyzeOriginalOwnedCoreSource(context,path){
+ if(contexts.get(context)?.booleanHelperSyntax===true)return withOwnedBooleanHelperSourceOperation(()=>analyzeOriginalOwnedBooleanHelperSourceBody(context,path));
+ return analyzeOriginalOwnedBooleanHelperSourceBody(context,path);
+}
+function analyzeOriginalOwnedBooleanHelperSourceBody(context,path){
  const analysis=originalOwnedCoreModule(context,path),{ts,file,source}=analysis,program=[],diagnostics=[],items=[];
  const run=()=>{let failed=false;
 
@@ -331,7 +378,7 @@ function checkFunction(context,path,declaration,analysis){
 function checkFunctionBody(context,path,declaration,analysis){
  const {ts,file,source,checker}=analysis,nativeScalars=contexts.get(context).data.primitiveOperators===true,primitiveDefinitions=contexts.get(context).data.primitiveDefinitions===true,vectorDefinitions=contexts.get(context).data.primitiveVectorDefinitions===true;
  if(!declaration.name||!declaration.body||declaration.asteriskToken||declaration.typeParameters||declaration.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary original named function required');
- const name=rustName(declaration.name.text),params=[],sourceCalls=[],environment=new Map(),orderedMapLocalRoots=new Map();let cells=0,paired=pairedFunction(context,path,declaration,analysis);
+ const booleanHelperCalls=[];const name=rustName(declaration.name.text),params=[],sourceCalls=[],environment=new Map(),orderedMapLocalRoots=new Map();let cells=0,paired=pairedFunction(context,path,declaration,analysis);
  const vectorCandidate=checkOriginalOwnedVectorFunction(path,declaration,analysis,paired,name,operand=>originalOwnedCoreImport(context,path,operand,analysis));if(vectorCandidate)return vectorCandidate;
  const vectorProfile=analysis.vectorProfiles?.get(declaration.name.text),jsonVectorProfile=['json-vector','json-value','json-scalar','primitive-scalar','primitive-expression-vector'].includes(vectorProfile?.kind)?vectorProfile:null;
  if(jsonVectorProfile?.kind==='primitive-scalar'&&nativeScalars&&jsonVectorProfile.vectorLocals!==true)fail('closed primitive source units retain their separate non-operator input profile');
@@ -451,6 +498,16 @@ function checkFunctionBody(context,path,declaration,analysis){
     if(!target.name||!primitiveDefinitions&&(!jsonVectorProfile||!['primitive-scalar',...(expressionVector?['primitive-expression-vector']:[])].includes(analysis.vectorProfiles?.get(target.name.text)?.kind)))fail('source calls require a complete actual closed primitive callee');const callee=checkFunction(context,path,target,analysis),origin=callee.vectorOrigin?.original,definitionRole=type=>type==='bool'||!!primitiveBitwiseType(type);if(primitiveDefinitions?(!!origin||!definitionRole(callee.returns)&&!(vectorDefinitions&&(callee.returns==='unit'||primitiveVectorResultRole(callee.returns)))||callee.params.some(param=>!definitionRole(param.type)&&!(vectorDefinitions&&param.type==='str'))||node.arguments.length!==callee.params.length):(!['primitive-scalar',...(expressionVector?['primitive-expression-vector']:[])].includes(callee.vectorOrigin?.kind)||!origin||origin.qualifiedName.split('.').slice(0,-1).join('.')!==jsonVectorProfile.original.qualifiedName.split('.').slice(0,-1).join('.')||origin.qualifiedName.split('.').some(part=>! /^[A-Za-z_][A-Za-z0-9_]*$/u.test(part)||KEYS.has(part))||node.arguments.length!==callee.params.length))fail('actual ordinary primitive source callee/arity differs');const args=node.arguments.map((argument,index)=>{const role=callee.params[index].type;let value=expression(argument,scope,depth+1,false,role);if(primitiveBitwiseType(role)){value=scalarReturnLiteral(value,scope,depth+1);narrowOwnedNumericLiteral(value,role);}if(value.type!==role&&!(role==='u64'&&value.type==='usize'))fail('source callee argument differs from its actual native ABI');if(role==='str'&&!asciiStringLoan(value,scope))fail('source helper text requires an actual live borrowed/static loan');return value;});const frame=traversals.get(analysis);frame.scalarEdges=(frame.scalarEdges??0)+1;if(frame.scalarEdges>16384)fail('bounded original source-call edges required');const selected={path,javascript:callee.javascript,rust:origin?.qualifiedName??callee.name,localRust:callee.name,parameters:callee.params.map(param=>param.type),returns:callee.returns,span:[...callee.source.span]};sourceCalls.push(selected);return {kind:'source-scalar-call',callee:selected,args,type:callee.returns,root:null};
    }}
    const binding=originalOwnedCoreImport(context,path,node.expression,analysis),op=OPS[binding.name];
+   if(binding.booleanHelper){
+    requireOwnedCoreSourceCurrent(context);
+    if(node.arguments.some(argument=>!ts.isIdentifier(argument)&&argument.kind!==ts.SyntaxKind.TrueKeyword&&argument.kind!==ts.SyntaxKind.FalseKeyword))fail('helper operands must be inert Boolean bindings or literals');
+    const state=contexts.get(context),selected=binding.booleanHelper,helperAnalysis={ts,checker,syntax:analysis.syntax,runtimeRoot:analysis.runtimeRoot,file:selected.file,source:state.files.get(binding.target)};
+    traversals.set(helperAnalysis,{handle:context,state,booleanHelperBody:true});let helper;
+    try{helper=checkFunction(context,binding.target,selected.declaration,helperAnalysis);}finally{traversals.delete(helperAnalysis);}
+    const args=node.arguments.map(argument=>expression(argument,scope,depth+1));
+    const value=substituteBooleanHelperExpression20261103(helper,args,level=>tick(depth+1+level));
+    booleanHelperCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end],declaration:{path:binding.target,source:helper.source.source,span:[...helper.source.span]}});requireOwnedCoreSourceCurrent(context);return value;
+   }
    const textScalar=ownedVectorTextScalarOperation(binding.name);if(textScalar&&binding.target===analysis.runtimeRoot+'/string-iterator-runtime.mjs'){if(!jsonVectorProfile&&!vectorDefinitions||binding.typeOnly||node.arguments.length!==textScalar.args.length)fail('fixed source-bound text scalar operation/arity required');requireOwnedCoreSourceCurrent(context);const args=node.arguments.map(argument=>expression(argument,scope,depth+1));if(args.some(value=>value.type!=='str'||!asciiStringLoan(value,scope)))fail('text scalar arguments need actual live borrowed/static text');hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return {kind:'text-scalar-call',name:binding.name,args,type:textScalar.ret,root:null};}
    if(ownedPrimitiveOperatorOperation(binding.name)&&binding.target===analysis.runtimeRoot+'/primitive-operator-runtime.mjs'){
     requireOwnedCoreSourceCurrent(context);if(!nativeScalars&&(!jsonVectorProfile||!ownedNativeClosedOperator(binding.name)))fail('non-operator source units require a qualified total operation');if(binding.typeOnly)fail('primitive runtime call cannot use a type-only import');const value=readOwnedPrimitiveOperatorCall(ts,node,binding.name,(argument,domain)=>expression(argument,scope,depth+1,false,domain));if(!nativeScalars)requireOwnedNativeClosedCall(value);hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return value;
@@ -642,8 +699,8 @@ function checkFunctionBody(context,path,declaration,analysis){
  if(newVectorDefinition&&resultType!==definitionReturnType)fail('actual written primitive vector definition return differs');
  if(!hostCalls.length&&!sourceNativeOperators.length)nativeOperatorHistory.adoptCopies();
  if(jsonVectorProfile&&resultType!==jsonVectorProfile.type)fail('actual original native owned JSON return shape required');
- if(!hostCalls.length&&!sourceNativeOperators.length&&!params.some(param=>param.type==='base64-result')&&!jsonVectorProfile&&!primitiveDefinitions)fail('no actual owned-core call');
- const item={kind:'owned-function',name,...(sourceCalls.length?{sourceCalls}:{}),javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},...(jsonVectorProfile?{vectorOrigin:jsonVectorProfile}:{}),...(sourceNativeOperators.length?{sourceNativeOperators}:{}),hostCalls};
+ if(!booleanHelperCalls.length&&!traversals.get(analysis).booleanHelperBody&&!hostCalls.length&&!sourceNativeOperators.length&&!params.some(param=>param.type==='base64-result')&&!jsonVectorProfile&&!primitiveDefinitions)fail('no actual owned-core call');
+ const item={kind:'owned-function',name,...(booleanHelperCalls.length?{booleanHelperCalls}:{}),...(sourceCalls.length?{sourceCalls}:{}),javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},...(jsonVectorProfile?{vectorOrigin:jsonVectorProfile}:{}),...(sourceNativeOperators.length?{sourceNativeOperators}:{}),hostCalls};
  if(paired)item.pairedSource={path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits};
  if(vectorFieldBoundary)requireOwnedVectorJsonFieldSources(traversals.get(analysis).state.files,contexts.get(context).data);if(boundedJsonBoundary)boundedJsonRuntimeRustEdge(traversals.get(analysis).state.files);requireOwnedCoreSourceCurrent(context);return item;
 }
