@@ -1,3 +1,4 @@
+import {knownWidthCountedRangeSourceSuccessor20261104} from './width-counted-range-source-history-20261104.mjs';
 // Reusable source construction, never a semantic or original-owner issuer.
 import {withProtectedPreparerWriter,allowContainedPreparerSourceWrites,writeContainedPreparerSource} from './protected-preparer-writers-20261102.mjs';
 import {knownProtectedPreparerDirectPolicySuccessor} from './protected-preparer-writers-20261102-direct-history.mjs';
@@ -88,6 +89,9 @@ export function prepareNativeSubstitutionCopy({root,archive,pin,id,laterPlans=[]
   }
   if(current!==null&&current!==before&&current!==after&&current!==currentAfter){
    const successor=knownProtectedPreparerWriterSuccessor({root,path:row.path,before:currentAfter});if(successor){need(successor.currentAfter===current,'unknown physical preparer policy successor');const equation=transportConcreteSourceEquations([{before:currentAfter,after:successor.currentAfter,language:sourceLanguage}])[0];need(equation.inverse===currentAfter,'complete named preparer successor inverse');laterHistories.push({...successor,equation,laterHistories:successor.laterHistories??[],parallelHistories:[],sourceDependencies:[],sourceAuthority:false,semanticAuthority:false});currentAfter=successor.currentAfter;}
+  }
+  if(current!==null&&current!==before&&current!==after&&current!==currentAfter){
+   const successor=knownWidthCountedRangeSourceSuccessor20261104({path:row.path,before:currentAfter},{root});if(successor){need(successor.currentIsTerminal===true&&successor.currentAfter===current,'unknown physical width-aware loop reader successor');parsed(ts,path,successor.currentAfter);const equation=transportConcreteSourceEquations([{before:currentAfter,after:successor.currentAfter,language:sourceLanguage}])[0];need(equation.inverse===currentAfter,'complete width-aware loop reader source inverse');laterHistories.push({id:'router:fixed-width-counted-reader-current-source-20261104',...successor,equation,laterHistories:[],parallelHistories:[],sourceDependencies:[],sourceAuthority:false,semanticAuthority:false});currentAfter=successor.currentAfter;}
   }
   need(current===null||current===before||current===after||current===currentAfter,'unknown physical copied implementation');
   files.push({path:row.path,...(row.originalPath?{originalPath:row.originalPath}:{}),before,language:language.after,after,current,currentAfter,laterHistories,parallelHistories,sourceDependencies,stages,trace:run.trace,nativeSelections:{language:language.selections,repository:repository.selections},inverse:before});

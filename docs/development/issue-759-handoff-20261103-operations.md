@@ -9,6 +9,27 @@ are authorized during this drafting phase. All new execution UNRUN; CI
 NOT_INSPECTED. Source reading/writing, lightweight DATA authoring and SCM remain
 allowed. Preserve all eight same-SHA JavaScript gates before fatal Rust CI.
 
+Latest installed-source checkpoint:
+[width-loop reader adoption](width-range-reader-adoption-20261104.md) installs all
+six import successors and actual native-preparer history integration. Original
+private grammar/bindings/source/policy/write/closing checks remain. The original
+hot index stays499/277; fixed additional segments are6 and18 rows,523 logical
+rows total under original per-index512/per-path64/16MiB limits. Old terminal
+roots need no new companion. Missing optional registry grants no new result;
+unknown or linked sources refuse. No source/owner/body/verdict cache was added.
+Twenty whole control and three complete copy source/CST/inverse equations retain
+engine/preparer/protected-dispatch/case ancestry. Four engine case counts were
+corrected by reading the recorded chronology, without tests or CI inspection.
+Registry SHA31ad842be34b3d267a40374f57d8d0da4be9ed69a77884d0c503fa7ab9cbf8ff;
+index18 SHA5445c95e9c0e1edaf4f09cfd51b486eb2b10575dda3c17ac822bfc7a68c56fdd;
+controls SHA33a5056d132820893535b6e1cce131cc0885c0f25292296ded58147be17c075c;
+engine SHA5e66828bb2995d1d5aa201f5660fc309573054e8bed839e1ef9a07c1d6e00a18;
+copies SHA48717d9c313eb5d2c19e59e63c76c21e4f5b7275006445eb2b07ec4bb290be72.
+Original/added cases, producer freshness, all native receiving, strict targets
+and Rust oracles remain UNRUN. Counts12/70 DRAFTED,58 OPEN; CI NOT_INSPECTED.
+Next: wider common control/ownership and actual production callers, all remaining
+acceptance bundles; do not run local verification or inspect CI during drafting.
+
 Latest continuation:
 [bounded source-history segments](partitioned-source-history-draft-20261104.md)
 draft an additive whole-index composer using the original chain and CST algebra.

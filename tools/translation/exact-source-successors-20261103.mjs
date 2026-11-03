@@ -1,3 +1,4 @@
+import {knownWidthRangeAdoptionSourceSuccessor20261104,prepareWidthRangeAdoptionSourceSuccessor20261104} from './width-range-adoption-source-history-20261104.mjs';
 // Fixed reviewed repository histories. Returns CST/source proposals, never owners.
 import {fileURLToPath} from 'node:url';
 import {resolve,join} from 'node:path';
@@ -59,10 +60,10 @@ function operate(root,run){root=realpathSync(resolve(root));return active?.root=
 function prepare(input,root,known){
  account(input);input=copyMetadata(input);if(!input||Object.keys(input).sort().join(',')!=='before,path'||typeof input.path!=='string'||typeof input.before!=='string')fail('exact path and complete original source DATA required');
  return operate(root,frame=>{
-  const rows=sourceIndex(frame).rows.filter(row=>row.path===input.path);if(!rows.length)return null;
+  const cold=()=>known?knownWidthRangeAdoptionSourceSuccessor20261104(input,{root:frame.root}):prepareWidthRangeAdoptionSourceSuccessor20261104(input,{root:frame.root});const rows=sourceIndex(frame).rows.filter(row=>row.path===input.path);if(!rows.length)return cold();
   const current=read(frame,input.path,4194304);
   const edges=rows.map(row=>({id:row.id,language:row.language,before:image(frame,row.before),after:image(frame,row.after)}));
-  const selected=composeExactSourceSuccessorData({path:input.path,before:input.before,current,edges});if(!selected||known&&!selected.currentIsTerminal)return null;
+  const selected=composeExactSourceSuccessorData({path:input.path,before:input.before,current,edges});if(!selected||!selected.currentIsTerminal){const later=cold();if(later)return later;}if(!selected||known&&!selected.currentIsTerminal)return null;
   const stages=selected.chain.map((edge,at)=>{
    const result=createRulePipeline([{phase:'language',rules:[]},{phase:'repository',rules:[countedLiteralSubstitutionRule('repository:exact-reviewed-source-edge-'+at,edge.before,edge.after,1,'whole reviewed source predecessor differs')]}]).run(edge.before);
    if(result.value!==edge.after)fail('complete literal source successor differs');const history=transportConcreteSourceEquations([{before:edge.before,after:edge.after,language:edge.language}])[0];if(history.inverse!==edge.before)fail('complete source edge inverse differs');

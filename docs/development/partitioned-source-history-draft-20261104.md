@@ -100,3 +100,8 @@ Integrate the fixed histories into actual source-preparer callers before
 installing the width-loop proposals. Continue all remaining grammar, ownership,
 production, synchronization and acceptance bundles, then complete the separately
 required full verification when authorized.
+
+The six reader imports and actual preparer/history integration are now
+[source adopted](width-range-reader-adoption-20261104.md). This supersedes the
+earlier uninstalled statements; all execution, full receiving and remaining
+translation obligations remain unfinished.

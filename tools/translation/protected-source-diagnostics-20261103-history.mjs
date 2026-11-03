@@ -1,3 +1,4 @@
+import {knownWidthRangeAdoptionSourceSuccessor20261104} from './width-range-adoption-source-history-20261104.mjs';
 import {knownProtectedDiagnosticNativeFdSuccessor} from './protected-source-diagnostics-20261103-native-fd-profile.mjs';
 import {knownProtectedNativeTemporaryPrefixSuccessor} from './protected-native-temporary-prefix-20261103-profile.mjs';
 import {copyMetadata} from './extensions/source-links.mjs';
@@ -23,7 +24,7 @@ export function proposeProtectedSourceDiagnosticSources(input,{root=ROOT}={}){
  try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
 }
 export function knownProtectedSourceDiagnosticSuccessor({root=ROOT,path,before}={}){
- const name=FILES.find(name=>path===name.name);if(!name)return null;const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
+ const name=FILES.find(name=>path===name.name);if(!name)return knownWidthRangeAdoptionSourceSuccessor20261104({path,before},{root});const capture=createReconcileSourceCapture(root);let result,primary,failed=false;
  try{const pair=images(capture,name),current=capture.capture(path).source,later=current===pair.after?null:knownProtectedNativeTemporaryPrefixSuccessor({root,path,before:pair.after});need(current===pair.after||later&&later.currentAfter===current,'actual full source-diagnostic/native-temporary source successor differs');result=before===pair.before?{...equation(name,pair.before,pair.after),current,currentAfter:current,laterHistories:later?[later]:[]}:before===pair.after?later:null;if(result)boundedReconcileWireBytes(result);}catch(error){failed=true;primary=error;}
  try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
 }

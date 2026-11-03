@@ -1,3 +1,4 @@
+import {proposeWidthRangeAdoptionControlSources20261104} from '../width-range-adoption-controls-20261104.mjs';
 // Complete installed source/lifetime cases. SOURCE ONLY; all UNRUN.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -29,8 +30,8 @@ test('all482 originals precede seventeen complete mutable/case continuations',{t
  withExactMutableScalarSourceFamilyData20261104(input=>withExactSourceHistoryDataOperation(ROOT,()=>{for(const family of input.families)for(const row of family.rows){const result=knownExactSourceSuccessor({path:row.path,before:row.before});assert.ok(result,row.path);assert.equal(result.after,read(row.path));assert.equal(result.currentIsTerminal,true);assert.equal(result.inverse,row.before);assert.equal(result.nativeBindingQualified,false);}}));
 });
 test('seventeen complete controls retain the separate482 to499 source engine',{timeout:60000},()=>{
- const controls=proposeExactMutableScalarControlSources20261104();assert.equal(controls.files.length,17);for(const row of controls.files){assert.equal(read(row.path),row.after);assert.equal(row.inverse,row.before);}
- const before=read('tools/translation/source-profiles/exact-source-scalar-early-return-families-20261104/engine.after.txt'),current=read('tools/translation/exact-source-successors-20261103.mjs'),result=knownExactSourceCompilerEngineEpoch({before,current});assert.ok(result);assert.equal(result.after,current);assert.equal(result.inverse,before);assert.equal(result.laterHistories.length,1);
+ const widthControls=proposeWidthRangeAdoptionControlSources20261104().files;const controls=proposeExactMutableScalarControlSources20261104();assert.equal(controls.files.length,17);for(const row of controls.files){const width=widthControls.find(value=>value.path===row.path);if(width)assert.equal(width.before,row.after);assert.equal(read(row.path),width?.after??row.after);assert.equal(row.inverse,row.before);}
+ const before=read('tools/translation/source-profiles/exact-source-scalar-early-return-families-20261104/engine.after.txt'),current=read('tools/translation/exact-source-successors-20261103.mjs'),result=knownExactSourceCompilerEngineEpoch({before,current});assert.ok(result);assert.equal(result.after,current);assert.equal(result.inverse,before);assert.equal(result.laterHistories.length,2);
 });
 function fixture(t){
  const root=fs.realpathSync(fs.mkdtempSync(join(tmpdir(),'router-scalar-local-source-')));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));const rows=[];

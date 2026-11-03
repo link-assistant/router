@@ -95,3 +95,8 @@ The [bounded history segment source draft](partitioned-source-history-draft-2026
 now retains immutable499 plus the complete six-reader extension through an
 additive consumer and the original index producer. Actual preparer integration
 and reader adoption remain unfinished; every case remains UNRUN.
+
+The six reader imports and actual preparer/history integration are now
+[source adopted](width-range-reader-adoption-20261104.md). This supersedes the
+earlier uninstalled statements; all execution, full receiving and remaining
+translation obligations remain unfinished.
