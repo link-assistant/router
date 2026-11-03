@@ -43,8 +43,9 @@ The [total scalar argument draft](copy-scalar-helper-arguments-draft-20261103.md
 adds pure comparisons, Boolean expressions and conditional operands, validating
 even unused arguments before expansion. Both full reader successors and native
 receiving sources are proposed together with a new eight-input source fence.
-This cohort remains uninstalled: append its source-history continuation next.
-Existing graph remains412 equations/271 paths; all execution remains UNRUN.
+The complete cohort is now [source adopted](scalar-helper-arguments-adoption-20261103.md),
+with all412 prior equations retained and12 appended:424 equations/272 paths.
+The original seven-input archive remains intact. All execution remains UNRUN.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 

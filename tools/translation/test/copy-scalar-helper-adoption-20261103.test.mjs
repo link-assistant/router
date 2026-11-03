@@ -1,3 +1,4 @@
+import {proposeExactScalarArgumentsControlSources} from '../exact-source-scalar-arguments-controls-20261103.mjs';
 import {proposeExactScalarLocalsControlSources} from '../exact-source-scalar-locals-controls-20261103.mjs';
 // Actual complete source installation/history cases. SOURCE ONLY, UNRUN.
 import test from 'node:test';
@@ -17,7 +18,7 @@ import {withOwnedCopyHelperSourceOperation as vectorFence} from '../js-to-rust/o
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url));
 const BASE='tools/translation/source-profiles/exact-source-copy-scalar-helper-families-20261103/';
 const OLD='tools/translation/source-profiles/exact-source-boolean-helper-families-20261103/helper-inputs.json.gz';
-const INPUT='tools/translation/source-profiles/copy-scalar-helper-locals-20261103/helper-inputs.json.gz';
+const INPUT='tools/translation/source-profiles/copy-scalar-helper-arguments-20261103/helper-inputs.json.gz';
 const read=path=>fs.readFileSync(join(ROOT,path),'utf8');
 test('two original readers and four complete implementation copies are actually installed',{timeout:900000},()=>{
  const proposal=proposeCopyScalarHelperSources20261103();assert.equal(proposal.files.length,2);assert.equal(proposal.copies.length,4);assert.equal(proposal.newFiles.length,3);assert.equal(proposal.inputSources.length,6);
@@ -32,9 +33,9 @@ test('all391 original source equations remain before ten complete scalar/case co
  withExactCopyScalarHelperSourceFamilyData(input=>withExactSourceHistoryDataOperation(ROOT,()=>{for(const family of input.families)for(const row of family.rows){const result=knownExactSourceSuccessor({path:row.path,before:row.before});assert.ok(result,row.path);assert.equal(result.after,read(row.path));assert.equal(result.currentIsTerminal,true);assert.equal(result.inverse,row.before);assert.equal(result.nativeBindingQualified,false);}}));
 });
 test('all ten complete controls retain a separate391 to401 source engine transition',{timeout:60000},()=>{
- const controls=proposeExactCopyScalarHelperControlSources();assert.equal(controls.files.length,10);for(const row of controls.files){const locals=proposeExactScalarLocalsControlSources().files.find(value=>value.path===row.path);if(locals)assert.equal(locals.before,row.after);assert.equal(read(row.path),locals?.after??row.after);assert.equal(row.inverse,row.before);}
+ const controls=proposeExactCopyScalarHelperControlSources();assert.equal(controls.files.length,10);for(const row of controls.files){const locals=proposeExactScalarLocalsControlSources().files.find(value=>value.path===row.path);if(locals)assert.equal(locals.before,row.after);const operands=proposeExactScalarArgumentsControlSources().files.find(value=>value.path===row.path);if(operands)assert.equal(operands.before,locals?.after??row.after);assert.equal(read(row.path),operands?.after??locals?.after??row.after);assert.equal(row.inverse,row.before);}
  const before=read('tools/translation/source-profiles/exact-source-boolean-helper-families-20261103/engine.after.txt'),current=read('tools/translation/exact-source-successors-20261103.mjs');
- const result=knownExactSourceCompilerEngineEpoch({before,current});assert.ok(result);assert.equal(result.after,current);assert.equal(result.inverse,before);assert.equal(result.laterHistories.length,2);
+ const result=knownExactSourceCompilerEngineEpoch({before,current});assert.ok(result);assert.equal(result.after,current);assert.equal(result.inverse,before);assert.equal(result.laterHistories.length,3);
 });
 test('an original391 root needs no later Copy scalar source companion',{timeout:60000},t=>{
  const root=fs.realpathSync(fs.mkdtempSync(join(tmpdir(),'router-original391-copy-domain-')));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
@@ -49,8 +50,8 @@ function fixture(t){
  return {root,rows};
 }
 for(const [name,fence] of [['core',coreFence],['vector',vectorFence]]){
- test(name+' Copy source operation checks the old four and current seven complete inputs',{timeout:60000},t=>{
-  const {root,rows}=fixture(t);assert.equal(rows.length,11);assert.equal(fence(()=>true,{root}),true);
+ test(name+' Copy source operation checks the old four and current eight complete inputs',{timeout:60000},t=>{
+  const {root,rows}=fixture(t);assert.equal(rows.length,12);assert.equal(fence(()=>true,{root}),true);
   for(const row of rows){fs.writeFileSync(join(root,row.path),row.source+'\nchanged');assert.throws(()=>fence(()=>true,{root}),TypeError);fs.writeFileSync(join(root,row.path),row.source);assert.throws(()=>fence(()=>{fs.writeFileSync(join(root,row.path),row.source+'\nchanged');return true;},{root}),TypeError);fs.writeFileSync(join(root,row.path),row.source);}
   assert.equal(fence(()=>true,{root}),true);
  });

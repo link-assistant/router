@@ -2,8 +2,9 @@
 
 This extends the [installed scalar local family](scalar-helper-locals-adoption-20261103.md)
 with pure total Boolean/fixed-integer argument expressions. Both original reader
-successors and receiving cases are drafted as complete source proposals, not
-installed. All execution remains UNRUN and CI NOT_INSPECTED. Acceptance counting
+successors and receiving cases were drafted as complete source proposals and
+are now [source adopted](scalar-helper-arguments-adoption-20261103.md).
+All execution remains UNRUN and CI NOT_INSPECTED. Acceptance counting
 stays **12/70 DRAFTED,58 OPEN**; production translation coverage is UNKNOWN.
 
 The reusable argument substitution validates every argument, even one unused by
@@ -50,7 +51,7 @@ reissuance and interpreter comparisons. These are unexecuted case sources.
 Packet SHAe3321585c21749c1fd5ea962271d50eacdb9454aee0c697318369f589917924c,
 180548 compressed bytes. Eight-input archive
 SHA5b9f60248ad9e7e9017351d51b164203f5c9d1c1c309984d094cd8346c79bf1c.
-Next install the complete reader/case cohort through an appended source-history
-continuation, retaining all412 existing equations. This partial F/L/B-family
+The complete reader/case cohort now has an appended source-history
+continuation, retaining all412 previous equations. This partial F/L/B-family
 increment closes no acceptance bundle. General helper edits, wider expression,
 effect/ownership/module families and actual application receiving remain open.
