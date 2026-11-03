@@ -979,3 +979,8 @@ L02/B05. Detached inspection and a separate4096-file report domain preserve the
 old512-file configuration API, private source proofs and all other limits.
 Full source/receiving case images are drafted; no parser trial ran. Complete
 target/Cargo/owner/assignment/receiving scope remains OPEN;12/70 and58 OPEN stay.
+
+The [target binding-gap source adapter](target-binding-gap-plan-20261103.md)
+now reuses the actual immutable driver's single JS/TS native pass and preserves
+all lexical/refusal/closure gaps. Complete source ancestry and unrun receiving
+cases are retained. Actual import resolution and wider L02/B05 scope stay OPEN.

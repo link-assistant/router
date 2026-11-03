@@ -70,7 +70,9 @@ test('wrong blob malformed Unicode duplicate files and caller AST/compiler paylo
 
 test('broader native predicate/checker qualification stays an explicit gap despite source observations', {timeout: 60000}, () => {
   const result = collect('export function observed(){return 1;}');
-  assert.equal(result.nativeExportClosure, 'UNPROVED');
-  assert.ok(result.sources.every(source => source.unresolved.includes('complete-private-native-predicate-and-checker-export-closure-unproved')));
+  assert.equal(result.nativeExportClosure, 'original-private-source-scope-birth');
+  assert.ok(result.remainingScope.includes('complete-source-root-and-export-closure'));
+  assert.ok(result.remainingScope.includes('native-dependency-and-producer-boundaries'));
+  assert.ok(result.sources.every(source => source.unresolved.includes('actual-import-export-entrypoint-and-adoption-closure')));
   assert.equal(result.authority.executable, false);
 });

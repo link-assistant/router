@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {readFileSync,writeSync} from 'node:fs';
 import {readSelectedGitSizeRecords} from '../tools/translation/selected-git-size-records.mjs';
 import {collectDraftScopeRustObservations} from '../tools/translation/draft-scope-20261102-collector.mjs';
-import {collectDraftScopeTargetObservations} from '../tools/translation/draft-scope-20261102-target-collector.mjs';
+import {openTargetBindingGapObservation20261103} from '../tools/translation/target-binding-gap-plan-20261103.mjs';
 import {collectedScopeEvidencePaths,reconcileCollectedScopeBatch} from '../tools/translation/collected-scope-reconciliation-20261103.mjs';
 import {accountPrimitiveVectorIteratorBulkData as accountData} from '../tools/translation/primitive-vector-iterator-bulk-20261101-accounting.mjs';
 import {withCompleteSourceClosingFence,requireSynchronousSourceCallback} from '../tools/translation/complete-source-closing-fence.mjs';
@@ -43,15 +43,20 @@ export function collectRouterDraftScope({revision,assignments=[],run=originalGit
    const source=raw.toString('utf8');if(!Buffer.from(source).equals(raw))fail('complete original source UTF8 required');return {source,origin};
   });}
   function processBatch(kind,origins){
+   let targetFrame=null,targetGapRefusal=null;
    const files=origins.map(read),close=()=>withSourceInputValidation(()=>{for(const file of files)if(read(file.origin).source!==file.source)fail('closing complete original source body differs');});
    return withCompleteSourceClosingFence(()=>{
     const pipeline=createDiscoveredRulePipeline([
-     {phase:'language',id:'language:complete-original-CST-and-native-scope-observations',apply:()=>kind==='Rust'?collectDraftScopeRustObservations({files}):collectDraftScopeTargetObservations({files})},
+     {phase:'language',id:'language:complete-original-CST-and-native-scope-observations',apply:()=>{if(kind==='Rust')return collectDraftScopeRustObservations({files});targetFrame=openTargetBindingGapObservation20261103({files});return targetFrame.native;}},
      {phase:'repository',id:'repository:numbered-actual-adoptions-and-all-evidence-source-joins',requires:['language:complete-original-CST-and-native-scope-observations'],apply:native=>{
-      const reconciliation=reconcileCollectedScopeBatch({sources,observations:native.observations,assignments});return {native,reconciliation};
+      const reconciliation=reconcileCollectedScopeBatch({sources,observations:native.observations,assignments}),value={native,reconciliation};
+      if(targetFrame)try{value.targetBindingGaps=targetFrame.describe();}catch(error){
+       if(!(error instanceof TypeError)||!error.message.startsWith('Primitive vector iterator bulk accounting:'))throw error;
+       targetGapRefusal=error;
+      }return value;
      }},
     ],['repository:numbered-actual-adoptions-and-all-evidence-source-joins']),result=pipeline.run(null),value=result.value,trace=result.trace;
-    try{accountData(value);}
+    try{if(targetGapRefusal)throw targetGapRefusal;accountData(value);}
     catch(error){
      // Only the new complete DATA-output domain may refuse this batch here.
      // Original native/input/source failures propagate through all closing
@@ -61,7 +66,7 @@ export function collectRouterDraftScope({revision,assignments=[],run=originalGit
     for(const row of value.reconciliation.rows){if(seenIds.has(row.id))fail('observation repeated across complete batches');seenIds.add(row.id);observationIdBytes+=row.id.length;if(seenIds.size>200000||observationIdBytes>16*1024*1024)fail('aggregate observation locator retention bound');}
     observations+=value.reconciliation.observations;assigned+=value.reconciliation.assignedObservations;stale+=value.reconciliation.staleObservations;unresolved+=value.reconciliation.unresolvedObservations;
     emit({kind:'native-observation-batch',revision,language:kind,trace,ruleDiscovery:pipeline.discovery,...value,sourceAuthority:false,semanticAuthority:false});
-   },[close,()=>{files.length=0;}]);
+   },[close,()=>{try{targetFrame?.close();}finally{files.length=0;}}]);
   }
   return withCompleteSourceClosingFence(()=>{
    // The complete physical census includes non-code/package/build/generated

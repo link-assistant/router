@@ -11,6 +11,8 @@ export {withSourceBindingBulk20261101 as withSourceBindingBulk} from './source-b
 export {withSourceBindingGapInputs20261103} from './source-binding-bulk-20261101.mjs';
 export {collectSourceBindingGapPlan20261103} from './source-binding-gap-plan-20261103.mjs';
 export {proposeSourceBindingGapPlanSources} from './source-binding-gap-plan-20261103-profile.mjs';
+export {openTargetBindingGapObservation20261103,collectTargetBindingGapPlan20261103} from './target-binding-gap-plan-20261103.mjs';
+export {proposeTargetBindingGapPlanSources} from './target-binding-gap-plan-20261103-profile.mjs';
 export {planPairedSyncReconciliation,applyPairedSyncReconciliation} from './paired-sync-reconcile-20261101.mjs';
 export {proposeScalarChainBulk} from './scalar-chain-bulk-20261101.mjs';
 export {translateNetworkControlBulkJavaScript,translateNetworkControlBulkTypeScript} from './network-control-bulk-20261101.mjs';

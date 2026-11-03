@@ -1,5 +1,13 @@
 # Complete collected scope and adoption reconciliation — source draft
 
+The later [target binding-gap adopter](target-binding-gap-plan-20261103.md) now
+adds an OPEN L02/B05 worklist to each target event using the same original native
+observation pass. It preserves the original lexical/noResolve boundary, complete
+immutable source checks, batch limits and refused-output protocol. This remains
+source drafted; import resolution, native/body qualification and all receiving
+execution stay unfinished. The current acceptance count is12/70; later entries
+below that mention11/70 retain their historical source checkpoint state.
+
 The earlier immutable scope reporter carries only exact manual observations;
 the separate Rust and target collectors can inspect complete native source but
 were not connected to a shared adoption worklist. The additive

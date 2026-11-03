@@ -126,3 +126,30 @@ all58 remaining acceptance bundles alone without local execution or CI reads.
 
 The checklist is now981lines; use linked child receipts for further detailed
 increments and keep the root below the repository's1000-line limit.
+
+## Original target binding-gap adapter and immutable driver
+
+The [JS/TS adapter](target-binding-gap-plan-20261103.md) now calls the actual
+original target collector once and retains source-level closure review, every
+native refusal and original import/export/decorator/namespace/type observation.
+All rows stay OPEN under L02/B05. The original single-file `noResolve:true`
+checker remains lexical; no module, alias, strict type or executable proof is
+inferred. Input source/origin primitives are checked without caller getters,
+proxies, custom iterators or coercion; native AST/compiler injection is rejected.
+
+Actual immutable-driver language/repository rules keep their old IDs and source
+domains. Target events add `targetBindingGaps` without a second native pass;
+Rust handling is unchanged. Only DATA-output capacity errors are deferred into
+the existing refused-batch path. Native/source/input/reconciliation failures
+still propagate and all immutable closing checks/frame cleanup still run.
+Snapshot DATA is immutable; describe expires on close and grants no private fact.
+
+Complete five-parent/two-creation packet SHA
+b5911da856b05108ff64a3474fe42f2ba6f1cc2157a4ef644e23eef90ac7b543
+retains actual driver/cases, earlier registry source joins and the source case
+distinction between original native birth and unproved broader export closure.
+Independent JS/TS/native-refusal/origin/expiry/Unicode/input/immutable-driver and
+full source-history case source is drafted, all UNRUN. Graph stays374/264.
+Module resolution, Cargo/trait/producer ownership, reviewed assignments and
+application receiving remain gaps: L02/B05 OPEN,12/70 DRAFTED,58 OPEN. Root alone;
+no local execution, dependency installs, Rust tools or CI/review reads ran.
