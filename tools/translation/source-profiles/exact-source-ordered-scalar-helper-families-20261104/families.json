@@ -1,0 +1,34 @@
+{
+  "schema": "fixed-ordered-scalar-helper-source-family-census-20261104-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-ordered-scalar-helper-families-20261104/index437.before.json.gz",
+    "encodedSha256": "b8c9ff787a4983f5fa99d9fe93aa18d867558a289579908362175a5da0dd2e26",
+    "sourceSha256": "91f917c4f84c570a01f0c3be438076f47c1565a2565192eed8e8a1da7abdd697",
+    "rows": 437
+  },
+  "families": [
+    {
+      "id": "exact-ordered-scalar-helper-readers-20261104",
+      "manifest": "tools/translation/source-profiles/ordered-scalar-helper-native-20261104/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "ordered-scalar-helper-native-source-20261104-v1",
+      "sha256": "9524d1358c1c5e9b6f1648b9387b5d0b3452db74487da78e98ae4d142aa914a9",
+      "rows": 2,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-ordered-scalar-helper-cases-20261104",
+      "manifest": "tools/translation/source-profiles/exact-source-ordered-scalar-helper-families-20261104/joins.json.gz",
+      "kind": "archive",
+      "schema": "ordered-scalar-helper-index-joins-20261104-v1",
+      "sha256": "a3a4eb5f4f87cc57eade40c86d605d363c1e818390e8135749a7ffad3a2b2ffd",
+      "rows": 12,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 14,
+  "totalRows": 451,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

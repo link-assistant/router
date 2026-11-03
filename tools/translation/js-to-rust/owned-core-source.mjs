@@ -3,6 +3,7 @@ import {gunzipSync as booleanHelperSourceGunzip} from 'node:zlib';
 import {createOrderedMapCanonicalSourceCustody as booleanHelperSourceCustody} from '../ordered-text-map-callers-20261102-canonical-source-custody.mjs';
 import {withSourceInputValidation as booleanHelperSourceInput,withSourceFailureOperation as booleanHelperSourceFailure} from '../source-failure-operations.mjs';
 import {requireSynchronousSourceCallback as booleanHelperSourceCallback} from '../complete-source-closing-fence.mjs';
+import {lowerOrderedScalarHelperStatements20261103} from '../ordered-scalar-helper-statements-20261103.mjs';
 import {substituteCopyScalarHelperTotalPrimitives20261103 as substituteCopyScalarHelperExpression20261103} from '../copy-scalar-helper-total-primitives-20261103.mjs';
 import {substituteBooleanHelperExpression20261103} from '../boolean-helper-substitution-20261103.mjs';
 import {withBorrowedJsonToolReverseNativeSources} from '../borrowed-json-tool-20261103-reverse-native.mjs';
@@ -272,6 +273,9 @@ export function createOwnedCoreBooleanHelperSourceContext(input){
 export function createOwnedCoreCopyHelperSourceContext(input){
  const handle=createOwnedCoreBooleanHelperSourceContext(input),state=contexts.get(handle);if(state.data.primitiveOperators!==true)fail('Copy helper profile requires the complete explicit primitive operator context');state.copyHelperSyntax=true;return handle;
 }
+export function createOwnedCoreOrderedScalarHelperSourceContext(input){
+ const handle=createOwnedCoreCopyHelperSourceContext(input),state=contexts.get(handle);if(state.data.vectorDefinitions===true||state.data.vectorBindings?.length)fail('ordered scalar helpers need separate vector/application adoption');state.orderedScalarHelperSyntax=true;return handle;
+}
 export function requireOwnedCoreSourceCurrent(handle){
  assertReverseConcreteSourceHost();const __asciiSourceHas=Map.prototype.has,__asciiSourceApply=Reflect.apply;const state=contexts.get(handle);if(!state)fail('unissued source context');if(state.orderedMapSourceFrame)requireCanonicalOrderedMapSources(state);
  if(state.data.primitiveOperators===true)for(const row of ownedPrimitiveOperatorRuntimeSources(state.data.runtimeRoot,state.data.declarationRoot))if(state.files.get(row.path)!==row.source)fail('current primitive operator runtime differs');
@@ -367,7 +371,7 @@ function originalOwnedCoreImport(handle,path,node,analysis){
      if(state.copyHelperSyntax===true&&ts.isImportDeclaration(item)){
       if(!item.importClause||item.importClause.name||!item.importClause.namedBindings||!ts.isNamedImports(item.importClause.namedBindings)||item.attributes||item.assertClause)fail('helper imports require actual named canonical scalar or total primitive bindings');
       const typed={ts,checker,syntax,file:helperFile,source,runtimeRoot:analysis.runtimeRoot};traversals.set(typed,{handle,state});
-      try{for(const spec of item.importClause.namedBindings.elements){const imported=originalOwnedCoreImport(handle,target,spec.name,typed),typeOnly=item.importClause.isTypeOnly||spec.isTypeOnly;if(imported.target!==state.data.runtimeRoot+'/primitive-operator-runtime.mjs'||(typeOnly?!imported.typeOnly||!primitiveBitwiseAlias(imported.name):imported.typeOnly||!['primitiveBitwise','primitiveNot','integerCast','primitiveIntegerMethod'].includes(imported.name)))fail('actual canonical native scalar type or total primitive value import required');}}finally{traversals.delete(typed);}continue;
+      try{for(const spec of item.importClause.namedBindings.elements){const imported=originalOwnedCoreImport(handle,target,spec.name,typed),typeOnly=item.importClause.isTypeOnly||spec.isTypeOnly;if(imported.target!==state.data.runtimeRoot+'/primitive-operator-runtime.mjs'||(typeOnly?!imported.typeOnly||!primitiveBitwiseAlias(imported.name):imported.typeOnly||!(state.orderedScalarHelperSyntax===true?['primitiveBitwise','primitiveNot','integerCast','primitiveIntegerMethod','integerArithmetic','integerShift']:['primitiveBitwise','primitiveNot','integerCast','primitiveIntegerMethod']).includes(imported.name)))fail('actual canonical native scalar type or total primitive value import required');}}finally{traversals.delete(typed);}continue;
      }
 
      if(!ts.isFunctionDeclaration(item)||!item.name||!item.body||item.asteriskToken||item.typeParameters||item.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword)||names.has(item.name.text))fail('helper modules require distinct ordinary functions without top-level evaluation');
@@ -498,7 +502,24 @@ function withOwnedCopyHelperSourceOperationBody(run,{root=booleanHelperSourceRoo
   },[current,custody.close]);}finally{if(rows)rows.length=0;rows=null;}
  });
 }
+export function withOwnedOrderedScalarHelperSourceOperation(run,options={}){booleanHelperSourceCallback(run);return withOwnedCopyHelperSourceOperation(()=>withOwnedOrderedScalarHelperSourceOperationBody(run,options),options);}
+function withOwnedOrderedScalarHelperSourceOperationBody(run,{root=booleanHelperSourceRoot(new URL('../../../',import.meta.url))}={}){
+ booleanHelperSourceCallback(run);
+ return booleanHelperSourceFailure(()=>{
+  const custody=booleanHelperSourceCustody(root);let rows=null;
+  const current=()=>booleanHelperSourceInput(()=>{if(rows)for(const row of rows)if(custody.read(root.replace(/\/$/u,'')+'/'+row.path)!==row.source)fail('complete Boolean helper implementation source changed: '+row.path);});
+  try{return withCompleteSourceClosingFence(()=>{
+   booleanHelperSourceInput(()=>{
+    const encoded=custody.readBytes(root.replace(/\/$/u,'')+'/tools/translation/source-profiles/ordered-scalar-helper-native-20261104/helper-inputs.json.gz',1048576);if(digest(encoded)!=='e49b85748ca62cfbc933d903545310514a493f61697d4b2bf64aca6152e7e3d9')fail('fixed complete helper source input archive differs');
+    const raw=booleanHelperSourceGunzip(encoded,{maxOutputLength:1048576}),text=raw.toString('utf8');if(!Buffer.from(text).equals(raw))fail('complete helper source UTF8 differs');const input=JSON.parse(text);
+    const paths=["tools/translation/ordered-scalar-helper-statements-20261103.mjs","tools/translation/js-to-rust/owned-core-ordered-scalar-helper-document-20261104.mjs","tools/translation/js-to-rust/owned-vector-candidate-ordered-scalar-helper-document-20261104.mjs","tools/translation/js-to-rust/owned-ordered-scalar-helper-profile-20261104.mjs","tools/translation/js-to-rust/owned-ordered-scalar-helper-rust-20261104.mjs","tools/translation/js-to-rust/ordered-scalar-helper-source-reconciliation-20261104.mjs"];if(input.schema!=='original-ordered-scalar-helper-input-sources-20261104-v1'||input.rows.length!==6||new Set(input.rows.map(row=>row.path)).size!==6||input.rows.some(row=>!paths.includes(row.path)||typeof row.source!=='string'||digest(row.source)!==row.sha256))fail('all six original complete ordered helper input sources required');
+    rows=input.rows;current();
+   });return run();
+  },[current,custody.close]);}finally{if(rows)rows.length=0;rows=null;}
+ });
+}
 export function analyzeOriginalOwnedCoreSource(context,path){
+ if(contexts.get(context)?.orderedScalarHelperSyntax===true)return withOwnedOrderedScalarHelperSourceOperation(()=>analyzeOriginalOwnedBooleanHelperSourceBody(context,path));
  if(contexts.get(context)?.copyHelperSyntax===true)return withOwnedCopyHelperSourceOperation(()=>analyzeOriginalOwnedBooleanHelperSourceBody(context,path));
  if(contexts.get(context)?.booleanHelperSyntax===true)return withOwnedBooleanHelperSourceOperation(()=>analyzeOriginalOwnedBooleanHelperSourceBody(context,path));
  return analyzeOriginalOwnedBooleanHelperSourceBody(context,path);
@@ -532,6 +553,7 @@ function analyzeOriginalOwnedBooleanHelperSourceBody(context,path){
 function checkFunction(context,path,declaration,analysis){
  const {ts,file,source,checker}=analysis,nativeScalars=contexts.get(context).data.primitiveOperators===true;
  if(!declaration.name||!declaration.body||declaration.asteriskToken||declaration.typeParameters||declaration.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary original named function required');
+ let orderedScalarCalls=false;
  const booleanHelperCalls=[],copyHelperCalls=[],copyHelperRoots=contexts.get(context).copyHelperSyntax===true?new WeakSet():null;const name=rustName(declaration.name.text),params=[],environment=new Map(),orderedMapLocalRoots=new Map();let cells=0,paired=pairedFunction(context,path,declaration,analysis);
  const tick=depth=>{if(++cells>100000||depth>160)fail('whole function flow budget');};
  function bind(identifier,value,scope){
@@ -644,9 +666,10 @@ function checkFunction(context,path,declaration,analysis){
     if(copy&&(helper.params.some(param=>param.type!=='bool'&&!primitiveBitwiseType(param.type))||helper.returns!=='bool'&&!primitiveBitwiseType(helper.returns)))fail('actual checked Boolean/native integer Copy signatures required');
     if(copy&&node.arguments.length!==helper.params.length)fail('helper operands must be inert actual scalar bindings or literals');
     const args=node.arguments.map((argument,index)=>{const role=copy?helper.params[index].type:null,value=expression(argument,scope,depth+1,false,primitiveBitwiseType(role)?role:null);if(copy&&primitiveBitwiseType(role))narrowOwnedNumericLiteral(value,role);return value;});
-    const value=copy?substituteCopyScalarHelperExpression20261103(helper,args,level=>tick(depth+1+level)):substituteBooleanHelperExpression20261103(helper,args,level=>tick(depth+1+level));
+    let value;if(copy&&state.orderedScalarHelperSyntax===true){orderedScalarCalls=true;value={kind:'ordered-scalar-helper-call',helper,args,type:helper.returns,root:null};}else value=copy?substituteCopyScalarHelperExpression20261103(helper,args,level=>tick(depth+1+level)):substituteBooleanHelperExpression20261103(helper,args,level=>tick(depth+1+level));
     const receipt={name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end],declaration:{path:binding.target,source:helper.source.source,span:[...helper.source.span]}};
     if(copy&&helper.hostCalls.length){receipt.primitiveCalls=helper.hostCalls.map(call=>({name:call.name,target:call.target,span:[...call.span]}));for(const call of helper.hostCalls)hostCalls.push({...call,source:{path:binding.target,span:[...call.span]}});}
+    if(copy&&state.orderedScalarHelperSyntax===true&&helper.sourceNativeOperators?.length)for(const operation of helper.sourceNativeOperators)sourceNativeOperators.push({...operation,helperSource:{path:binding.target,span:[...operation.span]}});
     if(copy){receipt.parameters=helper.params.map(param=>param.type);receipt.returns=helper.returns;if(helper.pairedSource)receipt.pairedDeclaration={path:helper.pairedSource.path,source:helper.pairedSource.source,span:[...helper.pairedSource.span]};copyHelperCalls.push(receipt);copyHelperRoots.add(value);}else booleanHelperCalls.push(receipt);requireOwnedCoreSourceCurrent(context);return value;
    }
    const ascii=ownedAsciiOperation(binding.name);
@@ -803,6 +826,7 @@ function checkFunction(context,path,declaration,analysis){
   const actual=originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis);
   if((actual==='text-owned'?'str':['text-map','text-map-ref'].includes(actual)?'text-map-input':actual)!==params[index].type)fail('paired written parameter ABI differs');
  }
+ if(contexts.get(context).orderedScalarHelperSyntax===true){if(resultRoot!==null||resultType!=='bool'&&!primitiveBitwiseType(resultType)||params.some(param=>param.type!=='bool'&&!primitiveBitwiseType(param.type)))fail('ordered helper profile requires complete root-free scalar callers');if(orderedScalarCalls)checked.body=lowerOrderedScalarHelperStatements20261103({params,returns:resultType,body:checked.body},level=>tick(level)).body;}
  validateBorrowedJsonToolReverseBody(params,resultType,checked.body);
  const writtenReturn=declaration.type??ts.getJSDocReturnType(declaration);
  if(writtenReturn){
@@ -818,6 +842,7 @@ function checkFunction(context,path,declaration,analysis){
  if(params.some(param=>param.type==='bytes-ref'&&!byteInputs.has(param.name)))fail('octet input requires an actual fixed base64 operand');
  if(params.some(param=>param.type==='json-option-input'&&!hostCalls.some(call=>ownedJsonOptionalReaderOperation(call.name)&&call.inputRoot===param.name)))fail('opaque optional Json input requires validation');
  if(!hostCalls.length&&!sourceNativeOperators.length)nativeOperatorHistory.adoptCopies();
+ if(contexts.get(context).orderedScalarHelperSyntax===true&&(sourceNativeOperators.length>4096||sourceNativeOperators.reduce((units,row)=>units+row.source.length,0)>2097152))fail('bounded complete lifted native scalar source history required');
  if(!booleanHelperCalls.length&&!copyHelperCalls.length&&!traversals.get(analysis).booleanHelperBody&&!hostCalls.length&&!sourceNativeOperators.length&&!params.some(param=>param.type==='base64-result'))fail('no actual owned-core call');
  const item={kind:'owned-function',name,...(booleanHelperCalls.length?{booleanHelperCalls}:{}),...(copyHelperCalls.length?{copyHelperCalls}:{}),javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},...(sourceNativeOperators.length?{sourceNativeOperators}:{}),hostCalls};
  if(paired)item.pairedSource={path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits};

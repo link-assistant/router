@@ -80,8 +80,11 @@ histories and six creation/receiving images retain both CST rule sequences.
 Packet SHA9524d1358c1c5e9b6f1648b9387b5d0b3452db74487da78e98ae4d142aa914a9,
 213793compressed bytes; six-input archive
 SHAe49b85748ca62cfbc933d903545310514a493f61697d4b2bf64aca6152e7e3d9.
-Both reader successors and native receiving cases remain uninstalled. Append
-the complete source-history cohort next, retaining all437 existing equations.
+Both reader successors and native receiving cases are now
+[source adopted](ordered-scalar-helper-adoption-20261104.md). The complete
+source-history cohort retains all437 previous equations and appends14:
+451equations/274paths. The Copy fourteen-input archive remains unchanged; the
+ordered operation requires its additional six sources inside the original fences.
 All execution UNRUN; counts remain12/70 DRAFTED,58 OPEN. Inter-helper imports,
 recursive graph/source proof and broader application adoption remain gaps.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains

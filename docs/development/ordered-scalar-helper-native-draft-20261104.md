@@ -4,7 +4,8 @@ The [ordered statement rule](ordered-scalar-helper-statements-20261103.md) now h
 complete source proposals for both original native readers and five copied API
 modules: two document codecs, a source/CST/meta profile, Rust inverse and caller
 reconciliation adapter. Six new API/receiving sources are retained together.
-Both native reader successors remain uninstalled. All execution is UNRUN and
+Both native reader successors are now [source adopted](ordered-scalar-helper-adoption-20261104.md).
+All execution is UNRUN and
 CI NOT_INSPECTED. Counts stay12/70 DRAFTED,58 OPEN; coverage is UNKNOWN.
 
 The separate `createOwnedCoreOrderedScalarHelperSourceContext` derives its
@@ -73,8 +74,8 @@ These source cases have not run. Existing ordered JS/Rust oracle source remains
 unrun; Rust execution is CI-only after all same-SHA JavaScript gates.
 
 The complete two-reader/five-copy/six-creation packet and six-input archive are
-recorded in the operation handoff with their exact digests. Next source-adopt the
-whole cohort and native cases through appended history, preserving all437
-existing equations. Finish remaining inter-helper import/recursive graph,
+recorded in the operation handoff with their exact digests. The whole cohort
+and native cases now have appended history, preserving all437 previous
+equations. Qualification remains UNRUN. Finish inter-helper import/recursive graph,
 statement/ownership/interface, application and other open bundles before any
 verification. This draft closes no acceptance bundle.

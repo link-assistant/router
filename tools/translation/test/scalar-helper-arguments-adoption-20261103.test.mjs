@@ -1,3 +1,4 @@
+import {proposeExactOrderedScalarHelperControlSources20261104} from '../exact-source-ordered-scalar-helper-controls-20261104.mjs';
 import {proposeExactScalarPrimitivesControlSources} from '../exact-source-scalar-primitives-controls-20261103.mjs';
 // Complete installed source/lifetime cases. SOURCE ONLY; all UNRUN.
 import test from 'node:test';
@@ -29,8 +30,8 @@ test('all412 originals precede twelve complete local/helper case continuations',
  withExactScalarArgumentsSourceFamilyData(input=>withExactSourceHistoryDataOperation(ROOT,()=>{for(const family of input.families)for(const row of family.rows){const result=knownExactSourceSuccessor({path:row.path,before:row.before});assert.ok(result,row.path);assert.equal(result.after,read(row.path));assert.equal(result.currentIsTerminal,true);assert.equal(result.inverse,row.before);assert.equal(result.nativeBindingQualified,false);}}));
 });
 test('twelve complete controls retain the separate412 to424 source engine',{timeout:60000},()=>{
- const controls=proposeExactScalarArgumentsControlSources();assert.equal(controls.files.length,12);for(const row of controls.files){const primitives=proposeExactScalarPrimitivesControlSources().files.find(value=>value.path===row.path);if(primitives)assert.equal(primitives.before,row.after);assert.equal(read(row.path),primitives?.after??row.after);assert.equal(row.inverse,row.before);}
- const before=read('tools/translation/source-profiles/exact-source-scalar-locals-families-20261103/engine.after.txt'),current=read('tools/translation/exact-source-successors-20261103.mjs'),result=knownExactSourceCompilerEngineEpoch({before,current});assert.ok(result);assert.equal(result.after,current);assert.equal(result.inverse,before);assert.equal(result.laterHistories.length,2);
+ const controls=proposeExactScalarArgumentsControlSources();assert.equal(controls.files.length,12);for(const row of controls.files){const primitives=proposeExactScalarPrimitivesControlSources().files.find(value=>value.path===row.path);if(primitives)assert.equal(primitives.before,row.after);const ordered=proposeExactOrderedScalarHelperControlSources20261104().files.find(value=>value.path===row.path);if(ordered)assert.equal(ordered.before,primitives?.after??row.after);assert.equal(read(row.path),ordered?.after??primitives?.after??row.after);assert.equal(row.inverse,row.before);}
+ const before=read('tools/translation/source-profiles/exact-source-scalar-locals-families-20261103/engine.after.txt'),current=read('tools/translation/exact-source-successors-20261103.mjs'),result=knownExactSourceCompilerEngineEpoch({before,current});assert.ok(result);assert.equal(result.after,current);assert.equal(result.inverse,before);assert.equal(result.laterHistories.length,3);
 });
 function fixture(t){
  const root=fs.realpathSync(fs.mkdtempSync(join(tmpdir(),'router-scalar-local-source-')));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));const rows=[];
