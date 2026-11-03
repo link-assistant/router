@@ -9,6 +9,21 @@ are authorized during this drafting phase. All new execution UNRUN; CI
 NOT_INSPECTED. Source reading/writing, lightweight DATA authoring and SCM remain
 allowed. Preserve all eight same-SHA JavaScript gates before fatal Rust CI.
 
+The existing layout guide was absent from the sparse checkout, but its complete
+tracked source is retained and now links a separate
+[physical adoption guide](physical-language-receiving-adoption-20261104.md).
+The new guide details all three
+source trees, exact ownership precedence, explicit receiving roots/dependencies,
+separate guidance, actual package/CLI checks and the known full-corpus resource
+gap. Compiler vault export must explicitly include
+`translation/source-role-contract.json` through the original `extraPaths` API;
+the declaration remains nonauthoritative DATA outside default compiler roots.
+New independent source cases draft complete committed compiler export retention
+of the role and actual producer/history closure, plus a relocated ordinary
+layout-helper copy with real js/src,ts/src,rust/src authored neighbors, Unicode
+receiver path and unrelated cwd. These are UNRUN and do not qualify a complete
+receiving compiler or close L03/L04/L05; counts remain12/70,58 OPEN.
+
 Latest source checkpoint: physical-layout planner imports are now adopted in
 `scripts/regenerate-js-first.mjs` and `js-to-rust/native-typescript.mjs`. Their
 complete forward source-history continuations are appended through the existing
