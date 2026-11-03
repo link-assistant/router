@@ -87,6 +87,19 @@ source-history cohort retains all437 previous equations and appends14:
 ordered operation requires its additional six sources inside the original fences.
 All execution UNRUN; counts remain12/70 DRAFTED,58 OPEN. Inter-helper imports,
 recursive graph/source proof and broader application adoption remain gaps.
+The [native helper graph draft](ordered-scalar-helper-graph-draft-20261104.md)
+now adds complete two-reader source proposals for actual inter-helper imports
+and same-file FunctionDeclaration symbols. An iterative module/import layout
+worklist retains original native pointer/type joins, while actual bodies are
+rechecked freshly with a finally-cleaned recursion/depth stack. Transitive
+helper/primitive/operator receipts keep their true source origins. The old
+six-input archive remains intact; a new seven-input archive adds the graph helper.
+Packet SHAa9cb390d61dff0c5088a1ea2f83e3648b3e8d965eebafe2ae4a13f7da0cb6679,
+189808compressed bytes; input archive
+SHA17de382051744162b2e88ab82c4172eb08b3188aa255350c78ddbcb69f84598f.
+Both reader successors and native receiving cases remain uninstalled; append
+their full source-history cohort next, preserving451 prior equations. All
+structural/native receiving execution remains UNRUN. Counts stay12/70,58 OPEN.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 
