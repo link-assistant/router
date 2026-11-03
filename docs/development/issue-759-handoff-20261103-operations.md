@@ -62,6 +62,14 @@ It preserves unchanged primitive helpers and the original scalar adapter/API.
 Full two-copy/two-creation CST ancestry and receiving source remain UNRUN.
 No guarded parent changed; graph remains437 equations/273 paths. General helper
 decomposition, interface edits and actual application adoption remain unfinished.
+The [ordered statement rule](ordered-scalar-helper-statements-20261103.md) now
+drafts fallible arithmetic/shift/clamp helpers with once-only eager arguments,
+unused failing initializers and lazy branches, emitting existing let/if/return
+IR. Linked plans, immutable operand spines and invocation-local structural fork
+metadata avoid flat-list continuation recursion and repeated prefix copies.
+Complete source creation/CST cases and independent JS/native oracle source are
+UNRUN. Native source producer/private checking, document/profile/inverse and
+source-fence adoption remain the next complete batch; graph stays437/273.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 
