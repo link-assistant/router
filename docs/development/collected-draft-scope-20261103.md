@@ -20,6 +20,14 @@ complete immutable tree/size sequence also closes. Uncommitted worktree edits
 are outside this explicitly committed-source domain. Source identity does not
 establish native behavior or semantic admission.
 
+Tree and size metadata must also be complete lossless UTF8; the tree stream
+must retain its final NUL. Lossy path decoding cannot invent an observed source
+name. The default Git reader removes inherited Git redirection/configuration
+overrides, disables hooks/maintenance/lazy fetch/replacement objects and uses
+the fixed executing repository. Receiving tests can still supply their own
+explicit immutable Git reader, whose returned metadata/blob buffers undergo
+the same checks. Original shared Git-reader APIs remain unchanged.
+
 The language sequence invokes each original complete CST/native collector.
 The repository sequence joins its observations to the complete physical census
 and actual numbered implementation/adoption records. All original language

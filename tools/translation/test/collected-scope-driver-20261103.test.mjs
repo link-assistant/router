@@ -49,3 +49,8 @@ test('falsy callback errors retain exact identity and invalid callback forms per
  const data=fixture(t);for(const primary of [undefined,null,false,0,'']){let thrown=false;try{collectRouterDraftScope({revision:data.revision,run:data.run},()=>{throw primary;});}catch(error){thrown=true;assert.equal(error,primary);}assert.equal(thrown,true);}
  let calls=0;assert.throws(()=>collectRouterDraftScope({revision:data.revision,run:()=>{calls++;throw Error('must not read');}},async()=>{}));assert.equal(calls,0);
 });
+test('lossy or truncated immutable Git metadata refuses before any observation event',()=>{
+ for(const raw of [Buffer.from([0xff,0]),Buffer.from('100644 blob '+'b'.repeat(40)+'\trust/src/lib.rs')]){
+  let emitted=0;assert.throws(()=>collectRouterDraftScope({revision:'a'.repeat(40),run:()=>raw},()=>{emitted++;}));assert.equal(emitted,0);
+ }
+});

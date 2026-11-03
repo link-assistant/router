@@ -15,6 +15,10 @@ import {createRulePipeline} from '../tools/translation/rule-pipeline.mjs';
 import {draftInventoryPath} from '../tools/translation/draft-inventory-reconciliation.mjs';
 import {withProtectedNativeWriter,captureActiveNativeSourceVetoLease} from '../tools/translation/protected-native-writers-20261102.mjs';
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'..'),fail=message=>{throw TypeError('Collected Router draft scope: '+message);};
+function originalGit(args,options){
+ const nil=process.platform==='win32'?'NUL':'/dev/null',env={...Object.fromEntries(Object.entries(process.env).filter(([key])=>!key.startsWith('GIT_'))),GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:nil,GIT_CONFIG_SYSTEM:nil,GIT_NO_LAZY_FETCH:'1',GIT_NO_REPLACE_OBJECTS:'1',GIT_PAGER:'cat'};
+ return execFileSync('git',['-c','core.hooksPath='+nil,'-c','gc.auto=0','-c','maintenance.auto=false',...args],{cwd:ROOT,env,maxBuffer:40*1024*1024,timeout:20000,...options});
+}
 const physical=path=>path.startsWith('rust/')||path.startsWith('js/')||path.startsWith('ts/')||['Cargo.toml','Cargo.lock','package.json'].includes(path);
 const language=path=>path.startsWith('rust/')&&path.endsWith('.rs')?'Rust':(path.startsWith('js/')||path.startsWith('ts/'))&&/\.(?:[cm]?[jt]s|[jt]sx)$/u.test(path)?'Target':null;
 const sha1=(body,bytes)=>createHash('sha1').update('blob '+bytes+'\0').update(body).digest('hex');
@@ -23,10 +27,11 @@ function freeze(value,seen=new Set()){
 }
 /** One complete immutable revision; streamed DATA events, no report file writer,
  * no worktree reads, no new native/parser/owner/verdict cache across operations. */
-export function collectRouterDraftScope({revision,assignments=[],run=(args,options)=>execFileSync('git',args,{cwd:ROOT,maxBuffer:40*1024*1024,timeout:20000,...options})}={},consume){
+export function collectRouterDraftScope({revision,assignments=[],run=originalGit}={},consume){
  requireSynchronousSourceCallback(run);requireSynchronousSourceCallback(consume);accountData(assignments);assignments=structuredClone(assignments);
  if(typeof revision!=='string'||!/^[a-f0-9]{40}$/u.test(revision))fail('one explicit immutable full revision required');
- const extra=new Set(collectedScopeEvidencePaths(assignments)),selection={run,revision,select:path=>physical(path)||extra.has(path),maxPaths:100000,maxFileBytes:8*1024*1024,maxTotalBytes:512*1024*1024};
+ const metadataRun=(args,options)=>{const raw=run(args,options);if(!Buffer.isBuffer(raw)||!Buffer.from(raw.toString('utf8')).equals(raw))fail('complete immutable Git metadata UTF8 required');if(args[0]==='ls-tree'&&raw.length&&raw[raw.length-1]!==0)fail('complete NUL-terminated tree census required');return raw;};
+ const extra=new Set(collectedScopeEvidencePaths(assignments)),selection={run:metadataRun,revision,select:path=>physical(path)||extra.has(path),maxPaths:100000,maxFileBytes:8*1024*1024,maxTotalBytes:512*1024*1024};
  return withSourceFailureOperation(()=>{
   const selected=withSourceInputValidation(()=>readSelectedGitSizeRecords(selection));
   const paths=new Set(),sources=selected.map(row=>{const at=row.indexOf('\t'),[mode,,blob,bytes]=row.slice(0,at).split(' '),path=draftInventoryPath(row.slice(at+1));if(paths.has(path)||!['100644','100755','120000'].includes(mode))fail('unique ordinary physical source records required');paths.add(path);return {revision,path,mode,blob,bytes:Number(bytes)};});

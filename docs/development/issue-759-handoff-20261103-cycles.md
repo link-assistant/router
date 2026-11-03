@@ -696,3 +696,12 @@ complete source receipts, and no fresh census was executed.11/70 DRAFTED,
 coverage remain UNKNOWN. Shared source-history index stays342/245; new
 bookkeeping modules do not modify frozen compiler parents or require repinning
 an old image. Continue the remaining requirements after this source checkpoint.
+
+The complete collector/reconciler source checkpoint is committed as
+d681d69dda2bdd2190b7116657e408bf9bc25d9c. Source follow-up also requires exact
+lossless UTF8 tree/size metadata and the final tree NUL before emitting events;
+default Git reads strip inherited Git redirection/config overrides and disable
+hooks, maintenance, lazy fetch and replacement objects. Independent malformed/
+truncated metadata refusal case source is added. These changes are also UNRUN.
+Last disk observation55GiB free. No source-generated output, CI feedback or
+executable coverage was inspected. Root continues alone under the active goal.
