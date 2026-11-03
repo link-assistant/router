@@ -66,13 +66,15 @@ case source. Do not skip the existing native source guards or treat this
 proposal's packet hash as semantic authority. The current graph374/264 and
 the installed reader files remain unchanged by this proposal.
 
-Carry the grammar selection through separately declared document/meta read and
-recheck APIs; old source-data decoding intentionally retains its old grammar.
-Draft original helper provenance in the serialized semantic representation and
-its independent round trip, plus original source-aware emitter/interpreter
-receiving cases. Inlining yields a canonical expression, not exact original
-call/trivia reconstruction. Current whole-source context receipts include the
-helper file but do not alone prove bidirectional helper reconstruction.
+The [document continuation](boolean-helper-documents-draft-20261103.md) now
+drafts separately declared document/meta APIs, original helper provenance and
+its independent round trip, plus checked target emission. Install those copies
+and their receiving cases together with the reader/source-guard continuation.
+Old source-data decoding intentionally retains its old grammar. Inlining yields
+a canonical expression, not exact original call/trivia reconstruction. Current
+whole-source context receipts include the helper file but do not alone prove
+bidirectional helper reconstruction. Original interpreter cases and Rust-source
+inverse reconstruction of helper calls remain open.
 
 Expand qualified arguments and helper bodies with independent effect/ownership
 theorems rather than silently allowing effectful expressions. General nested

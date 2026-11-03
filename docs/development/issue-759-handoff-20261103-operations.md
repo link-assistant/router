@@ -16,8 +16,11 @@ Open IDs: L01–L05; R01–R04; C01–C05; O01–O05; B01–B05; F01–F05; V01�
 S01–S05; P01–P05; T01–T05; Q01/Q02/Q04; J04; E01–E05. Continue drafting
 actual unfinished clauses; partial operation counts do not close parent rows.
 The [imported Boolean helper source draft](boolean-helper-source-draft-20261103.md)
-adds uninstalled complete two-reader substitution recipes and receiving source;
-its native source-graph adoption and document/meta APIs remain explicit gaps.
+adds uninstalled complete two-reader substitution recipes and receiving source.
+The [document continuation](boolean-helper-documents-draft-20261103.md) adds
+fresh meta read, provenance/CST and original target-emitter implementation
+copies. Native source-graph adoption, interpreter cases and Rust inverse APIs
+remain explicit gaps; all source proposals are uninstalled and UNRUN.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 

@@ -29,6 +29,7 @@ drafted work is supported. Every initial status is `OPEN`; existing evidence
 links are review starting points, not closure receipts.
 
 Current source-review accounting (2026-11-03 UTC): **12/70 DRAFTED, 58/70 OPEN**.
+Latest partial helper/document drafts and gaps: [operations handoff](issue-759-handoff-20261103-operations.md).
 Closed IDs: D01/D02/D03/D05 (written policy), J01/J05 (existing workflow,
 partition and independent audit-case sources), Q03 (native join emission
 implementation/case source), D04 (checkpoint/handoff/PR template source), J02 (same-SHA gate with actual-program outcome case source), Q05 (deferred complete-cycle failure collector/classifier and reopening proposal), J03 (existing fatal Rust CI/native-oracle/hook source), and R05 (registered discovery/composition and complete source chronology/inverse replay). This is an unweighted acceptance-bundle count,
