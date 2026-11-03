@@ -1,3 +1,4 @@
+import {proposeExactScalarPrimitivesControlSources} from '../exact-source-scalar-primitives-controls-20261103.mjs';
 import {proposeExactScalarArgumentsControlSources} from '../exact-source-scalar-arguments-controls-20261103.mjs';
 import {proposeExactScalarLocalsControlSources} from '../exact-source-scalar-locals-controls-20261103.mjs';
 import {proposeExactCopyScalarHelperControlSources} from '../exact-source-copy-scalar-helper-controls-20261103.mjs';
@@ -47,10 +48,10 @@ test('all original374 equations remain before seventeen new whole-source edges',
 });
 test('the source engine has a separate original374 to391 transition',{timeout:60000},()=>{
  const controls=proposeExactBooleanHelperControlSources();assert.equal(controls.files.length,9);
- for(const row of controls.files){const scalar=proposeExactCopyScalarHelperControlSources().files.find(value=>value.path===row.path);if(scalar)assert.equal(scalar.before,row.after);const locals=proposeExactScalarLocalsControlSources().files.find(value=>value.path===row.path);if(locals)assert.equal(locals.before,scalar?.after??row.after);const operands=proposeExactScalarArgumentsControlSources().files.find(value=>value.path===row.path);if(operands)assert.equal(operands.before,locals?.after??scalar?.after??row.after);assert.equal(read(row.path),operands?.after??locals?.after??scalar?.after??row.after);assert.equal(row.inverse,row.before);}
+ for(const row of controls.files){const scalar=proposeExactCopyScalarHelperControlSources().files.find(value=>value.path===row.path);if(scalar)assert.equal(scalar.before,row.after);const locals=proposeExactScalarLocalsControlSources().files.find(value=>value.path===row.path);if(locals)assert.equal(locals.before,scalar?.after??row.after);const operands=proposeExactScalarArgumentsControlSources().files.find(value=>value.path===row.path);if(operands)assert.equal(operands.before,locals?.after??scalar?.after??row.after);const primitives=proposeExactScalarPrimitivesControlSources().files.find(value=>value.path===row.path);if(primitives)assert.equal(primitives.before,operands?.after??locals?.after??scalar?.after??row.after);assert.equal(read(row.path),primitives?.after??operands?.after??locals?.after??scalar?.after??row.after);assert.equal(row.inverse,row.before);}
  const before=read('tools/translation/source-profiles/exact-source-collection-description-families-20261103/engine.after.txt');
  const current=read('tools/translation/exact-source-successors-20261103.mjs');
- const result=knownExactSourceCompilerEngineEpoch({before,current});assert.ok(result);assert.equal(result.after,current);assert.equal(result.inverse,before);assert.equal(result.laterHistories.length,4);
+ const result=knownExactSourceCompilerEngineEpoch({before,current});assert.ok(result);assert.equal(result.after,current);assert.equal(result.inverse,before);assert.equal(result.laterHistories.length,5);
 });
 function fixture(t){
  const root=fs.realpathSync(fs.mkdtempSync(join(tmpdir(),'router-Boolean-helper-source-')));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));

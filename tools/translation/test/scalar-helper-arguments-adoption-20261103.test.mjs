@@ -1,3 +1,4 @@
+import {proposeExactScalarPrimitivesControlSources} from '../exact-source-scalar-primitives-controls-20261103.mjs';
 // Complete installed source/lifetime cases. SOURCE ONLY; all UNRUN.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -14,30 +15,30 @@ import {knownExactSourceCompilerEngineEpoch} from '../exact-source-compiler-epoc
 import {withOwnedCopyHelperSourceOperation as coreFence} from '../js-to-rust/owned-core-source.mjs';
 import {withOwnedCopyHelperSourceOperation as vectorFence} from '../js-to-rust/owned-vector-candidate-source.mjs';
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url)),BASE='tools/translation/source-profiles/exact-source-scalar-arguments-families-20261103/';
-const OLD='tools/translation/source-profiles/exact-source-boolean-helper-families-20261103/helper-inputs.json.gz',INPUT='tools/translation/source-profiles/copy-scalar-helper-arguments-20261103/helper-inputs.json.gz';
+const OLD='tools/translation/source-profiles/exact-source-boolean-helper-families-20261103/helper-inputs.json.gz',INPUT='tools/translation/source-profiles/copy-scalar-helper-total-primitives-20261103/helper-inputs.json.gz';
 const read=path=>fs.readFileSync(join(ROOT,path),'utf8');
 test('both original native readers install the complete total-argument proposal',{timeout:900000},()=>{
  const proposal=proposeCopyScalarHelperArgumentSources20261103();assert.equal(proposal.files.length,2);assert.equal(proposal.newFiles.length,2);
- for(const row of proposal.files){assert.equal(read(row.path),row.after);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const stage of row.stages)assert.equal(stage.history.inverse,stage.before);}
+ for(const row of proposal.files){const current=read(row.path);if(current!==row.after){const later=knownExactSourceSuccessor({path:row.path,before:row.after});assert.ok(later,row.path);assert.equal(later.currentIsTerminal,true);assert.equal(later.after,current);}assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const stage of row.stages)assert.equal(stage.history.inverse,stage.before);}
  for(const row of proposal.newFiles)assert.equal(read(row.path),row.source);
 });
 test('all412 originals precede twelve complete local/helper case continuations',{timeout:900000},()=>{
  const proposal=proposeExactScalarArgumentsSourceIndex(),previous=JSON.parse(gunzipSync(fs.readFileSync(join(ROOT,BASE+'index412.before.json.gz'))));
- assert.equal(proposal.indexText,read('tools/translation/source-profiles/exact-source-successor-adoption-20261103/index.json'));assert.equal(proposal.index.rows.length,424);assert.equal(new Set(proposal.index.rows.map(row=>row.path)).size,272);assert.deepEqual(proposal.index.rows.slice(0,412),previous.rows);assert.equal(proposal.images.length,24);
+ assert.equal(proposal.indexText,gunzipSync(fs.readFileSync(join(ROOT,'tools/translation/source-profiles/exact-source-scalar-primitives-families-20261103/index424.before.json.gz'))).toString('utf8'));assert.equal(proposal.index.rows.length,424);assert.equal(new Set(proposal.index.rows.map(row=>row.path)).size,272);assert.deepEqual(proposal.index.rows.slice(0,412),previous.rows);assert.equal(proposal.images.length,24);
  for(const row of proposal.images)assert.equal(read(row.path),row.source);
  withExactScalarArgumentsSourceFamilyData(input=>withExactSourceHistoryDataOperation(ROOT,()=>{for(const family of input.families)for(const row of family.rows){const result=knownExactSourceSuccessor({path:row.path,before:row.before});assert.ok(result,row.path);assert.equal(result.after,read(row.path));assert.equal(result.currentIsTerminal,true);assert.equal(result.inverse,row.before);assert.equal(result.nativeBindingQualified,false);}}));
 });
 test('twelve complete controls retain the separate412 to424 source engine',{timeout:60000},()=>{
- const controls=proposeExactScalarArgumentsControlSources();assert.equal(controls.files.length,12);for(const row of controls.files){assert.equal(read(row.path),row.after);assert.equal(row.inverse,row.before);}
- const before=read('tools/translation/source-profiles/exact-source-scalar-locals-families-20261103/engine.after.txt'),current=read('tools/translation/exact-source-successors-20261103.mjs'),result=knownExactSourceCompilerEngineEpoch({before,current});assert.ok(result);assert.equal(result.after,current);assert.equal(result.inverse,before);assert.equal(result.laterHistories.length,1);
+ const controls=proposeExactScalarArgumentsControlSources();assert.equal(controls.files.length,12);for(const row of controls.files){const primitives=proposeExactScalarPrimitivesControlSources().files.find(value=>value.path===row.path);if(primitives)assert.equal(primitives.before,row.after);assert.equal(read(row.path),primitives?.after??row.after);assert.equal(row.inverse,row.before);}
+ const before=read('tools/translation/source-profiles/exact-source-scalar-locals-families-20261103/engine.after.txt'),current=read('tools/translation/exact-source-successors-20261103.mjs'),result=knownExactSourceCompilerEngineEpoch({before,current});assert.ok(result);assert.equal(result.after,current);assert.equal(result.inverse,before);assert.equal(result.laterHistories.length,2);
 });
 function fixture(t){
  const root=fs.realpathSync(fs.mkdtempSync(join(tmpdir(),'router-scalar-local-source-')));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));const rows=[];
  for(const path of [OLD,INPUT]){const raw=fs.readFileSync(join(ROOT,path));for(const row of JSON.parse(gunzipSync(raw)).rows){rows.push(row);fs.mkdirSync(dirname(join(root,row.path)),{recursive:true});fs.writeFileSync(join(root,row.path),row.source);}fs.mkdirSync(dirname(join(root,path)),{recursive:true});fs.writeFileSync(join(root,path),raw);}return {root,rows};
 }
 for(const [name,fence] of [['core',coreFence],['vector',vectorFence]]){
- test(name+' old four and current eight inputs are checked before and after use',{timeout:60000},t=>{
-  const {root,rows}=fixture(t);assert.equal(rows.length,12);assert.equal(fence(()=>true,{root}),true);
+ test(name+' old four and current fourteen inputs are checked before and after use',{timeout:60000},t=>{
+  const {root,rows}=fixture(t);assert.equal(rows.length,18);assert.equal(fence(()=>true,{root}),true);
   for(const row of rows){fs.writeFileSync(join(root,row.path),row.source+'\nchanged');assert.throws(()=>fence(()=>true,{root}),TypeError);fs.writeFileSync(join(root,row.path),row.source);assert.throws(()=>fence(()=>{fs.writeFileSync(join(root,row.path),row.source+'\nchanged');return true;},{root}),TypeError);fs.writeFileSync(join(root,row.path),row.source);}assert.equal(fence(()=>true,{root}),true);
  });
  test(name+' caught/restored local implementation failures remain fatal to the enclosing operation',{timeout:60000},t=>{

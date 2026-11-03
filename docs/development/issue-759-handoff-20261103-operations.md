@@ -50,8 +50,11 @@ The [total primitive helper draft](copy-scalar-helper-total-primitives-draft-202
 adds canonical bitwise, complement, cast, wrapping/saturating and min/max rules,
 both complete original reader/import/provenance successors, a separate copied
 Rust inverse, native receiving matrices and independent Rust oracle source.
-The two reader successors and fourteen-input fence remain uninstalled; append
-their full source-history adoption next. All execution remains UNRUN.
+Both reader successors, fourteen-input fence and full native receiving source
+are now [source adopted](scalar-helper-total-primitives-adoption-20261103.md).
+All424 previous equations remain, with13 appended:437 equations/273 paths.
+The original no-runtime-call scalar inverse remains unchanged; the new total
+primitive inverse is additive. All execution remains UNRUN.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 

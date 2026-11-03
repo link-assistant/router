@@ -2,9 +2,10 @@
 
 This source draft extends the [adopted argument family](scalar-helper-arguments-adoption-20261103.md)
 with a shared operation family rather than individual caller rewrites. The two
-reader successors remain proposals, not installed. All execution is UNRUN,
+reader successors are now [source adopted](scalar-helper-total-primitives-adoption-20261103.md).
+All execution is UNRUN,
 CI NOT_INSPECTED, acceptance counting12/70 DRAFTED,58 OPEN and production
-coverage UNKNOWN. The installed source graph remains424 equations/272 paths.
+coverage UNKNOWN. The installed source graph now retains437 equations/273 paths.
 
 The new normalizer handles original checked scalar IR for eager Boolean/fixed
 bitwise operations, fixed complement, all fixed-domain casts, wrapping and
@@ -73,7 +74,7 @@ Complete two-reader/four-creation packet
 SHA0429f315caed59bcecc889ad936dfe5dcb1140787c4716a0e1521522b0f06ef9,
 186414 compressed bytes. Fourteen-input archive
 SHA cf3e8f1c5d397c12c6af5af2210fc70e7034a1886414860407c43b94f4421231.
-Next append the complete source-history adoption and cases, preserving all424
-existing equations, before qualification. Remaining general statement/effect,
+The complete source-history adoption and cases now preserve all424
+previous equations. Qualification remains unrun. Remaining general statement/effect,
 helper-network, TypeScript, application and other open clauses still require
 actual implementation and independent case source.
