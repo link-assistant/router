@@ -103,6 +103,21 @@ source-history cohort retains451 previous equations and appends15:
 466equations/275paths. The old six-input archive remains intact; ordered source
 operations now close all25 combined original inputs. All
 structural/native receiving execution remains UNRUN. Counts stay12/70,58 OPEN.
+The [early-return control-flow draft](ordered-scalar-early-return-draft-20261104.md)
+now adds both complete native reader successors and a separate full ordered-rule
+copy for partial/unbraced ifs, else-if and fallthrough. Original native lexical/
+symbol/type checks remain before lowering; no source hoisting occurs. Complete
+return trees delegate to the old normalizer with its exact callback work.
+New continuations preserve caller resumption, skipped failing tails and branch
+local scopes. An eight-input archive adds the new rule without changing the old
+seven sources. Full CST/copy/source histories and independent JS/Rust/paired
+receiving source remain UNRUN; both reader successors are uninstalled.
+Packet SHA03b21f5032afa488df4992a1b43443d28162f37556e9a840c711376a4f8b6a0a,
+195722compressed bytes; archive
+SHA13f81110bb0782ad05c47126c1bd478f68a7a33816f34442ee2cd5b21083abbe.
+Append the complete native source/case adoption next, retaining466 equations.
+Counts remain12/70 DRAFTED,58 OPEN; loops, wider ownership/effects/interfaces,
+recursive emission and actual production adoption remain unfinished.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 
