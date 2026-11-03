@@ -9,6 +9,30 @@ are authorized during this drafting phase. All new execution UNRUN; CI
 NOT_INSPECTED. Source reading/writing, lightweight DATA authoring and SCM remain
 allowed. Preserve all eight same-SHA JavaScript gates before fatal Rust CI.
 
+Latest application-derived source batch:
+[model-alias JSON core](model-alias-json-core-draft-20261104.md) copies the actual
+production rewrite_value body into the existing owned JSON state library and
+adds a paired immutable canonical JS backend. One shared operation row drives
+existing forward/reverse bindings and exact TypeScript declarations; original
+private source/type/ownership/meta/emit checks remain. Five fixed policy paths,
+exact/one-prefix matching, non-string/array shapes and Unicode preserve the
+original source contract within the existing translated JSON bounds.
+Five library sources are installed. The actual production wrapper is unchanged;
+its complete owned-call/mem::take replacement remains an uninstalled source
+proposal with mutable-parameter and whole-caller admission gaps. Four native
+inline oracle tests compare actual production/library functions to independent
+expectations; JS runtime/forward strict targets/six reverse profile and source/CST
+cases are all UNRUN. No Rust tool or local execution occurred.
+Packet SHA2c8c01406d2578d9b9f2420aa39ceeaca3c28b24c02d1d10b2b95761678f6155
+(49784 bytes) retains5parents/1caller/1oracle/3creations/4guards and whole native
+body-copy provenance. Next: complete older state-family source-history joins,
+actual mutable Json caller support and response/stream composition, plus all
+other open bundles. Counts12/70 DRAFTED,58 OPEN; CI NOT_INSPECTED.
+
+Last published source checkpoint is86059e36a on PR775 (2026-11-03~19:50UTC);
+its PR body records the source-only12/70 status. Subsequent checkpoints remain
+local until the next authorized periodic publication.
+
 Latest installed-source checkpoint:
 [width-loop reader adoption](width-range-reader-adoption-20261104.md) installs all
 six import successors and actual native-preparer history integration. Original

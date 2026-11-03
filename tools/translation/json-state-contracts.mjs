@@ -13,6 +13,7 @@ const rows=[
  ['json_object_keys',['shared-json'],'owned-json'],
  ['json_array_len',['shared-json'],'u64'],
  ['json_object_has',['shared-json','str'],'bool'],
+ ['json_rewrite_model_alias',['owned-json','str','str'],'owned-json'],
 ];
 export const JSON_STATE_CONTRACTS=Object.freeze(rows.map(([name,parameters,returns])=>Object.freeze({
  id:'owned-json-state:'+name,rustName:name,javascriptName:'router_state_'+name,parameters:Object.freeze(parameters),returns,

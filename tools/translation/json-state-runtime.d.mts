@@ -11,3 +11,4 @@ export declare function router_state_json_merge(argument0:JsonValue,argument1:Js
 export declare function router_state_json_object_keys(argument0:JsonValue): JsonValue;
 export declare function router_state_json_array_len(argument0:JsonValue): bigint;
 export declare function router_state_json_object_has(argument0:JsonValue,argument1:string): boolean;
+export declare function router_state_json_rewrite_model_alias(argument0:JsonValue,argument1:string,argument2:string): JsonValue;

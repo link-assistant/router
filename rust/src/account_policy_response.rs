@@ -161,3 +161,52 @@ mod tests {
         assert_eq!(output.matches("friendly").count(), 2, "{output}");
     }
 }
+
+#[cfg(test)]
+mod model_alias_core_oracles_20261104 {
+    use serde_json::json;
+
+    fn check(original: serde_json::Value, upstream: &str, visible: &str, expected: serde_json::Value) {
+        let owned = crate::translation_state_core::json_rewrite_model_alias(original.clone(), upstream, visible);
+        let mut production = original;
+        super::rewrite_value(&mut production, upstream, visible);
+        assert_eq!(owned, expected);
+        assert_eq!(production, expected);
+    }
+
+    #[test]
+    fn all_five_policy_locations_preserve_unrelated_text() {
+        check(
+            json!({"model":"native","message":{"model":"native","text":"native"},"response":{"model":"native","modelVersion":"native"},"modelVersion":"native","unrelated":{"model":"native"}}),
+            "native", "visible 🦀",
+            json!({"model":"visible 🦀","message":{"model":"visible 🦀","text":"native"},"response":{"model":"visible 🦀","modelVersion":"visible 🦀"},"modelVersion":"visible 🦀","unrelated":{"model":"native"}}),
+        );
+    }
+
+    #[test]
+    fn prefix_is_stripped_once_and_matching_remains_exact() {
+        check(json!({"model":"native","message":{"model":"models/native"},"response":{"model":"Native"}}),
+            "models/native", "", json!({"model":"","message":{"model":""},"response":{"model":"Native"}}));
+        check(json!({"model":"models/native","response":{"model":"native"}}),
+            "models/models/native", "visible", json!({"model":"visible","response":{"model":"native"}}));
+        check(json!({"model":" native","message":{"model":"native "}}),
+            "native", "visible", json!({"model":" native","message":{"model":"native "}}));
+    }
+
+    #[test]
+    fn absent_non_string_and_array_pointer_shapes_do_not_coerce() {
+        for value in [json!(null),json!(false),json!(7),json!(["native"]),json!({"nested":"native"})] {
+            let original = json!({"model":value,"message":[{"model":"native"}],"response":"native","other/model":"native"});
+            check(original.clone(), "native", "visible", original);
+        }
+        check(json!([{"model":"native"}]), "native", "visible", json!([{"model":"native"}]));
+    }
+
+    #[test]
+    fn unicode_empty_ids_and_repeat_application_keep_value_semantics() {
+        check(json!({"model":"é😀\u{0}文"}), "é😀\u{0}文", "", json!({"model":""}));
+        check(json!({"model":""}), "models/", "empty", json!({"model":"empty"}));
+        let first = crate::translation_state_core::json_rewrite_model_alias(json!({"model":"native"}), "native", "visible");
+        assert_eq!(crate::translation_state_core::json_rewrite_model_alias(first, "native", "visible"), json!({"model":"visible"}));
+    }
+}

@@ -62,3 +62,25 @@ pub fn json_array_len(value: &Json) -> u64 {
 pub fn json_object_has(value: &Json, key: &str) -> bool {
     value.as_object().map(|object| object.contains_key(key)).unwrap_or(false)
 }
+
+// Concrete model alias policy; ordinary JSON library internals stay native.
+pub fn json_rewrite_model_alias(mut base: Json, upstream: &str, visible: &str) -> Json {
+    for pointer in [
+        "/model",
+        "/message/model",
+        "/response/model",
+        "/modelVersion",
+        "/response/modelVersion",
+    ] {
+        if let Some(model) = base.pointer_mut(pointer)
+            && (model.as_str() == Some(upstream)
+                || upstream
+                    .strip_prefix("models/")
+                    .is_some_and(|id| model.as_str() == Some(id)))
+        {
+            *model = Json::String(visible.to_string());
+        }
+    }
+
+    base
+}

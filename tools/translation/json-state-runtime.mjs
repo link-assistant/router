@@ -36,3 +36,16 @@ export function router_state_json_merge(base,patch){
 export function router_state_json_object_keys(value){return json_macro_array(Object.freeze(entries(value,'JSON keys require an object').map(row=>json_macro_string(row.key))));}
 export function router_state_json_array_len(value){return BigInt(array(value,'JSON length requires an array').length);}
 export function router_state_json_object_has(value,key){const observed=canonical(value),name=text(key);return observed.$==='Object'&&observed.field0.entries.some(row=>row.key===name);}
+
+// Fixed policy pointers mirror the actual native response model rewrite.
+export function router_state_json_rewrite_model_alias(base,upstream,visible){
+ let result=canonical(base);const original=text(upstream),replacement=text(visible),short=original.startsWith('models/')?original.slice(7):null;
+ const replace=value=>value.$==='String'&&(value.field0===original||short!==null&&value.field0===short)?json_macro_string(replacement):value;
+ function at(value,path,index){
+  if(value.$!=='Object')return value;let changed=false;
+  const rows=value.field0.entries.map(row=>{if(row.key!==path[index])return [row.key,row.value];const next=index+1===path.length?replace(row.value):at(row.value,path,index+1);if(next!==row.value)changed=true;return [row.key,next];});
+  return changed?object(rows):value;
+ }
+ for(const path of [['model'],['message','model'],['response','model'],['modelVersion'],['response','modelVersion']])result=at(result,path,0);
+ return result;
+}
