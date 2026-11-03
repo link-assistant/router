@@ -138,6 +138,16 @@ export function captureActiveNativeSourceVetoLease(){
  try{observe(roots());}catch(error){live=false;retained.length=0;throw error;}
  return Object.freeze({
   verify(){alive();return observe(roots());},
+  hasRoot(requiredRoot){alive();const actual=fs.realpathSync(resolve(requiredRoot));return roots().some(current=>current.root===actual);},
+  temporaryPrefix(root,prefix,maximumRetainedBytes){
+   alive();const rows=roots(),observers=[];let retainedBytes=0,failed=false,primary;
+   const note=error=>{if(!failed){failed=true;primary=error;}else secondary(primary,error);};
+   try{observe(rows);}catch(error){note(error);}
+   for(const current of rows)try{const observer=current.policy.allowNativeTemporaryPrefix({root:current.root,prefix,maximumRetainedBytes:maximumRetainedBytes-retainedBytes});observers.push(observer);retainedBytes+=observer.retainedBytes;}catch(error){note(error);}
+   try{observe(rows);}catch(error){note(error);}
+   if(failed){record(rows,primary);for(const observer of observers)try{observer.close();}catch(error){secondary(primary,error);}try{observe(rows);}catch(error){secondary(primary,error);}throw primary;}
+   return Object.freeze({observers:Object.freeze(observers),retainedBytes});
+  },
   source(operation){alive();const rows=roots();let value,failed=false,primary;try{observe(rows);value=invoke(operation);}catch(error){failed=true;primary=error;record(rows,error);}try{observe(rows);}catch(error){if(!failed){failed=true;primary=error;}else secondary(primary,error);}if(failed)throw primary;return value;},
   direct(root,targets,descriptors=[]){return admission(root,targets,descriptors,true);},
   streams(root,descriptors){return admission(root,[],descriptors,'stream');},

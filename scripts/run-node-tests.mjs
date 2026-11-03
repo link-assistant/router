@@ -37,7 +37,7 @@ async function runWithDiagnostics({root,files,flags,outputDirectory,outerTimeout
  const originalSources=scope.source(()=>absoluteFiles.map(file=>readCaseSource(file)));
  if(scope.retainedBytes+originalSources.reduce((sum,row)=>sum+row.bytes,0)>64*1024*1024)throw Error('Complete original Node source bound exceeded');
  const outputBase=path.join(root,'js/node_modules/.node-case-deadlines');
- if(!outputDirectory){plainDirectory(path.dirname(outputBase));scope.mkdir(outputBase,{recursive:true});plainDirectory(outputBase);scope.verify();outputDirectory=fs.mkdtempSync(path.join(outputBase,'complete-'));scope.entries([outputDirectory],()=>{});}
+ if(!outputDirectory){plainDirectory(path.dirname(outputBase));scope.mkdir(outputBase,{recursive:true});plainDirectory(outputBase);scope.verify();outputDirectory=scope.makeTemporaryDirectory(path.join(outputBase,'complete-'));}
  else {outputDirectory=canonicalCasePath(outputDirectory);plainDirectory(path.dirname(outputDirectory));scope.mkdir(outputDirectory,{mode:0o700});}
  const outputIdentity=fs.lstatSync(outputDirectory),guardOutput=()=>{plainDirectory(outputDirectory);const after=fs.lstatSync(outputDirectory);if(after.dev!==outputIdentity.dev||after.ino!==outputIdentity.ino||after.mode!==outputIdentity.mode)throw Error('Deadline output directory identity changed');};
  const receipt=path.join(outputDirectory,'case-deadlines.json');

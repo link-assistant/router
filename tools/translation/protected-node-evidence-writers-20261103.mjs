@@ -19,6 +19,7 @@ async function runner(lease,operation){
   verify(){live();return lease.verify();},source(operation){live();return lease.source(operation);},sourceAsync(operation){live();return lease.sourceAsync(operation);},
   preflightFiles(targets){live();return preflight(lease,targets);},entries(targets,operation){live();return lease.entries(targets,operation);},
   mkdir(directory,options){live();return mkdir(lease,directory,options);},
+  makeTemporaryDirectory(prefix){live();return lease.makeTemporaryDirectory(prefix);},
   open,close,forward(destination,chunk){live();const fd=destination===stdout?1:destination===stderr?2:null;if(fd===null)throw Error('Fixed inherited Node evidence stream required');return lease.streamDescriptor(fd,()=>destination.write(chunk));},descriptor(fd,operation){required(fd);return lease.descriptor(fd,operation);},
   write(target,value,options){live();const absolute=resolve(target);return lease.withOpen(absolute,options?.flag??'w',options?.mode,fd=>fs.writeFileSync(fd,value));},
  });

@@ -1,14 +1,17 @@
-import {emitProtectedSourceDiagnostic} from './protected-source-diagnostics-20261103.mjs';
+import {emitProtectedSourceDiagnostic,retainProtectedSourceDiagnostic} from './protected-source-diagnostics-20261103.mjs';
 import {captureActiveNativeSourceVetoLease,guardProtectedSynchronousDiagnosticWrite,hasProtectedSynchronousDiagnosticRoot} from './protected-native-writers-20261102.mjs';
 import {captureAbsoluteNativeMutationTargets} from './protected-external-mutations-20261102-addresses.mjs';
 import {captureProtectedNativeDescriptorNumbers} from './protected-preparer-writers-20261102-alias.mjs';
 // Async operational source veto for reviewed adoption. No native authority.
 import {AsyncLocalStorage} from 'node:async_hooks';
-import {realpathSync,openSync,closeSync} from 'node:fs';
+import {realpathSync,openSync,closeSync,mkdtempSync,lstatSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
 import {resolve,relative,isAbsolute,sep} from 'node:path';
 import {types} from 'node:util';
 import {captureExplicitSourceMutationPolicy} from './unit-runtime-materialization.mjs';
 const contexts=new AsyncLocalStorage();
+const TEMPORARY_EXECUTABLE_ROOT=fileURLToPath(new URL('../../',import.meta.url));
+const nativeTemporaryDirectory=mkdtempSync,nativeTemporaryStat=lstatSync;
 const fail=message=>{throw new TypeError('Protected reviewed adoption: '+message);};
 function secondary(error){try{emitProtectedSourceDiagnostic('{"schema":"protected-reviewed-adoption-closing-20261102","closingFailed":true}\n',{secondary:error});}catch{}}
 function poison(frame,error){for(let current=frame;current;current=current.parent)if(!current.failed){current.failed=true;current.primary=error;}}
@@ -75,6 +78,29 @@ function nativeMutation(frame,borrowed,targets,descriptors,direct,operation){
  if(!failed)try{admit(frame,()=>nativeResult(value));}catch(error){failed=true;primary=error;}
  const observed=observeNativeRoots(frame,borrowed,failed,primary);if(observed.failed)throw observed.primary;return value;
 }
+function makeNativeTemporaryDirectory(frame,borrowed,prefix){
+ const observers=[],maximumRetainedBytes=16777216;let retainedBytes=0,created=null,identity=null,failed=false,primary,sourceFailed=false,sourcePrimary;
+ const note=error=>{if(!failed){failed=true;primary=error;}else secondary(error);};
+ const source=error=>{if(!sourceFailed){sourceFailed=true;sourcePrimary=error;}note(error);for(const current of nativeFrames(frame))poison(current,sourcePrimary);try{borrowed.source(()=>{throw sourcePrimary;});}catch(error){secondary(error);}};
+ const inspectCreated=()=>{const actual=nativeTemporaryStat(created,{bigint:true});if(!actual.isDirectory()||actual.isSymbolicLink())fail('actual native temporary result is not a plain directory');const fields=['dev','ino','mode','uid','gid'];if(identity&&fields.some(field=>actual[field]!==identity[field]))fail('owned native temporary directory identity changed');return actual;};
+ let stable;
+ try{const before=observeNativeRoots(frame,borrowed);if(before.failed)throw before.primary;const required=realpathSync(TEMPORARY_EXECUTABLE_ROOT);if(!nativeFrames(frame).some(current=>current.root===required)&&!borrowed.hasRoot(required))fail('fixed temporary-directory executable root absent from genuine source route');stable=captureAbsoluteNativeMutationTargets({requestedRoot:frame.root,canonicalRoot:frame.root,targets:[prefix]})[0].canonicalTarget;}catch(error){source(error);}
+ if(stable!==undefined){
+  for(const current of nativeFrames(frame))try{const observer=current.policy.allowNativeTemporaryPrefix({root:current.root,prefix:stable,maximumRetainedBytes:maximumRetainedBytes-retainedBytes});observers.push(observer);retainedBytes+=observer.retainedBytes;}catch(error){source(error);}
+  try{const captured=borrowed.temporaryPrefix(frame.root,stable,maximumRetainedBytes-retainedBytes);observers.push(...captured.observers);retainedBytes+=captured.retainedBytes;}catch(error){source(error);}
+ }
+ if(!failed){const observed=observeNativeRoots(frame,borrowed);if(observed.failed)source(observed.primary);}
+ // A fixed captured native operation owns the returned entry immediately.
+ // No public callback, replacement random generator or fresh-result witness.
+ if(!failed){try{created=nativeTemporaryDirectory(stable);}catch(error){note(error);}if(created!==null){try{identity=inspectCreated();}catch(error){source(error);}try{nativeTargets(frame,borrowed,[created],[],false);}catch(error){source(error);}}}
+ for(const observer of observers)try{observer.close(created);}catch(error){source(error);}
+ if(created!==null)try{inspectCreated();}catch(error){source(error);}
+ const observed=observeNativeRoots(frame,borrowed,failed,primary);failed=observed.failed;primary=observed.primary;
+ if(failed){if(created!==null){retainProtectedSourceDiagnostic('Native temporary directory retained for explicit recovery',{primary,createdDirectory:created,sourceFailed,sourcePrimary});if(primary!==null&&['object','function'].includes(typeof primary)&&!types.isProxy(primary))try{Object.defineProperty(primary,'protectedTemporaryDirectoryRecovery',{value:created,enumerable:true});}catch{}}
+  // Do not delete through a veto or remove an entry that another actor replaced.
+  throw primary;
+ }return created;
+}
 function nativeScope(context,borrowed){
  let frame=context.frame,ownerContext=context,vetoLease=borrowed,live=true;
  const alive=()=>{if(!live||!ownerContext.active)fail('expired general native async lease');let current=contexts.getStore(),count=0,found=false;for(;current;current=current.parentContext){if(++count>64)fail('bounded native invocation ancestry');if(!current.active)fail('expired native ancestor invocation');if(current===ownerContext)found=true;}if(!found)fail('general native lease belongs to another async invocation');};
@@ -87,6 +113,7 @@ function nativeScope(context,borrowed){
   async sourceAsync(operation){const leave=enter(),sourceContext=ownerContext;sourceContext.children++;try{verify();let value,failed=false,primary;try{if(typeof operation!=='function'||types.isProxy(operation))fail('fixed async source operation required');value=await operation();}catch(error){failed=true;primary=error;}alive();if(failed)poison(frame,primary);const observed=observeNativeRoots(frame,vetoLease,failed,primary);if(observed.failed)throw observed.primary;return value;}finally{sourceContext.children--;leave();}},
   preflightDirect(targets){return act(()=>nativeTargets(frame,vetoLease,targets,[],true));},
   preflightEntries(targets){return act(()=>nativeTargets(frame,vetoLease,targets,[],false));},
+  makeTemporaryDirectory(prefix){return act(()=>makeNativeTemporaryDirectory(frame,vetoLease,prefix));},
   direct(targets,operation){return act(()=>nativeMutation(frame,vetoLease,targets,[],true,operation));},
   entries(targets,operation){return act(()=>nativeMutation(frame,vetoLease,targets,[],false,operation));},
   descriptor(fd,operation){return act(()=>{try{admit(frame,()=>nativeCallback(operation));}catch(error){const observed=observeNativeRoots(frame,vetoLease,true,error);throw observed.primary;}return nativeMutation(frame,vetoLease,[],[fd],true,()=>operation(fd));});},

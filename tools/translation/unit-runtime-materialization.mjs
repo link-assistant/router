@@ -1,4 +1,5 @@
 import {emitProtectedSourceDiagnostic,retainProtectedSourceDiagnostic} from './protected-source-diagnostics-20261103.mjs';
+import {captureProtectedNativeTemporaryPrefix} from './protected-native-temporary-prefix-20261103.mjs';
 import {captureAbsoluteNativeMutationTargets} from './protected-external-mutations-20261102-addresses.mjs';
 import {captureContainedNativeDirectTargets} from './protected-contained-direct-20261102-paths.mjs';
 // Source-unit synchronization with fresh Git baselines and complete proposals.
@@ -270,6 +271,7 @@ function captureProtectedSourcePolicy(requestedRoot){
   allowContainedDirectWrites(fresh){return veto(()=>{const captured=captureContainedNativeDirectTargets({requestedRoot:fresh.root,canonicalRoot:root,targets:fresh.targets});assertProtectedDirectWriteTargets({root,protectedNames:[policyPath,...protectedPaths],paths:captured.map(row=>row.canonicalTarget)});return captured;});},
   allowNativeDirectWrites(fresh){return veto(()=>{const captured=captureAbsoluteNativeMutationTargets({requestedRoot:fresh.root,canonicalRoot:root,targets:fresh.targets});assertProtectedNativeDirectWriteTargets({root,protectedNames:[policyPath,...protectedPaths],paths:captured.map(row=>row.canonicalTarget),descriptors:fresh.descriptors??[]});return captured;});},
   allowNativeStreamWrites(fresh){return veto(()=>{captureAbsoluteNativeMutationTargets({requestedRoot:fresh.root,canonicalRoot:root,targets:[]});return assertProtectedNativeStreamWriteDescriptors({root,protectedNames:[policyPath,...protectedPaths],descriptors:fresh.descriptors??[]});});},
+  allowNativeTemporaryPrefix(fresh){return veto(()=>{const captured=captureAbsoluteNativeMutationTargets({requestedRoot:fresh.root,canonicalRoot:root,targets:[fresh.prefix]});return captureProtectedNativeTemporaryPrefix({root,protectedNames:[policyPath,...protectedPaths],prefix:captured[0].canonicalTarget,maximumRetainedBytes:fresh.maximumRetainedBytes});});},
   allowNativeMutationPaths(fresh){return veto(()=>{const captured=captureAbsoluteNativeMutationTargets({requestedRoot:fresh.root,canonicalRoot:root,targets:fresh.targets});assertProtectedNativeStagedMutationTargets({root,protectedNames:[policyPath,...protectedPaths],paths:captured.map(row=>row.canonicalTarget)});return captured;});},
   close(){if(closed)fail('protected-source policy already closed');try{verify();}finally{closed=true;protectedPaths.clear();}},
  });
