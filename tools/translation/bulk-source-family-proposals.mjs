@@ -131,3 +131,5 @@ export {proposeOpaquePairedCalleeInverse,proposeOpaqueTargetCalleeData,proposeOp
 export {proposeOpaquePairedComposedIdentifierInverse,proposeOpaqueComposedIdentifierTargetData,proposeOpaqueComposedIdentifierNativeData,prepareOpaqueComposedIdentifierReceivingSample,proposeOpaqueComposedIdentifierSourceCopies} from './opaque-composed-identifiers-20261102.mjs';
 export {proposeOrderedTextMapSourceCopies} from './ordered-text-map-20261102-source-copies.mjs';
 export {ORDERED_TEXT_MAP_CONTRACTS,emitOrderedTextMapDeclarations} from './ordered-text-map-20261102-contracts.mjs';
+export {BORROWED_PREDICATE_OPERATION_DESCRIPTIONS,borrowedPredicateOperationDescription,borrowedPredicateNativeArity,borrowedPredicateLoweredArity,borrowedPredicateReverseDescription,emitBorrowedPredicateDeclaration} from './borrowed-predicate-operation-descriptions-20261103.mjs';
+export {proposeBorrowedPredicateDescriptionSources} from './borrowed-predicate-descriptions-20261103-profile.mjs';

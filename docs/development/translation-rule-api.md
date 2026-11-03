@@ -306,3 +306,10 @@ immutable original-span source plans and full CST-checked forward/inverse
 replay. Discovery, descriptions and source plans are DATA, not private semantic
 permission; actual application receiving must still reissue complete original
 source/type/owner/body checks. All new implementation/case execution is UNRUN.
+
+The [borrowed-predicate source cohort](borrowed-predicate-shared-descriptions-20261103.md)
+drafts a concrete shared-description consumer for two original forward/reverse
+adapter families and their strict declarations. Its six-parent registered rule
+proposal preserves original private guards, declaration pins and complete phase
+histories. Proposal availability is separate from qualified installation into
+the original guarded compiler graph; R04 remains OPEN and all new cases UNRUN.

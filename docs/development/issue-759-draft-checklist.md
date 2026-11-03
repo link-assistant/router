@@ -906,3 +906,20 @@ V01–V05; S01–S05; P01–P05; T01–T05; Q01/Q02/Q04; J04; E01–E05.
 Complete application families, inventory/adoption, semantic synchronization,
 export/receiving qualification and all actual verification remain unfinished.
 No executable-function percentage or full-translation claim follows.
+
+## R04 shared borrowed-predicate description source increment — 2026-11-03
+
+[The two-family source increment](borrowed-predicate-shared-descriptions-20261103.md)
+drafts one shared role/arity/declaration description implementation and an
+actual six-parent adoption proposal for the original JSON and standard-map
+forward/reverse adapters and declarations. Original private issuers and complete
+body/literal checks remain; declarations retain their original bytes and pins.
+The actual source rule registry composes language substitutions then repository
+imports, with full original/intermediate/final CST and inverse source. Complete
+creation images and independent arity/type/literal-boundary cases are retained
+in immutable packet79745b1e3228aba61e90afcf8f26084d7cab2f9f63ac9e96b5e773d7679393ca.
+
+R04 stays OPEN: this proposal is not installed into the guarded compiler parent
+graph; full qualified receiving, other applicable inventory families and shared
+production caller generation remain. The hot graph stays347 equations/247paths.
+All cases UNRUN, CI NOT_INSPECTED; counts stay12/70 DRAFTED,58 OPEN.

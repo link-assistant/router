@@ -842,3 +842,26 @@ and all qualification remain unfinished. No tests, compilation, Rust tools or
 CI feedback inspection ran. All new execution remains UNRUN. Continue drafting
 the remaining58 bundles under the active all70 goal; this receipt is not a
 stopping condition or full-translation claim. Root remains the sole worker.
+
+## R04 shared borrowed-predicate descriptions and six-parent proposal
+
+Root drafted the [shared two-family description cohort](borrowed-predicate-shared-descriptions-20261103.md).
+Both original contracts now have a common description implementation deriving
+strict target declarations, reverse operation roles and native/flattened arity.
+The six-parent proposal uses the actual registered source planner, preserves
+both original declaration byte strings/pins and every private source/type/body
+guard, and retains both intermediate phase histories plus complete inverse
+replay. The compressed complete-source packet is7884bytes with SHA256
+79745b1e3228aba61e90afcf8f26084d7cab2f9f63ac9e96b5e773d7679393ca.
+Both new APIs are available from the existing bulk source proposal entrypoint.
+
+Independent case source covers the exact old reverse DATA shapes, unknown
+names/IDs, immutable descriptions and fresh result isolation, full declaration
+bytes, six-parent forward/inverse/idempotent replay, stale/mixed input refusal,
+retained private guards and original 64/65 literal boundary. All are UNRUN.
+This is an uninstalled source proposal; it does not change actual guarded parent
+acceptance, source index347/247, native ABI pins or executable coverage. R04
+remains OPEN pending complete qualified installation/receiving, remaining
+inventory families and production caller generation. Counts remain12/70 DRAFTED,
+58 OPEN. No tests, compilation, translator experiments, installs, Rust tools or
+CI feedback inspection ran. Continue full-scope drafting alone.
