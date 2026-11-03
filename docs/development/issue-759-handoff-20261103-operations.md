@@ -26,7 +26,9 @@ adds unchanged graph restoration and checked edited-caller proposals. General
 helper-network edit reconciliation and full receiving remain gaps; execution UNRUN.
 The [shared Copy scalar draft](copy-scalar-helper-draft-20261103.md) now proposes
 both reader extensions and four complete document/profile/Rust-inverse copies
-for Boolean and all ten native integer widths. Its source adoption remains open;
+for Boolean and all ten native integer widths. Their
+[source adoption](copy-scalar-helper-adoption-20261103.md) now installs the full
+cohort with original and added source restrictions;
 all source cases and execution remain UNRUN, and the count stays12/70.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
@@ -50,11 +52,12 @@ invocation-local source restrictions to the original private ABI operations.
 Every corresponding execution remains UNRUN. The current combined adoption is
 detailed below; find its exact commit through SCM.
 
-Hot source graph:391equations/269paths, all original374 equations preserved.
-Index SHA35a4314cd505a75f4215e10c797b7bd260b31668039c067038be95588ca8cbf2;
-engine SHA472d54fdb781a2d3cbeab8fa184a45717c0708942aeaeab7e17b74f632eef2e5.
+Hot source graph:401equations/270paths, all original391 equations preserved.
+Index SHA0af8c06eb7ad1acc294f7c88e62168e07fee9980649451c0df77fabefe8bf3b4;
+engine SHAb8b3d3a7aeccbad9f8013931d671233d16026d25d42f1d56af742dcaab1cf42e.
 The separate engine chronology preserves all original source images and old-root
-domains. The latest adoption appends the complete374→391 helper transition;
+domains. The latest adoption appends the complete391→401 scalar transition;
+the preceding374→391 helper transition remains intact, and
 the preceding361→374 collection transition remains intact below.
 
 ## Combined collection adoption source

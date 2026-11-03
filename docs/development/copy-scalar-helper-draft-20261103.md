@@ -4,7 +4,9 @@ This continues the [adopted Boolean helper family](boolean-helper-source-adoptio
 and [canonical Rust inverse](boolean-helper-rust-inverse-draft-20261103.md).
 It adds one reusable substitution for Boolean plus the ten already registered
 native integer widths. The two reader successors and four complete document/API
-copies are **uninstalled source proposals**. No tests, compilers, native parser
+copies were **source proposals** at this checkpoint. Their
+[subsequent adoption](copy-scalar-helper-adoption-20261103.md) now installs the
+complete cohort; all receiving remains unverified. No tests, compilers, native parser
 trials, translator/preparer runs, proposal CST execution or CI feedback inspection
 ran. The count remains12/70 whole acceptance bundles DRAFTED,58 OPEN; executable
 coverage remains UNKNOWN.
@@ -103,9 +105,9 @@ The [Rust oracle](../../rust/tests/translation_copy_scalar_helper_oracle.rs)
 uses actual primitive MIN/MAX values and native Copy selection independently;
 only gated CI may compile it. No workflow or JavaScript-first prerequisite changed.
 
-Install the complete cohort through genuine source successors, both original
-private reader source guards, the six-input source operation and actual receiving
-paths. The current installed source graph remains391 equations/269 paths.
+The subsequent adoption installs the cohort through genuine source successors,
+both original private reader source guards, the six-input source operation and
+actual receiving paths. It advances391/269 to401/270 with all old equations kept.
 Packet SHA39dbd0b8b50e4b9d9385d0c4bee557f29ef0817cca56c06194186a6772b706a8,
 191613 compressed bytes; six-input archive
 SHAfc7224ee767ba0149c46b8a8600ee1b95dfa81fb9ff53089bda93ea1940818f7.

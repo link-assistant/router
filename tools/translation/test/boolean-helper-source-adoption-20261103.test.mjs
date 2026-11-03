@@ -1,3 +1,4 @@
+import {proposeExactCopyScalarHelperControlSources} from '../exact-source-copy-scalar-helper-controls-20261103.mjs';
 // Original complete source/native lifetime cases. SOURCE ONLY, UNRUN.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,7 +27,7 @@ test('both complete helper reader proposals precede the actual source-custodied 
  for(const row of installed.files){
   const previous=second.files.find(original=>original.path===row.path)??second.copies.find(original=>original.path===row.path);
   if(previous)assert.equal(previous.after,row.before);
-  assert.equal(read(row.path),row.after);assert.equal(row.inverse,row.before);
+  const current=read(row.path);if(current!==row.after){const later=knownExactSourceSuccessor({path:row.path,before:row.after});assert.ok(later,row.path);assert.equal(later.currentIsTerminal,true);assert.equal(later.after,current);}assert.equal(row.inverse,row.before);
   assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);
   for(const stage of row.stages)assert.equal(stage.history.inverse,stage.before);
  }
@@ -34,7 +35,7 @@ test('both complete helper reader proposals precede the actual source-custodied 
 });
 test('all original374 equations remain before seventeen new whole-source edges',{timeout:900000},()=>{
  const proposal=proposeExactBooleanHelperSourceIndex(),previous=JSON.parse(gunzipSync(fs.readFileSync(join(ROOT,BASE+'index374.before.json.gz'))));
- assert.equal(proposal.indexText,read('tools/translation/source-profiles/exact-source-successor-adoption-20261103/index.json'));
+ assert.equal(proposal.indexText,gunzipSync(fs.readFileSync(join(ROOT,'tools/translation/source-profiles/exact-source-copy-scalar-helper-families-20261103/index391.before.json.gz'))).toString('utf8'));
  assert.equal(proposal.index.rows.length,391);assert.equal(new Set(proposal.index.rows.map(row=>row.path)).size,269);
  assert.deepEqual(proposal.index.rows.slice(0,374),previous.rows);assert.equal(proposal.images.length,34);
  for(const row of proposal.images)assert.equal(read(row.path),row.source);
@@ -44,10 +45,10 @@ test('all original374 equations remain before seventeen new whole-source edges',
 });
 test('the source engine has a separate original374 to391 transition',{timeout:60000},()=>{
  const controls=proposeExactBooleanHelperControlSources();assert.equal(controls.files.length,9);
- for(const row of controls.files){assert.equal(read(row.path),row.after);assert.equal(row.inverse,row.before);}
+ for(const row of controls.files){const scalar=proposeExactCopyScalarHelperControlSources().files.find(value=>value.path===row.path);if(scalar)assert.equal(scalar.before,row.after);assert.equal(read(row.path),scalar?.after??row.after);assert.equal(row.inverse,row.before);}
  const before=read('tools/translation/source-profiles/exact-source-collection-description-families-20261103/engine.after.txt');
  const current=read('tools/translation/exact-source-successors-20261103.mjs');
- const result=knownExactSourceCompilerEngineEpoch({before,current});assert.ok(result);assert.equal(result.after,current);assert.equal(result.inverse,before);assert.equal(result.laterHistories.length,1);
+ const result=knownExactSourceCompilerEngineEpoch({before,current});assert.ok(result);assert.equal(result.after,current);assert.equal(result.inverse,before);assert.equal(result.laterHistories.length,2);
 });
 function fixture(t){
  const root=fs.realpathSync(fs.mkdtempSync(join(tmpdir(),'router-Boolean-helper-source-')));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
