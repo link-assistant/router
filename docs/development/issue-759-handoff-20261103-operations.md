@@ -97,8 +97,11 @@ six-input archive remains intact; a new seven-input archive adds the graph helpe
 Packet SHAa9cb390d61dff0c5088a1ea2f83e3648b3e8d965eebafe2ae4a13f7da0cb6679,
 189808compressed bytes; input archive
 SHA17de382051744162b2e88ab82c4172eb08b3188aa255350c78ddbcb69f84598f.
-Both reader successors and native receiving cases remain uninstalled; append
-their full source-history cohort next, preserving451 prior equations. All
+Both reader successors and native receiving cases are now
+[source adopted](ordered-helper-graph-adoption-20261104.md). Their complete
+source-history cohort retains451 previous equations and appends15:
+466equations/275paths. The old six-input archive remains intact; ordered source
+operations now close all25 combined original inputs. All
 structural/native receiving execution remains UNRUN. Counts stay12/70,58 OPEN.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.

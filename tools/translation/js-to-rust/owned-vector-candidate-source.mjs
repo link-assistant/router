@@ -3,6 +3,7 @@ import {gunzipSync as booleanHelperSourceGunzip} from 'node:zlib';
 import {createOrderedMapCanonicalSourceCustody as booleanHelperSourceCustody} from '../ordered-text-map-callers-20261102-canonical-source-custody.mjs';
 import {withSourceInputValidation as booleanHelperSourceInput,withSourceFailureOperation as booleanHelperSourceFailure} from '../source-failure-operations.mjs';
 import {requireSynchronousSourceCallback as booleanHelperSourceCallback} from '../complete-source-closing-fence.mjs';
+import {createOrderedScalarHelperLayoutGraph20261104,inspectOrderedScalarHelperModule20261104} from '../ordered-scalar-helper-layout-graph-20261104.mjs';
 import {lowerOrderedScalarHelperStatements20261103} from '../ordered-scalar-helper-statements-20261103.mjs';
 import {substituteCopyScalarHelperTotalPrimitives20261103 as substituteCopyScalarHelperExpression20261103} from '../copy-scalar-helper-total-primitives-20261103.mjs';
 import {substituteBooleanHelperExpression20261103} from '../boolean-helper-substitution-20261103.mjs';
@@ -195,12 +196,29 @@ function originalImportTarget(from,specifier,analysis,state){
  }
  return target;
 }
+// One native import-layout operation, never a cached checked-body verdict.
+function withOriginalOrderedScalarHelperLayout(handle,analysis,file,path,run){
+ const privateState=traversals.get(analysis),state=contexts.get(handle);
+ if(!privateState||privateState.handle!==handle||privateState.state!==state||state.orderedScalarHelperSyntax!==true||analysis.syntax.get(path)!==file)fail('foreign ordered helper layout traversal');
+ let graph=privateState.orderedHelperLayoutGraph;const own=graph===undefined;
+ if(own){let cells=0;const charge=()=>{if(++cells>100000)fail('original complete helper graph work bound');};graph=createOrderedScalarHelperLayoutGraph20261104({
+  current:()=>requireOwnedCoreSourceCurrent(handle),charge,
+  inspect:(selected,target)=>{if(analysis.syntax.get(target)!==selected||state.files.get(target)!==selected.text)fail('complete actual helper module/source identity differs');return inspectOrderedScalarHelperModule20261104({ts:analysis.ts,file:selected,path:target,source:state.files.get(target),charge});},
+  resolve:job=>{const typed={ts:analysis.ts,checker:analysis.checker,syntax:analysis.syntax,file:job.file,source:state.files.get(job.path),runtimeRoot:analysis.runtimeRoot};traversals.set(typed,{handle,state,orderedHelperLayoutGraph:graph,...(privateState.paired?{paired:true}:{})});
+   try{const imported=originalOwnedCoreImport(handle,job.path,job.spec.name,typed),canonical=imported.target===state.data.runtimeRoot+'/primitive-operator-runtime.mjs';if(job.typeOnly?(!canonical||!imported.typeOnly||!primitiveBitwiseAlias(imported.name)):imported.typeOnly||!(imported.booleanHelper||canonical&&['primitiveBitwise','primitiveNot','integerCast','primitiveIntegerMethod','integerArithmetic','integerShift'].includes(imported.name)))fail('actual canonical scalar/primitive or ordinary helper import required');}finally{traversals.delete(typed);}
+  },
+ });privateState.orderedHelperLayoutGraph=graph;}
+ return withCompleteSourceClosingFence(()=>graph.withSelection(file,path,run),own?[()=>graph.close(),()=>{delete privateState.orderedHelperLayoutGraph;}]:[]);
+}
 /** Resolve an actual source import symbol, including only exact named reexports. */
 function originalOwnedCoreImport(handle,path,node,analysis){
  const {file,ts,checker,syntax}=analysis,privateState=traversals.get(analysis);assertReverseConcreteSourceHost();const state=contexts.get(handle);
  if(!privateState||privateState.handle!==handle||privateState.state!==state||file.fileName!==path)fail('foreign source traversal');
  if(!ts.isIdentifier(node))fail('direct original imported call required');
  const symbol=checker.getSymbolAtLocation(node),declarations=symbol?.declarations;
+ if(state.orderedScalarHelperSyntax===true&&declarations?.length===1&&ts.isFunctionDeclaration(declarations[0])&&declarations[0].parent===file){
+  const selected=declarations[0];return withOriginalOrderedScalarHelperLayout(handle,analysis,file,path,layout=>{if(!selected.name||layout.functions.get(selected.name.text)!==selected||selected.getSourceFile()!==file)fail('actual local helper declaration identity differs');requireOwnedCoreSourceCurrent(handle);return {target:path,name:selected.name.text,links:[],local:node.text,typeOnly:false,booleanHelper:{declaration:selected,file}};});
+ }
  if(!declarations||declarations.length!==1||!ts.isImportSpecifier(declarations[0]))fail('callee is not the actual import symbol');
  const spec=declarations[0],declaration=spec.parent.parent.parent;
  if(declaration.getSourceFile()!==file||!ts.isStringLiteral(declaration.moduleSpecifier))fail('foreign import declaration');
@@ -223,6 +241,10 @@ function originalOwnedCoreImport(handle,path,node,analysis){
    if(!exported)fail('original runtime has no such export');return {target,name,links,local:node.text,typeOnly:!!typesOnly};
   }
   const helperFile=syntax.get(target);
+  if(state.orderedScalarHelperSyntax===true&&helperFile?.statements.some(ts.isFunctionDeclaration)){
+   if(!helperValuePath||helperFile.text!==source||helperFile.parseDiagnostics?.length)fail('actual complete helper value module required');
+   return withOriginalOrderedScalarHelperLayout(handle,analysis,helperFile,target,layout=>{const selected=layout.exports.get(name),actual=checker.getAliasedSymbol(symbol)?.declarations;if(!selected||selected.getSourceFile()!==helperFile||actual?.length!==1||actual[0]!==selected)fail('actual imported helper declaration identity differs');requireOwnedCoreSourceCurrent(handle);return {target,name,links,local:node.text,typeOnly:false,booleanHelper:{declaration:selected,file:helperFile}};});
+  }
   if(state.booleanHelperSyntax===true&&helperFile?.statements.some(ts.isFunctionDeclaration)){
    if(!helperValuePath||helperFile.text!==source||helperFile.parseDiagnostics?.length)fail('actual complete helper value module required');
    privateState.booleanHelperLayouts??=new Map();let layout=privateState.booleanHelperLayouts.get(helperFile);
@@ -377,9 +399,9 @@ function withOwnedOrderedScalarHelperSourceOperationBody(run,{root=booleanHelper
   const current=()=>booleanHelperSourceInput(()=>{if(rows)for(const row of rows)if(custody.read(root.replace(/\/$/u,'')+'/'+row.path)!==row.source)fail('complete Boolean helper implementation source changed: '+row.path);});
   try{return withCompleteSourceClosingFence(()=>{
    booleanHelperSourceInput(()=>{
-    const encoded=custody.readBytes(root.replace(/\/$/u,'')+'/tools/translation/source-profiles/ordered-scalar-helper-native-20261104/helper-inputs.json.gz',1048576);if(digest(encoded)!=='e49b85748ca62cfbc933d903545310514a493f61697d4b2bf64aca6152e7e3d9')fail('fixed complete helper source input archive differs');
+    const encoded=custody.readBytes(root.replace(/\/$/u,'')+'/tools/translation/source-profiles/ordered-scalar-helper-graph-20261104/helper-inputs.json.gz',1048576);if(digest(encoded)!=='17de382051744162b2e88ab82c4172eb08b3188aa255350c78ddbcb69f84598f')fail('fixed complete helper source input archive differs');
     const raw=booleanHelperSourceGunzip(encoded,{maxOutputLength:1048576}),text=raw.toString('utf8');if(!Buffer.from(text).equals(raw))fail('complete helper source UTF8 differs');const input=JSON.parse(text);
-    const paths=["tools/translation/ordered-scalar-helper-statements-20261103.mjs","tools/translation/js-to-rust/owned-core-ordered-scalar-helper-document-20261104.mjs","tools/translation/js-to-rust/owned-vector-candidate-ordered-scalar-helper-document-20261104.mjs","tools/translation/js-to-rust/owned-ordered-scalar-helper-profile-20261104.mjs","tools/translation/js-to-rust/owned-ordered-scalar-helper-rust-20261104.mjs","tools/translation/js-to-rust/ordered-scalar-helper-source-reconciliation-20261104.mjs"];if(input.schema!=='original-ordered-scalar-helper-input-sources-20261104-v1'||input.rows.length!==6||new Set(input.rows.map(row=>row.path)).size!==6||input.rows.some(row=>!paths.includes(row.path)||typeof row.source!=='string'||digest(row.source)!==row.sha256))fail('all six original complete ordered helper input sources required');
+    const paths=["tools/translation/ordered-scalar-helper-statements-20261103.mjs","tools/translation/js-to-rust/owned-core-ordered-scalar-helper-document-20261104.mjs","tools/translation/js-to-rust/owned-vector-candidate-ordered-scalar-helper-document-20261104.mjs","tools/translation/js-to-rust/owned-ordered-scalar-helper-profile-20261104.mjs","tools/translation/js-to-rust/owned-ordered-scalar-helper-rust-20261104.mjs","tools/translation/js-to-rust/ordered-scalar-helper-source-reconciliation-20261104.mjs","tools/translation/ordered-scalar-helper-layout-graph-20261104.mjs"];if(input.schema!=='original-ordered-scalar-helper-graph-input-sources-20261104-v1'||input.rows.length!==7||new Set(input.rows.map(row=>row.path)).size!==7||input.rows.some(row=>!paths.includes(row.path)||typeof row.source!=='string'||digest(row.source)!==row.sha256))fail('all seven original complete ordered helper graph input sources required');
     rows=input.rows;current();
    });return run();
   },[current,custody.close]);}finally{if(rows)rows.length=0;rows=null;}
@@ -497,7 +519,7 @@ function checkFunctionBody(context,path,declaration,analysis){
    return undefined;
   }
 
- const copyHelperWrittenReturn=traversals.get(analysis).copyHelperBody?(declaration.type??ts.getJSDocReturnType(declaration)??paired?.declaration.type):null,copyHelperReturnRole=copyHelperWrittenReturn?originalOwnedCoreType(context,declaration.type||ts.getJSDocReturnType(declaration)?path:paired.pair.typescript.path,copyHelperWrittenReturn,declaration.type||ts.getJSDocReturnType(declaration)?analysis:paired.analysis):null;
+ const copyHelperWrittenReturn=(traversals.get(analysis).copyHelperBody||contexts.get(context).orderedScalarHelperSyntax===true)?(declaration.type??ts.getJSDocReturnType(declaration)??paired?.declaration.type):null,copyHelperReturnRole=copyHelperWrittenReturn?originalOwnedCoreType(context,declaration.type||ts.getJSDocReturnType(declaration)?path:paired.pair.typescript.path,copyHelperWrittenReturn,declaration.type||ts.getJSDocReturnType(declaration)?analysis:paired.analysis):null;
  function expression(node,scope,depth,opaqueOperand=false,numericDomain=null){
   tick(depth);if(ts.isParenthesizedExpression(node))return expression(node.expression,scope,depth+1,opaqueOperand,numericDomain);
   if(expressionVector&&ts.isArrayLiteralExpression(node)){
@@ -552,17 +574,18 @@ function checkFunctionBody(context,path,declaration,analysis){
     requireOwnedCoreSourceCurrent(context);
     if(contexts.get(context).copyHelperSyntax!==true&&node.arguments.some(argument=>!ts.isIdentifier(argument)&&argument.kind!==ts.SyntaxKind.TrueKeyword&&argument.kind!==ts.SyntaxKind.FalseKeyword))fail('helper operands must be inert Boolean bindings or literals');
     const state=contexts.get(context),selected=binding.booleanHelper,helperAnalysis={ts,checker,syntax:analysis.syntax,runtimeRoot:analysis.runtimeRoot,file:selected.file,source:state.files.get(binding.target)};
-    traversals.set(helperAnalysis,{handle:context,state,booleanHelperBody:true,copyHelperBody:state.copyHelperSyntax===true});let helper;
-    try{helper=checkFunction(context,binding.target,selected.declaration,helperAnalysis);}finally{traversals.delete(helperAnalysis);}
+    const active=state.orderedScalarHelperSyntax===true?(traversals.get(analysis).orderedHelperBodies??=new Set()):null;if(active&&(active.has(selected.declaration)||active.size>=160))fail('recursive or too-deep original helper body graph');if(active)active.add(selected.declaration);
+    traversals.set(helperAnalysis,{handle:context,state,booleanHelperBody:true,copyHelperBody:state.copyHelperSyntax===true,...(active?{orderedHelperBodies:active}:{})});let helper;
+    try{helper=checkFunction(context,binding.target,selected.declaration,helperAnalysis);}finally{traversals.delete(helperAnalysis);if(active)active.delete(selected.declaration);}
     const copy=state.copyHelperSyntax===true;
     if(copy&&(helper.params.some(param=>param.type!=='bool'&&!primitiveBitwiseType(param.type))||helper.returns!=='bool'&&!primitiveBitwiseType(helper.returns)))fail('actual checked Boolean/native integer Copy signatures required');
     if(copy&&node.arguments.length!==helper.params.length)fail('helper operands must be inert actual scalar bindings or literals');
     const args=node.arguments.map((argument,index)=>{const role=copy?helper.params[index].type:null,value=expression(argument,scope,depth+1,false,primitiveBitwiseType(role)?role:null);if(copy&&primitiveBitwiseType(role))narrowOwnedNumericLiteral(value,role);return value;});
     let value;if(copy&&state.orderedScalarHelperSyntax===true){orderedScalarCalls=true;value={kind:'ordered-scalar-helper-call',helper,args,type:helper.returns,root:null};}else value=copy?substituteCopyScalarHelperExpression20261103(helper,args,level=>tick(depth+1+level)):substituteBooleanHelperExpression20261103(helper,args,level=>tick(depth+1+level));
     const receipt={name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end],declaration:{path:binding.target,source:helper.source.source,span:[...helper.source.span]}};
-    if(copy&&helper.hostCalls.length){receipt.primitiveCalls=helper.hostCalls.map(call=>({name:call.name,target:call.target,span:[...call.span]}));for(const call of helper.hostCalls)hostCalls.push({...call,source:{path:binding.target,span:[...call.span]}});}
-    if(copy&&state.orderedScalarHelperSyntax===true&&helper.sourceNativeOperators?.length)for(const operation of helper.sourceNativeOperators)sourceNativeOperators.push({...operation,helperSource:{path:binding.target,span:[...operation.span]}});
-    if(copy){receipt.parameters=helper.params.map(param=>param.type);receipt.returns=helper.returns;if(helper.pairedSource)receipt.pairedDeclaration={path:helper.pairedSource.path,source:helper.pairedSource.source,span:[...helper.pairedSource.span]};copyHelperCalls.push(receipt);copyHelperRoots.add(value);}else booleanHelperCalls.push(receipt);requireOwnedCoreSourceCurrent(context);return value;
+    if(copy&&helper.hostCalls.length){receipt.primitiveCalls=helper.hostCalls.map(call=>({name:call.name,target:call.target,span:[...call.span],...(call.source?{source:call.source}:{})}));for(const call of helper.hostCalls)hostCalls.push({...call,source:call.source??{path:binding.target,span:[...call.span]}});}
+    if(copy&&state.orderedScalarHelperSyntax===true&&helper.sourceNativeOperators?.length)for(const operation of helper.sourceNativeOperators)sourceNativeOperators.push({...operation,helperSource:operation.helperSource??{path:binding.target,span:[...operation.span]}});
+    if(copy){receipt.parameters=helper.params.map(param=>param.type);receipt.returns=helper.returns;if(helper.pairedSource)receipt.pairedDeclaration={path:helper.pairedSource.path,source:helper.pairedSource.source,span:[...helper.pairedSource.span]};copyHelperCalls.push(receipt);if(state.orderedScalarHelperSyntax===true)for(const nested of helper.copyHelperCalls??[])copyHelperCalls.push({...nested,caller:nested.caller??{path:binding.target,span:[...nested.span]}});copyHelperRoots.add(value);}else booleanHelperCalls.push(receipt);requireOwnedCoreSourceCurrent(context);return value;
    }
    const textScalar=ownedVectorTextScalarOperation(binding.name);if(textScalar&&binding.target===analysis.runtimeRoot+'/string-iterator-runtime.mjs'){if(!jsonVectorProfile&&!vectorDefinitions||binding.typeOnly||node.arguments.length!==textScalar.args.length)fail('fixed source-bound text scalar operation/arity required');requireOwnedCoreSourceCurrent(context);const args=node.arguments.map(argument=>expression(argument,scope,depth+1));if(args.some(value=>value.type!=='str'||!asciiStringLoan(value,scope)))fail('text scalar arguments need actual live borrowed/static text');hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});requireOwnedCoreSourceCurrent(context);return {kind:'text-scalar-call',name:binding.name,args,type:textScalar.ret,root:null};}
    if(ownedPrimitiveOperatorOperation(binding.name)&&binding.target===analysis.runtimeRoot+'/primitive-operator-runtime.mjs'){
@@ -757,7 +780,7 @@ function checkFunctionBody(context,path,declaration,analysis){
  if(!hostCalls.length&&!sourceNativeOperators.length)nativeOperatorHistory.adoptCopies();
  if(contexts.get(context).orderedScalarHelperSyntax===true&&(sourceNativeOperators.length>4096||sourceNativeOperators.reduce((units,row)=>units+row.source.length,0)>2097152))fail('bounded complete lifted native scalar source history required');
  if(jsonVectorProfile&&resultType!==jsonVectorProfile.type)fail('actual original native owned JSON return shape required');
- if(!booleanHelperCalls.length&&!copyHelperCalls.length&&!traversals.get(analysis).booleanHelperBody&&!hostCalls.length&&!sourceNativeOperators.length&&!params.some(param=>param.type==='base64-result')&&!jsonVectorProfile&&!primitiveDefinitions)fail('no actual owned-core call');
+ if(contexts.get(context).orderedScalarHelperSyntax!==true&&!booleanHelperCalls.length&&!copyHelperCalls.length&&!traversals.get(analysis).booleanHelperBody&&!hostCalls.length&&!sourceNativeOperators.length&&!params.some(param=>param.type==='base64-result')&&!jsonVectorProfile&&!primitiveDefinitions)fail('no actual owned-core call');
  const item={kind:'owned-function',name,...(booleanHelperCalls.length?{booleanHelperCalls}:{}),...(copyHelperCalls.length?{copyHelperCalls}:{}),...(sourceCalls.length?{sourceCalls}:{}),javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},...(jsonVectorProfile?{vectorOrigin:jsonVectorProfile}:{}),...(sourceNativeOperators.length?{sourceNativeOperators}:{}),hostCalls};
  if(paired)item.pairedSource={path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits};
  if(vectorFieldBoundary)requireOwnedVectorJsonFieldSources(traversals.get(analysis).state.files,contexts.get(context).data);if(boundedJsonBoundary)boundedJsonRuntimeRustEdge(traversals.get(analysis).state.files);requireOwnedCoreSourceCurrent(context);return item;

@@ -2,9 +2,9 @@
 
 This extends the [adopted ordered helper lane](ordered-scalar-helper-adoption-20261104.md)
 with complete reader source proposals for named inter-helper imports and actual
-same-module function symbols. Native source adoption remains unfinished. All
+same-module function symbols. Both readers are now [source adopted](ordered-helper-graph-adoption-20261104.md). All
 execution is UNRUN, CI NOT_INSPECTED, counts12/70 DRAFTED,58 OPEN and actual
-production coverage UNKNOWN. The installed source graph remains451/274.
+production coverage UNKNOWN. The installed source graph now retains466/275.
 
 ## Separate import layout from executable body proof
 
@@ -87,7 +87,7 @@ SHAa9cb390d61dff0c5088a1ea2f83e3648b3e8d965eebafe2ae4a13f7da0cb6679,
 189808compressed bytes. Seven-input archive
 SHA17de382051744162b2e88ab82c4172eb08b3188aa255350c78ddbcb69f84598f.
 Proposed original readers remain928/862lines, below the1000-line policy.
-Next adopt both exact reader successors, receiving source and appended complete
-history while preserving all451 existing equations. Recursive function emission,
+Both exact reader successors and receiving source now have appended complete
+history preserving all451 previous equations. Qualification remains unrun. Recursive function emission,
 wider owner/effect/interface and module forms, actual application adoption and
 all other remaining acceptance clauses stay open. This increment closes no row.
