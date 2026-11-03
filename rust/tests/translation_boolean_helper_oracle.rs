@@ -31,3 +31,21 @@ fn independent_boolean_helper_truth_table() {
     assert!(HELPER_JS_WITNESS.contains("export function predicate"));
     assert!(CALLER_JS_WITNESS.contains("predicate as chosen"));
 }
+
+#[test]
+fn boolean_canonical_edit_truth_tables() {
+    // Independent table for original AND and an edited OR caller. Reprojection
+    // must change the caller without silently changing a shared helper module.
+    let cases = [
+        (false, false, false, false, true, false),
+        (false, true, false, true, false, true),
+        (true, false, false, true, false, true),
+        (true, true, true, true, true, false),
+    ];
+    for (a, b, and, or, equal, different) in cases {
+        assert_eq!(a && b, and);
+        assert_eq!(a || b, or);
+        assert_eq!(a == b, equal);
+        assert_eq!(a != b, different);
+    }
+}

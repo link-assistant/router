@@ -75,8 +75,10 @@ JavaScript-first gate changed. No local Rust tool ran.
 
 ## Remaining work
 
-Complete the Rust-source inverse profile and original helper-call/source graph
-reconstruction or explicit conflict reporting. Expand the Boolean-only family
+The [canonical Rust inverse draft](boolean-helper-rust-inverse-draft-20261103.md)
+now adds unchanged helper-network restoration and checked edited-caller proposals
+with explicit reconciliation records. General helper-call/source-graph edit
+reconciliation remains open. Expand the Boolean-only family
 to qualified production integer/text/JSON, ownership/effect, generic/trait and
 module cases. Join actual application callers rather than reporting API or case
 counts as coverage. Source adoption is not a receiving pass: all focused/native,

@@ -21,7 +21,9 @@ The [document continuation](boolean-helper-documents-draft-20261103.md) adds
 fresh meta read, provenance/CST and original target-emitter implementation
 copies. Their [actual source adoption](boolean-helper-source-adoption-20261103.md)
 now installs the complete guarded source cohort and interpreter/native oracle
-case source. Rust inverse APIs and full receiving remain gaps; all execution UNRUN.
+case source. The [canonical Rust inverse draft](boolean-helper-rust-inverse-draft-20261103.md)
+adds unchanged graph restoration and checked edited-caller proposals. General
+helper-network edit reconciliation and full receiving remain gaps; execution UNRUN.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 
