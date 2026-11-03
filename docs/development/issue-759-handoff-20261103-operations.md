@@ -39,6 +39,12 @@ adds ordered pure local normalization and separate branch environments. Both
 reader source successors and the seven-input source fence are now
 [source adopted](scalar-helper-locals-adoption-20261103.md); the old six-input
 archive/implementation remain intact. All execution UNRUN.
+The [total scalar argument draft](copy-scalar-helper-arguments-draft-20261103.md)
+adds pure comparisons, Boolean expressions and conditional operands, validating
+even unused arguments before expansion. Both full reader successors and native
+receiving sources are proposed together with a new eight-input source fence.
+This cohort remains uninstalled: append its source-history continuation next.
+Existing graph remains412 equations/271 paths; all execution remains UNRUN.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 
