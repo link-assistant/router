@@ -47,3 +47,17 @@ export function extendExactSourceIndexData(input){
  const result=createRulePipeline([{phase:'language',rules:[{id:'language:whole-source-CST-and-complete-inverse',apply:language}]},{phase:'repository',rules:[{id:'repository:deterministic-bounded-index-images-preserving-prior-equations',apply:repository}]}]).run(input);
  boundedReconcileWireBytes(result.value);return {...result.value,trace:result.trace};
 }
+/** Additive compact layout keeps large DATA indexes below the repository line
+ * limit. Original pretty-output API, source/CST checks and limits are intact. */
+export function extendExactSourceIndexCompactData(input){
+ account(input);input=copyMetadata(input);
+ const result=createRulePipeline([
+  {phase:'language',rules:[{id:'language:whole-source-CST-and-complete-inverse',apply:language}]},
+  {phase:'repository',rules:[{id:'repository:bounded-compact-index-preserving-complete-equations',apply:value=>{
+   const proposal=repository(value),indexText=JSON.stringify(proposal.index)+'\n';
+   if(Buffer.byteLength(indexText)>1048576)fail('original complete index byte bound');
+   return {...proposal,indexText,indexSha256:hash(indexText),layout:'compact-complete-data-v1'};
+  }}]},
+ ]).run(input);
+ boundedReconcileWireBytes(result.value);return {...result.value,trace:result.trace};
+}

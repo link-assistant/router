@@ -13,7 +13,7 @@ const base='tools/translation/source-profiles/exact-source-compiler-epochs-20261
 test('complete reviewed index retains its original127 and excludes engine self-reference',()=>{
  const old=JSON.parse(readSourceProfileFileSync(join(root,base+'index127.before.json'),'utf8'));
  const current=JSON.parse(readSourceProfileFileSync(join(root,'tools/translation/source-profiles/exact-source-successor-adoption-20261103/index.json'),'utf8'));
- assert.equal(old.rows.length,127);assert.equal(current.rows.length,198);assert.deepEqual(current.rows.slice(0,127),old.rows);
+ assert.equal(old.rows.length,127);assert.equal(current.rows.length,282);assert.deepEqual(current.rows.slice(0,127),old.rows);
  assert.equal(current.rows.some(row=>row.path==='tools/translation/exact-source-successors-20261103.mjs'),false);
  assert.equal(new Set(current.rows.map(row=>row.id)).size,current.rows.length);
 });

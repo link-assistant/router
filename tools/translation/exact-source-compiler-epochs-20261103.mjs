@@ -23,13 +23,14 @@ export function knownExactSourceCompilerEngineEpoch({root=ROOT,before,current,re
   const cold=custody.read(join(root,BASE+'engine.before.txt'));
   const after=custody.read(join(root,BASE+'engine.after.txt'));
   if(hash(original)!=='7b2d7970c7e5e424d14e1f18d8528fee3a38064ebc154c0e2361488b8888d6ea'||hash(cold)!=='be23f8d3b828cb21357b506449818f9ec43d116da7f93fd05f4c14f2f9cd66d9'||hash(after)!=='ae36643af1f08c48d679942db08534baf10d7c5d1ad59e2eca6ea2b413ad3290')throw TypeError('Fixed whole engine source images differ');
-  if(before!==original&&before!==cold&&before!==after)return null;
-  if(current!==after||custody.read(join(root,ENGINE))!==after)return null;
-  return withExactSourceHistoryDataOperation(root,()=>withExactSourceHistoryDataReservation(retainedBytes+Buffer.byteLength(original)+Buffer.byteLength(cold)+Buffer.byteLength(after),()=>{
-  const stages=[];
-  if(before===original)stages.push(exactSourceHistoryEpoch({path:ENGINE,before:original,after:cold,current,language:'JavaScript'}));
-  if(before!==after)stages.push(exactSourceHistoryEpoch({path:ENGINE,before:cold,after,current,language:'JavaScript'}));
-  const result=exactSourceHistoryEpoch({path:ENGINE,before,after,current,language:'JavaScript'});
+  // The original198 domain needs no newer-source companion in another root.
+  const chain=[original,cold,after];
+  if(current!==after){const latest=custody.read(join(root,'tools/translation/source-profiles/exact-source-current-families-20261103/engine.after.txt'));if(hash(latest)!=='54007cd41b86cfe0cc380ef5a42903f1d607a6598cd217844723b8740ad25791')throw TypeError('Fixed complete current-family engine source differs');chain.push(latest);}
+  const first=chain.indexOf(before),last=chain.indexOf(current);
+  if(first<0||last<2||first>last||custody.read(join(root,ENGINE))!==current)return null;
+  return withExactSourceHistoryDataOperation(root,()=>withExactSourceHistoryDataReservation(retainedBytes+chain.reduce((bytes,source)=>bytes+Buffer.byteLength(source),0),()=>{
+  const stages=[];for(let at=first;at<last;at++)stages.push(exactSourceHistoryEpoch({path:ENGINE,before:chain[at],after:chain[at+1],current,language:'JavaScript'}));
+  const result=exactSourceHistoryEpoch({path:ENGINE,before,after:current,current,language:'JavaScript'});
   return {...result,laterHistories:stages,sourceAuthority:false,semanticAuthority:false,nativeBindingQualified:false,verification:'UNRUN'};
   }));
  },[custody.close]));
