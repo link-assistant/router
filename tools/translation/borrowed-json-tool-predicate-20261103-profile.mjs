@@ -1,6 +1,7 @@
 // Complete source proposal only; two parent edits do not activate private JSON typing.
 import {fileURLToPath} from 'node:url';
 import {knownBorrowedJsonToolPackagingInstalledSuccessor} from './borrowed-json-tool-packaging-installed-20261103-profile.mjs';
+import {exactSourceHistoryEpoch} from './exact-source-history-epoch-20261103.mjs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {createOrderedMapCanonicalSourceCustody} from './ordered-text-map-callers-20261102-canonical-source-custody.mjs';
@@ -33,7 +34,8 @@ export function proposeBorrowedJsonToolPredicateSourceSuccessors(){
     if(history.inverse!==before||transportConcreteSyntaxMeta(history.beforeMeta).source!==before||transportConcreteSyntaxMeta(history.afterMeta).source!==after)throw TypeError('Lossless reparsed source CST/inverse differs');
     stages.push({phase:phase.phase,before,after,history});before=after;
    }
-   return {...row,stages,trace:result.trace,currentAfter:current,laterHistories:later?[later]:[]};
+   const continuation=later?{...exactSourceHistoryEpoch({path:row.path,before:row.after,after:current,current,language:'JavaScript'}),currentAfter:current,laterHistories:[],installationEquation:later.installationEquation,sourceAuthority:false,semanticAuthority:false,verification:'UNRUN'}:null;
+   return {...row,stages,trace:result.trace,currentAfter:current,laterHistories:continuation?[continuation]:[]};
   });
   // DATA/CST only: this does not issue native serde ownership, checked bodies or meta.
   return {files,applicationSources:packet.applicationSources,sourceInstalled:false,semanticAuthority:false,privateCallerQualified:false,allChecks:'UNRUN'};
