@@ -638,3 +638,61 @@ executable coverage UNKNOWN. Remaining work includes full inventory/acceptance
 receipts, old-domain non-narrowing, broader mixed/helper/control/effect families,
 all actual corpus receiving and independent full verification when authorized.
 Continue substantive drafting; do not treat this checkpoint as a stopping point.
+
+## Complete collected scope/adoption driver — source-only continuation
+
+The preceding goal turn made actual source progress: JSON compiler checkpoint
+0fa9f43c12918234ebf86db61e7a131eef8bb941 was pushed to PR775; lifetime and full
+emitted-definition receiving checkpointcaa15269cce55915746a29b6a079c20cec4c4254
+is committed locally. Root removed20 completed own temporary author/snapshot/
+stage files (1269030 bytes), retaining all repository source archives/images
+and the latest index recipe, which requires its original333 baseline and must
+not be rerun against342. Goal remains active; no CI/review feedback inspection.
+
+Checklist review identifies L01/L02 as the scope closure blocker. Source review
+found that the existing physical scope report carries only its small manual
+observation set while the Rust and JS/TS native collectors are standalone. The
+new collect-router-draft-scope-20261103.mjs connects both actual original
+collectors to one complete immutable physical Git selection and a shared
+numbered adoption worklist. Original reporters/collectors/private parser APIs
+remain unchanged. The new language/repository pipeline preserves full original
+CST/native observations, source origins, spans, owner/configuration/producer
+gaps and refuses native/source failures through complete closing checks.
+
+The new collected-scope-reconciliation-20261103.mjs requires actual
+implementation attempt symbols/spans, all four target/sync lanes, independent
+cases or explicit gaps, and full physical origins for every referenced source.
+It fixes a scope-accounting gap without changing the old reconciler: staleness
+includes receiving/type/runtime/case/producer evidence, rather than only
+implementation paths. New/changed observations remain unassigned; old unmatched
+assignments stream explicitly. Same-spelling/overlapping native views are not
+silently merged into a function denominator. Matching metadata and REVIEWED
+flags never clear original source-role/configuration/unknown-producer gaps or
+issue compiler authority.
+
+Selection/reads/events/locator retention are bounded. Whole-file native limits
+stay unchanged; ordinary batches are16 files/512KiB and oversized originals
+stay whole on their original refusal domains. Original blobs and complete
+census close after consumers. DATA-output refusals discard whole batches;
+native/input/source failures propagate instead of wasting repeated retries.
+Callbacks preserve exact falsy/frozen primaries, and local references clear.
+The CLI reserves escaped wire space and uses progressing bounded synchronous
+FD1 chunks under the actual protected native source-writer lease, with no
+unbounded stdout queue or new source installer.
+
+Independent pure bookkeeping cases and real temporary-Git Rust/JS/TS collector
+cases are drafted, including changed independent cases, new function/unmatched
+records, immutable/worktree distinctions, exact original blob corruption at
+closing, source/callback primaries and invalid callback preflight. New files
+use the original whole-file translation test discovery partition; its commands
+and deadlines were not reduced. All new tests, parsers, collectors, CLI and
+receiving execution remain UNRUN. No compilation/Rust/CI feedback inspection.
+See collected-draft-scope-20261103.md for full domain and remaining work.
+
+These are actual implementation/case source changes, not a closed inventory.
+L01/L02 remain OPEN, every production role/feature/producer/adoption still needs
+complete source receipts, and no fresh census was executed.11/70 DRAFTED,
+59 OPEN remains truthful; full function/writer denominators and executable
+coverage remain UNKNOWN. Shared source-history index stays342/245; new
+bookkeeping modules do not modify frozen compiler parents or require repinning
+an old image. Continue the remaining requirements after this source checkpoint.

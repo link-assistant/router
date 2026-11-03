@@ -117,3 +117,10 @@ production entry's actual implementation/adoption mapping remain incomplete.
 The stored meta can guide later fresh native CST/meta review; it cannot replace
 that review or recover an original denominator. No source count here changes the
 checklist's DRAFTED/70 count. Execution and all full verification remain UNRUN.
+
+The additive [complete collected scope driver](collected-draft-scope-20261103.md)
+now connects both original native collectors to the same immutable physical
+census and numbered adoption worklist. It also invalidates changed lane/case/
+producer evidence and streams unmatched old assignments. The old manual reporter
+above remains available with its original domain. This newer source draft is
+also UNRUN and does not close the remaining production inventory review.
