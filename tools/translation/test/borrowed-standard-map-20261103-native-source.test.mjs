@@ -1,3 +1,4 @@
+import {matchesExactSourceEpoch} from '../exact-source-compiler-epochs-20261103.mjs';
 // Full source-copy and foreign-authority cases SOURCE. All execution UNRUN.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -29,7 +30,7 @@ test('an object-shaped parser or asynchronous callback never enters the native o
 });
 test('fixed native compatibility identities retain the preceding whole ABI and its inverse',{timeout:60000},()=>{
  const result=proposeFixedBorrowedStandardMapNativeAbi();
- assert.equal(result.after,read(result.path));assert.equal(result.history.inverse,result.before);assert.equal(result.inverse,result.before);
+ assert.equal(matchesExactSourceEpoch(result,read(result.path)),true);assert.equal(result.currentAfter,read(result.path));assert.equal(result.history.inverse,result.before);assert.equal(result.inverse,result.before);
  assert.deepEqual(result.trace.map(step=>step.phase),['language','repository']);
  assert.ok(result.after.includes('sourcePins[path]'));assert.ok(result.after.includes('binding.declaration?.source!==leaf.file'));
  assert.equal(result.semanticAuthority,false);

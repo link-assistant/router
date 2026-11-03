@@ -133,3 +133,6 @@ export {proposeOrderedTextMapSourceCopies} from './ordered-text-map-20261102-sou
 export {ORDERED_TEXT_MAP_CONTRACTS,emitOrderedTextMapDeclarations} from './ordered-text-map-20261102-contracts.mjs';
 export {BORROWED_PREDICATE_OPERATION_DESCRIPTIONS,borrowedPredicateOperationDescription,borrowedPredicateNativeArity,borrowedPredicateLoweredArity,borrowedPredicateReverseDescription,emitBorrowedPredicateDeclaration} from './borrowed-predicate-operation-descriptions-20261103.mjs';
 export {proposeBorrowedPredicateDescriptionSources} from './borrowed-predicate-descriptions-20261103-profile.mjs';
+export {proposeBorrowedPredicateDescriptionInstalledSources} from './borrowed-predicate-description-install-20261103-profile.mjs';
+export {proposeExactBorrowedPredicateSourceIndex,withExactBorrowedPredicateSourceFamilyData} from './exact-source-borrowed-predicate-families-20261103.mjs';
+export {proposeExactBorrowedPredicateControlSources} from './exact-source-borrowed-predicate-controls-20261103.mjs';

@@ -865,3 +865,35 @@ remains OPEN pending complete qualified installation/receiving, remaining
 inventory families and production caller generation. Counts remain12/70 DRAFTED,
 58 OPEN. No tests, compilation, translator experiments, installs, Rust tools or
 CI feedback inspection ran. Continue full-scope drafting alone.
+
+## Actual shared-predicate compiler adoption and361-equation source graph
+
+Root source-installed the four adapter afterimages from the preceding complete
+six-parent proposal; strict declaration bytes/pins remain unchanged. Both
+original private ABI operations now add a complete invocation-local restriction
+over the new shared implementation and both contract sources. It rechecks full
+source during private receipt use and on closing, poisons caught/restored
+changes, expires after closing and grants no ownership authority or cross-call
+verdict cache. Original source/namespace/type/body checks remain in place.
+
+Complete installation packet a19f0ab5ff50ede659000d1ac42cdad9f430b2a23ba193e4528ab799eff20ef5
+retains nine changed parents and the new restriction's whole creation source.
+Fixed three-input source packet83a6a5fd0a9bb8bcc7c73c348485247e8ab4dc82bf1759edf3d444b0790fc031
+retains the description implementation and both original contracts. Actual
+source proposals and the new full-index/control producers are exported from
+the existing bulk source proposal entrypoint.
+
+Hot graph is now361equations/256paths, with original347 preserved in a complete
+compressed baseline and fourteen appended equations/28images/164939sourcebytes.
+Index SHA0440b3521451aed8335aaf5473dd0c66c9483c838a5ccc33966d1551d8128d69;
+engine SHA021ecb81e92cfe42da36fc3c462db212b8f014d4b37f5e75cc25f7e291d63533;
+census SHA13e5f11574ee90514d212a90705354db07678b81df94c82275793c7a3886ace9;
+controls SHAe82848fcc40b9f0e4b79de0d1e29503481eeb670e803c2bd61d1c4a1e56e009a.
+The separate347→361 engine transition preserves every older afterimage and
+original-root domain. New source/expiry/mutation/primary cases are drafted;
+existing whole Router and both reverse receiving cases now use the actual
+changed adapters. All execution remains UNRUN and CI NOT_INSPECTED. Source
+installation is drafted, receiving qualification is not complete. R04 stays
+OPEN,12/70 DRAFTED and58OPEN. Continue all70 source scope alone, then seek the
+separate authorization required before any local verification. About52GiB was
+free at the latest filesystem observation; no builds/dependencies were created.

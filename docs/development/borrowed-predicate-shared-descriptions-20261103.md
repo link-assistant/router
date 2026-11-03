@@ -1,9 +1,10 @@
 # Shared borrowed-predicate operation source draft
 
-R04 remains OPEN. This cohort drafts a shared description implementation and a
-complete adoption proposal for the two existing borrowed predicate families.
-It does not install the proposed compiler parents, qualify a compiler source
-successor or establish executable translation. All new cases are UNRUN.
+R04 remains OPEN. The initial cohort at5b8186d7 drafted a shared description
+implementation and a complete adoption proposal for the two existing borrowed
+predicate families. The follow-up below installs that source into the actual
+compiler parents and records their complete successor graph. Runtime/source
+qualification has not been executed; all new cases are UNRUN.
 
 The original contracts are the operation-description inputs:
 
@@ -53,22 +54,62 @@ Independent source cases retain the original 1/3 native arities, 2–66 flattene
 map arity, exact reverse type roles, unpaired-surrogate refusal and 64/65
 literal boundary. Expected values are not generated from the new descriptions.
 
-Installation is deliberately a separate remaining task: append complete source
-successor equations for the actual guarded parent graph, preserve every old
-image and route staged sources through the original whole compiler and both
-reverse readers. Do not replace their source guards with a descriptor or run a
-copied unguarded adapter and call that semantic receiving. The existing hot
-source graph remains 347 equations over 247 paths; this uninstalled proposal
-does not increase that graph or its qualified coverage.
+At the initial checkpoint, source installation and a complete guarded-parent
+successor graph were still separate remaining tasks. The follow-up below drafts
+both. Full receiving must still use the original whole compiler and both reverse
+readers. Do not replace their source guards with a descriptor or run a copied
+unguarded adapter and call that semantic receiving.
+
+## Actual source installation and complete successor graph
+
+Both actual forward adapters now derive native arity from the shared operation
+descriptions. The standard-map emitter and interpreter derive the same 2–66
+flattened operand range. Both actual reverse adapters obtain their original
+role/ownership DATA from the shared descriptions, while retaining the original
+argument/root/literal guards and private analyzer/checker paths. Original strict
+declaration source remains byte-for-byte unchanged.
+
+Each original private native ABI operation also obtains an invocation-local
+description source restriction. It compares the complete implementation and
+both original contract sources, repeats those reads during private receipt
+checks and closes them after callback completion. A caught change poisons that
+restriction even if the source is restored; expiry and cleanup preserve primary
+failures. The restriction cannot grant native/type/body ownership, change public
+project APIs or persist a verdict/source cache between operations. The fixed
+three-input packet SHA256 is
+`83a6a5fd0a9bb8bcc7c73c348485247e8ab4dc82bf1759edf3d444b0790fc031`.
+
+The complete nine-parent installation packet SHA256 is
+`a19f0ab5ff50ede659000d1ac42cdad9f430b2a23ba193e4528ab799eff20ef5`.
+It retains the actual adapter/ABI edits, the original standard-map ABI history
+consumer and source cases, plus the complete new restriction implementation.
+The ABI history consumer preserves its original afterimage and accepts only a
+complete known terminal successor; it separately reports the current source.
+
+The hot source graph now drafts **361 equations across 256 paths**, preserving
+all original347 equations. Fourteen appended complete source equations retain
+all nine installation parents and five original case continuations, with 28
+full source images totaling164939bytes. The original347 index is losslessly
+archived. The separate347→361 engine history preserves the older engine images
+and copied-root domains without introducing an index/hash self-reference.
+
+New cases cover complete CST/inverse ancestry, original-index preservation,
+source replay, all seven control images, the old347 receiving-root domain,
+whole-input mutation/restoration poisoning, expiry, foreign private receipt
+refusal and preservation of falsy/frozen primary failures. Existing complete
+Router forward/reverse receiving cases now target the actual changed adapters,
+including both original reverse compilers. No such case has been run for this
+cohort; source graph size is not executable coverage or semantic qualification.
 
 ## Remaining R04 scope
 
-This removes one explicit source-draft duplication across two real families;
-it does not close R04. Remaining work includes actual qualified installation,
+This removes explicit source-draft duplication across two real families;
+it does not close R04. Remaining work includes executed receiving qualification,
 all other applicable inventory families, shared production caller proposal
 generation, source-derived declaration/adaptor consistency, and independent
 full receiving cases for the installed cohort. L01/L02's complete production
 inventory and assignments remain open, so neither the complete operation
 denominator nor an executable coverage percentage follows from this cohort.
-The acceptance count remains 12/70 DRAFTED and 58 OPEN. No local tests,
-compilation, translator trials, installs or CI feedback inspection were run.
+The acceptance count remains 12/70 DRAFTED and 58 OPEN. Actual source writing
+and SCM were the only implementation operations. No local tests, compilation,
+translator trials, dependency installation or CI feedback inspection were run.

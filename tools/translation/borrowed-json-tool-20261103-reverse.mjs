@@ -1,10 +1,11 @@
 // Source proposals only; original JS/TS source/symbol/owner checks remain.
 import {BORROWED_JSON_TOOL_PREDICATE as CONTRACT} from './borrowed-json-tool-20261103-contracts.mjs';
+import {borrowedPredicateReverseDescription, borrowedPredicateNativeArity} from './borrowed-predicate-operation-descriptions-20261103.mjs';
 export function borrowedJsonToolReverseOperation(name){
- if(name!==CONTRACT.javascriptName)return null;return {id:CONTRACT.id,javascriptName:name,rustPath:CONTRACT.rustPath,parameters:['borrowed-json-tool-input'],returns:'bool',shared:[0],consumed:[],returnedLoan:false,containerEntryLimit:null,valueByteLimit:null,sourceAuthority:false,semanticAuthority:false};
+ return borrowedPredicateReverseDescription(CONTRACT.id,name);
 }
 export function borrowedJsonToolReverseRustCall(name,arguments_){
- if(name!==CONTRACT.javascriptName||!Array.isArray(arguments_)||arguments_.length!==1||typeof arguments_[0]!=='string'||!/^__ro_arg_[0-9]+$/u.test(arguments_[0]))throw TypeError('Original JSON predicate requires one already bound native operand');return CONTRACT.rustPath+'('+arguments_[0]+')';
+ if(name!==CONTRACT.javascriptName||!Array.isArray(arguments_)||arguments_.length!==borrowedPredicateNativeArity(CONTRACT.id)||typeof arguments_[0]!=='string'||!/^__ro_arg_[0-9]+$/u.test(arguments_[0]))throw TypeError('Original JSON predicate requires one already bound native operand');return CONTRACT.rustPath+'('+arguments_[0]+')';
 }
 /** A checked direct parameter root is already a once-evaluated operand. */
 export function borrowedJsonToolReverseDirectRootCall(name,root){

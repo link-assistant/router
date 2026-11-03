@@ -47,7 +47,7 @@ test('complete six-parent language/repository proposal has full intermediate CST
  assert.equal(proposal.sourceInstalled,false);assert.equal(proposal.nativeBindingQualified,false);assert.equal(proposal.semanticAuthority,false);assert.equal(proposal.verification,'UNRUN');
  assert.deepEqual(plan.stages.map(stage=>stage.phase),['language','repository']);assert.deepEqual(plan.trace.map(stage=>stage.phase),['language','repository']);
  for(const row of plan.files){
-  assert.equal(readFileSync(join(ROOT,row.path),'utf8'),row.before);assert.equal(row.inverse,row.before);
+  assert.equal(readFileSync(join(ROOT,row.path),'utf8'),row.after);assert.equal(row.inverse,row.before);
   assert.equal(transportConcreteSyntaxMeta(row.history.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.history.afterMeta).source,row.after);
   if(row.path.endsWith('.d.mts'))assert.equal(row.after,row.before);
   else assert.match(row.after,/borrowed-predicate-operation-descriptions-20261103\.mjs/u);

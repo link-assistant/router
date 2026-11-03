@@ -923,3 +923,19 @@ R04 stays OPEN: this proposal is not installed into the guarded compiler parent
 graph; full qualified receiving, other applicable inventory families and shared
 production caller generation remain. The hot graph stays347 equations/247paths.
 All cases UNRUN, CI NOT_INSPECTED; counts stay12/70 DRAFTED,58 OPEN.
+
+### R04 actual two-family source adoption follow-up
+
+The actual JSON and standard-map adapters now use the shared operation DATA.
+Both private native ABI operations retain their original proofs and additionally
+rejoin the complete description implementation/contract sources throughout the
+receipt lifetime. Original strict declarations, native pins, size domains and
+64-literal limit remain unchanged. Complete installation source packet
+a19f0ab5ff50ede659000d1ac42cdad9f430b2a23ba193e4528ab799eff20ef5
+retains nine full parents and the new source restriction implementation.
+The full successor index now drafts361 equations/256paths, preserving the
+original347 plus fourteen complete adoption/case continuations and the separate
+engine epoch. Independent lifecycle, source-history and old-root cases are
+drafted. This supersedes the immediately preceding uninstalled-source gap for
+these two families only; all receiving execution remains UNRUN, and R04 remains
+OPEN for the rest of its full scope. Counts stay12/70 DRAFTED,58 OPEN.

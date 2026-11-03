@@ -1,5 +1,6 @@
 // Original parser/checker fragments; only the complete parent issuer grants IR.
 import {BORROWED_JSON_TOOL_PREDICATE as CONTRACT} from './borrowed-json-tool-20261103-contracts.mjs';
+import {borrowedPredicateNativeArity} from './borrowed-predicate-operation-descriptions-20261103.mjs';
 import {withBorrowedJsonToolNativeSourceABI,requireBorrowedJsonToolNativeSourceABI} from './borrowed-json-tool-20261103-native-abi.mjs';
 import {requireBorrowedJsonToolType} from './borrowed-json-tool-20261103-native-types.mjs';
 import {requireOriginalFromNamespaceCallbacks,requireOriginalPrimitiveTryFromChecker} from './extensions/host-contracts.mjs';
@@ -20,17 +21,17 @@ export function parseForwardBorrowedJsonTool(parser,path){
  }),[()=>withSourceInputValidation(()=>{requireOriginalFromNamespaceCallbacks(parser);if(matchesParserFacts(parser)!==frame||parser.cursor!==c||c.tokens!==tokens||end!==null&&c.index!==end||c.index<start||c.index>tokens.length)fail('original parser/cursor/source association changed');})]);
 }
 export function checkForwardBorrowedJsonTool(checker,node,env,path,expected,{current,sourceNode=node}={}){
- requireOriginalPrimitiveTryFromChecker(checker);const original=calls.get(sourceNode);if(!original||metadataDigest(sourceNode)!==original.snapshot||node.operation!==CONTRACT.javascriptName||node.args.length!==1)fail('genuine original parsed predicate required');const snapshot=metadataDigest(node);
+ requireOriginalPrimitiveTryFromChecker(checker);const original=calls.get(sourceNode);if(!original||metadataDigest(sourceNode)!==original.snapshot||node.operation!==CONTRACT.javascriptName||node.args.length!==borrowedPredicateNativeArity(CONTRACT.id))fail('genuine original parsed predicate required');const snapshot=metadataDigest(node);
  const close=()=>withSourceInputValidation(()=>{requireOriginalPrimitiveTryFromChecker(checker);current();if(metadataDigest(node)!==snapshot||metadataDigest(sourceNode)!==original.snapshot||matchesParserFacts(original.parser)!==original.frame)fail('whole original predicate/caller association changed');native(original.parser,()=>null);});
  return withCompleteSourceClosingFence(()=>{close();const value=checker.expr(node.args[0],env,path);requireBorrowedJsonToolType(value.type);close();if(expected){if(!sameType(BOOL,expected))fail('original boolean result required');checker.expectedOwnership(BOOL,expected,path,node.span);checker.expectedPrimitiveIdentity(BOOL,expected,path,node.span);}return {k:'routerHostCall',id:CONTRACT.javascriptName,args:[value],type:BOOL,span:node.span,constEligible:false};},[close]);
 }
 export function emitForwardBorrowedJsonTool(emitter,node,{requireCurrentPrivateCall}={}){
- requireCurrentPrivateCall(node);if(node.k!=='routerHostCall'||node.id!==CONTRACT.javascriptName||node.args.length!==1)fail('complete original checked predicate required');requireBorrowedJsonToolType(node.args[0].type);const value='ml_host_'+CONTRACT.javascriptName+'('+emitter.expr(node.args[0])+')';requireCurrentPrivateCall(node);(emitter.borrowedJsonTools??=new Set()).add(CONTRACT.javascriptName);return value;
+ requireCurrentPrivateCall(node);if(node.k!=='routerHostCall'||node.id!==CONTRACT.javascriptName||node.args.length!==borrowedPredicateNativeArity(CONTRACT.id))fail('complete original checked predicate required');requireBorrowedJsonToolType(node.args[0].type);const value='ml_host_'+CONTRACT.javascriptName+'('+emitter.expr(node.args[0])+')';requireCurrentPrivateCall(node);(emitter.borrowedJsonTools??=new Set()).add(CONTRACT.javascriptName);return value;
 }
 export function borrowedJsonToolForwardImports(names,runtimeModule='./runtime/'+CONTRACT.runtimeModule){
  if(!names?.size)return [];if(names.size!==1||!names.has(CONTRACT.javascriptName)||typeof runtimeModule!=='string')fail('fixed original JSON runtime import required');return ['import { '+CONTRACT.javascriptName+' as ml_host_'+CONTRACT.javascriptName+' } from '+JSON.stringify(runtimeModule)+';'];
 }
 export function interpretForwardBorrowedJsonTool(node,evaluate,{requireCurrentPrivateCall}={}){
  const snapshot=metadataDigest(node),current=()=>withSourceInputValidation(()=>{requireCurrentPrivateCall(node);if(metadataDigest(node)!==snapshot)fail('checked JSON predicate changed during interpretation');});const typeCurrent=()=>requireBorrowedJsonToolType(node.args[0].type);
- return withCompleteSourceClosingFence(()=>{current();if(node.k!=='routerHostCall'||node.id!==CONTRACT.javascriptName||node.args.length!==1)fail('whole original checked JSON predicate required');typeCurrent();const input=evaluate(node.args[0]);current();typeCurrent();return predicate(input);},[current,typeCurrent]);
+ return withCompleteSourceClosingFence(()=>{current();if(node.k!=='routerHostCall'||node.id!==CONTRACT.javascriptName||node.args.length!==borrowedPredicateNativeArity(CONTRACT.id))fail('whole original checked JSON predicate required');typeCurrent();const input=evaluate(node.args[0]);current();typeCurrent();return predicate(input);},[current,typeCurrent]);
 }

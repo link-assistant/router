@@ -1,3 +1,4 @@
+import {proposeExactBorrowedPredicateControlSources} from '../exact-source-borrowed-predicate-controls-20261103.mjs';
 import {proposeExactBorrowedJsonContextControlSources} from '../exact-source-borrowed-json-context-controls-20261103.mjs';
 // Complete original lifetime source/adoption cases. All UNRUN.
 import test from 'node:test';
@@ -33,6 +34,6 @@ test('each current lifetime source is an exact terminal of its complete original
  }));
 });
 test('all five complete controls and the separate333→342 engine transition remain retained',{timeout:60000},()=>{
- const controls=proposeExactBorrowedJsonLifetimeControlSources();assert.equal(controls.files.length,5);for(const row of controls.files){const later=proposeExactBorrowedJsonContextControlSources().files.find(value=>value.path===row.path);if(later)assert.equal(later.before,row.after);assert.equal(read(row.path),later?.after??row.after);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}
- const before=read('tools/translation/source-profiles/exact-source-borrowed-json-compiler-families-20261103/engine.after.txt'),current=read(ENGINE),known=knownExactSourceCompilerEngineEpoch({root:ROOT,before,current});assert.ok(known);assert.equal(known.after,current);assert.equal(known.inverse,before);assert.equal(known.laterHistories.length,2);assert.equal(known.nativeBindingQualified,false);
+ const controls=proposeExactBorrowedJsonLifetimeControlSources();assert.equal(controls.files.length,5);for(const row of controls.files){const later=proposeExactBorrowedJsonContextControlSources().files.find(value=>value.path===row.path);if(later)assert.equal(later.before,row.after);const terminal=proposeExactBorrowedPredicateControlSources().files.find(value=>value.path===row.path);if(terminal)assert.equal(terminal.before,later?.after??row.after);assert.equal(read(row.path),terminal?.after??later?.after??row.after);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}
+ const before=read('tools/translation/source-profiles/exact-source-borrowed-json-compiler-families-20261103/engine.after.txt'),current=read(ENGINE),known=knownExactSourceCompilerEngineEpoch({root:ROOT,before,current});assert.ok(known);assert.equal(known.after,current);assert.equal(known.inverse,before);assert.equal(known.laterHistories.length,3);assert.equal(known.nativeBindingQualified,false);
 });

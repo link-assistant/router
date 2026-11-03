@@ -1,3 +1,4 @@
+import {createBorrowedPredicateDescriptionSourceCustody} from './borrowed-predicate-description-source-custody-20261103.mjs';
 // A synchronous private SOURCE ABI for one unrestricted borrowed map predicate.
 // No opaque map issuer, container-size restriction or observed rustc claim.
 import {fileURLToPath} from 'node:url';
@@ -59,8 +60,9 @@ export function withBorrowedStandardMapNativeSourceABI(parser,run){
    const sources=originalOrderedTextMapStandardSources(),input={modules:facts.modules,sourceScopes:facts.evidence.scopes,compilationProfile:facts.compilationProfile,cargoEditionContext:facts.cargoEditionContext,deriveDependencies:originalMatchesDependencyProof(facts),standardSources:sources};
    return {frame,input,sources,context:proveBorrowedStandardMapNativeSourceContext(input)};
   });
-  const capture=createReconcileSourceCapture(ROOT);let active=true,receipt;
+  const capture=createReconcileSourceCapture(ROOT),descriptions=createBorrowedPredicateDescriptionSourceCustody({root:ROOT});let active=true,receipt;
   const current=()=>withSourceInputValidation(()=>{
+   descriptions.current();
    requireOriginalFromNamespaceCallbacks(parser);if(matchesParserFacts(parser)!==frame)fail('actual private parser frame changed');
    requireBorrowedStandardMapNativeSourceContext(context,input);standardOwners(sources);
    if(receipt){const next=actualMember(input.modules,input.sourceScopes,receipt.sources[0].source),row=issued.get(receipt);if(!row||next.leaf!==row.member.leaf||next.member!==row.member.member||next.binding!==row.member.binding||next.scope!==row.member.scope)fail('actual native member association changed');}
@@ -78,7 +80,7 @@ export function withBorrowedStandardMapNativeSourceABI(parser,run){
     issued.set(receipt,{parser,member,current,alive:()=>active});return receipt;
    }}]}]).run(null).value);
    current();return run(selected);
-  },[current,()=>withSourceInputValidation(capture.close)]);}finally{active=false;if(receipt)issued.delete(receipt);}
+  },[current,()=>withSourceInputValidation(capture.close),descriptions.close]);}finally{active=false;if(receipt)issued.delete(receipt);}
  });
 }
 export function requireBorrowedStandardMapNativeSourceABI(value,{parser}={}){
