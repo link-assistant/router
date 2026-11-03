@@ -70,6 +70,20 @@ metadata avoid flat-list continuation recursion and repeated prefix copies.
 Complete source creation/CST cases and independent JS/native oracle source are
 UNRUN. Native source producer/private checking, document/profile/inverse and
 source-fence adoption remain the next complete batch; graph stays437/273.
+The [native ordered helper cohort](ordered-scalar-helper-native-draft-20261104.md)
+now drafts both complete reader successors, a separate private constructor,
+two document codecs, source profile, Rust inverse and reconciliation API copies.
+It lowers only genuine reconstructed helper calls before the original validators,
+preserves old APIs, retains bounded helper-origin native history and guards six
+new sources inside the existing Copy/Boolean fences. Five full original copy
+histories and six creation/receiving images retain both CST rule sequences.
+Packet SHA9524d1358c1c5e9b6f1648b9387b5d0b3452db74487da78e98ae4d142aa914a9,
+213793compressed bytes; six-input archive
+SHAe49b85748ca62cfbc933d903545310514a493f61697d4b2bf64aca6152e7e3d9.
+Both reader successors and native receiving cases remain uninstalled. Append
+the complete source-history cohort next, retaining all437 existing equations.
+All execution UNRUN; counts remain12/70 DRAFTED,58 OPEN. Inter-helper imports,
+recursive graph/source proof and broader application adoption remain gaps.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 
