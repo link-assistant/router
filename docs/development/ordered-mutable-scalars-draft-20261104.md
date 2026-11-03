@@ -1,9 +1,10 @@
 # Mutable scalar locals through immutable statement substitution
 
 SOURCE DRAFT ONLY / UNRUN. Full translation is unfinished; accounting stays
-12/70 DRAFTED,58 OPEN and executable production coverage UNKNOWN. Both actual
-native reader successors are complete source proposals, not installed source.
-Original readers, existing source guards, old APIs and archives remain intact.
+12/70 DRAFTED,58 OPEN and executable production coverage UNKNOWN. The complete reader proposals are now
+[source adopted](ordered-mutable-scalars-adoption-20261104.md); earlier original
+reader images, source guards, APIs and archives remain retained. The chronological
+draft below describes their pre-adoption state; execution is still UNRUN.
 
 ## Shared behavior
 
@@ -96,3 +97,8 @@ adoption; they are intentionally not evidence that current installed APIs accept
 mutable code. No small mutable helper qualifies complete Router translation.
 Loops, references/owned mutation, general writes, recursive function emission,
 full application adoption and every other open requirement remain unfinished.
+
+The complete reader/fence/history cohort is now
+[source adopted](ordered-mutable-scalars-adoption-20261104.md). This supersedes
+the earlier uninstalled-reader statements while preserving every remaining
+verification, wider syntax/ownership and full production obligation.

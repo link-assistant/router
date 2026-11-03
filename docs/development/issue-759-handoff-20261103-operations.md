@@ -9,6 +9,24 @@ are authorized during this drafting phase. All new execution UNRUN; CI
 NOT_INSPECTED. Source reading/writing, lightweight DATA authoring and SCM remain
 allowed. Preserve all eight same-SHA JavaScript gates before fatal Rust CI.
 
+Latest source adoption: both mutable scalar reader proposals and their complete
+nine-input ordered fence are now installed, with chronological old-case joins.
+See [the source receipt](ordered-mutable-scalars-adoption-20261104.md). The exact
+index retains all482 prior equations and adds17, giving499/277 paths and34 new
+source images. Separate immutable482 baseline and engine continuation preserve
+old-root domains. Original caps are unchanged; only13 hot rows remain before512.
+Index SHAe473dffa755395511bb70aa36bb8f849a78b0611c3bd318540b4a0d9b8ee83e0;
+census SHA2febfeab76504b8c4d166154b7c84868e7353b187485564c00fb9cbb4952204d;
+controls SHA9483ef06df4a1b04b7017a9544f1b455a2e94970869809729fa9dc980abe6dfe;
+engine SHA4a955abe439d07270566d010077218c6e79b7f0a7789b4a169f41b4e0da9859b.
+Three full collector/control/case copies retain complete CST/inverse equations,
+SHA3fc37381f55b8b38d0e304c78e8d97beb448559eb11b8b207c27f4a671f7c8d5.
+All27 source-input mutation/closing/poison/primary cases, original482 domain,
+full index/copy/CST and paired/unpaired native cases remain UNRUN. Next: wider
+shared control flow/ownership and actual production adoption, preserving the
+original512-row index bound through an additive bounded history design when
+needed. Counts remain12/70 DRAFTED,58 OPEN; CI NOT_INSPECTED.
+
 New shared translator source batch:
 [ordered mutable scalar locals](ordered-mutable-scalars-draft-20261104.md) drafts
 a complete early-return normalizer copy, both original native reader successors

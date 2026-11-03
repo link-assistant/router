@@ -1,3 +1,4 @@
+import {proposeExactMutableScalarControlSources20261104} from '../exact-source-mutable-scalar-controls-20261104.mjs';
 import {proposeExactScalarEarlyReturnControlSources20261104} from '../exact-source-scalar-early-return-controls-20261104.mjs';
 import {proposeExactOrderedHelperGraphControlSources20261104} from '../exact-source-ordered-helper-graph-controls-20261104.mjs';
 // Complete installed source/lifetime cases. SOURCE ONLY; all UNRUN.
@@ -17,7 +18,7 @@ import {withOwnedOrderedScalarHelperSourceOperation as coreFence} from '../js-to
 import {withOwnedOrderedScalarHelperSourceOperation as vectorFence} from '../js-to-rust/owned-vector-candidate-source.mjs';
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url)),BASE='tools/translation/source-profiles/exact-source-ordered-scalar-helper-families-20261104/';
 const OLD='tools/translation/source-profiles/exact-source-boolean-helper-families-20261103/helper-inputs.json.gz',INPUT='tools/translation/source-profiles/copy-scalar-helper-total-primitives-20261103/helper-inputs.json.gz';
-const ORDERED='tools/translation/source-profiles/ordered-scalar-early-return-20261104/helper-inputs.json.gz';
+const ORDERED='tools/translation/source-profiles/ordered-mutable-scalars-20261104/helper-inputs.json.gz';
 const read=path=>fs.readFileSync(join(ROOT,path),'utf8');
 test('both original native readers install the complete ordered native proposal',{timeout:900000},()=>{
  const proposal=proposeOrderedScalarHelperNativeSources20261104();assert.equal(proposal.files.length,2);assert.equal(proposal.newFiles.length,6);assert.equal(proposal.copies.length,5);assert.equal(proposal.inputSources.length,6);
@@ -31,16 +32,16 @@ test('all437 originals precede fourteen complete local/helper case continuations
  withExactOrderedScalarHelperSourceFamilyData20261104(input=>withExactSourceHistoryDataOperation(ROOT,()=>{for(const family of input.families)for(const row of family.rows){const result=knownExactSourceSuccessor({path:row.path,before:row.before});assert.ok(result,row.path);assert.equal(result.after,read(row.path));assert.equal(result.currentIsTerminal,true);assert.equal(result.inverse,row.before);assert.equal(result.nativeBindingQualified,false);}}));
 });
 test('fourteen complete controls retain the separate437 to451 source engine',{timeout:60000},()=>{
- const controls=proposeExactOrderedScalarHelperControlSources20261104();assert.equal(controls.files.length,14);for(const row of controls.files){const helperGraph=proposeExactOrderedHelperGraphControlSources20261104().files.find(value=>value.path===row.path);if(helperGraph)assert.equal(helperGraph.before,row.after);const early=proposeExactScalarEarlyReturnControlSources20261104().files.find(value=>value.path===row.path);if(early)assert.equal(early.before,helperGraph?.after??row.after);assert.equal(read(row.path),early?.after??helperGraph?.after??row.after);assert.equal(row.inverse,row.before);}
- const before=read('tools/translation/source-profiles/exact-source-scalar-primitives-families-20261103/engine.after.txt'),current=read('tools/translation/exact-source-successors-20261103.mjs'),result=knownExactSourceCompilerEngineEpoch({before,current});assert.ok(result);assert.equal(result.after,current);assert.equal(result.inverse,before);assert.equal(result.laterHistories.length,3);
+ const mutableControls=proposeExactMutableScalarControlSources20261104().files;const controls=proposeExactOrderedScalarHelperControlSources20261104();assert.equal(controls.files.length,14);for(const row of controls.files){const helperGraph=proposeExactOrderedHelperGraphControlSources20261104().files.find(value=>value.path===row.path);if(helperGraph)assert.equal(helperGraph.before,row.after);const early=proposeExactScalarEarlyReturnControlSources20261104().files.find(value=>value.path===row.path);if(early)assert.equal(early.before,helperGraph?.after??row.after);const mutable=mutableControls.find(value=>value.path===row.path);if(mutable)assert.equal(mutable.before,early?.after??helperGraph?.after??row.after);assert.equal(read(row.path),mutable?.after??early?.after??helperGraph?.after??row.after);assert.equal(row.inverse,row.before);}
+ const before=read('tools/translation/source-profiles/exact-source-scalar-primitives-families-20261103/engine.after.txt'),current=read('tools/translation/exact-source-successors-20261103.mjs'),result=knownExactSourceCompilerEngineEpoch({before,current});assert.ok(result);assert.equal(result.after,current);assert.equal(result.inverse,before);assert.equal(result.laterHistories.length,4);
 });
 function fixture(t){
  const root=fs.realpathSync(fs.mkdtempSync(join(tmpdir(),'router-scalar-local-source-')));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));const rows=[];
  for(const path of [OLD,INPUT,ORDERED]){const raw=fs.readFileSync(join(ROOT,path));for(const row of JSON.parse(gunzipSync(raw)).rows){rows.push(row);fs.mkdirSync(dirname(join(root,row.path)),{recursive:true});fs.writeFileSync(join(root,row.path),row.source);}fs.mkdirSync(dirname(join(root,path)),{recursive:true});fs.writeFileSync(join(root,path),raw);}return {root,rows};
 }
 for(const [name,fence] of [['core',coreFence],['vector',vectorFence]]){
- test(name+' original four, fourteen Copy and eight ordered inputs are checked before and after use',{timeout:60000},t=>{
-  const {root,rows}=fixture(t);assert.equal(rows.length,26);assert.equal(fence(()=>true,{root}),true);
+ test(name+' original four, fourteen Copy and nine ordered inputs are checked before and after use',{timeout:60000},t=>{
+  const {root,rows}=fixture(t);assert.equal(rows.length,27);assert.equal(fence(()=>true,{root}),true);
   for(const row of rows){fs.writeFileSync(join(root,row.path),row.source+'\nchanged');assert.throws(()=>fence(()=>true,{root}),TypeError);fs.writeFileSync(join(root,row.path),row.source);assert.throws(()=>fence(()=>{fs.writeFileSync(join(root,row.path),row.source+'\nchanged');return true;},{root}),TypeError);fs.writeFileSync(join(root,row.path),row.source);}assert.equal(fence(()=>true,{root}),true);
  });
  test(name+' caught/restored local implementation failures remain fatal to the enclosing operation',{timeout:60000},t=>{
