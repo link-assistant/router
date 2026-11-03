@@ -48,8 +48,10 @@ The source proposer retains a complete uninstalled replacement of the actual
 `rewrite_value` body with an owned core call and `std::mem::take(value)`. This is
 source construction only. The mutable Json parameter, mem::take call, complete
 original caller ownership and the async response/stream composition still need
-compiler support and whole-function admission. The actual production rewrite
-body remains unchanged; only independent inline test source was appended.
+compiler support and whole-function admission. The actual mutable rewrite body remains unchanged. The subsequent
+[response adoption](model-alias-response-adoption-20261104.md) installs the owned
+operation in the non-streaming response branch and preserves these complete
+historical images through an exact successor. Streaming keeps the mutable API.
 Do not count this proposal as a translated production function.
 
 The new native oracle module compares both the actual production function and
@@ -84,8 +86,8 @@ SHA `2c8c01406d2578d9b9f2420aa39ceeaca3c28b24c02d1d10b2b95761678f6155`,
 native/Cargo guards and the whole native body-copy origin. The earlier source
 archives and core operation implementations remain unchanged in history.
 
-Complete earlier source-history/freshness joins for the enlarged state library,
-actual production adoption, unbounded/native-versus-target domains, response
+The subsequent response adoption records the precise source-history joins and
+non-streaming production adoption. Wider freshness, unbounded/native-versus-target domains, response
 body/status/header/compression handling and streaming backpressure/cancellation/
 EOF/error contracts remain unfinished. Continue these with O03/O04/O05, B01–B04,
 F/V/S/T/E and P02/P03 scope; no parent bundle closes in this increment.

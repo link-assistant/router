@@ -9,6 +9,22 @@ are authorized during this drafting phase. All new execution UNRUN; CI
 NOT_INSPECTED. Source reading/writing, lightweight DATA authoring and SCM remain
 allowed. Preserve all eight same-SHA JavaScript gates before fatal Rust CI.
 
+Latest source increment: [non-streaming model-alias response adoption](model-alias-response-adoption-20261104.md)
+installs the existing owned JSON operation in the real successful JSON response
+branch, retaining its serialization/fallback and the original streaming mutable
+API. Three additional CI-only native response oracles cover success/entity
+headers, unsuccessful passthrough and compression error. The original immutable
+core packet stays unchanged; one exact successor packet (SHA
+fd2ebbbd9e1d4d6e1f3ad44ce6185602538e5639adb010865a4270917e0c6afe,
+3910 bytes) retains complete before/after source, two phases and inverse.
+The original source proposer now joins that successor in the same custody/fence,
+retains historical oracle/caller images and composes the uninstalled mutable
+wrapper onto current source without dropping the adopted call or new tests.
+Source review found no applicable older index row for the five state library
+files: no extra global index/dispatch needed. All execution UNRUN; CI
+NOT_INSPECTED. Actual full async/streaming/mutable caller admission remains open.
+Counts12/70 DRAFTED,58 OPEN. Continue all unfinished bundles, source only.
+
 Latest application-derived source batch:
 [model-alias JSON core](model-alias-json-core-draft-20261104.md) copies the actual
 production rewrite_value body into the existing owned JSON state library and
@@ -17,7 +33,7 @@ existing forward/reverse bindings and exact TypeScript declarations; original
 private source/type/ownership/meta/emit checks remain. Five fixed policy paths,
 exact/one-prefix matching, non-string/array shapes and Unicode preserve the
 original source contract within the existing translated JSON bounds.
-Five library sources are installed. The actual production wrapper is unchanged;
+Five library sources are installed. The original mutable production wrapper is unchanged;
 its complete owned-call/mem::take replacement remains an uninstalled source
 proposal with mutable-parameter and whole-caller admission gaps. Four native
 inline oracle tests compare actual production/library functions to independent
@@ -25,7 +41,7 @@ expectations; JS runtime/forward strict targets/six reverse profile and source/C
 cases are all UNRUN. No Rust tool or local execution occurred.
 Packet SHA2c8c01406d2578d9b9f2420aa39ceeaca3c28b24c02d1d10b2b95761678f6155
 (49784 bytes) retains5parents/1caller/1oracle/3creations/4guards and whole native
-body-copy provenance. Next: complete older state-family source-history joins,
+body-copy provenance. Later increment above resolves the precise source successor joins. Next:
 actual mutable Json caller support and response/stream composition, plus all
 other open bundles. Counts12/70 DRAFTED,58 OPEN; CI NOT_INSPECTED.
 

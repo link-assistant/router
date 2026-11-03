@@ -62,7 +62,7 @@ pub async fn rewrite(response: Response, upstream: &crate::translation_core::Str
             }
         };
         let bytes = if let Ok(mut value) = serde_json::from_slice::<Value>(&bytes) {
-            rewrite_value(&mut value, upstream, visible);
+            value = crate::translation_state_core::json_rewrite_model_alias(value, upstream, visible);
             serde_json::to_vec(&value).map_or(bytes, Bytes::from)
         } else {
             bytes
@@ -209,4 +209,56 @@ mod model_alias_core_oracles_20261104 {
         let first = crate::translation_state_core::json_rewrite_model_alias(json!({"model":"native"}), "native", "visible");
         assert_eq!(crate::translation_state_core::json_rewrite_model_alias(first, "native", "visible"), json!({"model":"visible"}));
     }
+    #[tokio::test]
+    async fn nonstream_response_rewrites_model_fields_and_retires_stale_entity_headers() {
+        let response = axum::response::Response::builder()
+            .header("content-type", "application/json")
+            .header("content-length", "77")
+            .header("etag", "old")
+            .header("x-preserved", "kept")
+            .body(axum::body::Body::from(r#"{"model":"native","response":{"modelVersion":"models/native"},"text":"native"}"#))
+            .unwrap();
+        let result = super::rewrite(response, "models/native", "visible").await;
+        assert_eq!(result.status(), axum::http::StatusCode::OK);
+        assert!(result.headers().get("content-length").is_none());
+        assert!(result.headers().get("etag").is_none());
+        assert_eq!(result.headers().get("x-preserved").unwrap(), "kept");
+        let bytes = axum::body::to_bytes(result.into_body(), 4096).await.unwrap();
+        let value: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(value, json!({"model":"visible","response":{"modelVersion":"visible"},"text":"native"}));
+    }
+
+    #[tokio::test]
+    async fn unsuccessful_response_keeps_original_body_and_entity_headers() {
+        let response = axum::response::Response::builder()
+            .status(axum::http::StatusCode::TOO_MANY_REQUESTS)
+            .header("content-type", "application/json")
+            .header("content-encoding", "gzip")
+            .header("content-length", "18")
+            .header("etag", "original")
+            .body(axum::body::Body::from(r#"{"model":"native"}"#))
+            .unwrap();
+        let result = super::rewrite(response, "native", "visible").await;
+        assert_eq!(result.status(), axum::http::StatusCode::TOO_MANY_REQUESTS);
+        assert_eq!(result.headers().get("etag").unwrap(), "original");
+        assert_eq!(result.headers().get("content-length").unwrap(), "18");
+        let bytes = axum::body::to_bytes(result.into_body(), 4096).await.unwrap();
+        assert_eq!(&bytes[..], br#"{"model":"native"}"#);
+    }
+
+    #[tokio::test]
+    async fn successful_nonidentity_encoding_stays_an_explicit_policy_error() {
+        let response = axum::response::Response::builder()
+            .header("content-type", "application/json")
+            .header("content-encoding", "gzip")
+            .body(axum::body::Body::from(r#"{"model":"native"}"#))
+            .unwrap();
+        let result = super::rewrite(response, "native", "visible").await;
+        assert_eq!(result.status(), axum::http::StatusCode::BAD_GATEWAY);
+        let bytes = axum::body::to_bytes(result.into_body(), 4096).await.unwrap();
+        let text = std::str::from_utf8(&bytes).unwrap();
+        assert!(text.contains("routing_policy_error"));
+        assert!(text.contains("upstream compression prevents model alias rewriting"));
+    }
+
 }
