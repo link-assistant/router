@@ -1,5 +1,6 @@
 // Complete source proposal only; two parent edits do not activate private JSON typing.
 import {fileURLToPath} from 'node:url';
+import {knownBorrowedJsonToolPackagingInstalledSuccessor} from './borrowed-json-tool-packaging-installed-20261103-profile.mjs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {createOrderedMapCanonicalSourceCustody} from './ordered-text-map-callers-20261102-canonical-source-custody.mjs';
@@ -22,7 +23,7 @@ export function proposeBorrowedJsonToolPredicateSourceSuccessors(){
   if(packet.schema!=='borrowed-json-tool-predicate-20261103-partial-source-v1'||packet.rows.length!==2||new Set(packet.rows.map(row=>row.path)).size!==2)throw TypeError('Fixed two-parent source proposal required');
   const files=packet.rows.map(row=>{
    if(!paths.includes(row.path)||hash(row.before)!==row.beforeSha256||hash(row.after)!==row.afterSha256||row.inverse!==row.before)throw TypeError('Complete source equation/inverse differs');
-   if(custody.read(fileURLToPath(new URL('../../'+row.path,import.meta.url)),8388608)!==row.before)throw TypeError('Original source proposal epoch differs');
+   const current=custody.read(fileURLToPath(new URL('../../'+row.path,import.meta.url)),8388608),later=current===row.before?null:knownBorrowedJsonToolPackagingInstalledSuccessor({root,path:row.path,before:row.before});if(current!==row.before&&(!later||later.currentAfter!==current))throw TypeError('Original or complete installed source proposal epoch differs');
    const phases=[{phase:'language',rules:[]},{phase:'repository',rules:[countedLiteralSubstitutionRule('repository:borrowed-json-observed-projection-packaging',row.before,row.after,1,'complete parent source differs')]}];
    const result=createRulePipeline(phases).run(row.before);if(result.value!==row.after)throw TypeError('Complete source successor differs');
    const stages=[];let before=row.before;
@@ -32,7 +33,7 @@ export function proposeBorrowedJsonToolPredicateSourceSuccessors(){
     if(history.inverse!==before||transportConcreteSyntaxMeta(history.beforeMeta).source!==before||transportConcreteSyntaxMeta(history.afterMeta).source!==after)throw TypeError('Lossless reparsed source CST/inverse differs');
     stages.push({phase:phase.phase,before,after,history});before=after;
    }
-   return {...row,stages,trace:result.trace};
+   return {...row,stages,trace:result.trace,currentAfter:current,laterHistories:later?[later]:[]};
   });
   // DATA/CST only: this does not issue native serde ownership, checked bodies or meta.
   return {files,applicationSources:packet.applicationSources,sourceInstalled:false,semanticAuthority:false,privateCallerQualified:false,allChecks:'UNRUN'};

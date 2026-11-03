@@ -1,3 +1,4 @@
+import {borrowedJsonToolPredicateRuntimeAssets,relocateBorrowedJsonRuntimeSource} from './borrowed-json-tool-predicate-20261103-packaging.mjs';
 import {borrowedStandardMapRuntimeAssets} from './borrowed-standard-map-20261103-packaging.mjs';import {orderedTextMapCallerRuntimeAssets} from './ordered-text-map-callers-20261102-packaging.mjs';
 import {jsonRetentionRuntimeAssets} from './json-retention-runtime-assets.mjs';
 import {readFileSync} from 'node:fs';
@@ -9,6 +10,7 @@ export function hostRuntimeAssets() {
   const types=program.declarations,aliases=typeScriptAliases(types);
   const files=new Map();for(const [path,source]of orderedTextMapCallerRuntimeAssets())files.set(path.slice('runtime/'.length),source);
   for(const [path,source]of borrowedStandardMapRuntimeAssets())files.set(path.slice('runtime/'.length),source);
+  for(const [path,source]of borrowedJsonToolPredicateRuntimeAssets())files.set(path.slice('runtime/'.length),source);
   files.set('string-bytes-runtime.mjs',readFileSync(new URL('./extensions/string-bytes-runtime.mjs',import.meta.url),'utf8'));
   files.set('string-bytes-runtime.d.mts','export declare function stringBytes(value: string): IterableIterator<bigint>;\n');
   files.set('reverse-string-runtime.mjs',readFileSync(new URL('./extensions/reverse-string-runtime.mjs',import.meta.url),'utf8'));
@@ -49,7 +51,7 @@ export function hostRuntimeAssets() {
   files.set('float-runtime.mjs',readFileSync(new URL('./extensions/float-runtime.mjs',import.meta.url),'utf8'));
   files.set('iterator-runtime.mjs',readFileSync(new URL('./extensions/iterator-runtime.mjs',import.meta.url),'utf8'));
   files.set('iterator-runtime.d.mts','export declare function assertImmutableIterator(value: unknown): true;\n');
-  for(const file of ['json-runtime.mjs','json-values.mjs','json-parser.mjs','json-numbers.mjs','time-runtime.mjs','vector-runtime.mjs','integer-runtime.mjs','fixed-integer-runtime.mjs','copy-runtime.mjs','fixed-array-runtime.mjs'])files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));
+  for(const file of ['json-runtime.mjs','json-values.mjs','json-parser.mjs','json-numbers.mjs','time-runtime.mjs','vector-runtime.mjs','integer-runtime.mjs','fixed-integer-runtime.mjs','copy-runtime.mjs','fixed-array-runtime.mjs'])files.set(file,relocateBorrowedJsonRuntimeSource(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8')));
   files.set('primitive-bool-from-runtime.mjs',readFileSync(new URL('./extensions/primitive-bool-from-runtime.mjs',import.meta.url),'utf8'));
   files.set('primitive-bool-from-runtime.d.mts','export declare function primitiveBoolFrom(value:boolean): bigint;\n');
   files.set('primitive-operator-runtime.mjs',readFileSync(new URL('./extensions/primitive-operator-runtime.mjs',import.meta.url),'utf8'));
@@ -100,6 +102,7 @@ export function hostRuntimeAssetsNamedDataAliases() {
   const namedAliases=new Set([...types].filter(([,entry])=>entry.k==='data').map(([name])=>name));
   const files=new Map();for(const [path,source]of orderedTextMapCallerRuntimeAssets())files.set(path.slice('runtime/'.length),source);
   for(const [path,source]of borrowedStandardMapRuntimeAssets())files.set(path.slice('runtime/'.length),source);
+  for(const [path,source]of borrowedJsonToolPredicateRuntimeAssets())files.set(path.slice('runtime/'.length),source);
   files.set('string-bytes-runtime.mjs',readFileSync(new URL('./extensions/string-bytes-runtime.mjs',import.meta.url),'utf8'));
   files.set('string-bytes-runtime.d.mts','export declare function stringBytes(value: string): IterableIterator<bigint>;\n');
   files.set('reverse-string-runtime.mjs',readFileSync(new URL('./extensions/reverse-string-runtime.mjs',import.meta.url),'utf8'));
@@ -140,7 +143,7 @@ export function hostRuntimeAssetsNamedDataAliases() {
   files.set('float-runtime.mjs',readFileSync(new URL('./extensions/float-runtime.mjs',import.meta.url),'utf8'));
   files.set('iterator-runtime.mjs',readFileSync(new URL('./extensions/iterator-runtime.mjs',import.meta.url),'utf8'));
   files.set('iterator-runtime.d.mts','export declare function assertImmutableIterator(value: unknown): true;\n');
-  for(const file of ['json-runtime.mjs','json-values.mjs','json-parser.mjs','json-numbers.mjs','time-runtime.mjs','vector-runtime.mjs','integer-runtime.mjs','fixed-integer-runtime.mjs','copy-runtime.mjs','fixed-array-runtime.mjs'])files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));
+  for(const file of ['json-runtime.mjs','json-values.mjs','json-parser.mjs','json-numbers.mjs','time-runtime.mjs','vector-runtime.mjs','integer-runtime.mjs','fixed-integer-runtime.mjs','copy-runtime.mjs','fixed-array-runtime.mjs'])files.set(file,relocateBorrowedJsonRuntimeSource(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8')));
   files.set('primitive-bool-from-runtime.mjs',readFileSync(new URL('./extensions/primitive-bool-from-runtime.mjs',import.meta.url),'utf8'));
   files.set('primitive-bool-from-runtime.d.mts','export declare function primitiveBoolFrom(value:boolean): bigint;\n');
   files.set('primitive-operator-runtime.mjs',readFileSync(new URL('./extensions/primitive-operator-runtime.mjs',import.meta.url),'utf8'));
