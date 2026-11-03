@@ -820,3 +820,25 @@ The old archive and afterimages remain immutable. Every new execution is UNRUN;
 no local tests, parsers, collectors, compilers, translators, preparers, Rust
 tools, installs or CI feedback inspection ran. Formal R05 receipt review follows
 this committed chronology implementation; the full all70 objective stays active.
+
+## R05 source receipt closed after complete clause review
+
+Reviewed actual committed registry/source-discovery implementation73e91261903779b3790aacf1e893cd0f0b3f0d72
+and complete chronology/replay implementationab54a4b74cb00a582ff31ee142bd19c156299992.
+The numbered checklist now closes R05's reusable infrastructure source clauses:
+source discovery, transitive dependencies, stable order, conflict/exclusive/
+cycle/phase refusal, immutable original-span nesting, complete intermediate
+and final CST/inverses, both source replay directions/idempotence and bounded
+refusal. Actual scope-collector adoption and full original Router/Cargo caller
+receiving through both reverse compilers have independent case source. Public
+plans and discovery remain DATA; private semantic checks and native behavior
+obligations remain with the original issuers and actual Rust oracle source.
+
+Accounting is now12/70 DRAFTED,58 OPEN. This is not executable/code coverage.
+Open IDs: L01–L05; R01–R04; C01–C05; O01–O05; B01–B05; F01–F05; V01–V05;
+S01–S05; P01–P05; T01–T05; Q01/Q02/Q04; J04; E01–E05. Source clauses for
+other families, full scope/inventory, actual synchronization, export closure
+and all qualification remain unfinished. No tests, compilation, Rust tools or
+CI feedback inspection ran. All new execution remains UNRUN. Continue drafting
+the remaining58 bundles under the active all70 goal; this receipt is not a
+stopping condition or full-translation claim. Root remains the sole worker.

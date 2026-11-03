@@ -28,10 +28,10 @@ written or an estimate of remaining engineering effort. Do not report this as
 drafted work is supported. Every initial status is `OPEN`; existing evidence
 links are review starting points, not closure receipts.
 
-Current source-review accounting (2026-11-02 local): **11/70 DRAFTED, 59/70 OPEN**.
+Current source-review accounting (2026-11-03 UTC): **12/70 DRAFTED, 58/70 OPEN**.
 Closed IDs: D01/D02/D03/D05 (written policy), J01/J05 (existing workflow,
 partition and independent audit-case sources), Q03 (native join emission
-implementation/case source), D04 (checkpoint/handoff/PR template source), J02 (same-SHA gate with actual-program outcome case source), Q05 (deferred complete-cycle failure collector/classifier and reopening proposal), and J03 (existing fatal Rust CI/native-oracle/hook source). This is an unweighted acceptance-bundle count,
+implementation/case source), D04 (checkpoint/handoff/PR template source), J02 (same-SHA gate with actual-program outcome case source), Q05 (deferred complete-cycle failure collector/classifier and reopening proposal), J03 (existing fatal Rust CI/native-oracle/hook source), and R05 (registered discovery/composition and complete source chronology/inverse replay). This is an unweighted acceptance-bundle count,
 not a code-completion or executable-translation percentage. All current
 verification remains UNRUN/uninspected. Earlier 5/70 and 7/70 entries record
 historical checkpoints; CI-source and delivery-template receipts follow below.
@@ -95,7 +95,7 @@ Starting evidence: [rule contract](translation-rules.md),
 | R02 | OPEN | Implement shared language substitutions for inventoried expressions, declarations, control flow and type/ownership/effect constraints, with inverse/refusal source cases; repository spelling cannot grant semantic authority. |
 | R03 | OPEN | Implement repository bindings, facade adoption, imports, hygiene, formatting and output conventions for those families, separate from language semantics; include shadowing/ambiguity/conflicting-name cases. |
 | R04 | OPEN | Drive applicable forward/reverse registrations, target declarations and bulk caller proposals from shared operation descriptions or source-derived templates; preserve independent oracle expectations and original APIs. |
-| R05 | OPEN | Draft complete rule-composition/discovery orchestration and dependency/conflict handling, including nested original-span edits, idempotence, complete inverses and bounded refusal; one rule must not erase another's needed source evidence. |
+| R05 | [DRAFTED](#r05-rule-discovery-and-composition-source-receipt--2026-11-03) | Draft complete rule-composition/discovery orchestration and dependency/conflict handling, including nested original-span edits, idempotence, complete inverses and bounded refusal; one rule must not erase another's needed source evidence. |
 
 ## 03 — CST and checked meta boundary (ledger area 3)
 
@@ -833,3 +833,76 @@ share protected staging/rename/async scopes and the js/src native import patch
 with exact original/already-imported handling; see
 [the serialization source contract](serialization-writer-layout-20261102.md).
 These advance L03/L04/C05/O05/S03 but do not close their complete-domain clauses.
+
+
+### R05 rule discovery and composition source receipt — 2026-11-03
+
+Source-reviewed implementation commits
+`73e91261903779b3790aacf1e893cd0f0b3f0d72` and
+`ab54a4b74cb00a582ff31ee142bd19c156299992`. This closes the reusable
+composition/discovery infrastructure source clauses, not all application
+registrations/semantics (R01–R04), runtime parity or verified synchronization.
+Covered implementation entries are the actual scope collector's two-rule
+orchestration, reusable rule/source registries and the complete original
+`rust/src/openai_tools.rs::is_translatable` receiving example. L01/L02's
+full production inventory and denominator remain OPEN/UNKNOWN.
+
+1. **Discovery and ordered dependencies:** `createRuleRegistry`, `compile`,
+   `discover`, `runDiscovered` and `createDiscoveredRulePipeline` in
+   `tools/translation/rule-registry.mjs`. Own declaration tables, actual source
+   inspection, transitive requires, stable ready-rule order, optional before/
+   after, conflicts/exclusive labels, missing references/cycles and impossible
+   phase order are implemented. Exactly language then repository delegates to
+   the unchanged original runner; descriptions issue no semantic authority.
+2. **Nested composition and evidence preservation:**
+   `createConcreteSourceRuleRegistry`/`planDiscovered` in
+   `tools/translation/concrete-source-rule-registry.mjs`, using the actual
+   existing `composeConcreteSourceEditTemplates`. Complete original sources
+   and all earlier proposals remain immutable. Every nested child needs one
+   retained original reference; dropped/crossing/duplicate/stale edits refuse.
+   Every rule retains whole intermediate cohorts, phase/ID, before/after,
+   full serialized/reparsed CST and exact inverse. Final histories do not
+   replace intermediate chronology.
+3. **Both directions and idempotence:** `applyConcreteSourceRulePlan` and
+   `restoreConcreteSourceRulePlan` validate every retained stage, continuous
+   source chain, complete cohorts and current/new CST. Original/final cohorts
+   can apply/restore/no-op; stale/mixed/missing/wrong-language or changed
+   retained histories refuse. Original undo and no-op current inverses remain
+   separate. Rust, JavaScript and TypeScript source are all supported within
+   the original source/CST/template and aggregate DATA bounds. No installation
+   or overwrite permission is returned.
+4. **Actual adoption and private receiving:**
+   `scripts/collect-router-draft-scope-20261103.mjs` now uses discovered
+   language prerequisites while preserving both original collectors and IDs.
+   `registered-source-rules-router-20261103.test.mjs` discovers nested adoption
+   of the whole production Rust caller, compiles the complete genuine
+   project/Cargo source universe, exports actual JS/TS definitions and uses
+   both actual reverse compilers to check them and emit Rust. It preserves
+   independent expected tool vectors and a single native predicate call.
+   All actual source/type/namespace/whole-body checks remain with their
+   original private issuers; a source plan, name, flag or hash cannot replace
+   them. Source inverse replay is separate from semantic Rust regeneration.
+5. **Independent cases/provenance:** `rule-registry.test.mjs`,
+   `concrete-source-rule-registry.test.mjs`, the actual Router receiving file,
+   `collected-scope-driver-20261103.test.mjs`, and both rule-registry
+   adoption/chronology source-ancestry files. They retain immutable creation
+   images and complete source/CST/inverse successor packets. The actual
+   application Rust oracle remains
+   `rust/tests/borrowed_json_tool_predicate_20261103_test.rs`, gated CI only.
+   A fabricated Rust implementation of this JS compiler orchestration is
+   inapplicable; private semantic receiving and original native application
+   behavior remain the required evidence boundaries.
+6. **Execution and limits:** all new execution is UNRUN and CI feedback is
+   NOT_INSPECTED. Existing whole-file partitions, deadlines and native/source
+   guards remain. Declaration/reference, source-template, full-history and
+   aggregate DATA bounds refuse before accepting incomplete results. No
+   input/source/owner/verdict/result cache crosses operations. Original
+   pipeline/project APIs remain available. See
+   [the detailed contract](registered-translation-rules.md).
+
+Accounting is now **12/70 DRAFTED,58/70 OPEN**, an unweighted source-bundle
+count. Open IDs: L01–L05; R01–R04; C01–C05; O01–O05; B01–B05; F01–F05;
+V01–V05; S01–S05; P01–P05; T01–T05; Q01/Q02/Q04; J04; E01–E05.
+Complete application families, inventory/adoption, semantic synchronization,
+export/receiving qualification and all actual verification remain unfinished.
+No executable-function percentage or full-translation claim follows.
