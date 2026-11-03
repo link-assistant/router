@@ -9,6 +9,23 @@ are authorized during this drafting phase. All new execution UNRUN; CI
 NOT_INSPECTED. Source reading/writing, lightweight DATA authoring and SCM remain
 allowed. Preserve all eight same-SHA JavaScript gates before fatal Rust CI.
 
+Latest continuation:
+[bounded source-history segments](partitioned-source-history-draft-20261104.md)
+draft an additive whole-index composer using the original chain and CST algebra.
+Each index retains512 rows/1MiB, the complete selected path retains64 edges, and
+raw/decoded/selected DATA share16MiB. Original single-index APIs are unchanged.
+The fixed width-loop reader joins immutable499 plus a separate six-reader
+extension, with actual source custody and the original parent reservation/
+poison/closing protocols. No public registry/callback or persisted verdict is
+accepted. The original reusable builder separately proposes all6rows/12images.
+Registry SHA03c86f7e5590e56293b6ef4ac0d786d9be6c89a37e0c1b17a5a7bb5fb6b929a0;
+extension SHAce4f3e94f128a434aac71cafa97dc2276cb7b3fe3518b4f702df53cef1837f8e.
+All bound/conflict/CST/source mutation/parent budget/full producer cases UNRUN.
+Next: integrate these fixed complete successors into actual preparer/history
+callers and adopt the six width-reader proposals; wider loops/ownership and
+application receiving remain unfinished. Hot index remains499/277,12/70 DRAFTED,
+58 OPEN. No tests, compilation, module/producer trials or CI reads occurred.
+
 Latest shared loop source batch:
 [fixed-width counted ranges](width-counted-ranges-draft-20261104.md) copies the
 complete actual counted-loop checker and extends its bound domain to all ten

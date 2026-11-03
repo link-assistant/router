@@ -90,3 +90,8 @@ This advances common loop control under R02/O03/F02/V02/T01/T02/T03 but closes
 none of their complete inventory, forward/reverse, production adoption or
 receiving clauses. General loops, helper-loop composition, wider ownership,
 all other open requirements and all verification obligations remain unfinished.
+
+The [bounded history segment source draft](partitioned-source-history-draft-20261104.md)
+now retains immutable499 plus the complete six-reader extension through an
+additive consumer and the original index producer. Actual preparer integration
+and reader adoption remain unfinished; every case remains UNRUN.
