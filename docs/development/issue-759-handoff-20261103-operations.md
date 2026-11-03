@@ -24,6 +24,10 @@ now installs the complete guarded source cohort and interpreter/native oracle
 case source. The [canonical Rust inverse draft](boolean-helper-rust-inverse-draft-20261103.md)
 adds unchanged graph restoration and checked edited-caller proposals. General
 helper-network edit reconciliation and full receiving remain gaps; execution UNRUN.
+The [shared Copy scalar draft](copy-scalar-helper-draft-20261103.md) now proposes
+both reader extensions and four complete document/profile/Rust-inverse copies
+for Boolean and all ten native integer widths. Its source adoption remains open;
+all source cases and execution remain UNRUN, and the count stays12/70.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
 
