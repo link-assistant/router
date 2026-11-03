@@ -140,3 +140,6 @@ export {PRIMITIVE_COLLECTION_DOMAINS,primitiveCollectionOperationShape,primitive
 export {proposePrimitiveCollectionDescriptionSources} from './primitive-collection-descriptions-20261103-profile.mjs';
 export {VECTOR_LITERAL_MAX_SOURCE_ARGUMENTS,vectorOperationShape,emitVectorOperationDeclarations} from './vector-operation-descriptions-20261103.mjs';
 export {proposeVectorOperationDescriptionSources} from './vector-operation-descriptions-20261103-profile.mjs';
+export {proposeCollectionDescriptionInstalledSources} from './collection-description-install-20261103-profile.mjs';
+export {proposeExactCollectionDescriptionSourceIndex,withExactCollectionDescriptionSourceFamilyData} from './exact-source-collection-description-families-20261103.mjs';
+export {proposeExactCollectionDescriptionControlSources} from './exact-source-collection-description-controls-20261103.mjs';

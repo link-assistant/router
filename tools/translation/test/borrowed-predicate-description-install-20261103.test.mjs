@@ -1,3 +1,4 @@
+import {proposeExactCollectionDescriptionControlSources} from '../exact-source-collection-description-controls-20261103.mjs';
 // Complete current-source and source-lifetime case SOURCE. All UNRUN.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -39,7 +40,7 @@ test('both real adapter families and their private ABI operations retain complet
 });
 test('the original347 index is preserved before fourteen complete current-source equations',{timeout:60000},()=>{
  const proposal=proposeExactBorrowedPredicateSourceIndex(),old=JSON.parse(gunzipSync(fs.readFileSync(join(ROOT,BASE+'index347.before.json.gz'))));
- assert.equal(proposal.indexText,read(INDEX));assert.equal(proposal.index.rows.length,361);assert.equal(new Set(proposal.index.rows.map(row=>row.path)).size,256);assert.deepEqual(proposal.index.rows.slice(0,347),old.rows);assert.equal(proposal.images.length,28);
+ assert.equal(proposal.indexText,gunzipSync(fs.readFileSync(join(ROOT,'tools/translation/source-profiles/exact-source-collection-description-families-20261103/index361.before.json.gz'))).toString('utf8'));assert.equal(proposal.index.rows.length,361);assert.equal(new Set(proposal.index.rows.map(row=>row.path)).size,256);assert.deepEqual(proposal.index.rows.slice(0,347),old.rows);assert.equal(proposal.images.length,28);
  assert.deepEqual(proposal.trace.map(row=>row.phase),['language','repository']);for(const image of proposal.images)assert.equal(read(image.path),image.source);
  withExactBorrowedPredicateSourceFamilyData(input=>withExactSourceHistoryDataOperation(ROOT,()=>{
   for(const family of input.families)for(const row of family.rows){const known=knownExactSourceSuccessor({path:row.path,before:row.before},{root:ROOT});assert.ok(known,row.path);assert.equal(known.after,read(row.path));assert.equal(known.inverse,row.before);assert.equal(known.currentIsTerminal,true);assert.equal(known.nativeBindingQualified,false);}
@@ -47,9 +48,9 @@ test('the original347 index is preserved before fourteen complete current-source
 });
 test('all seven controls retain complete source and a separate347 to361 engine transition',{timeout:60000},()=>{
  const controls=proposeExactBorrowedPredicateControlSources();assert.equal(controls.files.length,7);
- for(const row of controls.files){assert.equal(read(row.path),row.after);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}
+ for(const row of controls.files){const newest=proposeExactCollectionDescriptionControlSources().files.find(value=>value.path===row.path);if(newest)assert.equal(newest.before,row.after);assert.equal(read(row.path),newest?.after??row.after);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}
  const before=read('tools/translation/source-profiles/exact-source-borrowed-json-context-families-20261103/engine.after.txt'),current=read(ENGINE),known=knownExactSourceCompilerEngineEpoch({root:ROOT,before,current});
- assert.ok(known);assert.equal(known.inverse,before);assert.equal(known.after,current);assert.equal(known.laterHistories.length,1);assert.equal(known.nativeBindingQualified,false);
+ assert.ok(known);assert.equal(known.inverse,before);assert.equal(known.after,current);assert.equal(known.laterHistories.length,2);assert.equal(known.nativeBindingQualified,false);
 });
 function copy(t,paths,label){
  const root=fs.realpathSync(fs.mkdtempSync(join(tmpdir(),label)));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));

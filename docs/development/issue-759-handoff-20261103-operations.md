@@ -27,22 +27,23 @@ publish coherent source checkpoints about every three hours without reading CI
 or review feedback. Commit coherent source at least every six hours, with Rust
 hooks disabled. This checkpoint cadence does not certify verification.
 
-Last local committed predecessor for this cohort is
-6fd50d8cba10bd82ea54e49b3affb32e37bc60d7. It drafts the121-row primitive
-collection description implementation and four-parent proposal. The preceding
+The local predecessor for this combined adoption is
+b62101bde99ce4d985cc60b9fea985c004626a02, which drafts the20-wrapper vector
+cohort. Its predecessor6fd50d8cba10bd82ea54e49b3affb32e37bc60d7 drafts the121-row
+primitive collection implementation and four-parent proposal. The preceding
 e109b48035ae460a8836759736cf848189cd3efb actually source-installs shared
 descriptions in both borrowed predicate adapter families and adds complete
 invocation-local source restrictions to the original private ABI operations.
-Every corresponding execution remains UNRUN. The current cohort is the linked
-20-wrapper vector description source below; find its exact commit through SCM.
+Every corresponding execution remains UNRUN. The current combined adoption is
+detailed below; find its exact commit through SCM.
 
-Hot source graph:361equations/256paths, all original347 equations preserved.
-Index SHA0440b3521451aed8335aaf5473dd0c66c9483c838a5ccc33966d1551d8128d69;
-engine SHA021ecb81e92cfe42da36fc3c462db212b8f014d4b37f5e75cc25f7e291d63533.
+Hot source graph:374equations/264paths, all original361 equations preserved.
+Index SHAdb59b28da6a04a01bf276a5baa126d121f86010b43802aa2b3200a583dcc0ecc;
+engine SHAa1f92121efdfd4d133d1f736e5d08689bf023d66a73f9b1dc5c0b080aae7c1ad.
 The separate engine chronology preserves all original source images and old-root
-domains. No index/engine change is made by the current pending proposals.
+domains. This adoption appends the complete361→374 transition.
 
-## Pending combined collection adoption
+## Combined collection adoption source
 
 1. [Primitive collection descriptions](primitive-collection-shared-descriptions-20261103.md):
    existing33 slice and88 primitive vector rows; four complete source parents.
@@ -66,20 +67,32 @@ literal cases cover all780 wrapper/arity combinations, preserving64/4096 bounds,
 signed zero and owning String clone behavior without primitive Copy permission.
 No expected result depends on the new descriptor's verdict or a future wrapper.
 
-Next draft a single combined actual source adoption and full source-successor
-dependency closure; retain every old source image and original limits/deadlines.
-Keep original private native/source/caller/type/move/loan checks and actual full
+The [combined actual source adoption](collection-description-source-adoption-20261103.md)
+now updates all five candidate modules and retains both old source proposals.
+The independent native/source/caller/type/move/loan checks remain unchanged.
+Seven complete adoption parents and six older case continuations append to the
+original361 index, giving374 equations/264paths and26 images/128520sourcebytes.
+Complete source packet SHAd011041ad959d7d19dd78b80850d32d7c5a73ff7376ea006327f2ee48e95ed3c;
+index SHAdb59b28da6a04a01bf276a5baa126d121f86010b43802aa2b3200a583dcc0ecc;
+engine SHAa1f92121efdfd4d133d1f736e5d08689bf023d66a73f9b1dc5c0b080aae7c1ad;
+census SHA59c2fac5e5d1cc6022f6500dc13a3b652ef951ea3916134b3fdb0a41d4fae392;
+controls SHA1722a29f3c752c5815094fda79a7564bf725b08097c4575507ab2da20e2699ec.
+The original361 index/engine and all prior source images are retained. Original
+API/domain/limit/deadline and signed-zero/clone/Copy expectations remain.
+
+Receiving/freshness/native qualification remains unfinished. Keep the original
+private native/source/caller/type/move/loan checks and actual full
 forward/reverse receiving. Do not fake completion by using unguarded copied
 adapters or counting descriptor rows as executable functions. The combined
-adoption and receiving source remain unfinished, R04 stays OPEN and all checks
-are UNRUN. Then continue the other remaining58 full acceptance bundles.
+source adoption is drafted; full receiving remains UNRUN. R04 stays OPEN.
+Continue all remaining58 full acceptance bundles and their actual source gaps.
 
 ## Resources and continuation
 
 Latest filesystem observation was about52GiB free. No new build/worktree or
 dependency tree was created; task-only authoring scratch files can be retired
 after their complete implementation/packet/SCM source is retained. Retain the
-new361-index authoring metadata as needed for source handoff, but do not rerun
+new374-index authoring metadata as needed for source handoff, but do not rerun
 the old recipes against a newer baseline. All older packets remain immutable.
 Root remains active on the full objective; this document is a continuation
 checkpoint, not draft completion, a pause or a verification result.

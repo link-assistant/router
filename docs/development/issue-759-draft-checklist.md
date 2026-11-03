@@ -964,3 +964,11 @@ both remain uninstalled. Current continuation details are in the
 [operation-source handoff](issue-759-handoff-20261103-operations.md).
 No new full parent receipt or executable coverage follows:12/70 DRAFTED,58 OPEN,
 hot graph361/256, all execution UNRUN and CI NOT_INSPECTED remain unchanged.
+
+The [combined source adoption](collection-description-source-adoption-20261103.md)
+now installs all five collection candidate afterimages, preserving all original
+private native/type/body/ownership checks and five declaration byte strings.
+Its seven full adoption parents and six older case continuations preserve the
+original361 graph and draft374 equations/264paths. This closes that cohort's
+uninstalled-source gap only: R04 OPEN,12/70 DRAFTED,58 OPEN and all execution
+UNRUN remain. The operation-source handoff records the current images and gaps.

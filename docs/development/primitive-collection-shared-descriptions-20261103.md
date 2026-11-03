@@ -55,14 +55,15 @@ complete source histories, stale/mixed cohort refusal, both replay directions
 and preservation of every existing type/optional witness export. Expected
 counts and original source bytes are independent of the generator.
 
-The four-parent proposal is not yet installed into the original guarded source
-graph. Batch its later installation with related operation cohorts rather than
-authoring a new engine transition for each individual signature. Installation
+At the initial checkpoint the four-parent proposal was not installed. The
+[combined adoption](collection-description-source-adoption-20261103.md) now
+source-installs it with the related owning-text/literal cohort in one transition.
+Installation
 must retain the original private caller/source/ownership checks, append full
 source successor equations and qualify the actual original forward/reverse
 readers; a candidate shape alone grants no source permission. Full declaration
 freshness, strict TypeScript and compiler receiving remain UNRUN. The hot graph
-still contains361 equations over256 paths. There is no measured executable
+now contains374 equations over264 paths. There is no measured executable
 coverage gain, new complete requirement receipt or verification result here.
 The acceptance count remains12/70 DRAFTED and58 OPEN. Root works alone; no local
 tests, compilation, translator trials, Rust tools, dependency installation or

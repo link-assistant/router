@@ -66,7 +66,9 @@ successors/dependency closure and original forward/reverse receiving cases.
 Preserve every old creation/afterimage and actual API/domain/deadline; never
 replace private native/type/body proof with descriptor flags. Batch the graph
 transition so individual signatures do not each require another control epoch.
-Both proposals remain uninstalled at this checkpoint. The hot graph stays361
-equations/256paths. R04 remains OPEN; accounting remains12/70 DRAFTED and58 OPEN.
+The [combined adoption](collection-description-source-adoption-20261103.md) now
+source-installs both proposals and drafts the complete374-equation/264-path
+successor graph. Receiving remains unrun. R04 remains OPEN; accounting remains
+12/70 DRAFTED and58 OPEN.
 All new execution is UNRUN and CI feedback is NOT_INSPECTED. No local tests,
 compilation, Rust tools, translator trials or dependency installation ran.
