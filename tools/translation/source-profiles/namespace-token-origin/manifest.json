@@ -1,0 +1,210 @@
+{
+  "schema": "original-namespace-token-origin-source-v1",
+  "rustVersion": "1.89.0",
+  "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+  "sources": [
+    {
+      "path": "library/core/src/macros/mod.rs",
+      "archive": "source-profiles/derive/rust-core-macros-1.89.0.rs.gz",
+      "archiveBytes": 14787,
+      "archiveSha256": "8506fde0d40b33c2336337b7282358b44f09a010434807b6e0e06d7a896ab49e",
+      "bytes": 65222,
+      "sha256": "9a950cfa3735eef653b7f9a6a4701e7b218f9876141701dac72ccb8b8e8d3862",
+      "callbacks": []
+    },
+    {
+      "path": "library/alloc/src/macros.rs",
+      "archive": "source-profiles/json-macro/arrays/alloc-macros.rs.gz",
+      "archiveBytes": 1655,
+      "archiveSha256": "c486e0d8d08910a089f44bc30e3d96dc84566b1e736938a75b91717d74aa3eb2",
+      "bytes": 3982,
+      "sha256": "f493a323ef1ab77759d9a04877219e4932d7689a29bccaa8d4da7c57a8dbfac1",
+      "callbacks": []
+    },
+    {
+      "path": "compiler/rustc_expand/src/mbe/transcribe.rs",
+      "archive": "source-profiles/macro-metavar/rust-1.89-compiler_rustc_expand_src_mbe_transcribe.rs.gz",
+      "archiveBytes": 11336,
+      "archiveSha256": "3a6de8d134cc8e58206df89e45471eb024c32e659aebec9bbc11c947ed5cd009",
+      "bytes": 40107,
+      "sha256": "acda5fe47ef2ea8f896d9bef65757174e194b7a0b9ca5d4af17961bc91875a8d",
+      "callbacks": [
+        {
+          "name": "transcribe",
+          "span": {
+            "start": 6075,
+            "end": 11881
+          },
+          "bytes": 5806,
+          "sha256": "a890aae7e2aac7db1a3fc9bb088e3eeeccef3f263cbd27b9f74425ab805da435"
+        },
+        {
+          "name": "transcribe_metavar",
+          "span": {
+            "start": 15077,
+            "end": 21035
+          },
+          "bytes": 5958,
+          "sha256": "399d6d6e13653655b5b43cb56ec3e6018c7ae46b6350482fb44f6a0759966630"
+        },
+        {
+          "name": "transcribe_metavar_expr",
+          "span": {
+            "start": 21100,
+            "end": 22898
+          },
+          "bytes": 1798,
+          "sha256": "ac9f06eff9b77dffec5cbd974c390c514019ee85b32fef373bb84a15093aa293"
+        },
+        {
+          "name": "metavar_expr_concat",
+          "span": {
+            "start": 22957,
+            "end": 25056
+          },
+          "bytes": 2099,
+          "sha256": "521c23134f0903ab8277ec4c381e55eed99fc61d4465c688623bb79880db4a71"
+        },
+        {
+          "name": "maybe_use_metavar_location",
+          "span": {
+            "start": 27057,
+            "end": 29264
+          },
+          "bytes": 2207,
+          "sha256": "74fb860258825ad7506adf18edc7f0b0b98b5ad671fbc1cd29378c93f5372ed5"
+        }
+      ]
+    },
+    {
+      "path": "compiler/rustc_ast/src/tokenstream.rs",
+      "archive": "source-profiles/builtin-data-item-inputs/compiler_rustc_ast_src_tokenstream.rs.gz",
+      "archiveBytes": 11378,
+      "archiveSha256": "e9909e571e500fc37d5a70d1e3394a24d055f6d8bd5132110d4cbcd92e9b0e0d",
+      "bytes": 41946,
+      "sha256": "21406bba5ebb2a15389b1dd045fcc793f58a7ccf2da61c7890ffe5f7ed3bfc50",
+      "callbacks": [
+        {
+          "name": "from_ast",
+          "span": {
+            "start": 29799,
+            "end": 30116
+          },
+          "bytes": 317,
+          "sha256": "366b1e4888d49bebdea15a2f5e71bee081383fc73aa3acf0d1ed8dbc2fa3a9a2"
+        },
+        {
+          "name": "attrs_and_tokens_to_token_trees",
+          "span": {
+            "start": 19995,
+            "end": 22771
+          },
+          "bytes": 2776,
+          "sha256": "060ee627d7547256ec91b34e203c03df9b68ece4b5a9fffc32de46a9d4235442"
+        }
+      ]
+    },
+    {
+      "path": "compiler/rustc_parse/src/parser/attr_wrapper.rs",
+      "archive": "source-profiles/builtin-data-item-inputs/compiler_rustc_parse_src_parser_attr_wrapper.rs.gz",
+      "archiveBytes": 5945,
+      "archiveSha256": "018cee6be2f612bbd76067cc48675b77739aca10b8885bf5fe545a4d421ac66e",
+      "bytes": 19040,
+      "sha256": "1b77b162fe807ae3c64261925df4b36353a3cfb1689e0e3a3b0353778f964a0e",
+      "callbacks": [
+        {
+          "name": "collect_tokens",
+          "span": {
+            "start": 5623,
+            "end": 18464
+          },
+          "bytes": 12841,
+          "sha256": "a248bb925a4414c7f8017760458b902fde7d6899f729a1d7e14d52400ae43811"
+        }
+      ]
+    },
+    {
+      "path": "compiler/rustc_builtin_macros/src/lib.rs",
+      "archive": "source-profiles/builtin-derive-bang/rust-1.89-compiler_rustc_builtin_macros_src_lib.rs.gz",
+      "archiveBytes": 1631,
+      "archiveSha256": "87b25549db475e3644a4f89b27348d0a15fba8dfd72338ae37d97e2095ebae0d",
+      "bytes": 5277,
+      "sha256": "7af7c77b36351c3ea41e1ebb62605c2f74aeee3ee76ba9ea0b1f511356f85f07",
+      "callbacks": [
+        {
+          "name": "register_builtin_macros",
+          "span": {
+            "start": 1527,
+            "end": 5276
+          },
+          "bytes": 3749,
+          "sha256": "d05a8058cfb085de8206064089c7a2ba2459684c685adf9eb738d123a4f8dfcc"
+        }
+      ]
+    },
+    {
+      "path": "compiler/rustc_builtin_macros/src/format.rs",
+      "archive": "source-profiles/format-arguments/compiler-rustc_builtin_macros-src-format.rs.gz",
+      "archiveBytes": 9557,
+      "archiveSha256": "40da921172000ffd2cdd3a938caa08ba1ec026de6dbe9516c6416b32619adca4",
+      "bytes": 39952,
+      "sha256": "c996ad70339e2915897ddd4e3aed4ed11f6e168e9e7d5562fc7139c45dc6a4ea",
+      "callbacks": [
+        {
+          "name": "expand_format_args",
+          "span": {
+            "start": 39582,
+            "end": 39759
+          },
+          "bytes": 177,
+          "sha256": "e8c264dc4d5fe7636d963e6063486ddd95f5e52f7b7c5f48af8986275d51050c"
+        },
+        {
+          "name": "expand_format_args_nl",
+          "span": {
+            "start": 39772,
+            "end": 39951
+          },
+          "bytes": 179,
+          "sha256": "9f486c389279b22d03f68ae85d2e2fc172c3d5a6388cfcaa73b8c06aa77246c2"
+        },
+        {
+          "name": "expand_format_args_impl",
+          "span": {
+            "start": 38768,
+            "end": 39569
+          },
+          "bytes": 801,
+          "sha256": "026c65eb30decbfe320f4a19413afcde7d1c07dedc06aec593e528904419428f"
+        }
+      ]
+    }
+  ],
+  "json": {
+    "profile": "source-profiles/json-macro/manifest.json",
+    "profileSha256": "e42ec7a5f1358da8f077c9fdb77057b52cf6748d26cc4d2b8574e1afae4ae0af",
+    "archive": "source-profiles/json-macro/serde_json-1.0.151.crate",
+    "archiveBytes": 156556,
+    "archiveSha256": "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14",
+    "member": {
+      "path": "src/macros.rs",
+      "bytes": 10361,
+      "sha256": "94dda91c847e819a95e64d655eb066dfa44ed69712064016c3fe862c34ef92e6"
+    }
+  },
+  "licenses": [
+    {
+      "path": "source-profiles/namespace-standard/LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+    },
+    {
+      "path": "source-profiles/namespace-standard/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+    }
+  ],
+  "compilerExecuted": false,
+  "namespaceAuthority": false,
+  "runtimeAuthority": false
+}
