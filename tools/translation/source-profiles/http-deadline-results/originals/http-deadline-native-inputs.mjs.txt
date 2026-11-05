@@ -1,0 +1,16 @@
+// Complete source observations only. A private caller checker must independently
+// bind every actual operation, domain, loan, effect and full source body.
+import {observeOwnedHttpTransportSources} from './js-to-rust/owned-http-transport-contracts.mjs';
+import {HTTP_DEADLINE_NATIVE_SOURCE,HTTP_DEADLINE_RUNTIME_SOURCE,HTTP_DEADLINE_DECLARATIONS_SOURCE} from './http-deadline-native-source.mjs';
+import {HTTP_DEADLINE_CONTRACTS} from './http-deadline-contracts.mjs';
+import {captureSourceModuleViews,originalModuleViewItems} from './source-module-views.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
+export function observeHttpDeadlineSources(files,configuration){
+ const observed=observeOwnedHttpTransportSources(files,configuration),records=[...observed.records],root=files.get('src/lib.rs'),captured=captureSourceModuleViews({source:root,sourcePath:'src/lib.rs'}),items=originalModuleViewItems(captured.views[0],root),edges=items.filter(item=>item.term==='mod'&&item.name==='translation_http_deadline_core');
+ if(edges.length!==1||root.slice(edges[0].start,edges[0].end).trim()!=='pub mod translation_http_deadline_core;'||items.some(item=>item.term==='use'&&item.tokens.some(token=>token.text==='translation_http_deadline_core')))throw new TypeError('Actual unique HTTP deadline native edge required');
+ for(const [path,source,language]of [['src/translation_http_deadline_core.rs',HTTP_DEADLINE_NATIVE_SOURCE,'Rust'],[configuration.runtimeRoot+'/http-deadline-runtime.mjs',HTTP_DEADLINE_RUNTIME_SOURCE,'JavaScript'],[configuration.declarationRoot+'/http-deadline-runtime.d.mts',HTTP_DEADLINE_DECLARATIONS_SOURCE,'TypeScript']]){
+  if(files.get(path)!==source)throw new TypeError('Complete actual HTTP deadline source differs: '+path);const concrete=transportConcreteSyntaxSource(source,{language});if(transportConcreteSyntaxMeta(concrete.meta).source!==source)throw new TypeError('Complete HTTP deadline source CST differs');records.push({path,source,concreteSyntax:concrete.meta,sourceAuthority:false,semanticAuthority:false});
+ }
+ const native=captureSourceModuleViews({source:HTTP_DEADLINE_NATIVE_SOURCE,sourcePath:'src/translation_http_deadline_core.rs'}),functions=originalModuleViewItems(native.views[0],HTTP_DEADLINE_NATIVE_SOURCE).filter(item=>item.term==='fn');if(functions.length!==HTTP_DEADLINE_CONTRACTS.length||functions.some(item=>!HTTP_DEADLINE_CONTRACTS.some(row=>row.rustName===item.name)))throw new TypeError('Complete actual HTTP deadline function census differs');
+ return {records,sourceAuthority:false,semanticAuthority:false,callerOwnerResolved:false,nativeRustGrammarChecked:false,runtimeParity:false};
+}

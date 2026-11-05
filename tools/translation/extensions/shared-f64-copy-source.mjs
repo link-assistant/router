@@ -2,7 +2,7 @@
 // The preexisting Option witness is reused as original source evidence only;
 // its Option-field scope does not grant a general trait or nominal capability.
 import {SOURCE_F64,requirePrimitiveFloat} from './primitive-float-contracts.mjs';
-import {SHARED_REFERENCE_COPY_SOURCE,originalPrimitiveCopySource} from '../shared-reference-copy-source.mjs';
+import {SHARED_REFERENCE_COPY_SOURCE,currentPrimitiveCopySource as originalPrimitiveCopySource} from '../current-standard-copy-source.mjs';
 import {unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 import {copyMetadata} from './source-links.mjs';
 let source;

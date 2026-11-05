@@ -1,0 +1,34 @@
+{
+  "schema": "fixed-scalar-early-return-source-family-census-20261104-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-scalar-early-return-families-20261104/index466.before.json.gz",
+    "encodedSha256": "c2e7c1aaeaa5e935d82554ece0383ee4ba945ed1d2a025cab8e83613d1defa61",
+    "sourceSha256": "6927705c29912ab2fdd1ddde8fc763ff3344612c0bca52b7fecdf939e752f621",
+    "rows": 466
+  },
+  "families": [
+    {
+      "id": "exact-scalar-early-return-readers-20261104",
+      "manifest": "tools/translation/source-profiles/ordered-scalar-early-return-20261104/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "ordered-scalar-early-return-source-20261104-v1",
+      "sha256": "03b21f5032afa488df4992a1b43443d28162f37556e9a840c711376a4f8b6a0a",
+      "rows": 2,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-scalar-early-return-cases-20261104",
+      "manifest": "tools/translation/source-profiles/exact-source-scalar-early-return-families-20261104/joins.json.gz",
+      "kind": "archive",
+      "schema": "scalar-early-return-index-joins-20261104-v1",
+      "sha256": "1cf393c59f8674b3ffb2a028ffb6f2a6993e68ec5fe5288e426c7f0f7fc84f7a",
+      "rows": 14,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 16,
+  "totalRows": 482,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

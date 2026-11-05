@@ -30,51 +30,51 @@ function ml_host_option_bind(value: { $: string; field0?: any }, operation: (...
 function rp_6f70656e61692e746f6f6c732e69735f7472616e736c617461626c65(tool: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635): boolean {
   ml_validate_rust_value(tool, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   const kind = (() => {
-    const ml_standard_body_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(tool, "type"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
-    const ml_standard_body_3 = "function";
-    switch (ml_standard_body_2.$) {
+    const ml_standard_body_8 = ml_host_option_bind(ml_host_serde_json_value_get_string(tool, "type"), (ml_host_callback_6_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_6_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
+    const ml_standard_body_9 = "function";
+    switch (ml_standard_body_8.$) {
       case "None": {
-        return ml_standard_body_3;
+        return ml_standard_body_9;
       }
       case "Some": {
-        const x = ml_standard_body_2.field0;
+        const x = ml_standard_body_8.field0;
         return x;
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_2);
+        return ml_router_unexpected(ml_standard_body_8);
       }
     }
   })();
   if ((kind === "function")) {
     return (() => {
-    const ml_standard_callback_self_2 = ml_host_option_bind(ml_host_serde_json_value_get_string((() => {
-      const ml_standard_body_1 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_get_string(tool, "function"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
-      const ml_standard_body_2_2 = (() => { const ml_shared_immutable_value = tool; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
-      switch (ml_standard_body_1.$) {
+    const ml_standard_callback_self_17 = ml_host_option_bind(ml_host_serde_json_value_get_string((() => {
+      const ml_standard_body_12 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_get_string(tool, "function"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+      const ml_standard_body_13 = (() => { const ml_shared_immutable_value = tool; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+      switch (ml_standard_body_12.$) {
         case "None": {
-          return ml_standard_body_2_2;
+          return ml_standard_body_13;
         }
         case "Some": {
-          const x_2 = ml_standard_body_1.field0;
+          const x_2 = ml_standard_body_12.field0;
           return x_2;
         }
         default: {
-          return ml_router_unexpected(ml_standard_body_1);
+          return ml_router_unexpected(ml_standard_body_12);
         }
       }
-    })(), "name"), (ml_host_callback_0_0_2) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0_2); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
-    switch (ml_standard_callback_self_2.$) {
+    })(), "name"), (ml_host_callback_15_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_15_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
+    switch (ml_standard_callback_self_17.$) {
       case "None": {
         return false;
       }
       case "Some": {
-        const ml_standard_pattern_3 = ml_standard_callback_self_2.field0;
-        const ml_standard_callback_arg_1 = ml_standard_pattern_3;
-        const name = ml_standard_callback_arg_1;
+        const ml_standard_pattern_18 = ml_standard_callback_self_17.field0;
+        const ml_standard_callback_arg_19 = ml_standard_pattern_18;
+        const name = ml_standard_callback_arg_19;
         return !(name.length === 0);
       }
       default: {
-        return ml_router_unexpected(ml_standard_callback_self_2);
+        return ml_router_unexpected(ml_standard_callback_self_17);
       }
     }
   })();

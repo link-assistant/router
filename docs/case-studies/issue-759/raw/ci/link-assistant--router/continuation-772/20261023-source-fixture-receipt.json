@@ -1,0 +1,12 @@
+{
+  "archive": "20261023-source-fixture-delivery.tar.gz",
+  "bytes": 83214659,
+  "sha256": "4b2f4b213cef6746876341ee503bc8fff5be5d0bbe91ac8baa5f2d30c11ec9f8",
+  "members": 256,
+  "allMembersReadBack": true,
+  "completePriorAndProposedBankBytes": true,
+  "completeNativeCstEquationsAndInverses": true,
+  "failedAttemptsRetained": true,
+  "wholeGate": false,
+  "rustExecuted": false
+}

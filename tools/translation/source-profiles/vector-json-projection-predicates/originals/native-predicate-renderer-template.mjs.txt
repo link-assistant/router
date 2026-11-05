@@ -1,0 +1,7 @@
+
+// Source DATA rendering only. The caller reissues the original complete function;
+// fresh native forward checking still owns namespace, signature and loan proof.
+export function nativeJsonPredicateSource(name,argument){
+ const op=ownedJsonReaderOperation(name);if(!op||op.ret!=='bool'||op.args.length!==1||op.args[0]!=='json-ref'||op.root!==null||typeof argument!=='string'||!/^&?(?:[a-z][a-z0-9_]*|__ro_arg_[0-9]+)$/u.test(argument))throw new TypeError('Native JSON predicate requires the exact registered scalar operation and a checked emitted binder');
+ return '::serde_json::Value::'+op.method+'('+argument+')';
+}

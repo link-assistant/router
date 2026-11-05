@@ -10,7 +10,7 @@ import {renameExpr,Scope} from '../vendor/meta-language/translation/ir.js';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 import {containsIntegerRange,proveIntegerCoverage} from './integer-range-patterns.mjs';
 import {originalConstMatchSource} from './const-match-source-context.mjs';
-import {originalPrimitiveCopySource} from '../shared-reference-copy-source.mjs';
+import {currentPrimitiveCopySource as originalPrimitiveCopySource} from '../current-standard-copy-source.mjs';
 import {checkedOptionNominal} from './option-nominal-proof.mjs';
 const LIMIT=256;
 const exits=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(exits):exits(value))));

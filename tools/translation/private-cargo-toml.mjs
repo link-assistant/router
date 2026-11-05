@@ -11,6 +11,9 @@ import {originalStaticSourceIntrinsicsUnchanged,originalCapturedFunctionSource,t
 import {deriveDependencyOriginalInputs} from './derive-dependencies.mjs';
 import {originalExternalTraitPackageInputs} from './extensions/external-trait-sources.mjs';
 import {originalStandardUnitInputs} from './standard-unit-inputs.mjs';
+import {cargoLayoutManifestMatches} from './cargo-layout-input-compatibility.mjs';
+import {requireOriginalOrderedTextMapStandardSources} from './ordered-text-map-callers-20261102-standard-source.mjs';
+import {withCompleteSourceClosingFence} from './complete-source-closing-fence.mjs';
 // This SAME common issuer guard uses its captured operations. A poisoned
 // cold import is inert and permanently disqualified, even after restoration.
 const initialQualified=originalStaticSourceIntrinsicsUnchanged();
@@ -136,8 +139,8 @@ const equalIdentity=(a,b)=>a.dev===b.dev&&a.ino===b.ino&&a.size===b.size&&a.mtim
 function original(path,limit,records){
   let parent=dirname(path);while(parent!==dirname(parent)){const stat=lstatSync(parent);if(!stat.isDirectory()||stat.isSymbolicLink())fail('linked source directory');parent=dirname(parent);}
   const before=lstatSync(path);if(!before.isFile()||before.isSymbolicLink()||before.size>limit)fail('bounded regular parser source required');
-  const fd=openSync(path,constants.O_RDONLY|constants.O_NOFOLLOW);
-  try{const opened=fstatSync(fd);if(!equalIdentity(identity(before),identity(opened)))fail('parser source fd differs');const bytes=new guard.globals.Uint8Array(opened.size);let at=0;while(at<opened.size){const count=readSync(fd,bytes,at,opened.size-at,at);if(!count)fail('parser source truncated');at+=count;}const extra=new guard.globals.Uint8Array(1);if(readSync(fd,extra,0,1,at)||!equalIdentity(identity(opened),identity(fstatSync(fd)))||!equalIdentity(identity(opened),identity(lstatSync(path))))fail('parser source changed');records.push({path,identity:identity(opened)});return bytes;}finally{closeSync(fd);}
+  const fd=openSync(path,constants.O_RDONLY|constants.O_NOFOLLOW);let failed=false;
+  try{const opened=fstatSync(fd);if(!equalIdentity(identity(before),identity(opened)))fail('parser source fd differs');const bytes=new guard.globals.Uint8Array(opened.size);let at=0;while(at<opened.size){const count=readSync(fd,bytes,at,opened.size-at,at);if(!count)fail('parser source truncated');at+=count;}const extra=new guard.globals.Uint8Array(1);if(readSync(fd,extra,0,1,at)||!equalIdentity(identity(opened),identity(fstatSync(fd)))||!equalIdentity(identity(opened),identity(lstatSync(path))))fail('parser source changed');records.push({path,identity:identity(opened)});return bytes;}catch(error){failed=true;throw error;}finally{try{closeSync(fd);}catch(error){if(!failed)throw error;}}
 }
 function ascii(bytes){let text='';const length=guard.length(bytes);for(let at=0;at<length;at++){const byte=bytes[at];if(byte>127)fail('registered executable source is not ASCII');text+=apply(guard.globals.fromCharCode,undefined,[byte]);}return text;}
 function utf8Size(value){let bytes=0;for(let at=0;at<value.length;at++){const code=apply(guard.globals.charCodeAt,value,[at]);if(code<128)bytes++;else if(code<2048)bytes+=2;else if(code>=55296&&code<=56319&&at+1<value.length){const next=apply(guard.globals.charCodeAt,value,[at+1]);if(next>=56320&&next<=57343){bytes+=4;at++;}else bytes+=3;}else bytes+=3;}return bytes;}
@@ -205,7 +208,7 @@ export function parsePrivateOriginalCargoToml(source,options){
   const originals=deriveDependencyOriginalInputs(dependency.value),originalPackage=originalExternalTraitPackageInputs(capture.value),manifests=originalPackage.sources.filter(row=>row.path==='Cargo.toml');
   if(manifests.length!==1||source!==originals.manifest&&source!==manifests[0].source)fail('exact complete source from private dependency/package capture required');
   const {files,records,profile}=sources();checked();unchanged(records);
-  for(const [name,value]of [['Cargo.toml',originals.manifest],['Cargo.lock',originals.lock]])if(utf8Size(value)!==profile.projectSource[name].bytes||hash(value)!==profile.projectSource[name].sha256)fail('complete registered project source differs');
+  for(const [name,value]of [['Cargo.toml',originals.manifest],['Cargo.lock',originals.lock]])if((utf8Size(value)!==profile.projectSource[name].bytes||hash(value)!==profile.projectSource[name].sha256)&&!(name==='Cargo.toml'&&cargoLayoutManifestMatches(value,profile.projectSource[name].sha256)))fail('complete registered project source differs');
   const pins=profile.packages.filter(row=>row.name===originalPackage.dependency.package&&row.version===originalPackage.dependency.version);
   if(pins.length!==1||utf8Size(manifests[0].source)!==pins[0].manifestBytes||hash(manifests[0].source)!==pins[0].manifestSha256)fail('complete registered package source differs');
   checked();unchanged(records);
@@ -225,4 +228,17 @@ export function parsePrivateOriginalStandardCargoToml(unitToken,path){
  if(!compiled){compiled=execute(files,state);compiledSources=files;}else for(const [path,bytes]of files){const prior=compiledSources.get(path),length=guard.length(bytes);if(!prior||guard.length(prior)!==length)fail('compiled private parser source changed');for(let at=0;at<length;at++)if(bytes[at]!==prior[at])fail('compiled private parser source changed');}
  let result;try{result=cargoData(apply(compiled.parse,undefined,[source]),compiled.bookkeeping);}catch(error){throw new Failure('Private original standard Cargo TOML refused: '+(typeof error?.message==='string'?error.message:'unavailable parsed data'));}
  checked();unchanged(records);originalStandardUnitInputs(unitToken);return result;
+}
+
+// Specialized source-model ABI entry; only a genuine fixed standard-source
+// receipt selects this complete original alloc manifest. No caller TOML text,
+// generic profile registry or guessed manifest digest enters the private parser.
+export function parsePrivateOriginalOrderedMapAllocCargoToml(receipt){
+ const state=checked();requireOriginalOrderedTextMapStandardSources(receipt);
+ const originals=receipt.snapshots.filter(row=>row.path==='library/alloc/Cargo.toml');if(originals.length!==1)fail('one actual original allocation unit manifest required');
+ const source=originals[0].source,{files,records}=sources();checked();unchanged(records);
+ return withCompleteSourceClosingFence(()=>{
+  if(!compiled){compiled=execute(files,state);compiledSources=files;}else for(const [path,bytes]of files){const prior=compiledSources.get(path),length=guard.length(bytes);if(!prior||guard.length(prior)!==length)fail('compiled private parser source changed');for(let at=0;at<length;at++)if(bytes[at]!==prior[at])fail('compiled private parser source changed');}
+  return cargoData(apply(compiled.parse,undefined,[source]),compiled.bookkeeping);
+ },[()=>{checked();unchanged(records);},()=>requireOriginalOrderedTextMapStandardSources(receipt)]);
 }

@@ -1,0 +1,23 @@
+{
+  "schema": "router-ordered-text-map-source-draft-v1",
+  "sha256": "a5028ebb4b62360871ca0e892ccf07c3e010c305c2c5a2b8e03c15225b35d29b",
+  "decodedBytes": 127225,
+  "packedBytes": 29108,
+  "completeSourceFiles": 11,
+  "completeSourceEquations": 2,
+  "selectedReviewSources": [
+    "rust/src/openai.rs",
+    "rust/src/refresh_rejections.rs",
+    "rust/src/deploy_config.rs"
+  ],
+  "javascriptCaseSourceCount": 11,
+  "strictTypeScriptCaseFiles": 1,
+  "rustCaseSourceCount": 10,
+  "allExecution": "UNRUN",
+  "CI": "NOT_INSPECTED",
+  "sourceCounts": {
+    "drafted": 11,
+    "open": 59,
+    "total": 70
+  }
+}

@@ -1,0 +1,1 @@
+Draft concurrent native-shaped Claude activity sessions, actual child registration and verified transactional settings-only reset with bounded profile backup/inventory. Eleven source equations and independent JS/strict TS/native cases remain unrun.

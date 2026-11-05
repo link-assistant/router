@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import {retainForwardSourceProposalAccounting} from './forward-output-ownership-20261101-source-accounting.mjs';
+import {withFixedForwardWriterSources} from './forward-output-ownership-20261101-source-history.mjs';
 // Complete source-derived process-lifetime copies. Original synchronous APIs,
 // functions and private planner implementations remain unchanged.
 import {readFileSync,lstatSync,mkdirSync,writeFileSync} from 'node:fs';
@@ -17,7 +19,7 @@ function concrete(source){const actual=transportConcreteSyntaxSource(source,{lan
 function native(source){const ts=ownershipCompiler(),file=ts.createSourceFile('complete-matrix.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete native module syntax');return {ts,file};}
 function replace(source,rows){return createRulePipeline([{phase:'language',rules:rows.filter(row=>row.phase==='language').map(({id,before,after})=>exactLiteralSubstitutionRule(id,before,after,'Complete original matrix anchor changed'))},{phase:'repository',rules:rows.filter(row=>row.phase==='repository').map(({id,before,after})=>exactLiteralSubstitutionRule(id,before,after,'Complete original matrix anchor changed'))}]).run(source);}
 function inverse(source,rows){for(const row of [...rows].reverse()){if(source.split(row.after).length!==2)fail('complete source inverse anchor changed');source=source.replace(row.after,()=>row.before);}return source;}
-export function deriveIsolatedMatrixSource(source,path){
+function deriveIsolatedMatrixSourceOriginal(source,path){
  const {ts,file}=native(source),imports=file.statements.filter(ts.isImportDeclaration),planner=imports.filter(node=>node.importClause?.namedBindings&&ts.isNamedImports(node.importClause.namedBindings)&&node.importClause.namedBindings.elements.some(item=>item.name.text==='planRegeneration'));
  if(planner.length!==1)fail('one actual original private planner import required');
  const plannerModule=planner[0].moduleSpecifier.text.replace(/^\.\//u,'');
@@ -47,7 +49,7 @@ if(profileMatrix){
   console.log(JSON.stringify(ownedCoreDefinitions?{ownedCoreDefinitions:true,definitionOnly:true,projects:manifest.projects,runtimeParity:false,mode:check?'check':'write'}:{kind:manifest.schema,matrixSha256:manifest.matrixSha256,sourceSetSha256:manifest.sourceSetSha256,profiles:manifest.profiles.map(member=>({name:member.name,profileSha256:member.profileSha256,totals:member.totals,projects:member.projects})),platformDomainComplete:false,commonExecutableOutput:false,runtimeParity:false,mode:check?'check':'write'}));
   if(failures.length){console.error(failures.join('\\n'));process.exitCode=1;}
 }else if(ownedCoreDefinitions){`;
-export function deriveIsolatedMatrixCliSource(current){
+function deriveIsolatedMatrixCliSourceOriginal(current){
  native(current);let source=current;
  if(source.includes(cliMarker)){
   if(source.split(cliBranch).length!==2)fail('complete installed CLI branch changed');
@@ -60,6 +62,8 @@ export function deriveIsolatedMatrixCliSource(current){
  return {path:'scripts/translate-router.mjs',text:result.value,currentSource:current,source,sourceSha256:hash(source),sha256:hash(result.value),rules:rows,trace:result.trace,beforeMeta:concrete(source),afterMeta:concrete(result.value),inverse:source,originalCanonicalBodiesUnchanged:true,semanticAuthority:false,runtimeParity:false};
 }
 
+export function deriveIsolatedMatrixSource(source,path){return withFixedForwardWriterSources(undefined,history=>{const inputPath=path.replace('tools/translation/isolated-','tools/translation/'),historical=history.before(inputPath,source);return retainForwardSourceProposalAccounting({...history.compose(deriveIsolatedMatrixSourceOriginal(historical,path),'text'),currentInputSourceEquation:{current:source,historical,inverse:source}});});}
+export function deriveIsolatedMatrixCliSource(current){return withFixedForwardWriterSources(undefined,history=>retainForwardSourceProposalAccounting(history.compose(deriveIsolatedMatrixCliSourceOriginal(history.before('scripts/translate-router.mjs',current)),'text')));}
 export function deriveIsolatedMatrixSources(root){
  const names=['matrix-bulk.mjs','retained-matrix-bulk.mjs','owned-definitions-matrix-bulk.mjs','retained-owned-definitions-matrix-bulk.mjs'];
  const files=names.map(name=>deriveIsolatedMatrixSource(readFileSync(resolve(root,'tools/translation',name),'utf8'),'tools/translation/isolated-'+name));

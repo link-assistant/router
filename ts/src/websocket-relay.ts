@@ -105,7 +105,7 @@ export async function relayWebSocket(incoming: any, downstream: any, head: any, 
         return;
     }
     const { url, headers, claims }: any = binding, upstreamKey: string = randomBytes(16).toString('base64');
-    const options: any = { method: 'GET', headers: { ...(Object as any).fromEntries(headers), connection: 'Upgrade', upgrade: 'websocket', 'sec-websocket-key': upstreamKey, 'sec-websocket-version': '13' }, timeout: timeoutMs };
+    const options: any = { ...(binding.ca?{ca:binding.ca}:{}), method: 'GET', headers: { ...(Object as any).fromEntries(headers), connection: 'Upgrade', upgrade: 'websocket', 'sec-websocket-key': upstreamKey, 'sec-websocket-version': '13' }, timeout: timeoutMs };
     let connecting: any = true;
     const request: any = (url.protocol === 'https:' ? httpsRequest : httpRequest)(url, options);
     request.once('timeout', (): any => request.destroy(new (Error as any)('WebSocket connect timeout')));

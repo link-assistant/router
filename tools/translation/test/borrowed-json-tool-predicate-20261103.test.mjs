@@ -1,0 +1,21 @@
+// Independent behavior/refusal/lazy-branch cases; source-only, UNRUN.
+import assert from 'node:assert/strict';
+import {borrowedJsonToolIsTranslatable as predicate} from '../borrowed-json-tool-predicate-20261103-runtime.mjs';
+const str=field0=>({$:'String',field0}),nil={$:'Null'};
+const obj=fields=>({$:'Object',field0:{$:'Map',entries:Object.keys(fields).sort().map(key=>({$:'MapEntry',key,value:fields[key]}))}});
+for(const input of [nil,{$:'Bool',field0:true},str('function'),{$:'Array',field0:[]}])assert.equal(predicate(input),false);
+assert.equal(predicate(obj({name:str('top')})),true);
+assert.equal(predicate(obj({type:nil,name:str('fallback')})),true);
+assert.equal(predicate(obj({type:{$:'Bool',field0:false},name:str('fallback')})),true);
+assert.equal(predicate(obj({name:str('top'),function:nil})),false);
+assert.equal(predicate(obj({function:obj({name:str('nested')})})),true);
+assert.equal(predicate(obj({function:obj({name:str('')})})),false);
+for(const name of [' ','名','😀','x'.repeat(1048577)])assert.equal(predicate(obj({name:str(name)})),true);
+const unused={};Object.defineProperty(unused,'$',{get(){throw new Error('unused subtree was traversed');}});
+for(const type of ['web_search','web_fetch'])assert.equal(predicate(obj({type:str(type),function:unused})),true);
+assert.equal(predicate(obj({type:str('custom'),function:unused})),false);
+assert.equal(predicate(obj({name:str('ok'),unused:{$:'Array',field0:new Array(65537).fill(unused)}})),true);
+assert.throws(()=>predicate(new Proxy(obj({}),{})),TypeError);
+const selected={};Object.defineProperty(selected,'$',{get(){throw null;}});
+assert.throws(()=>predicate(selected),TypeError);
+const malformed=obj({name:{$:'String',field0:1}});assert.throws(()=>predicate(malformed),TypeError);

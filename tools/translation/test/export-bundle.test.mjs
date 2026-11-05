@@ -10,6 +10,7 @@ import {join} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {gzipSync} from 'node:zlib';
 import {exportTranslatorBundle} from '../export-bundle.mjs';
+import {exportPartitionedTranslatorBundle} from '../partitioned-export-bundle.mjs';
 import {discoverCompilerSourceInputs} from '../compiler-source-inputs.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
@@ -18,7 +19,7 @@ const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const git=(cwd,args)=>execFileSync('git',args,{cwd,timeout:10000,stdio:'pipe'});
 function fixture(){
   const directory=mkdtempSync(join(tmpdir(),'router-translator-export-')),source=join(directory,'source');mkdirSync(source);
-  const paths=['scripts/translate-router.mjs','tools/translation/bulk.mjs','tools/translation/vendor/meta-language/package.json','tools/translation/source-profiles/original/full.rs.gz','tools/translation/source-profiles/original/LICENSE.txt'];
+  const paths=['scripts/translate-router.mjs',"scripts/translate-router-flat-native-owned-field-meta.mjs",'tools/translation/bulk.mjs','tools/translation/vendor/meta-language/package.json','tools/translation/source-profiles/original/full.rs.gz','tools/translation/source-profiles/original/LICENSE.txt'];
   for(const path of paths){mkdirSync(join(source,path,'..'),{recursive:true});writeFileSync(join(source,path),path+'\n');}
   chmodSync(join(source,paths[0]),0o755);
   git(source,['init','--quiet']);git(source,['add','--force','.']);
@@ -35,7 +36,7 @@ function retainConcreteExport(value){
 test('complete committed offline compiler exports deterministically with full source/license bytes',{timeout:360000},()=>{
   const directory=mkdtempSync(join(tmpdir(),'router-translator-export-real-'));
   try{
-    const first=exportTranslatorBundle({sourceRoot:root,output:join(directory,'first')}),second=exportTranslatorBundle({sourceRoot:root,output:join(directory,'second')});
+    const first=exportPartitionedTranslatorBundle({sourceRoot:root,output:join(directory,'first')}),second=exportPartitionedTranslatorBundle({sourceRoot:root,output:join(directory,'second')});
     assert.deepEqual(first.manifest,second.manifest);assert.equal(first.manifest.runtimeParity,false);
     assert.equal(JSON.stringify(first.manifest).includes(directory),false);assert.equal(JSON.stringify(first.manifest).includes(root),false);
     assert.equal(first.manifest.files,first.manifest.inputs.length);
@@ -64,7 +65,7 @@ test('complete committed offline compiler exports deterministically with full so
 test('the exported synchronization CLI generates and updates real receiving JavaScript through meta, Rust and strict TypeScript',{timeout:180000},async()=>{
   const directory=mkdtempSync(join(tmpdir(),'router-export-sync-'));
   try{
-    const bundle=exportTranslatorBundle({sourceRoot:root,output:join(directory,'bundle')});
+    const bundle=exportPartitionedTranslatorBundle({sourceRoot:root,output:join(directory,'bundle')});
     assert.ok(bundle.manifest.inputs.some(row=>row.path==='scripts/sync-router.mjs'));
     assert.ok(bundle.manifest.inputs.some(row=>row.path==='tools/translation/js-to-rust/vendor/constructs.lino'));
     const receiving=join(directory,'receiving');mkdirSync(receiving);
@@ -126,7 +127,7 @@ test('the exported synchronization CLI generates and updates real receiving Java
 test('the complete exported CST extension feeds edited source into both checked translation directions',{timeout:60000},async()=>{
   const directory=mkdtempSync(join(tmpdir(),'router-export-concrete-'));
   try{
-    const bundle=exportTranslatorBundle({sourceRoot:root,output:join(directory,'bundle')});
+    const bundle=exportPartitionedTranslatorBundle({sourceRoot:root,output:join(directory,'bundle')});
     const paths=new Set(bundle.manifest.inputs.map(row=>row.path));
     for(const name of ['concrete-syntax-meta.mjs','forward-concrete-syntax.mjs','js-to-rust/concrete-source.mjs'])assert.ok(paths.has('tools/translation/'+name),name);
     const load=name=>import(pathToFileURL(join(bundle.destination,'tools/translation',name)).href);

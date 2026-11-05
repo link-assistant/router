@@ -31,3 +31,11 @@ pipeline never claims that source reconstruction proves runtime parity.
 
 `upstream-lock.json` records SHA-256 hashes of the vendored files. Tests verify
 these hashes so local semantic extensions remain visible outside this tree.
+
+The adapted reverse frontend files listed by `js-to-rust/provenance.json` also
+retain the complete formal-ai Unlicense in `js-to-rust/vendor/LICENSE`, so that
+subtree carries its declared upstream license alongside the copied adapters.
+The `translation-provenance-20261102.json` catalogue records the current source
+images, declared copied cohorts, preserved license/notice paths and explicit
+receiving dependency boundaries. Its checks establish byte transport only, not
+semantic admission, complete dependency resolution or legal certification.

@@ -20,7 +20,10 @@ export async function verifyTypedTargets(result,verify,{childTimeoutMs}={}) {
     mkdirSync(dirname(javascript),{recursive:true});
     writeFileSync(javascript,result.javascript);
     writeFileSync(typescript,result.typescript);
-    execFileSync(process.execPath,['--check',javascript],childOptions);
+    // Bun's --check is not Node's syntax-only command. Scan the complete module
+    // without executing it or resolving imports; both targets execute below.
+    if(process.versions.bun)new Bun.Transpiler({loader:'js',target:'bun'}).scan(result.javascript);
+    else execFileSync(process.execPath,['--check',javascript],childOptions);
     const compiled=join(directory,'compiled');
     let compiler=process.env.ROUTER_TRANSLATION_TSC,prefix=[];
     if(compiler===undefined){

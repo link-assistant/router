@@ -1,0 +1,12 @@
+{
+  "schema": "opaque-complete-source-successor-v1",
+  "archive": "tools/translation/source-profiles/opaque-constant-adoption-20261101/complete-source-copies-output-parent.json.gz",
+  "sha256": "e6e908cb227f295b0960d2928274cb1bf73d38739fa283e393f1c46d033cb4d9",
+  "rawBytes": 186609,
+  "packedBytes": 30714,
+  "sourceHistorySha256": "14318c132e6a69249e2eb78576e61b461d75336c4a78644a5aeca72602b241dd",
+  "sourceHistoryBeforeSha256": "308c3a0e0b013a074e742f1823598f2fa47d253237d046e2bfa4f9cf06f44077",
+  "evolutionRows": 2,
+  "currentCases": 1,
+  "executionEvidence": "UNRUN"
+}

@@ -1,0 +1,97 @@
+{
+  "schema": "protected-native-writers-source-history-20261102-v1",
+  "baselineRevision": "e03938ec393b284d3ea833055d2c6b6aab437a56",
+  "files": [
+    {
+      "path": "tools/translation/native-leaf-move-recovery-20261101-io.mjs",
+      "originalRevision": "e03938ec393b284d3ea833055d2c6b6aab437a56",
+      "originalBlob": "519130d131104ce9e038923abc612e4b046e3789",
+      "mode": "100644",
+      "before": "native-leaf-move-recovery-20261101-io.mjs.before.txt",
+      "after": "native-leaf-move-recovery-20261101-io.mjs.after.txt",
+      "beforeBytes": 8313,
+      "afterBytes": 11479,
+      "beforeSha256": "7d5bc60be1c46c474afb038538ff7a4dc6d0934763536b8e49a8277c672bebf5",
+      "afterSha256": "17d959f2eb85e207f55bf3aaec97c2ff25d95d3ccf9cd37c4ae6eefecc2a4eff",
+      "sequences": [
+        {
+          "phase": "language",
+          "purpose": "retain complete original private producers, source and inode/durability checks"
+        },
+        {
+          "phase": "repository",
+          "purpose": "attach fixed explicit operational ownership veto and lifecycle closing"
+        }
+      ]
+    },
+    {
+      "path": "tools/translation/native-leaf-move-recovery-20261101-source-history.mjs",
+      "originalRevision": "e03938ec393b284d3ea833055d2c6b6aab437a56",
+      "originalBlob": "d3f4ba5bc3684b58a74c428bfbb4a72dd7090d8a",
+      "mode": "100644",
+      "before": "native-leaf-move-recovery-20261101-source-history.mjs.before.txt",
+      "after": "native-leaf-move-recovery-20261101-source-history.mjs.after.txt",
+      "beforeBytes": 2796,
+      "afterBytes": 3177,
+      "beforeSha256": "99c3afc9d296e3ad218e831509c89eab44ed98612a61e36bd84cf602fdb3df23",
+      "afterSha256": "b00fed2ac51eb1400d0f51ee411db3e4004239b965b96a43aca30f0b8b8c2580",
+      "sequences": [
+        {
+          "phase": "language",
+          "purpose": "retain complete original private producers, source and inode/durability checks"
+        },
+        {
+          "phase": "repository",
+          "purpose": "attach fixed explicit operational ownership veto and lifecycle closing"
+        }
+      ]
+    },
+    {
+      "path": "tools/translation/native-leaf-move-recovery-20261101.mjs",
+      "originalRevision": "e03938ec393b284d3ea833055d2c6b6aab437a56",
+      "originalBlob": "bc6766b1f30c253ed1a6a420a6fd9068086beaa5",
+      "mode": "100644",
+      "before": "native-leaf-move-recovery-20261101.mjs.before.txt",
+      "after": "native-leaf-move-recovery-20261101.mjs.after.txt",
+      "beforeBytes": 34137,
+      "afterBytes": 36664,
+      "beforeSha256": "ee59700ed5bb5420d0cd9fd2cf475f34cb8c60e3905ce83cd4505a6da8ca0f6a",
+      "afterSha256": "ae2c4e59ce20f12e9a9fa140e51cfb33a43e08529c58bb862c30fedb80810df5",
+      "sequences": [
+        {
+          "phase": "language",
+          "purpose": "retain complete original private producers, source and inode/durability checks"
+        },
+        {
+          "phase": "repository",
+          "purpose": "attach fixed explicit operational ownership veto and lifecycle closing"
+        }
+      ]
+    },
+    {
+      "path": "tools/translation/native-module-move-20261101-install.mjs",
+      "originalRevision": "e03938ec393b284d3ea833055d2c6b6aab437a56",
+      "originalBlob": "6ed7d919fe71e1c13c10a1d3f98561c021ad9232",
+      "mode": "100644",
+      "before": "native-module-move-20261101-install.mjs.before.txt",
+      "after": "native-module-move-20261101-install.mjs.after.txt",
+      "beforeBytes": 11802,
+      "afterBytes": 14960,
+      "beforeSha256": "c6a1354bfc99cc10608331d787670d77f067a98e00b0ca9836ab0308b499310f",
+      "afterSha256": "20497bbed86b9244195d276b730d8247b83590b06c3316d25fbaa2fc34b02db2",
+      "sequences": [
+        {
+          "phase": "language",
+          "purpose": "retain complete original private producers, source and inode/durability checks"
+        },
+        {
+          "phase": "repository",
+          "purpose": "attach fixed explicit operational ownership veto and lifecycle closing"
+        }
+      ]
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

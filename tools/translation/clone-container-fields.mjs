@@ -15,7 +15,7 @@ import {TranslationError} from './vendor/meta-language/translation/diagnostics.j
 import {TokenCursor} from './vendor/meta-language/translation/lexer.js';
 import {assertOriginalParserIdentity} from './original-parser-identity.mjs';
 import {originalTextCursorGuard} from './extensions/text.mjs';
-import {originalPrimitiveCopySource} from './shared-reference-copy-source.mjs';
+import {currentPrimitiveCopySource as originalPrimitiveCopySource} from './current-standard-copy-source.mjs';
 const issued=new WeakMap(),hash=value=>createHash('sha256').update(value).digest('hex'),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b),fail=message=>{throw new TypeError('Original Option Clone fields: '+message);};
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 // The general original-source census distinguishes opaque types from block

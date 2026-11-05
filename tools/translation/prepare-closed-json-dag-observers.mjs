@@ -1,3 +1,4 @@
+import {writeProtectedAfterCliPlan} from './protected-after-cli-writers-20261102.mjs';
 // Receiving observation storage only. This grants no compiler authority.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
@@ -39,7 +40,6 @@ export function prepareClosedJsonDagObservers({root=ROOT}={}){
  return {schema:'complete-closed-json-dag-observer-adapters-v1',inputs,files,originalWorkloadsChanged:false,originalLimitsChanged:false,observationDataOnly:true,runtimeQualified:false,performanceQualified:false,sourceAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=prepareClosedJsonDagObservers();
- if(mode==='--write'){for(const row of plan.files)if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('whole source changed');for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}
- else if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete receiving source stale');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),runtimeQualified:false}));
+ const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=mode==='--write'?writeProtectedAfterCliPlan(ROOT,()=>prepareClosedJsonDagObservers(),plan=>{for(const row of plan.files)if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('whole source changed');}):prepareClosedJsonDagObservers();
+ if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete receiving source stale');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),runtimeQualified:false}));
 }

@@ -1,0 +1,5 @@
+// Finite candidate shape only. Names/types alone never bind a source caller.
+export function primitiveSequenceOperationShape(name){
+ if(typeof name!=='string')return null;const match=/^(?:router_)?slice_(bool|[ui](?:8|16|32|64|128))_(len|is_empty|get)$/u.exec(name);if(!match||match[0]!==name)return null;const [,domain,operation]=match,rustName='slice_'+domain+'_'+operation;return {domain,operation,rustName,javascriptName:'router_'+rustName,rustPath:'crate::translation_primitive_sequences_core::'+rustName,parameters:[domain+'-list-ref',...(operation==='get'?['u64']:[])],returns:operation==='len'?'u64':operation==='is_empty'?'bool':domain+'-option',runtimeModule:'primitive-sequence-runtime.mjs',sourceAuthority:false,semanticAuthority:false};
+}
+export function primitiveSequenceOptionalWitness(type){if(typeof type!=='string'||!type.endsWith('-option'))return null;const candidate=primitiveSequenceOperationShape('slice_'+type.slice(0,-7)+'_get');return candidate?.returns===type?candidate.javascriptName:null;}

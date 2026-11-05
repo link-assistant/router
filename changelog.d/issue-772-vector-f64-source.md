@@ -1,0 +1,1 @@
+Draft source-qualified f64 vectors and reverse literal/parameter/conditional support with signed-zero preservation, normal IEEE input classification and fresh numeric-host guards. Preserve complete CST source equations and independent unrun regression/oracle source.

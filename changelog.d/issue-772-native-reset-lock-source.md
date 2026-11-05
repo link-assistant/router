@@ -1,0 +1,1 @@
+Draft shared native profile-operation locking around Router-Claude reset to serialize with Rust/JS session registration, preserving complete original source histories and old pins. Native and source/export cases remain unrun.

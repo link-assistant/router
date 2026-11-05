@@ -1,0 +1,31 @@
+/** Bounded local discovery: candidate ports are DATA; TCP plus Router health is required. */
+import {spawn} from 'node:child_process';
+import {connect} from 'node:net';
+import {verifyRemoteClientHealth} from './client-remote-health.mjs';
+const port=(value)=>{if(typeof value!=='number'&&(typeof value!=='string'||!/^\d{1,5}$/u.test(value.trim())))return null;const number=Number(value);return Number.isInteger(number)&&number>0&&number<=65535?number:null;};
+export function publishedLocalRouterPorts(listing){
+ if(typeof listing!=='string'||Buffer.byteLength(listing)>65536)return [];const ports=[];
+ for(const value of listing.split(/[,\n]/u)){const match=/^\s*(127\.0\.0\.1|0\.0\.0\.0|\[::\]|):(\d{1,5})->\d{1,5}\/(?:tcp|udp)\s*$/u.exec(value);if(!match||value.trim().endsWith('/udp'))continue;const candidate=port(match[2]);if(candidate!==null&&!ports.includes(candidate))ports.push(candidate);if(ports.length===64)break;}return ports;
+}
+async function dockerPorts(deadline,signal){
+ if(signal?.aborted||performance.now()>=deadline)return [];return new Promise(done=>{
+ let child,timer,settled=false,bytes=0;const chunks=[];
+ const finish=(ports)=>{if(settled)return;settled=true;clearTimeout(timer);signal?.removeEventListener('abort',cancel);done(ports);};
+ const cancel=()=>{child?.kill('SIGKILL');finish([]);};
+ try{child=spawn('docker',['ps','--format','{{.Ports}}'],{stdio:['ignore','pipe','ignore'],shell:false});}catch{finish([]);return;}
+ child.once('error',()=>finish([]));child.stdout?.on('data',(chunk)=>{bytes+=chunk.length;if(bytes>65536){cancel();return;}chunks.push(chunk);});child.once('close',(code)=>finish(code===0?publishedLocalRouterPorts(Buffer.concat(chunks).toString('utf8')):[]));
+ timer=setTimeout(cancel,Math.max(1,Math.min(1000,deadline-performance.now())));signal?.addEventListener('abort',cancel,{once:true});if(signal?.aborted)cancel();
+ });
+}
+async function accepts(port,budget,signal){
+ if(signal?.aborted||budget<=0)return false;return new Promise(done=>{
+ const socket=connect({host:'127.0.0.1',port});let settled=false;const finish=(answer)=>{if(settled)return;settled=true;clearTimeout(timer);signal?.removeEventListener('abort',cancel);socket.destroy();done(answer);},cancel=()=>finish(false),timer=setTimeout(cancel,Math.min(150,budget));socket.once('connect',()=>finish(true));socket.once('error',()=>finish(false));signal?.addEventListener('abort',cancel,{once:true});if(signal?.aborted)cancel();
+ });
+}
+export async function discoverLocalRouter(context={}){
+ const deadline=performance.now()+3000,signal=context.invocation?.signal,seen=new Set(),conventional=[];
+ const inputs=context.candidatePorts??[context.env?.ROUTER_PORT,8080,context.managedPort];if(!Array.isArray(inputs)||inputs.length>64)throw new TypeError('Bounded local candidate port DATA required');
+ for(const value of inputs){const candidate=port(value);if(candidate!==null&&!conventional.includes(candidate))conventional.push(candidate);}
+ const probe=async(candidates)=>{for(const candidate of candidates){if(seen.has(candidate))continue;seen.add(candidate);if(signal?.aborted||performance.now()>=deadline)return null;if(!await accepts(candidate,deadline-performance.now(),signal))continue;const server='http://127.0.0.1:'+candidate;try{await verifyRemoteClientHealth({...context,healthDeadlineMs:Math.max(1,Math.min(1000,deadline-performance.now()))},{server});if(signal?.aborted||performance.now()>deadline)return null;const token=context.env?.LINK_ASSISTANT_ROUTER_TOKEN??context.env?.LINK_ASSISTANT_TOKEN;return {server,managementServer:server,source:'already-running local server',...(token?{token}:{})};}catch{if(signal?.aborted)return null;}}return null;};
+ const conventionalTarget=await probe(conventional);if(conventionalTarget)return conventionalTarget;if(signal?.aborted||performance.now()>=deadline)return null;const candidates=context.dockerListing===undefined?await dockerPorts(deadline,signal):publishedLocalRouterPorts(context.dockerListing);return probe(candidates);
+}

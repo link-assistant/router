@@ -148,10 +148,10 @@ export function createLiteralTextImportRoles(modules,profile,dependencyInputs=un
     let role=!shadowed?(standardRole(leaf.segments)??standardRootModuleRole(leaf.segments)??external?.(leaf.segments)):null;
     const scope=evidence.scopes.find(row=>row.file===module.file&&same(row.path,module.path));
     const bindings=scope?.bindings.filter(row=>row.name===leaf.name&&row.span?.start===item.start&&row.span?.end===item.end&&row.status==='resolved')??[];
-    if(!role&&bindings.length&&bindings.every(binding=>nonTraits.has(binding.kind))){
+    if(!role&&bindings.length&&bindings.every(binding=>nonTraits.has(binding.kind)||binding.kind==='type')){
       const originalBindings=bindings.map(binding=>{
         const declaration=binding.declaration;if(!declaration)return null;
-        const candidates=modules.flatMap(owner=>owner.file===declaration.source&&closedDeclarations(owner,profile)?originalSourceModuleItems(owner).filter(row=>row.start===declaration.span.start&&row.end===declaration.span.end&&nonTraits.has(row.term)&&row.term===binding.kind).map(row=>({owner,row})):[]);
+        const candidates=modules.flatMap(owner=>owner.file===declaration.source&&closedDeclarations(owner,profile)?originalSourceModuleItems(owner).filter(row=>row.start===declaration.span.start&&row.end===declaration.span.end&&(nonTraits.has(row.term)||ordinaryTypeAliasDeclarationSource(row,owner.path))&&row.term===binding.kind).map(row=>({owner,row})):[]);
         return candidates.length===1?originalNonTraitImportRole(facts,module,binding):null;
       });
       if(originalBindings.every(Boolean))role={kind:'original-graph-nontrait-candidate',originalBindings};
@@ -172,3 +172,5 @@ function standardRootModuleRole(segments){
  const candidate=originalPublicModuleCandidate(root.source,segments[1]);
  return candidate?{kind:'mod',route:[{crate:owner,sourceSha256:root.sourceSha256??root.sha256,...candidate}],namespaceComplete:false,originalDispatchProved:false,executableAdmission:false}:null;
 }
+
+import {ordinaryTypeAliasDeclarationSource} from './local-type-alias-declaration-source.mjs';

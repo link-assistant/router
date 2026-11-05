@@ -1,0 +1,8 @@
+// Complete receiving execution harness source. Not run during bulk drafting.
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {join,dirname} from 'node:path';
+import {tmpdir} from 'node:os';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+import {execFileSync} from 'node:child_process';
+const root=fileURLToPath(new URL('../../../../',import.meta.url));
+export async function targets(t,data,proposal){const directory=mkdtempSync(join(tmpdir(),'router-empty-adoption-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const write=(path,text)=>{mkdirSync(dirname(join(directory,path)),{recursive:true});writeFileSync(join(directory,path),text);};for(const row of data.files.filter(row=>/\.(?:mjs|mts|ts)$/u.test(row.path)))write(row.path,row.source);write('adopted.mjs',proposal.files[0].after);write('typed.mts',proposal.typescript);execFileSync(process.execPath,[join(root,'js/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--outDir',join(directory,'out'),join(directory,'typed.mts')],{cwd:root,stdio:'pipe',timeout:20000});for(const row of data.files.filter(row=>row.path.startsWith('runtime/')))write('out/'+row.path,row.source);return [await import(pathToFileURL(join(directory,'caller.mjs')).href),await import(pathToFileURL(join(directory,'adopted.mjs')).href),await import(pathToFileURL(join(directory,'out/typed.mjs')).href)];}

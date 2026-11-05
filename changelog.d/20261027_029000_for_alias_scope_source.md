@@ -1,0 +1,1 @@
+- Draft shared ordinary-for pattern boundaries across immutable alias families and existing adoption selectors, preserving unknown iterator values, shadow refusals, complete source equations and independent unrun loop/JS/strict TypeScript/export/native oracle cases. Full translation, synchronization, freshness, parity and CI qualification remain unfinished (#759, #772).

@@ -1,6 +1,6 @@
 // Complete selected tracked bytes are fingerprints, never semantic authority.
 // The caller fixes its source family and retains the original read guards.
-import {execFileSync} from 'node:child_process';
+import {execFileSync} from 'node:child_process';import {discoverReadonlySourceProfileInputs} from './ordered-text-map-callers-20261102-source-storage.mjs';
 import {createHash} from 'node:crypto';
 import {constants,lstatSync,realpathSync,openSync,fstatSync,readSync,closeSync} from 'node:fs';
 import {resolve,join} from 'node:path';
@@ -27,7 +27,7 @@ function originalPath(root,path,prefix,fail){
 export function discoverTrackedInputs({root,prefix,select=()=>true,limits:inputLimits,maximumLimits,errorPrefix}={}){
   const fail=message=>{throw new TypeError(errorPrefix+': '+message);};
   if(typeof prefix!=='string'||!prefix.endsWith('/')||prefix.split('/').slice(0,-1).some(part=>!part||part==='.'||part==='..'||part.includes('\\'))||typeof select!=='function')fail('invalid tracked input selection');
-  const bounds=limits(inputLimits,maximumLimits,fail);root=realpathSync(resolve(root));
+  const bounds=limits(inputLimits,maximumLimits,fail);root=realpathSync(resolve(root));if(prefix==='tools/translation/source-profiles/'){const stored=discoverReadonlySourceProfileInputs(root,bounds,select);if(stored!==null)return stored;}
   const git=(...args)=>execFileSync('git',args,{cwd:root,timeout:10000,maxBuffer:8*1024*1024});
   const top=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(git('rev-parse','--show-toplevel')).replace(/\n$/u,'');
   if(realpathSync(top)!==root)fail('root is not its original Git worktree root');

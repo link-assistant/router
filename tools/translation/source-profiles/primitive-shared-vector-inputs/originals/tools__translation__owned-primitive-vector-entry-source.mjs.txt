@@ -1,0 +1,4 @@
+// Checked-node entry-prefix DATA only. The caller must supply private genuine
+// operation membership from the actual unchanged whole source/callee frame.
+import {primitiveOwnedVectorOperationShape} from './primitive-owned-vector-call-shape.mjs';
+export function hasBoundedOwnedPrimitiveVectorEntry(current,name,genuine){let node=current.body;const names=new Set(current.params.map(param=>param.name));for(let at=0;at<current.params.length&&node?.k==='let';at++,node=node.body){const call=node.value,row=call?.k==='routerHostCall'?primitiveOwnedVectorOperationShape(call.id):null;if(names.has(node.name)||node.mutable||row?.operation!=='truncate'||!genuine(call,current)||call.args.length!==2||call.args[0].k!=='var'||!names.has(call.args[0].name)||call.args[1].k!=='lit'||call.args[1].value!=='18446744073709551615'||call.args[1].type?.rustPrimitiveName!=='u64')return false;if(call.args[0].name===name)return true;}return false;}

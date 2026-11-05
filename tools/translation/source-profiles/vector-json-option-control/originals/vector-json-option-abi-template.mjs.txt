@@ -1,0 +1,17 @@
+// DATA layout join, reached only after originalJsonVectorDomain on the same
+// fresh checkedSource()/lower() pair. No supplied type/layout issues authority.
+export function originalJsonVectorOptionPayload(own,lowered,input){
+ const program=lowered?.program;if(!(program?.declarations instanceof Map)||!input||input.kind!=='data')return null;
+ const key=program.declarations.has(input.name)?input.name:flattened(input.name),owner=program.declarations.get(key);if(owner?.standardGeneric?.kind!=='Option')return null;
+ if(input.rustReference||input.rustOwnership||input.patternOwnershipRefusal||input.rustGenericIdentityUnresolved||input.rustBorrowingUnresolved||owner.k!=='data'||owner.name!==key||owner.standardGeneric.arguments?.length!==1||owner.ctors?.length!==2)fail('actual clean standard Option layout required');
+ const some=owner.ctors.filter(row=>row.name==='Some'),none=owner.ctors.filter(row=>row.name==='None');if(some.length!==1||none.length!==1||some[0].fields?.length!==1||some[0].fields[0].name!=='field0'||none[0].fields?.length)fail('actual standard Option constructors differ');
+ let work=0;
+ function resolve(type){if(++work>64||!type)fail('bounded actual Option payload type required');if(type.kind!=='named')return type;const name=type.path.filter((part,index)=>index!==0||part!=='crate').join('.'),key=program.declarations.has(name)?name:flattened(name);if(!program.declarations.has(key))fail('actual lowered Option field owner missing');const value={...type,kind:'data',name:key};delete value.path;return value;}
+ function payload(type){
+  type=resolve(type);if(type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)return null;
+  if(type.rustReference){if(type.rustReference.kind!=='shared')return null;const point=resolve(type.rustReference.pointee),name=program.declarations.has(point.name)?point.name:flattened(point.name);return point.kind==='data'&&name===flattened(own.ret.element.name)&&!point.rustReference&&!point.rustOwnership&&!point.patternOwnershipRefusal&&!point.rustGenericIdentityUnresolved&&!point.rustBorrowingUnresolved?'json-ref':null;}
+  if(type.patternOwnershipRefusal)return null;if(type.kind==='string'&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str')return 'str';if(type.rustOwnership)return null;if(type.kind==='bool')return 'bool';if(type.kind==='fixed'&&type.bits===64&&['u64','i64'].includes(type.rustPrimitiveName)&&type.signed===(type.rustPrimitiveName==='i64'))return type.rustPrimitiveName;return null;
+ }
+ const role=payload(some[0].fields[0].type),declared=payload(owner.standardGeneric.arguments[0]);if(!role||role!==declared)fail('only actual shared Json/str and bool/u64/i64 standard Option payloads are drafted');
+ if(input.rustStandardGeneric){if(input.rustStandardGeneric.kind!=='Option'||input.rustStandardGeneric.arguments?.length!==1||payload(input.rustStandardGeneric.arguments[0])!==role)fail('original and lowered standard Option arguments differ');}return role;
+}

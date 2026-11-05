@@ -673,3 +673,40 @@ fn claude_gateway_model_prefers_a_servable_row() {
         Some("glm-4.7")
     );
 }
+
+// Independent JS/TS persistent codec oracles. SOURCE ONLY; gated Rust CI UNRUN.
+#[test]
+fn js_source_draft_claude_takeover_restores_original_keys() {
+    let home = tempfile::tempdir().expect("temporary client home");
+    let manager = super::ClientManager::isolated(home.path());
+    let path = manager.config_path(super::ClientKind::ClaudeCode);
+    std::fs::create_dir_all(path.parent().expect("client directory")).expect("directory");
+    let before = serde_json::json!({"model":"default","env":{"ANTHROPIC_BASE_URL":"https://user.invalid","ANTHROPIC_API_KEY":"private-user-key","ANTHROPIC_MODEL":"user-model"}});
+    std::fs::write(&path, serde_json::to_string_pretty(&before).expect("serialize")).expect("config");
+    manager.setup(super::ClientKind::ClaudeCode, "http://127.0.0.1:8080", &[]).expect("configure");
+    let configured: serde_json::Value = serde_json::from_slice(&std::fs::read(&path).expect("read")).expect("JSON");
+    assert_eq!(configured["env"]["ANTHROPIC_MODEL"], "user-model");
+    assert_eq!(configured["env"]["CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY"], "1");
+    assert!(configured["env"].get("ANTHROPIC_API_KEY").is_none());
+    manager.remove(super::ClientKind::ClaudeCode).expect("remove");
+    let restored: serde_json::Value = serde_json::from_slice(&std::fs::read(&path).expect("read")).expect("JSON");
+    assert_eq!(restored, before);
+}
+
+#[test]
+fn js_source_draft_codex_reconfigure_preserves_first_native_predecessor() {
+    let home = tempfile::tempdir().expect("temporary client home");
+    let manager = super::ClientManager::isolated(home.path());
+    let path = manager.config_path(super::ClientKind::Codex);
+    std::fs::create_dir_all(path.parent().expect("client directory")).expect("directory");
+    std::fs::write(&path, "model_provider = \"custom\"\nchatgpt_base_url = \"https://old.invalid\"\n").expect("config");
+    manager.setup(super::ClientKind::Codex, "http://127.0.0.1:8080", &[]).expect("first setup");
+    manager.setup(super::ClientKind::Codex, "http://127.0.0.1:8081", &[]).expect("second setup");
+    let configured = std::fs::read_to_string(&path).expect("read").parse::<toml_edit::DocumentMut>().expect("TOML");
+    assert_eq!(configured["model_providers"]["link-assistant"]["requires_openai_auth"].as_bool(), Some(true));
+    assert!(configured["model_providers"]["link-assistant"].get("env_key").is_none());
+    manager.remove(super::ClientKind::Codex).expect("remove");
+    let restored = std::fs::read_to_string(&path).expect("read").parse::<toml_edit::DocumentMut>().expect("TOML");
+    assert_eq!(restored["model_provider"].as_str(), Some("custom"));
+    assert_eq!(restored["chatgpt_base_url"].as_str(), Some("https://old.invalid"));
+}

@@ -12,7 +12,7 @@ fn sibling_with_suffix(path: &Path, suffix: &crate::translation_core::Str) -> io
         .file_name()
         .and_then(|name| name.to_str())
         .ok_or_else(|| io::Error::other("durable file name is not valid UTF-8"))?;
-    Ok(path.with_file_name(format!(".{name}{suffix}")))
+    Ok(path.with_file_name(crate::translation_core::format!(".{name}{suffix}")))
 }
 
 #[cfg(test)]
@@ -101,16 +101,16 @@ fn fail_if_injected(path: &Path, point: FaultPoint) -> io::Result<()> {
 /// `Read-only file system (os error 30)`, which does not say what to change
 /// (issue #205).
 #[must_use]
-pub fn describe_write_failure(path: &Path, error: &io::Error) -> String {
+pub fn describe_write_failure(path: &Path, error: &io::Error) -> crate::translation_core::Text {
     if error.kind() == io::ErrorKind::ReadOnlyFilesystem {
-        return format!(
+        return crate::translation_core::format!(
             "cannot write {}: the credential directory is mounted read-only. \
              Re-run without `:ro` to authorize, then restore it — serving and \
              token renewal do not need write access.",
             path.display()
         );
     }
-    format!("could not create {}: {error}", path.display())
+    crate::translation_core::format!("could not create {}: {error}", path.display())
 }
 
 /// Replace `path` atomically, syncing both the file and its containing

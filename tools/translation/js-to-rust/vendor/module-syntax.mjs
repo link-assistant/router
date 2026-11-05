@@ -1,3 +1,4 @@
+import {captureOwnershipRuntimeOriginBefore,verifyOwnershipRuntimeOriginLoadWindow,verifyOwnershipRuntimeOriginCurrent,detachOwnershipRuntimeOriginData} from '../../forward-output-ownership-20261101-native-origin.mjs';
 import { createRequire,Module } from 'node:module';
 import {types as ownershipNativeTypes} from 'node:util';
 import * as ownershipNativeFs from 'node:fs';
@@ -29,6 +30,9 @@ const ownershipRuntimeLoader={globalSelf:ownershipRuntimeOps.get(ownershipRuntim
 const ownershipRuntimeFs=(()=>{const o=ownershipRuntimeOps,field=o.get(ownershipNativeFs,'default'),owners=[ownershipNativeFs],rows=[];if(field&&o.own(field,'value')&&field.value)o.define(owners,'1',{value:field.value,writable:true,enumerable:true,configurable:true});for(let at=0;at<owners.length;at++){const owner=owners[at];if(o.proxy(owner))return null;const names=o.keys(owner),fields=[];for(let index=0;index<names.length;index++)o.define(fields,''+fields.length,{value:o.get(owner,names[index]),writable:true,enumerable:true,configurable:true});o.define(rows,''+rows.length,{value:{owner,names,fields},writable:true,enumerable:true,configurable:true});}return rows;})();
 const ownershipRuntimeExtensions=(()=>{const o=ownershipRuntimeOps,field=ownershipRuntimeLoader.extensions;if(!field||!o.own(field,'value')||!field.value||o.proxy(field.value))return null;const names=o.keys(field.value),rows=[];for(let at=0;at<names.length;at++)o.define(rows,''+rows.length,{value:[names[at],o.get(field.value,names[at])],writable:true,enumerable:true,configurable:true});return rows;})();
 let ownershipRuntimeNative=null,ownershipRuntimeAttempted=false;
+// Origin is detached filesystem DATA only. Metadata failure never changes
+// the original compiler return/throw; qualified consumers observe it explicitly.
+let ownershipRuntimeOrigin=null,ownershipRuntimeOriginAssociation=null,ownershipRuntimeOriginValue=null,ownershipRuntimeOriginValueCaptured=false,ownershipRuntimeOriginFailed=false,ownershipRuntimeOriginFailure;
 function ownershipRuntimeSame(a,b){const o=ownershipRuntimeOps;if(!a||!b)return a===b;const names=['value','get','set','writable','enumerable','configurable'];for(let at=0;at<names.length;at++){const key=names[at];if(o.own(a,key)!==o.own(b,key)||o.own(a,key)&&a[key]!==b[key])return false;}return true;}
 function ownershipRuntimeLoadersCurrent(){
  const o=ownershipRuntimeOps,l=ownershipRuntimeLoader;if(!ownershipRuntimeSame(o.get(ownershipRuntimeRoot,'globalThis'),l.globalSelf))return false;const globals=['Object','Array','Reflect'];for(let at=0;at<globals.length;at++)if(!ownershipRuntimeSame(o.get(ownershipRuntimeRoot,globals[at]),l.globals[at]))return false;
@@ -50,16 +54,59 @@ function ownershipRuntimeCapture(value){
  const names=['getNodeConstructor','getTokenConstructor','getIdentifierConstructor','getPrivateIdentifierConstructor','getSourceFileConstructor'];
  for(let at=0;at<names.length;at++){const field=o.get(value.objectAllocator,names[at]);if(!field||!o.own(field,'value')||typeof field.value!=='function'||o.proxy(field.value))return null;let ctor=o.apply(field.value,value.objectAllocator,[]),depth=0;if(typeof ctor!=='function'||!capture(ctor))return null;let owner=ctor.prototype;while(owner!==null){if(++depth>8||!capture(owner))return null;owner=o.parent(owner);}owner=o.parent(ctor);depth=0;while(owner!==null){if(++depth>8||!capture(owner))return null;owner=o.parent(owner);}}
  const noop=value.noop,level=o.get(value.Debug,'getAssertionLevel');if(typeof noop!=='function'||o.proxy(noop)||!level||!o.own(level,'value')||typeof level.value!=='function'||o.proxy(level.value))return null;
- return {value,rows,noop,debug:value.Debug,getLevel:level.value};
+ let sourceScopeBirth=null;try{sourceScopeBirth=ownershipRuntimeCaptureSourceScopeBirth(value);}catch{}
+ return {value,rows,noop,debug:value.Debug,getLevel:level.value,sourceScopeBirth};
 }
+// Extended source-scope identities are captured at the same genuine private
+// fresh module birth, before its first caller can mutate exported predicates.
+// This separate optional frame never changes the original selected guard/API.
+function ownershipRuntimeCaptureSourceScopeBirth(value){
+ const o=ownershipRuntimeOps,rows=[],bindings=[];let fields=0;
+ const append=item=>o.define(rows,''+rows.length,{value:item,writable:true,enumerable:true,configurable:true});
+ const capture=owner=>{
+  if(!owner||typeof owner!=='object'&&typeof owner!=='function'||o.proxy(owner))return false;
+  for(let at=0;at<rows.length;at++)if(rows[at].owner===owner)return true;
+  const names=o.keys(owner);if(names.length>8192||fields+names.length>65536)return false;
+  const descriptors=[];for(let at=0;at<names.length;at++)o.define(descriptors,''+descriptors.length,{value:o.get(owner,names[at]),writable:true,enumerable:true,configurable:true});
+  fields+=names.length;append({owner,names,descriptors,parent:o.parent(owner)});return true;
+ };
+ if(!capture(value))return null;
+ const root=rows[0];for(let at=0;at<root.names.length;at++){const field=root.descriptors[at];if(!field)return null;let original;if(o.own(field,'value'))original=field.value;else{if(typeof field.get!=='function'||o.proxy(field.get))return null;original=o.apply(field.get,value,[]);}o.define(bindings,''+bindings.length,{value:{name:root.names[at],value:original},writable:true,enumerable:true,configurable:true});}
+ const names=['SyntaxKind','ScriptKind','ScriptTarget','ModuleKind','ModuleResolutionKind','NodeFlags','ModifierFlags','SymbolFlags','TypeFlags','ObjectFlags','sys','factory'];
+ for(let at=0;at<names.length;at++)if(!capture(value[names[at]]))return null;
+ return {rows,fields,bindings,revoked:false};
+}
+export function ownershipCompilerRuntimeSourceScopeCurrent(value){
+ const n=ownershipRuntimeNative,o=ownershipRuntimeOps;
+ if(!n||n.value!==value||!n.sourceScopeBirth)return false;
+ const scope=n.sourceScopeBirth;if(scope.revoked)return false;
+ try{
+  if(!ownershipCompilerRuntimeNativeCurrent(value))throw TypeError('Original native selected birth differs');
+  for(let at=0;at<scope.rows.length;at++){
+   const row=scope.rows[at];if(o.proxy(row.owner)||o.parent(row.owner)!==row.parent)throw TypeError('Original source-scope export owner differs');
+   const names=o.keys(row.owner);if(names.length!==row.names.length)throw TypeError('Original source-scope export membership differs');
+   for(let index=0;index<names.length;index++)if(names[index]!==row.names[index]||!ownershipRuntimeSame(o.get(row.owner,names[index]),row.descriptors[index]))throw TypeError('Original source-scope export descriptor differs');
+  }
+  // Original getters can retain identity while an official SDK setter changes
+  // their private exported binding. Rejoin actual values, not descriptor names.
+  for(let at=0;at<scope.bindings.length;at++){
+   const binding=scope.bindings[at],field=o.get(value,binding.name),actual=o.own(field,'value')?field.value:o.apply(field.get,value,[]),original=binding.value;
+   if(actual!==original&&!(actual!==actual&&original!==original))throw TypeError('Original source-scope exported binding differs');
+  }
+  return true;
+ }catch{scope.revoked=true;return false;}
+}
+
 // Only original source-selected native require functions enter this private
 // loader. No public callback or caller-supplied compiler can issue identities.
 function ownershipRuntimeRequire(load,root=sourceRoot){
  const o=ownershipRuntimeOps;let before=null,cache=null;
  if(!ownershipRuntimeAttempted&&root===sourceRoot){ownershipRuntimeAttempted=true;try{if(ownershipRuntimeLoadersCurrent()){const field=ownershipRuntimeLoader.cache;cache=field&&o.own(field,'value')?field.value:null;if(cache&&!o.proxy(cache)){before=o.keys(cache);if(before.length>8192)before=null;}}}catch{before=null;}}
- const value=load('typescript');
+ let originBefore=null,originTried=false;
+ if(before&&root===sourceRoot)try{originTried=true;if(!ownershipRuntimeLoadersCurrent())throw TypeError('Original native loader source guards unavailable');const resolver=o.get(load,'resolve');if(!resolver||!o.own(resolver,'value')||typeof resolver.value!=='function'||o.proxy(resolver.value))throw TypeError('Actual private native resolver unavailable');const filename=o.apply(resolver.value,load,['typescript']),packageJson=o.apply(resolver.value,load,['typescript/package.json']);originBefore=captureOwnershipRuntimeOriginBefore(root,filename,packageJson);if(!ownershipRuntimeLoadersCurrent())throw TypeError('Original native loader changed during origin acquisition');}catch(error){ownershipRuntimeOriginFailed=true;ownershipRuntimeOriginFailure=error;}
+ const value=load('typescript');if(originTried){ownershipRuntimeOriginValue=value;ownershipRuntimeOriginValueCaptured=true;}
  if(before)try{const names=o.keys(cache);if(names.length>8192)return value;let matched=null;for(let at=0;at<names.length;at++){let old=false;for(let index=0;index<before.length;index++)if(names[at]===before[index]){old=true;break;}if(old)continue;const field=o.get(cache,names[at]),module=field&&o.own(field,'value')?field.value:null;if(!module||o.proxy(module))continue;const exported=o.get(module,'exports'),loaded=o.get(module,'loaded'),filename=o.get(module,'filename');if(exported&&o.own(exported,'value')&&exported.value===value&&loaded&&o.own(loaded,'value')&&loaded.value===true&&filename&&o.own(filename,'value')&&typeof filename.value==='string'&&filename.value===names[at]){if(matched){matched=null;break;}matched=module;}}
-  if(matched&&ownershipRuntimeLoadersCurrent())ownershipRuntimeNative=ownershipRuntimeCapture(value);
+  if(matched&&ownershipRuntimeLoadersCurrent()){ownershipRuntimeNative=ownershipRuntimeCapture(value);if(originBefore&&!ownershipRuntimeOriginFailed)try{const filename=o.get(matched,'filename');if(!filename||!o.own(filename,'value')||filename.value!==originBefore.resolvedFilename)throw TypeError('Unique actual native module/resolver coordinate differs');const known=path=>{for(let index=0;index<originBefore.files.length;index++)if(originBefore.files[index].path===path)return true;return false;};for(let index=0;index<names.length;index++){let existed=false;for(let prior=0;prior<before.length;prior++)if(before[prior]===names[index]){existed=true;break;}if(existed)continue;const field=o.get(cache,names[index]),module=field&&o.own(field,'value')?field.value:null;if(!module||o.proxy(module))throw TypeError('Unknown newly loaded native module');const path=o.get(module,'filename'),loaded=o.get(module,'loaded');if(!path||!o.own(path,'value')||typeof path.value!=='string'||!loaded||!o.own(loaded,'value')||loaded.value!==true||!known(ownershipNativeFs.realpathSync(path.value)))throw TypeError('Loaded native dependency outside original captured cohort');}verifyOwnershipRuntimeOriginLoadWindow(originBefore);if(!ownershipRuntimeLoadersCurrent())throw TypeError('Original native loader changed during origin closing');ownershipRuntimeOrigin=originBefore;ownershipRuntimeOriginAssociation={module:matched,cache,filename:filename.value,exports:o.get(matched,'exports'),loaded:o.get(matched,'loaded'),file:o.get(matched,'filename')};}catch(error){ownershipRuntimeOriginFailed=true;ownershipRuntimeOriginFailure=error;}}
  }catch{ownershipRuntimeNative=null;}
  return value;
 }
@@ -72,4 +119,15 @@ export function ownershipCompilerRuntimeNativeCurrent(value){
 export function ownershipCompilerRuntimeLoad(sourceRoot) {
   const require = createRequire(join(sourceRoot, 'js/package.json'));
   return ownershipRuntimeRequire(require,sourceRoot);
+}
+
+// This getter grants NO native/source/type/owner permission. Only the original
+// private fresh-loader association can supply its actual physical origin DATA.
+// Unknown/preloaded values cannot gain authority from public paths/sys fields.
+export function ownershipCompilerRuntimeOriginData(value){
+ if(!ownershipRuntimeOriginValueCaptured||value!==ownershipRuntimeOriginValue)return null;
+ if(ownershipRuntimeOriginFailed)throw ownershipRuntimeOriginFailure;
+ if(!ownershipCompilerRuntimeNativeCurrent(value)||!ownershipRuntimeOrigin||!ownershipRuntimeOriginAssociation)return null;
+ const association=ownershipRuntimeOriginAssociation,o=ownershipRuntimeOps,current=o.get(association.cache,association.filename);if(!current||!o.own(current,'value')||current.value!==association.module||!ownershipRuntimeSame(o.get(association.module,'exports'),association.exports)||!ownershipRuntimeSame(o.get(association.module,'loaded'),association.loaded)||!ownershipRuntimeSame(o.get(association.module,'filename'),association.file))throw TypeError('Actual original native module cache association changed');
+ verifyOwnershipRuntimeOriginCurrent(ownershipRuntimeOrigin);return detachOwnershipRuntimeOriginData(ownershipRuntimeOrigin);
 }

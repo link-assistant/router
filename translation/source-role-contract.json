@@ -1,0 +1,146 @@
+{
+  "schema": "router-multilanguage-source-role-contract-20261104-v1",
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "installationAuthority": false,
+  "defaultRole": "authored-or-unmanaged-until-exact-fresh-producer-reproduction",
+  "authoredInputs": [
+    "js/src/",
+    "js/portable/",
+    "rust/src/",
+    "tools/translation/",
+    "tools/translation/source-profiles/"
+  ],
+  "mixedTrees": [
+    {
+      "root": "ts/src/",
+      "defaultRole": "authored-or-unmanaged",
+      "candidateProducers": [
+        "native-typescript",
+        "js-first",
+        "js-first-definitions",
+        "js-first-definitions-matrix"
+      ]
+    },
+    {
+      "root": "ts/portable/",
+      "defaultRole": "authored-or-unmanaged",
+      "candidateProducers": [
+        "native-typescript"
+      ]
+    },
+    {
+      "root": "js/runtime/",
+      "defaultRole": "authored-or-unmanaged",
+      "candidateProducers": [
+        "actual-project-runtime-materializer"
+      ]
+    },
+    {
+      "root": "ts/runtime/",
+      "defaultRole": "authored-or-unmanaged",
+      "candidateProducers": [
+        "native-typescript"
+      ]
+    }
+  ],
+  "generatedCandidates": [
+    {
+      "roots": [
+        "ts/src/",
+        "ts/portable/",
+        "ts/runtime/",
+        "ts/schemas/",
+        "tools/translation/js-to-rust/generated/native-typescript/"
+      ],
+      "exactPaths": [
+        "ts/package.json",
+        "ts/tsconfig.native.json",
+        "ts/.gitignore",
+        "ts/index.ts",
+        "ts/testing.ts",
+        "ts/catalog.json"
+      ],
+      "producerFamily": "native-typescript"
+    },
+    {
+      "roots": [
+        "rust/src/generated_js_first/",
+        "ts/src/portable-draft/",
+        "tools/translation/js-to-rust/generated/",
+        "ts/generated/reverse-owned-core/",
+        "ts/generated/reverse-owned-definitions/",
+        "tools/translation/js-to-rust/generated/native-portable/",
+        "tools/translation/js-to-rust/generated/owned-core/",
+        "tools/translation/js-to-rust/generated/owned-core-definitions/"
+      ],
+      "exactPaths": [
+        "ts/src/js-first-policy.ts",
+        "tools/translation/js-to-rust/generated/policy.lino",
+        "parity/js-first-translation.json",
+        "parity/js-native-portable-draft.json",
+        "parity/js-owned-core-reverse-draft.json",
+        "parity/js-owned-core-definitions-reverse-draft.json"
+      ],
+      "producerFamily": "original-js-first-and-definition-producers",
+      "closedPathPatterns": [
+        "^tools/translation/js-to-rust/generated/owned-(?:core|base64|ascii)-witness(?:/|\\.rs$|\\.lino$|-inputs\\.json$)"
+      ]
+    },
+    {
+      "roots": [
+        "tools/translation/meta/",
+        "tools/translation/projects/",
+        "js/generated/rust-draft/",
+        "ts/generated/rust-draft/",
+        "js/generated/rust-project/",
+        "ts/generated/rust-project/",
+        "tools/translation/generated/owned-definitions/",
+        "js/generated/rust-owned-definitions/",
+        "ts/generated/rust-owned-definitions/"
+      ],
+      "exactPaths": [
+        "parity/rust-source-inventory.json"
+      ],
+      "producerFamily": "eight-original-forward-producers"
+    },
+    {
+      "roots": [
+        "ts/dist/"
+      ],
+      "exactPaths": [],
+      "producerFamily": "native-typescript-emit"
+    }
+  ],
+  "explicitProtectionPolicy": "translation/source-ownership.json",
+  "precedence": [
+    "explicit-authored-or-unmanaged-protection",
+    "actual-input-source-protection",
+    "exact-original-producer-domain-and-complete-fresh-source-semantic-checks",
+    "exact-current-prior-output-bytes-and-mode-or-genuine-fixed-legacy-replay",
+    "guarded-current-source-and-output-closing-and-original-installer"
+  ],
+  "rules": [
+    "Candidate roots declare destinations only and never enroll neighboring files.",
+    "A matching header, schema, path, digest or this contract grants no overwrite or deletion permission.",
+    "Source-profile/CST/equation assets remain reviewed authored evidence unless an exact producer transaction owns their outputs.",
+    "Standalone crates retain src/generated_js_first; nested Router crates use rust/src/generated_js_first.",
+    "Unknown or empty receiving layouts retain the original exact-producer behavior; no ownership is inferred from absence."
+  ],
+  "bookkeepingCandidates": [
+    "tools/translation/js-to-rust/generated/native-typescript/ownership-20261101.json",
+    "tools/translation/js-to-rust/generated/js-first-ownership-canonical-20261101.json",
+    "tools/translation/js-to-rust/generated/js-first-ownership-definitions-20261101.json",
+    "tools/translation/js-to-rust/generated/js-first-ownership-matrix-20261101.json",
+    ".router-typescript-emit-ownership-20261101.json",
+    ".router-forward-output-ownership/"
+  ],
+  "profileCoordinates": {
+    "prefix": "profiles/<actual-profile-name>-<actual-sha256>/",
+    "rule": "Only the actual fresh matrix producer selects a prefix; roots inside it retain the corresponding exact producer domains.",
+    "matrixIndexes": [
+      "profiles/matrix-<actual-sha256>.json",
+      "profiles/owned-definitions-matrix-<actual-sha256>.json"
+    ]
+  }
+}

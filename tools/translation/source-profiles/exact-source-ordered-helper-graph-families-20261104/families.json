@@ -1,0 +1,34 @@
+{
+  "schema": "fixed-ordered-helper-graph-source-family-census-20261104-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-ordered-helper-graph-families-20261104/index451.before.json.gz",
+    "encodedSha256": "64efd124ab4a8904fbab3996426b872dba865fa81ed439a0e4b6c9ea9df6b66e",
+    "sourceSha256": "1102cde93408e2606f5dc9b92696fc80a31b0df43cac911806ebf052f1ec845b",
+    "rows": 451
+  },
+  "families": [
+    {
+      "id": "exact-ordered-helper-graph-readers-20261104",
+      "manifest": "tools/translation/source-profiles/ordered-scalar-helper-graph-20261104/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "ordered-scalar-helper-graph-source-20261104-v1",
+      "sha256": "a9cb390d61dff0c5088a1ea2f83e3648b3e8d965eebafe2ae4a13f7da0cb6679",
+      "rows": 2,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-ordered-helper-graph-cases-20261104",
+      "manifest": "tools/translation/source-profiles/exact-source-ordered-helper-graph-families-20261104/joins.json.gz",
+      "kind": "archive",
+      "schema": "ordered-helper-graph-index-joins-20261104-v1",
+      "sha256": "b4d2c960824feee00dd53e6aa98f057961529f3f100e48c28807198e8b112d2a",
+      "rows": 13,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 15,
+  "totalRows": 466,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

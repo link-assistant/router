@@ -1,0 +1,26 @@
+// Independent missing-alternative SOURCE. Every new case remains unrun.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {normalizeHttpResourceRustBindings} from '../http-resource-native-bindings.mjs';
+import {translateHttpResourceShadowCallerRust} from '../http-resource-shadow-rust.mjs';
+import {httpResourceReceivingData,verifyHttpResourceTargets} from './http-resource-receiving-data.mjs';
+import {sameRustSourceSyntax} from '../../rust-syntax-cells.mjs';
+import {prepareHttpResourceImplicitNoneSources} from '../../prepare-http-resource-implicit-none-sources.mjs';
+const limits={timeout:60000};
+function input(source){return {sourcePath:'src/caller.rs',javascriptPath:'caller.mjs',...httpResourceReceivingData([{path:'src/caller.rs',source}])};}
+test('actual no-else Option branches retain a complete returning success path and final absence continuation',limits,async()=>{
+ const source='pub fn tail(value: Option<bool>) -> Option<bool> { if let Some(payload) = value { return Some(!payload); } None }\npub fn returned(value: Option<bool>) -> Option<bool> { if let Some(value) = value { return Some(!value); } return None; }\npub fn grouped(value: Option<bool>) -> Option<bool> { if let Some(payload) = value { return Some(payload); } ((None)) }\n',result=translateHttpResourceShadowCallerRust(source,input(source)),history=result.httpResourceRustSourceHistory;assert.equal(history.equation.inverse,source);assert.equal(history.lexicalBindings.equation.inverse,source);assert.doesNotMatch(history.normalizedSource,/if\s+let/u);assert.match(history.normalizedSource,/\?;/u);assert.ok(sameRustSourceSyntax(history.normalizedSource,result.rust));await verifyHttpResourceTargets(result,api=>{for(const name of ['tail','returned','grouped']){assert.deepEqual(api[name]({$:'None'}),{$:'None'});for(const value of [false,true])assert.deepEqual(api[name]({$:'Some',field0:value}),{$:'Some',field0:name==='grouped'?value:!value});}});assert.equal(result.rustExecuted,false);assert.equal(result.receivingExecuted,false);
+});
+test('pure original generic no-else forms preserve their precise Option signatures and opaque payload movement',limits,async()=>{
+ const source='pub fn tail<T>(value: Option<T>) -> Option<T> { if let Some(payload) = value { return Some(payload); } None }\npub fn returned<T>(value: Option<T>) -> Option<T> { if let Some(payload) = value { return Some(payload); } return None; }\n',result=translateHttpResourceShadowCallerRust(source,input(source));assert.equal(result.httpResourceRustSourceHistory.equation.inverse,source);assert.equal(result.httpResourceRustSourceHistory.lexicalBindings.selections.filter(row=>row.kind==='generic-option-unchanged-payload-body').length,2);assert.match(result.rust,/fn tail<T>\(value: Option<T>\) -> Option<T>/u);await verifyHttpResourceTargets(result,api=>{const payload=new Proxy({},{get(){throw Error('opaque payload');}});for(const name of ['tail','returned']){assert.strictEqual(api[name]({$:'Some',field0:payload}).field0,payload);assert.deepEqual(api[name]({$:'None'}),{$:'None'});}});
+});
+test('loop-local normalization retains the original function return target and complete source inverse',()=>{
+ const source='pub fn selected(value: Option<bool>) -> Option<bool> { loop { if let Some(payload) = value { return Some(!payload); } return None; } }',result=normalizeHttpResourceRustBindings(source);assert.equal(result.equation.inverse,source);assert.match(result.after,/return Some\(\(!payload\)\);/u);assert.doesNotMatch(result.after,/return None/u);assert.equal(result.semanticAuthority,false);assert.equal(result.crossInvocationCache,false);
+});
+test('nonreturning success extra fallback effects and different absence values remain refused',limits,()=>{
+ for(const body of ['if let Some(payload) = value { Some(payload) } None','if let Some(payload) = value { return Some(payload); } crate::translation_primitive_option_core::bool_none()','if let Some(payload) = value { return Some(payload); } crate::translation_primitive_option_core::bool_none(); None','if let Some(payload) = value { return Some(payload); } Some(false)','if let Some(payload) = value { return Some(payload); }','if let Some(mut payload) = value { return Some(payload); } None']){const source='pub fn bad(value: Option<bool>) -> Option<bool> { '+body+' }';assert.throws(()=>translateHttpResourceShadowCallerRust(source,input(source)),body);}
+ const source='pub fn good(value: Option<bool>) -> Option<bool> { if let Some(payload) = value { return Some(payload); } None }',changed=input(source);changed.files=changed.files.map(row=>row.path==='src/caller.rs'?{...row,source:source+'\n'}:row);assert.throws(()=>translateHttpResourceShadowCallerRust(source,changed));
+});
+test('four complete no-else source equations retain actual native owners both phases and full inverses',limits,()=>{
+ const plan=prepareHttpResourceImplicitNoneSources();assert.equal(plan.files.length,4);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.semanticAuthority,false);assert.equal(plan.receivingExecuted,false);
+});

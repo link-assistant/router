@@ -26,7 +26,7 @@ test('complete Rust1.89 macro intrinsic primitive-owner and license pins remain 
 test('primitive wrapping specialization consumes actual Self width signature body and generic intrinsic',()=>{
   for(const bits of [8,16,32,64,128])for(const signed of [false,true])for(const method of ['wrapping_add','wrapping_sub']){
     const fixed=type(bits,signed),proof=pinnedFixedWrapping(fixed,method),contract=fixedIntegerContracts(fixed).contracts.find(entry=>entry.rustPath.at(-1)===method);
-    assert.equal(requireFixedWrappingProof(proof,fixed,method),proof);assert.equal(contract.sourceWrappingProof,proof);assert.equal(proof.checkedBody.width,bits);assert.equal(proof.checkedBody.signed,signed);assert.equal(proof.checkedBody.parameters.every(parameter=>parameter.type===fixed.rustPrimitiveName),true);assert.equal(proof.checkedBody.ret,fixed.rustPrimitiveName);
+    assert.equal(requireFixedWrappingProof(proof,fixed,method),proof);assert.deepEqual(contract.sourceWrappingProof,proof);assert.equal(proof.checkedBody.width,bits);assert.equal(proof.checkedBody.signed,signed);assert.equal(proof.checkedBody.parameters.every(parameter=>parameter.type===fixed.rustPrimitiveName),true);assert.equal(proof.checkedBody.ret,fixed.rustPrimitiveName);
     assert.equal(contract.constSince,'1.32.0');assert.equal(contract.constEligible,true);assert.equal(contract.ret.kind,'fixed');assert.equal(proof.runtimeParity,false);
   }
 });
@@ -36,7 +36,7 @@ test('copied source proofs forged widths and unsupported methods cannot acquire 
   assert.throws(()=>requireFixedWrappingProof(structuredClone(proof),fixed,'wrapping_add'),/private original/);
   assert.throws(()=>requireFixedWrappingProof(proof,type(32,false),'wrapping_add'),/private original/);
   for(const bad of [{...fixed,rustPrimitiveName:'i64'},{...fixed,rustPrimitiveName:'Custom'},{...fixed,rustPrimitiveName:'usize'},{...fixed,bits:7},{kind:'float'}])assert.throws(()=>pinnedFixedWrapping(bad,'wrapping_add'));
-  assert.throws(()=>pinnedFixedWrapping(fixed,'wrapping_mul'));
+  assert.throws(()=>pinnedFixedWrapping(fixed,'wrapping_div'));
   // Existing pointer-width arithmetic still works; the new feature refuses it.
   const pointer=fixedIntegerContracts({...fixed,rustPrimitiveName:'usize'});assert.equal(pointer.contracts.some(entry=>entry.rustPath.at(-1)==='checked_add'),true);assert.equal(pointer.contracts.some(entry=>entry.rustPath.at(-1)==='wrapping_add'),false);
 });
@@ -90,8 +90,8 @@ test('late source type aliases determine real width and shadowed associated owne
   const forged=project('struct u64{value:u8}pub fn fake(x:u64)->u64{u64::wrapping_add(x,x)}');assert.equal(forged.meta.executable.some(entry=>entry.name==='fake'),false);
 });
 
-test('constant evaluation outside its admitted host profile remains explicit rather than claiming formatter constants',()=>{
-  const result=project('const WRAPPED:u8=255u8.wrapping_add(1);pub fn ordinary(x:u8)->u8{x.wrapping_add(1)}');
+test('unproved saturating constant evaluation remains an explicit refusal outside the source wrapping profile',()=>{
+  const result=project('const WRAPPED:u8=255u8.saturating_add(1);pub fn ordinary(x:u8)->u8{x.wrapping_add(1)}');
   assert.equal(result.meta.executable.some(entry=>entry.name==='ordinary'),true);assert.equal(result.meta.executable.some(entry=>entry.name==='WRAPPED'),false);assert.equal(result.meta.refused.some(entry=>entry.name==='WRAPPED'),true);
 });
 

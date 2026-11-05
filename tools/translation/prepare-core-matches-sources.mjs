@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-edges.mjs';
 import {composeOwnedCorePrivateAnalysisRetention} from './prepare-owned-core-private-analysis-retention.mjs';
 import {composeCoreUnitMatches,prepareCoreUnitMatches} from './prepare-core-unit-matches.mjs';
@@ -261,11 +262,8 @@ export function prepareCurrentCoreMatchesComposition(options = {}) {
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2); if (args.length !== 1 || !['--write', '--check', '--emit'].includes(args[0])) fail('usage: --write|--check|--emit');
-  const result = prepareCurrentCoreMatchesComposition();
+  const result=args[0] === '--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const result=prepareCurrentCoreMatchesComposition();    for (const row of result.files) if (!result.layers.flatMap(layer => layer.files.filter(part => part.path === row.path).flatMap(part => [part.before,part.after])).includes(row.current) || readFileSync(resolve(ROOT,row.path),'utf8') !== row.current) fail('complete current source differs from actual composed equations');
+    writer.preflight(result.files.map(row=>row.path));for (const row of result.files) writer.write(row.path,row.after);return result;}):prepareCurrentCoreMatchesComposition();
   if (args[0] === '--emit') console.log(JSON.stringify(result));
-  else if (args[0] === '--write') {
-    for (const row of result.files) if (!result.layers.flatMap(layer => layer.files.filter(part => part.path === row.path).flatMap(part => [part.before,part.after])).includes(row.current) || readFileSync(resolve(ROOT,row.path),'utf8') !== row.current) fail('complete current source differs from actual composed equations');
-    for (const row of result.files) writeFileSync(resolve(ROOT, row.path), row.after);
-  }
-  else { if (result.files.some(row => row.current !== row.after)) fail('generated source is stale'); console.log('Owned matches sources are current.'); }
+  else if (args[0] === '--check') { if (result.files.some(row => row.current !== row.after)) fail('generated source is stale'); console.log('Owned matches sources are current.'); }
 }

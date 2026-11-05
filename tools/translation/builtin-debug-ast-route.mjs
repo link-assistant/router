@@ -2,7 +2,7 @@
 import {createHash} from 'node:crypto';
 import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 import {createScopedPrivateNativeProofJsonSerializer as createPrivateFrozenJsonComposer} from "./operation-proof-byte-bridge.mjs";
-import {builtinDebugDataInputs} from './builtin-derive-data-inputs.mjs';
+import {builtinCloneDataInputs,builtinDebugDataInputs} from './builtin-derive-data-inputs.mjs';
 import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler} from './derive-quote-meta.mjs';
 import {originalAstFunction,originalAstDefinition,astStructLiteral,astSyntaxText,astFragmentText,astEnumVariant,originalAstPositiveConstructors} from './builtin-derive-ast-meta.mjs';
 import {originalBuiltinEnumPatternSource,requireOriginalBuiltinEnumPatternSource} from './builtin-derive-enum-patterns.mjs';
@@ -201,6 +201,88 @@ export function compileBuiltinDebugEnclosingNamespaceModel({profile,entry,origin
   }
  }
  const closed=closeBranches(plan,branches,input,fields);
+ // The candidate is DATA only. The private invocation issuer independently
+ // joins current input/owner/source and the original resolver rule.
+ return {schema:'original-debug-enclosing-grammar-candidate-v1',inputStyle:input.style,
+  sources:plan.recipes.map(recipe=>({source:recipe.source,sourceSha256:recipe.sourceSha256,span:recipe.span,syntaxSha256:recipe.syntaxSha256,digest:recipe.digest})),
+  branches:closed.map(branch=>({condition:branch.condition,statements:branch.statements.length,closure:branch.recursiveNamespaceClosure})),
+  sourceControls:plan.sourceControls,generatedAttributes:['automatically_derived','inline'],
+  sourceTypeRoundtrips:fields.map(field=>({name:field.name,typeSpan:field.typeSpan,sourceSha256:field.sourceSha256,semanticSyntaxRoundTrip:field.semanticSyntaxRoundTrip})),
+  methodBehavior:'opaque-untranslated',namespaceAuthority:false,runtimeAuthority:false};
+}
+
+// Explicit tuple Debug paths retain every original public source entry.
+function tupleDebugSourcePlan(profile,entry){
+ const plan=sourcePlan(profile,entry),show=originalAstFunction(profile,directory+'debug.rs','show_substructure'),access=originalAstFunction(profile,generic,'create_struct_field_access_fields'),parser=originalAstFunction(profile,'compiler/rustc_parse/src/parser/item.rs','parse_tuple_struct_body');
+ contains(show,'Struct(vdata, fields) => (substr.type_ident, *vdata, fields)','ast::VariantData::Tuple(..) => (false, 1)','format!("debug_tuple_field{}_finish", fields.len())','sym::debug_tuple_fields_finish');
+ contains(access,'self.create_fields(struct_def, |i, struct_field, sp|','Ident::from_str_and_span(&i.to_string(), struct_field.span)');
+ contains(parser,'self.parse_paren_comma_seq','p.parse_outer_attributes()?','let lo = p.token.span','p.parse_visibility(FollowedByType::Yes)','let ty = match p.parse_ty()','span: lo.to(ty.span)','ident: None');
+ return {...plan,recipes:[...plan.recipes,show,access,parser]};
+}
+function closeTupleDebugBranches(plan,branches,input,fields){
+ const constructors=new Set(plan.constructors.values()),labels=new Set([input.name,...fields.map(f=>f.name),...input.variants.map(v=>v.name)]);let visited=0;
+ const fail=()=>{throw new TypeError('Original Debug recursive positive namespace grammar differs');};
+ const visit=expr=>{
+  if(++visited>4096||expr?.kind!=='Expr'||expr.tokens!==null||expr.attrs?.length!==0||!constructors.has(expr.constructor))fail();const slots=expr.slots;
+  switch(expr.constructor.variant.name){
+   case 'Path':if(slots.path?.kind!=='Path'||!slots.path.segments.length)fail();break;
+   case 'Lit':if(slots.s?.kind!=='Symbol'||!labels.has(slots.s.value))fail();break;
+   case 'Field':visit(slots.selflike_arg);if(!fields.some(f=>f.name===slots.struct_field_ident&&JSON.stringify(f.fieldDefinitionSpan)===JSON.stringify(slots.sourceSpan)))fail();break;
+   case 'AddrOf':visit(slots.e);break;
+   case 'Call':visit(slots.expr);if(!Array.isArray(slots.args))fail();slots.args.forEach(visit);break;
+   case 'Array':case 'Tup':if(!Array.isArray(slots.exprs))fail();slots.exprs.forEach(visit);break;
+   case 'Match':visit(slots.arg);if(slots.matchKind!=='Prefix'||slots.arms.length!==input.variants.length)fail();slots.arms.forEach((arm,index)=>{const v=input.variants[index];if(arm.kind!=='Arm'||arm.attrs.length||arm.guard!==null||arm.isPlaceholder!==false||arm.pattern.kind!=='PatKind::Path'||arm.pattern.qself!==null||JSON.stringify(arm.pattern.path)!==JSON.stringify([input.name,v.name])||JSON.stringify(arm.pattern.sourceNameSpan)!==JSON.stringify(v.span))fail();visit(arm.body);});break;
+   default:fail();
+  }
+ };
+ const type=ty=>{switch(ty?.kind){case 'TyKind::Infer':break;case 'TyKind::Ref':if(ty.mutability!=='Not'||ty.lifetime!==null&&(ty.lifetime.kind!=='Lifetime'||ty.lifetime.symbol!=='StaticLifetime'))fail();type(ty.ty);break;case 'TyKind::Slice':type(ty.ty);break;case 'TyKind::TraitObject':if(ty.syntax!=='Dyn'||ty.bounds.length!==1||ty.bounds[0].kind!=='GenericBound::Trait'||ty.bounds[0].constness!=='Never'||JSON.stringify(ty.bounds[0].path.slice(1))!==JSON.stringify(['fmt','Debug']))fail();break;default:fail();}};
+ return branches.map(branch=>{
+  const before=visited;if(branch.statements.length&&!(input.style==='tuple-struct'&&fields.length>plan.sourceControls.fieldCountCutoff&&branch.statements.length===1))fail();
+  branch.statements.forEach((stmt,index)=>{const local=stmt.local;if(stmt.kind!=='StmtKind::Let'||local?.kind!=='LocalKind::Init'||local.tokens!==null||local.attrs.length||local.mutable!==false||local.pattern.kind!=='PatKind::Ident'||local.pattern.bindingMode!=='NONE'||local.pattern.subpattern!==null||local.pattern.ident!=='values')fail();type(local.ty);visit(local.initializer);});visit(branch.body);
+  return {...branch,recursiveNamespaceClosure:{schema:'source-original-debug-positive-tree-closure-v1',nodes:visited-before,localInitializers:branch.statements.length,sourceConstructorsOnly:true,bodyExpressionComplete:true,namespaceAuthority:false}};
+ });
+}
+export function liftBuiltinDebugTupleAstRoute({profile,entry,original,certificate,input}={}){
+ const plan=tupleDebugSourcePlan(profile,entry),fresh=builtinCloneDataInputs({source:original.module.source,span:certificate.span});if(JSON.stringify(fresh)!==JSON.stringify(input)||input.wholeSourceSha256!==certificate.sourceSha256||input.itemSha256!==certificate.itemSha256||input.name!==certificate.name||input.kind!==certificate.kind)throw new TypeError('Original Debug source syntax differs from its private invocation');if(input.attributes.some(a=>a.name==='repr'))throw new TypeError('Original Debug packed/repr field view remains outside this source route');
+ if(input.style!=='tuple-struct')throw new TypeError('Tuple Debug requires its explicit source input style');
+ const fields=typeLeaves(original,certificate,input),node=(builder,slots)=>({kind:'Expr',constructor:plan.constructors.get(builder),attrs:[],tokens:null,slots}),root={kind:'Ident',symbol:'kw::DollarCrate',hygiene:'original std_path with_def_site_ctxt(DUMMY_SP)'},path=segments=>node('expr_path',{path:{kind:'Path',segments}}),call=(segments,args)=>node('expr_call',{expr:path(segments),args}),string=value=>node('expr_str',{s:{kind:'Symbol',value}}),self=path(['self']),fmt=path(['f']);
+ const ok=()=>call([root,'result','Result','Ok'],[node('expr_tuple',{exprs:[]})]),write=name=>call([root,'fmt','Formatter','write_str'],[fmt,name]);
+ const fieldExpressions=fields.map(field=>node('expr_addr_of',{e:node('source_field',{selflike_arg:self,struct_field_ident:field.name,sourceSpan:field.fieldDefinitionSpan,hygiene:'original FieldDef span with trait ctxt'})}));
+ const last=(expr,index)=>index<fieldExpressions.length-1?expr:node('expr_addr_of',{e:expr,sourceSpan:fields[index].fieldDefinitionSpan,hygiene:'original expr_for_field last-field span'});
+ let branches=[{condition:'FmtDebug::None',statements:[],body:ok()}];
+ if(input.style==='unit-enum'&&input.variants.length>1){const arms=input.variants.map(variant=>({kind:'Arm',attrs:[],guard:null,body:string(variant.name),pattern:{kind:'PatKind::Path',qself:null,path:[input.name,variant.name],sourceNameSpan:variant.span},isPlaceholder:false}));branches.push({condition:'FmtDebug::Shallow or Full; AllFieldlessEnum bypasses shallow branch',statements:[],body:write(node('expr_match',{arg:self,arms,matchKind:'Prefix'}))});}
+ else{
+  const name=string(input.style==='unit-enum'?input.variants[0].name:input.name);branches.push({condition:'FmtDebug::Shallow',statements:[],body:write(name)});
+  if(!fields.length)branches.push({condition:'FmtDebug::Full; empty fields',statements:[],body:write(name)});
+  else if(fields.length<=5)branches.push({condition:'FmtDebug::Full; fields<=original CUTOFF',statements:[],body:call([root,'fmt','Formatter',{kind:'Symbol',originalFormat:'debug_tuple_field{}_finish',argument:fields.length}],[fmt,name,...fieldExpressions.map(last)])});
+  else{
+   const names=node('expr_addr_of',{e:node('expr_array',{exprs:fields.map(f=>string(f.name))})}),values=node('expr_addr_of',{e:node('expr_array',{exprs:fieldExpressions.map(last)})}),ref=(ty,lifetime=null)=>({kind:'TyKind::Ref',lifetime,mutability:'Not',ty}),namesTy=ref({kind:'TyKind::Infer'},{kind:'Lifetime',symbol:'StaticLifetime'}),valuesTy=ref({kind:'TyKind::Slice',ty:ref({kind:'TyKind::TraitObject',bounds:[{kind:'GenericBound::Trait',path:[root,'fmt','Debug'],constness:'Never'}],syntax:'Dyn'})});
+   const local=(ident,ty,initializer)=>({kind:'StmtKind::Let',local:{kind:'LocalKind::Init',pattern:{kind:'PatKind::Ident',bindingMode:'NONE',ident,subpattern:null},ty,initializer,attrs:[],tokens:null,mutable:false}});
+   branches.push({condition:'FmtDebug::Full; fields>original CUTOFF',statements:[local('values',valuesTy,values)],body:call([root,'fmt','Formatter','debug_tuple_fields_finish'],[fmt,name,path(['values'])])});
+  }
+ }
+ const evidence={schema:'original-debug-data-ast-bridge-v1',profileDigest:profile.digest,input,typedSource:{fields,variants:input.variants,inputStyle:input.style},descriptor:plan.descriptor,method:plan.method,recipes:plan.recipes,compilerMeta:plan.compilerMeta,positiveSchemas:plan.positiveSchemas,schemas:plan.schemas,parserFieldSpans:plan.parserFieldSpans,sourceControls:plan.sourceControls,branches:closeTupleDebugBranches(plan,branches,input,fields).map(branch=>({...branch,outputKind:'ItemKind::Impl',associatedKind:'AssocItemKind::Fn',bodyKind:'Block',associatedItems:1,associatedTypes:0,genericParameters:0,wherePredicates:0,generatedAttributes:['automatically_derived','inline'],lastBodyWrapper:'StmtKind::Expr from original BlockOrExpr::into_block'})),positiveOutputGrammarComplete:true,namespaceAuthority:false,copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['original compiler metadata includes independent uncompiled builder/helper execution facts','fmt/format/allocator execution is not translated','actual original caller/helper/ancestor owners require the independent private issuer join','all other derives, ownership, trait validity and const eligibility remain separate']};return freezeCompleted({...evidence,digest:hash(composeJson(evidence))});
+}
+export function compileBuiltinDebugTupleEnclosingNamespaceModel({profile,entry,original,certificate,input}={}){
+ const plan=tupleDebugSourcePlan(profile,entry),fresh=builtinCloneDataInputs({source:original.module.source,span:certificate.span});if(JSON.stringify(fresh)!==JSON.stringify(input)||input.wholeSourceSha256!==certificate.sourceSha256||input.itemSha256!==certificate.itemSha256||input.name!==certificate.name||input.kind!==certificate.kind)throw new TypeError('Original Debug source syntax differs from its private invocation');if(input.attributes.some(a=>a.name==='repr'))throw new TypeError('Original Debug packed/repr field view remains outside this source route');
+ if(input.style!=='tuple-struct')throw new TypeError('Tuple Debug requires its explicit source input style');
+ const fields=typeLeaves(original,certificate,input),node=(builder,slots)=>({kind:'Expr',constructor:plan.constructors.get(builder),attrs:[],tokens:null,slots}),root={kind:'Ident',symbol:'kw::DollarCrate',hygiene:'original std_path with_def_site_ctxt(DUMMY_SP)'},path=segments=>node('expr_path',{path:{kind:'Path',segments}}),call=(segments,args)=>node('expr_call',{expr:path(segments),args}),string=value=>node('expr_str',{s:{kind:'Symbol',value}}),self=path(['self']),fmt=path(['f']);
+ const ok=()=>call([root,'result','Result','Ok'],[node('expr_tuple',{exprs:[]})]),write=name=>call([root,'fmt','Formatter','write_str'],[fmt,name]);
+ const fieldExpressions=fields.map(field=>node('expr_addr_of',{e:node('source_field',{selflike_arg:self,struct_field_ident:field.name,sourceSpan:field.fieldDefinitionSpan,hygiene:'original FieldDef span with trait ctxt'})}));
+ const last=(expr,index)=>index<fieldExpressions.length-1?expr:node('expr_addr_of',{e:expr,sourceSpan:fields[index].fieldDefinitionSpan,hygiene:'original expr_for_field last-field span'});
+ let branches=[{condition:'FmtDebug::None',statements:[],body:ok()}];
+ if(input.style==='unit-enum'&&input.variants.length>1){const arms=input.variants.map(variant=>({kind:'Arm',attrs:[],guard:null,body:string(variant.name),pattern:{kind:'PatKind::Path',qself:null,path:[input.name,variant.name],sourceNameSpan:variant.span},isPlaceholder:false}));branches.push({condition:'FmtDebug::Shallow or Full; AllFieldlessEnum bypasses shallow branch',statements:[],body:write(node('expr_match',{arg:self,arms,matchKind:'Prefix'}))});}
+ else{
+  const name=string(input.style==='unit-enum'?input.variants[0].name:input.name);branches.push({condition:'FmtDebug::Shallow',statements:[],body:write(name)});
+  if(!fields.length)branches.push({condition:'FmtDebug::Full; empty fields',statements:[],body:write(name)});
+  else if(fields.length<=5)branches.push({condition:'FmtDebug::Full; fields<=original CUTOFF',statements:[],body:call([root,'fmt','Formatter',{kind:'Symbol',originalFormat:'debug_tuple_field{}_finish',argument:fields.length}],[fmt,name,...fieldExpressions.map(last)])});
+  else{
+   const names=node('expr_addr_of',{e:node('expr_array',{exprs:fields.map(f=>string(f.name))})}),values=node('expr_addr_of',{e:node('expr_array',{exprs:fieldExpressions.map(last)})}),ref=(ty,lifetime=null)=>({kind:'TyKind::Ref',lifetime,mutability:'Not',ty}),namesTy=ref({kind:'TyKind::Infer'},{kind:'Lifetime',symbol:'StaticLifetime'}),valuesTy=ref({kind:'TyKind::Slice',ty:ref({kind:'TyKind::TraitObject',bounds:[{kind:'GenericBound::Trait',path:[root,'fmt','Debug'],constness:'Never'}],syntax:'Dyn'})});
+   const local=(ident,ty,initializer)=>({kind:'StmtKind::Let',local:{kind:'LocalKind::Init',pattern:{kind:'PatKind::Ident',bindingMode:'NONE',ident,subpattern:null},ty,initializer,attrs:[],tokens:null,mutable:false}});
+   branches.push({condition:'FmtDebug::Full; fields>original CUTOFF',statements:[local('values',valuesTy,values)],body:call([root,'fmt','Formatter','debug_tuple_fields_finish'],[fmt,name,path(['values'])])});
+  }
+ }
+ const closed=closeTupleDebugBranches(plan,branches,input,fields);
  // The candidate is DATA only. The private invocation issuer independently
  // joins current input/owner/source and the original resolver rule.
  return {schema:'original-debug-enclosing-grammar-candidate-v1',inputStyle:input.style,

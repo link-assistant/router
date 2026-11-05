@@ -1,3 +1,4 @@
+import {writeProtectedRecursiveCliPlan} from './protected-recursive-cli-writers-20261103.mjs';
 // Additive owned Unicode operations, after the ASCII/matches/vector source layers.
 // Original native Rust implementations and complete source equations are retained.
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -146,10 +147,7 @@ export function composeCoreUnicodePredicates(prior,options={}){
  return {sources,layers:[plan],historicalSources:prior};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);if(args.length!==1||!['--check','--write'].includes(args[0]))fail('usage: --check|--write');const plan=prepareCoreUnicodePredicates();
- if(args[0]==='--write'){
-  for(const row of plan.files)if(![row.before,row.after].includes(row.current)&&!(row.before===''&&row.current===null))fail('physical complete parent differs: '+row.path);
-  for(const row of plan.files){const path=resolve(ROOT,row.path);mkdirSync(dirname(path),{recursive:true});writeFileSync(path,row.after);}
- }else if(plan.files.some(row=>row.current!==row.after))fail('generated source is stale');
+ const args=process.argv.slice(2);if(args.length!==1||!['--check','--write'].includes(args[0]))fail('usage: --check|--write');const plan=args[0]==='--write'?writeProtectedRecursiveCliPlan(ROOT,()=>prepareCoreUnicodePredicates(),plan=>{for(const row of plan.files)if(![row.before,row.after].includes(row.current)&&!(row.before===''&&row.current===null))fail('physical complete parent differs: '+row.path);}):prepareCoreUnicodePredicates();
+ if(args[0]==='--check'&&plan.files.some(row=>row.current!==row.after))fail('generated source is stale');
  console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),semanticAuthority:false}));
 }

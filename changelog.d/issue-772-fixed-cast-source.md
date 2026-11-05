@@ -1,0 +1,1 @@
+Draft general bare cast type-position selection and repository scalar facade substitutions under existing complete source scope guards. Independent numeric, float, JS/TS, native and inverse cases remain unrun; complete translation remains unfinished.

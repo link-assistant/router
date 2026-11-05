@@ -88,7 +88,7 @@ fn safe_relative(path: &Path) -> bool {
 
 fn read_bounded(path: &Path, remaining: &mut u64) -> io::Result<Vec<u8>> {
     if !fs::symlink_metadata(path)?.is_file() {
-        return Err(invalid(&format!(
+        return Err(invalid(&crate::translation_core::format!(
             "checkpoint requires a regular file at {}; no symlink or special file is followed",
             path.display()
         )));
@@ -106,7 +106,7 @@ fn read_bounded(path: &Path, remaining: &mut u64) -> io::Result<Vec<u8>> {
 /// prediction, so both name the same path and budget (issue #658).
 fn charge(path: &Path, length: u64, remaining: &mut u64) -> io::Result<()> {
     if length > *remaining {
-        return Err(invalid(&format!(
+        return Err(invalid(&crate::translation_core::format!(
             "checkpoint exceeds the {} MiB budget at {} ({length} bytes, {} bytes of budget left)",
             LIMIT / (1024 * 1024),
             path.display(),
@@ -129,20 +129,20 @@ fn copy_tree(
     deadline: Instant,
 ) -> io::Result<()> {
     if Instant::now() >= deadline {
-        return Err(invalid(&format!(
+        return Err(invalid(&crate::translation_core::format!(
             "checkpoint exceeded its {}-second time budget at {}",
             DEADLINE.as_secs(),
             source.display()
         )));
     }
     if manifest.files.len() >= FILES {
-        return Err(invalid(&format!(
+        return Err(invalid(&crate::translation_core::format!(
             "checkpoint exceeded its {FILES}-file budget at {}",
             source.display()
         )));
     }
     if relative.components().count() > DEPTH {
-        return Err(invalid(&format!(
+        return Err(invalid(&crate::translation_core::format!(
             "checkpoint exceeded its {DEPTH}-level depth budget at {}",
             source.display()
         )));
@@ -155,7 +155,7 @@ fn copy_tree(
     }
     let metadata = fs::symlink_metadata(source)?;
     if metadata.file_type().is_symlink() {
-        return Err(invalid(&format!(
+        return Err(invalid(&crate::translation_core::format!(
             "checkpoint refuses a symlink in recoverable state at {}",
             source.display()
         )));
@@ -179,7 +179,7 @@ fn copy_tree(
             .iter()
             .map(|part| {
                 part.to_str().ok_or_else(|| {
-                    invalid(&format!(
+                    invalid(&crate::translation_core::format!(
                         "checkpoint path is not valid Unicode at {}",
                         source.display()
                     ))
@@ -201,7 +201,7 @@ fn copy_tree(
         };
         manifest.files.insert(key, digest);
     } else {
-        return Err(invalid(&format!(
+        return Err(invalid(&crate::translation_core::format!(
             "checkpoint refuses a special file at {}",
             source.display()
         )));
@@ -217,7 +217,7 @@ fn covered(
     deadline: Instant,
 ) -> io::Result<()> {
     if fs::symlink_metadata(data)?.file_type().is_symlink() {
-        return Err(invalid(&format!(
+        return Err(invalid(&crate::translation_core::format!(
             "checkpoint data root is a symlink at {}",
             data.display()
         )));
@@ -273,14 +273,14 @@ pub(super) fn predict(root: &Path) -> io::Result<u64> {
 pub(super) fn checkpoint_status(root: &Path) -> Result<String, String> {
     predict(root)
         .map(|bytes| {
-            format!("data_checkpoint estimate_bytes={bytes} budget_bytes={LIMIT} excluded=requests")
+            crate::translation_core::format!("data_checkpoint estimate_bytes={bytes} budget_bytes={LIMIT} excluded=requests")
         })
         .map_err(|error| checkpoint_remedy(&error))
 }
 
 /// One wording for the refusal, shared by `--status` and the real run.
-pub(super) fn checkpoint_remedy(error: &io::Error) -> String {
-    format!(
+pub(super) fn checkpoint_remedy(error: &io::Error) -> crate::translation_core::Text {
+    crate::translation_core::format!(
         "recoverable non-OAuth data checkpoint failed: {error}. Move or shrink that path (request logs under data/requests are not checkpointed), then retry"
     )
 }

@@ -55,7 +55,7 @@ pub async fn list(
     }
     let provider = match crate::provider_proxy::resolve_openai_compatible_provider(&state) {
         Ok(provider) => provider,
-        Err(error) => return unavailable(&format!("provider lookup failed: {error}")),
+        Err(error) => return unavailable(&crate::translation_core::format!("provider lookup failed: {error}")),
     };
     if let Err(response) = authorize_provider(&claims, request.headers(), uri.path(), &provider) {
         return response;
@@ -66,7 +66,7 @@ pub async fn list(
         .list(namespace, &owner)
     {
         Ok(affinities) => affinities,
-        Err(error) => return unavailable(&format!("resource affinity is unavailable: {error}")),
+        Err(error) => return unavailable(&crate::translation_core::format!("resource affinity is unavailable: {error}")),
     };
     let allowed = affinities
         .iter()
@@ -89,7 +89,7 @@ pub async fn list(
     };
     let path = uri.query().map_or_else(
         || "/v1/chat/completions".to_string(),
-        |query| format!("/v1/chat/completions?{query}"),
+        |query| crate::translation_core::format!("/v1/chat/completions?{query}"),
     );
     let correlation_id = crate::request_log::correlation_id(request.headers());
     let client =
@@ -112,7 +112,7 @@ pub async fn list(
         .await
     {
         Ok(response) => response,
-        Err(error) => return bad_gateway(&format!("provider request failed: {error}")),
+        Err(error) => return bad_gateway(&crate::translation_core::format!("provider request failed: {error}")),
     };
     relay_list(&state, upstream, &allowed, &correlation_id).await
 }
@@ -180,7 +180,7 @@ async fn forward(
             Ok(Some(affinity)) => affinity,
             Ok(None) => return not_found(),
             Err(error) => {
-                return unavailable(&format!("resource affinity is unavailable: {error}"));
+                return unavailable(&crate::translation_core::format!("resource affinity is unavailable: {error}"));
             }
         };
     let AffinityDestination::StoredProvider {
@@ -203,7 +203,7 @@ async fn forward(
             None => return unavailable("the response's exact provider is unavailable"),
         },
         Ok(Some(_)) => return unavailable("the response's exact provider has changed"),
-        Err(error) => return unavailable(&format!("provider lookup failed: {error}")),
+        Err(error) => return unavailable(&crate::translation_core::format!("provider lookup failed: {error}")),
     };
     if let Err(response) = authorize_provider(&claims, request.headers(), uri.path(), &provider) {
         return response;
@@ -218,7 +218,7 @@ async fn forward(
             return openai_error(
                 StatusCode::PAYLOAD_TOO_LARGE,
                 "invalid_request_error",
-                &format!("request body exceeds the proxy limit: {error}"),
+                &crate::translation_core::format!("request body exceeds the proxy limit: {error}"),
             );
         }
     };
@@ -246,7 +246,7 @@ async fn forward(
         .await
     {
         Ok(response) => response,
-        Err(error) => return bad_gateway(&format!("provider request failed: {error}")),
+        Err(error) => return bad_gateway(&crate::translation_core::format!("provider request failed: {error}")),
     };
     relay_resource(
         &state,
@@ -329,7 +329,7 @@ async fn relay_list(
     let headers = crate::proxy::relay_response_headers(upstream.headers());
     let body = match upstream.bytes().await {
         Ok(body) => body,
-        Err(error) => return bad_gateway(&format!("upstream body read failed: {error}")),
+        Err(error) => return bad_gateway(&crate::translation_core::format!("upstream body read failed: {error}")),
     };
     record(state, status, 0, &body, correlation_id);
     if !status.is_success() {
@@ -378,9 +378,9 @@ fn record(state: &AppState, status: StatusCode, sent: u64, body: &[u8], correlat
     state.metrics.record_bytes(sent, body.len() as u64);
 }
 
-fn resource_path(completion_id: &crate::translation_core::Str, operation: Operation, query: crate::translation_core::Maybe<&crate::translation_core::Str>) -> String {
-    let query = query.map_or(String::new(), |query| format!("?{query}"));
-    format!(
+fn resource_path(completion_id: &crate::translation_core::Str, operation: Operation, query: crate::translation_core::Maybe<&crate::translation_core::Str>) -> crate::translation_core::Text {
+    let query = query.map_or(String::new(), |query| crate::translation_core::format!("?{query}"));
+    crate::translation_core::format!(
         "/v1/chat/completions/{}{}{query}",
         crate::responses_lifecycle::percent_encode_segment(completion_id),
         operation.suffix()

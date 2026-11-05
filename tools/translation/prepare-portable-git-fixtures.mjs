@@ -1,3 +1,4 @@
+import {TRANSLATOR_ENTRYPOINTS} from './translator-entrypoints.mjs';
 // Genuine Git object data for shallow receiving repositories. No source/owner
 // permission is issued; the original compiler still captures every full byte.
 import fs from 'node:fs';
@@ -17,7 +18,7 @@ export const PORTABLE_CONCRETE_SOURCES=Object.freeze([
  {path:'tools/translation/vendor/meta-language/translation/lexer.js',gitBlob:'37238c2584dd36220488c89694b9d0005923bc57',bytes:16109,sha256:'70dbe490cd5162661a665bdffd5b506093bebc5a515f6fc1d36ecc347b705fdc'},
 ].map(Object.freeze));
 const PREFIX='tools/translation/test/fixtures/portable-git/',REGISTRY='tools/translation/source-profiles/isolated-project-compiler/manifest.json.gz';
-const EXTRA=['scripts/translate-router.mjs','scripts/export-router-translator.mjs','scripts/regenerate-js-first.mjs','scripts/regenerate-native-typescript.mjs','scripts/sync-router.mjs','LICENSE','js/package.json','js/package-lock.json'];
+const EXTRA=[...TRANSLATOR_ENTRYPOINTS,"LICENSE","js/package.json","js/package-lock.json"];
 const fail=message=>{throw new TypeError('Portable original Git: '+message);};
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const oid=(kind,bytes)=>createHash('sha1').update(Buffer.from(kind+' '+bytes.length+'\0')).update(bytes).digest('hex');

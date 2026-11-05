@@ -1,0 +1,9 @@
+{
+  "schema": "router-owned-native-bulk-unit-v1",
+  "id": "router-native-bulk",
+  "runtimeRoot": "js/src/translation-runtime",
+  "declarationRoot": "ts/src/translation-runtime",
+  "javascriptRoot": "js/src/translated",
+  "typescriptRoot": "ts/src/translated",
+  "meta": "tools/translation/adoption/native-bulk.json"
+}

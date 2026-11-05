@@ -402,3 +402,6 @@ import {transportPrivateConcreteEquations} from './private-parser-execution.mjs'
 export function transportConcreteSyntaxSourceEquations(rows){
   checked();const result=transportPrivateConcreteEquations(rows);checked();return result;
 }
+
+// Guard-only entry for operation-local reuse of already checked immutable CST.
+export function assertConcreteSyntaxSourceOperationsCurrent(){checked();return {sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false};}

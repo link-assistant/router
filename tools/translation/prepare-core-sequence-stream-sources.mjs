@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Whole original helper copies selected by native TS and joined through CST.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -92,8 +93,7 @@ export function prepareCoreSequenceStreamSources({root=ROOT}={}){
  return {schema:'core-sequence-stream-source-v1',typescriptVersion:ts.version,inputs,files,defaultAPIsUnchanged:true,sourceAuthority:false,semanticAdmission:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);if(args.length!==1||!['--write','--check'].includes(args[0]))fail('use --write|--check');const plan=prepareCoreSequenceStreamSources();
- if(args[0]==='--write'){for(const row of plan.files){let actual=null;try{actual=readFileSync(resolve(ROOT,row.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}if(actual!==row.current)fail('current output changed');}for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}
- else if(plan.files.some(row=>row.current!==row.after))fail('actual generated complete source is stale');
+ const args=process.argv.slice(2);if(args.length!==1||!['--write','--check'].includes(args[0]))fail('use --write|--check');const plan=args[0]==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareCoreSequenceStreamSources();for(const row of plan.files){let actual=null;try{actual=readFileSync(resolve(ROOT,row.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}if(actual!==row.current)fail('current output changed');}writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)writer.write(row.path,row.after);return plan;}):prepareCoreSequenceStreamSources();
+ if(args[0]==='--check'&&plan.files.some(row=>row.current!==row.after))fail('actual generated complete source is stale');
  console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),typescriptVersion:plan.typescriptVersion,semanticAdmission:false}));
 }

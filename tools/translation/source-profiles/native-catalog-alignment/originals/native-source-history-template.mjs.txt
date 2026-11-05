@@ -1,0 +1,28 @@
+// Reusable full native source equation DATA; never semantic/type/owner authority.
+import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {gunzipSync} from 'node:zlib';
+import {createHash} from 'node:crypto';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
+import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
+const ROOT=fileURLToPath(new URL('../../',import.meta.url));
+const ARCHIVE='tools/translation/source-profiles/native-catalog-alignment/complete-native-history.json.gz',PIN='755a5f9532b027cae60085bc6900065265e10ab52a416633d4e2a56ce76035c4';
+const hash=value=>createHash('sha256').update(value).digest('hex'),need=(value,message)=>{if(!value)throw new TypeError('Native source history: '+message);};
+function local(root,path){need(typeof path==='string'&&path.length<=4096&&!path.startsWith('/')&&!path.includes('\\')&&!path.split('/').some(word=>!word||word==='.'||word==='..'),'repository-relative file required');return resolve(root,path);}
+function input(root){const packed=readFileSync(local(root,ARCHIVE));need(packed.length<=8388608&&hash(packed)===PIN,'complete pinned history archive differs');const data=JSON.parse(gunzipSync(packed,{maxOutputLength:16777216}).toString('utf8'));need(data.schema==='native-complete-source-history-v1'&&Array.isArray(data.files)&&data.files.length>0&&data.files.length<=64,'bounded complete history rows required');return {packed,data};}
+function equation(root,row){
+ need(row.language==='Rust'&&typeof row.before==='string'&&typeof row.after==='string'&&hash(row.before)===row.beforeSha256&&hash(row.after)===row.afterSha256&&Buffer.byteLength(row.before)<=2097152&&Buffer.byteLength(row.after)<=2097152&&Array.isArray(row.languageEdits)&&row.languageEdits.length===0&&Array.isArray(row.repositoryEdits),'complete native source/rule inputs required');need(readFileSync(local(root,row.originalPath),'utf8')===row.before,'physical complete original source differs');
+ const original=transportConcreteSyntaxSource(row.before,{language:row.language}),applied=applyConcreteSyntaxSubstitutions(original.document,{languageRules:[{id:'native-source:retain-complete-original-language',edits:row.languageEdits}],repositoryRules:[{id:row.ruleId,edits:row.repositoryEdits}]}),decoded=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applied.value));need(decoded.source===row.after,'complete ordered native source substitution differs');
+ const stages=transportConcreteSourceEquations([{before:row.before,after:row.before,language:row.language},{before:row.before,after:row.after,language:row.language}]).map((stage,index)=>({...stage,phase:index?'repository':'language'}));need(stages[0].inverse===row.before&&stages[1].inverse===row.before,'complete native inverse differs');return {path:row.path,originalPath:row.originalPath,language:row.language,before:row.before,after:row.after,inverse:row.before,stages,trace:applied.trace,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,rustExecuted:false};
+}
+export function prepareNativeSourceHistory({root=ROOT}={}){
+ root=resolve(root);const {packed,data}=input(root),seen=new Set(),files=data.files.map(row=>{need(!seen.has(row.path),'unique native target required');seen.add(row.path);const result=equation(root,row),current=readFileSync(local(root,row.path),'utf8');need(current===row.before||current===row.after,'unknown complete native current source');return {...result,current};});need(readFileSync(local(root,ARCHIVE)).equals(packed),'history input changed');for(const row of files)need(readFileSync(local(root,row.path),'utf8')===row.current&&readFileSync(local(root,row.originalPath),'utf8')===row.before,'native source changed during construction');return {schema:'native-complete-source-history-plan-v1',files,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,sourceCache:false,rustExecuted:false,receivingExecuted:false};
+}
+export function currentNativeSourceProvenance(root,row){
+ root=resolve(root);need(row&&typeof row.source==='string'&&typeof row.originalPath==='string','complete original provenance row required');need(readFileSync(local(root,row.originalPath),'utf8')===row.source,'complete original provenance source changed');const source=readFileSync(local(root,row.path),'utf8');if(source===row.source)return {path:row.path,originalPath:row.originalPath,originalSource:row.source,source,language:row.language??'Rust',nativeSourceHistory:null,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false};
+ const plan=prepareNativeSourceHistory({root}),matches=plan.files.filter(value=>value.path===row.path&&value.before===row.source&&value.current===source&&value.after===source);need(matches.length===1,'current native source needs one explicit full original-to-current equation');return {path:row.path,originalPath:row.originalPath,originalSource:row.source,source,language:row.language??'Rust',nativeSourceHistory:matches[0],sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false};
+}
+export function assertNativeSourceProvenanceCurrent(root,row){
+ const fresh=currentNativeSourceProvenance(root,{path:row.path,originalPath:row.originalPath,source:row.originalSource,language:row.language});need(fresh.source===row.source&&JSON.stringify(fresh.nativeSourceHistory)===JSON.stringify(row.nativeSourceHistory),'complete native provenance changed during a caller operation');
+}

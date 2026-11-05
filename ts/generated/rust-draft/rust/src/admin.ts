@@ -39,7 +39,7 @@ type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$"
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
-// Generated draft from rust/src/admin.rs; sha256=6ff7905bacd552ef1da7cde41c172e824668ef8913087a670a04bdabe377bf1e
+// Generated draft from rust/src/admin.rs; sha256=1f5b0823829dadf5f59208154917c2c8ad9ebddd09ce5b5527d233021829a489
 // Carried constructs are data, never runtime parity evidence.
 function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   if (value < min || value > max) throw new RangeError(message);
@@ -158,12 +158,12 @@ function rp_61646d696e2e636c616d705f74746c(ttl_hours: Readonly<{ readonly "$": "
   return ml_host_option_map_or((() => {
     const ml_standard_callback_self_1 = ttl_hours as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
     return (() => {
-    const ml_pattern_1 = ml_standard_callback_self_1 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
-    if ((ml_pattern_immutable(ml_pattern_1) && (ml_pattern_1.$ === "Some"))) {
-      const ml_standard_pattern_2 = (ml_pattern_1)["field0"];
+    const ml_pattern_3 = ml_standard_callback_self_1 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
+    if ((ml_pattern_immutable(ml_pattern_3) && (ml_pattern_3.$ === "Some"))) {
+      const ml_standard_pattern_2 = (ml_pattern_3)["field0"];
       if ((() => {
-      const ml_standard_callback_arg_2 = ml_standard_pattern_2;
-      const hours = ml_standard_callback_arg_2;
+      const ml_standard_callback_arg_4 = ml_standard_pattern_2;
+      const hours = ml_standard_callback_arg_4;
       return (hours > 0n);
     })()) {
         return Object.freeze({ $: 'Some', field0: ml_standard_pattern_2 });
@@ -177,4 +177,4 @@ function rp_61646d696e2e636c616d705f74746c(ttl_hours: Readonly<{ readonly "$": "
 }
 
 export const translated: { "ADMIN_TOKEN_PREFIX": string; "CLAIM_FILE_NAME": string; "DEFAULT_CANDIDATE_TTL_SECS": bigint; "DEFAULT_CLAIM_TTL_HOURS": bigint; "CLAIM_TOKEN_LABEL": string; "ClaimError": Readonly<{ "AlreadyClaimed": () => Readonly<{ readonly "$": "AlreadyClaimed" }> | Readonly<{ readonly "$": "ProvisionedByEnvironment" }> | Readonly<{ readonly "$": "NoCandidate" }> | Readonly<{ readonly "$": "ClaimIdMismatch" }> | Readonly<{ readonly "$": "TokenMismatch" }> | Readonly<{ readonly "$": "Storage" }>; "ProvisionedByEnvironment": () => Readonly<{ readonly "$": "AlreadyClaimed" }> | Readonly<{ readonly "$": "ProvisionedByEnvironment" }> | Readonly<{ readonly "$": "NoCandidate" }> | Readonly<{ readonly "$": "ClaimIdMismatch" }> | Readonly<{ readonly "$": "TokenMismatch" }> | Readonly<{ readonly "$": "Storage" }>; "NoCandidate": () => Readonly<{ readonly "$": "AlreadyClaimed" }> | Readonly<{ readonly "$": "ProvisionedByEnvironment" }> | Readonly<{ readonly "$": "NoCandidate" }> | Readonly<{ readonly "$": "ClaimIdMismatch" }> | Readonly<{ readonly "$": "TokenMismatch" }> | Readonly<{ readonly "$": "Storage" }>; "ClaimIdMismatch": () => Readonly<{ readonly "$": "AlreadyClaimed" }> | Readonly<{ readonly "$": "ProvisionedByEnvironment" }> | Readonly<{ readonly "$": "NoCandidate" }> | Readonly<{ readonly "$": "ClaimIdMismatch" }> | Readonly<{ readonly "$": "TokenMismatch" }> | Readonly<{ readonly "$": "Storage" }>; "TokenMismatch": () => Readonly<{ readonly "$": "AlreadyClaimed" }> | Readonly<{ readonly "$": "ProvisionedByEnvironment" }> | Readonly<{ readonly "$": "NoCandidate" }> | Readonly<{ readonly "$": "ClaimIdMismatch" }> | Readonly<{ readonly "$": "TokenMismatch" }> | Readonly<{ readonly "$": "Storage" }>; "Storage": () => Readonly<{ readonly "$": "AlreadyClaimed" }> | Readonly<{ readonly "$": "ProvisionedByEnvironment" }> | Readonly<{ readonly "$": "NoCandidate" }> | Readonly<{ readonly "$": "ClaimIdMismatch" }> | Readonly<{ readonly "$": "TokenMismatch" }> | Readonly<{ readonly "$": "Storage" }> }>; "Candidate": (claim_id: string, token: string, expires_in_secs: bigint, ttl_hours: bigint) => Readonly<{ readonly "$": "Candidate"; readonly "claim_id": string; readonly "token": string; readonly "expires_in_secs": bigint; readonly "ttl_hours": bigint }>; "clamp_ttl": (ttl_hours: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>) => bigint } = { ["ADMIN_TOKEN_PREFIX"]: rp_61646d696e2e41444d494e5f544f4b454e5f505245464958(), ["CLAIM_FILE_NAME"]: rp_61646d696e2e434c41494d5f46494c455f4e414d45(), ["DEFAULT_CANDIDATE_TTL_SECS"]: rp_61646d696e2e44454641554c545f43414e4449444154455f54544c5f53454353(), ["DEFAULT_CLAIM_TTL_HOURS"]: rp_61646d696e2e44454641554c545f434c41494d5f54544c5f484f555253(), ["CLAIM_TOKEN_LABEL"]: rp_61646d696e2e434c41494d5f544f4b454e5f4c4142454c(), ["ClaimError"]: Object.freeze({ ["AlreadyClaimed"]: ml_make_ClaimError_AlreadyClaimed, ["ProvisionedByEnvironment"]: ml_make_ClaimError_ProvisionedByEnvironment, ["NoCandidate"]: ml_make_ClaimError_NoCandidate, ["ClaimIdMismatch"]: ml_make_ClaimError_ClaimIdMismatch, ["TokenMismatch"]: ml_make_ClaimError_TokenMismatch, ["Storage"]: ml_make_ClaimError_Storage }), ["Candidate"]: ml_make_Candidate_Candidate, ["clamp_ttl"]: rp_61646d696e2e636c616d705f74746c };
-export const provenance = {"sourcePath":"rust/src/admin.rs","sourceSha256":"6ff7905bacd552ef1da7cde41c172e824668ef8913087a670a04bdabe377bf1e","executable":8,"executableFunctions":1,"executableConstants":5,"executableTypes":2,"executableConstructors":7,"carried":30,"preserved":39,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/admin.rs","sourceSha256":"1f5b0823829dadf5f59208154917c2c8ad9ebddd09ce5b5527d233021829a489","executable":8,"executableFunctions":1,"executableConstants":5,"executableTypes":2,"executableConstructors":7,"carried":30,"preserved":39,"runtimeParity":false};

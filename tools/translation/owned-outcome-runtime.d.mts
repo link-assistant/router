@@ -1,0 +1,12 @@
+import type {JsonValue} from './json-macro-runtime.mjs';
+export type OwnedJsonOption=Readonly<{$:'None'}>|Readonly<{$:'Some';field0:JsonValue}>;
+export type OwnedJsonResult=Readonly<{$:'Ok';field0:JsonValue}>|Readonly<{$:'Err';field0:string}>;
+export declare function router_carrier_json_ok(argument0:JsonValue): OwnedJsonResult;
+export declare function router_carrier_json_err(argument0:string): OwnedJsonResult;
+export declare function router_carrier_json_result_copy(argument0:OwnedJsonResult): OwnedJsonResult;
+export declare function router_carrier_json_result_or(argument0:OwnedJsonResult,argument1:JsonValue): JsonValue;
+export declare function router_carrier_json_option_to_result(argument0:OwnedJsonOption,argument1:string): OwnedJsonResult;
+export declare function router_carrier_json_result_to_option(argument0:OwnedJsonResult): OwnedJsonOption;
+export declare function router_carrier_json_some(argument0:JsonValue): OwnedJsonOption;
+export declare function router_carrier_json_none(): OwnedJsonOption;
+export declare function router_carrier_json_option_or(argument0:OwnedJsonOption,argument1:JsonValue): JsonValue;

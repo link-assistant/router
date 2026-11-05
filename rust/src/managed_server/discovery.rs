@@ -42,14 +42,6 @@ fn local_candidate_ports() -> Vec<u16> {
     if let Ok(Some(state)) = load_managed() {
         push(state.port);
     }
-    // A deployment reached over an SSH tunnel, or a container published on an
-    // operator-chosen port, listens somewhere this crate never named — issue
-    // #250's own reproduction uses 18878. Rather than guess, ask the machine
-    // which ports are actually published; each is still health-checked before
-    // it is believed, so a non-router listener is rejected exactly as any other.
-    for port in published_container_ports() {
-        push(port);
-    }
     ports
 }
 
@@ -57,11 +49,18 @@ fn local_candidate_ports() -> Vec<u16> {
 ///
 /// Best-effort: no Docker, no daemon, or no containers all yield an empty list
 /// and leave the conventional ports as the only candidates.
+#[cfg(test)]
 fn published_container_ports() -> Vec<u16> {
-    let Ok(output) = crate::operation_context::process_output(
+    published_container_ports_with_budget(Duration::from_secs(1))
+}
+
+fn published_container_ports_with_budget(budget: Duration) -> Vec<u16> {
+    let Ok(output) = crate::operation_context::bounded_output_limited(
         crate::operation_context::command("docker")
             .args(["ps", "--format", "{{.Ports}}"])
             .stderr(std::process::Stdio::null()),
+        budget.min(Duration::from_secs(1)),
+        65_536,
     ) else {
         return Vec::new();
     };
@@ -77,6 +76,9 @@ fn published_container_ports() -> Vec<u16> {
 /// below are what decides whether an SSH-tunnelled or operator-published router
 /// is found at all, and they are easy to get subtly wrong.
 fn parse_published_ports(listing: &str) -> Vec<u16> {
+    if listing.len() > 65_536 {
+        return Vec::new();
+    }
     let mut ports = Vec::new();
     for mapping in listing
         .split([',', '\n'])
@@ -94,10 +96,8 @@ fn parse_published_ports(listing: &str) -> Vec<u16> {
         };
         // Only bindings a loopback caller can actually reach. A container
         // published to one specific external address is not reachable here.
-        if !address.is_empty()
-            && !address.contains("127.0.0.1")
-            && !address.contains("0.0.0.0")
-            && !address.contains("[::]")
+        if !matches!(address, "" | "127.0.0.1" | "0.0.0.0" | "[::]")
+            || !mapping.ends_with("/tcp")
         {
             continue;
         }
@@ -106,6 +106,7 @@ fn parse_published_ports(listing: &str) -> Vec<u16> {
             && !ports.contains(&port)
         {
             ports.push(port);
+            if ports.len() == 64 { break; }
         }
     }
     ports
@@ -134,16 +135,30 @@ pub(super) async fn discover_local_router(force_managed: bool) -> Option<String>
     if matches!(load_managed(), Ok(Some(_))) {
         return None;
     }
-    for port in local_candidate_ports() {
-        if !port_accepts(port) {
-            continue;
-        }
-        let base_url = format!("http://127.0.0.1:{port}");
-        if verify_health(&base_url).await.is_ok() {
-            return Some(base_url);
+    let deadline = std::time::Instant::now() + Duration::from_secs(3);
+    let conventional = local_candidate_ports();
+    for port in &conventional {
+        if let Some(base_url) = probe_local_router(*port, deadline).await { return Some(base_url); }
+    }
+    let remaining = deadline.saturating_duration_since(std::time::Instant::now());
+    if remaining.is_zero() { return None; }
+    for port in published_container_ports_with_budget(remaining) {
+        if !conventional.contains(&port) {
+            if let Some(base_url) = probe_local_router(port, deadline).await { return Some(base_url); }
         }
     }
     None
+}
+
+async fn probe_local_router(port: u16, deadline: std::time::Instant) -> Option<String> {
+    if deadline.saturating_duration_since(std::time::Instant::now()) < Duration::from_millis(150)
+        || !port_accepts(port) { return None; }
+    let remaining = deadline.saturating_duration_since(std::time::Instant::now());
+    if remaining.is_zero() { return None; }
+    let base_url = format!("http://127.0.0.1:{port}");
+    if matches!(tokio::time::timeout(remaining.min(Duration::from_secs(1)), verify_health(&base_url)).await, Ok(Ok(()))) {
+        Some(base_url)
+    } else { None }
 }
 
 /// Whether something is accepting connections on a local port.

@@ -10,7 +10,8 @@ const plain=Object.prototype,arrayPrototype=Array.prototype,TypeErrorValue=TypeE
 const SetValue=Set,setHas=Set.prototype.has,setAdd=Set.prototype.add,setDelete=Set.prototype.delete;
 const charCode=String.prototype.charCodeAt,finite=Number.isFinite;
 const MAX_CELLS=65536,MAX_DEPTH=1024,MAX_TEXT=1048576;
-const U64_MAX=18446744073709551615n,I64_MIN=-9223372036854775808n;
+const U64_MAX=18446744073709551615n,I64_MIN=-9223372036854775808n,I64_MAX=9223372036854775807n;
+const toFloat=Number;
 const fail=message=>{throw new TypeErrorValue('Optional Json input: '+message);};
 const code=(text,at)=>apply(charCode,text,[at]);
 const append=(items,value)=>define(items,items.length,{__proto__:null,value,writable:true,enumerable:true,configurable:true});
@@ -69,7 +70,7 @@ function canonical(value){
  return value;
 }
 /** Fully checked opaque carrier -> optional borrowed text. None has no Json. */
-export function router_core_json_option_as_str(input){
+function optionalJsonReader(input,member){
  ordinary(input);const names=keys(input);
  if(names.length<1||names.length>2)fail('closed optional carrier required');
  for(let at=0;at<names.length;at++)if(names[at]!=='$'&&names[at]!=='field0')fail('closed optional carrier required');
@@ -77,5 +78,28 @@ export function router_core_json_option_as_str(input){
  if(tag==='None'){fields(input,['$']);return result('None');}
  if(tag!=='Some')fail('Some or None required');
  const carrier=fields(input,['$','field0']),value=canonical(carrier.field0);
- return own(value,'$')==='String'?result('Some',own(value,'field0')):result('None');
+ const kind=own(value,'$');
+ if(member==='as_str')return kind==='String'?result('Some',own(value,'field0')):result('None');
+ if(member==='as_bool')return kind==='Bool'?result('Some',own(value,'field0')):result('None');
+ if(member==='as_null')return kind==='Null'?result('Some',null):result('None');
+ if(member==='as_number')return kind==='Number'?result('Some',own(value,'field0')):result('None');
+ if(member==='as_array')return kind==='Array'?result('Some',own(value,'field0')):result('None');
+ if(member==='as_object')return kind==='Object'?result('Some',own(value,'field0')):result('None');
+ if(member==='as_u64'||member==='as_i64'||member==='as_f64'){
+  if(kind!=='Number')return result('None');const number=own(value,'field0'),tag=own(number,'$'),n=own(number,'field0');
+  if(member==='as_f64')return result('Some',toFloat(n));
+  if(member==='as_u64')return tag==='PosInt'?result('Some',n):result('None');
+  return tag==='NegInt'||tag==='PosInt'&&n<=I64_MAX?result('Some',n):result('None');
+ }
+ fail('unknown fixed optional reader');
 }
+
+export function router_core_json_option_as_str(input){return optionalJsonReader(input,'as_str');}
+export function router_core_json_option_as_bool(input){return optionalJsonReader(input,'as_bool');}
+export function router_core_json_option_as_u64(input){return optionalJsonReader(input,'as_u64');}
+export function router_core_json_option_as_i64(input){return optionalJsonReader(input,'as_i64');}
+export function router_core_json_option_as_f64(input){return optionalJsonReader(input,'as_f64');}
+export function router_core_json_option_as_null(input){return optionalJsonReader(input,'as_null');}
+export function router_core_json_option_as_number(input){return optionalJsonReader(input,'as_number');}
+export function router_core_json_option_as_array(input){return optionalJsonReader(input,'as_array');}
+export function router_core_json_option_as_object(input){return optionalJsonReader(input,'as_object');}

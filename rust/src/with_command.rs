@@ -160,7 +160,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     let codex_bridge = if args.client == ClientKind::Codex
         && crate::codex_loopback_bridge::required(&server.base_url)?
     {
-        Some(crate::codex_loopback_bridge::start_ephemeral(&server.base_url).await?)
+        Some(crate::codex_loopback_bridge::start_ephemeral_with_ca(&server.base_url, server.ca_cert.as_deref()).await?)
     } else {
         None
     };
@@ -458,7 +458,7 @@ impl TemporaryClient {
             }
         }
         let integration = client.integration();
-        let mut command = crate::operation_context::command(integration.command);
+        let mut command = crate::operation_context::client_command(integration.command);
         if extends_user_configuration(client, isolated_config, extend_user_configuration) {
             // Layer the router's connection settings on top of the user's own
             // configuration rather than replacing it, so sessions and settings

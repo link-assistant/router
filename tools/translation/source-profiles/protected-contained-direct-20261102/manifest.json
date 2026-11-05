@@ -1,0 +1,289 @@
+{
+  "schema": "protected-contained-native-direct-source-history-20261102-v1",
+  "parents": [
+    {
+      "role": "unit",
+      "path": "tools/translation/unit-runtime-materialization.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "37ffab870b1ed7d700c0f543de0e24882f891a2f",
+      "before": "unit.before.txt",
+      "after": "unit.after.txt",
+      "beforeBytes": 42557,
+      "beforeSha256": "1e9af646f3b6c9f393d0ca4d51a5a85457119f5082734701171472372f71795b",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 42986,
+      "afterSha256": "a9470b5a2cd596a017d393cdfcd8ba2d18a3c334f025ba4633324feb6808920f"
+    },
+    {
+      "role": "scope-adapter",
+      "path": "tools/translation/protected-native-writers-20261102.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "5755945f70d884ee0718909009572f5c8ecb5b59",
+      "before": "scope-adapter.before.txt",
+      "after": "scope-adapter.after.txt",
+      "beforeBytes": 4342,
+      "beforeSha256": "15eecfb4c1c79dbe404e0c23c69c54a8e26b31b661ef82dc3d5a2531767e0743",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 6732,
+      "afterSha256": "c4a0573e757675ef94f4ba75fc325416cb1a78c6831db3ef6389af4754181100"
+    },
+    {
+      "role": "preparer-helper",
+      "path": "tools/translation/protected-preparer-writers-20261102.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "1109de7e2b0ad54c81c74f5f477527700d69b398",
+      "before": "preparer-helper.before.txt",
+      "after": "preparer-helper.after.txt",
+      "beforeBytes": 2543,
+      "beforeSha256": "6b4945ef437ed08fbc0b42c36354e4f866255d1f994cd4b0c9bbec82678e1acd",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 4728,
+      "afterSha256": "47dbdfe4996b4d3014c5d5fc968e77ab6e9010b5182d3bd869bdb09ac48dd641"
+    },
+    {
+      "role": "preparer-native",
+      "path": "tools/translation/prepare-native-substitution-copy.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "6ca20ea63cde0d2f0562f1ba96301e4970f6bdb2",
+      "before": "preparer-native.before.txt",
+      "after": "preparer-native.after.txt",
+      "beforeBytes": 18420,
+      "beforeSha256": "4debbaa1b456a87bf365b0cb718768208cef05b8cc848d23042c0434062f24d9",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 18463,
+      "afterSha256": "9d98d6d6bc5cf58e66b27b0111e6df9f171c3d51c7cbb51967a233e4c6eae505"
+    },
+    {
+      "role": "preparer-mixed",
+      "path": "tools/translation/prepare-mixed-native-substitution-copy.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "ac312960448768c0dfb34206cf67fab36e086e15",
+      "before": "preparer-mixed.before.txt",
+      "after": "preparer-mixed.after.txt",
+      "beforeBytes": 18767,
+      "beforeSha256": "5c549c712e38f7e52fa6c218f94745f94e429ce05ebbbd0762dfcdafacb0faf5",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 18789,
+      "afterSha256": "0e99ebdd110d01b3fbdb132ae44010271ff08913b77d0a4d4d28924d508df166"
+    },
+    {
+      "role": "variant-native",
+      "path": "tools/translation/failure-aware-native-substitution-copy.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "c55ab47ddaebb114e10f2938b32691e97b27ff4f",
+      "before": "variant-native.before.txt",
+      "after": "variant-native.after.txt",
+      "beforeBytes": 17814,
+      "beforeSha256": "c0a479b2b5e43d10bcd7e7aec84c55669bb08ae376ddb5997bcdbbc74389accc",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 17857,
+      "afterSha256": "47941a66e669f92644d850127992dbecfdf5dfabb40fb2026b0e1e05ccd09119"
+    },
+    {
+      "role": "variant-mixed",
+      "path": "tools/translation/failure-aware-mixed-native-substitution-copy.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "bcf369a8e3fce7007438692331c671a3a2e11268",
+      "before": "variant-mixed.before.txt",
+      "after": "variant-mixed.after.txt",
+      "beforeBytes": 19267,
+      "beforeSha256": "b763925bac66bd05ead2d84a75e9123301fb3927cfd579632dd152749a39c460",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 19289,
+      "afterSha256": "48f2d8748641047706a7750d1c38fe23cc0f190aa7a5e394a6ec7b031683193d"
+    },
+    {
+      "role": "variant-typed",
+      "path": "tools/translation/prepare-native-typed-substitution-copy.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "99f15f7b751c4359fdb599d7f8758b0b6a84bd1e",
+      "before": "variant-typed.before.txt",
+      "after": "variant-typed.after.txt",
+      "beforeBytes": 12270,
+      "beforeSha256": "32ff1e5a937a7d105d58e5141351f8a49d9c25397fe81bd666d797580527fecc",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 12313,
+      "afterSha256": "454e0969e427969fcd390c4e27374df033150b948685eaf79186b7bffe285302"
+    },
+    {
+      "role": "preparer-history",
+      "path": "tools/translation/protected-preparer-writers-20261102-history.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "c93f98c7727c53f3fdcab08b9ba512ef85f1fcde",
+      "before": "preparer-history.before.txt",
+      "after": "preparer-history.after.txt",
+      "beforeBytes": 4784,
+      "beforeSha256": "9526b4d7d07ae2f3bc4e5e45f8ef7b9203df1ff38f2bf39dbe2659ce5d2aee46",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 5000,
+      "afterSha256": "7e01284059f98855a041c591629e34c48318ec1b5f329c772eb890eec31b4e51"
+    },
+    {
+      "role": "variant-history",
+      "path": "tools/translation/protected-copy-variants-20261102-history.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "79149022b986bb4b68a92bffa5f3784587e3e333",
+      "before": "variant-history.before.txt",
+      "after": "variant-history.after.txt",
+      "beforeBytes": 3861,
+      "beforeSha256": "2737beb35121b764ae16ef9b0c74ad603f4ea34e4ca33225a5bf8d3702290f27",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 4204,
+      "afterSha256": "8b98188f9484a19465134c16e18eaaf3a8e4b172447175b1ec7efdeb1eabd5af"
+    },
+    {
+      "role": "staged-history",
+      "path": "tools/translation/protected-staged-entries-20261102-history.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "f52a51c562f766153f8703d92dab380fbdcf4f96",
+      "before": "staged-history.before.txt",
+      "after": "staged-history.after.txt",
+      "beforeBytes": 4432,
+      "beforeSha256": "c0a6d24c3f51555699c1b9b60f279bce55ee3de2a51a4da2249a6abec119fdd3",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 4894,
+      "afterSha256": "c160b96466800d7fd59467ec6b13675edfa1bac6ca6aba0cf6bd8a5f3f014ceb"
+    },
+    {
+      "role": "preparer-history-case",
+      "path": "tools/translation/test/protected-preparer-writers-20261102-history.test.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "ff7a4032ae68f91e0c8e347789411f1c1468ceff",
+      "before": "preparer-history-case.before.txt",
+      "after": "preparer-history-case.after.txt",
+      "beforeBytes": 3334,
+      "beforeSha256": "ef6da500761f97e656792478080c22d90d81684cc7e0eaf85c019009afbb753a",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 3373,
+      "afterSha256": "8f5d8b11428c8913d320267798abe90b70c297e188b2d469a5a9a590f5d242f7"
+    },
+    {
+      "role": "preparer-receiving-case",
+      "path": "tools/translation/test/protected-preparer-writers-20261102-receiving.test.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "44e7b2b0b0cf4a1511a179fd4118ddad79cae42c",
+      "before": "preparer-receiving-case.before.txt",
+      "after": "preparer-receiving-case.after.txt",
+      "beforeBytes": 3732,
+      "beforeSha256": "c61eea2de9f45d5fb94ff0242810da4102196dbb06762b0173defc48d617dd0d",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 3957,
+      "afterSha256": "c7c2a718586d1d955c52fa3032532b780ba231fe4ffba6a2c654f400561d2a72"
+    },
+    {
+      "role": "variant-history-case",
+      "path": "tools/translation/test/protected-copy-variants-20261102-history.test.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "3d90feff5d390e1b927d37fe0647de82dee59373",
+      "before": "variant-history-case.before.txt",
+      "after": "variant-history-case.after.txt",
+      "beforeBytes": 4193,
+      "beforeSha256": "89a22dd28e662441be42c3230ea220d74c437ff0664cd37158f030e292c8183b",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 4435,
+      "afterSha256": "11e5c1ba1dec321c2bcd746e3141b3a892715ebf14a9973b3cfce821c2419ad8"
+    },
+    {
+      "role": "direct-history-case",
+      "path": "tools/translation/test/protected-preparer-writers-20261102-direct-history.test.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "e4c13b68b1e6154401b95ddaa47dd62ac7e68c7f",
+      "before": "direct-history-case.before.txt",
+      "after": "direct-history-case.after.txt",
+      "beforeBytes": 4320,
+      "beforeSha256": "4129dcc26a88bdbb87de57c5067d2fe96d4e90f33d55812fd3ee9661e24957be",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 4954,
+      "afterSha256": "285cc87ba24ae3d77d773d1d31f3faf58c19c1f2c206776ba2fb6bca7c66f9f8"
+    },
+    {
+      "role": "staged-history-case",
+      "path": "tools/translation/test/protected-staged-entries-20261102-history.test.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "b131beeff6c7215f5b3a5cef684373cf608567aa",
+      "before": "staged-history-case.before.txt",
+      "after": "staged-history-case.after.txt",
+      "beforeBytes": 4327,
+      "beforeSha256": "b8c6225322b33679212bfe2555adf9e9f78ffa371de5a46b1b66b3ebebd300dd",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 4591,
+      "afterSha256": "449164e685cce055fbaf5a9407de77ce12842825861fbeb44965d9ae72cf3aba"
+    },
+    {
+      "role": "safe-error-case",
+      "path": "tools/translation/test/protected-source-errors-20261102.test.mjs",
+      "originalRevision": "d01fdcfef5df719869661475c52e3ce41669c29e",
+      "originalBlob": "85b9d15c82cb877647b955f27154c1252bebd98a",
+      "before": "safe-error-case.before.txt",
+      "after": "safe-error-case.after.txt",
+      "beforeBytes": 4399,
+      "beforeSha256": "5c31c9091cf10d14aef33d4c08ceef39cbee5e1a545022e7ec5ef6ec45c90bda",
+      "sequences": [
+        "language",
+        "repository"
+      ],
+      "afterBytes": 4682,
+      "afterSha256": "1a0ef94b0ea63821113eb2dee4a781e9891958d64fc5499093b0130cbf518f8f"
+    }
+  ],
+  "proposalOnly": true,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN",
+  "additionalSourcePaths": [
+    "tools/translation/protected-contained-direct-20261102-paths.mjs",
+    "tools/translation/protected-contained-direct-20261102-history.mjs",
+    "tools/translation/test/protected-contained-direct-20261102.test.mjs",
+    "tools/translation/test/protected-contained-direct-20261102-capture.test.mjs",
+    "tools/translation/test/protected-contained-direct-20261102-history.test.mjs",
+    "docs/development/protected-contained-direct-20261102.md"
+  ]
+}

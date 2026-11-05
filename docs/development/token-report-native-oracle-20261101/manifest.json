@@ -1,0 +1,10 @@
+{
+  "schema": "token-report-native-edge-oracle-source-v1",
+  "baselineRevision": "76933e1f4abeb5562f864d3c18df2e56658ea7b5",
+  "sha256": "6d008060d1efb9de5849bed2fe14d326ea1d33a0fe8172dd1c2b7215c4511ce4",
+  "rawBytes": 16255,
+  "packedBytes": 3549,
+  "nativeVectorCount": 9,
+  "additionalNativeTestFunctions": 2,
+  "executionEvidence": "UNRUN"
+}

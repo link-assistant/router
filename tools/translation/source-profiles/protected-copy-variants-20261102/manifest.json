@@ -1,0 +1,75 @@
+{
+  "schema": "protected-copy-variants-source-history-20261102-v1",
+  "baselineRevision": "a57c3013d51f90ebf4929acd1a2f68b7015d0794",
+  "files": [
+    {
+      "path": "tools/translation/failure-aware-native-substitution-copy.mjs",
+      "originalRevision": "a57c3013d51f90ebf4929acd1a2f68b7015d0794",
+      "originalBlob": "c5c181f3211496a365209dd0152e8ffc6829a1f3",
+      "mode": "100644",
+      "before": "failure-aware-native-substitution-copy.mjs.before.txt",
+      "after": "failure-aware-native-substitution-copy.mjs.after.txt",
+      "beforeBytes": 16477,
+      "afterBytes": 17814,
+      "beforeSha256": "2b2cf83f9486f8ff2b8b137186e9e1729cbc70eb061545d1144990959f82c1dd",
+      "afterSha256": "c0a479b2b5e43d10bcd7e7aec84c55669bb08ae376ddb5997bcdbbc74389accc",
+      "sequences": [
+        {
+          "phase": "language",
+          "purpose": "retain complete original private native grammar/binding/failure checks"
+        },
+        {
+          "phase": "repository",
+          "purpose": "attach common operational policy and exact physical-current source chronology"
+        }
+      ]
+    },
+    {
+      "path": "tools/translation/failure-aware-mixed-native-substitution-copy.mjs",
+      "originalRevision": "a57c3013d51f90ebf4929acd1a2f68b7015d0794",
+      "originalBlob": "192b4e58f957ad92b4fb2cbe9b1d4c19b5759869",
+      "mode": "100644",
+      "before": "failure-aware-mixed-native-substitution-copy.mjs.before.txt",
+      "after": "failure-aware-mixed-native-substitution-copy.mjs.after.txt",
+      "beforeBytes": 17930,
+      "afterBytes": 19267,
+      "beforeSha256": "3accefa8700c4a24093a192db8d1a87c085401dd48decff3a32a0f95418b55c4",
+      "afterSha256": "b763925bac66bd05ead2d84a75e9123301fb3927cfd579632dd152749a39c460",
+      "sequences": [
+        {
+          "phase": "language",
+          "purpose": "retain complete original private native grammar/binding/failure checks"
+        },
+        {
+          "phase": "repository",
+          "purpose": "attach common operational policy and exact physical-current source chronology"
+        }
+      ]
+    },
+    {
+      "path": "tools/translation/prepare-native-typed-substitution-copy.mjs",
+      "originalRevision": "a57c3013d51f90ebf4929acd1a2f68b7015d0794",
+      "originalBlob": "b60091f368ae9108a556386fd73c537043db3152",
+      "mode": "100644",
+      "before": "prepare-native-typed-substitution-copy.mjs.before.txt",
+      "after": "prepare-native-typed-substitution-copy.mjs.after.txt",
+      "beforeBytes": 10935,
+      "afterBytes": 12270,
+      "beforeSha256": "fdbbb0476c50544f9fe9478844384a2fe5edfc3df88d75709da826ad2701d144",
+      "afterSha256": "32ff1e5a937a7d105d58e5141351f8a49d9c25397fe81bd666d797580527fecc",
+      "sequences": [
+        {
+          "phase": "language",
+          "purpose": "retain complete original private native grammar/binding/failure checks"
+        },
+        {
+          "phase": "repository",
+          "purpose": "attach common operational policy and exact physical-current source chronology"
+        }
+      ]
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

@@ -10,7 +10,7 @@ import {tmpdir} from 'node:os';
 import {join,dirname,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
-import {exportTranslatorBundle} from '../export-bundle.mjs';
+import {exportPartitionedTranslatorBundle} from '../partitioned-export-bundle.mjs';
 import {proposeCoreJsonReadersGzipPackets} from '../propose-core-adoption-corpus.mjs';
 import {openCoreAdoptionGzipPackets} from '../core-adoption-packet-storage.mjs';
 import {applyReviewedCoreAdoption,recoverReviewedCoreAdoption} from '../apply-reviewed-core-adoption.mjs';
@@ -252,7 +252,7 @@ keep('complete-budget-observations',result);
 }));
 
 test('actual checked-in workflow fully reviews strict targets and explicitly applies and recovers its selected bytes',()=>home(async directory=>{
- const root=join(directory,'source'),run=join(directory,'run'),exported=exportTranslatorBundle({sourceRoot:ROOT,output:root});
+ const root=join(directory,'source'),run=join(directory,'run'),exported=exportPartitionedTranslatorBundle({sourceRoot:ROOT,output:root});
 keep('complete-committed-compiler-export',exported.manifest);
  for(const path of runtimeFiles)write(join(root,path),fs.readFileSync(join(ROOT,repositorySourcePath(path,ROOT))));
 write(join(root,'tools/translation/fixtures/real-source-provenance.json'),fs.readFileSync(join(ROOT,'tools/translation/fixtures/real-source-provenance.json')));

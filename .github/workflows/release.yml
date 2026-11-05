@@ -419,6 +419,10 @@ jobs:
         os: [ubuntu-24.04, macos-26, windows-latest]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env:
+          GIT_CONFIG_COUNT: '1'
+          GIT_CONFIG_KEY_0: core.autocrlf
+          GIT_CONFIG_VALUE_0: 'false'
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
@@ -517,7 +521,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $testFiles = Get-ChildItem tests -File -Filter '*_test.rs' | Sort-Object Name
+          $testFiles = Get-ChildItem rust/tests -File -Filter '*_test.rs' | Sort-Object Name
           foreach ($testFile in $testFiles) {
             $target = $testFile.BaseName
             Write-Host "::group::Windows integration target $target"
@@ -538,8 +542,90 @@ jobs:
             }
           }
 
+          # Keep the original *_test.rs sweep above. Cargo also auto-discovers
+          # ordinary .rs targets, including the new independent native oracles.
+          # Select the actual default workspace packages and real test targets;
+          # no manually maintained allowlist may silently omit a target.
+          $metadataLines = [System.Collections.Generic.List[string]]::new()
+          $metadataBytes = 0
+          & cargo metadata --locked --offline --no-deps --format-version 1 | ForEach-Object {
+            $metadataBytes += [System.Text.Encoding]::UTF8.GetByteCount($_) + 1
+            if ($metadataBytes -gt 2097152) { throw 'Complete Cargo test metadata exceeded 2 MiB' }
+            $metadataLines.Add($_)
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'Actual Cargo test target census failed' }
+          $metadata = ($metadataLines -join "`n") | ConvertFrom-Json -Depth 128
+          if ($metadata.version -ne 1 -or !$metadata.workspace_default_members -or !$metadata.packages) {
+            throw 'Complete actual default Cargo workspace target census required'
+          }
+          $oldTargets = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+          foreach ($testFile in $testFiles) { [void]$oldTargets.Add($testFile.BaseName) }
+          $allTargets = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+          foreach ($package in $metadata.packages) {
+            if ($metadata.workspace_default_members -notcontains $package.id) { continue }
+            foreach ($candidate in $package.targets) {
+              if ($candidate.kind -notcontains 'test') { continue }
+              if ($candidate.name -notmatch '^[A-Za-z0-9_][A-Za-z0-9_-]{0,127}$') {
+                throw 'Unknown Cargo target argument spelling; refusing incomplete test discovery'
+              }
+              [void]$allTargets.Add($candidate.name)
+              if ($allTargets.Count -gt 5000) { throw 'Complete Cargo test target count exceeded bound' }
+            }
+          }
+          if ($allTargets.Count -eq 0) { throw 'Actual Cargo test target census was empty' }
+          foreach ($target in $oldTargets) {
+            if (!$allTargets.Contains($target)) { throw "Original Windows test target disappeared: $target" }
+          }
+          foreach ($target in @($allTargets | Where-Object { !$oldTargets.Contains($_) } | Sort-Object)) {
+            Write-Host "::group::Additional Windows integration target $target"
+            $arguments = @(
+              'test', '--locked', '--all-features', '--verbose',
+              '--test', $target, '--', '--test-threads=1'
+            )
+            $process = Start-Process -FilePath cargo -ArgumentList $arguments -NoNewWindow -PassThru
+            if (-not $process.WaitForExit(180000)) {
+              taskkill /PID $process.Id /T /F
+              Write-Host '::endgroup::'
+              throw "Additional Windows integration target $target exceeded 180 seconds"
+            }
+            $exitCode = $process.ExitCode
+            Write-Host '::endgroup::'
+            if ($exitCode -ne 0) { exit $exitCode }
+          }
+
       - name: Run doc tests
         run: cargo test --locked --doc --verbose
+
+      # Independent native provider/profile oracles. The existing job guard
+      # requires all eight JavaScript stages for this exact github.sha first.
+      - name: Setup Node for native profile source orchestration
+        if: ${{ always() && !cancelled() }}
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '20'
+
+      - name: Install locked native profile source dependencies
+        if: ${{ always() && !cancelled() }}
+        run: |
+          npm ci --prefix scripts/ci --ignore-scripts
+          npm ci --prefix js --ignore-scripts
+
+      - name: Run copied native profile oracles after the JavaScript gate
+        if: ${{ always() && !cancelled() }}
+        env:
+          ROUTER_NATIVE_PROFILE_SHA: ${{ github.sha }}
+          ROUTER_NATIVE_PROFILE_JAVASCRIPT: ${{ needs.javascript.result }}
+        run: node scripts/run-native-profile-oracles-20261101.mjs
+
+      - name: Retain complete native profile evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-profile-oracles-${{ runner.os }}-${{ github.sha }}
+          path: ${{ runner.temp }}/router-native-profile-oracles/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
 
   # === COVERAGE ===
   # Instrument once on Linux; platform-specific behavior remains covered by the test matrix.

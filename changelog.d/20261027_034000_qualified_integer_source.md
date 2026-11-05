@@ -1,0 +1,1 @@
+- Draft shared qualified native primitive parameter and static-bound source rules across both existing integer adapters, preserving original syntax/trivia, complete source equations and independent unrun JS/strict TypeScript/export/native boundary cases. Full translation, synchronization, freshness, parity and CI qualification remain unfinished (#759, #772).

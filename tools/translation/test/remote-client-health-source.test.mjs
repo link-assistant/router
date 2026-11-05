@@ -1,0 +1,3 @@
+// Independent source constructor cases. SOURCE ONLY; UNRUN.
+import test from 'node:test';import assert from 'node:assert/strict';import {prepareRemoteClientHealthSources} from '../prepare-remote-client-health-sources.mjs';
+test('seven paired source equations preserve original owners two phases CST and complete inverses',{timeout:60000},()=>{const plan=prepareRemoteClientHealthSources();assert.equal(plan.files.length,7);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.receivingExecuted,false);});

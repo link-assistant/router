@@ -2,7 +2,7 @@ import {originalMoveOwner,originalMoveContext,restoreOriginalMoves,requireOrigin
 import {hasOriginalStandardCall,requireOriginalStandardCall} from './original-standard-calls.mjs';
 import {originalSharedDomainGuard,sharedDomainGuardNeeded,captureBorrowedLayouts,requireBorrowedLayouts} from './standard-borrowed-body.mjs';
 import {hasMutableScalarBinding} from './control.mjs';
-import {sharedReferenceCopyIdentity} from '../shared-reference-copy-source.mjs';
+import {currentSharedReferenceCopyIdentity as sharedReferenceCopyIdentity} from '../current-standard-copy-source.mjs';
 import {renameFunction} from '../vendor/meta-language/translation/ir.js';
 // Specialize actual selected Rust bodies through the existing checker. The
 // returned semantic tree uses the ordinary let/match/literal emitter.

@@ -1,0 +1,11 @@
+import {fileURLToPath} from 'node:url';
+import {resolve} from 'node:path';
+import {prepareNativeSubstitutionCopy,writeNativeSubstitutionCopy,withNativeSubstitutionOperation,nativeSubstitutionCopyHasChanges} from './prepare-native-substitution-copy.mjs';
+import {prepareFixedTypeLifetimeSources} from './prepare-fixed-type-lifetimes-sources.mjs';
+const ROOT=fileURLToPath(new URL('../../',import.meta.url));
+export function prepareFixedTypeCarrierSources({root=ROOT}={}){
+ return withNativeSubstitutionOperation(()=>prepareNativeSubstitutionCopy({root,archive:'tools/translation/source-profiles/fixed-type-carrier/complete-originals-and-rules.json.gz',pin:'8a9372bba8ac328622ccee24b5c1f9d3c8309bc95236c6a01d47e790ab80eac2',id:'router:fixed-type-carrier-complete-source-substitutions-v1',laterPlans:[prepareFixedTypeLifetimeSources({root})]}));
+}
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+ const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))throw new TypeError('Use --emit|--write|--check');const plan=prepareFixedTypeCarrierSources();if(args[0]==='--write')writeNativeSubstitutionCopy(plan,{root:ROOT});if(args[0]==='--check'&&nativeSubstitutionCopyHasChanges(plan))throw new TypeError('Fixed type carrier source differs');console.log(JSON.stringify(args[0]==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),receivingExecuted:false}));
+}

@@ -1,4 +1,4 @@
-// Generated draft from rust/src/vendor_cli_refresh.rs; sha256=cfef45c8a449b274398ab8909cd36f8bd472ca7a3b46e84154278bcc5430d7de
+// Generated draft from rust/src/vendor_cli_refresh.rs; sha256=8445954144104847f28409b7bdc7d792a7a652328b7b6ead6b88832be01b7562
 // Carried constructs are data, never runtime parity evidence.
 import { std_time_duration_from_secs as ml_host_std_time_duration_from_secs } from "../../runtime/time-runtime.mjs";
 
@@ -54,4 +54,4 @@ function rp_76656e646f725f636c695f726566726573682e70726f62655f666f72(provider) {
 }
 
 export const translated = { ["DEFAULT_TIMEOUT"]: rp_76656e646f725f636c695f726566726573682e44454641554c545f54494d454f5554(), ["CLAUDE_PROBE"]: rp_76656e646f725f636c695f726566726573682e434c415544455f50524f4245(), ["CODEX_PROBE"]: rp_76656e646f725f636c695f726566726573682e434f4445585f50524f4245(), ["PROBE_ARGS_ENV"]: rp_76656e646f725f636c695f726566726573682e50524f42455f415247535f454e56(), ["probe_for"]: rp_76656e646f725f636c695f726566726573682e70726f62655f666f72 };
-export const provenance = {"sourcePath":"rust/src/vendor_cli_refresh.rs","sourceSha256":"cfef45c8a449b274398ab8909cd36f8bd472ca7a3b46e84154278bcc5430d7de","executable":5,"executableFunctions":1,"executableConstants":4,"executableTypes":0,"executableConstructors":0,"carried":10,"preserved":16,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/vendor_cli_refresh.rs","sourceSha256":"8445954144104847f28409b7bdc7d792a7a652328b7b6ead6b88832be01b7562","executable":5,"executableFunctions":1,"executableConstants":4,"executableTypes":0,"executableConstructors":0,"carried":10,"preserved":16,"runtimeParity":false};

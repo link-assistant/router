@@ -62,7 +62,7 @@ pub(super) fn fingerprint(token_secret: &str) -> Option<String> {
 
 /// Insert `-e NAME` for every variable and the fingerprint label before the
 /// image reference (the last two `docker run` arguments: image and `serve`).
-pub(super) fn insert(arguments: &mut Vec<String>, settings: &LocalSettings, token_secret: &str) {
+pub(super) fn insert(arguments: &mut Vec<String>, settings: &LocalSettings, token_secret: &crate::translation_core::Str) {
     let mut extra = Vec::new();
     for (name, _) in &settings.env {
         extra.extend(["-e".to_string(), name.clone()]);
@@ -70,7 +70,7 @@ pub(super) fn insert(arguments: &mut Vec<String>, settings: &LocalSettings, toke
     if let Some(fingerprint) = env_fingerprint(token_secret, &settings.env) {
         extra.extend([
             "--label".to_string(),
-            format!("{LABEL_KEY}.{LABEL_SUFFIX}={fingerprint}"),
+            crate::translation_core::format!("{LABEL_KEY}.{LABEL_SUFFIX}={fingerprint}"),
         ]);
     }
     let at = arguments.len().saturating_sub(2);

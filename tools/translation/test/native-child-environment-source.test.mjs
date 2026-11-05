@@ -1,0 +1,6 @@
+// Complete original/current native child command histories. SOURCE ONLY; UNRUN.
+import test from 'node:test';import assert from 'node:assert/strict';
+import {prepareNativeChildEnvironmentSources} from '../prepare-native-child-environment-sources.mjs';
+test('two compiler equations and eight native history steps retain complete source and private environment boundaries',{timeout:60000},()=>{
+ const plan=prepareNativeChildEnvironmentSources();assert.equal(plan.files.length,2);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.nativeInputs.files.length,17);assert.equal(plan.nativeInputs.files.reduce((count,row)=>count+row.historyChain.length,0),21);for(const row of plan.nativeInputs.files){assert.equal(row.current,row.after);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['rust/src/operation_context.rs','rust/src/with_command.rs'].includes(row.path)?['language','repository','language','repository']:['language','repository']);assert.equal(row.sourceAuthority,false);assert.equal(row.semanticAuthority,false);assert.equal(row.namespaceAuthority,false);}assert.equal(plan.rustExecuted,false);assert.equal(plan.receivingExecuted,false);
+});

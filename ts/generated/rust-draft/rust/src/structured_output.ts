@@ -93,37 +93,37 @@ try {
     } else {
       if ((kind === "json_schema")) {
         const definition = ml_router_try((() => {
-    const ml_standard_body_3 = (() => { const ml_shared_immutable_value = ml_host_option_bind(ml_host_serde_json_value_get_string(value_2, "json_schema"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_object(ml_host_callback_0_0); }, "and_then"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f373336353732363436353566366137333666366532653464363137303566353337343732363936653637356635363631366337353635 }>;
-    switch (ml_standard_body_3.$) {
+    const ml_standard_body_10 = (() => { const ml_shared_immutable_value = ml_host_option_bind(ml_host_serde_json_value_get_string(value_2, "json_schema"), (ml_host_callback_7_0) => { return ml_host_serde_json_value_as_object(ml_host_callback_7_0); }, "and_then"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f373336353732363436353566366137333666366532653464363137303566353337343732363936653637356635363631366337353635 }>;
+    switch (ml_standard_body_10.$) {
       case "None": {
         return Object.freeze({ $: 'Err', field0: (() => {
-          const ml_fmt_2 = "response_format.json_schema must be an object";
-          return ml_fmt_2;
+          const ml_fmt_9 = "response_format.json_schema must be an object";
+          return ml_fmt_9;
         })() });
       }
       case "Some": {
-        const v = ml_standard_body_3.field0;
+        const v = ml_standard_body_10.field0;
         return ml_snapshot_constructor_value(Object.freeze({ $: 'Ok', field0: v }), {"kind":"data","name":"rp_526f75746572526573756c745f37365f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f34643631373035663533373437323639366536373566353636313663373536355f31375f727573745f6f776e65645f737472696e67"}, ml_constructor_value_schema_78d7fab264b49616d8e6c460b95f8203f362e00a5723d748f8251a3b2945752b);
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_3);
+        return ml_router_unexpected(ml_standard_body_10);
       }
     }
   })(), false);
         ml_router_try(rp_737472756374757265645f6f75747075742e76616c69646174655f6e616d655f616e645f737472696374(ml_host_serde_json_map_get(definition, "name"), ml_host_serde_json_map_get(definition, "strict"), "response_format.json_schema"), false);
         const schema_2 = ml_router_try((() => {
-    const ml_standard_body_4 = (() => { const ml_shared_immutable_value = (() => {
-      const ml_standard_callback_self_1 = (() => { const ml_shared_immutable_value = ml_host_serde_json_map_get(definition, "schema"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+    const ml_standard_body_28 = (() => { const ml_shared_immutable_value = (() => {
+      const ml_standard_callback_self_23 = (() => { const ml_shared_immutable_value = ml_host_serde_json_map_get(definition, "schema"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
       return (() => {
-      const ml_pattern_1_2 = ml_standard_callback_self_1 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
-      if ((ml_pattern_immutable_view(ml_pattern_1_2) && (ml_pattern_1_2.$ === "Some"))) {
-        const ml_standard_pattern_2 = (ml_pattern_1_2)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+      const ml_pattern_25 = ml_standard_callback_self_23 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+      if ((ml_pattern_immutable_view(ml_pattern_25) && (ml_pattern_25.$ === "Some"))) {
+        const ml_standard_pattern_24 = (ml_pattern_25)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
         if ((() => {
-        const ml_standard_callback_arg_2 = ml_standard_pattern_2 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
-        const schema = ml_standard_callback_arg_2 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+        const ml_standard_callback_arg_26 = ml_standard_pattern_24 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+        const schema = ml_standard_callback_arg_26 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
         return ml_host_serde_json_value_is_object(schema);
       })()) {
-          return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: ml_standard_pattern_2 }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_constructor_value_schema_29d733eba4a5e6f1b84f992cff81c67fc7370447788c0c9a2c733cb2257e3e67);
+          return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: ml_standard_pattern_24 }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_constructor_value_schema_29d733eba4a5e6f1b84f992cff81c67fc7370447788c0c9a2c733cb2257e3e67);
         } else {
         }
       } else {
@@ -131,26 +131,26 @@ try {
       return Object.freeze({ $: 'None' });
       })();
     })(); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
-    switch (ml_standard_body_4.$) {
+    switch (ml_standard_body_28.$) {
       case "None": {
         return Object.freeze({ $: 'Err', field0: (() => {
-          const ml_fmt_3 = "response_format.json_schema.schema must be an object";
-          return ml_fmt_3;
+          const ml_fmt_27 = "response_format.json_schema.schema must be an object";
+          return ml_fmt_27;
         })() });
       }
       case "Some": {
-        const v_2 = ml_standard_body_4.field0;
+        const v_2 = ml_standard_body_28.field0;
         return ml_snapshot_constructor_value(Object.freeze({ $: 'Ok', field0: v_2 }), {"kind":"data","name":"rp_526f75746572526573756c745f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f353636313663373536355f31375f727573745f6f776e65645f737472696e67"}, ml_constructor_value_schema_d2c0f512ae52649aa22d0c7a885d6cd5fe3d02afc441fd209e2e68547b91e865);
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_4);
+        return ml_router_unexpected(ml_standard_body_28);
       }
     }
   })(), false) as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
         let format = ml_json_macro_object([["type", ml_json_macro_string("json_schema")], ["name", ml_json_macro_value(ml_host_router_core_json_map_index(definition, "name"))], ["schema", ml_json_macro_value(schema_2)]]);
-        const ml_pattern_1_3 = ml_host_serde_json_map_get(definition, "strict") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
-        if ((ml_pattern_immutable_view(ml_pattern_1_3) && (ml_pattern_1_3.$ === "Some"))) {
-          const strict = (ml_pattern_1_3)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+        const ml_pattern_29 = ml_host_serde_json_map_get(definition, "strict") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+        if ((ml_pattern_immutable_view(ml_pattern_29) && (ml_pattern_29.$ === "Some"))) {
+          const strict = (ml_pattern_29)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
           (() => {
     const __router_json_rhs_394 = ml_host_router_core_json_copy(strict) as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
     format = ml_host_router_core_json_with_field(format, "strict", __router_json_rhs_394);
@@ -162,8 +162,8 @@ try {
       } else {
         const other = kind;
         return Object.freeze({ $: 'Err', field0: (() => {
-    const ml_fmt_2_2 = other;
-    return ("unsupported response_format type: " + ml_fmt_2_2);
+    const ml_fmt_30 = other;
+    return ("unsupported response_format type: " + ml_fmt_30);
   })() });
       }
     }
@@ -177,15 +177,15 @@ function rp_737472756374757265645f6f75747075742e72657175697265645f74797065(value
   ml_validate_rust_value(value, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
   return (() => {
-    const ml_standard_body_4 = (() => {
+    const ml_standard_body_7 = (() => {
       const ml_standard_callback_self_2 = ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_as_object(value), (object) => { return ml_host_serde_json_map_get(object, "type"); }, "and_then"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
       return (() => {
-      const ml_pattern_1 = ml_standard_callback_self_2 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
-      if ((ml_pattern_immutable(ml_pattern_1) && (ml_pattern_1.$ === "Some"))) {
-        const ml_standard_pattern_3 = (ml_pattern_1)["field0"];
+      const ml_pattern_4 = ml_standard_callback_self_2 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
+      if ((ml_pattern_immutable(ml_pattern_4) && (ml_pattern_4.$ === "Some"))) {
+        const ml_standard_pattern_3 = (ml_pattern_4)["field0"];
         if ((() => {
-        const ml_standard_callback_arg_2 = ml_standard_pattern_3;
-        const kind = ml_standard_callback_arg_2;
+        const ml_standard_callback_arg_5 = ml_standard_pattern_3;
+        const kind = ml_standard_callback_arg_5;
         return !(kind.length === 0);
       })()) {
           return Object.freeze({ $: 'Some', field0: ml_standard_pattern_3 });
@@ -196,19 +196,19 @@ function rp_737472756374757265645f6f75747075742e72657175697265645f74797065(value
       return Object.freeze({ $: 'None' });
       })();
     })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
-    switch (ml_standard_body_4.$) {
+    switch (ml_standard_body_7.$) {
       case "None": {
         return Object.freeze({ $: 'Err', field0: (() => {
-          const ml_fmt_3 = path;
-          return (ml_fmt_3 + ".type must be a non-empty string");
+          const ml_fmt_6 = path;
+          return (ml_fmt_6 + ".type must be a non-empty string");
         })() });
       }
       case "Some": {
-        const v = ml_standard_body_4.field0;
+        const v = ml_standard_body_7.field0;
         return Object.freeze({ $: 'Ok', field0: v });
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_4);
+        return ml_router_unexpected(ml_standard_body_7);
       }
     }
   })();
@@ -237,8 +237,8 @@ function rp_737472756374757265645f6f75747075742e76616c69646174655f6e616d655f616e
       }
       case "Some": {
         const ml_standard_pattern_4 = ml_standard_callback_self_3.field0;
-        const ml_standard_callback_arg_1 = ml_standard_pattern_4;
-        const ml_standard_callback_1_0 = ml_standard_callback_arg_1;
+        const ml_standard_callback_arg_5 = ml_standard_pattern_4;
+        const ml_standard_callback_1_0 = ml_standard_callback_arg_5;
         return (ml_standard_callback_1_0.length === 0);
       }
       default: {
@@ -247,31 +247,31 @@ function rp_737472756374757265645f6f75747075742e76616c69646174655f6e616d655f616e
     }
   })()) {
     return Object.freeze({ $: 'Err', field0: (() => {
-    const ml_fmt_2 = path;
-    return (ml_fmt_2 + ".name must be a non-empty string");
+    const ml_fmt_6 = path;
+    return (ml_fmt_6 + ".name must be a non-empty string");
   })() });
   } else {
   }
   if ((() => {
-    const ml_standard_callback_self_3_2 = (() => { const ml_shared_immutable_value = strict; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
-    switch (ml_standard_callback_self_3_2.$) {
+    const ml_standard_callback_self_7 = (() => { const ml_shared_immutable_value = strict; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+    switch (ml_standard_callback_self_7.$) {
       case "None": {
         return false;
       }
       case "Some": {
-        const ml_standard_pattern_4_2 = ml_standard_callback_self_3_2.field0;
-        const ml_standard_callback_arg_1_2 = ml_standard_pattern_4_2 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
-        const value = ml_standard_callback_arg_1_2 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+        const ml_standard_pattern_8 = ml_standard_callback_self_7.field0;
+        const ml_standard_callback_arg_9 = ml_standard_pattern_8 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+        const value = ml_standard_callback_arg_9 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
         return !ml_host_serde_json_value_is_boolean(value);
       }
       default: {
-        return ml_router_unexpected(ml_standard_callback_self_3_2);
+        return ml_router_unexpected(ml_standard_callback_self_7);
       }
     }
   })()) {
     return Object.freeze({ $: 'Err', field0: (() => {
-    const ml_fmt_2_2 = path;
-    return (ml_fmt_2_2 + ".strict must be a boolean");
+    const ml_fmt_10 = path;
+    return (ml_fmt_10 + ".strict must be a boolean");
   })() });
   } else {
   }
@@ -289,35 +289,35 @@ try {
   }
   const text_2 = (ml_pattern_1)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
   const object = ml_router_try((() => {
-    const ml_standard_body_2 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_as_object(text_2); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f373336353732363436353566366137333666366532653464363137303566353337343732363936653637356635363631366337353635 }>;
-    switch (ml_standard_body_2.$) {
+    const ml_standard_body_7 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_as_object(text_2); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f373336353732363436353566366137333666366532653464363137303566353337343732363936653637356635363631366337353635 }>;
+    switch (ml_standard_body_7.$) {
       case "None": {
         return Object.freeze({ $: 'Err', field0: (() => {
-          const ml_fmt_1 = "text must be an object";
-          return ml_fmt_1;
+          const ml_fmt_6 = "text must be an object";
+          return ml_fmt_6;
         })() });
       }
       case "Some": {
-        const v = ml_standard_body_2.field0;
+        const v = ml_standard_body_7.field0;
         return ml_snapshot_constructor_value(Object.freeze({ $: 'Ok', field0: v }), {"kind":"data","name":"rp_526f75746572526573756c745f37365f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f34643631373035663533373437323639366536373566353636313663373536355f31375f727573745f6f776e65645f737472696e67"}, ml_constructor_value_schema_78d7fab264b49616d8e6c460b95f8203f362e00a5723d748f8251a3b2945752b);
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_2);
+        return ml_router_unexpected(ml_standard_body_7);
       }
     }
   })(), false);
-  const ml_pattern_3 = (() => {
-    const ml_standard_callback_self_1 = (() => { const ml_shared_immutable_value = ml_host_serde_json_map_get(object, "format"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+  const ml_pattern_12 = (() => {
+    const ml_standard_callback_self_8 = (() => { const ml_shared_immutable_value = ml_host_serde_json_map_get(object, "format"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
     return (() => {
-    const ml_pattern_1_2 = ml_standard_callback_self_1 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
-    if ((ml_pattern_immutable_view(ml_pattern_1_2) && (ml_pattern_1_2.$ === "Some"))) {
-      const ml_standard_pattern_2 = (ml_pattern_1_2)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+    const ml_pattern_10 = ml_standard_callback_self_8 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+    if ((ml_pattern_immutable_view(ml_pattern_10) && (ml_pattern_10.$ === "Some"))) {
+      const ml_standard_pattern_9 = (ml_pattern_10)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
       if ((() => {
-      const ml_standard_callback_arg_2 = ml_standard_pattern_2 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
-      const value = ml_standard_callback_arg_2 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+      const ml_standard_callback_arg_11 = ml_standard_pattern_9 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+      const value = ml_standard_callback_arg_11 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
       return !ml_host_serde_json_value_is_null(value);
     })()) {
-        return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: ml_standard_pattern_2 }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_constructor_value_schema_29d733eba4a5e6f1b84f992cff81c67fc7370447788c0c9a2c733cb2257e3e67);
+        return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: ml_standard_pattern_9 }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_constructor_value_schema_29d733eba4a5e6f1b84f992cff81c67fc7370447788c0c9a2c733cb2257e3e67);
       } else {
       }
     } else {
@@ -325,33 +325,33 @@ try {
     return Object.freeze({ $: 'None' });
     })();
   })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
-  if ((ml_pattern_immutable_view(ml_pattern_3) && (ml_pattern_3.$ === "Some"))) {
+  if ((ml_pattern_immutable_view(ml_pattern_12) && (ml_pattern_12.$ === "Some"))) {
   } else {
     return ml_snapshot_constructor_value(Object.freeze({ $: 'Ok', field0: Object.freeze({ $: 'None' }) }), {"kind":"data","name":"rp_526f75746572526573756c745f3131325f6e616d65645f353236663735373436353732346637303734363936663665356633333337356636653631366436353634356633373333333633353337333233363334333633353335363633363631333733333336363633363635356633353336333633313336363333373335333633355f31375f727573745f6f776e65645f737472696e67"}, ml_constructor_value_schema_ed607e7ad1c47328e3b460030132927507a585a129c3c794205b46c6278b194c);
   }
-  const format = (ml_pattern_3)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
-  const ml_s4 = ml_router_try(rp_737472756374757265645f6f75747075742e72657175697265645f74797065(format, "text.format"), false);
-  if ((ml_s4 === "text")) {
+  const format = (ml_pattern_12)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+  const ml_s13 = ml_router_try(rp_737472756374757265645f6f75747075742e72657175697265645f74797065(format, "text.format"), false);
+  if ((ml_s13 === "text")) {
     return ml_snapshot_constructor_value(Object.freeze({ $: 'Ok', field0: ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: ml_json_macro_object([["type", ml_json_macro_string("text")]]) }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_constructor_value_schema_657a4168dfa80c6994f199a10cb1549cd1c313906aa1484d4377c52826fbd7d7) }), {"kind":"data","name":"rp_526f75746572526573756c745f3131325f6e616d65645f353236663735373436353732346637303734363936663665356633333337356636653631366436353634356633373333333633353337333233363334333633353335363633363631333733333336363633363635356633353336333633313336363333373335333633355f31375f727573745f6f776e65645f737472696e67"}, ml_constructor_value_schema_ed607e7ad1c47328e3b460030132927507a585a129c3c794205b46c6278b194c);
   } else {
-    if ((ml_s4 === "json_object")) {
+    if ((ml_s13 === "json_object")) {
       return ml_snapshot_constructor_value(Object.freeze({ $: 'Ok', field0: ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: ml_json_macro_object([["type", ml_json_macro_string("json_object")]]) }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_constructor_value_schema_657a4168dfa80c6994f199a10cb1549cd1c313906aa1484d4377c52826fbd7d7) }), {"kind":"data","name":"rp_526f75746572526573756c745f3131325f6e616d65645f353236663735373436353732346637303734363936663665356633333337356636653631366436353634356633373333333633353337333233363334333633353335363633363631333733333336363633363635356633353336333633313336363333373335333633355f31375f727573745f6f776e65645f737472696e67"}, ml_constructor_value_schema_ed607e7ad1c47328e3b460030132927507a585a129c3c794205b46c6278b194c);
     } else {
-      if ((ml_s4 === "json_schema")) {
+      if ((ml_s13 === "json_schema")) {
         ml_router_try(rp_737472756374757265645f6f75747075742e76616c69646174655f6e616d655f616e645f737472696374(ml_host_serde_json_value_get_string(format, "name"), ml_host_serde_json_value_get_string(format, "strict"), "text.format"), false);
         const schema_2 = ml_router_try((() => {
-    const ml_standard_body_4 = (() => { const ml_shared_immutable_value = (() => {
-      const ml_standard_callback_self_1_2 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_get_string(format, "schema"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+    const ml_standard_body_31 = (() => { const ml_shared_immutable_value = (() => {
+      const ml_standard_callback_self_26 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_get_string(format, "schema"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
       return (() => {
-      const ml_pattern_1_3 = ml_standard_callback_self_1_2 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
-      if ((ml_pattern_immutable_view(ml_pattern_1_3) && (ml_pattern_1_3.$ === "Some"))) {
-        const ml_standard_pattern_2_2 = (ml_pattern_1_3)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+      const ml_pattern_28 = ml_standard_callback_self_26 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+      if ((ml_pattern_immutable_view(ml_pattern_28) && (ml_pattern_28.$ === "Some"))) {
+        const ml_standard_pattern_27 = (ml_pattern_28)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
         if ((() => {
-        const ml_standard_callback_arg_2_2 = ml_standard_pattern_2_2 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
-        const schema = ml_standard_callback_arg_2_2 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+        const ml_standard_callback_arg_29 = ml_standard_pattern_27 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+        const schema = ml_standard_callback_arg_29 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
         return ml_host_serde_json_value_is_object(schema);
       })()) {
-          return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: ml_standard_pattern_2_2 }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_constructor_value_schema_29d733eba4a5e6f1b84f992cff81c67fc7370447788c0c9a2c733cb2257e3e67);
+          return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: ml_standard_pattern_27 }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_constructor_value_schema_29d733eba4a5e6f1b84f992cff81c67fc7370447788c0c9a2c733cb2257e3e67);
         } else {
         }
       } else {
@@ -359,26 +359,26 @@ try {
       return Object.freeze({ $: 'None' });
       })();
     })(); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
-    switch (ml_standard_body_4.$) {
+    switch (ml_standard_body_31.$) {
       case "None": {
         return Object.freeze({ $: 'Err', field0: (() => {
-          const ml_fmt_3 = "text.format.schema must be an object";
-          return ml_fmt_3;
+          const ml_fmt_30 = "text.format.schema must be an object";
+          return ml_fmt_30;
         })() });
       }
       case "Some": {
-        const v_2 = ml_standard_body_4.field0;
+        const v_2 = ml_standard_body_31.field0;
         return ml_snapshot_constructor_value(Object.freeze({ $: 'Ok', field0: v_2 }), {"kind":"data","name":"rp_526f75746572526573756c745f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f353636313663373536355f31375f727573745f6f776e65645f737472696e67"}, ml_constructor_value_schema_d2c0f512ae52649aa22d0c7a885d6cd5fe3d02afc441fd209e2e68547b91e865);
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_4);
+        return ml_router_unexpected(ml_standard_body_31);
       }
     }
   })(), false) as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
         let definition = ml_json_macro_object([["name", ml_json_macro_value(ml_host_router_core_json_index_str(format, "name"))], ["schema", ml_json_macro_value(schema_2)]]);
-        const ml_pattern_1_4 = ml_host_serde_json_value_get_string(format, "strict") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
-        if ((ml_pattern_immutable_view(ml_pattern_1_4) && (ml_pattern_1_4.$ === "Some"))) {
-          const strict = (ml_pattern_1_4)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+        const ml_pattern_32 = ml_host_serde_json_value_get_string(format, "strict") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+        if ((ml_pattern_immutable_view(ml_pattern_32) && (ml_pattern_32.$ === "Some"))) {
+          const strict = (ml_pattern_32)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
           (() => {
     const __router_json_rhs_394 = ml_host_router_core_json_copy(strict) as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
     definition = ml_host_router_core_json_with_field(definition, "strict", __router_json_rhs_394);
@@ -388,10 +388,10 @@ try {
         }
         return ml_snapshot_constructor_value(Object.freeze({ $: 'Ok', field0: ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: ml_json_macro_object([["type", ml_json_macro_string("json_schema")], ["json_schema", ml_json_macro_value(definition)]]) }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_constructor_value_schema_657a4168dfa80c6994f199a10cb1549cd1c313906aa1484d4377c52826fbd7d7) }), {"kind":"data","name":"rp_526f75746572526573756c745f3131325f6e616d65645f353236663735373436353732346637303734363936663665356633333337356636653631366436353634356633373333333633353337333233363334333633353335363633363631333733333336363633363635356633353336333633313336363333373335333633355f31375f727573745f6f776e65645f737472696e67"}, ml_constructor_value_schema_ed607e7ad1c47328e3b460030132927507a585a129c3c794205b46c6278b194c);
       } else {
-        const other = ml_s4;
+        const other = ml_s13;
         return Object.freeze({ $: 'Err', field0: (() => {
-    const ml_fmt_2 = other;
-    return ("unsupported text.format type: " + ml_fmt_2);
+    const ml_fmt_33 = other;
+    return ("unsupported text.format type: " + ml_fmt_33);
   })() });
       }
     }
@@ -406,18 +406,18 @@ try {
   ml_validate_rust_value(schema, {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77, { refinements: ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 });
   if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
   const schema_3 = ml_router_try((() => {
-    const ml_standard_body_4 = (() => { const ml_shared_immutable_value = (() => {
-      const ml_standard_callback_self_1 = (() => { const ml_shared_immutable_value = schema; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+    const ml_standard_body_18 = (() => { const ml_shared_immutable_value = (() => {
+      const ml_standard_callback_self_13 = (() => { const ml_shared_immutable_value = schema; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
       return (() => {
-      const ml_pattern_1 = ml_standard_callback_self_1 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
-      if ((ml_pattern_immutable_view(ml_pattern_1) && (ml_pattern_1.$ === "Some"))) {
-        const ml_standard_pattern_2 = (ml_pattern_1)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+      const ml_pattern_15 = ml_standard_callback_self_13 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+      if ((ml_pattern_immutable_view(ml_pattern_15) && (ml_pattern_15.$ === "Some"))) {
+        const ml_standard_pattern_14 = (ml_pattern_15)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
         if ((() => {
-        const ml_standard_callback_arg_2 = ml_standard_pattern_2 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
-        const schema_2 = ml_standard_callback_arg_2 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+        const ml_standard_callback_arg_16 = ml_standard_pattern_14 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+        const schema_2 = ml_standard_callback_arg_16 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
         return ml_host_serde_json_value_is_object(schema_2);
       })()) {
-          return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: ml_standard_pattern_2 }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_constructor_value_schema_29d733eba4a5e6f1b84f992cff81c67fc7370447788c0c9a2c733cb2257e3e67);
+          return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: ml_standard_pattern_14 }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_constructor_value_schema_29d733eba4a5e6f1b84f992cff81c67fc7370447788c0c9a2c733cb2257e3e67);
         } else {
         }
       } else {
@@ -425,19 +425,19 @@ try {
       return Object.freeze({ $: 'None' });
       })();
     })(); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
-    switch (ml_standard_body_4.$) {
+    switch (ml_standard_body_18.$) {
       case "None": {
         return Object.freeze({ $: 'Err', field0: (() => {
-          const ml_fmt_3 = path;
-          return (ml_fmt_3 + " must be an object");
+          const ml_fmt_17 = path;
+          return (ml_fmt_17 + " must be an object");
         })() });
       }
       case "Some": {
-        const v = ml_standard_body_4.field0;
+        const v = ml_standard_body_18.field0;
         return ml_snapshot_constructor_value(Object.freeze({ $: 'Ok', field0: v }), {"kind":"data","name":"rp_526f75746572526573756c745f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f353636313663373536355f31375f727573745f6f776e65645f737472696e67"}, ml_constructor_value_schema_d2c0f512ae52649aa22d0c7a885d6cd5fe3d02afc441fd209e2e68547b91e865);
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_4);
+        return ml_router_unexpected(ml_standard_body_18);
       }
     }
   })(), false) as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;

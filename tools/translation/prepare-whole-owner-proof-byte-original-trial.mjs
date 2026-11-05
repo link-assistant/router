@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Source-copy the COMPLETE current original-twelve harness, not its test bodies.
 import {readFileSync,writeFileSync,existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -40,6 +41,6 @@ export function prepareWholeOwnerProofByteOriginalTrial({root=ROOT}={}){
  return {schema:'whole-owner-proof-byte-original-twelve-trial-source-v1',typescriptVersion:ts.version,birthProducer:birth,inputs,files:[{path:OUTPUT,before,language:before,after,current:existsSync(resolve(root,OUTPUT))?readFileSync(resolve(root,OUTPUT),'utf8'):null,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:first.meta,afterMeta,sequence,inverseSequence,inverse:before,trace:run.trace,nativeBindings,imports,schemaEdits,preserved}],productionSelected:false,originalTestChanged:false,originalLimitsChanged:false,performanceQualified:false,runtimeExecuted:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=prepareWholeOwnerProofByteOriginalTrial();
- if(mode==='--write')for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);else if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete proof byte original-twelve harness stale or ungenerated');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),runtimeExecuted:false,performanceQualified:false}));
+ const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=mode==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareWholeOwnerProofByteOriginalTrial();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)writer.write(row.path,row.after);return plan;}):prepareWholeOwnerProofByteOriginalTrial();
+ if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete proof byte original-twelve harness stale or ungenerated');console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),runtimeExecuted:false,performanceQualified:false}));
 }

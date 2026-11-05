@@ -1,0 +1,52 @@
+{
+  "schema": "fixed-Boolean-helper-source-family-census-20261103-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-boolean-helper-families-20261103/index374.before.json.gz",
+    "encodedSha256": "c2fcfae5dd28f2c6b7b574b821ff678f766192cdbd5d5a796d594d3beb5718b7",
+    "sourceSha256": "db59b28da6a04a01bf276a5baa126d121f86010b43802aa2b3200a583dcc0ecc",
+    "rows": 374
+  },
+  "families": [
+    {
+      "id": "exact-boolean-helper-readers-20261103",
+      "manifest": "tools/translation/source-profiles/boolean-helper-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "boolean-helper-source-20261103-v1",
+      "sha256": "79413e298030430692e247715f511c70d6a496fd0014a753f3713951e7753da8",
+      "rows": 2,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-boolean-helper-provenance-20261103",
+      "manifest": "tools/translation/source-profiles/boolean-helper-documents-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "boolean-helper-documents-source-20261103-v1",
+      "sha256": "79543e342e0a0b5e4903bed17979ada5f0157f362a79c4f1124539bfc94bcf02",
+      "rows": 2,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-boolean-helper-adoption-20261103",
+      "manifest": "tools/translation/source-profiles/exact-source-boolean-helper-families-20261103/adoption.json.gz",
+      "kind": "archive",
+      "schema": "Boolean-helper-installed-source-20261103-v1",
+      "sha256": "8359ba76a9836ff1294e78338a8350eca4723d1a91b43c4e57f7b07c32fd8f47",
+      "rows": 6,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-boolean-helper-cases-20261103",
+      "manifest": "tools/translation/source-profiles/exact-source-boolean-helper-families-20261103/joins.json.gz",
+      "kind": "archive",
+      "schema": "Boolean-helper-index-joins-20261103-v1",
+      "sha256": "bc25004ce5264caf9ff39f1e793e438a6e38d71495b04b2aecb19a1c004b3b95",
+      "rows": 7,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 17,
+  "totalRows": 391,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

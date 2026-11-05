@@ -1,0 +1,1 @@
+Draft actual native shared Vec helper operands and a separately source-qualified result route, preserving the generic ownership API and full helper graph. Add transient call-interval move/write protection, all-domain native target/refusal case source and independent Rust oracle extensions. All execution remains unrun; full translation and parity remain unfinished.

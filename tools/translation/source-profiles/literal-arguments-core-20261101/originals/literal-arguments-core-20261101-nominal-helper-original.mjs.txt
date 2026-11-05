@@ -1,0 +1,107 @@
+// Additive SOURCE profile. Predecessor compiler admission stays unchanged.
+// This module has no public owner/certificate registration operation.
+import * as project from './project.mjs';
+import * as clones from './extensions/clone-source-body.mjs';
+import {checkedOptionNominal,checkedNominalNoDrop} from './extensions/option-nominal-proof.mjs';
+import {TranslationError,unsupported} from './vendor/meta-language/translation/diagnostics.js';
+import {withCompleteSourceClosingFence,requireSynchronousSourceCallback} from './complete-source-closing-fence.mjs';
+import {loadDeriveDependencyProof} from './derive-dependencies.mjs';
+import {loadJsonMacroSourceProof} from './json-macro-inputs.mjs';
+import {PRODUCTION_PROFILE} from './cfg-profile.mjs';
+import {types,isDeepStrictEqual} from 'node:util';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
+import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
+import {accountPrimitiveVectorIteratorBulkData} from './primitive-vector-iterator-bulk-20261101-accounting.mjs';
+import {withNominalCopyCollectionInstalledSources,noteNominalCopyCollectionSourceFailure} from './nominal-copy-collection-20261101-profile.mjs';
+const fail=message=>{throw new TypeError('Nominal Copy collection: '+message);};
+let frame=null;
+const envelope=Object.freeze({maxValues:4096,inputEnvelopeChanged:true,resourceEnvelopeChanged:true,originalUnboundedInputEquivalent:false,originalBodyEquivalentOutsideBoundedDomain:false,newNativeAbi:false});
+// Only called by the complete copied project entrypoint. Actual private checker
+// joins below remain mandatory even if someone calls this callback wrapper.
+export function withNominalCopyCollections(run){
+ requireSynchronousSourceCallback(run);if(frame||typeof run!=='function'||types.isProxy(run)||types.isAsyncFunction(run))fail('one synchronous invocation-local project profile required');
+ const current={owners:new Map(),checkerOwners:new Map(),closers:[],programs:new Set(),poisonFailed:false,poison:undefined};frame=current;
+ return withCompleteSourceClosingFence(()=>{
+  let result;try{result=run();}catch(error){if(!(error instanceof TranslationError))noteNominalCopyCollectionSourceFailure(error);throw error;}if(types.isPromise(result)||result&&typeof result==='object'&&Object.hasOwn(result,'then'))fail('synchronous checked project result required');
+  if(current.poisonFailed)throw current.poison;
+  const {meta,javascript,typescript}=result;if(!meta||typeof javascript!=='string'||typeof typescript!=='string')fail('complete target pair required');
+  // This public callback wrapper reports only privately joined observations.
+  // Installation can be asserted only by the full physically checked facade.
+  return {meta:{...meta,nominalCopyCollectionProfile:{...envelope,exactOriginalProjectReissueRequired:true,productionPolicyAdmitted:false}},javascript,typescript,nominalCopyCollections:{schema:'original-unit-nominal-copy-collection-profile-v1',...envelope,owners:[...current.owners.values()],checkedProgramPasses:current.programs.size,genuineNominalSourceJoined:current.programs.size>0,sourceInstalled:false,runtimeExecuted:false,runtimeParity:false,productionPolicyAdmitted:false}};
+ },[()=>{
+  let failed=false,first;for(const close of current.closers)try{close();}catch(error){if(!failed){failed=true;first=error;}}
+  if(current.poisonFailed)throw current.poison;if(failed)throw first;
+ },()=>{current.owners.clear();current.checkerOwners.clear();current.closers.length=0;current.programs.clear();frame=null;}]);
+}
+export function nominalCopyIteratorItem(checker,type,span,operation){
+ if(!frame)fail('nominal copied/cloned is unavailable outside the additive source profile');
+ if(!['copied','cloned'].includes(operation)||type?.rustReference?.kind!=='shared'||type.rustReference.pointee?.kind!=='data')throw unsupported('nominal iterator Copy','requires actual shared nominal items',span);
+ const pointee=type.rustReference.pointee;
+ const requireOwner=()=>{try{
+  if(typeof clones.requireOriginalUnitCopyIteratorOwner!=='function')fail('complete original generated unit Copy/Clone source substitution is not installed');
+  // The accessor rechecks captured, privately linked parsed generated source;
+  // checkedOptionNominal independently rechecks layout, Copy/no-Drop/coherence,
+  // and every field/dependency. Neither output's public booleans are authority.
+  const owner=clones.requireOriginalUnitCopyIteratorOwner(checker,pointee,span),copy=checkedOptionNominal(checker,pointee,span);
+  if(owner.variants.length===0||copy.proof.layout.ctors.length!==owner.variants.length||copy.proof.layout.ctors.some((ctor,index)=>ctor.name!==owner.variants[index].name||ctor.fields.length))fail('actual original unit Copy layout differs');
+  return owner;
+ }catch(error){if(!(error instanceof TranslationError)){noteNominalCopyCollectionSourceFailure(error);if(frame&&!frame.poisonFailed){frame.poisonFailed=true;frame.poison=error;}}throw error;}
+ };
+ const owner=requireOwner();if(!frame.checkerOwners.has(checker))frame.checkerOwners.set(checker,new Map());frame.checkerOwners.get(checker).set(pointee.name,{type:structuredClone(pointee),check:requireOwner});if(frame.closers.length>=4096)fail('bounded original nominal collection source checks required');frame.closers.push(requireOwner);
+ frame.owners.set(owner.typePath.join('::'),{typePath:[...owner.typePath],source:owner.source,span:{...owner.span},variants:owner.variants.map(value=>value.name),generatedCloneAndCopySourceRechecked:true,privateCopyNoDropCoherenceRechecked:true,fieldCopyDependencies:[],unitFieldsOnly:true,clonedUsesActualDerivedCopyBranch:operation==='cloned',sourceAuthority:false,semanticAuthority:false});
+ return structuredClone(pointee);
+}
+export function finalizeNominalCopyCollectionProgram(checker,program){if(!frame)return;const owners=frame.checkerOwners.get(checker);if(!owners)return;for(const owner of owners.values()){owner.check();if(!checkedNominalNoDrop(program,owner.type))fail('complete program lacks the original private checker Copy/no-Drop binding');}frame.programs.add(program);}
+export function nominalCopyCollectionCarrierGuards(param){
+ if(!frame||param.type?.kind!=='array'||param.type.element?.kind!=='data')return [];
+ // Existing aggregate descriptor/proxy/frozen guards execute before this
+ // resource check and the genuine nominal value-layout validator follows it.
+ return [`if (!Array.isArray(${param.name}) || ${param.name}.length > 4096) throw new TypeError('nominal collection bounded input profile');`];
+}
+function requestData(value){
+ accountPrimitiveVectorIteratorBulkData(value);const request=structuredClone(value);
+ if(!request||Object.keys(request).sort().join(',')!=='entry,files,lock,manifest'||typeof request.manifest!=='string'||typeof request.lock!=='string'||!Array.isArray(request.files)||!request.files.length||request.files.length>2048)fail('exact bounded complete project source request required');
+ const paths=new Set();for(const row of request.files){if(!row||Object.keys(row).sort().join(',')!=='path,source'||typeof row.path!=='string'||!row.path.endsWith('.rs')||row.path.length>4096||/[:\\\0\r\n]/u.test(row.path)||row.path.startsWith('/')||row.path.split('/').some(part=>!part||part==='.'||part==='..')||paths.has(row.path.toLowerCase())||typeof row.source!=='string')fail('safe unique complete Rust source rows required');paths.add(row.path.toLowerCase());}
+ if(typeof request.entry!=='string'||!request.files.some(row=>row.path===request.entry))fail('actual root source required');return request;
+}
+// Complete retained-occurrence accounting, incrementally extended before each
+// output array append. Aliases are counted again, never globally deduplicated.
+export function incrementalNominalCopyCollectionOutput(seed){
+ const counts=accountPrimitiveVectorIteratorBulkData(seed),active=new Set(),roots=Object.values(seed).filter(Array.isArray),arrays=new Map(roots.map(array=>[array,array.length]));if(arrays.size!==roots.length)fail('distinct retained root arrays required');
+ const cell=()=>{if(++counts.cells>counts.maxCells)fail('complete retained DATA cell budget');};
+ const text=value=>{counts.utf16Units+=value.length;if(counts.utf16Units>counts.maxUtf16Units)fail('complete retained DATA UTF16 budget');counts.utf8Bytes+=Buffer.byteLength(value);if(counts.utf8Bytes>counts.maxUtf8Bytes)fail('complete retained DATA UTF8 budget');};
+ function visit(value,depth){
+  cell();if(depth>counts.maxDepth)fail('complete retained DATA depth budget');
+  if(typeof value==='string'){text(value);return;}if(value===null){text('null');return;}if(value===undefined){text('undefined');return;}
+  if(typeof value==='number'){if(!Number.isFinite(value))fail('finite DATA number required');text(Object.is(value,-0)?'-0':String(value));return;}if(typeof value==='boolean'){text(value?'true':'false');return;}
+  if(typeof value==='bigint'){if(value<-(1n<<127n)||value>(1n<<128n)-1n)fail('bounded DATA primitive integer required');text(value.toString());return;}
+  if(typeof value!=='object'||types.isProxy(value))fail('ordinary retained DATA required');const array=Array.isArray(value),parent=Object.getPrototypeOf(value);if(array?parent!==Array.prototype:parent!==Object.prototype&&parent!==null)fail('ordinary retained DATA prototype required');if(active.has(value))fail('cyclic retained DATA refused');
+  const keys=Reflect.ownKeys(value);if(keys.length>counts.maxCells-counts.cells)fail('complete retained own-field budget');
+  if(array){const size=Object.getOwnPropertyDescriptor(value,'length');if(!size||!Object.hasOwn(size,'value')||!Number.isSafeInteger(size.value)||size.value<0||keys.length!==size.value+1)fail('dense retained DATA array required');for(let index=0;index<size.value;index++)if(!Object.hasOwn(value,String(index)))fail('retained DATA array hole');}
+  active.add(value);try{for(const key of keys){if(typeof key!=='string')fail('string retained DATA field required');cell();text(key);const field=Object.getOwnPropertyDescriptor(value,key);if(!field||!Object.hasOwn(field,'value'))fail('own retained DATA field without accessor required');visit(field.value,depth+1);}}finally{active.delete(value);}
+ }
+ return {append(array,row){if(!arrays.has(array)||arrays.get(array)!==array.length)fail('original retained root array required');const old=String(array.length),next=String(array.length+1);cell();text(String(array.length));visit(row,2);counts.utf16Units-=old.length;counts.utf8Bytes-=Buffer.byteLength(old);text(next);array.push(row);arrays.set(array,array.length);}};
+}
+export function compileNominalCopyCollections(value){
+ const request=requestData(value);
+ return withNominalCopyCollectionInstalledSources(()=>{try{
+  if(typeof project.translateProjectNominalCopyCollections!=='function')fail('complete additive project source profile is not installed; propose the full source equations first');
+  const inputs={manifest:request.manifest,lock:request.lock},files=new Map(request.files.map(row=>[row.path,row.source]));
+  const result=project.translateProjectNominalCopyCollections({entry:request.entry,paths:[...files.keys()],readSource:path=>{if(!files.has(path))fail('original project requested an absent complete source: '+path);return files.get(path);},cargoManifest:request.manifest,deriveDependencies:loadDeriveDependencyProof(inputs),jsonMacroDependencies:loadJsonMacroSourceProof(inputs),compilationProfile:PRODUCTION_PROFILE});
+  const output={schema:'nominal-copy-collection-source-meta-target-v1',entry:request.entry,...result,nominalCopyCollections:{...result.nominalCopyCollections,sourceInstalled:true},sources:[],targets:[],histories:[],exactOriginalRustEntry:files.get(request.entry),nativeRestorationOnly:true,canonicalSemanticRustEmitted:false,editedTargetNativeInverseSupported:false,...envelope,sourceAuthority:false,semanticAuthority:false,wholeRouterSynchronization:false,receivingQualified:false,nativeExecuted:false};
+  const retained=incrementalNominalCopyCollectionOutput(output);
+  // One pair per unchanged transaction is deliberately below the original128
+  // count limit. Refuse the complete accumulated output before every append.
+  for(const row of request.files){const history=transportConcreteSourceEquations([{before:row.source,after:row.source,language:'Rust'}])[0];if(transportConcreteSyntaxMeta(history.beforeMeta).source!==row.source||transportConcreteSyntaxMeta(history.afterMeta).source!==row.source||history.inverse!==row.source)fail('complete original Rust CST inverse differs');retained.append(output.sources,{...row,concreteSyntax:history.beforeMeta});retained.append(output.histories,history);}
+  for(const row of [{language:'JavaScript',source:result.javascript},{language:'TypeScript',source:result.typescript}]){const history=transportConcreteSourceEquations([{before:row.source,after:row.source,language:row.language}])[0];if(transportConcreteSyntaxMeta(history.beforeMeta).source!==row.source||transportConcreteSyntaxMeta(history.afterMeta).source!==row.source||history.inverse!==row.source)fail('complete target CST inverse differs');retained.append(output.targets,{...row,concreteSyntax:history.beforeMeta});retained.append(output.histories,history);}
+  accountPrimitiveVectorIteratorBulkData(output);return output;
+ }catch(error){if(!(error instanceof TranslationError))noteNominalCopyCollectionSourceFailure(error);throw error;}
+ });
+}
+export function readNominalCopyCollectionMeta(value,meta){accountPrimitiveVectorIteratorBulkData(meta);const fresh=compileNominalCopyCollections(value);if(!isDeepStrictEqual(fresh.meta,meta))fail('submitted meta differs from a complete fresh original project reissue');return fresh;}
+export function invertNominalCopyCollectionTarget(value,{language,source}){
+ if(!['JavaScript','TypeScript'].includes(language)||typeof source!=='string')fail('one complete current target projection required');const fresh=compileNominalCopyCollections(value),target=fresh.targets.find(row=>row.language===language);
+ if(source!==target.source)fail('complete edited/stale/foreign target differs; arbitrary nominal target edits remain unsupported');
+ const equation=transportConcreteSourceEquations([{before:source,after:target.source,language}])[0];if(equation.inverse!==source)fail('complete exact target inverse differs');
+ const result={schema:'nominal-copy-collection-exact-original-inverse-v1',language,source,exactOriginalRustEntry:fresh.exactOriginalRustEntry,nativeRestorationOnly:true,canonicalSemanticRustEmitted:false,editedTargetNativeInverseSupported:false,sources:fresh.sources,meta:fresh.meta,equation,...envelope,exactCurrentProjectionOnly:true,privateFreshReissue:true,sourceAuthority:false,semanticAuthority:false,runtimeParity:false};accountPrimitiveVectorIteratorBulkData(result);return result;
+}

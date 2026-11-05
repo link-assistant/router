@@ -201,7 +201,7 @@ function enclosingSelectedOwner(selected){
  return (({invocation,owner,proof,builtin})=>({invocation,target:owner.target,proofDigest:proof.digest,attributeOwnersDigest:hash(nativeContextOperations.stringify(proof.attributeOwners)),...(builtin?{astOutputSink:proof.slotProofs.outputKind}:{fixedMacroDigest:hash(nativeContextOperations.stringify(proof.fixedMacro))}),...(proof.outputs?{featureOutputDigests:proof.outputs.map(output=>({feature:output.feature,digest:output.outputGrammarDigest}))}:{...(proof.outputGrammarDigest?{outputGrammarDigest:proof.outputGrammarDigest}:{})})}))(selected);
 }
 
-import {originalImplNamespaceSourcePlan,requireOriginalImplNamespaceSourcePlan} from './derive-ancestor-attribute-scope.mjs';
+import {freshOriginalImplNamespaceSourcePlan as originalImplNamespaceSourcePlan,requireOriginalImplNamespaceSourcePlan} from './derive-ancestor-attribute-scope.mjs';
 const fail=message=>{throw new TypeError('Original enclosing namespace format: '+message);};
 let effects=null;
 const word=node=>node?.tag==='token'?node.text:null;

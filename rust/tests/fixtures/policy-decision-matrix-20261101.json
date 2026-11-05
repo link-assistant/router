@@ -1,0 +1,312 @@
+{
+  "schema": "independent-policy-decision-matrix-20261101-v1",
+  "status": "source-only-unrun",
+  "legend": {
+    "D": "Denied",
+    "N": "Native",
+    "O": "Override"
+  },
+  "providers": [
+    "claude",
+    "codex",
+    "gemini",
+    "qwen"
+  ],
+  "clients": [
+    "codex",
+    "claude",
+    "cursor-agent",
+    "gemini",
+    "grok",
+    "opencode",
+    "qwen",
+    "agent"
+  ],
+  "protocols": [
+    "catalog",
+    "anthropic_messages",
+    "openai_chat",
+    "openai_responses",
+    "gemini_native"
+  ],
+  "fullOverrides": [
+    "claude:claude",
+    "claude:codex",
+    "codex:claude",
+    "codex:codex",
+    "gemini:claude",
+    "gemini:codex",
+    "grok:claude",
+    "grok:codex",
+    "opencode:claude",
+    "opencode:codex",
+    "qwen:claude",
+    "qwen:codex"
+  ],
+  "sortedOverrides": [
+    "claude:claude",
+    "claude:codex",
+    "codex:claude",
+    "codex:codex",
+    "gemini:claude",
+    "gemini:codex",
+    "grok:claude",
+    "grok:codex",
+    "opencode:claude",
+    "opencode:codex",
+    "qwen:claude",
+    "qwen:codex"
+  ],
+  "parseAcceptanceByClient": [
+    "YYNN",
+    "YYNN",
+    "NNNN",
+    "YYNN",
+    "YYNN",
+    "YYNN",
+    "YYNN",
+    "NNNN"
+  ],
+  "rows": [
+    {
+      "client": "codex",
+      "protocol": "catalog",
+      "empty": "DNDD",
+      "full": "ONDD"
+    },
+    {
+      "client": "codex",
+      "protocol": "anthropic_messages",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "codex",
+      "protocol": "openai_chat",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "codex",
+      "protocol": "openai_responses",
+      "empty": "DNDD",
+      "full": "ONDD"
+    },
+    {
+      "client": "codex",
+      "protocol": "gemini_native",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "claude",
+      "protocol": "catalog",
+      "empty": "NDDD",
+      "full": "NODD"
+    },
+    {
+      "client": "claude",
+      "protocol": "anthropic_messages",
+      "empty": "NDDD",
+      "full": "NODD"
+    },
+    {
+      "client": "claude",
+      "protocol": "openai_chat",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "claude",
+      "protocol": "openai_responses",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "claude",
+      "protocol": "gemini_native",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "cursor-agent",
+      "protocol": "catalog",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "cursor-agent",
+      "protocol": "anthropic_messages",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "cursor-agent",
+      "protocol": "openai_chat",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "cursor-agent",
+      "protocol": "openai_responses",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "cursor-agent",
+      "protocol": "gemini_native",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "gemini",
+      "protocol": "catalog",
+      "empty": "DDND",
+      "full": "OOND"
+    },
+    {
+      "client": "gemini",
+      "protocol": "anthropic_messages",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "gemini",
+      "protocol": "openai_chat",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "gemini",
+      "protocol": "openai_responses",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "gemini",
+      "protocol": "gemini_native",
+      "empty": "DDDD",
+      "full": "OODD"
+    },
+    {
+      "client": "grok",
+      "protocol": "catalog",
+      "empty": "DDDD",
+      "full": "OODD"
+    },
+    {
+      "client": "grok",
+      "protocol": "anthropic_messages",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "grok",
+      "protocol": "openai_chat",
+      "empty": "DDDD",
+      "full": "OODD"
+    },
+    {
+      "client": "grok",
+      "protocol": "openai_responses",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "grok",
+      "protocol": "gemini_native",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "opencode",
+      "protocol": "catalog",
+      "empty": "DDDD",
+      "full": "OODD"
+    },
+    {
+      "client": "opencode",
+      "protocol": "anthropic_messages",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "opencode",
+      "protocol": "openai_chat",
+      "empty": "DDDD",
+      "full": "OODD"
+    },
+    {
+      "client": "opencode",
+      "protocol": "openai_responses",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "opencode",
+      "protocol": "gemini_native",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "qwen",
+      "protocol": "catalog",
+      "empty": "DDDN",
+      "full": "OODN"
+    },
+    {
+      "client": "qwen",
+      "protocol": "anthropic_messages",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "qwen",
+      "protocol": "openai_chat",
+      "empty": "DDDD",
+      "full": "OODD"
+    },
+    {
+      "client": "qwen",
+      "protocol": "openai_responses",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "qwen",
+      "protocol": "gemini_native",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "agent",
+      "protocol": "catalog",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "agent",
+      "protocol": "anthropic_messages",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "agent",
+      "protocol": "openai_chat",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "agent",
+      "protocol": "openai_responses",
+      "empty": "DDDD",
+      "full": "DDDD"
+    },
+    {
+      "client": "agent",
+      "protocol": "gemini_native",
+      "empty": "DDDD",
+      "full": "DDDD"
+    }
+  ]
+}

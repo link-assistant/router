@@ -1,0 +1,1 @@
+- Draft shared owned JSON input/copy/decode receiver source rules with explicit borrows, actual typed aliases, seven complete compiler CST equations and independent unrun adopter, JS/strict TS, reverse scalar, native and export cases. Full translation and parity remain unfinished (#759, #772).

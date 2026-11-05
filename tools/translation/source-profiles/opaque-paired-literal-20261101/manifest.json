@@ -1,0 +1,15 @@
+{
+  "schema": "opaque-paired-literal-source-checkpoint-v1",
+  "archive": "tools/translation/source-profiles/opaque-paired-literal-20261101/complete-source-copies.json.gz",
+  "sha256": "2da581ead96de2304c95e8aae584a1aabbbdc107bfd7eb3d550312d789a0b589",
+  "rawBytes": 62297,
+  "packedBytes": 10583,
+  "copyRows": 1,
+  "additionRows": 1,
+  "currentCases": 1,
+  "prerequisites": 1,
+  "sourceHistorySha256": "fd13aee0117c30f23e31b58c8738362cf46838f9558ecdab61d8e2298b8c2eb4",
+  "executionEvidence": "UNRUN",
+  "sourceAuthority": false,
+  "semanticAuthority": false
+}

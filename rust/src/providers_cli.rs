@@ -209,12 +209,12 @@ pub fn call_for(op: &ProviderOp) -> crate::translation_core::Outcome<crate::tran
         }),
         ProviderOp::Show { name, .. } => Some(Call {
             method: "GET",
-            path: format!("/api/management/providers/{name}"),
+            path: crate::translation_core::format!("/api/management/providers/{name}"),
             body: None,
         }),
         ProviderOp::Remove { name, .. } => Some(Call {
             method: "DELETE",
-            path: format!("/api/management/providers/{name}"),
+            path: crate::translation_core::format!("/api/management/providers/{name}"),
             body: None,
         }),
         ProviderOp::Add {

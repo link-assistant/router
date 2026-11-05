@@ -285,8 +285,8 @@ impl CodexRemoteControlStore {
     }
 }
 
-fn new_continuation() -> String {
-    format!(
+fn new_continuation() -> crate::translation_core::Text {
+    crate::translation_core::format!(
         "{CONTINUATION_PREFIX}{}{}",
         uuid::Uuid::new_v4().simple(),
         uuid::Uuid::new_v4().simple()
@@ -477,11 +477,11 @@ fn service_uri(uri: &axum::http::Uri) -> String {
     uri_path_and_query(path, uri.query().unwrap_or_default())
 }
 
-fn uri_path_and_query(path: &crate::translation_core::Str, query: &crate::translation_core::Str) -> String {
+fn uri_path_and_query(path: &crate::translation_core::Str, query: &crate::translation_core::Str) -> crate::translation_core::Text {
     if query.is_empty() {
         path.to_string()
     } else {
-        format!("{path}?{query}")
+        crate::translation_core::format!("{path}?{query}")
     }
 }
 
@@ -519,7 +519,7 @@ fn primary_target(
             state.subscription_base_url.is_some(),
         )
         .clone(),
-        url: format!("{root}{uri}"),
+        url: crate::translation_core::format!("{root}{uri}"),
         headers,
     }
 }
@@ -601,7 +601,7 @@ async fn refresh(
         }
         Err(_) => return unavailable("remote-control continuation state is unavailable"),
     };
-    target.url = format!("{}{REFRESH_UPSTREAM}", current.record.upstream_base_url);
+    target.url = crate::translation_core::format!("{}{REFRESH_UPSTREAM}", current.record.upstream_base_url);
     let response = match send_buffered(&state, Method::POST, body, target).await {
         Ok(response) => response,
         Err(response) => return response,
@@ -712,7 +712,7 @@ fn continuation_target(
             state.subscription_base_url.is_some(),
         )
         .clone(),
-        url: format!("{}{path}", record.upstream_base_url),
+        url: crate::translation_core::format!("{}{path}", record.upstream_base_url),
         headers: crate::proxy::native_request_headers(incoming, &record.upstream_token),
     }
 }
@@ -904,3 +904,7 @@ fn api_error(status: StatusCode, error_type: &crate::translation_core::Str, mess
     }
     .render(crate::api_error::ApiDialect::OpenAi)
 }
+
+#[cfg(test)]
+#[path = "codex_remote_control/translation_tests.rs"]
+mod uri_translation_tests;

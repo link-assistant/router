@@ -1,0 +1,1 @@
+Draft actual paired temporary with composition through selected targets, exact run grants, ephemeral Codex bridge, private profiles and owned process supervision; preserve exit/stdin/cleanup behavior and native Claude version gate. All independent cases remain unrun.

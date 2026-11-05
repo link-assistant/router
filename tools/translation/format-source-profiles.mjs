@@ -1,6 +1,6 @@
 // Portable original inputs for format-source stages; partial inputs never
 // supply macro, builtin-builder, formatting trait, allocator or I/O authority.
-import {readFileSync} from 'node:fs';
+import {readSourceProfileFileSync as readFileSync} from './ordered-text-map-callers-20261102-source-storage.mjs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {freezeMacroTree} from './macro-token-trees.mjs';

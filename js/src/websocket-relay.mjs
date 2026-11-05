@@ -45,7 +45,7 @@ export async function relayWebSocket(incoming,downstream,head,{target,authorize,
   if(typeof key !== 'string' || !/^[A-Za-z0-9+/]{22}==$/.test(key) || incoming.headers['sec-websocket-version'] !== '13'){reject(downstream,400,'Invalid WebSocket handshake');return;}
   let binding;try{binding=await target();}catch(error){reject(downstream,error.status ?? 500,error.message);return;}
   const {url,headers,claims}=binding,upstreamKey=randomBytes(16).toString('base64');
-  const options={method:'GET',headers:{...Object.fromEntries(headers),connection:'Upgrade',upgrade:'websocket','sec-websocket-key':upstreamKey,'sec-websocket-version':'13'},timeout:timeoutMs};
+  const options={...(binding.ca?{ca:binding.ca}:{}),method:'GET',headers:{...Object.fromEntries(headers),connection:'Upgrade',upgrade:'websocket','sec-websocket-key':upstreamKey,'sec-websocket-version':'13'},timeout:timeoutMs};
   let connecting=true;
   const request=(url.protocol === 'https:' ? httpsRequest:httpRequest)(url,options);
   request.once('timeout',()=>request.destroy(new Error('WebSocket connect timeout')));

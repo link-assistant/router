@@ -1,4 +1,4 @@
-// Generated draft from rust/src/deploy_remote/session.rs; sha256=14502bc60a47c56b429da7989eea1b140d1da1f0416a023f7d2a06620ab87e14
+// Generated draft from rust/src/deploy_remote/session.rs; sha256=204c53ed444381a0ca8eee97f9733e8407dfa48a1d874913ca19d41ae19191f5
 // Carried constructs are data, never runtime parity evidence.
 function rp_6465706c6f795f72656d6f74652e73657373696f6e2e444541444c494e455f45584954() {
   return 12n;
@@ -49,4 +49,4 @@ const serde_json = {
 };
 
 export const translated = { ["DEADLINE_EXIT"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e444541444c494e455f45584954(), ["EVENT_PREFIX"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e4556454e545f505245464958(), ["Echo"]: Object.freeze({ ["Keep"]: ml_make_Echo_Keep, ["Stdout"]: ml_make_Echo_Stdout, ["Stderr"]: ml_make_Echo_Stderr }) };
-export const provenance = {"sourcePath":"rust/src/deploy_remote/session.rs","sourceSha256":"14502bc60a47c56b429da7989eea1b140d1da1f0416a023f7d2a06620ab87e14","executable":3,"executableFunctions":0,"executableConstants":2,"executableTypes":1,"executableConstructors":3,"carried":22,"preserved":26,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/deploy_remote/session.rs","sourceSha256":"204c53ed444381a0ca8eee97f9733e8407dfa48a1d874913ca19d41ae19191f5","executable":3,"executableFunctions":0,"executableConstants":2,"executableTypes":1,"executableConstructors":3,"carried":22,"preserved":26,"runtimeParity":false};

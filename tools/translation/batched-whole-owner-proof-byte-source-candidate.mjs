@@ -1,3 +1,6 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
+import {substituteWholeSourceRow} from './single-source-substitution-runtime.mjs';
+import {verifyNativeCopiedSourceBindingBatch} from './source-copy-native-bindings.mjs';
 // Explicit complete consumer closure. Old/default and existing bulk copies stay exact.
 import {readFileSync,writeFileSync,existsSync,lstatSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -91,6 +94,8 @@ export function prepareWholeOwnerProofByteCandidateBatched({root=ROOT}={}){
 const __batchedPending=[];
 function __batchedRequest(row){const {before,language,after,sequence}=row;const rule=(old,value,id)=>({id,edits:[{span:[0,old.length],expected:old,replacement:value}]}),stages=[];for(const phase of ['language','repository']){const from=phase==='language'?before:language,to=phase==='language'?language:after;stages.push({phase,expected:to,sequence:{languageRules:phase==='language'?sequence.languageRules:[],repositoryRules:phase==='repository'?sequence.repositoryRules:[]},inverseSequence:{languageRules:phase==='language'?[rule(to,from,'javascript:restore-complete-original-consumer')]:[],repositoryRules:phase==='repository'?[rule(to,from,'router:restore-complete-original-issuer-imports')]:[]}});}return {source:before,language:'JavaScript',stages};}
 
+ const nativeBatchRows=[];function verifyNativeCopiedSourceBindings(compiler,path,source){if(compiler!==ts)fail('native compiler association differs');const result={};nativeBatchRows.push({path,source,result});return result;}
+
  root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3'||createRequire(resolve(root,'js/package.json'))('typescript')!==ts)fail('actual root installed TypeScript5.9.3 required');
  const operation=prepareOperationProofByteSources({root}),resolver=prepareWholeOwnerResolverCandidate({root}),bulk=resolver.wholeOwnerProducer;
  if([...operation.files,...resolver.files,...bulk.files].some(row=>row.current!==row.after))fail('fresh complete materialized operation and existing whole-owner closure required');
@@ -166,12 +171,13 @@ __batchedPending.push({path,before,language,after,sequence});return __batchedRaw
 const serializerBindings=files.flatMap(row=>(row.selection.imports??[]).filter(edit=>edit.kind==='serializer-binding').map(edit=>({path:row.path,...edit})));
  if(serializerBindings.length!==5)fail('complete current native/frozen composer consumer import census differs');
  input(BASE+'prepare-whole-owner-proof-byte-candidate.mjs');
+ const nativeBatchChecks=verifyNativeCopiedSourceBindingBatch(ts,nativeBatchRows);if(nativeBatchChecks.length!==nativeBatchRows.length)fail('complete native result census differs');for(let index=0;index<nativeBatchRows.length;index++)Object.assign(nativeBatchRows[index].result,nativeBatchChecks[index]);
  for(const row of [...inputs.values(),...prerequisites,...currentProviderInputs])if(hash(readFileSync(resolve(root,row.path)))!==row.sha256)fail('complete current source input/prerequisite changed');
  return {currentProviderInputs,schema:'whole-owner-operation-proof-byte-candidate-v1',typescriptVersion:ts.version,inputs:[...inputs.values()],prerequisiteInputs:prerequisites,files,physicalOverlays,serializerBindings,cycleEvidence,operationProducer:operation,resolverProducer:resolver,existingDefaultsUnchanged:true,existingBulkCopiesUnchanged:true,scope:'one qualified complete synchronous owner operation; no retained encoded bytes',newAcrossInvocationEncodedCache:false,originalHashCallsUnchanged:true,performanceQualified:false,runtimeExecuted:false,sourceAuthority:false,runtimeAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=prepareWholeOwnerProofByteCandidateBatched();
- if(mode==='--write'){for(const row of plan.files){const current=existsSync(resolve(ROOT,row.path))?readFileSync(resolve(ROOT,row.path),'utf8'):null;if(current!==row.current)fail('current complete output changed');}for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}
+ const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=mode==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareWholeOwnerProofByteCandidateBatched();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files){const current=existsSync(resolve(ROOT,row.path))?readFileSync(resolve(ROOT,row.path),'utf8'):null;if(current!==row.current)fail('current complete output changed');}for(const row of plan.files)writer.write(row.path,row.after);return plan;}):prepareWholeOwnerProofByteCandidateBatched();
+ 
  else if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('whole byte consumer closure stale or ungenerated');
  console.log(JSON.stringify(mode==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),performanceQualified:false,runtimeExecuted:false}));
 }

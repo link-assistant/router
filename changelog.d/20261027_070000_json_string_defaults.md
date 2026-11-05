@@ -1,0 +1,1 @@
+- Draft the common borrowed JSON string empty-default boundary by copying the actual native/runtime reader, with matching forward/reverse rules, a reusable bounded Rust CST function-copy producer, full source equations and independent unrun caller, JS/strict TS, freshness/export and native pointer oracle source. Full translation and parity remain unfinished (#759, #772).

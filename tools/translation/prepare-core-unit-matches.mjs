@@ -1,3 +1,4 @@
+import {writeProtectedRecursiveCliPlan} from './protected-recursive-cli-writers-20261103.mjs';
 // A separate owned unit-enum operation. Old literal matches and their birth
 // equations are unchanged; private source association supplies const custody.
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -142,7 +143,6 @@ export function prepareCoreUnitMatches({root=ROOT}={}){
 }
 export function composeCoreUnitMatches(prior,options={}){const plan=prepareCoreUnitMatches(options),sources={...prior};for(const row of plan.files){if(Object.hasOwn(sources,row.path)&&sources[row.path].after!==row.before)fail('preceding complete source differs: '+row.path);sources[row.path]=row;}return {sources,layers:[plan],historicalSources:prior};}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const [mode]=process.argv.slice(2);if(process.argv.length!==3||!['--write','--check'].includes(mode))fail('usage: --write|--check');const plan=prepareCoreUnitMatches();
- if(mode==='--write'){for(const row of plan.files)if(![row.before,row.after].includes(row.current)&&!(row.before===''&&row.current===null))fail('actual complete input differs: '+row.path);for(const row of plan.files){const path=resolve(ROOT,row.path);mkdirSync(dirname(path),{recursive:true});writeFileSync(path,row.after);}}
- else if(plan.files.some(row=>row.current!==row.after))fail('complete unit matches output is stale');console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),semanticAuthority:false,rustExecuted:false}));
+ const [mode]=process.argv.slice(2);if(process.argv.length!==3||!['--write','--check'].includes(mode))fail('usage: --write|--check');const plan=mode==='--write'?writeProtectedRecursiveCliPlan(ROOT,()=>prepareCoreUnitMatches(),plan=>{for(const row of plan.files)if(![row.before,row.after].includes(row.current)&&!(row.before===''&&row.current===null))fail('actual complete input differs: '+row.path);}):prepareCoreUnitMatches();
+ if(mode==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete unit matches output is stale');console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),semanticAuthority:false,rustExecuted:false}));
 }

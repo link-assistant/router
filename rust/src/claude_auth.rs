@@ -4,9 +4,7 @@ use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use base64::Engine as _;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 
 use crate::refresh::{CLAUDE_CLIENT_ID, CLAUDE_TOKEN_URL};
 
@@ -137,8 +135,7 @@ impl ClaudeLogin {
     pub fn begin(config: ClaudeAuthConfig) -> Self {
         let state = random_urlsafe();
         let code_verifier = random_urlsafe();
-        let challenge = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .encode(Sha256::digest(code_verifier.as_bytes()));
+        let challenge = crate::translation_text_core::sha256_base64_url_no_pad(&code_verifier);
         let mut url = reqwest::Url::parse(&config.authorize_url)
             .expect("Claude authorization endpoint is a valid URL");
         url.query_pairs_mut()
@@ -351,7 +348,7 @@ async fn persist(
 fn random_urlsafe() -> String {
     let mut bytes = [0_u8; 32];
     getrandom::fill(&mut bytes).expect("operating system randomness is available");
-    base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes)
+    crate::translation_core::base64_url_no_pad_encode_array32(bytes)
 }
 
 #[cfg(unix)]

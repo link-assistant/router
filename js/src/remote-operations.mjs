@@ -100,17 +100,18 @@ export async function sendRemoteManagement(target,call,{fetch = globalThis.fetch
   try {
     const url = target.managementServer+call.path;
     const request = {method:call.method,redirect:'error',signal:combined,
-      headers:{accept:'application/json',...(target.token ? {authorization:`Bearer ${target.token}`} : {}),...(call.body !== undefined ? {'content-type':'application/json'} : {})},
+      headers:{accept:'application/json',...(call.client ? {'x-link-assistant-client':call.client} : {}),...(target.token ? {authorization:`Bearer ${target.token}`} : {}),...(call.body !== undefined ? {'content-type':'application/json'} : {})},
       ...(call.body !== undefined ? {body:JSON.stringify(call.body)} : {})};
     const response = await within(target.managementCaCert ? trustedFetch(url,request,target.managementCaCert,cwd) : fetch(url,request));
     if (response.url && new URL(response.url).origin !== target.managementServer) throw error('Remote management response changed origin');
     const chunks = [];let bytes = 0;reader = response.body?.getReader();
+    if(call.response==='status-only')return {status:response.status};
     if (reader) while (true) {
       const part = await within(reader.read());if (part.done) break;bytes += part.value.byteLength;
       if (bytes > maxOutputBytes) throw error('Remote management response exceeds the output budget');chunks.push(part.value);
     }
     const text = new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks,bytes));
-    let answer;try {answer = text ? JSON.parse(text) : {};}catch {throw error(`Selected router ${target.server} returned invalid JSON`);}
+    let answer;try {answer = call.response==='router-health'&&text.trim()==='ok' ? {status:'ok'} : text ? JSON.parse(text) : {};}catch {throw error(`Selected router ${target.server} returned invalid JSON`);}
     if (!response.ok) {
       const failure = error(`Selected router ${target.server} returned HTTP ${response.status}`,response.status === 404 && call.method === 'GET' ? 2 : 1);
       failure.status = response.status;failure.remoteOutcome = answer?.error?.outcome;throw failure;

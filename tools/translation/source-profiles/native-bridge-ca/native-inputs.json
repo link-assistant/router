@@ -1,0 +1,1 @@
+{"schema":"router-native-bridge-ca-helper-inputs-v1","files":[{"path":"rust/src/codex_loopback_bridge/trust.rs","language":"Rust","originalPath":"tools/translation/source-profiles/native-bridge-ca/originals/native-bridge-trust-template.rs.txt","bytes":8685,"sha256":"6efcfbf3070429bd7a8dca33c2c679e6caa7631d1eef607bd7e76606b1bac842"}]}

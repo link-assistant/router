@@ -2,6 +2,7 @@ import {types} from 'node:util';
 import {isRustWhitespaceCodeUnit} from './whitespace-data.mjs';
 const codeUnit=Function.call.bind(String.prototype.charCodeAt);
 const slice=Function.call.bind(String.prototype.slice);
+const asciiIncludes=Function.call.bind(String.prototype.includes);
 const cursors=new WeakMap();
 const none=Object.freeze({$:'None'});
 export function requireScalarString(value) {
@@ -77,4 +78,15 @@ export function router_core_unicode_scalar_count(value) {
     if(codeUnit(value,at)>=0xd800&&codeUnit(value,at)<=0xdbff)at++;
   }
   return BigInt(count);
+}
+
+// Explicit owned ASCII membership; no generic iterator or coercion boundary.
+export function router_core_ascii_chars_in(value, alphabet) {
+  requireScalarString(value);
+  requireScalarString(alphabet);
+  for(let at=0;at<value.length;at++) {
+    const byte=codeUnit(value,at);
+    if(byte>127||!asciiIncludes(alphabet,slice(value,at,at+1)))return false;
+  }
+  return true;
 }

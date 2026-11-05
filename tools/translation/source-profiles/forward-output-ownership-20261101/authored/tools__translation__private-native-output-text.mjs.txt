@@ -1,0 +1,116 @@
+// Storage only for the explicit retained CLI contract. No source/type/owner
+// authority is represented here; the default bulk APIs never import this leaf.
+import {Buffer as NativeOutputBuffer} from 'node:buffer';
+import nativeOutputZlib from 'node:zlib';
+import {types} from 'node:util';
+import {originalPrivateParserIngressUnchanged,originalPrivateParserNumericCommonIntrinsicsUnchanged,originalCapturedFunctionSource} from './original-json-intrinsics.mjs';
+const born=originalPrivateParserIngressUnchanged()&&originalPrivateParserNumericCommonIntrinsicsUnchanged();
+let mapNew,weakNew,mapSet,mapGet,mapHas,mapDelete,mapKeys,nextKey,weakSet,weakGet,freeze,charAt,slice,repeat,character,iteratorKey;
+let available=false,codec=false;
+if(born){
+  const get=Object.getOwnPropertyDescriptor,apply=Reflect.apply,own=Object.hasOwn,proto=Object.getPrototypeOf,proxy=types.isProxy;
+  const native=(fn,name)=>typeof fn==='function'&&!proxy(fn)&&originalCapturedFunctionSource(fn)===`function ${name}() { [native code] }`;
+  const field=(owner,key,name)=>{const d=get(owner,key);return d&&own(d,'value')&&native(d.value,name)?d.value:null;};
+  const call=field(Function.prototype,'call','call'),bind=field(Function.prototype,'bind','bind');
+  mapNew=field(globalThis,'Map','Map');weakNew=field(globalThis,'WeakMap','WeakMap');freeze=field(Object,'freeze','freeze');
+  const mp=mapNew&&get(mapNew,'prototype'),wp=weakNew&&get(weakNew,'prototype');
+  if(call&&bind&&mapNew&&weakNew&&freeze&&mp&&own(mp,'value')&&wp&&own(wp,'value')){
+    const bindCall=fn=>apply(bind,call,[fn]);
+    const methods=[field(mp.value,'set','set'),field(mp.value,'get','get'),field(mp.value,'has','has'),field(mp.value,'delete','delete'),field(mp.value,'keys','keys'),field(wp.value,'set','set'),field(wp.value,'get','get')];
+    let valid=true;for(let at=0;at<methods.length;at++)if(methods[at]===null)valid=false;
+    if(valid){
+      mapSet=bindCall(methods[0]);mapGet=bindCall(methods[1]);mapHas=bindCall(methods[2]);mapDelete=bindCall(methods[3]);mapKeys=bindCall(methods[4]);weakSet=bindCall(methods[5]);weakGet=bindCall(methods[6]);
+      const m=new mapNew(),key={},value={},weak=new weakNew();mapSet(m,key,value);weakSet(weak,key,value);
+      const cursor=mapKeys(m),next=field(proto(cursor),'next','next');
+      if(next){nextKey=bindCall(next);const first=nextKey(cursor),last=nextKey(cursor);available=mapGet(m,key)===value&&mapHas(m,key)&&weakGet(weak,key)===value&&first.value===key&&first.done===false&&last.done===true&&mapDelete(m,key)&&!mapHas(m,key);}
+      iteratorKey=get(Symbol,'iterator')?.value;
+      const code=field(String.prototype,'charCodeAt','charCodeAt'),cut=field(String.prototype,'slice','slice'),times=field(String.prototype,'repeat','repeat');character=field(String,'fromCharCode','fromCharCode');
+      if(available&&code&&cut&&times&&character){charAt=bindCall(code);slice=bindCall(cut);repeat=bindCall(times);codec=charAt(character(0,0xd800,0xffff),1)===0xd800&&slice('abc',1,2)==='b'&&repeat('ab',2)==='abab';}
+    }
+  }
+}
+const CHUNK=65536,THRESHOLD=16384,PACKED_BUDGET=134217728;
+function requirePrivateCollections(){if(!available)throw new TypeError('Retained output stock private collections unavailable');}
+// A literal is rebuilt from scalar cells. No source slice/substring becomes a
+// retained rope leaf, including incompressible chunks inside a packed entry.
+function detached(source,start,end){let value='';for(let at=start;at<end;at++)value+=character(charAt(source,at));return value;}
+// Explicit trusted stock Buffer/zlib DATA infrastructure at module birth.
+// This contract does not assert equivalence to legacy compression/observers.
+const nativeOutputGet=Object.getOwnPropertyDescriptor,nativeOutputApply=Reflect.apply,nativeOutputConstructor=NativeOutputBuffer;
+const nativeOutputFields=[
+ [NativeOutputBuffer,'from'],[NativeOutputBuffer,'isBuffer'],
+ [NativeOutputBuffer.prototype,'toString'],[NativeOutputBuffer.prototype,'utf16leSlice'],
+ [NativeOutputBuffer.prototype,'base64Slice'],[NativeOutputBuffer.prototype,'utf16leWrite'],
+ [NativeOutputBuffer.prototype,'base64Write'],
+ [nativeOutputZlib,'deflateRawSync'],[nativeOutputZlib,'inflateRawSync'],
+ [Object,'getOwnPropertyDescriptor'],[Reflect,'apply'],[NativeOutputBuffer,'prototype'],
+ [Number,'isSafeInteger'],[Math,'ceil']
+].map(([owner,key])=>({owner,key,field:nativeOutputGet(owner,key)}));
+const nativeOutputFrom=nativeOutputFields[0].field?.value,nativeOutputToString=nativeOutputFields[2].field?.value;
+const nativeOutputDeflate=nativeOutputFields[7].field?.value,nativeOutputInflate=nativeOutputFields[8].field?.value;
+const nativeOutputSafeInteger=nativeOutputFields[12].field?.value,nativeOutputCeil=nativeOutputFields[13].field?.value;
+function nativeOutputReady(){
+ if(NativeOutputBuffer!==nativeOutputConstructor)throw new TypeError('Native retained output constructor changed');
+ for(let at=0;at<nativeOutputFields.length;at++){
+  const row=nativeOutputFields[at],before=row.field,after=nativeOutputGet(row.owner,row.key);
+  if(!before&&!after)continue;
+  if(!before||!after||before.value!==after.value||before.get!==after.get||before.set!==after.set||before.writable!==after.writable||before.enumerable!==after.enumerable||before.configurable!==after.configurable)throw new TypeError('Native retained output host changed');
+ }
+ if(typeof nativeOutputFrom!=='function'||typeof nativeOutputToString!=='function'||typeof nativeOutputDeflate!=='function'||typeof nativeOutputInflate!=='function')throw new TypeError('Native retained output host unavailable');
+}
+function encode(source,start,end){
+  nativeOutputReady();
+  if(typeof source!=='string'||!nativeOutputApply(nativeOutputSafeInteger,undefined,[start])||!nativeOutputApply(nativeOutputSafeInteger,undefined,[end])||start<0||end<=start||end>source.length||end-start>CHUNK)throw new TypeError('Native retained output input bounds');
+  const raw=nativeOutputApply(nativeOutputFrom,NativeOutputBuffer,[slice(source,start,end),'utf16le']);
+  if(raw.length!==(end-start)*2)throw new TypeError('Native retained output UTF16 length');
+  let packed=nativeOutputApply(nativeOutputDeflate,nativeOutputZlib,[raw,{level:1}]);
+  // Bun's fast encoder may expand incompressible UTF16 beyond this fixed
+  // packet bound. Stored DEFLATE blocks preserve the bound and exact bytes;
+  // the unchanged caller then selects its original raw-storage fallback.
+  if(packed.length>CHUNK*2+1024)packed=nativeOutputApply(nativeOutputDeflate,nativeOutputZlib,[raw,{level:0}]);
+  if(packed.length>CHUNK*2+1024)throw new TypeError('Native retained output encoded bounds');
+  const result=nativeOutputApply(nativeOutputToString,packed,['base64']);nativeOutputReady();return result;
+}
+function decode(packed,units){
+  nativeOutputReady();
+  if(typeof packed!=='string'||packed.length>4*nativeOutputApply(nativeOutputCeil,undefined,[(CHUNK*2+1024)/3])||!nativeOutputApply(nativeOutputSafeInteger,undefined,[units])||units<1||units>CHUNK)throw new TypeError('Native retained output packed bounds');
+  const compressed=nativeOutputApply(nativeOutputFrom,NativeOutputBuffer,[packed,'base64']);
+  if(nativeOutputApply(nativeOutputToString,compressed,['base64'])!==packed)throw new TypeError('Native retained output canonical base64');
+  const raw=nativeOutputApply(nativeOutputInflate,nativeOutputZlib,[compressed,{maxOutputLength:units*2}]);
+  if(raw.length!==units*2)throw new TypeError('Native retained output complete byte length');
+  const result=nativeOutputApply(nativeOutputToString,raw,['utf16le']);nativeOutputReady();
+  if(result.length!==units)throw new TypeError('Native retained output complete unit length');return result;
+}
+export function createPrivateOutputTextRetention(){
+  requirePrivateCollections();const cells=new weakNew();let used=0;
+  function retain(text){
+    if(typeof text!=='string')throw new TypeError('Retained output primitive text required');
+    if(!codec||text.length<THRESHOLD||used>=PACKED_BUDGET)return text;
+    let first=null,last=null,stored=0,count=0;
+    for(let start=0;start<text.length;start+=CHUNK){
+      const end=start+CHUNK>text.length?text.length:start+CHUNK,units=end-start,packed=encode(text,start,end),original=slice(text,start,end);
+      if(decode(packed,units)!==original)throw new TypeError('Retained output independent roundtrip');
+      const compressed=packed.length<units,payload=compressed?packed:detached(text,start,end);stored+=payload.length;
+      if(used+stored>PACKED_BUDGET)return text;
+      const node={__proto__:null,payload,units,compressed,next:null};if(last)last.next=node;else first=node;last=node;count++;
+    }
+    if(stored>=text.length)return text;
+    let node=first;while(node){freeze(node);node=node.next;}const token=freeze({__proto__:null});weakSet(cells,token,freeze({__proto__:null,first,units:text.length,stored,count}));used+=stored;return token;
+  }
+  function restore(cell){
+    if(typeof cell==='string')return cell;const record=cell&&(typeof cell==='object'||typeof cell==='function')?weakGet(cells,cell):undefined;if(!record)throw new TypeError('Foreign retained output cell');
+    let text='',node=record.first,count=0;while(node){text+=node.compressed?decode(node.payload,node.units):node.payload;node=node.next;count++;}if(text.length!==record.units||count!==record.count)throw new TypeError('Retained output association');return text;
+  }
+  function observation(cell){if(typeof cell==='string')return freeze({mode:'raw',units:cell.length});const r=cell&&(typeof cell==='object'||typeof cell==='function')?weakGet(cells,cell):undefined;if(!r)throw new TypeError('Foreign retained output cell');return freeze({mode:'packed',units:r.units,stored:r.stored,chunks:r.count});}
+  return freeze({retain,restore,observation});
+}
+export function createPrivateOutputPlanStore(){
+  requirePrivateCollections();const records=new weakNew();return freeze({set(key,value){weakSet(records,key,value);return this;},get(key){return weakGet(records,key);}});
+}
+export function createPrivateOutputTextMap(){
+  requirePrivateCollections();const records=new mapNew(),storage=createPrivateOutputTextRetention();let api;
+  function iterator(mode){
+    const cursor=mapKeys(records);let result;result={__proto__:null,next(){const step=nextKey(cursor);if(step.done)return {value:undefined,done:true};const key=step.value;return {value:mode==='keys'?key:mode==='values'?storage.restore(mapGet(records,key)):[key,storage.restore(mapGet(records,key))],done:false};},return(){return {value:undefined,done:true};},[iteratorKey](){return result;}};return freeze(result);
+  }
+  api={__proto__:null,set(key,text){mapSet(records,key,storage.retain(text));return api;},get(key){return mapHas(records,key)?storage.restore(mapGet(records,key)):undefined;},has(key){return mapHas(records,key);},delete(key){return mapDelete(records,key);},keys(){return iterator('keys');},values(){return iterator('values');},[iteratorKey](){return iterator('entries');}};return freeze(api);
+}

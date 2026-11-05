@@ -1,4 +1,4 @@
-// Generated draft from rust/src/anthropic_nonstream.rs; sha256=4c7b912b69468cca2c1673702d43146586857b603a9d1bf90762b673539fb141
+// Generated draft from rust/src/anthropic_nonstream.rs; sha256=24f2edf50606b14a4a0c2a6aae4b1e6d831759812bfb63e6e834b9a716fa6373
 // Carried constructs are data, never runtime parity evidence.
 function ml_fixed(value, min, max, message) {
   if (value < min || value > max) throw new RangeError(message);
@@ -45,4 +45,4 @@ function rp_616e7468726f7069635f6e6f6e73747265616d2e6576656e745f696e646578(event
 }
 
 export const translated = { ["MAX_BUFFERED_RESPONSE"]: rp_616e7468726f7069635f6e6f6e73747265616d2e4d41585f42554646455245445f524553504f4e5345(), ["event_index"]: rp_616e7468726f7069635f6e6f6e73747265616d2e6576656e745f696e646578 };
-export const provenance = {"sourcePath":"rust/src/anthropic_nonstream.rs","sourceSha256":"4c7b912b69468cca2c1673702d43146586857b603a9d1bf90762b673539fb141","executable":2,"executableFunctions":1,"executableConstants":1,"executableTypes":0,"executableConstructors":0,"carried":16,"preserved":19,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/anthropic_nonstream.rs","sourceSha256":"24f2edf50606b14a4a0c2a6aae4b1e6d831759812bfb63e6e834b9a716fa6373","executable":2,"executableFunctions":1,"executableConstants":1,"executableTypes":0,"executableConstructors":0,"carried":16,"preserved":19,"runtimeParity":false};

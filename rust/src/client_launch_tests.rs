@@ -515,3 +515,27 @@ fn the_per_run_token_outlives_an_ordinary_session() {
     };
     assert_eq!(args.run_ttl_hours, 2, "an explicit lifetime is honoured");
 }
+
+
+// Independent native argv/policy oracles for the paired draft. UNRUN; CI only.
+#[test]
+fn source_draft_cloud_root_options_and_exact_boundary_are_checked_before_launch() {
+    for forwarded in [vec!["--search", "cloud-tasks"], vec!["--model=selected", "cloud"], vec!["-mselected", "cloud"], vec!["--", "cloud"]] {
+        assert!(unsupported_native_command(&args(ClientKind::Codex, &forwarded)).is_some());
+    }
+    assert!(unsupported_native_command(&args(ClientKind::Codex, &["--unknown", "value", "cloud"])).is_none());
+    let exact = plan(&args(ClientKind::ClaudeCode, &["--", "future-command", "--flag"]), None, false);
+    assert_eq!(rendered(&exact), vec!["future-command", "--flag"]);
+    assert!(!exact.one_shot);
+}
+#[test]
+fn source_draft_model_prefixes_and_flag_only_prompt_modes_remain_native() {
+    let selected = plan(&args(ClientKind::Opencode, &["hello"]), Some("model"), true);
+    assert_eq!(rendered(&selected), vec!["run", "--model", "link-assistant/model", "hello"]);
+    for client in [ClientKind::GeminiCli, ClientKind::QwenCode, ClientKind::GrokCli, ClientKind::Agent] {
+        let launch = plan(&args(client, &["--verbose"]), None, false);
+        assert_eq!(rendered(&launch), vec!["--verbose"]);
+        assert!(launch.one_shot);
+        assert!(launch.note.is_some());
+    }
+}

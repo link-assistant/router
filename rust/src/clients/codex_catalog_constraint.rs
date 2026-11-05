@@ -3,6 +3,8 @@ use super::{
     read_or_empty,
 };
 
+use std::io::Read as _;
+
 impl ClientManager {
     /// Remove a process-wide Codex catalog override before managed repair.
     ///
@@ -11,7 +13,7 @@ impl ClientManager {
     /// the Router never advertised. Repair snapshots this file before calling
     /// the helper, which makes the removal transactional and byte-exact on
     /// rollback.
-    pub(super) fn remove_codex_catalog_constraint(&self) -> Result<(), ClientError> {
+    pub(crate) fn remove_codex_catalog_constraint(&self) -> Result<(), ClientError> {
         let path = self.config_path(ClientKind::Codex);
         let source = read_or_empty(&path)?;
         if source.trim().is_empty() {
@@ -33,7 +35,7 @@ impl ClientManager {
     /// Validate the foreign catalog before a repair transaction snapshots or
     /// edits Codex configuration. Missing, non-regular, symlinked, or invalid
     /// catalogs are not safe evidence of the constraint being repaired.
-    pub(super) fn validate_codex_catalog_constraint(&self) -> Result<(), ClientError> {
+    pub(crate) fn validate_codex_catalog_constraint(&self) -> Result<(), ClientError> {
         let config_path = self.config_path(ClientKind::Codex);
         let source = read_or_empty(&config_path)?;
         if source.trim().is_empty() {
@@ -69,7 +71,20 @@ impl ClientManager {
                 }
             )));
         }
-        let catalog: Value = serde_json::from_slice(&fs::read(&path)?).map_err(|error| {
+        let maximum = 8 * 1024 * 1024;
+        if metadata.len() > maximum as u64 {
+            return Err(ClientError::message("Codex model_catalog_json exceeds its 8 MiB bound"));
+        }
+        let file = fs::File::open(&path)?;
+        if !file.metadata()?.is_file() {
+            return Err(ClientError::message("Codex model_catalog_json must remain a regular file"));
+        }
+        let mut source = Vec::new();
+        file.take(maximum as u64 + 1).read_to_end(&mut source)?;
+        if source.len() > maximum {
+            return Err(ClientError::message("Codex model_catalog_json grew beyond its 8 MiB bound"));
+        }
+        let catalog: Value = serde_json::from_slice(&source).map_err(|error| {
             ClientError::message(format!(
                 "invalid JSON in Codex model_catalog_json {}: {error}",
                 path.display()

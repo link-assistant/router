@@ -10,7 +10,7 @@ import {payloadOwner,validateCallbackCaptures,sourceTree,alphaTree,retargetCheck
 import {optionNominalContext,restoreOptionNominals} from './option-nominal-proof.mjs';
 import {captureBorrowedLayouts,requireBorrowedLayouts,originalSharedDomainGuard,sharedDomainGuardNeeded} from './standard-borrowed-body.mjs';
 import {originalStandardSharedPatternLayout} from './standard-shared-pattern-source.mjs';
-import {originalPrimitiveCopySource} from '../shared-reference-copy-source.mjs';
+import {currentPrimitiveCopySource as originalPrimitiveCopySource} from '../current-standard-copy-source.mjs';
 const applications=new WeakMap(),issued=new Map();
 function localNames(value,result=new Set()){if(!value||typeof value!=='object')return result;if(['var','let'].includes(value.k)&&typeof value.name==='string')result.add(value.name);for(const [key,child]of Object.entries(value))if(!['type','span','originalCallbackProof','sourceFrameProof','originalLoanProof','pinnedStandardBodyProof','sharedBodyProof'].includes(key))Array.isArray(child)?child.forEach(node=>localNames(node,result)):localNames(child,result);return result;}
 function safeFreshName(checker,prefix,reserved){let name;do{name=checker.freshName(prefix);}while(reserved.has(name));reserved.add(name);return name;}

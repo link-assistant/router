@@ -1,4 +1,4 @@
-// Generated draft from rust/src/deployment_preservation.rs; sha256=5083dcfbb336bbbd6f3f71a20421cd4b2cd7c2f7237d3803088a679474f28252
+// Generated draft from rust/src/deployment_preservation.rs; sha256=db25c887ad2d94f6780b96d27b2961337d563414c8a4d29e6a35a3b6c36e82bc
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../../runtime/type-layout-runtime.mjs";
 
@@ -20,4 +20,4 @@ function rp_6465706c6f796d656e745f707265736572766174696f6e2e757361626c65(record,
 }
 
 export const translated = { ["usable"]: rp_6465706c6f796d656e745f707265736572766174696f6e2e757361626c65 };
-export const provenance = {"sourcePath":"rust/src/deployment_preservation.rs","sourceSha256":"5083dcfbb336bbbd6f3f71a20421cd4b2cd7c2f7237d3803088a679474f28252","executable":1,"executableFunctions":1,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":9,"preserved":11,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/deployment_preservation.rs","sourceSha256":"db25c887ad2d94f6780b96d27b2961337d563414c8a4d29e6a35a3b6c36e82bc","executable":1,"executableFunctions":1,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":9,"preserved":11,"runtimeParity":false};

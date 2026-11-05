@@ -32,9 +32,9 @@ export function parseRouterCoreVector(parser, path) {
   const proof = sourceContract(() => { current(); return requireRouterCoreFacade(parser); }, location);
   c.index += width;
   const output = createRulePipeline([
-    {phase: 'language', rules: [{id: 'owned-vector:existing-comma-list-expression-grammar', apply: () => {
-      const value = descriptor.value.call(parser, {...macro, value: 'vec', start: first.start}, path);
-      if (value.k !== 'array' || value.items.length > 4096) throw unsupported('owned vector allocation', 'requires a comma list of at most 4096 checked elements', value.span);
+    {phase: 'language', rules: [{id: 'owned-vector:existing-comma-list-and-bounded-repeat-grammar', apply: () => {
+      const value = parseOwnedVectorRepeat(parser,path,{...macro,start:first.start}) ?? descriptor.value.call(parser, {...macro, value: 'vec', start: first.start}, path);
+      if (!['array','routerCoreVectorRepeat'].includes(value.k) || value.k==='array'&&value.items.length > 4096) throw unsupported('owned vector allocation', 'requires a bounded comma list or checked Copy repetition', value.span);
       return value;
     }}]},
     {phase: 'repository', rules: [{id: 'router-core:qualified-owned-vector-allocation', apply: value => ({
@@ -57,3 +57,5 @@ export function parseRouterCoreVector(parser, path) {
 
 
 // Private checker association, consumed before checked-meta serialization.
+
+import {parseOwnedVectorRepeat} from './owned-vector-repeat-source.mjs';

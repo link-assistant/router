@@ -1,3 +1,5 @@
+import {requireBorrowedJsonToolOwnership,assertBorrowedJsonToolBoundary,preserveBorrowedJsonToolResult} from '../borrowed-json-tool-20261103-native-types.mjs';
+import {requireOrderedTextMapOpaqueType,preserveOrderedTextMapOpaqueResult} from '../ordered-text-map-callers-20261102-native-types.mjs';
 // Source ownership qualifiers are distinct from equal portable value domains.
 // No borrow, move, dereference or allocation is fabricated by this adapter.
 import {TextRustParser,TextChecker} from './text.mjs';
@@ -11,7 +13,8 @@ const OWNED_VEC=Object.freeze({kind:'owned',source:'Vec'});
 const BORROWED_SLICE=Object.freeze({kind:'borrowed',source:'slice'});
 const location=(first,last)=>({start:first.start,end:last.end});
 const canonical=owner=>owner&&(owner.kind==='owned'&&['String','Vec'].includes(owner.source)||owner.kind==='borrowed'&&['String','str','Vec','slice'].includes(owner.source)||owner.kind==='value'&&owner.source==='array');
-function ownership(type) {
+import {requireBorrowedStandardMapOwnership,assertBorrowedStandardMapBoundary,preserveBorrowedStandardMapResult} from '../borrowed-standard-map-20261103-native-types.mjs';
+function ownership(type) {if(type?.kind==='routerBorrowedJsonTool'){requireBorrowedJsonToolOwnership(type);return type.rustOwnership;}if(type?.kind==='routerStandardTextMap'){requireBorrowedStandardMapOwnership(type);return type.rustOwnership;}if(type?.kind==='routerOrderedTextMap'){requireOrderedTextMapOpaqueType(type,{shared:Boolean(type.rustReference)});return type.rustOwnership;}
   if(type?.rustOwnership) {
     if(!canonical(type.rustOwnership))throw new TypeError('Malformed checked Rust ownership qualifier');
     return type.rustOwnership;
@@ -22,7 +25,7 @@ function ownership(type) {
   return null;
 }
 function requireResolvedOwnership(type,span,{declarations,resolveType=type=>type},active=new Set()) {
-  if(!type)return;
+  if(!type)return;if(type.kind==='routerBorrowedJsonTool'){requireBorrowedJsonToolOwnership(type);return;}if(type.kind==='routerStandardTextMap'){requireBorrowedStandardMapOwnership(type);return;}if(type.kind==='routerOrderedTextMap'){requireOrderedTextMapOpaqueType(type,{shared:Boolean(type.rustReference)});return;}
   if(type.rustSourceType!==undefined&&type.rustSourceType!==true)throw unsupported('source type ownership proof','requires an actual checked source type marker',span);
   if(type.rustGenericIdentityUnresolved)throw unsupported('erased Rust ownership generic','requires an actual checked source layout and ownership contract',span);
   if(type.kind==='array')requireResolvedOwnership(type.element,span,{declarations,resolveType},active);
@@ -39,6 +42,7 @@ function requireResolvedOwnership(type,span,{declarations,resolveType=type=>type
 }
 
 export function assertRustOwnership(actual,expected,span,{declarations,resolveType=type=>type}={},active=new Set()) {
+  if(assertBorrowedJsonToolBoundary(actual,expected))return;if(assertBorrowedStandardMapBoundary(actual,expected))return;
   requireResolvedOwnership(actual,span,{declarations,resolveType});requireResolvedOwnership(expected,span,{declarations,resolveType});
   if(!actual||!expected)return;
   const left=ownership(actual),right=ownership(expected);
@@ -84,6 +88,7 @@ export function withOwnershipParser(Base=TextRustParser) {
       return {k:'routerStringOwnership',operation:method.value,object,fallback:super.method(object,method,args,span),span};
     }
     primary(path,options) {
+      const qualified=parseOriginalQualifiedStringToOwned(this,path);if(qualified)return qualified;
       const c=this.cursor,first=c.peek(),constructor=['String','Vec'].includes(first.value)&&typeof this.builtinShadow==='function'&&!this.builtinShadow(first.value,path)&&c.is('::',1)&&c.is('new',2)&&c.is('(',3)&&c.is(')',4);
       const value=super.primary(path,options);
       if(!constructor)return value;
@@ -145,12 +150,14 @@ export function withOwnershipParser(Base=TextRustParser) {
 export function withOwnershipChecker(Base=TextChecker) {
   return class extends Base {
     program(surface) {
+      return withOriginalQualifiedStringToOwnedProgram(this,surface,()=>{
       const program=super.program(surface),context={declarations:program.declarations,resolveType:(type,path,span)=>this.resolveType(type,path,span)};
       for(const entry of program.declarations.values())if(entry.k==='fn') {
         for(const param of entry.params)requireResolvedOwnership(param.type,param.span??entry.span,context);
         requireResolvedOwnership(entry.ret,entry.span,context);
       }
       return program;
+      });
     }
     resolveType(type,path,span) {
       const resolved=super.resolveType(type,path,span);
@@ -159,7 +166,7 @@ export function withOwnershipChecker(Base=TextChecker) {
     expectedOwnership(actual,expected,path,span) {
       assertRustOwnership(actual,expected,span,{declarations:this.items,resolveType:(type,scope,range)=>this.resolveType(type,scope??path,range)});
     }
-    qualifyOwnershipResult(node,value,expected,path) {
+    qualifyOwnershipResult(node,value,expected,path) {const json=preserveBorrowedJsonToolResult(value);if(json)return json;const standardMap=preserveBorrowedStandardMapResult(value);if(standardMap)return standardMap;const opaque=preserveOrderedTextMapOpaqueResult(value);if(opaque)return opaque;
       let owner=ownership(value.type);
       if(node.k==='routerTextReference'&&['string','array'].includes(value.type.kind))throw unsupported('explicit ownership borrow','requires a checked lifetime and borrowing contract',node.span);
       if(['str','lit'].includes(node.k)&&typeof node.value==='string')owner=BORROWED_STR;
@@ -210,6 +217,7 @@ export function withOwnershipChecker(Base=TextChecker) {
       return value;
     }
     expr(node,env,path,expected,allowLiteral=false) {
+      if(node.k==='routerQualifiedStringToOwned')return checkOriginalQualifiedStringToOwned(this,node,env,path,expected);
       if(node.k==='routerStringOwnership') {
         const object=this.expr(node.object,env,path),owner=ownership(object.type);
         // JSON and actual inherent methods keep their independently checked
@@ -239,3 +247,5 @@ export class OwnershipRustParser extends withOwnershipParser() {}
 export class OwnershipChecker extends withOwnershipChecker() {}
 export const withSourceOwnershipParser=withOwnershipParser;
 export const withSourceOwnershipChecker=withOwnershipChecker;
+
+import {parseOriginalQualifiedStringToOwned,withOriginalQualifiedStringToOwnedProgram,checkOriginalQualifiedStringToOwned} from '../qualified-string-owned-source.mjs';

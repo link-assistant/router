@@ -1,0 +1,44 @@
+import {visitOpaqueBodyScalarSourceEquations as visitParentSourceEquations} from './opaque-body-scalar-20261102-history.mjs';
+// Whole source copies only. Real compiler and original-source frames reissue.
+import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
+import {gunzipSync} from 'node:zlib';
+import {withOpaqueBodyScalarSources as withOpaqueAdoptionSources} from './opaque-body-scalar-20261102-history.mjs';
+import {withSelectedTrackedSourceOperation,readSelectedTrackedSourceBytes} from './selected-source-reader-20261101.mjs';
+import {withCompleteSourceClosingFence,requireSynchronousSourceCallback} from './complete-source-closing-fence.mjs';
+import {withSourceInputValidation} from './source-failure-operations.mjs';
+import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
+import {transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
+import {accountPrimitiveVectorIteratorBulkData as accountData} from './primitive-vector-iterator-bulk-20261101-accounting.mjs';
+import {captureUnrunSourceCaseCustody} from './unrun-source-case-custody-20261101.mjs';
+const ROOT=fileURLToPath(new URL('../../',import.meta.url)),P="tools/translation/source-profiles/opaque-body-arithmetic-20261102/",ARCHIVE=P+'complete-source-copies.json.gz',SELF="tools/translation/opaque-body-arithmetic-20261102-history.mjs";
+const PIN='684c078ee6f990a4425c37e51f5e9a21eef897a49905cb728f01742167460a16';
+const fail=message=>{throw TypeError('Opaque checked arithmetic whole-source copies: '+message);};
+const expected=["tools/translation/opaque-body-arithmetic-20261102-corpus.mjs", "tools/translation/opaque-body-arithmetic-20261102-corpus-result.mjs", "tools/translation/opaque-body-arithmetic-20261102.mjs", "tools/translation/opaque-body-arithmetic-20261102-capture.mjs", "tools/translation/opaque-body-arithmetic-20261102-inverse.mjs", "tools/translation/opaque-paired-body-arithmetic-inverse-20261102.mjs", "tools/translation/opaque-receiving-bounded-arithmetic-20261102.mjs", "tools/translation/opaque-body-arithmetic-origins-20261102.mjs"];
+const added=["tools/translation/opaque-body-arithmetic-target-20261102.mjs", "tools/translation/opaque-body-arithmetic-sample-20261102.mjs"];
+const text=path=>new TextDecoder('utf8',{fatal:true}).decode(readSelectedTrackedSourceBytes(ROOT,path,{maxBytes:2097152}));
+function load(){return withSourceInputValidation(()=>{
+ const packed=readSelectedTrackedSourceBytes(ROOT,ARCHIVE,{maxBytes:2097152});if(createHash('sha256').update(packed).digest('hex')!==PIN)fail('complete immutable copy archive differs');
+ const data=JSON.parse(new TextDecoder('utf8',{fatal:true}).decode(gunzipSync(packed,{maxOutputLength:4194304})));accountData(data);
+ if(data.schema!=='opaque-body-arithmetic-complete-source-copies-v1'||!Array.isArray(data.rows)||data.rows.length!==expected.length||!Array.isArray(data.additions)||data.additions.length!==added.length||!Array.isArray(data.prerequisites)||data.prerequisites.length!==2||!Array.isArray(data.currentCases)||data.currentCases.length!==4)fail('exact complete copies and case source required');
+ for(let at=0;at<expected.length;at++){const row=data.rows[at];if(row.path!==expected[at]||typeof row.before!=='string'||typeof row.after!=='string'||!row.originalPath.startsWith('tools/translation/test/')&&text(row.originalPath)!==row.before||text(row.beforePath)!==row.before||text(row.path)!==row.after||text(row.afterPath)!==row.after)fail('whole original/copy/snapshot source differs');}
+ for(let at=0;at<added.length;at++){const row=data.additions[at];if(row.path!==added[at]||typeof row.source!=='string'||text(row.path)!==row.source||text(row.snapshotPath)!==row.source)fail('complete new source helper differs');}
+ const casePaths=["tools/translation/test/opaque-body-scalar-inverse-20261102.test.mjs", "tools/translation/test/opaque-body-scalar-context-20261102.test.mjs"];
+ for(let at=0;at<casePaths.length;at++){const row=data.prerequisites[at];if(row.path!==casePaths[at]||typeof row.source!=='string'||text(row.snapshotPath)!==row.source)fail('complete prerequisite case snapshot differs');}
+ const current=["tools/translation/test/opaque-body-arithmetic-origins-20261102.test.mjs", "tools/translation/test/opaque-body-arithmetic-target-20261102.test.mjs", "tools/translation/test/opaque-body-arithmetic-inverse-20261102.test.mjs", "tools/translation/test/opaque-body-arithmetic-history-20261102.test.mjs"];for(let at=0;at<current.length;at++){const row=data.currentCases[at];if(row.path!==current[at]||typeof row.source!=='string'||text(row.snapshotPath)!==row.source)fail('complete current case snapshot differs');}
+ const native=["rust/tests/oracles/opaque_body_arithmetic_20261102.rs", "rust/tests/opaque_body_arithmetic_20261102_test.rs"];if(!Array.isArray(data.nativeSources)||data.nativeSources.length!==native.length)fail('all complete native oracle/integration sources required');for(let at=0;at<native.length;at++){const row=data.nativeSources[at];if(row.path!==native[at]||row.language!=='Rust'||text(row.beforePath)!==row.before||text(row.afterPath)!==row.after||text(row.path)!==row.after)fail('complete native oracle/integration source differs');}
+ const self=text(SELF);if(self!==text(P+'authored/source-history.mjs.txt'))fail('complete executing source-author snapshot differs');return {data,self};
+});}
+function operation(run){requireSynchronousSourceCallback(run);return withOpaqueAdoptionSources(()=>withSelectedTrackedSourceOperation(ROOT,()=>{const frame=load(),rows=[...frame.data.prerequisites,...frame.data.currentCases].map(row=>({path:row.path,source:row.source}));for(const row of frame.data.rows)if(row.originalPath.startsWith('tools/translation/test/'))rows.push({path:row.originalPath,source:row.before});const cases=captureUnrunSourceCaseCustody(ROOT,rows);return withCompleteSourceClosingFence(()=>run(frame),[()=>cases.verify(),()=>{load();},()=>cases.release()]);}));}
+export function withOpaqueBodyArithmeticSources(run){requireSynchronousSourceCallback(run);return operation(()=>run());}
+export function visitOpaqueBodyArithmeticSourceEquations(consume){
+ requireSynchronousSourceCallback(consume);return operation(({data,self})=>{
+  const entries=[...data.rows,...data.nativeSources,...data.additions.map(row=>({path:row.path,before:'',after:row.source,role:'complete-new-source-helper'})),...data.prerequisites.map(row=>({path:row.path,before:row.source,after:row.source,role:'complete-independent-vector-prerequisite'})),...data.currentCases.map(row=>({path:row.path,before:'',after:row.source,role:'complete-independent-current-case'})),{path:SELF,before:'',after:self,role:'complete-source-author'}];let visited=0;
+  for(const row of entries){const history=withSourceInputValidation(()=>{const value=transportConcreteSourceEquations([{before:row.before,after:row.after,language:row.language??'JavaScript'}])[0];if(value.inverse!==row.before||transportConcreteSyntaxMeta(value.beforeMeta).source!==row.before||transportConcreteSyntaxMeta(value.afterMeta).source!==row.after||value.trace.map(part=>part.phase).join(',')!=='language,repository')fail('complete source/CST/two-phase inverse differs');return value;});const event={...row,history,sourceAuthority:false,semanticAuthority:false};accountData(event);withCompleteSourceClosingFence(()=>{const reply=consume(event);accountData({event,reply});},[]);visited++;}
+  const parent=visitParentSourceEquations(event=>consume({...event,kind:'complete-parent-source-copy-equation'}));
+  const copyCustody=data.rows.flatMap(row=>[{path:row.originalPath,source:row.before},{path:row.beforePath,source:row.before},{path:row.path,source:row.after},{path:row.afterPath,source:row.after}]);for(const row of data.additions)copyCustody.push({path:row.path,source:row.source},{path:row.snapshotPath,source:row.source});for(const row of [...data.prerequisites,...data.currentCases])copyCustody.push({path:row.path,source:row.source},{path:row.snapshotPath,source:row.source});copyCustody.push({path:SELF,source:self},{path:P+'authored/source-history.mjs.txt',source:self});
+  for(const row of data.nativeSources)copyCustody.push({path:row.path,source:row.after},{path:row.beforePath,source:row.before},{path:row.afterPath,source:row.after});
+  copyCustody.push(...parent.copyCustody);const unique=new Map();for(const row of copyCustody){if(unique.has(row.path)&&unique.get(row.path).source!==row.source)fail('conflicting complete parent/current custody source');if(!unique.has(row.path))unique.set(row.path,row);}
+  const result={schema:data.schema,visited,parentVisited:parent.visited,originalCaseClosureRetained:true,copyRows:data.rows.length,additionRows:data.additions.length,sourceInstalled:false,copyCustody:[...unique.values()],sourceAuthority:false,semanticAuthority:false,executionEvidence:'UNRUN'};accountData(result);return Object.freeze(result);
+ });
+}

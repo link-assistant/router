@@ -8,7 +8,6 @@ use std::process::{Child, ExitCode, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use base64::Engine as _;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -45,7 +44,7 @@ use origin::{normalize_server, same_origin};
 use process::process_alive;
 pub(crate) use run_lease::start as start_run_lease;
 pub use selection::{
-    clear_persisted, configured_source, load_persisted, save_persisted, save_persisted_with_trust,
+    clear_persisted, configured_source, inference_ca_for_origin, load_persisted, save_persisted, save_persisted_with_trust,
     selected_server,
 };
 

@@ -1,0 +1,19 @@
+{
+  "schema": "router-mixed-edit-source-draft-v1",
+  "sha256": "619f8bd4526b42fb5b865818c6dbaa4d4c2e39eff5bee53f811d68bc234de112",
+  "decodedBytes": 324655,
+  "packedBytes": 55043,
+  "completeSourceFiles": 12,
+  "completeSourceEquations": 4,
+  "javascriptCaseSourceCount": 12,
+  "rustCaseSourceCount": 2,
+  "projectAttempts": 6,
+  "samplingPlusInverseProjectAttempts": 9,
+  "allExecution": "UNRUN",
+  "CI": "NOT_INSPECTED",
+  "sourceCounts": {
+    "drafted": 11,
+    "open": 59,
+    "total": 70
+  }
+}

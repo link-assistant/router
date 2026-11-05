@@ -1,0 +1,1 @@
+Draft shared qualified scalar roles in existing Option/Result readers and four paired method adoption APIs, preserving domain restrictions and fresh checking. New independent cases remain unrun; full translation is unfinished.

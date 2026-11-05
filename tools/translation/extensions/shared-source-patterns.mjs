@@ -1,7 +1,7 @@
 import {originalStandardMatchOrigin,originalStandardTupleLayout} from './standard-method-context.mjs';
 import {requireOriginalPrimitiveTryFromChecker} from './host-contracts.mjs';
 import { originalStandardSharedPatternLayout } from './standard-shared-pattern-source.mjs';
-import { SHARED_REFERENCE_COPY_SOURCE, sharedReferenceCopyIdentity, originalPrimitiveCopySource } from '../shared-reference-copy-source.mjs';
+import { SHARED_REFERENCE_COPY_SOURCE, currentSharedReferenceCopyIdentity as sharedReferenceCopyIdentity, currentPrimitiveCopySource as originalPrimitiveCopySource } from '../current-standard-copy-source.mjs';
 import { originalStringSharedViewSource } from './string-shared-view-source.mjs';
 import { JSON_DATA } from './json-contracts.mjs';
 // Borrow-only pattern projections begin at genuine original caller syntax.

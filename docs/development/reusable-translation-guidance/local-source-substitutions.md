@@ -1,0 +1,82 @@
+# Reusing common local source and compatibility substitutions
+
+The Router examples below are source drafted and unverified. Copying these
+implementations does not establish receiving coverage, runtime parity, source
+authority, complete synchronization or a passing gate.
+
+Keep source selection separate from semantic admission. A shared chronological
+selector can track real immutable declarations, initializer spans, semicolon
+events and lexical scope. Family rules retain their own complete binder census,
+operand grammar, native source context and permitted result domains. Unknown
+initializers and public metadata grant no type, owner, borrow or executable
+permission. Preserve all whole-function and current-source checks afterward.
+
+Router's shared engine is `tools/translation/chronological-local-source.mjs`.
+Its base64, primitive, text and carrier adapters supply separate rules instead
+of duplicating its source-order machinery. Callback snapshots include currently
+visible source DATA and consume the same bounded operation budget. Never retain
+source/hash/owner/verdict/result caches across operations. A strict local lane
+must preserve or explicitly refuse older cases without silently weakening them.
+
+`tools/translation/layered-core-adoption-source.mjs` carries the complete source
+substitution and inverse algorithm for several compatibility families. General
+language rules introduce neutral calls; repository rules restore only the exact
+selected compatibility roots, rebased from actual token coordinates. Preserve
+literal contents, comments, Unicode offsets and complete original source. Add
+matching native/JS/TS contracts and corresponding reverse mappings together;
+a lexical path substitution alone cannot supply library behavior.
+
+Store complete original source and ordered native-owner substitution recipes
+with lossless serialized/reparsed CST histories and every inverse. Include the
+new helpers, runtime/declaration dependencies, complete originals, recipes,
+upstream pins, notices and licenses in the actual compiler export closure.
+Qualify a fresh receiving repository through its real public APIs and actual
+caller sources, then independently verify emitted JS and strict TS behavior,
+canonical/profile/owned/reverse freshness and fatal gated native CI.
+
+Router's independent `shared-adoption-export-closure.test.mjs` source covers
+seven real public bulk stages in an isolated compiler export, while the separate
+family regression and native oracle sources retain target behavior obligations.
+All these cases are unrun during the user's active bulk-draft phase. Respect the
+receiving user's testing and publication instructions separately; never export
+Router's standing push authorization as receiving permission.
+
+For written immutable locals, `local-alias-written-source.mjs` separates bounded
+native type tokens from a concrete initializer and requires exact family-domain
+agreement for both operands and selected whole results. An annotation cannot
+supply a missing value. Keep mutable/unknown/custom/shadowed domains unproved;
+retain the independent complete checker and native/source gates afterward.
+
+Ordinary for source can retain independent aliases only after the complete
+plain/wildcard pattern census excludes all real parameter/local/namespace
+shadowing. Keep iterator domains unknown and preserve actual body frames,
+mutation and exits. Never use a source census as checked loop/type/owner proof.
+
+Share one bounded native literal decoder across family selectors, with matching
+fixed-width identity and explicit per-caller count bounds. Retain radix spelling
+and signs as source DATA. An unsuffixed literal needs a concrete matching native
+context; a host's pointer width is no substitute. Draft independent nondecimal,
+signed MIN, overflow, malformed, typed-alias and full caller cases alongside
+both directions, then qualify them only when execution is authorized.
+
+To compose consecutive families, derive a finite result domain afresh from an
+actual complete qualified compatibility call and matching known operands in the
+current source. Keep the reader bounded and preserve its original call text.
+Never import a preceding stage's saved result or successful verdict as authority.
+Recheck the entire combined caller, both emitted targets and its complete inverse
+against current native/runtime sources, with independent native caller oracles.
+
+Native compatibility additions can reuse `native-rust-function-copies.mjs` to
+copy complete original functions with bounded exact source edits, then rename
+actual name tokens in a separate repository phase. Keep every original function,
+full library inverse, current physical input and target-language CST. The
+result is source DATA; it cannot certify Rust grammar, dispatch, namespace,
+ownership or target behavior. Draft independent native and emitted-target cases
+for the whole caller instead of inferring parity from the copy operation.
+
+For adjacent native source families, preserve each intermediate full library and
+its inverse. Pin and freshly read earlier original boundaries; bind successors
+to the same exact native target and recheck every original at operation exit.
+Boundary CST equality remains DATA and grants no compiler or owner authority.
+For fused field defaults, admit a moved fallback only under the exact closed
+literal source rule; preserve arbitrary fallback expressions and their ordering.

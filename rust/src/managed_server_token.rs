@@ -57,8 +57,7 @@ fn token_claim(token: &str) -> Result<Value, AnyError> {
         .split('.')
         .nth(1)
         .ok_or("router returned a token without a JWT payload")?;
-    let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(payload)
+    let decoded = crate::translation_core::base64_url_no_pad_decode_text(payload)
         .map_err(|error| format!("router returned an invalid JWT payload: {error}"))?;
     serde_json::from_slice(&decoded).map_err(Into::into)
 }

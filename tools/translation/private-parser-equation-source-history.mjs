@@ -1,3 +1,4 @@
+import {deriveNativeParsedCstSourceTransforms} from './prepare-native-parsed-cst.mjs';
 // Exact later SOURCE composition only. The private parser keeps all authority.
 import {readFileSync,lstatSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -17,6 +18,7 @@ export function composePrivateParserEquationSourceHistory(row,input,{root}){
  const inputs=INPUTS.map(path=>physical(root,path)),proposal=prepareConcreteEquationTransaction({root}),equations=proposal.files.filter(value=>value.path===EXECUTOR);if(equations.length!==1)fail('one complete generated equation required');const equation=equations[0];
  if(equation.before!==row.after||equation.current!==input.source||equation.after!==input.source||!equation.after.startsWith(equation.before)||equation.inverse!==equation.before)fail('complete original/later source equation differs');
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('TypeScript5.9.3 required');const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,row.path),equation.after);
- const verify=()=>{for(const input of inputs){const fresh=physical(root,input.path);if(fresh.source!==input.source||fresh.sha256!==input.sha256||JSON.stringify(fresh.identity)!==JSON.stringify(input.identity))fail('complete later producer input changed');}};
- verify();return {row:{...row,dataAdoptionAfter:row.after,after:equation.after,sha256:hash(equation.after),nativeBindings,laterSourceEquation:equation},evidence:{equation,inputs,sourceAuthority:false,runtimeAuthority:false},verify};
+ const nativeParsedCst=deriveNativeParsedCstSourceTransforms({root}),nativeParsedInputs=['tools/translation/prepare-native-parsed-cst.mjs','tools/translation/source-profiles/native-parsed-cst/complete-originals.json.gz'].map(path=>physical(root,path));
+ const verify=()=>{for(const input of [...inputs,...nativeParsedInputs]){const fresh=physical(root,input.path);if(fresh.source!==input.source||fresh.sha256!==input.sha256||JSON.stringify(fresh.identity)!==JSON.stringify(input.identity))fail('complete later producer input changed');}};
+ verify();return {row:{...row,dataAdoptionAfter:row.after,after:equation.after,sha256:hash(equation.after),nativeBindings,laterSourceEquation:equation},evidence:{nativeParsedCst,nativeParsedInputs,equation,inputs,sourceAuthority:false,runtimeAuthority:false},verify};
 }

@@ -1,4 +1,4 @@
-// Generated draft from rust/src/codex_identity.rs; sha256=a52076f084531b3dce5ebbb0d340701629da59c0f6ee15b6efd30c3e909391d3
+// Generated draft from rust/src/codex_identity.rs; sha256=aa48b183141e99293a9177cef95f3e2ced81873e4803c1aca7453a3d31407ecf
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../../runtime/type-layout-runtime.mjs";
 
@@ -57,4 +57,4 @@ const serde_json = {
 };
 
 export const translated = { ["DEFAULT_CLIENT_VERSION"]: rp_636f6465785f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["ORIGINATOR"]: rp_636f6465785f6964656e746974792e4f524947494e41544f52(), ["TmuxClientInfo"]: ml_make_TmuxClientInfo_TmuxClientInfo };
-export const provenance = {"sourcePath":"rust/src/codex_identity.rs","sourceSha256":"a52076f084531b3dce5ebbb0d340701629da59c0f6ee15b6efd30c3e909391d3","executable":3,"executableFunctions":0,"executableConstants":2,"executableTypes":1,"executableConstructors":1,"carried":13,"preserved":17,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/codex_identity.rs","sourceSha256":"aa48b183141e99293a9177cef95f3e2ced81873e4803c1aca7453a3d31407ecf","executable":3,"executableFunctions":0,"executableConstants":2,"executableTypes":1,"executableConstructors":1,"carried":13,"preserved":17,"runtimeParity":false};

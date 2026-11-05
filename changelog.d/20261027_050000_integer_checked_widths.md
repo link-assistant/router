@@ -1,0 +1,1 @@
+- Draft44 additional checked integer operations from complete existing native/runtime templates, actual Option payload widths, forward/reverse carrier mappings and complete Rust/JS/TS source histories with independent unrun boundary, receiving and native oracle case source. Full translation, synchronization and parity remain unfinished (#759, #772).

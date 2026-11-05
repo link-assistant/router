@@ -1,0 +1,1 @@
+Draft fresh selected CA trust through paired Codex HTTP/WebSocket and actual temporary/persistent callers, preserve normal TLS verification and fix explicit lock budgets. Retain original native/library pins through full three-language histories; all verification remains unrun.

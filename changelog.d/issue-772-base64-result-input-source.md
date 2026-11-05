@@ -1,0 +1,1 @@
+Draft shared owned Base64 Result input boundaries across seven reverse lanes, including native source selection, snapshots, affine moves, TS/Rust/evaluator controls and canonical inverse support. Independent cases remain unrun; full translation is unfinished.

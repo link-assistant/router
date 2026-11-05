@@ -248,29 +248,29 @@ try {
   } else {
   }
   const has_function = ml_router_any(ml_router_iter(tools_2, true), (tool) => { const kind = (() => {
-    const ml_standard_body_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(tool, "type"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
-    const ml_standard_body_3 = "custom";
-    switch (ml_standard_body_2.$) {
+    const ml_standard_body_34 = ml_host_option_bind(ml_host_serde_json_value_get_string(tool, "type"), (ml_host_callback_32_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_32_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
+    const ml_standard_body_35 = "custom";
+    switch (ml_standard_body_34.$) {
       case "None": {
-        return ml_standard_body_3;
+        return ml_standard_body_35;
       }
       case "Some": {
-        const x = ml_standard_body_2.field0;
+        const x = ml_standard_body_34.field0;
         return x;
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_2);
+        return ml_router_unexpected(ml_standard_body_34);
       }
     }
   })();
   return !((() => {
-    const ml_text_1 = kind;
-    const ml_text_2 = "web_search";
-    return ml_text_1.startsWith(ml_text_2);
+    const ml_text_36 = kind;
+    const ml_text_37 = "web_search";
+    return ml_text_36.startsWith(ml_text_37);
   })() || (() => {
-    const ml_text_3 = kind;
-    const ml_text_4 = "web_fetch";
-    return ml_text_3.startsWith(ml_text_4);
+    const ml_text_38 = kind;
+    const ml_text_39 = "web_fetch";
+    return ml_text_38.startsWith(ml_text_39);
   })()); });
   return ml_host_bool_then(!has_function, () => { return "tool_choice requires a tool call, but the request offers only server-side tools that the provider executes itself; use tool_choice auto or add a client tool"; });
 

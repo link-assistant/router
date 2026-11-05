@@ -1,0 +1,111 @@
+{
+  "schema": "protected-general-async-lease-20261103-source-proposal-v1",
+  "predecessor": "fb085c4bd44fefc60813f0cfef02a9ea7fda2b0a",
+  "files": [
+    {
+      "role": "sync-adapter",
+      "path": "tools/translation/protected-native-writers-20261102.mjs",
+      "physicalOrigin": {
+        "commit": "fb085c4bd44fefc60813f0cfef02a9ea7fda2b0a",
+        "path": "tools/translation/protected-native-writers-20261102.mjs",
+        "gitBlob": "5d58e5b23b66544c9456e7cbad702788bf004730"
+      },
+      "before": {
+        "path": "sync-adapter.before.txt",
+        "bytes": 9873,
+        "sha256": "c14940e23aeafb5eaaa018f62a62061cfaa7cb34ea0192201d0d23df3e99829d"
+      },
+      "after": {
+        "path": "sync-adapter.after.txt",
+        "bytes": 12852,
+        "sha256": "1b83c4a51f6b699272c448be22688e3c8ef509e4ffbb893085504990d436efe7"
+      }
+    },
+    {
+      "role": "async-adapter",
+      "path": "tools/translation/protected-reviewed-adoption-20261102.mjs",
+      "physicalOrigin": {
+        "commit": "fb085c4bd44fefc60813f0cfef02a9ea7fda2b0a",
+        "path": "tools/translation/protected-reviewed-adoption-20261102.mjs",
+        "gitBlob": "4226bf4eb46d60a077328e51343f44fdebe78996"
+      },
+      "before": {
+        "path": "async-adapter.before.txt",
+        "bytes": 7233,
+        "sha256": "461909f35f4312c32c952365fa7d679919f2d0f04be8375e93efc7616db3d702"
+      },
+      "after": {
+        "path": "async-adapter.after.txt",
+        "bytes": 17418,
+        "sha256": "91b95c4484fe762b614383316c73ee6c0d1bff4019eb5afb6a979624bb0a960b"
+      }
+    },
+    {
+      "role": "alias-observer",
+      "path": "tools/translation/protected-preparer-writers-20261102-alias.mjs",
+      "physicalOrigin": {
+        "commit": "fb085c4bd44fefc60813f0cfef02a9ea7fda2b0a",
+        "path": "tools/translation/protected-preparer-writers-20261102-alias.mjs",
+        "gitBlob": "fc9a40f03bb7d649f04fa32e7d187d4984a145d9"
+      },
+      "before": {
+        "path": "alias-observer.before.txt",
+        "bytes": 26371,
+        "sha256": "28b7c89773ae71ce228e0eb19fdd8945f956eb746222eeb4f3b6fc60cbf74086"
+      },
+      "after": {
+        "path": "alias-observer.after.txt",
+        "bytes": 26526,
+        "sha256": "2725f30ceed9f32ae233cca2dc33323ecee398a659da45427cceddf077e09a95"
+      }
+    },
+    {
+      "role": "sync-history",
+      "path": "tools/translation/protected-sync-native-cli-20261103-history.mjs",
+      "physicalOrigin": {
+        "commit": "fb085c4bd44fefc60813f0cfef02a9ea7fda2b0a",
+        "path": "tools/translation/protected-sync-native-cli-20261103-history.mjs",
+        "gitBlob": "c7ff246a758de754ac45700aaeb91c178e260420"
+      },
+      "before": {
+        "path": "sync-history.before.txt",
+        "bytes": 4386,
+        "sha256": "525cca623cd9d09c7e748a9fea356536d5f4a92530b57dfc77fb1fe7d8b966ac"
+      },
+      "after": {
+        "path": "sync-history.after.txt",
+        "bytes": 4740,
+        "sha256": "5b63d1f5089ba1cba45ae69c09a73c66a50956632d6d63d28338a91f8f09bd11"
+      }
+    },
+    {
+      "role": "external-history",
+      "path": "tools/translation/protected-external-mutations-20261102-history.mjs",
+      "physicalOrigin": {
+        "commit": "fb085c4bd44fefc60813f0cfef02a9ea7fda2b0a",
+        "path": "tools/translation/protected-external-mutations-20261102-history.mjs",
+        "gitBlob": "094c7971ae9f9d43829121c103f6c1727736f9ed"
+      },
+      "before": {
+        "path": "external-history.before.txt",
+        "bytes": 4353,
+        "sha256": "d789d8d7c3d64fa90c8b2f86e0ce110a51a4305c4bc493608568968275b96c9b"
+      },
+      "after": {
+        "path": "external-history.after.txt",
+        "bytes": 4537,
+        "sha256": "6847d33c19c254fbf88a2093d5cc5348fb3d4409ba5119f1b6f49a643655025e"
+      }
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceInstalled": false,
+  "sourceAuthority": false,
+  "completeOriginalFunctionDenominator": "UNKNOWN",
+  "completeWriterDenominator": "UNKNOWN",
+  "requirements": {
+    "L04": "additive actual shared policy/veto async lease and source-cause correction; physical/core-vector/delegated writer integration OPEN",
+    "S03": "no change or qualification of actual original transaction/restoration/deadline/resource guards in this infrastructure proposal",
+    "L01_L02": "five finite whole-source predecessor/implementation mappings plus actual delegated sink worklist; complete original function/writer denominator UNKNOWN"
+  }
+}

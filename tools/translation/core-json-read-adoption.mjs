@@ -69,7 +69,7 @@ function expressionRole(tokens,env,scoped,depth=0){
  const tried=tokens.at(-1).text==='?';if(tried)tokens=tokens.slice(0,-1);
  let at=1;if(!ident(tokens[0]))return null;let role=env.get(tokens[0].text);if(!role)return null;role={...role};
  let steps=0;while(at<tokens.length){
-  if(++steps>32)return null;if(tokens[at]?.text!=='.'||!ident(tokens[at+1])||tokens[at+2]?.text!=='(')return null;const end=close(tokens,at+2);if(end<0)return null;const method=tokens[at+1].text,args=tokens.slice(at+3,end);
+  if(++steps>32)return null;if(copies&&tokens[at]?.text==='?'){if(!role.optional)return null;role={...role,optional:false};at++;continue;}if(tokens[at]?.text!=='.'||!ident(tokens[at+1])||tokens[at+2]?.text!=='(')return null;const end=close(tokens,at+2);if(end<0)return null;const method=tokens[at+1].text,args=tokens.slice(at+3,end);
   if(method==='as_object'&&role.kind==='value'&&!role.optional&&!args.length)role={...role,kind:'map',optional:true};
   else if(method==='get'&&['map','value'].includes(role.kind)&&!role.optional&&keyRole(args,env,scoped,role.kind))role={...role,kind:'value',optional:true};
   else if(method==='and_then'&&role.kind==='value'&&role.optional&&scoped.jsonNames.has(args[0]?.text)&&text(args.slice(1))==='::as_object')role={...role,kind:'map'};
@@ -77,7 +77,7 @@ function expressionRole(tokens,env,scoped,depth=0){
   else if(method==='ok_or_else'&&role.optional&&tried&&end===tokens.length-1&&args[0]?.text==='||')role={...role,optional:false};
   else return null;at=end+1;
  }
- return tried&&role.optional?null:role;
+ return tried&&role.optional?(copies?{...role,optional:false}:null):role;
 }
 function keyRole(tokens,env,scoped,receiver){
  if(tokens.length!==1)return null;const token=tokens[0];if(token.type==='string'&&/^(?:"|r#*")/u.test(token.text))return 'str';
@@ -103,7 +103,7 @@ function errorFormatTail(tokens,start,stop){
  }
  return false;
 }
-function select(source,item,scoped,modulePath){
+function select(source,item,scoped,modulePath,names){
  const tokens=item.tokens.filter(token=>token.type!=='comment'),header=originalDeclarationHeader(item,modulePath),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),edits=[],selections=[],skipped=[];let open=name+1;
  // Only source lifetimes may appear between the actual name and parameter list.
  while(open<tokens.length&&tokens[open].text!=='(')open++;const generic=text(tokens.slice(name+1,open));if(generic&&!/^<(?:'[\p{ID_Start}_][\p{ID_Continue}_]*,?)+>$/u.test(generic))return {edits,selections,skipped:[{function:item.name,reason:'generic type/const parameters require separate roles'}]};
@@ -121,6 +121,18 @@ function select(source,item,scoped,modulePath){
   if(tokens[at].text==='=>'){let start=at-1;while(start>body&&!['{','}',',',';'].includes(tokens[start-1].text))start--;const pattern=tokens.slice(start,at);if(pattern.length!==1||!['string','number','ident'].includes(pattern[0].type))return {edits:[],selections:[],skipped:[{function:item.name,reason:'nontrivial match binder scope requires separate roles'}]};if(ident(pattern[0]))blocked.add(pattern[0].text);}
   if(!copies&&tokens[at].text==='let'&&['if','while'].includes(tokens[at-1]?.text)){const stop=tokens.slice(at+1).findIndex(token=>token.text==='=');for(const token of tokens.slice(at+1,stop<0?at+1:at+1+stop))if(ident(token))blocked.add(token.text);}
  }
+ let cloneSerial=0;const cloneNames=names??new Set(source.match(/[\p{ID_Start}_][\p{ID_Continue}_]*/gu)??[]);const freshClone=()=>{let value;do{if(cloneSerial>=200000)fail('copy hygiene bound');value='__router_json_clone_'+cloneSerial++;}while(cloneNames.has(value));cloneNames.add(value);return value;};
+ function cloneSuffix(start,current){
+  const initial=tokens[start];if(!ident(initial)||!current.get(initial.text)||blocked.has(initial.text)||['.','::'].includes(tokens[start-1]?.text))return null;let cursor=start+1;
+  for(let steps=0;steps<32&&cursor<tokens.length;steps++){
+   if(tokens[cursor].text==='?'){cursor++;continue;}
+   if(tokens[cursor].text!=='.'||!ident(tokens[cursor+1])||tokens[cursor+2]?.text!=='(')return null;const end=close(tokens,cursor+2);if(end<0)return null;const method=tokens[cursor+1].text;
+   if(['clone','cloned'].includes(method)){
+    if(end!==cursor+3)return null;const role=expressionRole(tokens.slice(start,cursor),current,scoped);if(role?.kind!=='value'||role.optional!==(method==='cloned'))return null;return {end,cursor,method,role};
+   }
+   if(!['as_object','get','and_then','filter','ok_or_else'].includes(method))return null;cursor=end+1;
+  }return null;
+ }
  const walk=(start,stop,current,depth=0)=>{if(depth>64)return;for(let at=start;at<stop;at++){
   if(copies&&tokens[at].text==='if'&&tokens[at+1]?.text==='let'){
    let equals=at+2;while(equals<stop&&!['=','{',';'].includes(tokens[equals].text))equals++;
@@ -134,12 +146,18 @@ function select(source,item,scoped,modulePath){
    if(some){const role=expressionRole(tokens.slice(equals+1,open),current,scoped);if(role?.kind==='value'&&role.optional&&role.evidence.length<32)branch.set(pattern[2].text,{...role,optional:false,evidence:[...role.evidence,{kind:'Some-if-let-true-branch',span:[tokens[at].start,tokens[end].end],source:source.slice(tokens[at].start,tokens[end].end)}]});}
    walk(open+1,end,branch,depth+1);at=end;continue;
   }
-  if(copies&&ident(tokens[at])&&!['.','::'].includes(tokens[at-1]?.text)&&tokens[at+1]?.text==='.'&&tokens[at+2]?.text==='clone'&&tokens[at+3]?.text==='('&&tokens[at+4]?.text===')'){
-   const receiver=tokens[at],role=current.get(receiver.text),span=[receiver.start,tokens[at+4].end];
-   if(role?.kind==='value'&&!role.optional&&!blocked.has(receiver.text)&&!item.tokens.some(token=>token.type==='comment'&&token.start>=span[0]&&token.end<=span[1])){
-    edits.push({span,expected:source.slice(...span),replacement:C+'json_copy('+receiver.text+')'});
-    selections.push({function:item.name,functionSpan:[item.start,item.end],span,receiver:receiver.text,operation:'json_copy',candidateRole:role,imports:scoped.imports,oldTraitDispatchProved:false,executableAdmission:false,evaluationOrder:['receiver-once'],ownership:'shared canonical candidate; independently checked owned copy result'});
-   }at+=4;continue;
+  if(copies){
+   const selected=cloneSuffix(at,current);if(selected){const receiver=tokens[at],span=[receiver.start,tokens[selected.end].end],receiverSpan=[receiver.start,tokens[selected.cursor].start],receiverSource=source.slice(...receiverSpan),role=selected.role;
+    if(!item.tokens.some(token=>token.type==='comment'&&token.start>=span[0]&&token.end<=span[1])){
+     if(selected.method==='clone'){
+      edits.push({span,expected:source.slice(...span),replacement:C+'json_copy('+receiverSource+')'});
+      selections.push({function:item.name,functionSpan:[item.start,item.end],span,receiver:receiver.text,receiverSpan,receiverSource,operation:'json_copy',candidateRole:role,imports:scoped.imports,oldTraitDispatchProved:false,executableAdmission:false,evaluationOrder:['receiver-once'],ownership:'shared canonical candidate; independently checked owned copy result'});
+     }else{
+      const input=freshClone(),payload=freshClone(),expanded=expandCanonicalJsonClone(receiverSource,input,payload);edits.push({span,expected:source.slice(...span),replacement:expanded.repository,languageReplacement:expanded.source,generatedPaths:expanded.paths});
+      selections.push({function:item.name,functionSpan:[item.start,item.end],span,receiver:receiver.text,receiverSpan,receiverSource,operation:'optional-json-copy',candidateRole:role,imports:scoped.imports,locals:[input,payload],oldTraitDispatchProved:false,executableAdmission:false,evaluationOrder:['receiver-once','Some-copy-once','None-without-copy'],ownership:'borrowed optional input; independently checked fresh owned payload'});
+     }
+    }at=selected.end;continue;
+   }
   }
 
   const macro=macroAt(tokens,at,'json');if(macro){
@@ -166,8 +184,12 @@ function select(source,item,scoped,modulePath){
 }
 function apply(source,edits){
  const before=transportConcreteSyntaxSource(source,{language:'Rust'});edits.sort((a,b)=>a.span[0]-b.span[0]);for(let at=0;at<edits.length;at++)if(source.slice(...edits[at].span)!==edits[at].expected||at&&edits[at-1].span[1]>edits[at].span[0])fail('overlapping or changed exact edits');
- const changed=applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:copies?'json-copy:retain-complete-source-call-and-receiver-order':'json-index:retain-complete-read-expression-and-evaluation-order',edits:[]}],repositoryRules:[{id:copies?'router-core:adopt-fixed-shared-json-copy-operation':'router-core:adopt-fixed-shared-json-index-operation',edits}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(changed.value)),mapping=[];let old=0,current=0;
- for(const edit of edits){if(old<edit.span[0]){const size=edit.span[0]-old;mapping.push({kind:'unchanged',before:[old,edit.span[0]],after:[current,current+size]});current+=size;}mapping.push({kind:'substitution',before:edit.span,after:[current,current+edit.replacement.length],expected:edit.expected,replacement:edit.replacement});old=edit.span[1];current+=edit.replacement.length;}if(old<source.length)mapping.push({kind:'unchanged',before:[old,source.length],after:[current,current+source.length-old]});let inverse=after.source;for(const row of [...mapping].reverse())if(row.kind==='substitution'){if(inverse.slice(...row.after)!==row.replacement)fail('inverse source differs');inverse=inverse.slice(0,row.after[0])+row.expected+inverse.slice(row.after[1]);}if(inverse!==source)fail('complete source inverse differs');return {before:{source,meta:before.meta,sha256:hash(source)},after:{source:after.source,meta:after.meta,sha256:hash(after.source)},edits,mapping,trace:changed.trace,executableAdmission:false};
+ const languageEdits=edits.filter(edit=>edit.languageReplacement!==undefined).map(edit=>({span:edit.span,expected:edit.expected,replacement:edit.languageReplacement})),languageId=copies?'json-copy:retain-complete-source-call-and-receiver-order':'json-index:retain-complete-read-expression-and-evaluation-order',repositoryId=copies?'router-core:adopt-fixed-shared-json-copy-operation':'router-core:adopt-fixed-shared-json-index-operation';
+ const first=applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:languageId,edits:languageEdits}],repositoryRules:[]}),intermediate=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(first.value)),deltas=[0];for(const edit of languageEdits)deltas.push(deltas.at(-1)+edit.replacement.length-(edit.span[1]-edit.span[0]));
+ const shifted=position=>{let low=0,high=languageEdits.length;while(low<high){const middle=(low+high)>>>1;if(languageEdits[middle].span[1]<=position)low=middle+1;else high=middle;}if(languageEdits[low]&&languageEdits[low].span[0]<position)fail('repository edit splits an Option clone equation');return position+deltas[low];};
+ const repositoryEdits=[];for(const edit of edits){if(edit.languageReplacement!==undefined){const start=shifted(edit.span[0]);if(intermediate.source.slice(start,start+edit.languageReplacement.length)!==edit.languageReplacement)fail('whole intermediate Option clone equation differs');for(const path of edit.generatedPaths)repositoryEdits.push({span:path.span.map(offset=>offset+start),expected:path.expected,replacement:path.replacement});}else{const span=edit.span.map(shifted);repositoryEdits.push({...edit,span,expected:intermediate.source.slice(...span)});}}
+ const changed=applyConcreteSyntaxSubstitutions(intermediate.document,{languageRules:[],repositoryRules:[{id:repositoryId,edits:repositoryEdits}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(changed.value)),mapping=[];let old=0,current=0;
+ for(const edit of edits){if(old<edit.span[0]){const size=edit.span[0]-old;mapping.push({kind:'unchanged',before:[old,edit.span[0]],after:[current,current+size]});current+=size;}mapping.push({kind:'substitution',before:edit.span,after:[current,current+edit.replacement.length],expected:edit.expected,replacement:edit.replacement});old=edit.span[1];current+=edit.replacement.length;}if(old<source.length)mapping.push({kind:'unchanged',before:[old,source.length],after:[current,current+source.length-old]});let inverse=after.source;for(const row of [...mapping].reverse())if(row.kind==='substitution'){if(inverse.slice(...row.after)!==row.replacement)fail('inverse source differs');inverse=inverse.slice(0,row.after[0])+row.expected+inverse.slice(row.after[1]);}if(inverse!==source)fail('complete source inverse differs');return {before:{source,meta:before.meta,sha256:hash(source)},after:{source:after.source,meta:after.meta,sha256:hash(after.source)},edits,intermediate:{source:intermediate.source,meta:intermediate.meta,sha256:hash(intermediate.source)},mapping,trace:[first.trace[0],changed.trace[1]],executableAdmission:false};
 }
 function run(){
  const supplied=record(options,['entry','files','compilationProfile','dependencyInputs'],4,'options'),{entry='src/lib.rs',files:input,compilationProfile:inputProfile=PRODUCTION_PROFILE,dependencyInputs:requestedDependencies}=supplied.value,captured=filesSnapshot(input),files=captured.value,profile=compilationProfile(inputProfile),dependencies=requestedDependencies===undefined?null:record(requestedDependencies,['manifest','lock'],2,'dependency inputs'),dependencyInputs=dependencies?.value;
@@ -178,8 +200,8 @@ function run(){
  const edges=originalSourceModuleItems(root[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');if(edges.length!==1||root[0].source.slice(edges[0].start,edges[0].end).trim()!=='pub mod translation_core;')fail('actual public core edge required');
  const roleFor=createLiteralTextImportRoles(graph.modules,profile,dependencyInputs),context=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs}),selfAlias=createCoreAdoptionSelfAliasSelector({modules:graph.modules,compilationProfile:profile,context}),proposals=[],skipped=[],after={...files};
  for(const file of Object.keys(files)){
-  if(file===crateModuleSourcePath(graph.modules,'src/translation_core.rs')||file.startsWith(crateModuleSourcePath(graph.modules,'src/translation_core/')))continue;const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>!module.sourceView.modulePath.length);if(origins.length!==1){skipped.push({file,reason:'one complete physical source origin required'});continue;}const edits=[],selections=[],preserved=[];
-  for(const module of modules){const scoped=scope(module,graph.modules,profile,roleFor,context,selfAlias);for(const item of originalSourceModuleItems(module)){if(item.term!=='fn')continue;const condition=itemConfiguration(item.tokens,profile);if(scoped.problems.length||module.configurationCondition!=='active'||condition.status!=='active'||condition.attributes.some(attribute=>!inert.has(attribute.name))){preserved.push({function:item.name,span:[item.start,item.end],reason:'configuration, source producer or namespace uncertainty',problems:scoped.problems});continue;}const selected=select(files[file],item,scoped,module.path);edits.push(...selected.edits);selections.push(...selected.selections);preserved.push(...selected.skipped);}}
+  if(file===crateModuleSourcePath(graph.modules,'src/translation_core.rs')||file.startsWith(crateModuleSourcePath(graph.modules,'src/translation_core/')))continue;const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>!module.sourceView.modulePath.length);if(origins.length!==1){skipped.push({file,reason:'one complete physical source origin required'});continue;}const edits=[],selections=[],preserved=[],hygieneNames=new Set(files[file].match(/[\p{ID_Start}_][\p{ID_Continue}_]*/gu)??[]);
+  for(const module of modules){const scoped=scope(module,graph.modules,profile,roleFor,context,selfAlias);for(const item of originalSourceModuleItems(module)){if(item.term!=='fn')continue;const condition=itemConfiguration(item.tokens,profile);if(scoped.problems.length||module.configurationCondition!=='active'||condition.status!=='active'||condition.attributes.some(attribute=>!inert.has(attribute.name))){preserved.push({function:item.name,span:[item.start,item.end],reason:'configuration, source producer or namespace uncertainty',problems:scoped.problems});continue;}const selected=select(files[file],item,scoped,module.path,hygieneNames);edits.push(...selected.edits);selections.push(...selected.selections);preserved.push(...selected.skipped);}}
   const proposal=apply(files[file],edits);proposals.push({file,...proposal,selections,preserved});after[file]=proposal.after.source;
  }
  const inputs=Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),producerEffects=finishCoreAdoptionProducerContext(context),result={schema:copies?'router-owned-json-copy-corpus-v1':'router-owned-json-index-corpus-v1',entry,compilationProfile:profile,dependencyInputs:dependencyInputs===undefined?null:{manifest:dependencyInputs.manifest,lock:dependencyInputs.lock},inputs,before:{...files},after,proposals,skipped,...(producerEffects?{producerEffects}:{}),moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},migrationSemantics:copies?'explicit maintainer-owned API adoption; no original Clone authority; fresh semantic/ownership/emission checks required':'explicit maintainer-owned API adoption; no original Index authority; fresh semantic/ownership/emission checks required',executableAdmission:false};verifyLiteralTextImportRoles(roleFor);dependencies?.verify();captured.verify();supplied.verify();return result;
@@ -187,3 +209,5 @@ function run(){
 
  return run();
 }
+
+import {expandCanonicalJsonClone} from './canonical-json-clone-normalization.mjs';

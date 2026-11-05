@@ -1,4 +1,3 @@
-use base64::Engine as _;
 use serde_json::Value;
 
 use super::{
@@ -466,9 +465,7 @@ pub(super) fn openai_claim(token: &SubscriptionToken, key: &str) -> Option<Strin
 
 pub(super) fn openai_claims(token: &str) -> Option<Value> {
     let payload = token.split('.').nth(1)?;
-    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(payload)
-        .ok()?;
+    let bytes = crate::translation_core::base64_url_no_pad_decode_text(payload).ok()?;
     let claims: Value = serde_json::from_slice(&bytes).ok()?;
     claims
         .get("https://api.openai.com/auth")?
@@ -610,4 +607,115 @@ fn epoch_timestamp(value: &Value) -> Option<String> {
         .as_i64()
         .and_then(|seconds| chrono::DateTime::from_timestamp(seconds, 0))
         .map(|time| time.to_rfc3339())
+}
+
+#[cfg(test)]
+mod translation_record_hygiene_tests {
+    use super::*;
+
+    #[test]
+    fn empty_usage_preserves_each_provider_and_every_independent_field() {
+        for provider in [
+            UsageProvider::Anthropic,
+            UsageProvider::OpenAi,
+            UsageProvider::ZAi,
+            UsageProvider::Lefine,
+            UsageProvider::Gemini,
+            UsageProvider::Qwen,
+        ] {
+            let value = empty_usage(provider);
+            assert_eq!(value.provider, provider);
+            assert_eq!(value.state, UsageState::Unverified);
+            assert_eq!(value.status, "unverified");
+            assert!(value.pool.is_none());
+            assert!(value.allowed.is_none());
+            assert!(value.limit_reached.is_none());
+            assert!(value.plan.is_none());
+            assert!(value.windows.is_empty());
+            assert!(value.additional_limits.is_empty());
+            assert!(value.credits.is_none());
+            assert!(value.extra_usage.is_none());
+            assert!(value.spend_control.is_none());
+            assert!(value.rate_limit_reached_type.is_none());
+            assert!(value.rate_limit_reset_credits_available.is_none());
+            assert!(value.subscription_end.is_none());
+            assert!(value.trial_end.is_none());
+            assert!(value.subscription_created.is_none());
+            assert!(value.retry_after_seconds.is_none());
+        }
+    }
+}
+
+
+// Independent boundary source for gated CI; no local Rust execution.
+#[cfg(test)]
+mod translation_scalar_boundary_tests {
+    use super::{safe_number, safe_numeric_string, safe_percentage, safe_string};
+    use serde_json::{json, Number, Value};
+
+    #[test]
+    fn absent_and_non_numeric_json_values_do_not_become_numbers() {
+        assert!(safe_number(None).is_none());
+        assert!(safe_percentage(None).is_none());
+        for value in [Value::Null, json!(false), json!(true), json!("0"), json!([]), json!({})] {
+            assert!(safe_number(Some(&value)).is_none());
+            assert!(safe_percentage(Some(&value)).is_none());
+        }
+    }
+
+    #[test]
+    fn nonnegative_finite_json_numbers_preserve_binary64_bits() {
+        for number in [0.0_f64, -0.0, 0.5, 100.0, f64::MIN_POSITIVE, f64::from_bits(1), f64::MAX] {
+            let value = Value::Number(Number::from_f64(number).unwrap());
+            assert_eq!(safe_number(Some(&value)).unwrap().to_bits(), number.to_bits());
+        }
+        for number in [-1.0_f64, -f64::MIN_POSITIVE, -f64::from_bits(1)] {
+            let value = Value::Number(Number::from_f64(number).unwrap());
+            assert!(safe_number(Some(&value)).is_none());
+        }
+    }
+
+    #[test]
+    fn percentage_bounds_include_both_zeros_and_exclude_adjacent_values() {
+        for number in [0.0_f64, -0.0, 50.0, 100.0] {
+            let value = Value::Number(Number::from_f64(number).unwrap());
+            assert_eq!(safe_percentage(Some(&value)).unwrap().to_bits(), number.to_bits());
+        }
+        for number in [-f64::from_bits(1), f64::from_bits(100.0_f64.to_bits() + 1), f64::MAX] {
+            let value = Value::Number(Number::from_f64(number).unwrap());
+            assert!(safe_percentage(Some(&value)).is_none());
+        }
+    }
+
+    #[test]
+    fn numeric_strings_preserve_text_and_the_exact_length_boundary() {
+        for text in ["0", "-0", "0.0", "1", "100", "1e2"] {
+            assert_eq!(safe_numeric_string(&json!(text)), Some(text.to_owned()));
+        }
+        let exact = "0".repeat(64);
+        assert_eq!(safe_numeric_string(&json!(exact)), Some(exact));
+        assert!(safe_numeric_string(&json!("0".repeat(65))).is_none());
+        for text in ["", " 1", "1 ", "-1", "NaN", "inf", "Infinity", "１２"] {
+            assert!(safe_numeric_string(&json!(text)).is_none());
+        }
+        for value in [Value::Null, json!(false), json!([]), json!({})] {
+            assert!(safe_numeric_string(&value).is_none());
+        }
+    }
+
+    #[test]
+    fn string_limits_count_utf8_bytes_and_reject_controls_and_at_signs() {
+        assert_eq!(safe_string(&json!("λ"), 2), Some("λ".to_owned()));
+        assert!(safe_string(&json!("λ"), 1).is_none());
+        assert_eq!(safe_string(&json!("😀"), 4), Some("😀".to_owned()));
+        assert!(safe_string(&json!("😀"), 3).is_none());
+        assert_eq!(safe_string(&json!("abcd"), 4), Some("abcd".to_owned()));
+        assert!(safe_string(&json!("abcde"), 4).is_none());
+        for text in ["", "a@b", "a\nb", "a\tb", "a\0b", "\u{0085}"] {
+            assert!(safe_string(&json!(text), 64).is_none());
+        }
+        for value in [Value::Null, json!(false), json!(3), json!([]), json!({})] {
+            assert!(safe_string(&value, 64).is_none());
+        }
+    }
 }

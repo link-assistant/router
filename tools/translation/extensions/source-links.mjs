@@ -2,7 +2,8 @@
 // a caller-supplied file checksum. Private contexts are not semantic IR nodes.
 import {createHash} from 'node:crypto';
 import {types} from 'node:util';
-import {originalFlatTokenIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,copyOriginalDigestMetadata,createOriginalDigestMetadataCopierForInternalSources} from '../original-json-intrinsics.mjs';
+import {createPrimitiveMetadataCopier as createOriginalDigestMetadataCopierForInternalSources} from '../primitive-metadata-copy.mjs';
+import {originalFlatTokenIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,copyOriginalDigestMetadata} from '../original-json-intrinsics.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {capturedRustTokenSource} from './lexical.mjs';
 
@@ -178,18 +179,19 @@ function verifyRelocatedSyntax(entry,semantic,offset) {
   if(!Number.isSafeInteger(offset)||offset<0)fail('source relocation requires an exact nonnegative offset');
   if(metadataDigest(relocatedSyntax(copyMetadata(entry),offset))!==metadataDigest(semantic))fail('semantic declaration differs from the exact source relocation');
 }
-// Keep exact object correspondence for selected owned calls and let-else. This
-// eligibility scan grants nothing and retains no parser for old declarations.
+// Keep exact correspondence for selected calls, bindings, borrows and vectors.
+// This grants no semantics; custody follows the original declaration lifetime.
 function rangeSyntaxOrigin(parser,syntax,semantic,offset){
   if(!originalDataFreezeIntrinsicsUnchanged())return null;
   let nodes=null,cells=200000;const path=[];
   const visit=(original,actual,depth=0)=>{
     if(--cells<0||depth>160||!original||typeof original!=='object'||!actual||typeof actual!=='object'||types.isProxy(original)||types.isProxy(actual))return;
+    const nativeType=Object.getOwnPropertyDescriptor(original,'kind');if(nativeType&&Object.hasOwn(nativeType,'value')&&['routerOrderedTextMap','routerStandardTextMap','routerBorrowedJsonTool'].includes(nativeType.value)){nodes??=new WeakMap();nodes.set(actual,{original,path:[...path]});}
     const kind=Object.getOwnPropertyDescriptor(original,'k');
     const readerKey=kind&&Object.hasOwn(kind,'value')?(kind.value==='routerStringOwnership'?'operation':kind.value==='routerDispatchMethod'?'method':null):null,readerField=readerKey?Object.getOwnPropertyDescriptor(original,readerKey):null;
     if(readerField&&Object.hasOwn(readerField,'value')&&readerField.value==='as_str'){nodes??=new WeakMap();nodes.set(actual,{original,path:[...path]});}
-    if(kind&&Object.hasOwn(kind,'value')&&(kind.value==='routerCoreBase64Call'||kind.value==='routerCoreF64InclusiveCall'||kind.value==='routerCoreScalarCountCall'||kind.value==='routerCoreJsonCall'||kind.value==='routerJsonMacro'||kind.value==='routerCoreJsonUpdateCall'||kind.value==='routerLetElse'||kind.value==='routerOrderedMatch')){nodes??=new WeakMap();nodes.set(actual,{original,path:[...path]});}
-    for(const key of Reflect.ownKeys(original))if(typeof key==='string'&&!['type','span','length'].includes(key)){
+    if(kind&&Object.hasOwn(kind,'value')&&(kind.value==='routerCoreBase64Call'||kind.value==='routerCoreF64InclusiveCall'||kind.value==='routerCoreScalarCountCall'||kind.value==='routerCoreJsonCall'||kind.value==='routerJsonMacro'||kind.value==='routerCoreJsonUpdateCall'||kind.value==='routerLetElse'||kind.value==='routerOrderedMatch'||kind.value==='let'||kind.value==='app'||kind.value==='routerTextReference'||kind.value==='routerCoreVector')){nodes??=new WeakMap();nodes.set(actual,{original,path:[...path]});}
+    for(const key of Reflect.ownKeys(original))if(typeof key==='string'&&!['span','length'].includes(key)){
       const left=Object.getOwnPropertyDescriptor(original,key),right=Object.getOwnPropertyDescriptor(actual,key);
       if(left&&right&&Object.hasOwn(left,'value')&&Object.hasOwn(right,'value')){path.push(key);visit(left.value,right.value,depth+1);path.pop();}
     }
@@ -291,6 +293,23 @@ export function originalParsedDeclarationEvidence(entry) {
   const evidence=linked.get(entry);if(!evidence)return null;
   if(evidence.parsedSurfaceSha256!==metadataDigestForInternalSources(entry))fail('original parsed declaration changed after source capture');
   return evidence;
+}
+// Recover complete declaration bytes only from the already retained genuine
+// parser association. Public evidence or caller-selected spans cannot create
+// it. No extra parser/source cache is installed; unknown relocations refuse.
+export function originalParsedDeclarationSource(entry) {
+  const evidence=originalParsedDeclarationEvidence(entry),association=syntaxOrigins.get(entry);
+  if(!evidence||!association)return null;
+  const origin=verifyParserTokens(association.parser);
+  if(!origin)return null;
+  const record=parsed.get(association.parser)?.find(row=>row.entry===association.syntax);
+  if(!record||record.syntaxSha256!==metadataDigest(parsedSyntax(association.syntax)))return null;
+  const displacement=association.offset-evidence.sourceOffset;
+  const start=evidence.declarationSpan.start-displacement,end=evidence.declarationSpan.end-displacement;
+  if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<start||end>origin.source.length)return null;
+  const source=origin.source.slice(start,end);
+  if(hash(source)!==evidence.declarationSha256)return null;
+  return source;
 }
 // Recover a node only through an existing genuine, unchanged parent link.
 // The private origin was retained at its approved relocation boundary; public

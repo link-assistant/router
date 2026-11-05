@@ -1,0 +1,1 @@
+Draft complete explicit local scalar type adoption through shared type grammar and original lifetime scope with whole-body refusal atomicity. Independent cases remain unrun; full translation is unfinished.

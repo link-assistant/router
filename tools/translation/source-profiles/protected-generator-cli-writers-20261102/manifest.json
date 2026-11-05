@@ -1,0 +1,35 @@
+{
+  "schema": "protected-generator-cli-writers-20261102-manifest-v1",
+  "predecessor": "861c380c4a038144907766f344e3e5645019439f",
+  "parents": [
+    {
+      "role": "whitespace",
+      "path": "tools/translation/generate-whitespace-data.mjs",
+      "before": "whitespace.before.txt",
+      "after": "whitespace.after.txt",
+      "beforeBytes": 1054,
+      "afterBytes": 1494,
+      "beforeSha256": "a4267455fc234d94ab5e12cb6f4b0512684df093ebde54c4845eea4a3221f301",
+      "afterSha256": "1cd7d4a956feee6dcee1d4dbc7ed44a64979418c3a1ce9132e27b750df2172e4",
+      "physicalOrigin": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-storage-repair-20261021/tools/translation/generate-whitespace-data.mjs",
+      "observedRevision": "861c380c4a038144907766f344e3e5645019439f",
+      "committedBlob": "040bae7a8b4a5478c6b2730dc129c5d82df13dff"
+    },
+    {
+      "role": "integer",
+      "path": "tools/translation/prepare-integer-core.mjs",
+      "before": "integer.before.txt",
+      "after": "integer.after.txt",
+      "beforeBytes": 4545,
+      "afterBytes": 4608,
+      "beforeSha256": "9b394a9e40f5d7de12182f429066b8f299031948c660f8f694f8f47903bb312a",
+      "afterSha256": "7e380386f16df72a9da24dfeec384514103eef0ce5521c88487a66891cb31a60",
+      "physicalOrigin": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-storage-repair-20261021/tools/translation/prepare-integer-core.mjs",
+      "observedRevision": "861c380c4a038144907766f344e3e5645019439f",
+      "committedBlob": "7a7dd2c4f07d9cdfcd997bcf553fb47921bb9563"
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceAuthority": false,
+  "semanticAuthority": false
+}

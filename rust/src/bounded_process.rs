@@ -73,7 +73,7 @@ impl Drop for Owned {
     }
 }
 
-fn drain(mut reader: impl Read) -> Result<Vec<u8>> {
+fn drain(mut reader: impl Read, limit: usize) -> Result<Vec<u8>> {
     let mut saved = Vec::new();
     let mut bytes = [0; 8192];
     loop {
@@ -82,7 +82,7 @@ fn drain(mut reader: impl Read) -> Result<Vec<u8>> {
             return Ok(saved);
         }
         // Keep draining after the cap, so a noisy child never blocks its pipes.
-        let remaining = (8 * 1024 * 1024_usize).saturating_sub(saved.len());
+        let remaining = limit.saturating_sub(saved.len());
         saved.extend_from_slice(&bytes[..read.min(remaining)]);
     }
 }
@@ -92,6 +92,20 @@ fn drain(mut reader: impl Read) -> Result<Vec<u8>> {
 /// Terminate the owned Unix process group or Windows job on every exit path.
 /// Retry transient executable write locks within the same execution deadline.
 pub fn output(command: &mut Command, deadline: Duration) -> Result<Output> {
+    capture(command, deadline, 8 * 1024 * 1024, false)
+}
+
+/// Capture a bounded diagnostic and reject output beyond the explicit byte cap.
+/// Every pipe is drained even after its finite retained buffer is exhausted.
+pub fn output_limited(command: &mut Command, deadline: Duration, maximum: usize) -> Result<Output> {
+    if maximum == 0 || maximum > 8 * 1024 * 1024 {
+        return Err(Error::new(ErrorKind::InvalidInput, "diagnostic byte cap must be within 1..=8 MiB"));
+    }
+    capture(command, deadline, maximum, true)
+}
+
+fn capture(command: &mut Command, deadline: Duration, maximum: usize, reject_oversize: bool) -> Result<Output> {
+    let retained = maximum + usize::from(reject_oversize);
     let end = Instant::now() + deadline;
     #[cfg(unix)]
     {
@@ -119,8 +133,8 @@ pub fn output(command: &mut Command, deadline: Duration) -> Result<Output> {
         }
     };
     let (stdout, stderr) = child.pipes();
-    let stdout = std::thread::spawn(move || drain(stdout));
-    let stderr = std::thread::spawn(move || drain(stderr));
+    let stdout = std::thread::spawn(move || drain(stdout, retained));
+    let stderr = std::thread::spawn(move || drain(stderr, retained));
     let status = loop {
         if let Some(status) = child.try_wait()? {
             break Some(status);
@@ -140,6 +154,9 @@ pub fn output(command: &mut Command, deadline: Duration) -> Result<Output> {
     let status = status.ok_or_else(|| {
         std::io::Error::new(std::io::ErrorKind::TimedOut, "diagnostic deadline exceeded")
     })?;
+    if reject_oversize && (stdout.len() > maximum || stderr.len() > maximum) {
+        return Err(Error::new(ErrorKind::InvalidData, "diagnostic output exceeds its explicit byte cap"));
+    }
     Ok(Output {
         status,
         stdout,

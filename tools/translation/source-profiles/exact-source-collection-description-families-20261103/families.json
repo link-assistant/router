@@ -1,0 +1,34 @@
+{
+  "schema": "fixed-collection-description-source-family-census-20261103-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-collection-description-families-20261103/index361.before.json.gz",
+    "encodedSha256": "4d9c88d45ae4c55c9a3db5c824aa50582e8a7bef1a253848dfa265081b3005db",
+    "sourceSha256": "0440b3521451aed8335aaf5473dd0c66c9483c838a5ccc33966d1551d8128d69",
+    "rows": 361
+  },
+  "families": [
+    {
+      "id": "exact-collection-description-adapters-20261103",
+      "manifest": "tools/translation/source-profiles/collection-description-install-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "collection-description-installed-source-20261103-v1",
+      "sha256": "d011041ad959d7d19dd78b80850d32d7c5a73ff7376ea006327f2ee48e95ed3c",
+      "rows": 7,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-collection-description-cases-20261103",
+      "manifest": "tools/translation/source-profiles/exact-source-collection-description-families-20261103/joins.json.gz",
+      "kind": "archive",
+      "schema": "collection-description-index-joins-20261103-v1",
+      "sha256": "5e175364d86aaae05d151ec2a38ad6978c0baef191f222ba1727114e89882cde",
+      "rows": 6,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 13,
+  "totalRows": 374,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

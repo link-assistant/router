@@ -1,0 +1,1 @@
+Draft paired JS/TS persistent remote client issuance, exact catalog authentication, origin-bound revocation and rollback using existing bounded HTTP and CA transport. All new verification remains unrun and full requirements remain unfinished.

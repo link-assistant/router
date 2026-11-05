@@ -1,0 +1,106 @@
+{
+  "schema": "protected-trial-vector-source-boundaries-20261103-source-proposal-v1",
+  "predecessor": "c562855f10e80ecc1c0f728633f7327e741847d8",
+  "files": [
+    {
+      "role": "facade",
+      "path": "tools/translation/protected-trial-vector-writers-20261103.mjs",
+      "physicalOrigin": {
+        "commit": "c562855f10e80ecc1c0f728633f7327e741847d8",
+        "path": "tools/translation/protected-trial-vector-writers-20261103.mjs",
+        "gitBlob": "2d19f4f00160e29bcad0db2f02db536a9091b83d"
+      },
+      "before": {
+        "path": "facade.before.txt",
+        "bytes": 2705,
+        "sha256": "5d929eb3770ae3baa8131aca1098bde804a61db43b6a223802082cf49bf19d90"
+      },
+      "after": {
+        "path": "facade.after.txt",
+        "bytes": 2795,
+        "sha256": "b11d3917e099499415fe99a596bc1e9a312fe7ebeb77bd54c98ebf57921be9cb"
+      }
+    },
+    {
+      "role": "physical-trial",
+      "path": "tools/translation/private-parser-data-physical-trial.mjs",
+      "physicalOrigin": {
+        "commit": "c562855f10e80ecc1c0f728633f7327e741847d8",
+        "path": "tools/translation/private-parser-data-physical-trial.mjs",
+        "gitBlob": "9667a29778ad0101e9991883e9a9b691d9c39d98"
+      },
+      "before": {
+        "path": "physical-trial.before.txt",
+        "bytes": 20095,
+        "sha256": "65a4c68ca2f3e95e9e49f74a54c9d6957c04890cd15767b1bd6a0784eac80c47"
+      },
+      "after": {
+        "path": "physical-trial.after.txt",
+        "bytes": 20510,
+        "sha256": "71782cf581fab5bdcd9a227a0b7fa2c5a57bcb2861d52f25f3bd5eac8ec8a321"
+      }
+    },
+    {
+      "role": "core-vector",
+      "path": "tools/translation/prepare-core-vector-sources.mjs",
+      "physicalOrigin": {
+        "commit": "c562855f10e80ecc1c0f728633f7327e741847d8",
+        "path": "tools/translation/prepare-core-vector-sources.mjs",
+        "gitBlob": "a41506f3a1fd2e951e1c21ae4637baf49112be0f"
+      },
+      "before": {
+        "path": "core-vector.before.txt",
+        "bytes": 32852,
+        "sha256": "58964a7a2730ac01190d686692027715ba23c562e6fa7875b4550a31c53628d4"
+      },
+      "after": {
+        "path": "core-vector.after.txt",
+        "bytes": 33438,
+        "sha256": "a358944246c002b0e4c27229d06646632ea0c9ed6c9ba74f0f12d41f482ca313"
+      }
+    },
+    {
+      "role": "prior-history",
+      "path": "tools/translation/protected-trial-vector-writers-20261103-history.mjs",
+      "physicalOrigin": {
+        "commit": "c562855f10e80ecc1c0f728633f7327e741847d8",
+        "path": "tools/translation/protected-trial-vector-writers-20261103-history.mjs",
+        "gitBlob": "e69ea6d335761e6ff1276f9c68e26f97153a4df1"
+      },
+      "before": {
+        "path": "prior-history.before.txt",
+        "bytes": 4251,
+        "sha256": "6da2ede497be9cdaf9f5f3946cd639912c1adeecfa06fe3c26eb71e6e9585be1"
+      },
+      "after": {
+        "path": "prior-history.after.txt",
+        "bytes": 4624,
+        "sha256": "910d734c45f7424faa37f09c802516daf677a7c1e1685e3591028628f087481e"
+      }
+    },
+    {
+      "role": "prior-restoration-case",
+      "path": "tools/translation/test/protected-trial-vector-writers-20261103-restoration.test.mjs",
+      "physicalOrigin": {
+        "commit": "c562855f10e80ecc1c0f728633f7327e741847d8",
+        "path": "tools/translation/test/protected-trial-vector-writers-20261103-restoration.test.mjs",
+        "gitBlob": "24e42b4b7d93ca24ae59ba2f96e0bae23203b518"
+      },
+      "before": {
+        "path": "prior-restoration-case.before.txt",
+        "bytes": 7958,
+        "sha256": "33fd626363eaddecf133937bd7b1f1e6e1f0cebdc29c3b1b235fa099dd28aa35"
+      },
+      "after": {
+        "path": "prior-restoration-case.after.txt",
+        "bytes": 8106,
+        "sha256": "79e8e94fa2db688215bd63ae79a37b1e4d0f0a56ea2b3046aa1cb86c76d74094"
+      }
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceInstalled": false,
+  "sourceAuthority": false,
+  "completeOriginalFunctionDenominator": "UNKNOWN",
+  "completeWriterDenominator": "UNKNOWN"
+}

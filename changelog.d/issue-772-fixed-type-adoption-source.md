@@ -1,0 +1,1 @@
+Draft reversible paired scalar type adoption in both source APIs and bulk orchestration. Preserve protected native subtrees, complete source inverses and fresh checking boundaries. All new cases remain unrun; full translation is unfinished.

@@ -1,0 +1,1 @@
+Draft shared complete scalar field/type adoption for monomorphic records, tuples, enums, unions, aliases and statics with whole-owner refusals and source inverses. Independent cases remain unrun; full translation is unfinished.

@@ -1,0 +1,1 @@
+- Draft all37 existing field contracts into the resource caller checker with fresh complete library guards, preserved local/multi-root loan rules and exact flat runtime imports; retain four full compiler CST equations and independent unrun JS/strict TS/native inverse, local-view and refusal cases. Full translation and parity remain unfinished (#759, #772).

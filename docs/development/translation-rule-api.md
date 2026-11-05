@@ -253,3 +253,76 @@ source/CST inverse and `--check` preserve all existing producer bodies.
 `originalExternalPackageDefaultSourceData` reuses the actual fresh Cargo parsing
 and activation rules. It returns no project module or namespace, test, unit or
 runtime authority; every unproved configuration atom remains unknown.
+
+The explicit synchronous conditional source operation groups complete native
+recipe inputs for one genuine source expansion. Each selected family must be
+loaded from its actual current full inputs and freshly reissued when that
+operation ends, including errors. Combined native input and selection/nesting
+bounds remain; nested scopes restore their parent and clear all references on
+all exits. No frame is passed to callbacks. No source/hash/owner/verdict/result
+cache crosses operations, and sharing source DATA grants no compiler authority.
+The implementation and independent lifecycle cases are source drafted, unrun.
+
+`withFixedWrappingSourceOperation` groups only current original wrapping source
+inputs for one synchronous compiler operation. Nested private selection frames
+share one bounded raw dataset and rejoin the manifest and all selected archives
+on every exit. Source failure invalidates the whole active root even if a nested
+caller catches it and restores files. Genuine proof identity is separately
+required by its original issuer; decoded metadata must instead reissue exact
+fresh source evidence and grants no executable authority. No source/token/item/
+verdict/result map crosses operations. Complete SourceFile recipe selection is
+native source construction DATA under the unchanged span/CST/inverse guards.
+All new lifecycle, source-history and receiving cases are source drafted, unrun.
+
+
+The additive [mixed source preparer](mixed-native-source-copy-source-draft.md)
+routes whole Rust files through Rust CST serialization/reparsing and exact
+whole-file substitutions. The original native source-copy API remains JS/TS
+only. Never parse a Rust row as a TypeScript SourceFile or infer Rust grammar,
+semantic scope, namespace or compilation from a source-copy result. Dedicated
+native scalar/base64 paths stay separate. All new mixed receiving/freshness
+checks remain UNRUN, and fatal Rust CI still follows all eight same-SHA JS gates.
+
+Nested source rules can use `composeConcreteSourceEditTemplates` to build
+nonoverlapping root edits from exact original spans and explicit retained
+source references. This DATA-only composition grants no owner/type/namespace
+authority; still apply the real serialized/reparsed CST substitution and full
+private caller checker. Use the fixed language/repository phases. Dropped or
+duplicated nested edits refuse. See [the source contract](primitive-vector-literal-bulk-source-draft.md).
+
+For selected compound primitive source operations, use the additive
+[failure-aware source APIs](primitive-source-failure-source-draft.md). Classify
+private source-input validation separately from application callbacks. Caught
+source failures invalidate every active selected scope; restoring bytes does
+not recover a cached verdict. Still execute every complete closing validator
+and preserve the primary thrown value. Keep legacy APIs available and introduce
+no across-operation source/owner/hash/verdict/result/failure cache.
+
+
+The additive [registered discovery/composition API](registered-translation-rules.md)
+keeps the original runner and its exactly two phases. It adds source inspection,
+transitive prerequisites, stable ordering, dependency/conflict/phase refusal,
+immutable original-span source plans and full CST-checked forward/inverse
+replay. Discovery, descriptions and source plans are DATA, not private semantic
+permission; actual application receiving must still reissue complete original
+source/type/owner/body checks. All new implementation/case execution is UNRUN.
+
+The [borrowed-predicate source cohort](borrowed-predicate-shared-descriptions-20261103.md)
+drafts a concrete shared-description consumer for two original forward/reverse
+adapter families and their strict declarations. Its six-parent registered rule
+proposal preserves original private guards, declaration pins and complete phase
+histories. Proposal availability is separate from qualified installation into
+the original guarded compiler graph; R04 remains OPEN and all new cases UNRUN.
+
+The [primitive collection cohort](primitive-collection-shared-descriptions-20261103.md)
+drafts descriptor-driven candidate shapes and strict declarations for all33
+existing slice and88 owned-vector operation rows. Its whole-parent proposal
+preserves both original candidate APIs, declarations and private proof
+boundaries. Source-generation scope is separate from qualified installation,
+actual receiving and production executable coverage; these remain unfinished.
+
+The [owning-text/literal cohort](vector-shared-descriptions-20261103.md) adds
+contract-driven candidate/declaration source proposals for eight owning-text
+methods and twelve literal wrappers. Original64/4096 bounds and String clone
+semantics remain distinct from primitive Copy. Batch its actual adoption with
+the preceding collection cohort; every new receiving execution remains UNRUN.

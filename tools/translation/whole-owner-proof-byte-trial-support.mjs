@@ -19,7 +19,7 @@ export function proposeWholeOwnerProofByteCanonicalTrial({root}={}){
  return {schema:'isolated-original-derive-whole-owner-proof-byte-canonical-source-v1',overlays,requiredSourceInputs,test:canonical.test,canonicalProducer:canonical,byteConsumerProducer:closure,runnerProducer:runner,originalPublicAPIUnchanged:true,originalTestUnchanged:true,productionSelected:false,trialSelected:true,performanceQualified:false,sourceAuthority:false,runtimeAuthority:false,scope:'complete coherent physical creator/resolver/output and serializer consumer closure; one qualified synchronous operation-local byte frame'};
 }
 function selected(overlays,path){
- if(!Array.isArray(overlays)||overlays.length!==PATHS.length||new Set(overlays.map(row=>row.path)).size!==PATHS.length||overlays.some(row=>!PATHS.includes(row.path)||typeof row.original!=='string'||typeof row.candidate!=='string'||row.original===row.candidate||row.candidate.length>COMPILER_SOURCE_INPUT_LIMITS.fileBytes||Buffer.byteLength(row.candidate)>COMPILER_SOURCE_INPUT_LIMITS.fileBytes))fail('exact complete codec and fifteen coherent private issuer/consumer overlays required');
+ if(!Array.isArray(overlays)||overlays.length!==PATHS.length||new Set(overlays.map(row=>row.path)).size!==PATHS.length||overlays.some(row=>!PATHS.includes(row.path)||typeof row.original!=='string'||typeof row.candidate!=='string'||row.path===CODEC&&row.original===row.candidate||row.candidate.length>COMPILER_SOURCE_INPUT_LIMITS.fileBytes||Buffer.byteLength(row.candidate)>COMPILER_SOURCE_INPUT_LIMITS.fileBytes))fail('exact complete codec and fifteen coherent private issuer/consumer overlays required');
  return overlays.find(row=>row.path===path);
 }
 export function assertWholeOwnerProofByteTrialInputs(vector,proposal){
@@ -29,8 +29,8 @@ export function assertWholeOwnerProofByteTrialInputs(vector,proposal){
 export function wholeOwnerProofByteTrialFilePacket(fact,original,trial,{overlays}={}){
  const row=selected(overlays,fact.path),limit=COMPILER_SOURCE_INPUT_LIMITS.fileBytes;
  if(!Buffer.isBuffer(original)||!Buffer.isBuffer(trial)||original.length!==fact.bytes||hash(original)!==fact.sha256||original.length>limit||trial.length>limit)fail('complete bounded original and trial source bytes required');
- if(row?!original.equals(Buffer.from(row.original))||original.equals(trial)||!trial.equals(Buffer.from(row.candidate)):!original.equals(trial))fail('only the exact complete freshly proposed physical overlays may differ');
- return {schema:'complete-original-and-whole-owner-proof-byte-trial-file-v1',path:fact.path,original:{...fact,base64:original.toString('base64')},trial:{sourceAssociation:row?'complete-candidate-source':'same-original-source',bytes:trial.length,sha256:hash(trial),...(row?{base64:trial.toString('base64')}:{})}};
+ if(row?!original.equals(Buffer.from(row.original))||(row.original!==row.candidate&&original.equals(trial))||!trial.equals(Buffer.from(row.candidate)):!original.equals(trial))fail('only the exact complete freshly proposed physical overlays may differ');
+ return {schema:'complete-original-and-whole-owner-proof-byte-trial-file-v1',path:fact.path,original:{...fact,base64:original.toString('base64')},trial:{sourceAssociation:row&&row.original!==row.candidate?'complete-candidate-source':'same-original-source',bytes:trial.length,sha256:hash(trial),...(row&&row.original!==row.candidate?{base64:trial.toString('base64')}:{})}};
 }
 export function decodeWholeOwnerProofByteTrialFilePacket(packet,fact,{overlays}={}){
  const row=selected(overlays,fact.path);if(typeof packet?.original?.base64!=='string'||packet.original.base64.length>Math.ceil(COMPILER_SOURCE_INPUT_LIMITS.fileBytes/3)*4)fail('bounded complete original source encoding required');

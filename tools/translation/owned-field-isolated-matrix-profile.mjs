@@ -6,7 +6,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createCompilationMatrix,compilationMatrixDescription} from './compilation-matrix.mjs';
-import {captureSourceCorpus} from './source-corpus.mjs';
+import {captureSourceCorpus} from './forward-output-ownership-20261101-corpus.mjs';
 const allowed=new Set(["owned-field-bulk.mjs","retained-owned-field-bulk.mjs"]);
 export async function materializeIsolatedProfile(request){
  if(!request||request.schema!=='router-isolated-profile-request-v1'||!allowed.has(request.plannerModule))throw TypeError('Unknown complete profile request');
@@ -19,7 +19,7 @@ export async function materializeIsolatedProfile(request){
  const applied=planner.applyRegenerationPlan(plan);
  if(applied.failures.length)throw Error('Original profile application refused: '+JSON.stringify(applied.failures));
 
- return {schema:'router-isolated-profile-output-v1',root,sourceSetSha256:corpus.sourceSetSha256,matrixSha256:matrix.sha256,name:member.name,directory:member.directory,plan:{schema:plan.schema,outputPrefix:plan.outputPrefix,outputRoots:plan.outputRoots,expectedBytes:plan.expectedBytes,outputs:plan.outputs,manifest:plan.manifest},semanticAuthority:false,runtimeParity:false,rustExecuted:false};
+ return {schema:'router-isolated-profile-output-v1',root,sourceSetSha256:corpus.sourceSetSha256,matrixSha256:matrix.sha256,name:member.name,directory:member.directory,materializationCustody:{banks:applied.ownershipBanks},plan:{schema:plan.schema,outputPrefix:plan.outputPrefix,outputRoots:plan.outputRoots,expectedBytes:plan.expectedBytes,outputs:plan.outputs,manifest:plan.manifest},semanticAuthority:false,runtimeParity:false,rustExecuted:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  if(process.argv.length!==2)throw Error('The fixed profile worker receives one complete JSON request on stdin');

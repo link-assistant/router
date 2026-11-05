@@ -32,8 +32,8 @@ pub const LEGACY_PLACEHOLDERS: [&crate::translation_core::Str; 3] = [
 
 /// A stand-in secret for a command that will not sign, naming why.
 #[must_use]
-pub fn placeholder(reason: &crate::translation_core::Str) -> String {
-    format!("{SENTINEL}{reason}")
+pub fn placeholder(reason: &crate::translation_core::Str) -> crate::translation_core::Text {
+    crate::translation_core::format!("{SENTINEL}{reason}")
 }
 
 /// Whether this secret is a stand-in rather than a real signing key.
@@ -78,12 +78,12 @@ pub const FILE_ENV: &crate::translation_core::Str = "TOKEN_SECRET_FILE";
 /// When the file cannot be read, is not UTF-8, or holds no secret.
 pub fn read_file(path: &std::path::Path) -> crate::translation_core::Outcome<String, String> {
     let text = std::fs::read_to_string(path)
-        .map_err(|error| format!("{FILE_ENV}={} could not be read: {error}", path.display()))?;
+        .map_err(|error| crate::translation_core::format!("{FILE_ENV}={} could not be read: {error}", path.display()))?;
     let secret = text.strip_suffix('\n').map_or(text.as_str(), |text| {
         text.strip_suffix('\r').unwrap_or(text)
     });
     if secret.is_empty() {
-        return Err(format!("{FILE_ENV}={} is empty", path.display()));
+        return Err(crate::translation_core::format!("{FILE_ENV}={} is empty", path.display()));
     }
     Ok(secret.to_string())
 }

@@ -110,7 +110,7 @@ pub async fn read_native_json(
     let value: Value = serde_json::from_slice(&decoded).map_err(|error| {
         request_error(
             StatusCode::BAD_REQUEST,
-            &format!("invalid JSON request body: {error}"),
+            &crate::translation_core::format!("invalid JSON request body: {error}"),
         )
     })?;
     Ok(ParsedBody {

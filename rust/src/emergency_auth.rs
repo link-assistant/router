@@ -296,7 +296,7 @@ pub fn synthetic_claims(token: &crate::translation_core::Str, headers: &HeaderMa
     let fingerprint = token_fingerprint(token);
     let now = now();
     TokenClaims {
-        sub: format!("{SUBJECT_PREFIX}{fingerprint}"),
+        sub: crate::translation_core::format!("{SUBJECT_PREFIX}{fingerprint}"),
         iat: now,
         exp: now.saturating_add(60),
         label: LABEL.to_string(),
@@ -307,7 +307,7 @@ pub fn synthetic_claims(token: &crate::translation_core::Str, headers: &HeaderMa
         principal_id: client.map(|_| {
             payload_field("principal_id")
                 .filter(|principal| !principal.trim().is_empty())
-                .unwrap_or_else(|| format!("emergency-{fingerprint}"))
+                .unwrap_or_else(|| crate::translation_core::format!("emergency-{fingerprint}"))
         }),
     }
 }

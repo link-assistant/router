@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {rustPackageSourcePath} from '../../repository-layout.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE as facade,ROUTER_CORE_PRIMITIVES_SOURCE as primitives,ROUTER_CORE_RANGES_SOURCE as ranges,ROUTER_CORE_BASE64_SOURCE as base64,ROUTER_CORE_JSON_COLLECTIONS_SOURCE as collections} from '../../router-core-source-data.mjs';
-import {ownedCoreRuntimeSources} from '../owned-core-source.mjs';
+import {ownedCoreRuntimeSources} from '../owned-vector-candidate-source.mjs';
 import {createOwnedVectorCandidateContext,translateOwnedVectorCandidate,parseOwnedVectorCandidateMeta,emitOwnedVectorCandidateRust,prepareOwnedVectorCandidateRuntime,evaluateOwnedVectorCandidate} from '../owned-vector-candidate.mjs';
 
 const ROOT=fileURLToPath(new URL('../../../../',import.meta.url)),JS='app/src/list.mjs',TS='typed/src/list.mts',C='crate::translation_core::';

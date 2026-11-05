@@ -1,0 +1,384 @@
+{
+  "schema": "single-source-operation-complete-evidence-v1",
+  "sourceHeadBefore": "e95b581d8d8d438f0c23b0ff80f01c17f9c68350",
+  "entries": [
+    {
+      "path": "issue772-single-row-source-proposal-v1/command.json.gz",
+      "bytes": 281,
+      "sha256": "2a85a6e9a329eb68953022333a950a208bef4de25ec37790c992156aaadad915",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-proposal-v1/command.json"
+    },
+    {
+      "path": "issue772-single-row-source-proposal-v1/receipt.json.gz",
+      "bytes": 194,
+      "sha256": "4ea471bfb54ae0fca26bfa2067a1d41521f9067b62851539e49d42b562983d3e",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-proposal-v1/receipt.json"
+    },
+    {
+      "path": "issue772-single-row-source-proposal-v1/resources.jsonl.gz",
+      "bytes": 204,
+      "sha256": "9cbebd475bca99594244fedacf0b65798e094edff43dc5cf96b1eb6d2cd8b960",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-proposal-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-single-row-source-proposal-v1/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-proposal-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-single-row-source-proposal-v1/stdout.log.gz",
+      "bytes": 147,
+      "sha256": "303f9dc75ad4afd7fb8ce8af4d8816c5dd708b9030d3f74c539e807348bab4ed",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-proposal-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-single-row-source-proposal-v1/temporary/complete-single-row-source-proposal.json.gz",
+      "bytes": 390646,
+      "sha256": "53b0b487795c50ac59ba5869838f71e3c5310a2118810d6f31a96487962d26cd",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-proposal-v1/temporary/complete-single-row-source-proposal.json.gz"
+    },
+    {
+      "path": "issue772-single-row-source-proposal-v2/command.json.gz",
+      "bytes": 281,
+      "sha256": "2a85a6e9a329eb68953022333a950a208bef4de25ec37790c992156aaadad915",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-proposal-v2/command.json"
+    },
+    {
+      "path": "issue772-single-row-source-proposal-v2/receipt.json.gz",
+      "bytes": 191,
+      "sha256": "6e3bbe631b46420136f3fa792b141bbc18cc2e9fd765ef8881cb765c194bdd04",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-proposal-v2/receipt.json"
+    },
+    {
+      "path": "issue772-single-row-source-proposal-v2/resources.jsonl.gz",
+      "bytes": 212,
+      "sha256": "d25875d228484e3ca8e605a8af039d3b75ec43005f87b3859bf4d9c961ab61d3",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-proposal-v2/resources.jsonl"
+    },
+    {
+      "path": "issue772-single-row-source-proposal-v2/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-proposal-v2/stderr.log.gz"
+    },
+    {
+      "path": "issue772-single-row-source-proposal-v2/stdout.log.gz",
+      "bytes": 147,
+      "sha256": "303f9dc75ad4afd7fb8ce8af4d8816c5dd708b9030d3f74c539e807348bab4ed",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-proposal-v2/stdout.log.gz"
+    },
+    {
+      "path": "issue772-single-row-source-proposal-v2/temporary/complete-single-row-source-proposal.json.gz",
+      "bytes": 392378,
+      "sha256": "cc28b0963bfa682a45da4b7ceff3cac0c60a0526d765e7126f358020caee5a74",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-proposal-v2/temporary/complete-single-row-source-proposal.json.gz"
+    },
+    {
+      "path": "issue772-single-row-source-review-v1/command.json.gz",
+      "bytes": 279,
+      "sha256": "8b8b68c54c4e1c17aa0fc06538511be8141e36e391f8fdce035bfadde64e0bad",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-review-v1/command.json"
+    },
+    {
+      "path": "issue772-single-row-source-review-v1/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "6c22bb4a752bc855cb3a26b5350e62a538487f6c1201705dd8b5df0084fd2cbb",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-review-v1/receipt.json"
+    },
+    {
+      "path": "issue772-single-row-source-review-v1/resources.jsonl.gz",
+      "bytes": 130,
+      "sha256": "ca26c168c534666f9fd658156480ee204d889900f1423dcb4e814d9f091a3492",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-review-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-single-row-source-review-v1/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-review-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-single-row-source-review-v1/stdout.log.gz",
+      "bytes": 170,
+      "sha256": "f90a244cfbfd4733152c763ed8b13a57960096224e10a961c6bf582ddeeba199",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-review-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-single-row-source-review-v2/command.json.gz",
+      "bytes": 279,
+      "sha256": "209b484bac8dcd9ef44d0e2e5daa7bbbe8fc127e639d05d6b3ef06395e7c6aad",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-review-v2/command.json"
+    },
+    {
+      "path": "issue772-single-row-source-review-v2/receipt.json.gz",
+      "bytes": 192,
+      "sha256": "edacc44bcdfd2df64fda5bb33f7d3895640df348fdf1d9cf83e72162fe52d542",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-review-v2/receipt.json"
+    },
+    {
+      "path": "issue772-single-row-source-review-v2/resources.jsonl.gz",
+      "bytes": 132,
+      "sha256": "86ce99a141de349726c7b4ec409e32e04d7d379e946ff02c02d51338666558f2",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-review-v2/resources.jsonl"
+    },
+    {
+      "path": "issue772-single-row-source-review-v2/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-review-v2/stderr.log.gz"
+    },
+    {
+      "path": "issue772-single-row-source-review-v2/stdout.log.gz",
+      "bytes": 170,
+      "sha256": "f90a244cfbfd4733152c763ed8b13a57960096224e10a961c6bf582ddeeba199",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-source-review-v2/stdout.log.gz"
+    },
+    {
+      "path": "issue772-single-row-provider-regeneration-v1/command.json.gz",
+      "bytes": 279,
+      "sha256": "07fb4dcab1a66e2a313cad38c1ea02e79af06f626ea85569d09814b4f810356f",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-provider-regeneration-v1/command.json"
+    },
+    {
+      "path": "issue772-single-row-provider-regeneration-v1/receipt.json.gz",
+      "bytes": 178,
+      "sha256": "dfd949b08bb3f7186953704bc7a7f5ca22cc07ade1129d71ad47f7e82aa00981",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-provider-regeneration-v1/receipt.json"
+    },
+    {
+      "path": "issue772-single-row-provider-regeneration-v1/resources.jsonl.gz",
+      "bytes": 98,
+      "sha256": "60d29b79519217605389bcc7b519ef36ede03e775b79a5898c8cf9eadf28d5d8",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-provider-regeneration-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-single-row-provider-regeneration-v1/stderr.log.gz",
+      "bytes": 513,
+      "sha256": "388bece910aa15e6d75ee702d705dc23b8eb8699b7b19730d232dc37373824b2",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-provider-regeneration-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-single-row-provider-regeneration-v1/stdout.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-provider-regeneration-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-single-row-provider-regeneration-v2/command.json.gz",
+      "bytes": 279,
+      "sha256": "07fb4dcab1a66e2a313cad38c1ea02e79af06f626ea85569d09814b4f810356f",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-provider-regeneration-v2/command.json"
+    },
+    {
+      "path": "issue772-single-row-provider-regeneration-v2/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "ffd93e013025eff84c180da30c89871afd407defceb1ecd3df56883ed58edef6",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-provider-regeneration-v2/receipt.json"
+    },
+    {
+      "path": "issue772-single-row-provider-regeneration-v2/resources.jsonl.gz",
+      "bytes": 605,
+      "sha256": "d1634e920c694a3d0c46e96e7f8c10ebe4bdcb945cc57f24bb4948a9a1fda274",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-provider-regeneration-v2/resources.jsonl"
+    },
+    {
+      "path": "issue772-single-row-provider-regeneration-v2/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-provider-regeneration-v2/stderr.log.gz"
+    },
+    {
+      "path": "issue772-single-row-provider-regeneration-v2/stdout.log.gz",
+      "bytes": 214,
+      "sha256": "64a989b16505a3d4d6dc248290c4043dd55469a8e2b9443b7d6f6861d43b08e7",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-provider-regeneration-v2/stdout.log.gz"
+    },
+    {
+      "path": "issue772-single-row-provider-regeneration-v2/temporary/complete-current-provider-proposal.json.gz",
+      "bytes": 975447,
+      "sha256": "d60b559e773873964ade319d63637c87792268164b90b8f64213a11b571c65eb",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-provider-regeneration-v2/temporary/complete-current-provider-proposal.json.gz"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Node-v1/command.json.gz",
+      "bytes": 383,
+      "sha256": "d1c14c0579ee8e4be86b923815b2d5f9a78184904db7e01c2afd4c4c575e8d53",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Node-v1/command.json"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Node-v1/receipt.json.gz",
+      "bytes": 193,
+      "sha256": "ca7b38f818f6c98faaa9744ca7406fad0073192fdfbe9092d8d67039b2e1b4e3",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Node-v1/receipt.json"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Node-v1/resources.jsonl.gz",
+      "bytes": 19954,
+      "sha256": "0bf91f01659b05d3fd1d60038cb90efa5f8a9b1e4c07d4ff5405eedc1877a59e",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Node-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Node-v1/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Node-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Node-v1/stdout.log.gz",
+      "bytes": 2217,
+      "sha256": "a94adffd2dc4e71eb6edcbb2a3299b67bfda9fd1b15fc1793f1cbfd51015bbdd",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Node-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Node-v1/temporary/complete-Node-deadlines/case-deadlines.json.gz",
+      "bytes": 13702,
+      "sha256": "987d911c6d50dc2e0babf97ed4c9d982dbb43ac71fde3be67a5a090cd5141b5c",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Node-v1/temporary/complete-Node-deadlines/case-deadlines.json"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Node-v1/temporary/complete-Node-deadlines/command.json.gz",
+      "bytes": 20692,
+      "sha256": "cac67eb24ccb1d96a8f106b6c42f948852952b8aa38f9b688ac5fe426bf92604",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Node-v1/temporary/complete-Node-deadlines/command.json"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Node-v1/temporary/complete-Node-deadlines/request.json.gz",
+      "bytes": 368,
+      "sha256": "bd8f455f2dd3968ccba347a21a2a0a5e245c2c73876dbc287112f25c67997457",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Node-v1/temporary/complete-Node-deadlines/request.json"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Node-v1/temporary/complete-Node-deadlines/stderr.raw.log.gz",
+      "bytes": 20,
+      "sha256": "abfbb86f9f5ddfbd9fc1a72c43ab384702ce8bae86b60f3324748485e235e61e",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Node-v1/temporary/complete-Node-deadlines/stderr.raw.log"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Node-v1/temporary/complete-Node-deadlines/stdout.raw.tap.gz",
+      "bytes": 1935,
+      "sha256": "17f480a076bb735c1190fe35852ddfd5a0a5778b5c365b489f821a81e0d00f53",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Node-v1/temporary/complete-Node-deadlines/stdout.raw.tap"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/command.json.gz",
+      "bytes": 452,
+      "sha256": "1de17b8e210594f89c0375dee9dc20121dad2ab18e2524515524534e52cfaa6c",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/command.json"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/receipt.json.gz",
+      "bytes": 180,
+      "sha256": "8e0c68a30c7d3ad4b244534faf54c5ac95f816b18b3d6097588ac64f032b4e16",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/receipt.json"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/resources.jsonl.gz",
+      "bytes": 25335,
+      "sha256": "2371ac52766a5cd9698104836ffeea18c351f679c247b65c9cc06c31d146dd11",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/resources.jsonl"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/stderr.log.gz",
+      "bytes": 20,
+      "sha256": "458c5a203299dd326aa747fee1bbc7709bfbd560507d1603459d9f7d9eb6be76",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/stderr.log.gz"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/stdout.log.gz",
+      "bytes": 460,
+      "sha256": "8585433f0777fc111b50e244b22d4a18e00185e20d6cc352451f9cc011e03785",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/stdout.log.gz"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/0/request.json.gz",
+      "bytes": 324,
+      "sha256": "50ec03083f9275d09762903410e9d408714d84a87b373305b5362643b132b534",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/0/request.json"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/0/stderr.raw.log.gz",
+      "bytes": 308,
+      "sha256": "5eb582c22a6844db17b4454f0cad612d0bae755b18c5cd98397bf4f0ac56417b",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/0/stderr.raw.log"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/1/request.json.gz",
+      "bytes": 333,
+      "sha256": "758628783080feff4ac8430226e75b04630b2bdc588ce7ae7e06f1c306e35ab3",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/1/request.json"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/1/stderr.raw.log.gz",
+      "bytes": 511,
+      "sha256": "9c497d672277c58c6f74d102fc5c5ba979e395656c88cd7f48a3911292a18f8b",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/1/stderr.raw.log"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/2/request.json.gz",
+      "bytes": 331,
+      "sha256": "fd94a8acb34994df3f6b9fda0172c40e17bbc1dd0b27fb8cc87e79d6fa059d9a",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/2/request.json"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/2/stderr.raw.log.gz",
+      "bytes": 580,
+      "sha256": "1698326f75656948e1252e7b7b35cca574c44f3c12b2a030c3697dd2ddaa84cf",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/2/stderr.raw.log"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/3/request.json.gz",
+      "bytes": 323,
+      "sha256": "3c6c9fef09e04a022eaed9c55613aefe3a0d574a329f06cc09d2894b634c1191",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/3/request.json"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/3/stderr.raw.log.gz",
+      "bytes": 359,
+      "sha256": "68bd866cbbf8ef4182604a9f9d75dd4b97e880a6752487908bbdc488fcf39bd9",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/3/stderr.raw.log"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/4/request.json.gz",
+      "bytes": 327,
+      "sha256": "2b38ef46f47c82a400c686802cd6b9d05d649d61c894b46ae76a154112571930",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/4/request.json"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/4/stderr.raw.log.gz",
+      "bytes": 305,
+      "sha256": "d549144a33891e15505084792270bcf36aec3ffd26ab3f647afc292a71d7c46c",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/4/stderr.raw.log"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/5/request.json.gz",
+      "bytes": 336,
+      "sha256": "a7f8ddf5c9a58d99c23a342c9dfb15ea68ac921e94722f70375ed7f6b0720e03",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/5/request.json"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/5/stderr.raw.log.gz",
+      "bytes": 562,
+      "sha256": "348c77f9240fa5b65ea7b31a0e37e9ec0e8ce60ee2ace107aff55e42e87a5250",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/5/stderr.raw.log"
+    },
+    {
+      "path": "issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/receipt.json.gz",
+      "bytes": 372,
+      "sha256": "a3e99adbe990d866bd5b5609f19daed23b20cae0e5299b3adfd8b80a17ea1b44",
+      "originalPath": "/private/tmp/router-layout-check-issue772-single-row-complete-controls-whole-Bun-v1/temporary/complete-focused-Bun-source-call-joins/receipt.json"
+    }
+  ],
+  "nodeWholeCases": 28,
+  "nodeDeadlineBreaches": 0,
+  "nodeComparisonMs": 59026.914833,
+  "nodeRepeatedPlansMs": 58060.4445,
+  "bunWholeFunctionalCases": 28,
+  "bunDeadlineBreaches": 1,
+  "bunRepeatedPlansMs": 78029.8,
+  "originalLimitsChanged": false,
+  "largeSourceOriginalFallbackPassedBoth": true,
+  "runtimeParity": false,
+  "wholeGate": false,
+  "rustExecuted": false
+}

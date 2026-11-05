@@ -1,4 +1,4 @@
-// Generated draft from rust/src/log_analysis.rs; sha256=e8bfaba0d8f359804b06e2b1eeaf874f29d14e66f5fb2bf7abaac920c2658bfe
+// Generated draft from rust/src/log_analysis.rs; sha256=630c72676eb2fa15b458ee2f6938301a31fc5fbd7cb21272355bc8ac0d3ae129
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../../runtime/type-layout-runtime.mjs";
 
@@ -158,4 +158,4 @@ function rp_6c6f675f616e616c797369732e726571756573745f61736b735f666f725f615f7374
 }
 
 export const translated = { ["Exchange"]: ml_make_Exchange_Exchange, ["Anomaly"]: ml_make_Anomaly_Anomaly, ["stored_bytes"]: rp_6c6f675f616e616c797369732e73746f7265645f6279746573, ["request_asks_for_a_stream"]: rp_6c6f675f616e616c797369732e726571756573745f61736b735f666f725f615f73747265616d };
-export const provenance = {"sourcePath":"rust/src/log_analysis.rs","sourceSha256":"e8bfaba0d8f359804b06e2b1eeaf874f29d14e66f5fb2bf7abaac920c2658bfe","executable":4,"executableFunctions":2,"executableConstants":0,"executableTypes":2,"executableConstructors":2,"carried":23,"preserved":28,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/log_analysis.rs","sourceSha256":"630c72676eb2fa15b458ee2f6938301a31fc5fbd7cb21272355bc8ac0d3ae129","executable":4,"executableFunctions":2,"executableConstants":0,"executableTypes":2,"executableConstructors":2,"carried":23,"preserved":28,"runtimeParity":false};

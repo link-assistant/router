@@ -35,13 +35,13 @@ fn parse_bindings(raw: &crate::translation_core::Str) -> crate::translation_core
         .map(|part| {
             let (listen, port) = part
                 .rsplit_once(',')
-                .ok_or_else(|| format!("invalid relay listener {part:?}; expected ADDR,PORT"))?;
+                .ok_or_else(|| crate::translation_core::format!("invalid relay listener {part:?}; expected ADDR,PORT"))?;
             listen
                 .parse::<std::net::SocketAddr>()
-                .map_err(|_| format!("invalid relay address {listen:?}"))?;
+                .map_err(|_| crate::translation_core::format!("invalid relay address {listen:?}"))?;
             let backend_port = port
                 .parse::<u16>()
-                .map_err(|_| format!("invalid relay backend port {port:?}"))?;
+                .map_err(|_| crate::translation_core::format!("invalid relay backend port {port:?}"))?;
             Ok(Binding {
                 listen: listen.to_string(),
                 backend_port,
@@ -64,10 +64,10 @@ fn valid_backend(value: &crate::translation_core::Str) -> bool {
 
 fn read_backend(state: &Path) -> crate::translation_core::Outcome<String, String> {
     let backend = std::fs::read_to_string(state)
-        .map_err(|error| format!("could not read relay state {}: {error}", state.display()))?;
+        .map_err(|error| crate::translation_core::format!("could not read relay state {}: {error}", state.display()))?;
     let backend = backend.trim();
     if !valid_backend(backend) {
-        return Err(format!(
+        return Err(crate::translation_core::format!(
             "relay state {} contains an invalid backend name",
             state.display()
         ));
@@ -237,7 +237,7 @@ pub async fn run_from_env() -> crate::translation_core::Outcome<crate::translati
     // Fail before binding a public port if the state is missing or malformed.
     read_backend(&state)?;
     let raw = crate::operation_context::var(LISTENERS_ENV)
-        .map_err(|_| format!("{LISTENERS_ENV} is required in deployment relay mode"))?;
+        .map_err(|_| crate::translation_core::format!("{LISTENERS_ENV} is required in deployment relay mode"))?;
     let bindings = parse_bindings(&raw)?;
     let connections = Arc::new(Mutex::new(Connections::new(&state)?));
     let servers = bindings

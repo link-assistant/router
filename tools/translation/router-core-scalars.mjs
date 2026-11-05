@@ -39,7 +39,7 @@ export const ROUTER_CORE_ASCII_CONTRACT=freeze({
     'Non-ASCII alphabet characters do not admit non-ASCII input.',
     'Native iterators and Pattern dispatch remain intentionally untranslated.'],
 });
-const calls=new WeakMap(),checkedCalls=new WeakMap();
+const calls=new WeakMap(),checkedCalls=new WeakMap(),issuedScalarCalls=new WeakMap();
 const fail=()=>{throw new TypeError('Router scalar counting requires the actual owned primitives leaf and qualified source binding');};
 function sourceContract(run,location){try{return run();}catch(error){if(!(error instanceof TypeError))throw error;throw unsupported('Router compatibility scalar count',error.message,location);}}
 function originalLeaf(state){
@@ -67,7 +67,7 @@ export function parseRouterCoreScalarCall(parser,path){
   const last=c.expect(')','Router scalar count'),span={start:first.start,end:last.end};
   const end=c.index;
   sourceContract(()=>{requireRouterCoreFacadeCurrent(parser,facade);if(originalLeaf(state)!==leaf||leaf.sourceView!==view||matchesParserFacts(parser)!==state||parser.cursor!==c||c.tokens!==tokens||c.index!==end)fail();},span);
-  const node={k:'routerCoreScalarCountCall',args,span};calls.set(node,{parser,syntax:copyMetadata(node),trace:stage.trace,contract:ascii?ROUTER_CORE_ASCII_CONTRACT:ROUTER_CORE_SCALAR_CONTRACT});return node;
+  const node={k:'routerCoreScalarCountCall',args,span};calls.set(node,{parser,facade,syntax:copyMetadata(node),trace:stage.trace,contract:ascii?ROUTER_CORE_ASCII_CONTRACT:ROUTER_CORE_SCALAR_CONTRACT});return node;
 }
 // Compare complete mutable node data after the last source-link hash. Keys
 // are preflighted before descriptors; proxies/accessors never supply syntax.
@@ -100,7 +100,7 @@ export function captureRouterCoreScalarCalls(checker,surface){
     if(!originalParsedDeclarationEvidence(entry))return;
     for(const node of candidates){
       const origin=originalParsedSyntaxNode(entry,node),receipt=origin&&calls.get(origin.original);
-      if(origin?.actual===node&&receipt?.parser===origin.parser&&sameSyntax(origin.original,receipt.syntax)&&sameSyntax(node,origin.relocated))nodes.set(node,{receipt,syntax:copyMetadata(node)});
+      if(origin?.actual===node&&receipt?.parser===origin.parser&&sameSyntax(origin.original,receipt.syntax)&&sameSyntax(node,origin.relocated))nodes.set(node,{receipt,owner:entry,syntax:copyMetadata(node)});
     }
   };
   const items=list=>{for(const entry of list)if(entry.k==='module')items(entry.items);else if(entry.k==='fn')declaration(entry);};items(surface.items);checkedCalls.set(checker,nodes);
@@ -117,5 +117,13 @@ export function checkRouterCoreScalarCall(checker,node,env,path,expected){
       requireOriginalPrimitiveTryFromChecker(checker);if(!sameSyntax(node,capture.syntax))throw typeError('scalar-count source call changed during operand checking',node.span);return call;
     }}]},
     {phase:'repository',rules:[{id:'router-core:retain-scalar-count-boundary',apply:call=>({...call,compatibilityCore:{id:receipt.contract.profile,symbol:receipt.contract.rustPath.join('::'),sourceSha256:ROUTER_CORE_PRIMITIVES_SHA256,libraryImplementation:'untranslated-owned-rust-library',sourceTrace:receipt.trace}})}]},
-  ]);return pipeline.run(null).value;
+  ]);const checked=pipeline.run(null).value,ownerName=typeof capture.owner.fullName==='string'?capture.owner.fullName:[...path,capture.owner.name].join('.');issuedScalarCalls.set(checked.compatibilityCore,{checker,capture,original:node,ownerName,ownerSpan:copyMetadata(capture.owner.span),snapshot:copyMetadata(checked)});return checked;
+}
+
+// A fresh actual source checker issues this receipt, never a copied boundary.
+// Its lifetime is that checker's original parser/program operation.
+export function isGenuineRouterCoreScalarCall(checker,node,entry){
+ if(!node||typeof node!=='object'||types.isProxy(node)||!entry||typeof entry!=='object'||types.isProxy(entry))return false;const boundary=Object.getOwnPropertyDescriptor(node,'compatibilityCore');if(!boundary||!Object.hasOwn(boundary,'value'))return false;const proof=issuedScalarCalls.get(boundary.value);if(!proof||proof.checker!==checker)return false;requireOriginalPrimitiveTryFromChecker(checker);if(checker.items.get(entry.fullName)!==entry||entry.fullName!==proof.ownerName||!sameSyntax(entry.span,proof.ownerSpan)||checkedCalls.get(checker)?.get(proof.original)!==proof.capture||!originalParsedDeclarationEvidence(proof.capture.owner))return false;
+ requireOriginalPrimitiveTryFromChecker(checker);const {receipt}=proof.capture;if(!sameSyntax(proof.original,proof.capture.syntax)||!sameSyntax(node,proof.snapshot)||node.id!==receipt.contract.id||receipt.contract.pure!==true)return false;
+ requireRouterCoreFacadeCurrent(receipt.parser,receipt.facade);const state=matchesParserFacts(receipt.parser);originalLeaf(state);requireOriginalPrimitiveTryFromChecker(checker);return sameSyntax(proof.original,proof.capture.syntax)&&sameSyntax(node,proof.snapshot)&&checker.items.get(entry.fullName)===entry;
 }

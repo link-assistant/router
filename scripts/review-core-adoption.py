@@ -2,6 +2,12 @@
 """Bound complete independent json-readers source/data review; never install source."""
 from pathlib import Path
 import argparse,hashlib,json,os,re,shutil,signal,stat,subprocess,sys,tempfile,time
+sys.dont_write_bytecode=True
+def _operational_source_review():
+ directory=str(Path(__file__).resolve().parents[1]/'tools/translation')
+ if directory not in sys.path:sys.path.insert(0,directory)
+ import core_adoption_review as source_review
+ return source_review
 
 CAP=180;RSS=1024**3;LIMIT=384*1024**2;ENTRY_LIMIT=30000
 REVIEWER=None
@@ -17,16 +23,18 @@ def regular(path,maximum=128*1024**2):
  return raw
 
 def allocation(directory):
- pending=[directory];logical=observed=count=0
+ # Every call creates a fresh native directory scan and freshly stats each node.
+ pending=[(directory,None)];count=logical=observed=0
  while pending:
-  path=pending.pop();count+=1
+  path,entry=pending.pop();count+=1
   if count>ENTRY_LIMIT:fail('complete observed entry bound')
-  try:s=path.lstat()
+  try:s=path.lstat()if entry is None else entry.stat(follow_symlinks=False)
   except FileNotFoundError:
    if path==directory:raise
    continue
   if stat.S_ISDIR(s.st_mode):
-   try:pending.extend(path/name for name in os.listdir(path))
+   try:
+    with os.scandir(path)as entries:pending.extend((entry.path,entry)for entry in entries)
    except FileNotFoundError:
     if path==directory:raise
   elif not(stat.S_ISREG(s.st_mode)or stat.S_ISLNK(s.st_mode)):fail('special evidence entry')
@@ -55,7 +63,7 @@ def receipt(row):
 
 def git(*args):return subprocess.check_output(['git','-C',str(ROOT),*args])
 def tracked():
- paths=[p for p in git('ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock','tools/translation','scripts').decode().split('\0')if p]
+ paths=[p for p in git('ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock','**/Cargo.toml','**/Cargo.lock','tools/translation','scripts').decode().split('\0')if p]
  return sorted(p for p in paths if p.endswith('.rs')or not p.startswith(('tools/translation/meta/','tools/translation/projects/','tools/translation/js-to-rust/generated/')))
 
 def source_join():
@@ -70,8 +78,8 @@ def source_join():
   if len(errors)<12:errors.append(message[:500])
  expected_git=tracked();expected_non_ts=[row['path']for row in INPUTS if not row['path'].startswith(TS_PREFIX)]
  if expected_git!=expected_non_ts:problem('complete tracked compiler/Rust/Cargo census changed')
- actual_rust={p for p in git('ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock').decode().split('\0')if p}
- if actual_rust!={p for p in expected_non_ts if p.endswith('.rs')or p in ['Cargo.toml','Cargo.lock']}:problem('all tracked Rust/Cargo scope changed')
+ actual_rust={p for p in git('ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock','**/Cargo.toml','**/Cargo.lock').decode().split('\0')if p}
+ if actual_rust!={p for p in expected_non_ts if _operational_source_review().is_rust_cargo_path(p)}:problem('all tracked Rust/Cargo scope changed')
  child=subprocess.Popen(['git','-C',str(ROOT),'cat-file','--batch'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
  try:
   for row in INPUTS:

@@ -1,0 +1,9 @@
+// Acquisition hint DATA tests, never compiler permission. UNRUN.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {resolve} from 'node:path';
+import {tmpdir} from 'node:os';
+import {missingOpaqueReceivingResource as hint} from '../opaque-receiving-resource-failure-20261101.mjs';
+const root=resolve(tmpdir(),'receiving-source-root'),path='tools/translation/source-profiles/family/complete.json.gz';
+test('only an actual source-acquisition ENOENT under the fixed profile prefix yields a hint',()=>{const result=hint(Object.assign(Error('missing'),{code:'ENOENT',path:resolve(root,path)}),{root,acquiring:true});assert.equal(result.path,path);assert.equal(result.sourceAuthority,false);assert.equal(result.semanticAuthority,false);for(const error of [Object.assign(Error('permission'),{code:'EACCES',path:resolve(root,path)}),Object.assign(Error('outside'),{code:'ENOENT',path:resolve(root,'../outside')}),Object.assign(Error('application'),{code:'ENOENT',path:resolve(root,'rust/src/lib.rs')})])assert.equal(hint(error,{root,acquiring:true}),null);assert.equal(hint({code:'ENOENT',path},{root,acquiring:false}),null);});
+test('bounded cause chains retain original hints while proxies getters and cycles refuse',()=>{const cause={code:'ENOENT',path},wrapped=Error('outer',{cause});assert.equal(hint(wrapped,{root,acquiring:true}).path,path);const getter={get code(){throw Error('getter must not execute');},get path(){throw Error('getter must not execute');}};assert.equal(hint(getter,{root,acquiring:true}),null);assert.equal(hint(new Proxy(cause,{get(){throw Error('proxy must not execute');}}),{root,acquiring:true}),null);const cycle={};cycle.cause=cycle;assert.equal(hint(cycle,{root,acquiring:true}),null);let deep=cause;for(let at=0;at<8;at++)deep={cause:deep};assert.equal(hint(deep,{root,acquiring:true}),null);});

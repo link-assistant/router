@@ -37,7 +37,7 @@ type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$"
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
-// Generated draft from rust/src/deploy_remote.rs; sha256=073bdccb6029ae3d1fe4f86576877ac33ab568479710c2b22af0e019ab1242c4
+// Generated draft from rust/src/deploy_remote.rs; sha256=24df45bd91c16e3bd1b220793890ba413b68a18b7ef7be87be71d4d9cefa1826
 // Carried constructs are data, never runtime parity evidence.
 function rp_6465706c6f795f72656d6f74652e4147454e545f4c454153455f45584954(): bigint {
   return 73n;
@@ -91,5 +91,18 @@ const serde_json = {
   },
 };
 
-export const translated: { "AGENT_LEASE_EXIT": bigint; "TRANSPORT_EXIT": bigint; "LEASE_EXIT": bigint; "RemoteMode": Readonly<{ "Deploy": () => Readonly<{ readonly "$": "Deploy" }> | Readonly<{ readonly "$": "Status" }> | Readonly<{ readonly "$": "Down" }>; "Status": () => Readonly<{ readonly "$": "Deploy" }> | Readonly<{ readonly "$": "Status" }> | Readonly<{ readonly "$": "Down" }>; "Down": () => Readonly<{ readonly "$": "Deploy" }> | Readonly<{ readonly "$": "Status" }> | Readonly<{ readonly "$": "Down" }> }> } = { ["AGENT_LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4147454e545f4c454153455f45584954(), ["TRANSPORT_EXIT"]: rp_6465706c6f795f72656d6f74652e5452414e53504f52545f45584954(), ["LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4c454153455f45584954(), ["RemoteMode"]: Object.freeze({ ["Deploy"]: ml_make_RemoteMode_Deploy, ["Status"]: ml_make_RemoteMode_Status, ["Down"]: ml_make_RemoteMode_Down }) };
-export const provenance = {"sourcePath":"rust/src/deploy_remote.rs","sourceSha256":"073bdccb6029ae3d1fe4f86576877ac33ab568479710c2b22af0e019ab1242c4","executable":4,"executableFunctions":0,"executableConstants":3,"executableTypes":1,"executableConstructors":3,"carried":27,"preserved":32,"runtimeParity":false};
+function rp_6465706c6f795f72656d6f74652e7368656c6c5f71756f7465(value: string): string {
+  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
+  return (() => {
+    const ml_fmt_4 = (() => {
+      const ml_text_1 = value;
+      const ml_text_2 = "'";
+      const ml_text_3 = "'\"'\"'";
+      return (ml_text_2.length===0?(ml_text_1.length===0?ml_text_3:ml_text_3+Array.from(ml_text_1).join(ml_text_3)+ml_text_3):ml_text_1.split(ml_text_2).join(ml_text_3));
+    })();
+    return (("'" + ml_fmt_4) + "'");
+  })();
+}
+
+export const translated: { "AGENT_LEASE_EXIT": bigint; "TRANSPORT_EXIT": bigint; "LEASE_EXIT": bigint; "RemoteMode": Readonly<{ "Deploy": () => Readonly<{ readonly "$": "Deploy" }> | Readonly<{ readonly "$": "Status" }> | Readonly<{ readonly "$": "Down" }>; "Status": () => Readonly<{ readonly "$": "Deploy" }> | Readonly<{ readonly "$": "Status" }> | Readonly<{ readonly "$": "Down" }>; "Down": () => Readonly<{ readonly "$": "Deploy" }> | Readonly<{ readonly "$": "Status" }> | Readonly<{ readonly "$": "Down" }> }>; "shell_quote": (value: string) => string } = { ["AGENT_LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4147454e545f4c454153455f45584954(), ["TRANSPORT_EXIT"]: rp_6465706c6f795f72656d6f74652e5452414e53504f52545f45584954(), ["LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4c454153455f45584954(), ["RemoteMode"]: Object.freeze({ ["Deploy"]: ml_make_RemoteMode_Deploy, ["Status"]: ml_make_RemoteMode_Status, ["Down"]: ml_make_RemoteMode_Down }), ["shell_quote"]: rp_6465706c6f795f72656d6f74652e7368656c6c5f71756f7465 };
+export const provenance = {"sourcePath":"rust/src/deploy_remote.rs","sourceSha256":"24df45bd91c16e3bd1b220793890ba413b68a18b7ef7be87be71d4d9cefa1826","executable":5,"executableFunctions":1,"executableConstants":3,"executableTypes":1,"executableConstructors":3,"carried":26,"preserved":32,"runtimeParity":false};

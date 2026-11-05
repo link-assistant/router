@@ -15,7 +15,7 @@ export const ownedBase64RustTypes=Object.freeze({'bytes-ref':"&'a [u8]",'text-ow
 export const ownedBase64TypeScriptTypes=Object.freeze({'bytes-ref':'readonly bigint[]','text-owned':'string','base64-result':'Base64Result','base64-error-ref':'Base64Error'});
 /** Source-only syntactic DATA: actual symbol/endpoint selection stays private. */
 export function ownedBase64ReadonlyOctets(ts,type){
- return ts.isTypeOperatorNode(type)&&type.operator===ts.SyntaxKind.ReadonlyKeyword&&ts.isArrayTypeNode(type.type)&&type.type.elementType.kind===ts.SyntaxKind.BigIntKeyword;
+ const unwrap=node=>{let depth=0;while(ts.isParenthesizedTypeNode(node)){if(++depth>64)fail('written byte type grouping bound');node=node.type;}return node;};type=unwrap(type);if(!ts.isTypeOperatorNode(type)||type.operator!==ts.SyntaxKind.ReadonlyKeyword)return false;const array=unwrap(type.type);return ts.isArrayTypeNode(array)&&unwrap(array.elementType).kind===ts.SyntaxKind.BigIntKeyword;
 }
 /** One already-bound original operand, never a caller-supplied Rust program. */
 export function ownedBase64RustCall(name,argument){
@@ -25,3 +25,5 @@ export function ownedBase64RustCall(name,argument){
  const value=op.copy==='to_vec'?argument+'.to_vec()':op.copy==='to_owned'?argument+'.to_owned()':op.copy==='array32'?'::core::convert::TryInto::<[u8; 32]>::try_into('+argument+').expect("owned reverse base64 array32 length")':argument;
  return '{ '+bound+'crate::translation_core::'+op.rust+'('+value+') }';
 }
+
+export {readOwnedBase64ResultImportType,consumeOwnedBase64InputPrelude,ownedBase64InputPrelude,ownedBase64InputEnvironment,hasOwnedBase64Input} from './owned-base64-inputs.mjs';

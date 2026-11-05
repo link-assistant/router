@@ -1,0 +1,42 @@
+{
+  "schema": "json-scalar-readers-immutable-parent-delta-v1",
+  "archive": "delta-sources.json.gz",
+  "sha256": "8a6de0143294b737f6e52f8ec01b513379810d32366a66eebf4a9a92352d8388",
+  "rawBytes": 723149,
+  "packedBytes": 118943,
+  "parent": {
+    "path": "tools/translation/source-profiles/owned-json-output-20261101/delta-sources.json.gz",
+    "sha256": "86da3f00604825cfde50162ad3ab8d53c65c37189863ff818925428caf3fff1a",
+    "versions": 148
+  },
+  "newVersions": 22,
+  "virtualRows": 7,
+  "additions": 12,
+  "sourceInstalled": false,
+  "runtimeExecuted": false,
+  "nativeOracleScheduled": false,
+  "checkpointPaths": [
+    "tools/translation/json-scalar-readers-20261101-adoption.mjs",
+    "tools/translation/json-scalar-readers-20261101-closure.mjs",
+    "tools/translation/json-scalar-readers-20261101-contracts.mjs",
+    "tools/translation/json-scalar-readers-20261101-corpus.mjs",
+    "tools/translation/json-scalar-readers-20261101-flow-source.mjs",
+    "tools/translation/json-scalar-readers-20261101-inverse.mjs",
+    "tools/translation/json-scalar-readers-20261101-native-source.mjs",
+    "tools/translation/json-scalar-readers-20261101-production.mjs",
+    "tools/translation/json-scalar-readers-20261101-profile.mjs",
+    "tools/translation/json-scalar-readers-20261101-project.mjs",
+    "tools/translation/json-scalar-readers-20261101-runtime.d.mts",
+    "tools/translation/json-scalar-readers-20261101-runtime.mjs",
+    "tools/translation/test/json-scalar-readers-20261101-corpus-receiving.mjs",
+    "tools/translation/test/json-scalar-readers-20261101-receiving.mjs",
+    "tools/translation/test/json-scalar-readers-20261101-targets.mjs",
+    "tools/translation/test/json-scalar-readers-20261101.test.mjs",
+    "tools/translation/source-profiles/json-scalar-readers-20261101/delta-sources.json.gz",
+    "tools/translation/source-profiles/json-scalar-readers-20261101/manifest.json",
+    "rust/tests/oracles/json_scalar_readers_20261101.rs",
+    "docs/development/json-scalar-readers-20261101.md"
+  ],
+  "profileSha256": "8b049b6a7d156bf5306aa2b5d039b05e79fcced7e62473fa1e9fec0e5d1b1fbf",
+  "resolvedVersions": 170
+}

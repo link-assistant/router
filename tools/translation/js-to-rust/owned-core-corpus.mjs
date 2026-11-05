@@ -10,11 +10,12 @@ import {ownedCoreSourceData} from './owned-core-source.mjs';
 import {emitRust,emitTypeScript} from './targets.mjs';
 import {toLino} from './vendor/ir.mjs';
 import {encodeWord,writeLink} from './vendor/lino.mjs';
-import {createRulePipeline} from '../rule-pipeline.mjs';
+import {types} from 'node:util';import {withCompleteSourceClosingFence} from '../complete-source-closing-fence.mjs';import {ownSourceFailureField} from '../source-error-fields-20261102.mjs';import {createRulePipeline} from '../rule-pipeline.mjs';
+import {resolveModuleGraph} from '../project.mjs';import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';import {createOrderedMapCanonicalSourceCustody} from '../ordered-text-map-callers-20261102-canonical-source-custody.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const WITNESS='tests/translation_core_reverse_owned_oracle.rs';
 const BASE64_LEAF='src/translation_core/base64.rs',BASE64_WITNESS='tests/translation_core_base64_reverse_oracle.rs';
-function hasBase64Leaf(root){try{lstatSync(join(root,rustPackageSourcePath(root,BASE64_LEAF)));return true;}catch(error){if(error.code==='ENOENT')return false;throw error;}}
+function hasBase64Leaf(root){try{lstatSync(join(root,rustPackageSourcePath(root,BASE64_LEAF)));return true;}catch(error){if(ownSourceFailureField(error,'code')==='ENOENT')return false;throw error;}}
 const ROOT='js/generated/rust-project',TYPED='ts/generated/rust-project';
 function strictSource(path){const bytes=readFileSync(path),source=bytes.toString('utf8');if(!Buffer.from(source,'utf8').equals(bytes))throw TypeError('Owned receiving source is not strict UTF8');return source;}
 const MAX_BYTES=256*1024*1024,MAX_FILE=32*1024*1024,MAX_PATHS=32768;
@@ -23,17 +24,30 @@ function physical(root,path){
  let current=root;for(const part of path.split('/')){current=join(current,part);const stat=lstatSync(current);if(stat.isSymbolicLink())throw TypeError('Owned receiving linked input: '+path);}
  return current;
 }
+// Dependency DATA only: actual source syntax and source paths select extra
+// inputs. No type/owner/body verdict is retained or issued by this traversal.
+function originalCorpusReferencesMap(files){
+ const ts=ownershipCompiler(),targets=new Set(),sources=new Map(files.map(row=>[row.path,row.source])),edges=new Map(),visited=new Set();let cells=0;
+ for(const root of [ROOT,TYPED])for(const name of ['ordered-text-map-20261102-runtime.mjs','ordered-text-map-20261102-runtime.d.mts','ordered-text-map-callers-20261102-pair-runtime.mjs','ordered-text-map-callers-20261102-pair-runtime.d.mts'])targets.add(root+'/runtime/'+name);
+ const dependencies=path=>{if(edges.has(path))return edges.get(path);const source=sources.get(path);if(typeof source!=='string'||!/\.(?:mjs|mts|ts)$/u.test(path))return [];const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,path.endsWith('.mjs')?ts.ScriptKind.JS:ts.ScriptKind.TS),result=[];if(!file.parseDiagnostics.length){const visit=(node,depth=0)=>{if(++cells>1000000||depth>160)return;let specifier=null;if((ts.isImportDeclaration(node)||ts.isExportDeclaration(node))&&node.moduleSpecifier&&ts.isStringLiteral(node.moduleSpecifier))specifier=node.moduleSpecifier.text;else if(ts.isImportTypeNode(node)&&ts.isLiteralTypeNode(node.argument)&&ts.isStringLiteral(node.argument.literal))specifier=node.argument.literal.text;if(specifier&&(specifier.startsWith('./')||specifier.startsWith('../')))result.push(posix.normalize(posix.join(posix.dirname(path),specifier)));ts.forEachChild(node,child=>visit(child,depth+1));};visit(file);}edges.set(path,result);return result;};
+ const reaches=(path,depth=0)=>{if(targets.has(path))return true;if(depth>160||visited.has(path))return false;visited.add(path);return dependencies(path).some(next=>reaches(next,depth+1));};
+ for(const row of files)if(!row.path.startsWith(ROOT+'/runtime/')&&!row.path.startsWith(TYPED+'/runtime/')&&reaches(row.path))return true;return false;
+}
+function originalCorpusRowsUnchanged(rows,expected){
+ if(types.isProxy(rows)||!Array.isArray(rows))return false;const outer=Object.getOwnPropertyDescriptors(rows),length=outer.length?.value;if(!Number.isSafeInteger(length)||length<0||length>MAX_PATHS||length!==expected.size||Reflect.ownKeys(rows).length!==length+1)return false;const seen=new Set();
+ for(let index=0;index<length;index++){const field=outer[index];if(!field||!Object.hasOwn(field,'value'))return false;const row=field.value;if(!row||typeof row!=='object'||types.isProxy(row)||![null,Object.prototype].includes(Object.getPrototypeOf(row)))return false;const keys=Reflect.ownKeys(row),fields=Object.getOwnPropertyDescriptors(row),path=fields.path,source=fields.source;if(keys.length!==2||!path||!source||!Object.hasOwn(path,'value')||!Object.hasOwn(source,'value')||typeof path.value!=='string'||typeof source.value!=='string'||seen.has(path.value)||!expected.has(path.value)||expected.get(path.value)!==source.value)return false;seen.add(path.value);}return true;
+}
 /** All generated application modules and materialized runtime originals. */
 export function captureOwnedCoreCorpus(root){
- const files=[],seen=new Set();let bytes=0;
+ const files=[],seen=new Set(),byPath=new Map(),custody=createOrderedMapCanonicalSourceCustody(root);let bytes=0;return withCompleteSourceClosingFence(()=>{
  const add=path=>{
   if(seen.has(path))return;seen.add(path);if(seen.size>MAX_PATHS)throw TypeError('Owned receiving path budget');
   const absolute=physical(root,path),stat=lstatSync(absolute);if(!stat.isFile()||stat.size>MAX_FILE||bytes+stat.size>MAX_BYTES)throw TypeError('Owned receiving input budget');
-  const source=strictSource(absolute);bytes+=Buffer.byteLength(source);if(bytes>MAX_BYTES||Buffer.byteLength(source)>MAX_FILE)throw TypeError('Owned receiving read budget');files.push({path,source});
+  const source=custody.read(absolute);bytes+=Buffer.byteLength(source);if(bytes>MAX_BYTES||Buffer.byteLength(source)>MAX_FILE)throw TypeError('Owned receiving read budget');byPath.set(path,source);files.push({path,source});
  };
  function visit(directory){
   if(!existsSync(join(root,directory)))return;
-  const absolute=physical(root,directory);
+  const absolute=physical(root,directory);custody.directory(absolute);
   for(const entry of readdirSync(absolute,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name))){
    const path=directory+'/'+entry.name;if(entry.isSymbolicLink())throw TypeError('Owned receiving linked input: '+path);
    if(entry.isDirectory())visit(path);else if(entry.isFile()&&(/\.(?:mjs|mts|ts)$/u.test(entry.name)||/LICENSE|NOTICE/iu.test(entry.name)))add(path);
@@ -42,8 +56,13 @@ export function captureOwnedCoreCorpus(root){
  visit(ROOT);visit(TYPED);
  if(files.length)for(const path of ['src/lib.rs','src/translation_core.rs','src/translation_core/primitives.rs','Cargo.toml','Cargo.lock'])add(path);
  const base64Present=hasBase64Leaf(root);if(files.length&&base64Present)add(BASE64_LEAF);
+ if(originalCorpusReferencesMap(files)){
+  const paths=[];let entries=0;const nativePaths=directory=>{const absolute=physical(root,directory);custody.directory(absolute);for(const entry of readdirSync(absolute,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name))){if(++entries>MAX_PATHS)throw TypeError('Owned native map source path budget');if(entry.isSymbolicLink())throw TypeError('Owned native map linked source');const path=directory+'/'+entry.name;if(entry.isDirectory())nativePaths(path);else if(entry.isFile()&&entry.name.endsWith('.rs'))paths.push(path);}custody.directory(absolute);};nativePaths('src');
+  const graph=resolveModuleGraph({entry:'src/lib.rs',paths,readSource:path=>{add(path);return byPath.get(path);},compilationProfile:PRODUCTION_PROFILE});if(graph.diagnostics.length)throw TypeError('Actual native map root/module source closure is unsupported: '+JSON.stringify(graph.diagnostics));
+  const native=files.filter(row=>row.path.endsWith('.rs')||row.path==='Cargo.toml'||row.path==='Cargo.lock');if(native.length>512||native.reduce((sum,row)=>sum+Buffer.byteLength(row.source),0)>8388608)throw TypeError('Actual native map root/module source closure exceeds original native ABI bounds');custody.close();
+ }
  const rows=files.sort((a,b)=>a.path.localeCompare(b.path));
- return {files:rows,bytes,requireCurrent(){if(hasBase64Leaf(root)!==base64Present)throw TypeError('Owned receiving base64 source presence changed');for(const row of rows)if(strictSource(physical(root,row.path))!==row.source)throw TypeError('Owned receiving complete input changed: '+row.path);}};
+ return {files:rows,bytes,requireCurrent(){return withCompleteSourceClosingFence(()=>{if(hasBase64Leaf(root)!==base64Present)throw TypeError('Owned receiving base64 source presence changed');if(!originalCorpusRowsUnchanged(rows,byPath))throw TypeError('Owned receiving complete input DATA changed');for(const [path,source]of byPath)if(custody.read(physical(root,path))!==source)throw TypeError('Owned receiving complete input bytes changed: '+path);},[custody.close]);}};},[custody.close]);
 }
 /** Language/source checks run independently for every original application item. */
 export function buildOwnedCoreArtifacts(root){
@@ -52,13 +71,13 @@ export function buildOwnedCoreArtifacts(root){
  const pipeline=createRulePipeline([
   {phase:'language',rules:[{id:'owned-corpus:all-original-application-bodies',apply:()=>{
    let context=null,contextError=null;
-   if(modules.length){try{context=createOwnedCoreSourceContext({files:capture.files,runtimeRoot:ROOT+'/runtime',declarationRoot:TYPED+'/runtime'});}catch(error){if(!(error instanceof TypeError))throw error;contextError=error.message;}}
+   if(modules.length){try{context=createOwnedCoreSourceContext({files:capture.files,runtimeRoot:ROOT+'/runtime',declarationRoot:TYPED+'/runtime'});}catch(error){if(!(error instanceof TypeError)||typeof ownSourceFailureField(error,'message')!=='string')throw error;contextError=ownSourceFailureField(error,'message');}}
    const ts=ownershipCompiler();
    for(const row of modules){
     capture.requireCurrent();const file=ts.createSourceFile(row.path,row.source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),functions=file.statements.filter(ts.isFunctionDeclaration);
     let analysis;
     try{if(contextError)throw TypeError(contextError);analysis=analyzeOwnedCoreJavaScript(row.source,{sourcePath:row.path,context});}
-    catch(error){if(!(error instanceof TypeError))throw error;analysis={program:[],items:functions.map(node=>({name:node.name?.text??null,span:[node.getStart(file),node.end],status:'unsupported'})),diagnostics:[{kind:'owned-core',message:error.message}]};}
+    catch(error){if(!(error instanceof TypeError)||typeof ownSourceFailureField(error,'message')!=='string')throw error;analysis={program:[],items:functions.map(node=>({name:node.name?.text??null,span:[node.getStart(file),node.end],status:'unsupported'})),diagnostics:[{kind:'owned-core',message:ownSourceFailureField(error,'message')}]};}
     const stem=row.path.slice(ROOT.length+1,-4),prefix='tools/translation/js-to-rust/generated/owned-core/'+stem;
     const output='ts/generated/reverse-owned-core/'+stem+'.ts';
     if(analysis.program.length){
@@ -115,13 +134,13 @@ export function buildOwnedCoreDocumentArtifacts(root){
  const pipeline=createRulePipeline([
   {phase:'language',rules:[{id:'owned-document-corpus:all-original-application-bodies',apply:()=>{
    let context=null,contextError=null;
-   if(modules.length){try{context=createOwnedCoreSourceContext({files:capture.files,runtimeRoot:ROOT+'/runtime',declarationRoot:TYPED+'/runtime'});}catch(error){if(!(error instanceof TypeError))throw error;contextError=error.message;}}
+   if(modules.length){try{context=createOwnedCoreSourceContext({files:capture.files,runtimeRoot:ROOT+'/runtime',declarationRoot:TYPED+'/runtime'});}catch(error){if(!(error instanceof TypeError)||typeof ownSourceFailureField(error,'message')!=='string')throw error;contextError=ownSourceFailureField(error,'message');}}
    const ts=ownershipCompiler();
    for(const row of modules){
     capture.requireCurrent();const file=ts.createSourceFile(row.path,row.source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),functions=file.statements.filter(ts.isFunctionDeclaration);
     let analysis;
     try{if(contextError)throw TypeError(contextError);analysis=analyzeOwnedCoreJavaScript(row.source,{sourcePath:row.path,context});}
-    catch(error){if(!(error instanceof TypeError))throw error;analysis={program:[],items:functions.map(node=>({name:node.name?.text??null,span:[node.getStart(file),node.end],status:'unsupported'})),diagnostics:[{kind:'owned-core',message:error.message}]};}
+    catch(error){if(!(error instanceof TypeError)||typeof ownSourceFailureField(error,'message')!=='string')throw error;analysis={program:[],items:functions.map(node=>({name:node.name?.text??null,span:[node.getStart(file),node.end],status:'unsupported'})),diagnostics:[{kind:'owned-core',message:ownSourceFailureField(error,'message')}]};}
     const stem=row.path.slice(ROOT.length+1,-4),prefix='tools/translation/js-to-rust/generated/owned-core/'+stem;
     const output='ts/generated/reverse-owned-core/'+stem+'.ts';
     if(analysis.program.length){
@@ -167,12 +186,14 @@ function ownedCoreAsciiWitnessArtifacts(root){
  const witness='tests/translation_core_ascii_reverse_oracle.rs',artifacts=new Map();if(!existsSync(join(root,rustPackageSourcePath(root,witness))))return {artifacts,manifest:{available:false,applicationItems:0}};
  const original=strictSource(physical(root,witness)),matches=[...original.matchAll(/const REVERSE_ASCII_JS_WITNESS: &str = r###"([\s\S]*?)"###;/gu)];
  if(matches.length!==1||!original.includes('use link_assistant_router::translation_core;'))throw TypeError('Actual authored ASCII witness and library alias required');
- const prefix='tools/translation/js-to-rust/generated/owned-ascii-witness',header='// GENERATED: actual checked reverse ASCII receiving witness.\n',source=header+matches[0][1],files=[...ownedCoreRuntimeSources(prefix+'/runtime'),...ownedCoreAsciiRuntimeSources(prefix+'/runtime')],originals=[];
+ const scalar=[...original.matchAll(/const REVERSE_SCALAR_JS_WITNESS: &str = r###"([\s\S]*?)"###;/gu)];if(scalar.length>1)throw TypeError('Ambiguous authored scalar witness');
+ const authored=matches[0][1]+(scalar[0]?.[1]??'');
+ const prefix='tools/translation/js-to-rust/generated/owned-ascii-witness',header='// GENERATED: actual checked reverse ASCII receiving witness.\n',source=header+authored,files=[...ownedCoreRuntimeSources(prefix+'/runtime'),...ownedCoreAsciiRuntimeSources(prefix+'/runtime')],originals=[];
  for(const path of ['src/lib.rs','src/translation_core.rs','src/translation_core/primitives.rs','Cargo.toml','Cargo.lock'])originals.push({path,source:strictSource(physical(root,path))});
  const data={runtimeRoot:prefix+'/runtime',declarationRoot:prefix+'/runtime',files:[...files,...originals.map(row=>row.path==='src/lib.rs'?{path:row.path,source:'pub mod translation_core;\n'}:row),{path:prefix+'/witness.mjs',source}]};
  const context=createOwnedCoreSourceContext(data),result=translateOwnedCoreJavaScript(source,{sourcePath:prefix+'/witness.mjs',context,typescriptOutputPath:prefix+'/witness.mts'});
  artifacts.set(prefix+'.rs',header+result.rust);artifacts.set(prefix+'.lino',result.meta);artifacts.set(prefix+'/witness.mts',result.typescript);artifacts.set(prefix+'/witness.mjs',source);for(const row of files)artifacts.set(row.path,row.source);
- artifacts.set(prefix+'-inputs.json',JSON.stringify({schema:'owned-ascii-reverse-ci-witness-v1',oracle:{path:witness,source:original,sha256:hash(original)},originalLibraryInputs:originals,stagedReceivingInputs:data,witnessTypeScript:{path:prefix+'/witness.mts',source:result.typescript},sourceRecipe:{kind:'prepend-one-generated-comment',before:matches[0][1],after:source,prefix:header,wholeUndo:source.slice(header.length)===matches[0][1]},concreteSyntax:result.concreteSyntax,trace:result.trace,applicationItems:0,rustExecuted:false})+'\n');
+ artifacts.set(prefix+'-inputs.json',JSON.stringify({schema:'owned-ascii-reverse-ci-witness-v1',oracle:{path:witness,source:original,sha256:hash(original)},originalLibraryInputs:originals,stagedReceivingInputs:data,witnessTypeScript:{path:prefix+'/witness.mts',source:result.typescript},sourceRecipe:{kind:'prepend-one-generated-comment',before:authored,after:source,prefix:header,wholeUndo:source.slice(header.length)===authored},concreteSyntax:result.concreteSyntax,trace:result.trace,applicationItems:0,rustExecuted:false})+'\n');
  if(strictSource(physical(root,witness))!==original)throw TypeError('Original ASCII witness changed');for(const row of originals)if(strictSource(physical(root,row.path))!==row.source)throw TypeError('Original ASCII witness library changed');
  return {artifacts,manifest:{available:true,applicationItems:0,functions:result.program.length,rust:prefix+'.rs',oracle:witness,sourceSha256:hash(source),rustExecuted:false}};
 }

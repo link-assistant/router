@@ -1,0 +1,3 @@
+Draft hosted-only native profile oracle orchestration after the unchanged eight-stage JavaScript gate, complete source/CST workflow history, bounded evidence handling, and full Cargo-discovered Windows test scheduling. All new behavior remains unverified.
+Schedule the complete workflow source cases through the existing lint entrypoint that installs locked YAML, retaining every original case and complete source history.
+Draft two portable native source profiles, shared bounded runtime evidence, exact-byte checkout and current-clock/source closing. All native and JavaScript verification remains unrun.

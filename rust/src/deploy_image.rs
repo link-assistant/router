@@ -21,7 +21,7 @@ fn inspect_with(docker: &OsStr, image: &crate::translation_core::Str, version: &
         crate::operation_context::command(docker).args(["manifest", "inspect", image]),
         Duration::from_secs(30),
     )
-        .map_err(|error| format!("image-unavailable: could not check default image {image}: {error}; pass --image RELEASE_TAG_OR_DIGEST or --build DIR"))?;
+        .map_err(|error| crate::translation_core::format!("image-unavailable: could not check default image {image}: {error}; pass --image RELEASE_TAG_OR_DIGEST or --build DIR"))?;
     if output.status.success() {
         return Ok(());
     }
@@ -36,11 +36,11 @@ fn inspect_with(docker: &OsStr, image: &crate::translation_core::Str, version: &
     .iter()
     .any(|missing| lower.contains(missing))
     {
-        Err(format!(
+        Err(crate::translation_core::format!(
             "image-unpublished: image for {version} is not published ({image}); pass --image RELEASE_TAG_OR_DIGEST or --build DIR"
         ))
     } else {
-        Err(format!(
+        Err(crate::translation_core::format!(
             "image-unavailable: could not verify default image {image}: {}; pass --image RELEASE_TAG_OR_DIGEST or --build DIR",
             reason.trim()
         ))

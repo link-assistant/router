@@ -1,0 +1,32 @@
+{
+  "schema": "fixed-width-counted-source-history-segments-20261104-v1",
+  "paths": [
+    "tools/translation/js-to-rust/owned-outcome-source.mjs",
+    "tools/translation/js-to-rust/owned-cancellation-source.mjs",
+    "tools/translation/js-to-rust/owned-text-vector-outcome-source.mjs",
+    "tools/translation/js-to-rust/owned-text-vector-cancellation-source.mjs",
+    "tools/translation/js-to-rust/owned-text-vector-join-outcome-source.mjs",
+    "tools/translation/js-to-rust/owned-text-vector-join-cancellation-source.mjs"
+  ],
+  "segments": [
+    {
+      "id": "original499",
+      "path": "tools/translation/source-profiles/width-counted-range-segments-20261104/index499.before.json.gz",
+      "encoding": "gzip",
+      "sha256": "672c7eb44a5cf6f700755b5aabb0545b4e2843a110629e4da7d499969820973c",
+      "sourceSha256": "e473dffa755395511bb70aa36bb8f849a78b0611c3bd318540b4a0d9b8ee83e0",
+      "rows": 499
+    },
+    {
+      "id": "width-counted-readers6",
+      "path": "tools/translation/source-profiles/width-counted-range-segments-20261104/index6.json",
+      "encoding": "utf8",
+      "sha256": "ce4f3e94f128a434aac71cafa97dc2276cb7b3fe3518b4f702df53cef1837f8e",
+      "sourceSha256": "ce4f3e94f128a434aac71cafa97dc2276cb7b3fe3518b4f702df53cef1837f8e",
+      "rows": 6
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

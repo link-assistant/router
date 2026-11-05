@@ -1,0 +1,46 @@
+{
+  "schema": "original-registered-builtin-caller-attribute-sources-v1",
+  "repository": "rust-lang/rust",
+  "ref": "1.89.0",
+  "sources": [
+    {
+      "path": "compiler/rustc_parse/src/parser/attr.rs",
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/compiler/rustc_parse/src/parser/attr.rs",
+      "ref": "1.89.0",
+      "gitBlobSha": "41d3889c448383c1d1d9063830b1ae534098beac",
+      "bytes": 19525,
+      "sha256": "9e497b25e61cd8e1aa7b40d8b2d890aa170dd8522626e2481d264980e2bd11fc",
+      "archive": "compiler_rustc_parse_src_parser_attr.rs.gz",
+      "archiveBytes": 4887,
+      "archiveSha256": "28749513fc97a2e614cc7701c129df560bfbc418aba4435613b65790f35a7e45"
+    },
+    {
+      "path": "compiler/rustc_parse/src/parser/path.rs",
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/compiler/rustc_parse/src/parser/path.rs",
+      "ref": "1.89.0",
+      "gitBlobSha": "9bce2fa74caa2b0247b62a6c458ea8ae87666949",
+      "bytes": 43246,
+      "sha256": "f7bbc9776173cf903b49637759169951effe2064064988eb83a7b3c08d2c5536",
+      "archive": "compiler_rustc_parse_src_parser_path.rs.gz",
+      "archiveBytes": 10787,
+      "archiveSha256": "4efd30581bb5a91647ee64307d7248954466b4f35a476abb5aa66bd917ac55dc"
+    },
+    {
+      "path": "compiler/rustc_parse/src/parser/mod.rs",
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/compiler/rustc_parse/src/parser/mod.rs",
+      "ref": "1.89.0",
+      "gitBlobSha": "b2e902513672d58d774bdc41e7e70fc20a739c25",
+      "bytes": 64389,
+      "sha256": "88e79af509064c441a88eb1b60facbfb50f8024dc0bcbf139a01a1902d111d59",
+      "archive": "compiler_rustc_parse_src_parser_mod.rs.gz",
+      "archiveBytes": 16588,
+      "archiveSha256": "1ac31573ac1590fbff8c7508572ba21fb139f257d8a7cc5f94b382949d937f05"
+    }
+  ],
+  "licenses": [
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
+  ],
+  "namespaceAuthority": false,
+  "runtimeAuthority": false
+}

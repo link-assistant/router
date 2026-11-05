@@ -1,0 +1,18 @@
+// Complete source history copy; current inferred domains are read only at function close.
+// Native syntax and carrier DATA only. The private complete-source checker must
+// independently authenticate operand bindings, native types and the context.
+import {primitiveBitwiseType} from '../primitive-bitwise-types.mjs';
+import {joinOwnedNativeScalarOperands} from './owned-native-scalar-flow.mjs';
+const fail=message=>{throw new TypeError('Owned native bitwise source: '+message);};
+export function readOwnedContextualBitwiseExpression(ts,node,read,{enabled=false,compound=false,join=null}={}){
+ if(enabled!==true||!ts.isBinaryExpression(node))return null;const pairs=compound?[[ts.SyntaxKind.AmpersandEqualsToken,'&'],[ts.SyntaxKind.BarEqualsToken,'|'],[ts.SyntaxKind.CaretEqualsToken,'^']]:[[ts.SyntaxKind.AmpersandToken,'&'],[ts.SyntaxKind.BarToken,'|'],[ts.SyntaxKind.CaretToken,'^']],operation=pairs.find(([kind])=>kind===node.operatorToken.kind)?.[1];if(!operation)return null;
+ const left=read(node.left),right=read(node.right);if(typeof join!=='function')fail('current function-local operand join required');join(left,right);joinOwnedNativeScalarOperands(left,right,true);const domain=primitiveBitwiseType(left.type);if(!domain||right.type!==domain.name||left.root!==null||right.root!==null)fail('identical actual root-free native integer operands required');return {kind:'primitive-bitwise-call',name:'primitiveBitwise',args:[left,right],operation,type:domain.name,bits:domain.bits,signed:domain.signed,root:null};
+}
+export function createOwnedContextualBitwiseHistory(){
+ const rows=[],copies=[],pending=[];let units=0,finalized=false;
+ function record(node,file,value,copy=false){
+  const comparison=!copy&&value?.kind==='binary'&&['===','!==','<','<=','>','>='].includes(value.op),domain=primitiveBitwiseType(comparison?value.left?.type:value?.type);if(!domain||value.root!==null||copy&&value.kind!=='variable'||!copy&&!comparison&&value.kind!=='primitive-bitwise-call'||comparison&&(value.type!=='bool'||value.left.root!==null||value.right.root!==null||value.right.type!==domain.name))fail('actual closed native scalar source operation required');if(rows.length+copies.length>=4096)fail('bounded complete native scalar source history required');const span=[node.getStart(file),node.end],source=node.getText(file);if(span[0]<0||span[1]>file.text.length||file.text.slice(...span)!==source||(units+=source.length)>2097152)fail('complete actual native scalar spans or history bound differ');return {kind:copy?'native-fixed-copy':comparison?'native-fixed-comparison':'native-fixed-bitwise',span,source,operation:copy?'Copy':comparison?value.op:value.operation,domain:domain.name,sourceAuthority:false,semanticAuthority:false};
+ }
+ function defer(node,file,value,copy){if(finalized||pending.length>=4096)fail('bounded unfinished contextual source history required');pending.push({node,file,value,copy});}
+ return {rows,retain(node,file,value){defer(node,file,value,false);},retainCopy(node,file,value){if(value?.kind==='variable'&&value.root===null&&!['bool','str','unit'].includes(value.type)&&!(typeof value.type==='string'&&value.type.startsWith('vec:')))defer(node,file,value,true);},finalize(){if(finalized)fail('source history finalizes exactly once');finalized=true;try{for(const entry of pending){if(entry.copy&&!primitiveBitwiseType(entry.value.type))continue;(entry.copy?copies:rows).push(record(entry.node,entry.file,entry.value,entry.copy));}}finally{pending.length=0;}},adoptCopies(){if(!finalized)fail('complete final type inference precedes source history adoption');if(!rows.length)rows.push(...copies);}};
+}

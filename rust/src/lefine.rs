@@ -211,12 +211,12 @@ fn body_error(error: &crate::translation_core::Json) -> CatalogFailure {
     CatalogFailure::new(kind, "Lefine model catalog returned an error")
 }
 
-fn catalog_url(base_url: &crate::translation_core::Str) -> String {
+fn catalog_url(base_url: &crate::translation_core::Str) -> crate::translation_core::Text {
     let base = base_url.trim_end_matches('/');
     if base.ends_with("/v1") {
-        format!("{base}/models")
+        crate::translation_core::format!("{base}/models")
     } else {
-        format!("{base}/v1/models")
+        crate::translation_core::format!("{base}/v1/models")
     }
 }
 

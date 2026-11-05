@@ -37,7 +37,7 @@ type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$"
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
-// Generated draft from rust/src/deploy_relay.rs; sha256=72a4f919ea1543e956829af791dd805ba613baeceadc8434ca5c6d8e6d16adbe
+// Generated draft from rust/src/deploy_relay.rs; sha256=bcfe761949dee45c69a577bcf8bebc32e19fbcfa48244be927339ed7a37c562b
 // Carried constructs are data, never runtime parity evidence.
 function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   if (value < min || value > max) throw new RangeError(message);
@@ -89,4 +89,4 @@ const serde_json = {
 };
 
 export const translated: { "STATE_ENV": string; "LISTENERS_ENV": string; "Binding": (listen: string, backend_port: bigint) => Readonly<{ readonly "$": "Binding"; readonly "listen": string; readonly "backend_port": bigint }> } = { ["STATE_ENV"]: rp_6465706c6f795f72656c61792e53544154455f454e56(), ["LISTENERS_ENV"]: rp_6465706c6f795f72656c61792e4c495354454e4552535f454e56(), ["Binding"]: ml_make_Binding_Binding };
-export const provenance = {"sourcePath":"rust/src/deploy_relay.rs","sourceSha256":"72a4f919ea1543e956829af791dd805ba613baeceadc8434ca5c6d8e6d16adbe","executable":3,"executableFunctions":0,"executableConstants":2,"executableTypes":1,"executableConstructors":1,"carried":17,"preserved":21,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/deploy_relay.rs","sourceSha256":"bcfe761949dee45c69a577bcf8bebc32e19fbcfa48244be927339ed7a37c562b","executable":3,"executableFunctions":0,"executableConstants":2,"executableTypes":1,"executableConstructors":1,"carried":17,"preserved":21,"runtimeParity":false};

@@ -1,3 +1,5 @@
+import {createDeriveEnclosingNamespaceContext} from './derive-enclosing-namespace-context.mjs';
+import {resolveOwnedEnclosingNamespaceModuleBindings as resolveMatchesEnclosingNamespaceModuleBindings} from './owned-enclosing-module-bindings.mjs';
 // Per-call proof from genuine original module views. No caller-closed flags or
 // external namespace tables are accepted as authority.
 import {createHash} from 'node:crypto';
@@ -372,4 +374,21 @@ export function configureMatchesMethodParserGrouped(parser,context,method) {
   configureRustEditionParser(parser,facts.cargoEditionContext);
   recordParserFrame(parser,{context,facts,module,offset:0,sourceLength:module.source.length,captured,tokens:parser.cursor.tokens,methodTransform:captured.proof,namespaceDigest:initialNamespaceDigest(parser,issued,module,namespace.scope)});
   return parser;
+}
+
+// Closed independent enclosing context; no caller namespace evidence.
+export function createMatchesEnclosingMacroContext({modules,compilationProfile=null,deriveDependencies=null,cargoEditionContext=null}={}) {
+  if(cargoEditionContext!==null&&!originalCargoEditionEvidence(cargoEditionContext))throw new TypeError('Matches source context requires private original Cargo edition evidence');
+  const profile=standardProfile??=loadStandardMatchesSourceProfile(),snapshot=captureOriginalMacroModules({modules,compilationProfile}),original=originalMacroModules(snapshot),external=standardExternal(deriveDependencies);
+  const deriveContext=deriveDependencies?createDeriveFootprintContext({modules:original.modules,dependencies:deriveDependencies,externalModules:external,compilationProfile:original.compilationProfile}):null;
+  const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):external;
+  const toolContext=createToolAttributeContext({modules:original.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:original.compilationProfile});
+  const deriveBangContext=deriveContext?createDeriveEnclosingNamespaceContext({deriveContext}):null;
+  const evidence=freezeMacroTree(resolveMatchesEnclosingNamespaceModuleBindings({modules:original.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:original.compilationProfile}));
+  const certificate=freezeMacroTree({schema:'original-standard-matches-call-context-v1',profileDigest:profile.digest,compilationProfile:original.compilationProfile,originalModules:original.modules.map(module=>({file:module.file,path:module.path,sha256:hash(module.source),sourceViewDigest:module.sourceView.digest,configurationCondition:module.configurationCondition??module.sourceView.configurationCondition})),namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
+  const facts={...original,profile,evidence,cargoEditionContext};
+  originalDependencies.set(facts,deriveDependencies);
+  contexts.set(certificate,facts);
+  immutableContexts.set(certificate,Object.freeze({facts,...original,profile,evidence,cargoEditionContext,...immutableNamespaceIndices(original.modules,evidence),moduleHashes:new WeakMap(original.modules.map((module,index)=>[module,certificate.originalModules[index].sha256])),scopes:new WeakSet(evidence.scopes),scopeHashes:new WeakMap(),namespaceCaptures:new Map()}));
+  return certificate;
 }

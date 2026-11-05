@@ -33,17 +33,17 @@ pub fn login_mode_report(login: &LoginConfig) -> Vec<String> {
             let resolved = resolve_in_path(&login.command);
             resolved.map_or_else(
                 || {
-                    format!(
+                    crate::translation_core::format!(
                         "UNAVAILABLE — LOGIN_CLI_COMMAND `{}` is not in PATH",
                         login.command
                     )
                 },
-                |path| format!("via {}", path.display()),
+                |path| crate::translation_core::format!("via {}", path.display()),
             )
         } else {
             "available (in-process OAuth)".to_string()
         };
-        lines.push(format!(
+        lines.push(crate::translation_core::format!(
             "login_mode {:<12}: {availability}{marker}; scopes: {}",
             mode.name(),
             mode.scopes()
@@ -122,20 +122,20 @@ fn credential_location(
     provider: SubscriptionProvider,
     origin: crate::platform_keychain::Origin,
     path: &std::path::Path,
-) -> String {
+) -> crate::translation_core::Text {
     match origin {
         crate::platform_keychain::Origin::Keychain => {
             crate::platform_keychain::service_name(provider).map_or_else(
                 || String::from("platform keychain"),
-                |service| format!("keychain {service:?}"),
+                |service| crate::translation_core::format!("keychain {service:?}"),
             )
         }
         crate::platform_keychain::Origin::File => path.display().to_string(),
         crate::platform_keychain::Origin::AdoptedFile => {
-            format!("{} (adopted vendor credential)", path.display())
+            crate::translation_core::format!("{} (adopted vendor credential)", path.display())
         }
         crate::platform_keychain::Origin::ExternalFile => {
-            format!("{} (external refresh owner)", path.display())
+            crate::translation_core::format!("{} (external refresh owner)", path.display())
         }
     }
 }

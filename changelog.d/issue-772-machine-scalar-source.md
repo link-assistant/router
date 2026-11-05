@@ -1,0 +1,1 @@
+Draft explicit native usize/isize facade aliases and shared source adoption through existing 64-bit checked JS/TS domains, retaining native template inputs and profile refusals. All new independent cases remain unrun; full translation remains unfinished.

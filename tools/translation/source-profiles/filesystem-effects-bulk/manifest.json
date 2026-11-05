@@ -1,0 +1,8 @@
+{
+  "schema": "filesystem-effects-complete-originals-index-v1",
+  "archive": "complete-originals.json.gz",
+  "bytes": 43141,
+  "sha256": "8358f89978cf29f4d9a88b1c11c425646fa3b4838e09750fa2a0584b18698454",
+  "rawBytes": 181442,
+  "rawSha256": "5f258271522370439071388fbbe48152e2ab91290966532e8bd9c4882867deb9"
+}

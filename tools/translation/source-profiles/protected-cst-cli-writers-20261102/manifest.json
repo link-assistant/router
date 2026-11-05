@@ -1,0 +1,101 @@
+{
+  "schema": "protected-cst-cli-writers-source-proposal-20261102-v1",
+  "predecessor": "bfc3eb40c26a245b1ace5e67a43e7d0e7e391d2e",
+  "files": [
+    {
+      "path": "tools/translation/batched-whole-owner-proof-byte-source-candidate.mjs",
+      "role": "batched-whole-owner-proof-byte-source-candidate",
+      "beforeFile": "batched-whole-owner-proof-byte-source-candidate.before.txt",
+      "afterFile": "batched-whole-owner-proof-byte-source-candidate.after.txt",
+      "beforeBytes": 22301,
+      "afterBytes": 22536,
+      "beforeSha256": "f8f0989187a9821c01e037d8b8627f053a35f81945f1a9feee92ff2cf2c73db8",
+      "afterSha256": "b250e98d4deb04bf9251469cdd820d44a82499634f309bb3e7554f3c6b36c5ce",
+      "originalBlob": "23ea38220d98a3cf972a3f03821fc764b77d80b7",
+      "producer": "prepareWholeOwnerProofByteCandidateBatched",
+      "staleBody": "for(const row of plan.files){const current=existsSync(resolve(ROOT,row.path))?readFileSync(resolve(ROOT,row.path),'utf8'):null;if(current!==row.current)fail('current complete output changed');}"
+    },
+    {
+      "path": "tools/translation/cst-batched-whole-owner-core-producer.mjs",
+      "role": "cst-batched-whole-owner-core-producer",
+      "beforeFile": "cst-batched-whole-owner-core-producer.before.txt",
+      "afterFile": "cst-batched-whole-owner-core-producer.after.txt",
+      "beforeBytes": 17190,
+      "afterBytes": 17449,
+      "beforeSha256": "da8c42dc836f1ee44ab93c69a0e0c83fcb92a2c337341efb473b37c629de0277",
+      "afterSha256": "d98ad17dada663ce8d2b1c5857ca9d3d34a3053d45856270bdf14a3232fd0f9a",
+      "originalBlob": "3641418d6f17bb99c1202a6d7eac410f76dbfff3",
+      "producer": "prepareWholeOwnerCoreProducerCandidate",
+      "staleBody": ""
+    },
+    {
+      "path": "tools/translation/cst-batched-whole-owner-corpus-producer.mjs",
+      "role": "cst-batched-whole-owner-corpus-producer",
+      "beforeFile": "cst-batched-whole-owner-corpus-producer.before.txt",
+      "afterFile": "cst-batched-whole-owner-corpus-producer.after.txt",
+      "beforeBytes": 13447,
+      "afterBytes": 13701,
+      "beforeSha256": "c317f14cd0d64e2f97f574067fec73843b0c78be2cd81bd288f98d08980602fb",
+      "afterSha256": "c9f29072cdbf011e0b4c0def588c95db3cdd7ca54d3c43d385ad9dfdd1686b89",
+      "originalBlob": "0dc0a09c7d5374e5b5c4f6853d90d9401bff03d4",
+      "producer": "prepareWholeOwnerCoreCorpusCandidate",
+      "staleBody": ""
+    },
+    {
+      "path": "tools/translation/cst-batched-whole-owner-derive-producer.mjs",
+      "role": "cst-batched-whole-owner-derive-producer",
+      "beforeFile": "cst-batched-whole-owner-derive-producer.before.txt",
+      "afterFile": "cst-batched-whole-owner-derive-producer.after.txt",
+      "beforeBytes": 12446,
+      "afterBytes": 12702,
+      "beforeSha256": "fa522e4a36809e279fe71066729de44c49b57f9fc14d9bcd8924446cda08a80b",
+      "afterSha256": "f1fa700d2ea56e2c30d912b5e156a4a8e903faf5d6afcca02532a2505d04b86e",
+      "originalBlob": "f4791e0a97c6935b4e8a5c0c40369d2ccff6729a",
+      "producer": "prepareWholeOwnerDeriveCandidate",
+      "staleBody": ""
+    },
+    {
+      "path": "tools/translation/cst-batched-whole-owner-resolver-producer.mjs",
+      "role": "cst-batched-whole-owner-resolver-producer",
+      "beforeFile": "cst-batched-whole-owner-resolver-producer.before.txt",
+      "afterFile": "cst-batched-whole-owner-resolver-producer.after.txt",
+      "beforeBytes": 10347,
+      "afterBytes": 10602,
+      "beforeSha256": "7d5a03e93d4b651d2028f5ec24cd6e05078c79a1240188d892e709e3443d6feb",
+      "afterSha256": "04071601cb3b6083ffaf38671b5ebba2a68c41deeff57b1d398f07538be0fcaf",
+      "originalBlob": "a57aa718271b87c1beaeae6e942f839bb294dde8",
+      "producer": "prepareWholeOwnerResolverCandidate",
+      "staleBody": ""
+    },
+    {
+      "path": "tools/translation/private-concrete-substitution-batch-historical-producer.mjs",
+      "role": "private-concrete-substitution-batch-historical-producer",
+      "beforeFile": "private-concrete-substitution-batch-historical-producer.before.txt",
+      "afterFile": "private-concrete-substitution-batch-historical-producer.after.txt",
+      "beforeBytes": 13461,
+      "afterBytes": 13734,
+      "beforeSha256": "b9968187d9441293e648a543d9407cf827c23760ba12105c7d30fcda9de6811d",
+      "afterSha256": "e565a9eaca74f0cc44c2823ef9ac7885c222322f74fb3f8291cc8bb62b3a1847",
+      "originalBlob": "adb4defeb939a433923f3893007dc5b7939c9442",
+      "producer": "prepareHistoricalPrivateConcreteSubstitutionBatchCandidate",
+      "staleBody": ""
+    },
+    {
+      "path": "tools/translation/private-parser-assignment-data-historical-producer.mjs",
+      "role": "private-parser-assignment-data-historical-producer",
+      "beforeFile": "private-parser-assignment-data-historical-producer.before.txt",
+      "afterFile": "private-parser-assignment-data-historical-producer.after.txt",
+      "beforeBytes": 9526,
+      "afterBytes": 9794,
+      "beforeSha256": "45317361b1ef2bd990d2e54d18527c4d3502506add9ff560a622715972ec0da2",
+      "afterSha256": "2ad7edd5022b5826c51d53fd93166e97914cb62f55099a8bf70a1efa2bd5180d",
+      "originalBlob": "7948b87923d237030aab8db74c9c1dc6bf8ea477",
+      "producer": "prepareHistoricalPrivateParserAssignmentDataCandidate",
+      "staleBody": ""
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceInstalled": false,
+  "sourceAuthority": false,
+  "semanticAuthority": false
+}

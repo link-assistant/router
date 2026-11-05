@@ -1,0 +1,1 @@
+Draft genuine paired integer alias MIN/MAX expression translation through existing checked fixed domains, preserving native source joins and source inverses. Independent JS/TS/native cases remain unrun; full translation is unfinished.

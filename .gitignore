@@ -82,8 +82,8 @@ experiments/issue-697/tools/
 experiments/issue-703/tools/
 ci-logs/
 
-# Physical JavaScript/TypeScript package dependencies and generated build output.
-**/node_modules/
+# JavaScript/TypeScript package dependencies, including shared installation links.
+**/node_modules
 /ts/dist/
 
 # Temporary generated profile storage; the owning matrix session removes it.

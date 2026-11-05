@@ -1,0 +1,6 @@
+// Native source construction and immutable compiler equations. SOURCE ONLY; UNRUN.
+import test from 'node:test';import assert from 'node:assert/strict';
+import {prepareNativeDiscoveryBoundsSources} from '../prepare-native-discovery-bounds-sources.mjs';
+test('two compiler equations and five complete native histories retain original source both CST phases and exact inverses',{timeout:60000},()=>{
+ const plan=prepareNativeDiscoveryBoundsSources();assert.equal(plan.files.length,2);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.nativeInputs.files.length,17);for(const row of plan.nativeInputs.files){assert.equal(row.current,row.after);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['rust/src/operation_context.rs','rust/src/with_command.rs'].includes(row.path)?['language','repository','language','repository']:['language','repository']);assert.equal(row.sourceAuthority,false);assert.equal(row.semanticAuthority,false);assert.equal(row.namespaceAuthority,false);}assert.equal(plan.rustExecuted,false);assert.equal(plan.receivingExecuted,false);
+});

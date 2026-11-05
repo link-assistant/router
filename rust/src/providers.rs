@@ -7,7 +7,9 @@
 
 use aes_gcm::aead::{Aead, Generate, KeyInit};
 use aes_gcm::{Aes256Gcm, Nonce};
+#[cfg(test)]
 use base64::Engine as _;
+#[cfg(test)]
 use base64::engine::general_purpose::STANDARD;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -837,7 +839,10 @@ fn encrypt_api_key(api_key: &str, token_secret: &str) -> Result<String, Provider
         .map_err(|e| ProviderError::Crypto(format!("encrypt failed: {e}")))?;
     let mut packed = nonce.to_vec();
     packed.extend_from_slice(&encrypted);
-    Ok(format!("aes256gcm:{}", STANDARD.encode(packed)))
+    Ok(format!(
+        "aes256gcm:{}",
+        crate::translation_core::base64_standard_encode_owned_bytes(packed)
+    ))
 }
 
 /// Encrypt another Router-owned secret with the same deployment key used for
@@ -860,7 +865,7 @@ fn decrypt_api_key(encrypted: &str, token_secret: &str) -> Result<String, Provid
     let encoded = encrypted
         .strip_prefix("aes256gcm:")
         .ok_or_else(|| ProviderError::Invalid("unsupported provider secret format".into()))?;
-    let packed = STANDARD.decode(encoded)?;
+    let packed = crate::translation_core::base64_standard_decode_text(encoded)?;
     if packed.len() < 13 {
         return Err(ProviderError::Invalid(
             "encrypted provider secret is too short".into(),

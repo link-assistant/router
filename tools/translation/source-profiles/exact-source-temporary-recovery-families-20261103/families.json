@@ -1,0 +1,34 @@
+{
+  "schema": "fixed-temporary-recovery-source-family-census-20261103-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-temporary-recovery-families-20261103/index308.before.json.gz",
+    "encodedSha256": "5b33a65eb5c650f5c36c2dac5cefb0eef213912f77e546107269aacc893d4b7e",
+    "sourceSha256": "894d90d073d005aff5158954f51288d4d6f55a27beb2096e72700ab2bd5c0170",
+    "rows": 308
+  },
+  "families": [
+    {
+      "id": "exact-temporary-recovery-recovery-20261103",
+      "manifest": "tools/translation/source-profiles/protected-native-temporary-recovery-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "protected-native-temporary-recovery-source-20261103-v1",
+      "sha256": "cd4c74e6e5d74fc6db1e598685cef759fb8d2486c1faf30142247a7c6f9ad328",
+      "rows": 3,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-temporary-recovery-cases-20261103",
+      "manifest": "tools/translation/source-profiles/exact-source-temporary-recovery-families-20261103/joins.json.gz",
+      "kind": "archive",
+      "schema": "exact-source-recovery-join-source-20261103-v1",
+      "sha256": "df81f2d5506382e8f578aaa6c9866a840cf205bc7e3c8fa745a90e96d95d8630",
+      "rows": 4,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 7,
+  "totalRows": 315,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

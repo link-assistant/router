@@ -1,11 +1,13 @@
 import test from 'node:test';
+import './js-first-outcome-source.test.mjs';
+import './deferred-ci-failure-cycle.test.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { auditWorkflows, guarded } from '../check-js-first-workflows.mjs';
-import {DRAFT_SUPPLEMENTS,DRAFT_SUPPLEMENT_CONDITION,DRAFT_SUPPLEMENT_PR_TYPES,readFixedNineDraftWorkflowSources} from '../fixed-nine-draft-policy.mjs';
+import {DRAFT_SUPPLEMENTS,DRAFT_SUPPLEMENT_CONDITION,DRAFT_SUPPLEMENT_PR_TYPES,readCurrentFixedNineDraftWorkflowSources as readFixedNineDraftWorkflowSources,readFixedNineDraftWorkflowSources as readOriginalFixedNineDraftWorkflowSources} from '../fixed-nine-draft-policy.mjs';
 import {prepareDraftSupplementalWorkflows} from '../prepare-draft-supplemental-workflows.mjs';
 import { parityCheckBudgets } from '../parity-check-budgets.mjs';
 const require = createRequire(new URL('../ci/package.json', import.meta.url));
@@ -21,6 +23,14 @@ function mutate(filename, operation) {
 }
 function fails(filename, operation, expected) { assert.ok(mutate(filename, operation).some(error => error.includes(expected))); }
 test('all repository workflows satisfy the policy', () => assert.deepEqual(auditWorkflows(baseline), []));
+test('current storage commands retain the immutable workflow archive and its complete native CST source inverse',{timeout:60000},()=>{
+ const original=readOriginalFixedNineDraftWorkflowSources(),before=JSON.stringify(original),current=readFixedNineDraftWorkflowSources(),name='.github/workflows/javascript-first.yml';
+ const old=original.files.find(row=>row.path===name),now=current.files.find(row=>row.path===name),evolution=current.currentWorkflowSourceEvolution;
+ assert.equal(JSON.stringify(original),before);assert.equal(evolution.before,old.before);assert.equal(evolution.after,baseline['javascript-first.yml']);assert.equal(evolution.inverse,old.before);assert.equal(evolution.completeInverse,true);assert.deepEqual(evolution.trace.map(row=>row.phase),['language','repository']);
+ assert.equal(JSON.parse(evolution.beforeMeta).source,old.before);assert.equal(JSON.parse(evolution.afterMeta).source,now.before);assert.equal(now.before,now.after);assert.equal(evolution.nativeSelections.length,2);assert.ok(old.before.includes('node scripts/translate-router.mjs --check'));assert.ok(now.before.includes('node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --check'));
+ for(const row of original.files)if(row.path!==name)assert.deepEqual(current.files.find(candidate=>candidate.path===row.path),row);
+ assert.equal(JSON.stringify(readOriginalFixedNineDraftWorkflowSources()),before);
+});
 test('locked repository dependencies are installed before every consuming stage, including forward and profile checks', () => {
   const jobs = parse(baseline['javascript-first.yml']).jobs;
   const installations = [
@@ -49,7 +59,7 @@ test('locked repository dependencies are installed before every consuming stage,
     const steps = workflow.jobs.translation.steps;
     const index = steps.findIndex(step => step.run === 'npm ci --prefix js --ignore-scripts');
     const [install] = steps.splice(index, 1);
-    steps.splice(steps.findIndex(step => step.run === 'node scripts/translate-router.mjs --check'), 0, install);
+    steps.splice(steps.findIndex(step => step.run === "node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --check"), 0, install);
   }, 'locked dependency install must precede');
 });
 test('installed pre-commit hooks preserve generic checks without automatic Rust execution or cache cleanup', () => {
@@ -137,7 +147,7 @@ test('aggregate rejects partial green, skipped and cancelled stages', () => {
 });
 test('independent profile freshness and strict TypeScript cannot be removed or replaced by canonical checks', () => {
   for (const [stage, command, substitute] of [
-    ['profile-matrix', 'node scripts/translate-router.mjs --profile-matrix --check', 'node scripts/translate-router.mjs --check'],
+    ['profile-matrix', "node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --profile-matrix --check", "node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --check"],
     ['typescript', 'node scripts/check-profile-typescript.mjs', 'node js/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json'],
   ]) {
     assert.ok(parse(baseline['javascript-first.yml']).jobs[stage].steps.some(step => step.run === command));
@@ -305,3 +315,6 @@ test('the fixed draft event model refuses missing malformed payloads and treats 
 test('unknown complete workflow source and a corrupted review archive cannot supply the fixed exception',{timeout:60000},()=>{
  const packet=readFixedNineDraftWorkflowSources(),root=fs.mkdtempSync(path.join(os.tmpdir(),'fixed-nine-workflow-source-'));try{for(const row of packet.files){const target=path.join(root,row.path);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,row.after??row.before);}const archive=path.join(root,'scripts/ci/fixed-nine-draft-workflow-sources.json.gz');fs.mkdirSync(path.dirname(archive),{recursive:true});fs.copyFileSync(new URL('../ci/fixed-nine-draft-workflow-sources.json.gz',import.meta.url),archive);const target=path.join(root,'.github/workflows/benchmarks.yml');fs.appendFileSync(target,'\n# source not in reviewed equation\n');assert.throws(()=>prepareDraftSupplementalWorkflows({root}),/physical workflow differs/);const bytes=fs.readFileSync(archive);bytes[bytes.length-1]^=1;fs.writeFileSync(archive,bytes);assert.throws(()=>readFixedNineDraftWorkflowSources({root}),/source archive differs/);}finally{fs.rmSync(root,{recursive:true,force:true});}
 });
+
+// Whole native-profile workflow cases run where locked YAML is installed.
+import '../../tools/translation/test/native-profile-oracles-20261101-workflow-cases.mjs';

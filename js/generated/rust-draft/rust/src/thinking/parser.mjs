@@ -36,8 +36,8 @@ function rp_7468696e6b696e672e7061727365722e70617273655f6e756d657269635f73756666
       }
       case "Some": {
         const ml_standard_pattern_4 = ml_standard_callback_self_3.field0;
-        const ml_standard_callback_arg_1 = ml_standard_pattern_4;
-        const digits = ml_standard_callback_arg_1;
+        const ml_standard_callback_arg_5 = ml_standard_pattern_4;
+        const digits = ml_standard_callback_arg_5;
         return (!(digits.length === 0) && ml_router_all(ml_string_bytes(digits), (digit) => { return (digit === 48n); }));
       }
       default: {

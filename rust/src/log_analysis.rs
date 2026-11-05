@@ -779,7 +779,7 @@ pub fn show(root: &Path, token: crate::translation_core::Maybe<&crate::translati
         output: Vec::new(),
     });
     if records.is_empty() {
-        return Ok(format!("no records for correlation id {correlation_id}\n"));
+        return Ok(crate::translation_core::format!("no records for correlation id {correlation_id}\n"));
     }
     let mut rendered = String::new();
     for record in records {

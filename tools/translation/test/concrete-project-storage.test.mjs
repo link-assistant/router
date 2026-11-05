@@ -96,11 +96,11 @@ function repository(){
   return {root,source,write,git,original,logical,storageLimits,plan,project:plan.manifest.projects[0],cleanup:()=>rmSync(root,{recursive:true,force:true})};
 }
 
-test('real bulk planning writes the whole CST sidecar and detects missing stale unexpected outputs',{timeout:60000},()=>{
+test('real bulk planning preserves the whole CST sidecar edited peers and authored neighbors',{timeout:60000},()=>{
   const f=repository();try{
     const path=f.project.targets.concreteSyntaxMeta;assert.ok(path);assert.ok(f.plan.outputs.some(row=>row.path===path));assert.deepEqual(applyRegenerationPlan(f.plan,{check:true}).failures,[]);
-    const original=readFileSync(join(f.root,path)),extra=path+'.unexpected.json';rmSync(join(f.root,path));f.write(extra,'{}');const missing=applyRegenerationPlan(f.plan,{check:true}).failures;assert.ok(missing.includes('missing: '+path));assert.ok(missing.includes('unexpected: '+extra));
-    f.write(path,'[]\n');const stale=applyRegenerationPlan(f.plan,{check:true}).failures;assert.ok(stale.includes('stale: '+path));applyRegenerationPlan(f.plan);assert.ok(readFileSync(join(f.root,path)).equals(original));assert.deepEqual(applyRegenerationPlan(f.plan,{check:true}).failures,[]);
+    const original=readFileSync(join(f.root,path)),extra=path+'.unexpected.json';rmSync(join(f.root,path));f.write(extra,'{}');const missing=applyRegenerationPlan(f.plan,{check:true}).failures;assert.ok(missing.includes('missing: '+path));assert.ok(!missing.includes('unexpected: '+extra));assert.equal(readFileSync(join(f.root,extra),'utf8'),'{}');
+    f.write(path,'[]\n');const stale=applyRegenerationPlan(f.plan,{check:true}).failures;assert.ok(stale.includes('edited: '+path));assert.throws(()=>applyRegenerationPlan(f.plan),/edited .*forward peer retained/);assert.equal(readFileSync(join(f.root,path),'utf8'),'[]\n');assert.equal(readFileSync(join(f.root,extra),'utf8'),'{}');f.write(path,original);applyRegenerationPlan(f.plan);assert.ok(readFileSync(join(f.root,path)).equals(original));assert.deepEqual(applyRegenerationPlan(f.plan,{check:true}).failures,[]);
     const loaded=loadProjectMetaStorageWithCompressedConcrete(readFileSync(join(f.root,metaPath)),{metaPath,targets:f.project.targets,read:name=>readFileSync(join(f.root,name)),storageLimits:f.storageLimits});assert.equal(loaded.text,f.original);assert.equal(loaded.meta.concreteSyntaxMeta[0].document.source,f.source);
     retain('06-real-bulk-component',{source:f.source,plan:f.plan,missing,stale,loaded});
   }finally{f.cleanup();}
@@ -126,4 +126,9 @@ test('valid complete storage does not turn forged concrete authority into an acc
   const loaded=loadProjectMetaStorage(plan.text,{metaPath,targets:{...f.targets,...plan.targets},storageLimits:f.storageLimits,read:name=>files.get(name)});assert.equal(loaded.text,original);
   const error=refused(()=>parseConcreteSyntaxMeta(JSON.stringify(loaded.meta.concreteSyntaxMeta[0].document)));assert.match(error.message,/authority/);
   retain('08-storage-not-concrete-or-semantic-authority',{original,plan,loaded,error});
+});
+
+test('a second real source edit reissues whole CST producers and rejects the stale first plan',{timeout:60000},()=>{
+ const f=repository();try{const target=f.project.targets.javascript,before=readFileSync(join(f.root,target)),changed=f.source.replace('v+0u8','v+1u8');assert.notEqual(changed,f.source);f.write('src/lib.rs',changed);assert.throws(()=>applyRegenerationPlan(f.plan),/original .*source|source.*changed|source identity/);assert.ok(readFileSync(join(f.root,target)).equals(before));const next=planRegeneration({root:f.root,sources:['src/lib.rs'],projectMetaStorageLimits:f.storageLimits});applyRegenerationPlan(next);assert.notDeepEqual(readFileSync(join(f.root,target)),before);assert.deepEqual(applyRegenerationPlan(next,{check:true}).failures,[]);const nextAgain=planRegeneration({root:f.root,sources:['src/lib.rs'],projectMetaStorageLimits:f.storageLimits});assert.equal(applyRegenerationPlan(nextAgain).noOp,true);
+ }finally{f.cleanup();}
 });

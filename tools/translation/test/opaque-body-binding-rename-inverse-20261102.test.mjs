@@ -1,0 +1,8 @@
+// Whole actual copied compiler receiving cases. Every execution is UNRUN now.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {performance} from 'node:perf_hooks';
+import {receiveOpaqueBoundedBindingRename} from '../opaque-receiving-bounded-binding-rename-20261102.mjs';
+const limits={timeout:60000,concurrency:false};
+for(const language of ['JavaScript','TypeScript'])test('actual whole paired local binding rename rechecks original/native/adopted graphs using '+language,limits,t=>{const value=receiveOpaqueBoundedBindingRename(t,{operation:'binding-rename-sample',language},{startedAt:performance.now()});assert.equal(value.packet.ok,true,JSON.stringify(value.packet.error));const result=value.packet.result,sample=result.receivingBindingRenameSample;assert.notEqual(sample.before,sample.after);assert.ok(sample.nativeOccurrences>=2);assert.equal(result.pairedTargetAgreement,true);assert.equal(result.projectAttemptCount,6);assert.equal(result.receivingTotalProjectAttemptCount,9);assert.ok(result.nativeEdits.length>=2);for(const row of result.rustEdits)assert.equal(row.history.inverse,row.before);assert.equal(result.sourceInstalled,false);assert.equal(result.semanticAuthority,false);assert.equal(value.report.cleanupSucceeded,true);});
+test('actual whole inverse refuses a stale authored peer after an otherwise consistent local binding rename',limits,t=>{const value=receiveOpaqueBoundedBindingRename(t,{operation:'binding-rename-sample',language:'JavaScript',sampleVariant:'stale-peer'},{startedAt:performance.now()});assert.equal(value.packet.ok,false);assert.equal(value.report.cleanupSucceeded,true);});

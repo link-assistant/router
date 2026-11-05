@@ -1,0 +1,30 @@
+// Independent explicit paired scalar-type SOURCE. All new cases UNRUN.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {translateProject} from '../project.mjs';
+import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
+import {FIXED_TYPE_CORE_NATIVE_SOURCE,FIXED_TYPE_CORE_ALIASES,readFixedTypeCoreSourceRole} from '../fixed-type-core-source.mjs';
+import {selectOriginalFixedTypeCore} from '../fixed-type-core-interface.mjs';
+import {parseRouterCoreFixedType} from '../fixed-type-core-parser.mjs';
+import {prepareFixedTypeCoreSources} from '../prepare-fixed-type-core-sources.mjs';
+import {prepareFixedTypeCoreNativeSources} from '../prepare-fixed-type-core-native-sources.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
+import {rustTokens} from '../rust-structure.mjs';
+import {verifyTypedTargets} from './typed-targets.mjs';
+const limits={timeout:60000},C='crate::translation_fixed_types_core::',widths=['u8','u16','u32','u64','u128','i8','i16','i32','i64','i128'];
+const body=widths.map(type=>'pub fn identity_'+type+'(value:'+C+type[0].toUpperCase()+type.slice(1)+')->'+C+type[0].toUpperCase()+type.slice(1)+'{value}').join('\n')+'\npub fn boolean(value:'+C+'Bool)->'+C+'Bool{value}\npub fn floating(value:'+C+'F64)->'+C+'F64{value}\n';
+function input(source=body,{declaration='pub mod translation_fixed_types_core;\n',native=FIXED_TYPE_CORE_NATIVE_SOURCE}={}){const files={'src/lib.rs':declaration+source,'src/translation_fixed_types_core.rs':native};return {files,options:{entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]}};}
+test('original twelve scalar domains use the actual native library and original checked scalar meta across serialization',limits,()=>{
+ const physical=readFileSync(new URL('../../../rust/src/translation_fixed_types_core.rs',import.meta.url),'utf8');assert.equal(physical,FIXED_TYPE_CORE_NATIVE_SOURCE);assert.equal(transportConcreteSyntaxMeta(transportConcreteSyntaxSource(physical,{language:'Rust'}).meta).source,physical);const request=input(),result=translateProject(request.options),wire=JSON.stringify(result.meta.checkedSemanticProgram),program=parseProgram(wire);assert.equal(serializeProgram(program),wire);for(const type of widths){const entry=program.declarations.get('identity_'+type);assert.ok(entry,type);assert.equal(entry.params[0].type.kind,'fixed');assert.equal(entry.params[0].type.bits,Number(type.slice(1)));assert.equal(entry.params[0].type.signed,type[0]==='i');assert.equal(entry.params[0].type.rustPrimitiveName,type);assert.equal(entry.ret.rustPrimitiveName,type);}assert.equal(program.declarations.get('boolean').ret.kind,'bool');assert.equal(program.declarations.get('floating').ret.kind,'float');assert.equal(FIXED_TYPE_CORE_ALIASES.length,14);
+});
+test('all fixed widths bool and binary64 retain independent whole JS strict TS value domains without coercion',limits,async()=>{
+ const result=translateProject(input().options);await verifyTypedTargets(result,api=>{for(const type of widths){const bits=BigInt(type.slice(1)),signed=type[0]==='i',min=signed?-(1n<<(bits-1n)):0n,max=(1n<<(signed?bits-1n:bits))-1n,fn=api['identity_'+type];for(const value of [min,0n,1n,max])assert.equal(fn(value),value);assert.throws(()=>fn(min-1n));assert.throws(()=>fn(max+1n));assert.throws(()=>fn(1));}for(const value of [false,true])assert.equal(api.boolean(value),value);for(const value of [-0,0,1,-1,Number.MIN_VALUE,Number.MAX_VALUE,Infinity,-Infinity,NaN])assert.ok(Object.is(api.floating(value),value));let reads=0;const hostile={[Symbol.toPrimitive](){reads++;return 1;}};assert.throws(()=>api.identity_u64(hostile));assert.throws(()=>api.boolean(hostile));assert.throws(()=>api.floating(hostile));assert.equal(reads,0);},{childTimeoutMs:20000});
+});
+test('the lexical role table cannot admit missing root bindings altered native bodies cfg/use shadows unknown aliases or fabricated parser/scope data',limits,()=>{
+ assert.equal(readFixedTypeCoreSourceRole(rustTokens(C+'U64')),'u64');assert.throws(()=>selectOriginalFixedTypeCore({modules:[],sourceScopes:[]}));const words=['crate','::','translation_fixed_types_core','::','U64'],fake={cursor:{is:(word,at=0)=>words[at]===word,peek:(at=0)=>({kind:'identifier',value:words[at],start:at,end:at+1})}};assert.throws(()=>parseRouterCoreFixedType(fake));
+ for(const overrides of [{declaration:''},{declaration:'#[cfg(all())]pub mod translation_fixed_types_core;\n'},{declaration:'pub mod translation_fixed_types_core;\nuse crate::translation_fixed_types_core as other;\n'},{native:FIXED_TYPE_CORE_NATIVE_SOURCE+'\n// changed complete library\n'},{native:FIXED_TYPE_CORE_NATIVE_SOURCE.replace('pub type U64 = ::std::primitive::u64;','pub type U64 = ::std::primitive::i64;')}]){const result=translateProject(input(body,overrides).options);assert.equal(result.meta.executable.filter(row=>row.name.startsWith('identity_')||['boolean','floating'].includes(row.name)).length,0);}const unknown=translateProject(input('pub fn unknown(value:'+C+'Unknown)->'+C+'Unknown{value}').options);assert.equal(unknown.meta.executable.some(row=>row.name==='unknown'),false);
+});
+test('ten complete compiler equations and actual two-file native template construction retain language/repository rules CST and original inverses',limits,()=>{
+ const plan=prepareFixedTypeCoreSources();assert.equal(plan.files.length,10);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.receivingExecuted,false);const native=prepareFixedTypeCoreNativeSources();assert.equal(native.files.length,2);for(const row of native.files){assert.equal(row.current,row.after);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.equal(row.rustExecuted,false);}assert.equal(native.nativeRustGrammarChecked,false);assert.equal(native.receivingExecuted,false);
+});

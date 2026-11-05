@@ -20,8 +20,8 @@ pub fn client_version() -> String {
 
 /// User-Agent emitted by Claude Code's OAuth account endpoints.
 #[must_use]
-pub fn oauth_user_agent() -> String {
-    format!("claude-cli/{} (external, cli)", client_version())
+pub fn oauth_user_agent() -> crate::translation_core::Text {
+    crate::translation_core::format!("claude-cli/{} (external, cli)", client_version())
 }
 
 /// Whether an upstream credential is a Claude subscription OAuth access token.

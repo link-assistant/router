@@ -51,11 +51,11 @@ impl ManagementConfig {
     }
 }
 
-fn integer<T: std::str::FromStr>(name: &str, default: T) -> Result<T, String> {
+fn integer<T: std::str::FromStr>(name: &crate::translation_core::Str, default: T) -> Result<T, String> {
     crate::operation_context::var(name).map_or(Ok(default), |value| {
         value
             .parse()
-            .map_err(|_| format!("{name} must be a non-negative integer"))
+            .map_err(|_| crate::translation_core::format!("{name} must be a non-negative integer"))
     })
 }
 
@@ -64,7 +64,7 @@ fn boolean(name: &crate::translation_core::Str, default: bool) -> crate::transla
         match value.to_ascii_lowercase().as_str() {
             "true" | "1" | "yes" | "on" => Ok(true),
             "false" | "0" | "no" | "off" => Ok(false),
-            _ => Err(format!("{name} must be true or false")),
+            _ => Err(crate::translation_core::format!("{name} must be true or false")),
         }
     })
 }

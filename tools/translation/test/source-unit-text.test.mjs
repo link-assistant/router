@@ -1,0 +1,17 @@
+// Independent three-direction transaction SOURCE. Unrun during bulk drafting.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join,dirname} from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {ownedStateReceivingData} from '../js-to-rust/test/owned-state-receiving-data.mjs';
+import {OWNED_OUTCOME_NATIVE_SOURCE} from '../owned-outcome-native-source.mjs';
+import {TEXT_NATIVE_SOURCE} from '../text-native-source.mjs';
+import {OWNED_OUTCOME_NATIVE_INPUTS,ownedOutcomeUnitRuntimeSources} from '../owned-outcome-unit.mjs';
+import {planUnitSynchronization,applyUnitSynchronization} from '../synchronize-units.mjs';
+test('actual JS Rust and TS edits preserve text core source mappings and live string origins',{timeout:60000},t=>{
+ const root=mkdtempSync(join(tmpdir(),'router-text-unit-'));t.after(()=>rmSync(root,{recursive:true,force:true}));const write=(path,value)=>{mkdirSync(dirname(join(root,path)),{recursive:true});writeFileSync(join(root,path),value);},read=path=>readFileSync(join(root,path),'utf8'),git=args=>execFileSync('git',['-C',root,'-c','core.hooksPath=/dev/null','-c','user.name=Router fixture','-c','user.email=fixture@example.invalid',...args],{stdio:'pipe',timeout:20000}),commit=()=>{git(['add','.']);git(['commit','--quiet','-m','Text unit baseline']);};git(['init','--quiet']);write('seed','baseline');commit();
+ const unit={id:'text',profile:'owned-outcome',authority:'auto',paths:{Rust:'rust/src/caller.rs',JavaScript:'js/src/caller.mjs',TypeScript:'ts/src/caller.ts'},runtimes:{JavaScript:'js/runtime',TypeScript:'ts/runtime'},meta:'translation/caller.json',nativeSources:[...OWNED_OUTCOME_NATIVE_INPUTS,'src/translation_text_core.rs'].map(path=>({path,sourcePath:path==='Cargo.lock'?path:'rust/'+path}))},data=ownedStateReceivingData(),native=new Map(data.files.filter(row=>!row.path.startsWith('runtime/')).map(row=>[row.path,row.source]));native.set('src/lib.rs',native.get('src/lib.rs')+'pub mod translation_carriers_core;\npub mod translation_text_core;\n');native.set('src/translation_carriers_core.rs',OWNED_OUTCOME_NATIVE_SOURCE);native.set('src/translation_text_core.rs',TEXT_NATIVE_SOURCE);for(const row of unit.nativeSources)write(row.sourcePath,native.get(row.path));for(const row of ownedOutcomeUnitRuntimeSources(unit))write(row.path,row.source);write('units.json',JSON.stringify({schema:'router-source-unit-sync-v1',units:[unit]}));
+ write(unit.paths.JavaScript,"import {router_text_take_chars as take} from '../runtime/text-runtime.mjs';\n/** @param {string} value */\nexport function initial(value){return take(value,1n);}\n");const options={root,manifestPath:'units.json'},plan=()=>planUnitSynchronization(options),apply=value=>applyUnitSynchronization(JSON.stringify(value),options);apply(plan());commit();write(unit.paths.Rust,read(unit.paths.Rust).replace('1_u64','2_u64'));let proposal=plan();assert.equal(proposal.units[0].authority,'Rust');apply(proposal);commit();write(unit.paths.JavaScript,read(unit.paths.JavaScript).replace('2n','3n'));proposal=plan();assert.equal(proposal.units[0].authority,'JavaScript');apply(proposal);commit();write(unit.paths.TypeScript,read(unit.paths.TypeScript).replace('3n','4n'));proposal=plan();assert.equal(proposal.units[0].authority,'TypeScript');apply(proposal);assert.match(read(unit.paths.Rust),/4_u64/u);assert.equal(proposal.rustExecuted,false);assert.equal(proposal.crossInvocationCache,false);
+});

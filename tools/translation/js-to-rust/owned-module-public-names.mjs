@@ -1,0 +1,3 @@
+import {snakeFromCamel} from './vendor/ir.mjs';
+const reserved=new Set('as async await break const continue crate dyn else enum extern false fn for if impl in let loop match mod move mut pub ref return self Self static struct super trait true type unsafe use where while abstract become box do final macro override priv typeof unsized virtual yield try gen'.split(' '));
+export function ownedModuleRustPublicName(name){const value=snakeFromCamel(name);if(!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(value)||value==='_'||reserved.has(value))throw new TypeError('Owned public alias requires an ordinary nonreserved Rust identifier');return value;}

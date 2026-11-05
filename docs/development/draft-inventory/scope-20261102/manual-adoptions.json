@@ -1,0 +1,949 @@
+[
+ {
+  "entry": "[\"rust/src/main.rs\",\"entrypoint\",[],\"router::main\",[111,265],[],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "F01",
+   "F02"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/main.rs",
+    "symbol": "router::main",
+    "span": [
+     111,
+     265
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "implementation-is-existing-Rust-or-JavaScript-source-only",
+   "complete-language-repository-rules-CST-meta-private-checks-forward-reverse-sync-cases-unproved"
+  ]
+ },
+ {
+  "entry": "[\"rust/build.rs\",\"function\",[],\"main\",[102,1400],[],\"router-build-source-commit\"]",
+  "requirements": [
+   "L01",
+   "L02",
+   "B02"
+  ],
+  "implementations": [
+   {
+    "path": "rust/build.rs",
+    "symbol": "main",
+    "span": [
+     102,
+     1400
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "inapplicable",
+    "paths": [],
+    "reason": "This record inventories a build input/target declaration; application translation is tracked separately for its actual source callers."
+   },
+   "strictTypeScript": {
+    "status": "inapplicable",
+    "paths": [],
+    "reason": "This record inventories a build input/target declaration; application translation is tracked separately for its actual source callers."
+   },
+   "reverseRust": {
+    "status": "inapplicable",
+    "paths": [],
+    "reason": "This record inventories a build input/target declaration; application translation is tracked separately for its actual source callers."
+   },
+   "synchronization": {
+    "status": "inapplicable",
+    "paths": [],
+    "reason": "This record inventories a build input/target declaration; application translation is tracked separately for its actual source callers."
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "implementation-is-existing-Rust-or-JavaScript-source-only",
+   "complete-language-repository-rules-CST-meta-private-checks-forward-reverse-sync-cases-unproved"
+  ]
+ },
+ {
+  "entry": "[\"rust/src/entrypoint.rs\",\"function\",[\"entrypoint\"],\"run_on_a_deep_stack\",[927,1640],[],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "F01",
+   "F02"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/entrypoint.rs",
+    "symbol": "run_on_a_deep_stack",
+    "span": [
+     927,
+     1640
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [
+   "rust/src/entrypoint_tests.rs"
+  ],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "implementation-is-existing-Rust-or-JavaScript-source-only",
+   "complete-language-repository-rules-CST-meta-private-checks-forward-reverse-sync-cases-unproved"
+  ]
+ },
+ {
+  "entry": "[\"rust/src/entrypoint.rs\",\"closure\",[\"entrypoint\",\"run_on_a_deep_stack\"],\"spawn-worker\",[1215,1479],[],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "F01",
+   "F02"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/entrypoint.rs",
+    "symbol": "spawn-worker",
+    "span": [
+     1215,
+     1479
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [
+   "rust/src/entrypoint_tests.rs"
+  ],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "implementation-is-existing-Rust-or-JavaScript-source-only",
+   "complete-language-repository-rules-CST-meta-private-checks-forward-reverse-sync-cases-unproved"
+  ]
+ },
+ {
+  "entry": "[\"rust/src/security_headers.rs\",\"function\",[\"security_headers\"],\"apply\",[2331,2603],[],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "F01",
+   "F02"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/security_headers.rs",
+    "symbol": "apply",
+    "span": [
+     2331,
+     2603
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [
+   "rust/src/security_headers.rs"
+  ],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "implementation-is-existing-Rust-or-JavaScript-source-only",
+   "complete-language-repository-rules-CST-meta-private-checks-forward-reverse-sync-cases-unproved"
+  ]
+ },
+ {
+  "entry": "[\"rust/src/security_headers.rs\",\"module\",[\"security_headers\"],\"tests\",[2604,3349],[\"cfg(test)\"],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "T01"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/security_headers.rs",
+    "symbol": "tests",
+    "span": [
+     2604,
+     3349
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "implementation-is-existing-Rust-or-JavaScript-source-only",
+   "complete-language-repository-rules-CST-meta-private-checks-forward-reverse-sync-cases-unproved"
+  ]
+ },
+ {
+  "entry": "[\"rust/src/security_headers.rs\",\"function\",[\"security_headers\",\"tests\"],\"the_policy_pins_scripts_to_this_origin_and_forbids_framing\",[2648,3083],[\"cfg(test)\"],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "T01"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/security_headers.rs",
+    "symbol": "the_policy_pins_scripts_to_this_origin_and_forbids_framing",
+    "span": [
+     2648,
+     3083
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "implementation-is-existing-Rust-or-JavaScript-source-only",
+   "complete-language-repository-rules-CST-meta-private-checks-forward-reverse-sync-cases-unproved"
+  ]
+ },
+ {
+  "entry": "[\"rust/src/security_headers.rs\",\"function\",[\"security_headers\",\"tests\"],\"every_hardening_header_has_a_valid_value\",[3085,3346],[\"cfg(test)\"],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "T01"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/security_headers.rs",
+    "symbol": "every_hardening_header_has_a_valid_value",
+    "span": [
+     3085,
+     3346
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "implementation-is-existing-Rust-or-JavaScript-source-only",
+   "complete-language-repository-rules-CST-meta-private-checks-forward-reverse-sync-cases-unproved"
+  ]
+ },
+ {
+  "entry": "[\"rust/src/bin/link-assistant-router.rs\",\"entrypoint\",[],\"link-assistant-router::included-main\",[0,815],[],\"legacy-router-main-include\"]",
+  "requirements": [
+   "L01",
+   "L02",
+   "F01",
+   "F02"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/bin/link-assistant-router.rs",
+    "symbol": "link-assistant-router::included-main",
+    "span": [
+     0,
+     815
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "implementation-is-existing-Rust-or-JavaScript-source-only",
+   "complete-language-repository-rules-CST-meta-private-checks-forward-reverse-sync-cases-unproved"
+  ]
+ },
+ {
+  "entry": "[\"rust/src/lib.rs\",\"module\",[],\"rust/src/lib.rs\",[0,7719],[],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "F01",
+   "F02"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/lib.rs",
+    "symbol": "rust/src/lib.rs",
+    "span": [
+     0,
+     7719
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "implementation-is-existing-Rust-or-JavaScript-source-only",
+   "complete-language-repository-rules-CST-meta-private-checks-forward-reverse-sync-cases-unproved"
+  ]
+ },
+ {
+  "entry": "[\"rust/src/bin/with-router.rs\",\"module\",[],\"rust/src/bin/with-router.rs\",[0,1701],[],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "F01",
+   "F02"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/bin/with-router.rs",
+    "symbol": "rust/src/bin/with-router.rs",
+    "span": [
+     0,
+     1701
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "implementation-is-existing-Rust-or-JavaScript-source-only",
+   "complete-language-repository-rules-CST-meta-private-checks-forward-reverse-sync-cases-unproved"
+  ]
+ },
+ {
+  "entry": "[\"js/src/index.mjs\",\"module\",[],\"js/src/index.mjs\",[0,431],[],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "F01",
+   "F02"
+  ],
+  "implementations": [
+   {
+    "path": "js/src/index.mjs",
+    "symbol": "js/src/index.mjs",
+    "span": [
+     0,
+     431
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "implementation-is-existing-Rust-or-JavaScript-source-only",
+   "complete-language-repository-rules-CST-meta-private-checks-forward-reverse-sync-cases-unproved"
+  ]
+ },
+ {
+  "entry": "[\"rust/Cargo.toml\",\"entrypoint\",[],\"router\",[981,1017],[],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "B02"
+  ],
+  "implementations": [
+   {
+    "path": "rust/Cargo.toml",
+    "symbol": "router",
+    "span": [
+     981,
+     1017
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "inapplicable",
+    "paths": [],
+    "reason": "This record inventories a build input/target declaration; application translation is tracked separately for its actual source callers."
+   },
+   "strictTypeScript": {
+    "status": "inapplicable",
+    "paths": [],
+    "reason": "This record inventories a build input/target declaration; application translation is tracked separately for its actual source callers."
+   },
+   "reverseRust": {
+    "status": "inapplicable",
+    "paths": [],
+    "reason": "This record inventories a build input/target declaration; application translation is tracked separately for its actual source callers."
+   },
+   "synchronization": {
+    "status": "inapplicable",
+    "paths": [],
+    "reason": "This record inventories a build input/target declaration; application translation is tracked separately for its actual source callers."
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "implementation-is-existing-Rust-or-JavaScript-source-only",
+   "complete-language-repository-rules-CST-meta-private-checks-forward-reverse-sync-cases-unproved"
+  ]
+ },
+ {
+  "entry": "[\"rust/Cargo.toml\",\"entrypoint\",[],\"link-assistant-router\",[1027,1099],[],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "B02"
+  ],
+  "implementations": [
+   {
+    "path": "rust/Cargo.toml",
+    "symbol": "link-assistant-router",
+    "span": [
+     1027,
+     1099
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "inapplicable",
+    "paths": [],
+    "reason": "This record inventories a build input/target declaration; application translation is tracked separately for its actual source callers."
+   },
+   "strictTypeScript": {
+    "status": "inapplicable",
+    "paths": [],
+    "reason": "This record inventories a build input/target declaration; application translation is tracked separately for its actual source callers."
+   },
+   "reverseRust": {
+    "status": "inapplicable",
+    "paths": [],
+    "reason": "This record inventories a build input/target declaration; application translation is tracked separately for its actual source callers."
+   },
+   "synchronization": {
+    "status": "inapplicable",
+    "paths": [],
+    "reason": "This record inventories a build input/target declaration; application translation is tracked separately for its actual source callers."
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "implementation-is-existing-Rust-or-JavaScript-source-only",
+   "complete-language-repository-rules-CST-meta-private-checks-forward-reverse-sync-cases-unproved"
+  ]
+ },
+ {
+  "entry": "[\"rust/Cargo.toml\",\"entrypoint\",[],\"with-router\",[1109,1161],[],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "B02"
+  ],
+  "implementations": [
+   {
+    "path": "rust/Cargo.toml",
+    "symbol": "with-router",
+    "span": [
+     1109,
+     1161
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "inapplicable",
+    "paths": [],
+    "reason": "This record inventories a build input/target declaration; application translation is tracked separately for its actual source callers."
+   },
+   "strictTypeScript": {
+    "status": "inapplicable",
+    "paths": [],
+    "reason": "This record inventories a build input/target declaration; application translation is tracked separately for its actual source callers."
+   },
+   "reverseRust": {
+    "status": "inapplicable",
+    "paths": [],
+    "reason": "This record inventories a build input/target declaration; application translation is tracked separately for its actual source callers."
+   },
+   "synchronization": {
+    "status": "inapplicable",
+    "paths": [],
+    "reason": "This record inventories a build input/target declaration; application translation is tracked separately for its actual source callers."
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "implementation-is-existing-Rust-or-JavaScript-source-only",
+   "complete-language-repository-rules-CST-meta-private-checks-forward-reverse-sync-cases-unproved"
+  ]
+ },
+ {
+  "entry": "[\"rust/src/operation_context.rs\",\"trait-method\",[\"operation_context\",\"ProcessRunner\"],\"output\",[437,528],[],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "O01"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/operation_context.rs",
+    "symbol": "output",
+    "span": [
+     437,
+     528
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "actual-receiving-implementation-private-checks-and-independent-cases-missing"
+  ]
+ },
+ {
+  "entry": "[\"rust/src/operation_context.rs\",\"trait-method\",[\"operation_context\",\"ProcessRunner\"],\"spawn\",[611,725],[],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "O01"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/operation_context.rs",
+    "symbol": "spawn",
+    "span": [
+     611,
+     725
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "actual-receiving-implementation-private-checks-and-independent-cases-missing"
+  ]
+ },
+ {
+  "entry": "[\"rust/src/operation_context.rs\",\"impl-method\",[\"operation_context\",\"impl Default for OperationContext\"],\"default\",[2273,2849],[],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "O01"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/operation_context.rs",
+    "symbol": "default",
+    "span": [
+     2273,
+     2849
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "actual-receiving-implementation-private-checks-and-independent-cases-missing"
+  ]
+ },
+ {
+  "entry": "[\"rust/src/operation_context.rs\",\"impl-method\",[\"operation_context\",\"impl OperationContext\"],\"scope\",[3728,3849],[],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "O01"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/operation_context.rs",
+    "symbol": "scope",
+    "span": [
+     3728,
+     3849
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "actual-receiving-implementation-private-checks-and-independent-cases-missing"
+  ]
+ },
+ {
+  "entry": "[\"rust/src/entrypoint_tests.rs\",\"function\",[\"entrypoint\",\"tests\"],\"a_deep_call_chain_completes\",[993,1570],[\"cfg(test)\"],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "T01"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/entrypoint_tests.rs",
+    "symbol": "a_deep_call_chain_completes",
+    "span": [
+     993,
+     1570
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "actual-receiving-implementation-private-checks-and-independent-cases-missing"
+  ]
+ },
+ {
+  "entry": "[\"rust/src/entrypoint_tests.rs\",\"nested-function\",[\"entrypoint\",\"tests\",\"a_deep_call_chain_completes\"],\"descend\",[1036,1323],[\"cfg(test)\"],null]",
+  "requirements": [
+   "L01",
+   "L02",
+   "T01"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/entrypoint_tests.rs",
+    "symbol": "descend",
+    "span": [
+     1036,
+     1323
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "actual-receiving-implementation-private-checks-and-independent-cases-missing"
+  ]
+ },
+ {
+  "entry": "[\"rust/src/generated_js_first/mod.rs\",\"module\",[],\"generated_js_first\",[0,75],[],\"generated-js-first-policy\"]",
+  "requirements": [
+   "L01",
+   "L02",
+   "L04"
+  ],
+  "implementations": [
+   {
+    "path": "rust/src/generated_js_first/mod.rs",
+    "symbol": "generated_js_first",
+    "span": [
+     0,
+     75
+    ]
+   }
+  ],
+  "lanes": {
+   "forwardJavaScript": {
+    "status": "required",
+    "paths": []
+   },
+   "strictTypeScript": {
+    "status": "required",
+    "paths": []
+   },
+   "reverseRust": {
+    "status": "required",
+    "paths": []
+   },
+   "synchronization": {
+    "status": "required",
+    "paths": []
+   }
+  },
+  "independentCases": [],
+  "reviewStatus": "OPEN",
+  "unresolved": [
+   "actual-receiving-implementation-private-checks-and-independent-cases-missing"
+  ]
+ }
+]

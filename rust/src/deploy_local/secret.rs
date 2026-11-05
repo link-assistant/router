@@ -34,9 +34,9 @@ fn hmac_sha256(key: &[u8], message: &[u8]) -> Vec<u8> {
 
 /// A keyed, truncated digest that identifies a secret without revealing it:
 /// HMAC-SHA256 keyed by the secret over a fixed context, first 128 bits.
-pub(super) fn fingerprint(secret: &crate::translation_core::Str) -> String {
+pub(super) fn fingerprint(secret: &crate::translation_core::Str) -> crate::translation_core::Text {
     let digest = hmac_sha256(secret.as_bytes(), FINGERPRINT_CONTEXT);
-    format!("hmac-sha256:{}", hex::encode(&digest[..16]))
+    crate::translation_core::format!("hmac-sha256:{}", hex::encode(&digest[..16]))
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

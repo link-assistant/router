@@ -5,7 +5,8 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {fixedNativeDescriptorSourcePair} from './prepare-fixed-native-descriptor-census.mjs';
-import {invocationLocalFreezerSourcePairs} from './prepare-invocation-local-freezer.mjs';
+import {invocationLocalFreezerSourcePairs} from './invocation-local-freezer-receiving-history.mjs';
+import {restoreCompilerAliasLaterHistory} from './test/fixtures/current-receiving-source-history.mjs';
 import {negativeBudgetConsumerImport} from './prepare-negative-budget-proof-json.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const FIXTURE='tools/translation/test/fixtures/compiler-data-alias-history.mjs';
@@ -22,7 +23,7 @@ function whole(path,before,after){
 function historyRows(root){
  const paths=['private-frozen-json.mjs','derive-bang-context.mjs','derive-enclosing-namespace-context.mjs','builtin-derive-bang-footprints.mjs','original-json-intrinsics.mjs','private-data-freeze.mjs'],rows=[];
  for(const name of paths){
-  const path='tools/translation/'+name,source=readFileSync(resolve(root,path),'utf8');let before=source,edits=[];
+  const path='tools/translation/'+name,physicalCurrent=readFileSync(resolve(root,path),'utf8'),source=restoreCompilerAliasLaterHistory(physicalCurrent,name);let before=source,edits=[];
   if(name==='private-data-freeze.mjs'){
    const pair=invocationLocalFreezerSourcePairs(root).find(row=>row.path===path);if(!pair||source!==pair.after)fail('complete actual invocation-local freezer required');
    edits=[{expected:pair.after,replacement:pair.original}];before=pair.original;
@@ -53,12 +54,13 @@ import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 import {createHash} from 'node:crypto';
+import {restoreCompilerAliasLaterHistory} from './current-receiving-source-history.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from '../../concrete-syntax-meta.mjs';
 const RECORDS=${JSON.stringify(records)};
 const hash=text=>createHash('sha256').update(text).digest('hex');
 const fail=message=>{throw new TypeError('Compiler alias source history: '+message);};
 export function restoreCompilerDataAliasHistory(source,name,retain=()=>{}){
- const matches=RECORDS.filter(row=>row.name===name);if(typeof source!=='string'||matches.length!==1)fail('complete registered source required');const row=matches[0];if(hash(source)!==row.currentSha256)fail('complete actual current source changed');let historical=source;
+ const matches=RECORDS.filter(row=>row.name===name);if(typeof source!=='string'||matches.length!==1)fail('complete registered source required');const row=matches[0];source=restoreCompilerAliasLaterHistory(source,name,retain);if(hash(source)!==row.currentSha256)fail('complete actual current source changed');let historical=source;
  for(const edit of row.edits){if(historical.split(edit.expected).length!==2)fail('actual whole substitution is absent or ambiguous');historical=historical.replace(edit.expected,()=>edit.replacement);}
  if(hash(historical)!==row.historicalSha256)fail('complete historical source differs');
  const first=transportConcreteSyntaxSource(source,{language:'JavaScript'}),run=applyConcreteSyntaxSubstitutions(first.document,{languageRules:[{id:'javascript:retain-all-original-comparison-bodies',edits:[]}],repositoryRules:[{id:'receiving:restore-complete-pre-alias-comparison-DATA',edits:[{span:[0,source.length],expected:source,replacement:historical}]}]}),afterMeta=serializeConcreteSyntaxMeta(run.value);if(transportConcreteSyntaxMeta(afterMeta).source!==historical)fail('complete source reparse differs');
@@ -83,6 +85,8 @@ export function prepareCompilerAliasHistory({root=fileURLToPath(new URL('../../'
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');const records=historyRows(root),fixture=renderFixture(records),files=[whole(FIXTURE,(()=>{try{return readFileSync(resolve(root,FIXTURE),'utf8');}catch(e){if(e.code==='ENOENT')return '';throw e;}})(),fixture)];
  for(const name of FILES){
   const path='tools/translation/test/'+name+'.test.mjs',source=readFileSync(resolve(root,path),'utf8'),file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete test grammar');
+  const later=file.statements.filter(node=>ts.isImportDeclaration(node)&&node.moduleSpecifier.text==='./fixtures/current-receiving-source-history.mjs');
+  if(later.length){if(later.length!==1||name!=='private-frozen-json'||later[0].importClause.namedBindings.elements.map(node=>(node.propertyName??node.name).text+':'+node.name.text).join(',')!=='readOriginalBuiltinPlanReceivingHistory:readFileSync')fail('exact current source-reader composition required');continue;}
   const existing=file.statements.filter(node=>ts.isImportDeclaration(node)&&node.moduleSpecifier.text==='./fixtures/compiler-data-alias-history.mjs');
   if(existing.length){if(existing.length!==1)fail('unique actual historical reader import');if(name==='private-frozen-json'){const node=existing[0],replacement="import {readOriginalBuiltinPlanHistory as readFileSync} from './fixtures/compiler-data-alias-history.mjs';",after=source.slice(0,node.getStart(file))+replacement+source.slice(node.end);if(after!==source)files.push(whole(path,source,after));}continue;}
   const selected=file.statements.filter(node=>ts.isImportDeclaration(node)&&['node:fs','fs'].includes(node.moduleSpecifier.text)&&node.importClause?.namedBindings&&ts.isNamedImports(node.importClause.namedBindings)&&node.importClause.namedBindings.elements.some(el=>!el.propertyName&&el.name.text==='readFileSync'));

@@ -1,0 +1,11 @@
+{
+  "schema": "router-protected-source-errors-source-draft-v1",
+  "sha256": "939576823a9ba5a4486b88505cc0474015b52f5b9b2db42d774487532cee0204",
+  "decodedBytes": 386193,
+  "packedBytes": 81114,
+  "completeFiles": 7,
+  "completeEquations": 3,
+  "caseSources": 8,
+  "execution": "UNRUN",
+  "CI": "NOT_INSPECTED"
+}

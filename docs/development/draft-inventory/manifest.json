@@ -1,0 +1,255 @@
+{
+  "schema": "router-source-draft-inventory-v1",
+  "revision": "9d29e99dce4874a9c646e19db30f83fd04ee516c",
+  "selection": {
+    "roots": [
+      "rust/src/",
+      "rust/tests/",
+      "rust/examples/",
+      "rust/benches/",
+      "js/src/",
+      "ts/src/",
+      "js/test/",
+      "ts/test/"
+    ],
+    "exact": [
+      "Cargo.lock",
+      "Cargo.toml",
+      "js/package-lock.json",
+      "js/package.json",
+      "rust/Cargo.toml",
+      "rust/build.rs",
+      "ts/package-lock.json",
+      "ts/package.json"
+    ]
+  },
+  "chunks": [
+    {
+      "path": "source-paths-01.jsonl",
+      "rows": 250,
+      "sha256": "6604a3605441ec4b5265dd4a20bf78df97b7063f36869b298572ab0b35a3c403"
+    },
+    {
+      "path": "source-paths-02.jsonl",
+      "rows": 250,
+      "sha256": "2cf0692d6197038622922e16687a2320d949b87c43c6a467d3bb161f71267dcd"
+    },
+    {
+      "path": "source-paths-03.jsonl",
+      "rows": 250,
+      "sha256": "eabafc9bd11dd87d588e50dfc6a7404105ab9608d38cc989d5f4420622779d04"
+    },
+    {
+      "path": "source-paths-04.jsonl",
+      "rows": 250,
+      "sha256": "f5abe680ff77d622ee150d385e6aadf8c5aeab9ca8ee024b2f4619cce5a7d934"
+    },
+    {
+      "path": "source-paths-05.jsonl",
+      "rows": 250,
+      "sha256": "b0061bda45086aca9a53f5287802787903f243af884fd4e78fb3027a939af85f"
+    },
+    {
+      "path": "source-paths-06.jsonl",
+      "rows": 250,
+      "sha256": "f24dce88dc025c827afc7e8addc7b5f559c242539e8c573ce968dac0e9c4c0a7"
+    },
+    {
+      "path": "source-paths-07.jsonl",
+      "rows": 12,
+      "sha256": "b46aab4282a35fca2f5354303f6b144e258e48ddfbd9eab377df2736f5584e76"
+    }
+  ],
+  "trackedPaths": 1512,
+  "functionCount": null,
+  "functionAnchorStatus": "lexical-review-only-not-a-function-census",
+  "rolesAreAuthoringHints": true,
+  "allRowsRequireReview": true,
+  "translationCoverage": null,
+  "entrypoints": {
+    "rustLibrary": {
+      "name": "link_assistant_router",
+      "path": "src/lib.rs"
+    },
+    "rustBinaries": [
+      {
+        "name": "router",
+        "path": "src/main.rs"
+      },
+      {
+        "name": "link-assistant-router",
+        "path": "src/bin/link-assistant-router.rs"
+      },
+      {
+        "name": "with-router",
+        "path": "src/bin/with-router.rs"
+      }
+    ],
+    "rustExamples": [
+      {
+        "name": "host_library_consumer",
+        "test": true,
+        "harness": false
+      }
+    ],
+    "rustBenchmarks": [
+      {
+        "name": "hot_paths",
+        "harness": false
+      }
+    ],
+    "jsPackage": "js/package.json",
+    "jsNative": "js/src/index.mjs",
+    "jsCommand": "js/src/cli.mjs"
+  },
+  "cargoFeatures": {},
+  "dependencyFeatures": {
+    "axum": {
+      "version": "0.8",
+      "features": [
+        "macros",
+        "ws"
+      ]
+    },
+    "hyper": {
+      "version": "1.11",
+      "features": [
+        "full"
+      ]
+    },
+    "hyper-util": {
+      "version": "0.1",
+      "features": [
+        "tokio"
+      ]
+    },
+    "reqwest": {
+      "version": "0.13",
+      "features": [
+        "stream",
+        "json",
+        "form",
+        "query",
+        "cookies",
+        "socks"
+      ]
+    },
+    "tokio": {
+      "version": "1.53",
+      "features": [
+        "rt-multi-thread",
+        "macros",
+        "time",
+        "signal",
+        "fs",
+        "process",
+        "sync",
+        "net"
+      ]
+    },
+    "serde": {
+      "version": "1.0",
+      "features": [
+        "derive"
+      ]
+    },
+    "schemars": {
+      "version": "1.2",
+      "features": [
+        "chrono04"
+      ]
+    },
+    "jsonschema": {
+      "version": "0.58",
+      "default-features": false
+    },
+    "jsonwebtoken": {
+      "version": "11.0",
+      "default-features": false,
+      "features": [
+        "rust_crypto"
+      ]
+    },
+    "chrono": {
+      "version": "0.4",
+      "features": [
+        "serde"
+      ]
+    },
+    "uuid": {
+      "version": "1.26",
+      "features": [
+        "v4"
+      ]
+    },
+    "tower": {
+      "version": "0.5",
+      "features": [
+        "util"
+      ]
+    },
+    "tower-http": {
+      "version": "0.7",
+      "features": [
+        "trace",
+        "cors"
+      ]
+    },
+    "tracing-subscriber": {
+      "version": "0.3",
+      "features": [
+        "env-filter",
+        "json"
+      ]
+    },
+    "tokio-tungstenite": {
+      "version": "0.30",
+      "features": [
+        "rustls-tls-webpki-roots"
+      ]
+    },
+    "clap": {
+      "version": "4",
+      "features": [
+        "derive",
+        "env",
+        "string"
+      ]
+    },
+    "rust-embed": {
+      "version": "8.12.0",
+      "default-features": false
+    },
+    "axum-server": {
+      "version": "0.8.0",
+      "features": [
+        "tls-rustls"
+      ]
+    }
+  },
+  "targetSpecificDependencies": {
+    "cfg(windows)": {
+      "dependencies": {
+        "process-wrap": {
+          "version": "10.0.1",
+          "default-features": false,
+          "features": [
+            "std",
+            "job-object"
+          ]
+        }
+      }
+    }
+  },
+  "platformProfiles": [
+    "neutral",
+    "unix",
+    "windows"
+  ],
+  "outsideScopeStillRequiresReview": [
+    "macro-and-include-producer-inputs-outside-selected-roots",
+    "workspace-and-feature-selected-dependency-internals",
+    "generated-output-and-export-dependency-closure"
+  ],
+  "execution": "UNRUN"
+}

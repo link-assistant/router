@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import {captureProducerInputs,installExactProducerOutputs} from '../tools/translation/layout-ownership-bulk-20261101.mjs';
+import {planPhysicalLanguageProducerOutputs20261104 as planExactProducerOutputs} from '../tools/translation/physical-language-output-layout-20261104.mjs';
 import {withOwnedRuntimeImportEdges} from '../tools/translation/js-to-rust/owned-core-source.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -54,7 +56,12 @@ function rustFixtures(fixtures, program) {
   return `\n#[cfg(test)]\n#[rustfmt::skip]\nmod shared_fixtures {\n    use super::*;\n\n${rows.join('\n\n')}\n}\n`;
 }
 
-function buildArtifactsSelected(root = ROOT, definitions=false, matrix,ownedBuilder) {
+const originalArtifactInputs=new WeakMap();
+function buildArtifactsSelected(root = ROOT,definitions=false,matrix,ownedBuilder){
+ const layout=repositoryRustLayout(root),capture=captureProducerInputs(root,{trees:['js/src','js/portable','js/generated/rust-project','ts/generated/rust-project','js/generated/rust-owned-definitions','ts/generated/rust-owned-definitions','tools/translation/generated/owned-definitions',...(definitions&&matrix?['profiles']:[]),layout.productionPrefix.replace(/\/$/u,''),layout.root==='.'?'tests':layout.root+'/tests'],files:[...layout.cargoInputs,'parity/fixtures/js-first/policy.json','parity/fixtures/js-first/unsupported.json']});let result,primary,failed=false;
+ try{result=buildArtifactsSelectedUnclosed(root,definitions,matrix,ownedBuilder);originalArtifactInputs.set(result,capture.inputs().filter(row=>!result.has(row.path)));}catch(error){failed=true;primary=error;}try{capture.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
+}
+function buildArtifactsSelectedUnclosed(root = ROOT, definitions=false, matrix,ownedBuilder) {
   const sources = modules(root, 'js/portable');
   if (!sources.length) throw new Error('no authoritative portable JavaScript modules found');
   const sourceRows = [];
@@ -131,72 +138,17 @@ function buildArtifactsSelected(root = ROOT, definitions=false, matrix,ownedBuil
 
 export function buildArtifacts(root = ROOT){return withOwnedRuntimeImportEdges(()=>buildArtifactsSelected(root));}
 export async function buildArtifactsWithOwnedDefinitions(root = ROOT,{matrix=false}={}){const [owned,profiles]=await Promise.all([import('../tools/translation/js-to-rust/owned-core-definition-corpus.mjs'),import('../tools/translation/compilation-matrix.mjs')]);return buildArtifactsSelected(root,true,matrix?profiles.createCompilationMatrix({profiles:profiles.DECLARED_FAMILY_PROFILES}):undefined,owned.buildOwnedCoreDefinitionArtifacts);}
-function applyArtifactsSelected(root,{check=false}={},artifacts,definitionCleanup,matrix=false){
-  const changed = [];
-  const witnessFamilies=[
-    {prefix:'tools/translation/js-to-rust/generated/owned-core-witness',schema:'owned-core-reverse-ci-witness-v1',header:'// GENERATED: actual checked reverse owned-core receiving witness.'},
-    {prefix:'tools/translation/js-to-rust/generated/owned-base64-witness',schema:'owned-base64-reverse-ci-witness-v1',header:'// GENERATED: actual checked reverse base64 receiving witness.'},
-    {prefix:'tools/translation/js-to-rust/generated/owned-ascii-witness',schema:'owned-ascii-reverse-ci-witness-v1',header:'// GENERATED: actual checked reverse ASCII receiving witness.'},
-  ];
-  const previousWitness=new Map();
-  for(const family of witnessFamilies){
-  const witnessPrefix=family.prefix;
-  const witnessIndex=join(root,witnessPrefix+'-inputs.json');
-  if(existsSync(witnessIndex)){
-    if(lstatSync(witnessIndex).isSymbolicLink()||lstatSync(witnessIndex).size>32*1024*1024)throw Error('Invalid old owned witness index');
-    const previous=JSON.parse(readFileSync(witnessIndex,'utf8'));
-    if(previous.schema!==family.schema||!Array.isArray(previous.stagedReceivingInputs?.files))throw Error('Unknown old owned witness index');
-    for(const row of previous.stagedReceivingInputs.files)if(typeof row.path==='string'&&row.path.startsWith(witnessPrefix+'/')&&typeof row.source==='string')previousWitness.set(row.path,row.source);
-    if(previous.witnessTypeScript!==undefined){
-      const row=previous.witnessTypeScript;if(!row||row.path!==witnessPrefix+'/witness.mts'||typeof row.source!=='string')throw Error('Unknown old owned witness TypeScript index');
-      previousWitness.set(row.path,row.source);
-    }
-  }
-  }
-  // Empty current programs are emitted too, so a newly refused body cannot
-  // survive. Removed source modules also remove only recognized owned drafts.
-  for (const directory of ['tools/translation/js-to-rust/generated/native-portable', 'ts/src/portable-draft','tools/translation/js-to-rust/generated/owned-core','ts/generated/reverse-owned-core',...witnessFamilies.map(row=>row.prefix)]) {
-    const visit = (path) => {
-      if (!existsSync(join(root, path))) return;
-      if (lstatSync(join(root, path)).isSymbolicLink()) throw new Error(`linked generated draft: ${path}`);
-      for (const entry of readdirSync(join(root, path), { withFileTypes: true })) {
-        const child = `${path}/${entry.name}`;
-        if (entry.isSymbolicLink()) throw new Error(`linked generated draft: ${child}`);
-        if (entry.isDirectory()) visit(child);
-        else if (!artifacts.has(child)) {
-          if (previousWitness.get(child)!==readFileSync(join(root,child),'utf8')&&!(child.endsWith('/inputs.json')&&JSON.parse(readFileSync(join(root,child),'utf8')).schema==='owned-core-reverse-original-inputs-v1')&&!readFileSync(join(root, child), 'utf8').startsWith(entry.name.endsWith('.lino') ? '# GENERATED:' : '// GENERATED:')) {
-            throw new Error(`unrecognized stale native draft: ${child}`);
-          }
-          changed.push(child);
-          if (!check) rmSync(join(root, child));
-        }
-      }
-    };
-    visit(directory);
-  }
-  for(const family of witnessFamilies)for(const path of [family.prefix+'.rs',family.prefix+'.lino',family.prefix+'-inputs.json']){
-    const absolute=join(root,path);if(!existsSync(absolute)||artifacts.has(path))continue;
-    if(lstatSync(absolute).isSymbolicLink())throw Error('Linked old owned witness output');
-    const content=readFileSync(absolute,'utf8');
-    if(path.endsWith('.rs')?!content.startsWith(family.header):
-       path.endsWith('.lino')?!(content.startsWith('(owned-core-context ')||content.startsWith('(owned-source-document ')&&content.startsWith('(owned-source-document '+encodeWord('{"profile":"router-owned-core-source-document-v1","context":'))):JSON.parse(content).schema!==family.schema)throw Error('Unknown old owned witness output');
-    changed.push(path);if(!check)rmSync(absolute);
-  }
-  if(definitionCleanup)definitionCleanup(root,artifacts,changed,{check,matrix});
-  for (const [path, content] of artifacts) {
-    const absolute = join(root, path);
-    if (existsSync(absolute) && readFileSync(absolute, 'utf8') === content) continue;
-    changed.push(path);
-    if (!check) {
-      mkdirSync(dirname(absolute), { recursive: true });
-      writeFileSync(absolute, content);
-    }
-  }
-  return { changed, bytes: [...artifacts.values()].reduce((sum, value) => sum + Buffer.byteLength(value), 0) };
+function applyArtifactsSelected(root,{check=false}={},artifacts,definitionCleanup,matrix=false,produceArtifacts=()=>buildArtifacts(root)){
+  // Producer headers, filenames and report schemas do not authorize removal.
+  // Exact stale rows are retained until the common installer supports deletion.
+  const produce=()=>{const fresh=produceArtifacts();return planExactProducerOutputs({root,producer:matrix?'js-first-definitions-matrix':definitionCleanup?'js-first-definitions':'js-first',receiptPath:'tools/translation/js-to-rust/generated/js-first-ownership-'+(matrix?'matrix':definitionCleanup?'definitions':'canonical')+'-20261101.json',artifacts:fresh,inputs:originalArtifactInputs.get(fresh)??[]});};
+  const proposal=planExactProducerOutputs({root,producer:matrix?'js-first-definitions-matrix':definitionCleanup?'js-first-definitions':'js-first',receiptPath:'tools/translation/js-to-rust/generated/js-first-ownership-'+(matrix?'matrix':definitionCleanup?'definitions':'canonical')+'-20261101.json',artifacts,inputs:originalArtifactInputs.get(artifacts)??[]});
+  if(!check)installExactProducerOutputs(proposal,produce);
+  return {changed:proposal.changed,unexpected:proposal.unexpected,identicalUnowned:proposal.identicalUnowned,bytes:[...artifacts.values()].reduce((sum,value)=>sum+Buffer.byteLength(value),0)};
 }
 
 export function regenerate(root = ROOT,{check=false}={}){const artifacts=buildArtifacts(root);return applyArtifactsSelected(root,{check},artifacts);}
-export async function regenerateWithOwnedDefinitions(root = ROOT,{check=false,matrix=false}={}){const artifacts=await buildArtifactsWithOwnedDefinitions(root,{matrix}),owned=await import('../tools/translation/js-to-rust/owned-core-definition-corpus.mjs');return applyArtifactsSelected(root,{check},artifacts,owned.cleanOwnedDefinitionDrafts,matrix);}
+export async function regenerateWithOwnedDefinitions(root = ROOT,{check=false,matrix=false}={}){const artifacts=await buildArtifactsWithOwnedDefinitions(root,{matrix}),owned=await import('../tools/translation/js-to-rust/owned-core-definition-corpus.mjs'),profiles=await import('../tools/translation/compilation-matrix.mjs');return applyArtifactsSelected(root,{check},artifacts,owned.cleanOwnedDefinitionDrafts,matrix,()=>buildArtifactsSelected(root,true,matrix?profiles.createCompilationMatrix({profiles:profiles.DECLARED_FAMILY_PROFILES}):undefined,owned.buildOwnedCoreDefinitionArtifacts));}
 
 if (process.argv[1] && relative(ROOT, process.argv[1]) === relative(ROOT, fileURLToPath(import.meta.url))) {
   const args = process.argv.slice(2);
