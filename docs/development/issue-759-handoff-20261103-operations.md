@@ -9,6 +9,20 @@ are authorized during this drafting phase. All new execution UNRUN; CI
 NOT_INSPECTED. Source reading/writing, lightweight DATA authoring and SCM remain
 allowed. Preserve all eight same-SHA JavaScript gates before fatal Rust CI.
 
+Latest reporting checkpoint (local November6):
+[development time and remaining delivery estimate](../case-studies/issue-759/current/delivery-time-report-20261106/README.md)
+freezes implementation history at5fa93ebf9. It records2,899 task-ancestry commits,
+990 integration checkpoints, all per-commit timestamps and observed gaps,
+source-supported reasons, the full58-open-bundle mapping and a solo forecast.
+The provisional model retains616–1,888 focused role hours (about16–48 weeks at
+40 focused hours/week), with low confidence and no unconditional due date.
+Git gaps are not active effort. Production scope L01/L02 and whole-caller
+composition remain key estimate blockers. No tests/builds/CI feedback inspection
+ran. This report changes no source receipt count:12/70 DRAFTED,58 OPEN.
+The report publication also includes local0c682683a, bfb747948 and5fa93ebf9;
+record its exact resulting SHA after the authorized push. Earlier publication
+statements below are historical. Root remains sole publisher/worker.
+
 Source-reviewed follow-up: corrected the new JS policy helper's pair/record
 constructor mismatch by calling the existing pair-based json_macro_object for
 rebuilt ancestors. Retained the immutable original core/runtime source with one

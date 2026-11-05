@@ -1,5 +1,10 @@
 # Router translation delivery audit
 
+Historical four-role baseline. See the later
+[November6 solo delivery-time update](../delivery-time-report-20261106/README.md)
+for subsequent commits, exact step intervals and changed staffing assumptions.
+The original observations and forecast below remain frozen at their stated head.
+
 Audit date: **2026-11-01**. Frozen source and Git-history head:
 `ba7b1d9f99f9be16628fe433a097b1b8ff036f43` (10:32:21 UTC).
 The three implementation workers continue in parallel; uncommitted work is

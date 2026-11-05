@@ -1,5 +1,10 @@
 # JavaScript gates expose Router's remaining work
 
+Updated development timing and solo-staffing forecast:
+[November6 commit-by-commit delivery report](current/delivery-time-report-20261106/README.md).
+It retains2,899 task commits,990 integration steps and the12/70 source-draft
+baseline; historical CI/coverage results below are not requalified by that report.
+
 Router should make native JavaScript behavior, strict feature parity and deterministic translation the prerequisite for expensive Rust verification. The evidence supports that design, but **does not establish a complete native JavaScript Router or a completed conversion**. Retained histories contain **4,184 workflow runs** across the four comparison branches; Router reached four revisions with all seven observed workflows green, while meta-language's principal CI and formal-ai's principal pipeline never succeeded in the captured history. Relative-meta-logic's **92/92 green parity runs alongside 0/23 green acceptance runs** demonstrate why a parity badge cannot substitute for a complete requirements gate. Router's observed failures include coverage policy, a missing changelog fragment, registry rate limits and a timing-sensitive test, so changing languages cannot correct every cause. The reported host incident additionally separates compiler cgroup kills, host Docker-daemon OOM and recovery-copy disk exhaustion. This case study preserves those distinctions, identifies a genuine bounded Rust → intermediate representation → JavaScript path, and records the remaining work against every requirement of [issue #759](https://github.com/link-assistant/router/issues/759). ([Computed retained-history metrics](raw/ci/computed-metrics.json.gz), [PR #749](https://github.com/link-assistant/router/pull/749), [relative-meta-logic #184](https://github.com/link-foundation/relative-meta-logic/pull/184))
 
 ## Retained history changes the comparison denominators
