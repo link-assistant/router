@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {nativeRequestHeaders} from '../src/native-service.mjs';
+import {nativeRequestHeaders} from '../../../js/src/native-service.mjs';
 import {readFileSync} from 'node:fs';
-import {sanitizeGeolocation,sharesGeolocation} from '../src/geolocation.mjs';
-import {WebSocketInspector,encodeWebSocketFrame,privateWebSocketPayload} from '../src/websocket-relay.mjs';
-import {createNativeRouter} from '../src/server.mjs';
+import {sanitizeGeolocation,sharesGeolocation} from '../../../js/src/geolocation.mjs';
+import {WebSocketInspector,encodeWebSocketFrame,privateWebSocketPayload} from '../../../js/src/websocket-relay.mjs';
+import {createNativeRouter} from '../../../js/src/server.mjs';
 
-const fixtures = JSON.parse(readFileSync(new URL('../../parity/fixtures/geolocation.json',import.meta.url),'utf8'));
+const fixtures = JSON.parse(readFileSync(new URL('../geolocation.json',import.meta.url),'utf8'));
 
 test('native forwarding removes explicit location headers by default', () => {
   const incoming = new Headers({authorization:'Bearer router-secret',

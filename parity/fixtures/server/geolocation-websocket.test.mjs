@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createServer,request} from 'node:http';
 import {createHash,randomBytes} from 'node:crypto';
-import {createNativeRouter} from '../src/server.mjs';
-import {WebSocketInspector,encodeWebSocketFrame} from '../src/websocket-relay.mjs';
+import {createNativeRouter} from '../../../js/src/server.mjs';
+import {WebSocketInspector,encodeWebSocketFrame} from '../../../js/src/websocket-relay.mjs';
 
 for(const share of [false,true]) test(`localhost WebSocket location consent=${share} survives fragmentation and client EOF`,{timeout:5000},async t=>{
   const sockets=[],events=[];let headers,received,failed;
