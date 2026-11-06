@@ -1,0 +1,86 @@
+{
+  "retrievedAt": "2026-11-06T22:35:06.369672+00:00",
+  "method": "Primary-source web search/open; observations are paraphrases, not copied pages. Moving references are not version-qualified client captures.",
+  "sources": [
+    {
+      "id": "codex-config",
+      "url": "https://developers.openai.com/codex/config-reference/",
+      "observation": "Config reference reviewed: no geolocation-off setting found; analytics and provider-header settings have separate semantics."
+    },
+    {
+      "id": "openai-web-search",
+      "url": "https://developers.openai.com/api/docs/guides/tools-web-search",
+      "observation": "Optional explicit location lives on web-search tools; a filter must preserve search availability."
+    },
+    {
+      "id": "openai-sdk",
+      "url": "https://github.com/openai/openai-node/blob/main/src/resources/responses/responses.ts",
+      "observation": "Dated preview spelling includes web_search_preview_2025_03_11; covered by a regression fixture."
+    },
+    {
+      "id": "claude-location",
+      "url": "https://privacy.claude.com/en/articles/11186740-does-claude-use-my-location",
+      "observation": "Optional product location has an account dashboard control. Mandatory security location cannot be disabled."
+    },
+    {
+      "id": "claude-env",
+      "url": "https://code.claude.com/docs/en/env-vars",
+      "observation": "Reviewed environment reference does not establish a global geolocation-off variable."
+    },
+    {
+      "id": "claude-search",
+      "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool",
+      "observation": "Web-search tools accept user_location; preserve domain controls and max_uses."
+    },
+    {
+      "id": "gemini-config",
+      "url": "https://geminicli.com/docs/reference/configuration/",
+      "observation": "Usage statistics settings are distinct from location consent."
+    },
+    {
+      "id": "gemini-maps",
+      "url": "https://ai.google.dev/gemini-api/docs/generate-content/maps-grounding",
+      "observation": "Maps grounding documents optional toolConfig.retrievalConfig.latLng; fetched as markdown by search, web open refused that content type."
+    },
+    {
+      "id": "qwen-privacy",
+      "url": "https://qwenlm.github.io/qwen-code-docs/en/users/support/tos-privacy/",
+      "observation": "Usage reporting has its own privacy setting and environment override, independent of inference provider."
+    },
+    {
+      "id": "opencode",
+      "url": "https://docs.opencode.ai/docs/providers/",
+      "observation": "Provider baseURL is configurable, enabling the existing Router endpoint."
+    },
+    {
+      "id": "agent",
+      "url": "https://github.com/link-assistant/agent",
+      "observation": "Agent identifies itself as a thin OpenCode-based agent."
+    },
+    {
+      "id": "grok-cli",
+      "url": "https://github.com/superagent-ai/grok-cli",
+      "observation": "This is the integrated CLI; configurable GROK_BASE_URL differs from consumer site settings."
+    },
+    {
+      "id": "cursor",
+      "url": "https://cursor.com/privacy",
+      "observation": "Policy describes IP-derived geography. Router private-protocol integration remains unsupported."
+    },
+    {
+      "id": "cursor-mode",
+      "url": "https://prod.cursor.com/help/security-and-privacy/privacy",
+      "observation": "Privacy Mode concerns code training/retention; not a verified geolocation switch."
+    },
+    {
+      "id": "cloudflare",
+      "url": "https://developers.cloudflare.com/fundamentals/reference/http-headers/",
+      "observation": "Visitor location headers can contain IP-derived country, city and coordinates; IP-header stripping alone is insufficient."
+    },
+    {
+      "id": "cloudflare-managed-location",
+      "url": "https://developers.cloudflare.com/rules/transform/managed-transforms/reference/#add-visitor-location-headers",
+      "observation": "Canonical headers include cf-region, cf-region-code, cf-metro-code, cf-postal-code and cf-timezone; regression fixtures include them in addition to ip-prefixed fields."
+    }
+  ]
+}

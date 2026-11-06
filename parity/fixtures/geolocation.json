@@ -1,0 +1,442 @@
+{
+  "headers": [
+    "CF-IPCountry",
+    "cf-ipcity",
+    "CF-IPLatitude",
+    "CF-IPLongitude",
+    "cf-iptimezone",
+    "cf-ipcontinent",
+    "cf-region",
+    "cf-region-code",
+    "cf-metro-code",
+    "cf-postal-code",
+    "cf-timezone",
+    "x-vercel-ip-city",
+    "x-vercel-ip-country-region",
+    "cloudfront-viewer-country",
+    "cloudfront-viewer-city",
+    "cloudfront-viewer-latitude",
+    "cloudfront-viewer-longitude",
+    "cloudfront-viewer-postal-code",
+    "cloudfront-viewer-time-zone",
+    "x-appengine-citylatlong",
+    "x-appengine-country",
+    "x-geo-city",
+    "x-geolocation",
+    "x-geolocation-country",
+    "x-user-location",
+    "x-client-country",
+    "x-latitude",
+    "x-longitude"
+  ],
+  "networkHeaders": [
+    "cf-connecting-ipv6",
+    "cf-pseudo-ipv4",
+    "x-forwarded-for"
+  ],
+  "bodies": [
+    {
+      "name": "Responses search",
+      "input": {
+        "model": "alias",
+        "tools": [
+          {
+            "type": "web_search",
+            "user_location": {
+              "type": "approximate",
+              "city": "London",
+              "country": "GB",
+              "timezone": "Europe/London"
+            },
+            "search_context_size": "low"
+          }
+        ]
+      },
+      "expected": {
+        "model": "alias",
+        "tools": [
+          {
+            "type": "web_search",
+            "search_context_size": "low"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Responses preview",
+      "input": {
+        "tools": [
+          {
+            "type": "web_search_preview_2025",
+            "user_location": {
+              "city": "keep unsupported tool"
+            }
+          },
+          {
+            "type": "web_search_preview_20250311",
+            "user_location": {
+              "city": "London"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "tools": [
+          {
+            "type": "web_search_preview_2025",
+            "user_location": {
+              "city": "keep unsupported tool"
+            }
+          },
+          {
+            "type": "web_search_preview_20250311"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OpenAI dated preview",
+      "input": {
+        "tools": [
+          {
+            "type": "web_search_preview_2025_03_11",
+            "user_location": {
+              "city": "London"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "tools": [
+          {
+            "type": "web_search_preview_2025_03_11"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Anthropic search",
+      "input": {
+        "tools": [
+          {
+            "type": "web_search_20250305",
+            "name": "web_search",
+            "user_location": {
+              "city": "London"
+            },
+            "max_uses": 2
+          }
+        ]
+      },
+      "expected": {
+        "tools": [
+          {
+            "type": "web_search_20250305",
+            "name": "web_search",
+            "max_uses": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "Chat search",
+      "input": {
+        "web_search_options": {
+          "user_location": {
+            "approximate": {
+              "city": "London"
+            }
+          },
+          "search_context_size": "medium"
+        }
+      },
+      "expected": {
+        "web_search_options": {
+          "search_context_size": "medium"
+        }
+      }
+    },
+    {
+      "name": "Gemini Maps",
+      "input": {
+        "toolConfig": {
+          "retrievalConfig": {
+            "latLng": {
+              "latitude": 51.5,
+              "longitude": -0.1
+            },
+            "languageCode": "en"
+          }
+        }
+      },
+      "expected": {
+        "toolConfig": {
+          "retrievalConfig": {
+            "languageCode": "en"
+          }
+        }
+      }
+    },
+    {
+      "name": "Gemini snake case",
+      "input": {
+        "tool_config": {
+          "retrieval_config": {
+            "lat_lng": {
+              "latitude": 51.5
+            }
+          }
+        }
+      },
+      "expected": {
+        "tool_config": {
+          "retrieval_config": {}
+        }
+      }
+    },
+    {
+      "name": "Code Assist wrapper",
+      "input": {
+        "request": {
+          "toolConfig": {
+            "retrievalConfig": {
+              "latLng": {
+                "latitude": 51.5
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "request": {
+          "toolConfig": {
+            "retrievalConfig": {}
+          }
+        }
+      }
+    },
+    {
+      "name": "WebSocket response",
+      "input": {
+        "type": "response.create",
+        "response": {
+          "tools": [
+            {
+              "type": "web_search",
+              "user_location": {
+                "city": "London"
+              }
+            }
+          ]
+        }
+      },
+      "expected": {
+        "type": "response.create",
+        "response": {
+          "tools": [
+            {
+              "type": "web_search"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Realtime session",
+      "input": {
+        "type": "session.update",
+        "session": {
+          "tools": [
+            {
+              "type": "web_search",
+              "user_location": {
+                "city": "London"
+              }
+            }
+          ]
+        }
+      },
+      "expected": {
+        "type": "session.update",
+        "session": {
+          "tools": [
+            {
+              "type": "web_search"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Anthropic batches",
+      "input": {
+        "requests": [
+          {
+            "custom_id": "one",
+            "params": {
+              "tools": [
+                {
+                  "type": "web_search_20260209",
+                  "user_location": {
+                    "city": "London"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected": {
+        "requests": [
+          {
+            "custom_id": "one",
+            "params": {
+              "tools": [
+                {
+                  "type": "web_search_20260209"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "User content and schemas",
+      "input": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Find London and latitude 51.5"
+          }
+        ],
+        "metadata": {
+          "location": "keep"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "web_search",
+            "user_location": "application value",
+            "parameters": {
+              "properties": {
+                "location": {
+                  "type": "string"
+                },
+                "user_location": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "expected": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Find London and latitude 51.5"
+          }
+        ],
+        "metadata": {
+          "location": "keep"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "web_search",
+            "user_location": "application value",
+            "parameters": {
+              "properties": {
+                "location": {
+                  "type": "string"
+                },
+                "user_location": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Malformed optional containers",
+      "input": {
+        "tools": [
+          null,
+          1,
+          {},
+          []
+        ],
+        "toolConfig": null,
+        "web_search_options": []
+      },
+      "expected": {
+        "tools": [
+          null,
+          1,
+          {},
+          []
+        ],
+        "toolConfig": null,
+        "web_search_options": []
+      }
+    },
+    {
+      "name": "Malformed search tool types stay unchanged",
+      "input": {
+        "tools": [
+          {
+            "type": [
+              "web_search"
+            ],
+            "user_location": {
+              "city": "London"
+            }
+          },
+          {
+            "type": {
+              "toString": "web_search"
+            },
+            "user_location": {
+              "city": "London"
+            }
+          },
+          {
+            "type": 7,
+            "user_location": {
+              "city": "London"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "tools": [
+          {
+            "type": [
+              "web_search"
+            ],
+            "user_location": {
+              "city": "London"
+            }
+          },
+          {
+            "type": {
+              "toString": "web_search"
+            },
+            "user_location": {
+              "city": "London"
+            }
+          },
+          {
+            "type": 7,
+            "user_location": {
+              "city": "London"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

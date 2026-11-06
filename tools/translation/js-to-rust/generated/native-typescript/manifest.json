@@ -452,6 +452,20 @@
       "runtimeASTIdentity": "verified after type erasure and relative module-extension normalization"
     },
     {
+      "source": "js/src/geolocation.mjs",
+      "sourceSha256": "3b637bc8ea32e6bd54cbc4ba3689c7659a9c0a0ab9f7ae44d17331139d34b54f",
+      "meta": "tools/translation/js-to-rust/generated/native-typescript/src/geolocation.mjs.meta.json",
+      "target": "ts/src/geolocation.ts",
+      "nodes": 531,
+      "explicitAny": 26,
+      "inferredReturns": 5,
+      "inferredLocals": 1,
+      "metaSha256": "20d75ebe6e90fde4245f49cb37012e003e4a5966b27a6594975c5dfaeb6f2411",
+      "targetSha256": "94bedc40588d33b278309be1d258c0b7ad9b8445bf9146c2cede97f20fe3bb5f",
+      "runtimeASTSha256": "a354997700e864abf79287ceb2cb2b3e104aebffc4398e015c6fb09d080733e1",
+      "runtimeASTIdentity": "verified after type erasure and relative module-extension normalization"
+    },
+    {
       "source": "js/src/git-proxy.mjs",
       "sourceSha256": "efd5b9b5d8d7a31aa7d1f0421d3063b987a297f187154418d38d4b7ac0bdfb71",
       "meta": "tools/translation/js-to-rust/generated/native-typescript/src/git-proxy.mjs.meta.json",
@@ -551,16 +565,16 @@
     },
     {
       "source": "js/src/native-service.mjs",
-      "sourceSha256": "36ece5d3f3d097c6c1a5d2d4b7a441c7b4e314175535c7ed553891f2291f7b88",
+      "sourceSha256": "87298d75368751b9cd63b66043de60b34241b69f989e2e12210b2aff46b1123e",
       "meta": "tools/translation/js-to-rust/generated/native-typescript/src/native-service.mjs.meta.json",
       "target": "ts/src/native-service.ts",
-      "nodes": 11435,
-      "explicitAny": 501,
+      "nodes": 11598,
+      "explicitAny": 506,
       "inferredReturns": 27,
-      "inferredLocals": 28,
-      "metaSha256": "90f2a4971f39713840a23f29ba8e238dec69a8f89455e4b067b59a2f1362ede2",
-      "targetSha256": "1dcf50c60ecffbc612d7ac88ed87abfd60975c9bb8ef6f4fe6b315bbef324a48",
-      "runtimeASTSha256": "31a46912b20cfd9318aa731716755e304e5cb7307736ce5ee468c9788aee7e26",
+      "inferredLocals": 30,
+      "metaSha256": "7991254a36d99656cd93d81703ba2496bc2f8316e7ccdedbf41ed4923ab35113",
+      "targetSha256": "dbeacaa391190339c39a43f2f00838c1ea87cdc31b9f1daa66bec752dba41d53",
+      "runtimeASTSha256": "48506baac703740c79ddcc2e86f17661434467878fa79bd734ae17c3c73f9c80",
       "runtimeASTIdentity": "verified after type erasure and relative module-extension normalization"
     },
     {
@@ -733,16 +747,16 @@
     },
     {
       "source": "js/src/server.mjs",
-      "sourceSha256": "6e928aa7f9d2ac7e31f3ae21497fb4d74b4010e726c410b2fe45cfa51da11b72",
+      "sourceSha256": "7818032c2e65ff1690acaa1f12b9c782c2f3562a66eb8fdf5cc1ea716a35613a",
       "meta": "tools/translation/js-to-rust/generated/native-typescript/src/server.mjs.meta.json",
       "target": "ts/src/server.ts",
-      "nodes": 15798,
+      "nodes": 15860,
       "explicitAny": 685,
       "inferredReturns": 30,
       "inferredLocals": 29,
-      "metaSha256": "22413db3673c447d363f2b1210e7747f27fa4cbb386d3b83b82c6bee1ac7ee4e",
-      "targetSha256": "28c404760b658bd8fe1b55b172852f11f96334d4c61efce4907277bd6a69538c",
-      "runtimeASTSha256": "02bdc6f3b38436dc2dae22085ae5bb00e0bb965fc4b697fa2b91bd8f9d855e66",
+      "metaSha256": "f7b7c07ad2bf3a7013da757068cab5ddc3d9acae3ec2499314923001eced7fdd",
+      "targetSha256": "54fdea1157c95043163c99315cb0caafdbea5c5eefdec5e82b2bcb0a53591e9d",
+      "runtimeASTSha256": "04477ac3cb96860f562c2b0aa9598e336d04348fbfa324547b217b793a408471",
       "runtimeASTIdentity": "verified after type erasure and relative module-extension normalization"
     },
     {
@@ -831,16 +845,16 @@
     },
     {
       "source": "js/src/websocket-relay.mjs",
-      "sourceSha256": "a569f6e3376eb9b37a866d1016d6e81760c45b91566b03c70ae0ed61667758e2",
+      "sourceSha256": "319ac3f7cd9bc0a63b0bb1957c97ade26500655411f21171c53c0a41241ff092",
       "meta": "tools/translation/js-to-rust/generated/native-typescript/src/websocket-relay.mjs.meta.json",
       "target": "ts/src/websocket-relay.ts",
-      "nodes": 3323,
-      "explicitAny": 165,
+      "nodes": 3886,
+      "explicitAny": 199,
       "inferredReturns": 21,
-      "inferredLocals": 11,
-      "metaSha256": "6bb28f05cbf332aea5e85206b4ab4c50578f27de6c0310c70ca690e519ec2c89",
-      "targetSha256": "85f79d96d4a08e2528cfd489c71d31f19fdb20e0296b606e4144d1a8bc944791",
-      "runtimeASTSha256": "82f676ac5336036f19742fd99f19c81dfa757205fba8e578b292a99d607093b1",
+      "inferredLocals": 13,
+      "metaSha256": "bbcf4d57a0d74b756b6596926ba17234fe9296d0bfd7dbd63001b0e8ed61c50b",
+      "targetSha256": "e4ac9800a24f127b0d73b726f0f3f8f402058036672b3445f37e421dc49945a1",
+      "runtimeASTSha256": "c4fd9574ca77b80d30d81e29e068db18e79dcdb732f83fe407fccf6fb6d6c7e7",
       "runtimeASTIdentity": "verified after type erasure and relative module-extension normalization"
     },
     {
@@ -1165,6 +1179,16 @@
       "sha256": "da18cdd079acc0082dd41fa91718a14651918d4021ce6e518bea8da912d0f080"
     },
     {
+      "path": "tools/translation/js-to-rust/generated/native-typescript/src/geolocation.mjs.meta.json",
+      "bytes": 8141,
+      "sha256": "20d75ebe6e90fde4245f49cb37012e003e4a5966b27a6594975c5dfaeb6f2411"
+    },
+    {
+      "path": "ts/src/geolocation.ts",
+      "bytes": 2782,
+      "sha256": "94bedc40588d33b278309be1d258c0b7ad9b8445bf9146c2cede97f20fe3bb5f"
+    },
+    {
       "path": "tools/translation/js-to-rust/generated/native-typescript/src/git-proxy.mjs.meta.json",
       "bytes": 32533,
       "sha256": "045503691d0fa69670cb54c59a85afd1b4a920130fdcff46226276b4fdf15a38"
@@ -1236,13 +1260,13 @@
     },
     {
       "path": "tools/translation/js-to-rust/generated/native-typescript/src/native-service.mjs.meta.json",
-      "bytes": 152167,
-      "sha256": "90f2a4971f39713840a23f29ba8e238dec69a8f89455e4b067b59a2f1362ede2"
+      "bytes": 154578,
+      "sha256": "7991254a36d99656cd93d81703ba2496bc2f8316e7ccdedbf41ed4923ab35113"
     },
     {
       "path": "ts/src/native-service.ts",
-      "bytes": 47660,
-      "sha256": "1dcf50c60ecffbc612d7ac88ed87abfd60975c9bb8ef6f4fe6b315bbef324a48"
+      "bytes": 48448,
+      "sha256": "dbeacaa391190339c39a43f2f00838c1ea87cdc31b9f1daa66bec752dba41d53"
     },
     {
       "path": "tools/translation/js-to-rust/generated/native-typescript/src/oauth.mjs.meta.json",
@@ -1366,13 +1390,13 @@
     },
     {
       "path": "tools/translation/js-to-rust/generated/native-typescript/src/server.mjs.meta.json",
-      "bytes": 209224,
-      "sha256": "22413db3673c447d363f2b1210e7747f27fa4cbb386d3b83b82c6bee1ac7ee4e"
+      "bytes": 210027,
+      "sha256": "f7b7c07ad2bf3a7013da757068cab5ddc3d9acae3ec2499314923001eced7fdd"
     },
     {
       "path": "ts/src/server.ts",
-      "bytes": 64405,
-      "sha256": "28c404760b658bd8fe1b55b172852f11f96334d4c61efce4907277bd6a69538c"
+      "bytes": 64671,
+      "sha256": "54fdea1157c95043163c99315cb0caafdbea5c5eefdec5e82b2bcb0a53591e9d"
     },
     {
       "path": "tools/translation/js-to-rust/generated/native-typescript/src/storage.mjs.meta.json",
@@ -1436,13 +1460,13 @@
     },
     {
       "path": "tools/translation/js-to-rust/generated/native-typescript/src/websocket-relay.mjs.meta.json",
-      "bytes": 44439,
-      "sha256": "6bb28f05cbf332aea5e85206b4ab4c50578f27de6c0310c70ca690e519ec2c89"
+      "bytes": 51756,
+      "sha256": "bbcf4d57a0d74b756b6596926ba17234fe9296d0bfd7dbd63001b0e8ed61c50b"
     },
     {
       "path": "ts/src/websocket-relay.ts",
-      "bytes": 12605,
-      "sha256": "85f79d96d4a08e2528cfd489c71d31f19fdb20e0296b606e4144d1a8bc944791"
+      "bytes": 14460,
+      "sha256": "e4ac9800a24f127b0d73b726f0f3f8f402058036672b3445f37e421dc49945a1"
     },
     {
       "path": "tools/translation/js-to-rust/generated/native-typescript/testing.js.meta.json",
