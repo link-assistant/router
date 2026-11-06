@@ -274,11 +274,14 @@ impl AccountRoutingPolicy {
 
     /// Copy only reviewed fields, after upstream authentication has been installed.
     pub fn apply_headers(&self, incoming: &HeaderMap, outgoing: &mut HeaderMap) {
+        let share_geolocation = crate::geolocation::shares_geolocation(incoming);
         for (name, value) in &self.headers {
             let Ok(name) = HeaderName::from_bytes(name.as_bytes()) else {
                 continue;
             };
-            if !permitted_destination(name.as_str()) {
+            if !permitted_destination(name.as_str())
+                || (!share_geolocation && crate::geolocation::is_geolocation_header(name.as_str()))
+            {
                 continue;
             }
             let value = if let Some(source) = value.strip_prefix('$') {

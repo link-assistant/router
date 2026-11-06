@@ -99,3 +99,34 @@ async fn native_location_rewrite_cannot_replay_original_zstd_bytes() {
     assert!(reparsed.value["tools"][0].get("user_location").is_none());
     assert_eq!(reparsed.value["model"], "m");
 }
+
+#[test]
+fn static_account_headers_cannot_restore_unconsented_location() {
+    let fixtures: Value =
+        serde_json::from_str(include_str!("../../parity/fixtures/geolocation.json")).unwrap();
+    let mut policy = crate::account_routing_policy::AccountRoutingPolicy::default();
+    for name in fixtures["headers"].as_array().unwrap() {
+        policy
+            .headers
+            .insert(name.as_str().unwrap().to_string(), "synthetic".to_string());
+    }
+    policy.headers.insert("x-request-id".into(), "keep".into());
+    policy.validate().unwrap();
+    for consent in [None, Some("true"), Some("false"), Some("true, true")] {
+        let mut incoming = HeaderMap::new();
+        if let Some(value) = consent {
+            incoming.insert(OPT_IN, value.parse().unwrap());
+        }
+        let mut outgoing = HeaderMap::new();
+        policy.apply_headers(&incoming, &mut outgoing);
+        for name in fixtures["headers"].as_array().unwrap() {
+            assert_eq!(
+                outgoing.contains_key(name.as_str().unwrap()),
+                consent == Some("true"),
+                "{name}"
+            );
+        }
+        assert_eq!(outgoing["x-request-id"], "keep");
+        assert!(!outgoing.contains_key(OPT_IN));
+    }
+}
