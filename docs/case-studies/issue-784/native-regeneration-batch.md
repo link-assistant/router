@@ -72,8 +72,21 @@ the earlier concrete Git profile remains exact. Independent proposal reproductio
 and complete physical source joins pass. The whole eight-case isolated Node
 file passes its independent deadline audit. An initial export attempt correctly
 refused the still-uncommitted refreshed bootstrap bytes: six cases passed and
-three refused before export. That full failed attempt is retained. Export
-receiving checks require the refresh commit, rather than relaxed provenance.
+three refused before export. That full failed attempt is retained. After the
+refresh commit, all nine export cases pass under both engines. All eight
+isolated receiving cases also pass under both engines. The complete Node files
+pass independent duration audits. Node isolated/export invocations take
+112.70/53.97 seconds; Bun takes 87.39/47.34 seconds. Export receiving checks
+require the refresh commit, rather than relaxed provenance.
+
+The mandatory complete local gate was attempted at clean source commit
+`d4ec5ce4d0bde43570713e2ff9ab497f8ff4ef2d`. Lint, all 259 core cases under each
+engine, the nine deadline controls and public TypeScript checking pass. The
+memory observer stops the owned invocation during native TypeScript checking
+after 415.89 seconds at a sampled 2,874,535,936 bytes. Later commands and stages
+are unrun for this attempt. The complete log, independent deadline audit and
+all-owned-process cleanup receipt are retained. This attempt grants no green
+stamp; earlier different-head results do not qualify its unrun stages.
 
 This batch adds zero measured executable production functions. Original deadline,
 whole Bun, generation, strict parity and complete gate requirements remain open.

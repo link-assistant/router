@@ -675,10 +675,38 @@ remain explicitly unmet parts of the literal all-tool requirement.
       refuses the 337-file PR (HTTP 406); use the complete local base/head diff
       and review the three changed production text files plus all binary source
       receipts. Main remains an ancestor; all prior CI jobs are terminal.
-- [ ] Publish the reviewed registration checkpoint and collect every new CI
-      result before any subsequent push; leave the PR draft and unmerged.
-- [ ] Repair actual shared native regeneration costs with complete source/CST
+- [x] Publish the reviewed registration checkpoint `bea75c2c1`; leave the PR
+      draft and unmerged. Collect every new CI result before another push.
+- [x] Draft actual shared native regeneration costs with complete source/CST
       boundaries and independent semantic checks; preserve all original cases,
-      assertions and deadlines. Qualify any candidate before reporting a gain.
+      assertions and deadlines. No deadline or executable gain is qualified.
 - [ ] Materialize genuine matrices, finish strict parity and original compiler
       deadlines, then pass the whole local and same-head CI gates.
+
+## Complete-source native regeneration batch
+
+- [x] Preserve complete original source equations and inverses; group whole
+      file authentication while retaining independent grammar/inference checks,
+      physical source rereads and live-host joins. Preserve standalone APIs.
+- [x] Run the complete new three-case file under Node and Bun. Retain both
+      original fixture failures, corrected tests and independent Node audit.
+- [x] Compare all 199 complete generated files and three complete CPU profiles.
+      Preserve the premature original-code candidate measurement separately.
+      Identical outputs establish equivalence, not causal performance gain.
+- [x] Retain the original whole nine-case Node attempt: behavior passes, but
+      regeneration's 116643.104607 ms exceeds the unchanged 60000 ms deadline.
+      Bun's compiler case exceeds its existing 5000 ms default, then memory
+      guard stops the owned run. Keep all original failures and reaped PIDs.
+- [x] Refresh the full compiler registration from source `84f791d10` and retain
+      all six complete historical files. Both whole receiving files pass under
+      Node and Bun; original Node audits pass. Preserve the first uncommitted
+      export refusal and post-commit successful retry without provenance bypass.
+- [x] Attempt the complete mandatory gate at clean `d4ec5ce4d`: lint, both core
+      259-case suites, deadline controls and public TypeScript pass. The memory
+      guard stops native TypeScript checking at 415.89 s; later stages are
+      unrun. Inspect all entered stages and complete audit; reap all owned PIDs.
+- [ ] Collect every terminal result of the published bea75c2c1 CI cycle, archive
+      complete native evidence, review main ancestry and the coherent source
+      batch, then publish accurate failed/unrun feedback in the draft PR.
+- [ ] Repair original deadlines, actual source generation and strict parity;
+      qualify all literal tool/privacy requirements and every same-head check.
