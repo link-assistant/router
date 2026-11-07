@@ -919,3 +919,9 @@ The separate [named-host history investigation](named-host-history-investigation
 retains the next complete regression, genuine producer captures, unsuccessful
 drafts and the final 10/10 receiving passes in both engines. Its independent Node
 deadline audit passes; this is not complete forward-cohort or gate qualification.
+
+The [project callback investigation](project-retention-investigation.md) records
+the finite retention comparison and complete receiving checks. The later
+[receiving successor investigation](receiving-history-investigation.md) records
+the entire `77e82f2bb` CI cycle, both history repairs and their distinct duration
+qualification results. The full gate and original unmet criteria remain required.

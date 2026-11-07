@@ -89,7 +89,11 @@ is checked separately. No historical output is accepted as current generation.
 The complete source producer passes under Node 20.20.2 in 11.59 seconds, retaining
 its entire 7012018-byte logical receipt. Its own write operation installs the
 first derived source in 10.97 seconds. The final name-preserving write takes
-11.81 seconds. The final finite four-process comparison takes
+11.81 seconds. A separate final-source capture passes in 14.72 seconds and its
+full 7013205-byte receipt is reopened and decoded. The compressed SHA256 is
+`1f37f5b111648c3d341033c2f114f7c99d07c1c6969e8f7bb8e3f50cec4533a4`;
+its complete afterimage matches the installed production source. The final
+finite four-process comparison takes
 64.00 seconds and samples a total-cgroup maximum of 1417990144 bytes; this is a
 diagnostic elapsed interval, not a receiving case with a 60-second declaration.
 

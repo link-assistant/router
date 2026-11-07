@@ -77,6 +77,29 @@ Objective: implement and verify all requirements in PR #785 on
 Constraints: one resource-intensive process at a time, no additional agents or clones,
 no Rust tool invocations, compressed evidence below 500 MB, preserve all strict gates.
 
+## Retained project callbacks, 2026-11-07
+
+- [x] Trace the complete ordinary current-source generation with bounded heap
+      sampling. Retain the intentionally stopped namespace-stage attempt; it
+      completed no generation and establishes no canonical or matrix freshness.
+- [x] Reproduce unnecessary compilation-environment retention through genuine
+      project callbacks with finite independent processes and actual config.rs.
+      Preserve failed harness attempts and the canonical private-issuer correction.
+- [x] Derive a private factory placement from the complete original project with
+      installed TypeScript 5.9.3, both CST phases, complete inverses and fresh
+      original/current joins; install only its generated output.
+- [x] Compare original/candidate callable names, arities, exact function text,
+      complete checked-program and emitted JavaScript hashes. The config probe
+      reduces retained facade heap from 53860720 to 50348624 bytes; this is a
+      finite retained-heap observation, not a whole-matrix resource qualification.
+- [ ] Complete the four whole source/behavior files under Node and Bun, including
+      independent comparison to the original source-declared case deadlines.
+- [ ] Verify every affected source producer and full current-source composition.
+- [ ] Run the complete local JavaScript gate on the resulting coherent batch;
+      retain each failure and unrun stage without lowering a gate or deadline.
+- [ ] Collect the entire published 77e82f2bb CI cycle, review every completed
+      failure, archive complete new originals and update the draft PR accurately.
+
 ## Second CI restart, 2026-11-07
 
 - [x] Refresh the complete issue, sub-issue inventory and all three PR comment types;
@@ -352,3 +375,55 @@ remain explicitly unmet parts of the literal all-tool requirement.
       then preserve its head until the entire fresh CI cycle finishes.
 - [ ] Obtain the green full gate and finish the remaining original issue
       criteria. Focused receiving passes do not establish full compiler parity.
+
+## Project callback retention and the complete 77e82f2bb cycle
+
+- [x] Collect all seven terminal workflows for immutable `77e82f2bb`, their
+      complete logs and all three ZIP artifacts. Read all 25 complete forward
+      failures, the TypeScript missing index and the profile worker's original
+      2048 MiB heap failure. No human-only prerequisite was found.
+- [x] Refresh the whole original issue, required sub-issues, conversation,
+      inline comments and reviews. No new requirement was found. Fetch main;
+      `eb2dad1c0` remains an ancestor of this branch.
+- [x] Bound the ordinary-generation allocation diagnostic. The sampled work
+      remains inside namespace resolution, before facade creation; allocation
+      samples do not establish retained heap, RSS or whole-generation gains.
+- [x] Reproduce project callbacks retaining unused source-reader and compiler
+      contexts. Derive private top-level factories with complete original
+      source, native bindings, both CST phases, serialized reparsing and inverse.
+      Preserve live modules, all callback bodies and actual per-engine names.
+- [x] Pass all three new callback cases in Node and Bun, including Node's
+      independent duration audit. Record the original cohorts' separate
+      deadline, source pin and Rust-header failures without weakening them.
+- [x] Replay actual Config through four fresh bounded Node processes. Complete
+      checked and emitted output, callback observations and function text agree.
+      Retention decreases in this finite diagnostic; matrix completion remains
+      unproved and zero newly executable production functions are claimed.
+- [x] Commit the coherent callback source batch at `c2d87697b`.
+- [x] Derive the freezer producer's known complete scanner successor while
+      retaining its frozen original receiving copy. Both whole engine cohorts
+      pass the source assertions but fail two original 60-second deadlines.
+- [x] Derive the known complete module-token successor of the facade receiving
+      test. All nine Node cases and the independent duration audit pass.
+- [x] Finish the complete Bun facade/module-token cohort: 9/9 pass with the
+      unchanged original cases and deadlines; inspect every result.
+- [x] Capture and fully decode the final 7013205-byte callback producer receipt.
+      Its complete installed afterimage matches. The existing strict generated
+      TypeScript project passes with installed TypeScript 5.9.3; all 27 changed
+      complete JavaScript files and the collector Python syntax pass.
+- [x] Commit the freezer history at `6aaa71c20`, the known module-token
+      receiving successor at `cb65c0cc8` and the diagnostic harnesses at
+      `e91499a4a`. Keep the original two freezer deadline failures explicit.
+- [x] Complete the previously unrun Node receiving file for core vectors:
+      6/7 TAP assertions pass; the first source composition takes 365160.48 ms
+      against its original 60000 ms limit and fails its independent audit.
+      The final case separately rejects the changed whole Rust header source.
+      Retain the original source pin, assertion and every complete result.
+- [ ] Attempt the mandatory complete local gate on the unchanged committed batch.
+- [ ] Preserve every new finished check, failed experiment, source variant and
+      full CI artifact in a verified packet under the task's 500 MB allocation.
+- [ ] Review the complete PR diff and publish only the prepared branch. Preserve
+      the new head until the entire fresh CI cycle closes; keep PR #785 draft.
+- [ ] Finish all remaining parity, source provenance, original deadlines,
+      actual ordinary/owned generation and all-tool privacy requirements.
+      Passing a receiving file does not satisfy the failed full gate.
