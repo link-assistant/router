@@ -114,7 +114,22 @@ no Rust tool invocations, compressed evidence below 500 MB, preserve all strict 
 - [x] Remove only this attempt's inactive checksum-verified Node toolchain,
       reclaiming 200761344 bytes of distinct allocation; retain both receipts.
 - [x] Preserve 123 complete originals in the verified 15.8 MB second CI packet.
-- [ ] Publish the reviewed repair batch and collect its entire same-head CI cycle.
+- [x] Publish the reviewed repair batch at `84779613d`; PR #785 remains draft.
+- [x] Verify GitHub's CI merge tree `a6f06612f` equals the published head tree.
+- [x] Inspect the fresh completed TypeScript, parity and reverse jobs: all three
+      profile trees now pass strict compilation, the owned-definition index is
+      missing, strict parity still fails, and reverse reaches its original limit.
+- [ ] Collect the entire new same-head CI cycle before another publication.
+- [x] Complete the six owned-field storage cases under Node 20 with the
+      independent deadline audit and under Bun; both pass.
+- [x] Complete all five unchanged Node storage dependencies: 39 TAP passes,
+      but one unchanged 30000 ms matrix CLI deadline is exceeded. Keep this
+      cohort failed and retain its full raw receipts.
+- [x] Attempt the same unchanged dependencies under Bun: 35 reported passes,
+      then an owned memory-guard stop at 2872123392 sampled cgroup bytes.
+      Keep the cohort incomplete and do not repeat it unchanged here.
+- [ ] Complete the bounded existing producer experiment; preserve resource
+      stops and unrun outputs without adopting the unqualified sibling CLI.
 - [ ] Repair the remaining complete source-producer pins, profile heap failure,
       owned-definition generation, forward/reverse deadlines and strict parity.
 - [ ] Rerun the complete local gate and collect every same-head CI result before
