@@ -847,3 +847,10 @@ or current-head CI qualification. It also records the entire failed
 three absent from the workflow stream. Both later complete local gate attempts
 stopped at the owned resource guard before their first stage; all seven stages
 remain unrun for those attempts.
+
+The corresponding [complete token/CI packet](evidence/token-ci-complete.tar.xz)
+and [full capture receipt](evidence/token-ci-complete.json.gz) retain 205 complete
+originals, 96,537,908 logical bytes, at source `154976668`. Every selected original
+and decoded archive member verifies; its 21,418,296-byte archive has SHA-256
+`68e1e2a478a28a1dab9b645c74fdaabb7b26981d4e19b9eb2cb452ec73949f06`.
+The distinct measured heads and failed/unrun boundaries remain explicit.

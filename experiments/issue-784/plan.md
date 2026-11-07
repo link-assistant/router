@@ -255,6 +255,9 @@ remain explicitly unmet parts of the literal all-tool requirement.
       outputs or missing owned-definition matrix are materialized.
 - [ ] Obtain a green complete local gate and all same-head CI checks; full
       parity and the literal universal privacy requirements remain unfinished.
-- [ ] Preserve the complete new token/fingerprint receiving evidence and the
-      completed 007dc7f3a CI cycle in a verified incremental packet, then review
-      and publish the coherent failed-gate draft batch on the prepared branch.
+- [x] Preserve the complete new token/fingerprint receiving evidence and the
+      completed 007dc7f3a CI cycle in a verified incremental packet: 205 complete
+      originals, 96537908 logical bytes, 21418296 archive bytes at 154976668.
+      All selected originals and decoded members verify; no semantic authority.
+- [ ] Review and publish the coherent failed-gate draft batch on the prepared
+      branch, then collect the entire immutable-head CI cycle before any push.

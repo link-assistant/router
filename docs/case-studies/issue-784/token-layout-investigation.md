@@ -178,3 +178,21 @@ TAP block in `completed-forward-failures.json`. The companion raw job logs in
 `storage-profile-completed-job.raw.log:257`, and reverse cancellation at
 `storage-reverse-completed-job.raw.log:653`. No missing secret or human-only CI
 prerequisite was identified; skipping these failures would hide unmet checks.
+
+## Complete evidence capture
+
+[`token-ci-complete.tar.xz`](evidence/token-ci-complete.tar.xz) retains 205 complete
+originals at source `154976668f200c81baf05ccdbb1a02fd1bdcd11f`: 96,537,908 logical
+bytes in a 21,418,296-byte archive. SHA-256:
+`68e1e2a478a28a1dab9b645c74fdaabb7b26981d4e19b9eb2cb452ec73949f06`.
+The [complete compressed receipt](evidence/token-ci-complete.json.gz) preserves
+every member's length and hash. All selected originals were unchanged and every
+decoded archive member verified. Capture took 56.08 seconds; its separate cgroup
+observer peaked at 2,063,724,544 sampled bytes without stopping the process.
+
+This packet complements the preceding 395-member storage packet. It contains
+the complete new local receiving and failed-generation/gate evidence, the
+finished preceding CI cycle, all three downloaded CI artifacts and explicit
+source snapshots. It does not claim a complete compiler closure or qualify any
+later head's gate. Compression changes storage only; all failed and unrun
+results above remain failed and unrun.
