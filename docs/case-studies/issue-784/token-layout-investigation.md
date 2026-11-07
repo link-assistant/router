@@ -114,3 +114,21 @@ After every local Node process finished, the task-owned temporary toolchain was
 checksum-verified and removed. `fingerprint-node-cleanup.json` records no active
 process references and 125,124,608 bytes of distinct file allocation removed.
 This cleanup touches neither repository sources nor Rust or worker build caches.
+
+## Separate Bun generation attempt
+
+The actual complete command was also attempted under Bun 1.4.4 on clean
+`e8c50e93ffb0ada99f26c3a2f6f92da446fc40b4`. The first process stopped at the same
+resource guard after 0.507 seconds, before logging any stage, with a starting
+cgroup total of 2,815,172,608 bytes. The recorded state was dominated by file
+cache. A separate hint on inactive tracked-file pages changed the observed total
+from 2,834,223,104 to 1,105,645,568 bytes without removing files or changing the
+guard. This is a cache observation, not disk reclamation or exact process memory.
+
+One retry started at 1,093,287,936 bytes with identical sources, arguments and
+guard. It discovered all 864 Rust sources and constructed the 397-module library
+graph, then stopped during `derive-namespace-context` after 82.182824 seconds at
+2,878,156,800 sampled cgroup bytes. It exited 143 and wrote no outputs. The
+`token-layout-bun-generation*` originals preserve both attempts separately;
+`pre-bun-generation-retry-pages.json` preserves the complete cache-hint selection.
+Neither the missing owned-definition matrix nor Node CI generation is qualified.

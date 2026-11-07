@@ -244,5 +244,10 @@ remain explicitly unmet parts of the literal all-tool requirement.
       the first stage; all seven stages remain unrun and no stamp exists.
 - [x] Remove only the inactive checksum-verified task Node toolchain after all
       local Node work finishes; record 125124608 bytes of allocation removed.
+- [x] Attempt the complete generator under Bun 1.4.4 as a separate engine
+      diagnostic. Preserve the first pre-progress cache-pressure stop and the
+      one retry after an inactive-file cache hint. The retry reaches the same
+      namespace phase, then exits 143 at the guard after 82.18 seconds; no
+      outputs or missing owned-definition matrix are materialized.
 - [ ] Obtain a green complete local gate and all same-head CI checks; full
       parity and the literal universal privacy requirements remain unfinished.
