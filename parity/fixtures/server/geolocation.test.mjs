@@ -30,6 +30,22 @@ for (const fixture of fixtures.bodies) test(`location policy: ${fixture.name}`, 
   assert.deepEqual(allowed,fixture.input);
 });
 
+test('Gemini HTTP forwarding protects every ProtoJSON location alias and retains opt-in', {timeout:5000}, async () => {
+  for (const fixture of fixtures.bodies.filter(value=>value.name.startsWith('Gemini ProtoJSON '))) {
+    for (const share of [false,true]) {
+      let captured;
+      const core={config:{api_key:'secret'},candidates:()=>[{protocol:'gemini',model:'upstream',base_url:'http://upstream',api_key:'upstream-secret'}]};
+      const router=createNativeRouter({core,fetch:async(_url,init)=>{captured=JSON.parse(init.body);return Response.json({candidates:[{content:{role:'model',parts:[{text:'ok'}]},finishReason:'STOP'}]});}});
+      const contents=[{role:'user',parts:[{text:'latLng is application text'}]}];
+      const headers={authorization:'Bearer secret','content-type':'application/json'};
+      if(share)headers['x-router-share-geolocation']='true';
+      const response=await router.fetch(new Request('http://router/api/services/gemini/v1beta/models/alias:generateContent',{method:'POST',headers,body:JSON.stringify({...fixture.input,contents})}));
+      assert.equal(response.status,200,await response.text());
+      assert.deepEqual(captured,{...(share ? fixture.input:fixture.expected),contents},fixture.name);
+    }
+  }
+});
+
 test('only one explicit true opts in; control and network-origin headers stay private', () => {
   for (const optIn of [undefined,'false','1','TRUE','true, true','true, false','true']) {
     const incoming=new Headers({'x-request-id':'keep'});

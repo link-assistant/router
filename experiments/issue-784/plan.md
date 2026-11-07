@@ -32,6 +32,13 @@ Objective: implement and verify all requirements in PR #785 on
       final feedback and remove only identified inactive task temporary paths.
 - [x] Preserve complete original gate, CI and repair evidence in verified compressed
       packets, with exact tested heads and failed/unrun results recorded.
+- [x] Recover the already published implementation and refresh all issue/PR feedback.
+- [x] Reproduce six Gemini mixed ProtoJSON spelling bypasses; fix all eight paths
+      in JavaScript and Rust, add real HTTP regressions, and regenerate TypeScript.
+- [x] Verify 30 focused cases in both Node and Bun; document actual Codex and
+      Claude custom-header settings from primary vendor references.
+- [ ] Run the complete unchanged local gate on the restart source commit and
+      inspect every stage without relaxing strict parity or original deadlines.
 - [ ] Inspect the complete current-head CI cycle, preserve all failures with line numbers,
       repair the complete failure set, and rerun required checks.
 - [x] Review the complete local source diff, preserve atomic commits and prepare an

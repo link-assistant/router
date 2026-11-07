@@ -3,6 +3,28 @@
 No green gate stamp, complete parity, vendor-account change, or blanket
 geolocation guarantee has been established. Rust tools remain unrun locally.
 
+## Restart regression and configuration audit
+
+The restart began from published head `1e6e0b36a9acb13cc7b829d7b6e3455e9a4b7c70`;
+the PR already contained source changes. Fresh issue and PR feedback was read,
+and `origin/main` at `eb2dad1c0a18394dc1aad46413e11401e74eb502` was an ancestor.
+
+The added shared ProtoJSON matrix reproduced **six failures** in the previous
+Gemini filter (`restart-protojson-before.log`). After the source fix, both
+complete geolocation files pass **30/30 cases in Node and Bun**, including 16
+real-router Gemini HTTP captures across eight spelling combinations and two
+consent values. Those focused runs used Node 26.13.0 and Bun 1.4.4. They do not
+qualify the compiler's unsupported Node 26 host-intrinsic check. Native TypeScript
+was regenerated successfully with Node 20.20.2 and a bounded 768 MiB V8 heap:
+11,586,409 AST-cycle bytes, 3 changed artifacts, 0 unexpected artifacts.
+
+The configuration guide now records verified Codex optional search-location
+and provider-header settings and Claude Code's newline-separated custom headers.
+Primary sources are preserved as observations in `raw/restart-research.json`.
+Rust source mirrors the fix and consumes the same fixture; no Rust tool ran.
+These focused observations precede the new complete gate and do not claim it
+passed. Full restart logs will be retained with the final gate evidence.
+
 ## Runtime development
 
 - Initial head: `83cb0d789e9f875a9e38353ce1a18ebb00a814a3`.

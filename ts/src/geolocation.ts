@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=20d75ebe6e90fde4245f49cb37012e003e4a5966b27a6594975c5dfaeb6f2411; dynamic any annotations are explicit draft gaps.
+// Meta sha256=a3204d99a3a2ca9a99bfa0cb93361e7727495a6dbba7399cc5659dc46b6817a7; dynamic any annotations are explicit draft gaps.
 export const GEOLOCATION_OPT_IN: string = 'x-router-share-geolocation';
 export function geolocationInferencePath(path?: any): boolean {
     return ['/messages', '/messages/count_tokens', '/messages/batches', '/chat/completions',
@@ -32,8 +32,12 @@ export function sanitizeGeolocation(value?: any, share: any = false): boolean {
         if (!root || typeof root !== 'object' || (Array as any).isArray(root))
             continue;
         remove(root.web_search_options, 'user_location');
-        remove(root.toolConfig?.retrievalConfig, 'latLng');
-        remove(root.tool_config?.retrieval_config, 'lat_lng');
+        for (const config of ['toolConfig', 'tool_config'] as any)
+            for (const retrieval of ['retrievalConfig', 'retrieval_config'] as any) {
+                const location: any = (root as any)[config]?.[retrieval];
+                remove(location, 'latLng');
+                remove(location, 'lat_lng');
+            }
         if ((Array as any).isArray(root.tools))
             for (const tool of root.tools as any) {
                 if (typeof tool?.type === 'string' && /^web_search(?:_preview)?(?:_(?:\d{8}|\d{4}_\d{2}_\d{2}))?$/.test(tool.type))

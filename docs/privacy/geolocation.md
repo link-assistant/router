@@ -10,7 +10,8 @@ and App Engine, plus `x-geo-*`, `x-geolocation`, `x-geolocation-*`, `x-user-loca
 `x-client-country/city/region` and `x-latitude/longitude`. It removes
 `user_location` from supported OpenAI and Anthropic web-search tools and Chat
 `web_search_options`, and `latLng` from Gemini `toolConfig.retrievalConfig`
-(including snake-case spelling). The search tool remains enabled.
+(including mixed camelCase and snake_case spellings at each level). The search
+tool remains enabled.
 
 It covers ordinary and streaming HTTP inference, supported native request replay,
 Anthropic message batches and JSON text WebSocket events. WebSocket consent lasts
@@ -45,6 +46,39 @@ Sharing permits metadata already supplied by the caller. Router does not acquire
 GPS coordinates, infer a city, or fabricate a location when the header is set.
 Only enable it for requests whose metadata you intend to share. Middleware
 between the client and Router must preserve the header only with user consent.
+
+## Configure Codex and Claude Code
+
+For the default policy, leave `x-router-share-geolocation` absent from the
+client's custom headers. To explicitly keep it off in a shared header template,
+set its value to `false`. Router enforces the same default even when a client
+already has optional search coordinates configured.
+
+Codex documents `tools.web_search.location` as optional approximate search
+location. Remove that field from the applicable user/profile configuration to
+avoid supplying those coordinates in the first place; retain any search context
+or domain settings. Router also removes the resulting request metadata unless
+sharing is explicitly enabled. To opt in with a custom Router provider, add the
+header to that existing provider's user configuration:
+
+```toml
+[model_providers.router.http_headers]
+x-router-share-geolocation = "true"
+```
+
+Use your actual Router provider identifier in place of `router`. Remove just
+this header or change its value to `false` to restore protection. This requires
+inference to use that provider. See the
+[Codex configuration reference](https://developers.openai.com/codex/config-reference/).
+
+Claude Code supports newline-separated `ANTHROPIC_CUSTOM_HEADERS`. For an
+already configured Router session, include `x-router-share-geolocation: true`
+in that value to opt in; remove that entry or change it to `false` to restore
+protection. Preserve any other required custom headers. The variable can also
+be set under `env` in Claude Code's user settings; restart the client after
+changing launch configuration. See the
+[Claude Code environment reference](https://code.claude.com/docs/en/env-vars).
+The separate Claude account location setting is described below.
 
 ## Limits and vendor settings
 

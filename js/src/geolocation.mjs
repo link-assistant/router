@@ -32,8 +32,12 @@ export function sanitizeGeolocation(value, share = false) {
   for (const root of roots) {
     if (!root || typeof root !== 'object' || Array.isArray(root)) continue;
     remove(root.web_search_options,'user_location');
-    remove(root.toolConfig?.retrievalConfig,'latLng');
-    remove(root.tool_config?.retrieval_config,'lat_lng');
+    // ProtoJSON accepts either field spelling independently at every level.
+    for (const config of ['toolConfig','tool_config']) for (const retrieval of ['retrievalConfig','retrieval_config']) {
+      const location = root[config]?.[retrieval];
+      remove(location,'latLng');
+      remove(location,'lat_lng');
+    }
     if (Array.isArray(root.tools)) for (const tool of root.tools) {
       if (typeof tool?.type === 'string' && /^web_search(?:_preview)?(?:_(?:\d{8}|\d{4}_\d{2}_\d{2}))?$/.test(tool.type)) remove(tool,'user_location');
     }

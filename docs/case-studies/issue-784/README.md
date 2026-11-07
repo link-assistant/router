@@ -1,6 +1,6 @@
 # Issue 784: default geolocation privacy
 
-Research date: 2026-11-06 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
+Research dates: 2026-11-06–07 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
 ## Requirements and evidence
@@ -12,11 +12,18 @@ the initial audit and the 2026-11-07 00:07 UTC refresh. The complete refresh
 receipt is [`raw/feedback-refresh.json`](raw/feedback-refresh.json). Requirements are taken
 from the title and both paragraphs of the issue.
 
+The restart audit found the implementation already published at `1e6e0b36a`,
+despite the stale empty-diff notification and placeholder PR description. All
+three comment types were fetched again: conversation comments contain session
+summaries, while inline comments and reviews remain empty. Complete originals
+are the `restart-pr-*.json` files in `raw/`. No new acceptance criterion or
+required sub-issue was found.
+
 | Requirement | Solution and verification | Status |
 | --- | --- | --- |
 | All tools, including Codex and Claude, default to no geolocation sharing | Common inference metadata filter, native headers, replay and JSON WebSockets; shared fixtures and HTTP regression | Supported Router metadata implemented and Node/Bun suites pass; literal all-tool guarantee remains unmet |
 | Option to share location when needed | Exactly one `x-router-share-geolocation: true` header; connection scope for WebSockets; invalid/duplicate consent tests | JavaScript focused tests pass; Rust pending |
-| Collect issue data in `docs/case-studies/issue-784` | GitHub JSON, requirements inventory, source register, full compressed logs and verification record | Collected; refreshed feedback remains empty |
+| Collect issue data in `docs/case-studies/issue-784` | GitHub JSON, requirements inventory, source register, full compressed logs and verification record | Collected; restart session summaries reviewed |
 | Deep analysis with additional online facts | Primary vendor references below, forwarding root cause and client matrix | Completed research; account limits remain explicit |
 | List every requirement and possible solutions/plans | This table and alternatives below | Recorded |
 | Check existing components/libraries | Existing native header classifier, request decoder, WebSocket inspector and vendor controls | Reused; no new dependency |
@@ -64,7 +71,7 @@ actually traverse Router. Existing unsupported client modes remain unsupported.
 
 | Integration | Observed control and boundary |
 | --- | --- |
-| Codex | The [config reference](https://developers.openai.com/codex/config-reference/) documents analytics, feedback, web search and provider headers; no reviewed geolocation-off key. Analytics is not location consent. [OpenAI web search](https://developers.openai.com/api/docs/guides/tools-web-search) accepts optional tool `user_location`. |
+| Codex | The [config reference](https://developers.openai.com/codex/config-reference/) documents optional `tools.web_search.location` and provider `http_headers`. Remove optional coordinates and omit the Router sharing header by default; the [configuration guide](../../privacy/geolocation.md#configure-codex-and-claude-code) shows explicit opt-in. No reviewed universal geolocation-off key. Analytics is not location consent. [OpenAI web search](https://developers.openai.com/api/docs/guides/tools-web-search) accepts optional tool `user_location`. |
 | Claude Code | [Settings](https://code.claude.com/docs/en/settings) and [environment variables](https://code.claude.com/docs/en/env-vars) provide provider/custom header configuration. The [privacy explanation](https://privacy.claude.com/en/articles/11186740-does-claude-use-my-location) distinguishes optional coarse product location from mandatory security inference; account changes cannot be made from an offline Router setup. [Search tool docs](https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool) specify tool-level `user_location`. |
 | Gemini CLI | [Configuration](https://geminicli.com/docs/reference/configuration/) exposes `privacy.usageStatisticsEnabled`; this controls usage reporting. [Maps grounding](https://ai.google.dev/gemini-api/docs/generate-content/maps-grounding) supports optional retrieval coordinates. Router only supports the existing isolated API-key path; subscription hijacking remains refused. |
 | Qwen Code | [Terms and privacy](https://qwenlm.github.io/qwen-code-docs/en/users/support/tos-privacy/) describe optional usage statistics independently of the selected LLM provider. Those statistics are not a location-off control. Chat inference through Router receives the common policy. |
@@ -80,6 +87,16 @@ and timezone names. Filtering only original IP headers leaves derived location
 metadata exposed. The original-IPv6 and pseudo-IPv4 fields join the unconditional
 network-origin filter. Test data uses synthetic
 coordinates and credentials; no personal location was collected for this study.
+
+The restart audit also checked the [ProtoJSON format contract](https://protobuf.dev/programming-guides/json/).
+Its parsers accept each field's original name and lowerCamelCase alias. This
+means the three Gemini retrieval path components can mix spellings independently.
+The prior filter covered only two of eight combinations. Six newly reproducing
+shared cases failed before the fix; all eight combinations now have body and
+HTTP-forwarding coverage, including explicit consent and preserved application
+content. The matching Rust implementation consumes the same fixture, but its
+execution remains unrun. Primary-source observations and their limits are
+recorded in [`raw/restart-research.json`](raw/restart-research.json).
 
 ## Alternatives and execution plan
 

@@ -453,16 +453,16 @@
     },
     {
       "source": "js/src/geolocation.mjs",
-      "sourceSha256": "3b637bc8ea32e6bd54cbc4ba3689c7659a9c0a0ab9f7ae44d17331139d34b54f",
+      "sourceSha256": "5c19585f116244342a33ce657e1be00f782452efed545da94d27dc8166644cff",
       "meta": "tools/translation/js-to-rust/generated/native-typescript/src/geolocation.mjs.meta.json",
       "target": "ts/src/geolocation.ts",
-      "nodes": 531,
-      "explicitAny": 26,
+      "nodes": 575,
+      "explicitAny": 30,
       "inferredReturns": 5,
       "inferredLocals": 1,
-      "metaSha256": "20d75ebe6e90fde4245f49cb37012e003e4a5966b27a6594975c5dfaeb6f2411",
-      "targetSha256": "94bedc40588d33b278309be1d258c0b7ad9b8445bf9146c2cede97f20fe3bb5f",
-      "runtimeASTSha256": "a354997700e864abf79287ceb2cb2b3e104aebffc4398e015c6fb09d080733e1",
+      "metaSha256": "a3204d99a3a2ca9a99bfa0cb93361e7727495a6dbba7399cc5659dc46b6817a7",
+      "targetSha256": "af26e1ab11c91899b6e9eea30fcc6c7591d52f516b85ad8ca7b9bf017287759a",
+      "runtimeASTSha256": "1561089eebe24b17e5a7e00d7251f44223d245672b501024c80b287bce0ce5c3",
       "runtimeASTIdentity": "verified after type erasure and relative module-extension normalization"
     },
     {
@@ -1180,13 +1180,13 @@
     },
     {
       "path": "tools/translation/js-to-rust/generated/native-typescript/src/geolocation.mjs.meta.json",
-      "bytes": 8141,
-      "sha256": "20d75ebe6e90fde4245f49cb37012e003e4a5966b27a6594975c5dfaeb6f2411"
+      "bytes": 8739,
+      "sha256": "a3204d99a3a2ca9a99bfa0cb93361e7727495a6dbba7399cc5659dc46b6817a7"
     },
     {
       "path": "ts/src/geolocation.ts",
-      "bytes": 2782,
-      "sha256": "94bedc40588d33b278309be1d258c0b7ad9b8445bf9146c2cede97f20fe3bb5f"
+      "bytes": 2989,
+      "sha256": "af26e1ab11c91899b6e9eea30fcc6c7591d52f516b85ad8ca7b9bf017287759a"
     },
     {
       "path": "tools/translation/js-to-rust/generated/native-typescript/src/git-proxy.mjs.meta.json",

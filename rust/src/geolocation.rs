@@ -69,8 +69,18 @@ fn remove(value: Option<&mut Value>, key: &str) -> bool {
 
 fn sanitize_root(value: &mut Value) -> bool {
     let mut changed = remove(value.get_mut("web_search_options"), "user_location");
-    changed |= remove(value.pointer_mut("/toolConfig/retrievalConfig"), "latLng");
-    changed |= remove(value.pointer_mut("/tool_config/retrieval_config"), "lat_lng");
+    // ProtoJSON field aliases are independent at each level of the path.
+    for config in ["toolConfig", "tool_config"] {
+        for retrieval in ["retrievalConfig", "retrieval_config"] {
+            if let Some(location) = value
+                .get_mut(config)
+                .and_then(|item| item.get_mut(retrieval))
+            {
+                changed |= remove(Some(&mut *location), "latLng");
+                changed |= remove(Some(location), "lat_lng");
+            }
+        }
+    }
     if let Some(tools) = value.get_mut("tools").and_then(Value::as_array_mut) {
         for tool in tools {
             let kind = tool.get("type").and_then(Value::as_str).unwrap_or_default();
