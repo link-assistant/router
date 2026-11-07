@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=f7b7c07ad2bf3a7013da757068cab5ddc3d9acae3ec2499314923001eced7fdd; dynamic any annotations are explicit draft gaps.
+// Meta sha256=3d1ffe5eed86d268a00be6827a115225b168a5e82bf4b7e50193ecf28608c8af; dynamic any annotations are explicit draft gaps.
 import { createServer } from 'node:http';
 import { createServer as createHTTPSServer } from 'node:https';
 import { lstat, readFile } from 'node:fs/promises';
@@ -9,7 +9,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { ProtocolError, translateRequest, translateResponse, normalizeUsage, projectModels } from "./protocols.js";
 import { translateStream, monitorNativeStream } from "./streams.js";
 import { ResponsesStore, responseOwner, normalizeResponseInput } from "./responses.js";
-import { createNativeService, boundedBytes } from "./native-service.js";
+import { createNativeService, boundedBytes, isIngressNetworkHeader } from "./native-service.js";
 import { estimateRequestBudget } from "./token-reservation.js";
 import { retryableStatus } from "./accounts.js";
 import { managementOperation } from "./http-management.js";
@@ -84,7 +84,7 @@ function upstreamHeaders(candidate?: any, protocol?: any, request?: any): any {
     const forbidden: any = /^(?:authorization|x-api-key|x-goog-api-key|anthropic-auth-token|chatgpt-account-id|cookie|set-cookie|host|connection|content-length|content-encoding|transfer-encoding|upgrade|te|trailer|keep-alive|proxy-.*|forwarded|x-forwarded-.*|x-router-.*|x-link-assistant-.*)$/i;
     const copies: Set<string> = new (Set as any)(['x-request-id', 'x-correlation-id', 'traceparent', 'tracestate', 'x-claude-code-session-id', 'x-codex-session-id', 'x-session-id', 'session-id']);
     for (const [key, value] of (Object as any).entries(candidate.headers ?? candidate.account?.headers ?? {}) as any) {
-        if (forbidden.test(key))
+        if (forbidden.test(key) || isIngressNetworkHeader(key))
             continue;
         if (!sharesGeolocation(request.headers) && isGeolocationHeader(key))
             continue;

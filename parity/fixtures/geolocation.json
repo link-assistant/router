@@ -32,7 +32,10 @@
   "networkHeaders": [
     "cf-connecting-ipv6",
     "cf-pseudo-ipv4",
-    "x-forwarded-for"
+    "x-forwarded-for",
+    "x-original-forwarded-for",
+    "cf-connecting-ip",
+    "x-appengine-user-ip"
   ],
   "bodies": [
     {

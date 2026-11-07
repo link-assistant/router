@@ -7,7 +7,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { ProtocolError, translateRequest, translateResponse, normalizeUsage, projectModels } from './protocols.mjs';
 import { translateStream, monitorNativeStream } from './streams.mjs';
 import { ResponsesStore, responseOwner, normalizeResponseInput } from './responses.mjs';
-import { createNativeService,boundedBytes } from './native-service.mjs';
+import { createNativeService,boundedBytes,isIngressNetworkHeader } from './native-service.mjs';
 import {estimateRequestBudget} from './token-reservation.mjs';
 import {retryableStatus} from './accounts.mjs';
 import {managementOperation} from './http-management.mjs';
@@ -65,7 +65,7 @@ function upstreamHeaders(candidate, protocol, request) {
   const forbidden = /^(?:authorization|x-api-key|x-goog-api-key|anthropic-auth-token|chatgpt-account-id|cookie|set-cookie|host|connection|content-length|content-encoding|transfer-encoding|upgrade|te|trailer|keep-alive|proxy-.*|forwarded|x-forwarded-.*|x-router-.*|x-link-assistant-.*)$/i;
   const copies=new Set(['x-request-id','x-correlation-id','traceparent','tracestate','x-claude-code-session-id','x-codex-session-id','x-session-id','session-id']);
   for (const [key, value] of Object.entries(candidate.headers ?? candidate.account?.headers ?? {})) {
-    if (forbidden.test(key)) continue;
+    if (forbidden.test(key) || isIngressNetworkHeader(key)) continue;
     if (!sharesGeolocation(request.headers) && isGeolocationHeader(key)) continue;
     if (typeof value !== 'string') continue;
     if(value.startsWith('$')){const source=value.slice(1).toLowerCase();if(copies.has(source) && request.headers.has(source))headers.set(key,request.headers.get(source));}

@@ -280,6 +280,8 @@ impl AccountRoutingPolicy {
                 continue;
             };
             if !permitted_destination(name.as_str())
+                || crate::proxy::INGRESS_NETWORK_HEADERS.contains(&name.as_str())
+                || name.as_str().starts_with("x-forwarded-")
                 || (!share_geolocation && crate::geolocation::is_geolocation_header(name.as_str()))
             {
                 continue;

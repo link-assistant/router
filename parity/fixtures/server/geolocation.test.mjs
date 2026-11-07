@@ -51,7 +51,8 @@ test('only one explicit true opts in; control and network-origin headers stay pr
 test('HTTP Chat forwarding sanitizes before fetch and permits explicit sharing',async () => {
   for(const share of [false,true]) {
     let captured;
-    const core={config:{api_key:'secret'},candidates:()=>[{provider:'openai',protocol:'chat',model:'upstream',baseUrl:'http://upstream/v1',apiKey:'upstream-secret',headers:{'x-geo-city':'London','x-request-id':'keep'}}]};
+    const networkHeaders=Object.fromEntries(fixtures.networkHeaders.map(name=>[name,'203.0.113.1']));
+    const core={config:{api_key:'secret'},candidates:()=>[{provider:'openai',protocol:'chat',model:'upstream',baseUrl:'http://upstream/v1',apiKey:'upstream-secret',headers:{...networkHeaders,'x-geo-city':'London','x-request-id':'keep'}}]};
     const router=createNativeRouter({core,fetch:async(url,init)=>{captured=init;return Response.json({id:'c',object:'chat.completion',choices:[{index:0,message:{role:'assistant',content:'ok'},finish_reason:'stop'}]});}});
     const input={model:'alias',messages:[{role:'user',content:'London'}],web_search_options:{user_location:{city:'London'}}};
     const headers={authorization:'Bearer secret','content-type':'application/json'};
@@ -61,6 +62,7 @@ test('HTTP Chat forwarding sanitizes before fetch and permits explicit sharing',
     assert.equal(JSON.parse(captured.body).web_search_options.user_location?.city,share?'London':undefined);
     assert.equal(captured.headers.get('x-geo-city'),share?'London':null);
     assert.equal(captured.headers.get('x-router-share-geolocation'),null);
+    for(const name of fixtures.networkHeaders)assert.equal(captured.headers.get(name),null,name);
   }
 });
 

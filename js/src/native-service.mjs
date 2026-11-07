@@ -9,12 +9,16 @@ import { conversationContract, conversationNotFound, conversationUnsupported, co
 import { captureSseId, captureJsonId, captureLocationId, resourceCaptureError } from './response-contracts.mjs';
 
 const transport = new Set(['authorization','x-api-key','x-goog-api-key','anthropic-auth-token','proxy-authorization','proxy-authenticate','host','connection','proxy-connection','keep-alive','transfer-encoding','upgrade','te','trailer','content-length','accept-encoding','cookie','chatgpt-account-id','sec-websocket-key','sec-websocket-version','sec-websocket-extensions','sec-websocket-accept']);
-const ingress = new Set(['forwarded','x-real-ip','x-client-ip','x-cluster-client-ip','cf-connecting-ip','cf-connecting-ipv6','cf-pseudo-ipv4','true-client-ip','fastly-client-ip','fly-client-ip','x-envoy-external-address','x-azure-clientip','x-appengine-user-ip','cloudfront-viewer-address']);
+const ingress = new Set(['forwarded','x-original-forwarded-for','x-real-ip','x-client-ip','x-cluster-client-ip','cf-connecting-ip','cf-connecting-ipv6','cf-pseudo-ipv4','true-client-ip','fastly-client-ip','fly-client-ip','x-envoy-external-address','x-azure-clientip','x-appengine-user-ip','cloudfront-viewer-address']);
 const responseCredentials = new Set(['authorization','x-api-key','x-goog-api-key','anthropic-auth-token','set-cookie','cookie','chatgpt-account-id']);
 const connectionNames = headers => new Set((headers.get('connection') ?? '').split(',').map(v => v.trim().toLowerCase()));
+export function isIngressNetworkHeader(name) {
+  const lower=name.toLowerCase();
+  return ingress.has(lower) || lower.startsWith('x-forwarded-');
+}
 export function nativeRequestHeaders(incoming, candidate) {
   const headers = new Headers(), nominated = connectionNames(incoming), share = sharesGeolocation(incoming);
-  for (const [name,value] of incoming) if (!transport.has(name) && !ingress.has(name) && !nominated.has(name) && !name.startsWith('x-forwarded-') && !name.startsWith('x-router-') && !name.startsWith('x-link-assistant-') && (share || !isGeolocationHeader(name))) headers.append(name,value);
+  for (const [name,value] of incoming) if (!transport.has(name) && !isIngressNetworkHeader(name) && !nominated.has(name) && !name.startsWith('x-router-') && !name.startsWith('x-link-assistant-') && (share || !isGeolocationHeader(name))) headers.append(name,value);
   const credential = candidate.apiKey ?? candidate.api_key;
   if (credential) headers.set('authorization', `Bearer ${credential}`);
   for (const [name,value] of Object.entries(candidate.oauth_headers ?? {})) if (typeof value === 'string' && ['chatgpt-account-id','originator','anthropic-beta','anthropic-version'].includes(name.toLowerCase())) headers.set(name,value);

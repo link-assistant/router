@@ -110,6 +110,11 @@ fn static_account_headers_cannot_restore_unconsented_location() {
             .headers
             .insert(name.as_str().unwrap().to_string(), "synthetic".to_string());
     }
+    for name in fixtures["networkHeaders"].as_array().unwrap() {
+        policy
+            .headers
+            .insert(name.as_str().unwrap().to_string(), "203.0.113.1".to_string());
+    }
     policy.headers.insert("x-request-id".into(), "keep".into());
     policy.validate().unwrap();
     for consent in [None, Some("true"), Some("false"), Some("true, true")] {
@@ -128,5 +133,8 @@ fn static_account_headers_cannot_restore_unconsented_location() {
         }
         assert_eq!(outgoing["x-request-id"], "keep");
         assert!(!outgoing.contains_key(OPT_IN));
+        for name in fixtures["networkHeaders"].as_array().unwrap() {
+            assert!(!outgoing.contains_key(name.as_str().unwrap()));
+        }
     }
 }
