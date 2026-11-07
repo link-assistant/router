@@ -3,6 +3,216 @@
 No green gate stamp, complete parity, vendor-account change, or blanket
 geolocation guarantee has been established. Rust tools remain unrun locally.
 
+## Completed CI cycle at 84779613d
+
+The entire cycle at `84779613d2a334d131083c4bb4eff7f1680e8add` is complete.
+The main [run 42354470542](https://github.com/link-assistant/router/actions/runs/42354470542)
+started **2026-11-07 08:12:20 UTC** and failed at **09:12:48 UTC**. All six
+supplemental workflows finished skipped; a skip establishes no verification.
+The CI merge tree equals the published head tree. All seven complete logs,
+metadata and three original artifact ZIPs are preserved under
+`ci-logs/issue-784-restart-2/`; the collector verified every artifact member.
+
+| Stage | Completed result |
+| --- | --- |
+| Lint and native engines | Passed; Node and Bun each passed 259 cases. |
+| TypeScript | All three real profile trees pass strict TypeScript 5.9.3 compilation. The next mandatory owned-definition index is absent; full log line 1375. |
+| Strict parity | Failed: stale account-policy inventory, 441 feature gaps and 12345 carried items, runtime parity false; full log lines 875–878. |
+| Profile matrix | Failed at the original 2048 MiB V8 heap limit after 1849706 ms. Native frames include `OrderedHashSet::Rehash` and `Runtime_SetGrow`; they do not identify a JavaScript allocation site. |
+| Forward translation | Cancelled at the original 60-minute limit. Its complete retained TAP contains 29 failure records, including 20 absent from the workflow log. No final complete cohort or deadline audit exists. |
+| Reverse translation | Cancelled at the original 15-minute limit after 76 passes; later Bun and regeneration commands remain unrun. |
+| Aggregate and Rust | Aggregate failed; all Rust/release jobs stayed skipped. |
+
+The full main log has **8061 lines**. The forward artifact
+`artifact-13567849550.zip` retains its complete **6431-line / 911819-byte**
+`complete-gjooP1/stdout.raw.tap`, SHA256
+`2c8aa14de83cdc95ade39270f5a9a4fe227ce95553bb232cab2cec84d29c268f`.
+`inspect-completed-forward.py` independently inventories all 29 failed blocks
+in `completed-forward-failures.json`, preserving every original line:
+
+- Eight `actual-gain-families` cases fail the generation compiler pin, starting
+  at TAP line 553. Current `translate.mjs` differs from the stored generation;
+  genuine complete generation remains required.
+- One whole-owner proposal rejects four unchanged members of its required
+  fifteen-file physical closure, TAP line 1288.
+- Sixteen historical alias comparisons fail the same stale current-source
+  equation, including the file-level exit of `completed-json-eligibility`.
+  Their full blocks run from TAP line 2541 through line 4655.
+- One scanner comparison rejects its changed guarded-lexing import, line 3181.
+- One core-adoption child receives SIGTERM at its original command deadline,
+  line 5633; two other cases exceed their original 60000 ms limits, lines
+  6285 and 6379.
+
+The workflow log's nine failures are a partial observation, not the complete
+forward failure set. Cancellation also leaves later cases unrun; 29 is the
+number of retained failure records, not a complete-suite count. The profile
+heap failure, missing definitions, strict parity and original compiler deadlines
+remain required failures. No skip, repin or relaxed limit resolves them.
+
+### Complete identity overlays
+
+Commit `6b5eba057` fixes the proposal's refusal of four physically unchanged
+members. The normal producer still requires all fifteen physical closure
+members plus the changed codec. Every packet must match its complete original
+and proposed bytes, including identity members; missing, duplicate, foreign,
+mutated or noncanonical packets still refuse. The separate proof-byte verifier
+counts actual physical substitutions. The original resolver verifier, original
+twelve cases, source pins, assertions and deadlines remain unchanged.
+
+Native selectors derive the support and verifier edits; their complete
+serialized/reparsed CST equations and independent source inverses are retained.
+Both ordinary producers regenerated their owned outputs. All seven new cases
+in `proof-byte-identity-overlays.test.mjs` pass under Node **20.20.2** with the
+independent deadline audit and Bun **1.4.4**. The before-generation attempt
+retains the original rejection. Node's complete raw receipt is `complete-6RykOK`.
+
+Both existing full receiving files finish under Node with **11/11 TAP passes**,
+including the real sixteen-packet proposal. Their independent audit **fails**:
+three original batched cases take 334769.518, 119805.633 and 213459.277 ms;
+two whole-owner cases take 150844.080 and 120203.619 ms. Each retains its
+original 60000 ms limit. The complete attempt takes 973.576 seconds, with a
+2114547712-byte sampled total cgroup maximum and no observer stop. Full log:
+`identity-existing-node.log`; raw receipt: `complete-NIqpXy`. Source correctness
+in these assertions does not qualify their failed performance or the full gate.
+
+The same two existing files were attempted under Bun. The first file reports
+five passes and two original 60000 ms timeouts (145704.80 and 118631.97 ms).
+The second reports its first case passing before the owned memory observer
+stops the process at **2868346880 sampled total cgroup bytes**, exit 143 after
+584.654 seconds. Its remaining cases are unqualified. The full output and
+receipt are `identity-existing-bun-retry.log` and its memory JSON. The earlier
+invalid `--concurrent=false` invocation exits before running tests and is
+retained separately; it supplies no test result. No unchanged repeat is planned.
+
+### Historical alias and scanner source equations
+
+The common alias reader still required the complete current source from its
+original generation, although three physical inputs had subsequently acquired
+declared import/wrapper changes. `compiler-alias-source-evolution.mjs` reverses
+only those changes through native selected spans and genuine lexical bindings,
+then requires the original full-source pin. Both language/repository CST phases
+are serialized and reparsed, and the complete inverse reconstructs the actual
+current source. Unrelated bodies/imports and changed callbacks remain refused.
+
+The actual producer regenerated only `compiler-data-alias-history.mjs`.
+Its entire serialized `RECORDS` declaration remains byte identical: all six
+original current pins, all six historical pins and every original substitution
+are preserved. The newer receiving reader is retained. Its complete 6915793-byte
+proposal is stored in `alias-history-proposal.json.gz` (878942 compressed bytes,
+SHA256 `4d5e51893f272f77c84fb63217c045a0b5217192388e4712dad784271d57e1ac`).
+The separate installation check rejoins complete physical inputs, CST documents,
+every original history record and the full inverse before writing producer bytes.
+
+The scanner producer compares its original APIs after reversing only the same
+declared guarded import. The complete current physical source remains in its
+support vector and final repository CST phase. The original scanner archive
+pin and the experimental/default codec bytes remain unchanged. Native comparison
+still removes only the already declared stateless addition before comparing
+the original APIs; this is not a claim of byte equality for that addition.
+
+The complete new five-case file reproduces the old history-reader rejection
+before regeneration and passes **5/5 on Node 20.20.2**, including the independent
+original deadline audit. Its complete receipt is `complete-LWC3ao`; elapsed time
+is 78.048 seconds, with a sampled total cgroup maximum of 1808482304 bytes.
+The first pre-generation producer draft also exposes its stale receiving-reader
+selection; both failures and the corrected source proposal remain retained.
+Bun **1.4.4** also passes all five new cases in 79.278 seconds, with a sampled
+total cgroup maximum of 1834835968 bytes and no observer stop. The complete
+six-file existing Node cohort reports **53/56 passes** in 328.022 seconds,
+with no independent deadline failures. All 41 alias/scanner cases pass; the
+fifteen-case freshness file exposes three additional complete-source producer
+mismatches. Its complete receipt is `complete-mBtzGr`, with a sampled total
+cgroup maximum of 2321408000 bytes. This source repair does not qualify
+generation, parity or CI.
+
+### Further complete producer freshness repairs
+
+The three failures above have distinct roots, retained in the full existing
+Node log. `inspect-source-producer-mismatches.mjs` invokes the actual producers
+and records complete source proposals, decoded PROGRAM values and native import
+spans. The full 3013919-byte diagnostic is retained as
+`source-producer-mismatches.json.gz` (691815 compressed bytes), SHA256
+`9758b50750dd24f1aecc9590b0db83a7cf10c52eafd95edc3994349689c81a5d`.
+
+The class producer already reproduces all thirteen current class files. Its
+stored PROGRAM alone retains the older Host entry pin. The complete decoded
+difference changes exactly `entry.sourcePin.bytes` from 120652 to 121542 and
+`entry.sourcePin.sha256` from
+`dcc451eae9dd895e6580c44be5c31cd3f36a439ba0140b418be508d167ec4d37` to
+`d9ed69f2944ef27f702a472a90ab3aa11473e5d7a253bb0bb03f165e7e9981ac`.
+`materialize-class-entry-pin.mjs` authenticates the complete saved proposal,
+rejoins every class output and the complete current Host source, verifies both
+serialized/reparsed CSTs and the full inverse, then invokes the actual storage
+renderer again before installing its exact output. Every other decoded PROGRAM
+value stays byte exact; original historical inputs remain unchanged.
+
+The invocation-local freezer producer predates the scanner's declared stateless
+eligibility export and guarded import. `proof-scanner-source-evolution.mjs`
+reverses the guarded import with its existing producer and selects the additive
+export through the installed native parser. The resulting complete source must
+equal the original scanner pin. Both declared phases carry complete serialized,
+reparsed CSTs and independent inverses. The actual freezer producer composes
+those equations while retaining its original profile archive, cost-store bodies,
+limits and full source inverse. Unrelated source and imports remain refused.
+
+The allocation producer assumed its two generated imports immediately followed
+the shebang. A later genuine Git-size import now precedes them; an independent
+original import also uses the storage module. Native import bindings select
+exactly the two allocation imports at their real position. Their complete
+adjacent bytes remain required, every original function stays exact, and
+duplicate, separated or renamed allocation imports refuse. No physical runtime
+producer or receiving test body changes.
+
+All five new cases in `source-producer-evolution.test.mjs` pass under Node
+**20.20.2**, including the independent deadline audit (`complete-5GusPu`).
+The attempt takes 31.322 seconds with a sampled total cgroup maximum of
+1807949824 bytes. The first draft's native selector also selected the independent
+original storage import; its four-pass/one-failure result remains retained in
+`source-producer-evolution-node.log`.
+
+The complete existing fifteen-case freshness file now passes on Node, including
+its independent original deadline audit (`complete-NYnVoz`): 85.743 seconds,
+1831145472-byte sampled total cgroup maximum, no observer stop. The new five-case
+file also passes on Bun in 29.844 seconds. At source `323779a4038ec7fb313ddd9e636c843e25dbcdf0`,
+all six original alias/scanner/freshness files pass on Bun (**56/56**), and the
+complete original invocation-local freezer file passes **8/8**. The sequential
+nine-file controller retains identical complete before/after source vectors.
+
+The ninth Bun file, `static-source-release.test.mjs`, passes its first three
+cases, then its complete original/released generation comparison is interrupted
+by the owned memory observer at **2875727872 sampled total cgroup bytes**,
+exit 143 after 68.9999 seconds. No final comparison or complete-file success is
+established. The entire selection has **72 reported passes** and one unfinished
+case; its summary deliberately remains failed. Each whole file has a separate
+complete log and memory receipt in `alias-existing-bun-*`; the controller's full
+result is `alias-existing-bun-results.json`. The stopped workload is not repeated
+unchanged under Bun. These source repairs do not establish a green gate or parity.
+
+Both complete existing freezer/allocation files also finish under Node at the
+same source head with the separate 768 MiB diagnostic heap: **12/12 TAP passes**,
+including complete artifact and source-vector equality. The independent audit
+**fails** because the last generation comparison takes **140915.024449 ms**
+against its unchanged **60000 ms** case deadline. The complete run takes
+159.506 seconds with a sampled total cgroup maximum of 2335240192 bytes and no
+observer stop. Full evidence: `producer-existing-node.log`, its memory receipt,
+and `complete-LTOSSZ`. The source freshness repair is qualified separately;
+the failed runtime deadline remains a required receiving obligation.
+
+Final focused diagnostics pass the complete strict translator API TypeScript
+project with lockfile compiler **5.9.3** (13.908 seconds), all nineteen changed
+JavaScript syntax checks and ten investigation Python grammar checks. These are
+focused diagnostics, not a new complete gate. The previous full gate's failed
+resource/deadline and strict-parity obligations remain unresolved; a new complete
+local gate is unrun, and no Rust tool ran.
+
+After every local child closed, `cleanup-storage-toolchain.py` authenticated the
+same complete Node archive and binary checksums, checked live task command/map
+references and removed only this task's inactive temporary toolchain. The
+`identity-node-cleanup.json` receipt records **125124608 bytes** of distinct file
+allocation removed and a separate **125128704-byte** filesystem free-space delta.
+No Rust cache or another worker directory was touched. Freshly fetched main
+`eb2dad1c0a18394dc1aad46413e11401e74eb502` remains an ancestor of the repair branch.
+
 ## Second CI restart: explicit profile paths and composer evolution
 
 The complete cycle at head `7dceb9b0a545aa5c61f078920d966d6220e355b1`

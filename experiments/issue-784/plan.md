@@ -119,7 +119,39 @@ no Rust tool invocations, compressed evidence below 500 MB, preserve all strict 
 - [x] Inspect the fresh completed TypeScript, parity and reverse jobs: all three
       profile trees now pass strict compilation, the owned-definition index is
       missing, strict parity still fails, and reverse reaches its original limit.
-- [ ] Collect the entire new same-head CI cycle before another publication.
+- [x] Collect the entire new same-head CI cycle before another publication:
+      all seven workflows at `84779613d` are terminal. The main run failed at
+      2026-11-07 09:12:48 UTC; retain all logs and every complete artifact member.
+      Inspect the complete forward TAP artifact: it contains 29 failure records,
+      including 20 that are absent from the streamed workflow log.
+- [x] Reproduce the proof-byte proposal's incorrect refusal of four unchanged
+      members of its required fifteen-file physical closure. Derive both support
+      and verifier changes through their native/CST source producers, preserving
+      the changed codec, complete closure and every exact byte/refusal check.
+      All seven new regression cases pass on Node 20 with deadline audit and Bun.
+- [x] Finish the two existing full proof-byte receiving attempts: Node passes all
+      eleven assertions but fails five original case deadlines; Bun passes six
+      cases, fails two original deadlines and stops at the owned memory guard.
+      Keep receiving unqualified and do not repeat the unchanged workload here.
+- [x] Repair the common historical alias reader and scanner source equations
+      while retaining all original complete current/historical pins. Draft native
+      inverse selectors and refusal regressions; all five new cases pass on
+      Node 20 with deadline audit and Bun. All 41 existing alias/scanner cases
+      pass on Node; the same cohort exposes three separate freshness failures.
+- [x] Diagnose all three further freshness mismatches from the actual producers:
+      only the current class PROGRAM entry pin is stale, the invocation freezer
+      predates declared scanner evolution, and native allocation imports moved.
+      Retain complete proposals and install only the actual class producer output.
+- [x] Draft scanner evolution and native import selectors with full source/CST
+      inverses and unrelated-edit refusals; all five new Node cases and their
+      original deadline audit pass. Preserve the failed first selector draft.
+- [x] Finish complete existing producer freshness and receiving attempts for this
+      integrated batch. Freshness passes all fifteen cases on Node with deadline
+      audit and Bun. All six original alias/scanner/freshness files pass on Bun,
+      as do all five new evolution cases and all eight original freezer cases.
+      Bun's final allocation comparison needs an owned memory stop; Node finishes
+      all twelve freezer/allocation assertions but fails the unchanged 60000 ms
+      generation deadline at 140915.024449 ms. Keep receiving unqualified.
 - [x] Complete the six owned-field storage cases under Node 20 with the
       independent deadline audit and under Bun; both pass.
 - [x] Complete all five unchanged Node storage dependencies: 39 TAP passes,
@@ -144,6 +176,12 @@ no Rust tool invocations, compressed evidence below 500 MB, preserve all strict 
       Node copy. No OOM repair or performance qualification is established.
 - [ ] Repair the remaining complete source-producer pins, profile heap failure,
       owned-definition generation, forward/reverse deadlines and strict parity.
+- [x] Verify changed source syntax and the complete strict translator API project
+      with installed TypeScript 5.9.3, then remove only the inactive authenticated
+      task Node copy. Keep all failed deadlines and interrupted cases explicit.
+- [ ] Preserve all newly completed CI and local receiving evidence in one verified
+      compressed packet, review the coordinated source batch and publish its
+      accurate failed-gate draft checkpoint only on the assigned branch.
 - [ ] Rerun the complete local gate and collect every same-head CI result before
       claiming completion or marking the PR ready.
 
