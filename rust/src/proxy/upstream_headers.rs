@@ -73,6 +73,7 @@ pub fn merge_oauth_beta(existing: Option<&str>) -> String {
 
 fn replaced_or_transport_header(name: &str) -> bool {
     INGRESS_NETWORK_HEADERS.contains(&name)
+        || name.starts_with("x-forwarded-")
         || matches!(
             name,
             "authorization"

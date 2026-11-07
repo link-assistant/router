@@ -50,6 +50,7 @@ fn location_headers_require_one_explicit_true() {
             );
         }
         headers.insert("x-request-id", "keep".parse().unwrap());
+        headers.insert("x-forwarded-city", "London".parse().unwrap());
         let result = crate::proxy::native_request_headers(&headers, "upstream");
         for name in fixtures["headers"].as_array().unwrap() {
             assert_eq!(
@@ -59,6 +60,7 @@ fn location_headers_require_one_explicit_true() {
             );
         }
         assert!(!result.contains_key(OPT_IN));
+        assert!(!result.contains_key("x-forwarded-city"));
         for name in fixtures["networkHeaders"].as_array().unwrap() {
             assert!(!result.contains_key(name.as_str().unwrap()));
         }
