@@ -179,9 +179,13 @@ no Rust tool invocations, compressed evidence below 500 MB, preserve all strict 
 - [x] Verify changed source syntax and the complete strict translator API project
       with installed TypeScript 5.9.3, then remove only the inactive authenticated
       task Node copy. Keep all failed deadlines and interrupted cases explicit.
-- [ ] Preserve all newly completed CI and local receiving evidence in one verified
-      compressed packet, review the coordinated source batch and publish its
-      accurate failed-gate draft checkpoint only on the assigned branch.
+- [x] Preserve all newly completed CI and local receiving evidence in one verified
+      compressed packet: 395 complete originals, 49851037 logical bytes and
+      33132484 archive bytes at a8ba300a7; all decoded originals verify.
+- [x] Review the coordinated source batch and the complete published PR diff;
+      preserve exact historical inputs, original deadlines and failed results.
+- [ ] Publish the reviewed failed-gate draft checkpoint only on the assigned
+      branch, update PR #785 and collect its complete same-head CI cycle.
 - [ ] Rerun the complete local gate and collect every same-head CI result before
       claiming completion or marking the PR ready.
 

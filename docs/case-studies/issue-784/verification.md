@@ -213,6 +213,26 @@ allocation removed and a separate **125128704-byte** filesystem free-space delta
 No Rust cache or another worker directory was touched. Freshly fetched main
 `eb2dad1c0a18394dc1aad46413e11401e74eb502` remains an ancestor of the repair branch.
 
+The [complete storage and CI packet](evidence/storage-ci-complete.tar.xz)
+and [losslessly compressed receipt](evidence/storage-ci-complete.json.gz)
+preserve **395 complete originals / 49851037 logical bytes** at source head
+`a8ba300a78e44f2d541ee79531ebcd61bcb2d437`. The archive occupies **33132484
+bytes**, SHA256
+`b61c283ae8ed35dfd75f168f691426f76146ea36f5ac8b3fb4561d42b87ca3dd`.
+The frozen manifest's SHA256 is
+`0cc24bb11beb5cb73f83bef56cb4d304fec7ca29870aafeb1afa6741df28cc76`.
+Capture reopened and byte-verified every decoded original and confirmed all
+selected inputs remained unchanged. It finished in 45.113 seconds with a
+1948794880-byte sampled total cgroup maximum and no observer stop.
+
+The packet contains all seven completed workflow logs and original artifacts,
+the 91 complete allocation samples, complete producer proposals, new passing
+and failing receiving logs, raw Node deadline receipts and cleanup evidence.
+The allocation diagnostic still lacks a parent terminal result; interrupted
+cases and failed deadlines remain unqualified. Capture does not rerun tests,
+establish runtime parity or provide a passing full gate. The next same-head CI
+cycle remains pending publication of this reviewed draft checkpoint.
+
 ## Second CI restart: explicit profile paths and composer evolution
 
 The complete cycle at head `7dceb9b0a545aa5c61f078920d966d6220e355b1`
