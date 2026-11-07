@@ -3,13 +3,20 @@ import {spawn} from 'node:child_process';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {gzipSync} from 'node:zlib';
 import {join,resolve} from 'node:path';
-const directory=resolve('ci-logs/issue-784-restart-2/owned-allocation-samples');
+const choices=new Map([
+ ['owned',['owned-allocation-samples','profile-owned-generation-child.mjs']],
+ ['ordinary-current',['ordinary-current-allocation-samples','profile-ordinary-generation-child.mjs']],
+]);
+const choice=process.argv[2]??'owned';
+if(!choices.has(choice)||process.argv.length>3)throw new TypeError('Select owned or ordinary-current');
+const [folder,script]=choices.get(choice);
+const directory=resolve('ci-logs/issue-784-restart-2/'+folder);
 mkdirSync(directory);
 const executable=resolve('experiments/issue-784/toolchain/node20/bin/node');
-const command=[executable,'--max-old-space-size=768','--inspect=127.0.0.1:0','experiments/issue-784/profile-owned-generation-child.mjs'];
+const command=[executable,'--max-old-space-size=768','--inspect=127.0.0.1:0','experiments/issue-784/'+script];
 const child=spawn(command[0],command.slice(1),{stdio:['ignore','inherit','pipe']});
 const started=performance.now(),pending=new Map(),samples=[];
-let socket=null,identifier=0,interval=null,collecting=false,prefix='',sampling=false;
+let socket=null,identifier=0,interval=null,collecting=false,prefix='',sampling=false,storedBytes=0;
 function request(method,params={}){
  return new Promise((resolve,reject)=>{
   const id=++identifier;pending.set(id,{resolve,reject});
@@ -24,7 +31,9 @@ async function collect(){
   const bytes=Buffer.from(JSON.stringify(profile)+'\n');
   if(bytes.length>32*1024*1024)throw Error('Sampling profile exceeds diagnostic storage bound');
   const name=String(samples.length).padStart(4,'0')+'.json.gz';
-  writeFileSync(join(directory,name),gzipSync(bytes,{level:1}),{flag:'wx'});
+  const packed=gzipSync(bytes,{level:1});
+  if(storedBytes+packed.length>32*1024*1024){sampling=false;clearInterval(interval);await request('HeapProfiler.stopSampling');socket.close();return;}
+  writeFileSync(join(directory,name),packed,{flag:'wx'});storedBytes+=packed.length;
   const rows=[],stack=[profile.head];
   while(stack.length){const row=stack.pop();rows.push({functionName:row.callFrame.functionName,url:row.callFrame.url,lineNumber:row.callFrame.lineNumber,selfSize:row.selfSize});for(const item of row.children)stack.push(item);}
   rows.sort((a,b)=>b.selfSize-a.selfSize);
