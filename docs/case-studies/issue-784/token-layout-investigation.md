@@ -328,3 +328,17 @@ case reaches 88436.65 ms and fails the original 60000 ms deadline. No assertion
 or deadline is removed or increased. The sampled total cgroup peak is 2524577792
 bytes without a resource stop. That whole receiving file remains unqualified;
 the unchanged expensive workload is not repeated locally.
+
+The required complete local gate was attempted on clean `19091dacb` with
+Node 20.20.2, a bounded 512 MiB orchestration heap and the original child
+commands. Its observer stopped at 2869051392 sampled total cgroup bytes after
+19.98 seconds while fingerprinting, before the first stage. **All seven stages
+are unrun for this attempt; no green stamp exists.** Cache-inclusive cgroup
+totals do not establish that fingerprinting needs that much resident heap.
+
+After all local checks and owned processes finished, the authenticated temporary
+Node toolchain was removed: 125124608 bytes of distinct file allocation, with
+125128704 bytes of observed filesystem free-space increase. No Rust directory
+or another process's active input was removed. The explicit tracked-file cache
+hint preserves every file and excludes observed open/mapped paths; it confers
+no test or gate qualification.

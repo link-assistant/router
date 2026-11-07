@@ -290,7 +290,13 @@ remain explicitly unmet parts of the literal all-tool requirement.
       source-equation case takes 88436.65 ms and fails its original 60000 ms
       deadline, while its other six cases pass. No resource stop; receiving
       remains unqualified and the unchanged workload is not repeated here.
-- [ ] Commit the coherent repairs, attempt the complete local gate, publish only
-      on the prepared branch and inspect the entire new same-head CI cycle.
+- [x] Commit the coherent repairs and attempt the complete local gate on clean
+      `19091dacb`: owned resource stop after 19.98 seconds while fingerprinting,
+      all seven stages unrun, no stamp. Existing strict generated TypeScript
+      project and changed syntax pass; installed TypeScript is 5.9.3.
+- [x] Remove only the inactive authenticated temporary Node toolchain after
+      every local process finishes; 125124608 allocation bytes reclaimed.
+- [ ] Freeze complete new evidence, publish only on the prepared branch and
+      inspect the entire new immutable-head CI cycle before another push.
 - [ ] Obtain green complete gate/CI and fulfill all remaining issue criteria;
       passing receiving cases do not certify the missing application parity.

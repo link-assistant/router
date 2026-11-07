@@ -894,3 +894,13 @@ subsequent full-proposal deadline failure are also retained. Its new positive
 cases now use the existing complete enclosing-history entry point of the same
 shared reader; the older nine-row adoption test remains unchanged and failed.
 These results neither regenerate the missing matrix nor establish full parity.
+
+The required complete gate attempt on clean `19091dacb` stops at the owned
+resource guard during fingerprinting after 19.98 seconds (sampled total cgroup
+2869051392 bytes). **No stage started; all seven are unrun and no stamp exists.**
+The Node orchestration heap was bounded at 512 MiB, without changing any child
+command, case deadline or strictness. Cache-inclusive totals are not heap/RSS.
+After every local check and owned process finished, the authenticated temporary
+Node toolchain was removed, reclaiming 125124608 bytes of distinct allocation.
+Main `eb2dad1c0` remains an ancestor; every PR comment type is unchanged from the
+already-read complete feedback. Draft status and all unmet criteria remain.
