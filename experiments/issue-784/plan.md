@@ -261,3 +261,36 @@ remain explicitly unmet parts of the literal all-tool requirement.
       All selected originals and decoded members verify; no semantic authority.
 - [ ] Review and publish the coherent failed-gate draft batch on the prepared
       branch, then collect the entire immutable-head CI cycle before any push.
+
+## Complete e29a8dd23 cycle and source-history repairs
+
+- [x] Publish the preceding batch at `e29a8dd23` and review its complete PR diff.
+- [x] Wait for all seven workflows at that exact head to finish. Main run
+      42369312365 failed at 12:43:01 UTC; six supplemental workflows skipped.
+      Download every complete workflow and all three artifacts, verify each ZIP
+      member and inspect every failure, including all 25 forward TAP records.
+- [x] Retain passing native suites (259 per engine) and lint separately from
+      missing owned TypeScript matrix, 441 strict-parity gaps / 12345 carried
+      items, the original 2048 MiB profile failure and both cohort deadlines.
+- [x] Identify the default-byte producer's stale prerequisite equation. Reuse
+      the genuine guarded import selector and its complete native/CST inverse;
+      retain all original archive pins and unrelated-source refusals.
+- [x] Reproduce the refusal in the first complete three-case regression draft.
+      Preserve that 1-pass/2-fail attempt and the later 2-pass/1-deadline-fail
+      attempt. Scope the new positive tests to the existing enclosing-history
+      entry point of the same prerequisite reader; do not change any older test.
+- [x] Replay the module-view optimization in the existing derive-effects
+      historical comparison through its actual whole-source producer, preserving
+      the original fixture, native actions, complete inverses and case deadline.
+- [x] Pass both complete new-prerequisite/derive-effects files on Node 20.20.2:
+      13/13 with the independent deadline audit. Pass the complete new prerequisite
+      file on Bun 1.4.4: 3/3. TypeScript remains the installed version 5.9.3.
+- [x] Finish and inspect the complete existing Bun adoption/derive cohort:
+      16/17 pass. All ten derive-effects cases pass; the complete adoption
+      source-equation case takes 88436.65 ms and fails its original 60000 ms
+      deadline, while its other six cases pass. No resource stop; receiving
+      remains unqualified and the unchanged workload is not repeated here.
+- [ ] Commit the coherent repairs, attempt the complete local gate, publish only
+      on the prepared branch and inspect the entire new same-head CI cycle.
+- [ ] Obtain green complete gate/CI and fulfill all remaining issue criteria;
+      passing receiving cases do not certify the missing application parity.

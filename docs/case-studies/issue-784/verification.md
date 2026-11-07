@@ -854,3 +854,43 @@ originals, 96,537,908 logical bytes, at source `154976668`. Every selected origi
 and decoded archive member verifies; its 21,418,296-byte archive has SHA-256
 `68e1e2a478a28a1dab9b645c74fdaabb7b26981d4e19b9eb2cb452ec73949f06`.
 The distinct measured heads and failed/unrun boundaries remain explicit.
+
+### Completed e29a8dd23 cycle and source-history repair checks
+
+All seven workflows at `e29a8dd23e4a52f2892122276693d9b026ab7191` finished.
+[Main run 42369312365](https://github.com/link-assistant/router/actions/runs/42369312365)
+failed at 2026-11-07 12:43:01 UTC; six supplemental workflows skipped. Native
+Node/Bun each passed 259 cases and lint passed. The full TypeScript stage still
+requires the missing owned-definition index. Strict parity still reports a
+stale source hash, 441 feature gaps and 12345 carried items. Profiles exhaust
+the original 2048 MiB heap; forward/reverse reach their original enclosing
+deadlines. Rust and release skip. No secret or human-only prerequisite was found.
+
+Every complete workflow log and all three artifacts were retained and verified.
+The complete forward artifact has 25 failures, distinct from the preceding
+cycle's 11. `completed-forward-failures.json` retains every full failure block,
+line number and source location. See the [source-history investigation](token-layout-investigation.md)
+for the complete categories and their remaining limits.
+
+The next coherent source batch composes the actual guarded lexer import in the
+default-byte prerequisite reader and the actual module-token source history in
+the existing derive-effects comparison. Both retain the original archive and
+historical fixture pins, native actions, serialized/reparsed CST phases and
+complete inverses. The receiving source hashes are frozen in
+`source-history-repair-sources.json`; checks ran on that explicit source draft
+before its atomic commits `8175f7458` and `6d315317d`.
+
+| Check | Result |
+| --- | --- |
+| New prerequisite file plus complete derive-effects file, Node 20.20.2 | **13/13 pass**, independent deadline audit passes; 118.77 s, sampled total cgroup peak 2151837696 bytes. |
+| Complete new prerequisite file, Bun 1.4.4 | **3/3 pass**, 65.77 s, sampled total peak 2040631296 bytes. |
+| Complete existing derive-effects/adoption files, Bun 1.4.4 | **16/17 pass**, 215.31 s, sampled total peak 2524577792 bytes. The adoption source-equation case fails its original 60000 ms deadline at 88436.65 ms; its other six cases and all ten derive-effects cases pass. |
+| Existing strict generated TypeScript project | **Pass**, installed TypeScript 5.9.3, 14.64 s, sampled total peak 2247733248 bytes. This is not the entire TypeScript stage or a compiler-JavaScript typecheck. |
+| Changed JavaScript syntax / evidence collector Python syntax | **Pass**. |
+
+No observer stopped these checks. All original assertions and deadlines remain.
+The first new regression draft's two reproduced prerequisite failures and the
+subsequent full-proposal deadline failure are also retained. Its new positive
+cases now use the existing complete enclosing-history entry point of the same
+shared reader; the older nine-row adoption test remains unchanged and failed.
+These results neither regenerate the missing matrix nor establish full parity.

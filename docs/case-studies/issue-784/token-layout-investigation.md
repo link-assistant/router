@@ -270,3 +270,61 @@ requires the named native function text. Other inspected fixed ingress
 operations retain their named native text. No anonymous-function allowance was
 added: bound arbitrary JavaScript functions can also have anonymous native text.
 This diagnostic neither qualifies Node 26 nor repairs Node 20 generation.
+
+## Completed e29a8dd23 CI and historical source equations
+
+The entire seven-workflow cycle at `e29a8dd23e4a52f2892122276693d9b026ab7191`
+is complete. [Run 42369312365](https://github.com/link-assistant/router/actions/runs/42369312365)
+ran from 11:42:34 to 12:43:01 UTC on 2026-11-07 and failed. The other six
+workflows skipped and supply no passing evidence. Native Node and Bun each pass
+259 cases; lint passes. TypeScript still needs the absent complete owned matrix,
+strict parity reports 441 feature gaps and 12345 carried items, and the neutral
+profile worker exhausts its original 2048 MiB heap. Forward and reverse cohorts
+reach their unchanged 60-minute and 15-minute limits. Rust and release skip.
+
+Every complete workflow log and all three artifact ZIPs were downloaded after
+completion. Each decoded artifact member's CRC, byte count and SHA-256 were
+verified. The forward TAP contains **25 failures**, compared with **11 in the
+distinct preceding cycle**. The complete failure blocks remain in
+`ci-logs/issue-784-checkpoint-e29a8dd23/completed-forward-failures.json`.
+
+Eight failures share stale generation compiler metadata. The remaining failures
+include original deadlines, three CSV frontier assertions, three default-byte
+prerequisite refusals, a derive-effects historical source mismatch, an owned
+reader historical equation and seven isolated-project/source-registry failures.
+Neither complete TAP has a terminal deadline audit: cancelling its enclosing job
+prevents finalization. Reported TAP passes are not complete cohort qualification.
+
+The default-byte refusal has an exact cause: its original archive authenticates
+the consumer scope's original lexer import, while the current scope uses the
+guarded lexer. The repair invokes the existing native-selected import equation
+and verifies its full inverse against the original source and hash. Bridge and
+fallback prerequisites still require their exact original bytes. No original
+archive, hash or generated output is edited.
+
+The initial complete new regression draft reproduces two prerequisite failures
+and one passing refusal. After the production repair, its nine-row proposal
+passes once, but a second case with two full proposals takes 109226.23 ms and
+fails its 60000 ms deadline. This failed draft remains retained. The new positive
+regressions instead use the existing complete enclosing-history entry point of
+the same shared prerequisite reader. Older nine-row tests remain unchanged.
+The resulting complete new file passes 3/3 under Bun in 65.77 seconds; its sampled
+total cgroup peak is 2040631296 bytes, without a resource stop.
+
+The existing derive-effects comparison also requires the module-view source
+evolution. It now obtains the actual module-token producer, checks current and
+original full bytes, original historical pin and both serialized/reparsed CST
+inverses, and retains that history as comparison DATA. The original historical
+fixture and every initial native action remain exact. Both complete Node files
+pass **13/13**, with an independently passing case-deadline audit. The observed
+Node 20.20.2 run takes 118.77 seconds and peaks at 2151837696 sampled total cgroup
+bytes. These source-history repairs do not regenerate the owned matrix, supply
+executable-function gains or qualify a full gate.
+
+The complete existing Bun derive-effects/adoption cohort finishes with **16/17**
+passes in 215.31 seconds. All ten derive-effects cases pass. The older adoption
+file passes its six other cases; its complete nine-row plus independent history
+case reaches 88436.65 ms and fails the original 60000 ms deadline. No assertion
+or deadline is removed or increased. The sampled total cgroup peak is 2524577792
+bytes without a resource stop. That whole receiving file remains unqualified;
+the unchanged expensive workload is not repeated locally.
