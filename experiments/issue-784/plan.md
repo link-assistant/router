@@ -325,8 +325,14 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [x] Pass both complete receiving files on Bun 1.4.4 and Node 20.20.2: 10/10
       each. The independent Node deadline audit also passes. No resource stop;
       TypeScript remains the repository-installed 5.9.3.
-- [ ] Commit the coherent repair, attempt the mandatory complete local gate on
-      its clean SHA and preserve every passed, failed and unrun stage.
+- [x] Commit the coherent repair at `8bea3ad1a` and attempt the mandatory
+      complete gate at clean `884820dce`: owned resource stop after 32.72 seconds
+      during fingerprinting, all seven stages unrun and no green stamp.
+- [x] Measure the cache component separately, preserving all source bytes.
+      Add an explicit one-time initial-fingerprint cache-advice option to the
+      owned observer; three finite launch/refusal/cancellation controls pass.
+- [ ] Attempt the unchanged complete gate with this resource option and retain
+      its full passed, failed, interrupted and unrun evidence.
 - [ ] Collect the entire `94367657f` CI cycle, review all completed failures,
       then publish the coordinated batch on the prepared branch only.
 - [ ] Obtain the green full gate and finish the remaining original issue

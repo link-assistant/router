@@ -93,3 +93,24 @@ remain retained alongside the complete Bun report.
 The existing missing owned-definition matrix, strict parity gaps, other forward
 failures, reverse deadline and full-gate resource limits remain unresolved.
 No Rust tool was invoked.
+
+## Full gate and cache observation
+
+The complete gate attempt on clean `884820dce` stops during fingerprinting after
+32.72 seconds at the unchanged 2866933760-byte cgroup guard. The entire log is
+empty: all seven stages remain unrun and no green stamp exists. After the child
+closes, `memory.stat` reports 510029824 anonymous bytes and 2077372416 file-cache
+bytes; these observations do not turn an interrupted gate into a pass.
+
+The existing worktree-only cache advisor subsequently changes the observed total
+from 2841014272 to 1464451072 bytes, without removing or changing any file.
+An explicit observer option therefore permits one cache hint during the initial
+fingerprint only: it pauses its new owned process group, checks again that no
+stage has printed its mandatory opening line, advises inactive tracked pages and
+continues the group before either resuming observation or terminating it. The
+memory threshold and complete gate commands remain unchanged. An already running
+test cohort cannot select this option's cache branch; it changes no case deadline.
+
+Three finite observer controls pass: ordinary complete output, refusal of this
+option for another command and cancellation with complete owned-group cleanup.
+The separate complete gate attempt with this option remains pending.
