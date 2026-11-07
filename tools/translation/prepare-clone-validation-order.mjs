@@ -1,4 +1,4 @@
-// Full source preparation; an early size refusal grants no grammar authority.
+// Full source preparation; early refusal/freezing grants no grammar authority.
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
@@ -53,23 +53,41 @@ export function prepareCloneValidationOrder(){
  const validatorText=validator.getText(file),bound='++nodes>32000||depth>64';
  if(validatorText.split(bound).length!==2)fail('original positive grammar bound differs');
  const span=[validator.getStart(file),validator.end];
- const languageEdits=[{span,expected:original.slice(...span),replacement:preflight+validatorText.replace(bound,'++nodes>CLONE_AST_NODES||depth>CLONE_AST_DEPTH')}];
- const middle=edit(original,languageEdits),middleFile=parse(middle);
- const lift=one(middleFile.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text==='liftBuiltinCloneAstRoute'));
- const branches=one(lift.body.statements.filter(node=>ts.isVariableStatement(node)&&node.declarationList.declarations.some(declaration=>declaration.name.getText(middleFile)==='branches')));
- if(branches.getText(middleFile)!=='const branches=materialize(state,leaves,payload);')fail('actual original materialization differs');
- const repositoryEdits=[{span:[branches.end,branches.end],expected:'',replacement:'\n assertCloneAstSize(branches);'}];
+ const validationEdits=[{span,expected:original.slice(...span),replacement:preflight+validatorText.replace(bound,'++nodes>CLONE_AST_NODES||depth>CLONE_AST_DEPTH')}];
+ function sizeEdits(source){
+  const parsed=parse(source),lift=one(parsed.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text==='liftBuiltinCloneAstRoute'));
+  const branches=one(lift.body.statements.filter(node=>ts.isVariableStatement(node)&&node.declarationList.declarations.some(declaration=>declaration.name.getText(parsed)==='branches')));
+  if(branches.getText(parsed)!=='const branches=materialize(state,leaves,payload);')fail('actual original materialization differs');
+  return [{span:[branches.end,branches.end],expected:'',replacement:'\n assertCloneAstSize(branches);'}];
+ }
+ const previousMiddle=edit(original,validationEdits),previousAfter=edit(previousMiddle,sizeEdits(previousMiddle));
+ const freezer=one(file.statements.filter(node=>ts.isVariableStatement(node)&&node.declarationList.declarations.some(declaration=>declaration.name.getText(file)==='freeze')));
+ if(freezer.getText(file)!=="const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};")fail('complete original freezer differs');
+ const languageEdits=[...validationEdits,{span:[freezer.end,freezer.end],expected:'',replacement:'\nconst freezeCompleted=createCompletedDataFreezer(freeze);'}];
+ const middle=edit(original,languageEdits),middleFile=parse(middle),calls=[];
+ function visit(node){
+  if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='freeze'&&ts.isVariableDeclaration(node.parent)&&node.parent.name.getText(middleFile)==='result')calls.push(node);
+  ts.forEachChild(node,visit);
+ }
+ visit(middleFile);
+ if(calls.length!==2||calls.some(call=>call.getText(middleFile)!=='freeze({...evidence,digest:hash(JSON.stringify(evidence))})'))fail('two complete result freezer calls required');
+ const imports=middleFile.statements.filter(node=>ts.isImportDeclaration(node));
+ if(imports.length!==7)fail('complete original imports differ');
+ const repositoryEdits=[...sizeEdits(middle),{span:[imports.at(-1).end,imports.at(-1).end],expected:'',replacement:"\nimport {createCompletedDataFreezer} from './private-data-freeze.mjs';"},
+  ...calls.map(call=>({span:[call.expression.getStart(middleFile),call.expression.end],expected:'freeze',replacement:'freezeCompleted'}))];
  const after=edit(middle,repositoryEdits);parse(after);
  const before=readFileSync(resolve(root,path),'utf8');
- if(before!==original&&before!==after)fail('unexpected current complete source');
- const [equation]=transportConcreteSourcePhases([{before:original,middle,after,language:'JavaScript'}]);
+ if(before!==original&&before!==previousAfter&&before!==after)fail('unexpected current complete source');
+ const [equation,previousEquation]=transportConcreteSourcePhases([{before:original,middle,after,language:'JavaScript'},
+  {before:original,middle:previousMiddle,after:previousAfter,language:'JavaScript'}]);
  if(readFileSync(resolve(root,path),'utf8')!==before)fail('complete physical source changed');
  return {schema:'complete-clone-validation-order-v1',file:{path,before,original,middle,after,originalSha256,afterSha256:hash(after),languageEdits,repositoryEdits,equation},
+  previous:{after:previousAfter,afterSha256:hash(previousAfter),equation:previousEquation},
   originalNodeLimit:32000,originalDepthLimit:64,privateIssuersUnchanged:true,positiveGrammarUnchanged:true,semanticAuthority:false,runtimeParity:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--emit','--check'].includes(args[0]))fail('Usage: prepare-clone-validation-order.mjs --emit|--check');
  const result=prepareCloneValidationOrder();
- if(args[0]==='--check'){if(result.file.before!==result.file.after)fail('complete current source is stale');console.log('Complete early Clone size validation is current; no grammar or issuer authority.');}
+ if(args[0]==='--check'){if(result.file.before!==result.file.after)fail('complete current source is stale');console.log('Complete Clone size validation and completed freezing are current; no grammar or issuer authority.');}
  else console.log(JSON.stringify(result));
 }

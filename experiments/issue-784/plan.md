@@ -501,10 +501,26 @@ remain explicitly unmet parts of the literal all-tool requirement.
       phased/Clone packet at `5ce0b64b5`. Every complete member and unchanged
       selected input verifies. Capture takes 38.02 seconds, peak sampled cgroup
       2057351168 bytes, without a resource stop. Earlier packets remain intact.
-- [ ] Publish the reviewed explicitly incomplete draft checkpoint. Collect the
-      entire next CI cycle before any subsequent push.
+- [x] Publish the reviewed explicitly incomplete draft checkpoint at `be8560a8d`.
+- [ ] Collect the entire next CI cycle before any subsequent push; its main run
+      is `42400974916`, started 2026-11-07 18:22:33 UTC.
 - [ ] Repair remaining source/semantic/deadline/generation failures and pass
       the mandatory complete local gate on the integrated immutable source.
 - [ ] Obtain all green same-head CI and finish the remaining all-tool privacy
       and strict parity criteria before readiness. No source-only or focused
       receiving check completes an unmet criterion.
+
+## Completed Clone freezing during be8560a8d CI
+
+- [x] Preserve a finite three-route baseline with complete output hashes.
+- [x] Derive both the earlier size-only and new shared-freezer source equations
+      from the unchanged full original, with both CST phases and native inverses.
+- [x] Pass both whole receiving files on Node 20 with independent deadline audit
+      and Bun: four cases per engine, including original observer/error behavior.
+- [x] Finish the broader unchanged three-file Node cohort: 23 assertions pass,
+      but the original parent case remains late at 76791.194776 > 60000 ms.
+- [x] Attempt the broader Bun cohort once after this source change: three passes,
+      then the owned memory guard stops the parent case at 2881613824 bytes.
+      Preserve complete partial evidence and do not repeat the unchanged cohort.
+- [ ] Qualify the coherent integrated source with the complete local gate and
+      all same-head CI; no timing, parity or executable gain is claimed here.
