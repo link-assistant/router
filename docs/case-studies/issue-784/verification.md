@@ -3,6 +3,108 @@
 No green gate stamp, complete parity, vendor-account change, or blanket
 geolocation guarantee has been established. Rust tools remain unrun locally.
 
+## Second CI restart: explicit profile paths and composer evolution
+
+The complete cycle at head `7dceb9b0a545aa5c61f078920d966d6220e355b1`
+started **2026-11-07 05:24:32 UTC**. All seven workflows finished before source
+repairs. The main [run 42342602437](https://github.com/link-assistant/router/actions/runs/42342602437)
+finished **failure at 06:30:15 UTC**. Each complete workflow log and job inventory
+is preserved in `ci-logs/issue-784-restart-2`. The following lines refer to that
+run's full `42342602437.log.gz`, after decompression.
+
+| Stage | Completed result |
+| --- | --- |
+| Lint and both native engines | Passed; Node and Bun each passed 259 cases. |
+| TypeScript | Failed at `Missing TypeScript output tree: neutral`, line 4513. Subsequent commands were unrun. |
+| Profile matrix | Failed: the neutral worker aborted at the original 2048 MiB V8 heap limit, line 4834. |
+| Strict parity | Failed: stale `rust/src/account_routing_policy.rs`, 441 draft gaps, 12345 carried items across 847 declared sources; runtime parity false, lines 5761–5764. |
+| Forward translation | Cancelled at the original 60-minute limit. The incomplete cohort contains historical compiler pin failures (line 2436) and three immutable-composer source refusals (lines 3166, 3187, 3208). No final cohort/deadline qualification exists. |
+| Reverse translation | Cancelled at the original 15-minute limit after case 76, line 6469. Later checks remained unrun. |
+| Aggregate and Rust | Aggregate failed, line 8050; downstream Rust/release jobs stayed skipped. |
+
+The profile checker assumed the modern `ts/generated` layout while two explicit
+profile inventories still declare `packages/typescript/generated`. Commit
+`7731530dc6522b483195dc451a7f88acca264ee3` selects both complete draft/project
+trees from those inventories, validates profile identity and safe consistent
+target paths, and retains strict/noEmit settings. All three real profiles pass
+with lockfile TypeScript **5.9.3**. Both complete regression cases pass on Node
+and Bun, including errors in an unindexed draft file and a project file. The
+complete gate-control file passes **40/40 cases on Node 20**, including its
+original deadline-control assertions. The earlier Node 26 draft has two failures and is
+retained separately; neither the fixed historical workflow text nor its
+assertions changed in the committed repair.
+
+The next required TypeScript command was run and **fails**: the complete
+`profiles/owned-definitions-matrix-80dc0d37762835fbe925b47e6fad25fee5c1d3c093fafff0512fc2bd3f9ae4e0.json`
+does not exist (`restart2-owned-typescript.log`). The producer must generate and
+qualify the complete forward/reverse definitions. No empty index, skip or relaxed
+compilation is substituted for it.
+
+Commit `ec5254161` repairs the composer's stale pin through the existing native
+guarded-import consumer equation. The original complete source pin remains
+`6da6243dd4c2d9f48ca86c5a9e13f88b3b2ea6ad8f7a79df525128c11e732c5f`;
+the current body's complete inverse must match it. Both CST phases are serialized
+and reparsed, and unrelated body/import changes still refuse. The normal producer
+regenerated the operation source. Independent complete comparison to the starting
+head confirms only the lexing module literal changes. Original body, fallback,
+budget and refusal bytes remain exact. This is source evidence, not parity.
+
+The normal whole-owner producer then generated all **19 files / 15 physical
+overlays**. Its complete **83099013-byte** proposal is retained as an
+**11876822-byte** gzip, SHA256
+`2e3804f7dd79d1bb4739029cc7588820c961e456a529ec4f1069430690e251e1`.
+Only `operation-proof-byte-consumer-scope.mjs` changes, through the same single
+lexing literal. Independent byte/hash review verifies every physical input,
+installed output, source/stage equation and inverse marker. The producer itself
+performed all native/CST checks; the separate Python review does not independently
+reparse CST metadata or execute the complete consumer runtime workload. Its first
+draft refused hash-only prerequisites; the corrected review checks their complete
+physical bytes against their retained hashes, and both logs are preserved.
+
+The two complete operation receiving files pass **9/9 on Node 20** with the
+independent original deadline audit, and **9/9 on Bun**. Bun's sampled total
+cgroup peak was **2083430400 bytes**; no guard stop occurred. All three affected
+guarded producer/receiving files then pass **12/12** with their deadline audit.
+An earlier draft passed assertions but exceeded a new case's 60000 ms deadline;
+it is retained as unqualified. Reusing only the shared consumer equation removes
+the redundant full guarded-factory construction; the qualified new cases take
+10785.95 and 21571.42 ms. Assertions and original deadlines were not changed.
+
+These focused checks use Node **20.20.2**, one worker and a **768 MiB** V8
+old-space bound; Bun is **1.4.4**. The same official Node archive checksum was
+verified before installation. Complete raw deadline directories are
+`complete-Y4y3dL` (operation) and `complete-vvEg7R` (shared producer). The complete
+gate-control file used the gate's ordinary Node test runner. Full generation, strict
+parity and the unchanged resource/deadline failures remain unresolved. A new
+complete local gate is **unrun**; previous resource-stopped workloads were not
+repeated. No Rust tool ran, and no green stamp or completion is claimed.
+The current-source strict parity diagnostic was rerun and **fails** with the
+same stale source, 441 gaps and 12345 carried items (`restart2-parity.log`).
+Syntax checks pass all **1749 JavaScript files**; the complete strict translator
+API TypeScript project passes with compiler **5.9.3**. The complete GitHub PR
+diff was downloaded and its 749-line production privacy patch reviewed; no
+existing feature removal was identified. Main `eb2dad1c0` remains an ancestor.
+
+After all owned checks closed, the checksum-verified temporary Node installation
+was removed. No task process referenced it. The receipt records three pre-existing
+foreign daemon map files that the task UID cannot read; task UID maps remained
+required. Distinct allocation removed: **200761344 bytes**; observed filesystem
+free delta: **200765440 bytes**. No Rust cache or worker directory was removed.
+The initial cleanup refusal and successful receipt are both retained. The draft
+gate-control log also names an already removed nested temporary fixture receipt;
+the collector records that boundary and retains its complete parent log. Both
+actual operation/shared-producer raw deadline directories remain complete.
+
+The [complete second CI repair packet](evidence/second-ci-repair-complete.tar.xz)
+and [verification receipt](evidence/second-ci-repair-complete.json.gz) retain
+**123 complete originals / 19480933 logical bytes** in **15837704 archive bytes**.
+SHA256: `9c5c1b9fd1a1c749d8b29021b72fff5155c8498853c51ae2b78f3616764ea370`.
+The unchanged capture tool reopened and byte-verified every selected member.
+The packet includes all seven completed workflow logs, complete source proposals,
+focused passed/failed attempts, available raw deadline receipts and cleanup
+evidence. Its source head is `2b5464e251db2efe5891006e6f8dbad74f6341a7`;
+it predates this final documentation clarification and does not qualify new CI.
+
 ## Completed CI cycle at 7586d14b1 and export repair
 
 [Run 42330245583](https://github.com/link-assistant/router/actions/runs/42330245583)

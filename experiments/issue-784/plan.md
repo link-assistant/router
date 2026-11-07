@@ -107,6 +107,14 @@ no Rust tool invocations, compressed evidence below 500 MB, preserve all strict 
       changes; independent whole-byte/hash review confirms every installed output.
 - [x] Rerun strict parity on the repair source: it still fails with the same stale
       account-policy inventory, 441 feature gaps and 12345 carried Rust items.
+- [x] Pass syntax checks for all 1749 JavaScript files and the complete strict
+      translator API TypeScript project using compiler 5.9.3.
+- [x] Recheck current main ancestry and review the complete production privacy
+      patch from the downloaded GitHub diff. Preserve the full diff separately.
+- [x] Remove only this attempt's inactive checksum-verified Node toolchain,
+      reclaiming 200761344 bytes of distinct allocation; retain both receipts.
+- [x] Preserve 123 complete originals in the verified 15.8 MB second CI packet.
+- [ ] Publish the reviewed repair batch and collect its entire same-head CI cycle.
 - [ ] Repair the remaining complete source-producer pins, profile heap failure,
       owned-definition generation, forward/reverse deadlines and strict parity.
 - [ ] Rerun the complete local gate and collect every same-head CI result before
