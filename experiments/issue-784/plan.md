@@ -41,8 +41,19 @@ Objective: implement and verify all requirements in PR #785 on
       inspect every stage without relaxing strict parity or original deadlines.
 - [x] Record all four failed groups at 08e09f884 and the explicit failed/unrun
       boundaries; remove only the inactive temporary Node toolchain afterward.
-- [ ] Inspect the complete current-head CI cycle, preserve all failures with line numbers,
-      repair the complete failure set, and rerun required checks.
+- [x] Compare the complete current-source fixture to main and the PR; regenerate
+      its two producer-owned artifacts for all 867 current Rust/Cargo paths while
+      retaining both historical universes and every assertion/deadline.
+- [x] Complete both Node receiving files: 16 TAP passes, with three independent
+      60000 ms deadline failures. Complete associated-original-text Bun: 8 passes.
+      Preserve exact head b852b955c and remove only inactive task temporary paths.
+- [x] Attempt the complete Bun lifecycle file: original first-case timeout,
+      then an owned-process memory-guard stop at 2888380416 total cgroup bytes.
+      Preserve the failed/interrupted result; do not repeat in this container.
+- [x] Inspect the entire published-head CI cycle through 02:31:19 UTC, preserve
+      every failed job log and artifact, and review all reported failure classes.
+- [ ] Repair the remaining compiler pin, missing-profile, strict parity, resource
+      and deadline failures; rerun the complete gate without weakening checks.
 - [x] Review the complete local source diff, preserve atomic commits and prepare an
       accurate PR title/body with a positive `Fixes #784` reference.
 - [ ] Publish the reviewed batch only on the prepared branch under the repository's

@@ -1,71 +1,74 @@
 Fixes #784
 
-Router forwarded location headers such as `CF-IPCountry: GB` and optional
-search-location fields to providers. This draft removes supported explicit
-location metadata by default across inference HTTP, native replay and JSON
-WebSockets. Supplying exactly one `x-router-share-geolocation: true` header
-permits the caller's metadata for that request or WebSocket connection; Router
-consumes the control header. Prompts, tool schemas, search functionality and
-existing explicit telemetry choices are preserved.
+Router previously forwarded location headers and optional search coordinates to
+providers. This draft removes supported explicit geolocation metadata by default
+from routed inference HTTP, native replay and JSON WebSocket messages. Exactly
+one `x-router-share-geolocation: true` header opts in for a request or WebSocket
+connection. Router consumes that control header and preserves prompts, tool
+schemas, search availability and existing telemetry choices.
 
-JavaScript implements the policy first, with matching Rust source, shared
-fixtures, bounded fragmented-WebSocket inspection and generated native
-TypeScript. Source review also guards static account header overrides against
-restoring unconsented location or ingress IP headers. Two additional reproducing
-assertions cover `x-original-forwarded-for` and configured Cloudflare IP fields.
-Historical compiler regressions now use authenticated original source inputs,
-retaining their fixed censuses, assertions, strict targets and deadlines while
-current-source generation and parity checks remain mandatory.
+The JavaScript policy has matching Rust source, shared fixtures and generated
+native TypeScript. Account header overrides cannot restore unconsented location
+or ingress IP headers. Gemini retrieval coordinates cover all eight independent
+ProtoJSON field-spelling combinations; six mixed combinations leaked before the
+restart fix. Existing bounded decoders and WebSocket inspection are reused, with
+no new dependency. Historical compiler fixtures retain authenticated original
+inputs, assertions, strictness and deadlines. The current-source fixture was
+regenerated through its unchanged producer for the PR's two new Rust files;
+both historical source universes remain byte-identical.
 
-Reproduction: send a native inference request through Router with
-`CF-IPCountry: GB`, `X-Vercel-IP-City: London` or a supported web-search tool's
-`user_location`, then inspect a synthetic upstream. Before the change these
-fields were forwarded. Complete geolocation cases in
-`parity/fixtures/server/geolocation.test.mjs` and
-`geolocation-websocket.test.mjs` verify default removal, explicit sharing,
-invalid/duplicate consent, body wrappers, byte replay, and actual fragmented
-localhost WebSockets through the native-server suite.
+Reproduce by sending a native inference request with `CF-IPCountry: GB`,
+`X-Vercel-IP-City: London`, supported search `user_location`, or a mixed-spelling
+Gemini retrieval coordinate and inspecting a synthetic upstream. The complete
+`geolocation.test.mjs` and `geolocation-websocket.test.mjs` files verify removal,
+opt-in, repeated/invalid consent, preserved application content and fragmented
+WebSocket forwarding. Node and Bun each pass all **30 focused cases**; the full
+native suites each pass **259 cases**.
 
-Validation so far:
+Validation remains incomplete:
 
-- Complete native suites: **250/250 Node** and **250/250 Bun**. Workflow-policy
-  controls: **31/31**. Both strict API checks pass with lockfile TypeScript 5.9.3.
-- Final-source native TypeScript is fresh and all 165 files compile strictly.
-  All 9 receiving cases report TAP passes, with 250 matching JavaScript/compiled
-  TypeScript Node expectations and the compiled Bun suite passing. Its independent
-  deadline audit still **fails**: regeneration took 168908.191799 ms against the
-  unchanged 60000 ms limit. These checks belong to source head `60b4f53bd`.
-- Strict parity at that source head **fails** with 441 draft gaps, a stale
-  account-policy source hash and 12345 carried Rust items (`runtimeParity: false`).
-  Final Rust-only commit `df1420d2a` additionally mirrors JavaScript's existing
-  `x-forwarded-` prefix refusal; its regression source remains unrun.
-- Existing producer generated native TypeScript. The complete local gate at
-  `6f36a43f7eacf73a519c9ca2437cee9d3dc10f77` was attempted and **failed**:
-  workflow evidence budget (subsequently repaired), TypeScript deadline audit,
-  strict parity (441 draft gaps and stale inventory), forward heap limit and
-  reverse deadlines/heap/historical inputs (input regressions repaired).
-- Complete affected Node compiler files: 51 pass, 2 original-deadline
-  cancellations, 4 independent deadline breaches; **failed qualification**.
-  The complete affected Bun files have 52 passes and one original 5000 ms
-  oracle-loading timeout. Both engines' overall qualifications **failed**.
-- The entire initial-head CI cycle
-  [42303967922](https://github.com/link-assistant/router/actions/runs/42303967922)
-  failed TypeScript (missing neutral outputs), parity, profile heap limit and
-  both compiler cohort deadlines. These are **initial-head** results, not
-  qualification of this implementation. All failures and full logs were collected.
-- **No Rust tool ran locally. Rust tests are unrun. No green final-source gate
-  or final-source CI qualification is claimed.** Same-SHA JavaScript-before-Rust
-  requirements remain intact.
+- The complete local gate at `08e09f884546ecf373dfa2997f7d0dd906a0cb1c`
+  attempted all seven groups and **failed four**. Lint and both native suites
+  passed. Strict API checks, generation freshness, strict compilation of 165
+  native TypeScript files and all nine receiving TAP cases passed, but the
+  independent audit failed: regeneration took 152128.545269 ms against the
+  original 60000 ms limit. Lockfile TypeScript is 5.9.3.
+- All 121 parity acceptance cases passed. Strict parity failed with **441 draft
+  gaps**, a stale account-policy hash and **12345 carried Rust items**.
+  Forward translation was stopped before its coordinator and two workers
+  exhausted the 2.92 GiB container. Reverse translation reached its unchanged
+  900000 ms deadline after case 76, with three explicit case timeouts and two
+  further independent deadline breaches. Later commands in these groups were
+  unrun. No deadline, assertion or parity status was relaxed.
+- Both complete source-fixture receiving files at `b852b955c68d419ee2a7e2fc9f87a1d47deacd13`
+  reported **16 TAP passes** under Node, but their independent audit **failed**
+  three original 60000 ms deadlines (87606.702682, 191174.753546 and
+  85549.779081 ms). The complete associated-original-text file passed **8/8**
+  under Bun. A complete Bun lifecycle attempt failed its original first-case
+  deadline and was then stopped at 2888380416 sampled total cgroup bytes before
+  exhausting the container; later cases remain unqualified. These receiving
+  checks do not replace the failed full gate or establish executable parity.
+- The complete published-head [CI cycle](https://github.com/link-assistant/router/actions/runs/42318632426)
+  at `1e6e0b36a9acb13cc7b829d7b6e3455e9a4b7c70` finished failure at
+  2026-11-07 02:31:19 UTC. Lint and both native suites passed; TypeScript,
+  strict parity and profiles failed, and both compiler cohorts reached their
+  original CI limits. Complete logs and all artifacts are preserved. This
+  cycle predates the two restart source commits. **No Rust tool ran locally;
+  Rust remains unrun and gated by JavaScript failures.** No green full gate or
+  Rust qualification is claimed.
 
 The [case study](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/README.md)
-contains the complete requirements inventory, original GitHub data, client
-matrix, primary-source research, alternatives and unresolved scope. The
+contains all requirements, GitHub source data, the client matrix, primary-source
+research, alternatives and remaining obligations. The
 [verification record](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/verification.md)
-preserves full compressed evidence, exact SHAs, timestamps and failure lines.
+preserves complete compressed logs and exact tested SHAs. The
+[configuration guide](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/privacy/geolocation.md)
+shows actual Codex and Claude Code defaults and opt-in settings. Changelog
+fragments use the repository's automated version/release process.
 
-This remains **draft and unmerged**. The literal all-tool guarantee is unmet:
-transport IPs remain visible, vendors retain mandatory security location
-inference, account privacy controls need the respective authenticated accounts,
-and direct client/telemetry/OAuth/MCP traffic can bypass Router. Cursor's private
-protocol and Gemini subscription modes remain unsupported. Removing optional
-metadata does not disable IP inference or establish full translation/parity.
+This PR stays **draft and unmerged**. The literal all-tool guarantee remains
+unmet: connection IPs are visible, vendors retain mandatory security location
+inference, account privacy controls require the respective authenticated
+accounts, and direct client, telemetry, OAuth or MCP traffic can bypass Router.
+Cursor's private protocol and Gemini subscription modes remain unsupported.
+Removing optional metadata does not establish full translation or parity.

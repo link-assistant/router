@@ -113,8 +113,87 @@ archive and manifest change. The producer, readers, assertions and deadlines
 remain unchanged. This is source-data fidelity, not executable parity.
 
 Complete proposal/review receipts are `ci-logs/restart-static-proposal.json` and
-`ci-logs/restart-static-review.json`. Receiving tests and the subsequent complete
-gate are recorded separately when their commands finish.
+`ci-logs/restart-static-review.json`.
+
+At source head `b852b955c68d419ee2a7e2fc9f87a1d47deacd13`, both complete
+`static-source-lifecycle.test.mjs` and `associated-original-text-data.test.mjs`
+finished under Node 20.20.2, one worker and a bounded 768 MiB old-space heap.
+All **16 TAP cases passed**, including current source/Git joins, deterministic
+producer equality, complete historical bytes, CST inverses, strict typed
+execution and tamper refusals. The independent audit nevertheless **failed**
+with three unchanged 60000 ms deadline breaches: complete universe validation
+**87606.702682 ms**, producer determinism **191174.753546 ms** and forgery
+controls **85549.779081 ms**. Overall **exit 1**, complete log
+`ci-logs/restart-static-receiving.log:1–95`; original deadline directory
+`js/node_modules/.node-case-deadlines/complete-LNvHCq`. All selected files and
+owned children closed; process-group cleanup passed. No assertion, deadline,
+compiler rule or admission status changed. This receiving attempt does not
+replace the failed complete gate at `08e09f884` or qualify a later whole gate.
+
+The complete associated-original-text file also passed **8/8** under Bun 1.4.4
+in **51.13 seconds** (`ci-logs/restart-static-associated-bun.log`). After both
+receiving commands closed, the
+cleanup script checked live process references, verified the external proposal
+against its preserved originals and removed only the temporary Node 20
+installation and that proposal directory. It removed **166809600 bytes** of
+distinct file allocation; the observed filesystem free-space increase was
+**169107456 bytes**, including directory allocation and concurrent activity.
+Exact paths and counts: `ci-logs/restart-static-cleanup.json`. No Rust tool or
+cache was involved.
+
+A subsequent complete-file Bun lifecycle attempt used `bun --smol test` and
+the child reaper, retaining every original case and deadline. Its first case
+failed at **87205.71 ms** against the unchanged **60000 ms** limit, with Bun
+terminating a dangling Git census subprocess (`restart-static-lifecycle-bun.log:4–30`).
+Later in the attempt, an owned-process guard sent SIGTERM at
+**2026-11-07 02:20:34.498 UTC**, when total sampled cgroup memory reached
+**2888380416 bytes**, above the **2866933760-byte** stop threshold and below the
+**3135369216-byte** container limit. The monitor sampled every 0.1 seconds;
+these are cgroup observations, not Bun RSS or a complete process peak.
+Overall **exit 143**, no final suite qualification, remaining cases unrun or
+interrupted. All owned children closed; no kernel OOM kill occurred. Complete
+streams and samples are `ci-logs/restart-static-lifecycle-bun.log` and
+`ci-logs/restart-static-lifecycle-memory.json`. This failed resource attempt
+does not qualify the fixture or justify repeating it in this container.
+
+## Completed published-head CI cycle
+
+[Run 42318632426](https://github.com/link-assistant/router/actions/runs/42318632426)
+was created **2026-11-07 00:30:27 UTC** for published head
+`1e6e0b36a9acb13cc7b829d7b6e3455e9a4b7c70`, checking merge commit
+`c4f9678e217601059402661f6a5af614d8aafda7`. Jobs started at **01:30:54 UTC**;
+the full cycle finished **failure at 02:31:19 UTC**. All seven workflows for
+that head had closed: six supplemental workflows were skipped. This cycle
+predates the mixed-ProtoJSON fix and current-source fixture regeneration.
+
+| Job | Completed result and complete log reference |
+| --- | --- |
+| Lint, native Node, native Bun | Passed; the published head had 250 native cases per engine. |
+| TypeScript | Failed: `Missing TypeScript output tree: neutral`, `ci-logs/restart-head-complete-typescript.log:452`. All nine receiving cases and the independent deadline audit passed on this runner; regeneration took 54407.004101 ms. Later profile/descriptor/UI commands were unrun. |
+| Parity | Failed: stale `rust/src/account_routing_policy.rs` source hash and **441 draft gaps**, `ci-logs/restart-head-complete-parity.log:891–892`. All 121 acceptance cases passed. |
+| Profile matrix | Failed: neutral worker `SIGABRT` at its V8 heap limit, `ci-logs/restart-head-complete-profile-matrix.log:276`. |
+| Reverse translation | Cancelled at its unchanged 15-minute CI limit, `ci-logs/restart-head-complete-reverse-translation.log:665`. Last completed case was 76; no final audit or later Bun/regeneration result exists. |
+| Forward translation | Cancelled at its unchanged 60-minute CI limit, `ci-logs/restart-head-complete-translation.log:11658`. The 11718-line original reports **74 failing TAP entries**, including eleven file-level exits; this is an incomplete-cohort observation. |
+| Aggregate, Rust and release | JavaScript aggregate failed; all downstream Rust/release jobs stayed skipped. |
+
+The complete forward failure index is
+`ci-logs/restart-head-complete-forward-failures.json`. Failures include compiler
+input pins (lines 836–1066), current-source census checks (1246–1427 and
+6866 onward), immutable-composer and alias-history pins, a scanner API mismatch,
+a receiving child `SIGTERM` (6066–6093), two original 60000 ms timeouts,
+historical reader substitution (10390–10416) and isolated-child byte
+authentication (10903–11034). The regenerated fixture addresses the introduced
+current-source census mismatch; its local failed deadline qualifications remain
+separate. Other compiler failures remain unresolved. No assertion or pin was
+edited merely to make those failures pass.
+
+All failed job logs, the complete workflow log, paginated metadata and all
+three original artifact ZIPs are preserved under `ci-logs/restart-head-complete-*`.
+The reverse ZIP contains four complete files below its hidden
+`.node-case-deadlines/complete-j0nPdj` directory; it has no terminal audit receipt.
+The capture includes those files without treating an interrupted artifact as
+passing evidence. No CI run was cancelled manually, no original limit was
+increased, and the published head remained unchanged throughout its cycle.
 
 ## Runtime development
 
@@ -309,7 +388,21 @@ original was verified and every selected input remained unchanged. This later
 capture preserves the distinct tested heads and the final Rust change's unrun
 status; capture does not rerun or qualify a check.
 
-Unfinished: a green final-source gate, current-head CI, Rust qualification
+[`restart-complete.tar.xz`](evidence/restart-complete.tar.xz) preserves **361
+complete members**, including both completed restart CI cycles, every downloaded
+artifact, the complete local gate, all receiving logs, resource observations,
+cleanup receipts and authenticated tested-source snapshots. Its **91,292,737
+uncompressed bytes** occupy **21,592,036 compressed bytes**. SHA-256:
+`177d943783a62d112f878dc40b4b452cb1bc887d5985715a38157a4d5a027b6b`.
+The losslessly compressed full receipt is
+[`restart-complete.json.gz`](evidence/restart-complete.json.gz). Every selected
+original was verified before, during and after capture. Capture occurred at
+`b852b955c68d419ee2a7e2fc9f87a1d47deacd13`; authenticated Git snapshots retain
+the distinct `08e09f884` gate inputs, including its older current-source fixture.
+The failed gate and failed receiving qualifications retain their original
+tested heads; this packet supplies no later same-SHA or executable authority.
+
+Unfinished: a green final-source gate, green current-head CI, Rust qualification
 after all JavaScript stages pass, and the literal all-tool guarantee
 (transport IPs, mandatory vendor security inference, account settings and
 traffic bypassing Router). Unsupported integrations remain refused. The PR

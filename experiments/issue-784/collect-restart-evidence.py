@@ -6,12 +6,27 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-TESTED_HEAD = '08e09f884546ecf373dfa2997f7d0dd906a0cb1c'
+GATE_HEAD = '08e09f884546ecf373dfa2997f7d0dd906a0cb1c'
+RECEIVING_HEAD = 'b852b955c68d419ee2a7e2fc9f87a1d47deacd13'
 paths = set()
+snapshot_paths = subprocess.check_output(
+    ['git', 'diff', '--name-only', '-z', '1e6e0b36a', GATE_HEAD], cwd=ROOT
+).decode().split('\0')
+snapshot_paths += [
+    'tools/translation/source-profiles/static-source-lifecycle/manifest.json',
+    'tools/translation/source-profiles/static-source-lifecycle/originals.json.gz',
+]
+for name in filter(None, snapshot_paths):
+    target = ROOT / 'ci-logs/restart-git-snapshot-08e' / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    # These are authenticated Git snapshots, separately named from executed logs.
+    target.write_bytes(subprocess.check_output(
+        ['git', 'show', GATE_HEAD + ':' + name], cwd=ROOT))
 for directory, pattern in [
     ('ci-logs', 'restart-*'),
     ('experiments/issue-784', 'restart-*.log'),
     ('experiments/issue-784', '*.py'),
+    ('experiments/issue-784', '*.mjs'),
 ]:
     for candidate in (ROOT / directory).glob(pattern):
         if candidate.name == 'restart-evidence-manifest.json':
@@ -25,8 +40,10 @@ log = ROOT / 'experiments/issue-784/restart-full-gate.log'
 if 'JavaScript preflight failed (no green stamp written):' not in log.read_text():
     raise RuntimeError('The failed complete local attempt has not closed')
 deadline_root = ROOT / 'js/node_modules/.node-case-deadlines'
-for value in re.findall(r'^Complete Node deadline evidence: (.+)$',
-                        log.read_text(), re.M):
+deadline_logs = [log, ROOT / 'ci-logs/restart-static-receiving.log']
+values = {value for source in deadline_logs for value in re.findall(
+    r'^Complete Node deadline evidence: (.+)$', source.read_text(), re.M)}
+for value in values:
     directory = Path(value).resolve()
     if directory.parent != deadline_root or not directory.name.startswith('complete-'):
         raise RuntimeError('Unexpected deadline receipt path: ' + value)
@@ -35,7 +52,7 @@ for value in re.findall(r'^Complete Node deadline evidence: (.+)$',
     paths.update(path for path in directory.iterdir() if path.is_file())
 
 changed = subprocess.check_output(
-    ['git', 'diff', '--name-only', '-z', '1e6e0b36a', TESTED_HEAD], cwd=ROOT
+    ['git', 'diff', '--name-only', '-z', '1e6e0b36a', RECEIVING_HEAD], cwd=ROOT
 ).decode().split('\0')
 paths.update(ROOT / name for name in changed if name)
 for name in [
@@ -70,4 +87,5 @@ if not members or len(members) > 8192 or total > 500_000_000:
 target = ROOT / 'ci-logs/restart-evidence-manifest.json'
 target.write_text(json.dumps({'members': members}, indent=2) + '\n')
 print(json.dumps({'members': len(members), 'completeBytes': total,
-                  'testedHead': TESTED_HEAD, 'manifest': str(target)}))
+                  'gateHead': GATE_HEAD, 'receivingHead': RECEIVING_HEAD,
+                  'manifest': str(target)}))
