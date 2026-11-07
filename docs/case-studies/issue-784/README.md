@@ -8,17 +8,19 @@ Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 The original issue, all issue comments, required sub-issues and all three PR
 comment types were fetched through authenticated GitHub APIs and preserved in
 [`raw/`](raw/). Each comment list and the required-sub-issue list was empty at
-the initial audit. Requirements are taken from both paragraphs of the issue.
+the initial audit and the 2026-11-07 00:07 UTC refresh. The complete refresh
+receipt is [`raw/feedback-refresh.json`](raw/feedback-refresh.json). Requirements are taken
+from the title and both paragraphs of the issue.
 
 | Requirement | Solution and verification | Status |
 | --- | --- | --- |
-| All tools, including Codex and Claude, default to no geolocation sharing | Common inference metadata filter, native headers, replay and JSON WebSockets; shared fixtures and HTTP regression | Implemented for explicit supported Router traffic; Rust and complete gate qualification pending |
+| All tools, including Codex and Claude, default to no geolocation sharing | Common inference metadata filter, native headers, replay and JSON WebSockets; shared fixtures and HTTP regression | Supported Router metadata implemented and Node/Bun suites pass; literal all-tool guarantee remains unmet |
 | Option to share location when needed | Exactly one `x-router-share-geolocation: true` header; connection scope for WebSockets; invalid/duplicate consent tests | JavaScript focused tests pass; Rust pending |
-| Collect issue data in `docs/case-studies/issue-784` | GitHub JSON, this requirements inventory, source register and verification record | Collected; final feedback audit pending |
+| Collect issue data in `docs/case-studies/issue-784` | GitHub JSON, requirements inventory, source register, full compressed logs and verification record | Collected; refreshed feedback remains empty |
 | Deep analysis with additional online facts | Primary vendor references below, forwarding root cause and client matrix | Completed research; account limits remain explicit |
 | List every requirement and possible solutions/plans | This table and alternatives below | Recorded |
 | Check existing components/libraries | Existing native header classifier, request decoder, WebSocket inspector and vendor controls | Reused; no new dependency |
-| Execute and verify the whole solution in this PR | Focused checks, generated TypeScript, complete local gate and exact-head CI | Pending; no completion or readiness claim |
+| Execute and verify the whole solution in this PR | Focused checks, generated TypeScript, complete local gate and exact-head CI | Full gate and initial-head CI failed; Rust and final-head qualification remain unfinished |
 
 The literal guarantee that *every tool never shares any geolocation* cannot be
 established by editing Router configuration. Source IPs are observable, providers

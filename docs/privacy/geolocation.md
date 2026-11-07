@@ -6,7 +6,7 @@ OpenCode, Qwen Code, Grok CLI, Agent and isolated Gemini API-key sessions.
 Cursor Agent's private protocol remains unsupported.
 
 The policy removes visitor location headers from Cloudflare, Vercel, CloudFront
-and App Engine, plus `x-geo-*`, `x-geolocation*`, `x-user-location`,
+and App Engine, plus `x-geo-*`, `x-geolocation`, `x-geolocation-*`, `x-user-location`,
 `x-client-country/city/region` and `x-latitude/longitude`. It removes
 `user_location` from supported OpenAI and Anthropic web-search tools and Chat
 `web_search_options`, and `latLng` from Gemini `toolConfig.retrievalConfig`
