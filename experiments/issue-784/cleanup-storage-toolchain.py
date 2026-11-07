@@ -1,4 +1,5 @@
 """Remove only the inactive binary-only toolchain from storage receiving."""
+import argparse
 import hashlib
 import json
 import os
@@ -7,7 +8,12 @@ import shutil
 
 root = Path(__file__).resolve().parents[2]
 target = root / 'experiments/issue-784/toolchain'
-receipt_path = root / 'ci-logs/issue-784-restart-2/storage-node-cleanup.json'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--receipt', type=Path,
+                    default=root / 'ci-logs/issue-784-restart-2/storage-node-cleanup.json')
+receipt_path = parser.parse_args().receipt.resolve()
+if receipt_path.parent != root / 'ci-logs/issue-784-restart-2':
+    raise RuntimeError('Cleanup receipts must remain in this investigation directory')
 if receipt_path.exists():
     raise RuntimeError('Refusing to overwrite an earlier cleanup receipt')
 expected = json.loads((root / 'ci-logs/issue-784-restart-2/storage-node-toolchain.json').read_text())

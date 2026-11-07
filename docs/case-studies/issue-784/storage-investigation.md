@@ -101,3 +101,44 @@ archive and executable checksums, checked live task process commands and maps,
 and removed only this temporary Node copy. The full `storage-node-cleanup.json`
 receipt records distinct allocation and filesystem free-space observations;
 no Rust cache or another worker's path was removed.
+
+## Separate allocation diagnostic
+
+The fresh CI profile job failed at the original 2048 MiB V8 heap limit after
+1849706 ms. Its complete `new-profile-matrix.log:277` reports SIGABRT and native
+`OrderedHashSet::Rehash` / `Runtime_SetGrow` frames. Those native frames do not
+identify the JavaScript allocation site. The retained-definition matrix command
+was never reached. This is an actual CI heap failure, distinct from the local
+observer's conservative container stop.
+
+`profile-owned-generation.mjs` ran the complete existing production plan without
+applying artifacts, using a separately constrained 768 MiB Node 20 child and
+the local inspector's 65536-byte allocation sampling. Its Node 26 coordinator
+used a 256 MiB heap. This changed diagnostic configuration is not the original
+receiving workload and establishes neither a speed gain nor heap qualification.
+The observer stopped both owned processes after 458.089 seconds at
+2872496128 sampled total cgroup bytes, exit 143. The last stage was
+`default-source` at 437292 ms; no complete plan or generated output was produced.
+
+All **91 complete allocation profiles**, including the last at 455856 ms, are
+preserved losslessly under `owned-allocation-samples`. The last profile estimates
+701227472 live sampled bytes. Its largest grouped sites include
+`source-module-views.mjs:10` (139897320 bytes), unnamed source `build:185`
+(73783992), `module-bindings.mjs:191` (58588800), unnamed `leaf:197` (55986032),
+and `builtin-derive-bang-footprints.mjs:304` (43132208). These are statistical
+allocation estimates, not exact retained sizes, process RSS or object counts.
+They do not identify the root cause of CI's different, later heap failure.
+
+The parent was terminated before its terminal child callback, so no parent
+`result.json` exists. The complete observer receipt, log and all 91 sample files
+are retained; `analyze-owned-allocation.py` explicitly records that missing
+terminal receipt and verifies every complete sample against its logged byte
+length and aggregate. It does not synthesize successful completion. Its full
+analysis is `owned-allocation-analysis.json` beside the log and memory receipt.
+
+After every diagnostic process closed, the temporary binary-only Node copy
+was checksum-verified and removed again. `allocation-node-cleanup.json` records
+125124608 bytes of distinct allocation removed and a separate 125128704-byte
+filesystem free-space delta. No other directory was removed. The unchanged
+generation probe remains failed and must not be repeated here without a
+separately verified implementation change.

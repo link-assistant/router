@@ -137,6 +137,11 @@ no Rust tool invocations, compressed evidence below 500 MB, preserve all strict 
       one original case deadline; Bun passes all four. Keep receiving failed.
 - [x] Verify and remove only the inactive binary-only Node toolchain, preserving
       its checksum, process-reference and reclaimed-allocation receipt.
+- [x] Preserve the fresh profile CI heap failure and a separate full-corpus
+      allocation diagnostic: 91 complete profiles, then the owned cgroup guard
+      stops generation at 2872496128 sampled bytes. Keep missing parent terminal
+      evidence explicit, preserve all samples, and remove only the newly inactive
+      Node copy. No OOM repair or performance qualification is established.
 - [ ] Repair the remaining complete source-producer pins, profile heap failure,
       owned-definition generation, forward/reverse deadlines and strict parity.
 - [ ] Rerun the complete local gate and collect every same-head CI result before
