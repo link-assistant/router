@@ -544,5 +544,15 @@ remain explicitly unmet parts of the literal all-tool requirement.
       163909.893825 > 60000 ms. Bun has six passes and the final case times out
       at 120916.88 ms. Neither attempt needs an owned resource stop. Preserve
       both failed terminal results and every unchanged assertion/deadline.
-- [ ] Run the mandatory complete gate on the coherent immutable source batch;
-      collect the entire published CI cycle before any further push.
+- [x] Attempt the mandatory complete gate at clean `21caf33cf`: lint, both
+      259-case native suites, deadline controls, public/native type checking,
+      native TypeScript freshness and strict compilation pass. The memory guard
+      interrupts the native behavior file after four passes; its complete audit
+      is absent. Later commands and stages are unrun. No green stamp exists.
+- [x] Reap the interrupted gate's detached test daemon and retain the complete
+      process evidence. Improve the task observer's owned-ancestry cleanup and
+      pass a finite detached-daemon control without replacing any Router test.
+- [x] Verify all archived bytes before retiring 655360 allocated bytes of
+      inactive duplicate Node receipts; original packet members remain intact.
+- [ ] Collect the entire published CI cycle before any further push; finish
+      actual remaining generation/parity/deadline repairs and qualify the gate.

@@ -120,3 +120,7 @@ recorded in [`raw/restart-research.json`](raw/restart-research.json).
 See [`verification.md`](verification.md). Passing focused tests is not complete
 translation/parity qualification. Strict gates and same-SHA JavaScript-before-Rust
 requirements remain unchanged. This PR stays unmerged while criteria remain unmet.
+
+The [integrated Clone/runtime gate attempt](runtime-integrated-gate.md) records
+the complete immutable-head local attempt, its passed stages, memory interruption,
+unrun stages and fully reaped test processes.

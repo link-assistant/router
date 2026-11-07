@@ -47,6 +47,8 @@ source-equation cases remain within 60000 ms at 47775.68 and 50059.05 ms.
 These are failed parent qualifications, preserved with complete terminal streams
 and Node's full independent audit. No assertion or deadline changes.
 
-The integrated full gate still requires separate qualification. Source-only
-checks add zero newly executable production functions and establish neither
-complete parity nor CI readiness.
+The [integrated full gate attempt](runtime-integrated-gate.md) passes lint,
+both native suites and public/native type checking before the memory guard
+interrupts native TypeScript behavior testing. It remains unqualified.
+Source-only checks add zero newly executable production functions and establish
+neither complete parity nor CI readiness.

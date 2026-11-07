@@ -37,6 +37,9 @@ peak = samples = 0
 stopped = False
 reclaims = []
 interrupted = None
+stop_sample = None
+stop_seconds = None
+stopped_processes = []
 
 
 def request_stop(signum, _frame):
@@ -91,16 +94,34 @@ with args.log.open('xb') as log:
                         pass
                 if not interrupted and row.get('exitCode') == 0 and row['afterBytes'] < threshold:
                     continue
-            # Keep the subreaper alive to collect every owned descendant. The
-            # direct command and its children share the new process group.
-            # Signal group members individually, excluding that reaper.
+            # Keep the subreaper alive to collect every owned descendant.
+            # Test daemons can detach into their own process group, but retain
+            # this launcher's ancestry (or are adopted by its subreaper).
+            stop_sample = observed
+            stop_seconds = time.monotonic() - started
+            parents = {}
             for process in Path('/proc').iterdir():
-                if not process.name.isdecimal() or int(process.name) == child.pid:
+                if not process.name.isdecimal():
                     continue
                 try:
-                    if os.getpgid(int(process.name)) == child.pid:
-                        os.kill(int(process.name), signal.SIGTERM)
-                except ProcessLookupError:
+                    fields = (process / 'stat').read_text().rsplit(')', 1)[1].split()
+                    parents[int(process.name)] = (int(fields[1]), fields[19])
+                except (FileNotFoundError, ProcessLookupError):
+                    pass
+            owned = {child.pid}
+            while True:
+                descendants = {pid for pid, (parent, _) in parents.items() if parent in owned}
+                if descendants <= owned:
+                    break
+                owned.update(descendants)
+            for pid in sorted(owned - {child.pid}):
+                try:
+                    # Refuse a recycled PID before signalling it.
+                    fields = Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()
+                    if fields[19] == parents[pid][1]:
+                        os.kill(pid, signal.SIGTERM)
+                        stopped_processes.append(pid)
+                except (FileNotFoundError, ProcessLookupError):
                     pass
             stopped = True
         time.sleep(0.1)
@@ -113,6 +134,8 @@ receipt = {
     'containerLimitBytes': limit, 'stopThresholdBytes': threshold,
     'peakSampledCgroupBytes': peak, 'sampleIntervalSeconds': 0.1,
     'samples': samples, 'stopped': stopped,
+    'stopSampledCgroupBytes': stop_sample, 'stopElapsedSeconds': stop_seconds,
+    'stoppedOwnedProcessIds': stopped_processes,
     'initialFingerprintCacheAdvice': reclaims,
     'interrupted': interrupted,
     'scope': 'Total cgroup samples, not child RSS or a complete process peak.',

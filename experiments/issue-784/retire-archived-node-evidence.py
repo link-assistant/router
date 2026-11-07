@@ -1,4 +1,5 @@
 """Remove only inactive task attempts whose complete bytes remain in packets."""
+import argparse
 import gzip
 import hashlib
 import json
@@ -11,7 +12,12 @@ from datetime import datetime, timezone
 root = Path(__file__).resolve().parents[2]
 attempts = root / 'js/node_modules/.node-case-deadlines'
 packets = root / 'docs/case-studies/issue-784/evidence'
-receipt = root / 'ci-logs/issue-784-restart-2/archived-node-retirement.json'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--receipt', default='archived-node-retirement.json')
+args = parser.parse_args()
+if Path(args.receipt).name != args.receipt or not args.receipt.endswith('.json'):
+    parser.error('receipt must be a JSON filename in the task evidence directory')
+receipt = root / 'ci-logs/issue-784-restart-2' / args.receipt
 if receipt.exists():
     raise RuntimeError('Refusing to overwrite cleanup evidence')
 
