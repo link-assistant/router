@@ -34,6 +34,22 @@ trees are terminal and reaped. No source/definition matrix or new executable
 function is claimed from these cases. Complete original logs, failed attempts,
 raw Node streams and audit receipts are retained separately from summaries.
 
-Compiler registration, whole exported receiving qualification, a current-head
-full gate and fresh published CI remain independently required. Strict parity,
-full corpus deadlines and literal tool/privacy obligations are still unfinished.
+The full registration proposal at source
+`ae10349b69f2303b9c799f07a40757fbd8d315cc` independently reproduces all seven
+proposed files and joins 1783 complete compiler/TypeScript files (57221413
+source bytes) and 463 genuine portable Git objects. All six complete previous
+registration files remain archived. The concrete source profile and historical
+pins remain unchanged. This registration measures no new executable function.
+
+Both complete receiving files pass all seventeen original cases and the
+independent Node deadline audit in 165.32 seconds, sampled peak 2354147328 bytes.
+The first invocation failed before any test launched because it named two
+nonexistent files; its complete ENOENT output is retained. The corrected command
+uses the original whole export and isolated-project batch files. Bun's complete
+nine-case export file also passes in 46.50 seconds, sampled peak 2239062016
+bytes. Its complete eight-case isolated-project file passes in 83.02 seconds,
+sampled peak 2121691136 bytes. Both engines therefore pass the same seventeen
+whole receiving cases. Bun remains version 1.4.4 locally; CI pins 1.4.3.
+A current-head full gate and fresh published CI remain separately required.
+Strict parity, full corpus deadlines and literal tool/privacy obligations are
+still unfinished.

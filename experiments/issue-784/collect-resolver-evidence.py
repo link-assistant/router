@@ -70,6 +70,27 @@ for name in ['current-isolated-node.log', 'current-export-node.log',
         if not terminal['childClosed'] or not terminal['groupCleanup']['complete']:
             raise RuntimeError('All selected attempt processes must finish first')
         selected.update(path for path in attempt.iterdir() if path.is_file())
+# Every newly retained log can introduce another whole Node attempt. Include
+# failed and interrupted attempts rather than selecting only successful names.
+for log in sorted(directory.rglob('*.log')):
+    if (str(log), log.stat().st_size, digest(log)) in baseline:
+        continue
+    for value in re.findall(r'^Complete Node deadline evidence: (.+)$', log.read_text(), re.M):
+        attempt = Path(value).resolve()
+        if attempt.parent != root / 'js/node_modules/.node-case-deadlines':
+            raise RuntimeError('Unexpected complete Node attempt location')
+        terminal = json.loads((attempt / 'terminal.json').read_bytes())
+        if not terminal['childClosed'] or not terminal['groupCleanup']['complete']:
+            raise RuntimeError('A newly selected original Node attempt is not terminal')
+        if Path('/proc/' + str(terminal['groupCleanup']['group'])).exists():
+            raise RuntimeError('A selected Node process group is still active')
+        for row in terminal['logs']:
+            original = attempt / row['path']
+            if (original.stat().st_size != row['bytes'] or digest(original) != row['sha256']):
+                raise RuntimeError('Original complete Node stream changed')
+        for path in attempt.iterdir():
+            if path.is_file() and (str(path), path.stat().st_size, digest(path)) not in baseline:
+                selected.add(path)
 names = subprocess.check_output(['git', 'diff', '--name-only', '-z', args.head], cwd=root)
 names += subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard', '-z'], cwd=root)
 for name in names.decode().split('\0'):

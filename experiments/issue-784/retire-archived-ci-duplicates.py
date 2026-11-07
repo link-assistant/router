@@ -17,7 +17,14 @@ parser.add_argument('--receipt', required=True)
 parser.add_argument('--current-cycle', required=True)
 parser.add_argument('--restart-diff', action='append', default=[],
                     help='Explicit inactive complete PR diff already retained in a verified packet')
+parser.add_argument('--restart-profile', action='append', default=[],
+                    choices=['native-typescript-' + label + '-' + kind + '.json.gz'
+                             for label in ['baseline', 'batch-candidate', 'batch-candidate-qualified']
+                             for kind in ['cpu', 'outputs']],
+                    help='Explicit inactive full native profile/output already verified in a packet')
 args = parser.parse_args()
+if len(set(args.restart_profile)) != len(args.restart_profile):
+    parser.error('each explicit complete native profile must be unique')
 if (len(set(args.restart_diff)) != len(args.restart_diff)
         or any(Path(name).name != name or not name.endswith(('.diff', '.diff.gz', '.patch.gz'))
                for name in args.restart_diff)):
@@ -57,7 +64,8 @@ for manifest_path in sorted(packets.glob('*.json.gz')):
         if relative.parts[0] == 'issue-784-restart-2' and not (
                 path.name.endswith(('-pages.json', '-cache-reclaim.json'))
                 or path.name == 'phased-equations-initial-cache.json'
-                or path.name in args.restart_diff):
+                or path.name in args.restart_diff
+                or path.name in args.restart_profile):
             continue
         if path.is_symlink() or not path.is_file() or path.stat().st_uid != os.getuid():
             continue
@@ -70,6 +78,10 @@ if set(args.restart_diff) != {Path(name).name for name in selected
                             if Path(name).parent == ci / 'issue-784-restart-2'
                             and Path(name).name in args.restart_diff}:
     raise RuntimeError('Every explicit complete diff must have an exact archived copy')
+if set(args.restart_profile) != {Path(name).name for name in selected
+                               if Path(name).parent == ci / 'issue-784-restart-2'
+                               and Path(name).name in args.restart_profile}:
+    raise RuntimeError('Every explicit full native profile must have an exact archived copy')
 
 
 def assert_inactive():

@@ -10,14 +10,16 @@ root = Path(__file__).resolve().parents[2]
 base = root / 'ci-logs/issue-784-restart-2'
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--head', required=True)
+parser.add_argument('--label', choices=['native-regeneration', 'matrix-draft'],
+                    default='native-regeneration')
 args = parser.parse_args()
 assert re.fullmatch('[a-f0-9]{40}', args.head)
 assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root).decode().strip() == args.head
 assert not subprocess.check_output(['git', 'status', '--porcelain'], cwd=root)
-log = base / 'native-regeneration-full-gate.log'
+log = base / (args.label + '-full-gate.log')
 raw = log.read_bytes()
 lines = raw.decode().splitlines()
-memory = json.loads((base / 'native-regeneration-full-gate.memory.json').read_bytes())
+memory = json.loads((base / (args.label + '-full-gate.memory.json')).read_bytes())
 assert memory['containerLimitBytes'] == 3135369216
 assert memory['command'] == ['node', '--max-old-space-size=512', 'scripts/check-js-first-local.mjs']
 assert all(not Path('/proc/' + str(pid)).exists()
@@ -52,7 +54,7 @@ stages = [dict(line=i + 1, stage=value.removeprefix('JavaScript stage: '))
           for i, value in enumerate(lines) if value.startswith('JavaScript stage: ')]
 observations = [dict(line=i + 1, text=value) for i, value in enumerate(lines)
                 if re.search(r'(^not ok|Error|failed|fail [1-9]|exceeds|interrupted|carried|feature gaps|runtimeParity)', value)]
-result = {'schema': 'native-regeneration-complete-gate-inspection-v1',
+result = {'schema': 'complete-gate-inspection-v1', 'label': args.label,
           'sourceHead': args.head, 'cleanWorktreeAtInspection': True,
           'completeLog': identity(log), 'logLines': len(lines),
           'enteredStages': stages, 'errorObservations': observations,
@@ -61,7 +63,7 @@ result = {'schema': 'native-regeneration-complete-gate-inspection-v1',
           'fullGatePassed': False,
           'scope': 'Every reported terminal log and audit read completely. Entering a stage does not prove its completion; missing stages remain unrun. No green gate or Rust authority is inferred.'}
 assert memory['exitCode'] != 0
-with (base / 'native-regeneration-full-gate-inspection.json').open('x') as stream:
+with (base / (args.label + '-full-gate-inspection.json')).open('x') as stream:
     json.dump(result, stream, indent=2)
     stream.write('\n')
 print(json.dumps({'sourceHead': args.head, 'logLines': len(lines), 'enteredStages': stages,

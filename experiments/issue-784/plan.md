@@ -705,8 +705,38 @@ remain explicitly unmet parts of the literal all-tool requirement.
       259-case suites, deadline controls and public TypeScript pass. The memory
       guard stops native TypeScript checking at 415.89 s; later stages are
       unrun. Inspect all entered stages and complete audit; reap all owned PIDs.
-- [ ] Collect every terminal result of the published bea75c2c1 CI cycle, archive
+- [x] Collect every terminal result of the published bea75c2c1 CI cycle, archive
       complete native evidence, review main ancestry and the coherent source
-      batch, then publish accurate failed/unrun feedback in the draft PR.
+      batch. Seven full logs and all three ZIPs are verified. Publication and
+      the current-source review remain separately required below.
 - [ ] Repair original deadlines, actual source generation and strict parity;
       qualify all literal tool/privacy requirements and every same-head check.
+
+## Retain genuine computed matrix drafts
+
+- [x] Inventory all bea75c2c1 failures: ordinary profile plans now complete;
+      actual freshness still fails, owned matrix remains absent, strict parity
+      has 441 gaps and forward/reverse original deadlines remain unmet.
+- [x] Draft opt-in full-byte custody after original private validation and
+      freshness comparison. Keep all check failures, original time and byte
+      bounds, current-source rereads and default public behavior.
+- [x] Run complete custody/workflow controls: first 35-case attempt has two
+      historical-workflow integration failures; corrected 36-case attempt and
+      independent Node audit pass. Preserve both original terminal attempts.
+- [x] Run the complete original isolated matrix file plus the new integration
+      case: all eleven Node cases and independent deadline audit pass. All
+      three low-level custody cases also pass under Bun; full matrix Bun unrun.
+- [x] Refresh the complete compiler registration: 1783 complete inputs,
+      57221413 source bytes and 463 genuine portable Git objects. Preserve six
+      full historical preimages. All seventeen whole Node cases and independent
+      deadline audit pass; all seventeen whole receiving cases also pass Bun.
+      No actual production function gain or complete gate is established.
+- [ ] Attempt the complete current-head JavaScript gate, record every entered
+      stage and preserve failed/unrun status and all reaped owned processes.
+- [ ] Archive completed CI, review the whole PR/default ancestry and publish
+      the coherent batch with accurate description. Keep PR draft and unmerged.
+- [ ] Independently validate genuine CI drafts before installing outputs;
+      finish source/owned matrices, strict parity and original deadlines.
+- [x] Retire six inactive complete CPU/output duplicate files only after full
+      packet readback, matching lengths/hashes and process-reference checks.
+      Complete originals remain public; reclaimed 15302656 allocated bytes.
