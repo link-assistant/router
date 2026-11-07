@@ -196,3 +196,77 @@ finished preceding CI cycle, all three downloaded CI artifacts and explicit
 source snapshots. It does not claim a complete compiler closure or qualify any
 later head's gate. Compression changes storage only; all failed and unrun
 results above remain failed and unrun.
+
+## Uninstalled shared-token experiment
+
+The shared `rust-structure.mjs` tokenizer also uses an object spread to copy
+the private lexer's four fields. A finite Node 20.20.2 experiment on the eight
+largest actual `rust/src` files, containing 45,300 tokens, compares that copy
+with a four-field literal. Each variant runs in its own process with a 256 MiB
+heap, explicit GC, bounded input and a complete source inverse. The complete
+per-file token/item result hashes match within each mode.
+
+| Retained mode | Original heap delta | Literal heap delta |
+| --- | ---: | ---: |
+| Mutable tokens | 4,519,296 bytes | 4,390,400 bytes |
+| Recursively frozen tokens | 13,374,208 bytes | 5,160,088 bytes |
+
+These finite deltas are an allocation hypothesis, not a whole-compiler memory
+result or an executable-function gain. The probe's literal variant is unguarded
+and is never installed. Its reusable command is:
+
+```sh
+node --max-old-space-size=256 --expose-gc \
+  experiments/issue-784/probe-rust-token-layout.mjs original frozen
+```
+
+Replace `original` with `literal`, or `frozen` with `plain`, for the separate
+finite comparisons. The probe checks the complete original source pin before
+selecting its variant.
+
+A separate source proposal adds the same pre-lexer native-operation guard as
+the installed module-view optimization. Its language and repository stages
+retain genuine TypeScript 5.9.3 bindings and complete serialized/reparsed CST
+inverses. Installing this proposal was refused with
+`Private parser execution: complete source bytes changed`: the shared tokenizer
+is one of the fixed private parser's seven authenticated source modules. The
+existing host-profile maintenance tool permits host-source evolution only.
+Changing its manifest hash alone would not qualify this new parser closure.
+
+The production tokenizer was restored to its complete original SHA-256
+`ea09bde0452ff0e8021454e2c0040b6bdd8493163b0ab48cea496353e6b92261`.
+All historical parser pins remain unchanged. The uninstalled proposal,
+snapshot and tests live under `experiments/issue-784`; no compiler imports
+them. The proposal's `--check` deliberately refuses the restored production
+source because it is not the proposed installed output.
+
+The entire experimental test file passes **5/5** on Node 20.20.2 and Bun 1.4.4,
+using the proposed module in isolation. It compares every token and item for
+all **864 tracked Rust files**, checks descriptors and fresh mutable identities,
+exercises nested literals, malformed input and customized/self-restoring hooks,
+and refuses unrelated complete source and snapshot changes. Both engines report
+the same complete corpus fingerprint:
+`80f704ef7593721511c1c955aefb96015ea0a5c81910bbd9f67c6ffaf43aa784`.
+The Node command uses a 512 MiB diagnostic heap; the existing 60-second test
+deadlines remain intact. The two observed runs took 26.58 and 19.75 seconds,
+with sampled total cgroup peaks of 1,743,634,432 and 1,770,766,336 bytes and no
+resource stop. These receiving checks do not qualify the private parser,
+install the optimization, regenerate the missing matrix or pass the full gate.
+
+The four complete allocation receipts, both complete receiving logs and their
+memory receipts, source proposal and production-restoration receipt are retained
+as `rust-token-*` originals under `ci-logs/issue-784-restart-2`.
+
+## Node 26 diagnostic
+
+The complete owned-definition command was separately attempted in check mode
+on clean `e29a8dd23e4a52f2892122276693d9b026ab7191`, under Node 26.13.0 with a
+2,048 MiB heap. It exited 1 after 2.33 seconds with
+`Retained output stock private collections unavailable`; no output was written.
+The bounded read-only `inspect-stock-intrinsics.mjs` experiment identifies a
+qualification difference: this runtime renders `util.types.isProxy` as the
+anonymous native function text, whereas the existing parser ingress guard
+requires the named native function text. Other inspected fixed ingress
+operations retain their named native text. No anonymous-function allowance was
+added: bound arbitrary JavaScript functions can also have anonymous native text.
+This diagnostic neither qualifies Node 26 nor repairs Node 20 generation.
