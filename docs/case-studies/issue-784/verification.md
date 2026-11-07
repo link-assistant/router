@@ -50,12 +50,57 @@ universes, every 867 current source byte and NOTICE remain unchanged.
 No resource bound, test deadline, assertion or parity status was increased.
 
 Five complete transport inverse/refusal tests passed under Node 26.13.0 and
-Bun 1.4.4 before integration. Complete receiving/export checks and the next
-full gate/CI cycle remain unqualified at this source snapshot. Actual results
-and their exact SHA must be recorded separately; these five passes cannot
-qualify the previously failed gate. Source proposals, independent reviews and
-bounded compression experiments are retained under `ci-logs/restart-export-*`
+Bun 1.4.4 before integration. At source head
+`b913882ab538e0ffda77ff1b6a1171a53228ca59`, all five complete receiving files
+were then attempted under Node 20.20.2 with a 768 MiB old-space limit and one
+worker. **33/34 TAP cases passed**. The real core-adoption producer child hit
+its unchanged **20000 ms** deadline and received SIGTERM
+(`restart-export-receiving.log:38–65`). The independent source/deadline audit
+also failed: the complete current-bank codec case took **65319.319072 ms**
+against its unchanged **60000 ms** deadline (lines 160–164, 205–206).
+The full export file, layout file and five new transport cases passed; the
+actual committed archive-budget regression passed too. Complete deadline
+originals are retained in `complete-ifetLh`.
+
+The complete four-file Bun attempt passed **23 cases**, including all nine
+export cases, three layout cases, five transport cases and the first six codec
+cases. Its owned memory guard then stopped Bun during a full-bank codec case
+at **2869792768 sampled total cgroup bytes**, below the **3135369216-byte**
+container limit (`restart-export-memory.json`). Later codec cases remain
+unqualified. The original assertions and deadlines were unchanged; this is an
+interrupted attempt, not a passing four-file suite. The process and its guard
+closed before further resource-intensive work; no kernel OOM kill occurred.
+
+The complete local gate is still failed at its previously recorded source
+head. A new complete local gate is **unrun**: the unchanged forward and Bun
+lifecycle workloads already required owned resource stops in this container,
+and strict parity, missing-profile and compiler-pin failures remain unresolved.
+No repeated killed workload, green stamp, Rust invocation, or receiving/full-gate
+equivalence is claimed. The next published-head CI cycle remains unqualified
+at this source snapshot. Source proposals, independent reviews, complete logs
+and bounded compression experiments are retained under `ci-logs/restart-export-*`
 and the task experiment directory.
+
+The repository syntax check passed all **1747 JavaScript files**. Its strict
+translation API TypeScript project also passed with the lockfile compiler
+**5.9.3**. After all local children closed, cleanup verified complete preserved
+proposal bytes and removed only this attempt's inactive Node toolchain and
+external proposal. Distinct file allocation removed: **164212736 bytes**;
+observed filesystem free delta: **166510592 bytes**. The earlier cleanup
+attempt refused a missing preserved `proposal.json`; that complete original
+was copied and compared before the successful cleanup. Both receipts remain
+in the evidence. No Rust cache or other worker's directory was removed.
+
+The [complete export-repair packet](evidence/export-repair-complete.tar.xz)
+and its [verification receipt](evidence/export-repair-complete.json.gz) preserve
+**160 complete originals / 38377813 logical bytes** in **14219992 archive
+bytes**. SHA256:
+`e6a19758d356028ba028243138b506623a8e8d1c9ebb1155cc3b830a5776e99c`.
+The unchanged capture tool reopened and byte-verified every member against
+its original, including the previous finished CI cycle, full receiving logs,
+raw deadline receipts, complete proposals and changed source. Its source head
+is `b913882ab538e0ffda77ff1b6a1171a53228ca59`; captured file hashes distinguish
+the subsequent documentation drafts. No evidence packet supplies a green gate.
 
 ## Restart regression and configuration audit
 

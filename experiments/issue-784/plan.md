@@ -63,8 +63,15 @@ Objective: implement and verify all requirements in PR #785 on
 - [x] Reproduce the newly exposed source archive export budget failure, preserve
       all logical bytes with versioned Git blob reference factoring, and regenerate
       both producer outputs without changing resource bounds or original deadlines.
-- [ ] Finish complete export/receiving checks for the storage repair, run the full
-      gate, publish the coherent batch, and collect its entire same-head CI cycle.
+- [x] Finish the complete five-file Node receiving attempt: 33/34 TAP passes,
+      real producer child timeout and one independent 60000 ms deadline breach.
+      Finish the four-file Bun attempt with 23 passes and an owned memory stop;
+      preserve remaining codec cases as unqualified and do not repeat it locally.
+- [ ] Obtain a new green full gate; the new local attempt remains unrun because
+      unchanged workloads already required resource stops and parity is unresolved.
+- [x] Preserve 160 complete export-repair originals in a verified 14.2 MB packet;
+      record syntax/strict API passes and remove only inactive task paths.
+- [ ] Publish the reviewed coherent batch and collect its entire same-head CI cycle.
 - [ ] Verify all same-SHA CI checks, clean tree, and mark ready only if complete.
 
 Constraints: one resource-intensive process at a time, no additional agents or clones,

@@ -2,14 +2,18 @@
 import json
 import os
 import shutil
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[2]
-proposal = Path(json.loads((root / 'ci-logs/restart-static-proposal.json').read_text())['output'])
+label = sys.argv[1] if len(sys.argv) > 1 else 'restart-static'
+if label not in ['restart-static', 'restart-export'] or len(sys.argv) > 2:
+    raise RuntimeError('Expected an identified task receipt label')
+proposal = Path(json.loads((root / ('ci-logs/' + label + '-proposal.json')).read_text())['output'])
 if proposal.parent != Path('/tmp') or not proposal.name.startswith('router-issue-784-static-proposal-'):
     raise RuntimeError('Unexpected proposal root')
-preserved = root / 'ci-logs/restart-static-proposal-originals'
+preserved = root / ('ci-logs/' + label + '-proposal-originals')
 for source in proposal.iterdir():
     target = preserved / source.name
     if source.is_symlink() or not source.is_file() or source.read_bytes() != target.read_bytes():
@@ -55,5 +59,5 @@ for path in roots:
 receipt = {'checkedAt': datetime.now(timezone.utc).isoformat(), 'removed': rows,
            'activeReferences': [], 'rustToolsExecuted': False,
            'observedFilesystemFreeDeltaBytes': shutil.disk_usage(root).free - before}
-(root / 'ci-logs/restart-static-cleanup.json').write_text(json.dumps(receipt, indent=2) + '\n')
+(root / ('ci-logs/' + label + '-cleanup.json')).write_text(json.dumps(receipt, indent=2) + '\n')
 print(json.dumps(receipt))

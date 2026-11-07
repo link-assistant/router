@@ -62,9 +62,18 @@ Validation remains incomplete:
   checks passed, then the missing neutral profile failed the TypeScript stage.
   Strict parity and profile generation failed; both compiler cohorts reached
   their original CI limits. Complete logs and all artifacts are preserved.
-  This cycle exposed the fixture export failure repaired above. Complete
-  export/receiving checks and a new full gate/CI cycle remain unqualified at
-  this source snapshot. **No Rust tool ran locally;
+  This cycle exposed the fixture export failure repaired above.
+- At `b913882ab538e0ffda77ff1b6a1171a53228ca59`, all five complete export and
+  receiving files reported **33/34 Node TAP passes**. The real producer child
+  hit its unchanged 20000 ms deadline; the independent audit also failed a
+  65319.319072 ms case against its original 60000 ms deadline. The archive-budget
+  regression, full export/layout files and five new transport cases passed.
+  Bun passed 23 cases in the four-file attempt, including complete export,
+  layout and transport files, before the owned guard stopped it at 2869792768
+  sampled total cgroup bytes. Later codec cases remain unqualified. A new
+  complete local gate is unrun; unchanged resource-stopped workloads were not
+  repeated. New published-head CI remains unqualified at this source snapshot.
+  **No Rust tool ran locally;
   Rust remains unrun and gated by JavaScript failures.** No green full gate or
   Rust qualification is claimed.
 
