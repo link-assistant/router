@@ -207,8 +207,12 @@ remain explicitly unmet parts of the literal all-tool requirement.
       #785's actual title/body, preserving draft status and failed/unrun evidence.
 - [x] Compare all 165 complete downloaded PR diff sections against the committed
       local diff, normalizing only object-ID abbreviation lines: all match.
-- [ ] Collect the entire seven-workflow same-head cycle once every run finishes;
-      the cycle was still running when this source draft began.
+- [x] Collect the entire seven-workflow same-head cycle after every run finishes.
+      Run 42364504470 failed at 11:34:36 UTC: native suites/lint passed;
+      TypeScript, parity and profiles failed; both compiler cohorts reached their
+      unchanged limits. Read and verify all three complete artifact ZIPs and
+      preserve every one of the forward TAP's 11 failures, including the three
+      additional failures absent from the workflow stream. No green gate exists.
 - [x] Test a finite token-layout allocation hypothesis on eight actual files in
       separate 256 MiB processes. Preserve Node 26's small difference and Node
       20's material difference without calling either full compiler evidence.
@@ -251,3 +255,6 @@ remain explicitly unmet parts of the literal all-tool requirement.
       outputs or missing owned-definition matrix are materialized.
 - [ ] Obtain a green complete local gate and all same-head CI checks; full
       parity and the literal universal privacy requirements remain unfinished.
+- [ ] Preserve the complete new token/fingerprint receiving evidence and the
+      completed 007dc7f3a CI cycle in a verified incremental packet, then review
+      and publish the coherent failed-gate draft batch on the prepared branch.

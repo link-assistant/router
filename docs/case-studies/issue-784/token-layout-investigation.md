@@ -132,3 +132,49 @@ graph, then stopped during `derive-namespace-context` after 82.182824 seconds at
 `token-layout-bun-generation*` originals preserve both attempts separately;
 `pre-bun-generation-retry-pages.json` preserves the complete cache-hint selection.
 Neither the missing owned-definition matrix nor Node CI generation is qualified.
+
+## Completed preceding CI cycle
+
+All seven workflows for published head
+`007dc7f3a3a882d17ab87d2a53067ebb236f948f` finished. The required
+[pipeline run](https://github.com/link-assistant/router/actions/runs/42364504470)
+started at 10:34:08 UTC on 2026-11-07 and failed at 11:34:36 UTC. Its checkout
+was merge SHA `ef0435374243c0a12a274d0d58e916ce388bfe8b`. These results predate
+the token-layout and fingerprint changes; they do not qualify those changes.
+
+| Stage | Complete result |
+| --- | --- |
+| Lint, native Node and Bun | Passed; both native suites passed 259 cases. |
+| TypeScript | Failed: the owned-definition matrix `owned-definitions-matrix-80dc0d37762835fbe925b47e6fad25fee5c1d3c093fafff0512fc2bd3f9ae4e0.json` is missing. The three existing profile trees separately passed strict TypeScript 5.9.3. |
+| Strict parity | Failed: stale `rust/src/account_routing_policy.rs` source hash, 441 draft gaps and 12,345 carried items; runtime parity remains false. |
+| Profile matrix | Failed: the neutral worker aborted at its original 2,048 MiB V8 heap limit; retained-definition generation remained unrun. |
+| Reverse translation | Cancelled at the unchanged 15-minute limit after 76 passing cases; later Bun and regeneration commands remained unrun. |
+| Forward translation | Cancelled at the unchanged 60-minute limit; the complete retained TAP contains 11 failures and no terminal qualification. Later canonical and owned-definition freshness commands remained unrun. |
+| Aggregate, Rust and release | The JavaScript aggregate failed; Rust and release stayed skipped. Six supplemental workflows were skipped, supplying no qualification. |
+
+The entire workflow log and all three ZIP artifacts were downloaded after every
+run became terminal. Every ZIP member was read, CRC-checked and hashed. The full
+forward TAP has 6,201 lines and SHA-256
+`553cef1b5e9dd2671fc6e3fd5dfd8ca17695e32afe46dec97fa9db3e592beb8a`.
+Its eight `actual-gain-families.test.mjs` failures share the unchanged setup
+assertion at line 78: the inventory's generation compiler hash for
+`tools/translation/translate.mjs` is stale. Replacing that hash would not
+regenerate or authenticate the stored outputs. Complete regeneration remains
+required and unfinished.
+
+Three further failures appear in the retained TAP but not the workflow stream:
+the adoption CLI child's original deadline sends `SIGTERM` (TAP line 5403),
+the complete literal-text corpus case exceeds 60,000 ms at 96,259.44 ms
+(line 6055), and the complete three-build provenance case exceeds 60,000 ms at
+119,618.08 ms (line 6149). The original child and case deadlines remain intact.
+These failures are not established as repaired by the focused allocation check.
+
+Evidence is under `ci-logs/issue-784-checkpoint-007dc7f3a`: complete workflow logs,
+artifact ZIPs, `completed-artifact-verification.json` and every complete failed
+TAP block in `completed-forward-failures.json`. The companion raw job logs in
+`ci-logs/issue-784-restart-2` locate TypeScript's missing file at
+`storage-typescript-completed-job.raw.log:456`, parity at
+`storage-parity-completed-job.raw.log:891`, the heap abort at
+`storage-profile-completed-job.raw.log:257`, and reverse cancellation at
+`storage-reverse-completed-job.raw.log:653`. No missing secret or human-only CI
+prerequisite was identified; skipping these failures would hide unmet checks.

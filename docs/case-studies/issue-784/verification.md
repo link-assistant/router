@@ -842,4 +842,8 @@ stays draft and unmerged while those criteria remain unmet.
 The subsequent [Node 20 token-layout investigation](token-layout-investigation.md)
 records a bounded allocation improvement, passing complete receiving files, and
 the still-failed actual whole-generator attempt. It supplies no green full-gate
-or current-head CI qualification.
+or current-head CI qualification. It also records the entire failed
+`007dc7f3a` CI cycle and all 11 failures in its complete forward TAP, including
+three absent from the workflow stream. Both later complete local gate attempts
+stopped at the owned resource guard before their first stage; all seven stages
+remain unrun for those attempts.
