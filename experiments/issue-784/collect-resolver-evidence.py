@@ -50,20 +50,26 @@ for parent in [directory, cycle]:
             continue
         if (str(path), path.stat().st_size, digest(path)) not in baseline:
             selected.add(path)
-# Include every original event/source/terminal receipt from the two complete
-# current receiving Node files, outside the task log directory.
-for name in ['current-isolated-node.log', 'current-export-node.log']:
+# Include complete receiving and full-gate attempts, including the failed
+# deadline audit and interrupted forward cohort. Terminal does not mean pass.
+for name in ['current-isolated-node.log', 'current-export-node.log',
+             'current-isolated-full-gate.log']:
     log = directory / name
     if not log.exists():
         continue
     matches = re.findall(r'^Complete Node deadline evidence: (.+)$', log.read_text(), re.M)
-    if len(matches) != 1:
-        raise RuntimeError('Complete current receiving deadline report required')
-    attempt = Path(matches[0]).resolve()
-    if (attempt.parent != root / 'js/node_modules/.node-case-deadlines'
-            or not (attempt / 'terminal.json').is_file()):
-        raise RuntimeError('Original terminal receiving receipt required')
-    selected.update(path for path in attempt.iterdir() if path.is_file())
+    expected = 3 if name == 'current-isolated-full-gate.log' else 1
+    if len(matches) != expected:
+        raise RuntimeError('Every original complete Node attempt is required')
+    for value in matches:
+        attempt = Path(value).resolve()
+        if (attempt.parent != root / 'js/node_modules/.node-case-deadlines'
+                or not (attempt / 'terminal.json').is_file()):
+            raise RuntimeError('Original terminal receipt required')
+        terminal = json.loads((attempt / 'terminal.json').read_bytes())
+        if not terminal['childClosed'] or not terminal['groupCleanup']['complete']:
+            raise RuntimeError('All selected attempt processes must finish first')
+        selected.update(path for path in attempt.iterdir() if path.is_file())
 names = subprocess.check_output(['git', 'diff', '--name-only', '-z', args.head], cwd=root)
 names += subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard', '-z'], cwd=root)
 for name in names.decode().split('\0'):

@@ -620,5 +620,15 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [x] Independently join all 17 original cases per engine to unchanged sources
       and deadlines; verify every current registered source and all six full
       historical published preimages. No executable application gain is claimed.
-- [ ] Rerun the mandatory full JavaScript gate for this substantive registration
-      batch; retain failures and unrun stages without relaxing the gate.
+- [x] Attempt the mandatory full JavaScript gate at clean source `17aea691976`.
+      Lint, native suites, strict TypeScript and 121 acceptance cases pass.
+      Native regeneration exceeds its original 60-second deadline (133.32 s);
+      strict parity fails; the memory guard stops forward startup. Preserve all
+      original terminal attempts and reaped-process evidence; no green stamp.
+- [ ] Capture the coherent registration repair and complete CI/local evidence,
+      review current main and the full PR diff, then publish fresh draft feedback.
+- [ ] Repair actual shared native regeneration costs with complete source/CST
+      boundaries and independent semantic checks; preserve all original cases,
+      assertions and deadlines. Qualify any candidate before reporting a gain.
+- [ ] Materialize genuine matrices, finish strict parity and original compiler
+      deadlines, then pass the whole local and same-head CI gates.
