@@ -744,10 +744,38 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [x] Compress new complete cache-advice receipts with decoded readback to
       conserve the fixed allocation. Preserve all original default receipts;
       no file content or active process mapping is changed by page advice.
-- [ ] Archive completed CI, review the whole PR/default ancestry and publish
+- [x] Archive completed CI, review the whole PR/default ancestry and publish
       the coherent batch with accurate description. Keep PR draft and unmerged.
 - [ ] Independently validate genuine CI drafts before installing outputs;
       finish source/owned matrices, strict parity and original deadlines.
 - [x] Retire six inactive complete CPU/output duplicate files only after full
       packet readback, matching lengths/hashes and process-reference checks.
       Complete originals remain public; reclaimed 15302656 allocated bytes.
+
+## Independent original owned matrix CI check
+
+- [x] Publish complete custody batch a2539817c after the entire preceding CI
+      cycle, full source review and verified complete packet readback.
+- [x] Preserve first whole workflow regression: 33/34 pass; the new original
+      complete-job comparison fails because both commands still share one job.
+      Complete independent Node audit passes; behavioral exit remains failure.
+- [x] Draft two independent same-SHA jobs using the original whole checkout,
+      verification and install steps and each original 60-minute bound. Keep
+      every original mandatory command, add the ninth required aggregate result
+      and distinct complete artifact custody. No source/compiler bytes change.
+- [x] Run complete original workflow/local-control/profile-TypeScript files
+      under Node and Bun; source/CST equations and all original refusals pass.
+      Preserve the initial imported-file selection audit failure, both original
+      Bun deadline failures and final 47-case audited Node/45-case Bun passes.
+      Only immutable whole-source YAML syntax is reused; assertions and every
+      original deadline remain. The full review script preserves all six
+      attempts; its first two fixture-summary assumptions fail and are retained.
+- [x] Exercise the read-only original-input snapshot. Draft complete artifact
+      joins and streaming readback; full artifact qualification remains unrun
+      until genuine terminal CI custody is available. No index is fabricated.
+- [ ] Commit a coherent source checkpoint, attempt the mandatory complete gate
+      and record passed, failed and unrun stages at its exact source SHA.
+- [ ] Wait for every a2539817c CI job, download and inspect every whole log and
+      artifact, validate genuine matrix drafts before any output installation.
+- [ ] Complete source generation, strict parity, original deadlines and all
+      issue privacy requirements; PR remains draft and issue open until verified.

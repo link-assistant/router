@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import {runInNewContext} from 'node:vm';
 import { createRequire } from 'node:module';
 import { auditWorkflows, guarded } from '../check-js-first-workflows.mjs';
 import {DRAFT_SUPPLEMENTS,DRAFT_SUPPLEMENT_CONDITION,DRAFT_SUPPLEMENT_PR_TYPES,readFixedNineDraftWorkflowSources} from '../fixed-nine-draft-policy.mjs';
@@ -22,6 +23,13 @@ function mutate(filename, operation) {
 }
 function fails(filename, operation, expected) { assert.ok(mutate(filename, operation).some(error => error.includes(expected))); }
 test('all repository workflows satisfy the policy', () => assert.deepEqual(auditWorkflows(baseline), []));
+test('repeated audits check changed complete source and current policy without retaining a previous verdict',()=>{
+ const broken={...baseline},workflow=parse(broken['javascript-first.yml']);workflow.jobs['owned-profile-matrix'].steps.at(-2).if='${{ false }}';broken['javascript-first.yml']=stringify(workflow);
+ for(let index=0;index<3;index++){assert.deepEqual(auditWorkflows(baseline),[]);assert.ok(auditWorkflows(broken).some(error=>error.includes('checks cannot be conditional')));}
+ const malformed={...baseline,'javascript-first.yml':baseline['javascript-first.yml']+'\njobs: {}\n'};
+ for(let index=0;index<2;index++)assert.ok(auditWorkflows(malformed).some(error=>error.includes('Map keys must be unique')));
+ assert.deepEqual(auditWorkflows(baseline),[]);
+});
 test('current matrix custody composes complete historical YAML and preserves both CST phases and inverse',()=>{
  const result=prepareMatrixDraftWorkflow();assert.equal(result.current,baseline['javascript-first.yml']);assert.equal(result.inverse,result.before);
  assert.equal(result.before,readFixedNineDraftWorkflowSources().files.find(row=>row.path.endsWith('/javascript-first.yml')).before);
@@ -31,7 +39,7 @@ test('current matrix custody composes complete historical YAML and preserves bot
  assert.equal(result.semanticAuthority,false);assert.equal(result.gateSuccessObserved,false);
 });
 test('matrix draft custody preserves every unconditional freshness command and only permits the exact data uploader',()=>{
-  for(const operation of [
+  for(const id of ['profile-matrix','owned-profile-matrix'])for(const operation of [
     job=>{delete job.env.ROUTER_MATRIX_DRAFT_DIRECTORY;},
     job=>{job.steps.pop();},
     job=>{job.steps.at(-1).with.path='profiles/';},
@@ -39,15 +47,39 @@ test('matrix draft custody preserves every unconditional freshness command and o
     job=>{job.steps.at(-1).if='${{ success() }}';},
     job=>{job.steps.at(-1)['continue-on-error']=true;},
     job=>{job.steps.at(-1).run='true';},
-  ])fails('javascript-first.yml',workflow=>operation(workflow.jobs['profile-matrix']),'matrix draft custody missing');
+  ])fails('javascript-first.yml',workflow=>operation(workflow.jobs[id]),'matrix draft custody missing');
   fails('javascript-first.yml',workflow=>{workflow.jobs['profile-matrix'].steps.find(step=>step.run?.includes('--profile-matrix --check')).if='${{ always() }}';},'checks cannot be conditional');
+});
+test('ordinary and owned matrix checks have independent original budgets and both are fatal same-SHA stages',()=>{
+ const jobs=parse(baseline['javascript-first.yml']).jobs;
+ const checks=[['profile-matrix','node scripts/translate-router.mjs --profile-matrix --check','matrix-drafts-'],['owned-profile-matrix','node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check','matrix-owned-drafts-']];
+ const historical=parse(readFixedNineDraftWorkflowSources().files.find(row=>row.path.endsWith('/javascript-first.yml')).before).jobs['profile-matrix'];
+ const originals=historical.steps.filter(step=>step.run?.includes('--profile-matrix --check'));
+ assert.deepEqual(checks.map(([,command])=>command),originals.map(step=>step.run));
+ for(const [id,command,prefix]of checks){
+  const job=jobs[id];assert.ok(job,id);assert.equal(job['timeout-minutes'],historical['timeout-minutes']);assert.equal(Object.hasOwn(job,'needs'),false);assert.equal(Object.hasOwn(job,'if'),false);assert.equal(Object.hasOwn(job,'strategy'),false);
+  assert.deepEqual(job.steps.slice(0,-2),historical.steps.filter(step=>!originals.includes(step)));assert.equal(job.steps.at(-2).run,command);assert.equal(job.steps.at(-1).with.name,prefix+'${{ inputs.sha }}');
+  assert.equal(jobs.complete.needs.filter(need=>need===id).length,1);
+  for(const minutes of [1,59,61])fails('javascript-first.yml',workflow=>{workflow.jobs[id]['timeout-minutes']=minutes;},'independent original 60-minute');
+  for(const dependency of [[],['profile-matrix'],['translation']])fails('javascript-first.yml',workflow=>{workflow.jobs[id].needs=dependency;},'independent original 60-minute');
+  fails('javascript-first.yml',workflow=>{workflow.jobs[id].strategy={matrix:{unused:[true]}};},'independent original 60-minute');
+  fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.at(-1).with.name='matrix-collision-${{ inputs.sha }}';},'matrix draft custody missing');
+  fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.splice(-1,0,{run:command});},'exactly once');
+  fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.splice(-1,0,{run:checks.find(row=>row[0]!==id)[1]});},'independent original 60-minute');
+ }
+ const wrapper=jobs.complete.steps[0].run,match=/^\s*node --input-type=module -e "([\s\S]*)"\s*$/u.exec(wrapper);assert.ok(match);
+ const results=Object.fromEntries(jobs.complete.needs.map(id=>[id,{result:'success'}]));assert.equal(Object.keys(results).length,9);
+ const rejected=()=>{throw Error('aggregate rejected');},execute=value=>runInNewContext(match[1],{process:{env:{STAGE_RESULTS:JSON.stringify(value)},exit:rejected},console:{error(){}}});
+ assert.doesNotThrow(()=>execute(results));
+ for(const id of Object.keys(results))for(const result of ['failure','cancelled','skipped'])assert.throws(()=>execute({...results,[id]:{result}}),/aggregate rejected/);
+ const missing={...results};delete missing['owned-profile-matrix'];assert.throws(()=>execute(missing),/aggregate rejected/);
 });
 test('locked repository dependencies are installed before every consuming stage, including forward and profile checks', () => {
   const jobs = parse(baseline['javascript-first.yml']).jobs;
   const installations = [
     ['lint', 'npm ci --prefix scripts/ci --ignore-scripts'],
     ['lint', 'npm ci --prefix js --ignore-scripts'],
-    ...['node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'reverse-translation'].map(id => [id, 'npm ci --prefix js --ignore-scripts']),
+    ...['node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'owned-profile-matrix', 'reverse-translation'].map(id => [id, 'npm ci --prefix js --ignore-scripts']),
     ['typescript', 'npm ci --prefix ui --ignore-scripts'],
   ];
   for (const [id, command] of installations) {
@@ -119,7 +151,7 @@ test('Rust verification after JavaScript preserves hard failures without relying
   }, 'verification step must not ignore failures');
 });
 test('every JavaScript stage and command is mandatory and cannot skip or ignore failures', () => {
-  for (const id of ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'reverse-translation']) {
+  for (const id of ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'owned-profile-matrix', 'reverse-translation']) {
     fails('javascript-first.yml', workflow => { delete workflow.jobs[id]; }, 'stage missing');
     for (const condition of ['false', false, '', 0, null]) {
       fails('javascript-first.yml', workflow => { workflow.jobs[id].if = condition; }, 'stage missing');
@@ -129,7 +161,7 @@ test('every JavaScript stage and command is mandatory and cannot skip or ignore 
     fails('javascript-first.yml', workflow => { workflow.jobs[id].steps.at(-1).run = 'echo inventory only'; }, 'mandatory command');
   }
   fails('javascript-first.yml', workflow => { workflow.jobs.parity.steps.at(-1).run = 'node scripts/check-router-parity.mjs'; }, 'mandatory command');
-  for(const [id,command]of [['typescript', 'node scripts/check-owned-definition-typescript.mjs'], ['translation', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check'], ['profile-matrix', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check'], ['reverse-translation', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --check'], ['reverse-translation', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check']]) {
+  for(const [id,command]of [['typescript', 'node scripts/check-owned-definition-typescript.mjs'], ['translation', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check'], ['owned-profile-matrix', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check'], ['reverse-translation', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --check'], ['reverse-translation', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check']]) {
     fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps=workflow.jobs[id].steps.filter(step=>step.run!==command);},'mandatory command');
     fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.find(step=>step.run===command).run='echo '+command;},'mandatory command');
     fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.find(step=>step.run===command).if='${{ false }}';},'conditional');
@@ -238,7 +270,7 @@ test('profile matrix has an independent immutable job and the aggregate rejects 
   assert.ok(jobs.complete.needs.includes('profile-matrix'));
   fails('javascript-first.yml', workflow => { workflow.jobs.complete.needs = workflow.jobs.complete.needs.filter(id => id !== 'profile-matrix'); }, 'depend on every');
   fails('javascript-first.yml', workflow => { workflow.jobs['profile-matrix'].steps[0].with.ref = 'main'; }, 'inputs.sha');
-  fails('javascript-first.yml', workflow => { workflow.jobs.complete.steps[0].run = workflow.jobs.complete.steps[0].run.replace('stages.length !== 8', 'stages.length !== 7'); }, 'unconditional reviewed program');
+  fails('javascript-first.yml', workflow => { workflow.jobs.complete.steps[0].run = workflow.jobs.complete.steps[0].run.replace('stages.length !== 9', 'stages.length !== 8'); }, 'unconditional reviewed program');
 });
 
 test('parity job covers three sequential acceptance checkers and the final checker', () => {

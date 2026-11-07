@@ -10,7 +10,7 @@ root = Path(__file__).resolve().parents[2]
 base = root / 'ci-logs/issue-784-restart-2'
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--head', required=True)
-parser.add_argument('--label', choices=['native-regeneration', 'matrix-draft'],
+parser.add_argument('--label', choices=['native-regeneration', 'matrix-draft', 'owned-matrix-stage'],
                     default='native-regeneration')
 args = parser.parse_args()
 assert re.fullmatch('[a-f0-9]{40}', args.head)

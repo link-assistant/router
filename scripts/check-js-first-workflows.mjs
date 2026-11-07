@@ -10,11 +10,11 @@ import { parityCheckBudgets } from './parity-check-budgets.mjs';
 import {DRAFT_SUPPLEMENTS,DRAFT_SUPPLEMENT_CONDITION,DRAFT_SUPPLEMENT_PR_TYPES,readFixedNineDraftWorkflowSources} from './fixed-nine-draft-policy.mjs';
 const require = createRequire(new URL('./ci/package.json', import.meta.url));
 const { parseDocument } = require('yaml');
-export const STAGES = ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'reverse-translation'];
+export const STAGES = ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'owned-profile-matrix', 'reverse-translation'];
 const draftSupplementNames=new Set(DRAFT_SUPPLEMENTS);
 function exact(a,b,depth=0){if(Object.is(a,b))return true;if(depth>=64||!a||!b||typeof a!=='object'||typeof b!=='object'||Array.isArray(a)!==Array.isArray(b)||Array.isArray(a)&&a.length!==b.length)return false;const left=Object.keys(a).sort(),right=Object.keys(b).sort();return left.length===right.length&&left.every((key,index)=>key===right[index]&&exact(a[key],b[key],depth+1));}
 // Immutable reviewed source DATA supplies only this fixed table. It does not
-// make skipped callers eight successful stages or grant Rust admission.
+// make skipped callers successful stages or grant Rust admission.
 const reviewedDraftSupplementals=new Map(readFixedNineDraftWorkflowSources().files.filter(row=>draftSupplementNames.has(path.basename(row.path))).map(row=>{
  const document=parseDocument(row.after,{uniqueKeys:true,version:'1.2'});if(document.errors.length)throw TypeError('Fixed-nine reviewed workflow grammar differs');return [path.basename(row.path),document.toJS()];
 }));
@@ -35,7 +35,7 @@ const shaVerifier = normalizeProgram(`node --input-type=module -e "
 "`);
 const aggregateVerifier = normalizeProgram(`node --input-type=module -e "
   const stages = Object.values(JSON.parse(process.env.STAGE_RESULTS));
-  if (stages.length !== 8 || stages.some(stage => stage.result !== 'success')) {
+  if (stages.length !== 9 || stages.some(stage => stage.result !== 'success')) {
     console.error('JavaScript gate rejected:', process.env.STAGE_RESULTS);
     process.exit(1);
   }
@@ -62,10 +62,31 @@ function nestedGuard(condition, first, second) {
   return guarded(value, first) && guarded(value.slice(success(first).length + 5, -1), second);
 }
 function dependencies(job) { return Array.isArray(job.needs) ? job.needs : job.needs ? [job.needs] : []; }
+// Reuse only a bounded, private, immutable syntax tree for identical complete
+// source text. Every policy assertion and current parity budget still runs on
+// each call; no successful audit or caller-owned object is cached.
+const syntaxCache=new Map();let syntaxBytes=0;
+const syntaxLimit=8*1024*1024;
+function immutableSyntax(value){
+  const pending=[value],objects=[],seen=new Set();
+  while(pending.length){const item=pending.pop();if(!item||typeof item!=='object'||seen.has(item))continue;seen.add(item);
+    if(![Object.prototype,Array.prototype,null].includes(Object.getPrototypeOf(item)))return false;
+    objects.push(item);for(const child of Object.values(item))pending.push(child);
+  }
+  for(const item of objects)Object.freeze(item);return true;
+}
 function parse(source, name, errors) {
+  const cached=syntaxCache.get(name);if(cached&&cached.source===source)return cached.value;
   const document = parseDocument(source, { uniqueKeys: true, version: '1.2' });
   for (const error of document.errors) errors.push(`${name}: ${error.message}`);
-  return document.toJS() ?? {};
+  const value=document.toJS()??{};
+  if(typeof source==='string'&&!document.errors.length&&source.length<=syntaxLimit/2&&immutableSyntax(value)){
+    if(cached){syntaxCache.delete(name);syntaxBytes-=cached.bytes;}
+    const bytes=source.length*2;
+    while(syntaxCache.size>=32||syntaxBytes+bytes>syntaxLimit){const [key,entry]=syntaxCache.entries().next().value;syntaxCache.delete(key);syntaxBytes-=entry.bytes;}
+    syntaxCache.set(name,{source,value,bytes});syntaxBytes+=bytes;
+  }
+  return value;
 }
 export function auditWorkflows(sources) {
   const errors = [];
@@ -83,7 +104,8 @@ export function auditWorkflows(sources) {
       typescript: ['node scripts/run-node-tests.mjs --outer-timeout-ms=180000 scripts/test/node-case-deadlines.test.mjs', 'npm run typecheck --prefix js', 'npm run native:typecheck --prefix js', 'node scripts/regenerate-native-typescript.mjs --check', 'node scripts/check-native-typescript.mjs', 'node scripts/run-node-tests.mjs --outer-timeout-ms=900000 tools/translation/js-to-rust/test/native-typescript.test.mjs', 'node js/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json', 'node tools/translation/check-typescript-fixtures.mjs', 'node scripts/check-profile-typescript.mjs', 'node scripts/check-owned-definition-typescript.mjs', 'node tools/translation/serialization-schema/native-descriptor.mjs --check', 'node tools/translation/serialization-schema/check-descriptor-typescript.mjs', 'node tools/translation/serialization-schema/bulk.mjs --check', 'node tools/translation/serialization-schema/check-bulk-typescript.mjs', 'node scripts/build-js-first-ui.mjs'],
       parity: ['node --test --test-concurrency=2 experiments/issue-759/acceptance/*.test.mjs', 'node scripts/check-router-parity.mjs --strict'],
       translation: ['node scripts/translate-router.mjs --check', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check', 'node scripts/run-node-tests.mjs --outer-timeout-ms=3600000 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs'],
-      'profile-matrix': ['node scripts/translate-router.mjs --profile-matrix --check', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check'],
+      'profile-matrix': ['node scripts/translate-router.mjs --profile-matrix --check'],
+      'owned-profile-matrix': ['node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check'],
       'reverse-translation': ['node scripts/regenerate-js-first.mjs --check', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --check', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check', 'node scripts/run-node-tests.mjs --outer-timeout-ms=900000 --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs', 'node scripts/run-bun-reverse-files.mjs --output-root js/node_modules/.bun-reverse-files'],
     };
     const packageInstall = 'npm ci --prefix js --ignore-scripts';
@@ -93,10 +115,15 @@ export function auditWorkflows(sources) {
       const runs = (job?.steps ?? []).map(step => step.run);
       let deadlineEvidenceUpload = null;
       let matrixEvidenceUpload = null;
-      if(id==='profile-matrix'){
+      if(['profile-matrix','owned-profile-matrix'].includes(id)){
+        const artifact=id==='profile-matrix'?'matrix-drafts-${{ inputs.sha }}':'matrix-owned-drafts-${{ inputs.sha }}';
+        if(job?.['timeout-minutes']!==60||Object.hasOwn(job??{},'needs')||Object.hasOwn(job??{},'strategy'))errors.push(`${gateName}/${id}: independent original 60-minute matrix job required`);
+        for(const command of required[id])if(runs.filter(run=>run===command).length!==1)errors.push(`${gateName}/${id}: mandatory matrix command must run exactly once`);
+        const other=id==='profile-matrix'?'owned-profile-matrix':'profile-matrix';
+        if(runs.some(run=>required[other].includes(run)))errors.push(`${gateName}/${id}: independent original 60-minute matrix job cannot contain the other complete check`);
         const uploads=(job?.steps??[]).filter(step=>step.uses==='actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
         const upload=uploads.length===1?uploads[0]:null;
-        const valid=upload&&!Object.hasOwn(upload,'run')&&job.steps.at(-1)===upload&&upload.if==='${{ always() }}'&&!upload['continue-on-error']&&upload.with?.name==='matrix-drafts-${{ inputs.sha }}'&&upload.with?.path==='js/node_modules/.matrix-drafts/'&&upload.with?.['include-hidden-files']===true&&upload.with?.['if-no-files-found']==='error'&&upload.with?.['retention-days']===7&&job.env?.ROUTER_MATRIX_DRAFT_DIRECTORY==='js/node_modules/.matrix-drafts';
+        const valid=upload&&!Object.hasOwn(upload,'run')&&job.steps.at(-1)===upload&&upload.if==='${{ always() }}'&&!upload['continue-on-error']&&upload.with?.name===artifact&&upload.with?.path==='js/node_modules/.matrix-drafts/'&&upload.with?.['include-hidden-files']===true&&upload.with?.['if-no-files-found']==='error'&&upload.with?.['retention-days']===7&&job.env?.ROUTER_MATRIX_DRAFT_DIRECTORY==='js/node_modules/.matrix-drafts';
         if(!valid)errors.push(`${gateName}/${id}: missing mandatory command evidence: complete unqualified matrix draft custody missing`);
         else matrixEvidenceUpload=upload;
       }

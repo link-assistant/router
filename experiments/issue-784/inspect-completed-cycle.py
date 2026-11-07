@@ -11,6 +11,8 @@ import zipfile
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--directory', required=True, type=Path)
 parser.add_argument('--head', required=True)
+parser.add_argument('--matrix-inspection', type=Path,
+                    help='Complete prior read-only custody review for large matrix archives')
 args = parser.parse_args()
 directory = args.directory
 destination = directory / 'complete-cycle-inspection.json.gz'
@@ -43,6 +45,17 @@ result = {'headSha': args.head, 'logs': [], 'artifacts': [],
           'scope': 'Complete terminal workflow inventory; cancelled test cohorts remain incomplete. '
                    'Expected negative fixture errors do not change a successful job conclusion. '
                    'No semantic, runtime, deadline or full-gate authority.'}
+matrix_receipts = {}
+if args.matrix_inspection:
+    original = gzip.decompress(args.matrix_inspection.read_bytes())
+    if len(original) > 8 * 1024 * 1024:
+        raise RuntimeError('Complete matrix review receipt exceeds its bound')
+    review = json.loads(original)
+    if review['schema'] != 'complete-matrix-custody-investigation-v1' or review['headSha'] != args.head or any(
+            review[key] is not False for key in ['semanticAuthority', 'runtimeParity', 'freshnessQualified', 'rustExecuted', 'outputsInstalled']):
+        raise RuntimeError('Original complete matrix review scope differs')
+    matrix_receipts = {row['file']: row for row in review['artifacts']}
+    result['matrixReview'] = {'file': str(args.matrix_inspection), 'bytes': len(original), 'sha256': digest(original)}
 for run in runs:
     identity = run['databaseId']
     path = directory / (str(identity) + '.log.gz')
@@ -68,12 +81,29 @@ for run in runs:
 
 for path in sorted(directory.glob('artifact-*.zip')):
     members = []
+    matrix = matrix_receipts.get(path.name)
+    if matrix:
+        with path.open('rb') as source:
+            if hashlib.file_digest(source, 'sha256').hexdigest() != matrix['sha256']:
+                raise RuntimeError('Complete reviewed matrix archive changed')
     with zipfile.ZipFile(path) as archive:
         info = archive.infolist()
-        if len(info) > 512 or sum(row.file_size for row in info) > 128 * 1024 * 1024:
+        count_bound, byte_bound = (200001, 500_000_000) if matrix else (512, 128 * 1024 * 1024)
+        if len(info) > count_bound or sum(row.file_size for row in info) > byte_bound:
             raise RuntimeError('Complete artifact exceeds the investigation bound')
         for row in info:
             if row.is_dir():
+                continue
+            if matrix:
+                length, complete_hash = 0, hashlib.sha256()
+                with archive.open(row) as source:
+                    while block := source.read(1024 * 1024):
+                        length += len(block)
+                        complete_hash.update(block)
+                if length != row.file_size:
+                    raise RuntimeError('Complete matrix ZIP member length differs')
+                members.append({'path': row.filename, 'bytes': length, 'sha256': complete_hash.hexdigest(),
+                                'scope': 'Complete stored bytes and CRC reread; original decoded joins in the separate whole custody review.'})
                 continue
             raw = archive.read(row)  # Includes complete CRC verification.
             member = {'path': row.filename, 'bytes': len(raw), 'sha256': digest(raw)}
