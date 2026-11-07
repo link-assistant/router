@@ -89,6 +89,16 @@ failing in JSON serialization after 608.27 seconds, peak 2608074752 bytes. Neith
 is interrupted by the resource observer; all owned descendants are reaped.
 Config completes in 691.45 ms in the finer trace. This rules out attributing
 that run's failure to a stalled Config derive, but does not identify the later
-serialized object or qualify the unchanged 2048 MiB CI worker. A narrower
-resolver-consumption trace remains in progress. No executable-function gain,
-matrix-memory improvement or green-gate result is established.
+serialized object or qualify the unchanged 2048 MiB CI worker.
+
+The narrower resolver-consumption trace also finishes: exit 134 after 631.91
+seconds, peak sampled cgroup 2048663552 bytes, with no observer stop or external
+interruption. Its complete 52270-line stream retains 19578360 decoded bytes,
+SHA256 `409169b09354f5dd78796e3b303b850f7c0009fe60103bce140fb4ae2f3708b1`.
+All 419 derive declarations and all 397 carrier modules finish. The last item
+marker identifies `TokenClaims` in `rust/src/token.rs`; the subsequent fatal
+native stack does not identify a particular serialized operand. That marker
+alone does not establish that this declaration causes the retained heap.
+`inspect-resolver-progress.py` checks the entire compressed stream and retains
+every derive interval, non-event line and fatal frame. No executable-function
+gain, matrix-memory improvement or green-gate result is established.

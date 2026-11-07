@@ -438,7 +438,7 @@ remain explicitly unmet parts of the literal all-tool requirement.
 
 - [x] Publish the reviewed callback/history batch only on the prepared branch at
       `545f2909d`; update the actual PR title/body and retain draft status.
-- [ ] Preserve this immutable head until all seven fresh workflows finish;
+- [x] Preserve this immutable head until all seven fresh workflows finish;
       collect every completed failure and complete artifact before another push.
 - [x] Derive a separate bounded private CST transaction from the complete original
       executor. Preserve original APIs, physical authentication, aggregate bounds,
@@ -460,9 +460,37 @@ remain explicitly unmet parts of the literal all-tool requirement.
       applies no generated output; it cannot qualify the original matrix. Both
       runs end in JSON heap exhaustion, at 457.61 and 608.27 seconds respectively.
       All 419 derive declarations finish in the finer trace; Config takes 691 ms.
-- [ ] Finish the next scalar resolver-consumption diagnostic under the same
+- [x] Finish the next scalar resolver-consumption diagnostic under the same
       finite bound, with complete output streamed into gzip and no source
       installation. Identify the failing serialized operand before claiming a
       root cause; keep all original checks, pins, limits and issuers intact.
 - [ ] Repair remaining failures, run the complete mandatory local gate and obtain
       green same-head CI before marking the PR ready or the issue complete.
+
+## Clone validation order and completed 545f2909d failures
+
+- [x] Reproduce the actual 128-field budget refusal: one full evidence encoding
+      before the unchanged rejection, with a failing regression assertion.
+- [x] Draft and install a complete native-selected source equation that charges
+      the original logical bounds before encoding. Retain full CST phase and
+      native inverses, fresh physical-source joins and unchanged accepted checks.
+- [x] Pass the after-change finite regression with zero rejected encodings.
+      Preserve the earlier wrong workspace Cargo-input refusal separately.
+- [x] Pass the whole new two-case file in Node and Bun, including the independent
+      Node audit and exact source equation. Keep the broader Node deadline
+      failure (78901.82 > 60000 ms) and Bun memory stop explicitly unqualified.
+- [x] Finish and inspect the third complete ordinary trace: all 419 derives and
+      397 carrier modules finish before a 631.91-second heap failure. The last
+      TokenClaims marker is insufficient to identify a root serialized operand.
+- [x] Verify complete archived bytes before retiring 53 inactive raw Node receipt
+      directories, reclaiming 53596160 allocated bytes. Preserve all originals,
+      the successful receipt, and both earlier hardlink-related refusal receipts.
+- [x] Collect the entire completed seven-workflow 545f2909d CI cycle and all three
+      complete diagnostic archives before any further publication. Main fails;
+      six supplemental callers skip. Keep draft status and the Rust gate.
+- [ ] Review every new CI failure and artifact, preserve its complete evidence,
+      repair remaining source/semantic/deadline/generation failures, and rerun
+      the mandatory full local gate on the coherent integrated source commit.
+- [ ] Obtain all green same-head CI and finish the remaining all-tool privacy
+      and strict parity criteria before readiness. No source-only or focused
+      receiving check completes an unmet criterion.
