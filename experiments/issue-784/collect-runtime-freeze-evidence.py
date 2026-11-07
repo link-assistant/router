@@ -35,6 +35,9 @@ for prefix in prefixes[:-1]:
     baseline.update({row['path']: row for row in
                      json.loads(manifest.read_bytes())['members']})
 paths = {directory / 'phased-clone-evidence-manifest.json'}
+# Preserve complete earlier refused selections without selecting this writer's
+# still-open stdout log or recursively including the current manifest.
+paths.update(directory.glob('runtime-freeze-evidence-manifest-*.json'))
 for parent in [directory, cycle]:
     for path in parent.rglob('*'):
         if not path.is_file() or path.name.startswith(prefixes):
