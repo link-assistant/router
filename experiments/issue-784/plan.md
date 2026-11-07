@@ -302,7 +302,8 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [x] Review all 193 complete PR diff sections and publish only on the prepared
       branch at `94367657f8086dfb23d0d43f6584f15eb4a42346`. Keep that published
       head unchanged while its complete seven-workflow cycle runs.
-- [ ] Inspect the entire new immutable-head CI cycle before another push.
+- [x] Inspect the entire `94367657f` immutable-head CI cycle before another
+      push: all seven workflows close; all logs and three ZIP artifacts verify.
 - [ ] Obtain green complete gate/CI and fulfill all remaining issue criteria;
       passing receiving cases do not certify the missing application parity.
 
@@ -331,9 +332,23 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [x] Measure the cache component separately, preserving all source bytes.
       Add an explicit one-time initial-fingerprint cache-advice option to the
       owned observer; three finite launch/refusal/cancellation controls pass.
-- [ ] Attempt the unchanged complete gate with this resource option and retain
-      its full passed, failed, interrupted and unrun evidence.
-- [ ] Collect the entire `94367657f` CI cycle, review all completed failures,
-      then publish the coordinated batch on the prepared branch only.
+- [x] Attempt the unchanged complete gate at clean `e60a7d9ef`: lint and both
+      259-case native suites pass; TypeScript's unchanged regeneration deadline
+      and strict parity fail. All 121 acceptance assertions pass. The cgroup
+      guard interrupts forward launch after 993.22 seconds; reverse is unrun.
+      No green stamp or complete forward case audit exists.
+- [x] Collect the entire `94367657f` CI cycle and inspect every completed
+      failure. Eleven forward failures precede cancellation; later named-host
+      and CSV cases are unreached, not passing. The matrix exhausts its original
+      2048 MiB heap. TypeScript still needs the genuine owned matrix.
+- [x] Preserve two finite complete historical-parent CSV graphs. Both retain
+      derived type-namespace uncertainty and refuse borrowed `str`; neither
+      probe qualifies the original complete library test.
+- [ ] Complete genuine derive-output investigation; do not replace complete
+      output evidence with standard input spelling or a shadowing bypass.
+      Config's real Clone output exceeds the unchanged 32000-node validator;
+      SemanticLink separately lacks struct-ordering and ancestor evidence.
+- [ ] Publish the reviewed coordinated batch on the prepared branch only,
+      then preserve its head until the entire fresh CI cycle finishes.
 - [ ] Obtain the green full gate and finish the remaining original issue
       criteria. Focused receiving passes do not establish full compiler parity.

@@ -113,4 +113,77 @@ test cohort cannot select this option's cache branch; it changes no case deadlin
 
 Three finite observer controls pass: ordinary complete output, refusal of this
 option for another command and cancellation with complete owned-group cleanup.
-The separate complete gate attempt with this option remains pending.
+The complete gate on clean `e60a7d9ef` with this option runs for 993.22 seconds
+before the same cgroup guard stops its owned group. Peak sampled total memory is
+2877177856 bytes. The initial hint changes observed memory from 2872098816 to
+1516322816 bytes; it changes no file and grants no test or parity authority.
+
+| Stage | Complete local observation |
+| --- | --- |
+| Lint | Pass, including all 1760 JavaScript syntax inputs and the workflow/coordinator controls. |
+| Native Node and Bun | Pass, 259 cases per engine. |
+| TypeScript | Fail. The complete native suite reports nine passes, but its stale/missing/unexpected regeneration case takes 130041.36 ms against its original 60000 ms deadline. The independent audit fails. The installed compiler is 5.9.3; earlier strict native compilation passes. Later stage commands remain unrun. |
+| Strict parity | Fail after all 121 acceptance assertions pass: stale account-policy source hash, 441 gaps, 12345 carried items, runtime parity false. |
+| Forward translation | Interrupted at launch by the resource guard. Its closed raw/terminal evidence has no complete case audit and supplies no cohort qualification. |
+| Reverse translation | Unrun. |
+
+No green stamp exists. All owned children close before further work begins. A
+subsequent inactive-page hint changes observed total memory from 2036965376 to
+1542795264 bytes without deleting or changing any file. These cgroup observations
+include file cache and are not process RSS or an exact reclaimed-byte account.
+
+## Completed published-head CI
+
+The entire seven-workflow cycle for
+`94367657f8086dfb23d0d43f6584f15eb4a42346` is closed. The required
+[run 42376325155](https://github.com/link-assistant/router/actions/runs/42376325155)
+fails; six supplemental workflows skip. Complete job logs and all three uploaded
+artifacts are retained, with every ZIP member reopened and verified.
+
+Lint and both 259-case native suites pass. TypeScript reaches the missing
+`owned-definitions-matrix-80dc0d37762835fbe925b47e6fad25fee5c1d3c093fafff0512fc2bd3f9ae4e0.json`
+at complete job-log line 1188. Strict parity fails at line 4499 with the same
+441 gaps and carried-code boundary. The profile worker exhausts its original
+2048 MiB heap at line 7226. Reverse and forward jobs reach their original
+15-minute and 60-minute limits respectively. The aggregate fails; Rust and
+release remain skipped.
+
+The forward artifact's complete 6201-line retained TAP reports eleven failures:
+eight stale generation-source hooks at lines 553–756; the receiving child's
+original 20-second limit at line 5403; and original 60000 ms cases at lines 6055
+and 6149, observed at 108914.36 and 135974.92 ms. The first source hook compares
+the actual complete `translate.mjs` hash `cd328961a7beb6504fe87f824edb1d54c08bc982d9e6a35711a9b9f2b1822dc2`
+with its stored generation hash `84d99f5f6dbc5688e541c7fa697338151c955eea64c91e5a19d1e6bfd75c1ec2`.
+Genuine regeneration remains required. Later named-host and CSV cases are not
+reached; cancellation and a shorter failure list do not prove them repaired.
+
+## Separate original-parent CSV diagnostics
+
+Finite one-file probes use the complete original `src/config.rs` and
+`src/storage/associative.rs`, original Cargo/dependency inputs and actual project
+compiler. Both close without a resource stop under a 768 MiB heap. Their full
+source, CST, checked/refused metadata and emitted output remain losslessly
+compressed. These are separate diagnostic graphs, not the original complete
+library/Cargo/profile receiving test.
+
+Both graphs refuse their CSV functions because borrowed `str` lacks a complete
+type-namespace owner. The config graph retains the effect of `Config`'s actual
+`#[derive(Clone)]`; the associative graph retains `SemanticLink`'s actual
+`#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]`. Original input-owner
+identity alone does not certify the complete generated output grammar. The
+shadowing check and conservative output boundary remain unchanged while the
+missing genuine output evidence is investigated.
+
+Two further bounded probes run the actual original derive-input and bang-output
+producers over these same complete parents. Config's sole residual owner is
+Clone: `Clone positive AST validation budget exceeded`. The other four config
+certificates close their actual bang owners. The original 32000-node output
+budget remains unchanged; repeated constructor provenance must not silently
+increase a public validation limit.
+
+The associative parent has separate residuals. Debug, Clone, PartialEq and Eq
+retain an unresolved ancestor in their generated-attribute namespace, while
+PartialOrd and Ord require the implemented nonempty ordinary unit-enum route.
+`SemanticLink` is a struct. These are distinct missing output/ancestor proofs;
+the Config budget observation does not establish an associative repair or a
+gain in the complete original library graph.
