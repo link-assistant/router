@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Release cached pages of this task's inactive evidence, preserving every file."""
+import argparse
 import json
 import os
 from pathlib import Path
@@ -7,7 +8,12 @@ import stat
 import time
 
 root = Path(__file__).resolve().parents[2]
-receipt_path = root / 'ci-logs/issue-784-restart-2/inactive-evidence-pages.json'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--receipt', type=Path,
+                    default=root / 'ci-logs/issue-784-restart-2/inactive-evidence-pages.json')
+receipt_path = parser.parse_args().receipt.resolve()
+if receipt_path.parent != root / 'ci-logs/issue-784-restart-2':
+    raise RuntimeError('Resource receipts must remain in this investigation directory')
 if receipt_path.exists():
     raise RuntimeError('Refusing to overwrite an earlier resource observation')
 selected = [root / 'ci-logs/issue-784-restart-2',
