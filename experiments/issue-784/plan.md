@@ -15,7 +15,7 @@ Objective: implement and verify all requirements in PR #785 on
       Rust-forward/profile outputs remain unqualified.
 - [x] Run focused Node/Bun checks and record lockfile TypeScript version (5.9.3).
 - [x] Run the full local JavaScript gate and inspect every stage; no local Rust tools.
-- [ ] Obtain a green full gate; the complete attempt failed five groups.
+- [ ] Obtain a green full gate; the latest complete attempt failed four groups.
 - [x] Collect the entire initial published-head CI cycle and preserve all failures.
 - [x] Repair introduced evidence-budget and fixed historical-input failures.
 - [x] Review post-filter header overrides and add the matching Rust consent guard
@@ -37,8 +37,10 @@ Objective: implement and verify all requirements in PR #785 on
       in JavaScript and Rust, add real HTTP regressions, and regenerate TypeScript.
 - [x] Verify 30 focused cases in both Node and Bun; document actual Codex and
       Claude custom-header settings from primary vendor references.
-- [ ] Run the complete unchanged local gate on the restart source commit and
+- [x] Run the complete unchanged local gate on the restart source commit and
       inspect every stage without relaxing strict parity or original deadlines.
+- [x] Record all four failed groups at 08e09f884 and the explicit failed/unrun
+      boundaries; remove only the inactive temporary Node toolchain afterward.
 - [ ] Inspect the complete current-head CI cycle, preserve all failures with line numbers,
       repair the complete failure set, and rerun required checks.
 - [x] Review the complete local source diff, preserve atomic commits and prepare an

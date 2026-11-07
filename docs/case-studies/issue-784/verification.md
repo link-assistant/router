@@ -22,8 +22,99 @@ The configuration guide now records verified Codex optional search-location
 and provider-header settings and Claude Code's newline-separated custom headers.
 Primary sources are preserved as observations in `raw/restart-research.json`.
 Rust source mirrors the fix and consumes the same fixture; no Rust tool ran.
-These focused observations precede the new complete gate and do not claim it
-passed. Full restart logs will be retained with the final gate evidence.
+These focused observations precede the complete gate below and do not claim it
+passed.
+
+## Complete restart gate at 08e09f884
+
+Source head: `08e09f884546ecf373dfa2997f7d0dd906a0cb1c`. The complete local
+gate finished **exit 1 at 2026-11-07 01:18:29 UTC**, after attempting all seven
+groups. Node 20.20.2 used a bounded 640 MiB V8 old-space heap and 8 MiB
+semi-space per process, with the existing child reaper. Source inputs remained
+unchanged during the attempt. No green stamp was written. Original test cases,
+strictness and deadlines were preserved.
+
+Line references are to the complete 3137-line member
+`experiments/issue-784/restart-full-gate.log`.
+
+| Group | Result and evidence |
+| --- | --- |
+| Lint | Passed: 1746 JavaScript source files, 20 coordinator cases, 31 workflow controls, 7 gate controls and 14 validated workflows (lines 2–327). |
+| Native Node | **259 passed, 0 failed** (lines 1630–1638). |
+| Native Bun | **259 passed, 0 failed**, across 35 complete files (lines 1976–1978). |
+| TypeScript | Both strict API checks, generation freshness (0 changed/unexpected artifacts), strict compilation of 165 native files, all 9 receiving TAP cases, 259 shared Node expectations and the compiled Bun suite passed. Independent qualification **failed**: regeneration took **152128.545269 ms**, above the unchanged **60000 ms** source deadline (lines 2083–2108). Later TypeScript commands were unrun. |
+| Parity | All **121 acceptance cases passed**. Strict inventory failed with **441 draft gaps**, a stale `rust/src/account_routing_policy.rs` hash and 12345 carried items across 847 sources; `runtimeParity: false` (lines 2718–2730). |
+| Forward translation | **Failed** after the owned coordinator and two workers approached the 3135369216-byte container limit. The cohort alone was stopped with SIGTERM at a sampled **3131424768 bytes** of total cgroup memory. Its audit remained incomplete; missing final audit data is secondary to the recorded resource stop (lines 2732–2735). Later generation commands were unrun. |
+| Reverse translation | **Failed** at its unchanged **900000 ms** enclosing deadline after subtest 76. Explicit 60000 ms case timeouts occurred in callback-inputs (**80223.907595 ms**, line 2755), completions (**61416.176567 ms**, line 2864) and the Rust-reader source case (**111697.231983 ms**, line 2953). Captured-primitives (**62472.99861 ms**) and closures (**84090.661461 ms**) also exceeded their unchanged 60000 ms deadlines despite TAP passes. The enclosing shutdown/audit receipt remained failed; no complete deadline audit was produced. Later files, Bun reverse and regeneration commands were unrun. |
+
+Complete raw deadline directories are `complete-07XTjn` (controls),
+`complete-MWJTIi` (TypeScript), `complete-5GWNLL` (forward) and
+`complete-BGdFKm` (reverse), under `js/node_modules/.node-case-deadlines`.
+The forward resource observation is `ci-logs/restart-forward-memory-guard.json`.
+No kernel OOM kill occurred. After the enclosing reaper exited, no owned test
+process remained. No Rust tool ran or was unlocked by this attempt.
+
+After all local checks closed, the inactive temporary Node 20 installation at
+`js/node_modules/.issue-784-tools` was removed. No process referenced that path.
+Distinct file allocation removed: **154140672 bytes**; observed filesystem free
+space increased by **237060096 bytes**, which also includes other filesystem
+activity and directory allocation. No Rust cache was created or removed.
+Complete cleanup receipt: `ci-logs/restart-cleanup.json`.
+
+## Completed intermediate CI cycle
+
+[Run 42318628676](https://github.com/link-assistant/router/actions/runs/42318628676)
+started **2026-11-07 00:30:25 UTC** for head
+`b79ebc1b4beee49bebd6f9d5cbb2c2f56d5fc192`, checking merge commit
+`50c9043f0f4f5b0de5b04d90280ae8a768ae5b2d`. The entire cycle finished
+**failure at 01:30:52 UTC**. These observations do not qualify `08e09f884`.
+
+| Job | Completed result and full log |
+| --- | --- |
+| Lint, native Node, native Bun | Passed. |
+| TypeScript | Failed: `Missing TypeScript output tree: neutral`, `ci-logs/restart-prior-typescript.log:446`. The nine receiving cases and their independent deadline audit passed on this runner; regeneration took 42844.906 ms. Later profile/descriptor/UI commands were unrun. |
+| Parity | Failed: 441 draft gaps and a stale account-policy source hash, `ci-logs/restart-prior-parity.log:872–875`. All 121 acceptance cases passed. |
+| Profile matrix | Failed: the neutral worker aborted at its V8 heap limit, `ci-logs/restart-prior-profile.log:276`. |
+| Reverse translation | Cancelled at its original 15-minute CI limit. Last completed case was 76; `ci-logs/restart-prior-reverse.log:669–670`. No complete audit or later Bun/regeneration result exists. |
+| Forward translation | Cancelled at its original 60-minute CI limit, `ci-logs/restart-prior-forward.log:11646`. Its completed portion reports 73 failing TAP entries, including file-level failures; this is not a complete-cohort failure count. |
+| Aggregate, Rust and release | JavaScript aggregate failed; all downstream Rust/release jobs stayed skipped. Full aggregate log: `ci-logs/restart-prior-aggregate.log`. |
+
+The forward failures include compiler-pin mismatches (lines 828–1058), complete
+current-source fixture mismatches (1238–1419 and 6854–7104), alias-history and
+immutable-composer pins (1660–1721 and 2981–3474), a source-scanner API mismatch
+(3621–3640), a receiving child SIGTERM (6058–6085), an original 60000 ms timeout
+(6800–6807), a historical reader substitution mismatch (10378–10404), and
+isolated-child byte authentication failures (10891–11022). The full log and
+`ci-logs/restart-prior-forward-failures.json` preserve every reported failure
+block, source location and line range, including eleven file-level exits.
+
+The read-only `inspect-ci-baseline.mjs` experiment independently decoded the
+authenticated source-text archive. Its current census exactly matches the
+**865** Rust/Cargo paths on `main`, but this PR has **867**: the two additional
+paths are `rust/src/geolocation.rs` and `rust/src/geolocation_tests.rs`.
+Those new files introduce the exact-census failure; it is not classified as a
+baseline defect. In contrast, the observed `translate.mjs`, concrete-syntax
+and immutable-composer bytes are identical to `main` and already differ from
+their reported historical pins. This comparison does not qualify the full base
+gate or establish that every failure predates the PR. Complete receipt:
+`ci-logs/restart-fixture-base-comparison.json`.
+
+### Current Rust source fixture repair
+
+The unchanged `prepareStaticSourceLifecycleProposalReleased` producer generated
+an external proposal at source head `08e09f884`, under Node 20.20.2 with a
+768 MiB old-space bound. The first Node 26.13.0 attempt refused with
+`Private parser execution: native source operations changed`; it is not a pass.
+The successful proposal retains both fixed historical universes, all source/CST
+round trips and complete inverses. Independent source-text review compared every
+historical source byte, all current physical files, notices and authority flags:
+**806/808 original paths unchanged; 867 current paths match**. Only the generated
+archive and manifest change. The producer, readers, assertions and deadlines
+remain unchanged. This is source-data fidelity, not executable parity.
+
+Complete proposal/review receipts are `ci-logs/restart-static-proposal.json` and
+`ci-logs/restart-static-review.json`. Receiving tests and the subsequent complete
+gate are recorded separately when their commands finish.
 
 ## Runtime development
 

@@ -27,7 +27,7 @@ required sub-issue was found.
 | Deep analysis with additional online facts | Primary vendor references below, forwarding root cause and client matrix | Completed research; account limits remain explicit |
 | List every requirement and possible solutions/plans | This table and alternatives below | Recorded |
 | Check existing components/libraries | Existing native header classifier, request decoder, WebSocket inspector and vendor controls | Reused; no new dependency |
-| Execute and verify the whole solution in this PR | Focused checks, generated TypeScript, complete local gate and exact-head CI | Full gate and initial-head CI failed; Rust and final-head qualification remain unfinished |
+| Execute and verify the whole solution in this PR | Focused checks, generated TypeScript, complete local gate and exact-head CI | Restart gate failed four groups; earlier CI failed; Rust and final-head qualification remain unfinished |
 
 The literal guarantee that *every tool never shares any geolocation* cannot be
 established by editing Router configuration. Source IPs are observable, providers
