@@ -539,7 +539,10 @@ remain explicitly unmet parts of the literal all-tool requirement.
       phases and complete inverses; preserve the full original producer/pins.
 - [x] Pass both whole new cases in Node with independent deadline audit and Bun,
       preserving unchanged outputs and the exact original Bun runtime refusal.
-- [ ] Finish the unchanged whole parent file in both engines, inspect every
-      assertion and original case deadline, then record failed/unrun boundaries.
+- [x] Finish the unchanged whole parent file in both engines. Node has seven TAP
+      passes but its independent audit fails the original final case at
+      163909.893825 > 60000 ms. Bun has six passes and the final case times out
+      at 120916.88 ms. Neither attempt needs an owned resource stop. Preserve
+      both failed terminal results and every unchanged assertion/deadline.
 - [ ] Run the mandatory complete gate on the coherent immutable source batch;
       collect the entire published CI cycle before any further push.

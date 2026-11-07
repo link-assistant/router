@@ -29,6 +29,15 @@ Its native-selected transaction copy retains both substitution sequences and
 complete inverses, with fresh original source and native checks on each call.
 These DATA results grant no semantic or owner authority.
 
+`composeOwnedRuntimeImportEdges` obtains its complete original source plan in
+fresh Node when Bun cannot satisfy the producer's exact compiler-callable text
+pins. The receiving composer rechecks whole compiler/archive/current sources,
+both serialized CST phases and native syntax. The original preparation API and
+Bun's runtime-loader refusal remain exact; source DATA transfers no runtime or
+private issuer authority. `prepare-runtime-import-phased-data.mjs --check`
+verifies the complete producer afterimage against its archived original and
+native/CST inverses. Parent deadlines and the complete gate remain required.
+
 The [rule-layer contract](translation-rules.md) defines the required separation
 between language semantics and repository conventions. The implementation in
 [`rule-pipeline.mjs`](../../tools/translation/rule-pipeline.mjs) accepts exactly
