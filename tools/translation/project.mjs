@@ -570,19 +570,8 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   meta.matchesMacroContext=matchesMacroContext;
   meta.originalCargoEditionInput=originalCargoEditionEvidence(cargoEditionContext);
   const sourceScopes=graph.modules.map(module=>Object.freeze({source:module.file,module:[...module.path],sourceView:module.sourceView,sha256:sha256(module.source),project:options.entry,compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition,configurationEvidence:Object.freeze([...module.configurationEvidence]),scope:scopes.get(moduleScopeKey(module)),scopes:bindingEvidence.scopes,jsonParserProfile,matchesMacroContext}));
-  const lowerDeclaration=(entry,name)=>function(lowerOptions={}) {
-    const program=declarationProgram(target.program,target.names.get(entry.name));
-    const emitted=emitJavaScript(program,lowerOptions),own=program.declarations.get(target.names.get(entry.name));
-    const targetMapping=emitted.mappings.find(mapping=>mapping.source===own.fullName);
-    const signatures=[...program.declarations.values()].filter(entry=>entry.k==='fn').map(entry=>({target:emitted.mappings.find(mapping=>mapping.source===entry.fullName)?.target,params:entry.params,ret:entry.async?{kind:'routerFuture',value:entry.ret}:entry.ret}));
-    return {own,program,emitted:{...emitted,signatures,mappings:[...emitted.mappings,{...targetMapping,source:name}]}};
-  };
-  const executableDeclarations=entries.map(entry=>({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:entry.name.split('.').at(-1),span:entry.span,project:options.entry,qualifiedName:entry.name,lower:lowerDeclaration(entry,entry.name.split('.').at(-1)),checkedSource:()=>{
-    const own=checked.declarations.get(entry.name),modules=graph.modules.filter(module=>module.file===entry.file&&JSON.stringify(module.path)===JSON.stringify(entry.path));
-    const origin=originalParsedDeclarationEvidence(entry.surface),module=modules.length===1?modules[0]:null;
-    if(entry.term!=='fn'||own?.k!=='fn'||own.fullName!==entry.name||!origin||!module||origin.sourcePath!==entry.file||origin.sourceSha256!==sha256(module.source)||origin.declarationSpan.start!==entry.span.start||origin.declarationSpan.end!==entry.span.end||origin.checkedSpan.start!==entry.surface.span.start||origin.checkedSpan.end!==entry.surface.span.end||own.span.start!==entry.surface.span.start||own.span.end!==entry.surface.span.end)throw new TypeError('Original executable checked source association differs');
-    return freezeMacroTree(structuredClone({schema:'original-checked-executable-source-v1',source:entry.file,sourceSha256:sha256(module.source),qualifiedName:entry.name,module:entry.path,span:entry.span,checkedSpan:own.span,sourceSignature:{params:entry.surface.params,ret:entry.surface.ret},declaration:own}));
-  }}));
+  const lowerDeclaration=(entry,name)=>createProjectLowerer(target,entry,name);
+  const executableDeclarations=entries.map(entry=>({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:entry.name.split('.').at(-1),span:entry.span,project:options.entry,qualifiedName:entry.name,lower:lowerDeclaration(entry,entry.name.split('.').at(-1)),checkedSource:createProjectCheckedSource(checked,{modules:graph.modules},entry)}));
   // This additive facade closes over the same actual checked program. It does
   // not append a synthetic Rust wrapper or count a method as a source fn.
   const checkedMethodDeclarations=methods.map(entry=>{
@@ -691,3 +680,17 @@ const coreReaderDefinitionRules=createRulePipeline([
  {phase:'repository',rules:[{id:'rust-project-core-readers:explicit-owned-library-wrappers',apply:finalize=>finalize()}]},
 ]);
 export function translateProjectOwnedCoreReaderDefinitions(options){return coreReaderDefinitionRules.run(options).value;}
+
+function createProjectLowerer(target,entry,name){return function(lowerOptions={}) {
+    const program=declarationProgram(target.program,target.names.get(entry.name));
+    const emitted=emitJavaScript(program,lowerOptions),own=program.declarations.get(target.names.get(entry.name));
+    const targetMapping=emitted.mappings.find(mapping=>mapping.source===own.fullName);
+    const signatures=[...program.declarations.values()].filter(entry=>entry.k==='fn').map(entry=>({target:emitted.mappings.find(mapping=>mapping.source===entry.fullName)?.target,params:entry.params,ret:entry.async?{kind:'routerFuture',value:entry.ret}:entry.ret}));
+    return {own,program,emitted:{...emitted,signatures,mappings:[...emitted.mappings,{...targetMapping,source:name}]}};
+  };}
+function createProjectCheckedSource(checked,graph,entry){const facade={checkedSource:()=>{
+    const own=checked.declarations.get(entry.name),modules=graph.modules.filter(module=>module.file===entry.file&&JSON.stringify(module.path)===JSON.stringify(entry.path));
+    const origin=originalParsedDeclarationEvidence(entry.surface),module=modules.length===1?modules[0]:null;
+    if(entry.term!=='fn'||own?.k!=='fn'||own.fullName!==entry.name||!origin||!module||origin.sourcePath!==entry.file||origin.sourceSha256!==sha256(module.source)||origin.declarationSpan.start!==entry.span.start||origin.declarationSpan.end!==entry.span.end||origin.checkedSpan.start!==entry.surface.span.start||origin.checkedSpan.end!==entry.surface.span.end||own.span.start!==entry.surface.span.start||own.span.end!==entry.surface.span.end)throw new TypeError('Original executable checked source association differs');
+    return freezeMacroTree(structuredClone({schema:'original-checked-executable-source-v1',source:entry.file,sourceSha256:sha256(module.source),qualifiedName:entry.name,module:entry.path,span:entry.span,checkedSpan:own.span,sourceSignature:{params:entry.surface.params,ret:entry.surface.ret},declaration:own}));
+  }};return facade.checkedSource;}

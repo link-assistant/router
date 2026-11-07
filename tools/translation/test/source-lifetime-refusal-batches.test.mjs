@@ -19,7 +19,7 @@ function thrown(run) { try { run(); } catch (error) { return error; } assert.fai
 test('complete actual lifetime checker collector and project source copies retain native bindings and serialized CST inverses', {timeout: 60000}, () => {
   const plan = prepareSourceLifetimeRefusalBatches(), current = prepareCurrentSourceLifetimeRefusalBatches();
   const finalSources = Object.fromEntries(current.files.map(row => [row.path, row]));
-  assert.equal(current.layers.length,10);assertRuntimeImportSourceComposition(current.layers[9],Object.fromEntries(current.layers.slice(0,9).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
+  assert.equal(current.layers.slice(0,-1).length,10);assert.equal(current.layers.length,11);assert.equal(current.layers.at(-1).schema,'project-facade-retention-source-v1');assertRuntimeImportSourceComposition(current.layers[9],Object.fromEntries(current.layers.slice(0,9).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
   assert.equal(current.layers[1].files[0].before, plan.files.find(row => row.path === 'tools/translation/project.mjs').after);
   assert.equal(current.layers[2].files.find(row => row.path === 'tools/translation/project.mjs').before, current.layers[1].files[0].after);
   assert.equal(plan.typescriptVersion, '5.9.3'); assert.equal(plan.files.length, 3); assert.equal(plan.newAcrossInvocationCache, false);
