@@ -53,3 +53,16 @@ whole receiving cases. Bun remains version 1.4.4 locally; CI pins 1.4.3.
 A current-head full gate and fresh published CI remain separately required.
 Strict parity, full corpus deadlines and literal tool/privacy obligations are
 still unfinished.
+
+The complete mandatory local gate is attempted at clean
+`a6f2cdf17b3244b5ee25856a051c01799b951c6b`. Its complete 2073-line log records
+successful lint/workflow controls and both 259-case native suites. All nine
+deadline controls and their independent audit pass. The observer then stops
+the public TypeScript compiler before a completion result: 358.85 seconds,
+exit 143, sampled peak and final stop sample 2867654656 bytes against the
+3135369216-byte container. Public TypeScript is interrupted; native TypeScript,
+remaining type checks, strict parity, forward and reverse stages are unrun.
+The initial fingerprint alone receives inactive-page cache advice before any
+stage begins; no active test deadline is paused. The complete inspection checks
+every reported Node stream, terminal receipt and audit and verifies that all
+owned processes are reaped. No green stamp or current-head parity is established.

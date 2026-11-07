@@ -731,8 +731,19 @@ remain explicitly unmet parts of the literal all-tool requirement.
       full historical preimages. All seventeen whole Node cases and independent
       deadline audit pass; all seventeen whole receiving cases also pass Bun.
       No actual production function gain or complete gate is established.
-- [ ] Attempt the complete current-head JavaScript gate, record every entered
-      stage and preserve failed/unrun status and all reaped owned processes.
+- [x] Attempt the complete current-head JavaScript gate at clean a6f2cdf17.
+      Lint, both native 259-case suites and nine audited deadline controls pass.
+      Memory guard stops public TypeScript at 358.85 seconds, exit 143 and
+      2867654656 sampled bytes. Preserve all entered stages, complete Node
+      streams and the original cache-advice receipt; all owned PIDs are reaped.
+      Remaining type checks, parity and both translation stages are unrun.
+- [x] Preserve the first evidence-selector refusal when an already archived
+      old log refers to retired raw attempt files. Select those complete bytes
+      through their existing verified public packet; include every newly
+      reported whole Node attempt and retain fresh failed and passed streams.
+- [x] Compress new complete cache-advice receipts with decoded readback to
+      conserve the fixed allocation. Preserve all original default receipts;
+      no file content or active process mapping is changed by page advice.
 - [ ] Archive completed CI, review the whole PR/default ancestry and publish
       the coherent batch with accurate description. Keep PR draft and unmerged.
 - [ ] Independently validate genuine CI drafts before installing outputs;

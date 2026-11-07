@@ -57,6 +57,8 @@ for name in ['current-isolated-node.log', 'current-export-node.log',
     log = directory / name
     if not log.exists():
         continue
+    if (str(log), log.stat().st_size, digest(log)) in baseline:
+        continue
     matches = re.findall(r'^Complete Node deadline evidence: (.+)$', log.read_text(), re.M)
     expected = 3 if name == 'current-isolated-full-gate.log' else 1
     if len(matches) != expected:

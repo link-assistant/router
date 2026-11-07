@@ -1,89 +1,104 @@
 Fixes #784
 
-Router forwarded supported location headers and optional search coordinates to
-providers. This draft removes explicit geolocation metadata by default from
-routed inference HTTP, native replay and JSON WebSocket messages. Exactly one
-`x-router-share-geolocation: true` header opts in per request or connection.
-Router consumes consent and preserves prompts, tool schemas, search availability
-and existing telemetry choices. Account overrides cannot restore unconsented
-location or ingress IP headers.
+Router forwarded explicit location metadata to providers. This draft removes
+supported location and ingress-IP headers, search `user_location` and Gemini
+retrieval coordinates from routed inference HTTP, native replay and JSON
+WebSocket messages by default. Exactly one `x-router-share-geolocation: true`
+header opts in per request or connection. Router consumes consent and preserves
+prompts, tool schemas, search availability and existing telemetry choices.
+Account overrides cannot restore unconsented location headers.
 
-Reproduce with `CF-IPCountry: GB`, `X-Vercel-IP-City: London`, supported search
-`user_location`, or mixed-spelling Gemini retrieval coordinates and inspect a
-synthetic upstream. Complete `geolocation.test.mjs` and
-`geolocation-websocket.test.mjs` files cover removal, opt-in, repeated/invalid
-consent, preserved content and fragmented forwarding. All eight independent
-Gemini ProtoJSON spelling combinations are covered; six mixed combinations
-leaked before the fix. Node and Bun each pass **30 focused cases** and **259
-native cases**. JavaScript, generated native TypeScript and matching Rust source
-share fixtures. Rust execution remains unverified.
+Reproduce with `CF-IPCountry: GB`, `X-Vercel-IP-City: London`, search coordinates,
+or mixed-spelling Gemini retrieval coordinates and inspect a synthetic upstream.
+Complete `geolocation.test.mjs` and `geolocation-websocket.test.mjs` files cover
+removal, exact opt-in, repeated/invalid consent, preserved content and fragmented
+forwarding. All eight independent Gemini ProtoJSON spelling combinations are
+covered; six mixed combinations leaked before the fix. Node and Bun each pass
+**30 focused cases** and **259 native cases**. JavaScript, generated native
+TypeScript and matching Rust source share fixtures. Rust remains unverified.
 
-The coordinated compiler repair refreshes the documented complete isolated
-compiler registration and genuine portable Git fixture. It independently
-reproduces all proposal bytes, checks all **1779 compiler/TypeScript files**,
-retains six complete historical preimages, and checks both serialized/reparsed
-bootstrap CST phases and full inverses. Historical receiving fixtures and pins
-remain exact. Both whole receiving files now pass **17 original cases per
-engine** in Node 20.20.2 and Bun 1.4.4, including the real exported compiler round
-trip and both CST directions. Independent source/deadline audits pass. Largest
-sampled receiving cgroup use is **2275155968 bytes**, with no observer stop.
-Installed TypeScript is **5.9.3**. **Zero newly executable production functions**
-are claimed. Earlier completed-freezer and Bun source-data repairs remain intact.
+The coordinated compiler repair preserves complete source/CST equations,
+independent semantic checks and historical pins. A regeneration-only native
+source batch authenticates whole inputs together while retaining the original
+standalone APIs, fresh private issuers, native checks and physical rereads.
+All **199 complete outputs (11586409 bytes)** match the original build. The
+complete new three-case file passes Node and Bun. The original nine-case Node
+attempt passes behavior but its independent audit **fails** regeneration at
+**116643.104607 > 60000 ms**. The original Bun attempt breaches its existing
+compiler deadline and is then stopped by the memory guard; remaining cases are
+unqualified. No original deadline or assertion is relaxed.
+
+CI now retains complete matrix draft bytes after original validation and
+freshness comparison. The original freshness commands still fail on stale,
+missing or unexpected outputs. An exact final artifact uploader preserves the
+unqualified drafts; no generation-before-check, checked-in output replacement,
+PR-only skip or semantic permission is added. Complete source equations and
+both serialized/reparsed YAML CST phases qualify the workflow extension.
+
+The custody/workflow controls pass **36 whole Node cases** and their independent
+deadline audit. The complete matrix file passes **11 Node cases** and its audit;
+all **3** low-level custody cases pass Bun. The whole matrix Bun file is unrun.
+The full isolated compiler registration is independently refreshed from
+`ae10349b69f2303b9c799f07a40757fbd8d315cc`: **1783 compiler/TypeScript files,
+57221413 source bytes, 463 genuine portable Git objects**. Six complete prior
+registration files remain archived; historical source profiles remain exact.
+Both whole receiving files pass **17 original cases per engine**, including the
+real exported round trip and strict TypeScript. Independent Node source/deadline
+audit passes. Local Node is **20.20.2**, Bun **1.4.4** (CI pins **1.4.3**), and
+lockfile TypeScript **5.9.3**. **Zero new executable production functions** are
+claimed by registration, batching, draft retention or diagnostic counts.
 
 All seven workflows at preceding published head
-`f3ba507ddc3f48391239c21423cc84ec1a2a275e` finished before this publication.
-The [main run](https://github.com/link-assistant/router/actions/runs/42406506626)
-failed at **2026-11-07 20:30:35 UTC**; six supplemental callers skipped. Every
-complete log and all members of all three artifact ZIPs were downloaded and
-CRC/length/hash checked.
+`bea75c2c1676c78a381228a3a15557ae3a290276` finished before this publication.
+The [main run](https://github.com/link-assistant/router/actions/runs/42415256131)
+finished **2026-11-07 22:19:19 UTC** with failure; six supplemental callers
+skipped. Every complete log and every member of all three artifact ZIPs was
+read and checked for CRC, length and SHA256.
 
 | Required stage | Complete preceding-head CI result |
 | --- | --- |
-| Lint, native Node, native Bun | **Pass**; 259 native cases per engine. |
-| TypeScript | Genuine owned-definition matrix index absent, full workflow log line **1157**. |
-| Strict parity | **Fail**: stale account-policy hash, **441 feature gaps**, **12345 carried items**, runtime parity false, lines **7172–7176**. |
-| Profile matrix | Cancelled at the original **60-minute** job limit, line **3112**. |
-| Forward | Cancelled at the original **60-minute** limit. Full partial TAP preserves **21 failure blocks**, including seven stale isolated registration failures addressed by this batch. No terminal cohort audit. |
-| Reverse | Cancelled at the original **15-minute** limit, line **6213**; no terminal cohort audit. |
-| Aggregate / Rust | Aggregate **fails**; Rust correctly remains skipped. No Rust tool ran locally. |
+| Lint, native Node, native Bun | **Pass**, including 259 native cases per engine. |
+| Profile matrix | All three ordinary plans complete within the original 60 minutes, then **fail** freshness: each has 2803 missing, 67 stale and 742 unexpected files; stale matrix index also fails. Full log lines 12709–12710. |
+| TypeScript | **Fail**: genuine owned-definition matrix index absent, lines 13920 and 13933. |
+| Strict parity | **Fail**: stale account-policy source hash, **441 feature gaps**, **12345 carried items**, runtime parity false, lines 14875–14880. |
+| Forward | Cancelled at the original **60-minute** limit. Complete partial TAP preserves eleven failures: eight stale generation/compiler hashes, core-adoption receiving SIGTERM at its original 20 seconds, literal corpus graph 107920.885818 > 60000 ms, and all-three native corpus builds 127007.485961 > 60000 ms. No terminal cohort audit. |
+| Reverse | Cancelled at the original **15-minute** limit, full log line 13414; no terminal cohort audit. |
+| Aggregate / Rust | Aggregate **fails** at line 18884; Rust correctly remains skipped. No Rust tool ran locally. |
 
-The mandatory complete local gate was attempted at clean source
-**`17aea691976747ef8d8318ab1aa7994789b023ee`**. Lint and all 61 controls, both
-259-case native suites, nine audited deadline controls, public/native type
-checking, native TypeScript freshness and strict compilation of all 165 files
-pass. All nine native behavior TAP cases finish, but the independent audit
-**fails** regeneration at **133321.867865 > 60000 ms**. Passing TAP does not waive
-the unchanged deadline. All 121 parity acceptance cases pass; strict parity then
-fails on the source hash, feature gaps and carried items above. The memory
-observer interrupts forward startup before TAP or a complete case audit.
-Remaining TypeScript and forward commands, and reverse translation, are **unrun**.
-The attempt takes **971.06 seconds**, exit **143**; every owned process is reaped.
-Peak sampled cgroup use is **2876076032 bytes**, with a distinct final stop sample
-of **2873933824**, against the **3135369216-byte** container. **No green stamp
-exists.** Tests, resource limits, private issuers and strict checks are unchanged.
+The mandatory complete local JavaScript gate is attempted at clean source
+**`a6f2cdf17b3244b5ee25856a051c01799b951c6b`**. Lint/workflow controls, both
+259-case native suites, and nine deadline controls with independent audit pass.
+The memory guard interrupts public TypeScript checking before completion:
+**358.85 seconds**, exit **143**, sampled peak/final stop **2867654656 bytes**
+against the **3135369216-byte** container. Remaining TypeScript commands, strict
+parity, forward and reverse are **unrun** for this attempt. Initial inactive-page
+cache advice occurs before any stage; no active case deadline is paused. Every
+owned process is reaped. **No green gate stamp exists.** Earlier gate attempts
+and complete failed probes remain distinct evidence at their original heads.
 
-This remains an incomplete feedback checkpoint. Actual ordinary/owned matrix
-generation, compiler provenance, original deadlines and strict parity remain
-required. No empty index, repinned historical fixture or PR-only failure skip
-substitutes for implementation. No human-only CI prerequisite was identified.
-Fresh main `eb2dad1c0` is an ancestor; no integration conflict remains.
+Actual ordinary/owned output installation, canonical generation freshness,
+compiler provenance, all original deadlines and strict parity remain required.
+There is no missing secret or human-only CI access prerequisite to bypass.
+Fresh main `eb2dad1c0a18394dc1aad46413e11401e74eb502` is an ancestor.
+GitHub refuses the complete PR diff with HTTP 406 (>300 files); the full local
+base/head text diff is retained and new production changes reviewed directly.
+Changelog fragments use the repository's automatic release process.
 
 The [case study](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/README.md)
-contains requirements, vendor research, client matrix and existing components.
-The [registration verification](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/current-isolated-registration.md)
-and [complete preceding CI review](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/resolver-profile-checkpoint-verification.md)
-record passed, failed and unrun checks. The
-[complete evidence packet](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/evidence/resolver-complete.tar.xz)
-preserves full logs, artifacts, failed probes, source variants and terminal
-receipts; every selected original and archive member verifies. Earlier packets
-remain intact. The [configuration guide](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/privacy/geolocation.md)
-shows actual Codex/Claude defaults and opt-in. Changelog fragments use the
-repository's automatic release process.
+contains requirements, vendor research, client coverage, existing components and
+solution limits. The [configuration guide](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/privacy/geolocation.md)
+shows actual Codex/Claude defaults and opt-in. The
+[native batch verification](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/native-regeneration-batch.md),
+[complete preceding CI review](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/native-regeneration-ci-review.md)
+and [custody verification](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/matrix-draft-custody-verification.md)
+distinguish passed, failed and unrun checks. Complete evidence packets preserve
+original logs, artifacts, source variants, failed probes and terminal receipts;
+all earlier public packets remain intact.
 
-**Draft and unmerged; completion remains unfinished.** Remaining criteria include
-all compiler/profile/parity failures and Rust qualification after a green
-same-SHA JavaScript gate. The literal all-tool guarantee also remains unmet:
-vendors see connection IPs and retain mandatory security inference; account
-controls need authenticated accounts; direct client, telemetry, OAuth and MCP
-traffic can bypass Router. Cursor's private protocol and Gemini subscription
-modes remain unsupported. Account settings were not changed.
+**Draft and unmerged; issue completion remains unfinished.** The compiler,
+profile, parity and same-SHA Rust qualification criteria remain open. The literal
+all-tool privacy guarantee also remains unmet: vendors can infer connection IPs
+and retain mandatory security data; account controls require authenticated
+accounts; direct client, telemetry, OAuth and MCP traffic can bypass Router.
+Cursor's private protocol and Gemini subscription modes remain unsupported.
+Account settings were not changed.

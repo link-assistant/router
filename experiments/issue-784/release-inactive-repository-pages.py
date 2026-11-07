@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Bounded file-cache diagnostic before checking this task's repository."""
 import argparse
+import gzip
 import json
 import os
 from pathlib import Path
@@ -11,11 +12,15 @@ root = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--receipt', type=Path,
                     default=root / 'ci-logs/issue-784-restart-2/inactive-repository-pages.json')
-receipt_path = parser.parse_args().receipt.resolve()
+parser.add_argument('--gzip-receipt', action='store_true')
+args = parser.parse_args()
+receipt_path = args.receipt.resolve()
 if receipt_path.parent != root / 'ci-logs/issue-784-restart-2':
     raise RuntimeError('Resource receipts must remain in this investigation directory')
 if receipt_path.exists():
     raise RuntimeError('Refusing to overwrite an earlier observation')
+if args.gzip_receipt and not receipt_path.name.endswith('.json.gz'):
+    raise RuntimeError('Compressed receipts require an explicit .json.gz path')
 
 def memory():
     fields = dict(line.split() for line in Path('/sys/fs/cgroup/memory.stat').read_text().splitlines())
@@ -76,7 +81,11 @@ for name in names:
 receipt = {'before': before, 'after': memory(), 'files': selected,
            'skipped': skipped, 'foreignUnreadableProcesses': unreadable, 'zombies': zombies,
            'scope': 'POSIX_FADV_DONTNEED only on single-link regular tracked files inside this task worktree, excluding observed open/mapped paths. No file deleted, global cache drop, build tool, .git object, build cache or other worktree path. Cgroup differences are observations, not exact reclaimed disk or per-file cache accounting.'}
-with receipt_path.open('x') as output:
+opener = gzip.open if args.gzip_receipt else open
+with opener(receipt_path, 'xt') as output:
     json.dump(receipt, output)
     output.write('\n')
+with opener(receipt_path, 'rt') as stream:
+    if json.load(stream) != receipt:
+        raise RuntimeError('Complete resource receipt readback differs')
 print(json.dumps({key: value for key, value in receipt.items() if key not in ['files', 'skipped']}))
