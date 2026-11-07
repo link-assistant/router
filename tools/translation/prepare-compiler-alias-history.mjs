@@ -7,6 +7,7 @@ import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {fixedNativeDescriptorSourcePair} from './prepare-fixed-native-descriptor-census.mjs';
 import {invocationLocalFreezerSourcePairs} from './prepare-invocation-local-freezer.mjs';
 import {negativeBudgetConsumerImport} from './prepare-negative-budget-proof-json.mjs';
+import {deriveCompilerAliasSourceEvolution,COMPILER_ALIAS_ORIGINAL_CURRENT_PINS} from './compiler-alias-source-evolution.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const FIXTURE='tools/translation/test/fixtures/compiler-data-alias-history.mjs';
 const FILES=['private-walk-scalar-results','builtin-json-equality-hint','completed-json-eligibility','private-frozen-json-measurement','packed-frozen-json-eligibility','private-frozen-json-cache-policy','private-frozen-json-owner-memo','private-frozen-json-cohorts','native-descriptor-guard-batching','builtin-proof-json-composition','native-descriptor-kind-discriminator','private-frozen-json-subtrees','native-string-quotation','builtin-plan-json-composition','immutable-json-continuations','private-primitive-native-quotation','derive-bang-carrier-json','private-frozen-json','private-native-proof-cost-scope','private-data-freeze-walk','private-data-freeze-packed-walk'];
@@ -22,7 +23,8 @@ function whole(path,before,after){
 function historyRows(root){
  const paths=['private-frozen-json.mjs','derive-bang-context.mjs','derive-enclosing-namespace-context.mjs','builtin-derive-bang-footprints.mjs','original-json-intrinsics.mjs','private-data-freeze.mjs'],rows=[];
  for(const name of paths){
-  const path='tools/translation/'+name,source=readFileSync(resolve(root,path),'utf8');let before=source,edits=[];
+  const path='tools/translation/'+name,physical=readFileSync(resolve(root,path),'utf8'),sourceEvolution=deriveCompilerAliasSourceEvolution(physical,name),source=sourceEvolution?.source??physical;let before=source,edits=[];
+  if(sha(source)!==COMPILER_ALIAS_ORIGINAL_CURRENT_PINS[name])fail('complete original current source pin differs');
   if(name==='private-data-freeze.mjs'){
    const pair=invocationLocalFreezerSourcePairs(root).find(row=>row.path===path);if(!pair||source!==pair.after)fail('complete actual invocation-local freezer required');
    edits=[{expected:pair.after,replacement:pair.original}];before=pair.original;
@@ -42,7 +44,7 @@ function historyRows(root){
    edits=[{expected:call,replacement:''},{expected:imported,replacement:original}];for(const edit of edits){if(before.split(edit.expected).length!==2)fail('unique actual consumer alias equation');before=before.replace(edit.expected,()=>edit.replacement);}
   }
   let inverse=before;for(const edit of [...edits].reverse())if(edit.replacement){if(inverse.split(edit.replacement).length!==2)fail('inverse import uniqueness');inverse=inverse.replace(edit.replacement,()=>edit.expected);}else if(name==='private-frozen-json.mjs')inverse+=edit.expected;else if(name==='builtin-derive-bang-footprints.mjs'){const anchor="if(composeJson(fresh)!==(proof.schema==='builtin-debug-data-bang-output-v1'?composeJson(proof):originalJson(proof)))";if(inverse.split(anchor).length!==2)fail('inverse builtin plan uniqueness');inverse=inverse.replace(anchor,()=>anchor.replace('if(','if('+edit.expected));}else{const anchor='function validateItemCarrier(module,original){\n';if(inverse.split(anchor).length!==2)fail('inverse function uniqueness');inverse=inverse.replace(anchor,()=>anchor+edit.expected);}
-  if(inverse!==source)fail('complete actual production inverse');rows.push({name,path,currentSha256:sha(source),historicalSha256:sha(before),edits,completeCurrent:source,completeHistorical:before});
+  if(inverse!==source||readFileSync(resolve(root,path),'utf8')!==physical)fail('complete actual production inverse or physical input differs');rows.push({name,path,currentSha256:sha(source),historicalSha256:sha(before),edits,completeCurrent:source,completeHistorical:before,completePhysical:physical,sourceEvolution});
  }
  return rows;
 }
@@ -54,16 +56,17 @@ import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from '../../concrete-syntax-meta.mjs';
+import {deriveCompilerAliasSourceEvolution} from '../../compiler-alias-source-evolution.mjs';
 const RECORDS=${JSON.stringify(records)};
 const hash=text=>createHash('sha256').update(text).digest('hex');
 const fail=message=>{throw new TypeError('Compiler alias source history: '+message);};
 export function restoreCompilerDataAliasHistory(source,name,retain=()=>{}){
- const matches=RECORDS.filter(row=>row.name===name);if(typeof source!=='string'||matches.length!==1)fail('complete registered source required');const row=matches[0];if(hash(source)!==row.currentSha256)fail('complete actual current source changed');let historical=source;
+ const matches=RECORDS.filter(row=>row.name===name);if(typeof source!=='string'||matches.length!==1)fail('complete registered source required');const row=matches[0],sourceEvolution=hash(source)===row.currentSha256?null:deriveCompilerAliasSourceEvolution(source,name);let historical=sourceEvolution?.source??source;if(hash(historical)!==row.currentSha256)fail('complete actual current source changed');
  for(const edit of row.edits){if(historical.split(edit.expected).length!==2)fail('actual whole substitution is absent or ambiguous');historical=historical.replace(edit.expected,()=>edit.replacement);}
  if(hash(historical)!==row.historicalSha256)fail('complete historical source differs');
  const first=transportConcreteSyntaxSource(source,{language:'JavaScript'}),run=applyConcreteSyntaxSubstitutions(first.document,{languageRules:[{id:'javascript:retain-all-original-comparison-bodies',edits:[]}],repositoryRules:[{id:'receiving:restore-complete-pre-alias-comparison-DATA',edits:[{span:[0,source.length],expected:source,replacement:historical}]}]}),afterMeta=serializeConcreteSyntaxMeta(run.value);if(transportConcreteSyntaxMeta(afterMeta).source!==historical)fail('complete source reparse differs');
  const reverse=applyConcreteSyntaxSubstitutions(run.value,{languageRules:[],repositoryRules:[{id:'receiving:replay-complete-actual-source',edits:[{span:[0,historical.length],expected:historical,replacement:source}]}]});if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(reverse.value)).source!==source)fail('whole current inverse differs');
- retain('complete-actual-and-historical-alias-source',{source,historical,row,beforeMeta:serializeConcreteSyntaxMeta(first.document),afterMeta,trace:run.trace,inverse:source,compilerAuthority:false});return historical;
+ retain('complete-actual-and-historical-alias-source',{source,historical,row,sourceEvolution,beforeMeta:serializeConcreteSyntaxMeta(first.document),afterMeta,trace:run.trace,inverse:source,compilerAuthority:false});return historical;
 }
 // Invoke the native filesystem read first, with its original complete arguments.
 // Only the exact registered physical compiler inputs have historical DATA views.
@@ -83,6 +86,8 @@ export function prepareCompilerAliasHistory({root=fileURLToPath(new URL('../../'
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');const records=historyRows(root),fixture=renderFixture(records),files=[whole(FIXTURE,(()=>{try{return readFileSync(resolve(root,FIXTURE),'utf8');}catch(e){if(e.code==='ENOENT')return '';throw e;}})(),fixture)];
  for(const name of FILES){
   const path='tools/translation/test/'+name+'.test.mjs',source=readFileSync(resolve(root,path),'utf8'),file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete test grammar');
+  const receiving=file.statements.filter(node=>ts.isImportDeclaration(node)&&node.moduleSpecifier.text==='./fixtures/current-receiving-source-history.mjs');
+  if(name==='private-frozen-json'&&receiving.length){if(receiving.length!==1||receiving[0].getText(file)!=="import {readOriginalBuiltinPlanReceivingHistory as readFileSync} from './fixtures/current-receiving-source-history.mjs';")fail('exact complete later receiving reader required');continue;}
   const existing=file.statements.filter(node=>ts.isImportDeclaration(node)&&node.moduleSpecifier.text==='./fixtures/compiler-data-alias-history.mjs');
   if(existing.length){if(existing.length!==1)fail('unique actual historical reader import');if(name==='private-frozen-json'){const node=existing[0],replacement="import {readOriginalBuiltinPlanHistory as readFileSync} from './fixtures/compiler-data-alias-history.mjs';",after=source.slice(0,node.getStart(file))+replacement+source.slice(node.end);if(after!==source)files.push(whole(path,source,after));}continue;}
   const selected=file.statements.filter(node=>ts.isImportDeclaration(node)&&['node:fs','fs'].includes(node.moduleSpecifier.text)&&node.importClause?.namedBindings&&ts.isNamedImports(node.importClause.namedBindings)&&node.importClause.namedBindings.elements.some(el=>!el.propertyName&&el.name.text==='readFileSync'));
