@@ -572,7 +572,9 @@ remain explicitly unmet parts of the literal all-tool requirement.
       Retain the changing-log refusal and both complete capture receipts.
 - [x] Publish the reviewed source and evidence only to the prepared draft PR:
       `f3ba507ddc3f48391239c21423cc84ec1a2a275e`, all seven workflows observed.
-- [ ] Collect every result of the new published head before another push.
+- [x] Collect every result of the new published head before another push.
+      The full f3ba507dd cycle is terminal; all seven logs and all three ZIPs
+      are retained, with every member verified and 21 forward failures indexed.
 - [ ] Repair the actual serialized operand/generation blocker, materialize
       genuine ordinary and owned matrices, and pass original receiving deadlines.
 - [ ] Pass strict parity, the mandatory whole local gate and every same-head CI
@@ -588,8 +590,30 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [x] Stop a finite native retained-allocation sample below the diagnostic heap
       limit, verify its entire compressed profile and retain the observer receipt.
       Sampling identifies large CST/token sites but establishes no leak.
-- [ ] Profile the expensive derive-proof interval with a finite early stop before
+- [x] Profile the expensive derive-proof interval with a finite early stop before
       the known failed resolver; preserve complete results and source equations.
+      Complete 368.68-second profile: no single dominant site, final boundary
+      heap 568931944 bytes, no ordinary completion or executable gain.
+- [x] Retire only fully archived inactive CI/page-advice duplicates after complete
+      archive/member verification; reclaim 230936576 allocated bytes. Retain all
+      original packet bytes and the initial failed cleanup harness.
+- [x] Inspect a finite CPU interval of the nested final resolver with the same
+      canonical private issuers. The 385.08-second baseline stops exactly 2048
+      checkpoints after the resolver starts, before TokenClaims; no generated
+      output is installed and no complete planner result is established.
+- [x] Compare a diagnostic shared project arithmetic scope at the same boundary;
+      preserve the original nonrefundable 4096 admissions and every private join.
+      Resolver interval increases to 20.44 from 19.32 seconds and boundary heap
+      rises to 660712096 bytes. A lower total elapsed time and sampled cgroup
+      peak do not qualify a gain; leave the candidate uninstalled.
 - [ ] Repair measured shared costs without weakening private issuers, source
       provenance, strict parity, complete tests or their original deadlines.
-- [ ] Collect the entire published f3ba507dd CI cycle before another push.
+- [x] Collect the entire published f3ba507dd CI cycle before another push.
+      Native engines and lint pass; missing owned matrix, strict parity and
+      all three translation-stage deadline failures remain unfinished.
+- [x] Capture and independently compare the complete current isolated-compiler
+      proposal: 1779 files, 57194658 source bytes; the old registry stays exact
+      during proposal review. No receiving or executable gain is established.
+- [ ] Use the documented reviewed registration-refresh workflow, preserving the
+      complete old registry/bootstrap history; regenerate the genuine portable
+      Git fixture and run both whole receiving files with original deadlines.
