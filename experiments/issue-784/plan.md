@@ -488,9 +488,20 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [x] Collect the entire completed seven-workflow 545f2909d CI cycle and all three
       complete diagnostic archives before any further publication. Main fails;
       six supplemental callers skip. Keep draft status and the Rust gate.
-- [ ] Review every new CI failure and artifact, preserve its complete evidence,
-      repair remaining source/semantic/deadline/generation failures, and rerun
-      the mandatory full local gate on the coherent integrated source commit.
+- [x] Review every completed CI failure and all three complete artifacts. Retain
+      the eight stale-pin hook failures, original child/case deadlines, missing
+      matrix, stale parity inventory and all job cancellations separately.
+- [x] Attempt the mandatory full local gate at clean `3d645ee03`. Preserve the
+      initial omitted-npm setup failure separately. The corrected environment
+      passes lint, both 259-case native suites, nine audited deadline controls
+      and public type checking before a memory stop during native type checking:
+      392.96 seconds, exit 143, 2878582784 sampled total-cgroup bytes. All owned
+      processes are reaped. Remaining commands are unrun; no green stamp exists.
+- [ ] Preserve the complete new evidence in a verified packet, review the source
+      batch, and publish the explicitly incomplete draft checkpoint. Collect
+      the entire next CI cycle before any subsequent push.
+- [ ] Repair remaining source/semantic/deadline/generation failures and pass
+      the mandatory complete local gate on the integrated immutable source.
 - [ ] Obtain all green same-head CI and finish the remaining all-tool privacy
       and strict parity criteria before readiness. No source-only or focused
       receiving check completes an unmet criterion.
