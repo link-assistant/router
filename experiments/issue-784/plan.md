@@ -524,3 +524,22 @@ remain explicitly unmet parts of the literal all-tool requirement.
       Preserve complete partial evidence and do not repeat the unchanged cohort.
 - [ ] Qualify the coherent integrated source with the complete local gate and
       all same-head CI; no timing, parity or executable gain is claimed here.
+
+## Runtime-import source DATA during be8560a8d CI
+
+- [x] Reproduce Bun's callable-text refusal and retain complete failed native
+      syntax comparisons. Boolean/conditional rewrites remain refused.
+- [x] Keep the original direct preparation API and runtime issuer checks exact.
+      Compose only source DATA from the original producer in fresh Node when
+      Bun cannot satisfy its original callable-source pins.
+- [x] Recheck complete compiler/archive/current inputs, both serialized CST
+      phases and complete native grammar in the receiving engine. No runtime
+      authority is transferred and no producer output is cached.
+- [x] Derive the source change with native-selected edits, both complete CST
+      phases and complete inverses; preserve the full original producer/pins.
+- [x] Pass both whole new cases in Node with independent deadline audit and Bun,
+      preserving unchanged outputs and the exact original Bun runtime refusal.
+- [ ] Finish the unchanged whole parent file in both engines, inspect every
+      assertion and original case deadline, then record failed/unrun boundaries.
+- [ ] Run the mandatory complete gate on the coherent immutable source batch;
+      collect the entire published CI cycle before any further push.

@@ -36,6 +36,11 @@ vendor-account authorization or account sessions were supplied for changing
 dashboard settings. This part remains unmet; it is not certified by passing
 metadata tests. No required child issue was discovered or deferred.
 
+Later CI repairs retain their separate verification boundaries in
+[the Clone freezer record](clone-completed-freeze.md) and
+[the runtime-import source-data record](runtime-import-source-data.md).
+Focused receiving checks do not complete the remaining full-gate requirements.
+
 ## Root cause and implementation
 
 Native forwarding intentionally preserved application headers. Network-origin
