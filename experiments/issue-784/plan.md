@@ -625,8 +625,14 @@ remain explicitly unmet parts of the literal all-tool requirement.
       Native regeneration exceeds its original 60-second deadline (133.32 s);
       strict parity fails; the memory guard stops forward startup. Preserve all
       original terminal attempts and reaped-process evidence; no green stamp.
-- [ ] Capture the coherent registration repair and complete CI/local evidence,
+- [x] Capture the coherent registration repair and complete CI/local evidence,
       review current main and the full PR diff, then publish fresh draft feedback.
+      Capture verifies 251 complete originals. GitHub's full diff endpoint
+      refuses the 337-file PR (HTTP 406); use the complete local base/head diff
+      and review the three changed production text files plus all binary source
+      receipts. Main remains an ancestor; all prior CI jobs are terminal.
+- [ ] Publish the reviewed registration checkpoint and collect every new CI
+      result before any subsequent push; leave the PR draft and unmerged.
 - [ ] Repair actual shared native regeneration costs with complete source/CST
       boundaries and independent semantic checks; preserve all original cases,
       assertions and deadlines. Qualify any candidate before reporting a gain.

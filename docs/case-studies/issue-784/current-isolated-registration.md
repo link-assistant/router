@@ -50,6 +50,15 @@ processes are reaped. Complete raw streams, original source snapshots and all
 three terminal Node receipts, including the failed and interrupted attempts,
 are retained in the [resolver evidence packet](evidence/resolver-complete.tar.xz).
 
+The packet verifies all 251 selected originals (57005170 logical bytes), including
+the entire preceding CI cycle, current receiving evidence and failed local gate.
+It occupies 25575912 bytes and takes 42.02 seconds with peak sampled cgroup use
+2401726464 bytes. A memory-stopped initial capture is retained separately as a
+complete failed artifact, with no successful-packet claim. After full archive
+readback and inactive-reference checks, retiring only archived raw Node and CI
+duplicates removes 30109696 allocated bytes; their complete bytes remain in
+the unchanged archives. The latest complete CI cycle remains available locally.
+
 This adds no measured executable application coverage, does not regenerate the
 missing owned matrix, and establishes neither strict parity nor a green local
 or CI gate. No Rust tool has run locally.

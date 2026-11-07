@@ -14,7 +14,12 @@ ci = root / 'ci-logs'
 packets = root / 'docs/case-studies/issue-784/evidence'
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--receipt', required=True)
+parser.add_argument('--current-cycle', required=True)
 args = parser.parse_args()
+if (Path(args.current_cycle).name != args.current_cycle
+        or not args.current_cycle.startswith('issue-784-checkpoint-')
+        or not (ci / args.current_cycle).is_dir()):
+    parser.error('the actual complete published-head cycle directory is required')
 if Path(args.receipt).name != args.receipt or not args.receipt.endswith('.json'):
     parser.error('receipt must be a new JSON filename')
 receipt = ci / 'issue-784-restart-2' / args.receipt
@@ -41,7 +46,7 @@ for manifest_path in sorted(packets.glob('*.json.gz')):
         relative = path.relative_to(ci)
         # Keep the latest completed cycle and every current producer input.
         # The restart directory selection contains only old page-advice receipts.
-        if relative.parts[0] == 'issue-784-checkpoint-be8560a8d':
+        if relative.parts[0] == args.current_cycle:
             continue
         if relative.parts[0] == 'issue-784-restart-2' and not (
                 path.name.endswith(('-pages.json', '-cache-reclaim.json'))
