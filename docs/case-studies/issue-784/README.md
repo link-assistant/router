@@ -124,3 +124,7 @@ requirements remain unchanged. This PR stays unmerged while criteria remain unme
 The [integrated Clone/runtime gate attempt](runtime-integrated-gate.md) records
 the complete immutable-head local attempt, its passed stages, memory interruption,
 unrun stages and fully reaped test processes.
+
+The [runtime/freezer checkpoint](runtime-freeze-checkpoint-verification.md)
+records the complete be8560a8d CI cycle, every remaining failure class and the
+focused source batch's exact receiving boundaries.

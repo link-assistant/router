@@ -23,68 +23,68 @@ Node and Bun each pass all **30 focused cases** and **259 native cases**.
 Compiler repairs retain original assertions, deadlines, source pins, resource
 limits, private issuers and strict parity. Earlier batches preserve complete
 receiving fixture universes, historical source inverses and callback bodies.
-The current batch:
+The current compiler batch:
 
-- Adds one bounded complete CST phase transaction and connects the actual
-  callback producer. Complete original/intermediate/final documents and both
-  inverses serialize and reparse. Fresh physical source authentication remains.
-  The actual project afterimage is byte exact. All four whole receiving files
-  pass **11/11** cases in each engine; Node's independent deadline audit passes.
-- Rejects oversized materialized Clone branches before evidence encoding, using
-  the existing logical node/depth limits. Accepted evidence still receives full
-  serialization, freezing, grammar checks and original callback checks. The
-  finite 128-field regression fails before the fix and passes afterward. Both
-  whole new two-case files and the independent Node audit pass. The broader Node
-  cohort still breaches one original 60000 ms deadline at 78901.82 ms; Bun's
-  broader cohort is stopped by the memory observer.
-- Retains three bounded whole-planner diagnostics and complete source proposals.
-  All 419 derives and 397 carrier modules finish in the narrowest trace before
-  heap exhaustion. No root serialized operand or matrix completion is claimed.
+- Reuses the completed-data freezer for materialized Clone evidence while
+  preserving the original callback order, error identity and private issuers.
+  Both complete receiving files pass **4/4** cases per engine; Node's
+  independent case-deadline audit passes. The broader Node parent remains late
+  at **76791.194776 > 60000 ms**; Bun's broader cohort needs a memory stop.
+- Allows Bun's source composer to receive complete source DATA from a fresh
+  invocation of the original producer in Node. The receiving engine rechecks
+  whole compiler/archive/current inputs, both serialized CST phases and native
+  grammar. Original direct preparation and runtime-loader refusals stay exact;
+  all four output files are byte exact. Both new whole cases pass in each
+  engine; Node's deadline audit passes. The unchanged final parent case remains
+  late: Node **163909.893825 ms**, Bun **120916.88 ms**, against **60000 ms**.
+- Preserves complete native-selected source inverses and historical originals.
   **Zero newly executable production functions** are claimed for this batch.
 
-All seven workflows for published head
-`545f2909d14817f33ba18721a2d0c28690578544` finished before this publication.
-The [main run](https://github.com/link-assistant/router/actions/runs/42392951636)
-failed; six supplemental callers skipped. Every complete log and all three
-artifact ZIPs were downloaded and fully inspected.
+All seven workflows at published head
+`be8560a8d446f039c602672ad5d0f6f1a218acc6` finished before this publication.
+The [main run](https://github.com/link-assistant/router/actions/runs/42400974916)
+failed at **2026-11-07 19:23:03 UTC**; six supplemental callers skipped. Every
+complete log and all members of all three artifact ZIPs were downloaded,
+CRC-checked and inspected.
 
 | Required stage | Complete preceding-head CI result |
 | --- | --- |
 | Lint, native Node, native Bun | **Pass**; 259 native cases per engine. |
-| TypeScript | Prior native checks and their full deadline audit pass with installed TypeScript **5.9.3**. The genuine owned-definition matrix index is absent (full log lines 7130–7143). |
-| Strict parity | **Fail**: stale account-policy hash, **441 feature gaps**, **12345 carried items**, runtime parity false (lines 1184–1188). |
-| Profile matrix | Cancelled at the original **60-minute** job limit (lines 269–273); no observed heap-fatal message in this cycle. |
-| Forward | Cancelled at the original **60-minute** limit. The complete partial artifact retains eleven failures: eight stale compiler-pin hooks, one original child deadline and two original case deadlines. No terminal cohort audit. |
-| Reverse | Cancelled at the original **15-minute** limit (line 7859); partial streams retained without terminal qualification. |
+| TypeScript | Prior native/profile checks pass with installed TypeScript **5.9.3**. Genuine owned-definition matrix index absent (full log lines **453–474**). |
+| Strict parity | **Fail**: stale account-policy hash, **441 feature gaps**, **12345 carried items**, runtime parity false (lines **4561–4566**). |
+| Profile matrix | Cancelled at the original **60-minute** job limit (lines **7915–7919**). No heap-fatal cause is established in this cycle. |
+| Forward | Cancelled at the original **60-minute** limit. Complete partial TAP retains eleven failures: eight stale compiler-pin hooks, one original child deadline and two original case deadlines. No terminal cohort audit. |
+| Reverse | Cancelled at the original **15-minute** limit (line **7591**); partial streams retained without terminal qualification. |
 | Aggregate / Rust | Aggregate **fails**; Rust correctly remains skipped. No Rust tool ran locally. |
 
-The complete local gate was attempted at clean **`3d645ee03`**. With the corrected
-PATH, lint (1772 syntax checks and all 61 controls), both 259-case native suites,
-nine independently audited deadline controls and public operation type checking
-pass. During native type checking, the owned observer stops and reaps the group
-at **2878582784 sampled total-cgroup bytes**, with a 3135369216-byte container
-limit: **392.96 seconds**, exit **143**. Remaining TypeScript commands, parity,
-forward and reverse are **unrun in this attempt**. **No green gate stamp exists.**
-Initial fingerprint cache advice changes no file, limit or deadline. An earlier
-omitted-npm setup attempt is retained separately and cannot qualify native or
-TypeScript commands. Separate strict generated TypeScript checks pass with 5.9.3.
+The complete local gate was attempted at clean **`21caf33cf`**. Lint (1776
+syntax checks and all 61 controls), both 259-case native suites, nine audited
+deadline controls, public/native type checking, native TypeScript freshness and
+strict compilation of all 165 native TypeScript files pass. The owned memory
+observer interrupts the native behavior file after four passes, without its
+complete audit. Remaining TypeScript commands, parity, forward and reverse are
+**unrun**. **No green stamp exists.** The attempt takes **669.87 seconds**,
+including reaping its detached test daemon; exit **143**. Peak sampled cgroup
+use is **2887798784 bytes**, including initial fingerprinting, against a
+3135369216-byte container limit. The separate final-stop sample is unavailable.
+The task observer now reaps its owned detached descendants and records stop
+samples; a finite cleanup control passes. Tests and deadlines stay unchanged.
 
-This is an explicitly incomplete feedback checkpoint. Fresh CI remains
-unqualified until the entire cycle completes. Genuine ordinary/owned matrix
-generation, source provenance, original deadlines and strict parity all remain
-required. No empty index, repinned history, relaxed check or PR-only error skip
-substitutes for a repair. No human-only CI prerequisite was found. Fresh main
-`eb2dad1c0` is an ancestor; no integration conflict remains.
+This is an explicitly incomplete feedback checkpoint. Actual ordinary/owned
+matrix generation, compiler provenance, original deadlines and strict parity
+remain required. No empty index, repinned history, relaxed check or PR-only
+error skip substitutes for a repair. No human-only CI prerequisite was found.
+Fresh main `eb2dad1c0` is an ancestor; no integration conflict remains.
 
 The [case study](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/README.md)
 contains requirements, vendor research, client matrix and existing components.
-The [checkpoint verification](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/clone-checkpoint-verification.md),
-[phased CST investigation](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/phased-cst-investigation.md)
-and [Clone regression](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/clone-validation-order.md)
+The [checkpoint verification](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/runtime-freeze-checkpoint-verification.md),
+[Clone receiving evidence](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/clone-completed-freeze.md)
+and [Bun source composition](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/runtime-import-source-data.md)
 record exact passed, failed and unrun boundaries. The
-[complete evidence packet](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/evidence/phased-clone-complete.tar.xz)
-preserves all new original logs, artifacts, failed probes, complete source
-variants and terminal receipts; every full member and selected input verifies.
+[complete evidence packet](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/evidence/runtime-freeze-complete.tar.xz)
+preserves complete new logs, artifacts, failed probes, full source variants and
+terminal receipts. Every selected input and decoded archive member verifies.
 Earlier packets remain intact. The [configuration guide](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/privacy/geolocation.md)
 shows actual Codex/Claude defaults and opt-in. Changelog fragments use the
 repository's automatic version/release process.

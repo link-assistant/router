@@ -502,8 +502,10 @@ remain explicitly unmet parts of the literal all-tool requirement.
       selected input verifies. Capture takes 38.02 seconds, peak sampled cgroup
       2057351168 bytes, without a resource stop. Earlier packets remain intact.
 - [x] Publish the reviewed explicitly incomplete draft checkpoint at `be8560a8d`.
-- [ ] Collect the entire next CI cycle before any subsequent push; its main run
-      is `42400974916`, started 2026-11-07 18:22:33 UTC.
+- [x] Collect the entire next CI cycle before any subsequent push; main run
+      `42400974916` fails after the unchanged forward/profile job limits. Read
+      all seven complete logs and every member of all three diagnostic ZIPs;
+      retain eleven forward failures and the missing matrix/strict parity gaps.
 - [ ] Repair remaining source/semantic/deadline/generation failures and pass
       the mandatory complete local gate on the integrated immutable source.
 - [ ] Obtain all green same-head CI and finish the remaining all-tool privacy
@@ -559,3 +561,15 @@ remain explicitly unmet parts of the literal all-tool requirement.
       17784832 allocated bytes while keeping every original in its packet.
 - [ ] Collect the entire published CI cycle before any further push; finish
       actual remaining generation/parity/deadline repairs and qualify the gate.
+
+## Runtime and completed-freezer feedback checkpoint
+
+- [x] Finish collecting and inspecting the complete be8560a8d cycle. Preserve
+      expected negative deadline controls separately from real failed jobs.
+- [ ] Review the coherent source batch, archive all complete new originals,
+      verify current main ancestry and publish only to the prepared draft PR.
+- [ ] Collect every result of the new published head before another push.
+- [ ] Repair the actual serialized operand/generation blocker, materialize
+      genuine ordinary and owned matrices, and pass original receiving deadlines.
+- [ ] Pass strict parity, the mandatory whole local gate and every same-head CI
+      check; finish the remaining all-tool requirements before marking ready.
