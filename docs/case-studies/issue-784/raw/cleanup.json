@@ -1,0 +1,27 @@
+{
+  "checkedAt": "2026-11-07T00:16:14.157928+00:00",
+  "activeReferences": [],
+  "removed": [
+    {
+      "path": "/tmp/router-issue-784-node",
+      "files": 2389,
+      "logicalBytesRemoved": 247916709,
+      "fileAllocationBytesRemoved": 154152960
+    },
+    {
+      "path": "/tmp/router-serde-alias-default-5Mo1B7",
+      "files": 3,
+      "logicalBytesRemoved": 129716,
+      "fileAllocationBytesRemoved": 139264
+    },
+    {
+      "path": "/tmp/router-native-core-ytYjms",
+      "files": 2,
+      "logicalBytesRemoved": 58,
+      "fileAllocationBytesRemoved": 4096
+    }
+  ],
+  "rustBuildCachesCreated": false,
+  "observedFilesystemFreeDeltaBytes": 156573696,
+  "totalFileAllocationBytesRemoved": 154296320
+}

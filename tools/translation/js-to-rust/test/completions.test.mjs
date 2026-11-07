@@ -1,3 +1,4 @@
+import {materializeHistoricalNativeSources} from './historical-native-source.mjs';
 import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -235,18 +236,18 @@ test('actual TypeScript class import aliases avoid all legal parameter local and
 });
 
 test('complete original imageMedia body independently preserves all-input throw/return and actual native class identity',{timeout:60000},async t=>{
-  const inventory=spawnSync('git',['ls-files','-z','--','js/src'],{cwd:root,encoding:'utf8',timeout:10000});assert.equal(inventory.status,0);
-  const paths=inventory.stdout.split('\0').filter(path=>path.endsWith('.mjs')).sort();assert.equal(paths.length,52);
-  const sources=paths.map(path=>({path,source:readFileSync(join(root,rustPackageSourcePath(root,path)),'utf8')})),graph=createConstructorSourceGraph(sources),path='js/src/gemini-protocol.mjs',source=sources.find(row=>row.path===path).source;
+  const historicalRoot=realpathSync(mkdtempSync(join(tmpdir(),'router-original-native-source-')));t.after(()=>rmSync(historicalRoot,{recursive:true,force:true}));
+  const historical=materializeHistoricalNativeSources(historicalRoot,root),paths=historical.paths.filter(path=>path.startsWith('js/src/')&&path.endsWith('.mjs'));assert.equal(paths.length,52);
+  const sources=paths.map(path=>({path,source:historical.source(path)})),graph=createConstructorSourceGraph(sources),path='js/src/gemini-protocol.mjs',source=sources.find(row=>row.path===path).source;
   const analysis=analyzeJavaScript(source,{sourcePath:path,constructorGraph:graph}),item=analysis.program.find(row=>row.name==='image_media');
   assert.ok(item,'unchanged whole original imageMedia must check through its qualified constructor source graph');assert.equal(item.params[0].type,'value');assert.equal(item.returns,'value');assert.equal(item.conditionalConstructors,true);
   const meta=toLino(item)+'\n',program=parseMeta(meta,{constructorGraph:graph}),owner=item.sourceConstructors.owner,originalBody=source.slice(owner.start,owner.end);
-  const {ProtocolError}=await import(pathToFileURL(join(root,'js/src/protocols.mjs')).href);
+  const {ProtocolError}=await import(pathToFileURL(join(historicalRoot,'js/src/protocols.mjs')).href);
   const original=Function('ProtocolError','return ('+originalBody+');')(ProtocolError);
   let reads=0;const getter={get [Symbol.toPrimitive](){reads++;throw Error('coercion');},get value(){reads++;throw Error('property');}},proxy=new Proxy({}, {get(){reads++;throw Error('proxy');}}),revoked=Proxy.revocable({},{});revoked.revoke();
   const cases=[['jpeg','image/jpeg'],['png','image/png'],['gif','image/gif'],['webp','image/webp'],['undefined',undefined],['null',null],['false',false],['zero',0],['negative-zero',-0],['nan',NaN],['huge-bigint',10n**100n],['symbol',Symbol('opaque')],['function',()=>1],['object',{}],['getter-object',getter],['proxy',proxy],['revoked-proxy',revoked.proxy],['boxed-string',Object('image/png')],['lone-surrogate','\ud800'],['other-media','text/plain']],rows=[];
   for(const [label,value]of cases) {
-    const expected=result(()=>original(value)),actual=await asyncResult(()=>evaluateWithOriginalConstructors(program,'image_media',[value],{sourceRoot:root,executeOriginalModules:true}));
+    const expected=result(()=>original(value)),actual=await asyncResult(()=>evaluateWithOriginalConstructors(program,'image_media',[value],{sourceRoot:historicalRoot,executeOriginalModules:true}));
     assert.equal(actual.normal,expected.normal,label);
     if(expected.normal)assert.ok(Object.is(actual.value,expected.value),label);
     else {assert.ok(actual.error instanceof ProtocolError,label);assert.equal(actual.error.constructor,ProtocolError,label);assert.notEqual(actual.error,expected.error,label);assert.deepEqual(errorContract(actual.error),errorContract(expected.error),label);}

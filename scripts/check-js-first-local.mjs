@@ -29,6 +29,9 @@ export function fingerprint(stampPath) {
   if (result.status !== 0) throw new Error(result.error?.message || result.stderr || `git ls-files failed (${result.status ?? result.signal}).`);
   const files = [...new Set(result.stdout.split('\0').filter(Boolean))].sort();
   const hash = createHash('sha256');
+  // Keep file-content allocation independent of the complete evidence size.
+  // The length frame and hash bytes are identical to whole-buffer hashing.
+  const chunk = Buffer.allocUnsafe(64 * 1024);
   for (const relative of files) {
     const absolute = path.resolve(root, relative);
     if (absolute === resolvedStamp) continue;
@@ -37,7 +40,23 @@ export function fingerprint(stampPath) {
     if (fs.existsSync(absolute)) {
       const metadata = fs.lstatSync(absolute);
       kind = metadata.isSymbolicLink() ? 'symlink' : metadata.mode & 0o111 ? 'executable' : 'file';
-      content = metadata.isSymbolicLink() ? Buffer.from(fs.readlinkSync(absolute)) : fs.readFileSync(absolute);
+      if (metadata.isSymbolicLink()) content = Buffer.from(fs.readlinkSync(absolute));
+      else {
+        const descriptor = fs.openSync(absolute, 'r');
+        try {
+          const length = fs.fstatSync(descriptor).size;
+          hash.update(JSON.stringify([relative, kind, length]) + '\n');
+          let position = 0;
+          while (position < length) {
+            const bytes = fs.readSync(descriptor, chunk, 0, Math.min(chunk.length, length - position), position);
+            if (!bytes) throw new Error(`Source changed while fingerprinting: ${relative}`);
+            hash.update(chunk.subarray(0, bytes));
+            position += bytes;
+          }
+          if (fs.fstatSync(descriptor).size !== length) throw new Error(`Source changed while fingerprinting: ${relative}`);
+        } finally { fs.closeSync(descriptor); }
+        continue;
+      }
     }
     // Length framing prevents file bytes from masquerading as another path.
     // Executability and link targets are part of Git's source tree identity.

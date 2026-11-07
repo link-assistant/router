@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
+import {deriveProofScannerSourceEvolution} from './proof-scanner-source-evolution.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const PROFILE='tools/translation/source-profiles/invocation-local-freezer/complete-originals.json.gz';
@@ -54,12 +55,18 @@ export function invocationLocalFreezerSourcePairs(root=ROOT){
 export function prepareInvocationLocalFreezer({root=ROOT}={}){
  const files=[];
  for(const row of invocationLocalFreezerSourcePairs(root)){
-  const before=readFileSync(resolve(root,row.path),'utf8');if(before!==row.original&&before!==row.after)fail('unexpected complete current source');
+  const before=readFileSync(resolve(root,row.path),'utf8');let sourceEvolution=null,language=row.language,after=row.after;
+  if(before!==row.original&&before!==row.after){
+   if(row.path!=='tools/translation/private-native-proof-json.mjs')fail('unexpected complete current source');
+   sourceEvolution=deriveProofScannerSourceEvolution(before);if(sourceEvolution.original!==row.after)fail('complete original scanner source differs');
+   language=sourceEvolution.unguarded;after=sourceEvolution.current;
+  }
   const beforeMeta=serializeConcreteSyntaxMeta(transportConcreteSyntaxSource(row.original,{language:'JavaScript'}).document),first=transportConcreteSyntaxMeta(beforeMeta);if(first.source!==row.original)fail('complete original CST');
-  const sequence={languageRules:[stage(row.original,row.language,'javascript:invocation-local-immutable-scalar-traversal-costs')],repositoryRules:[stage(row.language,row.after,'router:bind-private-synchronous-proof-cost-lifetime')]};
-  const run=applyConcreteSyntaxSubstitutions(first.document,sequence),afterMeta=serializeConcreteSyntaxMeta(run.value),last=transportConcreteSyntaxMeta(afterMeta);if(last.source!==row.after)fail('complete proposed CST');
-  const inverse=applyConcreteSyntaxSubstitutions(last.document,{languageRules:[stage(row.after,row.original,'javascript:restore-complete-original-freezer')],repositoryRules:[]});if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source!==row.original)fail('complete inverse');
-  files.push({...row,before,beforeMeta,afterMeta,sequence,trace:run.trace,inverse:row.original});
+  const sequence={languageRules:[stage(row.original,language,'javascript:invocation-local-immutable-scalar-traversal-costs')],repositoryRules:[stage(language,after,'router:bind-private-synchronous-proof-cost-lifetime')]};
+  const run=applyConcreteSyntaxSubstitutions(first.document,sequence),afterMeta=serializeConcreteSyntaxMeta(run.value),last=transportConcreteSyntaxMeta(afterMeta);if(last.source!==after)fail('complete proposed CST');
+  const inverse=applyConcreteSyntaxSubstitutions(last.document,{languageRules:[stage(after,row.original,'javascript:restore-complete-original-freezer')],repositoryRules:[]});if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source!==row.original)fail('complete inverse');
+  if(readFileSync(resolve(root,row.path),'utf8')!==before)fail('complete physical source changed');
+  files.push({...row,language,after,afterSha256:hash(after),before,beforeMeta,afterMeta,sequence,trace:run.trace,inverse:row.original,sourceEvolution});
  }
  return {schema:'invocation-local-freezer-source-v1',files,newAcrossInvocationCache:false,globalRetentionPolicyUnchanged:true,invocationRecords:32768,sourceAuthority:false,runtimeAuthority:false};
 }

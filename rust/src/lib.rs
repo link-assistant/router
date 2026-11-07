@@ -85,6 +85,7 @@ pub mod error_log;
 pub mod gemini;
 pub mod gemini_bridge;
 pub mod generated_js_first;
+mod geolocation;
 pub mod git_proxy;
 pub mod github_proxy;
 pub mod gonka;

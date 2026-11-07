@@ -8,6 +8,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 import {prepareSchemarsEnclosingAdoption} from './prepare-schemars-enclosing-adoption.mjs';
+import {deriveGuardedProofLexingConsumerSource} from './prepare-guarded-proof-lexing.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),BASE='tools/translation/',PROFILE=BASE+'source-profiles/default-proof-byte-adoption/';
 const ARCHIVE=PROFILE+'complete-original-inputs.json.gz',FRAGMENT=PROFILE+'default-proof-byte-operation.mjs.txt',HELPER=BASE+'default-proof-byte-operation.mjs';
@@ -24,6 +25,18 @@ function originalInputs(root){
  for(const row of archive.files){if(originals.has(row.path)||Buffer.byteLength(row.source)!==row.bytes||hash(row.source)!==row.sha256)fail('complete original source/hash join differs');originals.set(row.path,row);}return {archive,originals};
 }
 function sourceAt(root,path){const absolute=resolve(root,path);if(!existsSync(absolute))return null;const state=lstatSync(absolute);if(!state.isFile()||state.isSymbolicLink()||state.size>2*1024*1024)fail('bounded regular complete source required: '+path);return readFileSync(absolute,'utf8');}
+function currentPrerequisites(root,originals){
+ return PREREQUISITES.map(name=>{
+  const original=originals.get(BASE+name);if(!original)fail('complete actual byte bridge prerequisite differs');const source=sourceAt(root,original.path);
+  if(source===original.source)return original;
+  if(name!=='operation-proof-byte-consumer-scope.mjs'||typeof source!=='string')fail('complete actual byte bridge prerequisite differs');
+  // Reuse the native-selected import equation, retaining the original whole
+  // source pin and both serialized/reparsed CST phases and their inverses.
+  const sourceEvolution=deriveGuardedProofLexingConsumerSource(source,original.path);
+  if(sourceEvolution.current!==source||sourceEvolution.text!==source||sourceEvolution.source!==original.source||sourceEvolution.inverse!==original.source||sourceEvolution.sourceSha256!==original.sha256)fail('complete actual byte bridge prerequisite differs');
+  return {...original,source,bytes:Buffer.byteLength(source),sha256:hash(source),original,sourceEvolution};
+ });
+}
 function parse(ts,path,source){const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete native grammar differs: '+path);return file;}
 function nativeCopy(ts,path,source){
  const file=parse(ts,path,source),detach=node=>{ts.setTextRange(node,{pos:-1,end:-1});ts.setOriginalNode(node,undefined);ts.forEachChild(node,detach);};
@@ -71,7 +84,7 @@ function producer(ts,path,before){
 export function prepareDefaultProofByteAdoption({root=ROOT}={}){
  root=resolve(root);const ts=compiler(root);
  const {archive,originals}=originalInputs(root);
- const prerequisiteInputs=PREREQUISITES.map(name=>{const row=originals.get(BASE+name);if(!row||sourceAt(root,row.path)!==row.source)fail('complete actual byte bridge prerequisite differs');return row;});
+ const prerequisiteInputs=currentPrerequisites(root,originals);
  const fragment=readFileSync(resolve(root,FRAGMENT),'utf8');if(hash(fragment)!==FRAGMENT_PIN)fail('complete authored internal adapter differs');parse(ts,HELPER,fragment);
  const schemars=prepareSchemarsEnclosingAdoption({root}),schemarsRow=one(schemars.files.filter(row=>row.path===ENCLOSING),'complete Schemars import predecessor');if(schemarsRow.before!==originals.get(ENCLOSING).source)fail('complete original Schemars birth differs');
  const files=[];for(const name of CONSUMERS){const path=BASE+name,before=originals.get(path).source,result=consumer(ts,path,before);files.push({...equation(ts,root,path,before,result.language,result.language,result.edits),serializerBindings:result.bindings});}
@@ -89,7 +102,7 @@ export function prepareDefaultProofByteAdoption({root=ROOT}={}){
 export function prepareDefaultProofByteEnclosingHistory({root=ROOT}={}){
  root=resolve(root);const ts=compiler(root),{archive,originals}=originalInputs(root),schemars=prepareSchemarsEnclosingAdoption({root}),birth=one(schemars.files.filter(row=>row.path===ENCLOSING),'complete Schemars history predecessor');if(birth.before!==originals.get(ENCLOSING).source)fail('complete original Schemars birth differs');
  const fragment=readFileSync(resolve(root,FRAGMENT),'utf8');if(hash(fragment)!==FRAGMENT_PIN)fail('complete authored internal adapter differs');const helper=sourceAt(root,HELPER);if(helper!==null&&helper!==fragment)fail('complete current internal adapter differs');
- const prerequisiteInputs=PREREQUISITES.map(name=>{const row=originals.get(BASE+name);if(!row||sourceAt(root,row.path)!==row.source)fail('complete current byte bridge prerequisite differs');return row;});
+ const prerequisiteInputs=currentPrerequisites(root,originals);
  const result=entry(ts,root,ENCLOSING,birth.after,'createDeriveEnclosingNamespaceContext','createUnscopedDeriveEnclosingNamespaceContext','createUnscopedDeriveEnclosingNamespaceContext({deriveContext})'),row={...equation(ts,root,ENCLOSING,birth.after,result.language,result.after,result.edits),repositorySelections:result.repositoryEdits,originalEntry:result.originalEntry,originalCall:result.originalCall,current:sourceAt(root,ENCLOSING)};
  if(![birth.before,row.before,row.after].includes(row.current))fail('complete physical enclosing source differs from exact import/wrapper history');if(row.current===row.after&&helper!==fragment)fail('complete installed byte wrapper helper is absent');if(row.inverse!==birth.after)fail('complete wrapper inverse differs from import predecessor');
  if(hash(readFileSync(resolve(root,ARCHIVE)))!==ARCHIVE_PIN||readFileSync(resolve(root,FRAGMENT),'utf8')!==fragment||sourceAt(root,HELPER)!==helper||sourceAt(root,ENCLOSING)!==row.current)fail('complete enclosing history inputs changed');for(const input of prerequisiteInputs)if(sourceAt(root,input.path)!==input.source)fail('complete enclosing history byte bridge changed');

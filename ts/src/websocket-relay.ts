@@ -1,11 +1,42 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=6bb28f05cbf332aea5e85206b4ab4c50578f27de6c0310c70ca690e519ec2c89; dynamic any annotations are explicit draft gaps.
+// Meta sha256=bbcf4d57a0d74b756b6596926ba17234fe9296d0bfd7dbd63001b0e8ed61c50b; dynamic any annotations are explicit draft gaps.
 import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { createHash, randomBytes } from 'node:crypto';
 import { ProtocolError, normalizeUsage } from "./protocols.js";
+import { sanitizeGeolocation, sharesGeolocation } from "./geolocation.js";
 const guid: string = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 const accept: any = (key?: any): string => createHash('sha1').update(key + guid).digest('base64');
+export function encodeWebSocketFrame(opcode?: any, payload?: any, masked: any = true): any {
+    const prefix: number = payload.length < 126 ? 2 : payload.length <= 65535 ? 4 : 10;
+    const header: any = (Buffer as any).alloc(prefix + (masked ? 4 : 0));
+    (header as any)[0] = 0x80 | opcode;
+    (header as any)[1] = (masked ? 0x80 : 0) | (prefix === 2 ? payload.length : prefix === 4 ? 126 : 127);
+    if (prefix === 4)
+        header.writeUInt16BE(payload.length, 2);
+    if (prefix === 10)
+        header.writeBigUInt64BE(BigInt(payload.length), 2);
+    const body: any = (Buffer as any).from(payload);
+    if (masked) {
+        const mask: any = randomBytes(4);
+        mask.copy(header, prefix);
+        for (let i: any = 0; i < body.length; i++)
+            (body as any)[i] ^= (mask as any)[i % 4];
+    }
+    return (Buffer as any).concat([header, body]);
+}
+export function privateWebSocketPayload(opcode?: any, payload?: any, share: any = false): any {
+    if (opcode !== 1 || share)
+        return payload;
+    let value: any;
+    try {
+        (value as any) = (JSON as any).parse((payload.toString as any)('utf8'));
+    }
+    catch {
+        return payload;
+    }
+    return sanitizeGeolocation(value) ? (Buffer as any).from((JSON as any).stringify(value)) : payload;
+}
 const closeFrame: any = (code?: any, reason?: any, masked: any = false): any => {
     const text: any = (Buffer as any).from(reason).subarray(0, 123), payload: any = (Buffer as any).alloc(2 + text.length);
     payload.writeUInt16BE(code);
@@ -105,6 +136,7 @@ export async function relayWebSocket(incoming: any, downstream: any, head: any, 
         return;
     }
     const { url, headers, claims }: any = binding, upstreamKey: string = randomBytes(16).toString('base64');
+    const shareGeolocation: boolean = sharesGeolocation(new (Headers as any)(incoming.headers));
     const options: any = { method: 'GET', headers: { ...(Object as any).fromEntries(headers), connection: 'Upgrade', upgrade: 'websocket', 'sec-websocket-key': upstreamKey, 'sec-websocket-version': '13' }, timeout: timeoutMs };
     let connecting: any = true;
     const request: any = (url.protocol === 'https:' ? httpsRequest : httpRequest)(url, options);
@@ -142,29 +174,29 @@ export async function relayWebSocket(incoming: any, downstream: any, head: any, 
             await core.tokens?.settle?.(tokenId, 0, 0);
         } };
         const fromClient: any = new (WebSocketInspector as any)({ masked: true, maxMessageBytes, onMessage: async (opcode?: any, payload?: any): Promise<void> => {
-                if (opcode !== 1)
-                    return;
                 let event: any;
                 try {
-                    (event as any) = (JSON as any).parse((payload.toString as any)('utf8'));
+                    if (opcode === 1)
+                        (event as any) = (JSON as any).parse((payload.toString as any)('utf8'));
                 }
-                catch {
-                    return;
+                catch { }
+                if ((event as any)?.type === 'response.create') {
+                    const model: any = (event as any).response?.model ?? (event as any).model;
+                    const allowed: any = claims.record?.model_policy?.allowed_models ?? [];
+                    if (allowed.length && (!model || !(allowed.includes as any)(model)))
+                        throw new (ProtocolError as any)(model ? 'model_not_allowed' : 'model_required', 403);
+                    if (model)
+                        await (authorize as any)(model);
+                    if (tokenId && core.tokens?.admit) {
+                        const admitted: any = await (core.tokens.admit as any)(tokenId, 0);
+                        if (admitted === false || typeof admitted === 'string' && admitted !== 'admitted')
+                            throw new (ProtocolError as any)('Router token budget is exhausted', 429);
+                        inFlight++;
+                    }
                 }
-                if ((event as any).type !== 'response.create')
-                    return;
-                const model: any = (event as any).response?.model ?? (event as any).model;
-                const allowed: any = claims.record?.model_policy?.allowed_models ?? [];
-                if (allowed.length && (!model || !(allowed.includes as any)(model)))
-                    throw new (ProtocolError as any)(model ? 'model_not_allowed' : 'model_required', 403);
-                if (model)
-                    await (authorize as any)(model);
-                if (tokenId && core.tokens?.admit) {
-                    const admitted: any = await (core.tokens.admit as any)(tokenId, 0);
-                    if (admitted === false || typeof admitted === 'string' && admitted !== 'admitted')
-                        throw new (ProtocolError as any)('Router token budget is exhausted', 429);
-                    inFlight++;
-                }
+                const frame: any = encodeWebSocketFrame(opcode, privateWebSocketPayload(opcode, payload, shareGeolocation));
+                if (!upstream.write(frame))
+                    await new (Promise as any)((resolve?: any): any => upstream.once('drain', resolve));
             } });
         const fromUpstream: any = new (WebSocketInspector as any)({ masked: false, maxMessageBytes, onMessage: async (opcode?: any, payload?: any): Promise<void> => {
                 if (opcode !== 1)
@@ -188,19 +220,20 @@ export async function relayWebSocket(incoming: any, downstream: any, head: any, 
                 if (inFlight > 0)
                     inFlight--;
             } });
-        const forward: any = (source?: any, sink?: any, inspector?: any, initial?: any): void => {
+        const forward: any = (source?: any, sink?: any, inspector?: any, initial?: any, raw: any = true): void => {
             let pending: any = (Promise as any).resolve();
             const consume: any = (chunk?: any): void => { source.pause(); (pending as any) = pending.then(async (): Promise<void> => { if (closed)
-                return; await (inspector.feed as any)(chunk); if (!(sink.write as any)(chunk))
+                return; await (inspector.feed as any)(chunk); if (raw && !(sink.write as any)(chunk))
                 await new (Promise as any)((resolve?: any): any => (sink.once as any)('drain', resolve)); source.resume(); }).catch((): Promise<void> => stop(1008, 'Router rejected WebSocket message')); };
             (source.on as any)('data', consume);
-            (source.once as any)('end', (): void => { sink.end(); });
+            (source.once as any)('end', (): void => { (pending as any) = pending.then((): any => sink.end()); });
             (source.once as any)('error', (): Promise<void> => stop(1011, 'WebSocket peer disconnected'));
-            (source.once as any)('close', (): void => { sink.destroy(); });
+            (source.once as any)('close', (): void => { if (!source.readableEnded)
+                void pending.then((): any => sink.destroy()); });
             if (initial.length)
                 consume(initial);
         };
-        forward(downstream, upstream, fromClient, head);
+        forward(downstream, upstream, fromClient, head, false);
         forward(upstream, downstream, fromUpstream, upstreamHead);
     });
     request.end();

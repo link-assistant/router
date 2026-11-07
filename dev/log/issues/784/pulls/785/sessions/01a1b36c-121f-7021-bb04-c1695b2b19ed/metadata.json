@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 3,
+  "collectedAt": "2026-11-07T05:23:26.401Z",
+  "issueNumber": "784",
+  "prNumber": "785",
+  "branchName": "issue-784-1f6838f56841",
+  "tool": null,
+  "sessionId": "01a1b36c-121f-7021-bb04-c1695b2b19ed",
+  "rawCommand": null,
+  "developmentLogDirectory": "./dev/log/issues/784/pulls/785",
+  "caseStudyDirectory": "./docs/case-studies/issue-784",
+  "artifacts": {
+    "solveLog": "./dev/log/issues/784/pulls/785/sessions/01a1b36c-121f-7021-bb04-c1695b2b19ed/solve.log",
+    "solveLogRange": {
+      "startByte": 0,
+      "endByte": 17325058
+    },
+    "sessionFiles": []
+  }
+}

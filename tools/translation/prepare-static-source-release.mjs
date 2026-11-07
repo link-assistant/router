@@ -23,7 +23,14 @@ function stages(ts,path,original,language,after,before){
 }
 export function prepareStaticSourceRelease({root=ROOT}={}){
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');
- const current=readFileSync(resolve(root,FILE),'utf8');let original=current.includes(MARKER)?current.slice(0,current.indexOf(MARKER)):current;const importAt=original.startsWith('#!')?original.indexOf('\n')+1:0;if(original.slice(importAt).startsWith(IMPORT))original=original.slice(0,importAt)+original.slice(importAt+IMPORT.length);
+ const current=readFileSync(resolve(root,FILE),'utf8');if(current.split(MARKER).length>2)fail('one complete generated variant boundary required');let original=current.includes(MARKER)?current.slice(0,current.indexOf(MARKER)):current;
+ const originalFile=grammar(ts,FILE,original),imported=originalFile.statements.filter(node=>ts.isImportDeclaration(node)&&ts.isStringLiteral(node.moduleSpecifier)&&['./original-json-intrinsics.mjs','./static-source-layout-storage.mjs'].includes(node.moduleSpecifier.text)&&node.importClause?.namedBindings&&ts.isNamedImports(node.importClause.namedBindings)&&node.importClause.namedBindings.elements.some(element=>['originalBatchedDataFreezeIntrinsicsUnchanged','encodeStaticSourceStorageIncremental'].includes((element.propertyName??element.name).text)));
+ let importAt=original.startsWith('#!')?original.indexOf('\n')+1:0;
+ if(imported.length){
+  if(imported.length!==2)fail('both complete allocation imports required');importAt=imported[0].getStart(originalFile);
+  if(original.slice(importAt,imported[1].end+1)!==IMPORT)fail('exact adjacent allocation imports required');
+  original=original.slice(0,importAt)+original.slice(importAt+IMPORT.length);
+ }
  const file=grammar(ts,FILE,original),functions=file.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text==='prepareStaticSourceLifecycleProposal');if(functions.length!==1)fail('one complete original producer required');
  const definition=functions[0].getText(file),rules=[
   ['export function prepareStaticSourceLifecycleProposal(','export function prepareStaticSourceLifecycleProposalReleased('],
