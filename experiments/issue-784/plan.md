@@ -497,9 +497,12 @@ remain explicitly unmet parts of the literal all-tool requirement.
       and public type checking before a memory stop during native type checking:
       392.96 seconds, exit 143, 2878582784 sampled total-cgroup bytes. All owned
       processes are reaped. Remaining commands are unrun; no green stamp exists.
-- [ ] Preserve the complete new evidence in a verified packet, review the source
-      batch, and publish the explicitly incomplete draft checkpoint. Collect
-      the entire next CI cycle before any subsequent push.
+- [x] Preserve 239 complete originals / 66232495 logical bytes in the new
+      phased/Clone packet at `5ce0b64b5`. Every complete member and unchanged
+      selected input verifies. Capture takes 38.02 seconds, peak sampled cgroup
+      2057351168 bytes, without a resource stop. Earlier packets remain intact.
+- [ ] Publish the reviewed explicitly incomplete draft checkpoint. Collect the
+      entire next CI cycle before any subsequent push.
 - [ ] Repair remaining source/semantic/deadline/generation failures and pass
       the mandatory complete local gate on the integrated immutable source.
 - [ ] Obtain all green same-head CI and finish the remaining all-tool privacy

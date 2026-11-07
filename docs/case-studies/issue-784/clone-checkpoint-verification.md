@@ -48,3 +48,10 @@ The broader Clone Node receiving command still fails an original 60000 ms
 deadline at 78901.82 ms; its Bun counterpart is stopped by the memory observer.
 No old pin, assertion, limit or deadline is relaxed. Actual ordinary/owned
 generation, source provenance, strict parity and all-tool privacy remain open.
+
+The complete phased/Clone packet at `5ce0b64b5` retains 239 complete originals /
+66232495 logical bytes in 14250376 archive bytes. Every full member and selected
+input verifies; archive SHA256 is
+`c093255d9dde5dbb9cf84a278b8b3d6e86750aeeaac87633fc1af4ab3bdd1b98`.
+Capture takes 38.02 seconds with 2057351168 sampled total-cgroup bytes, no resource
+stop and all owned processes reaped. Earlier evidence packets remain intact.
