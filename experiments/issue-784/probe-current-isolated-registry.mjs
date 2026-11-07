@@ -7,6 +7,8 @@ import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
 import {prepareIsolatedProjectCompiler} from '../../tools/translation/prepare-isolated-project-compiler.mjs';
 import {transportConcreteSourcePhases} from '../../tools/translation/concrete-phased-equations.mjs';
+const label=process.argv[2]??'current-isolated';
+if(process.argv.length>3||!/^[-a-z0-9]{1,64}$/.test(label))throw Error('Use one finite evidence label');
 const root=resolve('.'),revision=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const profile='tools/translation/source-profiles/isolated-project-compiler/manifest.json.gz';
@@ -35,7 +37,7 @@ try{
   originalRegistrySha256:hash(originalRegistry),allCapturedInputsCurrent:true,originalRegistryUnchanged:true,
   installed:false,productionExecutableGain:0,semanticAuthority:false,runtimeParity:false};
  const raw=Buffer.from(JSON.stringify(result));if(raw.length>32*1024*1024)throw Error('Finite complete proposal evidence bound');
- const target='ci-logs/issue-784-restart-2/current-isolated-registry-proposal.json.gz';
+ const target='ci-logs/issue-784-restart-2/'+label+'-registry-proposal.json.gz';
  writeFileSync(target,gzipSync(raw),{flag:'wx'});
  if(!gunzipSync(readFileSync(target),{maxOutputLength:32*1024*1024}).equals(raw))throw Error('Complete current registry proposal readback differs');
  console.log(JSON.stringify({target,bytes:raw.length,sha256:hash(raw),revision,files:registry.files,

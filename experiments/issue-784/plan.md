@@ -106,8 +106,15 @@ no Rust tool invocations, compressed evidence below 500 MB, preserve all strict 
       measurement. No unmatched profile establishes a measured speed gain.
 - [x] Reclaim 42037248 allocated bytes only from four inactive PR-diff duplicates
       after complete unchanged-packet readback and active-descriptor checks.
-- [ ] Review and commit the coherent private regeneration source batch, refresh
-      the complete current registered compiler, then preserve all new evidence.
+- [x] Review and commit private regeneration source at `84f791d10`; refresh all
+      1782 complete compiler/TypeScript inputs and 463 genuine portable objects.
+      Preserve the old complete registration and concrete Git fixture unchanged.
+      The whole isolated Node file passes all eight cases and duration auditing.
+- [x] Preserve the premature exported-compiler attempt: six cases pass and three
+      correctly refuse uncommitted bootstrap bytes. Commit before rerunning;
+      source provenance and original test limits remain unchanged.
+- [ ] Complete whole exported and isolated Node/Bun receiving checks, run the
+      mandatory complete gate on the committed batch, and preserve all evidence.
 - [ ] Collect and inspect every terminal `bea75c2c1` CI result before publishing
       any next repair batch. At 21:34 UTC, forward and profile jobs still run;
       TypeScript/parity fail and reverse reaches its original job limit.

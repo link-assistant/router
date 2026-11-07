@@ -64,6 +64,17 @@ complete original-byte verification against unchanged earlier packets and an
 active-file-descriptor check, reclaiming 42,037,248 allocated bytes. Earlier
 packets were retained.
 
+The complete compiler registration is refreshed from source commit
+`84f791d10fcad6e0d7efca1f5106a53f3e8bad5f`: 1,782 compiler/TypeScript files and
+57,218,035 source bytes, with 463 genuine portable Git objects. Six complete
+previous registration/fixture files remain in the historical source archive;
+the earlier concrete Git profile remains exact. Independent proposal reproduction
+and complete physical source joins pass. The whole eight-case isolated Node
+file passes its independent deadline audit. An initial export attempt correctly
+refused the still-uncommitted refreshed bootstrap bytes: six cases passed and
+three refused before export. That full failed attempt is retained. Export
+receiving checks require the refresh commit, rather than relaxed provenance.
+
 This batch adds zero measured executable production functions. Original deadline,
 whole Bun, generation, strict parity and complete gate requirements remain open.
 No local Rust tools were invoked.
