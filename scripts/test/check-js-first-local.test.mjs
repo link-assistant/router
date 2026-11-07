@@ -144,6 +144,52 @@ test('green stamps require strict parity, every stage and unchanged tracked/untr
   } finally { process.chdir(previous); fs.rmSync(directory, { recursive: true, force: true }); }
 });
 
+test('fingerprints stream regular files with unchanged complete content, mode, link and deleted framing', () => {
+  const previous = process.cwd(), directory = fs.mkdtempSync(path.join(os.tmpdir(), 'router-gate-stream-'));
+  const readFile = fs.readFileSync, read = fs.readSync;
+  try {
+    process.chdir(directory);
+    execFileSync('git', ['init', '-q']);
+    execFileSync('git', ['config', 'user.name', 'Gate Test']);
+    execFileSync('git', ['config', 'user.email', 'gate@example.invalid']);
+    const large = path.join(directory, 'large.bin'), bytes = Buffer.alloc(2 * 65536 + 17);
+    for (let at = 0; at < bytes.length; at++) bytes[at] = at % 251;
+    fs.writeFileSync(large, bytes); fs.chmodSync(large, 0o755);
+    fs.writeFileSync('Ω.js', 'export const value = "😀";\n'); fs.symlinkSync('Ω.js', 'linked');
+    fs.writeFileSync('deleted.js', 'deleted'); fs.writeFileSync('empty', '');
+    execFileSync('git', ['add', '.']); execFileSync('git', ['commit', '-qm', 'stream fixture']);
+    fs.unlinkSync('deleted.js'); fs.writeFileSync('untracked', 'new input');
+    const stampPath = path.join(directory, 'stamp.json'); fs.writeFileSync(stampPath, 'excluded stamp');
+    const names = [...new Set(execFileSync('git', ['ls-files', '-co', '--exclude-standard', '-z'], {encoding:'utf8'}).split('\0').filter(Boolean))].sort();
+    const expected = createHash('sha256');
+    for (const name of names) {
+      if (name === 'stamp.json') continue;
+      let kind = 'deleted', content = Buffer.alloc(0);
+      if (fs.existsSync(name)) {
+        const metadata = fs.lstatSync(name);
+        kind = metadata.isSymbolicLink() ? 'symlink' : metadata.mode & 0o111 ? 'executable' : 'file';
+        content = metadata.isSymbolicLink() ? Buffer.from(fs.readlinkSync(name)) : readFile(name);
+      }
+      expected.update(JSON.stringify([name, kind, content.length]) + '\n').update(content);
+    }
+    const identity = {headSha:execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim(),treeHash:expected.digest('hex')};
+    const inode = fs.statSync(large).ino, reads = [];
+    fs.readFileSync = function (name, ...args) {
+      assert.notEqual(path.resolve(String(name)), large, 'regular content must not use a whole-file buffer');
+      return Reflect.apply(readFile, this, [name, ...args]);
+    };
+    fs.readSync = function (descriptor, buffer, offset, length, position) {
+      if (fs.fstatSync(descriptor).ino === inode) { assert.ok(length <= 65536); reads.push({length,position}); }
+      return Reflect.apply(read, this, [descriptor,buffer,offset,length,position]);
+    };
+    assert.deepEqual(fingerprint(stampPath), identity);
+    assert.deepEqual(reads, [{length:65536,position:0},{length:65536,position:65536},{length:17,position:131072}]);
+  } finally {
+    fs.readFileSync = readFile; fs.readSync = read;
+    process.chdir(previous); fs.rmSync(directory, {recursive:true,force:true});
+  }
+});
+
 test('large tracked path inventories remain fingerprinted beyond the default subprocess buffer', () => {
   const previous = process.cwd();
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'router-gate-large-tree-'));

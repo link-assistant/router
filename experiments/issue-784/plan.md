@@ -231,7 +231,15 @@ remain explicitly unmet parts of the literal all-tool requirement.
       matrix in the full TypeScript CI stage.
 - [x] Preserve separate file-cache observations. Advising inactive evidence
       pages and tracked source pages removes no files and does not reclaim disk.
-- [ ] Run the required complete local gate for this source batch with an owned
-      cgroup observer; retain all actual failures and unrun commands.
+- [x] Attempt the required complete local gate at clean `579511eee` with the
+      owned cgroup observer. It exits 143 after 27.65 seconds while fingerprinting,
+      before any stage starts; every stage remains unrun for that attempt.
+- [x] Draft bounded streaming for regular-file fingerprint content, preserving
+      original framing. The complete gate test file fails only the new regression
+      against its original module (9/10), then passes against current code (10/10).
+      Resource observations include substantial cached file data and do not prove
+      that this buffer-allocation change repairs the complete gate.
+- [ ] Repeat the required complete gate after the changed fingerprint, preserving
+      any resource stop, every actual stage result and unrun commands.
 - [ ] Obtain a green complete local gate and all same-head CI checks; full
       parity and the literal universal privacy requirements remain unfinished.

@@ -69,3 +69,34 @@ receipt, strict TypeScript output and both file-page observations. The published
 `007dc7f3a` CI cycle was still running when this source draft was committed; its
 results do not qualify `1319e283f`. No changed heap literal, relaxed deadline,
 inventory-only parity claim or JavaScript bypass authorizes Rust execution.
+
+## Local gate fingerprint
+
+The complete local gate was attempted on clean
+`579511eee1cd9de9aa01ce51b73b5c4145d0526f`, with Node 20.20.2, installed TypeScript
+5.9.3 and an inherited 768 MiB diagnostic heap. The actual command remained
+`node scripts/check-js-first-local.mjs`. The cgroup observer stopped its process
+group after 27.649860 seconds at 2,868,326,400 sampled bytes. It exited 143 while
+fingerprinting, before logging the first stage. All seven stages remain unrun
+for that attempt; there is no green gate stamp.
+
+The gate's regular-file content hashing now uses one 64 KiB buffer rather than
+allocating a whole buffer per file. It retains the exact previous path, mode,
+UTF-8 link-target, deletion and content-length framing. File growth or premature
+EOF refuses the fingerprint. This bounds temporary content-buffer allocation;
+it does not limit operating-system file caching or establish a successful gate.
+
+The complete `check-js-first-local.test.mjs` file runs against both modules with
+only its three import targets and original resource URL rebound. Against the
+unchanged module from `579511eee`, 9 cases pass and the new bounded-read
+regression fails. Against the current module all 10 pass. The regression also
+compares the complete fingerprint against the previous algorithm for binary,
+Unicode, executable, symbolic-link, empty, deleted and untracked inputs. Existing
+stamp invalidation, full stage discovery and source deadlines remain tested.
+The two runs took 27.07 seconds together with a 1,768,607,744-byte sampled cgroup
+peak and no resource stop. Their complete logs and module/test hashes remain in
+`gate-fingerprint-before.log`, `gate-fingerprint-after.log` and
+`gate-fingerprint-before-after.json` under the investigation evidence directory.
+The complete syntax lint also passes for 1,757 JavaScript files in 98.80 seconds,
+with a 1,592,250,368-byte sampled cgroup peak. It is a focused check; the complete
+gate after this fingerprint change remains unrun at this checkpoint.
