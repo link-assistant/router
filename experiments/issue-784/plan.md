@@ -200,3 +200,28 @@ original inputs, counts and deadlines; they do not certify current-source parity
 Current focused compiler checks use one worker and bounded 768 MiB heaps.
 Transport IPs, vendor security inference, account settings and direct traffic
 remain explicitly unmet parts of the literal all-tool requirement.
+
+## Independent source draft during checkpoint 007dc7f3a CI
+
+- [x] Publish checkpoint `007dc7f3a` only on the prepared branch and update PR
+      #785's actual title/body, preserving draft status and failed/unrun evidence.
+- [x] Compare all 165 complete downloaded PR diff sections against the committed
+      local diff, normalizing only object-ID abbreviation lines: all match.
+- [ ] Collect the entire seven-workflow same-head cycle once every run finishes;
+      the cycle was still running when this source draft began.
+- [x] Test a finite token-layout allocation hypothesis on eight actual files in
+      separate 256 MiB processes. Preserve Node 26's small difference and Node
+      20's material difference without calling either full compiler evidence.
+- [x] Derive a guarded module-view token copy through native bindings and both
+      complete CST phases/inverses, preserving the full pinned original source.
+- [x] Finish both complete receiving files on Node 20 and Bun: 17/17 each, plus
+      a passing independent Node deadline audit with TypeScript 5.9.3. Compare
+      every tracked rust/src Rust file and complete customized-operation traces.
+- [x] Verify the actual guarded implementation's finite Node 20 comparison:
+      47824 token values and complete view/item digests match; retained heap
+      deltas are 14819416 original and 5664408 guarded bytes after explicit GC.
+- [ ] Attempt actual complete production generation after this source change,
+      with the original heap controls and an owned cgroup observer; preserve
+      all failed, interrupted and unrun results honestly.
+- [ ] Obtain a green complete local gate and all same-head CI checks; full
+      parity and the literal universal privacy requirements remain unfinished.

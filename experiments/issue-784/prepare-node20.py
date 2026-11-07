@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 """Prepare only the checksum-verified Node binary needed by compiler checks."""
+import argparse
 import hashlib
 import json
 from pathlib import Path
 import subprocess
 import tarfile
 
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--receipt', type=Path,
+                    default=Path('ci-logs/issue-784-restart-2/storage-node-toolchain.json'))
+args = parser.parse_args()
+if args.receipt.exists():
+    raise SystemExit('Refusing to replace existing toolchain receipt: ' + str(args.receipt))
 root = Path('experiments/issue-784/toolchain')
 root.mkdir(exist_ok=True)
 name = 'node-v20.20.2-linux-x64'
@@ -40,6 +47,6 @@ receipt = {'archive': str(archive), 'archiveSha256': actual,
            'officialChecksumUrl': base + sums.name, 'binary': str(binary),
            'binarySha256': hashlib.sha256(binary.read_bytes()).hexdigest(),
            'version': version, 'purpose': 'Complete compiler receiving checks only'}
-Path('ci-logs/issue-784-restart-2/storage-node-toolchain.json').write_text(
-    json.dumps(receipt) + '\n')
+with args.receipt.open('x') as output:
+    output.write(json.dumps(receipt) + '\n')
 print(json.dumps(receipt))

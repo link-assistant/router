@@ -4,6 +4,7 @@
 import {createHash} from 'node:crypto';
 import {sourceItems} from './rust-structure.mjs';
 import {compilationProfile,itemConfiguration} from './cfg-profile.mjs';
+import {originalStaticSourceIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const identifier=/^[\p{ID_Start}_][\p{ID_Continue}_]*$/u;
 const states=new WeakMap();
@@ -13,7 +14,10 @@ const condition=(parent,own)=>parent==='inactive'||own==='inactive'?'inactive':p
 function originalItems(source,span,budget){
   const text=source.slice(span.start,span.end);budget.parsedBytes+=Buffer.byteLength(text);
   if(budget.parsedBytes>SOURCE_MODULE_VIEW_PROFILE.maxParsedBytes)throw new TypeError('Original module views exceed the parsed-byte bound');
-  const items=sourceItems(text).filter(item=>!item.comment).map(item=>({...item,start:item.start+span.start,end:item.end+span.start,tokens:item.tokens.map(token=>({...token,start:token.start+span.start,end:token.end+span.start}))}));
+  // Only the private lexer under unchanged native operations establishes this
+  // four-field token shape. Every observed/customized route keeps its old copy.
+  const ordinaryTokens=typeof text==='string'&&originalStaticSourceIntrinsicsUnchanged();
+  const items=sourceItems(text).filter(item=>!item.comment).map(item=>({...item,start:item.start+span.start,end:item.end+span.start,tokens:item.tokens.map(ordinaryTokens?token=>({type:token.type,text:token.text,start:token.start+span.start,end:token.end+span.start}):token=>({...token,start:token.start+span.start,end:token.end+span.start}))}));
   budget.items+=items.length;if(budget.items>SOURCE_MODULE_VIEW_PROFILE.maxItems)throw new TypeError('Original module views exceed the item bound');
   return items;
 }
