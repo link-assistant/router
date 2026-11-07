@@ -66,3 +66,12 @@ The initial fingerprint alone receives inactive-page cache advice before any
 stage begins; no active test deadline is paused. The complete inspection checks
 every reported Node stream, terminal receipt and audit and verifies that all
 owned processes are reaped. No green stamp or current-head parity is established.
+
+The [complete evidence packet](evidence/matrix-draft-complete.tar.xz) and
+[full receipt](evidence/matrix-draft-complete.json.gz) retain 155 whole originals,
+29412541 logical bytes, including the completed preceding CI cycle and all
+newly reported terminal Node attempts. Every original and decoded archive
+member verifies. Archive size is 14166384 bytes, SHA256
+`4cfd666e943a68c8b72ed3e5263599d7a307dce5750dccde963e1e867eed6835`.
+The observed capture completes in 15.62 seconds, sampled peak 2367291392 bytes.
+These are storage and resource observations, not a green gate or parity result.

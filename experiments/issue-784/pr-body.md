@@ -93,7 +93,10 @@ shows actual Codex/Claude defaults and opt-in. The
 and [custody verification](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/matrix-draft-custody-verification.md)
 distinguish passed, failed and unrun checks. Complete evidence packets preserve
 original logs, artifacts, source variants, failed probes and terminal receipts;
-all earlier public packets remain intact.
+all earlier public packets remain intact. The
+[complete current packet](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/evidence/matrix-draft-complete.tar.xz)
+verifies 155 complete originals and 29412541 logical bytes; the separate native
+batch packet preserves its complete original CPU profiles and failed attempts.
 
 **Draft and unmerged; issue completion remains unfinished.** The compiler,
 profile, parity and same-SHA Rust qualification criteria remain open. The literal
