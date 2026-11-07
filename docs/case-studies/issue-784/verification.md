@@ -3,6 +3,60 @@
 No green gate stamp, complete parity, vendor-account change, or blanket
 geolocation guarantee has been established. Rust tools remain unrun locally.
 
+## Completed CI cycle at 7586d14b1 and export repair
+
+[Run 42330245583](https://github.com/link-assistant/router/actions/runs/42330245583)
+checked head `7586d14b1331823be35a1289ad01c49e6018ffa9`, using merge
+`31dff4f6bf4412069c4cb5c89d04f7bae739f1b6`. The complete cycle ran from
+**2026-11-07 02:38:30 to 03:38:58 UTC** and failed. Every same-head workflow
+finished before further repairs. Complete workflow/job logs and all three
+original artifact ZIPs, including hidden reverse deadline files, were downloaded
+under `ci-logs/restart-published-complete-*`.
+
+| Stage | Result and original log location |
+| --- | --- |
+| Lint, native Node, native Bun | Passed; both native suites passed all 259 cases. |
+| TypeScript | Strict APIs, generation freshness, 165 strict native files, nine receiving cases and their independent deadline audit, 259 shared expectations, compiled Bun, and 32 strict translator fixture modules passed. Regeneration took 52729.63655 ms against the original 60000 ms limit. The stage then failed on `Missing TypeScript output tree: neutral`, `typescript.log:452`; later commands were unrun. |
+| Parity | All 121 acceptance cases passed. Strict verification failed: stale account-policy source hash, 441 draft gaps, 847 declared sources and 12345 carried items, `parity.log:871–875`. |
+| Profile matrix | Neutral worker aborted at its V8 heap limit, `profile-matrix.log:261`. |
+| Reverse translation | Original 15-minute CI limit reached after completed case 76, `reverse-translation.log:656`. No final complete audit or later Bun/regeneration result exists. |
+| Forward translation | Original 60-minute CI limit reached, `translation.log:6744`. The incomplete portion reported 31 failing entries, including a file-level exit. This is not a complete-cohort count or evidence that 43 previous failures were fixed. |
+| Aggregate and Rust | Aggregate failed; all Rust/release jobs stayed skipped. No Rust qualification exists. |
+
+Forward failures include unchanged historical compiler/alias/composer/scanner
+pins, original 60000 ms case timeouts, and a newly exposed export failure at
+`translation.log:5953–5972`: the regenerated current-source archive was
+**5245605 bytes**, above the exporter's unchanged **4194304-byte** individual
+file bound. This is a PR-introduced failure. The complete failure index and all
+blocks are in `restart-published-complete-forward-failures.json`.
+
+The repair factors only matching repeated Git blob identifiers through the
+existing source dictionary. The explicit `source-and-blob-index-v1` metadata
+encoding preserves key order and every original value. Old plain metadata and
+`source-index-v1` archives remain readable; foreign or absent Git blobs retain
+their literal old representation. New integer-index and dictionary refusals
+apply to both full and text-only reads. These are storage DATA operations and
+grant no source, CST, semantic or executable authority.
+
+Both complete fixture producers now use gzip level 9. The strict producer copy
+was regenerated through its existing native/CST source derivation, with an
+independent assertion that only the two compression-level literals changed.
+The complete source fixture was then regenerated through its normal producer
+under Node 20.20.2 with a 768 MiB old-space bound. Its archive is
+**4134635 bytes**, SHA256
+`c41c1333a471268c8401424d34e806438ad1bf589287396b87de75b5ca77d29a`.
+Its original logical byte count/hash, current source-set hash, both historical
+universes, every 867 current source byte and NOTICE remain unchanged.
+No resource bound, test deadline, assertion or parity status was increased.
+
+Five complete transport inverse/refusal tests passed under Node 26.13.0 and
+Bun 1.4.4 before integration. Complete receiving/export checks and the next
+full gate/CI cycle remain unqualified at this source snapshot. Actual results
+and their exact SHA must be recorded separately; these five passes cannot
+qualify the previously failed gate. Source proposals, independent reviews and
+bounded compression experiments are retained under `ci-logs/restart-export-*`
+and the task experiment directory.
+
 ## Restart regression and configuration audit
 
 The restart began from published head `1e6e0b36a9acb13cc7b829d7b6e3455e9a4b7c70`;

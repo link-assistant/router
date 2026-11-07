@@ -7,7 +7,8 @@ import {gunzipSync} from 'node:zlib';
 import {decodeStaticSourceTextData} from '../../tools/translation/static-source-layout-storage.mjs';
 
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-const receipt=JSON.parse(readFileSync('ci-logs/restart-static-proposal.json'));
+const label=process.argv[2]??'restart-static';
+const receipt=JSON.parse(readFileSync('ci-logs/'+label+'-proposal.json'));
 const installed='tools/translation/source-profiles/static-source-lifecycle';
 const read=folder=>{
   const index=JSON.parse(readFileSync(join(folder,'manifest.json')));
@@ -35,5 +36,5 @@ for(const row of receipt.files){const bytes=readFileSync(join(receipt.output,bas
 const result={historicalProfiles:proposed.profiles.map(row=>({revision:row.revision,files:row.files.length})),
   historicalSourceBytesUnchanged:true,currentFiles:proposed.current.files.length,
   currentPhysicalBytesMatch:true,noticeUnchanged:true,semanticAuthority:false};
-writeFileSync('ci-logs/restart-static-review.json',JSON.stringify(result,null,2)+'\n');
+writeFileSync('ci-logs/'+label+'-review.json',JSON.stringify(result,null,2)+'\n');
 console.log(JSON.stringify(result,null,2));

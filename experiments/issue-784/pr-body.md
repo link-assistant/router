@@ -17,6 +17,13 @@ inputs, assertions, strictness and deadlines. The current-source fixture was
 regenerated through its unchanged producer for the PR's two new Rust files;
 both historical source universes remain byte-identical.
 
+The refreshed fixture exposed the exporter's unchanged 4 MiB per-file limit.
+The repair factors repeated Git blob identifiers through the existing source
+dictionary, retains old archive support and refusal checks, and regenerates
+the complete fixture with maximum gzip compression. The 4,134,635-byte archive
+retains its exact logical content hash and all historical/current source bytes.
+No test deadline, resource bound or parity status was relaxed.
+
 Reproduce by sending a native inference request with `CF-IPCountry: GB`,
 `X-Vercel-IP-City: London`, supported search `user_location`, or a mixed-spelling
 Gemini retrieval coordinate and inspecting a synthetic upstream. The complete
@@ -48,12 +55,16 @@ Validation remains incomplete:
   deadline and was then stopped at 2888380416 sampled total cgroup bytes before
   exhausting the container; later cases remain unqualified. These receiving
   checks do not replace the failed full gate or establish executable parity.
-- The complete published-head [CI cycle](https://github.com/link-assistant/router/actions/runs/42318632426)
-  at `1e6e0b36a9acb13cc7b829d7b6e3455e9a4b7c70` finished failure at
-  2026-11-07 02:31:19 UTC. Lint and both native suites passed; TypeScript,
-  strict parity and profiles failed, and both compiler cohorts reached their
-  original CI limits. Complete logs and all artifacts are preserved. This
-  cycle predates the two restart source commits. **No Rust tool ran locally;
+- The complete published-head [CI cycle](https://github.com/link-assistant/router/actions/runs/42330245583)
+  at `7586d14b1331823be35a1289ad01c49e6018ffa9` finished failure at
+  2026-11-07 03:38:58 UTC. Lint and both native suites (259 cases each) passed.
+  Strict API/native/translator TypeScript checks and all receiving deadline
+  checks passed, then the missing neutral profile failed the TypeScript stage.
+  Strict parity and profile generation failed; both compiler cohorts reached
+  their original CI limits. Complete logs and all artifacts are preserved.
+  This cycle exposed the fixture export failure repaired above. Complete
+  export/receiving checks and a new full gate/CI cycle remain unqualified at
+  this source snapshot. **No Rust tool ran locally;
   Rust remains unrun and gated by JavaScript failures.** No green full gate or
   Rust qualification is claimed.
 

@@ -1,4 +1,4 @@
-// Generate an external proposal using the unchanged upstream producer.
+// Generate an external proposal using the complete source fixture producer.
 import {mkdtempSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
@@ -15,5 +15,5 @@ const receipt={output,node:process.version,subjectRevision:proposal.subjectRevis
   sourceFiles:proposal.before.length,inputsUnchanged:JSON.stringify(proposal.before)===JSON.stringify(proposal.after),
   completeInverse:proposal.completeInverse,authority:proposal.authority,
   files:proposal.files.map(({path,bytes,sha256})=>({path,bytes,sha256}))};
-writeFileSync('ci-logs/restart-static-proposal.json',JSON.stringify(receipt,null,2)+'\n');
+writeFileSync('ci-logs/'+(process.argv[2]??'restart-static')+'-proposal.json',JSON.stringify(receipt,null,2)+'\n');
 console.log(JSON.stringify(receipt,null,2));

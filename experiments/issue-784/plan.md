@@ -56,9 +56,15 @@ Objective: implement and verify all requirements in PR #785 on
       and deadline failures; rerun the complete gate without weakening checks.
 - [x] Review the complete local source diff, preserve atomic commits and prepare an
       accurate PR title/body with a positive `Fixes #784` reference.
-- [ ] Publish the reviewed batch only on the prepared branch under the repository's
+- [x] Publish the reviewed batch only on the prepared branch under the repository's
       failed-gate draft-checkpoint exception, then update PR #785's title/body.
-- [ ] Review the published PR diff against the committed local source.
+- [x] Review the published PR diff against the committed local source.
+- [x] Wait for all CI at 7586d14b1 to finish; preserve every failed job and artifact.
+- [x] Reproduce the newly exposed source archive export budget failure, preserve
+      all logical bytes with versioned Git blob reference factoring, and regenerate
+      both producer outputs without changing resource bounds or original deadlines.
+- [ ] Finish complete export/receiving checks for the storage repair, run the full
+      gate, publish the coherent batch, and collect its entire same-head CI cycle.
 - [ ] Verify all same-SHA CI checks, clean tree, and mark ready only if complete.
 
 Constraints: one resource-intensive process at a time, no additional agents or clones,
