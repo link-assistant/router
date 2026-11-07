@@ -299,7 +299,35 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [x] Freeze complete new evidence: 175 complete originals / 34990068 logical
       bytes at `14b93301b`; 14608172 archive bytes. Verify all decoded originals
       and unchanged inputs; retain the complete compressed receipt.
-- [ ] Review and publish only on the prepared branch, then inspect the entire
-      new immutable-head CI cycle before another push.
+- [x] Review all 193 complete PR diff sections and publish only on the prepared
+      branch at `94367657f8086dfb23d0d43f6584f15eb4a42346`. Keep that published
+      head unchanged while its complete seven-workflow cycle runs.
+- [ ] Inspect the entire new immutable-head CI cycle before another push.
 - [ ] Obtain green complete gate/CI and fulfill all remaining issue criteria;
       passing receiving cases do not certify the missing application parity.
+
+## Complete named-host history repair
+
+- [x] Refresh the issue, required-sub-issue and all three PR comment types; no
+      additional requirement was found. Preserve all original response bytes.
+- [x] Reproduce the full original named-host test failure in Bun (7/8 pass).
+      Locate the four complete later reader equations and separate host ASCII
+      declaration equation without changing any old fixture or source pin.
+- [x] Preserve the failed complete producer draft in Bun, Node 26's native
+      operation refusal, Node 20's successful but over-60-second diagnostic and
+      the reader-only fixture's distinct complete host-source mismatch.
+- [x] Capture entire selected rows through the unchanged genuine producers on
+      Node 20.20.2, with complete native copies, both CST phases and inverses.
+      Check full gzip readback and fixed complete current source joins.
+- [x] Compose the five complete historical DATA equations with the original
+      named-host comparison; retain every original assertion and deadline.
+      Add two refusal cases for changed source and archived bytes.
+- [x] Pass both complete receiving files on Bun 1.4.4 and Node 20.20.2: 10/10
+      each. The independent Node deadline audit also passes. No resource stop;
+      TypeScript remains the repository-installed 5.9.3.
+- [ ] Commit the coherent repair, attempt the mandatory complete local gate on
+      its clean SHA and preserve every passed, failed and unrun stage.
+- [ ] Collect the entire `94367657f` CI cycle, review all completed failures,
+      then publish the coordinated batch on the prepared branch only.
+- [ ] Obtain the green full gate and finish the remaining original issue
+      criteria. Focused receiving passes do not establish full compiler parity.

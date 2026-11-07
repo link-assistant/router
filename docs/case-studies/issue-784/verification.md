@@ -914,3 +914,8 @@ archive has SHA-256
 The [full compressed receipt](evidence/source-history-complete.json.gz) verifies
 every decoded original and unchanged selected input. This evidence preserves
 the failed/unrun boundaries; capture supplies no later same-SHA qualification.
+
+The separate [named-host history investigation](named-host-history-investigation.md)
+retains the next complete regression, genuine producer captures, unsuccessful
+drafts and the final 10/10 receiving passes in both engines. Its independent Node
+deadline audit passes; this is not complete forward-cohort or gate qualification.
