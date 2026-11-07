@@ -18,7 +18,16 @@ Historical receiving sources and pins are unchanged.
 The bounded refresh passes in 12.50 seconds with 1625464832 bytes peak sampled
 cgroup use. Full before/after sources, generated proposals, CST equations and
 readback evidence are retained in the task evidence. This repairs the stale
-registration prerequisite; whole receiving files and their original deadlines
-still require verification. It adds no measured executable application coverage,
-does not regenerate the missing owned matrix, and establishes neither strict
-parity nor a green local or CI gate. No Rust tool has run locally.
+registration prerequisite. Both complete receiving files now pass under Node
+20.20.2 and Bun 1.4.4: 17 cases per engine, including the exported compiler's
+real round trip and both CST directions. Node's independent source/deadline
+audit passes; every Bun case also completes within the unchanged source limit.
+The complete isolated file takes 110.90 seconds in Node and 88.88 in Bun;
+the export file takes 55.25 and 49.16 seconds respectively. All four resource
+observations finish without a stop (largest sampled cgroup use 2275155968 bytes).
+Independent review rehashes every registered source and verifies all six full
+historical preimages against the published `f3ba507dd` tree.
+
+This adds no measured executable application coverage, does not regenerate the
+missing owned matrix, and establishes neither strict parity nor a green local
+or CI gate. No Rust tool has run locally.

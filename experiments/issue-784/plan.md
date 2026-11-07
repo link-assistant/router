@@ -614,6 +614,11 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [x] Capture and independently compare the complete current isolated-compiler
       proposal: 1779 files, 57194658 source bytes; the old registry stays exact
       during proposal review. No receiving or executable gain is established.
-- [ ] Use the documented reviewed registration-refresh workflow, preserving the
+- [x] Use the documented reviewed registration-refresh workflow, preserving the
       complete old registry/bootstrap history; regenerate the genuine portable
       Git fixture and run both whole receiving files with original deadlines.
+- [x] Independently join all 17 original cases per engine to unchanged sources
+      and deadlines; verify every current registered source and all six full
+      historical published preimages. No executable application gain is claimed.
+- [ ] Rerun the mandatory full JavaScript gate for this substantive registration
+      batch; retain failures and unrun stages without relaxing the gate.
