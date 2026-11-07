@@ -40,6 +40,7 @@ for name in [
     'experiments/issue-784/with-child-reaper.py',
     'experiments/issue-784/cleanup-storage-toolchain.py',
     'experiments/issue-784/collect-storage-ci-evidence.py',
+    'experiments/issue-784/collect-completed-ci.py',
     'experiments/issue-784/profile-owned-generation.mjs',
     'experiments/issue-784/profile-owned-generation-child.mjs',
     'experiments/issue-784/analyze-owned-allocation.py',
