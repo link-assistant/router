@@ -220,8 +220,18 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [x] Verify the actual guarded implementation's finite Node 20 comparison:
       47824 token values and complete view/item digests match; retained heap
       deltas are 14819416 original and 5664408 guarded bytes after explicit GC.
-- [ ] Attempt actual complete production generation after this source change,
+- [x] Attempt actual complete production generation after this source change,
       with the original heap controls and an owned cgroup observer; preserve
-      all failed, interrupted and unrun results honestly.
+      all failed, interrupted and unrun results honestly. At clean `1319e283f`,
+      the complete CLI stopped after 98.66 seconds at the cgroup guard during
+      namespace construction and wrote no outputs; generation remains failed.
+- [x] Check the existing strict generated TypeScript project with installed
+      TypeScript 5.9.3 after the token change. It passes; this does not typecheck
+      all JavaScript compiler implementation files or repair the missing owned
+      matrix in the full TypeScript CI stage.
+- [x] Preserve separate file-cache observations. Advising inactive evidence
+      pages and tracked source pages removes no files and does not reclaim disk.
+- [ ] Run the required complete local gate for this source batch with an owned
+      cgroup observer; retain all actual failures and unrun commands.
 - [ ] Obtain a green complete local gate and all same-head CI checks; full
       parity and the literal universal privacy requirements remain unfinished.

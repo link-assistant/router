@@ -1,4 +1,5 @@
 """Download the entire published-head cycle only after all runs finish."""
+import argparse
 import gzip
 import hashlib
 import json
@@ -7,10 +8,20 @@ import subprocess
 import zipfile
 
 root = Path(__file__).resolve().parents[2]
-directory = root / 'ci-logs/issue-784-restart-2'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--head', default='84779613d2a334d131083c4bb4eff7f1680e8add')
+parser.add_argument('--directory', type=Path, default=Path('ci-logs/issue-784-restart-2'))
+parser.add_argument('--runs', type=Path, default=Path('ci-logs/issue-784-restart-2/new-head-runs.json'))
+args = parser.parse_args()
+head = args.head
+if len(head) != 40 or any(char not in '0123456789abcdef' for char in head):
+    raise RuntimeError('An exact published head SHA is required')
+directory = (root / args.directory).resolve()
+if not directory.is_relative_to(root / 'ci-logs'):
+    raise RuntimeError('CI evidence must remain inside this task ci-logs directory')
+directory.mkdir(parents=True, exist_ok=True)
 repo = 'link-assistant/router'
-head = '84779613d2a334d131083c4bb4eff7f1680e8add'
-originals = json.loads((directory / 'new-head-runs.json').read_text())
+originals = json.loads((root / args.runs).read_text())
 selected = [row for row in originals if row['headSha'] == head]
 if len(selected) != 7:
     raise RuntimeError('Expected the complete seven-workflow published cycle')

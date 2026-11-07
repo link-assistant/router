@@ -11,12 +11,18 @@ target = root / 'experiments/issue-784/toolchain'
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--receipt', type=Path,
                     default=root / 'ci-logs/issue-784-restart-2/storage-node-cleanup.json')
-receipt_path = parser.parse_args().receipt.resolve()
+parser.add_argument('--toolchain-receipt', type=Path,
+                    default=root / 'ci-logs/issue-784-restart-2/storage-node-toolchain.json')
+args = parser.parse_args()
+receipt_path = args.receipt.resolve()
 if receipt_path.parent != root / 'ci-logs/issue-784-restart-2':
     raise RuntimeError('Cleanup receipts must remain in this investigation directory')
 if receipt_path.exists():
     raise RuntimeError('Refusing to overwrite an earlier cleanup receipt')
-expected = json.loads((root / 'ci-logs/issue-784-restart-2/storage-node-toolchain.json').read_text())
+input_receipt = args.toolchain_receipt.resolve()
+if input_receipt.parent != root / 'ci-logs/issue-784-restart-2':
+    raise RuntimeError('Toolchain receipts must remain in this investigation directory')
+expected = json.loads(input_receipt.read_text())
 if not target.is_dir() or target.is_symlink() or sorted(p.name for p in target.iterdir()) != [
         'SHASUMS256.txt', 'node-v20.20.2-linux-x64.tar.xz', 'node20']:
     raise RuntimeError('Unexpected temporary toolchain layout')
@@ -60,6 +66,7 @@ before = shutil.disk_usage(root).free
 shutil.rmtree(target)
 after = shutil.disk_usage(root).free
 receipt = {'removedPath': str(target), 'inactiveProcessReferences': references,
+           'toolchainReceipt': str(input_receipt),
            'foreignUnreadableMaps': foreign_unreadable_maps,
            'verifiedArchiveSha256': expected['archiveSha256'],
            'verifiedBinarySha256': expected['binarySha256'],

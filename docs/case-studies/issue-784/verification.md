@@ -838,3 +838,8 @@ after all JavaScript stages pass, and the literal all-tool guarantee
 (transport IPs, mandatory vendor security inference, account settings and
 traffic bypassing Router). Unsupported integrations remain refused. The PR
 stays draft and unmerged while those criteria remain unmet.
+
+The subsequent [Node 20 token-layout investigation](token-layout-investigation.md)
+records a bounded allocation improvement, passing complete receiving files, and
+the still-failed actual whole-generator attempt. It supplies no green full-gate
+or current-head CI qualification.
