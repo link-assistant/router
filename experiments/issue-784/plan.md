@@ -91,6 +91,17 @@ no Rust tool invocations, compressed evidence below 500 MB, preserve all strict 
 - [x] Inspect the next required TypeScript command: it correctly fails because the
       complete owned-definition matrix index has never been generated. No skip
       or fabricated index is authorized by this observation.
+- [x] Repair the operation composer's stale historical pin through the existing
+      guarded-import source equation. Preserve the original full-source hash,
+      both CST phases and complete inverse, then regenerate the operation copy.
+      The two complete receiving files pass 9/9 on Node 20 with the independent
+      deadline audit and 9/9 on Bun. Unrelated body/import changes still refuse.
+- [x] Independently compare the complete generated operation source to the
+      starting head: only its lexing module literal changes; all original body,
+      fallback, budget and refusal bytes remain exact.
+- [x] Complete all three affected guarded lexing/receiving files on Node 20:
+      12/12 cases and their independent deadline audit pass. Original public
+      guard bodies, historical producer archive and receiving cases stay exact.
 - [ ] Repair the remaining complete source-producer pins, profile heap failure,
       owned-definition generation, forward/reverse deadlines and strict parity.
 - [ ] Rerun the complete local gate and collect every same-head CI result before
