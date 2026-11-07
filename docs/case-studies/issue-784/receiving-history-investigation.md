@@ -118,5 +118,24 @@ sampled total cgroup peak is 2212732928 bytes and no observer stops a child.
 This reproduces the older Bun file's distinct deadline/header failures; neither
 engine supplies a passing complete-file qualification.
 
-The mandatory complete local gate remains pending on the final committed batch;
-its result cannot be inferred from these focused checks.
+The mandatory complete local gate ran at clean `dfcc6b93d`, with no source
+changes during execution. It passes lint (1766 JavaScript syntax checks and all
+61 coordinator/workflow/gate cases), all **259 native Node** and **259 native
+Bun** cases, the deadline runner's nine controls, both public declaration type
+checks, the unchanged native AST cycle and strict compilation of all 165 native
+TypeScript files. The broader native-TypeScript receiving cohort emits four
+passing cases before the resource stop; its remaining cases and independent
+case audit are incomplete. The interrupted runner records missing
+`case-deadlines.json`, not a passing duration receipt.
+
+The observer stops only its owned gate process group at **2869354496 sampled
+cgroup bytes**, against a 3135369216-byte container limit and the unchanged
+2866933760-byte stop threshold. Elapsed time, including reaping the test's
+adopted daemon, is **608.69 seconds**; exit is **143**. The identified adopted
+`managed-server.mjs --daemon` receives SIGTERM only after its exact command and
+subreaper parent are checked, and all owned descendants finish. The initial
+fingerprint's one-time inactive-page advice changes no file bytes. Parity,
+forward translation and reverse translation are **unrun in this attempt**;
+later TypeScript commands are also unrun. No green stamp is written. The
+previous completed strict-parity failures and CI matrix failure remain open;
+this interrupted attempt neither repairs nor requalifies them.

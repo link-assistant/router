@@ -419,7 +419,12 @@ remain explicitly unmet parts of the literal all-tool requirement.
       against its original 60000 ms limit and fails its independent audit.
       The final case separately rejects the changed whole Rust header source.
       Retain the original source pin, assertion and every complete result.
-- [ ] Attempt the mandatory complete local gate on the unchanged committed batch.
+- [x] Attempt the mandatory complete local gate at clean `dfcc6b93d`: lint,
+      native Node/Bun 259 cases each, AST freshness and strict native TypeScript
+      pass. The owned observer interrupts broader TypeScript at 2869354496
+      sampled cgroup bytes after 608.69 seconds. Audit is incomplete; remaining
+      TypeScript, parity, forward and reverse are unrun. Reap the identified
+      adopted daemon and retain exit 143; no green stamp is written.
 - [ ] Preserve every new finished check, failed experiment, source variant and
       full CI artifact in a verified packet under the task's 500 MB allocation.
 - [ ] Review the complete PR diff and publish only the prepared branch. Preserve
