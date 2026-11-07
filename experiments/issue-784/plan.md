@@ -102,6 +102,11 @@ no Rust tool invocations, compressed evidence below 500 MB, preserve all strict 
 - [x] Complete all three affected guarded lexing/receiving files on Node 20:
       12/12 cases and their independent deadline audit pass. Original public
       guard bodies, historical producer archive and receiving cases stay exact.
+- [x] Regenerate the complete downstream owner producer's 19 files and retain
+      its full 15 physical overlays. Only the consumer scope's lexing literal
+      changes; independent whole-byte/hash review confirms every installed output.
+- [x] Rerun strict parity on the repair source: it still fails with the same stale
+      account-policy inventory, 441 feature gaps and 12345 carried Rust items.
 - [ ] Repair the remaining complete source-producer pins, profile heap failure,
       owned-definition generation, forward/reverse deadlines and strict parity.
 - [ ] Rerun the complete local gate and collect every same-head CI result before
