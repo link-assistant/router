@@ -77,6 +77,25 @@ Objective: implement and verify all requirements in PR #785 on
 Constraints: one resource-intensive process at a time, no additional agents or clones,
 no Rust tool invocations, compressed evidence below 500 MB, preserve all strict gates.
 
+## Second CI restart, 2026-11-07
+
+- [x] Refresh the complete issue, sub-issue inventory and all three PR comment types;
+      issue comments and required sub-issues remain empty.
+- [x] Fetch main and the prepared branch; main `eb2dad1c0` remains an ancestor of
+      starting head `7dceb9b0a`, with no integration conflicts.
+- [x] Collect every completed workflow at that head, including all seven full
+      compressed logs and job metadata in `ci-logs/issue-784-restart-2`.
+- [x] Reproduce the profile TypeScript path failure and repair selection from the
+      explicit inventory. All three real profiles compile with strict/noEmit and
+      TypeScript 5.9.3; both complete regression cases pass under Node and Bun.
+- [x] Inspect the next required TypeScript command: it correctly fails because the
+      complete owned-definition matrix index has never been generated. No skip
+      or fabricated index is authorized by this observation.
+- [ ] Repair the remaining complete source-producer pins, profile heap failure,
+      owned-definition generation, forward/reverse deadlines and strict parity.
+- [ ] Rerun the complete local gate and collect every same-head CI result before
+      claiming completion or marking the PR ready.
+
 The full attempt at 6f36a43f completed at 23:30:46 UTC with five failed groups:
 workflow budget, TypeScript deadline audit, strict parity, forward heap limit and
 reverse deadline/heap/historical-input failures. Node and Bun each passed 250 tests;
