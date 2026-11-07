@@ -37,6 +37,11 @@ Router test or qualify the interrupted gate. Complete archived-byte verification
 also permits retiring 655360 allocated bytes of inactive duplicate Node receipts;
 their complete originals remain in existing packets.
 
+Complete archive/member hashes also verify all 188 inactive task allocation
+samples before retiring their duplicate directory. This reclaims 17784832
+allocated bytes; the complete originals remain in the project-retention packet.
+Neither cleanup changes source, test evidence, compiler authority or limits.
+
 The full integrated gate and same-head CI remain required for
 [PR #785](https://github.com/link-assistant/router/pull/785). This attempt
 establishes neither complete translation nor parity nor release readiness.

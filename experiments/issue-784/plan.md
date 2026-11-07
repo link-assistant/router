@@ -554,5 +554,8 @@ remain explicitly unmet parts of the literal all-tool requirement.
       pass a finite detached-daemon control without replacing any Router test.
 - [x] Verify all archived bytes before retiring 655360 allocated bytes of
       inactive duplicate Node receipts; original packet members remain intact.
+- [x] Verify the complete archived bytes and inactivity of all 188 task-owned
+      allocation samples before retiring their duplicate directory; reclaim
+      17784832 allocated bytes while keeping every original in its packet.
 - [ ] Collect the entire published CI cycle before any further push; finish
       actual remaining generation/parity/deadline repairs and qualify the gate.
