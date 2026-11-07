@@ -428,7 +428,7 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [x] Preserve 429 complete originals / 37725438 logical bytes in the verified
       project-retention packet at `300261919`; every complete member and input
       verifies, and selected evidence remains below the 500 MB allocation.
-- [ ] Review the complete PR diff and publish only the prepared branch. Preserve
+- [x] Review the complete PR diff and publish only the prepared branch. Preserve
       the new head until the entire fresh CI cycle closes; keep PR #785 draft.
 - [ ] Finish all remaining parity, source provenance, original deadlines,
       actual ordinary/owned generation and all-tool privacy requirements.
@@ -451,10 +451,18 @@ remain explicitly unmet parts of the literal all-tool requirement.
       original deadlines unchanged and no owned resource stop.
 - [x] Verify the complete generated private sibling with both producer-native
       syntax paths. The actual project afterimage stays byte exact.
-- [ ] Capture the final complete producer receipts, review and commit this atomic
-      source batch; retain all original broader deadline failures as unresolved.
-- [ ] Complete the separately bounded ordinary namespace trace. It adds only
+- [x] Capture the final complete producer receipts, review and commit this atomic
+      source batch at `0a60a3fae`; retain original broader deadlines as unresolved.
+      Both complete captures, final freshness and strict generated TypeScript
+      5.9.3 pass. Preserve the failed nonexistent-root-compiler invocation too.
+- [x] Complete the separately bounded ordinary namespace trace. It adds only
       progress in an uninstalled diagnostic afterimage, uses a 512 MiB heap and
-      applies no generated output; it cannot qualify the original matrix.
+      applies no generated output; it cannot qualify the original matrix. Both
+      runs end in JSON heap exhaustion, at 457.61 and 608.27 seconds respectively.
+      All 419 derive declarations finish in the finer trace; Config takes 691 ms.
+- [ ] Finish the next scalar resolver-consumption diagnostic under the same
+      finite bound, with complete output streamed into gzip and no source
+      installation. Identify the failing serialized operand before claiming a
+      root cause; keep all original checks, pins, limits and issuers intact.
 - [ ] Repair remaining failures, run the complete mandatory local gate and obtain
       green same-head CI before marking the PR ready or the issue complete.

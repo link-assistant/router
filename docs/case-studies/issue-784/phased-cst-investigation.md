@@ -52,6 +52,17 @@ cleanup and no interruption. Bun passes all eleven cases in 53.11 seconds, with
 case takes 21628.12 ms. These totals describe the complete multi-file commands;
 case qualification uses each unchanged individual declaration.
 
+Final complete producer capture passes with full gzip readback and a fresh
+installed-afterimage join. The private phased proposal retains 5801982 logical
+bytes / 979108 compressed bytes, SHA256
+`37d40f3598b86923329f396f75acfd47841f2e14b75d18b1ab7f72c6833420f4`.
+The actual callback proposal retains 7422204 logical bytes and both full phases
+and inverses; capture takes 7.96 seconds, peak sampled cgroup 1254838272 bytes.
+Final generated freshness passes in 9.37 seconds. Strict generated TypeScript
+passes with the lockfile-installed 5.9.3 compiler in 15.34 seconds. An earlier
+command selected a nonexistent root compiler path and failed before any compile;
+its failed receipt remains retained separately from the successful check.
+
 The new cases exercise complete Rust, JavaScript and TypeScript edits, Unicode,
 CRLF, malformed source preservation, a lone UTF-16 surrogate, both complete
 inverses, input accessors/proxies/sparse arrays, original aggregate overflow,
@@ -62,3 +73,22 @@ checks. The original broader compiler receiving cohorts remain unqualified.
 Full raw receipts are retained under `ci-logs/issue-784-restart-2/` with the
 `phased-equations-` prefix. This evidence does not establish a green full gate,
 ordinary/owned generation, semantic authority or complete application parity.
+
+## Separate ordinary planner diagnostics
+
+Two complete ordinary-planner diagnostics retain all 864 tracked corpus inputs
+and the 397-module graph, use a finite 512 MiB JavaScript heap and apply no output.
+Only scalar progress reporting changes in uninstalled source afterimages. Native
+syntax selection, complete CST phase serialization/reparsing, full inverses and
+fresh physical-source joins verify those afterimages. Private issuers retain
+their actual canonical module URLs.
+
+The first fails with heap exhaustion after 457.61 seconds, peak sampled cgroup
+2653204480 bytes. The finer trace completes all 419 derive declarations before
+failing in JSON serialization after 608.27 seconds, peak 2608074752 bytes. Neither
+is interrupted by the resource observer; all owned descendants are reaped.
+Config completes in 691.45 ms in the finer trace. This rules out attributing
+that run's failure to a stalled Config derive, but does not identify the later
+serialized object or qualify the unchanged 2048 MiB CI worker. A narrower
+resolver-consumption trace remains in progress. No executable-function gain,
+matrix-memory improvement or green-gate result is established.
