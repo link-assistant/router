@@ -566,8 +566,11 @@ remain explicitly unmet parts of the literal all-tool requirement.
 
 - [x] Finish collecting and inspecting the complete be8560a8d cycle. Preserve
       expected negative deadline controls separately from real failed jobs.
-- [ ] Review the coherent source batch, archive all complete new originals,
-      verify current main ancestry and publish only to the prepared draft PR.
+- [x] Review the coherent source batch, verify fresh main ancestry, and archive
+      all 190 complete originals / 22706608 logical bytes. The 14.2 MB packet
+      verifies every member; capture takes 13.28 seconds, peak 1736130560 bytes.
+      Retain the changing-log refusal and both complete capture receipts.
+- [ ] Publish the reviewed source and evidence only to the prepared draft PR.
 - [ ] Collect every result of the new published head before another push.
 - [ ] Repair the actual serialized operand/generation blocker, materialize
       genuine ordinary and owned matrices, and pass original receiving deadlines.

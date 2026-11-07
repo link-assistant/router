@@ -41,7 +41,17 @@ No green stamp or newly executable production function is claimed.
 
 The complete inspection has 234799 logical bytes and SHA256
 `97b22b9c51ca597ea5645b7a90166e453fd58054293b470498bca102809aad06`.
-All new originals are selected for the next complete evidence packet. Actual
+The [complete packet](evidence/runtime-freeze-complete.tar.xz) at source head
+`bc249eb95be2f4ccb4449bb986b13d05dbc50bd2` preserves 190 originals / 22706608
+logical bytes. Every decoded member and unchanged selected input verifies.
+The archive is 14158312 bytes with SHA256
+`1b2ee98cf145bff00a49ebdb2cfc0d9025556b65fb42e8fa12157340805236ff`.
+The [full receipt](evidence/runtime-freeze-complete.json.gz) and
+[complete observer originals](evidence/runtime-freeze-observer.json.gz) retain
+the 13.28-second successful attempt, sampled cgroup peak 1736130560 bytes and
+the earlier refusal caused by a still-changing selection log. The refused
+selection and all its closed logs are also retained. Original limits stay exact;
+all task evidence remains below 500000000 bytes. Actual
 ordinary/owned generation, compiler provenance, complete receiving files, strict
 parity, the full local gate and green same-head CI remain open. No human-only
 secret or access prerequisite was found. [PR #785](https://github.com/link-assistant/router/pull/785)
