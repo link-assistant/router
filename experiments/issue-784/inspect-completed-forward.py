@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Inventory every failed case from the complete retained forward CI artifact."""
+import argparse
 import hashlib
 import json
 from pathlib import Path
@@ -7,10 +8,17 @@ import re
 import zipfile
 
 directory = Path('ci-logs/issue-784-restart-2')
-archive = directory / 'artifact-13567849550.zip'
-destination = directory / 'completed-forward-failures.json'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--archive', type=Path, default=directory / 'artifact-13567849550.zip')
+parser.add_argument('--output', type=Path, default=directory / 'completed-forward-failures.json')
+args = parser.parse_args()
+archive, destination = args.archive, args.output
+if destination.exists():
+    raise RuntimeError('Refusing to overwrite a retained complete failure inventory')
 with zipfile.ZipFile(archive) as packed:
     member, = [row for row in packed.infolist() if row.filename.endswith('/stdout.raw.tap')]
+    if member.file_size > 128 * 1024 * 1024:
+        raise RuntimeError('Complete TAP exceeds the investigation member bound')
     raw = packed.read(member)
 lines = raw.decode('utf-8').splitlines()
 failures = []

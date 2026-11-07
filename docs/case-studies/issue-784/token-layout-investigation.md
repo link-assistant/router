@@ -99,4 +99,18 @@ peak and no resource stop. Their complete logs and module/test hashes remain in
 `gate-fingerprint-before-after.json` under the investigation evidence directory.
 The complete syntax lint also passes for 1,757 JavaScript files in 98.80 seconds,
 with a 1,592,250,368-byte sampled cgroup peak. It is a focused check; the complete
-gate after this fingerprint change remains unrun at this checkpoint.
+gate was not yet run at that checkpoint.
+
+The complete gate was then attempted on clean
+`c19d20c9ee083a3b0e0de62b259777cd1de7aca1`, with the same Node, installed
+TypeScript, inherited diagnostic heap and full original command list. Its
+observer stopped it after 28.802209 seconds at 2,867,630,080 sampled cgroup
+bytes. It again exited 143 before the first stage: all seven stages remain
+unrun and no green stamp exists. The bounded-read regression is qualified;
+complete-gate resource behavior is not repaired. Complete originals are
+`fingerprint-full-local-gate-start.json`, `.log`, `-driver.log` and `-memory.json`.
+
+After every local Node process finished, the task-owned temporary toolchain was
+checksum-verified and removed. `fingerprint-node-cleanup.json` records no active
+process references and 125,124,608 bytes of distinct file allocation removed.
+This cleanup touches neither repository sources nor Rust or worker build caches.

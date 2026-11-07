@@ -239,7 +239,10 @@ remain explicitly unmet parts of the literal all-tool requirement.
       against its original module (9/10), then passes against current code (10/10).
       Resource observations include substantial cached file data and do not prove
       that this buffer-allocation change repairs the complete gate.
-- [ ] Repeat the required complete gate after the changed fingerprint, preserving
-      any resource stop, every actual stage result and unrun commands.
+- [x] Repeat the required complete gate at clean `c19d20c9e` after the changed
+      fingerprint. It exits 143 after 28.80 seconds at the resource guard, before
+      the first stage; all seven stages remain unrun and no stamp exists.
+- [x] Remove only the inactive checksum-verified task Node toolchain after all
+      local Node work finishes; record 125124608 bytes of allocation removed.
 - [ ] Obtain a green complete local gate and all same-head CI checks; full
       parity and the literal universal privacy requirements remain unfinished.
