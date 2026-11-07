@@ -109,17 +109,30 @@ function materialize(state,leaves,payload=null){
 }
 // Public syntax validation grants no issuer authority. Every recursive category
 // is positive and constructor-bearing; unknown items/macros/guards are refused.
+// This private tree was materialized by the original source route. Charge
+// every logical occurrence before hashing/freezing its complete evidence.
+// The independent positive grammar and private issuer checks still run below.
+const CLONE_AST_NODES=32000,CLONE_AST_DEPTH=64;
+function assertCloneAstSize(branches){
+ let nodes=0;
+ function visit(value,depth=0){
+  if(++nodes>CLONE_AST_NODES||depth>CLONE_AST_DEPTH)throw new TypeError('Clone positive AST validation budget exceeded');
+  if(value!==null&&typeof value==='object')for(const key of Object.keys(value))visit(value[key],depth+1);
+ }
+ visit(branches);
+}
 export function validateBuiltinCloneAstOutput(route,branches){
  const state=outputs.get(route);if(!state)throw new TypeError('Clone AST validation requires a genuine original source route');let nodes=0;
  const fail=()=>{throw new TypeError('Clone positive AST grammar/slot differs from original output');};
  const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
- function visit(actual,expected,depth=0){if(++nodes>32000||depth>64)throw new TypeError('Clone positive AST validation budget exceeded');if(actual===null||typeof actual!=='object'){if(!same(actual,expected))fail();return;}if(types.isProxy(actual)||expected===null||typeof expected!=='object'||Array.isArray(actual)!==Array.isArray(expected))fail();const descriptors=Object.getOwnPropertyDescriptors(actual);for(const descriptor of Object.values(descriptors))if(!('value'in descriptor))fail();const a=Object.keys(actual),b=Object.keys(expected);if(!same(a,b))fail();for(const key of b)visit(descriptors[key].value,expected[key],depth+1);}
+ function visit(actual,expected,depth=0){if(++nodes>CLONE_AST_NODES||depth>CLONE_AST_DEPTH)throw new TypeError('Clone positive AST validation budget exceeded');if(actual===null||typeof actual!=='object'){if(!same(actual,expected))fail();return;}if(types.isProxy(actual)||expected===null||typeof expected!=='object'||Array.isArray(actual)!==Array.isArray(expected))fail();const descriptors=Object.getOwnPropertyDescriptors(actual);for(const descriptor of Object.values(descriptors))if(!('value'in descriptor))fail();const a=Object.keys(actual),b=Object.keys(expected);if(!same(a,b))fail();for(const key of b)visit(descriptors[key].value,expected[key],depth+1);}
  visit(branches,state.branches);return true;
 }
 export function liftBuiltinCloneAstRoute({profile,original,certificate,entry,input}={}){
  const state=sourcePlan(profile,entry),leaves=originalLeaves(original,certificate,input),payload=input.style==='payload-enum'?requireOriginalBuiltinEnumPatternSource(originalBuiltinEnumPatternSource(profile),profile):null;
  if(payload){const original=originalAstFunction(profile,directory+'clone.rs','cs_clone');contains(original,'VariantData::Tuple(..)','let subcalls = all_fields.iter().map(|f| subcall(cx, f)).collect()','cx.expr_call(trait_span, path, subcalls)');}
  const branches=materialize(state,leaves,payload);
+ assertCloneAstSize(branches);
  const evidence={schema:'original-clone-positive-ast-output-v1',profileDigest:profile.digest,source:certificate.source,sourceSha256:certificate.sourceSha256,itemSha256:certificate.itemSha256,span:certificate.span,typedSource:leaves,plan:{schema:state.result.schema,digest:state.result.digest,originalCompilerMetaPrivatelyRetained:true},...(payload?{payloadPatternSource:payload,payloadFlow:{allVariantsRetained:true,resolverBranches:['has_derive_copy=false','has_derive_copy=true'],full:'actual EnumMatching bound field paths -> Clone call -> source tuple/named/unit constructor',simple:'all actual variant fields -> original global is_simple_path/dedup type-only assertion subsequence',runtimeAuthority:false}}:{}),branches,positiveOutputGrammarComplete:true,selectedBodyBangComplete:true,namespaceAuthority:false,copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['actual original derive and all helper/ancestor attribute bindings require independent private joins','Clone field trait calls, Copy assertion validity and borrowed/owned runtime behavior remain uncompiled','unknown layouts/configuration/source-stage errors remain refused']};
  const result=freeze({...evidence,digest:hash(JSON.stringify(evidence))});outputs.set(result,{state,branches});validateBuiltinCloneAstOutput(result,branches);return result;
 }
