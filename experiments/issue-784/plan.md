@@ -425,8 +425,9 @@ remain explicitly unmet parts of the literal all-tool requirement.
       sampled cgroup bytes after 608.69 seconds. Audit is incomplete; remaining
       TypeScript, parity, forward and reverse are unrun. Reap the identified
       adopted daemon and retain exit 143; no green stamp is written.
-- [ ] Preserve every new finished check, failed experiment, source variant and
-      full CI artifact in a verified packet under the task's 500 MB allocation.
+- [x] Preserve 429 complete originals / 37725438 logical bytes in the verified
+      project-retention packet at `300261919`; every complete member and input
+      verifies, and selected evidence remains below the 500 MB allocation.
 - [ ] Review the complete PR diff and publish only the prepared branch. Preserve
       the new head until the entire fresh CI cycle closes; keep PR #785 draft.
 - [ ] Finish all remaining parity, source provenance, original deadlines,

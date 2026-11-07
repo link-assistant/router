@@ -925,3 +925,17 @@ the finite retention comparison and complete receiving checks. The later
 [receiving successor investigation](receiving-history-investigation.md) records
 the entire `77e82f2bb` CI cycle, both history repairs and their distinct duration
 qualification results. The full gate and original unmet criteria remain required.
+
+The [complete callback/history packet](evidence/project-retention-complete.tar.xz)
+and [full compressed receipt](evidence/project-retention-complete.json.gz) retain
+**429 complete originals / 37725438 logical bytes** at source
+`300261919ee2a8334fe9e38537c61b6e32e5212f`, including every completed
+77e82f2bb workflow and artifact, source variants, failed experiments and the
+interrupted mandatory local gate. The archive is **21279876 bytes**, SHA256
+`368a6de776d8fdf7c2e6fe698e054969dcce052b72347058e74653d59174ae5d`.
+Every decoded original and unchanged selected input verifies. Capture takes
+27.22 seconds with sampled total-cgroup peak 2527215616 bytes and no stop.
+The receipt's gzip wrapper is losslessly reread; decoded JSON is unchanged.
+Prior packets remain intact. Complete selected evidence roots use
+455426048 distinct allocated bytes, below the task's 500 MB cap.
+The packet preserves failed and unrun results; it grants no gate or parity pass.
