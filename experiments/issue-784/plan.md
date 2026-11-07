@@ -77,6 +77,43 @@ Objective: implement and verify all requirements in PR #785 on
 Constraints: one resource-intensive process at a time, no additional agents or clones,
 no Rust tool invocations, compressed evidence below 500 MB, preserve all strict gates.
 
+## Native regeneration receiving batch, 2026-11-07 21:33 UTC
+
+- [x] Publish the reviewed registration batch at `bea75c2c1676c78a381228a3a15557ae3a290276`;
+      keep that head unchanged throughout its entire seven-workflow CI cycle.
+- [x] Preserve complete native baseline CPU/output evidence. Retain the failed
+      first producer and prematurely launched original-source measurement with
+      an explicit qualification; neither is a successful candidate observation.
+- [x] Derive a separate private regeneration builder from complete pinned source,
+      both ordered substitution phases, serialized/reparsed CST and full inverses.
+      The standalone public builder/parser bodies and every original test stay exact.
+- [x] Compare all 199 actual regeneration outputs with all standalone baseline
+      bytes; the valid candidate matches 11586409 output bytes. Its sampled
+      single-call duration is not the original four-build deadline qualification.
+- [x] Complete the three added receiving cases under audited Node 20.20.2 and
+      Bun 1.4.4. Both pass, including grammar and BOM snapshot refusals.
+- [x] Complete the original nine-case native TypeScript Node file and independent
+      audit without filtering or changing its four-build workload. All nine
+      behavior cases pass, but 116643.104607 ms exceeds the original 60000 ms
+      regeneration deadline. This remains a failed qualification.
+- [x] Attempt the same whole file under Bun with original deadlines. Six cases
+      pass; strict compilation takes 5094.40 ms against its 5000 ms limit, then
+      the owned invocation reaches the 2872283136-byte memory guard sample.
+      All owned processes were reaped; remaining cases stay unqualified and
+      this unchanged memory-failing workload will not be repeated locally.
+- [x] Analyze all complete CPU profiles and output bytes, retaining signed V8
+      clock deltas, failed first analyzer source and original-source premature
+      measurement. No unmatched profile establishes a measured speed gain.
+- [x] Reclaim 42037248 allocated bytes only from four inactive PR-diff duplicates
+      after complete unchanged-packet readback and active-descriptor checks.
+- [ ] Review and commit the coherent private regeneration source batch, refresh
+      the complete current registered compiler, then preserve all new evidence.
+- [ ] Collect and inspect every terminal `bea75c2c1` CI result before publishing
+      any next repair batch. At 21:34 UTC, forward and profile jobs still run;
+      TypeScript/parity fail and reverse reaches its original job limit.
+- [ ] Finish missing genuine profile generation, strict native parity and every
+      original acceptance criterion. These remain unfinished; no Rust is authorized.
+
 ## Retained project callbacks, 2026-11-07
 
 - [x] Trace the complete ordinary current-source generation with bounded heap

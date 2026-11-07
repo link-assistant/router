@@ -69,6 +69,15 @@ rechecks earlier file and ancestor identities, complete compiled source
 associations and caller array descriptors. No source or validation verdict is
 cached across calls. Existing standalone APIs retain their own contract.
 
+Native TypeScript regeneration has a separate private grouped source path,
+derived by `tools/translation/prepare-native-regeneration-batch.mjs`. It groups
+complete source files with fresh concrete authentication and preserves the
+original per-file native semantic checks, physical snapshot joins and final host
+checks. Standalone public parser and builder contracts retain their original
+observer schedule. Complete output equivalence and focused tests do not qualify
+the original regeneration deadline or complete JavaScript gate; see the
+[receiving record](../case-studies/issue-784/native-regeneration-batch.md).
+
 ## Independent reverse analysis
 
 `analyzeJavaScriptIndependentCorpus` in `js-to-rust/translator.mjs` analyzes a

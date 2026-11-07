@@ -413,7 +413,7 @@ export function buildNativeTypeScript(sourceRoot) {
 }
 
 export function regenerateNativeTypeScript(outputRoot, { sourceRoot = outputRoot, check = false } = {}) {
-  const artifacts = buildNativeTypeScript(sourceRoot);
+  const artifacts = buildNativeTypeScriptForRegeneration(sourceRoot);
   const changed = [];
   const managed = [
     ...(existsSync(join(outputRoot, 'ts')) ? readdirSync(join(outputRoot, 'ts'), { withFileTypes: true }).filter((entry) => entry.isFile() && /\.(?:ts|json)$/u.test(entry.name) && entry.name !== 'package-lock.json').map((entry) => `ts/${entry.name}`) : []),
@@ -456,4 +456,82 @@ export function compileNativeTypeScript(outputRoot, { sourceRoot = outputRoot, o
     if (!existsSync(join(outDir, 'node_modules'))) symlinkSync(dependencyRoot, join(outDir, 'node_modules'), 'dir');
   }
   return { files: files.length, compiler: ts.version };
+}
+
+// Separate regeneration-only grouped source contract. Public build/parser APIs
+// retain their original standalone observer schedule. No verdict survives a call.
+import {prepareReverseConcreteSources,assertReverseConcreteSourceHost} from './concrete-source.mjs';
+function* nativeRegenerationConcreteSources(sourceRoot, paths) {
+  const originals=[];
+  let cursor=0;
+  while(cursor<paths.length) {
+    const rows=[];let units=0;
+    while(cursor<paths.length && rows.length<16) {
+      const path=paths[cursor],source=readFileSync(join(sourceRoot,path),'utf8');
+      if(rows.length && units+source.length>65536)break;
+      rows.push({path,source});units+=source.length;cursor++;
+      if(units>=65536)break;
+    }
+    const batch=prepareReverseConcreteSources(rows.map(row=>({source:row.source,language:'JavaScript'})));
+    if(batch.stages.length!==rows.length)throw new Error('native concrete batch row count differs');
+    for(let at=0;at<rows.length;at++) {
+      const row=rows[at],source=batch.stages[at].source;
+      assertReverseConcreteSourceHost();
+      if(source!==row.source || readFileSync(join(sourceRoot,row.path),'utf8')!==source)throw new Error('native concrete source snapshot differs for '+row.path);
+      originals.push(row);yield {path:row.path,source};
+      assertReverseConcreteSourceHost();
+    }
+  }
+  // Rejoin every complete physical input after all semantic consumers return.
+  for(const row of originals)if(readFileSync(join(sourceRoot,row.path),'utf8')!==row.source)throw new Error('native concrete source changed during regeneration: '+row.path);
+  assertReverseConcreteSourceHost();
+}
+
+function parseBuildReconstructedNativeJavaScript(ts, path, source, { file: inferredFile, checker } = {}) {
+  assertReverseConcreteSourceHost();
+  const file = inferredFile ?? ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+  if (file.text !== source) throw new Error(`inference source snapshot differs for ${path}`);
+  if (file.parseDiagnostics.length) throw new Error(`invalid authoritative JavaScript syntax in ${path}`);
+  return { schema: 'native-js-syntax-ast-v1', compiler: ts.version, path, sourceSha256: hash(source), ...serializeBuild(ts, file, checker) };
+}
+
+function buildNativeTypeScriptForRegeneration(sourceRoot) {
+  const ts = loadTypeScript(sourceRoot);
+  const paths = sourceModules(sourceRoot);
+  if (!paths.some((path) => path.startsWith('js/src/'))) throw new Error('native JavaScript source modules are missing');
+  const artifacts = new Map();
+  const rows = [];
+  const inference = inferenceProgram(ts, sourceRoot, paths);
+  for (const {path,source} of nativeRegenerationConcreteSources(sourceRoot, paths)) {
+    const meta = parseBuildReconstructedNativeJavaScript(ts, path, source, { file: inference.program.getSourceFile(join(sourceRoot, path)), checker: inference.checker });
+    const metaText = `${JSON.stringify(meta)}\n`;
+    const reparsed = JSON.parse(metaText);
+    const output = emitNativeTypeScript(ts, reparsed);
+    const target = path.replace('js/', 'ts/').replace(/\.(?:mjs|js)$/u, '.ts');
+    const metaPath = `tools/translation/js-to-rust/generated/native-typescript/${path.slice('js/'.length)}.meta.json`;
+    const targetText = `// GENERATED JavaScript -> structured syntax AST -> TypeScript draft.\n// Meta sha256=${hash(metaText)}; dynamic any annotations are explicit draft gaps.\n${output.text}`;
+    const erased = ts.transpileModule(output.text, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, verbatimModuleSyntax: true, useDefineForClassFields: false }, fileName: target }).outputText;
+    const sourceRuntime = JSON.stringify(runtimeAST(ts, source, { rewriteImports: true }));
+    let targetRuntime;
+    try {targetRuntime=JSON.stringify(runtimeAST(ts,erased));}
+    catch(cause){throw new Error(`Invalid erased TypeScript runtime for ${path}`,{cause});}
+    if (sourceRuntime !== targetRuntime) throw new Error(`runtime AST identity differs for ${path}`);
+    artifacts.set(metaPath, metaText);
+    artifacts.set(target, targetText);
+    rows.push({ source: path, sourceSha256: hash(source), meta: metaPath, target, nodes: meta.nodes, explicitAny: output.explicitAny, inferredReturns: output.inferredReturns, inferredLocals: output.inferredLocals, metaSha256: hash(metaText), targetSha256: hash(targetText), runtimeASTSha256: hash(sourceRuntime), runtimeASTIdentity: 'verified after type erasure and relative module-extension normalization' });
+  }
+  // Package resolution and public declarations influence inference even when
+  // every JavaScript source hash is unchanged. Record the complete public
+  // declaration context so isolated source snapshots can reproduce it.
+  const loadedDeclarations = new Set(inference.program.getSourceFiles().filter(file => file.isDeclarationFile).map(file => resolve(file.fileName)));
+  const inferenceInputs = ['js/package.json', ...readdirSync(join(sourceRoot, 'js')).filter(name => name.endsWith('.d.ts')).sort().map(name => `js/${name}`)].map(path => ({ path, sha256: hash(readFileSync(join(sourceRoot, path))), role: path.endsWith('.d.ts') ? 'public-declaration' : 'package-resolution', resolvedByCompiler: path.endsWith('.d.ts') ? loadedDeclarations.has(resolve(sourceRoot, path)) : true }));
+  const sourcePackage = JSON.parse(readFileSync(join(sourceRoot, 'js/package.json'), 'utf8'));
+  artifacts.set('ts/package.json', `${JSON.stringify({ name: '@link-assistant/router-typescript-draft', version: sourcePackage.version, private: true, type: 'module', engines: sourcePackage.engines, exports: { '.': './dist/index.js', './native': './dist/src/index.js', './testing': './dist/testing.js' }, scripts: { build: 'node ../scripts/check-native-typescript.mjs --out-dir ts/dist' }, dependencies: sourcePackage.dependencies, devDependencies: sourcePackage.devDependencies }, null, 2)}\n`);
+  artifacts.set('ts/tsconfig.native.json', `${JSON.stringify({ compilerOptions: { strict: true, target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', skipLibCheck: true, useDefineForClassFields: false, verbatimModuleSyntax: true, outDir: 'dist', rootDir: '.', declaration: true }, include: ['index.ts', 'testing.ts', 'src/**/*.ts', 'portable/**/*.ts'] }, null, 2)}\n`);
+  artifacts.set('ts/.gitignore', 'node_modules\n/dist/\n');
+  // Public embedded assets have byte-level HTTP contracts. Keep their exact
+  // payload alongside the independently checked TypeScript syntax targets.
+  for (const path of ['js/catalog.json', ...walkFiles(sourceRoot, 'js/schemas'), ...walkFiles(sourceRoot, 'js/src/assets/admin')]) artifacts.set(path.replace('js/', 'ts/'), readFileSync(join(sourceRoot, path)));
+  artifacts.set('tools/translation/js-to-rust/generated/native-typescript/manifest.json', `${JSON.stringify({ schema: 'native-js-syntax-ast-v1', compiler: ts.version, target: 'complete-native-package-typescript-draft', lowering: 'identity runtime semantics; syntax-token AST serialization and explicit draft dynamic type annotations', fullNativeRustTranslation: false, inferenceInputs, modules: rows, assets: ['catalog.json', 'schemas', 'src/assets/admin'], outputs: [...artifacts].map(([path, value]) => ({ path, bytes: Buffer.byteLength(value), sha256: hash(value) })) }, null, 2)}\n`);
+  return artifacts;
 }

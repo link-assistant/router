@@ -15,7 +15,13 @@ packets = root / 'docs/case-studies/issue-784/evidence'
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--receipt', required=True)
 parser.add_argument('--current-cycle', required=True)
+parser.add_argument('--restart-diff', action='append', default=[],
+                    help='Explicit inactive complete PR diff already retained in a verified packet')
 args = parser.parse_args()
+if (len(set(args.restart_diff)) != len(args.restart_diff)
+        or any(Path(name).name != name or not name.endswith(('.diff', '.diff.gz', '.patch.gz'))
+               for name in args.restart_diff)):
+    parser.error('each explicit restart selection must be a unique complete diff filename')
 if (Path(args.current_cycle).name != args.current_cycle
         or not args.current_cycle.startswith('issue-784-checkpoint-')
         or not (ci / args.current_cycle).is_dir()):
@@ -50,7 +56,8 @@ for manifest_path in sorted(packets.glob('*.json.gz')):
             continue
         if relative.parts[0] == 'issue-784-restart-2' and not (
                 path.name.endswith(('-pages.json', '-cache-reclaim.json'))
-                or path.name == 'phased-equations-initial-cache.json'):
+                or path.name == 'phased-equations-initial-cache.json'
+                or path.name in args.restart_diff):
             continue
         if path.is_symlink() or not path.is_file() or path.stat().st_uid != os.getuid():
             continue
@@ -59,6 +66,10 @@ for manifest_path in sorted(packets.glob('*.json.gz')):
         selected[str(path)] = {'packet': str(manifest_path), **row}
 if not selected or len(selected) > 2048 or sum(row['bytes'] for row in selected.values()) > 500_000_000:
     raise RuntimeError('Expected a bounded identified archived task selection')
+if set(args.restart_diff) != {Path(name).name for name in selected
+                            if Path(name).parent == ci / 'issue-784-restart-2'
+                            and Path(name).name in args.restart_diff}:
+    raise RuntimeError('Every explicit complete diff must have an exact archived copy')
 
 
 def assert_inactive():
