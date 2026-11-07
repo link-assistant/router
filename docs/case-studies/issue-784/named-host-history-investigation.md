@@ -187,3 +187,22 @@ PartialOrd and Ord require the implemented nonempty ordinary unit-enum route.
 `SemanticLink` is a struct. These are distinct missing output/ancestor proofs;
 the Config budget observation does not establish an associative repair or a
 gain in the complete original library graph.
+
+## Complete evidence packet
+
+The [complete packet](evidence/named-host-complete.tar.xz) captures 199 whole
+originals with 59122365 logical bytes from source checkpoint
+`7f1530bae1c0fde53736a9c73306a50298b41677`. It includes the genuine producer
+captures, both successful receiving engines, all failed receiving attempts, both
+complete local gate attempts, every closed published-head workflow and artifact,
+and both original-parent diagnostic pairs. Every decoded archive member is
+reopened and checked against its original byte length and SHA256; each selected
+original is checked again after verification.
+
+The archive is 14816764 bytes with SHA256
+`c7c523024a7a6f284eeadcd13b9a45519e6424db0fac0f2fb8e40c98da01f0c6`.
+Its [complete receipt](evidence/named-host-complete.json.gz) retains every member
+and its original path. Capture and verification take 30.59 seconds under the
+existing finite 600-second packer bound. Previous evidence packets and original
+files remain intact. Compression and storage verification grant no executable,
+namespace, runtime-parity or full-gate authority.
