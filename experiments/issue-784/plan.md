@@ -296,7 +296,10 @@ remain explicitly unmet parts of the literal all-tool requirement.
       project and changed syntax pass; installed TypeScript is 5.9.3.
 - [x] Remove only the inactive authenticated temporary Node toolchain after
       every local process finishes; 125124608 allocation bytes reclaimed.
-- [ ] Freeze complete new evidence, publish only on the prepared branch and
-      inspect the entire new immutable-head CI cycle before another push.
+- [x] Freeze complete new evidence: 175 complete originals / 34990068 logical
+      bytes at `14b93301b`; 14608172 archive bytes. Verify all decoded originals
+      and unchanged inputs; retain the complete compressed receipt.
+- [ ] Review and publish only on the prepared branch, then inspect the entire
+      new immutable-head CI cycle before another push.
 - [ ] Obtain green complete gate/CI and fulfill all remaining issue criteria;
       passing receiving cases do not certify the missing application parity.

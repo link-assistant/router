@@ -904,3 +904,13 @@ After every local check and owned process finished, the authenticated temporary
 Node toolchain was removed, reclaiming 125124608 bytes of distinct allocation.
 Main `eb2dad1c0` remains an ancestor; every PR comment type is unchanged from the
 already-read complete feedback. Draft status and all unmet criteria remain.
+
+The [complete source-history packet](evidence/source-history-complete.tar.xz)
+retains 175 complete originals / 34990068 logical bytes at source
+`14b93301b7563b3affde75eb91bc38fa1441a9a2`, including the entire finished
+e29 CI cycle, all artifacts and every later receiving attempt. Its 14608172-byte
+archive has SHA-256
+`c0023fec9f6b6c55a15ee1bec8ee516967c76078a648e568b912057d66bd44d5`.
+The [full compressed receipt](evidence/source-history-complete.json.gz) verifies
+every decoded original and unchanged selected input. This evidence preserves
+the failed/unrun boundaries; capture supplies no later same-SHA qualification.
