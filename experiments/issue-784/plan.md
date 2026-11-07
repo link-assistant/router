@@ -570,9 +570,26 @@ remain explicitly unmet parts of the literal all-tool requirement.
       all 190 complete originals / 22706608 logical bytes. The 14.2 MB packet
       verifies every member; capture takes 13.28 seconds, peak 1736130560 bytes.
       Retain the changing-log refusal and both complete capture receipts.
-- [ ] Publish the reviewed source and evidence only to the prepared draft PR.
+- [x] Publish the reviewed source and evidence only to the prepared draft PR:
+      `f3ba507ddc3f48391239c21423cc84ec1a2a275e`, all seven workflows observed.
 - [ ] Collect every result of the new published head before another push.
 - [ ] Repair the actual serialized operand/generation blocker, materialize
       genuine ordinary and owned matrices, and pass original receiving deadlines.
 - [ ] Pass strict parity, the mandatory whole local gate and every same-head CI
       check; finish the remaining all-tool requirements before marking ready.
+
+## Ordinary resolver investigation during f3ba507dd CI
+
+- [x] Finish the complete actual token parent and isolated declaration probes;
+      retain both failed harness attempts and both corrected terminal results.
+      One-file production-profile output owners remain refused; actual gain is zero.
+- [x] Locate the earlier heap failure inside Default's nested final resolver,
+      before the project's later Clone and complete-binding stages.
+- [x] Stop a finite native retained-allocation sample below the diagnostic heap
+      limit, verify its entire compressed profile and retain the observer receipt.
+      Sampling identifies large CST/token sites but establishes no leak.
+- [ ] Profile the expensive derive-proof interval with a finite early stop before
+      the known failed resolver; preserve complete results and source equations.
+- [ ] Repair measured shared costs without weakening private issuers, source
+      provenance, strict parity, complete tests or their original deadlines.
+- [ ] Collect the entire published f3ba507dd CI cycle before another push.
