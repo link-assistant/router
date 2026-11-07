@@ -201,6 +201,8 @@ jobs:
     # Completed cycle-nine matrix checks reached 2166s. Keep a finite independent
     # 60-minute window, the same immutable SHA and unconditional failure.
     timeout-minutes: 60
+    env:
+      ROUTER_MATRIX_DRAFT_DIRECTORY: js/node_modules/.matrix-drafts
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -220,6 +222,15 @@ jobs:
       - run: npm ci --prefix js --ignore-scripts
       - run: node scripts/translate-router.mjs --profile-matrix --check
       - run: node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check
+      - name: Preserve complete unqualified matrix drafts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: matrix-drafts-${{ inputs.sha }}
+          path: js/node_modules/.matrix-drafts/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
   reverse-translation:
     runs-on: ubuntu-24.04
     timeout-minutes: 15

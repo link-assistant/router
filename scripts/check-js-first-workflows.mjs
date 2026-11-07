@@ -92,6 +92,14 @@ export function auditWorkflows(sources) {
       if (!job || !job['runs-on'] || Object.hasOwn(job, 'if') || job['continue-on-error'] || job.strategy?.['fail-fast'] === true) errors.push(`${gateName}/${id}: required unconditional failing stage missing`);
       const runs = (job?.steps ?? []).map(step => step.run);
       let deadlineEvidenceUpload = null;
+      let matrixEvidenceUpload = null;
+      if(id==='profile-matrix'){
+        const uploads=(job?.steps??[]).filter(step=>step.uses==='actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
+        const upload=uploads.length===1?uploads[0]:null;
+        const valid=upload&&!Object.hasOwn(upload,'run')&&job.steps.at(-1)===upload&&upload.if==='${{ always() }}'&&!upload['continue-on-error']&&upload.with?.name==='matrix-drafts-${{ inputs.sha }}'&&upload.with?.path==='js/node_modules/.matrix-drafts/'&&upload.with?.['include-hidden-files']===true&&upload.with?.['if-no-files-found']==='error'&&upload.with?.['retention-days']===7&&job.env?.ROUTER_MATRIX_DRAFT_DIRECTORY==='js/node_modules/.matrix-drafts';
+        if(!valid)errors.push(`${gateName}/${id}: missing mandatory command evidence: complete unqualified matrix draft custody missing`);
+        else matrixEvidenceUpload=upload;
+      }
       if (['typescript', 'translation', 'reverse-translation'].includes(id)) {
         const uploads = (job?.steps ?? []).filter(step => step.uses === 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
         const upload = uploads.length === 1 ? uploads[0] : null;
@@ -115,7 +123,7 @@ export function auditWorkflows(sources) {
       }
       if (!(job?.steps ?? []).some(step => step.env?.EXPECTED_SHA === '${{ inputs.sha }}' && normalizeProgram(step.run) === shaVerifier)) errors.push(`${gateName}/${id}: immutable SHA verification missing`);
       for (const step of job?.steps ?? []) {
-        if (step['continue-on-error'] || Object.hasOwn(step, 'if') && step !== deadlineEvidenceUpload) errors.push(`${gateName}/${id}: checks cannot be conditional or ignore failures`);
+        if (step['continue-on-error'] || Object.hasOwn(step, 'if') && step !== deadlineEvidenceUpload && step !== matrixEvidenceUpload) errors.push(`${gateName}/${id}: checks cannot be conditional or ignore failures`);
         if (step.uses?.startsWith('actions/checkout@') && step.with?.ref !== '${{ inputs.sha }}') errors.push(`${gateName}/${id}: checkout must use inputs.sha`);
         if (/\b(?:cargo|rustc|rust-script|clippy-driver)\b|rust-toolchain|docker\/(?:build|setup-buildx)/.test(`${step.uses ?? ''}\n${step.run ?? ''}`)) errors.push(`${gateName}/${id}: Rust must not execute inside JavaScript gate`);
       }

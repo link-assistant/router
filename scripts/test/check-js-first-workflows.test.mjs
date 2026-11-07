@@ -7,6 +7,7 @@ import { createRequire } from 'node:module';
 import { auditWorkflows, guarded } from '../check-js-first-workflows.mjs';
 import {DRAFT_SUPPLEMENTS,DRAFT_SUPPLEMENT_CONDITION,DRAFT_SUPPLEMENT_PR_TYPES,readFixedNineDraftWorkflowSources} from '../fixed-nine-draft-policy.mjs';
 import {prepareDraftSupplementalWorkflows} from '../prepare-draft-supplemental-workflows.mjs';
+import {prepareMatrixDraftWorkflow} from '../prepare-matrix-draft-workflow.mjs';
 import { parityCheckBudgets } from '../parity-check-budgets.mjs';
 const require = createRequire(new URL('../ci/package.json', import.meta.url));
 const { parse, stringify } = require('yaml');
@@ -21,6 +22,26 @@ function mutate(filename, operation) {
 }
 function fails(filename, operation, expected) { assert.ok(mutate(filename, operation).some(error => error.includes(expected))); }
 test('all repository workflows satisfy the policy', () => assert.deepEqual(auditWorkflows(baseline), []));
+test('current matrix custody composes complete historical YAML and preserves both CST phases and inverse',()=>{
+ const result=prepareMatrixDraftWorkflow();assert.equal(result.current,baseline['javascript-first.yml']);assert.equal(result.inverse,result.before);
+ assert.equal(result.before,readFixedNineDraftWorkflowSources().files.find(row=>row.path.endsWith('/javascript-first.yml')).before);
+ assert.deepEqual(result.stages.map(row=>row.phase),['language','repository']);
+ for(const stage of result.stages){assert.equal(JSON.parse(stage.beforeMeta).source,stage.before);assert.equal(JSON.parse(stage.afterMeta).source,stage.after);}
+ assert.throws(()=>prepareMatrixDraftWorkflow(result.after+'\n# unreviewed source\n'),/source differs/);
+ assert.equal(result.semanticAuthority,false);assert.equal(result.gateSuccessObserved,false);
+});
+test('matrix draft custody preserves every unconditional freshness command and only permits the exact data uploader',()=>{
+  for(const operation of [
+    job=>{delete job.env.ROUTER_MATRIX_DRAFT_DIRECTORY;},
+    job=>{job.steps.pop();},
+    job=>{job.steps.at(-1).with.path='profiles/';},
+    job=>{job.steps.at(-1).with['if-no-files-found']='ignore';},
+    job=>{job.steps.at(-1).if='${{ success() }}';},
+    job=>{job.steps.at(-1)['continue-on-error']=true;},
+    job=>{job.steps.at(-1).run='true';},
+  ])fails('javascript-first.yml',workflow=>operation(workflow.jobs['profile-matrix']),'matrix draft custody missing');
+  fails('javascript-first.yml',workflow=>{workflow.jobs['profile-matrix'].steps.find(step=>step.run?.includes('--profile-matrix --check')).if='${{ always() }}';},'checks cannot be conditional');
+});
 test('locked repository dependencies are installed before every consuming stage, including forward and profile checks', () => {
   const jobs = parse(baseline['javascript-first.yml']).jobs;
   const installations = [
@@ -262,8 +283,12 @@ test('compiler case-deadline audits and complete always-retained raw receipts ca
  }
 });
 
-test('fixed-nine workflow proposal retains all fourteen complete sources eighteen steps and every downstream block',{timeout:60000},()=>{
- const packet=readFixedNineDraftWorkflowSources(),plan=prepareDraftSupplementalWorkflows(),changed=plan.files.filter(row=>row.changed);assert.equal(plan.draftOnly,true);assert.equal(plan.gateSuccessObserved,false);assert.equal(plan.readyTransitionObserved,false);assert.equal(plan.branchRulesFresh,false);assert.deepEqual(changed.map(row=>row.path.split('/').at(-1)).sort(),[...DRAFT_SUPPLEMENTS].sort());assert.equal(plan.files.length,14);assert.equal(changed.flatMap(row=>row.stages).length,18);assert.equal(packet.rules.length,18);
+test('fixed-nine workflow proposal retains all fourteen complete sources eighteen steps and every downstream block',{timeout:60000},t=>{
+ const packet=readFixedNineDraftWorkflowSources(),historical=fs.mkdtempSync(path.join(os.tmpdir(),'fixed-nine-complete-originals-'));t.after(()=>fs.rmSync(historical,{recursive:true,force:true}));
+ for(const row of packet.files){const target=path.join(historical,row.path);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,row.after??row.before);}
+ const archive=path.join(historical,'scripts/ci/fixed-nine-draft-workflow-sources.json.gz');fs.mkdirSync(path.dirname(archive),{recursive:true});fs.copyFileSync(new URL('../ci/fixed-nine-draft-workflow-sources.json.gz',import.meta.url),archive);
+ const plan=prepareDraftSupplementalWorkflows({root:historical}),changed=plan.files.filter(row=>row.changed);assert.equal(plan.draftOnly,true);assert.equal(plan.gateSuccessObserved,false);assert.equal(plan.readyTransitionObserved,false);assert.equal(plan.branchRulesFresh,false);
+ assert.deepEqual(changed.map(row=>row.path.split('/').at(-1)).sort(),[...DRAFT_SUPPLEMENTS].sort());assert.equal(plan.files.length,14);assert.equal(changed.flatMap(row=>row.stages).length,18);assert.equal(packet.rules.length,18);
  function blocks(source){const jobs=source.slice(source.indexOf('\njobs:\n')+7);return Object.fromEntries(jobs.split(/(?=^  [A-Za-z0-9_-]+:\s*$)/mu).filter(Boolean).map(block=>[block.match(/^  ([A-Za-z0-9_-]+):/u)?.[1],block]));}
  for(const row of plan.files){assert.equal(row.current,row.after);assert.equal(row.inverse,row.before);const a=blocks(row.before),b=blocks(row.after);assert.deepEqual(Object.keys(b),Object.keys(a));for(const id of Object.keys(a))if(id!=='javascript')assert.equal(b[id],a[id],row.path+'/'+id);if(row.changed){assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const stage of row.stages){assert.equal(stage.completeInverse,true);const before=JSON.parse(stage.beforeMeta),after=JSON.parse(stage.afterMeta);assert.equal(before.source,stage.before);assert.equal(after.source,stage.after);assert.ok(stage.nativeSelection.nativeKeySpan[1]>stage.nativeSelection.nativeKeySpan[0]);}}else assert.equal(row.after,row.before,row.path);}
  assert.deepEqual(auditWorkflows(baseline),[]);assert.equal(plan.files.find(row=>row.path.endsWith('/release.yml')).after,packet.files.find(row=>row.path.endsWith('/release.yml')).before);assert.equal(plan.files.find(row=>row.path.endsWith('/javascript-first.yml')).after,packet.files.find(row=>row.path.endsWith('/javascript-first.yml')).before);

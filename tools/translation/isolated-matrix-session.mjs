@@ -15,6 +15,7 @@ import {captureSourceCorpus,sourceCorpusPaths,sourceCorpusText} from './source-c
 import {discoverCompilerSourceInputs} from './compiler-source-inputs.mjs';
 import {discoverSourceProfileInputs} from './source-profile-inputs.mjs';
 import {translationProgressReporter} from './translation-progress.mjs';
+import {retainMatrixDraft} from './matrix-draft-custody.mjs';
 const compilerRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..'),worker=fileURLToPath(new URL('./isolated-matrix-profile.mjs',import.meta.url));
 const allowed=new Set(['bulk.mjs','retained-bulk.mjs','owned-definitions-bulk.mjs','retained-owned-definitions-bulk.mjs']);
 const roots=['tools/translation/meta','js/generated/rust-draft','ts/generated/rust-draft','tools/translation/projects','js/generated/rust-project','ts/generated/rust-project'];
@@ -102,6 +103,10 @@ export function createIsolatedMatrixSession({root,matrix,corpus,paths,entries,pl
   for(const plan of plans)validate(plan);
   current();
   const failures=[];for(const plan of plans)failures.push(...applyBytes(plan,{check}).failures);
+  if(check&&process.env.ROUTER_MATRIX_DRAFT_DIRECTORY!==undefined){
+   retainMatrixDraft({root,staging,plans,inputs:{...before,corpus,matrix:description,plannerModule},directory:process.env.ROUTER_MATRIX_DRAFT_DIRECTORY});
+   current();
+  }
   return failures;
  }
  function close(){if(!closed){closed=true;rmSync(staging,{recursive:true,force:true});}}

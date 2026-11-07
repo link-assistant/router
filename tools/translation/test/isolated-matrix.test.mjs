@@ -1,6 +1,7 @@
 import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,readdirSync,existsSync,rmSync,symlinkSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -79,4 +80,18 @@ test('copied corpus and matrix handles and public staged plan fields grant no pr
 
 test('every complete process-lifetime copy reproduces its original source and CST inverse',{timeout:30000},()=>{
  const proposal=deriveIsolatedMatrixSources(root);assert.equal(proposal.files.length,5);for(const row of proposal.files){assert.equal(readFileSync(join(root,repositorySourcePath(row.path,root)),'utf8'),row.text);assert.equal(row.inverse,row.source);assert.ok(row.beforeMeta);assert.ok(row.afterMeta);assert.equal(row.semanticAuthority,false);}retain('06-complete-source-derivation',proposal);
+});
+
+test('optional complete draft custody retains freshness failures and never updates checked outputs',{timeout:90000},t=>{
+ const directory=fixture(t),previous=process.env.ROUTER_MATRIX_DRAFT_DIRECTORY;
+ process.env.ROUTER_MATRIX_DRAFT_DIRECTORY='js/node_modules/.matrix-drafts';
+ try{
+  const before=vector(directory),result=isolate({root:directory,matrix:matrix(),sources:paths,check:true});
+  assert.ok(result.failures.some(row=>row.startsWith('missing: ')));assert.deepEqual(vector(directory),before);noTemporary(directory);
+  const base=join(directory,process.env.ROUTER_MATRIX_DRAFT_DIRECTORY),attempts=readdirSync(base);assert.equal(attempts.length,1);
+  const attempt=join(base,attempts[0]),record=JSON.parse(readFileSync(join(attempt,'manifest.json')));
+  assert.equal(record.plans.length,3);assert.equal(record.semanticAuthority,false);assert.equal(record.runtimeParity,false);
+  assert.equal(record.members.length,record.plans.reduce((count,plan)=>count+plan.outputs.length,0));
+  for(const row of record.members){const bytes=gunzipSync(readFileSync(join(attempt,row.storedAs)));assert.equal(bytes.length,row.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),row.sha256);}
+ }finally{if(previous===undefined)delete process.env.ROUTER_MATRIX_DRAFT_DIRECTORY;else process.env.ROUTER_MATRIX_DRAFT_DIRECTORY=previous;}
 });
