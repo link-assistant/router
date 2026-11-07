@@ -128,8 +128,15 @@ no Rust tool invocations, compressed evidence below 500 MB, preserve all strict 
 - [x] Attempt the same unchanged dependencies under Bun: 35 reported passes,
       then an owned memory-guard stop at 2872123392 sampled cgroup bytes.
       Keep the cohort incomplete and do not repeat it unchanged here.
-- [ ] Complete the bounded existing producer experiment; preserve resource
-      stops and unrun outputs without adopting the unqualified sibling CLI.
+- [x] Complete the bounded existing producer experiment: stop before namespace
+      construction finishes at 2868981760 sampled cgroup bytes, exit 143, with
+      no output writes. Preserve the original heap, full log and unrun matrix;
+      do not repeat the unchanged workload or adopt the unqualified sibling CLI.
+- [x] Complete the unchanged four-case three-profile CLI file in both engines:
+      Node passes two ordinary cases but fails both retained child deadlines and
+      one original case deadline; Bun passes all four. Keep receiving failed.
+- [x] Verify and remove only the inactive binary-only Node toolchain, preserving
+      its checksum, process-reference and reclaimed-allocation receipt.
 - [ ] Repair the remaining complete source-producer pins, profile heap failure,
       owned-definition generation, forward/reverse deadlines and strict parity.
 - [ ] Rerun the complete local gate and collect every same-head CI result before

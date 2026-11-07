@@ -77,3 +77,12 @@ the complete gate remain unqualified. See the
 [receiving investigation](../case-studies/issue-784/storage-investigation.md) for
 complete selections and resource observations. No heap improvement, repaired
 OOM or coverage gain is claimed.
+
+The complete four-case three-profile CLI selection subsequently passed on Bun.
+Node passed its two ordinary cases but both retained cases failed an unchanged
+20000 ms child deadline; its retained-check case also exceeded the original
+60000 ms case deadline. All eight full input/output vectors are retained.
+An actual existing owned-definition production generation was separately stopped
+before namespace construction completed at 2868981760 sampled cgroup bytes;
+it wrote no output and did not reach this proposed storage operation. These
+observations preserve failed receiving and do not authorize default adoption.
