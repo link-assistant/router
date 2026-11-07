@@ -433,3 +433,28 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [ ] Finish all remaining parity, source provenance, original deadlines,
       actual ordinary/owned generation and all-tool privacy requirements.
       Passing a receiving file does not satisfy the failed full gate.
+
+## Explicit complete CST phases during 545f2909d CI
+
+- [x] Publish the reviewed callback/history batch only on the prepared branch at
+      `545f2909d`; update the actual PR title/body and retain draft status.
+- [ ] Preserve this immutable head until all seven fresh workflows finish;
+      collect every completed failure and complete artifact before another push.
+- [x] Derive a separate bounded private CST transaction from the complete original
+      executor. Preserve original APIs, physical authentication, aggregate bounds,
+      actual language/repository edits, serialized reparsing and full inverses.
+- [x] Compare the old/new operation on the complete actual project proposal:
+      6638.47/4102.43 ms, identical complete canonical stages and inverses.
+      Preserve the full 19.27 MB logical comparison receipt; no whole-gate claim.
+- [x] Connect only the actual callback producer and finish all four whole receiving
+      files in both engines: eleven passes each, independent Node audit passing,
+      original deadlines unchanged and no owned resource stop.
+- [x] Verify the complete generated private sibling with both producer-native
+      syntax paths. The actual project afterimage stays byte exact.
+- [ ] Capture the final complete producer receipts, review and commit this atomic
+      source batch; retain all original broader deadline failures as unresolved.
+- [ ] Complete the separately bounded ordinary namespace trace. It adds only
+      progress in an uninstalled diagnostic afterimage, uses a 512 MiB heap and
+      applies no generated output; it cannot qualify the original matrix.
+- [ ] Repair remaining failures, run the complete mandatory local gate and obtain
+      green same-head CI before marking the PR ready or the issue complete.

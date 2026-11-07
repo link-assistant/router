@@ -6,7 +6,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
-import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+import {transportConcreteSourcePhases} from './concrete-phased-equations.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const PROFILE=new URL('./source-profiles/project-facade-retention/',import.meta.url);
 const PATH='tools/translation/project.mjs';
@@ -60,20 +60,11 @@ export function prepareProjectFacadeRetention({root=ROOT}={}){
  root=resolve(root);const input=original(),before=input.source,ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript 5.9.3 required');
  const {language,after,selection}=derive(ts,before),current=readFileSync(resolve(root,PATH),'utf8');
  if(current!==before&&current!==after)fail('complete physical project is neither original nor derived output');
- const first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),stages=[];let document=first.document;
- for(const [phase,from,to]of [['language',before,language],['repository',language,after]]){
-  const rule={id:phase==='language'?'javascript:detach-retained-project-closure-environments':'router:place-private-factories-outside-project-invocation',edits:[{span:[0,from.length],expected:from,replacement:to}]};
-  const sequence={languageRules:phase==='language'?[rule]:[],repositoryRules:phase==='repository'?[rule]:[]};
-  const beforeMeta=serializeConcreteSyntaxMeta(document),run=applyConcreteSyntaxSubstitutions(document,sequence),afterMeta=serializeConcreteSyntaxMeta(run.value),parsed=transportConcreteSyntaxMeta(afterMeta);
-  if(parsed.source!==to)fail('complete serialized/reparsed stage differs');
-  const inverseRule={id:'inverse:'+rule.id,edits:[{span:[0,to.length],expected:to,replacement:from}]};
-  const inverse=applyConcreteSyntaxSubstitutions(parsed.document,{languageRules:phase==='language'?[inverseRule]:[],repositoryRules:phase==='repository'?[inverseRule]:[]});
-  if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source!==from)fail('complete CST inverse differs');
-  stages.push({phase,before:from,after:to,beforeMeta,afterMeta,trace:run.trace,completeInverse:true});document=parsed.document;
- }
+ const [equation]=transportConcreteSourcePhases([{before,middle:language,after,language:'JavaScript'}]);
+ const stages=equation.stages.map(stage=>({...stage,completeInverse:true}));
  const nativeCopies=[nativeCopy(ts,before),nativeCopy(ts,after)],nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,PATH),after);
  if(readFileSync(resolve(root,PATH),'utf8')!==current||original().source!==before)fail('complete source changed across final boundary');
- return {schema:'project-facade-retention-source-v1',typescriptVersion:ts.version,input,files:[{path:PATH,before,language,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:first.meta,afterMeta:serializeConcreteSyntaxMeta(document),inverse:before,stages,trace:stages.flatMap(stage=>stage.trace),nativeCopies,nativeBindings,selection}],sourceAuthority:false,semanticAuthority:false};
+ return {schema:'project-facade-retention-source-v1',typescriptVersion:ts.version,input,files:[{path:PATH,before,language,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:equation.beforeMeta,afterMeta:equation.afterMeta,inverse:before,stages,trace:equation.trace,nativeCopies,nativeBindings,selection}],sourceAuthority:false,semanticAuthority:false};
 }
 export function composeProjectFacadeRetention(prior,options={}){
  const plan=prepareProjectFacadeRetention(options),sources={...prior};

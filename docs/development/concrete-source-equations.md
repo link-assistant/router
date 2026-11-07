@@ -53,3 +53,33 @@ retains both CST phases and inverse, and freshly checks all producer inputs and
 physical identities. Existing adoption proposals preserve the already installed
 later API. Unknown source suffixes still refuse. This source history adds no
 parser, namespace or executable authority.
+
+## Explicit language and repository phases
+
+`concrete-phased-equations.mjs` provides the separate
+`transportConcreteSourcePhases([{before, middle, after, language}])` DATA API.
+It applies the actual complete `before` → `middle` edit in the `language`
+sequence and `middle` → `after` in the `repository` sequence. Each stage
+serializes and reparses the full canonical document before the next stage.
+Each inverse runs in that same phase and also serializes/reparses. Complete
+canonical bytes must equal independently built original/middle/final rows.
+Returned traces use new `source-phases:complete-*-edit` IDs; they do not claim
+to execute any previous producer's rule IDs or partial native-span edits.
+
+The separate generated private sibling copies the complete pinned existing
+executor prefix and its original transaction. Original APIs and source pins
+remain unchanged. It authenticates the original physical parser closure before
+and after each complete call, preserving final source identities, original
+intrinsic checks, complete input-descriptor joins and captured-function joins.
+It shares that authentication only inside the new explicit transaction, with
+no new result/source/verdict cache or caller callback/private frame.
+
+An input has at most 85 triples (255 original rows), with unchanged aggregate
+source/UTF-8/node/canonical bounds across all three members of every triple.
+Ordered ordinary data, primitive strings and supported languages are required;
+proxies, getters, sparse arrays, extra fields, changed input and mixed languages
+refuse. Edited source remains DATA and needs independent semantic checking.
+`prepare-concrete-phased-equations.mjs --emit|--write|--check` retains the full
+original snapshot, actual native selections, both CST stages and all inverses.
+A finite complete-project diagnostic compares every canonical stage and inverse;
+it does not qualify the original whole receiving deadlines, matrix or parity.
