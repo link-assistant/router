@@ -9,13 +9,24 @@ The six supplemental workflows skipped. No run was cancelled by this task.
 The tested merge is `cfd80ffbf6a81e70bbcc584de875a17cfcc62d75`; its tree
 `75cf48cfbe29770ccdce6bc9d1da8d1e5c4dc427` equals the published head's tree.
 
-The [whole-container manifest](evidence/ci-567e1dd0/manifest.json) maps all
+The [whole-container manifest](https://github.com/link-assistant/router/blob/764222b6e6d4f0ce1efb0341396cfb6a87661e85/docs/case-studies/issue-784/evidence/ci-567e1dd0/manifest.json) maps all
 162 retained originals to their former task paths, lengths and SHA256 values.
 The task-only retainer moved the closed, owned, single-link files without
 copying 40,779,042 existing bytes. It verified complete gzip readback, every
 ZIP member's length, SHA256 and CRC, and whole-container SHA256 after moving.
 All 24 published artifact ZIPs (431 members) and the complete whole-run ZIP
 (216 members) are retained. These checks establish evidence integrity only.
+
+After publication at `764222b6e6d4f0ce1efb0341396cfb6a87661e85`, the
+[retirement receipt](evidence/ci-567e1dd0-local-retirement.json.gz) preserves
+the whole manifest, remote directory metadata and immutable URLs for all 163
+published files. The task-only retirement script compared every local byte
+with its published Git blob and manifest digest, checked ownership and inactive
+file descriptors/mappings, then removed these local copies. It reclaimed
+40,846,510 logical bytes and 41,082,880 allocated bytes. No original stream
+was discarded from published history. Task evidence measured 450,103,616 bytes
+after retirement and the first current-cycle log downloads, below the fixed
+500,000,000-byte allocation. The unavailable shard-5 log remains unavailable.
 
 There are 25 original nonpassing job responses, but only 24 complete job logs.
 Forward translation shard 5, job `128848041746`, was cancelled at the original
