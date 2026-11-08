@@ -179,3 +179,7 @@ separate remaining alias-reader freshness failure.
 The [compiler alias receiving-reader repair](current-alias-reader.md) records
 the actual producer composition and all 21 passing complete-file cases under
 Node and Bun, with fresh native binding checks and full source histories.
+
+The [receiving repair checkpoint](current-alias-checkpoint.md) records the
+complete prior CI cycle, refreshed feedback, combined source review and the
+remaining qualification required after publication.
