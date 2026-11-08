@@ -310,3 +310,17 @@ remain unfinished; no draft checkpoint establishes release readiness.
       its separate receipt and incomplete audit remain explicit.
 - [ ] Full generation, strict parity, the complete gate and current-head CI are
       still unfinished. These focused results do not qualify completion.
+
+## Current owned-vector source regeneration
+
+- [x] Run the actual `prepare-owned-vector-candidate.mjs --write` producer.
+      Preserve all three complete source-copy equations, native bindings,
+      two CST phases and complete inverses. Only the source and operations
+      copies change; the document copy remains current.
+- [x] Run the complete original six-case `owned-vector-candidate.test.mjs`
+      under Node 20.20.2 and Bun 1.4.4. Both pass with unchanged 60000-ms
+      case limits. Node elapsed 93.702081 seconds, sampled cgroup peak
+      1946963968 bytes; Bun elapsed 79.936240 seconds, peak 2162528256 bytes.
+      Receipts and complete logs use the `current-owned-vector-candidate-`
+      prefix. The independent Node deadline audit passes.
+- [ ] The complete repository gate and current-source CI remain required.
