@@ -121,9 +121,15 @@ remain unfinished; no draft checkpoint establishes release readiness.
       Capture the apply function with the original weak-set methods. The full
       producer is not executed by that diagnostic. Original before/after logs:
       `physical-mismatch-apply-{before,after}.log` in the restart directory.
-- [ ] Run the complete four-case refusal file under Node and Bun for the new
-      captured-apply source, then check the unchanged equation producer output.
-      The three earlier receiving passes do not cover this fourth regression.
+- [x] Complete receiving and producer freshness for captured apply. All four
+      refusal cases pass under Node in 1.307924 seconds, peak 1761046528 bytes,
+      with the unchanged source-deadline audit, and on Bun in 1.010555 seconds,
+      peak 1472200704 bytes. The producer check passes in 13.919147 seconds,
+      peak 1553244160 bytes. The unchanged complete two-case original equation
+      suite passes on Node in 17.237309 seconds, peak 1643454464 bytes, with its
+      original deadline audit, and on Bun in 17.964481 seconds, peak 1686765568
+      bytes. The three earlier receiving passes did not cover this fourth
+      regression. Broader parser-history performance remains failed above.
 
 ## Additional completed-CI root causes
 
@@ -134,17 +140,57 @@ remain unfinished; no draft checkpoint establishes release readiness.
       Draft a separate invocation of the existing native/CST relocation
       generator; preserve the old seventeen-case generator contract and every
       original eight-case body, assertion, instrumentation and deadline.
-- [ ] Independently review and install that generated relocation, run both
-      complete original receiving files and the new refusal/source regressions
-      under Node and Bun, then check both producer entry points for freshness.
-- [ ] Resolve the actual method-owner scope mismatch. Earlier source-only
-      controlled/client enum comparisons agree. The standalone clients.rs graph
-      had only four scopes / 66 graph diagnostics; the binary main.rs graph had
-      only one scope / one diagnostic. Neither was the library graph. The new
-      finite library probe separately compares genuine full and enclosing
-      binders with the actual matches context's independently captured evidence.
-      This experiment issues no source or runtime authority and does not waive
-      the whole-owner scope digest or the documented method-free comparison.
+- [x] Independently review and install that generated relocation, retaining the
+      complete native/CST proposal and all eight original cases byte for byte.
+      All four complete files pass 31 cases on Node, with the original deadline
+      audit, in 133.409893 seconds (sampled peak 1912287232 bytes), and 31 on Bun
+      1.4.4 in 108.369643 seconds (2368225280 bytes). Neither observer interrupted.
+      Both producer freshness entry points pass separately: the original
+      receiving import in 19.652787 seconds, peak 1501708288 bytes, and the
+      scan-cost invocation in 19.443700 seconds, peak 1493495808 bytes.
+- [x] Finish the actual library method-owner investigation. All 397 scopes were
+      compared in 1394.511253 seconds, peak 2487779328 bytes. Only clients.rs
+      differs: full-bang evidence retains the ClientKind Schemars-with residual,
+      while enclosing output closes it. The complete bindings agree; the actual
+      differences are the residual diagnostic and the two macro-scope fields.
+      Complete sources, both full records and the independently captured record
+      remain in `current-method-owner-scope-comparison-lib-tree.json.gz`.
+- [x] Reproduce the same linker exception in a complete small Schemars-with
+      method regression before changing production. Two actual cases fail at
+      source-links.mjs:263; unknown-owner controls pass. The unchanged whole
+      scope digest rejects the incorrect enclosing record as intended.
+- [x] Qualify the generated method call-site repair in complete receiving files.
+      Its existing private parser
+      namespace API supplies the actual scope; the original linker, standalone
+      full-bang refusals and enclosing records stay unchanged. Independent whole
+      source/native/CST/inverse/binding review passes and installs two selected
+      edits, preserving the original pinned archive and callable bodies. Complete
+      receiving passes as recorded below. Both facade-retention and owned-binding
+      generator checks pass separately in 10.817903 and 8.681718 seconds, peaks
+      1542291456 and 1505705984 bytes. Current production matrix generation
+      remains required; no newly executable production function count is claimed.
+- [x] Run all eight complete method receiving files after installation: Node
+      reports 38/41 passes in 138.223071 seconds, peak 2138378240 bytes. All three
+      functional method-owner regressions pass. One new native-refusal control
+      edited an earlier equal spelling rather than the selected native span;
+      correct that new control to use its recorded span. Two existing complete
+      cohort cases fail because their helper selects an absent ambient `tsc`.
+      Every original deadline and existing assertion remains unchanged.
+- [x] Reproduce the compiler selection defect in a complete three-case file:
+      default and invalid-source checks fail before repair; mandatory explicit
+      missing-compiler refusal passes. Node takes 3.531907 seconds, peak
+      1806086144 bytes. Share the existing installed-compiler selection between
+      both receiving helpers and add optional default-off selection diagnostics.
+      All ten complete receiving files now pass 47 cases under Node, including
+      the independent original deadline audit, in 156.787725 seconds, peak
+      2138546176 bytes. Separate fresh sequential Bun 1.4.4 processes pass the
+      same 47 cases; all fourteen captured inputs remain unchanged. Their
+      largest sampled cgroup use is 2285502464 bytes. This differs from CI's
+      pinned Bun 1.4.3 and does not qualify the complete gate.
+- [x] Preserve the failed combined Bun attempt separately: the unchanged memory
+      guard interrupted it at 79.305270 seconds, peak 2872438784 bytes, and all
+      owned processes were reaped. Fresh whole-file receiving does not turn that
+      interrupted combined run into a pass.
 - [x] Fetch main again: eb2dad1c0a18394dc1aad46413e11401e74eb502 remains an
       ancestor of local HEAD. Published b63dd5a33 and its actual synthetic merge
       3df6f72d9 have the same tree, 9db87b29e98e408b03da5bba5c426f4d442a407f.

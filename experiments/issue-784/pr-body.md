@@ -17,47 +17,85 @@ mixed combinations leaked before the fix. Node and Bun each pass **30 focused
 cases** and **259 native cases**. JavaScript, generated native TypeScript and
 matching Rust source share fixtures. Rust execution remains unverified.
 
-Forward CI now partitions every discovered complete test file into eight
-required jobs with unchanged test bodies, original deadlines and concurrency.
-Each job joins every original test and runner source before and after execution,
-and retains the independent deadline audit and complete raw output. Both
-canonical freshness commands run once in an independent required job; owned
-profile generation also has an independent required job. All ten logical stages,
-including every shard, must pass before Rust. The local gate retains its original
-seven stages and complete unpartitioned cohort. Both serialized/reparsed YAML
-CST phases and the complete inverse qualify the workflow source extension.
+The CI repair preserves every discovered original test file, assertion and
+deadline. Forward tests use eight required complete-file bins. Reverse uses
+eight complete-file bins per engine plus the three original regeneration
+commands. Both canonical freshness commands and owned profile generation remain
+required. All twelve logical JavaScript stages and every bin must pass before
+Rust. The local gate retains its complete unpartitioned cohorts. Workflow
+generation retains serialized/reparsed YAML CST phases and complete inverses.
+The four complete reverse-coordinator receiving files pass 82 Node cases with
+the independent deadline audit and 80 Bun cases; that is coordinator evidence,
+not a successful full translator gate.
 
-The four whole receiving files pass **54 Node cases plus the independent
-deadline audit** and **52 Bun cases**. These controls verify exhaustive selection,
-source-change refusals, real failure propagation, original setup and aggregate
-requirements; they do not establish full production translation. Node is
-**20.20.2**, local Bun **1.4.4** (CI pins **1.4.3**), and lockfile TypeScript
-**5.9.3**. Original failed attempts, assertions and deadlines remain preserved.
+The current source batch also repairs exact compiler-index custody, refreshes the
+genuine source registry, adds the separately pinned complete official Node
+20.20.2 crypto profile, restores the parser fixture's missing physical equation
+dependencies and preserves its original refusal boundary. Genuine Hash callback
+exceptions retain their identity; copied errors and proxies cannot acquire the
+producer's private mismatch identity. No source pin, complete original archive,
+semantic admission check or performance limit is waived.
 
-The mandatory full local gate at clean source
-**645d5adf0419c588f4db93ce499163aa5c9c5557** passes lint, both 259-case native
-suites, nine audited deadline controls and public TypeScript. The memory guard
-interrupts native TypeScript after **330.51 seconds**, exit **143**, stop sample
-**2870210560 bytes** against the **3135369216-byte** container. Remaining
-TypeScript checks, parity, forward and reverse are **unrun** for this attempt.
-All owned processes are reaped; no active test deadline is paused and **no green
-gate stamp exists**. Earlier exact-head failures remain separate evidence.
+Recorded receiving results remain distinct:
 
-All seven workflows at preceding published head
-**a2539817c8608f7dc5c40ae93af18e47b0fb6dd0** finished before this publication.
-The [main run](https://github.com/link-assistant/router/actions/runs/42423777151)
-fails; six supplemental workflows skip. Every whole log and every member of all
-three artifact ZIPs has been read and checked for digest, length and CRC.
+- Exact-index controls: 17 Node and 17 Bun cases pass.
+- Registry controls: 16 Node and 16 Bun cases pass. Source registration must be
+  regenerated again for the final coherent compiler batch.
+- Node 20.20.2 crypto profile: all three complete files, 17 cases and the original
+  deadline audit pass under Node. Both Bun attempts hit the unchanged memory
+  guard and leave receiving qualification unfinished. Its producer freshness
+  check passes separately.
+- Parser refusal controls: all four cases pass under both engines, including
+  late ambient apply replacement. The unchanged two-case equation transaction
+  suite passes separately under both engines; the Node producer freshness
+  check also passes. All three complete parser/history receiving files report
+  13 functional passes under
+  Node, but the independent audit fails four unchanged 60000-ms deadlines at
+  167719.120359, 148714.146195, 62934.191560 and 90153.668876 ms. Whole-file Bun
+  receiving and current-batch producer/gate verification remain required.
+- Guarded-runtime receiving imports: all four complete files pass 31 Node and
+  31 Bun cases. The scan-cost fixture now copies its actual runtime dependency;
+  all original instrumentation, assertions and deadlines remain unchanged.
+  Both generator freshness entry points pass separately.
+- Method owner and strict compiler selection: all ten complete receiving files
+  pass 47 Node cases with the original deadline audit and 47 cases in fresh
+  sequential Bun 1.4.4 processes. The actual private parser scope fixes the
+  complete-owner digest mismatch without changing linker refusals. Both helpers
+  use the lockfile-installed TypeScript 5.9.3, preserving explicit overrides.
+  A combined Bun attempt hit the unchanged memory guard and remains a failure.
+  Production matrix generation and the full gate remain unqualified.
 
-| Required stage | Complete preceding-head CI result |
+The latest complete local gate attempt at source `308a3b861` ran for
+1509.425560 seconds before the unchanged memory guard stopped and reaped all
+owned descendants, peak sample 2873679872 bytes against the 3135369216-byte
+container. Lint and both 259-case native suites pass. Native strict TypeScript
+5.9.3 compiles 165 files with no freshness changes. All nine TypeScript behaviors
+report functional passes, but regeneration exceeds its original deadline at
+121353.172706 / 60000 ms. Strict parity fails, forward exhausts its bounded heap,
+and reverse records an original deadline failure before interruption. Later
+commands remain unrun. No green gate stamp exists; this earlier attempt does not
+qualify subsequent source changes.
+
+All seven workflows at published head
+`b63dd5a337c4e17f9df51f9ce866cb73fdea7662` completed before publication of the
+next batch. The [main run](https://github.com/link-assistant/router/actions/runs/42430143951)
+fails; six supplemental workflows skip. Every available official log member and
+every member of all nine artifact ZIPs has been read and checked for digest,
+length and CRC. Forward bin 7's original log is unavailable: two authenticated
+requests return 404 `BlobNotFound`. Its missing original log, artifact and
+terminal cohort audit remain explicitly unavailable.
+
+| Required stage | Complete published-head CI result |
 | --- | --- |
-| Lint, native Node/Bun | **Pass**, including 259 native cases per engine. |
-| TypeScript | **Fail:** genuine owned-definition matrix index absent; main log lines 1154, 1167. |
-| Profile matrix | Cancelled at the original **60 minutes**, with no complete draft. Mandatory uploader correctly fails on missing files; lines 4625, 4639. |
-| Strict parity | **Fail:** stale account-policy source hash, **441 gaps**, **12345 carried items**, runtime parity false; lines 7905–7910. |
-| Forward | Cancelled at original **60 minutes**. Eleven actual failures remain: eight stale generation/compiler contexts; receiving SIGTERM at original 20 seconds; complete corpus graph **96788.733202 > 60000 ms**; three real native builds **118552.328916 > 60000 ms**. No terminal cohort audit. |
-| Reverse | Cancelled at original **15 minutes**, main log line 6949; Bun and regeneration unrun. |
-| Aggregate / Rust | Aggregate **fails**, line 8057; Rust and release correctly skip. No Rust tool ran locally. |
+| Lint, native Node/Bun | Pass, including 259 native cases per engine. |
+| TypeScript | Fail: genuine owned-definition matrix index absent, main log lines 190403–190416. |
+| Profile matrix | Cancelled at the original 60 minutes; no complete draft. The mandatory uploader fails on missing files, lines 18955–18969. |
+| Owned profile matrix | Fail: original method-owner scope differs from independently captured evidence; no complete draft, lines 189561–189582. |
+| Strict parity | Fail: stale account-policy source hash, 441 incomplete features, 12345 carried items, runtime parity false, lines 50910–50915. |
+| Forward | Seven available bins retain 114 actual failures and 29 deadline breaches. Bin 7 is cancelled with unavailable original output. Stale original source equations, current generated artifacts, fixture imports and full-operation deadlines remain mandatory repairs. |
+| Freshness | Fail: required current generated sources/inventory differ, lines 26954–27549. |
+| Reverse | Cancelled at its original 15 minutes, lines 188490 and 189228. The separate complete-file coordinator repair awaits fresh CI. |
+| Aggregate / Rust | Aggregate fails; Rust and release correctly skip. No Rust tool ran locally. |
 
 The read-only artifact reviewer joins the actual checked merge to the published
 head using complete authenticated commit metadata, exact base/head parents and
@@ -84,5 +122,5 @@ and retain mandatory security data; account controls require authenticated
 accounts; direct client, telemetry, OAuth and MCP traffic can bypass Router.
 Cursor's private protocol and Gemini subscription modes remain unsupported.
 Account settings were not changed. Changelog fragments use the existing release
-process. Main ancestry and the complete local source diff are checked before
+process. Main ancestry and the complete local source diff must be checked before
 publication; GitHub refuses the full PR diff with HTTP 406 (>300 files).

@@ -27,10 +27,11 @@ ownership or executable authority.
 
 All original current-source behavior assertions, source pins, freshness
 fences, complete native checks and 60000-ms deadlines remain mandatory. The
-original three focused refusal regressions pass on Node and Bun. The fourth
-apply-replacement regression and the current captured-apply source still need
-complete receiving checks. A tiny native-VM reproduction fails before this
-repair and passes afterward, but does not execute the complete producer.
+four focused refusal regressions pass on Node and Bun. The unchanged complete
+two-case equation transaction suite also passes under both engines, including
+Node's independent deadline audit; its producer freshness check passes.
+A tiny native-VM reproduction fails before this repair and passes afterward,
+but does not execute the complete producer.
 Whole-file performance is not yet qualified; the current full Node run exceeds
 original case deadlines.
 See the [active repair checklist](../../experiments/issue-784/current-native-ci-repair.md)
