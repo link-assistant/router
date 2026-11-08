@@ -10,13 +10,14 @@ import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 import {prepareCoreAsciiReverseSources} from './prepare-core-ascii-reverse-sources.mjs';
 import {composeCoreAsciiBaseAssets} from './prepare-current-core-ascii-base-assets.mjs';
-import {transportConcreteNamedSourcePhases} from './concrete-named-phases.mjs';
+import {transportConcreteNamedSourcePhases} from './concrete-sequential-phases.mjs';
 import {currentUnicodeAssetInputs,requireCurrentUnicodeAssetInputs} from './current-unicode-asset-inputs.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const HOST='tools/translation/host-assets.mjs',HELPER='tools/translation/ascii-runtime-assets.mjs',DATA='tools/translation/ascii-runtime-assets-source-data.mjs',SOURCE='tools/translation/js-to-rust/owned-core-source.mjs';
 const NAMES=['string-iterator-runtime.mjs','whitespace-data.mjs','string-iterator-runtime.d.mts'];
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('Owned ASCII asset preparation: '+message);};
+function timing(stage){if(process.env.ROUTER_TRANSLATION_PRODUCER_TRACE==='1')process.stderr.write(JSON.stringify({producer:"current-core-ascii-assets",stage,timeMs:Date.now()})+'\n');}
 function originals(){
  const packed=readFileSync(new URL('./source-profiles/core-ascii/assets-originals.json.gz',import.meta.url));
  if(packed.length!==18161||hash(packed)!=='628ea63fafc598ec0e0db0a6b8b7253c033b4ee1ad8692434641b351acb99d15')fail('original source archive changed');
@@ -93,15 +94,31 @@ function prepare(ts,row,root,equation){
 }
 export function prepareCoreAsciiAssets({root=ROOT}={}){
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');
- const rows=originals(),inputs=currentUnicodeAssetInputs(rows,root),historical=afterSources(ts,rows),result=afterSources(ts,inputs.rows),parent=inputs.rows.find(row=>row.path===HOST);
+ timing('prepare:start');const rows=originals();timing('prepare:originals');
+ const inputs=currentUnicodeAssetInputs(rows,root);timing('prepare:unicode-inputs');
+ const historical=afterSources(ts,rows);timing('prepare:historical');
+ const result=afterSources(ts,inputs.rows),parent=inputs.rows.find(row=>row.path===HOST);timing('prepare:current');
  const all=[...historical.files,...result.files],equations=transportConcreteNamedSourcePhases(all.map(row=>({before:row.before,middle:row.before,after:row.after,language:'JavaScript',rules:["ascii-assets:retain-complete-original-source","ascii-assets:explicit-selected-read-schedule","ascii-assets:restore-complete-language-input","ascii-assets:restore-complete-original-input"]})));
+ timing('prepare:concrete-equations');
  const historicalFiles=historical.files.map((row,at)=>prepare(ts,row,root,equations[at])),files=result.files.map((row,at)=>prepare(ts,row,root,equations[historical.files.length+at]));
  requireCurrentUnicodeAssetInputs(inputs);
+ timing('prepare:complete');
  return {schema:"router-owned-ascii-assets-v1",typescriptVersion:ts.version,files,selection:{path:HOST,source:parent.source,sha256:parent.sha256,statements:result.selection.selected.map(row=>({name:row.name,span:[row.node.getStart(),row.node.end],source:row.node.getText()})),nativeBindings:result.selection.nativeBindings,nativeLexicalBindings:result.selection.links},historical:{files:historicalFiles,selection:{selected:historical.selection.selected.map(row=>({name:row.name,span:[row.node.getStart(),row.node.end],source:row.node.getText()})),links:historical.selection.links,statements:historical.selection.statements,nativeBindings:historical.selection.nativeBindings},originals:rows},currentInputComposition:inputs,runtimeExecuted:false,rustExecuted:false,semanticAuthority:false,fullBuilderCallbackParity:false};
 }
-export function composeCoreAsciiAssets(prior,options={}){const plan=prepareCoreAsciiAssets(options),sources={...prior};for(const row of plan.files){if(sources[row.path]&&sources[row.path].after!==row.before)fail('preceding complete source equation differs: '+row.path);sources[row.path]=row;}return {sources,layers:[plan],historicalSources:prior};}
+export function composeCoreAsciiAssets(prior,options={}){
+ // Authenticate the whole archived predecessor before native/CST preparation.
+ // Accepted inputs retain complete preparation and its final comparison.
+ const rows=originals(),before=new Map([[HELPER,''],[DATA,''],[SOURCE,rows.find(row=>row.path===SOURCE).source]]);
+ for(const [path,source]of before)if(Object.hasOwn(prior,path)&&prior[path]&&prior[path].after!==source)fail('preceding complete source equation differs: '+path);
+const plan=prepareCoreAsciiAssets(options),sources={...prior};for(const row of plan.files){if(sources[row.path]&&sources[row.path].after!==row.before)fail('preceding complete source equation differs: '+row.path);sources[row.path]=row;}return {sources,layers:[plan],historicalSources:prior};}
 export function prepareCurrentCoreAsciiAssets(options={}){const birth=prepareCoreAsciiAssets(options),base=composeCoreAsciiBaseAssets(Object.fromEntries(birth.files.map(row=>[row.path,row])),options),retention=composeOwnedCorePrivateAnalysisRetention(base.sources,options),runtime=composeOwnedRuntimeImportEdges(retention.sources,options);return {schema:'current-owned-ascii-assets-v1',birth,layers:[birth,...base.layers,...retention.layers,...runtime.layers],files:Object.values(runtime.sources),semanticAuthority:false};}
-export function prepareCurrentCoreAsciiReverseAssets(options={}){const birth=prepareCoreAsciiReverseSources(options),assets=composeCoreAsciiAssets(Object.fromEntries(birth.files.map(row=>[row.path,row])),options),base=composeCoreAsciiBaseAssets(assets.sources,options),retention=composeOwnedCorePrivateAnalysisRetention(base.sources,options),runtime=composeOwnedRuntimeImportEdges(retention.sources,options);return {schema:'current-owned-ascii-reverse-assets-v1',birth,layers:[birth,...assets.layers,...base.layers,...retention.layers,...runtime.layers],files:Object.values(runtime.sources),semanticAuthority:false};}
+export function prepareCurrentCoreAsciiReverseAssets(options={}){
+ timing('reverse:start');const birth=prepareCoreAsciiReverseSources(options);timing('reverse:birth');
+ const assets=composeCoreAsciiAssets(Object.fromEntries(birth.files.map(row=>[row.path,row])),options);timing('reverse:assets');
+ const base=composeCoreAsciiBaseAssets(assets.sources,options);timing('reverse:base');
+ const retention=composeOwnedCorePrivateAnalysisRetention(base.sources,options);timing('reverse:retention');
+ const runtime=composeOwnedRuntimeImportEdges(retention.sources,options);timing('reverse:runtime');
+ return {schema:'current-owned-ascii-reverse-assets-v1',birth,layers:[birth,...assets.layers,...base.layers,...retention.layers,...runtime.layers],files:Object.values(runtime.sources),semanticAuthority:false};}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--write','--check'].includes(args[0]))fail('usage: --write|--check');const plan=prepareCurrentCoreAsciiAssets();
  if(args[0]==='--write'){for(const row of plan.files)if(row.current!==null&&!plan.layers.flatMap(layer=>layer.files.filter(part=>part.path===row.path).flatMap(part=>[part.before,part.after])).includes(row.current))fail('physical complete parent differs: '+row.path);for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}

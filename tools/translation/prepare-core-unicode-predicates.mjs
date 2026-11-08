@@ -7,7 +7,7 @@ import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {unicodePredicateSourceArtifacts} from './unicode-predicates-source.mjs';
-import {transportConcreteNamedSourcePhases} from './concrete-named-phases.mjs';
+import {transportConcreteNamedSourcePhases} from './concrete-sequential-phases.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('Owned Unicode source preparation: '+message);};

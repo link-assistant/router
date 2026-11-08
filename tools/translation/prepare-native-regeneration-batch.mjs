@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {exactLiteralSubstitutionRule} from './literal-substitution-rule.mjs';
-import {transportConcreteSourcePhases} from './concrete-phased-equations.mjs';
+import {transportConcreteSourcePhases} from './concrete-sequential-equations.mjs';
 const root=new URL('../../',import.meta.url),path='tools/translation/js-to-rust/native-typescript.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const originalSha256='46ec636ff5c2ffa3ec3dfd8dfbc7b73f7a01b171286cf6d5c78b3320726d8208';

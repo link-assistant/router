@@ -15,6 +15,8 @@ test('separate current asset producers retain both entire historical producers a
  for(const row of plan.files){
   assert.equal(row.current,row.after);assert.equal(readFileSync(new URL('../../../'+row.input,import.meta.url),'utf8'),row.before);assert.equal(row.equation.inverse,row.before);
   for(const stage of row.equation.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}
+  assert.equal(row.publishedEquation.before,row.publishedAfter);assert.equal(row.publishedEquation.after,row.after);assert.equal(row.publishedEquation.inverse,row.publishedAfter);
+  for(const stage of row.publishedEquation.stages){assert.equal(stage.inverse,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}
   for(const marker of ['copySource(ts,row.path,before)','copySource(ts,row.path,after)','verifyNativeCopiedSourceBindings','completeNativeAstCopy:true'])assert.ok(row.before.includes(marker)&&row.after.includes(marker),marker);
  }
 });

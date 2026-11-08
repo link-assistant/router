@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
-import {transportConcreteNamedSourcePhases} from './concrete-named-phases.mjs';
+import {transportConcreteNamedSourcePhases} from './concrete-sequential-phases.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const PATH='tools/translation/js-to-rust/owned-core-operations.mjs';
 const ARCHIVE=new URL('./source-profiles/owned-core-private-analysis-retention/original.json.gz',import.meta.url);

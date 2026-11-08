@@ -52,14 +52,17 @@ export function prepareRuntimeImportCurrentSources(){
  if(selected.length!==1||selected[0].initializer?.getText(file)!=='equation(ts,root,NATIVE,nativeBefore,nativeLanguage,nativeAfter,nativeEdits)')fail('complete native row selection differs');
  const node=selected[0].initializer,replacement='composeCurrentNativeRegenerationRow(ts,root,'+node.getText(file)+')';
  const middle=before.slice(0,node.getStart(file))+replacement+before.slice(node.end)+addition;
- const after=once(middle,"from './owned-runtime-node-source-data.mjs'","from './"+nodeName+"'");
- files.push({path:base+currentName,before,middle,after,nativeSelection:{span:[node.getStart(file),node.end],expected:node.getText(file),replacement}});
+ let after=once(middle,"from './owned-runtime-node-source-data.mjs'","from './"+nodeName+"'");
+ after=once(after,"from './concrete-phased-equations.mjs'","from './concrete-sequential-equations.mjs'");
+ const previousAfter=once(after,"from './concrete-sequential-equations.mjs'","from './concrete-phased-equations.mjs'");
+ files.push({path:base+currentName,before,middle,after,previousAfter,nativeSelection:{span:[node.getStart(file),node.end],expected:node.getText(file),replacement}});
  const dataBefore=readFileSync(resolve(root,helper),'utf8');if(hash(dataBefore)!==helperPin)fail('complete original Node DATA helper differs');
  const dataMiddle=once(dataBefore,"new URL('./"+originalName+"',import.meta.url)","new URL('./"+currentName+"',import.meta.url)");
  let dataAfter=once(dataMiddle,"['tools/translation/"+originalName+"'","['tools/translation/"+currentName+"'");
  const tail="'tools/translation/js-to-rust/native-typescript.mjs'];";
- dataAfter=once(dataAfter,tail,"'tools/translation/js-to-rust/native-typescript.mjs','tools/translation/prepare-native-regeneration-batch.mjs','tools/translation/source-profiles/native-regeneration-batch/original.mjs.gz','tools/translation/prepare-runtime-import-current-sources.mjs','tools/translation/"+originalName+"'];");
- files.push({path:base+nodeName,before:dataBefore,middle:dataMiddle,after:dataAfter});
+ dataAfter=once(dataAfter,tail,"'tools/translation/js-to-rust/native-typescript.mjs','tools/translation/prepare-native-regeneration-batch.mjs','tools/translation/source-profiles/native-regeneration-batch/original.mjs.gz','tools/translation/prepare-runtime-import-current-sources.mjs','tools/translation/"+originalName+"','tools/translation/concrete-sequential-equations.mjs','tools/translation/concrete-sequential-phases.mjs','tools/translation/private-parser-sequential-phases.mjs'];");
+ const previousDataAfter=once(dataAfter,",'tools/translation/concrete-sequential-equations.mjs','tools/translation/concrete-sequential-phases.mjs','tools/translation/private-parser-sequential-phases.mjs'",'');
+ files.push({path:base+nodeName,before:dataBefore,middle:dataMiddle,after:dataAfter,previousAfter:previousDataAfter});
  for(const relative of paths){
   const path=base+relative,current=readFileSync(resolve(root,path),'utf8');
   let old=current.includes(currentName)?current.replaceAll(currentName,originalName):current;
