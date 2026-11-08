@@ -26,7 +26,7 @@ workers per job and the original 60-minute limit. Every artifact name includes
 its bin to avoid collisions. All eight results must succeed. Both original
 canonical freshness commands run once in a separate unconditional
 `translation-freshness` job with the complete original setup and budget. The
-aggregate requires ten logical stages; any failed, cancelled, skipped or
+aggregate requires twelve logical stages; any failed, cancelled, skipped or
 missing result refuses Rust admission. The local gate retains its original
 complete unpartitioned cohort, seven stages and every mandatory command.
 
@@ -52,3 +52,39 @@ failure: all nine native TypeScript behaviors finish, but regeneration takes
 strict parity then fails stale account-policy source data and retains 441 gaps
 and 12345 carried items. Memory interruption leaves forward incomplete and
 reverse unrun. Every owned process is reaped; no green stamp is issued.
+
+Reverse CI also assigns every original `js-to-rust/test/*.test.mjs` file to
+one of eight Node bins and one of eight independent Bun bins. Node keeps two
+workers, the original 900000 ms enclosing cohort limit and all independent
+case-deadline audits. Each job keeps its original 15-minute limit. A separate
+unconditional `reverse-freshness` job runs all three original regeneration
+commands exactly once with the complete original setup and 15-minute budget.
+Every bin and the freshness result must succeed before Rust can start.
+
+`prepare-bun-reverse-shard.mjs` derives the separate Bun shard coordinator
+from the entire unchanged `run-bun-reverse-files.mjs` source. Ordered language
+and repository substitutions cross serialized/reparsed complete JavaScript
+CST boundaries, check native syntax and restore the entire original inverse.
+The generated coordinator preserves fresh sequential child processes, exact
+whole-file Bun arguments, the original case deadlines and the 40-minute
+coordinator cap. The workflow's shorter enclosing limit remains effective.
+Both complete current discovery and the selected bin are retained; all original
+input files, including other bins, are joined before and after execution.
+New, removed, changed or unrun mandatory files still fail. Node and Bun artifact
+names include the bin, and each engine retains its full original raw receipts.
+
+The local gate retains the original unpartitioned reverse API, every original
+test file and all three freshness commands. The new producer freshness and
+complete coordinator controls are additional mandatory local and CI lint
+checks. Focused receiving results and actual same-SHA CI results are recorded
+separately; this orchestration does not establish executable runtime parity.
+
+The eight complete affected control files pass under Node 20.20.2: 82 cases
+in 84.216753 seconds, with a passing independent audit, 17 original finite
+deadlines and no unobserved deadlines or breaches. Bun 1.4.4 passes 80 cases
+in 66.051793 seconds; two repeated imports are cached. Peak sampled cgroup
+use is 2181545984 and 2189271040 bytes respectively. Both complete original
+coordinator checks and both new producer freshness checks pass; the workflow
+audit accepts all fourteen workflows. Installed TypeScript is 5.9.3. These
+focused controls do not qualify the complete 49-file reverse cohort or its
+actual same-SHA CI jobs.

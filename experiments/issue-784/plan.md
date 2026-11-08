@@ -916,3 +916,27 @@ remain explicitly unmet parts of the literal all-tool requirement.
       no resource interruption, all launched children reaped. Original refusal
       subprocess stderr remains preserved in complete logs. These receiving
       checks do not establish a green complete gate or executable parity.
+
+## Exhaustive reverse complete-file CI bins
+
+- [x] Derive the separate Bun coordinator from its entire unchanged original
+      through ordered fixed language/repository rules, full serialized/reparsed
+      CST boundaries, native syntax and exact inverse. Independently review the
+      whole coordinator and workflow proposals before installing either output.
+- [x] Preserve every original reverse file/case/deadline and complete source
+      joins. CI uses eight bins per engine, original two Node workers and
+      original 15-minute jobs. All three original regeneration commands run
+      exactly once in an independent job. All twelve aggregate stages and
+      every bin remain fatal before Rust. The original seven-stage local gate,
+      whole unpartitioned reverse APIs and commands remain mandatory.
+- [x] All eight complete affected receiving files pass: Node 82 cases in
+      84.216753 seconds, peak sampled cgroup 2181545984 bytes, independent audit
+      passes all 17 finite deadlines, zero breaches/unobserved deadlines. Bun
+      80 cases in 66.051793 seconds, peak 2189271040 bytes; two repeated imports
+      cached. All children reaped, no guard interruption. Both old/new producer
+      freshness and complete fourteen-workflow audit pass. Lockfile TS 5.9.3.
+- [ ] Run the complete gate at the coherent integrated SHA; collect every
+      b63dd5a33 CI failure before any new publication. No full reverse-cohort,
+      regeneration freshness or runtime-parity success is inferred from these
+      focused controls. All unresolved actual-gain/deadline/parity failures
+      and literal all-tool privacy requirements remain mandatory and unfinished.

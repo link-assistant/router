@@ -33,10 +33,24 @@ const freshnessJob=replaceOnce(replaceOnce(forwardComplete.slice(0,nodeUploadSta
 const forwardHeader='  translation:\n    runs-on: ubuntu-24.04\n';
 const shardStrategy='    strategy:\n      fail-fast: false\n      matrix:\n        shard: [1, 2, 3, 4, 5, 6, 7, 8]\n';
 const shardCommand='      - run: node scripts/run-node-test-shard.mjs --outer-timeout-ms=3600000 --whole-file-shard=${{ matrix.shard }}/8 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs\n';
+const reverseStart=original.indexOf('  reverse-translation:\n'),reverseEnd=original.indexOf('  complete:\n',reverseStart);
+if(reverseStart<0||reverseEnd<=reverseStart)throw TypeError('Complete historical reverse job missing');
+const reverseComplete=original.slice(reverseStart,reverseEnd);
+const reverseNode='      - run: node scripts/run-node-tests.mjs --outer-timeout-ms=900000 --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs\n';
+const reverseBun='      - run: node scripts/run-bun-reverse-files.mjs --output-root js/node_modules/.bun-reverse-files\n';
+const reverseCanonical='      - run: node scripts/regenerate-js-first.mjs --check\n      - run: node scripts/regenerate-js-first.mjs --owned-core-definitions --check\n      - run: node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check\n';
+const reverseUpload=reverseComplete.indexOf('      - name: Preserve complete Node deadline audit and Bun file receipts and raw streams\n');
+if(reverseUpload<0)throw TypeError('Complete historical reverse evidence missing');
+const withoutReverseCanonical=replaceOnce(reverseComplete,reverseCanonical,'');
+const reverseNodeJob=replaceOnce(withoutReverseCanonical,reverseBun,'');
+const reverseBunJob=replaceOnce(replaceOnce(withoutReverseCanonical,reverseNode,''),'  reverse-translation:\n','  reverse-bun:\n');
+const reverseFreshnessJob=replaceOnce(replaceOnce(replaceOnce(reverseComplete.slice(0,reverseUpload),reverseNode,''),reverseBun,''),'  reverse-translation:\n','  reverse-freshness:\n');
+const allTenNeeds=replaceOnce(replaceOnce(needs,'profile-matrix, reverse-translation','profile-matrix, owned-profile-matrix, reverse-translation'),'translation, profile-matrix','translation, translation-freshness, profile-matrix');
 export const MATRIX_DRAFT_LANGUAGE_RULES=Object.freeze([
  {id:'matrix-custody:explicit-data-directory',before:profile,after:profile+directory},
  {id:'matrix-custody:independent-complete-owned-check',before:complete,after:ordinaryJob+ownedJob},
  {id:'forward-files:independent-complete-freshness',before:forwardComplete,after:shardJob+freshnessJob},
+ {id:'reverse-files:independent-complete-engines-and-freshness',before:reverseComplete,after:reverseNodeJob+reverseBunJob+reverseFreshnessJob},
 ]);
 export const MATRIX_DRAFT_REPOSITORY_RULES=Object.freeze([
  {id:'matrix-custody:retain-complete-failed-check-drafts',before:ordinary,after:ordinary+upload},
@@ -49,6 +63,16 @@ export const MATRIX_DRAFT_REPOSITORY_RULES=Object.freeze([
  {id:'forward-files:require-complete-freshness',before:replaceOnce(needs,'profile-matrix, reverse-translation','profile-matrix, owned-profile-matrix, reverse-translation'),after:replaceOnce(replaceOnce(needs,'profile-matrix, reverse-translation','profile-matrix, owned-profile-matrix, reverse-translation'),'translation, profile-matrix','translation, translation-freshness, profile-matrix')},
  {id:'forward-files:reject-each-of-ten-stage-failures',before:'stages.length !== 9',after:'stages.length !== 10'},
  {id:'forward-files:mandatory-whole-control-file',before:'      - run: node --test scripts/test/check-js-first-local.test.mjs\n',after:'      - run: node --test scripts/test/check-js-first-local.test.mjs\n      - run: node --test scripts/test/run-node-test-shard.test.mjs\n'},
+ {id:'reverse-files:complete-node-evidence-per-bin',before:reverseNodeJob,after:replaceOnce(replaceOnce(reverseNodeJob,'name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}','name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}-${{ matrix.shard }}'),'            js/node_modules/.bun-reverse-files/\n','')},
+ {id:'reverse-files:complete-bun-evidence-per-bin',before:reverseBunJob,after:replaceOnce(replaceOnce(reverseBunJob,'name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}','name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}-${{ matrix.shard }}'),'            js/node_modules/.node-case-deadlines/\n','')},
+ {id:'reverse-files:node-exhaustive-eight-whole-file-bins',before:'  reverse-translation:\n    runs-on: ubuntu-24.04\n',after:'  reverse-translation:\n    runs-on: ubuntu-24.04\n'+shardStrategy},
+ {id:'reverse-files:bun-exhaustive-eight-whole-file-bins',before:'  reverse-bun:\n    runs-on: ubuntu-24.04\n',after:'  reverse-bun:\n    runs-on: ubuntu-24.04\n'+shardStrategy},
+ {id:'reverse-files:unchanged-node-auditor-and-case-budgets',before:reverseNode,after:reverseNode.replace('scripts/run-node-tests.mjs','scripts/run-node-test-shard.mjs').replace('--test-concurrency=2','--whole-file-shard=${{ matrix.shard }}/8 --test-concurrency=2')},
+ {id:'reverse-files:unchanged-bun-leaf-and-case-budgets',before:reverseBun,after:reverseBun.replace('scripts/run-bun-reverse-files.mjs','scripts/run-bun-reverse-shard.mjs').replace(' --output-root',' --whole-file-shard ${{ matrix.shard }}/8 --output-root')},
+ {id:'reverse-files:require-both-engines-and-original-regeneration',before:allTenNeeds,after:replaceOnce(allTenNeeds,'reverse-translation]','reverse-translation, reverse-bun, reverse-freshness]')},
+ {id:'reverse-files:reject-each-of-twelve-stage-failures',before:'stages.length !== 10',after:'stages.length !== 12'},
+ {id:'reverse-files:mandatory-source-derived-coordinator-freshness',before:'      - run: node scripts/prepare-bun-reverse-files.mjs --check\n',after:'      - run: node scripts/prepare-bun-reverse-files.mjs --check\n      - run: node scripts/prepare-bun-reverse-shard.mjs --check\n'},
+ {id:'reverse-files:mandatory-whole-coordinator-control-file',before:'      - run: node --test scripts/test/run-node-test-shard.test.mjs\n',after:'      - run: node --test scripts/test/run-node-test-shard.test.mjs\n      - run: node --test scripts/test/bun-reverse-shard.test.mjs\n'},
 ]);
 function concrete(source){
  const document=parseDocument(source,{version:'1.2',uniqueKeys:true});if(document.errors.length)throw TypeError('Complete matrix workflow grammar differs');
