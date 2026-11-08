@@ -21,9 +21,16 @@
   `358849070`. The fingerprint hits the resource guard; all seven stages are
   unrun. Its separate page adviser also fails with a same-user /proc permission
   error. No green gate or successful adviser is claimed.
-- [ ] Review the full published PR diff and coordinated local batch; update
+- [x] Review the full published PR diff and coordinated local batch; update
   the draft PR with exact failed/unrun evidence, then publish only the prepared
   branch after the previous complete cycle is terminal.
+- [x] Publish the coordinated draft checkpoint at `1c235248e1b584875c3ec2b9c1bd2d94a859943c`
+  and update PR #785 with focused passes and failed/unrun full-gate evidence.
+- [x] Verify all 180 previous CI files against their whole published blobs,
+  retain immutable custody links and the full manifest, then retire only
+  inactive task-owned local copies (40,297,794 logical bytes).
+- [ ] Wait for every workflow at `1c235248` to finish and retain every completed
+  failure before the next coordinated publication. Do not cancel or repush.
 - [ ] Finish every remaining source equation, application semantic refusal,
   original deadline, missing generated output, TypeScript and strict parity
   obligation. No failure is optional because main also fails.

@@ -8,7 +8,7 @@ The six supplemental workflows skipped. This task did not cancel any run.
 The tested merge `a6989a7e76cb009ab2c7460e646faad025297190` has exactly the
 published tree `fcbc786945dc23af8f1b809080d0ccca66f44a2f`.
 
-The [container manifest](evidence/ci-764222b6/manifest.json) identifies 179
+The [published container manifest](https://github.com/link-assistant/router/blob/1c235248e1b584875c3ec2b9c1bd2d94a859943c/docs/case-studies/issue-784/evidence/ci-764222b6/manifest.json) identifies 179
 whole originals, 40,224,672 bytes moved without copying. All 24 published
 artifact ZIPs are retained: 34,171,218 bytes, 431 fully read members.
 The whole-run ZIP has 249 fully read members. The retainer verifies every
@@ -16,6 +16,15 @@ container and member's full length and SHA256, plus ZIP CRCs, before and after
 the move. The plan's first tree lookup failed before any move; the corrected
 retainer uses the Git database response's top-level tree. This is evidence
 integrity, not semantic qualification.
+
+After publishing all 180 files, including the manifest, the
+[local retirement receipt](evidence/ci-764222b6-local-retirement.json.gz)
+retains the complete original manifest, remote directory metadata and immutable
+links to every whole stream. The retirement tool checked every local file's
+full length and SHA256 against its complete published Git blob, checked file
+ownership and identity, and refused observed active files before deleting only
+these task-owned copies. It reclaimed 40,297,794 logical bytes and 40,574,976
+allocated bytes. Complete originals remain available at the immutable commit.
 
 All 24 nonpassing job responses are retained, but only 23 complete job logs
 exist. Cancelled forward translation shard 7 (`128880489169`) returned

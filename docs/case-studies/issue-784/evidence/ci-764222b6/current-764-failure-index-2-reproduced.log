@@ -1,5 +1,0 @@
-Traceback (most recent call last):
-  File "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/index-current-ci-failures.py", line 68, in <module>
-    'headSha': snapshot['headSha'], 'runId': snapshot['databaseId'],
-                                             ~~~~~~~~^^^^^^^^^^^^^^
-KeyError: 'databaseId'
