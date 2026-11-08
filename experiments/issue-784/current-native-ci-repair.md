@@ -31,7 +31,14 @@ remain unfinished; no draft checkpoint establishes release readiness.
   retaining the original sixteen separate diagnostic calls. Full three-build
   byte equality and the original 60000-ms deadline remain unqualified. The
   adapter is now installed in the original complete receiving file; the archived
-  original generator is restored exactly. Current receiving execution is unrun.
+  original generator is restored exactly. Complete Node receiving passes seven
+  of eight cases. The three-build case now loads the original generator, then
+  fails the unchanged ASCII asset producer's complete host-source guard because
+  the separately drafted Unicode layer changes that source. It also exceeds
+  its unchanged 60000-ms deadline at 65509.509149 ms. Total 78.337650 seconds,
+  sampled cgroup peak 2085138432 bytes; no resource interruption. Audit
+  `complete-iX3MKx` and `current-independent-generator-complete-node.*` retain
+  the complete failed result. Neither artifact equality nor timing qualifies.
 - `upstream-header-privacy-source-composition.mjs` retains the complete
   archived upstream-header module (`4ff0d415...`) and derives the complete
   current privacy source (`2598264f...`) through the four explicit source
@@ -75,6 +82,13 @@ remain unfinished; no draft checkpoint establishes release readiness.
   complete rerun hits the unchanged memory guard after 286.871339 seconds,
   sampled peak 2872266752 bytes; every owned descendant is reaped, its audit is
   incomplete, and no complete receiving result is claimed.
+  Complete Bun 1.4.4 receiving subsequently finishes all eight cases: six pass,
+  including both repaired physical-parent and original whole-function cases.
+  The two source-preparation cases fail their unchanged 60000-ms deadlines at
+  160944.14 and 100927.06 ms. Total 319.008948 seconds, sampled cgroup peak
+  2542956544 bytes; no resource interruption and all owned children reaped.
+  Full evidence: `current-unit-unicode-source-repairs-bun.*`. The source repairs
+  do not qualify the complete file or resolve its asset-consumer integration.
 
 ## Requirements and independent verification
 
