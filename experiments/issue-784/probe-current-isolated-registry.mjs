@@ -1,10 +1,11 @@
 // Uninstalled complete current-source proposal; the frozen registry stays exact.
-import {mkdtempSync,readFileSync,writeFileSync,readdirSync,rmSync,realpathSync,statSync} from 'node:fs';
+import {mkdtempSync,readFileSync,readdirSync,rmSync,realpathSync,statSync} from 'node:fs';
 import {join,resolve} from 'node:path';
 import {tmpdir} from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {gzipSync,gunzipSync} from 'node:zlib';
+import {gunzipSync} from 'node:zlib';
+import {writeCompleteEvidenceJson} from './complete-evidence-json.mjs';
 import {prepareIsolatedProjectCompiler} from '../../tools/translation/prepare-isolated-project-compiler.mjs';
 import {transportConcreteSourcePhases} from '../../tools/translation/concrete-phased-equations.mjs';
 const label=process.argv[2]??'current-isolated';
@@ -37,9 +38,7 @@ try{
   originalRegistrySha256:hash(originalRegistry),allCapturedInputsCurrent:true,originalRegistryUnchanged:true,
   installed:false,productionExecutableGain:0,semanticAuthority:false,runtimeParity:false};
  const raw=Buffer.from(JSON.stringify(result));if(raw.length>32*1024*1024)throw Error('Finite complete proposal evidence bound');
- const target='ci-logs/issue-784-restart-2/'+label+'-registry-proposal.json.gz';
- writeFileSync(target,gzipSync(raw),{flag:'wx'});
- if(!gunzipSync(readFileSync(target),{maxOutputLength:32*1024*1024}).equals(raw))throw Error('Complete current registry proposal readback differs');
+ const target=writeCompleteEvidenceJson('ci-logs/issue-784-restart-2/'+label+'-registry-proposal.json',raw);
  console.log(JSON.stringify({target,bytes:raw.length,sha256:hash(raw),revision,files:registry.files,
   totalSourceBytes:registry.totalBytes,originalRegistryUnchanged:true,installed:false}));
 }finally{rmSync(temporary,{recursive:true,force:false});}

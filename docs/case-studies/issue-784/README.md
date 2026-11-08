@@ -47,6 +47,10 @@ the still-failing original whole-file deadlines. The
 [string-equality parent record](current-string-equality-parent.md) separately
 qualifies all three original cases in both engines.
 
+The [complete diagnostic custody record](current-container-custody.md) preserves
+whole decoded proposal payloads, records the earlier evidence-cap overrun and
+retains an immutable published archive when its inactive local copy is retired.
+
 The [complete 17c7 CI review](current-17c7-ci-review.md) retains all failed and
 cancelled jobs, all 25 artifacts, exact-head identity and complete custody
 receipts. Its failures remain open until independently repaired and verified.

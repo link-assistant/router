@@ -9,6 +9,7 @@ import {prepareIsolatedProjectCompiler} from '../../tools/translation/prepare-is
 import {preparePortableGitFixtureProposal,readPortableGitFixture} from '../../tools/translation/prepare-portable-git-fixtures.mjs';
 import {transportConcreteSourcePhases} from '../../tools/translation/concrete-phased-equations.mjs';
 import {ownershipCompiler} from '../../tools/translation/js-to-rust/vendor/module-syntax.mjs';
+import {readCompleteEvidenceJson,writeCompleteEvidenceJson} from './complete-evidence-json.mjs';
 
 const args=process.argv.slice(2);
 if(args[0]!=='--install'||![1,5].includes(args.length)||args.length===5&&(args[1]!=='--label'||args[3]!=='--sha256'))throw Error('Usage: --install [--label LABEL --sha256 REVIEWED_SHA256]');
@@ -16,7 +17,7 @@ const label=args[2]??'current-isolated',reviewedSha256=args[4]??'e27443a1527875d
 if(!/^[-a-z0-9]{1,64}$/.test(label)||!/^[a-f0-9]{64}$/.test(reviewedSha256))throw Error('Finite label and complete reviewed proposal SHA256 required');
 const root=resolve('.'),folder='tools/translation/source-profiles/isolated-project-compiler/';
 const evidence='ci-logs/issue-784-restart-2/',hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-const rawProposal=gunzipSync(fs.readFileSync(evidence+label+'-registry-proposal.json.gz'),{maxOutputLength:32*1024*1024});
+const rawProposal=readCompleteEvidenceJson(evidence+label+'-registry-proposal.json');
 if(hash(rawProposal)!==reviewedSha256)throw Error('Complete reviewed proposal differs');
 const captured=JSON.parse(rawProposal),get=name=>{
  const row=captured.files.find(row=>row.path===name),bytes=Buffer.from(row.base64,'base64');
@@ -69,11 +70,10 @@ try{
   files:registry.files,totalSourceBytes:registry.totalBytes,portableObjects:checked.objects.size,
   oldConcreteProfileUnchanged:true,wholeReceivingTestsPassed:false,productionExecutableGain:0,semanticAuthority:false,runtimeParity:false};
  const raw=Buffer.from(JSON.stringify(result));if(raw.length>32*1024*1024)throw Error('Finite complete refresh evidence bound');
- const target=evidence+label+'-registration-refresh.json.gz';fs.writeFileSync(target,gzipSync(raw),{flag:'wx'});
- if(!gunzipSync(fs.readFileSync(target),{maxOutputLength:32*1024*1024}).equals(raw))throw Error('Complete refresh evidence readback differs');
+ const target=writeCompleteEvidenceJson(evidence+label+'-registration-refresh.json',raw);
  console.log(JSON.stringify({target,bytes:raw.length,sha256:hash(raw),files:registry.files,totalSourceBytes:registry.totalBytes,
   portableObjects:checked.objects.size,oldSourceHead:original.sourceHead,sourceHead:captured.revision,oldConcreteProfileUnchanged:true,wholeReceivingTestsPassed:false}));
 }catch(error){
  const target=evidence+label+'-registration-refresh-failure.json';
- fs.writeFileSync(target,JSON.stringify({error:{message:error.message,stack:error.stack},installed},null,2)+'\n',{flag:'wx'});throw error;
+ fs.writeFileSync(target,JSON.stringify({error:{message:error.message,stack:error.stack},installed:installed.map(({path,bytes,sha256})=>({path,bytes,sha256}))},null,2)+'\n',{flag:'wx'});throw error;
 }finally{fs.rmSync(temporary,{recursive:true,force:false});}

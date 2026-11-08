@@ -213,7 +213,7 @@ allocation removed and a separate **125128704-byte** filesystem free-space delta
 No Rust cache or another worker directory was touched. Freshly fetched main
 `eb2dad1c0a18394dc1aad46413e11401e74eb502` remains an ancestor of the repair branch.
 
-The [complete storage and CI packet](evidence/storage-ci-complete.tar.xz)
+The [complete storage and CI packet](https://github.com/link-assistant/router/blob/4e7093eb98b2170bac2cd5fd24c0c777e6bcf4b2/docs/case-studies/issue-784/evidence/storage-ci-complete.tar.xz?raw=true)
 and [losslessly compressed receipt](evidence/storage-ci-complete.json.gz)
 preserve **395 complete originals / 49851037 logical bytes** at source head
 `a8ba300a78e44f2d541ee79531ebcd61bcb2d437`. The archive occupies **33132484
@@ -224,6 +224,12 @@ The frozen manifest's SHA256 is
 Capture reopened and byte-verified every decoded original and confirmed all
 selected inputs remained unchanged. It finished in 45.113 seconds with a
 1948794880-byte sampled total cgroup maximum and no observer stop.
+
+The exact complete compressed stream remains at that immutable published link.
+Its inactive local copy was retired after full SHA256/Git blob readback and
+authenticated remote metadata checks, reclaiming 33132484 logical / 33132544
+allocated bytes. The [complete retirement receipt](evidence/storage-ci-complete-local-retirement.json.gz)
+records custody; all 395 original members remain in the published archive.
 
 The packet contains all seven completed workflow logs and original artifacts,
 the 91 complete allocation samples, complete producer proposals, new passing
