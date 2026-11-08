@@ -65,9 +65,7 @@ function compilerProfile(ts,source,lazy){
  return {pins,origins};
 }
 export function prepareOwnedRuntimeImportEdges({root=ROOT}={}){
- root=resolve(root);const require=createRequire(resolve(root,'js/package.json')),ts=ownershipCompiler();if(ts!==require('typescript')||ts.version!=='5.9.3')fail('actual root installed native TypeScript5.9.3 required');const compilerPath=require.resolve('typescript'),compilerBytes=readFileSync(compilerPath);if(compilerBytes.length!==9112572||hash(compilerBytes)!==COMPILER_PIN)fail('complete original native TypeScript5.9.3 source differs');const compilerSource=new TextDecoder('utf8',{fatal:true,ignoreBOM:true}).decode(compilerBytes),compilerFile=parse(ts,compilerPath,compilerSource),selections=nativeCompilerSelections(ts,compilerFile),lazy=nativeLazyAssertions(ts,compilerFile,selections),native=compilerProfile(ts,compilerSource,lazy),parentTail=[];
- for(const name of ['createSourceFile','parseSourceFileWorker','fixupParentReferences','setParentRecursive','setParent','forEachChild','forEachChildRecursively','gatherPossibleChildren','isJSDocNode','hasJSDocNodes']){const node=one((selections.functions.get(name)??[]),'complete actual native '+name);parentTail.push({name,source:node.getText(compilerFile),span:[node.getStart(compilerFile),node.end]});}
- const table=one(selections.childTables,'complete native child traversal table');parentTail.push({name:'forEachChildTable',source:table.getText(compilerFile),span:[table.getStart(compilerFile),table.end]});
+ root=resolve(root);const {ts,compilerPath,compilerBytes,compilerSource,lazy,native,parentTail}=freshRuntimeCompilerSourceData(root);
  const packed=readFileSync(resolve(root,ARCHIVE));if(packed.length!==27671||hash(packed)!==PACKED_PIN)fail('complete original archive differs');const raw=gunzipSync(packed,{maxOutputLength:262144});if(raw.length!==110675||hash(raw)!==RAW_PIN)fail('complete original source vector differs');const original=JSON.parse(new TextDecoder('utf8',{fatal:true,ignoreBOM:true}).decode(raw));if(original.schema!=='owned-runtime-import-edge-originals-v1'||original.files.length!==4)fail('complete original source domain differs');for(const row of original.files)if(Buffer.byteLength(row.source)!==row.bytes||hash(row.source)!==row.sha256)fail('complete original source/hash join differs');
  const before=one(original.files.filter(row=>row.path===OWNED),'complete actual owned source').source,buildBefore=one(original.files.filter(row=>row.path===BUILD),'complete actual canonical builder').source,fragment=readFileSync(resolve(root,FRAGMENT),'utf8');if(hash(fragment)!==FRAGMENT_PIN)fail('complete authored native DATA scope differs');const file=parse(ts,OWNED,before),parsed=fn(ts,file,'parsed'),parentCall=one(find(ts,parsed,node=>ts.isCallExpression(node)&&ts.isPropertyAccessExpression(node.expression)&&node.expression.name.text==='createSourceFile'),'actual complete native parser call');if(parentCall.arguments.length!==5||parentCall.arguments[3].kind!==ts.SyntaxKind.TrueKeyword)fail('original true-parent parser arguments differ');
  const specialized=apply(parsed.getText(file),[{span:[parsed.name.getStart(file)-parsed.getStart(file),parsed.name.end-parsed.getStart(file)],expected:'parsed',replacement:'runtimeParsedWithoutParents'},{span:[parentCall.arguments[3].getStart(file)-parsed.getStart(file),parentCall.arguments[3].end-parsed.getStart(file)],expected:'true',replacement:'false'}]);
@@ -126,4 +124,17 @@ function nativeCompilerSelections(ts,file){
   ts.forEachChild(node,visit);
  }
  visit(file);return {functions,childTables,exportCalls,moduleExports};
+}
+
+// A fresh invocation returns source DATA; native nodes remain in this scope.
+function freshRuntimeCompilerSourceData(root){
+ const require=createRequire(resolve(root,'js/package.json')),ts=ownershipCompiler();
+ if(ts!==require('typescript')||ts.version!=='5.9.3')fail('actual root installed native TypeScript5.9.3 required');
+ const compilerPath=require.resolve('typescript'),compilerBytes=readFileSync(compilerPath);
+ if(compilerBytes.length!==9112572||hash(compilerBytes)!==COMPILER_PIN)fail('complete original native TypeScript5.9.3 source differs');
+ const compilerSource=new TextDecoder('utf8',{fatal:true,ignoreBOM:true}).decode(compilerBytes),compilerFile=parse(ts,compilerPath,compilerSource),selections=nativeCompilerSelections(ts,compilerFile),lazy=nativeLazyAssertions(ts,compilerFile,selections),native=compilerProfile(ts,compilerSource,lazy),parentTail=[];
+ for(const name of ['createSourceFile','parseSourceFileWorker','fixupParentReferences','setParentRecursive','setParent','forEachChild','forEachChildRecursively','gatherPossibleChildren','isJSDocNode','hasJSDocNodes']){const node=one((selections.functions.get(name)??[]),'complete actual native '+name);parentTail.push({name,source:node.getText(compilerFile),span:[node.getStart(compilerFile),node.end]});}
+ const table=one(selections.childTables,'complete native child traversal table');
+ parentTail.push({name:'forEachChildTable',source:table.getText(compilerFile),span:[table.getStart(compilerFile),table.end]});
+ return {ts,compilerPath,compilerBytes,compilerSource,lazy,native,parentTail};
 }
