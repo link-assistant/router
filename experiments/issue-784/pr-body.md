@@ -39,8 +39,9 @@ semantic admission check or performance limit is waived.
 Recorded receiving results remain distinct:
 
 - Exact-index controls: 17 Node and 17 Bun cases pass.
-- Registry controls: 16 Node and 16 Bun cases pass. Source registration must be
-  regenerated again for the final coherent compiler batch.
+- Current combined registry: 16 Node and 16 Bun cases pass after independent
+  full-source proposal reproduction. It captures 1,790 files / 57,284,152 bytes
+  and preserves the previous registry, all bootstrap source and Git history.
 - Node 20.20.2 crypto profile: all three complete files, 17 cases and the original
   deadline audit pass under Node. Both Bun attempts hit the unchanged memory
   guard and leave receiving qualification unfinished. Its producer freshness
@@ -64,6 +65,10 @@ Recorded receiving results remain distinct:
   use the lockfile-installed TypeScript 5.9.3, preserving explicit overrides.
   A combined Bun attempt hit the unchanged memory guard and remains a failure.
   Production matrix generation and the full gate remain unqualified.
+
+This is an authorized draft feedback checkpoint. The complete local gate and
+production generation have not yet run for this new source SHA; their failed
+and unrun status remains explicit. No green stamp exists.
 
 The latest complete local gate attempt at source `308a3b861` ran for
 1509.425560 seconds before the unchanged memory guard stopped and reaped all

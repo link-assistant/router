@@ -196,6 +196,33 @@ remain unfinished; no draft checkpoint establishes release readiness.
       3df6f72d9 have the same tree, 9db87b29e98e408b03da5bba5c426f4d442a407f.
       Local repairs are not yet published or qualified by those CI results.
 
+## Qualified receiving checkpoint and production generation
+
+- [x] Rebuild the genuine source registry from source head
+      dc4a7309c23f98c17de5699df156dad042db87a8 after the complete source repairs.
+      Independently reproduce the complete proposal and both serialized/reparsed
+      CST bootstrap equations before installation. Preserve all prior bytes in
+      the new explicit history archive and the original concrete Git profile.
+      The registry contains 1790 files / 57284152 source bytes; the portable
+      original Git fixture contains 464 genuine objects. Registration grants no
+      semantic authority or new executable application count.
+- [x] Run both complete registry receiving files: all 16 Node cases pass with
+      the independent original deadline audit in 204.353527 seconds, peak
+      2125967360 bytes. All 16 Bun 1.4.4 cases pass in 167.832097 seconds, peak
+      2106978304 bytes. Neither observer interrupts. Complete before/after
+      proposals and raw reports remain in the receiving-batch evidence files.
+- [x] Fetch and check latest main again: eb2dad1c0 remains an ancestor. Fresh
+      authenticated PR state has no pending contexts at published b63dd5a33;
+      the complete preceding cycle is terminal and its full failure set remains
+      recorded above. No missing-secret or access-only prerequisite is found.
+- [ ] Run all four complete production generation families sequentially,
+      inspect each result, review the actual generated artifacts and function
+      gains, then execute their independent freshness and TypeScript checks.
+- [ ] Run the complete mandatory gate at the coherent source SHA. Earlier
+      failed gate evidence does not qualify this checkpoint. Strict parity,
+      full production generation, original performance deadlines and same-SHA
+      CI/Rust qualification remain unfinished; no green stamp exists.
+
 ## Evidence allocation
 
 - [x] Retire the 24588813-byte inactive failed capture from the current tree
