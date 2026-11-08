@@ -17,16 +17,20 @@ parser.add_argument('--log', required=True, type=Path)
 parser.add_argument('--receipt', required=True, type=Path)
 parser.add_argument('--reclaim-initial-gate-cache', action='store_true',
                     help='Once, pause only the initial gate fingerprint and advise inactive tracked pages')
+parser.add_argument('--advise-closed-gate-pages', action='store_true',
+                    help='Bounded asynchronous advice on closed tracked pages; original clocks keep running')
 parser.add_argument('command', nargs=argparse.REMAINDER)
 args = parser.parse_args()
 command = args.command[1:] if args.command[:1] == ['--'] else args.command
 if not command:
     parser.error('a complete check command is required')
-if args.reclaim_initial_gate_cache and (len(command) != 3
+if (args.reclaim_initial_gate_cache or args.advise_closed_gate_pages) and (len(command) != 3
         or command[1:] != ['--max-old-space-size=512', 'scripts/check-js-first-local.mjs']
         or Path(command[0]).name != 'node'
         or args.receipt.resolve().parent != Path.cwd() / 'ci-logs/issue-784-restart-2'):
     parser.error('cache advice is restricted to this task initial complete gate')
+if args.reclaim_initial_gate_cache and args.advise_closed_gate_pages:
+    parser.error('choose one explicitly recorded file-cache experiment')
 limit = int(Path('/sys/fs/cgroup/memory.max').read_text())
 threshold = limit - 256 * 1024 * 1024
 memory = Path('/sys/fs/cgroup/memory.current')
@@ -40,6 +44,9 @@ interrupted = None
 stop_sample = None
 stop_seconds = None
 stopped_processes = []
+closed_advice = []
+adviser = None
+adviser_output = None
 
 
 def request_stop(signum, _frame):
@@ -58,6 +65,30 @@ with args.log.open('xb') as log:
         observed = int(memory.read_text())
         peak = max(peak, observed)
         samples += 1
+        if adviser is not None and adviser.poll() is not None:
+            closed_advice[-1].update(exitCode=adviser.wait(),
+                                    finishedElapsedSeconds=time.monotonic() - started,
+                                    afterBytes=int(memory.read_text()))
+            adviser_output.close()
+            adviser = adviser_output = None
+        if (args.advise_closed_gate_pages and not stopped and not interrupted
+                and observed >= 2_300_000_000 and observed < threshold
+                and adviser is None and len(closed_advice) < 12
+                and (not closed_advice
+                     or time.monotonic() - started - closed_advice[-1]['startedElapsedSeconds'] >= 60)):
+            number = len(closed_advice) + 1
+            prefix = args.receipt.stem + '-closed-pages-' + str(number)
+            advice_receipt = args.receipt.with_name(prefix + '.json.gz')
+            advice_log = args.receipt.with_name(prefix + '.log')
+            adviser_output = advice_log.open('xb')
+            adviser = subprocess.Popen([
+                'python3', '-B', 'experiments/issue-784/release-inactive-repository-pages.py',
+                '--receipt', str(advice_receipt), '--gzip-receipt',
+            ], stdout=adviser_output, stderr=subprocess.STDOUT)
+            closed_advice.append({'pid': adviser.pid, 'beforeBytes': observed,
+                                  'startedElapsedSeconds': time.monotonic() - started,
+                                  'receipt': str(advice_receipt), 'log': str(advice_log),
+                                  'activeTestClocksPaused': False, 'sourceContentsChanged': False})
         if (observed >= threshold or interrupted) and not stopped:
             if (not interrupted and args.reclaim_initial_gate_cache
                     and not reclaims and args.log.stat().st_size == 0):
@@ -126,6 +157,11 @@ with args.log.open('xb') as log:
             stopped = True
         time.sleep(0.1)
     status = child.wait()
+    if adviser is not None:
+        closed_advice[-1].update(exitCode=adviser.wait(),
+                                finishedElapsedSeconds=time.monotonic() - started,
+                                afterBytes=int(memory.read_text()))
+        adviser_output.close()
 observer_status = (128 + signal.SIGTERM if (stopped or interrupted) and status == 0
                    else status if status >= 0 else 128 - status)
 receipt = {
@@ -137,6 +173,11 @@ receipt = {
     'stopSampledCgroupBytes': stop_sample, 'stopElapsedSeconds': stop_seconds,
     'stoppedOwnedProcessIds': stopped_processes,
     'initialFingerprintCacheAdvice': reclaims,
+    'closedTrackedPageAdvice': closed_advice,
+    'closedTrackedPageAdvicePolicy': {'enabled': args.advise_closed_gate_pages,
+                                    'thresholdBytes': 2_300_000_000,
+                                    'minimumIntervalSeconds': 60, 'maximumInvocations': 12,
+                                    'activeTestClocksPaused': False},
     'interrupted': interrupted,
     'scope': 'Total cgroup samples, not child RSS or a complete process peak.',
     'deadlineQualification': 'Original test deadlines remain independently required.',

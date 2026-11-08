@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Finite launch/refusal/cancellation controls for this task resource observer."""
+import argparse
 import json
 import os
 from pathlib import Path
@@ -12,17 +13,24 @@ import time
 root = Path(__file__).resolve().parents[2]
 directory = root / 'ci-logs/issue-784-restart-2'
 observer = root / 'experiments/issue-784/run-observed-check.py'
-output = directory / 'named-host-observer-controls.json'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--label', default='named-host')
+args = parser.parse_args()
+if not args.label.replace('-', '').isalnum():
+    parser.error('a simple fresh task control label is required')
+output = directory / (args.label + '-observer-controls.json')
 if output.exists():
     raise RuntimeError('Fresh complete control receipt required')
 results = []
 with tempfile.TemporaryDirectory(prefix='.observer-controls-', dir=observer.parent) as temporary:
     temporary = Path(temporary)
-    for name in ['refuse', 'ordinary', 'cancel']:
+    for name in ['refuse', 'refuse-closed-pages', 'ordinary', 'cancel']:
         log, receipt = temporary / (name + '.log'), temporary / (name + '.json')
         command = [sys.executable, str(observer), '--log', str(log), '--receipt', str(receipt)]
         if name == 'refuse':
             command += ['--reclaim-initial-gate-cache']
+        if name == 'refuse-closed-pages':
+            command += ['--advise-closed-gate-pages']
         marker = temporary / 'child-started'
         program = ('print("unchanged child output")' if name != 'cancel' else
                    'from pathlib import Path; import time; Path(' + repr(str(marker))
@@ -41,10 +49,12 @@ with tempfile.TemporaryDirectory(prefix='.observer-controls-', dir=observer.pare
                'completeOutput': raw.decode(), 'receipt': json.loads(receipt.read_text())
                if receipt.exists() else None, 'completeChildLog': log.read_text() if log.exists() else None}
         results.append(row)
-        if name == 'refuse':
+        if name.startswith('refuse'):
             assert child.returncode == 2 and row['receipt'] is None and not log.exists()
         else:
             assert row['receipt']['initialFingerprintCacheAdvice'] == []
+            assert row['receipt']['closedTrackedPageAdvice'] == []
+            assert row['receipt']['closedTrackedPageAdvicePolicy']['enabled'] is False
             assert row['receipt']['interrupted'] == ('SIGTERM' if name == 'cancel' else None)
             assert child.returncode == (143 if name == 'cancel' else 0)
             if name == 'ordinary':

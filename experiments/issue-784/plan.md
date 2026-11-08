@@ -940,3 +940,16 @@ remain explicitly unmet parts of the literal all-tool requirement.
       regeneration freshness or runtime-parity success is inferred from these
       focused controls. All unresolved actual-gain/deadline/parity failures
       and literal all-tool privacy requirements remain mandatory and unfinished.
+
+## Asynchronous closed-page resource experiment
+
+- [x] Preserve the earlier full gate memory interruption. Add an explicitly
+      selected, task-only observer mode for the unchanged exact complete gate:
+      at 2300000000 sampled cgroup bytes, advise only observable closed/unmapped
+      single-link tracked pages in this worktree, asynchronously, at most once
+      per 60 seconds and twelve times overall. Never pause active test clocks,
+      change source, remove caches or raise the original memory guard. Reap
+      every advice process and retain its full compressed receipt separately.
+- [x] Four finite observer controls pass: both restricted-mode refusal paths,
+      unchanged ordinary output, and cancellation/reaping. The new resource
+      experiment itself remains unqualified until the complete gate runs.
