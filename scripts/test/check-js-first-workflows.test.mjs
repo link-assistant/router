@@ -36,6 +36,10 @@ test('current matrix custody composes complete historical YAML and preserves bot
  assert.deepEqual(result.stages.map(row=>row.phase),['language','repository']);
  for(const stage of result.stages){assert.equal(JSON.parse(stage.beforeMeta).source,stage.before);assert.equal(JSON.parse(stage.afterMeta).source,stage.after);}
  assert.throws(()=>prepareMatrixDraftWorkflow(result.after+'\n# unreviewed source\n'),/source differs/);
+ const trace="        env:\n          ROUTER_TRANSLATION_TYPED_TARGET_TRACE: '1'\n";
+ assert.equal(result.after.split(trace).length,2);
+ assert.throws(()=>prepareMatrixDraftWorkflow(result.after.replace(trace,'')),/source differs/);
+ assert.throws(()=>prepareMatrixDraftWorkflow(result.after.replace(trace,trace.replace("'1'","'0'"))),/source differs/);
  assert.equal(result.semanticAuthority,false);assert.equal(result.gateSuccessObserved,false);
 });
 test('matrix draft custody preserves every unconditional freshness command and only permits the exact data uploader',()=>{

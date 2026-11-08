@@ -60,6 +60,7 @@ export const MATRIX_DRAFT_REPOSITORY_RULES=Object.freeze([
  {id:'forward-files:distinct-complete-evidence',before:shardJob,after:replaceOnce(shardJob,'name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}','name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}-${{ matrix.shard }}')},
  {id:'forward-files:eight-exhaustive-whole-file-shards',before:forwardHeader,after:forwardHeader+shardStrategy},
  {id:'forward-files:unchanged-auditor-and-case-budgets',before:forward,after:shardCommand},
+ {id:'forward-files:complete-child-compiler-diagnostics',before:shardCommand,after:shardCommand+"        env:\n          ROUTER_TRANSLATION_TYPED_TARGET_TRACE: '1'\n"},
  {id:'forward-files:require-complete-freshness',before:replaceOnce(needs,'profile-matrix, reverse-translation','profile-matrix, owned-profile-matrix, reverse-translation'),after:replaceOnce(replaceOnce(needs,'profile-matrix, reverse-translation','profile-matrix, owned-profile-matrix, reverse-translation'),'translation, profile-matrix','translation, translation-freshness, profile-matrix')},
  {id:'forward-files:reject-each-of-ten-stage-failures',before:'stages.length !== 9',after:'stages.length !== 10'},
  {id:'forward-files:mandatory-whole-control-file',before:'      - run: node --test scripts/test/check-js-first-local.test.mjs\n',after:'      - run: node --test scripts/test/check-js-first-local.test.mjs\n      - run: node --test scripts/test/run-node-test-shard.test.mjs\n'},
