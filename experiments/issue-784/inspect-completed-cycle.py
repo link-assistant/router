@@ -45,6 +45,17 @@ result = {'headSha': args.head, 'logs': [], 'artifacts': [],
           'scope': 'Complete terminal workflow inventory; cancelled test cohorts remain incomplete. '
                    'Expected negative fixture errors do not change a successful job conclusion. '
                    'No semantic, runtime, deadline or full-gate authority.'}
+missing_log_receipt = directory / 'missing-job-log-recovery.json'
+if missing_log_receipt.exists():
+    recovery = json.loads(missing_log_receipt.read_bytes())
+    if (recovery.get('schema') != 'exact-cancelled-job-log-404-recovery-v1'
+            or recovery.get('headSha') != args.head
+            or recovery.get('allJobsHaveOriginalLogs') is not False
+            or recovery.get('missingOriginalLogFabricated') is not False):
+        raise RuntimeError('Exact missing-log recovery scope differs')
+    result['unavailableJobLogs'] = [recovery['unavailableJob']]
+    result['scope'] += (' Official ZIP preserves every available member; the cancelled bin 7 '
+                        'original log and artifact remain explicitly unavailable (HTTP 404 BlobNotFound).')
 matrix_receipts = {}
 if args.matrix_inspection:
     original = gzip.decompress(args.matrix_inspection.read_bytes())
@@ -60,7 +71,10 @@ for run in runs:
     identity = run['databaseId']
     path = directory / (str(identity) + '.log.gz')
     raw = gzip.decompress(path.read_bytes())
-    if len(raw) > 32 * 1024 * 1024:
+    # Official per-step member names are retained on every display line. The
+    # complete available b63 log is 17837518 original bytes and 50385053 bytes
+    # in that lossless adapter; keep a finite investigation bound for both.
+    if len(raw) > 64 * 1024 * 1024:
         raise RuntimeError('Complete log exceeds the investigation bound')
     lines = raw.decode('utf-8').splitlines()
     errors = []

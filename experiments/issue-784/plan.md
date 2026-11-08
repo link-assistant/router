@@ -953,3 +953,6 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [x] Four finite observer controls pass: both restricted-mode refusal paths,
       unchanged ordinary output, and cancellation/reaping. The new resource
       experiment itself remains unqualified until the complete gate runs.
+
+The complete gate result, separate current Node profile work and active
+requirements continue in [the current repair checklist](current-native-ci-repair.md).

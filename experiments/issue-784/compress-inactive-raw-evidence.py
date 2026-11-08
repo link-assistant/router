@@ -1,4 +1,5 @@
-"""Losslessly compress four explicit inactive task logs before CI collection."""
+"""Losslessly compress explicit inactive task logs or one closed command record."""
+import argparse
 import gzip
 import hashlib
 import json
@@ -7,12 +8,30 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[2]
 base = root / 'ci-logs/issue-784-restart-2'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--closed-attempt')
+parser.add_argument('--closed-investigations', action='store_true')
+parser.add_argument('--receipt', default='reverse-shard-inactive-evidence-compression.json')
+args = parser.parse_args()
+assert not (args.closed_attempt and args.closed_investigations)
+assert Path(args.receipt).name == args.receipt and args.receipt.endswith('.json')
 paths = [root / 'ci-logs' / name for name in [
     'restart-export-published-review.diff',
     'restart-published-review.diff',
     'restart-review-published.diff',
 ]] + [base / 'native-regeneration-before-csv-cache-advice.json']
-receipt = base / 'reverse-shard-inactive-evidence-compression.json'
+if args.closed_attempt:
+    assert Path(args.closed_attempt).name == args.closed_attempt and args.closed_attempt.startswith('complete-')
+    attempt = root / 'js/node_modules/.node-case-deadlines' / args.closed_attempt
+    terminal = json.loads((attempt / 'terminal.json').read_bytes())
+    assert terminal['childClosed'] and terminal['groupCleanup']['complete']
+    assert not Path('/proc/' + str(terminal['groupCleanup']['group'])).exists()
+    paths = [attempt / 'command.json']
+elif args.closed_investigations:
+    # Complete historical task outputs only. Neither path is an input or cache.
+    paths = [root / 'experiments/issue-784/local-gate-bounded.log',
+             base / 'owned-allocation-analysis.json']
+receipt = base / args.receipt
 assert not receipt.exists()
 
 
@@ -62,6 +81,6 @@ for path in paths:
     path.unlink()
 with receipt.open('x') as output:
     json.dump({'rows': rows, 'completeOriginalsPreserved': True,
-               'scope': 'Explicit inactive historical task logs only. No source, active output, cache or foreign path.'}, output)
+               'scope': 'Explicit inactive task logs or closed command record only. Complete gzip readback retains all original bytes; no source, active output, cache or foreign path.'}, output)
 print(json.dumps({'completeFiles': len(rows), 'logicalBytesReclaimed': sum(row['originalBytes'] - row['compressedBytes'] for row in rows),
                   'allocatedBytesReclaimed': sum(row['allocatedBytesReclaimed'] for row in rows)}))
