@@ -54,7 +54,13 @@ The packet verifies all 251 selected originals (57005170 logical bytes), includi
 the entire preceding CI cycle, current receiving evidence and failed local gate.
 It occupies 25575912 bytes and takes 42.02 seconds with peak sampled cgroup use
 2401726464 bytes. A memory-stopped initial capture is retained separately as a
-complete failed artifact, with no successful-packet claim. After full archive
+complete [failed artifact at its published commit](https://github.com/link-assistant/router/blob/b63dd5a337c4e17f9df51f9ce866cb73fdea7662/docs/case-studies/issue-784/evidence/resolver-failed-partial.tar.xz?raw=true),
+with no successful-packet claim. Its 24588813 local bytes were subsequently
+retired only after checking the complete published Git blob against the original
+SHA-256, the authenticated published blob metadata and inactive references. The
+[retirement receipt](evidence/resolver-failed-partial-retirement.json.gz)
+records that unchanged permanent original. The successful packet remains local.
+After full archive
 readback and inactive-reference checks, retiring only archived raw Node and CI
 duplicates removes 30109696 allocated bytes; their complete bytes remain in
 the unchanged archives. The latest complete CI cycle remains available locally.

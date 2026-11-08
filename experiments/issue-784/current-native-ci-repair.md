@@ -198,6 +198,12 @@ remain unfinished; no draft checkpoint establishes release readiness.
 
 ## Evidence allocation
 
+- [x] Retire the 24588813-byte inactive failed capture from the current tree
+      after verifying every byte against its unchanged published Git blob at
+      b63dd5a33 and authenticated GitHub blob metadata. Keep its original failed
+      capture receipt, permanent download link and new retirement receipt. The
+      successful complete packet remains unchanged. No successful packet,
+      source input, cache or active output is removed.
 - [x] Retire only the inactive adapter replay after comparing its complete
       50385053 decoded bytes and SHA-256 with the retained original main log.
       Reclaim 4085779 logical / 4087808 allocated bytes; retain the primary
