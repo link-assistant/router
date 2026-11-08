@@ -48,7 +48,7 @@ against the original 2866933760-byte task threshold and 3135369216-byte containe
 limit. Initial fingerprint cache advice changes no file contents. All owned
 processes are reaped. Complete raw streams, original source snapshots and all
 three terminal Node receipts, including the failed and interrupted attempts,
-are retained in the [resolver evidence packet](evidence/resolver-complete.tar.xz).
+are retained in the [published resolver evidence packet](https://github.com/link-assistant/router/blob/4e7093eb98b2170bac2cd5fd24c0c777e6bcf4b2/docs/case-studies/issue-784/evidence/resolver-complete.tar.xz?raw=true).
 
 The packet verifies all 251 selected originals (57005170 logical bytes), including
 the entire preceding CI cycle, current receiving evidence and failed local gate.

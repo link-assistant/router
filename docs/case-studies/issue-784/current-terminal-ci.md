@@ -92,6 +92,13 @@ The [retirement receipt](evidence/token-ci-complete-local-retirement.json.gz)
 records the complete archive identity and inactive-path checks. No source,
 active output, foreign path or build cache was removed.
 
+The same complete published-blob and inactive-path checks subsequently retire
+the 25575912-byte resolver packet. All 251 members remain in its unchanged
+[published archive](https://github.com/link-assistant/router/blob/4e7093eb98b2170bac2cd5fd24c0c777e6bcf4b2/docs/case-studies/issue-784/evidence/resolver-complete.tar.xz?raw=true).
+Its [separate receipt](evidence/resolver-complete-local-retirement.json.gz)
+retains the full archive identity and remote metadata. These two retirements
+reclaim 46994208 logical bytes without losing the published original streams.
+
 Issue #784 and the PR remain unfinished. The universal all-tool/account privacy
 criterion is still unmet; the case-study requirement inventory and configuration
 guide retain the exact supported scope and all external-account limitations.

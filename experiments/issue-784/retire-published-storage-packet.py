@@ -8,15 +8,18 @@ import stat
 import subprocess
 import sys
 
-if sys.argv[1:] not in ([], ['--token-ci']):
-    raise RuntimeError('Only the two reviewed inactive task archives are selectable')
-token_ci = sys.argv[1:] == ['--token-ci']
-stem = 'token-ci-complete' if token_ci else 'storage-ci-complete'
-expected_size, expected_members = (21418296, 205) if token_ci else (33132484, 395)
+choices = {
+    (): ('storage-ci-complete', 'storage-ci', 33132484, 395),
+    ('--token-ci',): ('token-ci-complete', 'token-ci', 21418296, 205),
+    ('--resolver',): ('resolver-complete', 'resolver', 25575912, 251),
+}
+if tuple(sys.argv[1:]) not in choices:
+    raise RuntimeError('Only the three reviewed inactive task archives are selectable')
+stem, metadata_stem, expected_size, expected_members = choices[tuple(sys.argv[1:])]
 relative = 'docs/case-studies/issue-784/evidence/' + stem + '.tar.xz'
 path = Path(relative)
 head = '4e7093eb98b2170bac2cd5fd24c0c777e6bcf4b2'
-metadata_path = Path('ci-logs/issue-784-restart-2/current-published-' + ('token' if token_ci else 'storage') + '-ci-archive-metadata.json')
+metadata_path = Path('ci-logs/issue-784-restart-2/current-published-' + metadata_stem + '-archive-metadata.json')
 metadata = json.loads(metadata_path.read_bytes())
 original = json.loads(gzip.decompress(path.with_name(stem + '.json.gz').read_bytes()))
 assert metadata['path'] == relative and metadata['size'] == original['archiveBytes'] == expected_size
