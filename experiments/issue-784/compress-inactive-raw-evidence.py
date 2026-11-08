@@ -11,9 +11,15 @@ base = root / 'ci-logs/issue-784-restart-2'
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--closed-attempt')
 parser.add_argument('--closed-investigations', action='store_true')
+parser.add_argument('--closed-ci-investigations', action='store_true')
+parser.add_argument('--closed-historical-observations', action='store_true')
+parser.add_argument('--closed-current-diagnostics', action='store_true')
 parser.add_argument('--receipt', default='reverse-shard-inactive-evidence-compression.json')
 args = parser.parse_args()
-assert not (args.closed_attempt and args.closed_investigations)
+assert sum(bool(value) for value in [args.closed_attempt, args.closed_investigations,
+                                   args.closed_ci_investigations,
+                                   args.closed_historical_observations,
+                                   args.closed_current_diagnostics]) <= 1
 assert Path(args.receipt).name == args.receipt and args.receipt.endswith('.json')
 paths = [root / 'ci-logs' / name for name in [
     'restart-export-published-review.diff',
@@ -26,11 +32,69 @@ if args.closed_attempt:
     terminal = json.loads((attempt / 'terminal.json').read_bytes())
     assert terminal['childClosed'] and terminal['groupCleanup']['complete']
     assert not Path('/proc/' + str(terminal['groupCleanup']['group'])).exists()
-    paths = [attempt / 'command.json']
+    paths = [attempt / name for name in ['command.json', 'stdout.raw.tap', 'stderr.raw.log']
+             if (attempt / name).exists() and (attempt / name).stat().st_size > 32768]
 elif args.closed_investigations:
     # Complete historical task outputs only. Neither path is an input or cache.
     paths = [root / 'experiments/issue-784/local-gate-bounded.log',
              base / 'owned-allocation-analysis.json']
+elif args.closed_ci_investigations:
+    # Explicit historical task observations, never live producer inputs.
+    paths = [root / 'ci-logs' / name for name in [
+        'restart-export-complete-translation.log',
+        'restart-export-complete-workflow.log',
+        'restart-export-ci-watch.log',
+        'restart-published-watch.log',
+    ]] + [base / name for name in [
+        'matrix-current-inputs.log',
+        'current-node-profile-proposal.log',
+        'ordinary-current-allocation.log',
+    ]]
+elif args.closed_current_diagnostics:
+    # Exact completed diagnostic outputs only. The current whole-file run,
+    # current CI snapshot and all source inputs remain outside this list.
+    paths = [base / name for name in [
+        'current-static-refusal-callback.cpuprofile',
+        'module-token-layout-proposal.json', 'rust-token-layout-proposal.json',
+        'static-source-budget-textual-diagnostic.json',
+        'receiving-batch-completed-job-collection-11.json',
+        'receiving-batch-completed-job-collection-6.json',
+    ]] + [base / ('receiving-batch-live-main-' + str(index) + '.json')
+          for index in range(1, 12)
+          if (base / ('receiving-batch-live-main-' + str(index) + '.json')).exists()]
+elif args.closed_historical_observations:
+    # Frozen observations from completed attempts. No current producer input,
+    # source, successfully archived packet, or live CI snapshot is selected.
+    paths = [root / 'ci-logs' / name for name in [
+        'evidence-manifest-6f36.json', 'restart-export-published-all-files.json',
+        'restart-capture-receipt.json', 'restart-export-complete-native-node.log',
+        'restart-evidence-manifest.json', 'restart-export-complete-forward-failures.json',
+        'restart-published-workflows.json', 'restart-export-complete-head-workflows.json',
+        'restart-export-complete-parity.log', 'restart-export-early-parity.log',
+        'restart-published-parity.log', 'restart-export-complete-native-bun.log',
+    ]] + [base / name for name in [
+        'token-checkpoint-watch.log', 'archived-ci-duplicate-retirement.json',
+        'ordinary-bang-progress-512.log', 'owned-stage-current-node-retirement.json',
+        'ordinary-bang-progress-inspection.json', 'reverse-shard-full-gate.log',
+        'archived-node-retirement.json', 'owned-stage-node-capture.json',
+        'alias-existing-node.log', 'project-retention-evidence-capture-receipt.json',
+        'owned-matrix-stage-full-gate.log', 'owned-allocation.log',
+        'named-host-cache-aware-full-gate.log', 'current-isolated-full-gate.log',
+        'project-retention-evidence-manifest.json', 'owned-stage-node-evidence-manifest.json',
+        'storage-packet-capture.json', 'storage-evidence-manifest.json',
+        'whole-file-shard-capture-retry.json', 'whole-file-shard-verified-node-retirement.json',
+        'owned-matrix-stage-full-gate-inspection.json', 'whole-file-shard-full-gate.log',
+        'runtime-import-integrated-full-gate.log', 'project-history-full-gate.log',
+        'matrix-draft-full-gate.log', 'native-regeneration-full-gate.log',
+        'clone-validation-corrected-full-gate.log', 'current-isolated-full-gate-inspection.json',
+        'named-host-history-fixture-bun.log', 'whole-file-shard-retry-evidence-manifest.json',
+        'whole-file-shard-evidence-manifest.json', 'resolver-evidence-retry-manifest.json',
+        'phased-clone-evidence-capture.json', 'resolver-evidence-manifest.json',
+        'phased-clone-evidence-manifest.json', 'storage-parity-completed-job.raw.log',
+        'new-parity.log', 'identity-before.log', 'token-evidence-receipt.json',
+        'named-host-evidence-packet.json', 'archived-allocation-retirement.json',
+    ]] + [root / 'experiments/issue-784' / name
+          for name in ['restart-full-gate.log', 'local-gate.log']]
 receipt = base / args.receipt
 assert not receipt.exists()
 

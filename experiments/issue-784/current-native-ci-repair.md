@@ -383,3 +383,42 @@ remain unfinished; no draft checkpoint establishes release readiness.
       live JSON/Hash, bounds, intrinsic mutation and escaped-scope cases remain.
 - [ ] These focused passes do not complete the repository gate, certify the
       candidate for production selection or establish runtime parity.
+
+## Complete published cycle and retained diagnostics
+
+- [x] Observe the entire original `42443083163` cycle at published
+      `28aba1b62f98608e65bb86bb550e0debe4445f16` finish. Read all 29 available
+      nonpassing job streams and every member of the 16 available artifact
+      ZIPs. The qualified-v2 failure index retains 274 matched error lines and
+      21 complete deadline audits. UTF-8 BOMs are recognized as valid original
+      timestamped logs. An HTTP error body is never counted as a job log.
+- [ ] Translation bin 4's original job `128616252063` was cancelled after
+      65 minutes with no step records. Repeated authenticated requests return
+      BlobNotFound and `gh run view --log` returns log-not-found. Its original
+      log and cohort audit remain unavailable. Request a targeted rerun at
+      the unchanged published head to recover diagnostics; do not cancel a
+      running cycle or publish another head before the rerun finishes.
+- [x] Refresh the complete issue and all three PR comment lists on 2026-11-08.
+      There are no issue comments, inline comments or reviews and seven
+      previously read conversation comments. No new requirement was found.
+- [x] Retain the complete fixed-descriptor diagnostic and actual Bun refusal
+      profile. Neither qualifies a production optimization. The three actual
+      parser-history equations have identical complete canonical records in
+      standalone and existing-batch paths. The single ordered diagnostic
+      measures 23986.509596 versus 13615.12055 ms with shared initialization;
+      original complete-file performance remains unqualified.
+- [x] Preserve the entire 46407066-byte parser probe through verified lossless
+      XZ repacking, reclaiming 2237461 bytes. Remove nine inactive byte-exact
+      duplicates only after complete readback from the committed storage
+      packet, reclaiming 31747027 logical / 31760384 allocated bytes. Remove
+      the inactive complete proposal duplicate only after exact reproduction
+      from its retained installation record. No unique original, active path,
+      build directory or other worker's cache is removed.
+- [x] Current task evidence census is 464827502 bytes, including raw Node
+      deadline evidence and excluding the installed toolchains; the original
+      500000000-byte allocation is unchanged. Python compilation and JavaScript
+      syntax checks pass for the retained investigation helpers.
+- [ ] Run the complete current-source gate and all four actual production
+      generation families sequentially. Strict parity, matrix materialization,
+      original receiving deadlines, current-head CI and the literal all-tool
+      privacy requirement remain unfinished.
