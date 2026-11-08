@@ -92,7 +92,7 @@ This batch adds zero measured executable production functions. Original deadline
 whole Bun, generation, strict parity and complete gate requirements remain open.
 No local Rust tools were invoked.
 
-The [complete packet](evidence/native-regeneration-complete.tar.xz) contains
+The [complete packet](https://github.com/link-assistant/router/blob/567e1dd0b072a2bfd736a9025ba245a630aaff7d/docs/case-studies/issue-784/evidence/native-regeneration-complete.tar.xz?raw=true) contains
 125 original files / 30,535,160 logical bytes. Its compressed length is
 18,508,712 bytes and SHA256 is
 `4c7d6538544951a9b65ebf74b8c229aabdc9151faaac5b0cfba99ee91ede159f`.
@@ -101,3 +101,10 @@ original length/hash and complete decoded-member verification at source
 `9ab2c338281b547983c247c90c98b7c76d327032`. Capture took 20.37 seconds with
 a sampled container peak of 2,746,826,752 bytes. Storage verification grants
 no deadline, semantic, runtime or gate authority.
+
+The inactive local packet was later retired only after fresh published metadata,
+the entire immutable Git blob, its original manifest and observed open/mapped
+file exclusions were checked. All original compressed bytes remain at the
+permanent link above. The [local retirement receipt](evidence/native-regeneration-complete-local-retirement.json.gz)
+records 18,508,712 logical and 18,509,824 allocated bytes reclaimed. It does not
+change any failed or unrun verification result.
