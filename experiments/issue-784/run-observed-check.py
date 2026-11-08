@@ -19,18 +19,22 @@ parser.add_argument('--reclaim-initial-gate-cache', action='store_true',
                     help='Once, pause only the initial gate fingerprint and advise inactive tracked pages')
 parser.add_argument('--advise-closed-gate-pages', action='store_true',
                     help='Bounded asynchronous advice on closed tracked pages; original clocks keep running')
+parser.add_argument('--advise-completed-fingerprint-pages', action='store_true',
+                    help='Single pass over actual completed fingerprint prefixes; clocks and guard unchanged')
 parser.add_argument('command', nargs=argparse.REMAINDER)
 args = parser.parse_args()
 command = args.command[1:] if args.command[:1] == ['--'] else args.command
 if not command:
     parser.error('a complete check command is required')
-if (args.reclaim_initial_gate_cache or args.advise_closed_gate_pages) and (len(command) != 3
+if (args.reclaim_initial_gate_cache or args.advise_closed_gate_pages or args.advise_completed_fingerprint_pages) and (len(command) != 3
         or command[1:] != ['--max-old-space-size=512', 'scripts/check-js-first-local.mjs']
         or Path(command[0]).name != 'node'
         or args.receipt.resolve().parent != Path.cwd() / 'ci-logs/issue-784-restart-2'):
     parser.error('cache advice is restricted to this task initial complete gate')
-if args.reclaim_initial_gate_cache and args.advise_closed_gate_pages:
+if sum([args.reclaim_initial_gate_cache, args.advise_closed_gate_pages, args.advise_completed_fingerprint_pages]) > 1:
     parser.error('choose one explicitly recorded file-cache experiment')
+if args.advise_completed_fingerprint_pages and os.environ.get('ROUTER_JS_FIRST_FINGERPRINT_PROGRESS') != '1':
+    parser.error('completed-prefix advice requires actual default-off fingerprint progress')
 limit = int(Path('/sys/fs/cgroup/memory.max').read_text())
 threshold = limit - 256 * 1024 * 1024
 memory = Path('/sys/fs/cgroup/memory.current')
@@ -47,6 +51,9 @@ stopped_processes = []
 closed_advice = []
 adviser = None
 adviser_output = None
+fingerprint_adviser = None
+fingerprint_output = None
+fingerprint_advice = None
 
 
 def request_stop(signum, _frame):
@@ -61,6 +68,16 @@ with args.log.open('xb') as log:
         ['python3', 'experiments/issue-784/with-child-reaper.py', *command],
         stdout=log, stderr=subprocess.STDOUT, start_new_session=True,
     )
+    if args.advise_completed_fingerprint_pages:
+        advice_receipt = args.receipt.with_name(args.receipt.stem + '-completed-pages.json.gz')
+        advice_log = args.receipt.with_name(args.receipt.stem + '-completed-pages.log')
+        fingerprint_output = advice_log.open('xb')
+        fingerprint_adviser = subprocess.Popen([
+            'python3', '-B', 'experiments/issue-784/completed-fingerprint-pages.py',
+            '--log', str(args.log), '--receipt', str(advice_receipt), '--owner-pid', str(child.pid),
+        ], stdout=fingerprint_output, stderr=subprocess.STDOUT)
+        fingerprint_advice = {'pid': fingerprint_adviser.pid, 'receipt': str(advice_receipt),
+                              'log': str(advice_log), 'activeTestClocksPaused': False}
     while child.poll() is None:
         observed = int(memory.read_text())
         peak = max(peak, observed)
@@ -158,6 +175,9 @@ with args.log.open('xb') as log:
             stopped = True
         time.sleep(0.1)
     status = child.wait()
+    if fingerprint_adviser is not None:
+        fingerprint_advice.update(exitCode=fingerprint_adviser.wait())
+        fingerprint_output.close()
     if adviser is not None:
         closed_advice[-1].update(exitCode=adviser.wait(),
                                 finishedElapsedSeconds=time.monotonic() - started,
@@ -174,6 +194,7 @@ receipt = {
     'stopSampledCgroupBytes': stop_sample, 'stopElapsedSeconds': stop_seconds,
     'stoppedOwnedProcessIds': stopped_processes,
     'initialFingerprintCacheAdvice': reclaims,
+    'completedFingerprintPageAdvice': fingerprint_advice,
     'closedTrackedPageAdvice': closed_advice,
     'closedTrackedPageAdvicePolicy': {'enabled': args.advise_closed_gate_pages,
                                     'thresholdBytes': 2_300_000_000,

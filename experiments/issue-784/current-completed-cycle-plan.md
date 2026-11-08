@@ -29,6 +29,8 @@ partial receiving evidence does not establish completion.
       profile; all six whole-file cases pass in Node and Bun.
 - [x] Verify exact whole privacy history for historical literal comparisons;
       both complete files pass all twelve cases in Node and Bun.
+- [x] Retain the completed-prefix advice experiment: initial full fingerprint,
+      lint and both native test stages pass; TypeScript hits the memory guard.
 - [ ] Resolve every remaining semantic, source generation, strict parity and
       original deadline failure without changing refusals or mandatory checks.
 - [ ] Verify all tool/account privacy criteria, including unsupported protocols
@@ -45,3 +47,10 @@ enabled, the gate reaches at least 45,056 inputs and 1.64 GB content before the
 unchanged guard stops it; all stages remain unrun. This trace narrows the
 observation without proving the remaining container memory's cause. The exact
 streams and receipts are retained in `current-fingerprint-trace.json.gz`.
+
+The next task-only experiment follows actual completed fingerprint prefixes.
+It finishes all 49,097 inputs (1,860,724,960 content bytes), lint and 259 native
+cases in each engine. TypeScript is interrupted after 353.154 seconds at the
+unchanged guard; parity, forward and reverse remain unrun in that attempt.
+Do not present that partial gate as green. Whole evidence is retained in
+`current-completed-fingerprint-pages.json.gz`.
