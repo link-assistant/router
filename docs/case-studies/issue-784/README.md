@@ -167,3 +167,7 @@ audits, interrupted storage attempts and the separate remaining native deadline.
 The [native CLI import repair](current-native-cli-imports.md) records the next
 source equation and passing complete Node/Bun retention files, including the
 original CLI deadline. Full-gate and exact-head CI qualification remain open.
+
+The [historical project accessor comparison](current-paired-project-accessors.md)
+records the six reproduced metadata failures and complete receiving-source
+repair, preserving all public accessor observations and original deadlines.
