@@ -41,6 +41,12 @@ Later CI repairs retain their separate verification boundaries in
 [the runtime-import source-data record](runtime-import-source-data.md).
 Focused receiving checks do not complete the remaining full-gate requirements.
 
+The [current ASCII receiving record](current-ascii-receiving.md) retains the
+complete source transaction repair, five passing controls in both engines and
+the still-failing original whole-file deadlines. The
+[string-equality parent record](current-string-equality-parent.md) separately
+qualifies all three original cases in both engines.
+
 The [complete 17c7 CI review](current-17c7-ci-review.md) retains all failed and
 cancelled jobs, all 25 artifacts, exact-head identity and complete custody
 receipts. Its failures remain open until independently repaired and verified.

@@ -1,5 +1,7 @@
 import {assertCurrentCoreUnicodeSourceComposition} from './current-unit-unicode-source-composition.mjs';
 import {assertUnitMatchesSourceComposition} from './unit-matches-source-composition.mjs';
+import {composeGeolocationModuleSource} from './fixtures/geolocation-module-source-composition.mjs';
+import {receiveCompleteSourceMetadata} from './complete-source-metadata-receiving.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -28,12 +30,14 @@ function inverse(row){assert.equal(transportConcreteSyntaxMeta(row.before.meta).
 
 test('complete ASCII source equations retain current full facade and both native/CST copies',{timeout:60000},()=>{
  const plan=prepareCoreAsciiSources(),current=prepareCurrentCoreAsciiSources(),finalSources=Object.fromEntries(current.files.map(row=>[row.path,row]));assert.equal(current.layers.length,3);assert.equal(plan.typescriptVersion,'5.9.3');assert.equal(plan.files.length,7);
+ const receiving=receiveCompleteSourceMetadata(plan.files),transportConcreteSyntaxMeta=receiving.next;
  for(const row of plan.files){assert.equal(row.current,finalSources[row.path].after,row.path);assert.equal(row.inverse,row.before);assert.equal(hash(row.before),row.beforeSha256);assert.equal(hash(row.after),row.afterSha256);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const stage of row.stages){assert.equal(stage.completeInverse,true);assert.deepEqual(stage.trace.map(event=>event.phase),['language','repository']);assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}if(row.sourceLanguage==='JavaScript'){assert.equal(row.nativeCopies.length,2);assert.ok(row.nativeCopies.every(copy=>copy.completeNativeAstCopy));}else assert.deepEqual(row.nativeCopies,[]);}
  const host=plan.files.find(row=>row.path.endsWith('/host-contracts.mjs'));assert.equal(host.after.split('\n').length-1,999);assert.ok(host.before.includes('prepareOriginalPrimitiveIdentityBoundary'));
  const prior=Object.fromEntries(plan.files.map(row=>[row.path,{after:row.before}]));assert.equal(composeCoreAscii(prior).layers.length,1);assert.throws(()=>composeCoreAscii({...prior,[host.path]:{after:host.before+' '}}),/preceding complete source/);
  assertUnitMatchesSourceComposition(current.layers[1],Object.fromEntries(plan.files.map(row=>[row.path,row])),finalSources);
  assertCurrentCoreUnicodeSourceComposition(current.layers[2],Object.fromEntries(current.layers.slice(0,2).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
  assert.equal(ROUTER_CORE_ASCII_CONTRACT.requiresRefinement,'genuine-router-core-ascii-call');assert.equal(ROUTER_CORE_ASCII_CONTRACT.constEligible,false);
+ receiving.finish();
 });
 
 test('shared ASCII vectors include every byte empty-all Unicode and invalid ABI without coercion',{timeout:60000},()=>{
@@ -63,7 +67,7 @@ test('ASCII source adoption preserves whole bodies comments attributes and inver
 
 test('complete production modules and Cargo inputs retain exact actual predicate bodies without admission claims',{timeout:60000},()=>{
  const archive=readFileSync(new URL('../source-profiles/core-ascii/application.json.gz',import.meta.url));assert.equal(hash(archive),'53abfb67c0bbdcd30d48c2e10491ae21da53e064d5dfa6236dccb59ecf59a619');const raw=gunzipSync(archive);assert.equal(hash(raw),'4f47814ad48cc84a7204c6bb256ae113966bb98b155d68d1990a57d92bf20d2e');const packet=JSON.parse(raw.toString('utf8'));
- for(const row of packet.files){assert.equal(hash(row.source),row.sha256);assert.equal(readFileSync(new URL(row.path,root),'utf8'),row.source,row.path);}
+ for(const row of packet.files){assert.equal(hash(row.source),row.sha256);const current=row.path==='rust/src/lib.rs'?composeGeolocationModuleSource(row.source).after:row.source;assert.equal(readFileSync(new URL(row.path,root),'utf8'),current,row.path);if(row.path==='rust/src/lib.rs')assert.throws(()=>composeGeolocationModuleSource(row.source+'\n'),/Complete pinned Router root/);}
  for(const [path,name]of [['rust/src/client_lifecycle/backup.rs','validate_id'],['rust/src/codex_loopback_bridge.rs','validate_nonce'],['rust/src/deploy/instance.rs','validate'],['rust/src/deploy_local/staging.rs','namespace']]){const source=packet.files.find(row=>row.path===path).source,items=sourceItems(source).filter(item=>item.term==='fn'&&item.name===name);assert.equal(items.length,1);assert.ok(source.slice(items[0].start,items[0].end).includes('.bytes()'));}
  // Complete parents are retained as inputs. A synthetic fixture or spelling
  // census does not prove these modules executable in their real crate scope.

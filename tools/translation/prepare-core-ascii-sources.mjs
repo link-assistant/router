@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
-import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+import {transportConcreteNamedSourcePhases} from './concrete-named-phases.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('Owned ASCII source preparation: '+message);};
@@ -83,19 +83,14 @@ function nativeCopy(ts,path,source){
  const shape=node=>{const children=[];ts.forEachChild(node,child=>{children.push(shape(child));});return [node.kind,ts.isIdentifier(node)?node.escapedText:ts.isLiteralExpression(node)?node.text:null,children];};
  if(JSON.stringify(shape(parse(copy)))!==JSON.stringify(shape(file)))fail('complete native AST copy differs');return {source,copy,completeNativeAstCopy:true};
 }
-function prepare(row,after,root,ts){
- const before=row.source,language=row.path.endsWith('.rs')?'Rust':'JavaScript',rule=(left,right,id)=>({id,edits:[{span:[0,left.length],expected:left,replacement:right}]}),stages=[];
- const first=transportConcreteSyntaxSource(before,{language}),beforeMeta=serializeConcreteSyntaxMeta(first.document);let document=transportConcreteSyntaxMeta(beforeMeta).document;
- for(const phase of ['language','repository']){
-  const target=phase==='language'?before:after,wire=serializeConcreteSyntaxMeta(document),fresh=transportConcreteSyntaxMeta(wire);if(fresh.source!==before)fail('complete stage parent differs');
-  const run=applyConcreteSyntaxSubstitutions(fresh.document,{languageRules:phase==='language'?[rule(before,before,'owned-ascii:retain-complete-inputs')]:[],repositoryRules:phase==='repository'?[rule(before,after,'router-core:explicit-ascii-membership')]:[]}),encoded=serializeConcreteSyntaxMeta(run.value),reparsed=transportConcreteSyntaxMeta(encoded);
-  if(reparsed.source!==target)fail('complete source substitution differs');const undo=applyConcreteSyntaxSubstitutions(reparsed.document,{languageRules:phase==='language'?[rule(target,before,'owned-ascii:restore-language-input')]:[],repositoryRules:phase==='repository'?[rule(target,before,'router-core:restore-complete-before-ascii')]:[]});
-  if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(undo.value)).source!==before)fail('complete inverse differs');stages.push({phase,before,after:target,beforeMeta:wire,afterMeta:encoded,trace:run.trace,completeInverse:true});document=reparsed.document;
- }
- let current=null;try{current=readFileSync(resolve(root,row.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
- return {path:row.path,before,language:before,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta,afterMeta:serializeConcreteSyntaxMeta(document),inverse:before,stages,trace:stages.flatMap(stage=>stage.trace),nativeCopies:language==='JavaScript'?[nativeCopy(ts,row.path,before),nativeCopy(ts,row.path,after)]:[],completeNativeAstCopy:language==='JavaScript',sourceLanguage:language};
+function prepare(row,after,root,ts,equation){
+ const before=row.source,language=row.path.endsWith('.rs')?'Rust':'JavaScript';
+ if(equation.before!==before||equation.middle!==before||equation.after!==after||equation.inverse!==before)fail('complete named source equation differs');
+ const beforeMeta=equation.beforeMeta,afterMeta=equation.afterMeta,stages=equation.stages.map(({phase,before,after,beforeMeta,afterMeta,trace})=>({phase,before,after,beforeMeta,afterMeta,trace,completeInverse:true}));
+  let current=null;try{current=readFileSync(resolve(root,row.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
+ return {path:row.path,before,language:before,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta,afterMeta,inverse:before,stages,trace:stages.flatMap(stage=>stage.trace),nativeCopies:language==='JavaScript'?[nativeCopy(ts,row.path,before),nativeCopy(ts,row.path,after)]:[],completeNativeAstCopy:language==='JavaScript',sourceLanguage:language};
 }
-export function prepareCoreAsciiSources({root=ROOT}={}){const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');const rows=originals(),after=afterSources(rows);return {schema:'router-owned-ascii-sources-v1',typescriptVersion:ts.version,files:rows.map(row=>prepare(row,after[row.path],root,ts)),nativeRustExecuted:false,semanticAuthority:false};}
+export function prepareCoreAsciiSources({root=ROOT}={}){const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');const rows=originals(),after=afterSources(rows);const equations=transportConcreteNamedSourcePhases(rows.map(row=>({before:row.source,middle:row.source,after:after[row.path],language:row.path.endsWith('.rs')?'Rust':'JavaScript',rules:["owned-ascii:retain-complete-inputs","router-core:explicit-ascii-membership","owned-ascii:restore-language-input","router-core:restore-complete-before-ascii"]})));return {schema:'router-owned-ascii-sources-v1',typescriptVersion:ts.version,files:rows.map((row,at)=>prepare(row,after[row.path],root,ts,equations[at])),nativeRustExecuted:false,semanticAuthority:false};}
 export function composeCoreAscii(prior,options={}){const plan=prepareCoreAsciiSources(options),sources={...prior};for(const row of plan.files){if(sources[row.path]&&sources[row.path].after!==row.before)fail('preceding complete source equation differs: '+row.path);sources[row.path]=row;}return {sources,layers:[plan],historicalSources:prior};}
 export function prepareCurrentCoreAsciiSources(options={}){const birth=prepareCoreAsciiSources(options),unit=composeCoreUnitMatches(Object.fromEntries(birth.files.map(row=>[row.path,row])),options);return {schema:'current-owned-ascii-unit-source-v1',birth,layers:[birth,...unit.layers],files:Object.values(unit.sources),semanticAuthority:false};}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){const args=process.argv.slice(2);if(args.length!==1||!['--check','--write'].includes(args[0]))fail('usage: --check|--write');const plan=prepareCurrentCoreAsciiSources();if(args[0]==='--write'){for(const row of plan.files){if(!plan.layers.flatMap(layer=>layer.files.filter(part=>part.path===row.path).flatMap(part=>[part.before,part.after])).includes(row.current))fail('physical complete parent differs: '+row.path);}for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}else if(plan.files.some(row=>row.current!==row.after))fail('generated source is stale');console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),semanticAuthority:false}));}

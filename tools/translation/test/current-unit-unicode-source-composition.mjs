@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {prepareCurrentCoreUnitUnicode} from '../prepare-current-core-unit-unicode.mjs';
 import {composeUnitPrivacyApplicationSources} from './fixtures/unit-privacy-source-composition.mjs';
+import {receiveCompleteSourceMetadata} from './complete-source-metadata-receiving.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 export function currentCoreApplicationSourceEquations(packet){
  const plan=prepareCurrentCoreUnitUnicode(),originals=plan.layers[1].originalUnicodePlan.files;
@@ -20,6 +21,7 @@ export function currentCoreApplicationSource(row,equations){
  return current.source;
 }
 export function assertCurrentCoreUnicodeSourceComposition(layer,prior={},finalSources){
+ const receiving=receiveCompleteSourceMetadata([...layer.originalUnicodePlan.files,...layer.files]),transportConcreteSyntaxMeta=receiving.next;
  assert.equal(layer.schema,'router-current-unit-unicode-source-v1');assert.equal(layer.typescriptVersion,'5.9.3');
  assert.equal(layer.semanticAuthority,false);assert.equal(layer.runtimeExecuted,false);assert.equal(layer.rustExecuted,false);assert.equal(layer.newEncodedOrDigestCache,false);
  assert.equal(layer.files.length,8);assert.equal(new Set(layer.files.map(row=>row.path)).size,8);
@@ -45,4 +47,5 @@ export function assertCurrentCoreUnicodeSourceComposition(layer,prior={},finalSo
  assert.equal(layer.dataDiamond.fromUnicode,data.after);assert.equal(layer.dataDiamond.fromUnit,data.after);
  assert.ok(data.after.includes(JSON.stringify(facade.after)));
  const leaf=layer.files.find(row=>row.path==='rust/src/translation_core/primitives.rs');assert.ok(data.after.includes(JSON.stringify(leaf.after)));
+ receiving.finish();
 }
