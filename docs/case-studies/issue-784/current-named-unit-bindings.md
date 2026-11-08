@@ -6,7 +6,7 @@ eight-input diagnostic finishes in 8.860375 seconds; it is not a receiving
 test, controlled benchmark or measured speed gain.
 
 The named source producer now derives one fresh TypeScript 5.9.3 program for
-all six complete JavaScript modules in each unit preparation. The existing
+all five complete JavaScript modules in each unit preparation. The existing
 module-batch checker retains separate lexical scopes and each module's full
 diagnostics. Scripts, global augmentations, duplicate paths, missing bindings,
 initialization errors and changed complete source retain their existing

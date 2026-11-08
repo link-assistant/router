@@ -18,21 +18,26 @@ serializing one vector after 229.166205 seconds; peak is 2634878976 bytes.
 Neither observer stops the process. Neither attempt completes a behavior case.
 These attempts establish no deadline or memory improvement.
 
-A later complete-file attempt keeps the final graph and disables optional
-vector logging, as in CI. It still fails before completing a case: V8 reports
+A later complete-file attempt keeps the final graph. It still fails before
+completing a case: V8 reports
 its 512 MiB heap limit in JSON stringification, and the independent cgroup guard
 also stops the owned process group at 2872942592 sampled bytes. The observer
 finishes after 229.689472 seconds with every owned child closed. Its deadline
 audit is incomplete because the child never writes a case-deadline record.
 The [full default-logging attempt](evidence/current-default-matches-attempt.json.gz)
-retains all 11 complete stream, source, observer and audit members. No optional
+retains all 11 complete stream, source, observer and audit members. No complete
 runtime vector is captured and the final parent case remains unreached.
 
-This observation rules out optional vector logging as a necessary cause. The
-earlier attribution to aggregate/vector evidence serialization is therefore
-unqualified: the native JSON-stringifier stack does not identify its JavaScript
-call site. No exact cause or memory improvement is established. A new targeted
-diagnostic must locate that call site before another equivalent local attempt.
+The packet's `optionalFullVectorLoggingEnabled: false` label was incorrect.
+Its saved complete test source has the original always-on `finally` writer,
+and its SHA256 equals the physical source. The unchanged original packet is
+retained; [the independent label audit](evidence/current-matches-logging-label.json.gz)
+verifies every full member and records the correction. This attempt cannot
+rule out evidence logging as a necessary cause. The native JSON-stringifier
+stack does not identify its JavaScript call site, so neither the earlier
+aggregate/vector attribution nor its subsequent exclusion is established.
+A new targeted diagnostic must locate that call site before another equivalent
+local attempt. No memory or deadline improvement is established.
 
 Withdraw the writer and restore the original logger. Its full source, controls,
 both complete failure streams and audits, and the incomplete 854612-byte gzip

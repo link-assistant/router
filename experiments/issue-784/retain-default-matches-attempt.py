@@ -1,4 +1,8 @@
-"""Preserve the failed whole-file receiving with optional vector logging off."""
+"""Preserve the failed whole file; its original evidence logger stays enabled.
+
+The first immutable packet incorrectly recorded logging as disabled. Its full
+members and the separate current-matches-logging-label audit retain that error.
+"""
 import base64
 import gzip
 import hashlib
@@ -23,7 +27,7 @@ for path in sorted(paths):
                     'sha256': hashlib.sha256(raw).hexdigest(),
                     'base64': base64.b64encode(raw).decode()})
 record = {'schema': 'complete-default-matches-receiving-attempt-v1',
-          'members': members, 'optionalFullVectorLoggingEnabled': False,
+          'members': members, 'optionalFullVectorLoggingEnabled': True,
           'completedBehavioralCases': 0, 'finalParentCaseReached': False,
           'heapMiB': 512, 'nodeVersion': '20.20.2', 'typescriptVersion': '5.9.3',
           'nativeStackIncludesJsonStringifier': True,
