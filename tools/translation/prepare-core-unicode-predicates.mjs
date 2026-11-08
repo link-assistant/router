@@ -7,7 +7,7 @@ import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {unicodePredicateSourceArtifacts} from './unicode-predicates-source.mjs';
-import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+import {transportConcreteNamedSourcePhases} from './concrete-named-phases.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('Owned Unicode source preparation: '+message);};
@@ -120,23 +120,19 @@ function nativeCopy(ts,path,source){
  const shape=node=>{const children=[];ts.forEachChild(node,child=>{children.push(shape(child));});return [node.kind,ts.isIdentifier(node)?node.escapedText:ts.isLiteralExpression(node)?node.text:null,children];};
  if(JSON.stringify(shape(parse(copy)))!==JSON.stringify(shape(file)))fail('complete native AST copy differs');return {source,copy,completeNativeAstCopy:true};
 }
-function prepare(row,after,root,ts){
- const before=row.source,language=row.path.endsWith('.rs')?'Rust':'JavaScript',rule=(left,right,id)=>({id,edits:[{span:[0,left.length],expected:left,replacement:right}]}),stages=[];
- const first=transportConcreteSyntaxSource(before,{language}),beforeMeta=serializeConcreteSyntaxMeta(first.document);let document=transportConcreteSyntaxMeta(beforeMeta).document;
- for(const phase of ['language','repository']){
-  const target=phase==='language'?before:after,wire=serializeConcreteSyntaxMeta(document),fresh=transportConcreteSyntaxMeta(wire);if(fresh.source!==before)fail('complete stage parent differs');
-  const run=applyConcreteSyntaxSubstitutions(fresh.document,{languageRules:phase==='language'?[rule(before,before,'owned-unicode-predicates:retain-complete-inputs')]:[],repositoryRules:phase==='repository'?[rule(before,after,'router-core:explicit-unicode-predicates')]:[]}),encoded=serializeConcreteSyntaxMeta(run.value),reparsed=transportConcreteSyntaxMeta(encoded);
-  if(reparsed.source!==target)fail('complete source substitution differs');const undo=applyConcreteSyntaxSubstitutions(reparsed.document,{languageRules:phase==='language'?[rule(target,before,'owned-unicode-predicates:restore-language-input')]:[],repositoryRules:phase==='repository'?[rule(target,before,'router-core:restore-complete-before-unicode-predicates')]:[]});
-  if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(undo.value)).source!==before)fail('complete inverse differs');stages.push({phase,before,after:target,beforeMeta:wire,afterMeta:encoded,trace:run.trace,completeInverse:true});document=reparsed.document;
- }
- let current=null;try{current=readFileSync(resolve(root,row.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
- return {path:row.path,before,language:before,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta,afterMeta:serializeConcreteSyntaxMeta(document),inverse:before,stages,trace:stages.flatMap(stage=>stage.trace),nativeCopies:language==='JavaScript'?[nativeCopy(ts,row.path,before),nativeCopy(ts,row.path,after)]:[],completeNativeAstCopy:language==='JavaScript',sourceLanguage:language};
+function prepare(row,after,root,ts,equation){
+ const before=row.source,language=row.path.endsWith('.rs')?'Rust':'JavaScript';
+ if(equation.before!==before||equation.middle!==before||equation.after!==after||equation.inverse!==before)fail('complete named source equation differs');
+ const stages=equation.stages.map(({phase,before,after,beforeMeta,afterMeta,trace})=>({phase,before,after,beforeMeta,afterMeta,trace,completeInverse:true})),beforeMeta=equation.beforeMeta,afterMeta=equation.afterMeta;
+  let current=null;try{current=readFileSync(resolve(root,row.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
+ return {path:row.path,before,language:before,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta,afterMeta,inverse:before,stages,trace:stages.flatMap(stage=>stage.trace),nativeCopies:language==='JavaScript'?[nativeCopy(ts,row.path,before),nativeCopy(ts,row.path,after)]:[],completeNativeAstCopy:language==='JavaScript',sourceLanguage:language};
 }
 export function prepareCoreUnicodePredicates({root=ROOT}={}){
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');
  const property=unicodePredicateSourceArtifacts(),rows=originals(),after=afterSources(rows);
+ const cst=transportConcreteNamedSourcePhases(rows.map(row=>({before:row.source,middle:row.source,after:after[row.path],language:row.path.endsWith('.rs')?'Rust':'JavaScript',rules:["owned-unicode-predicates:retain-complete-inputs","router-core:explicit-unicode-predicates","owned-unicode-predicates:restore-language-input","router-core:restore-complete-before-unicode-predicates"]})));
  const plan={schema:'router-owned-unicode-predicate-sources-v1',typescriptVersion:ts.version,property,
-  files:rows.map(row=>prepare(row,after[row.path],root,ts)),nativeRustExecuted:false,runtimeExecuted:false,semanticAuthority:false};
+  files:rows.map((row,at)=>prepare(row,after[row.path],root,ts,cst[at])),nativeRustExecuted:false,runtimeExecuted:false,semanticAuthority:false};
  // Rejoin the complete original property source after every native/CST callback.
  if(JSON.stringify(unicodePredicateSourceArtifacts())!==JSON.stringify(property))fail('property source changed during preparation');return plan;
 }

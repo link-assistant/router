@@ -7,7 +7,7 @@ import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
-import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+import {transportConcreteNamedSourcePhases} from './concrete-named-phases.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),PROFILE=new URL('./source-profiles/core-unit-matches/',import.meta.url);
 const FACADE='rust/src/translation_core.rs',DATA='tools/translation/router-core-source-data.mjs',MATCHES='tools/translation/router-core-matches.mjs',CONST='tools/translation/extensions/const-match-source-context.mjs',ORDERED='tools/translation/extensions/ordered-matches.mjs',LAYOUT='tools/translation/extensions/unit-enum-cast.mjs',LINKS='tools/translation/extensions/source-links.mjs',ORACLE='rust/tests/translation_core_unit_matches_oracle.rs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -122,22 +122,18 @@ function equations(ts,packet){
  const sourceAssociationOrigin={path:LINKS,owner:{span:[association.getStart(links),association.end],source:association.getText(links)},span:[expression.getStart(links),expression.end],before:old,after:replacement,namespaceAuthority:false,constAuthority:false};
  return {source,after,layoutOrigin,sourceAssociationOrigin,originalNativeFiles:new Map([[ORDERED,ordered],[LINKS,links]])};
 }
-function rowPlan(ts,path,before,after,root,originalNativeFile){
- const language=path.endsWith('.rs')?'Rust':'JavaScript',languageSource=[MATCHES,CONST,ORDERED,LINKS].includes(path)?after:before,input=transportConcreteSyntaxSource(before,{language}),beforeMeta=serializeConcreteSyntaxMeta(input.document),stages=[];let document=input.document,prior=before;
- const rule=(left,right,id)=>({id,edits:[{span:[0,left.length],expected:left,replacement:right}]});
- for(const phase of ['language','repository']){
-  const wire=serializeConcreteSyntaxMeta(document),parent=transportConcreteSyntaxMeta(wire),target=phase==='language'?languageSource:after;if(parent.source!==prior)fail('complete stage parent differs');
-  const run=applyConcreteSyntaxSubstitutions(parent.document,{languageRules:phase==='language'?[rule(prior,target,'language:copy-checked-unit-matches-and-original-source-custody')]:[],repositoryRules:phase==='repository'?[rule(prior,target,'router:bind-separate-owned-unit-matches-operation')]:[]}),afterMeta=serializeConcreteSyntaxMeta(run.value),result=transportConcreteSyntaxMeta(afterMeta);
-  if(result.source!==target)fail('complete source equation differs');const inverse=applyConcreteSyntaxSubstitutions(result.document,{languageRules:phase==='language'?[rule(target,prior,'language:restore-complete-unit-input')]:[],repositoryRules:phase==='repository'?[rule(target,prior,'router:restore-original-unit-operation-input')]:[]});if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source!==prior)fail('complete inverse differs');
-  stages.push({phase,before:prior,after:target,beforeMeta:wire,afterMeta,trace:run.trace,completeInverse:true});document=result.document;prior=target;
- }
- let current=null;try{current=readFileSync(resolve(root,path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
+function rowPlan(ts,path,before,after,root,originalNativeFile,equation){
+ const language=path.endsWith('.rs')?'Rust':'JavaScript',languageSource=[MATCHES,CONST,ORDERED,LINKS].includes(path)?after:before;
+ if(equation.before!==before||equation.middle!==languageSource||equation.after!==after||equation.inverse!==before)fail('complete named source equation differs');
+ const stages=equation.stages.map(({phase,before,after,beforeMeta,afterMeta,trace})=>({phase,before,after,beforeMeta,afterMeta,trace,completeInverse:true})),beforeMeta=equation.beforeMeta,afterMeta=equation.afterMeta;
+  let current=null;try{current=readFileSync(resolve(root,path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
  const nativeCopies=language==='JavaScript'?[nativeCopy(ts,path,before,originalNativeFile),nativeCopy(ts,path,after)]:[];
- return {path,before,language:languageSource,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta,afterMeta:serializeConcreteSyntaxMeta(document),inverse:before,stages,trace:stages.flatMap(stage=>stage.trace),nativeCopies,sourceLanguage:language,completeNativeAstCopy:language==='JavaScript',...(language==='JavaScript'?{nativeBindings:verifyNativeCopiedSourceBindings(ts,resolve(root,path),after)}:{})};
+ return {path,before,language:languageSource,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta,afterMeta,inverse:before,stages,trace:stages.flatMap(stage=>stage.trace),nativeCopies,sourceLanguage:language,completeNativeAstCopy:language==='JavaScript',...(language==='JavaScript'?{nativeBindings:verifyNativeCopiedSourceBindings(ts,resolve(root,path),after)}:{})};
 }
 export function prepareCoreUnitMatches({root=ROOT}={}){
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');const packet=originals(),result=equations(ts,packet),paths=packet.files.map(row=>row.path).filter(path=>path!==LAYOUT),files=[];
- try{for(const path of paths)files.push(rowPlan(ts,path,result.source[path],result.after[path],root,result.originalNativeFiles.get(path)));}finally{result.originalNativeFiles.clear();}
+ const cst=transportConcreteNamedSourcePhases(paths.map(path=>({before:result.source[path],middle:[MATCHES,CONST,ORDERED,LINKS].includes(path)?result.after[path]:result.source[path],after:result.after[path],language:path.endsWith('.rs')?'Rust':'JavaScript',rules:["language:copy-checked-unit-matches-and-original-source-custody","router:bind-separate-owned-unit-matches-operation","language:restore-complete-unit-input","router:restore-original-unit-operation-input"]})));
+ try{for(const [at,path]of paths.entries())files.push(rowPlan(ts,path,result.source[path],result.after[path],root,result.originalNativeFiles.get(path),cst[at]));}finally{result.originalNativeFiles.clear();}
  return {schema:'router-owned-unit-matches-source-v1',typescriptVersion:ts.version,input:packet,layoutOrigin:result.layoutOrigin,sourceAssociationOrigin:result.sourceAssociationOrigin,files,semanticAuthority:false,runtimeExecuted:false,rustExecuted:false,newEncodedOrDigestCache:false,originalLiteralDomainUnchanged:true};
 }
 export function composeCoreUnitMatches(prior,options={}){const plan=prepareCoreUnitMatches(options),sources={...prior};for(const row of plan.files){if(Object.hasOwn(sources,row.path)&&sources[row.path].after!==row.before)fail('preceding complete source differs: '+row.path);sources[row.path]=row;}return {sources,layers:[plan],historicalSources:prior};}

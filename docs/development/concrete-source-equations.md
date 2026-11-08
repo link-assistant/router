@@ -83,7 +83,7 @@ refuse. Edited source remains DATA and needs independent semantic checking.
 original snapshot, actual native selections, both CST stages and all inverses.
 A finite complete-project diagnostic compares every canonical stage and inverse;
 it does not qualify the original whole receiving deadlines, matrix or parity.
-# Explicit names for source phase rules
+## Explicit names for source phase rules
 
 `transportConcreteNamedSourcePhases` is a separate DATA entry point for whole
 source equations whose existing rule identifiers must survive batching. Each
@@ -101,4 +101,3 @@ native callbacks. There is no retained source verdict or semantic authority.
 Four complete receiving cases pass in both Node and Bun with their original
 60000-ms deadlines. Producer integration and whole-file performance remain
 separate qualifications.
-

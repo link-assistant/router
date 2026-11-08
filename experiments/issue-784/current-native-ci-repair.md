@@ -18,7 +18,31 @@ remain unfinished; no draft checkpoint establishes release readiness.
   1955405824 bytes. Neither observer interrupts; every owned child is reaped.
   Full streams: `current-named-phase-receiving-{node,bun}.*`. Source producer
   installation passes separately in 3.120652 seconds, peak 1869815808 bytes.
-  Actual unit/Unicode producer integration and performance remain unrun.
+  Unit/Unicode producer integration is qualified separately below; original
+  whole-file deadlines and full-gate obligations remain mandatory.
+
+## Complete original unit/Unicode producer comparison
+
+- Retain both entire original producer modules in a pinned deterministic
+  archive. Native-selected whole producer functions use the new transaction
+  with their actual original language/repository/inverse rule identifiers.
+  Complete native AST copies, binding checks, source reads, property rechecks,
+  original trace shapes and returned records remain unchanged.
+- All three complete receiving cases pass Node 20.20.2 with their unchanged
+  60000-ms deadlines and independent audit (`complete-QCRtSw`), in 88.756577
+  seconds, sampled cgroup peak 1805701120 bytes. Bun 1.4.4 passes all three in
+  87.519799 seconds, peak 2313367552 bytes. Both engines execute the complete
+  retained original modules and compare their entire results with the installed
+  producers; no before operation is omitted. Every child is reaped. Full streams
+  are `current-named-core-producer-receiving-{node,bun}.*`. Source installation
+  passes independently in 2.821378 seconds, peak 1595015168 bytes.
+- A first complete eight-case Unicode Node file then passes all functional
+  assertions but fails the independent unchanged first-case deadline at
+  71206.665344 / 60000 ms (`complete-WpwVU8`); total 161.371574 seconds,
+  peak 2061053952 bytes. The unknown-parent case takes 28492.772060 ms.
+  The original first-case workload remains intact. New uncommitted unit/Unicode
+  composition assertions are being given their own new case in that same
+  complete file; no original assertion or deadline is moved or removed.
 
 ## Current source repairs and failed production generation
 
