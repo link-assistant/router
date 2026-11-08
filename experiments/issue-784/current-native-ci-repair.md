@@ -57,6 +57,15 @@ remain unfinished; no draft checkpoint establishes release readiness.
 
 ## Verified inactive diagnostic cleanup
 
+- At published checkpoint `17c7dd994`, reopen all nine relevant complete
+  published archives, verify each complete archive SHA and all 35 selected
+  original members, then compare every inactive loose copy, identity and open
+  file set before removing only those duplicates. Reclaimed 41857375 logical /
+  41930752 allocated bytes. All original diagnostics remain recoverable from
+  their unchanged published archives. The complete plan, receipt, streams and
+  cleanup source are preserved in
+  `docs/case-studies/issue-784/evidence/current-published-ci-duplicate-retirement.json.gz`.
+  This storage action changes no source-generation, deadline or parity result.
 - Reopen the unchanged complete phased-clone archive, verify its full SHA
   and each of six exact inactive diagnostic members, and compare every loose
   duplicate and identity before retiring only those redundant copies. All
