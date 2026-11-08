@@ -620,3 +620,17 @@ remain unfinished; no draft checkpoint establishes release readiness.
   The failed first Bun launch used an absent task-local executable; that error
   is retained separately, and the actual installed Bun run supplies the result.
   Node receiving does not establish Bun, full-gate or production parity success.
+
+## Explicit Unicode Text return adoption
+
+- Add a separate source-adoption entry point for a complete borrowed core-Str
+  whitespace-filter tail returning bare String. The original literal migration
+  stays unchanged. Shadowed names, foreign producers, comments, other binders,
+  collections and signatures retain their complete original source. Adoption
+  grants no original Iterator dispatch, semantic or executable authority.
+- All three complete focused cases pass under Node with the original 60000-ms
+  case limits and independent audit (`complete-3y2PiJ`), in 23.557828 seconds,
+  sampled peak 1643278336 bytes. All three pass under Bun 1.4.4 in 18.009996
+  seconds, peak 1763385344 bytes. Complete BOM/CRLF/trivia mapping, round trips
+  and inverses remain checked. Actual whole-function Unicode receiving and
+  the full gate remain independent unfinished obligations.
