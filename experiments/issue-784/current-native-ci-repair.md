@@ -361,3 +361,25 @@ remain unfinished; no draft checkpoint establishes release readiness.
 - [ ] Both owned-definition regeneration modes, forward generation, strict
       parity, the complete JavaScript gate and new same-head CI remain
       required. Canonical reverse freshness does not establish parity.
+
+## Current negative-budget proof source repair
+
+- [x] Reproduce the two published source-pin failures from the complete bin-7
+      stream. Preserve both historical whole-source pins and add the exact
+      guarded-lexing import history, native declaration selection and both
+      serialized/reparsed CST phases with full inverses. Rejoin the actual
+      operation-byte bridge consumer through its existing independent complete
+      source evolution. Keep the old consumer contract and historical reader
+      available; add the separately named current contract/reader.
+- [x] Regenerate the complete candidate and receiving history through
+      `prepare-negative-budget-proof-json.mjs --write`; the production
+      consumer is byte-identical and still selects its original serializer.
+      The first two failed preparation attempts are retained separately.
+- [x] Run all seven original cases with their unchanged 60000-ms limits.
+      Node 20.20.2 and its independent deadline audit pass in 77.541072 seconds
+      (sampled cgroup peak 2586771456 bytes, `complete-eS3jaQ`); Bun 1.4.4 passes
+      in 70.094486 seconds (peak 2686803968). Full logs and resource receipts
+      use `current-negative-budget-`. Complete existing getter/proxy/lazy-stack,
+      live JSON/Hash, bounds, intrinsic mutation and escaped-scope cases remain.
+- [ ] These focused passes do not complete the repository gate, certify the
+      candidate for production selection or establish runtime parity.
