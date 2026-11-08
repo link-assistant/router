@@ -198,6 +198,12 @@ remain unfinished; no draft checkpoint establishes release readiness.
 
 ## Evidence allocation
 
+- [x] Retire only the inactive adapter replay after comparing its complete
+      50385053 decoded bytes and SHA-256 with the retained original main log.
+      Reclaim 4085779 logical / 4087808 allocated bytes; retain the primary
+      gzip and the explicit duplicate-retirement receipt. A separate archived-CI
+      retirement attempt found no eligible complete archived duplicate and
+      removed nothing.
 - [x] Reclaim exactly 11514274 logical bytes / 11517952 allocated bytes from
       one explicit inactive task duplicate only after whole ZIP/member hash,
       CRC, physical identity and length readback. The complete original is
