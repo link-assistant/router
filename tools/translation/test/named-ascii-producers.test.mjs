@@ -12,6 +12,8 @@ test('complete named ASCII producer sources retain original native checks rules 
  for(const row of plan.files){
   assert.equal(row.current,row.after);assert.equal(row.equation.inverse,row.before);assert.equal(readFileSync(new URL('../../../'+row.path,import.meta.url),'utf8'),row.after);
   for(const stage of row.equation.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);assert.equal(stage.inverse,stage.before);}
+  assert.deepEqual(row.historyEquations.map(equation=>equation.before),[row.namedAfter,row.sequentialAfter]);
+  for(const equation of row.historyEquations){assert.equal(equation.after,row.after);assert.equal(equation.inverse,equation.before);for(const stage of equation.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}}
   assert.ok(row.rules.every(name=>row.before.includes(name)&&row.after.includes(name)));
   for(const marker of ['nativeCopy(','readFileSync(resolve(root,','runtimeExecuted:false'])assert.ok(row.before.includes(marker)&&row.after.includes(marker),marker);
  }

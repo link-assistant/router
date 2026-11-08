@@ -101,15 +101,19 @@ export function prepareCoreUnicodeHostAssetHistory({root=ROOT}={}){
  let after=replaceImport(middle)+suffix;
  if(unit)after=once(after,"import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';","import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';");
  grammar(ts,row.path,middle);grammar(ts,row.path,after);
- return {path:row.path,before,middle,after,previousAfter,precedingAfter,nativeEdits:edits,rules:[...names[kind]]};
+ const namedAfter=after,sequentialAfter=once(after,"from './concrete-named-phases.mjs'","from './concrete-sequential-phases.mjs'");
+ after=once(namedAfter,"from './concrete-named-phases.mjs'","from './concrete-source-origin-phases.mjs'");
+ return {path:row.path,before,middle,after,previousAfter,precedingAfter,namedAfter,sequentialAfter,nativeEdits:edits,rules:[...names[kind]]};
 }
 export function prepareNamedCoreProducers({root=ROOT}={}){
  root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript 5.9.3 required');
  const input=originals(root),files=input.map(row=>prepareSource(ts,row));
  const equations=transportConcreteNamedSourcePhases(files.map(row=>({before:row.before,middle:row.middle,after:row.after,language:'JavaScript',rules:['language:batch-complete-original-core-equations','repository:import-named-core-equation-transaction','language:restore-complete-original-core-producer','repository:restore-complete-original-core-imports']})));
+ const historyEquations=transportConcreteNamedSourcePhases(files.flatMap(row=>[row.namedAfter,row.sequentialAfter].map(before=>({before,middle:before,after:row.after,language:'JavaScript',rules:['language:retain-complete-core-producer-history','repository:primitive-source-origin-phase-domain','language:restore-complete-core-producer-history','repository:restore-complete-core-producer-import']}))));
  for(const [at,row]of files.entries()){
-  row.equation=equations[at];row.current=readFileSync(resolve(root,row.path),'utf8');
-  if(row.equation.inverse!==row.before||![row.before,row.previousAfter,row.precedingAfter,row.after].includes(row.current))fail('unknown complete physical source: '+row.path);
+  row.equation=equations[at];row.historyEquations=historyEquations.slice(at*2,at*2+2);row.current=readFileSync(resolve(root,row.path),'utf8');
+  if(row.historyEquations.some((equation,index)=>equation.before!==[row.namedAfter,row.sequentialAfter][index]||equation.after!==row.after||equation.inverse!==equation.before))fail('complete producer history inverse differs');
+  if(row.equation.inverse!==row.before||![row.before,row.previousAfter,row.precedingAfter,row.namedAfter,row.sequentialAfter,row.after].includes(row.current))fail('unknown complete physical source: '+row.path);
   if(row.after.split('\n').length>=1000)fail('complete output exceeds line bound');
  }
  if(JSON.stringify(originals(root))!==JSON.stringify(input))fail('complete original archive changed');

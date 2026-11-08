@@ -17,6 +17,9 @@ test('separate current asset producers retain both entire historical producers a
   for(const stage of row.equation.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}
   assert.equal(row.publishedEquation.before,row.publishedAfter);assert.equal(row.publishedEquation.after,row.after);assert.equal(row.publishedEquation.inverse,row.publishedAfter);
   for(const stage of row.publishedEquation.stages){assert.equal(stage.inverse,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}
+  assert.equal(row.sequentialEquation.before,row.sequentialAfter);assert.equal(row.sequentialEquation.after,row.after);assert.equal(row.sequentialEquation.inverse,row.sequentialAfter);
+  for(const stage of row.sequentialEquation.stages){assert.equal(stage.inverse,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}
+  assert.ok(row.sequentialAfter.includes("from './concrete-sequential-phases.mjs'"));assert.ok(row.after.includes("from './concrete-source-origin-phases.mjs'"));
   for(const marker of ['copySource(ts,row.path,before)','copySource(ts,row.path,after)','verifyNativeCopiedSourceBindings','completeNativeAstCopy:true'])assert.ok(row.before.includes(marker)&&row.after.includes(marker),marker);
  }
 });

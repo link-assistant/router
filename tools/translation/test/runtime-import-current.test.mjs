@@ -21,6 +21,10 @@ test('current runtime-import consumers retain the complete historical producers 
   assert.equal(row.current,row.after,row.path);
   assert.equal(row.equation.inverse,row.before,row.path);
   assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true,row.path);
+  if(Object.hasOwn(row,'lifetimeAfter')){
+   assert.equal(row.lifetimeEquation.before,row.lifetimeAfter,row.path);assert.equal(row.lifetimeEquation.after,row.after,row.path);assert.equal(row.lifetimeEquation.inverse,row.lifetimeAfter,row.path);
+   for(const stage of row.lifetimeEquation.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before,row.path);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after,row.path);}
+  }
   assert.deepEqual(row.equation.stages.map(stage=>stage.phase),['language','repository']);
   for(const stage of row.equation.stages){
    assert.equal(stage.inverse,stage.before,row.path);

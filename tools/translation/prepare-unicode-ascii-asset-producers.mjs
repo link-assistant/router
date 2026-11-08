@@ -83,13 +83,16 @@ export function prepareUnicodeAsciiAssetProducers({root=ROOT}={}){
   const input='tools/translation/'+name,path='tools/translation/'+name.replace('prepare-core-','prepare-current-core-'),before=readFileSync(resolve(root,input),'utf8');
   if(hash(before)!==sha256)fail('complete original producer source differs: '+input);
   const previous=prepareFile(ts,before,path,name.includes('base-assets'),false),published=prepareFile(ts,before,path,name.includes('base-assets'));
-  return {input,path,...prepareFile(ts,before,path,name.includes('base-assets'),true,true),previousAfter:previous.after,publishedAfter:published.after,previousNativeEdits:previous.nativeEdits,beforeSha256:sha256};
+  const sequential=prepareFile(ts,before,path,name.includes('base-assets'),true,true);
+  const after=once(sequential.after,"from './concrete-sequential-phases.mjs'","from './concrete-source-origin-phases.mjs'");
+  return {input,path,...sequential,after,sequentialAfter:sequential.after,previousAfter:previous.after,publishedAfter:published.after,previousNativeEdits:previous.nativeEdits,beforeSha256:sha256};
  });
  const equations=transportConcreteNamedSourcePhases(files.map(row=>({before:row.before,middle:row.middle,after:row.after,language:'JavaScript',rules:['language:compose-complete-known-unicode-asset-inputs','repository:bind-current-unicode-asset-input-composition','language:restore-complete-historical-asset-producer','repository:restore-historical-asset-imports']})));
  const publishedEquations=transportConcreteNamedSourcePhases(files.map(row=>({before:row.publishedAfter,middle:row.publishedAfter,after:row.after,language:'JavaScript',rules:['language:retain-complete-published-producer','repository:sequential-source-data-and-refusal-preflight','language:restore-complete-published-language-input','repository:restore-complete-published-producer']})));
+ const sequentialEquations=transportConcreteNamedSourcePhases(files.map(row=>({before:row.sequentialAfter,middle:row.sequentialAfter,after:row.after,language:'JavaScript',rules:['language:retain-complete-sequential-producer','repository:primitive-source-origin-phase-domain','language:restore-complete-sequential-language-input','repository:restore-complete-sequential-producer']})));
  for(const [at,row]of files.entries()){
-  row.equation=equations[at];row.publishedEquation=publishedEquations[at];row.afterSha256=hash(row.after);let current=null;try{current=readFileSync(resolve(root,row.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}row.current=current;
-  if(current!==null&&current!==row.after&&current!==row.previousAfter&&current!==row.publishedAfter)fail('unknown complete current producer: '+row.path);
+  row.equation=equations[at];row.publishedEquation=publishedEquations[at];row.sequentialEquation=sequentialEquations[at];row.afterSha256=hash(row.after);let current=null;try{current=readFileSync(resolve(root,row.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}row.current=current;
+  if(current!==null&&current!==row.after&&current!==row.previousAfter&&current!==row.publishedAfter&&current!==row.sequentialAfter)fail('unknown complete current producer: '+row.path);
   if(row.after.split('\n').length>=1000)fail('complete source exceeds line bound');
   if(readFileSync(resolve(root,row.input),'utf8')!==row.before)fail('complete original producer changed');
  }

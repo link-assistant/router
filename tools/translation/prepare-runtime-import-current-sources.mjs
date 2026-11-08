@@ -58,15 +58,18 @@ export function prepareRuntimeImportCurrentSources(){
  after=once(after,"from './concrete-phased-equations.mjs'","from './concrete-sequential-equations.mjs'");
  const previousAfter=after,publishedAfter=once(after,"from './concrete-sequential-equations.mjs'","from './concrete-phased-equations.mjs'");
  const compilerSelections=proposeRuntimeCompilerSelections(ts,base+currentName,after),indexedAfter=compilerSelections.after;
- const compilerLifetime=proposeRuntimeCompilerLifetime(ts,base+currentName,indexedAfter);after=compilerLifetime.after;
- files.push({path:base+currentName,before,middle,after,previousAfter,publishedAfter,indexedAfter,compilerSelections,compilerLifetime,nativeSelection:{span:[node.getStart(file),node.end],expected:node.getText(file),replacement}});
+ const compilerLifetime=proposeRuntimeCompilerLifetime(ts,base+currentName,indexedAfter),lifetimeAfter=compilerLifetime.after;
+ after=once(lifetimeAfter,"from './concrete-sequential-equations.mjs'","from './concrete-source-origin-equations.mjs'");
+ files.push({path:base+currentName,before,middle,after,previousAfter,publishedAfter,indexedAfter,lifetimeAfter,compilerSelections,compilerLifetime,nativeSelection:{span:[node.getStart(file),node.end],expected:node.getText(file),replacement}});
  const dataBefore=readFileSync(resolve(root,helper),'utf8');if(hash(dataBefore)!==helperPin)fail('complete original Node DATA helper differs');
  const dataMiddle=once(dataBefore,"new URL('./"+originalName+"',import.meta.url)","new URL('./"+currentName+"',import.meta.url)");
  let dataAfter=once(dataMiddle,"['tools/translation/"+originalName+"'","['tools/translation/"+currentName+"'");
  const tail="'tools/translation/js-to-rust/native-typescript.mjs'];";
  dataAfter=once(dataAfter,tail,"'tools/translation/js-to-rust/native-typescript.mjs','tools/translation/prepare-native-regeneration-batch.mjs','tools/translation/source-profiles/native-regeneration-batch/original.mjs.gz','tools/translation/prepare-runtime-import-current-sources.mjs','tools/translation/"+originalName+"','tools/translation/concrete-sequential-equations.mjs','tools/translation/concrete-sequential-phases.mjs','tools/translation/private-parser-sequential-phases.mjs'];");
  const previousDataAfter=once(dataAfter,",'tools/translation/concrete-sequential-equations.mjs','tools/translation/concrete-sequential-phases.mjs','tools/translation/private-parser-sequential-phases.mjs'",'');
- files.push({path:base+nodeName,before:dataBefore,middle:dataMiddle,after:dataAfter,previousAfter:previousDataAfter});
+ const lifetimeDataAfter=dataAfter;
+ dataAfter=once(dataAfter,"'tools/translation/private-parser-sequential-phases.mjs'];","'tools/translation/private-parser-sequential-phases.mjs','tools/translation/concrete-source-origin-equations.mjs','tools/translation/concrete-source-origin-phases.mjs','tools/translation/private-parser-source-origin-phases.mjs','tools/translation/prepare-source-origin-concrete-phases.mjs'];");
+ files.push({path:base+nodeName,before:dataBefore,middle:dataMiddle,after:dataAfter,previousAfter:previousDataAfter,lifetimeAfter:lifetimeDataAfter});
  for(const relative of paths){
   const path=base+relative,current=readFileSync(resolve(root,path),'utf8');
   let old=current.includes(currentName)?current.replaceAll(currentName,originalName):current;
@@ -106,7 +109,11 @@ export function prepareRuntimeImportCurrentSources(){
    [row.indexedEquation]=transportConcreteSourcePhases([{before:row.indexedAfter,middle:row.after,after:row.after,language:'JavaScript'}]);
    if(row.indexedEquation.inverse!==row.indexedAfter)fail('complete indexed receiving inverse differs');
   }
-  if(row.current!==null&&row.current!==row.before&&row.current!==row.after&&(!Object.hasOwn(row,'previousAfter')||row.current!==row.previousAfter)&&(!Object.hasOwn(row,'publishedAfter')||row.current!==row.publishedAfter)&&(!Object.hasOwn(row,'indexedAfter')||row.current!==row.indexedAfter))fail('unexpected complete physical source: '+row.path);
+  if(Object.hasOwn(row,'lifetimeAfter')){
+   [row.lifetimeEquation]=transportConcreteSourcePhases([{before:row.lifetimeAfter,middle:row.after,after:row.after,language:'JavaScript'}]);
+   if(row.lifetimeEquation.inverse!==row.lifetimeAfter)fail('complete lifetime receiving inverse differs');
+  }
+  if(row.current!==null&&row.current!==row.before&&row.current!==row.after&&(!Object.hasOwn(row,'previousAfter')||row.current!==row.previousAfter)&&(!Object.hasOwn(row,'publishedAfter')||row.current!==row.publishedAfter)&&(!Object.hasOwn(row,'indexedAfter')||row.current!==row.indexedAfter)&&(!Object.hasOwn(row,'lifetimeAfter')||row.current!==row.lifetimeAfter))fail('unexpected complete physical source: '+row.path);
  }
  if(readFileSync(resolve(root,original.path),'utf8')!==before||readFileSync(resolve(root,helper),'utf8')!==dataBefore)fail('complete original input changed');
  return {schema:'current-runtime-import-source-composition-v1',files,typescriptVersion:ts.version,

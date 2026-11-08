@@ -50,16 +50,19 @@ function producer(ts,row){
  }
  const nativeEdits=edits.map(([node,replacement])=>({span:[node.getStart(file),node.end],expected:node.getText(file),replacement}));
  let middle=before;for(const edit of [...nativeEdits].sort((a,b)=>b.span[0]-a.span[0])){if(middle.slice(...edit.span)!==edit.expected)fail('whole native span changed');middle=middle.slice(0,edit.span[0])+edit.replacement+middle.slice(edit.span[1]);}
- const after=once(middle,"import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';","import {transportConcreteNamedSourcePhases} from './concrete-named-phases.mjs';");
- grammar(ts,row.path,middle);grammar(ts,row.path,after);return {path:row.path,before,middle,after,nativeEdits,rules:names[kind]};
+ const namedAfter=once(middle,"import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';","import {transportConcreteNamedSourcePhases} from './concrete-named-phases.mjs';");
+ const sequentialAfter=once(namedAfter,"from './concrete-named-phases.mjs'","from './concrete-sequential-phases.mjs'"),after=once(namedAfter,"from './concrete-named-phases.mjs'","from './concrete-source-origin-phases.mjs'");
+ grammar(ts,row.path,middle);grammar(ts,row.path,after);return {path:row.path,before,middle,after,namedAfter,sequentialAfter,nativeEdits,rules:names[kind]};
 }
 export function prepareNamedAsciiProducers({root=ROOT}={}){
  root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');
  const input=originals(root),files=input.map(row=>producer(ts,row));
  const equations=transportConcreteNamedSourcePhases(files.map(row=>({before:row.before,middle:row.middle,after:row.after,language:'JavaScript',rules:['language:batch-whole-original-ascii-source-equations','repository:import-named-ascii-source-transaction','language:restore-whole-original-ascii-producer','repository:restore-original-ascii-producer-imports']})));
+ const historyEquations=transportConcreteNamedSourcePhases(files.flatMap(row=>[row.namedAfter,row.sequentialAfter].map(before=>({before,middle:before,after:row.after,language:'JavaScript',rules:['language:retain-complete-ascii-producer-history','repository:primitive-source-origin-phase-domain','language:restore-complete-ascii-producer-history','repository:restore-complete-ascii-producer-import']}))));
  for(const [at,row]of files.entries()){
-  row.equation=equations[at];row.current=readFileSync(resolve(root,row.path),'utf8');
-  if(row.current!==row.before&&row.current!==row.after||row.equation.inverse!==row.before)fail('unknown complete physical source: '+row.path);
+  row.equation=equations[at];row.historyEquations=historyEquations.slice(at*2,at*2+2);row.current=readFileSync(resolve(root,row.path),'utf8');
+  if(row.historyEquations.some((equation,index)=>equation.before!==[row.namedAfter,row.sequentialAfter][index]||equation.after!==row.after||equation.inverse!==equation.before))fail('whole producer history inverse differs');
+  if(![row.before,row.namedAfter,row.sequentialAfter,row.after].includes(row.current)||row.equation.inverse!==row.before)fail('unknown complete physical source: '+row.path);
   if(row.after.split('\n').length>=1000)fail('whole producer exceeds line bound');
  }
  if(JSON.stringify(originals(root))!==JSON.stringify(input))fail('whole original source archive changed');

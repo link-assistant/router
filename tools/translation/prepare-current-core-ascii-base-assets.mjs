@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 import {hostRuntimeAssetsNamedDataAliases} from './host-assets.mjs';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
-import {transportConcreteNamedSourcePhases} from './concrete-sequential-phases.mjs';
+import {transportConcreteNamedSourcePhases} from './concrete-source-origin-phases.mjs';
 import {currentUnicodeAssetInputs,requireCurrentUnicodeAssetInputs} from './current-unicode-asset-inputs.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const HOST='tools/translation/host-assets.mjs',RETENTION='tools/translation/json-retention-runtime-assets.mjs',SOURCE='tools/translation/js-to-rust/owned-core-source.mjs',HELPER='tools/translation/ascii-base-runtime-assets.mjs',DATA='tools/translation/ascii-base-runtime-assets-source-data.mjs';
