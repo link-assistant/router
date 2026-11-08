@@ -201,3 +201,7 @@ Node and Bun, with fresh native binding checks and full source histories.
 The [receiving repair checkpoint](current-alias-checkpoint.md) records the
 complete prior CI cycle, refreshed feedback, combined source review and the
 remaining qualification required after publication.
+
+The [withdrawn receiving-helper draft](current-shared-source-receiving-withdrawal.md)
+retains both complete Node files and all three original deadline failures.
+Its nine assertion passes establish no performance qualification.
