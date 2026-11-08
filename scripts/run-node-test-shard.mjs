@@ -66,4 +66,3 @@ async function main(){
  process.exitCode=result.exitCode;
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href)main().catch(error=>{console.error(error.stack??error.message);process.exitCode=1;});
-

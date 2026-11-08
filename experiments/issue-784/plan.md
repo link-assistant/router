@@ -874,3 +874,29 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [ ] Publish the reviewed coherent workflow batch, collect the entire fresh
       same-head CI cycle and repair its complete failures without weakening
       source pins, strict parity, original tests or original deadlines.
+
+## Genuine computed matrix index custody
+
+- [x] Publish b63dd5a337c4e17f9df51f9ce866cb73fdea7662 after collecting the entire
+      a2539817c cycle. Preserve the two final EOF whitespace findings and draft
+      their correction; no next push before every new workflow is terminal.
+- [x] Trace missing index bytes to custody inside applyAll, before the original
+      producer computes and compares its ordinary and owned matrix indices.
+- [x] Extend the source-derived producer copies to defer only DATA retention,
+      then retain actual index strings after every original freshness check.
+      Preserve standalone original APIs, all private validation and deadlines.
+- [x] Independently verify whole source/CST inverses before installing generated
+      copies. Run both complete custody and matrix receiving files with original
+      assertions/deadlines under Node and Bun; preserve failures and refusals.
+      Node passes 17 cases plus independent audit in 361.049232 seconds,
+      zero breaches, peak sampled cgroup 2306273280 bytes. Bun passes all 17
+      in 269.168283 seconds, peak 2554150912 bytes. Both observers exit zero
+      without resource interruption; all children are reaped. Producer freshness
+      passes and lockfile TypeScript is 5.9.3. Complete original/new reproduction
+      preserves the original missing-index assertion and actual new byte match.
+- [x] Extend the read-only artifact reviewer for complete index custody; seven
+      finite Python receiving cases pass. No missing index is reconstructed or
+      unqualified output installed. Genuine full v2 artifact review is unrun.
+- [ ] Attempt the mandatory complete gate and collect the entire b63dd5a33 CI
+      failure set before another coordinated publication. Strict parity and
+      literal all-tool privacy requirements remain unfinished.

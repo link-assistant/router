@@ -78,4 +78,3 @@ test('name filters and repeated normalized paths cannot replace complete selecte
   f.files.push(f.files[0]);const duplicate=run(f);assert.notEqual(duplicate.result.status,0);assert.match(duplicate.result.stderr,/distinct/u);
  }finally{f.dispose();}
 });
-

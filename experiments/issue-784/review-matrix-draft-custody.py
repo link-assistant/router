@@ -13,6 +13,7 @@ import re
 import stat
 import subprocess
 import zipfile
+from matrix_index_custody import read_complete_indices
 
 ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
@@ -131,7 +132,7 @@ for receipt in selected:
             raise RuntimeError('Complete manifest bound differs')
         raw_manifest = archive.read(manifest_name)
         capsule = json.loads(raw_manifest)
-        if capsule['schema'] != 'unqualified-isolated-matrix-draft-v1' or any(
+        if capsule['schema'] not in ['unqualified-isolated-matrix-draft-v1', 'unqualified-isolated-matrix-draft-v2'] or any(
                 capsule[key] is not False for key in ['semanticAuthority', 'runtimeParity', 'rustExecuted']):
             raise RuntimeError('Unqualified original custody scope differs')
         inputs = capsule['inputs']
@@ -219,11 +220,15 @@ for receipt in selected:
                 raise RuntimeError('Complete decoded original output bytes differ')
             if inventory_bytes is not None and json.loads(inventory_bytes) != inventory_plan['manifest']:
                 raise RuntimeError('Complete decoded original inventory and plan differ')
+        indices = read_complete_indices(archive, by_name, prefix, capsule, plans, inputs,
+                                        current['matrixSha256'], current['entries'], owned)
+        expected_names.update(indices['members'])
         if set(by_name) != expected_names or complete_bytes != capsule['completeBytes']:
             raise RuntimeError('Complete original artifact/member accounting differs')
         report['artifacts'].append({'file': path.name, 'sha256': receipt['sha256'],
             'manifestSha256': sha(raw_manifest), 'completeOutputs': len(outputs),
             'completeOutputBytes': complete_bytes, 'compilerInputs': len(inputs['compiler']),
+            'computedIndices': indices['indices'], 'completeIndexBytes': indices['completeBytes'],
             'profileInputs': len(inputs['profiles']), 'rustSources': len(inputs['tracked']),
             'profiles': [{'name': member['name'], 'totals': plan['manifest']['totals'],
                           'functionCoverage': plan['manifest']['functionCoverage']} for member, plan in zip(profiles, plans)]})

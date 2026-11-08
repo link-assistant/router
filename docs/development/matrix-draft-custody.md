@@ -10,6 +10,13 @@ Retention never updates those checked-in files or changes the failing status.
 One fresh attempt contains each complete output compressed separately and a
 manifest with original inputs, complete plans, byte lengths and SHA256 hashes.
 Every compressed file is decoded and compared before the manifest is written.
+The current v2 format also retains the actual computed ordinary matrix index
+and, for owned-definition producers, the actual owned matrix index. Retention
+runs after both original index freshness comparisons; the complete strings,
+including their whitespace, are compressed separately and checked on readback.
+Their byte lengths share the original aggregate storage bound. Missing index
+files still fail check mode and are never created by retention. Calling the
+original standalone retention API without computed indices keeps its v1 format.
 Capture failures remove only that attempt. Symbolic links, escaping paths, alternative
 output directories and files exceeding the original byte bounds are refused.
 Inputs are independently reread after capture. Existing deadlines include this
@@ -65,8 +72,24 @@ complete captured compiler/profile/TypeScript/Rust/Cargo inputs with physical
 current files, stream every original stored and decoded member and compare
 each decoded inventory to its original plan. The current-input snapshot has
 been exercised; full custody investigation awaits a genuine completed CI
-artifact. Matrix index bytes are not present in the first custody format.
-The investigation neither reconstructs that missing index nor installs files.
+artifact. Matrix index bytes are absent from v1 and remain explicitly absent
+when reviewing those artifacts. For v2, the reviewer requires every actual
+stored index, verifies its stored and decoded bytes, and compares its entire
+parsed content with the original complete plans. JSON Boolean and numeric
+values remain distinct. The investigation never reconstructs a missing index
+or installs files.
+
+The complete custody and isolated-matrix files pass 17 cases under Node
+20.20.2, including the independent source-declared deadline audit, and all 17
+under Bun 1.4.4. The owned
+receiving case compares both retained index strings byte for byte with the
+independent original producer in the same finite three-profile fixture.
+An original/new reproduction confirms that the original v1 retention loses
+the supplied index while v2 preserves it. Seven small Python receiving controls
+verify full index comparison, missing bytes, hash and length failures, JSON
+type distinctions and false authority claims. Genuine complete v2 CI artifact
+review remains required; these focused checks do not
+establish a green gate, installed matrices or executable parity.
 
 GitHub's published run head and checked merge SHA are distinct identities.
 The read-only reviewer requires complete authenticated commit metadata, the

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,readdirSync,rmSync,symlinkSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,readdirSync,rmSync,symlinkSync,existsSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {gunzipSync} from 'node:zlib';
@@ -32,4 +32,30 @@ test('escaping, generated-tree and linked custody paths cannot change external f
  mkdirSync(join(value.root,'js'));symlinkSync(value.staging,join(value.root,'js/node_modules'),'dir');
  assert.throws(()=>retainMatrixDraft(value),/symbolic links/);
  assert.deepEqual(readFileSync(join(value.staging,value.plans[0].outputs[0].path)),Buffer.from('complete output\n'));
+});
+test('complete computed ordinary and owned indices retain exact bytes without creating checked-in indices',t=>{
+ const value=fixture(t),computedIndices=[
+  {path:'profiles/matrix-'+ 'a'.repeat(64)+'.json',content:'{\n "ordinary": "exact spacing and λ"\n}\n'},
+  {path:'profiles/owned-definitions-matrix-'+ 'a'.repeat(64)+'.json',content:'{"owned": true}\r\n'},
+ ];
+ const attempt=retainMatrixDraft({...value,computedIndices}),record=JSON.parse(readFileSync(join(attempt,'manifest.json')));
+ assert.equal(record.schema,'unqualified-isolated-matrix-draft-v2');assert.equal(record.indices.length,2);
+ assert.equal(record.completeIndexBytes,computedIndices.reduce((n,row)=>n+Buffer.byteLength(row.content),0));
+ for(const [at,row]of record.indices.entries()){
+  const expected=computedIndices[at];assert.equal(row.path,expected.path);assert.equal(existsSync(join(value.root,row.path)),false);
+  const bytes=gunzipSync(readFileSync(join(attempt,row.storedAs)));assert.deepEqual(bytes,Buffer.from(expected.content));
+  assert.equal(row.bytes,bytes.length);assert.equal(row.sha256,createHash('sha256').update(bytes).digest('hex'));
+ }
+ assert.equal(record.semanticAuthority,false);assert.equal(record.runtimeParity,false);
+});
+test('malformed computed index data is refused without invoking getters or leaving partial custody',t=>{
+ const value=fixture(t),good={path:'profiles/matrix-'+ 'a'.repeat(64)+'.json',content:'{}\n'};let called=false;
+ const accessor={path:good.path,get content(){called=true;throw Error('getter must not run');}};
+ const incidental=[good];incidental.extra=true;
+ for(const computedIndices of [[],[good,good],new Array(1),incidental,[accessor],new Proxy([good],{}),[new Proxy(good,{})],
+  [{...good,path:'../index.json'}],[{...good,content:'invalid JSON'}],[{...good,content:'"\ud800"'}]]){
+  assert.throws(()=>retainMatrixDraft({...value,computedIndices}));
+  assert.deepEqual(readdirSync(join(value.root,value.directory)),[]);
+ }
+ assert.equal(called,false);assert.deepEqual(readFileSync(join(value.staging,value.plans[0].outputs[0].path)),Buffer.from('complete output\n'));
 });

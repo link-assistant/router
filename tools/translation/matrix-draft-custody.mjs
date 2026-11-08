@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {lstatSync,mkdirSync,mkdtempSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
 import {join,relative,resolve,sep} from 'node:path';
 import {gzipSync,gunzipSync} from 'node:zlib';
+import {types} from 'node:util';
 
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 function physical(root,path){
@@ -18,7 +19,7 @@ function physical(root,path){
  }
  return target;
 }
-export function retainMatrixDraft({root,staging,plans,inputs,directory}={}){
+export function retainMatrixDraft({root,staging,plans,inputs,directory,computedIndices}={}){
  if(directory===undefined)return null;
  if(typeof directory!=='string'||!directory)throw TypeError('Matrix draft directory must be explicit');
  root=resolve(root);
@@ -40,7 +41,27 @@ export function retainMatrixDraft({root,staging,plans,inputs,directory}={}){
    if(!gunzipSync(readFileSync(join(attempt,name))).equals(bytes))throw TypeError('Complete matrix draft readback differs');
    members.push({...output,storedAs:name,storedBytes:compressed.length,storedSha256:hash(compressed)});
   }
-  const record={schema:'unqualified-isolated-matrix-draft-v1',inputs,plans,members,completeBytes:total,semanticAuthority:false,runtimeParity:false,rustExecuted:false};
+  const indices=[];let completeIndexBytes=0;
+  if(computedIndices!==undefined){
+   if(!Array.isArray(computedIndices)||types.isProxy(computedIndices)||Object.getPrototypeOf(computedIndices)!==Array.prototype||computedIndices.length<1||computedIndices.length>2||Reflect.ownKeys(computedIndices).length!==computedIndices.length+1)throw TypeError('Complete ordinary computed index data required');
+   const names=new Set();
+   for(let at=0;at<computedIndices.length;at++){
+    const slot=Object.getOwnPropertyDescriptor(computedIndices,String(at)),row=slot&&Object.hasOwn(slot,'value')?slot.value:null;
+    if(!row||types.isProxy(row)||Object.getPrototypeOf(row)!==Object.prototype||Reflect.ownKeys(row).length!==2)throw TypeError('Complete ordinary computed index row required');
+    const fields=Object.getOwnPropertyDescriptors(row);
+    if(!fields.path||!Object.hasOwn(fields.path,'value')||!fields.content||!Object.hasOwn(fields.content,'value'))throw TypeError('Complete computed index own data fields required');
+    const path=fields.path.value,content=fields.content.value;
+    if(typeof path!=='string'||!/^profiles\/(?:owned-definitions-)?matrix-[a-f0-9]{64}\.json$/u.test(path)||names.has(path)||typeof content!=='string')throw TypeError('Complete original computed index path/content required');
+    const bytes=Buffer.from(content);
+    if(bytes.toString('utf8')!==content||bytes.length>64*1024*1024||(completeIndexBytes+=bytes.length)+total>1024*1024*1024)throw RangeError('Original matrix draft index byte bounds exceeded');
+    JSON.parse(content);names.add(path);
+    const storedAs='index-'+String(at+1).padStart(2,'0')+'.json.gz',compressed=gzipSync(bytes);
+    writeFileSync(join(attempt,storedAs),compressed,{flag:'wx'});
+    if(!gunzipSync(readFileSync(join(attempt,storedAs))).equals(bytes))throw TypeError('Complete computed index readback differs');
+    indices.push({path,bytes:bytes.length,sha256:hash(bytes),storedAs,storedBytes:compressed.length,storedSha256:hash(compressed)});
+   }
+  }
+  const record={schema:computedIndices===undefined?'unqualified-isolated-matrix-draft-v1':'unqualified-isolated-matrix-draft-v2',inputs,plans,members,completeBytes:total,...(computedIndices===undefined?{}:{indices,completeIndexBytes}),semanticAuthority:false,runtimeParity:false,rustExecuted:false};
   writeFileSync(join(attempt,'manifest.json'),JSON.stringify(record)+'\n',{flag:'wx'});
   return attempt;
  }catch(error){rmSync(attempt,{recursive:true,force:true});throw error;}

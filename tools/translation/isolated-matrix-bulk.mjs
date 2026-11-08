@@ -66,12 +66,13 @@ export function regenerateCompilationMatrix({root,matrix,check=false,sources,ent
     canonicalNeutralOutputsChanged:false,platformDomainComplete:false,commonExecutableOutput:false,runtimeParity:false,
     obligations:[{kind:'profile-domain-incomplete',message:'Explicit profiles do not cover all Rust targets, Cargo features, build modes or residual platform families.'},{kind:'native-parity-unproved',message:'Independent draft outputs preserve all refusals and do not establish complete native behavior.'},{kind:'common-executable-unproved',message:'No merged output or profile-independent executable is emitted.'}]};
   const failures=[];
-  failures.push(...isolation.applyAll(outputPlans.map(({plan})=>plan),{check}));
+  failures.push(...isolation.applyAll(outputPlans.map(({plan})=>plan),{check,deferDraft:true}));
   const target=join(root,relative),content=json(manifest);
   if(check){
     if(!existsSync(target))failures.push(`missing: ${relative}`);
     else if(readFileSync(target,'utf8')!==content)failures.push(`stale: ${relative}`);
   }else{mkdirSync(join(root,'profiles'),{recursive:true});writeFileSync(target,content);}
+  isolation.retainComputedIndices([{path:relative,content}]);
   return {manifest,failures};
   }finally{isolation.close();}
 }

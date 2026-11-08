@@ -53,7 +53,7 @@ export function createIsolatedMatrixSession({root,matrix,corpus,paths,entries,pl
  const before=state(),selection={profiles:description.profiles.map(({name,compilationProfile})=>({name,compilationProfile})),requiredProfiles:description.requiredProfiles},records=new WeakMap();
  // Generated staging output obeys the original per-profile/aggregate bounds;
  // it is temporary generated storage, not an expanded verification archive.
- const staging=mkdtempSync(join(root,'.router-isolated-matrix-')),started=performance.now();let closed=false,total=0;
+ const staging=mkdtempSync(join(root,'.router-isolated-matrix-')),started=performance.now();let closed=false,total=0,lastApplied=null;
  function open(){stockHost();if(closed||lstatSync(staging).isSymbolicLink())fail('closed or replaced staging session');}
  function current(){
   open();const fresh=captureSourceCorpus({root,paths:selectedPaths});
@@ -93,7 +93,9 @@ export function createIsolatedMatrixSession({root,matrix,corpus,paths,entries,pl
   const expected=new Set(plan.outputs.map(row=>row.path));for(const name of plan.outputRoots)for(const path of files(root,name))if(!expected.has(path)){if(check)failures.push('unexpected: '+path);else rmSync(physical(root,path));}
   return {manifest:plan.manifest,failures};
  }
- function applyAll(input,{check=false}={}){
+ function applyAll(input,{check=false,deferDraft=false}={}){
+  if(typeof deferDraft!=='boolean')fail('explicit Boolean draft deferral required');
+  lastApplied=null;
   open();if(!Array.isArray(input)||types.isProxy(input)||Object.getPrototypeOf(input)!==Array.prototype)fail('complete ordinary selected profile array required');
   const fields=Object.getOwnPropertyDescriptors(input),length=fields.length;
   if(!length||!Object.hasOwn(length,'value')||length.value!==description.profiles.length||Reflect.ownKeys(fields).length!==length.value+1)fail('complete selected profile set required');
@@ -103,12 +105,31 @@ export function createIsolatedMatrixSession({root,matrix,corpus,paths,entries,pl
   for(const plan of plans)validate(plan);
   current();
   const failures=[];for(const plan of plans)failures.push(...applyBytes(plan,{check}).failures);
-  if(check&&process.env.ROUTER_MATRIX_DRAFT_DIRECTORY!==undefined){
+  lastApplied={plans,check,deferDraft,retained:false};
+  if(check&&!deferDraft&&process.env.ROUTER_MATRIX_DRAFT_DIRECTORY!==undefined){
    retainMatrixDraft({root,staging,plans,inputs:{...before,corpus,matrix:description,plannerModule},directory:process.env.ROUTER_MATRIX_DRAFT_DIRECTORY});
    current();
   }
   return failures;
  }
+ function retainComputedIndices(indices){
+  open();
+  if(!lastApplied)fail('complete original application required before computed index custody');
+  if(!lastApplied.check||process.env.ROUTER_MATRIX_DRAFT_DIRECTORY===undefined)return null;
+  if(!lastApplied.deferDraft||lastApplied.retained)fail('one deferred complete index custody required');
+  const expected=[`profiles/matrix-${matrix.sha256}.json`,...(owned?[`profiles/owned-definitions-matrix-${matrix.sha256}.json`]:[])];
+  if(!Array.isArray(indices)||types.isProxy(indices)||Object.getPrototypeOf(indices)!==Array.prototype||indices.length!==expected.length)fail('complete computed index selection required');
+  for(let at=0;at<expected.length;at++){
+   const slot=Object.getOwnPropertyDescriptor(indices,String(at)),row=slot&&Object.hasOwn(slot,'value')?slot.value:null;
+   if(!row||types.isProxy(row)||Object.getPrototypeOf(row)!==Object.prototype)fail('ordinary computed index data required');
+   const path=Object.getOwnPropertyDescriptor(row,'path');
+   if(!path||!Object.hasOwn(path,'value')||path.value!==expected[at])fail('complete original matrix index path differs');
+  }
+  for(const plan of lastApplied.plans)validate(plan);
+  current();
+  const attempt=retainMatrixDraft({root,staging,plans:lastApplied.plans,computedIndices:indices,inputs:{...before,corpus,matrix:description,plannerModule},directory:process.env.ROUTER_MATRIX_DRAFT_DIRECTORY});
+  current();lastApplied.retained=true;return attempt;
+ }
  function close(){if(!closed){closed=true;rmSync(staging,{recursive:true,force:true});}}
- return Object.freeze({plan,validate,applyAll,close});
+ return Object.freeze({plan,validate,applyAll,retainComputedIndices,close});
 }
