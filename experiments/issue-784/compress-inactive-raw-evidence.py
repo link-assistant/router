@@ -25,6 +25,7 @@ parser.add_argument('--closed-10fd-final-observations', action='store_true')
 parser.add_argument('--closed-matrix-custody-observations', action='store_true')
 parser.add_argument('--closed-draft-observations', action='store_true')
 parser.add_argument('--closed-raw-packet-preflight', action='store_true')
+parser.add_argument('--retained-17c7-metadata', action='store_true')
 parser.add_argument('--receipt', default='reverse-shard-inactive-evidence-compression.json')
 args = parser.parse_args()
 assert sum(bool(value) for value in [args.closed_attempt, args.closed_investigations,
@@ -40,7 +41,8 @@ assert sum(bool(value) for value in [args.closed_attempt, args.closed_investigat
                                    args.closed_terminal_ci_observations,
                                    args.closed_10fd_final_observations,
                                    args.closed_matrix_custody_observations,
-                                   args.closed_draft_observations, args.closed_raw_packet_preflight]) <= 1
+                                   args.closed_draft_observations, args.closed_raw_packet_preflight,
+                                   args.retained_17c7_metadata]) <= 1
 assert Path(args.receipt).name == args.receipt and args.receipt.endswith('.json')
 paths = [root / 'ci-logs' / name for name in [
     'restart-export-published-review.diff',
@@ -111,6 +113,13 @@ elif args.closed_10fd_early_observations:
         'current-10fd-ci-early-snapshot.json', 'current-10fd-ci-early-logs.json',
         'current-10fd-ci-early-collection.log',
     ]]
+elif args.retained_17c7_metadata:
+    # Only completed-cycle observations already retained in the case study.
+    # Original custody manifests keep their paths; append .gz for recovery.
+    retained = root / 'docs/case-studies/issue-784/evidence/ci-17c7'
+    paths = sorted(retained.glob('current-17c7-*.json'))
+    paths += sorted((retained / 'current-17c7-complete-cycle').glob('*.json'))
+    assert 25 <= len(paths) <= 100 and all(path.stat().st_size <= 200_000 for path in paths)
 elif args.closed_raw_packet_preflight:
     paths = [base / name for name in ['current-source-origin-pr.json',
         'receiving-batch-published-runs.json', 'current-pr-conversation-10.json']]

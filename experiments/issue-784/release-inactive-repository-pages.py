@@ -60,7 +60,13 @@ for name in names:
     if not name:
         continue
     path = root / name
-    state = path.lstat()
+    try:
+        state = path.lstat()
+    except FileNotFoundError:
+        # Tracked inactive observations can have a reviewed compressed successor.
+        # No descriptor exists to advise for their removed working-tree path.
+        skipped.append(name)
+        continue
     if (not stat.S_ISREG(state.st_mode) or state.st_uid != os.getuid()
             or state.st_nlink != 1 or not path.resolve().is_relative_to(root)
             or str(path) in active):
