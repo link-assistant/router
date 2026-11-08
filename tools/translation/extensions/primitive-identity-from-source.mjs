@@ -56,7 +56,7 @@ export function parsePrimitiveIdentityFromBody(Parser,checker,selection){
   class BoundTParser extends Parser{hostTypeSyntax(){if(this.cursor.is('T')||this.cursor.is('Self')){this.cursor.next();return {...selection.type};}return super.hostTypeSyntax();}}
   const parser=new BoundTParser(tokenizeRust(selection.original.parsedMemberSource)),entry=parser.fn(['core','convert']);
   if(!parser.cursor.atEnd()||entry.constFunction||entry.params.length!==1||entry.params[0].name!=='t'||metadataDigest(scalar(entry.params[0].type))!==metadataDigest(selection.type)||metadataDigest(scalar(entry.ret))!==metadataDigest(selection.type)||entry.body.k!=='name'||!same(entry.body.path,['t']))throw new TypeError('Identity From parsed member differs from its actual bound T');
-  const body=HostChecker.prototype.expr.call(checker,entry.body,new Map([['t',selection.type]]),[],selection.type);
+  const body=HostChecker.prototype.expr.call(checker,entry.body,checker.callbackEnvironment(new Map([['t',selection.type]]),selection.type),[],selection.type);
   if(body.k!=='var'||body.name!=='t'||metadataDigest(scalar(body.type))!==metadataDigest(selection.type))throw new TypeError('Identity From checked body differs from its actual parameter');
   const evidence={selection,parsedMemberSha256:metadataDigest(entry),checkedBodySha256:metadataDigest(body),operation:'primitive-source-identity',constTraitCall:false},proof=freeze({...evidence,digest:metadataDigest(evidence)});
   parsed.set(proof,{entry,body,entryDigest:metadataDigest(entry),bodyDigest:metadataDigest(body)});issued.set(proof.digest,proof);return proof;
