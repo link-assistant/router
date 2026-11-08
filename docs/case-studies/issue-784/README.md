@@ -159,3 +159,7 @@ The [complete forward-file verification](whole-file-shard-verification.md)
 records exhaustive CI partitions, the complete a2539817c CI failure set and
 the clean 645d5adf0 local gate interruption. Missing production outputs, strict
 parity and original deadline qualification remain unfinished.
+
+The [complete original decoder repair](current-original-decoder.md) records
+the retained matrix CLI regression, exact wire/refusal checks, passing focused
+audits, interrupted storage attempts and the separate remaining native deadline.
