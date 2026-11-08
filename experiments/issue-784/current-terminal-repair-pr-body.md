@@ -45,10 +45,11 @@ heap in JSON stringification. Their unsuccessful vector writer is withdrawn,
 with complete failed streams and partial evidence preserved. Registration and
 receiving performance observations are recorded separately from full-gate status.
 
-A later whole owned-matches attempt also fails with optional vector logging off,
-before completing a case, at the bounded heap and cgroup guard. That disproves
-optional logging as a necessary cause; the exact JSON serialization call site
-remains unidentified. The final production-parent case is still unreached.
+A later whole owned-matches attempt fails before completing a case, at the
+bounded heap and cgroup guard. Its original test has an always-on JSON writer in
+`finally`; the earlier label suggesting optional logging was off was incorrect.
+The preserved label audit corrects that attribution. The exact JSON serialization
+call site remains unidentified, and the final production-parent case is unreached.
 
 After the production fixture refresh, both complete eight-case registration and
 portable Git receiving files pass under both Node and Bun: 32 cases, unchanged

@@ -75,7 +75,7 @@ with args.log.open('xb') as log:
                 and observed >= 2_300_000_000 and observed < threshold
                 and adviser is None and len(closed_advice) < 12
                 and (not closed_advice
-                     or time.monotonic() - started - closed_advice[-1]['startedElapsedSeconds'] >= 60)):
+                     or time.monotonic() - started - closed_advice[-1]['startedElapsedSeconds'] >= 15)):
             number = len(closed_advice) + 1
             prefix = args.receipt.stem + '-closed-pages-' + str(number)
             advice_receipt = args.receipt.with_name(prefix + '.json.gz')
@@ -176,7 +176,7 @@ receipt = {
     'closedTrackedPageAdvice': closed_advice,
     'closedTrackedPageAdvicePolicy': {'enabled': args.advise_closed_gate_pages,
                                     'thresholdBytes': 2_300_000_000,
-                                    'minimumIntervalSeconds': 60, 'maximumInvocations': 12,
+                                    'minimumIntervalSeconds': 15, 'maximumInvocations': 12,
                                     'activeTestClocksPaused': False},
     'interrupted': interrupted,
     'scope': 'Total cgroup samples, not child RSS or a complete process peak.',

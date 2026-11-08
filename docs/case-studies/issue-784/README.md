@@ -205,3 +205,8 @@ remaining qualification required after publication.
 The [withdrawn receiving-helper draft](current-shared-source-receiving-withdrawal.md)
 retains both complete Node files and all three original deadline failures.
 Its nine assertion passes establish no performance qualification.
+
+The [current completed CI inventory](current-4e9fad88-ci.md) preserves all 23
+nonpassing whole job logs and all 25 artifacts for the next coordinated batch.
+The [current compiler registration](current-unicode-registration.md) records
+32 passing Node/Bun receiving cases and the genuine shallow-checkout regression.
