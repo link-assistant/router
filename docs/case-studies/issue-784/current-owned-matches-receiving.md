@@ -39,6 +39,16 @@ aggregate/vector attribution nor its subsequent exclusion is established.
 A new targeted diagnostic must locate that call site before another equivalent
 local attempt. No memory or deadline improvement is established.
 
+A separate finite diagnostic executes the nine public composition calls and
+logs scalar stage boundaries. It completes all ten layers and 26 files in
+151.915 seconds, sampled total-cgroup peak 2513825792 bytes, without a guard
+stop. It does not serialize the original complete aggregate, execute the
+original test or preserve an identical retained-memory workload. Its complete
+source snapshot at launch was not captured. The original JSON call site,
+writer causality and original case deadlines remain unqualified.
+[The complete diagnostic packet](evidence/current-matches-stage-diagnostic.json.gz)
+retains the executed script, both full streams and resource receipt.
+
 Withdraw the writer and restore the original logger. Its full source, controls,
 both complete failure streams and audits, and the incomplete 854612-byte gzip
 member remain in [the complete withdrawal packet](evidence/current-vector-writer-withdrawal.json.gz).
