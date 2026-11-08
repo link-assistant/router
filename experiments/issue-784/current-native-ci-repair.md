@@ -4,6 +4,24 @@ Objective: fully satisfy issue #784 and all mandatory CI in PR #785, including
 base-branch failures. The objective remains active. All unresolved criteria
 remain unfinished; no draft checkpoint establishes release readiness.
 
+## Complete current privacy application parents
+
+- Retain the original complete 567-file unit application packet byte-for-byte.
+  Twelve explicit reviewed substitutions join all seven privacy parent files;
+  the complete new geolocation module has a separate empty-before source
+  equation. Both CST phases, complete canonical metadata, inverses, current
+  physical bytes and final physical identities are checked. These source
+  records grant no executable permission. Unknown historical parents remain
+  refused, including a changed source with its digest recomputed.
+- Both complete new receiving cases pass Node 20.20.2 and the independent
+  original deadline audit (`complete-BTYmAV`) in 17.822682 seconds, sampled
+  cgroup peak 1954344960 bytes. Bun 1.4.4 passes both cases in 14.192349
+  seconds, peak 2191421440 bytes. Every child is reaped. Full streams:
+  `current-unit-privacy-source-receiving-{node,bun}.*`. The enclosing complete
+  unit application/owned-definition workload remains unqualified until its
+  own complete run, all nine actual target functions and original deadlines
+  pass. The separate current unit/Unicode consumer integration remains draft.
+
 ## Complete original reverse and retention producer comparison
 
 - Retain the complete original reverse-ASCII and private-analysis-retention
@@ -23,9 +41,20 @@ remain unfinished; no draft checkpoint establishes release readiness.
   attempt remains retained in `current-named-ascii-producer-receiving-node.*`.
   The new cases now all declare literal 60000-ms deadlines. No existing test
   case, assertion or deadline changes. Source installation passes separately
-  in 1.710877 seconds, peak 2172006400 bytes. The complete existing enclosing
-  files are being rerun; their previous failed timing remains failed until
-  a complete receiving run and original deadline audit qualify the change.
+  in 1.710877 seconds, peak 2172006400 bytes.
+- Both complete existing ASCII Node files pass all eight functional cases
+  after this change in 183.990108 seconds, peak 2407342080 bytes. Their
+  independent original deadline audit (`complete-gBGauy`) still fails:
+  selected source takes 119051.588213 / 60000 ms; base takes
+  56516.241063 / 60000 ms. Full stream:
+  `current-named-ascii-original-complete-node.*`.
+- The complete two-file Bun run with its explicitly recorded `--smol`
+  engine variant is interrupted before its first completed case after
+  53.362596 seconds, sampled peak 2920734720 bytes, by the unchanged
+  memory observer. Every owned descendant is reaped. No test workload or
+  deadline changes. This incomplete run remains failed; it establishes no
+  receiving or performance qualification. Stream:
+  `current-named-ascii-original-complete-bun-smol.*`.
 
 ## Current Unicode and ASCII asset inputs
 
