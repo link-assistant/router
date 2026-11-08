@@ -2,22 +2,37 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import {gunzipSync} from 'node:zlib';
 import {translateProject} from '../project.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {extractImplDeclarations} from '../impl-resolver.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {migrateCorePrimitives} from '../migrate-core-primitives.mjs';
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 const hash=source=>createHash('sha256').update(source).digest('hex');
 const find=(value,predicate)=>value&&typeof value==='object'?(predicate(value)?value:Object.entries(value).filter(([key])=>!['type','copyCertificate'].includes(key)).map(([,child])=>Array.isArray(child)?child.map(item=>find(item,predicate)).find(Boolean):find(child,predicate)).find(Boolean)):null;
 
 test('unchanged production RefUpdate create/delete bodies consume standard String-place equality',async()=>{
-  const source=readFileSync(new URL('../../../rust/src/git_proxy.rs',import.meta.url),'utf8');
+  const source=gunzipSync(readFileSync(new URL('./fixtures/standard-string-git-proxy-original.rs.gz',import.meta.url)),{maxOutputLength:20000}).toString('utf8');
   assert.equal(hash(source),'ed47b0f287dcf7cc1d03672ed1abd924bebb5862929af06f714ccdff42409f22');
   const pins=[['const','ZERO_OID',1299,1365,'53cd2719fed634701423b50bb15c35d990c10ff0c22a4cb8c6edd726d78bc961'],['struct','RefUpdate',1426,1553,'2768451b4d5c3269ba735025323a70750cd62bad5d38ab5c012de64916ae4875'],['impl','RefUpdate',1555,1859,'b2acf1c1a0586cd8458cfafb5ece73065ed27cfd151bfc8c45786ada41c6e442']];
   const declarations=pins.map(([term,name,start,end,digest])=>{assert.ok(sourceItems(source).some(item=>item.term===term&&item.name===name&&item.start===start&&item.end===end));const text=source.slice(start,end);assert.equal(hash(text),digest);return text;});
   const methods=extractImplDeclarations(source).implementations.find(item=>item.typePath.join('::')==='RefUpdate')?.methods;
   for(const [name,start,end,digest]of [['is_delete',1621,1705,'adf0f84709905301f2efae966cf9fceb1f2114b10f03303ac8b29f0043aeb7d7'],['is_create',1773,1857,'5ea266e5e33f97cd685bcc5e71d7d7cbba0b21c6090915e1293a8e382e3a32a1']]){assert.ok(methods?.some(method=>method.name===name&&method.span.start===start&&method.span.end===end));assert.equal(hash(source.slice(start,end)),digest);}
+  const current=readFileSync(new URL('../../../rust/src/git_proxy.rs',import.meta.url),'utf8');
+  assert.equal(hash(current),'a6f351ad1a51d538350edff25817ecf9b21963f4ab171d5a948ad184735b9764');
+  const currentItems=sourceItems(current);pins.forEach(([term,name],at)=>{
+    const selected=currentItems.filter(item=>item.term===term&&item.name===name);assert.equal(selected.length,1);
+    const text=current.slice(selected[0].start,selected[0].end);
+    if(at===0){
+      const adopted=migrateCorePrimitives(declarations[0]);assert.equal(adopted.before.source,declarations[0]);assert.equal(adopted.after.source,text);assert.equal(adopted.executableAdmission,false);
+      let inverse=adopted.after.source;for(const row of [...adopted.mapping].reverse())if(row.kind==='substitution'){assert.equal(inverse.slice(...row.after),row.replacement);inverse=inverse.slice(0,row.after[0])+row.expected+inverse.slice(row.after[1]);}assert.equal(inverse,declarations[0]);
+    }
+    else assert.equal(text,declarations[at],'complete unchanged production '+name);
+  });
+  // Compile the complete original declarations under their original contract.
+  // The current-parent source checks above grant no real-crate admission.
   const result=project(declarations.join('\n'));assert.deepEqual(result.meta.refused,[]);
   const checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),target=parseProgram(JSON.stringify(result.meta.targetSemanticProgram));
   const names=[];

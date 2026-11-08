@@ -3,6 +3,19 @@
 Objective: implement and verify all requirements in PR #785 on
 `issue-784-1f6838f56841`. Keep unresolved criteria explicit and the PR unmerged.
 
+Current continuation at published `4e7093eb9`:
+
+- [x] Preserve completed-cycle metadata through checked lossless compression;
+      retain all complete original observations and publication readback.
+- [x] Repair the whole historical/current RefUpdate receiving boundary; all three
+      original cases pass under Node 20.20.2 and Bun 1.4.4.
+- [ ] Finish the ASCII source transaction and receiving-cost repair under both
+      original engine deadlines. The first named draft still exceeds 60000 ms.
+- [ ] Collect every terminal result and full nonpassing job log for the entire
+      `4e7093eb9` cycle before publishing any next coordinated repair batch.
+- [ ] Resolve all remaining semantic, generated-output, strict-parity and deadline
+      failures and every original acceptance criterion; obtain same-SHA green CI.
+
 - [x] Read the entire issue, comments, PR conversations, inline comments and reviews.
 - [x] Preserve source data and inspect required sub-issues and recent related PRs.
 - [x] Research primary vendor references and existing reusable components.
