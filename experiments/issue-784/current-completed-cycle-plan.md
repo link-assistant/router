@@ -16,7 +16,10 @@ partial receiving evidence does not establish completion.
 - [x] Confirm latest main is an ancestor, inspect all refreshed issue/PR feedback
       and review the complete PR diff before publishing only the prepared branch.
 - [x] Publish the coordinated batch as `567e1dd0b`.
-- [ ] Collect that head's entire immutable CI cycle before the next push.
+- [x] Collect that head's seven terminal workflows, all 24 artifacts and 24
+      complete nonpassing logs. Preserve the unavailable forward shard 5 log
+      response and failed recovery attempts explicitly; complete logs remain
+      unavailable for that one job. Retain every original without duplication.
 - [x] Repair the exact selected-census predecessor and complete the whole
       receiving file in both engines (five cases each) and actual freshness.
 - [x] Trace the full gate fingerprint without changing hashing or the guard;
