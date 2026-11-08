@@ -4,8 +4,8 @@ import {composeCoreUnitMatches,prepareCoreUnitMatches} from './prepare-core-unit
 // Native source composition for an explicit owned compatibility operation.
 import {composeCoreAscii} from './prepare-core-ascii-sources.mjs';
 import {composeCoreAsciiReverse} from './prepare-core-ascii-reverse-sources.mjs';
-import {composeCoreAsciiAssets} from './prepare-core-ascii-assets.mjs';
-import {composeCoreAsciiBaseAssets} from './prepare-core-ascii-base-assets.mjs';
+import {composeCoreAsciiAssets} from './prepare-current-core-ascii-assets.mjs';
+import {composeCoreAsciiBaseAssets} from './prepare-current-core-ascii-base-assets.mjs';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';

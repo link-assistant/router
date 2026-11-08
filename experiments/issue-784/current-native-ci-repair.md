@@ -4,6 +4,39 @@ Objective: fully satisfy issue #784 and all mandatory CI in PR #785, including
 base-branch failures. The objective remains active. All unresolved criteria
 remain unfinished; no draft checkpoint establishes release readiness.
 
+## Current Unicode and ASCII asset inputs
+
+- The physical Unicode addition changed the complete host asset producer and
+  selected String iterator source. Historical ASCII helpers still pinned the
+  old whole host source. Derive separate current selected/base producers from
+  both byte-exact historical producers. Retain all three historical and all
+  three current source equations, native copies, binding checks, original
+  read schedules, full source DATA and both named CST phases/inverses. The
+  historical public producer files and archives remain unchanged.
+- The complete new three-case receiving file passes Node 20.20.2 and its
+  independent deadline audit (`complete-UOshUv`) in 48.889386 seconds, sampled
+  peak 2049085440 bytes. Bun 1.4.4 passes all three in 53.529154 seconds,
+  peak 2411622400 bytes. Current outputs equal all 3/33 outputs of the
+  independent complete builder; historical helper and DATA bytes equal Git.
+  Every child is reaped. Streams: `current-unicode-ascii-producers-receiving-`.
+- Install the actual four selected/base helper and DATA afterimages through
+  the producer, checking every physical predecessor before writes. The base
+  helper is byte-identical. Installation passes in 43.944037 seconds, sampled
+  peak 2023419904 bytes. Update enclosing callers to these explicit current
+  APIs. Their broader complete receiving files remain unrun for this batch.
+- Both existing complete ASCII asset Node files pass all eight functional
+  cases in 201.014044 seconds, peak 2380931072 bytes. The independent audit
+  (`complete-jCQ7k2`) correctly fails: the selected source case takes
+  138220.779184 / 60000 ms; the base source case takes 54654.009208 ms.
+  Both existing files retain their complete original bodies and deadlines;
+  only the imported producer paths change. The matching Bun run is stopped
+  before its first completed case at the unchanged memory guard after
+  40.394226 seconds, peak 2868015104 bytes. It is incomplete, not a pass.
+  Full streams: `current-unicode-ascii-original-complete-{node,bun}.*`.
+- These focused source/data repairs establish neither the remaining source
+  deadlines, all broader receiving files, production generation, actual owned
+  profile indexes, strict parity, the full gate nor same-SHA CI success.
+
 ## Named source-phase transaction
 
 - Add a separate complete native/CST transaction that actually executes four

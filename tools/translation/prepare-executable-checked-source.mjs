@@ -5,8 +5,8 @@ import {composeCoreUnitMatches} from './prepare-core-unit-matches.mjs';
 // Additive original-checker source view. Saved DATA never issues source owners.
 import {composeCoreAscii} from './prepare-core-ascii-sources.mjs';
 import {composeCoreAsciiReverse} from './prepare-core-ascii-reverse-sources.mjs';
-import {composeCoreAsciiAssets} from './prepare-core-ascii-assets.mjs';
-import {composeCoreAsciiBaseAssets} from './prepare-core-ascii-base-assets.mjs';
+import {composeCoreAsciiAssets} from './prepare-current-core-ascii-assets.mjs';
+import {composeCoreAsciiBaseAssets} from './prepare-current-core-ascii-base-assets.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';

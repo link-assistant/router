@@ -23,8 +23,8 @@ import {composeCurrentCoreMatchesSources} from '../prepare-core-matches-sources.
 import {composePrimitiveIdentityBoundary} from '../prepare-primitive-identity-boundary.mjs';
 import {composeCoreAscii} from '../prepare-core-ascii-sources.mjs';
 import {composeCoreAsciiReverse} from '../prepare-core-ascii-reverse-sources.mjs';
-import {composeCoreAsciiAssets} from '../prepare-core-ascii-assets.mjs';
-import {composeCoreAsciiBaseAssets} from '../prepare-core-ascii-base-assets.mjs';
+import {composeCoreAsciiAssets} from '../prepare-current-core-ascii-assets.mjs';
+import {composeCoreAsciiBaseAssets} from '../prepare-current-core-ascii-base-assets.mjs';
 import {composeSourceProofPreservation} from '../prepare-source-proof-preservation.mjs';
 import {composeExecutableCheckedSource} from '../prepare-executable-checked-source.mjs';
 import {composeSourceLifetimeRefusalBatches} from '../prepare-source-lifetime-refusal-batches.mjs';

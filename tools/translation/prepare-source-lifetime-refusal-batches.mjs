@@ -5,8 +5,8 @@ import {composeCoreUnitMatches} from './prepare-core-unit-matches.mjs';
 // Complete native source selections followed by serialized/reparsed CST rules.
 import {composeCoreAscii} from './prepare-core-ascii-sources.mjs';
 import {composeCoreAsciiReverse} from './prepare-core-ascii-reverse-sources.mjs';
-import {composeCoreAsciiAssets} from './prepare-core-ascii-assets.mjs';
-import {composeCoreAsciiBaseAssets} from './prepare-core-ascii-base-assets.mjs';
+import {composeCoreAsciiAssets} from './prepare-current-core-ascii-assets.mjs';
+import {composeCoreAsciiBaseAssets} from './prepare-current-core-ascii-base-assets.mjs';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
