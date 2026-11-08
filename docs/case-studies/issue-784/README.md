@@ -208,5 +208,12 @@ Its nine assertion passes establish no performance qualification.
 
 The [current completed CI inventory](current-4e9fad88-ci.md) preserves all 23
 nonpassing whole job logs and all 25 artifacts for the next coordinated batch.
+
+The [later terminal 567e1dd0b inventory](current-terminal-ci-567.md) retains all
+available original logs and containers, including the explicit unavailable shard
+5 log boundary. The [authenticated ASCII source repair](current-ascii-sequential.md)
+keeps focused passing checks separate from original deadline/resource failures.
+The [actual current registration](current-ascii-registration.md) preserves the
+whole reviewed source transition and both interrupted receiving attempts.
 The [current compiler registration](current-unicode-registration.md) records
 32 passing Node/Bun receiving cases and the genuine shallow-checkout regression.
