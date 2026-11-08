@@ -136,3 +136,25 @@ export function prepareNegativeBudgetProofJson({root=ROOT}={}){
  return {schema:'negative-budget-proof-json-source-v1',typescriptVersion:ts.version,inputs:[{path:INPUT,source},{path:COMPOSER,source:composer}],proof,consumerSourceHistory,files,candidateOnly:true,productionDefaultSelected:consumer===consumerAfter,productionInstallationApproved:false,originalHelperAPIsAndBytesUnchanged:true,newAcrossInvocationCache:false,unseenTailAuthority:false,sourceAuthority:false,semanticAdmission:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('usage: prepare-negative-budget-proof-json.mjs --emit|--write|--check');const plan=prepareNegativeBudgetProofJson();if(args[0]==='--emit')console.log(JSON.stringify(plan));else if(args[0]==='--write'){for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.installationSource);console.log('Prepared explicit negative-budget candidate; original production serializer remains selected.');}else{if(plan.files.some(row=>row.current!==row.installationSource))fail('complete candidate source or original production selection is stale');console.log('Negative-budget candidate source equations and original production selection are current.');}}
+
+// Compose the later complete receiving layer without rerunning the unrelated
+// census/consumer proposal. The original producer and its equations stay exact.
+export function deriveCurrentNegativeBudgetProofHistory(source,{root=ROOT}={}){
+ if(typeof source!=='string')fail('complete receiving history source required');
+ const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');
+ const file=native(ts,HISTORY,source),owner=declaration(ts,file,'statelessProofConsumerSource');
+ const legacy=historySource(),append=currentHistorySource();
+ if(source.split(legacy).length!==2||source.includes('function restoreCurrentNegativeBudgetProofConsumerSource('))fail('one complete preceding negative-budget history required');
+ const first=owner.body?.statements[0];
+ if(!first||first.getText(file)!=='source=restoreNegativeBudgetProofConsumerSource(source,retain);')fail('actual original first history call required');
+ const insertion='source=restoreCurrentNegativeBudgetProofConsumerSource(source,retain);\n ',at=first.getStart(file);
+ const language=source.slice(0,at)+insertion+source.slice(at),after=language+append;
+ const result=whole(ts,root,HISTORY,source,language,after);
+ if(transportConcreteSyntaxMeta(result.beforeMeta).source!==source)fail('complete original history reparse differs');
+ const output=native(ts,HISTORY,transportConcreteSyntaxMeta(result.afterMeta).source),added=declaration(ts,output,'restoreCurrentNegativeBudgetProofConsumerSource');
+ if(!ts.isFunctionDeclaration(added)||after.slice(0,-append.length)!==language||language.slice(0,at)+language.slice(at+insertion.length)!==source)fail('complete receiving append/call inverse differs');
+ const originalDeclarations=file.statements.map(node=>node.getText(file));
+ const restored=after.slice(0,-append.length),inverse=restored.slice(0,at)+restored.slice(at+insertion.length);
+ if(inverse!==source)fail('complete receiving inverse differs');
+ return {...result,nativeSelections:[{span:[at,at],expected:'',replacement:insertion,owner:owner.getText(file)},{span:[language.length,language.length],expected:'',replacement:append,declaration:added.getText(output)}],originalDeclarations,sourceAuthority:false,semanticAuthority:false,runtimeAuthority:false};
+}
