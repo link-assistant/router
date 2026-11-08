@@ -69,6 +69,23 @@ rechecks earlier file and ancestor identities, complete compiled source
 associations and caller array descriptors. No source or validation verdict is
 cached across calls. Existing standalone APIs retain their own contract.
 
+`concrete-source-origin-equations.mjs` and `concrete-source-origin-phases.mjs`
+provide a separate complete-source substitution domain. Their only inputs are
+bounded primitive before/middle/after sources, languages and fixed phase rule
+names. No stored CST document, caller node array or validation verdict enters
+this domain. The private operation performs the actual exact whole-span edit;
+each initial source, phase and independent inverse then uses the existing
+source-origin transport with two fresh builds, canonical JSON serialization and
+parsing, complete partition comparison and reconstruction. It retains the full
+canonical documents and original traces. Original untrusted-document APIs and
+sequential transactions remain byte-identical. Complete parser authentication,
+aggregate budgets, final source identities, host guards and caller descriptor
+joins still surround the transaction. This distinct operation does not claim
+the redundant intermediate object-validation schedule of the untrusted edit
+API, or grant type, owner or executable authority. Focused receiving controls
+pass in both engines; current producer adoption, original workload deadlines,
+generation freshness and the complete gate require separate qualification.
+
 Native TypeScript regeneration has a separate private grouped source path,
 derived by `tools/translation/prepare-native-regeneration-batch.mjs`. It groups
 complete source files with fresh concrete authentication and preserves the
