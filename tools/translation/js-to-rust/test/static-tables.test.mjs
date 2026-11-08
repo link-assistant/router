@@ -28,7 +28,7 @@ test('twelve original private tables admit generic readers and preserve exact so
     ['client-setup.mjs','implemented_clients','implementedClients',4,'qwen'],
     ['emergency-auth.mjs','client_names','clientNames',8,'cursor'],
     ['native-service.mjs','transport','transport',22,'proxy-authenticate'],
-    ['native-service.mjs','ingress','ingress',12,'cloudfront-viewer-address'],
+    ['native-service.mjs','ingress','ingress',15,'cloudfront-viewer-address'],
     ['native-service.mjs','response_credentials','responseCredentials',7,'set-cookie'],
     ['provider-manifest.mjs','fields','fields',14,'acknowledge_intermediary_risk'],
     ['tokens.mjs','clients','clients',8,'opencode'],
@@ -47,6 +47,14 @@ test('twelve original private tables admit generic readers and preserve exact so
       for(const [input,expected]of [[present,true],['missing-entry',false],[present.toUpperCase(),false],[new String(present),false],[{},false],[unknown,false],[undefined,false],[null,false],[false,false],[1,false],[1n,false],[Symbol(present),false],[()=>{},false]]) {
         assert.equal(original.has(input),expected,`source ${name}`);assert.equal(translated.has(input),expected,`TS ${name}`);assert.equal(evaluate(result.program,'has',[input]),expected,`IR ${name}`);
         if(mapped!==undefined) {const value=expected?mapped:undefined;assert.equal(original.lookup(input),value);assert.equal(translated.lookup(input),value);assert.equal(evaluate(result.program,'lookup',[input]),value);}
+      }
+      if(path==='native-service.mjs'&&name==='ingress'){
+        // Issue #784 adds these three fixed ingress identities. Every original
+        // table and every original membership/refusal case above still runs.
+        for(const input of ['x-original-forwarded-for','cf-connecting-ipv6','cf-pseudo-ipv4']){
+          assert.equal(original.has(input),true);assert.equal(translated.has(input),true);assert.equal(evaluate(result.program,'has',[input]),true);
+          assert.equal(original.has(input.toUpperCase()),false);assert.equal(translated.has(input.toUpperCase()),false);assert.equal(evaluate(result.program,'has',[input.toUpperCase()]),false);
+        }
       }
       assert.equal(original.size(),size);assert.equal(translated.size(),size);assert.equal(evaluate(result.program,'size',[]),size);
       assert.match(result.typescript,/Readonly(?:Map|Set)<unknown/u);assert.match(result.rust,/JsStatic(?:Map|Set)/u);

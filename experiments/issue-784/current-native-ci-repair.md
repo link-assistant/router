@@ -324,3 +324,28 @@ remain unfinished; no draft checkpoint establishes release readiness.
       Receipts and complete logs use the `current-owned-vector-candidate-`
       prefix. The independent Node deadline audit passes.
 - [ ] The complete repository gate and current-source CI remain required.
+
+## Current receiving fixture repairs
+
+- [x] Extend the original twelve-table fixture's ingress count from 12 to 15
+      and check all three new fixed identities in source, strict TypeScript
+      and evaluator, including uppercase refusals. All original cases remain.
+      Complete Node file passes all three cases (29.393827 seconds, sampled
+      peak 2121846784 bytes). Complete Bun file still fails its unchanged
+      5000-ms refusal deadline: 6263.52 ms. Two full-file profiling attempts
+      reproduce that failure; their logs remain separate from qualification.
+- [x] Native-select the complete current ASCII loan helper and its full leading
+      comment into one additive string-fold receiving source rule. Preserve
+      all 23 old rules, eight complete cases, 60000-ms limits, both CST phases
+      and complete inverses. Preparation and installation receipts use
+      `current-string-fold-receiving-equation-`.
+- [ ] Complete string-fold Node qualification fails: seven behavior passes,
+      one timed-out case, and independent audit breaches at 82526.645709 and
+      69722.072457 ms. Elapsed 294.431307 seconds, peak 2120695808 bytes,
+      complete audit `complete-QBAtqv`. Complete Bun 1.4.4 file has six passes
+      and two failures: the original 60000-ms case limit and a strict-target
+      subprocess termination. Elapsed 266.165999 seconds, peak 2748669952.
+      An earlier Bun launch used a nonexistent executable and never ran a
+      test; its failed launch receipt is retained separately as unqualified.
+- [ ] Resolve original deadline/child failures and complete the repository
+      gate. Source-equation repair alone does not establish verification.
