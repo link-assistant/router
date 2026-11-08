@@ -6,7 +6,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
-import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
+import {verifyNativeCopiedSourceBindings,verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 import {nativeOutputImports,nativeOutputHost,nativeOutputEncode,nativeOutputDecode} from './native-output-text-kernels.mjs';
@@ -37,10 +37,10 @@ function copied(ts,source,path){
  const shape=node=>{const children=[];ts.forEachChild(node,child=>{children.push(shape(child));});return [node.kind,ts.isIdentifier(node)?node.escapedText:ts.isLiteralExpression(node)?node.text:null,children];};
  if(JSON.stringify(shape(file))!==JSON.stringify(shape(syntax(ts,copy,path).file)))fail('complete detached native AST differs');return {source,copy,completeNativeAstCopy:true};
 }
-function derive(ts,before,path,language,repository){
+function derive(ts,before,path,language,repository,nativeScope=true){
  const stages=[],result=createRulePipeline([{phase:'language',rules:[{id:'native-output:checked-kernels-or-preserved-bodies',apply:source=>{const row=phase(ts,source,path,'language',language);stages.push(row);return row.after;}}]},{phase:'repository',rules:[{id:'native-output:explicit-private-routes',apply:source=>{const row=phase(ts,source,path,'repository',repository);stages.push(row);return row.after;}}]}]).run(before),after=result.value;
  if(stages[0].before!==before||stages[1].before!==stages[0].after||stages[1].after!==after)fail('whole phase join differs');
- return {path,before,language:stages[0].after,after,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:stages[0].beforeMeta,afterMeta:stages[1].afterMeta,stages,trace:result.trace,inverse:before,nativeBindings:verifyNativeCopiedSourceBindings(ts,path,after),nativeCopies:[copied(ts,before,path),copied(ts,after,path)],semanticAuthority:false};
+ return {path,before,language:stages[0].after,after,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:stages[0].beforeMeta,afterMeta:stages[1].afterMeta,stages,trace:result.trace,inverse:before,nativeBindings:nativeScope?verifyNativeCopiedSourceBindings(ts,path,after):null,nativeCopies:[copied(ts,before,path),copied(ts,after,path)],semanticAuthority:false};
 }
 const empty=()=>[];
 export function deriveNativeOutputTextRetention(source){
@@ -57,7 +57,7 @@ export function deriveNativeOutputTextRetention(source){
 }
 function route(ts,source,path,mapping,extra=empty){return derive(ts,source,path,empty,native=>{
  const edits=[];for(const [before,after]of Object.entries(mapping)){const nodes=native.nodes.filter(node=>ts.isStringLiteral(node)&&node.text===before);if(!nodes.length)fail('required native route missing: '+before);for(const node of nodes)edits.push(selection(native.file,node,JSON.stringify(after),'route:'+before));}return [...edits,...extra(native)];
-});}
+},false);}
 const consumers=[
  ['retained-owned-field-bulk.mjs','native-retained-owned-field-bulk.mjs',{'./private-output-text.mjs':'./private-native-output-text.mjs'}],
  ['retained-owned-field-matrix-bulk.mjs','native-retained-owned-field-matrix-bulk.mjs',{'./retained-owned-field-bulk.mjs':'./native-retained-owned-field-bulk.mjs'}],
@@ -66,18 +66,29 @@ const consumers=[
  ['owned-field-isolated-matrix-profile.mjs','native-owned-field-isolated-matrix-profile.mjs',{}],
 ];
 function admission({ts,file,nodes}){const declaration=one(nodes.filter(node=>ts.isVariableDeclaration(node)&&ts.isIdentifier(node.name)&&node.name.text==='allowed'),'original private planner admission');if(!ts.isNewExpression(declaration.initializer)||declaration.initializer.expression.getText(file)!=='Set'||declaration.initializer.arguments.length!==1)fail('actual original admission constructor differs');const list=declaration.initializer.arguments[0];if(!ts.isArrayLiteralExpression(list)||JSON.stringify(list.elements.map(row=>row.text))!==JSON.stringify(['owned-field-bulk.mjs','retained-owned-field-bulk.mjs']))fail('actual original two-planner boundary differs');return [selection(file,list,'["native-retained-owned-field-bulk.mjs"]','repository:native-only-private-planner')];}
+// Source DATA only. Both current and authenticated predecessor cohorts use the
+// same native selectors; a complete fresh binding program precedes every return.
+export function deriveNativeOutputTextSourceSet(rows){
+ const ts=ownershipCompiler(),cli='scripts/translate-router-owned-field-meta.mjs';
+ const names=[P+'private-output-text.mjs',...consumers.map(([before])=>P+before),cli];
+ if(!Array.isArray(rows)||rows.length!==names.length)fail('all seven complete source inputs required');
+ const sources=new Map();for(const row of rows){if(!row||typeof row.path!=='string'||typeof row.source!=='string'||!names.includes(row.path)||sources.has(row.path))fail('distinct complete source set required');sources.set(row.path,row.source);}
+ const files=[deriveNativeOutputTextRetention(sources.get(names[0]))];
+ for(const [before,after,mapping]of consumers)files.push(route(ts,sources.get(P+before),P+after,mapping,before.includes('-session.')||before.includes('-profile.')?admission:empty));
+ files.push(route(ts,sources.get(cli),'scripts/translate-router-native-owned-field-meta.mjs',{
+  'isolated-retained-owned-field-matrix-bulk.mjs':'isolated-native-retained-owned-field-matrix-bulk.mjs',
+  '../tools/translation/retained-owned-field-bulk.mjs':'../tools/translation/native-retained-owned-field-bulk.mjs',
+  '../tools/translation/retained-owned-field-matrix-bulk.mjs':'../tools/translation/native-retained-owned-field-matrix-bulk.mjs',
+ },({file,nodes})=>{const marker=one(file.statements.filter(node=>ts.isVariableStatement(node)&&node.declarationList.declarations.some(row=>ts.isIdentifier(row.name)&&row.name.text==='progressStarted')),'post-argument original boundary');return [{id:'repository:explicit-native-cli-contract',span:[marker.getStart(file),marker.getStart(file)],expected:'',replacement:"if(!retainOutputText||ownedCoreDefinitions)throw new TypeError('Native owned-field CLI requires --retain-output-text and does not support --owned-core-definitions');\n"}];}));
+ const bindings=verifyNativeCopiedModuleBindings(ts,files.map(({path,after})=>({path,source:after})));
+ for(const [at,row]of files.entries())row.nativeBindings=bindings[at];return files;
+}
 export async function prepareNativeOutputTextRetention({root=ROOT}={}){
  root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');const inputs=[],read=path=>{const full=resolve(root,path),stat=lstatSync(full);if(!stat.isFile()||stat.isSymbolicLink()||stat.size>1048576)fail('whole regular source input required: '+path);const raw=readFileSync(full),source=raw.toString('utf8');if(!Buffer.from(source).equals(raw))fail('source UTF8 differs');inputs.push({path,source,bytes:raw.length,sha256:hash(raw)});return source;};
  const priorSource=read(P+'prepare-owned-field-bulk.mjs');const {prepareOwnedFieldBulkSources,assertOwnedFieldBulkInputsFresh}=await import(pathToFileURL(resolve(root,P+'prepare-owned-field-bulk.mjs')));
  const prior=prepareOwnedFieldBulkSources({root});if(prior.files.length!==9)fail('all nine original owned-field equations required');for(const row of prior.files)if(read(row.path)!==row.text)fail('actual owned-field prerequisite stale: '+row.path);
  if(readFileSync(resolve(root,P+'prepare-owned-field-bulk.mjs'),'utf8')!==priorSource)fail('original producer changed during import');
- const files=[deriveNativeOutputTextRetention(read(P+'private-output-text.mjs'))];
- for(const [before,after,mapping]of consumers)files.push(route(ts,read(P+before),P+after,mapping,before.includes('-session.')||before.includes('-profile.')?admission:empty));
- const cli='scripts/translate-router-owned-field-meta.mjs';files.push(route(ts,read(cli),'scripts/translate-router-native-owned-field-meta.mjs',{
-  'isolated-retained-owned-field-matrix-bulk.mjs':'isolated-native-retained-owned-field-matrix-bulk.mjs',
-  '../tools/translation/retained-owned-field-bulk.mjs':'../tools/translation/native-retained-owned-field-bulk.mjs',
-  '../tools/translation/retained-owned-field-matrix-bulk.mjs':'../tools/translation/native-retained-owned-field-matrix-bulk.mjs',
- },({file,nodes})=>{const marker=one(file.statements.filter(node=>ts.isVariableStatement(node)&&node.declarationList.declarations.some(row=>ts.isIdentifier(row.name)&&row.name.text==='progressStarted')),'post-argument original boundary');return [{id:'repository:explicit-native-cli-contract',span:[marker.getStart(file),marker.getStart(file)],expected:'',replacement:"if(!retainOutputText||ownedCoreDefinitions)throw new TypeError('Native owned-field CLI requires --retain-output-text and does not support --owned-core-definitions');\n"}];}));
+ const files=deriveNativeOutputTextSourceSet([P+'private-output-text.mjs',...consumers.map(([before])=>P+before),'scripts/translate-router-owned-field-meta.mjs'].map(path=>({path,source:read(path)})));
  for(const row of files){try{const path=resolve(root,row.path),stat=lstatSync(path);if(!stat.isFile()||stat.isSymbolicLink()||stat.size>1048576)fail('regular bounded current native source required: '+row.path);row.current=readFileSync(path,'utf8');}catch(error){if(error.code!=='ENOENT')throw error;row.current='';}if(row.current!==''&&row.current!==row.after)fail('unknown existing native output: '+row.path);}
  for(const name of ['prepare-native-output-text-retention.mjs','native-output-text-kernels.mjs','source-copy-native-bindings.mjs','rule-pipeline.mjs','concrete-syntax-meta.mjs','js-to-rust/vendor/module-syntax.mjs'])read(P+name);
  const plan={schema:'native-output-retention-source-proposal-v1',root,files,inputs,prerequisites:{ownedField:prior},typescriptVersion:ts.version,originalAPIsUnchanged:true,arbitraryObserverEquivalent:false,compressionObservationsEquivalent:false,storageLimitsUnchanged:true,semanticAuthority:false,performanceQualified:false};assertOwnedFieldBulkInputsFresh(prior);assertNativeOutputTextInputsFresh(plan);return plan;
