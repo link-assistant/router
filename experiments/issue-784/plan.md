@@ -900,3 +900,19 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [ ] Attempt the mandatory complete gate and collect the entire b63dd5a33 CI
       failure set before another coordinated publication. Strict parity and
       literal all-tool privacy requirements remain unfinished.
+
+## Current computed-index compiler registration
+
+- [x] After coherent cf64dd48f1c9d6bbd77960c3781b5693c4251c78, reproduce the
+      actual compiler registry proposal, independently check all 1783 complete
+      physical inputs / 57226052 source bytes, both CST phases, inverses, native
+      syntax and installed TypeScript. Archive the original registration and
+      regenerate the genuine 463-object portable Git closure without relaxing
+      its source pin or changing the original concrete fixture.
+- [x] Both complete registration receiving files pass: Node 16 cases in
+      208.511057 seconds, peak sampled cgroup 2468556800 bytes; independent
+      original-deadline audit passes without breaches. Bun 16 cases in
+      173.732800 seconds, peak 2445475840 bytes. Both observers exit zero,
+      no resource interruption, all launched children reaped. Original refusal
+      subprocess stderr remains preserved in complete logs. These receiving
+      checks do not establish a green complete gate or executable parity.
