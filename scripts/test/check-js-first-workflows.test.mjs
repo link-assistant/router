@@ -68,18 +68,40 @@ test('ordinary and owned matrix checks have independent original budgets and bot
   fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.splice(-1,0,{run:checks.find(row=>row[0]!==id)[1]});},'independent original 60-minute');
  }
  const wrapper=jobs.complete.steps[0].run,match=/^\s*node --input-type=module -e "([\s\S]*)"\s*$/u.exec(wrapper);assert.ok(match);
- const results=Object.fromEntries(jobs.complete.needs.map(id=>[id,{result:'success'}]));assert.equal(Object.keys(results).length,9);
+ const results=Object.fromEntries(jobs.complete.needs.map(id=>[id,{result:'success'}]));assert.equal(Object.keys(results).length,10);
  const rejected=()=>{throw Error('aggregate rejected');},execute=value=>runInNewContext(match[1],{process:{env:{STAGE_RESULTS:JSON.stringify(value)},exit:rejected},console:{error(){}}});
  assert.doesNotThrow(()=>execute(results));
  for(const id of Object.keys(results))for(const result of ['failure','cancelled','skipped'])assert.throws(()=>execute({...results,[id]:{result}}),/aggregate rejected/);
  const missing={...results};delete missing['owned-profile-matrix'];assert.throws(()=>execute(missing),/aggregate rejected/);
+});
+test('every forward shard and independent canonical check preserve complete historical setup and original budgets',{timeout:15000},()=>{
+ const jobs=parse(baseline['javascript-first.yml']).jobs;
+ const historical=parse(readFixedNineDraftWorkflowSources().files.find(row=>row.path.endsWith('/javascript-first.yml')).before).jobs.translation;
+ const cohort=historical.steps.find(step=>step.run?.includes('tools/translation/test/*.test.mjs'));
+ const canonical=historical.steps.filter(step=>step.run?.startsWith('node scripts/translate-router.mjs'));
+ const upload=historical.steps.at(-1),setup=historical.steps.filter(step=>step!==cohort&&step!==upload&&!canonical.includes(step));
+ const shard=jobs.translation,fresh=jobs['translation-freshness'];
+ assert.deepEqual(shard.steps.slice(0,setup.length),setup);assert.deepEqual(fresh.steps.slice(0,setup.length),setup);
+ assert.equal(shard['timeout-minutes'],historical['timeout-minutes']);assert.equal(fresh['timeout-minutes'],historical['timeout-minutes']);
+ assert.deepEqual(shard.strategy,{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7,8]}});
+ assert.deepEqual(fresh.steps.slice(setup.length),canonical);assert.equal(shard.steps.length,setup.length+2);
+ assert.match(shard.steps.at(-2).run,/--whole-file-shard=\$\{\{ matrix.shard \}\}\/8 --test-concurrency=2 tools\/translation\/test\/\*\.test\.mjs tools\/translation\/serialization-schema\/\*\.test\.mjs$/u);
+ assert.equal(shard.steps.at(-1).with.name,upload.with.name+'-${{ matrix.shard }}');
+ for(const strategy of [undefined,{'fail-fast':true,matrix:{shard:[1,2,3,4,5,6,7,8]}},{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7]}},{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7,8],exclude:[{shard:2}]}},{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7,8],include:[{shard:9}]}}])fails('javascript-first.yml',workflow=>{workflow.jobs.translation.strategy=strategy;},'exact exhaustive eight');
+ fails('javascript-first.yml',workflow=>{workflow.jobs.translation.steps.at(-1).with.name=upload.with.name;},'evidence uploader');
+ for(const command of canonical.map(step=>step.run)){
+  fails('javascript-first.yml',workflow=>{workflow.jobs['translation-freshness'].steps.push({run:command});},'exactly once');
+  fails('javascript-first.yml',workflow=>{workflow.jobs.translation.steps.splice(-1,0,{run:command});},'freshness must remain independent');
+ }
+ fails('javascript-first.yml',workflow=>{workflow.jobs['translation-freshness'].strategy={matrix:{shard:[1,2]}};},'independent unconditional original freshness');
+ fails('javascript-first.yml',workflow=>{workflow.jobs.complete.needs=workflow.jobs.complete.needs.filter(id=>id!=='translation-freshness');},'depend on every');
 });
 test('locked repository dependencies are installed before every consuming stage, including forward and profile checks', () => {
   const jobs = parse(baseline['javascript-first.yml']).jobs;
   const installations = [
     ['lint', 'npm ci --prefix scripts/ci --ignore-scripts'],
     ['lint', 'npm ci --prefix js --ignore-scripts'],
-    ...['node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'owned-profile-matrix', 'reverse-translation'].map(id => [id, 'npm ci --prefix js --ignore-scripts']),
+    ...['node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'translation-freshness', 'profile-matrix', 'owned-profile-matrix', 'reverse-translation'].map(id => [id, 'npm ci --prefix js --ignore-scripts']),
     ['typescript', 'npm ci --prefix ui --ignore-scripts'],
   ];
   for (const [id, command] of installations) {
@@ -96,14 +118,19 @@ test('locked repository dependencies are installed before every consuming stage,
       workflow.jobs[id].steps.find(step => step.run === command).run = command.replace('npm ci', 'npm install');
     }, 'locked dependency install must precede');
   }
-  // An installation between the whole forward suite and canonical check is
-  // still too late, even though it precedes the last command in that stage.
+  // An installation between the two original canonical checks is still too
+  // late, even though it precedes the last command in the independent stage.
   fails('javascript-first.yml', workflow => {
-    const steps = workflow.jobs.translation.steps;
+    const steps = workflow.jobs['translation-freshness'].steps;
     const index = steps.findIndex(step => step.run === 'npm ci --prefix js --ignore-scripts');
     const [install] = steps.splice(index, 1);
-    steps.splice(steps.findIndex(step => step.run === 'node scripts/translate-router.mjs --check'), 0, install);
+    steps.splice(steps.findIndex(step => step.run === 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check'), 0, install);
   }, 'locked dependency install must precede');
+  fails('javascript-first.yml',workflow=>{
+    const steps=workflow.jobs.lint.steps,index=steps.findIndex(step=>step.run==='node --test scripts/test/run-node-test-shard.test.mjs');
+    const [control]=steps.splice(index,1),install=steps.findIndex(step=>step.run==='npm ci --prefix js --ignore-scripts');
+    steps.splice(install,0,control);
+  },'locked dependency install must precede');
 });
 test('installed pre-commit hooks preserve generic checks without automatic Rust execution or cache cleanup', () => {
   const config = parse(fs.readFileSync(new URL('../../.pre-commit-config.yaml', import.meta.url), 'utf8'));
@@ -151,7 +178,7 @@ test('Rust verification after JavaScript preserves hard failures without relying
   }, 'verification step must not ignore failures');
 });
 test('every JavaScript stage and command is mandatory and cannot skip or ignore failures', () => {
-  for (const id of ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'owned-profile-matrix', 'reverse-translation']) {
+  for (const id of ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'translation-freshness', 'profile-matrix', 'owned-profile-matrix', 'reverse-translation']) {
     fails('javascript-first.yml', workflow => { delete workflow.jobs[id]; }, 'stage missing');
     for (const condition of ['false', false, '', 0, null]) {
       fails('javascript-first.yml', workflow => { workflow.jobs[id].if = condition; }, 'stage missing');
@@ -161,7 +188,7 @@ test('every JavaScript stage and command is mandatory and cannot skip or ignore 
     fails('javascript-first.yml', workflow => { workflow.jobs[id].steps.at(-1).run = 'echo inventory only'; }, 'mandatory command');
   }
   fails('javascript-first.yml', workflow => { workflow.jobs.parity.steps.at(-1).run = 'node scripts/check-router-parity.mjs'; }, 'mandatory command');
-  for(const [id,command]of [['typescript', 'node scripts/check-owned-definition-typescript.mjs'], ['translation', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check'], ['owned-profile-matrix', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check'], ['reverse-translation', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --check'], ['reverse-translation', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check']]) {
+  for(const [id,command]of [['typescript', 'node scripts/check-owned-definition-typescript.mjs'], ['translation-freshness', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check'], ['owned-profile-matrix', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check'], ['reverse-translation', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --check'], ['reverse-translation', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check']]) {
     fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps=workflow.jobs[id].steps.filter(step=>step.run!==command);},'mandatory command');
     fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.find(step=>step.run===command).run='echo '+command;},'mandatory command');
     fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.find(step=>step.run===command).if='${{ false }}';},'conditional');
@@ -170,7 +197,7 @@ test('every JavaScript stage and command is mandatory and cannot skip or ignore 
 });
 test('heavy compiler and acceptance cohorts require two workers and every test file', () => {
   for (const [id, glob] of [['translation', 'tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs'], ['parity', 'experiments/issue-759/acceptance/*.test.mjs']]) {
-    const prefix = id === 'translation' ? 'node scripts/run-node-tests.mjs --outer-timeout-ms=3600000' : 'node --test';
+    const prefix = id === 'translation' ? 'node scripts/run-node-test-shard.mjs --outer-timeout-ms=3600000 --whole-file-shard=${{ matrix.shard }}/8' : 'node --test';
     const command = `${prefix} --test-concurrency=2 ${glob}`;
     assert.ok(parse(baseline['javascript-first.yml']).jobs[id].steps.some(step => step.run === command));
     for (const replacement of [
@@ -226,7 +253,7 @@ test('duplicate YAML keys are rejected rather than choosing a convenient one', (
 });
 
 test('Bun runtime is required for lint engine checks, native JavaScript, compiled TypeScript and both translation directions', () => {
-  for (const id of ['lint', 'bun-tests', 'typescript', 'translation', 'reverse-translation']) {
+  for (const id of ['lint', 'bun-tests', 'typescript', 'translation', 'translation-freshness', 'reverse-translation']) {
     fails('javascript-first.yml', workflow => { workflow.jobs[id].steps = workflow.jobs[id].steps.filter(step => !step.uses?.startsWith('oven-sh/setup-bun@')); }, 'pinned Bun runtime');
     fails('javascript-first.yml', workflow => { workflow.jobs[id].steps.find(step => step.uses?.startsWith('oven-sh/setup-bun@')).with['bun-version'] = 'latest'; }, 'pinned Bun runtime');
     fails('javascript-first.yml', workflow => { workflow.jobs[id].steps.find(step => step.uses?.startsWith('oven-sh/setup-bun@')).uses = 'oven-sh/setup-bun@main'; }, 'pinned Bun runtime');
@@ -270,7 +297,7 @@ test('profile matrix has an independent immutable job and the aggregate rejects 
   assert.ok(jobs.complete.needs.includes('profile-matrix'));
   fails('javascript-first.yml', workflow => { workflow.jobs.complete.needs = workflow.jobs.complete.needs.filter(id => id !== 'profile-matrix'); }, 'depend on every');
   fails('javascript-first.yml', workflow => { workflow.jobs['profile-matrix'].steps[0].with.ref = 'main'; }, 'inputs.sha');
-  fails('javascript-first.yml', workflow => { workflow.jobs.complete.steps[0].run = workflow.jobs.complete.steps[0].run.replace('stages.length !== 9', 'stages.length !== 8'); }, 'unconditional reviewed program');
+  fails('javascript-first.yml', workflow => { workflow.jobs.complete.steps[0].run = workflow.jobs.complete.steps[0].run.replace('stages.length !== 10', 'stages.length !== 8'); }, 'unconditional reviewed program');
 });
 
 test('parity job covers three sequential acceptance checkers and the final checker', () => {
@@ -304,12 +331,13 @@ test('native and source-discovered schema freshness and strict TS are mandatory'
 
 test('compiler case-deadline audits and complete always-retained raw receipts cannot be bypassed',()=>{
  for(const id of ['typescript','translation','reverse-translation']){
+  const runner=id==='translation'?'node scripts/run-node-test-shard.mjs':'node scripts/run-node-tests.mjs';
   const job=parse(baseline['javascript-first.yml']).jobs[id];
   const uploader=job.steps.find(step=>step.uses==='actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');assert.ok(uploader);
   for(const change of [step=>{step.if='false';},step=>{step['continue-on-error']=true;},step=>{step.with['include-hidden-files']=false;},step=>{step.with.path='unrelated/';},step=>{step.with['if-no-files-found']='ignore';}])fails('javascript-first.yml',workflow=>{change(workflow.jobs[id].steps.find(step=>step.uses===uploader.uses));},'deadline');
-  fails('javascript-first.yml',workflow=>{const command=workflow.jobs[id].steps.find(step=>step.run?.startsWith('node scripts/run-node-tests.mjs'));command.run=command.run.replace(/node scripts\/run-node-tests\.mjs --outer-timeout-ms=\d+/u,'node --test');},'mandatory command');
-  for(const bypass of ['if','continue-on-error'])fails('javascript-first.yml',workflow=>{const step=workflow.jobs[id].steps.find(step=>step.run?.startsWith('node scripts/run-node-tests.mjs'));step[bypass]=bypass==='if'?'${{ always() }}':true;step.name=uploader.name;},'conditional or ignore failures');
-  fails('javascript-first.yml',workflow=>{const selected=workflow.jobs[id],step=selected.steps.find(step=>step.run?.startsWith('node scripts/run-node-tests.mjs'));selected.steps=selected.steps.filter(item=>item.uses!==uploader.uses);Object.assign(step,{uses:uploader.uses,with:uploader.with,if:'${{ always() }}'});},'conditional or ignore failures');
+  fails('javascript-first.yml',workflow=>{const command=workflow.jobs[id].steps.find(step=>step.run?.startsWith(runner));command.run=command.run.replace(/node scripts\/run-node-(?:tests|test-shard)\.mjs --outer-timeout-ms=\d+/u,'node --test');},'mandatory command');
+  for(const bypass of ['if','continue-on-error'])fails('javascript-first.yml',workflow=>{const step=workflow.jobs[id].steps.find(step=>step.run?.startsWith(runner));step[bypass]=bypass==='if'?'${{ always() }}':true;step.name=uploader.name;},'conditional or ignore failures');
+  fails('javascript-first.yml',workflow=>{const selected=workflow.jobs[id],step=selected.steps.find(step=>step.run?.startsWith(runner));selected.steps=selected.steps.filter(item=>item.uses!==uploader.uses);Object.assign(step,{uses:uploader.uses,with:uploader.with,if:'${{ always() }}'});},'conditional or ignore failures');
   fails('javascript-first.yml',workflow=>{const step=workflow.jobs[id].steps.find(step=>step.uses===uploader.uses);step.run='echo forged upload and check';},'deadline');
   fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.unshift({name:uploader.name,uses:'actions/checkout@forged',if:'${{ always() }}',with:{ref:'${{ inputs.sha }}'}});},'conditional or ignore failures');
  }

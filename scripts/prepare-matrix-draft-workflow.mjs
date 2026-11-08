@@ -21,15 +21,34 @@ const complete=replaceOnce(original.slice(start,end),profile,profile+directory);
 const ordinaryJob=replaceOnce(complete,checks,'');
 const ownedJob=replaceOnce(replaceOnce(complete,ordinary,''),'  profile-matrix:\n','  owned-profile-matrix:\n');
 const needs='    needs: [lint, node-tests, bun-tests, typescript, parity, translation, profile-matrix, reverse-translation]\n';
+const forward='      - run: node scripts/run-node-tests.mjs --outer-timeout-ms=3600000 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs\n';
+const canonical='      - run: node scripts/translate-router.mjs --check\n      - run: node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check\n';
+const forwardStart=original.indexOf('  translation:\n'),forwardEnd=original.indexOf(profile,forwardStart);
+if(forwardStart<0||forwardEnd<=forwardStart)throw TypeError('Complete historical forward job missing');
+const forwardComplete=original.slice(forwardStart,forwardEnd);
+const nodeUploadStart=forwardComplete.indexOf('      - name: Preserve complete Node deadline audit and raw streams\n');
+if(nodeUploadStart<0)throw TypeError('Complete historical forward evidence missing');
+const shardJob=replaceOnce(forwardComplete,canonical,'');
+const freshnessJob=replaceOnce(replaceOnce(forwardComplete.slice(0,nodeUploadStart),forward,''),'  translation:\n','  translation-freshness:\n');
+const forwardHeader='  translation:\n    runs-on: ubuntu-24.04\n';
+const shardStrategy='    strategy:\n      fail-fast: false\n      matrix:\n        shard: [1, 2, 3, 4, 5, 6, 7, 8]\n';
+const shardCommand='      - run: node scripts/run-node-test-shard.mjs --outer-timeout-ms=3600000 --whole-file-shard=${{ matrix.shard }}/8 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs\n';
 export const MATRIX_DRAFT_LANGUAGE_RULES=Object.freeze([
  {id:'matrix-custody:explicit-data-directory',before:profile,after:profile+directory},
  {id:'matrix-custody:independent-complete-owned-check',before:complete,after:ordinaryJob+ownedJob},
+ {id:'forward-files:independent-complete-freshness',before:forwardComplete,after:shardJob+freshnessJob},
 ]);
 export const MATRIX_DRAFT_REPOSITORY_RULES=Object.freeze([
  {id:'matrix-custody:retain-complete-failed-check-drafts',before:ordinary,after:ordinary+upload},
  {id:'matrix-custody:retain-complete-owned-check-drafts',before:checks,after:checks+replaceOnce(upload,'name: matrix-drafts-','name: matrix-owned-drafts-')},
  {id:'matrix-custody:require-both-complete-jobs',before:needs,after:replaceOnce(needs,'profile-matrix, reverse-translation','profile-matrix, owned-profile-matrix, reverse-translation')},
  {id:'matrix-custody:reject-each-of-nine-stage-failures',before:'stages.length !== 8',after:'stages.length !== 9'},
+ {id:'forward-files:distinct-complete-evidence',before:shardJob,after:replaceOnce(shardJob,'name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}','name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}-${{ matrix.shard }}')},
+ {id:'forward-files:eight-exhaustive-whole-file-shards',before:forwardHeader,after:forwardHeader+shardStrategy},
+ {id:'forward-files:unchanged-auditor-and-case-budgets',before:forward,after:shardCommand},
+ {id:'forward-files:require-complete-freshness',before:replaceOnce(needs,'profile-matrix, reverse-translation','profile-matrix, owned-profile-matrix, reverse-translation'),after:replaceOnce(replaceOnce(needs,'profile-matrix, reverse-translation','profile-matrix, owned-profile-matrix, reverse-translation'),'translation, profile-matrix','translation, translation-freshness, profile-matrix')},
+ {id:'forward-files:reject-each-of-ten-stage-failures',before:'stages.length !== 9',after:'stages.length !== 10'},
+ {id:'forward-files:mandatory-whole-control-file',before:'      - run: node --test scripts/test/check-js-first-local.test.mjs\n',after:'      - run: node --test scripts/test/check-js-first-local.test.mjs\n      - run: node --test scripts/test/run-node-test-shard.test.mjs\n'},
 ]);
 function concrete(source){
  const document=parseDocument(source,{version:'1.2',uniqueKeys:true});if(document.errors.length)throw TypeError('Complete matrix workflow grammar differs');
