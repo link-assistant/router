@@ -40,7 +40,7 @@ async function fixture(t,retain){
  const modules={},sources=[];
  for(const [label,original]of [['before',before],['current',current]]){
   let source=original;const steps=[];const edit=(a,b)=>{source=once(source,a,b);steps.push({before:a,after:b});};
-  for(const name of ['private-frozen-json.mjs','original-json-intrinsics.mjs','original-lexing-intrinsics.mjs'])edit("from './"+name+"'","from '"+new URL('../'+name,import.meta.url).href+"'");
+  for(const name of ['private-frozen-json.mjs','original-json-intrinsics.mjs',"guarded-proof-lexing-intrinsics.mjs"])edit("from './"+name+"'","from '"+new URL('../'+name,import.meta.url).href+"'");
   edit('   if(selected)return apply(stringifyField.value,jsonOwner,[value]);','   if(selected){receivingNative++;return apply(stringifyField.value,jsonOwner,[value]);}');
   edit('  return fallback(value);','  receivingFallback++;return fallback(value);');
   edit('  const names=ownKeys(value);','  receivingCensuses++;const names=ownKeys(value);');
