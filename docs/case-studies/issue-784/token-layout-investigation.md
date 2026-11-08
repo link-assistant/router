@@ -181,7 +181,7 @@ prerequisite was identified; skipping these failures would hide unmet checks.
 
 ## Complete evidence capture
 
-[`token-ci-complete.tar.xz`](evidence/token-ci-complete.tar.xz) retains 205 complete
+[`token-ci-complete.tar.xz`](https://github.com/link-assistant/router/blob/4e7093eb98b2170bac2cd5fd24c0c777e6bcf4b2/docs/case-studies/issue-784/evidence/token-ci-complete.tar.xz?raw=true) retains 205 complete
 originals at source `154976668f200c81baf05ccdbb1a02fd1bdcd11f`: 96,537,908 logical
 bytes in a 21,418,296-byte archive. SHA-256:
 `68e1e2a478a28a1dab9b645c74fdaabb7b26981d4e19b9eb2cb452ec73949f06`.

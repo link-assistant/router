@@ -6,15 +6,21 @@ import os
 from pathlib import Path
 import stat
 import subprocess
+import sys
 
-relative = 'docs/case-studies/issue-784/evidence/storage-ci-complete.tar.xz'
+if sys.argv[1:] not in ([], ['--token-ci']):
+    raise RuntimeError('Only the two reviewed inactive task archives are selectable')
+token_ci = sys.argv[1:] == ['--token-ci']
+stem = 'token-ci-complete' if token_ci else 'storage-ci-complete'
+expected_size, expected_members = (21418296, 205) if token_ci else (33132484, 395)
+relative = 'docs/case-studies/issue-784/evidence/' + stem + '.tar.xz'
 path = Path(relative)
 head = '4e7093eb98b2170bac2cd5fd24c0c777e6bcf4b2'
-metadata_path = Path('ci-logs/issue-784-restart-2/current-published-storage-ci-archive-metadata.json')
+metadata_path = Path('ci-logs/issue-784-restart-2/current-published-' + ('token' if token_ci else 'storage') + '-ci-archive-metadata.json')
 metadata = json.loads(metadata_path.read_bytes())
-original = json.loads(gzip.decompress(path.with_name('storage-ci-complete.json.gz').read_bytes()))
-assert metadata['path'] == relative and metadata['size'] == original['archiveBytes'] == 33132484
-assert original['allDecodedOriginalsVerified'] and original['completeMembers'] == 395
+original = json.loads(gzip.decompress(path.with_name(stem + '.json.gz').read_bytes()))
+assert metadata['path'] == relative and metadata['size'] == original['archiveBytes'] == expected_size
+assert original['allDecodedOriginalsVerified'] and original['completeMembers'] == expected_members
 state = path.lstat()
 assert state.st_uid == os.getuid() and state.st_nlink == 1 and stat.S_ISREG(state.st_mode)
 with path.open('rb') as source:
@@ -55,12 +61,12 @@ record = {'schema': 'complete-published-storage-packet-local-retirement-v1',
           'publishedCommit': head, 'gitBlob': blob, 'remoteMetadata': metadata,
           'permanentUrl': metadata['html_url'] + '?raw=true',
           'completeOriginalCompressedStreamRetained': True,
-          'completePublishedGitBlobVerified': True, 'originalMembers': 395,
+          'completePublishedGitBlobVerified': True, 'originalMembers': expected_members,
           'logicalBytesReclaimed': state.st_size,
           'allocatedBytesReclaimed': state.st_blocks * 512,
           'scope': 'One inactive task archive. Exact original compressed bytes remain in published Git history.',
           'semanticAuthority': False, 'runtimeParity': False, 'rustExecuted': False}
-target = path.with_name('storage-ci-complete-local-retirement.json.gz')
+target = path.with_name(stem + '-local-retirement.json.gz')
 raw = json.dumps(record, separators=(',', ':')).encode()
 with target.open('xb') as output:
     output.write(gzip.compress(raw, mtime=0))

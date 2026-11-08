@@ -854,7 +854,7 @@ three absent from the workflow stream. Both later complete local gate attempts
 stopped at the owned resource guard before their first stage; all seven stages
 remain unrun for those attempts.
 
-The corresponding [complete token/CI packet](evidence/token-ci-complete.tar.xz)
+The corresponding [complete token/CI packet](https://github.com/link-assistant/router/blob/4e7093eb98b2170bac2cd5fd24c0c777e6bcf4b2/docs/case-studies/issue-784/evidence/token-ci-complete.tar.xz?raw=true)
 and [full capture receipt](evidence/token-ci-complete.json.gz) retain 205 complete
 originals, 96,537,908 logical bytes, at source `154976668`. Every selected original
 and decoded archive member verifies; its 21,418,296-byte archive has SHA-256

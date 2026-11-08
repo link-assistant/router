@@ -987,4 +987,4 @@ remain explicitly unmet parts of the literal all-tool requirement.
       experiment itself remains unqualified until the complete gate runs.
 
 The complete gate result, separate current Node profile work and active
-requirements continue in [the current repair checklist](current-native-ci-repair.md).
+requirements continue in [the current repair checklist](current-native-ci-repair.md) and [the terminal-cycle checklist](current-terminal-ci-repair.md).

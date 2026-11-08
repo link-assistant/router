@@ -27,6 +27,7 @@ parser.add_argument('--closed-draft-observations', action='store_true')
 parser.add_argument('--closed-raw-packet-preflight', action='store_true')
 parser.add_argument('--retained-17c7-metadata', action='store_true')
 parser.add_argument('--closed-4e709-snapshots', action='store_true')
+parser.add_argument('--closed-4e709-terminal-snapshots', action='store_true')
 parser.add_argument('--receipt', default='reverse-shard-inactive-evidence-compression.json')
 args = parser.parse_args()
 assert sum(bool(value) for value in [args.closed_attempt, args.closed_investigations,
@@ -43,7 +44,8 @@ assert sum(bool(value) for value in [args.closed_attempt, args.closed_investigat
                                    args.closed_10fd_final_observations,
                                    args.closed_matrix_custody_observations,
                                    args.closed_draft_observations, args.closed_raw_packet_preflight,
-                                   args.retained_17c7_metadata, args.closed_4e709_snapshots]) <= 1
+                                   args.retained_17c7_metadata, args.closed_4e709_snapshots,
+                                   args.closed_4e709_terminal_snapshots]) <= 1
 assert Path(args.receipt).name == args.receipt and args.receipt.endswith('.json')
 paths = [root / 'ci-logs' / name for name in [
     'restart-export-published-review.diff',
@@ -114,6 +116,16 @@ elif args.closed_10fd_early_observations:
         'current-10fd-ci-early-snapshot.json', 'current-10fd-ci-early-logs.json',
         'current-10fd-ci-early-collection.log',
     ]]
+elif args.closed_4e709_terminal_snapshots:
+    # Every job is terminal. One upstream log remains unavailable; preserving
+    # complete metadata never changes that explicit collection failure.
+    paths = [base / ('current-4e709-ci-snapshot-' + str(index) + '.json')
+             for index in range(5, 13)]
+    paths += [base / ('current-4e709-ci-logs-' + str(index) + '.json')
+              for index in [5, 8, 10, 12]]
+    assert all(json.loads(path.read_bytes()).get('headSha',
+        json.loads(path.read_bytes()).get('snapshot', {}).get('headSha'))
+        == '4e7093eb98b2170bac2cd5fd24c0c777e6bcf4b2' for path in paths)
 elif args.closed_4e709_snapshots:
     # Completed immutable observations only; the CI cycle itself is still live.
     paths = [base / ('current-4e709-ci-snapshot-' + str(index) + '.json')
