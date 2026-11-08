@@ -14,10 +14,13 @@
   resource guard; keep their failed/unrun status explicit.
 - [x] Fetch main and read the complete current issue, all three PR comment
   types and child-issue list. Main is an ancestor; no new requirement arrived.
-- [ ] Attempt all four actual complete canonical/profile producer families;
-  independently review outputs before committing any generated result.
-- [ ] Run the mandatory complete local JavaScript gate at the committed source
-  SHA. Inspect every stage; a fingerprint/resource stop qualifies no stage.
+- [x] Attempt all four actual complete canonical/profile producer families.
+  All four stop at the unchanged resource guard; no output changes. Successful
+  materialization and independent output review remain unfinished.
+- [x] Run the mandatory complete local JavaScript gate at committed source
+  `358849070`. The fingerprint hits the resource guard; all seven stages are
+  unrun. Its separate page adviser also fails with a same-user /proc permission
+  error. No green gate or successful adviser is claimed.
 - [ ] Review the full published PR diff and coordinated local batch; update
   the draft PR with exact failed/unrun evidence, then publish only the prepared
   branch after the previous complete cycle is terminal.
