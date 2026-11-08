@@ -116,6 +116,13 @@ The [separate receipt](evidence/restart-complete-local-retirement.json.gz)
 records exact compressed-stream recovery and reclaimed logical/allocated bytes.
 This creates evidence capacity without deleting any active check output.
 
+Before collecting the next cycle's complete artifacts, the same checks retire
+the inactive 21279876-byte project-retention archive. All 429 original members
+remain in its unchanged
+[published archive](https://github.com/link-assistant/router/blob/4e7093eb98b2170bac2cd5fd24c0c777e6bcf4b2/docs/case-studies/issue-784/evidence/project-retention-complete.tar.xz?raw=true).
+Its [receipt](evidence/project-retention-complete-local-retirement.json.gz)
+records the complete stream hash and 21282816 allocated bytes reclaimed.
+
 Issue #784 and the PR remain unfinished. The universal all-tool/account privacy
 criterion is still unmet; the case-study requirement inventory and configuration
 guide retain the exact supported scope and all external-account limitations.

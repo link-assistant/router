@@ -13,9 +13,10 @@ choices = {
     ('--token-ci',): ('token-ci-complete', 'token-ci', 21418296, 205),
     ('--resolver',): ('resolver-complete', 'resolver', 25575912, 251),
     ('--restart',): ('restart-complete', 'restart', 21592036, 361),
+    ('--project-retention',): ('project-retention-complete', 'project-retention', 21279876, 429),
 }
 if tuple(sys.argv[1:]) not in choices:
-    raise RuntimeError('Only the four reviewed inactive task archives are selectable')
+    raise RuntimeError('Only the five reviewed inactive task archives are selectable')
 stem, metadata_stem, expected_size, expected_members = choices[tuple(sys.argv[1:])]
 relative = 'docs/case-studies/issue-784/evidence/' + stem + '.tar.xz'
 path = Path(relative)

@@ -932,7 +932,7 @@ the finite retention comparison and complete receiving checks. The later
 the entire `77e82f2bb` CI cycle, both history repairs and their distinct duration
 qualification results. The full gate and original unmet criteria remain required.
 
-The [complete callback/history packet](evidence/project-retention-complete.tar.xz)
+The [complete callback/history packet](https://github.com/link-assistant/router/blob/4e7093eb98b2170bac2cd5fd24c0c777e6bcf4b2/docs/case-studies/issue-784/evidence/project-retention-complete.tar.xz?raw=true)
 and [full compressed receipt](evidence/project-retention-complete.json.gz) retain
 **429 complete originals / 37725438 logical bytes** at source
 `300261919ee2a8334fe9e38537c61b6e32e5212f`, including every completed
@@ -945,3 +945,6 @@ The receipt's gzip wrapper is losslessly reread; decoded JSON is unchanged.
 Prior packets remain intact. Complete selected evidence roots use
 455426048 distinct allocated bytes, below the task's 500 MB cap.
 The packet preserves failed and unrun results; it grants no gate or parity pass.
+The inactive local archive was subsequently retired after full published-blob
+and inactive-path verification; its [receipt](evidence/project-retention-complete-local-retirement.json.gz)
+records 21279876 logical bytes reclaimed. The linked original remains unchanged.
