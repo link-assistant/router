@@ -43,6 +43,20 @@ remain unfinished; no draft checkpoint establishes release readiness.
   The original first-case workload remains intact. New uncommitted unit/Unicode
   composition assertions are being given their own new case in that same
   complete file; no original assertion or deadline is moved or removed.
+- The complete nine-case Unicode rerun now passes Node and its independent
+  deadline audit (`complete-u5UhKb`) in 178.973510 seconds, sampled peak
+  2082119680 bytes. The original first-case workload takes 50718.396472 ms;
+  the new complete composition case takes 38137.059215 ms. All original cases
+  and assertions remain in the same file with their unchanged deadlines.
+  Bun 1.4.4 passes the same nine cases in 172.825274 seconds, peak 2633998336
+  bytes; its corresponding cases take 53243.04 and 36881.18 ms. Both complete
+  source plans, every physical output, the complete DATA diamond, Unicode
+  scalar boundaries, genuine calls, refusals, root-module source evolution
+  and original compact/model-id bodies qualify in these receiving files.
+  Neither observer interrupts, and every child is reaped. Evidence is
+  `current-named-core-unicode-independent-composition-{node,bun}.*`.
+  Broader source consumers, Rust, generation, parity and full-gate results
+  remain independent unfinished criteria.
 
 ## Current source repairs and failed production generation
 

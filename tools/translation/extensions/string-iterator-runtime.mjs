@@ -90,3 +90,22 @@ export function router_core_ascii_chars_in(value, alphabet) {
   }
   return true;
 }
+
+// Owned Unicode predicates: validate the complete scalar input before use.
+export function router_core_strip_unicode_whitespace(value) {
+  requireScalarString(value);
+  let result='';
+  for(let at=0;at<value.length;at++) {
+    const unit=codeUnit(value,at);
+    if(!isRustWhitespaceCodeUnit(unit))result+=slice(value,at,at+1);
+  }
+  return result;
+}
+export function router_core_has_unicode_control(value) {
+  requireScalarString(value);
+  for(let at=0;at<value.length;at++) {
+    const unit=codeUnit(value,at);
+    if(unit<=31||unit>=127&&unit<=159)return true;
+  }
+  return false;
+}

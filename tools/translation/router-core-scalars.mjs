@@ -4,7 +4,7 @@ import {crateModuleSourcePath} from './repository-layout.mjs';
 import {types} from 'node:util';
 import {requireOriginalPrimitiveTryFromChecker} from './extensions/host-contracts.mjs';
 import {copyMetadata,originalParsedDeclarationEvidence,originalParsedSyntaxNode} from './extensions/source-links.mjs';
-import {SOURCE_STR} from './extensions/source-contract-types.mjs';
+import {SOURCE_STR,SOURCE_STRING} from './extensions/source-contract-types.mjs';
 import {matchesParserFacts} from './matches-macro-context.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
 import {transportConcreteSyntaxSource} from './concrete-syntax-meta.mjs';
@@ -39,6 +39,24 @@ export const ROUTER_CORE_ASCII_CONTRACT=freeze({
     'Non-ASCII alphabet characters do not admit non-ASCII input.',
     'Native iterators and Pattern dispatch remain intentionally untranslated.'],
 });
+
+export const ROUTER_CORE_UNICODE_PREDICATE_CONTRACTS=freeze([
+  {id:'router_core_strip_unicode_whitespace',jsExport:'router_core_strip_unicode_whitespace',
+   rustPath:['crate','translation_core','strip_unicode_whitespace'],kind:'function',family:'string-iterator',
+   params:[SOURCE_STR],ret:SOURCE_STRING,async:false,pure:true,constEligible:false,
+   requiresRefinement:'genuine-router-core-unicode-predicate-call',profile:'router-owned-strip-unicode-whitespace-v1',
+   assumptions:['One checked borrowed scalar string evaluates once; output is fresh owned text.',
+    'Use the pinned Rust White_Space property, not JavaScript trim or regular expressions.',
+    'Retain non-whitespace scalars, including FEFF, combining marks, NUL and ZWJ.',
+    'Native char iterator and collection implementations remain untranslated.']},
+  {id:'router_core_has_unicode_control',jsExport:'router_core_has_unicode_control',
+   rustPath:['crate','translation_core','has_unicode_control'],kind:'function',family:'string-iterator',
+   params:[SOURCE_STR],ret:{kind:'bool'},async:false,pure:true,constEligible:false,
+   requiresRefinement:'genuine-router-core-unicode-predicate-call',profile:'router-owned-has-unicode-control-v1',
+   assumptions:['One checked borrowed scalar string evaluates once and is completely validated.',
+    'The source-derived Rust Cc property contains exactly U+0000..001F and U+007F..009F.',
+    'Native char iterator and predicate implementations remain untranslated.']},
+]);
 const calls=new WeakMap(),checkedCalls=new WeakMap();
 const fail=()=>{throw new TypeError('Router scalar counting requires the actual owned primitives leaf and qualified source binding');};
 function sourceContract(run,location){try{return run();}catch(error){if(!(error instanceof TypeError))throw error;throw unsupported('Router compatibility scalar count',error.message,location);}}
@@ -49,7 +67,7 @@ function originalLeaf(state){
   originalSourceModuleItems(leaf);return leaf;
 }
 export function parseRouterCoreScalarCall(parser,path){
-  const c=parser.cursor,ascii=c.is('ascii_chars_in',4),words=['crate','::','translation_core','::',ascii?'ascii_chars_in':'unicode_scalar_count'];
+  const c=parser.cursor,unicode=c.is('strip_unicode_whitespace',4)?ROUTER_CORE_UNICODE_PREDICATE_CONTRACTS[0]:c.is('has_unicode_control',4)?ROUTER_CORE_UNICODE_PREDICATE_CONTRACTS[1]:null,ascii=c.is('ascii_chars_in',4),words=['crate','::','translation_core','::',unicode?unicode.rustPath[2]:ascii?'ascii_chars_in':'unicode_scalar_count'];
   if(!words.every((word,index)=>c.is(word,index))||[0,2,4].some(index=>c.peek(index).kind!=='identifier'))return null;
   const first=c.peek(),location={start:first.start,end:c.peek(4).end};
   if(!c.is('(',5))throw unsupported('Router scalar count call','requires a complete nongeneric call',location);
@@ -67,7 +85,7 @@ export function parseRouterCoreScalarCall(parser,path){
   const last=c.expect(')','Router scalar count'),span={start:first.start,end:last.end};
   const end=c.index;
   sourceContract(()=>{requireRouterCoreFacadeCurrent(parser,facade);if(originalLeaf(state)!==leaf||leaf.sourceView!==view||matchesParserFacts(parser)!==state||parser.cursor!==c||c.tokens!==tokens||c.index!==end)fail();},span);
-  const node={k:'routerCoreScalarCountCall',args,span};calls.set(node,{parser,syntax:copyMetadata(node),trace:stage.trace,contract:ascii?ROUTER_CORE_ASCII_CONTRACT:ROUTER_CORE_SCALAR_CONTRACT});return node;
+  const node={k:'routerCoreScalarCountCall',args,span};calls.set(node,{parser,syntax:copyMetadata(node),trace:stage.trace,contract:unicode??(ascii?ROUTER_CORE_ASCII_CONTRACT:ROUTER_CORE_SCALAR_CONTRACT)});return node;
 }
 // Compare complete mutable node data after the last source-link hash. Keys
 // are preflighted before descriptors; proxies/accessors never supply syntax.

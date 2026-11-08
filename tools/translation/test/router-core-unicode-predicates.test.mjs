@@ -4,6 +4,9 @@ import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {prepareCoreUnicodePredicates,composeCoreUnicodePredicates} from '../prepare-core-unicode-predicates.mjs';
+import {prepareCurrentCoreUnitUnicode,composeCurrentCoreUnitMatches} from '../prepare-current-core-unit-unicode.mjs';
+import {assertCurrentCoreUnicodeSourceComposition} from './current-unit-unicode-source-composition.mjs';
+import {assertUnitMatchesSourceComposition} from './unit-matches-source-composition.mjs';
 import {unicodePredicateSourceArtifacts} from '../unicode-predicates-source.mjs';
 import {proposeCoreUnicodePredicatesCorpus} from '../migrate-core-unicode-predicates.mjs';
 import {router_core_strip_unicode_whitespace as strip,router_core_has_unicode_control as control} from '../extensions/string-iterator-runtime.mjs';
@@ -13,7 +16,8 @@ import {translateProject} from '../project.mjs';
 import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {sourceItems} from '../rust-structure.mjs';
-import {migrateCoreLiteralText} from '../migrate-core-literal-text.mjs';
+import {migrateCoreLiteralText,adoptCoreUnicodeStringReturns} from '../migrate-core-literal-text.mjs';
+import {composeGeolocationModuleSource} from './fixtures/geolocation-module-source-composition.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const root=new URL('../../../',import.meta.url),C='crate::translation_core::',S='&'+C+'Str';
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -26,12 +30,18 @@ function inverse(row){assert.equal(transportConcreteSyntaxMeta(row.before.meta).
 function application(){const archive=readFileSync(new URL('../source-profiles/core-unicode-predicates/application.json.gz',import.meta.url));assert.equal(hash(archive),'5c7894b6f00e68b972250058bcaf2979f1cf781f76a5ab3ffe2707ffaa80afec');const raw=gunzipSync(archive,{maxOutputLength:300000});assert.equal(hash(raw),'616a7509c5daec22cd5a9e4eca7d4fc30fec8347d212e9e03831c3b4c68c7339');return JSON.parse(raw.toString('utf8'));}
 
 test('Unicode source layer retains every original core API and complete native/CST inverse',{timeout:60000},()=>{
- const plan=prepareCoreUnicodePredicates();assert.equal(plan.files.length,8);assert.equal(plan.semanticAuthority,false);assert.equal(plan.nativeRustExecuted,false);
- for(const row of plan.files){assert.equal(row.current,row.after,row.path);assert.equal(hash(row.before),row.beforeSha256);assert.equal(hash(row.after),row.afterSha256);assert.equal(row.inverse,row.before);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.deepEqual(row.trace,row.stages.flatMap(stage=>stage.trace));for(const stage of row.stages){assert.equal(stage.completeInverse,true);assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}assert.equal(row.nativeCopies.length,row.sourceLanguage==='JavaScript'?2:0);assert.ok(row.nativeCopies.every(copy=>copy.completeNativeAstCopy));}
+ const current=prepareCurrentCoreUnitUnicode(),plan=current.layers[1].originalUnicodePlan,finalSources=current.sources;assert.equal(current.layers.length,2);assert.equal(plan.files.length,8);assert.equal(plan.semanticAuthority,false);assert.equal(plan.nativeRustExecuted,false);
+ for(const row of plan.files){assert.equal(row.current,finalSources[row.path].after,row.path);assert.equal(hash(row.before),row.beforeSha256);assert.equal(hash(row.after),row.afterSha256);assert.equal(row.inverse,row.before);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.deepEqual(row.trace,row.stages.flatMap(stage=>stage.trace));for(const stage of row.stages){assert.equal(stage.completeInverse,true);assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}assert.equal(row.nativeCopies.length,row.sourceLanguage==='JavaScript'?2:0);assert.ok(row.nativeCopies.every(copy=>copy.completeNativeAstCopy));}
  const facade=plan.files.find(row=>row.path==='rust/src/translation_core.rs');for(const marker of ['unicode_scalar_count, ascii_chars_in','json_parse','__router_translation_core_format','__router_translation_core_matches','__router_translation_core_vec'])assert.ok(facade.before.includes(marker)&&facade.after.includes(marker),marker);
  assert.ok(plan.files.find(row=>row.path.endsWith('host-contracts.mjs')).after.split('\n').length-1<=999);
  const prior=Object.fromEntries(plan.files.map(row=>[row.path,{after:row.before}]));assert.equal(composeCoreUnicodePredicates(prior).layers.length,1);assert.throws(()=>composeCoreUnicodePredicates({...prior,[facade.path]:{after:facade.before+' '}}),/preceding complete source/);
  const proof=plan.property;assert.deepEqual(proof.control.ranges,[[0,31],[127,159]]);assert.deepEqual(proof.whitespace.codes,whitespace);for(const row of proof.sources){assert.equal(hash(row.source),row.sha256);assert.equal(transportConcreteSyntaxMeta(row.meta).source,row.source);}
+});
+
+test('new current unit and Unicode composition retains both whole source plans and the complete DATA diamond',{timeout:60000},()=>{
+ const current=prepareCurrentCoreUnitUnicode();assert.equal(current.layers.length,2);
+ assertUnitMatchesSourceComposition(current.layers[0],{},current.sources);
+ assertCurrentCoreUnicodeSourceComposition(current.layers[1],Object.fromEntries(current.layers[0].files.map(row=>[row.path,row])),current.sources);
 });
 
 test('Unicode runtime matches every scalar boundary and rejects invalid ABI without coercion',{timeout:60000},()=>{
@@ -41,6 +51,11 @@ test('Unicode runtime matches every scalar boundary and rejects invalid ABI with
  for(const value of [undefined,null,0,0n,true,{},new String('a'),hostile,proxy,'\ud800','\udfff','x\ud800'])for(const run of [strip,control])assert.throws(()=>run(value),TypeError);assert.equal(callbacks,0);
  // Complete input validation precedes the early positive control result.
  assert.throws(()=>control('\0\ud800'),TypeError);const order=[];assert.equal(strip((order.push('argument'),' a ')),'a');assert.deepEqual(order,['argument']);
+});
+
+test('current composition refuses an unknown complete host parent before installing Unicode sources',{timeout:60000},()=>{
+ const original=prepareCoreUnicodePredicates().files.find(row=>row.path==='tools/translation/extensions/host-contracts.mjs');
+ assert.throws(()=>composeCurrentCoreUnitMatches({[original.path]:{after:original.before+' '}}),/preceding complete source differs/);
 });
 
 test('genuine owned Unicode calls survive semantic roundtrip and strict typed targets',{timeout:60000},async()=>{
@@ -67,7 +82,7 @@ test('unknown producers shadowed names attributes and unobserved callbacks retai
 });
 
 test('complete physical parents Cargo and exact original function spans remain retained DATA',{timeout:60000},()=>{
- const packet=application();assert.equal(packet.files.length,7);for(const row of packet.files){assert.equal(hash(row.source),row.sha256);assert.equal(readFileSync(new URL(row.path,root),'utf8'),row.source,row.path);}
+ const packet=application();assert.equal(packet.files.length,7);for(const row of packet.files){assert.equal(hash(row.source),row.sha256);const current=row.path==='rust/src/lib.rs'?composeGeolocationModuleSource(row.source).after:row.source;assert.equal(readFileSync(new URL(row.path,root),'utf8'),current,row.path);}
  for(const [path,name]of [['rust/src/login_pty_backend.rs','compact_terminal_text'],['rust/src/model_resource.rs','valid_model_id']]){const row=packet.files.find(row=>row.path===path),items=sourceItems(row.source).filter(item=>item.term==='fn'&&item.name===name);assert.equal(items.length,1);assert.ok(row.source.slice(items[0].start,items[0].end).includes('.chars()'));}
  for(const path of ['rust/src/lib.rs','Cargo.toml','rust/Cargo.toml','Cargo.lock'])assert.ok(packet.files.some(row=>row.path===path));
  // These complete parents are source evidence, not a closed executable crate.
@@ -77,7 +92,8 @@ test('complete physical parents Cargo and exact original function spans remain r
 test('complete original compact and model-id bodies receive fresh whole-function checking',{timeout:60000},async()=>{
  const packet=application(),originals=[['rust/src/login_pty_backend.rs','compact_terminal_text'],['rust/src/model_resource.rs','valid_model_id']].map(([path,name])=>{const source=packet.files.find(row=>row.path===path).source,items=sourceItems(source).filter(item=>item.term==='fn'&&item.name===name);assert.equal(items.length,1);return {path,name,span:[items[0].start,items[0].end],source:source.slice(items[0].start,items[0].end)};});
  const text=migrateCoreLiteralText(originals.map(row=>row.source).join('\n'));assert.equal(transportConcreteSyntaxMeta(text.before.meta).source,text.before.source);assert.equal(transportConcreteSyntaxMeta(text.after.meta).source,text.after.source);
- const files=input(text.after.source),before=project(files),plan=proposeCoreUnicodePredicatesCorpus({files}),row=plan.proposals.find(row=>row.file==='src/lib.rs');inverse(row);assert.equal(row.edits.length,2);assert.deepEqual(row.selections.map(row=>row.name),originals.map(row=>row.name));const after=project(plan.after);for(const original of originals)assert.equal(has(after,original.name),true,original.name);for(const item of before.meta.executable)assert.equal(has(after,item.name),true,'retained original fixture item '+item.name);
+ const returns=adoptCoreUnicodeStringReturns(text.after.source);assert.equal(returns.edits.length,1);assert.equal(transportConcreteSyntaxMeta(returns.before.meta).source,text.after.source);assert.equal(transportConcreteSyntaxMeta(returns.after.meta).source,returns.after.source);assert.equal(returns.executableAdmission,false);
+ const files=input(returns.after.source),before=project(files),plan=proposeCoreUnicodePredicatesCorpus({files}),row=plan.proposals.find(row=>row.file==='src/lib.rs');inverse(row);assert.equal(row.edits.length,2);assert.deepEqual(row.selections.map(row=>row.name),originals.map(row=>row.name));const after=project(plan.after);for(const original of originals)assert.equal(has(after,original.name),true,original.name);for(const item of before.meta.executable)assert.equal(has(after,item.name),true,'retained original fixture item '+item.name);
  await verifyTypedTargets(after,api=>{for(const [value,expected]of vectors)assert.equal(api.compact_terminal_text(value),expected);for(const value of ['model','猫😀','e\u0301','\ufeff','a'.repeat(512),'😀'.repeat(128)])assert.equal(api.valid_model_id(value),true,value);for(const value of ['', '/', 'model/name','\0','\u0085','a'.repeat(513),'😀'.repeat(129)])assert.equal(api.valid_model_id(value),false,value);},{childTimeoutMs:20000});
  // Exact full-body fixture checks above do not establish admission in either
  // retained original parent, the full corpus, reverse executable parity or CI.

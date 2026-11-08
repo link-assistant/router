@@ -88,3 +88,16 @@ pub fn json_parse_bytes(value: &[u8]) -> Maybe<Json> {
 pub fn ascii_chars_in(value: &Str, alphabet: &Str) -> bool {
     value.bytes().all(|byte| byte.is_ascii() && alphabet.as_bytes().contains(&byte))
 }
+
+/// Remove exactly Rust Unicode White_Space scalars, retaining all other scalars.
+/// Native iterator and String collection internals remain untranslated.
+#[must_use]
+pub fn strip_unicode_whitespace(value: &Str) -> String {
+    value.chars().filter(|ch| !ch.is_whitespace()).collect()
+}
+
+/// Detect Rust Unicode General_Category=Cc without exposing a char iterator.
+#[must_use]
+pub fn has_unicode_control(value: &Str) -> bool {
+    value.chars().any(char::is_control)
+}
