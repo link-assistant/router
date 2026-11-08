@@ -26,6 +26,7 @@ const tag=($,fields={})=>Object.freeze({$,...fields});
 const json=value=>{const parsed=serde_json_from_str(JSON.stringify(value));assert.equal(parsed.$,'Ok');return parsed.field0;};
 async function current(ids,verify){
   const entries=retain('complete-current-parents-selections-and-core',ids.map(id=>currentRealSourceEntry(id))),files={...entries[0].files,'src/lib.rs':'pub mod translation_core;\n'+entries.map(row=>row.source).join('\n')};
+  assert.equal(files['src/translation_core/base64.rs'],readFileSync(resolve(ROOT,repositorySourcePath('src/translation_core/base64.rs',ROOT)),'utf8'));
   for(const row of entries)assert.deepEqual(row.dependencyInputs,entries[0].dependencyInputs);
   const dependencyInputs=entries[0].dependencyInputs,result=retain('complete-current-core-carrier-result',translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE,cargoManifest:dependencyInputs.manifest,jsonMacroDependencies:loadJsonMacroSourceProof(dependencyInputs)}));
   for(const row of entries)for(const name of row.entry.bodyNames)assert.ok(result.meta.executable.some(item=>item.term==='fn'&&item.name===name),JSON.stringify(result.meta.refused));

@@ -1,4 +1,5 @@
 import {projectCanonicalJsonStringFields} from '../canonical-json-projection.mjs';
+import {completeOwnedCoreSourceFixture} from './complete-core-source-fixture.mjs';
 import {originalBatchedNamespaceTraversalIntrinsicsUnchanged,originalPrivateParserIngressUnchanged} from '../original-json-intrinsics.mjs';
 import {originalBatchedLexingIntrinsicsUnchanged} from '../original-lexing-intrinsics.mjs';
 import {relocatedRustSourcePath,rustPackageSourcePath} from '../repository-layout.mjs';
@@ -75,8 +76,10 @@ export function currentRealSourceEntry(id,options={}){
   if(JSON.stringify(selection)!==JSON.stringify(expected))fail('exact current selection changed');
   const files={'src/lib.rs':'pub mod translation_core;\n'+selection.source};
   for(const path of ['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs','src/translation_core/json_collections.rs'])files[path]=sourceAt(bundle,'current',path,{...options,physical:true});
+  const completeFiles=completeOwnedCoreSourceFixture(files);
+  for(const [path,source]of Object.entries(completeFiles))if(path!=='src/lib.rs'&&text(readFileSync(resolve(options.root??ROOT,rustPackageSourcePath(options.root??ROOT,path))))!==source)fail('actual complete Core child differs: '+path);
   const dependencyInputs={manifest:sourceAt(bundle,'current','Cargo.toml',{...options,physical:true}),lock:sourceAt(bundle,'current','Cargo.lock',{...options,physical:true})};
-  return {entry,original,source:selection.source,selection,files,dependencyInputs,revision:bundle.current.revision,scope:'Current full source parent retained; exact declarations in an authored Core carrier, not full parent/crate admission.'};
+  return {entry,original,source:selection.source,selection,files:completeFiles,dependencyInputs,revision:bundle.current.revision,scope:'Current full source parent retained; exact declarations in an authored Core carrier, not full parent/crate admission.'};
 }
 
 
