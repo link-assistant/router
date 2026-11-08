@@ -72,6 +72,25 @@ remain unfinished; no draft checkpoint establishes release readiness.
   and failure markers retain their original presence or absence; an incomplete
   application directory never becomes a successful application result.
   Receipt: `current-unit-application-incomplete-data-retirement.json`.
+- Capture all 148 complete inactive Node audit files / 1750368 original bytes,
+  including original failed deadlines and the full heap-abort attempt, in
+  `current-unit-unicode-closed-deadline-evidence.tar.xz` (75604 bytes). Every
+  complete archive member is independently read back. The capture makes no
+  change to any test outcome, source deadline or full-gate status.
+  After complete archive/member verification and inactive-path checks, retiring
+  only those archived audit duplicates reclaims 2031616 allocated bytes.
+  Receipt: `current-unit-unicode-closed-deadline-retirement.json`.
+
+## Bounded static closure diagnostic
+
+- A finite source-only private compiler census refuses an unknown actual
+  `node:module` import before it can establish the complete static closure.
+  Elapsed 2.415876 seconds, sampled peak 1790726144 bytes; every child is reaped.
+  Full streams: `current-private-compiler-static-census.*`. No production
+  module/external bound is raised, no compiler is executed and no complete
+  census, executable gain or generation result is claimed. Retain the source
+  and the actual failure alongside the other explicitly unqualified proposals
+  in `current-source-draft-status.md`.
 
 ## Complete current privacy application parents
 
