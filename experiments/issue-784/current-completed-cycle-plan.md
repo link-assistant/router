@@ -23,6 +23,12 @@ partial receiving evidence does not establish completion.
       complete both focused files and retain all failed gate attempts.
 - [x] Retain the complete private compiler census and its unchanged over-limit
       raw input and unsupported-native boundaries; production remains refused.
+- [x] Authenticate complete later binder helper history before the original
+      comparison; all eight whole-file cases pass in Node and Bun.
+- [x] Resolve callback-mutation child Cargo inputs from the repository source
+      profile; all six whole-file cases pass in Node and Bun.
+- [x] Verify exact whole privacy history for historical literal comparisons;
+      both complete files pass all twelve cases in Node and Bun.
 - [ ] Resolve every remaining semantic, source generation, strict parity and
       original deadline failure without changing refusals or mandatory checks.
 - [ ] Verify all tool/account privacy criteria, including unsupported protocols

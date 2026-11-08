@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
-import {composeUnitPrivacyApplicationSources} from './fixtures/unit-privacy-source-composition.mjs';
+import {composeUnitPrivacyApplicationSources,restoreUnitPrivacySourceHistory} from './fixtures/unit-privacy-source-composition.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 function application(){
@@ -32,4 +32,20 @@ test('complete privacy joins refuse altered missing duplicated and unknown histo
  }
  const packet=application(),row=packet.files.find(row=>row.path==='rust/src/account_routing_policy.rs');row.source+=' ';row.sha256=hash(row.source);
  assert.throws(()=>composeUnitPrivacyApplicationSources(packet),/complete pinned privacy parent/);
+});
+test('historical receiving comparisons restore only exact complete privacy sources and retain the current source',{timeout:10000},()=>{
+ const path='rust/src/native_service_relay.rs',source=readFileSync(new URL('../../../'+path,import.meta.url),'utf8'),records=[];
+ const historical=restoreUnitPrivacySourceHistory(path,source,(name,value)=>records.push({name,value}));
+ assert.equal(hash(historical),'5ef693242ff7081a899872ba1a9f19e540a982102670eaa6c01a14b88d7b7e69');
+ assert.equal(hash(source),'28c33a558c9112da0f40ab532bcdd9f647af8dff737d4a7b076e4dff80d1191b');
+ assert.equal(records.length,1);const row=records[0].value;
+ assert.equal(row.current,source);assert.equal(row.historical,historical);assert.equal(row.semanticAuthority,false);
+ assert.equal(transportConcreteSyntaxMeta(row.equation.beforeMeta).source,historical);
+ assert.equal(transportConcreteSyntaxMeta(row.equation.afterMeta).source,source);
+ assert.deepEqual(row.equation.stages.map(stage=>stage.phase),['language','repository']);
+ assert.equal(restoreUnitPrivacySourceHistory(path,historical),historical);
+ assert.equal(restoreUnitPrivacySourceHistory('unrelated.rs','unchanged'), 'unchanged');
+ for(const unknown of [source+'\n',source.slice(1),source+source])assert.throws(()=>restoreUnitPrivacySourceHistory(path,unknown),/unregistered complete current privacy source/);
+ let calls=0;assert.throws(()=>restoreUnitPrivacySourceHistory(path,source,{}),/callback required/);assert.equal(calls,0);
+ const failure=new Error('retention callback failed');assert.throws(()=>restoreUnitPrivacySourceHistory(path,source,()=>{calls++;throw failure;}),error=>error===failure);assert.equal(calls,1);
 });

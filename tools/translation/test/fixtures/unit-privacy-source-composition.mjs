@@ -7,6 +7,11 @@ import {transportConcreteNamedSourcePhases} from '../../concrete-named-phases.mj
 const root=new URL('../../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw Error('Complete unit privacy source composition: '+message);};
 const identity=state=>['dev','ino','mode','size','mtimeMs','ctimeMs'].map(key=>state[key]);
+function reviewedRules(){
+ const raw=readFileSync(new URL('./unit-privacy-source-rules.json',import.meta.url));
+ if(hash(raw)!=='2ea2bda49086d73d03111549a9e6e3c02f28d7d736d1e10fd2f62631237ad0ac')fail('reviewed complete source rules changed');
+ return {raw,rules:JSON.parse(raw)};
+}
 function physical(path){
  const url=new URL(path,root),before=lstatSync(url);
  if(!before.isFile()||before.isSymbolicLink())fail('ordinary complete physical file required: '+path);
@@ -15,9 +20,7 @@ function physical(path){
  return {source,identity:identity(before)};
 }
 export function composeUnitPrivacyApplicationSources(packet){
- const raw=readFileSync(new URL('./unit-privacy-source-rules.json',import.meta.url));
- if(hash(raw)!=='2ea2bda49086d73d03111549a9e6e3c02f28d7d736d1e10fd2f62631237ad0ac')fail('reviewed complete source rules changed');
- const rules=JSON.parse(raw),rows=[];
+ const {raw,rules}=reviewedRules(),rows=[];
  if(packet.schema!=='router-unit-matches-complete-application-sources-v1'||packet.files.length!==567||new Set(packet.files.map(row=>row.path)).size!==567)fail('complete original application required');
  for(const part of rules.files){
   const original=packet.files.find(row=>row.path===part.path);
@@ -45,4 +48,29 @@ export function composeUnitPrivacyApplicationSources(packet){
  }
  if(!readFileSync(new URL('./unit-privacy-source-rules.json',import.meta.url)).equals(raw))fail('complete source rules changed during transaction');
  return result;
+}
+
+// Restore only a complete known source for historical receiving comparisons.
+// Actual callers still need their current source, ownership and runtime proofs.
+export function restoreUnitPrivacySourceHistory(path,source,retain=()=>{}){
+ if(typeof path!=='string'||typeof source!=='string'||typeof retain!=='function')fail('primitive path/source and retention callback required');
+ const {raw,rules}=reviewedRules(),part=rules.files.find(row=>row.path===path);
+ if(!part)return source;
+ if(hash(source)===part.beforeSha256)return source;
+ if(hash(source)!==part.afterSha256)fail('unregistered complete current privacy source: '+path);
+ const reverse=createRulePipeline([
+  {phase:'language',rules:[...part.edits].reverse().map((edit,at)=>exactLiteralSubstitutionRule('privacy-history:restore:'+at,edit.replacement,edit.expected,'Complete current privacy anchor differs: '+path))},
+  {phase:'repository',rules:[]},
+ ]).run(source),historical=reverse.value;
+ if(hash(historical)!==part.beforeSha256)fail('complete historical privacy inverse differs: '+path);
+ const replay=createRulePipeline([
+  {phase:'language',rules:part.edits.map((edit,at)=>exactLiteralSubstitutionRule('privacy-history:replay:'+at,edit.expected,edit.replacement,'Complete historical privacy anchor differs: '+path))},
+  {phase:'repository',rules:[]},
+ ]).run(historical);
+ if(replay.value!==source)fail('complete current privacy replay differs: '+path);
+ const [equation]=transportConcreteNamedSourcePhases([{before:historical,middle:source,after:source,language:'Rust',rules:['privacy-history:reviewed-language-edits','privacy-history:complete-current-input','privacy-history:restore-language-input','privacy-history:restore-complete-parent']}]);
+ if(equation.before!==historical||equation.after!==source||equation.inverse!==historical)fail('complete serialized privacy source equation differs');
+ if(!readFileSync(new URL('./unit-privacy-source-rules.json',import.meta.url)).equals(raw))fail('reviewed source rules changed during history transaction');
+ retain('complete-reviewed-privacy-source-history',{path,historical,current:source,equation,reverseTrace:reverse.trace,replayTrace:replay.trace,semanticAuthority:false});
+ return historical;
 }
