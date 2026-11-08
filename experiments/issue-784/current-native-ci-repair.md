@@ -4,6 +4,22 @@ Objective: fully satisfy issue #784 and all mandatory CI in PR #785, including
 base-branch failures. The objective remains active. All unresolved criteria
 remain unfinished; no draft checkpoint establishes release readiness.
 
+## Named source-phase transaction
+
+- Add a separate complete native/CST transaction that actually executes four
+  explicit existing rule identifiers, keeping language and repository phases,
+  full canonical stages and inverses, original aggregate bounds, fresh parser
+  closure authentication and final original input/rule descriptor joins. All
+  original public transaction files remain byte-exact. No source-verdict cache
+  or semantic authority is introduced.
+- The complete four-case file passes Node 20.20.2 and its independent original
+  deadline audit (`complete-MGJdD5`) in 10.370293 seconds, sampled cgroup peak
+  1954222080 bytes. Bun 1.4.4 passes all four cases in 11.311202 seconds, peak
+  1955405824 bytes. Neither observer interrupts; every owned child is reaped.
+  Full streams: `current-named-phase-receiving-{node,bun}.*`. Source producer
+  installation passes separately in 3.120652 seconds, peak 1869815808 bytes.
+  Actual unit/Unicode producer integration and performance remain unrun.
+
 ## Current source repairs and failed production generation
 
 - The complete four-mode generation batch retained production HEAD `1ca80df96`

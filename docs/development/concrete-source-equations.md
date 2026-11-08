@@ -83,3 +83,22 @@ refuse. Edited source remains DATA and needs independent semantic checking.
 original snapshot, actual native selections, both CST stages and all inverses.
 A finite complete-project diagnostic compares every canonical stage and inverse;
 it does not qualify the original whole receiving deadlines, matrix or parity.
+# Explicit names for source phase rules
+
+`transportConcreteNamedSourcePhases` is a separate DATA entry point for whole
+source equations whose existing rule identifiers must survive batching. Each
+ordered own-data row supplies `before`, `middle`, `after`, `language`, and four
+`rules`: language edit, repository edit, language inverse, repository inverse.
+The actual substitution runner executes those identifiers; traces are never
+renamed after execution. Both phase names remain `language` and `repository`.
+
+`prepare-concrete-named-phases.mjs --check` derives its complete native
+transaction from the pinned original phased transaction, with full CST
+serialization, reparse and inverses. Original public transactions stay exact.
+Each call freshly authenticates the complete parser graph, reparses every stage
+and inverse, and rejoins both original caller and private rule descriptors after
+native callbacks. There is no retained source verdict or semantic authority.
+Four complete receiving cases pass in both Node and Bun with their original
+60000-ms deadlines. Producer integration and whole-file performance remain
+separate qualifications.
+
