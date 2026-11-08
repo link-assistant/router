@@ -28,6 +28,11 @@ configurations = {
         'inputs': ['router-core-facade-source.mjs', 'router-core-source-data.mjs'],
         'newInputs': ['test/fixtures/tuple-owned-core-refusals.json'],
         'nodeLabel': 'node-2', 'cases': 8},
+    'typed-target-trace': {
+        'tests': ['typed-target-compiler.test.mjs'],
+        'inputs': ['test/typed-targets.mjs', 'test/option-ok-or.test.mjs',
+                   'test/option-borrowed-str-equality.test.mjs'],
+        'repositoryInputs': ['.github/workflows/javascript-first.yml'], 'cases': 3},
 }
 assert len(sys.argv) == 2 and sys.argv[1] in configurations
 label = sys.argv[1]
@@ -51,6 +56,11 @@ for name in ['test/' + name for name in configuration['tests']] + configuration[
     retain(path, path.read_bytes())
 for name in configuration.get('newInputs', []):
     path = Path('tools/translation') / name
+    retain(path, path.read_bytes())
+for name in configuration.get('repositoryInputs', []):
+    path = Path(name)
+    retain('git:' + baseline + ':' + str(path),
+           subprocess.check_output(['git', 'show', baseline + ':' + str(path)]))
     retain(path, path.read_bytes())
 if label == 'tuple-core':
     for name in ['lib.rs', 'anthropic_stream.rs', 'responses.rs', 'translation_core.rs',

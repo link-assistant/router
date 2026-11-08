@@ -33,6 +33,9 @@ partial receiving evidence does not establish completion.
       lint and both native test stages pass; TypeScript hits the memory guard.
 - [x] Repair the tuple receiving scope with all actual Core sources and explicit
       unchanged library refusals; eight whole-file cases pass in each engine.
+- [x] Preserve complete typed-child failure diagnostics behind an off-by-default
+      trace; three whole-file controls pass in both engines and 14 workflows pass
+      structural checks. Large-project failure repairs remain unfinished.
 - [ ] Resolve every remaining semantic, source generation, strict parity and
       original deadline failure without changing refusals or mandatory checks.
 - [ ] Verify all tool/account privacy criteria, including unsupported protocols

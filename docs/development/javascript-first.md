@@ -53,6 +53,13 @@ The single-module and whole-cohort receiving helpers share compiler selection.
 Set `ROUTER_TRANSLATION_COMPILER_TRACE=1` for optional command, argument-prefix
 and installed-version diagnostics; an explicit unavailable compiler still fails.
 
+Set `ROUTER_TRANSLATION_TYPED_TARGET_TRACE=1` to retain failure-only child
+compiler diagnostics from `verifyTypedTargets`. Its JSON stderr event contains
+the phase, exact command/arguments, status/signal and complete stdout/stderr
+bytes in base64. The original error still propagates, and default behavior is
+silent. CI enables this trace in the complete translation receiving step to
+avoid losing compiler output in truncated TAP exception messages.
+
 Reverse regeneration also [bulk drafts independently checked native bodies](native-portable-body-drafts.md). Complete top-level and scoped lexical censuses retain every source span and refusal separately. Every module's checked program is serialized and reparsed before emitting TypeScript and uncompiled Rust projections; refused enclosing owners remain refused. The emitted TypeScript joins the existing strict native compilation.
 
 The local reverse stage runs every `tools/translation/js-to-rust/test/*.test.mjs` under Node with two test workers and under Bun before checking regeneration. Bun uses `node scripts/run-bun-reverse-files.mjs --output-root js/node_modules/.bun-reverse-files`: one fresh sequential process per complete discovered file, with original case deadlines and a 40-minute total cap. The coordinator retains complete raw streams, child resource receipts, compiler observations and before/after Rust, JavaScript, TypeScript and forward-definition input vectors. Every failed, interrupted, newly discovered or unrun mandatory file fails the stage. Each invocation allocates a new evidence directory. CI uses eight exhaustive complete-file bins per engine and an independent job for all three original regeneration checks; every job keeps its original 15-minute limit and complete setup. The source-derived Bun shard coordinator preserves the original leaf execution and deadlines. All Node and Bun bins retain their full evidence and must succeed. CI installs pinned Bun 1.4.3. New compiler test files are automatically included; the workflow audit rejects selecting only the legacy translator suite, filtering tests or ignoring an engine failure. The TypeScript stage retains its independent native TypeScript tests.

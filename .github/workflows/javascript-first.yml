@@ -192,6 +192,8 @@ jobs:
           "
       - run: npm ci --prefix js --ignore-scripts
       - run: node scripts/run-node-test-shard.mjs --outer-timeout-ms=3600000 --whole-file-shard=${{ matrix.shard }}/8 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs
+        env:
+          ROUTER_TRANSLATION_TYPED_TARGET_TRACE: '1'
       - name: Preserve complete Node deadline audit and raw streams
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
