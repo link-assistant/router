@@ -99,6 +99,14 @@ Its [separate receipt](evidence/resolver-complete-local-retirement.json.gz)
 retains the full archive identity and remote metadata. These two retirements
 reclaim 46994208 logical bytes without losing the published original streams.
 
+Before the next complete gate and CI capture, the same full Git-blob, fresh
+GitHub-metadata and inactive-path checks retire the 21592036-byte local restart
+packet. Its 361 complete original members remain in the unchanged
+[published archive](https://github.com/link-assistant/router/blob/4e7093eb98b2170bac2cd5fd24c0c777e6bcf4b2/docs/case-studies/issue-784/evidence/restart-complete.tar.xz?raw=true).
+The [separate receipt](evidence/restart-complete-local-retirement.json.gz)
+records exact compressed-stream recovery and reclaimed logical/allocated bytes.
+This creates evidence capacity without deleting any active check output.
+
 Issue #784 and the PR remain unfinished. The universal all-tool/account privacy
 criterion is still unmet; the case-study requirement inventory and configuration
 guide retain the exact supported scope and all external-account limitations.

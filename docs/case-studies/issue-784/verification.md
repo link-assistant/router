@@ -825,7 +825,7 @@ original was verified and every selected input remained unchanged. This later
 capture preserves the distinct tested heads and the final Rust change's unrun
 status; capture does not rerun or qualify a check.
 
-[`restart-complete.tar.xz`](evidence/restart-complete.tar.xz) preserves **361
+[`restart-complete.tar.xz`](https://github.com/link-assistant/router/blob/4e7093eb98b2170bac2cd5fd24c0c777e6bcf4b2/docs/case-studies/issue-784/evidence/restart-complete.tar.xz?raw=true) preserves **361
 complete members**, including both completed restart CI cycles, every downloaded
 artifact, the complete local gate, all receiving logs, resource observations,
 cleanup receipts and authenticated tested-source snapshots. Its **91,292,737
