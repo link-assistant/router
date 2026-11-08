@@ -16,6 +16,8 @@ parser.add_argument('--closed-historical-observations', action='store_true')
 parser.add_argument('--closed-current-diagnostics', action='store_true')
 parser.add_argument('--closed-published-source-review', action='store_true')
 parser.add_argument('--closed-alias-checkpoint', action='store_true')
+parser.add_argument('--closed-generation-observations', action='store_true')
+parser.add_argument('--closed-translation-observations', action='store_true')
 parser.add_argument('--receipt', default='reverse-shard-inactive-evidence-compression.json')
 args = parser.parse_args()
 assert sum(bool(value) for value in [args.closed_attempt, args.closed_investigations,
@@ -23,7 +25,9 @@ assert sum(bool(value) for value in [args.closed_attempt, args.closed_investigat
                                    args.closed_historical_observations,
                                    args.closed_current_diagnostics,
                                    args.closed_published_source_review,
-                                   args.closed_alias_checkpoint]) <= 1
+                                   args.closed_alias_checkpoint,
+                                   args.closed_generation_observations,
+                                   args.closed_translation_observations]) <= 1
 assert Path(args.receipt).name == args.receipt and args.receipt.endswith('.json')
 paths = [root / 'ci-logs' / name for name in [
     'restart-export-published-review.diff',
@@ -63,6 +67,30 @@ elif args.closed_alias_checkpoint:
         'current-translation-four-rerun-complete.log',
         'current-publish-readable-review.diff', 'current-alias-reader-numstat.txt',
     ]]
+elif args.closed_generation_observations:
+    # Exact closed observations from previous published heads, never inputs.
+    paths = [base / name for name in [
+        'current-d46-native-closed-deadline-retirement.json',
+        'receiving-batch-completed-job-collection-13-validity-2.json',
+        'receiving-batch-completed-job-collection-13.json',
+        'receiving-batch-completed-job-collection-12.json',
+        'receiving-batch-completed-job-collection-3.json',
+        'current-unit-application-incomplete-data-capture.json',
+        'current-d46b10bba-full-gate.log',
+        'current-unit-application-incomplete-data-manifest.json',
+        'current-d46-native-closed-deadline-evidence-capture.json',
+        'current-node-profile-ci-failure-index.txt',
+        'receiving-batch-early-reverse-failure-index.txt',
+    ]]
+elif args.closed_translation_observations:
+    # Previous completed cycle snapshots and closed custody receipts only.
+    paths = [base / name for name in [
+        'current-d46-native-closed-deadline-evidence-manifest.json',
+        'receiving-batch-live-main-13.json', 'receiving-batch-live-main-12.json',
+        'current-unit-unicode-closed-deadline-retirement.json',
+        'current-unit-unicode-closed-deadline-evidence-capture.json',
+    ]] + [base / ('current-translation-four-rerun-live-' + str(index) + '.json')
+          for index in range(1, 10)]
 elif args.closed_current_diagnostics:
     # Exact completed diagnostic outputs only. The current whole-file run,
     # current CI snapshot and all source inputs remain outside this list.

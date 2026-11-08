@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
+import {deriveModuleItemNativeFreeze} from './module-item-native-freeze-source.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
@@ -54,8 +55,10 @@ export function prepareModuleTokenLayout({root=ROOT}={}){
  const original=readFileSync(resolve(root,ORIGINAL),'utf8');if(hash(original)!==PIN)fail('complete original source pin differs');
  const before=readFileSync(resolve(root,PATH),'utf8'),native=nativeSelection(original);
  // Language edits occur after all imports, so this repository position is exact.
- const language=native.language,after=language.slice(0,native.importAt)+IMPORT+language.slice(native.importAt);
- if(before!==original&&before!==after)fail('unrelated complete physical source differs');
+ const nativeItemFreeze=deriveModuleItemNativeFreeze(native.language),language=nativeItemFreeze.after;
+ const after=language.slice(0,native.importAt)+IMPORT+language.slice(native.importAt);
+ const previousAfter=native.language.slice(0,native.importAt)+IMPORT+native.language.slice(native.importAt);
+ if(before!==original&&before!==previousAfter&&before!==after)fail('unrelated complete physical source differs');
  const ts=ownershipCompiler();if(ts.createSourceFile(PATH,after,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS).parseDiagnostics.length)fail('complete proposed native grammar differs');
  let document=transportConcreteSyntaxSource(original,{language:'JavaScript'}).document;
  const stages=[];
@@ -69,7 +72,7 @@ export function prepareModuleTokenLayout({root=ROOT}={}){
   stages.push({phase,source,target,beforeMeta,afterMeta,sequence,inverseSequence,inverse:source,trace:run.trace});document=parsed.document;
  }
  if(readFileSync(resolve(root,PATH),'utf8')!==before)fail('complete physical source changed during preparation');
- return {schema:'module-token-layout-source-v1',path:PATH,originalCommit:'007dc7f3a3a882d17ab87d2a53067ebb236f948f',original,originalSha256:PIN,before,language,after,afterSha256:hash(after),inverse:original,native,stages,newAcrossInvocationCaches:false,originalLexerUnchanged:true,originalBoundsUnchanged:true,sourceAuthority:false,runtimeAuthority:false};
+ return {schema:'module-token-layout-source-v1',path:PATH,originalCommit:'007dc7f3a3a882d17ab87d2a53067ebb236f948f',original,originalSha256:PIN,before,previousAfter,language,after,afterSha256:hash(after),inverse:original,native,nativeItemFreeze,stages,newAcrossInvocationCaches:false,originalLexerUnchanged:true,originalBoundsUnchanged:true,sourceAuthority:false,runtimeAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--emit','--check'].includes(args[0]))fail('Usage: prepare-module-token-layout.mjs --emit|--check');
