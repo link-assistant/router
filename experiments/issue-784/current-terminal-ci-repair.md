@@ -51,6 +51,11 @@ issue/PR conversation, inline-comment and review reads at 2026-11-08 18:44 UTC.
 - [ ] Satisfy every literal all-tool/account privacy criterion; keep external
   blockers and unsupported traffic paths explicit. Keep the PR draft/unmerged
   until every acceptance criterion and same-head required CI check passes.
+- [x] Join the genuine Unicode facade/primitive history and regenerate its
+  receiving copies. Both complete Node files pass 19 cases and original
+  deadlines. All seven facade cases pass under Bun 1.4.4 `--smol`; the earlier
+  combined Bun run retains two text failures and a resource stop. Complete
+  forward/Bun/CI/gate qualification remains unfinished.
 
 The complete [terminal inventory](../../docs/case-studies/issue-784/current-terminal-ci.md)
 maps the completed cycle and preserves its upstream evidence gap. Passing a
