@@ -55,6 +55,15 @@ bytes. The exact plan, every member hash, inactivity checks, full receipt and
 actual collection/retirement tools are preserved in
 [the custody packet](evidence/current-ci-custody.json.gz).
 
+The 25 inactive original artifact ZIP copies were subsequently retired from the
+current working tree after every full SHA-256, size and Git blob was checked
+against immutable published commit `764222b6e6d4f0ce1efb0341396cfb6a87661e85`.
+The [retirement receipt](evidence/ci-17c7-artifact-local-retirement.json.gz)
+retains the whole manifest, remote metadata, complete original hashes and
+permanent download links for all 25 originals. They remain in that published
+commit. No current CI artifact, job log or active file was removed. This
+reclaimed 34,687,021 logical bytes and the receipt records filesystem allocation.
+
 These are failed published-head results. Subsequent focused source repairs
 do not retroactively qualify this head or establish full-gate success, strict
 parity, Rust verification, or completion of issue #784. The pull request stays
