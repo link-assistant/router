@@ -4,6 +4,29 @@ Objective: fully satisfy issue #784 and all mandatory CI in PR #785, including
 base-branch failures. The objective remains active. All unresolved criteria
 remain unfinished; no draft checkpoint establishes release readiness.
 
+## Complete original reverse and retention producer comparison
+
+- Retain the complete original reverse-ASCII and private-analysis-retention
+  preparers in a separate deterministic pinned archive. Select whole native
+  source functions to batch their full CST equations with the actual original
+  rule identifiers. Every native copy, lexical binding, physical source read,
+  archive recheck, original result property, phase and inverse remains present.
+  No source result/verdict cache or semantic permission is added.
+- All three new receiving cases pass Node 20.20.2 and its independent deadline
+  audit (`complete-wY55JL`) in 37.217664 seconds, sampled peak 1959735296 bytes.
+  Bun 1.4.4 passes all three in 40.655995 seconds, peak 2092204032 bytes.
+  Both engines execute the complete retained original operations and compare
+  their entire returned records against the installed producers. Every child
+  is reaped. Streams: `current-named-ascii-producer-static-deadlines-`.
+- The first functional Node comparison passes all three cases but the audit
+  rejects a new loop-bound deadline declaration as non-static. That failed
+  attempt remains retained in `current-named-ascii-producer-receiving-node.*`.
+  The new cases now all declare literal 60000-ms deadlines. No existing test
+  case, assertion or deadline changes. Source installation passes separately
+  in 1.710877 seconds, peak 2172006400 bytes. The complete existing enclosing
+  files are being rerun; their previous failed timing remains failed until
+  a complete receiving run and original deadline audit qualify the change.
+
 ## Current Unicode and ASCII asset inputs
 
 - The physical Unicode addition changed the complete host asset producer and
