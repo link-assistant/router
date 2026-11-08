@@ -163,3 +163,7 @@ parity and original deadline qualification remain unfinished.
 The [complete original decoder repair](current-original-decoder.md) records
 the retained matrix CLI regression, exact wire/refusal checks, passing focused
 audits, interrupted storage attempts and the separate remaining native deadline.
+
+The [native CLI import repair](current-native-cli-imports.md) records the next
+source equation and passing complete Node/Bun retention files, including the
+original CLI deadline. Full-gate and exact-head CI qualification remain open.

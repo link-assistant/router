@@ -4,7 +4,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
-import {deriveNativeOutputTextSourceSet} from './prepare-native-output-text-retention.mjs';
+import {deriveNativeOutputTextSourceSet,deriveCurrentNativeOutputTextSourceSet} from './prepare-native-output-text-retention.mjs';
 import {prepareOwnedFieldBulkSources,assertOwnedFieldBulkInputsFresh} from './prepare-owned-field-bulk.mjs';
 import {transportConcreteNamedSourcePhases} from './concrete-sequential-phases.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),P='tools/translation/';
@@ -35,7 +35,7 @@ export function prepareCurrentNativeOutputTextRetention({root=ROOT}={}){
  for(const row of prior.files)if(read(row.path)!==row.text)fail('actual owned-field prerequisite stale: '+row.path);
  const oldFiles=deriveNativeOutputTextSourceSet(INPUTS.map(path=>({path,source:archived.get(path).source})));
  for(const [at,row]of oldFiles.entries())if(row.path!==OUTPUTS[at]||row.after!==archived.get(row.path).source||row.inverse!==archived.get(INPUTS[at]).source)fail('complete native predecessor equation differs');
- const files=deriveNativeOutputTextSourceSet(INPUTS.map(path=>({path,source:read(path)})));
+ const files=deriveCurrentNativeOutputTextSourceSet(INPUTS.map(path=>({path,source:read(path)})));
  for(const [at,row]of files.entries()){
   if(row.path!==OUTPUTS[at]||row.before!==inputs.find(input=>input.path===INPUTS[at]).source)fail('complete current source association differs');
   row.current=read(row.path);if(row.current!==oldFiles[at].after&&row.current!==row.after)fail('unknown complete native source: '+row.path);

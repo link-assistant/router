@@ -66,9 +66,24 @@ const consumers=[
  ['owned-field-isolated-matrix-profile.mjs','native-owned-field-isolated-matrix-profile.mjs',{}],
 ];
 function admission({ts,file,nodes}){const declaration=one(nodes.filter(node=>ts.isVariableDeclaration(node)&&ts.isIdentifier(node.name)&&node.name.text==='allowed'),'original private planner admission');if(!ts.isNewExpression(declaration.initializer)||declaration.initializer.expression.getText(file)!=='Set'||declaration.initializer.arguments.length!==1)fail('actual original admission constructor differs');const list=declaration.initializer.arguments[0];if(!ts.isArrayLiteralExpression(list)||JSON.stringify(list.elements.map(row=>row.text))!==JSON.stringify(['owned-field-bulk.mjs','retained-owned-field-bulk.mjs']))fail('actual original two-planner boundary differs');return [selection(file,list,'["native-retained-owned-field-bulk.mjs"]','repository:native-only-private-planner')];}
-// Source DATA only. Both current and authenticated predecessor cohorts use the
-// same native selectors; a complete fresh binding program precedes every return.
-export function deriveNativeOutputTextSourceSet(rows){
+function deferredCliImports({ts,file}){
+ const declarations=[
+  ['../tools/translation/owned-field-bulk.mjs',['regenerate'],'retainOutputText?{}:'],
+  ['../tools/translation/owned-field-matrix-bulk.mjs',['regenerateCompilationMatrix'],'retainOutputText?{}:'],
+  ['../tools/translation/compilation-matrix.mjs',['createCompilationMatrix','DECLARED_FAMILY_PROFILES'],'profileMatrix?'],
+ ],edits=[],loading=[];
+ for(const [path,names,condition]of declarations){
+  const node=one(file.statements.filter(row=>ts.isImportDeclaration(row)&&row.moduleSpecifier.text===path),'original CLI import '+path),clause=node.importClause,bindings=clause?.namedBindings;
+  if(!clause||clause.name||clause.isTypeOnly||!bindings||!ts.isNamedImports(bindings)||bindings.elements.some(row=>row.propertyName||row.isTypeOnly)||JSON.stringify(bindings.elements.map(row=>row.name.text))!==JSON.stringify(names))fail('actual original CLI named bindings differ: '+path);
+  edits.push(selection(file,node,'','repository:defer-native-cli:'+path));
+  loading.push('const {'+names.join(',')+'}='+condition+'await import('+JSON.stringify(path)+')'+(condition==='profileMatrix?'?':{}':'')+';\n');
+ }
+ return {edits,source:loading.join('')};
+}
+// Source DATA only. The archived equations keep their original eager imports;
+// the current rule defers unreachable ordinary routes after the native guard.
+// Both issue one complete fresh all-module binding program before returning.
+function deriveNativeOutputTextSourceSetUsing(rows,deferCli){
  const ts=ownershipCompiler(),cli='scripts/translate-router-owned-field-meta.mjs';
  const names=[P+'private-output-text.mjs',...consumers.map(([before])=>P+before),cli];
  if(!Array.isArray(rows)||rows.length!==names.length)fail('all seven complete source inputs required');
@@ -79,16 +94,18 @@ export function deriveNativeOutputTextSourceSet(rows){
   'isolated-retained-owned-field-matrix-bulk.mjs':'isolated-native-retained-owned-field-matrix-bulk.mjs',
   '../tools/translation/retained-owned-field-bulk.mjs':'../tools/translation/native-retained-owned-field-bulk.mjs',
   '../tools/translation/retained-owned-field-matrix-bulk.mjs':'../tools/translation/native-retained-owned-field-matrix-bulk.mjs',
- },({file,nodes})=>{const marker=one(file.statements.filter(node=>ts.isVariableStatement(node)&&node.declarationList.declarations.some(row=>ts.isIdentifier(row.name)&&row.name.text==='progressStarted')),'post-argument original boundary');return [{id:'repository:explicit-native-cli-contract',span:[marker.getStart(file),marker.getStart(file)],expected:'',replacement:"if(!retainOutputText||ownedCoreDefinitions)throw new TypeError('Native owned-field CLI requires --retain-output-text and does not support --owned-core-definitions');\n"}];}));
+ },native=>{const {file}=native,marker=one(file.statements.filter(node=>ts.isVariableStatement(node)&&node.declarationList.declarations.some(row=>ts.isIdentifier(row.name)&&row.name.text==='progressStarted')),'post-argument original boundary'),imports=deferCli?deferredCliImports(native):{edits:[],source:''};return [...imports.edits,{id:'repository:explicit-native-cli-contract',span:[marker.getStart(file),marker.getStart(file)],expected:'',replacement:"if(!retainOutputText||ownedCoreDefinitions)throw new TypeError('Native owned-field CLI requires --retain-output-text and does not support --owned-core-definitions');\n"+imports.source}];}));
  const bindings=verifyNativeCopiedModuleBindings(ts,files.map(({path,after})=>({path,source:after})));
  for(const [at,row]of files.entries())row.nativeBindings=bindings[at];return files;
 }
+export function deriveNativeOutputTextSourceSet(rows){return deriveNativeOutputTextSourceSetUsing(rows,false);}
+export function deriveCurrentNativeOutputTextSourceSet(rows){return deriveNativeOutputTextSourceSetUsing(rows,true);}
 export async function prepareNativeOutputTextRetention({root=ROOT}={}){
  root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');const inputs=[],read=path=>{const full=resolve(root,path),stat=lstatSync(full);if(!stat.isFile()||stat.isSymbolicLink()||stat.size>1048576)fail('whole regular source input required: '+path);const raw=readFileSync(full),source=raw.toString('utf8');if(!Buffer.from(source).equals(raw))fail('source UTF8 differs');inputs.push({path,source,bytes:raw.length,sha256:hash(raw)});return source;};
  const priorSource=read(P+'prepare-owned-field-bulk.mjs');const {prepareOwnedFieldBulkSources,assertOwnedFieldBulkInputsFresh}=await import(pathToFileURL(resolve(root,P+'prepare-owned-field-bulk.mjs')));
  const prior=prepareOwnedFieldBulkSources({root});if(prior.files.length!==9)fail('all nine original owned-field equations required');for(const row of prior.files)if(read(row.path)!==row.text)fail('actual owned-field prerequisite stale: '+row.path);
  if(readFileSync(resolve(root,P+'prepare-owned-field-bulk.mjs'),'utf8')!==priorSource)fail('original producer changed during import');
- const files=deriveNativeOutputTextSourceSet([P+'private-output-text.mjs',...consumers.map(([before])=>P+before),'scripts/translate-router-owned-field-meta.mjs'].map(path=>({path,source:read(path)})));
+ const files=deriveCurrentNativeOutputTextSourceSet([P+'private-output-text.mjs',...consumers.map(([before])=>P+before),'scripts/translate-router-owned-field-meta.mjs'].map(path=>({path,source:read(path)})));
  for(const row of files){try{const path=resolve(root,row.path),stat=lstatSync(path);if(!stat.isFile()||stat.isSymbolicLink()||stat.size>1048576)fail('regular bounded current native source required: '+row.path);row.current=readFileSync(path,'utf8');}catch(error){if(error.code!=='ENOENT')throw error;row.current='';}if(row.current!==''&&row.current!==row.after)fail('unknown existing native output: '+row.path);}
  for(const name of ['prepare-native-output-text-retention.mjs','native-output-text-kernels.mjs','source-copy-native-bindings.mjs','rule-pipeline.mjs','concrete-syntax-meta.mjs','js-to-rust/vendor/module-syntax.mjs'])read(P+name);
  const plan={schema:'native-output-retention-source-proposal-v1',root,files,inputs,prerequisites:{ownedField:prior},typescriptVersion:ts.version,originalAPIsUnchanged:true,arbitraryObserverEquivalent:false,compressionObservationsEquivalent:false,storageLimitsUnchanged:true,semanticAuthority:false,performanceQualified:false};assertOwnedFieldBulkInputsFresh(prior);assertNativeOutputTextInputsFresh(plan);return plan;

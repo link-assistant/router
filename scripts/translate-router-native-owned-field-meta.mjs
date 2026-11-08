@@ -3,9 +3,9 @@
 // Complete project translation and all original storage bounds remain required.
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { regenerate } from "../tools/translation/owned-field-bulk.mjs";
-import {regenerateCompilationMatrix} from "../tools/translation/owned-field-matrix-bulk.mjs";
-import {createCompilationMatrix,DECLARED_FAMILY_PROFILES} from '../tools/translation/compilation-matrix.mjs';
+
+
+
 
 const args = process.argv.slice(2);
 let root = resolve(dirname(fileURLToPath(import.meta.url)), '..'), check = false,profileMatrix=false,progress=false,retainOutputText=false,ownedCoreDefinitions=false;
@@ -23,6 +23,9 @@ for (let index = 0; index < args.length; index++) {
   } else throw new Error('Usage: node scripts/translate-router.mjs [--check] [--progress] [--profile-matrix] [--retain-output-text] [--owned-core-definitions] [--root REPOSITORY] [--entry TRACKED_RS]');
 }
 if(!retainOutputText||ownedCoreDefinitions)throw new TypeError('Native owned-field CLI requires --retain-output-text and does not support --owned-core-definitions');
+const {regenerate}=retainOutputText?{}:await import("../tools/translation/owned-field-bulk.mjs");
+const {regenerateCompilationMatrix}=retainOutputText?{}:await import("../tools/translation/owned-field-matrix-bulk.mjs");
+const {createCompilationMatrix,DECLARED_FAMILY_PROFILES}=profileMatrix?await import("../tools/translation/compilation-matrix.mjs"):{};
 const progressStarted=process.hrtime.bigint();
 const options={root,check,entries:entries.length?entries:undefined,progress:progress?record=>process.stderr.write(JSON.stringify({...record,elapsedMilliseconds:Number((process.hrtime.bigint()-progressStarted)/1_000_000n)})+'\n'):undefined};
 // Complete matrix CLI: sequential source-derived process lifetime.

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
-import {deriveNativeOutputTextSourceSet} from '../prepare-native-output-text-retention.mjs';
+import {deriveNativeOutputTextSourceSet,deriveCurrentNativeOutputTextSourceSet} from '../prepare-native-output-text-retention.mjs';
 import {readNativeOutputRetentionPredecessors,prepareCurrentNativeOutputTextRetention,assertCurrentNativeOutputTextInputsFresh} from '../prepare-current-native-output-text-retention.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 
@@ -48,12 +48,26 @@ test('all seven original and current native equations join exact committed outpu
   assert.deepEqual(row.sourceHistory.stages.map(stage=>stage.phase),['language','repository']);
   for(const stage of row.sourceHistory.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);assert.equal(stage.inverse,stage.before);}
  }
- assert.equal(changed,2);assert.equal(assertCurrentNativeOutputTextInputsFresh(plan),true);
+ assert.equal(changed,3);assert.equal(assertCurrentNativeOutputTextInputsFresh(plan),true);
+ const cli=plan.files.at(-1),ts=ownershipCompiler(),parse=source=>ts.createSourceFile(cli.path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),old=parse(cli.historical.after),current=parse(cli.after);
+ const deferred=['../tools/translation/owned-field-bulk.mjs','../tools/translation/owned-field-matrix-bulk.mjs','../tools/translation/compilation-matrix.mjs'];
+ for(const node of old.statements){
+  if(ts.isImportDeclaration(node)&&deferred.includes(node.moduleSpecifier.text)){
+   assert.equal(current.statements.filter(row=>ts.isImportDeclaration(row)&&row.moduleSpecifier.text===node.moduleSpecifier.text).length,0);
+  }else assert.equal(current.statements.filter(row=>row.getText(current)===node.getText(old)).length,1,'whole original CLI statement');
+ }
+ const edits=cli.stages[1].edits.filter(row=>row.id.startsWith('repository:defer-native-cli:'));
+ assert.equal(edits.length,3);assert.ok(edits.every(row=>row.replacement===''));
+ const contract=cli.stages[1].edits.find(row=>row.id==='repository:explicit-native-cli-contract');
+ assert.ok(contract.replacement.startsWith("if(!retainOutputText||ownedCoreDefinitions)throw new TypeError("));
+ for(const path of deferred)assert.equal(contract.replacement.split('await import('+JSON.stringify(path)+')').length,2);
+ assert.ok(contract.replacement.includes('const {regenerate}=retainOutputText?{}:await import('));
+ assert.ok(contract.replacement.includes('const {createCompilationMatrix,DECLARED_FAMILY_PROFILES}=profileMatrix?await import('));
  const producer=plan.producerEvolution.equation;
  assert.equal(producer.inverse,producer.before);assert.equal(transportConcreteSyntaxMeta(producer.afterMeta).source,readFileSync(plan.producerEvolution.path,'utf8'));
 });
 
 test('incomplete duplicate and unrelated source cohorts refuse before creating a native candidate',{timeout:60000},()=>{
  const history=readNativeOutputRetentionPredecessors(),first=history.files[0];
- for(const rows of [[],Array(7).fill(first),Array(7).fill({path:'unrelated.mjs',source:'export const x=1;'}),Array(7).fill({path:first.path})])assert.throws(()=>deriveNativeOutputTextSourceSet(rows),TypeError);
+ for(const rows of [[],Array(7).fill(first),Array(7).fill({path:'unrelated.mjs',source:'export const x=1;'}),Array(7).fill({path:first.path})])for(const derive of [deriveNativeOutputTextSourceSet,deriveCurrentNativeOutputTextSourceSet])assert.throws(()=>derive(rows),TypeError);
 });
