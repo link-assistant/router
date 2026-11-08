@@ -25,5 +25,8 @@ finite controls verify that a genuine tracked large file is excluded while
 open and mapped, included once closed, and retains its whole SHA-256, inode
 and metadata. The [complete control packet](evidence/current-large-page-controls.json.gz)
 retains every whole control stream, resource receipt and before/after helper
-source. The actual complete gate remains independently required. No Rust tool
-was run.
+source. The subsequent actual gate still stops before all seven stages: 35.601
+seconds, sampled cgroup peak 2,874,527,744 bytes, eight completed advice passes
+and no stage output. The later [fingerprint trace](current-fingerprint-trace.md)
+retains that whole failed observation alongside the traced attempt. These
+passing controls do not resolve the gate failure. No Rust tool was run.

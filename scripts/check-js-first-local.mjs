@@ -20,7 +20,8 @@ function git(...args) {
   if (result.status !== 0) throw new Error(result.error?.message || result.stderr || `git ${args[0]} failed (${result.status ?? result.signal}).`);
   return result.stdout.trim();
 }
-export function fingerprint(stampPath) {
+export function fingerprint(stampPath, { progress } = {}) {
+  if (progress !== undefined && typeof progress !== 'function') throw new TypeError('Fingerprint progress must be a function.');
   const root = git('rev-parse', '--show-toplevel');
   const resolvedStamp = path.join(fs.realpathSync(path.dirname(path.resolve(stampPath))), path.basename(stampPath));
   // The conserved source and compressed evidence include tens of thousands of
@@ -28,6 +29,13 @@ export function fingerprint(stampPath) {
   const result = spawnSync('git', ['ls-files', '-co', '--exclude-standard', '-z'], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
   if (result.status !== 0) throw new Error(result.error?.message || result.stderr || `git ls-files failed (${result.status ?? result.signal}).`);
   const files = [...new Set(result.stdout.split('\0').filter(Boolean))].sort();
+  let completedFiles = 0, completedBytes = 0;
+  const observe = (relative, kind, bytes) => {
+    if (!progress) return;
+    completedFiles++; completedBytes += bytes;
+    if (completedFiles % 512 === 0 || bytes >= 8 * 1024 * 1024) progress({state:'advance', relative, kind, bytes, completedFiles, completedBytes, totalFiles:files.length});
+  };
+  progress?.({state:'start', totalFiles:files.length});
   const hash = createHash('sha256');
   // Keep file-content allocation independent of the complete evidence size.
   // The length frame and hash bytes are identical to whole-buffer hashing.
@@ -42,9 +50,11 @@ export function fingerprint(stampPath) {
       kind = metadata.isSymbolicLink() ? 'symlink' : metadata.mode & 0o111 ? 'executable' : 'file';
       if (metadata.isSymbolicLink()) content = Buffer.from(fs.readlinkSync(absolute));
       else {
+        if (progress && metadata.size >= 8 * 1024 * 1024) progress({state:'opening', relative, kind, bytes:metadata.size, completedFiles, completedBytes, totalFiles:files.length});
         const descriptor = fs.openSync(absolute, 'r');
+        let length;
         try {
-          const length = fs.fstatSync(descriptor).size;
+          length = fs.fstatSync(descriptor).size;
           hash.update(JSON.stringify([relative, kind, length]) + '\n');
           let position = 0;
           while (position < length) {
@@ -55,13 +65,16 @@ export function fingerprint(stampPath) {
           }
           if (fs.fstatSync(descriptor).size !== length) throw new Error(`Source changed while fingerprinting: ${relative}`);
         } finally { fs.closeSync(descriptor); }
+        observe(relative, kind, length);
         continue;
       }
     }
     // Length framing prevents file bytes from masquerading as another path.
     // Executability and link targets are part of Git's source tree identity.
     hash.update(JSON.stringify([relative, kind, content.length]) + '\n').update(content);
+    observe(relative, kind, content.length);
   }
+  progress?.({state:'complete', completedFiles, completedBytes, totalFiles:files.length});
   return { headSha: git('rev-parse', 'HEAD'), treeHash: hash.digest('hex') };
 }
 export function verifyStamp(stampPath) {
@@ -78,7 +91,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       const option = process.argv.indexOf('--stamp');
       const stampPath = option !== -1 ? process.argv[option + 1] : path.join(os.tmpdir(), 'router-js-first-gate.json');
       fs.rmSync(stampPath, { force: true });
-      const before = fingerprint(stampPath);
+      const fingerprintOptions = process.env.ROUTER_JS_FIRST_FINGERPRINT_PROGRESS === '1'
+        ? {progress:record=>process.stderr.write(JSON.stringify({event:'javascript-gate-fingerprint', ...record, memory:process.memoryUsage()}) + '\n')}
+        : undefined;
+      const before = fingerprint(stampPath, fingerprintOptions);
       const failures = [];
       for (const [id, commands] of stages) {
         console.log(`\nJavaScript stage: ${id}`);
@@ -88,7 +104,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
         }
       }
       if (failures.length) throw new Error(`JavaScript preflight failed (no green stamp written):\n${failures.join('\n')}`);
-      const after = fingerprint(stampPath);
+      const after = fingerprint(stampPath, fingerprintOptions);
       if (JSON.stringify(before) !== JSON.stringify(after)) throw new Error('Source changed during checks. Run the full preflight again.');
       fs.writeFileSync(stampPath, JSON.stringify({ version: 1, ...after, checkedAt: new Date().toISOString(), stages: stages.map(([id]) => id), strictParity: true }, null, 2) + '\n');
       console.log(`Strict JavaScript gate passed; stamp: ${stampPath}`);

@@ -161,7 +161,7 @@ test('fingerprints stream regular files with unchanged complete content, mode, l
     fs.unlinkSync('deleted.js'); fs.writeFileSync('untracked', 'new input');
     const stampPath = path.join(directory, 'stamp.json'); fs.writeFileSync(stampPath, 'excluded stamp');
     const names = [...new Set(execFileSync('git', ['ls-files', '-co', '--exclude-standard', '-z'], {encoding:'utf8'}).split('\0').filter(Boolean))].sort();
-    const expected = createHash('sha256');
+    const expected = createHash('sha256'); let expectedBytes = 0;
     for (const name of names) {
       if (name === 'stamp.json') continue;
       let kind = 'deleted', content = Buffer.alloc(0);
@@ -171,6 +171,7 @@ test('fingerprints stream regular files with unchanged complete content, mode, l
         content = metadata.isSymbolicLink() ? Buffer.from(fs.readlinkSync(name)) : readFile(name);
       }
       expected.update(JSON.stringify([name, kind, content.length]) + '\n').update(content);
+      expectedBytes += content.length;
     }
     const identity = {headSha:execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim(),treeHash:expected.digest('hex')};
     const inode = fs.statSync(large).ino, reads = [];
@@ -184,10 +185,42 @@ test('fingerprints stream regular files with unchanged complete content, mode, l
     };
     assert.deepEqual(fingerprint(stampPath), identity);
     assert.deepEqual(reads, [{length:65536,position:0},{length:65536,position:65536},{length:17,position:131072}]);
+    const progress = [];
+    assert.deepEqual(fingerprint(stampPath, {progress:row=>progress.push(row)}), identity);
+    assert.deepEqual(progress.map(row=>row.state), ['start','complete']);
+    assert.equal(progress[1].completedFiles, names.length - 1);
+    assert.equal(progress[1].completedBytes, expectedBytes);
+    assert.throws(()=>fingerprint(stampPath, {progress:null}), /progress must be a function/);
   } finally {
     fs.readFileSync = readFile; fs.readSync = read;
     process.chdir(previous); fs.rmSync(directory, {recursive:true,force:true});
   }
+});
+
+test('optional fingerprint progress identifies a large input without changing its hash or swallowing callback failures', () => {
+  const previous = process.cwd();
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'router-gate-progress-'));
+  try {
+    process.chdir(directory);
+    execFileSync('git', ['init', '-q']);
+    execFileSync('git', ['config', 'user.name', 'Gate Test']);
+    execFileSync('git', ['config', 'user.email', 'gate@example.invalid']);
+    const content = Buffer.alloc(8 * 1024 * 1024 + 1, 65);
+    fs.writeFileSync('large.bin', content);
+    execFileSync('git', ['add', 'large.bin']);
+    execFileSync('git', ['commit', '-qm', 'progress fixture']);
+    const stampPath = path.join(directory, 'stamp.json');
+    const identity = fingerprint(stampPath), progress = [];
+    assert.equal(identity.treeHash, createHash('sha256').update(JSON.stringify(['large.bin', 'file', content.length]) + '\n').update(content).digest('hex'));
+    assert.deepEqual(fingerprint(stampPath, {progress:row=>progress.push(row)}), identity);
+    assert.deepEqual(progress.map(row=>row.state), ['start','opening','advance','complete']);
+    assert.equal(progress[1].relative, 'large.bin');
+    assert.equal(progress[1].completedFiles, 0);
+    assert.equal(progress[2].completedBytes, content.length);
+    assert.equal(progress[3].completedFiles, 1);
+    const failure = new Error('progress callback failed');
+    assert.throws(()=>fingerprint(stampPath, {progress:()=>{throw failure;}}), error=>error === failure);
+  } finally { process.chdir(previous); fs.rmSync(directory, { recursive: true, force: true }); }
 });
 
 test('large tracked path inventories remain fingerprinted beyond the default subprocess buffer', () => {
@@ -206,7 +239,12 @@ test('large tracked path inventories remain fingerprinted beyond the default sub
     const listing = execFileSync('git', ['ls-files', '-z'], { maxBuffer: 2 * 1024 * 1024 });
     assert.ok(listing.length > 1024 * 1024);
     const stampPath = path.join(directory, 'stamp.json');
-    const identity = fingerprint(stampPath);
+    const progress = [], identity = fingerprint(stampPath, {progress:row=>progress.push(row)});
+    assert.equal(progress[0].state, 'start');
+    assert.equal(progress.at(-1).state, 'complete');
+    assert.equal(progress.at(-1).completedFiles, 7000);
+    assert.equal(progress.at(-1).completedBytes, 0);
+    assert.equal(progress.filter(row=>row.state==='advance').length, Math.floor(7000/512));
     fs.writeFileSync(stampPath, JSON.stringify({ version: 1, ...identity, checkedAt: new Date().toISOString(), stages: stages.map(([id]) => id), strictParity: true }));
     assert.deepEqual(verifyStamp(stampPath), identity);
     fs.writeFileSync('00000-' + 'x'.repeat(160) + '.js', 'changed content');

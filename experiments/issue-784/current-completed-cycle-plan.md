@@ -17,8 +17,12 @@ partial receiving evidence does not establish completion.
       and review the complete PR diff before publishing only the prepared branch.
 - [x] Publish the coordinated batch as `567e1dd0b`.
 - [ ] Collect that head's entire immutable CI cycle before the next push.
-- [x] Repair the exact selected-census predecessor and complete both whole
-      receiving files (five cases per engine) and actual producer freshness.
+- [x] Repair the exact selected-census predecessor and complete the whole
+      receiving file in both engines (five cases each) and actual freshness.
+- [x] Trace the full gate fingerprint without changing hashing or the guard;
+      complete both focused files and retain all failed gate attempts.
+- [x] Retain the complete private compiler census and its unchanged over-limit
+      raw input and unsupported-native boundaries; production remains refused.
 - [ ] Resolve every remaining semantic, source generation, strict parity and
       original deadline failure without changing refusals or mandatory checks.
 - [ ] Verify all tool/account privacy criteria, including unsupported protocols
@@ -29,3 +33,9 @@ guard after 16.521 seconds; all seven stages remain unrun. The bounded 15-second
 closed-file page-advice experiment did not resolve this failure. Its four finite
 controls pass, but do not qualify the gate. Do not repeat that unchanged failed
 experiment. No local Rust execution or additional agents.
+
+The later three-second large-file advice also fails. With default-off progress
+enabled, the gate reaches at least 45,056 inputs and 1.64 GB content before the
+unchanged guard stops it; all stages remain unrun. This trace narrows the
+observation without proving the remaining container memory's cause. The exact
+streams and receipts are retained in `current-fingerprint-trace.json.gz`.

@@ -34,6 +34,13 @@ establishes a measured speed gain.
 
 ## Run the complete gate before Rust
 
+For fingerprint diagnostics, set `ROUTER_JS_FIRST_FINGERPRINT_PROGRESS=1` on
+the complete gate command. This default-off trace writes scalar JSON records
+to stderr for every 512 completed inputs and before/after files at least 8 MiB.
+It includes paths, byte counters and Node memory samples, without source
+contents. Complete input discovery, hash framing and stage commands stay the
+same; progress and memory samples do not qualify any unrun stage.
+
 Install the checked-in JavaScript package dependencies with `npm ci --prefix js`. Node 20 or newer is required; install Bun for the native Bun test stage. Run `node scripts/check-js-first-local.mjs --stamp /tmp/router-js-first-gate.json` from the repository root. This orchestrates the actual repository lint, native Node and Bun tests, TypeScript checks, strict parity, forward translation checks and reverse regeneration checks. It writes a green stamp only after all stages succeed and the SHA and file contents remain unchanged. A current strict parity failure is a reason to finish the missing implementation, not to downgrade the gate.
 
 Useful individual diagnostics are `node --test scripts/test/*.test.mjs`, `npm run native:test --prefix js`, `npm run native:test:bun --prefix js`, `npm run typecheck --prefix js`, `node scripts/check-router-parity.mjs`, `node scripts/check-router-parity.mjs --strict`, `node scripts/translate-router.mjs --check`, `node scripts/regenerate-js-first.mjs --check` and `node scripts/check-js-first-workflows.mjs`. Individual diagnostics do not replace the complete gate. The broader package `npm test` command can exercise the Rust-backed integration surface. Use the native commands above for local JavaScript diagnostics; issue #759 prohibits local Rust execution.
