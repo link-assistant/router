@@ -42,3 +42,10 @@ test('a genuine Hash callback exception is propagated unchanged rather than rela
  try{Object.defineProperty(Hash.prototype,'update',{...update,value:function(...args){if(Buffer.isBuffer(args[0])&&args[0].equals(packed)){invoked=true;throw sentinel;}return Reflect.apply(update.value,this,args);}});assert.throws(()=>composePrivateParserEquationSourceHistory(row,input,{root}),error=>error===sentinel);}finally{Object.defineProperty(Hash.prototype,'update',update);}
  assert.equal(invoked,true);assert.equal(isConcreteEquationPhysicalSourceMismatch(sentinel),false);
 });
+
+test('late ambient Reflect.apply replacement cannot mint a physical-source mismatch identity',{timeout:60000},t=>{
+ const {root}=fixture(t);let original;assert.throws(()=>prepareConcreteEquationTransaction({root}),error=>{original=error;return isConcreteEquationPhysicalSourceMismatch(error);});
+ const copy=Object.create(Object.getPrototypeOf(original),Object.getOwnPropertyDescriptors(original)),prior=Object.getOwnPropertyDescriptor(Reflect,'apply');let calls=0,genuine,forged;
+ try{Object.defineProperty(Reflect,'apply',{...prior,value(){calls++;return true;}});genuine=isConcreteEquationPhysicalSourceMismatch(original);forged=isConcreteEquationPhysicalSourceMismatch(copy);}finally{Object.defineProperty(Reflect,'apply',prior);}
+ assert.equal(genuine,true);assert.equal(forged,false);assert.equal(calls,0);
+});

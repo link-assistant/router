@@ -114,6 +114,16 @@ remain unfinished; no draft checkpoint establishes release readiness.
       unchanged 60000-ms deadlines. Full raw evidence: `complete-XosAEn`;
       observer/log: `private-parser-current-repaired-node.*` in the restart
       evidence directory. No whole-file performance qualification is claimed.
+- [x] Independently reproduce late `Reflect.apply` replacement forging the
+      physical-source refusal predicate. The finite native-VM experiment runs
+      the three complete actual private-brand declarations; a descriptor copy
+      incorrectly qualifies before the repair and is refused afterward.
+      Capture the apply function with the original weak-set methods. The full
+      producer is not executed by that diagnostic. Original before/after logs:
+      `physical-mismatch-apply-{before,after}.log` in the restart directory.
+- [ ] Run the complete four-case refusal file under Node and Bun for the new
+      captured-apply source, then check the unchanged equation producer output.
+      The three earlier receiving passes do not cover this fourth regression.
 
 ## Additional completed-CI root causes
 

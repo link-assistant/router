@@ -10,11 +10,11 @@ import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcr
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),SELF='tools/translation/prepare-concrete-equation-transaction.mjs';
 const ARCHIVE='tools/translation/source-profiles/concrete-equation-transaction/complete-originals.json.gz';
 const hash=value=>createHash('sha256').update(value).digest('hex'),fail=message=>{throw new TypeError('Concrete equation transaction: '+message);};
-const physicalSourceMismatchErrors=new WeakSet(),physicalSourceMismatchHas=WeakSet.prototype.has,physicalSourceMismatchAdd=WeakSet.prototype.add;
+const physicalSourceMismatchErrors=new WeakSet(),physicalSourceMismatchHas=WeakSet.prototype.has,physicalSourceMismatchAdd=WeakSet.prototype.add,physicalSourceMismatchApply=Reflect.apply;
 // This private brand distinguishes this producer's refusal from an exception
 // thrown by a caller callback. It grants no source or executable authority.
-export function isConcreteEquationPhysicalSourceMismatch(error){return Reflect.apply(physicalSourceMismatchHas,physicalSourceMismatchErrors,[error]);}
-function physicalSourceMismatch(path){const error=new TypeError('Concrete equation transaction: physical source differs from exact original/successor: '+path);Reflect.apply(physicalSourceMismatchAdd,physicalSourceMismatchErrors,[error]);throw error;}
+export function isConcreteEquationPhysicalSourceMismatch(error){return physicalSourceMismatchApply(physicalSourceMismatchHas,physicalSourceMismatchErrors,[error]);}
+function physicalSourceMismatch(path){const error=new TypeError('Concrete equation transaction: physical source differs from exact original/successor: '+path);physicalSourceMismatchApply(physicalSourceMismatchAdd,physicalSourceMismatchErrors,[error]);throw error;}
 function one(rows,label){if(rows.length!==1)fail('one exact native selection required: '+label);return rows[0];}
 function native(ts,path,source){const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete native grammar differs: '+path);return file;}
 function changes(source,edits){let after=source,last=source.length;for(const row of [...edits].sort((a,b)=>b.span[0]-a.span[0])){if(row.span[1]>last||source.slice(...row.span)!==row.expected)fail('exact native span differs');after=after.slice(0,row.span[0])+row.replacement+after.slice(row.span[1]);last=row.span[0];}let delta=0;const mapped=[...edits].sort((a,b)=>a.span[0]-b.span[0]).map(row=>{const at=row.span[0]+delta;delta+=row.replacement.length-row.expected.length;return {...row,afterSpan:[at,at+row.replacement.length]};});let inverse=after;for(const row of mapped.reverse()){if(inverse.slice(...row.afterSpan)!==row.replacement)fail('exact inverse span differs');inverse=inverse.slice(0,row.afterSpan[0])+row.expected+inverse.slice(row.afterSpan[1]);}if(inverse!==source)fail('complete native inverse differs');return after;}

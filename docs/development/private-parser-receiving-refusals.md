@@ -19,12 +19,19 @@ or copied descriptors: a genuine Hash callback can throw the same text and its
 original exception must escape unchanged. The separate receiving regressions
 exercise actual invalid physical source, copied and proxied exceptions,
 hostile accessors, primitive exceptions, a changed weak-set prototype method,
-and the genuine callback exception. Error classification grants no source,
+a late replacement of `Reflect.apply`, and the genuine callback exception.
+Both weak-set operations use the apply function captured with the private set;
+looking up ambient `Reflect.apply` later would let a replacement forge a match.
+Error classification grants no source,
 ownership or executable authority.
 
 All original current-source behavior assertions, source pins, freshness
 fences, complete native checks and 60000-ms deadlines remain mandatory. The
-focused refusal regressions pass on Node and Bun. Whole-file performance is
-not yet qualified; the current full Node run exceeds original case deadlines.
+original three focused refusal regressions pass on Node and Bun. The fourth
+apply-replacement regression and the current captured-apply source still need
+complete receiving checks. A tiny native-VM reproduction fails before this
+repair and passes afterward, but does not execute the complete producer.
+Whole-file performance is not yet qualified; the current full Node run exceeds
+original case deadlines.
 See the [active repair checklist](../../experiments/issue-784/current-native-ci-repair.md)
 for passed, failed and unrun verification against the current source batch.
