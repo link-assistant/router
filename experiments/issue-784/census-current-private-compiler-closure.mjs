@@ -68,8 +68,9 @@ while(pending.length){
       if(!ts.isStringLiteral(value))throw Error('Nonliteral static edge');
       let target=value.text.startsWith('.')?posix.normalize(posix.join(posix.dirname(request.path),value.text)):null;
       if(request.route&&value.text==='./types.js')target='tools/translation/checked-types.mjs';
-      if(!target&&!native.includes(value.text))throw Error('Unknown actual native input: '+value.text);
-      imports.push({specifier:value.text,target});
+      if(!target&&!value.text.startsWith('node:'))throw Error('Unresolved external input: '+value.text);
+      imports.push({specifier:value.text,target,
+        productionNativeAllowed:target?null:native.includes(value.text)});
       if(++edges>4096)throw Error('Diagnostic edge bound exceeded');
       if(target)pending.push({id:target,path:target});
     }
