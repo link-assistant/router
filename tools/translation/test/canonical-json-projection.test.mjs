@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
-import {join} from 'node:path';
+import {mkdtempSync,writeFileSync,rmSync,readFileSync,copyFileSync,mkdirSync} from 'node:fs';
+import {join,dirname} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createHash,Hash} from 'node:crypto';
 import {gzipSync} from 'node:zlib';
@@ -44,6 +44,23 @@ test('both actual source producers reproduce complete copied scanner metadata ch
  const result=prepareStaticJsonPreflight();assert.equal(result.files.length,3);
  for(const row of result.files){assert.equal(row.before,row.after);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.original);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);assert.equal(row.inverse,row.original);assert.deepEqual(row.trace.map(x=>x.phase),['language','repository']);}
  assert.equal(result.existingCompleteReaderBodyUnchanged,true);assert.equal(result.allOriginalPublicReaderBodiesUnchanged,true);assert.equal(result.additionalMetadataCallbackContract,true);assert.equal(result.originalLimitsUnchanged,true);assert.equal(result.newCaches,false);assert.equal(result.sourceAuthority,false);assert.equal(result.runtimeAuthority,false);
+ const reader=result.files.find(row=>row.path.endsWith('/real-source-fixtures.mjs'));
+ assert.ok(reader.original.includes("import {completeOwnedCoreSourceFixture} from './complete-core-source-fixture.mjs';"));
+ for(const edit of result.importEdits)assert.equal(reader.before.slice(...edit.span),edit.source);
+});
+
+test('missing or repeated complete preflight imports refuse instead of copying an unknown binding',{timeout:60000},()=>{
+ const root=mkdtempSync(join(tmpdir(),'router-preflight-imports-'));
+ try{
+  const paths=['tools/translation/canonical-json-text.mjs','tools/translation/test/real-source-fixtures.mjs','tools/translation/test/static-source-lifecycle.test.mjs'];
+  for(const path of paths){const target=join(root,path);mkdirSync(dirname(target),{recursive:true});copyFileSync(new URL('../../../'+path,import.meta.url),target);}
+  const reader=join(root,paths[1]),source=readFileSync(reader,'utf8'),line="import {projectCanonicalJsonStringFields} from '../canonical-json-projection.mjs';\n";
+  assert.ok(source.startsWith(line));
+  for(const changed of [source.slice(line.length),line+source]){
+   writeFileSync(reader,changed);
+   assert.throws(()=>prepareStaticJsonPreflight({root}),/one complete native preflight import required|complete native grammar/);
+  }
+ }finally{rmSync(root,{recursive:true,force:true});}
 });
 
 test('a complete valid legacy bank still receives every original canonical document and source equation',{timeout:60000},t=>{

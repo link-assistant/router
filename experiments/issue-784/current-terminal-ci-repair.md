@@ -44,6 +44,10 @@ issue/PR conversation, inline-comment and review reads at 2026-11-08 18:44 UTC.
   remain unqualified; CI's Bun 1.4.3 and the full current gate remain required.
 - [ ] Finish `4e9fad88f` run `42512128521` and its entire CI cycle and handle every failure
   before another coordinated publication. Do not cancel CI or start Rust early.
+- [x] Repair complete preflight import selection and relocated metadata/census
+  expectations. All 13 cases in the three complete Node files and their original
+  deadlines pass. Bun passed eight cases before a resource stop; remaining Bun
+  work is unrun, and the full gate remains unqualified.
 - [ ] Satisfy every literal all-tool/account privacy criterion; keep external
   blockers and unsupported traffic paths explicit. Keep the PR draft/unmerged
   until every acceptance criterion and same-head required CI check passes.
