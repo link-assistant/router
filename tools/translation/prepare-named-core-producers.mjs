@@ -85,9 +85,23 @@ export function prepareCoreUnicodeHostAssetHistory({root=ROOT}={}){
   edits.push({span:[composer.getStart(file),composer.getStart(file)],expected:'',replacement:addition});
   middle=once(middle,expected,addition+expected);
  }
- const after=replaceImport(middle)+(unit?"\nimport {types} from 'node:util';\nimport {assertConcreteSyntaxHost} from './concrete-syntax-meta.mjs';\n":'');
+ const suffix=unit?"\nimport {types} from 'node:util';\nimport {assertConcreteSyntaxHost} from './concrete-syntax-meta.mjs';\n":'';
+ const precedingAfter=replaceImport(middle)+suffix;
+ if(unit){
+  // One fresh external-module program retains each complete lexical result.
+  // The original per-source API and its archived operation remain unchanged.
+  const nextHelper=once(once(helperAfter,'originalNativeFile,equation){','originalNativeFile,equation,nativeBindings){'),
+   'nativeBindings:verifyNativeCopiedSourceBindings(ts,resolve(root,path),after)','nativeBindings');
+  const loop='try{for(const [at,path]of paths.entries())files.push(rowPlan(ts,path,result.source[path],result.after[path],root,result.originalNativeFiles.get(path),cst[at]));}';
+  const nextLoop="try{const bindings=new Map(verifyNativeCopiedModuleBindings(ts,paths.filter(path=>path.endsWith('.mjs')).map(path=>({path:resolve(root,path),source:result.after[path]}))).map(row=>[row.sourcePath,row]));for(const [at,path]of paths.entries())files.push(rowPlan(ts,path,result.source[path],result.after[path],root,result.originalNativeFiles.get(path),cst[at],bindings.get(resolve(root,path))));}";
+  const nextEntry=once(entryAfter,loop,nextLoop);
+  edits[0].replacement=nextHelper;edits[1].replacement=nextEntry;
+  middle=once(once(middle,helperAfter,nextHelper),entryAfter,nextEntry);
+ }
+ let after=replaceImport(middle)+suffix;
+ if(unit)after=once(after,"import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';","import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';");
  grammar(ts,row.path,middle);grammar(ts,row.path,after);
- return {path:row.path,before,middle,after,previousAfter,nativeEdits:edits,rules:[...names[kind]]};
+ return {path:row.path,before,middle,after,previousAfter,precedingAfter,nativeEdits:edits,rules:[...names[kind]]};
 }
 export function prepareNamedCoreProducers({root=ROOT}={}){
  root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript 5.9.3 required');
@@ -95,7 +109,7 @@ export function prepareNamedCoreProducers({root=ROOT}={}){
  const equations=transportConcreteNamedSourcePhases(files.map(row=>({before:row.before,middle:row.middle,after:row.after,language:'JavaScript',rules:['language:batch-complete-original-core-equations','repository:import-named-core-equation-transaction','language:restore-complete-original-core-producer','repository:restore-complete-original-core-imports']})));
  for(const [at,row]of files.entries()){
   row.equation=equations[at];row.current=readFileSync(resolve(root,row.path),'utf8');
-  if(row.equation.inverse!==row.before||![row.before,row.previousAfter,row.after].includes(row.current))fail('unknown complete physical source: '+row.path);
+  if(row.equation.inverse!==row.before||![row.before,row.previousAfter,row.precedingAfter,row.after].includes(row.current))fail('unknown complete physical source: '+row.path);
   if(row.after.split('\n').length>=1000)fail('complete output exceeds line bound');
  }
  if(JSON.stringify(originals(root))!==JSON.stringify(input))fail('complete original archive changed');

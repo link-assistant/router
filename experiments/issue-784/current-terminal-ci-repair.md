@@ -29,9 +29,20 @@ issue/PR conversation, inline-comment and review reads at 2026-11-08 18:44 UTC.
 - [ ] Repair the complete remaining CI set, including strict parity, real
   semantic and original deadline failures, canonical/profile/owned generation
   and the missing TypeScript owned-matrix sidecar. No check is optional.
-- [ ] Freshly integrate main, review the full patch, publish only the prepared
-  branch as an honest draft feedback checkpoint, and update PR #785.
-- [ ] Finish the new published head's entire CI cycle and handle every failure
+- [x] Freshly fetch main (already an ancestor), review the complete source
+  batch, publish only the prepared branch at `4e9fad88f`, and update draft
+  PR #785 with the failed/unrun gate result. No completion is claimed.
+- [x] Reproduce and repair the named Unicode producer's omitted complete host
+  history. Preserve the full original and unknown-source refusal; source
+  freshness passes. Node's six assertions pass but its original composition
+  deadline fails; Bun's last two cases remain unrun after a resource stop.
+- [x] Qualify the subsequent unit-producer native module-binding batch using
+  complete original/new records and all original case deadlines. The finite
+  profile locates repeated native binding/library work; it is not a benchmark.
+  Both complete files pass all ten cases under Node with its independent audit
+  and Bun 1.4.4 after closed-file page advice. Two earlier Bun resource stops
+  remain unqualified; CI's Bun 1.4.3 and the full current gate remain required.
+- [ ] Finish `4e9fad88f` run `42512128521` and its entire CI cycle and handle every failure
   before another coordinated publication. Do not cancel CI or start Rust early.
 - [ ] Satisfy every literal all-tool/account privacy criterion; keep external
   blockers and unsupported traffic paths explicit. Keep the PR draft/unmerged

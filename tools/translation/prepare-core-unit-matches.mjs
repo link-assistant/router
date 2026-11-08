@@ -6,7 +6,7 @@ import {createHash} from 'node:crypto';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
-import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
+import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';
 import {transportConcreteNamedSourcePhases} from './concrete-named-phases.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),PROFILE=new URL('./source-profiles/core-unit-matches/',import.meta.url);
 const FACADE='rust/src/translation_core.rs',DATA='tools/translation/router-core-source-data.mjs',MATCHES='tools/translation/router-core-matches.mjs',CONST='tools/translation/extensions/const-match-source-context.mjs',ORDERED='tools/translation/extensions/ordered-matches.mjs',LAYOUT='tools/translation/extensions/unit-enum-cast.mjs',LINKS='tools/translation/extensions/source-links.mjs',ORACLE='rust/tests/translation_core_unit_matches_oracle.rs';
@@ -122,18 +122,18 @@ function equations(ts,packet){
  const sourceAssociationOrigin={path:LINKS,owner:{span:[association.getStart(links),association.end],source:association.getText(links)},span:[expression.getStart(links),expression.end],before:old,after:replacement,namespaceAuthority:false,constAuthority:false};
  return {source,after,layoutOrigin,sourceAssociationOrigin,originalNativeFiles:new Map([[ORDERED,ordered],[LINKS,links]])};
 }
-function rowPlan(ts,path,before,after,root,originalNativeFile,equation){
+function rowPlan(ts,path,before,after,root,originalNativeFile,equation,nativeBindings){
  const language=path.endsWith('.rs')?'Rust':'JavaScript',languageSource=[MATCHES,CONST,ORDERED,LINKS].includes(path)?after:before;
  if(equation.before!==before||equation.middle!==languageSource||equation.after!==after||equation.inverse!==before)fail('complete named source equation differs');
  const stages=equation.stages.map(({phase,before,after,beforeMeta,afterMeta,trace})=>({phase,before,after,beforeMeta,afterMeta,trace,completeInverse:true})),beforeMeta=equation.beforeMeta,afterMeta=equation.afterMeta;
   let current=null;try{current=readFileSync(resolve(root,path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
  const nativeCopies=language==='JavaScript'?[nativeCopy(ts,path,before,originalNativeFile),nativeCopy(ts,path,after)]:[];
- return {path,before,language:languageSource,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta,afterMeta,inverse:before,stages,trace:stages.flatMap(stage=>stage.trace),nativeCopies,sourceLanguage:language,completeNativeAstCopy:language==='JavaScript',...(language==='JavaScript'?{nativeBindings:verifyNativeCopiedSourceBindings(ts,resolve(root,path),after)}:{})};
+ return {path,before,language:languageSource,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta,afterMeta,inverse:before,stages,trace:stages.flatMap(stage=>stage.trace),nativeCopies,sourceLanguage:language,completeNativeAstCopy:language==='JavaScript',...(language==='JavaScript'?{nativeBindings}:{})};
 }
 export function prepareCoreUnitMatches({root=ROOT}={}){
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');const packet=originals(),result=equations(ts,packet),paths=packet.files.map(row=>row.path).filter(path=>path!==LAYOUT),files=[];
  const cst=transportConcreteNamedSourcePhases(paths.map(path=>({before:result.source[path],middle:[MATCHES,CONST,ORDERED,LINKS].includes(path)?result.after[path]:result.source[path],after:result.after[path],language:path.endsWith('.rs')?'Rust':'JavaScript',rules:["language:copy-checked-unit-matches-and-original-source-custody","router:bind-separate-owned-unit-matches-operation","language:restore-complete-unit-input","router:restore-original-unit-operation-input"]})));
- try{for(const [at,path]of paths.entries())files.push(rowPlan(ts,path,result.source[path],result.after[path],root,result.originalNativeFiles.get(path),cst[at]));}finally{result.originalNativeFiles.clear();}
+ try{const bindings=new Map(verifyNativeCopiedModuleBindings(ts,paths.filter(path=>path.endsWith('.mjs')).map(path=>({path:resolve(root,path),source:result.after[path]}))).map(row=>[row.sourcePath,row]));for(const [at,path]of paths.entries())files.push(rowPlan(ts,path,result.source[path],result.after[path],root,result.originalNativeFiles.get(path),cst[at],bindings.get(resolve(root,path))));}finally{result.originalNativeFiles.clear();}
  return {schema:'router-owned-unit-matches-source-v1',typescriptVersion:ts.version,input:packet,layoutOrigin:result.layoutOrigin,sourceAssociationOrigin:result.sourceAssociationOrigin,files,semanticAuthority:false,runtimeExecuted:false,rustExecuted:false,newEncodedOrDigestCache:false,originalLiteralDomainUnchanged:true};
 }
 export function composeCoreUnitMatches(prior,options={}){assertConcreteSyntaxHost();
