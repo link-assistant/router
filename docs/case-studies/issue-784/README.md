@@ -171,3 +171,7 @@ original CLI deadline. Full-gate and exact-head CI qualification remain open.
 The [historical project accessor comparison](current-paired-project-accessors.md)
 records the six reproduced metadata failures and complete receiving-source
 repair, preserving all public accessor observations and original deadlines.
+
+The [class-birth entry repair](current-class-birth-entry.md) records the complete
+host pin regeneration, passing original class files under Node/Bun, and the
+separate remaining alias-reader freshness failure.

@@ -7,14 +7,27 @@ import os
 from pathlib import Path
 import stat
 import subprocess
+import sys
 
 root = Path.cwd()
-receipt = Path('ci-logs/issue-784-restart-2/current-paired-project-duplicate-retirement.json')
+assert sys.argv[1:] in ([], ['--paired-project'], ['--closed-receiving'])
+paired = sys.argv[1:] == ['--paired-project']
+receiving = sys.argv[1:] == ['--closed-receiving']
+label = 'current-class-birth-receiving' if receiving else 'current-class-birth' if paired else 'current-paired-project'
+receipt = Path('ci-logs/issue-784-restart-2/' + label + '-duplicate-retirement.json')
 assert not receipt.exists()
 selected, archives = {}, []
-for name, commit in [('current-native-cli-imports', '262a338c522bcadce2955acdc2ed93bc7e90b752'),
+packets = [('current-paired-project', 'c368316d2d56e9d81a58438d2a2fc2c8d3093757'),
+           ('current-paired-project-typescript', 'c368316d2d56e9d81a58438d2a2fc2c8d3093757')] if paired else [
+                    ('current-native-cli-imports', '262a338c522bcadce2955acdc2ed93bc7e90b752'),
                      ('current-native-retention-history', 'cbe928e11'),
-                     ('current-receiving-performance', 'a7bcf9526b0835f634b900e91fc30fc9c8301581')]:
+                     ('current-receiving-performance', 'a7bcf9526b0835f634b900e91fc30fc9c8301581')]
+if receiving:
+    packets = [(name, 'c368316d2d56e9d81a58438d2a2fc2c8d3093757') for name in [
+        'current-ascii-history-and-static-refresh', 'current-ci-custody',
+        'current-historical-native-receiving', 'current-host-unicode-history-receiving',
+        'current-negative-budget-history-receiving', 'current-proof-cost-history-receiving']]
+for name, commit in packets:
     path = Path('docs/case-studies/issue-784/evidence') / (name + '.json.gz')
     packed = path.read_bytes()
     assert packed == subprocess.check_output(['git', 'show', commit + ':' + str(path)])
@@ -33,6 +46,8 @@ for name, commit in [('current-native-cli-imports', '262a338c522bcadce2955acdc2e
         seen.add(name)
         if not name.startswith(('ci-logs/issue-784-restart-2/', 'js/node_modules/.node-case-deadlines/')):
             continue
+        if receiving and not Path(name).exists():
+            continue
         assert name not in selected
         selected[name] = (member, raw, str(path))
         if name.endswith('.memory.json'):
@@ -43,7 +58,8 @@ for name, commit in [('current-native-cli-imports', '262a338c522bcadce2955acdc2e
             check = json.loads(raw)
             assert check['childClosed'] and check['groupCleanup']['complete']
             assert not Path('/proc/' + str(check['groupCleanup']['group'])).exists()
-assert len(selected) == 221 and sum(row[0]['bytes'] for row in selected.values()) == 1686719
+assert len(selected) == (86 if receiving else 51 if paired else 221)
+assert sum(row[0]['bytes'] for row in selected.values()) == (2820967 if receiving else 399624 if paired else 1686719)
 
 
 def identity(state):
