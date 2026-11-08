@@ -15,20 +15,21 @@ const originals=[
 ];
 const once=(source,before,after)=>{if(source.split(before).length!==2)fail('unique complete native selection differs');return source.replace(before,()=>after);};
 function ruleNames(base){return base?['ascii-base:retain-complete-original-source','ascii-base:explicit-selected-read-schedule','ascii-base:restore-complete-language-input','ascii-base:restore-complete-original-input']:['ascii-assets:retain-complete-original-source','ascii-assets:explicit-selected-read-schedule','ascii-assets:restore-complete-language-input','ascii-assets:restore-complete-original-input'];}
-function entrySource(base){
+function entrySource(base,serializable){
  const entry=base?'prepareCoreAsciiBaseAssets':'prepareCoreAsciiAssets',schema=base?'router-owned-ascii-base-assets-v1':'router-owned-ascii-assets-v1';
  const metadata=base?"selection:{source:inputs.rows.find(row=>row.path===HOST).source,...result.selection},closure:result.closure,originalSourcePublicBuilderUnchanged:true,nonAsciiContextsUnchanged:true":
   "selection:{path:HOST,source:parent.source,sha256:parent.sha256,statements:result.selection.selected.map(row=>({name:row.name,span:[row.node.getStart(),row.node.end],source:row.node.getText()})),nativeBindings:result.selection.nativeBindings,nativeLexicalBindings:result.selection.links}";
+ const historicalSelection=base||!serializable?'historical.selection':"{selected:historical.selection.selected.map(row=>({name:row.name,span:[row.node.getStart(),row.node.end],source:row.node.getText()})),links:historical.selection.links,statements:historical.selection.statements,nativeBindings:historical.selection.nativeBindings}";
  return `export function ${entry}({root=ROOT}={}){
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');
  const rows=originals(),inputs=currentUnicodeAssetInputs(rows,root),historical=afterSources(ts,rows),result=afterSources(ts,inputs.rows),parent=inputs.rows.find(row=>row.path===HOST);
  const all=[...historical.files,...result.files],equations=transportConcreteNamedSourcePhases(all.map(row=>({before:row.before,middle:row.before,after:row.after,language:'JavaScript',rules:${JSON.stringify(ruleNames(base))}})));
  const historicalFiles=historical.files.map((row,at)=>prepare(ts,row,root,equations[at])),files=result.files.map((row,at)=>prepare(ts,row,root,equations[historical.files.length+at]));
  requireCurrentUnicodeAssetInputs(inputs);
- return {schema:${JSON.stringify(schema)},typescriptVersion:ts.version,files,${metadata},historical:{files:historicalFiles,selection:historical.selection,originals:rows},currentInputComposition:inputs,runtimeExecuted:false,rustExecuted:false,semanticAuthority:false,fullBuilderCallbackParity:false};
+ return {schema:${JSON.stringify(schema)},typescriptVersion:ts.version,files,${metadata},historical:{files:historicalFiles,selection:${historicalSelection},originals:rows},currentInputComposition:inputs,runtimeExecuted:false,rustExecuted:false,semanticAuthority:false,fullBuilderCallbackParity:false};
 }`;
 }
-function prepareFile(ts,before,path,base){
+function prepareFile(ts,before,path,base,serializable=true){
  const parse=source=>{const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete native grammar differs: '+path);return file;};
  const file=parse(before),fn=name=>{const found=file.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text===name);if(found.length!==1)fail('one complete native '+name+' required');return found[0];};
  const helper=fn('prepare'),source=helper.getText(file),marker=' let current=null;',start=source.indexOf(marker);
@@ -39,7 +40,7 @@ function prepareFile(ts,before,path,base){
  if(equation.before!==before||equation.middle!==before||equation.after!==after||equation.inverse!==before)fail('complete named source equation differs');
  const stages=equation.stages.map(({phase,before,after,beforeMeta,afterMeta,trace})=>({phase,before,after,beforeMeta,afterMeta,trace,completeInverse:true})),beforeMeta=equation.beforeMeta,afterMeta=equation.afterMeta;
  ${tail}`;
- const entry=fn(base?'prepareCoreAsciiBaseAssets':'prepareCoreAsciiAssets'),edits=[[helper,replacement],[entry,entrySource(base)]].map(([node,replacement])=>({span:[node.getStart(file),node.end],expected:node.getText(file),replacement}));
+ const entry=fn(base?'prepareCoreAsciiBaseAssets':'prepareCoreAsciiAssets'),edits=[[helper,replacement],[entry,entrySource(base,serializable)]].map(([node,replacement])=>({span:[node.getStart(file),node.end],expected:node.getText(file),replacement}));
  let middle=before;for(const edit of [...edits].sort((a,b)=>b.span[0]-a.span[0])){if(middle.slice(...edit.span)!==edit.expected)fail('complete native selection changed');middle=middle.slice(0,edit.span[0])+edit.replacement+middle.slice(edit.span[1]);}
  let after=once(middle,"import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';","import {transportConcreteNamedSourcePhases} from './concrete-named-phases.mjs';\nimport {currentUnicodeAssetInputs,requireCurrentUnicodeAssetInputs} from './current-unicode-asset-inputs.mjs';");
  if(!base)after=once(after,"from './prepare-core-ascii-base-assets.mjs'","from './prepare-current-core-ascii-base-assets.mjs'");
@@ -50,12 +51,13 @@ export function prepareUnicodeAsciiAssetProducers({root=ROOT}={}){
  const files=originals.map(([name,sha256])=>{
   const input='tools/translation/'+name,path='tools/translation/'+name.replace('prepare-core-','prepare-current-core-'),before=readFileSync(resolve(root,input),'utf8');
   if(hash(before)!==sha256)fail('complete original producer source differs: '+input);
-  return {input,path,...prepareFile(ts,before,path,name.includes('base-assets')),beforeSha256:sha256};
+  const previous=prepareFile(ts,before,path,name.includes('base-assets'),false);
+  return {input,path,...prepareFile(ts,before,path,name.includes('base-assets')),previousAfter:previous.after,previousNativeEdits:previous.nativeEdits,beforeSha256:sha256};
  });
  const equations=transportConcreteNamedSourcePhases(files.map(row=>({before:row.before,middle:row.middle,after:row.after,language:'JavaScript',rules:['language:compose-complete-known-unicode-asset-inputs','repository:bind-current-unicode-asset-input-composition','language:restore-complete-historical-asset-producer','repository:restore-historical-asset-imports']})));
  for(const [at,row]of files.entries()){
   row.equation=equations[at];row.afterSha256=hash(row.after);let current=null;try{current=readFileSync(resolve(root,row.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}row.current=current;
-  if(current!==null&&current!==row.after)fail('unknown complete current producer: '+row.path);
+  if(current!==null&&current!==row.after&&current!==row.previousAfter)fail('unknown complete current producer: '+row.path);
   if(row.after.split('\n').length>=1000)fail('complete source exceeds line bound');
   if(readFileSync(resolve(root,row.input),'utf8')!==row.before)fail('complete original producer changed');
  }

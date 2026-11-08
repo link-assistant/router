@@ -1,8 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {execFileSync} from 'node:child_process';
-import {fileURLToPath} from 'node:url';
+import {readHistoricalAsciiAsset} from './ascii-asset-historical-outputs.mjs';
 import {prepareUnicodeAsciiAssetProducers} from '../prepare-unicode-ascii-asset-producers.mjs';
 import {prepareCoreAsciiAssets} from '../prepare-current-core-ascii-assets.mjs';
 import {prepareCoreAsciiBaseAssets} from '../prepare-current-core-ascii-base-assets.mjs';
@@ -10,8 +9,6 @@ import {hostCoreAsciiRuntimeAssets} from '../ascii-runtime-assets.mjs';
 import {hostCoreAsciiBaseRuntimeAssets} from '../ascii-base-runtime-assets.mjs';
 import {hostRuntimeAssetsNamedDataAliases} from '../host-assets.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
-const root=fileURLToPath(new URL('../../../',import.meta.url));
-const baseline='088e4772d';
 
 test('separate current asset producers retain both entire historical producers and complete source equations',{timeout:60000},()=>{
  const plan=prepareUnicodeAsciiAssetProducers();assert.equal(plan.originalProducerApisUnchanged,true);assert.equal(plan.semanticAuthority,false);assert.equal(plan.files.length,2);
@@ -27,9 +24,15 @@ for(const [name,prepare,assets]of [
  ['base',prepareCoreAsciiBaseAssets,hostCoreAsciiBaseRuntimeAssets],
 ])test(name+' current assets preserve complete historical helper DATA and source plans',{timeout:60000},()=>{
  const plan=prepare();assert.equal(plan.files.length,3);assert.equal(plan.historical.files.length,3);assert.equal(plan.currentInputComposition.unicode.files.length,8);assert.equal(plan.semanticAuthority,false);
+ assert.deepEqual(JSON.parse(JSON.stringify(plan.historical.selection)),plan.historical.selection);
+ const historicalParent=plan.historical.originals.find(row=>row.path==='tools/translation/host-assets.mjs').source;
+ for(const row of name==='selected'?plan.historical.selection.selected:plan.historical.selection.retained){
+  assert.ok(row.span.every(Number.isInteger));assert.equal(historicalParent.slice(...row.span),row.source);
+  assert.ok(!Object.hasOwn(row,'node'),'native AST ownership stays private');
+ }
  for(const row of plan.historical.files){
   assert.equal(row.inverse,row.before);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);
-  if(row.path!=='tools/translation/js-to-rust/owned-core-source.mjs')assert.equal(row.after,execFileSync('git',['show',baseline+':'+row.path],{cwd:root,encoding:'utf8',maxBuffer:1000000}),row.path);
+  if(row.path!=='tools/translation/js-to-rust/owned-core-source.mjs')assert.equal(row.after,readHistoricalAsciiAsset(row.path),row.path);
  }
  for(const row of plan.files){
   assert.equal(row.inverse,row.before);for(const stage of row.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}
