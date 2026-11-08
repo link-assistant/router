@@ -33,12 +33,12 @@ export function prepareNativeRegenerationBatch(){
   'export function buildNativeTypeScript(', 'function buildNativeTypeScriptForRegeneration(');
  builder=once(builder,
   "  for (const path of paths) {\n    const source = readFileSync(join(sourceRoot, path), 'utf8');\n    const meta = parseBuildNativeJavaScript(ts, path, source, { file: inference.program.getSourceFile(join(sourceRoot, path)), checker: inference.checker });",
-  '  for (const {path,source} of nativeRegenerationConcreteSources(sourceRoot, paths)) {\n    const meta = parseBuildReconstructedNativeJavaScript(ts, path, source, { file: inference.program.getSourceFile(join(sourceRoot, path)), checker: inference.checker });');
+  '  for (const {path,source} of nativeRegenerationParsedConcreteSources(sourceRoot, paths)) {\n    const meta = parseBuildReconstructedNativeJavaScript(ts, path, source, { file: inference.program.getSourceFile(join(sourceRoot, path)), checker: inference.checker });');
  const helpers=`
-// Separate regeneration-only grouped source contract. Public build/parser APIs
+// Separate regeneration-only source-origin contract. Public build/parser APIs
 // retain their original standalone observer schedule. No verdict survives a call.
-import {prepareReverseConcreteSources,assertReverseConcreteSourceHost} from './concrete-source.mjs';
-function* nativeRegenerationConcreteSources(sourceRoot, paths) {
+import {prepareReverseConcreteParsedSourceChunks,assertReverseConcreteSourceHost} from './concrete-source.mjs';
+function* nativeRegenerationParsedConcreteSources(sourceRoot, paths) {
   const originals=[];
   let cursor=0;
   while(cursor<paths.length) {
@@ -49,7 +49,9 @@ function* nativeRegenerationConcreteSources(sourceRoot, paths) {
       rows.push({path,source});units+=source.length;cursor++;
       if(units>=65536)break;
     }
-    const batch=prepareReverseConcreteSources(rows.map(row=>({source:row.source,language:'JavaScript'})));
+    const result=prepareReverseConcreteParsedSourceChunks([rows.map(row=>({source:row.source,language:'JavaScript'}))]);
+    if(result.chunks.length!==1)throw new Error('native concrete source-origin chunk count differs');
+    const batch=result.chunks[0];
     if(batch.stages.length!==rows.length)throw new Error('native concrete batch row count differs');
     for(let at=0;at<rows.length;at++) {
       const row=rows[at],source=batch.stages[at].source;
@@ -78,11 +80,27 @@ function* nativeRegenerationConcreteSources(sourceRoot, paths) {
  ]).run(middle);
  const after=repository.value;
  for(const source of [middle,after])if(ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS).parseDiagnostics.length)throw Error('Complete candidate native grammar differs');
- const [equation]=transportConcreteSourcePhases([{before,middle,after,language:'JavaScript'}]);
+ // Retain the exact installed predecessor as a second complete source
+ // equation. This is source DATA, never a remembered native/semantic verdict.
+ let previousAfter=after;
+ for(const [next,previous]of [
+  ['// Separate regeneration-only source-origin contract. Public build/parser APIs','// Separate regeneration-only grouped source contract. Public build/parser APIs'],
+  ["import {prepareReverseConcreteParsedSourceChunks,assertReverseConcreteSourceHost} from './concrete-source.mjs';","import {prepareReverseConcreteSources,assertReverseConcreteSourceHost} from './concrete-source.mjs';"],
+  ['function* nativeRegenerationParsedConcreteSources(', 'function* nativeRegenerationConcreteSources('],
+  ['for (const {path,source} of nativeRegenerationParsedConcreteSources(sourceRoot, paths))', 'for (const {path,source} of nativeRegenerationConcreteSources(sourceRoot, paths))'],
+  ["    const result=prepareReverseConcreteParsedSourceChunks([rows.map(row=>({source:row.source,language:'JavaScript'}))]);\n    if(result.chunks.length!==1)throw new Error('native concrete source-origin chunk count differs');\n    const batch=result.chunks[0];","    const batch=prepareReverseConcreteSources(rows.map(row=>({source:row.source,language:'JavaScript'})));"],
+ ])previousAfter=once(previousAfter,next,previous);
+ const previousSha256='399c4719f43a7fdf9e682219fb38463e06accd4ac6bae980ee314a40e035c362';
+ if(hash(previousAfter)!==previousSha256)throw Error('Complete original grouped-regeneration predecessor differs');
+ const [equation,previousEquation]=transportConcreteSourcePhases([
+  {before,middle,after,language:'JavaScript'},
+  {before:previousAfter,middle:after,after,language:'JavaScript'},
+ ]);
  const physical=readFileSync(new URL(path,root),'utf8');
- if(physical!==before&&physical!==after)throw Error('Physical native source is neither full original nor exact proposal');
+ if(physical!==before&&physical!==previousAfter&&physical!==after)throw Error('Physical native source is neither full original nor exact proposal');
  return {schema:'native-regeneration-concrete-batch-proposal-v1',path,before,middle,after,
   originalSha256,middleSha256:hash(middle),afterSha256:hash(after),equation,
+  previousAfter,previousSha256,previousEquation,
   trace:[language.trace,repository.trace],compiler:ts.version,semanticAuthority:false,
   productionExecutableGain:0,standalonePublicBuildUnchanged:true};
 }

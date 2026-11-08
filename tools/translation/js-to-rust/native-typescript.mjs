@@ -458,10 +458,10 @@ export function compileNativeTypeScript(outputRoot, { sourceRoot = outputRoot, o
   return { files: files.length, compiler: ts.version };
 }
 
-// Separate regeneration-only grouped source contract. Public build/parser APIs
+// Separate regeneration-only source-origin contract. Public build/parser APIs
 // retain their original standalone observer schedule. No verdict survives a call.
-import {prepareReverseConcreteSources,assertReverseConcreteSourceHost} from './concrete-source.mjs';
-function* nativeRegenerationConcreteSources(sourceRoot, paths) {
+import {prepareReverseConcreteParsedSourceChunks,assertReverseConcreteSourceHost} from './concrete-source.mjs';
+function* nativeRegenerationParsedConcreteSources(sourceRoot, paths) {
   const originals=[];
   let cursor=0;
   while(cursor<paths.length) {
@@ -472,7 +472,9 @@ function* nativeRegenerationConcreteSources(sourceRoot, paths) {
       rows.push({path,source});units+=source.length;cursor++;
       if(units>=65536)break;
     }
-    const batch=prepareReverseConcreteSources(rows.map(row=>({source:row.source,language:'JavaScript'})));
+    const result=prepareReverseConcreteParsedSourceChunks([rows.map(row=>({source:row.source,language:'JavaScript'}))]);
+    if(result.chunks.length!==1)throw new Error('native concrete source-origin chunk count differs');
+    const batch=result.chunks[0];
     if(batch.stages.length!==rows.length)throw new Error('native concrete batch row count differs');
     for(let at=0;at<rows.length;at++) {
       const row=rows[at],source=batch.stages[at].source;
@@ -502,7 +504,7 @@ function buildNativeTypeScriptForRegeneration(sourceRoot) {
   const artifacts = new Map();
   const rows = [];
   const inference = inferenceProgram(ts, sourceRoot, paths);
-  for (const {path,source} of nativeRegenerationConcreteSources(sourceRoot, paths)) {
+  for (const {path,source} of nativeRegenerationParsedConcreteSources(sourceRoot, paths)) {
     const meta = parseBuildReconstructedNativeJavaScript(ts, path, source, { file: inference.program.getSourceFile(join(sourceRoot, path)), checker: inference.checker });
     const metaText = `${JSON.stringify(meta)}\n`;
     const reparsed = JSON.parse(metaText);

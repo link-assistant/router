@@ -24,6 +24,14 @@ test('complete native proposal retains original public functions and both full C
  assert.equal(readFileSync(join(root,plan.path),'utf8'),plan.after);
  assert.equal(gunzipSync(readFileSync(new URL('../../source-profiles/native-regeneration-batch/original.mjs.gz',import.meta.url))).toString(),plan.before);
  assert.equal(plan.originalSha256,'46ec636ff5c2ffa3ec3dfd8dfbc7b73f7a01b171286cf6d5c78b3320726d8208');
+ assert.equal(plan.previousSha256,'399c4719f43a7fdf9e682219fb38463e06accd4ac6bae980ee314a40e035c362');
+ assert.equal(plan.previousEquation.before,plan.previousAfter);
+ assert.equal(plan.previousEquation.after,plan.after);
+ assert.equal(plan.previousEquation.inverse,plan.previousAfter);
+ assert.deepEqual(plan.previousEquation.stages.map(stage=>stage.phase),['language','repository']);
+ for(const stage of plan.previousEquation.stages){assert.equal(stage.inverse,stage.before);assert.ok(stage.beforeMeta);assert.ok(stage.afterMeta);}
+ assert.match(plan.after,/function\* nativeRegenerationParsedConcreteSources\(/u);
+ assert.match(plan.after,/prepareReverseConcreteParsedSourceChunks\(\[rows\.map/u);
  const ts=loadTypeScript(root);
  const exported=source=>{
   const file=ts.createSourceFile('complete.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);

@@ -422,3 +422,54 @@ remain unfinished; no draft checkpoint establishes release readiness.
       generation families sequentially. Strict parity, matrix materialization,
       original receiving deadlines, current-head CI and the literal all-tool
       privacy requirement remain unfinished.
+
+## Full gate at d46b10bba and native TypeScript deadline repair
+
+- [x] Run the complete local gate at unchanged `d46b10bba`. Lint, source native
+      Node tests and all 259 native Bun cases pass. TypeScript 5.9.3 compiles all
+      167 native files. All nine TypeScript behavior cases pass, including
+      source/compiled runtime fixtures in both engines, but their independent
+      audit correctly fails the original stale-artifact case at 110908.639926
+      ms against its unchanged 60000-ms limit (`complete-sQiIjy`).
+- [x] All 121 parity acceptance cases pass. Strict parity still fails with
+      441 draft gaps and a stale `rust/src/account_routing_policy.rs` inventory
+      hash. Translation starts but is interrupted by the existing container
+      guard: sampled 2874028032 bytes against 2866933760; total elapsed
+      892.718604 seconds, exit 143. Its audit is incomplete (`complete-Rzl6Ww`);
+      reverse translation is unrun. All six identified descendants are reaped.
+      Complete logs and resource receipts use `current-d46b10bba-full-gate-`.
+- [x] Trace the TypeScript overrun to the four complete regeneration builds'
+      general-purpose CST transport. Select the separately named existing
+      source-origin chunk transport for freshly read JavaScript, keeping the
+      same row/source scheduling bounds, full serialized/reparsed documents,
+      live native guards, final whole-source joins, inference and runtime AST
+      equality. Public standalone parser/build functions remain byte-exact.
+      The actual producer retains its original full-source pin and an explicit
+      second two-phase CST/inverse equation for the exact installed predecessor
+      `399c4719f43a7fdf9e682219fb38463e06accd4ac6bae980ee314a40e035c362`.
+- [x] Run the actual source producer and all three original regeneration cases
+      with unchanged 60000-ms limits. Node 20.20.2 and its independent audit pass
+      in 21.251435 seconds, sampled cgroup peak 1871294464 bytes
+      (`complete-77Jzxt`); Bun 1.4.4 passes in 15.811633 seconds, peak
+      2119000064 bytes. Complete logs use `current-native-regeneration-source-origin-`.
+- [x] Complete the nine-case TypeScript Node file against this source change.
+      All nine behaviors pass, including 259 source/compiled expectations in
+      Node and Bun. The original regeneration deadline still fails:
+      104580.741099 ms against 60000 ms (`complete-hnHtxW`), total 261.080224
+      seconds, sampled cgroup peak 2355576832 bytes. This remains a partial
+      transport improvement, not a completed performance repair.
+- [x] Profile one entire actual regeneration check with native CPU sampling;
+      all 11586409 bytes match and no unexpected artifacts appear. Elapsed
+      29152.075654 ms includes profiler overhead. Every signed sample remains
+      in the complete 61806417-byte compressed profile. Attributed inclusive
+      costs include 9934647 us in semantic serialization, 3557093 us in CST
+      transport and 4593018 us in garbage collection. Inclusive costs overlap
+      and do not establish a matched speed improvement or deadline pass.
+- [x] Preserve all 400 complete inactive Node audit files, including the
+      interrupted gate audit, in `current-d46-native-closed-deadline-evidence`.
+      Read back and verify every one of 22737991 original bytes before retiring
+      their exact raw duplicates: 23515136 allocated bytes reclaimed. No active
+      path, unique diagnostic, compiler cache or Rust build directory is removed.
+- [ ] Complete all four production generation modes, the regeneration deadline
+      repair and the complete gate. Strict parity and the original deadline
+      remain failed; reverse translation remains unrun in the latest full gate.
