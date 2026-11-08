@@ -1,14 +1,37 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {gzipSync} from 'node:zlib';
 import {translateSource,sha256} from '../translate.mjs';
 import {translateProject} from '../project.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {parseRust,checkProgram} from '../extensions/host-contracts.mjs';
 import {roundTripProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 const tagged=($,fields={})=>Object.freeze({$,...fields});
 const tuple=(...values)=>tagged('Tuple',Object.fromEntries(values.map((value,index)=>['field'+index,value])));
+function originalTupleProject(fixture,name) {
+  const standalone=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>fixture});
+  if(name!=='response_content_key')return {result:standalone,fixture};
+  assert.equal(standalone.meta.refused.length,1);
+  assert.equal(standalone.meta.refused[0].name,name);
+  assert.match(standalone.meta.refused[0].message,/actual owned facade and qualified source binding/u);
+  assert.equal(standalone.meta.executable.some(row=>row.name===name),false);
+  const root=readFileSync(new URL('../../../rust/src/lib.rs',import.meta.url),'utf8');
+  const edge=sourceItems(root).filter(row=>row.term==='mod'&&row.name==='translation_core');
+  assert.equal(edge.length,1);assert.equal(root.slice(edge[0].start,edge[0].end),'pub mod translation_core;');
+  const scoped=root.slice(edge[0].start,edge[0].end)+'\n'+fixture,files={'src/lib.rs':scoped};
+  for(const path of ['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/json_collections.rs','src/translation_core/ranges.rs','src/translation_core/base64.rs'])files[path]=readFileSync(new URL('../../../rust/'+path,import.meta.url),'utf8');
+  const cst=Object.entries(files).map(([path,source])=>{const transported=transportConcreteSyntaxSource(source,{language:'Rust'}),again=transportConcreteSyntaxMeta(transported.meta);assert.equal(again.source,source);return {path,source,transported,again};});
+  const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>{assert.ok(Object.hasOwn(files,path));return files[path];}});
+  const expected=JSON.parse(readFileSync(new URL('fixtures/tuple-owned-core-refusals.json',import.meta.url),'utf8'));
+  assert.equal(expected.length,27);assert.deepEqual(result.meta.refused,expected);
+  const directory=process.env.ROUTER_TUPLE_CORE_VECTOR_DIR;
+  if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,'complete-scoped-tuple-project.json.gz'),gzipSync(JSON.stringify({standalone,root,edge,files,cst,result,scope:'authored scoped fixture; not full-crate namespace equivalence'})),{flag:'wx'});}
+  return {result,fixture:scoped};
+}
 async function sourceTargets(source,verify) {
   const result=translateSource(source);assert.equal(result.ir.items.map(item=>item.source).join(''),source);
   assert.equal(result.ir.counts.carried,0,JSON.stringify(result.ir.items.filter(item=>item.status==='carried').map(item=>({name:item.name,diagnostic:item.diagnostic}))));
@@ -75,9 +98,8 @@ test('earlier tuple declarations cannot launder later ownership or primitive ide
 test('original response content key functions execute unchanged through contextual tuple lowering',async()=>{
   for(const [file,name] of [['responses.rs','stream_content_key'],['anthropic_stream.rs','response_content_key']]) {
     const source=readFileSync(new URL('../../../rust/src/'+file,import.meta.url),'utf8'),item=sourceItems(source).find(item=>item.term==='fn'&&item.name===name);
-    assert.ok(item);const original=source.slice(item.start,item.end),fixture='use serde_json::Value;\n'+original;
-    const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>fixture});
-    assert.deepEqual(result.meta.refused,[]);const executable=result.meta.executable.find(item=>item.name===name);
+    assert.ok(item);const original=source.slice(item.start,item.end),{result,fixture}=originalTupleProject('use serde_json::Value;\n'+original,name);
+    assert.deepEqual(result.meta.refused.filter(row=>row.file==='src/lib.rs'),[]);const executable=result.meta.executable.find(item=>item.name===name);
     assert.ok(executable);assert.equal(sha256(fixture.slice(executable.span.start,executable.span.end)),sha256(original));
     await verifyTypedTargets(result,api=>{
       const number=value=>tagged('Number',{field0:tagged('PosInt',{field0:value})});

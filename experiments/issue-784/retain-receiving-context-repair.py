@@ -23,6 +23,11 @@ configurations = {
         'inputs': ['test/fixtures/unit-privacy-source-composition.mjs',
                    'test/fixtures/unit-privacy-source-rules.json'],
         'cases': 12},
+    'tuple-core': {
+        'tests': ['tuples.test.mjs'],
+        'inputs': ['router-core-facade-source.mjs', 'router-core-source-data.mjs'],
+        'newInputs': ['test/fixtures/tuple-owned-core-refusals.json'],
+        'nodeLabel': 'node-2', 'cases': 8},
 }
 assert len(sys.argv) == 2 and sys.argv[1] in configurations
 label = sys.argv[1]
@@ -44,16 +49,29 @@ for name in ['test/' + name for name in configuration['tests']] + configuration[
     retain('git:' + baseline + ':' + str(path),
            subprocess.check_output(['git', 'show', baseline + ':' + str(path)]))
     retain(path, path.read_bytes())
-for path in sorted(base.glob('current-' + label + '-*')):
-    if path.is_file():
+for name in configuration.get('newInputs', []):
+    path = Path('tools/translation') / name
+    retain(path, path.read_bytes())
+if label == 'tuple-core':
+    for name in ['lib.rs', 'anthropic_stream.rs', 'responses.rs', 'translation_core.rs',
+                 'translation_core/primitives.rs', 'translation_core/json_collections.rs',
+                 'translation_core/ranges.rs', 'translation_core/base64.rs']:
+        path = Path('rust/src') / name
         retain(path, path.read_bytes())
+    path = Path('experiments/issue-784/probe-tuple-core.mjs')
+    retain(path, path.read_bytes())
+for path in sorted(base.glob('current-' + label + '-*')):
+    for selected in ([path] if path.is_file() else sorted(path.rglob('*'))):
+        if selected.is_file():
+            retain(selected, selected.read_bytes())
 receipts = {}
 for engine in ['node', 'bun']:
-    receipt = json.loads((base / ('current-' + label + '-' + engine + '.memory.json')).read_bytes())
+    engine_label = configuration.get('nodeLabel', 'node') if engine == 'node' else engine
+    receipt = json.loads((base / ('current-' + label + '-' + engine_label + '.memory.json')).read_bytes())
     assert receipt['exitCode'] == 0 and not receipt['stopped']
     assert not Path('/proc/' + str(receipt['pid'])).exists()
     receipts[engine] = receipt
-lines = (base / ('current-' + label + '-node.log')).read_text().splitlines()
+lines = (base / ('current-' + label + '-' + configuration.get('nodeLabel', 'node') + '.log')).read_text().splitlines()
 audits = [line.removeprefix('Complete Node deadline evidence: ')
           for line in lines if line.startswith('Complete Node deadline evidence: ')]
 assert len(audits) == 1

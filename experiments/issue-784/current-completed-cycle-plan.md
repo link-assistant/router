@@ -31,6 +31,8 @@ partial receiving evidence does not establish completion.
       both complete files pass all twelve cases in Node and Bun.
 - [x] Retain the completed-prefix advice experiment: initial full fingerprint,
       lint and both native test stages pass; TypeScript hits the memory guard.
+- [x] Repair the tuple receiving scope with all actual Core sources and explicit
+      unchanged library refusals; eight whole-file cases pass in each engine.
 - [ ] Resolve every remaining semantic, source generation, strict parity and
       original deadline failure without changing refusals or mandatory checks.
 - [ ] Verify all tool/account privacy criteria, including unsupported protocols
