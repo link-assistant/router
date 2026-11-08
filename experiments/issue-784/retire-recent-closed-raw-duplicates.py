@@ -1,4 +1,4 @@
-"""Retire only exact inactive raw members of three committed complete packets."""
+"""Retire only exact inactive raw members of committed complete packets."""
 import base64
 import gzip
 import hashlib
@@ -10,10 +10,11 @@ import subprocess
 import sys
 
 root = Path.cwd()
-assert sys.argv[1:] in ([], ['--paired-project'], ['--closed-receiving'])
+assert sys.argv[1:] in ([], ['--paired-project'], ['--closed-receiving'], ['--class-birth'])
 paired = sys.argv[1:] == ['--paired-project']
 receiving = sys.argv[1:] == ['--closed-receiving']
-label = 'current-class-birth-receiving' if receiving else 'current-class-birth' if paired else 'current-paired-project'
+class_birth = sys.argv[1:] == ['--class-birth']
+label = 'current-alias-reader' if class_birth else 'current-class-birth-receiving' if receiving else 'current-class-birth' if paired else 'current-paired-project'
 receipt = Path('ci-logs/issue-784-restart-2/' + label + '-duplicate-retirement.json')
 assert not receipt.exists()
 selected, archives = {}, []
@@ -27,6 +28,8 @@ if receiving:
         'current-ascii-history-and-static-refresh', 'current-ci-custody',
         'current-historical-native-receiving', 'current-host-unicode-history-receiving',
         'current-negative-budget-history-receiving', 'current-proof-cost-history-receiving']]
+if class_birth:
+    packets = [('current-class-birth-entry', '95460607f9b286e0df754a1088295745b02c82ee')]
 for name, commit in packets:
     path = Path('docs/case-studies/issue-784/evidence') / (name + '.json.gz')
     packed = path.read_bytes()
@@ -58,8 +61,8 @@ for name, commit in packets:
             check = json.loads(raw)
             assert check['childClosed'] and check['groupCleanup']['complete']
             assert not Path('/proc/' + str(check['groupCleanup']['group'])).exists()
-assert len(selected) == (86 if receiving else 51 if paired else 221)
-assert sum(row[0]['bytes'] for row in selected.values()) == (2820967 if receiving else 399624 if paired else 1686719)
+assert len(selected) == (34 if class_birth else 86 if receiving else 51 if paired else 221)
+assert sum(row[0]['bytes'] for row in selected.values()) == (407953 if class_birth else 2820967 if receiving else 399624 if paired else 1686719)
 
 
 def identity(state):

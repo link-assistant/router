@@ -175,3 +175,7 @@ repair, preserving all public accessor observations and original deadlines.
 The [class-birth entry repair](current-class-birth-entry.md) records the complete
 host pin regeneration, passing original class files under Node/Bun, and the
 separate remaining alias-reader freshness failure.
+
+The [compiler alias receiving-reader repair](current-alias-reader.md) records
+the actual producer composition and all 21 passing complete-file cases under
+Node and Bun, with fresh native binding checks and full source histories.

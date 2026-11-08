@@ -8,6 +8,7 @@ import {fixedNativeDescriptorSourcePair} from './prepare-fixed-native-descriptor
 import {invocationLocalFreezerSourcePairs} from './prepare-invocation-local-freezer.mjs';
 import {negativeBudgetConsumerImport} from './prepare-negative-budget-proof-json.mjs';
 import {deriveCompilerAliasSourceEvolution,COMPILER_ALIAS_ORIGINAL_CURRENT_PINS} from './compiler-alias-source-evolution.mjs';
+import {COMPILER_ALIAS_SCOPE_READER,deriveCompilerAliasScopeReader} from './compiler-alias-receiving-reader.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const FIXTURE='tools/translation/test/fixtures/compiler-data-alias-history.mjs';
 const FILES=['private-walk-scalar-results','builtin-json-equality-hint','completed-json-eligibility','private-frozen-json-measurement','packed-frozen-json-eligibility','private-frozen-json-cache-policy','private-frozen-json-owner-memo','private-frozen-json-cohorts','native-descriptor-guard-batching','builtin-proof-json-composition','native-descriptor-kind-discriminator','private-frozen-json-subtrees','native-string-quotation','builtin-plan-json-composition','immutable-json-continuations','private-primitive-native-quotation','derive-bang-carrier-json','private-frozen-json','private-native-proof-cost-scope','private-data-freeze-walk','private-data-freeze-packed-walk'];
@@ -83,11 +84,14 @@ export function readOriginalBuiltinPlanHistory(...args){
 `;
 }
 export function prepareCompilerAliasHistory({root=fileURLToPath(new URL('../../',import.meta.url))}={}){
- const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');const records=historyRows(root),fixture=renderFixture(records),files=[whole(FIXTURE,(()=>{try{return readFileSync(resolve(root,FIXTURE),'utf8');}catch(e){if(e.code==='ENOENT')return '';throw e;}})(),fixture)];
+ const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');const records=historyRows(root),fixture=renderFixture(records),receivingReaders=[],files=[whole(FIXTURE,(()=>{try{return readFileSync(resolve(root,FIXTURE),'utf8');}catch(e){if(e.code==='ENOENT')return '';throw e;}})(),fixture)];
  for(const name of FILES){
   const path='tools/translation/test/'+name+'.test.mjs',source=readFileSync(resolve(root,path),'utf8'),file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete test grammar');
   const receiving=file.statements.filter(node=>ts.isImportDeclaration(node)&&node.moduleSpecifier.text==='./fixtures/current-receiving-source-history.mjs');
   if(name==='private-frozen-json'&&receiving.length){if(receiving.length!==1||receiving[0].getText(file)!=="import {readOriginalBuiltinPlanReceivingHistory as readFileSync} from './fixtures/current-receiving-source-history.mjs';")fail('exact complete later receiving reader required');continue;}
+  if(path===COMPILER_ALIAS_SCOPE_READER.consumer&&file.statements.some(node=>ts.isImportDeclaration(node)&&node.moduleSpecifier.text===COMPILER_ALIAS_SCOPE_READER.module)){
+   receivingReaders.push(deriveCompilerAliasScopeReader(source,readFileSync(resolve(root,COMPILER_ALIAS_SCOPE_READER.path),'utf8')));continue;
+  }
   const existing=file.statements.filter(node=>ts.isImportDeclaration(node)&&node.moduleSpecifier.text==='./fixtures/compiler-data-alias-history.mjs');
   if(existing.length){if(existing.length!==1)fail('unique actual historical reader import');if(name==='private-frozen-json'){const node=existing[0],replacement="import {readOriginalBuiltinPlanHistory as readFileSync} from './fixtures/compiler-data-alias-history.mjs';",after=source.slice(0,node.getStart(file))+replacement+source.slice(node.end);if(after!==source)files.push(whole(path,source,after));}continue;}
   const selected=file.statements.filter(node=>ts.isImportDeclaration(node)&&['node:fs','fs'].includes(node.moduleSpecifier.text)&&node.importClause?.namedBindings&&ts.isNamedImports(node.importClause.namedBindings)&&node.importClause.namedBindings.elements.some(el=>!el.propertyName&&el.name.text==='readFileSync'));
@@ -95,7 +99,7 @@ export function prepareCompilerAliasHistory({root=fileURLToPath(new URL('../../'
   const reader=name==='private-frozen-json'?'readOriginalBuiltinPlanHistory':'readCompilerAliasHistory',replacement='import '+(clause.name?clause.name.text+(rest.length?',':''):'')+(rest.length?'{'+rest.join(',')+'}':'')+' from '+node.moduleSpecifier.getText(file)+';\nimport {'+reader+' as readFileSync} from \'./fixtures/compiler-data-alias-history.mjs\';';
   if(!clause.name&&!rest.length)fail('retained native import members required');const after=source.slice(0,node.getStart(file))+replacement+source.slice(node.end);files.push(whole(path,source,after));
  }
- return {schema:'complete-compiler-alias-history-reader-proposal-v1',files,records,sourceAuthority:false,runtimeAuthority:false,originalCaseNamesBodiesAndDeadlinesUnchanged:true,sourceInstalled:false,rustExecuted:false};
+ return {schema:'complete-compiler-alias-history-reader-proposal-v1',files,records,receivingReaders,sourceAuthority:false,runtimeAuthority:false,originalCaseNamesBodiesAndDeadlinesUnchanged:true,sourceInstalled:false,rustExecuted:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--emit','--check'].includes(args[0]))fail('Usage: prepare-compiler-alias-history.mjs --emit|--check');const result=prepareCompilerAliasHistory();if(args[0]==='--check'){if(result.files.some(row=>row.before!==row.after))fail('complete historical readers are stale');console.log('Complete alias receiving source histories are current; no compiler authority.');}else console.log(JSON.stringify(result));
