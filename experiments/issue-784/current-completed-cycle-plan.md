@@ -11,18 +11,21 @@ partial receiving evidence does not establish completion.
 - [x] Correct the unsupported logging attribution in source evidence and PR text.
 - [x] Install the actual current compiler registration and genuine Git fixture.
 - [x] Complete both whole registration files in Node and Bun, original deadlines.
-- [ ] Commit the reviewed coherent source and evidence batch.
-- [ ] Run the mandatory complete JavaScript gate and inspect every stage.
-- [ ] Confirm latest main is an ancestor, inspect all refreshed issue/PR feedback
+- [x] Commit the reviewed coherent source and evidence batch.
+- [x] Attempt the mandatory complete JavaScript gate and inspect every stage.
+- [x] Confirm latest main is an ancestor, inspect all refreshed issue/PR feedback
       and review the complete PR diff before publishing only the prepared branch.
-- [ ] Publish the coordinated batch and collect its entire immutable CI cycle.
+- [x] Publish the coordinated batch as `567e1dd0b`.
+- [ ] Collect that head's entire immutable CI cycle before the next push.
+- [x] Repair the exact selected-census predecessor and complete both whole
+      receiving files (five cases per engine) and actual producer freshness.
 - [ ] Resolve every remaining semantic, source generation, strict parity and
       original deadline failure without changing refusals or mandatory checks.
 - [ ] Verify all tool/account privacy criteria, including unsupported protocols
       and authenticated account settings, before marking the PR ready.
 
-The previous gate stops during fingerprinting at the unchanged cgroup guard;
-all seven stages remain unrun. A task-only observer draft shortens its bounded
-closed-file page-advice interval to 15 seconds, retaining the same 12-invocation
-limit and all clocks. Its four finite controls pass; the actual gate must still
-be run on the committed batch. No local Rust execution or additional agents.
+The published batch's gate stops during fingerprinting at the unchanged cgroup
+guard after 16.521 seconds; all seven stages remain unrun. The bounded 15-second
+closed-file page-advice experiment did not resolve this failure. Its four finite
+controls pass, but do not qualify the gate. Do not repeat that unchanged failed
+experiment. No local Rust execution or additional agents.
