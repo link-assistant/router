@@ -3,7 +3,7 @@
 Continue the original #784 objective and all requirements from
 [the case-study inventory](../../docs/case-studies/issue-784/README.md).
 No required sub-issues or new human comments were found in the complete fresh
-issue/PR conversation, inline-comment and review reads at 2026-11-08 17:56 UTC.
+issue/PR conversation, inline-comment and review reads at 2026-11-08 18:44 UTC.
 
 - [x] Finish the complete published `4e709` CI cycle before another push.
 - [x] Verify all 59 terminal jobs, all seven workflows, 24 available whole logs
@@ -22,8 +22,10 @@ issue/PR conversation, inline-comment and review reads at 2026-11-08 17:56 UTC.
   archive. Preserve all failed/unrun statuses.
 - [x] Refresh source registration after the latest fixture archive and qualify
   the complete receiving files against that exact registration.
-- [ ] Run the mandatory complete local JavaScript gate on the coherent source
-  batch, inspect every reached stage, and preserve every failed/unrun result.
+- [x] Attempt the mandatory complete local JavaScript gate at `6ee1a798e`.
+  Its initial fingerprint is resource-stopped at 25.414637 seconds; every one
+  of seven stages is unrun, with no green stamp. Retain complete streams and
+  page-advice receipts; this does not qualify the gate or later commits.
 - [ ] Repair the complete remaining CI set, including strict parity, real
   semantic and original deadline failures, canonical/profile/owned generation
   and the missing TypeScript owned-matrix sidecar. No check is optional.

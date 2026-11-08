@@ -15,6 +15,15 @@ for workflow logs returns HTTP 405 and supplies no further log evidence.
 The cancellation cause is not established. Complete-cycle log collection is
 explicitly false: 24 available whole job logs, one unavailable upstream log.
 
+A subsequent actual GET of the complete workflow log ZIP succeeds. All 66
+members pass full CRC/readback and SHA256 verification, and all 24 available
+whole nonpassing job logs match their workflow-archive counterparts byte for
+byte. The archive also omits the exact `translation (3)` job; the separate
+`reverse-translation (3)` member is not its replacement. The
+[checkpoint custody packet](evidence/current-terminal-checkpoint.json.gz)
+retains every member identity and the complete archive identity. Complete-cycle
+log collection remains false.
+
 [The terminal custody packet](evidence/current-4e709-terminal-cycle.json.gz)
 retains 14 entire metadata/error originals and identities for all 49 external
 whole originals: 25 download streams (including the explicitly invalid XML
@@ -110,3 +119,24 @@ This creates evidence capacity without deleting any active check output.
 Issue #784 and the PR remain unfinished. The universal all-tool/account privacy
 criterion is still unmet; the case-study requirement inventory and configuration
 guide retain the exact supported scope and all external-account limitations.
+
+## Mandatory local gate at the reviewed source checkpoint
+
+Run the unchanged complete gate at committed source
+`6ee1a798eba292b825cc4c61fee13c023fe65dfc`, using Node 20.20.2 and a 512 MiB
+old-space limit. The observer resource-stops the initial repository fingerprint
+at 25.414637 seconds, with peak sampled total cgroup memory 2867912704 bytes
+above its unchanged 2866933760-byte guard. The command exits 143, its entire
+process group is closed, and no stage has started. All seven stages are
+**unrun**, and no green stamp is written. The completed asynchronous closed-page
+advice changes no source or test clock and does not prevent the stop. This is
+a failed resource experiment, not evidence of a particular compiler allocation
+cause. The complete raw streams, observer source, gate source, full page-advice
+receipts and fresh issue/PR metadata are retained by the checkpoint packet.
+
+Main is freshly fetched and remains `eb2dad1c0a18394dc1aad46413e11401e74eb502`,
+already an ancestor. The GitHub PR-diff API refuses the greater-than-300-file
+comparison with HTTP 406; retain that complete response and the complete local
+textual batch diff instead. Original binary evidence has its own retained blob
+identities. Later evidence and documentation commits do not inherit a green
+gate or a passing CI result from this checkpoint.

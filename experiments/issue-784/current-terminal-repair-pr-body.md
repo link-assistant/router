@@ -18,8 +18,15 @@ gate passes.
 This remains an authorized **draft CI feedback checkpoint**, not completion.
 The original all-tool/account guarantee and every required CI check remain
 mandatory. Main `eb2dad1c0a18394dc1aad46413e11401e74eb502` is already an ancestor;
-it was freshly fetched during this batch. Final publication and gate identities
-are recorded below after verification.
+it was freshly fetched during this batch.
+
+The mandatory complete local gate at source commit
+`6ee1a798eba292b825cc4c61fee13c023fe65dfc` is resource-stopped during its initial
+repository fingerprint after 25.415 seconds. Peak sampled total cgroup memory
+is 2,867,912,704 bytes, above the unchanged 2,866,933,760-byte guard. Closed-page
+advice completes but does not prevent the stop. **All seven stages are unrun;
+no green stamp is written.** Later evidence/documentation commits inherit no
+gate qualification. The complete receipt is retained in the case study.
 
 The coordinated repair batch preserves complete historical and physical current
 source equations for string equality, ASCII producers, production fixtures and
@@ -58,7 +65,9 @@ are terminal/skipped under the existing draft policy. The tested merge tree
 equals that head. All 24 available whole failed-job logs and all 24 available
 whole artifacts are retained and verified. Cancelled translation shard 3 has
 no artifact, and GitHub returns HTTP 404 `BlobNotFound` for its log; complete log
-collection is explicitly false. Its cancellation cause is unknown. The
+collection is explicitly false. A subsequent complete workflow ZIP has 66
+verified members and matches all 24 available whole failed-job logs byte for
+byte, but also omits that exact shard. Its cancellation cause is unknown. The
 [terminal inventory](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/current-terminal-ci.md)
 links every nonpassing job and preserves that evidence gap.
 
