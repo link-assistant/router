@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,copyFileSync,mkdirSync,mkdtempSync,writeFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {dirname,join} from 'node:path';
 import {gunzipSync} from 'node:zlib';
 import {prepareNamedCoreProducers,originalNamedCoreProducerSources} from '../prepare-named-core-producers.mjs';
 import {prepareCoreUnitMatches,composeCoreUnitMatches} from '../prepare-core-unit-matches.mjs';
@@ -12,11 +14,29 @@ test('both complete producer source equations retain original native copies bind
  assert.equal(plan.originalRuleNamesRetained,true);assert.equal(plan.originalNativeCopiesAndBindingsRetained,true);assert.equal(plan.newVerdictCaches,false);assert.equal(plan.semanticAuthority,false);
  for(const row of plan.files){
   assert.equal(row.current,row.after);assert.equal(row.equation.inverse,row.before);
+  let replayed=row.before;
+  for(const edit of [...row.nativeEdits].sort((a,b)=>b.span[0]-a.span[0])){
+   assert.equal(replayed.slice(...edit.span),edit.expected);
+   replayed=replayed.slice(0,edit.span[0])+edit.replacement+replayed.slice(edit.span[1]);
+  }
+  assert.equal(replayed,row.middle);
   assert.equal(readFileSync(new URL('../../../'+row.path,import.meta.url),'utf8'),row.after);
   for(const stage of row.equation.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);assert.equal(stage.inverse,stage.before);}
   assert.ok(row.rules.every(name=>row.before.includes(name)&&row.after.includes(name)));
   for(const marker of ['nativeCopy(','readFileSync(resolve(root,','semanticAuthority:false'])assert.ok(row.after.includes(marker),marker);
  }
+});
+
+test('the known host history does not admit an unknown complete physical producer',{timeout:60000},()=>{
+ const root=mkdtempSync(join(tmpdir(),'router-named-core-'));
+ try{
+  const paths=['tools/translation/source-profiles/named-core-producers/manifest.json','tools/translation/source-profiles/named-core-producers/originals.json.gz','tools/translation/prepare-core-unit-matches.mjs','tools/translation/prepare-core-unicode-predicates.mjs'];
+  for(const path of paths){const target=join(root,path);mkdirSync(dirname(target),{recursive:true});copyFileSync(new URL('../../../'+path,import.meta.url),target);}
+  const path=join(root,paths[3]),source=readFileSync(path,'utf8');
+  assert.ok(source.includes('propertyQualified:false'));
+  writeFileSync(path,source.replace('propertyQualified:false','propertyQualified:true'));
+  assert.throws(()=>prepareNamedCoreProducers({root}),/unknown complete physical source: tools\/translation\/prepare-core-unicode-predicates\.mjs/);
+ }finally{rmSync(root,{recursive:true,force:true});}
 });
 
 for(const [name,prepare,entry]of [

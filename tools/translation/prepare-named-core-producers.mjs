@@ -68,6 +68,22 @@ function prepareSource(ts,row){
   const replacement=once(expected,'const plan=prepareCoreUnitMatches(options)',prefix+'const plan=prepareCoreUnitMatches(options)');
   const edit={span:[composer.getStart(file),composer.end],expected,replacement};edits.push(edit);
   middle=once(middle,expected,replacement);
+ }else{
+  const composer=fn('composeCoreUnicodePredicates'),expected=composer.getText(file);
+  // Preserve the later host-only history as an explicit complete source edit.
+  // It supplies neither runtime nor Unicode-property authority.
+  const addition=`/** A separately scoped host declaration history, with no runtime/property proof.
+ * The full original archive is authenticated; only the complete host source
+ * equation is transported. The ordinary eight-file producer stays unchanged. */
+export function prepareCoreUnicodeHostAssetHistory({root=ROOT}={}){
+ const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');
+ const rows=originals(),after=afterSources(rows),path='tools/translation/host-assets.mjs',row=rows.find(row=>row.path===path);
+ const [equation]=transportConcreteNamedSourcePhases([{before:row.source,middle:row.source,after:after[path],language:'JavaScript',rules:['owned-unicode-predicates:retain-complete-inputs','router-core:explicit-unicode-predicates','owned-unicode-predicates:restore-language-input','router-core:restore-complete-before-unicode-predicates']}]);
+ return {schema:'router-unicode-host-asset-history-v1',file:prepare(row,after[path],root,ts,equation),typescriptVersion:ts.version,semanticAuthority:false,runtimeExecuted:false,propertyQualified:false};
+}
+`;
+  edits.push({span:[composer.getStart(file),composer.getStart(file)],expected:'',replacement:addition});
+  middle=once(middle,expected,addition+expected);
  }
  const after=replaceImport(middle)+(unit?"\nimport {types} from 'node:util';\nimport {assertConcreteSyntaxHost} from './concrete-syntax-meta.mjs';\n":'');
  grammar(ts,row.path,middle);grammar(ts,row.path,after);
