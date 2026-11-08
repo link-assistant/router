@@ -43,8 +43,13 @@ remain unfinished; no draft checkpoint establishes release readiness.
   archived upstream-header module (`4ff0d415...`) and derives the complete
   current privacy source (`2598264f...`) through the four explicit source
   changes. The original `forwarded_client_headers` function is unchanged;
-  current whole-module translation and strict targets remain unrun. The complete
-  adapter is installed; the original seven-header workload is unchanged.
+  the original seven-header workload is unchanged. The complete seven-case
+  vector file now passes six cases, including this whole-module application
+  case in 8404.758633 ms. The source-producer case fails the separately drafted
+  Unicode/ASCII host-source join at 168159.072403 / 60000 ms. Complete Node run:
+  217.143140 seconds, sampled cgroup peak 2162962432 bytes, no interruption;
+  audit `complete-WKfHmD`. Bun receiving remains unrun. Source and performance
+  failures in the other case remain unfinished.
 - `native-regeneration-semantic-read-rules.mjs` prepares a separate private
   serializer that elides unused stock-checker queries for zero-argument calls,
   `bind` and empty loop/reassignment binding sets. The original public

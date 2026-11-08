@@ -1,3 +1,4 @@
+import {composeUpstreamHeaderPrivacySource} from './fixtures/upstream-header-privacy-source-composition.mjs';
 import {composeOwnedRuntimeImportEdges} from '../prepare-owned-runtime-import-current.mjs';
 import {composeProjectFacadeRetention} from '../prepare-project-facade-retention.mjs';
 import {assertRuntimeImportSourceComposition} from './runtime-import-source-composition.mjs';
@@ -291,10 +292,16 @@ test('source adoption refuses competing macro imports and producers without chan
 test('the complete actual upstream-header module retains its original function and yields an independently checked owned candidate', async () => {
   const original = retain('complete-original-application-module', originalInputs().originalApplication);
   const physical = readFileSync(new URL(original.path, root), 'utf8');
-  assert.equal(physical, original.source); assert.equal(hash(physical), original.sha256);
+  assert.equal(hash(original.source), original.sha256);
+  const privacy = retain('complete-upstream-header-privacy-source-equation', composeUpstreamHeaderPrivacySource(original.source));
+  assert.equal(privacy.equation.inverse, original.source);
+  assert.equal(physical, privacy.after); assert.equal(hash(physical), privacy.afterSha256);
   const originalFn = sourceItems(physical).find(item => item.term === 'fn' && item.name === 'forwarded_client_headers');
   assert.ok(originalFn);
   const completeFunction = physical.slice(originalFn.start, originalFn.end);
+  const archivedFn = sourceItems(original.source).find(item => item.term === 'fn' && item.name === 'forwarded_client_headers');
+  assert.ok(archivedFn);
+  assert.equal(completeFunction, original.source.slice(archivedFn.start, archivedFn.end));
   const carrier = 'pub mod candidate;pub const REQUIRED_FORWARD_HEADERS:&[&str]=&[];';
   const proposal = retain('complete-original-parent-vector-adoption', migrateCoreVectors(physical, {rootSource: 'pub mod translation_core;' + carrier}));
   assert.equal(proposal.functions.some(row => row.name === 'forwarded_client_headers'), true);
