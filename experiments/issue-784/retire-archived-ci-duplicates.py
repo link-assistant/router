@@ -22,6 +22,8 @@ parser.add_argument('--restart-profile', action='append', default=[],
                              for label in ['baseline', 'batch-candidate', 'batch-candidate-qualified']
                              for kind in ['cpu', 'outputs']],
                     help='Explicit inactive full native profile/output already verified in a packet')
+parser.add_argument('--restart-proposal', action='store_true',
+                    help='Explicit inactive whole-owner proposal retained in complete verified packets')
 args = parser.parse_args()
 if len(set(args.restart_profile)) != len(args.restart_profile):
     parser.error('each explicit complete native profile must be unique')
@@ -65,7 +67,8 @@ for manifest_path in sorted(packets.glob('*.json.gz')):
                 path.name.endswith(('-pages.json', '-cache-reclaim.json'))
                 or path.name == 'phased-equations-initial-cache.json'
                 or path.name in args.restart_diff
-                or path.name in args.restart_profile):
+                or path.name in args.restart_profile
+                or args.restart_proposal and path.name == 'whole-owner-proposal.json.gz'):
             continue
         if path.is_symlink() or not path.is_file() or path.stat().st_uid != os.getuid():
             continue
@@ -82,6 +85,9 @@ if set(args.restart_profile) != {Path(name).name for name in selected
                                if Path(name).parent == ci / 'issue-784-restart-2'
                                and Path(name).name in args.restart_profile}:
     raise RuntimeError('Every explicit full native profile must have an exact archived copy')
+if args.restart_proposal and not any(Path(name).name == 'whole-owner-proposal.json.gz'
+                                    for name in selected):
+    raise RuntimeError('The explicit complete proposal must have an exact archived copy')
 
 
 def assert_inactive():

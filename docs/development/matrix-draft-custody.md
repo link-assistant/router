@@ -25,8 +25,8 @@ The two original matrix commands run in separate unconditional jobs:
 `profile-matrix` and `owned-profile-matrix`. Each preserves its original
 60-minute limit, complete immutable checkout, SHA assertion and locked install.
 Neither waits for the other to succeed. Their distinct artifact names prevent
-collisions; the aggregate requires all eight original stages and the additional
-owned stage to succeed before Rust. This repairs the serial failure path in
+collisions; the aggregate requires all eight original stages, the owned stage
+and independent canonical freshness stage to succeed before Rust. This repairs the serial failure path in
 which ordinary freshness failure prevented the owned check from starting.
 It does not qualify either generated matrix or waive any original check.
 
@@ -67,3 +67,9 @@ each decoded inventory to its original plan. The current-input snapshot has
 been exercised; full custody investigation awaits a genuine completed CI
 artifact. Matrix index bytes are not present in the first custody format.
 The investigation neither reconstructs that missing index nor installs files.
+
+GitHub's published run head and checked merge SHA are distinct identities.
+The read-only reviewer requires complete authenticated commit metadata, the
+exact base/head parents, base ancestry and a merge tree equal to the published
+head tree. Artifact names and captured inputs join the checked SHA; workflow
+metadata joins the published head. All physical source checks remain required.

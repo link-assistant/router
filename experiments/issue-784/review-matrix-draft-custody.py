@@ -18,10 +18,27 @@ ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--directory', required=True, type=Path)
 parser.add_argument('--head', required=True)
+parser.add_argument('--checked-head', required=True)
+parser.add_argument('--base', required=True)
+parser.add_argument('--checked-commit', required=True, type=Path)
 parser.add_argument('--output', required=True, type=Path)
 args = parser.parse_args()
-if not re.fullmatch('[a-f0-9]{40}', args.head) or args.output.exists():
+if any(not re.fullmatch('[a-f0-9]{40}', value) for value in
+       [args.head, args.checked_head, args.base]) or args.output.exists():
     raise RuntimeError('A complete published SHA and fresh report are required')
+
+
+def git(*arguments):
+    return subprocess.check_output(['git', *arguments], cwd=ROOT).decode().strip()
+
+
+checked_commit_raw = args.checked_commit.read_bytes()
+checked_commit = json.loads(checked_commit_raw)
+if (checked_commit['sha'] != args.checked_head or
+        [row['sha'] for row in checked_commit['parents']] != [args.base, args.head] or
+        checked_commit['commit']['tree']['sha'] != git('rev-parse', args.head + '^{tree}')):
+    raise RuntimeError('The checked merge must have the exact base/head parents and complete published tree')
+subprocess.check_call(['git', 'merge-base', '--is-ancestor', args.base, args.head], cwd=ROOT)
 
 
 def sha(raw):
@@ -82,10 +99,12 @@ if len(runs) != 7 or any(row['headSha'] != args.head or row['status'] != 'comple
     raise RuntimeError('Every published workflow and job must be terminal')
 verification = json.loads((args.directory / 'completed-artifact-verification.json').read_bytes())
 selected = [row for row in verification if row['metadata']['name'] in
-            ['matrix-drafts-' + args.head, 'matrix-owned-drafts-' + args.head]]
+            ['matrix-drafts-' + args.checked_head, 'matrix-owned-drafts-' + args.checked_head]]
 if not selected:
     raise RuntimeError('No genuine completed matrix draft artifact is present')
 report = {'schema': 'complete-matrix-custody-investigation-v1', 'headSha': args.head,
+          'checkedHeadSha': args.checked_head, 'baseSha': args.base,
+          'checkedCommitMetadataSha256': sha(checked_commit_raw),
           'artifacts': [], 'semanticAuthority': False, 'runtimeParity': False,
           'freshnessQualified': False, 'rustExecuted': False, 'outputsInstalled': False}
 legacy_inputs = {}
@@ -116,7 +135,7 @@ for receipt in selected:
                 capsule[key] is not False for key in ['semanticAuthority', 'runtimeParity', 'rustExecuted']):
             raise RuntimeError('Unqualified original custody scope differs')
         inputs = capsule['inputs']
-        if inputs['head'] != args.head or any(inputs[key] != current[key] for key in
+        if inputs['head'] != args.checked_head or any(inputs[key] != current[key] for key in
                 ['tracked', 'compiler', 'profiles', 'typescript', 'corpus', 'matrix']):
             raise RuntimeError('Complete current original input vector differs')
         owned = receipt['metadata']['name'].startswith('matrix-owned-drafts-')

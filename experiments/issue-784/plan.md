@@ -773,9 +773,87 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [x] Exercise the read-only original-input snapshot. Draft complete artifact
       joins and streaming readback; full artifact qualification remains unrun
       until genuine terminal CI custody is available. No index is fabricated.
-- [ ] Commit a coherent source checkpoint, attempt the mandatory complete gate
+- [x] Commit a coherent source checkpoint, attempt the mandatory complete gate
       and record passed, failed and unrun stages at its exact source SHA.
-- [ ] Wait for every a2539817c CI job, download and inspect every whole log and
-      artifact, validate genuine matrix drafts before any output installation.
+      Clean fd960aae3e12882fc12284db18722e6e9376cd83: lint, both 259-case
+      native suites and the nine deadline controls pass. Native TypeScript
+      compilation passes (165 files, installed TS 5.9.3), but the original
+      regeneration case exceeds 60000 ms at 105263.83772 ms. All nine behavior
+      cases complete; the independent audit remains failed. Acceptance passes
+      121 cases, then strict parity fails the stale account-policy source hash
+      and retains 441 gaps / 12345 carried items. The forward cohort is
+      interrupted before its audit; reverse is unrun. Original memory guard
+      stops at 2868236288 bytes after 767.697 seconds; all owned PIDs reaped.
+      No green stamp or Rust authority. Complete 2777-line gate review retained.
+- [x] Wait for every a2539817c CI job, download and inspect every whole log and
+      artifact. No complete matrix draft is present; qualification and output
+      installation remain unrun, with the read-only refusal retained.
 - [ ] Complete source generation, strict parity, original deadlines and all
       issue privacy requirements; PR remains draft and issue open until verified.
+
+## Exhaustive complete forward test-file shards
+
+- [x] Preserve the exact original 657-file command in the seven-stage local
+      gate. Draft eight deterministic CI partitions of complete discovered
+      files, each retaining original concurrency, case deadlines, enclosing
+      budget and independent runner/auditor. All future discovered files are
+      included, exactly once across bins. Every shard failure remains fatal.
+- [x] Copy the entire original forward checkout, Node/Bun setup, SHA assertion
+      and locked install into an independent mandatory canonical freshness job.
+      Both original canonical checks still run exactly once. Require all ten
+      logical CI stages; keep fail-fast false and distinct shard artifacts.
+      Derive the full workflow from the original archive through both CST
+      phases and complete inverse; preserve original fixed-nine source pins.
+- [x] Preserve the first complete 54-case run: 53 behavioral passes and one
+      outdated install-order mutation fails, while its independent audit passes.
+      Correct that mutation to place installation between the two original
+      independent freshness checks. All 54 whole Node cases then pass with
+      the independent deadline audit; no limits or assertions are removed.
+- [x] Finish all four complete receiving files: final Node 54/54 plus its
+      independent audit and Bun 52/52 pass. Preserve the original failed run,
+      first review assumption failure and every complete repeated attempt.
+      Final Node takes 53.129642 seconds with 2288877568 sampled cgroup bytes;
+      Bun takes 47.065526 seconds with 2230538240 bytes. All owned PIDs reaped.
+      The source review also restores installation ordering for the new lint
+      control and adds its refusal to the existing complete workflow test.
+- [ ] Commit the coherent source batch and attempt the mandatory complete gate
+      at its clean SHA. Complete forward CI qualification remains unrun;
+      small positive controls do not prove it.
+- [x] Archive all 458 complete owned-stage originals (55140866 logical bytes)
+      into a verified 2374760-byte packet before retiring 36319903 bytes of
+      terminal Node duplicates and the explicitly named older interrupted
+      forward attempt (11573420 bytes). It predates the current gate and is not
+      evidence of reverse execution. Packet readback and inactivity checks pass.
+      Including ignored raw attempts exposed a temporary 512916471-byte total
+      before this cleanup; the corrected census is 468087510 bytes before the
+      next focused attempts. Preserve that overage rather than omitting raws.
+- [x] Verify the complete preserved cache-advice member before retiring its
+      inactive duplicate: 6882593 logical / 6885376 allocated bytes reclaimed.
+      Preflight all remaining actual evidence roots and pending CI archive
+      sizes before downloading the complete cycle; preserve a log reserve.
+- [x] Retire the inactive whole-owner proposal duplicate only after exact
+      original/member readback from its complete packet and live-reference
+      checks. Reclaim 11876822 logical / 11878400 allocated bytes before the
+      next required gate. Replaying that old investigation requires its
+      preserved packet; no production source or active output is removed.
+- [x] Read-only artifact investigation distinguishes published a2539817c from
+      checked merge 1b352d7fe1503343e9037cd4d4bac0cbde9340c4. Obtain the complete
+      REST commit metadata, require exact base/head parents, base ancestry and
+      the complete published tree, then join checked artifact names and inputs.
+      No hash, source-profile pin, private issuer or missing index is replaced.
+- [x] Collect all seven terminal a2539817c workflows, every complete log and all
+      three artifacts with full hashes and ZIP member CRCs. The main log has
+      8058 lines / 1095307 bytes. Native Node/Bun each pass 259 and lint passes.
+      TypeScript fails the genuinely absent owned matrix index (line 1154).
+      Strict parity retains the stale account-policy hash, 441 gaps and 12345
+      carried items (7905–7908). Ordinary matrix cancels at 60 minutes with no
+      complete draft; the mandatory uploader correctly fails (4625, 4639).
+      Forward cancels at 60 minutes and reverse at 15 minutes (6949); aggregate
+      correctly fails (8057), and every Rust/release job remains skipped.
+      Complete forward raw records retain eight stale actual-gain compiler
+      context failures (553–756), receiving subprocess SIGTERM (5443), complete
+      corpus graph 96788.733202 ms / 60000 ms (6095), and three real builds
+      118552.328916 ms / 60000 ms (6189). No pin or deadline is relaxed. No
+      genuine matrix artifact exists to qualify or install; preserve that
+      explicit read-only refusal and complete evidence rather than fabricating
+      output or index bytes. None of these incomplete criteria is complete.

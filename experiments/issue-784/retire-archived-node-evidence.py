@@ -14,7 +14,12 @@ attempts = root / 'js/node_modules/.node-case-deadlines'
 packets = root / 'docs/case-studies/issue-784/evidence'
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--receipt', default='archived-node-retirement.json')
+parser.add_argument('--partial-attempt', action='append', default=[],
+                    help='Explicit inactive interrupted attempt, retained whole without a terminal claim')
 args = parser.parse_args()
+if (len(set(args.partial_attempt)) != len(args.partial_attempt) or
+        any(Path(name).name != name or not name.startswith('complete-') for name in args.partial_attempt)):
+    parser.error('Explicit unique task attempt basenames required')
 if Path(args.receipt).name != args.receipt or not args.receipt.endswith('.json'):
     parser.error('receipt must be a JSON filename in the task evidence directory')
 receipt = root / 'ci-logs/issue-784-restart-2' / args.receipt
@@ -39,7 +44,8 @@ for path in sorted(packets.glob('*.json.gz')):
 
 selected = []
 for attempt in sorted(attempts.glob('complete-*')):
-    if attempt.is_symlink() or not attempt.is_dir() or not (attempt / 'terminal.json').is_file():
+    if attempt.is_symlink() or not attempt.is_dir() or (not (attempt / 'terminal.json').is_file()
+                                                     and attempt.name not in args.partial_attempt):
         continue
     files = sorted(path for path in attempt.rglob('*') if path.is_file())
     if not files or len(files) > 64 or any(path.is_symlink() for path in attempt.rglob('*')):
@@ -56,6 +62,9 @@ for attempt in sorted(attempts.glob('complete-*')):
         selected.append({'path': str(attempt), 'files': retained})
 if not selected or len(selected) > 128:
     raise RuntimeError('Expected a bounded identified task selection')
+if set(args.partial_attempt) != {Path(row['path']).name for row in selected
+                                if Path(row['path']).name in args.partial_attempt}:
+    raise RuntimeError('Every explicit interrupted attempt must have complete archived bytes')
 selected_roots = [row['path'] for row in selected]
 
 
