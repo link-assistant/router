@@ -7,6 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 import {transportConcreteSourcePhases} from './concrete-phased-equations.mjs';
+import {deriveProjectMethodOwnerScope} from './project-method-owner-scope-source.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const PROFILE=new URL('./source-profiles/project-facade-retention/',import.meta.url);
 const PATH='tools/translation/project.mjs';
@@ -58,8 +59,10 @@ function derive(ts,before){
 }
 export function prepareProjectFacadeRetention({root=ROOT}={}){
  root=resolve(root);const input=original(),before=input.source,ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript 5.9.3 required');
- const {language,after,selection}=derive(ts,before),current=readFileSync(resolve(root,PATH),'utf8');
- if(current!==before&&current!==after)fail('complete physical project is neither original nor derived output');
+ const retained=derive(ts,before),methodOwnerScope=deriveProjectMethodOwnerScope(ts,retained.language),language=methodOwnerScope.after,after=language+retained.selection.helpers;
+ if(methodOwnerScope.inverse!==retained.language||retained.selection.completeNativeInverse!==before)fail('complete composed native inverse differs');
+ const selection={...retained.selection,methodOwnerScope},current=readFileSync(resolve(root,PATH),'utf8');
+ if(current!==before&&current!==retained.after&&current!==after)fail('complete physical project is neither original nor an exact derived output');
  const [equation]=transportConcreteSourcePhases([{before,middle:language,after,language:'JavaScript'}]);
  const stages=equation.stages.map(stage=>({...stage,completeInverse:true}));
  const nativeCopies=[nativeCopy(ts,before),nativeCopy(ts,after)],nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,PATH),after);
