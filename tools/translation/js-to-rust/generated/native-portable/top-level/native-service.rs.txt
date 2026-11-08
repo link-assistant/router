@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked top-level bodies from js/src/native-service.mjs; source sha256=36ece5d3f3d097c6c1a5d2d4b7a441c7b4e314175535c7ed553891f2291f7b88; IR sha256=ee46fc9345eb53edd1bdfa27448a7d84c734fee476f6665d8d44d947831e234f.
+// Independently checked top-level bodies from js/src/native-service.mjs; source sha256=2b824242ed9e34f4c04298d8ff626ec2f2a824855af6d3b77364f3717aa81089; IR sha256=0bd111c3f45896611a400ef8b070597b62e7dec2711e4fb228217e6b11a60981.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsValue<'a> {
@@ -73,7 +73,7 @@ const transport: JsStaticSet = JsStaticSet { values: &[JsLiteral::String("author
 
 #[rustfmt::skip]
 #[allow(non_upper_case_globals)]
-const ingress: JsStaticSet = JsStaticSet { values: &[JsLiteral::String("forwarded"), JsLiteral::String("x-real-ip"), JsLiteral::String("x-client-ip"), JsLiteral::String("x-cluster-client-ip"), JsLiteral::String("cf-connecting-ip"), JsLiteral::String("true-client-ip"), JsLiteral::String("fastly-client-ip"), JsLiteral::String("fly-client-ip"), JsLiteral::String("x-envoy-external-address"), JsLiteral::String("x-azure-clientip"), JsLiteral::String("x-appengine-user-ip"), JsLiteral::String("cloudfront-viewer-address")] };
+const ingress: JsStaticSet = JsStaticSet { values: &[JsLiteral::String("forwarded"), JsLiteral::String("x-original-forwarded-for"), JsLiteral::String("x-real-ip"), JsLiteral::String("x-client-ip"), JsLiteral::String("x-cluster-client-ip"), JsLiteral::String("cf-connecting-ip"), JsLiteral::String("cf-connecting-ipv6"), JsLiteral::String("cf-pseudo-ipv4"), JsLiteral::String("true-client-ip"), JsLiteral::String("fastly-client-ip"), JsLiteral::String("fly-client-ip"), JsLiteral::String("x-envoy-external-address"), JsLiteral::String("x-azure-clientip"), JsLiteral::String("x-appengine-user-ip"), JsLiteral::String("cloudfront-viewer-address")] };
 
 #[rustfmt::skip]
 #[allow(non_upper_case_globals)]

@@ -349,3 +349,15 @@ remain unfinished; no draft checkpoint establishes release readiness.
       test; its failed launch receipt is retained separately as unqualified.
 - [ ] Resolve original deadline/child failures and complete the repository
       gate. Source-equation repair alone does not establish verification.
+
+## Reverse output freshness repair
+
+- [x] Run the complete actual `scripts/regenerate-js-first.mjs --write`.
+      It refreshes 32 artifacts, including the new geolocation projections;
+      no generated output is edited manually. Elapsed 81.976175 seconds,
+      sampled cgroup peak 2580299776 bytes. The complete canonical `--check`
+      then passes in 85.219281 seconds, peak 2622730240 bytes. Full streams
+      and resource receipts use `current-reverse-regeneration-`.
+- [ ] Both owned-definition regeneration modes, forward generation, strict
+      parity, the complete JavaScript gate and new same-head CI remain
+      required. Canonical reverse freshness does not establish parity.
