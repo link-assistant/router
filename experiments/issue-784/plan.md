@@ -15,7 +15,8 @@ Objective: implement and verify all requirements in PR #785 on
       Rust-forward/profile outputs remain unqualified.
 - [x] Run focused Node/Bun checks and record lockfile TypeScript version (5.9.3).
 - [x] Run the full local JavaScript gate and inspect every stage; no local Rust tools.
-- [ ] Obtain a green full gate; the latest complete attempt failed four groups.
+- [ ] Obtain a green full gate; the latest clean-head attempt is interrupted
+      during native TypeScript by the unchanged container memory guard.
 - [x] Collect the entire initial published-head CI cycle and preserve all failures.
 - [x] Repair introduced evidence-budget and fixed historical-input failures.
 - [x] Review post-filter header overrides and add the matching Rust consent guard
@@ -816,9 +817,15 @@ remain explicitly unmet parts of the literal all-tool requirement.
       Bun takes 47.065526 seconds with 2230538240 bytes. All owned PIDs reaped.
       The source review also restores installation ordering for the new lint
       control and adds its refusal to the existing complete workflow test.
-- [ ] Commit the coherent source batch and attempt the mandatory complete gate
-      at its clean SHA. Complete forward CI qualification remains unrun;
-      small positive controls do not prove it.
+- [x] Commit the coherent source batch and attempt the mandatory complete gate
+      at clean 645d5adf0419c588f4db93ce499163aa5c9c5557. Its complete 2132-line
+      log records passing lint, both 259-case native suites, nine independently
+      audited deadline controls and public TypeScript. The unchanged memory
+      guard stops native TypeScript at 330.508682 seconds, exit 143, final
+      stop sample 2870210560 bytes against the 3135369216-byte container.
+      All owned processes are reaped; subsequent TypeScript checks, parity,
+      forward and reverse are unrun. No green stamp exists. Complete forward
+      CI qualification remains unrun; small positive controls do not prove it.
 - [x] Archive all 458 complete owned-stage originals (55140866 logical bytes)
       into a verified 2374760-byte packet before retiring 36319903 bytes of
       terminal Node duplicates and the explicitly named older interrupted
@@ -857,3 +864,13 @@ remain explicitly unmet parts of the literal all-tool requirement.
       genuine matrix artifact exists to qualify or install; preserve that
       explicit read-only refusal and complete evidence rather than fabricating
       output or index bytes. None of these incomplete criteria is complete.
+- [x] Preserve the zero-byte evidence-capture failure and complete observer
+      receipt. Advise only inactive tracked file pages before a fresh capture;
+      no file content changes or active test deadline pauses. The fresh capture
+      succeeds in 12.481838 seconds, peak sampled cgroup 2024808448 bytes.
+      Verify all 359 complete originals / 24465760 logical bytes and archive
+      readback: 10397776 bytes, SHA256
+      9f8674ea609dbd7caa9940b12ee8ac0d3f633977384e2d1eac9d060861a85b51.
+- [ ] Publish the reviewed coherent workflow batch, collect the entire fresh
+      same-head CI cycle and repair its complete failures without weakening
+      source pins, strict parity, original tests or original deadlines.

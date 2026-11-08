@@ -140,3 +140,8 @@ unrun stages and fully reaped test processes.
 The [runtime/freezer checkpoint](runtime-freeze-checkpoint-verification.md)
 records the complete be8560a8d CI cycle, every remaining failure class and the
 focused source batch's exact receiving boundaries.
+
+The [complete forward-file verification](whole-file-shard-verification.md)
+records exhaustive CI partitions, the complete a2539817c CI failure set and
+the clean 645d5adf0 local gate interruption. Missing production outputs, strict
+parity and original deadline qualification remain unfinished.
