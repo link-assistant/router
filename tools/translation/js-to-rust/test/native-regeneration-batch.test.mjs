@@ -81,3 +81,19 @@ test('grouped CST fidelity cannot admit malformed native JavaScript',{timeout:60
  assert.throws(()=>buildNativeTypeScript(sourceRoot),/invalid authoritative JavaScript syntax/);
  assert.throws(()=>regenerateNativeTypeScript(sourceRoot),/invalid authoritative JavaScript syntax/);
 });
+test('source-origin regeneration retains complete zero extra rest bind loop and reassignment outputs',{timeout:60000},t=>{
+ const sourceRoot=fixture(t),output=mkdtempSync(join(tmpdir(),'router-native-query-output-'));
+ t.after(()=>rmSync(output,{recursive:true,force:true}));
+ writeFileSync(join(sourceRoot,'js/src/calls.mjs'),`function zero(){return 7;}
+function one(value){return value;}
+function rest(...values){return values;}
+export function calls(){return [zero(),one(1,2),rest(1,2),one.bind(null,3)()];}
+export function loops(record){let result='';for(const key in record){result+=key;}return result;}
+export function reassigned(value){value={field:9};return value.field;}
+export function stable(value){return value.field;}
+`);
+ const original=buildNativeTypeScript(sourceRoot),result=regenerateNativeTypeScript(output,{sourceRoot});
+ assert.equal(result.changed.length,original.size);
+ for(const [path,bytes]of original)assert.ok(readFileSync(join(output,path)).equals(Buffer.from(bytes)),path);
+ assert.deepEqual(regenerateNativeTypeScript(output,{sourceRoot,check:true}).changed,[]);
+});

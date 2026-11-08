@@ -634,3 +634,22 @@ remain unfinished; no draft checkpoint establishes release readiness.
   seconds, peak 1763385344 bytes. Complete BOM/CRLF/trivia mapping, round trips
   and inverses remain checked. Actual whole-function Unicode receiving and
   the full gate remain independent unfinished obligations.
+
+## Current native regeneration and runtime-import source join
+
+- Derive the current complete native producer pin from its checked source
+  equation. Preserve the original runtime-import producer, its exact archived
+  native source and the previous receiving source equation, including full CST
+  serialization, reparse and inverse checks. The installed native producer is
+  the source-origin transport predecessor; the semantic-query elision draft
+  remains withdrawn and unqualified.
+- Add complete artifact comparisons for zero, extra and rest arguments, bound
+  calls, for-in loops and reassigned parameters. Keep all original cases and
+  deadlines. The complete two-file Node receiving run passes six cases and its
+  independent deadline audit (`complete-DPz6mS`) in 55.762302 seconds, sampled
+  cgroup peak 2198052864 bytes. The same complete files pass six Bun 1.4.4
+  cases in 60.027199 seconds, peak 2758909952 bytes. Neither observer reaches
+  its unchanged memory stop threshold.
+- These focused results do not qualify the separate nine-case native compiler
+  file, its failed 60000-ms regeneration deadline, production generation,
+  strict parity or the complete JavaScript gate.
