@@ -1,4 +1,4 @@
-import {composeOwnedRuntimeImportEdges} from '../prepare-owned-runtime-import-edges.mjs';
+import {composeOwnedRuntimeImportEdges} from '../prepare-owned-runtime-import-current.mjs';
 import {composeProjectFacadeRetention} from '../prepare-project-facade-retention.mjs';
 import {assertRuntimeImportSourceComposition} from './runtime-import-source-composition.mjs';
 import {composeOwnedCorePrivateAnalysisRetention} from '../prepare-owned-core-private-analysis-retention.mjs';

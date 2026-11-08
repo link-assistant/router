@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {prepareRuntimeImportPhasedData} from '../prepare-runtime-import-phased-data.mjs';
-import {prepareOwnedRuntimeImportEdges,composeOwnedRuntimeImportEdges} from '../prepare-owned-runtime-import-edges.mjs';
+import {prepareOwnedRuntimeImportEdges,composeOwnedRuntimeImportEdges} from '../prepare-owned-runtime-import-current.mjs';
 import {ownershipCompiler,ownershipCompilerRuntimeNativeCurrent} from '../js-to-rust/vendor/module-syntax.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -35,10 +35,11 @@ test('actual source composition keeps complete original outputs while Bun retain
   ['tools/translation/js-to-rust/owned-core-source.mjs','ebd45c97808dbe473fcbc77c1663bcd0168953dfa25e16c305878f5736e6d2d9'],
   ['scripts/regenerate-js-first.mjs','f471e9ff097584ec47212fa52054b68e6bdc187e6029785c2b7f9e841044d290'],
   ['tools/translation/js-to-rust/vendor/module-syntax.mjs','e782e1f4dd9bd5934ed22a51b11fe0d264a68223380e747085781149edb645a6'],
-  ['tools/translation/js-to-rust/native-typescript.mjs','46ec636ff5c2ffa3ec3dfd8dfbc7b73f7a01b171286cf6d5c78b3320726d8208']]);
+  ['tools/translation/js-to-rust/native-typescript.mjs','399c4719f43a7fdf9e682219fb38463e06accd4ac6bae980ee314a40e035c362']]);
  assert.deepEqual(new Set(Object.keys(joined.sources)),new Set(expected.keys()));
  for(const [path,sha]of expected){
   const row=joined.sources[path];assert.equal(row.current,row.after);assert.equal(hash(row.after),sha);
+  if(path==='tools/translation/js-to-rust/native-typescript.mjs'){assert.equal(row.sourceHistory[0].afterSha256,'46ec636ff5c2ffa3ec3dfd8dfbc7b73f7a01b171286cf6d5c78b3320726d8208');assert.equal(row.sourceHistory[1].before,row.sourceHistory[0].after);assert.equal(row.sourceHistory[1].after,row.after);}
   assert.equal(row.inverse,row.before);assert.equal(row.semanticAuthority,false);
   assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);
   assert.ok(row.stages.every(stage=>stage.completeInverse));

@@ -1,4 +1,4 @@
-import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-edges.mjs';
+import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-current.mjs';
 import {composeOwnedCorePrivateAnalysisRetention} from './prepare-owned-core-private-analysis-retention.mjs';
 // A separate, explicit ASCII asset/read schedule; old full builders stay exact.
 import {readFileSync,writeFileSync} from 'node:fs';

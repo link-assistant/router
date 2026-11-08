@@ -288,3 +288,25 @@ remain unfinished; no draft checkpoint establishes release readiness.
       `parser-refusal-historical-log-compression.json`. Latest census before
       further source-review artifacts: 489698039 bytes including all task log,
       case-study, experiment and raw Node audit evidence, excluding toolchains.
+
+## Current runtime-import composition draft
+
+- [x] Keep the complete original public preparation producer and Node DATA
+      helper unchanged. Add a separately named producer/helper composing the
+      exact subsequent native TypeScript regeneration equation; all source,
+      compiler, archive, native binding and both CST/inverse checks remain.
+      The 12 complete receiving proposals and original source history are in
+      `current-runtime-import-composition-proposal.json.gz`.
+- [x] The complete two-case phased-data file passes under Node 20.20.2
+      (32.074579 seconds, peak 2405314560 bytes) with the independent audit and
+      Bun 1.4.4 (45.619118 seconds, peak 2617040896 bytes). The new complete
+      one-case freshness file passes Node (33.607267 seconds, peak 1745584128)
+      and Bun (30.711263 seconds, peak 2107990016) within its original limit.
+- [ ] The complete seven-case parent file has seven behavior passes under Node,
+      but its unchanged 60000-ms audit fails at 61810.277173 and 172741.148521
+      ms. Peak is 2567335936 bytes; elapsed 280.403346 seconds. Preserve these
+      failed qualifications. The parent Bun file remains unrun. A combined
+      two-file Node attempt was stopped by the existing cgroup memory guard;
+      its separate receipt and incomplete audit remain explicit.
+- [ ] Full generation, strict parity, the complete gate and current-head CI are
+      still unfinished. These focused results do not qualify completion.
