@@ -9,13 +9,17 @@ import sys
 
 base = Path('ci-logs/issue-784-restart-2')
 snapshot = json.loads((base / sys.argv[1]).read_bytes())
-assert snapshot['headSha'] == '28aba1b62f98608e65bb86bb550e0debe4445f16'
+head = sys.argv[3] if len(sys.argv) > 3 else '28aba1b62f98608e65bb86bb550e0debe4445f16'
+file_prefix = sys.argv[4] if len(sys.argv) > 4 else 'receiving-batch-early'
+assert re.fullmatch(r'[0-9a-f]{40}', head)
+assert re.fullmatch(r'[a-z0-9-]+', file_prefix)
+assert snapshot['headSha'] == head
 records = []
 for job in snapshot['jobs']:
     if job['status'] != 'completed' or job['conclusion'] in ['success', 'skipped']:
         continue
     identity = job['databaseId']
-    path = base / ('receiving-batch-early-job-' + str(identity) + '.log.gz')
+    path = base / (file_prefix + '-job-' + str(identity) + '.log.gz')
     reused = path.exists()
     status = None
     if not reused:

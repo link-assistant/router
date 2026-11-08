@@ -1,0 +1,1 @@
+{"run": 42467233769, "headSha": "17c7dd9942814f2a6a17eee135016e5941f04f15", "conclusion": "failure", "downloadExitCode": 1, "completeLogBytes": 0, "jobCount": 59, "scope": "A skipped workflow may have no job log; preserve the actual CLI error and result."}

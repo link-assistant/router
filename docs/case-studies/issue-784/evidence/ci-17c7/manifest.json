@@ -1,0 +1,1906 @@
+{
+  "schema": "complete-current-ci-container-retention-v1",
+  "publishedHead": "17c7dd9942814f2a6a17eee135016e5941f04f15",
+  "ciMergeHead": "f7065eceb9a5171d0a6e7864c1edf996510e15bb",
+  "tree": "323b4f8af55bf99d02d8ff745293630d7ae526f2",
+  "runId": 42467233769,
+  "runUrl": "https://github.com/link-assistant/router/actions/runs/42467233769",
+  "jobConclusions": {
+    "failure": 21,
+    "success": 6,
+    "cancelled": 7,
+    "skipped": 25
+  },
+  "nonpassingJobLogs": 28,
+  "completeArtifacts": 25,
+  "completeArtifactMembers": 430,
+  "originals": [
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-all-runs-9.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-all-runs-9.json",
+      "bytes": 91002,
+      "sha256": "6fd1745ebe43417ef63f0340449b8f773b136eb330022b43d5677d2025849aa4",
+      "device": 62,
+      "inode": 8138128,
+      "mtimeNs": 1794133580877631914
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13611744973.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13611744973.zip",
+      "bytes": 284675,
+      "sha256": "92f5c5a313220f0dfd9fe9dcc30679ed6b0551913bf9b2424b913543dadc5ca1",
+      "device": 62,
+      "inode": 8138282,
+      "mtimeNs": 1794134373753557127
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13611744973.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13611744973.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138283,
+      "mtimeNs": 1794134372521569695
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13611863413.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13611863413.zip",
+      "bytes": 316480,
+      "sha256": "8287ba7bf7bc53107ce7a62c8537dbfa7ca781f89dd829b99579a959eb974fe6",
+      "device": 62,
+      "inode": 8138280,
+      "mtimeNs": 1794134372403570899
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13611863413.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13611863413.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138281,
+      "mtimeNs": 1794134371090584293
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13611944170.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13611944170.zip",
+      "bytes": 142498,
+      "sha256": "cc1d0e220431cd5f55f9e0e7b656bf808c3be8ba49789d7f5ec5a085bc49b039",
+      "device": 62,
+      "inode": 8138277,
+      "mtimeNs": 1794134370950585721
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13611944170.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13611944170.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138278,
+      "mtimeNs": 1794134369826597188
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13611948422.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13611948422.zip",
+      "bytes": 689152,
+      "sha256": "a11a4227c9e2add70e08773954a46678f34f231cb1896368cc15a3eb1eb91d90",
+      "device": 62,
+      "inode": 8138273,
+      "mtimeNs": 1794134369701598463
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13611948422.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13611948422.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138274,
+      "mtimeNs": 1794134368348612265
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612049617.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612049617.zip",
+      "bytes": 4215013,
+      "sha256": "c3cf263a6df95e159f82f60bbac5ded7f4d66b2bd8e7ed049f0c9e77ef2e396b",
+      "device": 62,
+      "inode": 8138269,
+      "mtimeNs": 1794134368156614224
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612049617.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612049617.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138270,
+      "mtimeNs": 1794134366305633107
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612123732.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612123732.zip",
+      "bytes": 689827,
+      "sha256": "6e0fdf780207c8567e739980abecd6320ef517cfdb90f80a8046c1eafe152388",
+      "device": 62,
+      "inode": 8138267,
+      "mtimeNs": 1794134366160634586
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612123732.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612123732.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138268,
+      "mtimeNs": 1794134364843648021
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612194151.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612194151.zip",
+      "bytes": 4161592,
+      "sha256": "309df603c3564039716466148702db2d913596c5e76f7a222ce2e8d5080b73a4",
+      "device": 62,
+      "inode": 8138265,
+      "mtimeNs": 1794134364645650041
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612194151.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612194151.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138266,
+      "mtimeNs": 1794134362853668321
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612277745.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612277745.zip",
+      "bytes": 688350,
+      "sha256": "d46df32406b77690118886aac70f9956e64637a1f5c44cae4f26dec61fabb294",
+      "device": 62,
+      "inode": 8138263,
+      "mtimeNs": 1794134362727669607
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612277745.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612277745.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138264,
+      "mtimeNs": 1794134361289684276
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612282562.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612282562.zip",
+      "bytes": 688474,
+      "sha256": "8e4d77badb096b576e4b771a6d78ac82fc33cfcf1f743e78f2609012c3b73f8d",
+      "device": 62,
+      "inode": 8138261,
+      "mtimeNs": 1794134361154685653
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612282562.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612282562.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138262,
+      "mtimeNs": 1794134359747700006
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612318113.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612318113.zip",
+      "bytes": 303835,
+      "sha256": "36c92a0a88fd42cb64b9c357872496cf98406b8c0ef4e2061fb07a3b955f9c41",
+      "device": 62,
+      "inode": 8138259,
+      "mtimeNs": 1794134359624701261
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612318113.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612318113.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138260,
+      "mtimeNs": 1794134358339714369
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612451040.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612451040.zip",
+      "bytes": 325983,
+      "sha256": "15b1c06da6b4ffc87df939e1eebda8e24f3ea02738cd30e12fc35f4d3b90018e",
+      "device": 62,
+      "inode": 8138257,
+      "mtimeNs": 1794134358223715552
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612451040.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612451040.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138258,
+      "mtimeNs": 1794134356941728630
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612497942.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612497942.zip",
+      "bytes": 348053,
+      "sha256": "c7009c40865085f0ea0d587f03aaea9c6f19b49c01f1eb5d3470d213d5e10a59",
+      "device": 62,
+      "inode": 8138255,
+      "mtimeNs": 1794134356832729742
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612497942.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612497942.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138256,
+      "mtimeNs": 1794134355541742912
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612512617.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612512617.zip",
+      "bytes": 43343,
+      "sha256": "7f6f9cf12992a17311bff976c0a109c85e1320c5bdc60c5d875e170f47abbb2a",
+      "device": 62,
+      "inode": 8138253,
+      "mtimeNs": 1794134355437743973
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612512617.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612512617.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138254,
+      "mtimeNs": 1794134354514753388
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612581800.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612581800.zip",
+      "bytes": 339278,
+      "sha256": "73b3fbd18a2c16c3e841c789732a0c6e84cc80a3d48f68d09b0d88fd051c1a6f",
+      "device": 62,
+      "inode": 8138251,
+      "mtimeNs": 1794134354394754612
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612581800.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612581800.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138252,
+      "mtimeNs": 1794134353157767230
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612651044.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612651044.zip",
+      "bytes": 687700,
+      "sha256": "fb2caf42f38c697be0622b194725dbcb1f610b71e09c1046b5a9932ba8955f02",
+      "device": 62,
+      "inode": 8138249,
+      "mtimeNs": 1794134353028768546
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612651044.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612651044.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138250,
+      "mtimeNs": 1794134351585783265
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612665553.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612665553.zip",
+      "bytes": 307400,
+      "sha256": "9ad8eed16277eae530de91a3298ce663505645d0b36963b632b619df2ac2c05f",
+      "device": 62,
+      "inode": 8138246,
+      "mtimeNs": 1794134351431784835
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612665553.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612665553.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138247,
+      "mtimeNs": 1794134350195797443
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612696272.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612696272.zip",
+      "bytes": 325351,
+      "sha256": "15384c7a7a23dbc6baf038c4b506a9d9605f172f7a6da4518a1e6cf7de84b82e",
+      "device": 62,
+      "inode": 8138244,
+      "mtimeNs": 1794134350076798657
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612696272.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612696272.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138245,
+      "mtimeNs": 1794134348847811192
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612824490.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612824490.zip",
+      "bytes": 449399,
+      "sha256": "c4f0a39378646fa2bc934afc726eb9d499bba42ae37c753d0b907ecc8a91c4fa",
+      "device": 62,
+      "inode": 8138242,
+      "mtimeNs": 1794134348735812335
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612824490.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612824490.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138243,
+      "mtimeNs": 1794134347351826452
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612961239.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612961239.zip",
+      "bytes": 3683337,
+      "sha256": "61ea4082c0156e2ccb1487268b9f4dec051699127bc11a6ef93d1e971f91fe1c",
+      "device": 62,
+      "inode": 8138240,
+      "mtimeNs": 1794134347169828309
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612961239.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612961239.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138241,
+      "mtimeNs": 1794134344481855727
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612985545.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612985545.zip",
+      "bytes": 3925972,
+      "sha256": "8ef5940a7c01213cacdeadc1080d6611d2ccdd0f93b778dfba039b49c2035671",
+      "device": 62,
+      "inode": 8138238,
+      "mtimeNs": 1794134344252858063
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13612985545.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13612985545.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138239,
+      "mtimeNs": 1794134341126889949
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13613010359.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13613010359.zip",
+      "bytes": 3831740,
+      "sha256": "f4496a49421ea6e3ad84085b02aafa656e9af795ed9831fbe13fee4bc49b9f6f",
+      "device": 62,
+      "inode": 8138332,
+      "mtimeNs": 1794134340926891989
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13613010359.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13613010359.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138333,
+      "mtimeNs": 1794134338710914593
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13613050020.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13613050020.zip",
+      "bytes": 690099,
+      "sha256": "cb893ee52a5f855c5bd27d19f9d6c52470d4d28d8a28ece13c47f0c0d85b56f1",
+      "device": 62,
+      "inode": 8138236,
+      "mtimeNs": 1794134338587915848
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13613050020.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13613050020.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138237,
+      "mtimeNs": 1794134337102930996
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13613146279.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13613146279.zip",
+      "bytes": 3679992,
+      "sha256": "90bc08a001d64541373fe5891e85ab0a798a83a4fc5518885827c8d91a8311cf",
+      "device": 62,
+      "inode": 8138234,
+      "mtimeNs": 1794134336923932822
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13613146279.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13613146279.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138235,
+      "mtimeNs": 1794134335155950856
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13613366982.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13613366982.zip",
+      "bytes": 3833786,
+      "sha256": "055ca42c4d7351f6eea11091e902293ca23972a8949a181b1fdeacbe4e3afa21",
+      "device": 62,
+      "inode": 8138232,
+      "mtimeNs": 1794134334969952754
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13613366982.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13613366982.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138233,
+      "mtimeNs": 1794134333214970656
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13613370015.zip",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13613370015.zip",
+      "bytes": 35692,
+      "sha256": "9cb4cbd5cc25737287c181879b2ecbaf2daed9c9d53eb40c1666dd23be4812fc",
+      "device": 62,
+      "inode": 8138230,
+      "mtimeNs": 1794134333094971880
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-13613370015.zip.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-13613370015.zip.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138231,
+      "mtimeNs": 1794134332144981570
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-metadata-1.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-metadata-1.json",
+      "bytes": 18410,
+      "sha256": "8312706de21f0f19dd09f2046096e5532ec1902f5ff8c958edcf1aa2acf5570b",
+      "device": 62,
+      "inode": 8138198,
+      "mtimeNs": 1794133217055316770
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-metadata-2.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-metadata-2.json",
+      "bytes": 18412,
+      "sha256": "03af2383d35f8ed889dbac70cacaea43a5d26704ca991af9a22633a6ad2397b7",
+      "device": 62,
+      "inode": 8138134,
+      "mtimeNs": 1794133623791196016
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-artifact-metadata-3.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-artifact-metadata-3.json",
+      "bytes": 19175,
+      "sha256": "066bb49fe0b9d7dae55cae064ff15b3c83e3f9c3e6286391a154f49b994b9f97",
+      "device": 62,
+      "inode": 8138174,
+      "mtimeNs": 1794134032487036777
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-logs-1.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-logs-1.json",
+      "bytes": 83344,
+      "sha256": "b3be9cb585c02c01623a941da9b2134d29dedc62715c7f6fdcb7852d001aa9a7",
+      "device": 62,
+      "inode": 8129065,
+      "mtimeNs": 1794130521668010691
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-logs-11.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-logs-11.json",
+      "bytes": 176315,
+      "sha256": "c5de770c75f4e724571b3465e3dc719869ea0c3189bbede83bc7e8d8425f27bf",
+      "device": 62,
+      "inode": 8138167,
+      "mtimeNs": 1794133806520337908
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-logs-13.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-logs-13.json",
+      "bytes": 191945,
+      "sha256": "222617bfa8072fe4a218eab9c8e1ceacbf487f5cfb29a93a98fb8908ded5e795",
+      "device": 62,
+      "inode": 8138227,
+      "mtimeNs": 1794134293881371860
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-logs-2.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-logs-2.json",
+      "bytes": 125617,
+      "sha256": "88ad40b993e19bde86e3e9c7ce38fe4912b7fccfc77801b420c3919fa96af099",
+      "device": 62,
+      "inode": 8137981,
+      "mtimeNs": 1794130856374427859
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-logs-3.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-logs-3.json",
+      "bytes": 143188,
+      "sha256": "5c06383a31751d07361713e9963c5921d3c620f0f619679d385afa5357cabc18",
+      "device": 62,
+      "inode": 8137987,
+      "mtimeNs": 1794131093567931124
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-logs-4.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-logs-4.json",
+      "bytes": 153342,
+      "sha256": "79e603617bd7a8e1fb1df7b36bfcaa32df032f3d5486964382a7b7984f83837c",
+      "device": 62,
+      "inode": 8138010,
+      "mtimeNs": 1794131308682684771
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-logs-6.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-logs-6.json",
+      "bytes": 166729,
+      "sha256": "d9d7a9408ee2a0aae016da3d55fc621044034d7ccd87d06cb51c670fad357a9c",
+      "device": 62,
+      "inode": 8138201,
+      "mtimeNs": 1794131788599707532
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-logs-7.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-logs-7.json",
+      "bytes": 170100,
+      "sha256": "8e11909221302aefd3f643b01ecfa48451113c001ebd637370d5520cac7cff60",
+      "device": 62,
+      "inode": 8138248,
+      "mtimeNs": 1794132344939965172
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-logs-8.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-logs-8.json",
+      "bytes": 173465,
+      "sha256": "2c10aa63ebb7a0bbd80cb8e09b494d02f2c587e5aa4aed2ec912e651e850d086",
+      "device": 62,
+      "inode": 8138123,
+      "mtimeNs": 1794132937810124410
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-merge-commit.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-merge-commit.json",
+      "bytes": 2648,
+      "sha256": "3641ae1b590cd45423c39d9db2186641bdf700f880c3f66aa40f29f302183c92",
+      "device": 62,
+      "inode": 8138032,
+      "mtimeNs": 1794132030508208499
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-snapshot-1.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-snapshot-1.json",
+      "bytes": 64151,
+      "sha256": "0e120cec06b73f4aebfbb371a39c4671f93ffcba66acc1f26f1abe94b7d22611",
+      "device": 62,
+      "inode": 8126837,
+      "mtimeNs": 1794130481608446385
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-snapshot-10.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-snapshot-10.json",
+      "bytes": 90126,
+      "sha256": "a95ef3d397a0765c2d49eb9dae3b7f868e1208537ad25ddd456362fc9532e977",
+      "device": 62,
+      "inode": 8138133,
+      "mtimeNs": 1794133623179202234
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-snapshot-11.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-snapshot-11.json",
+      "bytes": 90330,
+      "sha256": "3a0f89028852edd06cec27b468c015258a5e8c5798da473dad734e3a2f81d2a3",
+      "device": 62,
+      "inode": 8138162,
+      "mtimeNs": 1794133786974536798
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-snapshot-12.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-snapshot-12.json",
+      "bytes": 90521,
+      "sha256": "3572c112fdb93a56f446b52b8fa7f24043a34ad92d1aa0e92af79dcec6539ff7",
+      "device": 62,
+      "inode": 8138168,
+      "mtimeNs": 1794133941536963329
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-snapshot-13.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-snapshot-13.json",
+      "bytes": 98626,
+      "sha256": "bec41bed5786fde1ad3f7fd79c10ca8980fa23d549ff1ac4e5d6907223f25f7b",
+      "device": 62,
+      "inode": 8138173,
+      "mtimeNs": 1794134032037041362
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-snapshot-2.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-snapshot-2.json",
+      "bytes": 83403,
+      "sha256": "410309ffe6b46ce7682015290512254481bd8ecd7971a334d3892a882a382898",
+      "device": 62,
+      "inode": 8131102,
+      "mtimeNs": 1794130808123939244
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-snapshot-3.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-snapshot-3.json",
+      "bytes": 88197,
+      "sha256": "c347df3aee0cbae72b59005c7e019eccf280327f0172082ae9ae82a7dbea3ff4",
+      "device": 62,
+      "inode": 8131356,
+      "mtimeNs": 1794131051391373304
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-snapshot-4.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-snapshot-4.json",
+      "bytes": 88895,
+      "sha256": "f5c42cf12a569ecb28f8dfbe031330494764f451fb8f65d00d3a56b0d6519878",
+      "device": 62,
+      "inode": 8137974,
+      "mtimeNs": 1794131289603883495
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-snapshot-5.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-snapshot-5.json",
+      "bytes": 88895,
+      "sha256": "f5c42cf12a569ecb28f8dfbe031330494764f451fb8f65d00d3a56b0d6519878",
+      "device": 62,
+      "inode": 8138020,
+      "mtimeNs": 1794131458867123260
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-snapshot-6.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-snapshot-6.json",
+      "bytes": 89730,
+      "sha256": "2f7f3a6933890f336a8b2ba8b7707700ccc0f08ab97e0661efd96bcfd78de647",
+      "device": 62,
+      "inode": 8138034,
+      "mtimeNs": 1794131756248042094
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-snapshot-7.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-snapshot-7.json",
+      "bytes": 89928,
+      "sha256": "68d93bb39be1fe0c2a78b7df243df0db54c53f19d74e7f9e36d0d91cce0b0bbf",
+      "device": 62,
+      "inode": 8138086,
+      "mtimeNs": 1794132314158282510
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-snapshot-8.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-snapshot-8.json",
+      "bytes": 90126,
+      "sha256": "a95ef3d397a0765c2d49eb9dae3b7f868e1208537ad25ddd456362fc9532e977",
+      "device": 62,
+      "inode": 8138116,
+      "mtimeNs": 1794132904435458153
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-ci-snapshot-9.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-ci-snapshot-9.json",
+      "bytes": 90126,
+      "sha256": "a95ef3d397a0765c2d49eb9dae3b7f868e1208537ad25ddd456362fc9532e977",
+      "device": 62,
+      "inode": 8138196,
+      "mtimeNs": 1794133465896798749
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-collector-preflight.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-collector-preflight.json",
+      "bytes": 404,
+      "sha256": "cf4c96a1cba767c819929963598f547123cfae910e408136eab4d3c656b80257",
+      "device": 62,
+      "inode": 8138172,
+      "mtimeNs": 1794134048174876915
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-collector-runs.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-collector-runs.json",
+      "bytes": 589,
+      "sha256": "d25704d5a07bdc82a346d8641941684bed71e4bf5b8a838fcdfe5a2c1ed253f6",
+      "device": 62,
+      "inode": 8138171,
+      "mtimeNs": 1794134048026878424
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-artifact-download.stderr.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-artifact-download.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138229,
+      "mtimeNs": 1794134331664986467
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-artifact-download.stdout.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-artifact-download.stdout.log",
+      "bytes": 1614,
+      "sha256": "e68d8d79552813b18e15fceafe9623236887a1c52f35be4abc2f29a87085487c",
+      "device": 62,
+      "inode": 8138228,
+      "mtimeNs": 1794134373771556943
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-artifact-verification.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-artifact-verification.json",
+      "bytes": 101481,
+      "sha256": "51ca659498d6cb1ddf8d7e16db0d3ee5e677fa946b0608bd2fe2c0a78bb6d6bb",
+      "device": 62,
+      "inode": 8138284,
+      "mtimeNs": 1794134373779556861
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle-collection.stderr.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle-collection.stderr.log",
+      "bytes": 295,
+      "sha256": "48a8b477917eca685eb5a81af9c7ac975fcdddc0153a0cac1f41d42d9a406568",
+      "device": 62,
+      "inode": 8138176,
+      "mtimeNs": 1794134076191591394
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle-collection.stdout.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle-collection.stdout.log",
+      "bytes": 1793,
+      "sha256": "549bd51db45bee3d477079e43fa615da656a7eadc14fdb3842891f4f5eb4b586",
+      "device": 62,
+      "inode": 8138175,
+      "mtimeNs": 1794134076138591934
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-1-retry.stderr.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-1-retry.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8129032,
+      "mtimeNs": 1794130517435056644
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-1-retry.stdout.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-1-retry.stdout.log",
+      "bytes": 806,
+      "sha256": "2b9a1cfcf9487a50cca1c637516f411a6ef5f6a2489cad298eae53841245674f",
+      "device": 62,
+      "inode": 8129028,
+      "mtimeNs": 1794130521663010746
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-1.stderr.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-1.stderr.log",
+      "bytes": 292,
+      "sha256": "21b32c002bbf990bda23bcbc741827a219e3473ae799353634bc45691e5bd1a8",
+      "device": 62,
+      "inode": 8128258,
+      "mtimeNs": 1794130497226276305
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-1.stdout.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-1.stdout.log",
+      "bytes": 150,
+      "sha256": "6b7c5761d856927d80f1511f668de304e14bfbbd96358722a3f0c3d17a7da856",
+      "device": 62,
+      "inode": 8128022,
+      "mtimeNs": 1794130497145277187
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-11.stderr.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-11.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138164,
+      "mtimeNs": 1794133804543358027
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-11.stdout.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-11.stdout.log",
+      "bytes": 4087,
+      "sha256": "578c5f4c213cea6ea45b87b93c82b3db1b537a9dd96325cc5c8a2716e8e67846",
+      "device": 62,
+      "inode": 8138163,
+      "mtimeNs": 1794133806507338041
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-13.stderr.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-13.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138218,
+      "mtimeNs": 1794134290336408017
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-13.stdout.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-13.stdout.log",
+      "bytes": 4572,
+      "sha256": "7c98b56b700b39cc11baa384755cfb8e1267edb66f6b97bb81448c5d8397f446",
+      "device": 62,
+      "inode": 8138217,
+      "mtimeNs": 1794134293867372003
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-2.stderr.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-2.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8137976,
+      "mtimeNs": 1794130850333491810
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-2.stdout.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-2.stdout.log",
+      "bytes": 1787,
+      "sha256": "d85b4b7e689f6cce5482dbcaa9fb252f57366bbcd935ded35c3d25d239f90fe8",
+      "device": 62,
+      "inode": 8137975,
+      "mtimeNs": 1794130856365427954
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-3.stderr.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-3.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8137968,
+      "mtimeNs": 1794131086647003638
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-3.stdout.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-3.stdout.log",
+      "bytes": 2445,
+      "sha256": "81b3fd8033178357fb51d801a61c7310d5b5ef7cf094058262acb69fdb0b8942",
+      "device": 62,
+      "inode": 8133334,
+      "mtimeNs": 1794131093559931208
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-4.stderr.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-4.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138003,
+      "mtimeNs": 1794131304477728561
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-4.stdout.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-4.stdout.log",
+      "bytes": 2933,
+      "sha256": "1b4679f7d18cebc162467df64e1d036e06865e3fc3795d744e6c67d517926ae2",
+      "device": 62,
+      "inode": 8138001,
+      "mtimeNs": 1794131308669684907
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-6.stderr.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-6.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138036,
+      "mtimeNs": 1794131783759757578
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-6.stdout.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-6.stdout.log",
+      "bytes": 3591,
+      "sha256": "510f2e03969a9ac08fe566839a4b4624bbc0936106b8349d52c35d743d841b97",
+      "device": 62,
+      "inode": 8138035,
+      "mtimeNs": 1794131788588707645
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-7.stderr.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-7.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138088,
+      "mtimeNs": 1794132343153983583
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-7.stdout.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-7.stdout.log",
+      "bytes": 3759,
+      "sha256": "69a1d40eb182b8929b88bd19d62a33db10016c8f4d6755b3142eb849120fa159",
+      "device": 62,
+      "inode": 8138087,
+      "mtimeNs": 1794132344927965296
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-8.stderr.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-8.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138120,
+      "mtimeNs": 1794132936175140771
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-download-8.stdout.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-download-8.stdout.log",
+      "bytes": 3921,
+      "sha256": "5a0c8abbd59619034ff3206ef013167dedac1288ea5f2299f143466bd4c2c7ff",
+      "device": 62,
+      "inode": 8138119,
+      "mtimeNs": 1794132937797124540
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-failure-index-11.json.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-failure-index-11.json.gz",
+      "bytes": 19352,
+      "sha256": "7a8a8056e52f418f8f61655c4a38349e9bd1937d94459ec66ac7e1a980ff4a9c",
+      "device": 62,
+      "inode": 8138159,
+      "mtimeNs": 1794133882004569560
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-failure-index-11.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-failure-index-11.log",
+      "bytes": 139,
+      "sha256": "5cb6882eeee9bf2a4c032cc96a0744de2c8d3c5c0bbb54c6fd7d5890f8bd4438",
+      "device": 62,
+      "inode": 8138109,
+      "mtimeNs": 1794133882005569550
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-failure-index-13.json.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-failure-index-13.json.gz",
+      "bytes": 28319,
+      "sha256": "65afe641ffb2c2ef631e37de086d60408806574f2682588f28febca046f5a9b4",
+      "device": 62,
+      "inode": 8138285,
+      "mtimeNs": 1794134443445843777
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-failure-index-4.json.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-failure-index-4.json.gz",
+      "bytes": 9288,
+      "sha256": "ca649f125bb1bce00fe2fed376bb1486bcc3cba13ecb3bd8026cf7ea1a28cc6f",
+      "device": 62,
+      "inode": 8138012,
+      "mtimeNs": 1794131352584227831
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-failure-index-4.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-failure-index-4.log",
+      "bytes": 137,
+      "sha256": "08d004eefe59f59ef575093904c056cbfcff2dabcb91fa3abf3a27130b792671",
+      "device": 62,
+      "inode": 8138011,
+      "mtimeNs": 1794131352585227821
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-failure-index-6.json.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-failure-index-6.json.gz",
+      "bytes": 13569,
+      "sha256": "22e3cf0580f61f8136224a8f8d28888e99f140e9737cdfdaf446645f6fe43454",
+      "device": 62,
+      "inode": 8138026,
+      "mtimeNs": 1794131840434171678
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-failure-index-7.json.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-failure-index-7.json.gz",
+      "bytes": 15967,
+      "sha256": "6432b1549f6e7ffb2a7010901bd43fff35c781d5e83d01940271ea49d816a6bd",
+      "device": 62,
+      "inode": 8138114,
+      "mtimeNs": 1794132616282315726
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-failure-index-8.json.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-failure-index-8.json.gz",
+      "bytes": 18994,
+      "sha256": "7729936320086f07a695763ff6ffcc9a4a0878ca5ee944ae7d03e10a84bc8093",
+      "device": 62,
+      "inode": 8138125,
+      "mtimeNs": 1794132954632956011
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-history-before-pages.json.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-history-before-pages.json.gz",
+      "bytes": 574459,
+      "sha256": "d90887e041e8620834d79914fba6869f82fbac899b7af739fce132e7156ad9c7",
+      "device": 62,
+      "inode": 8130599,
+      "mtimeNs": 1794130765207395320
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-history-before-pages.stdout.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-history-before-pages.stdout.log",
+      "bytes": 988,
+      "sha256": "dc29ca4097907efcf1975eb71d9759236a2862929f3989a46d64a872b72de2cf",
+      "device": 62,
+      "inode": 8129651,
+      "mtimeNs": 1794130765370393586
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-index-6.stderr.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-index-6.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138025,
+      "mtimeNs": 1794131839691179358
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-index-6.stdout.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-index-6.stdout.log",
+      "bytes": 138,
+      "sha256": "119dc68a5b69351172f66564d0cc1ffac7d7f8aa86a65f0566078aa84b4501ab",
+      "device": 62,
+      "inode": 8138024,
+      "mtimeNs": 1794131840434171678
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-index-7.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-index-7.log",
+      "bytes": 138,
+      "sha256": "be7993b41cd11a295e17dedf32e16d9d03e3cd21571f731694309dbc8d3e5185",
+      "device": 62,
+      "inode": 8138113,
+      "mtimeNs": 1794132616283315717
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-index-8.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-index-8.log",
+      "bytes": 139,
+      "sha256": "0bdebea8c8377542574d314faf5fc3d4a66f38f080b46cd60469e9ad5ecf85a1",
+      "device": 62,
+      "inode": 8138124,
+      "mtimeNs": 1794132954633956001
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456666.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456666.log.gz",
+      "bytes": 17142,
+      "sha256": "1d8ee33e9b651477c9cc84d003de7509188c6f50e3bc82eec72e1c366e58f759",
+      "device": 62,
+      "inode": 8129026,
+      "mtimeNs": 1794130497138277263
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456666.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456666.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8128980,
+      "mtimeNs": 1794130496064288950
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456790.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456790.log.gz",
+      "bytes": 7153,
+      "sha256": "98ca6d3345fc32bc084426e9c799d8aaf99152abce53cb04ba052aad3931ff26",
+      "device": 62,
+      "inode": 8129050,
+      "mtimeNs": 1794130518763042225
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456790.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456790.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8129049,
+      "mtimeNs": 1794130517728053462
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456858.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456858.log.gz",
+      "bytes": 6381,
+      "sha256": "28238f04a18cec2a1e404c57cc56f6fbdbc98970eda1d42760ce2f905dd28add",
+      "device": 62,
+      "inode": 8129057,
+      "mtimeNs": 1794130519755031456
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456858.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456858.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8129056,
+      "mtimeNs": 1794130518765042204
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456923.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456923.log.gz",
+      "bytes": 10374,
+      "sha256": "417e98dd8726361a8d93955cef4b7205de1f3f767950cc9bf08454f98f280b32",
+      "device": 62,
+      "inode": 8138038,
+      "mtimeNs": 1794131785106743650
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456923.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456923.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138037,
+      "mtimeNs": 1794131784056754507
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456931.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456931.log.gz",
+      "bytes": 10848,
+      "sha256": "82b26cf988fb1fbb8c861321eb3b9d923fc1d92d0610b739b6ea97ef851c77a1",
+      "device": 62,
+      "inode": 8137978,
+      "mtimeNs": 1794130851624478141
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456931.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456931.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8137977,
+      "mtimeNs": 1794130850622488750
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456932.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456932.log.gz",
+      "bytes": 6442,
+      "sha256": "ef69c1b95aa0c9439e6d81b4130b88db33cdf06e30de33d9ac76d3a39035e0ba",
+      "device": 62,
+      "inode": 8138222,
+      "mtimeNs": 1794134291623394890
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456932.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456932.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138221,
+      "mtimeNs": 1794134290617405151
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456941.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456941.log.gz",
+      "bytes": 973545,
+      "sha256": "29121007477e566f8d4fe45f1f5b20fda54ebb83e30c391fc6dec5d315eeca5d",
+      "device": 62,
+      "inode": 8137973,
+      "mtimeNs": 1794131090721960941
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456941.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456941.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8137969,
+      "mtimeNs": 1794131086919000788
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456950.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456950.log.gz",
+      "bytes": 223908,
+      "sha256": "ae0a386fa19c07f43415d67439950a03b3ad87fb1bc8fb5659f4adf125217c48",
+      "device": 62,
+      "inode": 8138005,
+      "mtimeNs": 1794131306259710004
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456950.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456950.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138004,
+      "mtimeNs": 1794131304791725291
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456957.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456957.log.gz",
+      "bytes": 67600,
+      "sha256": "b762cd6acdab10943b076514f8c5c22545fa02f76caac206208fa78bc5934e70",
+      "device": 62,
+      "inode": 8138122,
+      "mtimeNs": 1794132937781124701
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456957.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456957.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138121,
+      "mtimeNs": 1794132936442138099
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456958.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456958.log.gz",
+      "bytes": 6592,
+      "sha256": "e36a983ec108a389b1fe226a01136cfbdbbcd9ba116d974a2a4f9a957bf490f4",
+      "device": 62,
+      "inode": 8138166,
+      "mtimeNs": 1794133806468338438
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456958.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456958.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138165,
+      "mtimeNs": 1794133805200351341
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456979.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456979.log.gz",
+      "bytes": 86155,
+      "sha256": "e72ff9cd98d1b2b55d100df14de2b51ce65bf0871ffedf6d5227896528bb47fa",
+      "device": 62,
+      "inode": 8138007,
+      "mtimeNs": 1794131307627695758
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689456979.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689456979.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138006,
+      "mtimeNs": 1794131306279709795
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457025.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457025.log.gz",
+      "bytes": 91871,
+      "sha256": "6e4b84f034a3555d84bede0b23dacc59fbce1802cd2c3aea8db8daa8d7e26dcc",
+      "device": 62,
+      "inode": 8138040,
+      "mtimeNs": 1794131786494729298
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457025.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457025.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138039,
+      "mtimeNs": 1794131785138743319
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457026.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457026.log.gz",
+      "bytes": 10010,
+      "sha256": "a9890ae9ca5d10ed5ef0bc214978baf8fea7a6328013f493d674874eaf00186f",
+      "device": 62,
+      "inode": 8137982,
+      "mtimeNs": 1794131091652951187
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457026.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457026.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8137979,
+      "mtimeNs": 1794131090746960679
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457031.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457031.log.gz",
+      "bytes": 10651,
+      "sha256": "0c4e467386e22ee37b67215e46fd85f4971d7df77a217e39a1e19ecd88e65c51",
+      "device": 62,
+      "inode": 8137989,
+      "mtimeNs": 1794130852537468476
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457031.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457031.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8137988,
+      "mtimeNs": 1794130851625478131
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457034.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457034.log.gz",
+      "bytes": 61208,
+      "sha256": "a0454aedd9e46b53aa1586fe5296e1f088112cea30bc829b1cf44a06853d7a0a",
+      "device": 62,
+      "inode": 8138042,
+      "mtimeNs": 1794131787685716982
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457034.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457034.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138041,
+      "mtimeNs": 1794131786498729256
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457057.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457057.log.gz",
+      "bytes": 7128,
+      "sha256": "69c90b564cb81d42883836167d3a728384e18dfc692427671af6f1953223c77b",
+      "device": 62,
+      "inode": 8132428,
+      "mtimeNs": 1794130853447458842
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457057.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457057.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8132272,
+      "mtimeNs": 1794130852538468465
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457058.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457058.log.gz",
+      "bytes": 11048,
+      "sha256": "e215541c6a755e962d553febaf825abcdc971e7c2245825a4fa7478ff5d17f82",
+      "device": 62,
+      "inode": 8129059,
+      "mtimeNs": 1794130520736020807
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457058.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457058.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8129058,
+      "mtimeNs": 1794130519757031434
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457067.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457067.log.gz",
+      "bytes": 11239,
+      "sha256": "1023a4ecbee67f0b7b0546903f6445d76ce55725623b4b4404b820cb3cb858d6",
+      "device": 62,
+      "inode": 8132475,
+      "mtimeNs": 1794130854414448606
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457067.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457067.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8132432,
+      "mtimeNs": 1794130853449458821
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457071.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457071.log.gz",
+      "bytes": 7032,
+      "sha256": "f4e2895eeede2a3cc983a93b4fd529f794fb0fdec69590038a45b224f318f903",
+      "device": 62,
+      "inode": 8137984,
+      "mtimeNs": 1794131092616941087
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457071.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457071.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8137983,
+      "mtimeNs": 1794131091655951155
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457084.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457084.log.gz",
+      "bytes": 11184,
+      "sha256": "3307d2c1333efb87fc855ca371b2af276324e40251665cb261fe9db7b9ce8c86",
+      "device": 62,
+      "inode": 8129063,
+      "mtimeNs": 1794130521662010756
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457084.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457084.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8129062,
+      "mtimeNs": 1794130520737020796
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457109.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457109.log.gz",
+      "bytes": 79196,
+      "sha256": "9077bd95895750ebe22012e14626ecead3ce928efc2fc7f26c0024efd09ecd5d",
+      "device": 62,
+      "inode": 8138224,
+      "mtimeNs": 1794134292860382274
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457109.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457109.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138223,
+      "mtimeNs": 1794134291666394452
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457127.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457127.log.gz",
+      "bytes": 7075,
+      "sha256": "374a6992d1a553e57d6111a335bd6b2f2f78b63615d721446b03cbcad969fd70",
+      "device": 62,
+      "inode": 8138009,
+      "mtimeNs": 1794131308652685084
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457127.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457127.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138008,
+      "mtimeNs": 1794131307635695674
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457135.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457135.log.gz",
+      "bytes": 10436,
+      "sha256": "f764fc29fdeac12eef8d0768a2784123c7a4d6d18b541eee4cb46bb1da922d65",
+      "device": 62,
+      "inode": 8137971,
+      "mtimeNs": 1794130855432437830
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457135.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457135.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8137970,
+      "mtimeNs": 1794130854416448585
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457136.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457136.log.gz",
+      "bytes": 58186,
+      "sha256": "e9e89f026d092f0d3d1308b224cff05a34f196695c79b38141bafd6753f63b71",
+      "device": 62,
+      "inode": 8138090,
+      "mtimeNs": 1794132344924965327
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457136.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457136.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138089,
+      "mtimeNs": 1794132343515979852
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457141.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457141.log.gz",
+      "bytes": 6899,
+      "sha256": "2e605f9399f4670a5e7a08ecf9846272a56508b1e1faaf217e3a325c6fb741a3",
+      "device": 62,
+      "inode": 8137986,
+      "mtimeNs": 1794131093558931219
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457141.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457141.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8137985,
+      "mtimeNs": 1794131092617941077
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457157.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457157.log.gz",
+      "bytes": 7062,
+      "sha256": "01a974875d6f324cd1101d2689fc267b2ff34d4725a2d218168fc4b5c37b021f",
+      "device": 62,
+      "inode": 8137980,
+      "mtimeNs": 1794130856364427965
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457157.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457157.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8137972,
+      "mtimeNs": 1794130855434437809
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457170.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457170.log.gz",
+      "bytes": 7495,
+      "sha256": "c0cf8a3e79c653b822f1b74e873470ba05c4e052a84ad23e17011bb5bbf7aede",
+      "device": 62,
+      "inode": 8138059,
+      "mtimeNs": 1794131788587707656
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128689457170.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128689457170.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138058,
+      "mtimeNs": 1794131787691716920
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128704221649.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128704221649.log.gz",
+      "bytes": 1693,
+      "sha256": "28ac5d036aba651a26e9720c54d38f2fd3312e327a455990368894bb2cd300c2",
+      "device": 62,
+      "inode": 8138226,
+      "mtimeNs": 1794134293866372013
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-job-128704221649.log.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-job-128704221649.log.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138225,
+      "mtimeNs": 1794134292866382212
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-run-list-5.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-run-list-5.json",
+      "bytes": 797,
+      "sha256": "fa4fedf82e6043e435b2dc48ac75434e5b87b6d26deb526dd380d17c321fcea8",
+      "device": 62,
+      "inode": 8138019,
+      "mtimeNs": 1794131438850331124
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-run-list-7.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-run-list-7.json",
+      "bytes": 692,
+      "sha256": "09ef58dc4a509fb6b5cdb698f6c693bd6f344dffd3eb2a1d07d630806010ab94",
+      "device": 62,
+      "inode": 8138085,
+      "mtimeNs": 1794132312319301470
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-run-list-9.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-run-list-9.json",
+      "bytes": 692,
+      "sha256": "09ef58dc4a509fb6b5cdb698f6c693bd6f344dffd3eb2a1d07d630806010ab94",
+      "device": 62,
+      "inode": 8138127,
+      "mtimeNs": 1794133580243638352
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-source-review-compression.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-source-review-compression.json",
+      "bytes": 667,
+      "sha256": "45d0ec222385b3c501a11e838694bc03e87b2750da8f0d985e5d1afa184c1e32",
+      "device": 62,
+      "inode": 8137925,
+      "mtimeNs": 1794132397918440246
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-source-review-compression.log",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-source-review-compression.log",
+      "bytes": 91,
+      "sha256": "8a60a4705ecc5f29f17ac1499e06ba1c7445e82aedbe1ff5770c12135059938b",
+      "device": 62,
+      "inode": 8138075,
+      "mtimeNs": 1794132397918440246
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233769.download.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233769.download.json",
+      "bytes": 257,
+      "sha256": "39c50d2aa88641ad7608d78ce597f3b84ce53c7ae3afed912438ea4a939849a9",
+      "device": 62,
+      "inode": 8138220,
+      "mtimeNs": 1794134076138591934
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233769.download.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233769.download.stderr",
+      "bytes": 105,
+      "sha256": "08c56bce5c1ba167b97851920dfc8e0ffced77f20aa5e5e3d5576bc86658b81a",
+      "device": 62,
+      "inode": 8138216,
+      "mtimeNs": 1794134076127592046
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233769.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233769.json",
+      "bytes": 104579,
+      "sha256": "e3140602a065f1d6266db26a2935b6f8161887737ce3c979e6750a91c5bf88c5",
+      "device": 62,
+      "inode": 8138214,
+      "mtimeNs": 1794134067126683778
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233769.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233769.log.gz",
+      "bytes": 36,
+      "sha256": "5022401276341a56a6397e7754ee3311b11960c22c5fac02946092dbd65adeaa",
+      "device": 62,
+      "inode": 8138215,
+      "mtimeNs": 1794134076138591934
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233774.download.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233774.download.json",
+      "bytes": 256,
+      "sha256": "ee13424d0a83737df7e83e1e93fd119acd9256a6cc8ed4fa27cacb561183e442",
+      "device": 62,
+      "inode": 8138208,
+      "mtimeNs": 1794134065482700532
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233774.download.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233774.download.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138206,
+      "mtimeNs": 1794134063842717246
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233774.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233774.json",
+      "bytes": 1484,
+      "sha256": "e88c7a7bdf6d76c2e652d56dfad679885d667c8f792867a5a908bcb592067457",
+      "device": 62,
+      "inode": 8138204,
+      "mtimeNs": 1794134063842717246
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233774.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233774.log.gz",
+      "bytes": 36,
+      "sha256": "009fad2a414e33e00353e6de105e94cee2953fe3e5966d0bd7f4e94e0d4a0835",
+      "device": 62,
+      "inode": 8138205,
+      "mtimeNs": 1794134065481700542
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233778.download.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233778.download.json",
+      "bytes": 256,
+      "sha256": "67ff77bd45d861a7361dba7e0373f61170f9df1cbcf7de1988588642d967cc37",
+      "device": 62,
+      "inode": 8138189,
+      "mtimeNs": 1794134060494751365
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233778.download.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233778.download.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138187,
+      "mtimeNs": 1794134058964766957
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233778.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233778.json",
+      "bytes": 1536,
+      "sha256": "d9a7019537cf799305a9297e65f24bf017a8d550b3a21c4ed1f0a4ee0ba4912b",
+      "device": 62,
+      "inode": 8138185,
+      "mtimeNs": 1794134058963766967
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233778.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233778.log.gz",
+      "bytes": 36,
+      "sha256": "361f43839561f4c4a7431eede67239467e3393d589efc068caf0a020ab0e01e4",
+      "device": 62,
+      "inode": 8138186,
+      "mtimeNs": 1794134060494751365
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233793.download.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233793.download.json",
+      "bytes": 256,
+      "sha256": "fdff1ff7f2952dfe803d8692eb7d691ae69295c86ab9d448665d1cf11b4ee318",
+      "device": 62,
+      "inode": 8138184,
+      "mtimeNs": 1794134058963766967
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233793.download.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233793.download.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138182,
+      "mtimeNs": 1794134057368783223
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233793.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233793.json",
+      "bytes": 906,
+      "sha256": "8273329c871002446016c15b58218c9b3ab7a11d2a949297995aba7b10510f0a",
+      "device": 62,
+      "inode": 8138180,
+      "mtimeNs": 1794134057367783233
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233793.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233793.log.gz",
+      "bytes": 36,
+      "sha256": "4e30331e6da9b101afa7f370abcb02c31b82bbc286b671917ee63c1060044d83",
+      "device": 62,
+      "inode": 8138181,
+      "mtimeNs": 1794134058961766988
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233800.download.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233800.download.json",
+      "bytes": 256,
+      "sha256": "8f0daf931cd2b89ea3b3ba992bdb8f9a261327386781264e1dcb8973a5119317",
+      "device": 62,
+      "inode": 8138195,
+      "mtimeNs": 1794134062175734234
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233800.download.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233800.download.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138192,
+      "mtimeNs": 1794134060495751355
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233800.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233800.json",
+      "bytes": 904,
+      "sha256": "ee739902aad90b281dc05fe13a7d2a339c4553cdd67581909af6595af0b247cc",
+      "device": 62,
+      "inode": 8138190,
+      "mtimeNs": 1794134060495751355
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233800.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233800.log.gz",
+      "bytes": 36,
+      "sha256": "d70383c229cdca21c01539ed4ec62b3f05b1900c2ee38ddd8d1f006427042bc9",
+      "device": 62,
+      "inode": 8138191,
+      "mtimeNs": 1794134062175734234
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233910.download.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233910.download.json",
+      "bytes": 256,
+      "sha256": "aa385f770a00aa52660fca0b89d5d123ae40a35464d2608ff331017e91554d88",
+      "device": 62,
+      "inode": 8138213,
+      "mtimeNs": 1794134067119683849
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233910.download.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233910.download.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138211,
+      "mtimeNs": 1794134065482700532
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233910.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233910.json",
+      "bytes": 1597,
+      "sha256": "ebf596723e05192a0dd9e677f4cc9480f69b4a953febd390022cd75110ec107e",
+      "device": 62,
+      "inode": 8138209,
+      "mtimeNs": 1794134065482700532
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233910.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233910.log.gz",
+      "bytes": 36,
+      "sha256": "802a7bb176c8126e5854baf1bd868655b9e1f65828fdf0aed4e4c1ed3fa0581f",
+      "device": 62,
+      "inode": 8138210,
+      "mtimeNs": 1794134067119683849
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233921.download.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233921.download.json",
+      "bytes": 256,
+      "sha256": "0005d9c6592541a8b5695e15e50e89577fd76af9b14ad67b025592a3c6f4fe36",
+      "device": 62,
+      "inode": 8138203,
+      "mtimeNs": 1794134063841717256
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233921.download.stderr",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233921.download.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "device": 62,
+      "inode": 8138200,
+      "mtimeNs": 1794134062176734224
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233921.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233921.json",
+      "bytes": 926,
+      "sha256": "8b5ab231b8824cf4cf17a113a44c91d38b6433c6c4890385877d0a276e63f4a3",
+      "device": 62,
+      "inode": 8138197,
+      "mtimeNs": 1794134062176734224
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/42467233921.log.gz",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/42467233921.log.gz",
+      "bytes": 36,
+      "sha256": "5539ccabc9b46c7e637113bdef88f3769d423497f253becdfe4dd5424ed10f34",
+      "device": 62,
+      "inode": 8138199,
+      "mtimeNs": 1794134063840717266
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/completed-head-runs-api.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/completed-head-runs-api.json",
+      "bytes": 94165,
+      "sha256": "a2eefe8cbe05bf778b56bc7d144c62d4cede5e6990839064cf937acbb8de8870",
+      "device": 62,
+      "inode": 8138178,
+      "mtimeNs": 1794134057357783335
+    },
+    {
+      "originalPath": "ci-logs/issue-784-restart-2/current-17c7-complete-cycle/completed-head-runs.json",
+      "retainedPath": "docs/case-studies/issue-784/evidence/ci-17c7/current-17c7-complete-cycle/completed-head-runs.json",
+      "bytes": 111940,
+      "sha256": "3d14c0f041e50f6646877d2c9de3b2f7672ac50d4205f997ae7361286daafa32",
+      "device": 62,
+      "inode": 8138179,
+      "mtimeNs": 1794134057367783233
+    }
+  ],
+  "contentCopied": false,
+  "wholeOriginalReadbackVerified": true,
+  "artifactCrcVerified": true,
+  "allRequiredChecksPassed": false,
+  "semanticAuthority": false,
+  "rustExecuted": false
+}

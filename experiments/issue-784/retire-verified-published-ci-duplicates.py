@@ -1,17 +1,28 @@
-"""Retire 35 exact inactive CI copies after complete published member readback."""
+"""Retire explicit inactive CI copies after complete published member readback."""
+import argparse
 import gzip
 import hashlib
 import json
 import os
 import stat
+import subprocess
 import tarfile
 from pathlib import Path
 
 ROOT = Path.cwd()
-PLAN = ROOT / 'ci-logs/issue-784-restart-2/current-ci-duplicate-retirement-plan.json'
-RECEIPT = PLAN.with_name('current-ci-duplicate-retirement.json')
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--plan', default='current-ci-duplicate-retirement-plan.json')
+parser.add_argument('--receipt', default='current-ci-duplicate-retirement.json')
+parser.add_argument('--count', type=int, default=35)
+parser.add_argument('--published-head', default='17c7dd9942814f2a6a17eee135016e5941f04f15')
+args = parser.parse_args()
+assert 1 <= args.count <= 2048
+assert len(args.published_head) == 40 and all(c in '0123456789abcdef' for c in args.published_head)
+assert all(Path(name).name == name and name.endswith('.json') for name in [args.plan, args.receipt])
+PLAN = ROOT / 'ci-logs/issue-784-restart-2' / args.plan
+RECEIPT = PLAN.with_name(args.receipt)
 plan = json.loads(PLAN.read_text())
-assert len(plan) == 35 and not RECEIPT.exists()
+assert len(plan) == args.count and not RECEIPT.exists()
 assert len({row['path'] for row in plan}) == len(plan)
 
 
@@ -72,17 +83,34 @@ for manifest, packet in packets.items():
     archive = Path(packet['archive'])
     assert archive.is_relative_to(ROOT / 'docs/case-studies/issue-784/evidence')
     assert not archive.is_symlink()
+    for preserved in [ROOT / manifest, archive]:
+        relative = str(preserved.relative_to(ROOT))
+        published = subprocess.check_output(['git', 'rev-parse', args.published_head + ':' + relative]).strip()
+        actual = subprocess.check_output(['git', 'hash-object', str(preserved)]).strip()
+        assert actual == published
     with archive.open('rb') as stream:
         assert digest(stream) == (packet['archiveBytes'], packet['archiveSha256'])
-    with tarfile.open(archive, 'r:xz') as source:
-        for row in rows:
-            if row['manifest'] != manifest:
-                continue
-            member = source.getmember(row['path'])
-            assert member.isfile() or member.islnk()
-            with source.extractfile(member) as stream:
-                assert digest(stream) == (row['bytes'], row['sha256'])
-            row['completeMemberReadbackVerified'] = True
+    wanted = {row['path']: row for row in rows if row['manifest'] == manifest}
+    originals, verified = {}, set()
+    with tarfile.open(archive, 'r|xz') as source:
+        for member in source:
+            actual = None
+            if member.isfile():
+                with source.extractfile(member) as stream:
+                    actual = digest(stream)
+            elif member.islnk():
+                assert member.linkname in originals
+                actual = originals[member.linkname]
+            if actual is not None:
+                originals[member.name] = actual
+            if member.name in wanted:
+                row = wanted[member.name]
+                assert member.name not in verified and actual == (row['bytes'], row['sha256'])
+                row['completeMemberReadbackVerified'] = True
+                verified.add(member.name)
+    assert verified == set(wanted)
+    print(json.dumps({'completeArchive': str(archive.relative_to(ROOT)),
+                      'verifiedRetirementMembers': len(verified)}), flush=True)
 
 assert all(row['completeMemberReadbackVerified'] for row in rows)
 require_inactive()
@@ -101,6 +129,7 @@ record = {
     'logicalBytesReclaimed': sum(row['bytes'] for row in rows),
     'allocatedBytesReclaimed': sum(row['allocatedBytes'] for row in rows),
     'completeOriginalsRetained': True,
+    'publishedHead': args.published_head,
 }
 with RECEIPT.open('x') as stream:
     json.dump(record, stream, indent=2)

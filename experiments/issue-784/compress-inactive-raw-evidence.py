@@ -14,12 +14,14 @@ parser.add_argument('--closed-investigations', action='store_true')
 parser.add_argument('--closed-ci-investigations', action='store_true')
 parser.add_argument('--closed-historical-observations', action='store_true')
 parser.add_argument('--closed-current-diagnostics', action='store_true')
+parser.add_argument('--closed-published-source-review', action='store_true')
 parser.add_argument('--receipt', default='reverse-shard-inactive-evidence-compression.json')
 args = parser.parse_args()
 assert sum(bool(value) for value in [args.closed_attempt, args.closed_investigations,
                                    args.closed_ci_investigations,
                                    args.closed_historical_observations,
-                                   args.closed_current_diagnostics]) <= 1
+                                   args.closed_current_diagnostics,
+                                   args.closed_published_source_review]) <= 1
 assert Path(args.receipt).name == args.receipt and args.receipt.endswith('.json')
 paths = [root / 'ci-logs' / name for name in [
     'restart-export-published-review.diff',
@@ -50,6 +52,9 @@ elif args.closed_ci_investigations:
         'current-node-profile-proposal.log',
         'ordinary-current-allocation.log',
     ]]
+elif args.closed_published_source_review:
+    # Closed review of the already published 17c7 checkpoint, never a producer input.
+    paths = [base / 'current-publish-source-review.diff']
 elif args.closed_current_diagnostics:
     # Exact completed diagnostic outputs only. The current whole-file run,
     # current CI snapshot and all source inputs remain outside this list.
