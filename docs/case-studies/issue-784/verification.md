@@ -331,7 +331,7 @@ gate-control log also names an already removed nested temporary fixture receipt;
 the collector records that boundary and retains its complete parent log. Both
 actual operation/shared-producer raw deadline directories remain complete.
 
-The [complete second CI repair packet](evidence/second-ci-repair-complete.tar.xz)
+The [complete second CI repair packet](https://github.com/link-assistant/router/blob/567e1dd0b072a2bfd736a9025ba245a630aaff7d/docs/case-studies/issue-784/evidence/second-ci-repair-complete.tar.xz?raw=true)
 and [verification receipt](evidence/second-ci-repair-complete.json.gz) retain
 **123 complete originals / 19480933 logical bytes** in **15837704 archive bytes**.
 SHA256: `9c5c1b9fd1a1c749d8b29021b72fff5155c8498853c51ae2b78f3616764ea370`.
@@ -340,6 +340,11 @@ The packet includes all seven completed workflow logs, complete source proposals
 focused passed/failed attempts, available raw deadline receipts and cleanup
 evidence. Its source head is `2b5464e251db2efe5891006e6f8dbad74f6341a7`;
 it predates this final documentation clarification and does not qualify new CI.
+
+The exact published compressed stream was compared with its full Git blob before
+retiring the inactive local duplicate. The [retirement receipt](evidence/second-ci-repair-complete-local-retirement.json.gz)
+records **15,837,704 logical bytes** reclaimed; all 123 original members remain
+available in the immutable published packet above. Current CI evidence is retained.
 
 ## Completed CI cycle at 7586d14b1 and export repair
 

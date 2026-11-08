@@ -15,13 +15,14 @@ choices = {
     ('--restart',): ('restart-complete', 'restart', 21592036, 361),
     ('--project-retention',): ('project-retention-complete', 'project-retention', 21279876, 429),
     ('--native-regeneration',): ('native-regeneration-complete', 'native-regeneration', 18508712, 125),
+    ('--second-ci-repair',): ('second-ci-repair-complete', 'second-ci-repair', 15837704, 123),
 }
 if tuple(sys.argv[1:]) not in choices:
-    raise RuntimeError('Only the six reviewed inactive task archives are selectable')
+    raise RuntimeError('Only the seven reviewed inactive task archives are selectable')
 stem, metadata_stem, expected_size, expected_members = choices[tuple(sys.argv[1:])]
 relative = 'docs/case-studies/issue-784/evidence/' + stem + '.tar.xz'
 path = Path(relative)
-head = ('567e1dd0b072a2bfd736a9025ba245a630aaff7d' if sys.argv[1:] == ['--native-regeneration']
+head = ('567e1dd0b072a2bfd736a9025ba245a630aaff7d' if tuple(sys.argv[1:]) in [('--native-regeneration',), ('--second-ci-repair',)]
         else '4e7093eb98b2170bac2cd5fd24c0c777e6bcf4b2')
 metadata_path = Path('ci-logs/issue-784-restart-2/current-published-' + metadata_stem + '-archive-metadata.json')
 metadata = json.loads(metadata_path.read_bytes())
