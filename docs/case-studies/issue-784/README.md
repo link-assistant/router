@@ -51,6 +51,10 @@ The [complete diagnostic custody record](current-container-custody.md) preserves
 whole decoded proposal payloads, records the earlier evidence-cap overrun and
 retains an immutable published archive when its inactive local copy is retired.
 
+The [current compiler registration receiving record](current-registration-receiving.md)
+qualifies the refreshed registry and portable Git fixture with 32 original
+receiving cases across both engines, retaining every assertion and deadline.
+
 The [complete 17c7 CI review](current-17c7-ci-review.md) retains all failed and
 cancelled jobs, all 25 artifacts, exact-head identity and complete custody
 receipts. Its failures remain open until independently repaired and verified.

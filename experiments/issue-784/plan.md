@@ -9,6 +9,9 @@ Current continuation at published `4e7093eb9`:
       retain all complete original observations and publication readback.
 - [x] Repair the whole historical/current RefUpdate receiving boundary; all three
       original cases pass under Node 20.20.2 and Bun 1.4.4.
+- [x] Refresh the exact current compiler registration and genuine portable Git
+      fixture; both complete eight-case files pass both engines and Node audits.
+- [x] Regenerate and independently check all eleven stale reverse artifacts.
 - [ ] Finish the ASCII source transaction and receiving-cost repair under both
       original engine deadlines. The first named draft still exceeds 60000 ms.
 - [ ] Collect every terminal result and full nonpassing job log for the entire
