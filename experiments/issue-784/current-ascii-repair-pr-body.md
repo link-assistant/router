@@ -56,12 +56,15 @@ Bun after one in 12.803 seconds. Their remaining cases stay unqualified. The
 [registration record](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/current-ascii-registration.md)
 retains the actual install and every failed attempt.
 
-The preceding mandatory complete gate advances through fingerprinting, lint and
-both native suites (259 cases per engine), then stops at the unchanged memory
-guard during native TypeScript checking after 353.154 seconds. Later stages are
-unrun; no green stamp exists. The next complete gate attempt will use Node 20
-on PATH and a 512 MiB heap inherited by its child processes, preserving all
-original stage commands, assertions, compiler strictness and deadlines.
+The current mandatory complete gate at source `283143a7c` stops during its
+initial fingerprint after 22.965 seconds, peak sampled cgroup memory
+2,871,259,136 bytes against the unchanged 2,866,933,760-byte guard. It uses Node
+20 on PATH and an inherited 512 MiB heap. No stage starts: all seven stages are
+unrun and no green stamp exists. No test clock is paused, command filtered,
+deadline raised or strictness reduced. The
+[complete gate record](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/current-ascii-checkpoint-gate.md)
+retains the complete stream, guard and bounded closed-page advice. A preceding
+snapshot's lint/native successes do not qualify this changed source snapshot.
 
 The entire published `567e1dd0b072a2bfd736a9025ba245a630aaff7d` CI cycle is
 terminal. [Run 42518964289](https://github.com/link-assistant/router/actions/runs/42518964289)
