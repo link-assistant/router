@@ -1,7 +1,7 @@
 import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-current.mjs';
 import {composeProjectFacadeRetention} from './prepare-project-facade-retention.mjs';
 import {composeOwnedCorePrivateAnalysisRetention} from './prepare-owned-core-private-analysis-retention.mjs';
-import {composeCoreUnitMatches} from './prepare-core-unit-matches.mjs';
+import {composeCurrentCoreUnitMatches as composeCoreUnitMatches} from './prepare-current-core-unit-unicode.mjs';
 // Complete native source selections followed by serialized/reparsed CST rules.
 import {composeCoreAscii} from './prepare-core-ascii-sources.mjs';
 import {composeCoreAsciiReverse} from './prepare-core-ascii-reverse-sources.mjs';

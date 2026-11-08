@@ -1,4 +1,4 @@
-import {composeCoreUnitMatches} from './prepare-core-unit-matches.mjs';
+import {composeCurrentCoreUnitMatches as composeCoreUnitMatches} from './prepare-current-core-unit-unicode.mjs';
 // Fixed source equations after the complete matches/vector owned-core facade.
 // These copies and CST stages are DATA, never checked operand or owner permits.
 import {readFileSync,writeFileSync} from 'node:fs';

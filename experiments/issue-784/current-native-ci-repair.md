@@ -49,6 +49,11 @@ remain unfinished; no draft checkpoint establishes release readiness.
   `current-unit-unicode-privacy-complete-node.*`. Do not repeat that unchanged
   heap-exhausting workload locally. The broader integration and full application
   remain unqualified, and Rust remains unrun.
+- The repository's complete JavaScript syntax command checks all 1819 source
+  files successfully in 102.383582 seconds, sampled peak 1685774336 bytes.
+  `git diff --check` passes. These checks do not execute the eight complete
+  consumer files or replace the complete gate. Stream:
+  `current-integrated-source-lint.*`.
 
 ## Verified inactive diagnostic cleanup
 
@@ -59,6 +64,14 @@ remain unfinished; no draft checkpoint establishes release readiness.
   11547598 logical / 11554816 allocated bytes; no build cache or active path
   is removed. Full receipt:
   `current-phased-diagnostic-duplicate-retirement.json`.
+- Preserve all 603 complete files / 3741605 original bytes from four exact
+  inactive application DATA directories in
+  `current-unit-application-incomplete-data.tar.xz` (2748432 bytes). The unchanged
+  capture tool reopens and verifies every full member. Only then retire their
+  raw temporary copies, reclaiming 4956160 allocated bytes. Directory indexes
+  and failure markers retain their original presence or absence; an incomplete
+  application directory never becomes a successful application result.
+  Receipt: `current-unit-application-incomplete-data-retirement.json`.
 
 ## Complete current privacy application parents
 

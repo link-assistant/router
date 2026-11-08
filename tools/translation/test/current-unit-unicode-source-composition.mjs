@@ -4,13 +4,14 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {prepareCurrentCoreUnitUnicode} from '../prepare-current-core-unit-unicode.mjs';
+import {composeUnitPrivacyApplicationSources} from './fixtures/unit-privacy-source-composition.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
-export function currentCoreApplicationSourceEquations(){
+export function currentCoreApplicationSourceEquations(packet){
  const plan=prepareCurrentCoreUnitUnicode(),originals=plan.layers[1].originalUnicodePlan.files;
- return Object.fromEntries(['rust/src/translation_core.rs','rust/src/translation_core/primitives.rs'].map(path=>{
+ return {...composeUnitPrivacyApplicationSources(packet),...Object.fromEntries(['rust/src/translation_core.rs','rust/src/translation_core/primitives.rs'].map(path=>{
   const row=plan.sources[path],historical=originals.find(part=>part.path===path);
   return [path,{historicalSource:historical.before,source:row.after,equation:row}];
- }));
+ }))};
 }
 export function currentCoreApplicationSource(row,equations){
  const current=equations[row.path];if(!current)return row.source;

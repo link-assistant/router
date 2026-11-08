@@ -4,7 +4,8 @@ import {composeProjectFacadeRetention} from '../prepare-project-facade-retention
 import {assertRuntimeImportSourceComposition} from './runtime-import-source-composition.mjs';
 import {composeOwnedCorePrivateAnalysisRetention} from '../prepare-owned-core-private-analysis-retention.mjs';
 import {assertOwnedCorePrivateAnalysisSourceComposition} from './owned-core-private-analysis-source-composition.mjs';
-import {composeCoreUnitMatches} from '../prepare-core-unit-matches.mjs';
+import {composeCurrentCoreUnitMatches as composeCoreUnitMatches} from '../prepare-current-core-unit-unicode.mjs';
+import {assertCurrentCoreUnicodeSourceComposition} from './current-unit-unicode-source-composition.mjs';
 import {assertUnitMatchesSourceComposition} from './unit-matches-source-composition.mjs';
 import {assertAsciiSourceComposition,assertAsciiReverseComposition,assertAsciiAssetsComposition,assertAsciiBaseAssetsComposition} from './ascii-source-composition.mjs';
 import testCase from 'node:test';
@@ -111,6 +112,7 @@ test('native source producer derives the actual owned wrapper and composes compl
   assertAsciiAssetsComposition(assets.layers[0], reverse.sources, facades.sources);
   assertAsciiBaseAssetsComposition(base.layers[0], assets.sources, facades.sources);
   assertUnitMatchesSourceComposition(unit.layers[0], base.sources, facades.sources);
+  assert.equal(unit.layers.length,2);assertCurrentCoreUnicodeSourceComposition(unit.layers[1], {...base.sources,...Object.fromEntries(unit.layers[0].files.map(row=>[row.path,row]))}, facades.sources);
   assertOwnedCorePrivateAnalysisSourceComposition(retention.layers[0], unit.sources, facades.sources);
   const reverseSource = reverse.layers[0].files[0];
   assert.throws(() => composeCoreAsciiReverse({...ascii.sources, [reverseSource.path]: {after: 'forged'}}), /preceding complete source equation/u);

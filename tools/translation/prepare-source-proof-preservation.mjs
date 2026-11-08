@@ -1,4 +1,4 @@
-import {composeCoreUnitMatches} from './prepare-core-unit-matches.mjs';
+import {composeCurrentCoreUnitMatches as composeCoreUnitMatches} from './prepare-current-core-unit-unicode.mjs';
 import {composeProjectFacadeRetention} from './prepare-project-facade-retention.mjs';
 // Opaque source proofs retain original coordinates across syntax relocation.
 // Complete original programs and native AST/CST equations confer no authority.
