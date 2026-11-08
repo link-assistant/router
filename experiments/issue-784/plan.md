@@ -78,6 +78,22 @@ Objective: implement and verify all requirements in PR #785 on
 Constraints: one resource-intensive process at a time, no additional agents or clones,
 no Rust tool invocations, compressed evidence below 500 MB, preserve all strict gates.
 
+## Current published-head repair continuation, 2026-11-08
+
+- [x] Identify the fixed 52-module historical archive/current 53-module manifest
+      mismatch in four reverse suites. Preserve both original source data and
+      all corresponding historical outputs; keep fresh current compiler checks.
+- [x] Complete all five receiving files under Bun: 20 cases pass. Node remains
+      failed at the original callback and closure census deadlines, including
+      the larger-heap diagnostic. See the complete historical cohort case study.
+- [ ] Qualify the separately scoped current Unicode host-asset history under
+      both engines and independent Node duration auditing.
+- [ ] Finish and inventory the entire immutable published `17c7dd994` CI cycle.
+- [ ] Repair every remaining source-generation, strict parity, resource and
+      original deadline failure, then pass the complete same-source gate.
+- [ ] Review and publish the coordinated repair batch only after that full CI
+      cycle is terminal; keep PR #785 draft until every requirement is verified.
+
 ## Native regeneration receiving batch, 2026-11-07 21:33 UTC
 
 - [x] Publish the reviewed registration batch at `bea75c2c1676c78a381228a3a15557ae3a290276`;
