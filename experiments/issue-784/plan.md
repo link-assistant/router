@@ -86,7 +86,7 @@ no Rust tool invocations, compressed evidence below 500 MB, preserve all strict 
 - [x] Complete all five receiving files under Bun: 20 cases pass. Node remains
       failed at the original callback and closure census deadlines, including
       the larger-heap diagnostic. See the complete historical cohort case study.
-- [ ] Qualify the separately scoped current Unicode host-asset history under
+- [x] Qualify the separately scoped current Unicode host-asset history under
       both engines and independent Node duration auditing.
 - [ ] Finish and inventory the entire immutable published `17c7dd994` CI cycle.
 - [ ] Repair every remaining source-generation, strict parity, resource and

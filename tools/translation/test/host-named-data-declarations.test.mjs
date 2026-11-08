@@ -20,7 +20,8 @@ import {translateOwnedCoreJavaScript,parseOwnedCoreMeta} from '../js-to-rust/tra
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE} from '../router-core-source-data.mjs';
 import {createRulePipeline} from '../rule-pipeline.mjs';
 import {materializeNamedHostOriginalGit} from './portable-named-host-history.mjs';
-import {readOwnedReaderSourceHistory,readHostAssetSourceHistory} from './owned-reader-source-history.mjs';
+import {readOwnedReaderSourceHistory} from './owned-reader-source-history.mjs';
+import {readCurrentHostAssetSourceHistory as readHostAssetSourceHistory} from './current-host-asset-source-history.mjs';
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const BASELINE='077889e3fb2ad2d4f3a96c756bf6087ef17678b1';
 const HOST=NAMED_HOST_DECLARATION_SOURCE_PATHS[0],OWNED=NAMED_HOST_DECLARATION_SOURCE_PATHS[1];

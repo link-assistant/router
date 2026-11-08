@@ -136,6 +136,15 @@ export function prepareCoreUnicodePredicates({root=ROOT}={}){
  // Rejoin the complete original property source after every native/CST callback.
  if(JSON.stringify(unicodePredicateSourceArtifacts())!==JSON.stringify(property))fail('property source changed during preparation');return plan;
 }
+/** A separately scoped host declaration history, with no runtime/property proof.
+ * The full original archive is authenticated; only the complete host source
+ * equation is transported. The ordinary eight-file producer stays unchanged. */
+export function prepareCoreUnicodeHostAssetHistory({root=ROOT}={}){
+ const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');
+ const rows=originals(),after=afterSources(rows),path='tools/translation/host-assets.mjs',row=rows.find(row=>row.path===path);
+ const [equation]=transportConcreteNamedSourcePhases([{before:row.source,middle:row.source,after:after[path],language:'JavaScript',rules:['owned-unicode-predicates:retain-complete-inputs','router-core:explicit-unicode-predicates','owned-unicode-predicates:restore-language-input','router-core:restore-complete-before-unicode-predicates']}]);
+ return {schema:'router-unicode-host-asset-history-v1',file:prepare(row,after[path],root,ts,equation),typescriptVersion:ts.version,semanticAuthority:false,runtimeExecuted:false,propertyQualified:false};
+}
 export function composeCoreUnicodePredicates(prior,options={}){
  const plan=prepareCoreUnicodePredicates(options),sources={...prior};
  for(const row of plan.files){if(Object.hasOwn(sources,row.path)&&sources[row.path].after!==row.before)fail('preceding complete source equation differs: '+row.path);sources[row.path]=row;}
