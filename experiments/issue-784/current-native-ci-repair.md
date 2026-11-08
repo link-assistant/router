@@ -53,11 +53,28 @@ remain unfinished; no draft checkpoint establishes release readiness.
   Combined Bun receiving hits the unchanged memory guard after 44.199156 seconds,
   peak 2884014080 bytes; every owned descendant was reaped. No speed gain, Bun
   qualification or original four-build deadline success is claimed.
+  The complete nine-case Node file subsequently reports all behavioral passes
+  but fails the unchanged regeneration deadline at 104177.949917 / 60000 ms,
+  total 248.114397 seconds, sampled peak 2264576000 bytes. This is not an
+  established speed gain over the earlier 104580.741099-ms result. The mutable
+  compiler's semantic closure is also unqualified. Withdraw the private query
+  elision from production; retain its source experiment and exact six-file
+  withdrawal patch. The independently qualified source-origin transport stays
+  installed. Current-source import joins must now refer to that complete
+  `b0e9ed69588b445686802b67cd5e71a51f43921f6797a2c0304438eee7d7793b`
+  source and retain their exact previous-source equations.
 
-- The current unit/Unicode composition is a separate source proposal. It retains
-  both complete historical producer plans and derives the shared facade/DATA
-  diamond in both orders. Physical installation and complete receiving checks
-  remain unrun; the earlier missing-export failure is still required to pass.
+- The current unit/Unicode composition retains both complete historical
+  producer plans and derives the shared facade/DATA diamond in both orders.
+  All thirteen physical outputs are installed. Its complete producer freshness
+  check passes in 82.789139 seconds, sampled peak 2445901824 bytes. This source
+  result does not qualify receiving performance. The earlier complete eight-case
+  Node file took 359.521084 seconds and failed two original 60000-ms deadlines
+  (183279.178852 and 114679.018494 ms), the root-module source join and the bare
+  String return adoption. The latter two source repairs are now drafted. The
+  complete rerun hits the unchanged memory guard after 286.871339 seconds,
+  sampled peak 2872266752 bytes; every owned descendant is reaped, its audit is
+  incomplete, and no complete receiving result is claimed.
 
 ## Requirements and independent verification
 
@@ -574,3 +591,32 @@ remain unfinished; no draft checkpoint establishes release readiness.
       63701.603523 ms, native vector producer 81785.200532 ms, workspace census
       83479.261597 ms, lifetime source copies 79789.187262 ms, static release
       61724.109437 ms; each original limit remains 60000 ms.
+
+## Complete current bridge conversion receiving, 2026-11-08
+
+- The recovered CI assertion first fails because the retained original bridge
+  now imports its actual path-selected child. Supplying the complete child
+  resolves that missing producer. A subsequent complete original run still
+  fails the old expected refusal: the current locked external Engine producer
+  proof genuinely admits `untranslatable_responses_state`. The finite diagnostic
+  retains both whole-source hashes and the actual complete result: eight
+  executable functions, 29 retained refusals and the selected function admitted.
+- Replace that stale refusal expectation with fresh semantic round trips and
+  five state-selector vectors in emitted JavaScript and separately strict-
+  compiled TypeScript. Retain the full authored anonymous-trait source/inverse
+  negative and the original aggregate, derive and Default barriers. No source
+  pin, original case or deadline is removed or raised.
+- The first complete receiving attempt is interrupted by the unchanged memory
+  guard at 71.751902 seconds, sampled peak 2867011584 bytes; its audit remains
+  incomplete. Releasing only inactive tracked regular file-cache pages observes
+  total cgroup use fall from 2462961664 to 1596502016 bytes. No file is removed
+  or changed; the complete process/path selection and receipt are retained.
+- The fresh complete Node 20.20.2 file passes all three cases and its original
+  independent deadline audit (`complete-51wcIG`) in 120.428298 seconds, sampled
+  peak 2087477248 bytes. The new conversion case takes 77418.619449 ms and has
+  no newly introduced case deadline. Complete Bun 1.4.4 receiving still fails
+  all three original 5000-ms defaults (12268.07, 43019.55 and 14493.25 ms);
+  the second case's syntax-check child is terminated by that original timeout.
+  The failed first Bun launch used an absent task-local executable; that error
+  is retained separately, and the actual installed Bun run supplies the result.
+  Node receiving does not establish Bun, full-gate or production parity success.
