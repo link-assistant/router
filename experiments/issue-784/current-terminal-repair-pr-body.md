@@ -8,89 +8,81 @@ Prompt content, user tool schemas, search availability and existing telemetry
 choices remain intact.
 
 Reproduce by routing a supported location header or search location field without
-consent. The privacy regressions check removal, explicit opt-in, account overrides,
-WebSocket forwarding and all eight independently mixed Gemini field spellings.
-Earlier complete Node/Bun native suites each passed 259 cases, with another 30
-mixed-Gemini regression cases per engine. Matching Rust source and oracle cases
-are included; their execution remains unqualified until the same-head JavaScript
-gate passes.
+consent. Privacy regressions cover removal, opt-in, account overrides, WebSocket
+forwarding and all eight independently mixed Gemini field spellings. Earlier
+complete native Node/Bun suites each passed 259 cases, with another 30 mixed
+Gemini cases per engine. Matching Rust source and oracle cases are included;
+execution remains unqualified until the same-head JavaScript gate passes.
 
 This remains an authorized **draft CI feedback checkpoint**, not completion.
-The original all-tool/account guarantee and every required CI check remain
-mandatory. Main `eb2dad1c0a18394dc1aad46413e11401e74eb502` is already an ancestor;
-it was freshly fetched during this batch.
+Every original acceptance criterion and every required CI check remains mandatory.
+Freshly fetched main `eb2dad1c0a18394dc1aad46413e11401e74eb502` is an ancestor.
 
-The mandatory complete local gate at source commit
-`6ee1a798eba292b825cc4c61fee13c023fe65dfc` is resource-stopped during its initial
-repository fingerprint after 25.415 seconds. Peak sampled total cgroup memory
-is 2,867,912,704 bytes, above the unchanged 2,866,933,760-byte guard. Closed-page
-advice completes but does not prevent the stop. **All seven stages are unrun;
-no green stamp is written.** Later evidence/documentation commits inherit no
-gate qualification. The complete receipt is retained in the case study.
+The current repair batch preserves the actual named Unicode host producer,
+native unit binding results, all six facade history layers, preflight import
+positions and logical/physical Rust path joins. Actual producers regenerate the
+receiving outputs and current compiler registration, preserving full original
+archives, source equations, checked CST phases and inverses. A portable metadata
+regression exercises genuine pinned Git objects in a checkout without HEAD.
+No source hash was manually repinned. Newly executable production functions: zero.
 
-The coordinated repair batch preserves complete historical and physical current
-source equations for string equality, ASCII producers, production fixtures and
-the owned-matches parent graph. At source commit `ce7e1df8d`, actual reverse
-generation writes and independently checks all 11 then-stale outputs; later
-source changes still require their own freshness checks. Existing producers refresh the compiler registration
-and portable Git data together, preserving their complete predecessors. Shared
-receiving uses the existing bounded metadata transport with every original
-assertion, serialized/reparsed CST phase, native copy and inverse retained.
-These repairs add zero measured executable application functions.
+Focused complete-file results, with original assertions and deadlines:
 
-All eight original real-source fixture cases pass under Node and Bun, with
-unchanged deadlines and full vectors retained. The final owned-matches graph
-remains unqualified; two earlier whole-file attempts abort at the bounded Node
-heap in JSON stringification. Their unsuccessful vector writer is withdrawn,
-with complete failed streams and partial evidence preserved. Registration and
-receiving performance observations are recorded separately from full-gate status.
+- Named unit/Unicode receiving: ten Node and ten Bun cases pass.
+- Unicode facade/text receiving: 19 Node cases pass; seven facade Bun cases pass.
+  The combined Bun attempt fails and stops at the memory guard; text qualification
+  remains unfinished, with every failed and unrun case retained.
+- Preflight/path receiving: 13 Node cases pass. Bun stops after eight passes;
+  its remaining cases stay unqualified.
+- Current compiler registration/portable Git receiving: 16 Node and 16 Bun cases
+  pass. The independent Node deadline audit passes. Installed TypeScript is 5.9.3,
+  Node is 20.20.2 and local Bun is 1.4.4; CI's Bun 1.4.3 remains independently tested.
 
-A later whole owned-matches attempt fails before completing a case, at the
-bounded heap and cgroup guard. Its original test has an always-on JSON writer in
-`finally`; the earlier label suggesting optional logging was off was incorrect.
-The preserved label audit corrects that attribution. The exact JSON serialization
-call site remains unidentified, and the final production-parent case is unreached.
+The mandatory complete local JavaScript gate at source `af4b03fd1` stops during
+its initial fingerprint after 16.521 seconds. Peak sampled total cgroup memory is
+2,880,176,128 bytes versus the unchanged 2,866,933,760-byte guard. Bounded closed
+file-cache advice does not prevent the stop. **All seven stages are unrun and no
+green stamp is written.** No test clock is paused or deadline raised. Later
+evidence/documentation commits inherit no gate qualification. The
+[checkpoint record](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/current-unicode-checkpoint.md)
+links every focused result and the complete failed gate attempt.
 
-After the production fixture refresh, both complete eight-case registration and
-portable Git receiving files pass under both Node and Bun: 32 cases, unchanged
-assertions and deadlines, with both Node deadline audits passing. Three earlier
-resource-stopped attempts remain retained. A separate helper reuse draft is
-withdrawn after its two complete Node files pass nine assertions but fail three
-original ASCII deadlines (112.925, 346.855 and 76.933 seconds versus 60 seconds).
-That withdrawn draft has no Bun qualification and establishes no speed gain.
+The entire published `4e9fad88f28552f9e78da53084e4dcc50fdbe3c3` CI cycle is
+terminal. [Run 42512128521](https://github.com/link-assistant/router/actions/runs/42512128521)
+has 59 terminal jobs: 11 successful, 16 failed, seven cancelled and 25 skipped.
+All six supplemental workflows are terminal/skipped under the existing draft
+policy. The tested merge tree equals that head. Every one of the 23 nonpassing
+whole job logs and all 25 complete artifacts, including 438 members, are retained
+and independently verified. The
+[complete inventory](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/current-4e9fad88-ci.md)
+links every failure and full original container. Matrix cancellations after
+roughly 60 minutes do not establish their cause.
 
-The previous published head `4e7093eb98b2170bac2cd5fd24c0c777e6bcf4b2` has finished
-its entire CI cycle. [Run 42498636979](https://github.com/link-assistant/router/actions/runs/42498636979)
-has 59 terminal jobs and 25 nonpassing results; all six supplemental workflows
-are terminal/skipped under the existing draft policy. The tested merge tree
-equals that head. All 24 available whole failed-job logs and all 24 available
-whole artifacts are retained and verified. Cancelled translation shard 3 has
-no artifact, and GitHub returns HTTP 404 `BlobNotFound` for its log; complete log
-collection is explicitly false. A subsequent complete workflow ZIP has 66
-verified members and matches all 24 available whole failed-job logs byte for
-byte, but also omits that exact shard. Its cancellation cause is unknown. The
-[terminal inventory](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/current-terminal-ci.md)
-links every nonpassing job and preserves that evidence gap.
+The whole owned-matches receiving file remains unqualified after bounded heap
+and memory-guard failures. Its original test includes an always-on JSON writer
+in `finally`; an earlier label suggesting optional logging was off was incorrect.
+Complete original evidence and its correction are retained. The exact failing
+JSON call site remains unidentified. A separate finite stage diagnostic passes
+but does not execute or qualify the original whole-file workload.
 
 Still unfinished: the TypeScript owned-matrix sidecar, complete canonical/profile
 and owned generation, semantic refusals, original forward/reverse deadlines and
 strict parity. The last strict inventory has 441 gaps: 151 partial and 290
 unsupported features, with only two of 443 features implemented and 12,345 carried
-items. No required check is skipped or weakened. None of these code failures
-requires a missing secret or human-only CI setup. No local Rust tool is invoked;
-Rust CI remains gated on every required JavaScript stage for the same SHA.
+items. No required check is skipped or weakened. No missing secret or human-only
+CI setup cause is established; no manual CI action is substituted for these code
+failures. No local Rust tool is invoked. Rust CI remains gated on every required
+JavaScript stage passing for the same SHA.
 
 The [case study](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/README.md)
-contains all requirements, primary vendor research, component choices, client
-coverage, full evidence and remaining plans. The
+contains the full requirement inventory, primary vendor research, component
+choices, client coverage, evidence and remaining plans. The
 [configuration guide](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/privacy/geolocation.md)
-documents supported defaults and opt-in. Evidence includes two explicitly
-recorded allocation overruns and verified recovery of retired inactive archives
-from immutable published Git blobs; neither incident is presented as a passing
-storage check.
+documents supported defaults and opt-in. All storage overruns and subsequent
+verified recovery of inactive evidence archives remain explicitly recorded.
 
 **Unfinished acceptance criteria:** providers still see transport IPs and may
 retain security information; direct client, telemetry, OAuth and MCP traffic can
 bypass Router. Cursor's private protocol and Gemini subscription modes remain
 unsupported. Authenticated vendor account settings were not changed. The PR
-stays draft and unmerged while these criteria or required CI checks remain unmet.
+stays draft and unmerged while any criterion or required CI check remains unmet.
