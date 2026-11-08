@@ -5,14 +5,14 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
-import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
+import {verifyNativeCopiedSourceBindings,verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 import {readSchemarsEnclosingHistory,assertSchemarsEnclosingHistoryFresh,captureSchemarsEnclosingHistory,deriveSchemarsEnclosingImportHistory,SCHEMARS_ENCLOSING_ORIGINAL,SCHEMARS_ENCLOSING_OLD_CONTROL,SCHEMARS_ENCLOSING_TEST} from './schemars-enclosing-history.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),SELF='tools/translation/prepare-schemars-enclosing-adoption.mjs',DISPATCH='tools/translation/schemars-enclosing-output-dispatch.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex'),fail=message=>{throw new TypeError('Schemars enclosing import adoption: '+message);};
 const read=(root,path)=>readFileSync(resolve(root,path),'utf8');
 function canonical(source){const wire=serializeConcreteSyntaxMeta(transportConcreteSyntaxSource(source,{language:'JavaScript'}).document),result=transportConcreteSyntaxMeta(wire);if(result.source!==source)fail('complete concrete source differs');return {...result,wire};}
-function plan({root,path,before,after,current,edit=null}){
+function plan({root,path,before,after,current,edit=null,nativeBindings=null}){
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');const first=canonical(before),stages=[];let concrete=first;
  for(const [phase,start,end]of [['language',before,before],['repository',before,after]]){
   const rule=(old,next,id)=>({id,edits:[{span:[0,old.length],expected:old,replacement:next}]}),sequence={languageRules:[],repositoryRules:phase==='repository'&&start!==end?[rule(start,end,'router:actual-original-enclosing-Schemars-import')]:[]},run=applyConcreteSyntaxSubstitutions(concrete.document,sequence),wire=serializeConcreteSyntaxMeta(run.value),parsed=transportConcreteSyntaxMeta(wire),inverseSequence={languageRules:[],repositoryRules:phase==='repository'&&start!==end?[rule(end,start,'router:restore-whole-genuine-original-enclosing-source')]:[]},inverse=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applyConcreteSyntaxSubstitutions(parsed.document,inverseSequence).value));
@@ -21,7 +21,7 @@ function plan({root,path,before,after,current,edit=null}){
  let inverse=after;for(const stage of [...stages].reverse()){if(inverse!==stage.after)fail('whole source phase association differs');inverse=stage.inverse;}if(inverse!==before)fail('complete source inverse differs');
  const syntax=ts.createSourceFile(path,after,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(syntax.parseDiagnostics.length)fail('complete native after source grammar differs');
  let nativeInverse=after;if(edit){if(after.slice(edit.span[0],edit.span[0]+edit.replacement.length)!==edit.replacement)fail('actual native after span differs');nativeInverse=after.slice(0,edit.span[0])+edit.expected+after.slice(edit.span[0]+edit.replacement.length);}if(nativeInverse!==before)fail('whole independent native inverse differs');
- return {path,before,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:first.wire,afterMeta:concrete.wire,stages,nativeEdits:edit?[edit]:[],nativeInverse,inverse,nativeBindings:verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),compositionRequired:current!==null&&current!==before&&current!==after};
+ return {path,before,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:first.wire,afterMeta:concrete.wire,stages,nativeEdits:edit?[edit]:[],nativeInverse,inverse,nativeBindings:nativeBindings??verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),compositionRequired:current!==null&&current!==before&&current!==after};
 }
 function original(history,path){const rows=history.files.filter(row=>row.path===path);if(rows.length!==1)fail('one complete genuine original source required');return rows[0].source;}
 function testImport(ts,source){
@@ -34,9 +34,10 @@ export function deriveSchemarsEnclosingImport({root=ROOT,source}={}){
 }
 export function prepareSchemarsEnclosingAdoption({root=ROOT}={}){
  root=resolve(root);const history=readSchemarsEnclosingHistory({root}),before=original(history,SCHEMARS_ENCLOSING_ORIGINAL),birth=deriveSchemarsEnclosingImportHistory({original:before,source:before}),physical=read(root,SCHEMARS_ENCLOSING_ORIGINAL),dispatch=read(root,DISPATCH),self=read(root,SELF),testBefore=original(history,SCHEMARS_ENCLOSING_TEST),testPhysical=read(root,SCHEMARS_ENCLOSING_TEST),ts=ownershipCompiler(),testEdit=testImport(ts,testBefore),testAfter=testBefore.slice(0,testEdit.span[0])+testEdit.replacement+testBefore.slice(testEdit.span[1]);
- const files=[plan({root,path:SCHEMARS_ENCLOSING_ORIGINAL,before,after:birth.after,current:physical,edit:birth.edit}),plan({root,path:SCHEMARS_ENCLOSING_OLD_CONTROL,before,after:before,current:existsSync(resolve(root,SCHEMARS_ENCLOSING_OLD_CONTROL))?read(root,SCHEMARS_ENCLOSING_OLD_CONTROL):null}),plan({root,path:SCHEMARS_ENCLOSING_TEST,before:testBefore,after:testAfter,current:testPhysical,edit:testEdit})];
+ const bindings=verifyNativeCopiedModuleBindings(ts,[[SCHEMARS_ENCLOSING_ORIGINAL,birth.after],[SCHEMARS_ENCLOSING_OLD_CONTROL,before],[SCHEMARS_ENCLOSING_TEST,testAfter],[DISPATCH,dispatch]].map(([path,source])=>({path:resolve(root,path),source})));
+ const files=[plan({root,path:SCHEMARS_ENCLOSING_ORIGINAL,before,after:birth.after,current:physical,edit:birth.edit,nativeBindings:bindings[0]}),plan({root,path:SCHEMARS_ENCLOSING_OLD_CONTROL,before,after:before,current:existsSync(resolve(root,SCHEMARS_ENCLOSING_OLD_CONTROL))?read(root,SCHEMARS_ENCLOSING_OLD_CONTROL):null,nativeBindings:bindings[1]}),plan({root,path:SCHEMARS_ENCLOSING_TEST,before:testBefore,after:testAfter,current:testPhysical,edit:testEdit,nativeBindings:bindings[2]})];
  const inputs=[{path:SCHEMARS_ENCLOSING_ORIGINAL,source:physical,sha256:hash(physical)},{path:SCHEMARS_ENCLOSING_TEST,source:testPhysical,sha256:hash(testPhysical)},{path:DISPATCH,source:dispatch,sha256:hash(dispatch)},{path:SELF,source:self,sha256:hash(self)},...history.inputs];
- const dispatcher={path:DISPATCH,source:dispatch,meta:canonical(dispatch).wire,nativeBindings:verifyNativeCopiedSourceBindings(ts,resolve(root,DISPATCH),dispatch)};
+ const dispatcher={path:DISPATCH,source:dispatch,meta:canonical(dispatch).wire,nativeBindings:bindings[3]};
  // The birth plan remains derivable after another explicit layer changes the
  // physical body. Only a final composer can qualify that later whole source.
  for(const input of inputs)if(read(root,input.path)!==input.source)fail('fresh complete physical input changed');assertSchemarsEnclosingHistoryFresh({root,history});
