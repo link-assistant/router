@@ -4,6 +4,62 @@ Objective: fully satisfy issue #784 and all mandatory CI in PR #785, including
 base-branch failures. The objective remains active. All unresolved criteria
 remain unfinished; no draft checkpoint establishes release readiness.
 
+## Early refusal of an invalid complete unit predecessor
+
+- Extend the native-selected complete unit composer with a read-only early
+  refusal for plain own-data predecessor strings that already contradict the
+  pinned complete original source. Proxy/accessor inputs keep the original
+  deferred reads. Valid inputs still execute the entire original native/CST
+  preparation, physical source checks and final predecessor join; no source
+  verdict or executable permission is cached.
+- All five complete receiving cases pass Node 20.20.2 and the independent
+  original deadline audit (`complete-4anCU5`) in 160.831744 seconds, sampled
+  cgroup peak 2081533952 bytes. The three original cases retain all their
+  assertions and deadlines. New cases compare the entire valid composition
+  with the actual complete archived operation, execute the original invalid
+  operation and compare its exception, and verify single deferred getter reads.
+  The longest new case takes 59780.015759 / 60000 ms. Every child is reaped.
+  Full streams: `current-unit-predecessor-fast-refusal-node.*`.
+- Bun 1.4.4 passes the same complete five-case file in 157.356116 seconds,
+  sampled peak 2559266816 bytes. Its complete valid/invalid comparison takes
+  55491.53 / 60000 ms. No observer interrupts; every child is reaped. Full
+  stream: `current-unit-predecessor-fast-refusal-bun.*`.
+- Producer installation independently passes in 2.216578 seconds, sampled
+  peak 1876062208 bytes. It derives the current and preceding complete output
+  sources afresh from the unchanged whole original archive. Unicode output
+  remains byte-identical. This qualification does not establish complete
+  application performance, the broader consumer files or full-gate success.
+
+## Complete application attempt and current consumer draft
+
+- Seven production composition callers now select the explicit current
+  unit/Unicode API. Eight enclosing whole test files retain every original
+  case, assertion and deadline, checking the additional full Unicode layer
+  and adjusting source-layer indices. The full unit application checker
+  retains the complete original 567-file packet and joins every reviewed
+  current privacy parent, the new geolocation module and the whole unit/
+  Unicode source equations before fresh genuine adopter and project graphs.
+- The complete seven-case unit Node attempt before the early refusal change
+  runs for 329.173612 seconds, sampled peak 2477641728 bytes, then V8 aborts
+  on its bounded 512 MiB heap. The observer does not stop it. Three completed
+  functional cases are observed; the independent audit (`complete-haj5fn`)
+  fails the first case at 63344.754540 / 60000 ms. Remaining cases are
+  incomplete/unobserved. This is a failed complete-file attempt, not evidence
+  that all nine actual application functions execute. Full streams:
+  `current-unit-unicode-privacy-complete-node.*`. Do not repeat that unchanged
+  heap-exhausting workload locally. The broader integration and full application
+  remain unqualified, and Rust remains unrun.
+
+## Verified inactive diagnostic cleanup
+
+- Reopen the unchanged complete phased-clone archive, verify its full SHA
+  and each of six exact inactive diagnostic members, and compare every loose
+  duplicate and identity before retiring only those redundant copies. All
+  original bytes remain recoverable in the complete archive. Reclaimed
+  11547598 logical / 11554816 allocated bytes; no build cache or active path
+  is removed. Full receipt:
+  `current-phased-diagnostic-duplicate-retirement.json`.
+
 ## Complete current privacy application parents
 
 - Retain the original complete 567-file unit application packet byte-for-byte.

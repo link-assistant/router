@@ -50,9 +50,28 @@ function prepareSource(ts,row){
  }
  const edits=[[helper,helperAfter],[entry,entryAfter]].map(([node,replacement])=>({span:[node.getStart(file),node.end],expected:node.getText(file),replacement}));
  let middle=before;for(const edit of [...edits].sort((a,b)=>b.span[0]-a.span[0])){if(middle.slice(...edit.span)!==edit.expected)fail('complete native producer span changed');middle=middle.slice(0,edit.span[0])+edit.replacement+middle.slice(edit.span[1]);}
- const after=once(middle,"import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';","import {transportConcreteNamedSourcePhases} from './concrete-named-phases.mjs';");
+ const replaceImport=source=>once(source,"import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';","import {transportConcreteNamedSourcePhases} from './concrete-named-phases.mjs';");
+ const previousAfter=replaceImport(middle);
+ if(unit){
+  const composer=fn('composeCoreUnitMatches'),expected=composer.getText(file);
+  const prefix=`assertConcreteSyntaxHost();
+ if(prior!==null&&typeof prior==='object'&&!types.isProxy(prior)&&Object.getPrototypeOf(prior)===Object.prototype){
+  for(const row of originals().files)if(row.path!==LAYOUT){
+   const field=Object.getOwnPropertyDescriptor(prior,row.path),value=field&&Object.hasOwn(field,'value')?field.value:null;
+   if(value!==null&&typeof value==='object'&&!types.isProxy(value)&&Object.getPrototypeOf(value)===Object.prototype){
+    const after=Object.getOwnPropertyDescriptor(value,'after');
+    if(after&&Object.hasOwn(after,'value')&&typeof after.value==='string'&&after.value!==row.source)fail('preceding complete source differs: '+row.path);
+   }
+  }
+ }
+ `;
+  const replacement=once(expected,'const plan=prepareCoreUnitMatches(options)',prefix+'const plan=prepareCoreUnitMatches(options)');
+  const edit={span:[composer.getStart(file),composer.end],expected,replacement};edits.push(edit);
+  middle=once(middle,expected,replacement);
+ }
+ const after=replaceImport(middle)+(unit?"\nimport {types} from 'node:util';\nimport {assertConcreteSyntaxHost} from './concrete-syntax-meta.mjs';\n":'');
  grammar(ts,row.path,middle);grammar(ts,row.path,after);
- return {path:row.path,before,middle,after,nativeEdits:edits,rules:[...names[kind]]};
+ return {path:row.path,before,middle,after,previousAfter,nativeEdits:edits,rules:[...names[kind]]};
 }
 export function prepareNamedCoreProducers({root=ROOT}={}){
  root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript 5.9.3 required');
@@ -60,7 +79,7 @@ export function prepareNamedCoreProducers({root=ROOT}={}){
  const equations=transportConcreteNamedSourcePhases(files.map(row=>({before:row.before,middle:row.middle,after:row.after,language:'JavaScript',rules:['language:batch-complete-original-core-equations','repository:import-named-core-equation-transaction','language:restore-complete-original-core-producer','repository:restore-complete-original-core-imports']})));
  for(const [at,row]of files.entries()){
   row.equation=equations[at];row.current=readFileSync(resolve(root,row.path),'utf8');
-  if(row.equation.inverse!==row.before||row.current!==row.before&&row.current!==row.after)fail('unknown complete physical source: '+row.path);
+  if(row.equation.inverse!==row.before||![row.before,row.previousAfter,row.after].includes(row.current))fail('unknown complete physical source: '+row.path);
   if(row.after.split('\n').length>=1000)fail('complete output exceeds line bound');
  }
  if(JSON.stringify(originals(root))!==JSON.stringify(input))fail('complete original archive changed');

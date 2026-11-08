@@ -136,9 +136,22 @@ export function prepareCoreUnitMatches({root=ROOT}={}){
  try{for(const [at,path]of paths.entries())files.push(rowPlan(ts,path,result.source[path],result.after[path],root,result.originalNativeFiles.get(path),cst[at]));}finally{result.originalNativeFiles.clear();}
  return {schema:'router-owned-unit-matches-source-v1',typescriptVersion:ts.version,input:packet,layoutOrigin:result.layoutOrigin,sourceAssociationOrigin:result.sourceAssociationOrigin,files,semanticAuthority:false,runtimeExecuted:false,rustExecuted:false,newEncodedOrDigestCache:false,originalLiteralDomainUnchanged:true};
 }
-export function composeCoreUnitMatches(prior,options={}){const plan=prepareCoreUnitMatches(options),sources={...prior};for(const row of plan.files){if(Object.hasOwn(sources,row.path)&&sources[row.path].after!==row.before)fail('preceding complete source differs: '+row.path);sources[row.path]=row;}return {sources,layers:[plan],historicalSources:prior};}
+export function composeCoreUnitMatches(prior,options={}){assertConcreteSyntaxHost();
+ if(prior!==null&&typeof prior==='object'&&!types.isProxy(prior)&&Object.getPrototypeOf(prior)===Object.prototype){
+  for(const row of originals().files)if(row.path!==LAYOUT){
+   const field=Object.getOwnPropertyDescriptor(prior,row.path),value=field&&Object.hasOwn(field,'value')?field.value:null;
+   if(value!==null&&typeof value==='object'&&!types.isProxy(value)&&Object.getPrototypeOf(value)===Object.prototype){
+    const after=Object.getOwnPropertyDescriptor(value,'after');
+    if(after&&Object.hasOwn(after,'value')&&typeof after.value==='string'&&after.value!==row.source)fail('preceding complete source differs: '+row.path);
+   }
+  }
+ }
+ const plan=prepareCoreUnitMatches(options),sources={...prior};for(const row of plan.files){if(Object.hasOwn(sources,row.path)&&sources[row.path].after!==row.before)fail('preceding complete source differs: '+row.path);sources[row.path]=row;}return {sources,layers:[plan],historicalSources:prior};}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const [mode]=process.argv.slice(2);if(process.argv.length!==3||!['--write','--check'].includes(mode))fail('usage: --write|--check');const plan=prepareCoreUnitMatches();
  if(mode==='--write'){for(const row of plan.files)if(![row.before,row.after].includes(row.current)&&!(row.before===''&&row.current===null))fail('actual complete input differs: '+row.path);for(const row of plan.files){const path=resolve(ROOT,row.path);mkdirSync(dirname(path),{recursive:true});writeFileSync(path,row.after);}}
  else if(plan.files.some(row=>row.current!==row.after))fail('complete unit matches output is stale');console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),semanticAuthority:false,rustExecuted:false}));
 }
+
+import {types} from 'node:util';
+import {assertConcreteSyntaxHost} from './concrete-syntax-meta.mjs';

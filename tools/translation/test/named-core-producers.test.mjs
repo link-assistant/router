@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {gunzipSync} from 'node:zlib';
 import {prepareNamedCoreProducers,originalNamedCoreProducerSources} from '../prepare-named-core-producers.mjs';
-import {prepareCoreUnitMatches} from '../prepare-core-unit-matches.mjs';
+import {prepareCoreUnitMatches,composeCoreUnitMatches} from '../prepare-core-unit-matches.mjs';
 import {prepareCoreUnicodePredicates} from '../prepare-core-unicode-predicates.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 
@@ -30,4 +31,24 @@ for(const [name,prepare,entry]of [
  // Entire records: all sources, canonical documents, traces, copied native
  // programs, lexical bindings, current physical bytes and original properties.
  assert.deepEqual(after,before);
+});
+
+test('complete valid unit composition equals the original while wrong own-data predecessors refuse',{timeout:60000},async()=>{
+ const row=originalNamedCoreProducerSources().find(row=>row.path.endsWith('prepare-core-unit-matches.mjs'));
+ const original=await import('data:text/javascript;base64,'+Buffer.from(row.after).toString('base64'));
+ const before=original.composeCoreUnitMatches({}),after=composeCoreUnitMatches({});assert.deepEqual(after,before);
+ const prior={'rust/src/translation_core.rs':{after:'forged'}};let refused;
+ try{original.composeCoreUnitMatches(prior);}catch(error){refused=error;}
+ assert.ok(refused instanceof TypeError);
+ assert.throws(()=>composeCoreUnitMatches(prior),error=>error.constructor===refused.constructor&&error.message===refused.message);
+ assert.deepEqual(prior,{'rust/src/translation_core.rs':{after:'forged'}});
+});
+
+test('unit predecessor accessors keep their original deferred single-read behavior',{timeout:60000},()=>{
+ const packet=JSON.parse(gunzipSync(readFileSync(new URL('../source-profiles/core-unit-matches/originals.json.gz',import.meta.url)),{maxOutputLength:100000}).toString('utf8')),path='rust/src/translation_core.rs',source=packet.files.find(row=>row.path===path).source;
+ let parentReads=0,afterReads=0;
+ const prior={};Object.defineProperty(prior,path,{get(){parentReads++;return {after:source};},enumerable:true});
+ const first=composeCoreUnitMatches(prior);assert.equal(parentReads,1);assert.equal(first.historicalSources,prior);assert.equal(first.sources[path].before,source);
+ const value={};Object.defineProperty(value,'after',{get(){afterReads++;return source;},enumerable:true});
+ const second=composeCoreUnitMatches({[path]:value});assert.equal(afterReads,1);assert.equal(second.sources[path].before,source);
 });
