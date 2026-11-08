@@ -9,6 +9,7 @@ import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcr
 import {ownershipCompiler} from '../tools/translation/js-to-rust/vendor/module-syntax.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 export const REVERSE_SHARD_LANGUAGE_RULES=Object.freeze([
+ {id:'reverse-shard:separate-argument-cursor-from-selected-bin',before:"for(let index=0;index<args.length;index++){const flag=args[index],value=args[++index];",after:"for(let argumentIndex=0;argumentIndex<args.length;argumentIndex++){const flag=args[argumentIndex],value=args[++argumentIndex];"},
  {id:'reverse-shard:explicit-complete-bin-selection',before:"runBunReverseFiles({root,outputDirectory,bun='bun',python='python3',totalTimeoutMs=2400000}",after:"runBunReverseShard({root,outputDirectory,bun='bun',python='python3',totalTimeoutMs=2400000,index,count}"},
  {id:'reverse-shard:refuse-missing-or-invalid-bin',before:' root=resolve(root);outputDirectory=resolve(outputDirectory);',after:" if(!Number.isSafeInteger(count)||count<1||count>16||!Number.isSafeInteger(index)||index<1||index>count)throw Error('Explicit bounded complete reverse shard required');\n root=resolve(root);outputDirectory=resolve(outputDirectory);"},
  {id:'reverse-shard:partition-entire-current-discovery',before:'files=await discoverReverseBunFiles(root),records=[]',after:'allFiles=await discoverReverseBunFiles(root),partition=partitionWholeFiles(allFiles,index,count),files=partition.selected,records=[]'},

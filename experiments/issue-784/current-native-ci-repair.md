@@ -223,7 +223,40 @@ remain unfinished; no draft checkpoint establishes release readiness.
       full production generation, original performance deadlines and same-SHA
       CI/Rust qualification remain unfinished; no green stamp exists.
 
-## Evidence allocation
+## Published 28aba1b62 CI repair
+
+- [x] Preserve the new head's complete TypeScript and parity job logs. Native
+      TypeScript 5.9.3 compiles all 165 files, the nine native TypeScript cases
+      pass their independent deadlines, and all three ordinary profile targets
+      compile. TypeScript then fails on the missing owned matrix
+      `owned-definitions-matrix-80dc0d37762835fbe925b47e6fad25fee5c1d3c093fafff0512fc2bd3f9ae4e0.json`.
+      Strict parity still fails on 441 gaps, 12345 carried items and the stale
+      account-routing-policy source hash. Neither failure is waived.
+- [x] Reproduce all eight Bun reverse jobs' pre-test CLI refusal in a complete
+      nine-case regression file: eight pass, valid-shard regression fails with
+      `One exact reverse shard required`. The argv loop shadows the shard's
+      `index`; add an ordered language rule separating its cursor and regenerate
+      the actual coordinator through both serialized/reparsed CST phases.
+      Preserve the original coordinator and all seven existing cases.
+- [x] After the cursor repair, the complete nine-case file passes under Node
+      20.20.2 in 15.353719 seconds, sampled cgroup peak 1900474368 bytes, with
+      its independent deadline audit, and Bun 1.4.4 in 11.690568 seconds, peak
+      1823342592 bytes. Both include real Bun CLI invocations for all eight bins,
+      alternate argv positions, complete input/receipt checks and invalid-bin
+      refusals. CI's pinned Bun remains 1.4.3; full CI is not qualified by these
+      local checks. Complete before/after logs, source proposals, inverse proofs
+      and observer receipts use the `current-reverse-cli-` prefix.
+- [x] Interrupt canonical production generation intentionally after fresh CI
+      identifies compiler-helper and fixture repairs that would invalidate its
+      source vector. The SIGTERM receipt records 1434.485971 seconds and peak
+      2732875776 bytes; this was not a memory failure or a completed generation.
+      Owned canonical and both matrix families remain unrun. The observer's
+      child/reaper exited; its own zero-RSS zombie is adopted by container PID 1.
+- [ ] Finish this head's complete CI cycle, collect every failure, complete the
+      source repair batch, regenerate all required outputs and run the full gate
+      before claiming verification. No next push has been made.
+
+## Earlier evidence allocation
 
 - [x] Retire the 24588813-byte inactive failed capture from the current tree
       after verifying every byte against its unchanged published Git blob at

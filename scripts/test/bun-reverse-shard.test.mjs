@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,mkdir,writeFile,readFile,chmod,rm} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,readFile,chmod,rm,readdir} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {spawnSync} from 'node:child_process';
@@ -83,5 +83,29 @@ test('actual Bun executes all original cases in every selected complete file acr
  for(const index of [1,2]){
   const result=await f.run(index,2,{bun:'bun'});assert.equal(result.exitCode,0);assert.equal(result.records.length,2);
   for(const row of result.records){assert.match(row.resource.bunReportedVersion.version,/^\d+\.\d+\.\d+$/u);assert.equal(row.resource.processGroupCleanupSupported,true);}
+ }
+});
+
+test('actual reverse CLI accepts every complete bin without confusing argv position with shard identity',async t=>{
+ const f=await fixture(t),files=Array.from({length:8},(_,at)=>directory+'/'+at+'.test.mjs'),selected=[];
+ for(const [at,file]of files.entries())await writeFile(join(f.root,file),"import test from 'node:test';test('CLI whole "+at+" first',()=>{});test('CLI whole "+at+" second',()=>{});\n");
+ for(let index=1;index<=8;index++){
+  const outputRoot=join(f.root,'node_modules','cli-'+index),identity=['--whole-file-shard',index+'/8'],options=['--root',f.root,'--bun','bun','--output-root',outputRoot];
+  const command=[new URL('../run-bun-reverse-shard.mjs',import.meta.url).pathname,...(index%2?[...identity,...options]:[...options,...identity])];
+  const child=spawnSync(process.execPath,command,{encoding:'utf8'});assert.equal(child.status,0,child.stderr);
+  const summary=JSON.parse(child.stdout);assert.equal(summary.exitCode,0);assert.equal(summary.mandatoryFiles,1);assert.equal(summary.executedFiles,1);assert.equal(summary.inputsUnchanged,true);
+  const runs=await readdir(outputRoot);assert.equal(runs.length,1);const evidence=join(outputRoot,runs[0],'evidence'),receipt=JSON.parse(await readFile(join(evidence,'receipt.json'),'utf8'));
+  assert.deepEqual(receipt.shard,{index,count:8});assert.deepEqual(receipt.completeDiscoveredFiles,files);assert.equal(receipt.records.length,1);assert.equal(receipt.allSelectedFilesExecuted,true);assert.equal(receipt.originalPerCaseDeadlinesUnchanged,true);assert.equal(receipt.globalCapMs,2400000);assert.equal(receipt.inputsUnchanged,true);assert.equal(receipt.executionInputsUnchanged,true);
+  const row=receipt.records[0];assert.equal(row.status,'passed');assert.deepEqual(row.command,['bun','test','./'+row.file]);assert.equal(row.resource.timedOut,false);assert.match(row.resource.bunReportedVersion.version,/^\d+\.\d+\.\d+$/u);
+  const raw=(await Promise.all(row.logs.map(log=>readFile(join(evidence,log.path),'utf8')))).join('\n');assert.match(raw,/CLI whole \d first/u);assert.match(raw,/CLI whole \d second/u);selected.push(row.file);
+ }
+ assert.deepEqual(selected.sort(),files);
+});
+test('actual reverse CLI refuses malformed duplicate out-of-range or absent shard identities',async t=>{
+ const f=await fixture(t),script=new URL('../run-bun-reverse-shard.mjs',import.meta.url).pathname;
+ const variants=[[],['--whole-file-shard','0/8'],['--whole-file-shard','9/8'],['--whole-file-shard','1/17'],['--whole-file-shard','1/8tail'],['--whole-file-shard','1/8','--whole-file-shard','2/8'],['--whole-file-shard']];
+ for(const [at,identity]of variants.entries()){
+  const child=spawnSync(process.execPath,[script,'--root',f.root,'--output',join(f.root,'node_modules','invalid-'+at),...identity],{encoding:'utf8'});
+  assert.notEqual(child.status,0);assert.match(child.stderr,/One exact reverse shard required|Explicit bounded complete reverse shard required/u);
  }
 });
