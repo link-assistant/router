@@ -2,8 +2,9 @@
 
 This local source batch follows published checkpoint `10fd7f0da` in
 [PR #785](https://github.com/link-assistant/router/pull/785). Its full CI cycle
-is still running. No further push is authorized until that cycle is terminal
-and every completed failure has been collected.
+completed with failures at 15:17:27 UTC on 2026-11-08. All 25 failed/cancelled
+job logs have been collected. The focused results below do not qualify that
+published head or the later complete-generation attempt.
 
 The earlier stopped whole-production allocation diagnostic attributed about
 139.9 MB of sampled live allocations to the source-module freeze closure. That
@@ -62,6 +63,18 @@ No observer stopped a final focused check. Newly executable application
 functions: **zero**. The actual owned matrix/sidecars, original full-generation
 deadlines, freshness, strict parity, complete local gate and current-head CI
 remain unfinished. No Rust tool was invoked.
+
+The subsequent complete owned planner stopped after 2,104.327 seconds when
+sampled total cgroup use reached 2,870,996,992 bytes, above the observer's
+2,866,933,760-byte guard. All six owned processes closed; no output was applied.
+The original shell pipeline terminated Node and gzip together, leaving an empty
+progress file. The [complete stop packet](evidence/current-owned-freeze-whole-plan-stop.json.gz)
+retains every observed original byte, command and resource receipt and explicitly
+records that no per-stage progress or generation result can be recovered.
+The launcher has since been changed to the existing streaming Python capture
+helper with signal forwarding. That correction is not runtime-qualified; the
+unchanged whole planner was not retried. No speed or full-memory qualification
+can be inferred from this stopped attempt.
 
 Two explicit cleanup batches losslessly compressed 25 inactive task observations,
 reclaiming 2,513,569 logical bytes and 2,519,040 allocated bytes. Every complete

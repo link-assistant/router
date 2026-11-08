@@ -4,17 +4,28 @@ import json
 import os
 from pathlib import Path
 import stat
+import sys
 import zipfile
 
 root = Path.cwd()
 base = root / 'ci-logs'
-receipt = base / 'issue-784-restart-2/receiving-batch-old-zip-duplicate-retirement.json'
+assert sys.argv[1:] in ([], ['--remaining-closed-export'])
+remaining = bool(sys.argv[1:])
+receipt = base / ('issue-784-restart-2/current-closed-export-zip-retirement.json' if remaining else 'issue-784-restart-2/receiving-batch-old-zip-duplicate-retirement.json')
 assert not receipt.exists()
 choices = [
     ('13560346605', 'complete-GaWIBh/stdout.raw.tap', 2098380),
     ('13561756688', 'complete-HyIlVn/stdout.raw.tap', 1373036),
     ('13560498078', '.node-case-deadlines/complete-LikO5m/command.json', 948765),
 ]
+if remaining:
+    choices = []
+    for label in ['13560346605', '13561756688', '13560498078']:
+        folder = base / ('restart-export-complete-artifact-' + label)
+        for path in sorted(folder.rglob('*')):
+            if path.is_file():
+                choices.append((label, path.relative_to(folder).as_posix(), path.stat().st_size))
+    assert len(choices) == 55 and sum(row[2] for row in choices) == 531682
 selected = []
 for identity, member, expected in choices:
     prefix = base / ('restart-export-complete-artifact-' + identity)
@@ -75,7 +86,7 @@ for original, archive, member_name, expected in selected:
                  'completeReadbackVerified': True})
 inactive()
 with receipt.open('x') as output:
-    json.dump({'schema': 'three-explicit-inactive-ci-duplicate-retirement-v1',
+    json.dump({'schema': 'complete-closed-export-ci-duplicate-retirement-v1' if remaining else 'three-explicit-inactive-ci-duplicate-retirement-v1',
                'rows': rows, 'completeOriginalsRetained': True,
                'scope': 'Only these historical extracted duplicates; full originals remain in verified ZIPs.'}, output)
 for original, _, _, _ in selected:

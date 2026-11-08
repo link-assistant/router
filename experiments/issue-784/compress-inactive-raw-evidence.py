@@ -18,6 +18,13 @@ parser.add_argument('--closed-published-source-review', action='store_true')
 parser.add_argument('--closed-alias-checkpoint', action='store_true')
 parser.add_argument('--closed-generation-observations', action='store_true')
 parser.add_argument('--closed-translation-observations', action='store_true')
+parser.add_argument('--closed-10fd-early-observations', action='store_true')
+parser.add_argument('--closed-prior-cycle-observations', action='store_true')
+parser.add_argument('--closed-terminal-ci-observations', action='store_true')
+parser.add_argument('--closed-10fd-final-observations', action='store_true')
+parser.add_argument('--closed-matrix-custody-observations', action='store_true')
+parser.add_argument('--closed-draft-observations', action='store_true')
+parser.add_argument('--closed-raw-packet-preflight', action='store_true')
 parser.add_argument('--receipt', default='reverse-shard-inactive-evidence-compression.json')
 args = parser.parse_args()
 assert sum(bool(value) for value in [args.closed_attempt, args.closed_investigations,
@@ -27,7 +34,13 @@ assert sum(bool(value) for value in [args.closed_attempt, args.closed_investigat
                                    args.closed_published_source_review,
                                    args.closed_alias_checkpoint,
                                    args.closed_generation_observations,
-                                   args.closed_translation_observations]) <= 1
+                                   args.closed_translation_observations,
+                                   args.closed_10fd_early_observations,
+                                   args.closed_prior_cycle_observations,
+                                   args.closed_terminal_ci_observations,
+                                   args.closed_10fd_final_observations,
+                                   args.closed_matrix_custody_observations,
+                                   args.closed_draft_observations, args.closed_raw_packet_preflight]) <= 1
 assert Path(args.receipt).name == args.receipt and args.receipt.endswith('.json')
 paths = [root / 'ci-logs' / name for name in [
     'restart-export-published-review.diff',
@@ -91,6 +104,68 @@ elif args.closed_translation_observations:
         'current-unit-unicode-closed-deadline-evidence-capture.json',
     ]] + [base / ('current-translation-four-rerun-live-' + str(index) + '.json')
           for index in range(1, 10)]
+elif args.closed_10fd_early_observations:
+    # The collector process closed. These immutable partial-cycle observations
+    # do not establish that the published CI cycle has completed.
+    paths = [base / name for name in [
+        'current-10fd-ci-early-snapshot.json', 'current-10fd-ci-early-logs.json',
+        'current-10fd-ci-early-collection.log',
+    ]]
+elif args.closed_raw_packet_preflight:
+    paths = [base / name for name in ['current-source-origin-pr.json',
+        'receiving-batch-published-runs.json', 'current-pr-conversation-10.json']]
+elif args.closed_draft_observations:
+    # Whole inactive diagnostic drafts, profiles and published-head observations.
+    paths = [base / name for name in [
+        'current-reverse-shard-cursor-draft.json', 'current-ingress-table-fixture-draft.json',
+        'current-unit-unicode-source-cpu-analysis-aggregated.log', 'current-unit-unicode-profile-analysis.json',
+        'current-ci-custody-commit.log', 'current-unit-unicode-receiving-node.log',
+        'current-independent-generator-literal-history.json', 'receiving-batch-before-publish-pr.json',
+        'current-unit-checkpoint-pr.json', 'current-named-ascii-pr.json',
+    ]]
+elif args.closed_matrix_custody_observations:
+    # Whole closed storage receipts and old matrix observations only.
+    paths = [base / name for name in [
+        'matrix-draft-packet-original-receipt.json', 'matrix-draft-evidence-final.json',
+        'computed-index-verified-ci-retirement.json', 'matrix-draft-postpublish-retirement.json',
+        'historical-observation-gzip-retention.json', 'current-ci-duplicate-retirement.json',
+        'receiving-batch-early-artifact-verification.json', 'current-owned-freeze-duplicate-retirement.json',
+    ]]
+elif args.closed_10fd_final_observations:
+    # The entire published cycle is terminal and all 25 nonpassing logs are
+    # retained. Preserve every original response byte, including job metadata.
+    snapshot = json.loads((base / 'current-10fd-ci-final-snapshot.json').read_bytes())
+    collection = json.loads((base / 'current-10fd-ci-final-logs.json').read_bytes())
+    assert collection['completeCycleCollected'] is True
+    paths = [base / name for name in [
+        'current-10fd-ci-final-snapshot.json', 'current-10fd-ci-final-logs.json',
+    ]]
+elif args.closed_prior_cycle_observations:
+    # Exact previous-cycle observations and closed logs, never producer inputs.
+    paths = [root / 'ci-logs/issue-784-checkpoint-b63dd5a33' / name for name in [
+        'completed-head-runs-api.json', 'completed-head-runs.json', '42430143951.json',
+    ]] + [root / 'ci-logs' / name for name in [
+        'restart-export-early-reverse.log', 'restart-export-complete-reverse-translation.log',
+        'restart-published-reverse-translation.log',
+    ]] + [base / name for name in [
+        'current-profile-current-jobs.json', 'crypto-profile-current-jobs.json',
+        'node-profile-cycle-status-2.json', 'receiving-batch-early-reverse-job-collection.json',
+    ]] + [root / 'experiments/issue-784' / name for name in [
+        'native-node-repaired.log', 'final-native-node.log',
+    ]]
+elif args.closed_terminal_ci_observations:
+    # Whole closed historical CI observations, with no live producer inputs.
+    paths = [base / name for name in [
+        'current-source-origin-generate-owned-canonical.log',
+        'node-profile-cycle-status.json', 'current-profile-terminal-probe.json',
+        'reverse-shard-current-jobs.json', 'computed-index-current-jobs.json',
+        'current-unit-unicode-closed-deadline-evidence-manifest.json',
+        'owned-stage-previous-node-retirement.json', 'current-terminal-repair-pr.json',
+    ]] + [root / 'ci-logs' / name for name in [
+        'restart-export-capture-receipt.json', 'restart-export-evidence-manifest.json',
+        'restart-published-typescript.log', 'restart-export-early-typescript.log',
+        'restart-export-complete-typescript.log',
+    ]] + [root / 'ci-logs/issue-784-checkpoint-b63dd5a33/missing-job-log-recovery.json']
 elif args.closed_current_diagnostics:
     # Exact completed diagnostic outputs only. The current whole-file run,
     # current CI snapshot and all source inputs remain outside this list.

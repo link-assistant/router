@@ -3,8 +3,8 @@ import base64
 import gzip
 import hashlib
 import json
+import os
 from pathlib import Path
-import subprocess
 
 root = Path.cwd()
 base = Path('ci-logs/issue-784-restart-2')
@@ -53,6 +53,15 @@ record = {'schema': 'complete-current-static-source-refresh-attempts-v1',
           'fullGatePassed': False, 'rustExecuted': False}
 raw = json.dumps(record, separators=(',', ':')).encode() + b'\n'
 packed = gzip.compress(raw, mtime=0)
+size = 0
+for name in ['ci-logs', 'docs/case-studies/issue-784', 'experiments/issue-784',
+             'js/node_modules/.node-case-deadlines']:
+    for parent, children, files in os.walk(name):
+        if Path(parent) == Path('experiments/issue-784'):
+            children[:] = [child for child in children if child != 'toolchain']
+        size += sum((Path(parent) / path).stat().st_size for path in files
+                    if not (Path(parent) / path).is_symlink())
+assert size + len(packed) < 500_000_000, (size, len(packed))
 target = dest / 'current-static-fixture-refresh-checks.json.gz'
 assert not target.exists() and not Path(record['proposal']['path']).exists()
 with target.open('xb') as output:

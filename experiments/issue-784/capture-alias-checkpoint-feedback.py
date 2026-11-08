@@ -1,5 +1,6 @@
 """Capture full current issue, PR and published-head CI feedback without overwrite."""
 import base64
+import argparse
 from datetime import datetime, timezone
 import gzip
 import hashlib
@@ -7,7 +8,13 @@ import json
 from pathlib import Path
 import subprocess
 
-target = Path('docs/case-studies/issue-784/evidence/current-alias-checkpoint-feedback.json.gz')
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--label', default='current-alias-checkpoint')
+parser.add_argument('--published-head', default='17c7dd9942814f2a6a17eee135016e5941f04f15')
+args = parser.parse_args()
+assert args.label.isascii() and all(char.isalnum() or char == '-' for char in args.label)
+assert len(args.published_head) == 40 and all(char in '0123456789abcdef' for char in args.published_head)
+target = Path('docs/case-studies/issue-784/evidence/' + args.label + '-feedback.json.gz')
 assert not target.exists()
 queries = {
     'issue': ['gh', 'issue', 'view', 'https://github.com/link-assistant/router/issues/784',
@@ -22,7 +29,7 @@ for label, endpoint in {
         'issue-comments': 'issues/784/comments', 'pr-conversation': 'issues/785/comments',
         'pr-inline': 'pulls/785/comments', 'pr-reviews': 'pulls/785/reviews',
         'sub-issues': 'issues/784/sub_issues',
-        'published-head-runs': 'actions/runs?head_sha=17c7dd9942814f2a6a17eee135016e5941f04f15&per_page=100',
+        'published-head-runs': 'actions/runs?head_sha=' + args.published_head + '&per_page=100',
 }.items():
     queries[label] = ['gh', 'api', 'repos/link-assistant/router/' + endpoint, '--paginate', '--slurp']
 members = []

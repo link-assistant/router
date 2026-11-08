@@ -10,11 +10,18 @@ import subprocess
 import sys
 
 root = Path.cwd()
-assert sys.argv[1:] in ([], ['--paired-project'], ['--closed-receiving'], ['--class-birth'])
+assert sys.argv[1:] in ([], ['--paired-project'], ['--closed-receiving'], ['--class-birth'], ['--module-freeze'], ['--alias-reader'], ['--descriptor-kind'], ['--ascii-selection'], ['--fixture-paths'], ['--static-refresh'], ['--proof-graph'])
 paired = sys.argv[1:] == ['--paired-project']
 receiving = sys.argv[1:] == ['--closed-receiving']
 class_birth = sys.argv[1:] == ['--class-birth']
-label = 'current-alias-reader' if class_birth else 'current-class-birth-receiving' if receiving else 'current-class-birth' if paired else 'current-paired-project'
+module_freeze = sys.argv[1:] == ['--module-freeze']
+alias_reader = sys.argv[1:] == ['--alias-reader']
+descriptor_kind = sys.argv[1:] == ['--descriptor-kind']
+ascii_selection = sys.argv[1:] == ['--ascii-selection']
+fixture_paths = sys.argv[1:] == ['--fixture-paths']
+static_refresh = sys.argv[1:] == ['--static-refresh']
+proof_graph = sys.argv[1:] == ['--proof-graph']
+label = 'current-proof-graph' if proof_graph else 'current-static-refresh' if static_refresh else 'current-receiving-fixture-paths' if fixture_paths else 'current-static-fixture' if ascii_selection else 'current-ascii-selection' if descriptor_kind else 'current-descriptor-kind' if alias_reader else 'current-owned-freeze' if module_freeze else 'current-alias-reader' if class_birth else 'current-class-birth-receiving' if receiving else 'current-class-birth' if paired else 'current-paired-project'
 receipt = Path('ci-logs/issue-784-restart-2/' + label + '-duplicate-retirement.json')
 assert not receipt.exists()
 selected, archives = {}, []
@@ -30,6 +37,20 @@ if receiving:
         'current-negative-budget-history-receiving', 'current-proof-cost-history-receiving']]
 if class_birth:
     packets = [('current-class-birth-entry', '95460607f9b286e0df754a1088295745b02c82ee')]
+if module_freeze:
+    packets = [('current-module-item-freezing', '68c598bc2')]
+if alias_reader:
+    packets = [('current-alias-reader', 'bbe46cfaf42ee688b3ea40936cb91421a55c4d2d')]
+if descriptor_kind:
+    packets = [('current-descriptor-kind-receiving', '54259b027')]
+if ascii_selection:
+    packets = [('current-ascii-selection-checks', 'f2b67cb79')]
+if fixture_paths:
+    packets = [('current-receiving-fixture-paths', '858ca2d47')]
+if static_refresh:
+    packets = [('current-static-fixture-refresh-checks', '9f27bfe67')]
+if proof_graph:
+    packets = [('current-proof-consumer-graph', '66aec03d0')]
 for name, commit in packets:
     path = Path('docs/case-studies/issue-784/evidence') / (name + '.json.gz')
     packed = path.read_bytes()
@@ -61,8 +82,8 @@ for name, commit in packets:
             check = json.loads(raw)
             assert check['childClosed'] and check['groupCleanup']['complete']
             assert not Path('/proc/' + str(check['groupCleanup']['group'])).exists()
-assert len(selected) == (34 if class_birth else 86 if receiving else 51 if paired else 221)
-assert sum(row[0]['bytes'] for row in selected.values()) == (407953 if class_birth else 2820967 if receiving else 399624 if paired else 1686719)
+assert len(selected) == (22 if proof_graph else 19 if static_refresh else 12 if fixture_paths else 27 if ascii_selection else 13 if descriptor_kind else 17 if alias_reader else 96 if module_freeze else 34 if class_birth else 86 if receiving else 51 if paired else 221)
+assert sum(row[0]['bytes'] for row in selected.values()) == (198818 if proof_graph else 74566 if static_refresh else 376505 if fixture_paths else 121643 if ascii_selection else 134866 if descriptor_kind else 129057 if alias_reader else 823544 if module_freeze else 407953 if class_birth else 2820967 if receiving else 399624 if paired else 1686719)
 
 
 def identity(state):
