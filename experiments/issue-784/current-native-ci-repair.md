@@ -4,6 +4,61 @@ Objective: fully satisfy issue #784 and all mandatory CI in PR #785, including
 base-branch failures. The objective remains active. All unresolved criteria
 remain unfinished; no draft checkpoint establishes release readiness.
 
+## Current source repairs and failed production generation
+
+- The complete four-mode generation batch retained production HEAD `1ca80df96`
+  and unchanged production files until every command ended. Canonical generation
+  hit the unchanged memory guard at 341.582323 seconds, sampled peak 2880843776
+  bytes. Owned canonical generation exhausted its bounded 768 MiB V8 heap after
+  2565.928091 seconds, peak 2792214528 bytes. The ordinary and owned profile
+  matrices hit the same guard after 90.257568 and 85.257594 seconds, peaks
+  2868416512 and 2872594432 bytes. Every owned descendant was reaped. No complete
+  draft, independent review, freshness result or executable gain is qualified.
+  Complete command receipts and the original output streams remain in the
+  task evidence directory under `current-source-origin-generation*`.
+- `prepare-current-git-fixture-paths.mjs` selects all three current `git show
+  HEAD:` reads in the two complete serde/TOML files. It makes their actual
+  repository root explicit and reuses the existing checked Git-path rule.
+  Installed after the batch ended. All nine complete Node cases pass with the
+  independent original deadline audit in 73.472733 seconds, peak 2030714880
+  bytes. All three TOML cases pass on Bun. Three original serde cases fail their
+  unchanged 5000-ms deadlines at 8614.54, 14956.45 and 11248.31 ms. The complete
+  six-case serde file remains failed under Bun; no limit was raised.
+- `historical-generator-current-source.mjs` retains the original complete
+  9982-byte generator (`476ff090...`) and independently checks its exact known
+  language-layout projection (`67a77538...`). Its receiving proposal adds the
+  current Rust output layout and complete owned-core artifacts/manifest while
+  retaining the original sixteen separate diagnostic calls. Full three-build
+  byte equality and the original 60000-ms deadline remain unqualified. The
+  adapter is now installed in the original complete receiving file; the archived
+  original generator is restored exactly. Current receiving execution is unrun.
+- `upstream-header-privacy-source-composition.mjs` retains the complete
+  archived upstream-header module (`4ff0d415...`) and derives the complete
+  current privacy source (`2598264f...`) through the four explicit source
+  changes. The original `forwarded_client_headers` function is unchanged;
+  current whole-module translation and strict targets remain unrun. The complete
+  adapter is installed; the original seven-header workload is unchanged.
+- `native-regeneration-semantic-read-rules.mjs` prepares a separate private
+  serializer that elides unused stock-checker queries for zero-argument calls,
+  `bind` and empty loop/reassignment binding sets. The original public
+  serializer remains exact. Installed through the complete original producer
+  and all retained whole-source equations. All 199 actual artifacts / 11586409
+  bytes remain identical in an independent freshness run (28.800199 seconds,
+  peak 2226941952 bytes). The four complete regeneration receiving cases and
+  two complete current-source composition cases pass on Node with original
+  independent deadlines (63.688140 seconds, peak 2278617088 bytes). The new
+  behavioral case compares actual original/private output for zero/extra/rest
+  arguments, bind, loops and reassignment. An initial regression-test byte/string
+  comparison failed and was corrected; its original failed log remains retained.
+  Combined Bun receiving hits the unchanged memory guard after 44.199156 seconds,
+  peak 2884014080 bytes; every owned descendant was reaped. No speed gain, Bun
+  qualification or original four-build deadline success is claimed.
+
+- The current unit/Unicode composition is a separate source proposal. It retains
+  both complete historical producer plans and derives the shared facade/DATA
+  diamond in both orders. Physical installation and complete receiving checks
+  remain unrun; the earlier missing-export failure is still required to pass.
+
 ## Requirements and independent verification
 
 - [x] Read the full original issue, issue comments, PR conversation comments,
@@ -473,3 +528,49 @@ remain unfinished; no draft checkpoint establishes release readiness.
 - [ ] Complete all four production generation modes, the regeneration deadline
       repair and the complete gate. Strict parity and the original deadline
       remain failed; reverse translation remains unrun in the latest full gate.
+
+## Recovered final forward shard, 2026-11-08
+
+- [x] Complete the targeted rerun of translation shard 4 at unchanged published
+      `28aba1b62f98608e65bb86bb550e0debe4445f16`. Run `42443083163`, attempt 2,
+      job `128636368388` fails at 05:52:10 UTC. The published cycle is terminal;
+      the other attempt-2 job records carry earlier results, not fresh checks.
+- [x] Download and completely verify artifact `13606168221`, including all seven
+      original members, CRCs and SHA-256 values. Read all 3731 raw TAP lines in
+      batches of at most 1500. The GitHub CLI job stream stops after case 499;
+      its shorter log is not treated as the complete test stream. The actual
+      artifact has 633 completion events, ten failures and five unchanged
+      source-deadline breaches. All eight forward shard artifacts are available.
+- [x] Join its full failure diagnostics to the 29 previously available original
+      job streams in `receiving-batch-complete-recovered-failure-index.json.gz`.
+      Retain the unavailable original shard response separately. There are 30
+      diagnostic groups and 22 original deadline audits across the completed
+      attempts at the same immutable head; CI is still failed.
+- [x] Repair the newly exposed pre-relocation Git reads in the complete Serde
+      unit-enum file and the TOML namespace file. Preserve current committed
+      source provenance, the actual Rust package manifest and shared lock,
+      every existing case and every original assertion/deadline.
+- [x] The complete nine Node cases pass in 73.472733 seconds with the original
+      deadlines and independent audit (`complete-EMXLWh`), sampled cgroup peak
+      2030714880 bytes. Complete TOML Bun cases pass. Complete Serde Bun remains
+      failed at its original 5000-ms deadlines: 8614.54, 14956.45 and 11248.31
+      ms. The source-path repair does not establish complete qualification.
+- [ ] Repair the existing complete generator/header source joins and the actual
+      conversion refusal source without replacing their historical full-source
+      pins or weakening the anonymous-trait barrier. Native-source import joins
+      overlap already drafted repairs; every new source evolution still needs
+      complete current composition and receiving qualification.
+- [x] Trace the reverse independent-corpus fixture's hash mismatch to commit
+      `cfb62019d`: four language-root replacements changed its embedded complete
+      original generator while leaving its historical SHA unchanged. Recover
+      the exact 9982-byte generator from `358ad1ffe`; it still hashes to
+      `476ff090d064ced3d7b090cfc3962b24e50d8ddf3f32bca20a88c9d22966b558`.
+      Retain the entire original and current 9905-byte literal in the ignored
+      `current-independent-generator-literal-history.json` evidence packet.
+      Receiving must derive the known layout and later owned-output additions
+      explicitly; replacing that original hash or omitting new artifacts is
+      not a valid repair of the three-complete-build comparison.
+- [ ] Resolve all five original deadline breaches: checked-source composition
+      63701.603523 ms, native vector producer 81785.200532 ms, workspace census
+      83479.261597 ms, lifetime source copies 79789.187262 ms, static release
+      61724.109437 ms; each original limit remains 60000 ms.
