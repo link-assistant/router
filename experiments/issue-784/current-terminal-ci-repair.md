@@ -20,7 +20,7 @@ issue/PR conversation, inline-comment and review reads at 2026-11-08 17:56 UTC.
 - [x] Record the 721474-byte allocation incident and restore the cap. Verify
   permanent published recovery before retiring one inactive 21418296-byte
   archive. Preserve all failed/unrun statuses.
-- [ ] Refresh source registration after the latest fixture archive and qualify
+- [x] Refresh source registration after the latest fixture archive and qualify
   the complete receiving files against that exact registration.
 - [ ] Run the mandatory complete local JavaScript gate on the coherent source
   batch, inspect every reached stage, and preserve every failed/unrun result.
