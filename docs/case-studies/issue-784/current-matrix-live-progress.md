@@ -16,9 +16,13 @@ The new complete worker regression file passes both cases in Node 20.20.2 and
 Bun 1.4.4. It observes diagnostics before actual process exit, compares stdout,
 stderr and every generated file byte/hash with tracing disabled, and checks
 that a mismatched complete source corpus still refuses without output changes.
-The regression was added with the source change; its old-worker failure was
-not independently executed. Initial implementation/test errors and their full
-failed output remain in the retained packet.
+The complete regression file was also run against the genuine worker from
+`37147a95ce5fb1efeced23b2ba49dcd036a53a8a`. It fails the live-delivery
+assertion (`false !== true`), while the current worker passes. The reproduction
+relocates only module paths, checks whole-source inverses, and preserves all
+assertions and deadlines. Its second case also fails because that old worker
+emits no trace. Initial implementation/test errors and their full failed output
+remain in the retained packets.
 
 All 39 original workflow cases pass in both engines. The Node audit reports
 no original deadline or whole-source errors. Both complete source producers
@@ -50,3 +54,16 @@ This change adds zero executable production functions and does not fix or
 qualify the outstanding matrix, parity, generation and deadline failures.
 The complete current-SHA local gate and CI remain required. No Rust tool ran.
 [PR #785](https://github.com/link-assistant/router/pull/785) remains draft.
+
+The [supplemental packet](evidence/current-matrix-supplement.tar.gz) and
+[receipt](evidence/current-matrix-supplement.json.gz) retain the complete
+predecessor reproduction, its original deadline audit, and a separate finite
+SHA-256 experiment. Both algorithms match 258 vectors and seven complete parser
+sources, including the live optional-array fallback. Node's four before/after
+samples suggest a small difference; Bun's samples do not consistently improve.
+The candidate stays uninstalled and performance remains unqualified. No original
+workload or source bound changes. The packet is 99,851 bytes, SHA-256
+`24f713c8a33305d78976c9298ad5968dc202fa4fa3c46bc23aa863e9926959b5`.
+
+The [subsequent complete-gate attempt](current-matrix-live-gate.md) records the
+exact source SHA, every completed stage, both interruptions and all unrun work.

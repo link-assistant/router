@@ -13,13 +13,28 @@
   in both engines. Both original producer freshness checks pass. The complete
   matrix files remain unqualified: Node stops at the original memory guard
   after two completed cases; Bun stops during its first case.
-- [ ] Run the complete local gate and record every failed or unrun stage.
-- [ ] Keep the published head unchanged until its complete CI cycle finishes;
+  The entire new regression file also fails against the genuine predecessor
+  worker, with only module-path relocation and complete source inverses.
+- [x] Run the complete local gate and record every failed or unrun stage.
+  Attempted at clean `2d62cc2877273f9235d1bf5373bc648cfd1d3e29`:
+  lint, both 259-case native suites, nine deadline controls, both package
+  typechecks and 121 acceptance cases pass. Native regeneration exhausts its
+  selected heap; strict parity fails. The forward audit is incomplete before
+  the original cgroup guard stops the tree. Remaining stages are unrun.
+- [ ] Pass the complete local JavaScript gate for the final source SHA.
+- [x] Keep the published head unchanged until its complete CI cycle finishes;
   collect every failure before publishing the next coordinated batch.
+  All seven 37147a workflows are terminal. All 24 failed/cancelled job logs
+  and final deadline receipts were collected and read. CI remains red.
+- [ ] Review and publish the complete next source batch with explicit failed
+  and unrun evidence; keep the PR draft and Rust gated.
 
 The finite guard-routing experiment on 37147a matched twelve paired diagnostic
 observations but its four timing samples did not demonstrate a consistent
 improvement. Its alternative remains uninstalled and performance unqualified.
+The separate signed SHA-256 probe matches 258 vectors and seven actual parser
+sources in Node and Bun. Its timing difference is inconsistent across engines;
+that candidate also remains uninstalled.
 
 All local raw attempts, including the initial failed regression and workflow
 checks, are retained with full readback in the case-study matrix test packet.

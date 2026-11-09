@@ -3,6 +3,12 @@
 Research and verification dates: 2026-11-06–09 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [completed 37147a CI cycle](current-ci-cycle.md) retains all 24 complete
+failed/cancelled logs and the exact failed/unrun boundaries. The
+[local gate](current-matrix-live-gate.md) also failed. A
+[bounded evaluator profile](current-ascii-profile.md) identifies repeated fresh
+source checks as a cost; no performance repair or parity completion is claimed.
+
 The [live matrix diagnostics](current-matrix-live-progress.md) preserve worker
 progress during synchronous planning. New worker tests and all workflow cases
 pass in Node/Bun; both complete original matrix files remain memory-interrupted.

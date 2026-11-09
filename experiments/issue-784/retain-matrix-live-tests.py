@@ -5,13 +5,16 @@ import json
 import os
 from pathlib import Path
 import stat
+import sys
 import tarfile
 
 root = Path.cwd().resolve()
 base = Path('ci-logs/issue-784-restart-2')
 attempts = Path('js/node_modules/.node-case-deadlines')
-archive = Path('docs/case-studies/issue-784/evidence/current-matrix-live-tests.tar.gz')
-receipt = archive.with_name('current-matrix-live-tests.json.gz')
+label = sys.argv[1] if len(sys.argv) == 2 else 'current-matrix-live-tests'
+assert len(sys.argv) <= 2 and label in ['current-matrix-live-tests', 'current-matrix-supplement']
+archive = Path('docs/case-studies/issue-784/evidence') / (label + '.tar.gz')
+receipt = archive.with_name(label + '.json.gz')
 assert not archive.exists() and not receipt.exists()
 roots = [Path('ci-logs'), Path('docs/case-studies/issue-784'), Path('experiments/issue-784'), attempts]
 def allocation():
@@ -26,7 +29,11 @@ def identity(path):
     return (s.st_dev, s.st_ino, s.st_mode, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
 paths = sorted(p for p in attempts.rglob('*') if p.is_file())
 assert 1 <= len(paths) <= 2048 and not any(p.is_symlink() for p in attempts.rglob('*'))
-paths += sorted(base.glob('current-37147a-matrix-trace-*'))
+if label == 'current-matrix-live-tests':
+    paths += sorted(base.glob('current-37147a-matrix-trace-*'))
+else:
+    paths += sorted(base.glob('current-matrix-trace-before*'))
+    paths += sorted(base.glob('current-signed-sha-*'))
 assert all(p.is_file() for p in paths) and sum(p.stat().st_size for p in paths) < 64*1024*1024
 rows = [dict(originalPath=str(p), bytes=p.stat().st_size, sha256=digest(p),
              allocatedBytes=p.stat().st_blocks*512, identity=identity(p)) for p in paths]
