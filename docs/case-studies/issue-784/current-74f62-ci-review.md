@@ -1,5 +1,9 @@
 # Complete published 74f62 CI cycle
 
+Published artifact ZIP copies now use the verified immutable links described in
+the [local storage receipt](current-74f62-storage.md); all available complete job
+logs and the complete whole-run ZIP remain local.
+
 [Run 42560989296](https://github.com/link-assistant/router/actions/runs/42560989296)
 is terminal for published source `74f62c037a21e4b3e4e3804dcf3d941d0aabfe19`.
 Its 59 jobs comprise ten successes, 17 failures, seven cancellations and 25
