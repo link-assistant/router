@@ -914,3 +914,14 @@ remain explicitly unmet parts of the literal all-tool requirement.
       installation remain unrun, with the read-only refusal retained.
 - [ ] Complete source generation, strict parity, original deadlines and all
       issue privacy requirements; PR remains draft and issue open until verified.
+# Cold lexical storage accounting
+
+- [x] Count complete private lexer storage from fixed layouts under the existing
+      native guard. Preserve all lexical cache bounds and mutable refusal results.
+- [x] Verify exact 200000-cell admission and above-limit refusal with actual
+      independent lexer coverage. Both complete focused files pass Node/Bun;
+      the Node deadline audit has no breaches. Preserve all original test bytes.
+- [x] Retain all alternating cold-read observations, full original whole-file
+      memory interruptions and reaped processes. No receiving or parity claim.
+- [ ] Refresh genuine compiler registration, repair all current CI failures,
+      then pass complete local and exact-head CI gates before marking ready.
