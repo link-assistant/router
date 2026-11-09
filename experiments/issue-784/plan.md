@@ -3,6 +3,24 @@
 Objective: implement and verify all requirements in PR #785 on
 `issue-784-1f6838f56841`. Keep unresolved criteria explicit and the PR unmerged.
 
+## 2026-11-09 emitter allocation continuation
+
+- [x] Preserve private runtime comparison and phase release in `d00afeb47`.
+      Keep the published `1c82cbd9` head unchanged until CI finishes.
+- [x] Remove per-node empty hint/gap allocations and count gap occurrences only
+      for planned kinds, preserving every earlier node of those kinds. Release
+      unused CST batch metadata only after complete source reconstruction.
+- [x] Pass ten focused Node/Bun cases with original deadlines. Node before
+      CST projection also passes all ten. Complete freshness still reports no
+      changed or unexpected artifact on both actual diagnostic passes.
+- [x] Preserve the complete CPU profile: warmup 26.991 seconds and profiled
+      pass 16.182 seconds, not a controlled gain or deadline qualification.
+      The original nine-case file and complete gate after this draft are unrun;
+      the last qualified observation still fails the four-build deadline.
+- [ ] Measure actual canonical production functions with the current shared
+      rules; distinguish executable gain from candidates or diagnostic admission.
+- [ ] Collect the full published CI cycle and fix its entire remaining set.
+
 ## 2026-11-09 runtime comparison continuation
 
 - [x] Publish the reviewed checkpoint as `1c82cbd9355724439a953ddaa7642193d03878ca`.

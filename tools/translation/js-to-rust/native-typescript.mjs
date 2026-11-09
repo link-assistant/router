@@ -166,14 +166,21 @@ export function emitNativeTypeScript(ts, meta) {
   let explicitAny = 0;
   const occurrences=new Map();
   const plans=new Map((meta.gaps??[]).map(gap=>[`${gap.kind}:${gap.occurrence}`,gap]));
+  const plannedKinds=new Set([...plans.keys()].map(key=>key.slice(0,key.indexOf(':'))));
+  const empty={},noHints=[];
   const namespaces = new Set(file.statements.filter(ts.isImportDeclaration).map((statement) => statement.importClause?.namedBindings).filter((binding) => binding && ts.isNamespaceImport(binding)).map((binding) => binding.name.text));
   const transform = (context) => {
     const visit = (node) => {
-      const occurrence=occurrences.get(node.kind)??0;occurrences.set(node.kind,occurrence+1);
-      const gap=plans.get(`${node.kind}:${occurrence}`)??{};
+      let gap=empty;
+      // Only planned kinds need occurrence counters. Count every node of those
+      // kinds, including earlier nodes without a gap, to preserve exact joins.
+      if(plannedKinds.has(`${node.kind}`)){
+        const occurrence=occurrences.get(node.kind)??0;occurrences.set(node.kind,occurrence+1);
+        gap=plans.get(`${node.kind}:${occurrence}`)??empty;
+      }
       const functionLike = ts.isFunctionLike(node) && node.parameters;
-      const hint = functionLike ? meta.annotations[functionIndex++] ?? {} : {};
-      const hints = hint.parameters ?? [];
+      const hint = functionLike ? meta.annotations[functionIndex++] ?? empty : empty;
+      const hints = hint.parameters ?? noHints;
       const local = ts.isVariableDeclaration(node) ? meta.locals?.[localIndex++] : null;
       const keyDynamic = ts.isElementAccessExpression(node) ? meta.indices?.[indexIndex++] : false;
       let updated = ts.visitEachChild(node, visit, context);
@@ -501,9 +508,12 @@ function* nativeRegenerationParsedConcreteSources(sourceRoot, paths) {
       rows.push({path,source});units+=source.length;cursor++;
       if(units>=262144)break;
     }
-    const stages=transport(rows);
+    // The complete transport has serialized, reparsed and reconstructed every
+    // row. Independent semantic consumers need only those reconstructed sources;
+    // do not retain the unused full CST metadata during per-file emission.
+    const reconstructed=transport(rows).map(stage=>stage.source);
     for(let at=0;at<rows.length;at++) {
-      const row=rows[at],source=stages[at].source;
+      const row=rows[at],source=reconstructed[at];
       assertReverseConcreteSourceHost();
       if(source!==row.source || readFileSync(join(sourceRoot,row.path),'utf8')!==source)throw new Error('native concrete source snapshot differs for '+row.path);
       originals.push(row);yield {path:row.path,source};
