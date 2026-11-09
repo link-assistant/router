@@ -5,6 +5,15 @@ Objective: implement and verify all requirements in PR #785 on
 
 ## Published 3b197 cycle and source-record draft, 2026-11-09 05:50 UTC
 
+- [x] Preserve fresh full canonical CI output and independently join all declared
+      inputs to the tested merge and published source. Coverage remains 158
+      executable production functions; current source freshness is unproved.
+- [x] Reduce allocation scanner path churn without reusing totals, stats, source
+      verdicts or changing any bound. Both complete focused engine files pass.
+- [x] Run the complete original adoption receiving file at `21354e47e`: seven
+      passes and the same real 20-second child deadline failure. Preserve it.
+- [ ] Trace the remaining original producer cost and repair the complete workflow.
+
 - [x] Publish the reviewed companion batch and retain exact PR body/head readback.
 - [x] Preserve the published head while collecting every completed CI failure.
       The entire run remains active; no next push is authorized yet.

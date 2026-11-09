@@ -27,3 +27,12 @@ refusal, raw Node/Bun streams, deadline evidence and resource receipts are in
 measurement predates the added disappearing-child control; the second includes
 it. Neither diagnostic establishes the original workflow deadline, full gate,
 runtime parity or any newly executable production function.
+
+The original complete `core-adoption-receiving.test.mjs` subsequently finished
+at source commit `21354e47e` under Node 20.20.2: seven cases passed, and the
+actual workflow case still failed its unchanged 20-second producer child
+deadline. The complete file took 39.56 seconds and sampled 2,833,354,752 cgroup
+bytes without hitting the resource guard. This is a completed failed check,
+not a qualified workflow speed gain. An opt-in finite Python call profiler in
+`experiments/issue-784/python-profile` is available for investigating the
+unmodified whole file; profiling overhead cannot establish its deadline.
