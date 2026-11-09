@@ -44,7 +44,7 @@ parents and tree equal to the published tree. The read-only custody reviewer
 accepts this identity relationship and refuses the absent complete matrix draft.
 No output or missing index is fabricated or installed.
 
-The [complete packet](evidence/whole-file-shard-complete.tar.xz) and
+The [complete packet](https://github.com/link-assistant/router/blob/74f62c037a21e4b3e4e3804dcf3d941d0aabfe19/docs/case-studies/issue-784/evidence/whole-file-shard-complete.tar.xz?raw=true) and
 [member receipt](evidence/whole-file-shard-complete.json.gz) preserve 359 whole
 originals, 24465760 logical bytes. Archive length is 10397776 bytes, SHA256
 `9f8674ea609dbd7caa9940b12ee8ac0d3f633977384e2d1eac9d060861a85b51`.

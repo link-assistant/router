@@ -22,3 +22,12 @@ The released evidence allocation permits custody of the complete 58,474,945-byte
 canonical CI artifact from [run 42560989296](https://github.com/link-assistant/router/actions/runs/42560989296).
 Its 2,873 nested outputs are separately checked against the actual plan; current
 working-tree freshness and all remaining CI failures still require resolution.
+
+Three further inactive diagnostic copies are retired by the same complete
+immutable-blob, ownership and active-use checks: the current real-source fixture
+packet, whole-file shard packet and fingerprint trace packet. Their original
+bytes remain in the same published commit and history, and their three report
+links now select that immutable commit. The [separate complete receipt](evidence/published-diagnostic-packet-local-retirement.json.gz)
+records every original URL and SHA-256. This reclaims 30,903,464 logical bytes
+and 30,912,512 allocated bytes to keep the final current-cycle custody below
+500,000,000 bytes. No original observation or qualification is changed.

@@ -36,7 +36,7 @@ TypeScript. The installed compiler is the repository lockfile's TypeScript
 5.9.3. These existing functions are receiving qualification, not newly added
 executable application coverage.
 
-[The complete receiving packet](evidence/current-real-source-fixture-receiving.json.gz)
+[The complete receiving packet](https://github.com/link-assistant/router/blob/74f62c037a21e4b3e4e3804dcf3d941d0aabfe19/docs/case-studies/issue-784/evidence/current-real-source-fixture-receiving.json.gz?raw=true)
 retains all 45 original members: both complete vector sets, streams, resource
 receipts, Node audit, source files, actual producer proposal and the earlier
 refusal. Every full member was read back and verified. Only its exact inactive

@@ -31,7 +31,7 @@ written. The optional large-file cache advice does not resolve this failure.
 The preceding untraced large-file-advice gate also failed: 35.601 seconds,
 sampled peak 2,874,527,744 bytes, eight completed advice passes, zero stage
 output. Its finite controls remain separate passing evidence.
-The [whole diagnostic packet](evidence/current-fingerprint-trace.json.gz)
+The [whole diagnostic packet](https://github.com/link-assistant/router/blob/74f62c037a21e4b3e4e3804dcf3d941d0aabfe19/docs/case-studies/issue-784/evidence/current-fingerprint-trace.json.gz?raw=true)
 retains both complete gate streams, all advice receipts, every focused attempt
 and audit, before/after source and exact harnesses. It is not an immutable
 gate-launch snapshot or a full-gate qualification. No Rust tool was run.
