@@ -18,6 +18,9 @@ Objective: implement and verify all requirements in PR #785 on
       whole-file controls pass, including the same bounded regression.
 - [x] Qualify source preparation for all 697 actual forward test files, complete
       related runner/workflow checks and preserve before/after observations.
+- [x] Run the actual default reverse producer: exactly three stale artifacts are
+      regenerated. A separate check verifies all 12,027,571 bytes with no changes.
+      Source items rise from 688 to 692, all still unsupported; no parity gain.
 - [ ] Collect every terminal current CI result and available failure before
       publishing another reviewed source batch. The current cycle is still live.
 - [ ] Resolve all remaining actual deadlines, missing owned-matrix outputs,
