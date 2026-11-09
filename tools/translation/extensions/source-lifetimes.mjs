@@ -377,8 +377,8 @@ function origins(node,env,context,returns,depth=0) {
   if(node.k==='routerTry') {
     const value=read(node.value);
     // Option's None residual contains no borrow; Some passes its actual leaf
-    // origins. Result residual lifetimes need separate error-origin lowering.
-    if(!node.option&&(borrowed||hasBorrow(node.value.type,context))&&!closedStringErrorTry(node,context))throw unsupported('borrowed Result propagation','requires checked residual error lifetime origins',node.span);
+    // origins. Result errors require their own checked residual origins.
+    if(!node.option&&(borrowed||hasBorrow(node.value.type,context))&&!closedStringErrorTry(node,context)&&!closedStaticStrErrorTry(node,value,context))throw unsupported('borrowed Result propagation','requires checked residual error lifetime origins',node.span);
     return borrowed?project(value,['argument',0]):new Set();
   }
   if(node.k==='routerStaticArrayElement'&&hasStaticElementOrigin(node))return uniformOrigins(node.type,new Set(['static']),context);
@@ -616,6 +616,39 @@ function emptyBorrowValue(node,context,depth=0) {
   return false;
 }
 
+// A checked Ok has no Err payload (and conversely), even when both source
+// arguments contain distinct borrowed leaves. Absence is proved from actual
+// constructor/control syntax, never inferred from a missing public map row.
+function emptyResultBorrowLeaf(node,path,context,depth=0){
+ if(!node||depth>256)return false;
+ const empty=value=>emptyResultBorrowLeaf(value,path,context,depth+1);
+ if(['let','routerDiscard','routerSet','routerWhile','routerFor','routerIf'].includes(node.k))return empty(node.body);
+ if(node.k==='if')return empty(node.then)&&empty(node.else);
+ if(node.k==='match')return node.cases.every(arm=>empty(arm.body));
+ if(node.k!=='ctor'||path[0]!=='argument'||![0,1].includes(path[1])||!context.checker)return false;
+ const result=canonicalResult(context.checker,node.type,context.entry.modulePath,node.span,false);
+ if(!result||node.data!==node.type.name||!['Ok','Err'].includes(node.ctor)||node.args?.length!==1||!sameType(node.args[0].type,node.ctor==='Ok'?result.success:result.error))return false;
+ const selected=node.ctor==='Ok'?0:1;
+ return path[1]!==selected||path.length>2&&emptyResultBorrowLeaf(node.args[0],path.slice(2),context,depth+1);
+}
+
+// The only borrowed residual admitted here is a genuine static str leaf,
+// independently proved static in both the written type and actual flow.
+function closedStaticStrErrorTry(node,value,context){
+ const checker=context.checker;if(!checker)return false;
+ const input=canonicalResult(checker,node.value.type,context.entry.modulePath,node.span,false),output=canonicalResult(checker,context.entry.ret,context.entry.modulePath,node.span,false);
+ if(!input||!output||!sameType(input.error,output.error)||!sameType(input.success,node.type))return false;
+ const staticStr=type=>type.kind==='string'&&type.rustSourceType===true&&!type.rustReference&&!type.rustGenericIdentityUnresolved&&!type.rustBorrowingUnresolved&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str'&&sourceBorrowRegions(type,context).length===1&&sourceBorrowRegions(type,context)[0].kind==='static';
+ if(!staticStr(input.error)||!staticStr(output.error))return false;
+ // A written static error type alone cannot prove the actual Err leaf.
+ // Do not project with the conservative whole-value fallback: its success
+ // may borrow from a caller even though the residual must be static.
+ const residual=value.leaves?.get(key(['argument',1]));
+ if(!residual?.size||[...residual].some(origin=>origin!=='static'))return false;
+ checker.expectedOwnership(input.error,output.error,context.entry.modulePath,node.span);checker.expectedPrimitiveIdentity(input.error,output.error,context.entry.modulePath,node.span);checker.expectedOwnership(node.type,input.success,context.entry.modulePath,node.span);
+ return true;
+}
+
 // Result's Err residual is nonborrowed here; this does not infer origins for
 // arbitrary errors or stored aggregate loans. Existing return/static checks
 // still consume the actual success leaf origins below.
@@ -711,7 +744,7 @@ export function withSourceLifetimeChecker(Base) {
         const returns=[],result=origins(entry.body,env,{...context,entry,signatures,hostContracts:this.sourceLifetimeHostContracts,mutableBorrowLocals:new Map(),borrowOriginUniverse,borrowFlowBudget},returns);
         if(signature.outputs.length)for(const {value:actual,node} of [...returns,{value:result,node:entry.body}]) {
           if(!actual.size&&!emptyBorrowValue(node,context))throw unsupported('escaping source borrow','the checked returned value has no proven borrow origin or empty borrowed variant',entry.span);
-          for(const output of signature.outputs)for(const origin of at(actual,output.path))if(origin!=='static'&&origin!==output.identity)throw unsupported('escaping source borrow','the checked returned leaf lacks a proven input or static lifetime origin',entry.span);
+          for(const output of signature.outputs)if(!emptyResultBorrowLeaf(node,output.path,{...context,entry}))for(const origin of at(actual,output.path))if(origin!=='static'&&origin!==output.identity)throw unsupported('escaping source borrow','the checked returned leaf lacks a proven input or static lifetime origin',entry.span);
         }
         const leaves=value=>[...(value.leaves??[])].map(([path,origins])=>({path:JSON.parse(path),origins:[...origins].sort()}));
         entry.sourceLifetimeProof={...signature,returnOrigins:[...union(result,...returns.map(returned=>returned.value))].sort(),returnLeaves:leaves(result),explicitReturnLeaves:returns.map(returned=>({span:returned.node.span??entry.span,leaves:leaves(returned.value)})),...(borrowFlowBudget.mutableBindings?{copiedLocalFlow:{profile:'finite-copied-shared-local-origins-v1',steps:borrowFlowBudget.steps,fixedPoints:borrowFlowBudget.fixedPoints,originDomain:[...borrowOriginUniverse].sort(),mutablePointeeAccess:false,mutableParameterSupport:false}}:{})};

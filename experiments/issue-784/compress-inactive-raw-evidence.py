@@ -28,6 +28,7 @@ parser.add_argument('--closed-raw-packet-preflight', action='store_true')
 parser.add_argument('--retained-17c7-metadata', action='store_true')
 parser.add_argument('--closed-4e709-snapshots', action='store_true')
 parser.add_argument('--closed-4e709-terminal-snapshots', action='store_true')
+parser.add_argument('--closed-standard-observations', action='store_true')
 parser.add_argument('--receipt', default='reverse-shard-inactive-evidence-compression.json')
 args = parser.parse_args()
 assert sum(bool(value) for value in [args.closed_attempt, args.closed_investigations,
@@ -45,14 +46,31 @@ assert sum(bool(value) for value in [args.closed_attempt, args.closed_investigat
                                    args.closed_matrix_custody_observations,
                                    args.closed_draft_observations, args.closed_raw_packet_preflight,
                                    args.retained_17c7_metadata, args.closed_4e709_snapshots,
-                                   args.closed_4e709_terminal_snapshots]) <= 1
+                                   args.closed_4e709_terminal_snapshots,
+                                   args.closed_standard_observations]) <= 1
 assert Path(args.receipt).name == args.receipt and args.receipt.endswith('.json')
 paths = [root / 'ci-logs' / name for name in [
     'restart-export-published-review.diff',
     'restart-published-review.diff',
     'restart-review-published.diff',
 ]] + [base / 'native-regeneration-before-csv-cache-advice.json']
-if args.closed_attempt:
+if args.closed_standard_observations:
+    # Closed profiles, probes and immutable earlier snapshots. The published
+    # workflow can still be running; no live output, input or latest snapshot
+    # is selected. Recover every original by appending .gz to its old path.
+    paths = [base / name for name in [
+        'current-unicode-facade.cpuprofile', 'current-unit-before.cpuprofile',
+        'current-numeric-record-probe.json', 'current-record-field-emission.json',
+        'current-published-764-directory-metadata.json',
+        'current-published-17c7-directory-metadata.json',
+        'current-published-567-directory-metadata.json',
+        'current-published-4e9fad88-directory-metadata.json',
+    ]]
+    paths += [base / ('current-1c235-ci-run-' + str(index) + '.json')
+              for index in range(1, 15)]
+    paths += [base / ('current-1c235-completed-log-snapshot-' + str(index) + '.json')
+              for index in range(1, 7)]
+elif args.closed_attempt:
     assert Path(args.closed_attempt).name == args.closed_attempt and args.closed_attempt.startswith('complete-')
     attempt = root / 'js/node_modules/.node-case-deadlines' / args.closed_attempt
     terminal = json.loads((attempt / 'terminal.json').read_bytes())
