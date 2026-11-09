@@ -80,6 +80,13 @@
 - [ ] Finish every remaining source equation, application semantic refusal,
   original deadline, missing generated output, TypeScript and strict parity
   obligation. No failure is optional because main also fails.
+- [x] Retain the canonical producer's complete computed output bytes and fresh
+  input fingerprints after a real check, with full readback and regression
+  coverage. Preserve the original freshness failure and every mandatory command;
+  an unqualified draft artifact cannot establish generation or parity success.
+  Both complete six-case custody files and the 38-case Node workflow file pass.
+  The extra Bun workflow file fails an original default deadline and remains
+  unqualified; actual application generation and same-SHA CI are unfinished.
 - [ ] Verify every issue-wide privacy acceptance criterion, all required
   same-SHA CI and Rust CI, then mark PR ready. Leave it draft and unmerged
   while any requirement remains unfinished.

@@ -30,6 +30,9 @@ const nodeUploadStart=forwardComplete.indexOf('      - name: Preserve complete N
 if(nodeUploadStart<0)throw TypeError('Complete historical forward evidence missing');
 const shardJob=replaceOnce(forwardComplete,canonical,'');
 const freshnessJob=replaceOnce(replaceOnce(forwardComplete.slice(0,nodeUploadStart),forward,''),'  translation:\n','  translation-freshness:\n');
+const bulkDirectory='    env:\n      ROUTER_BULK_DRAFT_DIRECTORY: js/node_modules/.bulk-drafts\n';
+const bulkUpload=upload.replace('matrix drafts','canonical drafts').replace('name: matrix-drafts-','name: bulk-drafts-').replaceAll('.matrix-drafts/','.bulk-drafts/');
+const custodyFreshnessJob=replaceOnce(freshnessJob,'  translation-freshness:\n    runs-on: ubuntu-24.04\n','  translation-freshness:\n    runs-on: ubuntu-24.04\n'+bulkDirectory)+bulkUpload;
 const forwardHeader='  translation:\n    runs-on: ubuntu-24.04\n';
 const shardStrategy='    strategy:\n      fail-fast: false\n      matrix:\n        shard: [1, 2, 3, 4, 5, 6, 7, 8]\n';
 const shardCommand='      - run: node scripts/run-node-test-shard.mjs --outer-timeout-ms=3600000 --whole-file-shard=${{ matrix.shard }}/8 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs\n';
@@ -53,6 +56,7 @@ export const MATRIX_DRAFT_LANGUAGE_RULES=Object.freeze([
  {id:'reverse-files:independent-complete-engines-and-freshness',before:reverseComplete,after:reverseNodeJob+reverseBunJob+reverseFreshnessJob},
 ]);
 export const MATRIX_DRAFT_REPOSITORY_RULES=Object.freeze([
+ {id:'bulk-custody:retain-complete-canonical-failed-check-drafts',before:freshnessJob,after:custodyFreshnessJob},
  {id:'matrix-custody:retain-complete-failed-check-drafts',before:ordinary,after:ordinary+upload},
  {id:'matrix-custody:retain-complete-owned-check-drafts',before:checks,after:checks+replaceOnce(upload,'name: matrix-drafts-','name: matrix-owned-drafts-')},
  {id:'matrix-custody:require-both-complete-jobs',before:needs,after:replaceOnce(needs,'profile-matrix, reverse-translation','profile-matrix, owned-profile-matrix, reverse-translation')},

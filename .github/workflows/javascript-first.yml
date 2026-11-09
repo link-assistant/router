@@ -205,6 +205,8 @@ jobs:
           retention-days: 7
   translation-freshness:
     runs-on: ubuntu-24.04
+    env:
+      ROUTER_BULK_DRAFT_DIRECTORY: js/node_modules/.bulk-drafts
     # Cycle nine forward/canonical steps reached 719s/752s; the separate matrix
     # stage prevents their sum exhausting a shared 60-minute job.
     timeout-minutes: 60
@@ -230,6 +232,15 @@ jobs:
       - run: npm ci --prefix js --ignore-scripts
       - run: node scripts/translate-router.mjs --check
       - run: node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check
+      - name: Preserve complete unqualified canonical drafts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bulk-drafts-${{ inputs.sha }}
+          path: js/node_modules/.bulk-drafts/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
   profile-matrix:
     runs-on: ubuntu-24.04
     # Completed cycle-nine matrix checks reached 2166s. Keep a finite independent

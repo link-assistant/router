@@ -119,6 +119,7 @@ export function auditWorkflows(sources) {
       const runs = (job?.steps ?? []).map(step => step.run);
       let deadlineEvidenceUpload = null;
       let matrixEvidenceUpload = null;
+      let bulkEvidenceUpload = null;
       if(id==='translation'){
         if(job?.['timeout-minutes']!==60||Object.hasOwn(job??{},'needs')||!exact(job?.strategy,{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7,8]}}))errors.push(`${gateName}/${id}: exact exhaustive eight whole-file shards with original budget required`);
         if(runs.filter(run=>run===required.translation[0]).length!==1||runs.some(run=>required['translation-freshness'].includes(run)))errors.push(`${gateName}/${id}: whole-file cohort must run exactly once and freshness must remain independent`);
@@ -126,6 +127,11 @@ export function auditWorkflows(sources) {
       if(id==='translation-freshness'){
         if(job?.['timeout-minutes']!==60||Object.hasOwn(job??{},'needs')||Object.hasOwn(job??{},'strategy'))errors.push(`${gateName}/${id}: independent unconditional original freshness job required`);
         for(const command of required[id])if(runs.filter(run=>run===command).length!==1)errors.push(`${gateName}/${id}: original freshness must run exactly once`);
+        const uploads=(job?.steps??[]).filter(step=>step.uses==='actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
+        const upload=uploads.length===1?uploads[0]:null;
+        const valid=upload&&!Object.hasOwn(upload,'run')&&job.steps.at(-1)===upload&&upload.if==='${{ always() }}'&&!upload['continue-on-error']&&upload.with?.name==='bulk-drafts-${{ inputs.sha }}'&&upload.with?.path==='js/node_modules/.bulk-drafts/'&&upload.with?.['include-hidden-files']===true&&upload.with?.['if-no-files-found']==='error'&&upload.with?.['retention-days']===7&&job.env?.ROUTER_BULK_DRAFT_DIRECTORY==='js/node_modules/.bulk-drafts';
+        if(!valid)errors.push(`${gateName}/${id}: missing mandatory command evidence: complete unqualified canonical draft custody missing`);
+        else bulkEvidenceUpload=upload;
       }
       if(['reverse-translation','reverse-bun'].includes(id)){
         if(job?.['timeout-minutes']!==15||Object.hasOwn(job??{},'needs')||!exact(job?.strategy,{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7,8]}}))errors.push(`${gateName}/${id}: exact exhaustive eight reverse whole-file shards with original budget required`);
@@ -171,7 +177,7 @@ export function auditWorkflows(sources) {
       }
       if (!(job?.steps ?? []).some(step => step.env?.EXPECTED_SHA === '${{ inputs.sha }}' && normalizeProgram(step.run) === shaVerifier)) errors.push(`${gateName}/${id}: immutable SHA verification missing`);
       for (const step of job?.steps ?? []) {
-        if (step['continue-on-error'] || Object.hasOwn(step, 'if') && step !== deadlineEvidenceUpload && step !== matrixEvidenceUpload) errors.push(`${gateName}/${id}: checks cannot be conditional or ignore failures`);
+        if (step['continue-on-error'] || Object.hasOwn(step, 'if') && step !== deadlineEvidenceUpload && step !== matrixEvidenceUpload && step !== bulkEvidenceUpload) errors.push(`${gateName}/${id}: checks cannot be conditional or ignore failures`);
         if (step.uses?.startsWith('actions/checkout@') && step.with?.ref !== '${{ inputs.sha }}') errors.push(`${gateName}/${id}: checkout must use inputs.sha`);
         if (/\b(?:cargo|rustc|rust-script|clippy-driver)\b|rust-toolchain|docker\/(?:build|setup-buildx)/.test(`${step.uses ?? ''}\n${step.run ?? ''}`)) errors.push(`${gateName}/${id}: Rust must not execute inside JavaScript gate`);
       }

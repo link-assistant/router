@@ -1,0 +1,23 @@
+{
+  "schema": "complete-bulk-draft-originals-v1",
+  "sourceHead": "f86824ea2eff18895db3ea809373457ebeb66a83",
+  "sources": [
+    {
+      "path": "tools/translation/bulk.mjs",
+      "archive": "bulk.mjs.gz",
+      "bytes": 27821,
+      "sha256": "93cd3151f06b71a9666eddc24830bc69ee66e8f56f00cb5676236eba7bdd560c",
+      "archiveBytes": 6664,
+      "archiveSha256": "3bf5d401fe9804fac0cc9f3ed06476c4160b029077e9793d1e0a8ce6ebc6379d"
+    },
+    {
+      "path": "scripts/translate-router.mjs",
+      "archive": "translate-router.mjs.gz",
+      "bytes": 5558,
+      "sha256": "1bb29ebb15ef4d3c8176e2230e927c3fb84c89e77fd6b61a4ce872ecb16b2f5b",
+      "archiveBytes": 1437,
+      "archiveSha256": "3486326c22d17354271cec150dfa9c1993ae5a7505e382311b84c6709de273f9"
+    }
+  ],
+  "semanticAuthority": false
+}
