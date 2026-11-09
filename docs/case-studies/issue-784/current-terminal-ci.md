@@ -24,6 +24,14 @@ byte. The archive also omits the exact `translation (3)` job; the separate
 retains every member identity and the complete archive identity. Complete-cycle
 log collection remains false.
 
+The [local-copy retirement receipt](evidence/ci-4e709-local-retirement.json.gz)
+later verifies 50 complete published files against fresh GitHub tree metadata
+and their entire immutable Git blobs at `f86824ea2eff18895db3ea809373457ebeb66a83`.
+It records a permanent URL for each original. Only inactive task-owned local
+copies were removed, reclaiming 34,405,397 logical / 34,500,608 allocated bytes.
+The original missing-log gap remains explicit; retirement establishes no CI
+pass or translation qualification.
+
 [The terminal custody packet](evidence/current-4e709-terminal-cycle.json.gz)
 retains 14 entire metadata/error originals and identities for all 49 external
 whole originals: 25 download streams (including the explicitly invalid XML
