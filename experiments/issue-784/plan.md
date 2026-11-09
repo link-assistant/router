@@ -948,3 +948,25 @@ remain explicitly unmet parts of the literal all-tool requirement.
       memory interruptions and reaped processes. No receiving or parity claim.
 - [ ] Refresh genuine compiler registration, repair all current CI failures,
       then pass complete local and exact-head CI gates before marking ready.
+
+## Complete 815527 feedback and coordinated repair checkpoint
+
+- [x] Refresh the genuine compiler registration and complete portable Git
+      object set. Both original whole receiving attempts remain resource
+      interrupted; focused checks do not establish receiving qualification.
+- [x] Attempt the complete gate at clean f08eee. Five commands complete;
+      workflow tests start and the original cgroup guard interrupts lint.
+      Reap all owned processes, preserve full receipts and mark later stages
+      unrun. No green stamp or Rust invocation is permitted.
+- [x] Wait for the entire published 815527 cycle: 19 failed, nine successful,
+      six cancelled and 25 skipped jobs, plus six terminal supplemental runs.
+      Read all available complete nonpassing logs and every audit/receipt;
+      retain 25 full logs, all 26 artifacts and exact published input joins.
+      Separate 43 real deadline breaches from one intentional negative control.
+- [x] Verify complete canonical bytes and all declared published inputs before
+      rejecting installation against four changed current inputs. Actual
+      coverage remains 158/2578 production functions; no executable gain.
+- [ ] Publish the reviewed coherent source checkpoint with complete failed
+      and unrun evidence; retain draft status and positive Fixes #784.
+- [ ] Repair every current generation, namespace, source-bound and deadline
+      failure; complete literal all-tool privacy and same-SHA gate/CI checks.

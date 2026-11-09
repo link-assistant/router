@@ -187,6 +187,12 @@ See [`verification.md`](verification.md). Passing focused tests is not complete
 translation/parity qualification. Strict gates and same-SHA JavaScript-before-Rust
 requirements remain unchanged. This PR stays unmerged while criteria remain unmet.
 
+The [complete 815527 CI review](current-815527-ci-review.md) retains all
+25 nonpassing job logs and all 26 artifacts, with terminal job counts,
+43 real case deadline breaches, full canonical input verification and
+explicit current-source limitations. The [f08eee gate](current-f08eee-gate.md)
+records the separate local memory interruption and unrun stages.
+
 The [integrated Clone/runtime gate attempt](runtime-integrated-gate.md) records
 the complete immutable-head local attempt, its passed stages, memory interruption,
 unrun stages and fully reaped test processes.
