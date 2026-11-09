@@ -100,6 +100,14 @@ function deriveNativeOutputTextSourceSetUsing(rows,deferCli){
 }
 export function deriveNativeOutputTextSourceSet(rows){return deriveNativeOutputTextSourceSetUsing(rows,false);}
 export function deriveCurrentNativeOutputTextSourceSet(rows){return deriveNativeOutputTextSourceSetUsing(rows,true);}
+// Exact two-file source DATA adapter. A complete receiving cohort must still
+// obtain its own fresh all-module binding program after composing these rows.
+export function deriveNativeMatrixBoundarySources(rows){
+ const ts=ownershipCompiler(),selected=consumers.filter(([before])=>before==='owned-field-isolated-matrix-session.mjs'||before==='owned-field-isolated-matrix-profile.mjs');
+ if(!Array.isArray(rows)||rows.length!==selected.length)fail('both complete native matrix boundary sources required');
+ const sources=new Map();for(const row of rows){if(!row||typeof row.path!=='string'||typeof row.source!=='string'||!selected.some(([before])=>P+before===row.path)||sources.has(row.path))fail('distinct complete native matrix boundary sources required');sources.set(row.path,row.source);}
+ return selected.map(([before,after,mapping])=>route(ts,sources.get(P+before),P+after,mapping,admission));
+}
 export async function prepareNativeOutputTextRetention({root=ROOT}={}){
  root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');const inputs=[],read=path=>{const full=resolve(root,path),stat=lstatSync(full);if(!stat.isFile()||stat.isSymbolicLink()||stat.size>1048576)fail('whole regular source input required: '+path);const raw=readFileSync(full),source=raw.toString('utf8');if(!Buffer.from(source).equals(raw))fail('source UTF8 differs');inputs.push({path,source,bytes:raw.length,sha256:hash(raw)});return source;};
  const priorSource=read(P+'prepare-owned-field-bulk.mjs');const {prepareOwnedFieldBulkSources,assertOwnedFieldBulkInputsFresh}=await import(pathToFileURL(resolve(root,P+'prepare-owned-field-bulk.mjs')));

@@ -2,20 +2,27 @@
 // Complete project translation and all original storage bounds remain required.
 // Sequential CLI worker: full original source capture, original private planner,
 // full output validation and application only inside its caller-owned mirror.
-import {readFileSync} from 'node:fs';
+import {readFileSync,writeSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createCompilationMatrix,compilationMatrixDescription} from './compilation-matrix.mjs';
 import {captureSourceCorpus} from './source-corpus.mjs';
+import {translationProgressReporter} from './translation-progress.mjs';
 const allowed=new Set(["native-retained-owned-field-bulk.mjs"]);
-export async function materializeIsolatedProfile(request){
+export async function materializeIsolatedProfile(request,{traceProgress}={}){
  if(!request||request.schema!=='router-isolated-profile-request-v1'||!allowed.has(request.plannerModule))throw TypeError('Unknown complete profile request');
  const root=resolve(request.root),matrix=createCompilationMatrix(request.selection),members=compilationMatrixDescription(matrix).profiles,member=members.find(row=>row.name===request.name);
  if(!member||matrix.sha256!==request.matrixSha256||member.directory!==request.directory)throw TypeError('Original matrix profile identity differs');
+ const trace=translationProgressReporter(traceProgress);
+ trace({stage:'corpus',state:'start',profile:member.name});
  const corpus=captureSourceCorpus({root,paths:request.paths});
  if(JSON.stringify(corpus)!==JSON.stringify(request.corpus))throw TypeError('Complete mirrored source corpus differs');
- const planner=await import('./'+request.plannerModule),plan=planner.planRegeneration({root,sources:request.paths,entries:request.entries,compilationProfile:member.compilationProfile,outputPrefix:member.directory,sourceCorpus:corpus,matrix,progress:request.progress?record=>process.stderr.write(JSON.stringify(record)+'\n'):undefined});
+ trace({stage:'corpus',state:'end',profile:member.name});
+ const progress=request.progress||traceProgress?record=>{if(request.progress)process.stderr.write(JSON.stringify(record)+'\n');const {schema,...event}=record;if(schema!=='rust-meta-translation-progress-v1')throw TypeError('Unknown original worker progress schema');trace(event);}:undefined;
+ trace({stage:'plan',state:'start',profile:member.name});
+ const planner=await import('./'+request.plannerModule),plan=planner.planRegeneration({root,sources:request.paths,entries:request.entries,compilationProfile:member.compilationProfile,outputPrefix:member.directory,sourceCorpus:corpus,matrix,progress});
  planner.validateRegenerationPlan(plan);
+ trace({stage:'plan',state:'end',profile:member.name,outputs:plan.outputs.length,bytes:plan.expectedBytes});
  const applied=planner.applyRegenerationPlan(plan);
  if(applied.failures.length)throw Error('Original profile application refused: '+JSON.stringify(applied.failures));
 
@@ -24,6 +31,10 @@ export async function materializeIsolatedProfile(request){
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  if(process.argv.length!==2)throw Error('The fixed profile worker receives one complete JSON request on stdin');
  const bytes=readFileSync(0);if(bytes.length>16*1024*1024)throw RangeError('Complete profile request bound');
- const request=JSON.parse(bytes.toString('utf8')),result=await materializeIsolatedProfile(request);
+ const request=JSON.parse(bytes.toString('utf8')),started=performance.now();
+ // Only the stock CLI worker uses descriptor 3. A library callback remains
+ // ordinary diagnostic data and grants no source or private-plan authority.
+ const traceProgress=process.env.ROUTER_TRANSLATION_MATRIX_TRACE==='1'?record=>writeSync(3,JSON.stringify({...record,schema:'router-isolated-matrix-worker-trace-v1',profile:request.name,workerPid:process.pid,workerElapsedMilliseconds:Math.floor(performance.now()-started)})+'\n'):undefined;
+ const result=await materializeIsolatedProfile(request,{traceProgress});
  process.stdout.write(JSON.stringify(result)+'\n');
 }

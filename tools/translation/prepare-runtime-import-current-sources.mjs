@@ -27,6 +27,8 @@ const paths=[
 const nativeOld='46ec636ff5c2ffa3ec3dfd8dfbc7b73f7a01b171286cf6d5c78b3320726d8208';
 const nativePrevious='399c4719f43a7fdf9e682219fb38463e06accd4ac6bae980ee314a40e035c362';
 const sourceOriginPrevious='b0e9ed69588b445686802b67cd5e71a51f43921f6797a2c0304438eee7d7793b';
+const loaderOld='e782e1f4dd9bd5934ed22a51b11fe0d264a68223380e747085781149edb645a6';
+const loaderCurrent='5587f9b51453bd4fd13a7a1383d96a96d19d7bf55bf46a66f5ed21b916172d36';
 const historyAssertion="  if(path==='tools/translation/js-to-rust/native-typescript.mjs'){assert.equal(row.sourceHistory[0].afterSha256,'"+nativeOld+"');assert.equal(row.sourceHistory[1].before,row.sourceHistory[0].after);assert.equal(row.sourceHistory[1].after,row.after);}\n";
 const originalName='prepare-owned-runtime-import-edges.mjs',currentName='prepare-owned-runtime-import-current.mjs';
 const nodeName='owned-runtime-node-current-source-data.mjs';
@@ -40,6 +42,16 @@ function composeCurrentNativeRegenerationRow(ts,root,original) {
  if(batch.path!==original.path||batch.before!==original.after)fail('complete native regeneration predecessor differs');
  const current=equation(ts,root,original.path,original.before,original.after,batch.after,original.nativeSelections);
  return {...current,sourceHistory:[original,batch]};
+}
+`;
+const loaderAddition=`
+// Preserve the original descriptor proof and its complete source history.
+import {proposeRuntimeLoaderComparison} from './prepare-runtime-loader-comparison.mjs';
+function composeCurrentLoaderComparisonRow(ts,root,original) {
+ if(resolve(root)!==resolve(ROOT))fail('current loader equation requires its actual repository root');
+ const batch=proposeRuntimeLoaderComparison(ts,original.path,original.after);
+ const current=equation(ts,root,original.path,original.before,original.after,batch.after,original.nativeSelections);
+ return {...original,...current,sourceHistory:[original,batch]};
 }
 `;
 export function prepareRuntimeImportCurrentSources(){
@@ -60,7 +72,12 @@ export function prepareRuntimeImportCurrentSources(){
  const compilerSelections=proposeRuntimeCompilerSelections(ts,base+currentName,after),indexedAfter=compilerSelections.after;
  const compilerLifetime=proposeRuntimeCompilerLifetime(ts,base+currentName,indexedAfter),lifetimeAfter=compilerLifetime.after;
  after=once(lifetimeAfter,"from './concrete-sequential-equations.mjs'","from './concrete-source-origin-equations.mjs'");
- files.push({path:base+currentName,before,middle,after,previousAfter,publishedAfter,indexedAfter,lifetimeAfter,compilerSelections,compilerLifetime,nativeSelection:{span:[node.getStart(file),node.end],expected:node.getText(file),replacement}});
+ const loaderPreviousAfter=after,loaderFile=parse(base+currentName,after),loaderRows=[];
+ function findLoader(value){if(ts.isVariableDeclaration(value)&&ts.isIdentifier(value.name)&&value.name.text==='loaderRow')loaderRows.push(value);ts.forEachChild(value,findLoader);}findLoader(loaderFile);
+ if(loaderRows.length!==1||!ts.isObjectLiteralExpression(loaderRows[0].initializer))fail('complete native loader row selection differs');
+ const loaderNode=loaderRows[0].initializer,loaderExpected=loaderNode.getText(loaderFile),loaderReplacement='composeCurrentLoaderComparisonRow(ts,root,'+loaderExpected+')';
+ after=after.slice(0,loaderNode.getStart(loaderFile))+loaderReplacement+after.slice(loaderNode.end)+loaderAddition;
+ files.push({path:base+currentName,before,middle,after,previousAfter,publishedAfter,indexedAfter,lifetimeAfter,loaderPreviousAfter,compilerSelections,compilerLifetime,nativeSelection:{span:[node.getStart(file),node.end],expected:node.getText(file),replacement}});
  const dataBefore=readFileSync(resolve(root,helper),'utf8');if(hash(dataBefore)!==helperPin)fail('complete original Node DATA helper differs');
  const dataMiddle=once(dataBefore,"new URL('./"+originalName+"',import.meta.url)","new URL('./"+currentName+"',import.meta.url)");
  let dataAfter=once(dataMiddle,"['tools/translation/"+originalName+"'","['tools/translation/"+currentName+"'");
@@ -69,13 +86,16 @@ export function prepareRuntimeImportCurrentSources(){
  const previousDataAfter=once(dataAfter,",'tools/translation/concrete-sequential-equations.mjs','tools/translation/concrete-sequential-phases.mjs','tools/translation/private-parser-sequential-phases.mjs'",'');
  const lifetimeDataAfter=dataAfter;
  dataAfter=once(dataAfter,"'tools/translation/private-parser-sequential-phases.mjs'];","'tools/translation/private-parser-sequential-phases.mjs','tools/translation/concrete-source-origin-equations.mjs','tools/translation/concrete-source-origin-phases.mjs','tools/translation/private-parser-source-origin-phases.mjs','tools/translation/prepare-source-origin-concrete-phases.mjs'];");
- files.push({path:base+nodeName,before:dataBefore,middle:dataMiddle,after:dataAfter,previousAfter:previousDataAfter,lifetimeAfter:lifetimeDataAfter});
+ const loaderPreviousDataAfter=dataAfter;
+ dataAfter=once(dataAfter,"'tools/translation/prepare-source-origin-concrete-phases.mjs'];","'tools/translation/prepare-source-origin-concrete-phases.mjs','tools/translation/prepare-runtime-loader-comparison.mjs','tools/translation/source-profiles/runtime-loader-comparison/original.mjs.gz'];");
+ files.push({path:base+nodeName,before:dataBefore,middle:dataMiddle,after:dataAfter,previousAfter:previousDataAfter,lifetimeAfter:lifetimeDataAfter,loaderPreviousAfter:loaderPreviousDataAfter});
  for(const relative of paths){
   const path=base+relative,current=readFileSync(resolve(root,path),'utf8');
   let old=current.includes(currentName)?current.replaceAll(currentName,originalName):current;
   if(relative==='test/runtime-import-phased-data.test.mjs'){
    if(old.includes(historyAssertion))old=once(old,historyAssertion,'');
    for(const pin of [nativePrevious,sourceOriginPrevious,nativeCurrent])if(old.includes(pin))old=once(old,pin,nativeOld);
+   if(old.includes(loaderCurrent))old=once(old,loaderCurrent,loaderOld);
   }
   const native=parse(path,old),imports=[];
   function find(value){if(ts.isStringLiteral(value)&&value.text.endsWith('/'+originalName))imports.push(value);ts.forEachChild(value,find);}find(native);
@@ -88,32 +108,33 @@ export function prepareRuntimeImportCurrentSources(){
    changed=once(changed,'  assert.equal(row.inverse,row.before);',historyAssertion+'  assert.equal(row.inverse,row.before);');
   }
   const previousAfter=relative==='test/runtime-import-phased-data.test.mjs'?once(changed,nativeCurrent,nativePrevious):undefined;
-  files.push({path,before:old,middle:old,after:changed,current,...(previousAfter===undefined?{}:{previousAfter})});
+  const loaderPreviousAfter=relative==='test/runtime-import-phased-data.test.mjs'?changed:undefined;
+  if(loaderPreviousAfter!==undefined)changed=once(changed,loaderOld,loaderCurrent);
+  files.push({path,before:old,middle:old,after:changed,current,...(previousAfter===undefined?{}:{previousAfter}),...(loaderPreviousAfter===undefined?{}:{loaderPreviousAfter})});
  }
  const equations=transportConcreteSourcePhases(files.map(row=>({before:row.before,middle:row.middle,after:row.after,language:'JavaScript'})));
+ const histories=[],historyFields=[
+  ['previousAfter','previousEquation','previous'],['publishedAfter','publishedEquation','published'],
+  ['indexedAfter','indexedEquation','indexed'],['lifetimeAfter','lifetimeEquation','lifetime'],
+  ['loaderPreviousAfter','loaderPreviousEquation','loader'],
+ ];
  for(const [at,row]of files.entries()){
   parse(row.path,row.before);parse(row.path,row.middle);parse(row.path,row.after);
   if(row.after.split('\n').length>=1000)fail('complete source exceeds repository line bound');
   row.equation=equations[at];if(row.equation.inverse!==row.before)fail('complete source inverse differs');
   row.nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,row.path),row.after);
   row.current=existsSync(resolve(root,row.path))?readFileSync(resolve(root,row.path),'utf8'):null;
-  if(Object.hasOwn(row,'previousAfter')){
-   [row.previousEquation]=transportConcreteSourcePhases([{before:row.previousAfter,middle:row.after,after:row.after,language:'JavaScript'}]);
-   if(row.previousEquation.inverse!==row.previousAfter)fail('complete previous receiving inverse differs');
+  for(const [before,equation,label]of historyFields)if(Object.hasOwn(row,before))histories.push({row,before,equation,label});
+  if(row.current!==null&&row.current!==row.before&&row.current!==row.after&&(!Object.hasOwn(row,'previousAfter')||row.current!==row.previousAfter)&&(!Object.hasOwn(row,'publishedAfter')||row.current!==row.publishedAfter)&&(!Object.hasOwn(row,'indexedAfter')||row.current!==row.indexedAfter)&&(!Object.hasOwn(row,'lifetimeAfter')||row.current!==row.lifetimeAfter)&&(!Object.hasOwn(row,'loaderPreviousAfter')||row.current!==row.loaderPreviousAfter))fail('unexpected complete physical source: '+row.path);
+ }
+ // One fresh bounded transaction for this invocation's complete source history.
+ // All historical sources and both original phase sequences remain present.
+ if(histories.length){
+  const checked=transportConcreteSourcePhases(histories.map(({row,before})=>({before:row[before],middle:row.after,after:row.after,language:'JavaScript'})));
+  if(checked.length!==histories.length)fail('complete receiving history census differs');
+  for(const [at,{row,before,equation,label}]of histories.entries()){
+   row[equation]=checked[at];if(row[equation].inverse!==row[before])fail('complete '+label+' receiving inverse differs');
   }
-  if(Object.hasOwn(row,'publishedAfter')){
-   [row.publishedEquation]=transportConcreteSourcePhases([{before:row.publishedAfter,middle:row.after,after:row.after,language:'JavaScript'}]);
-   if(row.publishedEquation.inverse!==row.publishedAfter)fail('complete published receiving inverse differs');
-  }
-  if(Object.hasOwn(row,'indexedAfter')){
-   [row.indexedEquation]=transportConcreteSourcePhases([{before:row.indexedAfter,middle:row.after,after:row.after,language:'JavaScript'}]);
-   if(row.indexedEquation.inverse!==row.indexedAfter)fail('complete indexed receiving inverse differs');
-  }
-  if(Object.hasOwn(row,'lifetimeAfter')){
-   [row.lifetimeEquation]=transportConcreteSourcePhases([{before:row.lifetimeAfter,middle:row.after,after:row.after,language:'JavaScript'}]);
-   if(row.lifetimeEquation.inverse!==row.lifetimeAfter)fail('complete lifetime receiving inverse differs');
-  }
-  if(row.current!==null&&row.current!==row.before&&row.current!==row.after&&(!Object.hasOwn(row,'previousAfter')||row.current!==row.previousAfter)&&(!Object.hasOwn(row,'publishedAfter')||row.current!==row.publishedAfter)&&(!Object.hasOwn(row,'indexedAfter')||row.current!==row.indexedAfter)&&(!Object.hasOwn(row,'lifetimeAfter')||row.current!==row.lifetimeAfter))fail('unexpected complete physical source: '+row.path);
  }
  if(readFileSync(resolve(root,original.path),'utf8')!==before||readFileSync(resolve(root,helper),'utf8')!==dataBefore)fail('complete original input changed');
  return {schema:'current-runtime-import-source-composition-v1',files,typescriptVersion:ts.version,
