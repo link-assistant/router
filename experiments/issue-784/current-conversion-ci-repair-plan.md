@@ -29,8 +29,22 @@
 - [x] Verify all 180 previous CI files against their whole published blobs,
   retain immutable custody links and the full manifest, then retire only
   inactive task-owned local copies (40,297,794 logical bytes).
-- [ ] Wait for every workflow at `1c235248` to finish and retain every completed
-  failure before the next coordinated publication. Do not cancel or repush.
+- [x] Wait for every workflow at `1c235248` to finish. Retain all 24 nonpassing
+  responses, 23 available full logs, 24 artifacts and the whole-run ZIP; preserve
+  the missing forward shard-2 log as a gap. Read the whole available failure set.
+- [x] Fix numeric/standard/unwrap record bindings and static residual origins;
+  keep before/after strict-TypeScript regressions and original deadlines.
+- [x] Preserve separate whole historical/current getter and capabilities cases;
+  check Schemars' actual dispatcher in both whole Core sources. Getter passes;
+  capabilities is resource-failed and repaired Core execution is unrun.
+- [x] Generate and independently reproduce the actual current compiler registry
+  from 1,824 inputs / 57,923,560 bytes, all seven outputs and 468 Git objects.
+- [x] Attempt the full local gate twice at committed source `b28c5bfe5`. Both
+  fingerprint attempts hit the unchanged memory guard; all stages stay unrun.
+- [x] Refresh issue/all PR comment types/main, review the full coordinated source
+  diff and retain both whole local diffs after GitHub refuses its 300-file limit.
+- [ ] Publish this reviewed coordinated draft checkpoint with exact failed/unrun
+  evidence, then collect the entire new CI cycle before another publication.
 - [ ] Finish every remaining source equation, application semantic refusal,
   original deadline, missing generated output, TypeScript and strict parity
   obligation. No failure is optional because main also fails.
