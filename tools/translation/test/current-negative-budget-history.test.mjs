@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readNativeProofFormatSourceHistory as readFileSync} from './native-proof-format-source-history.mjs';
 import {createHash} from 'node:crypto';
 import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
 import {deriveCurrentNegativeBudgetProofHistory} from '../prepare-negative-budget-proof-json.mjs';

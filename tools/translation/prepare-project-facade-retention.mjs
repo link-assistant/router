@@ -8,6 +8,7 @@ import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 import {transportConcreteSourcePhases} from './concrete-phased-equations.mjs';
 import {deriveProjectMethodOwnerScope} from './project-method-owner-scope-source.mjs';
+import {derivePinnedRepositorySourceEvolution} from './pinned-repository-source-evolution.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const PROFILE=new URL('./source-profiles/project-facade-retention/',import.meta.url);
 const PATH='tools/translation/project.mjs';
@@ -59,10 +60,18 @@ function derive(ts,before){
 }
 export function prepareProjectFacadeRetention({root=ROOT}={}){
  root=resolve(root);const input=original(),before=input.source,ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript 5.9.3 required');
- const retained=derive(ts,before),methodOwnerScope=deriveProjectMethodOwnerScope(ts,retained.language),language=methodOwnerScope.after,after=language+retained.selection.helpers;
+ const retained=derive(ts,before),methodOwnerScope=deriveProjectMethodOwnerScope(ts,retained.language),language=methodOwnerScope.after;
+ const previousAfter=language+retained.selection.helpers;
+ const namespaceComposition=derivePinnedRepositorySourceEvolution(ts,{
+  profile:new URL('./source-profiles/project-namespace-composition/source-rules.json',import.meta.url),
+  profileSha256:'0f8dc4da59d5937600340512ede4b3ce557fa60ba6028deef9f23ee10f922162',
+  path:PATH,source:previousAfter,
+ });
+ const after=namespaceComposition.after;
  if(methodOwnerScope.inverse!==retained.language||retained.selection.completeNativeInverse!==before)fail('complete composed native inverse differs');
- const selection={...retained.selection,methodOwnerScope},current=readFileSync(resolve(root,PATH),'utf8');
- if(current!==before&&current!==retained.after&&current!==after)fail('complete physical project is neither original nor an exact derived output');
+ if(namespaceComposition.inverse!==previousAfter)fail('complete namespace composition inverse differs');
+ const selection={...retained.selection,methodOwnerScope,namespaceComposition},current=readFileSync(resolve(root,PATH),'utf8');
+ if(current!==before&&current!==retained.after&&current!==previousAfter&&current!==after)fail('complete physical project is neither original nor an exact derived output');
  const [equation]=transportConcreteSourcePhases([{before,middle:language,after,language:'JavaScript'}]);
  const stages=equation.stages.map(stage=>({...stage,completeInverse:true}));
  const nativeCopies=[nativeCopy(ts,before),nativeCopy(ts,after)],nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,PATH),after);

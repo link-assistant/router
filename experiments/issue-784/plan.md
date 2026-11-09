@@ -3,6 +3,65 @@
 Objective: implement and verify all requirements in PR #785 on
 `issue-784-1f6838f56841`. Keep unresolved criteria explicit and the PR unmerged.
 
+## 2026-11-09 namespace and terminal CI continuation
+
+- [x] Measure clean `893de40bb` with the complete canonical check. The 512 MiB
+      attempt runs out of V8 heap after 322.648 seconds. The 1024 MiB attempt
+      remains in namespace resolution after 1710.220 seconds; stop and reap it
+      before changing source. Its sampled cgroup peak is 2542338048 bytes.
+      Neither attempt produces a final inventory or executable-function gain.
+- [x] Reproduce missing canonical namespace diagnostics in both new complete
+      cases; enable the existing phases only for requested diagnostics. Both
+      cases pass with their original 60-second limits and independent audit.
+- [x] Draft normal-project composition using the same genuine enclosing issuer
+      already used by owned definitions. Share a genuine Default context with
+      Clone while preserving separate body, type and ownership checks.
+- [x] Pass all four new Node receiving cases: full legacy evidence/binding
+      equality, foreign-context refusals, checked JS/strict TS behavior, and an
+      unrelated function beside a large unsupported Clone body. Correct the
+      new test's initial assumption that shadowing Default must also bar Clone;
+      each independent method must retain its own trait refusal.
+- [x] Pass the latest whole six-file cohort in both engines: 18/18 each;
+      Node independent deadlines also pass. Preserve ordinary complete macro
+      bindings and lazily issue separate genuine method parser evidence for
+      owned-definition projects. Enclosing names grant no executable authority.
+- [x] Qualify pinned complete source profiles, exact ordered inverses and both
+      CST phases for project/native producers. Restore every original public
+      native emitter/compiler callable; keep allocation changes private.
+- [x] Compose the known Clone successor with validation and compiler-alias
+      equations. Original five-case alias Node file passes; Bun is still unrun.
+- [x] Qualify the complete current proof fixture and restore the original
+      negative-budget receiving bytes without changing the original assertions.
+- [x] Pass all 17 original project-facade/derive/resolver Node cases and the
+      independent audit (182.412 seconds; sampled peak 2529644544 bytes).
+      Bun's combined cohort stops at the unchanged cgroup guard after three
+      resolver cases; remaining files are unrun, not passing. All children reap.
+- [x] Pass all five original compiler-alias cases in Bun's separate complete
+      file: 95.730 seconds, unchanged case deadlines. Refresh issue/comments,
+      reviews and main; no new feedback and main remains an ancestor.
+- [x] Preserve all closed receiving observations: 223 complete verified
+      members / 590104 packed bytes, fourteen whole independent Node audits.
+      Retire only exact inactive originals after readback; evidence remains
+      below 500000000 bytes. All 18 changed JavaScript files pass native syntax.
+- [ ] Finish native deadlines, actual canonical counts and the complete gate.
+- [x] Published `1c82cbd9` run 42697950690 is terminal: 18 failed, 8 passed,
+      8 cancelled and 25 skipped jobs. Preserve every available failure log.
+- [x] Join all 26 available failed/cancelled logs and 26 final artifacts.
+      Stream/read back all 2873 canonical nested members and all deadline ZIPs.
+      The exact published head admits 161/2578 production functions, three
+      more than the prior 158 baseline; 2417 remain carried. This does not
+      establish current working-tree freshness or full parity.
+- [x] Preserve complete terminal receipts/logs in the verified 6664954-byte
+      packet; retire only the exact inactive raw copies after readback.
+- [x] Pass all six new context/diagnostic cases in Bun. Replay the complete
+      four-case context file with the committed `893de40bb` project at its
+      canonical URL: its large-Clone refusal case fails before this fix.
+- [x] Read all eight terminal Bun artifact stderr sets and preserve numbered
+      context for all five failed cases. The original deterministic-regeneration
+      case takes 62967.05 ms against its unchanged 5000 ms limit; it remains open.
+- [ ] Repair every final CI failure before publishing the next batch.
+- [ ] Complete the whole gate, all parity and universal privacy requirements.
+
 ## 2026-11-09 emitter allocation continuation
 
 - [x] Preserve private runtime comparison and phase release in `d00afeb47`.

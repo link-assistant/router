@@ -1,4 +1,4 @@
-import {ownershipCompilerRuntimeLoad} from './vendor/module-syntax.mjs';
+import {ownershipCompilerRuntimeLoad as ownershipCompilerRuntimeLoadDirect} from './vendor/module-syntax.mjs';
 // Full JavaScript/TypeScript identity lowering through a structured syntax AST.
 // Each meta node records SyntaxKind and children. Only lexical leaf tokens
 // contain text; no source file or function body is an opaque source carrier.
@@ -166,21 +166,14 @@ export function emitNativeTypeScript(ts, meta) {
   let explicitAny = 0;
   const occurrences=new Map();
   const plans=new Map((meta.gaps??[]).map(gap=>[`${gap.kind}:${gap.occurrence}`,gap]));
-  const plannedKinds=new Set([...plans.keys()].map(key=>key.slice(0,key.indexOf(':'))));
-  const empty={},noHints=[];
   const namespaces = new Set(file.statements.filter(ts.isImportDeclaration).map((statement) => statement.importClause?.namedBindings).filter((binding) => binding && ts.isNamespaceImport(binding)).map((binding) => binding.name.text));
   const transform = (context) => {
     const visit = (node) => {
-      let gap=empty;
-      // Only planned kinds need occurrence counters. Count every node of those
-      // kinds, including earlier nodes without a gap, to preserve exact joins.
-      if(plannedKinds.has(`${node.kind}`)){
-        const occurrence=occurrences.get(node.kind)??0;occurrences.set(node.kind,occurrence+1);
-        gap=plans.get(`${node.kind}:${occurrence}`)??empty;
-      }
+      const occurrence=occurrences.get(node.kind)??0;occurrences.set(node.kind,occurrence+1);
+      const gap=plans.get(`${node.kind}:${occurrence}`)??{};
       const functionLike = ts.isFunctionLike(node) && node.parameters;
-      const hint = functionLike ? meta.annotations[functionIndex++] ?? empty : empty;
-      const hints = hint.parameters ?? noHints;
+      const hint = functionLike ? meta.annotations[functionIndex++] ?? {} : {};
+      const hints = hint.parameters ?? [];
       const local = ts.isVariableDeclaration(node) ? meta.locals?.[localIndex++] : null;
       const keyDynamic = ts.isElementAccessExpression(node) ? meta.indices?.[indexIndex++] : false;
       let updated = ts.visitEachChild(node, visit, context);
@@ -455,9 +448,6 @@ export function regenerateNativeTypeScript(outputRoot, { sourceRoot = outputRoot
 }
 
 export function compileNativeTypeScript(outputRoot, { sourceRoot = outputRoot, outDir, emit = false } = {}) {
-  // Strict target compilation starts a separate phase. Consecutive regeneration
-  // calls may share inference, but target compilation needs none of that graph.
-  regenerationInference.release();
   const ts = loadTypeScript(sourceRoot);
   const dependencyRoot = join(sourceRoot, 'js/node_modules');
   const packageRoot = join(outputRoot, 'ts');
@@ -535,7 +525,7 @@ function parseBuildReconstructedNativeJavaScript(ts, path, source, { file: infer
 
 const regenerationInference=createInferenceProgramReuse();
 function buildNativeTypeScriptForRegeneration(sourceRoot) {
-  const ts = loadTypeScript(sourceRoot);
+  const ts = ownershipCompilerRuntimeLoadDirect(sourceRoot);
   const paths = sourceModules(sourceRoot);
   if (!paths.some((path) => path.startsWith('js/src/'))) throw new Error('native JavaScript source modules are missing');
   const artifacts = new Map();
@@ -545,7 +535,7 @@ function buildNativeTypeScriptForRegeneration(sourceRoot) {
     const meta = parseBuildReconstructedNativeJavaScript(ts, path, source, { file: inference.program.getSourceFile(join(sourceRoot, path)), checker: inference.checker });
     const metaText = `${JSON.stringify(meta)}\n`;
     const reparsed = JSON.parse(metaText);
-    const output = emitNativeTypeScript(ts, reparsed);
+    const output = emitRegeneratedNativeTypeScript(ts, reparsed);
     const target = path.replace('js/', 'ts/').replace(/\.(?:mjs|js)$/u, '.ts');
     const metaPath = `tools/translation/js-to-rust/generated/native-typescript/${path.slice('js/'.length)}.meta.json`;
     const targetText = `// GENERATED JavaScript -> structured syntax AST -> TypeScript draft.\n// Meta sha256=${hash(metaText)}; dynamic any annotations are explicit draft gaps.\n${output.text}`;
@@ -575,4 +565,145 @@ function buildNativeTypeScriptForRegeneration(sourceRoot) {
   for (const path of ['js/catalog.json', ...walkFiles(sourceRoot, 'js/schemas'), ...walkFiles(sourceRoot, 'js/src/assets/admin')]) artifacts.set(path.replace('js/', 'ts/'), readFileSync(join(sourceRoot, path)));
   artifacts.set('tools/translation/js-to-rust/generated/native-typescript/manifest.json', `${JSON.stringify({ schema: 'native-js-syntax-ast-v1', compiler: ts.version, target: 'complete-native-package-typescript-draft', lowering: 'identity runtime semantics; syntax-token AST serialization and explicit draft dynamic type annotations', fullNativeRustTranslation: false, inferenceInputs, modules: rows, assets: ['catalog.json', 'schemas', 'src/assets/admin'], outputs: [...artifacts].map(([path, value]) => ({ path, bytes: Buffer.byteLength(value), sha256: hash(value) })) }, null, 2)}\n`);
   return artifacts;
+}
+
+// Release the previous private inference phase before standalone public work.
+function ownershipCompilerRuntimeLoad(sourceRoot) {
+  regenerationInference.release();
+  return ownershipCompilerRuntimeLoadDirect(sourceRoot);
+}
+
+function emitRegeneratedNativeTypeScript(ts, meta) {
+  const syntax = reconstructSyntax(meta);
+  const file = ts.createSourceFile(meta.path, syntax, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+  if (file.parseDiagnostics.length) throw new Error(`reconstructed ${meta.path} has invalid syntax`);
+  const f = ts.factory;
+  const any = () => f.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
+  const primitive = (value) => f.createKeywordTypeNode(({ number: ts.SyntaxKind.NumberKeyword, string: ts.SyntaxKind.StringKeyword, boolean: ts.SyntaxKind.BooleanKeyword })[value] ?? ts.SyntaxKind.AnyKeyword);
+  let functionIndex = 0;
+  let localIndex = 0;
+  let indexIndex = 0;
+  let inferredReturns = 0;
+  let inferredLocals = 0;
+  let explicitAny = 0;
+  const occurrences=new Map();
+  const plans=new Map((meta.gaps??[]).map(gap=>[`${gap.kind}:${gap.occurrence}`,gap]));
+  const plannedKinds=new Set([...plans.keys()].map(key=>key.slice(0,key.indexOf(':'))));
+  const empty={},noHints=[];
+  const namespaces = new Set(file.statements.filter(ts.isImportDeclaration).map((statement) => statement.importClause?.namedBindings).filter((binding) => binding && ts.isNamespaceImport(binding)).map((binding) => binding.name.text));
+  const transform = (context) => {
+    const visit = (node) => {
+      let gap=empty;
+      // Only planned kinds need occurrence counters. Count every node of those
+      // kinds, including earlier nodes without a gap, to preserve exact joins.
+      if(plannedKinds.has(`${node.kind}`)){
+        const occurrence=occurrences.get(node.kind)??0;occurrences.set(node.kind,occurrence+1);
+        gap=plans.get(`${node.kind}:${occurrence}`)??empty;
+      }
+      const functionLike = ts.isFunctionLike(node) && node.parameters;
+      const hint = functionLike ? meta.annotations[functionIndex++] ?? empty : empty;
+      const hints = hint.parameters ?? noHints;
+      const local = ts.isVariableDeclaration(node) ? meta.locals?.[localIndex++] : null;
+      const keyDynamic = ts.isElementAccessExpression(node) ? meta.indices?.[indexIndex++] : false;
+      let updated = ts.visitEachChild(node, visit, context);
+      // A var introduced in for-in is function-scoped in JavaScript and can
+      // subsequently hold any value, including undefined before the loop.
+      // The non-null marker only suppresses TS's definite-assignment premise;
+      // the outer explicit any records that no value domain is proved here.
+      if(gap.loopBinding && ts.isIdentifier(updated))updated=f.createParenthesizedExpression(f.createAsExpression(f.createNonNullExpression(updated),any()));
+      if (functionLike) {
+        updated.parameters = f.createNodeArray(updated.parameters.map((parameter, index) => {
+          const type = parameter.dotDotDotToken ? f.createArrayTypeNode(any()) : primitive(hints[index]);
+          if (!hints[index] || hints[index] === 'any') explicitAny++;
+          const laterRequired = updated.parameters.slice(index + 1).some((later, laterIndex) => !later.initializer && !later.dotDotDotToken && (!ts.isIdentifier(later.name) || hints[index + laterIndex + 1] !== 'any'));
+          const optional = !laterRequired && hints[index] === 'any' && !parameter.initializer && !parameter.dotDotDotToken && ts.isIdentifier(parameter.name) && !ts.isSetAccessorDeclaration(node) && !ts.isConstructorDeclaration(node);
+          return f.updateParameterDeclaration(parameter, parameter.modifiers, parameter.dotDotDotToken, parameter.name, optional ? f.createToken(ts.SyntaxKind.QuestionToken) : parameter.questionToken, type, parameter.initializer);
+        }));
+        if (hint.thisContext && (ts.isFunctionDeclaration(updated) || ts.isFunctionExpression(updated))) {
+          explicitAny++;
+          updated.parameters = f.createNodeArray([f.createParameterDeclaration(undefined, undefined, 'this', undefined, any(), undefined), ...updated.parameters]);
+        }
+        if (!ts.isConstructorDeclaration(updated) && !ts.isSetAccessorDeclaration(updated)) {
+          if (hint.returns) { inferredReturns++; updated.type = typeNode(ts, hint.returns); }
+          else {
+            explicitAny++;
+            updated.type = updated.asteriskToken
+            ? f.createTypeReferenceNode(updated.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.AsyncKeyword) ? 'AsyncGenerator' : 'Generator', [any(), any(), any()])
+            : updated.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.AsyncKeyword) ? f.createTypeReferenceNode('Promise', [any()]) : any();
+          }
+        }
+      }
+      if (ts.isVariableDeclaration(updated)) {
+        const loop = ts.isVariableDeclarationList(node.parent) && (ts.isForOfStatement(node.parent.parent) || ts.isForInStatement(node.parent.parent));
+        if (!loop) {
+          if (local) inferredLocals++; else explicitAny++;
+          updated = f.updateVariableDeclaration(updated, updated.name, updated.exclamationToken, local ? typeNode(ts, local) : any(), updated.initializer);
+        }
+      }
+      if (ts.isForOfStatement(updated)) updated = f.updateForOfStatement(updated, updated.awaitModifier, updated.initializer, f.createAsExpression(updated.expression, any()), updated.statement);
+      if (ts.isCatchClause(updated) && updated.variableDeclaration) updated = f.updateCatchClause(updated, f.updateVariableDeclaration(updated.variableDeclaration, updated.variableDeclaration.name, undefined, any(), undefined), updated.block);
+      if (ts.isNewExpression(updated)) updated = f.updateNewExpression(updated, f.createParenthesizedExpression(f.createAsExpression(updated.expression, any())), undefined, updated.arguments);
+      // Grouping the receiver of an optional-chain continuation would stop
+      // short circuiting: (x?.headers)[key] differs from x?.headers[key].
+      if (keyDynamic) updated = ts.isElementAccessChain(updated)
+        ? f.updateElementAccessChain(updated, updated.expression, updated.questionDotToken, f.createAsExpression(updated.argumentExpression, any()))
+        : f.updateElementAccessExpression(updated, updated.expression, f.createAsExpression(updated.argumentExpression, any()));
+      if (ts.isElementAccessExpression(updated) && !ts.isElementAccessChain(updated)) updated = f.updateElementAccessExpression(updated, f.createParenthesizedExpression(f.createAsExpression(updated.expression, any())), updated.argumentExpression);
+      if (ts.isPropertyAccessExpression(updated) && ts.isIdentifier(updated.expression) && namespaces.has(updated.expression.text)) updated = f.updatePropertyAccessExpression(updated, f.createParenthesizedExpression(f.createAsExpression(updated.expression, any())), updated.name);
+      if (ts.isCallExpression(updated) && updated.expression.kind === ts.SyntaxKind.ImportKeyword && ts.isStringLiteral(updated.arguments[0]) && updated.arguments[0].text.startsWith('.')) updated = f.updateCallExpression(updated, updated.expression, updated.typeArguments, [f.createStringLiteral(updated.arguments[0].text.replace(/\.mjs$/u, '.js')), ...updated.arguments.slice(1)]);
+      if(gap.call && ts.isCallExpression(updated)) {
+        const callable=expression=>ts.isParenthesizedExpression(expression)?f.updateParenthesizedExpression(expression,callable(expression.expression))
+          : ts.isBinaryExpression(expression)&&expression.operatorToken.kind===ts.SyntaxKind.CommaToken?f.updateBinaryExpression(expression,f.createParenthesizedExpression(f.createAsExpression(expression.left,any())),expression.operatorToken,callable(expression.right))
+            : f.createParenthesizedExpression(f.createAsExpression(expression,any()));
+        updated=f.updateCallExpression(updated,callable(updated.expression),updated.typeArguments,updated.arguments);
+      }
+      if(gap.globalProperty && ts.isPropertyAccessExpression(updated))updated=ts.isPropertyAccessChain(updated)
+        ? f.updatePropertyAccessChain(updated,f.createParenthesizedExpression(f.createAsExpression(updated.expression,any())),updated.questionDotToken,updated.name)
+        : f.updatePropertyAccessExpression(updated,f.createParenthesizedExpression(f.createAsExpression(updated.expression,any())),updated.name);
+      if(ts.isBinaryExpression(updated)) {
+        if(gap.assignment)updated=f.updateBinaryExpression(updated,f.createParenthesizedExpression(f.createAsExpression(updated.left,any())),updated.operatorToken,updated.right);
+        if(gap.coercion)updated=f.updateBinaryExpression(updated,f.createParenthesizedExpression(f.createAsExpression(updated.left,any())),updated.operatorToken,f.createParenthesizedExpression(f.createAsExpression(updated.right,any())));
+      }
+      if (ts.isCallExpression(updated) && ts.isPropertyAccessExpression(updated.expression) && updated.expression.expression.kind === ts.SyntaxKind.Identifier && updated.expression.expression.text === 'JSON' && updated.expression.name.text === 'parse') updated = f.updateCallExpression(updated, updated.expression, updated.typeArguments, updated.arguments.map((argument) => f.createAsExpression(argument, any())));
+      if ((ts.isImportDeclaration(updated) || ts.isExportDeclaration(updated)) && updated.moduleSpecifier && ts.isStringLiteral(updated.moduleSpecifier) && updated.moduleSpecifier.text.startsWith('.')) {
+        updated.moduleSpecifier = f.createStringLiteral(updated.moduleSpecifier.text.replace(/\.mjs$/u, '.js'));
+      }
+      if ((ts.isClassDeclaration(updated) || ts.isClassExpression(updated))) {
+        const members = new Set(updated.members.map((member) => member.name?.getText(file)));
+        const fields = new Set();
+        const collect = (child) => {
+          if (child !== node && (ts.isClassDeclaration(child) || ts.isClassExpression(child))) return;
+          if (ts.isPropertyAccessExpression(child) && child.expression.kind === ts.SyntaxKind.ThisKeyword && !members.has(child.name.text)) fields.add(child.name.text);
+          ts.forEachChild(child, collect);
+        };
+        collect(node);
+        const declarations = [...fields].sort().map((name) => f.createPropertyDeclaration([f.createModifier(ts.SyntaxKind.DeclareKeyword)], name, undefined, any(), undefined));
+        explicitAny += declarations.length;
+        updated.members = f.createNodeArray([...declarations, ...updated.members]);
+      }
+      return updated;
+    };
+    return (root) => {
+      const transformed=ts.visitNode(root,visit);
+      const declarations=(meta.globalGaps??[]).map(name=>f.createVariableStatement([f.createModifier(ts.SyntaxKind.DeclareKeyword)],f.createVariableDeclarationList([f.createVariableDeclaration(name,undefined,any())],ts.NodeFlags.Const)));
+      return f.updateSourceFile(transformed,[...declarations,...transformed.statements]);
+    };
+  };
+  let result;
+  const pipeline=createRulePipeline([
+    {phase:'language',rules:[{id:'native-typescript:checked-syntax',apply:input=>{result=ts.transform(input,[transform]);return result;}}]},
+    {phase:'repository',rules:[
+      {id:'native-typescript:print',apply:input=>ts.createPrinter({ newLine: ts.NewLineKind.LineFeed, removeComments: true }).printFile(input.transformed[0])},
+      {id:'native-typescript:output-census',apply:text=>{
+        const typed = ts.createSourceFile(meta.path.replace(/\.m?js$/u, '.ts'), text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+        explicitAny = 0;
+        const countAny = (node) => { if (node.kind === ts.SyntaxKind.AnyKeyword) explicitAny++; ts.forEachChild(node, countAny); };
+        countAny(typed);
+        return { text, explicitAny, inferredReturns, inferredLocals };
+      }},
+    ]},
+  ]);
+  try {
+    return pipeline.run(file).value;
+  } finally { if(result)result.dispose(); }
 }

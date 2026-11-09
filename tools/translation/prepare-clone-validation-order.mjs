@@ -6,6 +6,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {transportConcreteSourcePhases} from './concrete-phased-equations.mjs';
+import {deriveCloneEnclosingNativeSourceHistory,assertCloneEnclosingSourceInputsFresh} from './prepare-clone-enclosing-source-history.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const path='tools/translation/builtin-clone-ast-route.mjs';
@@ -75,14 +76,18 @@ export function prepareCloneValidationOrder(){
  if(imports.length!==7)fail('complete original imports differ');
  const repositoryEdits=[...sizeEdits(middle),{span:[imports.at(-1).end,imports.at(-1).end],expected:'',replacement:"\nimport {createCompletedDataFreezer} from './private-data-freeze.mjs';"},
   ...calls.map(call=>({span:[call.expression.getStart(middleFile),call.expression.end],expected:'freeze',replacement:'freezeCompleted'}))];
- const after=edit(middle,repositoryEdits);parse(after);
+ const validationAfter=edit(middle,repositoryEdits);parse(validationAfter);
+ const enclosingHistory=deriveCloneEnclosingNativeSourceHistory({path,source:validationAfter});
+ if(!enclosingHistory||enclosingHistory.before!==validationAfter||enclosingHistory.inverse!==validationAfter)fail('complete enclosing source predecessor differs');
+ const after=enclosingHistory.after;parse(after);
  const before=readFileSync(resolve(root,path),'utf8');
- if(before!==original&&before!==previousAfter&&before!==after)fail('unexpected current complete source');
+ if(before!==original&&before!==previousAfter&&before!==validationAfter&&before!==after)fail('unexpected current complete source');
  const [equation,previousEquation]=transportConcreteSourcePhases([{before:original,middle,after,language:'JavaScript'},
   {before:original,middle:previousMiddle,after:previousAfter,language:'JavaScript'}]);
  if(readFileSync(resolve(root,path),'utf8')!==before)fail('complete physical source changed');
+ assertCloneEnclosingSourceInputsFresh(enclosingHistory);
  return {schema:'complete-clone-validation-order-v1',file:{path,before,original,middle,after,originalSha256,afterSha256:hash(after),languageEdits,repositoryEdits,equation},
-  previous:{after:previousAfter,afterSha256:hash(previousAfter),equation:previousEquation},
+  previous:{after:previousAfter,afterSha256:hash(previousAfter),equation:previousEquation},enclosingHistory,
   originalNodeLimit:32000,originalDepthLimit:64,privateIssuersUnchanged:true,positiveGrammarUnchanged:true,semanticAuthority:false,runtimeParity:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){

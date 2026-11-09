@@ -12,7 +12,7 @@ import tarfile
 
 root = Path.cwd()
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--group', choices=['clone', 'cst-native', 'native-reuse', 'packed-gate', 'iterable', 'runtime-direct', 'emitter-allocation'], required=True)
+parser.add_argument('--group', choices=['clone', 'cst-native', 'native-reuse', 'packed-gate', 'iterable', 'runtime-direct', 'emitter-allocation', 'namespace'], required=True)
 args = parser.parse_args()
 base = Path('ci-logs/issue-784-restart-2')
 attempts = Path('js/node_modules/.node-case-deadlines')
@@ -58,6 +58,15 @@ if args.group == 'runtime-direct':
     prefixes = ['current-native-runtime-direct-']
 if args.group == 'emitter-allocation':
     prefixes = ['current-native-emitter-allocation-']
+if args.group == 'namespace':
+    prefixes = ['current-namespace-progress-', 'current-project-enclosing-',
+                'current-project-owner-', 'current-namespace-source-equations-',
+                'current-source-equations-', 'current-alias-clone-history-',
+                'current-native-public-contract-', 'current-source-predecessors-',
+                'current-source-evolution-', 'current-whole-owner-derive-write-',
+                'current-whole-owner-resolver-write-', 'current-generated-source-',
+                'current-1c82-bun-failure-context', 'current-terminal-failure-inventory',
+                'current-native-public-review', 'current-2303-', 'current-2306-']
 retire = sorted({p for prefix in prefixes for p in base.glob(prefix + '*')
                  if p.is_file()})
 selected_attempts = ['complete-g09iRd', 'complete-2pE6rh',
@@ -77,6 +86,11 @@ if args.group == 'runtime-direct':
     selected_attempts = ['complete-8cmtPh', 'complete-0quOhz']
 if args.group == 'emitter-allocation':
     selected_attempts = ['complete-MKYNF7', 'complete-oVTzno']
+if args.group == 'namespace':
+    # Every case audit must be linked by the original runner's closed log.
+    import re
+    selected_attempts = sorted({match for path in retire if path.suffix == '.log'
+        for match in re.findall(r'Complete Node deadline evidence: [^\n]*/(complete-[A-Za-z0-9]+)', path.read_text())})
 for name in selected_attempts:
     directory = attempts / name
     assert (directory / 'terminal.json').is_file(), 'Only complete closed attempts'
@@ -88,6 +102,9 @@ sources += [Path(path) for path in subprocess.check_output(
 sources = sorted(set(sources + [Path(__file__).resolve().relative_to(root)]))
 sources = [p for p in sources if p.suffix in ['.mjs', '.md', '.py', '.json']
            and 'evidence' not in p.parts and 'ci-logs' not in p.parts]
+if args.group == 'namespace':
+    sources += sorted(Path('experiments/issue-784').glob('*-profile-*.mjs.txt'))
+    sources += [Path('experiments/issue-784/native-typescript-public-contract.mjs.txt')]
 paths = sorted(set(retire + sources))
 assert 1 <= len(paths) <= 2048
 assert sum(p.stat().st_size for p in paths) <= 128 * 1024 * 1024

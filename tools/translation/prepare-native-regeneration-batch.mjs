@@ -7,6 +7,8 @@ import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {exactLiteralSubstitutionRule} from './literal-substitution-rule.mjs';
 import {transportConcreteSourcePhases} from './concrete-sequential-equations.mjs';
+import {derivePinnedRepositorySourceEvolution} from './pinned-repository-source-evolution.mjs';
+import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 const root=new URL('../../',import.meta.url),path='tools/translation/js-to-rust/native-typescript.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const originalSha256='46ec636ff5c2ffa3ec3dfd8dfbc7b73f7a01b171286cf6d5c78b3320726d8208';
@@ -72,17 +74,26 @@ function* nativeRegenerationParsedConcreteSources(sourceRoot, paths) {
   {phase:'repository',rules:[]},
  ]).run(before);
  const middle=language.value;
+ let memoryEvolution;
+ const privateBuildRule=exactLiteralSubstitutionRule('native-regeneration:select-private-grouped-build',
+  'const artifacts = buildNativeTypeScript(sourceRoot);',
+  'const artifacts = buildNativeTypeScriptForRegeneration(sourceRoot);','Original regeneration build call differs');
  const repository=createRulePipeline([
   {phase:'language',rules:[]},
-  {phase:'repository',rules:[exactLiteralSubstitutionRule('native-regeneration:select-private-grouped-build',
-   'const artifacts = buildNativeTypeScript(sourceRoot);',
-   'const artifacts = buildNativeTypeScriptForRegeneration(sourceRoot);','Original regeneration build call differs')]},
+  {phase:'repository',rules:[{id:privateBuildRule.id,apply(source){
+   memoryEvolution=derivePinnedRepositorySourceEvolution(ts,{
+    profile:new URL('./source-profiles/native-regeneration-memory/source-rules.json',import.meta.url),
+    profileSha256:'88bec14c3a65c30bbb11d29d86002ddad96893c0b77a3e4276589d82f7424694',
+    path,source:privateBuildRule.apply(source),
+   });
+   return memoryEvolution.after;
+  }}]},
  ]).run(middle);
  const after=repository.value;
  for(const source of [middle,after])if(ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS).parseDiagnostics.length)throw Error('Complete candidate native grammar differs');
  // Retain the exact installed predecessor as a second complete source
  // equation. This is source DATA, never a remembered native/semantic verdict.
- let previousAfter=after;
+ let previousAfter=memoryEvolution.before;
  for(const [next,previous]of [
   ['// Separate regeneration-only source-origin contract. Public build/parser APIs','// Separate regeneration-only grouped source contract. Public build/parser APIs'],
   ["import {prepareReverseConcreteParsedSourceChunks,assertReverseConcreteSourceHost} from './concrete-source.mjs';","import {prepareReverseConcreteSources,assertReverseConcreteSourceHost} from './concrete-source.mjs';"],
@@ -92,15 +103,37 @@ function* nativeRegenerationParsedConcreteSources(sourceRoot, paths) {
  ])previousAfter=once(previousAfter,next,previous);
  const previousSha256='399c4719f43a7fdf9e682219fb38463e06accd4ac6bae980ee314a40e035c362';
  if(hash(previousAfter)!==previousSha256)throw Error('Complete original grouped-regeneration predecessor differs');
- const [equation,previousEquation]=transportConcreteSourcePhases([
+ const exports=source=>{
+  const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+  return file.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.modifiers?.some(modifier=>modifier.kind===ts.SyntaxKind.ExportKeyword))
+   .map(node=>[node.name.text,node.getText(file)]);
+ };
+ const oldExports=exports(before),newExports=exports(after);
+ if(oldExports.length!==newExports.length||oldExports.some(([name,text],at)=>
+  newExports[at][0]!==name||newExports[at][1]!==
+   (name==='regenerateNativeTypeScript'?once(text,'const artifacts = buildNativeTypeScript(sourceRoot);','const artifacts = buildNativeTypeScriptForRegeneration(sourceRoot);'):text)))
+  throw Error('Complete original public native function differs');
+ const nativeBindings=verifyNativeCopiedSourceBindings(ts,fileURLToPath(new URL(path,root)),after);
+ const physical=readFileSync(new URL(path,root),'utf8');
+ let receivingEvolution=null;
+ if(physical!==before&&physical!==previousAfter&&physical!==memoryEvolution.before&&physical!==after){
+  if(hash(physical)!=='4abc593dffee59a1649b9258ad7d6acbc58300558a394e997d6c5034554070f6')throw Error('Physical native source is neither full original nor exact proposal');
+  receivingEvolution=derivePinnedRepositorySourceEvolution(ts,{
+   profile:new URL('./source-profiles/native-regeneration-public-contract/source-rules.json',import.meta.url),
+   profileSha256:'c9334def1ba0ebbbe1f919e9ae505c1b2e06967cf51f661cc6bb82900bdc45de',
+   path,source:physical,
+  });
+  if(receivingEvolution.after!==after)throw Error('Complete receiving native source successor differs');
+ }
+ const [equation,previousEquation,receivingEquation]=transportConcreteSourcePhases([
   {before,middle,after,language:'JavaScript'},
   {before:previousAfter,middle:after,after,language:'JavaScript'},
+  ...(receivingEvolution?[{before:physical,middle:after,after,language:'JavaScript'}]:[]),
  ]);
- const physical=readFileSync(new URL(path,root),'utf8');
- if(physical!==before&&physical!==previousAfter&&physical!==after)throw Error('Physical native source is neither full original nor exact proposal');
+ if(readFileSync(new URL(path,root),'utf8')!==physical)throw Error('Complete physical native source changed during derivation');
  return {schema:'native-regeneration-concrete-batch-proposal-v1',path,before,middle,after,
   originalSha256,middleSha256:hash(middle),afterSha256:hash(after),equation,
-  previousAfter,previousSha256,previousEquation,
+  previousAfter,previousSha256,previousEquation,memoryEvolution,nativeBindings,receivingEvolution,receivingEquation,
   trace:[language.trace,repository.trace],compiler:ts.version,semanticAuthority:false,
   productionExecutableGain:0,standalonePublicBuildUnchanged:true};
 }

@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {deriveGuardedProofLexingConsumerSource} from './prepare-guarded-proof-lexing.mjs';
+import {deriveCloneEnclosingNativeSourceHistory,assertCloneEnclosingSourceInputsFresh} from './prepare-clone-enclosing-source-history.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 
 export const COMPILER_ALIAS_ORIGINAL_CURRENT_PINS=Object.freeze({
@@ -57,8 +58,16 @@ function concreteEquation(row){
 export function deriveCompilerAliasSourceEvolution(source,name){
  const pin=Object.hasOwn(COMPILER_ALIAS_ORIGINAL_CURRENT_PINS,name)?COMPILER_ALIAS_ORIGINAL_CURRENT_PINS[name]:null;
  if(!pin||typeof source!=='string'||Buffer.byteLength(source)>1048576)fail('bounded complete registered source required');if(hash(source)===pin)return null;
- let row=name==='private-frozen-json.mjs'?deriveGuardedProofLexingConsumerSource(source,'tools/translation/'+name):nativeInverse(source,name);
+ let cloneHistory=null;
+ if(name==='builtin-derive-bang-footprints.mjs'||name==='derive-enclosing-namespace-context.mjs'){
+  try{cloneHistory=deriveCloneEnclosingNativeSourceHistory({path:'tools/translation/'+name,source});}
+  catch(error){fail('declared complete source history required: '+error.message);}
+ }
+ const predecessor=cloneHistory?.before??source;
+ let row=name==='private-frozen-json.mjs'?deriveGuardedProofLexingConsumerSource(predecessor,'tools/translation/'+name):nativeInverse(predecessor,name);
+ if(cloneHistory)row={...row,current:source,text:source,cloneHistory};
  if(row.current!==source||row.text!==source||row.inverse!==row.source||hash(row.inverse)!==pin)fail('complete original source pin differs');
  if(name!=='private-frozen-json.mjs')row=concreteEquation(row);
+ if(cloneHistory)assertCloneEnclosingSourceInputsFresh(cloneHistory);
  return {...row,originalSha256:pin,currentSha256:hash(source),sourceAuthority:false,runtimeAuthority:false};
 }

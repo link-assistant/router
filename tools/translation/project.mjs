@@ -11,6 +11,7 @@ import {planTrackedModulePath,planConditionalModuleSourcePath,isTrackedModulePat
 import {resolveModuleBindings} from './module-bindings.mjs';
 import {resolveOwnedEnclosingNamespaceModuleBindings as resolveEnclosingNamespaceModuleBindings} from './owned-enclosing-module-bindings.mjs';
 import {createDeriveEnclosingNamespaceContext} from './derive-enclosing-namespace-context.mjs';
+import {createDeriveBangContext} from './derive-bang-context.mjs';
 import {lockedTomlValueNamespaceBindings} from './toml-value-namespace.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {STANDARD_NAMESPACE_EVIDENCE} from './namespace-standard.mjs';
@@ -19,8 +20,8 @@ import { HostRustParser as MethodRustParser, checkProjectProgram, emitJavaScript
 import {declarationRefusals,withSourceLifetimeRefusals} from './extensions/declaration-refusals.mjs';
 import { extractImplDeclarations, lowerSharedMethodTokens, lowerCopyMethodTokens,originalMethodMember,originalMethodLowering } from './impl-resolver.mjs';
 import {projectCopyEvidence,originalOptionCopyPayload} from './project-copy.mjs';
-import {createDefaultSourceContext,createDefaultEnclosingSourceContext} from './default-trait-source.mjs';
-import {createCloneSourceContext,createCloneEnclosingSourceContext} from './clone-trait-source.mjs';
+import {createDefaultEnclosingSourceContext} from './default-trait-source.mjs';
+import {createCloneEnclosingSourceContext} from './clone-trait-source.mjs';
 import {originalCloneGeneratedMethods,assertOriginalCloneGeneratedMethod} from './clone-source-ir.mjs';
 import {linkOriginalCloneSemantic} from './extensions/clone-source-body.mjs';
 import {originalDefaultGeneratedMethods,assertOriginalDefaultGeneratedMethod} from './default-source-ir.mjs';
@@ -336,7 +337,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   progress({stage:'project-graph',state:'end',entry:options.entry,total:graph.modules.length});
   progress({stage:'namespace',state:'start',entry:options.entry});
   const enclosingNamespace=ownedDefinitionMode===true||ownedDefinitionMode==='core-json-readers';
-  const namespaceProgress=phase=>{if(enclosingNamespace)progress({stage:'namespace',state:'advance',entry:options.entry,phase});};
+  const namespaceProgress=phase=>{if(enclosingNamespace||options.progress!==undefined)progress({stage:'namespace',state:'advance',entry:options.entry,phase});};
   namespaceProgress('json-context');
   const jsonParserProfile=options.jsonParserProfile??actualJsonCapabilityProfile();
   let jsonMacroContext=null,jsonMacroDiagnostic=null;
@@ -345,29 +346,30 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   const externalModules=registeredStandardHostBindings([...originalMatchesNamespaceBindings(),...lockedTomlValueNamespaceBindings(options.deriveDependencies)]);
   namespaceProgress('derive-inputs');
   const deriveContext=options.deriveDependencies?createDeriveFootprintContext({modules:graph.modules,dependencies:options.deriveDependencies,externalModules,compilationProfile:graph.compilationProfile}):null;
-  // Construct the genuine enclosing issuer once for this project and pass it
-  // explicitly through the independent Default/Clone and binding consumers.
+  // Generated Default/Clone names share one genuine enclosing issuer. Ordinary
+  // project bindings and method parsers still require complete macro evidence.
+  const hasDefaultDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum','impl'].includes(item.term)&&item.tokens.some(token=>token.text==='Default')));
+  const hasCloneDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum'].includes(item.term)&&item.tokens.some(token=>token.text==='Clone')));
   let deriveBangContext=null;
-  if(deriveContext){
+  if(deriveContext&&(enclosingNamespace||hasDefaultDeclarations||hasCloneDeclarations)){
     namespaceProgress('derive-namespace-context');
     deriveBangContext=deriveContext?createDeriveEnclosingNamespaceContext({deriveContext}):null;
   }
   namespaceProgress('default-source');
-  const hasDefaultDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum','impl'].includes(item.term)&&item.tokens.some(token=>token.text==='Default')));
-  const defaultContext=deriveContext&&hasDefaultDeclarations?(enclosingNamespace?createDefaultEnclosingSourceContext(deriveContext,{deriveBangContext}):createDefaultSourceContext(deriveContext)):null;
+  const defaultContext=deriveContext&&hasDefaultDeclarations?createDefaultEnclosingSourceContext(deriveContext,{deriveBangContext}):null;
   namespaceProgress('clone-source');
-  const hasCloneDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum'].includes(item.term)&&item.tokens.some(token=>token.text==='Clone')));
-  const cloneContext=deriveContext&&hasCloneDeclarations?(enclosingNamespace?createCloneEnclosingSourceContext(deriveContext,{deriveBangContext,defaultContext:defaultContext??undefined}):createCloneSourceContext(deriveContext)):null;
+  const cloneContext=deriveContext&&hasCloneDeclarations?createCloneEnclosingSourceContext(deriveContext,{deriveBangContext,defaultContext:defaultContext??undefined}):null;
   namespaceProgress('tool-attributes');
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):externalModules;
   const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});
-  // This consumer needs enclosing bindings. Runtime/ownership and generated
-  // Default/Clone checking retain their separate original source contexts.
-  namespaceProgress(deriveContext?'enclosing-bindings':'complete-bindings');
-  const bindingEvidence=(deriveContext?resolveEnclosingNamespaceModuleBindings:resolveModuleBindings)({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
+  if(!enclosingNamespace)deriveBangContext=deriveContext?createDeriveBangContext({deriveContext}):null;
+  namespaceProgress(enclosingNamespace?'enclosing-bindings':'complete-bindings');
+  const bindingEvidence=(enclosingNamespace?resolveEnclosingNamespaceModuleBindings:resolveModuleBindings)({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[moduleScopeKey(scope),scope]));
   const configureSourceScope=(parser,module)=>configureParserSourceScope(requestImmutableNamespaceTargets(parser),scopes.get(moduleScopeKey(module)),bindingEvidence.scopes,module.path);
-  const matchesMacroContext=(deriveContext?createEnclosingMatchesMacroContext:createMatchesMacroContext)({modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext});
+  const matchesOptions={modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext};
+  const matchesMacroContext=(enclosingNamespace?createEnclosingMatchesMacroContext:createMatchesMacroContext)(matchesOptions);
+  let methodMatchesMacroContext=enclosingNamespace?null:matchesMacroContext;
   progress({stage:'namespace',state:'end',entry:options.entry,total:bindingEvidence.scopes.length});
   const declarations = [], refused = [], imports = [], unloweredItems = [], moduleAliases = new Map();
   let completedModules=0,completedMethods=0;
@@ -454,7 +456,8 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
           // A closed original owner can acquire source association. Existing
           // independent method checking remains available without that claim;
           // its unconfigured original macro route still refuses explicitly.
-          try{transform=createOriginalMethodTokenTransform(matchesMacroContext,method,lowered);}catch(error){if(!(error instanceof OriginalMethodOwnerUnproved))throw error;}
+          methodMatchesMacroContext??=createMatchesMacroContext(matchesOptions);
+          try{transform=createOriginalMethodTokenTransform(methodMatchesMacroContext,method,lowered);}catch(error){if(!(error instanceof OriginalMethodOwnerUnproved))throw error;}
           let originalParsed=null;
           if(transform){try{originalParsed=parseOriginalMethodTransformGrouped(transform,{immutableNamespaceTargets:true});}catch(error){if(error instanceof TypeError)throw new TranslationError('unsupported','original method source contract: '+error.message,method.span);throw error;}}
           const parser = originalParsed?originalMethodParsedFactsGrouped(originalParsed).parser:new MethodRustParser(copyMetadata(lowered.tokens));
@@ -485,7 +488,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
           const semantic=originalParsed?relocateOriginalMethodSemanticGrouped(surface,module.offset):relocate(surface,module.offset);
           if(fieldEvidence)fieldEvidenceBySurface.set(semantic,fieldEvidence);
           if(!originalParsed&&certificate)semantic.impl.copyCertificate=certificate;
-          if(originalParsed)linkProjectMethodDeclaration(parser,originalParsed.entry,surface,semantic,{source:module.source,sourcePath:module.file,memberSpan:method.span,bodySpan:method.bodySpan,globalOffset:module.offset,scope:{bindingEvidence:originalMethodParserNamespace(matchesMacroContext,method).scope,compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition}});
+          if(originalParsed)linkProjectMethodDeclaration(parser,originalParsed.entry,surface,semantic,{source:module.source,sourcePath:module.file,memberSpan:method.span,bodySpan:method.bodySpan,globalOffset:module.offset,scope:{bindingEvidence:originalMethodParserNamespace(methodMatchesMacroContext,method).scope,compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition}});
           if(originalParsed)captureDeclarationRangeGroupedTokens(semantic,module,globalSpan);
           else captureStructuralMethodRange(semantic,method,lowered,module,globalSpan);
           declarations.push({file:module.file,path:module.path,name:[...module.path,surface.name].join('.'),displayName:display,term:'method',span:method.span,globalSpan,surface:semantic,...(defaultProof?{defaultSourceAdmission:defaultProof}:{})});
