@@ -38,6 +38,8 @@ remains active. This source batch does not complete the issue or qualify parity.
 - [ ] Complete the original native retention file after freezing new profile
   inputs. Its initial full Node run passes the five source/codec cases but
   correctly refuses both later receiving cases while new inputs are untracked.
+  After registration, complete Node and Bun attempts stop at the unchanged
+  memory guard (85.682 s and 63.395 s); neither qualifies the complete file.
 - [x] Preserve the entire terminal CI failure log set and artifact metadata;
   inspect all new deadline archives and all canonical outputs with CRC/hash
   joins. Keep source/archive custody distinct from bounded inspection.
@@ -45,8 +47,17 @@ remains active. This source batch does not complete the issue or qualify parity.
   reproduce and refresh actual compiler registration and genuine portable Git
   fixtures, with native grammar/control checks before installation. Receiving
   qualification and the mandatory full gate remain separate.
+- [ ] Complete the original portable Git fixture file. The unchanged complete
+  file passes its first seven cases, then the observer stops the owned process
+  tree during the final receiving case at 95.421 s and 2,867,953,664 sampled
+  cgroup bytes. The missing final deadline report does not qualify that case.
 - [ ] Resolve all generated output, semantic, strict parity and original
   deadline failures; run the complete mandatory local gate for the final SHA.
+  The clean `032a154a6` attempt passes lint and both native suites, then hits
+  its diagnostic heap limit in native TypeScript regeneration and the cgroup
+  guard during parity acceptance. Forward/reverse stages remain unrun.
+- [x] Fetch latest main `eb2dad1c0a18394dc1aad46413e11401e74eb502` and
+  verify it is an ancestor of the current branch, without merge conflicts.
 - [ ] Verify every requested tool/account geolocation criterion and same-SHA
   green CI before marking the PR ready. Keep Rust gated and the PR unmerged.
 

@@ -15,12 +15,15 @@ groups = {
     'current-withdrawn-concrete-guard': ['current-concrete*'],
     'current-terminal-matrix-ci-logs': ['current-52e2c04*'],
     'current-terminal-matrix-ci-receipts': ['current-matrix*', 'current-feedback*'],
+    'current-registered-loader-deadlines': [],
+    'current-registered-loader-trace': ['current-loader-trace*', 'registered-loader-trace*',
+                                       'loader-trace-checkpoint*', 'loader-trace-registration*'],
 }
 assert label in groups
 base = Path('ci-logs/issue-784-restart-2')
 attempts = Path('js/node_modules/.node-case-deadlines')
 paths = sorted({p for pattern in groups[label] for p in base.glob(pattern) if p.is_file()})
-if label == 'current-withdrawn-concrete-guard':
+if label in ['current-withdrawn-concrete-guard', 'current-registered-loader-deadlines']:
     paths += sorted(p for p in attempts.rglob('*') if p.is_file())
 assert paths and not any(p.is_symlink() for p in paths)
 archive = Path('docs/case-studies/issue-784/evidence') / (label + '.tar.gz')
@@ -103,7 +106,7 @@ assert allocation() < 500000000
 inactive()
 for path in paths:
     path.unlink()
-if label == 'current-withdrawn-concrete-guard':
+if label in ['current-withdrawn-concrete-guard', 'current-registered-loader-deadlines']:
     for path in sorted(attempts.rglob('*'), key=lambda p: len(p.parts), reverse=True):
         assert path.is_dir()
         path.rmdir()

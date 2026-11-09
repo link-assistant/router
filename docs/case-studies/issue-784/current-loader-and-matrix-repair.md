@@ -109,3 +109,44 @@ before writing. The genuine portable Git fixture is regenerated and read back;
 its original concrete profile stays byte-equivalent. This source registration
 does not establish receiving-test or full-gate success. The complete preceding
 registration remains in its own historical source archive.
+
+After registration, the complete original native-retention file remains
+unqualified. Node's first source-equation case passes at 56,705.439 ms; the
+observer stops the owned process tree at 85.682 seconds, sampling
+2,874,998,784 total cgroup bytes. Bun passes the first five cases, including
+source equations at 53,234.02 ms, then stops at 63.395 seconds and
+2,868,936,704 sampled bytes. Both use the unchanged 2,866,933,760-byte guard;
+sampled peaks can exceed it between observations. All children are reaped.
+
+The complete local gate starts on clean commit
+`032a154a61e482558bb2807e5c723ca86a3d89bd`. Its complete fingerprint covers
+50,118 files and 1,883,703,807 bytes. Lint, both 259-case native suites, all
+nine deadline controls and both strict package typechecks pass. Native
+TypeScript regeneration exhausts the inherited 192 MiB diagnostic heap.
+Parity acceptance reports a Responses cancellation connection-close failure;
+the unchanged complete two-case file then passes in isolation. Its cause
+remains unresolved. The observer stops and reaps the complete gate during
+parity at 492.472 seconds, sampling 2,874,740,736 cgroup bytes. Later parity
+checks and both translation stages are unrun. There is no green stamp or
+same-SHA CI qualification. The complete command list and limits stay exact.
+
+The unchanged complete eight-case portable Git fixture file passes its first
+seven cases. During its final compiler receiving case, the observer stops and
+reaps the owned process tree at 95.421 seconds, sampling 2,867,953,664 cgroup
+bytes. Its final independent deadline report is absent after that interruption;
+neither the receiving case nor the complete file is qualified.
+
+The [registered-source and full-gate packet](evidence/current-registered-loader-trace.tar.gz)
+retains the complete registration proposals, native syntax review, resource
+observations, full gate log and all subsequent original-test attempts. The
+[deadline packet](evidence/current-registered-loader-deadlines.tar.gz) retains
+all complete and interrupted audit directories. Each adjacent compressed
+receipt lists every original member length and hash. Every member is decoded
+and verified before retiring only inactive task copies. The deadline packet
+was retained first because a combined packet exceeded the cap preflight; no
+original evidence was removed after that refused combined attempt.
+
+Latest fetched main `eb2dad1c0a18394dc1aad46413e11401e74eb502` remains an
+ancestor of this branch. This source checkpoint has no merge conflict and
+does not satisfy the remaining generated-output, deadline, parity or universal
+privacy requirements.
