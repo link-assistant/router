@@ -19,6 +19,8 @@ parser.add_argument('--reclaim-initial-gate-cache', action='store_true',
                     help='Once, pause only the initial gate fingerprint and advise inactive tracked pages')
 parser.add_argument('--advise-closed-gate-pages', action='store_true',
                     help='Bounded asynchronous advice on closed tracked pages; original clocks keep running')
+parser.add_argument('--advise-closed-production-pages', action='store_true',
+                    help='Same bounded page advice for the complete canonical producer with 320 MiB old-space')
 parser.add_argument('--advise-completed-fingerprint-pages', action='store_true',
                     help='Single pass over actual completed fingerprint prefixes; clocks and guard unchanged')
 parser.add_argument('command', nargs=argparse.REMAINDER)
@@ -31,7 +33,12 @@ if (args.reclaim_initial_gate_cache or args.advise_closed_gate_pages or args.adv
         or Path(command[0]).name != 'node'
         or args.receipt.resolve().parent != Path.cwd() / 'ci-logs/issue-784-restart-2'):
     parser.error('cache advice is restricted to this task initial complete gate')
-if sum([args.reclaim_initial_gate_cache, args.advise_closed_gate_pages, args.advise_completed_fingerprint_pages]) > 1:
+if args.advise_closed_production_pages and (command != [
+        'node', '--max-old-space-size=320', 'scripts/translate-router.mjs', '--progress']
+        or args.receipt.resolve().parent != Path.cwd() / 'ci-logs/issue-784-restart-2'):
+    parser.error('production advice requires this task complete canonical producer and fixed heap')
+if sum([args.reclaim_initial_gate_cache, args.advise_closed_gate_pages,
+        args.advise_completed_fingerprint_pages, args.advise_closed_production_pages]) > 1:
     parser.error('choose one explicitly recorded file-cache experiment')
 if args.advise_completed_fingerprint_pages and os.environ.get('ROUTER_JS_FIRST_FINGERPRINT_PROGRESS') != '1':
     parser.error('completed-prefix advice requires actual default-off fingerprint progress')
@@ -88,7 +95,8 @@ with args.log.open('xb') as log:
                                     afterBytes=int(memory.read_text()))
             adviser_output.close()
             adviser = adviser_output = None
-        if (args.advise_closed_gate_pages and not stopped and not interrupted
+        if ((args.advise_closed_gate_pages or args.advise_closed_production_pages)
+                and not stopped and not interrupted
                 and observed >= 2_300_000_000 and observed < threshold
                 and adviser is None and len(closed_advice) < 12
                 and (not closed_advice
@@ -196,7 +204,8 @@ receipt = {
     'initialFingerprintCacheAdvice': reclaims,
     'completedFingerprintPageAdvice': fingerprint_advice,
     'closedTrackedPageAdvice': closed_advice,
-    'closedTrackedPageAdvicePolicy': {'enabled': args.advise_closed_gate_pages,
+    'closedTrackedPageAdvicePolicy': {'enabled': args.advise_closed_gate_pages or args.advise_closed_production_pages,
+                                    'completeCanonicalProduction': args.advise_closed_production_pages,
                                     'thresholdBytes': 2_300_000_000,
                                     'minimumIntervalSeconds': 3, 'maximumInvocations': 12,
                                     'minimumTrackedFileBytes': 131072,
