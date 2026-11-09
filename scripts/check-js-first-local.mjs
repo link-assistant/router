@@ -15,6 +15,17 @@ export const stages = [
   ['translation', ['node scripts/run-node-tests.mjs --outer-timeout-ms=3600000 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs', 'node scripts/translate-router.mjs --check', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check', 'node scripts/translate-router.mjs --profile-matrix --check', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check']],
   ['reverse-translation', ['node scripts/run-node-tests.mjs --outer-timeout-ms=900000 --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs', 'node scripts/run-bun-reverse-files.mjs --output-root js/node_modules/.bun-reverse-files', 'node scripts/regenerate-js-first.mjs --check', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --check', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check']],
 ];
+// Optional scalar diagnostics identify the exact silent child that is still
+// running. Neither the command list nor the original failure handling changes.
+export function runStageCommand(stage, command, { progress } = {}) {
+  if (progress !== undefined && typeof progress !== 'function') throw new TypeError('Command progress must be a function.');
+  const started = progress ? performance.now() : 0;
+  progress?.({ stage, command, state: 'start' });
+  const result = spawnSync(command, { shell: true, stdio: 'inherit' });
+  progress?.({ stage, command, state: 'finish', elapsedMs: performance.now() - started,
+    status: result.status, signal: result.signal, error: result.error?.message ?? null });
+  return result;
+}
 function git(...args) {
   const result = spawnSync('git', args, { encoding: 'utf8' });
   if (result.status !== 0) throw new Error(result.error?.message || result.stderr || `git ${args[0]} failed (${result.status ?? result.signal}).`);
@@ -96,10 +107,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
         : undefined;
       const before = fingerprint(stampPath, fingerprintOptions);
       const failures = [];
+      const commandOptions = process.env.ROUTER_JS_FIRST_COMMAND_PROGRESS === '1'
+        ? {progress:record=>process.stderr.write(JSON.stringify({event:'javascript-gate-command', ...record, memory:process.memoryUsage()}) + '\n')}
+        : undefined;
       for (const [id, commands] of stages) {
         console.log(`\nJavaScript stage: ${id}`);
         for (const command of commands) {
-          const result = spawnSync(command, { shell: true, stdio: 'inherit' });
+          const result = runStageCommand(id, command, commandOptions);
           if (result.status !== 0) { failures.push(`${id}: ${command}`); break; }
         }
       }

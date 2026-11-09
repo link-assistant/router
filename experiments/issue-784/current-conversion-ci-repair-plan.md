@@ -125,11 +125,23 @@ retention; no existing bound, test body, original deadline or gate is relaxed.
 - [x] Read the available complete failure set and all 20 Node audit members,
   distinguish deliberate child controls from actual parent failures, and
   inspect all six complete Bun receipts and their actual per-file outcomes.
-- [ ] Publish the reviewed custody/root/layer batch only to the prepared
-  branch, update the draft PR with the complete current inventory, then wait
-  for its entire CI cycle while drafting independent repairs.
+- [x] Publish the reviewed custody/root/layer batch as `74f62c037` only to
+  the prepared branch and update the draft PR with the complete inventory.
+- [ ] Collect the entire `74f62c037` cycle before another push; continue
+  independent source repairs without changing its published head.
 - [ ] Independently review and install actual canonical computed outputs when
   available, produce all original owned/profile sidecars, resolve original
   semantic and performance failures, and pass the unchanged strict parity and
   every same-SHA stage. Current source inventory and 441 parity gaps remain
   fatal; a custody artifact supplies data only.
+
+- [x] Diagnose the last printed TypeScript package command independently: the
+  complete strict file passes in 3.423 seconds; complete regeneration with a
+  separate 256 MiB diagnostic heap fails after 15.023 seconds. Correct the
+  earlier interrupted-child attribution and preserve both whole results.
+- [x] Add default-off exact command progress to the original gate; preserve
+  every command and failure. The complete Node cohort and its deadline audit
+  pass (15 cases); both complete Bun files pass (13 cases). Preserve the first
+  audit failure caused by incomplete source preselection and its full retry.
+- [ ] Run the complete current gate with command progress and resolve its
+  actual interrupted child without relaxing any original check.

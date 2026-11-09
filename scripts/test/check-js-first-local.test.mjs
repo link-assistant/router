@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { fingerprint, verifyStamp, stages } from '../check-js-first-local.mjs';
+import { fingerprint, verifyStamp, stages, runStageCommand } from '../check-js-first-local.mjs';
 import {reviewTranslationDraft} from '../review-translation-draft.mjs';
 import {createHash} from 'node:crypto';
 
@@ -270,4 +270,35 @@ test('the full translation stage runs every fixture with bounded test-file concu
     }
     assert.equal(started,4);assert.equal(active.size,0);assert.ok(peak<=2);
   } finally {fs.rmSync(directory,{recursive:true,force:true});fs.rmSync(outside,{recursive:true,force:true});}
+});
+
+test('optional command progress retains real successful and failed child statuses',()=>{
+  const quote=value=>"'"+value.replaceAll("'","'\\''")+"'";
+  for(const status of [0,7]) {
+    const command=quote(process.execPath)+' -e '+quote(`process.exit(${status})`), records=[];
+    const plain=runStageCommand('fixture',command);
+    const traced=runStageCommand('fixture',command,{progress:record=>records.push(record)});
+    assert.equal(plain.status,status);assert.equal(traced.status,status);
+    assert.equal(records.length,2);
+    assert.deepEqual(records[0],{stage:'fixture',command,state:'start'});
+    assert.deepEqual({...records[1],elapsedMs:0},{stage:'fixture',command,state:'finish',elapsedMs:0,status,signal:null,error:null});
+    assert.ok(Number.isFinite(records[1].elapsedMs) && records[1].elapsedMs>=0);
+  }
+});
+
+test('invalid and throwing command observers cannot silently launch or qualify a child',()=>{
+  const quote=value=>"'"+value.replaceAll("'","'\\''")+"'";
+  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'router-gate-command-'));
+  const marker=path.join(directory,'child-ran');
+  const command=quote(process.execPath)+' -e '+quote("require('node:fs').writeFileSync(process.argv[1],'ran')")+' '+quote(marker);
+  const failure=new Error('observer failed');
+  try {
+    assert.throws(()=>runStageCommand('fixture',command,{progress:null}),/Command progress must be a function/);
+    assert.equal(fs.existsSync(marker),false);
+    assert.throws(()=>runStageCommand('fixture',command,{progress:()=>{throw failure;}}),error=>error===failure);
+    assert.equal(fs.existsSync(marker),false);
+    const records=[];
+    assert.throws(()=>runStageCommand('fixture',command,{progress:record=>{records.push(record);if(record.state==='finish')throw failure;}}),error=>error===failure);
+    assert.equal(fs.readFileSync(marker,'utf8'),'ran');assert.equal(records[1].status,0);
+  } finally {fs.rmSync(directory,{recursive:true,force:true});}
 });

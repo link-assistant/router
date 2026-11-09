@@ -58,8 +58,9 @@ These changes measure zero newly executable production functions.
 
 The complete local gate at committed source `ec90f0754` passes lint, 259 native
 cases per engine, nine deadline controls and ordinary package TypeScript. The
-unchanged cgroup guard interrupts native TypeScript; later TypeScript, parity,
-forward and reverse stages remain unrun. See the
+unchanged cgroup guard interrupts the TypeScript stage. Its exact silent child
+is unestablished without command tracing; the remaining TypeScript is
+unqualified, and parity, forward and reverse stages remain unrun. See the
 [complete gate report](current-layered-integrated-gate.md).
 
 No secret or human-only access action explains these failures. Missing outputs,
