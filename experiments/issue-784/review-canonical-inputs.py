@@ -1,17 +1,27 @@
 """Verify complete published custody inputs; separately report current differences."""
+import argparse
 import gzip
 import hashlib
 import json
 from pathlib import Path
 import subprocess
 import zipfile
+import re
 
 base = Path('ci-logs/issue-784-restart-2')
-head = '74f62c037a21e4b3e4e3804dcf3d941d0aabfe19'
-merge = json.loads((base / 'current-74f62-tested-merge.json').read_bytes())
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--head', default='74f62c037a21e4b3e4e3804dcf3d941d0aabfe19')
+parser.add_argument('--prefix', default='current-74f62')
+args = parser.parse_args()
+assert re.fullmatch(r'[0-9a-f]{40}', args.head)
+assert re.fullmatch(r'[a-z0-9-]+', args.prefix)
+head = args.head
+merge = json.loads((base / (args.prefix + '-tested-merge.json')).read_bytes())
 assert merge['tree']['sha'] == subprocess.check_output(['git', 'rev-parse', head + '^{tree}'], text=True).strip()
 assert [row['sha'] for row in merge['parents']] == ['eb2dad1c0a18394dc1aad46413e11401e74eb502', head]
-with zipfile.ZipFile(base / 'current-74f62-artifact-13650976310.zip') as archive:
+receipt = json.loads(gzip.decompress((base / (args.prefix + '-canonical-artifact-verification.json.gz')).read_bytes()))
+assert receipt['headSha'] == head and receipt['mergeSha'] == merge['sha']
+with zipfile.ZipFile(receipt['file']) as archive:
     manifest = json.loads(archive.read(next(name for name in archive.namelist() if name.endswith('/manifest.json'))))
 inputs = manifest['inputs']
 assert inputs['head'] == merge['sha']
@@ -90,7 +100,7 @@ record = dict(schema='complete-canonical-published-input-review-v1', headSha=hea
     currentHead=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
     changedDeclaredInputs=changes, completeCurrentCompilerCensusProved=False,
     currentWorkingTreeFreshnessProved=False, semanticAuthority=False, runtimeParity=False)
-target = base / 'current-74f62-canonical-input-review.json.gz'
+target = base / (args.prefix + '-canonical-input-review.json.gz')
 raw = json.dumps(record, separators=(',', ':')).encode()
 with target.open('xb') as output:
     output.write(gzip.compress(raw, mtime=0))

@@ -1,4 +1,5 @@
 """Verify every complete nested custody member and retain actual coverage counts."""
+import argparse
 import gzip
 import hashlib
 import json
@@ -7,7 +8,11 @@ import re
 import zipfile
 
 base = Path('ci-logs/issue-784-restart-2')
-receipt = json.loads(gzip.decompress((base / 'current-74f62-canonical-artifact-verification.json.gz').read_bytes()))
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--prefix', default='current-74f62')
+args = parser.parse_args()
+assert re.fullmatch(r'[a-z0-9-]+', args.prefix)
+receipt = json.loads(gzip.decompress((base / (args.prefix + '-canonical-artifact-verification.json.gz')).read_bytes()))
 assert receipt['completeCrcAndReadbackVerified']
 
 
@@ -73,7 +78,7 @@ record = dict(schema='complete-canonical-ci-custody-member-verification-v1',
     completeNestedGzipCrcSha256AndCensusVerified=True, inventoryEqualsActualPlanManifest=True,
     generationDataForPublishedMergeOnly=True, currentWorkingTreeFreshnessProved=False,
     semanticAuthority=False, runtimeParity=False, fullGatePassed=False, rustExecuted=False)
-target = base / 'current-74f62-canonical-member-verification.json.gz'
+target = base / (args.prefix + '-canonical-member-verification.json.gz')
 raw = json.dumps(record, separators=(',', ':')).encode()
 with target.open('xb') as output:
     output.write(gzip.compress(raw, mtime=0))
