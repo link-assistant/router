@@ -43,8 +43,21 @@
   fingerprint attempts hit the unchanged memory guard; all stages stay unrun.
 - [x] Refresh issue/all PR comment types/main, review the full coordinated source
   diff and retain both whole local diffs after GitHub refuses its 300-file limit.
-- [ ] Publish this reviewed coordinated draft checkpoint with exact failed/unrun
-  evidence, then collect the entire new CI cycle before another publication.
+- [x] Publish the reviewed coordinated draft checkpoint `910e8dadf` with exact
+  failed/unrun evidence. The PR stays draft; the current tree was clean at push.
+- [ ] Collect the entire `910e8dadf` CI cycle before another publication.
+- [x] Separate historical/current static consumers without changing frozen
+  fixture bytes; both complete 10-case files and the Node deadline audit pass.
+- [x] Supply the actual explicit root facade context to four original Option
+  cases. The first three changed cases pass, but both whole Node files and Bun
+  fail; subscription normalization and remaining cases stay unqualified.
+- [x] Compose the complete static Result residual checker through a separate
+  native/CST source layer. Its whole file passes in Node and Bun. Explicit birth
+  batch equivalence passes in Node and is memory-failed in Bun. All larger whole
+  lifetime attempts fail; the repaired core-vector whole file is unrun.
+- [x] Retire 79 exact inactive fingerprint raw duplicates only after complete
+  immutable published-blob and packet-member verification; retain the receipt
+  and all originals in the packet (8,826,614 logical bytes reclaimed).
 - [ ] Finish every remaining source equation, application semantic refusal,
   original deadline, missing generated output, TypeScript and strict parity
   obligation. No failure is optional because main also fails.

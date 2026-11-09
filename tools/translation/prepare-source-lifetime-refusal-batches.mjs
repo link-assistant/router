@@ -1,5 +1,7 @@
 import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-current.mjs';
 import {composeProjectFacadeRetention} from './prepare-project-facade-retention.mjs';
+import {composeStaticResultResidualSource} from './prepare-static-result-residual-source.mjs';
+import {transportConcreteNamedSourcePhases} from './concrete-source-origin-phases.mjs';
 import {composeOwnedCorePrivateAnalysisRetention} from './prepare-owned-core-private-analysis-retention.mjs';
 import {composeCurrentCoreUnitMatches as composeCoreUnitMatches} from './prepare-current-core-unit-unicode.mjs';
 // Complete native source selections followed by serialized/reparsed CST rules.
@@ -122,10 +124,31 @@ export function composeSourceLifetimeRefusalBatches(prior, options = {}) {
   }
   return {sources, layers: [plan]};
 }
+// Additive complete-source DATA API. The original producer above keeps its
+// independent transactions and observable contract. This explicit batch shares
+// fresh source authentication, preserving every full CST build and inverse.
+export function prepareBatchedSourceLifetimeRefusalBatches({root=ROOT}={}){
+ const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual installed TypeScript 5.9.3 required');
+ const inputs=originalSources(),files=inputs.map(input=>{
+  const before=input.source,after=languageSource(ts,input.path,before),language=input.path==='tools/translation/project.mjs'?before:after;
+  if(ts.createSourceFile(input.path,after,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS).parseDiagnostics.length)fail('complete generated native grammar differs');
+  const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,input.path),after);
+  let current=null;try{current=readFileSync(resolve(root,input.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
+  return {path:input.path,before,original:before,language,after,current,nativeBindings};
+ });
+ const equations=transportConcreteNamedSourcePhases(files.map(row=>({before:row.before,middle:row.language,after:row.after,language:'JavaScript',rules:['javascript:collect-complete-independently-attributed-lifetime-phases','router:select-batching-only-inside-original-project-invocation','javascript:restore-complete-original-lifetime-checker-and-project','router:restore-complete-original-project-selection']})));
+ for(const [index,row]of files.entries()){
+  const equation=equations[index];if(equation.before!==row.before||equation.middle!==row.language||equation.after!==row.after||equation.inverse!==row.before)fail('complete batch source or inverse differs');
+  Object.assign(row,{beforeMeta:equation.beforeMeta,afterMeta:equation.afterMeta,inverse:row.before,trace:equation.stages.map(stage=>stage.trace.find(part=>part.phase===stage.phase))});
+  if(readFileSync(resolve(root,row.path),'utf8')!==row.current)fail('complete batch physical source changed');
+ }
+ if(originalSources().some((input,index)=>input.source!==inputs[index].source))fail('complete original batch changed');
+ return {schema:'batched-source-lifetime-refusal-source-v1',typescriptVersion:ts.version,inputs,files,ordinaryCheckerSelectionUnchanged:true,failedPhaseReturnsProgram:false,newAcrossInvocationCache:false,semanticAuthority:false,executableAdmission:false};
+}
 // Explicit later source layers never rewrite the three historical birth
 // equations above. The current native output is checked only after composition.
 export function prepareCurrentSourceLifetimeRefusalBatches(options = {}) {
-  const birth = prepareSourceLifetimeRefusalBatches(options);
+  const birth = prepareBatchedSourceLifetimeRefusalBatches(options);
   const checked = composeExecutableCheckedSource(Object.fromEntries(birth.files.map(row => [row.path, row])), options);
   const preserved = composeSourceProofPreservation(checked.sources, options);
   const ascii = composeCoreAscii(preserved.sources, options);
@@ -136,7 +159,8 @@ export function prepareCurrentSourceLifetimeRefusalBatches(options = {}) {
  const retention=composeOwnedCorePrivateAnalysisRetention(unit.sources,options);
  const runtime=composeOwnedRuntimeImportEdges(retention.sources,options);
  const facades=composeProjectFacadeRetention(runtime.sources,options);
-  return {schema: 'current-source-lifetime-refusal-batch-source-v1', birth, layers: [birth, ...checked.layers, ...preserved.layers, ...ascii.layers, ...reverse.layers, ...assets.layers, ...base.layers,...unit.layers,...retention.layers,...runtime.layers,...facades.layers], files: Object.values(facades.sources), semanticAuthority: false};
+ const residuals=composeStaticResultResidualSource(facades.sources,options);
+  return {schema: 'current-source-lifetime-refusal-batch-source-v1', birth, layers: [birth, ...checked.layers, ...preserved.layers, ...ascii.layers, ...reverse.layers, ...assets.layers, ...base.layers,...unit.layers,...retention.layers,...runtime.layers,...facades.layers,...residuals.layers], files: Object.values(residuals.sources), semanticAuthority: false};
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [mode] = process.argv.slice(2); if (process.argv.length !== 3 || !['--check', '--write'].includes(mode)) fail('usage: --check|--write');

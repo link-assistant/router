@@ -10,7 +10,7 @@ import subprocess
 import sys
 
 root = Path.cwd()
-assert sys.argv[1:] in ([], ['--paired-project'], ['--closed-receiving'], ['--class-birth'], ['--module-freeze'], ['--alias-reader'], ['--descriptor-kind'], ['--ascii-selection'], ['--fixture-paths'], ['--static-refresh'], ['--proof-graph'])
+assert sys.argv[1:] in ([], ['--paired-project'], ['--closed-receiving'], ['--class-birth'], ['--module-freeze'], ['--alias-reader'], ['--descriptor-kind'], ['--ascii-selection'], ['--fixture-paths'], ['--static-refresh'], ['--proof-graph'], ['--fingerprint-trace'])
 paired = sys.argv[1:] == ['--paired-project']
 receiving = sys.argv[1:] == ['--closed-receiving']
 class_birth = sys.argv[1:] == ['--class-birth']
@@ -21,7 +21,10 @@ ascii_selection = sys.argv[1:] == ['--ascii-selection']
 fixture_paths = sys.argv[1:] == ['--fixture-paths']
 static_refresh = sys.argv[1:] == ['--static-refresh']
 proof_graph = sys.argv[1:] == ['--proof-graph']
+fingerprint_trace = sys.argv[1:] == ['--fingerprint-trace']
 label = 'current-proof-graph' if proof_graph else 'current-static-refresh' if static_refresh else 'current-receiving-fixture-paths' if fixture_paths else 'current-static-fixture' if ascii_selection else 'current-ascii-selection' if descriptor_kind else 'current-descriptor-kind' if alias_reader else 'current-owned-freeze' if module_freeze else 'current-alias-reader' if class_birth else 'current-class-birth-receiving' if receiving else 'current-class-birth' if paired else 'current-paired-project'
+if fingerprint_trace:
+    label = 'current-fingerprint-trace'
 receipt = Path('ci-logs/issue-784-restart-2/' + label + '-duplicate-retirement.json')
 assert not receipt.exists()
 selected, archives = {}, []
@@ -51,6 +54,8 @@ if static_refresh:
     packets = [('current-static-fixture-refresh-checks', '9f27bfe67')]
 if proof_graph:
     packets = [('current-proof-consumer-graph', '66aec03d0')]
+if fingerprint_trace:
+    packets = [('current-fingerprint-trace', '910e8dadfbf3f92490f2db19ed47c39d98af7077')]
 for name, commit in packets:
     path = Path('docs/case-studies/issue-784/evidence') / (name + '.json.gz')
     packed = path.read_bytes()
@@ -70,7 +75,7 @@ for name, commit in packets:
         seen.add(name)
         if not name.startswith(('ci-logs/issue-784-restart-2/', 'js/node_modules/.node-case-deadlines/')):
             continue
-        if receiving and not Path(name).exists():
+        if (receiving or fingerprint_trace) and not Path(name).exists():
             continue
         assert name not in selected
         selected[name] = (member, raw, str(path))
@@ -82,8 +87,8 @@ for name, commit in packets:
             check = json.loads(raw)
             assert check['childClosed'] and check['groupCleanup']['complete']
             assert not Path('/proc/' + str(check['groupCleanup']['group'])).exists()
-assert len(selected) == (22 if proof_graph else 19 if static_refresh else 12 if fixture_paths else 27 if ascii_selection else 13 if descriptor_kind else 17 if alias_reader else 96 if module_freeze else 34 if class_birth else 86 if receiving else 51 if paired else 221)
-assert sum(row[0]['bytes'] for row in selected.values()) == (198818 if proof_graph else 74566 if static_refresh else 376505 if fixture_paths else 121643 if ascii_selection else 134866 if descriptor_kind else 129057 if alias_reader else 823544 if module_freeze else 407953 if class_birth else 2820967 if receiving else 399624 if paired else 1686719)
+assert len(selected) == (79 if fingerprint_trace else 22 if proof_graph else 19 if static_refresh else 12 if fixture_paths else 27 if ascii_selection else 13 if descriptor_kind else 17 if alias_reader else 96 if module_freeze else 34 if class_birth else 86 if receiving else 51 if paired else 221)
+assert sum(row[0]['bytes'] for row in selected.values()) == (8826614 if fingerprint_trace else 198818 if proof_graph else 74566 if static_refresh else 376505 if fixture_paths else 121643 if ascii_selection else 134866 if descriptor_kind else 129057 if alias_reader else 823544 if module_freeze else 407953 if class_birth else 2820967 if receiving else 399624 if paired else 1686719)
 
 
 def identity(state):

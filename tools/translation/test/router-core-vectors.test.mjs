@@ -1,6 +1,8 @@
 import {composeUpstreamHeaderPrivacySource} from './fixtures/upstream-header-privacy-source-composition.mjs';
 import {composeOwnedRuntimeImportEdges} from '../prepare-owned-runtime-import-current.mjs';
 import {composeProjectFacadeRetention} from '../prepare-project-facade-retention.mjs';
+import {composeStaticResultResidualSource} from '../prepare-static-result-residual-source.mjs';
+import {assertStaticResultResidualSourceComposition} from './static-result-residual-source-composition.mjs';
 import {assertRuntimeImportSourceComposition} from './runtime-import-source-composition.mjs';
 import {composeOwnedCorePrivateAnalysisRetention} from '../prepare-owned-core-private-analysis-retention.mjs';
 import {assertOwnedCorePrivateAnalysisSourceComposition} from './owned-core-private-analysis-source-composition.mjs';
@@ -106,6 +108,8 @@ test('native source producer derives the actual owned wrapper and composes compl
   assert.equal(facades.historicalSources, composition.sources);
   assert.equal(facades.layers.length, 1);assert.equal(facades.layers[0].schema, 'project-facade-retention-source-v1');
   assert.equal(facades.layers[0].files[0].before, composition.sources['tools/translation/project.mjs'].after);
+  const residuals=retain('complete-current-static-result-residual-source-layer',composeStaticResultResidualSource(facades.sources));
+  assert.equal(residuals.historicalSources,facades.sources);assertStaticResultResidualSourceComposition(residuals.layers[0],facades.sources,residuals.sources);
   assertRuntimeImportSourceComposition(composition.layers[0],retention.sources,facades.sources);
   assertAsciiSourceComposition(ascii.layers[0], boundary.sources, facades.sources);
   assertAsciiReverseComposition(reverse.layers[0], ascii.sources, facades.sources);
@@ -118,7 +122,7 @@ test('native source producer derives the actual owned wrapper and composes compl
   assert.throws(() => composeCoreAsciiReverse({...ascii.sources, [reverseSource.path]: {after: 'forged'}}), /preceding complete source equation/u);
   assert.throws(() => composeCoreAscii({...boundary.sources, 'rust/src/translation_core.rs': {after: 'forged'}}), /preceding complete source equation/u);
   assert.equal(facades.sources['rust/src/translation_core.rs'].after, ROUTER_FORMATTING_FACADE_SOURCE);
-  for (const [path, source] of Object.entries(facades.sources)) assert.equal(readFileSync(new URL(path, root), 'utf8'), source.after, path);
+  for (const [path, source] of Object.entries(residuals.sources)) assert.equal(readFileSync(new URL(path, root), 'utf8'), source.after, path);
   assert.equal(readFileSync(new URL('rust/src/translation_core.rs', root), 'utf8'), ROUTER_FORMATTING_FACADE_SOURCE);
   for (const source of Object.values(result.value.sources)) {
     assert.equal(transportConcreteSyntaxMeta(source.beforeMeta).source, source.before);
