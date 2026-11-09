@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/verify-canonical-custody-members.py", line 49, in <module>
+    while block := decoded.read(65536):
+                   ~~~~~~~~~~~~^^^^^^^
+  File "/home/box/.pyenv/versions/3.15.0/lib/python3.15/gzip.py", line 352, in read
+    return self._buffer.read(size)
+           ~~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/box/.pyenv/versions/3.15.0/lib/python3.15/compression/_common/_streams.py", line 68, in readinto
+    data = self.read(len(byte_view))
+  File "/home/box/.pyenv/versions/3.15.0/lib/python3.15/gzip.py", line 613, in read
+    buf = self._fp.read(READ_BUFFER_SIZE)
+  File "/home/box/.pyenv/versions/3.15.0/lib/python3.15/gzip.py", line 96, in read
+    return self.file.read(size)
+           ~~~~~~~~~~~~~~^^^^^^
+  File "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/verify-canonical-custody-members.py", line 19, in read
+    assert size <= 65536
+           ^^^^^^^^^^^^^
+AssertionError
