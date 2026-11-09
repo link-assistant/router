@@ -29,6 +29,7 @@ parser.add_argument('--retained-17c7-metadata', action='store_true')
 parser.add_argument('--closed-4e709-snapshots', action='store_true')
 parser.add_argument('--closed-4e709-terminal-snapshots', action='store_true')
 parser.add_argument('--closed-standard-observations', action='store_true')
+parser.add_argument('--retained-closed-ci-metadata', action='store_true')
 parser.add_argument('--receipt', default='reverse-shard-inactive-evidence-compression.json')
 args = parser.parse_args()
 assert sum(bool(value) for value in [args.closed_attempt, args.closed_investigations,
@@ -47,14 +48,24 @@ assert sum(bool(value) for value in [args.closed_attempt, args.closed_investigat
                                    args.closed_draft_observations, args.closed_raw_packet_preflight,
                                    args.retained_17c7_metadata, args.closed_4e709_snapshots,
                                    args.closed_4e709_terminal_snapshots,
-                                   args.closed_standard_observations]) <= 1
+                                   args.closed_standard_observations,
+                                   args.retained_closed_ci_metadata]) <= 1
 assert Path(args.receipt).name == args.receipt and args.receipt.endswith('.json')
 paths = [root / 'ci-logs' / name for name in [
     'restart-export-published-review.diff',
     'restart-published-review.diff',
     'restart-review-published.diff',
 ]] + [base / 'native-regeneration-before-csv-cache-advice.json']
-if args.closed_standard_observations:
+if args.retained_closed_ci_metadata:
+    # Immutable observations from completed, earlier published heads. Original
+    # paths in custody manifests remain recoverable with a .gz suffix.
+    retained = root / 'docs/case-studies/issue-784/evidence'
+    paths = [path for name in ['ci-815527', 'ci-74f62', 'ci-3b197',
+                               'ci-f86824ea', 'current-37147a']
+             for path in (retained / name).glob('*.json')
+             if path.stat().st_size > 40000]
+    assert 30 <= len(paths) <= 150
+elif args.closed_standard_observations:
     # Closed profiles, probes and immutable earlier snapshots. The published
     # workflow can still be running; no live output, input or latest snapshot
     # is selected. Recover every original by appending .gz to its old path.
