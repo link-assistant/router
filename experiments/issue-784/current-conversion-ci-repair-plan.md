@@ -105,6 +105,11 @@
 - [x] Attempt the complete gate at `743c338d4` with asynchronous closed-page
   advice. Its incomplete fingerprint hits the unchanged guard after 17.142
   seconds; all seven stages are unrun and no green stamp is issued.
+- [x] Attempt the complete gate at `ec90f0754` with completed-prefix page
+  advice. Fingerprinting, lint, 259 native cases per engine, nine deadline
+  controls and ordinary package TypeScript pass. The unchanged memory guard
+  interrupts native TypeScript after 348.453 seconds; remaining TypeScript,
+  parity, forward and reverse checks are unrun. Retain the whole failed run.
 
 One resource-intensive workload runs at a time. No workers, clones or local
 Rust tools. Evidence stays below 500,000,000 bytes with complete verified
