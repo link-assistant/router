@@ -1,96 +1,89 @@
 Fixes #784
 
 Router removes supported geolocation headers and structured search/retrieval
-location fields by default from routed HTTP and native JSON WebSocket requests.
+location fields by default from routed HTTP and JSON WebSocket requests.
 Exactly one `x-router-share-geolocation: true` header opts in for the request or
 connection; Router consumes it. Account overrides cannot restore stripped data.
-Prompt content, user tool schemas, search availability and existing telemetry
-choices remain intact.
+Prompts, user tool schemas, search availability and telemetry choices are preserved.
 
-Reproduce by routing a supported location header or search location field without
-consent. Privacy regressions cover removal, opt-in, overrides, WebSocket forwarding
-and all eight independently mixed Gemini field spellings. At published `1c235248`,
-lint and the complete native Node/Bun suites pass, 259 native cases per engine.
-Earlier separate Gemini cohorts pass 30 cases per engine. Matching Rust source
-oracles are included; execution requires every same-head JavaScript stage green.
-Those results do not qualify this changed compiler snapshot.
+Reproduce by routing a supported location header or structured search location
+without consent. Automated privacy regressions cover default removal, opt-in,
+overrides, WebSocket forwarding and all eight independently mixed Gemini field
+spellings. Both complete native suites pass 259 cases per engine at local source
+`e15197054`. Matching Rust source oracles are included but remain unrun: every
+required JavaScript stage must first pass for the same SHA.
 
-This is an authorized **draft CI feedback checkpoint**, with failed and unrun
-checks explicit. Fetched main `eb2dad1c0a18394dc1aad46413e11401e74eb502` is
-included. The complete issue, all three PR comment types and child-issue list
-were refreshed and read. Every criterion and required check remains mandatory.
+This is an authorized **draft CI feedback checkpoint**, with incomplete acceptance
+and failed/unrun checks explicit. Latest fetched main
+`eb2dad1c0a18394dc1aad46413e11401e74eb502` is included. The complete issue,
+issue comments, all three PR comment types and child-issue list were refreshed
+and read. No required sub-issue or new human feedback was found.
 
-The coordinated batch repairs demonstrated record-binding aliasing in original
-numeric, standard callback/frame and unwrap bodies. Finite regressions fail
-strict TypeScript before repair and pass afterward. Complete focused files retain
-their original cases, compiler strictness and deadlines. Static `Result` residual
-checking now proves the actual static error leaf independently of dynamic success
-origins, and still refuses dynamic-to-static escapes. Its two new cases pass under
-Node and Bun; the original nine-case lifetime file passes under Node.
+The coordinated source batch repairs complete static-consumer comparisons while
+preserving frozen historical sources and all original checks. Both complete
+10-case files pass under Node and Bun; the independent Node deadline audit passes.
+The actual original root facade context is now supplied explicitly to four Option
+receiving cases. Their first three changed cases pass, but both whole Node files
+and Bun remain failed; subscription normalization and later cases are unqualified.
 
-Historical whole getter and capabilities sources now have explicit pinned fixtures
-and separate current-source regressions. The complete getter file passes nine
-cases under each engine. Both complete capabilities attempts hit the unchanged
-memory guard and remain unqualified. The Core candidate assertion checks the
-actual unchanged Schemars dispatcher and all three native bindings in both whole
-sources. Syntax passes; repaired whole producer execution remains unrun after the
-unchanged producer previously hit the memory guard. These changes establish
-**zero measured newly executable production functions**.
+A final source layer composes the complete static `Result` residual checker from
+its full original. Both fixed CST phases are serialized/reparsed, detached native
+ASTs and bindings are checked with lockfile TypeScript 5.9.3, and the complete
+inverse is verified. The new whole residual file passes in Node and Bun. Fresh
+three-source batch equivalence passes in Node and reaches the memory guard in
+Bun. Larger whole lifetime attempts remain failed; repaired core-vector execution
+is unrun. These changes measure **zero newly executable production functions**.
 
-Actual compiler registration captures committed source
-`6de907547b18993b252aa91542f5c75bc7a420dd`: 1,824 inputs / 57,923,560 bytes,
-two changed inputs and no additions/removals from the preceding snapshot.
-Independent review checks every physical input; the installer independently
-reproduces all seven outputs, both complete CST equations and 468 genuine Git
-objects. Complete previous registries/bootstrap/fixture history remains retained.
-The original concrete profile is unchanged. Current complete receiving execution
-remains unqualified. See the [registration report](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/current-residual-registration.md).
+The actual existing compiler producer captures committed source
+`5050cb0091ebde984cf79b9914090646ffde57c8`: 1,826 complete inputs / 57,954,229
+bytes, two changes and two additions, with no input removed. Independent review
+and fresh regeneration reproduce all seven outputs, complete CST equations and
+469 genuine Git objects. Original registries, bootstrap sources and the concrete
+profile are preserved. Both complete receiving attempts hit the unchanged memory
+guard and remain unqualified. See the [source composition](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/current-static-result-residual-source.md)
+and [registration evidence](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/current-composed-registration.md).
 
-At committed source `b28c5bfe52f8cd2c1a834bf80798e062433e2f3d`, both mandatory
-full local gate attempts stop during fingerprinting at the fixed
-2,866,933,760-byte resource guard. They take 14.929 / 15.179 seconds and peak at
-2,871,148,544 / 2,877,116,416 sampled cgroup bytes. All seven stages are unrun;
-no green stamp exists. Completed-prefix advisers exit zero but fingerprint coverage
-is incomplete. The second attempt first advises inactive tracked pages. No original
-clock, deadline, strictness or bound is altered. Previous four complete canonical
-producer families also stopped at that guard without output changes. No local Rust
-tool ran. The [checkpoint report](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/current-residual-checkpoint.md)
-links full before/after evidence, failed streams, whole local review and remaining
-limits. GitHub refuses the PR diff endpoint because this PR exceeds 300 files;
-complete published/coordinated Git diffs and blob identities remain retained.
+The mandatory complete local gate at `e15197054` uses a 128 MiB parent heap and
+corrected 512 MiB child heaps. It fingerprints all 49,423 paths / 1,861,774,251
+bytes and passes lint, both 259-case native suites, nine TypeScript deadline
+controls and the ordinary package TypeScript command. The unchanged cgroup guard
+stops the subsequent native TypeScript check after 365.488 seconds, at a sampled
+peak of 2,884,665,344 bytes. Later TypeScript, parity, forward and reverse stages
+are unrun. No green stamp exists. The [complete report and packet](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/current-final-composed-gate.md)
+retain every complete stream, receipt and completed deadline output. Previous
+attempts with the incorrect inherited child heap remain separately recorded.
+No local Rust tool ran; no deadline, bound, test body or strictness was relaxed.
 
-The entire published `1c235248e1b584875c3ec2b9c1bd2d94a859943c` CI cycle is
-terminal. [Run 42536508655](https://github.com/link-assistant/router/actions/runs/42536508655)
-has 59 jobs: 10 passed, 17 failed, seven cancelled and 25 skipped. All six
-supplemental workflows are terminal/skipped under existing draft policy. The
-tested merge tree exactly equals the published head. The
-[complete failure inventory](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/current-terminal-ci-1c235.md)
-maps every nonpassing job to available original evidence. All 24 responses,
-23 available complete logs, all 24 artifact ZIPs and the whole-run ZIP are retained
-with full readback/hash/CRC verification. Forward shard 2 has no available log:
-`BlobNotFound`, a failed exact-job retry and no whole-run member. This gap remains
-explicit. No run was cancelled by this task.
+The entire published `910e8dadfbf3f92490f2db19ed47c39d98af7077` CI cycle is
+terminal. [Run 42543805504](https://github.com/link-assistant/router/actions/runs/42543805504)
+has 59 jobs: 12 passed, 15 failed, seven cancelled and 25 skipped. All six
+supplemental workflows are terminal; the tested merge tree equals the published
+head. The [complete failure inventory](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/current-910e8-ci-review.md)
+maps all 22 nonpassing responses to 21 available complete logs, all 24 artifact
+ZIPs and the fully verified 186-member whole-run ZIP. Forward shard 4 has no
+available log: both endpoint attempts return `BlobNotFound`, and the exact forward
+job is absent from the whole-run archive. That diagnostic gap stays explicit.
+No running workflow was cancelled by this task.
 
-Still unfinished: the TypeScript owned-matrix sidecar, complete canonical/profile/
-owned generation, source equations, semantic refusals, original forward/reverse/
-application deadlines, receiving qualification and strict parity. The last strict
-inventory reports 441 gaps: 151 partial, 290 unsupported; only two of 443 features
-are implemented and 12,345 functions are carried. No check is skipped or weakened.
-No missing secret or human-only CI setup cause was established; no manual action
-replaces these code failures. Rust CI remains gated until every required
-JavaScript stage passes for that exact SHA. Node is 20.20.2, local Bun 1.4.4 and
-lockfile TypeScript 5.9.3; CI Bun 1.4.3 requires independent qualification.
+Still unfinished: the missing TypeScript owned-matrix sidecar, complete canonical,
+profile and owned generation, actual geolocation source inventory, remaining
+source equations and semantic refusals, original forward/reverse/application
+deadlines, receiving qualification and strict parity. The last strict check
+reports 441 gaps: 151 partial, 290 unsupported, two of 443 implemented features
+and 12,345 carried Rust functions. Main's failures remain mandatory here. No
+missing-secret or human-only setup cause explains them; no manual action replaces
+these code failures. Rust CI remains gated on all exact-head JavaScript stages.
 
 The [case study](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/case-studies/issue-784/README.md)
-contains the requirement inventory, primary vendor research, existing component
-analysis, client coverage and remaining plans. The
-[configuration guide](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/privacy/geolocation.md)
-documents supported defaults and explicit opt-in. Task evidence remains below
-500,000,000 bytes. Verified retirement receipts preserve immutable complete
-published originals; no original source/test is removed to meet that cap.
+contains every requirement, primary vendor research, existing component analysis,
+client coverage and plans. The [configuration guide](https://github.com/link-assistant/router/blob/issue-784-1f6838f56841/docs/privacy/geolocation.md)
+documents supported defaults and opt-in. Task evidence stays below 500,000,000
+bytes; inactive duplicates are retired only after complete verified retention or
+immutable published-blob comparison, with exact reclaimed-byte receipts.
 
-**Unfinished acceptance criteria:** providers still see transport IPs and may
-retain security information; direct client, telemetry, OAuth and MCP traffic
-can bypass Router. Cursor's private protocol and Gemini subscription modes
-remain unsupported. Authenticated vendor account settings were not changed.
-The PR stays draft and unmerged while any criterion or required check is unmet.
+**Unfinished acceptance:** providers still see transport IPs and may retain
+security information. Direct client, telemetry, OAuth and MCP traffic can bypass
+Router. Cursor's private protocol and Gemini subscription modes remain unsupported.
+Authenticated vendor account settings were not changed. Node is 20.20.2, local
+Bun 1.4.4 and TypeScript 5.9.3; CI Bun 1.4.3 needs independent qualification.
+The PR stays draft and unmerged while any acceptance criterion or check is unmet.

@@ -73,8 +73,10 @@
   performance vectors and 29,424,936 bytes of old complete research packets.
   Retain and fully read back all 743 completed deadline files before retiring
   28,855,519 raw bytes. Record the initial failed archive attempt separately.
-- [ ] Correct the child heap cap, repeat the complete gate at the checkpoint
-  source and record every reached, failed and unrun stage without relaxing it.
+- [x] Correct the child heap cap and run the complete gate at `e15197054`.
+  Fingerprint, lint, both 259-case native suites, nine deadline controls and
+  ordinary package TypeScript pass. The unchanged guard stops native TypeScript
+  after 365.488 seconds. Later TypeScript/parity/forward/reverse are unrun.
 - [ ] Finish every remaining source equation, application semantic refusal,
   original deadline, missing generated output, TypeScript and strict parity
   obligation. No failure is optional because main also fails.
