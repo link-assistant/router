@@ -248,6 +248,7 @@ jobs:
     timeout-minutes: 60
     env:
       ROUTER_MATRIX_DRAFT_DIRECTORY: js/node_modules/.matrix-drafts
+      ROUTER_TRANSLATION_MATRIX_TRACE: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -282,6 +283,7 @@ jobs:
     timeout-minutes: 60
     env:
       ROUTER_MATRIX_DRAFT_DIRECTORY: js/node_modules/.matrix-drafts
+      ROUTER_TRANSLATION_MATRIX_TRACE: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:

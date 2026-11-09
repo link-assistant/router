@@ -56,6 +56,8 @@ export const MATRIX_DRAFT_LANGUAGE_RULES=Object.freeze([
  {id:'reverse-files:independent-complete-engines-and-freshness',before:reverseComplete,after:reverseNodeJob+reverseBunJob+reverseFreshnessJob},
 ]);
 export const MATRIX_DRAFT_REPOSITORY_RULES=Object.freeze([
+ {id:'matrix-trace:stream-ordinary-worker-diagnostics',before:profile+directory,after:profile+directory+"      ROUTER_TRANSLATION_MATRIX_TRACE: '1'\n"},
+ {id:'matrix-trace:stream-owned-worker-diagnostics',before:profile.replace('  profile-matrix:\n','  owned-profile-matrix:\n')+directory,after:profile.replace('  profile-matrix:\n','  owned-profile-matrix:\n')+directory+"      ROUTER_TRANSLATION_MATRIX_TRACE: '1'\n"},
  {id:'bulk-custody:retain-complete-canonical-failed-check-drafts',before:freshnessJob,after:custodyFreshnessJob},
  {id:'matrix-custody:retain-complete-failed-check-drafts',before:ordinary,after:ordinary+upload},
  {id:'matrix-custody:retain-complete-owned-check-drafts',before:checks,after:checks+replaceOnce(upload,'name: matrix-drafts-','name: matrix-owned-drafts-')},

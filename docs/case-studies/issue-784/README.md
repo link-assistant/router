@@ -3,6 +3,10 @@
 Research and verification dates: 2026-11-06–09 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [live matrix diagnostics](current-matrix-live-progress.md) preserve worker
+progress during synchronous planning. New worker tests and all workflow cases
+pass in Node/Bun; both complete original matrix files remain memory-interrupted.
+
 The [complete 3b197 CI review](current-3b197-ci-review.md) records every terminal
 job, all 25 artifacts, complete canonical output/input verification and the
 explicit unavailable forward-shard-5 log. The [record-copy repair](current-static-record-copy.md),

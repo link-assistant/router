@@ -144,6 +144,7 @@ export function auditWorkflows(sources) {
       if(['profile-matrix','owned-profile-matrix'].includes(id)){
         const artifact=id==='profile-matrix'?'matrix-drafts-${{ inputs.sha }}':'matrix-owned-drafts-${{ inputs.sha }}';
         if(job?.['timeout-minutes']!==60||Object.hasOwn(job??{},'needs')||Object.hasOwn(job??{},'strategy'))errors.push(`${gateName}/${id}: independent original 60-minute matrix job required`);
+        if(job?.env?.ROUTER_TRANSLATION_MATRIX_TRACE!=='1')errors.push(`${gateName}/${id}: live matrix worker diagnostics required`);
         for(const command of required[id])if(runs.filter(run=>run===command).length!==1)errors.push(`${gateName}/${id}: mandatory matrix command must run exactly once`);
         const other=id==='profile-matrix'?'owned-profile-matrix':'profile-matrix';
         if(runs.some(run=>required[other].includes(run)))errors.push(`${gateName}/${id}: independent original 60-minute matrix job cannot contain the other complete check`);

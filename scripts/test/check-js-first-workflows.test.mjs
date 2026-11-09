@@ -42,6 +42,13 @@ test('current matrix custody composes complete historical YAML and preserves bot
  assert.throws(()=>prepareMatrixDraftWorkflow(result.after.replace(trace,trace.replace("'1'","'0'"))),/source differs/);
  assert.equal(result.semanticAuthority,false);assert.equal(result.gateSuccessObserved,false);
 });
+test('both unchanged matrix commands enable live worker diagnostics explicitly',()=>{
+ for(const id of ['profile-matrix','owned-profile-matrix']){
+  const job=parse(baseline['javascript-first.yml']).jobs[id];
+  assert.equal(job.env.ROUTER_TRANSLATION_MATRIX_TRACE,'1');
+  for(const value of [undefined,'0',true,1])fails('javascript-first.yml',workflow=>{workflow.jobs[id].env.ROUTER_TRANSLATION_MATRIX_TRACE=value;},'live matrix worker diagnostics required');
+ }
+});
 test('matrix draft custody preserves every unconditional freshness command and only permits the exact data uploader',()=>{
   for(const id of ['profile-matrix','owned-profile-matrix'])for(const operation of [
     job=>{delete job.env.ROUTER_MATRIX_DRAFT_DIRECTORY;},
