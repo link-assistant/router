@@ -149,14 +149,14 @@ const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'so
 
 // The separate optional argument leaves every old option read unchanged.
 export function resolveModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null },progressInput=undefined) {
-  const trackedPaths=Array.isArray(paths)?[...paths]:paths,captured=[];
+  const trackedPaths=Array.isArray(paths)?[...paths]:paths,captured=[],trackedInput={value:null};
   // Discover only the bounded physical input sequence. None of these planning
   // views or path proofs is returned or supplied to independent semantics.
   let planning=resolveSourceModuleGraph({entry,paths:trackedPaths,compilationProfile:profileInput,readSource(file){
     const source=readSource(file);
     if(typeof source!=='string')throw new TypeError('Forward concrete syntax requires primitive source text');
     captured.push({file,source});return source;
-  }},progressInput,source=>({source,document:null}));
+  }},progressInput,source=>({source,document:null}),trackedInput);
   const profile=planning.compilationProfile;planning=null;
   const stages=captured.length===1?[createRustConcreteSyntaxStage(captured[0].source)]:createRustConcreteSyntaxStages(captured.map(row=>row.source));
   let at=0;
@@ -169,15 +169,15 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
     const stage=stages[at++];
     if(!stage||stage.source!==source)throw new TypeError('Original module source changed after concrete syntax transport');
     return stage;
-  });
+  },trackedInput);
   if(at!==captured.length)throw new TypeError('Original module input sequence was not consumed completely');
   return graph;
 }
 
-function resolveSourceModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null },progressInput,sourceStage) {
+function resolveSourceModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null },progressInput,sourceStage,trackedInput) {
   const moduleProgress=progressInput==null?null:translationProgressReporter(progressInput);
   const profile=compilationProfile(profileInput);
-  const tracked = new Set(paths);
+  const tracked = trackedInput.value??=new Set(paths);
   if (!tracked.has(entry)) throw new Error(`crate entrypoint is not tracked: ${entry}`);
   const modules = [], edges = [], diagnostics = [], concreteSyntaxMeta = [], visited = new Set();
   const boundedChild=(file,path,item)=>{

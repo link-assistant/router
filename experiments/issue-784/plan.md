@@ -3,6 +3,33 @@
 Objective: implement and verify all requirements in PR #785 on
 `issue-784-1f6838f56841`. Keep unresolved criteria explicit and the PR unmerged.
 
+## 2026-11-09 current local gate and publication batch
+
+- [x] Preserve Clone/CST source and full receiving evidence in `dea446951`;
+      preserve native inference, allocation and packing repairs in `baa608114`.
+      Six current Node/Bun native controls pass unchanged 60-second deadlines.
+      The original nine-case native file passes assertions but fails its
+      four-build limit at 75.809 seconds. ClientKind remains 279.719 seconds.
+- [x] Attempt the whole mandatory gate at clean `baa608114`. Attempt one stops
+      in fingerprinting; attempt two is rejected before launch. Attempt three
+      passes all lint, 259 Node and 259 Bun runtime cases, deadline controls,
+      both package type checks, native freshness and strict 167-file compilation.
+      Its cgroup guard interrupts native receiving at 2,877,132,800 sampled B
+      after 780.952 seconds; remaining stages and final fingerprint are unrun.
+      A concurrent broad Git diff adds avoidable load; this is not an isolated
+      performance comparison. All owned processes are reaped; no green stamp.
+- [x] Prepare the reviewed coherent draft batch for publication, preserving all
+      current failed/unrun evidence and the entire terminal d3103700 failure set.
+- [x] Correct a review-found one-shot path regression. Preserve the initial
+      invalid broader fixture, reproduce the actual root-only regression in
+      the whole six-case file, and pass all six original deadlines in Node and
+      Bun after sharing the initial tracked set. External-module array checks
+      remain intact. The complete gate after this source repair is unrun.
+- [ ] Collect every new published CI result before the next coordinated push.
+- [ ] Repair original deadlines, private compiler source admission, genuine
+      matrices, carried production behavior and strict parity; finish every
+      same-head gate and original issue criterion before declaring completion.
+
 ## 2026-11-09 current d3103700 checkpoint
 
 Current continuation: published head is `d3103700d0e8b0d44a6deec8062d2507cb0a2134`.
@@ -816,210 +843,5 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [ ] Finish all remaining parity, source provenance, original deadlines,
       actual ordinary/owned generation and all-tool privacy requirements.
       Passing a receiving file does not satisfy the failed full gate.
-
-## Explicit complete CST phases during 545f2909d CI
-
-- [x] Publish the reviewed callback/history batch only on the prepared branch at
-      `545f2909d`; update the actual PR title/body and retain draft status.
-- [x] Preserve this immutable head until all seven fresh workflows finish;
-      collect every completed failure and complete artifact before another push.
-- [x] Derive a separate bounded private CST transaction from the complete original
-      executor. Preserve original APIs, physical authentication, aggregate bounds,
-      actual language/repository edits, serialized reparsing and full inverses.
-- [x] Compare the old/new operation on the complete actual project proposal:
-      6638.47/4102.43 ms, identical complete canonical stages and inverses.
-      Preserve the full 19.27 MB logical comparison receipt; no whole-gate claim.
-- [x] Connect only the actual callback producer and finish all four whole receiving
-      files in both engines: eleven passes each, independent Node audit passing,
-      original deadlines unchanged and no owned resource stop.
-- [x] Verify the complete generated private sibling with both producer-native
-      syntax paths. The actual project afterimage stays byte exact.
-- [x] Capture the final complete producer receipts, review and commit this atomic
-      source batch at `0a60a3fae`; retain original broader deadlines as unresolved.
-      Both complete captures, final freshness and strict generated TypeScript
-      5.9.3 pass. Preserve the failed nonexistent-root-compiler invocation too.
-- [x] Complete the separately bounded ordinary namespace trace. It adds only
-      progress in an uninstalled diagnostic afterimage, uses a 512 MiB heap and
-      applies no generated output; it cannot qualify the original matrix. Both
-      runs end in JSON heap exhaustion, at 457.61 and 608.27 seconds respectively.
-      All 419 derive declarations finish in the finer trace; Config takes 691 ms.
-- [x] Finish the next scalar resolver-consumption diagnostic under the same
-      finite bound, with complete output streamed into gzip and no source
-      installation. Identify the failing serialized operand before claiming a
-      root cause; keep all original checks, pins, limits and issuers intact.
-- [ ] Repair remaining failures, run the complete mandatory local gate and obtain
-      green same-head CI before marking the PR ready or the issue complete.
-
-## Clone validation order and completed 545f2909d failures
-
-- [x] Reproduce the actual 128-field budget refusal: one full evidence encoding
-      before the unchanged rejection, with a failing regression assertion.
-- [x] Draft and install a complete native-selected source equation that charges
-      the original logical bounds before encoding. Retain full CST phase and
-      native inverses, fresh physical-source joins and unchanged accepted checks.
-- [x] Pass the after-change finite regression with zero rejected encodings.
-      Preserve the earlier wrong workspace Cargo-input refusal separately.
-- [x] Pass the whole new two-case file in Node and Bun, including the independent
-      Node audit and exact source equation. Keep the broader Node deadline
-      failure (78901.82 > 60000 ms) and Bun memory stop explicitly unqualified.
-- [x] Finish and inspect the third complete ordinary trace: all 419 derives and
-      397 carrier modules finish before a 631.91-second heap failure. The last
-      TokenClaims marker is insufficient to identify a root serialized operand.
-- [x] Verify complete archived bytes before retiring 53 inactive raw Node receipt
-      directories, reclaiming 53596160 allocated bytes. Preserve all originals,
-      the successful receipt, and both earlier hardlink-related refusal receipts.
-- [x] Collect the entire completed seven-workflow 545f2909d CI cycle and all three
-      complete diagnostic archives before any further publication. Main fails;
-      six supplemental callers skip. Keep draft status and the Rust gate.
-- [x] Review every completed CI failure and all three complete artifacts. Retain
-      the eight stale-pin hook failures, original child/case deadlines, missing
-      matrix, stale parity inventory and all job cancellations separately.
-- [x] Attempt the mandatory full local gate at clean `3d645ee03`. Preserve the
-      initial omitted-npm setup failure separately. The corrected environment
-      passes lint, both 259-case native suites, nine audited deadline controls
-      and public type checking before a memory stop during native type checking:
-      392.96 seconds, exit 143, 2878582784 sampled total-cgroup bytes. All owned
-      processes are reaped. Remaining commands are unrun; no green stamp exists.
-- [x] Preserve 239 complete originals / 66232495 logical bytes in the new
-      phased/Clone packet at `5ce0b64b5`. Every complete member and unchanged
-      selected input verifies. Capture takes 38.02 seconds, peak sampled cgroup
-      2057351168 bytes, without a resource stop. Earlier packets remain intact.
-- [x] Publish the reviewed explicitly incomplete draft checkpoint at `be8560a8d`.
-- [x] Collect the entire next CI cycle before any subsequent push; main run
-      `42400974916` fails after the unchanged forward/profile job limits. Read
-      all seven complete logs and every member of all three diagnostic ZIPs;
-      retain eleven forward failures and the missing matrix/strict parity gaps.
-- [ ] Repair remaining source/semantic/deadline/generation failures and pass
-      the mandatory complete local gate on the integrated immutable source.
-- [ ] Obtain all green same-head CI and finish the remaining all-tool privacy
-      and strict parity criteria before readiness. No source-only or focused
-      receiving check completes an unmet criterion.
-
-## Completed Clone freezing during be8560a8d CI
-
-- [x] Preserve a finite three-route baseline with complete output hashes.
-- [x] Derive both the earlier size-only and new shared-freezer source equations
-      from the unchanged full original, with both CST phases and native inverses.
-- [x] Pass both whole receiving files on Node 20 with independent deadline audit
-      and Bun: four cases per engine, including original observer/error behavior.
-- [x] Finish the broader unchanged three-file Node cohort: 23 assertions pass,
-      but the original parent case remains late at 76791.194776 > 60000 ms.
-- [x] Attempt the broader Bun cohort once after this source change: three passes,
-      then the owned memory guard stops the parent case at 2881613824 bytes.
-      Preserve complete partial evidence and do not repeat the unchanged cohort.
-- [ ] Qualify the coherent integrated source with the complete local gate and
-      all same-head CI; no timing, parity or executable gain is claimed here.
-
-## Runtime-import source DATA during be8560a8d CI
-
-- [x] Reproduce Bun's callable-text refusal and retain complete failed native
-      syntax comparisons. Boolean/conditional rewrites remain refused.
-- [x] Keep the original direct preparation API and runtime issuer checks exact.
-      Compose only source DATA from the original producer in fresh Node when
-      Bun cannot satisfy its original callable-source pins.
-- [x] Recheck complete compiler/archive/current inputs, both serialized CST
-      phases and complete native grammar in the receiving engine. No runtime
-      authority is transferred and no producer output is cached.
-- [x] Derive the source change with native-selected edits, both complete CST
-      phases and complete inverses; preserve the full original producer/pins.
-- [x] Pass both whole new cases in Node with independent deadline audit and Bun,
-      preserving unchanged outputs and the exact original Bun runtime refusal.
-- [x] Finish the unchanged whole parent file in both engines. Node has seven TAP
-      passes but its independent audit fails the original final case at
-      163909.893825 > 60000 ms. Bun has six passes and the final case times out
-      at 120916.88 ms. Neither attempt needs an owned resource stop. Preserve
-      both failed terminal results and every unchanged assertion/deadline.
-- [x] Attempt the mandatory complete gate at clean `21caf33cf`: lint, both
-      259-case native suites, deadline controls, public/native type checking,
-      native TypeScript freshness and strict compilation pass. The memory guard
-      interrupts the native behavior file after four passes; its complete audit
-      is absent. Later commands and stages are unrun. No green stamp exists.
-- [x] Reap the interrupted gate's detached test daemon and retain the complete
-      process evidence. Improve the task observer's owned-ancestry cleanup and
-      pass a finite detached-daemon control without replacing any Router test.
-- [x] Verify all archived bytes before retiring 655360 allocated bytes of
-      inactive duplicate Node receipts; original packet members remain intact.
-- [x] Verify the complete archived bytes and inactivity of all 188 task-owned
-      allocation samples before retiring their duplicate directory; reclaim
-      17784832 allocated bytes while keeping every original in its packet.
-- [ ] Collect the entire published CI cycle before any further push; finish
-      actual remaining generation/parity/deadline repairs and qualify the gate.
-
-## Runtime and completed-freezer feedback checkpoint
-
-- [x] Finish collecting and inspecting the complete be8560a8d cycle. Preserve
-      expected negative deadline controls separately from real failed jobs.
-- [x] Review the coherent source batch, verify fresh main ancestry, and archive
-      all 190 complete originals / 22706608 logical bytes. The 14.2 MB packet
-      verifies every member; capture takes 13.28 seconds, peak 1736130560 bytes.
-      Retain the changing-log refusal and both complete capture receipts.
-- [x] Publish the reviewed source and evidence only to the prepared draft PR:
-      `f3ba507ddc3f48391239c21423cc84ec1a2a275e`, all seven workflows observed.
-- [x] Collect every result of the new published head before another push.
-      The full f3ba507dd cycle is terminal; all seven logs and all three ZIPs
-      are retained, with every member verified and 21 forward failures indexed.
-- [ ] Repair the actual serialized operand/generation blocker, materialize
-      genuine ordinary and owned matrices, and pass original receiving deadlines.
-- [ ] Pass strict parity, the mandatory whole local gate and every same-head CI
-      check; finish the remaining all-tool requirements before marking ready.
-
-## Ordinary resolver investigation during f3ba507dd CI
-
-- [x] Finish the complete actual token parent and isolated declaration probes;
-      retain both failed harness attempts and both corrected terminal results.
-      One-file production-profile output owners remain refused; actual gain is zero.
-- [x] Locate the earlier heap failure inside Default's nested final resolver,
-      before the project's later Clone and complete-binding stages.
-- [x] Stop a finite native retained-allocation sample below the diagnostic heap
-      limit, verify its entire compressed profile and retain the observer receipt.
-      Sampling identifies large CST/token sites but establishes no leak.
-- [x] Profile the expensive derive-proof interval with a finite early stop before
-      the known failed resolver; preserve complete results and source equations.
-      Complete 368.68-second profile: no single dominant site, final boundary
-      heap 568931944 bytes, no ordinary completion or executable gain.
-- [x] Retire only fully archived inactive CI/page-advice duplicates after complete
-      archive/member verification; reclaim 230936576 allocated bytes. Retain all
-      original packet bytes and the initial failed cleanup harness.
-- [x] Inspect a finite CPU interval of the nested final resolver with the same
-      canonical private issuers. The 385.08-second baseline stops exactly 2048
-      checkpoints after the resolver starts, before TokenClaims; no generated
-      output is installed and no complete planner result is established.
-- [x] Compare a diagnostic shared project arithmetic scope at the same boundary;
-      preserve the original nonrefundable 4096 admissions and every private join.
-      Resolver interval increases to 20.44 from 19.32 seconds and boundary heap
-      rises to 660712096 bytes. A lower total elapsed time and sampled cgroup
-      peak do not qualify a gain; leave the candidate uninstalled.
-- [ ] Repair measured shared costs without weakening private issuers, source
-      provenance, strict parity, complete tests or their original deadlines.
-- [x] Collect the entire published f3ba507dd CI cycle before another push.
-      Native engines and lint pass; missing owned matrix, strict parity and
-      all three translation-stage deadline failures remain unfinished.
-- [x] Capture and independently compare the complete current isolated-compiler
-      proposal: 1779 files, 57194658 source bytes; the old registry stays exact
-      during proposal review. No receiving or executable gain is established.
-- [x] Use the documented reviewed registration-refresh workflow, preserving the
-      complete old registry/bootstrap history; regenerate the genuine portable
-      Git fixture and run both whole receiving files with original deadlines.
-- [x] Independently join all 17 original cases per engine to unchanged sources
-      and deadlines; verify every current registered source and all six full
-      historical published preimages. No executable application gain is claimed.
-- [x] Attempt the mandatory full JavaScript gate at clean source `17aea691976`.
-      Lint, native suites, strict TypeScript and 121 acceptance cases pass.
-      Native regeneration exceeds its original 60-second deadline (133.32 s);
-      strict parity fails; the memory guard stops forward startup. Preserve all
-      original terminal attempts and reaped-process evidence; no green stamp.
-- [x] Capture the coherent registration repair and complete CI/local evidence,
-      review current main and the full PR diff, then publish fresh draft feedback.
-      Capture verifies 251 complete originals. GitHub's full diff endpoint
-      refuses the 337-file PR (HTTP 406); use the complete local base/head diff
-      and review the three changed production text files plus all binary source
-      receipts. Main remains an ancestor; all prior CI jobs are terminal.
-- [x] Publish the reviewed registration checkpoint `bea75c2c1`; leave the PR
-      draft and unmerged. Collect every new CI result before another push.
-- [x] Draft actual shared native regeneration costs with complete source/CST
-      boundaries and independent semantic checks; preserve all original cases,
-      assertions and deadlines. No deadline or executable gain is qualified.
-- [ ] Materialize genuine matrices, finish strict parity and original compiler
-      deadlines, then pass the whole local and same-head CI gates.
 
 Further completed receiving batches remain in [the preserved cohort history](plan-cohort-history.md).

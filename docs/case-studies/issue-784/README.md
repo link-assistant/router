@@ -3,6 +3,16 @@
 Research and verification dates: 2026-11-06–09 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [terminal d3103700 CI review](ci-d3103700-20261109.md) records all completed
+jobs, all 25 artifacts and the unavailable forward-shard log. Its failures remain
+mandatory. The [Clone/CST receiving batch](clone-cst-receiving-20261109.md) and
+[native regeneration repair](native-regeneration-receiving-20261109.md) preserve
+whole-file Node/Bun controls and the still-failing original deadlines. The
+[complete local gate attempt at baa608114](packed-gate-20261109.md) passes lint,
+both 259-case runtime suites, freshness and strict native TypeScript compilation
+before a memory interruption; remaining stages are unrun. No current green gate,
+new executable production gain or complete translation is claimed.
+
 The [terminal 02bf28e5 CI review](current-02bf-ci-review.md) preserves every
 available failed/cancelled log, the unavailable-log response and all artifact
 inspection boundaries. The [full ef601cec local gate](current-ef601-gate.md)

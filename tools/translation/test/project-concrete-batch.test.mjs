@@ -58,6 +58,30 @@ test('fresh graph calls transport changed full bytes and retain conditional cand
  assert.equal(readRustConcreteSyntaxMeta(JSON.stringify(after.concreteSyntaxMeta[1].document)).source,files['src/child.rs']);
 });
 
+test('complete graph ingress consumes iterable path inputs once',{timeout:60000},()=>{
+ // Root-only graphs accepted iterable paths before batched ingress. External
+ // module planning separately retains its existing bounded-array contract.
+ const files={'src/lib.rs':'pub fn value()->u8{7u8}'};
+ const keys=Object.keys(files),base={entry:'src/lib.rs',readSource:file=>files[file]};
+ const expected=resolveModuleGraph({...base,paths:keys});
+ let iterations=0;
+ const once={
+  [Symbol.iterator](){iterations++;assert.equal(iterations,1);return keys[Symbol.iterator]();},
+ };
+ for(const paths of [new Set(keys),(function*(){yield*keys;})(),once]){
+  const calls=[],actual=resolveModuleGraph({...base,paths,readSource(file){calls.push(file);return files[file];}});
+  assert.deepEqual(calls,keys);
+  assert.deepEqual(actual.concreteSyntaxMeta,expected.concreteSyntaxMeta);
+  assert.deepEqual(actual.modules.map(({source,path,offset})=>({source,path,offset})),expected.modules.map(({source,path,offset})=>({source,path,offset})));
+  assert.deepEqual(actual.edges,expected.edges);assert.deepEqual(actual.diagnostics,expected.diagnostics);
+ }
+ assert.equal(iterations,1);
+ assert.throws(()=>resolveModuleGraph({...base,paths:undefined}),/crate entrypoint is not tracked/u);
+ const reads=[],external=resolveModuleGraph({entry:'src/lib.rs',paths:new Set(['src/lib.rs','src/child.rs']),readSource(file){reads.push(file);return 'mod child;';}});
+ assert.deepEqual(reads,['src/lib.rs']);assert.equal(external.modules.length,1);
+ assert.ok(external.diagnostics.some(row=>row.message.includes('tracked path list exceeds its bound')));
+});
+
 test('malformed source retains the original diagnostic CST without semantic authority',{timeout:60000},()=>{
  for(const source of ['mod broken {','pub fn broken(){"unterminated','pub fn broken(){/*unterminated']){
   const expected=createRustConcreteSyntaxStage(source),stages=createRustConcreteSyntaxStages(['pub fn valid(){}',source]);

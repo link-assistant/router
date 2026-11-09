@@ -34,3 +34,8 @@ aggregate partitions, independent single-source equality, full CST inverse
 checks, inline coordinates, inactive and unknown module conditions, changed
 source on a fresh call, malformed text and non-string refusal. The original
 whole project, module-path and payload tests remain separate verification.
+
+Both traversals share the initial tracked-path set without iterating caller
+inputs again. Root-only graphs retain their existing support for one-shot
+iterables. External-module path planning keeps its original bounded-array
+requirement; the snapshot does not admit previously unsupported path carriers.
