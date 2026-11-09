@@ -67,7 +67,7 @@ stage begins; no active test deadline is paused. The complete inspection checks
 every reported Node stream, terminal receipt and audit and verifies that all
 owned processes are reaped. No green stamp or current-head parity is established.
 
-The [complete evidence packet](evidence/matrix-draft-complete.tar.xz) and
+The [complete evidence packet](https://github.com/link-assistant/router/blob/74f62c037a21e4b3e4e3804dcf3d941d0aabfe19/docs/case-studies/issue-784/evidence/matrix-draft-complete.tar.xz?raw=true) and
 [full receipt](evidence/matrix-draft-complete.json.gz) retain 155 whole originals,
 29412541 logical bytes, including the completed preceding CI cycle and all
 newly reported terminal Node attempts. Every original and decoded archive

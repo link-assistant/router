@@ -41,7 +41,7 @@ No green stamp or newly executable production function is claimed.
 
 The complete inspection has 234799 logical bytes and SHA256
 `97b22b9c51ca597ea5645b7a90166e453fd58054293b470498bca102809aad06`.
-The [complete packet](evidence/runtime-freeze-complete.tar.xz) at source head
+The [complete packet](https://github.com/link-assistant/router/blob/74f62c037a21e4b3e4e3804dcf3d941d0aabfe19/docs/case-studies/issue-784/evidence/runtime-freeze-complete.tar.xz?raw=true) at source head
 `bc249eb95be2f4ccb4449bb986b13d05dbc50bd2` preserves 190 originals / 22706608
 logical bytes. Every decoded member and unchanged selected input verifies.
 The archive is 14158312 bytes with SHA256

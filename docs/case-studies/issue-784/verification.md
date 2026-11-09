@@ -434,7 +434,7 @@ attempt refused a missing preserved `proposal.json`; that complete original
 was copied and compared before the successful cleanup. Both receipts remain
 in the evidence. No Rust cache or other worker's directory was removed.
 
-The [complete export-repair packet](evidence/export-repair-complete.tar.xz)
+The [complete export-repair packet](https://github.com/link-assistant/router/blob/74f62c037a21e4b3e4e3804dcf3d941d0aabfe19/docs/case-studies/issue-784/evidence/export-repair-complete.tar.xz?raw=true)
 and its [verification receipt](evidence/export-repair-complete.json.gz) preserve
 **160 complete originals / 38377813 logical bytes** in **14219992 archive
 bytes**. SHA256:
