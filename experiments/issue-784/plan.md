@@ -3,6 +3,27 @@
 Objective: implement and verify all requirements in PR #785 on
 `issue-784-1f6838f56841`. Keep unresolved criteria explicit and the PR unmerged.
 
+## 2026-11-09 current 02bf28e5 checkpoint
+
+- [x] Install all actual canonical producer outputs after complete physical input
+      joins; measure 158 executable production functions, with 2,420 still carried.
+- [x] Preserve the complete preceding CI cycle before publishing `02bf28e5`.
+- [x] Attempt the whole local gate at that clean head: lint, 259 native Node
+      cases, 259 native Bun cases and 121 acceptance cases pass. TypeScript's
+      independent deadline audit and strict parity fail; forward source auditing
+      exhausts its 512 MiB heap. The container guard interrupts reverse tests
+      at 2,867,879,936 bytes. Later reverse commands remain unrun; no green stamp.
+- [x] Reproduce retained per-file deadline compiler programs exhausting a finite
+      128 MiB child heap. Compact exact spans and lexical conclusions; all ten
+      whole-file controls pass, including the same bounded regression.
+- [x] Qualify source preparation for all 697 actual forward test files, complete
+      related runner/workflow checks and preserve before/after observations.
+- [ ] Collect every terminal current CI result and available failure before
+      publishing another reviewed source batch. The current cycle is still live.
+- [ ] Resolve all remaining actual deadlines, missing owned-matrix outputs,
+      reverse freshness, private compiler bounds and executable parity obligations.
+      Keep every original acceptance criterion open until fully verified.
+
 ## 2026-11-09 current 815527 cycle and f08eee gate
 
 - Published head remains `815527efb3db40ca7e650ba9aaae47bfa1529dab`; its
