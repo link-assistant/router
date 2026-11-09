@@ -27,10 +27,19 @@ function inspect(items,source){
  }
  return {nodes,cells,chars};
 }
-function fresh(value){
- if(!value||typeof value!=='object')return value;
- const result=Array.isArray(value)?[]:{},names=Object.keys(value);
- for(let index=0;index<names.length;index++)Object.defineProperty(result,names[index],{__proto__:null,value:fresh(value[names[index]]),writable:true,enumerable:true,configurable:true});
+function fresh(items){
+ // These private records come only from the unchanged sourceItems lexer, not
+ // caller metadata. Literals define own data fields even with inherited named
+ // setters; the existing native guard excludes inherited numeric array cells.
+ const result=[];
+ for(let index=0;index<items.length;index++){
+  const item=items[index],tokens=[];
+  for(let at=0;at<item.tokens.length;at++){
+   const token=item.tokens[at];
+   tokens[at]={type:token.type,text:token.text,start:token.start,end:token.end};
+  }
+  result[index]={start:item.start,end:item.end,comment:item.comment,tokens,term:item.term,name:item.name};
+ }
  return result;
 }
 // Each consumer receives independent bounded private storage. The exported

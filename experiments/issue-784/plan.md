@@ -3,6 +3,24 @@
 Objective: implement and verify all requirements in PR #785 on
 `issue-784-1f6838f56841`. Keep unresolved criteria explicit and the PR unmerged.
 
+## Published 3b197 cycle and source-record draft, 2026-11-09 05:50 UTC
+
+- [x] Publish the reviewed companion batch and retain exact PR body/head readback.
+- [x] Preserve the published head while collecting every completed CI failure.
+      The entire run remains active; no next push is authorized yet.
+- [x] Draft fixed-layout copying of private lexer records, keeping all original
+      guards, budgets, source parsing, fallbacks, field order and fresh mutability.
+- [x] Compare complete predecessor/draft reads on three complete actual sources;
+      retain all measurements and full before/after bytes. Diagnostic cache hits
+      improve about fivefold; original receiving deadlines remain unqualified.
+- [x] Pass both complete focused cases on Node and Bun, with Node deadline audit.
+- [x] Attempt both original complete receiving files once on the changed source.
+      Preserve Node's setup memory stop and Bun's six passes then memory stop.
+- [ ] Refresh genuine compiler registration for the complete final source batch.
+- [ ] Collect the entire terminal 3b197 CI cycle, all artifacts and every failure.
+- [ ] Resolve all generated-output, semantic, original deadline and strict parity
+      obligations; pass the complete gate and same-SHA CI before readiness.
+
 ## Current companion repair, 2026-11-09 04:45 UTC
 
 - [x] Inspect fresh published `74f62c037` CI failures and retain all 21 currently
