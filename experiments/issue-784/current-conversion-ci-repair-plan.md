@@ -91,6 +91,14 @@
   same-SHA CI and Rust CI, then mark PR ready. Leave it draft and unmerged
   while any requirement remains unfinished.
 
+- [x] Refresh the complete canonical-custody compiler snapshot from 1,832
+  inputs / 57,980,131 bytes, all seven outputs and 470 genuine Git objects.
+  Both complete receiving files remain resource-failed and unqualified.
+- [x] Diagnose the current capabilities failure against its complete physical
+  source and supply the actual original facade root declarations explicitly.
+  The separately labeled projection diagnostic passes; both complete receiving
+  files hit the unchanged memory guard, so their qualification is unfinished.
+
 One resource-intensive workload runs at a time. No workers, clones or local
 Rust tools. Evidence stays below 500,000,000 bytes with complete verified
 retention; no existing bound, test body, original deadline or gate is relaxed.

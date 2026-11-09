@@ -1,8 +1,9 @@
-import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
+import {repositorySourceURL,repositorySourcePath,repositoryCratePaths} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {translateProject} from '../project.mjs';
 import {translateSource} from '../translate.mjs';
 import {sourceItems} from '../rust-structure.mjs';
@@ -11,6 +12,21 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyCohortTargets} from './cohort-targets.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const tag=($,fields={})=>Object.freeze({$,...fields}),some=field0=>tag('Some',{field0}),none=tag('None');
+// Explicit root declaration projection: retain the complete physical parent
+// and facade descendants. This is not whole-crate execution qualification.
+function currentCapabilitiesProject(){
+  const read=path=>readFileSync(repositorySourceURL(path,root),'utf8'),originalRoot=read('src/lib.rs');
+  const declarations=sourceItems(originalRoot).filter(item=>item.term==='mod'&&['translation_core','capabilities'].includes(item.name));
+  assert.equal(declarations.length,2);
+  const projection=declarations.map(item=>originalRoot.slice(item.start,item.end)).join('\n');assert.notEqual(hash(projection),hash(originalRoot));
+  const paths=repositoryCratePaths(execFileSync('git',['ls-tree','-r','--name-only','HEAD','--',repositorySourcePath('src',root)],{cwd:root,encoding:'utf8',maxBuffer:1024*1024}).trim().split('\n'),root);
+  const manifest=read('Cargo.toml'),lock=read('Cargo.lock');
+  const result=translateProject({entry:'src/lib.rs',paths,readSource:path=>path==='src/lib.rs'?projection:read(path),cargoManifest:manifest,deriveDependencies:loadDeriveDependencyProof({manifest,lock}),compilationProfile:PRODUCTION_PROFILE});
+  assert.equal(result.meta.sources.find(row=>row.source==='src/lib.rs').sha256,hash(projection));
+  for(const row of result.meta.sources.filter(row=>row.source!=='src/lib.rs'))assert.equal(row.sha256,hash(read(row.source)),row.source+' complete physical source');
+  for(const path of ['src/capabilities.rs','src/translation_core.rs','src/translation_core/primitives.rs'])assert.ok(result.meta.sources.some(row=>row.source===path));
+  return result;
+}
 function json(value){
   if(value===null)return tag('Null');
   if(typeof value==='string')return tag('String',{field0:value});
@@ -75,18 +91,18 @@ test('whole original capabilities propagates typed JSON arrays into ordinary any
   assert.equal(project.meta.runtimeParity,false);assert.equal(draft.ir.runtimeParity,false);
 });
 
-test('whole current capabilities propagates typed JSON arrays into ordinary any closures in both outputs',{timeout:60_000},async()=>{
+test('labeled root projection retains whole current capabilities and typed JSON any closures in both outputs',{timeout:60_000},async()=>{
   const path='src/capabilities.rs',source=readFileSync(repositorySourceURL(path,root),'utf8');
   assert.equal(hash(source),'f51ba943b456a099a7cae5ae2073cd8d5d912bf23c117fc76ec1016cd50ebbd4');
   const item=sourceItems(source).find(item=>item.name==='unsatisfiable_forced_tool_choice');assert.deepEqual([item.start,item.end],[6306,7098]);
   assert.equal(hash(source.slice(item.start,item.end)),'433656a1dd4e0a2390776e9f5d1dd2a6978a48878b382e59f8080eefce0eb22c');
-  const deriveDependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
-  const project=translateProject({entry:path,paths:[path],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE,deriveDependencies});
-  assert.deepEqual(project.meta.executable.find(entry=>entry.name===item.name)?.span,{start:item.start,end:item.end});
+  const project=currentCapabilitiesProject();
+  assert.deepEqual(project.meta.executable.find(entry=>entry.source===path&&entry.name==='capabilities.'+item.name)?.span,{start:item.start,end:item.end});
   const draft=translateSource(source,path,{projectDeclarations:project.executableDeclarations,projectSourceScopes:project.sourceScopes});
   const translated=draft.ir.items.find(entry=>entry.name===item.name);assert.equal(translated.status,'executable');assert.equal(translated.sha256,hash(source.slice(item.start,item.end)));
   const why='tool_choice requires a tool call, but the request offers only server-side tools that the provider executes itself; use tool_choice auto or add a client tool';
   for(const result of [project,draft])await verifyCohortTargets(result,api=>{
+    const operation=api[result===project?'capabilities.'+item.name:item.name];assert.equal(typeof operation,'function');
     for(const [input,forced,expected]of [
       [none,true,none],[some(json(null)),true,none],[some(json([])),true,none],
       [some(json([{type:'web_search'}])),false,none],
@@ -95,9 +111,9 @@ test('whole current capabilities propagates typed JSON arrays into ordinary any 
       [some(json([{type:'function'}])),true,none],[some(json([{}])),true,none],
       [some(json([{type:false}])),true,none],
       [some(json([{type:'web_search'},{type:'custom'}])),true,none],
-    ])assert.deepEqual(api.unsatisfiable_forced_tool_choice(input,forced),expected);
+    ])assert.deepEqual(operation(input,forced),expected);
     let reads=0;const proxy=new Proxy(json([{type:'web_search'}]),{get(){reads++;throw Error('get');},ownKeys(){reads++;throw Error('keys');},getOwnPropertyDescriptor(){reads++;throw Error('descriptor');},getPrototypeOf(){reads++;throw Error('prototype');}});
-    assert.throws(()=>api.unsatisfiable_forced_tool_choice(some(proxy),true),TypeError);assert.equal(reads,0);
+    assert.throws(()=>operation(some(proxy),true),TypeError);assert.equal(reads,0);
   });
   assert.equal(project.meta.runtimeParity,false);assert.equal(draft.ir.runtimeParity,false);
 });
