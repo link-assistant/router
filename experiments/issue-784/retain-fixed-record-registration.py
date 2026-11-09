@@ -6,14 +6,22 @@ import json
 import lzma
 from pathlib import Path
 import re
+import sys
 
 base = Path('ci-logs/issue-784-restart-2')
 destination = Path('docs/case-studies/issue-784/evidence')
-external_names = ['current-fixed-record-registry-proposal.json.xz',
-                  'current-fixed-record-registration-refresh.json.xz']
-prefixes = ['current-fixed-record-registry-', 'current-fixed-record-registration-',
-            'current-fixed-record-isolated-', 'current-fixed-record-preinstall-',
-            'current-fixed-record-prereceiving-']
+profiles = {
+    'current-fixed-record': ('462a202c9f213cd01e3a219a1e3314ca72c21729', 58006958, 1, True),
+    'current-static-cold': ('92bc32d436c0d13e0fa44e858768bdf98314dec8', 58006766, 0, False),
+}
+assert len(sys.argv) <= 2
+label = sys.argv[1] if len(sys.argv) == 2 else 'current-fixed-record'
+assert label in profiles
+head, source_bytes, node_cases, initial_wrong_filename = profiles[label]
+external_names = [label + '-registry-proposal.json.xz',
+                  label + '-registration-refresh.json.xz']
+prefixes = [label + suffix for suffix in ['-registry-', '-registration-',
+            '-isolated-', '-preinstall-', '-prereceiving-']]
 paths = {path for prefix in prefixes for path in base.glob(prefix + '*')}
 paths -= {base / name for name in external_names}
 paths.update([Path(__file__), Path('experiments/issue-784/review-fixed-record-registry.mjs'),
@@ -62,13 +70,13 @@ for name in external_names:
         bytes=len(packed), sha256=hashlib.sha256(packed).hexdigest(), rawBytes=len(raw),
         rawSha256=hashlib.sha256(raw).hexdigest()))
 record = dict(schema='complete-fixed-record-registration-receiving-v1',
-    sourceHead='462a202c9f213cd01e3a219a1e3314ca72c21729', members=members,
+    sourceHead=head, members=members,
     externalMembers=external, nodeDeadlineAudits=audits, resourceReceipts=resources,
-    inputs=1833, sourceBytes=58006958, portableObjects=470,
+    inputs=1833, sourceBytes=source_bytes, portableObjects=470,
     addedInputs=0, changedInputs=1, removedInputs=0,
     originalSelectionDomainUnchanged=True, originalConcreteProfileUnchanged=True,
-    completeInstallationPassed=True, initialWrongFilenameLaunchedNoTests=True,
-    nodeReceivingCompletedCases=1, bunReceivingCompletedCases=1,
+    completeInstallationPassed=True, initialWrongFilenameLaunchedNoTests=initial_wrong_filename,
+    nodeReceivingCompletedCases=node_cases, bunReceivingCompletedCases=1,
     nodeReceivingMemoryGuard=True, bunReceivingMemoryGuard=True,
     currentCompleteReceivingRun=False, fullGatePassed=False,
     newlyExecutableProductionFunctions=0, runtimeParity=False, rustExecuted=False)
@@ -79,7 +87,7 @@ roots = [Path('ci-logs'), Path('docs/case-studies/issue-784'), Path('experiments
 before = sum(path.stat().st_size for root in roots for path in root.rglob('*')
              if path.is_file() and not path.is_symlink() and 'toolchain' not in path.parts)
 assert before + len(packed) < 500000000
-target = destination / 'current-fixed-record-registration-receiving.json.gz'
+target = destination / (label + '-registration-receiving.json.gz')
 with target.open('xb') as output:
     output.write(packed)
 assert gzip.decompress(target.read_bytes()) == raw
