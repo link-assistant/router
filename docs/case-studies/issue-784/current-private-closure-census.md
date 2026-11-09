@@ -30,3 +30,12 @@ comparison after the observation, not an immutable launch snapshot. No raw
 bound was raised, source body omitted, or production plan admitted. This work
 adds zero executable production functions and leaves the original receiving
 test, strict parity and complete gate unqualified. No Rust tool was run.
+
+The [complete import-coupling diagnostic](evidence/current-private-import-coupling.json.gz)
+walks all archived edges from every original root. For each non-root module it
+records every original file that would become unreachable if that module were
+removed. The largest such coupling is 314,510 bytes, below the 446,742-byte
+excess. These are hypothetical graph cuts, not unused-code proofs or permission
+to remove a compiler path. The diagnostic uses the complete authenticated
+archived census; it does not qualify current physical sources. No dependency,
+raw-input limit, native-import allowlist or private execution gate changes.
