@@ -28,8 +28,10 @@ Objective: implement and verify all requirements in PR #785 on
       384 MiB child heaps. Retain initial headroom refusal, fingerprint memory
       stop and final whole-fingerprint/lint success followed by the unchanged
       native Node memory stop; all later stages remain unrun.
-- [ ] Collect the entire `74f62c037` CI cycle, every completed failure, complete
-      job logs and artifacts before publishing the reviewed repair batch.
+- [x] Collect the entire terminal `74f62c037` CI cycle, every nonpassing response,
+      all 25 artifacts, 23 available complete job logs and the complete 251-member
+      whole-run ZIP. Forward shard 5 has no available log in either endpoint or
+      whole-run archive; preserve that explicit gap. Review all available failures.
 - [ ] Resolve all remaining semantics, missing outputs, original deadlines and
       strict parity obligations; obtain a green complete gate and same-SHA CI.
 
@@ -61,8 +63,9 @@ Current continuation at published `4e7093eb9`:
       Rust-forward/profile outputs remain unqualified.
 - [x] Run focused Node/Bun checks and record lockfile TypeScript version (5.9.3).
 - [x] Run the full local JavaScript gate and inspect every stage; no local Rust tools.
-- [ ] Obtain a green full gate; the latest clean-head attempt is interrupted
-      during native TypeScript by the unchanged container memory guard.
+- [ ] Obtain a green full gate; the latest clean-head `b7f8826b1` attempt passes
+      lint, then stops during native Node at the unchanged memory guard.
+      The earlier `b93129482` attempt reached native TypeScript regeneration.
 - [x] Collect the entire initial published-head CI cycle and preserve all failures.
 - [x] Repair introduced evidence-budget and fixed historical-input failures.
 - [x] Review post-filter header overrides and add the matching Rust consent guard

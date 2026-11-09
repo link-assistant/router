@@ -3,6 +3,14 @@
 Research dates: 2026-11-06–07 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [complete 74f62 CI review](current-74f62-ci-review.md) records every terminal
+job, all 25 artifacts, complete canonical output/input verification and the
+explicit unavailable forward-shard-5 log. The [companion repair](current-bulk-companions.md)
+and [current compiler registration](current-companion-registration.md) preserve
+original source equations; their receiving qualifications remain separate from
+the [failed complete local gate](current-companion-gate.md). All remaining
+semantic, generation, deadline, parity and universal-account criteria stay open.
+
 ## Requirements and evidence
 
 The original issue, all issue comments, required sub-issues and all three PR
