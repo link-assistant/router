@@ -39,3 +39,16 @@ test('a canonical namespace observer error propagates before later compiler stag
   assert.equal(records.some(row=>['semantic-check','target-emit'].includes(row.stage)),false);
  }
 });
+
+test('canonical namespace diagnostics capture the original progress input once',
+ {timeout:60000},()=>{
+ const records=[];let reads=0;
+ const input={...options,get progress(){
+  reads++;assert.equal(reads,1);return row=>records.push(row);
+ }};
+ const actual=translateProject(input),plain=translateProject(options);
+ assert.equal(reads,1);assert.equal(actual.javascript,plain.javascript);
+ assert.equal(actual.typescript,plain.typescript);assert.deepEqual(actual.meta,plain.meta);
+ assert.deepEqual(records.filter(row=>row.stage==='namespace'&&row.state==='advance')
+  .map(row=>row.phase),phases);
+});

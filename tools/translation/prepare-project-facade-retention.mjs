@@ -64,7 +64,7 @@ export function prepareProjectFacadeRetention({root=ROOT}={}){
  const previousAfter=language+retained.selection.helpers;
  const namespaceComposition=derivePinnedRepositorySourceEvolution(ts,{
   profile:new URL('./source-profiles/project-namespace-composition/source-rules.json',import.meta.url),
-  profileSha256:'0f8dc4da59d5937600340512ede4b3ce557fa60ba6028deef9f23ee10f922162',
+  profileSha256:'67fe9db0a517b6050ff9117a59c427ba880272e93a9fa90417ad61affcd74730',
   path:PATH,source:previousAfter,
  });
  const after=namespaceComposition.after;

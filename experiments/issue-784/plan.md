@@ -3,6 +3,29 @@
 Objective: implement and verify all requirements in PR #785 on
 `issue-784-1f6838f56841`. Keep unresolved criteria explicit and the PR unmerged.
 
+## 2026-11-09 canonical byte-cost and progress receiving continuation
+
+- [x] Observe clean `a9b168c54` canonical check without changing its sources.
+      Stop/reap at 1514.766 seconds after exceeding the unchanged 1200-second
+      canonical comparison limit: still resolving complete bindings, no final
+      inventory or production gain. Sampled cgroup peak is 2408083456 bytes.
+- [x] Preserve a finite 15-second, 100 Hz CPU observation of that owned process;
+      serializer and repeated proof work remain material. Instrumented elapsed
+      time is not a controlled comparison or performance qualification.
+- [x] Reproduce progress option rereading (2 !== 1); capture its original input
+      once. Draft bounded existing byte DATA scopes at actual Clone and complete
+      binding callers, retaining all original checks and unchanged byte limits.
+- [x] Join the original complete project progress receiving history through the
+      pinned full source inverse, native grammar and both serialized CST phases.
+- [x] Pass all 33 relevant cases in both engines; both complete Node audits
+      and all unchanged Bun case deadlines pass. Native assertions pass 9/9,
+      but regeneration takes 64335.027529 ms against 60000 ms: audit FAIL.
+- [x] Archive 87 complete members with readback before exact inactive retirement;
+      ten JavaScript syntax checks pass. Evidence is 489087070 bytes.
+- [ ] Refresh genuine isolated registration and portable Git receiving fixtures.
+- [ ] Complete current native deadlines, genuine canonical inventory and full gate.
+- [ ] Repair the entire terminal CI set and all original issue requirements.
+
 ## 2026-11-09 namespace and terminal CI continuation
 
 - [x] Measure clean `893de40bb` with the complete canonical check. The 512 MiB

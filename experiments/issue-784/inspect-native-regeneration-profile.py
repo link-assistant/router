@@ -1,6 +1,7 @@
 """Inspect a complete bounded regeneration profile without selecting samples."""
 import argparse
 import collections
+from datetime import datetime
 import gzip
 import hashlib
 import json
@@ -9,6 +10,8 @@ import re
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('label')
+parser.add_argument('--attached', action='store_true',
+                    help='Read this task finite already-running canonical CPU observation')
 args = parser.parse_args()
 assert re.fullmatch(r'[a-z0-9-]{1,70}', args.label)
 base = Path('ci-logs/issue-784-restart-2')
@@ -23,10 +26,20 @@ def complete(suffix):
         return raw
 
 
-record = json.loads(complete('-result.json.gz'))
-raw = complete('-cpu.json.gz')
-assert len(raw) == record['cpu']['bytes']
-assert hashlib.sha256(raw).hexdigest() == record['cpu']['sha256']
+if args.attached:
+    record = json.loads(Path(str(prefix) + '.receipt.json').read_text())
+    assert record['schema'] == 'owned-canonical-cpu-observation-v1'
+    assert record['compilerInputsChanged'] is False
+    assert record['performanceQualification'] is False
+    raw = complete('.cpuprofile.json.gz')
+    assert len(raw) == record['rawBytes'] <= 8388608
+    record['elapsedMs'] = 1000 * (datetime.fromisoformat(record['finishedAt'])
+                                 - datetime.fromisoformat(record['startedAt'])).total_seconds()
+else:
+    record = json.loads(complete('-result.json.gz'))
+    raw = complete('-cpu.json.gz')
+    assert len(raw) == record['cpu']['bytes']
+    assert hashlib.sha256(raw).hexdigest() == record['cpu']['sha256']
 profile = json.loads(raw)
 nodes = {row['id']: row for row in profile['nodes']}
 assert len(nodes) == len(profile['nodes']) <= 100000

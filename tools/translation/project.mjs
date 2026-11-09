@@ -12,6 +12,7 @@ import {resolveModuleBindings} from './module-bindings.mjs';
 import {resolveOwnedEnclosingNamespaceModuleBindings as resolveEnclosingNamespaceModuleBindings} from './owned-enclosing-module-bindings.mjs';
 import {createDeriveEnclosingNamespaceContext} from './derive-enclosing-namespace-context.mjs';
 import {createDeriveBangContext} from './derive-bang-context.mjs';
+import {withDefaultProofByteConsumers} from './default-proof-byte-operation.mjs';
 import {lockedTomlValueNamespaceBindings} from './toml-value-namespace.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {STANDARD_NAMESPACE_EVIDENCE} from './namespace-standard.mjs';
@@ -330,14 +331,14 @@ function declarationProgram(program, root) {
 }
 
 function compileProjectLanguage(options, ownedDefinitionMode=false) {
-  const progress=translationProgressReporter(options.progress);
+  const progressInput=options.progress,progress=translationProgressReporter(progressInput);
   progress({stage:'project-graph',state:'start',entry:options.entry});
   const cargoEditionContext=options.cargoManifest===undefined||options.cargoManifest===null?null:captureOriginalCargoEdition(options.cargoManifest,{sourcePath:options.cargoManifestPath??'Cargo.toml'});
   const graph = resolveModuleGraph(options);
   progress({stage:'project-graph',state:'end',entry:options.entry,total:graph.modules.length});
   progress({stage:'namespace',state:'start',entry:options.entry});
   const enclosingNamespace=ownedDefinitionMode===true||ownedDefinitionMode==='core-json-readers';
-  const namespaceProgress=phase=>{if(enclosingNamespace||options.progress!==undefined)progress({stage:'namespace',state:'advance',entry:options.entry,phase});};
+  const namespaceProgress=phase=>{if(enclosingNamespace||progressInput!==undefined)progress({stage:'namespace',state:'advance',entry:options.entry,phase});};
   namespaceProgress('json-context');
   const jsonParserProfile=options.jsonParserProfile??actualJsonCapabilityProfile();
   let jsonMacroContext=null,jsonMacroDiagnostic=null;
@@ -358,13 +359,17 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   namespaceProgress('default-source');
   const defaultContext=deriveContext&&hasDefaultDeclarations?createDefaultEnclosingSourceContext(deriveContext,{deriveBangContext}):null;
   namespaceProgress('clone-source');
-  const cloneContext=deriveContext&&hasCloneDeclarations?createCloneEnclosingSourceContext(deriveContext,{deriveBangContext,defaultContext:defaultContext??undefined}):null;
+  const cloneContext=deriveContext&&hasCloneDeclarations?withDefaultProofByteConsumers(()=>createCloneEnclosingSourceContext(deriveContext,{deriveBangContext,defaultContext:defaultContext??undefined})):null;
   namespaceProgress('tool-attributes');
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):externalModules;
   const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});
-  if(!enclosingNamespace)deriveBangContext=deriveContext?createDeriveBangContext({deriveContext}):null;
-  namespaceProgress(enclosingNamespace?'enclosing-bindings':'complete-bindings');
-  const bindingEvidence=(enclosingNamespace?resolveEnclosingNamespaceModuleBindings:resolveModuleBindings)({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
+  // Share only bounded encoded comparison DATA for this synchronous operation.
+  // Every original source, owner, namespace and semantic check still executes.
+  const bindingEvidence=withDefaultProofByteConsumers(()=>{
+    if(!enclosingNamespace)deriveBangContext=deriveContext?createDeriveBangContext({deriveContext}):null;
+    namespaceProgress(enclosingNamespace?'enclosing-bindings':'complete-bindings');
+    return (enclosingNamespace?resolveEnclosingNamespaceModuleBindings:resolveModuleBindings)({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
+  });
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[moduleScopeKey(scope),scope]));
   const configureSourceScope=(parser,module)=>configureParserSourceScope(requestImmutableNamespaceTargets(parser),scopes.get(moduleScopeKey(module)),bindingEvidence.scopes,module.path);
   const matchesOptions={modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext};
