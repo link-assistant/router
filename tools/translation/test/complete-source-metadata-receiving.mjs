@@ -25,3 +25,20 @@ export function receiveCompleteSourceMetadata(rows){
   finish(){assert.equal(offset,metas.length,'every original metadata import remains asserted');},
  };
 }
+
+// Declared source layers retain independent complete receiving calls. Neither
+// the original 256-document bound nor each transport's wire budget changes.
+export function receiveCompleteSourceMetadataLayers(layers){
+ assert.ok(layers.length>0&&layers.length<=256);
+ const counts=layers.map(rows=>rows.reduce((count,row)=>count+2+2*row.stages.length,0));
+ const receivers=layers.map(rows=>receiveCompleteSourceMetadata(rows));
+ let layer=0,remaining=counts[0];
+ return {
+  next(meta){
+   if(remaining===0){receivers[layer].finish();layer++;remaining=counts[layer];}
+   assert.ok(layer<receivers.length,'each original layered metadata import is consumed once');
+   const result=receivers[layer].next(meta);remaining--;return result;
+  },
+  finish(){for(const receiver of receivers)receiver.finish();},
+ };
+}

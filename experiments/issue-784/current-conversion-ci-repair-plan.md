@@ -98,6 +98,13 @@
   source and supply the actual original facade root declarations explicitly.
   The separately labeled projection diagnostic passes; both complete receiving
   files hit the unchanged memory guard, so their qualification is unfinished.
+- [x] Preserve the receiving helper's 256-document bound by coordinating each
+  complete declared source layer independently. All six receiver cases pass
+  in Node/Bun; the actual complete lifetime file is memory-failed in both.
+  Keep the original CSV failures explicit and retain actual refusal context.
+- [x] Attempt the complete gate at `743c338d4` with asynchronous closed-page
+  advice. Its incomplete fingerprint hits the unchanged guard after 17.142
+  seconds; all seven stages are unrun and no green stamp is issued.
 
 One resource-intensive workload runs at a time. No workers, clones or local
 Rust tools. Evidence stays below 500,000,000 bytes with complete verified
