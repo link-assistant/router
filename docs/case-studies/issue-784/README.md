@@ -3,6 +3,11 @@
 Research and verification dates: 2026-11-06–09 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [canonical output checkpoint](current-canonical-installation.md) installs
+all 2,873 actual computed CI outputs with complete input and byte verification.
+Canonical strict TypeScript and three direct application cases pass; complete
+semantic review, the full gate and all remaining CI requirements stay open.
+
 The [completed 37147a CI cycle](current-ci-cycle.md) retains all 24 complete
 failed/cancelled logs and the exact failed/unrun boundaries. The
 [local gate](current-matrix-live-gate.md) also failed. A

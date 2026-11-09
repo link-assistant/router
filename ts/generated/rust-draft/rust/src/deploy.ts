@@ -49,18 +49,18 @@ function rp_6465706c6f792e4445504c4f595f544f4b454e5f4c4142454c(): string {
 function rp_6465706c6f792e66697273745f6c696e65(text: string): string {
   if (!(typeof text === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(text))) throw new TypeError('argument outside supported Rust value domain');
   return ((() => {
-    const ml_standard_body_1 = ml_str_next(ml_str_lines(text)) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
-    const ml_standard_body_2 = "";
-    switch (ml_standard_body_1.$) {
+    const ml_standard_body_17 = ml_str_next(ml_str_lines(text)) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
+    const ml_standard_body_18 = "";
+    switch (ml_standard_body_17.$) {
       case "None": {
-        return ml_standard_body_2;
+        return ml_standard_body_18;
       }
       case "Some": {
-        const x = ml_standard_body_1.field0;
+        const x = ml_standard_body_17.field0;
         return x;
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_1);
+        return ml_router_unexpected(ml_standard_body_17);
       }
     }
   })()).replace(/^[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '');

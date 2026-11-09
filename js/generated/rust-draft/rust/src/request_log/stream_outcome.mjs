@@ -98,33 +98,33 @@ function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c
 function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e69735f73747265616d696e675f6d656469615f74797065(content_type) {
   ml_validate_rust_value(content_type, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
   return (() => {
-    const ml_standard_callback_self_1 = content_type;
-    switch (ml_standard_callback_self_1.$) {
+    const ml_standard_callback_self_10 = content_type;
+    switch (ml_standard_callback_self_10.$) {
       case "None": {
         return true;
       }
       case "Some": {
-        const ml_standard_pattern_2 = ml_standard_callback_self_1.field0;
-        const ml_standard_callback_arg_1 = ml_standard_pattern_2;
-        const value = ml_standard_callback_arg_1;
+        const ml_standard_pattern_11 = ml_standard_callback_self_10.field0;
+        const ml_standard_callback_arg_12 = ml_standard_pattern_11;
+        const value = ml_standard_callback_arg_12;
         return ((((() => {
-          const ml_standard_body_1 = ml_csv_split_next(ml_csv_split(value, ";"));
-          switch (ml_standard_body_1.$) {
+          const ml_standard_body_9 = ml_csv_split_next(ml_csv_split(value, ";"));
+          switch (ml_standard_body_9.$) {
             case "None": {
               return "";
             }
             case "Some": {
-              const x = ml_standard_body_1.field0;
+              const x = ml_standard_body_9.field0;
               return x;
             }
             default: {
-              return ml_router_unexpected(ml_standard_body_1);
+              return ml_router_unexpected(ml_standard_body_9);
             }
           }
         })()).replace(/^[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '')).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32)) === ("text/event-stream").replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32)));
       }
       default: {
-        return ml_router_unexpected(ml_standard_callback_self_1);
+        return ml_router_unexpected(ml_standard_callback_self_10);
       }
     }
   })();
