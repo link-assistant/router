@@ -4,7 +4,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,symlinkSync,rmSync} fro
 import {tmpdir} from 'node:os';
 import {join,dirname,resolve} from 'node:path';
 import {regenerateNativeTypeScript,loadTypeScript,parseNativeJavaScript,sourceModules} from '../native-typescript.mjs';
-import {inferenceProgram} from '../native-inference.mjs';
+import {inferenceProgram,createInferenceProgramReuse} from '../native-inference.mjs';
 import {prepareReverseConcreteParsedSourceChunks} from '../concrete-source.mjs';
 
 function fixture(){
@@ -50,6 +50,20 @@ test('source additions changes and exact asset bytes remain fresh on repeated re
   assert.match(readFileSync(join(f.root,'ts/src/added.ts'),'utf8'),/added/u);
   assert.equal(readFileSync(join(f.root,'ts/catalog.json'),'utf8'),'{"complete":"Ω😀"}\r\n');
   assert.deepEqual(f.generate().changed,[]);
+ }finally{f.remove();}
+});
+
+test('inference owner can release a completed phase and rebuild equivalent fresh inference',{timeout:60000},()=>{
+ const f=fixture();try{
+  f.declaration('string');
+  const ts=loadTypeScript(f.root),paths=sourceModules(f.root),infer=createInferenceProgramReuse();
+  const before=infer(ts,f.root,paths);assert.equal(infer(ts,f.root,paths),before);
+  infer.release();infer.release();
+  const after=infer(ts,f.root,paths);assert.notEqual(after,before);assert.notEqual(after.checker,before.checker);
+  const path='js/src/core.js',source=readFileSync(join(f.root,path),'utf8');
+  const meta=value=>parseNativeJavaScript(ts,path,source,{file:value.program.getSourceFile(join(f.root,path)),checker:value.checker});
+  assert.deepEqual(meta(after),meta(before));assert.equal(infer(ts,f.root,paths),after);
+  before.assertInputsCurrent();after.assertInputsCurrent();infer.release();
  }finally{f.remove();}
 });
 

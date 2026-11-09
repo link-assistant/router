@@ -14,7 +14,8 @@ if(process.argv[3]!==undefined&&!warm)throw Error('Only the explicit warm diagno
 const prefix='ci-logs/issue-784-restart-2/'+label;
 const root=resolve('.'),hash=value=>createHash('sha256').update(value).digest('hex');
 const paths=[...sourceModules(root),'js/package.json',...readdirSync('js').filter(name=>name.endsWith('.d.ts')).map(name=>'js/'+name),
- 'tools/translation/js-to-rust/native-typescript.mjs','tools/translation/js-to-rust/native-inference.mjs','tools/translation/js-to-rust/concrete-source.mjs'];
+ 'tools/translation/js-to-rust/native-typescript.mjs','tools/translation/js-to-rust/native-inference.mjs',
+ 'tools/translation/js-to-rust/native-runtime-identity.mjs','tools/translation/js-to-rust/concrete-source.mjs'];
 const inputs=paths.map(path=>({path,source:readFileSync(path,'utf8')}));
 assert.ok(inputs.reduce((sum,row)=>sum+Buffer.byteLength(row.source),0)<16*1024*1024);
 let warmup=null;

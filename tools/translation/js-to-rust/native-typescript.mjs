@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, mkdirSync, writeFileSync, rmSync, symlinkSync, cpSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { inferenceProgram, createInferenceProgramReuse, returnHint, localHint, typeNode, dynamicIndex } from './native-inference.mjs';
+import {matchesNativeRuntimeAST} from './native-runtime-identity.mjs';
 import {createRulePipeline} from '../rule-pipeline.mjs';
 import {prepareReverseConcreteSource} from './concrete-source.mjs';
 
@@ -447,6 +448,9 @@ export function regenerateNativeTypeScript(outputRoot, { sourceRoot = outputRoot
 }
 
 export function compileNativeTypeScript(outputRoot, { sourceRoot = outputRoot, outDir, emit = false } = {}) {
+  // Strict target compilation starts a separate phase. Consecutive regeneration
+  // calls may share inference, but target compilation needs none of that graph.
+  regenerationInference.release();
   const ts = loadTypeScript(sourceRoot);
   const dependencyRoot = join(sourceRoot, 'js/node_modules');
   const packageRoot = join(outputRoot, 'ts');
@@ -536,11 +540,12 @@ function buildNativeTypeScriptForRegeneration(sourceRoot) {
     const metaPath = `tools/translation/js-to-rust/generated/native-typescript/${path.slice('js/'.length)}.meta.json`;
     const targetText = `// GENERATED JavaScript -> structured syntax AST -> TypeScript draft.\n// Meta sha256=${hash(metaText)}; dynamic any annotations are explicit draft gaps.\n${output.text}`;
     const erased = ts.transpileModule(output.text, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, verbatimModuleSyntax: true, useDefineForClassFields: false }, fileName: target }).outputText;
-    const sourceRuntime = JSON.stringify(runtimeAST(ts, source, { rewriteImports: true }));
-    let targetRuntime;
-    try {targetRuntime=JSON.stringify(runtimeAST(ts,erased));}
+    const sourceTree=runtimeAST(ts,source,{rewriteImports:true});
+    let sameRuntime;
+    try {sameRuntime=matchesNativeRuntimeAST(ts,erased,sourceTree);}
     catch(cause){throw new Error(`Invalid erased TypeScript runtime for ${path}`,{cause});}
-    if (sourceRuntime !== targetRuntime) throw new Error(`runtime AST identity differs for ${path}`);
+    if (!sameRuntime) throw new Error(`runtime AST identity differs for ${path}`);
+    const sourceRuntime=JSON.stringify(sourceTree);
     artifacts.set(metaPath, metaText);
     artifacts.set(target, targetText);
     rows.push({ source: path, sourceSha256: hash(source), meta: metaPath, target, nodes: meta.nodes, explicitAny: output.explicitAny, inferredReturns: output.inferredReturns, inferredLocals: output.inferredLocals, metaSha256: hash(metaText), targetSha256: hash(targetText), runtimeASTSha256: hash(sourceRuntime), runtimeASTIdentity: 'verified after type erasure and relative module-extension normalization' });

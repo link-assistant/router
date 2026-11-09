@@ -81,7 +81,7 @@ export function createInferenceProgramReuse() {
     for(const [path,source] of entry.sources)if(host.readFile(path)!==source)return false;
     return entry.eligible;
   };
-  return (ts,root,paths)=>{
+  const infer=(ts,root,paths)=>{
     const options={allowJs:true,checkJs:false,noEmit:true,strictNullChecks:true,target:ts.ScriptTarget.ES2022,
       module:ts.ModuleKind.NodeNext,moduleResolution:ts.ModuleResolutionKind.NodeNext,skipLibCheck:true,
       typeRoots:[`${root}/js/node_modules/@types`],types:['node']};
@@ -122,6 +122,8 @@ export function createInferenceProgramReuse() {
     }};
     entry.result=result;if(entry.eligible)previous=entry;return result;
   };
+  infer.release=()=>{previous=null;};
+  return infer;
 }
 
 export function returnHint(ts, checker, node) {

@@ -3,6 +3,12 @@
 Research and verification dates: 2026-11-06–09 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [private runtime comparison continuation](native-runtime-receiving-20261109.md)
+passes focused Node/Bun controls and every original receiving assertion. Its
+four-regeneration case still fails the unchanged deadline at 77.216 seconds.
+The published `1c82cbd9` CI cycle is still running; no complete-gate result is
+claimed for the independent draft.
+
 The [terminal d3103700 CI review](ci-d3103700-20261109.md) records all completed
 jobs, all 25 artifacts and the unavailable forward-shard log. Its failures remain
 mandatory. The [Clone/CST receiving batch](clone-cst-receiving-20261109.md) and

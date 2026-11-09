@@ -3,6 +3,31 @@
 Objective: implement and verify all requirements in PR #785 on
 `issue-784-1f6838f56841`. Keep unresolved criteria explicit and the PR unmerged.
 
+## 2026-11-09 runtime comparison continuation
+
+- [x] Publish the reviewed checkpoint as `1c82cbd9355724439a953ddaa7642193d03878ca`.
+      Main remains an ancestor. CI run 42697950690 is still in progress;
+      collect its entire failure set before publishing another batch.
+- [x] Draft a private direct runtime comparison and explicit inference-phase
+      release. Preserve the public serializer, complete source/CST/meta transport,
+      independent fresh target parsing and original runtime fingerprint bytes.
+- [x] Pass all ten whole-file focused assertions and unchanged deadlines in
+      Node. Bun's first attempt is memory-interrupted after nine assertions;
+      release only closed Git object pages, preserve the interrupted receipt,
+      and pass all ten Bun assertions on the second attempt.
+- [x] Run the unchanged original nine-case receiving file alone with a 1 GiB
+      heap. All assertions and the shared compiled runtime suite pass; the
+      four-regeneration case still fails its 60-second limit at 77.216 seconds.
+      The complete 283.572-second attempt peaks at 2,398,777,344 sampled cgroup
+      bytes, without guard interruption. This is not a controlled comparison
+      with earlier attempts and does not qualify the deadline or complete gate.
+- [x] Profile the actual complete remaining regeneration work: fresh warmup
+      35.116 seconds, warm pass 16.219 seconds, both zero changed/unexpected
+      artifacts. Preserve the entire CPU profile. TypeScript emission/erasure,
+      complete CST transport and GC all remain material costs; no tested gain.
+- [ ] Choose another evidence-based optimization; preserve all tests and bounds.
+- [ ] Finish every unresolved requirement below; no completion or parity claim.
+
 ## 2026-11-09 current local gate and publication batch
 
 - [x] Preserve Clone/CST source and full receiving evidence in `dea446951`;

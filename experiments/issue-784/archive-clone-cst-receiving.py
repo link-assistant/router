@@ -12,7 +12,7 @@ import tarfile
 
 root = Path.cwd()
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--group', choices=['clone', 'cst-native', 'native-reuse', 'packed-gate', 'iterable'], required=True)
+parser.add_argument('--group', choices=['clone', 'cst-native', 'native-reuse', 'packed-gate', 'iterable', 'runtime-direct'], required=True)
 args = parser.parse_args()
 base = Path('ci-logs/issue-784-restart-2')
 attempts = Path('js/node_modules/.node-case-deadlines')
@@ -54,6 +54,8 @@ if args.group == 'packed-gate':
     prefixes = ['current-native-packed-gate-']
 if args.group == 'iterable':
     prefixes = ['current-project-iterable-']
+if args.group == 'runtime-direct':
+    prefixes = ['current-native-runtime-direct-']
 retire = sorted({p for prefix in prefixes for p in base.glob(prefix + '*')
                  if p.is_file()})
 selected_attempts = ['complete-g09iRd', 'complete-2pE6rh',
@@ -69,6 +71,8 @@ if args.group == 'packed-gate':
     selected_attempts = ['complete-IB8TgE', 'complete-qGBO04']
 if args.group == 'iterable':
     selected_attempts = ['complete-1k2DIl', 'complete-mTBIYM', 'complete-sO5BOQ']
+if args.group == 'runtime-direct':
+    selected_attempts = ['complete-8cmtPh', 'complete-0quOhz']
 for name in selected_attempts:
     directory = attempts / name
     assert (directory / 'terminal.json').is_file(), 'Only complete closed attempts'
