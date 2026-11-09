@@ -1,14 +1,15 @@
 # Issue 784: default geolocation privacy
 
-Research dates: 2026-11-06–07 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
+Research and verification dates: 2026-11-06–09 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
-The [complete 74f62 CI review](current-74f62-ci-review.md) records every terminal
+The [complete 3b197 CI review](current-3b197-ci-review.md) records every terminal
 job, all 25 artifacts, complete canonical output/input verification and the
-explicit unavailable forward-shard-5 log. The [companion repair](current-bulk-companions.md)
-and [current compiler registration](current-companion-registration.md) preserve
-original source equations; their receiving qualifications remain separate from
-the [failed complete local gate](current-companion-gate.md). All remaining
+explicit unavailable forward-shard-5 log. The [record-copy repair](current-static-record-copy.md),
+[actual registration refresh](current-fixed-record-registration.md) and
+[allocation scanner](current-allocation-paths.md) retain their focused evidence.
+The [complete local gate on 7582887](current-7582887-gate.md) passes lint and
+both native suites before its TypeScript memory interruption. All remaining
 semantic, generation, deadline, parity and universal-account criteria stay open.
 
 ## Requirements and evidence
