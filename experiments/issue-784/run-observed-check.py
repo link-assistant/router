@@ -29,7 +29,8 @@ command = args.command[1:] if args.command[:1] == ['--'] else args.command
 if not command:
     parser.error('a complete check command is required')
 if (args.reclaim_initial_gate_cache or args.advise_closed_gate_pages or args.advise_completed_fingerprint_pages) and (len(command) != 3
-        or command[1:] != ['--max-old-space-size=512', 'scripts/check-js-first-local.mjs']
+        or command[1] not in ['--max-old-space-size=128', '--max-old-space-size=512']
+        or command[2] != 'scripts/check-js-first-local.mjs'
         or Path(command[0]).name != 'node'
         or args.receipt.resolve().parent != Path.cwd() / 'ci-logs/issue-784-restart-2'):
     parser.error('cache advice is restricted to this task initial complete gate')
