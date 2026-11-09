@@ -16,7 +16,12 @@ Objective: implement and verify all requirements in PR #785 on
 - [x] Pass both complete focused cases on Node and Bun, with Node deadline audit.
 - [x] Attempt both original complete receiving files once on the changed source.
       Preserve Node's setup memory stop and Bun's six passes then memory stop.
-- [ ] Refresh genuine compiler registration for the complete final source batch.
+- [x] Refresh genuine compiler registration for the complete final source batch:
+      all 1,833 inputs and seven complete outputs independently reproduced;
+      preserve one completed case per engine before unchanged memory stops.
+- [x] Retire 25 inactive published 74f62 artifact copies only after complete
+      immutable-blob verification; reclaim 92,702,297 logical bytes and retain
+      all complete available logs, the whole-run ZIP and individual download URLs.
 - [ ] Collect the entire terminal 3b197 CI cycle, all artifacts and every failure.
 - [ ] Resolve all generated-output, semantic, original deadline and strict parity
       obligations; pass the complete gate and same-SHA CI before readiness.

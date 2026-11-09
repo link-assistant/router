@@ -10,9 +10,9 @@ import {types} from 'node:util';
 
 const ORIGINAL_ROOT = null;
 const TASK_ROOT = null;
-const SOURCE_HEAD = "ff483c8976c976d8019a6ded9adaf5a3cc179588";
-const REGISTRY_GZIP_SHA256 = "faf573e9662e93613f35cc302f39d829cf98084da8fa8baed94dc084cdc27c10";
-const REGISTRY_RAW_SHA256 = "8dedbdfa5a3e4db20e5a5bbdc34e9917b97b750349e8b017c8f2b2ad46768537";
+const SOURCE_HEAD = "462a202c9f213cd01e3a219a1e3314ca72c21729";
+const REGISTRY_GZIP_SHA256 = "5f47bc5aea161d0d60d7191fec9e03877d2cccc8867a541a30d777f9a7f02043";
+const REGISTRY_RAW_SHA256 = "04f73f8b7639368728b60e413aaf50ffcd2c5d06fa302250d34eb58cc8517588";
 const REGISTRY_PATH='tools/translation/source-profiles/isolated-project-compiler/manifest.json.gz';
 const LIMIT={files:1024,entries:8,file:2097152,source:16777216,input:33554432,
   compilerFiles:2048,compilerFile:33554432,compiler:67108864,outputs:16384,
