@@ -32,3 +32,16 @@ preselected. Its complete failed result is retained separately.
 These focused controls grant no complete-gate, generated-output, performance or
 runtime-parity qualification. [PR #785](https://github.com/link-assistant/router/pull/785)
 remains draft with its original application and acceptance failures unfinished.
+
+The complete gate on clean source `b93129482ff79d06efca55b95f01c1b1fae78243`
+now identifies the interrupted command: `node scripts/regenerate-native-typescript.mjs
+--check`. Lint, all 259 native Node cases, all 259 native Bun cases, all nine
+deadline controls and both package TypeScript checks finish successfully first.
+The unchanged observer stops the owned process group after 359.540 seconds at
+2,873,462,784 sampled cgroup bytes, above its 2,866,933,760-byte threshold.
+The parent heap is 128 MiB and inherited child heaps are 512 MiB. Completed
+fingerprint page advice finishes successfully; no active test clock is paused.
+All owned processes are reaped. Regeneration, remaining TypeScript commands,
+strict parity, forward translation and reverse regeneration remain unqualified
+or unrun. No green stamp is issued. This new observation does not retroactively
+identify the interrupted child in the earlier untraced gate.
