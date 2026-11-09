@@ -916,7 +916,7 @@ Node toolchain was removed, reclaiming 125124608 bytes of distinct allocation.
 Main `eb2dad1c0` remains an ancestor; every PR comment type is unchanged from the
 already-read complete feedback. Draft status and all unmet criteria remain.
 
-The [complete source-history packet](evidence/source-history-complete.tar.xz)
+The [complete source-history packet](https://github.com/link-assistant/router/blob/910e8dadfbf3f92490f2db19ed47c39d98af7077/docs/case-studies/issue-784/evidence/source-history-complete.tar.xz?raw=true)
 retains 175 complete originals / 34990068 logical bytes at source
 `14b93301b7563b3affde75eb91bc38fa1441a9a2`, including the entire finished
 e29 CI cycle, all artifacts and every later receiving attempt. Its 14608172-byte

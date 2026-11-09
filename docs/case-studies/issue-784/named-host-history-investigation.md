@@ -190,7 +190,7 @@ gain in the complete original library graph.
 
 ## Complete evidence packet
 
-The [complete packet](evidence/named-host-complete.tar.xz) captures 199 whole
+The [complete packet](https://github.com/link-assistant/router/blob/910e8dadfbf3f92490f2db19ed47c39d98af7077/docs/case-studies/issue-784/evidence/named-host-complete.tar.xz?raw=true) captures 199 whole
 originals with 59122365 logical bytes from source checkpoint
 `7f1530bae1c0fde53736a9c73306a50298b41677`. It includes the genuine producer
 captures, both successful receiving engines, all failed receiving attempts, both

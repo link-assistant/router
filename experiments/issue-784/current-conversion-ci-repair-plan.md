@@ -45,7 +45,10 @@
   diff and retain both whole local diffs after GitHub refuses its 300-file limit.
 - [x] Publish the reviewed coordinated draft checkpoint `910e8dadf` with exact
   failed/unrun evidence. The PR stays draft; the current tree was clean at push.
-- [ ] Collect the entire `910e8dadf` CI cycle before another publication.
+- [x] Wait for the entire `910e8dadf` CI cycle before another publication.
+  Retain all 22 nonpassing responses, all 21 available complete logs, all 24
+  artifacts and the fully verified 186-member whole-run archive. The twice
+  unavailable forward shard-4 log remains an explicit diagnostic gap.
 - [x] Separate historical/current static consumers without changing frozen
   fixture bytes; both complete 10-case files and the Node deadline audit pass.
 - [x] Supply the actual explicit root facade context to four original Option
@@ -58,6 +61,20 @@
 - [x] Retire 79 exact inactive fingerprint raw duplicates only after complete
   immutable published-blob and packet-member verification; retain the receipt
   and all originals in the packet (8,826,614 logical bytes reclaimed).
+- [x] Regenerate and independently review the actual residual-composition
+  compiler registry: 1,826 complete inputs / 57,954,229 bytes, all seven outputs
+  and 469 genuine Git objects. Both receiving attempts remain resource-failed.
+- [x] Attempt the complete gate at `a3d64c3cb` and `038e24b94`. Retain the
+  mistaken-PATH attempt and the corrected attempt separately. The latter passes
+  lint, 259 native cases in each engine and 121 acceptance cases, but strict
+  parity fails and the 128 MiB child cap exhausts TypeScript/forward heaps.
+  The final resource guard leaves reverse translation unrun.
+- [x] Verify immutable published custody before retiring 17,517,073 bytes of
+  performance vectors and 29,424,936 bytes of old complete research packets.
+  Retain and fully read back all 743 completed deadline files before retiring
+  28,855,519 raw bytes. Record the initial failed archive attempt separately.
+- [ ] Correct the child heap cap, repeat the complete gate at the checkpoint
+  source and record every reached, failed and unrun stage without relaxing it.
 - [ ] Finish every remaining source equation, application semantic refusal,
   original deadline, missing generated output, TypeScript and strict parity
   obligation. No failure is optional because main also fails.

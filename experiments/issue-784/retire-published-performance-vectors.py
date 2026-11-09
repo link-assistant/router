@@ -9,8 +9,9 @@ import stat
 import subprocess
 import sys
 
-assert sys.argv[1:] in ([], ['--write'])
-write = sys.argv[1:] == ['--write']
+assert sys.argv[1:] in ([], ['--write'], ['--history'], ['--history', '--write'])
+write = '--write' in sys.argv[1:]
+history = '--history' in sys.argv[1:]
 root = Path.cwd().resolve()
 head = '910e8dadfbf3f92490f2db19ed47c39d98af7077'
 folder = Path('docs/case-studies/issue-784/evidence/receiving-performance-vectors')
@@ -19,8 +20,13 @@ remote = json.loads(remote_path.read_bytes())
 assert remote['sha'] == head
 tree = subprocess.check_output(['git', 'rev-parse', head + '^{tree}'], text=True).strip()
 assert remote['tree']['sha'] == tree
-names = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', head, '--', str(folder)], text=True).splitlines()
-assert names and set(names) == {str(path) for path in folder.rglob('*') if path.is_file()}
+if history:
+    names = ['docs/case-studies/issue-784/evidence/named-host-complete.tar.xz',
+             'docs/case-studies/issue-784/evidence/source-history-complete.tar.xz']
+    assert subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', head, '--', *names], text=True).splitlines() == names
+else:
+    names = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', head, '--', str(folder)], text=True).splitlines()
+    assert names and set(names) == {str(path) for path in folder.rglob('*') if path.is_file()}
 rows, states = [], {}
 for name in names:
     path = Path(name)
@@ -54,14 +60,14 @@ def inactive():
     return unreadable
 
 
-record = dict(schema='published-performance-vector-copy-retirement-v1',
+record = dict(schema='published-whole-evidence-copy-retirement-v1' if history else 'published-performance-vector-copy-retirement-v1',
               publishedHead=head, publishedTree=tree, remoteCommit=remote,
               originalFiles=rows, completePublishedBlobsVerified=True,
               foreignUnreadableProcesses=inactive(), allOriginalStreamsRetained=True,
               logicalBytesReclaimed=sum(row['bytes'] for row in rows),
               allocatedBytesReclaimed=sum(row['allocatedBytes'] for row in rows),
               runtimeParity=False, fullGatePassed=False)
-target = folder.with_name('receiving-performance-vectors-local-retirement.json.gz')
+target = folder.with_name('historical-complete-packet-local-retirement.json.gz' if history else 'receiving-performance-vectors-local-retirement.json.gz')
 if write:
     raw = json.dumps(record, separators=(',', ':')).encode()
     with target.open('xb') as output:
