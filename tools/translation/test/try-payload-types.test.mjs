@@ -49,10 +49,37 @@ test('genuine Option and Result try preserve success payload and residual types'
 });
 
 test('whole original capabilities propagates typed JSON arrays into ordinary any closures in both outputs',{timeout:60_000},async()=>{
-  const path='src/capabilities.rs',source=readFileSync(repositorySourceURL(path,root),'utf8');
+  const path='src/capabilities.rs',source=readFileSync(new URL('./fixtures/capabilities-try-original.rs.txt',import.meta.url),'utf8');
   assert.equal(hash(source),'7a8bb8a76288590bbc9d556b77d4415cd513837a45d88edb278dc5c6b7b6b222');
   const item=sourceItems(source).find(item=>item.name==='unsatisfiable_forced_tool_choice');assert.deepEqual([item.start,item.end],[6112,6808]);
   assert.equal(hash(source.slice(item.start,item.end)),'be78dd12b76f8f6baac481f5072b0700ad3962ae52641c0dfbbb192df7313f97');
+  const deriveDependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
+  const project=translateProject({entry:path,paths:[path],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE,deriveDependencies});
+  assert.deepEqual(project.meta.executable.find(entry=>entry.name===item.name)?.span,{start:item.start,end:item.end});
+  const draft=translateSource(source,path,{projectDeclarations:project.executableDeclarations,projectSourceScopes:project.sourceScopes});
+  const translated=draft.ir.items.find(entry=>entry.name===item.name);assert.equal(translated.status,'executable');assert.equal(translated.sha256,hash(source.slice(item.start,item.end)));
+  const why='tool_choice requires a tool call, but the request offers only server-side tools that the provider executes itself; use tool_choice auto or add a client tool';
+  for(const result of [project,draft])await verifyCohortTargets(result,api=>{
+    for(const [input,forced,expected]of [
+      [none,true,none],[some(json(null)),true,none],[some(json([])),true,none],
+      [some(json([{type:'web_search'}])),false,none],
+      [some(json([{type:'web_search'}])),true,some(why)],
+      [some(json([{type:'web_search_preview'},{type:'web_fetch'}])),true,some(why)],
+      [some(json([{type:'function'}])),true,none],[some(json([{}])),true,none],
+      [some(json([{type:false}])),true,none],
+      [some(json([{type:'web_search'},{type:'custom'}])),true,none],
+    ])assert.deepEqual(api.unsatisfiable_forced_tool_choice(input,forced),expected);
+    let reads=0;const proxy=new Proxy(json([{type:'web_search'}]),{get(){reads++;throw Error('get');},ownKeys(){reads++;throw Error('keys');},getOwnPropertyDescriptor(){reads++;throw Error('descriptor');},getPrototypeOf(){reads++;throw Error('prototype');}});
+    assert.throws(()=>api.unsatisfiable_forced_tool_choice(some(proxy),true),TypeError);assert.equal(reads,0);
+  });
+  assert.equal(project.meta.runtimeParity,false);assert.equal(draft.ir.runtimeParity,false);
+});
+
+test('whole current capabilities propagates typed JSON arrays into ordinary any closures in both outputs',{timeout:60_000},async()=>{
+  const path='src/capabilities.rs',source=readFileSync(repositorySourceURL(path,root),'utf8');
+  assert.equal(hash(source),'f51ba943b456a099a7cae5ae2073cd8d5d912bf23c117fc76ec1016cd50ebbd4');
+  const item=sourceItems(source).find(item=>item.name==='unsatisfiable_forced_tool_choice');assert.deepEqual([item.start,item.end],[6306,7098]);
+  assert.equal(hash(source.slice(item.start,item.end)),'433656a1dd4e0a2390776e9f5d1dd2a6978a48878b382e59f8080eefce0eb22c');
   const deriveDependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
   const project=translateProject({entry:path,paths:[path],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE,deriveDependencies});
   assert.deepEqual(project.meta.executable.find(entry=>entry.name===item.name)?.span,{start:item.start,end:item.end});
