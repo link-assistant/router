@@ -7,16 +7,21 @@ import {createHash} from 'node:crypto';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings,verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+import {transportConcreteNamedSourcePhases} from './concrete-source-origin-phases.mjs';
 import {readSchemarsEnclosingHistory,assertSchemarsEnclosingHistoryFresh,captureSchemarsEnclosingHistory,deriveSchemarsEnclosingImportHistory,SCHEMARS_ENCLOSING_ORIGINAL,SCHEMARS_ENCLOSING_OLD_CONTROL,SCHEMARS_ENCLOSING_TEST} from './schemars-enclosing-history.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),SELF='tools/translation/prepare-schemars-enclosing-adoption.mjs',DISPATCH='tools/translation/schemars-enclosing-output-dispatch.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex'),fail=message=>{throw new TypeError('Schemars enclosing import adoption: '+message);};
 const read=(root,path)=>readFileSync(resolve(root,path),'utf8');
 function canonical(source){const wire=serializeConcreteSyntaxMeta(transportConcreteSyntaxSource(source,{language:'JavaScript'}).document),result=transportConcreteSyntaxMeta(wire);if(result.source!==source)fail('complete concrete source differs');return {...result,wire};}
-function plan({root,path,before,after,current,edit=null,nativeBindings=null}){
- const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');const first=canonical(before),stages=[];let concrete=first;
+function plan({root,path,before,after,current,edit=null,nativeBindings=null,equation=null}){
+ const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');
+ if(equation&&(equation.before!==before||equation.middle!==before||equation.after!==after||equation.inverse!==before))fail('complete named phase association differs');
+ const first=equation?{wire:equation.beforeMeta}:canonical(before),stages=[];let concrete=first;
+ if(equation){stages.push(...equation.stages);concrete={wire:equation.afterMeta};}else{
  for(const [phase,start,end]of [['language',before,before],['repository',before,after]]){
   const rule=(old,next,id)=>({id,edits:[{span:[0,old.length],expected:old,replacement:next}]}),sequence={languageRules:[],repositoryRules:phase==='repository'&&start!==end?[rule(start,end,'router:actual-original-enclosing-Schemars-import')]:[]},run=applyConcreteSyntaxSubstitutions(concrete.document,sequence),wire=serializeConcreteSyntaxMeta(run.value),parsed=transportConcreteSyntaxMeta(wire),inverseSequence={languageRules:[],repositoryRules:phase==='repository'&&start!==end?[rule(end,start,'router:restore-whole-genuine-original-enclosing-source')]:[]},inverse=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applyConcreteSyntaxSubstitutions(parsed.document,inverseSequence).value));
   if(parsed.source!==end||inverse.source!==start)fail('whole serialized/reparsed phase or inverse differs');stages.push({phase,before:start,after:end,beforeMeta:concrete.wire,afterMeta:wire,sequence,inverseSequence,inverse:inverse.source,trace:run.trace});concrete={...parsed,wire};
+ }
  }
  let inverse=after;for(const stage of [...stages].reverse()){if(inverse!==stage.after)fail('whole source phase association differs');inverse=stage.inverse;}if(inverse!==before)fail('complete source inverse differs');
  const syntax=ts.createSourceFile(path,after,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(syntax.parseDiagnostics.length)fail('complete native after source grammar differs');
@@ -35,9 +40,13 @@ export function deriveSchemarsEnclosingImport({root=ROOT,source}={}){
 export function prepareSchemarsEnclosingAdoption({root=ROOT}={}){
  root=resolve(root);const history=readSchemarsEnclosingHistory({root}),before=original(history,SCHEMARS_ENCLOSING_ORIGINAL),birth=deriveSchemarsEnclosingImportHistory({original:before,source:before}),physical=read(root,SCHEMARS_ENCLOSING_ORIGINAL),dispatch=read(root,DISPATCH),self=read(root,SELF),testBefore=original(history,SCHEMARS_ENCLOSING_TEST),testPhysical=read(root,SCHEMARS_ENCLOSING_TEST),ts=ownershipCompiler(),testEdit=testImport(ts,testBefore),testAfter=testBefore.slice(0,testEdit.span[0])+testEdit.replacement+testBefore.slice(testEdit.span[1]);
  const bindings=verifyNativeCopiedModuleBindings(ts,[[SCHEMARS_ENCLOSING_ORIGINAL,birth.after],[SCHEMARS_ENCLOSING_OLD_CONTROL,before],[SCHEMARS_ENCLOSING_TEST,testAfter],[DISPATCH,dispatch]].map(([path,source])=>({path:resolve(root,path),source})));
- const files=[plan({root,path:SCHEMARS_ENCLOSING_ORIGINAL,before,after:birth.after,current:physical,edit:birth.edit,nativeBindings:bindings[0]}),plan({root,path:SCHEMARS_ENCLOSING_OLD_CONTROL,before,after:before,current:existsSync(resolve(root,SCHEMARS_ENCLOSING_OLD_CONTROL))?read(root,SCHEMARS_ENCLOSING_OLD_CONTROL):null,nativeBindings:bindings[1]}),plan({root,path:SCHEMARS_ENCLOSING_TEST,before:testBefore,after:testAfter,current:testPhysical,edit:testEdit,nativeBindings:bindings[2]})];
+ // One fresh bounded source transaction retains every complete source, both
+ // serialized/reparsed phases and their inverses. Native scope checking above
+ // remains independent; no encoded result survives this invocation.
+ const equations=transportConcreteNamedSourcePhases([[before,birth.after],[before,before],[testBefore,testAfter],[dispatch,dispatch]].map(([source,after])=>({before:source,middle:source,after,language:'JavaScript',rules:['javascript:retain-whole-original-Schemars-source','router:actual-original-enclosing-Schemars-import','javascript:restore-whole-original-Schemars-source','router:restore-whole-genuine-original-enclosing-source']})));
+ const files=[plan({root,path:SCHEMARS_ENCLOSING_ORIGINAL,before,after:birth.after,current:physical,edit:birth.edit,nativeBindings:bindings[0],equation:equations[0]}),plan({root,path:SCHEMARS_ENCLOSING_OLD_CONTROL,before,after:before,current:existsSync(resolve(root,SCHEMARS_ENCLOSING_OLD_CONTROL))?read(root,SCHEMARS_ENCLOSING_OLD_CONTROL):null,nativeBindings:bindings[1],equation:equations[1]}),plan({root,path:SCHEMARS_ENCLOSING_TEST,before:testBefore,after:testAfter,current:testPhysical,edit:testEdit,nativeBindings:bindings[2],equation:equations[2]})];
  const inputs=[{path:SCHEMARS_ENCLOSING_ORIGINAL,source:physical,sha256:hash(physical)},{path:SCHEMARS_ENCLOSING_TEST,source:testPhysical,sha256:hash(testPhysical)},{path:DISPATCH,source:dispatch,sha256:hash(dispatch)},{path:SELF,source:self,sha256:hash(self)},...history.inputs];
- const dispatcher={path:DISPATCH,source:dispatch,meta:canonical(dispatch).wire,nativeBindings:bindings[3]};
+ const dispatcher={path:DISPATCH,source:dispatch,meta:equations[3].afterMeta,sourceEquation:equations[3],nativeBindings:bindings[3]};
  // The birth plan remains derivable after another explicit layer changes the
  // physical body. Only a final composer can qualify that later whole source.
  for(const input of inputs)if(read(root,input.path)!==input.source)fail('fresh complete physical input changed');assertSchemarsEnclosingHistoryFresh({root,history});

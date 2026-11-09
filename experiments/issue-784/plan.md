@@ -3,7 +3,135 @@
 Objective: implement and verify all requirements in PR #785 on
 `issue-784-1f6838f56841`. Keep unresolved criteria explicit and the PR unmerged.
 
-## 2026-11-09 current 02bf28e5 checkpoint
+## 2026-11-09 current d3103700 checkpoint
+
+Current continuation: published head is `d3103700d0e8b0d44a6deec8062d2507cb0a2134`.
+Its complete CI cycle has finished: 33 terminal jobs (16 failures, nine
+cancellations, eight successes) and six skipped supplemental workflows. All 25
+nonpassing results and 24 available complete logs are retained; forward shard 7
+still returns BlobNotFound and is absent from the verified whole-run archive.
+All 25 artifacts are now inspected. The final joined terminal receipt checks
+the complete job/workflow sets, all available raw log hashes and every artifact
+identity. Canonical production coverage remains 158/2,578 executable functions,
+with 2,420 carried; no current-working-tree freshness or full parity is claimed.
+The Clone source layer is installed locally through its complete three-source
+equation. Its focused receiving files qualify; it remains uncommitted.
+The complete fourth attempt was stopped and reaped after source review found
+an invalid phase-label list. The fifth attempt passes all 48 whole-file Node
+assertions and independent source deadlines (388.598 seconds, peak sampled
+cgroup 1,985,187,840 bytes). The whole history case takes 42.415 seconds. Bun 1.4.4
+also passes all 48 cases in nine fresh processes (357.568 seconds, peak sampled
+cgroup 2,103,648,256 bytes), with unchanged selected inputs and deadlines.
+The actual three-output Schemars candidate producer also completed with full
+physical/CST/native inverse joins; only its context output changed. The whole
+five-file CST/payload/Schemars receiving attempt passes all 36 assertions, but
+the unchanged ClientKind case takes 279.719 seconds against its 60-second limit.
+The original four-owner payload case now passes at 52.203 seconds. Actual
+production gain, Bun qualification and the ClientKind deadline remain open.
+No full-gate or complete-parity claim is made.
+
+- [x] Trace the original CSV refusal through normal parser configuration. The
+      matches consumer independently rebuilt a legacy scope and overwrote the
+      genuine enclosing scope. Add a separate original enclosing matches issuer
+      and use it consistently in project parsing. All 33 complete focused Node
+      cases pass under Node and Bun, including seven unchanged finite deadlines and all original
+      project/matches mutation controls. No deadlines were inferred or raised.
+- [x] Observe `parse_csv` admitted from the complete original `config.rs` in a
+      one-parent normal project diagnostic (44.498 seconds). `parse_usize_csv`
+      still has an unresolved ConfigError boundary in this one-parent graph.
+      This is not complete-library, typed-target or aggregate coverage evidence.
+- [x] Profile the original four AffinityDestination/InstallDocumentResult owner
+      proofs. Complete context construction dominates: 53.662 sampled seconds
+      in module-graph construction, largely repeated native CST authentication.
+      The complete original four-proof diagnostic takes 103.751 seconds.
+- [x] Qualify a fresh bounded CST batch ingress under Node, preserving every complete
+      serialized/reparsed source before independent semantic checks. Reissue all
+      original module views/path proofs after transport; planning views grant no
+      semantic authority. Repair the real 88.652-second payload deadline failure
+      and rerun whole receiving files with original bodies and deadlines. The
+      separate original ClientKind deadline still fails; Bun remains unrun.
+- [x] Preserve the complete terminal published CI cycle in local checkpoint
+      `49fd301d6`, without publishing another head or claiming a green gate.
+- [x] Profile actual complete native TypeScript regeneration: 34.251 sampled
+      seconds, dominated by inference-backed serialization (13.458 seconds).
+- [x] Draft private inference reuse with complete fresh host/source observations.
+      All three actual invalidation regressions pass. The first complete original
+      receiving attempt exhausts its 512 MiB heap before the fifth original case,
+      before private reuse is reached; later original cases are unrun.
+- [ ] Qualify the unchanged native TypeScript file and its original 60-second
+      regeneration limit. At a 1 GiB heap all 12 assertions pass, including the
+      complete shared Node/Bun runtime checks, but regeneration still takes
+      88.139 seconds. The whole attempt takes 331.425 seconds, peaks at
+      2,607,783,936 sampled cgroup bytes and does not trip the resource guard.
+      Audit `complete-YUsQtE` correctly fails the original deadline. No test,
+      source-declared deadline or gate requirement was relaxed.
+- [ ] Repair the complete original ClientKind case after actual profiling.
+      The first 1 ms sampling diagnostic at a 512 MiB heap exhausts V8 after
+      517.713 seconds (sampled cgroup peak 2,267,467,776 bytes, no guard stop),
+      before a complete CPU profile can be retained. Its completed phases are
+      24.186 seconds for the graph, 19.322 for derive inputs and 24.755 for the
+      selected Schemars output. The complete 1 GiB/10 ms diagnostic takes
+      340.218 seconds, including 266.520 seconds in enclosing context creation.
+      Sampled inclusive builtin output proof is 100.027 seconds, Deserialize
+      output proof 67.458 seconds and garbage collection 39.412 seconds. These
+      diagnostics do not qualify the unchanged original receiving deadline.
+- [x] Preserve complete Clone and CST/native receiving packets, member hashes,
+      CPU profiles, failures and original deadline audits. Retire only verified
+      inactive raw copies. The combined packet hit the unchanged evidence cap;
+      retire only its incomplete output and split the complete originals.
+- [x] Repeat current matches/CST controls together with four native inference
+      controls: 42/42 Node assertions and original deadlines pass, 67.079 seconds,
+      peak sampled cgroup 1,587,695,616 bytes (`complete-eqMSiA`).
+- [x] Verify private serialization against complete unchanged public metadata,
+      including dynamic call/assignment/coercion/loop/global gaps. A first test
+      expectation needed a declaration-backed `Math.max` property rather than
+      a synthetic global property; complete metadata equality already passed.
+- [x] Run a complete production regeneration after allocation repair. Its
+      warmup takes 34.127 seconds and profiled repeat 24.126 seconds, with zero
+      changed/unexpected outputs. This diagnostic does not qualify 60 seconds
+      for the original four-regeneration case.
+- [x] Draft larger private native CST packing with unchanged native bounds and
+      full fresh-half retries after aggregate refusal. All five whole Node
+      inference/packing controls and their finite deadlines pass in 20.485
+      seconds, peak sampled cgroup 1,680,371,712 bytes (`complete-IIHo7E`).
+- [ ] Qualify current native packing against complete production regeneration,
+      the unchanged original native TypeScript file and full JavaScript gate.
+- [x] Repeat current combined project ingress under Bun: all 38 cases in six
+      whole files pass with unchanged finite deadlines and complete selected
+      input identities (`current-project-ingress-bun-2.json.gz`).
+
+- [x] Run all six new Clone enclosing/refusal cases under Node with the original
+      60-second limits: all assertions and independent deadlines pass.
+- [x] Regenerate current receiving fixtures through the actual producer, keeping
+      the original eight records, five outputs, case bodies and deadlines.
+- [x] Repair the original receiving assertion that requires the byte-wrapper
+      predecessor to remain a literal prefix. The current adapter incorrectly
+      restores through that predecessor rather than only the Clone extension.
+- [x] Restrict Clone source composition to actual adoption equations. Relocated
+      receiving copies must retain their original separate-tables equations.
+- [x] Remove redundant complete CST composition work while retaining both
+      independently serialized/reparsed phase chains and all complete inverses.
+      Current whole receiving cases exceed their original 60-second deadlines
+      (77.165 seconds for current-history, 70.083 seconds for default adoption).
+- [x] Capture a complete bounded CPU profile of the actual current-history
+      producer. Use the existing source-origin transaction for whole-source
+      substitutions, preserving fresh full source builds, canonical parsing,
+      both phases, inverse equations and the original budgets. The actual
+      fixture producer now completes in 42.886 seconds, versus 61.054 before
+      this transport change; this alone does not qualify receiving deadlines.
+- [x] Draft the receiving-copy Clone/byte-wrapper commuting equation and carry
+      the complete Clone source rules into the Schemars candidate. Both final
+      sources must independently match the complete current physical equation.
+      The third run exposed overlapping anchor batching. The ordered rule pipeline
+      now retains every full native/CST inverse and independent physical source
+      join. All 48 complete Node assertions and independent deadlines now pass.
+      Bun 1.4.4 also passes all 48 cases with unchanged original limits.
+- [ ] Re-run the complete affected original and new receiving files under Node
+      and Bun, retain their independent deadline evidence, then measure actual
+      production translation. No executable gain is established by source DATA.
+- [ ] Collect every terminal result and failure log from the published cycle,
+      resolve every current check, run the complete JavaScript gate, and keep
+      every remaining issue criterion open until independently verified.
 
 - [x] Install all actual canonical producer outputs after complete physical input
       joins; measure 158 executable production functions, with 2,420 still carried.
@@ -48,7 +176,7 @@ Objective: implement and verify all requirements in PR #785 on
       strict parity fail. All 697 forward sources are prepared before the memory
       guard interrupts execution at 2,870,001,664 cgroup bytes after 3,242.428
       seconds. Reverse is unrun; all owned processes are reaped; no green stamp.
-- [ ] Qualify the uninstalled Clone enclosing-only grammar against original
+- [ ] Qualify the installed Clone enclosing-only grammar against original
       whole receiving files. Source equations/syntax checks grant no namespace,
       method execution, executable coverage or gate authority.
 - [ ] Resolve all remaining actual deadlines, missing owned-matrix outputs,

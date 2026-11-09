@@ -1,5 +1,5 @@
 import {createRulePipeline} from './rule-pipeline.mjs';
-import {createRustConcreteSyntaxStage} from './forward-concrete-syntax.mjs';
+import {createRustConcreteSyntaxStage,createRustConcreteSyntaxStages} from './forward-concrete-syntax.mjs';
 import {associateOriginalSharedPatternDependencies} from './extensions/shared-source-patterns.mjs';
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 import {translationProgressReporter} from './translation-progress.mjs';
@@ -10,7 +10,6 @@ import {captureSourceModuleViews,originalSourceModuleItems,moduleScopeKey} from 
 import {planTrackedModulePath,planConditionalModuleSourcePath,isTrackedModulePathPlan,MODULE_PATH_PROFILE} from './module-paths.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
 import {resolveOwnedEnclosingNamespaceModuleBindings as resolveEnclosingNamespaceModuleBindings} from './owned-enclosing-module-bindings.mjs';
-import {createDeriveBangContext} from './derive-bang-context.mjs';
 import {createDeriveEnclosingNamespaceContext} from './derive-enclosing-namespace-context.mjs';
 import {lockedTomlValueNamespaceBindings} from './toml-value-namespace.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
@@ -43,7 +42,7 @@ import {createToolAttributeContext} from './tool-attributes.mjs';
 import {configureToolAttributes} from './tool-attribute-layout.mjs';
 import {actualJsonCapabilityProfile} from './json-capabilities.mjs';
 import {createJsonMacroContext,configureJsonMacroParser} from './json-macro-context.mjs';
-import {createMatchesMacroContext,configureMatchesMacroParser,originalMatchesNamespaceBindings,OriginalMethodOwnerUnproved,originalMethodParserNamespace} from './matches-macro-context.mjs';
+import {createMatchesMacroContext,createEnclosingMatchesMacroContext,configureMatchesMacroParser,originalMatchesNamespaceBindings,OriginalMethodOwnerUnproved,originalMethodParserNamespace} from './matches-macro-context.mjs';
 import {captureOriginalCargoEdition,originalCargoEditionEvidence} from './cargo-edition-context.mjs';
 
 // Only the actual original-source project pipeline can issue this identity.
@@ -150,6 +149,32 @@ const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'so
 
 // The separate optional argument leaves every old option read unchanged.
 export function resolveModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null },progressInput=undefined) {
+  const trackedPaths=Array.isArray(paths)?[...paths]:paths,captured=[];
+  // Discover only the bounded physical input sequence. None of these planning
+  // views or path proofs is returned or supplied to independent semantics.
+  let planning=resolveSourceModuleGraph({entry,paths:trackedPaths,compilationProfile:profileInput,readSource(file){
+    const source=readSource(file);
+    if(typeof source!=='string')throw new TypeError('Forward concrete syntax requires primitive source text');
+    captured.push({file,source});return source;
+  }},progressInput,source=>({source,document:null}));
+  const profile=planning.compilationProfile;planning=null;
+  const stages=captured.length===1?[createRustConcreteSyntaxStage(captured[0].source)]:createRustConcreteSyntaxStages(captured.map(row=>row.source));
+  let at=0;
+  // Reissue every original view and path proof from reconstructed source. The
+  // first traversal grants no type, ownership, expansion or executable rights.
+  const graph=resolveSourceModuleGraph({entry,paths:trackedPaths,compilationProfile:profile,readSource(file){
+    if(captured[at]?.file!==file)throw new TypeError('Original module input sequence changed after concrete syntax transport');
+    return captured[at].source;
+  }},undefined,source=>{
+    const stage=stages[at++];
+    if(!stage||stage.source!==source)throw new TypeError('Original module source changed after concrete syntax transport');
+    return stage;
+  });
+  if(at!==captured.length)throw new TypeError('Original module input sequence was not consumed completely');
+  return graph;
+}
+
+function resolveSourceModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null },progressInput,sourceStage) {
   const moduleProgress=progressInput==null?null:translationProgressReporter(progressInput);
   const profile=compilationProfile(profileInput);
   const tracked = new Set(paths);
@@ -168,7 +193,7 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
     if(moduleProgress)moduleProgress({stage:'module-parse',state:'start',entry,source:file,phase:'source-module',declaration:key||'crate',completed:modules.length});
     // Only whole physical inputs cross the CST boundary. Inline module views
     // reuse their parent's exact reconstructed source and original coordinates.
-    const concrete=original?null:createRustConcreteSyntaxStage(readSource(file));
+    const concrete=original?null:sourceStage(readSource(file));
     const source = original?.source??concrete.source;
     if(concrete)concreteSyntaxMeta.push({source:file,document:concrete.document});
     const fileOffset=original?.offset??offset;
@@ -323,7 +348,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   // Construct the genuine enclosing issuer once for this project and pass it
   // explicitly through the independent Default/Clone and binding consumers.
   let deriveBangContext=null;
-  if(enclosingNamespace){
+  if(deriveContext){
     namespaceProgress('derive-namespace-context');
     deriveBangContext=deriveContext?createDeriveEnclosingNamespaceContext({deriveContext}):null;
   }
@@ -338,12 +363,11 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});
   // This consumer needs enclosing bindings. Runtime/ownership and generated
   // Default/Clone checking retain their separate original source contexts.
-  if(!enclosingNamespace)deriveBangContext=deriveContext?createDeriveBangContext({deriveContext}):null;
-  namespaceProgress(enclosingNamespace?'enclosing-bindings':'complete-bindings');
-  const bindingEvidence=(enclosingNamespace?resolveEnclosingNamespaceModuleBindings:resolveModuleBindings)({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
+  namespaceProgress(deriveContext?'enclosing-bindings':'complete-bindings');
+  const bindingEvidence=(deriveContext?resolveEnclosingNamespaceModuleBindings:resolveModuleBindings)({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[moduleScopeKey(scope),scope]));
   const configureSourceScope=(parser,module)=>configureParserSourceScope(requestImmutableNamespaceTargets(parser),scopes.get(moduleScopeKey(module)),bindingEvidence.scopes,module.path);
-  const matchesMacroContext=createMatchesMacroContext({modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext});
+  const matchesMacroContext=(deriveContext?createEnclosingMatchesMacroContext:createMatchesMacroContext)({modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext});
   progress({stage:'namespace',state:'end',entry:options.entry,total:bindingEvidence.scopes.length});
   const declarations = [], refused = [], imports = [], unloweredItems = [], moduleAliases = new Map();
   let completedModules=0,completedMethods=0;

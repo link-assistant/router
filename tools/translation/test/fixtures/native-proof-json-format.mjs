@@ -164,6 +164,7 @@ export function restoreEnclosingNamespaceSource(source,retain=()=>{}){
 // Additive receiving history for the later owned-binding import adoption.
 // The original enclosing history API and its exact frozen rules stay unchanged.
 export function restoreCurrentEnclosingNamespaceSource(source,retain=()=>{}){
+ if(typeof source==='string'&&source.includes('export function proveBuiltinCloneEnclosingNamespace('))source=restoreReceivingSourceHistory(source,'clone-enclosing-extension',retain);
  if(typeof source==='string'&&source.includes('export function coreAdoptionProducerClosedAttributeSpans('))source=restoreReceivingSourceHistory(source,'core-attribute-extension',retain);
  if(typeof source!=='string')fail('complete current enclosing source text required');
  const before="import {resolveEnclosingNamespaceModuleBindings} from './module-bindings.mjs';",after="import {resolveOwnedEnclosingNamespaceModuleBindings as resolveEnclosingNamespaceModuleBindings} from './owned-enclosing-module-bindings.mjs';";
