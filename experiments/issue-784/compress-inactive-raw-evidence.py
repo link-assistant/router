@@ -30,6 +30,7 @@ parser.add_argument('--closed-4e709-snapshots', action='store_true')
 parser.add_argument('--closed-4e709-terminal-snapshots', action='store_true')
 parser.add_argument('--closed-standard-observations', action='store_true')
 parser.add_argument('--retained-closed-ci-metadata', action='store_true')
+parser.add_argument('--closed-reverse-freshness-profile', action='store_true')
 parser.add_argument('--receipt', default='reverse-shard-inactive-evidence-compression.json')
 args = parser.parse_args()
 assert sum(bool(value) for value in [args.closed_attempt, args.closed_investigations,
@@ -49,14 +50,20 @@ assert sum(bool(value) for value in [args.closed_attempt, args.closed_investigat
                                    args.retained_17c7_metadata, args.closed_4e709_snapshots,
                                    args.closed_4e709_terminal_snapshots,
                                    args.closed_standard_observations,
-                                   args.retained_closed_ci_metadata]) <= 1
+                                   args.retained_closed_ci_metadata,
+                                   args.closed_reverse_freshness_profile]) <= 1
 assert Path(args.receipt).name == args.receipt and args.receipt.endswith('.json')
 paths = [root / 'ci-logs' / name for name in [
     'restart-export-published-review.diff',
     'restart-published-review.diff',
     'restart-review-published.diff',
 ]] + [base / 'native-regeneration-before-csv-cache-advice.json']
-if args.retained_closed_ci_metadata:
+if args.closed_reverse_freshness_profile:
+    observed = json.loads((base / 'current-02bf-reverse-fresh-profile-resource.json').read_bytes())
+    assert observed['exitCode'] == 0 and observed['stopped'] is False
+    assert not Path('/proc/' + str(observed['pid'])).exists()
+    paths = [base / 'current-02bf-reverse-fresh.cpuprofile']
+elif args.retained_closed_ci_metadata:
     # Immutable observations from completed, earlier published heads. Original
     # paths in custody manifests remain recoverable with a .gz suffix.
     retained = root / 'docs/case-studies/issue-784/evidence'
@@ -301,7 +308,8 @@ rows = []
 for path in paths:
     state = path.lstat()
     assert path.is_file() and not path.is_symlink() and state.st_uid == os.getuid()
-    assert state.st_nlink == 1 and state.st_size <= 32 * 1024 * 1024
+    maximum = 128 * 1024 * 1024 if args.closed_reverse_freshness_profile else 32 * 1024 * 1024
+    assert state.st_nlink == 1 and state.st_size <= maximum
     target = path.with_name(path.name + '.gz')
     original = digest(path)
     with target.open('xb') as output:

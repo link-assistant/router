@@ -21,8 +21,23 @@ Objective: implement and verify all requirements in PR #785 on
 - [x] Run the actual default reverse producer: exactly three stale artifacts are
       regenerated. A separate check verifies all 12,027,571 bytes with no changes.
       Source items rise from 688 to 692, all still unsupported; no parity gain.
-- [ ] Collect every terminal current CI result and available failure before
-      publishing another reviewed source batch. The current cycle is still live.
+- [x] Preserve and revert the runtime guard trial after its original receiving
+      assertions pass but two unchanged independent deadlines fail. Retain the
+      complete proposal, producer attempts, streams and deadline observations.
+- [x] Inspect the earlier closure's 337 current physical source files. The
+      4,194,304-byte private compiler bound is still exceeded; no source-size
+      repair or executable gain is claimed.
+- [x] Attempt the actual three-profile owned producer. The unchanged guard
+      stops its first profile at 2,873,204,736 cgroup bytes after 132.535 seconds;
+      all owned processes are reaped. Complete matrix generation remains open.
+- [x] Collect all 59 terminal current CI jobs and six skipped supplemental
+      workflows: 11 successes, 15 failures, eight cancellations and 25 skips.
+      Preserve every available failed/cancelled log and the verified complete
+      workflow archive. Forward shard 7 returns BlobNotFound and is also absent
+      through CLI recovery; keep that upstream log gap explicit.
+- [x] Retire 26 exact inactive copies of already published prior-cycle ZIPs
+      after remote Git tree joins and complete local/published blob comparison.
+      Immutable links retain all originals; reclaim 97,015,237 logical bytes.
 - [ ] Resolve all remaining actual deadlines, missing owned-matrix outputs,
       reverse freshness, private compiler bounds and executable parity obligations.
       Keep every original acceptance criterion open until fully verified.
@@ -854,143 +869,4 @@ remain explicitly unmet parts of the literal all-tool requirement.
 - [ ] Materialize genuine matrices, finish strict parity and original compiler
       deadlines, then pass the whole local and same-head CI gates.
 
-## Complete-source native regeneration batch
-
-- [x] Preserve complete original source equations and inverses; group whole
-      file authentication while retaining independent grammar/inference checks,
-      physical source rereads and live-host joins. Preserve standalone APIs.
-- [x] Run the complete new three-case file under Node and Bun. Retain both
-      original fixture failures, corrected tests and independent Node audit.
-- [x] Compare all 199 complete generated files and three complete CPU profiles.
-      Preserve the premature original-code candidate measurement separately.
-      Identical outputs establish equivalence, not causal performance gain.
-- [x] Retain the original whole nine-case Node attempt: behavior passes, but
-      regeneration's 116643.104607 ms exceeds the unchanged 60000 ms deadline.
-      Bun's compiler case exceeds its existing 5000 ms default, then memory
-      guard stops the owned run. Keep all original failures and reaped PIDs.
-- [x] Refresh the full compiler registration from source `84f791d10` and retain
-      all six complete historical files. Both whole receiving files pass under
-      Node and Bun; original Node audits pass. Preserve the first uncommitted
-      export refusal and post-commit successful retry without provenance bypass.
-- [x] Attempt the complete mandatory gate at clean `d4ec5ce4d`: lint, both core
-      259-case suites, deadline controls and public TypeScript pass. The memory
-      guard stops native TypeScript checking at 415.89 s; later stages are
-      unrun. Inspect all entered stages and complete audit; reap all owned PIDs.
-- [x] Collect every terminal result of the published bea75c2c1 CI cycle, archive
-      complete native evidence, review main ancestry and the coherent source
-      batch. Seven full logs and all three ZIPs are verified. Publication and
-      the current-source review remain separately required below.
-- [ ] Repair original deadlines, actual source generation and strict parity;
-      qualify all literal tool/privacy requirements and every same-head check.
-
-## Retain genuine computed matrix drafts
-
-- [x] Inventory all bea75c2c1 failures: ordinary profile plans now complete;
-      actual freshness still fails, owned matrix remains absent, strict parity
-      has 441 gaps and forward/reverse original deadlines remain unmet.
-- [x] Draft opt-in full-byte custody after original private validation and
-      freshness comparison. Keep all check failures, original time and byte
-      bounds, current-source rereads and default public behavior.
-- [x] Run complete custody/workflow controls: first 35-case attempt has two
-      historical-workflow integration failures; corrected 36-case attempt and
-      independent Node audit pass. Preserve both original terminal attempts.
-- [x] Run the complete original isolated matrix file plus the new integration
-      case: all eleven Node cases and independent deadline audit pass. All
-      three low-level custody cases also pass under Bun; full matrix Bun unrun.
-- [x] Refresh the complete compiler registration: 1783 complete inputs,
-      57221413 source bytes and 463 genuine portable Git objects. Preserve six
-      full historical preimages. All seventeen whole Node cases and independent
-      deadline audit pass; all seventeen whole receiving cases also pass Bun.
-      No actual production function gain or complete gate is established.
-- [x] Attempt the complete current-head JavaScript gate at clean a6f2cdf17.
-      Lint, both native 259-case suites and nine audited deadline controls pass.
-      Memory guard stops public TypeScript at 358.85 seconds, exit 143 and
-      2867654656 sampled bytes. Preserve all entered stages, complete Node
-      streams and the original cache-advice receipt; all owned PIDs are reaped.
-      Remaining type checks, parity and both translation stages are unrun.
-- [x] Preserve the first evidence-selector refusal when an already archived
-      old log refers to retired raw attempt files. Select those complete bytes
-      through their existing verified public packet; include every newly
-      reported whole Node attempt and retain fresh failed and passed streams.
-- [x] Compress new complete cache-advice receipts with decoded readback to
-      conserve the fixed allocation. Preserve all original default receipts;
-      no file content or active process mapping is changed by page advice.
-- [x] Archive completed CI, review the whole PR/default ancestry and publish
-      the coherent batch with accurate description. Keep PR draft and unmerged.
-- [ ] Independently validate genuine CI drafts before installing outputs;
-      finish source/owned matrices, strict parity and original deadlines.
-- [x] Retire six inactive complete CPU/output duplicate files only after full
-      packet readback, matching lengths/hashes and process-reference checks.
-      Complete originals remain public; reclaimed 15302656 allocated bytes.
-
-## Independent original owned matrix CI check
-
-- [x] Publish complete custody batch a2539817c after the entire preceding CI
-      cycle, full source review and verified complete packet readback.
-- [x] Preserve first whole workflow regression: 33/34 pass; the new original
-      complete-job comparison fails because both commands still share one job.
-      Complete independent Node audit passes; behavioral exit remains failure.
-- [x] Draft two independent same-SHA jobs using the original whole checkout,
-      verification and install steps and each original 60-minute bound. Keep
-      every original mandatory command, add the ninth required aggregate result
-      and distinct complete artifact custody. No source/compiler bytes change.
-- [x] Run complete original workflow/local-control/profile-TypeScript files
-      under Node and Bun; source/CST equations and all original refusals pass.
-      Preserve the initial imported-file selection audit failure, both original
-      Bun deadline failures and final 47-case audited Node/45-case Bun passes.
-      Only immutable whole-source YAML syntax is reused; assertions and every
-      original deadline remain. The full review script preserves all six
-      attempts; its first two fixture-summary assumptions fail and are retained.
-- [x] Exercise the read-only original-input snapshot. Draft complete artifact
-      joins and streaming readback; full artifact qualification remains unrun
-      until genuine terminal CI custody is available. No index is fabricated.
-- [x] Commit a coherent source checkpoint, attempt the mandatory complete gate
-      and record passed, failed and unrun stages at its exact source SHA.
-      Clean fd960aae3e12882fc12284db18722e6e9376cd83: lint, both 259-case
-      native suites and the nine deadline controls pass. Native TypeScript
-      compilation passes (165 files, installed TS 5.9.3), but the original
-      regeneration case exceeds 60000 ms at 105263.83772 ms. All nine behavior
-      cases complete; the independent audit remains failed. Acceptance passes
-      121 cases, then strict parity fails the stale account-policy source hash
-      and retains 441 gaps / 12345 carried items. The forward cohort is
-      interrupted before its audit; reverse is unrun. Original memory guard
-      stops at 2868236288 bytes after 767.697 seconds; all owned PIDs reaped.
-      No green stamp or Rust authority. Complete 2777-line gate review retained.
-- [x] Wait for every a2539817c CI job, download and inspect every whole log and
-      artifact. No complete matrix draft is present; qualification and output
-      installation remain unrun, with the read-only refusal retained.
-- [ ] Complete source generation, strict parity, original deadlines and all
-      issue privacy requirements; PR remains draft and issue open until verified.
-# Cold lexical storage accounting
-
-- [x] Count complete private lexer storage from fixed layouts under the existing
-      native guard. Preserve all lexical cache bounds and mutable refusal results.
-- [x] Verify exact 200000-cell admission and above-limit refusal with actual
-      independent lexer coverage. Both complete focused files pass Node/Bun;
-      the Node deadline audit has no breaches. Preserve all original test bytes.
-- [x] Retain all alternating cold-read observations, full original whole-file
-      memory interruptions and reaped processes. No receiving or parity claim.
-- [ ] Refresh genuine compiler registration, repair all current CI failures,
-      then pass complete local and exact-head CI gates before marking ready.
-
-## Complete 815527 feedback and coordinated repair checkpoint
-
-- [x] Refresh the genuine compiler registration and complete portable Git
-      object set. Both original whole receiving attempts remain resource
-      interrupted; focused checks do not establish receiving qualification.
-- [x] Attempt the complete gate at clean f08eee. Five commands complete;
-      workflow tests start and the original cgroup guard interrupts lint.
-      Reap all owned processes, preserve full receipts and mark later stages
-      unrun. No green stamp or Rust invocation is permitted.
-- [x] Wait for the entire published 815527 cycle: 19 failed, nine successful,
-      six cancelled and 25 skipped jobs, plus six terminal supplemental runs.
-      Read all available complete nonpassing logs and every audit/receipt;
-      retain 25 full logs, all 26 artifacts and exact published input joins.
-      Separate 43 real deadline breaches from one intentional negative control.
-- [x] Verify complete canonical bytes and all declared published inputs before
-      rejecting installation against four changed current inputs. Actual
-      coverage remains 158/2578 production functions; no executable gain.
-- [ ] Publish the reviewed coherent source checkpoint with complete failed
-      and unrun evidence; retain draft status and positive Fixes #784.
-- [ ] Repair every current generation, namespace, source-bound and deadline
-      failure; complete literal all-tool privacy and same-SHA gate/CI checks.
+Further completed receiving batches remain in [the preserved cohort history](plan-cohort-history.md).

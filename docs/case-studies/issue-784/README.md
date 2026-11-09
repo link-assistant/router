@@ -3,6 +3,12 @@
 Research and verification dates: 2026-11-06–09 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [current compiler cost investigation](current-compiler-cost-investigation.md)
+records actual reverse freshness repair, a reverted deadline-failing trial and
+the still-unresolved private compiler source bound. The
+[deadline auditor memory repair](deadline-source-memory.md) passes its bounded
+regression; neither record establishes complete gate or parity success.
+
 The [canonical output checkpoint](current-canonical-installation.md) installs
 all 2,873 actual computed CI outputs with complete input and byte verification.
 Canonical strict TypeScript and three direct application cases pass; complete
