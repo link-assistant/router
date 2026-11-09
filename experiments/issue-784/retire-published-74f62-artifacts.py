@@ -1,4 +1,5 @@
 """Retire only 25 complete, immutable published CI ZIP working-tree copies."""
+import argparse
 import gzip
 import hashlib
 import importlib.util
@@ -7,14 +8,16 @@ import os
 from pathlib import Path
 import stat
 import subprocess
-import sys
-
-assert sys.argv[1:] in [[], ['--write']]
-write = sys.argv[1:] == ['--write']
-head = '3b19785353c0a004efc62ab675a97b99c8a2e5a1'
-folder = Path('docs/case-studies/issue-784/evidence/ci-74f62')
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--cycle', choices=['74f62', '3b197'], default='74f62')
+parser.add_argument('--write', action='store_true')
+args = parser.parse_args()
+write, cycle = args.write, args.cycle
+head = {'74f62': '3b19785353c0a004efc62ab675a97b99c8a2e5a1',
+        '3b197': '815527efb3db40ca7e650ba9aaae47bfa1529dab'}[cycle]
+folder = Path('docs/case-studies/issue-784/evidence/ci-' + cycle)
 tree = subprocess.check_output(['git', 'rev-parse', head + ':' + str(folder)], text=True).strip()
-metadata_path = Path('ci-logs/issue-784-restart-2/current-published-74f62-artifact-tree.json.gz')
+metadata_path = Path('ci-logs/issue-784-restart-2/current-published-' + cycle + '-artifact-tree.json.gz')
 if not metadata_path.exists():
     with metadata_path.open('xb') as output:
         with gzip.GzipFile(fileobj=output, mode='wb', mtime=0) as packed:
@@ -25,7 +28,7 @@ if not metadata_path.exists():
 metadata = json.loads(gzip.decompress(metadata_path.read_bytes()))
 assert metadata['sha'] == tree and metadata['truncated'] is False
 remote = {row['path']: row for row in metadata['tree']}
-paths = sorted(folder.glob('current-74f62-artifact-*.zip'))
+paths = sorted(folder.glob('current-' + cycle + '-artifact-*.zip'))
 assert len(paths) == 25
 rows, states = [], {}
 for path in paths:
@@ -60,7 +63,7 @@ def inactive_and_unchanged():
     return unreadable
 
 
-record = dict(schema='published-74f62-artifact-local-retirement-v1', publishedCommit=head,
+record = dict(schema='published-' + cycle + '-artifact-local-retirement-v1', publishedCommit=head,
     remoteDirectoryTree=tree, remoteMetadata=str(metadata_path),
     remoteMetadataSha256=hashlib.sha256(metadata_path.read_bytes()).hexdigest(),
     foreignUnreadableProcesses=inactive_and_unchanged(), publishedOriginals=rows,
@@ -70,7 +73,7 @@ record = dict(schema='published-74f62-artifact-local-retirement-v1', publishedCo
     completeAvailableJobLogsRemainLocal=True, originalForwardFiveLogGapUnchanged=True,
     runtimeParity=False, fullGatePassed=False)
 if write:
-    target = Path('docs/case-studies/issue-784/evidence/ci-74f62-artifact-local-retirement.json.gz')
+    target = Path('docs/case-studies/issue-784/evidence/ci-' + cycle + '-artifact-local-retirement.json.gz')
     raw = json.dumps(record, separators=(',', ':')).encode()
     with target.open('xb') as output:
         output.write(gzip.compress(raw, mtime=0))

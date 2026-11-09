@@ -12,6 +12,13 @@ The [complete local gate on 7582887](current-7582887-gate.md) passes lint and
 both native suites before its TypeScript memory interruption. All remaining
 semantic, generation, deadline, parity and universal-account criteria stay open.
 
+The [cold lexer budget change](current-static-cold-budget.md) passes its focused
+Node/Bun checks with the exact original storage cap. Its
+[complete registration refresh](current-static-cold-registration.md) retains
+the original whole-file memory interruptions. The published
+[3b197 artifact copies](current-3b197-storage.md) remain available through
+verified immutable Git links while fresh CI evidence is collected.
+
 ## Requirements and evidence
 
 The original issue, all issue comments, required sub-issues and all three PR
