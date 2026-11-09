@@ -83,6 +83,12 @@ owners separately; they establish no executable production gain.
 
 ## Root cause and implementation
 
+The [canonical custody companion repair](current-bulk-companions.md) restores
+the complete original source-copy equations through actual producers. Full Node
+custody, native source-history and workflow controls pass; both whole Bun
+receiving attempts remain interrupted by the unchanged memory guard. The
+complete same-SHA gate and every unresolved CI obligation remain required.
+
 Native forwarding intentionally preserved application headers. Network-origin
 headers were filtered, but location headers derived from those IPs were not.
 The pre-fix regression forwarded `CF-IPCountry: GB` and `X-Vercel-IP-City: London`.

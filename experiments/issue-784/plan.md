@@ -3,6 +3,27 @@
 Objective: implement and verify all requirements in PR #785 on
 `issue-784-1f6838f56841`. Keep unresolved criteria explicit and the PR unmerged.
 
+## Current companion repair, 2026-11-09 04:45 UTC
+
+- [x] Inspect fresh published `74f62c037` CI failures and retain all 21 currently
+      available complete artifacts with member CRC, SHA-256 and full readback.
+- [x] Reproduce the complete predecessor conflict from custody's shared-source
+      addition. Generate separate companions and restore originals using actual
+      producers, full native copies/bindings and complete CST/inverse equations.
+- [x] Complete all six Node custody controls with independent deadline auditing.
+      Retain the initial untracked-input failures and Bun's final-case memory stop.
+- [x] Verify and retire only 25 inactive immutable published f868 ZIP copies;
+      reclaim 32,061,881 logical bytes while keeping full available logs local.
+- [x] Complete all three native source-copy cases under Node and all 38 workflow
+      controls; reproduce both actual producer freshness checks. Preserve Bun's
+      whole native source-copy interruption as unqualified.
+- [ ] Refresh the actual compiler registration and genuine portable Git fixture
+      for the complete integrated source batch, without editing generated text.
+- [ ] Collect the entire `74f62c037` CI cycle, every completed failure, complete
+      job logs and artifacts before publishing the reviewed repair batch.
+- [ ] Resolve all remaining semantics, missing outputs, original deadlines and
+      strict parity obligations; obtain a green complete gate and same-SHA CI.
+
 Current continuation at published `4e7093eb9`:
 
 - [x] Preserve completed-cycle metadata through checked lossless compression;

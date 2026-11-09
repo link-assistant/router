@@ -6,8 +6,9 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {gunzipSync} from 'node:zlib';
 import {retainBulkDraft} from '../bulk-draft-custody.mjs';
-import {regenerate,regenerateWithDraftCustody} from '../bulk.mjs';
-import {prepareBulkDraftCustody} from '../prepare-bulk-draft-custody.mjs';
+import {regenerate} from '../bulk.mjs';
+import {regenerateWithDraftCustody} from '../bulk-with-draft-custody.mjs';
+import {prepareBulkDraftCustody,assertBulkDraftCompanionsFresh} from '../prepare-bulk-draft-custody.mjs';
 
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 function fixture(t){
@@ -76,6 +77,8 @@ test('actual source mutation during generation prevents retaining or installing 
 test('whole bulk and CLI sources retain both CST phases, native copies and complete inverses',{timeout:60000},()=>{
  const result=prepareBulkDraftCustody();assert.equal(result.typescriptVersion,'5.9.3');assert.equal(result.originalRegenerateBodyChanged,false);
  assert.equal(result.files.length,2);
+ assert.equal(result.originals.length,2);assert.equal(assertBulkDraftCompanionsFresh(),true);
+ for(const row of result.originals)assert.equal(readFileSync(row.path,'utf8'),row.source,'complete original source stays unchanged');
  for(const row of result.files){assert.equal(row.current,row.after);assert.equal(row.inverse,row.before);assert.equal(row.nativeCopies.length,2);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}
  assert.equal(result.semanticAuthority,false);assert.equal(result.runtimeParity,false);
 });

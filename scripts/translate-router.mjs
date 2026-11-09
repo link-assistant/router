@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { regenerate,regenerateWithDraftCustody } from '../tools/translation/bulk.mjs';
+import { regenerate } from '../tools/translation/bulk.mjs';
 import {regenerateCompilationMatrix} from '../tools/translation/matrix-bulk.mjs';
 import {createCompilationMatrix,DECLARED_FAMILY_PROFILES} from '../tools/translation/compilation-matrix.mjs';
 
@@ -38,9 +38,7 @@ if(profileMatrix){
     if(failures.length){console.error(failures.join('\n'));process.exitCode=1;}
   }).catch(error=>{console.error(error);process.exitCode=1;});
 }else if(!retainOutputText){
-// Optional complete DATA custody; the original freshness result stays fatal.
-
-const { manifest, failures } = profileMatrix?regenerateCompilationMatrix({...options,matrix:createCompilationMatrix({profiles:DECLARED_FAMILY_PROFILES})}):process.env.ROUTER_BULK_DRAFT_DIRECTORY?regenerateWithDraftCustody({...options,draftDirectory:process.env.ROUTER_BULK_DRAFT_DIRECTORY}):regenerate(options);
+const { manifest, failures } = profileMatrix?regenerateCompilationMatrix({...options,matrix:createCompilationMatrix({profiles:DECLARED_FAMILY_PROFILES})}):regenerate(options);
 console.log(JSON.stringify(profileMatrix?{kind:manifest.schema,matrixSha256:manifest.matrixSha256,sourceSetSha256:manifest.sourceSetSha256,profiles:manifest.profiles.map(member=>({name:member.name,profileSha256:member.profileSha256,totals:member.totals,projects:member.projects})),platformDomainComplete:false,commonExecutableOutput:false,runtimeParity:false,mode:check?'check':'write'}:{ ...manifest.totals, projects: manifest.projects, runtimeParity: false, mode: check ? 'check' : 'write' }));
 if (failures.length) {
   console.error(failures.join('\n'));

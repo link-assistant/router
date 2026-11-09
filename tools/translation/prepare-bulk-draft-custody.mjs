@@ -59,18 +59,39 @@ export function deriveBulkDraftSource(ts,path,before){
 export function prepareBulkDraftCustody({root=ROOT}={}){
  const ts=ownershipCompiler(),originals=inputs(),files=[];
  for(const input of originals){
-  const before=input.source,{language,after}=deriveBulkDraftSource(ts,input.path,before);
-  const current=readFileSync(resolve(root,input.path),'utf8');if(current!==before&&current!==after)fail('physical source is outside the complete equation');
+  const before=input.source,legacy=deriveBulkDraftSource(ts,input.path,before);
+  input.current=readFileSync(resolve(root,input.path),'utf8');
+  if(input.current!==before&&input.current!==legacy.after)fail('original physical source is outside the complete equation');
+  const path=input.path.replace(/\.mjs$/u,'-with-draft-custody.mjs');
+  let {language,after}=legacy;
+  if(input.path==='scripts/translate-router.mjs'){
+   const old="from '../tools/translation/bulk.mjs';",next="from '../tools/translation/bulk-with-draft-custody.mjs';";
+   const admission="import {assertBulkDraftCompanionsFresh} from '../tools/translation/prepare-bulk-draft-custody.mjs';\nassertBulkDraftCompanionsFresh();\n";
+   const admit=source=>{const at=source.startsWith('#!')?source.indexOf('\n')+1:0;return source.slice(0,at)+admission+source.slice(at);};
+   language=admit(one(language,old,next));after=admit(one(after,old,next));
+  }
+  let current='';try{current=readFileSync(resolve(root,path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
+  if(current!==''&&current!==after)fail('companion physical source is outside the complete equation');
   const [equation]=transportConcreteNamedSourcePhases([{before,middle:language,after,language:'JavaScript',rules:['javascript:retain-complete-private-output-data-after-fresh-input-checks','router:keep-original-freshness-failure-unconditional','javascript:restore-complete-original-bulk-and-cli','router:restore-original-output-observer-contract']}]);
   if(equation.inverse!==before)fail('complete serialized/reparsed CST inverse differs');
-  files.push({path:input.path,before,language,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:equation.beforeMeta,afterMeta:equation.afterMeta,inverse:equation.inverse,trace:equation.trace,stages:equation.stages,nativeCopies:[nativeCopy(ts,input.path,before),nativeCopy(ts,input.path,after)]});
+  files.push({path,sourcePath:input.path,before,language,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:equation.beforeMeta,afterMeta:equation.afterMeta,inverse:equation.inverse,trace:equation.trace,stages:equation.stages,nativeCopies:[nativeCopy(ts,path,before),nativeCopy(ts,path,after)]});
  }
  const bindings=verifyNativeCopiedModuleBindings(ts,files.map(row=>({path:resolve(root,row.path),source:row.after})));
- for(const [at,row]of files.entries()){row.nativeBindings=bindings[at];if(readFileSync(resolve(root,row.path),'utf8')!==row.current)fail('complete physical source changed');}
- return {schema:'complete-bulk-draft-source-composition-v1',typescriptVersion:ts.version,files,semanticAuthority:false,sourceAuthority:false,originalRegenerateBodyChanged:false,runtimeParity:false,rustExecuted:false};
+ for(const [at,row]of files.entries()){
+  row.nativeBindings=bindings[at];let current='';
+  try{current=readFileSync(resolve(root,row.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
+  if(current!==row.current)fail('complete physical source changed');
+ }
+ for(const input of originals)if(readFileSync(resolve(root,input.path),'utf8')!==input.current)fail('complete original physical source changed');
+ return {schema:'complete-bulk-draft-source-composition-v2',typescriptVersion:ts.version,originals,files,semanticAuthority:false,sourceAuthority:false,originalRegenerateBodyChanged:false,runtimeParity:false,rustExecuted:false};
+}
+export function assertBulkDraftCompanionsFresh(){
+ const plan=prepareBulkDraftCustody();
+ if(plan.originals.some(row=>row.current!==row.source)||plan.files.some(row=>row.current!==row.after))fail('complete original or companion source differs');
+ return true;
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  if(process.argv.length!==3||!['--emit','--check'].includes(process.argv[2]))fail('use --emit|--check');
  const plan=prepareBulkDraftCustody();
- if(process.argv[2]==='--emit')console.log(JSON.stringify(plan));else{if(plan.files.some(row=>row.current!==row.after))fail('complete current source differs');console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>({path:row.path,sha256:row.afterSha256})),semanticAuthority:false}));}
+ if(process.argv[2]==='--emit')console.log(JSON.stringify(plan));else{if(plan.originals.some(row=>row.current!==row.source)||plan.files.some(row=>row.current!==row.after))fail('complete current source differs');console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>({path:row.path,sha256:row.afterSha256})),semanticAuthority:false}));}
 }

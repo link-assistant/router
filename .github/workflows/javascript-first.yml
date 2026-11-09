@@ -230,7 +230,7 @@ jobs:
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
       - run: npm ci --prefix js --ignore-scripts
-      - run: node scripts/translate-router.mjs --check
+      - run: node scripts/translate-router-with-draft-custody.mjs --check
       - run: node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check
       - name: Preserve complete unqualified canonical drafts
         if: ${{ always() }}

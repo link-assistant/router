@@ -32,7 +32,7 @@ const shardJob=replaceOnce(forwardComplete,canonical,'');
 const freshnessJob=replaceOnce(replaceOnce(forwardComplete.slice(0,nodeUploadStart),forward,''),'  translation:\n','  translation-freshness:\n');
 const bulkDirectory='    env:\n      ROUTER_BULK_DRAFT_DIRECTORY: js/node_modules/.bulk-drafts\n';
 const bulkUpload=upload.replace('matrix drafts','canonical drafts').replace('name: matrix-drafts-','name: bulk-drafts-').replaceAll('.matrix-drafts/','.bulk-drafts/');
-const custodyFreshnessJob=replaceOnce(freshnessJob,'  translation-freshness:\n    runs-on: ubuntu-24.04\n','  translation-freshness:\n    runs-on: ubuntu-24.04\n'+bulkDirectory)+bulkUpload;
+const custodyFreshnessJob=replaceOnce(replaceOnce(freshnessJob,'  translation-freshness:\n    runs-on: ubuntu-24.04\n','  translation-freshness:\n    runs-on: ubuntu-24.04\n'+bulkDirectory),'      - run: node scripts/translate-router.mjs --check\n','      - run: node scripts/translate-router-with-draft-custody.mjs --check\n')+bulkUpload;
 const forwardHeader='  translation:\n    runs-on: ubuntu-24.04\n';
 const shardStrategy='    strategy:\n      fail-fast: false\n      matrix:\n        shard: [1, 2, 3, 4, 5, 6, 7, 8]\n';
 const shardCommand='      - run: node scripts/run-node-test-shard.mjs --outer-timeout-ms=3600000 --whole-file-shard=${{ matrix.shard }}/8 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs\n';

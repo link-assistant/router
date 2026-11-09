@@ -88,7 +88,9 @@ test('every forward shard and independent canonical check preserve complete hist
  assert.deepEqual(shard.steps.slice(0,setup.length),setup);assert.deepEqual(fresh.steps.slice(0,setup.length),setup);
  assert.equal(shard['timeout-minutes'],historical['timeout-minutes']);assert.equal(fresh['timeout-minutes'],historical['timeout-minutes']);
  assert.deepEqual(shard.strategy,{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7,8]}});
- assert.deepEqual(fresh.steps.slice(setup.length,-1),canonical);assert.equal(shard.steps.length,setup.length+2);
+ const currentCanonical=canonical.map(step=>({...step,run:step.run.replace('node scripts/translate-router.mjs --check','node scripts/translate-router-with-draft-custody.mjs --check')}));
+ assert.deepEqual(currentCanonical.map(step=>({...step,run:step.run.replace('node scripts/translate-router-with-draft-custody.mjs --check','node scripts/translate-router.mjs --check')})),canonical);
+ assert.deepEqual(fresh.steps.slice(setup.length,-1),currentCanonical);assert.equal(shard.steps.length,setup.length+2);
  assert.equal(fresh.steps.length,setup.length+canonical.length+1);
  assert.equal(fresh.env.ROUTER_BULK_DRAFT_DIRECTORY,'js/node_modules/.bulk-drafts');
  assert.equal(fresh.steps.at(-1).with.name,'bulk-drafts-${{ inputs.sha }}');
@@ -96,7 +98,7 @@ test('every forward shard and independent canonical check preserve complete hist
  assert.equal(shard.steps.at(-1).with.name,upload.with.name+'-${{ matrix.shard }}');
  for(const strategy of [undefined,{'fail-fast':true,matrix:{shard:[1,2,3,4,5,6,7,8]}},{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7]}},{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7,8],exclude:[{shard:2}]}},{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7,8],include:[{shard:9}]}}])fails('javascript-first.yml',workflow=>{workflow.jobs.translation.strategy=strategy;},'exact exhaustive eight');
  fails('javascript-first.yml',workflow=>{workflow.jobs.translation.steps.at(-1).with.name=upload.with.name;},'evidence uploader');
- for(const command of canonical.map(step=>step.run)){
+ for(const command of currentCanonical.map(step=>step.run)){
   fails('javascript-first.yml',workflow=>{workflow.jobs['translation-freshness'].steps.push({run:command});},'exactly once');
   fails('javascript-first.yml',workflow=>{workflow.jobs.translation.steps.splice(-1,0,{run:command});},'freshness must remain independent');
  }
@@ -112,7 +114,7 @@ test('canonical draft custody only permits the exact complete data uploader and 
   job=>{job.steps.at(-1)['continue-on-error']=true;},job=>{job.steps.at(-1).run='true';},
  ])fails('javascript-first.yml',workflow=>operation(workflow.jobs['translation-freshness']),'canonical draft custody missing');
  for(const operation of [step=>{step.if='${{ always() }}';},step=>{step['continue-on-error']=true;}])
-  fails('javascript-first.yml',workflow=>operation(workflow.jobs['translation-freshness'].steps.find(step=>step.run==='node scripts/translate-router.mjs --check')),'checks cannot be conditional');
+  fails('javascript-first.yml',workflow=>operation(workflow.jobs['translation-freshness'].steps.find(step=>step.run==='node scripts/translate-router-with-draft-custody.mjs --check')),'checks cannot be conditional');
 });
 test('locked repository dependencies are installed before every consuming stage, including forward and profile checks', () => {
   const jobs = parse(baseline['javascript-first.yml']).jobs;
