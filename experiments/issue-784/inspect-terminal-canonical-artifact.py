@@ -3,6 +3,7 @@
 Every nested output is decoded and checked. Retain the complete original
 manifest and member receipts; this is inspection, not source/archive custody.
 """
+import argparse
 import gzip
 import hashlib
 import io
@@ -13,15 +14,24 @@ import subprocess
 import zipfile
 
 base = Path('ci-logs/issue-784-restart-2')
-snapshot = base / 'current-matrix-artifacts-final.json'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--snapshot', default='current-matrix-artifacts-final.json')
+parser.add_argument('--artifact', type=int, default=13665817864)
+parser.add_argument('--head', default='52e2c0461f00e79a1dcd04b475138acd3ec28d17')
+parser.add_argument('--merge', default='6c424f706e91fe1b3b9c46e3109659b871b6011f')
+parser.add_argument('--run', type=int, default=42596515451)
+parser.add_argument('--output', default='current-52e2c04-canonical-inspection.json.gz')
+args = parser.parse_args()
+assert '/' not in args.snapshot and '/' not in args.output
+assert all(re.fullmatch('[0-9a-f]{40}', value) for value in [args.head, args.merge])
+snapshot = base / args.snapshot
 artifact = next(row for page in json.loads(snapshot.read_bytes())
-                for row in page['artifacts'] if row['id'] == 13665817864)
-head = '52e2c0461f00e79a1dcd04b475138acd3ec28d17'
-merge = '6c424f706e91fe1b3b9c46e3109659b871b6011f'
+                for row in page['artifacts'] if row['id'] == args.artifact)
+head, merge = args.head, args.merge
 assert artifact['name'] == 'bulk-drafts-' + merge
-assert artifact['size_in_bytes'] == 58475751 and not artifact['expired']
-assert artifact['digest'] == 'sha256:c1f5636a1833c8b8ca022d00884bf56856f792dac592bcadd064ef02bcce4aad'
-target = base / 'current-52e2c04-canonical-inspection.json.gz'
+assert 0 < artifact['size_in_bytes'] <= 64 * 1024 * 1024 and not artifact['expired']
+assert re.fullmatch('sha256:[0-9a-f]{64}', artifact['digest'])
+target = base / args.output
 assert not target.exists()
 buffer = io.BytesIO()
 child = subprocess.Popen(['gh', 'api', 'repos/link-assistant/router/actions/artifacts/'
@@ -102,7 +112,7 @@ with zipfile.ZipFile(buffer) as archive:
     assert not declared and expected == set(archive.namelist())
     assert total == manifest['completeBytes'] == manifest['plan']['expectedBytes']
 record = dict(schema='terminal-canonical-artifact-inspection-v1', headSha=head, mergeSha=merge,
-              runId=42596515451, metadata=artifact, archiveSha256=archive_hash,
+              runId=args.run, metadata=artifact, archiveSha256=archive_hash,
               archiveRetained=False, completeOriginalManifest=manifest, members=members,
               completeBytes=total, allNestedCrcSha256AndCensusVerified=True,
               inventoryEqualsActualPlanManifest=True, currentWorkingTreeFreshnessProved=False,

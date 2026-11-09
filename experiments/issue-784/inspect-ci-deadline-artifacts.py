@@ -22,12 +22,17 @@ args = parser.parse_args()
 assert args.output.parent == Path('ci-logs/issue-784-restart-2')
 assert not args.output.exists()
 pages = json.loads(args.snapshot.read_bytes())
+if isinstance(pages, dict):
+    pages = [pages]
 artifacts = [row for page in pages for row in page['artifacts']]
 records = []
 excluded = []
 previous = {}
 if args.previous_snapshot:
-    previous = {row['id']: row for page in json.loads(args.previous_snapshot.read_bytes())
+    previous_pages = json.loads(args.previous_snapshot.read_bytes())
+    if isinstance(previous_pages, dict):
+        previous_pages = [previous_pages]
+    previous = {row['id']: row for page in previous_pages
                 for row in page['artifacts'] if row['name'].startswith('node-case-deadlines-')}
 reused = []
 for artifact in artifacts:
@@ -70,7 +75,7 @@ for artifact in artifacts:
             members.append({'path': member.filename, 'bytes': length,
                             'sha256': digest.hexdigest(), 'crc': member.CRC})
             basename = member.filename.rsplit('/', 1)[-1]
-            selected_json = basename in ['case-deadlines.json', 'summary.json', 'progress.json', 'terminal.json']
+            selected_json = basename in ['case-deadlines.json', 'summary.json', 'progress.json', 'terminal.json', 'receipt.json']
             if member.filename.endswith('.json') and (not args.receipts_only or selected_json):
                 assert member.file_size < 16 * 1024 * 1024
                 reports.append({'path': member.filename,
@@ -93,7 +98,7 @@ document = {'schema': 'bounded-ci-deadline-inspection-v1', 'snapshot': str(args.
              'previousSnapshot': str(args.previous_snapshot) if args.previous_snapshot else None,
              'previouslyInspectedArtifacts': reused, 'receiptsOnly': args.receipts_only,
              'scope': 'Whole new ZIP members were decoded and CRC-checked. '
-                      + ('Only selected complete deadline/summary/progress/terminal JSON receipts and '
+                      + ('Only selected complete deadline/summary/progress/terminal/Bun JSON receipts and '
                          'complete stderr raw logs retained; other original JSON is not retained. '
                          if args.receipts_only else 'Complete original JSON reports retained; raw logs discarded. ')
                       + 'Source copies and ZIP bytes were inspected and discarded, not retained. '
