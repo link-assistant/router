@@ -40,8 +40,8 @@ both complete halves. No source or semantic verdict is cached across calls.
 | Five CST/project/payload/Schemars files, Node | 36/36 assertions pass; original ClientKind deadline fails | CST/native packet; `complete-y5tzIi` |
 | Original four AffinityDestination/InstallDocumentResult owner proofs | 52.203 s, within unchanged 60 s deadline | Same complete five-file attempt |
 | Original ClientKind owner proof | 279.719 s, exceeding unchanged 60 s deadline | Same complete five-file attempt |
-| Seven current ingress/native-control files, Node | 42/42 assertions and all original deadlines pass; 67.079 s; sampled cgroup peak 1,587,695,616 B | Current local `complete-eqMSiA`; later than the two packets |
-| Six current project/matches/CST files, Bun 1.4.4 | 38/38 cases and unchanged finite deadlines pass | Current local `current-project-ingress-bun-2.json.gz`; later than the two packets |
+| Seven current ingress/native-control files, Node | 42/42 assertions and all original deadlines pass; 67.079 s; sampled cgroup peak 1,587,695,616 B | Native repair packet; `complete-eqMSiA` |
+| Six current project/matches/CST files, Bun 1.4.4 | 38/38 cases and unchanged finite deadlines pass | Native repair packet; `current-project-ingress-bun-2.json.gz` |
 
 The earlier five-file matches results precede project CST batching. The final
 42-case attempt repeats those complete matches files with the new CST controls
@@ -66,12 +66,14 @@ Both are diagnostics, not deadline qualification. The actual shared proof costs
 remain unresolved; no owner or output proof was skipped.
 
 Private native TypeScript inference reuse has separate input-change controls.
-The complete original receiving file passes all 12 assertions at a 1 GiB heap,
-including the shared Node/Bun runtime suite, but its four-build regeneration
+The complete original file and three input-change cases pass all 12 assertions
+at a 1 GiB heap, including the shared Node/Bun runtime suite, but the four-build regeneration
 case still takes 88.139 s against 60 s. The whole attempt takes 331.425 s with
 sampled cgroup peak 2,607,783,936 B. The independent audit `complete-YUsQtE`
 correctly fails that deadline. A 512 MiB attempt exhausts V8; it is not a pass.
-Later allocation and transaction-packing drafts require new qualification.
+The [later native repair report](native-regeneration-receiving-20261109.md)
+records the allocation and transaction-packing follow-up and its remaining
+original deadline failure.
 
 Full CSV, current canonical/profile/owned generation, the private compiler's
 4 MiB source closure, strict parity, the complete local gate and same-head CI

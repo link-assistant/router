@@ -12,7 +12,7 @@ import tarfile
 
 root = Path.cwd()
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--group', choices=['clone', 'cst-native'], required=True)
+parser.add_argument('--group', choices=['clone', 'cst-native', 'native-reuse'], required=True)
 args = parser.parse_args()
 base = Path('ci-logs/issue-784-restart-2')
 attempts = Path('js/node_modules/.node-case-deadlines')
@@ -46,6 +46,10 @@ prefixes = ['current-payload-original-profile-',
             'current-native-ts-reuse-receiving-', 'current-client-kind-profile-']
 if args.group == 'clone':
     prefixes = ['current-clone-']
+if args.group == 'native-reuse':
+    prefixes = ['current-native-ts-allocation-', 'current-native-ts-packing-',
+                'current-native-ts-packed-', 'current-ingress-native-controls-',
+                'current-project-ingress-bun-']
 retire = sorted({p for prefix in prefixes for p in base.glob(prefix + '*')
                  if p.is_file()})
 selected_attempts = ['complete-g09iRd', 'complete-2pE6rh',
@@ -54,6 +58,9 @@ selected_attempts = ['complete-g09iRd', 'complete-2pE6rh',
 if args.group == 'clone':
     selected_attempts = ['complete-T6inPf', 'complete-qKJJU2', 'complete-nsRxwS',
                          'complete-Xif0PK', 'complete-PbrQA0']
+if args.group == 'native-reuse':
+    selected_attempts = ['complete-i9c6Hr', 'complete-eqMSiA',
+                         'complete-IIHo7E', 'complete-tAfA7B', 'complete-wjqhwC']
 for name in selected_attempts:
     directory = attempts / name
     assert (directory / 'terminal.json').is_file(), 'Only complete closed attempts'

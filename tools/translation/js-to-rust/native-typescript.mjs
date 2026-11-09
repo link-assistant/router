@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, mkdirSync, writeFileSync, rmSync, symlinkSync, cpSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { inferenceProgram, returnHint, localHint, typeNode, dynamicIndex } from './native-inference.mjs';
+import { inferenceProgram, createInferenceProgramReuse, returnHint, localHint, typeNode, dynamicIndex } from './native-inference.mjs';
 import {createRulePipeline} from '../rule-pipeline.mjs';
 import {prepareReverseConcreteSource} from './concrete-source.mjs';
 
@@ -322,34 +322,46 @@ function serializeBuild(ts, sourceFile, checker) {
     }
     if (ts.isVariableDeclaration(node)) locals.push(localHint(ts, checker, node));
     if (ts.isElementAccessExpression(node)) indices.push(dynamicIndex(ts, checker, node));
-    const gap={};
+    let gap=null;
     if(checker) {
-      const propertyName=node.parent && (ts.isPropertyAccessExpression(node.parent)&&node.parent.name===node || ts.isPropertyAssignment(node.parent)&&node.parent.name===node || ts.isBindingElement(node.parent)&&node.parent.propertyName===node);
-      if(ts.isIdentifier(node) && !propertyName && ts.isInExpressionContext(node) && !ts.isDeclarationName(node) && !checker.getSymbolAtLocation(node)) globalGaps.add(node.text);
-      if(ts.isIdentifier(node) && !propertyName && !ts.isDeclarationName(node) && loopBindings.has(checker.getSymbolAtLocation(node)))gap.loopBinding=true;
+      if(ts.isIdentifier(node)){
+        const propertyName=node.parent && (ts.isPropertyAccessExpression(node.parent)&&node.parent.name===node || ts.isPropertyAssignment(node.parent)&&node.parent.name===node || ts.isBindingElement(node.parent)&&node.parent.propertyName===node);
+        if(!propertyName&&!ts.isDeclarationName(node)){
+          const symbol=checker.getSymbolAtLocation(node);
+          if(ts.isInExpressionContext(node)&&!symbol)globalGaps.add(node.text);
+          if(loopBindings.has(symbol))(gap??={}).loopBinding=true;
+        }
+      }
       if(ts.isCallExpression(node) && !ts.isOptionalChain(node) && ![ts.SyntaxKind.ImportKeyword,ts.SyntaxKind.SuperKeyword].includes(node.expression.kind)) {
-        const signature=checker.getResolvedSignature(node),parameters=signature?.getParameters()??[];
-        const formal=signature?.declaration?.parameters;
-        const rest=formal?formal.at(-1)?.dotDotDotToken:parameters.at(-1)?.declarations?.some(declaration=>declaration.dotDotDotToken);
-        // The JS checker can infer extra parameters from callers. The emitted
-        // declaration still has the original formal list, so compare that list.
-        if(node.arguments.length>(formal?.length??parameters.length) && !rest || ts.isPropertyAccessExpression(node.expression) && node.expression.name.text==='bind') gap.call=true;
+        if(ts.isPropertyAccessExpression(node.expression)&&node.expression.name.text==='bind')(gap??={}).call=true;
+        else if(node.arguments.length){
+          const signature=checker.getResolvedSignature(node),parameters=signature?.getParameters()??[];
+          const formal=signature?.declaration?.parameters;
+          const rest=formal?formal.at(-1)?.dotDotDotToken:parameters.at(-1)?.declarations?.some(declaration=>declaration.dotDotDotToken);
+          // Preserve the original formal-list check. Zero arguments cannot
+          // exceed its length; bind keeps its unconditional original gap.
+          if(node.arguments.length>(formal?.length??parameters.length)&&!rest)(gap??={}).call=true;
+        }
       }
       if(ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression)) {
         const symbol=checker.getSymbolAtLocation(node.expression);
-        if(symbol?.declarations?.some(declaration=>declaration.getSourceFile().isDeclarationFile))gap.globalProperty=true;
+        if(symbol?.declarations?.some(declaration=>declaration.getSourceFile().isDeclarationFile))(gap??={}).globalProperty=true;
+        if(reassignedBindings.has(symbol)&&checker.getTypeAtLocation(node.expression).flags&ts.TypeFlags.Any)(gap??={}).globalProperty=true;
       }
-      if(ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) && reassignedBindings.has(checker.getSymbolAtLocation(node.expression)) && checker.getTypeAtLocation(node.expression).flags&ts.TypeFlags.Any)gap.globalProperty=true;
       if(ts.isBinaryExpression(node)) {
-        if(ts.isAssignmentOperator(node.operatorToken.kind) && ts.isIdentifier(node.left))gap.assignment=true;
-        if(node.operatorToken.kind===ts.SyntaxKind.PlusToken && [node.left,node.right].some(value=>checker.getTypeAtLocation(value).flags & ts.TypeFlags.BooleanLike))gap.coercion=true;
-        if([node.left,node.right].some(value=>ts.isStringLiteralLike(value)&&value.text==='unknown') && [node.left,node.right].some(ts.isTypeOfExpression))gap.coercion=true;
+        if(ts.isAssignmentOperator(node.operatorToken.kind) && ts.isIdentifier(node.left))(gap??={}).assignment=true;
+        if(node.operatorToken.kind===ts.SyntaxKind.PlusToken && (checker.getTypeAtLocation(node.left).flags&ts.TypeFlags.BooleanLike||checker.getTypeAtLocation(node.right).flags&ts.TypeFlags.BooleanLike))(gap??={}).coercion=true;
+        if((ts.isStringLiteralLike(node.left)&&node.left.text==='unknown'||ts.isStringLiteralLike(node.right)&&node.right.text==='unknown') && (ts.isTypeOfExpression(node.left)||ts.isTypeOfExpression(node.right)))(gap??={}).coercion=true;
       }
     }
-    if(Object.keys(gap).length)gaps.push({kind:node.kind,occurrence,...gap});
+    if(gap)gaps.push({kind:node.kind,occurrence,...gap});
     count++;
-    const children = node.getChildren(sourceFile).map(encode).filter(Boolean);
-    if (children.length) return [node.kind, children];
+    const syntaxChildren=node.getChildren(sourceFile);
+    if(syntaxChildren.length){
+      const children=[];
+      for(const child of syntaxChildren){const encoded=encode(child);if(encoded!==null)children.push(encoded);}
+      if(children.length)return [node.kind,children];
+    }
     const start = node.getStart(sourceFile);
     const text = sourceFile.text.slice(start, node.end);
     if (!text || node.kind === ts.SyntaxKind.EndOfFileToken) return [node.kind, []];
@@ -463,21 +475,31 @@ export function compileNativeTypeScript(outputRoot, { sourceRoot = outputRoot, o
 import {prepareReverseConcreteParsedSourceChunks,assertReverseConcreteSourceHost} from './concrete-source.mjs';
 function* nativeRegenerationParsedConcreteSources(sourceRoot, paths) {
   const originals=[];
+  const transport=rows=>{
+    let result;
+    try{result=prepareReverseConcreteParsedSourceChunks([rows.map(row=>({source:row.source,language:'JavaScript'}))]);}
+    catch(error){
+      // Packing never enlarges the native aggregate bounds. Discard a failed
+      // transaction and transport both complete halves from source again.
+      if(rows.length<2||Object.getOwnPropertyDescriptor(error,'message')?.value!=='Private parser execution: corpus aggregate node/canonical budget')throw error;
+      const middle=Math.floor(rows.length/2);
+      return [...transport(rows.slice(0,middle)),...transport(rows.slice(middle))];
+    }
+    if(result.chunks.length!==1||result.chunks[0].stages.length!==rows.length)throw new Error('native concrete source-origin chunk shape differs');
+    return result.chunks[0].stages;
+  };
   let cursor=0;
   while(cursor<paths.length) {
     const rows=[];let units=0;
-    while(cursor<paths.length && rows.length<16) {
+    while(cursor<paths.length && rows.length<64) {
       const path=paths[cursor],source=readFileSync(join(sourceRoot,path),'utf8');
-      if(rows.length && units+source.length>65536)break;
+      if(rows.length && units+source.length>262144)break;
       rows.push({path,source});units+=source.length;cursor++;
-      if(units>=65536)break;
+      if(units>=262144)break;
     }
-    const result=prepareReverseConcreteParsedSourceChunks([rows.map(row=>({source:row.source,language:'JavaScript'}))]);
-    if(result.chunks.length!==1)throw new Error('native concrete source-origin chunk count differs');
-    const batch=result.chunks[0];
-    if(batch.stages.length!==rows.length)throw new Error('native concrete batch row count differs');
+    const stages=transport(rows);
     for(let at=0;at<rows.length;at++) {
-      const row=rows[at],source=batch.stages[at].source;
+      const row=rows[at],source=stages[at].source;
       assertReverseConcreteSourceHost();
       if(source!==row.source || readFileSync(join(sourceRoot,row.path),'utf8')!==source)throw new Error('native concrete source snapshot differs for '+row.path);
       originals.push(row);yield {path:row.path,source};
@@ -497,13 +519,14 @@ function parseBuildReconstructedNativeJavaScript(ts, path, source, { file: infer
   return { schema: 'native-js-syntax-ast-v1', compiler: ts.version, path, sourceSha256: hash(source), ...serializeBuild(ts, file, checker) };
 }
 
+const regenerationInference=createInferenceProgramReuse();
 function buildNativeTypeScriptForRegeneration(sourceRoot) {
   const ts = loadTypeScript(sourceRoot);
   const paths = sourceModules(sourceRoot);
   if (!paths.some((path) => path.startsWith('js/src/'))) throw new Error('native JavaScript source modules are missing');
   const artifacts = new Map();
   const rows = [];
-  const inference = inferenceProgram(ts, sourceRoot, paths);
+  const inference = regenerationInference(ts, sourceRoot, paths);
   for (const {path,source} of nativeRegenerationParsedConcreteSources(sourceRoot, paths)) {
     const meta = parseBuildReconstructedNativeJavaScript(ts, path, source, { file: inference.program.getSourceFile(join(sourceRoot, path)), checker: inference.checker });
     const metaText = `${JSON.stringify(meta)}\n`;
@@ -527,6 +550,7 @@ function buildNativeTypeScriptForRegeneration(sourceRoot) {
   // declaration context so isolated source snapshots can reproduce it.
   const loadedDeclarations = new Set(inference.program.getSourceFiles().filter(file => file.isDeclarationFile).map(file => resolve(file.fileName)));
   const inferenceInputs = ['js/package.json', ...readdirSync(join(sourceRoot, 'js')).filter(name => name.endsWith('.d.ts')).sort().map(name => `js/${name}`)].map(path => ({ path, sha256: hash(readFileSync(join(sourceRoot, path))), role: path.endsWith('.d.ts') ? 'public-declaration' : 'package-resolution', resolvedByCompiler: path.endsWith('.d.ts') ? loadedDeclarations.has(resolve(sourceRoot, path)) : true }));
+  inference.assertInputsCurrent();
   const sourcePackage = JSON.parse(readFileSync(join(sourceRoot, 'js/package.json'), 'utf8'));
   artifacts.set('ts/package.json', `${JSON.stringify({ name: '@link-assistant/router-typescript-draft', version: sourcePackage.version, private: true, type: 'module', engines: sourcePackage.engines, exports: { '.': './dist/index.js', './native': './dist/src/index.js', './testing': './dist/testing.js' }, scripts: { build: 'node ../scripts/check-native-typescript.mjs --out-dir ts/dist' }, dependencies: sourcePackage.dependencies, devDependencies: sourcePackage.devDependencies }, null, 2)}\n`);
   artifacts.set('ts/tsconfig.native.json', `${JSON.stringify({ compilerOptions: { strict: true, target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', skipLibCheck: true, useDefineForClassFields: false, verbatimModuleSyntax: true, outDir: 'dist', rootDir: '.', declaration: true }, include: ['index.ts', 'testing.ts', 'src/**/*.ts', 'portable/**/*.ts'] }, null, 2)}\n`);

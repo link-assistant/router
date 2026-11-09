@@ -15,7 +15,8 @@ the complete job/workflow sets, all available raw log hashes and every artifact
 identity. Canonical production coverage remains 158/2,578 executable functions,
 with 2,420 carried; no current-working-tree freshness or full parity is claimed.
 The Clone source layer is installed locally through its complete three-source
-equation. Its focused receiving files qualify; it remains uncommitted.
+equation. Its focused receiving files qualify; local source checkpoint
+`dea446951` preserves the complete Clone, matches and project CST batch.
 The complete fourth attempt was stopped and reaped after source review found
 an invalid phase-label list. The fifth attempt passes all 48 whole-file Node
 assertions and independent source deadlines (388.598 seconds, peak sampled
@@ -56,8 +57,9 @@ No full-gate or complete-parity claim is made.
       seconds, dominated by inference-backed serialization (13.458 seconds).
 - [x] Draft private inference reuse with complete fresh host/source observations.
       All three actual invalidation regressions pass. The first complete original
-      receiving attempt exhausts its 512 MiB heap before the fifth original case,
-      before private reuse is reached; later original cases are unrun.
+      receiving attempt exhausts its 512 MiB heap before the fifth original
+      report. Buffered TAP does not identify the active case at that instant;
+      neither later original cases nor private reuse are qualified by that run.
 - [ ] Qualify the unchanged native TypeScript file and its original 60-second
       regeneration limit. At a 1 GiB heap all 12 assertions pass, including the
       complete shared Node/Bun runtime checks, but regeneration still takes
@@ -94,8 +96,18 @@ No full-gate or complete-parity claim is made.
       full fresh-half retries after aggregate refusal. All five whole Node
       inference/packing controls and their finite deadlines pass in 20.485
       seconds, peak sampled cgroup 1,680,371,712 bytes (`complete-IIHo7E`).
-- [ ] Qualify current native packing against complete production regeneration,
-      the unchanged original native TypeScript file and full JavaScript gate.
+- [x] Recheck complete production regeneration after native packing: zero changed
+      or unexpected artifacts. Warmup takes 35.930 seconds, profiled repeat
+      19.299 seconds; these remain diagnostics, not deadline qualification.
+- [x] Run all six whole native inference/packing controls with unchanged 60 s
+      limits: Node passes in 36.480 seconds, sampled cgroup peak 1,824,276,480 B;
+      Bun passes all six, with dense aggregate retry taking 23.469 seconds.
+- [ ] Qualify the unchanged original native TypeScript file and full gate. The
+      complete nine-case Node file passes every assertion and shared runtime
+      check, but its original regeneration case takes 75.809 seconds against
+      60 seconds. The whole attempt takes 310.760 seconds, sampled cgroup peak
+      2,697,969,664 B, no resource guard stop (`complete-wjqhwC`). Do not infer
+      completion from the semantic passes or the earlier 88.139-second result.
 - [x] Repeat current combined project ingress under Bun: all 38 cases in six
       whole files pass with unchanged finite deadlines and complete selected
       input identities (`current-project-ingress-bun-2.json.gz`).
