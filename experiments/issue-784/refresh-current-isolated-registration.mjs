@@ -5,6 +5,7 @@ import {join,resolve} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
+import {spawnSync} from 'node:child_process';
 import {prepareIsolatedProjectCompiler} from '../../tools/translation/prepare-isolated-project-compiler.mjs';
 import {preparePortableGitFixtureProposal,readPortableGitFixture} from '../../tools/translation/prepare-portable-git-fixtures.mjs';
 import {transportConcreteSourcePhases} from '../../tools/translation/concrete-phased-equations.mjs';
@@ -40,6 +41,18 @@ try{
   if(!state.isFile()||state.isSymbolicLink()||bytes.length!==row.bytes||hash(bytes)!==row.sha256||(state.mode&0o111?'100755':'100644')!==row.mode)throw Error('Complete current physical compiler differs: '+row.path);
  }
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')throw Error('Lockfile TypeScript 5.9.3 required');
+ const nativeSyntax=[];
+ for(const [engine,args]of [[process.execPath,['--input-type=module','--check']],['bun',['-e',"new Bun.Transpiler({loader:'js',target:'bun'}).scan(await Bun.stdin.text())"]]]){
+  for(const [name,source,expected]of [
+   ['duplicate-binding','let duplicate; let duplicate;',false],
+   ['inert-import','import "./unavailable-never-resolved.mjs"; throw Error("must not execute");',true],
+   ...['parent-before.mjs','isolated-project-batch.mjs','driver-before.mjs','isolated-project-driver.mjs'].map(name=>[name,get(name).toString('utf8'),true]),
+  ]){
+   const result=spawnSync(engine,args,{input:source,encoding:'utf8',maxBuffer:1048576});
+   nativeSyntax.push({engine,args,name,sha256:hash(Buffer.from(source)),expected,status:result.status,signal:result.signal,stdout:result.stdout,stderr:result.stderr});
+   if((result.status===0)!==expected||result.signal||result.error)throw Error('Complete native syntax check/control differs: '+name+' '+engine);
+  }
+ }
  const equations=transportConcreteSourcePhases([
   ['parent-before.mjs','isolated-project-batch.mjs'],['driver-before.mjs','isolated-project-driver.mjs'],
  ].map(([before,after])=>{
@@ -66,7 +79,7 @@ try{
  for(const row of portable.files){const bytes=Buffer.from(row.content,'base64');fs.writeFileSync(row.path,bytes);if(!fs.readFileSync(row.path).equals(bytes))throw Error('Complete installed portable fixture differs');installed.push(record(row.path,bytes));}
  for(const row of registry.sources)if(hash(fs.readFileSync(row.path))!==row.sha256)throw Error('Complete current compiler changed during installation');
  const result={schema:'complete-reviewed-isolated-registration-refresh-v1',sourceHead:captured.revision,oldSourceHead:original.sourceHead,
-  beforeFiles,installed,history:record(archive,fs.readFileSync(archive)),equations,portable,
+  beforeFiles,installed,history:record(archive,fs.readFileSync(archive)),equations,portable,nativeSyntax,
   files:registry.files,totalSourceBytes:registry.totalBytes,portableObjects:checked.objects.size,
   oldConcreteProfileUnchanged:true,wholeReceivingTestsPassed:false,productionExecutableGain:0,semanticAuthority:false,runtimeParity:false};
  const raw=Buffer.from(JSON.stringify(result));if(raw.length>32*1024*1024)throw Error('Finite complete refresh evidence bound');

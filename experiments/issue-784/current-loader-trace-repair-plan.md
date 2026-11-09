@@ -41,8 +41,10 @@ remains active. This source batch does not complete the issue or qualify parity.
 - [x] Preserve the entire terminal CI failure log set and artifact metadata;
   inspect all new deadline archives and all canonical outputs with CRC/hash
   joins. Keep source/archive custody distinct from bounded inspection.
-- [ ] Record the coherent source and evidence batch in a checkpoint commit;
-  refresh actual compiler registration and genuine portable Git fixtures.
+- [x] Record coherent source and evidence checkpoint `ce212a05d`; independently
+  reproduce and refresh actual compiler registration and genuine portable Git
+  fixtures, with native grammar/control checks before installation. Receiving
+  qualification and the mandatory full gate remain separate.
 - [ ] Resolve all generated output, semantic, strict parity and original
   deadline failures; run the complete mandatory local gate for the final SHA.
 - [ ] Verify every requested tool/account geolocation criterion and same-SHA

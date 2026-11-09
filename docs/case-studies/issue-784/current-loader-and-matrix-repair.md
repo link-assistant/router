@@ -99,3 +99,13 @@ complete original manifest is retained. The 58,475,751-byte ZIP and output
 sources were inspected in bounded memory and discarded; this is inspection,
 not custody of the ZIP or generated output bytes. It qualifies neither current
 working-tree freshness nor parity.
+
+The subsequent isolated compiler proposal captures committed source
+`ce212a05d917fd39b3d236c4043868ab519ca2f7`: 1,836 complete registered files
+and 58,061,712 source bytes. An independent invocation reproduces all seven
+proposal files before installation. Both native engines check the complete
+bootstrap before/after modules and duplicate-binding/inert-import controls
+before writing. The genuine portable Git fixture is regenerated and read back;
+its original concrete profile stays byte-equivalent. This source registration
+does not establish receiving-test or full-gate success. The complete preceding
+registration remains in its own historical source archive.
