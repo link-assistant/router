@@ -24,6 +24,10 @@ Objective: implement and verify all requirements in PR #785 on
 - [x] Preserve the complete published canonical draft and verify all 2,873 inner
       outputs. Its 158 executable production functions do not establish current
       working-tree freshness, complete parity or a passing gate.
+- [x] Attempt the unchanged complete local gate on clean `b7f8826b1` with
+      384 MiB child heaps. Retain initial headroom refusal, fingerprint memory
+      stop and final whole-fingerprint/lint success followed by the unchanged
+      native Node memory stop; all later stages remain unrun.
 - [ ] Collect the entire `74f62c037` CI cycle, every completed failure, complete
       job logs and artifacts before publishing the reviewed repair batch.
 - [ ] Resolve all remaining semantics, missing outputs, original deadlines and
