@@ -38,6 +38,19 @@ Objective: implement and verify all requirements in PR #785 on
 - [x] Retire 26 exact inactive copies of already published prior-cycle ZIPs
       after remote Git tree joins and complete local/published blob comparison.
       Immutable links retain all originals; reclaim 97,015,237 logical bytes.
+- [x] Inspect all 25 terminal current CI artifacts; retain complete selected
+      reports, stderr and original manifests. Every canonical nested member is
+      checked; its discarded source bytes receive no custody claim. Preserve
+      the 131-file custody manifest and the unavailable forward-shard-7 log.
+- [x] Run the complete local gate at clean `ef601cec`: lint, both 259-case
+      native suites, ten deadline controls, native TypeScript compilation and
+      all 121 acceptance cases pass. The original TypeScript drift deadline and
+      strict parity fail. All 697 forward sources are prepared before the memory
+      guard interrupts execution at 2,870,001,664 cgroup bytes after 3,242.428
+      seconds. Reverse is unrun; all owned processes are reaped; no green stamp.
+- [ ] Qualify the uninstalled Clone enclosing-only grammar against original
+      whole receiving files. Source equations/syntax checks grant no namespace,
+      method execution, executable coverage or gate authority.
 - [ ] Resolve all remaining actual deadlines, missing owned-matrix outputs,
       reverse freshness, private compiler bounds and executable parity obligations.
       Keep every original acceptance criterion open until fully verified.

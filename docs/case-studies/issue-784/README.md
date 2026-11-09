@@ -3,6 +3,12 @@
 Research and verification dates: 2026-11-06–09 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [terminal 02bf28e5 CI review](current-02bf-ci-review.md) preserves every
+available failed/cancelled log, the unavailable-log response and all artifact
+inspection boundaries. The [full ef601cec local gate](current-ef601-gate.md)
+passes lint, both native suites and acceptance, but fails TypeScript deadlines
+and strict parity before a memory interruption. Complete CI and parity remain open.
+
 The [current compiler cost investigation](current-compiler-cost-investigation.md)
 records actual reverse freshness repair, a reverted deadline-failing trial and
 the still-unresolved private compiler source bound. The
