@@ -114,3 +114,22 @@
 One resource-intensive workload runs at a time. No workers, clones or local
 Rust tools. Evidence stays below 500,000,000 bytes with complete verified
 retention; no existing bound, test body, original deadline or gate is relaxed.
+
+- [x] Finish and collect the entire published `f86824ea` cycle: 59 jobs,
+  11 successes, 15 failures, eight cancellations and 25 skips; all seven
+  workflows terminal. Verify the actual tested merge tree against that head.
+  Retain 23 nonpassing responses, all 22 available complete logs, 24 artifact
+  ZIPs / 428 members and the complete 206-member whole-run ZIP by rename.
+  Forward shard 4 has no available log or artifact; preserve both endpoint
+  failures and its absence from the complete ZIP as an explicit gap.
+- [x] Read the available complete failure set and all 20 Node audit members,
+  distinguish deliberate child controls from actual parent failures, and
+  inspect all six complete Bun receipts and their actual per-file outcomes.
+- [ ] Publish the reviewed custody/root/layer batch only to the prepared
+  branch, update the draft PR with the complete current inventory, then wait
+  for its entire CI cycle while drafting independent repairs.
+- [ ] Independently review and install actual canonical computed outputs when
+  available, produce all original owned/profile sidecars, resolve original
+  semantic and performance failures, and pass the unchanged strict parity and
+  every same-SHA stage. Current source inventory and 441 parity gaps remain
+  fatal; a custody artifact supplies data only.
