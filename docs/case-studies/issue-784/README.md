@@ -89,6 +89,10 @@ custody, native source-history and workflow controls pass; both whole Bun
 receiving attempts remain interrupted by the unchanged memory guard. The
 complete same-SHA gate and every unresolved CI obligation remain required.
 
+The [companion registry refresh](current-companion-registration.md) preserves
+the interrupted installer and exact restoration before a complete successful
+retry. Both whole receiving cohorts remain memory-interrupted and unqualified.
+
 Native forwarding intentionally preserved application headers. Network-origin
 headers were filtered, but location headers derived from those IPs were not.
 The pre-fix regression forwarded `CF-IPCountry: GB` and `X-Vercel-IP-City: London`.

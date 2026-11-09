@@ -17,8 +17,13 @@ Objective: implement and verify all requirements in PR #785 on
 - [x] Complete all three native source-copy cases under Node and all 38 workflow
       controls; reproduce both actual producer freshness checks. Preserve Bun's
       whole native source-copy interruption as unqualified.
-- [ ] Refresh the actual compiler registration and genuine portable Git fixture
+- [x] Refresh the actual compiler registration and genuine portable Git fixture
       for the complete integrated source batch, without editing generated text.
+      Retain the interrupted install, exact restoration and complete retry;
+      both whole receiving cohorts remain memory-interrupted and unqualified.
+- [x] Preserve the complete published canonical draft and verify all 2,873 inner
+      outputs. Its 158 executable production functions do not establish current
+      working-tree freshness, complete parity or a passing gate.
 - [ ] Collect the entire `74f62c037` CI cycle, every completed failure, complete
       job logs and artifacts before publishing the reviewed repair batch.
 - [ ] Resolve all remaining semantics, missing outputs, original deadlines and
