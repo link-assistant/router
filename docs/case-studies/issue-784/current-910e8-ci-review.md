@@ -7,12 +7,18 @@ and 25 skips. The tested merge `9aee5d5d6cdccdf5524b1646e5609f470aba4e83`
 has exactly the published commit's tree, `195a58ae0da7e1cbf556f9c0973221d547c78eae`.
 No running workflow was cancelled by this task.
 
-The [complete custody manifest](evidence/ci-910e8dad/manifest.json) retains
+The [complete custody manifest](https://github.com/link-assistant/router/blob/f86824ea2eff18895db3ea809373457ebeb66a83/docs/case-studies/issue-784/evidence/ci-910e8dad/manifest.json?raw=true) retains
 all 22 nonpassing responses, 21 available complete job logs, all 24 artifact
 ZIPs and every member of the 186-member whole-run ZIP. Every artifact and
 archive member was read completely and checked for length, SHA256 and CRC.
-The [failure index](evidence/ci-910e8dad/current-910e8-terminal-failure-index.json.gz)
+The [failure index](https://github.com/link-assistant/router/blob/f86824ea2eff18895db3ea809373457ebeb66a83/docs/case-studies/issue-784/evidence/ci-910e8dad/current-910e8-terminal-failure-index.json.gz?raw=true)
 indexes original log line numbers and all 21 deadline audit members.
+
+The [local retirement receipt](evidence/ci-910e8dad-local-retirement.json.gz)
+verifies all 143 published files against their complete immutable Git blobs
+and embeds all 18 otherwise unpublished collection transcripts. Only inactive
+task-owned published copies were removed: 39,805,148 logical bytes and
+40,022,016 allocated bytes. Every original remains available at that exact SHA.
 
 Forward shard 4, job `128924361849`, is a genuine diagnostic gap. Both job-log
 endpoint attempts returned `BlobNotFound`; its exact forward job is also absent
