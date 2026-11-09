@@ -9,13 +9,24 @@ This task did not cancel a run. Tested merge
 `afe800e74ed2c04b52fec97ccf7a97796b61157b` and the published commit have the
 same tree, `580ecff1a496c3213aa996e92c661f3ea268d1fe`.
 
-The [whole-container manifest](evidence/ci-1c235248/manifest.json) retains
+The [published whole-container manifest](https://github.com/link-assistant/router/blob/910e8dadfbf3f92490f2db19ed47c39d98af7077/docs/case-studies/issue-784/evidence/ci-1c235248/manifest.json) identifies
 every original intermediate and terminal observation, all 24 nonpassing job
 responses, 23 complete job logs, all 24 artifact ZIPs and the whole-run ZIP.
 Every complete original and ZIP member was read back and hash/CRC verified.
 The artifacts occupy 34,137,954 bytes; 21 original deadline-audit members were
 inspected. The whole-run ZIP contains 216 verified members. Moving the
 containers preserves their complete bytes without duplicate local copies.
+
+The [local retirement receipt](evidence/ci-1c235248-local-retirement.json.gz)
+keeps the complete original manifest, remote directory metadata and immutable
+links to 142 fully verified published files. The repository's `*.log` rule
+excluded 15 small collection transcripts from that publication; their complete
+bytes are embedded and verified in the receipt. All original gzip job streams
+and artifact ZIPs are published. The first retirement attempt correctly refused
+the directory mismatch before changing files. After explicit custody of those
+15 transcripts, only the 142 inactive, owned, exact published copies were
+retired: 37,965,925 logical / 38,178,816 allocated bytes. No source or test was
+deleted. The unavailable shard log remains unavailable.
 
 Cancelled forward shard 2, job `128901874825`, has no available whole job
 log. Its API response is `BlobNotFound`; a second exact-job attempt also
