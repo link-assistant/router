@@ -1,0 +1,28 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/project.mjs",
+  "phase": "repository",
+  "beforeSha256": "f4614977214aa63c213330bb3aae131de55c3661410e6ba6ae76ebc7cc7cd164",
+  "afterSha256": "0d6da8c4385692bef46bffc8b899ccaf7a85088603c6db79d553a47b68c0cb15",
+  "edits": [
+    {
+      "id": "router.project-matches-analysis-import.v1",
+      "before": "import {createMatchesMacroContext,createEnclosingMatchesMacroContext,configureMatchesMacroParser,originalMatchesNamespaceBindings,OriginalMethodOwnerUnproved,originalMethodParserNamespace} from './matches-macro-context.mjs';\n",
+      "after": "import {configureMatchesMacroParser,originalMatchesNamespaceBindings,OriginalMethodOwnerUnproved,originalMethodParserNamespace} from './matches-macro-context.mjs';\nimport {createProjectMatchesMacroContexts} from './project-matches-analysis-context.mjs';\n"
+    },
+    {
+      "id": "router.project-matches-analysis-contexts.v1",
+      "before": "  // Parser configuration reissues the same enclosing name domain.\n  // Actual impl methods lazily create their independent complete context.\n  const matchesMacroContext=createEnclosingMatchesMacroContext(matchesOptions);\n  let methodMatchesMacroContext=null;\n",
+      "after": "  // Parser and methods share one privately captured original project input.\n  // Each still checks its independent enclosing or complete namespace.\n  const matchesAnalysis=createProjectMatchesMacroContexts(matchesOptions);\n  const matchesMacroContext=matchesAnalysis.parser;\n  let methodMatchesMacroContext=null;\n"
+    },
+    {
+      "id": "router.project-matches-analysis-methods.v1",
+      "before": "          methodMatchesMacroContext??=createMatchesMacroContext(matchesOptions);\n",
+      "after": "          methodMatchesMacroContext??=matchesAnalysis.methods();\n"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

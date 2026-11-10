@@ -14,6 +14,8 @@ const profiles=[
    sha256:'f72a45665a7592f6047daad51a082ff0a11d5b9614a699be562a480e4bac76ff'},
  {url:new URL('../source-profiles/ordinary-parser-enclosing-namespace/source-rules.json',import.meta.url),
    sha256:'a2d5b73d7c2ed51234e4eae99c0381b6f51d32f948421fb47bea757684d7531f'},
+ {url:new URL('../source-profiles/project-matches-analysis/source-rules.json',import.meta.url),
+   sha256:'4b4692687b1e4726bede9a861bd08b4574341f571154b00d2f66efbafd0facf7'},
 ];
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('Project progress source history: '+message);};

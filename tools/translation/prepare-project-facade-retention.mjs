@@ -79,11 +79,15 @@ export function prepareProjectFacadeRetention({root=ROOT}={}){
    profile:new URL('./source-profiles/ordinary-parser-enclosing-namespace/source-rules.json',import.meta.url),
    profileSha256:'a2d5b73d7c2ed51234e4eae99c0381b6f51d32f948421fb47bea757684d7531f',path:PATH,source:ingressBoundary.after,
   });
-  const after=ordinaryParserEnclosing.after;
+  const projectMatchesAnalysis=derivePinnedRepositorySourceEvolution(ts,{
+   profile:new URL('./source-profiles/project-matches-analysis/source-rules.json',import.meta.url),
+   profileSha256:'4b4692687b1e4726bede9a861bd08b4574341f571154b00d2f66efbafd0facf7',path:PATH,source:ordinaryParserEnclosing.after,
+  });
+  const after=projectMatchesAnalysis.after;
  if(methodOwnerScope.inverse!==retained.language||retained.selection.completeNativeInverse!==before)fail('complete composed native inverse differs');
- if(ordinaryParserEnclosing.inverse!==ingressBoundary.after||ingressBoundary.inverse!==namespaceObserver.after||namespaceObserver.inverse!==namespaceComposition.after||namespaceComposition.inverse!==previousAfter)fail('complete namespace composition inverse differs');
- const selection={...retained.selection,methodOwnerScope,namespaceComposition,namespaceObserver,ingressBoundary,ordinaryParserEnclosing},current=readFileSync(resolve(root,PATH),'utf8');
- if(current!==before&&current!==retained.after&&current!==previousAfter&&current!==namespaceComposition.after&&current!==namespaceObserver.after&&current!==ingressBoundary.after&&current!==after)fail('complete physical project is neither original nor an exact derived output');
+ if(projectMatchesAnalysis.inverse!==ordinaryParserEnclosing.after||ordinaryParserEnclosing.inverse!==ingressBoundary.after||ingressBoundary.inverse!==namespaceObserver.after||namespaceObserver.inverse!==namespaceComposition.after||namespaceComposition.inverse!==previousAfter)fail('complete namespace composition inverse differs');
+ const selection={...retained.selection,methodOwnerScope,namespaceComposition,namespaceObserver,ingressBoundary,ordinaryParserEnclosing,projectMatchesAnalysis},current=readFileSync(resolve(root,PATH),'utf8');
+ if(current!==before&&current!==retained.after&&current!==previousAfter&&current!==namespaceComposition.after&&current!==namespaceObserver.after&&current!==ingressBoundary.after&&current!==ordinaryParserEnclosing.after&&current!==after)fail('complete physical project is neither original nor an exact derived output');
  const [equation]=transportConcreteSourcePhases([{before,middle:language,after,language:'JavaScript'}]);
  const stages=equation.stages.map(stage=>({...stage,completeInverse:true}));
  const nativeCopies=[nativeCopy(ts,before),nativeCopy(ts,after)],nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,PATH),after);

@@ -45,7 +45,8 @@ import {createToolAttributeContext} from './tool-attributes.mjs';
 import {configureToolAttributes} from './tool-attribute-layout.mjs';
 import {actualJsonCapabilityProfile} from './json-capabilities.mjs';
 import {createJsonMacroContext,configureJsonMacroParser} from './json-macro-context.mjs';
-import {createMatchesMacroContext,createEnclosingMatchesMacroContext,configureMatchesMacroParser,originalMatchesNamespaceBindings,OriginalMethodOwnerUnproved,originalMethodParserNamespace} from './matches-macro-context.mjs';
+import {configureMatchesMacroParser,originalMatchesNamespaceBindings,OriginalMethodOwnerUnproved,originalMethodParserNamespace} from './matches-macro-context.mjs';
+import {createProjectMatchesMacroContexts} from './project-matches-analysis-context.mjs';
 import {captureOriginalCargoEdition,originalCargoEditionEvidence} from './cargo-edition-context.mjs';
 
 // Only the actual original-source project pipeline can issue this identity.
@@ -376,9 +377,10 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[moduleScopeKey(scope),scope]));
   const configureSourceScope=(parser,module)=>configureParserSourceScope(requestImmutableNamespaceTargets(parser),scopes.get(moduleScopeKey(module)),bindingEvidence.scopes,module.path);
   const matchesOptions={modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext};
-  // Parser configuration reissues the same enclosing name domain.
-  // Actual impl methods lazily create their independent complete context.
-  const matchesMacroContext=createEnclosingMatchesMacroContext(matchesOptions);
+  // Parser and methods share one privately captured original project input.
+  // Each still checks its independent enclosing or complete namespace.
+  const matchesAnalysis=createProjectMatchesMacroContexts(matchesOptions);
+  const matchesMacroContext=matchesAnalysis.parser;
   let methodMatchesMacroContext=null;
   progress({stage:'namespace',state:'end',entry:options.entry,total:bindingEvidence.scopes.length});
   const declarations = [], refused = [], imports = [], unloweredItems = [], moduleAliases = new Map();
@@ -466,7 +468,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
           // A closed original owner can acquire source association. Existing
           // independent method checking remains available without that claim;
           // its unconfigured original macro route still refuses explicitly.
-          methodMatchesMacroContext??=createMatchesMacroContext(matchesOptions);
+          methodMatchesMacroContext??=matchesAnalysis.methods();
           try{transform=createOriginalMethodTokenTransform(methodMatchesMacroContext,method,lowered);}catch(error){if(!(error instanceof OriginalMethodOwnerUnproved))throw error;}
           let originalParsed=null;
           if(transform){try{originalParsed=parseOriginalMethodTransformGrouped(transform,{immutableNamespaceTargets:true});}catch(error){if(error instanceof TypeError)throw new TranslationError('unsupported','original method source contract: '+error.message,method.span);throw error;}}
