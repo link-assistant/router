@@ -3,6 +3,11 @@
 Research and verification dates: 2026-11-06–10 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [Schemars candidate receiving repair](current-schemars-candidate-composition.md)
+checks the actual complete Clone composition and its original constituent edits.
+Both whole focused files pass six cases in each engine with unchanged deadlines;
+all broader gate, parity, production and privacy criteria remain open.
+
 The [current complete gate at 619e35656](current-619e-complete-gate.md) passes
 lint, both 259-case runtime suites, native freshness and strict 167-file
 TypeScript compilation. The memory guard interrupts the complete native
