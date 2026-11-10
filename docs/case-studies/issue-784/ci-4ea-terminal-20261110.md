@@ -23,6 +23,17 @@ reopened and verified against its original CRC and SHA-256. Expected nested
 deadline controls and intentional tampered-source negative controls remain
 explicitly separate from genuine stage failures.
 
+The 50 original ZIP and compressed-log payloads are permanently retained at
+[published commit 93995ee40](https://github.com/link-assistant/router/tree/93995ee40be4b570becbe0b788dba58f5bd0ea6f/docs/case-studies/issue-784/evidence/ci-4ea).
+After publication, every complete local stream was compared with its immutable
+Git blob and fresh GitHub metadata. Only those inactive task-owned local
+copies were retired, reclaiming 93713511 logical and 93806592 allocated bytes.
+The [custody receipt](evidence/ci-4ea-published-local-retirement.json.gz)
+maps all original payloads to permanent URLs and full hashes; its
+[completion record](evidence/ci-4ea-published-local-retirement-complete.json.gz)
+confirms all 50 removals. The retained local manifest and review records still
+describe the complete original streams. No other cache or build was removed.
+
 | Nonpassing job | Finding and remaining work |
 | --- | --- |
 | Parity, 129995160591 | All 121 acceptance cases pass. Log lines 887–892: canonical `--check` reaches 1200284 ms against its unchanged 1200000 ms bound; strict parity reports 441 draft gaps and one validation error. Stored inventory retains 865 sources, 12426 carried items and `runtimeParity=false`. |
