@@ -24,6 +24,13 @@ native goal active and the PR draft and unmerged while criteria remain open.
       ABBA comparison: identical whole contexts, 22.894238% slower mean, both
       original sources restored. Complete negative evidence is retained in
       `docs/case-studies/issue-784/completed-derive-data-negative.md`.
+      The fresh requested-module comparison was also declined: its complete
+      outputs match, but the variable 3.855% mean reduction qualifies no original
+      deadline. Full evidence is in `requested-module-data-negative.md`.
+      A complete production CPU diagnostic identifies private CST transport as
+      about 14 of 40 seconds. Investigate the existing separate source-origin
+      domain while preserving two builds, full wire reconstruction and original
+      standalone and untrusted-document APIs.
 - [ ] Fix every terminal CI failure, including original case/child deadlines,
       raw private compiler bounds, actual canonical/owned/profile generation,
       strict parity and whole-source provenance. No deadline or test weakening.
