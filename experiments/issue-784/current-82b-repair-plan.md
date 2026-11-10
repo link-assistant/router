@@ -68,8 +68,15 @@ native goal active and the PR draft and unmerged while criteria remain open.
       51626.710 ms. The same seven cases pass in Bun, history 54836.44 ms.
       See `runtime-common-guard-negative.md` for full negative and final evidence.
 - [ ] Pass the mandatory complete local JavaScript gate and same-head CI.
-      Latest complete local gate remains failed/interrupted with later work
-      unrun; focused checks cannot qualify completion or admit Rust.
+      The current registration gate at 73b2b85e7 passes all ten lint commands,
+      259 native Node cases, declaration/freshness checks and strict 167-file
+      TypeScript compilation. Bun has three persistence failures; the complete
+      nine-case native TypeScript file fails its unchanged regeneration deadline
+      at 69340.815/60000 ms. The observer stops parity after 104 assertions at
+      2867978240 container bytes, reaping all owned processes. Later commands
+      remain unrun. Full evidence is `current-runtime-binding-full-gate.md`.
+      Trace Bun lock/storage timing and the genuine CSV namespace context before
+      changing behavior. Focused checks cannot qualify completion or admit Rust.
 - [x] Reproduce and install the complete isolated registration at 90446cc9d,
       including all 1936 full sources, six complete bootstrap substitutions,
       their predecessors and 493 genuine Git objects. Both original receiving

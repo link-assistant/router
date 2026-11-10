@@ -22,7 +22,7 @@ CI credential and supplies no reason to skip any mandatory check.
 | [translation (1)](https://github.com/link-assistant/router/actions/runs/42895668515/job/130108034118) | failure | internal-metadata-digest-adoption.test.mjs:33 provider/affinity parent case: 70946.665 ms against 60000 ms. | 1083, 1306, 1307, 1849, 1850 |
 | [reverse-freshness](https://github.com/link-assistant/router/actions/runs/42895668515/job/130108034126) | failure | Owned definition corpus: current forward inventory differs. Ordinary regeneration independently reported zero changes. | 297, 306 |
 | [owned-profile-matrix](https://github.com/link-assistant/router/actions/runs/42895668515/job/130108034130) | cancelled | Owned-profile generation exhausted its original 60-minute job during Unix work; the complete matrix and its upload were unavailable. | 5889 |
-| [translation (11)](https://github.com/link-assistant/router/actions/runs/42895668515/job/130108034196) | failure | parse_csv exceeded 900000 ms; split_repository_list lacks checked execution and reports unresolved std imports. Two other whole-source cases exceeded their 60000/90000 ms limits. | 530, 531, 604, 613, 1087, 1088, 1117, 1118, 1128, 1202, 1840, 1841 |
+| [translation (11)](https://github.com/link-assistant/router/actions/runs/42895668515/job/130108034196) | failure | parse_csv exceeded 900000 ms; split_repository_list reports shadowed borrowed str and lacks checked execution. Two other whole-source cases exceeded their 60000/90000 ms limits. | 530, 531, 604, 613, 618, 1087, 1088, 1117, 1118, 1128, 1202, 1840, 1841 |
 | [translation (4)](https://github.com/link-assistant/router/actions/runs/42895668515/job/130108034210) | failure | router-core-json-parse.test.mjs:30 full parent case: 160635.679 ms against 60000 ms. | 983, 984, 1574, 1617, 1618, 1702, 1703, 1872, 1873 |
 | [reverse-translation (10)](https://github.com/link-assistant/router/actions/runs/42895668515/job/130108034238) | failure | All assertions passed, but owned-core-base64.test.mjs:19 took 69618.764 ms against its original 60000 ms limit. | 403, 404 |
 | [translation (10)](https://github.com/link-assistant/router/actions/runs/42895668515/job/130108034294) | failure | All assertions passed, but derive-bang-context.test.mjs:120 took 141215.622 ms against 60000 ms. | 1747, 1748 |
@@ -56,6 +56,15 @@ All nested streams and complete source/output joins were reviewed. Only
 `parity/rust-source-inventory.json` differs among its checked-in outputs, but
 the current `tools/translation/project.mjs` also differs from the packet input.
 These unqualified old-source outputs were not installed.
+
+The CSV assertion at complete log line 618 includes the exact original
+`storage::associative::split_repository_list` refusal: `shadowed borrowed str
+type: requires actual standard primitive identity in the source type namespace`,
+span 10676–10680. The assertion truncates its diagnostic after 10000 characters;
+that retained prefix must not be treated as a complete parsed diagnostic array.
+The source has struct ordering derives; the existing complete ordering route
+only admits unit enums. This is an investigation lead, not a verified causal
+trace or permission to relax namespace proofs.
 
 Native Node/Bun tests passed. Those successes do not waive the original
 case deadlines, missing owned-profile outputs, raw private compiler bound,

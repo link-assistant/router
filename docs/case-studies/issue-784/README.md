@@ -8,7 +8,11 @@ nonpassing logs and all 26 whole artifacts after all 59 jobs finish. Reverse
 freshness has a local receiving repair; strict parity, original deadlines,
 complete matrices and universal privacy criteria remain unfinished.
 
-The [current complete local gate attempts](current-complete-gates-20261110.md)
+The [latest complete local gate attempt](current-runtime-binding-full-gate.md)
+retains three Bun persistence failures, the unchanged native TypeScript
+regeneration deadline breach, and the memory-interrupted parity run. Later
+commands remain unrun. The earlier
+[complete local gate attempts](current-complete-gates-20261110.md)
 retain the invalid npm-PATH launch and corrected full invocation separately.
 The corrected run passes both 259-case runtime suites and strict 167-file
 TypeScript compilation, but the original regeneration deadline fails and the
