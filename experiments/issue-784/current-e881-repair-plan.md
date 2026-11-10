@@ -42,6 +42,12 @@ deadlines or speculative pushes.
       executable production functions and 2,420 carried functions.
 - [ ] Run the complete local JavaScript gate on the integrated source, retain
       every stage's passed/failed/unrun evidence, and obtain same-head green CI.
+      The complete attempt at `1ec7b77f4` is retained in the coordinated gate
+      packet: lint and native suites pass, regeneration deadlines and strict
+      parity fail, forward startup reaches the memory guard, reverse is unrun.
+      No green stamp exists. Complete canonical generation then exhausted a
+      320 MiB V8 heap and reached the unchanged cgroup guard at 768 MiB; neither
+      published outputs. Both complete attempts and resources are retained.
 - [ ] Verify every privacy/tool/account criterion in the existing README matrix,
       including the universal protocol/account scope that remains unfinished.
 - [ ] Fetch latest main, preserve forward history, review the complete PR diff,

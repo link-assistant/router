@@ -3,6 +3,12 @@
 Research and verification dates: 2026-11-06–10 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [coordinated batch's complete local gate](coordinated-gate-20261110.md)
+passes all lint commands, both 259-case native suites, native freshness,
+strict native TypeScript compilation and 121 acceptance cases. It fails the
+original regeneration deadline and strict parity, then stops at the memory
+guard during forward-suite startup. Every later check remains unverified.
+
 The [coordinated compiler registration](e881-coordinated-registry-20261110.md)
 joins all 1,925 current source inputs and the genuine portable Git fixture.
 Both engines pass all 16 original receiving cases within unchanged deadlines;
