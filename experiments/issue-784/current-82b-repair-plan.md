@@ -17,6 +17,9 @@ native goal active and the PR draft and unmerged while criteria remain open.
       and fresh published metadata. Reclaim 101094950 logical bytes and retain
       complete per-file custody and completion receipts. Evidence is 385965908
       bytes immediately afterward; continue respecting the 500 MB allocation.
+      A subsequent complete readback retired 69 additional inactive copies,
+      reclaiming 40863582 logical bytes. All original archive members and
+      published CI streams remain retained; completed writer logs were kept.
 - [ ] Investigate actual production namespace and immutable-data traversal costs.
       Preserve source equations, both CST phases, inverses, all observer tapes,
       original deadlines and bounded failures. Count actual executable gains.
@@ -31,6 +34,10 @@ native goal active and the PR draft and unmerged while criteria remain open.
       about 14 of 40 seconds. Investigate the existing separate source-origin
       domain while preserving two builds, full wire reconstruction and original
       standalone and untrusted-document APIs.
+      The new complete-production candidate-first ABBA measurements retain
+      identical 397-module/419-certificate outputs. Both candidate runs reduce
+      the workload to about 30 seconds. The complete 12-case Node receiving
+      cohort passes unchanged deadlines; Bun and full CI remain independent.
 - [ ] Fix every terminal CI failure, including original case/child deadlines,
       raw private compiler bounds, actual canonical/owned/profile generation,
       strict parity and whole-source provenance. No deadline or test weakening.
