@@ -41,7 +41,7 @@ and negative controls. The genuine portable Git producer emits **482 objects**
 while preserving its complete original concrete profile. The original isolated
 and portable whole-file cases pass in both engines in the registered cohort.
 
-The [complete packet](evidence/namespace-receiving-20261110.tar.gz) contains
+The [complete packet](https://github.com/link-assistant/router/blob/e88183bb894b9ea62c9d6ae170c3fc099047685b/docs/case-studies/issue-784/evidence/namespace-receiving-20261110.tar.gz?raw=true) contains
 **119 members**, **5,134,701 compressed bytes**, SHA-256
 `4903c2e37e2d96644f0fe7132006dd2716c2c291942d770c6b9bc0a189ea9beb`.
 Its [receipt](evidence/namespace-receiving-20261110.tar.receipt.json.gz) retains

@@ -75,7 +75,7 @@ original whole-file runs above independently qualify their own deadlines.
 
 ## Complete retained evidence
 
-`evidence/core-hook-receiving-20261110.tar.gz` contains 131 fully read-back,
+[complete published archive](https://github.com/link-assistant/router/blob/e88183bb894b9ea62c9d6ae170c3fc099047685b/docs/case-studies/issue-784/evidence/core-hook-receiving-20261110.tar.gz?raw=true) contains 131 fully read-back,
 member-hashed entries: all complete source proposals and inverses, rejected
 in-place proposal, failed original closed-DAG receiving, passing final receiving,
 all six Node audit directories, complete scalar traces and complete compressed
@@ -154,7 +154,7 @@ agree with the original and invoke no callbacks. The full draft parses with
 TypeScript 5.9.3. It remains uninstalled, without CST/receiving or performance
 qualification, and establishes no executable coverage gain.
 
-`evidence/core-registration-receiving-20261110.tar.gz` retains 104 fully
+[complete published archive](https://github.com/link-assistant/router/blob/e88183bb894b9ea62c9d6ae170c3fc099047685b/docs/case-studies/issue-784/evidence/core-registration-receiving-20261110.tar.gz?raw=true) retains 104 fully
 read-back, member-hashed entries, including all registration proposals, failed
 and passing receiving, three complete Node audit directories, full CPU profile
 and child wire, both callback probes and the uninstalled descriptor draft.

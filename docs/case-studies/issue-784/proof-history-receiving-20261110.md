@@ -37,7 +37,7 @@ qualification. A finite probe of the shared phased transport refuses at its
 existing aggregate node/canonical bound. That refusal is retained; no bound
 or disabled batching gate changes.
 
-The [61-member evidence packet](evidence/proof-history-receiving-20261110.tar.gz)
+The [61-member evidence packet](https://github.com/link-assistant/router/blob/e88183bb894b9ea62c9d6ae170c3fc099047685b/docs/case-studies/issue-784/evidence/proof-history-receiving-20261110.tar.gz?raw=true)
 has SHA-256 `9e2a9b5b666ba853b0487bfd7bf12225793e617cabd6ecd7013b691b0e7d7e89`.
 It retains the complete before/after reports, author proposals, native checks,
 original sources, three Node audit directories, Core diagnostics and corrected

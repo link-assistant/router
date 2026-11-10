@@ -52,7 +52,7 @@ case after 81,575.69 ms. Cancelled cohorts remain unfinished.
 
 ## Retained evidence
 
-The [complete cycle archive](evidence/current-679-ci-terminal-ci.tar.gz) has
+The [complete cycle archive](https://github.com/link-assistant/router/blob/e88183bb894b9ea62c9d6ae170c3fc099047685b/docs/case-studies/issue-784/evidence/current-679-ci-terminal-ci.tar.gz?raw=true) has
 100 members and 7,829,294 compressed bytes, SHA-256
 `cc9ed055aea0850f8b59334662c94502d4d821452f50604293d798c5ec4cbe59`.
 Its [receipt](evidence/current-679-ci-terminal-ci.tar.receipt.json.gz) records
