@@ -47,8 +47,15 @@ active, PR draft and incomplete criteria explicit. No local Rust tools or agents
       bound. All 20 Node assertions pass, but two original deadlines still fail.
 - [x] Refresh the complete 1934-source registration at `8c35fb19f`; both whole
       receiving files pass all 16 cases under Node and Bun with original limits.
-- [ ] Attempt the complete local gate on the coordinated batch, record each
-      passed, failed and unrun stage, review and publish the draft checkpoint.
+- [x] Attempt the complete local gate at `619e35656`: lint, both 259-case runtime
+      suites, native freshness and strict 167-file TypeScript compilation pass;
+      the memory guard interrupts the native TypeScript file after four passing
+      assertions. Later TypeScript, parity, forward and reverse checks are unrun.
+- [ ] Publish the reviewed coordinated draft checkpoint with exact failed/unrun
+      evidence, then collect its entire terminal same-head CI cycle.
+- [ ] Repair the Schemars candidate regression's outdated two-edit expectation
+      by checking both original constituents and the complete ordered Clone
+      composition, preserving every source equation, inverse and refusal case.
 - [ ] Finish universal all-tool/account privacy acceptance; Router headers alone
       cannot establish external account settings or vendor/security retention.
 

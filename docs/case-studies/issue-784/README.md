@@ -3,6 +3,12 @@
 Research and verification dates: 2026-11-06–10 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [current complete gate at 619e35656](current-619e-complete-gate.md) passes
+lint, both 259-case runtime suites, native freshness and strict 167-file
+TypeScript compilation. The memory guard interrupts the complete native
+TypeScript test file after four passing assertions. Later TypeScript, parity,
+forward and reverse stages are unrun. All original limits remain mandatory.
+
 The [terminal 79f CI review](ci-79f-terminal-20261110.md) records all 24
 nonpassing results, all 25 complete artifacts, every available job log and
 the unavailable shard-eight log. The [current registration refresh](current-8c35-registration.md)
@@ -13,7 +19,7 @@ cases but retains seven Bun deadline failures. The
 original export bound while retaining two failed Node deadlines. All broader
 performance, freshness, matrix, strict parity and privacy criteria stay open.
 
-The [coordinated batch's complete local gate](coordinated-gate-20261110.md)
+The [earlier coordinated batch's complete local gate](coordinated-gate-20261110.md)
 passes all lint commands, both 259-case native suites, native freshness,
 strict native TypeScript compilation and 121 acceptance cases. It fails the
 original regeneration deadline and strict parity, then stops at the memory
