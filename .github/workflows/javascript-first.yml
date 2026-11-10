@@ -167,7 +167,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    # Each complete file may spawn its own strict TypeScript compiler. Keep
+    # those process trees independent instead of sharing a runner's resources.
     # Cycle nine forward/canonical steps reached 719s/752s; the separate matrix
     # stage prevents their sum exhausting a shared 60-minute job.
     timeout-minutes: 60
@@ -191,7 +193,7 @@ jobs:
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
       - run: npm ci --prefix js --ignore-scripts
-      - run: node scripts/run-node-test-shard.mjs --outer-timeout-ms=3600000 --whole-file-shard=${{ matrix.shard }}/8 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs
+      - run: node scripts/run-node-test-shard.mjs --outer-timeout-ms=3600000 --whole-file-shard=${{ matrix.shard }}/16 --test-concurrency=1 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs
         env:
           ROUTER_TRANSLATION_TYPED_TARGET_TRACE: '1'
           ROUTER_FREEZE_COHORT_VECTOR_DIR: js/node_modules/.node-case-deadlines/freeze-cohorts
@@ -317,7 +319,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -339,7 +341,7 @@ jobs:
         with:
           bun-version: '1.4.3'
       - run: npm ci --prefix js --ignore-scripts
-      - run: node scripts/run-node-test-shard.mjs --outer-timeout-ms=900000 --whole-file-shard=${{ matrix.shard }}/8 --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs
+      - run: node scripts/run-node-test-shard.mjs --outer-timeout-ms=900000 --whole-file-shard=${{ matrix.shard }}/16 --test-concurrency=1 tools/translation/js-to-rust/test/*.test.mjs
       - name: Preserve complete Node deadline audit and Bun file receipts and raw streams
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

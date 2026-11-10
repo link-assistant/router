@@ -11,6 +11,8 @@ import {DRAFT_SUPPLEMENTS,DRAFT_SUPPLEMENT_CONDITION,DRAFT_SUPPLEMENT_PR_TYPES,r
 const require = createRequire(new URL('./ci/package.json', import.meta.url));
 const { parseDocument } = require('yaml');
 export const STAGES = ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'translation-freshness', 'profile-matrix', 'owned-profile-matrix', 'reverse-translation', 'reverse-bun', 'reverse-freshness'];
+const nodeShards = Array.from({length:16}, (_,index) => index+1);
+const bunShards = Array.from({length:8}, (_,index) => index+1);
 const draftSupplementNames=new Set(DRAFT_SUPPLEMENTS);
 function exact(a,b,depth=0){if(Object.is(a,b))return true;if(depth>=64||!a||!b||typeof a!=='object'||typeof b!=='object'||Array.isArray(a)!==Array.isArray(b)||Array.isArray(a)&&a.length!==b.length)return false;const left=Object.keys(a).sort(),right=Object.keys(b).sort();return left.length===right.length&&left.every((key,index)=>key===right[index]&&exact(a[key],b[key],depth+1));}
 // Immutable reviewed source DATA supplies only this fixed table. It does not
@@ -103,11 +105,11 @@ export function auditWorkflows(sources) {
       'bun-tests': ['npm run native:test:bun --prefix js'],
       typescript: ['node scripts/run-node-tests.mjs --outer-timeout-ms=180000 scripts/test/node-case-deadlines.test.mjs', 'npm run typecheck --prefix js', 'npm run native:typecheck --prefix js', 'node scripts/regenerate-native-typescript.mjs --check', 'node scripts/check-native-typescript.mjs', 'node scripts/run-node-tests.mjs --outer-timeout-ms=900000 tools/translation/js-to-rust/test/native-typescript.test.mjs', 'node js/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json', 'node tools/translation/check-typescript-fixtures.mjs', 'node scripts/check-profile-typescript.mjs', 'node scripts/check-owned-definition-typescript.mjs', 'node tools/translation/serialization-schema/native-descriptor.mjs --check', 'node tools/translation/serialization-schema/check-descriptor-typescript.mjs', 'node tools/translation/serialization-schema/bulk.mjs --check', 'node tools/translation/serialization-schema/check-bulk-typescript.mjs', 'node scripts/build-js-first-ui.mjs'],
       parity: ['node --test --test-concurrency=2 experiments/issue-759/acceptance/*.test.mjs', 'node scripts/check-router-parity.mjs --strict'],
-      translation: ['node scripts/run-node-test-shard.mjs --outer-timeout-ms=3600000 --whole-file-shard=${{ matrix.shard }}/8 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs'],
+      translation: ['node scripts/run-node-test-shard.mjs --outer-timeout-ms=3600000 --whole-file-shard=${{ matrix.shard }}/16 --test-concurrency=1 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs'],
       'translation-freshness': ['node scripts/translate-router-with-draft-custody.mjs --check', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check'],
       'profile-matrix': ['node scripts/translate-router.mjs --profile-matrix --check'],
       'owned-profile-matrix': ['node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check'],
-      'reverse-translation': ['node scripts/run-node-test-shard.mjs --outer-timeout-ms=900000 --whole-file-shard=${{ matrix.shard }}/8 --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs'],
+      'reverse-translation': ['node scripts/run-node-test-shard.mjs --outer-timeout-ms=900000 --whole-file-shard=${{ matrix.shard }}/16 --test-concurrency=1 tools/translation/js-to-rust/test/*.test.mjs'],
       'reverse-bun': ['node scripts/run-bun-reverse-shard.mjs --whole-file-shard ${{ matrix.shard }}/8 --output-root js/node_modules/.bun-reverse-files'],
       'reverse-freshness': ['node scripts/regenerate-js-first.mjs --check', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --check', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check'],
     };
@@ -121,7 +123,7 @@ export function auditWorkflows(sources) {
       let matrixEvidenceUpload = null;
       let bulkEvidenceUpload = null;
       if(id==='translation'){
-        if(job?.['timeout-minutes']!==60||Object.hasOwn(job??{},'needs')||!exact(job?.strategy,{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7,8]}}))errors.push(`${gateName}/${id}: exact exhaustive eight whole-file shards with original budget required`);
+        if(job?.['timeout-minutes']!==60||Object.hasOwn(job??{},'needs')||!exact(job?.strategy,{'fail-fast':false,matrix:{shard:nodeShards}}))errors.push(`${gateName}/${id}: exact exhaustive sixteen whole-file shards with original budget required`);
         if(runs.filter(run=>run===required.translation[0]).length!==1||runs.some(run=>required['translation-freshness'].includes(run)))errors.push(`${gateName}/${id}: whole-file cohort must run exactly once and freshness must remain independent`);
       }
       if(id==='translation-freshness'){
@@ -134,7 +136,8 @@ export function auditWorkflows(sources) {
         else bulkEvidenceUpload=upload;
       }
       if(['reverse-translation','reverse-bun'].includes(id)){
-        if(job?.['timeout-minutes']!==15||Object.hasOwn(job??{},'needs')||!exact(job?.strategy,{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7,8]}}))errors.push(`${gateName}/${id}: exact exhaustive eight reverse whole-file shards with original budget required`);
+        const shards=id==='reverse-translation'?nodeShards:bunShards;
+        if(job?.['timeout-minutes']!==15||Object.hasOwn(job??{},'needs')||!exact(job?.strategy,{'fail-fast':false,matrix:{shard:shards}}))errors.push(`${gateName}/${id}: exact exhaustive ${shards.length} reverse whole-file shards with original budget required`);
         if(runs.filter(run=>run===required[id][0]).length!==1||runs.some(run=>required['reverse-freshness'].includes(run)||required[id==='reverse-bun'?'reverse-translation':'reverse-bun'].includes(run)))errors.push(`${gateName}/${id}: whole reverse cohort must run exactly once and other engine/freshness must remain independent`);
       }
       if(id==='reverse-freshness'){

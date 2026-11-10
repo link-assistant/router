@@ -36,6 +36,8 @@ const custodyFreshnessJob=replaceOnce(replaceOnce(freshnessJob,'  translation-fr
 const forwardHeader='  translation:\n    runs-on: ubuntu-24.04\n';
 const shardStrategy='    strategy:\n      fail-fast: false\n      matrix:\n        shard: [1, 2, 3, 4, 5, 6, 7, 8]\n';
 const shardCommand='      - run: node scripts/run-node-test-shard.mjs --outer-timeout-ms=3600000 --whole-file-shard=${{ matrix.shard }}/8 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs\n';
+const isolatedNodeStrategy=shardStrategy.replace('7, 8]','7, 8, 9, 10, 11, 12, 13, 14, 15, 16]');
+const isolatedNodeComment="    # Each complete file may spawn its own strict TypeScript compiler. Keep\n    # those process trees independent instead of sharing a runner's resources.\n";
 const reverseStart=original.indexOf('  reverse-translation:\n'),reverseEnd=original.indexOf('  complete:\n',reverseStart);
 if(reverseStart<0||reverseEnd<=reverseStart)throw TypeError('Complete historical reverse job missing');
 const reverseComplete=original.slice(reverseStart,reverseEnd);
@@ -81,6 +83,10 @@ export const MATRIX_DRAFT_REPOSITORY_RULES=Object.freeze([
  {id:'reverse-files:reject-each-of-twelve-stage-failures',before:'stages.length !== 10',after:'stages.length !== 12'},
  {id:'reverse-files:mandatory-source-derived-coordinator-freshness',before:'      - run: node scripts/prepare-bun-reverse-files.mjs --check\n',after:'      - run: node scripts/prepare-bun-reverse-files.mjs --check\n      - run: node scripts/prepare-bun-reverse-shard.mjs --check\n'},
  {id:'reverse-files:mandatory-whole-coordinator-control-file',before:'      - run: node --test scripts/test/run-node-test-shard.test.mjs\n',after:'      - run: node --test scripts/test/run-node-test-shard.test.mjs\n      - run: node --test scripts/test/bun-reverse-shard.test.mjs\n'},
+ {id:'forward-files:independent-node-process-trees',before:forwardHeader+shardStrategy,after:forwardHeader+isolatedNodeStrategy+isolatedNodeComment},
+ {id:'forward-files:one-worker-per-complete-shard',before:shardCommand,after:shardCommand.replace('/8 --test-concurrency=2','/16 --test-concurrency=1')},
+ {id:'reverse-files:independent-node-process-trees',before:'  reverse-translation:\n    runs-on: ubuntu-24.04\n'+shardStrategy,after:'  reverse-translation:\n    runs-on: ubuntu-24.04\n'+isolatedNodeStrategy},
+ {id:'reverse-files:one-worker-per-complete-shard',before:reverseNode.replace('scripts/run-node-tests.mjs','scripts/run-node-test-shard.mjs').replace('--test-concurrency=2','--whole-file-shard=${{ matrix.shard }}/8 --test-concurrency=2'),after:reverseNode.replace('scripts/run-node-tests.mjs','scripts/run-node-test-shard.mjs').replace('--test-concurrency=2','--whole-file-shard=${{ matrix.shard }}/16 --test-concurrency=1')},
 ]);
 function concrete(source){
  const document=parseDocument(source,{version:'1.2',uniqueKeys:true});if(document.errors.length)throw TypeError('Complete matrix workflow grammar differs');

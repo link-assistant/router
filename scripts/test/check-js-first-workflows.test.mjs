@@ -98,16 +98,17 @@ test('every forward shard and independent canonical check preserve complete hist
  const shard=jobs.translation,fresh=jobs['translation-freshness'];
  assert.deepEqual(shard.steps.slice(0,setup.length),setup);assert.deepEqual(fresh.steps.slice(0,setup.length),setup);
  assert.equal(shard['timeout-minutes'],historical['timeout-minutes']);assert.equal(fresh['timeout-minutes'],historical['timeout-minutes']);
- assert.deepEqual(shard.strategy,{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7,8]}});
+ const bins=Array.from({length:16},(_,index)=>index+1);
+ assert.deepEqual(shard.strategy,{'fail-fast':false,matrix:{shard:bins}});
  const currentCanonical=canonical.map(step=>({...step,run:step.run.replace('node scripts/translate-router.mjs --check','node scripts/translate-router-with-draft-custody.mjs --check')}));
  assert.deepEqual(currentCanonical.map(step=>({...step,run:step.run.replace('node scripts/translate-router-with-draft-custody.mjs --check','node scripts/translate-router.mjs --check')})),canonical);
  assert.deepEqual(fresh.steps.slice(setup.length,-1),currentCanonical);assert.equal(shard.steps.length,setup.length+2);
  assert.equal(fresh.steps.length,setup.length+canonical.length+1);
  assert.equal(fresh.env.ROUTER_BULK_DRAFT_DIRECTORY,'js/node_modules/.bulk-drafts');
  assert.equal(fresh.steps.at(-1).with.name,'bulk-drafts-${{ inputs.sha }}');
- assert.match(shard.steps.at(-2).run,/--whole-file-shard=\$\{\{ matrix.shard \}\}\/8 --test-concurrency=2 tools\/translation\/test\/\*\.test\.mjs tools\/translation\/serialization-schema\/\*\.test\.mjs$/u);
+ assert.match(shard.steps.at(-2).run,/--whole-file-shard=\$\{\{ matrix.shard \}\}\/16 --test-concurrency=1 tools\/translation\/test\/\*\.test\.mjs tools\/translation\/serialization-schema\/\*\.test\.mjs$/u);
  assert.equal(shard.steps.at(-1).with.name,upload.with.name+'-${{ matrix.shard }}');
- for(const strategy of [undefined,{'fail-fast':true,matrix:{shard:[1,2,3,4,5,6,7,8]}},{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7]}},{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7,8],exclude:[{shard:2}]}},{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7,8],include:[{shard:9}]}}])fails('javascript-first.yml',workflow=>{workflow.jobs.translation.strategy=strategy;},'exact exhaustive eight');
+ for(const strategy of [undefined,{'fail-fast':true,matrix:{shard:bins}},{'fail-fast':false,matrix:{shard:bins.slice(0,-1)}},{'fail-fast':false,matrix:{shard:[...bins,17]}},{'fail-fast':false,matrix:{shard:[...bins.slice(0,-1),15]}},{'fail-fast':false,matrix:{shard:bins,exclude:[{shard:2}]}},{'fail-fast':false,matrix:{shard:bins,include:[{shard:17}]}}])fails('javascript-first.yml',workflow=>{workflow.jobs.translation.strategy=strategy;},'exact exhaustive sixteen');
  fails('javascript-first.yml',workflow=>{workflow.jobs.translation.steps.at(-1).with.name=upload.with.name;},'evidence uploader');
  for(const command of currentCanonical.map(step=>step.run)){
   fails('javascript-first.yml',workflow=>{workflow.jobs['translation-freshness'].steps.push({run:command});},'exactly once');
@@ -183,9 +184,10 @@ test('reverse engines partition complete files independently and all original fr
   for(const id of ids)fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.splice(-1,0,step);},'freshness must remain independent');
  }
  for(const id of ids){
-  const job=jobs[id];assert.deepEqual(job.strategy,{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7,8]}});assert.equal(job.steps.length,setup.length+2);
+  const bins=Array.from({length:id==='reverse-translation'?16:8},(_,index)=>index+1);
+  const job=jobs[id];assert.deepEqual(job.strategy,{'fail-fast':false,matrix:{shard:bins}});assert.equal(job.steps.length,setup.length+2);
   assert.equal(job.steps.at(-1).with.name,upload.with.name+'-${{ matrix.shard }}');
-  for(const strategy of [undefined,{'fail-fast':true,matrix:{shard:[1,2,3,4,5,6,7,8]}},{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7]}},{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7,8],exclude:[{shard:1}]}},{'fail-fast':false,matrix:{shard:[1,2,3,4,5,6,7,8],include:[{shard:9}]}}])fails('javascript-first.yml',workflow=>{workflow.jobs[id].strategy=strategy;},'exact exhaustive eight reverse');
+  for(const strategy of [undefined,{'fail-fast':true,matrix:{shard:bins}},{'fail-fast':false,matrix:{shard:bins.slice(0,-1)}},{'fail-fast':false,matrix:{shard:[...bins,bins.length+1]}},{'fail-fast':false,matrix:{shard:[...bins.slice(0,-1),bins.length-1]}},{'fail-fast':false,matrix:{shard:bins,exclude:[{shard:1}]}},{'fail-fast':false,matrix:{shard:bins,include:[{shard:bins.length+1}]}}])fails('javascript-first.yml',workflow=>{workflow.jobs[id].strategy=strategy;},'exact exhaustive '+bins.length+' reverse');
   fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.splice(-1,0,job.steps.at(-2));},'exactly once');
   fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.at(-1).with.name=upload.with.name;},'evidence uploader');
   fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.at(-1).with.path='js/node_modules/';},'evidence uploader');
@@ -258,17 +260,19 @@ test('every JavaScript stage and command is mandatory and cannot skip or ignore 
     fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.find(step=>step.run===command).run=command.includes('--owned-core-definitions')?command.replace('--owned-core-definitions','--old-definitions'):command+' --skip';},'mandatory command');
   }
 });
-test('heavy compiler and acceptance cohorts require two workers and every test file', () => {
+test('compiler shards require one worker and every file while acceptance retains its original concurrency', () => {
   for (const [id, glob] of [['translation', 'tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs'], ['parity', 'experiments/issue-759/acceptance/*.test.mjs']]) {
-    const prefix = id === 'translation' ? 'node scripts/run-node-test-shard.mjs --outer-timeout-ms=3600000 --whole-file-shard=${{ matrix.shard }}/8' : 'node --test';
-    const command = `${prefix} --test-concurrency=2 ${glob}`;
+    const prefix = id === 'translation' ? 'node scripts/run-node-test-shard.mjs --outer-timeout-ms=3600000 --whole-file-shard=${{ matrix.shard }}/16' : 'node --test';
+    const concurrency = id === 'translation' ? 1 : 2;
+    const command = `${prefix} --test-concurrency=${concurrency} ${glob}`;
     assert.ok(parse(baseline['javascript-first.yml']).jobs[id].steps.some(step => step.run === command));
     for (const replacement of [
       `${prefix} ${glob}`,
       `${prefix} --test-concurrency=3 ${glob}`,
-      `${prefix} --test-concurrency=2 ${glob.replace('*', 'one')}`,
-      `${prefix} --test-concurrency=2 --test-name-pattern=only-one ${glob}`,
-      ...(id === 'translation' ? [`node --test --test-concurrency=2 ${glob}`] : []),
+      `${prefix} --test-concurrency=${concurrency===1?2:1} ${glob}`,
+      `${prefix} --test-concurrency=${concurrency} ${glob.replace('*', 'one')}`,
+      `${prefix} --test-concurrency=${concurrency} --test-name-pattern=only-one ${glob}`,
+      ...(id === 'translation' ? [`node --test --test-concurrency=1 ${glob}`] : []),
     ]) fails('javascript-first.yml', workflow => {
       workflow.jobs[id].steps.find(step => step.run === command).run = replacement;
     }, 'mandatory command');
@@ -326,8 +330,9 @@ test('Bun runtime is required for lint engine checks, native JavaScript, compile
 test('both reverse translator engines must discover every current and future test file', () => {
   const glob = 'tools/translation/js-to-rust/test/*.test.mjs';
   for (const [id, command, replacements] of [
-    ['reverse-translation', 'node scripts/run-node-test-shard.mjs --outer-timeout-ms=900000 --whole-file-shard=${{ matrix.shard }}/8 --test-concurrency=2 '+glob, [
+    ['reverse-translation', 'node scripts/run-node-test-shard.mjs --outer-timeout-ms=900000 --whole-file-shard=${{ matrix.shard }}/16 --test-concurrency=1 '+glob, [
       'node --test tools/translation/js-to-rust/test/translator.test.mjs',
+      'node scripts/run-node-test-shard.mjs --outer-timeout-ms=900000 --whole-file-shard=${{ matrix.shard }}/16 --test-concurrency=2 '+glob,
       `node --test --test-concurrency=2 --test-name-pattern=one ${glob}`,
     ]],
     ['reverse-bun', 'node scripts/run-bun-reverse-shard.mjs --whole-file-shard ${{ matrix.shard }}/8 --output-root js/node_modules/.bun-reverse-files', ['bun test tools/translation/js-to-rust/test/translator.test.mjs', `bun test --test-name-pattern=one ${glob}`, 'node scripts/run-bun-reverse-files.mjs --test-name-pattern=one --output-root js/node_modules/.bun-reverse-files']],
