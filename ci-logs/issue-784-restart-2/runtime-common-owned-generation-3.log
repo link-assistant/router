@@ -1,0 +1,1 @@
+{"schema":"owned-runtime-import-parent-link-source-v1","files":["tools/translation/js-to-rust/owned-core-source.mjs","scripts/regenerate-js-first.mjs","tools/translation/js-to-rust/vendor/module-syntax.mjs","tools/translation/js-to-rust/native-typescript.mjs"],"semanticAuthority":false,"runtimeExecuted":false,"performanceQualified":false}

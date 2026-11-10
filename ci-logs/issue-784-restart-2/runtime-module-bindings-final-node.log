@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: current runtime-import consumers retain the complete historical producers and fresh reversible source equations
+ok 1 - current runtime-import consumers retain the complete historical producers and fresh reversible source equations
+  ---
+  duration_ms: 51626.709557
+  ...
+# Subtest: one fresh native program retains all independent module scope results and actual installed compiler
+ok 2 - one fresh native program retains all independent module scope results and actual installed compiler
+  ---
+  duration_ms: 5438.94537
+  ...
+# Subtest: a sibling declaration never supplies an unbound local and original initialization errors remain exact
+ok 3 - a sibling declaration never supplies an unbound local and original initialization errors remain exact
+  ---
+  duration_ms: 6637.896186
+  ...
+# Subtest: unscoped scripts duplicate paths missing sources and aggregate source bounds refuse before admission
+ok 4 - unscoped scripts duplicate paths missing sources and aggregate source bounds refuse before admission
+  ---
+  duration_ms: 1019.291577
+  ...
+# Subtest: global augmentations cannot introduce sibling bindings and changed whole source is freshly checked
+ok 5 - global augmentations cannot introduce sibling bindings and changed whole source is freshly checked
+  ---
+  duration_ms: 3321.492763
+  ...
+# Subtest: native source-copy scope validation joins actual import bindings and rejects omitted imports
+ok 6 - native source-copy scope validation joins actual import bindings and rejects omitted imports
+  ---
+  duration_ms: 3688.647246
+  ...
+# Subtest: native source-copy validation rejects the actual URL initialization shadow and preserves deferred bindings
+ok 7 - native source-copy validation rejects the actual URL initialization shadow and preserves deferred bindings
+  ---
+  duration_ms: 3029.029618
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 76315.876622
+Complete Node deadline evidence: /tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-hQZAeA

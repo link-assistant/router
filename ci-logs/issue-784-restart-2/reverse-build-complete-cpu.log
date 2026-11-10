@@ -1,0 +1,9 @@
+file:///tmp/gh-issue-solver-1794003502595/experiments/issue-784/complete-evidence-json.mjs:20
+ if(!stem.startsWith('ci-logs/issue-784-restart-2/')||!stem.endsWith('.json')||raw.length>LIMIT)throw Error('Bounded task diagnostic required');
+                                                                                                      ^
+
+Error: Bounded task diagnostic required
+    at writeCompleteEvidenceJson (file:///tmp/gh-issue-solver-1794003502595/experiments/issue-784/complete-evidence-json.mjs:20:103)
+    at file:///tmp/gh-issue-solver-1794003502595/experiments/issue-784/profile-reverse-build.mjs:32:15
+
+Node.js v20.20.2

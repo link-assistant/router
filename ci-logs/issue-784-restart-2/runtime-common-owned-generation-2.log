@@ -1,0 +1,13 @@
+file:///tmp/gh-issue-solver-1794003502595/tools/translation/prepare-owned-runtime-import-current.mjs:22
+const hash=value=>createHash('sha256').update(value).digest('hex'),fail=message=>{throw new TypeError('Owned runtime import source: '+message);},one=(rows,label)=>{if(rows.length!==1)fail('one exact native selection required: '+label);return rows[0];};
+                                                                                        ^
+
+TypeError: Owned runtime import source: complete physical source is neither exact birth nor final output: tools/translation/js-to-rust/owned-core-source.mjs
+    at fail (file:///tmp/gh-issue-solver-1794003502595/tools/translation/prepare-owned-runtime-import-current.mjs:22:89)
+    at prepareOwnedRuntimeImportEdges (file:///tmp/gh-issue-solver-1794003502595/tools/translation/prepare-owned-runtime-import-current.mjs:86:78)
+    at file:///tmp/gh-issue-solver-1794003502595/tools/translation/prepare-owned-runtime-import-current.mjs:105:229
+    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v20.20.2

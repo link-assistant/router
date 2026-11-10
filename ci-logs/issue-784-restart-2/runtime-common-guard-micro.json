@@ -1,0 +1,1 @@
+{"rows":[{"label":"candidate","iterations":1000,"milliseconds":87.613472},{"label":"before","iterations":1000,"milliseconds":129.734022},{"label":"before","iterations":1000,"milliseconds":110.399044},{"label":"candidate","iterations":1000,"milliseconds":68.6997}],"diagnosticOnly":true,"retainedVerdicts":false,"originalDeadlinesQualified":false}

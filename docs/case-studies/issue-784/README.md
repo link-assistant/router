@@ -416,3 +416,13 @@ passing receiving cases under Node and Bun with unchanged deadlines.
 The [reverse freshness repair](current-reverse-freshness-20261110.md) retains
 genuine regeneration of three stale artifacts, all twelve passing Node cases
 and their deadline audit, and the memory-interrupted whole Bun attempt.
+
+The [terminal 82b CI review](ci-82b-terminal-20261110.md) records all 75 terminal
+jobs, every available nonpassing stream, all 41 complete artifacts and the
+explicit unavailable forward-bin-9 log. Its failure set remains mandatory.
+
+The [project source-origin CST comparison](project-source-origin-cst.md) retains
+complete production outputs, measured improvements and the separately failed
+broader deadline case. The [withdrawn runtime guard experiment](runtime-common-guard-negative.md)
+retains complete negative evidence and the separate seven-case Node/Bun
+qualification of fresh runtime-source module binding programs.

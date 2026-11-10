@@ -44,6 +44,29 @@ native goal active and the PR draft and unmerged while criteria remain open.
 - [ ] Fix every terminal CI failure, including original case/child deadlines,
       raw private compiler bounds, actual canonical/owned/profile generation,
       strict parity and whole-source provenance. No deadline or test weakening.
+      The entire 82b cycle is terminal: 20 failed, nine cancelled, 21 successful,
+      25 skipped. All 41 artifacts and every available non-passing log are
+      reviewed. Forward bin 9 has a GitHub 404 BlobNotFound evidence gap; two
+      direct requests and the run/job fallback are retained. The complete
+      failure inventory is `docs/case-studies/issue-784/ci-82b-terminal-20261110.md`.
+      A complete 443-output CPU diagnostic retains exactly 12698398 output
+      bytes. Repeated original runtime guard conjunctions are a measured cost;
+      the new exact two-consumer common-guard source proposal preserves fresh
+      parses/hash sites and original APIs. Its first Node receiving run fails
+      the unchanged 60000 ms history-case limit at 68505.916 ms. Sharing only a
+      fresh TypeScript program's library parse across complete external modules
+      reduces that case to 54067.657 ms; all five cases and the independent
+      deadline audit then pass. The complete build preserves all 443 outputs
+      byte for byte in 92872.410 ms, without establishing a speed gain. Bun
+      fails the original history case at 75044.12 ms against 60000 ms. The
+      common-guard runtime candidate is withdrawn; every complete source,
+      historical equation, CST and inverse is archived. The five original
+      tracked candidate predecessors are retained; generated runtime files
+      and the receiving test are restored exactly. Only fresh source-preparer
+      module-program sharing remains. Its final seven-case Node cohort and
+      independent deadline audit pass; the original history case takes
+      51626.710 ms. The same seven cases pass in Bun, history 54836.44 ms.
+      See `runtime-common-guard-negative.md` for full negative and final evidence.
 - [ ] Pass the mandatory complete local JavaScript gate and same-head CI.
       Latest complete local gate remains failed/interrupted with later work
       unrun; focused checks cannot qualify completion or admit Rust.

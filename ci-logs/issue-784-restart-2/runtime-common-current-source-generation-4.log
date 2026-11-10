@@ -1,0 +1,14 @@
+{"schema":"runtime-import-source-preparation-trace-v1","stage":"complete-current-equations","files":12}
+file:///tmp/gh-issue-solver-1794003502595/tools/translation/prepare-runtime-import-current-sources.mjs:18
+const fail=message=>{throw TypeError('Current runtime import source: '+message);};
+                           ^
+
+TypeError: Current runtime import source: unexpected complete physical source: tools/translation/prepare-owned-runtime-import-current.mjs
+    at fail (file:///tmp/gh-issue-solver-1794003502595/tools/translation/prepare-runtime-import-current-sources.mjs:18:28)
+    at prepareRuntimeImportCurrentSources (file:///tmp/gh-issue-solver-1794003502595/tools/translation/prepare-runtime-import-current-sources.mjs:157:810)
+    at file:///tmp/gh-issue-solver-1794003502595/tools/translation/prepare-runtime-import-current-sources.mjs:185:13
+    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v20.20.2

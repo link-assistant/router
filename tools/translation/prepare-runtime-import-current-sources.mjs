@@ -7,7 +7,7 @@ import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {prepareRuntimeImportPhasedData} from './prepare-runtime-import-phased-data.mjs';
 import {prepareNativeRegenerationBatch} from './prepare-native-regeneration-batch.mjs';
 import {transportConcreteSourcePhases} from './concrete-phased-equations.mjs';
-import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
+import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';
 import {proposeRuntimeCompilerSelections} from './prepare-runtime-compiler-selections.mjs';
 import {proposeRuntimeCompilerLifetime} from './prepare-runtime-compiler-lifetime.mjs';
 import {proposeRuntimeImportBindingBatch} from './prepare-runtime-import-binding-batch.mjs';
@@ -126,11 +126,14 @@ export function prepareRuntimeImportCurrentSources(){
   ['bindingPreviousAfter','bindingPreviousEquation','binding'],
   ['runtimePreviousAfter','runtimePreviousEquation','runtime'],
  ];
+ // Every candidate has its own external-module scope. Share only this fresh
+ // program's standard-library parse; each complete candidate is still checked.
+ const nativeBindings=verifyNativeCopiedModuleBindings(ts,files.map(row=>({path:resolve(root,row.path),source:row.after})));
  for(const [at,row]of files.entries()){
   parse(row.path,row.before);parse(row.path,row.middle);parse(row.path,row.after);
   if(row.after.split('\n').length>=1000)fail('complete source exceeds repository line bound');
   row.equation=equations[at];if(row.equation.inverse!==row.before)fail('complete source inverse differs');
-  row.nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,row.path),row.after);
+  row.nativeBindings=nativeBindings[at];
   row.current=existsSync(resolve(root,row.path))?readFileSync(resolve(root,row.path),'utf8'):null;
   for(const [before,equation,label]of historyFields)if(Object.hasOwn(row,before))histories.push({row,before,equation,label});
   if(row.current!==null&&row.current!==row.before&&row.current!==row.after&&(!Object.hasOwn(row,'previousAfter')||row.current!==row.previousAfter)&&(!Object.hasOwn(row,'publishedAfter')||row.current!==row.publishedAfter)&&(!Object.hasOwn(row,'indexedAfter')||row.current!==row.indexedAfter)&&(!Object.hasOwn(row,'lifetimeAfter')||row.current!==row.lifetimeAfter)&&(!Object.hasOwn(row,'loaderPreviousAfter')||row.current!==row.loaderPreviousAfter)&&(!Object.hasOwn(row,'sourceOriginPreviousAfter')||row.current!==row.sourceOriginPreviousAfter)&&(!Object.hasOwn(row,'bindingPreviousAfter')||row.current!==row.bindingPreviousAfter)&&(!Object.hasOwn(row,'runtimePreviousAfter')||row.current!==row.runtimePreviousAfter))fail('unexpected complete physical source: '+row.path);

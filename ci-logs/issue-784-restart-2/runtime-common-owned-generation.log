@@ -1,0 +1,17 @@
+file:///tmp/gh-issue-solver-1794003502595/tools/translation/rule-pipeline.mjs:63
+    if(source.split(before).length!==2)throw new Error(message);
+                                             ^
+
+Error: Complete original guard source changed
+    at Object.apply (file:///tmp/gh-issue-solver-1794003502595/tools/translation/rule-pipeline.mjs:63:46)
+    at Object.run (file:///tmp/gh-issue-solver-1794003502595/tools/translation/rule-pipeline.mjs:52:32)
+    at run (file:///tmp/gh-issue-solver-1794003502595/tools/translation/prepare-runtime-import-common-guard.mjs:40:117)
+    at proposeRuntimeImportCommonGuard (file:///tmp/gh-issue-solver-1794003502595/tools/translation/prepare-runtime-import-common-guard.mjs:41:15)
+    at composeCurrentRuntimeCommonGuardRow (file:///tmp/gh-issue-solver-1794003502595/tools/translation/prepare-owned-runtime-import-current.mjs:172:14)
+    at prepareOwnedRuntimeImportEdges (file:///tmp/gh-issue-solver-1794003502595/tools/translation/prepare-owned-runtime-import-current.mjs:77:831)
+    at file:///tmp/gh-issue-solver-1794003502595/tools/translation/prepare-owned-runtime-import-current.mjs:105:229
+    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v20.20.2
