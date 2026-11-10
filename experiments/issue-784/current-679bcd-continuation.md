@@ -177,6 +177,18 @@ PR #785. The native goal stays active. No green gate or release readiness exists
 - [ ] Verify universal tool/account privacy criteria. Keep unsupported direct
       traffic, source-IP/account inference and absent vendor sessions explicit.
 
+- [ ] Qualify the integrated registration after the coordinated history and
+      callback repairs. The genuine source-13e411 proposal retains all 1880
+      complete inputs / 58443962 bytes and 485 actual portable Git objects.
+      Independent complete reproduction, physical inputs, both CST phases,
+      inverses and native checks pass. Freeze commit aa256e7c4 before receiving:
+      all 27 original Node cases and the independent deadline audit pass.
+      Bun observes all 27 and passes 26; Default/Clone diagnostics takes
+      6038 ms against its original 5000 ms default. No guard stop occurs.
+      Complete observations and proposals are retained in the verified
+      51-member integrated-registration-20261110 packet. The receiving cohort
+      remains unqualified, with no production gain or full-gate stamp.
+
 No Rust tools or workers are allowed. One intensive workload runs at a time;
 retain complete evidence below 500000000 bytes and retire only verified inactive
 task artifacts. Preserve compiler source, safety and original deadline limits.

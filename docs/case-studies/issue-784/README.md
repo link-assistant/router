@@ -9,6 +9,12 @@ the unavailable original shard-five log. Source-history and callback repairs
 are committed locally. Generation, original deadlines, private compiler
 admission, strict parity and the complete privacy criteria remain unfinished.
 
+The [integrated registration receiving](integrated-registration-20261110.md)
+captures all 1,880 complete inputs and genuine historical Git objects. Node
+passes all 27 original cases and its deadline audit. Bun passes 26 of 27;
+the Default/Clone diagnostic exceeds its unchanged five-second limit.
+The complete cohort and JavaScript gate remain unqualified.
+
 The [fresh derive path reentry](derive-path-reentry-20261110.md) passes the
 original eight Node cases and two new cases in both engines. Complete graph
 contexts remain byte-identical. The larger Bun cohort reaches the unchanged

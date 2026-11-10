@@ -20,6 +20,7 @@ parser.add_argument('--archive-stem', default='isolated-refresh-20261110')
 parser.add_argument('--prefix', action='append')
 parser.add_argument('--node-log')
 parser.add_argument('--bun-log', action='append')
+parser.add_argument('--registered-bun-review')
 args = parser.parse_args()
 assert re.fullmatch('[a-f0-9]{40}', args.baseline)
 assert re.fullmatch('[-a-z0-9]{1,80}', args.archive_stem)
@@ -49,11 +50,30 @@ else:
 terminal = json.loads((audit_root / 'terminal.json').read_bytes())
 assert terminal['exitCode'] == 0
 audit = json.loads((audit_root / 'case-deadlines.json').read_bytes())
-assert audit['passed'] and audit['observedCompletedCases'] == 16
+expected_cases = 27 if args.registered_bun_review else 16
+assert audit['passed'] and audit['observedCompletedCases'] == expected_cases
+assert audit['originalFailedCompletionEvents'] == 0
 assert not audit['errors'] and not audit['durationBreaches']
+for row in audit['sourceRecords']:
+    assert hashlib.sha256(Path(row['path']).read_bytes()).hexdigest() == row['sha256']
 bun = []
-bun_logs = args.bun_log or ['current-f059-' + name + '-bun-1.log' for name in ['isolated', 'portable']]
-assert len(bun_logs) in [1, 2]
+if args.registered_bun_review:
+    assert '/' not in args.registered_bun_review and not args.bun_log
+    review = json.loads((base / args.registered_bun_review).read_bytes())
+    assert review['schema'] == 'complete-integrated-registration-bun-receiving-v1'
+    assert not review['originalLimitsChanged']
+    assert Path(review['nodeEvidence']).resolve() == audit_root
+    assert len(review['results']) == 4
+    assert {row['file'] for row in review['results']} == {
+        'tools/translation/test/' + name + '.test.mjs' for name in
+        ['bulk-draft-custody', 'translation-progress', 'isolated-project-batch', 'portable-git-fixtures']}
+    assert all(not row['unobservedCases'] and not row['resource']['stopped'] for row in review['results'])
+    bun = [case for row in review['results'] for case in row['cases']]
+    assert len(bun) == expected_cases
+    bun_logs = []
+else:
+    bun_logs = args.bun_log or ['current-f059-' + name + '-bun-1.log' for name in ['isolated', 'portable']]
+assert args.registered_bun_review or len(bun_logs) in [1, 2]
 for name in bun_logs:
     text = (base / name).read_text()
     rows = re.findall(r'^\(pass\) (.+) \[([0-9.]+)ms\]$', text, re.M)
@@ -66,9 +86,9 @@ for name in bun_logs:
         bun.append(dict(name=name, milliseconds=float(duration), precisionMs=0.01,
                         originalDeadlineMs=original[0]['deadline']['milliseconds']))
 sources = set()
-for args in [['git', 'diff', '--name-only', baseline],
-             ['git', 'ls-files', '--others', '--exclude-standard']]:
-    sources.update(Path(p) for p in subprocess.check_output(args).decode().splitlines()
+for command in [['git', 'diff', '--name-only', baseline],
+                ['git', 'ls-files', '--others', '--exclude-standard']]:
+    sources.update(Path(p) for p in subprocess.check_output(command).decode().splitlines()
                    if p.startswith(('tools/translation/', 'experiments/issue-784/')))
 paths = sorted(retire | sources)
 assert 1 <= len(paths) <= 512
@@ -162,10 +182,13 @@ with tarfile.open(archive, 'r|xz') as source:
         assert hashlib.file_digest(source.extractfile(member), 'sha256').hexdigest() == row['sha256']
         seen.add(member.name)
 assert seen == set(by_path)
+bun_passed = (sum(row['state'] == 'pass' and not row['durationBreach'] for row in bun)
+              if args.registered_bun_review else 16)
 record = dict(schema='complete-isolated-refresh-receiving-v1', baseline=baseline,
               archive=str(archive), bytes=archive.stat().st_size, sha256=digest(archive),
-              members=rows, originalLimitsChanged=False, nodeCasesPassed=16,
-              bunCasesPassed=16, bunCases=bun, sourceHead=baseline,
+              members=rows, originalLimitsChanged=False, nodeCasesPassed=expected_cases,
+              bunCasesPassed=bun_passed, bunCases=bun, sourceHead=baseline,
+              receivingQualified=bun_passed == expected_cases,
               retiredAuditAttempts=len(attempts), olderFailuresRetained=True,
               fullGatePassed=False, productionExecutableGain=0,
               runtimeParity=False, rustExecuted=False, evidenceBytesBefore=before)
