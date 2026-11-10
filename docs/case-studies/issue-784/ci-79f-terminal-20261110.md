@@ -34,13 +34,24 @@ checked. Its whole ZIP is 58769430 bytes, SHA-256
 These are computed outputs for the published merge, not verified current-tree
 outputs. They have not been installed against the changed local compiler.
 
-The retained payloads reside under
-[`ci-logs/issue-784-restart-2`](../../../ci-logs/issue-784-restart-2/).
+The complete retained payloads reside under the immutable published
+[`ci-logs/issue-784-restart-2`](https://github.com/link-assistant/router/tree/a598d2b01b5a8e47bbf6bb5a8f90b317d90ce5de/ci-logs/issue-784-restart-2/).
 Logs use `checkpoint79f-job-JOBID.log.gz`; artifacts use
 `checkpoint79f-artifact-ARTIFACTID.zip`. The complete failure review is
 `checkpoint79f-current-failure-review.json.gz`, and the independent nested
 canonical readback is `checkpoint79f-canonical-member-verification.json.gz`.
 No ZIP or log was replaced by a selected excerpt or its receipt alone.
+
+After that commit was published, 49 inactive local copies were retired:
+all 25 artifact ZIPs, all 23 available full nonpassing job logs and the complete
+workflow ZIP. Each whole local stream was compared with its published Git
+blob and GitHub directory metadata before retirement. The
+[custody receipt](evidence/ci-79f-published-local-retirement.json.gz) retains
+every immutable URL, complete byte count, SHA-256 and Git blob identity; its
+[completion receipt](evidence/ci-79f-published-local-retirement-complete.json.gz)
+records 97292190 logical bytes and 97394688 allocated bytes reclaimed.
+Open descriptors and mapped paths were checked before deleting only these
+identified task copies. All original whole streams remain in published Git.
 
 | Nonpassing job or group | Evidence and remaining work |
 | --- | --- |

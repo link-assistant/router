@@ -51,8 +51,13 @@ active, PR draft and incomplete criteria explicit. No local Rust tools or agents
       suites, native freshness and strict 167-file TypeScript compilation pass;
       the memory guard interrupts the native TypeScript file after four passing
       assertions. Later TypeScript, parity, forward and reverse checks are unrun.
-- [ ] Publish the reviewed coordinated draft checkpoint with exact failed/unrun
-      evidence, then collect its entire terminal same-head CI cycle.
+- [x] Publish the reviewed coordinated draft checkpoint `a598d2b01` with exact
+      failed/unrun evidence and verify the complete PR description readback.
+- [ ] Collect its entire terminal same-head CI cycle, run `42849964395`, before
+      publishing the next coordinated batch. Keep Rust behind the same-SHA gate.
+- [x] Verify all 49 complete preceding CI payloads against published Git and
+      GitHub metadata before retiring 97292190 inactive local bytes. Preserve
+      every whole stream and permanent URL in immutable commit `a598d2b01`.
 - [ ] Repair the Schemars candidate regression's outdated two-edit expectation
       by checking both original constituents and the complete ordered Clone
       composition, preserving every source equation, inverse and refusal case.
