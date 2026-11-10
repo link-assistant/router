@@ -33,7 +33,7 @@ deadlines or speculative pushes.
 - [ ] Reduce the actual private compiler source closure within its unchanged
       4 MiB bound. The finite static census observes 340 files and 4,684,686
       bytes; no compiler/execution qualification follows from that census.
-- [ ] Refresh actual current isolated compiler registration and genuine Git
+- [x] Refresh actual current isolated compiler registration and genuine Git
       fixtures, then run complete receiving files in both engines.
 - [ ] Materialize and independently review actual current canonical, all three
       profile, owned-definition and reverse outputs; resolve missing owned matrix

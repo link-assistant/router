@@ -3,6 +3,12 @@
 Research and verification dates: 2026-11-06–10 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [coordinated compiler registration](e881-coordinated-registry-20261110.md)
+joins all 1,925 current source inputs and the genuine portable Git fixture.
+Both engines pass all 16 original receiving cases within unchanged deadlines;
+complete earlier failures remain retained. This does not establish full parity
+or a green JavaScript gate.
+
 The [terminal e881 CI review](ci-e881-terminal-20261110.md) retains all 25
 complete original artifact ZIPs, every available nonpassing log and the whole
 available workflow archive. Shard five's unavailable original log remains an
