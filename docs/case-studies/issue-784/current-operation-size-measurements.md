@@ -20,14 +20,22 @@ byte-identical. Complete public plans precede installation:
 | Plan | Compressed bytes | Complete plan |
 | --- | ---: | --- |
 | Operation | 508,075 | [Archive](evidence/current-operation-measurement-operation-source.json.gz) |
-| Consumer | 16,114,037 | [Archive](evidence/current-operation-measurement-consumer-source.json.gz) |
-| Default, corrected capture | 12,285,010 | [Archive](evidence/current-operation-measurement-default-source-v2.json.gz) |
+| Consumer | 16,114,037 | [Archive](https://github.com/link-assistant/router/blob/93995ee40be4b570becbe0b788dba58f5bd0ea6f/docs/case-studies/issue-784/evidence/current-operation-measurement-consumer-source.json.gz?raw=true) |
+| Default, corrected capture | 12,285,010 | [Archive](https://github.com/link-assistant/router/blob/93995ee40be4b570becbe0b788dba58f5bd0ea6f/docs/case-studies/issue-784/evidence/current-operation-measurement-default-source-v2.json.gz?raw=true) |
 
 The first default capture incorrectly compared a JSON data projection against
-live rule callbacks. It failed before installation. Its [complete plan](evidence/current-operation-measurement-default-source.json.gz)
+live rule callbacks. It failed before installation. Its [complete plan](https://github.com/link-assistant/router/blob/93995ee40be4b570becbe0b788dba58f5bd0ea6f/docs/case-studies/issue-784/evidence/current-operation-measurement-default-source.json.gz?raw=true)
 and full failed stream remain retained. The corrected capture compares the whole
 JSON projection, preserves executable callbacks in source and confirms every
 physical default output is unchanged. JSON data grants no execution authority.
+
+The three linked complete plans remain in immutable published commit
+`93995ee40be4b570becbe0b788dba58f5bd0ea6f`. After matching every local byte to
+that commit and fresh GitHub metadata, their inactive local copies were retired
+to reserve space for the next complete CI artifacts. The
+[custody receipt](evidence/published-measurement-copy-retirement.json.gz)
+records 40,683,907 logical bytes reclaimed. No failed evidence was discarded
+and no additional check or performance result is established by this cleanup.
 
 Both complete test files pass using installed TypeScript 5.9.3:
 
