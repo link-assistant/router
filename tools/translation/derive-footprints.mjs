@@ -58,9 +58,9 @@ function captureOriginalItemLookup(certificate,module,item){
   if(!itemScanNative)return;const items=apply(itemScanGet,itemScanOrigins,[module]),lookup=apply(itemScanGet,itemScanOrigins,[item]);if(items&&lookup?.items===items&&itemScanUnchanged(items))apply(itemScanSet,itemScanOrigins,[certificate,lookup]);
 }
 function ownSelection(value,name){if(!value||typeof value!=='object'||types.isProxy(value))throw new TypeError('Original derive selection requires non-proxy own data');const field=descriptor(value,name);if(!field||!hasOwn(field,'value'))throw new TypeError('Original derive selection requires own data: '+name);return field.value;}
-// This index lives only between requested-closure construction and the first
-// missing/unresolved module. No source hashing or caller callback runs in that
-// interval. A miss retires it before the old conditional-proof JSON walk.
+// Each index lives only until a missing/unresolved module. A miss retires it
+// before the original conditional-proof JSON walk. A later resolved query may
+// qualify current paths and bindings again; it never revives the old snapshot.
 const pathObjectPrototype=Object.prototype,pathArrayPrototype=Array.prototype;
 function ordinaryPathArray(value,strings=false){
   if(types.isProxy(value)||!Array.isArray(value)||Object.getPrototypeOf(value)!==pathArrayPrototype)return false;
@@ -313,6 +313,9 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
             if(binding.namespace!=='type'||binding.kind!=='mod')return false;
             if(binding.status!=='resolved'){modulePaths=null;return true;}
             if(binding.via!=='declaration'||binding.target?.[0]!=='crate')return false;
+            // The intervening proof comparison can mutate caller-owned paths.
+            // Re-enter only through complete fresh native/data qualification.
+            modulePaths??=standardModulePathIndex(modules,ancestors);
             const present=modulePaths?modulePaths.has(JSON.stringify(binding.target)):modules.some(module=>JSON.stringify(['crate',...module.path])===JSON.stringify(binding.target));
             if(!present)modulePaths=null;
             return !present;

@@ -3,6 +3,12 @@
 Research and verification dates: 2026-11-06–10 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [fresh derive path reentry](derive-path-reentry-20261110.md) passes the
+original eight Node cases and two new cases in both engines. Complete graph
+contexts remain byte-identical. The larger Bun cohort reaches the unchanged
+memory guard; complete registration, generation and gate qualification remain
+unfinished. The newly published `679bcd027` CI cycle is still running.
+
 The [complete gate attempt at 5ef265492](complete-gate-5ef265-20261110.md)
 passes all ten lint commands, both 259-case runtime suites, native freshness,
 strict native TypeScript compilation and all 121 acceptance cases. It fails

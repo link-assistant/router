@@ -1,0 +1,23 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/derive-footprints.mjs",
+  "phase": "repository",
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0,
+  "beforeSha256": "aca34c04213d1e683da149cf6f9779d42ab99fb275bb74cdecca09cbcc27e50b",
+  "afterSha256": "0a6dd964d2de1d09b09c1ce4668739505d41ef11e7337b43754e59789fecdf58",
+  "edits": [
+    {
+      "id": "derive-paths:describe-fresh-index-lifetime",
+      "before": "// This index lives only between requested-closure construction and the first\n// missing/unresolved module. No source hashing or caller callback runs in that\n// interval. A miss retires it before the old conditional-proof JSON walk.",
+      "after": "// Each index lives only until a missing/unresolved module. A miss retires it\n// before the original conditional-proof JSON walk. A later resolved query may\n// qualify current paths and bindings again; it never revives the old snapshot."
+    },
+    {
+      "id": "derive-paths:freshly-qualify-resolved-query",
+      "before": "            const present=modulePaths?modulePaths.has(JSON.stringify(binding.target)):modules.some(module=>JSON.stringify(['crate',...module.path])===JSON.stringify(binding.target));",
+      "after": "            // The intervening proof comparison can mutate caller-owned paths.\n            // Re-enter only through complete fresh native/data qualification.\n            modulePaths??=standardModulePathIndex(modules,ancestors);\n            const present=modulePaths?modulePaths.has(JSON.stringify(binding.target)):modules.some(module=>JSON.stringify(['crate',...module.path])===JSON.stringify(binding.target));"
+    }
+  ]
+}

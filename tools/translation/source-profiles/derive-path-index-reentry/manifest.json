@@ -1,0 +1,11 @@
+{
+  "schema": "derive-path-index-reentry-original-v1",
+  "path": "tools/translation/derive-footprints.mjs",
+  "revision": "679bcd0278a7cb045349507d6bf1e8234de19cdc",
+  "archive": "original.mjs.gz",
+  "archiveBytes": 14047,
+  "archiveSha256": "eaa16d8ee41a35542efcbee2640d607e452643930958de843a7875a0c52605a6",
+  "bytes": 58311,
+  "sha256": "aca34c04213d1e683da149cf6f9779d42ab99fb275bb74cdecca09cbcc27e50b",
+  "rulesSha256": "f22e622cbb4a293fa207b30d627a78f0b67542ccee7d823a6b0084f578aba3cb"
+}
