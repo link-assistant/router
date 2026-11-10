@@ -61,7 +61,7 @@ optional by failures on `main`. No observed failure requires a missing secret
 or manual permission, and no such skip was added.
 
 The complete original deadline JSON is retained in three containers:
-[initial inspection](evidence/current-37147a/current-37147a-deadline-inspection-4.json.xz),
+[initial inspection](https://github.com/link-assistant/router/blob/e88183bb894b9ea62c9d6ae170c3fc099047685b/docs/case-studies/issue-784/evidence/current-37147a/current-37147a-deadline-inspection-4.json.xz?raw=true),
 [later shards](evidence/current-37147a/current-37147a-deadline-inspection-12.json.gz)
 and [final shards](evidence/current-37147a/current-37147a-deadline-inspection-15.json.gz).
 The latter two retain only the selected complete receipts and stderr logs;

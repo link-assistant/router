@@ -61,7 +61,7 @@ Two old complete research packets now use verified immutable published-commit
 links. Their whole Git blobs were independently compared with the inactive
 local files before removing those copies: 29,424,936 logical bytes reclaimed.
 All 743 completed local deadline files were separately retained, fully read
-back and hashed in the [complete archive](evidence/completed-deadline-files-20261109_0235.tar.gz)
+back and hashed in the [complete archive](https://github.com/link-assistant/router/blob/e88183bb894b9ea62c9d6ae170c3fc099047685b/docs/case-studies/issue-784/evidence/completed-deadline-files-20261109_0235.tar.gz?raw=true)
 before retiring 28,855,519 raw bytes. Its archive is 5,198,169 bytes; the
 [receipt](evidence/completed-deadline-files-20261109_0235.tar.gz.json) records
 every original member. The first archive attempt exceeded its conservative

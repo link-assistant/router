@@ -136,7 +136,7 @@ reaps the owned process tree at 95.421 seconds, sampling 2,867,953,664 cgroup
 bytes. Its final independent deadline report is absent after that interruption;
 neither the receiving case nor the complete file is qualified.
 
-The [registered-source and full-gate packet](evidence/current-registered-loader-trace.tar.gz)
+The [registered-source and full-gate packet](https://github.com/link-assistant/router/blob/e88183bb894b9ea62c9d6ae170c3fc099047685b/docs/case-studies/issue-784/evidence/current-registered-loader-trace.tar.gz?raw=true)
 retains the complete registration proposals, native syntax review, resource
 observations, full gate log and all subsequent original-test attempts. The
 [deadline packet](evidence/current-registered-loader-deadlines.tar.gz) retains

@@ -32,7 +32,7 @@ heap failure. The container guard stops reverse testing at 2,867,879,936 sampled
 cgroup bytes, leaving its later commands unrun. No green stamp or Rust result
 exists. The current published head's entire CI cycle is still running.
 
-The [complete observation archive](evidence/deadline-memory-20261109.tar.gz)
+The [complete observation archive](https://github.com/link-assistant/router/blob/e88183bb894b9ea62c9d6ae170c3fc099047685b/docs/case-studies/issue-784/evidence/deadline-memory-20261109.tar.gz?raw=true)
 and [member receipt](evidence/deadline-memory-20261109.json.gz) preserve failed,
 interrupted and successful attempts, full original sources and exact commands.
 The initial smaller fixture did not reproduce heap exhaustion and had an
