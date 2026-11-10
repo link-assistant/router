@@ -376,8 +376,10 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[moduleScopeKey(scope),scope]));
   const configureSourceScope=(parser,module)=>configureParserSourceScope(requestImmutableNamespaceTargets(parser),scopes.get(moduleScopeKey(module)),bindingEvidence.scopes,module.path);
   const matchesOptions={modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext};
-  const matchesMacroContext=(enclosingNamespace?createEnclosingMatchesMacroContext:createMatchesMacroContext)(matchesOptions);
-  let methodMatchesMacroContext=enclosingNamespace?null:matchesMacroContext;
+  // Parser configuration reissues the same enclosing name domain.
+  // Actual impl methods lazily create their independent complete context.
+  const matchesMacroContext=createEnclosingMatchesMacroContext(matchesOptions);
+  let methodMatchesMacroContext=null;
   progress({stage:'namespace',state:'end',entry:options.entry,total:bindingEvidence.scopes.length});
   const declarations = [], refused = [], imports = [], unloweredItems = [], moduleAliases = new Map();
   let completedModules=0,completedMethods=0;

@@ -6,7 +6,8 @@ file. It constructs the genuine derive and enclosing-only contexts in a
 one-file module graph. It does not replace the original whole-library test,
 prove ancestor completeness or produce executable declarations.
 
-The complete `config.rs` source SHA256 remains
+The following initial observation predates the current enclosing Clone repair.
+Its complete `config.rs` source SHA256 remains
 `9f5bb5c2d7060a8ab317889e401d3da2155a0574b5d4e2ed112f52d5e9468d8a`.
 Four of its five derive invocations close in the existing enclosing-only format.
 `RouterOptions`, span 6702–12665, retains its actual `Clone` invocation and
@@ -23,6 +24,16 @@ and Ord require a nonempty ordinary unit enum in the current source route.
 Context construction takes 5,409.34 ms; the whole invocation takes 38.90 seconds
 and samples 1,614,491,648 bytes. Both original complete outputs, commands and
 memory receipts are retained; both owned process trees exit normally.
+
+The later current-fixture probe preserves the same complete source and closes
+all five actual `config.rs` enclosing derive invocations, including
+`RouterOptions`. Context construction takes 8,144 ms; the complete diagnostic
+takes 40.032 seconds and samples 2,197,155,840 cgroup bytes. The corresponding
+current associative probe still refuses the same actual `SemanticLink` derive:
+the ordering route requires a nonempty ordinary unit enum. Its context takes
+5,547 ms. Neither process success grants semantic closure. The
+[ordinary parser repair](ordinary-parser-enclosing-20261110.md) records the
+separate current compiler probe and whole focused receiving results.
 
 These diagnostics establish zero newly executable production functions. A
 future source-backed extension still needs all actual owners and ancestors,

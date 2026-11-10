@@ -109,3 +109,29 @@ test('a large owned-definition Clone namespace cannot authorize its unsupported 
  assert.equal(result.meta.runtimeParity,false);
  await verifyTypedTargets(result,api=>assert.equal(api.value(),7n),{childTimeoutMs:20000});
 });
+
+test('ordinary project names use the enclosing Clone proof without admitting its over-budget body',
+ {timeout:60000},async()=>{
+ const declaration='#[derive(Clone)]pub struct Record{'
+  +Array.from({length:128},(_,index)=>'f'+index+':u8').join(',')+'}';
+ const csv="pub fn csv(value:&str)->Vec<String>{value.split(',').map(str::trim)"
+  +'.filter(|s|!s.is_empty()).map(ToString::to_string).collect()}';
+ const result=compile(declaration+csv);
+ assert.equal(result.meta.executable.some(row=>row.name==='csv'),true,
+  JSON.stringify(result.meta.refused));
+ assert.equal((result.meta.checkedGeneratedMethods??[]).some(row=>row.name==='Record.clone'),false);
+ assert.ok(result.meta.refused.some(row=>row.term==='generated-method'
+  &&row.name==='Record.clone'&&/positive AST validation budget/.test(row.message)));
+ assert.equal(result.meta.runtimeParity,false);
+ await verifyTypedTargets(result,api=>{
+  for(const [value,expected] of [['',[]],[', ,',[]],['a, b,a',['a','b','a']],
+   ['\u0085a,\uFEFFb',['a','\uFEFFb']],['😀,Ω',['😀','Ω']]])
+   assert.deepEqual(api.csv(value),expected);
+ },{childTimeoutMs:20000});
+ for(const source of [declaration.replace('derive(Clone)','derive(Clone,Unknown)'),
+  'mod str{}'+declaration,'use missing::*;'+declaration]){
+  const refused=compile(source+csv);
+  assert.equal(refused.meta.executable.some(row=>row.name==='csv'),false,source);
+  assert.ok(refused.meta.refused.some(row=>row.name==='csv'),source);
+ }
+});
