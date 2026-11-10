@@ -1,5 +1,6 @@
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import {legacyProofConsumerSource} from './fixtures/facade-ast-receiving-history.mjs';
+import {prepareDerivePathIndexReentry} from '../prepare-derive-path-index-reentry.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {prepareModuleTokenLayout} from '../prepare-module-token-layout.mjs';
 import nodeTest from 'node:test';
@@ -206,6 +207,14 @@ test('opaque bodies types helpers additional derives and generated attributes ca
  const actualTargets=new Set(fixture.modules.flatMap(row=>row.imports.filter(edge=>edge.kind==='current-genuine-interface'&&!edge.target.startsWith('node:')).map(edge=>edge.target)));
  for(const path of actualTargets){
   const pin=fixture.currentGenuineInterfaces.find(row=>row.path===path);assert.ok(pin,'complete current interface '+path);const currentSource=read(path),receivingHistory=[];let selectedSource=currentSource;
+  if(path==='tools/translation/derive-footprints.mjs'){
+   const history=prepareDerivePathIndexReentry(),row=history.files[0];
+   assert.equal(row.path,path);assert.equal(row.current,currentSource);assert.equal(row.after,currentSource);
+   assert.equal(row.equation.inverse,row.before);assert.equal(row.evolution.inverse,row.before);
+   assert.deepEqual(row.equation.stages.map(stage=>stage.phase),['language','repository']);
+   assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);
+   receivingHistory.push({kind:'complete-derive-path-index-reentry',value:history});selectedSource=row.before;
+  }
   if(path==='tools/translation/source-module-views.mjs'){
    const history=prepareModuleTokenLayout();assert.equal(history.path,path);assert.equal(history.before,currentSource);assert.equal(history.after,currentSource);assert.equal(history.inverse,history.original);assert.equal(history.originalSha256,pin.sha256);assert.equal(Buffer.byteLength(history.original),pin.bytes);
    assert.deepEqual(history.stages.map(stage=>stage.phase),['language','repository']);for(const stage of history.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.source);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.target);assert.equal(stage.inverse,stage.source);}

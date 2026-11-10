@@ -171,3 +171,9 @@ PR #785. The native goal stays active. No green gate or release readiness exists
 No Rust tools or workers are allowed. One intensive workload runs at a time;
 retain complete evidence below 500000000 bytes and retire only verified inactive
 task artifacts. Preserve compiler source, safety and original deadline limits.
+- [x] Restore the complete derive-effect source-history comparison: the original
+      ten-case file reproduces one 232-byte source mismatch, then passes all ten
+      cases in Node and Bun after composing the existing checked path-index
+      inverse. Original pins, native actions and deadlines remain unchanged.
+      Complete evidence is in derive-effects-history-20261110.md. The related
+      seven-case retention file still fails two cases; no full-gate claim.
