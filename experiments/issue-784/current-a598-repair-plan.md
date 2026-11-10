@@ -23,6 +23,10 @@ native goal active and the PR draft and unmerged while criteria remain open.
       the entire completed failure set before publishing the next source batch.
 - [ ] Resolve the remaining original child and case deadlines, production heap
       costs, genuine canonical/owned/profile generation and fresh source joins.
+- [x] Preserve a finite whole fourteen-function base64 source-path CPU profile
+      and complete inputs/output. Repeated original-module and source-current
+      checks dominate the sample. This diagnostic does not qualify the original
+      complete vector test or establish a production performance improvement.
 - [ ] Obtain the complete local gate and same-SHA green CI, including strict
       parity. The latest complete local attempt at `619e35656` remains memory
       interrupted; its later TypeScript, parity, forward and reverse are unrun.

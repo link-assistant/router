@@ -3,6 +3,11 @@
 Research and verification dates: 2026-11-06–10 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [complete base64 source-path diagnostic](current-owned-base64-source-profile.md)
+retains a finite CPU profile and every source/output byte. Repeated original
+analysis and source authentication remain performance targets; the diagnostic
+does not qualify the complete test, production generation or original deadlines.
+
 The [nullable fixture repair](current-native-nullable-receiving.md) passes the
 complete five-case file in both engines with strict ES2022 library checking and
 unchanged deadlines. All unsuccessful drafts and whole before/after evidence
