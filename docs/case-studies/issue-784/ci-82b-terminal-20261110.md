@@ -64,5 +64,8 @@ freshness failures or strict parity requirements. Strict parity still reports
 was run. There is no green current complete JavaScript gate.
 
 The full per-job findings and exact complete-log hashes are retained in
-[the compressed review](../../../ci-logs/issue-784-restart-2/next-82b-terminal-complete-failure-review.json.gz).
+[the compressed review](https://github.com/link-assistant/router/blob/ae267c7f3a250f421c319adc20eba4ad466f49f5/ci-logs/issue-784-restart-2/next-82b-terminal-complete-failure-review.json.gz?raw=true).
 The evidence is diagnostic, not a completion or executable-authority claim.
+The complete original containers remain in that immutable source commit.
+Their inactive working copies were retired only after whole Git blob readback
+and inode/descriptor checks; the separate custody receipt records exact hashes.

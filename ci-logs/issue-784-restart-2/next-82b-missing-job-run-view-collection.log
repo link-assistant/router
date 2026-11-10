@@ -1,1 +1,0 @@
-{"command": ["gh", "run", "view", "42895668515", "--repo", "link-assistant/router", "--job", "130108034312", "--log"], "exitCode": 1, "decodedBytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "fullReadbackVerified": true, "previousDirectJobApiReturnedBlobNotFound": true, "validLog": false}

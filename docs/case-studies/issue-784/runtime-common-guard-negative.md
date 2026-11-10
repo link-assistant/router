@@ -48,7 +48,9 @@ the resource guard. The full final streams and receipts are
 Node's complete independent evidence is `complete-hQZAeA`. This qualifies only
 the selected complete files, not the entire failing CI cohort or full gate.
 
-Complete evidence under `ci-logs/issue-784-restart-2/` includes:
+Complete evidence under `ci-logs/issue-784-restart-2/` in immutable commit
+[`ae267c7f3`](https://github.com/link-assistant/router/commit/ae267c7f3a250f421c319adc20eba4ad466f49f5)
+includes:
 
 - `reverse-build-complete-output.json.xz` and
   `reverse-build-complete-cpu-v3.json.xz`: complete production output and CPU
@@ -76,6 +78,12 @@ and inactive inode/descriptor checks. The second attempt refused the fixed
 500 MB capacity before writing the last proposal. Compressing that completed
 error stream reclaimed 3309365 logical bytes. The third complete archive
 passed. Neither storage refusal discarded source or raised a bound.
+
+After committing every complete record, a separate cleanup verified every
+whole immutable Git blob and checked inactive inodes and open descriptors
+before retiring 326 working copies, reclaiming 125926612 logical bytes.
+The per-file `runtime-terminal-copy-retirement.json.gz` receipt preserves all
+permanent blob locations and hashes. This storage cleanup grants no authority.
 
 All original limits remain unchanged. No Rust tool was invoked. Newly
 executable production functions qualified by this experiment: **0**.
