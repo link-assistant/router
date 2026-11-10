@@ -16,19 +16,26 @@ choices = {
     ('--project-retention',): ('project-retention-complete', 'project-retention', 21279876, 429),
     ('--native-regeneration',): ('native-regeneration-complete', 'native-regeneration', 18508712, 125),
     ('--second-ci-repair',): ('second-ci-repair-complete', 'second-ci-repair', 15837704, 123),
+    ('--older-ci-remaining',): ('older-ci-complete-members-remaining-20261110', 'older-ci-remaining', 17496224, 164),
+    ('--older-ci-first',): ('older-ci-complete-members-first-20261110', 'older-ci-first', 11357940, 97),
 }
 if tuple(sys.argv[1:]) not in choices:
-    raise RuntimeError('Only the seven reviewed inactive task archives are selectable')
+    raise RuntimeError('Only the nine reviewed inactive task archives are selectable')
 stem, metadata_stem, expected_size, expected_members = choices[tuple(sys.argv[1:])]
 relative = 'docs/case-studies/issue-784/evidence/' + stem + '.tar.xz'
 path = Path(relative)
-head = ('567e1dd0b072a2bfd736a9025ba245a630aaff7d' if tuple(sys.argv[1:]) in [('--native-regeneration',), ('--second-ci-repair',)]
+head = ('e88183bb894b9ea62c9d6ae170c3fc099047685b' if metadata_stem.startswith('older-ci-') else
+        '567e1dd0b072a2bfd736a9025ba245a630aaff7d' if tuple(sys.argv[1:]) in [('--native-regeneration',), ('--second-ci-repair',)]
         else '4e7093eb98b2170bac2cd5fd24c0c777e6bcf4b2')
-metadata_path = Path('ci-logs/issue-784-restart-2/current-published-' + metadata_stem + '-archive-metadata.json')
+metadata_path = Path('ci-logs/issue-784-restart-2/current-published-' + metadata_stem + ('-metadata.json' if metadata_stem.startswith('older-ci-') else '-archive-metadata.json'))
 metadata = json.loads(metadata_path.read_bytes())
-original = json.loads(gzip.decompress(path.with_name(stem + '.json.gz').read_bytes()))
+original = json.loads(gzip.decompress(path.with_name(stem + ('.tar.receipt.json.gz' if metadata_stem.startswith('older-ci-') else '.json.gz')).read_bytes()))
 assert metadata['path'] == relative and metadata['size'] == original['archiveBytes'] == expected_size
-assert original['allDecodedOriginalsVerified'] and original['completeMembers'] == expected_members
+if metadata_stem.startswith('older-ci-'):
+    assert original['completeOriginalMemberBytesRetained'] and original['everyOriginalCrcVerified']
+    assert len(original['members']) == expected_members
+else:
+    assert original['allDecodedOriginalsVerified'] and original['completeMembers'] == expected_members
 state = path.lstat()
 assert state.st_uid == os.getuid() and state.st_nlink == 1 and stat.S_ISREG(state.st_mode)
 with path.open('rb') as source:

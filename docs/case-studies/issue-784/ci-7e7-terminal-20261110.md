@@ -19,10 +19,13 @@ members pass CRC and SHA-256 checks. The complete
 
 All 25 artifacts were downloaded, authenticated against the exact head/run,
 and read completely, including every member CRC and SHA-256. The bulk artifact
-contains 2874 complete members. Its original member bytes remain in the local
-54415600-byte archive, SHA-256
-`4013f112ed9a3c410a9f83da1db9ce315e090927250d6b0dfbf408276774a2a1`;
-its ZIP container is deliberately not retained. The other 24 complete original
+contains 2874 complete members. Every original member was SHA-256 checked
+before recompression, and all 322368324 decoded payload bytes were independently
+reopened and checked in the 29947820-byte local archive, SHA-256
+`b05b5b0d62072436c559690dbd8cdf1eda018bb3ad09b6af00239f0242e48d7d`.
+The [complete custody map](evidence/ci-7e7-decoded-bulk-custody-20261110.json.gz)
+retains every original member identity and decoded successor. The original ZIP
+and inner gzip container bytes are not retained. The other 24 complete original
 ZIPs remain locally compressed. These payloads have not been installed as
 current outputs: the unpublished compiler source batch differs from this run.
 
@@ -63,11 +66,24 @@ The task's evidence remains below its 500000000-byte allocation limit.
 Storage reductions retain complete payloads and explicitly distinguish their
 containers. No active file, worker directory, build cache or lock was removed.
 
-- The two `older-ci-complete-members-*-20261110.tar.xz` archives and adjacent
-  receipts retain all 261 original members from 26 inactive older ZIPs. Every
+- The two `older-ci-complete-members-*-20261110.tar.xz` archives retain all 261
+  original members from 26 inactive older ZIPs in published commit
+  `e88183bb894b9ea62c9d6ae170c3fc099047685b`. Every
   original CRC and full member hash was checked before and after writing.
   The ZIP containers are not retained. Replacing 61587367 bytes with
-  28854164 bytes reclaims 32733203 logical bytes.
+  28854164 bytes reclaimed 32733203 logical bytes. Their inactive working
+  copies were then retired after fresh remote metadata and complete published
+  Git blob verification, reclaiming another 28854164 logical bytes. The
+  adjacent full member receipts and new local-retirement receipts remain.
+  Exact compressed archives remain available as
+  [first archive](https://github.com/link-assistant/router/blob/e88183bb894b9ea62c9d6ae170c3fc099047685b/docs/case-studies/issue-784/evidence/older-ci-complete-members-first-20261110.tar.xz?raw=true)
+  and
+  [remaining archive](https://github.com/link-assistant/router/blob/e88183bb894b9ea62c9d6ae170c3fc099047685b/docs/case-studies/issue-784/evidence/older-ci-complete-members-remaining-20261110.tar.xz?raw=true).
+- The current bulk recompression reclaims 24467780 logical bytes while retaining
+  every complete decoded payload. Two earlier attempts refused the storage
+  guard and left the original archive untouched; their logs and resource
+  receipts remain. The successful attempt takes 176.38 seconds and peaks at
+  2253381632 sampled cgroup bytes, below the unchanged memory guard.
 - The `complete-ci-duplicates-retired-20261110.json.gz` and
   `complete-ci-large-duplicates-retired-20261110.json.gz` receipts identify
   54 inactive working duplicates, totaling 28302615 bytes. Every complete byte
