@@ -1,0 +1,11 @@
+node-case-deadlines-translation-ac46abf2eb6c7f311287bfdaa8a7dabe834f34fa-7
+  /home/runner/work/router/router/tools/translation/serialization-schema/serialization-schema.test.mjs:98:1 generation compares the actual projection before offering any native replacement artifact: Observed 373370.491537ms exceeds unchanged source-declared 30000ms timeout
+  /home/runner/work/router/router/tools/translation/test/grouped-original-method-producers.test.mjs:164:1 both complete original derive parents retain the unchanged native and typed behavior: Observed 83393.056658ms exceeds unchanged source-declared 60000ms timeout
+  /home/runner/work/router/router/tools/translation/test/method-metadata-digest-adoption.test.mjs:31:25 complete original provider and affinity parents retain independent checked and strict behavior: Observed 68158.754601ms exceeds unchanged source-declared 60000ms timeout
+  /home/runner/work/router/router/tools/translation/test/private-parser-data-current-sources.test.mjs:23:1 complete three-file default proposal retains historical source inputs before and after actual installed adoption: Observed 87415.120956ms exceeds unchanged source-declared 60000ms timeout
+  /home/runner/work/router/router/tools/translation/test/private-parser-data-current-sources.test.mjs:27:1 both explicit candidate current wrappers follow the actual executor while retaining their exact original birth equations: Observed 76392.574775ms exceeds unchanged source-declared 60000ms timeout
+Traceback (most recent call last):
+  File "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/review-79f-ci-failures.py", line 72, in <module>
+    data = event['data']
+           ~~~~~^^^^^^^^
+KeyError: 'data'

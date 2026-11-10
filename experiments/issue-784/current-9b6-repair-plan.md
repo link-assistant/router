@@ -37,8 +37,18 @@ active, PR draft and incomplete criteria explicit. No local Rust tools or agents
 - [ ] Review/publish the coordinated batch to the prepared branch only, then
       wait for all same-SHA checks. Do not start Rust before every JS stage passes.
 - [x] Publish reviewed source batch at `79f375ed1`, explicitly incomplete. Run
-      `42832857700` is in progress; collect the entire terminal cycle before the
-      next coordinated push. Continue independent drafting without changing it.
+      `42832857700` is terminal: all 24 nonpassing results, every available log
+      and all 25 artifacts reviewed. Shard eight's unavailable original log
+      remains explicit; its check annotation confirms the original job limit.
+- [x] Compose the actual class-birth and project-progress source successors,
+      private Display context association and operation size measurement rule.
+      Preserve all source equations and original deadline failures.
+- [x] Losslessly compress the complete static archive below the original export
+      bound. All 20 Node assertions pass, but two original deadlines still fail.
+- [x] Refresh the complete 1934-source registration at `8c35fb19f`; both whole
+      receiving files pass all 16 cases under Node and Bun with original limits.
+- [ ] Attempt the complete local gate on the coordinated batch, record each
+      passed, failed and unrun stage, review and publish the draft checkpoint.
 - [ ] Finish universal all-tool/account privacy acceptance; Router headers alone
       cannot establish external account settings or vendor/security retention.
 

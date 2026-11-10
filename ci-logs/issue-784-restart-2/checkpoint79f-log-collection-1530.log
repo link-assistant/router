@@ -1,0 +1,6 @@
+gh: HTTP 404
+Traceback (most recent call last):
+  File "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/collect-current-ci-logs.py", line 49, in <module>
+    assert child.wait() == 0
+           ^^^^^^^^^^^^^^^^^
+AssertionError

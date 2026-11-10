@@ -3,6 +3,16 @@
 Research and verification dates: 2026-11-06–10 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [terminal 79f CI review](ci-79f-terminal-20261110.md) records all 24
+nonpassing results, all 25 complete artifacts, every available job log and
+the unavailable shard-eight log. The [current registration refresh](current-8c35-registration.md)
+passes 16 original receiving cases in each engine. The
+[Display context repair](current-project-display-context.md) passes 43 Node
+cases but retains seven Bun deadline failures. The
+[static archive repair](current-static-archive-compression.md) clears the
+original export bound while retaining two failed Node deadlines. All broader
+performance, freshness, matrix, strict parity and privacy criteria stay open.
+
 The [coordinated batch's complete local gate](coordinated-gate-20261110.md)
 passes all lint commands, both 259-case native suites, native freshness,
 strict native TypeScript compilation and 121 acceptance cases. It fails the
