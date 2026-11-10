@@ -386,3 +386,6 @@ The [actual current registration](current-ascii-registration.md) preserves the
 whole reviewed source transition and both interrupted receiving attempts.
 The [current compiler registration](current-unicode-registration.md) records
 32 passing Node/Bun receiving cases and the genuine shallow-checkout regression.
+
+The [Default prerequisite history repair](current-default-prerequisite-history.md)
+retains every source layer, original refusal and complete failed/receiving run.

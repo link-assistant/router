@@ -25,6 +25,10 @@ native goal active and the PR draft and unmerged while criteria remain open.
       Both complete original cases pass in each engine within unchanged limits.
 - [ ] Wait for every job in run 42849964395 to finish, then preserve and inspect
       the entire completed failure set before publishing the next source batch.
+- [x] Reproduce both Default prerequisite history assertions, then join the
+      archived input, guarded-import predecessor and complete measurement
+      successor with their CST inverses. Three cases pass in both engines;
+      retain the original and intermediate full failures and all Node audits.
 - [ ] Resolve the remaining original child and case deadlines, production heap
       costs, genuine canonical/owned/profile generation and fresh source joins.
 - [x] Preserve a finite whole fourteen-function base64 source-path CPU profile

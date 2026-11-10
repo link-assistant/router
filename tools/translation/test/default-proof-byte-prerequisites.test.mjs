@@ -37,8 +37,11 @@ test('complete enclosing source history composes only the genuine guarded prereq
     assert.deepEqual(row.original,original);
     const equation=row.sourceEvolution;
     assert.equal(equation.path,scope);
-    assert.equal(equation.current,row.source);
-    assert.equal(equation.text,row.source);
+    // The guarded import is the complete predecessor of the independent
+    // operation-local measurement layer; keep both whole-source inverses.
+    const measurement=row.measurementSourceHistory;
+    assert.equal(equation.current,original.source);
+    assert.equal(equation.text,measurement.before);
     assert.equal(equation.source,original.source);
     assert.equal(equation.inverse,original.source);
     assert.equal(equation.sourceSha256,original.sha256);
@@ -49,6 +52,36 @@ test('complete enclosing source history composes only the genuine guarded prereq
       assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.text);
       assert.equal(stage.inverse,stage.source);
     }
+    assert.equal(measurement.path,scope);
+    assert.equal(measurement.after,row.source);
+    assert.equal(measurement.inverse,equation.text);
+    assert.deepEqual(measurement.languageRules.map(rule=>rule.id),[
+      'javascript:operation-local-positive-size-records',
+      'javascript:retain-fresh-per-call-measurement-budgets',
+      'javascript:retire-size-records-before-original-callbacks',
+    ]);
+    assert.deepEqual(measurement.repositoryRules,[]);
+    let expected=measurement.before;
+    for(const rule of measurement.languageRules){
+      assert.equal(expected.split(rule.before).length,2);
+      expected=expected.replace(rule.before,()=>rule.after);
+    }
+    assert.equal(expected,row.source);
+    for(const rule of [...measurement.languageRules].reverse()){
+      assert.equal(expected.split(rule.after).length,2);
+      expected=expected.replace(rule.after,()=>rule.before);
+    }
+    assert.equal(expected,equation.text);
+    assert.equal(transportConcreteSyntaxMeta(measurement.equation.beforeMeta).source,equation.text);
+    assert.equal(transportConcreteSyntaxMeta(measurement.equation.afterMeta).source,row.source);
+    assert.equal(measurement.equation.inverse,equation.text);
+    assert.equal(measurement.maximumRecords,1024);
+    assert.equal(measurement.minimumCells,64);
+    assert.equal(measurement.originalLogicalBudgetsUnchanged,true);
+    assert.equal(measurement.newAcrossOperationCache,false);
+    assert.equal(measurement.sourceAuthority,false);
+    assert.equal(measurement.runtimeAuthority,false);
+    assert.equal(measurement.performanceQualified,false);
   }
   assert.equal(plan.semanticAuthority,false);
   assert.equal(plan.runtimeExecuted,false);
@@ -72,7 +105,10 @@ test('unrelated prerequisite bodies and foreign imports are refused before sourc
   const source=readFileSync(join(target,scope),'utf8');
   for(const changed of [source+'\n// unrelated body extension\n',source.replace("'./guarded-proof-lexing-intrinsics.mjs'","'./foreign-lexing-intrinsics.mjs'")]){
     writeFileSync(join(target,scope),changed);
-    assert.throws(()=>prepareDefaultProofByteAdoption({root:target}),/complete actual byte bridge prerequisite differs|private lexing import/);
+    assert.throws(()=>prepareDefaultProofByteAdoption({root:target}),{
+      name:'TypeError',
+      message:'Default proof byte adoption: complete operation measurement predecessor differs',
+    });
   }
   writeFileSync(join(target,scope),source);
   for(const path of prerequisites.filter(path=>path!==scope)){
