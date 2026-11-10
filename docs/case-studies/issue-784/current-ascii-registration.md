@@ -34,7 +34,7 @@ contains 30 complete members / 1,304,515 compressed bytes, including all five
 proposal/install/test attempts, resource receipts, complete audit directory and
 actual installed sources. Its external complete
 [proposal](evidence/current-ascii-registry-proposal.json.xz) and
-[installation](evidence/current-ascii-registration-refresh.json.xz) containers
+[installation](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/current-ascii-registration-refresh.json.xz?raw=true) containers
 retain all complete source equations and before/after files. Complete compressed
 containers are moved without duplication; every member and container's length
 and SHA256 is independently verified after readback. Evidence totals 488,221,837

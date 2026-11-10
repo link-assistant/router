@@ -22,7 +22,7 @@ all owned processes are reaped. No original workload or deadline changes.
 
 The [receiving packet](evidence/current-fixed-record-registration-receiving.json.gz),
 [complete proposal](evidence/current-fixed-record-registry-proposal.json.xz) and
-[complete installed refresh](evidence/current-fixed-record-registration-refresh.json.xz)
+[complete installed refresh](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/current-fixed-record-registration-refresh.json.xz?raw=true)
 retain every original byte, resource receipt, failed invocation and complete
 available Node audit file with full readback. Registration adds zero executable
 production functions. The complete gate, strict parity and same-head CI remain

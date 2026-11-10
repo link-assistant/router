@@ -38,7 +38,7 @@ case (5.323 seconds). Another case reports 13.364 seconds under that implicit
 deadline despite Bun reporting a pass, so the Bun control cohort is unqualified.
 No test body or deadline was reduced or increased.
 
-The [complete receiving packet](evidence/current-bulk-custody-receiving.json.gz)
+The [complete receiving packet](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/current-bulk-custody-receiving.json.gz?raw=true)
 retains the whole source proposal, complete pass/fail streams and resource
 receipts, with complete member readback. Closing inactive task-owned Git object
 descriptors and advising away only their closed pages reduced observed cgroup

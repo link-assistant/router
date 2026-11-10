@@ -22,7 +22,7 @@ incorrectly refused `node:module` while discovering the graph. That failed
 Neither attempt hit the container guard. The second sampled peak is
 2,082,455,552 bytes across the entire cgroup.
 
-The [complete packet](evidence/current-private-closure-census.json.gz) contains
+The [complete packet](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/current-private-closure-census.json.gz?raw=true) contains
 both whole observations, the failed and corrected diagnostic programs, and
 every complete original input. All 338 observation inputs match their complete
 Git blobs at the recorded immutable source commit. This is a verified source

@@ -57,7 +57,7 @@ qualification or application coverage.
 Complete before/after, rejected author selectors, original sources, full producer
 proposal, every receiving log/resource receipt, completed and missing audit
 evidence and diagnostic measurements are retained in the verified
-[evidence archive](evidence/project-ingress-native-boundary-20261110.tar.gz)
+[evidence archive](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/project-ingress-native-boundary-20261110.tar.gz?raw=true)
 and its [receipt](evidence/project-ingress-native-boundary-20261110.tar.receipt.json.gz).
 The case study and source fix do not establish complete compiler registration,
 canonical/matrix freshness, strict parity or a green JavaScript gate. Those

@@ -53,7 +53,7 @@ seconds and does not resolve the isolated graph's remaining `ConfigError`.
 Complete before/after streams, the rejected wider proposal, final real source
 proposal, original whole files, resource receipts and independent deadline
 records are retained in the
-[complete archive](evidence/ordinary-parser-enclosing-20261110.tar.gz) and
+[complete archive](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/ordinary-parser-enclosing-20261110.tar.gz?raw=true) and
 [member receipt](evidence/ordinary-parser-enclosing-20261110.json.gz). The final generated
 `project.mjs` SHA-256 is
 `f4614977214aa63c213330bb3aae131de55c3661410e6ba6ae76ebc7cc7cd164`.

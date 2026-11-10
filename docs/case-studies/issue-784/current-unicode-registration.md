@@ -34,7 +34,7 @@ retains every probe, install and receiving stream, all resource receipts, the
 whole Node audit and the test's full before/after source. Its two complete
 external containers retain the actual
 [proposal](evidence/current-unicode-registry-proposal.json.xz) and
-[installation](evidence/current-unicode-registration-refresh.json.xz), including
+[installation](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/current-unicode-registration-refresh.json.xz?raw=true), including
 all original sources, proposed outputs, checked phases and inverses. Containers
 were moved without duplicating bytes and were fully hashed before and after.
 

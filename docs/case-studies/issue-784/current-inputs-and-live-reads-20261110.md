@@ -53,7 +53,7 @@ same producer case **fails at 79,377.92 ms / 60,000 ms**. Earlier whole attempts
 including the original unknown-source and ESM-hook failures, remain retained.
 No deadline, source pin, assertion, test file or original workload was removed.
 
-The [complete packet](evidence/current-inputs-and-live-reads-20261110.tar.gz) and
+The [complete packet](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/current-inputs-and-live-reads-20261110.tar.gz?raw=true) and
 [custody receipt](evidence/current-inputs-and-live-reads-20261110.json.gz) retain
 the complete generated proposal, reference envelope, failed and passed streams,
 resource receipts, closed Node audits, selected sources and reproduction scripts.

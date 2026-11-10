@@ -67,7 +67,7 @@ same-head JavaScript gate.
 
 ## Packet custody
 
-The [complete native repair packet](evidence/native-reuse-receiving-20261109.tar.gz)
+The [complete native repair packet](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/native-reuse-receiving-20261109.tar.gz?raw=true)
 contains 86 members, 1,805,852 compressed bytes, SHA-256
 `321ce1a7cc39ad5394438b44c9c30fda049f923389633ca314bf23d977aa088b`.
 Its [receipt](evidence/native-reuse-receiving-20261109.json.gz) records complete

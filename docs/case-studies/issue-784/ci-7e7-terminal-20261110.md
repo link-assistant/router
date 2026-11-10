@@ -13,7 +13,7 @@ Every available failed/cancelled job log was read. GitHub returns
 whole-run ZIP also lacks that shard's original log. This is an explicit
 evidence gap, not a passing or fully observed shard. All 136 available ZIP
 members pass CRC and SHA-256 checks. The complete
-[available log ZIP](evidence/ci-7e7-complete-available-logs-20261110.zip) is
+[available log ZIP](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/ci-7e7-complete-available-logs-20261110.zip?raw=true) is
 2531546 bytes, SHA-256
 `de2f5f0701283a2eb69282b98fb148a028dc9fcfbad1ac1ce442bf0c00fb9c1d`.
 

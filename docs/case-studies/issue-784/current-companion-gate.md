@@ -26,7 +26,7 @@ observations as a measured performance comparison. The earlier complete gate
 that reached native regeneration remains separately recorded in
 [the command-progress report](current-command-progress.md).
 
-The [complete packet](evidence/current-companion-gate.json.gz) retains both
+The [complete packet](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/current-companion-gate.json.gz?raw=true) retains both
 interrupted invocations, the initial refusal, complete traces, memory receipts,
 page-advice records and executed sources. Its full readback and member hashes
 are verified by [the retainer](../../../experiments/issue-784/retain-companion-gate.py).

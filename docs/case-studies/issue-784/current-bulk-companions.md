@@ -26,7 +26,7 @@ unconditional result checks remain required. The workflow source producer and
 audit require this exact companion command. The workflow regression checks also
 invert the single command substitution back to the complete original job.
 
-The [complete proposal](evidence/current-bulk-companions-proposal.json.gz) stores
+The [complete proposal](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/current-bulk-companions-proposal.json.gz?raw=true) stores
 20,683,813 decoded bytes, 2,637,914
 compressed bytes, SHA-256
 `5e904a45b9ed3681a04aba96046bc6af40822a28c278a3670ac7d30229fe0ac1`.

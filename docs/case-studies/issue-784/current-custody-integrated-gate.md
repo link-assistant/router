@@ -17,7 +17,7 @@ finish successfully and retain complete receipts. They do not keep the complete
 fingerprint below the guard; no cache or performance improvement is claimed.
 Every owned child and adviser is reaped.
 
-The [complete packet](evidence/current-custody-integrated-gate.json.gz) retains
+The [complete packet](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/current-custody-integrated-gate.json.gz?raw=true) retains
 the full fingerprint stream, observer, original gate source, all resource and
 page-advice receipts, and whole readback. It does not replace the earlier gate
 at `e15197054`, whose passed stages and later interruption remain separate.

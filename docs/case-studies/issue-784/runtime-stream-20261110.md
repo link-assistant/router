@@ -54,7 +54,7 @@ wire matches for all 60 modules, with fresh physical-source joins. These
 uncontrolled observations do not qualify semantics, deadlines or a speedup.
 Production packing remains unchanged.
 
-The [complete observation packet](evidence/runtime-stream-20261110.tar.gz)
+The [complete observation packet](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/runtime-stream-20261110.tar.gz?raw=true)
 contains source proposals, full inputs and vectors, both complete receiving
 cohorts, the failed whole-file attempt, closed independent audits and original
 profiles. Its [custody receipt](evidence/runtime-stream-20261110.json.gz) records

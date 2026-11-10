@@ -25,7 +25,7 @@ that reported pass does not qualify the original workload.
 
 The [complete receiving packet](evidence/current-bulk-registration.json.gz),
 [complete proposal](evidence/current-bulk-registry-proposal.json.xz) and
-[complete refresh](evidence/current-bulk-registration-refresh.json.xz) retain
+[complete refresh](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/current-bulk-registration-refresh.json.xz?raw=true) retain
 every complete output and resource receipt with full member readback. The
 receiving packet includes the initial command-selection mistake separately.
 

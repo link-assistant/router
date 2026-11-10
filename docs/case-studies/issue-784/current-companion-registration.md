@@ -29,7 +29,7 @@ reaped. Original workloads, deadlines and the memory threshold remain unchanged.
 
 The [complete receiving packet](evidence/current-companion-registration-receiving.json.gz),
 [complete proposal](evidence/current-companion-registry-proposal.json.xz),
-[complete refresh](evidence/current-companion-registration-refresh.json.xz) and
+[complete refresh](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/current-companion-registration-refresh.json.xz?raw=true) and
 [complete interrupted installation](evidence/current-companion-interrupted-registration.json.gz)
 preserve full original bytes and resource observations with full readback.
 Registration measures zero newly executable production functions. The complete

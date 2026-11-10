@@ -19,7 +19,7 @@ cgroup peaks are 2,870,149,120 and 2,876,690,432 bytes. All owned processes are
 reaped; original test workloads, assertions and deadlines remain unchanged.
 
 The [complete proposal](evidence/current-static-cold-registry-proposal.json.xz),
-[installed refresh](evidence/current-static-cold-registration-refresh.json.xz)
+[installed refresh](https://github.com/link-assistant/router/blob/79f375ed1d9690ab8336e06a28331c2871092eb0/docs/case-studies/issue-784/evidence/current-static-cold-registration-refresh.json.xz?raw=true)
 and [receiving packet](evidence/current-static-cold-registration-receiving.json.gz)
 retain every producer output, full available audit, original interruption and
 resource receipt with complete readback. This registration adds zero executable
