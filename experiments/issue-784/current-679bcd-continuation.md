@@ -3,6 +3,15 @@
 Objective: finish every issue #784 requirement and every mandatory CI failure in
 PR #785. The native goal stays active. No green gate or release readiness exists.
 
+- [x] Collect the complete terminal 7e7fb7a3c cycle before another push. All
+      seven workflows are terminal; the required run has eight successes,
+      18 failures, eight cancellations and 25 skipped jobs. Read every
+      available nonpassing log and all 25 artifacts. Preserve the explicit
+      unavailable translation-five log, all unchanged deadline failures,
+      semantic/admission refusals and generation gaps in
+      docs/case-studies/issue-784/ci-7e7-terminal-20261110.md. Original negative
+      deadline controls in the TypeScript artifact are expected failures.
+
 - [x] Repair the new published-head proof-byte history and owned-field CLI
       freshness failures. Compose the already pinned complete candidate
       binding source profile; retain all original sources, phases, inverses and

@@ -3,11 +3,17 @@
 Research and verification dates: 2026-11-06–10 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [complete terminal 7e7fb7a3c CI review](ci-7e7-terminal-20261110.md)
+records every available nonpassing log and all 25 complete artifacts, including
+the unavailable original shard-five log. Source-history and callback repairs
+are committed locally. Generation, original deadlines, private compiler
+admission, strict parity and the complete privacy criteria remain unfinished.
+
 The [fresh derive path reentry](derive-path-reentry-20261110.md) passes the
 original eight Node cases and two new cases in both engines. Complete graph
 contexts remain byte-identical. The larger Bun cohort reaches the unchanged
 memory guard; complete registration, generation and gate qualification remain
-unfinished. The newly published `679bcd027` CI cycle is still running.
+unfinished. Both the `679bcd027` and subsequent `7e7fb7a3c` CI cycles are terminal.
 
 The subsequent [complete registration refresh](isolated-path-reentry-20261110.md)
 passes all 16 original cases in each engine. It preserves the full predecessor,
