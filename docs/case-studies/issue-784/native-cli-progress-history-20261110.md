@@ -27,7 +27,7 @@ at 6201 ms and the three-profile command at 25086 ms. The latter includes
 overhead and do not qualify the original child deadline or a performance gain.
 All resource observers finish without stopping at the unchanged cgroup guard.
 
-The [complete 42-member packet](evidence/native-cli-progress-history-20261110.tar.gz)
+The [complete 42-member packet](https://github.com/link-assistant/router/blob/e88183bb894b9ea62c9d6ae170c3fc099047685b/docs/case-studies/issue-784/evidence/native-cli-progress-history-20261110.tar.gz?raw=true)
 is 4782098 bytes, SHA-256
 `23b8da6f67262f6397c21c3f5fa7a12e50c76904c8040d06a059fe2091bf0944`.
 Its [receipt](evidence/native-cli-progress-history-20261110.tar.receipt.json.gz)

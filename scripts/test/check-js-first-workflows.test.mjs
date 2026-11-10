@@ -40,6 +40,10 @@ test('current matrix custody composes complete historical YAML and preserves bot
  assert.equal(result.after.split(trace).length,2);
  assert.throws(()=>prepareMatrixDraftWorkflow(result.after.replace(trace,'')),/source differs/);
  assert.throws(()=>prepareMatrixDraftWorkflow(result.after.replace(trace,trace.replace("'1'","'0'"))),/source differs/);
+ const freezer='          ROUTER_FREEZE_COHORT_VECTOR_DIR: js/node_modules/.node-case-deadlines/freeze-cohorts\n';
+ assert.equal(result.after.split(freezer).length,2);
+ assert.throws(()=>prepareMatrixDraftWorkflow(result.after.replace(freezer,'')),/source differs/);
+ assert.throws(()=>prepareMatrixDraftWorkflow(result.after.replace(freezer,freezer.replace('/freeze-cohorts','/uncollected'))),/source differs/);
  assert.equal(result.semanticAuthority,false);assert.equal(result.gateSuccessObserved,false);
 });
 test('both unchanged matrix commands enable live worker diagnostics explicitly',()=>{

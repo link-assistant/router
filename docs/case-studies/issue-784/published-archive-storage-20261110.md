@@ -34,3 +34,11 @@ preserves those observations. The separate
 [completion receipt](evidence/four-published-diagnostic-retirement-completion-20261110.json.gz)
 records all four paths absent and the reclaimed space. These retirements make
 room for complete terminal CI artifacts within the fixed evidence allocation.
+
+Two inactive published source-history archives were then retired under the
+same verification procedure, reclaiming another **9,181,910 logical bytes**
+(9,187,328 allocated bytes). Their original reports now link to exact complete
+streams at `e88183bb894b9ea62c9d6ae170c3fc099047685b`. The
+[pre-unlink receipt](evidence/two-published-history-retirement-pre-unlink-20261110.json.gz)
+and [completion receipt](evidence/two-published-history-retirement-completion-20261110.json.gz)
+preserve the whole-source identities and final absent-path observations.

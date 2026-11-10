@@ -3,6 +3,14 @@
 Research and verification dates: 2026-11-06–10 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [terminal e881 CI review](ci-e881-terminal-20261110.md) retains all 25
+complete original artifact ZIPs, every available nonpassing log and the whole
+available workflow archive. Shard five's unavailable original log remains an
+explicit gap. The [module-token history repair](module-token-path-history-20261110.md)
+passes 22 whole cases per engine; the
+[footprint JSON history repair](footprint-json-path-history-20261110.md) passes
+eight per engine. The remaining CI, parity and privacy criteria stay open.
+
 The [shared f64 receiver repair](shared-f64-receiving-20261110.md) qualifies the
 unchanged `safe_number` body only in an independent small project. Seven new,
 19 existing borrow/float and 14 existing Option cases pass in separate complete

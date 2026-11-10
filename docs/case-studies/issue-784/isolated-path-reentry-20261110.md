@@ -23,7 +23,7 @@ source/manifest/installed-compiler mutation refusals, genuine Git objects,
 complete source/CST proposals and process cleanup. Test assertions and deadlines
 were not edited.
 
-The [complete packet](evidence/isolated-path-reentry-20261110.tar.xz) contains
+The [complete packet](https://github.com/link-assistant/router/blob/e88183bb894b9ea62c9d6ae170c3fc099047685b/docs/case-studies/issue-784/evidence/isolated-path-reentry-20261110.tar.xz?raw=true) contains
 **31 members**, **4,399,812 compressed bytes**, SHA-256
 `c040d8c357bf8f7dea541a4e8046f06fe8309795ead59400c7f8dca5c3a25e7d`.
 Its [member receipt](evidence/isolated-path-reentry-20261110.json.gz) records every
