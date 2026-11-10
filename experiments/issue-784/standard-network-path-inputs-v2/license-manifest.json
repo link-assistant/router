@@ -1,0 +1,21 @@
+{
+  "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+  "files": [
+    {
+      "path": "LICENSE-APACHE",
+      "archive": "LICENSE-APACHE.gz",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "packedBytes": 3554,
+      "packedSha256": "454547db9e3fafcad3bdaeb66a0ad46dab04e8793cc5d6dcee803d618edb4f25"
+    },
+    {
+      "path": "LICENSE-MIT",
+      "archive": "LICENSE-MIT.gz",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1",
+      "packedBytes": 646,
+      "packedSha256": "cd63b5219d420f57f16254f0f9c72659b5b377e26e558d5628f02b0c66b9ecd6"
+    }
+  ]
+}
