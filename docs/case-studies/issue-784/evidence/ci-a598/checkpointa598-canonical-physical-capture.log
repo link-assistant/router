@@ -1,0 +1,21 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ '6ace572ba53f048b4fca77c5133694c24020470e'
+- '6ace572ba90a9c37c0e7300030d83caa7be75555'
+    at file:///tmp/gh-issue-solver-1794003502595/experiments/issue-784/capture-canonical-install-inputs.mjs:12:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '6ace572ba53f048b4fca77c5133694c24020470e',
+  expected: '6ace572ba90a9c37c0e7300030d83caa7be75555',
+  operator: 'strictEqual'
+}
+
+Node.js v20.20.2
