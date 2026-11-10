@@ -34,6 +34,15 @@ native goal active and the PR draft and unmerged while criteria remain open.
 - [ ] Complete independent semantic review and fresh canonical regeneration.
       The local full semantic reviewer hit the unchanged cgroup guard in
       14.23 seconds; its missing result remains unqualified.
+- [x] Publish the reviewed batch at `4ea091242` and update the draft PR body.
+      Preserve all whole a598 originals in that immutable commit, then retire
+      56 verified inactive local copies, reclaiming 97376671 logical bytes.
+- [x] Reproduce both selected Git census assertions; preserve the exact pinned
+      controller guard history and installed census-only source. Keep the first
+      failed duration audit, then batch fresh complete CST and native binding
+      checks. All five original cases pass Node/Bun within unchanged deadlines.
+- [ ] Collect and review the entire `4ea091242` CI cycle, including every
+      failed job and whole artifact, before publishing the next source batch.
 - [x] Reproduce both Default prerequisite history assertions, then join the
       archived input, guarded-import predecessor and complete measurement
       successor with their CST inverses. Three cases pass in both engines;

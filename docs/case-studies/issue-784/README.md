@@ -395,3 +395,7 @@ nonpassing logs and all 26 artifacts, the complete actual canonical output
 installation, 55 passing reconstruction/recorded-gain cases and strict generated
 TypeScript. It keeps the interrupted semantic review and all remaining failures
 explicitly unfinished.
+
+The [selected Git census source history repair](selected-census-source-history-20261110.md)
+retains both original assertions, the first failed duration audit, and all five
+passing receiving cases under Node and Bun with unchanged deadlines.

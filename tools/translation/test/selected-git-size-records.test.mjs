@@ -4,6 +4,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,rmSync,readFileSync} from 'node:fs';
 import {join,dirname} from 'node:path';
 import {tmpdir} from 'node:os';
 import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {readSelectedGitSizeRecords} from '../selected-git-size-records.mjs';
 import {prepareSelectedGitCensus} from '../prepare-selected-git-census.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
@@ -21,17 +22,35 @@ test('empty selected input needs no object query and too many rows refuse before
 });
 test('all three complete controller copies retain native selections both CST phases and the actual strict producer equation',{timeout:60000},()=>{
  const plan=prepareSelectedGitCensus();assert.equal(plan.files.length,3);assert.equal(plan.newCaches,false);assert.equal(plan.semanticAuthority,false);assert.equal(plan.performanceQualified,false);assert.equal(plan.originalLimitsAndValidationBodiesRetained,true);assert.equal(plan.canonicalArchiveBytesUnchanged,true);const strict=plan.files.find(row=>row.path.endsWith('/strict-static-source-producer.mjs'));assert.equal(strict.after,plan.strictProducer.files[0].after);
- for(const row of plan.files){assert.equal(row.current,row.after);assert.equal(row.inverse,row.before);assert.equal(row.allOriginalValidationBodiesRetained,true);assert.equal(row.nativeSelections.length,1);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const stage of row.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);assert.equal(stage.inverse,stage.before);}assert.equal(row.repositorySelections.length,row.path.endsWith('static-source-universe.mjs')?1:3);}
+ for(const row of plan.files){assert.equal(row.current,row.censusOnly);assert.equal(row.inverse,row.before);assert.equal(row.allOriginalValidationBodiesRetained,true);assert.equal(row.nativeSelections.length,1);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const stage of row.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);assert.equal(stage.inverse,stage.before);}assert.equal(row.repositorySelections.length,row.path.endsWith('static-source-universe.mjs')?1:3);}
+ const history=plan.producerHistory,hash=value=>createHash('sha256').update(value).digest('hex');
+ assert.equal(history.current,history.after);assert.equal(history.inverse,history.before);
+ assert.equal(hash(history.after),'add7542caf50f0bde993169e97f01a8233b3814321abb9aa1243acc0f9f1209f');
+ assert.equal(history.nativeSelections.length,1);assert.equal(history.semanticAuthority,false);
+ assert.deepEqual(history.stages.map(stage=>stage.phase),['language','repository']);
+ for(const stage of history.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);assert.equal(stage.inverse,stage.before);}
+ const originalGuard="if(current!==''&&current!==after)fail('unknown existing strict producer output');";
+ const replacement='\n // Complete prior output, before the source archive compression repair.\n'
+  +' // This pin accepts no other physical source as an installation predecessor.\n'
+  +" if(current!==''&&current!==after&&hash(current)!=='644663d19e7b94b783504ec182eadcbc58e5810b7327c0e996e9bc020619241f')fail('unknown existing strict producer output');";
+ assert.equal(history.before.split(originalGuard).length,2);
+ assert.equal(history.after,history.before.replace(originalGuard,()=>replacement));
+ assert.equal(history.after.split(replacement).length,2);
+ assert.equal(history.before,history.after.replace(replacement,()=>originalGuard));
 });
 
 test('the exact census-only predecessor retains both encoder inverses and rejects an unknown compression source',{timeout:60000},t=>{
- const root=mkdtempSync(join(tmpdir(),'router-selected-census-history-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
+ const baseline=prepareSelectedGitCensus(),root=mkdtempSync(join(tmpdir(),'router-selected-census-history-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
  const prefix='tools/translation/',paths=['prepare-real-source-fixtures.mjs','static-source-universe.mjs','strict-static-source-producer.mjs','prepare-strict-static-source-producer.mjs','prepare-selected-git-census.mjs','selected-git-size-records.mjs','source-profiles/selected-git-census/complete-originals.json.gz'];
  const encoder='packed=gzipSync(stored.raw,{level:1,mtime:0})',original='packed=gzipSync(stored.raw,{level:9,mtime:0})';
  for(const name of paths){
   const path=prefix+name,target=join(root,path);mkdirSync(dirname(target),{recursive:true});let bytes=readFileSync(new URL('../../../'+path,import.meta.url));
   if(['prepare-real-source-fixtures.mjs','strict-static-source-producer.mjs'].includes(name)){
-   const source=bytes.toString('utf8');assert.equal(source.split(encoder).length,3);bytes=Buffer.from(source.replaceAll(encoder,original));
+   const row=baseline.files.find(row=>row.path===path),source=bytes.toString('utf8');
+   assert.equal(source,row.censusOnly);assert.equal(source.split(original).length,3);
+   assert.equal(row.after.split(encoder).length,3);
+   const inverse=row.after.replaceAll(encoder,original);assert.equal(inverse,source);
+   bytes=Buffer.from(inverse);
   }
   writeFileSync(target,bytes);
  }
@@ -46,4 +65,14 @@ test('the exact census-only predecessor retains both encoder inverses and reject
  const path=join(root,prefix+paths[0]),source=readFileSync(path,'utf8');
  assert.equal(source.split(original).length,3);writeFileSync(path,source.replace(original,()=>original.replace('level:9','level:2')));
  assert.throws(()=>prepareSelectedGitCensus({root}),/unknown current source: tools\/translation\/prepare-real-source-fixtures\.mjs/);
+ writeFileSync(path,source);
+ const producer=join(root,baseline.producerHistory.path),current=readFileSync(producer,'utf8');
+ writeFileSync(producer,current+'\n// unrelated source change\n');
+ assert.throws(()=>prepareSelectedGitCensus({root}),/actual strict copy producer changed/);
+ writeFileSync(producer,current.replace('644663d19e7b94b783504ec182eadcbc58e5810b7327c0e996e9bc020619241f','0'.repeat(64)));
+ assert.throws(()=>prepareSelectedGitCensus({root}),/actual strict copy producer changed/);
+ writeFileSync(producer,baseline.producerHistory.before);
+ const historical=prepareSelectedGitCensus({root});
+ assert.equal(historical.producerHistory.current,baseline.producerHistory.before);
+ assert.equal(historical.strictProducer.files[0].after,baseline.strictProducer.files[0].after);
 });
