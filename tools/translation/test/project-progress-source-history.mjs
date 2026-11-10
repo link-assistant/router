@@ -12,6 +12,8 @@ const profiles=[
   sha256:'23eabe8f329efc2534b7da89442c3273fea75056b1d05469987124ef7ff5cf46'},
  {url:new URL('../source-profiles/project-ingress-native-boundary/source-rules.json',import.meta.url),
    sha256:'f72a45665a7592f6047daad51a082ff0a11d5b9614a699be562a480e4bac76ff'},
+ {url:new URL('../source-profiles/ordinary-parser-enclosing-namespace/source-rules.json',import.meta.url),
+   sha256:'a2d5b73d7c2ed51234e4eae99c0381b6f51d32f948421fb47bea757684d7531f'},
 ];
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('Project progress source history: '+message);};

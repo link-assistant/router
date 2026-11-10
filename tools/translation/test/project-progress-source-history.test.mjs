@@ -12,6 +12,11 @@ test('complete project progress receiving history preserves current bytes and th
  assert.equal(rows.length,1);const row=rows[0].value;
  assert.equal(row.current,current);assert.equal(row.historical,historical);
  assert.equal(row.proof.after,current);assert.equal(row.proof.inverse,historical);
+ assert.equal(row.proof.layers.length,4);
+ const parserLayer=row.proof.layers.at(-1);
+ assert.equal(parserLayer.after,current);
+ assert.equal(parserLayer.inverse,row.proof.layers.at(-2).after);
+ assert.match(parserLayer.after,/const matchesMacroContext=createEnclosingMatchesMacroContext\(matchesOptions\)/u);
  assert.equal(row.equation.after,current);assert.equal(row.equation.inverse,historical);
  for(const stage of row.equation.stages){
   assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);
