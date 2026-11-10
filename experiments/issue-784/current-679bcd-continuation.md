@@ -177,3 +177,10 @@ task artifacts. Preserve compiler source, safety and original deadline limits.
       inverse. Original pins, native actions and deadlines remain unchanged.
       Complete evidence is in derive-effects-history-20261110.md. The related
       seven-case retention file still fails two cases; no full-gate claim.
+- [x] Compose the complete historical native CLI trace from its own archived
+      input before joining the current progress-observer CLI. All seven genuine
+      candidates retain fresh native binding checks and complete phased CST
+      inverses. The complete ten-case Bun cohort passes its original limits.
+      Node passes nine cases; the profile CLI child still exceeds 20000 ms.
+      Full evidence is in native-cli-progress-history-20261110.md. CLI deadline
+      qualification and the complete gate remain unfinished.

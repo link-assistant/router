@@ -4,6 +4,7 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {namespaceProgressObserver} from '../tools/translation/translation-progress.mjs';
 
 
 
@@ -27,7 +28,7 @@ const {regenerate}=retainOutputText?{}:await import("../tools/translation/owned-
 const {regenerateCompilationMatrix}=retainOutputText?{}:await import("../tools/translation/owned-field-matrix-bulk.mjs");
 const {createCompilationMatrix,DECLARED_FAMILY_PROFILES}=profileMatrix?await import("../tools/translation/compilation-matrix.mjs"):{};
 const progressStarted=process.hrtime.bigint();
-const options={root,check,entries:entries.length?entries:undefined,progress:progress?record=>process.stderr.write(JSON.stringify({...record,elapsedMilliseconds:Number((process.hrtime.bigint()-progressStarted)/1_000_000n)})+'\n'):undefined};
+const options={root,check,entries:entries.length?entries:undefined,progress:progress?namespaceProgressObserver(record=>process.stderr.write(JSON.stringify({...record,elapsedMilliseconds:Number((process.hrtime.bigint()-progressStarted)/1_000_000n)})+'\n')):undefined};
 // Complete matrix CLI: sequential source-derived process lifetime.
 if(profileMatrix){
   const name=ownedCoreDefinitions?(retainOutputText?'isolated-retained-owned-definitions-matrix-bulk.mjs':'isolated-owned-definitions-matrix-bulk.mjs'):(retainOutputText?"isolated-native-retained-owned-field-matrix-bulk.mjs":"isolated-owned-field-matrix-bulk.mjs");

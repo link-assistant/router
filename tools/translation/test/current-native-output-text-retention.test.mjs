@@ -56,15 +56,21 @@ test('all seven original and current native equations join exact committed outpu
   assert.deepEqual(row.sourceHistory.stages.map(stage=>stage.phase),['language','repository']);
   for(const stage of row.sourceHistory.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);assert.equal(stage.inverse,stage.before);}
  }
- assert.deepEqual(traceChanged,['tools/translation/native-owned-field-isolated-matrix-session.mjs','tools/translation/native-owned-field-isolated-matrix-profile.mjs']);
+ assert.deepEqual(traceChanged,['tools/translation/native-owned-field-isolated-matrix-session.mjs','tools/translation/native-owned-field-isolated-matrix-profile.mjs','scripts/translate-router-native-owned-field-meta.mjs']);
  assert.equal(changed.length,4);assert.equal(assertCurrentNativeOutputTextInputsFresh(plan),true);
- const cli=plan.files.at(-1),ts=ownershipCompiler(),parse=source=>ts.createSourceFile(cli.path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),old=parse(cli.historical.after),current=parse(cli.after);
+ const cli=plan.files.at(-1),ts=ownershipCompiler(),parse=source=>ts.createSourceFile(cli.path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),old=parse(cli.historical.after),current=parse(plan.traceFiles.at(-1).after);
  const deferred=['../tools/translation/owned-field-bulk.mjs','../tools/translation/owned-field-matrix-bulk.mjs','../tools/translation/compilation-matrix.mjs'];
  for(const node of old.statements){
   if(ts.isImportDeclaration(node)&&deferred.includes(node.moduleSpecifier.text)){
    assert.equal(current.statements.filter(row=>ts.isImportDeclaration(row)&&row.moduleSpecifier.text===node.moduleSpecifier.text).length,0);
   }else assert.equal(current.statements.filter(row=>row.getText(current)===node.getText(old)).length,1,'whole original CLI statement');
  }
+ const progress=plan.cliEvolution;assert.equal(progress.before,plan.traceFiles.at(-1).after);assert.equal(progress.after,cli.after);assert.equal(progress.inverse,progress.before);
+ assert.deepEqual(progress.stages.map(stage=>stage.phase),['language','repository']);
+ for(const stage of progress.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);assert.equal(stage.inverse,stage.before);}
+ const imports=parse(cli.after).statements.filter(ts.isImportDeclaration).filter(node=>node.moduleSpecifier.text==='../tools/translation/translation-progress.mjs');
+ assert.equal(imports.length,1);assert.equal(imports[0].importClause.namedBindings.elements[0].name.text,'namespaceProgressObserver');
+ assert.ok(cli.after.includes('progress:progress?namespaceProgressObserver(record=>'));
  const edits=cli.stages[1].edits.filter(row=>row.id.startsWith('repository:defer-native-cli:'));
  assert.equal(edits.length,3);assert.ok(edits.every(row=>row.replacement===''));
  const contract=cli.stages[1].edits.find(row=>row.id==='repository:explicit-native-cli-contract');

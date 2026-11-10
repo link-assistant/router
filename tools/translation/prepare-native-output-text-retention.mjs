@@ -80,6 +80,17 @@ function deferredCliImports({ts,file}){
  }
  return {edits,source:loading.join('')};
 }
+function deriveNativeCliSource(ts,source,deferCli){
+ return route(ts,source,'scripts/translate-router-native-owned-field-meta.mjs',{
+  'isolated-retained-owned-field-matrix-bulk.mjs':'isolated-native-retained-owned-field-matrix-bulk.mjs',
+  '../tools/translation/retained-owned-field-bulk.mjs':'../tools/translation/native-retained-owned-field-bulk.mjs',
+  '../tools/translation/retained-owned-field-matrix-bulk.mjs':'../tools/translation/native-retained-owned-field-matrix-bulk.mjs',
+ },native=>{const {file}=native,marker=one(file.statements.filter(node=>ts.isVariableStatement(node)&&node.declarationList.declarations.some(row=>ts.isIdentifier(row.name)&&row.name.text==='progressStarted')),'post-argument original boundary'),imports=deferCli?deferredCliImports(native):{edits:[],source:''};return [...imports.edits,{id:'repository:explicit-native-cli-contract',span:[marker.getStart(file),marker.getStart(file)],expected:'',replacement:"if(!retainOutputText||ownedCoreDefinitions)throw new TypeError('Native owned-field CLI requires --retain-output-text and does not support --owned-core-definitions');\n"+imports.source}];});
+}
+// Complete CLI source DATA; the receiving cohort supplies fresh all-module bindings.
+export function deriveNativeCliBoundarySource(source){
+ return deriveNativeCliSource(ownershipCompiler(),source,true);
+}
 // Source DATA only. The archived equations keep their original eager imports;
 // the current rule defers unreachable ordinary routes after the native guard.
 // Both issue one complete fresh all-module binding program before returning.
@@ -90,11 +101,7 @@ function deriveNativeOutputTextSourceSetUsing(rows,deferCli){
  const sources=new Map();for(const row of rows){if(!row||typeof row.path!=='string'||typeof row.source!=='string'||!names.includes(row.path)||sources.has(row.path))fail('distinct complete source set required');sources.set(row.path,row.source);}
  const files=[deriveNativeOutputTextRetention(sources.get(names[0]))];
  for(const [before,after,mapping]of consumers)files.push(route(ts,sources.get(P+before),P+after,mapping,before.includes('-session.')||before.includes('-profile.')?admission:empty));
- files.push(route(ts,sources.get(cli),'scripts/translate-router-native-owned-field-meta.mjs',{
-  'isolated-retained-owned-field-matrix-bulk.mjs':'isolated-native-retained-owned-field-matrix-bulk.mjs',
-  '../tools/translation/retained-owned-field-bulk.mjs':'../tools/translation/native-retained-owned-field-bulk.mjs',
-  '../tools/translation/retained-owned-field-matrix-bulk.mjs':'../tools/translation/native-retained-owned-field-matrix-bulk.mjs',
- },native=>{const {file}=native,marker=one(file.statements.filter(node=>ts.isVariableStatement(node)&&node.declarationList.declarations.some(row=>ts.isIdentifier(row.name)&&row.name.text==='progressStarted')),'post-argument original boundary'),imports=deferCli?deferredCliImports(native):{edits:[],source:''};return [...imports.edits,{id:'repository:explicit-native-cli-contract',span:[marker.getStart(file),marker.getStart(file)],expected:'',replacement:"if(!retainOutputText||ownedCoreDefinitions)throw new TypeError('Native owned-field CLI requires --retain-output-text and does not support --owned-core-definitions');\n"+imports.source}];}));
+ files.push(deriveNativeCliSource(ts,sources.get(cli),deferCli));
  const bindings=verifyNativeCopiedModuleBindings(ts,files.map(({path,after})=>({path,source:after})));
  for(const [at,row]of files.entries())row.nativeBindings=bindings[at];return files;
 }

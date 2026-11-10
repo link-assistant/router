@@ -4,7 +4,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
-import {deriveNativeOutputTextSourceSet,deriveCurrentNativeOutputTextSourceSet,deriveNativeMatrixBoundarySources} from './prepare-native-output-text-retention.mjs';
+import {deriveNativeOutputTextSourceSet,deriveCurrentNativeOutputTextSourceSet,deriveNativeMatrixBoundarySources,deriveNativeCliBoundarySource} from './prepare-native-output-text-retention.mjs';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';
 import {prepareOwnedFieldBulkSources,assertOwnedFieldBulkInputsFresh} from './prepare-owned-field-bulk.mjs';
@@ -53,10 +53,11 @@ export function prepareCurrentNativeOutputTextRetention({root=ROOT}={}){
  const traceHistory=readNativeMatrixTracePredecessors({root}),traceSources=new Map(traceHistory.files.map(row=>[row.path,row]));
  const files=deriveCurrentNativeOutputTextSourceSet(INPUTS.map(path=>({path,source:read(path)})));
  const boundaries=deriveNativeMatrixBoundarySources(INPUTS.slice(4,6).map(path=>({path,source:traceSources.get(path).source})));
- // Five rows have identical complete inputs and outputs in both cohorts. Reuse
- // those source equations within this invocation; semantic checks remain fresh
- // for the entire historical cohort, including both separately derived rows.
- const traceFiles=files.map((row,at)=>({...([4,5].includes(at)?boundaries[at-4]:row)}));
+ // Four rows have identical complete inputs and outputs in both cohorts.
+ // Reproduce both matrix boundaries and the historical CLI from their own
+ // complete archived inputs; current progress diagnostics stay separate.
+ const traceCli=deriveNativeCliBoundarySource(traceSources.get(INPUTS[6]).source);
+ const traceFiles=files.map((row,at)=>({...([4,5].includes(at)?boundaries[at-4]:at===6?traceCli:row)}));
  for(const [at,row]of traceFiles.entries())if(row.path!==OUTPUTS[at]||row.before!==traceSources.get(INPUTS[at]).source||row.after!==traceSources.get(row.path).source||row.inverse!==traceSources.get(INPUTS[at]).source)fail('complete matrix trace predecessor equation differs');
  const traceBindings=verifyNativeCopiedModuleBindings(ownershipCompiler(),traceFiles.map(({path,after})=>({path,source:after})));
  for(const [at,row]of traceFiles.entries())row.nativeBindings=traceBindings[at];
@@ -71,7 +72,9 @@ export function prepareCurrentNativeOutputTextRetention({root=ROOT}={}){
   {before:archived.get(PRODUCER).source,middle:producer,after:producer,language:'JavaScript',rules:['language:share-fresh-native-module-scope-checks','repository:retain-original-native-output-proposal','language:restore-whole-original-native-producer','repository:restore-original-native-proposal']},
  ]);
  for(const [at,row]of files.entries()){row.historical=oldFiles[at];row.sourceHistory=transitions[at];if(row.sourceHistory.before!==row.historical.after||row.sourceHistory.after!==row.after||row.sourceHistory.inverse!==row.historical.after)fail('complete native source-history join differs');}
- const plan={schema:'complete-current-native-output-retention-v1',root,files,inputs,history,traceHistory,traceFiles,prerequisites:{ownedField:prior},producerEvolution:{path:PRODUCER,equation:transitions.at(-1)},semanticAuthority:false,performanceQualified:false,runtimeParity:false,rustExecuted:false};
+ const [cliEvolution]=transportConcreteNamedSourcePhases([{before:traceCli.after,middle:traceCli.after,after:files[6].after,language:'JavaScript',rules:['language:preserve-complete-native-cli','repository:follow-checked-progress-adapter','language:restore-complete-native-cli','repository:restore-trace-cli']}]);
+ if(cliEvolution.before!==traceCli.after||cliEvolution.after!==files[6].after||cliEvolution.inverse!==traceCli.after)fail('complete native CLI evolution differs');
+ const plan={schema:'complete-current-native-output-retention-v1',root,files,inputs,history,traceHistory,traceFiles,cliEvolution,prerequisites:{ownedField:prior},producerEvolution:{path:PRODUCER,equation:transitions.at(-1)},semanticAuthority:false,performanceQualified:false,runtimeParity:false,rustExecuted:false};
  assertCurrentNativeOutputTextInputsFresh(plan);return plan;
 }
 export function assertCurrentNativeOutputTextInputsFresh(plan){
