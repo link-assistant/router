@@ -20,6 +20,10 @@ native goal active and the PR draft and unmerged while criteria remain open.
 - [ ] Investigate actual production namespace and immutable-data traversal costs.
       Preserve source equations, both CST phases, inverses, all observer tapes,
       original deadlines and bounded failures. Count actual executable gains.
+      The complete-production completed-DATA candidate was rejected after an
+      ABBA comparison: identical whole contexts, 22.894238% slower mean, both
+      original sources restored. Complete negative evidence is retained in
+      `docs/case-studies/issue-784/completed-derive-data-negative.md`.
 - [ ] Fix every terminal CI failure, including original case/child deadlines,
       raw private compiler bounds, actual canonical/owned/profile generation,
       strict parity and whole-source provenance. No deadline or test weakening.
