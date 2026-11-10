@@ -15,7 +15,8 @@ active, PR draft and incomplete criteria explicit. No local Rust tools or agents
       preserving original historical outputs, full CST phases and inverses.
 - [x] Preserve complete three-file results: Node 8 assertions pass, audit fails
       60861.688613/60000 ms; Bun 7 pass/1 timeout at 79377.92/60000 ms.
-- [ ] Commit the coherent current-input source, generated DATA and full evidence.
+- [x] Commit the coherent current-input source, generated DATA and full evidence
+      at `de310d1ee`, keeping both whole-file deadline failures explicit.
 - [ ] Repair repeated native binding work; retain before/after whole public plans
       and original whole-file checks, without claiming uncontrolled speed gains.
 - [ ] Compose the actual unit/Unicode receiver successor and qualify whole files.

@@ -62,3 +62,13 @@ every member's complete byte count and hash, with independent archive readback.
 Strict parity, current canonical/profile/owned regeneration, all remaining CI
 failures and universal tool/account privacy remain unfinished. No local Rust
 tool ran and no complete gate pass is claimed.
+
+After commit `7283f934747bb46ed61766cf944b1a6c41426191` retained the complete
+packet, an exact inactive-duplicate retirement reclaimed **27,672,576 allocated
+bytes** (27,563,217 logical bytes) from 44 task-owned temporary files. Every
+complete tar member was read back, and each removed file matched its retained
+member and had no identified open descriptor or mapping. The
+[pre-unlink receipt](evidence/runtime-stream-duplicate-retirement.json.gz) and
+[completion receipt](evidence/runtime-stream-duplicate-retirement-complete.json.gz)
+retain all identities and hashes. Source files, build caches and other workers'
+paths were not removed.
