@@ -1,0 +1,86 @@
+{
+  "schema": "candidate-binding-batches-originals-v1",
+  "revision": "e6477654069be5678b1e8b08ddea35383a7632e8",
+  "sources": [
+    {
+      "path": "tools/translation/prepare-whole-owner-derive-candidate.mjs",
+      "archive": "whole-owner-derive-candidate.original.mjs.gz",
+      "archiveBytes": 4249,
+      "archiveSha256": "64b677d655a56b03219110269b2a531e4b94af0320a490d55ac53fab87770087",
+      "bytes": 11997,
+      "sha256": "c1a43913e15e5598869ed0a931593dc8ad80d86907da084227872b337841bff8",
+      "rules": "whole-owner-derive-candidate.rules.json",
+      "rulesSha256": "268eb02b5d0a289515f429b34212327f72ff94eac9be8d06b6ac551fd5b6d504"
+    },
+    {
+      "path": "tools/translation/prepare-whole-owner-resolver-candidate.mjs",
+      "archive": "whole-owner-resolver-candidate.original.mjs.gz",
+      "archiveBytes": 3295,
+      "archiveSha256": "cb28eda202a6eb91ce186ad70cc49d13b7293413502e744b27360b8770072367",
+      "bytes": 9815,
+      "sha256": "4c40b2e8578f610a2f3d515df3d3dce7a8676c2a633e0c7dafd48cda7581dcb9",
+      "rules": "whole-owner-resolver-candidate.rules.json",
+      "rulesSha256": "22d47231497b407181b4a48f679eba58eec8933fff519cc865e5859c12cfccd9"
+    },
+    {
+      "path": "tools/translation/prepare-whole-owner-proof-byte-candidate.mjs",
+      "archive": "whole-owner-proof-byte-candidate.original.mjs.gz",
+      "archiveBytes": 5671,
+      "archiveSha256": "914dcea055c1d67b64e170c1865f88264b8c5644870ea278b92af29725c12844",
+      "bytes": 18516,
+      "sha256": "73061bdd569c8b34f0b66b99e77f77c16856880575cb7e0c8007b0954ef10a15",
+      "rules": "whole-owner-proof-byte-candidate.rules.json",
+      "rulesSha256": "25db23ed741bdc8c59b6d4d120328fe9dffdd09c2e45c4ba2fc7df351e1e76ae"
+    },
+    {
+      "path": "tools/translation/prepare-whole-owner-core-producer-candidate.mjs",
+      "archive": "whole-owner-core-producer-candidate.original.mjs.gz",
+      "archiveBytes": 5256,
+      "archiveSha256": "48a775ec78b2c5219336d76e1d4ea80b3ce11c1483ad5a04053097eeb5b0c756",
+      "bytes": 17187,
+      "sha256": "773d58240f391609d32fd2b89f1a725cb47233564305b882bb2cc6d6938e26e1",
+      "rules": "whole-owner-core-producer-candidate.rules.json",
+      "rulesSha256": "136401e19fe1c7af2824bf98a4a00b5c4d5c5377bd013d6fa544c4e5b206336e"
+    },
+    {
+      "path": "tools/translation/prepare-whole-owner-core-corpus-candidate.mjs",
+      "archive": "whole-owner-core-corpus-candidate.original.mjs.gz",
+      "archiveBytes": 4390,
+      "archiveSha256": "6e02f41bea61006c8de4b7e2f3f91b4e275721a842b8cb6bb2af4e05454434bb",
+      "bytes": 13453,
+      "sha256": "b2a56409a0ea4bfd8e6039b66e402187d28dc9a316d24fcb8e8af2e784a6a2ea",
+      "rules": "whole-owner-core-corpus-candidate.rules.json",
+      "rulesSha256": "a096b5ef00cbfe99cefcfdeb59151f2596cc9a340133f806f2ecf829eba7f3a7"
+    },
+    {
+      "path": "tools/translation/prepare-core-sequence-stream-sources.mjs",
+      "archive": "core-sequence-stream-sources.original.mjs.gz",
+      "archiveBytes": 3913,
+      "archiveSha256": "b74fb8a4935c47be93f2d182ab1661033531ad08b97561e284786bbd9a42be2e",
+      "bytes": 11823,
+      "sha256": "01fe5ad4d62a29b36d87caff35c2f2eedffc4766d5a1bdbc6dffb801eb10414f",
+      "rules": "core-sequence-stream-sources.rules.json",
+      "rulesSha256": "f6f741bede7651421b5bc7c553acab01f635bac91320ac680a8418df8a863a0e"
+    },
+    {
+      "path": "tools/translation/prepare-batched-proof-byte-source-candidate.mjs",
+      "archive": "batched-proof-byte-source-candidate.original.mjs.gz",
+      "archiveBytes": 9633,
+      "archiveSha256": "e76cdbc9ac05a1bc84633dac09c3c777ffedda3d28d7db616d50ffdfe2d98689",
+      "bytes": 42586,
+      "sha256": "530cd8c1b94854e658606a8985f44f2b4350dd1da0e6bef458f9a9fee9e7a5f6",
+      "rules": "batched-proof-byte-source-candidate.rules.json",
+      "rulesSha256": "f4db1b0f84cee19813f846f75c8e120514f8322fac1670ab4e1575bb1c3f5711"
+    },
+    {
+      "path": "tools/translation/prepare-whole-owner-source-cst-batch.mjs",
+      "archive": "whole-owner-source-cst-batch.original.mjs.gz",
+      "archiveBytes": 5233,
+      "archiveSha256": "171a0fbc36e5d7c04bc5f25fac120b355c74e5d74d017eeade695c45e549918c",
+      "bytes": 16603,
+      "sha256": "4cf10364fd278d83dafecca0b2501d9396f9c6ada8403189a4ffc2ef2c77bec0",
+      "rules": "whole-owner-source-cst-batch.rules.json",
+      "rulesSha256": "a0e56d9edffb64629772a02df77cf2fa5e3309bd5873e95f8313fd028737f6cb"
+    }
+  ]
+}

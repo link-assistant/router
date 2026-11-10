@@ -39,6 +39,17 @@ PR #785. The native goal stays active. No green gate or release readiness exists
 - [ ] Refresh the actual whole-owner proof/Core/corpus/stream candidate writers
       in prerequisite order, then run each complete original receiving file.
       Fresh CI rejects stale complete copied closures; do not edit copies by hand.
+      The first genuine twelve-stage refresh passes every writer. A separate
+      source batch shares fresh TypeScript standard-library parsing within each
+      invocation; all complete native diagnostics remain mandatory. Its first
+      twelve-stage refresh passes ten stages and rejects two downstream copies:
+      an author selector mistakenly put the stage validation inside a template.
+      The rejected complete source was restored through its checked inverse,
+      the author rule now selects the actual unique generator return, and the
+      genuine source driver passes again. Three dependent source writers are
+      running. Original receiving tests and performance remain unqualified;
+      direct writer timings and the finite CPU sample establish no speed gain
+      or newly executable production function.
 - [ ] Qualify fresh path-index reentry in the actual derive-context source using
       both fixed rule phases, complete original/CST/inverse bytes, independent
       grammar/binding checks and all original whole-file cases and deadlines.

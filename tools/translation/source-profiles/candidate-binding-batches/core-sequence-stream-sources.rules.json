@@ -1,0 +1,33 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/prepare-core-sequence-stream-sources.mjs",
+  "phase": "repository",
+  "beforeSha256": "01fe5ad4d62a29b36d87caff35c2f2eedffc4766d5a1bdbc6dffb801eb10414f",
+  "afterSha256": "d99eee4bb80c97e8724336b44bb180c85a8c25785f1f0ad4f34c9e94f1e22939",
+  "edits": [
+    {
+      "id": "router.candidate-binding-batch.import.v1",
+      "before": "import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';",
+      "after": "import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';"
+    },
+    {
+      "id": "router.candidate-binding-batch.invocation.v1",
+      "before": "export function prepareCoreSequenceStreamSources({root=ROOT}={}){",
+      "after": "export function prepareCoreSequenceStreamSources({root=ROOT}={}){\n const bindingCandidates=[];"
+    },
+    {
+      "id": "router.candidate-binding-batch.collect.v1",
+      "before": "const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),",
+      "after": "const nativeBindings={};bindingCandidates.push({path:resolve(root,path),source:after,result:nativeBindings});const "
+    },
+    {
+      "id": "router.candidate-binding-batch.complete.v1",
+      "before": " return {schema:'core-sequence-stream-source-v1',typescriptVersion:ts.version,inputs,files,defaultAPIsUnchanged:true,sourceAuthority:false,semanticAdmission:false};",
+      "after": " // Fresh complete native scope checks precede every returned plan and write.\n const checkedBindings=verifyNativeCopiedModuleBindings(ts,bindingCandidates);\n for(let at=0;at<bindingCandidates.length;at++)Object.assign(bindingCandidates[at].result,checkedBindings[at]);\n return {schema:'core-sequence-stream-source-v1',typescriptVersion:ts.version,inputs,files,defaultAPIsUnchanged:true,sourceAuthority:false,semanticAdmission:false};"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

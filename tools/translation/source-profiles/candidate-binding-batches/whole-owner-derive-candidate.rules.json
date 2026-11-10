@@ -1,0 +1,33 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/prepare-whole-owner-derive-candidate.mjs",
+  "phase": "repository",
+  "beforeSha256": "c1a43913e15e5598869ed0a931593dc8ad80d86907da084227872b337841bff8",
+  "afterSha256": "f862a6a99e6d251f55f8e66e848e10220c9575344ae8b97c3f7ef0c03c83719f",
+  "edits": [
+    {
+      "id": "router.candidate-binding-batch.import.v1",
+      "before": "import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';",
+      "after": "import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';"
+    },
+    {
+      "id": "router.candidate-binding-batch.invocation.v1",
+      "before": "export function prepareWholeOwnerDeriveCandidate({root=ROOT}={}){",
+      "after": "export function prepareWholeOwnerDeriveCandidate({root=ROOT}={}){\n const bindingCandidates=[];"
+    },
+    {
+      "id": "router.candidate-binding-batch.collect.v1",
+      "before": "const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),",
+      "after": "const nativeBindings={};bindingCandidates.push({path:resolve(root,path),source:after,result:nativeBindings});const "
+    },
+    {
+      "id": "router.candidate-binding-batch.complete.v1",
+      "before": " return {schema:'whole-owner-derive-source-candidate-v1',typescriptVersion:ts.version,inputs,files,originalDefaultsUnchanged:true,originalSingleOwnerAPIsUnchanged:true,newAcrossInvocationSourceOrOwnerCache:false,scope:'one complete synchronous original owner-list operation',performanceQualified:false,sourceAuthority:false,runtimeAuthority:false};",
+      "after": " // Fresh complete native scope checks precede every returned plan and write.\n const checkedBindings=verifyNativeCopiedModuleBindings(ts,bindingCandidates);\n for(let at=0;at<bindingCandidates.length;at++)Object.assign(bindingCandidates[at].result,checkedBindings[at]);\n return {schema:'whole-owner-derive-source-candidate-v1',typescriptVersion:ts.version,inputs,files,originalDefaultsUnchanged:true,originalSingleOwnerAPIsUnchanged:true,newAcrossInvocationSourceOrOwnerCache:false,scope:'one complete synchronous original owner-list operation',performanceQualified:false,sourceAuthority:false,runtimeAuthority:false};"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}
