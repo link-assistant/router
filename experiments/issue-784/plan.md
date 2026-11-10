@@ -22,7 +22,12 @@ Objective: implement and verify all requirements in PR #785 on
       but regeneration takes 64335.027529 ms against 60000 ms: audit FAIL.
 - [x] Archive 87 complete members with readback before exact inactive retirement;
       ten JavaScript syntax checks pass. Evidence is 489087070 bytes.
-- [ ] Refresh genuine isolated registration and portable Git receiving fixtures.
+- [x] Refresh genuine isolated registration and portable Git receiving fixtures:
+      1843 physical inputs / 58280323 bytes; exact reviewed proposal reproduced,
+      prior complete history retained, original bootstrap bounds unchanged.
+      Original complete files pass 16/16 in Node and Bun; Node audit passes.
+      Preserve 217 full members in readback-verified receiving/audit packets;
+      evidence is 478464513 bytes before documentation. No parity gain claimed.
 - [ ] Complete current native deadlines, genuine canonical inventory and full gate.
 - [ ] Repair the entire terminal CI set and all original issue requirements.
 
