@@ -6,6 +6,8 @@ import {fileURLToPath} from 'node:url';
 import {renderClassProgramStorage} from '../class-program-storage.mjs';
 import {prepareClassBirthEntrySource} from '../prepare-class-birth-entry.mjs';
 import {prepareOriginalClassBirthPlan} from '../prepare-original-class-birth.mjs';
+import {reconstructClassBirthInput} from '../class-birth-receiver-history.mjs';
+import {createHash} from 'node:crypto';
 import {prepareCompilerAliasHistory} from '../prepare-compiler-alias-history.mjs';
 import {prepareCoreBase64SourceData} from '../prepare-core-base64-sources.mjs';
 import {prepareLexicalParentHistorySources} from '../prepare-lexical-parent-history.mjs';
@@ -38,6 +40,20 @@ test('the actual class producer reproduces every registered class source and the
  const plan=prepareOriginalClassBirthPlan({sourceRoot:fileURLToPath(root)});assert.equal(plan.files.length,13);assert.equal(plan.selections.length,24);
  for(const row of plan.files)assert.equal(row.afterSource,read('tools/translation/'+row.path));assert.equal(plan.leaf.afterSource,read(plan.leaf.path));
  assert.deepEqual(plan.authority,{type:false,owner:false,executable:false});
+ assert.equal(plan.sourceHistory.length,1);const history=plan.sourceHistory[0];
+ assert.equal(history.path,'tools/translation/extensions/pattern-control.mjs');
+ assert.equal(history.equation.before,history.original);assert.equal(history.equation.after,history.source);
+ assert.equal(history.equation.inverse,history.original);assert.equal(history.receiver.after,read(history.path));
+ assert.equal(history.runtimeAuthority,false);assert.equal(history.sourceAuthority,false);
+ const pin=source=>({bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex')});
+ const inputs={current:history.receiver.after,installed:plan.program.files.find(row=>'tools/translation/'+row.path===history.path),receiver:history.receiver,pin,expected:pin(history.original)};
+ // Each refusal occurs before a restored input can be selected or parsed.
+ let restored=0;const unexpected=()=>{restored++;throw Error('untrusted restore was invoked');};
+ assert.throws(()=>reconstructClassBirthInput({...inputs,current:inputs.current+'\n',restore:unexpected}),/complete current receiver successor/);
+ assert.throws(()=>reconstructClassBirthInput({...inputs,installed:null,restore:unexpected}),/complete registered predecessor/);
+ assert.throws(()=>reconstructClassBirthInput({...inputs,installed:{...inputs.installed,after:{bytes:0,sha256:'0'.repeat(64)}},restore:unexpected}),/unknown successor/);
+ assert.equal(restored,0);
+ assert.throws(()=>reconstructClassBirthInput({...inputs,restore:()=>history.source+'\n'}),/complete original class input differs/);
 });
 
 test('the complete historical compiler readers equal their actual current source producer output',{timeout:60000},()=>{

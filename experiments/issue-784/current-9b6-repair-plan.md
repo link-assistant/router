@@ -28,11 +28,17 @@ active, PR draft and incomplete criteria explicit. No local Rust tools or agents
       retain all 24 nonpassing logs and all 26 complete artifact payloads.
 - [ ] Resolve every collected failure, including original class-source pins,
       unchanged original deadlines, whole matrix timeouts and strict parity.
+- [x] Compose the actual class-birth/receiver history, regenerate the Host entry
+      and stored program, and pass both complete original files: 23 Node cases
+      with zero independent deadline breaches, and 23 Bun cases.
 - [x] Profile exact whole production input in bounded 15-second windows; retain
       failures, samples and reaping receipts. No original test qualified.
 - [ ] Finish genuine generated outputs, strict parity and the complete local gate.
 - [ ] Review/publish the coordinated batch to the prepared branch only, then
       wait for all same-SHA checks. Do not start Rust before every JS stage passes.
+- [x] Publish reviewed source batch at `79f375ed1`, explicitly incomplete. Run
+      `42832857700` is in progress; collect the entire terminal cycle before the
+      next coordinated push. Continue independent drafting without changing it.
 - [ ] Finish universal all-tool/account privacy acceptance; Router headers alone
       cannot establish external account settings or vendor/security retention.
 
