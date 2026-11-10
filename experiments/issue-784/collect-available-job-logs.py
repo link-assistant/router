@@ -13,6 +13,8 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--head', required=True)
 parser.add_argument('--run', type=int, required=True)
 parser.add_argument('--prefix', required=True)
+parser.add_argument('--retry-unavailable', action='store_true',
+                    help='Retry a failed download under a new immutable attempt path')
 args = parser.parse_args()
 assert len(args.head) == 40 and all(c in '0123456789abcdef' for c in args.head)
 assert args.prefix and all(c in 'abcdefghijklmnopqrstuvwxyz0123456789-' for c in args.prefix)
@@ -31,6 +33,17 @@ for job in jobs:
     name = args.prefix + '-job-' + str(job['id'])
     target, errors = base / (name + '.log.gz'), base / (name + '.stderr')
     receipt = base / (name + '.json')
+    if args.retry_unavailable:
+        attempt = 0
+        while receipt.exists():
+            saved = json.loads(receipt.read_bytes())
+            assert saved['job'] == job and saved['headSha'] == args.head
+            if saved['validJobLog']:
+                break
+            attempt += 1
+            retry = name + '-retry-' + str(attempt)
+            target, errors = base / (retry + '.log.gz'), base / (retry + '.stderr')
+            receipt = base / (retry + '.json')
     if receipt.exists():
         record = json.loads(receipt.read_bytes())
         assert record['job'] == job and record['headSha'] == args.head
@@ -77,5 +90,6 @@ raw = json.dumps(result, separators=(',', ':')).encode()
 with path.open('xb') as output:
     output.write(gzip.compress(raw, mtime=0))
 assert gzip.decompress(path.read_bytes()) == raw
-print(json.dumps(dict(receipt=str(path), completeLogs=len(records),
+print(json.dumps(dict(receipt=str(path), completeLogs=sum(row['validJobLog'] for row in records),
+                     unavailableLogs=sum(not row['validJobLog'] for row in records),
                      completeCycleCollected=False)), flush=True)
