@@ -3,6 +3,11 @@
 Research and verification dates: 2026-11-06–10 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [operation source receiving repair](current-operation-source-evolution.md)
+preserves historical hashes while checking every ordered measurement edit and
+the full source/CST inverse. Both complete cases pass in each engine within
+unchanged deadlines; broader generation, parity and privacy criteria remain open.
+
 The [complete base64 source-path diagnostic](current-owned-base64-source-profile.md)
 retains a finite CPU profile and every source/output byte. Repeated original
 analysis and source authentication remain performance targets; the diagnostic

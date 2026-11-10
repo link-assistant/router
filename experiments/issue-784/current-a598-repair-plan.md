@@ -19,6 +19,10 @@ native goal active and the PR draft and unmerged while criteria remain open.
       strict compilation with explicit full ES2022 library checking. The whole
       final file passes five cases in each engine; retain four failed drafts
       and both full Node audits. Fresh published CI remains required.
+- [x] Reproduce the operation source's outdated historical-output assertion,
+      preserve its original hashes and verify all three independently authored
+      ordered measurement edits, full inverse and serialized/reparsed CST.
+      Both complete original cases pass in each engine within unchanged limits.
 - [ ] Wait for every job in run 42849964395 to finish, then preserve and inspect
       the entire completed failure set before publishing the next source batch.
 - [ ] Resolve the remaining original child and case deadlines, production heap
