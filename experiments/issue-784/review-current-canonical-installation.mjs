@@ -5,9 +5,12 @@ import {gzipSync, gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {reviewTranslationDraft} from '../../scripts/review-translation-draft.mjs';
 
-const output = 'ci-logs/issue-784-restart-2/current-ec600-independent-current-review.json.gz';
+const output = process.argv[2] ?? 'ci-logs/issue-784-restart-2/current-ec600-independent-current-review.json.gz';
+const head = process.argv[3] ?? 'ec6005a8358428a560bb7c685d52a32b174a74f6';
+assert.match(head, /^[a-f0-9]{40}$/u);
+assert.match(output, /^ci-logs\/issue-784-restart-2\/[a-z0-9-]+-independent-current-review\.json\.gz$/u);
 const report = reviewTranslationDraft({root: process.cwd()});
-assert.equal(report.headSha, 'ec6005a8358428a560bb7c685d52a32b174a74f6');
+assert.equal(report.headSha, head);
 assert.equal(report.baselineSha, null);
 const raw = Buffer.from(JSON.stringify(report));
 const packed = gzipSync(raw);

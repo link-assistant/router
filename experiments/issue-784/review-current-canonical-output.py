@@ -17,17 +17,27 @@ import subprocess
 import zipfile
 
 BASE = Path('ci-logs/issue-784-restart-2')
-HEAD = 'ec6005a8358428a560bb7c685d52a32b174a74f6'
-MERGE = 'a74e300516ee0dbc068e170412be99a470227ce5'
 ROOTS = ['tools/translation/meta', 'js/generated/rust-draft', 'ts/generated/rust-draft',
          'tools/translation/projects', 'js/generated/rust-project', 'ts/generated/rust-project']
 INVENTORY = 'parity/rust-source-inventory.json'
 LIMIT = 2866933760
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--install-reviewed', help='SHA256 of the complete existing review receipt')
+parser.add_argument('--head', default='ec6005a8358428a560bb7c685d52a32b174a74f6')
+parser.add_argument('--published-head')
+parser.add_argument('--merge', default='a74e300516ee0dbc068e170412be99a470227ce5')
+parser.add_argument('--prefix', default='current-ec600')
+parser.add_argument('--snapshot', default='current-ec600-artifacts-9.json')
+parser.add_argument('--artifact', type=int, default=13672361496)
+parser.add_argument('--retained-archive', type=Path)
 args = parser.parse_args()
-receipt_path = BASE / 'current-ec600-canonical-output-review-v2.json.gz'
-installation_path = BASE / 'current-ec600-canonical-output-installation.json.gz'
+import re
+HEAD, MERGE, PUBLISHED = args.head, args.merge, args.published_head or args.head
+assert all(re.fullmatch(r'[a-f0-9]{40}', value) for value in [HEAD, MERGE, PUBLISHED])
+assert re.fullmatch(r'[a-z0-9-]+', args.prefix)
+assert re.fullmatch(r'[a-z0-9.-]+', args.snapshot)
+receipt_path = BASE / (args.prefix + '-canonical-output-review-v2.json.gz')
+installation_path = BASE / (args.prefix + '-canonical-output-installation.json.gz')
 active_paths = set()
 for process in Path('/proc').iterdir():
     if not process.name.isdecimal():
@@ -96,15 +106,15 @@ def physical(path):
 
 
 assert git('rev-parse', 'HEAD') == HEAD
-merge = json.loads((BASE / 'current-ec600-tested-merge.json').read_bytes())
+merge = json.loads((BASE / (args.prefix + '-tested-merge.json')).read_bytes())
 assert merge['sha'] == MERGE
-assert [r['sha'] for r in merge['parents']] == ['eb2dad1c0a18394dc1aad46413e11401e74eb502', HEAD]
-assert merge['tree']['sha'] == git('rev-parse', 'HEAD^{tree}')
-capture_path = BASE / 'current-ec600-canonical-physical-inputs-before.json.gz'
+assert [r['sha'] for r in merge['parents']] == ['eb2dad1c0a18394dc1aad46413e11401e74eb502', PUBLISHED]
+assert merge['tree']['sha'] == git('rev-parse', PUBLISHED + '^{tree}')
+capture_path = BASE / (args.prefix + '-canonical-physical-inputs-before.json.gz')
 capture = json.loads(gzip.decompress(capture_path.read_bytes()))
 assert capture['schema'] == 'canonical-physical-installation-inputs-v1'
 assert capture['inputs']['head'] == HEAD and capture['compilerVersion'] == '5.9.3'
-assert capture['gitTree'] == merge['tree']['sha']
+assert capture['gitTree'] == git('rev-parse', 'HEAD^{tree}')
 inputs = capture['inputs']
 tree = {}
 for row in subprocess.check_output(['git', 'ls-tree', '-rz', '-r', '--full-tree', HEAD]).split(b'\0'):
@@ -135,26 +145,34 @@ for label, rows in [('rust', inputs['corpus']['sources']), ('cargo', inputs['cor
 assert json.loads(Path('js/node_modules/typescript/package.json').read_bytes())['version'] == '5.9.3'
 print(json.dumps(dict(stage='physical-inputs', counts=input_counts, tree=merge['tree']['sha'])), flush=True)
 
-snapshot = json.loads((BASE / 'current-ec600-artifacts-9.json').read_bytes())
+snapshot = json.loads((BASE / args.snapshot).read_bytes())
 if isinstance(snapshot, dict):
     snapshot = [snapshot]
-artifact, = [r for page in snapshot for r in page['artifacts'] if r['id'] == 13672361496]
+artifact, = [r for page in snapshot for r in page['artifacts'] if r['id'] == args.artifact]
 assert artifact['name'] == 'bulk-drafts-' + MERGE and not artifact['expired']
-assert artifact['workflow_run']['head_sha'] == HEAD
-assert artifact['size_in_bytes'] == 58476520
-assert artifact['digest'] == 'sha256:67d3324f679e37b79a845f5be40bbabe98ec7b348fb5d04c30541557400dd172'
+assert artifact['workflow_run']['head_sha'] == PUBLISHED
+assert 0 < artifact['size_in_bytes'] <= 96 * 1024 * 1024
+assert re.fullmatch(r'sha256:[a-f0-9]{64}', artifact['digest'])
 buffer = io.BytesIO()
-child = subprocess.Popen(['gh', 'api', 'repos/link-assistant/router/actions/artifacts/'
-                          + str(artifact['id']) + '/zip'], stdout=subprocess.PIPE)
+child = None
+if args.retained_archive:
+    assert args.retained_archive.parent == BASE
+    assert not args.retained_archive.is_symlink()
+    source = args.retained_archive.open('rb')
+else:
+    child = subprocess.Popen(['gh', 'api', '--allow-escape-sequences',
+                              'repos/link-assistant/router/actions/artifacts/'
+                              + str(artifact['id']) + '/zip'], stdout=subprocess.PIPE)
+    source = child.stdout
 try:
-    while block := child.stdout.read(65536):
+    while block := source.read(65536):
         guard()
         buffer.write(block)
         assert buffer.tell() <= artifact['size_in_bytes']
-    assert child.wait() == 0 and buffer.tell() == artifact['size_in_bytes']
+    assert (child is None or child.wait() == 0) and buffer.tell() == artifact['size_in_bytes']
 finally:
-    child.stdout.close()
-    if child.poll() is None:
+    source.close()
+    if child is not None and child.poll() is None:
         child.terminate()
         child.wait()
 assert artifact['digest'] == 'sha256:' + sha(buffer.getbuffer())
@@ -253,6 +271,7 @@ with zipfile.ZipFile(buffer) as archive:
     for name in sorted(set(before) - {r['path'] for r in members}):
         changes.append(dict(path=name, before=before[name], after=None))
     record = dict(schema='actual-canonical-output-review-v1', headSha=HEAD, mergeSha=MERGE,
+        publishedHeadSha=PUBLISHED,
         testedMergeTree=merge['tree']['sha'], mergeTreeEqualsPublishedHead=True,
         inputCapturePath=str(capture_path), inputCaptureSha256=sha(capture_path.read_bytes()),
         completePhysicalInputVectorsEqual=True, inputCounts=input_counts, artifact=artifact,

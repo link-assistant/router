@@ -1,0 +1,9 @@
+{
+  "schema": "complete-node-case-deadline-request-v1",
+  "root": "/tmp/gh-issue-solver-1794003502595",
+  "files": [
+    "/tmp/gh-issue-solver-1794003502595/tools/translation/test/actual-gain-families.test.mjs",
+    "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs"
+  ],
+  "receipt": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-i9aG3J/case-deadlines.json"
+}

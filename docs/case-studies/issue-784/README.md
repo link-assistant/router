@@ -389,3 +389,9 @@ The [current compiler registration](current-unicode-registration.md) records
 
 The [Default prerequisite history repair](current-default-prerequisite-history.md)
 retains every source layer, original refusal and complete failed/receiving run.
+
+The [terminal a598 CI review](ci-a598-terminal-20261110.md) preserves all 24
+nonpassing logs and all 26 artifacts, the complete actual canonical output
+installation, 55 passing reconstruction/recorded-gain cases and strict generated
+TypeScript. It keeps the interrupted semantic review and all remaining failures
+explicitly unfinished.

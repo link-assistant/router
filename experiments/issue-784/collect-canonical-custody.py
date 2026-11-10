@@ -33,7 +33,7 @@ assert before + artifact['size_in_bytes'] + 2000000 < 500000000
 path = base / (args.prefix + '-artifact-' + str(args.artifact) + '.zip')
 length = 0
 with path.open('xb') as output, path.with_suffix('.stderr').open('xb') as errors:
-    child = subprocess.Popen(['gh', 'api', 'repos/link-assistant/router/actions/artifacts/' + str(args.artifact) + '/zip'],
+    child = subprocess.Popen(['gh', 'api', '--allow-escape-sequences', 'repos/link-assistant/router/actions/artifacts/' + str(args.artifact) + '/zip'],
                              stdout=subprocess.PIPE, stderr=errors)
     while block := child.stdout.read(65536):
         length += len(block)

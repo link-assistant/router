@@ -23,8 +23,17 @@ native goal active and the PR draft and unmerged while criteria remain open.
       preserve its original hashes and verify all three independently authored
       ordered measurement edits, full inverse and serialized/reparsed CST.
       Both complete original cases pass in each engine within unchanged limits.
-- [ ] Wait for every job in run 42849964395 to finish, then preserve and inspect
+- [x] Wait for every job in run 42849964395 to finish, then preserve and inspect
       the entire completed failure set before publishing the next source batch.
+- [x] Retain all 24 complete failed/cancelled job logs and all 26 artifacts;
+      recheck every complete member and classify nested auditor controls.
+- [x] Join the complete actual canonical artifact to all current source inputs,
+      install only its 20 reviewed changed outputs and compare full before/after
+      input captures. Both complete regression files pass 55 Node cases with
+      the independent deadline audit; full generated strict TypeScript passes.
+- [ ] Complete independent semantic review and fresh canonical regeneration.
+      The local full semantic reviewer hit the unchanged cgroup guard in
+      14.23 seconds; its missing result remains unqualified.
 - [x] Reproduce both Default prerequisite history assertions, then join the
       archived input, guarded-import predecessor and complete measurement
       successor with their CST inverses. Three cases pass in both engines;

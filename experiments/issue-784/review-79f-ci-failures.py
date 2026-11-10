@@ -1,14 +1,19 @@
 """Read every retained current CI log and artifact; preserve complete failure records."""
 import gzip
+import argparse
 import hashlib
 import json
 from pathlib import Path
 import re
 import zipfile
 
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--prefix', default='checkpoint79f')
+args = parser.parse_args()
+assert re.fullmatch(r'[a-z0-9]+', args.prefix)
 base = Path('ci-logs/issue-784-restart-2')
-snapshot = json.loads(gzip.decompress((base / 'checkpoint79f-current-snapshot.json.gz').read_bytes()))
-inventory = json.loads((base / 'checkpoint79f-artifact-verification.json').read_bytes())
+snapshot = json.loads(gzip.decompress((base / (args.prefix + '-current-snapshot.json.gz')).read_bytes()))
+inventory = json.loads((base / (args.prefix + '-artifact-verification.json')).read_bytes())
 logs, artifacts = [], []
 for row in snapshot['logs']:
     data = gzip.decompress(Path(row['path']).read_bytes())
@@ -32,7 +37,10 @@ for row in inventory['records']:
                 assert hashlib.file_digest(source, 'sha256').hexdigest() == expected['sha256']
             if member.filename.endswith('case-deadlines.json'):
                 value = json.loads(archive.read(member))
+                fixture_records = [event for event in value['records']
+                    if event.get('file') and '/js/node_modules/node-deadline-fixture-' in event['file']]
                 audits.append(dict(path=member.filename,
+                    expectedNestedDeadlineControl=bool(fixture_records),
                     summary={key: value[key] for key in ['passed', 'observedCompletedCases',
                      'durationBreaches', 'errors', 'originalFailedCompletionEvents']},
                     originalFailures=[event for event in value['records'] if event['type'] == 'test:fail']))
@@ -57,7 +65,7 @@ value = dict(schema='complete-current-ci-failure-review-v1', publishedHead=snaps
              runId=snapshot['run']['id'], completeCycleCollected=snapshot['completeCycleCollected'],
              pendingLargeArtifacts=inventory['pendingLargeArtifacts'], logs=logs, artifacts=artifacts,
              fullGatePassed=False, rustExecuted=False)
-target = base / 'checkpoint79f-current-failure-review.json.gz'
+target = base / (args.prefix + '-current-failure-review.json.gz')
 raw = (json.dumps(value, separators=(',', ':')) + '\n').encode()
 target.write_bytes(gzip.compress(raw, mtime=0))
 assert gzip.decompress(target.read_bytes()) == raw
@@ -66,6 +74,9 @@ for row in artifacts:
         continue
     print(row['metadata']['name'])
     for audit in row['audits']:
+        if audit['expectedNestedDeadlineControl']:
+            print('  EXPECTED NESTED DEADLINE CONTROL (complete records retained): ' + audit['path'])
+            continue
         for error in audit['summary']['errors']:
             print('  ' + error)
         for event in audit['originalFailures']:
