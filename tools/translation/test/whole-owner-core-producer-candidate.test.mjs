@@ -13,7 +13,7 @@ import {wholeOwnerCoreProducerInputsCallbackFree} from '../whole-owner-core-prod
 import {originalAttributeOwnerBulkCryptoReady} from '../attribute-owner-bulk-crypto.mjs';
 import {createWholeOwnerCoreAdoptionProducerContext,createEnclosingCoreAdoptionProducerContext,coreAdoptionProducerClosedAttributeSpans,coreAdoptionProducerBindings,finishCoreAdoptionProducerContext,captureWholeOwnerCoreAdoptionAttributeData} from '../whole-owner-core-producer-candidate.mjs';
 import {createEnclosingCoreAdoptionProducerContext as originalCreate,coreAdoptionProducerBindings as originalBindings} from '../core-adoption-producer-context.mjs';
-import {decodeCompleteHookWire,encodeCompleteHookWire,compareCompleteHookWires} from './fixtures/complete-hook-wire.mjs';
+import {decodeCompleteClosedJsonDagHookWire as decodeCompleteHookWire,encodeCompleteNativeBufferJsonDagHookWire as encodeCompleteHookWire,compareCompleteClosedJsonDagHookWires as compareCompleteHookWires} from './fixtures/complete-native-buffer-json-dag-hook-wire.mjs';
 const root=new URL('../../../',import.meta.url),dependencyInputs=Object.freeze({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')}),hash=value=>createHash('sha256').update(value).digest('hex');
 function setup(source='#[derive(Clone,Debug,serde::Serialize)] pub struct Record { value:u8 }'){
  const sources=new Map([['src/lib.rs','mod model;'],['src/model.rs',source]]),graph=resolveModuleGraph({entry:'src/lib.rs',paths:[...sources.keys()],readSource:path=>sources.get(path),compilationProfile:PRODUCTION_PROFILE});return {modules:graph.modules,compilationProfile:PRODUCTION_PROFILE,dependencyInputs};

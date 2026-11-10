@@ -1,0 +1,33 @@
+{
+  "schema": "complete-native-buffer-json-DAG-source-rules-v1",
+  "beforePath": "tools/translation/test/fixtures/complete-closed-json-dag-hook-wire.mjs",
+  "afterPath": "tools/translation/test/fixtures/complete-native-buffer-json-dag-hook-wire.mjs",
+  "beforeSha256": "3f98b9c02e147995f08d7f904a8df31a9933f7ab1907687f9fc2a40277d2afe3",
+  "afterSha256": "16fb355b26edf6bc267148b705d71f7579d20da3a43e006045a83d75c2149c0d",
+  "languageEdits": [
+    [
+      "// every fresh object's unchanged own-key/prototype/refusal census in visit.",
+      "// every fresh object's applicable prototype/refusal census in visit."
+    ],
+    [
+      "  // key census for stack refusal, exact byte shape and ordered object fields.",
+      "  // key census for stack refusal, exact byte shape and ordered object fields,\n  // except the explicit direct-native Buffer JSON projection below."
+    ],
+    [
+      "export function encodeCompleteClosedJsonDagHookWire(value){",
+      "export function encodeCompleteClosedJsonDagHookWire(value){return encodeClosedJsonDag(value,false);}\n// Stock direct Buffers project only native numeric bytes. Own extra fields are\n// ignored by native Buffer.toJSON; length/toJSON overrides still refuse, and\n// stack remains refused without materializing it. Other byte objects retain\n// the original complete key census. This API grants no source/type authority.\nexport function encodeCompleteNativeBufferJsonDagHookWire(value){return encodeClosedJsonDag(value,true);}\nfunction encodeClosedJsonDag(value,nativeBufferProjection){"
+    ],
+    [
+      "  const names=keys(item);if(names.includes('stack'))fail();const bytes=isBytes(item),buffer=bytes&&prototype(item)===BUFFER;domain(item,buffer);active.add(item);",
+      "  const bytes=isBytes(item),buffer=bytes&&prototype(item)===BUFFER,projectBuffer=nativeBufferProjection&&buffer;\n  let names=null;\n  if(projectBuffer){if(descriptor(item,'stack')||descriptor(item,'length'))fail();}\n  else{names=keys(item);if(names.includes('stack'))fail();}\n  domain(item,buffer);active.add(item);"
+    ],
+    [
+      "||names.length!==length)fail();",
+      "||!projectBuffer&&names.length!==length)fail();"
+    ]
+  ],
+  "repositoryEdits": [],
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

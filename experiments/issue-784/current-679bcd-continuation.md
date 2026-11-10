@@ -67,7 +67,15 @@ PR #785. The native goal stays active. No green gate or release readiness exists
       leaves its audit incomplete; Bun passes 45 of 46, with the final Core case
       unobserved after a guard stop. A focused Core retry also reaches the guard.
       Complete evidence and rejected author selectors are archived separately.
-      Do not repeat the killed workload unchanged or claim whole-Core success.
+      A new, separately checked observation transport now qualifies every
+      original Core case in both engines: lossless DAG plus direct native
+      Buffer JSON projection, with complete payloads and unchanged 12500 ms
+      child and 60000 ms case limits. All 22 focused cases pass per engine;
+      the Node independent deadline audits pass. The original nine-file run
+      remains distinct; the newly checked Core file is no longer unqualified.
+      Complete original failures, source/CST/inverses, scalar diagnostics and
+      byte-identical full wire controls are retained in
+      docs/case-studies/issue-784/core-hook-receiving-20261110.md.
 - [ ] Qualify fresh path-index reentry in the actual derive-context source using
       both fixed rule phases, complete original/CST/inverse bytes, independent
       grammar/binding checks and all original whole-file cases and deadlines.
@@ -107,6 +115,11 @@ PR #785. The native goal stays active. No green gate or release readiness exists
       unchanged limits; the independent Node audit passes. Complete evidence
       is preserved in namespace-receiving-20261110.md and its verified packet.
 - [ ] Run the complete JavaScript gate without dropping stages or assertions.
+- [ ] Refresh the isolated registration against the complete new committed
+      native binding, project ingress and Core transport batch. The earlier
+      pre-DAG proposal is stale and uninstalled; retain it as such, reproduce
+      the new proposal and run all original isolated/portable and registered
+      receiving files under both engines with unchanged deadline audits.
 - [ ] Verify universal tool/account privacy criteria. Keep unsupported direct
       traffic, source-IP/account inference and absent vendor sessions explicit.
 
