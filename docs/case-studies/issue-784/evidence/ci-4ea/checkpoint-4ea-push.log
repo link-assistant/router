@@ -1,0 +1,5 @@
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File docs/case-studies/issue-784/evidence/ci-a598/checkpointa598-artifact-13784735512.zip is 56.05 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+To https://github.com/link-assistant/router.git
+   a598d2b01..4ea091242  HEAD -> issue-784-1f6838f56841

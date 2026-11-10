@@ -3,6 +3,11 @@
 Research and verification dates: 2026-11-06–10 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [terminal 4ea CI review](ci-4ea-terminal-20261110.md) retains all 24
+nonpassing logs and all 26 whole artifacts after all 59 jobs finish. Reverse
+freshness has a local receiving repair; strict parity, original deadlines,
+complete matrices and universal privacy criteria remain unfinished.
+
 The [current complete local gate attempts](current-complete-gates-20261110.md)
 retain the invalid npm-PATH launch and corrected full invocation separately.
 The corrected run passes both 259-case runtime suites and strict 167-file

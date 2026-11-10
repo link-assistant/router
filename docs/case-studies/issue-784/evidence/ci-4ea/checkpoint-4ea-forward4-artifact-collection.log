@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/collect-ci-artifact-selection.py", line 38, in <module>
+    assert size + sum(a['size_in_bytes'] for a in selected) < 498_000_000, size
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 496420661

@@ -71,8 +71,12 @@ active, PR draft and incomplete criteria explicit. No local Rust tools or agents
       strict native TypeScript but fails the original regeneration deadline,
       then reaches the memory guard in parity acceptance. Later work is unrun.
 - [x] Wait for the entire `4ea091242` CI cycle, run `42863382776`, to finish.
-- [ ] Read and retain every terminal `4ea091242` failure and complete artifact,
-      review the coordinated local batch, refresh main/feedback and publish.
+- [x] Read and retain every terminal `4ea091242` failure and complete artifact:
+      59 jobs, 24 nonpassing whole logs, 26 original artifacts and 176 retained
+      files. Preserve canonical output as unqualified data, with no installation.
+- [x] Refresh main and all issue/PR feedback; no new requirements or conflicts.
+- [ ] Review and publish the coordinated local batch, then collect its whole
+      exact-head CI cycle before the next repair publication.
 - [ ] Finish universal all-tool/account privacy acceptance; Router headers alone
       cannot establish external account settings or vendor/security retention.
 
