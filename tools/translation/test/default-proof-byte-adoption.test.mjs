@@ -34,6 +34,13 @@ test('complete default issuer source equations preserve both historical import a
  const context=plan.files.find(row=>row.path.endsWith('/derive-enclosing-namespace-context.mjs')),birth=plan.historicalLayers[0].files.find(row=>row.path===context.path);assert.equal(context.before,birth.after);assert.equal(context.inverse,birth.after);assert.ok(context.after.includes(context.originalCall));assert.equal(context.nativeSelections.length,1);assert.equal(context.repositorySelections.length,1);assert.equal(plan.files.filter(row=>row.serializerBindings).length,5);
  const history=retain('complete-one-row-current-enclosing-history',prepareDefaultProofByteEnclosingHistory());assert.equal(history.files.length,1);assert.deepEqual(history.files[0],context);assert.deepEqual(history.inputs,plan.inputs);assert.deepEqual(history.prerequisiteInputs,plan.prerequisiteInputs);assert.equal(history.files[0].inverse,history.historicalLayers[0].files.find(row=>row.path===context.path).after);
  const producer=plan.files.find(row=>row.path.endsWith('/prepare-whole-owner-proof-byte-candidate.mjs'));assert.equal(producer.nativeSelections.length,1);assert.match(producer.nativeSelections[0].replacement,/operation-proof-byte-bridge/);
+ assert.equal(producer.preBindingLayer.after,producer.bindingSourceHistory.before);
+ assert.equal(producer.bindingSourceHistory.after,producer.after);
+ assert.equal(producer.bindingSourceHistory.inverse,producer.preBindingLayer.after);
+ assert.equal(producer.bindingSourceHistory.equation.nativeBindings.nativeSemanticScopeChecked,true);
+ assert.deepEqual(producer.bindingSourceHistory.equation.stages.map(stage=>stage.phase),['language','repository']);
+ assert.equal(producer.stages[1].composedFrom.length,2);
+ assert.deepEqual(producer.originalHashCalls,producer.bindingSourceHistory.equation.originalHashCalls);
 });
 test('original enclosing issuer produces the complete original DATA and keeps its own private context identity',async()=>{
  const old=await baseline(),input=retain('complete-current-profile-and-module-input',fixture()),expected=old.enclosing.createDeriveEnclosingNamespaceContext(input),actual=enclosing.createDeriveEnclosingNamespaceContext(input);retain('complete-old-and-installed-enclosing-contexts',{expected,actual});assert.deepEqual(actual,expected);

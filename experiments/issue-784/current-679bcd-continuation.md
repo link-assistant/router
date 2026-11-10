@@ -3,6 +3,18 @@
 Objective: finish every issue #784 requirement and every mandatory CI failure in
 PR #785. The native goal stays active. No green gate or release readiness exists.
 
+- [x] Repair the new published-head proof-byte history and owned-field CLI
+      freshness failures. Compose the already pinned complete candidate
+      binding source profile; retain all original sources, phases, inverses and
+      native checks. The genuine nine-file CLI proposal changes only the CLI.
+      The complete four-file cohort passes all 22 cases in both engines, with
+      a green independent Node deadline audit and unchanged Bun case limits.
+      Preserve the original two failures, corrected added assertion error,
+      full source proposals and Core diagnostics in the 61-member
+      proof-history-receiving-20261110 packet. The Core sampled producer is
+      diagnostic; its aggregate phased probe refuses at the original bound.
+      No executable production functions or full-gate qualification are added.
+
 - [x] Publish the coordinated source/evidence batch to the prepared branch only.
       Update PR #785 with exact passed, failed and unrun local results and its
       positive closing reference. Keep the PR draft and unmerged.

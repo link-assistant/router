@@ -10,12 +10,15 @@ import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mj
 import {prepareSchemarsEnclosingAdoption} from './prepare-schemars-enclosing-adoption.mjs';
 import {deriveGuardedProofLexingConsumerSource} from './prepare-guarded-proof-lexing.mjs';
 import {deriveCloneEnclosingNativeSourceHistory,deriveCloneEnclosingContextSourceRules,assertCloneEnclosingSourceInputsFresh} from './prepare-clone-enclosing-source-history.mjs';
+import {derivePinnedRepositorySourceEvolution} from './pinned-repository-source-evolution.mjs';
 import {transportConcreteNamedSourcePhases} from './concrete-source-origin-phases.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),BASE='tools/translation/',PROFILE=BASE+'source-profiles/default-proof-byte-adoption/';
 const ARCHIVE=PROFILE+'complete-original-inputs.json.gz',FRAGMENT=PROFILE+'default-proof-byte-operation.mjs.txt',HELPER=BASE+'default-proof-byte-operation.mjs';
 const ARCHIVE_PIN='5d6ab1bebb994fccbb2f5b32cb1d425447edd4f84adf784b7cf1ee5c836ac3e3',RAW_PIN='7151ca3c4f21e5095bcf2d3d72b82ba0f0fb8be70b75926908d0d2500a7c8930',FRAGMENT_PIN='0290fff27f07822424a6da837626c9245ad04ee28b846ea9a5b1d3d354e0762a';
 const CONSUMERS=['builtin-derive-bang-footprints.mjs','builtin-debug-ast-route.mjs','builtin-eq-ast-route.mjs','builtin-partial-eq-ast-route.mjs','builtin-ordering-ast-route.mjs'];
 const ENCLOSING=BASE+'derive-enclosing-namespace-context.mjs',DEFAULT=BASE+'default-trait-source.mjs',PRODUCER=BASE+'prepare-whole-owner-proof-byte-candidate.mjs';
+const PRODUCER_PROFILE=new URL('./source-profiles/candidate-binding-batches/whole-owner-proof-byte-candidate.rules.json',import.meta.url);
+const PRODUCER_PROFILE_PIN='25db23ed741bdc8c59b6d4d120328fe9dffdd09c2e45c4ba2fc7df351e1e76ae';
 const PREREQUISITES=['operation-proof-byte-bridge.mjs','operation-proof-byte-consumer-scope.mjs','operation-proof-byte-original-fallback.mjs'];
 const hash=value=>createHash('sha256').update(value).digest('hex'),fail=message=>{throw new TypeError('Default proof byte adoption: '+message);};
 const one=(rows,label)=>{if(rows.length!==1)fail('one exact native selection required: '+label);return rows[0];};
@@ -122,6 +125,25 @@ function composeCloneSourceLayer(ts,root,row){
   nativeBindings:verifyNativeCopiedModuleBindings(ts,[{path:resolve(root,row.path),source:after}])[0],
   preCloneLayer,cloneSourceHistory,newHashCalls};
 }
+// Retain the complete original adoption before composing its already pinned
+// generator evolution. This DATA history never substitutes an earlier file.
+function composeProducerBindingSourceLayer(ts,root,row){
+ if(row.path!==PRODUCER)return row;
+ const history=derivePinnedRepositorySourceEvolution(ts,{path:row.path,source:row.after,
+  profile:PRODUCER_PROFILE,profileSha256:PRODUCER_PROFILE_PIN});
+ const extension=equation(ts,root,row.path,row.after,row.after,history.after,[]);
+ if(extension.stages[0].before!==extension.stages[0].after||extension.stages[0].beforeMeta!==extension.stages[0].afterMeta)
+  fail('producer binding language phase must retain the complete source');
+ const stages=[row.stages[0],joinPhase(row.stages[1],extension.stages[1])];
+ if(stages[0].before!==row.before||stages[0].after!==row.language||stages[1].before!==row.language
+  ||stages[1].after!==history.after||stages[0].afterMeta!==stages[1].beforeMeta)
+  fail('complete composed producer binding CST equation differs');
+ return {...row,after:history.after,afterSha256:hash(history.after),
+  afterMeta:stages[1].afterMeta,stages,
+  sequence:{languageRules:stages[0].sequence.languageRules,repositoryRules:stages[1].sequence.repositoryRules},
+  trace:stages.flatMap(stage=>stage.trace),nativeCopies:[row.nativeCopies[0],extension.nativeCopies[1]],
+  nativeBindings:extension.nativeBindings,preBindingLayer:row,bindingSourceHistory:{...history,equation:extension}};
+}
 function consumer(ts,path,before){
  const file=parse(ts,path,before),imports=file.statements.filter(node=>ts.isImportDeclaration(node)&&ts.isStringLiteral(node.moduleSpecifier)&&['./private-native-proof-json.mjs','./private-frozen-json.mjs'].includes(node.moduleSpecifier.text)&&node.importClause?.namedBindings&&ts.isNamedImports(node.importClause.namedBindings)&&node.importClause.namedBindings.elements.some(row=>['createScopedPrivateNativeProofJsonSerializer','createPrivateFrozenJsonComposer'].includes((row.propertyName??row.name).text))),owner=one(imports,path),bindings=owner.importClause.namedBindings.elements;
  if(owner.importClause.name||bindings.length!==1||!['createScopedPrivateNativeProofJsonSerializer','createPrivateFrozenJsonComposer'].includes((bindings[0].propertyName??bindings[0].name).text))fail('complete actual serializer import binding differs');
@@ -151,11 +173,13 @@ export function prepareDefaultProofByteAdoption({root=ROOT}={}){
  }
  rows.push({path:HELPER,before:'',language:fragment,after:fragment,nativeSelections:[{kind:'complete-authored-internal-byte-scope',span:[0,0],expected:'',replacement:fragment}]});
  const producerBefore=originals.get(PRODUCER).source,updatedProducer=producer(ts,PRODUCER,producerBefore);rows.push({path:PRODUCER,before:producerBefore,language:updatedProducer.language,after:updatedProducer.language,nativeSelections:updatedProducer.edits});
- const files=equations(ts,root,rows,true).map(row=>composeCloneSourceLayer(ts,root,row));
+ const files=equations(ts,root,rows,true).map(row=>composeProducerBindingSourceLayer(ts,root,composeCloneSourceLayer(ts,root,row)));
  timing('complete-source-equations');
- for(const row of files){row.current=sourceAt(root,row.path);const allowed=[row.before,row.after];if(row.preCloneLayer)allowed.push(row.preCloneLayer.after);if(row.path===ENCLOSING)allowed.push(schemarsRow.before);if(row.path===HELPER)allowed.push(null);if(!allowed.includes(row.current))fail('complete physical source differs from explicit historical/final layers: '+row.path);}
+ for(const row of files){row.current=sourceAt(root,row.path);const allowed=[row.before,row.after];if(row.preBindingLayer)allowed.push(row.preBindingLayer.after);if(row.preCloneLayer)allowed.push(row.preCloneLayer.after);if(row.path===ENCLOSING)allowed.push(schemarsRow.before);if(row.path===HELPER)allowed.push(null);if(!allowed.includes(row.current))fail('complete physical source differs from explicit historical/final layers: '+row.path);}
  if(hash(readFileSync(resolve(root,ARCHIVE)))!==ARCHIVE_PIN||readFileSync(resolve(root,FRAGMENT),'utf8')!==fragment)fail('complete source inputs changed during operation');for(const row of prerequisiteInputs)if(sourceAt(root,row.path)!==row.source)fail('complete byte bridge source changed during operation');for(const row of files)if(sourceAt(root,row.path)!==row.current)fail('complete target source changed during operation');
- for(const row of files)if(row.cloneSourceHistory)assertCloneEnclosingSourceInputsFresh(row.cloneSourceHistory);
+ for(const row of files){if(row.cloneSourceHistory)assertCloneEnclosingSourceInputsFresh(row.cloneSourceHistory);
+  if(row.bindingSourceHistory&&hash(readFileSync(PRODUCER_PROFILE))!==PRODUCER_PROFILE_PIN)fail('producer binding source profile changed');
+ }
  return {schema:'default-operation-proof-byte-adoption-v1',typescriptVersion:ts.version,historicalLayers:[schemars],inputs:archive.files,prerequisiteInputs,fragment:{path:FRAGMENT,source:fragment,sha256:FRAGMENT_PIN},files,sameOriginalPrivateIssuers:true,classicCreatorUnchanged:true,originalSourceOwnerAndHashCallsUnchanged:true,originalJsonBytesAndFallbacksRequired:true,diagnosticWarmingCountersMayDiffer:true,newAcrossInvocationEncodedCache:false,semanticAuthority:false,performanceQualified:false,runtimeExecuted:false,requiredRegeneration:['prepare-batched-proof-byte-source-candidate.mjs','current-whole-owner-proof-byte-provider.mjs complete candidate closure'],defaultAdoptionProposed:true};
 }
 // Exact history for the existing enclosing source pin. This reissues the same
