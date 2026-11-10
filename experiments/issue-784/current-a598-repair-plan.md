@@ -53,6 +53,9 @@ native goal active and the PR draft and unmerged while criteria remain open.
       and complete inputs/output. Repeated original-module and source-current
       checks dominate the sample. This diagnostic does not qualify the original
       complete vector test or establish a production performance improvement.
+- [x] Compare the existing runtime import-edge scope on the same complete
+      fourteen-function translation. Whole outputs equal the baseline but no
+      measured speedup results; retain both profiles without source integration.
 - [ ] Obtain the complete local gate and same-SHA green CI, including strict
       parity. The latest complete local attempt at `619e35656` remains memory
       interrupted; its later TypeScript, parity, forward and reverse are unrun.

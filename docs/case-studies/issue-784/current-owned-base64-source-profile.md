@@ -35,6 +35,24 @@ translation; its full failure and resource receipt are retained separately in
 the same archive. The successful diagnostic uses the actual Rust package paths.
 Both children have exited and been reaped; raw evidence remains retained.
 
+The follow-up checks the existing runtime import-edge scope around the same
+complete fourteen-function translation. Its full oracle, input files and
+translation result equal the baseline exactly. The scope records 3,624 hits
+and 24 misses, stores and rows, but translation takes 30,419.163 ms and the
+observed command takes 34.666629 seconds with a sampled total cgroup peak of
+1,904,439,296 bytes. These uncontrolled observations show no measured speedup;
+the existing operation scope already supplies the relevant grouping. No
+production integration or new executable function is claimed.
+
+The [17-member follow-up archive](evidence/current-owned-runtime-scope-profile.tar.gz)
+and [complete receipt](evidence/current-owned-runtime-scope-profile.json.gz)
+retain both whole profiles and results, full function attribution, source
+snapshots, experiments and resource observations. Every complete member was
+independently reopened and hashed. The archive is 1,128,635 bytes, SHA-256
+`55f8d2b4e0190a7a3e2830628cd51b8fe796c5a804177e52ef376017d3d3c4e5`.
+Both commands have exited and been reaped. This comparison does not qualify
+the complete original test or any performance improvement.
+
 This is source-path evidence only. Original test deadlines, the full production
 producer's heap failure, matrix generation, strict parity and the complete
 JavaScript gate remain unresolved. No production executable gain or universal

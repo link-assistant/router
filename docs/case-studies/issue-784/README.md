@@ -12,6 +12,8 @@ The [complete base64 source-path diagnostic](current-owned-base64-source-profile
 retains a finite CPU profile and every source/output byte. Repeated original
 analysis and source authentication remain performance targets; the diagnostic
 does not qualify the complete test, production generation or original deadlines.
+The retained whole runtime-scope follow-up produces equal translation results
+without a measured speedup; no production optimization was installed.
 
 The [nullable fixture repair](current-native-nullable-receiving.md) passes the
 complete five-case file in both engines with strict ES2022 library checking and
