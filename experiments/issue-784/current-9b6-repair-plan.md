@@ -17,11 +17,19 @@ active, PR draft and incomplete criteria explicit. No local Rust tools or agents
       60861.688613/60000 ms; Bun 7 pass/1 timeout at 79377.92/60000 ms.
 - [x] Commit the coherent current-input source, generated DATA and full evidence
       at `de310d1ee`, keeping both whole-file deadline failures explicit.
-- [ ] Repair repeated native binding work; retain before/after whole public plans
-      and original whole-file checks, without claiming uncontrolled speed gains.
-- [ ] Compose the actual unit/Unicode receiver successor and qualify whole files.
-- [ ] Wait for published `9b6c9192c` run 42807280445's entire terminal CI cycle,
-      download every failed/cancelled log/artifact and handle the complete set.
+- [x] Batch repeated native binding work; retain identical before/after whole
+      public plans and complete Node/Bun checks; no controlled speed gain claimed.
+- [x] Compose the actual unit/Unicode receiver successor. Unicode, runtime-import
+      and binding whole files pass both engines; Node unit file still exhausts
+      its heap. Source-proof assertions pass but 138829.902195/60000 ms fails.
+- [x] Join the actual derive path-index successor without dropping the original
+      source equation. All eight original attribute cases pass Node and Bun.
+- [x] Wait for published `9b6c9192c` run 42807280445's entire terminal CI cycle;
+      retain all 24 nonpassing logs and all 26 complete artifact payloads.
+- [ ] Resolve every collected failure, including original class-source pins,
+      unchanged original deadlines, whole matrix timeouts and strict parity.
+- [x] Profile exact whole production input in bounded 15-second windows; retain
+      failures, samples and reaping receipts. No original test qualified.
 - [ ] Finish genuine generated outputs, strict parity and the complete local gate.
 - [ ] Review/publish the coordinated batch to the prepared branch only, then
       wait for all same-SHA checks. Do not start Rust before every JS stage passes.
