@@ -978,3 +978,5 @@ Continue with [the current 9b6 repair plan](current-9b6-repair-plan.md).
 Further completed receiving batches remain in [the preserved cohort history](plan-cohort-history.md).
 
 Continue with [the current a598 coordinated repair plan](current-a598-repair-plan.md).
+
+Continue with [the current 82b coordinated repair plan](current-82b-repair-plan.md).
