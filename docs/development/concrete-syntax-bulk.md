@@ -69,6 +69,14 @@ rechecks earlier file and ancestor identities, complete compiled source
 associations and caller array descriptors. No source or validation verdict is
 cached across calls. Existing standalone APIs retain their own contract.
 
+Complete project graphs select this source-origin contract through the separately
+generated `forward-source-origin-concrete-syntax.mjs`. Its owning producer derives
+the entire helper and actual project import/call using both fixed rule phases
+and full serialized/reparsed inverses. Single-source graphs retain their original
+path. The [receiving record](../case-studies/issue-784/project-source-origin-cst.md)
+keeps complete production comparisons and focused controls distinct from
+generation freshness, strict parity and the full gate.
+
 `concrete-source-origin-equations.mjs` and `concrete-source-origin-phases.mjs`
 provide a separate complete-source substitution domain. Their only inputs are
 bounded primitive before/middle/after sources, languages and fixed phase rule

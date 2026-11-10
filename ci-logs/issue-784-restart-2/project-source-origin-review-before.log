@@ -1,0 +1,2 @@
+{"target":"ci-logs/issue-784-restart-2/project-source-origin-complete-author-review.json.gz","bytes":1298167,"decodedBytes":8736101,"sha256":"a0c9911c363b7861da30deba3ef071e5d3859737fb0ed1074499ea2e10738fea","typescriptVersion":"5.9.3","receivingQualified":false}
+{"mode":"review-before","projectSourceSha256":"0d6da8c4385692bef46bffc8b899ccaf7a85088603c6db79d553a47b68c0cb15","semanticAuthority":false}

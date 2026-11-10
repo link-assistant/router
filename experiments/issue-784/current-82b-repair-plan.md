@@ -37,7 +37,10 @@ native goal active and the PR draft and unmerged while criteria remain open.
       The new complete-production candidate-first ABBA measurements retain
       identical 397-module/419-certificate outputs. Both candidate runs reduce
       the workload to about 30 seconds. The complete 12-case Node receiving
-      cohort passes unchanged deadlines; Bun and full CI remain independent.
+      cohort passes unchanged deadlines in Node and Bun. The broader original
+      five-file Node cohort fails: 39 pass, one original complete three-build
+      case exceeds 60 seconds at 251.087 seconds. No deadline is changed; its
+      entire evidence remains separate. The broader Bun repeat is unrun.
 - [ ] Fix every terminal CI failure, including original case/child deadlines,
       raw private compiler bounds, actual canonical/owned/profile generation,
       strict parity and whole-source provenance. No deadline or test weakening.

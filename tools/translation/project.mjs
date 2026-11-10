@@ -1,6 +1,7 @@
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {assertPrivateParserExecution} from './private-parser-execution.mjs';
-import {createRustConcreteSyntaxStage,createRustConcreteSyntaxStages} from './forward-concrete-syntax.mjs';
+import {createRustConcreteSyntaxStage} from './forward-concrete-syntax.mjs';
+import {createRustConcreteSyntaxSourceStages} from './forward-source-origin-concrete-syntax.mjs';
 import {associateOriginalSharedPatternDependencies} from './extensions/shared-source-patterns.mjs';
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 import {translationProgressReporter,namespaceProgressRequested} from './translation-progress.mjs';
@@ -164,7 +165,7 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
     captured.push({file,source});return source;
   }},progressInput,source=>({source,document:null}),trackedInput);
   const profile=planning.compilationProfile;planning=null;
-  const stages=captured.length===1?[createRustConcreteSyntaxStage(captured[0].source)]:createRustConcreteSyntaxStages(captured.map(row=>row.source));
+  const stages=captured.length===1?[createRustConcreteSyntaxStage(captured[0].source)]:createRustConcreteSyntaxSourceStages(captured.map(row=>row.source));
   let at=0;
   // Reissue every original view and path proof from reconstructed source. The
   // first traversal grants no type, ownership, expansion or executable rights.
