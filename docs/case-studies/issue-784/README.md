@@ -1,13 +1,22 @@
 # Issue 784: default geolocation privacy
 
-Research and verification dates: 2026-11-06–09 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
+Research and verification dates: 2026-11-06–10 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
-The [private runtime comparison continuation](native-runtime-receiving-20261109.md)
-passes focused Node/Bun controls and every original receiving assertion. Its
-four-regeneration case still fails the unchanged deadline at 77.216 seconds.
-The published `1c82cbd9` CI cycle is still running; no complete-gate result is
-claimed for the independent draft.
+The [complete gate attempt at 5ef265492](complete-gate-5ef265-20261110.md)
+passes all ten lint commands, both 259-case runtime suites, native freshness,
+strict native TypeScript compilation and all 121 acceptance cases. It fails
+the original native regeneration deadline and strict parity, then stops at
+the unchanged memory guard during forward-suite startup. Reverse checks are
+unrun. The published `1c82cbd9` cycle is terminal; every nonpassing log and
+artifact was inspected. No current green gate or new executable gain is claimed.
+
+The [isolated registration refresh](isolated-refresh-20261110.md) passes all
+16 original receiving cases in each engine. The
+[project progress/source-history batch](project-progress-receiving-20261109.md)
+separately passes 33 per engine. These focused results and the
+[private runtime continuation](native-runtime-receiving-20261109.md) do not
+complete generation, strict parity or the universal client/account criteria.
 
 The [terminal d3103700 CI review](ci-d3103700-20261109.md) records all completed
 jobs, all 25 artifacts and the unavailable forward-shard log. Its failures remain
