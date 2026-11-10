@@ -55,7 +55,9 @@ deadlines or speculative pushes.
       the prepared branch. Ready status requires full completion and green CI.
 
 Complete terminal bytes are in
-`docs/case-studies/issue-784/evidence/checkpoint-e881-terminal/`; its custody
-receipt maps every original collection path to its single retained copy.
+`docs/case-studies/issue-784/evidence/checkpoint-e881-terminal/` and the immutable
+published `9b6c9192c` Git tree. The original custody map and supplemental
+published-archive retirement receipts map every complete stream to its retained
+copy; only 26 verified inactive ZIP working copies were retired locally.
 Current canonical artifacts are retained DATA, not fresh working-tree outputs.
 No human credential/access action was identified as the cause of these failures.
