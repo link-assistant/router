@@ -89,7 +89,12 @@ function* nativeRegenerationParsedConcreteSources(sourceRoot, paths) {
    return memoryEvolution.after;
   }}]},
  ]).run(middle);
- const after=repository.value;
+ const runtimeEvolution=derivePinnedRepositorySourceEvolution(ts,{
+  profile:new URL('./source-profiles/native-regeneration-runtime-stream/source-rules.json',import.meta.url),
+  profileSha256:'a77607663394032415a47797bf6e8c078e736d10c22f57569874499a4e073023',
+  path,source:repository.value,
+ });
+ const after=runtimeEvolution.after;
  for(const source of [middle,after])if(ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS).parseDiagnostics.length)throw Error('Complete candidate native grammar differs');
  // Retain the exact installed predecessor as a second complete source
  // equation. This is source DATA, never a remembered native/semantic verdict.
@@ -116,14 +121,14 @@ function* nativeRegenerationParsedConcreteSources(sourceRoot, paths) {
  const nativeBindings=verifyNativeCopiedSourceBindings(ts,fileURLToPath(new URL(path,root)),after);
  const physical=readFileSync(new URL(path,root),'utf8');
  let receivingEvolution=null;
- if(physical!==before&&physical!==previousAfter&&physical!==memoryEvolution.before&&physical!==after){
+ if(physical!==before&&physical!==previousAfter&&physical!==memoryEvolution.before&&physical!==runtimeEvolution.before&&physical!==after){
   if(hash(physical)!=='4abc593dffee59a1649b9258ad7d6acbc58300558a394e997d6c5034554070f6')throw Error('Physical native source is neither full original nor exact proposal');
   receivingEvolution=derivePinnedRepositorySourceEvolution(ts,{
    profile:new URL('./source-profiles/native-regeneration-public-contract/source-rules.json',import.meta.url),
    profileSha256:'c9334def1ba0ebbbe1f919e9ae505c1b2e06967cf51f661cc6bb82900bdc45de',
    path,source:physical,
   });
-  if(receivingEvolution.after!==after)throw Error('Complete receiving native source successor differs');
+  if(receivingEvolution.after!==runtimeEvolution.before)throw Error('Complete receiving native source successor differs');
  }
  const [equation,previousEquation,receivingEquation]=transportConcreteSourcePhases([
   {before,middle,after,language:'JavaScript'},
@@ -133,7 +138,7 @@ function* nativeRegenerationParsedConcreteSources(sourceRoot, paths) {
  if(readFileSync(new URL(path,root),'utf8')!==physical)throw Error('Complete physical native source changed during derivation');
  return {schema:'native-regeneration-concrete-batch-proposal-v1',path,before,middle,after,
   originalSha256,middleSha256:hash(middle),afterSha256:hash(after),equation,
-  previousAfter,previousSha256,previousEquation,memoryEvolution,nativeBindings,receivingEvolution,receivingEquation,
+  previousAfter,previousSha256,previousEquation,memoryEvolution,runtimeEvolution,nativeBindings,receivingEvolution,receivingEquation,
   trace:[language.trace,repository.trace],compiler:ts.version,semanticAuthority:false,
   productionExecutableGain:0,standalonePublicBuildUnchanged:true};
 }

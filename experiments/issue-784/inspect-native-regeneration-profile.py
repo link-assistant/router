@@ -50,8 +50,11 @@ for row in nodes.values():
         parents[child] = row['id']
 assert len(profile['samples']) == len(profile['timeDeltas']) <= 1000000
 own, inclusive = collections.Counter(), collections.Counter()
-for identity, delta in zip(profile['samples'], profile['timeDeltas']):
-    assert identity in nodes and delta >= 0
+negative = []
+for index, (identity, delta) in enumerate(zip(profile['samples'], profile['timeDeltas'])):
+    assert identity in nodes and type(delta) is int
+    if delta < 0:
+        negative.append(dict(index=index, node=identity, microseconds=delta))
     own[identity] += delta
     cursor, seen = identity, set()
     while cursor is not None:
@@ -74,6 +77,10 @@ def rows(counter):
 result = dict(label=args.label, elapsedMs=record['elapsedMs'],
               warmup=record.get('warmup'), samples=len(profile['samples']),
               self=rows(own), inclusive=rows(inclusive),
+              allNegativeDeltas=negative,
+              signedSampleMicroseconds=sum(profile['timeDeltas']),
+              profileDurationMicroseconds=profile['endTime']-profile['startTime'],
+              scope='All signed samples; inclusive costs overlap and are not additive.',
               diagnosticOnly=True, deadlineQualified=False)
 target = Path(str(prefix) + '-analysis.json')
 with target.open('x') as output:
