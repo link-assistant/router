@@ -48,3 +48,28 @@ test('native Buffer projection rechecks stock native owners on every call and pr
  const nested=(depth,leaf)=>{for(let at=0;at<depth;at++)leaf={child:leaf};return leaf;};
  encode(nested(510,Buffer.from([1])));assert.throws(()=>encode(nested(511,Buffer.from([1]))),/full bounded node/u);
 });
+
+test('native Buffer projection ignores conversion getters on both sides of the byte index bound and on nonstock storage',{timeout:60000},()=>{
+ for(const length of [1048576,1048577])for(const changedStorage of [false,true]){
+  const backing=new ArrayBuffer(length+37),bytes=Buffer.from(backing,13,length);
+  for(let at=0;at<length;at++)bytes[at]=(at*71+255)%256;
+  const expected=Buffer.from(bytes),native=JSON.stringify(bytes);let callbacks=0;
+  const ignored=()=>{callbacks++;throw Error('native Buffer JSON ignores this conversion getter');};
+  for(const key of ['valueOf','buffer','byteOffset','byteLength',Symbol.toPrimitive])
+   Object.defineProperty(bytes,key,{get:ignored,enumerable:true});
+  if(changedStorage)Object.defineProperty(backing,'byteLength',{get:ignored});
+  const decoded=wire.decodeCompleteClosedJsonDagHookWire(encode(bytes));
+  assert.deepEqual(decoded,expected);assert.equal(JSON.stringify(decoded),native);
+  assert.equal(JSON.stringify(bytes),native);assert.equal(callbacks,0);
+ }
+});
+
+test('native Buffer projection refuses own iterator overrides without observing them',{timeout:60000},()=>{
+ let callbacks=0;
+ for(const length of [0,1,1048577])for(const accessor of [false,true]){
+  const bytes=Buffer.alloc(length,255),observe=()=>{callbacks++;throw Error('observable native Buffer iterator');};
+  Object.defineProperty(bytes,Symbol.iterator,accessor?{get:observe}:{value:observe});
+  assert.throws(()=>encode(bytes),/full bounded node/u);
+ }
+ assert.equal(callbacks,0);
+});

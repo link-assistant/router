@@ -8,6 +8,10 @@ and a whole-source inverse are required by the candidate producer.
 Only direct native Buffer JSON observation DATA uses the additive projection.
 Other byte objects and the original encoder retain their full own-key census.
 Unknown extra Buffer own fields are ignored exactly as by native Buffer.toJSON;
-length overrides, toJSON overrides, stack, proxies and shared storage refuse.
+Length, toJSON and iterator overrides, stack, proxies and shared storage refuse.
+The own iterator refusal preserves a closed domain across Node and Bun's native
+Buffer JSON implementations. Conversion getters stay unobserved even above the
+byte index threshold and with changed backing-store properties. The checked
+native view or private typed-array copy retains every byte and original offset.
 Every original byte and event is retained. No source, ownership, type, runtime,
 performance, production coverage or parity authority follows from this profile.

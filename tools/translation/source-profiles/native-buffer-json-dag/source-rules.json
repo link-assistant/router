@@ -3,7 +3,7 @@
   "beforePath": "tools/translation/test/fixtures/complete-closed-json-dag-hook-wire.mjs",
   "afterPath": "tools/translation/test/fixtures/complete-native-buffer-json-dag-hook-wire.mjs",
   "beforeSha256": "3f98b9c02e147995f08d7f904a8df31a9933f7ab1907687f9fc2a40277d2afe3",
-  "afterSha256": "16fb355b26edf6bc267148b705d71f7579d20da3a43e006045a83d75c2149c0d",
+  "afterSha256": "15af2bcca63a66c539ea334faedc4d1d71f3941a955522b4c9226059f583f803",
   "languageEdits": [
     [
       "// every fresh object's unchanged own-key/prototype/refusal census in visit.",
@@ -24,6 +24,26 @@
     [
       "||names.length!==length)fail();",
       "||!projectBuffer&&names.length!==length)fail();"
+    ],
+    [
+      "byteLength=Buffer.byteLength,OMIT={};",
+      "byteLength=Buffer.byteLength,byteIterator=Symbol.iterator,OMIT={};"
+    ],
+    [
+      " function byteNode(tag,values){\n  const length=array(values)?values.length:apply(lengthOf,values,[]);\n  if(length>BYTE_INDEX)return node([tag,intern(base64(values))]);",
+      " function byteNode(tag,values){\n  const length=array(values)?values.length:apply(lengthOf,values,[]);"
+    ],
+    [
+      "  if(view===null)view=apply(bufferFrom,Buffer,[values]);",
+      "  // Copy a genuine typed-array view through its internal byte slots. Input\n  // conversion getters and foreign backing-store properties stay unobserved.\n  if(view===null)view=apply(bufferFrom,Buffer,[isBytes(values)?new Byte(values):values]);\n  if(length>BYTE_INDEX)return node([tag,intern(apply(bufferText,view,['base64']))]);"
+    ],
+    [
+      "if(projectBuffer){if(descriptor(item,'stack')||descriptor(item,'length'))fail();}",
+      "if(projectBuffer){if(descriptor(item,'stack')||descriptor(item,'length')||descriptor(item,byteIterator))fail();}"
+    ],
+    [
+      "// ignored by native Buffer.toJSON; length/toJSON overrides still refuse, and\n// stack remains refused without materializing it.",
+      "// ignored by native Buffer.toJSON; length/toJSON/iterator overrides refuse,\n// and stack remains refused without materializing it."
     ]
   ],
   "repositoryEdits": [],

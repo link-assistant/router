@@ -8,7 +8,7 @@ const stringify=JSON.stringify,keys=Reflect.ownKeys,objectKeys=Object.keys,descr
 const NativeMap=Map,NativeSet=Set,NativeWeakMap=WeakMap,NativeWeakSet=WeakSet,Failure=TypeError;
 const array=Array.isArray,finite=Number.isFinite,integer=Number.isInteger,objectIs=Object.is,proxy=types.isProxy,boxed=types.isBoxedPrimitive,nativeError=types.isNativeError,isBytes=types.isUint8Array,isShared=types.isSharedArrayBuffer,isView=ArrayBuffer.isView;
 const OBJECT=Object.prototype,ARRAY=Array.prototype,BYTE=Uint8Array.prototype,BUFFER=Buffer.prototype,Byte=Uint8Array,typed=prototype(BYTE),lengthOf=descriptor(typed,'length').get,bufferOf=descriptor(typed,'buffer').get,offsetOf=descriptor(typed,'byteOffset').get,STORAGE=ArrayBuffer.prototype,storageParent=prototype(STORAGE),storageNames=keys(STORAGE),storageFields=storageNames.map(key=>descriptor(STORAGE,key));
-const bufferFrom=Buffer.from,bufferText=Buffer.prototype.toString,bufferJson=descriptor(BUFFER,'toJSON'),byteLength=Buffer.byteLength,OMIT={};
+const bufferFrom=Buffer.from,bufferText=Buffer.prototype.toString,bufferJson=descriptor(BUFFER,'toJSON'),byteLength=Buffer.byteLength,byteIterator=Symbol.iterator,OMIT={};
 const SCHEMA='complete-closed-json-structural-DAG-v1',LIMIT=384*1024*1024,CHUNK=32768,EDGES=Math.floor((LIMIT-64)/32);
 // These are trusted-bootstrap fixed intrinsic owners, not input prototypes.
 // A changed census is rejected BEFORE descriptors of any newly added lazy key.
@@ -25,8 +25,8 @@ function isByte(value){return typeof value==='number'&&integer(value)&&value>=0&
 function base64(value){return apply(bufferText,apply(bufferFrom,Buffer,[value]),['base64']);}
 export function encodeCompleteClosedJsonDagHookWire(value){return encodeClosedJsonDag(value,false);}
 // Stock direct Buffers project only native numeric bytes. Own extra fields are
-// ignored by native Buffer.toJSON; length/toJSON overrides still refuse, and
-// stack remains refused without materializing it. Other byte objects retain
+// ignored by native Buffer.toJSON; length/toJSON/iterator overrides refuse,
+// and stack remains refused without materializing it. Other byte objects retain
 // the original complete key census. This API grants no source/type authority.
 export function encodeCompleteNativeBufferJsonDagHookWire(value){return encodeClosedJsonDag(value,true);}
 function encodeClosedJsonDag(value,nativeBufferProjection){
@@ -55,7 +55,6 @@ function encodeClosedJsonDag(value,nativeBufferProjection){
  // It cannot skip that census or grant source/owner/serializer authority.
  function byteNode(tag,values){
   const length=array(values)?values.length:apply(lengthOf,values,[]);
-  if(length>BYTE_INDEX)return node([tag,intern(base64(values))]);
   let view=null;
   if(isBytes(values)){
    const storage=apply(bufferOf,values,[]),offset=apply(offsetOf,values,[]);
@@ -63,7 +62,10 @@ function encodeClosedJsonDag(value,nativeBufferProjection){
    // getter or foreign/changed prototype therefore keeps the original copy.
    if(stockStorage&&!proxy(storage)&&prototype(storage)===STORAGE&&keys(storage).length===0)try{view=apply(bufferFrom,Buffer,[storage,offset,length]);}catch{/* Detached/out-of-bounds view: preserve the exact original copy path. */}
   }
-  if(view===null)view=apply(bufferFrom,Buffer,[values]);
+  // Copy a genuine typed-array view through its internal byte slots. Input
+  // conversion getters and foreign backing-store properties stay unobserved.
+  if(view===null)view=apply(bufferFrom,Buffer,[isBytes(values)?new Byte(values):values]);
+  if(length>BYTE_INDEX)return node([tag,intern(apply(bufferText,view,['base64']))]);
   // Latin1 is an exact one-byte/code-unit key, not UTF8 decoding, a digest,
   // prefix, previous object verdict or source association. Equal fresh byte
   // objects still each passed the complete census before this full comparison.
@@ -84,7 +86,7 @@ function encodeClosedJsonDag(value,nativeBufferProjection){
   // payload; this list remains local to this visit and is never authority.
   const bytes=isBytes(item),buffer=bytes&&prototype(item)===BUFFER,projectBuffer=nativeBufferProjection&&buffer;
   let names=null;
-  if(projectBuffer){if(descriptor(item,'stack')||descriptor(item,'length'))fail();}
+  if(projectBuffer){if(descriptor(item,'stack')||descriptor(item,'length')||descriptor(item,byteIterator))fail();}
   else{names=keys(item);if(names.includes('stack'))fail();}
   domain(item,buffer);active.add(item);
   try{

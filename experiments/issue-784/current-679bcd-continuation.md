@@ -140,12 +140,19 @@ PR #785. The native goal stays active. No green gate or release readiness exists
       Bun dependency cases pass. All failed/passing receiving, full CPU profile,
       complete wire and callback diagnostics are archived in the 104-member
       core-registration-receiving packet. This checklist remains unfinished.
-- [ ] Fix newly reproduced native Buffer observation domain bugs. Above the
+- [x] Fix newly reproduced native Buffer observation domain bugs. Above the
       1 MiB index threshold, Node encoding invokes an own valueOf getter.
       Bun native Buffer JSON observes an own Symbol.iterator getter, but the
       current closed projection silently admits it. Add original-bound whole
       file regressions and install fixes through the checked source producer.
-      These finite diagnostic failures are not receiving qualification.
+      The complete five-case regression fails twice in Node and once in Bun
+      before installation. The genuine source producer now installs a checked
+      native/private byte view and a callback-free own-iterator refusal. All
+      18 codec/source-contract cases pass in both engines with original bounds;
+      the Node independent audit passes. The separate complete Core check has
+      six assertion passes in both engines, but Node's source-validation case
+      takes 75575.721335 ms against 60000 ms, so its deadline audit fails.
+      This narrower fix does not qualify Core performance or the complete gate.
 - [ ] Verify universal tool/account privacy criteria. Keep unsupported direct
       traffic, source-IP/account inference and absent vendor sessions explicit.
 
