@@ -9,7 +9,10 @@ import {prepareStaticSourceLifecycleProposalReleased} from '../../tools/translat
 import {decodeStaticSourceTextData} from '../../tools/translation/static-source-layout-storage.mjs';
 
 const root=resolve('.'),folder='tools/translation/source-profiles/static-source-lifecycle';
-const target='ci-logs/issue-784-restart-2/current-static-fixture-refresh-v3.json.gz';
+const [requestedTarget,...extra]=process.argv.slice(2);
+const target=requestedTarget??'ci-logs/issue-784-restart-2/current-static-fixture-refresh-v3.json.gz';
+assert.equal(extra.length,0);
+assert.match(target,/^ci-logs\/issue-784-restart-2\/[a-z0-9-]+\.json\.gz$/);
 assert.ok(!existsSync(target));
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8',maxBuffer:64*1024*1024});

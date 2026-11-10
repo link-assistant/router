@@ -12,6 +12,7 @@ import {prepareCoreAsciiReverseSources} from './prepare-core-ascii-reverse-sourc
 import {composeCoreAsciiBaseAssets} from './prepare-current-core-ascii-base-assets.mjs';
 import {transportConcreteNamedSourcePhases} from './concrete-source-origin-phases.mjs';
 import {currentUnicodeAssetInputs,requireCurrentUnicodeAssetInputs} from './current-unicode-asset-inputs.mjs';
+import {deriveAsciiLiveSourceReads} from './ascii-live-source-reads.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const HOST='tools/translation/host-assets.mjs',HELPER='tools/translation/ascii-runtime-assets.mjs',DATA='tools/translation/ascii-runtime-assets-source-data.mjs',SOURCE='tools/translation/js-to-rust/owned-core-source.mjs';
 const NAMES=['string-iterator-runtime.mjs','whitespace-data.mjs','string-iterator-runtime.d.mts'];
@@ -97,13 +98,13 @@ export function prepareCoreAsciiAssets({root=ROOT}={}){
  timing('prepare:start');const rows=originals();timing('prepare:originals');
  const inputs=currentUnicodeAssetInputs(rows,root);timing('prepare:unicode-inputs');
  const historical=afterSources(ts,rows);timing('prepare:historical');
- const result=afterSources(ts,inputs.rows),parent=inputs.rows.find(row=>row.path===HOST);timing('prepare:current');
+ const result=deriveAsciiLiveSourceReads(ts,afterSources(ts,inputs.rows)),parent=inputs.rows.find(row=>row.path===HOST);timing('prepare:current');
  const all=[...historical.files,...result.files],equations=transportConcreteNamedSourcePhases(all.map(row=>({before:row.before,middle:row.before,after:row.after,language:'JavaScript',rules:["ascii-assets:retain-complete-original-source","ascii-assets:explicit-selected-read-schedule","ascii-assets:restore-complete-language-input","ascii-assets:restore-complete-original-input"]})));
  timing('prepare:concrete-equations');
  const historicalFiles=historical.files.map((row,at)=>prepare(ts,row,root,equations[at])),files=result.files.map((row,at)=>prepare(ts,row,root,equations[historical.files.length+at]));
  requireCurrentUnicodeAssetInputs(inputs);
  timing('prepare:complete');
- return {schema:"router-owned-ascii-assets-v1",typescriptVersion:ts.version,files,selection:{path:HOST,source:parent.source,sha256:parent.sha256,statements:result.selection.selected.map(row=>({name:row.name,span:[row.node.getStart(),row.node.end],source:row.node.getText()})),nativeBindings:result.selection.nativeBindings,nativeLexicalBindings:result.selection.links},historical:{files:historicalFiles,selection:{selected:historical.selection.selected.map(row=>({name:row.name,span:[row.node.getStart(),row.node.end],source:row.node.getText()})),links:historical.selection.links,statements:historical.selection.statements,nativeBindings:historical.selection.nativeBindings},originals:rows},currentInputComposition:inputs,runtimeExecuted:false,rustExecuted:false,semanticAuthority:false,fullBuilderCallbackParity:false};
+ return {schema:"router-owned-ascii-assets-v1",typescriptVersion:ts.version,files,selection:{path:HOST,source:parent.source,sha256:parent.sha256,statements:result.selection.selected.map(row=>({name:row.name,span:[row.node.getStart(),row.node.end],source:row.node.getText()})),nativeBindings:result.selection.nativeBindings,nativeLexicalBindings:result.selection.links},historical:{files:historicalFiles,selection:{selected:historical.selection.selected.map(row=>({name:row.name,span:[row.node.getStart(),row.node.end],source:row.node.getText()})),links:historical.selection.links,statements:historical.selection.statements,nativeBindings:historical.selection.nativeBindings},originals:rows},currentInputComposition:inputs,sourceReadEvolution:result.sourceReadEvolution,runtimeExecuted:false,rustExecuted:false,semanticAuthority:false,fullBuilderCallbackParity:false};
 }
 export function composeCoreAsciiAssets(prior,options={}){
  // Authenticate the whole archived predecessor before native/CST preparation.

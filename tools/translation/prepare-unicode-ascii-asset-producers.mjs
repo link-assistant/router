@@ -84,15 +84,24 @@ export function prepareUnicodeAsciiAssetProducers({root=ROOT}={}){
   if(hash(before)!==sha256)fail('complete original producer source differs: '+input);
   const previous=prepareFile(ts,before,path,name.includes('base-assets'),false),published=prepareFile(ts,before,path,name.includes('base-assets'));
   const sequential=prepareFile(ts,before,path,name.includes('base-assets'),true,true);
-  const after=once(sequential.after,"from './concrete-sequential-phases.mjs'","from './concrete-source-origin-phases.mjs'");
-  return {input,path,...sequential,after,sequentialAfter:sequential.after,previousAfter:previous.after,publishedAfter:published.after,previousNativeEdits:previous.nativeEdits,beforeSha256:sha256};
+  const sourceReadPredecessor=once(sequential.after,"from './concrete-sequential-phases.mjs'","from './concrete-source-origin-phases.mjs'");
+  let after=sourceReadPredecessor;
+  if(!name.includes('base-assets')){
+   after=once(after,"import {currentUnicodeAssetInputs,requireCurrentUnicodeAssetInputs} from './current-unicode-asset-inputs.mjs';", "import {currentUnicodeAssetInputs,requireCurrentUnicodeAssetInputs} from './current-unicode-asset-inputs.mjs';\nimport {deriveAsciiLiveSourceReads} from './ascii-live-source-reads.mjs';");
+   after=once(after,'const result=afterSources(ts,inputs.rows),parent=', 'const result=deriveAsciiLiveSourceReads(ts,afterSources(ts,inputs.rows)),parent=');
+   after=once(after,'currentInputComposition:inputs,runtimeExecuted:false', 'currentInputComposition:inputs,sourceReadEvolution:result.sourceReadEvolution,runtimeExecuted:false');
+  }
+  const native=ts.createSourceFile(path,after,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+  if(native.parseDiagnostics.length)fail('complete live source producer grammar differs');
+  return {input,path,...sequential,after,sourceReadPredecessor,sequentialAfter:sequential.after,previousAfter:previous.after,publishedAfter:published.after,previousNativeEdits:previous.nativeEdits,beforeSha256:sha256};
  });
  const equations=transportConcreteNamedSourcePhases(files.map(row=>({before:row.before,middle:row.middle,after:row.after,language:'JavaScript',rules:['language:compose-complete-known-unicode-asset-inputs','repository:bind-current-unicode-asset-input-composition','language:restore-complete-historical-asset-producer','repository:restore-historical-asset-imports']})));
  const publishedEquations=transportConcreteNamedSourcePhases(files.map(row=>({before:row.publishedAfter,middle:row.publishedAfter,after:row.after,language:'JavaScript',rules:['language:retain-complete-published-producer','repository:sequential-source-data-and-refusal-preflight','language:restore-complete-published-language-input','repository:restore-complete-published-producer']})));
  const sequentialEquations=transportConcreteNamedSourcePhases(files.map(row=>({before:row.sequentialAfter,middle:row.sequentialAfter,after:row.after,language:'JavaScript',rules:['language:retain-complete-sequential-producer','repository:primitive-source-origin-phase-domain','language:restore-complete-sequential-language-input','repository:restore-complete-sequential-producer']})));
+ const sourceReadEquations=transportConcreteNamedSourcePhases(files.map(row=>({before:row.sourceReadPredecessor,middle:row.sourceReadPredecessor,after:row.after,language:'JavaScript',rules:['language:retain-complete-source-read-producer','repository:observe-live-own-data-source-reads','language:restore-complete-source-read-language-input','repository:restore-complete-source-read-producer']})));
  for(const [at,row]of files.entries()){
-  row.equation=equations[at];row.publishedEquation=publishedEquations[at];row.sequentialEquation=sequentialEquations[at];row.afterSha256=hash(row.after);let current=null;try{current=readFileSync(resolve(root,row.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}row.current=current;
-  if(current!==null&&current!==row.after&&current!==row.previousAfter&&current!==row.publishedAfter&&current!==row.sequentialAfter)fail('unknown complete current producer: '+row.path);
+  row.equation=equations[at];row.publishedEquation=publishedEquations[at];row.sequentialEquation=sequentialEquations[at];row.sourceReadEquation=sourceReadEquations[at];row.afterSha256=hash(row.after);let current=null;try{current=readFileSync(resolve(root,row.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}row.current=current;
+  if(current!==null&&current!==row.after&&current!==row.previousAfter&&current!==row.publishedAfter&&current!==row.sequentialAfter&&current!==row.sourceReadPredecessor)fail('unknown complete current producer: '+row.path);
   if(row.after.split('\n').length>=1000)fail('complete source exceeds line bound');
   if(readFileSync(resolve(root,row.input),'utf8')!==row.before)fail('complete original producer changed');
  }

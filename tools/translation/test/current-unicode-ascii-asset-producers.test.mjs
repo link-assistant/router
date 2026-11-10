@@ -19,6 +19,8 @@ test('separate current asset producers retain both entire historical producers a
   for(const stage of row.publishedEquation.stages){assert.equal(stage.inverse,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}
   assert.equal(row.sequentialEquation.before,row.sequentialAfter);assert.equal(row.sequentialEquation.after,row.after);assert.equal(row.sequentialEquation.inverse,row.sequentialAfter);
   for(const stage of row.sequentialEquation.stages){assert.equal(stage.inverse,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}
+  assert.equal(row.sourceReadEquation.before,row.sourceReadPredecessor);assert.equal(row.sourceReadEquation.after,row.after);assert.equal(row.sourceReadEquation.inverse,row.sourceReadPredecessor);
+  for(const stage of row.sourceReadEquation.stages){assert.equal(stage.inverse,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}
   assert.ok(row.sequentialAfter.includes("from './concrete-sequential-phases.mjs'"));assert.ok(row.after.includes("from './concrete-source-origin-phases.mjs'"));
   for(const marker of ['copySource(ts,row.path,before)','copySource(ts,row.path,after)','verifyNativeCopiedSourceBindings','completeNativeAstCopy:true'])assert.ok(row.before.includes(marker)&&row.after.includes(marker),marker);
  }
@@ -45,9 +47,21 @@ for(const [name,prepare,assets]of [
   if(row.path!=='tools/translation/js-to-rust/owned-core-source.mjs')assert.equal(readFileSync(new URL('../../../'+row.path,import.meta.url),'utf8'),row.after,row.path);
  }
  const complete=hostRuntimeAssetsNamedDataAliases(),current=assets();assert.equal(current.size,name==='selected'?3:33);
+ if(name==='selected'){
+  assert.equal(plan.sourceReadEvolution.productionExecutableGain,0);assert.equal(plan.sourceReadEvolution.files.length,2);
+  for(const row of plan.sourceReadEvolution.files){
+   assert.equal(row.equation.before,row.before);assert.equal(row.equation.after,row.after);assert.equal(row.equation.inverse,row.before);
+   assert.equal(plan.files.find(other=>other.path===row.path).after,row.after);
+   for(const stage of row.equation.stages){assert.equal(stage.inverse,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}
+  }
+ }
  for(const [path,source]of current)assert.equal(source,complete.get(path),path);
  for(const row of plan.currentInputComposition.rows){
   const original=plan.currentInputComposition.originals.find(other=>other.path===row.path),evolution=plan.currentInputComposition.unicode.files.find(other=>other.path===row.path);
-  assert.equal(row.source,evolution?evolution.after:original.source);if(evolution)assert.equal(evolution.before,original.source);
+  const receiver=plan.currentInputComposition.receiverEvolution?.files.find(other=>other.path===row.path);
+  let expected=evolution?evolution.after:original.source;
+  if(evolution)assert.equal(evolution.before,original.source);
+  if(receiver){assert.equal(receiver.before,expected);assert.equal(receiver.equation.inverse,expected);expected=receiver.after;}
+  assert.equal(row.source,expected);
  }
 });

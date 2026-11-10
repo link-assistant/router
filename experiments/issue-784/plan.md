@@ -974,4 +974,5 @@ remain explicitly unmet parts of the literal all-tool requirement.
       actual ordinary/owned generation and all-tool privacy requirements.
       Passing a receiving file does not satisfy the failed full gate.
 
+Continue with [the current 9b6 repair plan](current-9b6-repair-plan.md).
 Further completed receiving batches remain in [the preserved cohort history](plan-cohort-history.md).

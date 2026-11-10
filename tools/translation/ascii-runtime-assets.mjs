@@ -1,5 +1,14 @@
 // GENERATED: exact selected native asset statements; explicit new read schedule.
-import {readFileSync} from 'node:fs';
+import fs from 'node:fs';
+import {types} from 'node:util';
+const isProxy=types.isProxy;
+function readFileSync(...args){
+ assertReverseConcreteSourceHost();
+ if(!fs||typeof fs!=='object'||isProxy(fs))throw TypeError('ASCII source filesystem host changed');
+ const field=Object.getOwnPropertyDescriptor(fs,'readFileSync');
+ if(!field||!Object.hasOwn(field,'value')||typeof field.value!=='function'||isProxy(field.value))throw TypeError('ASCII source read host changed');
+ return Reflect.apply(field.value,undefined,args);
+}
 import {createHash} from 'node:crypto';
 import {assertReverseConcreteSourceHost} from './js-to-rust/concrete-source.mjs';
 import {ASCII_RUNTIME_ASSET_SOURCE,ASCII_RUNTIME_ASSET_SHA256,ASCII_HOST_ASSET_SOURCE,ASCII_HOST_ASSET_SHA256,ASCII_SELECTED_ASSET_JSON} from './ascii-runtime-assets-source-data.mjs';
