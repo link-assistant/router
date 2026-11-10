@@ -1,4 +1,7 @@
 docs/case-studies/**/raw/*.log -whitespace
+# Preserve original terminal output and HTTP CRLF bytes in verified CI custody.
+docs/case-studies/issue-784/evidence/ci-939/checkpoint-939-push.log -whitespace
+docs/case-studies/issue-784/evidence/ci-939/checkpoint939-rate-limit-1938.txt -whitespace
 rust/tests/fixtures/token_stores/*.lino text eol=lf
 rust/src/deploy/remote_agent.sh text eol=lf
 
