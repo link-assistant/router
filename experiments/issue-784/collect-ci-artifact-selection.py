@@ -11,6 +11,8 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--snapshot', required=True, type=Path)
 parser.add_argument('--merge-sha', required=True)
 parser.add_argument('--prefix', required=True)
+parser.add_argument('--maximum-artifact-bytes', type=int, default=16_000_000,
+                    choices=[16_000_000, 64_000_000])
 parser.add_argument('ids', nargs='+', type=int)
 args = parser.parse_args()
 assert len(args.merge_sha) == 40 and all(c in '0123456789abcdef' for c in args.merge_sha)
@@ -36,7 +38,7 @@ for root in ['ci-logs', 'docs/case-studies/issue-784', 'experiments/issue-784',
 assert size + sum(a['size_in_bytes'] for a in selected) < 498_000_000, size
 for artifact in selected:
     assert not artifact['expired'] and args.merge_sha in artifact['name']
-    assert artifact['size_in_bytes'] < 16_000_000
+    assert artifact['size_in_bytes'] < args.maximum_artifact_bytes
     path = base / (args.prefix + '-artifact-' + str(artifact['id']) + '.zip')
     if not path.exists():
         with path.open('xb') as output:
