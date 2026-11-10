@@ -35,10 +35,37 @@ The four dependent CST copies also pass their genuine writer. A finite 2.5-secon
 CPU sample attributes work to CST validation, native descriptor equality and
 garbage collection. It is diagnostic and adds overhead; it proves no speed gain.
 
-At this source checkpoint, all **62 original receiving cases in eleven complete
-files are unrun** for the new batch. Independent Node deadline audits and Bun
-duration comparisons remain mandatory. Registration must be regenerated after
-the source commit. No complete JavaScript gate or strict parity pass exists,
-and canonical generation, missing matrices, reverse artifacts and remaining
-original deadline failures are unfinished. No Rust tool ran. This batch adds
-**zero executable production functions**. PR #785 remains draft and unmerged.
+The complete eleven-file receiving run is **failed**, with all original limits
+unchanged. Node completes 48 of the 62 source-declared cases: 43 assertion passes,
+five assertion failures and fourteen unobserved cases after two file processes
+exhaust the bounded 512 MiB heap. Twelve assertion passes exceed their original
+60000 ms deadlines, so the independent deadline audit fails. Bun completes 49
+cases: 39 pass, ten fail and thirteen remain unobserved after four unchanged
+container-memory guard stops. Six Bun failures exceed the original case limits;
+the other four expose a JSON-hook invariant failure or a 12500 ms child timeout.
+Neither engine qualifies the complete batch.
+
+The complete Core producer test reproduces JSON serialization during graph
+discovery before the original private-parser refusal. The legacy/candidate
+complete hook-wire comparison passes, then the independent baseline invariant
+at `whole-owner-core-producer-candidate.test.mjs:77` fails. This is a shared graph
+ordering regression requiring a separate repair. The remaining source-writer,
+child deadline and bounded-memory failures remain unfinished; a successful
+source equation or assertion does not qualify their original deadlines.
+
+Complete source at `257392ec1`, its full predecessor versions, rejected author
+draft, every receiving log/resource record and the independent Node source and
+deadline audit are retained in the fully read-back
+[188-member evidence archive](evidence/candidate-binding-receiving-20261110.tar.gz)
+and its [receipt](evidence/candidate-binding-receiving-20261110.tar.receipt.json.gz).
+The archive is 2,595,831 bytes, SHA-256
+`0ae0a60cc98b3c44a536b693f8494e25df7a3214ddb7cc0e40adaab3bbbc1b8e`.
+Only identical inactive raw duplicates were retired after full member hash and
+open-file checks; the first archival attempt's active-log refusal is preserved.
+
+Registration must be regenerated after the final source batch. No complete
+JavaScript gate or strict parity pass exists. Canonical generation, missing
+matrices, reverse artifacts and remaining original deadline failures are
+unfinished. No Rust tool ran. This batch adds **zero executable production
+functions**. [PR #785](https://github.com/link-assistant/router/pull/785) remains
+draft and unmerged.
