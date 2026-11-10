@@ -94,3 +94,22 @@ open-descriptor checks. Remaining task evidence was 452,446,969 bytes.
 The isolated compiler registration must be refreshed against the committed
 complete new source batch before publishing. This report does not claim that
 the registration, matrices, strict parity or complete JavaScript gate is green.
+
+
+## Subsequent registration checkpoint
+
+The genuine registration producer captured source commit `549555b38` with
+1880 complete inputs / 58,439,323 bytes. Complete proposal SHA-256:
+`115edd88f6f4bb9f9fd840b87d5dd10494aa48b215c3393564f9573de33fcac3`.
+The installed refresh was independently reproduced against every current
+physical input, both CST phases and complete inverses, fresh Node/Bun syntax
+controls and 485 actual portable Git objects. Its full retained refresh has
+SHA-256 `1211de5ebbe6db3ff702a8bfeb00f8e451e5ae0aef4ea405420b048341faae8c`.
+
+The first complete Node registered cohort finished 27 cases: 23 passed and
+four failed with `untracked profile inputs must be frozen before fingerprinting`.
+The generated history had not yet been committed; this was an orchestration
+error, not receiving qualification. The original 27-case run and its complete
+deadline audit are retained. The scheduler was paused between complete cohorts
+to freeze the generated history before continuing. A new whole-cohort run is
+required. The graph cohort and Bun receiving are unrun at this checkpoint.

@@ -120,6 +120,15 @@ PR #785. The native goal stays active. No green gate or release readiness exists
       pre-DAG proposal is stale and uninstalled; retain it as such, reproduce
       the new proposal and run all original isolated/portable and registered
       receiving files under both engines with unchanged deadline audits.
+      A new genuine proposal captures source head 549555b38 and all 1880
+      complete inputs / 58439323 bytes; its complete proposal SHA-256 is
+      115edd88f6f4bb9f9fd840b87d5dd10494aa48b215c3393564f9573de33fcac3.
+      Independent reproduction, current physical inputs, complete CST phases
+      and inverses, Node/Bun syntax and all 485 portable Git objects pass.
+      The first complete Node registered run observes 23 passes and four
+      failures because the generated history was still untracked. Preserve
+      those failures, freeze the registration, and rerun the whole affected
+      cohort. The graph and Bun receiving remain unrun at this checkpoint.
 - [ ] Verify universal tool/account privacy criteria. Keep unsupported direct
       traffic, source-IP/account inference and absent vendor sessions explicit.
 
