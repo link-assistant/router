@@ -3,6 +3,12 @@
 Research and verification dates: 2026-11-06–10 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [current complete local gate attempts](current-complete-gates-20261110.md)
+retain the invalid npm-PATH launch and corrected full invocation separately.
+The corrected run passes both 259-case runtime suites and strict 167-file
+TypeScript compilation, but the original regeneration deadline fails and the
+memory guard interrupts parity acceptance. Later stages remain unverified.
+
 The [operation source receiving repair](current-operation-source-evolution.md)
 preserves historical hashes while checking every ordered measurement edit and
 the full source/CST inverse. Both complete cases pass in each engine within

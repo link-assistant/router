@@ -53,14 +53,26 @@ active, PR draft and incomplete criteria explicit. No local Rust tools or agents
       assertions. Later TypeScript, parity, forward and reverse checks are unrun.
 - [x] Publish the reviewed coordinated draft checkpoint `a598d2b01` with exact
       failed/unrun evidence and verify the complete PR description readback.
-- [ ] Collect its entire terminal same-head CI cycle, run `42849964395`, before
+- [x] Collect its entire terminal same-head CI cycle, run `42849964395`, before
       publishing the next coordinated batch. Keep Rust behind the same-SHA gate.
 - [x] Verify all 49 complete preceding CI payloads against published Git and
       GitHub metadata before retiring 97292190 inactive local bytes. Preserve
       every whole stream and permanent URL in immutable commit `a598d2b01`.
-- [ ] Repair the Schemars candidate regression's outdated two-edit expectation
+- [x] Repair the Schemars candidate regression's outdated two-edit expectation
       by checking both original constituents and the complete ordered Clone
       composition, preserving every source equation, inverse and refusal case.
+- [x] Repair selected Git census history composition and pass all five original
+      cases in each engine with unchanged limits; retain the failed first run.
+- [x] Run actual reverse regeneration, review all three changed artifacts and
+      pass the original twelve-case Node translator file with its full audit.
+      Keep Bun's memory interruption and unqualified default deadline explicit.
+- [x] Run the complete gate at `456f62dd1` and corrected `bcf84c063`; preserve
+      every whole log and audit. The latter passes both runtime suites and
+      strict native TypeScript but fails the original regeneration deadline,
+      then reaches the memory guard in parity acceptance. Later work is unrun.
+- [x] Wait for the entire `4ea091242` CI cycle, run `42863382776`, to finish.
+- [ ] Read and retain every terminal `4ea091242` failure and complete artifact,
+      review the coordinated local batch, refresh main/feedback and publish.
 - [ ] Finish universal all-tool/account privacy acceptance; Router headers alone
       cannot establish external account settings or vendor/security retention.
 
