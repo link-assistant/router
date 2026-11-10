@@ -2,7 +2,7 @@ import {createRulePipeline} from './rule-pipeline.mjs';
 import {createRustConcreteSyntaxStage,createRustConcreteSyntaxStages} from './forward-concrete-syntax.mjs';
 import {associateOriginalSharedPatternDependencies} from './extensions/shared-source-patterns.mjs';
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
-import {translationProgressReporter} from './translation-progress.mjs';
+import {translationProgressReporter,namespaceProgressRequested} from './translation-progress.mjs';
 // Resolve tracked Rust module edges before semantic checking. External crates,
 // conditional modules, macro expansion and effects remain explicit obligations.
 import { posix } from 'node:path';
@@ -338,7 +338,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   progress({stage:'project-graph',state:'end',entry:options.entry,total:graph.modules.length});
   progress({stage:'namespace',state:'start',entry:options.entry});
   const enclosingNamespace=ownedDefinitionMode===true||ownedDefinitionMode==='core-json-readers';
-  const namespaceProgress=phase=>{if(enclosingNamespace||progressInput!==undefined)progress({stage:'namespace',state:'advance',entry:options.entry,phase});};
+  const namespaceProgress=phase=>{if(enclosingNamespace||namespaceProgressRequested(progressInput))progress({stage:'namespace',state:'advance',entry:options.entry,phase});};
   namespaceProgress('json-context');
   const jsonParserProfile=options.jsonParserProfile??actualJsonCapabilityProfile();
   let jsonMacroContext=null,jsonMacroDiagnostic=null;

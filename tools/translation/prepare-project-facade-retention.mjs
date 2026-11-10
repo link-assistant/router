@@ -67,11 +67,15 @@ export function prepareProjectFacadeRetention({root=ROOT}={}){
   profileSha256:'67fe9db0a517b6050ff9117a59c427ba880272e93a9fa90417ad61affcd74730',
   path:PATH,source:previousAfter,
  });
- const after=namespaceComposition.after;
+ const namespaceObserver=derivePinnedRepositorySourceEvolution(ts,{
+  profile:new URL('./source-profiles/namespace-progress-observer/0-rules.json',import.meta.url),
+  profileSha256:'23eabe8f329efc2534b7da89442c3273fea75056b1d05469987124ef7ff5cf46',path:PATH,source:namespaceComposition.after,
+ });
+ const after=namespaceObserver.after;
  if(methodOwnerScope.inverse!==retained.language||retained.selection.completeNativeInverse!==before)fail('complete composed native inverse differs');
- if(namespaceComposition.inverse!==previousAfter)fail('complete namespace composition inverse differs');
- const selection={...retained.selection,methodOwnerScope,namespaceComposition},current=readFileSync(resolve(root,PATH),'utf8');
- if(current!==before&&current!==retained.after&&current!==previousAfter&&current!==after)fail('complete physical project is neither original nor an exact derived output');
+ if(namespaceObserver.inverse!==namespaceComposition.after||namespaceComposition.inverse!==previousAfter)fail('complete namespace composition inverse differs');
+ const selection={...retained.selection,methodOwnerScope,namespaceComposition,namespaceObserver},current=readFileSync(resolve(root,PATH),'utf8');
+ if(current!==before&&current!==retained.after&&current!==previousAfter&&current!==namespaceComposition.after&&current!==after)fail('complete physical project is neither original nor an exact derived output');
  const [equation]=transportConcreteSourcePhases([{before,middle:language,after,language:'JavaScript'}]);
  const stages=equation.stages.map(stage=>({...stage,completeInverse:true}));
  const nativeCopies=[nativeCopy(ts,before),nativeCopy(ts,after)],nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,PATH),after);

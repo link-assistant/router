@@ -110,13 +110,15 @@ export function prepareRuntimeImportCurrentSources(){
   const previousAfter=relative==='test/runtime-import-phased-data.test.mjs'?once(changed,nativeCurrent,nativePrevious):undefined;
   const loaderPreviousAfter=relative==='test/runtime-import-phased-data.test.mjs'?changed:undefined;
   if(loaderPreviousAfter!==undefined)changed=once(changed,loaderOld,loaderCurrent);
-  files.push({path,before:old,middle:old,after:changed,current,...(previousAfter===undefined?{}:{previousAfter}),...(loaderPreviousAfter===undefined?{}:{loaderPreviousAfter})});
+  const sourceOriginPreviousAfter=relative==='test/runtime-import-phased-data.test.mjs'?once(changed,nativeCurrent,sourceOriginPrevious):undefined;
+  files.push({path,before:old,middle:old,after:changed,current,...(sourceOriginPreviousAfter===undefined?{}:{sourceOriginPreviousAfter}),...(previousAfter===undefined?{}:{previousAfter}),...(loaderPreviousAfter===undefined?{}:{loaderPreviousAfter})});
  }
  const equations=transportConcreteSourcePhases(files.map(row=>({before:row.before,middle:row.middle,after:row.after,language:'JavaScript'})));
  const histories=[],historyFields=[
   ['previousAfter','previousEquation','previous'],['publishedAfter','publishedEquation','published'],
   ['indexedAfter','indexedEquation','indexed'],['lifetimeAfter','lifetimeEquation','lifetime'],
   ['loaderPreviousAfter','loaderPreviousEquation','loader'],
+  ['sourceOriginPreviousAfter','sourceOriginPreviousEquation','source-origin'],
  ];
  for(const [at,row]of files.entries()){
   parse(row.path,row.before);parse(row.path,row.middle);parse(row.path,row.after);
@@ -125,7 +127,7 @@ export function prepareRuntimeImportCurrentSources(){
   row.nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,row.path),row.after);
   row.current=existsSync(resolve(root,row.path))?readFileSync(resolve(root,row.path),'utf8'):null;
   for(const [before,equation,label]of historyFields)if(Object.hasOwn(row,before))histories.push({row,before,equation,label});
-  if(row.current!==null&&row.current!==row.before&&row.current!==row.after&&(!Object.hasOwn(row,'previousAfter')||row.current!==row.previousAfter)&&(!Object.hasOwn(row,'publishedAfter')||row.current!==row.publishedAfter)&&(!Object.hasOwn(row,'indexedAfter')||row.current!==row.indexedAfter)&&(!Object.hasOwn(row,'lifetimeAfter')||row.current!==row.lifetimeAfter)&&(!Object.hasOwn(row,'loaderPreviousAfter')||row.current!==row.loaderPreviousAfter))fail('unexpected complete physical source: '+row.path);
+  if(row.current!==null&&row.current!==row.before&&row.current!==row.after&&(!Object.hasOwn(row,'previousAfter')||row.current!==row.previousAfter)&&(!Object.hasOwn(row,'publishedAfter')||row.current!==row.publishedAfter)&&(!Object.hasOwn(row,'indexedAfter')||row.current!==row.indexedAfter)&&(!Object.hasOwn(row,'lifetimeAfter')||row.current!==row.lifetimeAfter)&&(!Object.hasOwn(row,'loaderPreviousAfter')||row.current!==row.loaderPreviousAfter)&&(!Object.hasOwn(row,'sourceOriginPreviousAfter')||row.current!==row.sourceOriginPreviousAfter))fail('unexpected complete physical source: '+row.path);
  }
  // One fresh bounded transaction for this invocation's complete source history.
  // All historical sources and both original phase sequences remain present.

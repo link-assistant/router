@@ -1,0 +1,23 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/test/core-adoption-progress.test.mjs",
+  "phase": "repository",
+  "beforeSha256": "b346eaffb4f860f97fd062dd2c4a0fb0e8f1176e145b2feb44ee0c7a2004eb57",
+  "afterSha256": "c97e7e412dfc8a54c48d8ef663ecda8b68313498ac85054cabaf0a3dbe825926",
+  "edits": [
+    {
+      "id": "router.project-progress-history-import.v1",
+      "before": "import {restoreReceivingSourceHistory} from './fixtures/current-receiving-source-history.mjs';",
+      "after": "import {restoreProjectProgressSourceHistory} from './project-progress-source-history.mjs';\nimport {restoreReceivingSourceHistory} from './fixtures/current-receiving-source-history.mjs';"
+    },
+    {
+      "id": "router.project-progress-history-branch.v1",
+      "before": "function progressLayoutHistory(path,source){",
+      "after": "function progressLayoutHistory(path,source){\n if(path==='tools/translation/project.mjs')return restoreProjectProgressSourceHistory(source,retain);"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

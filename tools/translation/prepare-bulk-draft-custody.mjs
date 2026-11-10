@@ -1,11 +1,12 @@
 // Complete source composition. Output custody cannot replace semantic checks.
-import {readFileSync} from 'node:fs';
+import {readFileSync,writeFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';
+import {derivePinnedRepositorySourceEvolution} from './pinned-repository-source-evolution.mjs';
 import {transportConcreteNamedSourcePhases} from './concrete-source-origin-phases.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),PROFILE=new URL('./source-profiles/bulk-draft-custody/',import.meta.url);
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -57,24 +58,41 @@ export function deriveBulkDraftSource(ts,path,before){
  parse(ts,path,language);parse(ts,path,after);return {language,after};
 }
 export function prepareBulkDraftCustody({root=ROOT}={}){
- const ts=ownershipCompiler(),originals=inputs(),files=[];
- for(const input of originals){
-  const before=input.source,legacy=deriveBulkDraftSource(ts,input.path,before);
+ const ts=ownershipCompiler(),archiveOriginals=inputs(),originals=[],files=[];
+ for(const archived of archiveOriginals){
+  const sourceEvolution=archived.path==='scripts/translate-router.mjs'
+   ?derivePinnedRepositorySourceEvolution(ts,{
+    profile:new URL('./source-profiles/namespace-progress-observer/1-rules.json',import.meta.url),
+    profileSha256:'76fd46c143c5599a94a29df82ffdfe22b4fdb77e430f4d78c9b90a88dcadb2c1',path:archived.path,source:archived.source,
+   }):null;
+  const before=sourceEvolution?sourceEvolution.after:archived.source;
+  const input={path:archived.path,source:before,bytes:Buffer.byteLength(before),sha256:hash(before),
+   archivedOriginal:archived,sourceEvolution};originals.push(input);
+  const legacy=deriveBulkDraftSource(ts,input.path,before);
+  const previousLegacy=deriveBulkDraftSource(ts,input.path,archived.source);
   input.current=readFileSync(resolve(root,input.path),'utf8');
-  if(input.current!==before&&input.current!==legacy.after)fail('original physical source is outside the complete equation');
+  if(input.current!==before&&input.current!==archived.source&&input.current!==legacy.after&&input.current!==previousLegacy.after)fail('original physical source is outside the complete equation');
   const path=input.path.replace(/\.mjs$/u,'-with-draft-custody.mjs');
-  let {language,after}=legacy;
+  let {language,after}=legacy,previousAfter=previousLegacy.after;
   if(input.path==='scripts/translate-router.mjs'){
    const old="from '../tools/translation/bulk.mjs';",next="from '../tools/translation/bulk-with-draft-custody.mjs';";
    const admission="import {assertBulkDraftCompanionsFresh} from '../tools/translation/prepare-bulk-draft-custody.mjs';\nassertBulkDraftCompanionsFresh();\n";
    const admit=source=>{const at=source.startsWith('#!')?source.indexOf('\n')+1:0;return source.slice(0,at)+admission+source.slice(at);};
    language=admit(one(language,old,next));after=admit(one(after,old,next));
+   previousAfter=admit(one(previousAfter,old,next));
   }
   let current='';try{current=readFileSync(resolve(root,path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
-  if(current!==''&&current!==after)fail('companion physical source is outside the complete equation');
+  if(current!==''&&current!==after&&current!==previousAfter)fail('companion physical source is outside the complete equation');
   const [equation]=transportConcreteNamedSourcePhases([{before,middle:language,after,language:'JavaScript',rules:['javascript:retain-complete-private-output-data-after-fresh-input-checks','router:keep-original-freshness-failure-unconditional','javascript:restore-complete-original-bulk-and-cli','router:restore-original-output-observer-contract']}]);
   if(equation.inverse!==before)fail('complete serialized/reparsed CST inverse differs');
-  files.push({path,sourcePath:input.path,before,language,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:equation.beforeMeta,afterMeta:equation.afterMeta,inverse:equation.inverse,trace:equation.trace,stages:equation.stages,nativeCopies:[nativeCopy(ts,path,before),nativeCopy(ts,path,after)]});
+  const [previousEquation]=transportConcreteNamedSourcePhases([{
+   before:previousAfter,middle:after,after,language:'JavaScript',
+   rules:['javascript:retain-complete-original-draft-companion','router:compose-explicit-namespace-observer',
+    'javascript:restore-complete-original-draft-companion','router:restore-original-namespace-progress-contract'],
+  }]);
+  if(previousEquation.inverse!==previousAfter||previousEquation.after!==after)
+   fail('complete companion source-history inverse differs');
+  files.push({path,sourcePath:input.path,before,language,after,current,sourceEvolution,previousAfter,previousEquation,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:equation.beforeMeta,afterMeta:equation.afterMeta,inverse:equation.inverse,trace:equation.trace,stages:equation.stages,nativeCopies:[nativeCopy(ts,path,before),nativeCopy(ts,path,after)]});
  }
  const bindings=verifyNativeCopiedModuleBindings(ts,files.map(row=>({path:resolve(root,row.path),source:row.after})));
  for(const [at,row]of files.entries()){
@@ -83,7 +101,8 @@ export function prepareBulkDraftCustody({root=ROOT}={}){
   if(current!==row.current)fail('complete physical source changed');
  }
  for(const input of originals)if(readFileSync(resolve(root,input.path),'utf8')!==input.current)fail('complete original physical source changed');
- return {schema:'complete-bulk-draft-source-composition-v2',typescriptVersion:ts.version,originals,files,semanticAuthority:false,sourceAuthority:false,originalRegenerateBodyChanged:false,runtimeParity:false,rustExecuted:false};
+ if(hash(readFileSync(new URL('./source-profiles/namespace-progress-observer/1-rules.json',import.meta.url)))!=='76fd46c143c5599a94a29df82ffdfe22b4fdb77e430f4d78c9b90a88dcadb2c1')fail('complete CLI source history changed');
+ return {schema:'complete-bulk-draft-source-composition-v2',typescriptVersion:ts.version,archiveOriginals,originals,files,semanticAuthority:false,sourceAuthority:false,originalRegenerateBodyChanged:false,runtimeParity:false,rustExecuted:false};
 }
 export function assertBulkDraftCompanionsFresh(){
  const plan=prepareBulkDraftCustody();
@@ -91,7 +110,14 @@ export function assertBulkDraftCompanionsFresh(){
  return true;
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- if(process.argv.length!==3||!['--emit','--check'].includes(process.argv[2]))fail('use --emit|--check');
+ if(process.argv.length!==3||!['--emit','--check','--write'].includes(process.argv[2]))fail('use --emit|--check|--write');
  const plan=prepareBulkDraftCustody();
- if(process.argv[2]==='--emit')console.log(JSON.stringify(plan));else{if(plan.originals.some(row=>row.current!==row.source)||plan.files.some(row=>row.current!==row.after))fail('complete current source differs');console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>({path:row.path,sha256:row.afterSha256})),semanticAuthority:false}));}
+ if(process.argv[2]==='--emit')console.log(JSON.stringify(plan));else{
+  if(process.argv[2]==='--write'){
+   for(const row of plan.originals)if(row.current!==row.source||readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)
+    fail('complete original source must be current before companion installation');
+   for(const row of plan.files){let current='';try{current=readFileSync(resolve(ROOT,row.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
+    if(current!==row.current)fail('complete companion changed before source installation');}
+   for(const row of plan.files){writeFileSync(resolve(ROOT,row.path),row.after);row.current=row.after;}
+  }if(plan.originals.some(row=>row.current!==row.source)||plan.files.some(row=>row.current!==row.after))fail('complete current source differs');console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>({path:row.path,sha256:row.afterSha256})),semanticAuthority:false}));}
 }

@@ -1,6 +1,20 @@
 // Diagnostic callbacks receive bounded flat data only. No original source, AST, scope
 // text or private proof is exposed, and progress never enters generated artifacts.
 import {types} from 'node:util';
+// Namespace details are an explicit diagnostic observer contract. Keep this
+// registry private and use its captured operations; ordinary callbacks retain
+// their original sequence even if the public WeakSet prototype later changes.
+const namespaceObservers=new WeakSet(),observerAdd=WeakSet.prototype.add;
+const observerHas=WeakSet.prototype.has,observerApply=Reflect.apply;
+export function namespaceProgressObserver(callback){
+  if(typeof callback!=='function')throw new TypeError('Namespace progress requires a callback');
+  const observer=record=>callback(record);
+  observerApply(observerAdd,namespaceObservers,[observer]);
+  return observer;
+}
+export function namespaceProgressRequested(callback){
+  return observerApply(observerHas,namespaceObservers,[callback]);
+}
 const stages=new Set(['corpus','project','project-graph','namespace','module-parse','method-parse','generated-default','generated-clone','semantic-check','semantic-refusal','target-emit','project-serialize','standalone','fingerprint','plan','profile']);
 const states=new Set(['start','advance','end']);
 const strings=new Set(['stage','state','entry','source','profile','declaration','phase']);

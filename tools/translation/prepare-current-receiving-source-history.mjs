@@ -11,6 +11,8 @@ import {deriveInvocationFreezerProducerEvolution} from './invocation-freezer-pro
 import {prepareGuardedProofLexing,assertGuardedProofLexingInputsFresh} from './prepare-guarded-proof-lexing.mjs';
 import {assertSchemarsEnclosingHistoryFresh} from './schemars-enclosing-history.mjs';
 import {deriveCurrentNegativeBudgetProofHistory} from './prepare-negative-budget-proof-json.mjs';
+import {derivePinnedRepositorySourceEvolution} from './pinned-repository-source-evolution.mjs';
+import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 import {transportConcreteNamedSourcePhases} from './concrete-source-origin-phases.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),BASE='tools/translation/';
 const ARCHIVE=BASE+'source-profiles/current-receiving-source-history/complete-originals.json.gz';
@@ -145,7 +147,18 @@ export function prepareCurrentReceivingSourceHistory({root=ROOT}={}){
  add(fixturePath,fixtureLanguage,fixtureEvolution.after,[...fixtureEdits,...fixtureEvolution.nativeSelections],previousFixtureEvolution.after);
  const planPath=BASE+'test/builtin-plan-json-composition.test.mjs',plan=read(planPath);if(snapshots.get(planPath)!==plan)fail('complete original builtin plan suite changed');
  timing('negative-budget-history');
- const progressPath=BASE+'test/core-adoption-progress.test.mjs',progress=read(progressPath),progressEdit=insertCall(ts,progressPath,progress,'progressLayoutHistory',"if(path==='tools/translation/propose-core-adoption-corpus.mjs')source=restoreReceivingSourceHistory(source,'progress-packets',retain);"),progressLanguage=apply(progress,[progressEdit]),progressAfter=apply(progressLanguage,[{span:[0,0],expected:'',replacement:"import {restoreReceivingSourceHistory} from './fixtures/current-receiving-source-history.mjs';\n"}]);add(progressPath,progressLanguage,progressAfter,[progressEdit]);
+ const progressPath=BASE+'test/core-adoption-progress.test.mjs',progress=read(progressPath),progressEdit=insertCall(ts,progressPath,progress,'progressLayoutHistory',"if(path==='tools/translation/propose-core-adoption-corpus.mjs')source=restoreReceivingSourceHistory(source,'progress-packets',retain);"),progressLanguage=apply(progress,[progressEdit]),progressAfter=apply(progressLanguage,[{span:[0,0],expected:'',replacement:"import {restoreReceivingSourceHistory} from './fixtures/current-receiving-source-history.mjs';\n"}]);
+ const progressEvolution=derivePinnedRepositorySourceEvolution(ts,{
+  profile:new URL('./source-profiles/project-progress-receiving/source-rules.json',import.meta.url),
+  profileSha256:'f90f3ad3e9cf4b5ea2519594a3d274db0a2c63ed305535672eafc283a8f90ef3',path:progressPath,source:progressAfter,
+ });
+ const progressNamespaceEdits=[insertCall(ts,progressPath,progressAfter,'progressLayoutHistory',
+  "if(path==='tools/translation/project.mjs')return restoreProjectProgressSourceHistory(source,retain);"),
+  {span:[0,0],expected:'',replacement:"import {restoreProjectProgressSourceHistory} from './project-progress-source-history.mjs';\n"}];
+ if(apply(progressAfter,progressNamespaceEdits)!==progressEvolution.after)
+  fail('complete project progress profile/native source equation differs');
+ progressEvolution.nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,progressPath),progressEvolution.after);
+ add(progressPath,progressLanguage,progressEvolution.after,[progressEdit,...progressNamespaceEdits],progressAfter);
  const producerPath=BASE+'prepare-invocation-local-freezer.mjs',producer=read(producerPath),producerFile=syntax(ts,producerPath,producer),fsImport=one(producerFile.statements.filter(node=>ts.isImportDeclaration(node)&&node.moduleSpecifier.text==='node:fs'),'complete original freezer source reader');if(fsImport.getText(producerFile)!=="import {readFileSync} from 'node:fs';")fail('complete original freezer source reader binding differs');
  const producerEvolution=deriveInvocationFreezerProducerEvolution(producer,snapshots.get(producerPath));
  const producerEdit=edit(producerFile,fsImport,"import {readFreezerReceivingHistory as readFileSync} from './test/fixtures/current-receiving-source-history.mjs';"),copy=apply(producer,[producerEdit]);add(COPY,producer,copy,[producerEdit]);
@@ -157,7 +170,7 @@ export function prepareCurrentReceivingSourceHistory({root=ROOT}={}){
  for(const row of bytePlan.files){const actual=existsSync(resolve(root,row.path))?readFileSync(resolve(root,row.path),'utf8'):null;if(actual!==row.current)fail('complete default producer target changed');}for(const row of bytePlan.prerequisiteInputs)if(readFileSync(resolve(root,row.path),'utf8')!==row.source)fail('complete default producer prerequisite changed');for(const layer of bytePlan.historicalLayers){for(const row of layer.inputs)if(readFileSync(resolve(root,row.path),'utf8')!==row.source)fail('complete historical predecessor input changed');assertSchemarsEnclosingHistoryFresh({root,history:layer.history});}if(readFileSync(resolve(root,bytePlan.fragment.path),'utf8')!==bytePlan.fragment.source)fail('complete authored byte operation changed');
  assertGuardedProofLexingInputsFresh(guarded);
  for(const [path,source]of snapshots)if(readFileSync(resolve(root,path),'utf8')!==source)fail('complete source input changed during history construction');if(!readFileSync(resolve(root,ARCHIVE)).equals(packed)||!readFileSync(resolve(root,defaultArchive)).equals(defaultPacked))fail('complete binary history changed during operation');
- return {schema:'complete-current-receiving-source-history-proposal-v1',files,records,history,guarded,guardedRecords,defaultByteHistory:bytePlan,freezerPairs,producerEvolution,fixtureEvolution,inputs:[...snapshots].map(([path,source])=>({path,source,sha256:hash(source)})),binaryInputs:[{path:ARCHIVE,bytes:packed.length,sha256:PACKED},{path:defaultArchive,bytes:defaultPacked.length,sha256:hash(defaultPacked)}],sourceAuthority:false,ownerAuthority:false,runtimeImplementationChanged:false,originalCaseBodiesAndDeadlinesUnchanged:true,receivingExecuted:false,sourceInstalled:false};
+ return {schema:'complete-current-receiving-source-history-proposal-v1',files,records,history,guarded,guardedRecords,defaultByteHistory:bytePlan,freezerPairs,producerEvolution,fixtureEvolution,progressEvolution,inputs:[...snapshots].map(([path,source])=>({path,source,sha256:hash(source)})),binaryInputs:[{path:ARCHIVE,bytes:packed.length,sha256:PACKED},{path:defaultArchive,bytes:defaultPacked.length,sha256:hash(defaultPacked)}],sourceAuthority:false,ownerAuthority:false,runtimeImplementationChanged:false,originalCaseBodiesAndDeadlinesUnchanged:true,receivingExecuted:false,sourceInstalled:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('use --emit|--write|--check; this is an explicit receiving-history proposal');const plan=prepareCurrentReceivingSourceHistory();if(args[0]==='--write'){for(const row of plan.files)if((existsSync(resolve(ROOT,row.path))?readFileSync(resolve(ROOT,row.path),'utf8'):'')!==row.current)fail('target changed before explicit history write');for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}else if(args[0]==='--check'){if(plan.files.some(row=>row.current!==row.after))fail('complete generated receiving history is stale');console.log('Complete current/historical receiving sources are fresh; no compiler authority.');}else console.log(JSON.stringify(plan));
