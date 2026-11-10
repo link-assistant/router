@@ -22,7 +22,9 @@ PR #785. The native goal stays active. No green gate or release readiness exists
       missing TypeScript counterparts and refresh reverse artifacts.
 - [ ] Resolve every remaining original whole-file deadline, private compiler
       admission, carried application behavior and strict parity obligation.
-- [ ] Refresh complete isolated compiler registration after compiler edits.
+- [x] Refresh complete isolated compiler registration after the path reentry
+      source commit. All 16 original cases pass in Node and Bun, with original
+      limits. Further compiler edits require another genuine refresh.
 - [ ] Run the complete JavaScript gate without dropping stages or assertions.
 - [ ] Verify universal tool/account privacy criteria. Keep unsupported direct
       traffic, source-IP/account inference and absent vendor sessions explicit.

@@ -83,11 +83,11 @@ with 2,420 carried; these receiving changes do not change that observation.
 
 ## Complete retained packets
 
-The [Clone packet](evidence/clone-receiving-20261109.tar.gz) contains 220 complete
+The [Clone packet](https://github.com/link-assistant/router/blob/679bcd0278a7cb045349507d6bf1e8234de19cdc/docs/case-studies/issue-784/evidence/clone-receiving-20261109.tar.gz?raw=true) contains 220 complete
 members (13,654,668 compressed bytes), with SHA-256
 `0e9c82f2d8420bd34a2ed0bb383edcc1e33b0892f182fadd795a2be18d17ecaf`.
 Its [receipt](evidence/clone-receiving-20261109.json.gz) lists each member's full
-size and hash. The [CST/native packet](evidence/cst-native-receiving-20261109.tar.gz)
+size and hash. The [CST/native packet](https://github.com/link-assistant/router/blob/679bcd0278a7cb045349507d6bf1e8234de19cdc/docs/case-studies/issue-784/evidence/cst-native-receiving-20261109.tar.gz?raw=true)
 contains 163 complete members (15,991,691 compressed bytes), with SHA-256
 `4714e0094e4eb4fed9446e23b224845badda4baf17d02a3d409319709a7ae759`.
 Its [receipt](evidence/cst-native-receiving-20261109.json.gz) provides the same

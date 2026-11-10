@@ -1,4 +1,5 @@
 """Retire four exact, inactive, immutable published receiving archive copies."""
+import argparse
 import gzip
 import hashlib
 import importlib.util
@@ -7,16 +8,24 @@ import os
 from pathlib import Path
 import stat
 import subprocess
-import sys
+import re
 
-assert sys.argv[1:] in [[], ['--write']]
-write = sys.argv[1:] == ['--write']
-head = '74f62c037a21e4b3e4e3804dcf3d941d0aabfe19'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--write', action='store_true')
+parser.add_argument('--head', default='74f62c037a21e4b3e4e3804dcf3d941d0aabfe19')
+parser.add_argument('--name', action='append')
+parser.add_argument('--label', default='published-receiving-archive')
+args = parser.parse_args()
+write, head = args.write, args.head
+assert re.fullmatch('[a-f0-9]{40}', head)
+assert re.fullmatch('[-a-z0-9]{1,80}', args.label)
 folder = Path('docs/case-studies/issue-784/evidence')
-names = ['phased-clone-complete.tar.xz', 'export-repair-complete.tar.xz',
+names = args.name or ['phased-clone-complete.tar.xz', 'export-repair-complete.tar.xz',
          'matrix-draft-complete.tar.xz', 'runtime-freeze-complete.tar.xz']
+assert len(set(names)) == len(names) and 1 <= len(names) <= 32
+assert all(re.fullmatch('[-a-z0-9.]{1,120}', name) and name not in ['.', '..'] for name in names)
 tree = subprocess.check_output(['git', 'rev-parse', head + ':' + str(folder)], text=True).strip()
-metadata_path = Path('ci-logs/issue-784-restart-2/current-published-receiving-archive-tree.json.gz')
+metadata_path = Path('ci-logs/issue-784-restart-2') / ('current-' + args.label + '-tree.json.gz')
 if not metadata_path.exists():
     raw = subprocess.check_output(['gh', 'api', 'repos/link-assistant/router/git/trees/' + tree])
     with metadata_path.open('xb') as output:
@@ -66,7 +75,7 @@ record = dict(schema='published-receiving-archive-local-retirement-v1', publishe
     allocatedBytesReclaimed=sum(row['allocatedBytes'] for row in rows),
     runtimeParity=False, fullGatePassed=False)
 if write:
-    target = folder / 'published-receiving-archive-local-retirement.json.gz'
+    target = folder / (args.label + '-local-retirement.json.gz')
     raw = json.dumps(record, separators=(',', ':')).encode()
     with target.open('xb') as output:
         output.write(gzip.compress(raw, mtime=0))

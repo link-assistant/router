@@ -26,7 +26,7 @@ lockfile-installed 5.9.3; no Rust tool is run.
 
 Complete observations, current source copies and available `f05961a5c`
 preimages are retained in
-[the receiving packet](evidence/isolated-refresh-20261110.tar.xz): 4383428 bytes,
+[the receiving packet](https://github.com/link-assistant/router/blob/679bcd0278a7cb045349507d6bf1e8234de19cdc/docs/case-studies/issue-784/evidence/isolated-refresh-20261110.tar.xz?raw=true): 4383428 bytes,
 46 members, SHA-256
 `5eaad6a1b14d1c73d2ec72cc6c839b3f062e245086ae9a0c4de16d05e8ecc59b`.
 Twenty-six earlier complete terminal Node audits remain separately in

@@ -78,7 +78,7 @@ original receiving deadlines and the full-gate requirements remain unresolved.
 No local Rust tool or additional agent ran.
 
 Complete local attempts and proposals are retained in the
-[loader packet](evidence/current-loader-repair.tar.gz),
+[loader packet](https://github.com/link-assistant/router/blob/679bcd0278a7cb045349507d6bf1e8234de19cdc/docs/case-studies/issue-784/evidence/current-loader-repair.tar.gz?raw=true),
 [native/owned-field packet](evidence/current-native-trace-repair.tar.gz) and
 [withdrawn candidate and deadline packet](evidence/current-withdrawn-concrete-guard.tar.gz).
 Each has an adjacent `.json.gz` receipt with full member lengths and hashes.

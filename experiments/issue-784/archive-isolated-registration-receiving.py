@@ -1,4 +1,5 @@
 """Archive complete closed registration observations and older task audits."""
+import argparse
 import gzip
 import hashlib
 import io
@@ -13,12 +14,23 @@ import tarfile
 
 root = Path.cwd()
 base = Path('ci-logs/issue-784-restart-2')
-archive = Path('docs/case-studies/issue-784/evidence/isolated-refresh-20261110.tar.xz')
-receipt = archive.with_name('isolated-refresh-20261110.json.gz')
-baseline = 'f05961a5c0426b27327f2d362d6f17f850368f44'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--baseline', default='f05961a5c0426b27327f2d362d6f17f850368f44')
+parser.add_argument('--archive-stem', default='isolated-refresh-20261110')
+parser.add_argument('--prefix', action='append')
+parser.add_argument('--node-log')
+parser.add_argument('--bun-log', action='append')
+args = parser.parse_args()
+assert re.fullmatch('[a-f0-9]{40}', args.baseline)
+assert re.fullmatch('[-a-z0-9]{1,80}', args.archive_stem)
+prefixes = args.prefix or ['current-f059-']
+assert all(re.fullmatch('[-a-z0-9]{1,80}', value) for value in prefixes)
+archive = Path('docs/case-studies/issue-784/evidence') / (args.archive_stem + '.tar.xz')
+receipt = archive.with_name(args.archive_stem + '.json.gz')
+baseline = args.baseline
 assert subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip() == baseline
 assert not archive.exists() and not receipt.exists()
-retire = {p for p in base.iterdir() if p.is_file() and p.name.startswith('current-f059-')}
+retire = {p for p in base.iterdir() if p.is_file() and p.name.startswith(tuple(prefixes))}
 attempts = sorted(Path('js/node_modules/.node-case-deadlines').glob('complete-*'))
 assert 1 <= len(attempts) <= 64
 for attempt in attempts:
@@ -26,14 +38,27 @@ for attempt in attempts:
     assert terminal['childClosed'] and terminal['groupCleanup']['complete']
     assert not Path('/proc/' + str(terminal['groupCleanup']['group'])).exists()
     retire.update(p for p in attempt.iterdir() if p.is_file())
-audit = json.loads(Path('js/node_modules/.node-case-deadlines/complete-MYF8Op/case-deadlines.json').read_bytes())
+if args.node_log:
+    node_log = (base / args.node_log).read_text()
+    matches = re.findall(r'^Complete Node deadline evidence: (.+)$', node_log, re.M)
+    assert len(matches) == 1
+    audit_root = Path(matches[0]).resolve()
+    assert audit_root in [p.resolve() for p in attempts]
+else:
+    audit_root = Path('js/node_modules/.node-case-deadlines/complete-MYF8Op')
+terminal = json.loads((audit_root / 'terminal.json').read_bytes())
+assert terminal['exitCode'] == 0
+audit = json.loads((audit_root / 'case-deadlines.json').read_bytes())
 assert audit['passed'] and audit['observedCompletedCases'] == 16
 assert not audit['errors'] and not audit['durationBreaches']
 bun = []
-for name in ['isolated', 'portable']:
-    text = (base / ('current-f059-' + name + '-bun-1.log')).read_text()
+bun_logs = args.bun_log or ['current-f059-' + name + '-bun-1.log' for name in ['isolated', 'portable']]
+assert len(bun_logs) in [1, 2]
+for name in bun_logs:
+    text = (base / name).read_text()
     rows = re.findall(r'^\(pass\) (.+) \[([0-9.]+)ms\]$', text, re.M)
-    assert len(rows) == 8 and re.search(r'\n 8 pass\n 0 fail\n', text)
+    expected = 16 // len(bun_logs)
+    assert len(rows) == expected and re.search(r'\n ' + str(expected) + r' pass\n 0 fail\n', text)
     for name, duration in rows:
         original = [row for row in audit['records'] if row['name'] == name]
         assert len(original) == 1

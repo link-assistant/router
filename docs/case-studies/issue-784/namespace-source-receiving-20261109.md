@@ -7,7 +7,7 @@ complete translation, parity, release readiness, or universal tool privacy.
 The complete terminal cycle contains 59 jobs: 18 failures, eight successes,
 eight cancellations and 25 skips. All 26 failed/cancelled logs and all 26 final
 artifacts were inspected. The complete retained packet is
-[evidence/current-1c82-terminal-ci.tar.gz](evidence/current-1c82-terminal-ci.tar.gz)
+[evidence/current-1c82-terminal-ci.tar.gz](https://github.com/link-assistant/router/blob/679bcd0278a7cb045349507d6bf1e8234de19cdc/docs/case-studies/issue-784/evidence/current-1c82-terminal-ci.tar.gz?raw=true)
 (6664954 bytes, SHA-256
 `16e021db43e563dd9f57ccc662d4adaf15a7e07bb7c3ccdf8ae29737f45e7c36`).
 The canonical artifact admits 161 of 2578 production functions, three more

@@ -9,6 +9,11 @@ contexts remain byte-identical. The larger Bun cohort reaches the unchanged
 memory guard; complete registration, generation and gate qualification remain
 unfinished. The newly published `679bcd027` CI cycle is still running.
 
+The subsequent [complete registration refresh](isolated-path-reentry-20261110.md)
+passes all 16 original cases in each engine. It preserves the full predecessor,
+all genuine Git fixtures and original limits. Generation and the gate remain
+unfinished; the larger derive Bun interruption above is a separate result.
+
 The [complete gate attempt at 5ef265492](complete-gate-5ef265-20261110.md)
 passes all ten lint commands, both 259-case runtime suites, native freshness,
 strict native TypeScript compilation and all 121 acceptance cases. It fails

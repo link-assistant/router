@@ -4,7 +4,7 @@
 The actual complete local JavaScript gate was launched from clean commit
 `ef601cecf4766f9ab3527ea0ab898744ef37a24c` with Node 20.20.2, Bun 1.4.4,
 installed TypeScript 5.9.3, a 128 MiB parent heap and 512 MiB child heaps.
-The [complete 33-member observation](evidence/current-ef601-gate.json.gz)
+The [complete 33-member observation](https://github.com/link-assistant/router/blob/679bcd0278a7cb045349507d6bf1e8234de19cdc/docs/case-studies/issue-784/evidence/current-ef601-gate.json.gz?raw=true)
 retains full command output, original deadline audit files, resource receipts,
 source inputs and the executed harnesses, with complete member readback.
 
