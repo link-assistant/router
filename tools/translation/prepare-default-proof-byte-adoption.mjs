@@ -9,6 +9,7 @@ import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';
 import {prepareSchemarsEnclosingAdoption} from './prepare-schemars-enclosing-adoption.mjs';
 import {deriveGuardedProofLexingConsumerSource} from './prepare-guarded-proof-lexing.mjs';
+import {restoreOperationSizeMeasurementSource} from './operation-size-measurement-source.mjs';
 import {deriveCloneEnclosingNativeSourceHistory,deriveCloneEnclosingContextSourceRules,assertCloneEnclosingSourceInputsFresh} from './prepare-clone-enclosing-source-history.mjs';
 import {derivePinnedRepositorySourceEvolution} from './pinned-repository-source-evolution.mjs';
 import {transportConcreteNamedSourcePhases} from './concrete-source-origin-phases.mjs';
@@ -38,9 +39,15 @@ function currentPrerequisites(root,originals){
   if(name!=='operation-proof-byte-consumer-scope.mjs'||typeof source!=='string')fail('complete actual byte bridge prerequisite differs');
   // Reuse the native-selected import equation, retaining the original whole
   // source pin and both serialized/reparsed CST phases and their inverses.
-  const sourceEvolution=deriveGuardedProofLexingConsumerSource(source,original.path);
-  if(sourceEvolution.current!==source||sourceEvolution.text!==source||sourceEvolution.source!==original.source||sourceEvolution.inverse!==original.source||sourceEvolution.sourceSha256!==original.sha256)fail('complete actual byte bridge prerequisite differs');
-  return {...original,source,bytes:Buffer.byteLength(source),sha256:hash(source),original,sourceEvolution};
+  const predecessor=deriveGuardedProofLexingConsumerSource(original.source,original.path);
+  let measurementSourceHistory=null;
+  if(source!==predecessor.text){
+   measurementSourceHistory=restoreOperationSizeMeasurementSource(source,original.path);
+   if(measurementSourceHistory.before!==predecessor.text)fail('complete operation measurement predecessor differs');
+  }
+  const sourceEvolution=predecessor;
+  if(sourceEvolution.source!==original.source||sourceEvolution.inverse!==original.source||sourceEvolution.sourceSha256!==original.sha256)fail('complete actual byte bridge prerequisite differs');
+  return {...original,source,bytes:Buffer.byteLength(source),sha256:hash(source),original,sourceEvolution,measurementSourceHistory};
  });
 }
 function parse(ts,path,source){const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete native grammar differs: '+path);return file;}
