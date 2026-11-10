@@ -75,8 +75,23 @@ active, PR draft and incomplete criteria explicit. No local Rust tools or agents
       59 jobs, 24 nonpassing whole logs, 26 original artifacts and 176 retained
       files. Preserve canonical output as unqualified data, with no installation.
 - [x] Refresh main and all issue/PR feedback; no new requirements or conflicts.
-- [ ] Review and publish the coordinated local batch, then collect its whole
-      exact-head CI cycle before the next repair publication.
+- [x] Review and publish the coordinated local batch at `93995ee40`; preserve
+      its failed/unrun evidence and verify the exact PR description readback.
+- [x] Verify all 50 complete preceding CI payloads against immutable published
+      Git and fresh GitHub metadata before retiring 93713511 inactive bytes.
+      Every original stream remains in published commit `93995ee40`.
+- [ ] Collect run `42879038865`'s whole terminal exact-head CI cycle before the
+      next repair publication. Do not cancel any running check.
+- [x] Reopen and hash-check all 86 members of the complete saved native profile
+      packet. Retain complete sample attribution; make no deadline/gain claim.
+- [x] Compare complete fresh native erasure outputs for all 60 production
+      modules in an ABBA diagnostic. Outputs match but the small saving does
+      not qualify the original four-build deadline. No producer change applied.
+- [x] Repair the changed selected-Git producer registration through the actual
+      source producer. Preserve complete predecessor bytes and independent
+      installation; all 16 original cases pass in both engines, with a green
+      Node source/deadline audit and unchanged limits. Local commit `e00063223`
+      awaits the complete published CI cycle before coordinated publication.
 - [ ] Finish universal all-tool/account privacy acceptance; Router headers alone
       cannot establish external account settings or vendor/security retention.
 
