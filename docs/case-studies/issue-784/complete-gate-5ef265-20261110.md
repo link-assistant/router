@@ -72,7 +72,7 @@ The [complete gate evidence packet](evidence/complete-gate-5ef265-20261110.tar.x
 contains 40 complete members / 1,085,207 original bytes, with full readback;
 its [receipt](evidence/complete-gate-5ef265-20261110.json.gz) records SHA-256
 `5c50f2831e83ee4e1c4648ec8e67339411a40186a857a20fa7e0f66208f08694`.
-The [terminal Node audit packet](evidence/complete-gate-5ef265-node-audits-20261110.tar.gz)
+The [terminal Node audit packet](https://github.com/link-assistant/router/blob/9b6c9192c70f1f9309eac0c516b59102ce080409/docs/case-studies/issue-784/evidence/complete-gate-5ef265-node-audits-20261110.tar.gz?raw=true)
 preserves 85 complete members from 13 closed attempts, including failures;
 its [receipt](evidence/complete-gate-5ef265-node-audits-20261110.json.gz) records
 SHA-256 `c91329e5f462e5306edcd66505970f79f7f9916ebd513ec111eef6cfc6c84e84`.

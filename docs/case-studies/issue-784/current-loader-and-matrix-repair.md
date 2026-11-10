@@ -79,7 +79,7 @@ No local Rust tool or additional agent ran.
 
 Complete local attempts and proposals are retained in the
 [loader packet](https://github.com/link-assistant/router/blob/679bcd0278a7cb045349507d6bf1e8234de19cdc/docs/case-studies/issue-784/evidence/current-loader-repair.tar.gz?raw=true),
-[native/owned-field packet](evidence/current-native-trace-repair.tar.gz) and
+[native/owned-field packet](https://github.com/link-assistant/router/blob/9b6c9192c70f1f9309eac0c516b59102ce080409/docs/case-studies/issue-784/evidence/current-native-trace-repair.tar.gz?raw=true) and
 [withdrawn candidate and deadline packet](evidence/current-withdrawn-concrete-guard.tar.gz).
 Each has an adjacent `.json.gz` receipt with full member lengths and hashes.
 Every member was decoded and verified before retiring only its inactive task
@@ -88,8 +88,8 @@ replacement receipts inside the packets; the one-use installers describe their
 original inputs. Reproduction requires restoring those complete evidence bytes
 to the paths recorded in the receipts. No foreign cache or build was removed.
 
-The [terminal CI logs](evidence/current-terminal-matrix-ci-logs.tar.gz) and
-[terminal API and deadline receipts](evidence/current-terminal-matrix-ci-receipts.tar.gz)
+The [terminal CI logs](https://github.com/link-assistant/router/blob/9b6c9192c70f1f9309eac0c516b59102ce080409/docs/case-studies/issue-784/evidence/current-terminal-matrix-ci-logs.tar.gz?raw=true) and
+[terminal API and deadline receipts](https://github.com/link-assistant/router/blob/9b6c9192c70f1f9309eac0c516b59102ce080409/docs/case-studies/issue-784/evidence/current-terminal-matrix-ci-receipts.tar.gz?raw=true)
 retain the final complete failure set, original artifact metadata and selected
 complete deadline reports. The terminal canonical artifact inspection verifies
 all 2,873 complete nested outputs (318,859,859 bytes), including nested gzip

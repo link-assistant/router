@@ -76,7 +76,7 @@ or required sub-issue was found.
 
 ## Complete evidence and storage
 
-The [complete packet](evidence/coordinated-gate-20261110.tar.xz) contains 100
+The [complete packet](https://github.com/link-assistant/router/blob/9b6c9192c70f1f9309eac0c516b59102ce080409/docs/case-studies/issue-784/evidence/coordinated-gate-20261110.tar.xz?raw=true) contains 100
 members and 3,270,296 compressed bytes, SHA-256
 `6659809745c75ad9b4532d123332e0f4525cc627d02e759ef83913eeeaa6ef26`.
 The [receipt](evidence/coordinated-gate-20261110.json.gz) pins each member's

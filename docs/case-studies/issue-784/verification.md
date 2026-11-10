@@ -808,7 +808,7 @@ and no failed JavaScript gate bypassed to run Rust.
 
 ## Preserved evidence and remaining obligations
 
-[`6f36-complete-attempt.tar.xz`](evidence/6f36-complete-attempt.tar.xz)
+[`6f36-complete-attempt.tar.xz`](https://github.com/link-assistant/router/blob/9b6c9192c70f1f9309eac0c516b59102ce080409/docs/case-studies/issue-784/evidence/6f36-complete-attempt.tar.xz?raw=true)
 contains **2217 complete members**: initial CI logs/artifacts, local logs, raw
 deadline evidence, changed source and compiler/harness inputs. It contains
 **86,538,429 uncompressed bytes** in a **4,798,284-byte** archive.

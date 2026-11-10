@@ -23,7 +23,7 @@ changed. Expected missing-object diagnostics come from passing Git refusal
 controls. No memory guard stops occur; peak sampled container memory is
 2,571,386,880 bytes for Node and 2,725,244,928 bytes for Bun.
 
-The [complete 51-member packet](evidence/integrated-registration-20261110.tar.xz)
+The [complete 51-member packet](https://github.com/link-assistant/router/blob/9b6c9192c70f1f9309eac0c516b59102ce080409/docs/case-studies/issue-784/evidence/integrated-registration-20261110.tar.xz?raw=true)
 and [receipt](evidence/integrated-registration-20261110.json.gz) preserve both
 complete engine streams, all original source records, five closed Node audit
 attempts, genuine proposals, source changes and predecessors. The packet is

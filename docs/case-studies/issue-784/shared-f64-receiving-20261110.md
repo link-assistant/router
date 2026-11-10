@@ -83,7 +83,7 @@ values. This is not a complete original-root receiving comparison. Newly
 executable production functions remain **zero measured** until actual whole
 production regeneration and comparison qualify the result.
 
-The [complete receiving archive](evidence/shared-f64-receiving-20261110.tar.gz)
+The [complete receiving archive](https://github.com/link-assistant/router/blob/9b6c9192c70f1f9309eac0c516b59102ce080409/docs/case-studies/issue-784/evidence/shared-f64-receiving-20261110.tar.gz?raw=true)
 contains 173 files and 3,838,904 bytes, SHA-256
 `a674be4f02667e7fc9e212864cd49361f63aa2ae16cda7bd085f4b2d7b499e40`.
 The [receipt](evidence/shared-f64-receiving-20261110.tar.receipt.json.gz) records

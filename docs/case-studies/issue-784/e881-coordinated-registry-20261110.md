@@ -19,7 +19,7 @@ passes with zero breaches. All 16 reported Bun durations fit the same original
 source limits, including a 0.01 ms rounding allowance. CI pins Bun 1.4.3.
 No original source assertion, test file, compiler bound or deadline changes.
 
-The [complete archive](evidence/e881-coordinated-registry-20261110.tar.xz)
+The [complete archive](https://github.com/link-assistant/router/blob/9b6c9192c70f1f9309eac0c516b59102ce080409/docs/case-studies/issue-784/evidence/e881-coordinated-registry-20261110.tar.xz?raw=true)
 contains 123 fully read-back members, including the whole proposal, independent
 installation review, complete raw streams and 16 closed Node audit attempts.
 Earlier failed attempts remain failed historical observations. Its 4,580,408

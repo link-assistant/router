@@ -56,7 +56,7 @@ source equation or assertion does not qualify their original deadlines.
 Complete source at `257392ec1`, its full predecessor versions, rejected author
 draft, every receiving log/resource record and the independent Node source and
 deadline audit are retained in the fully read-back
-[188-member evidence archive](evidence/candidate-binding-receiving-20261110.tar.gz)
+[188-member evidence archive](https://github.com/link-assistant/router/blob/9b6c9192c70f1f9309eac0c516b59102ce080409/docs/case-studies/issue-784/evidence/candidate-binding-receiving-20261110.tar.gz?raw=true)
 and its [receipt](evidence/candidate-binding-receiving-20261110.tar.receipt.json.gz).
 The archive is 2,595,831 bytes, SHA-256
 `0ae0a60cc98b3c44a536b693f8494e25df7a3214ddb7cc0e40adaab3bbbc1b8e`.

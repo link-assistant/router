@@ -30,7 +30,7 @@ preimages are retained in
 46 members, SHA-256
 `5eaad6a1b14d1c73d2ec72cc6c839b3f062e245086ae9a0c4de16d05e8ecc59b`.
 Twenty-six earlier complete terminal Node audits remain separately in
-[the audit packet](evidence/closed-node-audits-20261110.tar.gz): 3566077 bytes,
+[the audit packet](https://github.com/link-assistant/router/blob/9b6c9192c70f1f9309eac0c516b59102ce080409/docs/case-studies/issue-784/evidence/closed-node-audits-20261110.tar.gz?raw=true): 3566077 bytes,
 171 members, SHA-256
 `73729e0314c0b3fbdde9b091b373a5c2853c0cdc7ae9d0b3f366588d837952a9`.
 Every complete member is read back and hashed before retiring its exact,

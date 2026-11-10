@@ -35,7 +35,7 @@ The final forward command has no recorded finish event. Its failure message
 preceded the stop, and its audit is incomplete. There is no basis to assign
 passes or source-declared deadline compliance to any unobserved case.
 
-The [complete packet](evidence/current-matrix-live-gate.tar.xz) contains all
+The [complete packet](https://github.com/link-assistant/router/blob/9b6c9192c70f1f9309eac0c516b59102ce080409/docs/case-studies/issue-784/evidence/current-matrix-live-gate.tar.xz?raw=true) contains all
 86 original gate, adviser and deadline files from these attempts. Every member
 was read back and matched by length and SHA-256 before its inactive raw
 duplicate was retired. The packet is 3,321,568 bytes; SHA-256 is

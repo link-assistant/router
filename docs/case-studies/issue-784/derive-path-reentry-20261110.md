@@ -47,7 +47,7 @@ only that experiment's retention cap changed to retain every byte.
 
 ## Complete evidence and remaining requirements
 
-The [complete receiving archive](evidence/derive-path-reentry-20261110.tar.xz)
+The [complete receiving archive](https://github.com/link-assistant/router/blob/9b6c9192c70f1f9309eac0c516b59102ce080409/docs/case-studies/issue-784/evidence/derive-path-reentry-20261110.tar.xz?raw=true)
 contains **64 members**, **2,270,348 compressed bytes**, SHA-256
 `b2474d237cdca2b24cc045b665d9706091d0a336ff25cc606f1b3efd4913080f`.
 Its [receipt](evidence/derive-path-reentry-20261110.json.gz) records every member,
