@@ -3,6 +3,12 @@
 Research and verification dates: 2026-11-06–10 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [shared f64 receiver repair](shared-f64-receiving-20261110.md) qualifies the
+unchanged `safe_number` body only in an independent small project. Seven new,
+19 existing borrow/float and 14 existing Option cases pass in separate complete
+Node/Bun runs. Full source equations and failed drafts are retained; actual
+whole-production gain, generation and full-gate qualification remain unfinished.
+
 The [complete terminal 7e7fb7a3c CI review](ci-7e7-terminal-20261110.md)
 records every available nonpassing log and all 25 complete artifacts, including
 the unavailable original shard-five log. Source-history and callback repairs

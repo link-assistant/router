@@ -47,7 +47,7 @@ import {rustFixedType} from '../checked-types.mjs';
 import {checkOriginalOptionEquality} from './option-equality.mjs';
 import {decodeRustFloat,RUST_FLOAT_LITERAL_PROFILE} from './rust-float.mjs';
 import {FLOAT_CONTRACTS,SOURCE_F64,primitiveFloatContract,primitiveFloatConstant,requirePrimitiveFloat,qualifyPrimitiveFloatResult,checkedPrimitiveFloatConstant} from './primitive-float-contracts.mjs';
-import {sharedF64Pointee,originalSharedF64CopySource} from './shared-f64-copy-source.mjs';
+import {sharedF64Pointee} from './shared-f64-copy-source.mjs';import {captureSharedF64MethodCall,inherentSharedF64Receiver,sharedF64DereferenceSource} from './shared-f64-method-source.mjs';import {parseJointSharedReferenceType} from './joint-shared-reference-type.mjs';
 import {floatSignObligation,withFloatZeroSignChecker} from './float-zero-refinements.mjs';
 import {checkedUtf16Iterator,checkedFixedF64Cast,prepareTemporaryStringCall,consumeTemporaryStringCallBorrow,prepareOriginalStringPatternBorrow} from './utf16-fixed-f64.mjs';
 import {checkStringIteratorOperation,requireBorrowedString} from './string-iterators.mjs';
@@ -231,6 +231,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     return {k:'routerIntegerParse',object,args,instantiation,span:range};
   }
   method(object,name,args,range) {
+    if(primitiveFloatContract(name.value))return captureSharedF64MethodCall(this,name,super.method(object,name,args,range));
     if(name.value==='into'){
       let sourceConversionScope=null,sourceConversionRefusal=null;
       try{sourceConversionScope=captureSourceConversionScope(this,name.start);}catch(error){if(!(error instanceof TypeError))throw error;sourceConversionRefusal=error.message;}
@@ -275,9 +276,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     const coreStr=parseRouterCoreStrReference(this);if(coreStr)return coreStr;
     const character=parseCharacterType(this);if(character)return character;
     const c=this.cursor,originalSelf=originalPrimitiveTryFromSelfType(this);if(originalSelf)return originalSelf;
-    // && is one lexer token, but two borrows only in a source type position.
-    // Split its coordinates here; boolean expression tokens remain untouched.
-    if(c.is('&&')){const token=c.peek();c.tokens=[...c.tokens.slice(0,c.index),{...token,value:'&',end:token.start+1},{...token,value:'&',start:token.start+1},...c.tokens.slice(c.index+1)];}
+    const joint=parseJointSharedReferenceType(this);if(joint)return joint;if(c.is('&&')){const token=c.peek();c.tokens=[...c.tokens.slice(0,c.index),{...token,value:'&',end:token.start+1},{...token,value:'&',start:token.start+1},...c.tokens.slice(c.index+1)];}
     const named=this.namedSourceReferenceType();if(named)return named;
     const first=c.peek();
     if(c.is('&')){
@@ -622,7 +621,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
       const value=this.expr(node.value,env,path),reference=value.type.rustReference,pointee=reference?.pointee;
       if(value.type.kind==='string'&&reference?.kind==='shared'&&pointee?.kind==='string'&&pointee.rustOwnership?.kind==='borrowed'&&pointee.rustOwnership.source==='str'&&!pointee.rustGenericIdentityUnresolved)return {...node,value,type:pointee,dereferenceProof:{kind:'shared-str-reference-copy',reference:structuredClone(reference),sourceFeature:node.sourceFeature,span:node.span}};
       if(value.type.kind==='bool')return {...node,value,type:sharedBooleanPointee(value.type,node.span),dereferenceProof:{kind:'shared-bool-copy',reference:structuredClone(reference),sourceFeature:node.sourceFeature,span:node.span}};
-      if(value.type.kind==='float'){requireOriginalPrimitiveTryFromChecker(this);return {...node,value,type:sharedF64Pointee(value.type,node.span),dereferenceProof:{kind:'shared-f64-copy',source:originalSharedF64CopySource(),reference:structuredClone(reference),sourceFeature:node.sourceFeature,span:node.span}};}
+      if(value.type.kind==='float'){requireOriginalPrimitiveTryFromChecker(this);return {...node,value,type:sharedF64Pointee(value.type,node.span),dereferenceProof:{kind:'shared-f64-copy',source:sharedF64DereferenceSource(node),reference:structuredClone(reference),sourceFeature:node.sourceFeature,span:node.span}};}
       const type=sharedFixedPointee(value.type,node.span);
       return {...node,value,type,dereferenceProof:{kind:'shared-fixed-copy',primitiveName:type.rustPrimitiveName,reference:structuredClone(value.type.rustReference),sourceFeature:node.sourceFeature,span:node.span}};
     }
@@ -694,7 +693,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
       if(method==='as_deref')return checkedOptionAsDeref(this,node,receiver,path);
       if(receiver.type.kind==='float') {
         const contract=primitiveFloatContract(method);
-        if(contract){requirePrimitiveFloat(receiver,node.span);return this.hostCall([contract],[node.object,...node.args],env,path,expected,node.span);}
+        if(contract){const object=inherentSharedF64Receiver(node,receiver,method);if(!receiver.type.rustReference)requirePrimitiveFloat(receiver,node.span);return this.hostCall([contract],[object,...node.args],env,path,expected,node.span);}
         if(['is_sign_negative','is_sign_positive'].includes(method)){if(node.args.length)throw typeError('primitive f64 sign predicate takes no arguments',node.span);this.floatSignObligations=true;return floatSignObligation(method,receiver,node.span);}
       }
       const contracts=HOST_CONTRACTS.filter(contract=>contract.family!=='float'&&contract.kind==='method'&&contract.rustPath.at(-1)===method&&sameType(this.hostType(contract.receiver,path,node.span),receiver.type));

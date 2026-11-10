@@ -15,6 +15,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {sourceWhileLetCondition,requireSourceWhileLet} from './while-let-source.mjs';
 import {hasSourceLetChain,parseSourceLetChain,requireSourceLetChain} from './let-chain-source.mjs';
 import {hasOriginalStandardCall,requireOriginalStandardCall} from './original-standard-calls.mjs';
+import {originalPrimitiveCopySource} from '../shared-reference-copy-source.mjs';
 const range=(start,end)=>({start:start.start,end:end.end});
 const containsExit=node=>node&&typeof node==='object'&&node.k!=='routerLambda'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(containsExit):containsExit(value))));
 const scalar=type=>['fixed','bool','string','unit'].includes(type?.kind);
@@ -22,6 +23,7 @@ const KNOWN_CONSTRUCTORS=Symbol('checked immutable constructor locals');
 export function immutableBinding(type,checker,active=new Set()) {
   if(type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved||active.size>=32)return false;
   if(type.rustReference)return type.rustReference.kind==='shared'&&Boolean(type.rustReference.pointee);
+  if(type.kind==='float')return type.rustSourceType===true&&Boolean(originalPrimitiveCopySource(type));
   if(scalar(type))return !type.patternOwnershipRefusal&&type.rustOwnership?.kind!=='owned';
   const entry=type.kind==='data'?checker.items.get(type.name):null,profile=type.rustStandardGeneric??entry?.standardGeneric;
   if(entry?.tuple&&entry.generated==='router-tuple-type'&&entry.ctors.length===1&&!active.has(type.name)) {

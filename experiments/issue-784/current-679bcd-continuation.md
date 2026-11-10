@@ -3,6 +3,19 @@
 Objective: finish every issue #784 requirement and every mandatory CI failure in
 PR #785. The native goal stays active. No green gate or release readiness exists.
 
+- [x] Repair source-qualified shared `f64` inherent receivers. Preserve the
+      unchanged actual `safe_number` declaration in an independent small project,
+      exact original token frames, competing-trait and lifetime refusals, both
+      checked CST phases and complete source inverses. The new seven-case file,
+      19 existing float/borrow cases and 14 existing Option cases pass in separate
+      complete Node/Bun observations. Preserve failed draft attempts and original
+      named/static parser regressions in the complete 173-file receiving archive.
+      Original deadlines remain unchanged; no whole-production gain, exported
+      compiler receiving, Rust result or full-gate qualification is claimed.
+- [ ] Collect the complete `e88183bb8` CI cycle before publishing the next batch.
+      Five jobs are still running in the latest observation; published head
+      remains fixed. All failures, cancellations and artifacts remain required.
+
 - [x] Collect the complete terminal 7e7fb7a3c cycle before another push. All
       seven workflows are terminal; the required run has eight successes,
       18 failures, eight cancellations and 25 skipped jobs. Read every

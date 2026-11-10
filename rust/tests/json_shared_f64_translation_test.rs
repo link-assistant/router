@@ -79,3 +79,47 @@ fn a_visible_reference_trait_requires_separate_method_selection_evidence() {
     assert!(!(&value).is_finite());
     assert!(f64::is_finite(value));
 }
+
+#[test]
+#[allow(
+    clippy::trivially_copy_pass_by_ref,
+    reason = "shared primitive inherent receiver selection is the behavior under test"
+)]
+fn shared_inherent_receivers_preserve_ieee_values_and_evaluate_once() {
+    fn finite(value: &f64) -> bool {
+        value.is_finite()
+    }
+    fn nan(value: &&f64) -> bool {
+        value.is_nan()
+    }
+    fn floor(value: &&f64) -> f64 {
+        value.floor()
+    }
+    fn receive<'a, 'b>(value: &'a &'b f64, count: &std::cell::Cell<u8>) -> &'a &'b f64 {
+        count.set(count.get() + 1);
+        value
+    }
+    for (value, expected_finite, expected_nan, expected_floor) in [
+        (f64::NAN, false, true, f64::NAN),
+        (f64::INFINITY, false, false, f64::INFINITY),
+        (f64::NEG_INFINITY, false, false, f64::NEG_INFINITY),
+        (-0.0_f64, true, false, -0.0_f64),
+        (0.0, true, false, 0.0),
+        (f64::from_bits(1), true, false, 0.0),
+        (-f64::from_bits(1), true, false, -1.0),
+        (1.5, true, false, 1.0),
+        (-2.5, true, false, -3.0),
+        (f64::MAX, true, false, f64::MAX),
+    ] {
+        assert_eq!(finite(&value), expected_finite);
+        assert_eq!(nan(&&value), expected_nan);
+        if expected_nan {
+            assert!(floor(&&value).is_nan());
+        } else {
+            assert_eq!(floor(&&value).to_bits(), expected_floor.to_bits());
+        }
+        let count = std::cell::Cell::new(0);
+        assert_eq!(receive(&&value, &count).is_finite(), expected_finite);
+        assert_eq!(count.get(), 1);
+    }
+}
