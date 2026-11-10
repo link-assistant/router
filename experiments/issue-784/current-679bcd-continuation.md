@@ -46,10 +46,28 @@ PR #785. The native goal stays active. No green gate or release readiness exists
       an author selector mistakenly put the stage validation inside a template.
       The rejected complete source was restored through its checked inverse,
       the author rule now selects the actual unique generator return, and the
-      genuine source driver passes again. Three dependent source writers are
-      running. Original receiving tests and performance remain unqualified;
-      direct writer timings and the finite CPU sample establish no speed gain
-      or newly executable production function.
+      genuine source driver passes again. The final eight-generator proposal
+      and all dependent source writers pass their native/CST/inverse checks.
+      The complete 62-case receiving cohort is red: Node completes 48 cases
+      (43 assertion passes, five failures, fourteen unobserved after two bounded
+      heap failures); twelve assertion passes breach their original deadlines.
+      Bun completes 49 (39 pass, ten fail, thirteen unobserved after four memory
+      guard stops). Both binding files pass in both engines. All raw results,
+      unchanged source/deadlines and rejected author drafts are retained in the
+      verified 188-member candidate-binding-receiving packet. No performance
+      qualification or newly executable production function is established.
+- [ ] Restore the original private native refusal before graph discovery can
+      serialize source views. Both engines reproduce two new refusal failures
+      and pass the third reader-error/restored-state control. A pinned source
+      layer installs only through the genuine project facade producer; the full
+      8,362,437-byte proposal passes native scope, CST phases and full inverses.
+      All three new cases pass in Node/Bun, with a complete focused Node audit.
+      Seven other complete Node files pass 37 cases and their original deadline
+      audit. The original nine-file receiving remains failed: Node's guard stop
+      leaves its audit incomplete; Bun passes 45 of 46, with the final Core case
+      unobserved after a guard stop. A focused Core retry also reaches the guard.
+      Complete evidence and rejected author selectors are archived separately.
+      Do not repeat the killed workload unchanged or claim whole-Core success.
 - [ ] Qualify fresh path-index reentry in the actual derive-context source using
       both fixed rule phases, complete original/CST/inverse bytes, independent
       grammar/binding checks and all original whole-file cases and deadlines.
@@ -67,7 +85,10 @@ PR #785. The native goal stays active. No green gate or release readiness exists
       its repeated native own-field query while preserving every fresh guard,
       descriptor comparison and observer/refusal result. A complete uninstalled
       scalar descriptor draft is retained; it is not installed or performance
-      qualified. Sampled attribution is no speed gain or executable coverage.
+      qualified. A finite comparison finds descriptor collection and the proposed
+      kind common guard slower than the current numeric guard; neither is
+      installed. All 32 mutation controls agree, with no callbacks. Sampled
+      attribution is no speed gain or executable coverage.
       The actual 768 MiB canonical attempt ended with V8 heap exhaustion after
       3168.49 seconds, peak sampled cgroup 2418880512 bytes. It changed no outputs.
       Do not repeat unchanged with a larger heap or claim the deadline passed.

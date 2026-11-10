@@ -71,11 +71,15 @@ export function prepareProjectFacadeRetention({root=ROOT}={}){
   profile:new URL('./source-profiles/namespace-progress-observer/0-rules.json',import.meta.url),
   profileSha256:'23eabe8f329efc2534b7da89442c3273fea75056b1d05469987124ef7ff5cf46',path:PATH,source:namespaceComposition.after,
  });
- const after=namespaceObserver.after;
+  const ingressBoundary=derivePinnedRepositorySourceEvolution(ts,{
+   profile:new URL('./source-profiles/project-ingress-native-boundary/source-rules.json',import.meta.url),
+   profileSha256:'f72a45665a7592f6047daad51a082ff0a11d5b9614a699be562a480e4bac76ff',path:PATH,source:namespaceObserver.after,
+  });
+  const after=ingressBoundary.after;
  if(methodOwnerScope.inverse!==retained.language||retained.selection.completeNativeInverse!==before)fail('complete composed native inverse differs');
- if(namespaceObserver.inverse!==namespaceComposition.after||namespaceComposition.inverse!==previousAfter)fail('complete namespace composition inverse differs');
- const selection={...retained.selection,methodOwnerScope,namespaceComposition,namespaceObserver},current=readFileSync(resolve(root,PATH),'utf8');
- if(current!==before&&current!==retained.after&&current!==previousAfter&&current!==namespaceComposition.after&&current!==after)fail('complete physical project is neither original nor an exact derived output');
+ if(ingressBoundary.inverse!==namespaceObserver.after||namespaceObserver.inverse!==namespaceComposition.after||namespaceComposition.inverse!==previousAfter)fail('complete namespace composition inverse differs');
+ const selection={...retained.selection,methodOwnerScope,namespaceComposition,namespaceObserver,ingressBoundary},current=readFileSync(resolve(root,PATH),'utf8');
+ if(current!==before&&current!==retained.after&&current!==previousAfter&&current!==namespaceComposition.after&&current!==namespaceObserver.after&&current!==after)fail('complete physical project is neither original nor an exact derived output');
  const [equation]=transportConcreteSourcePhases([{before,middle:language,after,language:'JavaScript'}]);
  const stages=equation.stages.map(stage=>({...stage,completeInverse:true}));
  const nativeCopies=[nativeCopy(ts,before),nativeCopy(ts,after)],nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,PATH),after);

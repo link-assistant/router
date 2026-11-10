@@ -1,4 +1,5 @@
 import {createRulePipeline} from './rule-pipeline.mjs';
+import {assertPrivateParserExecution} from './private-parser-execution.mjs';
 import {createRustConcreteSyntaxStage,createRustConcreteSyntaxStages} from './forward-concrete-syntax.mjs';
 import {associateOriginalSharedPatternDependencies} from './extensions/shared-source-patterns.mjs';
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
@@ -157,6 +158,8 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
   let planning=resolveSourceModuleGraph({entry,paths:trackedPaths,compilationProfile:profileInput,readSource(file){
     const source=readSource(file);
     if(typeof source!=='string')throw new TypeError('Forward concrete syntax requires primitive source text');
+    // Preserve the original native refusal before discovery can observe JSON.
+    assertPrivateParserExecution();
     captured.push({file,source});return source;
   }},progressInput,source=>({source,document:null}),trackedInput);
   const profile=planning.compilationProfile;planning=null;

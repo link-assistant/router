@@ -30,6 +30,40 @@ for directory in selected:
     paths.extend(path for path in directory.rglob('*') if path.is_file())
 if archive.is_file():
     paths.append(archive)
+identities = {}
+for path in paths:
+    state = path.lstat()
+    if not stat.S_ISREG(state.st_mode) or state.st_uid != os.getuid():
+        raise RuntimeError('Expected ordinary task-owned evidence file: ' + str(path))
+    identities[(state.st_dev, state.st_ino)] = path
+# Refuse files currently opened by any process visible to this container.
+# This check runs before opening our own descriptors or creating the receipt.
+checked_processes = 0
+unreadable_foreign_processes = []
+for process in Path('/proc').iterdir():
+    if not process.name.isdecimal():
+        continue
+    try:
+        descriptors = list((process / 'fd').iterdir())
+    except FileNotFoundError:
+        continue
+    except PermissionError:
+        status = dict(line.split(':', 1) for line in (process / 'status').read_text().splitlines() if ':' in line)
+        if status['State'].strip().startswith('Z'):
+            continue
+        if int(status['Uid'].split()[1]) == os.getuid():
+            raise
+        unreadable_foreign_processes.append(int(process.name))
+        continue
+    checked_processes += 1
+    for descriptor in descriptors:
+        try:
+            opened = descriptor.stat()
+        except FileNotFoundError:
+            continue
+        identity = (opened.st_dev, opened.st_ino)
+        if identity in identities:
+            raise RuntimeError('Evidence is active: ' + str(identities[identity]))
 before, rows = memory(), []
 for path in sorted(paths):
     state = path.lstat()
@@ -50,6 +84,8 @@ for path in sorted(paths):
         os.close(fd)
 time.sleep(1)
 receipt = {'before': before, 'after': memory(), 'files': rows,
+           'visibleProcessesCheckedForOpenDescriptors': checked_processes,
+           'unreadableForeignProcessIds': unreadable_foreign_processes,
            'selectedLogicalBytes': sum(row['bytes'] for row in rows),
            'scope': 'POSIX_FADV_DONTNEED on only identified inactive task evidence and its authenticated Node archive; no file removed, no global cache drop, no Rust or other worker build directory touched. Total cgroup differences are observations, not exact per-file page accounting.'}
 with receipt_path.open('x') as target:
