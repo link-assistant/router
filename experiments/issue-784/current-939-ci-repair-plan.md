@@ -9,10 +9,17 @@ remains active. Keep the PR draft while any acceptance criterion is unverified.
   Both complete receiving files pass all sixteen cases on Node and Bun.
 - [x] Preserve complete published custody before retiring only inactive local
   copies; keep the complete failed native erasure experiment without applying it.
-- [ ] Collect the entire published 939 CI cycle: verify head/time, save and read
-  every failed/cancelled log, review every complete artifact, then publish the
-  coordinated repair batch. Poll complete snapshots sparingly; the earlier
-  GitHub rate limit has reset. Parity remains in progress at 20:02 UTC.
+- [x] Collect the entire published 939 CI cycle: all three workflows and 59 jobs
+  are terminal at 20:12 UTC. Read all 23 nonpassing logs and every member of all
+  26 artifacts; retain complete failures and original streams in `evidence/ci-939`.
+  Fully inspect all 2873 canonical output streams and current physical input pins.
+  Three repaired current inputs differ; do not install the old inventory.
+- [x] Preserve all original checks while isolating Node compiler process trees:
+  sixteen exhaustive bins, one worker each. Complete workflow/runner files pass
+  all 45 cases. The complete seven-case runtime-import file passes assertions,
+  but its full-build case takes 190815.839221 ms against 60000 ms. Keep the
+  independent deadline failure and full original evidence explicit.
+- [ ] Review and publish the coordinated completed source batch for fresh CI.
 - [x] Measure a guarded native TAR header byte loop against the original actual
   dependency verification and complete fourteen-function base64 translation.
   Preserve fallback observers, original full source, both CST phases and inverses.

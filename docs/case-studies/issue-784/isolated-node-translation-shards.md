@@ -3,8 +3,8 @@
 Draft toward [PR #785](https://github.com/link-assistant/router/pull/785).
 The published `93995ee40be4b570becbe0b788dba58f5bd0ea6f` CI cycle runs two
 complete Node files per runner. Each file can start a separate strict TypeScript
-compiler. Observed deadline failures include the complete four-build runtime
-import case at 78,857.387 ms against its original 60,000 ms limit, and the base64
+compiler. Observed deadline failures include the complete original/current runtime
+build comparison at 78,857.387 ms against its original 60,000 ms limit, and the base64
 file's case at 92,296.898 ms against 60,000 ms. This evidence does not establish
 that resource contention explains every deadline failure.
 

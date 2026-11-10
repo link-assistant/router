@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/review-939-canonical-custody.py", line 113, in <module>
+    path = prefix + row['source' if kind == 'corpus' else 'path']
+                    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'path'
