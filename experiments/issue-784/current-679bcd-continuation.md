@@ -184,3 +184,8 @@ task artifacts. Preserve compiler source, safety and original deadline limits.
       Node passes nine cases; the profile CLI child still exceeds 20000 ms.
       Full evidence is in native-cli-progress-history-20261110.md. CLI deadline
       qualification and the complete gate remain unfinished.
+- [x] Repair the original project byte-operation regression's callback setup
+      with explicit namespace diagnostics. Both complete cases pass in Node
+      and Bun after reproducing the ordinary failure; Node deadline audits
+      pass without changing the observer, cleanup or nested-translation checks.
+      See project-byte-observer-20261110.md for complete evidence.

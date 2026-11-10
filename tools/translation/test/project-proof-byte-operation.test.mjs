@@ -5,6 +5,7 @@ import {repositorySourceURL} from './fixtures/repository-paths.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {translateProject,translateProjectOwnedDefinitions} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
+import {namespaceProgressObserver} from '../translation-progress.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
 const root=new URL('../../../',import.meta.url);
@@ -24,17 +25,17 @@ for(const [name,compile,phase]of [
  {timeout:60000},async()=>{
  const expected=compile(options),nestedExpected=translateProject(nestedOptions);
  const sentinel=new Error('original observer throw'),records=[];
- assert.throws(()=>compile({...options,progress:row=>{
+ assert.throws(()=>compile({...options,progress:namespaceProgressObserver(row=>{
   records.push(row);if(row.stage==='namespace'&&row.phase===phase)throw sentinel;
- }}),error=>error===sentinel);
+ })}),error=>error===sentinel);
  assert.equal(records.at(-1).phase,phase);
  assert.equal(records.some(row=>row.stage==='module-parse'),false);
  let entered=0,nested;
- const actual=compile({...options,progress:row=>{
+ const actual=compile({...options,progress:namespaceProgressObserver(row=>{
   if(row.stage==='namespace'&&row.phase===phase){
    entered++;nested=translateProject(nestedOptions);
   }
- }});
+ })});
  assert.equal(entered,1);assert.deepEqual(nested.meta,nestedExpected.meta);
  assert.equal(nested.javascript,nestedExpected.javascript);
  assert.equal(nested.typescript,nestedExpected.typescript);
