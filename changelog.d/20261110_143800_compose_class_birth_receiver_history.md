@@ -1,3 +1,7 @@
+---
+bump: patch
+---
+
 ### Fixed
 
 - Compose the current shared-f64 receiver source history in the class-birth
