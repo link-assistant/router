@@ -96,7 +96,11 @@ PR #785. The native goal stays active. No green gate or release readiness exists
       qualified. A finite comparison finds descriptor collection and the proposed
       kind common guard slower than the current numeric guard; neither is
       installed. All 32 mutation controls agree, with no callbacks. Sampled
-      attribution is no speed gain or executable coverage.
+      attribution is no speed gain or executable coverage. A separate full
+      private-parser descriptor-kind draft now passes 17689 pair comparisons
+      over 133 real descriptors, repeated under a hostile inherited getter,
+      with zero callbacks. TypeScript 5.9.3 parses the entire draft. It remains
+      uninstalled and has no CST, receiving or performance qualification.
       The actual 768 MiB canonical attempt ended with V8 heap exhaustion after
       3168.49 seconds, peak sampled cgroup 2418880512 bytes. It changed no outputs.
       Do not repeat unchanged with a larger heap or claim the deadline passed.
@@ -128,7 +132,20 @@ PR #785. The native goal stays active. No green gate or release readiness exists
       The first complete Node registered run observes 23 passes and four
       failures because the generated history was still untracked. Preserve
       those failures, freeze the registration, and rerun the whole affected
-      cohort. The graph and Bun receiving remain unrun at this checkpoint.
+      cohort. After commit 76e2d5b9e freezes the complete history, all 27
+      Node registered cases and their independent deadline audit pass.
+      The complete Node dependency cohort passes 45 of 46; Core's legacy Hash
+      child exceeds its unchanged 12500 ms bound. Bun passes 72 of 73 cases:
+      the progress diagnostic exceeds its original 5000 ms default. All 46
+      Bun dependency cases pass. All failed/passing receiving, full CPU profile,
+      complete wire and callback diagnostics are archived in the 104-member
+      core-registration-receiving packet. This checklist remains unfinished.
+- [ ] Fix newly reproduced native Buffer observation domain bugs. Above the
+      1 MiB index threshold, Node encoding invokes an own valueOf getter.
+      Bun native Buffer JSON observes an own Symbol.iterator getter, but the
+      current closed projection silently admits it. Add original-bound whole
+      file regressions and install fixes through the checked source producer.
+      These finite diagnostic failures are not receiving qualification.
 - [ ] Verify universal tool/account privacy criteria. Keep unsupported direct
       traffic, source-IP/account inference and absent vendor sessions explicit.
 

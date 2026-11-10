@@ -1,6 +1,6 @@
 # Complete Core observation transport receiving
 
-The complete Core candidate file now passes under Node 20.20.2 and Bun 1.4.4,
+The initial focused Core candidate file passed under Node 20.20.2 and Bun 1.4.4,
 including its independent JSON refusal invariant and all original Hash events.
 The original callback case completes in 35,679.919524 ms under Node and
 32,622.81 ms under Bun, below its original 60,000 ms limit. All four independent
@@ -112,4 +112,55 @@ The generated history had not yet been committed; this was an orchestration
 error, not receiving qualification. The original 27-case run and its complete
 deadline audit are retained. The scheduler was paused between complete cohorts
 to freeze the generated history before continuing. A new whole-cohort run is
-required. The graph cohort and Bun receiving are unrun at this checkpoint.
+required. The larger cohort and Bun receiving were unrun at that checkpoint.
+Subsequent complete receiving is recorded below; its timing failures supersede
+any general claim that the transport is qualified for the integrated batch.
+
+
+## Integrated receiving and finite callback failures
+
+After commit `76e2d5b9e` froze the generated history, the complete Node registered
+cohort passed all 27 cases in 382.929 seconds. Its independent original-deadline
+audit also passed. The first four untracked-history failures remain retained.
+
+The complete Node dependency cohort passed 45 of 46 cases. The last Core case
+failed because its legacy Hash child exceeded the original 12,500 ms bound
+(`core-transport-receiving-node-graph.log:237`). The complete Bun receiving
+passed 72 of 73 cases. The generated Default/Clone progress diagnostic case
+took 7,275.05 ms against Bun's original 5,000 ms default
+(`core-transport-receiving-bun-translation-progress.log:6`). All 46 Bun dependency
+cases, including all six Core cases, passed. No guard stop occurred. These
+receiving failures remain unresolved; the earlier focused 22-case pass does
+not override them. No deadline or workload was changed.
+
+A finite inspector run retained the entire 5,061,270-byte child wire and the
+complete CPU profile. Profiling overhead makes it diagnostic only. Function
+aggregation attributes 1,333.745 ms of self time to lexing, 1,104.107 ms to the
+syntax-clone compatibility traversal, 933.724 ms to Rust tokenization and
+636.826 ms to freezing macro trees. Garbage collection accounts for 2,355.678 ms.
+Reusing parsed syntax must preserve all fresh source/owner checks and every
+observable original Hash and JSON event. No such optimization is installed.
+
+Finite probes at 1,048,576 and 1,048,577 bytes also expose real closed-projection
+bugs. On Node, an own `valueOf` getter is called by the current encoder only
+above the byte index threshold, although native Buffer JSON ignores it. On
+Bun, native Buffer JSON calls an own `Symbol.iterator` getter; the encoder
+silently accepts that domain. Both are unfinished regression/fix requirements.
+The original partial Bun probe and complete second probes are retained.
+
+The private native descriptor-kind draft was executed against 133 actual
+descriptors: 17,689 pair comparisons, repeated with a hostile inherited getter,
+agree with the original and invoke no callbacks. The full draft parses with
+TypeScript 5.9.3. It remains uninstalled, without CST/receiving or performance
+qualification, and establishes no executable coverage gain.
+
+`evidence/core-registration-receiving-20261110.tar.gz` retains 104 fully
+read-back, member-hashed entries, including all registration proposals, failed
+and passing receiving, three complete Node audit directories, full CPU profile
+and child wire, both callback probes and the uninstalled descriptor draft.
+Archive bytes: 7,567,424. SHA-256:
+`93b285cf13fbb3ef2b0ea3f75c77025856ea170f94b2a7eb8a26b6c447542be4`.
+The separate compressed receipt retains all complete joins. After identity,
+hash and open-descriptor checks, only verified inactive raw duplicates were
+retired; task evidence occupied 460,192,912 bytes. The full gate remains red,
+matrices and strict parity unfinished, and PR #785 remains draft.
