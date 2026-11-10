@@ -53,7 +53,7 @@ focused cases, not a controlled comparative speed benchmark or the full gate.
 The [complete evidence packet](evidence/current-native-cli-imports.json.gz)
 retains whole current/before source, full stdout/stderr and deadline audits,
 resource receipts and the complete duplicate-retirement record. The complete
-[seven-file source proposal](evidence/native-cli-imports/current-native-cli-import-proposal.json.gz)
+[seven-file source proposal](https://github.com/link-assistant/router/blob/9b6c9192c70f1f9309eac0c516b59102ce080409/docs/case-studies/issue-784/evidence/native-cli-imports/current-native-cli-import-proposal.json.gz?raw=true)
 moves intact to its permanent path with the same inode and complete compressed
 and decoded byte hashes. No complete proposal is copied or discarded.
 

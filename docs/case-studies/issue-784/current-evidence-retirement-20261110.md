@@ -21,6 +21,13 @@ removal. The affected reports now link directly to those immutable published
 copies; their complete failed and passed evidence remains recoverable in Git
 history.
 
+The [nested-archive receipt](evidence/current-published-nested-retirement-20261110.json.gz)
+and its [completion receipt](evidence/current-published-nested-retirement-complete-20261110.json.gz)
+cover three additional inactive archives under evidence subdirectories. The same
+complete published-byte, GitHub metadata, ownership, descriptor and mapping
+checks reclaimed 13,244,018 logical bytes and 13,250,560 allocated bytes. Their
+immutable published copies remain available at the same `9b6c9192c` commit.
+
 Both procedures required regular task-owned files with one hard link, checked
 open descriptors and mappings, and rechecked physical identity immediately
 before unlinking. The scripts and complete per-file receipts retain the exact
