@@ -401,3 +401,7 @@ explicitly unfinished.
 The [selected Git census source history repair](selected-census-source-history-20261110.md)
 retains both original assertions, the first failed duration audit, and all five
 passing receiving cases under Node and Bun with unchanged deadlines.
+
+The [reverse freshness repair](current-reverse-freshness-20261110.md) retains
+genuine regeneration of three stale artifacts, all twelve passing Node cases
+and their deadline audit, and the memory-interrupted whole Bun attempt.

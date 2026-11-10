@@ -56,6 +56,10 @@ native goal active and the PR draft and unmerged while criteria remain open.
 - [x] Compare the existing runtime import-edge scope on the same complete
       fourteen-function translation. Whole outputs equal the baseline but no
       measured speedup results; retain both profiles without source integration.
+- [x] Regenerate the three stale reverse artifacts with their original producer.
+      All twelve original Node translator cases and their independent duration
+      audit pass. Preserve the corrected Bun attempt interrupted by the cgroup
+      guard; the complete Bun file and its original deadlines remain unqualified.
 - [ ] Obtain the complete local gate and same-SHA green CI, including strict
       parity. The latest complete local attempt at `619e35656` remains memory
       interrupted; its later TypeScript, parity, forward and reverse are unrun.
