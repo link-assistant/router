@@ -70,6 +70,12 @@ native goal active and the PR draft and unmerged while criteria remain open.
 - [ ] Pass the mandatory complete local JavaScript gate and same-head CI.
       Latest complete local gate remains failed/interrupted with later work
       unrun; focused checks cannot qualify completion or admit Rust.
+- [x] Reproduce and install the complete isolated registration at 90446cc9d,
+      including all 1936 full sources, six complete bootstrap substitutions,
+      their predecessors and 493 genuine Git objects. Both original receiving
+      files pass all 16 cases in Node and Bun; the independent Node audit has
+      zero deadline breaches. Full evidence is in
+      `docs/case-studies/issue-784/current-runtime-binding-registration.md`.
 - [ ] Verify the original universal client/account/tool privacy requirements.
       Known routed request-header consent does not establish those guarantees.
 - [ ] Refresh main and every issue/PR feedback category, review all final source

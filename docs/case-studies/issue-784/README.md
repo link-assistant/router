@@ -421,6 +421,11 @@ The [terminal 82b CI review](ci-82b-terminal-20261110.md) records all 75 termina
 jobs, every available nonpassing stream, all 41 complete artifacts and the
 explicit unavailable forward-bin-9 log. Its failure set remains mandatory.
 
+The [current compiler registration](current-runtime-binding-registration.md)
+captures all 1936 current source inputs and passes the complete 16-case
+receiving cohort in Node and Bun with original deadlines. Wider gate, generated
+freshness and parity failures remain separate.
+
 The [project source-origin CST comparison](project-source-origin-cst.md) retains
 complete production outputs, measured improvements and the separately failed
 broader deadline case. The [withdrawn runtime guard experiment](runtime-common-guard-negative.md)
