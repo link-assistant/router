@@ -21,6 +21,18 @@ test('current runtime-import consumers retain the complete historical producers 
   assert.equal(row.current,row.after,row.path);
   assert.equal(row.equation.inverse,row.before,row.path);
   assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true,row.path);
+  if(Object.hasOwn(row,'bindingBatch')){
+   assert.equal(row.bindingBatch.before,row.bindingPreviousAfter,row.path);
+   assert.equal(row.bindingBatch.after,row.after,row.path);assert.equal(row.bindingBatch.inverse,row.bindingPreviousAfter,row.path);
+   assert.equal(row.bindingBatch.semanticAuthority,false);assert.equal(row.bindingBatch.runtimeAuthority,false);
+   assert.equal(row.bindingPreviousEquation.before,row.bindingPreviousAfter,row.path);
+   assert.equal(row.bindingPreviousEquation.after,row.after,row.path);assert.equal(row.bindingPreviousEquation.inverse,row.bindingPreviousAfter,row.path);
+   for(const stage of row.bindingPreviousEquation.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before,row.path);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after,row.path);}
+  }
+  if(Object.hasOwn(row,'runtimePreviousAfter')){
+   assert.equal(row.runtimePreviousEquation.before,row.runtimePreviousAfter,row.path);
+   assert.equal(row.runtimePreviousEquation.after,row.after,row.path);assert.equal(row.runtimePreviousEquation.inverse,row.runtimePreviousAfter,row.path);
+  }
   if(Object.hasOwn(row,'lifetimeAfter')){
    assert.equal(row.lifetimeEquation.before,row.lifetimeAfter,row.path);assert.equal(row.lifetimeEquation.after,row.after,row.path);assert.equal(row.lifetimeEquation.inverse,row.lifetimeAfter,row.path);
    for(const stage of row.lifetimeEquation.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before,row.path);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after,row.path);}

@@ -6,10 +6,11 @@ import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {composeCoreUnitMatches} from './prepare-core-unit-matches.mjs';
 import {prepareCoreUnicodePredicates} from './prepare-core-unicode-predicates.mjs';
+import {prepareSharedF64MethodReceivers} from './prepare-shared-f64-method-receivers.mjs';
 import {transportConcreteNamedSourcePhases} from './concrete-named-phases.mjs';
 
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
-const FACADE='rust/src/translation_core.rs',LEAF='rust/src/translation_core/primitives.rs',DATA='tools/translation/router-core-source-data.mjs';
+const FACADE='rust/src/translation_core.rs',LEAF='rust/src/translation_core/primitives.rs',DATA='tools/translation/router-core-source-data.mjs',HOST='tools/translation/extensions/host-contracts.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('Current unit/Unicode source composition: '+message);};
 function replace(source,before,after){
@@ -60,7 +61,18 @@ export function composeCurrentCoreUnitMatches(prior,options={}){
  for(const row of files)sources[row.path]=row;
  const layer={schema:'router-current-unit-unicode-source-v1',typescriptVersion:ts.version,files,originalUnicodePlan:unicode,
   dataDiamond:{fromUnicode,fromUnit},semanticAuthority:false,runtimeExecuted:false,rustExecuted:false,newEncodedOrDigestCache:false};
- return {sources,layers:[...unit.layers,layer],historicalSources:prior};
+ // Keep both historical layers exact. Only the final source map receives the
+ // independently prepared receiver successor, with its whole predecessor.
+ const receiverEvolution=prepareSharedF64MethodReceivers(options);
+ const receiver=receiverEvolution.files.find(row=>row.path===HOST),historical=sources[HOST];
+ if(!receiver||!historical||historical.after!==receiver.before)fail('complete Unicode/receiver predecessor differs');
+ const [receiverEquation]=transportConcreteNamedSourcePhases([{
+  before:historical.before,middle:historical.before,after:receiver.after,language:historical.sourceLanguage,
+  rules:['unit-unicode:retain-complete-host-parent','router:compose-complete-host-receiver','unit-unicode:restore-complete-host-parent','router:restore-complete-host-receiver'],
+ }]);
+ sources[HOST]={...joinedRow(historical,historical.before,receiver.after,ts,receiverEquation),sourceHistory:[historical,receiver]};
+ for(const row of receiverEvolution.files)if(readFileSync(resolve(options.root??ROOT,row.path),'utf8')!==row.current)fail('complete receiver input changed during composition');
+ return {sources,layers:[...unit.layers,layer],historicalSources:prior,receiverEvolution};
 }
 export function prepareCurrentCoreUnitUnicode(options={}){
  const result=composeCurrentCoreUnitMatches({},options);
@@ -71,7 +83,7 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const plan=prepareCurrentCoreUnitUnicode();
  if(mode==='--write'){
   for(const row of plan.files){
-   const known=plan.layers.flatMap(layer=>[...layer.files,...(layer.originalUnicodePlan?.files??[])]).filter(other=>other.path===row.path).flatMap(other=>[other.before,other.after]);
+   const known=[...plan.layers.flatMap(layer=>[...layer.files,...(layer.originalUnicodePlan?.files??[])]),...plan.receiverEvolution.files].filter(other=>other.path===row.path).flatMap(other=>[other.before,other.after]);
    if(!known.includes(row.current)&&!(row.current===null&&known.includes('')))fail('unknown complete physical input: '+row.path);
   }
   for(const row of plan.files){

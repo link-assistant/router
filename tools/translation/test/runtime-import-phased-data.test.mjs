@@ -35,7 +35,7 @@ test('actual source composition keeps complete original outputs while Bun retain
   ['tools/translation/js-to-rust/owned-core-source.mjs','ebd45c97808dbe473fcbc77c1663bcd0168953dfa25e16c305878f5736e6d2d9'],
   ['scripts/regenerate-js-first.mjs','f471e9ff097584ec47212fa52054b68e6bdc187e6029785c2b7f9e841044d290'],
   ['tools/translation/js-to-rust/vendor/module-syntax.mjs','5587f9b51453bd4fd13a7a1383d96a96d19d7bf55bf46a66f5ed21b916172d36'],
-  ['tools/translation/js-to-rust/native-typescript.mjs','16710553c7ea1f918c4c40ac08479460926fd57aceb44919d2422d8e02655478']]);
+  ['tools/translation/js-to-rust/native-typescript.mjs','ccc28a4b4f774836afbc169dad61d7d84c50057a7a4eb7258c6d4abe2d45ca30']]);
  assert.deepEqual(new Set(Object.keys(joined.sources)),new Set(expected.keys()));
  for(const [path,sha]of expected){
   const row=joined.sources[path];assert.equal(row.current,row.after);assert.equal(hash(row.after),sha);

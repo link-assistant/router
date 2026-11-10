@@ -42,6 +42,15 @@ test('new current unit and Unicode composition retains both whole source plans a
  const current=prepareCurrentCoreUnitUnicode();assert.equal(current.layers.length,2);
  assertUnitMatchesSourceComposition(current.layers[0],{},current.sources);
  assertCurrentCoreUnicodeSourceComposition(current.layers[1],Object.fromEntries(current.layers[0].files.map(row=>[row.path,row])),current.sources);
+ const host=current.sources['tools/translation/extensions/host-contracts.mjs'],[unicode,receiver]=host.sourceHistory;
+ assert.equal(current.receiverEvolution.files.length,5);assert.equal(current.receiverEvolution.semanticAuthority,false);
+ assert.equal(current.layers[1].files.find(row=>row.path===host.path),unicode);
+ assert.equal(unicode.after,receiver.before);assert.equal(receiver.after,host.after);
+ assert.equal(host.inverse,unicode.before);assert.equal(transportConcreteSyntaxMeta(host.afterMeta).source,receiver.after);
+ for(const row of current.receiverEvolution.files){
+  assert.equal(row.current,row.after,row.path);assert.equal(row.equation.inverse,row.before);
+  assert.equal(row.nativeBindings.length,2);assert.ok(row.nativeBindings.every(binding=>binding.nativeSemanticScopeChecked));
+ }
 });
 
 test('Unicode runtime matches every scalar boundary and rejects invalid ABI without coercion',{timeout:60000},()=>{

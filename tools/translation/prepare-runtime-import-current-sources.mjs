@@ -10,6 +10,7 @@ import {transportConcreteSourcePhases} from './concrete-phased-equations.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 import {proposeRuntimeCompilerSelections} from './prepare-runtime-compiler-selections.mjs';
 import {proposeRuntimeCompilerLifetime} from './prepare-runtime-compiler-lifetime.mjs';
+import {proposeRuntimeImportBindingBatch} from './prepare-runtime-import-binding-batch.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url)),base='tools/translation/';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const helper=base+'owned-runtime-node-source-data.mjs';
@@ -58,7 +59,7 @@ export function prepareRuntimeImportCurrentSources(){
  const original=prepareRuntimeImportPhasedData().file;
  if(original.current!==original.after)fail('complete original phased producer must be current');
  const ts=ownershipCompiler(),files=[],nativeBatch=prepareNativeRegenerationBatch();
- const nativeCurrent=nativeBatch.afterSha256;
+ const nativeCurrent=nativeBatch.afterSha256,runtimePrevious=nativeBatch.runtimeEvolution.beforeSha256;
  if(ts.version!=='5.9.3')fail('installed TypeScript 5.9.3 required');
  const parse=(path,source)=>{const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete native grammar differs: '+path);return file;};
  const before=original.after,file=parse(original.path,before),selected=[];
@@ -77,7 +78,9 @@ export function prepareRuntimeImportCurrentSources(){
  if(loaderRows.length!==1||!ts.isObjectLiteralExpression(loaderRows[0].initializer))fail('complete native loader row selection differs');
  const loaderNode=loaderRows[0].initializer,loaderExpected=loaderNode.getText(loaderFile),loaderReplacement='composeCurrentLoaderComparisonRow(ts,root,'+loaderExpected+')';
  after=after.slice(0,loaderNode.getStart(loaderFile))+loaderReplacement+after.slice(loaderNode.end)+loaderAddition;
- files.push({path:base+currentName,before,middle,after,previousAfter,publishedAfter,indexedAfter,lifetimeAfter,loaderPreviousAfter,compilerSelections,compilerLifetime,nativeSelection:{span:[node.getStart(file),node.end],expected:node.getText(file),replacement}});
+ const bindingPreviousAfter=after,bindingBatch=proposeRuntimeImportBindingBatch(ts,base+currentName,after);
+ after=bindingBatch.after;
+ files.push({path:base+currentName,before,middle,after,previousAfter,publishedAfter,indexedAfter,lifetimeAfter,loaderPreviousAfter,bindingPreviousAfter,bindingBatch,compilerSelections,compilerLifetime,nativeSelection:{span:[node.getStart(file),node.end],expected:node.getText(file),replacement}});
  const dataBefore=readFileSync(resolve(root,helper),'utf8');if(hash(dataBefore)!==helperPin)fail('complete original Node DATA helper differs');
  const dataMiddle=once(dataBefore,"new URL('./"+originalName+"',import.meta.url)","new URL('./"+currentName+"',import.meta.url)");
  let dataAfter=once(dataMiddle,"['tools/translation/"+originalName+"'","['tools/translation/"+currentName+"'");
@@ -94,7 +97,7 @@ export function prepareRuntimeImportCurrentSources(){
   let old=current.includes(currentName)?current.replaceAll(currentName,originalName):current;
   if(relative==='test/runtime-import-phased-data.test.mjs'){
    if(old.includes(historyAssertion))old=once(old,historyAssertion,'');
-   for(const pin of [nativePrevious,sourceOriginPrevious,nativeCurrent])if(old.includes(pin))old=once(old,pin,nativeOld);
+   for(const pin of [nativePrevious,sourceOriginPrevious,runtimePrevious,nativeCurrent])if(old.includes(pin))old=once(old,pin,nativeOld);
    if(old.includes(loaderCurrent))old=once(old,loaderCurrent,loaderOld);
   }
   const native=parse(path,old),imports=[];
@@ -111,7 +114,8 @@ export function prepareRuntimeImportCurrentSources(){
   const loaderPreviousAfter=relative==='test/runtime-import-phased-data.test.mjs'?changed:undefined;
   if(loaderPreviousAfter!==undefined)changed=once(changed,loaderOld,loaderCurrent);
   const sourceOriginPreviousAfter=relative==='test/runtime-import-phased-data.test.mjs'?once(changed,nativeCurrent,sourceOriginPrevious):undefined;
-  files.push({path,before:old,middle:old,after:changed,current,...(sourceOriginPreviousAfter===undefined?{}:{sourceOriginPreviousAfter}),...(previousAfter===undefined?{}:{previousAfter}),...(loaderPreviousAfter===undefined?{}:{loaderPreviousAfter})});
+  const runtimePreviousAfter=relative==='test/runtime-import-phased-data.test.mjs'?once(changed,nativeCurrent,runtimePrevious):undefined;
+  files.push({path,before:old,middle:old,after:changed,current,...(sourceOriginPreviousAfter===undefined?{}:{sourceOriginPreviousAfter}),...(previousAfter===undefined?{}:{previousAfter}),...(loaderPreviousAfter===undefined?{}:{loaderPreviousAfter}),...(runtimePreviousAfter===undefined?{}:{runtimePreviousAfter})});
  }
  const equations=transportConcreteSourcePhases(files.map(row=>({before:row.before,middle:row.middle,after:row.after,language:'JavaScript'})));
  const histories=[],historyFields=[
@@ -119,6 +123,8 @@ export function prepareRuntimeImportCurrentSources(){
   ['indexedAfter','indexedEquation','indexed'],['lifetimeAfter','lifetimeEquation','lifetime'],
   ['loaderPreviousAfter','loaderPreviousEquation','loader'],
   ['sourceOriginPreviousAfter','sourceOriginPreviousEquation','source-origin'],
+  ['bindingPreviousAfter','bindingPreviousEquation','binding'],
+  ['runtimePreviousAfter','runtimePreviousEquation','runtime'],
  ];
  for(const [at,row]of files.entries()){
   parse(row.path,row.before);parse(row.path,row.middle);parse(row.path,row.after);
@@ -127,7 +133,7 @@ export function prepareRuntimeImportCurrentSources(){
   row.nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,row.path),row.after);
   row.current=existsSync(resolve(root,row.path))?readFileSync(resolve(root,row.path),'utf8'):null;
   for(const [before,equation,label]of historyFields)if(Object.hasOwn(row,before))histories.push({row,before,equation,label});
-  if(row.current!==null&&row.current!==row.before&&row.current!==row.after&&(!Object.hasOwn(row,'previousAfter')||row.current!==row.previousAfter)&&(!Object.hasOwn(row,'publishedAfter')||row.current!==row.publishedAfter)&&(!Object.hasOwn(row,'indexedAfter')||row.current!==row.indexedAfter)&&(!Object.hasOwn(row,'lifetimeAfter')||row.current!==row.lifetimeAfter)&&(!Object.hasOwn(row,'loaderPreviousAfter')||row.current!==row.loaderPreviousAfter)&&(!Object.hasOwn(row,'sourceOriginPreviousAfter')||row.current!==row.sourceOriginPreviousAfter))fail('unexpected complete physical source: '+row.path);
+  if(row.current!==null&&row.current!==row.before&&row.current!==row.after&&(!Object.hasOwn(row,'previousAfter')||row.current!==row.previousAfter)&&(!Object.hasOwn(row,'publishedAfter')||row.current!==row.publishedAfter)&&(!Object.hasOwn(row,'indexedAfter')||row.current!==row.indexedAfter)&&(!Object.hasOwn(row,'lifetimeAfter')||row.current!==row.lifetimeAfter)&&(!Object.hasOwn(row,'loaderPreviousAfter')||row.current!==row.loaderPreviousAfter)&&(!Object.hasOwn(row,'sourceOriginPreviousAfter')||row.current!==row.sourceOriginPreviousAfter)&&(!Object.hasOwn(row,'bindingPreviousAfter')||row.current!==row.bindingPreviousAfter)&&(!Object.hasOwn(row,'runtimePreviousAfter')||row.current!==row.runtimePreviousAfter))fail('unexpected complete physical source: '+row.path);
  }
  // One fresh bounded transaction for this invocation's complete source history.
  // All historical sources and both original phase sequences remain present.
