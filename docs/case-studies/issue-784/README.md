@@ -3,6 +3,12 @@
 Research and verification dates: 2026-11-06–11 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
+The [latest terminal CI review](ci-0e234-terminal-20261111.md) records all 75
+completed jobs: 25 failed, eight cancelled, 17 passed and 25 skipped. Every
+available nonpassing log and all selected deadline reports are preserved;
+translation-12's cancelled log remains unavailable. All 26 genuine original
+deadline breaches and strict parity gaps remain blocking.
+
 The [latest complete local gate attempt](current-source-origin-full-gate.md)
 passes lint, both 260-case native suites and 121 parity acceptance cases. The
 original TypeScript regeneration deadline and actual strict parity fail. The
@@ -21,7 +27,7 @@ The [struct-ordering comparison repair](current-struct-ordering-comparison.md)
 retains exact predecessors, complete generated inverses and unchanged original
 Clone cases with separate current-source checks. Focused Node/Bun checks and
 producer freshness pass; the whole-owner file's local heap failure and the
-remaining current CI cycle stay explicit.
+terminal current CI failures stay explicit.
 
 The [terminal 4ea CI review](ci-4ea-terminal-20261110.md) retains all 24
 nonpassing logs and all 26 whole artifacts after all 59 jobs finish. Reverse
