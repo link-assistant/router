@@ -1,0 +1,13 @@
+{"file":".github/workflows/benchmarks.yml","changedScalars":5,"completeInverse":true}
+{"file":".github/workflows/bindings.yml","changedScalars":4,"completeInverse":true}
+{"file":".github/workflows/delivery.yml","changedScalars":2,"completeInverse":true}
+{"file":".github/workflows/docker-build.yml","changedScalars":2,"completeInverse":true}
+{"file":".github/workflows/fuzz.yml","changedScalars":2,"completeInverse":true}
+{"file":".github/workflows/live-tier.yml","changedScalars":2,"completeInverse":true}
+{"file":".github/workflows/macos-keychain.yml","changedScalars":2,"completeInverse":true}
+{"file":".github/workflows/mutants.yml","changedScalars":2,"completeInverse":true}
+{"file":".github/workflows/real-clients.yml","changedScalars":4,"completeInverse":true}
+{"file":".github/workflows/release.yml","changedScalars":27,"completeInverse":true}
+{"file":".github/workflows/soak.yml","changedScalars":2,"completeInverse":true}
+{"file":".github/workflows/upgrade-matrix.yml","changedScalars":4,"completeInverse":true}
+{"file":".github/workflows/verify-releases.yml","changedScalars":3,"completeInverse":true}

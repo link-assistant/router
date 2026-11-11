@@ -1,0 +1,2125 @@
+{"event":"javascript-gate-fingerprint","state":"start","totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"changelog.d/20261015_000171_mutable_primitive_f64.md","kind":"file","bytes":691,"completedFiles":512,"completedBytes":7299673,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"changelog.d/20261020_000545_package_default_source_data.md","kind":"file","bytes":386,"completedFiles":1024,"completedBytes":7811599,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"dev/log/issues/184/pulls/185/clone-js-template.log","kind":"file","bytes":61,"completedFiles":1536,"completedBytes":34755214,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"dev/log/issues/648/pulls/649/ci-logs/ci-cd-pipeline-36764352534.log","kind":"file","bytes":11717874,"completedFiles":1669,"completedBytes":53157912,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"dev/log/issues/648/pulls/649/ci-logs/ci-cd-pipeline-36764352534.log","kind":"file","bytes":11717874,"completedFiles":1670,"completedBytes":64875786,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"dev/log/issues/784/pulls/785/sessions/01a1b36c-121f-7021-bb04-c1695b2b19ed/solve.log","kind":"file","bytes":17324841,"completedFiles":1742,"completedBytes":80379849,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"dev/log/issues/784/pulls/785/sessions/01a1b36c-121f-7021-bb04-c1695b2b19ed/solve.log","kind":"file","bytes":17324841,"completedFiles":1743,"completedBytes":97704690,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"docs/case-studies/issue-759/current/canonical-recovery/complete-evidence.tar.xz","kind":"file","bytes":18748440,"completedFiles":1995,"completedBytes":107798980,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/current/canonical-recovery/complete-evidence.tar.xz","kind":"file","bytes":18748440,"completedFiles":1996,"completedBytes":126547420,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"docs/case-studies/issue-759/current/coherent-source-successor/complete-evidence.tar.xz","kind":"file","bytes":11462080,"completedFiles":2026,"completedBytes":136757956,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/current/coherent-source-successor/complete-evidence.tar.xz","kind":"file","bytes":11462080,"completedFiles":2027,"completedBytes":148220036,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/current/language-layout-20261019/complete-ci-657-feedback.tar.xz","kind":"file","bytes":1024784,"completedFiles":2048,"completedBytes":156053367,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"docs/case-studies/issue-759/current/verified-source-successor-20261015/complete-part-2.tar.xz","kind":"file","bytes":49102280,"completedFiles":2123,"completedBytes":176968703,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/current/verified-source-successor-20261015/complete-part-2.tar.xz","kind":"file","bytes":49102280,"completedFiles":2124,"completedBytes":226070983,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"docs/case-studies/issue-759/current/verified-source-successor-20261015/complete-part-3.tar.xz","kind":"file","bytes":19603808,"completedFiles":2125,"completedBytes":226286209,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/current/verified-source-successor-20261015/complete-part-3.tar.xz","kind":"file","bytes":19603808,"completedFiles":2126,"completedBytes":245890017,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/artifacts/repository-artifacts-per-page50-page-008.json.gz","kind":"file","bytes":5439,"completedFiles":2560,"completedBytes":249948748,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37470365590/attempt-1/expanded-log-manifest.json","kind":"file","bytes":798,"completedFiles":3072,"completedBytes":257216311,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37472289946/attempt-1/logs/4_Build CLI cli-linux-x64.txt.xz","kind":"file","bytes":30744,"completedFiles":3584,"completedBytes":260519436,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477594040/attempt-1/logs/Build the census and upload it/system.txt.gz","kind":"file","bytes":393,"completedFiles":4096,"completedBytes":263976436,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37485477332/attempt-1/logs/11_Package VS Code extension (.vsix).txt.xz","kind":"file","bytes":16148,"completedFiles":4608,"completedBytes":268509398,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37489942808/attempt-1/jobs-page-001.json.gz","kind":"file","bytes":1248,"completedFiles":5120,"completedBytes":271579850,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543604/attempt-1/logs/Box Image Projects (go)/system.txt.gz","kind":"file","bytes":535,"completedFiles":5632,"completedBytes":275996709,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522181979/attempt-1/logs/E2E (opencode)/system.txt.gz","kind":"file","bytes":452,"completedFiles":6144,"completedBytes":279555842,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37529112833/attempt-1/logs-not-downloaded.json","kind":"file","bytes":267,"completedFiles":6656,"completedBytes":283439416,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37534053262/attempt-1/logs/Docker Image Build & Runtime Check/system.txt.gz","kind":"file","bytes":489,"completedFiles":7168,"completedBytes":287202235,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37547113880/attempt-1/jobs-page-001.json.gz","kind":"file","bytes":4167,"completedFiles":7680,"completedBytes":291134387,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37560998565/attempt-1/expanded-log-manifest.json","kind":"file","bytes":875,"completedFiles":8192,"completedBytes":295943346,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37570930929/attempt-1/logs/9_Box Image Projects (ruby).txt.gz","kind":"file","bytes":10106,"completedFiles":8704,"completedBytes":300858742,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37582735911/attempt-1/logs/26_base _ Pin base commit.txt.gz","kind":"file","bytes":4738,"completedFiles":9216,"completedBytes":304558661,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37613770572/attempt-1/logs/E2E (opencode-desktop)/system.txt.gz","kind":"file","bytes":453,"completedFiles":9728,"completedBytes":310461059,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37628152186/attempt-1/logs/Box Image Projects (python)/system.txt.gz","kind":"file","bytes":537,"completedFiles":10240,"completedBytes":315424039,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37706284854/attempt-1/jobs-all.json","kind":"file","bytes":3581,"completedFiles":10752,"completedBytes":320228201,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37719638927/attempt-1/logs/js tier (node --check over js, suites 2_4)/system.txt.gz","kind":"file","bytes":443,"completedFiles":11264,"completedBytes":325203480,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37752832195/attempt-1/logs/CodeQL (rust)/system.txt.gz","kind":"file","bytes":309,"completedFiles":11776,"completedBytes":333086559,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37768966211/attempt-1/logs/37_Detect Changes.txt.xz","kind":"file","bytes":65432,"completedFiles":12288,"completedBytes":338999072,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37778965238/attempt-1/expanded-log-manifest.json","kind":"file","bytes":3,"completedFiles":12800,"completedBytes":343005725,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37781789803/attempt-1/logs/Build CLI cli-windows-x64/system.txt.gz","kind":"file","bytes":488,"completedFiles":13312,"completedBytes":346268559,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37794331995/attempt-1/logs/12_Package VS Code extension (.vsix).txt.xz","kind":"file","bytes":16276,"completedFiles":13824,"completedBytes":350424486,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37799594933/attempt-1/run.json.gz","kind":"file","bytes":2227,"completedFiles":14336,"completedBytes":353476508,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806671431/attempt-1/expanded-log-manifest.json","kind":"file","bytes":777,"completedFiles":14848,"completedBytes":358066601,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37807900891/attempt-1/jobs-all.json","kind":"file","bytes":1082,"completedFiles":15360,"completedBytes":359210055,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37811593050/attempt-1/logs/Release Preflight/system.txt.gz","kind":"file","bytes":395,"completedFiles":15872,"completedBytes":361695486,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37823689468/attempt-1/expanded-log-manifest.json","kind":"file","bytes":3,"completedFiles":16384,"completedBytes":365325407,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37833155766/attempt-1/logs/Build linux-x64/system.txt.gz","kind":"file","bytes":480,"completedFiles":16896,"completedBytes":370441712,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37840425612/attempt-1/jobs-all.json","kind":"file","bytes":1091,"completedFiles":17408,"completedBytes":374040946,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37860243220/attempt-1/logs/macOS Core Tests _ Build macOS test archive/system.txt.gz","kind":"file","bytes":651,"completedFiles":17920,"completedBytes":378718969,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37870721768/attempt-1/logs/Version Modification Check/system.txt.gz","kind":"file","bytes":443,"completedFiles":18432,"completedBytes":383886798,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37900412888/attempt-1/logs/Box Image Projects (go)/system.txt.gz","kind":"file","bytes":528,"completedFiles":18944,"completedBytes":388602314,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37957602769/attempt-1/logs/14_Full source network serialization (1_8).txt.xz","kind":"file","bytes":16764,"completedFiles":19456,"completedBytes":394515496,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37980990387/attempt-1/logs/Agent CLI ladder depth-5-1.1.1.1/system.txt.gz","kind":"file","bytes":459,"completedFiles":19968,"completedBytes":398710055,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38003442331/attempt-1/logs/27_Test (ubuntu-latest _ full) shard 2_5.txt.xz","kind":"file","bytes":23784,"completedFiles":20480,"completedBytes":403837661,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38017973507/attempt-1/logs/15_Produce native aarch64-unknown-linux-gnu.txt.xz","kind":"file","bytes":33532,"completedFiles":20992,"completedBytes":408749447,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38034752597/attempt-1/logs/Select exact native release source/system.txt.gz","kind":"file","bytes":488,"completedFiles":21504,"completedBytes":413984605,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38040651006/attempt-1/logs/0_Matrix summary.txt.gz","kind":"file","bytes":1435,"completedFiles":22016,"completedBytes":417968377,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38050091632/attempt-1/logs/13_E2E Tests (agent CLI ↔ formal-ai) _ E2E Tests (agent CLI ↔ formal-ai).txt.xz","kind":"file","bytes":15636,"completedFiles":22528,"completedBytes":422816476,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38055711345/attempt-1/logs/E2E Tests (local web app) _ E2E Tests (local web app, shard 1_3)/system.txt.gz","kind":"file","bytes":576,"completedFiles":23040,"completedBytes":427977527,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38073189714/attempt-1/logs/js tier (node --check over js, suites 4_4)/system.txt.gz","kind":"file","bytes":441,"completedFiles":23552,"completedBytes":433026713,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37981694647/attempt-1/jobs-all.json.gz","kind":"file","bytes":3950,"completedFiles":24064,"completedBytes":439376867,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11661121158/text-manifest.json","kind":"file","bytes":1304,"completedFiles":24576,"completedBytes":442160808,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37660345580/attempt-1/logs/32_Rust _ Code Coverage (remaining).txt.xz","kind":"file","bytes":17300,"completedFiles":25088,"completedBytes":446599766,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37782943924/attempt-1/logs/19_Self-Translation Report (1_8).txt.gz","kind":"file","bytes":5261,"completedFiles":25600,"completedBytes":449025761,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37822606126/attempt-1/logs/56_JavaScript _ JavaScript Tests (grammar).txt.xz","kind":"file","bytes":30436,"completedFiles":26112,"completedBytes":453474076,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37984660603/attempt-1/logs/0_Full Requirements Aggregate.txt.gz","kind":"file","bytes":1618,"completedFiles":26624,"completedBytes":455792848,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38029353887/attempt-1/annotations/114146841980-page-001.json","kind":"file","bytes":880,"completedFiles":27136,"completedBytes":458308092,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35900766650/attempt-1/jobs-all.json.gz","kind":"file","bytes":871,"completedFiles":27648,"completedBytes":462582694,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37985634038/attempt-1/jobs-all.json.gz","kind":"file","bytes":1078,"completedFiles":28160,"completedBytes":465781178,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/text-objects/2d/2d05dafb597154926e75c58e4c6816b9eb2a3f894625d685c4e8f541fbcde50d.gz","kind":"file","bytes":1992,"completedFiles":28672,"completedBytes":470324264,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/text-objects/6a/6a68c4921afffee18214b737d0175309888cc7cd3db5a104718db93d2313182e.gz","kind":"file","bytes":9847,"completedFiles":29184,"completedBytes":473301467,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/text-objects/9f/9ffc124d8e42d933e7f2e8a9d9f225eb1deb90b5b6f73ad443d1f301e867b937.gz","kind":"file","bytes":8715,"completedFiles":29696,"completedBytes":476352219,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/text-objects/d8/d89c4dc2e681a0145751df838bc7e57e7b04bfd1f48fcec7f9bf03be0d160f12.gz","kind":"file","bytes":2674,"completedFiles":30208,"completedBytes":479336063,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"docs/case-studies/issue-759/raw/current-task/coherent-source-batch-v7/complete-evidence.tar.xz","kind":"file","bytes":11715560,"completedFiles":30564,"completedBytes":499315195,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/current-task/coherent-source-batch-v7/complete-evidence.tar.xz","kind":"file","bytes":11715560,"completedFiles":30565,"completedBytes":511030755,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/go.yml","kind":"file","bytes":8717,"completedFiles":30720,"completedBytes":525549067,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-784/evidence/checkpoint-e881-terminal/checkpoint-e881-artifacts-terminal.json","kind":"file","bytes":19154,"completedFiles":31232,"completedBytes":535703168,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-784/evidence/ci-3b197/current-3b197-early-job-128997756668.log.gz","kind":"file","bytes":94984,"completedFiles":31744,"completedBytes":555471331,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-784/evidence/ci-815527/current-815527-published-numstat.txt","kind":"file","bytes":162745,"completedFiles":32256,"completedBytes":571256384,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-784/evidence/current-37147a/current-37147a-job-129051661233.log.gz","kind":"file","bytes":595629,"completedFiles":32768,"completedBytes":587543903,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-784/evidence/current-struct-ordering.json.gz","kind":"file","bytes":10449,"completedFiles":33280,"completedBytes":677044595,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"experiments/issue-35/e2e-evidence/server.log.redacted","kind":"file","bytes":840,"completedFiles":33792,"completedBytes":714602325,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"experiments/issue-784/inspect-stock-intrinsics.mjs","kind":"file","bytes":2844,"completedFiles":34304,"completedBytes":720339564,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"experiments/issue-784/standard-network-path-inputs-v2/library--core--src--net--mod.rs.gz","kind":"file","bytes":384,"completedFiles":34816,"completedBytes":722974738,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"js/generated/rust-draft/rust/src/platform_keychain_tests.mjs","kind":"file","bytes":551,"completedFiles":35328,"completedBytes":726261217,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"js/generated/rust-owned-definitions/rust/src/lib/runtime/json-roundtrip-numbers.mjs","kind":"file","bytes":5346,"completedFiles":35840,"completedBytes":727152868,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/packages/javascript/generated/rust-draft/fuzz/harness.mjs","kind":"file","bytes":511,"completedFiles":36352,"completedBytes":737133941,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/packages/javascript/generated/rust-draft/src/responses_websocket_tests.mjs","kind":"file","bytes":546,"completedFiles":36864,"completedBytes":738167731,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/packages/typescript/generated/rust-draft/src/admin.ts","kind":"file","bytes":22059,"completedFiles":37376,"completedBytes":740011427,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/packages/typescript/generated/rust-draft/src/vendor_cli_refresh_tests.ts","kind":"file","bytes":551,"completedFiles":37888,"completedBytes":743701518,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/tools/translation/meta/src/deploy_image.meta.json","kind":"file","bytes":16276,"completedFiles":38400,"completedBytes":760304356,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/tools/translation/meta/tests/router_e2e/bridge_semantics.meta.json","kind":"file","bytes":18091,"completedFiles":38912,"completedBytes":791562182,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/tools/translation/projects/src/lib.meta.json","kind":"file","bytes":24531818,"completedFiles":38968,"completedBytes":793599153,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/tools/translation/projects/src/lib.meta.json","kind":"file","bytes":24531818,"completedFiles":38969,"completedBytes":818130971,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/tools/translation/projects/src/lib.meta.json.parts/checkedSemanticProgram.json","kind":"file","bytes":43603398,"completedFiles":38969,"completedBytes":818130971,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/tools/translation/projects/src/lib.meta.json.parts/checkedSemanticProgram.json","kind":"file","bytes":43603398,"completedFiles":38970,"completedBytes":861734369,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/tools/translation/projects/src/lib.meta.json.parts/targetSemanticProgram.json","kind":"file","bytes":44617984,"completedFiles":38970,"completedBytes":861734369,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/tools/translation/projects/src/lib.meta.json.parts/targetSemanticProgram.json","kind":"file","bytes":44617984,"completedFiles":38971,"completedBytes":906352353,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/packages/javascript/generated/rust-draft/src/native_service.mjs","kind":"file","bytes":1976,"completedFiles":39424,"completedBytes":907437285,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/packages/typescript/generated/rust-draft/runtime/formal-ai-lexer-LICENSE","kind":"file","bytes":1211,"completedFiles":39936,"completedBytes":909147768,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/packages/typescript/generated/rust-draft/src/responses_chat_input.ts","kind":"file","bytes":8264,"completedFiles":40448,"completedBytes":911421864,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/tools/translation/meta/src/bounded_process.meta.json","kind":"file","bytes":24327,"completedFiles":40960,"completedBytes":921301871,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/tools/translation/meta/tests/auth_cli_test.meta.json","kind":"file","bytes":70479,"completedFiles":41472,"completedBytes":955764015,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/tools/translation/projects/src/lib.meta.json","kind":"file","bytes":17799042,"completedFiles":41633,"completedBytes":961598503,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/tools/translation/projects/src/lib.meta.json","kind":"file","bytes":17799042,"completedFiles":41634,"completedBytes":979397545,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/tools/translation/projects/src/lib.meta.json.parts/checkedSemanticProgram.json","kind":"file","bytes":33085722,"completedFiles":41634,"completedBytes":979397545,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/tools/translation/projects/src/lib.meta.json.parts/checkedSemanticProgram.json","kind":"file","bytes":33085722,"completedFiles":41635,"completedBytes":1012483267,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/tools/translation/projects/src/lib.meta.json.parts/targetSemanticProgram.json","kind":"file","bytes":34118604,"completedFiles":41635,"completedBytes":1012483267,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/tools/translation/projects/src/lib.meta.json.parts/targetSemanticProgram.json","kind":"file","bytes":34118604,"completedFiles":41636,"completedBytes":1046601871,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/packages/javascript/generated/rust-draft/src/gemini_bridge_request_tests.mjs","kind":"file","bytes":550,"completedFiles":41984,"completedBytes":1047506076,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/packages/javascript/generated/rust-project/runtime/fixed-integer-NOTICE.md","kind":"file","bytes":1524,"completedFiles":42496,"completedBytes":1048354843,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/packages/typescript/generated/rust-draft/src/model_routing_resources.ts","kind":"file","bytes":547,"completedFiles":43008,"completedBytes":1051198490,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/tools/translation/meta/experiments/include-coverage-paths/src/bin/manifest.meta.json","kind":"file","bytes":9566,"completedFiles":43520,"completedBytes":1057326445,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/tools/translation/meta/src/stream_termination_tests.meta.json","kind":"file","bytes":28916,"completedFiles":44032,"completedBytes":1088475355,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/tools/translation/projects/src/lib.meta.json","kind":"file","bytes":17745286,"completedFiles":44298,"completedBytes":1101902753,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/tools/translation/projects/src/lib.meta.json","kind":"file","bytes":17745286,"completedFiles":44299,"completedBytes":1119648039,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/tools/translation/projects/src/lib.meta.json.parts/checkedSemanticProgram.json","kind":"file","bytes":33060968,"completedFiles":44299,"completedBytes":1119648039,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/tools/translation/projects/src/lib.meta.json.parts/checkedSemanticProgram.json","kind":"file","bytes":33060968,"completedFiles":44300,"completedBytes":1152709007,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/tools/translation/projects/src/lib.meta.json.parts/targetSemanticProgram.json","kind":"file","bytes":34093732,"completedFiles":44300,"completedBytes":1152709007,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/tools/translation/projects/src/lib.meta.json.parts/targetSemanticProgram.json","kind":"file","bytes":34093732,"completedFiles":44301,"completedBytes":1186802739,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"rust/src/conversation_record/matching.rs","kind":"file","bytes":6700,"completedFiles":44544,"completedBytes":1192137273,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"rust/tests/fixtures/thinking/body.json","kind":"file","bytes":25758,"completedFiles":45056,"completedBytes":1198522051,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/conditional-namespace-superset.mjs","kind":"file","bytes":15381,"completedFiles":45568,"completedBytes":1206105273,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/fixtures/json-roundtrip/format-builtin-source-bridge-next-plan.json","kind":"file","bytes":3620,"completedFiles":46080,"completedBytes":1264016856,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"tools/translation/fixtures/macro-module-path-evidence/complete-records.tar.gz","kind":"file","bytes":9866762,"completedFiles":46107,"completedBytes":1264128528,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/fixtures/macro-module-path-evidence/complete-records.tar.gz","kind":"file","bytes":9866762,"completedFiles":46108,"completedBytes":1273995290,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/js-to-rust/generated/native-portable/scoped/codex-login.rs.txt","kind":"file","bytes":4065,"completedFiles":46592,"completedBytes":1358788470,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/literal-include-source-program.mjs","kind":"file","bytes":10235,"completedFiles":47104,"completedBytes":1386795104,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/meta/rust/src/route_contract_routing.meta.json","kind":"file","bytes":18109,"completedFiles":47616,"completedBytes":1492249741,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/prepare-literal-include-type-contribution.mjs","kind":"file","bytes":21552,"completedFiles":48128,"completedBytes":1564792138,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"tools/translation/projects/rust/src/lib.meta.json","kind":"file","bytes":25078239,"completedFiles":48244,"completedBytes":1566809424,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/projects/rust/src/lib.meta.json","kind":"file","bytes":25078239,"completedFiles":48245,"completedBytes":1591887663,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"tools/translation/projects/rust/src/lib.meta.json.parts/checkedSemanticProgram.json","kind":"file","bytes":46847111,"completedFiles":48245,"completedBytes":1591887663,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/projects/rust/src/lib.meta.json.parts/checkedSemanticProgram.json","kind":"file","bytes":46847111,"completedFiles":48246,"completedBytes":1638734774,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"tools/translation/projects/rust/src/lib.meta.json.parts/concreteSyntaxMeta.json","kind":"file","bytes":14678043,"completedFiles":48246,"completedBytes":1638734774,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/projects/rust/src/lib.meta.json.parts/concreteSyntaxMeta.json","kind":"file","bytes":14678043,"completedFiles":48247,"completedBytes":1653412817,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"tools/translation/projects/rust/src/lib.meta.json.parts/targetSemanticProgram.json","kind":"file","bytes":48042608,"completedFiles":48247,"completedBytes":1653412817,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/projects/rust/src/lib.meta.json.parts/targetSemanticProgram.json","kind":"file","bytes":48042608,"completedFiles":48248,"completedBytes":1701455425,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/source-profiles/default-proof-byte-adoption/default-proof-byte-operation.mjs.txt","kind":"file","bytes":663,"completedFiles":48640,"completedBytes":1718839216,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/source-profiles/source-format-template/execution-evidence/source-format-template-node-sixth.log.gz","kind":"file","bytes":1162,"completedFiles":49152,"completedBytes":1746642565,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/test/fixtures/source-metadata-copy-previous.mjs","kind":"file","bytes":2407,"completedFiles":49664,"completedBytes":1763980376,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/test/typed-targets.mjs","kind":"file","bytes":3291,"completedFiles":50176,"completedBytes":1771423841,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"ts/generated/rust-draft/experiments/issue-725/signed-zero-reproduction.ts","kind":"file","bytes":585,"completedFiles":50688,"completedBytes":1779810224,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"ts/generated/rust-draft/rust/src/request_log/tracked_body.ts","kind":"file","bytes":559,"completedFiles":51200,"completedBytes":1782167658,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"ts/generated/rust-owned-definitions/rust/src/main/runtime/float-runtime.mjs","kind":"file","bytes":1128,"completedFiles":51712,"completedBytes":1784827082,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"complete","completedFiles":52119,"completedBytes":1790037753,"totalFiles":52119}
+Manual development stage: lint
+{"files":78,"bytes":3499265,"mode":"check","changed":0,"rustExecuted":false}
+Syntax checked 1938 JavaScript source files.
+TAP version 13
+# Manual development stage: lint
+# Manual development stage: node-tests
+# Manual development stage: bun-tests
+# Manual development stage: typescript
+# Manual development stage: lint
+# Manual development stage: node-tests
+# Manual development stage: bun-tests
+# Manual development stage: typescript
+# Subtest: actual manual workflow is SHA-pinned, fail-closed, and preserves the complete strict source policy
+ok 1 - actual manual workflow is SHA-pinned, fail-closed, and preserves the complete strict source policy
+  ---
+  duration_ms: 708.428054
+  ...
+# Subtest: manual lane refuses missing, skipped, ignored, reordered or substituted checks
+ok 2 - manual lane refuses missing, skipped, ignored, reordered or substituted checks
+  ---
+  duration_ms: 1646.296996
+  ...
+# Subtest: immutable SHA, read-only permissions and explicit false Rust output cannot be bypassed
+ok 3 - immutable SHA, read-only permissions and explicit false Rust output cannot be bypassed
+  ---
+  duration_ms: 791.619055
+  ...
+# Subtest: every caller retains its false Rust guard, original dependencies, draft policy and source pins
+ok 4 - every caller retains its false Rust guard, original dependencies, draft policy and source pins
+  ---
+  duration_ms: 2106.433359
+  ...
+# Subtest: malformed and duplicate YAML keys fail closed
+ok 5 - malformed and duplicate YAML keys fail closed
+  ---
+  duration_ms: 330.549619
+  ...
+# Subtest: aggregate executes and rejects failed, cancelled, skipped, missing and unknown stages
+ok 6 - aggregate executes and rejects failed, cancelled, skipped, missing and unknown stages
+  ---
+  duration_ms: 489.156696
+  ...
+# Subtest: local runner executes all active commands and cannot produce strict parity evidence
+ok 7 - local runner executes all active commands and cannot produce strict parity evidence
+  ---
+  duration_ms: 5.770594
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6487.91367
+Temporary manual development workflow policy verified. Automated translation is suspended; strict parity is unverified; Rust/releases remain blocked.
+TAP version 13
+# Subtest: real nonblocking trace pipe preserves all bytes through pressure and partial Unicode writes
+ok 1 - real nonblocking trace pipe preserves all bytes through pressure and partial Unicode writes
+  ---
+  duration_ms: 233.976927
+  ...
+# Subtest: a blocked trace retains the original absolute deadline and its exact completed prefix
+ok 2 - a blocked trace retains the original absolute deadline and its exact completed prefix
+  ---
+  duration_ms: 159.227715
+  ...
+# Subtest: trace transport preserves permanent descriptor errors and rejects unbounded deadlines
+ok 3 - trace transport preserves permanent descriptor errors and rejects unbounded deadlines
+  ---
+  duration_ms: 121.934069
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 714.55864
+bun test v1.4.4 (38afee6c8)
+
+tools/translation/test/matrix-trace-writer.test.mjs:
+(pass) real nonblocking trace pipe preserves all bytes through pressure and partial Unicode writes [199.20ms]
+(pass) a blocked trace retains the original absolute deadline and its exact completed prefix [319.93ms]
+(pass) trace transport preserves permanent descriptor errors and rejects unbounded deadlines [67.95ms]
+
+ 3 pass
+ 0 fail
+Ran 3 tests across 1 file. [1.61s]
+Manual development stage: node-tests
+
+> @link-assistant/router@1.24.1 native:test
+> node --test test/native-*.test.*
+
+TAP version 13
+# Subtest: source stored provider discovery and native resources use logical primary client authority independently of provider physical names
+ok 1 - source stored provider discovery and native resources use logical primary client authority independently of provider physical names
+  ---
+  duration_ms: 531.737935
+  ...
+# Subtest: subscription principal scoping keeps each provider primary distinct and named secondary strict without aliasing arbitrary physical names
+ok 2 - subscription principal scoping keeps each provider primary distinct and named secondary strict without aliasing arbitrary physical names
+  ---
+  duration_ms: 28.432025
+  ...
+# Subtest: actual implicit primary OAuth subscription relay persists canonical account and rejects named foreign ownership
+ok 3 - actual implicit primary OAuth subscription relay persists canonical account and rejects named foreign ownership
+  ---
+  duration_ms: 607.769471
+  ...
+# Subtest: admin candidates remain revoked until proof of possession and confirmed claim retires older admins
+ok 4 - admin candidates remain revoked until proof of possession and confirmed claim retires older admins
+  ---
+  duration_ms: 32.33697
+  ...
+# Subtest: only the latest candidate can confirm and expiry leaves bootstrap open
+ok 5 - only the latest candidate can confirm and expiry leaves bootstrap open
+  ---
+  duration_ms: 13.308935
+  ...
+# Subtest: claimed JWT survives restart without storing bearer, rotates and stays revoked or expired
+ok 6 - claimed JWT survives restart without storing bearer, rotates and stays revoked or expired
+  ---
+  duration_ms: 1714.803284
+  ...
+# Subtest: environment administrator closes bootstrap and anonymous management requires explicit opt-out
+ok 7 - environment administrator closes bootstrap and anonymous management requires explicit opt-out
+  ---
+  duration_ms: 14.649146
+  ...
+# Subtest: legacy opaque claim migrates to revocable admin JWT
+ok 8 - legacy opaque claim migrates to revocable admin JWT
+  ---
+  duration_ms: 377.918578
+  ...
+# Subtest: run lease can recover heartbeat outage but cannot promote ordinary, revoked or expired records
+ok 9 - run lease can recover heartbeat outage but cannot promote ordinary, revoked or expired records
+  ---
+  duration_ms: 9.444998
+  ...
+# Subtest: native resource admission consumes request quota exactly once and token settlement does not consume another request
+ok 10 - native resource admission consumes request quota exactly once and token settlement does not consume another request
+  ---
+  duration_ms: 7.040434
+  ...
+# Subtest: login reserves concurrent capacity before waiting for driver construction
+ok 11 - login reserves concurrent capacity before waiting for driver construction
+  ---
+  duration_ms: 20.553449
+  ...
+# Subtest: session expiry and retention use injected clock and never accept an expired code
+ok 12 - session expiry and retention use injected clock and never accept an expired code
+  ---
+  duration_ms: 9.871754
+  ...
+# Subtest: successful login installs owned durable credential before deleting private staging source
+ok 13 - successful login installs owned durable credential before deleting private staging source
+  ---
+  duration_ms: 103.318104
+  ...
+# Subtest: cancel during provider exchange prevents destination credential promotion
+ok 14 - cancel during provider exchange prevents destination credential promotion
+  ---
+  duration_ms: 8.942651
+  ...
+# Subtest: credential inspection verifies catalogs and redacts provider API keys
+ok 15 - credential inspection verifies catalogs and redacts provider API keys
+  ---
+  duration_ms: 281.35791
+  ...
+# Subtest: disabled login, unsupported providers, unknown code and malformed drivers fail explicitly
+ok 16 - disabled login, unsupported providers, unknown code and malformed drivers fail explicitly
+  ---
+  duration_ms: 7.023601
+  ...
+# Subtest: promotion fence rejects cancellation after the destination commit has begun
+ok 17 - promotion fence rejects cancellation after the destination commit has begun
+  ---
+  duration_ms: 147.483829
+  ...
+# Subtest: global flags precede or follow commands and client arguments after delimiter are preserved
+ok 18 - global flags precede or follow commands and client arguments after delimiter are preserved
+  ---
+  duration_ms: 4.879612
+  ...
+# Subtest: human output and errors are separate streams while --json retains one complete machine result
+ok 19 - human output and errors are separate streams while --json retains one complete machine result
+  ---
+  duration_ms: 174.649242
+  ...
+# Subtest: local and remote token tables use the Rust field order, defaults and limit rendering
+ok 20 - local and remote token tables use the Rust field order, defaults and limit rendering
+  ---
+  duration_ms: 3.640201
+  ...
+# Subtest: client setup mints exact bound credential and writes no token into public config or output
+ok 21 - client setup mints exact bound credential and writes no token into public config or output
+  ---
+  duration_ms: 1034.152153
+  ...
+# Subtest: transaction failure after config/environment/metadata restores original bytes and mode and revokes unused minted token
+ok 22 - transaction failure after config/environment/metadata restores original bytes and mode and revokes unused minted token
+  ---
+  duration_ms: 1148.715713
+  ...
+# Subtest: catalog rejection and wrong-client credentials never alter existing client configuration
+ok 23 - catalog rejection and wrong-client credentials never alter existing client configuration
+  ---
+  duration_ms: 107.149201
+  ...
+# Subtest: supplied credentials stay valid by default on removal; explicit revocation requires actual owned metadata
+ok 24 - supplied credentials stay valid by default on removal; explicit revocation requires actual owned metadata
+  ---
+  duration_ms: 2089.974838
+  ...
+# Subtest: concurrent operator edit is preserved and failed transaction retains its private recovery snapshot
+ok 25 - concurrent operator edit is preserved and failed transaction retains its private recovery snapshot
+  ---
+  duration_ms: 317.53345
+  ...
+# Subtest: operation text reads preserve BOM bytes instead of changing the transaction digest
+ok 26 - operation text reads preserve BOM bytes instead of changing the transaction digest
+  ---
+  duration_ms: 23.135335
+  ...
+# Subtest: hashed log directory selector is usable while bearer credential flags remain refused
+ok 27 - hashed log directory selector is usable while bearer credential flags remain refused
+  ---
+  duration_ms: 2.153016
+  ...
+# Subtest: client paths canonicalize aliases and honor explicit isolated home over ambient credentials
+ok 28 - client paths canonicalize aliases and honor explicit isolated home over ambient credentials
+  ---
+  duration_ms: 71.62744
+  ...
+# Subtest: all eight rows survive a malformed JSON configuration and show the matching error
+ok 29 - all eight rows survive a malformed JSON configuration and show the matching error
+  ---
+  duration_ms: 754.978707
+  ...
+# Subtest: Codex reads real TOML quoted keys inline tables and rejects malformed grammar
+ok 30 - Codex reads real TOML quoted keys inline tables and rejects malformed grammar
+  ---
+  duration_ms: 73.59458
+  ...
+# Subtest: OpenCode setup refreshes owned models preserves user settings and restores previous provider
+ok 31 - OpenCode setup refreshes owned models preserves user settings and restores previous provider
+  ---
+  duration_ms: 212.049776
+  ...
+# Subtest: user drift is preserved on removal and Qwen removes only exact owned entries
+ok 32 - user drift is preserved on removal and Qwen removes only exact owned entries
+  ---
+  duration_ms: 158.380394
+  ...
+# Subtest: credential metadata and actual config establish ownership; conflicting ambient values expose only key names
+ok 33 - credential metadata and actual config establish ownership; conflicting ambient values expose only key names
+  ---
+  duration_ms: 160.764631
+  ...
+# Subtest: managed exports round trip shell quoting and contain Codex control-plane aliases privately
+ok 34 - managed exports round trip shell quoting and contain Codex control-plane aliases privately
+  ---
+  duration_ms: 44.801911
+  ...
+# Subtest: catalog consumes canonical authenticated endpoint and rejects every malformed row without silently dropping it
+ok 35 - catalog consumes canonical authenticated endpoint and rejects every malformed row without silently dropping it
+  ---
+  duration_ms: 47.427068
+  ...
+# Subtest: device authorization uses public client, actual poll/PKCE/form grant and catalog before owned installation
+ok 36 - device authorization uses public client, actual poll/PKCE/form grant and catalog before owned installation
+  ---
+  duration_ms: 314.99216
+  ...
+# Subtest: device response PKCE mismatch never exchanges or installs tokens
+ok 37 - device response PKCE mismatch never exchanges or installs tokens
+  ---
+  duration_ms: 70.253608
+  ...
+# Subtest: device denial and cancelled pending polling never install credentials
+ok 38 - device denial and cancelled pending polling never install credentials
+  ---
+  duration_ms: 70.429727
+  ...
+# Subtest: loopback validates state without consuming callback and closes listener before form grant
+ok 39 - loopback validates state without consuming callback and closes listener before form grant
+  ---
+  duration_ms: 259.939838
+  ...
+# Subtest: unsupported issuer, flow, malformed interval and missing token fields fail explicitly
+ok 40 - unsupported issuer, flow, malformed interval and missing token fields fail explicitly
+  ---
+  duration_ms: 39.981119
+  ...
+# Subtest: HTTP login session uses real Codex driver and reports authorized only after final owned promotion
+ok 41 - HTTP login session uses real Codex driver and reports authorized only after final owned promotion
+  ---
+  duration_ms: 244.021033
+  ...
+# Subtest: real core native resources retain Rust stored-provider identity and client ownership through durable restart
+ok 42 - real core native resources retain Rust stored-provider identity and client ownership through durable restart
+  ---
+  duration_ms: 2739.989551
+  ...
+# Subtest: real emergency authority is bounded client-only, counts one outcome and exposes exact health management diagnostics
+ok 43 - real emergency authority is bounded client-only, counts one outcome and exposes exact health management diagnostics
+  ---
+  duration_ms: 997.010591
+  ...
+# Subtest: real core admin two-phase claim and monotonic lockout use HTTP credential verification and actual normalized peer
+ok 44 - real core admin two-phase claim and monotonic lockout use HTTP credential verification and actual normalized peer
+  ---
+  duration_ms: 2059.355652
+  ...
+# Subtest: Rust-compatible JWT carriers, signature, expiry leeway, revocation, admin scope
+ok 45 - Rust-compatible JWT carriers, signature, expiry leeway, revocation, admin scope
+  ---
+  duration_ms: 15.529147
+  ...
+# Subtest: unsigned/algorithm-confused token and published sentinel cannot authenticate
+ok 46 - unsigned/algorithm-confused token and published sentinel cannot authenticate
+  ---
+  duration_ms: 1.02415
+  ...
+# Subtest: durable exact model authority fails closed for untracked and wrong model selectors
+ok 47 - durable exact model authority fails closed for untracked and wrong model selectors
+  ---
+  duration_ms: 1.781423
+  ...
+# Subtest: client/principal and repository security boundaries
+ok 48 - client/principal and repository security boundaries
+  ---
+  duration_ms: 5.563268
+  ...
+# Subtest: atomic concurrent admission respects request, reserved-token and minute limits
+ok 49 - atomic concurrent admission respects request, reserved-token and minute limits
+  ---
+  duration_ms: 12.25513
+  ...
+# Subtest: fixed-minute window and sliding expiry follow injected time
+ok 50 - fixed-minute window and sliding expiry follow injected time
+  ---
+  duration_ms: 2.103684
+  ...
+# Subtest: fixture budget arithmetic remains exhausted at zero reservation
+ok 51 - fixture budget arithmetic remains exhausted at zero reservation
+  ---
+  duration_ms: 2.697251
+  ...
+# Subtest: Rust readable Links Notation strings, nested arrays and token metadata round trip
+ok 52 - Rust readable Links Notation strings, nested arrays and token metadata round trip
+  ---
+  duration_ms: 6.015882
+  ...
+# Subtest: text persistence survives reopening without storing JWT and coordinates independent instances
+ok 53 - text persistence survives reopening without storing JWT and coordinates independent instances
+  ---
+  duration_ms: 2913.947914
+  ...
+# Subtest: provider store uses Rust AES-GCM nonce/ciphertext/tag shape and redacts keys
+ok 54 - provider store uses Rust AES-GCM nonce/ciphertext/tag shape and redacts keys
+  ---
+  duration_ms: 429.455914
+  ...
+# Subtest: exact provider/model and operator alias fixture routing never guesses prefixes
+ok 55 - exact provider/model and operator alias fixture routing never guesses prefixes
+  ---
+  duration_ms: 5.315536
+  ...
+# Subtest: scoped cooldown fails over only affected model/account and strict pins never escape
+ok 56 - scoped cooldown fails over only affected model/account and strict pins never escape
+  ---
+  duration_ms: 3.12002
+  ...
+# Subtest: session failover off rejects cooling binding; weighted and least-used selection
+ok 57 - session failover off rejects cooling binding; weighted and least-used selection
+  ---
+  duration_ms: 11.888547
+  ...
+# Subtest: account policies forbid auth/transport overwrite, unsupported header reads, and duplicate aliases
+ok 58 - account policies forbid auth/transport overwrite, unsupported header reads, and duplicate aliases
+  ---
+  duration_ms: 2.174376
+  ...
+# Subtest: paused accounts and single-provider Rust limit projection survive restart
+ok 59 - paused accounts and single-provider Rust limit projection survive restart
+  ---
+  duration_ms: 385.487187
+  ...
+# Subtest: configuration file environment and explicit precedence with secret file
+ok 60 - configuration file environment and explicit precedence with secret file
+  ---
+  duration_ms: 8.043654
+  ...
+# Subtest: shared deterministic JWT and text projection fixture authenticate with durable model authority
+ok 61 - shared deterministic JWT and text projection fixture authenticate with durable model authority
+  ---
+  duration_ms: 3.765776
+  ...
+# Subtest: native durable token admission is atomic across independent Node processes
+ok 62 - native durable token admission is atomic across independent Node processes
+  ---
+  duration_ms: 2181.44842
+  ...
+# Subtest: persistent provider deletes remain authoritative across stale store instances
+ok 63 - persistent provider deletes remain authoritative across stale store instances
+  ---
+  duration_ms: 848.029199
+  ...
+# Subtest: management strategy changes preserve affinity and cooldown reset preserves manual pauses
+ok 64 - management strategy changes preserve affinity and cooldown reset preserves manual pauses
+  ---
+  duration_ms: 4.794132
+  ...
+# Subtest: rotation preserves authority and constraints while resetting Rust usage/clock semantics
+ok 65 - rotation preserves authority and constraints while resetting Rust usage/clock semantics
+  ---
+  duration_ms: 3.099703
+  ...
+# Subtest: readable codec retains empty objects and trailing quote runs; single-line markers distinguish arrays
+ok 66 - readable codec retains empty objects and trailing quote runs; single-line markers distinguish arrays
+  ---
+  duration_ms: 0.821392
+  ...
+# Subtest: credential status has no dependency on TOKEN_SECRET or TOKEN_SECRET_FILE
+ok 67 - credential status has no dependency on TOKEN_SECRET or TOKEN_SECRET_FILE
+  ---
+  duration_ms: 449.098123
+  ...
+# Subtest: clear removes every candidate file but never follows an adopted credential source or symlink
+ok 68 - clear removes every candidate file but never follows an adopted credential source or symlink
+  ---
+  duration_ms: 199.408196
+  ...
+# Subtest: multi-provider withdrawal requires confirmation before any mutation and reaches API-key providers
+ok 69 - multi-provider withdrawal requires confirmation before any mutation and reaches API-key providers
+  ---
+  duration_ms: 1263.612015
+  ...
+# Subtest: remote or saved-selected withdrawals refuse without making a request or touching local credentials
+ok 70 - remote or saved-selected withdrawals refuse without making a request or touching local credentials
+  ---
+  duration_ms: 102.009033
+  ...
+# Subtest: GitHub stdin/import/status use owner-only actual storage and host-selected mounted credentials
+ok 71 - GitHub stdin/import/status use owner-only actual storage and host-selected mounted credentials
+  ---
+  duration_ms: 109.105991
+  ...
+# Subtest: clear retains vendor Keychain ownership and reports an exact profile service without reading its secret
+ok 72 - clear retains vendor Keychain ownership and reports an exact profile service without reading its secret
+  ---
+  duration_ms: 69.731493
+  ...
+# Subtest: unremovable credentials produce a truthful failure while completed providers remain withdrawn
+ok 73 - unremovable credentials produce a truthful failure while completed providers remain withdrawn
+  ---
+  duration_ms: 77.506416
+  ...
+# Subtest: emergency mode stays opt-in, bounded, and acknowledged on every non-loopback listener
+ok 74 - emergency mode stays opt-in, bounded, and acknowledged on every non-loopback listener
+  ---
+  duration_ms: 28.53629
+  ...
+# Subtest: bypassed valid, revoked, malformed, foreign and expired credentials never mutate durable authority
+ok 75 - bypassed valid, revoked, malformed, foreign and expired credentials never mutate durable authority
+  ---
+  duration_ms: 41.495303
+  ...
+# Subtest: absent credentials remain rejected and bypass ends immediately on disable or configured lapse
+ok 76 - absent credentials remain rejected and bypass ends immediately on disable or configured lapse
+  ---
+  duration_ms: 24.165186
+  ...
+# Subtest: one request scope counts one authentication outcome and diagnostics retain bounded fingerprints
+ok 77 - one request scope counts one authentication outcome and diagnostics retain bounded fingerprints
+  ---
+  duration_ms: 27.80697
+  ...
+# Subtest: request headers determine emergency client binding before unverified token hints
+ok 78 - request headers determine emergency client binding before unverified token hints
+  ---
+  duration_ms: 10.896707
+  ...
+# Subtest: Gemini and Qwen flat aliases preserve ownership metadata while refreshed fields match vendor canonical layout
+ok 79 - Gemini and Qwen flat aliases preserve ownership metadata while refreshed fields match vendor canonical layout
+  ---
+  duration_ms: 3.511921
+  ...
+# Subtest: home selection honors official Gemini root and isolated operation environment
+ok 80 - home selection honors official Gemini root and isolated operation environment
+  ---
+  duration_ms: 0.534236
+  ...
+# Subtest: gemini refresh uses encoded form grant and durable canonical successor
+ok 81 - gemini refresh uses encoded form grant and durable canonical successor
+  ---
+  duration_ms: 138.133727
+  ...
+# Subtest: qwen refresh uses encoded form grant and durable canonical successor
+ok 82 - qwen refresh uses encoded form grant and durable canonical successor
+  ---
+  duration_ms: 120.764257
+  ...
+# Subtest: Gemini custom installed client overrides are atomic and operation scoped
+ok 83 - Gemini custom installed client overrides are atomic and operation scoped
+  ---
+  duration_ms: 172.366363
+  ...
+# Subtest: credential refresh waits for the exact shared Rust advisory lock path
+ok 84 - credential refresh waits for the exact shared Rust advisory lock path
+  ---
+  duration_ms: 283.792802
+  ...
+# Subtest: Gemini authenticated catalog uses registry pagination and exact names rather than guessed model aliases
+ok 85 - Gemini authenticated catalog uses registry pagination and exact names rather than guessed model aliases
+  ---
+  duration_ms: 2.587687
+  ...
+# Subtest: Qwen core lazily prepares only selected owning file and applies resource URL after refresh
+ok 86 - Qwen core lazily prepares only selected owning file and applies resource URL after refresh
+  ---
+  duration_ms: 120.002075
+  ...
+# Subtest: Gemini source terminal truth maps every blocked reason to content_filter including prompt-only JSON and SSE
+ok 87 - Gemini source terminal truth maps every blocked reason to content_filter including prompt-only JSON and SSE
+  ---
+  duration_ms: 54.856737
+  ...
+# Subtest: Gemini adapters preserve function pairing, generation policy and JSON usage
+ok 88 - Gemini adapters preserve function pairing, generation policy and JSON usage
+  ---
+  duration_ms: 4.664331
+  ...
+# Subtest: Gemini bridge rejects loss and ambiguous/unmatched calls
+ok 89 - Gemini bridge rejects loss and ambiguous/unmatched calls
+  ---
+  duration_ms: 1.530536
+  ...
+# Subtest: Gemini media and generation controls follow Rust bridge contracts without inventing HTTP MIME facts
+ok 90 - Gemini media and generation controls follow Rust bridge contracts without inventing HTTP MIME facts
+  ---
+  duration_ms: 2.592797
+  ...
+# Subtest: Gemini thinking uses source effort precedence, exact budget thresholds and separate summary visibility
+ok 91 - Gemini thinking uses source effort precedence, exact budget thresholds and separate summary visibility
+  ---
+  duration_ms: 2.727417
+  ...
+# Subtest: Gemini streams unwrap Code Assist, preserve UTF8/tools/usage and fail premature ending
+ok 92 - Gemini streams unwrap Code Assist, preserve UTF8/tools/usage and fail premature ending
+  ---
+  duration_ms: 6.660984
+  ...
+# Subtest: native Gemini localhost request uses Code Assist envelope and returns native response metadata
+ok 93 - native Gemini localhost request uses Code Assist envelope and returns native response metadata
+  ---
+  duration_ms: 88.588419
+  ...
+# Subtest: Gemini service translates to native Chat and keeps error dialect on rejected action
+ok 94 - Gemini service translates to native Chat and keeps error dialect on rejected action
+  ---
+  duration_ms: 4.349144
+  ...
+# Subtest: git pkt lines stop at flush and preserve exact capabilities and raw pack bytes
+ok 95 - git pkt lines stop at flush and preserve exact capabilities and raw pack bytes
+  ---
+  duration_ms: 5.704652
+  ...
+# Subtest: git localhost ancestry mediation refuses rewrites before forwarding and passes authorized fast-forward/create bytes
+ok 96 - git localhost ancestry mediation refuses rewrites before forwarding and passes authorized fast-forward/create bytes
+  ---
+  duration_ms: 160.427402
+  ...
+# Subtest: admin listener serves the actual embedded UI assets and hardens assets, API errors and fallbacks
+ok 97 - admin listener serves the actual embedded UI assets and hardens assets, API errors and fallbacks
+  ---
+  duration_ms: 43.33254
+  ...
+# Subtest: management requires actual peer, rejects remote combined ingress and enforces protected method before authentication
+ok 98 - management requires actual peer, rejects remote combined ingress and enforces protected method before authentication
+  ---
+  duration_ms: 48.123126
+  ...
+# Subtest: management counts failures once, blocks active bans before credential success and clears successful nonbanned failures
+ok 99 - management counts failures once, blocks active bans before credential success and clears successful nonbanned failures
+  ---
+  duration_ms: 3.678492
+  ...
+# Subtest: localhost server sets peer independently of forwarded headers and HEAD has no body
+ok 100 - localhost server sets peer independently of forwarded headers and HEAD has no body
+  ---
+  duration_ms: 67.959247
+  ...
+# Subtest: native managed lifecycle executes meaningful readiness, identity and ownership fixtures
+ok 101 - native managed lifecycle executes meaningful readiness, identity and ownership fixtures
+  ---
+  duration_ms: 31398.929392
+  ...
+# Subtest: mapped socket addresses normalize and default recovery exempts loopback
+ok 102 - mapped socket addresses normalize and default recovery exempts loopback
+  ---
+  duration_ms: 12.770612
+  ...
+# Subtest: successful authentication clears failures, preserves active bans, and wall-clock changes cannot shorten lockout
+ok 103 - successful authentication clears failures, preserves active bans, and wall-clock changes cannot shorten lockout
+  ---
+  duration_ms: 1.332005
+  ...
+# Subtest: bounded peer tracking backs off new clients until expired failures are pruned
+ok 104 - bounded peer tracking backs off new clients until expired failures are pruned
+  ---
+  duration_ms: 0.32231
+  ...
+# Subtest: lockout file carries Rust diagnostic shape and is never reloaded as ban authority
+ok 105 - lockout file carries Rust diagnostic shape and is never reloaded as ban authority
+  ---
+  duration_ms: 32.473875
+  ...
+# Subtest: management configuration rejects invalid switches and retains deliberate disable controls
+ok 106 - management configuration rejects invalid switches and retains deliberate disable controls
+  ---
+  duration_ms: 1.814495
+  ...
+# Subtest: canonical token management list/issuance/revoke/rotation preserve Rust wire shapes and numeric budgets
+ok 107 - canonical token management list/issuance/revoke/rotation preserve Rust wire shapes and numeric budgets
+  ---
+  duration_ms: 70.526758
+  ...
+# Subtest: admin bootstrap is open but delegated login operations require administrator authority and exact code
+ok 108 - admin bootstrap is open but delegated login operations require administrator authority and exact code
+  ---
+  duration_ms: 11.776497
+  ...
+# Subtest: Claude layout pairs nested access with nested refresh/expiry and accepts flat snake_case
+ok 109 - Claude layout pairs nested access with nested refresh/expiry and accepts flat snake_case
+  ---
+  duration_ms: 4.543936
+  ...
+# Subtest: Codex derives expiry and identity hints from exact nested carrier and refuses API-key auth
+ok 110 - Codex derives expiry and identity hints from exact nested carrier and refuses API-key auth
+  ---
+  duration_ms: 1.222851
+  ...
+# Subtest: OAuth grant endpoints reject credentials, redirects, remote overrides and plain HTTP
+ok 111 - OAuth grant endpoints reject credentials, redirects, remote overrides and plain HTTP
+  ---
+  duration_ms: 1.492024
+  ...
+# Subtest: Claude concurrent refresh deduplicates across manager instances and durably rotates before return
+ok 112 - Claude concurrent refresh deduplicates across manager instances and durably rotates before return
+  ---
+  duration_ms: 270.272742
+  ...
+# Subtest: refresh respects five-minute skew and expired credentials without refresh grants fail closed
+ok 113 - refresh respects five-minute skew and expired credentials without refresh grants fail closed
+  ---
+  duration_ms: 148.734823
+  ...
+# Subtest: Codex refresh uses JSON public client and preserves id_token, auth_mode and unknown fields
+ok 114 - Codex refresh uses JSON public client and preserves id_token, auth_mode and unknown fields
+  ---
+  duration_ms: 110.552128
+  ...
+# Subtest: read-only primary retains Rust recovery projection and restores successor after restart
+ok 115 - read-only primary retains Rust recovery projection and restores successor after restart
+  ---
+  duration_ms: 232.525311
+  ...
+# Subtest: persistence failure and uncertain grant never return access credentials or retry spent chain
+ok 116 - persistence failure and uncertain grant never return access credentials or retry spent chain
+  ---
+  duration_ms: 273.292936
+  ...
+# Subtest: external refresh owners, platform keychain, binary stores and malformed recovery fail closed
+ok 117 - external refresh owners, platform keychain, binary stores and malformed recovery fail closed
+  ---
+  duration_ms: 124.669882
+  ...
+# Subtest: adopted pointers read latest owner document and refresh owning file rather than pointer
+ok 118 - adopted pointers read latest owner document and refresh owning file rather than pointer
+  ---
+  duration_ms: 98.396684
+  ...
+# Subtest: exact Claude scope denial occurs before inference bearer preparation
+ok 119 - exact Claude scope denial occurs before inference bearer preparation
+  ---
+  duration_ms: 66.040138
+  ...
+# Subtest: catalog acceptance authenticates exact provider identity and checks pagination
+ok 120 - catalog acceptance authenticates exact provider identity and checks pagination
+  ---
+  duration_ms: 8.909689
+  ...
+# Subtest: validated import preserves source bytes, atomically references owner and leaves old credential on rejection
+ok 121 - validated import preserves source bytes, atomically references owner and leaves old credential on rejection
+  ---
+  duration_ms: 196.055982
+  ...
+# Subtest: snapshot import marks external refresh ownership and source changes during validation cannot promote
+ok 122 - snapshot import marks external refresh ownership and source changes during validation cannot promote
+  ---
+  duration_ms: 143.198475
+  ...
+# Subtest: Claude PKCE persisted flow uses Rust pending carrier and exchange shape with narrow scope
+ok 123 - Claude PKCE persisted flow uses Rust pending carrier and exchange shape with narrow scope
+  ---
+  duration_ms: 151.354408
+  ...
+# Subtest: PKCE state mismatch and expiry cannot exchange or replace existing credentials
+ok 124 - PKCE state mismatch and expiry cannot exchange or replace existing credentials
+  ---
+  duration_ms: 34.435193
+  ...
+# Subtest: core prepares only selected OAuth credentials and cannot bypass account pause/pin
+ok 125 - core prepares only selected OAuth credentials and cannot bypass account pause/pin
+  ---
+  duration_ms: 93.528273
+  ...
+# Subtest: native auth operation refuses unavailable resume, bulk, remote and Codex interactive flows
+ok 126 - native auth operation refuses unavailable resume, bulk, remote and Codex interactive flows
+  ---
+  duration_ms: 3.966949
+  ...
+# Subtest: account paused while refresh is in flight cannot issue an inference bearer candidate
+ok 127 - account paused while refresh is in flight cannot issue an inference bearer candidate
+  ---
+  duration_ms: 81.540501
+  ...
+# Subtest: catalogFor isolates pinned account aliases and exact client compatibility without advancing account selection
+ok 128 - catalogFor isolates pinned account aliases and exact client compatibility without advancing account selection
+  ---
+  duration_ms: 17.602375
+  ...
+# Subtest: completing a begun PKCE object atomically consumes its persisted pending grant
+ok 129 - completing a begun PKCE object atomically consumes its persisted pending grant
+  ---
+  duration_ms: 95.462842
+  ...
+# Subtest: oversized regular OAuth state, adopted source and recovery files fail before parsing or refresh
+ok 130 - oversized regular OAuth state, adopted source and recovery files fail before parsing or refresh
+  ---
+  duration_ms: 156.189027
+  ...
+# Subtest: pending OAuth state has a small byte bound and invalid UTF-8 cannot be normalized into credentials
+ok 131 - pending OAuth state has a small byte bound and invalid UTF-8 cannot be normalized into credentials
+  ---
+  duration_ms: 35.813915
+  ...
+# Subtest: per-invocation signing authority isolates stores while repeated identical context shares them
+ok 132 - per-invocation signing authority isolates stores while repeated identical context shares them
+  ---
+  duration_ms: 250.829684
+  ...
+# Subtest: explicit storage/data overrides resolve against invocation cwd and durable file reflects actual issued record
+ok 133 - explicit storage/data overrides resolve against invocation cwd and durable file reflects actual issued record
+  ---
+  duration_ms: 362.883394
+  ...
+# Subtest: unimplemented shared config effects remain explicit and aborted operation cannot mutate store
+ok 134 - unimplemented shared config effects remain explicit and aborted operation cannot mutate store
+  ---
+  duration_ms: 18.250794
+  ...
+# Subtest: native operation fixtures assert successful behavior and unsupported failures
+ok 135 - native operation fixtures assert successful behavior and unsupported failures
+  ---
+  duration_ms: 6734.347727
+  ...
+# Subtest: native input errors preserve schema and operation exit codes
+ok 136 - native input errors preserve schema and operation exit codes
+  ---
+  duration_ms: 9.453263
+  ...
+# Subtest: native CLI parses canonical flags and rejects secret argv
+ok 137 - native CLI parses canonical flags and rejects secret argv
+  ---
+  duration_ms: 1.908059
+  ...
+# Subtest: native CLI writes one JSON result and returns its actual exit code
+ok 138 - native CLI writes one JSON result and returns its actual exit code
+  ---
+  duration_ms: 2.860887
+  ...
+# Subtest: schema-invalid native handlers cannot inherit a successful exit status
+ok 139 - schema-invalid native handlers cannot inherit a successful exit status
+  ---
+  duration_ms: 1.658413
+  ...
+# Subtest: atomic IfAbsent stages invalid candidates first and preserves accepted bytes without rewriting
+ok 140 - atomic IfAbsent stages invalid candidates first and preserves accepted bytes without rewriting
+  ---
+  duration_ms: 176.268472
+  ...
+# Subtest: concurrent independent stores return one atomic created result and the same accepted record
+ok 141 - concurrent independent stores return one atomic created result and the same accepted record
+  ---
+  duration_ms: 191.897445
+  ...
+# Subtest: all supported local import formats activate routing and return secret-free acceptance reports
+ok 142 - all supported local import formats activate routing and return secret-free acceptance reports
+  ---
+  duration_ms: 218.809776
+  ...
+# Subtest: imports parse before writes, preserve completed records and stop on first rejected candidate
+ok 143 - imports parse before writes, preserve completed records and stop on first rejected candidate
+  ---
+  duration_ms: 50.609234
+  ...
+# Subtest: provider add canonical client validation, atomic replacement and IfAbsent never expose secrets
+ok 144 - provider add canonical client validation, atomic replacement and IfAbsent never expose secrets
+  ---
+  duration_ms: 75.303446
+  ...
+# Subtest: staged environment references remain references and follow rotation without storing key bytes
+ok 145 - staged environment references remain references and follow rotation without storing key bytes
+  ---
+  duration_ms: 191.05298
+  ...
+# Subtest: ActivityPub documents and inbound validation match source contracts including HEAD and private listener isolation
+ok 146 - ActivityPub documents and inbound validation match source contracts including HEAD and private listener isolation
+  ---
+  duration_ms: 60.757494
+  ...
+# Subtest: GitHub policy covers destructive REST and GraphQL effects with ordered operator overrides
+ok 147 - GitHub policy covers destructive REST and GraphQL effects with ordered operator overrides
+  ---
+  duration_ms: 2.779945
+  ...
+# Subtest: GitHub localhost relay enforces credential boundary, repository scope, byte/status/query fidelity and adapter isolation
+ok 148 - GitHub localhost relay enforces credential boundary, repository scope, byte/status/query fidelity and adapter isolation
+  ---
+  duration_ms: 82.265183
+  ...
+# Subtest: GitHub credential precedence uses invocation environment and exact configured gh host, policy schema fails closed
+ok 149 - GitHub credential precedence uses invocation environment and exact configured gh host, policy schema fails closed
+  ---
+  duration_ms: 27.466825
+  ...
+# Subtest: management calls preserve canonical routes and typed Rust DTO fields
+ok 150 - management calls preserve canonical routes and typed Rust DTO fields
+  ---
+  duration_ms: 5.262346
+  ...
+# Subtest: pause deadlines accept seconds, delays, timezone offsets and reject pre-epoch or unsafe values
+ok 151 - pause deadlines accept seconds, delays, timezone offsets and reject pre-epoch or unsafe values
+  ---
+  duration_ms: 0.791787
+  ...
+# Subtest: real remote HTTP preserves selected destination, bearer, request body and list/show semantics
+ok 152 - real remote HTTP preserves selected destination, bearer, request body and list/show semantics
+  ---
+  duration_ms: 97.499681
+  ...
+# Subtest: selected deployment has no silent local fallback or redirect and never exposes token on errors
+ok 153 - selected deployment has no silent local fallback or redirect and never exposes token on errors
+  ---
+  duration_ms: 1.915863
+  ...
+# Subtest: deadline caps uncooperative fetch and uncooperative body without hanging cancel
+ok 154 - deadline caps uncooperative fetch and uncooperative body without hanging cancel
+  ---
+  duration_ms: 65.017701
+  ...
+# Subtest: response bounds and malformed or failed server responses fail closed
+ok 155 - response bounds and malformed or failed server responses fail closed
+  ---
+  duration_ms: 14.491963
+  ...
+# Subtest: saved selection tokens follow matching origins and explicit targets override invalid saved state
+ok 156 - saved selection tokens follow matching origins and explicit targets override invalid saved state
+  ---
+  duration_ms: 75.925967
+  ...
+# Subtest: provider imports are parsed before requests, stop at first failure and redact unknown response secrets
+ok 157 - provider imports are parsed before requests, stop at first failure and redact unknown response secrets
+  ---
+  duration_ms: 73.02101
+  ...
+# Subtest: server use copies trust privately and management HTTPS verifies the selected CA
+ok 158 - server use copies trust privately and management HTTPS verifies the selected CA
+  ---
+  duration_ms: 352.718472
+  ...
+# Subtest: request Lino codec preserves nested data and source redaction masks actual credentials
+ok 159 - request Lino codec preserves nested data and source redaction masks actual credentials
+  ---
+  duration_ms: 6.851311
+  ...
+# Subtest: real retained exchange captures both sides, private permissions, source stream outcome and restart lookup
+ok 160 - real retained exchange captures both sides, private permissions, source stream outcome and restart lookup
+  ---
+  duration_ms: 322.483634
+  ...
+# Subtest: native opaque capture uses exact contract template and omits credentials body resource ids and query
+ok 161 - native opaque capture uses exact contract template and omits credentials body resource ids and query
+  ---
+  duration_ms: 139.307447
+  ...
+# Subtest: error captures retain redacted real body and clear invalidates in-flight buffers while preserving unrelated files
+ok 162 - error captures retain redacted real body and clear invalidates in-flight buffers while preserving unrelated files
+  ---
+  duration_ms: 124.055907
+  ...
+# Subtest: source stream outcomes distinguish incomplete readable streams, encoded streams, JSON and cancellation
+ok 163 - source stream outcomes distinguish incomplete readable streams, encoded streams, JSON and cancellation
+  ---
+  duration_ms: 300.202311
+  ...
+# Subtest: retention keeps complete newest records, migrates legacy files and refuses symlink paths
+ok 164 - retention keeps complete newest records, migrates legacy files and refuses symlink paths
+  ---
+  duration_ms: 360.893953
+  ...
+# Subtest: HTTP management reads actual retained requests errors queue and clears real storage
+ok 165 - HTTP management reads actual retained requests errors queue and clears real storage
+  ---
+  duration_ms: 657.013107
+  ...
+# Subtest: native resource parity fixtures execute and assert observed behavior
+ok 166 - native resource parity fixtures execute and assert observed behavior
+  ---
+  duration_ms: 508.925192
+  ...
+# Subtest: spend reservation uses exact source output precedence default UTF8 prompt and nested string counts
+ok 167 - spend reservation uses exact source output precedence default UTF8 prompt and nested string counts
+  ---
+  duration_ms: 3.619683
+  ...
+# Subtest: account error policy matches declaration-order literal bytes within source 16KiB prefix and exact transient statuses
+ok 168 - account error policy matches declaration-order literal bytes within source 16KiB prefix and exact transient statuses
+  ---
+  duration_ms: 2.865215
+  ...
+# Subtest: localhost retry honors actual error body rules preserves last response and never retries explicit cooldown relay or pinned account
+ok 169 - localhost retry honors actual error body rules preserves last response and never retries explicit cooldown relay or pinned account
+  ---
+  duration_ms: 262.353651
+  ...
+# Subtest: localhost admission reserves prompt plus output once, settles once and preserves final actual failure when exhausted
+ok 170 - localhost admission reserves prompt plus output once, settles once and preserves final actual failure when exhausted
+  ---
+  duration_ms: 19.866629
+  ...
+# Subtest: native HTTP census observes every canonical OpenAPI method and path
+ok 171 - native HTTP census observes every canonical OpenAPI method and path
+  ---
+  duration_ms: 24370.345752
+  ...
+# Subtest: request and response adapters preserve tools, system and usage
+ok 172 - request and response adapters preserve tools, system and usage
+  ---
+  duration_ms: 6.332913
+  ...
+# Subtest: unsupported bridge fields fail explicitly while native fields pass through
+ok 173 - unsupported bridge fields fail explicitly while native fields pass through
+  ---
+  duration_ms: 0.853642
+  ...
+# Subtest: local upstream HTTP receives selected credential and no client cookie or bearer
+ok 174 - local upstream HTTP receives selected credential and no client cookie or bearer
+  ---
+  duration_ms: 166.247219
+  ...
+# Subtest: bounded failover retries transient errors and leaves request errors alone
+ok 175 - bounded failover retries transient errors and leaves request errors alone
+  ---
+  duration_ms: 40.061338
+  ...
+# Subtest: authentication, model discovery, administrative mutation and redaction
+ok 176 - authentication, model discovery, administrative mutation and redaction
+  ---
+  duration_ms: 45.819409
+  ...
+# Subtest: token admission denial prevents upstream and token usage settles by sub
+ok 177 - token admission denial prevents upstream and token usage settles by sub
+  ---
+  duration_ms: 16.418586
+  ...
+# Subtest: UTF8 SSE decoder handles CRLF and multiline, bounds multibyte and comment lines
+ok 178 - UTF8 SSE decoder handles CRLF and multiline, bounds multibyte and comment lines
+  ---
+  duration_ms: 13.613184
+  ...
+# Subtest: incremental Chat to Messages streaming preserves parallel tools and usage
+ok 179 - incremental Chat to Messages streaming preserves parallel tools and usage
+  ---
+  duration_ms: 15.162152
+  ...
+# Subtest: native streaming settles usage and truncated native/cross streams emit error without success
+ok 180 - native streaming settles usage and truncated native/cross streams emit error without success
+  ---
+  duration_ms: 58.657386
+  ...
+# Subtest: HTTP listener health and body bounds use Node builtins
+ok 181 - HTTP listener health and body bounds use Node builtins
+  ---
+  duration_ms: 30.138389
+  ...
+# Subtest: Anthropic streaming converts cache usage, tool arguments and max-token finish
+ok 182 - Anthropic streaming converts cache usage, tool arguments and max-token finish
+  ---
+  duration_ms: 5.060781
+  ...
+# Subtest: Responses streaming preserves function arguments and final usage in both bridges
+ok 183 - Responses streaming preserves function arguments and final usage in both bridges
+  ---
+  duration_ms: 3.873646
+  ...
+# Subtest: stream memory caps and unsupported fragmented identities fail without success
+ok 184 - stream memory caps and unsupported fragmented identities fail without success
+  ---
+  duration_ms: 2.530169
+  ...
+# Subtest: cache token accounting is preserved across JSON dialects
+ok 185 - cache token accounting is preserved across JSON dialects
+  ---
+  duration_ms: 1.786963
+  ...
+# Subtest: failed listen leaves shutdown safe and permits a later retry
+ok 186 - failed listen leaves shutdown safe and permits a later retry
+  ---
+  duration_ms: 4.848955
+  ...
+# Subtest: malformed upstream usage cannot corrupt durable token budgets
+ok 187 - malformed upstream usage cannot corrupt durable token budgets
+  ---
+  duration_ms: 2.795484
+  ...
+# Subtest: OAuth credentials use reviewed provider headers and exact configured endpoint
+ok 188 - OAuth credentials use reviewed provider headers and exact configured endpoint
+  ---
+  duration_ms: 3.916015
+  ...
+# Subtest: only selected account credentials are prepared before upstream dispatch
+ok 189 - only selected account credentials are prepared before upstream dispatch
+  ---
+  duration_ms: 1.915564
+  ...
+# Subtest: foreground Responses create/retrieve/input-items/delete use exact IDs and owner isolation
+ok 190 - foreground Responses create/retrieve/input-items/delete use exact IDs and owner isolation
+  ---
+  duration_ms: 10.760302
+  ...
+# Subtest: canonical Responses namespace supports retained foreground creation
+ok 191 - canonical Responses namespace supports retained foreground creation
+  ---
+  duration_ms: 7.181085
+  ...
+# Subtest: store:false and unsupported stateful controls never create lifecycle resources
+ok 192 - store:false and unsupported stateful controls never create lifecycle resources
+  ---
+  duration_ms: 4.501517
+  ...
+# Subtest: retention expiration, record eviction, byte caps and duplicate IDs are enforced
+ok 193 - retention expiration, record eviction, byte caps and duplicate IDs are enforced
+  ---
+  duration_ms: 0.775137
+  ...
+# Subtest: native Responses SSE completion retains its complete resource and usage
+ok 194 - native Responses SSE completion retains its complete resource and usage
+  ---
+  duration_ms: 3.785771
+  ...
+# Subtest: bridge streaming completion is retrievable with announced response ID
+ok 195 - bridge streaming completion is retrievable with announced response ID
+  ---
+  duration_ms: 3.617877
+  ...
+# Subtest: cancelling an active native response aborts upstream and keeps cancelled ownership record
+ok 196 - cancelling an active native response aborts upstream and keeps cancelled ownership record
+  ---
+  duration_ms: 5.76849
+  ...
+# Subtest: incomplete HTTPS configuration fails before a plaintext listener can start
+ok 197 - incomplete HTTPS configuration fails before a plaintext listener can start
+  ---
+  duration_ms: 0.759076
+  ...
+# Subtest: deleting an active stream aborts it and cannot resurrect the response
+ok 198 - deleting an active stream aborts it and cannot resurrect the response
+  ---
+  duration_ms: 3.744055
+  ...
+# Subtest: active records cannot be evicted by capacity pressure and shutdown aborts them
+ok 199 - active records cannot be evicted by capacity pressure and shutdown aborts them
+  ---
+  duration_ms: 0.533855
+  ...
+# Subtest: near-cap cancellation and failure fit precharged transition allocations
+ok 200 - near-cap cancellation and failure fit precharged transition allocations
+  ---
+  duration_ms: 0.905499
+  ...
+# Subtest: canonical inference routes preserve dialect, service pin, client binding and token model scopes
+ok 201 - canonical inference routes preserve dialect, service pin, client binding and token model scopes
+  ---
+  duration_ms: 14.836084
+  ...
+# Subtest: canonical discovery filters token scope and projects vendor model shapes
+ok 202 - canonical discovery filters token scope and projects vendor model shapes
+  ---
+  duration_ms: 11.671973
+  ...
+# Subtest: Anthropic catalog pagination is bounded and validates cursors
+ok 203 - Anthropic catalog pagination is bounded and validates cursors
+  ---
+  duration_ms: 7.415263
+  ...
+# Subtest: unsupported service pin or client catalog cannot expose unrelated models
+ok 204 - unsupported service pin or client catalog cannot expose unrelated models
+  ---
+  duration_ms: 5.007561
+  ...
+# Subtest: native forwarding removes explicit location headers by default
+ok 205 - native forwarding removes explicit location headers by default
+  ---
+  duration_ms: 2.531812
+  ...
+# Subtest: location policy: Responses search
+ok 206 - location policy: Responses search
+  ---
+  duration_ms: 0.886724
+  ...
+# Subtest: location policy: Responses preview
+ok 207 - location policy: Responses preview
+  ---
+  duration_ms: 0.292987
+  ...
+# Subtest: location policy: OpenAI dated preview
+ok 208 - location policy: OpenAI dated preview
+  ---
+  duration_ms: 0.928051
+  ...
+# Subtest: location policy: Anthropic search
+ok 209 - location policy: Anthropic search
+  ---
+  duration_ms: 0.277227
+  ...
+# Subtest: location policy: Chat search
+ok 210 - location policy: Chat search
+  ---
+  duration_ms: 0.203359
+  ...
+# Subtest: location policy: Gemini Maps
+ok 211 - location policy: Gemini Maps
+  ---
+  duration_ms: 0.218336
+  ...
+# Subtest: location policy: Gemini snake case
+ok 212 - location policy: Gemini snake case
+  ---
+  duration_ms: 0.189353
+  ...
+# Subtest: location policy: Code Assist wrapper
+ok 213 - location policy: Code Assist wrapper
+  ---
+  duration_ms: 0.244616
+  ...
+# Subtest: location policy: WebSocket response
+ok 214 - location policy: WebSocket response
+  ---
+  duration_ms: 1.006218
+  ...
+# Subtest: location policy: Realtime session
+ok 215 - location policy: Realtime session
+  ---
+  duration_ms: 2.219561
+  ...
+# Subtest: location policy: Anthropic batches
+ok 216 - location policy: Anthropic batches
+  ---
+  duration_ms: 0.946475
+  ...
+# Subtest: location policy: User content and schemas
+ok 217 - location policy: User content and schemas
+  ---
+  duration_ms: 0.288939
+  ...
+# Subtest: location policy: Malformed optional containers
+ok 218 - location policy: Malformed optional containers
+  ---
+  duration_ms: 0.226312
+  ...
+# Subtest: location policy: Malformed search tool types stay unchanged
+ok 219 - location policy: Malformed search tool types stay unchanged
+  ---
+  duration_ms: 0.46653
+  ...
+# Subtest: location policy: Gemini ProtoJSON toolConfig/retrievalConfig/latLng
+ok 220 - location policy: Gemini ProtoJSON toolConfig/retrievalConfig/latLng
+  ---
+  duration_ms: 0.436604
+  ...
+# Subtest: location policy: Gemini ProtoJSON toolConfig/retrievalConfig/lat_lng
+ok 221 - location policy: Gemini ProtoJSON toolConfig/retrievalConfig/lat_lng
+  ---
+  duration_ms: 0.218187
+  ...
+# Subtest: location policy: Gemini ProtoJSON toolConfig/retrieval_config/latLng
+ok 222 - location policy: Gemini ProtoJSON toolConfig/retrieval_config/latLng
+  ---
+  duration_ms: 0.20366
+  ...
+# Subtest: location policy: Gemini ProtoJSON toolConfig/retrieval_config/lat_lng
+ok 223 - location policy: Gemini ProtoJSON toolConfig/retrieval_config/lat_lng
+  ---
+  duration_ms: 0.304168
+  ...
+# Subtest: location policy: Gemini ProtoJSON tool_config/retrievalConfig/latLng
+ok 224 - location policy: Gemini ProtoJSON tool_config/retrievalConfig/latLng
+  ---
+  duration_ms: 0.283178
+  ...
+# Subtest: location policy: Gemini ProtoJSON tool_config/retrievalConfig/lat_lng
+ok 225 - location policy: Gemini ProtoJSON tool_config/retrievalConfig/lat_lng
+  ---
+  duration_ms: 0.218087
+  ...
+# Subtest: location policy: Gemini ProtoJSON tool_config/retrieval_config/latLng
+ok 226 - location policy: Gemini ProtoJSON tool_config/retrieval_config/latLng
+  ---
+  duration_ms: 0.206546
+  ...
+# Subtest: location policy: Gemini ProtoJSON tool_config/retrieval_config/lat_lng
+ok 227 - location policy: Gemini ProtoJSON tool_config/retrieval_config/lat_lng
+  ---
+  duration_ms: 0.244146
+  ...
+# Subtest: Gemini HTTP forwarding protects every ProtoJSON location alias and retains opt-in
+ok 228 - Gemini HTTP forwarding protects every ProtoJSON location alias and retains opt-in
+  ---
+  duration_ms: 30.618974
+  ...
+# Subtest: only one explicit true opts in; control and network-origin headers stay private
+ok 229 - only one explicit true opts in; control and network-origin headers stay private
+  ---
+  duration_ms: 2.850637
+  ...
+# Subtest: HTTP Chat forwarding sanitizes before fetch and permits explicit sharing
+ok 230 - HTTP Chat forwarding sanitizes before fetch and permits explicit sharing
+  ---
+  duration_ms: 4.645316
+  ...
+# Subtest: fragmented WebSocket messages disclose no location before complete inspection
+ok 231 - fragmented WebSocket messages disclose no location before complete inspection
+  ---
+  duration_ms: 1.900646
+  ...
+# Subtest: native replay filters Responses metadata, preserves safe bytes and rejects opaque encoded inference
+ok 232 - native replay filters Responses metadata, preserves safe bytes and rejects opaque encoded inference
+  ---
+  duration_ms: 13.276134
+  ...
+# Subtest: localhost WebSocket location consent=false survives fragmentation and client EOF
+ok 233 - localhost WebSocket location consent=false survives fragmentation and client EOF
+  ---
+  duration_ms: 93.273156
+  ...
+# Subtest: localhost WebSocket location consent=true survives fragmentation and client EOF
+ok 234 - localhost WebSocket location consent=true survives fragmentation and client EOF
+  ---
+  duration_ms: 15.308767
+  ...
+# Subtest: Codex live calls share the persisted Realtime namespace and keep foreign owners isolated
+ok 235 - Codex live calls share the persisted Realtime namespace and keep foreign owners isolated
+  ---
+  duration_ms: 174.382513
+  ...
+# Subtest: native HEAD retains upstream upgrade rejection while cancelling its actual HTTP body
+ok 236 - native HEAD retains upstream upgrade rejection while cancelling its actual HTTP body
+  ---
+  duration_ms: 51.451284
+  ...
+# Subtest: canonical route matcher accepts declared methods and rejects unlisted vendor operations
+ok 237 - canonical route matcher accepts declared methods and rejects unlisted vendor operations
+  ---
+  duration_ms: 2.612763
+  ...
+# Subtest: opaque relay forwards actual multipart bytes/query and application headers through localhost
+ok 238 - opaque relay forwards actual multipart bytes/query and application headers through localhost
+  ---
+  duration_ms: 38.473767
+  ...
+# Subtest: Conversations retain owner/exact destination and capture upstream-owned child items
+ok 239 - Conversations retain owner/exact destination and capture upstream-owned child items
+  ---
+  duration_ms: 18.239895
+  ...
+# Subtest: native Responses capture foreground/background and stream IDs before exposing bytes, then relay exact lifecycle
+ok 240 - native Responses capture foreground/background and stream IDs before exposing bytes, then relay exact lifecycle
+  ---
+  duration_ms: 40.805435
+  ...
+# Subtest: vendor resources enforce official client, native error passthrough, bounded bodies and references
+ok 241 - vendor resources enforce official client, native error passthrough, bounded bodies and references
+  ---
+  duration_ms: 15.26332
+  ...
+# Subtest: header and URL boundaries preserve native protocol without credential leaks
+ok 242 - header and URL boundaries preserve native protocol without credential leaks
+  ---
+  duration_ms: 1.290888
+  ...
+# Subtest: binary bytes carry schema points, unique links and valid two-axis tree indexes
+ok 243 - binary bytes carry schema points, unique links and valid two-axis tree indexes
+  ---
+  duration_ms: 170.609265
+  ...
+# Subtest: binary transactions survive reopening and migrate legacy length-prefixed JSON on mutation
+ok 244 - binary transactions survive reopening and migrate legacy length-prefixed JSON on mutation
+  ---
+  duration_ms: 245.653159
+  ...
+# Subtest: dual transaction journal replays both projections before returning a record
+ok 245 - dual transaction journal replays both projections before returning a record
+  ---
+  duration_ms: 1273.678553
+  ...
+# Subtest: dual reads avoid binary rewrites and mutations reconcile safer reservation/revocation values
+ok 246 - dual reads avoid binary rewrites and mutations reconcile safer reservation/revocation values
+  ---
+  duration_ms: 1066.257721
+  ...
+# Subtest: durable replacement recovery respects commit markers and never resurrects removed prior state
+ok 247 - durable replacement recovery respects commit markers and never resurrects removed prior state
+  ---
+  duration_ms: 49.258144
+  ...
+# Subtest: OS locks coordinate separate helpers, allow shared readers, and time out an exclusive contender
+ok 248 - OS locks coordinate separate helpers, allow shared readers, and time out an exclusive contender
+  ---
+  duration_ms: 409.480132
+  ...
+# Subtest: failed optional lock trace writes preserve operation errors and release the OS lock
+ok 249 - failed optional lock trace writes preserve operation errors and release the OS lock
+  ---
+  duration_ms: 136.919553
+  ...
+# Subtest: resource ownership, account identity collisions, parent ambiguity and expiry survive restart
+ok 250 - resource ownership, account identity collisions, parent ambiguity and expiry survive restart
+  ---
+  duration_ms: 664.915678
+  ...
+# Subtest: operation contexts preserve authority and counters while isolating explicit state identities
+ok 251 - operation contexts preserve authority and counters while isolating explicit state identities
+  ---
+  duration_ms: 22.327478
+  ...
+# Subtest: native self-signed HTTPS binds localhost with a verified generated certificate
+ok 252 - native self-signed HTTPS binds localhost with a verified generated certificate
+  ---
+  duration_ms: 346.085019
+  ...
+# Subtest: all Rust file/deployment/checkpoint source formats decode without mutating source bytes
+ok 253 - all Rust file/deployment/checkpoint source formats decode without mutating source bytes
+  ---
+  duration_ms: 146.920567
+  ...
+# Subtest: merge reports exact differing fields and missing selections without reviving or replacing records
+ok 254 - merge reports exact differing fields and missing selections without reviving or replacing records
+  ---
+  duration_ms: 7.443945
+  ...
+# Subtest: replace saves private pre-change backup and retains larger usage and revocation
+ok 255 - replace saves private pre-change backup and retains larger usage and revocation
+  ---
+  duration_ms: 23.176842
+  ...
+# Subtest: dry run computes replacement effects without target or backup changes and unknown input is refused
+ok 256 - dry run computes replacement effects without target or backup changes and unknown input is refused
+  ---
+  duration_ms: 43.874932
+  ...
+# Subtest: usage tracker counts vendor caches, Unicode partial output and final usage without double counting
+ok 257 - usage tracker counts vendor caches, Unicode partial output and final usage without double counting
+  ---
+  duration_ms: 9.651053
+  ...
+# Subtest: native and translated truncated streams settle estimated usage and never report success
+ok 258 - native and translated truncated streams settle estimated usage and never report success
+  ---
+  duration_ms: 68.381545
+  ...
+# Subtest: WebSocket frame inspection handles fragmentation and refuses masked direction and message bounds
+ok 259 - WebSocket frame inspection handles fragmentation and refuses masked direction and message bounds
+  ---
+  duration_ms: 8.13787
+  ...
+# Subtest: native realtime localhost upgrade swaps credentials and forwards messages with model/budget settlement
+ok 260 - native realtime localhost upgrade swaps credentials and forwards messages with model/budget settlement
+  ---
+  duration_ms: 79.694807
+  ...
+1..260
+# tests 260
+# suites 0
+# pass 260
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 36729.599101
+Manual development stage: bun-tests
+
+> @link-assistant/router@1.24.1 native:test:bun
+> bun test test/native-*.test.*
+
+bun test v1.4.4 (38afee6c8)
+
+test/native-managed-server.test.mjs:
+(pass) native managed lifecycle executes meaningful readiness, identity and ownership fixtures [29688.79ms]
+
+test/native-git-ui.test.mjs:
+(pass) git pkt lines stop at flush and preserve exact capabilities and raw pack bytes [1.80ms]
+(pass) git localhost ancestry mediation refuses rewrites before forwarding and passes authorized fast-forward/create bytes [36.35ms]
+(pass) admin listener serves the actual embedded UI assets and hardens assets, API errors and fallbacks [14.85ms]
+
+test/native-client-setup.test.mjs:
+(pass) client setup mints exact bound credential and writes no token into public config or output [621.33ms]
+(pass) transaction failure after config/environment/metadata restores original bytes and mode and revokes unused minted token [715.88ms]
+(pass) catalog rejection and wrong-client credentials never alter existing client configuration [86.41ms]
+(pass) supplied credentials stay valid by default on removal; explicit revocation requires actual owned metadata [1059.31ms]
+(pass) concurrent operator edit is preserved and failed transaction retains its private recovery snapshot [180.79ms]
+(pass) operation text reads preserve BOM bytes instead of changing the transaction digest [7.08ms]
+(pass) hashed log directory selector is usable while bearer credential flags remain refused [2.14ms]
+
+test/native-auth-service.test.mjs:
+(pass) login reserves concurrent capacity before waiting for driver construction [10.45ms]
+(pass) session expiry and retention use injected clock and never accept an expired code [4.62ms]
+(pass) successful login installs owned durable credential before deleting private staging source [83.24ms]
+(pass) cancel during provider exchange prevents destination credential promotion [7.07ms]
+(pass) credential inspection verifies catalogs and redacts provider API keys [187.18ms]
+(pass) disabled login, unsupported providers, unknown code and malformed drivers fail explicitly [5.43ms]
+(pass) promotion fence rejects cancellation after the destination commit has begun [71.70ms]
+
+test/native-operation-context.test.mjs:
+(pass) per-invocation signing authority isolates stores while repeated identical context shares them [149.67ms]
+(pass) explicit storage/data overrides resolve against invocation cwd and durable file reflects actual issued record [223.63ms]
+(pass) unimplemented shared config effects remain explicit and aborted operation cannot mutate store [13.17ms]
+
+test/native-codex-login.test.mjs:
+(pass) device authorization uses public client, actual poll/PKCE/form grant and catalog before owned installation [134.18ms]
+(pass) device response PKCE mismatch never exchanges or installs tokens [16.20ms]
+(pass) device denial and cancelled pending polling never install credentials [45.31ms]
+(pass) loopback validates state without consuming callback and closes listener before form grant [95.68ms]
+(pass) unsupported issuer, flow, malformed interval and missing token fields fail explicitly [21.89ms]
+(pass) HTTP login session uses real Codex driver and reports authorized only after final owned promotion [173.93ms]
+
+test/native-token-import.test.mjs:
+(pass) all Rust file/deployment/checkpoint source formats decode without mutating source bytes [72.88ms]
+(pass) merge reports exact differing fields and missing selections without reviving or replacing records [3.67ms]
+(pass) replace saves private pre-change backup and retains larger usage and revocation [15.09ms]
+(pass) dry run computes replacement effects without target or backup changes and unknown input is refused [13.36ms]
+
+test/native-websocket.test.mjs:
+(pass) WebSocket frame inspection handles fragmentation and refuses masked direction and message bounds [1.71ms]
+(pass) native realtime localhost upgrade swaps credentials and forwards messages with model/budget settlement [41.47ms]
+
+test/native-flat-oauth.test.mjs:
+(pass) Gemini and Qwen flat aliases preserve ownership metadata while refreshed fields match vendor canonical layout [0.93ms]
+(pass) home selection honors official Gemini root and isolated operation environment [0.22ms]
+(pass) gemini refresh uses encoded form grant and durable canonical successor [51.35ms]
+(pass) qwen refresh uses encoded form grant and durable canonical successor [57.07ms]
+(pass) Gemini custom installed client overrides are atomic and operation scoped [95.88ms]
+(pass) credential refresh waits for the exact shared Rust advisory lock path [160.18ms]
+(pass) Gemini authenticated catalog uses registry pagination and exact names rather than guessed model aliases [1.16ms]
+(pass) Qwen core lazily prepares only selected owning file and applies resource URL after refresh [64.80ms]
+
+test/native-provider-provision.test.mjs:
+(pass) atomic IfAbsent stages invalid candidates first and preserves accepted bytes without rewriting [125.50ms]
+(pass) concurrent independent stores return one atomic created result and the same accepted record [98.93ms]
+(pass) all supported local import formats activate routing and return secret-free acceptance reports [31.43ms]
+(pass) imports parse before writes, preserve completed records and stop on first rejected candidate [25.76ms]
+(pass) provider add canonical client validation, atomic replacement and IfAbsent never expose secrets [32.60ms]
+(pass) staged environment references remain references and follow rotation without storing key bytes [150.88ms]
+
+test/native-cli-output.test.mjs:
+(pass) global flags precede or follow commands and client arguments after delimiter are preserved [1.73ms]
+(pass) human output and errors are separate streams while --json retains one complete machine result [22.97ms]
+(pass) local and remote token tables use the Rust field order, defaults and limit rendering [0.69ms]
+
+test/native-oauth.test.mjs:
+(pass) Claude layout pairs nested access with nested refresh/expiry and accepts flat snake_case [0.58ms]
+(pass) Codex derives expiry and identity hints from exact nested carrier and refuses API-key auth [0.70ms]
+(pass) OAuth grant endpoints reject credentials, redirects, remote overrides and plain HTTP [0.37ms]
+(pass) Claude concurrent refresh deduplicates across manager instances and durably rotates before return [158.14ms]
+(pass) refresh respects five-minute skew and expired credentials without refresh grants fail closed [94.21ms]
+(pass) Codex refresh uses JSON public client and preserves id_token, auth_mode and unknown fields [63.80ms]
+(pass) read-only primary retains Rust recovery projection and restores successor after restart [135.29ms]
+(pass) persistence failure and uncertain grant never return access credentials or retry spent chain [206.02ms]
+(pass) external refresh owners, platform keychain, binary stores and malformed recovery fail closed [95.72ms]
+(pass) adopted pointers read latest owner document and refresh owning file rather than pointer [73.27ms]
+(pass) exact Claude scope denial occurs before inference bearer preparation [53.41ms]
+(pass) catalog acceptance authenticates exact provider identity and checks pagination [1.22ms]
+(pass) validated import preserves source bytes, atomically references owner and leaves old credential on rejection [122.53ms]
+(pass) snapshot import marks external refresh ownership and source changes during validation cannot promote [115.81ms]
+(pass) Claude PKCE persisted flow uses Rust pending carrier and exchange shape with narrow scope [79.98ms]
+(pass) PKCE state mismatch and expiry cannot exchange or replace existing credentials [20.45ms]
+(pass) core prepares only selected OAuth credentials and cannot bypass account pause/pin [58.01ms]
+(pass) native auth operation refuses unavailable resume, bulk, remote and Codex interactive flows [2.53ms]
+(pass) account paused while refresh is in flight cannot issue an inference bearer candidate [52.15ms]
+(pass) catalogFor isolates pinned account aliases and exact client compatibility without advancing account selection [6.50ms]
+(pass) completing a begun PKCE object atomically consumes its persisted pending grant [75.85ms]
+(pass) oversized regular OAuth state, adopted source and recovery files fail before parsing or refresh [116.77ms]
+(pass) pending OAuth state has a small byte bound and invalid UTF-8 cannot be normalized into credentials [21.38ms]
+
+test/native-usage.test.mjs:
+(pass) usage tracker counts vendor caches, Unicode partial output and final usage without double counting [4.35ms]
+(pass) native and translated truncated streams settle estimated usage and never report success [17.08ms]
+
+test/native-resources.test.js:
+(pass) native resource parity fixtures execute and assert observed behavior [304.41ms]
+
+test/native-request-log.test.mjs:
+(pass) request Lino codec preserves nested data and source redaction masks actual credentials [1.73ms]
+(pass) real retained exchange captures both sides, private permissions, source stream outcome and restart lookup [112.49ms]
+(pass) native opaque capture uses exact contract template and omits credentials body resource ids and query [68.63ms]
+(pass) error captures retain redacted real body and clear invalidates in-flight buffers while preserving unrelated files [36.27ms]
+(pass) source stream outcomes distinguish incomplete readable streams, encoded streams, JSON and cancellation [164.74ms]
+(pass) retention keeps complete newest records, migrates legacy files and refuses symlink paths [140.64ms]
+(pass) HTTP management reads actual retained requests errors queue and clears real storage [254.76ms]
+
+test/native-storage.test.mjs:
+(pass) binary bytes carry schema points, unique links and valid two-axis tree indexes [31.80ms]
+(pass) binary transactions survive reopening and migrate legacy length-prefixed JSON on mutation [142.63ms]
+(pass) dual transaction journal replays both projections before returning a record [850.45ms]
+(pass) dual reads avoid binary rewrites and mutations reconcile safer reservation/revocation values [793.52ms]
+(pass) durable replacement recovery respects commit markers and never resurrects removed prior state [40.48ms]
+(pass) OS locks coordinate separate helpers, allow shared readers, and time out an exclusive contender [289.61ms]
+(pass) failed optional lock trace writes preserve operation errors and release the OS lock [126.76ms]
+(pass) resource ownership, account identity collisions, parent ambiguity and expiry survive restart [595.49ms]
+(pass) operation contexts preserve authority and counters while isolating explicit state identities [6.81ms]
+
+test/native-public-services.test.mjs:
+(pass) ActivityPub documents and inbound validation match source contracts including HEAD and private listener isolation [3.60ms]
+(pass) GitHub policy covers destructive REST and GraphQL effects with ordered operator overrides [1.97ms]
+(pass) GitHub localhost relay enforces credential boundary, repository scope, byte/status/query fidelity and adapter isolation [19.66ms]
+(pass) GitHub credential precedence uses invocation environment and exact configured gh host, policy schema fails closed [6.49ms]
+
+test/native-emergency-auth.test.mjs:
+(pass) emergency mode stays opt-in, bounded, and acknowledged on every non-loopback listener [14.52ms]
+(pass) bypassed valid, revoked, malformed, foreign and expired credentials never mutate durable authority [5.98ms]
+(pass) absent credentials remain rejected and bypass ends immediately on disable or configured lapse [6.43ms]
+(pass) one request scope counts one authentication outcome and diagnostics retain bounded fingerprints [12.62ms]
+(pass) request headers determine emergency client binding before unverified token hints [3.35ms]
+
+test/native-server.test.mjs:
+(pass) request and response adapters preserve tools, system and usage [0.91ms]
+(pass) unsupported bridge fields fail explicitly while native fields pass through [0.37ms]
+(pass) local upstream HTTP receives selected credential and no client cookie or bearer [18.29ms]
+(pass) bounded failover retries transient errors and leaves request errors alone [2.07ms]
+(pass) authentication, model discovery, administrative mutation and redaction [3.24ms]
+(pass) token admission denial prevents upstream and token usage settles by sub [1.63ms]
+(pass) UTF8 SSE decoder handles CRLF and multiline, bounds multibyte and comment lines [3.19ms]
+(pass) incremental Chat to Messages streaming preserves parallel tools and usage [1.74ms]
+(pass) native streaming settles usage and truncated native/cross streams emit error without success [6.07ms]
+(pass) HTTP listener health and body bounds use Node builtins [20.87ms]
+(pass) Anthropic streaming converts cache usage, tool arguments and max-token finish [2.40ms]
+(pass) Responses streaming preserves function arguments and final usage in both bridges [1.51ms]
+(pass) stream memory caps and unsupported fragmented identities fail without success [1.33ms]
+(pass) cache token accounting is preserved across JSON dialects [0.39ms]
+(pass) failed listen leaves shutdown safe and permits a later retry [16.74ms]
+(pass) malformed upstream usage cannot corrupt durable token budgets [1.54ms]
+(pass) OAuth credentials use reviewed provider headers and exact configured endpoint [1.73ms]
+(pass) only selected account credentials are prepared before upstream dispatch [0.93ms]
+(pass) foreground Responses create/retrieve/input-items/delete use exact IDs and owner isolation [4.53ms]
+(pass) canonical Responses namespace supports retained foreground creation [1.93ms]
+(pass) store:false and unsupported stateful controls never create lifecycle resources [2.46ms]
+(pass) retention expiration, record eviction, byte caps and duplicate IDs are enforced [0.85ms]
+(pass) native Responses SSE completion retains its complete resource and usage [5.19ms]
+(pass) bridge streaming completion is retrievable with announced response ID [5.40ms]
+(pass) cancelling an active native response aborts upstream and keeps cancelled ownership record [7.77ms]
+(pass) incomplete HTTPS configuration fails before a plaintext listener can start [1.99ms]
+(pass) deleting an active stream aborts it and cannot resurrect the response [1.99ms]
+(pass) active records cannot be evicted by capacity pressure and shutdown aborts them [0.44ms]
+(pass) near-cap cancellation and failure fit precharged transition allocations [0.66ms]
+(pass) canonical inference routes preserve dialect, service pin, client binding and token model scopes [8.49ms]
+(pass) canonical discovery filters token scope and projects vendor model shapes [1.64ms]
+(pass) Anthropic catalog pagination is bounded and validates cursors [1.46ms]
+(pass) unsupported service pin or client catalog cannot expose unrelated models [0.60ms]
+(pass) native forwarding removes explicit location headers by default [0.66ms]
+(pass) location policy: Responses search [0.32ms]
+(pass) location policy: Responses preview [0.14ms]
+(pass) location policy: OpenAI dated preview [0.06ms]
+(pass) location policy: Anthropic search [0.09ms]
+(pass) location policy: Chat search [0.05ms]
+(pass) location policy: Gemini Maps [0.11ms]
+(pass) location policy: Gemini snake case [0.04ms]
+(pass) location policy: Code Assist wrapper [0.04ms]
+(pass) location policy: WebSocket response [0.04ms]
+(pass) location policy: Realtime session [0.05ms]
+(pass) location policy: Anthropic batches [0.08ms]
+(pass) location policy: User content and schemas [0.10ms]
+(pass) location policy: Malformed optional containers [0.05ms]
+(pass) location policy: Malformed search tool types stay unchanged [0.07ms]
+(pass) location policy: Gemini ProtoJSON toolConfig/retrievalConfig/latLng [0.07ms]
+(pass) location policy: Gemini ProtoJSON toolConfig/retrievalConfig/lat_lng [0.05ms]
+(pass) location policy: Gemini ProtoJSON toolConfig/retrieval_config/latLng [0.04ms]
+(pass) location policy: Gemini ProtoJSON toolConfig/retrieval_config/lat_lng [0.04ms]
+(pass) location policy: Gemini ProtoJSON tool_config/retrievalConfig/latLng [0.06ms]
+(pass) location policy: Gemini ProtoJSON tool_config/retrievalConfig/lat_lng [0.07ms]
+(pass) location policy: Gemini ProtoJSON tool_config/retrieval_config/latLng [0.11ms]
+(pass) location policy: Gemini ProtoJSON tool_config/retrieval_config/lat_lng [0.04ms]
+(pass) Gemini HTTP forwarding protects every ProtoJSON location alias and retains opt-in [7.31ms]
+(pass) only one explicit true opts in; control and network-origin headers stay private [1.22ms]
+(pass) HTTP Chat forwarding sanitizes before fetch and permits explicit sharing [2.41ms]
+(pass) fragmented WebSocket messages disclose no location before complete inspection [0.85ms]
+(pass) native replay filters Responses metadata, preserves safe bytes and rejects opaque encoded inference [5.15ms]
+(pass) localhost WebSocket location consent=false survives fragmentation and client EOF [28.84ms]
+(pass) localhost WebSocket location consent=true survives fragmentation and client EOF [15.49ms]
+
+test/native-core-http.test.mjs:
+(pass) real core native resources retain Rust stored-provider identity and client ownership through durable restart [1565.80ms]
+(pass) real emergency authority is bounded client-only, counts one outcome and exposes exact health management diagnostics [398.96ms]
+(pass) real core admin two-phase claim and monotonic lockout use HTTP credential verification and actual normalized peer [1248.81ms]
+
+test/native-credential-operations.test.mjs:
+(pass) credential status has no dependency on TOKEN_SECRET or TOKEN_SECRET_FILE [230.42ms]
+(pass) clear removes every candidate file but never follows an adopted credential source or symlink [88.88ms]
+(pass) multi-provider withdrawal requires confirmation before any mutation and reaches API-key providers [646.45ms]
+(pass) remote or saved-selected withdrawals refuse without making a request or touching local credentials [54.12ms]
+(pass) GitHub stdin/import/status use owner-only actual storage and host-selected mounted credentials [33.51ms]
+(pass) clear retains vendor Keychain ownership and reports an exact profile service without reading its secret [33.53ms]
+(pass) unremovable credentials produce a truthful failure while completed providers remain withdrawn [38.08ms]
+
+test/native-account-scope.test.mjs:
+(pass) source stored provider discovery and native resources use logical primary client authority independently of provider physical names [229.93ms]
+(pass) subscription principal scoping keeps each provider primary distinct and named secondary strict without aliasing arbitrary physical names [7.19ms]
+(pass) actual implicit primary OAuth subscription relay persists canonical account and rejects named foreign ownership [283.79ms]
+
+test/native-management-access.test.mjs:
+(pass) mapped socket addresses normalize and default recovery exempts loopback [0.54ms]
+(pass) successful authentication clears failures, preserves active bans, and wall-clock changes cannot shorten lockout [0.40ms]
+(pass) bounded peer tracking backs off new clients until expired failures are pruned [0.22ms]
+(pass) lockout file carries Rust diagnostic shape and is never reloaded as ban authority [9.79ms]
+(pass) management configuration rejects invalid switches and retains deliberate disable controls [1.06ms]
+
+test/native-admin.test.mjs:
+(pass) admin candidates remain revoked until proof of possession and confirmed claim retires older admins [5.09ms]
+(pass) only the latest candidate can confirm and expiry leaves bootstrap open [2.61ms]
+(pass) claimed JWT survives restart without storing bearer, rotates and stays revoked or expired [912.31ms]
+(pass) environment administrator closes bootstrap and anonymous management requires explicit opt-out [8.25ms]
+(pass) legacy opaque claim migrates to revocable admin JWT [188.79ms]
+(pass) run lease can recover heartbeat outage but cannot promote ordinary, revoked or expired records [3.81ms]
+(pass) native resource admission consumes request quota exactly once and token settlement does not consume another request [3.29ms]
+
+test/native-management.test.mjs:
+(pass) canonical token management list/issuance/revoke/rotation preserve Rust wire shapes and numeric budgets [2.12ms]
+(pass) admin bootstrap is open but delegated login operations require administrator authority and exact code [1.36ms]
+
+test/native-remote-operations.test.mjs:
+(pass) management calls preserve canonical routes and typed Rust DTO fields [1.14ms]
+(pass) pause deadlines accept seconds, delays, timezone offsets and reject pre-epoch or unsafe values [2.21ms]
+(pass) real remote HTTP preserves selected destination, bearer, request body and list/show semantics [20.11ms]
+(pass) selected deployment has no silent local fallback or redirect and never exposes token on errors [1.07ms]
+(pass) deadline caps uncooperative fetch and uncooperative body without hanging cancel [62.10ms]
+(pass) response bounds and malformed or failed server responses fail closed [1.12ms]
+(pass) saved selection tokens follow matching origins and explicit targets override invalid saved state [11.31ms]
+(pass) provider imports are parsed before requests, stop at first failure and redact unknown response secrets [7.28ms]
+(pass) server use copies trust privately and management HTTPS verifies the selected CA [154.11ms]
+
+test/native-clients.test.mjs:
+(pass) client paths canonicalize aliases and honor explicit isolated home over ambient credentials [15.70ms]
+(pass) all eight rows survive a malformed JSON configuration and show the matching error [311.01ms]
+(pass) Codex reads real TOML quoted keys inline tables and rejects malformed grammar [40.99ms]
+(pass) OpenCode setup refreshes owned models preserves user settings and restores previous provider [89.76ms]
+(pass) user drift is preserved on removal and Qwen removes only exact owned entries [70.63ms]
+(pass) credential metadata and actual config establish ownership; conflicting ambient values expose only key names [94.76ms]
+(pass) managed exports round trip shell quoting and contain Codex control-plane aliases privately [17.57ms]
+(pass) catalog consumes canonical authenticated endpoint and rejects every malformed row without silently dropping it [7.54ms]
+
+test/native-listeners.test.mjs:
+(pass) management requires actual peer, rejects remote combined ingress and enforces protected method before authentication [1.44ms]
+(pass) management counts failures once, blocks active bans before credential success and clears successful nonbanned failures [0.76ms]
+(pass) localhost server sets peer independently of forwarded headers and HEAD has no body [16.78ms]
+
+test/native-routes.test.mjs:
+(pass) native HTTP census observes every canonical OpenAPI method and path [18796.10ms]
+
+test/native-retry-budget.test.mjs:
+(pass) spend reservation uses exact source output precedence default UTF8 prompt and nested string counts [0.39ms]
+(pass) account error policy matches declaration-order literal bytes within source 16KiB prefix and exact transient statuses [2.21ms]
+(pass) localhost retry honors actual error body rules preserves last response and never retries explicit cooldown relay or pinned account [46.83ms]
+(pass) localhost admission reserves prompt plus output once, settles once and preserves final actual failure when exhausted [18.74ms]
+
+test/native-core.test.mjs:
+(pass) Rust-compatible JWT carriers, signature, expiry leeway, revocation, admin scope [2.43ms]
+(pass) unsigned/algorithm-confused token and published sentinel cannot authenticate [1.08ms]
+(pass) durable exact model authority fails closed for untracked and wrong model selectors [0.88ms]
+(pass) client/principal and repository security boundaries [1.32ms]
+(pass) atomic concurrent admission respects request, reserved-token and minute limits [2.94ms]
+(pass) fixed-minute window and sliding expiry follow injected time [1.18ms]
+(pass) fixture budget arithmetic remains exhausted at zero reservation [1.27ms]
+(pass) Rust readable Links Notation strings, nested arrays and token metadata round trip [2.42ms]
+(pass) text persistence survives reopening without storing JWT and coordinates independent instances [1690.53ms]
+(pass) provider store uses Rust AES-GCM nonce/ciphertext/tag shape and redacts keys [318.04ms]
+(pass) exact provider/model and operator alias fixture routing never guesses prefixes [3.55ms]
+(pass) scoped cooldown fails over only affected model/account and strict pins never escape [6.46ms]
+(pass) session failover off rejects cooling binding; weighted and least-used selection [6.73ms]
+(pass) account policies forbid auth/transport overwrite, unsupported header reads, and duplicate aliases [0.98ms]
+(pass) paused accounts and single-provider Rust limit projection survive restart [284.07ms]
+(pass) configuration file environment and explicit precedence with secret file [16.19ms]
+(pass) shared deterministic JWT and text projection fixture authenticate with durable model authority [3.53ms]
+(pass) native durable token admission is atomic across independent Node processes [1788.61ms]
+(pass) persistent provider deletes remain authoritative across stale store instances [488.50ms]
+(pass) management strategy changes preserve affinity and cooldown reset preserves manual pauses [2.72ms]
+(pass) rotation preserves authority and constraints while resetting Rust usage/clock semantics [1.19ms]
+(pass) readable codec retains empty objects and trailing quote runs; single-line markers distinguish arrays [0.58ms]
+
+test/native-gemini.test.mjs:
+(pass) Gemini source terminal truth maps every blocked reason to content_filter including prompt-only JSON and SSE [6.58ms]
+(pass) Gemini adapters preserve function pairing, generation policy and JSON usage [3.08ms]
+(pass) Gemini bridge rejects loss and ambiguous/unmatched calls [1.14ms]
+(pass) Gemini media and generation controls follow Rust bridge contracts without inventing HTTP MIME facts [1.59ms]
+(pass) Gemini thinking uses source effort precedence, exact budget thresholds and separate summary visibility [3.74ms]
+(pass) Gemini streams unwrap Code Assist, preserve UTF8/tools/usage and fail premature ending [3.21ms]
+(pass) native Gemini localhost request uses Code Assist envelope and returns native response metadata [18.06ms]
+(pass) Gemini service translates to native Chat and keeps error dialect on rejected action [1.60ms]
+
+test/native-service.test.mjs:
+(pass) Codex live calls share the persisted Realtime namespace and keep foreign owners isolated [20.78ms]
+(pass) native HEAD retains upstream upgrade rejection while cancelling its actual HTTP body [28.22ms]
+(pass) canonical route matcher accepts declared methods and rejects unlisted vendor operations [0.22ms]
+(pass) opaque relay forwards actual multipart bytes/query and application headers through localhost [14.17ms]
+(pass) Conversations retain owner/exact destination and capture upstream-owned child items [4.55ms]
+(pass) native Responses capture foreground/background and stream IDs before exposing bytes, then relay exact lifecycle [5.82ms]
+(pass) vendor resources enforce official client, native error passthrough, bounded bodies and references [1.49ms]
+(pass) header and URL boundaries preserve native protocol without credential leaks [0.48ms]
+
+test/native-tls.test.mjs:
+(pass) native self-signed HTTPS binds localhost with a verified generated certificate [113.52ms]
+
+test/native-operations.test.mjs:
+(pass) native operation fixtures assert successful behavior and unsupported failures [4182.98ms]
+(pass) native input errors preserve schema and operation exit codes [2.14ms]
+(pass) native CLI parses canonical flags and rejects secret argv [1.79ms]
+(pass) native CLI writes one JSON result and returns its actual exit code [1.91ms]
+(pass) schema-invalid native handlers cannot inherit a successful exit status [1.02ms]
+
+ 260 pass
+ 0 fail
+Ran 260 tests across 35 files. [75.83s]
+Manual development stage: typescript
+TAP version 13
+# Subtest: exact source spans enforce zero and exact boundaries without rounding or guessed default limits
+ok 1 - exact source spans enforce zero and exact boundaries without rounding or guessed default limits
+  ---
+  duration_ms: 422.286571
+  ...
+# Subtest: duplicate names and nested reports join source positions and preserve every independent observed duration
+ok 2 - duplicate names and nested reports join source positions and preserve every independent observed duration
+  ---
+  duration_ms: 10.226637
+  ...
+# Subtest: lexical numeric constants and unescaped const options work; writes, escape, spread, duplicate or dynamic deadlines refuse
+ok 3 - lexical numeric constants and unescaped const options work; writes, escape, spread, duplicate or dynamic deadlines refuse
+  ---
+  duration_ms: 85.023819
+  ...
+# Subtest: ambiguous locations names and durations fail closed while original failures and later observations remain recorded
+ok 4 - ambiguous locations names and durations fail closed while original failures and later observations remain recorded
+  ---
+  duration_ms: 4.165791
+  ...
+# Subtest: complete source identity changes invalid syntax links and forbidden runner filtering cannot yield success
+ok 5 - complete source identity changes invalid syntax links and forbidden runner filtering cannot yield success
+  ---
+  duration_ms: 22.836038
+  ...
+# Subtest: actual complete synchronous Node pass is independently rejected after all later cases and TAP finish
+ok 6 - actual complete synchronous Node pass is independently rejected after all later cases and TAP finish
+  ---
+  duration_ms: 2152.462214
+  ...
+# Subtest: actual large complete TAP and original failed case are retained beyond small-buffer limits
+ok 7 - actual large complete TAP and original failed case are retained beyond small-buffer limits
+  ---
+  duration_ms: 1160.282532
+  ...
+# Subtest: actual complete positive cohort preserves duplicate names nested cases default cases and successful audit
+ok 8 - actual complete positive cohort preserves duplicate names nested cases default cases and successful audit
+  ---
+  duration_ms: 896.228159
+  ...
+# Subtest: actual ignored-stdio descendant survives TERM only until awaited owned-group escalation
+ok 9 - actual ignored-stdio descendant survives TERM only until awaited owned-group escalation
+  ---
+  duration_ms: 1823.486009
+  ...
+# Subtest: complete wide source cohort fits a bounded heap and still refuses overdue cases at their exact original positions
+ok 10 - complete wide source cohort fits a bounded heap and still refuses overdue cases at their exact original positions
+  ---
+  duration_ms: 7173.915579
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 13967.099049
+Complete Node deadline evidence: /tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-crg3Ia
+
+> @link-assistant/router@1.24.1 typecheck
+> tsc --noEmit --strict --module nodenext --moduleResolution nodenext test/types.ts
+
+
+> @link-assistant/router@1.24.1 native:typecheck
+> tsc --noEmit --strict --module nodenext --moduleResolution nodenext test/native-types.ts
+
+Strict native TypeScript compilation passed: 167 files; TypeScript 5.9.3.
+
+> link-assistant-router-admin-ui@0.0.0 build
+> vite build --outDir /tmp/router-js-first-ui-2C6UII --emptyOutDir
+
+vite v8.3.3 building client environment for production...
+transforming...
+✓ 1965 modules transformed.
+rendering chunks...
+computing gzip size...
+../../router-js-first-ui-2C6UII/index.html                    0.60 kB │ gzip:  0.31 kB
+../../router-js-first-ui-2C6UII/assets/rolldown-runtime.js    0.58 kB │ gzip:  0.36 kB
+../../router-js-first-ui-2C6UII/assets/app.js                16.47 kB │ gzip:  5.14 kB
+../../router-js-first-ui-2C6UII/assets/react.js             220.98 kB │ gzip: 68.82 kB
+../../router-js-first-ui-2C6UII/assets/ui-vendor.js         331.24 kB │ gzip: 88.22 kB
+
+✓ built in 1.26s
+{"event":"javascript-gate-fingerprint","state":"start","totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"changelog.d/20261015_000171_mutable_primitive_f64.md","kind":"file","bytes":691,"completedFiles":512,"completedBytes":7299673,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"changelog.d/20261020_000545_package_default_source_data.md","kind":"file","bytes":386,"completedFiles":1024,"completedBytes":7811599,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"dev/log/issues/184/pulls/185/clone-js-template.log","kind":"file","bytes":61,"completedFiles":1536,"completedBytes":34755214,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"dev/log/issues/648/pulls/649/ci-logs/ci-cd-pipeline-36764352534.log","kind":"file","bytes":11717874,"completedFiles":1669,"completedBytes":53157912,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"dev/log/issues/648/pulls/649/ci-logs/ci-cd-pipeline-36764352534.log","kind":"file","bytes":11717874,"completedFiles":1670,"completedBytes":64875786,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"dev/log/issues/784/pulls/785/sessions/01a1b36c-121f-7021-bb04-c1695b2b19ed/solve.log","kind":"file","bytes":17324841,"completedFiles":1742,"completedBytes":80379849,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"dev/log/issues/784/pulls/785/sessions/01a1b36c-121f-7021-bb04-c1695b2b19ed/solve.log","kind":"file","bytes":17324841,"completedFiles":1743,"completedBytes":97704690,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"docs/case-studies/issue-759/current/canonical-recovery/complete-evidence.tar.xz","kind":"file","bytes":18748440,"completedFiles":1995,"completedBytes":107798980,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/current/canonical-recovery/complete-evidence.tar.xz","kind":"file","bytes":18748440,"completedFiles":1996,"completedBytes":126547420,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"docs/case-studies/issue-759/current/coherent-source-successor/complete-evidence.tar.xz","kind":"file","bytes":11462080,"completedFiles":2026,"completedBytes":136757956,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/current/coherent-source-successor/complete-evidence.tar.xz","kind":"file","bytes":11462080,"completedFiles":2027,"completedBytes":148220036,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/current/language-layout-20261019/complete-ci-657-feedback.tar.xz","kind":"file","bytes":1024784,"completedFiles":2048,"completedBytes":156053367,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"docs/case-studies/issue-759/current/verified-source-successor-20261015/complete-part-2.tar.xz","kind":"file","bytes":49102280,"completedFiles":2123,"completedBytes":176968703,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/current/verified-source-successor-20261015/complete-part-2.tar.xz","kind":"file","bytes":49102280,"completedFiles":2124,"completedBytes":226070983,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"docs/case-studies/issue-759/current/verified-source-successor-20261015/complete-part-3.tar.xz","kind":"file","bytes":19603808,"completedFiles":2125,"completedBytes":226286209,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/current/verified-source-successor-20261015/complete-part-3.tar.xz","kind":"file","bytes":19603808,"completedFiles":2126,"completedBytes":245890017,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/artifacts/repository-artifacts-per-page50-page-008.json.gz","kind":"file","bytes":5439,"completedFiles":2560,"completedBytes":249948748,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37470365590/attempt-1/expanded-log-manifest.json","kind":"file","bytes":798,"completedFiles":3072,"completedBytes":257216311,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37472289946/attempt-1/logs/4_Build CLI cli-linux-x64.txt.xz","kind":"file","bytes":30744,"completedFiles":3584,"completedBytes":260519436,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477594040/attempt-1/logs/Build the census and upload it/system.txt.gz","kind":"file","bytes":393,"completedFiles":4096,"completedBytes":263976436,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37485477332/attempt-1/logs/11_Package VS Code extension (.vsix).txt.xz","kind":"file","bytes":16148,"completedFiles":4608,"completedBytes":268509398,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37489942808/attempt-1/jobs-page-001.json.gz","kind":"file","bytes":1248,"completedFiles":5120,"completedBytes":271579850,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543604/attempt-1/logs/Box Image Projects (go)/system.txt.gz","kind":"file","bytes":535,"completedFiles":5632,"completedBytes":275996709,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522181979/attempt-1/logs/E2E (opencode)/system.txt.gz","kind":"file","bytes":452,"completedFiles":6144,"completedBytes":279555842,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37529112833/attempt-1/logs-not-downloaded.json","kind":"file","bytes":267,"completedFiles":6656,"completedBytes":283439416,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37534053262/attempt-1/logs/Docker Image Build & Runtime Check/system.txt.gz","kind":"file","bytes":489,"completedFiles":7168,"completedBytes":287202235,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37547113880/attempt-1/jobs-page-001.json.gz","kind":"file","bytes":4167,"completedFiles":7680,"completedBytes":291134387,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37560998565/attempt-1/expanded-log-manifest.json","kind":"file","bytes":875,"completedFiles":8192,"completedBytes":295943346,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37570930929/attempt-1/logs/9_Box Image Projects (ruby).txt.gz","kind":"file","bytes":10106,"completedFiles":8704,"completedBytes":300858742,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37582735911/attempt-1/logs/26_base _ Pin base commit.txt.gz","kind":"file","bytes":4738,"completedFiles":9216,"completedBytes":304558661,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37613770572/attempt-1/logs/E2E (opencode-desktop)/system.txt.gz","kind":"file","bytes":453,"completedFiles":9728,"completedBytes":310461059,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37628152186/attempt-1/logs/Box Image Projects (python)/system.txt.gz","kind":"file","bytes":537,"completedFiles":10240,"completedBytes":315424039,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37706284854/attempt-1/jobs-all.json","kind":"file","bytes":3581,"completedFiles":10752,"completedBytes":320228201,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37719638927/attempt-1/logs/js tier (node --check over js, suites 2_4)/system.txt.gz","kind":"file","bytes":443,"completedFiles":11264,"completedBytes":325203480,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37752832195/attempt-1/logs/CodeQL (rust)/system.txt.gz","kind":"file","bytes":309,"completedFiles":11776,"completedBytes":333086559,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37768966211/attempt-1/logs/37_Detect Changes.txt.xz","kind":"file","bytes":65432,"completedFiles":12288,"completedBytes":338999072,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37778965238/attempt-1/expanded-log-manifest.json","kind":"file","bytes":3,"completedFiles":12800,"completedBytes":343005725,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37781789803/attempt-1/logs/Build CLI cli-windows-x64/system.txt.gz","kind":"file","bytes":488,"completedFiles":13312,"completedBytes":346268559,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37794331995/attempt-1/logs/12_Package VS Code extension (.vsix).txt.xz","kind":"file","bytes":16276,"completedFiles":13824,"completedBytes":350424486,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37799594933/attempt-1/run.json.gz","kind":"file","bytes":2227,"completedFiles":14336,"completedBytes":353476508,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806671431/attempt-1/expanded-log-manifest.json","kind":"file","bytes":777,"completedFiles":14848,"completedBytes":358066601,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37807900891/attempt-1/jobs-all.json","kind":"file","bytes":1082,"completedFiles":15360,"completedBytes":359210055,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37811593050/attempt-1/logs/Release Preflight/system.txt.gz","kind":"file","bytes":395,"completedFiles":15872,"completedBytes":361695486,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37823689468/attempt-1/expanded-log-manifest.json","kind":"file","bytes":3,"completedFiles":16384,"completedBytes":365325407,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37833155766/attempt-1/logs/Build linux-x64/system.txt.gz","kind":"file","bytes":480,"completedFiles":16896,"completedBytes":370441712,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37840425612/attempt-1/jobs-all.json","kind":"file","bytes":1091,"completedFiles":17408,"completedBytes":374040946,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37860243220/attempt-1/logs/macOS Core Tests _ Build macOS test archive/system.txt.gz","kind":"file","bytes":651,"completedFiles":17920,"completedBytes":378718969,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37870721768/attempt-1/logs/Version Modification Check/system.txt.gz","kind":"file","bytes":443,"completedFiles":18432,"completedBytes":383886798,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37900412888/attempt-1/logs/Box Image Projects (go)/system.txt.gz","kind":"file","bytes":528,"completedFiles":18944,"completedBytes":388602314,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37957602769/attempt-1/logs/14_Full source network serialization (1_8).txt.xz","kind":"file","bytes":16764,"completedFiles":19456,"completedBytes":394515496,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37980990387/attempt-1/logs/Agent CLI ladder depth-5-1.1.1.1/system.txt.gz","kind":"file","bytes":459,"completedFiles":19968,"completedBytes":398710055,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38003442331/attempt-1/logs/27_Test (ubuntu-latest _ full) shard 2_5.txt.xz","kind":"file","bytes":23784,"completedFiles":20480,"completedBytes":403837661,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38017973507/attempt-1/logs/15_Produce native aarch64-unknown-linux-gnu.txt.xz","kind":"file","bytes":33532,"completedFiles":20992,"completedBytes":408749447,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38034752597/attempt-1/logs/Select exact native release source/system.txt.gz","kind":"file","bytes":488,"completedFiles":21504,"completedBytes":413984605,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38040651006/attempt-1/logs/0_Matrix summary.txt.gz","kind":"file","bytes":1435,"completedFiles":22016,"completedBytes":417968377,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38050091632/attempt-1/logs/13_E2E Tests (agent CLI ↔ formal-ai) _ E2E Tests (agent CLI ↔ formal-ai).txt.xz","kind":"file","bytes":15636,"completedFiles":22528,"completedBytes":422816476,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38055711345/attempt-1/logs/E2E Tests (local web app) _ E2E Tests (local web app, shard 1_3)/system.txt.gz","kind":"file","bytes":576,"completedFiles":23040,"completedBytes":427977527,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38073189714/attempt-1/logs/js tier (node --check over js, suites 4_4)/system.txt.gz","kind":"file","bytes":441,"completedFiles":23552,"completedBytes":433026713,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37981694647/attempt-1/jobs-all.json.gz","kind":"file","bytes":3950,"completedFiles":24064,"completedBytes":439376867,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11661121158/text-manifest.json","kind":"file","bytes":1304,"completedFiles":24576,"completedBytes":442160808,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37660345580/attempt-1/logs/32_Rust _ Code Coverage (remaining).txt.xz","kind":"file","bytes":17300,"completedFiles":25088,"completedBytes":446599766,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37782943924/attempt-1/logs/19_Self-Translation Report (1_8).txt.gz","kind":"file","bytes":5261,"completedFiles":25600,"completedBytes":449025761,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37822606126/attempt-1/logs/56_JavaScript _ JavaScript Tests (grammar).txt.xz","kind":"file","bytes":30436,"completedFiles":26112,"completedBytes":453474076,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37984660603/attempt-1/logs/0_Full Requirements Aggregate.txt.gz","kind":"file","bytes":1618,"completedFiles":26624,"completedBytes":455792848,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38029353887/attempt-1/annotations/114146841980-page-001.json","kind":"file","bytes":880,"completedFiles":27136,"completedBytes":458308092,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35900766650/attempt-1/jobs-all.json.gz","kind":"file","bytes":871,"completedFiles":27648,"completedBytes":462582694,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37985634038/attempt-1/jobs-all.json.gz","kind":"file","bytes":1078,"completedFiles":28160,"completedBytes":465781178,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/text-objects/2d/2d05dafb597154926e75c58e4c6816b9eb2a3f894625d685c4e8f541fbcde50d.gz","kind":"file","bytes":1992,"completedFiles":28672,"completedBytes":470324264,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/text-objects/6a/6a68c4921afffee18214b737d0175309888cc7cd3db5a104718db93d2313182e.gz","kind":"file","bytes":9847,"completedFiles":29184,"completedBytes":473301467,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/text-objects/9f/9ffc124d8e42d933e7f2e8a9d9f225eb1deb90b5b6f73ad443d1f301e867b937.gz","kind":"file","bytes":8715,"completedFiles":29696,"completedBytes":476352219,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/ci/text-objects/d8/d89c4dc2e681a0145751df838bc7e57e7b04bfd1f48fcec7f9bf03be0d160f12.gz","kind":"file","bytes":2674,"completedFiles":30208,"completedBytes":479336063,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"docs/case-studies/issue-759/raw/current-task/coherent-source-batch-v7/complete-evidence.tar.xz","kind":"file","bytes":11715560,"completedFiles":30564,"completedBytes":499315195,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/current-task/coherent-source-batch-v7/complete-evidence.tar.xz","kind":"file","bytes":11715560,"completedFiles":30565,"completedBytes":511030755,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/go.yml","kind":"file","bytes":8717,"completedFiles":30720,"completedBytes":525549067,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-784/evidence/checkpoint-e881-terminal/checkpoint-e881-artifacts-terminal.json","kind":"file","bytes":19154,"completedFiles":31232,"completedBytes":535703168,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-784/evidence/ci-3b197/current-3b197-early-job-128997756668.log.gz","kind":"file","bytes":94984,"completedFiles":31744,"completedBytes":555471331,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-784/evidence/ci-815527/current-815527-published-numstat.txt","kind":"file","bytes":162745,"completedFiles":32256,"completedBytes":571256384,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-784/evidence/current-37147a/current-37147a-job-129051661233.log.gz","kind":"file","bytes":595629,"completedFiles":32768,"completedBytes":587543903,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"docs/case-studies/issue-784/evidence/current-struct-ordering.json.gz","kind":"file","bytes":10449,"completedFiles":33280,"completedBytes":677044595,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"experiments/issue-35/e2e-evidence/server.log.redacted","kind":"file","bytes":840,"completedFiles":33792,"completedBytes":714602325,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"experiments/issue-784/inspect-stock-intrinsics.mjs","kind":"file","bytes":2844,"completedFiles":34304,"completedBytes":720339564,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"experiments/issue-784/standard-network-path-inputs-v2/library--core--src--net--mod.rs.gz","kind":"file","bytes":384,"completedFiles":34816,"completedBytes":722974738,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"js/generated/rust-draft/rust/src/platform_keychain_tests.mjs","kind":"file","bytes":551,"completedFiles":35328,"completedBytes":726261217,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"js/generated/rust-owned-definitions/rust/src/lib/runtime/json-roundtrip-numbers.mjs","kind":"file","bytes":5346,"completedFiles":35840,"completedBytes":727152868,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/packages/javascript/generated/rust-draft/fuzz/harness.mjs","kind":"file","bytes":511,"completedFiles":36352,"completedBytes":737133941,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/packages/javascript/generated/rust-draft/src/responses_websocket_tests.mjs","kind":"file","bytes":546,"completedFiles":36864,"completedBytes":738167731,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/packages/typescript/generated/rust-draft/src/admin.ts","kind":"file","bytes":22059,"completedFiles":37376,"completedBytes":740011427,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/packages/typescript/generated/rust-draft/src/vendor_cli_refresh_tests.ts","kind":"file","bytes":551,"completedFiles":37888,"completedBytes":743701518,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/tools/translation/meta/src/deploy_image.meta.json","kind":"file","bytes":16276,"completedFiles":38400,"completedBytes":760304356,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/tools/translation/meta/tests/router_e2e/bridge_semantics.meta.json","kind":"file","bytes":18091,"completedFiles":38912,"completedBytes":791562182,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/tools/translation/projects/src/lib.meta.json","kind":"file","bytes":24531818,"completedFiles":38968,"completedBytes":793599153,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/tools/translation/projects/src/lib.meta.json","kind":"file","bytes":24531818,"completedFiles":38969,"completedBytes":818130971,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/tools/translation/projects/src/lib.meta.json.parts/checkedSemanticProgram.json","kind":"file","bytes":43603398,"completedFiles":38969,"completedBytes":818130971,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/tools/translation/projects/src/lib.meta.json.parts/checkedSemanticProgram.json","kind":"file","bytes":43603398,"completedFiles":38970,"completedBytes":861734369,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/tools/translation/projects/src/lib.meta.json.parts/targetSemanticProgram.json","kind":"file","bytes":44617984,"completedFiles":38970,"completedBytes":861734369,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/tools/translation/projects/src/lib.meta.json.parts/targetSemanticProgram.json","kind":"file","bytes":44617984,"completedFiles":38971,"completedBytes":906352353,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/packages/javascript/generated/rust-draft/src/native_service.mjs","kind":"file","bytes":1976,"completedFiles":39424,"completedBytes":907437285,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/packages/typescript/generated/rust-draft/runtime/formal-ai-lexer-LICENSE","kind":"file","bytes":1211,"completedFiles":39936,"completedBytes":909147768,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/packages/typescript/generated/rust-draft/src/responses_chat_input.ts","kind":"file","bytes":8264,"completedFiles":40448,"completedBytes":911421864,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/tools/translation/meta/src/bounded_process.meta.json","kind":"file","bytes":24327,"completedFiles":40960,"completedBytes":921301871,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/tools/translation/meta/tests/auth_cli_test.meta.json","kind":"file","bytes":70479,"completedFiles":41472,"completedBytes":955764015,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/tools/translation/projects/src/lib.meta.json","kind":"file","bytes":17799042,"completedFiles":41633,"completedBytes":961598503,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/tools/translation/projects/src/lib.meta.json","kind":"file","bytes":17799042,"completedFiles":41634,"completedBytes":979397545,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/tools/translation/projects/src/lib.meta.json.parts/checkedSemanticProgram.json","kind":"file","bytes":33085722,"completedFiles":41634,"completedBytes":979397545,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/tools/translation/projects/src/lib.meta.json.parts/checkedSemanticProgram.json","kind":"file","bytes":33085722,"completedFiles":41635,"completedBytes":1012483267,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/tools/translation/projects/src/lib.meta.json.parts/targetSemanticProgram.json","kind":"file","bytes":34118604,"completedFiles":41635,"completedBytes":1012483267,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/tools/translation/projects/src/lib.meta.json.parts/targetSemanticProgram.json","kind":"file","bytes":34118604,"completedFiles":41636,"completedBytes":1046601871,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/packages/javascript/generated/rust-draft/src/gemini_bridge_request_tests.mjs","kind":"file","bytes":550,"completedFiles":41984,"completedBytes":1047506076,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/packages/javascript/generated/rust-project/runtime/fixed-integer-NOTICE.md","kind":"file","bytes":1524,"completedFiles":42496,"completedBytes":1048354843,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/packages/typescript/generated/rust-draft/src/model_routing_resources.ts","kind":"file","bytes":547,"completedFiles":43008,"completedBytes":1051198490,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/tools/translation/meta/experiments/include-coverage-paths/src/bin/manifest.meta.json","kind":"file","bytes":9566,"completedFiles":43520,"completedBytes":1057326445,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/tools/translation/meta/src/stream_termination_tests.meta.json","kind":"file","bytes":28916,"completedFiles":44032,"completedBytes":1088475355,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/tools/translation/projects/src/lib.meta.json","kind":"file","bytes":17745286,"completedFiles":44298,"completedBytes":1101902753,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/tools/translation/projects/src/lib.meta.json","kind":"file","bytes":17745286,"completedFiles":44299,"completedBytes":1119648039,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/tools/translation/projects/src/lib.meta.json.parts/checkedSemanticProgram.json","kind":"file","bytes":33060968,"completedFiles":44299,"completedBytes":1119648039,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/tools/translation/projects/src/lib.meta.json.parts/checkedSemanticProgram.json","kind":"file","bytes":33060968,"completedFiles":44300,"completedBytes":1152709007,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/tools/translation/projects/src/lib.meta.json.parts/targetSemanticProgram.json","kind":"file","bytes":34093732,"completedFiles":44300,"completedBytes":1152709007,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/tools/translation/projects/src/lib.meta.json.parts/targetSemanticProgram.json","kind":"file","bytes":34093732,"completedFiles":44301,"completedBytes":1186802739,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"rust/src/conversation_record/matching.rs","kind":"file","bytes":6700,"completedFiles":44544,"completedBytes":1192137273,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"rust/tests/fixtures/thinking/body.json","kind":"file","bytes":25758,"completedFiles":45056,"completedBytes":1198522051,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/conditional-namespace-superset.mjs","kind":"file","bytes":15381,"completedFiles":45568,"completedBytes":1206105273,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/fixtures/json-roundtrip/format-builtin-source-bridge-next-plan.json","kind":"file","bytes":3620,"completedFiles":46080,"completedBytes":1264016856,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"tools/translation/fixtures/macro-module-path-evidence/complete-records.tar.gz","kind":"file","bytes":9866762,"completedFiles":46107,"completedBytes":1264128528,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/fixtures/macro-module-path-evidence/complete-records.tar.gz","kind":"file","bytes":9866762,"completedFiles":46108,"completedBytes":1273995290,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/js-to-rust/generated/native-portable/scoped/codex-login.rs.txt","kind":"file","bytes":4065,"completedFiles":46592,"completedBytes":1358788470,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/literal-include-source-program.mjs","kind":"file","bytes":10235,"completedFiles":47104,"completedBytes":1386795104,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/meta/rust/src/route_contract_routing.meta.json","kind":"file","bytes":18109,"completedFiles":47616,"completedBytes":1492249741,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/prepare-literal-include-type-contribution.mjs","kind":"file","bytes":21552,"completedFiles":48128,"completedBytes":1564792138,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"tools/translation/projects/rust/src/lib.meta.json","kind":"file","bytes":25078239,"completedFiles":48244,"completedBytes":1566809424,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/projects/rust/src/lib.meta.json","kind":"file","bytes":25078239,"completedFiles":48245,"completedBytes":1591887663,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"tools/translation/projects/rust/src/lib.meta.json.parts/checkedSemanticProgram.json","kind":"file","bytes":46847111,"completedFiles":48245,"completedBytes":1591887663,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/projects/rust/src/lib.meta.json.parts/checkedSemanticProgram.json","kind":"file","bytes":46847111,"completedFiles":48246,"completedBytes":1638734774,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"tools/translation/projects/rust/src/lib.meta.json.parts/concreteSyntaxMeta.json","kind":"file","bytes":14678043,"completedFiles":48246,"completedBytes":1638734774,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/projects/rust/src/lib.meta.json.parts/concreteSyntaxMeta.json","kind":"file","bytes":14678043,"completedFiles":48247,"completedBytes":1653412817,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"opening","relative":"tools/translation/projects/rust/src/lib.meta.json.parts/targetSemanticProgram.json","kind":"file","bytes":48042608,"completedFiles":48247,"completedBytes":1653412817,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/projects/rust/src/lib.meta.json.parts/targetSemanticProgram.json","kind":"file","bytes":48042608,"completedFiles":48248,"completedBytes":1701455425,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/source-profiles/default-proof-byte-adoption/default-proof-byte-operation.mjs.txt","kind":"file","bytes":663,"completedFiles":48640,"completedBytes":1718839216,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/source-profiles/source-format-template/execution-evidence/source-format-template-node-sixth.log.gz","kind":"file","bytes":1162,"completedFiles":49152,"completedBytes":1746642565,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/test/fixtures/source-metadata-copy-previous.mjs","kind":"file","bytes":2407,"completedFiles":49664,"completedBytes":1763980376,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"tools/translation/test/typed-targets.mjs","kind":"file","bytes":3291,"completedFiles":50176,"completedBytes":1771423841,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"ts/generated/rust-draft/experiments/issue-725/signed-zero-reproduction.ts","kind":"file","bytes":585,"completedFiles":50688,"completedBytes":1779810224,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"ts/generated/rust-draft/rust/src/request_log/tracked_body.ts","kind":"file","bytes":559,"completedFiles":51200,"completedBytes":1782167658,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"advance","relative":"ts/generated/rust-owned-definitions/rust/src/main/runtime/float-runtime.mjs","kind":"file","bytes":1128,"completedFiles":51712,"completedBytes":1784827082,"totalFiles":52119}
+{"event":"javascript-gate-fingerprint","state":"complete","completedFiles":52119,"completedBytes":1790037753,"totalFiles":52119}
+Manual development receipt: /tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/manual-development-complete-local-retry.receipt.json; strict parity remains unverified; Rust and releases remain blocked.
