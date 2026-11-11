@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
-import {transportConcreteSourcePhases} from './concrete-phased-equations.mjs';
+import {transportConcreteSourcePhases} from './concrete-source-origin-equations.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url)),path='tools/translation/prepare-owned-runtime-import-edges.mjs';
 const profile=new URL('./source-profiles/runtime-import-phased-data/',import.meta.url);
 const hash=value=>createHash('sha256').update(value).digest('hex');

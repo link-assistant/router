@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {exactLiteralSubstitutionRule} from './literal-substitution-rule.mjs';
-import {transportConcreteNamedSourcePhases} from './concrete-named-phases.mjs';
+import {transportConcreteNamedSourcePhases} from './concrete-source-origin-phases.mjs';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 
 const root=fileURLToPath(new URL('../../',import.meta.url));

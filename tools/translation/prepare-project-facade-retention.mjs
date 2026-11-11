@@ -6,7 +6,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
-import {transportConcreteSourcePhases} from './concrete-phased-equations.mjs';
+import {transportConcreteSourcePhases} from './concrete-source-origin-equations.mjs';
 import {deriveProjectMethodOwnerScope} from './project-method-owner-scope-source.mjs';
 import {derivePinnedRepositorySourceEvolution} from './pinned-repository-source-evolution.mjs';
 import {deriveProjectSourceOriginAdoption} from './prepare-project-source-origin-cst.mjs';

@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {prepareRuntimeImportPhasedData} from './prepare-runtime-import-phased-data.mjs';
 import {prepareNativeRegenerationBatch} from './prepare-native-regeneration-batch.mjs';
-import {transportConcreteSourcePhases} from './concrete-phased-equations.mjs';
+import {transportConcreteSourcePhases} from './concrete-source-origin-equations.mjs';
 import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';
 import {proposeRuntimeCompilerSelections} from './prepare-runtime-compiler-selections.mjs';
 import {proposeRuntimeCompilerLifetime} from './prepare-runtime-compiler-lifetime.mjs';

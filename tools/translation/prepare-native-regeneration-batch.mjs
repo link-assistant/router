@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {exactLiteralSubstitutionRule} from './literal-substitution-rule.mjs';
-import {transportConcreteSourcePhases} from './concrete-sequential-equations.mjs';
+import {transportConcreteSourcePhases} from './concrete-source-origin-equations.mjs';
 import {derivePinnedRepositorySourceEvolution} from './pinned-repository-source-evolution.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 const root=new URL('../../',import.meta.url),path='tools/translation/js-to-rust/native-typescript.mjs';

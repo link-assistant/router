@@ -980,3 +980,5 @@ Further completed receiving batches remain in [the preserved cohort history](pla
 Continue with [the current a598 coordinated repair plan](current-a598-repair-plan.md).
 
 Continue with [the current 82b coordinated repair plan](current-82b-repair-plan.md).
+
+Continue with [the current authoring transport plan](current-authoring-source-origin-plan.md).
