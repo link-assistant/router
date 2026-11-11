@@ -113,7 +113,7 @@ a failed independent audit. Bun has a separate regeneration deadline failure.
 
 ## Current source and complete custody
 
-The [166-member source/CI archive](evidence/struct-ordering-source-and-ci-20261111.tar.xz)
+The [166-member source/CI archive](https://github.com/link-assistant/router/blob/124edb33e096a2c018caf449214005ad555d8bdd/docs/case-studies/issue-784/evidence/struct-ordering-source-and-ci-20261111.tar.xz?raw=true)
 and [receipt](evidence/struct-ordering-source-and-ci-20261111.json.gz) retain
 all available failed-job streams, the complete workflow ZIP, full deadline
 inspection and exact source/history inputs. All 8146186 decoded original

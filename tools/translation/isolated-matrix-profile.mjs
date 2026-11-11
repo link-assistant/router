@@ -1,11 +1,12 @@
 // Sequential CLI worker: full original source capture, original private planner,
 // full output validation and application only inside its caller-owned mirror.
-import {readFileSync,writeSync} from 'node:fs';
+import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createCompilationMatrix,compilationMatrixDescription} from './compilation-matrix.mjs';
 import {captureSourceCorpus} from './source-corpus.mjs';
 import {translationProgressReporter} from './translation-progress.mjs';
+import {writeMatrixTrace} from './matrix-trace-writer.mjs';
 const allowed=new Set(['bulk.mjs','retained-bulk.mjs','owned-definitions-bulk.mjs','retained-owned-definitions-bulk.mjs']);
 export async function materializeIsolatedProfile(request,{traceProgress}={}){
  if(!request||request.schema!=='router-isolated-profile-request-v1'||!allowed.has(request.plannerModule))throw TypeError('Unknown complete profile request');
@@ -32,7 +33,7 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const request=JSON.parse(bytes.toString('utf8')),started=performance.now();
  // Only the stock CLI worker uses descriptor 3. A library callback remains
  // ordinary diagnostic data and grants no source or private-plan authority.
- const traceProgress=process.env.ROUTER_TRANSLATION_MATRIX_TRACE==='1'?record=>writeSync(3,JSON.stringify({...record,schema:'router-isolated-matrix-worker-trace-v1',profile:request.name,workerPid:process.pid,workerElapsedMilliseconds:Math.floor(performance.now()-started)})+'\n'):undefined;
+  const traceProgress=process.env.ROUTER_TRANSLATION_MATRIX_TRACE==='1'?record=>writeMatrixTrace(JSON.stringify({...record,schema:'router-isolated-matrix-worker-trace-v1',profile:request.name,workerPid:process.pid,workerElapsedMilliseconds:Math.floor(performance.now()-started)})+'\n',started+3600000):undefined;
  const result=await materializeIsolatedProfile(request,{traceProgress});
  process.stdout.write(JSON.stringify(result)+'\n');
 }

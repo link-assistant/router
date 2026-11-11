@@ -22,8 +22,12 @@ workload at a time, retain original checks and limits, and invoke no Rust tools.
   decoded readback before moving the three external records into permanent custody.
 - [ ] Collect the entire published `124edb33e` cycle, every nonpassing job and
   applicable artifact. Preserve its head until every CI job is terminal.
-- [ ] Reproduce and repair the owned-matrix trace writer's actual `EAGAIN` pipe
-  failure. Preserve complete ordered diagnostics and all generation obligations.
+- [x] Reproduce and repair the owned-matrix trace writer's actual `EAGAIN` pipe
+  failure. Both complete focused files pass five cases per engine; the original
+  source producers reproduce nine owned and seven native outputs, and native
+  freshness passes. Retain every failed diagnostic and installation attempt.
+- [ ] Refresh genuine isolated compiler registration for the new trace inputs;
+  the earlier receiving result covers the previous source cohort only.
 - [ ] Repair complete compiler source-size admission through actual source
   refactoring; keep the original 4194304-byte bound and all executable sources.
 - [ ] Finish every original deadline failure, genuine canonical/owned/profile
