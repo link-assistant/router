@@ -3,6 +3,10 @@
 Objective: implement and verify all requirements in PR #785 on
 `issue-784-1f6838f56841`. Keep unresolved criteria explicit and the PR unmerged.
 
+The current checklist and failed/unrun gate evidence are in
+[the proof-source continuation](current-source-proof-origin-plan.md).
+All historical unchecked criteria below remain required.
+
 ## 2026-11-09 canonical byte-cost and progress receiving continuation
 
 - [x] Observe clean `a9b168c54` canonical check without changing its sources.

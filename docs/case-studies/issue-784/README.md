@@ -1,14 +1,22 @@
 # Issue 784: default geolocation privacy
 
-Research and verification dates: 2026-11-06–10 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
+Research and verification dates: 2026-11-06–11 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
+
+The [latest complete local gate attempt](current-source-origin-full-gate.md)
+passes lint, both 260-case native suites and 121 parity acceptance cases. The
+original TypeScript regeneration deadline and actual strict parity fail. The
+memory guard interrupts forward tests; later commands remain unrun. The
+[complete published f93 cycle](ci-f93-terminal-20261111.md) is terminal, with
+every nonpassing log and all 42 complete artifacts reviewed. No green gate,
+complete parity or universal privacy qualification is claimed.
 
 The [terminal 4ea CI review](ci-4ea-terminal-20261110.md) retains all 24
 nonpassing logs and all 26 whole artifacts after all 59 jobs finish. Reverse
 freshness has a local receiving repair; strict parity, original deadlines,
 complete matrices and universal privacy criteria remain unfinished.
 
-The [latest complete local gate attempt](current-runtime-binding-full-gate.md)
+The [earlier complete local gate attempt](current-runtime-binding-full-gate.md)
 retains three Bun persistence failures, the unchanged native TypeScript
 regeneration deadline breach, and the memory-interrupted parity run. Later
 commands remain unrun. The earlier

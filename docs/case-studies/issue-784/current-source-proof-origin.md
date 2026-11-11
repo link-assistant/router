@@ -29,8 +29,11 @@ with no completed-case deadline breach. Total elapsed time is 521.467 seconds
 and peak sampled cgroup memory is 2292854784 bytes, below the unchanged
 2866933760-byte aggregate stop threshold. The memory guard does not stop it.
 A bounded 2500 ms profile of that already running worker samples derive/token
-work and GC. It neither identifies the active case nor supplies a controlled
-timing comparison; the instrumented failed attempt remains retained.
+work and GC. Complete call ancestry identifies the seventh, final whole
+application case at `router-core-unit-matches.test.mjs:109`: 354 of 1701 samples
+descend from that case. This identifies sampled execution, not the OOM cause,
+case completion or a controlled timing comparison. The instrumented failed
+attempt remains retained.
 
 Fresh separate Bun processes pass both original proof cases, all nine Unicode
 cases and both new receiving cases. Proof history takes 59357.91 ms within
@@ -46,6 +49,20 @@ retirement receipts retain immutable Git/member readback for two inactive
 initial lock-packet copies (208896 allocated bytes) and two already committed
 negative-experiment checkout packets (13041664 allocated bytes). Their whole
 contents remain recoverable; no active process or build path is removed.
+
+After complete immutable Git recovery of all 694 packet members, the seven
+inactive task DATA directories are retired. Every one of their 625 leaves is
+joined to the archived checksum and unchanged inode/time identity; process
+descriptors are checked before removal. This reclaims 3874335 logical and
+5156864 allocated bytes. The ancestry analysis and retirement receipt are
+retained in the [subsequent gate packet](evidence/current-source-origin-full-gate.json.gz).
+
+The [complete local gate attempt](current-source-origin-full-gate.md) on
+`b366d594d8b84bdb7143c516e1863e29c9656e20` fails. All ten lint commands,
+260 native cases in each engine and 121 parity acceptance cases pass; the
+original TypeScript regeneration deadline and strict parity fail. The aggregate
+memory guard stops forward tests and reaps every owned process. Later checks
+remain unrun; this source selection has no complete green gate.
 
 Generation, source freshness, raw compiler admission, all original deadlines,
 strict parity, the complete same-SHA JavaScript gate and universal privacy
