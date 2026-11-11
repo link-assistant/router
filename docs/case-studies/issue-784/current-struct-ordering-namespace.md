@@ -44,7 +44,7 @@ inputs, all 18 graph parts, complete derive context, scripts, stderr and resourc
 receipts remain retained. No whole CSV receiving test, source-scope admission,
 strict parity, complete gate or Rust execution is qualified by these probes.
 
-The [complete packet](evidence/current-struct-ordering.tar.gz) and its
+The [complete packet](https://github.com/link-assistant/router/blob/df6e63a2b667efb31629b746e43e93daddba0e8b/docs/case-studies/issue-784/evidence/current-struct-ordering.tar.gz) and its
 [whole-member receipt](evidence/current-struct-ordering.json.gz) preserve the
 positive and negative evidence, final draft sources and exact Git predecessors.
 Two initial custody attempts failed on a missing path prefix and absolute tar
@@ -54,3 +54,9 @@ The recording head identifies the predecessor; the receipt explicitly records
 that the candidate sources differ from that head. Mandatory current canonical,
 owned/profile generation, private raw compiler bounds, unchanged deadlines,
 strict parity and universal client/account privacy requirements remain open.
+
+The packet remains complete in the immutable commit linked above. After full
+Git-blob and all 147 member readbacks plus inactive inode checks, its duplicate
+checkout copy is retired to make room for final CI artifacts within the task's
+500 MB evidence limit. The [custody receipt](evidence/current-struct-ordering-checkout-retirement.json.gz)
+records exact reclaimed bytes; no evidence payload or commit is removed.
