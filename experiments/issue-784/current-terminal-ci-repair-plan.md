@@ -30,6 +30,10 @@ issue requirement and failing check. Never claim full parity from inventory.
   The finite narrow comparison does not qualify a complete CI deadline.
 - [x] Compare and decline completed-data freezing in derive contexts: complete
   contexts match, but the finite candidate is slower. Production is unchanged.
+- [x] Run and preserve both complete 5f8 gate attempts. The second passes lint,
+  both 260-case native suites and the first five TypeScript commands; its
+  memory interruption leaves the full native TypeScript file unqualified and
+  all later stages unrun. Independently read back all 95 archived members.
 - [ ] Repair the remaining source-processing CPU and memory failures without
   changing original deadlines, source budgets, host guards or test scope.
 - [ ] Regenerate all current canonical outputs and missing owned definitions

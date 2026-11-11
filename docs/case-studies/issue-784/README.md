@@ -9,10 +9,13 @@ available nonpassing log and all selected deadline reports are preserved;
 translation-12's cancelled log remains unavailable. All 26 genuine original
 deadline breaches and strict parity gaps remain blocking.
 
-The [latest complete local gate attempt](current-source-origin-full-gate.md)
-passes lint, both 260-case native suites and 121 parity acceptance cases. The
-original TypeScript regeneration deadline and actual strict parity fail. The
-memory guard interrupts forward tests; later commands remain unrun. The
+The [latest complete local gate attempts](current-5f8-complete-gate.md)
+retain both memory-guard interruptions. The second passes lint, both 260-case
+native suites, native freshness and strict 167-file TypeScript compilation.
+The complete original native TypeScript test file is interrupted; later
+TypeScript commands and all parity, forward and reverse stages are unrun.
+The [earlier gate](current-source-origin-full-gate.md) retains its original
+regeneration deadline and strict parity failures separately. The
 [complete published f93 cycle](ci-f93-terminal-20261111.md) is terminal, with
 every nonpassing log and all 42 complete artifacts reviewed. No green gate,
 complete parity or universal privacy qualification is claimed.
