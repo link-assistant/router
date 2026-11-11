@@ -11,6 +11,12 @@ memory guard interrupts forward tests; later commands remain unrun. The
 every nonpassing log and all 42 complete artifacts reviewed. No green gate,
 complete parity or universal privacy qualification is claimed.
 
+The [current reverse regeneration](current-reverse-freshness.md) repairs all
+ten stale outputs and passes the complete original twelve-case Node file and
+its deadline audit. Bun's regeneration deadline remains unresolved. The
+[native call-arity candidate](native-call-arity-negative.md) was withdrawn
+after failing the original nine-case file's deadline despite passing assertions.
+
 The [terminal 4ea CI review](ci-4ea-terminal-20261110.md) retains all 24
 nonpassing logs and all 26 whole artifacts after all 59 jobs finish. Reverse
 freshness has a local receiving repair; strict parity, original deadlines,

@@ -1,0 +1,134 @@
+{
+  "schema": "complete-evidence-packet-v1",
+  "sourceHead": "2964c19be2696a73a9ba70e856a6c7167c164da2",
+  "archive": "/tmp/gh-issue-solver-1794003502595/docs/case-studies/issue-784/evidence/current-reverse-freshness.tar.xz",
+  "archiveBytes": 1502496,
+  "archiveSha256": "0007f360fd20b8bba2ff6ded6b31423223bce303e7f9e62be638f073af5d5043",
+  "manifestSha256": "5f2c7cb25886d19d2f858dd04d9157329fc0ab4db66b9d40c86aa1081fa60dd0",
+  "members": [
+    {
+      "path": "ci-logs/issue-784-restart-2/current-reverse-artifacts-0e234-review.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-reverse-artifacts-0e234-review.json.gz",
+      "bytes": 2152,
+      "sha256": "e0f028c07f87a6763f96f6480580388e117d50132e2209c9f08d8a34fc9097fe"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-reverse-artifacts-0e234.patch.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-reverse-artifacts-0e234.patch.gz",
+      "bytes": 1612511,
+      "sha256": "6be02204405d60ffd7552732e8047e11337b80cdec273125f4adea2bb5b425b0"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-reverse-freshness-0e234.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-reverse-freshness-0e234.log",
+      "bytes": 77,
+      "sha256": "513e9278eb64a0947ea7a5dd3f3655bb9fe767e7187ff27e99125f71845263fb"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-reverse-freshness-0e234.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-reverse-freshness-0e234.memory.json",
+      "bytes": 949,
+      "sha256": "8e294a3de9d61efdd72b871d24d414ca64cad9ae659cb667e8c2b8fb25203206"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-reverse-original-translator-node-0e234.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-reverse-original-translator-node-0e234.log",
+      "bytes": 2816,
+      "sha256": "3296eba4f77139474555fa8ace28959edacd76f25a5f9153f971831d22600df3"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-reverse-original-translator-node-0e234.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-reverse-original-translator-node-0e234.memory.json",
+      "bytes": 1021,
+      "sha256": "0f4cb6fb4a9ca053b678da3d2c8dae14db1202170a940e511ce00b1cffa8a2da"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-reverse-regeneration-0e234.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-reverse-regeneration-0e234.log",
+      "bytes": 68,
+      "sha256": "02fd2f4638e012e271cd2e2b2a9a8a6c0fe8fabfae71c750d39ee285e07cc74e"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-reverse-regeneration-0e234.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-reverse-regeneration-0e234.memory.json",
+      "bytes": 949,
+      "sha256": "22eda97b172f79a6d319f25bc7207947ffe54a3a038ccc7563fbd32805b93ad8"
+    },
+    {
+      "path": "experiments/issue-784/archive-current-reverse-freshness.py",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/archive-current-reverse-freshness.py",
+      "bytes": 1779,
+      "sha256": "1a46e03e2a9d578f7df82eace5579106ddb534aa4381b46e7cf2fc189ef0566d"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-j9jcrf/case-deadlines.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-j9jcrf/case-deadlines.json",
+      "bytes": 19780,
+      "sha256": "6d3ef6a29633f139fffa6f12c13718772ac7e71a7022de6f213e5703398d1bb6"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-j9jcrf/command.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-j9jcrf/command.json",
+      "bytes": 44954,
+      "sha256": "1677805788e5b6cbba2a3d361368efabcab4f594bc361f3b24b968f082442099"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-j9jcrf/request.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-j9jcrf/request.json",
+      "bytes": 342,
+      "sha256": "19e6a6111465e07d0ba61412e0724242ea5a3e7cc5a5f8fcc947f65404708e3c"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-j9jcrf/stderr.raw.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-j9jcrf/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-j9jcrf/stdout.raw.tap",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-j9jcrf/stdout.raw.tap",
+      "bytes": 2695,
+      "sha256": "574146473cefc23fc6e3b7d782401cb84080971d1fa520f83d47efd1953d1ba6"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-j9jcrf/terminal.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-j9jcrf/terminal.json",
+      "bytes": 2352,
+      "sha256": "9ae0035994b063fbdbb1a198335180a7c9cab306d0b8f647e6da8249b01b3548"
+    },
+    {
+      "path": "js/src/file-lock.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/src/file-lock.mjs",
+      "bytes": 5059,
+      "sha256": "f89a82574899ed59a26a1863d5ba353930d74c881487579f9e6558fcdeeb7396"
+    },
+    {
+      "path": "scripts/regenerate-js-first.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/scripts/regenerate-js-first.mjs",
+      "bytes": 15928,
+      "sha256": "f471e9ff097584ec47212fa52054b68e6bdc187e6029785c2b7f9e841044d290"
+    },
+    {
+      "path": "tools/translation/js-to-rust/test/translator.test.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/js-to-rust/test/translator.test.mjs",
+      "bytes": 9482,
+      "sha256": "aa61a71ec822f1930b707cf5ab0271edbec2ca3adfc0bcb4caf4dfe6b5770442"
+    }
+  ],
+  "completeMembers": 18,
+  "completeOriginalBytes": 1722914,
+  "allDecodedOriginalsVerified": true,
+  "allSelectedOriginalsUnchanged": true,
+  "capSeconds": 600,
+  "elapsedSeconds": 1.0255825070198625,
+  "compression": {
+    "format": "xz",
+    "preset": 9,
+    "dictionaryBytes": 67108864
+  },
+  "harnessSha256": "79015998f626aecda125c5e03b6e7fc04951a14a57a7cdbba81771a2abfa08e9",
+  "semanticAuthority": false,
+  "runtimeParity": false,
+  "fullGatePass": false,
+  "rustExecuted": false
+}

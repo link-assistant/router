@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked top-level bodies from js/src/gemini-protocol.mjs; source sha256=0c15dfd433d8a354b5c66a6c88d9edc66db1796b56e1aa46e8045756632626e9; IR sha256=4d5520704d3c5161fc58fbc26607c337ea0132cb43edf41c75d448183aed4fed.
+// Independently checked top-level bodies from js/src/gemini-protocol.mjs; source sha256=0c15dfd433d8a354b5c66a6c88d9edc66db1796b56e1aa46e8045756632626e9; IR sha256=c948bad602e8711adb1d73cbd72af70c810d36b22516cdfc2b999fe2895b5fc4.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 export {};
 import { ProtocolError as routerOriginalError0 } from "../../protocols.js";
