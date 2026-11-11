@@ -24,6 +24,12 @@ issue requirement and failing check. Never claim full parity from inventory.
   Preserve the earlier unsupported Node 26 invocation as failed evidence.
 - [x] Reclaim only inactive task-owned duplicates with complete preserved
   archive bytes: 104 files, 3534156 logical and 3756032 allocated bytes.
+- [x] Stream qualified complete native namespace Map copies. Original complete
+  fifteen-case files and the two new cases pass in Node and Bun; complete
+  original observer tapes, independent Maps and CST/native inverses remain.
+  The finite narrow comparison does not qualify a complete CI deadline.
+- [x] Compare and decline completed-data freezing in derive contexts: complete
+  contexts match, but the finite candidate is slower. Production is unchanged.
 - [ ] Repair the remaining source-processing CPU and memory failures without
   changing original deadlines, source budgets, host guards or test scope.
 - [ ] Regenerate all current canonical outputs and missing owned definitions
