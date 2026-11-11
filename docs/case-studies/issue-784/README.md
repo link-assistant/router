@@ -489,3 +489,8 @@ bounded fixture workers, the complete remaining deadline failure, and both
 memory-stopped profiling attempts. The [internal namespace shadow data](namespace-shadow-data-20261111.md)
 retains passing complete Node/Bun receiving files and the full source inverse;
 its variable narrow measurements do not qualify a whole CI deadline.
+
+The [struct ordering receiving repair](struct-ordering-receiving-repair-20261111.md)
+preserves original historical refusals and current enclosing-only positives.
+Its complete Node receiving batch passes, while Bun's original default
+deadline and the serialization file's memory qualification remain unfinished.

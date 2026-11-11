@@ -41,6 +41,26 @@ issue requirement and failing check. Never claim full parity from inventory.
   complete gate or whole-project performance improvement.
 - [ ] Repair the remaining source-processing CPU and memory failures without
   changing original deadlines, source budgets, host guards or test scope.
+- [x] Correct current struct Ord receiving expectations while preserving the
+  exact original subjects, complete historical refusals, current private
+  positives and unknown/unsupported controls. Four complete files pass all
+  33 Node cases and their independent deadline audit. Standalone Bun core
+  adoption passes all eight cases. The updated complete eight-case standard
+  file also passes Node and its audit, while Bun standard input exceeds its
+  unchanged default deadline; complete Node serialization exhausts its
+  finite 512 MiB heap. These are unfinished, not passing qualifications.
+- [x] Preserve and verify 444 complete inactive Node audit members, then
+  retire only their matching inactive originals (10739712 allocated bytes).
+- [x] Wait for the entire published beda7848b cycle: all 75 jobs are terminal.
+  Preserve 30 available failed/cancelled logs and inspect all 40 complete
+  deadline ZIPs with SHA256/CRC verification. Retain all 36 Node reports and
+  six Bun receipts; 34 real duration breaches plus one expected fixture are
+  indexed. Translation-13's cancelled log returns HTTP 404 and remains
+  unavailable after inspecting the whole terminal workflow ZIP. That is an
+  explicit custody gap. Latest main eb2dad1c0 remains an ancestor.
+- [x] Run all five actual proof-byte source generators with their complete
+  CST/native inverses. Only two builtin ordering source copies change; fresh
+  private-registry registration and receiving qualification remain unrun.
 - [ ] Regenerate all current canonical outputs and missing owned definitions
   through their real producers; qualify the complete exported compiler.
 - [ ] Resolve all strict parity failures, including the 441 current draft

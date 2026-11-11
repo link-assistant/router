@@ -103,7 +103,8 @@ test('all privately closed builtin branches narrow only their original item type
  assert.equal(unitDefault.deriveContext.certificates[0].dimensions.valueNamespaceComplete,true);
  assert.equal(model(unitDefaultBefore).unresolvedTypeScope,false);assert.equal(model(unitDefaultAfter).unresolvedTypeScope,false);
  assert.ok(incomplete.deriveContext.certificates[0].standardInput);
- assert.equal(model(incompleteBefore).unresolvedTypeScope,true);assert.equal(model(incompleteAfter).unresolvedTypeScope,true,'an unproved output cannot discharge the repaired boundary');
+ assert.equal(model(incompleteBefore).unresolvedTypeScope,true);assert.equal(model(incompleteAfter).unresolvedTypeScope,false,'the current private struct Ord output discharges only its enclosing boundary');
+ const orderingToken=effect(incomplete),orderingFacts=facts(orderingToken,incomplete);assert.equal(orderingFacts.alternatives.length,1);assert.equal(orderingFacts.runtimeAuthority,false);assert.equal(incomplete.context.generatedImplBehavior,false);retain('02-original-Ord-current-private-output',{row:incomplete,token:orderingToken,actual:orderingFacts});
 });
 
 test('unit enum and full data branches retain all alternatives without trait or runtime promotion',()=>{
@@ -253,10 +254,17 @@ test('opaque bodies types helpers additional derives and generated attributes ca
  assert.deepEqual(route.branches.map(value=>value.feature),['has_derive_copy=false','has_derive_copy=true']);assert.deepEqual(route.typedSource.variants.map(value=>[value.name,value.style,value.fields.length]),[['Value','tuple',1],['None','unit',0]]);
  const full=route.branches[0].output.items[0].body.statements[0].expr;assert.equal(full.constructor.variant.name,'Match');assert.equal(full.slots.arms.length,2);assert.deepEqual(full.slots.arms.map(arm=>arm.pat.slots.path.segments),[['Payload','Value'],['Payload','None']]);assert.equal(route.branches[1].output.items[0].body.typeOnlyStatements.candidates.length,1);
  for(const key of ['namespaceAuthority','copyAuthority','noDropAuthority','constAuthority','generatedImplBehavior'])assert.equal(route[key],false,key);assert.equal(actual.runtimeAuthority,false);assert.equal(output.proof.generatedImplBehavior,false);assert.equal(actual.certificate.dimensions.typeNamespaceComplete,false);assert.equal(actual.certificate.dimensions.valueNamespaceComplete,false);assert.deepEqual(actual.enclosingTypeBindings,[]);assert.deepEqual(actual.enclosingUsableValueBindings,[]);
- // Preserve the exact seven other initial TypeError obligations. A setup
+ // Preserve the original Ord subject's historical refusal in the complete
+ // pinned issuer graph, then check both current per-invocation alternatives.
+ const ordering=states[0],orderingObserved=rows[0],orderingRow=ordering.row,oldOrdering=oldBang.createDeriveBangContext({deriveContext:orderingRow.deriveContext});let oldOrderingToken=null,oldOrderingError=null;
+ try{oldOrderingToken=oldEffects.proveDeriveEmptyEnclosingEffect(oldOrdering,orderingRow.deriveContext,orderingRow.module,orderingRow.item);}catch(error){oldOrderingError=error;}
+ retain('07-original-Ord-complete-historical-refusal',{fixture,profileJoins,currentSourcePins,copies,row:orderingRow,context:oldOrdering,token:oldOrderingToken,error:oldOrderingError&&{name:oldOrderingError.name,message:oldOrderingError.message}});
+ assert.equal(oldOrderingToken,null);assert.ok(oldOrderingError instanceof TypeError);assert.equal(oldOrderingError.message,'Original derive output has unresolved actual owners');const historicalOrdering=oldOrdering.certificates.find(value=>value.source===orderingRow.module.file&&value.span.start===orderingRow.item.start&&value.span.end===orderingRow.item.end);assert.ok(historicalOrdering);assert.ok(historicalOrdering.residualOwners.some(value=>value.path.join('::')==='Ord'));
+ assert.equal(ordering.setupError,null);assert.equal(ordering.error,null);assert.ok(ordering.token);assert.equal(orderingObserved.factsError,null);assert.equal(orderingObserved.actual.alternatives.length,2);assert.deepEqual(orderingObserved.actual.alternatives.map(value=>value.invocation.path),[['Clone'],['Ord']]);assert.ok(orderingObserved.actual.alternatives.every(value=>value.kind==='ItemKind::Impl'&&value.originalCompleteOutput.proof.generatedImplBehavior===false));assert.equal(orderingObserved.actual.runtimeAuthority,false);assert.deepEqual(orderingObserved.actual.enclosingTypeBindings,[]);assert.deepEqual(orderingObserved.actual.enclosingUsableValueBindings,[]);retain('07-original-Ord-complete-current-namespace-positive',{row:orderingRow,token:ordering.token,actual:orderingObserved.actual});
+ // Preserve the exact six remaining initial TypeError obligations. A setup
  // exception cannot substitute for the action's actual expected TypeError.
  for(let index=0;index<states.length;index++){
-  if(index===1)continue; // The exact payload subject retains its historical refusal above and current namespace-only positive.
+  if(index===0||index===1)continue; // Both exact subjects retain their historical refusals and current namespace-only positives above.
   const state=states[index];assert.equal(state.setupError,null,rows[index].label+' original setup');
   assert.throws(()=>{if(state.error)throw state.error;return state.token;},TypeError,rows[index].label+' original effect');
  }

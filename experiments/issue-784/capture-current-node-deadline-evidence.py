@@ -26,7 +26,8 @@ for path in packets.glob('*.json.gz'):
         receipt = json.load(stream)
     if receipt.get('allDecodedOriginalsVerified'):
         baseline.update((row['originalPath'], row['bytes'], row['sha256'])
-                        for row in receipt.get('members', []))
+                        for row in receipt.get('members', [])
+                        if isinstance(row.get('originalPath'), str))
 members, selected = [], []
 for attempt in sorted((root / 'js/node_modules/.node-case-deadlines').glob('complete-*')):
     if attempt.is_symlink() or not attempt.is_dir():
