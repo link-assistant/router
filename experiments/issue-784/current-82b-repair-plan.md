@@ -4,6 +4,46 @@ Objective: implement and verify every requirement of issue #784 and every CI
 check in [PR #785](https://github.com/link-assistant/router/pull/785). Keep the
 native goal active and the PR draft and unmerged while criteria remain open.
 
+Current continuation (2026-11-11 UTC): the published head is
+`f93b01795a935317942adfe7d329f636dcd1848b`. Run 42921384009 is still active;
+snapshot seven contains 20 successful, 20 failed, four cancelled and five
+      running jobs. Snapshot eight now has 20 successful, 21 failed, six cancelled
+      and two running jobs. Preserve the published head until the entire cycle is collected.
+All 36 artifacts in the first artifact snapshot have been downloaded, fully
+read back and reviewed; later artifacts remain to collect. Their independent
+deadline failures remain failures even when TAP assertions pass.
+
+- [x] Compose the exact source-origin CST adoption into both complete project
+      source histories, preserving original predecessors, inverses, both CST
+      phases and refusal controls. The three complete focused files pass all
+      12 cases in Node, including the independent deadline audit. Each file
+      also passes in a fresh Bun process. The combined Bun attempt was stopped
+      at the resource reserve and is retained as failed, not qualified.
+- [ ] Verify all four downstream source-composition files and fix every real
+      failure without changing their original deadlines or whole-file scope.
+      All 24 assertions now pass, but the independent deadline audit fails:
+      checked-source 178157.650047 ms, vectors 230848.050785 ms and lifetime
+      composition 217366.904694 ms, each against its original 60000 ms.
+- [x] Draft the source-backed named/unit struct ordering namespace and verify
+      all 15 cases under Node with the independent deadline audit. The seven
+      new cases pass in isolated Bun. Actual SemanticLink Ord/PartialOrd
+      namespace proofs now close; this grants zero executable functions.
+- [x] Complete the original eight-case ordering file under isolated Bun.
+      All eight cases pass; ClientKind takes 37074.53 ms against 60000 ms.
+- [ ] Retain full positive and negative ordering evidence and commit the
+      coherent rule. An initial custody attempt failed before creating an
+      archive because its Rust input path omitted the repository's rust/ prefix.
+      Completed in local commit df6e63a2b; all 147 complete archive members
+      were independently rechecked after correcting the tar-name reviewer.
+- [ ] Verify the default-off scalar OS-lock trace and its failed-sink cleanup
+      regression, regenerate actual native TypeScript, and run strict checks.
+      Earlier traced full Bun tests pass; persistence CI failures are not yet
+      reproduced or claimed fixed by diagnostics.
+- [ ] Preserve current complete draft sources and receipts in reviewable
+      checkpoint commits, then continue the common deadline/raw compiler/
+      generation/parity repairs. Current focused passes do not qualify the
+      complete JavaScript gate, same-SHA CI, Rust, or issue completion.
+
 - [x] Publish the complete reviewed terminal-939 batch at
       `82bff66b3eaec603e296f1d888fe909dad4743c8`, including the current isolated
       compiler registration and exhaustive sixteen-bin Node isolation.

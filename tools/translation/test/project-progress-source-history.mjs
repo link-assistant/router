@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
 import {derivePinnedRepositorySourceEvolution} from '../pinned-repository-source-evolution.mjs';
 import {transportConcreteNamedSourcePhases} from '../concrete-source-origin-phases.mjs';
+import {deriveProjectSourceOriginAdoption} from '../prepare-project-source-origin-cst.mjs';
 const path='tools/translation/project.mjs';
 const profiles=[
  {url:new URL('../source-profiles/project-namespace-composition/source-rules.json',import.meta.url),
@@ -30,8 +31,9 @@ export function restoreProjectProgressSourceHistory(source,retain=()=>{}){
   if(bytes.length!==state.size||hash(bytes)!==row.sha256)fail('complete authored profile differs');
   return {...row,bytes,input:JSON.parse(bytes)};
  });
- if(hash(source)!==inputs.at(-1).input.afterSha256)fail('unregistered complete current project source');
- let before=source;
+ const ts=ownershipCompiler(),projectSourceOrigin=deriveProjectSourceOriginAdoption(ts,source);
+ if(hash(projectSourceOrigin.before)!==inputs.at(-1).input.afterSha256)fail('unregistered complete current project source');
+ let before=projectSourceOrigin.before;
  for(const {input}of [...inputs].reverse()){
   if(hash(before)!==input.afterSha256)fail('complete source history boundary differs');
   for(const edit of [...input.edits].reverse()){
@@ -40,14 +42,16 @@ export function restoreProjectProgressSourceHistory(source,retain=()=>{}){
   }
   if(hash(before)!==input.beforeSha256)fail('complete source predecessor differs');
  }
- const ts=ownershipCompiler(),layers=[];let after=before;
+ const layers=[];let after=before;
  for(const row of inputs){
   const layer=derivePinnedRepositorySourceEvolution(ts,{
    profile:row.url,profileSha256:row.sha256,path,source:after});
   if(layer.inverse!==after)fail('complete source layer inverse differs');
   layers.push(layer);after=layer.after;
  }
- if(after!==source)fail('complete forward replay differs');
+ if(after!==projectSourceOrigin.before||projectSourceOrigin.inverse!==after)fail('complete forward replay differs');
+ layers.push(projectSourceOrigin);after=projectSourceOrigin.current;
+ if(after!==source)fail('complete source-origin forward replay differs');
  const proof={before,after,inverse:before,layers,sourceAuthority:false,
   semanticAuthority:false,runtimeAuthority:false,productionExecutableGain:0};
  const [equation]=transportConcreteNamedSourcePhases([{before,middle:before,

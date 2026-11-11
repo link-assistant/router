@@ -30,6 +30,32 @@ function inverse(source,rules){
  }
  return source;
 }
+// Compose this DATA equation into other complete project-source histories.
+// Its input must be exactly the original or its two-substitution afterimage.
+export function deriveProjectSourceOriginAdoption(ts,current){
+ if(ts?.version!=='5.9.3'||typeof current!=='string'||Buffer.byteLength(current)>262144)fail('bounded complete project source and TypeScript 5.9.3 required');
+ let before=current;
+ if(before.includes(newImport))before=before.replace(newImport,()=>oldImport);
+ if(before.includes(newCall))before=before.replace(newCall,()=>oldCall);
+ const file=ts.createSourceFile(projectPath,before,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+ if(file.parseDiagnostics.length)fail('complete native module syntax differs: '+projectPath);
+ const resolvers=file.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text==='resolveModuleGraph');
+ if(resolvers.length!==1)fail('one actual complete original graph resolver required');
+ const calls=[];const visit=node=>{if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='createRustConcreteSyntaxStages')calls.push(node);ts.forEachChild(node,visit);};visit(resolvers[0]);
+ if(calls.length!==1||calls[0].getText(file)!==oldCall||file.statements.filter(node=>ts.isImportDeclaration(node)&&node.getText(file)===oldImport).length!==1)fail('actual original batch call/import domain differs');
+ const rules=[
+  {phase:'language',id:'project-cst:reconstruct-complete-physical-source-batch',before:oldCall,after:newCall},
+  {phase:'repository',id:'project-cst:select-explicit-source-origin-batch-module',before:oldImport,after:newImport},
+ ];
+ const adopted=run(before,rules),middle=run(before,rules.filter(row=>row.phase==='language')).value;
+ if(current!==before&&current!==adopted.value)fail('unknown partially installed graph source');
+ if(inverse(adopted.value,rules)!==before)fail('complete original graph inverse differs');
+ const afterFile=ts.createSourceFile(projectPath,adopted.value,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+ if(afterFile.parseDiagnostics.length||adopted.value.split('\n').length>=1000)fail('complete adopted graph syntax or line budget differs');
+ const [equation]=transportConcreteNamedSourcePhases([{before,middle,after:adopted.value,language:'JavaScript',rules:['language:complete-private-source-origin-adoption','repository:complete-source-domain-imports','language:restore-complete-original-source','repository:restore-complete-original-imports']}]);
+ if(equation.inverse!==before)fail('complete serialized/reparsed inverse differs');
+ return {path:projectPath,before,middle,after:adopted.value,rules,trace:adopted.trace,inverse:before,equation,current,beforeSha256:hash(before),afterSha256:hash(adopted.value),semanticAuthority:false};
+}
 export function prepareProjectSourceOriginCst({sourceRoot=root}={}){
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('lockfile TypeScript 5.9.3 required');
  const native=(path,source)=>{
@@ -53,28 +79,12 @@ export function prepareProjectSourceOriginCst({sourceRoot=root}={}){
  const result=run(original,rules),after=result.value;
  if(inverse(result.value,rules)!==original)fail('complete original forward inverse differs');
  native(targetPath,after);
- const current=readFileSync(resolve(sourceRoot,projectPath),'utf8');
- let before=current;
- if(before.includes(newImport))before=before.replace(newImport,()=>oldImport);
- if(before.includes(newCall))before=before.replace(newCall,()=>oldCall);
- const projectFile=native(projectPath,before);
- const resolvers=projectFile.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text==='resolveModuleGraph');
- if(resolvers.length!==1)fail('one actual complete original graph resolver required');
- const calls=[];const visit=node=>{if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='createRustConcreteSyntaxStages')calls.push(node);ts.forEachChild(node,visit);};visit(resolvers[0]);
- if(calls.length!==1||calls[0].getText(projectFile)!==oldCall||projectFile.statements.filter(node=>ts.isImportDeclaration(node)&&node.getText(projectFile)===oldImport).length!==1)fail('actual original batch call/import domain differs');
- const adoption=[
-  {phase:'language',id:'project-cst:reconstruct-complete-physical-source-batch',before:oldCall,after:newCall},
-  {phase:'repository',id:'project-cst:select-explicit-source-origin-batch-module',before:oldImport,after:newImport},
- ];
- const adopted=run(before,adoption),middle=run(before,adoption.filter(row=>row.phase==='language')).value;
- if(current!==before&&current!==adopted.value)fail('unknown partially installed graph source');
- if(inverse(adopted.value,adoption)!==before)fail('complete original graph inverse differs');
- native(projectPath,adopted.value);
+ const project=deriveProjectSourceOriginAdoption(ts,readFileSync(resolve(sourceRoot,projectPath),'utf8'));
  const files=[{path:targetPath,originalPath:sourcePath,before:original,middle:language,after,rules,trace:result.trace,inverse:original},
-  {path:projectPath,before,middle,after:adopted.value,rules:adoption,trace:adopted.trace,inverse:before}];
- const equations=transportConcreteNamedSourcePhases(files.map(row=>({before:row.before,middle:row.middle,after:row.after,language:'JavaScript',rules:['language:complete-private-source-origin-adoption','repository:complete-source-domain-imports','language:restore-complete-original-source','repository:restore-complete-original-imports']})));
+  project];
+ const equations=transportConcreteNamedSourcePhases(files.filter(row=>!row.equation).map(row=>({before:row.before,middle:row.middle,after:row.after,language:'JavaScript',rules:['language:complete-private-source-origin-adoption','repository:complete-source-domain-imports','language:restore-complete-original-source','repository:restore-complete-original-imports']})));
  for(const [at,row]of files.entries()){
-  row.equation=equations[at];row.beforeSha256=hash(row.before);row.afterSha256=hash(row.after);
+  row.equation??=equations[at];row.beforeSha256=hash(row.before);row.afterSha256=hash(row.after);
   if(row.equation.inverse!==row.before)fail('complete serialized/reparsed inverse differs');
   if(row.after.split('\n').length>=1000)fail('whole source exceeds line bound');
   row.current=existsSync(resolve(sourceRoot,row.path))?readFileSync(resolve(sourceRoot,row.path),'utf8'):null;

@@ -28,6 +28,10 @@ test('complete project retention equation preserves both native callable bodies 
  assert.equal(plan.typescriptVersion,'5.9.3');assert.equal(plan.sourceAuthority,false);assert.equal(plan.semanticAuthority,false);
  assert.equal(row.current,row.after);assert.equal(readFileSync(new URL('../project.mjs',import.meta.url),'utf8'),row.after);
  assert.equal(row.inverse,row.before);assert.equal(row.selection.completeNativeInverse,row.before);
+ assert.equal(row.selection.projectSourceOrigin.before,row.selection.projectMatchesAnalysis.after);
+ assert.equal(row.selection.projectSourceOrigin.after,row.after);
+ assert.equal(row.selection.projectSourceOrigin.inverse,row.selection.projectMatchesAnalysis.after);
+ assert.equal(row.selection.projectSourceOrigin.semanticAuthority,false);
  assert.deepEqual(row.nativeBindings.unboundIdentifiers,[]);assert.ok(row.nativeCopies.every(copy=>copy.completeNativeAstCopy));
  assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);
  for(const stage of row.stages){

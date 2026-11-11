@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
 import {resolve,join} from 'node:path';
 import {tmpdir} from 'node:os';
-import {prepareProjectSourceOriginCst} from '../prepare-project-source-origin-cst.mjs';
+import {prepareProjectSourceOriginCst,deriveProjectSourceOriginAdoption} from '../prepare-project-source-origin-cst.mjs';
 import {createRustConcreteSyntaxStage,createRustConcreteSyntaxStages as original} from '../forward-concrete-syntax.mjs';
 import {createRustConcreteSyntaxSourceStages as sourceOrigin} from '../forward-source-origin-concrete-syntax.mjs';
 import {readRustConcreteSyntaxMeta} from '../forward-concrete-syntax.mjs';
@@ -43,6 +43,19 @@ test('complete producer refuses changed originals and partially installed or alt
   write(project.path,project.after);write(original.path,original.after+'\n// changed generated source\n');
   assert.throws(()=>prepareProjectSourceOriginCst({sourceRoot:directory}),/unknown complete generated source/u);
  }finally{rmSync(directory,{recursive:true,force:true});}
+});
+
+test('composable project source equation preserves complete predecessors and rejects partial adoption',{timeout:60000},()=>{
+ const ts=ownershipCompiler(),source=readFileSync(new URL('../project.mjs',import.meta.url),'utf8'),actual=deriveProjectSourceOriginAdoption(ts,source);
+ assert.equal(actual.after,source);assert.equal(actual.current,source);assert.equal(actual.semanticAuthority,false);
+ const original=deriveProjectSourceOriginAdoption(ts,actual.before);
+ assert.equal(original.before,actual.before);assert.equal(original.after,actual.after);assert.equal(original.inverse,actual.before);
+ assert.deepEqual(original.equation,actual.equation);
+ assert.deepEqual(actual.equation.stages.map(row=>row.phase),['language','repository']);
+ for(const stage of actual.equation.stages){assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);assert.equal(stage.inverse,stage.before);}
+ const partial=actual.after.replace('createRustConcreteSyntaxSourceStages(captured.map(row=>row.source))','createRustConcreteSyntaxStages(captured.map(row=>row.source))');
+ assert.throws(()=>deriveProjectSourceOriginAdoption(ts,partial),/unknown partially installed graph source/u);
+ assert.throws(()=>deriveProjectSourceOriginAdoption({...ts,version:'0'},source),/TypeScript 5.9.3 required/u);
 });
 
 test('source-origin partitioning preserves every full original Unicode trivia and malformed document',{timeout:60000},()=>{
