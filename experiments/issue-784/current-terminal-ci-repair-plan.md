@@ -66,8 +66,13 @@ issue requirement and failing check. Never claim full parity from inventory.
   unavailable after inspecting the whole terminal workflow ZIP. That is an
   explicit custody gap. Latest main eb2dad1c0 remains an ancestor.
 - [x] Run all five actual proof-byte source generators with their complete
-  CST/native inverses. Only two builtin ordering source copies change; fresh
-  private-registry registration and receiving qualification remain unrun.
+  CST/native inverses. Only two builtin ordering source copies change.
+- [x] Reproduce and install the complete current private registry from source
+  commit 3927bc315: 1944 complete inputs, 18 changed and eight added. Review
+  all seven outputs, full physical inputs and both complete bootstrap CST
+  inverses. All 32 original portable/isolated cases pass under Node/Bun and
+  both Node deadline audits pass. Preserve the zero-test Bun path error as a
+  failed invocation. This qualifies these files, not the full gate or parity.
 - [ ] Regenerate all current canonical outputs and missing owned definitions
   through their real producers; qualify the complete exported compiler.
 - [ ] Resolve all strict parity failures, including the 441 current draft

@@ -66,9 +66,10 @@ The four-call CPU diagnostic retains every full result, including shared
 warmup. Its cold lexical-storage call took 7393 milliseconds and its later
 calls 1268, 983 and 903 milliseconds. These are diagnostic observations, not
 qualification of an original test deadline or evidence of a byte-adapter gain.
-The separately generated registry proposal for head `54965e57` is now stale
-after these source edits and remains uninstalled. A fresh genuine proposal and
-receiving qualification are still required.
+The separately generated registry proposal for head `54965e57` became stale
+after these source edits and remains uninstalled. The subsequent
+[current registration](builtin-lexical-registration-20261111.md) installs a
+fresh genuine proposal and qualifies both original files under Node and Bun.
 
 The complete source and validation packet contains 109 members (1736703
 uncompressed bytes), including all attempts, full CPU observations, complete

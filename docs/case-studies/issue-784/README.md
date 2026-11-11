@@ -499,3 +499,8 @@ The [builtin lexical storage draft](builtin-lexical-storage-20261111.md)
 retains fresh hashes, macro trees and ownership checks. Complete Node/Bun
 receiving comparisons pass; the original Bun deadline and broader CI repairs
 remain unfinished.
+
+The [current compiler registration](builtin-lexical-registration-20261111.md)
+retains the genuine complete registry refresh and 32 passing original cases
+across Node and Bun. Both Node deadline audits pass. The complete gate remains
+unqualified.
