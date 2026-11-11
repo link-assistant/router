@@ -504,3 +504,7 @@ The [current compiler registration](builtin-lexical-registration-20261111.md)
 retains the genuine complete registry refresh and 32 passing original cases
 across Node and Bun. Both Node deadline audits pass. The complete gate remains
 unqualified.
+
+Two further [derivation context drafts](declined-context-drafts-20261111.md)
+miss the original Bun deadline. Their complete sources and failing reports are
+retained; both production builders were restored before publication.

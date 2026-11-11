@@ -73,6 +73,10 @@ issue requirement and failing check. Never claim full parity from inventory.
   inverses. All 32 original portable/isolated cases pass under Node/Bun and
   both Node deadline audits pass. Preserve the zero-test Bun path error as a
   failed invocation. This qualifies these files, not the full gate or parity.
+- [x] Decline two further context drafts against the complete original Bun
+  file: definition positions take 5289.30 ms and completed root freezing takes
+  6004.86 ms against the unchanged 5000 ms limit. Preserve complete sources,
+  inverses, logs and resource receipts; restore both production builders.
 - [ ] Regenerate all current canonical outputs and missing owned definitions
   through their real producers; qualify the complete exported compiler.
 - [ ] Resolve all strict parity failures, including the 441 current draft
