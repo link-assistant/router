@@ -1,0 +1,308 @@
+{
+  "schema": "complete-evidence-packet-v1",
+  "sourceHead": "0e2341ac9505744e993bda69587b5777c1594849",
+  "archive": "/tmp/gh-issue-solver-1794003502595/docs/case-studies/issue-784/evidence/native-call-arity-negative.tar.xz",
+  "archiveBytes": 958220,
+  "archiveSha256": "894e952f633079f3a5174bb7de79a0940ab54e5b51caf7f8d93562f0e21247dd",
+  "manifestSha256": "2de921e52f98aa42a249c066c8513555088efb0649c0f6199363add075c8c4c3",
+  "members": [
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-bun.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-bun.log",
+      "bytes": 1618,
+      "sha256": "c9dfe2565147d7bce7566b4d75eda35778dfc8aedef78081b313f7a90c337953"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-bun.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-bun.memory.json",
+      "bytes": 1115,
+      "sha256": "68cdd96cb57e1e06a5e245b292e3fa8c916ba4d26f6eca0c442e849b634ef7bd"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-composition-bun.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-composition-bun.log",
+      "bytes": 379,
+      "sha256": "e7a6ca77b30b75f0c9f5673598b7bc490ff4971d06e283f11093f8e0030dcbc8"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-composition-bun.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-composition-bun.memory.json",
+      "bytes": 972,
+      "sha256": "5282ffbbd4395df2514ad9f3a36931f148d0762c4f0252d5c03a3278408a9df3"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-composition-node.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-composition-node.log",
+      "bytes": 753,
+      "sha256": "d291503ba90491bf204a41fa5f189fb19096e45d670c5c60386b0f895e6d7086"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-composition-node.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-composition-node.memory.json",
+      "bytes": 1019,
+      "sha256": "1591de6a16f06b9038b0f42043d03be6e9c2a6d55ef397cee60552028e09371d"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-freshness.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-freshness.log",
+      "bytes": 80,
+      "sha256": "206ec17de15e000b802a86d5ca8ecdefadf9640b8c05fc92c98a0b47380203f5"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-freshness.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-freshness.memory.json",
+      "bytes": 959,
+      "sha256": "04417b0be3c257f426265a29e51668f63e6640b23e279574c149781cd3966181"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-install.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-install.log",
+      "bytes": 186,
+      "sha256": "5908cc329caaa422768f1985579cd4618e4d5d046586f186ab75e09528b71707"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-install.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-install.memory.json",
+      "bytes": 973,
+      "sha256": "20598a2b6086ef4bb3051dcbd6ab44dbc088b83ea501d32955a61d3e6b3612a4"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-node.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-node.log",
+      "bytes": 3158,
+      "sha256": "7a42dacc99b32e1d1e7586696054285937d626de75cec8908638f06b3e245749"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-node.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-node.memory.json",
+      "bytes": 1162,
+      "sha256": "0e9ba1b0fe5cfa644f89cc89d1919b43d107a1c6bd97e2a0b919c8b6db1cd228"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-original-node.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-original-node.log",
+      "bytes": 3337,
+      "sha256": "0de7daf42d3e2e941916e63a8404d756d4b083b1c449a5186b7d42e64e0014c3"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-original-node.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-original-node.memory.json",
+      "bytes": 1027,
+      "sha256": "f9fa6e666ab252925cfacf123922e64774a66483f4f7c8a7e8d538a334d1b68f"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-proposal.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-proposal.json.gz",
+      "bytes": 1063360,
+      "sha256": "79858f12900d27b4ffdb54922dcfb6009f5eaa62e2e383e5962756d0c91954f9"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-proposal.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-proposal.memory.json",
+      "bytes": 971,
+      "sha256": "bcbb101b9c0e82e4ae72b237f52f72abe854a26745062d243197d6fcdee5065d"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-proposal.observer.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-proposal.observer.log",
+      "bytes": 971,
+      "sha256": "bcbb101b9c0e82e4ae72b237f52f72abe854a26745062d243197d6fcdee5065d",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/current-native-call-arity-proposal.memory.json",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-source-check.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-source-check.log",
+      "bytes": 186,
+      "sha256": "fbeacbcfcb065b7783c12fa3c825c1559fd13c0cf85e4c5fba3cf71cb0691818"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-call-arity-source-check.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-call-arity-source-check.memory.json",
+      "bytes": 973,
+      "sha256": "7b2c4afdbae75183e7b6fae041732953fb5c48d62e37b8d7a14c07155f124ab7"
+    },
+    {
+      "path": "experiments/issue-784/compare-native-call-arity.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/compare-native-call-arity.mjs",
+      "bytes": 3832,
+      "sha256": "4caf2f5f0e71eb99e4f4680120bad5979cac664d5d190e98b118ba55362bbdf7"
+    },
+    {
+      "path": "experiments/issue-784/current-native-call-arity-plan.md",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/current-native-call-arity-plan.md",
+      "bytes": 2269,
+      "sha256": "a37e579c1e2b5c69c913cb133caaaaf29f6ca31ef8c71f22c18454b4e52e6505"
+    },
+    {
+      "path": "experiments/issue-784/native-call-arity-candidate.patch",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/native-call-arity-candidate.patch",
+      "bytes": 7234,
+      "sha256": "43b8ea6b341915dbc1300d78b7c60bc8c7432bb2680fc90fad8f88b5bb8265db"
+    },
+    {
+      "path": "experiments/issue-784/prepare-native-call-arity.py",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/prepare-native-call-arity.py",
+      "bytes": 2542,
+      "sha256": "b543c071b5b8c0aeb4fec2cea235808a1e2a914c8a57606564e971626e9cc91d"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-KZoYf4/case-deadlines.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-KZoYf4/case-deadlines.json",
+      "bytes": 8364,
+      "sha256": "892b47c48d1283e9d783ef75dc8c6fa281b697556622d8dc01a13125690848de"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-KZoYf4/command.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-KZoYf4/command.json",
+      "bytes": 40036,
+      "sha256": "191ff54b239950b2b950c044da0c3b50eff7f2afe9276c1d1e7292e83e647d89"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-KZoYf4/request.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-KZoYf4/request.json",
+      "bytes": 347,
+      "sha256": "f7685c2f6cfda7139b51d6324aa7e10d51871906c43ee10f3b8120138398d1b9"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-KZoYf4/stderr.raw.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-KZoYf4/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-KZoYf4/stdout.raw.tap",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-KZoYf4/stdout.raw.tap",
+      "bytes": 632,
+      "sha256": "6398aed62e27bf037c77d4aff38f31c1a0f05b6e3e137cee6e9cf06e762486ea"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-KZoYf4/terminal.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-KZoYf4/terminal.json",
+      "bytes": 2380,
+      "sha256": "2798f56224f6097657c908c994e49c109c375f6ef8d54be77377ae55af0a4e38"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-nUaSSW/case-deadlines.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-nUaSSW/case-deadlines.json",
+      "bytes": 32312,
+      "sha256": "4e78ae7d24758aa04e9b3bce8915664bb7e44605ecb1c09fdcfab196580068dd"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-nUaSSW/command.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-nUaSSW/command.json",
+      "bytes": 56435,
+      "sha256": "8fbc26c9096319be589537958ac245773e21ca9037187d73ddff27139622975d"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-nUaSSW/request.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-nUaSSW/request.json",
+      "bytes": 568,
+      "sha256": "e92d6dd09a908f952177e833ce493bc890314a78ed850967299331cf04018cc7"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-nUaSSW/stderr.raw.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-nUaSSW/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "js/node_modules/.node-case-deadlines/complete-KZoYf4/stderr.raw.log",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-nUaSSW/stdout.raw.tap",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-nUaSSW/stdout.raw.tap",
+      "bytes": 3037,
+      "sha256": "66690cceecce31fdaaccaea063316d9c67fef0a9fe82b7d8885debc070214fbd"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-nUaSSW/terminal.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-nUaSSW/terminal.json",
+      "bytes": 2685,
+      "sha256": "139fce82204895563f49c306942db87995c55cd15833ef93ed95a1522c83573c"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-voewf2/case-deadlines.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-voewf2/case-deadlines.json",
+      "bytes": 38809,
+      "sha256": "dafd7c4f20d58caa8bfd24068b085fb5881d8571b0944cbe46463c821864c6e6"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-voewf2/command.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-voewf2/command.json",
+      "bytes": 65331,
+      "sha256": "869d7245bbdfdc31e386e31afb828901f36d804883d1e7e9be68a90234f3eb57"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-voewf2/request.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-voewf2/request.json",
+      "bytes": 349,
+      "sha256": "08a618338b7835ae8fad750ac07df12e8a4b9cad0cd16670a6e8ad60b630067f"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-voewf2/stderr.raw.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-voewf2/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "js/node_modules/.node-case-deadlines/complete-KZoYf4/stderr.raw.log",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-voewf2/stdout.raw.tap",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-voewf2/stdout.raw.tap",
+      "bytes": 2529,
+      "sha256": "9e018353cd6b968d696d953b11f38901b09ce26ee8c6d008926435da86d8c1eb"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-voewf2/terminal.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-voewf2/terminal.json",
+      "bytes": 2975,
+      "sha256": "5102096b7abc4089077b49e69e99cbd6e03b084dd8aa5825e3fc2eab3c48696f"
+    },
+    {
+      "path": "tools/translation/js-to-rust/native-typescript.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/js-to-rust/native-typescript.mjs",
+      "bytes": 57666,
+      "sha256": "9624a947f464cc332386c809a79a9eed9361d5492c9e5b301f76bab525b5281f"
+    },
+    {
+      "path": "tools/translation/js-to-rust/test/native-call-arity.test.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/js-to-rust/test/native-call-arity.test.mjs",
+      "bytes": 4574,
+      "sha256": "ef14e503dde7721cb50093e8313998d42671a071f95f313b440ff92c8847a38a"
+    },
+    {
+      "path": "tools/translation/prepare-native-regeneration-batch.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/prepare-native-regeneration-batch.mjs",
+      "bytes": 11592,
+      "sha256": "33b7ea90a58f2736076660b14caa4a5ca8dcec1ed34b1850151c4b55414c235e"
+    },
+    {
+      "path": "tools/translation/source-profiles/native-call-arity/source-rules.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/source-profiles/native-call-arity/source-rules.json",
+      "bytes": 1816,
+      "sha256": "b6069e7791811d9b4deaa27a48f5eb6c33c42a22c693e3934c04a9f28ea4915b"
+    },
+    {
+      "path": "tools/translation/test/runtime-import-phased-data.test.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/runtime-import-phased-data.test.mjs",
+      "bytes": 4650,
+      "sha256": "e192c416d5bbb802388b7dc2dff15f07133f412cec961f532c09808ecbf9bbb1"
+    }
+  ],
+  "completeMembers": 46,
+  "completeOriginalBytes": 1436163,
+  "allDecodedOriginalsVerified": true,
+  "allSelectedOriginalsUnchanged": true,
+  "capSeconds": 600,
+  "elapsedSeconds": 0.9699308440322056,
+  "compression": {
+    "format": "xz",
+    "preset": 9,
+    "dictionaryBytes": 67108864
+  },
+  "harnessSha256": "79015998f626aecda125c5e03b6e7fc04951a14a57a7cdbba81771a2abfa08e9",
+  "semanticAuthority": false,
+  "runtimeParity": false,
+  "fullGatePass": false,
+  "rustExecuted": false
+}
