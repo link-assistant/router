@@ -34,6 +34,11 @@ issue requirement and failing check. Never claim full parity from inventory.
   both 260-case native suites and the first five TypeScript commands; its
   memory interruption leaves the full native TypeScript file unqualified and
   all later stages unrun. Independently read back all 95 archived members.
+- [x] Draft bounded complete native fixture workers and private namespace
+  shadow-name reuse. Preserve all original test bodies and bounds: 18 receiving
+  cases pass under Node and Bun, while the complete native file still fails
+  its original 60-second regeneration deadline. Neither draft establishes a
+  complete gate or whole-project performance improvement.
 - [ ] Repair the remaining source-processing CPU and memory failures without
   changing original deadlines, source budgets, host guards or test scope.
 - [ ] Regenerate all current canonical outputs and missing owned definitions

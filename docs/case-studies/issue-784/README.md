@@ -483,3 +483,9 @@ The [proof-source selection](current-source-proof-origin.md) preserves the
 original preparer and adds a separate primitive-source API with complete
 old/new plan equality. Its whole original proof file meets the original Node
 deadline; the broader unit worker still fails its finite local heap cap.
+
+The [native memory repair draft](native-resource-repair-20261111.md) records
+bounded fixture workers, the complete remaining deadline failure, and both
+memory-stopped profiling attempts. The [internal namespace shadow data](namespace-shadow-data-20261111.md)
+retains passing complete Node/Bun receiving files and the full source inverse;
+its variable narrow measurements do not qualify a whole CI deadline.

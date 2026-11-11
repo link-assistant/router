@@ -56,6 +56,7 @@ interrupted = None
 stop_sample = None
 stop_seconds = None
 stopped_processes = []
+stopped_resources = []
 closed_advice = []
 adviser = None
 adviser_output = None
@@ -172,6 +173,22 @@ with args.log.open('xb') as log:
                 if descendants <= owned:
                     break
                 owned.update(descendants)
+            # Scalar, task-owned process observations only. Do not capture
+            # command lines, environments, source text or another task's data.
+            for pid in sorted(owned):
+                try:
+                    status_rows = dict(line.split(':', 1) for line in
+                        Path(f'/proc/{pid}/status').read_text().splitlines() if ':' in line)
+                    fields = Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()
+                    identity = parents.get(pid)
+                    if identity is None or fields[19] != identity[1]:
+                        continue
+                    stopped_resources.append({'pid': pid, 'parent': int(fields[1]),
+                        'rssKiB': int(status_rows.get('VmRSS', '0 kB').split()[0]),
+                        'peakRssKiB': int(status_rows.get('VmHWM', '0 kB').split()[0]),
+                        'state': fields[0]})
+                except (FileNotFoundError, ProcessLookupError):
+                    pass
             for pid in sorted(owned - {child.pid}):
                 try:
                     # Refuse a recycled PID before signalling it.
@@ -202,6 +219,7 @@ receipt = {
     'samples': samples, 'stopped': stopped,
     'stopSampledCgroupBytes': stop_sample, 'stopElapsedSeconds': stop_seconds,
     'stoppedOwnedProcessIds': stopped_processes,
+    'stoppedOwnedProcessResources': stopped_resources,
     'initialFingerprintCacheAdvice': reclaims,
     'completedFingerprintPageAdvice': fingerprint_advice,
     'closedTrackedPageAdvice': closed_advice,
