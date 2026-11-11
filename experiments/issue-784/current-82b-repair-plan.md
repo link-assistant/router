@@ -4,14 +4,14 @@ Objective: implement and verify every requirement of issue #784 and every CI
 check in [PR #785](https://github.com/link-assistant/router/pull/785). Keep the
 native goal active and the PR draft and unmerged while criteria remain open.
 
-Current continuation (2026-11-11 UTC): the published head is
-`f93b01795a935317942adfe7d329f636dcd1848b`. Run 42921384009 is still active;
-snapshot seven contains 20 successful, 20 failed, four cancelled and five
-      running jobs. Snapshot eight now has 20 successful, 21 failed, six cancelled
-      and two running jobs. Preserve the published head until the entire cycle is collected.
-All 36 artifacts in the first artifact snapshot have been downloaded, fully
-read back and reviewed; later artifacts remain to collect. Their independent
-deadline failures remain failures even when TAP assertions pass.
+Current continuation (2026-11-11 UTC): the published head remains
+`f93b01795a935317942adfe7d329f636dcd1848b`. Run 42921384009 has finished:
+23 failed, seven cancelled, 20 successful and 25 skipped jobs. All 30
+nonpassing logs and all 42 artifacts have been fully collected and reviewed;
+see the [terminal report](../../docs/case-studies/issue-784/ci-f93-terminal-20261111.md)
+and [current continuation](current-authoring-source-origin-plan.md).
+The historical checklist below retains its original observations; subsequent
+qualification does not turn failed deadlines into successful checks.
 
 - [x] Compose the exact source-origin CST adoption into both complete project
       source histories, preserving original predecessors, inverses, both CST

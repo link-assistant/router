@@ -444,3 +444,8 @@ The [canonical metadata receiver](current-canonical-meta-reader.md) retains
 eight passing complete Node/Bun controls and both failed downstream attempts.
 Its separate serialized-input domain preserves old APIs and two fresh builds
 per row; downstream deadline repair remains unqualified.
+
+The [proof-source selection](current-source-proof-origin.md) preserves the
+original preparer and adds a separate primitive-source API with complete
+old/new plan equality. Its whole original proof file meets the original Node
+deadline; the broader unit worker still fails its finite local heap cap.

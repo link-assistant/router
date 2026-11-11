@@ -69,3 +69,5 @@ assertions but fails its independent deadline audit: lifetime history takes
 finishing; a separate complete helper file passes all six Bun controls. Actual
 deadline repair and performance remain unqualified. Generation and subsequent
 freshness checks pass; original native admission and all old public readers stay.
+
+Continue with [the complete proof-source selection plan](current-source-proof-origin-plan.md).

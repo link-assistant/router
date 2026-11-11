@@ -7,7 +7,7 @@ import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {composeCoreUnitMatches} from './prepare-core-unit-matches.mjs';
 import {prepareCoreUnicodePredicates} from './prepare-core-unicode-predicates.mjs';
 import {prepareSharedF64MethodReceivers} from './prepare-shared-f64-method-receivers.mjs';
-import {transportConcreteNamedSourcePhases} from './concrete-named-phases.mjs';
+import {transportConcreteNamedSourcePhases} from './concrete-source-origin-phases.mjs';
 
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const FACADE='rust/src/translation_core.rs',LEAF='rust/src/translation_core/primitives.rs',DATA='tools/translation/router-core-source-data.mjs',HOST='tools/translation/extensions/host-contracts.mjs';
