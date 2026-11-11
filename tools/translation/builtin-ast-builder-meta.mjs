@@ -3,12 +3,17 @@
 // External calls and source-stage macros remain explicit open obligations.
 import {createHash} from 'node:crypto';
 import {sealBuiltinSourceMeta} from './builtin-source-meta.mjs';
-import {originalMacroTrees} from './macro-token-trees.mjs';
+import {originalMacroTrees,createPinnedMacroTreeReader} from './macro-token-trees.mjs';
 import {builtinAstOriginal,isBuiltinDeriveAstProfile,originalAstFunction,assertOriginalAstFunction,originalAstDefinition,astEnumVariant,astSyntaxText,requireCompilerOutputAstSourceAccess} from './builtin-derive-ast-meta.mjs';
 const build='compiler/rustc_expand/src/build.rs',schema='compiler/rustc_ast/src/ast.rs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const compilers=new WeakMap(),contracts=new WeakMap(),callbackInventories=new WeakMap();
+const importTokenReaders=new WeakMap();
+function originalImportTrees(profile,origin){
+  let read=importTokenReaders.get(profile);if(!read){read=createPinnedMacroTreeReader();importTokenReaders.set(profile,read);}
+  return read(origin,{maxBytes:256000,maxTokens:32000,maxDepth:64});
+}
 const ident=node=>node?.kind==='token'&&/^[_\p{L}][_\p{L}\p{N}]*$/u.test(node.text);
 const bounds=Object.freeze({nodes:16000,depth:64,serializedBytes:524288,functions:128});
 // Full original schema bytes remain in the sealed source profile. A recipe
@@ -38,7 +43,7 @@ function parameters(fragment){
   });
 }
 function actualImports(profile,path,access=null){
-  const origin=access?access.original(path):builtinAstOriginal(profile,path),roots=originalMacroTrees(origin.source,{maxBytes:256000,maxTokens:32000,maxDepth:64}),result=new Map();
+  const origin=access?access.original(path):builtinAstOriginal(profile,path),roots=access?originalMacroTrees(origin.source,{maxBytes:256000,maxTokens:32000,maxDepth:64}):originalImportTrees(profile,origin),result=new Map();
   for(let at=0;at<roots.length;at++){
     if(roots[at].text==='impl')break;
     if(roots[at].text!=='use')continue;
@@ -88,7 +93,7 @@ export function inventoryBuiltinAstCallbackCalls(compiler,fragment){
   const state=compilers.get(compiler);if(!state)throw new TypeError('Original callback inventory requires its private builder compiler');
   assertOriginalAstFunction(state.profile,fragment);
   const parametersActual=parameters(fragment),receivers=parametersActual.filter(value=>astSyntaxText(value.typeSyntax??[]).replace(/\s/gu,'')==="&ExtCtxt<'_>");
-  const source=builtinAstOriginal(state.profile,fragment.source),trees=originalMacroTrees(source.source,{maxBytes:256000,maxTokens:32000,maxDepth:64});
+  const source=builtinAstOriginal(state.profile,fragment.source),trees=originalImportTrees(state.profile,source);
   const imports=[];
   for(let at=0;at<trees.length;at++)if(trees[at].text==='use'){
     let end=at+1;while(end<trees.length&&trees[end].text!==';')end++;

@@ -494,3 +494,8 @@ The [struct ordering receiving repair](struct-ordering-receiving-repair-20261111
 preserves original historical refusals and current enclosing-only positives.
 Its complete Node receiving batch passes, while Bun's original default
 deadline and the serialization file's memory qualification remain unfinished.
+
+The [builtin lexical storage draft](builtin-lexical-storage-20261111.md)
+retains fresh hashes, macro trees and ownership checks. Complete Node/Bun
+receiving comparisons pass; the original Bun deadline and broader CI repairs
+remain unfinished.

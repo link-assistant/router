@@ -41,6 +41,13 @@ issue requirement and failing check. Never claim full parity from inventory.
   complete gate or whole-project performance improvement.
 - [ ] Repair the remaining source-processing CPU and memory failures without
   changing original deadlines, source budgets, host guards or test scope.
+- [x] Draft bounded weak-key lexical storage for genuine original builder
+  inputs. Six complete receiving cases pass Node/Bun, including actual reuse,
+  source/CST inverses, TypeScript 5.9.3 native scope, full original outputs,
+  observer tapes and limits. The original 17-case Node batch passes; Bun's
+  standard-input case still exceeds five seconds and the complete builder
+  file stops at the memory guard after seven cases. Remove the unqualified
+  alternate freeze walk. No complete deadline or gate improvement is claimed.
 - [x] Correct current struct Ord receiving expectations while preserving the
   exact original subjects, complete historical refusals, current private
   positives and unknown/unsupported controls. Four complete files pass all
