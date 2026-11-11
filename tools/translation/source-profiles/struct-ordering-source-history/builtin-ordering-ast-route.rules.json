@@ -1,0 +1,28 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/builtin-ordering-ast-route.mjs",
+  "phase": "repository",
+  "beforeSha256": "645266b263775e9d1105606c9af2a723a386cbb111d12820c9d45f972f146fbe",
+  "afterSha256": "6e421606d6ceee3ca41a4b99616a4457e85da7b90aba6571381c8a8e188261a5",
+  "edits": [
+    {
+      "id": "router.struct-ordering.history.builtin-ordering-ast-route.mjs.0.v1",
+      "before": "// Original Ord/PartialOrd construction for nonempty unit enums only. This is\n",
+      "after": "// Original Ord/PartialOrd construction for unit enums and ordinary structs. This is\n"
+    },
+    {
+      "id": "router.struct-ordering.history.builtin-ordering-ast-route.mjs.1.v1",
+      "before": "import {createHash} from 'node:crypto';\n",
+      "after": "import {createHash} from 'node:crypto';\nimport {liftBuiltinStructOrderingAstRoute} from './builtin-ordering-struct-ast-route.mjs';\n"
+    },
+    {
+      "id": "router.struct-ordering.history.builtin-ordering-ast-route.mjs.2.v1",
+      "before": " if(JSON.stringify(fresh)!==JSON.stringify(input)||input.wholeSourceSha256!==certificate.sourceSha256||input.itemSha256!==certificate.itemSha256||input.name!==certificate.name||input.kind!==certificate.kind)throw new TypeError('Original ordering source syntax differs from its private invocation');\n",
+      "after": " if(JSON.stringify(fresh)!==JSON.stringify(input)||input.wholeSourceSha256!==certificate.sourceSha256||input.itemSha256!==certificate.itemSha256||input.name!==certificate.name||input.kind!==certificate.kind)throw new TypeError('Original ordering source syntax differs from its private invocation');\n if(input.kind==='struct'){const evidence=liftBuiltinStructOrderingAstRoute({profile,original,certificate,input,plan:sourcePlan(profile,entry,name)});return freezeCompleted({...evidence,digest:hash(composeJson(evidence))});}\n"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

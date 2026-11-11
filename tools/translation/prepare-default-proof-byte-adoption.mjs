@@ -11,6 +11,7 @@ import {prepareSchemarsEnclosingAdoption} from './prepare-schemars-enclosing-ado
 import {deriveGuardedProofLexingConsumerSource} from './prepare-guarded-proof-lexing.mjs';
 import {restoreOperationSizeMeasurementSource} from './operation-size-measurement-source.mjs';
 import {deriveCloneEnclosingNativeSourceHistory,deriveCloneEnclosingContextSourceRules,assertCloneEnclosingSourceInputsFresh} from './prepare-clone-enclosing-source-history.mjs';
+import {deriveStructOrderingSourceHistory} from './struct-ordering-source-history.mjs';
 import {derivePinnedRepositorySourceEvolution} from './pinned-repository-source-evolution.mjs';
 import {transportConcreteNamedSourcePhases} from './concrete-source-origin-phases.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),BASE='tools/translation/',PROFILE=BASE+'source-profiles/default-proof-byte-adoption/';
@@ -151,6 +152,20 @@ function composeProducerBindingSourceLayer(ts,root,row){
   trace:stages.flatMap(stage=>stage.trace),nativeCopies:[row.nativeCopies[0],extension.nativeCopies[1]],
   nativeBindings:extension.nativeBindings,preBindingLayer:row,bindingSourceHistory:{...history,equation:extension}};
 }
+// The struct-ordering behavior already exists in the installed compiler. This
+// source-only transition joins that successor without replacing earlier pins.
+function composeStructOrderingSourceLayer(ts,root,row){
+ const history=deriveStructOrderingSourceHistory(ts,{path:row.path,source:row.after});if(!history)return row;
+ const extension=equation(ts,root,row.path,row.after,row.after,history.after,[]);
+ if(extension.stages[0].beforeMeta!==extension.stages[0].afterMeta)fail('ordering history language phase must preserve complete source');
+ const stages=[row.stages[0],joinPhase(row.stages[1],extension.stages[1])];
+ if(history.before!==row.after||stages[0].before!==row.before||stages[0].after!==row.language||stages[1].before!==row.language
+  ||stages[1].after!==history.after||stages[0].afterMeta!==stages[1].beforeMeta)fail('complete ordering history CST equation differs');
+ return {...row,after:history.after,afterSha256:history.afterSha256,afterMeta:stages[1].afterMeta,
+  stages,sequence:{languageRules:stages[0].sequence.languageRules,repositoryRules:stages[1].sequence.repositoryRules},
+  trace:stages.flatMap(stage=>stage.trace),nativeCopies:[row.nativeCopies[0],extension.nativeCopies[1]],
+  nativeBindings:extension.nativeBindings,preStructOrderingLayer:row,structOrderingSourceHistory:{...history,equation:extension}};
+}
 function consumer(ts,path,before){
  const file=parse(ts,path,before),imports=file.statements.filter(node=>ts.isImportDeclaration(node)&&ts.isStringLiteral(node.moduleSpecifier)&&['./private-native-proof-json.mjs','./private-frozen-json.mjs'].includes(node.moduleSpecifier.text)&&node.importClause?.namedBindings&&ts.isNamedImports(node.importClause.namedBindings)&&node.importClause.namedBindings.elements.some(row=>['createScopedPrivateNativeProofJsonSerializer','createPrivateFrozenJsonComposer'].includes((row.propertyName??row.name).text))),owner=one(imports,path),bindings=owner.importClause.namedBindings.elements;
  if(owner.importClause.name||bindings.length!==1||!['createScopedPrivateNativeProofJsonSerializer','createPrivateFrozenJsonComposer'].includes((bindings[0].propertyName??bindings[0].name).text))fail('complete actual serializer import binding differs');
@@ -180,12 +195,13 @@ export function prepareDefaultProofByteAdoption({root=ROOT}={}){
  }
  rows.push({path:HELPER,before:'',language:fragment,after:fragment,nativeSelections:[{kind:'complete-authored-internal-byte-scope',span:[0,0],expected:'',replacement:fragment}]});
  const producerBefore=originals.get(PRODUCER).source,updatedProducer=producer(ts,PRODUCER,producerBefore);rows.push({path:PRODUCER,before:producerBefore,language:updatedProducer.language,after:updatedProducer.language,nativeSelections:updatedProducer.edits});
- const files=equations(ts,root,rows,true).map(row=>composeProducerBindingSourceLayer(ts,root,composeCloneSourceLayer(ts,root,row)));
+ const files=equations(ts,root,rows,true).map(row=>composeStructOrderingSourceLayer(ts,root,composeProducerBindingSourceLayer(ts,root,composeCloneSourceLayer(ts,root,row))));
  timing('complete-source-equations');
- for(const row of files){row.current=sourceAt(root,row.path);const allowed=[row.before,row.after];if(row.preBindingLayer)allowed.push(row.preBindingLayer.after);if(row.preCloneLayer)allowed.push(row.preCloneLayer.after);if(row.path===ENCLOSING)allowed.push(schemarsRow.before);if(row.path===HELPER)allowed.push(null);if(!allowed.includes(row.current))fail('complete physical source differs from explicit historical/final layers: '+row.path);}
+ for(const row of files){row.current=sourceAt(root,row.path);const allowed=[row.before,row.after];if(row.preStructOrderingLayer)allowed.push(row.preStructOrderingLayer.after);if(row.preBindingLayer)allowed.push(row.preBindingLayer.after);if(row.preCloneLayer)allowed.push(row.preCloneLayer.after);if(row.path===ENCLOSING)allowed.push(schemarsRow.before);if(row.path===HELPER)allowed.push(null);if(!allowed.includes(row.current))fail('complete physical source differs from explicit historical/final layers: '+row.path);}
  if(hash(readFileSync(resolve(root,ARCHIVE)))!==ARCHIVE_PIN||readFileSync(resolve(root,FRAGMENT),'utf8')!==fragment)fail('complete source inputs changed during operation');for(const row of prerequisiteInputs)if(sourceAt(root,row.path)!==row.source)fail('complete byte bridge source changed during operation');for(const row of files)if(sourceAt(root,row.path)!==row.current)fail('complete target source changed during operation');
  for(const row of files){if(row.cloneSourceHistory)assertCloneEnclosingSourceInputsFresh(row.cloneSourceHistory);
   if(row.bindingSourceHistory&&hash(readFileSync(PRODUCER_PROFILE))!==PRODUCER_PROFILE_PIN)fail('producer binding source profile changed');
+  if(row.structOrderingSourceHistory&&hash(readFileSync(new URL('./source-profiles/struct-ordering-source-history/'+row.path.slice(BASE.length).replace('.mjs','.rules.json'),import.meta.url)))!==row.structOrderingSourceHistory.profileSha256)fail('ordering source history profile changed');
  }
  return {schema:'default-operation-proof-byte-adoption-v1',typescriptVersion:ts.version,historicalLayers:[schemars],inputs:archive.files,prerequisiteInputs,fragment:{path:FRAGMENT,source:fragment,sha256:FRAGMENT_PIN},files,sameOriginalPrivateIssuers:true,classicCreatorUnchanged:true,originalSourceOwnerAndHashCallsUnchanged:true,originalJsonBytesAndFallbacksRequired:true,diagnosticWarmingCountersMayDiffer:true,newAcrossInvocationEncodedCache:false,semanticAuthority:false,performanceQualified:false,runtimeExecuted:false,requiredRegeneration:['prepare-batched-proof-byte-source-candidate.mjs','current-whole-owner-proof-byte-provider.mjs complete candidate closure'],defaultAdoptionProposed:true};
 }

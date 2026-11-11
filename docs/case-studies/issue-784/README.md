@@ -17,6 +17,12 @@ its deadline audit. Bun's regeneration deadline remains unresolved. The
 [native call-arity candidate](native-call-arity-negative.md) was withdrawn
 after failing the original nine-case file's deadline despite passing assertions.
 
+The [struct-ordering comparison repair](current-struct-ordering-comparison.md)
+retains exact predecessors, complete generated inverses and unchanged original
+Clone cases with separate current-source checks. Focused Node/Bun checks and
+producer freshness pass; the whole-owner file's local heap failure and the
+remaining current CI cycle stay explicit.
+
 The [terminal 4ea CI review](ci-4ea-terminal-20261110.md) retains all 24
 nonpassing logs and all 26 whole artifacts after all 59 jobs finish. Reverse
 freshness has a local receiving repair; strict parity, original deadlines,

@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+// Preserve the complete original Clone cases on their exact receiving source.
+// Installed ordering successors and their independent inverses have separate tests.
+import {readCloneEnclosingComparisonSource as readFileSync,prepareCloneEnclosingComparisonSources as prepareCloneEnclosingSources} from './fixtures/clone-enclosing-comparison-history.mjs';
 import {createHash,Hash} from 'node:crypto';
-import {prepareCloneEnclosingSources,deriveCloneEnclosingSourceHistory,deriveCloneEnclosingNativeSourceHistory,deriveCloneEnclosingContextSourceRules} from '../prepare-clone-enclosing-source-history.mjs';
+import {deriveCloneEnclosingSourceHistory,deriveCloneEnclosingNativeSourceHistory,deriveCloneEnclosingContextSourceRules} from '../prepare-clone-enclosing-source-history.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {restoreReceivingSourceHistory} from './fixtures/current-receiving-source-history.mjs';
 import {legacyProofConsumerSource,restoreCurrentEnclosingNamespaceSource} from './fixtures/native-proof-json-format.mjs';
