@@ -73,6 +73,7 @@ def main():
     parser.add_argument('--log', type=Path, required=True)
     parser.add_argument('--receipt', type=Path, required=True)
     parser.add_argument('--owner-pid', type=int, required=True)
+    parser.add_argument('--fingerprints', type=int, choices=[1, 2], default=1)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
     base = root / 'ci-logs/issue-784-restart-2'
@@ -84,6 +85,7 @@ def main():
         raise ValueError('Bounded complete input list required')
     positions = {name: at for at, name in enumerate(names)}
     cursor, records, pending, complete, started = 0, [], '', False, time.monotonic()
+    completed_fingerprints = 0
     with args.log.open() as source:
         while not complete:
             block = source.read(65536)
@@ -103,8 +105,15 @@ def main():
                 event = json.loads(line)
                 if event['totalFiles'] != len(names):
                     raise ValueError('Complete input list changed before observation')
+                if event['state'] == 'start':
+                    if cursor not in [0, len(names)]:
+                        raise ValueError('A fingerprint restarted before completion')
+                    cursor = 0
+                    continue
                 if event['state'] == 'complete':
-                    end, complete = len(names), True
+                    end = len(names)
+                    completed_fingerprints += 1
+                    complete = completed_fingerprints == args.fingerprints
                 elif event['state'] == 'advance':
                     end = positions[event['relative']] + 1
                 else:
@@ -112,11 +121,12 @@ def main():
                 if end < cursor:
                     raise ValueError('Fingerprint progress moved backwards')
                 result = advise_completed(root, names[cursor:end])
-                records.append({'event': event, 'first': cursor, 'end': end, **result})
+                records.append({'event': event, 'fingerprint': completed_fingerprints if event['state'] == 'complete' else completed_fingerprints + 1, 'first': cursor, 'end': end, **result})
                 cursor = end
                 if complete:
                     break
     record = {'schema': 'completed-fingerprint-page-advice-v1', 'complete': complete,
+        'expectedFingerprints': args.fingerprints, 'completedFingerprints': completed_fingerprints,
         'elapsedSeconds': time.monotonic() - started, 'completedInputPrefix': cursor,
         'totalInputs': len(names), 'records': records, 'sourceContentsChanged': False,
         'testClocksPaused': False, 'guardChanged': False,

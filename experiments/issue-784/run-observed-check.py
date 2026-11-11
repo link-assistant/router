@@ -23,6 +23,8 @@ parser.add_argument('--advise-closed-production-pages', action='store_true',
                     help='Same bounded page advice for the complete canonical producer with 320 MiB old-space')
 parser.add_argument('--advise-completed-fingerprint-pages', action='store_true',
                     help='Single pass over actual completed fingerprint prefixes; clocks and guard unchanged')
+parser.add_argument('--advise-manual-fingerprint-pages', action='store_true',
+                    help='Both complete temporary manual fingerprints; no source/test/guard changes')
 parser.add_argument('command', nargs=argparse.REMAINDER)
 args = parser.parse_args()
 command = args.command[1:] if args.command[:1] == ['--'] else args.command
@@ -38,10 +40,17 @@ if args.advise_closed_production_pages and (command != [
         'node', '--max-old-space-size=320', 'scripts/translate-router.mjs', '--progress']
         or args.receipt.resolve().parent != Path.cwd() / 'ci-logs/issue-784-restart-2'):
     parser.error('production advice requires this task complete canonical producer and fixed heap')
+if args.advise_manual_fingerprint_pages and (len(command) != 5
+        or command[:4] != ['node', '--max-old-space-size=128',
+                           'scripts/check-manual-development-local.mjs', '--receipt']
+        or Path(command[4]).resolve().parent != Path.cwd() / 'ci-logs/issue-784-restart-2'
+        or args.receipt.resolve().parent != Path.cwd() / 'ci-logs/issue-784-restart-2'):
+    parser.error('manual advice requires the complete exact task-local manual development command')
 if sum([args.reclaim_initial_gate_cache, args.advise_closed_gate_pages,
-        args.advise_completed_fingerprint_pages, args.advise_closed_production_pages]) > 1:
+        args.advise_completed_fingerprint_pages, args.advise_closed_production_pages,
+        args.advise_manual_fingerprint_pages]) > 1:
     parser.error('choose one explicitly recorded file-cache experiment')
-if args.advise_completed_fingerprint_pages and os.environ.get('ROUTER_JS_FIRST_FINGERPRINT_PROGRESS') != '1':
+if (args.advise_completed_fingerprint_pages or args.advise_manual_fingerprint_pages) and os.environ.get('ROUTER_JS_FIRST_FINGERPRINT_PROGRESS') != '1':
     parser.error('completed-prefix advice requires actual default-off fingerprint progress')
 limit = int(Path('/sys/fs/cgroup/memory.max').read_text())
 threshold = limit - 256 * 1024 * 1024
@@ -77,13 +86,14 @@ with args.log.open('xb') as log:
         ['python3', 'experiments/issue-784/with-child-reaper.py', *command],
         stdout=log, stderr=subprocess.STDOUT, start_new_session=True,
     )
-    if args.advise_completed_fingerprint_pages:
+    if args.advise_completed_fingerprint_pages or args.advise_manual_fingerprint_pages:
         advice_receipt = args.receipt.with_name(args.receipt.stem + '-completed-pages.json.gz')
         advice_log = args.receipt.with_name(args.receipt.stem + '-completed-pages.log')
         fingerprint_output = advice_log.open('xb')
         fingerprint_adviser = subprocess.Popen([
             'python3', '-B', 'experiments/issue-784/completed-fingerprint-pages.py',
             '--log', str(args.log), '--receipt', str(advice_receipt), '--owner-pid', str(child.pid),
+            '--fingerprints', '2' if args.advise_manual_fingerprint_pages else '1',
         ], stdout=fingerprint_output, stderr=subprocess.STDOUT)
         fingerprint_advice = {'pid': fingerprint_adviser.pid, 'receipt': str(advice_receipt),
                               'log': str(advice_log), 'activeTestClocksPaused': False}

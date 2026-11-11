@@ -40,7 +40,7 @@ jobs:
   javascript:
     if: ${{ github.event_name != 'pull_request' || toJSON(github.event.pull_request.draft) == 'false' }}
     name: JavaScript first (same commit)
-    uses: ./.github/workflows/javascript-first.yml
+    uses: ./.github/workflows/javascript-manual-development.yml
     with:
       sha: ${{ github.sha }}
     permissions:
@@ -49,7 +49,7 @@ jobs:
   resolve-base:
     name: Resolve immutable benchmark base (no Rust)
     needs: [javascript]
-    if: needs.javascript.result == 'success'
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
@@ -69,15 +69,15 @@ jobs:
   base-javascript:
     name: JavaScript first (immutable benchmark base)
     needs: [javascript, resolve-base]
-    if: needs.javascript.result == 'success' && (needs.resolve-base.result == 'success')
-    uses: ./.github/workflows/javascript-first.yml
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success' && (needs.resolve-base.result == 'success'))
+    uses: ./.github/workflows/javascript-manual-development.yml
     with:
       sha: ${{ needs.resolve-base.outputs.sha }}
     permissions:
       contents: read
 
   compare:
-    if: needs.javascript.result == 'success' && (needs.base-javascript.result == 'success')
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success' && (needs.base-javascript.result == 'success'))
     needs: [javascript, base-javascript, resolve-base]
     name: Compare against base
     runs-on: ubuntu-24.04

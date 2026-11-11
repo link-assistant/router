@@ -1,5 +1,11 @@
 # Develop Router behavior in JavaScript first
 
+**Temporary development policy (2026-11-11):** the maintainer requested
+[manual translation development](manual-translation-development.md). Current CI
+callers use that separate development lane while automated translation checks
+are suspended. The strict workflow below remains intact; a development pass
+does not establish parity or authorize Rust or releases.
+
 Use JavaScript to express and test new behavior before changing Rust. This keeps fast feedback independent of compiling the Rust dependency tree. Router already publishes a JavaScript operations package, but that package alone is not a replacement for the complete Rust runtime. The parity manifest records what is generated, ported, partial, carried or missing. A green inventory check means the inventory is consistent; only its strict mode can establish complete parity.
 
 ## Draft with focused JavaScript checks

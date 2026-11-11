@@ -29,14 +29,14 @@ jobs:
   javascript:
     if: ${{ github.event_name != 'pull_request' || toJSON(github.event.pull_request.draft) == 'false' }}
     name: JavaScript first (same commit)
-    uses: ./.github/workflows/javascript-first.yml
+    uses: ./.github/workflows/javascript-manual-development.yml
     with:
       sha: ${{ github.sha }}
     permissions:
       contents: read
 
   real-client-capture:
-    if: needs.javascript.result == 'success'
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
     needs: [javascript]
     name: Claude Code, Codex, Gemini, Qwen, and OpenCode
     runs-on: ubuntu-24.04
@@ -99,7 +99,7 @@ jobs:
   # selector -- against newer releases so client drift fails here, at the
   # operation that changed, rather than being hidden behind a version gate.
   claude-newer-release:
-    if: needs.javascript.result == 'success'
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
     needs: [javascript]
     name: Claude Code ${{ matrix.claude }} (capture ${{ matrix.capture }})
     runs-on: ubuntu-24.04
@@ -160,7 +160,7 @@ jobs:
   # calls. Run the Codex capture, history/notes, and TUI model selector against
   # a newer release so bootstrap drift fails at the operation that changed.
   codex-newer-release:
-    if: needs.javascript.result == 'success'
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
     needs: [javascript]
     name: Codex ${{ matrix.codex }} (newer than baseline)
     runs-on: ubuntu-24.04

@@ -3,7 +3,17 @@
 Research and verification dates: 2026-11-06–11 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
-The [latest terminal CI review](ci-beda-terminal-20261111.md) records all 75
+The maintainer's [latest instruction and manual development verification](manual-development-20261111.md)
+temporarily suspend automated translation checks while preserving the complete
+strict workflow. The complete local development run passes syntax/policy,
+both 260-case native suites, strict 167-file TypeScript compilation and the UI
+build. Its receipt deliberately grants no strict parity or Rust/release admission.
+The published `124edb33e` cycle is terminal: 40 failed, seven cancelled, three
+passed and 25 skipped. All 46 available nonpassing logs and all 41 artifact
+inspections are retained; one cancelled log remains unavailable. The whole issue,
+Rust verification and universal client/account privacy remain unfinished.
+
+The [earlier terminal CI review](ci-beda-terminal-20261111.md) records all 75
 completed jobs: 23 failed, eight cancelled, 19 passed and 25 skipped. Every
 available nonpassing log and all selected deadline reports are preserved;
 translation-13's cancelled log remains unavailable. All 34 genuine original
@@ -232,6 +242,11 @@ three comment types were fetched again: conversation comments contain session
 summaries, while inline comments and reviews remain empty. Complete originals
 are the `restart-pr-*.json` files in `raw/`. No new acceptance criterion or
 required sub-issue was found.
+
+The 2026-11-11 refresh reads all eight PR conversation comments, with no issue
+comments, inline comments or reviews. The final maintainer comment requests the
+temporary manual translation lane described above. Complete originals are in
+the latest evidence packet; the original issue's privacy criteria remain open.
 
 | Requirement | Solution and verification | Status |
 | --- | --- | --- |

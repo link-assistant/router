@@ -20,8 +20,9 @@ workload at a time, retain original checks and limits, and invoke no Rust tools.
   between-run file-page advice, different heap setting and all source identities.
 - [x] Retain all complete producer, installation and receiving records with full
   decoded readback before moving the three external records into permanent custody.
-- [ ] Collect the entire published `124edb33e` cycle, every nonpassing job and
-  applicable artifact. Preserve its head until every CI job is terminal.
+- [x] Finish the terminal published `124edb33e` cycle review: all jobs finished
+  at 10:25:35 UTC. Retain final logs, review every new failure and inspect the
+  remaining bulk draft artifact before publishing the complete source batch.
 - [x] Reproduce and repair the owned-matrix trace writer's actual `EAGAIN` pipe
   failure. Both complete focused files pass five cases per engine; the original
   source producers reproduce nine owned and seven native outputs, and native
@@ -32,6 +33,15 @@ workload at a time, retain original checks and limits, and invoke no Rust tools.
   refactoring; keep the original 4194304-byte bound and all executable sources.
 - [ ] Finish every original deadline failure, genuine canonical/owned/profile
   output, strict parity, full local gate and remaining all-tool privacy criterion.
+- [x] Apply the maintainer's 2026-11-11 request to suspend automated translation
+  checks and finish translation manually. Preserve the complete original strict
+  source/tests/deadlines; validate the separate active development lane. Its
+  success grants no strict parity or Rust/release admission. Track the suspended
+  requirements above explicitly rather than treating them as repaired.
+- [x] Complete the separate manual development run, both full native suites,
+  strict existing TypeScript, UI build and exact before/after fingerprint.
+  Preserve the initial resource stop and both completed-prefix advice passes.
+- [ ] Publish the coordinated branch and collect all CI results for the new SHA.
 - [ ] Review and publish the complete coordinated batch only on the prepared
   branch after the published cycle is terminal. Keep PR #785 draft until qualified.
 

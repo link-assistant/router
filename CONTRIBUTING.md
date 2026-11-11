@@ -16,6 +16,11 @@ Disabling a conflicting local hook does not waive CI verification. Rust check fa
 
 ## Development Workflow
 
+The maintainer's 2026-11-11 [temporary manual translation policy](docs/development/manual-translation-development.md)
+defines the currently active development checks. The complete strict gate below
+remains required to qualify translation and authorize Rust or releases. A manual
+development receipt grants neither strict parity nor a green Rust gate stamp.
+
 Create a feature branch or isolated worktree, implement behavior in JavaScript, add targeted behavioral tests and update documentation. Read [the JavaScript-first workflow](docs/development/javascript-first.md) for the parity boundary and generation limitations. Router's JavaScript operations package and a valid parity inventory do not by themselves establish complete Rust runtime parity.
 
 Run the complete local gate:
