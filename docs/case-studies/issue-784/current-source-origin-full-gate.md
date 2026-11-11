@@ -46,7 +46,8 @@ whole raw streams and complete source request even though its case receipt is
 missing. This is an incomplete failed cohort, not a passing audit.
 
 The [whole packet receipt](evidence/current-source-origin-full-gate.json.gz)
-identifies 118 complete archive members, including all 13 audit directories,
+and [complete published archive](https://github.com/link-assistant/router/blob/124edb33e096a2c018caf449214005ad555d8bdd/docs/case-studies/issue-784/evidence/current-source-origin-full-gate.tar.gz?raw=true)
+identify 118 complete archive members, including all 13 audit directories,
 every stage diagnostic, the resource receipt, complete fingerprint-page
 receipt and refreshed issue/PR/run metadata. Every archived member is reopened
 and checksum-verified. Only the archived inactive audit leaves are then retired,

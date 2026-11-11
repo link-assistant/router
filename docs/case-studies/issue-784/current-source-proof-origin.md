@@ -43,7 +43,8 @@ That attempt fails and its final two cases remain unfinished. Its owned child
 is reaped; the other three processes finish without a memory stop.
 
 The [whole receiving packet](evidence/current-source-proof-origin.json.gz)
-retains every successful/failed stream, independent Node audit, complete
+and [complete published archive](https://github.com/link-assistant/router/blob/124edb33e096a2c018caf449214005ad555d8bdd/docs/case-studies/issue-784/evidence/current-source-proof-origin.tar.gz?raw=true)
+retain every successful/failed stream, independent Node audit, complete
 current/predecessor source and all 625 closed receiving DATA leaves. Separate
 retirement receipts retain immutable Git/member readback for two inactive
 initial lock-packet copies (208896 allocated bytes) and two already committed

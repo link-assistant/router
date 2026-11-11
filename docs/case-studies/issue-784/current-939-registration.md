@@ -29,7 +29,7 @@ of 2209783808 bytes. Bun records 195.046251 seconds and 2123358208 bytes.
 Neither reaches the unchanged 2866933760-byte guard. These observations are
 total container samples, not child RSS or complete unsampled peaks.
 
-The [complete 21-member packet](evidence/current-939-registration-checks.tar.gz)
+The [complete 21-member packet](https://github.com/link-assistant/router/blob/124edb33e096a2c018caf449214005ad555d8bdd/docs/case-studies/issue-784/evidence/current-939-registration-checks.tar.gz?raw=true)
 is 2993790 bytes, SHA-256
 `ed656c583991e01442654ed9b3a9bad93f9adc172b5f2e1590582b9f9adfaa19`.
 Its [receipt](evidence/current-939-registration-checks.json.gz) identifies

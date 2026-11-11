@@ -28,7 +28,7 @@ Node takes 259.052 seconds with a sampled total container peak of
 reaches the unchanged 2866933760-byte observer threshold. These samples
 are not child RSS or complete unsampled peaks.
 
-The [complete 24-member packet](evidence/current-runtime-binding-registration-checks.tar.gz)
+The [complete 24-member packet](https://github.com/link-assistant/router/blob/124edb33e096a2c018caf449214005ad555d8bdd/docs/case-studies/issue-784/evidence/current-runtime-binding-registration-checks.tar.gz?raw=true)
 is 3000614 bytes, SHA-256
 `7d7eef3548c11045ca0419457b53556d92af5ba62fa69e5af2e781fb8a4b1092`.
 Its [receipt](evidence/current-runtime-binding-registration-checks.json.gz)

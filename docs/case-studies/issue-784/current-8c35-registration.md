@@ -29,7 +29,7 @@ bytes. Bun takes 202.420120 seconds with a sampled peak of 2480857088 bytes.
 Neither reaches the unchanged 2866933760-byte observer guard. These are total
 cgroup samples, not isolated child RSS or a complete unsampled peak.
 
-The [16-member complete archive](evidence/current-8c35-registration-checks.tar.gz)
+The [16-member complete archive](https://github.com/link-assistant/router/blob/124edb33e096a2c018caf449214005ad555d8bdd/docs/case-studies/issue-784/evidence/current-8c35-registration-checks.tar.gz?raw=true)
 is 2970264 bytes, SHA-256
 `8a4fe2a08069b97f26332d396e6ed7fb967c70c9a167ea9b14fd75d90164a59b`.
 Its [readback receipt](evidence/current-8c35-registration-checks.json.gz)
