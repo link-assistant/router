@@ -3,17 +3,27 @@
 Research and verification dates: 2026-11-06–11 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
 
-The [latest terminal CI review](ci-0e234-terminal-20261111.md) records all 75
-completed jobs: 25 failed, eight cancelled, 17 passed and 25 skipped. Every
+The [latest terminal CI review](ci-beda-terminal-20261111.md) records all 75
+completed jobs: 23 failed, eight cancelled, 19 passed and 25 skipped. Every
 available nonpassing log and all selected deadline reports are preserved;
-translation-12's cancelled log remains unavailable. All 26 genuine original
-deadline breaches and strict parity gaps remain blocking.
+translation-13's cancelled log remains unavailable. All 34 genuine original
+Node deadline breaches and strict parity gaps remain blocking.
 
-The [latest complete local gate attempts](current-5f8-complete-gate.md)
-retain both memory-guard interruptions. The second passes lint, both 260-case
-native suites, native freshness and strict 167-file TypeScript compilation.
-The complete original native TypeScript test file is interrupted; later
-TypeScript commands and all parity, forward and reverse stages are unrun.
+The [bounded lexical storage](builtin-lexical-storage-20261111.md) retains
+fresh mutable caller copies and independent native checks. The actual
+[registration refresh](builtin-lexical-registration-20261111.md) passes all
+32 original portable/isolated receiving cases across Node and Bun. Two later
+[derivation drafts](declined-context-drafts-20261111.md) failed their original
+deadlines and were withdrawn. These checks establish no new production gain.
+
+The [latest complete local gate](current-8aa-complete-gate.md) passes lint,
+both 260-case native suites, native freshness and strict 167-file TypeScript
+compilation. All nine native TypeScript assertions pass, but regeneration
+exceeds its unchanged 60-second deadline at 90.598 seconds. An evidence-cap
+overrun interrupts parity acceptance; complete preservation and verified
+duplicate retirement restore the total below 500 MB. Later stages stay unrun.
+The [earlier complete local attempts](current-5f8-complete-gate.md) retain both
+memory-guard interruptions separately.
 The [earlier gate](current-source-origin-full-gate.md) retains its original
 regeneration deadline and strict parity failures separately. The
 [complete published f93 cycle](ci-f93-terminal-20261111.md) is terminal, with

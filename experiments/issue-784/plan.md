@@ -7,6 +7,30 @@ The current checklist and failed/unrun gate evidence are in
 [the proof-source continuation](current-source-proof-origin-plan.md).
 All historical unchecked criteria below remain required.
 
+## 2026-11-11 lexical registration and complete gate continuation
+
+- [x] Collect the entire terminal beda CI cycle: 75 jobs, 30 available
+      nonpassing logs, one unavailable cancelled shard log, 40 complete
+      deadline artifacts inspected and 34 genuine Node deadline breaches.
+      Preserve the bulk-artifact inspection gap and every original failure.
+- [x] Commit bounded lexical DATA storage and native guard controls, refresh
+      genuine isolated registration and Git receiving history, and pass all
+      32 original portable/isolated cases in both engines. No new executable
+      production-function gain is claimed.
+- [x] Decline both derivation drafts after original Bun deadline failures;
+      restore the builders and retain complete unsuccessful evidence.
+- [x] Attempt the complete gate at clean 8aa6deb90. Lint, both 260-case native
+      suites, TypeScript freshness and strict generated compilation pass.
+      Native assertions pass 9/9 but regeneration fails 90598.061608/60000 ms.
+      Stop during parity acceptance after an evidence-cap overrun; reap every
+      owned process, retain all 93 members and restore evidence below 500 MB.
+      Nine later TypeScript commands, strict parity, forward/reverse stages
+      and the final fingerprint remain unrun. No green stamp or Rust run.
+- [ ] Publish this coherent feedback checkpoint with exact failed/unrun
+      records, then collect its entire CI cycle before the next push.
+- [ ] Repair every original deadline, genuine generation and compiler-bound
+      failure; qualify strict parity and every remaining issue #784 criterion.
+
 ## 2026-11-09 canonical byte-cost and progress receiving continuation
 
 - [x] Observe clean `a9b168c54` canonical check without changing its sources.
