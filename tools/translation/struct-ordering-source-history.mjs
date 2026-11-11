@@ -6,6 +6,7 @@ import {derivePinnedRepositorySourceEvolution} from './pinned-repository-source-
 const STRUCT_ORDERING_SOURCE_PROFILES=Object.freeze({
  'builtin-derive-bang-footprints.mjs':'e90460283e07d0d08ef4548e5c8aa9f1f43e7be9374b2c2e2547e7db1705c474',
  'builtin-ordering-ast-route.mjs':'ee817bbba54f916cada509ad9b63da474e8f6c78b88d633d518a706217ac88e7',
+ 'test/derive-output-effects.test.mjs':'2ae3c8620266c8d9c351b18cbf3aaf397aac6cf5198b56ffd7c4b4016b639f78',
 });
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('Struct ordering source history: '+message);};
@@ -15,7 +16,8 @@ export function deriveStructOrderingSourceHistory(ts,{path,source}){
  const name=path.startsWith('tools/translation/')?path.slice('tools/translation/'.length):'';
  if(!Object.hasOwn(STRUCT_ORDERING_SOURCE_PROFILES,name))return null;
  if(typeof source!=='string'||Buffer.byteLength(source)>262144)fail('bounded complete primitive source required');
- const profile=new URL('./source-profiles/struct-ordering-source-history/'+name.replace('.mjs','.rules.json'),import.meta.url);
+ const profileName=name==='test/derive-output-effects.test.mjs'?'derive-output-effects':name.replace('.mjs','');
+ const profile=new URL('./source-profiles/struct-ordering-source-history/'+profileName+'.rules.json',import.meta.url);
  const state=lstatSync(profile);
  if(!state.isFile()||state.isSymbolicLink()||state.size>131072)fail('bounded ordinary complete profile required');
  const bytes=readFileSync(profile),pin=STRUCT_ORDERING_SOURCE_PROFILES[name];

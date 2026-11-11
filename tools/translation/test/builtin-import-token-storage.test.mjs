@@ -24,6 +24,13 @@ const hash=value=>createHash('sha256').update(value).digest('hex');
 const raw=gunzipSync(readFileSync(new URL('./fixtures/builtin-import-token-storage-before.json.gz',import.meta.url)),{maxOutputLength:100000});
 assert.equal(hash(raw),'110d77985ceab49e0b00b07c04c96c681f83747bb657aea4f7a3e61a2f22bb37');
 const history=JSON.parse(raw),source=name=>history.files.find(row=>row.path==='tools/translation/'+name).source;
+const withdrawnRaw=gunzipSync(readFileSync(new URL('./fixtures/builtin-import-token-storage-withdrawn.json.gz',import.meta.url)),{maxOutputLength:100000});
+assert.equal(hash(withdrawnRaw),'32ec9e14152e2c7d601fb66a40ca3ea2d645457ee5cf0b1c31cb7afe745af735');
+const withdrawn=JSON.parse(withdrawnRaw),withdrawnSource=name=>withdrawn.files.find(row=>row.path==='tools/translation/'+name).source;
+for(const row of withdrawn.files){assert.equal(Buffer.byteLength(row.source),row.bytes);assert.equal(hash(row.source),row.sha256);}
+// The failed integration is withdrawn. Keep the original complete macro path;
+// the independently tested lexical DATA reader supplies no runtime dependency.
+const readPinned=()=>(pin,options)=>current.originalMacroTrees(pin.source,options);
 const dependencies=loadDeriveDependencyProof({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')});
 const profile=builtinDeriveAstSourceProfile(dependencies),bounds={maxBytes:256000,maxTokens:32000,maxDepth:64};
 let vectors=[];
@@ -51,20 +58,20 @@ async function original(t){
 function replaceOnce(value,before,after){assert.equal(value.split(before).length,2);return value.replace(before,()=>after);}
 const regexState=()=>Object.fromEntries(['input','lastMatch','lastParen','leftContext','rightContext','$1','$2','$3','$4','$5','$6','$7','$8','$9'].map(name=>[name,RegExp[name]]));
 
-check('complete original source equations retain two CST phases and exact inverses',()=>{
+check('withdrawn integration retains complete source equations and exact restored originals',()=>{
  const macro='macro-token-trees.mjs',before=source(macro);
  const language=[
   ['export function originalMacroTrees(source,{maxBytes=128000,maxTokens=16000,maxDepth=64}={}) {','function readOriginalMacroTrees(source,{maxBytes=128000,maxTokens=16000,maxDepth=64}={},readTokens) {'],
   ['for(const token of rustTokens(source)) {','for(const token of readTokens(source)) {'],
  ];
  let middle=before;for(const [from,to]of language)middle=replaceOnce(middle,from,to);
- const after=readFileSync(new URL(macro,base),'utf8'),repository=[
+ const after=withdrawnSource(macro),repository=[
   ["import {rustTokens} from './rust-structure.mjs';\n","import {rustTokens} from './rust-structure.mjs';\nimport {createStaticRustTokenReader} from './static-rust-tokens.mjs';\n"],
   ['function readOriginalMacroTrees(',after.slice(after.indexOf('export function originalMacroTrees('),after.indexOf('function readOriginalMacroTrees('))+'function readOriginalMacroTrees('],
  ];
  let actual=middle;for(const [from,to]of repository)actual=replaceOnce(actual,from,to);assert.equal(actual,after);
  let inverse=after;for(const [from,to]of [...repository].reverse())inverse=replaceOnce(inverse,to,from);assert.equal(inverse,middle);for(const [from,to]of [...language].reverse())inverse=replaceOnce(inverse,to,from);assert.equal(inverse,before);
- const builderBefore=source('builtin-ast-builder-meta.mjs'),builderAfter=readFileSync(new URL('builtin-ast-builder-meta.mjs',base),'utf8'),builderLanguage=[
+ const builderBefore=source('builtin-ast-builder-meta.mjs'),builderAfter=withdrawnSource('builtin-ast-builder-meta.mjs'),builderLanguage=[
   ['roots=originalMacroTrees(origin.source,{maxBytes:256000,maxTokens:32000,maxDepth:64})','roots=access?originalMacroTrees(origin.source,{maxBytes:256000,maxTokens:32000,maxDepth:64}):originalImportTrees(profile,origin)'],
   ['trees=originalMacroTrees(source.source,{maxBytes:256000,maxTokens:32000,maxDepth:64})','trees=originalImportTrees(state.profile,source)'],
  ],builderRepository=[
@@ -74,6 +81,8 @@ check('complete original source equations retain two CST phases and exact invers
  let builderMiddle=builderBefore;for(const [from,to]of builderLanguage)builderMiddle=replaceOnce(builderMiddle,from,to);
  let builderActual=builderMiddle;for(const [from,to]of builderRepository)builderActual=replaceOnce(builderActual,from,to);assert.equal(builderActual,builderAfter);
  let builderInverse=builderAfter;for(const [from,to]of [...builderRepository].reverse())builderInverse=replaceOnce(builderInverse,to,from);assert.equal(builderInverse,builderMiddle);for(const [from,to]of [...builderLanguage].reverse())builderInverse=replaceOnce(builderInverse,to,from);assert.equal(builderInverse,builderBefore);
+ assert.equal(readFileSync(new URL(macro,base),'utf8'),inverse);
+ assert.equal(readFileSync(new URL('builtin-ast-builder-meta.mjs',base),'utf8'),builderInverse);
  const equations=transportConcreteSourcePhases([{before,middle,after,language:'JavaScript'},{before:builderBefore,middle:builderMiddle,after:builderAfter,language:'JavaScript'}]);
  const newReader=readFileSync(new URL('static-rust-tokens.mjs',base),'utf8'),ts=ownershipCompiler();assert.equal(ts.version,'5.9.3');
  const nativeBindings=verifyNativeCopiedModuleBindings(ts,[['macro.before.mjs',before],['macro.after.mjs',after],['builder.before.mjs',builderBefore],['builder.after.mjs',builderAfter],['static-rust-tokens.mjs',newReader]].map(([path,source])=>({path:fileURLToPath(new URL(path,base)),source})));
@@ -82,7 +91,7 @@ check('complete original source equations retain two CST phases and exact invers
 });
 
 check('fresh macro trees retain exact source syntax legacy regexp state and original malformed refusals',async t=>{
- const old=(await original(t)).macro,read=current.createPinnedMacroTreeReader();
+ const old=(await original(t)).macro,read=readPinned();
  assert.equal(current.originalMacroTrees.length,old.originalMacroTrees.length);assert.equal(current.originalMacroTrees.name,old.originalMacroTrees.name);
  for(const text of ['struct S{v:u8}\n','/// Ω😀\nmacro_rules! m{($x:ident)=>{$x}}\n','use x::{a,b};\n','fn x(){let q=r##"raw"##;let c=\'λ\';}\n','struct S{v:u8}','fn x(\n','/** docs */struct S;\n']){
   const pin=Object.freeze({source:text});
@@ -100,7 +109,7 @@ check('fresh macro trees retain exact source syntax legacy regexp state and orig
 });
 
 check('every complete pinned Rust source retains full original macro projection and fresh tree identities',async t=>{
- const old=(await original(t)).macro,read=current.createPinnedMacroTreeReader();
+ const old=(await original(t)).macro,read=readPinned();
  for(const row of profile.sources){
   const pin=builtinAstOriginal(profile,row.path);
   /sentinel-(before)/u.exec('sentinel-before');const expected=outcome(()=>old.originalMacroTrees(pin.source,bounds)),state=regexState();
@@ -122,8 +131,8 @@ check('complete builder contracts callbacks original refusals and private compil
  for(const fake of [structuredClone(profile),{...profile},new Proxy(profile,{})])equal('original-private-profile-refusal',outcome(()=>old.createBuiltinAstBuilderMetaCompiler(fake)),outcome(()=>builder.createBuiltinAstBuilderMetaCompiler(fake)));
 });
 
-check('warm lexical storage preserves complete hash and changed host observer tapes',async t=>{
- const old=(await original(t)).macro,text='/// original Ω\nfn example(){let value=alpha;call!(value);}\n',pin=Object.freeze({source:text}),read=current.createPinnedMacroTreeReader();read(pin,bounds);
+check('restored macro reader preserves complete hash and changed host observer tapes',async t=>{
+ const old=(await original(t)).macro,text='/// original Ω\nfn example(){let value=alpha;call!(value);}\n',pin=Object.freeze({source:text}),read=readPinned();read(pin,bounds);
  function observe(run,owner,key){
   const field=get(owner,key),tape=[],callbacks=[];
   // Each complete invocation creates fresh closures, including two runs of

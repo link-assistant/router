@@ -7,6 +7,40 @@ The current checklist and failed/unrun gate evidence are in
 [the proof-source continuation](current-source-proof-origin-plan.md).
 All historical unchecked criteria below remain required.
 
+## 2026-11-11 current 124edb33 runtime closure repair
+
+- [x] Publish the prior feedback checkpoint as 124edb33 and preserve its
+      failed/unrun gate evidence. Its full CI cycle remains in progress.
+- [x] Preserve all fifteen initially available failed job logs. Identify the
+      unregistered static-rust-tokens.mjs runtime dependency and independently
+      reproduce the missing-module failure in the original whole runtime
+      closure file before changing source.
+- [x] Withdraw the unqualified macro/builder cache integration. Preserve its
+      complete published source in a new fixture, retain every original
+      forward/inverse/CST equation and all six complete storage cases, and
+      restore both complete original files. All seven whole-file runtime and
+      storage cases pass under Node 20.20.2 and Bun 1.4.4; Node deadlines pass.
+- [x] Retire five identified inactive task-owned evidence copies only after
+      verifying their complete published Git blobs. Retain immutable links
+      and the complete retirement receipt; reclaim 15994458 logical bytes.
+- [x] Verify 35 complete Node cases and their original deadlines: runtime,
+      storage, ASCII, paired types, module-token/ordering and facade histories.
+      Bun passes 24 cases in complete files. Preserve both memory-stopped Bun
+      files: ASCII completes no case; facade/AST completes four of seven.
+- [x] Repair the exact missing ordering-effects receiving successor through
+      a pinned three-rule complete source equation. Preserve prior history,
+      all private refusals and both CST phases; genuine producer check passes.
+- [ ] Reproduce and refresh the genuine isolated registry after source repair.
+- [ ] Collect the entire published 124edb33 CI cycle, including every failure
+      and artifact; handle all failures together before the next push.
+- [ ] Regenerate genuine canonical/owned outputs, resolve all strict parity
+      and deadline failures, pass the complete local and same-SHA CI gates,
+      and finish every original issue/client/account privacy criterion.
+
+This withdrawal claims no performance improvement or new executable production
+functions. Keep all prior generation, source-bound, parity and full-gate failures
+open. No Rust tool, deadline increase, filtered test or gate skip is authorized.
+
 ## 2026-11-11 lexical registration and complete gate continuation
 
 - [x] Collect the entire terminal beda CI cycle: 75 jobs, 30 available

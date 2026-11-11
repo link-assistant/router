@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
+import {deriveStructOrderingSourceHistory} from './struct-ordering-source-history.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const PATH='tools/translation/test/derive-output-effects.test.mjs';
 const ORIGINAL='75faaa6f0f7e843149303901f9cd97abe73b01a1619fad4c11884c5df27f8efd';
@@ -58,10 +59,17 @@ export function deriveModuleTokenReceivingEvolution(original,current){
  const repositoryEdits=[importEdit,pathImportEdit];let composedAfter=composedLanguage;
  for(const edit of repositoryEdits.slice().sort((a,b)=>b.span[0]-a.span[0]))composedAfter=composedAfter.slice(0,edit.span[0])+edit.replacement+composedAfter.slice(edit.span[1]);
  if(composedAfter!==later.after)fail('complete composed successor differs');grammar(ts,composedAfter);
- if(current!==original&&current!==composedAfter)fail('unregistered complete receiving successor');
- return {schema:'module-token-receiving-evolution-v1',path:PATH,original,current,language:composedLanguage,after:composedAfter,inverse:original,originalSha256:ORIGINAL,currentSha256:hash(current),afterSha256:hash(composedAfter),nativeSelections:[selection,importEdit],
+ let orderingHistory=null,completeAfter=composedAfter,completeRepositoryEdits=repositoryEdits;
+ if(current!==original&&current!==composedAfter){
+  if(hash(current)!=='dc9f1570e136715b3213f8d08d010166462375e76c44c5bc34f5bbd483b06c50')fail('unregistered complete receiving successor');
+  orderingHistory=deriveStructOrderingSourceHistory(ts,{path:PATH,source:current});
+  if(orderingHistory.before!==composedAfter||orderingHistory.after!==current)fail('unregistered complete receiving successor');
+  completeAfter=current;
+  completeRepositoryEdits=[{span:[0,composedLanguage.length],expected:composedLanguage,replacement:completeAfter}];
+ }
+ return {schema:'module-token-receiving-evolution-v1',path:PATH,original,current,language:composedLanguage,after:completeAfter,inverse:original,originalSha256:ORIGINAL,currentSha256:hash(current),afterSha256:hash(completeAfter),nativeSelections:[selection,importEdit],orderingHistory,
   historicalModuleToken:{language,after,nativeSelections:[selection,importEdit]},
   laterSourceEvolution:{...authored,original:later.before,inverse:later.before,selectedBlock:{span:[block.getStart(laterFile),block.end],source:block.getText(laterFile)},selectedImport:{span:[addedImport.getStart(laterFile),addedImport.end],source:addedImport.getText(laterFile)}},
   composedNativeSelections:[composedSelection,...repositoryEdits],
-  stages:[stage(original,composedLanguage,'language',[composedSelection]),stage(composedLanguage,composedAfter,'repository',repositoryEdits)],sourceAuthority:false,runtimeAuthority:false};
+  stages:[stage(original,composedLanguage,'language',[composedSelection]),stage(composedLanguage,completeAfter,'repository',completeRepositoryEdits)],sourceAuthority:false,runtimeAuthority:false};
 }

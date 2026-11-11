@@ -2,25 +2,17 @@
 // does not resolve macro owners or grant generated runtime implementations.
 import {createHash} from 'node:crypto';
 import {rustTokens} from './rust-structure.mjs';
-import {createStaticRustTokenReader} from './static-rust-tokens.mjs';
 const snapshots=new WeakMap();
 const pairs={'(':')','[':']','{':'}'};
 const hash=value=>createHash('sha256').update(value).digest('hex');
 export const freezeMacroTree=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freezeMacroTree);Object.freeze(value);}return value;};
 
-export function originalMacroTrees(source,options=undefined) {return readOriginalMacroTrees(source,options,rustTokens);}
-// Each consumer owns separate lexical storage. Hashing, token projection,
-// original budgets, delimiter checks and fresh frozen trees still run in full.
-export function createPinnedMacroTreeReader(){
-  const readTokens=createStaticRustTokenReader();
-  return (pin,options)=>{const source=pin.source;return readOriginalMacroTrees(source,options,()=>readTokens(pin,source));};
-}
-function readOriginalMacroTrees(source,{maxBytes=128000,maxTokens=16000,maxDepth=64}={},readTokens) {
+export function originalMacroTrees(source,{maxBytes=128000,maxTokens=16000,maxDepth=64}={}) {
   if(!Number.isSafeInteger(maxBytes)||maxBytes<=0||maxBytes>256000||!Number.isSafeInteger(maxTokens)||maxTokens<=0||maxTokens>32000||!Number.isSafeInteger(maxDepth)||maxDepth<=0||maxDepth>64)throw new TypeError('Invalid declarative source budgets');
   if(typeof source!=='string'||Buffer.byteLength(source)>maxBytes)throw new TypeError('Declarative macro source budget exceeded');
   const sourceSha256=hash(source);
   const tokens=[];
-  for(const token of readTokens(source)) {
+  for(const token of rustTokens(source)) {
     if(token.type==='comment') {
       if(token.text.startsWith('/*!')||token.text.startsWith('/**'))throw new TypeError('Declarative macro block documentation requires a separate lexical proof');
       if(token.text.startsWith('//!')||token.text.startsWith('///')&&!token.text.startsWith('////')) {

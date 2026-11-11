@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readOrderingEffectsComparisonSource as readFileSync} from './fixtures/ordering-effects-comparison-history.mjs';
 import {gunzipSync} from 'node:zlib';
 import {deriveModuleTokenReceivingEvolution} from '../module-token-receiving-evolution.mjs';
 import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
