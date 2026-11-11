@@ -1,0 +1,15 @@
+{
+  "schema": "complete-namespace-clone-predecessor-v1",
+  "sources": [
+    {
+      "path": "tools/translation/source-scopes.mjs",
+      "sourceHead": "8552c8e17737161111b54ee1d8f6b1afa43b054d",
+      "storedPath": "source-scopes.before.mjs.gz",
+      "storedBytes": 2646,
+      "storedSha256": "7b35ecc38c41ae06a94b5a41338d76f625585597affb3ad24537cd299c171990",
+      "bytes": 8808,
+      "sha256": "5b4208351f11747bf344f856388c07b9dd689422013b4a279800a670cedaba59",
+      "gitBlobSha1": "5c51fae9f31e0201480a6e19f57228b6b1afe28b"
+    }
+  ]
+}

@@ -29,6 +29,11 @@ Clone cases with separate current-source checks. Focused Node/Bun checks and
 producer freshness pass; the whole-owner file's local heap failure and the
 terminal current CI failures stay explicit.
 
+The [native namespace-copy change](current-namespace-cloning.md) avoids
+discarded arrays while keeping every complete mutable Map independent. All
+15 existing cases and two new callback/isolation cases pass in Node and Bun;
+the finite copy comparison does not establish repaired full-project deadlines.
+
 The [terminal 4ea CI review](ci-4ea-terminal-20261110.md) retains all 24
 nonpassing logs and all 26 whole artifacts after all 59 jobs finish. Reverse
 freshness has a local receiving repair; strict parity, original deadlines,

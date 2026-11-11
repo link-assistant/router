@@ -81,6 +81,25 @@ function cloneSourceNamespaces(template,path,immutable=false){
   if(sharingEnvironment()&&!closedNamespaceConsumerPath(path))immutableStorageEnabled=false;
   const mask=sourceVisibilityMask(template,path);
   const share=sharingEnvironment()&&immutable&&immutableTemplates.has(template)&&closedNamespaceVisibilityMask(mask,template.restricted.length);
+  if(share){
+    // All inputs here are private native maps and closed frozen data. Keep
+    // every parser's maps independent without constructing discarded arrays
+    // for the outer map and each namespace's complete binding collection.
+    const result={};
+    for(const namespace of ['type','value','macro']){
+      const scopes=new Map();result[namespace]=scopes;
+      for(const [key,owned] of template.ownedScopes){
+        const aliases=new Map(),restrictions=template.restrictionSlots[namespace].get(key);
+        for(const [name,target] of owned.namespaceAliases[namespace]){
+          const indices=restrictions?.get(name);let inaccessible=null;
+          for(const index of indices??[])if(mask[index])inaccessible=template.restricted[index];
+          aliases.set(name,immutableTargets.get(inaccessible??target));
+        }
+        scopes.set(key,aliases);
+      }
+    }
+    return result;
+  }
   return Object.fromEntries(['type','value','macro'].map(namespace=>[namespace,new Map([...template.ownedScopes].map(([key,owned])=>{
     const restrictions=template.restrictionSlots[namespace].get(key);
     const aliases=new Map([...owned.namespaceAliases[namespace]].map(([name,target])=>{
