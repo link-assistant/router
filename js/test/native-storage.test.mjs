@@ -86,6 +86,31 @@ test('OS locks coordinate separate helpers, allow shared readers, and time out a
   } finally { release(); await first; }
   assert.equal(await withAdvisoryFileLock(path,() => 'exclusive'),'exclusive');
 });
+test('failed optional lock trace writes preserve operation errors and release the OS lock',{timeout:5000},async t => {
+  const path = join(await directory(t),'trace-private.lock'), originalWrite = process.stderr.write;
+  const originalTrace = process.env.ROUTER_FILE_LOCK_TRACE, records = [], failure = new Error('operation failed');
+  let sharedJsonCalls = 0;
+  const shared = {toJSON() { sharedJsonCalls++; return 'private-option'; }};
+  process.env.ROUTER_FILE_LOCK_TRACE = '1';
+  process.stderr.write = text => {
+    const record = JSON.parse(text); records.push(record);
+    if (['acquired','operation-finished','helper-closed'].includes(record.phase)) throw new Error('trace sink unavailable');
+    return true;
+  };
+  try {
+    assert.equal(await withAdvisoryFileLock(path,() => 'first',{shared}),'first');
+    await assert.rejects(withAdvisoryFileLock(path,() => { throw failure; }),error => error === failure);
+    assert.equal(await withAdvisoryFileLock(path,() => 'after-failure'),'after-failure');
+  } finally {
+    process.stderr.write = originalWrite;
+    if (originalTrace === undefined) delete process.env.ROUTER_FILE_LOCK_TRACE;
+    else process.env.ROUTER_FILE_LOCK_TRACE = originalTrace;
+  }
+  assert.ok(records.every(record => record.event === 'router-file-lock' && !JSON.stringify(record).includes(path)));
+  assert.equal(sharedJsonCalls,0);
+  assert.ok(records.every(record => typeof record.shared === 'boolean'));
+  for (const phase of ['acquired','operation-finished','helper-closed']) assert.equal(records.filter(record => record.phase === phase).length,3);
+});
 test('resource ownership, account identity collisions, parent ambiguity and expiry survive restart',async t => {
   const home = await directory(t); let now = 100;
   const make = () => new AffinityStore({dataDir:home,clock:() => now,ttl:10,maxRecords:5});

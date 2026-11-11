@@ -425,16 +425,16 @@
     },
     {
       "source": "js/src/file-lock.mjs",
-      "sourceSha256": "537c1600e5c138216a6df605721e145dc33903ba1d204b8e8cccb043734dc270",
+      "sourceSha256": "f89a82574899ed59a26a1863d5ba353930d74c881487579f9e6558fcdeeb7396",
       "meta": "tools/translation/js-to-rust/generated/native-typescript/src/file-lock.mjs.meta.json",
       "target": "ts/src/file-lock.ts",
-      "nodes": 1019,
-      "explicitAny": 45,
-      "inferredReturns": 9,
-      "inferredLocals": 3,
-      "metaSha256": "29aa31648dbddfdd310560d10d226282390310d5b08397c79b421764a90d3f4c",
-      "targetSha256": "51aa80db2a4ff181648848c5c44d144d5f9e733f1ddd35176881e2617be6ff65",
-      "runtimeASTSha256": "86f8c3e086f2e9c08187d1ba7f212117419b7efcede8e98b48ee23da748af663",
+      "nodes": 1326,
+      "explicitAny": 60,
+      "inferredReturns": 12,
+      "inferredLocals": 5,
+      "metaSha256": "958fc4eeaa2d3a11c88ef1b3af45b3c7e2df2e028d94820fc89e7b20fc21506f",
+      "targetSha256": "9f35287eec633ead8eace01979fd7847932f0f870b0e4e86e042c71fde4a0b19",
+      "runtimeASTSha256": "9c471e54ab7697756f5a36eb5c1288db1cf69f54e94d19663bc41c48d4046959",
       "runtimeASTIdentity": "verified after type erasure and relative module-extension normalization"
     },
     {
@@ -1160,13 +1160,13 @@
     },
     {
       "path": "tools/translation/js-to-rust/generated/native-typescript/src/file-lock.mjs.meta.json",
-      "bytes": 14786,
-      "sha256": "29aa31648dbddfdd310560d10d226282390310d5b08397c79b421764a90d3f4c"
+      "bytes": 19050,
+      "sha256": "958fc4eeaa2d3a11c88ef1b3af45b3c7e2df2e028d94820fc89e7b20fc21506f"
     },
     {
       "path": "ts/src/file-lock.ts",
-      "bytes": 4896,
-      "sha256": "51aa80db2a4ff181648848c5c44d144d5f9e733f1ddd35176881e2617be6ff65"
+      "bytes": 5966,
+      "sha256": "9f35287eec633ead8eace01979fd7847932f0f870b0e4e86e042c71fde4a0b19"
     },
     {
       "path": "tools/translation/js-to-rust/generated/native-typescript/src/gemini-protocol.mjs.meta.json",
