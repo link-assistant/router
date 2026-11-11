@@ -27,7 +27,7 @@ remains active; focused qualification and checkpoint commits do not complete it.
   is instrumented, not a controlled speed comparison.
 - [x] Run all five authoring receiving files in separate complete Bun processes.
   All 21 cases pass; no memory guard stops a process. Original deadlines remain.
-- [ ] Retain all complete attempts, compare actual original deadlines, review
+- [x] Retain all complete attempts, compare actual original deadlines, review
   final source/output equations and commit the coherent authoring batch.
 - [x] Refresh issue #784, all seven PR conversation comments, inline comments
   and reviews. No issue comments, required sub-issues, inline comments or reviews.
@@ -39,8 +39,11 @@ remains active; focused qualification and checkpoint commits do not complete it.
   ZIP digest/CRCs and complete retained readback: 323066425 decoded bytes,
   30020032 retained bytes. Original ZIP/gzip containers are not retained. These
   published-head outputs are not installed as current or treated as authority.
-- [ ] Collect/review every remaining whole CI artifact, all final jobs and
-  failure lines. Finish genuine canonical, owned and profile generation, native
+- [x] Collect/review every remaining whole CI artifact, all final jobs and
+  failure lines: 42 complete artifacts and all 30 nonpassing whole job logs.
+  Published f93 production coverage is 162/2578 functions, 2416 carried; this
+  historical observation is not installed as current or new executable gain.
+- [ ] Finish genuine canonical, owned and profile generation, native
   deadlines, raw compiler-source admission, strict parity and the complete gate.
 - [ ] Finish universal client/account privacy and every original issue criterion;
   maintain positive `Fixes #784`, draft status and honest unfinished evidence.
@@ -55,4 +58,14 @@ compare every original wire byte against two fresh original builds, rather
 than reflectively copying nodes just parsed by the qualified native JSON
 parser. Preserve old readers, all canonical fields and original bounds; require
 complete adversarial controls and original downstream deadlines before any
-performance claim. This new source draft is unqualified.
+performance claim. The complete eight-case file passes in Node and Bun, with
+Node's independent source/deadline audit also passing. The test receiving
+helper now selects this separate reader only for bounded canonical chunks;
+large individual documents retain the original single reader. Its six whole
+receiving controls pass. The complete downstream Node attempt passes all 12
+assertions but fails its independent deadline audit: lifetime history takes
+188477.043285 ms against 60000 ms. The two-file Bun attempt fails a genuine
+50000 ms Node child timeout and is stopped by the original memory guard before
+finishing; a separate complete helper file passes all six Bun controls. Actual
+deadline repair and performance remain unqualified. Generation and subsequent
+freshness checks pass; original native admission and all old public readers stay.

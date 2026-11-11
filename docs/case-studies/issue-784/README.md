@@ -435,3 +435,12 @@ complete production outputs, measured improvements and the separately failed
 broader deadline case. The [withdrawn runtime guard experiment](runtime-common-guard-negative.md)
 retains complete negative evidence and the separate seven-case Node/Bun
 qualification of fresh runtime-source module binding programs.
+
+The [terminal f93 CI review](ci-f93-terminal-20261111.md) accounts for all 75
+jobs, 30 complete nonpassing logs and 42 fully reviewed artifacts. It records
+actual published production coverage and all unchanged deadline obligations.
+
+The [canonical metadata receiver](current-canonical-meta-reader.md) retains
+eight passing complete Node/Bun controls and both failed downstream attempts.
+Its separate serialized-input domain preserves old APIs and two fresh builds
+per row; downstream deadline repair remains unqualified.
