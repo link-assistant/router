@@ -36,7 +36,7 @@ grammar checks pass before candidate installation. These are authoring checks;
 the discarded candidate has no receiving or original-deadline qualification.
 No source, owner or semantic verdict cache was introduced.
 
-The [complete archive](evidence/completed-derive-data-negative.tar.gz) and
+The [complete archive](https://github.com/link-assistant/router/blob/241d34420d46ac833709b80f68fffc5e937f02c7/docs/case-studies/issue-784/evidence/completed-derive-data-negative.tar.gz) and
 [member receipt](evidence/completed-derive-data-negative.json.gz) retain all four
 whole outputs, complete input receipts, source review, streams, failed first
 harness and resource observations. Every member was reopened and hashed.

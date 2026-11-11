@@ -31,7 +31,7 @@ incorrect copy assertion. That failed command and its complete output remain
 separate from the corrected `before-1-v2` run. There was no memory termination in
 the four measurements.
 
-The [whole archive](evidence/requested-module-data-negative.tar.gz) contains every
+The [whole archive](https://github.com/link-assistant/router/blob/12cb8fc07d3a07fbda0cd5eee36f0cdb621fdddc/docs/case-studies/issue-784/evidence/requested-module-data-negative.tar.gz) contains every
 proposal, review, complete compressed output, complete input receipt, command,
 raw stream, memory receipt and reproduction script. Its 6,477,345 bytes have
 SHA256 `06ac2435183f2547cea644fa2d581c498ae6bbb0c1d1a3fc419c9c19063ae448`.
