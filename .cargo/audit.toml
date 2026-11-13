@@ -21,4 +21,15 @@ ignore = [
     # an RSA private-key operation, so the vulnerable code path is not reached.
     # Re-check when `rsa` 0.10 ships and `jsonwebtoken` picks it up.
     "RUSTSEC-2023-0071",
+    # RUSTSEC-2026-0387 — timing variability in constant-time operations of
+    # `crypto-bigint` 0.5. The only fix is 0.7.6, a semver-incompatible line
+    # that nothing in our tree can use: 0.5.5 reaches us solely through
+    # `elliptic-curve` 0.13 (`p256`/`p384`/`ecdsa`/`primeorder`), which
+    # `jsonwebtoken` 11 pulls in for the ES256/ES384 JWT algorithms. This
+    # router builds every JWT key with `EncodingKey::from_secret` /
+    # `DecodingKey::from_secret` and the default HS256 `Header`/`Validation`
+    # (HMAC-SHA256), so no elliptic-curve arithmetic on secret integers ever
+    # runs. Re-check when moving to `jsonwebtoken` 12, whose `p256`/`p384` 0.14
+    # use `crypto-bigint` 0.7 through `elliptic-curve` 0.14.
+    "RUSTSEC-2026-0387",
 ]
