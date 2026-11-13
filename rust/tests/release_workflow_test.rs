@@ -79,7 +79,10 @@ fn release_workflow_prepares_artifacts_before_stable_publication() {
     assert!(workflow.contains("finalize-release:"));
     assert!(workflow.contains("needs.verify-release-provenance.result == 'success'"));
     assert!(workflow.contains("--prerelease=false --latest"));
-    assert!(workflow.contains("ref: refs/tags/v${{ env.RELEASE_VERSION }}"));
+    // Packaging jobs build the commit the release tag names, resolved once.
+    assert!(workflow.contains("ref: ${{ needs.resolve-release-source.outputs.sha }}"));
+    let tag_commit = r#"git rev-parse --verify "refs/tags/v${RELEASE_VERSION}^{commit}""#;
+    assert!(workflow.contains(tag_commit));
 }
 
 #[test]
@@ -94,9 +97,16 @@ fn release_workflows_detect_missing_github_releases() {
         )),
         "each release run should fail if the version it just published lacks a GitHub Release"
     );
+    let finalize = release_workflow
+        .split_once("\n  finalize-release:\n")
+        .expect("release workflow should finalize the release")
+        .1
+        .split_once("\n\n")
+        .expect("the finalize job should end before the next section")
+        .0;
     assert!(
-        release_workflow
-            .contains("ref: refs/tags/v${{ env.RELEASE_VERSION }}\n          fetch-depth: 0"),
+        finalize.contains("fetch-depth: 0")
+            && finalize.contains(&format!("{verification_command} --release-version")),
         "the post-release check should fetch the default branch and complete tag history"
     );
     assert!(
@@ -286,10 +296,13 @@ fn release_workflow_uses_supported_action_runtimes() {
 fn release_workflows_pin_actions_tools_and_artifact_identity() {
     let release = read_lf(".github/workflows/release.yml");
     let verify = read_lf(".github/workflows/verify-releases.yml");
+    // A local reusable workflow (`uses: ./…`) is part of the same commit and
+    // has no revision to pin.
     for line in release
         .lines()
         .chain(verify.lines())
         .filter(|line| line.trim_start().starts_with("uses:"))
+        .filter(|line| !line.trim_start().starts_with("uses: ./"))
     {
         let revision = line
             .split_once('@')
@@ -441,7 +454,7 @@ fn release_workflow_enforces_single_platform_coverage() {
         "instrumentation and coverage failures must fail closed"
     );
     assert!(
-        workflow.contains("needs: [lint, test, coverage]"),
+        workflow.contains("needs: [javascript, lint, test, coverage]"),
         "the package build must be gated by coverage"
     );
 }
@@ -455,7 +468,7 @@ fn coverage_gate_is_behaviorally_tested_in_ci() {
         "CI must test the independent absolute-floor, ratchet, and baseline-update rules"
     );
     assert!(
-        fs::metadata("coverage-baseline.txt").is_ok(),
+        fs::metadata(repository::path("coverage-baseline.txt")).is_ok(),
         "the reviewable line-coverage baseline must be committed"
     );
 }

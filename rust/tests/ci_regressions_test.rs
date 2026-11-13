@@ -60,11 +60,16 @@ fn artifact_download_avoids_the_known_node_buffer_warning() {
     );
 }
 
+/// A new push must not cancel a run that may already be writing a release.
+///
+/// Every run completes its Rust stage, because the push gate waits for all of
+/// them before it pushes.
 #[test]
 fn release_writers_are_not_cancelled_by_a_new_run() {
     let workflow = read_lf(".github/workflows/release.yml");
-    assert!(workflow.contains("cancel-in-progress: ${{ github.event_name == 'pull_request' }}"));
+    assert!(workflow.contains("cancel-in-progress: false"));
     assert!(!workflow.contains("cancel-in-progress: true"));
+    assert!(!workflow.contains("cancel-in-progress: ${{"));
 }
 
 #[test]
@@ -119,38 +124,32 @@ fn local_builds_disable_the_unbounded_incremental_cache() {
     );
 }
 
-/// Every commit prunes what its build superseded, so the cache cannot grow
-/// without bound between manual cleanups.
+/// Local commits run only the generic pre-commit checks, never Cargo.
+///
+/// Rust formatting, Clippy, tests and the `cargo-sweep`/`cargo-clean` cache
+/// hooks were removed on purpose: Rust is verified only by the gated CI, so a
+/// commit cannot build (or fill) `target/` behind the developer's back.
 #[test]
-fn each_commit_prunes_superseded_build_artifacts() {
+fn local_commit_hooks_never_run_cargo() {
     let hooks = read_lf(".pre-commit-config.yaml");
 
-    assert!(hooks.contains("cargo-sweep"), "{hooks}");
+    assert!(!hooks.contains("cargo"), "{hooks}");
+    assert!(!hooks.contains("scripts/clear-build-cache.sh"), "{hooks}");
+    for generic in ["trailing-whitespace", "end-of-file-fixer", "check-yaml"] {
+        assert!(hooks.contains(generic), "{generic} must stay enabled:\n{hooks}");
+    }
+}
+
+/// Whoever builds locally can still reclaim the cache by hand.
+#[test]
+fn manual_build_cache_cleanup_remains_available() {
     assert!(
-        hooks.contains("stages: [post-commit]"),
-        "the sweep must run after the hooks that build, or it prunes their output"
+        read_lf("scripts/clear-build-cache.sh").contains("cargo clean"),
+        "the manual cleanup must reclaim the complete Cargo build cache"
     );
     assert!(
         read_lf(".gitignore").contains("sweep.timestamp"),
         "the sweep marker is local state, not a tracked file"
-    );
-}
-
-/// The checks above populate `target/`; the last pre-commit hook must reclaim
-/// that complete cache even when optional pruning tooling is unavailable.
-#[test]
-fn each_pre_commit_clears_the_rust_build_cache() {
-    let hooks = read_lf(".pre-commit-config.yaml");
-
-    assert!(hooks.contains("cargo-clean"), "{hooks}");
-    assert!(hooks.contains("scripts/clear-build-cache.sh"), "{hooks}");
-    assert!(
-        hooks.contains("stages: [pre-commit]"),
-        "the full cleanup must run as part of every pre-commit pass"
-    );
-    assert!(
-        read_lf("scripts/clear-build-cache.sh").contains("cargo clean"),
-        "the hook must reclaim the complete Cargo build cache"
     );
 }
 
