@@ -7,7 +7,7 @@ import tempfile
 import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
-source = (ROOT/'src/deploy/remote_agent.sh').read_text().split('case "$PUBLIC_NAME"', 1)[0]
+source = (ROOT/'rust/src/deploy/remote_agent.sh').read_text().split('case "$PUBLIC_NAME"', 1)[0]
 cookie = str(uuid.uuid4())
 with tempfile.TemporaryDirectory(prefix='issue-715-remote-') as temporary:
     marker = Path(temporary)/'mutation'

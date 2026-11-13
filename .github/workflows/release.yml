@@ -462,9 +462,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
+      # --no-fail-fast still fails the step, but runs every test binary so one
+      # CI run reports all failing targets instead of stopping at the first.
       - name: Run tests
         if: runner.os != 'Windows'
-        run: cargo test --locked --all-features --verbose
+        run: cargo test --locked --all-features --verbose --no-fail-fast
 
       - name: Repeat default-parallel wrapper sweep tests
         if: runner.os != 'Windows'
@@ -527,7 +529,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $testFiles = Get-ChildItem tests -File -Filter '*_test.rs' | Sort-Object Name
+          $testFiles = Get-ChildItem rust/tests -File -Filter '*_test.rs' | Sort-Object Name
           foreach ($testFile in $testFiles) {
             $target = $testFile.BaseName
             Write-Host "::group::Windows integration target $target"

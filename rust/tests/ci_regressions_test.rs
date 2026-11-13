@@ -179,7 +179,8 @@ fn ci_compiles_through_a_compilation_level_cache() {
 fn windows_ci_bounds_every_integration_test_target() {
     let workflow = read_lf(".github/workflows/release.yml");
 
-    assert!(workflow.contains("Get-ChildItem tests -File -Filter '*_test.rs'"));
+    // The package lives in `rust/`, so its integration tests are not in `tests/`.
+    assert!(workflow.contains("Get-ChildItem rust/tests -File -Filter '*_test.rs'"));
     assert!(workflow.contains("$process.WaitForExit(180000)"));
     assert!(workflow.contains("Windows integration target $target exceeded 180 seconds"));
     assert!(workflow.contains("--test', $target, '--', '--test-threads=1"));
