@@ -49,7 +49,10 @@ pub fn header_is_compared(name: &crate::translation_core::Str) -> bool {
 /// body — `body.messages[1].content[0].text` — so the turn that failed points
 /// at the field that moved rather than at the whole request.
 #[must_use]
-pub fn describe_difference(recorded: &crate::translation_core::Json, incoming: &crate::translation_core::Json) -> crate::translation_core::Maybe<String> {
+pub fn describe_difference(
+    recorded: &crate::translation_core::Json,
+    incoming: &crate::translation_core::Json,
+) -> crate::translation_core::Maybe<String> {
     for field in COMPARED_FIELDS {
         let expected = recorded.get(*field);
         let actual = incoming.get(*field);
@@ -72,7 +75,10 @@ pub fn describe_difference(recorded: &crate::translation_core::Json, incoming: &
 }
 
 /// The first compared header that differs.
-fn header_difference(recorded: &crate::translation_core::Json, incoming: &crate::translation_core::Json) -> crate::translation_core::Maybe<String> {
+fn header_difference(
+    recorded: &crate::translation_core::Json,
+    incoming: &crate::translation_core::Json,
+) -> crate::translation_core::Maybe<String> {
     let expected = recorded.get("headers").and_then(Value::as_object)?;
     let actual = incoming.get("headers").and_then(Value::as_object);
     for (name, value) in expected {
@@ -104,7 +110,11 @@ fn header_difference(recorded: &crate::translation_core::Json, incoming: &crate:
 }
 
 /// Walk two values in parallel and describe the first divergence at `path`.
-fn compare(path: &crate::translation_core::Str, recorded: &crate::translation_core::Json, incoming: &crate::translation_core::Json) -> crate::translation_core::Maybe<String> {
+fn compare(
+    path: &crate::translation_core::Str,
+    recorded: &crate::translation_core::Json,
+    incoming: &crate::translation_core::Json,
+) -> crate::translation_core::Maybe<String> {
     match (recorded, incoming) {
         (Value::Object(expected), Value::Object(actual)) => {
             for (key, value) in expected {

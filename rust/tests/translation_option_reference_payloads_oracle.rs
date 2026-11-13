@@ -46,9 +46,7 @@ fn nested_option_result_and_named_reference_identity_remain_distinct() {
     fn contextual(value: Option<&Owner>) -> Result<Option<&Owner>, bool> {
         value.map(Some).ok_or_else(|| false)
     }
-    let owner = Owner {
-        text: "Ω".into(),
-    };
+    let owner = Owner { text: "Ω".into() };
     assert!(matches!(nested(None), Err(false)));
     assert!(matches!(nested(Some(None)), Ok(None)));
     assert!(std::ptr::eq(

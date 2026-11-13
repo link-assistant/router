@@ -28,16 +28,25 @@ fn exact_reader_variants_numbers_and_loans() {
         "max": u64::MAX, "min": i64::MIN, "arr": ["first", null]});
     assert_eq!(Json::get(&input, "missing"), None);
     assert_eq!(Json::get(&input, "null"), Some(&Json::Null));
-    assert_eq!(Json::pointer(&input, "/a~1b/~").and_then(Json::as_str), Some("猫😀"));
+    assert_eq!(
+        Json::pointer(&input, "/a~1b/~").and_then(Json::as_str),
+        Some("猫😀")
+    );
     assert_eq!(Json::pointer(&input, ""), Some(&input));
     assert_eq!(Json::pointer(&input, "/arr/01"), None);
     let arr = Json::get(&input, "arr").unwrap();
     assert_eq!(Json::get(arr, 0usize).and_then(Json::as_str), Some("first"));
     assert_eq!(Json::get(arr, usize::MAX), None);
     assert_eq!(Json::as_bool(Json::get(&input, "yes").unwrap()), Some(true));
-    assert_eq!(Json::as_u64(Json::get(&input, "max").unwrap()), Some(u64::MAX));
+    assert_eq!(
+        Json::as_u64(Json::get(&input, "max").unwrap()),
+        Some(u64::MAX)
+    );
     assert_eq!(Json::as_i64(Json::get(&input, "max").unwrap()), None);
-    assert_eq!(Json::as_i64(Json::get(&input, "min").unwrap()), Some(i64::MIN));
+    assert_eq!(
+        Json::as_i64(Json::get(&input, "min").unwrap()),
+        Some(i64::MIN)
+    );
     assert_eq!(Json::as_u64(Json::get(&input, "min").unwrap()), None);
     assert!(Json::is_null(Json::get(&input, "null").unwrap()));
     assert!(!Json::is_null(&input));
@@ -45,5 +54,8 @@ fn exact_reader_variants_numbers_and_loans() {
     let text = serde_json::json!({"name": "retained"});
     let borrowed = borrowed_text(&text, "name").unwrap();
     assert_eq!(borrowed, "retained");
-    assert_eq!(borrowed.as_ptr(), Json::get(&text, "name").unwrap().as_str().unwrap().as_ptr());
+    assert_eq!(
+        borrowed.as_ptr(),
+        Json::get(&text, "name").unwrap().as_str().unwrap().as_ptr()
+    );
 }

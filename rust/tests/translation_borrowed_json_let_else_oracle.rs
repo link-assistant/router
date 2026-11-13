@@ -150,7 +150,10 @@ fn nested_subjects_run_once_and_empty_error_branches_are_lazy() {
     let reads = Cell::new(0);
     let empty = Cell::new(0);
     let errors = Cell::new(0);
-    assert_eq!(traced(&serde_json::json!({}), &reads, &empty, &errors), Ok(None));
+    assert_eq!(
+        traced(&serde_json::json!({}), &reads, &empty, &errors),
+        Ok(None)
+    );
     assert_eq!((reads.get(), empty.get(), errors.get()), (1, 1, 0));
     assert_eq!(
         traced(&serde_json::json!({"x": false}), &reads, &empty, &errors),

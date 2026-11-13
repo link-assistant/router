@@ -13,7 +13,9 @@ pub struct DisposableCli {
 impl DisposableCli {
     /// Configure Claude Code to run from a temporary bun (preferred) or npm
     /// cache. No vendor CLI is installed globally or retained afterwards.
-    pub fn claude(base: &LoginConfig) -> crate::translation_core::Outcome<(Self, LoginConfig), String> {
+    pub fn claude(
+        base: &LoginConfig,
+    ) -> crate::translation_core::Outcome<(Self, LoginConfig), String> {
         let root = std::env::temp_dir().join(format!(
             "link-assistant-claude-cli-{}",
             uuid::Uuid::new_v4()

@@ -188,7 +188,10 @@ pub(crate) struct IssueOptions {
 }
 
 /// Keys accepted in the `key=value` form, with their documented aliases.
-const ISSUE_KEYS: &[(&crate::translation_core::Str, &[&crate::translation_core::Str])] = &[
+const ISSUE_KEYS: &[(
+    &crate::translation_core::Str,
+    &[&crate::translation_core::Str],
+)] = &[
     ("label", &["label", "name"]),
     ("ttl_hours", &["ttl_hours", "ttl"]),
     ("max_requests", &["max_requests", "requests"]),
@@ -200,7 +203,9 @@ const ISSUE_KEYS: &[(&crate::translation_core::Str, &[&crate::translation_core::
     ("account", &["account", "pin"]),
 ];
 
-fn canonical_issue_key(key: &crate::translation_core::Str) -> crate::translation_core::Maybe<&'static crate::translation_core::Str> {
+fn canonical_issue_key(
+    key: &crate::translation_core::Str,
+) -> crate::translation_core::Maybe<&'static crate::translation_core::Str> {
     let key = key.to_ascii_lowercase();
     ISSUE_KEYS
         .iter()
@@ -209,7 +214,9 @@ fn canonical_issue_key(key: &crate::translation_core::Str) -> crate::translation
 }
 
 /// Parse the shared `/issue` and `/rotate-token` argument grammar.
-pub(crate) fn parse_issue_options(rest: &crate::translation_core::Str) -> crate::translation_core::Outcome<IssueOptions, String> {
+pub(crate) fn parse_issue_options(
+    rest: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<IssueOptions, String> {
     let mut options = IssueOptions::default();
     let mut positional = 0;
     for part in rest.split_whitespace() {

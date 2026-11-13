@@ -64,7 +64,9 @@ pub fn base64_standard_decode_owned_text(value: Text) -> Outcome<::std::vec::Vec
 }
 
 /// Decode borrowed standard text with padding strictly forbidden.
-pub fn base64_standard_no_pad_decode_text(value: &Str) -> Outcome<::std::vec::Vec<u8>, Base64Error> {
+pub fn base64_standard_no_pad_decode_text(
+    value: &Str,
+) -> Outcome<::std::vec::Vec<u8>, Base64Error> {
     ::base64::Engine::decode(&::base64::engine::general_purpose::STANDARD_NO_PAD, value)
 }
 
@@ -74,6 +76,8 @@ pub fn base64_url_no_pad_decode_text(value: &Str) -> Outcome<::std::vec::Vec<u8>
 }
 
 /// Consume owned URL text, preserving native padding and trailing-bit errors.
-pub fn base64_url_no_pad_decode_owned_text(value: Text) -> Outcome<::std::vec::Vec<u8>, Base64Error> {
+pub fn base64_url_no_pad_decode_owned_text(
+    value: Text,
+) -> Outcome<::std::vec::Vec<u8>, Base64Error> {
     ::base64::Engine::decode(&::base64::engine::general_purpose::URL_SAFE_NO_PAD, value)
 }

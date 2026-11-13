@@ -69,7 +69,11 @@ pub async fn run(chat: Arc<ChatAdmin>, client: Client) {
 }
 
 /// Process one update, dropping everything that is not a private message.
-async fn handle_update(chat: &Arc<ChatAdmin>, bot: &TelegramBot, update: &crate::translation_core::Json) {
+async fn handle_update(
+    chat: &Arc<ChatAdmin>,
+    bot: &TelegramBot,
+    update: &crate::translation_core::Json,
+) {
     let Some(message) = update.get("message") else {
         return;
     };
@@ -126,11 +130,17 @@ async fn deliver(chat: &Arc<ChatAdmin>, bot: &TelegramBot, chat_id: i64, reply: 
 /// through to "administer this router".
 #[must_use]
 pub fn is_private(message: &crate::translation_core::Json) -> bool {
-    message.pointer("/chat/type").and_then(crate::translation_core::Json::as_str) == crate::translation_core::Maybe::Some("private")
+    message
+        .pointer("/chat/type")
+        .and_then(crate::translation_core::Json::as_str)
+        == crate::translation_core::Maybe::Some("private")
 }
 
 fn update_id(update: &crate::translation_core::Json) -> i64 {
-    update.get("update_id").and_then(crate::translation_core::Json::as_i64).unwrap_or(0)
+    update
+        .get("update_id")
+        .and_then(crate::translation_core::Json::as_i64)
+        .unwrap_or(0)
 }
 
 /// Minimal Bot API client: the four calls this channel needs.
@@ -152,7 +162,10 @@ impl TelegramBot {
     }
 
     /// `getUpdates` with a long timeout, returning the raw update objects.
-    async fn updates(&self, offset: i64) -> crate::translation_core::Outcome<Vec<crate::translation_core::Json>, String> {
+    async fn updates(
+        &self,
+        offset: i64,
+    ) -> crate::translation_core::Outcome<Vec<crate::translation_core::Json>, String> {
         let body = self
             .call(
                 "getUpdates",
@@ -172,7 +185,11 @@ impl TelegramBot {
     }
 
     /// `sendMessage`, returning the new message id so secrets can be deleted.
-    async fn send(&self, chat_id: i64, text: &crate::translation_core::Str) -> crate::translation_core::Outcome<i64, String> {
+    async fn send(
+        &self,
+        chat_id: i64,
+        text: &crate::translation_core::Str,
+    ) -> crate::translation_core::Outcome<i64, String> {
         let body = self
             .call(
                 "sendMessage",
@@ -187,7 +204,11 @@ impl TelegramBot {
 
     /// `deleteMessage` — best effort; Telegram only lets a bot delete its own
     /// recent messages, and the user may have deleted it already.
-    async fn delete(&self, chat_id: i64, message_id: i64) -> crate::translation_core::Outcome<(), String> {
+    async fn delete(
+        &self,
+        chat_id: i64,
+        message_id: i64,
+    ) -> crate::translation_core::Outcome<(), String> {
         self.call(
             "deleteMessage",
             &json!({"chat_id": chat_id, "message_id": message_id}),
@@ -196,7 +217,11 @@ impl TelegramBot {
         .map(|_| ())
     }
 
-    async fn call(&self, method: &crate::translation_core::Str, body: &crate::translation_core::Json) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
+    async fn call(
+        &self,
+        method: &crate::translation_core::Str,
+        body: &crate::translation_core::Json,
+    ) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
         let response = self
             .client
             .post(format!("{}/{method}", self.base_url))

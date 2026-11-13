@@ -2,14 +2,20 @@
 use futures_util::StreamExt as _;
 use serde_json::{Value, json};
 
-const RELEASE_API: &crate::translation_core::Str = "https://api.github.com/repos/link-assistant/router/releases/latest";
+const RELEASE_API: &crate::translation_core::Str =
+    "https://api.github.com/repos/link-assistant/router/releases/latest";
 
 /// Check the latest stable GitHub release without sending Router credentials.
-pub async fn latest_version(client: &reqwest::Client) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
+pub async fn latest_version(
+    client: &reqwest::Client,
+) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
     fetch(client, RELEASE_API).await
 }
 
-async fn fetch(client: &reqwest::Client, endpoint: &crate::translation_core::Str) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
+async fn fetch(
+    client: &reqwest::Client,
+    endpoint: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
     let response = client
         .get(endpoint)
         .header(

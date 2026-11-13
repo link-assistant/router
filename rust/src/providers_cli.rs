@@ -16,7 +16,10 @@ struct ProviderImportReport {
     results: Vec<serde_json::Value>,
 }
 
-fn import_failure(name: &crate::translation_core::Str, outcome: ProviderProvisionFailureKind) -> crate::translation_core::Json {
+fn import_failure(
+    name: &crate::translation_core::Str,
+    outcome: ProviderProvisionFailureKind,
+) -> crate::translation_core::Json {
     crate::translation_core::json!({"name": name, "outcome": outcome})
 }
 
@@ -199,7 +202,9 @@ pub struct Call {
 /// # Errors
 ///
 /// Returns an operator-readable message when the provider cannot be encoded.
-pub fn call_for(op: &ProviderOp) -> crate::translation_core::Outcome<crate::translation_core::Maybe<Call>, String> {
+pub fn call_for(
+    op: &ProviderOp,
+) -> crate::translation_core::Outcome<crate::translation_core::Maybe<Call>, String> {
     Ok(match op {
         ProviderOp::List { .. } => Some(Call {
             method: "GET",
@@ -279,7 +284,10 @@ fn supplied_api_key(
     Ok(api_key.cloned())
 }
 
-fn reject_lefine_argv_key(kind: &crate::translation_core::Str, api_key: crate::translation_core::Maybe<&String>) -> crate::translation_core::Outcome<(), String> {
+fn reject_lefine_argv_key(
+    kind: &crate::translation_core::Str,
+    api_key: crate::translation_core::Maybe<&String>,
+) -> crate::translation_core::Outcome<(), String> {
     if crate::providers::ProviderKind::from_str_opt(kind)
         == Some(crate::providers::ProviderKind::Lefine)
         && api_key.is_some()
@@ -297,7 +305,9 @@ fn reject_lefine_argv_key(kind: &crate::translation_core::Str, api_key: crate::t
 /// # Errors
 ///
 /// Returns an operator-readable message when the record cannot be encoded.
-pub fn upsert_body(upsert: &ProviderUpsert) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
+pub fn upsert_body(
+    upsert: &ProviderUpsert,
+) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
     serde_json::to_value(upsert).map_err(|error| error.to_string())
 }
 

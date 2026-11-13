@@ -36,7 +36,10 @@ impl ManagementConfig {
     }
 
     /// Refuse published sample signing and administrative secrets at startup.
-    pub fn validate_secrets(token_secret: &crate::translation_core::Str, admin_key: crate::translation_core::Maybe<&crate::translation_core::Str>) -> crate::translation_core::Outcome<(), String> {
+    pub fn validate_secrets(
+        token_secret: &crate::translation_core::Str,
+        admin_key: crate::translation_core::Maybe<&crate::translation_core::Str>,
+    ) -> crate::translation_core::Outcome<(), String> {
         for (name, flag, secret) in [
             ("TOKEN_SECRET", "--token-secret", Some(token_secret)),
             ("TOKEN_ADMIN_KEY", "--admin-key", admin_key),
@@ -59,7 +62,10 @@ fn integer<T: std::str::FromStr>(name: &str, default: T) -> Result<T, String> {
     })
 }
 
-fn boolean(name: &crate::translation_core::Str, default: bool) -> crate::translation_core::Outcome<bool, String> {
+fn boolean(
+    name: &crate::translation_core::Str,
+    default: bool,
+) -> crate::translation_core::Outcome<bool, String> {
     crate::operation_context::var(name).map_or(Ok(default), |value| {
         match value.to_ascii_lowercase().as_str() {
             "true" | "1" | "yes" | "on" => Ok(true),

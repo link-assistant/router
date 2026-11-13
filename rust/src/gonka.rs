@@ -19,7 +19,8 @@ use crate::providers::LiveProviderModel;
 use crate::proxy::AppState;
 
 /// Error shown when Gonka is selected without a broker/API key.
-pub const MISSING_API_KEY_MESSAGE: &crate::translation_core::Str = "Gonka broker mode requires GONKA_API_KEY";
+pub const MISSING_API_KEY_MESSAGE: &crate::translation_core::Str =
+    "Gonka broker mode requires GONKA_API_KEY";
 const CATALOG_TTL: Duration = Duration::from_secs(5 * 60);
 const CATALOG_REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
 const FAILED_REFRESH_RETRY: Duration = Duration::from_secs(15);
@@ -57,7 +58,11 @@ impl std::fmt::Debug for GonkaConfig {
 impl GonkaConfig {
     /// Create Gonka config if all required fields are present.
     #[must_use]
-    pub fn new(api_key: crate::translation_core::Maybe<String>, source_url: crate::translation_core::Maybe<&crate::translation_core::Str>, model: String) -> crate::translation_core::Maybe<Self> {
+    pub fn new(
+        api_key: crate::translation_core::Maybe<String>,
+        source_url: crate::translation_core::Maybe<&crate::translation_core::Str>,
+        model: String,
+    ) -> crate::translation_core::Maybe<Self> {
         let api_key = api_key.filter(|key| !key.is_empty())?;
         let source_url = source_url.filter(|url| !url.is_empty())?;
         Some(Self {
@@ -77,7 +82,10 @@ impl GonkaConfig {
 
 /// Ensure an `OpenAI` request body has a model, using `GONKA_MODEL` when omitted.
 #[must_use]
-pub fn with_default_model(mut body: crate::translation_core::Json, default_model: &crate::translation_core::Str) -> crate::translation_core::Json {
+pub fn with_default_model(
+    mut body: crate::translation_core::Json,
+    default_model: &crate::translation_core::Str,
+) -> crate::translation_core::Json {
     if !default_model.is_empty()
         && !matches!(body.get("model").and_then(Value::as_str), Some(s) if !s.is_empty())
     {

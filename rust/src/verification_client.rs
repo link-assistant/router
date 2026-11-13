@@ -13,7 +13,9 @@ pub fn safety() -> crate::translation_core::Outcome<(), &'static crate::translat
     safety_for(std::env::consts::OS)
 }
 
-fn safety_for(os: &crate::translation_core::Str) -> crate::translation_core::Outcome<(), &'static crate::translation_core::Str> {
+fn safety_for(
+    os: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<(), &'static crate::translation_core::Str> {
     if os == "macos" {
         Err(
             "safe OS credential-store boundary unavailable: native macOS vendor probes are refused before version, doctor or TUI; use the disposable Linux verification environment",
@@ -46,7 +48,9 @@ pub fn environment(command: &mut Command, home: &Path) {
 }
 
 /// Extract one semantic version; extra banners may vary by vendor.
-pub fn parse_version(text: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
+pub fn parse_version(
+    text: &crate::translation_core::Str,
+) -> crate::translation_core::Maybe<String> {
     text.split(|ch: char| !ch.is_ascii_digit() && ch != '.')
         .find(|word| {
             let parts: Vec<_> = word.split('.').collect();
@@ -64,7 +68,9 @@ pub const CLIENTS: &[(&crate::translation_core::Str, &crate::translation_core::S
 /// Discover before Cargo builds `option_env!` expectations. Caller/CI pins win,
 /// but a pin mismatch is a preparation failure, never a compatibility result.
 #[must_use]
-pub fn prepare(clients: &[&crate::translation_core::Str]) -> (Vec<crate::translation_core::Json>, Vec<(String, String)>) {
+pub fn prepare(
+    clients: &[&crate::translation_core::Str],
+) -> (Vec<crate::translation_core::Json>, Vec<(String, String)>) {
     prepare_using(
         clients,
         |variable| crate::operation_context::var(variable).ok(),

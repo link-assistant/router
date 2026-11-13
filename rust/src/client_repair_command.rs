@@ -218,7 +218,10 @@ async fn repair_one(
             if let Some(id) = result.backup_id.as_deref() {
                 manager.rollback_repair(client, id)?;
             }
-            return Err(crate::translation_core::format!("post-repair catalog validation failed: {error}").into());
+            return Err(crate::translation_core::format!(
+                "post-repair catalog validation failed: {error}"
+            )
+            .into());
         }
         if client == ClientKind::Codex && bridge.is_none() {
             crate::codex_loopback_bridge::stop_persistent(
@@ -312,7 +315,8 @@ async fn repair_one(
             .as_deref()
             .map_or(Ok(()), |id| manager.rollback_repair(client, id).map(|_| ()));
         let cleanup = crate::managed_server::cleanup_run_credential(candidate).await;
-        let mut message = crate::translation_core::format!("post-repair catalog validation failed: {error}");
+        let mut message =
+            crate::translation_core::format!("post-repair catalog validation failed: {error}");
         if let Err(rollback) = rollback {
             let _ = write!(message, "; automatic rollback also failed: {rollback}");
         }

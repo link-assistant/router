@@ -29,7 +29,9 @@ fn input_loan_does_not_borrow_the_separate_output() {
 
 fn optional(input: Maybe<&Json>) -> Maybe<Json> {
     let Some(input) = input else { return None };
-    let Some(value) = input.get("data") else { return None };
+    let Some(value) = input.get("data") else {
+        return None;
+    };
     let mut output = core::json!({});
     output = core::json_with_field(output, "data", core::json_copy(value));
     Some(output)
@@ -40,7 +42,10 @@ fn option_reference_patterns_preserve_none_and_copy_the_present_payload() {
     assert_eq!(optional(None), None);
     assert_eq!(optional(Some(&core::json!({}))), None);
     let input = core::json!({"data": [false, "Ω😀"]});
-    assert_eq!(optional(Some(&input)), Some(core::json!({"data": [false, "Ω😀"]})));
+    assert_eq!(
+        optional(Some(&input)),
+        Some(core::json!({"data": [false, "Ω😀"]}))
+    );
     assert_eq!(input, core::json!({"data": [false, "Ω😀"]}));
 }
 
@@ -59,8 +64,14 @@ fn object_and_string_views_keep_their_actual_receiver() {
 }
 
 fn branched(left: &Json, right: &Json, flag: bool) -> Maybe<Json> {
-    let selected = if flag { left.get("pick") } else { right.get("pick") };
-    let Some(selected) = selected else { return None };
+    let selected = if flag {
+        left.get("pick")
+    } else {
+        right.get("pick")
+    };
+    let Some(selected) = selected else {
+        return None;
+    };
     Some(core::json_copy(selected))
 }
 
@@ -68,8 +79,14 @@ fn branched(left: &Json, right: &Json, flag: bool) -> Maybe<Json> {
 fn branch_results_copy_the_selected_input_without_moving_either() {
     let left = core::json!({"pick": {"side": "left"}});
     let right = core::json!({"pick": {"side": "right"}});
-    assert_eq!(branched(&left, &right, true), Some(core::json!({"side": "left"})));
-    assert_eq!(branched(&left, &right, false), Some(core::json!({"side": "right"})));
+    assert_eq!(
+        branched(&left, &right, true),
+        Some(core::json!({"side": "left"}))
+    );
+    assert_eq!(
+        branched(&left, &right, false),
+        Some(core::json!({"side": "right"}))
+    );
     assert_eq!(branched(&left, &core::json!({}), false), None);
 }
 
@@ -90,6 +107,9 @@ fn returned<'a>(input: &'a Json, key: &Str) -> Maybe<&'a Json> {
 #[test]
 fn a_returned_reference_still_belongs_to_the_declared_input_lifetime() {
     let input = core::json!({"keep": {"x": true}});
-    assert!(std::ptr::eq(returned(&input, "keep").unwrap(), &input["keep"]));
+    assert!(std::ptr::eq(
+        returned(&input, "keep").unwrap(),
+        &input["keep"]
+    ));
     assert_eq!(returned(&core::json!({}), "keep"), None);
 }

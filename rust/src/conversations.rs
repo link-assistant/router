@@ -454,7 +454,10 @@ async fn read_upstream(
     })
 }
 
-async fn bounded_request_body(state: &AppState, body: Body) -> crate::translation_core::Outcome<Bytes, Response> {
+async fn bounded_request_body(
+    state: &AppState,
+    body: Body,
+) -> crate::translation_core::Outcome<Bytes, Response> {
     axum::body::to_bytes(body, state.max_proxy_request_bytes)
         .await
         .map_err(|error| {
@@ -535,7 +538,10 @@ fn item_not_found() -> Response {
     resource_not_found("Conversation item", "conversation_item_not_found")
 }
 
-fn resource_not_found(message: &crate::translation_core::Str, code: &crate::translation_core::Str) -> Response {
+fn resource_not_found(
+    message: &crate::translation_core::Str,
+    code: &crate::translation_core::Str,
+) -> Response {
     (
         StatusCode::NOT_FOUND,
         axum::Json(crate::translation_core::json!({
@@ -578,7 +584,11 @@ fn upstream_error(message: &crate::translation_core::Str) -> Response {
     openai_error(StatusCode::BAD_GATEWAY, "api_error", message)
 }
 
-fn openai_error(status: StatusCode, error_type: &crate::translation_core::Str, message: &crate::translation_core::Str) -> Response {
+fn openai_error(
+    status: StatusCode,
+    error_type: &crate::translation_core::Str,
+    message: &crate::translation_core::Str,
+) -> Response {
     crate::api_error::PresentedError {
         status,
         error_type,

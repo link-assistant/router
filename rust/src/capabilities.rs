@@ -90,7 +90,9 @@ pub fn upstream(provider: UpstreamProvider) -> ProviderCapabilities {
 /// The versioned evidence manifest records its direct-provider source, product,
 /// protocol, and review date.
 #[must_use]
-pub fn claude_uses_adaptive_thinking(model: crate::translation_core::Maybe<&crate::translation_core::Str>) -> bool {
+pub fn claude_uses_adaptive_thinking(
+    model: crate::translation_core::Maybe<&crate::translation_core::Str>,
+) -> bool {
     let Some(model) = model else {
         return false;
     };
@@ -143,7 +145,9 @@ pub fn unsupported_server_tool_type(
 ) -> crate::translation_core::Maybe<String> {
     let capabilities = subscription(provider, None);
     tools?.as_array()?.iter().find_map(|tool| {
-        let kind = tool.get("type").and_then(crate::translation_core::Json::as_str)?;
+        let kind = tool
+            .get("type")
+            .and_then(crate::translation_core::Json::as_str)?;
         let support = if kind == "web_search" || kind.starts_with("web_search_") {
             capabilities.web_search
         } else if kind == "web_fetch" || kind.starts_with("web_fetch_") {
@@ -163,7 +167,10 @@ pub fn unsupported_server_tool_type(
 /// no way to comply, which is how the reported request stalled instead of
 /// answering.
 #[must_use]
-pub fn unsatisfiable_forced_tool_choice(tools: crate::translation_core::Maybe<&crate::translation_core::Json>, forced: bool) -> crate::translation_core::Maybe<String> {
+pub fn unsatisfiable_forced_tool_choice(
+    tools: crate::translation_core::Maybe<&crate::translation_core::Json>,
+    forced: bool,
+) -> crate::translation_core::Maybe<String> {
     if !forced {
         return None;
     }
@@ -172,7 +179,10 @@ pub fn unsatisfiable_forced_tool_choice(tools: crate::translation_core::Maybe<&c
         return None;
     }
     let has_function = tools.iter().any(|tool| {
-        let kind = tool.get("type").and_then(crate::translation_core::Json::as_str).unwrap_or("custom");
+        let kind = tool
+            .get("type")
+            .and_then(crate::translation_core::Json::as_str)
+            .unwrap_or("custom");
         !(kind.starts_with("web_search") || kind.starts_with("web_fetch"))
     });
     (!has_function).then(|| {
@@ -193,7 +203,12 @@ pub fn unhonourable_server_tool_request(
 ) -> crate::translation_core::Maybe<String> {
     let forced = match tool_choice {
         Some(crate::translation_core::Json::String(mode)) => mode == "required",
-        Some(choice) => choice.get("type").and_then(crate::translation_core::Json::as_str) == Some("any"),
+        Some(choice) => {
+            choice
+                .get("type")
+                .and_then(crate::translation_core::Json::as_str)
+                == Some("any")
+        }
         None => false,
     };
     unsatisfiable_forced_tool_choice(tools, forced)

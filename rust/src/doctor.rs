@@ -82,7 +82,9 @@ pub fn forwarded_header_report() -> Vec<String> {
 }
 
 /// Locate an executable on `PATH`, as the process spawner would.
-fn resolve_in_path(command: &crate::translation_core::Str) -> crate::translation_core::Maybe<std::path::PathBuf> {
+fn resolve_in_path(
+    command: &crate::translation_core::Str,
+) -> crate::translation_core::Maybe<std::path::PathBuf> {
     let candidate = std::path::Path::new(command);
     if candidate.is_absolute() {
         return candidate.is_file().then(|| candidate.to_path_buf());
@@ -101,7 +103,11 @@ fn resolve_in_path(command: &crate::translation_core::Str) -> crate::translation
 /// credential works. That is why "expired" and "rejected" are separate
 /// dimensions here, and why a token can be expired on disk yet accepted
 /// upstream.
-const fn credential_status(was_expired: bool, still_expired: bool, rejected: bool) -> &'static crate::translation_core::Str {
+const fn credential_status(
+    was_expired: bool,
+    still_expired: bool,
+    rejected: bool,
+) -> &'static crate::translation_core::Str {
     match (was_expired, still_expired, rejected) {
         (_, true, true) => "found, token EXPIRED and REJECTED",
         (_, true, false) => "found, token EXPIRED on disk but ACCEPTED upstream",
@@ -169,7 +175,10 @@ async fn subscription_catalog_diagnostics_with_token_url(
     claude_home: &crate::translation_core::Str,
     user_home: &crate::translation_core::Str,
     data_dir: crate::translation_core::Maybe<&std::path::Path>,
-    token_url: crate::translation_core::Maybe<(SubscriptionProvider, &crate::translation_core::Str)>,
+    token_url: crate::translation_core::Maybe<(
+        SubscriptionProvider,
+        &crate::translation_core::Str,
+    )>,
 ) -> bool {
     let readers = all_subscription_readers(claude_home, user_home);
     subscription_catalog_diagnostics_for_readers_with_token_url(readers, data_dir, token_url).await
@@ -186,7 +195,10 @@ pub async fn subscription_catalog_diagnostics_for_readers(
 async fn subscription_catalog_diagnostics_for_readers_with_token_url(
     readers: Vec<SubscriptionReader>,
     data_dir: crate::translation_core::Maybe<&std::path::Path>,
-    token_url: crate::translation_core::Maybe<(SubscriptionProvider, &crate::translation_core::Str)>,
+    token_url: crate::translation_core::Maybe<(
+        SubscriptionProvider,
+        &crate::translation_core::Str,
+    )>,
 ) -> bool {
     catalog_report_with_token_url(readers, data_dir, token_url)
         .await
@@ -204,7 +216,10 @@ pub async fn subscription_catalog_report(
 async fn catalog_report_with_token_url(
     readers: Vec<SubscriptionReader>,
     data_dir: crate::translation_core::Maybe<&std::path::Path>,
-    token_url: crate::translation_core::Maybe<(SubscriptionProvider, &crate::translation_core::Str)>,
+    token_url: crate::translation_core::Maybe<(
+        SubscriptionProvider,
+        &crate::translation_core::Str,
+    )>,
 ) -> (bool, Vec<crate::operation_reports::ProviderHealth>) {
     let client = reqwest::Client::new();
     let token_cache = data_dir.map_or_else(
@@ -377,7 +392,13 @@ pub async fn subscription_catalog_diagnostics_in(
     user_home: &crate::translation_core::Str,
     data_dir: &std::path::Path,
 ) -> bool {
-    subscription_catalog_diagnostics(active_provider, claude_home, user_home, crate::translation_core::Maybe::Some(data_dir)).await
+    subscription_catalog_diagnostics(
+        active_provider,
+        claude_home,
+        user_home,
+        crate::translation_core::Maybe::Some(data_dir),
+    )
+    .await
 }
 
 /// Return the complete doctor operation without printing or exiting.
@@ -389,7 +410,10 @@ pub async fn subscription_catalog_diagnostics_in(
 /// ```
 pub async fn report(
     context: crate::operation_context::OperationContext,
-) -> crate::translation_core::Outcome<crate::operations::OperationResult, crate::operations::OperationError> {
+) -> crate::translation_core::Outcome<
+    crate::operations::OperationResult,
+    crate::operations::OperationError,
+> {
     crate::operations::request(
         context,
         crate::cli::Command::Doctor {

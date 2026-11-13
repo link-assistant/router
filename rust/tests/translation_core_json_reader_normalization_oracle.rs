@@ -100,7 +100,10 @@ fn receiver_evaluates_once_and_only_inside_selected_branch() {
             None
         };
         assert_eq!(output, if run { Some("猫😀") } else { None });
-        assert_eq!(*events.borrow(), if run { vec!["receiver"] } else { vec![] });
+        assert_eq!(
+            *events.borrow(),
+            if run { vec!["receiver"] } else { vec![] }
+        );
     }
 }
 
@@ -147,7 +150,10 @@ fn filter_and_question_keep_the_existing_loan_root_live() {
         assert_eq!(selected(&value), expected);
         assert_eq!(
             selected(&value),
-            value.get("v").and_then(Json::as_str).filter(|text| !text.is_empty())
+            value
+                .get("v")
+                .and_then(Json::as_str)
+                .filter(|text| !text.is_empty())
         );
     }
 }
@@ -157,24 +163,27 @@ fn independent_citation_branches_preserve_borrowed_outputs() {
     fn original(value: &Json) -> Maybe<&Str> {
         match value.get("type").and_then(Json::as_str) {
             Some("web") => value.get("url").and_then(Json::as_str),
-            Some("search") => value.get("source").and_then(Json::as_str).filter(|text| {
-                text.starts_with("https://") || text.starts_with("http://")
-            }),
+            Some("search") => value
+                .get("source")
+                .and_then(Json::as_str)
+                .filter(|text| text.starts_with("https://") || text.starts_with("http://")),
             _ => None,
         }
     }
     for (value, expected) in [
         (json!({"type": "web", "url": "猫😀"}), Some("猫😀")),
-        (json!({"type": "search", "source": "https://a"}), Some("https://a")),
+        (
+            json!({"type": "search", "source": "https://a"}),
+            Some("https://a"),
+        ),
         (json!({"type": "search", "source": "file:///a"}), None),
         (json!({}), None),
     ] {
         let kind = explicit_text(value.get("type"));
         let actual = match kind {
             Some("web") => explicit_text(value.get("url")),
-            Some("search") => explicit_text(value.get("source")).filter(|text| {
-                text.starts_with("https://") || text.starts_with("http://")
-            }),
+            Some("search") => explicit_text(value.get("source"))
+                .filter(|text| text.starts_with("https://") || text.starts_with("http://")),
             _ => None,
         };
         assert_eq!(actual, expected);
@@ -188,7 +197,11 @@ fn normalization_does_not_move_or_mutate_either_shared_root() {
     let fallback = json!({"name": "猫😀"});
     let before_root = root.clone();
     let before_fallback = fallback.clone();
-    let original = root.get("function").unwrap_or(&fallback).get("name").and_then(Json::as_str);
+    let original = root
+        .get("function")
+        .unwrap_or(&fallback)
+        .get("name")
+        .and_then(Json::as_str);
     let subject = root.get("function").unwrap_or(&fallback).get("name");
     let explicit = if let Some(payload) = subject {
         Json::as_str(payload)
@@ -214,10 +227,7 @@ fn static_and_borrowed_filter_calls_keep_their_own_origins_in_both_orders() {
         })
     }
 
-    fn borrowed<'a>(
-        value: Maybe<&'a Str>,
-        events: &RefCell<Vec<&'static str>>,
-    ) -> Maybe<&'a Str> {
+    fn borrowed<'a>(value: Maybe<&'a Str>, events: &RefCell<Vec<&'static str>>) -> Maybe<&'a Str> {
         events.borrow_mut().push("borrowed receiver");
         value.filter(|text| {
             events.borrow_mut().push("borrowed predicate");
@@ -262,10 +272,16 @@ fn static_and_borrowed_filter_calls_keep_their_own_origins_in_both_orders() {
     events.borrow_mut().clear();
     assert_eq!(frozen(None, &events), None);
     assert_eq!(borrowed(None, &events), None);
-    assert_eq!(*events.borrow(), vec!["static receiver", "borrowed receiver"]);
+    assert_eq!(
+        *events.borrow(),
+        vec!["static receiver", "borrowed receiver"]
+    );
     events.borrow_mut().clear();
     assert_eq!(borrowed(Some(""), &events), None);
-    assert_eq!(*events.borrow(), vec!["borrowed receiver", "borrowed predicate"]);
+    assert_eq!(
+        *events.borrow(),
+        vec!["borrowed receiver", "borrowed predicate"]
+    );
     assert_eq!(root, before);
 }
 
@@ -301,11 +317,19 @@ fn nested_optional_success_and_error_payloads_keep_each_written_lifetime() {
             };
             assert_eq!(
                 static_result,
-                if success { Ok(Some("Ω")) } else { Err(Some("Ω")) }
+                if success {
+                    Ok(Some("Ω"))
+                } else {
+                    Err(Some("Ω"))
+                }
             );
             assert_eq!(
                 borrowed_result,
-                if success { Ok(Some("猫😀")) } else { Err(Some("猫😀")) }
+                if success {
+                    Ok(Some("猫😀"))
+                } else {
+                    Err(Some("猫😀"))
+                }
             );
             let static_text: &'static Str = match static_result {
                 Ok(Some(text)) | Err(Some(text)) => text,

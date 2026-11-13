@@ -6,7 +6,11 @@ use std::sync::{Arc, LazyLock, Mutex};
 static VALIDATORS: LazyLock<Mutex<BTreeMap<String, Arc<jsonschema::Validator>>>> =
     LazyLock::new(|| Mutex::new(BTreeMap::new()));
 
-fn validate(key: &crate::translation_core::Str, schema: &crate::translation_core::Json, document: &crate::translation_core::Json) -> crate::translation_core::Outcome<(), String> {
+fn validate(
+    key: &crate::translation_core::Str,
+    schema: &crate::translation_core::Json,
+    document: &crate::translation_core::Json,
+) -> crate::translation_core::Outcome<(), String> {
     let validator = {
         let mut validators = VALIDATORS.lock().map_err(|_| "contract cache poisoned")?;
         if let Some(validator) = validators.get(key) {
@@ -24,7 +28,10 @@ fn validate(key: &crate::translation_core::Str, schema: &crate::translation_core
 }
 
 /// Validate the complete versioned CLI result, including operation-owned fields.
-pub fn operation(name: &crate::translation_core::Str, document: &crate::translation_core::Json) -> crate::translation_core::Outcome<(), String> {
+pub fn operation(
+    name: &crate::translation_core::Str,
+    document: &crate::translation_core::Json,
+) -> crate::translation_core::Outcome<(), String> {
     let (_, schema) = super::generated::CLI_SCHEMAS
         .iter()
         .find(|(operation, _)| *operation == name)
@@ -41,8 +48,9 @@ pub fn http(
     status: u16,
     document: &crate::translation_core::Json,
 ) -> crate::translation_core::Outcome<(), String> {
-    let route = crate::route_contract::route_for_path(method, path)
-        .ok_or_else(|| crate::translation_core::format!("undocumented HTTP route {method} {path}"))?;
+    let route = crate::route_contract::route_for_path(method, path).ok_or_else(|| {
+        crate::translation_core::format!("undocumented HTTP route {method} {path}")
+    })?;
     let spec: Value =
         serde_json::from_str(super::generated::HTTP).map_err(|error| error.to_string())?;
     let template = route.template.replace("{*", "{");
@@ -54,7 +62,9 @@ pub fn http(
             .as_str()
             .and_then(|reference| reference.strip_prefix('#'))
             .and_then(|pointer| spec.pointer(pointer))
-            .ok_or_else(|| crate::translation_core::format!("undocumented catch-all response {method} {path}"))?;
+            .ok_or_else(|| {
+                crate::translation_core::format!("undocumented catch-all response {method} {path}")
+            })?;
     }
     let response = if status < 400 {
         &operation["responses"]["200"]

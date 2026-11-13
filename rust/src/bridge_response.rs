@@ -11,7 +11,9 @@ pub struct StopSemantics {
 }
 
 #[must_use]
-pub fn stop_semantics(reason: crate::translation_core::Maybe<&crate::translation_core::Str>) -> StopSemantics {
+pub fn stop_semantics(
+    reason: crate::translation_core::Maybe<&crate::translation_core::Str>,
+) -> StopSemantics {
     match reason.unwrap_or("end_turn") {
         "end_turn" | "stop_sequence" => complete("stop"),
         "tool_use" => complete("tool_calls"),
@@ -56,7 +58,10 @@ pub struct AnthropicUsage {
 }
 
 impl AnthropicUsage {
-    pub fn absorb(&mut self, usage: crate::translation_core::Maybe<&crate::translation_core::Json>) {
+    pub fn absorb(
+        &mut self,
+        usage: crate::translation_core::Maybe<&crate::translation_core::Json>,
+    ) {
         let Some(usage) = usage else {
             return;
         };
@@ -81,7 +86,9 @@ impl AnthropicUsage {
     }
 
     #[must_use]
-    pub fn from_value(usage: crate::translation_core::Maybe<&crate::translation_core::Json>) -> Self {
+    pub fn from_value(
+        usage: crate::translation_core::Maybe<&crate::translation_core::Json>,
+    ) -> Self {
         let mut mapped = Self::default();
         mapped.absorb(usage);
         mapped
@@ -122,7 +129,9 @@ impl AnthropicUsage {
     }
 
     #[must_use]
-    pub fn openai_service_tier(&self) -> crate::translation_core::Maybe<&'static crate::translation_core::Str> {
+    pub fn openai_service_tier(
+        &self,
+    ) -> crate::translation_core::Maybe<&'static crate::translation_core::Str> {
         match self.service_tier.as_deref() {
             Some("standard") => Some("default"),
             Some("priority") => Some("priority"),
@@ -133,7 +142,9 @@ impl AnthropicUsage {
 
 /// Map `OpenAI` usage back to Anthropic without double-counting cache hits.
 #[must_use]
-pub fn openai_usage_to_anthropic(usage: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Json {
+pub fn openai_usage_to_anthropic(
+    usage: crate::translation_core::Maybe<&crate::translation_core::Json>,
+) -> crate::translation_core::Json {
     let input_total = usage
         .and_then(|value| {
             value
@@ -168,7 +179,9 @@ pub fn openai_usage_to_anthropic(usage: crate::translation_core::Maybe<&crate::t
 }
 
 #[must_use]
-pub fn anthropic_service_tier_from_openai(value: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Maybe<&'static crate::translation_core::Str> {
+pub fn anthropic_service_tier_from_openai(
+    value: crate::translation_core::Maybe<&crate::translation_core::Json>,
+) -> crate::translation_core::Maybe<&'static crate::translation_core::Str> {
     match value.and_then(crate::translation_core::Json::as_str) {
         Some("default" | "auto") => Some("standard"),
         Some("priority") => Some("priority"),
@@ -184,7 +197,9 @@ fn update(slot: &mut u64, usage: &Value, key: &str) {
 
 /// Concatenate Anthropic text blocks and build flat `OpenAI` URL annotations.
 #[must_use]
-pub fn anthropic_text_and_annotations(content: crate::translation_core::Maybe<&crate::translation_core::Json>) -> (String, Vec<crate::translation_core::Json>) {
+pub fn anthropic_text_and_annotations(
+    content: crate::translation_core::Maybe<&crate::translation_core::Json>,
+) -> (String, Vec<crate::translation_core::Json>) {
     let mut text = String::new();
     let mut annotations = Vec::new();
     for block in content
@@ -230,18 +245,48 @@ pub fn anthropic_text_and_annotations(content: crate::translation_core::Maybe<&c
     (text, annotations)
 }
 
-fn citation_url(citation: &crate::translation_core::Json) -> crate::translation_core::Maybe<&crate::translation_core::Str> {
-    match { let __router_json_reader_0 = citation.get("type"); if let crate::translation_core::Maybe::Some(__router_json_reader_1) = __router_json_reader_0 { crate::translation_core::Json::as_str(__router_json_reader_1) } else { crate::translation_core::Maybe::None } } {
-        Some("web_search_result_location") => { let __router_json_reader_2 = citation.get("url"); if let crate::translation_core::Maybe::Some(__router_json_reader_3) = __router_json_reader_2 { crate::translation_core::Json::as_str(__router_json_reader_3) } else { crate::translation_core::Maybe::None } },
-        Some("search_result_location") => { let __router_json_reader_4 = citation
-            .get("source")
-            ; if let crate::translation_core::Maybe::Some(__router_json_reader_5) = __router_json_reader_4 { crate::translation_core::Json::as_str(__router_json_reader_5) } else { crate::translation_core::Maybe::None } }
-            .filter(|source| source.starts_with("https://") || source.starts_with("http://")),
+fn citation_url(
+    citation: &crate::translation_core::Json,
+) -> crate::translation_core::Maybe<&crate::translation_core::Str> {
+    match {
+        let __router_json_reader_0 = citation.get("type");
+        if let crate::translation_core::Maybe::Some(__router_json_reader_1) = __router_json_reader_0
+        {
+            crate::translation_core::Json::as_str(__router_json_reader_1)
+        } else {
+            crate::translation_core::Maybe::None
+        }
+    } {
+        Some("web_search_result_location") => {
+            let __router_json_reader_2 = citation.get("url");
+            if let crate::translation_core::Maybe::Some(__router_json_reader_3) =
+                __router_json_reader_2
+            {
+                crate::translation_core::Json::as_str(__router_json_reader_3)
+            } else {
+                crate::translation_core::Maybe::None
+            }
+        }
+        Some("search_result_location") => {
+            let __router_json_reader_4 = citation.get("source");
+            if let crate::translation_core::Maybe::Some(__router_json_reader_5) =
+                __router_json_reader_4
+            {
+                crate::translation_core::Json::as_str(__router_json_reader_5)
+            } else {
+                crate::translation_core::Maybe::None
+            }
+        }
+        .filter(|source| source.starts_with("https://") || source.starts_with("http://")),
         _ => None,
     }
 }
 
-fn find_char_range(text: &crate::translation_core::Str, cited: &crate::translation_core::Str, from: usize) -> crate::translation_core::Maybe<(u64, u64, usize)> {
+fn find_char_range(
+    text: &crate::translation_core::Str,
+    cited: &crate::translation_core::Str,
+    from: usize,
+) -> crate::translation_core::Maybe<(u64, u64, usize)> {
     let relative = text.get(from..)?.find(cited)?;
     let start_byte = from + relative;
     let end_byte = start_byte + cited.len();
@@ -251,7 +296,9 @@ fn find_char_range(text: &crate::translation_core::Str, cited: &crate::translati
 }
 
 #[must_use]
-pub fn chat_annotations(flat: &[crate::translation_core::Json]) -> Vec<crate::translation_core::Json> {
+pub fn chat_annotations(
+    flat: &[crate::translation_core::Json],
+) -> Vec<crate::translation_core::Json> {
     flat.iter()
         .map(|annotation| {
             crate::translation_core::json!({
@@ -364,7 +411,11 @@ fn required_annotation_string<'a>(
         .ok_or_else(|| format!("annotations[{index}].{field} is required"))
 }
 
-fn char_slice(text: &crate::translation_core::Str, start: u64, end: u64) -> crate::translation_core::Maybe<String> {
+fn char_slice(
+    text: &crate::translation_core::Str,
+    start: u64,
+    end: u64,
+) -> crate::translation_core::Maybe<String> {
     if end < start {
         return None;
     }
@@ -375,9 +426,13 @@ fn char_slice(text: &crate::translation_core::Str, start: u64, end: u64) -> crat
 }
 
 /// Validate every annotation in a successful upstream `OpenAI` response.
-pub fn validate_openai_response_citations(payload: &crate::translation_core::Json) -> crate::translation_core::Outcome<(), String> {
+pub fn validate_openai_response_citations(
+    payload: &crate::translation_core::Json,
+) -> crate::translation_core::Outcome<(), String> {
     if let Some(message) = payload.pointer("/choices/0/message")
-        && let Some(text) = message.get("content").and_then(crate::translation_core::Json::as_str)
+        && let Some(text) = message
+            .get("content")
+            .and_then(crate::translation_core::Json::as_str)
     {
         openai_annotations_to_anthropic(text, message.get("annotations"), true)?;
     }
@@ -393,7 +448,10 @@ pub fn validate_openai_response_citations(payload: &crate::translation_core::Jso
             .into_iter()
             .flatten()
         {
-            if let Some(text) = part.get("text").and_then(crate::translation_core::Json::as_str) {
+            if let Some(text) = part
+                .get("text")
+                .and_then(crate::translation_core::Json::as_str)
+            {
                 openai_annotations_to_anthropic(text, part.get("annotations"), false)?;
             }
         }
@@ -401,7 +459,9 @@ pub fn validate_openai_response_citations(payload: &crate::translation_core::Jso
     Ok(())
 }
 
-pub fn validate_anthropic_response_citations(content: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Outcome<(), String> {
+pub fn validate_anthropic_response_citations(
+    content: crate::translation_core::Maybe<&crate::translation_core::Json>,
+) -> crate::translation_core::Outcome<(), String> {
     for (block_index, block) in content
         .and_then(Value::as_array)
         .into_iter()

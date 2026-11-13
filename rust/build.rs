@@ -5,7 +5,10 @@ fn main() {
     println!("cargo:rerun-if-env-changed=ROUTER_SOURCE_COMMIT");
     // Resolve metadata from the crate directory, including linked worktrees.
     for name in ["HEAD", "refs", "packed-refs"] {
-        if let Ok(output) = Command::new("git").args(["rev-parse", "--git-path", name]).output() {
+        if let Ok(output) = Command::new("git")
+            .args(["rev-parse", "--git-path", name])
+            .output()
+        {
             if output.status.success() {
                 let path = String::from_utf8_lossy(&output.stdout);
                 let path = path.trim();

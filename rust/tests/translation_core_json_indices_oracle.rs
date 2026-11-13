@@ -25,7 +25,10 @@ fn value_keys_keep_identity_unicode_and_missing_null() {
         translation_core::json!(4),
         translation_core::json!("text"),
     ] {
-        assert_eq!(translation_core::json_index_str(&scalar, "key"), &Json::Null);
+        assert_eq!(
+            translation_core::json_index_str(&scalar, "key"),
+            &Json::Null
+        );
     }
 }
 
@@ -59,7 +62,10 @@ fn map_missing_keys_panic_without_insertion() {
     assert_eq!(translation_core::json_map_index(map, "key"), &Json::Null);
     let missing = std::panic::catch_unwind(|| translation_core::json_map_index(map, "absent"));
     assert!(missing.is_err());
-    assert_eq!(translation_core::json_index_str(&value, "absent"), &Json::Null);
+    assert_eq!(
+        translation_core::json_index_str(&value, "absent"),
+        &Json::Null
+    );
     assert_eq!(value, original);
 }
 

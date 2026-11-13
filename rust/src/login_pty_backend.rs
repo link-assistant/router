@@ -82,7 +82,10 @@ enum TuiAction {
     SelectLoginMethod,
 }
 
-fn next_tui_action(text: &crate::translation_core::Str, progress: &TuiProgress) -> crate::translation_core::Maybe<TuiAction> {
+fn next_tui_action(
+    text: &crate::translation_core::Str,
+    progress: &TuiProgress,
+) -> crate::translation_core::Maybe<TuiAction> {
     // Ink-based TUIs position words with cursor escapes instead of printing
     // literal spaces. `strip_ansi` intentionally removes those escapes, so a
     // rendered "Select login method:" may arrive as "Selectloginmethod:".
@@ -109,13 +112,19 @@ fn compact_terminal_text(text: &crate::translation_core::Str) -> String {
     text.chars().filter(|ch| !ch.is_whitespace()).collect()
 }
 
-fn contains_marker(compact: &crate::translation_core::Str, markers: &[&crate::translation_core::Str]) -> bool {
+fn contains_marker(
+    compact: &crate::translation_core::Str,
+    markers: &[&crate::translation_core::Str],
+) -> bool {
     markers.iter().any(|marker| compact.contains(marker))
 }
 
 /// Drive bare `claude` to the full-scope OAuth URL exposed by its `/login`
 /// command. The one timeout covers the whole startup sequence, not each screen.
-fn drive_tui_to_login_url(session: &PtySession, config: &LoginConfig) -> crate::translation_core::Outcome<String, String> {
+fn drive_tui_to_login_url(
+    session: &PtySession,
+    config: &LoginConfig,
+) -> crate::translation_core::Outcome<String, String> {
     let deadline = Instant::now() + config.url_timeout;
     let mut progress = TuiProgress::default();
     loop {
@@ -176,7 +185,10 @@ fn drive_tui_to_login_url(session: &PtySession, config: &LoginConfig) -> crate::
 
 /// Preserve the existing custom-argument behaviour: wait for whichever login
 /// URL the configured command prints without sending TUI input first.
-fn wait_for_login_url(session: &PtySession, config: &LoginConfig) -> crate::translation_core::Outcome<String, String> {
+fn wait_for_login_url(
+    session: &PtySession,
+    config: &LoginConfig,
+) -> crate::translation_core::Outcome<String, String> {
     let text = session
         .wait_for(
             |text| extract_login_url(text).is_some(),
@@ -202,7 +214,11 @@ fn wait_error_detail(session: &PtySession, err: &WaitError) -> String {
 }
 
 /// Type the code into the live session and decide what happened.
-pub fn submit_and_finalize(config: &LoginConfig, pty: &PtySession, code: &crate::translation_core::Str) -> Outcome {
+pub fn submit_and_finalize(
+    config: &LoginConfig,
+    pty: &PtySession,
+    code: &crate::translation_core::Str,
+) -> Outcome {
     // The default flow is an Ink TUI. A real terminal wraps pasted text so the
     // controlled input receives it as one transaction instead of racing its
     // repaint one keypress at a time. Preserve raw input for the explicit

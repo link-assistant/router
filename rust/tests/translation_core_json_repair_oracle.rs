@@ -47,7 +47,7 @@ fn adopted(flag: bool, value: Maybe<&Str>) -> Maybe<Json> {
         let computed = core::json!([value?]);
         document = core::json_with_field(document, "text", computed);
     };
-    Some(document,)
+    Some(document)
 }
 
 #[test]

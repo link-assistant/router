@@ -5,14 +5,14 @@
 
 mod primitives;
 pub use self::primitives::{Json, Maybe, Outcome, Str};
-pub use self::primitives::{unicode_scalar_count, ascii_chars_in};
-pub use self::primitives::{strip_unicode_whitespace, has_unicode_control};
+pub use self::primitives::{ascii_chars_in, unicode_scalar_count};
+pub use self::primitives::{has_unicode_control, strip_unicode_whitespace};
 pub use self::primitives::{json_copy, json_with_field};
-pub use self::primitives::{json_parse, json_parse_bytes};
 pub use self::primitives::{json_index_str, json_index_usize, json_map_index};
+pub use self::primitives::{json_parse, json_parse_bytes};
 
 mod json_collections;
-pub use self::json_collections::{json_map, json_filter_map};
+pub use self::json_collections::{json_filter_map, json_map};
 
 mod ranges;
 pub use self::ranges::f64_inclusive_contains;

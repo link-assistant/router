@@ -28,7 +28,9 @@ struct Binding {
     backend_port: u16,
 }
 
-fn parse_bindings(raw: &crate::translation_core::Str) -> crate::translation_core::Outcome<Vec<Binding>, String> {
+fn parse_bindings(
+    raw: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<Vec<Binding>, String> {
     let bindings = raw
         .split(';')
         .filter(|part| !part.trim().is_empty())
@@ -129,7 +131,11 @@ impl Connections {
         })
     }
 
-    fn change(&mut self, backend: &crate::translation_core::Str, change: i8) -> crate::translation_core::Outcome<(), String> {
+    fn change(
+        &mut self,
+        backend: &crate::translation_core::Str,
+        change: i8,
+    ) -> crate::translation_core::Outcome<(), String> {
         let value = self.counts.entry(backend.to_string()).or_default();
         let previous = *value;
         if change > 0 {
@@ -229,7 +235,8 @@ async fn serve_binding(
 /// Run relay mode when its opt-in environment is present.
 ///
 /// `Ok(None)` means this is an ordinary Router invocation.
-pub async fn run_from_env() -> crate::translation_core::Outcome<crate::translation_core::Maybe<()>, String> {
+pub async fn run_from_env()
+-> crate::translation_core::Outcome<crate::translation_core::Maybe<()>, String> {
     let Some(state) = crate::operation_context::var_os(STATE_ENV) else {
         return Ok(None);
     };

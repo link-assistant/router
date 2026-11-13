@@ -6,7 +6,10 @@ use serde_json::{Number, Value};
 #[test]
 fn original_json_numeric_signatures_preserve_binary64_boundaries() {
     for (number, expected) in [
-        (Number::from(9_007_199_254_740_993_u64), 9_007_199_254_740_992.0_f64),
+        (
+            Number::from(9_007_199_254_740_993_u64),
+            9_007_199_254_740_992.0_f64,
+        ),
         (Number::from(u64::MAX), 18_446_744_073_709_551_616.0_f64),
         (Number::from(i64::MIN), -9_223_372_036_854_775_808.0_f64),
     ] {
@@ -19,7 +22,10 @@ fn original_json_numeric_signatures_preserve_binary64_boundaries() {
     }
     for input in [-0.0_f64, 0.0, f64::from_bits(1), f64::MAX] {
         let number = Number::from_f64(input).expect("finite Number source");
-        assert_eq!(number.as_f64().expect("Number f64").to_bits(), input.to_bits());
+        assert_eq!(
+            number.as_f64().expect("Number f64").to_bits(),
+            input.to_bits()
+        );
     }
     for input in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
         assert!(Number::from_f64(input).is_none());

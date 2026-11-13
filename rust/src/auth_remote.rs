@@ -41,7 +41,9 @@ const POLL_INTERVAL: Duration = Duration::from_millis(20);
 /// `None` means "no selection" — the caller keeps its local behaviour. An
 /// unreachable *selected* server is an error rather than a silent fallback:
 /// falling back to a local directory is exactly the surprise this fixes.
-pub async fn selected_server(force_managed: bool) -> crate::translation_core::Outcome<crate::translation_core::Maybe<ResolvedServer>, String> {
+pub async fn selected_server(
+    force_managed: bool,
+) -> crate::translation_core::Outcome<crate::translation_core::Maybe<ResolvedServer>, String> {
     if force_managed {
         // `--managed` asks for a disposable container, which is what the local
         // path already provides for `auth`.
@@ -340,7 +342,10 @@ fn report_status_credentials(body: &crate::translation_core::Json) -> bool {
 /// `None` when the router cannot be reached or does not report homes — the
 /// refusal is still correct without it, so this never turns into a hard
 /// failure of its own.
-pub async fn credential_home(server: &ResolvedServer, provider: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
+pub async fn credential_home(
+    server: &ResolvedServer,
+    provider: &crate::translation_core::Str,
+) -> crate::translation_core::Maybe<String> {
     let client = server
         .management_client_with_timeout(REQUEST_TIMEOUT)
         .ok()?;
@@ -390,7 +395,10 @@ pub async fn accounts(server: &ResolvedServer) -> ExitCode {
 ///
 /// Returns an operator-readable message when the call cannot be made or the
 /// router answers with a failure.
-pub async fn get(server: &ResolvedServer, path: &crate::translation_core::Str) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
+pub async fn get(
+    server: &ResolvedServer,
+    path: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
     let client = server
         .management_client_with_timeout(REQUEST_TIMEOUT)
         .map_err(|error| error.to_string())?;
@@ -424,7 +432,8 @@ pub async fn post_response(
     server: &ResolvedServer,
     path: &crate::translation_core::Str,
     body: crate::translation_core::Json,
-) -> crate::translation_core::Outcome<(reqwest::StatusCode, crate::translation_core::Json), String> {
+) -> crate::translation_core::Outcome<(reqwest::StatusCode, crate::translation_core::Json), String>
+{
     let client = server
         .management_client_with_timeout(REQUEST_TIMEOUT)
         .map_err(|error| error.to_string())?;
@@ -454,7 +463,10 @@ pub async fn post_response(
 ///
 /// Returns an operator-readable message when the call cannot be made or the
 /// router answers with a failure.
-pub async fn delete(server: &ResolvedServer, path: &crate::translation_core::Str) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
+pub async fn delete(
+    server: &ResolvedServer,
+    path: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
     let client = server
         .management_client_with_timeout(REQUEST_TIMEOUT)
         .map_err(|error| error.to_string())?;
@@ -474,7 +486,10 @@ pub async fn delete(server: &ResolvedServer, path: &crate::translation_core::Str
 /// path is the instruction. It is omitted rather than guessed when the router
 /// does not say (issue #291).
 #[must_use]
-pub fn remote_import_refusal(base_url: &crate::translation_core::Str, home: crate::translation_core::Maybe<&crate::translation_core::Str>) -> Vec<String> {
+pub fn remote_import_refusal(
+    base_url: &crate::translation_core::Str,
+    home: crate::translation_core::Maybe<&crate::translation_core::Str>,
+) -> Vec<String> {
     let mut lines = vec![format!(
         "error: import installs a credential into the credential home of the machine running \
          it, so it cannot provision {base_url} from here."
@@ -499,10 +514,16 @@ pub fn remote_import_refusal(base_url: &crate::translation_core::Str, home: crat
 /// server: single-account deployments report under `credentials` and pooled
 /// ones under `accounts`, and a router predating either simply omits both.
 #[must_use]
-pub fn home_in_accounts(body: &crate::translation_core::Json, provider: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
+pub fn home_in_accounts(
+    body: &crate::translation_core::Json,
+    provider: &crate::translation_core::Str,
+) -> crate::translation_core::Maybe<String> {
     ["credentials", "accounts"]
         .into_iter()
-        .filter_map(|key| body.get(key).and_then(crate::translation_core::Json::as_array))
+        .filter_map(|key| {
+            body.get(key)
+                .and_then(crate::translation_core::Json::as_array)
+        })
         .flatten()
         .find(|entry| {
             entry
@@ -510,7 +531,11 @@ pub fn home_in_accounts(body: &crate::translation_core::Json, provider: &crate::
                 .and_then(crate::translation_core::Json::as_str)
                 .is_some_and(|name| name.eq_ignore_ascii_case(provider))
         })
-        .and_then(|entry| entry.get("home").and_then(crate::translation_core::Json::as_str))
+        .and_then(|entry| {
+            entry
+                .get("home")
+                .and_then(crate::translation_core::Json::as_str)
+        })
         .map(str::to_owned)
 }
 

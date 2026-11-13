@@ -2,7 +2,7 @@
 //! Generated functions borrow the JS ABI inputs and copy explicitly at owned calls.
 use link_assistant_router::translation_core;
 use link_assistant_router::translation_core::Base64Error;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 #[allow(clippy::needless_raw_string_hashes)]
 pub const REVERSE_BASE64_JS_WITNESS: &str = r###"import {router_core_base64_standard_encode_bytes as op0,router_core_base64_standard_encode_text as op1,router_core_base64_standard_encode_owned_bytes as op2,router_core_base64_standard_no_pad_encode_text as op3,router_core_base64_url_no_pad_encode_bytes as op4,router_core_base64_url_no_pad_encode_owned_bytes as op5,router_core_base64_url_no_pad_encode_owned_text as op6,router_core_base64_url_no_pad_encode_array32 as op7,router_core_base64_standard_decode_text as op8,router_core_base64_standard_decode_owned_text as op9,router_core_base64_standard_no_pad_decode_text as op10,router_core_base64_url_no_pad_decode_text as op11,router_core_base64_url_no_pad_decode_owned_text as op12,base64ErrorText as displayRuntime} from './runtime/base64-runtime.mjs';
@@ -83,9 +83,21 @@ fn observe(value: Result<Vec<u8>, Base64Error>, row: &Value) {
         Ok(value) => assert_eq!(json!({"Ok":value}), row["result"], "{name}"),
         Err(error) => {
             assert_eq!(json!({"Err":error_fields(&error)}), row["result"], "{name}");
-            assert_eq!(error.to_string(), row["display"].as_str().unwrap(), "{name}");
-            assert_eq!(reverse_generated::error_text(&error), row["display"].as_str().unwrap(), "{name}");
-            assert_eq!(format!("{error:?}"), row["debug"].as_str().unwrap(), "{name}");
+            assert_eq!(
+                error.to_string(),
+                row["display"].as_str().unwrap(),
+                "{name}"
+            );
+            assert_eq!(
+                reverse_generated::error_text(&error),
+                row["display"].as_str().unwrap(),
+                "{name}"
+            );
+            assert_eq!(
+                format!("{error:?}"),
+                row["debug"].as_str().unwrap(),
+                "{name}"
+            );
         }
     }
 }
@@ -99,23 +111,51 @@ fn every_concrete_encoder_uses_the_same_complete_shared_bytes() {
         let name = row["name"].as_str().unwrap();
         let standard = row["standard"].as_str().unwrap();
         let url = row["urlNoPad"].as_str().unwrap();
-        assert_eq!(reverse_generated::standard_encode_bytes(&input), standard, "{name}");
-        assert_eq!(reverse_generated::standard_encode_owned_bytes(&input), standard, "{name}");
-        assert_eq!(reverse_generated::url_no_pad_encode_bytes(&input), url, "{name}");
-        assert_eq!(reverse_generated::url_no_pad_encode_owned_bytes(&input), url, "{name}");
+        assert_eq!(
+            reverse_generated::standard_encode_bytes(&input),
+            standard,
+            "{name}"
+        );
+        assert_eq!(
+            reverse_generated::standard_encode_owned_bytes(&input),
+            standard,
+            "{name}"
+        );
+        assert_eq!(
+            reverse_generated::url_no_pad_encode_bytes(&input),
+            url,
+            "{name}"
+        );
+        assert_eq!(
+            reverse_generated::url_no_pad_encode_owned_bytes(&input),
+            url,
+            "{name}"
+        );
         if input.len() == 32 {
             let array: [u8; 32] = input.as_slice().try_into().unwrap();
-            assert_eq!(reverse_generated::url_no_pad_encode_array32(&array), url, "{name}");
+            assert_eq!(
+                reverse_generated::url_no_pad_encode_array32(&array),
+                url,
+                "{name}"
+            );
         }
         if let Some(text) = row["text"].as_str() {
             assert_eq!(text.as_bytes(), input.as_slice(), "{name}");
-            assert_eq!(reverse_generated::standard_encode_text(text), standard, "{name}");
+            assert_eq!(
+                reverse_generated::standard_encode_text(text),
+                standard,
+                "{name}"
+            );
             assert_eq!(
                 reverse_generated::standard_no_pad_encode_text(text),
                 row["standardNoPad"].as_str().unwrap(),
                 "{name}"
             );
-            assert_eq!(reverse_generated::url_no_pad_encode_owned_text(text), url, "{name}");
+            assert_eq!(
+                reverse_generated::url_no_pad_encode_owned_text(text),
+                url,
+                "{name}"
+            );
         }
     }
 }
@@ -130,7 +170,9 @@ fn all_shared_decode_errors_keep_fields_utf8_offsets_and_native_display_debug() 
                 observe(reverse_generated::standard_decode_text(input), row);
                 observe(reverse_generated::standard_decode_owned_text(input), row);
             }
-            "STANDARD_NO_PAD" => observe(reverse_generated::standard_no_pad_decode_text(input), row),
+            "STANDARD_NO_PAD" => {
+                observe(reverse_generated::standard_no_pad_decode_text(input), row)
+            }
             "URL_SAFE_NO_PAD" => {
                 observe(reverse_generated::url_no_pad_decode_text(input), row);
                 observe(reverse_generated::url_no_pad_decode_owned_text(input), row);
@@ -147,5 +189,8 @@ fn error_alias_keeps_native_question_mark_conversion_identity() {
         Ok(result)
     }
     assert_eq!(actual("Zg==").unwrap(), b"f");
-    assert_eq!(actual("AA=!"), Err(base64::DecodeError::InvalidByte(2, b'=')));
+    assert_eq!(
+        actual("AA=!"),
+        Err(base64::DecodeError::InvalidByte(2, b'='))
+    );
 }

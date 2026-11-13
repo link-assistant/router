@@ -37,7 +37,11 @@ async fn run_inner(operation: &ModelOp) -> crate::translation_core::Outcome<bool
     }
 }
 
-async fn explain(id: &crate::translation_core::Str, client: ClientKind, target: &AuthTarget) -> crate::translation_core::Outcome<bool, AnyError> {
+async fn explain(
+    id: &crate::translation_core::Str,
+    client: ClientKind,
+    target: &AuthTarget,
+) -> crate::translation_core::Outcome<bool, AnyError> {
     if id.is_empty() {
         return Err("model selector must not be empty".into());
     }
@@ -81,7 +85,11 @@ async fn explain_at(
     Ok(found)
 }
 
-fn diagnostic(id: &crate::translation_core::Str, client: ClientKind, catalog: &crate::translation_core::Json) -> (crate::translation_core::Json, bool) {
+fn diagnostic(
+    id: &crate::translation_core::Str,
+    client: ClientKind,
+    catalog: &crate::translation_core::Json,
+) -> (crate::translation_core::Json, bool) {
     let mut matches = catalog
         .get("data")
         .and_then(Value::as_array)
@@ -194,7 +202,9 @@ fn diagnostic(id: &crate::translation_core::Str, client: ClientKind, catalog: &c
     (diagnostic, found)
 }
 
-fn selector_kind(entry: crate::translation_core::Maybe<&crate::translation_core::Json>) -> (&crate::translation_core::Str, ModelSelectorKind) {
+fn selector_kind(
+    entry: crate::translation_core::Maybe<&crate::translation_core::Json>,
+) -> (&crate::translation_core::Str, ModelSelectorKind) {
     let label = entry
         .and_then(|value| value.get("selector_kind"))
         .and_then(crate::translation_core::Json::as_str)
@@ -203,7 +213,9 @@ fn selector_kind(entry: crate::translation_core::Maybe<&crate::translation_core:
     (label, kind)
 }
 
-fn effective_capabilities(entry: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Json {
+fn effective_capabilities(
+    entry: crate::translation_core::Maybe<&crate::translation_core::Json>,
+) -> crate::translation_core::Json {
     const FIELDS: [&str; 8] = [
         "context_window",
         "max_output_tokens",

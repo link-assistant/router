@@ -9,7 +9,15 @@ fn trim_url_punctuation(url: &str) -> &str {
 #[test]
 fn characters_include_astral_nul_and_noncharacters_without_normalization() {
     let cases = [
-        'a', 'Ω', '😀', '\0', '\n', '\u{d7ff}', '\u{e000}', '\u{ffff}', '\u{10ffff}',
+        'a',
+        'Ω',
+        '😀',
+        '\0',
+        '\n',
+        '\u{d7ff}',
+        '\u{e000}',
+        '\u{ffff}',
+        '\u{10ffff}',
     ];
     assert_eq!(cases[2].len_utf16(), 2);
     assert_eq!(cases[2].len_utf8(), 4);

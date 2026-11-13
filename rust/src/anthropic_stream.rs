@@ -22,13 +22,18 @@ pub use crate::stream_termination::INCOMPLETE_STREAM_MESSAGE;
 
 /// Render one Anthropic SSE frame (named event plus JSON payload).
 #[must_use]
-pub fn anthropic_frame(event: &crate::translation_core::Str, payload: &crate::translation_core::Json) -> String {
+pub fn anthropic_frame(
+    event: &crate::translation_core::Str,
+    payload: &crate::translation_core::Json,
+) -> String {
     format!("event: {event}\ndata: {payload}\n\n")
 }
 
 /// Map an `OpenAI` `finish_reason` onto an Anthropic `stop_reason`.
 #[must_use]
-pub fn map_stop_reason(finish_reason: &crate::translation_core::Str) -> &'static crate::translation_core::Str {
+pub fn map_stop_reason(
+    finish_reason: &crate::translation_core::Str,
+) -> &'static crate::translation_core::Str {
     match finish_reason {
         "length" | "max_tokens" | "max_output_tokens" => "max_tokens",
         "tool_calls" | "function_call" | "tool_use" => "tool_use",
@@ -483,7 +488,11 @@ impl AnthropicStreamTranslator {
         frames
     }
 
-    fn server_tool_result(&mut self, key: i64, item: &crate::translation_core::Json) -> Vec<String> {
+    fn server_tool_result(
+        &mut self,
+        key: i64,
+        item: &crate::translation_core::Json,
+    ) -> Vec<String> {
         let mut frames = Vec::new();
         if !self.server_tool_indices.contains_key(&key) {
             frames.extend(self.server_tool_start(key, item));
@@ -516,7 +525,10 @@ impl AnthropicStreamTranslator {
 
     // ---- shared -------------------------------------------------------
 
-    fn absorb_usage(&mut self, usage: crate::translation_core::Maybe<&crate::translation_core::Json>) {
+    fn absorb_usage(
+        &mut self,
+        usage: crate::translation_core::Maybe<&crate::translation_core::Json>,
+    ) {
         let Some(usage) = usage else { return };
         for key in ["input_tokens", "prompt_tokens"] {
             if let Some(v) = usage.get(key).and_then(Value::as_u64) {
@@ -536,7 +548,10 @@ impl AnthropicStreamTranslator {
             .min(self.input_tokens);
     }
 
-    fn absorb_service_tier(&mut self, tier: crate::translation_core::Maybe<&crate::translation_core::Json>) {
+    fn absorb_service_tier(
+        &mut self,
+        tier: crate::translation_core::Maybe<&crate::translation_core::Json>,
+    ) {
         if let Some(tier) = crate::bridge_response::anthropic_service_tier_from_openai(tier) {
             self.service_tier = Some(tier.into());
         }

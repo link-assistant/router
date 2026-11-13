@@ -128,7 +128,10 @@ async fn run_with_limit(
     ExitCode::SUCCESS
 }
 
-fn format_envelope(envelope: &UsageEnvelope, json: bool) -> crate::translation_core::Outcome<String, String> {
+fn format_envelope(
+    envelope: &UsageEnvelope,
+    json: bool,
+) -> crate::translation_core::Outcome<String, String> {
     if json {
         return serde_json::to_string_pretty(envelope)
             .map(|mut output| {

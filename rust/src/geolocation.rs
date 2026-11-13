@@ -12,7 +12,9 @@ pub const OPT_IN: &str = "x-router-share-geolocation";
 pub fn shares_geolocation(headers: &HeaderMap) -> bool {
     let all = headers.get_all(OPT_IN);
     let mut values = all.iter();
-    values.next().is_some_and(|value| value.as_bytes() == b"true")
+    values
+        .next()
+        .is_some_and(|value| value.as_bytes() == b"true")
         && values.next().is_none()
 }
 
@@ -89,7 +91,8 @@ fn sanitize_root(value: &mut Value) -> bool {
             let search = suffix.is_some_and(|tail| {
                 tail.is_empty()
                     || tail.strip_prefix('_').is_some_and(|date| {
-                        let plain = date.len() == 8 && date.bytes().all(|byte| byte.is_ascii_digit());
+                        let plain =
+                            date.len() == 8 && date.bytes().all(|byte| byte.is_ascii_digit());
                         let dated = date.len() == 10
                             && date.bytes().enumerate().all(|(i, byte)| {
                                 if i == 4 || i == 7 {
@@ -185,7 +188,8 @@ pub async fn route(
     if changed {
         parts.headers.remove("content-length");
     }
-    next.run(Request::from_parts(parts, Body::from(bytes))).await
+    next.run(Request::from_parts(parts, Body::from(bytes)))
+        .await
 }
 
 #[cfg(test)]

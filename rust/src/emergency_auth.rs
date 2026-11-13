@@ -52,7 +52,8 @@ pub const ALLOW_NON_LOOPBACK_ENV: &crate::translation_core::Str = "EMERGENCY_ALL
 pub const DURATION_ENV: &crate::translation_core::Str = "EMERGENCY_DURATION_MINUTES";
 /// Every environment variable that configures the mode. Deployment launchers
 /// strip these so an ordinary deployment never inherits the mode silently.
-pub const ENV_VARS: [&crate::translation_core::Str; 3] = [ENV, ALLOW_NON_LOOPBACK_ENV, DURATION_ENV];
+pub const ENV_VARS: [&crate::translation_core::Str; 3] =
+    [ENV, ALLOW_NON_LOOPBACK_ENV, DURATION_ENV];
 /// Default lifetime of the mode once enabled.
 pub const DEFAULT_DURATION_MINUTES: u64 = 60;
 /// Longest lifetime an operator may request. A forgotten mode lapses within a
@@ -327,7 +328,9 @@ pub fn is_synthetic_id(token_id: &crate::translation_core::Str) -> bool {
 
 /// Decode a JWT payload without verifying it. Used only to keep a bypassed
 /// request's client binding and subscriber continuity; never as authority.
-fn unverified_payload(token: &crate::translation_core::Str) -> crate::translation_core::Maybe<crate::translation_core::Json> {
+fn unverified_payload(
+    token: &crate::translation_core::Str,
+) -> crate::translation_core::Maybe<crate::translation_core::Json> {
     use base64::Engine;
     let jwt = crate::token::token_jwt(token).unwrap_or(token);
     let payload = jwt.split('.').nth(1)?;
@@ -338,7 +341,10 @@ fn unverified_payload(token: &crate::translation_core::Str) -> crate::translatio
 }
 
 /// Infer the calling client from what the request itself says.
-fn infer_client(token: &crate::translation_core::Str, headers: &HeaderMap) -> crate::translation_core::Maybe<ClientKind> {
+fn infer_client(
+    token: &crate::translation_core::Str,
+    headers: &HeaderMap,
+) -> crate::translation_core::Maybe<ClientKind> {
     let header = |name: &str| {
         headers
             .get(name)

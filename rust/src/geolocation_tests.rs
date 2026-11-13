@@ -75,7 +75,8 @@ fn location_headers_require_one_explicit_true() {
 
 #[tokio::test]
 async fn native_location_rewrite_cannot_replay_original_zstd_bytes() {
-    let source = br#"{ "model":"m", "tools":[{"type":"web_search","user_location":{"city":"London"}}] }"#;
+    let source =
+        br#"{ "model":"m", "tools":[{"type":"web_search","user_location":{"city":"London"}}] }"#;
     let encoded = zstd::encode_all(source.as_slice(), 0).unwrap();
     let mut headers = HeaderMap::new();
     headers.insert("content-encoding", "zstd".parse().unwrap());
@@ -90,14 +91,10 @@ async fn native_location_rewrite_cannot_replay_original_zstd_bytes() {
     assert!(sanitize(&mut parsed.value, false));
     let rewritten = parsed.native.encode(&parsed.value).unwrap();
     assert_ne!(rewritten, encoded);
-    let reparsed = crate::encoded_request_body::read_native_json(
-        &headers,
-        Body::from(rewritten),
-        4096,
-        true,
-    )
-    .await
-    .unwrap();
+    let reparsed =
+        crate::encoded_request_body::read_native_json(&headers, Body::from(rewritten), 4096, true)
+            .await
+            .unwrap();
     assert!(reparsed.value["tools"][0].get("user_location").is_none());
     assert_eq!(reparsed.value["model"], "m");
 }
@@ -113,9 +110,10 @@ fn static_account_headers_cannot_restore_unconsented_location() {
             .insert(name.as_str().unwrap().to_string(), "synthetic".to_string());
     }
     for name in fixtures["networkHeaders"].as_array().unwrap() {
-        policy
-            .headers
-            .insert(name.as_str().unwrap().to_string(), "203.0.113.1".to_string());
+        policy.headers.insert(
+            name.as_str().unwrap().to_string(),
+            "203.0.113.1".to_string(),
+        );
     }
     policy.headers.insert("x-request-id".into(), "keep".into());
     policy.validate().unwrap();

@@ -44,7 +44,10 @@ pub struct ZaiProbeFailure {
 }
 
 impl ZaiProbeFailure {
-    const fn new(kind: ZaiProbeFailureKind, message: &'static crate::translation_core::Str) -> Self {
+    const fn new(
+        kind: ZaiProbeFailureKind,
+        message: &'static crate::translation_core::Str,
+    ) -> Self {
         Self { kind, message }
     }
 
@@ -128,7 +131,11 @@ impl ZaiCodingPlanPolicy {
     }
 
     /// Authorize exactly one signed client/principal pair.
-    pub fn authorize(&self, client: ClientKind, principal_id: &crate::translation_core::Str) -> crate::translation_core::Outcome<(), String> {
+    pub fn authorize(
+        &self,
+        client: ClientKind,
+        principal_id: &crate::translation_core::Str,
+    ) -> crate::translation_core::Outcome<(), String> {
         if !self.intermediary_risk_acknowledged {
             return Err("z.ai Coding Plan intermediary-proxy risk is not acknowledged".into());
         }
@@ -208,7 +215,10 @@ pub fn mapping_for_client(
 
 /// Whether any supported adapter registry contains this exact exposed id.
 #[must_use]
-pub fn canonical_for_any_client(models: &[String], exposed_id: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
+pub fn canonical_for_any_client(
+    models: &[String],
+    exposed_id: &crate::translation_core::Str,
+) -> crate::translation_core::Maybe<String> {
     [
         ClientKind::ClaudeCode,
         ClientKind::Codex,
@@ -512,7 +522,10 @@ pub(crate) async fn live_provider_for_model(
     model: &crate::translation_core::Str,
     client: crate::translation_core::Maybe<ClientKind>,
     authorized: bool,
-) -> crate::translation_core::Outcome<crate::translation_core::Maybe<ResolvedProvider>, crate::model_routing::ModelRouteError> {
+) -> crate::translation_core::Outcome<
+    crate::translation_core::Maybe<ResolvedProvider>,
+    crate::model_routing::ModelRouteError,
+> {
     if !authorized {
         return Ok(None);
     }
@@ -585,7 +598,9 @@ pub(crate) fn authorize_automatic_discovery(
 }
 
 /// Resolve the selected enabled Coding Plan provider from runtime state.
-pub fn resolve(state: &crate::app_state::AppState) -> crate::translation_core::Outcome<crate::translation_core::Maybe<ResolvedProvider>, String> {
+pub fn resolve(
+    state: &crate::app_state::AppState,
+) -> crate::translation_core::Outcome<crate::translation_core::Maybe<ResolvedProvider>, String> {
     let providers = state
         .provider_store
         .list()
@@ -605,11 +620,15 @@ pub fn resolve(state: &crate::app_state::AppState) -> crate::translation_core::O
         .map_err(|error| error.to_string())
 }
 
-fn client_claims(claims: &crate::token::TokenClaims) -> crate::translation_core::Outcome<(ClientKind, &crate::translation_core::Str), String> {
+fn client_claims(
+    claims: &crate::token::TokenClaims,
+) -> crate::translation_core::Outcome<(ClientKind, &crate::translation_core::Str), String> {
     crate::client_policy::bound_client(claims)
 }
 
-fn provider_policy(provider: &ResolvedProvider) -> crate::translation_core::Outcome<ZaiCodingPlanPolicy, String> {
+fn provider_policy(
+    provider: &ResolvedProvider,
+) -> crate::translation_core::Outcome<ZaiCodingPlanPolicy, String> {
     if provider.kind != ProviderKind::ZaiCodingPlan {
         return Err("selected credential is not z.ai Coding Plan".into());
     }
@@ -689,7 +708,9 @@ pub async fn credential_healthy(
 ///
 /// The same authenticated non-inference live catalog gates catalogs and
 /// dispatch, so every health surface reports the routing source of truth.
-pub(crate) async fn configured_health(state: &crate::app_state::AppState) -> crate::translation_core::Maybe<bool> {
+pub(crate) async fn configured_health(
+    state: &crate::app_state::AppState,
+) -> crate::translation_core::Maybe<bool> {
     let configured = match state.provider_store.list() {
         Ok(providers) => providers
             .iter()
@@ -721,7 +742,10 @@ pub(crate) fn recorded_exhaustion(
     state.provider_store.exhaustion(&provider.name)
 }
 
-fn policy_error(surface: crate::metrics::Surface, message: &crate::translation_core::Str) -> axum::response::Response {
+fn policy_error(
+    surface: crate::metrics::Surface,
+    message: &crate::translation_core::Str,
+) -> axum::response::Response {
     crate::api_error::error_response_for_surface(
         surface,
         axum::http::StatusCode::FORBIDDEN,
@@ -730,7 +754,10 @@ fn policy_error(surface: crate::metrics::Surface, message: &crate::translation_c
     )
 }
 
-fn unavailable_error(surface: crate::metrics::Surface, message: &crate::translation_core::Str) -> axum::response::Response {
+fn unavailable_error(
+    surface: crate::metrics::Surface,
+    message: &crate::translation_core::Str,
+) -> axum::response::Response {
     crate::api_error::error_response_for_surface(
         surface,
         axum::http::StatusCode::SERVICE_UNAVAILABLE,
@@ -865,7 +892,10 @@ pub fn count_tokens(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
-    let Some(model) = body.get("model").and_then(crate::translation_core::Json::as_str) else {
+    let Some(model) = body
+        .get("model")
+        .and_then(crate::translation_core::Json::as_str)
+    else {
         return crate::api_error::error_response(
             axum::http::StatusCode::BAD_REQUEST,
             "invalid_request_error",

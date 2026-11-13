@@ -17,7 +17,11 @@ fn shared_native_token_projection_and_signature() {
     let fixture = fixture();
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("tokens.lino");
-    std::fs::write(&path, include_str!("../../parity/fixtures/core/tokens.lino")).unwrap();
+    std::fs::write(
+        &path,
+        include_str!("../../parity/fixtures/core/tokens.lino"),
+    )
+    .unwrap();
     let store = Arc::new(TextTokenStore::open(path).unwrap());
     let expected: TokenRecord = serde_json::from_value(fixture["token_record"].clone()).unwrap();
     assert_eq!(store.get(&expected.id).unwrap().unwrap(), expected);

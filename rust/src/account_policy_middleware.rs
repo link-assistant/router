@@ -119,7 +119,9 @@ pub async fn route(State(state): State<AppState>, request: Request, next: Next) 
             let bare = policy
                 .prefix
                 .as_ref()
-                .and_then(|prefix| requested.strip_prefix(&crate::translation_core::format!("{prefix}/")))
+                .and_then(|prefix| {
+                    requested.strip_prefix(&crate::translation_core::format!("{prefix}/"))
+                })
                 .unwrap_or(&requested);
             policy.model_aliases.iter().any(|alias| alias.alias == bare)
         })
@@ -157,7 +159,8 @@ pub async fn route(State(state): State<AppState>, request: Request, next: Next) 
             {
                 model = crate::translation_core::format!("models/{model}");
             }
-            let alias = model != requested && !requested.ends_with(&crate::translation_core::format!("/{model}"));
+            let alias = model != requested
+                && !requested.ends_with(&crate::translation_core::format!("/{model}"));
             if (state.upstream_provider == crate::config::UpstreamProvider::Auto
                 || alias
                 || configured_alias)
@@ -188,10 +191,10 @@ pub async fn route(State(state): State<AppState>, request: Request, next: Next) 
                                 .routable_models()
                                 .contains(&crate::translation_core::format!("models/{requested}")))
                         || router.routing_policy(account).is_ok_and(|policy| {
-                            policy
-                                .prefix
-                                .as_ref()
-                                .is_some_and(|prefix| requested.starts_with(&crate::translation_core::format!("{prefix}/")))
+                            policy.prefix.as_ref().is_some_and(|prefix| {
+                                requested
+                                    .starts_with(&crate::translation_core::format!("{prefix}/"))
+                            })
                         })
                 })))
     {
@@ -262,21 +265,25 @@ pub async fn route(State(state): State<AppState>, request: Request, next: Next) 
         .clone();
     // Resolve grants and aliases with the base identity, retaining the suffix
     // for the protocol handler where explicit body controls take precedence.
-    let upstream_selector = crate::translation_core::format!("{upstream}{}", &requested_selector[requested.len()..]);
+    let upstream_selector =
+        crate::translation_core::format!("{upstream}{}", &requested_selector[requested.len()..]);
     if body.get("model").is_some() {
         body["model"] = Value::String(upstream_selector.clone());
     }
     // URI model surfaces are rewritten as well as JSON surfaces.
     if path.contains("/models/") {
         let rewritten = path.replacen(
-            &crate::translation_core::format!("/models/{}", path_model.as_deref().unwrap_or(&requested)),
+            &crate::translation_core::format!(
+                "/models/{}",
+                path_model.as_deref().unwrap_or(&requested)
+            ),
             &crate::translation_core::format!("/models/{upstream_selector}"),
             1,
         );
-        let uri = parts
-            .uri
-            .query()
-            .map_or_else(|| rewritten.clone(), |q| crate::translation_core::format!("{rewritten}?{q}"));
+        let uri = parts.uri.query().map_or_else(
+            || rewritten.clone(),
+            |q| crate::translation_core::format!("{rewritten}?{q}"),
+        );
         if let Ok(uri) = uri.parse() {
             parts.uri = uri;
         }
@@ -330,7 +337,11 @@ pub async fn route(State(state): State<AppState>, request: Request, next: Next) 
         .await
 }
 
-fn failure(status: StatusCode, message: &crate::translation_core::Str, dialect: crate::api_error::ApiDialect) -> Response {
+fn failure(
+    status: StatusCode,
+    message: &crate::translation_core::Str,
+    dialect: crate::api_error::ApiDialect,
+) -> Response {
     crate::api_error::PresentedError {
         status,
         error_type: if status == StatusCode::FORBIDDEN {

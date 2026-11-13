@@ -56,7 +56,10 @@ fn missing_null_and_wrong_scalar_remain_distinct() {
 fn integer_values_preserve_full_i64_domain() {
     for value in [i64::MIN, -7, 0, i64::MAX] {
         let document: Json = serde_json::json!({"update_id": value});
-        assert_eq!(document.get("update_id").and_then(Json::as_i64), Some(value));
+        assert_eq!(
+            document.get("update_id").and_then(Json::as_i64),
+            Some(value)
+        );
     }
 }
 

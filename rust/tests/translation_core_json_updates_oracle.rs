@@ -25,16 +25,24 @@ fn null_is_promoted_replacements_are_unique_and_keys_keep_utf8_order() {
     }
     value = translation_core::json_with_field(value, "a", Json::Bool(false));
     assert_eq!(value["a"], false);
-    let keys = value.as_object().unwrap().keys().map(String::as_str).collect::<Vec<_>>();
+    let keys = value
+        .as_object()
+        .unwrap()
+        .keys()
+        .map(String::as_str)
+        .collect::<Vec<_>>();
     assert_eq!(keys, ["__proto__", "a", "猫", "\u{e000}", "𐀀"]);
 }
 
 #[test]
 fn non_object_non_null_bases_keep_the_indexing_panic_boundary() {
-    for base in [translation_core::json!([]), translation_core::json!(1), Json::Bool(true)] {
-        let outcome = std::panic::catch_unwind(|| {
-            translation_core::json_with_field(base, "key", Json::Null)
-        });
+    for base in [
+        translation_core::json!([]),
+        translation_core::json!(1),
+        Json::Bool(true),
+    ] {
+        let outcome =
+            std::panic::catch_unwind(|| translation_core::json_with_field(base, "key", Json::Null));
         assert!(outcome.is_err());
     }
 }
@@ -43,9 +51,18 @@ fn non_object_non_null_bases_keep_the_indexing_panic_boundary() {
 fn direct_operation_arguments_run_once_in_left_to_right_order() {
     use std::cell::RefCell;
     let tape = RefCell::new(Vec::new());
-    let base = || { tape.borrow_mut().push("base"); Json::Null };
-    let key = || { tape.borrow_mut().push("key"); "key" };
-    let value = || { tape.borrow_mut().push("value"); Json::Bool(true) };
+    let base = || {
+        tape.borrow_mut().push("base");
+        Json::Null
+    };
+    let key = || {
+        tape.borrow_mut().push("key");
+        "key"
+    };
+    let value = || {
+        tape.borrow_mut().push("value");
+        Json::Bool(true)
+    };
     let result = translation_core::json_with_field(base(), key(), value());
     assert_eq!(*tape.borrow(), ["base", "key", "value"]);
     assert_eq!(result, translation_core::json!({"key": true}));
@@ -94,7 +111,10 @@ fn rhs_panics_before_an_invalid_assignee_is_evaluated() {
         }
         document
     }
-    for operation in [original as fn(&Cell<bool>) -> Json, adopted as fn(&Cell<bool>) -> Json] {
+    for operation in [
+        original as fn(&Cell<bool>) -> Json,
+        adopted as fn(&Cell<bool>) -> Json,
+    ] {
         let called = Cell::new(false);
         let failure = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| operation(&called)));
         let error = failure.unwrap_err();
@@ -109,12 +129,17 @@ fn multiple_updates_preserve_conditional_fields_and_the_final_owned_return() {
         let original = {
             let mut value = translation_core::json!({"before": true});
             value["first"] = translation_core::json!([false]);
-            if include { value["second"] = translation_core::json!({"tail": "猫😀"}); }
+            if include {
+                value["second"] = translation_core::json!({"tail": "猫😀"});
+            }
             value
         };
         let adopted = {
             let mut value = translation_core::json!({"before": true});
-            { let rhs = translation_core::json!([false]); value = translation_core::json_with_field(value, "first", rhs); }
+            {
+                let rhs = translation_core::json!([false]);
+                value = translation_core::json_with_field(value, "first", rhs);
+            }
             if include {
                 let rhs = translation_core::json!({"tail": "猫😀"});
                 value = translation_core::json_with_field(value, "second", rhs);
@@ -124,7 +149,6 @@ fn multiple_updates_preserve_conditional_fields_and_the_final_owned_return() {
         assert_eq!(original, adopted);
     }
 }
-
 
 fn original_shared_child(value: &Json) -> Json {
     if let Some(child) = value.get("strict") {
@@ -152,7 +176,10 @@ fn shared_clone_adoption_pairs_keep_absent_null_unicode_and_independent_storage(
         translation_core::json!({"strict": {"nested": ["猫😀", false]}}),
     ] {
         let snapshot = original.clone();
-        assert_eq!(original_shared_child(&original), adopted_shared_child(&original));
+        assert_eq!(
+            original_shared_child(&original),
+            adopted_shared_child(&original)
+        );
         assert_eq!(original.clone(), translation_core::json_copy(&original));
         assert_eq!(original, snapshot);
     }
