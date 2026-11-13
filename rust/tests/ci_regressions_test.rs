@@ -136,7 +136,10 @@ fn local_commit_hooks_never_run_cargo() {
     assert!(!hooks.contains("cargo"), "{hooks}");
     assert!(!hooks.contains("scripts/clear-build-cache.sh"), "{hooks}");
     for generic in ["trailing-whitespace", "end-of-file-fixer", "check-yaml"] {
-        assert!(hooks.contains(generic), "{generic} must stay enabled:\n{hooks}");
+        assert!(
+            hooks.contains(generic),
+            "{generic} must stay enabled:\n{hooks}"
+        );
     }
 }
 
