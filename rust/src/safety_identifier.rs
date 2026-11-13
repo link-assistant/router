@@ -1,6 +1,5 @@
 //! Lossless end-user safety identifier handling across protocol bridges.
 
-use serde_json::Value;
 
 /// `OpenAI` accepts at most 64 Unicode characters for `safety_identifier`.
 const OPENAI_MAX_CHARACTERS: usize = 64;

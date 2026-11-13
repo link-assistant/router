@@ -1,5 +1,4 @@
 //! Scoped output transport shared by human adapters and importable operations.
-use serde_json::Value;
 use std::fmt::Arguments;
 
 macro_rules! println {

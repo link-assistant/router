@@ -25,7 +25,6 @@
 //!   excess; the overshoot is bounded by one request's unreported surplus rather
 //!   than being unbounded, and both figures are visible to administrators.
 
-use serde_json::Value;
 
 /// Characters per token used by the router's local estimator.
 ///

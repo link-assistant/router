@@ -54,7 +54,7 @@ use axum::http::{HeaderMap, HeaderName, HeaderValue, StatusCode};
 use axum::middleware::Next;
 use axum::response::Response;
 use futures_util::StreamExt as _;
-use serde_json::{Value, json};
+use serde_json::Value;
 
 use crate::request_log::{redacted_body, redacted_headers};
 

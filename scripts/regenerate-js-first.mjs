@@ -44,7 +44,9 @@ function rustFixtures(fixtures, program) {
   const rows = fixtures.cases.map((fixture) => {
     const item = functions.get(fixture.function);
     if (!item) throw new Error(`fixture names missing translated function ${fixture.function}`);
-    const call = `${item.name}(${fixture.args.map(rustLiteral).join(', ')})`;
+    // Fixture ids may equal the function under test (`provider-model-id`), and a
+    // test function of that name shadows the glob import, so call through `super::`.
+    const call = `super::${item.name}(${fixture.args.map(rustLiteral).join(', ')})`;
     let assertion;
     if (fixture.expected?.$number === 'NaN') assertion = `assert!(${call}.is_nan());`;
     else if (item.returns === 'number') assertion = `assert_eq!(${call}.to_bits(), (${rustLiteral(fixture.expected)}).to_bits());`;

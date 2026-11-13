@@ -2,7 +2,6 @@
 
 use crate::config::UpstreamProvider;
 use crate::subscription::SubscriptionProvider;
-use serde_json::Value;
 use std::sync::OnceLock;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
