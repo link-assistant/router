@@ -248,38 +248,22 @@ pub fn anthropic_text_and_annotations(
 fn citation_url(
     citation: &crate::translation_core::Json,
 ) -> crate::translation_core::Maybe<&crate::translation_core::Str> {
-    match {
-        let __router_json_reader_0 = citation.get("type");
-        if let crate::translation_core::Maybe::Some(__router_json_reader_1) = __router_json_reader_0
-        {
-            crate::translation_core::Json::as_str(__router_json_reader_1)
-        } else {
-            crate::translation_core::Maybe::None
-        }
-    } {
-        Some("web_search_result_location") => {
-            let __router_json_reader_2 = citation.get("url");
-            if let crate::translation_core::Maybe::Some(__router_json_reader_3) =
-                __router_json_reader_2
-            {
-                crate::translation_core::Json::as_str(__router_json_reader_3)
-            } else {
-                crate::translation_core::Maybe::None
-            }
-        }
-        Some("search_result_location") => {
-            let __router_json_reader_4 = citation.get("source");
-            if let crate::translation_core::Maybe::Some(__router_json_reader_5) =
-                __router_json_reader_4
-            {
-                crate::translation_core::Json::as_str(__router_json_reader_5)
-            } else {
-                crate::translation_core::Maybe::None
-            }
-        }
-        .filter(|source| source.starts_with("https://") || source.starts_with("http://")),
+    match json_text(citation, "type") {
+        Some("web_search_result_location") => json_text(citation, "url"),
+        Some("search_result_location") => json_text(citation, "source")
+            .filter(|source| source.starts_with("https://") || source.starts_with("http://")),
         _ => None,
     }
+}
+
+/// Read `key` from a JSON object as a string; anything else is `None`.
+fn json_text<'a>(
+    value: &'a crate::translation_core::Json,
+    key: &str,
+) -> crate::translation_core::Maybe<&'a crate::translation_core::Str> {
+    value
+        .get(key)
+        .and_then(crate::translation_core::Json::as_str)
 }
 
 fn find_char_range(

@@ -17,7 +17,7 @@ pub fn base64_standard_encode_text(value: &Str) -> Text {
     ::base64::Engine::encode(&::base64::engine::general_purpose::STANDARD, value)
 }
 
-/// Consume owned bytes at the same native call boundary as Engine::encode.
+/// Consume owned bytes at the same native call boundary as `Engine::encode`.
 #[must_use]
 pub fn base64_standard_encode_owned_bytes(value: ::std::vec::Vec<u8>) -> Text {
     ::base64::Engine::encode(&::base64::engine::general_purpose::STANDARD, value)

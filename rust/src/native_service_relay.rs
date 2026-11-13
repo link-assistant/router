@@ -171,12 +171,11 @@ async fn websocket_session(
                     let _ = upstream.close(None).await;
                     break;
                 };
-                if let Message::Text(text) = &message {
-                    if let Ok(mut value) = serde_json::from_slice::<serde_json::Value>(text.as_bytes()) {
-                        if crate::geolocation::sanitize(&mut value, share_geolocation) {
-                            message = Message::Text(value.to_string().into());
-                        }
-                    }
+                if let Message::Text(text) = &message
+                    && let Ok(mut value) = serde_json::from_slice::<serde_json::Value>(text.as_bytes())
+                    && crate::geolocation::sanitize(&mut value, share_geolocation)
+                {
+                    message = Message::Text(value.to_string().into());
                 }
                 let message_bytes = websocket_message_len(&message);
                 if let (Some((token_id, model_policy)), Message::Text(text)) = (&usage_identity, &message) {

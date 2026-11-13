@@ -174,16 +174,13 @@ pub async fn route(
         Err(response) => return response,
     };
     let changed = sanitize(&mut parsed.value, false);
-    let bytes = match parsed.native.encode(&parsed.value) {
-        Ok(bytes) => bytes,
-        Err(_) => {
-            return crate::api_error::PresentedError {
-                status: StatusCode::INTERNAL_SERVER_ERROR,
-                error_type: "api_error",
-                message: "could not encode private request",
-            }
-            .render(crate::api_error::dialect_for_path(parts.uri.path()));
+    let Ok(bytes) = parsed.native.encode(&parsed.value) else {
+        return crate::api_error::PresentedError {
+            status: StatusCode::INTERNAL_SERVER_ERROR,
+            error_type: "api_error",
+            message: "could not encode private request",
         }
+        .render(crate::api_error::dialect_for_path(parts.uri.path()));
     };
     if changed {
         parts.headers.remove("content-length");

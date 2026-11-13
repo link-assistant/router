@@ -112,7 +112,7 @@ pub fn chat_to_responses_format(
                 })?;
             let mut format = crate::translation_core::json!({
                 "type": "json_schema",
-                "name": crate::translation_core::json_map_index(&definition, "name"),
+                "name": crate::translation_core::json_map_index(definition, "name"),
                 "schema": schema,
             });
             if let Some(strict) = definition.get("strict") {
@@ -162,7 +162,7 @@ pub fn responses_to_chat_format(
                     crate::translation_core::format!("{}", "text.format.schema must be an object")
                 })?;
             let mut definition = crate::translation_core::json!({
-                "name": crate::translation_core::json_index_str(&format, "name"),
+                "name": crate::translation_core::json_index_str(format, "name"),
                 "schema": schema,
             });
             if let Some(strict) = format.get("strict") {
@@ -295,16 +295,9 @@ fn validate_name_and_strict(
     strict: crate::translation_core::Maybe<&crate::translation_core::Json>,
     path: &crate::translation_core::Str,
 ) -> crate::translation_core::Outcome<(), String> {
-    if {
-        let __router_json_reader_0 = name;
-        if let crate::translation_core::Maybe::Some(__router_json_reader_1) = __router_json_reader_0
-        {
-            crate::translation_core::Json::as_str(__router_json_reader_1)
-        } else {
-            crate::translation_core::Maybe::None
-        }
-    }
-    .is_none_or(str::is_empty)
+    if name
+        .and_then(crate::translation_core::Json::as_str)
+        .is_none_or(str::is_empty)
     {
         return Err(crate::translation_core::format!(
             "{path}.name must be a non-empty string"

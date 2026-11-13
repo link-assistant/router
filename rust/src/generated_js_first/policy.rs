@@ -1,6 +1,21 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
 // JavaScript -> portable-router-v1 Links IR -> target; IR sha256=d0021328c8826b7998cd0581491779aeb3e03352980c211ee0cdef36921b2938
-#![allow(unused_parens, clippy::needless_return, clippy::float_cmp)]
+#![allow(
+    unused_parens,
+    clippy::needless_return,
+    clippy::float_cmp,
+    clippy::assign_op_pattern,
+    clippy::bool_assert_comparison,
+    clippy::cast_precision_loss,
+    clippy::format_in_format_args,
+    clippy::manual_range_contains,
+    clippy::must_use_candidate,
+    clippy::suboptimal_flops,
+    clippy::to_string_in_format_args,
+    clippy::unicode_not_nfc,
+    clippy::unnecessary_to_owned,
+    clippy::unreadable_literal
+)]
 
 #[rustfmt::skip]
 fn js_min(a: f64, b: f64) -> f64 {
