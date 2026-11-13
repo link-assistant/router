@@ -418,6 +418,14 @@ jobs:
       matrix:
         os: [ubuntu-24.04, macos-26, windows-latest]
     steps:
+      # Committed translation evidence uses hex-encoded case names, and 336
+      # repository paths exceed 200 characters (the longest is 327). Under
+      # D:\a\router\router\ they pass Windows' 260-character MAX_PATH, so
+      # checkout fails with "Filename too long" unless Git uses long paths.
+      - name: Allow long Git paths on Windows
+        if: runner.os == 'Windows'
+        run: git config --system core.longpaths true
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Rust
