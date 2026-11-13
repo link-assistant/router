@@ -9,3 +9,5 @@ bump: patch
 - The scalar-count oracle integration test now covers `validate_openai_user_value` (absent, `null`, Unicode string and wrong type), which also keeps the path-included module free of dead code under `-D warnings`.
 - The Lint job's `cargo check` and `cargo clippy` steps pass `--keep-going`, so one CI run reports compile errors from every target instead of stopping at the first crate.
 - The logical-JSON oracle test parenthesizes `false || { … }` object values, which `json!` otherwise reads as a bare `false` literal and rejects; the ASCII reverse oracle allows `unused_parens` in the generated witness module it includes, as it already does for the other generated-code lints.
+- The verification-area test resolves `tests/` from `CARGO_MANIFEST_DIR` instead of `file!()`, which became workspace-relative when the crate moved to `rust/` and made every area report "is not a test target".
+- `scripts/verify-contracts.rs` depends on the router package at `../rust` (the repository root is now a virtual workspace manifest), and `scripts/record-vendor-fixtures.rs` finds its cassettes under `rust/tests/fixtures/vendor/` when run from the repository root.
