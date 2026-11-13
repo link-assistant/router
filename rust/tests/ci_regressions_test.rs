@@ -153,6 +153,22 @@ fn manual_build_cache_cleanup_remains_available() {
     );
 }
 
+/// The build script must not name a missing file as a rebuild trigger.
+///
+/// Cargo treats a missing `rerun-if-changed` path as changed on every run. CI
+/// checkouts have no `.git/packed-refs`, so the Windows loop, which runs Cargo
+/// once per integration target, rebuilt the whole library for each of them.
+#[test]
+fn build_script_tracks_only_existing_git_metadata() {
+    let script = read_lf("build.rs");
+
+    assert!(script.contains("cargo:rerun-if-changed={path}"), "{script}");
+    assert!(
+        script.contains("std::path::Path::new(path).exists()"),
+        "a missing tracked path makes every Cargo invocation rebuild the library"
+    );
+}
+
 /// CI compiles through sccache, which still hits when a dependency moves and
 /// the `Cargo.lock`-keyed artifact cache misses entirely.
 #[test]

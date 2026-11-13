@@ -4,6 +4,10 @@ use std::process::Command;
 fn main() {
     println!("cargo:rerun-if-env-changed=ROUTER_SOURCE_COMMIT");
     // Resolve metadata from the crate directory, including linked worktrees.
+    // Cargo treats a missing `rerun-if-changed` path as always changed, so a
+    // checkout without `packed-refs` (every CI checkout) would rebuild the
+    // library on each Cargo invocation. Only existing paths are tracked; refs
+    // that later move are written under `refs/`, which is tracked.
     for name in ["HEAD", "refs", "packed-refs"] {
         if let Ok(output) = Command::new("git")
             .args(["rev-parse", "--git-path", name])
@@ -12,7 +16,10 @@ fn main() {
         {
             let path = String::from_utf8_lossy(&output.stdout);
             let path = path.trim();
-            if !path.is_empty() && !path.contains(['\n', '\r']) {
+            if !path.is_empty()
+                && !path.contains(['\n', '\r'])
+                && std::path::Path::new(path).exists()
+            {
                 println!("cargo:rerun-if-changed={path}");
             }
         }
