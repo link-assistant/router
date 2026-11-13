@@ -12,3 +12,4 @@ bump: patch
 - The verification-area test resolves `tests/` from `CARGO_MANIFEST_DIR` instead of `file!()`, which became workspace-relative when the crate moved to `rust/` and made every area report "is not a test target".
 - `scripts/verify-contracts.rs` depends on the router package at `../rust` (the repository root is now a virtual workspace manifest), and `scripts/record-vendor-fixtures.rs` finds its cassettes under `rust/tests/fixtures/vendor/` when run from the repository root.
 - `build.rs` folds its nested `git rev-parse` success check into a `let` chain, which Rust 1.98's `clippy::collapsible_if` requires before any other target can be linted.
+- Integration tests that read workflows, scripts, the Dockerfile, deployment templates or documentation resolve them through a shared `tests/support/repository.rs` helper (package directory first, then the repository root), because `cargo test` runs them in `rust/` while those files stay at the repository root.

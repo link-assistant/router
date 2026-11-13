@@ -3,8 +3,11 @@
 //! Split from `release_workflow_test.rs` to keep that file within the
 //! repository's 1000-line limit.
 
+#[path = "support/repository.rs"]
+mod repository;
+
 fn read_lf(path: &str) -> String {
-    std::fs::read_to_string(path)
+    std::fs::read_to_string(repository::path(path))
         .unwrap_or_else(|error| panic!("read {path}: {error}"))
         .replace("\r\n", "\n")
 }

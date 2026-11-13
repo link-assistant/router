@@ -1,5 +1,8 @@
 //! Release publication must wait for all required artifacts (#687).
 
+#[path = "support/repository.rs"]
+mod repository;
+
 fn job<'a>(workflow: &'a str, name: &str) -> &'a str {
     let marker = format!("\n  {name}:\n");
     let start = workflow
@@ -17,7 +20,7 @@ fn job<'a>(workflow: &'a str, name: &str) -> &'a str {
 
 #[test]
 fn crate_and_stable_release_wait_for_verified_artifacts() {
-    let contents = std::fs::read_to_string(".github/workflows/release.yml")
+    let contents = std::fs::read_to_string(repository::path(".github/workflows/release.yml"))
         .unwrap()
         .replace("\r\n", "\n");
     let workflow = contents.as_str();
@@ -40,7 +43,8 @@ fn crate_and_stable_release_wait_for_verified_artifacts() {
 
 #[test]
 fn pull_requests_build_the_real_amd64_runtime_without_pushing() {
-    let workflow = std::fs::read_to_string(".github/workflows/docker-build.yml").unwrap();
+    let workflow =
+        std::fs::read_to_string(repository::path(".github/workflows/docker-build.yml")).unwrap();
     for input in [
         "Cargo.toml",
         "Dockerfile",

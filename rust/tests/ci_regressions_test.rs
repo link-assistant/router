@@ -1,7 +1,10 @@
 use std::fs;
 
+#[path = "support/repository.rs"]
+mod repository;
+
 fn read_lf(path: &str) -> String {
-    fs::read_to_string(path)
+    fs::read_to_string(repository::path(path))
         .unwrap_or_else(|error| panic!("failed to read {path}: {error}"))
         .replace("\r\n", "\n")
 }
@@ -75,7 +78,7 @@ fn lint_builds_and_checks_the_committed_admin_ui_bundle() {
 
 #[test]
 fn committed_admin_ui_chunks_stay_below_vites_warning_threshold() {
-    for entry in fs::read_dir("ui/dist/assets").expect("UI assets should exist") {
+    for entry in fs::read_dir(repository::path("ui/dist/assets")).expect("UI assets should exist") {
         let entry = entry.expect("UI asset should be readable");
         if entry.path().extension().is_some_and(|ext| ext == "js") {
             let size = entry

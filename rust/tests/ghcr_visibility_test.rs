@@ -6,6 +6,9 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::sync::atomic::{AtomicU64, Ordering};
 
+#[path = "support/repository.rs"]
+mod repository;
+
 static SANDBOX_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 fn script() -> String {
@@ -189,7 +192,7 @@ fn missing_image_and_invalid_bash_are_rejected() {
 
 #[test]
 fn release_manifest_job_checks_public_visibility_and_source_metadata() {
-    let workflow = fs::read_to_string(".github/workflows/release.yml")
+    let workflow = fs::read_to_string(repository::path(".github/workflows/release.yml"))
         .expect("release workflow should be readable");
     let manifests = workflow
         .split_once("  publish-docker-manifests:")
