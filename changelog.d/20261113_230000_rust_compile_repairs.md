@@ -8,3 +8,4 @@ bump: patch
 - Removed unused `serde_json` imports, moved the test-only `json!` imports of `activitypub.rs` and `gonka.rs` into their test modules, and imported `json!` in the deploy seed tests so the library and its tests build with `-D warnings`.
 - The scalar-count oracle integration test now covers `validate_openai_user_value` (absent, `null`, Unicode string and wrong type), which also keeps the path-included module free of dead code under `-D warnings`.
 - The Lint job's `cargo check` and `cargo clippy` steps pass `--keep-going`, so one CI run reports compile errors from every target instead of stopping at the first crate.
+- The logical-JSON oracle test parenthesizes `false || { … }` object values, which `json!` otherwise reads as a bare `false` literal and rejects; the ASCII reverse oracle allows `unused_parens` in the generated witness module it includes, as it already does for the other generated-code lints.

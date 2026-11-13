@@ -53,9 +53,11 @@ fn short_circuit_skips_only_untaken_division_panics() {
 #[allow(clippy::nonminimal_bool)] // Keep original logical interpolation order.
 fn source_field_evaluation_precedes_object_key_sorting() {
     let trace = std::cell::RefCell::new(Vec::new());
+    // `json!` matches a leading `false` literal as a complete value, so each
+    // logical expression is parenthesized to be read as one expression.
     let value = translation_core::json!({
-        "z": false || { trace.borrow_mut().push("z"); true },
-        "a": false || { trace.borrow_mut().push("a"); false }
+        "z": (false || { trace.borrow_mut().push("z"); true }),
+        "a": (false || { trace.borrow_mut().push("a"); false })
     });
     assert_eq!(&*trace.borrow(), &["z", "a"]);
     assert_eq!(value, translation_core::json!({"a": false, "z": true}));
