@@ -25,7 +25,6 @@
 //!   excess; the overshoot is bounded by one request's unreported surplus rather
 //!   than being unbounded, and both figures are visible to administrators.
 
-
 /// Characters per token used by the router's local estimator.
 ///
 /// Matches [`crate::output_limit`] and
