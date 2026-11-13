@@ -142,8 +142,6 @@ pub fn model_name_length_permits(value: &str, maximum: f64) -> bool {
 #[cfg(test)]
 #[rustfmt::skip]
 mod shared_fixtures {
-    use super::*;
-
     #[test]
     fn budget_unlimited() {
         assert_eq!(super::token_budget_permits(1000.0_f64, 500.0_f64, 20.0_f64, -1.0_f64), true);

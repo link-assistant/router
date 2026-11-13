@@ -45,7 +45,8 @@ function rustFixtures(fixtures, program) {
     const item = functions.get(fixture.function);
     if (!item) throw new Error(`fixture names missing translated function ${fixture.function}`);
     // Fixture ids may equal the function under test (`provider-model-id`), and a
-    // test function of that name shadows the glob import, so call through `super::`.
+    // test function of that name would shadow it, so call through `super::` (the
+    // literals only use `std` items, so the module needs no glob import).
     const call = `super::${item.name}(${fixture.args.map(rustLiteral).join(', ')})`;
     let assertion;
     if (fixture.expected?.$number === 'NaN') assertion = `assert!(${call}.is_nan());`;
@@ -53,7 +54,7 @@ function rustFixtures(fixtures, program) {
     else assertion = `assert_eq!(${call}, ${rustLiteral(fixture.expected)});`;
     return `    #[test]\n    fn ${fixture.id.replace(/-/gu, '_')}() {\n        ${assertion}\n    }`;
   });
-  return `\n#[cfg(test)]\n#[rustfmt::skip]\nmod shared_fixtures {\n    use super::*;\n\n${rows.join('\n\n')}\n}\n`;
+  return `\n#[cfg(test)]\n#[rustfmt::skip]\nmod shared_fixtures {\n${rows.join('\n\n')}\n}\n`;
 }
 
 function buildArtifactsSelected(root = ROOT, definitions=false, matrix,ownedBuilder) {

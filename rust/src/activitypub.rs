@@ -6,7 +6,7 @@
 use axum::extract::State;
 use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
-use serde_json::{Value, json};
+use serde_json::Value;
 
 use crate::proxy::AppState;
 use crate::route_contract::{RouteId, route_template};
@@ -210,6 +210,7 @@ fn require_string<'a>(activity: &'a Value, field: &'static str) -> Result<&'a st
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     const BASE: &str = "https://router.example";
     const KEY: &str = "-----BEGIN PUBLIC KEY-----\nabc\n-----END PUBLIC KEY-----";

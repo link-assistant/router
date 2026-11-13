@@ -8,7 +8,7 @@ use axum::body::Body;
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use futures_util::{Stream, StreamExt as _};
-use serde_json::{Value, json};
+use serde_json::Value;
 use std::collections::HashSet;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex, RwLock};
@@ -572,6 +572,7 @@ pub(crate) async fn forward_openai(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     #[test]
     fn unconfigured_gonka_injects_no_default() {
