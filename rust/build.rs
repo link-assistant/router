@@ -8,13 +8,12 @@ fn main() {
         if let Ok(output) = Command::new("git")
             .args(["rev-parse", "--git-path", name])
             .output()
+            && output.status.success()
         {
-            if output.status.success() {
-                let path = String::from_utf8_lossy(&output.stdout);
-                let path = path.trim();
-                if !path.is_empty() && !path.contains(['\n', '\r']) {
-                    println!("cargo:rerun-if-changed={path}");
-                }
+            let path = String::from_utf8_lossy(&output.stdout);
+            let path = path.trim();
+            if !path.is_empty() && !path.contains(['\n', '\r']) {
+                println!("cargo:rerun-if-changed={path}");
             }
         }
     }

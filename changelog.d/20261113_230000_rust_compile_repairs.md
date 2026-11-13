@@ -11,3 +11,4 @@ bump: patch
 - The logical-JSON oracle test parenthesizes `false || { … }` object values, which `json!` otherwise reads as a bare `false` literal and rejects; the ASCII reverse oracle allows `unused_parens` in the generated witness module it includes, as it already does for the other generated-code lints.
 - The verification-area test resolves `tests/` from `CARGO_MANIFEST_DIR` instead of `file!()`, which became workspace-relative when the crate moved to `rust/` and made every area report "is not a test target".
 - `scripts/verify-contracts.rs` depends on the router package at `../rust` (the repository root is now a virtual workspace manifest), and `scripts/record-vendor-fixtures.rs` finds its cassettes under `rust/tests/fixtures/vendor/` when run from the repository root.
+- `build.rs` folds its nested `git rev-parse` success check into a `let` chain, which Rust 1.98's `clippy::collapsible_if` requires before any other target can be linted.
