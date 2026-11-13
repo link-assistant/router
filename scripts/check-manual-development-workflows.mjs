@@ -32,7 +32,7 @@ export function auditManualDevelopment(sources) {
   if (!call || Object.keys(manual.on).length !== 1 ||
       !isDeepStrictEqual(Object.keys(call).sort(), ['inputs', 'outputs']) ||
       Object.keys(call.inputs ?? {}).length !== 1 || call.inputs?.sha?.required !== true || call.inputs?.sha?.type !== 'string' ||
-      !isDeepStrictEqual(call.outputs, MANUAL_OUTPUTS)) errors.push(`${MANUAL_WORKFLOW}: immutable SHA input and false Rust admission output required`);
+      !isDeepStrictEqual(call.outputs, MANUAL_OUTPUTS)) errors.push(`${MANUAL_WORKFLOW}: immutable SHA input and aggregate-derived Rust admission output required`);
   if (!isDeepStrictEqual(manual?.permissions, { contents: 'read' })) errors.push(`${MANUAL_WORKFLOW}: read-only permissions required`);
   const expected = manualJobs();
   if (!isDeepStrictEqual(Object.keys(manual?.jobs ?? {}).sort(), Object.keys(expected).sort())) errors.push(`${MANUAL_WORKFLOW}: exact active development stages and aggregate required`);
@@ -42,7 +42,7 @@ export function auditManualDevelopment(sources) {
 
   // Independently check the actual manual lane above. Then audit a *structural
   // policy projection* with the original strict audit: restore only the caller
-  // edge and remove only the additional, validated false-output Rust guard.
+  // edge and remove only the additional, validated Rust admission guard.
   // This checks conserved source policy, never claims those strict jobs ran.
   const projected = { ...sources };
   delete projected[MANUAL_WORKFLOW];
@@ -55,7 +55,7 @@ export function auditManualDevelopment(sources) {
       if (id === 'javascript') continue;
       const condition = job.if;
       if (typeof condition !== 'string' || !condition.startsWith(RUST_BLOCK) || !condition.endsWith(')')) {
-        errors.push(`${name}/${id}: explicit false-output Rust/release admission guard missing`);
+        errors.push(`${name}/${id}: explicit same-SHA Rust/release admission guard missing`);
       } else job.if = condition.slice(RUST_BLOCK.length, -1);
     }
     projected[name] = stringify(workflow);
@@ -69,6 +69,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   try {
     const errors = auditManualDevelopment(readWorkflowSources(process.argv[2]));
     if (errors.length) { console.error(errors.join('\n')); process.exitCode = 1; }
-    else console.log('Temporary manual development workflow policy verified. Automated translation is suspended; strict parity is unverified; Rust/releases remain blocked.');
+    else console.log('Temporary manual development workflow policy verified. Automated translation is suspended; strict parity is unverified; Rust CI runs only after every active stage passes for the same SHA.');
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }

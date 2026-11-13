@@ -1,11 +1,13 @@
 # Manual development policy and completed strict CI review
 
-The maintainer's [2026-11-11 instruction](https://github.com/link-assistant/router/pull/785#issuecomment-6792655442)
+The maintainer's 2026-11-11 instruction (no longer available; [repeated on 2026-11-13](https://github.com/link-assistant/router/pull/785#issuecomment-6864697228))
 asks to temporarily suspend automated translation checks and finish translation
 manually. The [development contract](../../development/manual-translation-development.md)
 records the exact active and suspended checks. The complete strict workflow,
 original compiler receiving files, deadlines and source bounds remain intact.
-The separate development lane does not certify parity or unlock Rust/releases.
+The separate development lane does not certify parity. Since 2026-11-13 it
+admits same-SHA Rust CI only after all four active stages pass (see the
+development contract); this record describes the earlier blocked state.
 
 ## Terminal published cycle
 

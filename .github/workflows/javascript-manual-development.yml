@@ -9,8 +9,8 @@ on:
         type: string
     outputs:
       rust_allowed:
-        description: "False: temporary manual checks do not qualify the strict JavaScript gate"
-        value: "false"
+        description: True only after every active manual development stage passed for this SHA; never strict parity
+        value: ${{ jobs.complete.outputs.rust_allowed }}
 permissions:
   contents: read
 jobs:
@@ -138,17 +138,22 @@ jobs:
       - bun-tests
       - typescript
     if: ${{ always() }}
+    outputs:
+      rust_allowed: ${{ steps.admit.outputs.rust_allowed }}
     steps:
       - name: Require every active development stage; report suspended checks
+        id: admit
         env:
           STAGE_RESULTS: ${{ toJSON(needs) }}
         run: |-
           node --input-type=module -e "
+            import fs from 'node:fs';
             const stages = JSON.parse(process.env.STAGE_RESULTS);
             const required = ['lint', 'node-tests', 'bun-tests', 'typescript'];
             if (Object.keys(stages).length !== required.length || required.some(id => stages[id]?.result !== 'success')) {
               console.error('Manual development checks rejected:', process.env.STAGE_RESULTS);
               process.exit(1);
             }
-            console.log('Temporary manual development checks passed. Automated translation checks are suspended; strict parity is unverified. Rust and releases remain blocked.');
+            if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, 'rust_allowed=true\n');
+            console.log('Temporary manual development checks passed. Automated translation checks are suspended; strict parity is unverified. Same-SHA Rust CI may now run; its failures remain fatal.');
           "

@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { auditManualDevelopment, readWorkflowSources } from '../check-manual-development-workflows.mjs';
 import { MANUAL_STAGES, MANUAL_WORKFLOW, MANUAL_AGGREGATE, RUST_BLOCK } from '../manual-development-policy.mjs';
 import { runManualDevelopment } from '../check-manual-development-local.mjs';
@@ -57,10 +60,14 @@ test('manual lane refuses missing, skipped, ignored, reordered or substituted ch
   for (const [index, change] of changes.entries()) assert.ok(mutation(MANUAL_WORKFLOW, change).length, `mutation ${index}`);
 });
 
-test('immutable SHA, read-only permissions and explicit false Rust output cannot be bypassed', { timeout: 30_000 }, () => {
+test('immutable SHA, read-only permissions and aggregate-derived Rust admission cannot be bypassed', { timeout: 30_000 }, () => {
   for (const change of [
     doc => { doc.on.workflow_call.inputs.sha.required = false; },
     doc => { doc.on.workflow_call.outputs.rust_allowed.value = 'true'; },
+    doc => { doc.on.workflow_call.outputs.rust_allowed.value = 'false'; },
+    doc => { doc.jobs.complete.outputs.rust_allowed = 'true'; },
+    doc => { delete doc.jobs.complete.outputs; },
+    doc => { delete doc.jobs.complete.steps[0].id; },
     doc => { delete doc.on.workflow_call.outputs; },
     doc => { doc.on.push = null; },
     doc => { doc.permissions.contents = 'write'; },
@@ -69,7 +76,7 @@ test('immutable SHA, read-only permissions and explicit false Rust output cannot
   ]) assert.ok(mutation(MANUAL_WORKFLOW, change).length);
 });
 
-test('every caller retains its false Rust guard, original dependencies, draft policy and source pins', { timeout: 30_000 }, () => {
+test('every caller retains its same-SHA Rust admission guard, original dependencies, draft policy and source pins', { timeout: 30_000 }, () => {
   for (const change of [
     doc => { doc.jobs.test.if = "needs.javascript.result == 'success'"; },
     doc => { doc.jobs.test.needs = []; },
@@ -90,16 +97,32 @@ test('malformed and duplicate YAML keys fail closed', { timeout: 30_000 }, () =>
   }
 });
 
-test('aggregate executes and rejects failed, cancelled, skipped, missing and unknown stages', { timeout: 30_000 }, () => {
+test('aggregate admits Rust only after all stages pass, rejecting failed, cancelled, skipped, missing and unknown stages', { timeout: 30_000 }, () => {
   const passed = Object.fromEntries(MANUAL_STAGES.map(([id]) => [id, { result: 'success' }]));
-  const run = value => spawnSync(MANUAL_AGGREGATE, { shell: true, encoding: 'utf8', env: { ...process.env, STAGE_RESULTS: JSON.stringify(value) } });
-  const green = run(passed);
-  assert.equal(green.status, 0, green.stderr);
-  assert.match(green.stdout, /strict parity is unverified/);
-  for (const status of ['failure', 'cancelled', 'skipped']) assert.notEqual(run({ ...passed, lint: { result: status } }).status, 0);
-  const missing = { ...passed }; delete missing.typescript;
-  assert.notEqual(run(missing).status, 0);
-  assert.notEqual(run({ ...passed, unreviewed: { result: 'success' } }).status, 0);
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'manual-aggregate-'));
+  try {
+    let index = 0;
+    const run = value => {
+      const output = path.join(directory, `output-${index++}`);
+      fs.writeFileSync(output, '');
+      const result = spawnSync(MANUAL_AGGREGATE, { shell: true, encoding: 'utf8', env: { ...process.env, GITHUB_OUTPUT: output, STAGE_RESULTS: JSON.stringify(value) } });
+      return { ...result, output: fs.readFileSync(output, 'utf8') };
+    };
+    const green = run(passed);
+    assert.equal(green.status, 0, green.stderr);
+    assert.match(green.stdout, /strict parity is unverified/);
+    assert.equal(green.output, 'rust_allowed=true\n');
+    const rejected = [
+      ...['failure', 'cancelled', 'skipped'].map(status => ({ ...passed, lint: { result: status } })),
+      (() => { const missing = { ...passed }; delete missing.typescript; return missing; })(),
+      { ...passed, unreviewed: { result: 'success' } },
+    ];
+    for (const value of rejected) {
+      const result = run(value);
+      assert.notEqual(result.status, 0);
+      assert.equal(result.output, '', 'a rejected aggregate must not admit Rust');
+    }
+  } finally { fs.rmSync(directory, { recursive: true, force: true }); }
 });
 
 test('local runner executes all active commands and cannot produce strict parity evidence', () => {

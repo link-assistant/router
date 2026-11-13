@@ -40,7 +40,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const after = fingerprint(receiptPath, fingerprintOptions);
     if (JSON.stringify(before) !== JSON.stringify(after)) throw Error('Source changed during manual development checks. Rerun the checks.');
     fs.writeFileSync(receiptPath, JSON.stringify({ ...report, ...after, checkedAt: new Date().toISOString() }, null, 2) + '\n');
-    console.log(`Manual development receipt: ${receiptPath}; strict parity remains unverified; Rust and releases remain blocked.`);
+    console.log(`Manual development receipt: ${receiptPath}; strict parity remains unverified; this local receipt never authorizes local Rust tools.`);
     if (!report.developmentChecksPassed) process.exitCode = 1;
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }

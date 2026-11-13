@@ -1,6 +1,8 @@
 // Temporary manual translation policy requested by the maintainer:
-// https://github.com/link-assistant/router/pull/785#issuecomment-6792655442
-// These checks grant neither strict parity nor permission to run Rust/releases.
+// https://github.com/link-assistant/router/pull/785#issuecomment-6864697228
+// These checks never grant strict parity. Once every active stage passes for
+// the same SHA, Rust CI may verify the manually maintained router; Rust
+// failures remain fatal. Local Rust tools stay forbidden (AGENTS.md).
 export const MANUAL_WORKFLOW = 'javascript-manual-development.yml';
 export const RUST_BLOCK = "needs.javascript.outputs.rust_allowed == 'true' && (";
 export const MANUAL_STAGES = Object.freeze([
@@ -31,13 +33,15 @@ export const SHA_VERIFIER = `node --input-type=module -e "
 "`;
 
 export const MANUAL_AGGREGATE = `node --input-type=module -e "
+  import fs from 'node:fs';
   const stages = JSON.parse(process.env.STAGE_RESULTS);
   const required = ['lint', 'node-tests', 'bun-tests', 'typescript'];
   if (Object.keys(stages).length !== required.length || required.some(id => stages[id]?.result !== 'success')) {
     console.error('Manual development checks rejected:', process.env.STAGE_RESULTS);
     process.exit(1);
   }
-  console.log('Temporary manual development checks passed. Automated translation checks are suspended; strict parity is unverified. Rust and releases remain blocked.');
+  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, 'rust_allowed=true\\n');
+  console.log('Temporary manual development checks passed. Automated translation checks are suspended; strict parity is unverified. Same-SHA Rust CI may now run; its failures remain fatal.');
 "`;
 
 export const INSTALLS = Object.freeze({
@@ -49,8 +53,8 @@ export const INSTALLS = Object.freeze({
 
 export const MANUAL_OUTPUTS = Object.freeze({
   rust_allowed: {
-    description: 'False: temporary manual checks do not qualify the strict JavaScript gate',
-    value: 'false',
+    description: 'True only after every active manual development stage passed for this SHA; never strict parity',
+    value: '${{ jobs.complete.outputs.rust_allowed }}',
   },
 });
 
@@ -78,7 +82,8 @@ export function manualJobs() {
     name: 'JavaScript fully green',
     'runs-on': 'ubuntu-24.04', 'timeout-minutes': 5,
     needs: MANUAL_STAGES.map(([id]) => id), if: '${{ always() }}',
-    steps: [{ name: 'Require every active development stage; report suspended checks',
+    outputs: { rust_allowed: '${{ steps.admit.outputs.rust_allowed }}' },
+    steps: [{ name: 'Require every active development stage; report suspended checks', id: 'admit',
       env: { STAGE_RESULTS: '${{ toJSON(needs) }}' }, run: MANUAL_AGGREGATE }],
   };
   return jobs;

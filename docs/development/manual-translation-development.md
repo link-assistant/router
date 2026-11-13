@@ -1,10 +1,13 @@
 # Temporary manual translation development
 
-On 2026-11-11 the maintainer [requested suspending checks that require automated
-translation and finishing translation manually](https://github.com/link-assistant/router/pull/785#issuecomment-6792655442).
+On 2026-11-11 the maintainer requested suspending checks that require automated
+translation and finishing translation manually; that original comment is no
+longer available. On 2026-11-13 the maintainer [repeated the instruction](https://github.com/link-assistant/router/pull/785#issuecomment-6864697228):
+skip those checks temporarily while preserving them in code, focus on manual
+changes, make sure the router system works, and ensure all CI/CD checks pass.
 The temporary development workflow implements that instruction. A passing
-development run does not prove translation freshness, runtime parity or release
-readiness. The complete strict workflow and its original tests remain checked in.
+development run does not prove translation freshness or runtime parity. The
+complete strict workflow and its original tests remain checked in.
 
 ## Active development checks
 
@@ -66,20 +69,28 @@ stage and supplies no verification of translation.
 
 ## Rust and publication boundary
 
-Until the conflicting Rust boundary is explicitly resolved, temporary checks
-**cannot authorize Rust or release jobs**. The reusable manual workflow exports
-literal `rust_allowed: 'false'`. Every downstream caller job retains its original
-success/dependency conditions and adds a requirement that this output be true.
-That guard applies on both pull requests and the default branch. Existing fixed
-nine draft-workflow triggers and draft conditions are preserved. No Rust tools
-run locally. This is an intentional development-only state, not a secret/access
-workaround and not a qualified release pipeline.
+The router itself is the Rust crate, so "the router system is working" can
+only be verified by running its Rust checks. The reusable manual workflow's
+`rust_allowed` output is therefore derived from the aggregate job: the
+`JavaScript fully green` step writes `rust_allowed=true` to `GITHUB_OUTPUT`
+only after it has verified that every active stage succeeded for the same
+immutable SHA. A failed, cancelled, skipped, missing or unknown stage writes
+nothing, so the output stays empty and every guarded Rust/release job is
+skipped. Every downstream caller job keeps its original success/dependency
+conditions and additionally requires that output to be `true`; literal
+`true`/`false` values are rejected by the policy audit.
+
+Once admitted, Rust lint, tests, coverage, builds and the other existing Rust
+workflows run with unchanged commands, and their failures remain fatal. The
+fixed nine draft-workflow triggers and draft conditions are preserved. Local
+Rust tools remain forbidden by `AGENTS.md`; the local runner's receipt keeps
+`rustAllowed: false` and cannot unlock the bounded Rust wrapper.
 
 Restore the strict caller references and remove only the additional Rust-output
 guards when resuming the strict workflow. Run the complete original local gate,
 its complete policy tests, and all same-SHA CI stages before claiming verified
-translation or allowing gated Rust/release work. The temporary local runner,
-manual workflow, policy and documentation can then be removed together.
+translation. The temporary local runner, manual workflow, policy and
+documentation can then be removed together.
 
 The last strict runs still reported missing/partial parity, carried source,
 stale generated outputs and original deadline failures. None is repaired or
