@@ -310,4 +310,70 @@ mod tests {
         assert!(!redacted.to_string().contains("sensitive-customer"));
         assert!(!redacted.to_string().contains("secret"));
     }
+
+    /// The shortest value that is partially redacted keeps three characters
+    /// at each end; anything shorter is replaced outright.
+    #[test]
+    fn partial_redaction_starts_at_its_minimum_length() {
+        assert_eq!(partially_redact("abcdefghijkl"), "abc******jkl");
+        assert_eq!(partially_redact("abcdefghijk"), REDACTED);
+    }
+
+    #[test]
+    fn secret_names_match_in_any_case_and_by_suffix() {
+        for name in [
+            "X-API-KEY",
+            "ACCESS_TOKEN",
+            "clientSecret",
+            "db_password",
+            "webhook_secret",
+            "github_token",
+            "openai_api_key",
+        ] {
+            assert!(is_secret_name(name), "{name} names a secret");
+        }
+        for name in ["X-Request-Id", "API", "content-type", "monkey"] {
+            assert!(!is_secret_name(name), "{name} does not name a secret");
+        }
+    }
+
+    #[test]
+    fn only_three_long_base64url_segments_after_a_json_header_are_a_jwt() {
+        let segment = "c2lnbmF0dXJl";
+        assert!(is_jwt(&format!("eyJhbGciOi.{segment}.{segment}")));
+        // A fourth segment, a header that is not JSON, a short segment, or a
+        // character outside base64url is not a JWT.
+        for value in [
+            format!("eyJhbGciOi.{segment}.{segment}.{segment}"),
+            format!("{segment}.{segment}.{segment}"),
+            format!("eyJ.{segment}.{segment}"),
+            format!("eyJhbGciOi.{segment}.sig/nature"),
+        ] {
+            assert!(!is_jwt(&value), "{value} is not a JWT");
+        }
+    }
+
+    #[test]
+    fn a_percent_sign_without_two_following_characters_is_literal() {
+        assert_eq!(percent_decode("100%"), "100%");
+        assert_eq!(percent_decode("%4"), "%4");
+        assert_eq!(percent_decode("%41+b"), "A b");
+        assert_eq!(redacted_uri("/v1?note=100%"), "/v1?note=100%");
+    }
+
+    #[test]
+    fn header_names_survive_while_secret_values_are_masked() {
+        let mut headers = HeaderMap::new();
+        headers.insert("content-type", "application/json".parse().unwrap());
+        headers.insert("x-api-key", "sk-live-0123456789".parse().unwrap());
+        let redacted = redacted_headers(&headers);
+        assert_eq!(
+            redacted.get("content-type").map(String::as_str),
+            Some("application/json")
+        );
+        assert_eq!(
+            redacted.get("x-api-key").map(String::as_str),
+            Some("sk-************789")
+        );
+    }
 }
