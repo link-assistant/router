@@ -3,10 +3,15 @@ import assert from 'node:assert/strict';
 import { writeFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Router, RouterError, catalog, operationNames, version, runProcess } from '../index.js';
 import { temporaryHome, mockUpstream, vendorStub } from '../testing.js';
 
-const binary = resolve(process.env.ROUTER_TEST_BIN ?? '../../target/debug/router');
+// The workspace target directory is at the repository root, one level above
+// this package; resolve it from this file so the working directory does not matter.
+const binary = process.env.ROUTER_TEST_BIN
+  ? resolve(process.env.ROUTER_TEST_BIN)
+  : fileURLToPath(new URL('../../target/debug/router', import.meta.url));
 async function fixture(body) {
   const dir = await mkdtemp(join(tmpdir(), 'router-binding-test-'));
   const path = join(dir, 'router');

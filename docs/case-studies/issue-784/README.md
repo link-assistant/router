@@ -1,7 +1,16 @@
 # Issue 784: default geolocation privacy
 
-Research and verification dates: 2026-11-06–11 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
+Research and verification dates: 2026-11-06–14 UTC. Issue: [#784](https://github.com/link-assistant/router/issues/784).
 Delivery: [PR #785](https://github.com/link-assistant/router/pull/785).
+
+The [2026-11-13 maintainer instruction](https://github.com/link-assistant/router/pull/785#issuecomment-6864697228)
+asks for every CI/CD check to pass in this PR while the automated translation
+checks stay suspended. Once the four JavaScript stages passed, the manual lane
+admitted same-SHA Rust CI for the first time. The
+[Rust CI repair record](rust-ci-repairs-20261113.md) lists every Rust, Lint,
+release-automation and supplemental-workflow failure found that way (most were
+already present on `main`), its root cause, the repair and the run that
+verifies it. The sections below keep the earlier history unchanged.
 
 The maintainer's [latest instruction and manual development verification](manual-development-20261111.md)
 temporarily suspend automated translation checks while preserving the complete
