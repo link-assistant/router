@@ -2,6 +2,9 @@
 include!("support/management_state.rs");
 use link_assistant_router::error_log::ErrorLog;
 use serde_json::{Value, json};
+#[path = "support/free_port.rs"]
+mod free_port;
+use free_port::free_port;
 
 async fn document(response: axum::response::Response) -> Value {
     serde_json::from_slice(&response.into_body().collect().await.unwrap().to_bytes()).unwrap()
@@ -433,47 +436,9 @@ async fn real_server_debug_patch_expires_and_audits_with_a_quiet_startup_filter(
         }
     }
     let dir = tempfile::tempdir().unwrap();
-    let socket = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-    let address = socket.local_addr().unwrap();
-    drop(socket);
     let audit = dir.path().join("audit.jsonl");
     let stderr = dir.path().join("server-stderr.log");
     let operational = dir.path().join("logs/operational.log");
-    let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_router"));
-    command
-        .args([
-            "serve",
-            "--listener",
-            &format!("{address}=combined,http"),
-            "--token-secret",
-            "observability-runtime-test-secret",
-            "--admin-key",
-            "management-test-admin",
-            "--upstream-provider",
-            "anthropic",
-        ])
-        .env_clear()
-        .env("HOME", dir.path())
-        .env("DATA_DIR", dir.path())
-        .env("RUST_LOG", "warn")
-        .env("LOG_DEBUG_TTL_SECS", "1")
-        .env("AUDIT_LOG", &audit)
-        .env("ERROR_LOG_DIR", dir.path().join("errors"))
-        .stdout(std::process::Stdio::null())
-        .stderr(std::fs::File::create(&stderr).unwrap());
-    // An empty Windows environment breaks network startup. Use the same
-    // runtime allowlist as the isolated persistent Codex bridge.
-    #[cfg(windows)]
-    command.envs(
-        ["SystemRoot", "WINDIR", "TEMP", "TMP"]
-            .into_iter()
-            .filter_map(|name| std::env::var_os(name).map(|value| (name, value))),
-    );
-    // Keep the child visible to the workspace coverage run after env_clear.
-    if let Some(profile) = std::env::var_os("LLVM_PROFILE_FILE") {
-        command.env("LLVM_PROFILE_FILE", profile);
-    }
-    let mut server = Server(command.spawn().unwrap());
     let diagnostics = || {
         use std::io::Read as _;
         let mut bytes = Vec::new();
@@ -489,29 +454,73 @@ async fn real_server_debug_patch_expires_and_audits_with_a_quiet_startup_filter(
         .timeout(Duration::from_secs(3))
         .build()
         .unwrap();
-    let endpoint = format!("http://{address}/api/management");
-    let deadline = tokio::time::Instant::now() + Duration::from_secs(10);
-    loop {
+    // The port is released before the server binds it, so a parallel test's
+    // listener can take it first; the server then exits and is started again
+    // on another port. The old probe of `/api/management/health`, which has no
+    // route, accepted any answer, including that listener's; now only the
+    // server's own `ok` from `/api/health` counts as ready.
+    let mut attempts = 0;
+    let (mut server, address) = 'started: loop {
+        attempts += 1;
         assert!(
-            server.0.try_wait().unwrap().is_none(),
-            "server exited before readiness: {}",
+            attempts <= 5,
+            "server never started on a port of its own: {}",
             diagnostics()
         );
-        if client
-            .get(format!("{endpoint}/health"))
-            .send()
-            .await
-            .is_ok()
-        {
-            break;
+        let address = SocketAddr::from(([127, 0, 0, 1], free_port()));
+        let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_router"));
+        command
+            .args([
+                "serve",
+                "--listener",
+                &format!("{address}=combined,http"),
+                "--token-secret",
+                "observability-runtime-test-secret",
+                "--admin-key",
+                "management-test-admin",
+                "--upstream-provider",
+                "anthropic",
+            ])
+            .env_clear()
+            .env("HOME", dir.path())
+            .env("DATA_DIR", dir.path())
+            .env("RUST_LOG", "warn")
+            .env("LOG_DEBUG_TTL_SECS", "1")
+            .env("AUDIT_LOG", &audit)
+            .env("ERROR_LOG_DIR", dir.path().join("errors"))
+            .stdout(std::process::Stdio::null())
+            .stderr(std::fs::File::create(&stderr).unwrap());
+        // An empty Windows environment breaks network startup. Use the same
+        // runtime allowlist as the isolated persistent Codex bridge.
+        #[cfg(windows)]
+        command.envs(
+            ["SystemRoot", "WINDIR", "TEMP", "TMP"]
+                .into_iter()
+                .filter_map(|name| std::env::var_os(name).map(|value| (name, value))),
+        );
+        // Keep the child visible to the workspace coverage run after env_clear.
+        if let Some(profile) = std::env::var_os("LLVM_PROFILE_FILE") {
+            command.env("LLVM_PROFILE_FILE", profile);
         }
-        assert!(
-            tokio::time::Instant::now() < deadline,
-            "server did not start: {}",
-            diagnostics()
-        );
-        tokio::time::sleep(Duration::from_millis(50)).await;
-    }
+        let mut server = Server(command.spawn().unwrap());
+        let health = format!("http://{address}/api/health");
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(10);
+        while server.0.try_wait().unwrap().is_none() {
+            if let Ok(response) = client.get(&health).send().await
+                && response.status() == StatusCode::OK
+                && response.text().await.is_ok_and(|body| body == "ok")
+            {
+                break 'started (server, address);
+            }
+            assert!(
+                tokio::time::Instant::now() < deadline,
+                "server did not start: {}",
+                diagnostics()
+            );
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+    };
+    let endpoint = format!("http://{address}/api/management");
     let response = client
         .get(format!("{endpoint}/logs/errors"))
         .bearer_auth("management-test-admin")

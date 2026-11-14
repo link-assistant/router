@@ -19,10 +19,14 @@
 
 use std::fmt::Write as _;
 use std::io::{Read, Write};
-use std::net::{TcpListener, TcpStream};
+use std::net::TcpStream;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
+
+#[path = "support/free_port.rs"]
+mod free_port;
+use free_port::free_port;
 
 struct Router {
     child: Child,
@@ -38,13 +42,20 @@ impl Drop for Router {
 }
 
 impl Router {
-    /// Start a router writing into `data_dir`, with any extra arguments.
+    /// Start a router writing into `data_dir`, with any extra arguments, on a
+    /// free port, and again on another port if it exits before it is ready:
+    /// the port is released before the router binds it, so a parallel test's
+    /// listener can take it first.
     fn start(data_dir: &Path, arguments: &[&str]) -> Self {
-        let port = TcpListener::bind("127.0.0.1:0")
-            .expect("bind an ephemeral port")
-            .local_addr()
-            .expect("ephemeral address")
-            .port();
+        for _ in 0..5 {
+            if let Some(router) = Self::try_start(data_dir, arguments, free_port()) {
+                return router;
+            }
+        }
+        panic!("router never served /api/health on a port of its own");
+    }
+
+    fn try_start(data_dir: &Path, arguments: &[&str], port: u16) -> Option<Self> {
         let child = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
             .arg("serve")
             .args(arguments)
@@ -59,13 +70,12 @@ impl Router {
             .stderr(Stdio::null())
             .spawn()
             .expect("start router");
-        let router = Self {
+        let mut router = Self {
             child,
             port,
             data_dir: data_dir.to_path_buf(),
         };
-        router.wait_until_ready();
-        router
+        router.wait_until_ready().then_some(router)
     }
 
     fn get(&self, extra_headers: &str) -> Option<String> {
@@ -98,15 +108,20 @@ impl Router {
         panic!("no record containing {needle} was written");
     }
 
-    fn wait_until_ready(&self) {
+    /// Wait until this router answers `/api/health` with its bare `ok`, as
+    /// `managed_server::tcp_health` checks; `false` if it exited first, as it
+    /// does when another listener took its port.
+    fn wait_until_ready(&mut self) -> bool {
         let deadline = Instant::now() + Duration::from_secs(30);
-        while Instant::now() < deadline {
-            if self.get("").is_some_and(|r| r.starts_with("HTTP/1.1 200")) {
-                return;
+        while matches!(self.child.try_wait(), Ok(None)) {
+            let response = self.get("").unwrap_or_default();
+            if response.starts_with("HTTP/1.1 200 ") && response.ends_with("ok") {
+                return true;
             }
+            assert!(Instant::now() < deadline, "router did not become ready");
             std::thread::sleep(Duration::from_millis(50));
         }
-        panic!("router did not become ready");
+        false
     }
 }
 

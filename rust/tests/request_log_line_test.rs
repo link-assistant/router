@@ -7,9 +7,13 @@
 
 use std::cell::Cell;
 use std::io::{BufRead as _, BufReader, Read as _, Seek as _, SeekFrom, Write as _};
-use std::net::{TcpListener, TcpStream};
+use std::net::TcpStream;
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
+
+#[path = "support/free_port.rs"]
+mod free_port;
+use free_port::free_port;
 
 struct Router {
     child: Child,
@@ -26,12 +30,19 @@ impl Drop for Router {
 }
 
 impl Router {
+    /// Start a router on a free port, and again on another port if it exits
+    /// before it is ready: the port is released before the router binds it, so
+    /// a parallel test's listener can take it first.
     fn start() -> Self {
-        let port = TcpListener::bind("127.0.0.1:0")
-            .expect("bind an ephemeral port")
-            .local_addr()
-            .expect("ephemeral address")
-            .port();
+        for _ in 0..5 {
+            if let Some(router) = Self::try_start(free_port()) {
+                return router;
+            }
+        }
+        panic!("router never served /api/health on a port of its own");
+    }
+
+    fn try_start(port: u16) -> Option<Self> {
         let data_dir = tempfile::tempdir().expect("temporary data directory");
         let child = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
             .arg("serve")
@@ -53,25 +64,29 @@ impl Router {
             .stderr(Stdio::null())
             .spawn()
             .expect("start router");
-        let router = Self {
+        let mut router = Self {
             child,
             port,
             log_offset: Cell::new(0),
             data_dir,
         };
-        router.wait_until_ready();
-        router
+        router.wait_until_ready().then_some(router)
     }
 
-    fn wait_until_ready(&self) {
+    /// Wait until this router answers `/api/health` with its bare `ok`, as
+    /// `managed_server::tcp_health` checks; `false` if it exited first, as it
+    /// does when another listener took its port.
+    fn wait_until_ready(&mut self) -> bool {
         let deadline = Instant::now() + Duration::from_secs(30);
-        while Instant::now() < deadline {
-            if self.get("/api/health").is_some() {
-                return;
+        while matches!(self.child.try_wait(), Ok(None)) {
+            let response = self.get("/api/health").unwrap_or_default();
+            if response.starts_with("HTTP/1.1 200 ") && response.ends_with("ok") {
+                return true;
             }
+            assert!(Instant::now() < deadline, "router did not become ready");
             std::thread::sleep(Duration::from_millis(100));
         }
-        panic!("router did not become ready");
+        false
     }
 
     fn get(&self, path: &str) -> Option<String> {

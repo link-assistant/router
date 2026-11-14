@@ -8,11 +8,14 @@
 
 #![cfg(unix)]
 
-use std::net::TcpListener;
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
 use link_assistant_router::providers::{ProviderStore, ProviderUpsert};
+
+#[path = "support/free_port.rs"]
+mod free_port;
+use free_port::free_port;
 
 const TOKEN_SECRET: &str = "zai-exhaustion-e2e-secret";
 const ADMIN_KEY: &str = "zai-exhaustion-e2e-admin";
@@ -29,12 +32,24 @@ impl Drop for RouterProcess {
     }
 }
 
-fn free_port() -> u16 {
-    TcpListener::bind("127.0.0.1:0")
-        .expect("reserve loopback port")
-        .local_addr()
-        .expect("read loopback port")
-        .port()
+/// Wait for this Router's own `ok` from `/api/health`; `false` if it exited
+/// first, as it does when another listener took its port.
+async fn wait_for_health(client: &reqwest::Client, base: &str, child: &mut Child) -> bool {
+    let deadline = Instant::now() + Duration::from_secs(60);
+    while matches!(child.try_wait(), Ok(None)) {
+        if let Ok(response) = client.get(format!("{base}/api/health")).send().await
+            && response.status() == reqwest::StatusCode::OK
+            && response.text().await.is_ok_and(|body| body == "ok")
+        {
+            return true;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "Router never accepted connections"
+        );
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+    false
 }
 
 /// A z.ai account whose catalog and quota answer but whose inference is
@@ -167,36 +182,32 @@ async fn a_persisted_exhaustion_marks_every_catalog_after_a_restart() {
     let data = tempfile::tempdir().expect("data");
     seed_data_dir(data.path(), &exhausted_zai().await);
 
-    let port = free_port();
-    let child = router(data.path(), home.path())
-        .arg("serve")
-        .env("ROUTER_HOST", "127.0.0.1")
-        .env("ROUTER_PORT", port.to_string())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-        .expect("start Router");
-    let mut process = RouterProcess(child);
-
     let client = reqwest::Client::new();
-    let base = format!("http://127.0.0.1:{port}");
-    let deadline = Instant::now() + Duration::from_secs(60);
-    while client
-        .get(format!("{base}/api/health"))
-        .send()
-        .await
-        .is_err()
-    {
+    // The port is released before the Router binds it, so a parallel test's
+    // listener can take it first; the Router then exits and is started again
+    // on another port.
+    let mut attempts = 0;
+    let (process, base) = loop {
+        attempts += 1;
         assert!(
-            !matches!(process.0.try_wait(), Ok(Some(_))),
-            "Router exited before it accepted connections"
+            attempts <= 5,
+            "Router never accepted connections on a port of its own"
         );
-        assert!(
-            Instant::now() < deadline,
-            "Router never accepted connections"
-        );
-        tokio::time::sleep(Duration::from_millis(50)).await;
-    }
+        let port = free_port();
+        let child = router(data.path(), home.path())
+            .arg("serve")
+            .env("ROUTER_HOST", "127.0.0.1")
+            .env("ROUTER_PORT", port.to_string())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("start Router");
+        let mut process = RouterProcess(child);
+        let base = format!("http://127.0.0.1:{port}");
+        if wait_for_health(&client, &base, &mut process.0).await {
+            break (process, base);
+        }
+    };
 
     let issued: serde_json::Value = client
         .post(format!("{base}/api/management/tokens/client"))

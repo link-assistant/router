@@ -285,6 +285,14 @@ so the next one in the list is the culprit. Loops in mutated modules should
 consume their input (slice patterns, iterators) rather than step an index, so
 no arithmetic mutation can stall them.
 
+A test that starts a router child takes its port from
+`rust/tests/support/free_port.rs`, which hands each port out once per test
+binary. The OS can still give that port to a parallel test's listener before
+the child binds it, so the test waits for the router's own `/api/health` to
+answer `ok` (no mock serves that body) and, if the child exits, starts it again
+on another port. A test that needs a refused connection dials `127.0.0.1:1`
+rather than a port it reserved and dropped.
+
 The soak uses a non-retaining upstream fixture; ordinary replay and feature
 tests still record complete requests. RSS is measured in KiB through
 `/proc/self/status` on Linux and `/bin/ps -o rss= -p <pid>` on macOS. A missing

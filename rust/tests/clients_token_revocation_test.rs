@@ -10,7 +10,11 @@
 
 mod common;
 
+#[path = "support/free_port.rs"]
+mod free_port;
+
 use common::mock_router;
+use free_port::free_port;
 use link_assistant_router::config::StoragePolicy;
 use link_assistant_router::storage::build_token_store;
 use link_assistant_router::token::{IssueRequest, TokenManager};
@@ -446,12 +450,19 @@ impl Drop for Router {
 }
 
 impl Router {
+    /// Start a router on a free port, and again on another port if it exits
+    /// before it is healthy: the port is released before the router binds it,
+    /// so a parallel test's listener can take it first.
     fn start(home: &Path, storage: &str) -> Self {
-        let port = std::net::TcpListener::bind("127.0.0.1:0")
-            .expect("ephemeral port")
-            .local_addr()
-            .expect("local address")
-            .port();
+        for _ in 0..5 {
+            if let Some(router) = Self::try_start(home, storage, free_port()) {
+                return router;
+            }
+        }
+        panic!("router never served /api/health on a port of its own");
+    }
+
+    fn try_start(home: &Path, storage: &str, port: u16) -> Option<Self> {
         let child = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
             .arg("serve")
             .env("HOME", home)
@@ -466,20 +477,46 @@ impl Router {
             .stderr(std::process::Stdio::null())
             .spawn()
             .expect("router should start");
-        let router = Self { child, port };
+        let mut router = Self { child, port };
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
-        while std::time::Instant::now() < deadline {
-            if http_post(&router.url("/api/health"), None, &[], "").is_some() {
-                return router;
+        while matches!(router.child.try_wait(), Ok(None)) {
+            if router_health(router.port) {
+                return Some(router);
             }
+            assert!(
+                std::time::Instant::now() < deadline,
+                "router never became healthy on port {}",
+                router.port
+            );
             std::thread::sleep(std::time::Duration::from_millis(100));
         }
-        panic!("router never became healthy on port {}", router.port);
+        None
     }
 
     fn url(&self, path: &str) -> String {
         format!("http://127.0.0.1:{}{path}", self.port)
     }
+}
+
+/// Whether the router answers `/api/health` with its bare `ok`, as
+/// `managed_server::tcp_health` checks. `mock_router` answers the same path
+/// with a JSON body, so a mock that took the router's port is not mistaken for
+/// it.
+fn router_health(port: u16) -> bool {
+    use std::io::{Read as _, Write as _};
+
+    let Ok(mut stream) = std::net::TcpStream::connect(("127.0.0.1", port)) else {
+        return false;
+    };
+    // A listener that accepts and never answers must not stall the start.
+    let _ = stream.set_read_timeout(Some(std::time::Duration::from_secs(5)));
+    let mut response = String::new();
+    stream
+        .write_all(b"GET /api/health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
+        .and_then(|()| stream.read_to_string(&mut response))
+        .is_ok()
+        && response.starts_with("HTTP/1.1 200 ")
+        && response.ends_with("ok")
 }
 
 /// Minimal blocking POST; the crate's `reqwest` is async-only here.
