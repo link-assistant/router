@@ -98,6 +98,21 @@ fn args() -> DeployArgs {
         .into();
     args
 }
+/// Wait until this test's own dropped listener has really closed.
+///
+/// A child process that a parallel test is spawning holds a copy of every
+/// open descriptor, close-on-exec ones included, between its fork and its
+/// exec, so the socket can stay in `LISTEN` for a moment after `drop`.
+fn wait_until_released(port: u16) {
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while let Err(error) = TcpListener::bind(("127.0.0.1", port)) {
+        assert!(
+            Instant::now() < deadline,
+            "port {port} stayed bound after its listener was dropped: {error}"
+        );
+        std::thread::sleep(Duration::from_millis(10));
+    }
+}
 
 fn execute(args: &DeployArgs, root: &Path, image: &str, docker: &Docker) -> Result<Value, String> {
     // Resource fixtures must not depend on space occupied by CI compilation.
@@ -178,6 +193,7 @@ fn collision_failure_and_pending_cleanup_never_recover_other_deployments() {
             .contains("listener")
     );
     drop(listener);
+    wait_until_released(args.port());
     runner.0.lock().unwrap().start_failed = true;
     let error = execute(&args, &root, "router:1.2.3", &docker).unwrap_err();
     assert!(error.contains("start failed"), "{error}");
