@@ -244,7 +244,8 @@ fn claude_2_1_265_privacy_matrix_keeps_monitor_when_feature_evaluation_is_enable
     // Monitor without a feature flag, so every environment offers it deferred.
     let (compatible_monitor, compatible_diagnostics) = monitor_offer(&compatible_three);
     assert_ne!(
-        compatible_monitor, MonitorOffer::Hidden,
+        compatible_monitor,
+        MonitorOffer::Hidden,
         "compatible defaults hid Monitor: {compatible_diagnostics}"
     );
     let expected_with_blocker = match compatible_monitor {
