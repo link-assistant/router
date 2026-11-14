@@ -1,7 +1,28 @@
 # Verification
 
-No green gate stamp, complete parity, vendor-account change, or blanket
-geolocation guarantee has been established. Rust tools remain unrun locally.
+No green strict gate stamp, complete translation parity, vendor-account change,
+or blanket geolocation guarantee has been established. Rust tools remain unrun
+locally, as `AGENTS.md` requires; Rust is verified in CI only.
+
+## Rust CI after manual-lane admission (2026-11-13/14)
+
+Following the [2026-11-13 maintainer instruction](https://github.com/link-assistant/router/pull/785#issuecomment-6864697228),
+the temporary manual lane admits same-SHA Rust CI while the strict translation
+checks stay suspended in code. The [repair record](rust-ci-repairs-20261113.md)
+lists each failure that admission exposed, with its root cause and repair.
+Green runs after those repairs:
+
+| Workflow | Run | Commit | Result |
+| --- | --- | --- | --- |
+| CI/CD Pipeline | [43545545245](https://github.com/link-assistant/router/actions/runs/43545545245) | `33e54797c` | Every job passes: Lint and Format, Ubuntu/macOS/Windows tests, coverage, dependency audit, changelog fragments, Build Package. Ubuntu runs 198 test binaries with 4450 passed and 0 failed, including `geolocation::tests::location_headers_require_one_explicit_true`, `shared_metadata_cases_preserve_prompts_and_opt_in` and `static_account_headers_cannot_restore_unconsented_location` |
+| Fuzz, Soak, macOS Keychain, Upgrade matrix | 43545385858, 43545388827, 43545394389, 43545397120 | `abeedf7fd` | Pass |
+| Docker Runtime Build | [43546188317](https://github.com/link-assistant/router/actions/runs/43546188317) | `f160d7b47` | Passes |
+| Downstream Operations and Contracts | [43547623212](https://github.com/link-assistant/router/actions/runs/43547623212) | `be7fe9042` | Passes, including the JavaScript binding tests |
+| Real Client Capture | [43548583589](https://github.com/link-assistant/router/actions/runs/43548583589) | `aebd75393` | Every job passes, including Claude Code latest (2.1.325) |
+| Benchmarks | [43548903264](https://github.com/link-assistant/router/actions/runs/43548903264) | `3540f46c3` | Passes, including the immutable-base lane and "Compare against base" |
+
+Each later commit changes only what its record row describes. The results for
+the final head, including the PR-only Mutants run, are in the PR description.
 
 ## Completed CI cycle at 84779613d
 

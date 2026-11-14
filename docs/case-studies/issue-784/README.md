@@ -19,8 +19,10 @@ both 260-case native suites, strict 167-file TypeScript compilation and the UI
 build. Its receipt deliberately grants no strict parity or Rust/release admission.
 The published `124edb33e` cycle is terminal: 40 failed, seven cancelled, three
 passed and 25 skipped. All 46 available nonpassing logs and all 41 artifact
-inspections are retained; one cancelled log remains unavailable. The whole issue,
-Rust verification and universal client/account privacy remain unfinished.
+inspections are retained; one cancelled log remains unavailable. Rust
+verification has since run in CI (see the [repair record](rust-ci-repairs-20261113.md)
+and [verification](verification.md#rust-ci-after-manual-lane-admission-2026-11-1314)).
+Universal client/account privacy remains unmet, as explained below the requirement table.
 
 The [earlier terminal CI review](ci-beda-terminal-20261111.md) records all 75
 completed jobs: 23 failed, eight cancelled, 19 passed and 25 skipped. Every
@@ -260,12 +262,12 @@ the latest evidence packet; the original issue's privacy criteria remain open.
 | Requirement | Solution and verification | Status |
 | --- | --- | --- |
 | All tools, including Codex and Claude, default to no geolocation sharing | Common inference metadata filter, native headers, replay and JSON WebSockets; shared fixtures and HTTP regression | Supported Router metadata implemented and Node/Bun suites pass; literal all-tool guarantee remains unmet |
-| Option to share location when needed | Exactly one `x-router-share-geolocation: true` header; connection scope for WebSockets; invalid/duplicate consent tests | JavaScript focused tests pass; Rust pending |
+| Option to share location when needed | Exactly one `x-router-share-geolocation: true` header; connection scope for WebSockets; invalid/duplicate consent tests | JavaScript focused tests pass; Rust geolocation tests pass in CI (run 43545545245, 4450 passed, 0 failed) |
 | Collect issue data in `docs/case-studies/issue-784` | GitHub JSON, requirements inventory, source register, full compressed logs and verification record | Collected; restart session summaries reviewed |
 | Deep analysis with additional online facts | Primary vendor references below, forwarding root cause and client matrix | Completed research; account limits remain explicit |
 | List every requirement and possible solutions/plans | This table and alternatives below | Recorded |
 | Check existing components/libraries | Existing native header classifier, request decoder, WebSocket inspector and vendor controls | Reused; no new dependency |
-| Execute and verify the whole solution in this PR | Focused checks, generated TypeScript, complete local gate and exact-head CI | Restart gate failed four groups; earlier CI failed; Rust and final-head qualification remain unfinished |
+| Execute and verify the whole solution in this PR | Focused checks, generated TypeScript, complete local gate and exact-head CI | Manual lane, Rust pipeline and supplemental workflows pass in CI ([record](rust-ci-repairs-20261113.md)); strict translation checks stay suspended at the maintainer's request; final-head results are in the PR description |
 
 The literal guarantee that *every tool never shares any geolocation* cannot be
 established by editing Router configuration. Source IPs are observable, providers
