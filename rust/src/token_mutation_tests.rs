@@ -167,3 +167,94 @@ fn a_token_with_one_binding_and_no_record_is_refused() {
         assert!(matches!(error, TokenError::MissingRecord), "{error:?}");
     }
 }
+
+/// Run `operation` as if the clock read `secs` seconds after the epoch.
+fn at<T>(secs: i64, operation: impl FnOnce() -> T) -> T {
+    let context = crate::operation_context::OperationContext {
+        now: chrono::DateTime::from_timestamp(secs, 0),
+        ..crate::operation_context::OperationContext::default()
+    };
+    context.scope(operation)
+}
+
+/// An admin token whose expiry is this very second is no longer a way in, so
+/// boot mints a bootstrap credential instead of relying on it.
+#[test]
+fn an_admin_token_expiring_this_second_is_not_active() {
+    let manager = test_manager();
+    let request = IssueRequest {
+        ttl_hours: 1,
+        label: "admin",
+        scope: ADMIN_SCOPE,
+        ..IssueRequest::default()
+    };
+    let token = manager.issue(&request).unwrap();
+    let id = manager.validate_token(&token).unwrap().sub;
+    let expires_at = manager.store().get(&id).unwrap().unwrap().expires_at;
+
+    let has_admin = |secs| at(secs, || manager.has_active_admin_token()).unwrap();
+    assert!(has_admin(expires_at - 1));
+    assert!(!has_admin(expires_at));
+}
+
+/// A rotation without a TTL keeps the whole hours the old token had left.
+#[test]
+fn rotating_without_a_ttl_keeps_the_remaining_whole_hours() {
+    let manager = test_manager();
+    let issued_at = chrono::Utc::now().timestamp();
+    let request = IssueRequest {
+        ttl_hours: 48,
+        label: "rotated",
+        ..IssueRequest::default()
+    };
+    let token = at(issued_at, || manager.issue(&request)).unwrap();
+    let id = manager.validate_token(&token).unwrap().sub;
+
+    // Half an hour later, 47.5 hours remain: the replacement gets 47.
+    let overrides = RotateOverrides::default();
+    let rotate = || manager.rotate_token_with(&id, &overrides);
+    let rotated = at(issued_at + 1800, rotate).unwrap();
+    let sub = manager.validate_token(&rotated).unwrap().sub;
+    let record = manager.store().get(&sub).unwrap().unwrap();
+    let ttl = record.expires_at - record.issued_at;
+    assert_eq!(ttl, 47 * 3600, "{record:?}");
+}
+
+/// A store whose revocation reports that nothing changed, as a concurrent
+/// writer or a lost update could, while the record stays live.
+struct StuckRevokeStore(MemoryTokenStore);
+
+impl TokenStore for StuckRevokeStore {
+    fn list(&self) -> Result<Vec<TokenRecord>, StorageError> {
+        self.0.list()
+    }
+    fn get(&self, id: &str) -> Result<Option<TokenRecord>, StorageError> {
+        self.0.get(id)
+    }
+    fn put(&self, record: TokenRecord) -> Result<(), StorageError> {
+        self.0.put(record)
+    }
+    fn delete(&self, id: &str) -> Result<bool, StorageError> {
+        self.0.delete(id)
+    }
+    fn revoke(&self, _: &str) -> Result<bool, StorageError> {
+        Ok(false)
+    }
+}
+
+/// Revocation is idempotent only for a record that really is revoked: a
+/// revoke that left the token live is reported, not passed off as done.
+#[test]
+fn a_revoke_that_leaves_the_token_live_is_an_error() {
+    let store = Arc::new(StuckRevokeStore(MemoryTokenStore::new()));
+    let manager = TokenManager::with_store("token-mutation-test-secret", store);
+    let token = manager.issue_token(1, "stuck").unwrap();
+    let id = manager.validate_token(&token).unwrap().sub;
+
+    let error = manager.revoke_token(&id).unwrap_err();
+    let TokenError::Storage(message) = &error else {
+        panic!("{error:?}");
+    };
+    assert!(message.contains("could not be revoked"), "{message}");
+    assert!(!manager.store().get(&id).unwrap().unwrap().revoked);
+}

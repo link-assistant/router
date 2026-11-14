@@ -24,7 +24,11 @@ async fn stub_token_endpoint(
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let url = format!("http://{}/v1/oauth/token", listener.local_addr().unwrap());
     let handle = tokio::spawn(async move {
-        let (mut socket, _) = listener.accept().await.unwrap();
+        // Bounded, so a refresh that never reaches the endpoint fails the test
+        // that awaits this handle instead of leaving it waiting forever.
+        let limit = std::time::Duration::from_secs(10);
+        let accepted = tokio::time::timeout(limit, listener.accept()).await;
+        let (mut socket, _) = accepted.expect("no token request arrived").unwrap();
         let mut raw = Vec::new();
         let mut buf = [0u8; 2048];
         // Read until the body (after the blank line) is fully present.
