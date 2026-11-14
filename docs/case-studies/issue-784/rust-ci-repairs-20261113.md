@@ -36,7 +36,8 @@ evidence for every repair below.
 | Ubuntu tests (run 43530302938, job 132248245985): `release_workflow_pin_actions_tools_and_artifact_identity` still expects `ref: refs/tags/v${{ env.RELEASE_VERSION }}` | The same stale tag-checkout literal appeared a second time, after the SHA-pinning assertion that failed first in the earlier run. [`scan-workflow-literals.py`](../../../experiments/issue-784/scan-workflow-literals.py) checks every positive `contains("…")` literal in the integration tests against the files each test reads; this was the only stale one (two other hits check runtime output) | The assertion expects the resolved release source checkout | follow-up to `15b7db39c` |
 | Windows tests: checkout `Filename too long` (97 paths) | 336 committed paths are longer than 200 characters (the longest is 327, the same on `main`). Under `D:\a\router\router\` they exceed MAX_PATH | `git config --system core.longpaths true` runs before checkout on Windows | `8b3e5017d` |
 | Lint `cargo clippy --all-targets` (run 43532139435, job 132255591200): 95 errors in 24 test targets, the first clippy pass to reach them once the library was clean | Rust 1.98 pedantic/nursery lints under `-D warnings` hit two kinds of code: (a) oracle shapes that are themselves the behavior under test — explicit `if let`/`match` beside the combinator, `let … else { return None }`, eager `unwrap_or(call())`/`ok_or(call())`, hashed raw strings that JavaScript tests extract by their exact `r###"` delimiters, the generated ASCII/base64 witnesses and the path-included `json_edit_candidate.rs`/`literal-include-type` sources that are translation input; (b) incidental test code — implicit `&x` → `*const` coercions in `std::ptr::eq`, long literals without separators, an `i64 as u64` cast, an `f64` `assert_ne!`, a missing `;`, a doc item without backticks | [`fix-clippy-tests-d110.mjs`](../../../experiments/issue-784/fix-clippy-tests-d110.mjs) (47 exact-match edits, 25 files): (a) item-, statement- or file-scoped `#[allow]`s with a reason, the inputs themselves unchanged; (b) genuine fixes — `&raw const` pointer witnesses (or a reference binding), `1.000_000_000_000_000_2`, `-2_147_483_648`, `4_294_967_295`, `0..=u32::from(char::MAX)`, `u64::try_from(value).ok()` (same values as the old `>= 0` filter and cast), a bit-exact `to_bits()` comparison, the missing `;`, backticks. `tools/translation/prepare-core-unit-matches.mjs` keeps its exact copy of the unit-matches oracle in step ([`compare-oracle-templates.mjs`](../../../experiments/issue-784/compare-oracle-templates.mjs) checks it); the unicode-predicates template already differed from its oracle and is unchanged | `53591a985` |
-| Ubuntu, macOS and Windows tests pass (run 43532139435, jobs 132256149939 / 132256149947 / 132256149988); Test Coverage (job 132256150138) fails only its ratchet step: "Coverage changed the baseline" | Line coverage rose from the `main` baseline 87.129419% to 87.232100% (82177 / 94205 lines), and `scripts/check-coverage.rs` advances `coverage-baseline.txt`, which CI requires to be committed so the change is reviewable | `coverage-baseline.txt` records 87.232100 | this commit |
+| Ubuntu, macOS and Windows tests pass (run 43532139435, jobs 132256149939 / 132256149947 / 132256149988); Test Coverage (job 132256150138) fails only its ratchet step: "Coverage changed the baseline" | Line coverage rose from the `main` baseline 87.129419% to 87.232100% (82177 / 94205 lines), and `scripts/check-coverage.rs` advances `coverage-baseline.txt`, which CI requires to be committed so the change is reviewable | `coverage-baseline.txt` records 87.232100 | `db39699c4` |
+| Lint `rust-script scripts/check-file-size.rs` (run 43534702239, job 132265267307): `rust/src/anthropic_stream.rs: 1014 lines`, `rust/src/gonka.rs: 1009 lines` (limit 1000) | The first Lint run to get past clippy reached the file-size step. On `main` the files have 999 and 1000 lines; this PR rewrapped five over-long signatures and a constant to rustfmt's 100-column width (+20/−5 and +13/−4 lines), which pushed both over the limit. No other tracked `.rs` file exceeds 1000 lines | [`split-oversized-files.mjs`](../../../experiments/issue-784/split-oversized-files.mjs) moves whole test functions, unchanged except for the 4-space de-indent, into sibling test files: the three stream-error tests (`failed_responses_…`, `standalone_error_…`, `finish_is_idempotent_…`) join `anthropic_stream_termination_tests.rs`, and the three `GONKA_MODEL` default tests move to the new `gonka_model_default_tests.rs` (`#[cfg(test)] #[path] mod model_default_tests`, as `anthropic_stream.rs` already does). The files now have 970 and 993 lines | this commit |
 
 `node scripts/regenerate-js-first.mjs --check` throws `Reverse concrete source
 host operations changed` both before and after the edit. That belongs to the
@@ -45,10 +46,26 @@ automated-translation lane the maintainer suspended, so the generated
 generator now emits: each of the 58 fixture assertions calls `super::<fn>`.
 `parity/js-first-translation.json` records the new `policy.rs` size and hash.
 
+## Related observation (not changed here)
+
+While aligning the release tests, a reading of `.github/workflows/release.yml`
+found that `finalize-release` ("Publish complete stable release") checks out
+`ref: ${{ github.sha }}` and `scripts/publish-crate.rs` publishes the version
+read from that checkout's `Cargo.toml`. The packaging jobs instead check out
+`needs.resolve-release-source.outputs.sha`, the commit that
+`refs/tags/v<version>` names. `main` has the same line (line 1680 at
+`origin/main`), so the crate could be published from the trigger commit rather
+than the tagged release commit. Changing release publication is outside issue
+#784 and this repair, and no CI check fails because of it, so this PR leaves the
+job unchanged. It needs a separate issue.
+
 ## Checks run locally (no Rust tools)
 
 - `node --test scripts/test/manual-development.test.mjs`: 7/7 pass.
 - `node scripts/check-manual-development-workflows.mjs`: passes.
+- `node scripts/sync-rust-assets.mjs --check` and `node scripts/lint-js-first.mjs`:
+  pass after the test split, and `git ls-files '*.rs' | xargs wc -l` finds no
+  file over 1000 lines.
 - `node scripts/check-js-first-workflows.mjs` and its test file give identical
   results before and after the Windows step (33/39 tests pass, 6 fail). This
   strict checker is part of the suspended lane and fails on `main` as well.
