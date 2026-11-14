@@ -372,9 +372,6 @@ mod tests {
 
     #[tokio::test]
     async fn failed_upstream_connect_releases_its_published_count() {
-        let unavailable = TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let backend_port = unavailable.local_addr().unwrap().port();
-        drop(unavailable);
         let clients = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let client_address = clients.local_addr().unwrap();
         let client = TcpStream::connect(client_address).await.unwrap();
@@ -384,11 +381,14 @@ mod tests {
         std::fs::write(&state, "127.0.0.1\n").unwrap();
         let connections = Arc::new(Mutex::new(Connections::new(&state).unwrap()));
 
-        assert!(
-            relay_connection(accepted, &state, backend_port, Arc::clone(&connections))
-                .await
-                .is_err()
-        );
+        // Refuse in the connector instead of dialling a just-closed port: a
+        // parallel test could bind that port again, and the relay would then
+        // wait on the open connection forever.
+        let refused = std::io::Error::from(std::io::ErrorKind::ConnectionRefused);
+        let refuse = |_: String, _: u16| std::future::ready(Err::<TcpStream, _>(refused));
+        let shared = Arc::clone(&connections);
+        let relayed = relay_connection_with_connector(accepted, &state, 9, shared, refuse);
+        assert!(relayed.await.is_err());
         assert_eq!(connections.lock().await.counts.get("127.0.0.1"), Some(&0));
         assert_eq!(
             std::fs::read_to_string(directory.path().join("connections/127.0.0.1")).unwrap(),

@@ -11,6 +11,14 @@ use std::sync::Arc;
 use tempfile::tempdir;
 use tower::ServiceExt;
 
+/// Wait at `barrier`, failing instead of hanging when the other party never
+/// arrives, for example because a request was rejected before its upstream.
+#[allow(clippy::redundant_pub_crate)]
+pub(crate) async fn rendezvous(barrier: &tokio::sync::Barrier) {
+    let arrival = tokio::time::timeout(std::time::Duration::from_secs(10), barrier.wait());
+    arrival.await.expect("the barrier partner never arrived");
+}
+
 #[allow(clippy::redundant_pub_crate)]
 pub(crate) fn auto_state(readers: Vec<SubscriptionReader>, data_dir: &std::path::Path) -> AppState {
     AppState {
