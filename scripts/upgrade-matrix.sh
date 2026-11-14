@@ -11,7 +11,7 @@
 #                                           read, serve and extend it with the router under test
 #   upgrade-matrix.sh fixture OLD_ROUTER DIR
 #                                           seed, then keep only the durable files, for
-#                                           tests/fixtures/upgrade/<version>/
+#                                           rust/tests/fixtures/upgrade/<version>/
 #
 # STATE holds data/ (the data directory), home/ (HOME, for the server
 # profile) and tokens.env (the issued bearer tokens and their ids). Every
