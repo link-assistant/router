@@ -60,7 +60,8 @@ async fn vendor(State(state): State<Vendor>, request: Request) -> axum::response
         })
         .into_response(),
         CatalogReply::Timeout => {
-            tokio::time::sleep(Duration::from_millis(100)).await;
+            // Far past the one-second client timeout of the test that uses it.
+            tokio::time::sleep(Duration::from_secs(30)).await;
             StatusCode::OK.into_response()
         }
     }
@@ -133,12 +134,20 @@ async fn every_uncertain_or_negative_catalog_verdict_retains_only_recovery_evide
                 &document(provider),
                 Some(&format!("{url}/token")),
                 Some(&url),
-                Duration::from_millis(20),
+                // The same client exchanges the token first, so the timeout
+                // must leave that local request room on a loaded runner: at
+                // 20 ms the Ubuntu job of CI run 43623480324 timed it out and
+                // saw `ExchangeUncertain`.
+                Duration::from_secs(1),
             )
             .await
             .expect_err("a non-positive catalog verdict must fail closed");
 
-            assert_eq!(error.kind(), AcceptanceFailureKind::SuccessorRetained);
+            assert_eq!(
+                error.kind(),
+                AcceptanceFailureKind::SuccessorRetained,
+                "{provider} {reply:?}: {error}"
+            );
             assert_eq!(error.phase(), AcceptancePhase::Catalog);
             assert!(error.transaction_id().is_some());
             let rendered = error.to_string();
