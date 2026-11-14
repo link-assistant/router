@@ -78,14 +78,15 @@ pub(super) fn admit_request_reserving(
 ///
 /// Never shortens. A window smaller than the remaining life leaves the longer
 /// expiry alone, so lowering the window cannot revoke a token early.
-const fn slide_expiry(record: &mut TokenRecord, now: i64) {
+///
+/// `max` rather than `if extended > expires_at`: the comparison's `>=` mutant
+/// stored the same value at equality, so no test could tell it apart and the
+/// full Mutants run reported it missed.
+fn slide_expiry(record: &mut TokenRecord, now: i64) {
     let Some(window) = record.sliding_window_seconds else {
         return;
     };
-    let extended = now.saturating_add(window);
-    if extended > record.expires_at {
-        record.expires_at = extended;
-    }
+    record.expires_at = record.expires_at.max(now.saturating_add(window));
 }
 
 pub(super) const fn add_token_usage(record: Option<&mut TokenRecord>, tokens: u64) {
@@ -141,5 +142,30 @@ mod tests {
         assert_eq!(admit(1_030), RequestAdmission::Admitted);
         assert_eq!(admit(1_059), RequestAdmission::RateLimitExceeded);
         assert_eq!(admit(1_060), RequestAdmission::Admitted);
+    }
+
+    /// A windowed token's expiry moves to `now + window` when that is later,
+    /// and stays where it is when it is not; a fixed-clock token never moves.
+    #[test]
+    fn a_sliding_window_extends_expiry_and_never_shortens_it() {
+        let mut record = super::super::tests::sample_record("sliding");
+        record.expires_at = 1_000;
+        record.sliding_window_seconds = Some(100);
+        let mut admit_at = |now| {
+            let admission = admit_request_reserving(Some(&mut record), now, 0);
+            assert_eq!(admission, RequestAdmission::Admitted);
+            record.expires_at
+        };
+
+        assert_eq!(admit_at(950), 1_050, "a later expiry is taken");
+        assert_eq!(admit_at(950), 1_050, "an equal expiry is kept");
+        assert_eq!(admit_at(900), 1_050, "an earlier expiry is ignored");
+        assert_eq!(admit_at(i64::MAX - 10), i64::MAX, "the expiry saturates");
+
+        let mut fixed = super::super::tests::sample_record("fixed");
+        let now = fixed.expires_at - 1;
+        let admission = admit_request_reserving(Some(&mut fixed), now, 0);
+        assert_eq!(admission, RequestAdmission::Admitted);
+        assert_eq!(fixed.expires_at, 1_700_001_000);
     }
 }
