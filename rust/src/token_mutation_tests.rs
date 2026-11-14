@@ -103,7 +103,10 @@ fn rotating_a_token_applies_the_requested_ttl() {
     let rotated = manager.rotate_token(&id, 48, "").unwrap();
     let sub = manager.validate_token(&rotated).unwrap().sub;
     let record = manager.store().get(&sub).unwrap().unwrap();
-    assert!(record.expires_at - record.issued_at >= 47 * 3600, "{record:?}");
+    assert!(
+        record.expires_at - record.issued_at >= 47 * 3600,
+        "{record:?}"
+    );
 }
 
 /// An admin token whose expiry is this very second has already expired, so

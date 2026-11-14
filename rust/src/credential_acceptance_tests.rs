@@ -405,7 +405,10 @@ async fn a_candidate_rewritten_during_validation_is_retained_not_accepted() {
 
     assert_eq!(error.kind(), AcceptanceFailureKind::SuccessorRetained);
     assert_eq!(error.phase(), AcceptancePhase::Persistence);
-    assert!(error.to_string().contains("changed after validation"), "{error}");
+    assert!(
+        error.to_string().contains("changed after validation"),
+        "{error}"
+    );
     server.abort();
 }
 
