@@ -23,7 +23,7 @@ hashes on every operation and after callbacks. A template change requires a new
 native source generation. Hashes and serialized DATA issue no namespace owners.
 
 Each stage calls the unchanged actual corpus adopter with the complete current
-map and fresh Cargo inputs, followed by its complete independent graph/source
+map and fresh Cargo inputs, followed by its complete independent module graph/source
 join. Every original/intermediate/final source has a lossless CST document. Each
 full stage input, row, inspection and remaining field is stored in bounded gzip
 packets and immediately reopened with exact canonical byte, gzip and digest
@@ -54,7 +54,7 @@ Production qualification still requires the coordinator's unchanged 900-second
 proposal and 180-second full review bounds, 2048 MiB heap, 3 GiB aggregate RSS,
 3 GiB starting free space and 2 GiB reserve. A complete outer compiler/TypeScript
 input census must be frozen and rechecked by that controller. This library's
-physical snapshot covers its complete Rust source graph and Cargo inputs.
+physical snapshot covers its complete Rust source module graph and Cargo inputs.
 
 The previous complete 564-source three-stage run stopped at its 900-second bound
 before producing a result. The new lifetime removes simultaneous decoded stage

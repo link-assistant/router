@@ -11,7 +11,7 @@ The batch contains private module-token freezing with original observer fallback
 guarded descriptor receiving imports, serializable historical ASCII selections,
 complete shallow-checkout historical fixtures, actual current static source
 fixture regeneration, receiving Git path/import corrections and the complete
-current proof-consumer bridge graph. Each source change has its own checkpoint,
+current proof-consumer bridge module graph. Each source change has its own checkpoint,
 whole-file results and failed/unrun qualifications. No local Rust tool ran.
 Newly executable application functions in this batch: zero.
 

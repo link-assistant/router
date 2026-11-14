@@ -7,11 +7,11 @@ project change, so downstream complete-source comparisons refused a stale
 project or an unregistered history. The actual project implementation stays
 unchanged by this repair.
 
-The shared source equation checks the original native graph resolver, import
+The shared source equation checks the original native module graph resolver, import
 and complete call, applies the two ordered language/repository substitutions,
 and retains both serialized/reparsed CST phases and the complete inverse.
 Original predecessors remain accepted. Partial installation, wrong compiler,
-changed graph syntax and copied metadata cannot replace those checks.
+changed module graph syntax and copied metadata cannot replace those checks.
 
 The three complete focused files pass all 12 Node cases and the independent
 original-deadline audit. Each file also passes in a separate Bun process, for

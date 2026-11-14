@@ -21,7 +21,7 @@ matches issuer now keeps that namespace consistent with project bindings. The
 original standalone matches API and generated method checks retain their
 separate contracts.
 
-Project graph discovery now captures the complete reachable physical inputs,
+Project module graph discovery now captures the complete reachable physical inputs,
 transports them through fresh bounded native CST batches, and reissues all
 original module views/path proofs from reconstructed source. Planning views are
 discarded. Every source still crosses serialization and reparsing before the
@@ -51,7 +51,7 @@ native packing changes.
 
 The normal one-parent project diagnostic admits `parse_csv` from the complete
 original `config.rs` in 44.498 s. `parse_usize_csv` still has an unresolved
-ConfigError boundary in that graph. This is neither a complete library/typed
+ConfigError boundary in that module graph. This is neither a complete library/typed
 target qualification nor a measured canonical executable coverage increase.
 
 ## Remaining deadline causes
@@ -61,7 +61,7 @@ context takes 266.520 s; sampled inclusive work includes 100.027 s in builtin
 derive output proof, 67.458 s in Deserialize output proof and 39.412 s of garbage
 collection. An earlier 512 MiB/1 ms sampling attempt exhausts V8 after 517.713 s
 and has no complete CPU profile. The successful 1 GiB/10 ms attempt preserves
-the whole original graph, source certificate, selected output and owner checks.
+the whole original module graph, source certificate, selected output and owner checks.
 Both are diagnostics, not deadline qualification. The actual shared proof costs
 remain unresolved; no owner or output proof was skipped.
 

@@ -1,12 +1,12 @@
-# Refuse changed native operations before graph discovery
+# Refuse changed native operations before module graph discovery
 
-The complete Core producer receiving file exposes a shared graph-ordering
+The complete Core producer receiving file exposes a shared module graph-ordering
 regression: `captureSourceModuleViews` serializes discovery data before the
 original private-parser native guard runs. A changed `JSON.stringify` therefore
 receives source data before the expected refusal. This affects both the original
 and copied Core paths; their agreement alone did not catch the regression.
 
-The graph reader now calls the existing fresh native guard after each physical
+The module graph reader now calls the existing fresh native guard after each physical
 read and primitive-string check, before retaining the source or discovering its
 children. Reader errors still propagate first. No guard verdict survives a call,
 and the later complete CST serialization/reparse and semantic checks remain.
@@ -38,7 +38,7 @@ cached pages of verified inactive task evidence reduces file-cache accounting
 by only 4,141,056 bytes and does not resolve the memory failure. No memory cap,
 guard threshold, case deadline or child timeout is raised.
 
-A separate complete Node run of the seven other graph/history files passes
+A separate complete Node run of the seven other module graph/history files passes
 all **37 cases** and its independent deadline audit. Thus 40 current Node cases
 are independently audited; the Core file remains unqualified. The Core source's
 unchanged deadline joins come from the preceding failed audit only for comparing

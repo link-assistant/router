@@ -49,7 +49,7 @@ The production targets are the complete original
 `client_launch.codex_root_boolean_option`. The receiving case retains their
 whole original module, real root, operation-output parent macro source and Cargo
 inputs, then checks both complete functions before and after explicit adoption.
-Its graph leaves unrelated missing root children as diagnostics and is explicitly
+Its module graph leaves unrelated missing root children as diagnostics and is explicitly
 not a whole-crate coverage measurement. Independent JS/strict TypeScript witnesses
 cover all 17 value options, all nine flags and cross-domain/Unicode negatives.
 The Rust oracle includes both complete source-selected functions and the same

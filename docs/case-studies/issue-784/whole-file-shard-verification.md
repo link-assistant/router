@@ -34,7 +34,7 @@ of all three ZIP artifacts is read, with digest, length and CRC checks.
 | TypeScript | Missing genuine owned-definition matrix index; main log lines 1154, 1167. |
 | Ordinary profile matrix | Cancelled at its original 60-minute bound; no complete draft exists. Mandatory uploader fails on missing files, lines 4625, 4639. |
 | Strict parity | Stale account-policy source hash; 441 gaps and 12345 carried items, lines 7905–7910. |
-| Forward | Cancelled at 60 minutes. Complete partial raw TAP retains eight stale actual-gain compiler-context failures at lines 553–756; receiving SIGTERM at its original 20 seconds (5443); literal corpus graph 96788.733202 > 60000 ms (6095); all-three native builds 118552.328916 > 60000 ms (6189). No terminal audit. |
+| Forward | Cancelled at 60 minutes. Complete partial raw TAP retains eight stale actual-gain compiler-context failures at lines 553–756; receiving SIGTERM at its original 20 seconds (5443); literal corpus module graph 96788.733202 > 60000 ms (6095); all-three native builds 118552.328916 > 60000 ms (6189). No terminal audit. |
 | Reverse | Cancelled at its original 15 minutes; main log line 6949. Bun and regeneration remain unrun. |
 | Aggregate / Rust | Aggregate fails at line 8057; Rust and release correctly skip. |
 

@@ -6,7 +6,7 @@ maps complete original observations to their single retained files.
 
 The original three freezer cohort cases pass locally, including the historical
 root count of two. Their full child sources, inspector coverage, compressed wire
-responses, graphs and counts are retained. A separately bounded 128 MiB child
+responses, module graphs and counts are retained. A separately bounded 128 MiB child
 probe forces optimization after 100 warm calls; both ordinary and forced runs
 still observe two. It does not reproduce the CI failure or establish its cause.
 Original assertions and deadlines remain unchanged.
@@ -24,7 +24,7 @@ This instrumentation does not fix the unexplained CI traversal count.
 The lockfile TypeScript 5.9.3 static census follows 340 physical source files,
 totaling 4,684,686 bytes. The production 4,194,304-byte limit stays unchanged;
 the larger diagnostic allowance grants no compiler or execution qualification.
-The complete graph still exceeds the original bound.
+The complete module graph still exceeds the original bound.
 
 A full-module descriptor-kind trial retains both complete sources, native
 import relocations and inverse, and six equivalent Unicode/Rust concrete

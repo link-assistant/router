@@ -5,7 +5,7 @@ The current complete private compiler test still requires its original 4 MiB
 raw-input bound. A finite diagnostic follows every actual static import and
 re-export from all four entry roots and all three original core source recipes.
 It parses the full sources with lockfile TypeScript 5.9.3, without producing a
-private plan or executing the graph. The diagnostic's larger input allowance
+private plan or executing the module graph. The diagnostic's larger input allowance
 does not change the production limit or qualify production execution.
 
 The actual closure contains 338 modules from 337 original files, totaling
@@ -17,7 +17,7 @@ source census and literal spans are retained for investigation.
 Two actual native imports, `node:module` and `node:buffer`, also lie outside the
 production native-import allowlist. The diagnostic records these unsupported
 routes; it does not permit them in the production plan. Its first attempt
-incorrectly refused `node:module` while discovering the graph. That failed
+incorrectly refused `node:module` while discovering the module graph. That failed
 2.316-second attempt is retained alongside the corrected 2.519-second census.
 Neither attempt hit the container guard. The second sampled peak is
 2,082,455,552 bytes across the entire cgroup.
@@ -35,7 +35,7 @@ The [complete import-coupling diagnostic](evidence/current-private-import-coupli
 walks all archived edges from every original root. For each non-root module it
 records every original file that would become unreachable if that module were
 removed. The largest such coupling is 314,510 bytes, below the 446,742-byte
-excess. These are hypothetical graph cuts, not unused-code proofs or permission
+excess. These are hypothetical module graph cuts, not unused-code proofs or permission
 to remove a compiler path. The diagnostic uses the complete authenticated
 archived census; it does not qualify current physical sources. No dependency,
 raw-input limit, native-import allowlist or private execution gate changes.

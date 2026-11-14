@@ -21,13 +21,13 @@ halves are authenticated and transported afresh. Splitting is finite and
 preserves row order; it never enlarges a bound or accepts an unrelated failure.
 Malformed source retains its original opaque/error CST and diagnostics.
 
-The actual graph is then rebuilt from the reconstructed complete source texts,
+The actual module graph is then rebuilt from the reconstructed complete source texts,
 with fresh original views and path proofs. Its physical input sequence must
 exactly consume the captured sequence. No planning proof is reused and caller
 source/progress callbacks are not run a second time. There is no cross-call
 source cache or authenticated epoch. CST reconstruction grants no type,
 ownership, macro-expansion or executable authority; independent semantic
-checking still follows graph construction.
+checking still follows module graph construction.
 
 Receiving tests cover complete Unicode and trivia reconstruction, row and
 aggregate partitions, independent single-source equality, full CST inverse
@@ -36,6 +36,6 @@ source on a fresh call, malformed text and non-string refusal. The original
 whole project, module-path and payload tests remain separate verification.
 
 Both traversals share the initial tracked-path set without iterating caller
-inputs again. Root-only graphs retain their existing support for one-shot
+inputs again. Root-only module graphs retain their existing support for one-shot
 iterables. External-module path planning keeps its original bounded-array
 requirement; the snapshot does not admit previously unsupported path carriers.

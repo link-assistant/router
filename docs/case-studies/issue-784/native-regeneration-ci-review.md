@@ -43,7 +43,7 @@ TAP lines 553, 582, 611, 640, 669, 698, 727 and 756. The remaining failures are:
 
 - Line 5443: complete core-adoption receiving workflow terminates with SIGTERM
   at its original 20-second child bound.
-- Line 6095: complete literal-text corpus graph case takes 107920.885818 ms,
+- Line 6095: complete literal-text corpus module graph case takes 107920.885818 ms,
   exceeding its unchanged 60000 ms deadline.
 - Line 6189: all-three-corpus native parse case takes 127007.485961 ms,
   exceeding its unchanged 60000 ms deadline.

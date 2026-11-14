@@ -40,7 +40,7 @@ the complete Bun cohort.
 
 The unchanged historical `config.rs` one-parent ordinary-project probe now
 emits `parse_csv`, source span 38315–38488. `parse_usize_csv` remains refused
-because this isolated graph cannot resolve `ConfigError`. The complete probe
+because this isolated module graph cannot resolve `ConfigError`. The complete probe
 takes 65.900 seconds, including original fixture/module loading; its compiler
 call takes 32.157 seconds. It samples 1,752,621,056 cgroup bytes and exits
 normally. This diagnostic is not the original whole-library test and does not
@@ -48,7 +48,7 @@ establish newly executable production coverage or whole-parent equivalence.
 The retained complete JavaScript and TypeScript outputs also pass independent
 strict compilation and both receivers execute five CSV cases. Null, objects,
 numbers and lone surrogate strings refuse. This receiving check takes 4.052
-seconds and does not resolve the isolated graph's remaining `ConfigError`.
+seconds and does not resolve the isolated module graph's remaining `ConfigError`.
 
 Complete before/after streams, the rejected wider proposal, final real source
 proposal, original whole files, resource receipts and independent deadline

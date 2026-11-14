@@ -2,7 +2,7 @@
 
 - [x] Wait for all seven workflows of the immutable published head; retain and fully read all 25 failed/cancelled job logs and all terminal metadata.
 - [x] Re-read the whole issue, every comment, PR conversations/inline comments/reviews and required sub-issue inventory; fetch main and verify ancestry.
-- [x] Commit private item-freeze, guarded descriptor, ASCII source-selection, full current source fixture, receiving path/import, and proof-consumer graph repairs with exact failed/passed/unrun evidence.
+- [x] Commit private item-freeze, guarded descriptor, ASCII source-selection, full current source fixture, receiving path/import, and proof-consumer module graph repairs with exact failed/passed/unrun evidence.
 - [x] Retain the stopped complete owned planner, including the invalid empty progress stream and the unqualified corrected launcher.
 - [x] Preserve all task observations with complete readback, inactive-path/identity checks and explicit custody. Consolidate 777 closed raw CI observations; the first capacity refusal left every original intact, and the second capture reclaimed 1,251,815 logical bytes.
 - [x] Check syntax and exact reviewed 450-line source diff; lockfile TypeScript reports 5.9.3. GitHub diff returns HTTP 406 above 300 files.

@@ -38,9 +38,9 @@ inverse is retained. The observation bytes have SHA-256
 This comparison closes two namespace proofs and adds zero executable functions.
 
 The two earlier whole CSV namespace probes fail within a 512 MiB Node heap:
-first while serializing the complete graph, then inside complete derive-bang
-context construction after lossless bounded graph partitioning. Their original
-inputs, all 18 graph parts, complete derive context, scripts, stderr and resource
+first while serializing the complete module graph, then inside complete derive-bang
+context construction after lossless bounded module graph partitioning. Their original
+inputs, all 18 module graph parts, complete derive context, scripts, stderr and resource
 receipts remain retained. No whole CSV receiving test, source-scope admission,
 strict parity, complete gate or Rust execution is qualified by these probes.
 

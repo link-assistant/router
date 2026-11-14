@@ -1,7 +1,7 @@
 # Project progress and bounded proof-byte receiving
 
-The progress option getter was read twice by one graph operation. The minimal
-regression fails with `2 !== 1` before the repair. The graph now captures the
+The progress option getter was read twice by one module graph operation. The minimal
+regression fails with `2 !== 1` before the repair. The module graph now captures the
 original option once. Existing bounded proof-byte DATA scopes also surround
 the actual enclosing Clone issuer and complete binding operation. They retain
 the original issuers, hash sites, checks and fixed cache bounds; they do not

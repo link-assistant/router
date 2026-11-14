@@ -233,10 +233,10 @@ ownership, semantic or executable authority. The original sixteen-case API and
 the default current `originalCsvContext` retain their existing behavior.
 
 The associated CSV helper selects one complete historical universe; it never
-mixes a pinned old file into a current graph. Its twelve original workloads,
+mixes a pinned old file into a current module graph. Its twelve original workloads,
 including the 900000 ms case deadlines, remain separate receiving obligations.
-Telegram's pinned case uses its historical graph while qwen keeps the current
-whole-root graph. Changed bridge/copy parents also have independent current Core
+Telegram's pinned case uses its historical module graph while qwen keeps the current
+whole-root module graph. Changed bridge/copy parents also have independent current Core
 fixture attempts with full parents and source/CST inverses retained. These scoped
 attempts establish neither complete parent/crate admission nor repaired semantic
 or performance frontiers. All ordinary source, dependency, checker and private

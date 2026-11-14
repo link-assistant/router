@@ -37,7 +37,7 @@ now reside beside the [relocation map](evidence/current-37147a/relocation.json).
 | Owned profile matrix, 129051661118 | Line 284: cancelled at the original one-hour job limit; line 298: no matrix draft artifacts. |
 | Forward 1, 129051661257 | Lines 1383, 1727, 2471 and 2520: original complete-parent tests time out. Line 2528: job cancellation. |
 | Forward 2, 129051661234 | Line 2252: actual private Rust compiler tool exceeds its complete-source byte bound. Independent deadline audit also fails. |
-| Forward 3, 129051661372 | Complete core graph and original provider/producer cases exceed deadlines; child compiler probes time out. |
+| Forward 3, 129051661372 | Complete core module graph and original provider/producer cases exceed deadlines; child compiler probes time out. |
 | Forward 4, 129051661188 | Actual core producer case takes 73,757.64 ms and whole-source private producer takes 62,460.24 ms against original 60,000 ms limits. |
 | Forward 5, 129051661233 | Lines 2007–2012: original clients parent test times out. The audit records 1,256,216.57 ms against 60,000 ms, and a second 62,935.28 ms breach. Lines 3397–3399: audited runner exits with failure before the job limit. |
 | Forward 6, 129051661099 | Line 1104: complete corpus case times out. Line 1703: original `safe_number` is not admitted. Audit records 2,024,700.08 ms against its original 60,000 ms limit. |

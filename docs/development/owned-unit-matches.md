@@ -123,8 +123,8 @@ Cargo are checked before, between and after phases.
 
 Each complete adoption history is written through the existing lossless indexed
 receiving-DATA codec, reopened and decoded one full row at a time. Its complete
-source/CST/inverse remains retained while the decoded graph becomes eligible for
-collection before the next graph or final checker. Owned `router-owned-unit-matches-data-`
+source/CST/inverse remains retained while the decoded module graph becomes eligible for
+collection before the next module graph or final checker. Owned `router-owned-unit-matches-data-`
 directories beneath the receiving TMPDIR retain the complete packets for the
 coordinator; no test cleanup deletes them before readback. Every packet includes
 its own full label/value, including undefined fields. A full inventory/decode
@@ -146,7 +146,7 @@ engine, generation, native parser, test or Rust execution ran for this follow-up
 
 Root's first complete seven-case receiving attempt passed cases 1, 2, 3, 5 and
 6. Case 4 failed the unchanged exact source-relocation verifier. Case 7 failed
-before proposals because its neutral graph exceeded the existing 512-module
+before proposals because its neutral module graph exceeded the existing 512-module
 macro-context limit; its 63176 ms duration also exceeded its original 60000 ms
 case bound. The complete 129.45-second run remains RED at
 `router-layout-check-complete-owned-unit-matches-seven-original-cases-Node-v1`,
@@ -157,11 +157,11 @@ The enclosing primitive wrapper does not drop a supplied profile: it preserves
 and the same private enclosing issuer. The production case itself omitted the
 profile from both project checks and the primitive phase, while the unit adopter
 already defaulted to `PRODUCTION_PROFILE`. The case now explicitly supplies that
-same existing profile through every phase and checks every returned graph/context
+same existing profile through every phase and checks every returned module graph/context
 profile. It sets only `test:false`; platform, feature and other cfg alternatives
 remain unknown. Neutral/default APIs and all seven workloads/deadlines remain.
-Real project-graph end observations are retained, including on failure, without
-constructing an extra graph or increasing any module limit.
+Real module graph stage end observations are retained, including on failure, without
+constructing an extra module graph or increasing any module limit.
 
 A streaming source-only audit of the complete stored frontier finds exactly
 209 distinct TYPE-first functions: str106, Result53, Option36, Vec14 across 27
@@ -169,8 +169,8 @@ active scopes. All use the existing production profile; the full stored report
 contains 1370 identical profile values. There are zero explicit queried-name
 bindings. Scope flags by function are 27 type-only, 173 type+bang+attribute and
 nine type+bang. These are historical compiler facts, not fresh outcomes. The
-stored production graph has 396 module coordinates, below 512; that supports the
-cfg(test)-inflation diagnosis but does not prove the current graph's fit or time.
+stored production module graph has 396 module coordinates, below 512; that supports the
+cfg(test)-inflation diagnosis but does not prove the current module graph's fit or time.
 
 The highest-priority residual source classes are literal item includes in
 `model_routing` (23 TYPE-first functions), `gemini_bridge_request` (19) and

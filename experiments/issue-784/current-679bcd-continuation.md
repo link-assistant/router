@@ -90,7 +90,7 @@ PR #785. The native goal stays active. No green gate or release readiness exists
       unchanged source/deadlines and rejected author drafts are retained in the
       verified 188-member candidate-binding-receiving packet. No performance
       qualification or newly executable production function is established.
-- [ ] Restore the original private native refusal before graph discovery can
+- [ ] Restore the original private native refusal before module graph discovery can
       serialize source views. Both engines reproduce two new refusal failures
       and pass the third reader-error/restored-state control. A pinned source
       layer installs only through the genuine project facade producer; the full

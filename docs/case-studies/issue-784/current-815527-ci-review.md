@@ -33,8 +33,8 @@ excerpt or a previous head's result.
 | 129024571498 / profile matrix | Original 60-minute job cancellation at line 283; no matrix draft files at line 297. No complete receiving matrix exists to install. |
 | 129024571667 / owned profile matrix | Original 60-minute job cancellation at line 281; no output artifacts at line 295. |
 | 129024571628 / forward 1 | Original derive-parent, three-build, Router-caller and nine-body cases fail their original 60-second deadlines (1397, 1741, 2485, 2534). Independent audit also rejects late synchronous passes. Line 2613: unchanged reference-proof child `spawnSync node ETIMEDOUT`. |
-| 129024571927 / forward 2 | Original three-build and complete ActivityPub cases exceed 60 seconds (1831, 1900). Line 2274: complete private Rust compiler source graph exceeds its unchanged byte bound. Independent audit rejects further late cases. |
-| 129024571669 / forward 3 | Line 995: complete corpus graph case exceeds 60 seconds. Independent audit identifies six late cases across the original files. |
+| 129024571927 / forward 2 | Original three-build and complete ActivityPub cases exceed 60 seconds (1831, 1900). Line 2274: complete private Rust compiler source module graph exceeds its unchanged byte bound. Independent audit rejects further late cases. |
+| 129024571669 / forward 3 | Line 995: complete corpus module graph case exceeds 60 seconds. Independent audit identifies six late cases across the original files. |
 | 129024571658 / forward 4 | The TAP suite reports 600 passes, but the independent audit rejects the original Router core match case at 74,189.384 ms against 60,000 ms. A synchronous TAP pass is insufficient. |
 | 129024572059 / forward 5 | Lines 2005–2011: complete original `qwen_model_is_managed` parent takes 1,298,169.428 ms against 60,000 ms. Independent audit also rejects the complete source census case. |
 | 129024571821 / forward 6 | Lines 1089–1095: original three-build deadline. Lines 1688–1706: actual `safe_number` remains refused; its `&f64` receiver lacks independent implicit Copy autodereference/method resolution evidence. This case also exceeds its original deadline. |
@@ -104,7 +104,7 @@ above-boundary regressions pass as complete focused files under Node and Bun.
 It also refreshes the actual registered compiler producer and its complete
 portable Git objects. Full receiving attempts remain memory-interrupted.
 No original tests, deadlines, source limits, strictness or workloads are
-relaxed. The private compiler graph coupling census is diagnostic only and
+relaxed. The private compiler module graph coupling census is diagnostic only and
 does not authorize deleting reachable code or increasing its bound.
 
 The complete local gate was attempted on clean

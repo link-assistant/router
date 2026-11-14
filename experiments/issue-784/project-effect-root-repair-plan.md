@@ -4,7 +4,7 @@ Objective: complete issue #784 and every check in
 [PR #785](https://github.com/link-assistant/router/pull/785). The goal remains
 active; this optimization does not establish whole-project parity or readiness.
 
-- [x] Identify the repeated complete graph/item scan at both declaration parser
+- [x] Identify the repeated complete module graph/item scan at both declaration parser
   setup sites. Keep every original source, profile, binding and body check.
 - [x] Reuse lexical names from the existing genuine immutable source context;
   preserve active/unknown item selection and create a fresh Set per parser.

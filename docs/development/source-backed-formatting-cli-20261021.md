@@ -60,7 +60,7 @@ All original storage limits remain unchanged: 1024 source files, 20000 path and
 packet entries, two million UTF-16 units/eight million UTF-8 bytes per source,
 32 Mi units across source, 64 MiB per logical packet, 1 GiB logical output,
 384 MiB stored output and the existing failure reserve. The complete source
-graph/private producer context remains resident; actual full-corpus time,
+module graph/private producer context remains resident; actual full-corpus time,
 heap and RSS need receiving measurements. The byte bounds are not a CPU or
 process-memory deadline, and this CLI does not alter any test/writer deadline or
 Node heap default. Run actual production under the coordinator's existing

@@ -95,7 +95,7 @@ renamed after execution. Both phase names remain `language` and `repository`.
 `prepare-concrete-named-phases.mjs --check` derives its complete native
 transaction from the pinned original phased transaction, with full CST
 serialization, reparse and inverses. Original public transactions stay exact.
-Each call freshly authenticates the complete parser graph, reparses every stage
+Each call freshly authenticates the complete parser module graph, reparses every stage
 and inverse, and rejoins both original caller and private rule descriptors after
 native callbacks. There is no retained source verdict or semantic authority.
 Four complete receiving cases pass in both Node and Bun with their original

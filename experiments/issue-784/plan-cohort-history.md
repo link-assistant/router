@@ -69,7 +69,7 @@ The active objective and requirements remain in [the work plan](plan.md).
       correctly fails (8057), and every Rust/release job remains skipped.
       Complete forward raw records retain eight stale actual-gain compiler
       context failures (553–756), receiving subprocess SIGTERM (5443), complete
-      corpus graph 96788.733202 ms / 60000 ms (6095), and three real builds
+      corpus module graph 96788.733202 ms / 60000 ms (6095), and three real builds
       118552.328916 ms / 60000 ms (6189). No pin or deadline is relaxed. No
       genuine matrix artifact exists to qualify or install; preserve that
       explicit read-only refusal and complete evidence rather than fabricating

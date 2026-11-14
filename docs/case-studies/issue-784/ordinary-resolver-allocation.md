@@ -7,7 +7,7 @@ Its 52243 complete JSON events include six ordinary resolver starts and one bang
 resolver start. The latter began at 456138.63 ms. This diagnostic heap is smaller
 than the unchanged CI worker heap and does not establish CI's failure cause.
 
-The complete `rust/src/token.rs` parent succeeds in a separate one-file graph
+The complete `rust/src/token.rs` parent succeeds in a separate one-file module graph
 with the production profile: 2.82 seconds, sampled cgroup peak 1706348544 bytes.
 It produces one genuine `TokenClaims` input certificate, but all four output
 owners remain refused. This does not reproduce the whole-crate failure or

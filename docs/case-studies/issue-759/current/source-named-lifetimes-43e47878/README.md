@@ -21,7 +21,7 @@ The complete unchanged canonical_openai_model declaration retains source SHA256
 item span 146..574 and SHA256
 `69c0ed38eea80cf9a018362cdef6bc1414fd31b6da8c09b3cc078b4632207574`.
 This fixture verifies complete syntax preservation. Provider trait dispatch and
-full original graph execution remain independent obligations.
+full original module graph execution remain independent obligations.
 
 The initial 23-file batch passed 150/154 in both engines (49.658/31.826 seconds).
 Its four failures are preserved: a checked-envelope fixture read error, two

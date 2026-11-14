@@ -330,9 +330,21 @@ rust-script scripts/check-terminology.rs
 
 This Rust-backed command is not a local diagnostic during issue #759: the user's no-local-Rust instruction includes `rust-script`. Obtain its result from CI after the same-head JavaScript gate passes.
 
-`dev/log/` and captured third-party text under `docs/case-studies/*/raw/` are
-excluded as records rather than as wording to fix — editing them would falsify
-what was written at the time — and `ui/dist/` is a built bundle.
+`dev/log/`, `ci-logs/`, captured third-party text under
+`docs/case-studies/*/raw/`, recorded tool output under
+`docs/case-studies/*/evidence/`, machine-written `*receipt.json` run receipts
+and `*.mjs.txt` byte snapshots of `.mjs` sources are excluded as records rather
+than as wording to fix — editing them would falsify what was written at the
+time — and `ui/dist/` is a built bundle. The translation tooling's generated
+output (`profiles/`, `parity/rust-source-inventory.json` and the `meta/`,
+`projects/`, `generated/`, `source-profiles/`, `js-to-rust/generated/` and
+`serialization-schema/bulk-generated/` directories under `tools/translation/`),
+its vendored upstream copies (`tools/translation/vendor/`) and its recorded
+fixtures are excluded too: they carry Rust identifiers such as rustc's own
+names, and regeneration would undo any edit. Authored translation
+documentation stays checked; where it means the crate's module structure, it
+says "module graph". An offence is reported as a short excerpt around the hit,
+so a generated single-line file cannot exhaust memory.
 
 ### Documentation Format
 

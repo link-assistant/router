@@ -10,7 +10,7 @@ declarations. Every complete context result compares equal.
 The two original ABBA legs total 41.789 ms; the two candidate legs total
 50.579 ms. This observation does not support installing the candidate, and
 production remains unchanged. It qualifies neither a CI deadline nor the
-complete original Router graph. The experiment takes 2.235 seconds with a
+complete original Router module graph. The experiment takes 2.235 seconds with a
 2261258240-byte sampled total-cgroup peak under Node 20.20.2.
 
 The first attempt correctly refuses the workspace manifest, which is outside

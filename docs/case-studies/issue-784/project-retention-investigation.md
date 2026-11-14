@@ -15,10 +15,10 @@ caller discards the public result metadata.
 
 The diagnostic uses the complete current `rust/src/config.rs`, SHA256
 `9f5bb5c2d7060a8ab317889e401d3da2155a0574b5d4e2ed112f52d5e9468d8a`,
-in an explicitly limited one-file graph with the genuine Cargo inputs. It retains
+in an explicitly limited one-file module graph with the genuine Cargo inputs. It retains
 `DEFAULT_MAX_PROXY_REQUEST_BYTES`; the original compiler lowers this constant as
 a zero-parameter function. That constant's checked-source accessor correctly
-refuses the function-only source contract. The separate complete small graph
+refuses the function-only source contract. The separate complete small module graph
 exercises successful checked-source reads and mutation observations.
 
 Four fresh Node 20 processes run sequentially with 512 MiB heaps. Each holds only

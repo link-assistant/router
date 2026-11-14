@@ -149,7 +149,7 @@ the Default/Clone diagnostic exceeds its unchanged five-second limit.
 The complete cohort and JavaScript gate remain unqualified.
 
 The [fresh derive path reentry](derive-path-reentry-20261110.md) passes the
-original eight Node cases and two new cases in both engines. Complete graph
+original eight Node cases and two new cases in both engines. Complete module graph
 contexts remain byte-identical. The larger Bun cohort reaches the unchanged
 memory guard; complete registration, generation and gate qualification remain
 unfinished. Both the `679bcd027` and subsequent `7e7fb7a3c` CI cycles are terminal.

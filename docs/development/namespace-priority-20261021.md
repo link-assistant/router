@@ -152,7 +152,7 @@ argument forwarded to a locally constructed `TraitDef`. Clone, Copy, Debug
 and Eq have one such route; PartialEq has two. The common source join checks
 the sole generic `push`, all Struct/Enum/Union dispatch alternatives, the
 struct and enum return routes, the concrete Impl constructor and the actual
-item builder. The reduced-graph source retains Impl associated-item handling
+item builder. The `rustc_resolve/src/build_reduced_graph.rs` source retains Impl associated-item handling
 and block scope restoration. This is a conditional range of emitted callback
 items, not a claim that a callback ran or that its full generated output was
 accepted. Caller AttrLike ownership, generated outer attributes and the global
@@ -274,7 +274,7 @@ ungated macro expansion, complete builtin lookup/map bodies and the collector's
 builtin interception bypass. Original copied lint/stability attributes are
 separately excluded from these concrete inputs. Twenty-two complete native
 fragment, placeholder, associated-item, visitor and scope-restoration callbacks
-retain the Impl/associated/body containment relation, with graph-root MacroNS
+retain the Impl/associated/body containment relation, with `graph_root` MacroNS
 escapes discharged only through the separate finite source-provider contract.
 Public reports and copied flags never select these private joins. Contexts expire
 at the end of each synchronous closure invocation; there is no new source,

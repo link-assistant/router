@@ -17,7 +17,7 @@ Compilation still uses the complete original declarations and retains every
 original empty-refusal, semantic, runtime, strict-TypeScript and negative case.
 
 A first diagnostic tried to compile the current declarations with a partial
-core graph. The original empty-refusal assertion correctly failed; the full
+core module graph. The original empty-refusal assertion correctly failed; the full
 source and failure remain retained. The final complete file passes all three
 cases under Node 20.20.2 (9.551 seconds TAP; 10.016 seconds observed wrapper) and
 Bun 1.4.4 (7.00 seconds reported; 7.132 seconds wrapper). The Node audit records

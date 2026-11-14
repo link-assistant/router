@@ -19,6 +19,6 @@ source proof. Merely collecting these inputs adds zero executable functions.
 The separate `draft-private-native-descriptor-kind.py` and matching finite probe
 are also retained as **unrun** experiments. They neither change the private
 executor nor establish a performance result. The measured common-guard variants
-and their rejected timings are documented separately in the graph-ingress case
+and their rejected timings are documented separately in the module graph ingress case
 study. Full CI, canonical/matrix generation and parity remain unfinished in
 [PR #785](https://github.com/link-assistant/router/pull/785).

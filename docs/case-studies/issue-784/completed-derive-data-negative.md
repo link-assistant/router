@@ -5,13 +5,13 @@ retains no production change. Reusing the existing bounded completed-DATA freeze
 in source-module views and derive snapshots slows the full production workload.
 Both original production files have been restored byte for byte.
 
-Each fresh Node 20.20.2 process resolves the complete actual production graph
+Each fresh Node 20.20.2 process resolves the complete actual production module graph
 from `src/lib.rs`, the complete tracked Rust path list and original Cargo inputs,
 then issues its complete derive context. Each produces 397 modules and 419
-certificates. The measured interval includes the entire graph and context work.
+certificates. The measured interval includes the entire module graph and context work.
 There is no selected-function or reduced-input timing.
 
-| Process order | Graph milliseconds | Graph and context milliseconds | Sampled cgroup peak bytes |
+| Process order | Module graph milliseconds | Module graph and context milliseconds | Sampled cgroup peak bytes |
 | --- | ---: | ---: | ---: |
 | Before 1 | 20,923.968368 | 34,897.745011 | 2,245,427,200 |
 | Candidate 1 | 26,839.491892 | 43,415.125192 | 2,320,465,920 |
@@ -23,10 +23,10 @@ The candidate's mean is 22.894238% slower. All four complete issued contexts are
 `2d37a69b9373a78fb1f40bfba3051e84699daf381f3efa584a8589aa612ad6a3`.
 
 The initial evidence writer exhausted its 512 MiB Node heap while serializing
-the graph's duplicated CSTs alongside the context. That failure, its original
+the module graph's duplicated CSTs alongside the context. That failure, its original
 harness and resource observations remain complete in the archive. The corrected
 writer runs the same complete computation, retains the whole context and all
-physical sources, graph identities and Cargo inputs, and excludes evidence
+physical sources, module graph identities and Cargo inputs, and excludes evidence
 serialization from the measured interval. It uses the unchanged 512 MiB heap.
 
 The source proposal retains complete predecessor and candidate files, ordered

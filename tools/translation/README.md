@@ -207,7 +207,7 @@ Fourteen new lifetime and four context cases pass within the 24-file, 158-case
 Node/Bun batch at `43e478789`; the
 [complete evidence](../../docs/case-studies/issue-759/current/source-named-lifetimes-43e47878/README.md)
 retains both failed phases. The unchanged OpenAI function verifies full syntax;
-provider trait dispatch and full original graph execution remain separate.
+provider trait dispatch and full original module graph execution remain separate.
 
 Unbounded generics, arbitrary trait implementations, aggregate mutation,
 unresolved derives/macros, ambiguous imports, compilation conditions and

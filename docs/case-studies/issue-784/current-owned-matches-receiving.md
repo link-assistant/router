@@ -4,7 +4,7 @@ The complete seven-case owned-matches file used the archived Router root as
 the expected physical current root. The privacy change adds `mod geolocation;`.
 Reuse the existing exact whole-source equation: keep the original root and
 its SHA unchanged, check the complete CST/inverse, and compare the afterimage
-with the physical current root. The final receiving graph now contains that
+with the physical current root. The final receiving module graph now contains that
 complete current root and the complete physical geolocation module. Original
 application bodies, Cargo input, assertions and deadlines remain unchanged.
 
@@ -18,7 +18,7 @@ serializing one vector after 229.166205 seconds; peak is 2634878976 bytes.
 Neither observer stops the process. Neither attempt completes a behavior case.
 These attempts establish no deadline or memory improvement.
 
-A later complete-file attempt keeps the final graph. It still fails before
+A later complete-file attempt keeps the final module graph. It still fails before
 completing a case: V8 reports
 its 512 MiB heap limit in JSON stringification, and the independent cgroup guard
 also stops the owned process group at 2872942592 sampled bytes. The observer
@@ -58,6 +58,6 @@ duplicates were retired, as recorded in
 [the receipt](evidence/current-vector-writer-duplicate-retirement.json.gz).
 
 Do not repeat the unchanged heap-aborting workload locally. The actual complete
-file, its original deadlines and the final current graph still need receiving
+file, its original deadlines and the final current module graph still need receiving
 on an adequately provisioned runner. The separate eight-case production fixture
 pass does not qualify this file, the complete JavaScript gate or Rust.

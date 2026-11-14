@@ -8,7 +8,7 @@ program, checker and lexical helper closures for every preselected test file.
 The auditor now computes each complete file's exact expression spans, call
 spans, literal names and lexical deadline conclusions during its fresh parse.
 It retains those records and the complete original source, releasing compiler
-graphs between files. Observation matching and final physical source identity
+module graphs between files. Observation matching and final physical source identity
 checks remain mandatory. All original bounds, whole files, concurrency and
 deadlines remain unchanged. Optional source progress is disabled by default.
 

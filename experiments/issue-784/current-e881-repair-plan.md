@@ -19,9 +19,9 @@ The ordinary parser's private full-method context overwrote its enclosing
 namespace and poisoned unrelated standard type names. The new source rule
 preserves the public full binding report and independent method admission.
 All eight whole focused files pass 33 cases per engine with original deadlines.
-The unchanged historical config one-parent graph now emits `parse_csv`; its
+The unchanged historical config one-parent module graph now emits `parse_csv`; its
 complete emitted JavaScript and strict TypeScript execute five cases and reject
-invalid inputs. `parse_usize_csv` still needs the actual `ConfigError` graph;
+invalid inputs. `parse_usize_csv` still needs the actual `ConfigError` module graph;
 associative ordering remains refused. Whole-library coverage remains unqualified.
 
 The current static fixture draft refresh preserves both complete historical

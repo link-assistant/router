@@ -64,7 +64,7 @@ logs, resource receipts, source proposals and complete public-plan comparisons
 are in the [evidence directory](evidence/current-9b6-repair-batch).
 
 Bounded 15-second profiles used the exact first complete production unit input.
-Initial graph discovery took 24.8–28.1 seconds; the derive namespace context was
+Initial module graph discovery took 24.8–28.1 seconds; the derive namespace context was
 issued at 39.4 seconds in one observation. The next phase repeatedly proves
 builtin and Deserialize output and serializes comparison operands. The stalled
 phase profile retained all samples before deliberately stopping and reaping the

@@ -19,7 +19,7 @@ profile or alternate rule sequence is accepted. There is no application command.
 Keep proposal and review inside the coordinator's existing resource monitors.
 
 The producer calls the actual physical sequence API. Every phase receives the
-complete preceding source map and rebuilds genuine graphs/private attribute
+complete preceding source map and rebuilds genuine module graphs/private attribute
 inspection and Cargo inputs. Original, inactive and unresolved source bytes stay
 in the result. The packet transport retains every original/intermediate/final
 CST, per-file inverse, source map, proposal row, inspection and trace. It does not

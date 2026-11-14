@@ -45,10 +45,17 @@ const SCANNED_EXTENSIONS: &[&str] = &[
 /// forbid, so they are the places -- and the only places -- where it is
 /// allowed to name it.
 ///
-/// **Records, not prose we own.** `dev/log` and `docs/case-studies/*/raw`
-/// hold captured third-party text and CI transcripts; `ui/dist` is a built
-/// bundle. Rewriting any of them would falsify a record or be undone by the
-/// next build.
+/// **Records, not prose we own.** `dev/log`, `ci-logs`, `docs/case-studies/*/raw`
+/// and `docs/case-studies/*/evidence` hold captured third-party text, CI
+/// transcripts and recorded tool output; `ui/dist` is a built bundle. The
+/// translation tooling's generated output (`profiles/`, the per-project
+/// metadata, generated drafts, source profiles, bulk schema output and the
+/// Rust source inventory) is rewritten by its generators from Rust identifiers
+/// that are not ours to rename, machine-written `*receipt.json` run receipts
+/// are pinned by hash in those inventories, its vendored upstream copies must stay
+/// byte-identical, its fixtures are recorded inputs, and `*.mjs.txt` files are
+/// byte-exact snapshots of `.mjs` sources, which are not a scanned type.
+/// Rewriting any of them would falsify a record or be undone by the next build.
 const EXCLUDED_PATHS: &[&str] = &[
     // Where the rule is stated.
     "CONTRIBUTING.md",
@@ -60,8 +67,24 @@ const EXCLUDED_PATHS: &[&str] = &[
     ".git/",
     "node_modules",
     "dev/log",
+    "ci-logs/",
     "/raw/",
+    "/evidence/",
+    "receipt.json",
     "ui/dist",
+    ".mjs.txt",
+    // Translation tooling: generated output, vendored upstream code, fixtures.
+    "./profiles/",
+    "parity/rust-source-inventory.json",
+    "tools/translation/meta/",
+    "tools/translation/projects/",
+    "tools/translation/generated/",
+    "tools/translation/source-profiles/",
+    "tools/translation/js-to-rust/generated/",
+    "tools/translation/serialization-schema/bulk-generated/",
+    "tools/translation/vendor/",
+    "tools/translation/fixtures/",
+    "tools/translation/test/fixtures/",
 ];
 
 /// Other people's names for their own things, which we have to spell correctly.
@@ -74,6 +97,9 @@ const ALLOWED_PHRASES: &[&str] = &[
     "graphviz",
     "graphite",
     "langgraph",
+    // rustc_resolve's own names: `build_reduced_graph.rs` and `Resolver::graph_root`.
+    "reduced_graph",
+    "graph_root",
     // Git's own term for its commit/object DAG.
     "object graph",
     // Build and CI vocabulary for things that are not our data structure.
@@ -99,6 +125,7 @@ const ALLOWED_PHRASES: &[&str] = &[
     "photograph",
     "graphic",
     "graphite",
+    "grapheme",
     // URLs to other projects' pages.
     "/graphs/",
 ];
@@ -146,6 +173,23 @@ fn is_allowed_at(lowered: &str, at: usize) -> bool {
     })
 }
 
+/// How many bytes of context an offence shows on each side of the hit.
+const EXCERPT_CONTEXT: usize = 60;
+
+/// The text around the hit at `at`, for the offence report.
+///
+/// Only a bounded window is copied: a generated file can hold a single line of
+/// tens of megabytes with thousands of hits, and copying the whole line once
+/// per hit would need hundreds of gigabytes. The window is clamped to
+/// character boundaries, and `…` marks a cut.
+fn excerpt(line: &str, at: usize) -> String {
+    let start = floor_boundary(line, at.saturating_sub(EXCERPT_CONTEXT));
+    let end = ceil_boundary(line, (at + "graph".len() + EXCERPT_CONTEXT).min(line.len()));
+    let before = if start > 0 { "…" } else { "" };
+    let after = if end < line.len() { "…" } else { "" };
+    format!("{before}{}{after}", line[start..end].trim())
+}
+
 fn floor_boundary(text: &str, mut index: usize) -> usize {
     while index > 0 && !text.is_char_boundary(index) {
         index -= 1;
@@ -175,12 +219,12 @@ fn main() {
             continue; // Not UTF-8: not prose or code we author.
         };
         for (number, line) in contents.lines().enumerate() {
-            for _ in violations(line) {
+            for at in violations(line) {
                 offences.push(format!(
                     "{}:{}: {}",
                     path.display(),
                     number + 1,
-                    line.trim()
+                    excerpt(line, at)
                 ));
             }
         }
@@ -234,6 +278,8 @@ mod tests {
         assert!(violations("the router holds no object graph").is_empty());
         assert!(violations("fell behind the dependency graph").is_empty());
         assert!(violations("View the workflow graph in GitHub Actions").is_empty());
+        assert!(violations("compiler/rustc_resolve/src/build_reduced_graph.rs").is_empty());
+        assert!(violations("self.r.graph_root").is_empty());
     }
 
     #[test]
@@ -242,6 +288,7 @@ mod tests {
         assert!(violations("lexicographic order").is_empty());
         assert!(violations("bypass geographic blocks").is_empty());
         assert!(violations("cryptographically immutable").is_empty());
+        assert!(violations("counts scalars, not graphemes").is_empty());
     }
 
     #[test]
@@ -274,6 +321,41 @@ mod tests {
         assert!(is_excluded(Path::new("./dev/log/issues/1/x.log")));
         assert!(is_excluded(Path::new("./docs/case-studies/issue-9/raw/x.md")));
         assert!(is_excluded(Path::new("./ui/dist/assets/react.js")));
+        assert!(is_excluded(Path::new("./ci-logs/run-1/job.json")));
+        assert!(is_excluded(Path::new("./docs/case-studies/issue-9/evidence/ci-1/job.log.txt")));
+        assert!(is_excluded(Path::new("./experiments/issue-9/x-before.mjs.txt")));
+        assert!(is_excluded(Path::new("./profiles/neutral-1/tools/x.json")));
+        assert!(is_excluded(Path::new("./parity/rust-source-inventory.json")));
+        assert!(is_excluded(Path::new("./docs/case-studies/issue-9/current/x/receipt.json")));
+        assert!(is_excluded(Path::new("./tools/translation/projects/rust/src/lib.meta.json")));
+        assert!(is_excluded(Path::new("./tools/translation/meta/x.json")));
+        assert!(is_excluded(Path::new("./tools/translation/vendor/x/a.js")));
+        assert!(is_excluded(Path::new("./tools/translation/fixtures/a.json")));
+        assert!(is_excluded(Path::new(
+            "./tools/translation/serialization-schema/bulk-generated/a.json"
+        )));
+        // Authored translation docs and sources stay checked.
+        assert!(!is_excluded(Path::new("./tools/translation/README.md")));
+        assert!(!is_excluded(Path::new("./tools/translation/js-to-rust/README.md")));
+        assert!(!is_excluded(Path::new("./docs/case-studies/issue-9/README.md")));
+        assert!(!is_excluded(Path::new("./docs/development/x.md")));
+        assert!(!is_excluded(Path::new("./rust/src/profiles.rs")));
+    }
+
+    #[test]
+    fn offences_show_a_bounded_excerpt() {
+        let line = format!("{} the graph {}", "x".repeat(10_000), "y".repeat(10_000));
+        let at = violations(&line)[0];
+        let shown = excerpt(&line, at);
+        assert!(shown.contains("the graph"));
+        assert!(shown.starts_with('…') && shown.ends_with('…'));
+        assert!(shown.len() <= 2 * EXCERPT_CONTEXT + "graph".len() + 2 * '…'.len_utf8());
+        assert_eq!(excerpt("a graph", 2), "a graph");
+        // Both window ends fall inside two-byte characters and move outwards.
+        let wide = format!("{}xgraphy{}", "щ".repeat(100), "ж".repeat(100));
+        let at = violations(&wide)[0];
+        let expected = format!("…{}xgraphy{}…", "щ".repeat(30), "ж".repeat(30));
+        assert_eq!(excerpt(&wide, at), expected);
     }
 
     #[test]

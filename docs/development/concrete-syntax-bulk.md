@@ -69,10 +69,10 @@ rechecks earlier file and ancestor identities, complete compiled source
 associations and caller array descriptors. No source or validation verdict is
 cached across calls. Existing standalone APIs retain their own contract.
 
-Complete project graphs select this source-origin contract through the separately
+Complete project module graphs select this source-origin contract through the separately
 generated `forward-source-origin-concrete-syntax.mjs`. Its owning producer derives
 the entire helper and actual project import/call using both fixed rule phases
-and full serialized/reparsed inverses. Single-source graphs retain their original
+and full serialized/reparsed inverses. Single-source module graphs retain their original
 path. The [receiving record](../case-studies/issue-784/project-source-origin-cst.md)
 keeps complete production comparisons and focused controls distinct from
 generation freshness, strict parity and the full gate.
@@ -124,7 +124,7 @@ Input is a dense array of 1–256 own-data objects with exactly `path`, then
 they supply no module or ownership context. Each row uses the original default
 frontend with `includeScoped: true`, `sourcePath: null` and `lossless: false`.
 Definitions and failures do not flow between rows. The only optional argument is
-an exact own-data `{constructorGraph}` object; the existing constructor checks
+an exact own-data options object naming the constructor producer; the existing constructor checks
 still decide its validity.
 
 The API uses one existing full CST batch transaction: complete parser-source

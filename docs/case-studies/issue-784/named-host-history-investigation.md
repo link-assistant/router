@@ -163,12 +163,12 @@ Finite one-file probes use the complete original `src/config.rs` and
 `src/storage/associative.rs`, original Cargo/dependency inputs and actual project
 compiler. Both close without a resource stop under a 768 MiB heap. Their full
 source, CST, checked/refused metadata and emitted output remain losslessly
-compressed. These are separate diagnostic graphs, not the original complete
+compressed. These are separate diagnostic module graphs, not the original complete
 library/Cargo/profile receiving test.
 
-Both graphs refuse their CSV functions because borrowed `str` lacks a complete
-type-namespace owner. The config graph retains the effect of `Config`'s actual
-`#[derive(Clone)]`; the associative graph retains `SemanticLink`'s actual
+Both module graphs refuse their CSV functions because borrowed `str` lacks a complete
+type-namespace owner. The config module graph retains the effect of `Config`'s actual
+`#[derive(Clone)]`; the associative module graph retains `SemanticLink`'s actual
 `#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]`. Original input-owner
 identity alone does not certify the complete generated output grammar. The
 shadowing check and conservative output boundary remain unchanged while the
@@ -186,7 +186,7 @@ retain an unresolved ancestor in their generated-attribute namespace, while
 PartialOrd and Ord require the implemented nonempty ordinary unit-enum route.
 `SemanticLink` is a struct. These are distinct missing output/ancestor proofs;
 the Config budget observation does not establish an associative repair or a
-gain in the complete original library graph.
+gain in the complete original library module graph.
 
 ## Complete evidence packet
 

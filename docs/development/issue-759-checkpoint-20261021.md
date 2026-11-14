@@ -41,7 +41,7 @@ The corrected receiving group, strict target checks and all profile/owned modes
 remain required for the final source.
 
 The Schemars dispatcher now runs through the original private context issuer.
-The complete eight-case fixture uses the genuine production graph and Cargo
+The complete eight-case fixture uses the genuine production module graph and Cargo
 namespace inputs. All eight assertions pass, but the original ClientKind case
 remains red at 81,950.771 ms against 60,000 ms. Extending the existing proof-byte
 scope preserves all 24 assertions across five complete files; ClientKind still

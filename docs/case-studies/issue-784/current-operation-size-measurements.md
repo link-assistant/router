@@ -7,7 +7,7 @@ Measurements now share one weak-keyed store within that operation, bounded to
 1,024 positive scalar records with at least 64 measured cells. Each record keeps
 only units, cells, text and height. No encoded bytes, verdicts or source authority
 enter this store. Native fallback clears it before invoking original callbacks;
-operation exit clears it as well. Every whole-graph eligibility check, native
+operation exit clears it as well. Every whole module graph eligibility check, native
 intrinsic guard and original logical budget remains mandatory on each call.
 
 The actual operation and whole-owner source producers install their complete

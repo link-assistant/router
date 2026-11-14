@@ -31,7 +31,7 @@ guard, first with normal Bun and then with `--smol`. The guard thresholds remain
 **2,869,497,856** bytes. Both owned process groups were stopped and reaped.
 Their uncompleted cases remain unrun. No larger Bun pass is claimed.
 
-A finite actual Router graph comparison produces byte-identical complete
+A finite actual Router module graph comparison produces byte-identical complete
 contexts: **10,137,180 bytes**, **419 certificates**, **122 diagnostics**, SHA-256
 `439c2fafd7136d6a2af1745cc84d5958f55ae2162492b7ec098e798161498fd4`.
 The single ordered predecessor/current run measures **15,159.86817** and

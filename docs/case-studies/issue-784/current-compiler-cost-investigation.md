@@ -35,7 +35,7 @@ copies were removed after complete archive readback.
 
 A separate [bounded source census](evidence/private-source-literals-20261109.json.gz)
 reads all 337 physical paths from the earlier observed closure using the
-installed TypeScript 5.9.3. It does not rediscover the current import graph.
+installed TypeScript 5.9.3. It does not rediscover the current module graph.
 Those current files total 4,645,355 bytes, beyond the unchanged 4,194,304-byte
 private compiler limit. Exact duplicated top-level bodies account for only
 15,841 bytes; comments account for 165,505 UTF-16 code units, and 14 large

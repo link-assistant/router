@@ -38,7 +38,7 @@ remain unfinished; no draft checkpoint establishes release readiness.
   and adjusting source-layer indices. The full unit application checker
   retains the complete original 567-file packet and joins every reviewed
   current privacy parent, the new geolocation module and the whole unit/
-  Unicode source equations before fresh genuine adopter and project graphs.
+  Unicode source equations before fresh genuine adopter and project module graphs.
 - The complete seven-case unit Node attempt before the early refusal change
   runs for 329.173612 seconds, sampled peak 2477641728 bytes, then V8 aborts
   on its bounded 512 MiB heap. The observer does not stop it. Three completed

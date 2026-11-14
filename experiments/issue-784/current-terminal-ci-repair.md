@@ -16,7 +16,7 @@ issue/PR conversation, inline-comment and review reads at 2026-11-08 18:44 UTC.
   cases under Node and Bun with unchanged deadlines.
 - [x] Withdraw the unsuccessful whole-vector logger; retain its full failed
   attempts and partial evidence. Draft the actual current owned-matches parent
-  graph without claiming its final receiving is qualified.
+  module graph without claiming its final receiving is qualified.
 - [x] Record the 721474-byte allocation incident and restore the cap. Verify
   permanent published recovery before retiring one inactive 21418296-byte
   archive. Preserve all failed/unrun statuses.

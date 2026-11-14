@@ -58,11 +58,11 @@ Keeping this two-function candidate separate avoids adding an unproved
 freshness exception to the existing production performance work.
 
 `proposeCoreUnicodePredicatesCorpus` invokes the unchanged scalar source-owner
-selector on a fresh complete graph, then selects exact shared-`Str` formal
+selector on a fresh complete module graph, then selects exact shared-`Str` formal
 occurrences of `chars().filter(|ch| !ch.is_whitespace()).collect()` and
 `chars().any(char::is_control)`. The latter also requires no competing `char`
 type/module/import/extern-crate binding or implicit-prelude uncertainty in the
-fresh graph. The generic collection expression must be the complete tail of
+fresh module graph. The generic collection expression must be the complete tail of
 a function explicitly returning the genuine owned `Text` alias; nested
 collection arguments and other return types retain their original source.
 Every other local binder, unrelated callback, item, body macro,

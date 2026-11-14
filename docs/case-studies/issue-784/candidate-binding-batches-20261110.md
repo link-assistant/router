@@ -45,10 +45,10 @@ container-memory guard stops. Six Bun failures exceed the original case limits;
 the other four expose a JSON-hook invariant failure or a 12500 ms child timeout.
 Neither engine qualifies the complete batch.
 
-The complete Core producer test reproduces JSON serialization during graph
+The complete Core producer test reproduces JSON serialization during module graph
 discovery before the original private-parser refusal. The legacy/candidate
 complete hook-wire comparison passes, then the independent baseline invariant
-at `whole-owner-core-producer-candidate.test.mjs:77` fails. This is a shared graph
+at `whole-owner-core-producer-candidate.test.mjs:77` fails. This is a shared module graph
 ordering regression requiring a separate repair. The remaining source-writer,
 child deadline and bounded-memory failures remain unfinished; a successful
 source equation or assertion does not qualify their original deadlines.

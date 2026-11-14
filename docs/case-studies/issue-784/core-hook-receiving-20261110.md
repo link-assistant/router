@@ -125,7 +125,7 @@ audit also passed. The first four untracked-history failures remain retained.
 
 The complete Node dependency cohort passed 45 of 46 cases. The last Core case
 failed because its legacy Hash child exceeded the original 12,500 ms bound
-(`core-transport-receiving-node-graph.log:237`). The complete Bun receiving
+(line 237 of the Node receiving log). The complete Bun receiving
 passed 72 of 73 cases. The generated Default/Clone progress diagnostic case
 took 7,275.05 ms against Bun's original 5,000 ms default
 (`core-transport-receiving-bun-translation-progress.log:6`). All 46 Bun dependency

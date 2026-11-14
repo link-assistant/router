@@ -258,11 +258,11 @@ No full-gate or complete-parity claim is made.
       project/matches mutation controls. No deadlines were inferred or raised.
 - [x] Observe `parse_csv` admitted from the complete original `config.rs` in a
       one-parent normal project diagnostic (44.498 seconds). `parse_usize_csv`
-      still has an unresolved ConfigError boundary in this one-parent graph.
+      still has an unresolved ConfigError boundary in this one-parent module graph.
       This is not complete-library, typed-target or aggregate coverage evidence.
 - [x] Profile the original four AffinityDestination/InstallDocumentResult owner
       proofs. Complete context construction dominates: 53.662 sampled seconds
-      in module-graph construction, largely repeated native CST authentication.
+      in module graph construction, largely repeated native CST authentication.
       The complete original four-proof diagnostic takes 103.751 seconds.
 - [x] Qualify a fresh bounded CST batch ingress under Node, preserving every complete
       serialized/reparsed source before independent semantic checks. Reissue all
@@ -290,7 +290,7 @@ No full-gate or complete-parity claim is made.
       The first 1 ms sampling diagnostic at a 512 MiB heap exhausts V8 after
       517.713 seconds (sampled cgroup peak 2,267,467,776 bytes, no guard stop),
       before a complete CPU profile can be retained. Its completed phases are
-      24.186 seconds for the graph, 19.322 for derive inputs and 24.755 for the
+      24.186 seconds for the module graph, 19.322 for derive inputs and 24.755 for the
       selected Schemars output. The complete 1 GiB/10 ms diagnostic takes
       340.218 seconds, including 266.520 seconds in enclosing context creation.
       Sampled inclusive builtin output proof is 100.027 seconds, Deserialize
@@ -966,7 +966,7 @@ remain explicitly unmet parts of the literal all-tool requirement.
       failure. Eleven forward failures precede cancellation; later named-host
       and CSV cases are unreached, not passing. The matrix exhausts its original
       2048 MiB heap. TypeScript still needs the genuine owned matrix.
-- [x] Preserve two finite complete historical-parent CSV graphs. Both retain
+- [x] Preserve two finite complete historical-parent CSV module graphs. Both retain
       derived type-namespace uncertainty and refuse borrowed `str`; neither
       probe qualifies the original complete library test.
 - [ ] Complete genuine derive-output investigation; do not replace complete

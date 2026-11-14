@@ -39,7 +39,7 @@ The unchanged command failed to finish. Its owned resource observer stopped the
 process group after 98.656832 seconds at 2,868,031,488 sampled cgroup bytes,
 above the 2,866,933,760-byte guard in the 3,135,369,216-byte container. It exited
 143 during `derive-namespace-context`, after constructing the 397-module
-`rust/src/lib.rs` graph. It wrote no generated outputs. The complete CLI corpus
+`rust/src/lib.rs` module graph. It wrote no generated outputs. The complete CLI corpus
 contained 864 tracked Rust sources. There is no complete generation result,
 coverage increase or repaired matrix from this attempt.
 
@@ -127,7 +127,7 @@ guard. This is a cache observation, not disk reclamation or exact process memory
 
 One retry started at 1,093,287,936 bytes with identical sources, arguments and
 guard. It discovered all 864 Rust sources and constructed the 397-module library
-graph, then stopped during `derive-namespace-context` after 82.182824 seconds at
+module graph, then stopped during `derive-namespace-context` after 82.182824 seconds at
 2,878,156,800 sampled cgroup bytes. It exited 143 and wrote no outputs. The
 `token-layout-bun-generation*` originals preserve both attempts separately;
 `pre-bun-generation-retry-pages.json` preserves the complete cache-hint selection.

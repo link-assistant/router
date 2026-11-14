@@ -393,7 +393,7 @@ Source-bound lexical creation and calls reconstruct the complete enclosing
 function from its original UTF16 source, declaration span and private lexical
 bindings. Only exact const-local arrows with immutable enclosing parameter
 captures and direct calls at their original positions are admitted. Caller
-capture maps and copied compiler graphs supply no authority. Calls before
+capture maps and copied compiler module graphs supply no authority. Calls before
 initialization, aliases, mutation, hoisting, defaults, unknown callees, receiver
 effects and escaping function references remain refused. Creation reads retained
 captures once; direct arguments are evaluated once in source order. The IR
@@ -428,17 +428,17 @@ Complete original source records privately bind each actual named import,
 constructor declaration, closed argument/default and ordered field assignment.
 The complete enclosing function is reparsed and checked again before either
 target is emitted. Constructor meta additionally requires the genuine original
-producer graph at `parseMeta(text, {constructorGraph})`; a self-consistent foreign
-source envelope cannot replace that graph. Arbitrary coercions, effectful
+producer module graph, passed in the options of `parseMeta(text, options)`; a self-consistent foreign
+source envelope cannot replace that module graph. Arbitrary coercions, effectful
 arguments/defaults, copied issuer handles and known source mutation/reflection
 are refused. Public input parameters retain their unknown payload domain.
 
 Private weak associations let freshly issued proofs and genuine parsed/checked
-parents retain their original graph syntax and checker. Every recheck still
+parents retain their original module graph syntax and checker. Every recheck still
 validates complete source strings, original callsite/import/class/effects,
 source hashes and exact expected proof/body/signature. Persisted copies and
-foreign objects reconstruct their graphs; mutable parent IR never supplies
-cache authority. No parser/checker graph is exposed to metadata or callers.
+foreign objects reconstruct their module graphs; mutable parent IR never supplies
+cache authority. No parser/checker module graph is exposed to metadata or callers.
 
 Qualified normal and throw completions stay distinct. TypeScript requires an
 explicit output module path and imports the actual corresponding native class;
@@ -450,16 +450,16 @@ stack or prototypes. These properties are not available as scalar observations.
 
 `evaluateWithOriginalConstructors` is an explicitly opted-in receiving-environment
 operation. Its opaque runtime binds every exact freshly reissued constructor proof,
-including the complete source graph and callsite; matching path/export names do
-not permit a foreign graph or recipe. Multiple proved callsites remain distinct.
+including the complete source module graph and callsite; matching path/export names do
+not permit a foreign module graph or recipe. Multiple proved callsites remain distinct.
 The receiving runtime additionally registers each exact freshly checked enclosing
 function. An explicit fourth runtime argument to `evaluate` validates that parent
 before either a normal return or a throw; missing, changed and foreign parents
 cannot reuse the runtime. Existing three-argument evaluation retains its ordinary
 callback behavior and does not perform these receiving-environment checks.
-It checks the complete source-byte graph and executes only constructor
+It checks the complete source-byte module graph and executes only constructor
 owners and their original relative import closure, including its actual ESM cycle
-order. Ordinary analysis and evaluation never import that graph. Copied module
+order. Ordinary analysis and evaluation never import that module graph. Copied module
 maps, external/dynamic bootstrap imports, linked paths and observed changed bytes
 at a cached module filename are refused. This API does not promise dynamic module
 reload convergence or harmless original module initialization.
@@ -472,7 +472,7 @@ the complete reflected class with the same closed constructor grammar used by
 original source issuance. Its entire semantic recipe (name, parameters/defaults,
 message parameter and ordered field assignments) must directly equal the freshly
 source-issued recipe. The observation retains both complete sources, recipes and
-all spans separately; it issues no source token, constructor token or graph and
+all spans separately; it issues no source token, constructor token or module graph and
 does not normalize a signed proof or compare normalized digests.
 
 Descriptor-only checks also require the captured builtin Error ancestry and the

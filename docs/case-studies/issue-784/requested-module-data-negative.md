@@ -7,11 +7,11 @@ a repair of any original test deadline. The complete original
 function became executable through this experiment.
 
 Each fresh Node 20.20.2 process used a 512 MiB heap and the complete production
-library graph: 397 modules and 419 derive certificates. All four entire context
+library module graph: 397 modules and 419 derive certificates. All four entire context
 outputs contain 10,137,192 bytes and SHA256
 `2d37a69b9373a78fb1f40bfba3051e84699daf381f3efa584a8589aa612ad6a3`.
 
-| Order | Graph ms | Graph and derive ms | Command seconds | Peak sampled cgroup bytes |
+| Order | Module graph ms | Module graph and derive ms | Command seconds | Peak sampled cgroup bytes |
 | --- | ---: | ---: | ---: | ---: |
 | Original 1 | 22638.140615 | 36421.931306 | 41.134371353 | 2290806784 |
 | Candidate 1 | 20292.473112 | 33308.478204 | 37.420553939 | 2280947712 |

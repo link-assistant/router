@@ -58,7 +58,7 @@ The complete original commands and deadlines remain in
 - Canonical and owned forward generation/freshness, neutral/Unix/Windows
   profile matrices, and all reverse regeneration/freshness checks.
 - Strict workflow/local-gate regression files that require the original
-  automation caller graph. They remain whole and are not represented as passing
+  automation call graph. They remain whole and are not represented as passing
   by the new development policy tests.
 
 These checks are suspended at the caller boundary rather than changed to no-op

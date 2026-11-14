@@ -45,7 +45,7 @@ pinned Bun 1.4.3 remains independently required.
 | Native descriptor kinds, eight cases | Node and Bun pass. |
 | Current ASCII producers, three cases | Node and Bun pass, including complete source plans, historical bytes and serializable selection DATA. |
 | Receiving paths/parser, 16 cases | Node passes all. Bun passes eight parser cases and four Display cases; four Display cases exceed their original five-second defaults. |
-| Current proof-consumer graph, eight cases | Node passes all, independent audit reports zero original-deadline breaches and a closed child group. Bun passes five before a memory-guard stop; whole-file Bun qualification remains unfinished. |
+| Current proof-consumer module graph, eight cases | Node passes all, independent audit reports zero original-deadline breaches and a closed child group. Bun passes five before a memory-guard stop; whole-file Bun qualification remains unfinished. |
 | Full static fixture proposal | Actual producer/review/install succeeds and preserves every historical occurrence. The whole lifecycle test is resource-stopped; no full-file qualification is claimed. |
 | Whole owned-definition planner | Resource-stopped after 2,104 seconds; no generated outputs or successful matrix qualification. |
 | Mandatory complete local gate | Attempted at `8255c55f78b245c8eea355ffca7e18bb765a6b2c`: resource-stopped during the initial fingerprint after 23.048 seconds at 2,867,511,296 sampled cgroup bytes. All seven stages are unrun in that attempt; no green stamp exists. This later evidence commit has no inherited gate result. |

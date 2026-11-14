@@ -82,7 +82,7 @@ NODE_OPTIONS=--max-old-space-size=2048 node scripts/translate-router.mjs --retai
 
 The invocation used the checksum-verified Node 20 binary and the same observer.
 It discovered all 864 tracked Rust files and three Cargo inputs, resolved the
-397-module library graph, and reached `derive-namespace-context` at 68186 ms.
+397-module library, and reached `derive-namespace-context` at 68186 ms.
 The observer stopped its owned descendants after 102.212 seconds at
 2868981760 sampled total cgroup bytes, preserving the subreaper until cleanup.
 Exit 143 is an interrupted generation, not successful output qualification.

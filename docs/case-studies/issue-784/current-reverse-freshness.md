@@ -5,8 +5,8 @@ The published file-lock tracing source had ten stale reverse outputs. Running
 the actual generator updates both manifests and every affected meta, Rust-text
 and TypeScript artifact. No generated output was edited by hand.
 
-The source-constructor graph includes the complete file-lock source; this also
-changes Gemini's graph proof and IR header without changing its emitted body.
+The source-constructor module graph includes the complete file-lock source; this also
+changes Gemini's module graph proof and IR header without changing its emitted body.
 The scoped census now includes two trivial no-op tracing callbacks instead of
 one. This is source enumeration, not a new translation-rule coverage gain.
 Top-level translated items remain 75; 726 items remain unsupported. Scoped
