@@ -263,26 +263,26 @@ pub(super) fn redacted_uri(uri: &str) -> String {
     format!("{path}?{query}")
 }
 
+/// Decode `%XY` escapes, and `+` as a space, as a query string does.
+///
+/// The loop takes bytes off the front of a slice instead of advancing an
+/// index, so every step consumes at least one byte and the loop always ends.
+/// With an index, a `Mutants` workflow mutation of `index += 1` to
+/// `index *= 1` left it at 0, pushing bytes until the runner ran out of
+/// memory and was shut down before cargo-mutants' test timeout could fire.
 fn percent_decode(value: &str) -> String {
-    let bytes = value.as_bytes();
-    let mut decoded = Vec::with_capacity(bytes.len());
-    let mut index = 0;
-    while index < bytes.len() {
-        match bytes[index] {
-            b'%' if index + 2 < bytes.len() => {
-                if let (Some(high), Some(low)) =
-                    (hex_digit(bytes[index + 1]), hex_digit(bytes[index + 2]))
-                {
-                    decoded.push(high * 16 + low);
-                    index += 3;
-                    continue;
-                }
-                decoded.push(bytes[index]);
-            }
-            b'+' => decoded.push(b' '),
-            byte => decoded.push(byte),
+    let mut decoded = Vec::with_capacity(value.len());
+    let mut rest = value.as_bytes();
+    while let [byte, tail @ ..] = rest {
+        rest = tail;
+        if let (b'%', [high, low, after @ ..]) = (byte, tail)
+            && let (Some(high), Some(low)) = (hex_digit(*high), hex_digit(*low))
+        {
+            decoded.push(high * 16 + low);
+            rest = after;
+            continue;
         }
-        index += 1;
+        decoded.push(if *byte == b'+' { b' ' } else { *byte });
     }
     String::from_utf8_lossy(&decoded).into_owned()
 }
@@ -358,6 +358,7 @@ mod tests {
         assert_eq!(percent_decode("100%"), "100%");
         assert_eq!(percent_decode("%4"), "%4");
         assert_eq!(percent_decode("%41+b"), "A b");
+        assert_eq!(percent_decode("%zz%41%"), "%zzA%");
         assert_eq!(redacted_uri("/v1?note=100%"), "/v1?note=100%");
     }
 

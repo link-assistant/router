@@ -106,7 +106,13 @@ jobs:
           elif [ -n "$ONLY_FILE" ]; then
             args+=(--file "$ONLY_FILE")
           fi
-          cargo mutants "${args[@]}"
+          # List the shard's mutants and print every outcome as it lands, so
+          # a runner that is lost mid-shard (and uploads no report) still
+          # shows which mutant it was testing: the next one in the list.
+          echo "::group::Mutants in shard $SHARD/$SHARDS"
+          cargo mutants "${args[@]}" --list
+          echo "::endgroup::"
+          cargo mutants "${args[@]}" --caught --unviable
 
       - name: Upload mutants report
         if: always()

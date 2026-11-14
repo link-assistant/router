@@ -277,6 +277,14 @@ triggered on pull requests only when the code they guard changes.
 | macOS Keychain (`rust/tests/macos_keychain_test.rs`) | Router finds `Claude Code-credentials` and its `CLAUDE_CONFIG_DIR`-scoped entry in a real keychain, and prefers it to a stale credentials file (#674) | on macOS, against a throwaway keychain seeded as `macos-keychain.yml` does, with `ROUTER_TEST_KEYCHAIN=1` | `macos-keychain.yml` |
 | Upgrade matrix (`scripts/upgrade-matrix.sh`, `rust/tests/upgrade_fixture_test.rs`) | A data directory written by each of the last three releases (capped, admin and revoked tokens, a provider with an encrypted key, a server profile) is listed, served and extended unchanged by the new build (#673) | `cargo test --test upgrade_fixture_test`, or `scripts/upgrade-matrix.sh download v1.15.3 /tmp/old`, `seed /tmp/old/router /tmp/state`, `verify target/debug/router /tmp/state` | `upgrade-matrix.yml` |
 
+Each `Mutants` shard first lists its mutants, then prints every outcome
+(caught, unviable, missed, timeout) as it lands. A mutant that makes a test
+exhaust memory gets the runner shut down before cargo-mutants' test timeout,
+and the shard uploads no report; its log still names the last finished mutant,
+so the next one in the list is the culprit. Loops in mutated modules should
+consume their input (slice patterns, iterators) rather than step an index, so
+no arithmetic mutation can stall them.
+
 The soak uses a non-retaining upstream fixture; ordinary replay and feature
 tests still record complete requests. RSS is measured in KiB through
 `/proc/self/status` on Linux and `/bin/ps -o rss= -p <pid>` on macOS. A missing
