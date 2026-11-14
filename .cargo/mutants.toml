@@ -24,10 +24,19 @@ examine_globs = [
 ]
 
 # Logging and Debug formatting are not security behaviour.
+#
+# cargo-mutants recognises `Option` only by name, so for a function returning
+# the `crate::translation_core::Maybe<T>` alias it generates `Maybe::new(..)`,
+# `Maybe::from(..)` and `Maybe::from_iter(..)` replacements. `Maybe` is not in
+# scope in these modules (and `Option` has no `new`), so every one of them
+# fails to build: all 1,719 tested in the 2026-11-14 runs were unviable, about
+# 28 seconds each, and they were two thirds of the 1,590 mutants. Mutations
+# inside those functions are still generated.
 exclude_re = [
     "impl Debug",
     "impl (std::fmt::)?Display",
     "tracing::",
+    " with Maybe::(new|from|from_iter)\\(",
 ]
 
 # Build with `[profile.mutants]` from the workspace `Cargo.toml` (no debug
