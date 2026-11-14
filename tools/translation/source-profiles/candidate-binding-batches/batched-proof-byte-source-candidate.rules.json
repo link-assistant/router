@@ -1,0 +1,28 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/prepare-batched-proof-byte-source-candidate.mjs",
+  "phase": "repository",
+  "beforeSha256": "530cd8c1b94854e658606a8985f44f2b4350dd1da0e6bef458f9a9fee9e7a5f6",
+  "afterSha256": "70c39d549cb36681d89a5aab8616f8f3f05c61ab558c6d5dbb8c821d5f5719fd",
+  "edits": [
+    {
+      "id": "router.candidate-binding-batch.retain-native-registration.v1",
+      "before": " const rawBody='{\\n",
+      "after": " const nativeRegistration=ts.isObjectLiteralExpression(native.initializer)?one(body.filter(node=>ts.isExpressionStatement(node)&&node.getText(file)==='bindingCandidates.push({path:resolve(root,path),source:after,result:nativeBindings});'),'complete invocation-local native registration').getText(file):'';\n const rawBody='{\\n"
+    },
+    {
+      "id": "router.candidate-binding-batch.copy-native-registration.v1",
+      "before": ".join(',')+';\\n'+hashGuard.getText(file)",
+      "after": ".join(',')+';\\n'+nativeRegistration+'\\n'+hashGuard.getText(file)"
+    },
+    {
+      "id": "router.candidate-binding-batch.native-before-cst-chunks.v1",
+      "before": " const finish=`\n // All34",
+      "after": " const finish=`\n ${nativeRegistration?'const __batchedNativeBindings=verifyNativeCopiedModuleBindings(ts,bindingCandidates);for(let at=0;at<bindingCandidates.length;at++)Object.assign(bindingCandidates[at].result,__batchedNativeBindings[at]);':''}\n // All34"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

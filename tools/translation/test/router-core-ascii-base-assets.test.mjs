@@ -6,7 +6,7 @@ import {syncBuiltinESMExports} from 'node:module';
 import {createHash} from 'node:crypto';
 import {hostRuntimeAssetsNamedDataAliases} from '../host-assets.mjs';
 import {hostCoreAsciiBaseRuntimeAssets,coreAsciiBaseAssetSchedule} from '../ascii-base-runtime-assets.mjs';
-import {prepareCoreAsciiBaseAssets,composeCoreAsciiBaseAssets,prepareCurrentCoreAsciiBaseAssets} from '../prepare-core-ascii-base-assets.mjs';
+import {prepareCoreAsciiBaseAssets,composeCoreAsciiBaseAssets,prepareCurrentCoreAsciiBaseAssets} from '../prepare-current-core-ascii-base-assets.mjs';
 import {createOwnedCoreSourceContext,ownedCoreRuntimeSources,ownedCoreAsciiBaseRuntimeSources,ownedCoreAsciiRuntimeSources,requireOwnedCoreSourceCurrent} from '../js-to-rust/owned-core-source.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE} from '../router-core-source-data.mjs';
 import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';

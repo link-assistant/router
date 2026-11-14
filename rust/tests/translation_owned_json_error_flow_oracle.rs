@@ -7,12 +7,12 @@ fn project(value: &Json) -> Result<Option<Json>, String> {
     let Some(value) = value.get("outer") else {
         return Ok(None);
     };
-    let object = value.as_object().ok_or_else(|| {
-        translation_core::format!("{}", "object required")
-    })?;
-    let child = object.get("value").ok_or_else(|| {
-        translation_core::format!("{}", "value required")
-    })?;
+    let object = value
+        .as_object()
+        .ok_or_else(|| translation_core::format!("{}", "object required"))?;
+    let child = object
+        .get("value")
+        .ok_or_else(|| translation_core::format!("{}", "value required"))?;
     Ok(Some(translation_core::json_copy(child)))
 }
 
@@ -67,9 +67,10 @@ fn error_callbacks_run_only_for_none_and_receivers_run_once() {
 }
 
 fn inner(value: &Json) -> Result<&str, String> {
-    value.get("text").and_then(Json::as_str).ok_or_else(|| {
-        translation_core::format!("{}", "text required")
-    })
+    value
+        .get("text")
+        .and_then(Json::as_str)
+        .ok_or_else(|| translation_core::format!("{}", "text required"))
 }
 
 fn outer(value: &Json) -> Result<Json, String> {
@@ -83,7 +84,6 @@ fn readonly_helpers_forward_only_the_actual_success_borrow() {
     assert_eq!(outer(&value), Ok(value.clone()));
     assert_eq!(outer(&Json::Null), Err(String::from("text required")));
 }
-
 
 #[test]
 fn borrowed_text_tail_arms_return_from_the_enclosing_function() {

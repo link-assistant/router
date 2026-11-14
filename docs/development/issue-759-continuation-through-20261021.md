@@ -769,7 +769,7 @@ source path and new trace-control failures were repaired together, with complete
 source/CST inverses in `router-layout-external-package-data-tests-source-proposal-v1`.
 
 The separately bounded complete-package diagnostic retains all 39 originals,
-31 module views and all 17 derive attempts. The original graph remains unknown
+31 module views and all 17 derive attempts. The original module graph remains unknown
 at the root. Explicit non-authorizing source proposals show that conditional
 documentation and lint alternatives account for that root blocker; the proposed
 root becomes active, but all 17 sibling derive attempts still refuse. No original

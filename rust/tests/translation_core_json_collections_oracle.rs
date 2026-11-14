@@ -44,7 +44,13 @@ fn callback_owns_fresh_conditional_update_state() {
         }
         Some(doc)
     });
-    assert_eq!(output, vec![json!({"start": true, "data": ["😀", true]}), json!({"start": true})]);
+    assert_eq!(
+        output,
+        vec![
+            json!({"start": true, "data": ["😀", true]}),
+            json!({"start": true})
+        ]
+    );
     assert_eq!(input, before);
 }
 
@@ -75,26 +81,51 @@ fn callback_panic_stops_before_later_rows() {
 }
 
 #[test]
-#[allow(clippy::manual_unwrap_or)] // Compare the explicit adopted branch with unwrap_or.
+// Compare the explicit adopted branches with the Option combinators.
+#[allow(clippy::manual_unwrap_or, clippy::option_if_let_else)]
 fn canonical_option_expansion_preserves_payload_and_default() {
-    let input = vec![json!({"image": {"url": "猫"}}), json!({"image": {"url": true}}), json!({})];
+    let input = vec![
+        json!({"image": {"url": "猫"}}),
+        json!({"image": {"url": true}}),
+        json!({}),
+    ];
     let original = json_map(&input, |value| {
-        let text = value.get("image").and_then(|image| image.get("url")).and_then(Value::as_str).unwrap_or("fallback");
+        let text = value
+            .get("image")
+            .and_then(|image| image.get("url"))
+            .and_then(Value::as_str)
+            .unwrap_or("fallback");
         json!({"text": text})
     });
     let explicit = json_map(&input, |value| {
         let image = value.get("image");
-        let url = if let Some(image) = image { image.get("url") } else { None };
-        let text = if let Some(url) = url { Value::as_str(url) } else { None };
+        let url = if let Some(image) = image {
+            image.get("url")
+        } else {
+            None
+        };
+        let text = if let Some(url) = url {
+            Value::as_str(url)
+        } else {
+            None
+        };
         let default = "fallback";
         let text = if let Some(text) = text { text } else { default };
         json!({"text": text})
     });
     assert_eq!(original, explicit);
-    assert_eq!(explicit, vec![json!({"text": "猫"}), json!({"text": "fallback"}), json!({"text": "fallback"})]);
+    assert_eq!(
+        explicit,
+        vec![
+            json!({"text": "猫"}),
+            json!({"text": "fallback"}),
+            json!({"text": "fallback"})
+        ]
+    );
 }
 
 #[test]
+#[allow(clippy::or_fun_call)] // The eager default call is the behavior under test.
 fn unwrap_default_evaluates_after_subject_even_for_some() {
     let events = RefCell::new(Vec::new());
     let subject = || {

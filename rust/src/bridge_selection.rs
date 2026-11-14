@@ -40,7 +40,9 @@ impl BridgeModelPolicy {
     /// # Errors
     ///
     /// Returns the accepted names when `value` is not one of them.
-    pub fn parse(value: &crate::translation_core::Str) -> crate::translation_core::Outcome<Self, String> {
+    pub fn parse(
+        value: &crate::translation_core::Str,
+    ) -> crate::translation_core::Outcome<Self, String> {
         match value.trim().to_ascii_lowercase().replace('_', "-").as_str() {
             "" | "first" | "first-advertised" => Ok(Self::FirstAdvertised),
             "last" | "last-advertised" => Ok(Self::LastAdvertised),

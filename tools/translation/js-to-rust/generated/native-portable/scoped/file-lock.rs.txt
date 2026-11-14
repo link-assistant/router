@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from js/src/file-lock.mjs; source sha256=537c1600e5c138216a6df605721e145dc33903ba1d204b8e8cccb043734dc270; IR sha256=be53ffdd4538deda2919544b2ef57a9592578806b1163de42fbf8d8760909168.
+// Independently checked scoped bodies from js/src/file-lock.mjs; source sha256=f89a82574899ed59a26a1863d5ba353930d74c881487579f9e6558fcdeeb7396; IR sha256=43ed475ea035af605ffe50f1ef9cdeaf42b603b5cfc369c56d05bd6b95197a07.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -76,6 +76,11 @@ pub enum JsNullable<T> { Null, Value(T) }
 pub enum JsOptional<T> { Undefined, Value(T) }
 
 #[rustfmt::skip]
-fn scoped_src0f0266b6d3889895_at2069() -> JsUndefined {
+fn scoped_src0a23266503cd79ab_at1802() -> JsUndefined {
+    return JsUndefined;
+}
+
+#[rustfmt::skip]
+fn scoped_src0a23266503cd79ab_at2726() -> JsUndefined {
     return JsUndefined;
 }

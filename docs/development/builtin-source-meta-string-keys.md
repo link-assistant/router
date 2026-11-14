@@ -20,7 +20,7 @@ reflection. It independently pins the genuine Number constructor and its
 `isFinite`/`isInteger` operations, so a numeric callback cannot change JSON
 after earlier strings have selected the native route. Existing complete DATA
 intrinsic guards remain fresh. The existing stateless native scan then checks
-the entire graph, including its original cell, depth and unit bounds. Its work
+the entire object graph, including its original cell, depth and unit bounds. Its work
 is part of the operation and must be included in whole-file duration checks.
 The temporary string map dies with one encoding call. It stores table indices,
 and retains no source, hash, encoded output or eligibility verdict across calls.

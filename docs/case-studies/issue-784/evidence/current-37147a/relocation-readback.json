@@ -1,0 +1,1 @@
+{"schema": "completed-ci-relocation-independent-readback-v1", "members": 51, "allByteHashesVerified": true, "originalAttemptExitCode": 1, "initialFailure": "Final Python tuple/list equality after all relocations; byte checks passed."}

@@ -67,6 +67,65 @@ export function inferenceProgram(ts, root, paths) {
   return { program, checker: program.getTypeChecker() };
 }
 
+// Each factory owns one private program. The regeneration producer keeps its
+// factory private; public parser/build calls cannot obtain its checker or AST.
+// Only inference is reused. CST transport, meta serialization/reparse, emission
+// and independent runtime AST identity still run on every regeneration.
+export function createInferenceProgramReuse() {
+  let previous=null;
+  const operations=['fileExists','readFile','directoryExists','getDirectories','readDirectory','realpath','getEnvironmentVariable'];
+  const copy=value=>Array.isArray(value)?value.map(copy):value;
+  const same=(left,right)=>Array.isArray(left)&&Array.isArray(right)?left.length===right.length&&left.every((value,at)=>same(value,right[at])):Object.is(left,right);
+  const current=(entry,host)=>{
+    for(const {name,args,value} of entry.observations.values())if(typeof host[name]!=='function'||!same(Reflect.apply(host[name],host,args),value))return false;
+    for(const [path,source] of entry.sources)if(host.readFile(path)!==source)return false;
+    return entry.eligible;
+  };
+  const infer=(ts,root,paths)=>{
+    const options={allowJs:true,checkJs:false,noEmit:true,strictNullChecks:true,target:ts.ScriptTarget.ES2022,
+      module:ts.ModuleKind.NodeNext,moduleResolution:ts.ModuleResolutionKind.NodeNext,skipLibCheck:true,
+      typeRoots:[`${root}/js/node_modules/@types`],types:['node']};
+    const host=ts.createCompilerHost(options),key=JSON.stringify([root,paths,options,host.getCurrentDirectory(),host.getDefaultLibFileName(options)]);
+    if(previous&&previous.ts===ts&&previous.createProgram===ts.createProgram&&previous.createHost===ts.createCompilerHost&&previous.key===key&&current(previous,host))return previous.result;
+    previous=null;
+    const entry={ts,key,createProgram:ts.createProgram,createHost:ts.createCompilerHost,observations:new Map(),sources:new Map(),eligible:true,units:0};
+    const disable=()=>{entry.eligible=false;entry.observations.clear();entry.sources.clear();};
+    for(const name of operations){
+      const operation=host[name];if(typeof operation!=='function')continue;
+      host[name]=(...args)=>{
+        const value=Reflect.apply(operation,host,args);
+        if(entry.eligible){
+          const key=JSON.stringify([name,args.map(value=>value===undefined?{undefined:true}:value)]),before=entry.observations.get(key);
+          if(before&&!same(before.value,value))disable();
+          else if(!before){
+            entry.units+=typeof value==='string'?value.length:0;
+            if(entry.observations.size>=65536||entry.units>16777216)disable();
+            else entry.observations.set(key,{name,args:args.map(copy),value:copy(value)});
+          }
+        }
+        return value;
+      };
+    }
+    const getSourceFile=host.getSourceFile;
+    host.getSourceFile=(...args)=>{
+      const file=Reflect.apply(getSourceFile,host,args);
+      if(entry.eligible&&file){
+        const before=entry.sources.get(args[0]);
+        if(before!==undefined&&before!==file.text)disable();
+        else entry.sources.set(args[0],file.text);
+      }
+      return file;
+    };
+    const program=ts.createProgram(paths.map(path=>`${root}/${path}`),options,host);
+    const result={program,checker:program.getTypeChecker(),assertInputsCurrent(){
+      if(entry.eligible&&!current(entry,ts.createCompilerHost(options))){previous=null;throw new Error('Native inference inputs changed during regeneration');}
+    }};
+    entry.result=result;if(entry.eligible)previous=entry;return result;
+  };
+  infer.release=()=>{previous=null;};
+  return infer;
+}
+
 export function returnHint(ts, checker, node) {
   if (!checker || ts.isConstructorDeclaration(node) || ts.isSetAccessorDeclaration(node) || node.asteriskToken) return null;
   const signature = checker.getSignatureFromDeclaration(node);

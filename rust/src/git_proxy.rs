@@ -224,7 +224,10 @@ pub enum Ancestry {
 /// we do not recognise — is not a fast-forward.
 #[must_use]
 pub fn ancestry_from_compare(payload: &crate::translation_core::Json) -> Ancestry {
-    match payload.get("status").and_then(crate::translation_core::Json::as_str) {
+    match payload
+        .get("status")
+        .and_then(crate::translation_core::Json::as_str)
+    {
         Some("ahead" | "identical") => Ancestry::FastForward,
         Some("behind" | "diverged") => Ancestry::Diverged,
         _ => Ancestry::Unknown,
@@ -258,7 +261,9 @@ pub fn updates_needing_ancestry(
 
 /// `owner/repo` from a `/git/{owner}/{repo}.git/...` path.
 #[must_use]
-pub fn repository_in_git_path(path: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
+pub fn repository_in_git_path(
+    path: &crate::translation_core::Str,
+) -> crate::translation_core::Maybe<String> {
     let rest = path.strip_prefix("/git/")?;
     let mut parts = rest.split('/');
     let owner = parts.next().filter(|part| !part.is_empty())?;
@@ -268,7 +273,11 @@ pub fn repository_in_git_path(path: &crate::translation_core::Str) -> crate::tra
 
 /// The upstream git URL for a proxied path.
 #[must_use]
-pub fn upstream_git_url(base: &crate::translation_core::Str, path: &crate::translation_core::Str, query: crate::translation_core::Maybe<&crate::translation_core::Str>) -> crate::translation_core::Maybe<String> {
+pub fn upstream_git_url(
+    base: &crate::translation_core::Str,
+    path: &crate::translation_core::Str,
+    query: crate::translation_core::Maybe<&crate::translation_core::Str>,
+) -> crate::translation_core::Maybe<String> {
     let rest = path.strip_prefix("/git/")?;
     let mut url = format!("{}/{rest}", base.trim_end_matches('/'));
     if let Some(query) = query {
@@ -305,7 +314,10 @@ pub fn refusal_for_request(
 ///
 /// Empty is unrestricted, matching the REST surface, so one rule governs both.
 #[must_use]
-pub fn scope_admits(allowed_repositories: &[String], repository: &crate::translation_core::Str) -> bool {
+pub fn scope_admits(
+    allowed_repositories: &[String],
+    repository: &crate::translation_core::Str,
+) -> bool {
     allowed_repositories.is_empty()
         || allowed_repositories
             .iter()

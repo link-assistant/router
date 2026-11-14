@@ -213,9 +213,9 @@ fn rejected_managed_bindings_leave_no_credentials_or_token_store() {
 #[test]
 fn an_unprovable_foreign_binding_leaves_no_credential_state() {
     let home = tempfile::tempdir().expect("temp home");
-    let listener = TcpListener::bind("127.0.0.1:0").expect("reserve port");
-    let base_url = format!("http://{}", listener.local_addr().unwrap());
-    drop(listener);
+    // Port 1 is privileged, so no parallel test can bind it the way one can
+    // reuse a just-dropped ephemeral port: connections to it stay refused.
+    let base_url = "http://127.0.0.1:1";
     let token = foreign_token("unprovable", Some("codex"), Some("external-principal"));
     let output = router(
         home.path(),
@@ -226,7 +226,7 @@ fn an_unprovable_foreign_binding_leaves_no_credential_state() {
             "--token",
             &token,
             "--base-url",
-            &base_url,
+            base_url,
         ],
     );
     assert!(!output.status.success(), "unreachable issuer was trusted");

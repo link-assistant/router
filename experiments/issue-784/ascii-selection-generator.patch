@@ -1,0 +1,26 @@
+*** Begin Patch
+*** Update File: tools/translation/prepare-unicode-ascii-asset-producers.mjs
+@@
+-function entrySource(base){
++function entrySource(base,serializable){
+@@
+  const metadata=base?"selection:{source:inputs.rows.find(row=>row.path===HOST).source,...result.selection},closure:result.closure,originalSourcePublicBuilderUnchanged:true,nonAsciiContextsUnchanged:true":
+   "selection:{path:HOST,source:parent.source,sha256:parent.sha256,statements:result.selection.selected.map(row=>({name:row.name,span:[row.node.getStart(),row.node.end],source:row.node.getText()})),nativeBindings:result.selection.nativeBindings,nativeLexicalBindings:result.selection.links}";
++ const historicalSelection=base||!serializable?'historical.selection':"{selected:historical.selection.selected.map(row=>({name:row.name,span:[row.node.getStart(),row.node.end],source:row.node.getText()})),links:historical.selection.links,statements:historical.selection.statements,nativeBindings:historical.selection.nativeBindings}";
+@@
+- return {schema:${JSON.stringify(schema)},typescriptVersion:ts.version,files,${metadata},historical:{files:historicalFiles,selection:historical.selection,originals:rows},currentInputComposition:inputs,runtimeExecuted:false,rustExecuted:false,semanticAuthority:false,fullBuilderCallbackParity:false};
++ return {schema:${JSON.stringify(schema)},typescriptVersion:ts.version,files,${metadata},historical:{files:historicalFiles,selection:${historicalSelection},originals:rows},currentInputComposition:inputs,runtimeExecuted:false,rustExecuted:false,semanticAuthority:false,fullBuilderCallbackParity:false};
+@@
+-function prepareFile(ts,before,path,base){
++function prepareFile(ts,before,path,base,serializable=true){
+@@
+- const entry=fn(base?'prepareCoreAsciiBaseAssets':'prepareCoreAsciiAssets'),edits=[[helper,replacement],[entry,entrySource(base)]].map(([node,replacement])=>({span:[node.getStart(file),node.end],expected:node.getText(file),replacement}));
++ const entry=fn(base?'prepareCoreAsciiBaseAssets':'prepareCoreAsciiAssets'),edits=[[helper,replacement],[entry,entrySource(base,serializable)]].map(([node,replacement])=>({span:[node.getStart(file),node.end],expected:node.getText(file),replacement}));
+@@
+-  return {input,path,...prepareFile(ts,before,path,name.includes('base-assets')),beforeSha256:sha256};
++  const previous=prepareFile(ts,before,path,name.includes('base-assets'),false);
++  return {input,path,...prepareFile(ts,before,path,name.includes('base-assets')),previousAfter:previous.after,previousNativeEdits:previous.nativeEdits,beforeSha256:sha256};
+@@
+-  if(current!==null&&current!==row.after)fail('unknown complete current producer: '+row.path);
++  if(current!==null&&current!==row.after&&current!==row.previousAfter)fail('unknown complete current producer: '+row.path);
+*** End Patch

@@ -7,7 +7,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { ProtocolError, translateRequest, translateResponse, normalizeUsage, projectModels } from './protocols.mjs';
 import { translateStream, monitorNativeStream } from './streams.mjs';
 import { ResponsesStore, responseOwner, normalizeResponseInput } from './responses.mjs';
-import { createNativeService,boundedBytes } from './native-service.mjs';
+import { createNativeService,boundedBytes,isIngressNetworkHeader } from './native-service.mjs';
 import {estimateRequestBudget} from './token-reservation.mjs';
 import {retryableStatus} from './accounts.mjs';
 import {managementOperation} from './http-management.mjs';
@@ -20,6 +20,7 @@ import {serveAdminAsset,hardenAdmin} from './admin-assets.mjs';
 import {matchHTTPRoute,HTTP_ROUTES} from './http-route-contract.mjs';
 import {isIP} from 'node:net';
 import {NativeRequestLog} from './request-log.mjs';
+import {isGeolocationHeader,sharesGeolocation,sanitizeGeolocation} from './geolocation.mjs';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, ...headers } });
@@ -64,7 +65,8 @@ function upstreamHeaders(candidate, protocol, request) {
   const forbidden = /^(?:authorization|x-api-key|x-goog-api-key|anthropic-auth-token|chatgpt-account-id|cookie|set-cookie|host|connection|content-length|content-encoding|transfer-encoding|upgrade|te|trailer|keep-alive|proxy-.*|forwarded|x-forwarded-.*|x-router-.*|x-link-assistant-.*)$/i;
   const copies=new Set(['x-request-id','x-correlation-id','traceparent','tracestate','x-claude-code-session-id','x-codex-session-id','x-session-id','session-id']);
   for (const [key, value] of Object.entries(candidate.headers ?? candidate.account?.headers ?? {})) {
-    if (forbidden.test(key)) continue;
+    if (forbidden.test(key) || isIngressNetworkHeader(key)) continue;
+    if (!sharesGeolocation(request.headers) && isGeolocationHeader(key)) continue;
     if (typeof value !== 'string') continue;
     if(value.startsWith('$')){const source=value.slice(1).toLowerCase();if(copies.has(source) && request.headers.has(source))headers.set(key,request.headers.get(source));}
     else headers.set(key, value);
@@ -245,6 +247,7 @@ export function createNativeRouter(options = {}) {
     }
     for (const key of ['max_tokens', 'max_completion_tokens', 'max_output_tokens']) if (body[key] !== undefined && (!Number.isSafeInteger(body[key]) || body[key] < 1)) throw new ProtocolError(`${key} must be a positive integer`);
     const claims = await authorize(request, false, body.model);
+    sanitizeGeolocation(body,sharesGeolocation(request.headers));
     const retain = source === 'responses' && body.store !== false;
     const namespace = new URL(request.url).pathname.match(/^\/api\/services\/(?:openai|codex|qwen)\/v1/)?.[0] ?? '/v1';
     const owner = retain ? responseOwner(claims, bearer(request.headers)) : undefined;

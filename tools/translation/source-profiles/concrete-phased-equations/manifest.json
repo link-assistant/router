@@ -1,0 +1,9 @@
+{
+  "schema": "concrete-phased-equations-original-v1",
+  "path": "tools/translation/private-parser-execution.mjs",
+  "bytes": 70029,
+  "sha256": "bb93546dc3ae5f258cdfcf96e185ddc491c0de4078de845b40752f315a8cd0d1",
+  "archive": "original.mjs.gz",
+  "archiveBytes": 14205,
+  "archiveSha256": "d03481fa2d6b9739b553180a4912b877cba78987ef0a5005e12d23a979459de0"
+}

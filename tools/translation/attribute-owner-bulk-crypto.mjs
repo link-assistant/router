@@ -5,7 +5,8 @@ import {types} from 'node:util';
 import process from 'node:process';
 import {originalCapturedFunctionSource,originalBatchedNamespaceTraversalIntrinsicsUnchanged,originalBatchedDataFreezeIntrinsicsUnchanged,originalPrivateParserIngressUnchanged} from './original-json-intrinsics.mjs';
 import {originalBatchedLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
-import * as nodeBulkCryptoFunctionSources from './attribute-owner-bulk-crypto-source.mjs';
+import * as nodeBulkCryptoLegacyFunctionSources from './attribute-owner-bulk-crypto-source.mjs';
+import * as nodeBulkCryptoCurrentFunctionSources from './attribute-owner-bulk-crypto-node20-20-source.mjs';
 const initial=originalPrivateParserIngressUnchanged()&&originalBatchedDataFreezeIntrinsicsUnchanged()&&originalBatchedLexingIntrinsicsUnchanged();
 const get=initial?Object.getOwnPropertyDescriptor:null,keys=initial?Reflect.ownKeys:null,parent=initial?Object.getPrototypeOf:null,has=initial?Object.hasOwn:null,apply=initial?Reflect.apply:null,proxy=initial?types.isProxy:null;
 const field=(owner,key)=>get(owner,key),value=descriptor=>descriptor&&has(descriptor,'value')?descriptor.value:undefined;
@@ -15,7 +16,8 @@ const createField=initial?field(crypto,'createHash'):null,hashField=initial?fiel
 const wrappers=initial&&hashPrototype?['constructor','copy','_transform','_flush','update','digest'].map(key=>({key,descriptor:field(hashPrototype,key)})):[];
 const chains=[];let handlePrototype=null,handleKey=null,nativeConstructor=null,nativeUpdate=null,nativeDigest=null;
 const versionsField=initial?field(process,'versions'):null,versions=value(versionsField),nodeVersionField=initial&&versions&&typeof versions==='object'&&!proxy(versions)?field(versions,'node'):null;
-let qualified=!!(initial&&value(nodeVersionField)==='20.19.4'&&typeof createHash==='function'&&typeof Hash==='function'&&hashPrototype&&typeof hashPrototype==='object'&&!proxy(createHash)&&!proxy(Hash)&&!proxy(hashPrototype)&&originalCapturedFunctionSource(createHash)===nodeBulkCryptoFunctionSources.createHash&&originalCapturedFunctionSource(Hash)===nodeBulkCryptoFunctionSources.Hash);
+const nodeBulkCryptoFunctionSources=value(nodeVersionField)==='20.20.2'?nodeBulkCryptoCurrentFunctionSources:nodeBulkCryptoLegacyFunctionSources;
+let qualified=!!(initial&&(value(nodeVersionField)==='20.19.4'||value(nodeVersionField)==='20.20.2')&&typeof createHash==='function'&&typeof Hash==='function'&&hashPrototype&&typeof hashPrototype==='object'&&!proxy(createHash)&&!proxy(Hash)&&!proxy(hashPrototype)&&originalCapturedFunctionSource(createHash)===nodeBulkCryptoFunctionSources.createHash&&originalCapturedFunctionSource(Hash)===nodeBulkCryptoFunctionSources.Hash);
 if(qualified){
  const actualKeys=keys(hashPrototype);qualified=actualKeys.length===wrappers.length&&wrappers.every((row,index)=>actualKeys[index]===row.key&&row.descriptor&&has(row.descriptor,'value')&&typeof row.descriptor.value==='function'&&!proxy(row.descriptor.value)&&originalCapturedFunctionSource(row.descriptor.value)===nodeBulkCryptoFunctionSources[row.key==='constructor'?'Hash':row.key]);
 }

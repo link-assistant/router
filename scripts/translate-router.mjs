@@ -2,6 +2,7 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { regenerate } from '../tools/translation/bulk.mjs';
+import {namespaceProgressObserver} from '../tools/translation/translation-progress.mjs';
 import {regenerateCompilationMatrix} from '../tools/translation/matrix-bulk.mjs';
 import {createCompilationMatrix,DECLARED_FAMILY_PROFILES} from '../tools/translation/compilation-matrix.mjs';
 
@@ -21,7 +22,7 @@ for (let index = 0; index < args.length; index++) {
   } else throw new Error('Usage: node scripts/translate-router.mjs [--check] [--progress] [--profile-matrix] [--retain-output-text] [--owned-core-definitions] [--root REPOSITORY] [--entry TRACKED_RS]');
 }
 const progressStarted=process.hrtime.bigint();
-const options={root,check,entries:entries.length?entries:undefined,progress:progress?record=>process.stderr.write(JSON.stringify({...record,elapsedMilliseconds:Number((process.hrtime.bigint()-progressStarted)/1_000_000n)})+'\n'):undefined};
+const options={root,check,entries:entries.length?entries:undefined,progress:progress?namespaceProgressObserver(record=>process.stderr.write(JSON.stringify({...record,elapsedMilliseconds:Number((process.hrtime.bigint()-progressStarted)/1_000_000n)})+'\n')):undefined};
 // Complete matrix CLI: sequential source-derived process lifetime.
 if(profileMatrix){
   const name=ownedCoreDefinitions?(retainOutputText?'isolated-retained-owned-definitions-matrix-bulk.mjs':'isolated-owned-definitions-matrix-bulk.mjs'):(retainOutputText?'isolated-retained-matrix-bulk.mjs':'isolated-matrix-bulk.mjs');

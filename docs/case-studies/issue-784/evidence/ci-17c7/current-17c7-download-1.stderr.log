@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/collect-current-ci-snapshot.py", line 22, in <module>
+    path = base / (prefix + '-job-' + str(identity) + '.log.gz')
+                   ~~~~~~~^~~~~~~~~
+TypeError: can't concat str to bytes

@@ -67,7 +67,7 @@ so both source producers must finish before any runtime import. The original
 eight-output producer still has eight outputs and all eight receiving cases
 remain intact. The new resolver producer has three separate outputs and six
 new complete 60,000 ms controls. They cover complete source equations, genuine
-graph/issuer/result checks, repeated/nested/carrier-alias results, exact getter/
+module graph/issuer/result checks, repeated/nested/carrier-alias results, exact getter/
 proxy/external-iterator callback tapes, forged/changed input refusals, and full
 JSON/Hash tapes in independent same-engine child processes. The latter observes
 all cold and warm constructors and resolver work; it hides no warmup. The

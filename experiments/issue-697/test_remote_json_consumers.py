@@ -14,7 +14,7 @@ if BASELINE:
 
 
 def source(name):
-    path = 'src/deploy/' + name
+    path = 'rust/src/deploy/' + name
     if BASELINE:
         return subprocess.check_output(['git', 'show', 'origin/main:' + path], cwd=ROOT, text=True)
     return (ROOT / path).read_text()

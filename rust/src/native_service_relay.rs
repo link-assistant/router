@@ -63,6 +63,7 @@ pub async fn upgrade_websocket(
     usage_identity: Option<(String, crate::model_contract::ModelAccessPolicy)>,
 ) -> Response {
     let (mut parts, _) = request.into_parts();
+    let share_geolocation = crate::geolocation::shares_geolocation(&parts.headers);
     let upgrade = match WebSocketUpgrade::from_request_parts(&mut parts, &state).await {
         Ok(upgrade) => upgrade,
         Err(rejection) => return rejection.into_response(),
@@ -78,7 +79,14 @@ pub async fn upgrade_websocket(
         .max_message_size(limit)
         .max_frame_size(limit)
         .on_upgrade(move |downstream| {
-            websocket_session(downstream, upstream, token_manager, usage_identity, metrics)
+            websocket_session(
+                downstream,
+                upstream,
+                token_manager,
+                usage_identity,
+                metrics,
+                share_geolocation,
+            )
         });
     for (name, value) in upstream_headers {
         if let Some(name) = name {
@@ -153,15 +161,22 @@ async fn websocket_session(
     token_manager: crate::token::TokenManager,
     usage_identity: Option<(String, crate::model_contract::ModelAccessPolicy)>,
     metrics: Arc<crate::metrics::Metrics>,
+    share_geolocation: bool,
 ) {
     let mut completed_responses = std::collections::HashSet::new();
     loop {
         tokio::select! {
             message = downstream.next() => {
-                let Some(Ok(message)) = message else {
+                let Some(Ok(mut message)) = message else {
                     let _ = upstream.close(None).await;
                     break;
                 };
+                if let Message::Text(text) = &message
+                    && let Ok(mut value) = serde_json::from_slice::<serde_json::Value>(text.as_bytes())
+                    && crate::geolocation::sanitize(&mut value, share_geolocation)
+                {
+                    message = Message::Text(value.to_string().into());
+                }
                 let message_bytes = websocket_message_len(&message);
                 if let (Some((token_id, model_policy)), Message::Text(text)) = (&usage_identity, &message) {
                     let event = serde_json::from_slice::<serde_json::Value>(text.as_bytes()).ok();

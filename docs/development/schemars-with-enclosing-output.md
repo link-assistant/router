@@ -78,10 +78,10 @@ source corruption. Any additional original owner refusal remains a real blocker;
 do not rewrite the actual parent or drop a sibling to make a fixture pass.
 
 The ClientKind control now uses the unchanged complete file in the complete
-captured original library graph, including actual ancestors, child modules and
+captured original library module graph, including actual ancestors, child modules and
 current Cargo/profile inputs. The previous standalone-file fixture omitted its
 external children and the private nested-helper proof correctly refused it.
-Root's complete eight-case Node v3 run passed every assertion with the full graph
+Root's complete eight-case Node v3 run passed every assertion with the full module graph
 and actual project external inputs. ClientKind took 81,950.771 ms, exceeding its
 unchanged 60-second deadline; the receiving file remains performance RED.
 
@@ -111,7 +111,7 @@ namespace branch, `derived-source-bindings.mjs`'s enclosing fallback and
 imports. Existing Default/Clone enclosing consumers and the owned resolver then
 consume the same genuine issuer; no foreign parallel context token is installed.
 Review the complete native/CST source proposal and every whole consumer file,
-then run the actual full production graph/profile and emitted-target checks.
+then run the actual full production module graph/profile and emitted-target checks.
 
 Keep `schemars-bang-footprints.mjs` and `derive-bang-context.mjs`'s standalone/full
 proof APIs unchanged in this first adoption. The existing actual ClientKind

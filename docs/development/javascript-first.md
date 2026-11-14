@@ -1,5 +1,11 @@
 # Develop Router behavior in JavaScript first
 
+**Temporary development policy (2026-11-11):** the maintainer requested
+[manual translation development](manual-translation-development.md). Current CI
+callers use that separate development lane while automated translation checks
+are suspended. The strict workflow below remains intact; a development pass
+does not establish parity or authorize Rust or releases.
+
 Use JavaScript to express and test new behavior before changing Rust. This keeps fast feedback independent of compiling the Rust dependency tree. Router already publishes a JavaScript operations package, but that package alone is not a replacement for the complete Rust runtime. The parity manifest records what is generated, ported, partial, carried or missing. A green inventory check means the inventory is consistent; only its strict mode can establish complete parity.
 
 ## Draft with focused JavaScript checks
@@ -34,6 +40,26 @@ establishes a measured speed gain.
 
 ## Run the complete gate before Rust
 
+For fingerprint diagnostics, set `ROUTER_JS_FIRST_FINGERPRINT_PROGRESS=1` on
+the complete gate command. This default-off trace writes scalar JSON records
+to stderr for every 512 completed inputs and before/after files at least 8 MiB.
+It includes paths, byte counters and Node memory samples, without source
+contents. Complete input discovery, hash framing and stage commands stay the
+same; progress and memory samples do not qualify any unrun stage.
+
+Set `ROUTER_JS_FIRST_COMMAND_PROGRESS=1` to record the exact start and finish
+of each mandatory command, its status/signal, elapsed milliseconds and parent
+memory. This default-off scalar trace preserves the complete command list and
+failure handling. Without it, a silent command may follow the last printed
+package command; that heading alone does not identify an interrupted child.
+
+Set `ROUTER_CASE_DEADLINE_PROGRESS=1` to trace each completely parsed source in
+the independent Node deadline auditor, including its byte count, call count,
+parse refusal and memory sample. The auditor retains complete source records
+and exact call spans with their lexical deadlines, then releases each file's
+TypeScript program. Final source identity checks and every original case limit
+remain mandatory. Preparing sources alone does not execute or qualify tests.
+
 Install the checked-in JavaScript package dependencies with `npm ci --prefix js`. Node 20 or newer is required; install Bun for the native Bun test stage. Run `node scripts/check-js-first-local.mjs --stamp /tmp/router-js-first-gate.json` from the repository root. This orchestrates the actual repository lint, native Node and Bun tests, TypeScript checks, strict parity, forward translation checks and reverse regeneration checks. It writes a green stamp only after all stages succeed and the SHA and file contents remain unchanged. A current strict parity failure is a reason to finish the missing implementation, not to downgrade the gate.
 
 Useful individual diagnostics are `node --test scripts/test/*.test.mjs`, `npm run native:test --prefix js`, `npm run native:test:bun --prefix js`, `npm run typecheck --prefix js`, `node scripts/check-router-parity.mjs`, `node scripts/check-router-parity.mjs --strict`, `node scripts/translate-router.mjs --check`, `node scripts/regenerate-js-first.mjs --check` and `node scripts/check-js-first-workflows.mjs`. Individual diagnostics do not replace the complete gate. The broader package `npm test` command can exercise the Rust-backed integration surface. Use the native commands above for local JavaScript diagnostics; issue #759 prohibits local Rust execution.
@@ -42,9 +68,20 @@ Forward translation currently runs Rust → meta-language → JavaScript for the
 
 Forward behavioral fixtures independently compile emitted TypeScript with the installed repository compiler, executing its complete strict CLI in the current Node or Bun engine. `ROUTER_TRANSLATION_TSC` remains an explicit mandatory override. Standalone bundles without repository dependencies retain the ambient `tsc` fallback; record the actual compiler version when comparing their observations. Compiler selection does not extend a test deadline or certify full parity.
 
+The single-module and whole-cohort receiving helpers share compiler selection.
+Set `ROUTER_TRANSLATION_COMPILER_TRACE=1` for optional command, argument-prefix
+and installed-version diagnostics; an explicit unavailable compiler still fails.
+
+Set `ROUTER_TRANSLATION_TYPED_TARGET_TRACE=1` to retain failure-only child
+compiler diagnostics from `verifyTypedTargets`. Its JSON stderr event contains
+the phase, exact command/arguments, status/signal and complete stdout/stderr
+bytes in base64. The original error still propagates, and default behavior is
+silent. CI enables this trace in the complete translation receiving step to
+avoid losing compiler output in truncated TAP exception messages.
+
 Reverse regeneration also [bulk drafts independently checked native bodies](native-portable-body-drafts.md). Complete top-level and scoped lexical censuses retain every source span and refusal separately. Every module's checked program is serialized and reparsed before emitting TypeScript and uncompiled Rust projections; refused enclosing owners remain refused. The emitted TypeScript joins the existing strict native compilation.
 
-The reverse stage runs every `tools/translation/js-to-rust/test/*.test.mjs` under Node with two test workers and under Bun before checking regeneration. Bun uses `node scripts/run-bun-reverse-files.mjs --output-root js/node_modules/.bun-reverse-files`: one fresh sequential process per complete discovered file, with original case deadlines and a 40-minute total cap. The coordinator retains complete raw streams, child resource receipts, compiler observations and before/after Rust, JavaScript, TypeScript and forward-definition input vectors. Every failed, interrupted, newly discovered or unrun mandatory file fails the stage. Each invocation allocates a new evidence directory, and CI uploads both Node and Bun receipts even after failure. CI installs pinned Bun 1.4.3 for this stage. New compiler test files are automatically included; the workflow audit rejects selecting only the legacy translator suite, filtering tests or ignoring an engine failure. The TypeScript stage retains its independent native TypeScript tests.
+The local reverse stage runs every `tools/translation/js-to-rust/test/*.test.mjs` under Node with two test workers and under Bun before checking regeneration. Bun uses `node scripts/run-bun-reverse-files.mjs --output-root js/node_modules/.bun-reverse-files`: one fresh sequential process per complete discovered file, with original case deadlines and a 40-minute total cap. The coordinator retains complete raw streams, child resource receipts, compiler observations and before/after Rust, JavaScript, TypeScript and forward-definition input vectors. Every failed, interrupted, newly discovered or unrun mandatory file fails the stage. Each invocation allocates a new evidence directory. CI uses sixteen exhaustive Node complete-file bins with one worker per runner, eight exhaustive Bun complete-file bins, and an independent job for all three original regeneration checks; every job keeps its original 15-minute limit and complete setup. The source-derived Bun shard coordinator preserves the original leaf execution and deadlines. All Node and Bun bins retain their full evidence and must succeed. CI installs pinned Bun 1.4.3. New compiler test files are automatically included; the workflow audit rejects selecting only the legacy translator suite, filtering tests or ignoring an engine failure. The TypeScript stage retains its independent native TypeScript tests.
 
 The reverse coordinator and its original controls are copied from the existing forward coordinator by `node scripts/prepare-bun-reverse-files.mjs --emit`, using separately declared language and repository CST rule sequences with complete serialized/reparsed source and inverses. Mandatory `--check` rejects stale copies. This changes process lifetime only; passing the coordinator controls does not establish translator coverage or full-gate completion.
 
@@ -52,11 +89,42 @@ Generate the independent neutral, Unix-family and Windows-family outputs with `n
 
 Add `--progress` to canonical or `--profile-matrix` translation commands to write newline-delimited JSON diagnostics to stderr. Each bounded scalar record identifies the stage and monotonic elapsed milliseconds; source text and private proofs are omitted. Source-generated Default and Clone stages identify every original module before its generator work begins. Stdout and generated bytes are unchanged by the flag for the same compiler. The library APIs also accept an optional `progress(record)` callback. A callback error propagates before any regeneration-plan artifacts are written; it does not grant admission or change a refused item.
 
+For additional canonical namespace boundaries, explicitly wrap the callback with
+`namespaceProgressObserver` from `tools/translation/translation-progress.mjs`.
+The canonical CLI uses that opt-in for `--progress`; ordinary library callbacks
+retain their original event sequence. Registration is private to the module
+instance and does not cross isolated matrix worker processes. Owned namespace
+translation retains its existing detailed progress contract.
+
+The isolated matrix workers also support default-off
+`ROUTER_TRANSLATION_MATRIX_TRACE=1`. The two matrix CI jobs explicitly enable it.
+Each worker writes bounded scalar diagnostics directly through a separate
+inherited descriptor to the parent's stderr while its synchronous planner is
+still running. Records use `router-isolated-matrix-worker-trace-v1` and include
+the profile, worker PID and elapsed milliseconds since that worker read its
+request. Original buffered errors and library progress callbacks remain
+independent. Diagnostics do not enter generated output, retain a partial matrix
+as complete, change deadlines or establish a successful check.
+
+Canonical CI sets `ROUTER_BULK_DRAFT_DIRECTORY=js/node_modules/.bulk-drafts`
+and invokes `scripts/translate-router-with-draft-custody.mjs --check` for complete
+computed-output custody. Its generated companion first checks the complete
+original and companion source equations. The additive `regenerateWithDraftCustody`
+API in `bulk-with-draft-custody.mjs` requires check mode, verifies unchanged Rust/Cargo, compiler, source-profile,
+Git and installed TypeScript inputs, and reads back every compressed output.
+It then runs the original mandatory freshness comparison with its original
+failures. The complete artifact is unqualified data, never a private compiler
+plan, semantic proof or parity result. Other CLI modes retain their existing
+execution paths. The original bulk, CLI and their retained/owned source copies
+keep their complete predecessor bytes. Reproduce and check the complete bulk/CLI source equations
+with `node tools/translation/prepare-bulk-draft-custody.mjs --check`; the retained
+and owned producer modules still require their separate source producers.
+
 After generation, run `node scripts/review-translation-draft.mjs --baseline FULL_PREVIOUS_SHA --output /tmp/router-draft-review.json` to record the complete original Rust/Cargo and compiler input hashes, every generated output, item gains and losses, project methods and refusal categories. The baseline must contain the same original Rust/Cargo bytes; changed source, stale compiler hashes, incomplete discovery, forged item/count metadata and linked or escaping outputs are rejected. Use `--inventory profiles/PROFILE/parity/rust-source-inventory.json` to review a matrix member independently. Reports preserve `runtimeParity: false` and cannot replace behavioral checks or the complete gate. Existing report paths are never overwritten.
 
 Both gates also check the original-source native affinity descriptor and the source-discovered serialization registry with `node tools/translation/serialization-schema/native-descriptor.mjs --check` and `node tools/translation/serialization-schema/bulk.mjs --check`, and compile both emitted TypeScript descriptors with their dedicated `check-descriptor-typescript.mjs` and `check-bulk-typescript.mjs` scripts. Forward test discovery includes `tools/translation/serialization-schema/*.test.mjs` alongside every existing compiler fixture. The current registry supports 88 bounded layouts and retains 453 refusals and 134 exclusions; these data descriptors do not lower complete serde trait bodies or establish runtime parity. After changing the original dependency source profiles, regenerate both registries with their explicit `--write` commands and retain the complete artifact comparison; check mode remains mandatory.
 
-Both the local gate and CI require `node scripts/translate-router.mjs --profile-matrix --check` for deterministic profile freshness and `node scripts/check-profile-typescript.mjs` for independent strict TypeScript compilation. Canonical freshness and strict native parity remain separate mandatory commands. CI uses separate unconditional translation and profile-matrix jobs, each with a finite 60-minute limit and the same immutable SHA. The aggregate requires all eight CI stages to succeed; the local gate keeps its seven stages and every mandatory command. Cycle nine completed forward/canonical steps reached 719/752 seconds and matrix checks reached 2166 seconds; six combined translation jobs were interrupted at their 60-minute limit. These step intervals do not establish CPU or infrastructure causes.
+Both the local gate and CI require `node scripts/translate-router.mjs --profile-matrix --check` for deterministic profile freshness and `node scripts/check-profile-typescript.mjs` for independent strict TypeScript compilation. Canonical freshness and strict native parity remain separate mandatory commands. CI uses eight exhaustive whole-file translation shards and separate unconditional translation-freshness, profile-matrix and owned-profile-matrix jobs, each with a finite 60-minute limit and the same immutable SHA. The aggregate requires all twelve logical CI stages, including every shard result, to succeed; the local gate keeps its seven stages, original complete unpartitioned cohort and every mandatory command. See [complete Node test shards](whole-node-test-shards.md) for full source joins, unchanged original deadlines and receiving evidence. Cycle nine completed forward/canonical steps reached 719/752 seconds and matrix checks reached 2166 seconds; six combined translation jobs were interrupted at their 60-minute limit. These step intervals do not establish CPU or infrastructure causes.
 
 The strict checker retains each native evidence runner’s 180-second bound and gives its complete canonical comparison 1200 seconds after seven embedded 600-second checks timed out. Acceptance executes three sequential complete checkers before CI runs a fourth. Each outer checker deadline includes all distinct cached test files in the current manifest and 180 seconds for inventory and fixture overhead. CI parity has a finite 240-minute limit, checked structurally against the four complete bounds plus 1200 seconds for other acceptance and 120 seconds for setup. A new evidence file increases each checker bound; the workflow audit rejects an insufficient enclosing limit. Genuine parity failures remain mandatory.
 
@@ -65,13 +133,13 @@ The complete compiler Node cohorts also require the [independent source-declared
 ## Draft supplemental CI source proposal
 
 The [fixed-nine supplemental draft proposal](draft-supplemental-ci-policy.md)
-retains the main eight-stage gate and every original fatal Rust check on draft
+retains every original gate stage and fatal Rust check on draft
 PRs. Only its nine named supplemental callers require an actual Boolean false PR
 draft field before selecting work; ready/non-draft/non-PR work keeps the full
 original checks, and missing or malformed PR draft data cannot select work.
 This remains a source draft until complete receiving and actual skipped/ready
 check-context observations plus fresh applicable branch/ruleset reads qualify
-integration. A skipped caller never proves eight green stages or waives same-SHA
+integration. A skipped caller never proves green stages or waives same-SHA
 JavaScript success before Rust. No generic conditional caller or bypass input is
 permitted.
 

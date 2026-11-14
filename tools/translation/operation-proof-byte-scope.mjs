@@ -1,6 +1,6 @@
 import {types} from 'node:util';
 import {originalBatchedNamespaceTraversalIntrinsicsUnchanged,originalBatchedDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
-import {originalBatchedLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
+import {originalBatchedLexingIntrinsicsUnchanged} from './guarded-proof-lexing-intrinsics.mjs';
 import {completedDataTraversalExceedsBudget,completedDataJsonWithinBudget} from './private-data-freeze.mjs';
 
 import {createScopedPrivateNativeProofJsonSerializer as operationOriginalSerializer} from './private-native-proof-json.mjs';
@@ -192,6 +192,9 @@ const COMPOSITION_UNITS=8388608;
 function syntaxSubstrateKey(key){return key==='recipes'||key==='compilerMeta'||key==='schemas'||key==='positiveSchemas'||key==='parserFieldSpans'||key==='descriptor'||key==='method'||key==='entry'||key==='callbackRecipes'||key==='positiveSchema'||key==='constructionSink'||key==='descriptors';}
 function existingSyntaxCost(value){const record=apply(weakGet,owners,[value])||apply(weakGet,largeSubtrees,[value])||apply(weakGet,subtrees,[value]);return record&&(record&1)===1?record:null;}
 function immutableCost(value){const saved=existingSyntaxCost(value);if(saved)return saved;if(!immutableJson(value,true))return null;return existingSyntaxCost(value);}
+// Positive scalar sizes only, weakly keyed inside this one operation.
+// Fresh whole-graph eligibility and every logical debit remain mandatory.
+let sharedMeasurements=qualified?new weakConstructor():null,sharedMeasurementRecords=0;
  function createPrivateFrozenJsonComposer(){
  return value=>{
   if(!compositionIntrinsics())return operationLegacy(value);
@@ -233,7 +236,7 @@ function immutableCost(value){const saved=existingSyntaxCost(value);if(saved)ret
   const entryUnits=(ENTRY_BYTES-128)/2;
   // Successful primitive sizes live only through this one completed plan.
   const quotedSizes=new Map();let quotedEntries=0,quotedKeyUnits=0;
-  const sharedMeasurements=new weakConstructor();let sharedMeasurementRecords=0,measurementDeepest=0;
+  let measurementDeepest=0;
   function quotedUnits(value,limit){
    if(value.length+2>limit||value.length>measureText)return -1;measureText-=value.length;let units=2;
    const saved=apply(mapGet,quotedSizes,[value]);if(saved!==undefined&&saved<=limit)return saved;
@@ -435,6 +438,7 @@ function sameImmutableArrayCells(left,right){
  // iteration. Mutated collection methods or globals cannot intercept cleanup.
  function operationClearBytes(){
   if(!qualified||storage===null)return;
+  sharedMeasurements=new weakConstructor();sharedMeasurementRecords=0;
   const cursor=apply(mapEntries,storage,[]);
   for(let at=0;at<ENTRIES;at++){const row=apply(next,cursor,[]);if(row.done)break;retire(row.value[0]);}
   if(entries!==0||retainedBytes!==0)throw new OperationByteError('Operation byte store did not close');

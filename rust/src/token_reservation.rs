@@ -25,8 +25,6 @@
 //!   excess; the overshoot is bounded by one request's unreported surplus rather
 //!   than being unbounded, and both figures are visible to administrators.
 
-use serde_json::Value;
-
 /// Characters per token used by the router's local estimator.
 ///
 /// Matches [`crate::output_limit`] and
@@ -75,9 +73,14 @@ pub fn estimate(body: &crate::translation_core::Json) -> RequestBudget {
 
 /// The caller's declared output cap, in whichever field its protocol uses.
 #[must_use]
-pub fn declared_output_tokens(body: &crate::translation_core::Json) -> crate::translation_core::Maybe<u64> {
+pub fn declared_output_tokens(
+    body: &crate::translation_core::Json,
+) -> crate::translation_core::Maybe<u64> {
     for field in ["max_output_tokens", "max_completion_tokens", "max_tokens"] {
-        if let Some(value) = body.get(field).and_then(crate::translation_core::Json::as_u64) {
+        if let Some(value) = body
+            .get(field)
+            .and_then(crate::translation_core::Json::as_u64)
+        {
             return Some(value);
         }
     }

@@ -48,13 +48,10 @@ fn a_green_run_with_skips_is_not_parity() {
 
 #[test]
 fn every_area_names_existing_test_targets() {
-    // rust-script builds and runs in a cache directory, but compiles the
-    // script from its own path in the checkout.
-    let tests = Path::new(file!())
-        .ancestors()
-        .nth(2)
-        .expect("scripts/ sits in the repository root")
-        .join("tests");
+    // `file!()` is relative to the workspace root while `cargo test` runs in
+    // the package directory, so the package's absolute manifest directory is
+    // the one path that names `tests/` from both.
+    let tests = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests");
     for area in AREAS {
         for run in area.runs {
             for target in run.targets {

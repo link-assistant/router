@@ -1,6 +1,6 @@
 //! Inference-surface coverage for credential-generation-aware evidence.
 
-use super::tests::auto_state;
+use super::tests::{auto_state, finished, rendezvous};
 use super::*;
 use axum::body::Body;
 use axum::extract::{OriginalUri, Query, State};
@@ -564,7 +564,7 @@ async fn validated_401_never_retries_or_poisons_a_post_dispatch_replacement() {
         .await
     });
 
-    reached_upstream.wait().await;
+    rendezvous(&reached_upstream).await;
     fs::write(
         &credential_path,
         r#"{"tokens":{"access_token":"codex-b","refresh_token":"refresh-b","account_id":"account-b"}}"#,
@@ -580,7 +580,7 @@ async fn validated_401_never_retries_or_poisons_a_post_dispatch_replacement() {
         .subscription_cache
         .record_status_for_credential(SubscriptionProvider::Codex, "primary", &credential_b, 200)
         .await;
-    may_answer.wait().await;
+    rendezvous(&may_answer).await;
 
     let response = request.await.unwrap();
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
@@ -806,7 +806,7 @@ async fn subscription_retry_records_the_final_actual_credential_without_leaking_
         .await
     });
 
-    reached_a.wait().await;
+    rendezvous(&reached_a).await;
     fs::write(
         home.path().join("auth.json"),
         json!({
@@ -835,7 +835,7 @@ async fn subscription_retry_records_the_final_actual_credential_without_leaking_
         .subscription_cache
         .record_status_for_credential(SubscriptionProvider::Codex, "primary", &credential_b, 403)
         .await;
-    release_a.wait().await;
+    rendezvous(&release_a).await;
 
     let response = request.await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
@@ -908,7 +908,7 @@ async fn retry_transport_failure_does_not_attribute_the_old_response_to_self_min
         .await
     });
 
-    reached_a.wait().await;
+    rendezvous(&reached_a).await;
     fs::write(
         home.path().join("auth.json"),
         json!({
@@ -937,7 +937,7 @@ async fn retry_transport_failure_does_not_attribute_the_old_response_to_self_min
         .subscription_cache
         .record_status_for_credential(SubscriptionProvider::Codex, "primary", &token_b, 200)
         .await;
-    release_a.wait().await;
+    rendezvous(&release_a).await;
 
     let response = request.await.unwrap();
     upstream.await.unwrap();
@@ -989,7 +989,7 @@ async fn native_gemini_records_401_before_an_incomplete_body_fails() {
         }),
     ))
     .await;
-    server.await.unwrap();
+    finished(server).await;
 
     assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
     assert_rejected(&state, SubscriptionProvider::Gemini);

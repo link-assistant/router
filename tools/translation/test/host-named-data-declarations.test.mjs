@@ -20,6 +20,8 @@ import {translateOwnedCoreJavaScript,parseOwnedCoreMeta} from '../js-to-rust/tra
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE} from '../router-core-source-data.mjs';
 import {createRulePipeline} from '../rule-pipeline.mjs';
 import {materializeNamedHostOriginalGit} from './portable-named-host-history.mjs';
+import {readOwnedReaderSourceHistory} from './owned-reader-source-history.mjs';
+import {readCurrentHostAssetSourceHistory as readHostAssetSourceHistory} from './current-host-asset-source-history.mjs';
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const BASELINE='077889e3fb2ad2d4f3a96c756bf6087ef17678b1';
 const HOST=NAMED_HOST_DECLARATION_SOURCE_PATHS[0],OWNED=NAMED_HOST_DECLARATION_SOURCE_PATHS[1];
@@ -92,7 +94,7 @@ function outcome(action){try{return {mode:'return',value:action()};}catch(error)
 
 test('legacy assets stay exact while the explicit format changes only unused family declaration spelling',t=>{
  const originalFixture=materializeNamedHostOriginalGit(t);assert.equal(originalFixture.revision,BASELINE);
- const sources=current(),actualRestored=restoreNamedHostDeclarationSources(sources),readerHistory=historicalReaderSource(actualRestored[OWNED]),restored={...actualRestored,[OWNED]:readerHistory.source},before=Object.fromEntries(NAMED_HOST_DECLARATION_SOURCE_PATHS.map(path=>[path,original(path,originalFixture.root)]));assert.deepEqual({...restored},before);retain('full689-current-to-historical-comparison-only',{sources,actualRestored,readerHistory});
+ const sources=current(),laterHistory=readOwnedReaderSourceHistory(sources[OWNED]),hostHistory=readHostAssetSourceHistory(sources[HOST]),actualRestored=restoreNamedHostDeclarationSources({[HOST]:hostHistory.source,[OWNED]:laterHistory.source}),readerHistory=historicalReaderSource(actualRestored[OWNED]),restored={...actualRestored,[OWNED]:readerHistory.source},before=Object.fromEntries(NAMED_HOST_DECLARATION_SOURCE_PATHS.map(path=>[path,original(path,originalFixture.root)]));assert.deepEqual({...restored},before);retain('full689-current-to-historical-comparison-only',{sources,laterHistory,hostHistory,actualRestored,readerHistory});
  const old=hostRuntimeAssets(),named=hostRuntimeAssetsNamedDataAliases();retain('complete-old-assets',[...old]);retain('complete-named-assets',[...named]);assert.deepEqual([...old.keys()],[...named.keys()]);
  const changed=[];for(const [path,source]of old){if(named.get(path)!==source)changed.push(path);if(path.endsWith('.mjs')||!FAMILY_FILES.includes(path))assert.equal(named.get(path),source,path);}
  assert.deepEqual(changed.sort(),['integer-runtime.d.mts','json-runtime.d.mts','time-runtime.d.mts']);const {declarations}=checked(),names=Object.keys(valueSchema(declarations).types);assert.equal(names.length,38);

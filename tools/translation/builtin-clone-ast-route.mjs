@@ -7,9 +7,11 @@ import {originalBuiltinEnumPatternSource,requireOriginalBuiltinEnumPatternSource
 import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler} from './derive-quote-meta.mjs';
 import {originalAstFunction,originalAstDefinition,astStructLiteral,astSyntaxText,astFragmentText,astEnumVariant,originalAstPositiveConstructors} from './builtin-derive-ast-meta.mjs';
 import {createBuiltinAstBuilderMetaCompiler} from './builtin-ast-builder-meta.mjs';
+import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 const directory='compiler/rustc_builtin_macros/src/deriving/',generic=directory+'generic/mod.rs',build='compiler/rustc_expand/src/build.rs',schema='compiler/rustc_ast/src/ast.rs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
+const freezeCompleted=createCompletedDataFreezer(freeze);
 const plans=new WeakMap(),outputs=new WeakMap(),inventories=new WeakMap();
 const member=(recipe,name)=>recipe.fields.find(value=>value.name===name);
 function field(recipe,name,expected){const actual=member(recipe,name);if(!actual||astSyntaxText(actual.expression)!==expected)throw new TypeError('Original Clone AST slot changed: '+recipe.name+'.'+name);return actual;}
@@ -67,7 +69,7 @@ function sourcePlan(profile,entry){
  const variants=[['ItemKind','Impl',1],['AssocItemKind','Fn',1],['StmtKind','Expr',1],['StmtKind','Let',1],['LocalKind','Decl',0],['ExprKind','Path',2],['ExprKind','Call',2],['ExprKind','Field',2],['ExprKind','AddrOf',3],['ExprKind','Unary',2],['ExprKind','Struct',1],['ExprKind','Match',3],['PatKind','Path',2],['PatKind','Wild',0],['PatKind','Ident',3],['TyKind','Path',2],['TyKind','Ref',2],['TyKind','ImplicitSelf',0]].map(([owner,name,arity])=>{const definition=schemas.find(value=>value.syntax.some(node=>node.text===owner)),variant=astEnumVariant(profile,definition,name);if(variant.arity!==arity)throw new TypeError('Original Clone positive AST arity changed');return {owner,...variant};});
  const stdPath=recipe('compiler/rustc_expand/src/base.rs','std_path');contains(stdPath,'Ident::new(kw::DollarCrate, def_site)','self.with_def_site_ctxt(DUMMY_SP)');
  const evidence={schema:'original-clone-positive-ast-plan-v1',profileDigest:profile.digest,entry,descriptor,method,recipes,compileMeta,positiveSchemas:schemas,positiveVariants:variants,constructors:[...positive].map(([name,constructors])=>({name,constructors})),constructionFlow:{associatedTypes:0,methods:1,nonselfArguments:0,selflikeArguments:1,methodGenerics:0,return:'actual Self_ original nongeneric owner Ty',receiver:'actual Param::from_self SelfKind::Region(None,Not)',simple:'static data -> type-only LocalKind::Decl assertions + Unary(Deref,self)',full:'named Struct fields -> Clone::clone(&self.field); unit Struct/Enum -> Path; multiple unit variants -> exhaustive Match',excludedBranches:['union','packed','tuple','payload variant','empty enum','Unify','SpecializeIfAllVariantsFieldless','multiple selflike arguments','discriminant_value','unreachable','compiler diagnostic format!'],sourceAttributes:'field/variant attributes are not copied into generated body; actual helper owners require an independent invocation join'},generatedImplBehavior:false};
- const result=freeze({...evidence,digest:hash(JSON.stringify(evidence))}),state={entry,profile,result,positive};plans.set(profile,state);return state;
+ const result=freezeCompleted({...evidence,digest:hash(JSON.stringify(evidence))}),state={entry,profile,result,positive};plans.set(profile,state);return state;
 }
 function originalLeaves(original,certificate,input){
  const actual=(input.style==='payload-enum'?builtinPayloadDataInputs:builtinDeriveDataInputs)({source:original.module.source,span:certificate.span});if(JSON.stringify(input)!==JSON.stringify(actual)||input.wholeSourceSha256!==certificate.sourceSha256||input.itemSha256!==certificate.itemSha256||input.name!==certificate.name||input.kind!==certificate.kind)throw new TypeError('Original Clone syntax differs from its private invocation');
@@ -109,18 +111,137 @@ function materialize(state,leaves,payload=null){
 }
 // Public syntax validation grants no issuer authority. Every recursive category
 // is positive and constructor-bearing; unknown items/macros/guards are refused.
+// This private tree was materialized by the original source route. Charge
+// every logical occurrence before hashing/freezing its complete evidence.
+// The independent positive grammar and private issuer checks still run below.
+const CLONE_AST_NODES=32000,CLONE_AST_DEPTH=64;
+function assertCloneAstSize(branches){
+ let nodes=0;
+ function visit(value,depth=0){
+  if(++nodes>CLONE_AST_NODES||depth>CLONE_AST_DEPTH)throw new TypeError('Clone positive AST validation budget exceeded');
+  if(value!==null&&typeof value==='object')for(const key of Object.keys(value))visit(value[key],depth+1);
+ }
+ visit(branches);
+}
 export function validateBuiltinCloneAstOutput(route,branches){
  const state=outputs.get(route);if(!state)throw new TypeError('Clone AST validation requires a genuine original source route');let nodes=0;
  const fail=()=>{throw new TypeError('Clone positive AST grammar/slot differs from original output');};
  const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
- function visit(actual,expected,depth=0){if(++nodes>32000||depth>64)throw new TypeError('Clone positive AST validation budget exceeded');if(actual===null||typeof actual!=='object'){if(!same(actual,expected))fail();return;}if(types.isProxy(actual)||expected===null||typeof expected!=='object'||Array.isArray(actual)!==Array.isArray(expected))fail();const descriptors=Object.getOwnPropertyDescriptors(actual);for(const descriptor of Object.values(descriptors))if(!('value'in descriptor))fail();const a=Object.keys(actual),b=Object.keys(expected);if(!same(a,b))fail();for(const key of b)visit(descriptors[key].value,expected[key],depth+1);}
+ function visit(actual,expected,depth=0){if(++nodes>CLONE_AST_NODES||depth>CLONE_AST_DEPTH)throw new TypeError('Clone positive AST validation budget exceeded');if(actual===null||typeof actual!=='object'){if(!same(actual,expected))fail();return;}if(types.isProxy(actual)||expected===null||typeof expected!=='object'||Array.isArray(actual)!==Array.isArray(expected))fail();const descriptors=Object.getOwnPropertyDescriptors(actual);for(const descriptor of Object.values(descriptors))if(!('value'in descriptor))fail();const a=Object.keys(actual),b=Object.keys(expected);if(!same(a,b))fail();for(const key of b)visit(descriptors[key].value,expected[key],depth+1);}
  visit(branches,state.branches);return true;
 }
 export function liftBuiltinCloneAstRoute({profile,original,certificate,entry,input}={}){
  const state=sourcePlan(profile,entry),leaves=originalLeaves(original,certificate,input),payload=input.style==='payload-enum'?requireOriginalBuiltinEnumPatternSource(originalBuiltinEnumPatternSource(profile),profile):null;
  if(payload){const original=originalAstFunction(profile,directory+'clone.rs','cs_clone');contains(original,'VariantData::Tuple(..)','let subcalls = all_fields.iter().map(|f| subcall(cx, f)).collect()','cx.expr_call(trait_span, path, subcalls)');}
  const branches=materialize(state,leaves,payload);
+ assertCloneAstSize(branches);
  const evidence={schema:'original-clone-positive-ast-output-v1',profileDigest:profile.digest,source:certificate.source,sourceSha256:certificate.sourceSha256,itemSha256:certificate.itemSha256,span:certificate.span,typedSource:leaves,plan:{schema:state.result.schema,digest:state.result.digest,originalCompilerMetaPrivatelyRetained:true},...(payload?{payloadPatternSource:payload,payloadFlow:{allVariantsRetained:true,resolverBranches:['has_derive_copy=false','has_derive_copy=true'],full:'actual EnumMatching bound field paths -> Clone call -> source tuple/named/unit constructor',simple:'all actual variant fields -> original global is_simple_path/dedup type-only assertion subsequence',runtimeAuthority:false}}:{}),branches,positiveOutputGrammarComplete:true,selectedBodyBangComplete:true,namespaceAuthority:false,copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['actual original derive and all helper/ancestor attribute bindings require independent private joins','Clone field trait calls, Copy assertion validity and borrowed/owned runtime behavior remain uncompiled','unknown layouts/configuration/source-stage errors remain refused']};
- const result=freeze({...evidence,digest:hash(JSON.stringify(evidence))});outputs.set(result,{state,branches});validateBuiltinCloneAstOutput(result,branches);return result;
+ const result=freezeCompleted({...evidence,digest:hash(JSON.stringify(evidence))});outputs.set(result,{state,branches});validateBuiltinCloneAstOutput(result,branches);return result;
 }
 export function builtinCloneOriginalSourcePlan(route){const value=outputs.get(route);if(!value)throw new TypeError('Clone plan requires genuine original output');return value.state.result;}
+
+// Separate enclosing-only representation. Constructor witnesses are joined by
+// private identity to the complete original source plan, rather than copied
+// into each syntax occurrence. The legacy full-output limits stay unchanged.
+function closeCloneEnclosingBranches(state,leaves,branches){
+ let cells=0;
+ const fail=()=>{throw new TypeError('Clone enclosing positive grammar differs from original output');};
+ const count=depth=>{if(++cells>32000||depth>64)throw new TypeError('Clone enclosing syntax budget exceeded');};
+ function exact(value,keys,depth){
+  count(depth);
+  if(!value||typeof value!=='object'||types.isProxy(value)||Array.isArray(value)||Object.getPrototypeOf(value)!==Object.prototype)fail();
+  const names=Reflect.ownKeys(value);if(names.length!==keys.length||keys.some((key,index)=>names[index]!==key))fail();
+  for(const key of keys){const field=Object.getOwnPropertyDescriptor(value,key);if(!field||!Object.hasOwn(field,'value'))fail();}
+ }
+ function list(value,length,visit,depth){
+  count(depth);
+  if(!Array.isArray(value)||types.isProxy(value)||Object.getPrototypeOf(value)!==Array.prototype||value.length!==length)fail();
+  const keys=Reflect.ownKeys(value);if(keys.length!==length+1||keys.at(-1)!=='length')fail();
+  for(let index=0;index<length;index++){
+   if(keys[index]!==String(index))fail();const field=Object.getOwnPropertyDescriptor(value,''+index);
+   if(!field||!Object.hasOwn(field,'value'))fail();visit(field.value,index,depth+1);
+  }
+ }
+ const atom=(value,expected)=>{count(0);if(value!==expected)fail();};
+ const witness=name=>{const value=state.positive.get(name)?.[0];if(!value)fail();return value;};
+ const empty=(value,depth)=>list(value,0,()=>{},depth);
+ function path(value,segments,depth){
+  exact(value,['kind','segments'],depth);atom(value.kind,'Path');
+  list(value.segments,segments.length,(segment,index,d)=>{
+   if(typeof segments[index]==='string')atom(segment,segments[index]);
+   else{exact(segment,['kind','symbol','hygiene'],d);atom(segment.kind,'OriginalStandardRoot');atom(segment.symbol,'kw::DollarCrate');atom(segment.hygiene,'original std_path with_def_site_ctxt');}
+  },depth+1);
+ }
+ function expression(value,builder,keys,depth){
+  exact(value,['kind','attrs','tokens','constructor','slots'],depth);atom(value.kind,'Expr');empty(value.attrs,depth+1);atom(value.tokens,null);
+  atom(value.constructor,witness(builder));
+  exact(value.slots,keys,depth+1);return value.slots;
+ }
+ function sourcePath(value,segments,depth){const slots=expression(value,'expr_path',['qself','path'],depth);atom(slots.qself,null);path(slots.path,segments,depth+1);}
+ function self(value,depth){sourcePath(value,['self'],depth);}
+ const standard={};
+ function cloneField(value,field,depth){
+  const call=expression(value,'expr_call',['expr','args'],depth);sourcePath(call.expr,[standard,'clone','Clone','clone'],depth+1);
+  list(call.args,1,(argument,_index,d)=>{
+   const borrow=expression(argument,'expr_addr_of',['borrowKind','mutability','e'],d);atom(borrow.borrowKind,'Ref');atom(borrow.mutability,'Not');
+   const selected=expression(borrow.e,'source_field',['e','ident','fieldInfoSpan'],d+1);self(selected.e,d+2);atom(selected.ident,field.name);atom(selected.fieldInfoSpan,field.fieldInfoSpan);
+  },depth+1);
+ }
+ function full(value,depth){
+  if(leaves.inputSyntax.style==='named-struct'){
+   const slots=expression(value,'expr_struct',['qself','path','fields','rest'],depth);atom(slots.qself,null);path(slots.path,[leaves.inputSyntax.name],depth+1);atom(slots.rest,'None');
+   list(slots.fields,leaves.fields.length,(node,index,d)=>{
+    const field=leaves.fields[index];exact(node,['kind','ident','attrs','is_shorthand','is_placeholder','fieldInfoSpan','expr'],d);atom(node.kind,'ExprField');atom(node.ident,field.name);empty(node.attrs,d+1);atom(node.is_shorthand,false);atom(node.is_placeholder,false);atom(node.fieldInfoSpan,field.fieldInfoSpan);cloneField(node.expr,field,d+1);
+   },depth+1);
+  }else if(leaves.inputSyntax.style==='unit-struct'||leaves.variants.length===1){
+   sourcePath(value,leaves.inputSyntax.style==='unit-struct'?[leaves.inputSyntax.name]:[leaves.inputSyntax.name,leaves.variants[0].name],depth);
+  }else{
+   const slots=expression(value,'expr_match',['arg','matchKind','arms'],depth);self(slots.arg,depth+1);atom(slots.matchKind,'Prefix');
+   list(slots.arms,leaves.variants.length,(arm,index,d)=>{
+    const variant=leaves.variants[index];exact(arm,['kind','attrs','guard','is_placeholder','pat','body'],d);atom(arm.kind,'Arm');empty(arm.attrs,d+1);atom(arm.guard,null);atom(arm.is_placeholder,false);
+    exact(arm.pat,['kind','tokens','constructor','slots'],d+1);atom(arm.pat.kind,'Pat');atom(arm.pat.tokens,null);atom(arm.pat.constructor,witness('pat_path'));
+    exact(arm.pat.slots,['qself','path'],d+2);atom(arm.pat.slots.qself,null);path(arm.pat.slots.path,[leaves.inputSyntax.name,variant.name],d+3);sourcePath(arm.body,[leaves.inputSyntax.name,variant.name],d+1);
+   },depth+1);
+  }
+ }
+ function assertion(value,field,depth){
+  exact(value,['kind','variant','local'],depth);atom(value.kind,'Stmt');atom(value.variant,'Let');
+  const local=value.local;exact(local,['kind','variant','initializer','attrs','tokens','pat','ty','fieldInfoSpan'],depth+1);atom(local.kind,'Local');atom(local.variant,'Decl');atom(local.initializer,null);empty(local.attrs,depth+2);atom(local.tokens,null);atom(local.fieldInfoSpan,field.fieldInfoSpan);
+  exact(local.pat,['kind','tokens','constructor','slots'],depth+2);atom(local.pat.kind,'Pat');atom(local.pat.tokens,null);atom(local.pat.constructor,witness('pat_wild'));exact(local.pat.slots,[],depth+3);
+  exact(local.ty,['kind','path','argument'],depth+2);atom(local.ty.kind,'AssertionTy');path(local.ty.path,[standard,'clone','AssertParamIsClone'],depth+3);atom(local.ty.argument,field.type);
+  if(field.type.semanticSyntaxRoundTrip!==true)fail();
+ }
+ const result=[];
+ list(branches,2,(branch,index,depth)=>{
+  const before=cells;exact(branch,['feature','output'],depth);atom(branch.feature,index?'has_derive_copy=true':'has_derive_copy=false');
+  const output=branch.output;exact(output,['kind','associatedTypes','items','attrs'],depth+1);atom(output.kind,'ItemKind::Impl');empty(output.associatedTypes,depth+2);list(output.attrs,1,value=>atom(value,'automatically_derived'),depth+2);
+  list(output.items,1,(method,_index,d)=>{
+   exact(method,['kind','attrs','tokens','name','header','generics','contract','define_opaque','parameters','returnType','body'],d);atom(method.kind,'AssocItemKind::Fn');list(method.attrs,1,value=>atom(value,'inline'),d+1);atom(method.tokens,null);atom(method.name,'clone');empty(method.generics,d+1);atom(method.contract,null);atom(method.define_opaque,null);
+   exact(method.header,['safety','coroutine_kind','constness','ext'],d+1);atom(method.header.safety,'Default');atom(method.header.coroutine_kind,null);atom(method.header.constness,'No');atom(method.header.ext,'None');
+   list(method.parameters,1,(parameter,_index,p)=>{
+    exact(parameter,['kind','attrs','is_placeholder','pat','receiver'],p);atom(parameter.kind,'Param');empty(parameter.attrs,p+1);atom(parameter.is_placeholder,false);
+    exact(parameter.pat,['kind','byRef','mutability','ident','subpattern','tokens'],p+1);atom(parameter.pat.kind,'PatKind::Ident');atom(parameter.pat.byRef,'No');atom(parameter.pat.mutability,'Not');atom(parameter.pat.ident,'self');atom(parameter.pat.subpattern,null);atom(parameter.pat.tokens,null);
+    exact(parameter.receiver,['kind','lifetime','mutability','pointee'],p+1);atom(parameter.receiver.kind,'TyKind::Ref');atom(parameter.receiver.lifetime,null);atom(parameter.receiver.mutability,'Not');atom(parameter.receiver.pointee,'TyKind::ImplicitSelf');
+   },d+1);
+   exact(method.returnType,['kind','name'],d+1);atom(method.returnType.kind,'OriginalSelfTy');atom(method.returnType.name,leaves.inputSyntax.name);
+   const block=method.body;exact(block,index?['kind','tokens','rules','statements','typeOnlyStatements']:['kind','tokens','rules','statements'],d+1);atom(block.kind,'Block');atom(block.tokens,null);atom(block.rules,'Default');
+   list(block.statements,1,(statement,_index,b)=>{
+    exact(statement,['kind','variant','expr'],b);atom(statement.kind,'Stmt');atom(statement.variant,'Expr');
+    if(!index)full(statement.expr,b+1);else{const slots=expression(statement.expr,'expr_deref',['op','e'],b+1);atom(slots.op,'Deref');self(slots.e,b+2);}
+   },d+2);
+   if(index){exact(block.typeOnlyStatements,['selection','candidates'],d+2);atom(block.typeOnlyStatements.selection,'original is_simple_path/seen_type_names subsequence; both original branches retain only LocalKind::Decl');list(block.typeOnlyStatements.candidates,leaves.fields.length,(node,index,a)=>assertion(node,leaves.fields[index],a),d+3);}
+  },depth+2);
+  result.push({condition:branch.feature,outputKind:'ItemKind::Impl',methods:1,associatedTypes:0,closure:{schema:'source-original-clone-enclosing-positive-tree-v1',cells:cells-before,allOriginalFieldsRetained:true,allOriginalVariantsRetained:true,constructorWitnessesPrivatelyJoined:true,bodyExpressionComplete:true,namespaceAuthority:false}});
+ },0);
+ return result;
+}
+
+export function compileBuiltinCloneEnclosingNamespaceModel({profile,entry,original,certificate,input}={}){
+ if(input.style==='payload-enum')return null;
+ const state=sourcePlan(profile,entry),leaves=originalLeaves(original,certificate,input),branches=materialize(state,leaves);
+ const closed=closeCloneEnclosingBranches(state,leaves,branches);
+ return {schema:'original-clone-enclosing-grammar-candidate-v1',inputStyle:input.style,
+  sources:state.result.recipes.map(recipe=>({source:recipe.source,sourceSha256:recipe.sourceSha256,span:recipe.span,syntaxSha256:recipe.syntaxSha256,digest:recipe.digest})),branches:closed,
+  sourceTypeRoundtrips:leaves.fields.map(field=>({name:field.name,typeSpan:field.typeSpan,sourceSha256:field.type.sourceSha256,syntaxSha256:field.type.syntaxSha256,semanticSyntaxRoundTrip:field.type.semanticSyntaxRoundTrip})),
+  generatedAttributes:['automatically_derived','inline'],methodBehavior:'opaque-untranslated',namespaceAuthority:false,runtimeAuthority:false};
+}

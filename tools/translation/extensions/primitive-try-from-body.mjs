@@ -87,14 +87,16 @@ export function checkOriginalPrimitiveTryFrom(checker,node,env,path,expected){
  const value=checker.expr(node.args[0],env,path);let selection;try{selection=pinnedPrimitiveTryFrom(value.type,node.target);}catch(error){if(!(error instanceof TypeError))throw error;throw unsupported('original primitive TryFrom input',error.message,node.span);}const syntax=parseBody(selection),error=errorType(checker,node.span),resultType=checker.instantiations.result(selection.target,error,node.span);
  if(expected&&!sameType(resultType,expected))throw typeError('source TryFrom result type differs from its actual checked Result',node.span);
  let binder;do{binder=checker.freshName('ml_try_from_argument_');}while(env.has(binder));
- const constants=[],specialized=bindBody(syntax,selection,binder,error,constants),body=checker.expr(specialized,new Map([[binder,value.type]]),[],resultType);
+ // Nested source bodies need an independent return/control boundary while
+ // retaining the enclosing function's fresh-name supply for record bindings.
+ const constants=[],specialized=bindBody(syntax,selection,binder,error,constants),body=checker.expr(specialized,checker.callbackEnvironment(new Map([[binder,value.type]]),resultType),[],resultType);
  if(!sameType(body.type,resultType))fail('original checked method returned a different Result layout');
  const computation={k:'let',name:binder,value,body,type:resultType,span:node.span};
  return issue(checker,node,computation,{schema:'original-checked-fixed-try-from-v1',caller,selection,originalParsedBodySha256:metadataDigest(syntax),constants,errorLayout:primitiveTryFromNamespace().errorLayout,errorSource:checkerContext(checker).error.copy,resultType,evaluationOrder:'argument exactly once, then actual complete selected original body'});
 }
 export function checkOriginalPrimitiveConstant(checker,node){
  const caller=requireCaller(checker,node),source=originalPrimitiveIntegerConstant(node.target,node.name);requireOriginalPrimitiveIntegerConstant(source,node.target,node.name);
- const body=checker.expr({k:'num',value:source.decimal,type:source.type,span:node.span},new Map(),[],source.type);
+ const body=checker.expr({k:'num',value:source.decimal,type:source.type,span:node.span},checker.callbackEnvironment(new Map(),source.type),[],source.type);
  return issue(checker,node,body,{schema:'original-checked-fixed-source-constant-v1',caller,source});
 }
 function nodes(value,result=[]){if(!value||typeof value!=='object')return result;if(value.k==='routerOriginalPrimitiveTryFrom')result.push(value);for(const [key,child]of Object.entries(value))if(!['type','sourceConversionProof'].includes(key))Array.isArray(child)?child.forEach(value=>nodes(value,result)):nodes(child,result);return result;}

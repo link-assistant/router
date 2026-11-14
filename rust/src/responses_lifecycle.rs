@@ -447,7 +447,11 @@ async fn relay(
     response
 }
 
-fn upstream_path(response_id: &crate::translation_core::Str, operation: Operation, query: crate::translation_core::Maybe<&crate::translation_core::Str>) -> String {
+fn upstream_path(
+    response_id: &crate::translation_core::Str,
+    operation: Operation,
+    query: crate::translation_core::Maybe<&crate::translation_core::Str>,
+) -> String {
     let encoded_id = percent_encode_segment(response_id);
     let query = query.map_or(String::new(), |query| format!("?{query}"));
     format!("/v1/responses/{encoded_id}{}{query}", operation.suffix())
@@ -499,7 +503,11 @@ fn upstream_error(message: &crate::translation_core::Str) -> Response {
     openai_error(StatusCode::BAD_GATEWAY, "api_error", message)
 }
 
-fn openai_error(status: StatusCode, error_type: &crate::translation_core::Str, message: &crate::translation_core::Str) -> Response {
+fn openai_error(
+    status: StatusCode,
+    error_type: &crate::translation_core::Str,
+    message: &crate::translation_core::Str,
+) -> Response {
     crate::api_error::PresentedError {
         status,
         error_type,

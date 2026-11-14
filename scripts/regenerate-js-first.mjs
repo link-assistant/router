@@ -15,6 +15,11 @@ import {encodeWord} from '../tools/translation/js-to-rust/vendor/lino.mjs';
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 const json = (value) => `${JSON.stringify(value)}\n`;
+// Generated Rust mirrors the JavaScript kernels expression by expression
+// (`x = x + 1`, `a >= lo && a <= hi`, `assert_eq!(v, true)`, wide literals), so
+// the style lints that CI promotes to errors are allowed at the module root
+// rather than rewriting the translation. One lint per line matches rustfmt.
+const GENERATED_RUST_ALLOW = `#![allow(\n${['unused_parens', 'clippy::needless_return', 'clippy::float_cmp', 'clippy::assign_op_pattern', 'clippy::bool_assert_comparison', 'clippy::cast_precision_loss', 'clippy::format_in_format_args', 'clippy::manual_range_contains', 'clippy::must_use_candidate', 'clippy::suboptimal_flops', 'clippy::to_string_in_format_args', 'clippy::unicode_not_nfc', 'clippy::unnecessary_to_owned', 'clippy::unreadable_literal'].map((lint) => `    ${lint}`).join(',\n')}\n)]\n`;
 
 function modules(root, directory) {
   const absolute = join(root, directory);
@@ -44,14 +49,17 @@ function rustFixtures(fixtures, program) {
   const rows = fixtures.cases.map((fixture) => {
     const item = functions.get(fixture.function);
     if (!item) throw new Error(`fixture names missing translated function ${fixture.function}`);
-    const call = `${item.name}(${fixture.args.map(rustLiteral).join(', ')})`;
+    // Fixture ids may equal the function under test (`provider-model-id`), and a
+    // test function of that name would shadow it, so call through `super::` (the
+    // literals only use `std` items, so the module needs no glob import).
+    const call = `super::${item.name}(${fixture.args.map(rustLiteral).join(', ')})`;
     let assertion;
     if (fixture.expected?.$number === 'NaN') assertion = `assert!(${call}.is_nan());`;
     else if (item.returns === 'number') assertion = `assert_eq!(${call}.to_bits(), (${rustLiteral(fixture.expected)}).to_bits());`;
     else assertion = `assert_eq!(${call}, ${rustLiteral(fixture.expected)});`;
     return `    #[test]\n    fn ${fixture.id.replace(/-/gu, '_')}() {\n        ${assertion}\n    }`;
   });
-  return `\n#[cfg(test)]\n#[rustfmt::skip]\nmod shared_fixtures {\n    use super::*;\n\n${rows.join('\n\n')}\n}\n`;
+  return `\n#[cfg(test)]\n#[rustfmt::skip]\nmod shared_fixtures {\n${rows.join('\n\n')}\n}\n`;
 }
 
 function buildArtifactsSelected(root = ROOT, definitions=false, matrix,ownedBuilder) {
@@ -94,7 +102,7 @@ function buildArtifactsSelected(root = ROOT, definitions=false, matrix,ownedBuil
   const rustSource=repositoryRustLayout(root).productionPrefix;
   const artifacts = new Map([
     ['tools/translation/js-to-rust/generated/policy.lino', `# GENERATED: executable portable-router-v1 IR, no source envelopes.\n${meta}`],
-    [`${rustSource}generated_js_first/policy.rs`, `${header}#![allow(unused_parens, clippy::needless_return, clippy::float_cmp)]\n\n${emitRust(program)}${rustFixtures(fixtures, program)}`],
+    [`${rustSource}generated_js_first/policy.rs`, `${header}${GENERATED_RUST_ALLOW}\n${emitRust(program)}${rustFixtures(fixtures, program)}`],
     [`${rustSource}generated_js_first/mod.rs`, '// Generated from authoritative JavaScript policy kernels.\npub mod policy;\n'],
     ['ts/src/js-first-policy.ts', `${header}${emitTypeScript(program)}`],
   ]);

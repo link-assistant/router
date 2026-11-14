@@ -8,9 +8,10 @@ import {types} from 'node:util';
 import {copyMetadata,metadataDigest,ownData} from './extensions/source-links.mjs';
 import {captureOriginalMacroModules,originalMacroModules} from './original-macro-module-context.mjs';
 import {captureSourceModuleViews,originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
-import {resolveModuleBindings} from './module-bindings.mjs';
+import {resolveModuleBindings,resolveEnclosingNamespaceModuleBindings} from './module-bindings.mjs';
 import {createDeriveFootprintContext,deriveFootprintExternalModules} from './derive-footprints.mjs';
 import {createDeriveBangContext} from './derive-bang-context.mjs';
+import {createDeriveEnclosingNamespaceContext} from './derive-enclosing-namespace-context.mjs';
 import {createToolAttributeContext} from './tool-attributes.mjs';
 import {capturedRustTokenSource} from './extensions/lexical.mjs';
 import {loadStandardMatchesSourceProfile,isStandardMatchesSourceProfile} from './matches-source-profile.mjs';
@@ -206,14 +207,23 @@ function originalOwnerHashes(issued,module,scope){
 export function originalMatchesNamespaceBindings(){const profile=standardProfile??=loadStandardMatchesSourceProfile();return ['std','core'].map(root=>Object.freeze({name:profile.name,namespace:'macro',macroKind:'bang',target:[root,profile.name],kind:'macro',originalNamespaceDigest:profile.digest}));}
 function standardExternal(dependencies){return registeredStandardHostBindings([...originalMatchesNamespaceBindings(),...lockedTomlValueNamespaceBindings(dependencies)]);}
 
-export function createMatchesMacroContext({modules,compilationProfile=null,deriveDependencies=null,cargoEditionContext=null}={}) {
+export function createMatchesMacroContext(options={}) {
+  return createOriginalMatchesContext(options,false);
+}
+// Reissue names from every original owner without granting generated method
+// behavior. Parser configuration must retain this same genuine scope issuer.
+export function createEnclosingMatchesMacroContext(options={}) {
+  return createOriginalMatchesContext(options,true);
+}
+function createOriginalMatchesContext({modules,compilationProfile=null,deriveDependencies=null,cargoEditionContext=null},enclosingNamespace) {
   if(cargoEditionContext!==null&&!originalCargoEditionEvidence(cargoEditionContext))throw new TypeError('Matches source context requires private original Cargo edition evidence');
   const profile=standardProfile??=loadStandardMatchesSourceProfile(),snapshot=captureOriginalMacroModules({modules,compilationProfile}),original=originalMacroModules(snapshot),external=standardExternal(deriveDependencies);
   const deriveContext=deriveDependencies?createDeriveFootprintContext({modules:original.modules,dependencies:deriveDependencies,externalModules:external,compilationProfile:original.compilationProfile}):null;
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):external;
   const toolContext=createToolAttributeContext({modules:original.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:original.compilationProfile});
-  const deriveBangContext=deriveContext?createDeriveBangContext({deriveContext}):null;
-  const evidence=freezeMacroTree(resolveModuleBindings({modules:original.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:original.compilationProfile}));
+  const deriveBangContext=deriveContext?(enclosingNamespace?createDeriveEnclosingNamespaceContext({deriveContext}):createDeriveBangContext({deriveContext})):null;
+  const resolveBindings=enclosingNamespace?resolveEnclosingNamespaceModuleBindings:resolveModuleBindings;
+  const evidence=freezeMacroTree(resolveBindings({modules:original.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:original.compilationProfile}));
   const certificate=freezeMacroTree({schema:'original-standard-matches-call-context-v1',profileDigest:profile.digest,compilationProfile:original.compilationProfile,originalModules:original.modules.map(module=>({file:module.file,path:module.path,sha256:hash(module.source),sourceViewDigest:module.sourceView.digest,configurationCondition:module.configurationCondition??module.sourceView.configurationCondition})),namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
   const facts={...original,profile,evidence,cargoEditionContext};
   originalDependencies.set(facts,deriveDependencies);

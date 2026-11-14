@@ -247,14 +247,14 @@ fn repeating_an_identical_setup_does_not_mint_another_token() {
 fn catalog_failure_revokes_the_candidate_minted_before_validation() {
     let home = tempfile::tempdir().expect("temp home");
     let home = home.path();
-    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("reserve port");
-    let base_url = format!("http://{}", listener.local_addr().expect("address"));
-    drop(listener);
+    // Port 1 is privileged, so no parallel test can bind it the way one can
+    // reuse a just-dropped ephemeral port: connections to it stay refused.
+    let base_url = "http://127.0.0.1:1";
 
     let failed = router(
         home,
         "text",
-        &["clients", "setup", "opencode", "--base-url", &base_url],
+        &["clients", "setup", "opencode", "--base-url", base_url],
     );
     assert!(!failed.status.success(), "setup unexpectedly worked");
     let records = tokens(home, "text");

@@ -1,11 +1,14 @@
 use std::process::Command;
 
+#[path = "support/repository.rs"]
+mod repository;
+
 const ENTRYPOINT: &str = "docker/tunnel/entrypoint.sh";
 
 fn run(environment: &[(&str, &str)]) -> std::process::Output {
     let mut command = Command::new("sh");
     command
-        .arg(ENTRYPOINT)
+        .arg(repository::path(ENTRYPOINT))
         .env_clear()
         .env("PATH", "/usr/bin:/bin");
     for (name, value) in environment {

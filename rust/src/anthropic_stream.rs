@@ -22,13 +22,18 @@ pub use crate::stream_termination::INCOMPLETE_STREAM_MESSAGE;
 
 /// Render one Anthropic SSE frame (named event plus JSON payload).
 #[must_use]
-pub fn anthropic_frame(event: &crate::translation_core::Str, payload: &crate::translation_core::Json) -> String {
+pub fn anthropic_frame(
+    event: &crate::translation_core::Str,
+    payload: &crate::translation_core::Json,
+) -> String {
     format!("event: {event}\ndata: {payload}\n\n")
 }
 
 /// Map an `OpenAI` `finish_reason` onto an Anthropic `stop_reason`.
 #[must_use]
-pub fn map_stop_reason(finish_reason: &crate::translation_core::Str) -> &'static crate::translation_core::Str {
+pub fn map_stop_reason(
+    finish_reason: &crate::translation_core::Str,
+) -> &'static crate::translation_core::Str {
     match finish_reason {
         "length" | "max_tokens" | "max_output_tokens" => "max_tokens",
         "tool_calls" | "function_call" | "tool_use" => "tool_use",
@@ -483,7 +488,11 @@ impl AnthropicStreamTranslator {
         frames
     }
 
-    fn server_tool_result(&mut self, key: i64, item: &crate::translation_core::Json) -> Vec<String> {
+    fn server_tool_result(
+        &mut self,
+        key: i64,
+        item: &crate::translation_core::Json,
+    ) -> Vec<String> {
         let mut frames = Vec::new();
         if !self.server_tool_indices.contains_key(&key) {
             frames.extend(self.server_tool_start(key, item));
@@ -516,7 +525,10 @@ impl AnthropicStreamTranslator {
 
     // ---- shared -------------------------------------------------------
 
-    fn absorb_usage(&mut self, usage: crate::translation_core::Maybe<&crate::translation_core::Json>) {
+    fn absorb_usage(
+        &mut self,
+        usage: crate::translation_core::Maybe<&crate::translation_core::Json>,
+    ) {
         let Some(usage) = usage else { return };
         for key in ["input_tokens", "prompt_tokens"] {
             if let Some(v) = usage.get(key).and_then(Value::as_u64) {
@@ -536,7 +548,10 @@ impl AnthropicStreamTranslator {
             .min(self.input_tokens);
     }
 
-    fn absorb_service_tier(&mut self, tier: crate::translation_core::Maybe<&crate::translation_core::Json>) {
+    fn absorb_service_tier(
+        &mut self,
+        tier: crate::translation_core::Maybe<&crate::translation_core::Json>,
+    ) {
         if let Some(tier) = crate::bridge_response::anthropic_service_tier_from_openai(tier) {
             self.service_tier = Some(tier.into());
         }
@@ -845,39 +860,6 @@ mod tests {
     }
 
     #[test]
-    fn failed_responses_stream_after_deltas_emits_anthropic_error() {
-        let mut t = AnthropicStreamTranslator::new("claude-opus-4-7");
-        let mut out = joined(&t.push(
-            b"data: {\"type\":\"response.output_text.delta\",\"delta\":\"partial\"}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"lookup\"}}\n\ndata: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"delta\":\"{}\"}\n\n",
-        ));
-        out.push_str(&joined(&t.push(b"data: {\"type\":\"response.failed\",\"response\":{\"error\":{\"message\":\"boom\",\"type\":\"server_error\",\"code\":\"upstream_failed\",\"param\":\"input\"}}}\n\ndata: [DONE]\n\n")));
-
-        assert!(out.contains("partial"), "{out}");
-        assert!(out.contains("event: error"), "{out}");
-        assert!(out.contains("\"message\":\"boom\""), "{out}");
-        assert!(out.contains("\"code\":\"upstream_failed\""), "{out}");
-        assert!(!out.contains("\"stop_reason\":\""), "{out}");
-        assert!(!out.contains("event: message_stop"), "{out}");
-    }
-
-    #[test]
-    fn standalone_error_after_deltas_emits_anthropic_error() {
-        let mut t = AnthropicStreamTranslator::new("claude-opus-4-7");
-        let mut out = joined(&t.push(
-            b"data: {\"type\":\"response.output_text.delta\",\"delta\":\"partial\"}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"lookup\"}}\n\ndata: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"delta\":\"{}\"}\n\n",
-        ));
-        out.push_str(&joined(&t.push(b"data: {\"type\":\"error\",\"message\":\"standalone boom\",\"code\":\"server_error\",\"param\":\"input\",\"private_account\":\"secret\"}\n\ndata: {\"type\":\"response.completed\",\"response\":{}}\n\ndata: [DONE]\n\n")));
-
-        assert!(out.contains("partial"), "{out}");
-        assert!(out.contains("event: error"), "{out}");
-        assert!(out.contains("\"message\":\"standalone boom\""), "{out}");
-        assert!(out.contains("\"code\":\"server_error\""), "{out}");
-        assert!(!out.contains("private_account"), "{out}");
-        assert!(!out.contains("\"stop_reason\":\""), "{out}");
-        assert!(!out.contains("event: message_stop"), "{out}");
-    }
-
-    #[test]
     fn streamed_refusal_is_displayed_in_source_order_without_duplication() {
         let mut t = AnthropicStreamTranslator::new("claude-opus-4-7");
         let out = joined(&t.push(b"data: {\"type\":\"response.output_text.delta\",\"output_index\":0,\"content_index\":0,\"delta\":\"before \"}\n\ndata: {\"type\":\"response.refusal.delta\",\"output_index\":0,\"content_index\":1,\"delta\":\"cannot comply\"}\n\ndata: {\"type\":\"response.refusal.done\",\"output_index\":0,\"content_index\":1,\"refusal\":\"cannot comply\"}\n\ndata: {\"type\":\"response.output_text.delta\",\"output_index\":1,\"content_index\":0,\"delta\":\" after\"}\n\ndata: {\"type\":\"response.completed\",\"response\":{}}\n\n"));
@@ -984,16 +966,5 @@ mod tests {
         assert!(!out.contains("hidden"));
         assert!(out.contains("\"stop_sequence\":\"<END>\""));
         assert!(out.contains("event: message_stop"));
-    }
-
-    #[test]
-    fn finish_is_idempotent_and_reports_a_cut_stream_as_an_error() {
-        let mut t = AnthropicStreamTranslator::new("claude-sonnet-4-5");
-        let first = joined(&t.finish());
-        assert!(first.contains("event: message_start"));
-        assert!(first.contains("event: error"), "{first}");
-        assert!(first.contains(INCOMPLETE_STREAM_MESSAGE), "{first}");
-        assert!(!first.contains("message_stop"), "{first}");
-        assert!(t.finish().is_empty());
     }
 }

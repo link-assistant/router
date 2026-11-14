@@ -1,0 +1,81 @@
+diff --git a/tools/translation/js-to-rust/native-typescript.mjs b/tools/translation/js-to-rust/native-typescript.mjs
+index 5b112c115..7393125fa 100644
+--- a/tools/translation/js-to-rust/native-typescript.mjs
++++ b/tools/translation/js-to-rust/native-typescript.mjs
+@@ -336,7 +336,14 @@ function serializeBuild(ts, sourceFile, checker) {
+       if(ts.isCallExpression(node) && !ts.isOptionalChain(node) && ![ts.SyntaxKind.ImportKeyword,ts.SyntaxKind.SuperKeyword].includes(node.expression.kind)) {
+         if(ts.isPropertyAccessExpression(node.expression)&&node.expression.name.text==='bind')(gap??={}).call=true;
+         else if(node.arguments.length){
+-          const signature=checker.getResolvedSignature(node),parameters=signature?.getParameters()??[];
++          // Arity needs the original declaration, not inferred argument types.
++          // A single native call signature keeps that declaration on every
++          // instantiation. Ambiguous/signatureless calls and JSDoc classes
++          // retain the full original resolver (class calls use an error sig).
++          const signatures=checker.getTypeAtLocation(node.expression).getCallSignatures();
++          const single=signatures.length===1?signatures[0]:null;
++          const signature=single?.declaration&&!ts.getJSDocClassTag(single.declaration)
++            ?single:checker.getResolvedSignature(node),parameters=signature?.getParameters()??[];
+           const formal=signature?.declaration?.parameters;
+           const rest=formal?formal.at(-1)?.dotDotDotToken:parameters.at(-1)?.declarations?.some(declaration=>declaration.dotDotDotToken);
+           // Preserve the original formal-list check. Zero arguments cannot
+diff --git a/tools/translation/prepare-native-regeneration-batch.mjs b/tools/translation/prepare-native-regeneration-batch.mjs
+index 8028679da..b4e4adfdc 100644
+--- a/tools/translation/prepare-native-regeneration-batch.mjs
++++ b/tools/translation/prepare-native-regeneration-batch.mjs
+@@ -94,7 +94,12 @@ function* nativeRegenerationParsedConcreteSources(sourceRoot, paths) {
+   profileSha256:'a77607663394032415a47797bf6e8c078e736d10c22f57569874499a4e073023',
+   path,source:repository.value,
+  });
+- const after=runtimeEvolution.after;
++ const callArityEvolution=derivePinnedRepositorySourceEvolution(ts,{
++  profile:new URL('./source-profiles/native-call-arity/source-rules.json',import.meta.url),
++  profileSha256:'b6069e7791811d9b4deaa27a48f5eb6c33c42a22c693e3934c04a9f28ea4915b',
++  path,source:runtimeEvolution.after,
++ });
++ const after=callArityEvolution.after;
+  for(const source of [middle,after])if(ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS).parseDiagnostics.length)throw Error('Complete candidate native grammar differs');
+  // Retain the exact installed predecessor as a second complete source
+  // equation. This is source DATA, never a remembered native/semantic verdict.
+@@ -121,7 +126,7 @@ function* nativeRegenerationParsedConcreteSources(sourceRoot, paths) {
+  const nativeBindings=verifyNativeCopiedSourceBindings(ts,fileURLToPath(new URL(path,root)),after);
+  const physical=readFileSync(new URL(path,root),'utf8');
+  let receivingEvolution=null;
+- if(physical!==before&&physical!==previousAfter&&physical!==memoryEvolution.before&&physical!==runtimeEvolution.before&&physical!==after){
++ if(physical!==before&&physical!==previousAfter&&physical!==memoryEvolution.before&&physical!==runtimeEvolution.before&&physical!==runtimeEvolution.after&&physical!==after){
+   if(hash(physical)!=='4abc593dffee59a1649b9258ad7d6acbc58300558a394e997d6c5034554070f6')throw Error('Physical native source is neither full original nor exact proposal');
+   receivingEvolution=derivePinnedRepositorySourceEvolution(ts,{
+    profile:new URL('./source-profiles/native-regeneration-public-contract/source-rules.json',import.meta.url),
+@@ -138,7 +143,7 @@ function* nativeRegenerationParsedConcreteSources(sourceRoot, paths) {
+  if(readFileSync(new URL(path,root),'utf8')!==physical)throw Error('Complete physical native source changed during derivation');
+  return {schema:'native-regeneration-concrete-batch-proposal-v1',path,before,middle,after,
+   originalSha256,middleSha256:hash(middle),afterSha256:hash(after),equation,
+-  previousAfter,previousSha256,previousEquation,memoryEvolution,runtimeEvolution,nativeBindings,receivingEvolution,receivingEquation,
++  previousAfter,previousSha256,previousEquation,memoryEvolution,runtimeEvolution,callArityEvolution,nativeBindings,receivingEvolution,receivingEquation,
+   trace:[language.trace,repository.trace],compiler:ts.version,semanticAuthority:false,
+   productionExecutableGain:0,standalonePublicBuildUnchanged:true};
+ }
+diff --git a/tools/translation/test/runtime-import-phased-data.test.mjs b/tools/translation/test/runtime-import-phased-data.test.mjs
+index 57c5d4c3f..1321daa63 100644
+--- a/tools/translation/test/runtime-import-phased-data.test.mjs
++++ b/tools/translation/test/runtime-import-phased-data.test.mjs
+@@ -35,11 +35,18 @@ test('actual source composition keeps complete original outputs while Bun retain
+   ['tools/translation/js-to-rust/owned-core-source.mjs','ebd45c97808dbe473fcbc77c1663bcd0168953dfa25e16c305878f5736e6d2d9'],
+   ['scripts/regenerate-js-first.mjs','f471e9ff097584ec47212fa52054b68e6bdc187e6029785c2b7f9e841044d290'],
+   ['tools/translation/js-to-rust/vendor/module-syntax.mjs','5587f9b51453bd4fd13a7a1383d96a96d19d7bf55bf46a66f5ed21b916172d36'],
+-  ['tools/translation/js-to-rust/native-typescript.mjs','ccc28a4b4f774836afbc169dad61d7d84c50057a7a4eb7258c6d4abe2d45ca30']]);
++  ['tools/translation/js-to-rust/native-typescript.mjs','9624a947f464cc332386c809a79a9eed9361d5492c9e5b301f76bab525b5281f']]);
+  assert.deepEqual(new Set(Object.keys(joined.sources)),new Set(expected.keys()));
+  for(const [path,sha]of expected){
+   const row=joined.sources[path];assert.equal(row.current,row.after);assert.equal(hash(row.after),sha);
+-  if(path==='tools/translation/js-to-rust/native-typescript.mjs'){assert.equal(row.sourceHistory[0].afterSha256,'46ec636ff5c2ffa3ec3dfd8dfbc7b73f7a01b171286cf6d5c78b3320726d8208');assert.equal(row.sourceHistory[1].before,row.sourceHistory[0].after);assert.equal(row.sourceHistory[1].after,row.after);}
++  if(path==='tools/translation/js-to-rust/native-typescript.mjs'){
++   assert.equal(row.sourceHistory[0].afterSha256,'46ec636ff5c2ffa3ec3dfd8dfbc7b73f7a01b171286cf6d5c78b3320726d8208');
++   const batch=row.sourceHistory[1];assert.equal(batch.before,row.sourceHistory[0].after);assert.equal(batch.after,row.after);
++   assert.equal(hash(batch.runtimeEvolution.after),'ccc28a4b4f774836afbc169dad61d7d84c50057a7a4eb7258c6d4abe2d45ca30');
++   const arity=batch.callArityEvolution;assert.equal(arity.before,batch.runtimeEvolution.after);assert.equal(arity.after,row.after);
++   assert.equal(arity.inverse,arity.before);assert.deepEqual(arity.languageRules,[]);
++   assert.equal(arity.repositoryRules.length,1);assert.equal(arity.productionExecutableGain,0);
++  }
+   assert.equal(row.inverse,row.before);assert.equal(row.semanticAuthority,false);
+   assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);
+   assert.ok(row.stages.every(stage=>stage.completeInverse));

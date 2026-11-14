@@ -961,5 +961,9 @@ pub use error::{BudgetFacts, ExpiryFacts, TokenError};
 mod tests;
 
 #[cfg(test)]
+#[path = "token_mutation_tests.rs"]
+mod mutation_tests;
+
+#[cfg(test)]
 #[path = "token_binding_tests.rs"]
 mod binding_tests;

@@ -12,6 +12,6 @@ A genuine builtin compiler-source profile also reuses the frozen original macro 
 
 Locked Clap sources retain immutable declaration names/spans and significant scalar syntax only within their genuine private dependency issuer and exact original source identity, string and hash. Predicates still run for every matching declaration in the original order, including effects, thrown errors and reentrant queries. Rule pattern scans and returned evidence allocations remain fresh. Nothing is shared across dependency identities.
 
-Independent primitive vectors, original DTOs and source graph stages have separate tests with the existing five-second or sixty-second limits. Complete original graphs, original spans, private owner proofs, residual source owners and current binding checks remain covered. The first complete bulk call is measured with a cold context; no warm-only result substitutes for that check.
+Independent primitive vectors, original DTOs and source module graph stages have separate tests with the existing five-second or sixty-second limits. Complete original module graphs, original spans, private owner proofs, residual source owners and current binding checks remain covered. The first complete bulk call is measured with a cold context; no warm-only result substitutes for that check.
 
 This is bounded layout metadata reuse. Generated trait execution, full source and runtime parity remain unproved.

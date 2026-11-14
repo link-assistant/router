@@ -9,7 +9,6 @@ use axum::body::Body;
 use axum::http::{HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 
-
 /// Runtime configuration for MPP charge challenges.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MppConfig {

@@ -7,15 +7,21 @@ import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {prepareDefaultProofByteAdoption} from './prepare-default-proof-byte-adoption.mjs';
 import {invocationLocalFreezerSourcePairs} from './prepare-invocation-local-freezer.mjs';
+import {deriveInvocationFreezerProducerEvolution} from './invocation-freezer-producer-evolution.mjs';
 import {prepareGuardedProofLexing,assertGuardedProofLexingInputsFresh} from './prepare-guarded-proof-lexing.mjs';
 import {assertSchemarsEnclosingHistoryFresh} from './schemars-enclosing-history.mjs';
-import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+import {deriveCurrentNegativeBudgetProofHistory} from './prepare-negative-budget-proof-json.mjs';
+import {derivePinnedRepositorySourceEvolution} from './pinned-repository-source-evolution.mjs';
+import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
+import {transportConcreteNamedSourcePhases} from './concrete-source-origin-phases.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),BASE='tools/translation/';
 const ARCHIVE=BASE+'source-profiles/current-receiving-source-history/complete-originals.json.gz';
 const PACKED='de5c88ca6b3eb54d6f949dc0ed070c4b25c2c9c44ce63ec5e618ba45d146e6a3',RAW='4010bfe88497e06a4f1314476484c7694fe9cf92f1e65357c691fa600b96a823';
 const HELPER=BASE+'test/fixtures/current-receiving-source-history.mjs',COPY=BASE+'invocation-local-freezer-receiving-history.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex'),fail=message=>{throw new TypeError('Current receiving source history: '+message);};
 const one=(rows,label)=>{if(rows.length!==1)fail('one actual native selection required: '+label);return rows[0];};
+// Opt-in timings contain stage names only; they grant no source authority.
+function timing(stage){if(process.env.ROUTER_TRANSLATION_PRODUCER_TRACE==='1')process.stderr.write(JSON.stringify({producer:'current-receiving-source-history',stage,timeMs:Date.now()})+'\n');}
 function syntax(ts,path,source){const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete native grammar: '+path);return file;}
 function edit(file,node,replacement){return {span:[node.getStart(file),node.end],expected:node.getText(file),replacement};}
 function apply(source,edits){
@@ -23,15 +29,24 @@ function apply(source,edits){
  let delta=0;const mapping=[...edits].sort((a,b)=>a.span[0]-b.span[0]).map(row=>{const start=row.span[0]+delta;delta+=row.replacement.length-row.expected.length;return {...row,afterSpan:[start,start+row.replacement.length]};});let inverse=result;
  for(const row of mapping.reverse()){if(inverse.slice(...row.afterSpan)!==row.replacement)fail('native inverse span differs');inverse=inverse.slice(0,row.afterSpan[0])+row.expected+inverse.slice(row.afterSpan[1]);}if(inverse!==source)fail('whole native inverse differs');return result;
 }
-function stage(ts,path,before,after,phase){
- syntax(ts,path,before);syntax(ts,path,after);
- const first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),beforeMeta=serializeConcreteSyntaxMeta(first.document),fresh=transportConcreteSyntaxMeta(beforeMeta);if(fresh.source!==before)fail('complete phase input differs');
- const rule=(source,target,id)=>({id,edits:[{span:[0,source.length],expected:source,replacement:target}]}),sequence={languageRules:phase==='language'?[rule(before,after,'javascript:actual-native-source-history')]:[],repositoryRules:phase==='repository'?[rule(before,after,'receiving:complete-source-history-layer')]:[]};
- const run=applyConcreteSyntaxSubstitutions(fresh.document,sequence),afterMeta=serializeConcreteSyntaxMeta(run.value),readback=transportConcreteSyntaxMeta(afterMeta);if(readback.source!==after)fail('complete phase reparse differs');
- const reverse=applyConcreteSyntaxSubstitutions(readback.document,{languageRules:phase==='language'?[rule(after,before,'javascript:restore-whole-current-source')]:[],repositoryRules:phase==='repository'?[rule(after,before,'receiving:restore-whole-source-layer')]:[]});if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(reverse.value)).source!==before)fail('complete phase inverse differs');
- return {phase,before,after,beforeMeta,afterMeta,sequence,trace:run.trace,inverse:before};
+function equations(ts,rows){
+ for(const {path,before,language,after}of rows){syntax(ts,path,before);syntax(ts,path,language);syntax(ts,path,after);}
+ // The complete literal history fixture has its own bounded batch. Growing
+ // comparison DATA cannot enlarge the compiler's aggregate source allowance.
+ const resultsByPath=new Map();
+ for(const group of [rows.filter(row=>row.path!==HELPER),rows.filter(row=>row.path===HELPER)]){
+  if(!group.length)continue;
+  const results=transportConcreteNamedSourcePhases(group.map(({before,language,after})=>({before,middle:language,after,language:'JavaScript',rules:['javascript:actual-native-source-history','receiving:complete-source-history-layer','javascript:restore-whole-current-source','receiving:restore-whole-source-layer']})));
+  for(const [at,row]of group.entries())resultsByPath.set(row.path,results[at]);
+ }
+ return rows.map(({path,before,language,after,nativeSelections=[]},at)=>{
+ const result=resultsByPath.get(path);
+ if(result.before!==before||result.middle!==language||result.after!==after||result.inverse!==before)fail('complete named phase association differs');
+ if(after.split('\n').length>=1000)fail('source must remain below1000lines');
+ const stages=result.stages;
+ return {path,before,language,after,beforeSha256:hash(before),afterSha256:hash(after),nativeSelections,stages,trace:stages.flatMap(row=>row.trace),inverse:before,sourceAuthority:false};
+ });
 }
-function equation(ts,path,before,language,after,nativeSelections=[]){const stages=[stage(ts,path,before,language,'language'),stage(ts,path,language,after,'repository')];if(after.split('\n').length>=1000)fail('source must remain below1000lines');return {path,before,language,after,beforeSha256:hash(before),afterSha256:hash(after),nativeSelections,stages,trace:stages.flatMap(row=>row.trace),inverse:before,sourceAuthority:false};}
 function exported(ts,file,name){return one(file.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text===name&&node.modifiers?.some(modifier=>modifier.kind===ts.SyntaxKind.ExportKeyword)),name);}
 function nativeHistory(ts,row){
  const before=syntax(ts,row.path,row.before),after=syntax(ts,row.path,row.after);
@@ -40,7 +55,7 @@ function nativeHistory(ts,row){
   let start=0,endBefore=row.before.length,endAfter=row.after.length;while(start<endBefore&&row.before[start]===row.after[start])start++;while(endBefore>start&&endAfter>start&&row.before[endBefore-1]===row.after[endAfter-1]){endBefore--;endAfter--;}
   if(endBefore!==start||node.getStart(after)<start||node.end>endAfter)fail('only complete later declaration/comments may extend the source');
   const insertion={span:[start,start],expected:'',replacement:row.after.slice(start,endAfter),declarationSpan:[node.getStart(after),node.end],declarationSource:node.getText(after)};if(apply(row.before,[insertion])!==row.after||row.after.slice(0,start)+row.after.slice(endAfter)!==row.before)fail('native declaration whole prefix/suffix inverse differs');
-  return {...row,nativeSelections:[insertion],equation:equation(ts,row.path,row.before,row.after,row.after,[insertion]),completePrefixAndSuffixPreserved:true};
+  return {...row,nativeSelections:[insertion],equation:null,completePrefixAndSuffixPreserved:true};
  }
  // The literal packet producer changed the actual final CLI and appended whole
  // functions; all preceding native statements remain independently identical.
@@ -49,9 +64,9 @@ function nativeHistory(ts,row){
  for(let at=0;at<a;at++)if(before.statements[at].getText(before)!==after.statements[at].getText(after))fail('preexisting complete native declaration changed');
  if(oldCli.expression.getText(before)!==newCli.expression.getText(after)||row.before.slice(0,oldCli.getStart(before))!==row.after.slice(0,newCli.getStart(after)))fail('original CLI guard or complete preceding source changed');
  const selections=[{beforeSpan:[oldCli.getStart(before),oldCli.end],afterSpan:[newCli.getStart(after),newCli.end],before:oldCli.getText(before),after:newCli.getText(after)},...after.statements.slice(b+1).map(node=>({afterSpan:[node.getStart(after),node.end],after:node.getText(after)}))];
- if(selections.length<2)fail('actual later complete packet declarations required');return {...row,nativeSelections:selections,equation:equation(ts,row.path,row.before,row.after,row.after,selections),originalCliAndEveryLaterDeclarationRetained:true};
+ if(selections.length<2)fail('actual later complete packet declarations required');return {...row,nativeSelections:selections,equation:null,originalCliAndEveryLaterDeclarationRetained:true};
 }
-function render(records,guardedRecords,aliasNames){return `// Generated by prepare-current-receiving-source-history.mjs. Comparison DATA only.
+function render(records,guardedRecords,aliasNames,cloneExtension=false,structOrderingExtension=false){return `// Generated by prepare-current-receiving-source-history.mjs. Comparison DATA only.
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
@@ -62,10 +77,17 @@ const RECORDS=${JSON.stringify(records)};
 const fail=message=>{throw new TypeError('Current receiving source history DATA: '+message);};
 export function restoreReceivingSourceHistory(source,lane,retain=()=>{}){
  if(typeof source!=='string'||typeof lane!=='string'||typeof retain!=='function')fail('primitive complete source/lane and callback required');
- const rows=RECORDS.filter(row=>row.lane===lane);if(!rows.length)fail('unknown exact comparison lane');
- const selected=rows.filter(row=>row.current===source);if(selected.length>1)fail('ambiguous whole source');
+ ${cloneExtension?`if(lane==='clone-enclosing-extension'){
+  const rows=RECORDS.filter(row=>row.provenance.cloneSourceHistory),selected=rows.filter(row=>row.current===source${structOrderingExtension?'||row.provenance.structOrderingSourceHistory?.before===source':''});
+  if(selected.length>1)fail('ambiguous whole Clone source');
+  if(!selected.length){if(rows.some(row=>row.provenance.cloneSourceHistory.byteWrapperOutput===source))return source;fail('unregistered complete current source');}
+  const row=selected[0],historical=row.provenance.cloneSourceHistory.byteWrapperOutput;
+  retain('complete-later-source-history-'+lane,{path:row.path,current:source,historical,provenance:row.provenance,inverse:source,sourceAuthority:false,ownerAuthority:false});return historical;
+ }
+ `:''}const rows=RECORDS.filter(row=>row.lane===lane);if(!rows.length)fail('unknown exact comparison lane');
+ const selected=rows.filter(row=>row.current===source${structOrderingExtension?'||row.provenance.structOrderingSourceHistory?.before===source':''});if(selected.length>1)fail('ambiguous whole source');
  if(!selected.length){if(rows.some(row=>row.historical===source))return source;if(lane==='proof-consumer'&&!source.includes('operation-proof-byte-bridge.mjs'))return source;fail('unregistered complete current source');}
- const row=selected[0];retain('complete-later-source-history-'+lane,{path:row.path,current:source,historical:row.historical,provenance:row.provenance,inverse:row.current,sourceAuthority:false,ownerAuthority:false});return row.historical;
+ const row=selected[0];retain('complete-later-source-history-'+lane,{path:row.path,current:source,historical:row.historical,provenance:row.provenance,inverse:${structOrderingExtension?'source':'row.current'},sourceAuthority:false,ownerAuthority:false});return row.historical;
 }
 // Original filesystem operation/arguments happen first. Archives and unrelated
 // paths stay byte exact; only the explicitly registered physical text is viewed.
@@ -89,37 +111,67 @@ export function readFreezerReceivingHistory(...args){
 `;}
 function insertCall(ts,path,source,name,call){const file=syntax(ts,path,source),node=one(file.statements.filter(value=>ts.isFunctionDeclaration(value)&&value.name?.text===name),name),at=node.body.getStart(file)+1;return {span:[at,at],expected:'',replacement:'\n '+call};}
 export function prepareCurrentReceivingSourceHistory({root=ROOT}={}){
+ timing('start');
  root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');const snapshots=new Map(),physical=path=>{const source=readFileSync(resolve(root,path),'utf8');snapshots.set(path,source);return source;};
  const packed=readFileSync(resolve(root,ARCHIVE));if(packed.length!==74158||hash(packed)!==PACKED)fail('complete historical archive differs');const raw=gunzipSync(packed,{maxOutputLength:1048576});if(raw.length!==385439||hash(raw)!==RAW)fail('complete historical source bytes differ');const archive=JSON.parse(new TextDecoder('utf8',{fatal:true}).decode(raw));if(archive.schema!=='complete-current-receiving-source-history-v1'||archive.rows.length!==3||archive.templates.length!==5)fail('exact historical source universe required');
  const templates=new Map();for(const row of archive.templates){if(templates.has(row.path)||hash(row.source)!==row.sha256)fail('complete original receiving template differs');templates.set(row.path,row.source);}
  const read=path=>{const source=physical(path);return templates.has(path)?templates.get(path):source;};
- read(BASE+'prepare-current-receiving-source-history.mjs');read(BASE+'prepare-default-proof-byte-adoption.mjs');
+ read(BASE+'prepare-current-receiving-source-history.mjs');read(BASE+'prepare-default-proof-byte-adoption.mjs');read(BASE+'invocation-freezer-producer-evolution.mjs');
  const guarded=prepareGuardedProofLexing({root}),guardedRecords=guarded.files.filter(row=>row.consumerBodyUnchanged).map(row=>({path:row.path,current:row.text,historical:row.source,provenance:{producer:'prepare-guarded-proof-lexing.mjs',schema:guarded.schema,nativeImport:row.nativeImport,sourceSha256:row.sourceSha256,sha256:row.sha256}}));if(guardedRecords.length!==2)fail('both complete actual guarded consumer equations required');
+ timing('guarded-history');
  const history=archive.rows.map(row=>{const current=read(row.path),guard=guarded.files.find(value=>value.path===row.path);if(hash(row.before)!==row.beforeSha256||hash(row.after)!==row.afterSha256||current!==row.after&&!(guard&&guard.source===row.after&&guard.current===current&&guard.text===current))fail('complete physical/Git/known-guarded source join differs: '+row.path);return {...nativeHistory(ts,row),physicalCurrent:current,guardedLayer:current===row.after?null:guard};});
  // Invoke the actual original complete producer once, including all its fresh
  // archive, prerequisite, native-symbol, current-source and inverse checks.
  const defaultArchive=BASE+'source-profiles/default-proof-byte-adoption/complete-original-inputs.json.gz',defaultPacked=readFileSync(resolve(root,defaultArchive)),bytePlan=prepareDefaultProofByteAdoption({root}),records=[];
+ timing('default-byte-history');
+ for(const row of bytePlan.files)if(row.cloneSourceHistory)for(const input of row.cloneSourceHistory.inputs)if(physical(input.path)!==input.source)fail('complete Clone source producer input differs');
  for(const row of bytePlan.files.filter(row=>row.serializerBindings)){
   if(row.current!==row.after||read(row.path)!==row.after||row.inverse!==row.before)fail('actual complete default consumer adoption differs');
-  records.push({lane:'proof-consumer',path:row.path,current:row.after,historical:row.before,provenance:{producer:'prepare-default-proof-byte-adoption.mjs',schema:bytePlan.schema,nativeSelections:row.nativeSelections,beforeSha256:row.beforeSha256,afterSha256:row.afterSha256,defaultArchiveSha256:hash(defaultPacked)}});
+  const clone=row.cloneSourceHistory,ordering=row.structOrderingSourceHistory;
+  records.push({lane:'proof-consumer',path:row.path,current:row.after,historical:row.before,provenance:{producer:'prepare-default-proof-byte-adoption.mjs',schema:bytePlan.schema,nativeSelections:row.nativeSelections,beforeSha256:row.beforeSha256,afterSha256:row.afterSha256,defaultArchiveSha256:hash(defaultPacked),...(clone?{cloneSourceHistory:{schema:clone.schema,path:clone.path,byteWrapperOutput:clone.before,rules:clone.rules,beforeSha256:clone.beforeSha256,afterSha256:clone.afterSha256,sourceAuthority:false}}: {}),...(ordering?{structOrderingSourceHistory:{before:ordering.before,beforeSha256:ordering.beforeSha256,afterSha256:ordering.afterSha256,profileSha256:ordering.profileSha256,rules:ordering.edits,inverse:ordering.inverse,sourceAuthority:false}}:{})}});
  }
  if(records.length!==5)fail('all five complete original consumer equations required');
  for(const row of history)records.push({lane:row.lane,path:row.path,current:row.physicalCurrent,historical:row.before,provenance:{guardedLayer:row.guardedLayer?{schema:guarded.schema,nativeImport:row.guardedLayer.nativeImport,source:row.guardedLayer.source,text:row.guardedLayer.text}:null,archive:ARCHIVE,archiveSha256:PACKED,beforeCommit:row.beforeCommit,afterCommit:row.afterCommit,beforeSha256:row.beforeSha256,afterSha256:row.afterSha256,nativeSelections:row.nativeSelections}});
  const freezerPairs=invocationLocalFreezerSourcePairs(root),nativePair=one(freezerPairs.filter(row=>row.path===BASE+'private-native-proof-json.mjs'),'original native freezer equation');if(nativePair.after!==one(history.filter(row=>row.lane==='freezer-budget-extension'),'budget extension').before)fail('complete invocation producer/next extension boundary differs');
- const outputs=[],add=(path,language,after,selections=[])=>{const current=existsSync(resolve(root,path))?physical(path):'',before=templates.get(path)??'';if(current!==before&&current!==after)fail('complete receiving target differs from birth/exact generated equation: '+path);outputs.push({...equation(ts,path,before,language,after,selections),current});};
+ timing('freezer-history');
+ const outputs=[],add=(path,language,after,nativeSelections=[],previous=null)=>{const current=existsSync(resolve(root,path))?physical(path):'',before=templates.get(path)??'';if(current!==before&&current!==after&&!(Array.isArray(previous)?previous:[previous]).includes(current))fail('complete receiving target differs from birth/exact generated equation: '+path);outputs.push({path,before,language,after,nativeSelections,current});};
  const aliasPath=BASE+'test/fixtures/compiler-data-alias-history.mjs',aliasSource=read(aliasPath),aliasFile=syntax(ts,aliasPath,aliasSource),aliasDeclarations=aliasFile.statements.filter(ts.isVariableStatement).flatMap(node=>[...node.declarationList.declarations]).filter(node=>ts.isIdentifier(node.name)&&node.name.text==='RECORDS');const aliasNode=one(aliasDeclarations,'complete actual original alias records');if(!ts.isArrayLiteralExpression(aliasNode.initializer))fail('actual complete original alias JSON DATA required');const aliasRows=JSON.parse(aliasNode.initializer.getText(aliasFile)),aliasNames=aliasRows.map(row=>row.name);if(aliasNames.length!==6||new Set(aliasNames).size!==6)fail('complete original alias reader scope differs');
- const helper=render(records,guardedRecords,aliasNames);add(HELPER,helper,helper);
- const fixturePath=BASE+'test/fixtures/native-proof-json-format.mjs',fixture=read(fixturePath),fixtureEdits=[insertCall(ts,fixturePath,fixture,'legacyProofConsumerSource',"if(typeof source==='string')source=restoreReceivingSourceHistory(source,'proof-consumer',retain);"),insertCall(ts,fixturePath,fixture,'restoreCurrentEnclosingNamespaceSource',"if(typeof source==='string'&&source.includes('export function coreAdoptionProducerClosedAttributeSpans('))source=restoreReceivingSourceHistory(source,'core-attribute-extension',retain);")],fixtureLanguage=apply(fixture,fixtureEdits),fixtureAfter=apply(fixtureLanguage,[{span:[0,0],expected:'',replacement:"import {restoreReceivingSourceHistory} from './current-receiving-source-history.mjs';\n"}]);add(fixturePath,fixtureLanguage,fixtureAfter,fixtureEdits);
+ const preOrderingRecords=records.map(row=>{const ordering=row.provenance.structOrderingSourceHistory;if(!ordering)return row;const {structOrderingSourceHistory,...provenance}=row.provenance;return {...row,current:ordering.before,provenance:{...provenance,afterSha256:ordering.beforeSha256}};});
+ const previousRecords=preOrderingRecords.map(row=>{const clone=row.provenance.cloneSourceHistory;if(!clone)return row;const {cloneSourceHistory,...provenance}=row.provenance;return {...row,current:clone.byteWrapperOutput,provenance:{...provenance,afterSha256:clone.beforeSha256}};});
+ const helper=render(records,guardedRecords,aliasNames,true,true);add(HELPER,helper,helper,[],[render(previousRecords,guardedRecords,aliasNames),render(preOrderingRecords,guardedRecords,aliasNames,true)]);
+ const fixturePath=BASE+'test/fixtures/native-proof-json-format.mjs',fixture=read(fixturePath);
+ const consumerCall="if(typeof source==='string')source=restoreReceivingSourceHistory(source,'proof-consumer',retain);",coreCall="if(typeof source==='string'&&source.includes('export function coreAdoptionProducerClosedAttributeSpans('))source=restoreReceivingSourceHistory(source,'core-attribute-extension',retain);",cloneCall="if(typeof source==='string'&&source.includes('export function proveBuiltinCloneEnclosingNamespace('))source=restoreReceivingSourceHistory(source,'clone-enclosing-extension',retain);";
+ const fixtureEdits=[insertCall(ts,fixturePath,fixture,'legacyProofConsumerSource',consumerCall),insertCall(ts,fixturePath,fixture,'restoreCurrentEnclosingNamespaceSource',cloneCall+'\n '+coreCall)],fixtureLanguage=apply(fixture,fixtureEdits);
+ const importHistory=source=>apply(source,[{span:[0,0],expected:'',replacement:"import {restoreReceivingSourceHistory} from './current-receiving-source-history.mjs';\n"}]);
+ const fixtureEvolution=deriveCurrentNegativeBudgetProofHistory(importHistory(fixtureLanguage),{root});
+ const previousFixtureEdits=[fixtureEdits[0],insertCall(ts,fixturePath,fixture,'restoreCurrentEnclosingNamespaceSource',coreCall)],previousFixtureEvolution=deriveCurrentNegativeBudgetProofHistory(importHistory(apply(fixture,previousFixtureEdits)),{root});
+ add(fixturePath,fixtureLanguage,fixtureEvolution.after,[...fixtureEdits,...fixtureEvolution.nativeSelections],previousFixtureEvolution.after);
  const planPath=BASE+'test/builtin-plan-json-composition.test.mjs',plan=read(planPath);if(snapshots.get(planPath)!==plan)fail('complete original builtin plan suite changed');
- const progressPath=BASE+'test/core-adoption-progress.test.mjs',progress=read(progressPath),progressEdit=insertCall(ts,progressPath,progress,'progressLayoutHistory',"if(path==='tools/translation/propose-core-adoption-corpus.mjs')source=restoreReceivingSourceHistory(source,'progress-packets',retain);"),progressLanguage=apply(progress,[progressEdit]),progressAfter=apply(progressLanguage,[{span:[0,0],expected:'',replacement:"import {restoreReceivingSourceHistory} from './fixtures/current-receiving-source-history.mjs';\n"}]);add(progressPath,progressLanguage,progressAfter,[progressEdit]);
+ timing('negative-budget-history');
+ const progressPath=BASE+'test/core-adoption-progress.test.mjs',progress=read(progressPath),progressEdit=insertCall(ts,progressPath,progress,'progressLayoutHistory',"if(path==='tools/translation/propose-core-adoption-corpus.mjs')source=restoreReceivingSourceHistory(source,'progress-packets',retain);"),progressLanguage=apply(progress,[progressEdit]),progressAfter=apply(progressLanguage,[{span:[0,0],expected:'',replacement:"import {restoreReceivingSourceHistory} from './fixtures/current-receiving-source-history.mjs';\n"}]);
+ const progressEvolution=derivePinnedRepositorySourceEvolution(ts,{
+  profile:new URL('./source-profiles/project-progress-receiving/source-rules.json',import.meta.url),
+  profileSha256:'f90f3ad3e9cf4b5ea2519594a3d274db0a2c63ed305535672eafc283a8f90ef3',path:progressPath,source:progressAfter,
+ });
+ const progressNamespaceEdits=[insertCall(ts,progressPath,progressAfter,'progressLayoutHistory',
+  "if(path==='tools/translation/project.mjs')return restoreProjectProgressSourceHistory(source,retain);"),
+  {span:[0,0],expected:'',replacement:"import {restoreProjectProgressSourceHistory} from './project-progress-source-history.mjs';\n"}];
+ if(apply(progressAfter,progressNamespaceEdits)!==progressEvolution.after)
+  fail('complete project progress profile/native source equation differs');
+ progressEvolution.nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,progressPath),progressEvolution.after);
+ add(progressPath,progressLanguage,progressEvolution.after,[progressEdit,...progressNamespaceEdits],progressAfter);
  const producerPath=BASE+'prepare-invocation-local-freezer.mjs',producer=read(producerPath),producerFile=syntax(ts,producerPath,producer),fsImport=one(producerFile.statements.filter(node=>ts.isImportDeclaration(node)&&node.moduleSpecifier.text==='node:fs'),'complete original freezer source reader');if(fsImport.getText(producerFile)!=="import {readFileSync} from 'node:fs';")fail('complete original freezer source reader binding differs');
- if(snapshots.get(producerPath)!==producer)fail('complete original freezer producer changed');
+ const producerEvolution=deriveInvocationFreezerProducerEvolution(producer,snapshots.get(producerPath));
  const producerEdit=edit(producerFile,fsImport,"import {readFreezerReceivingHistory as readFileSync} from './test/fixtures/current-receiving-source-history.mjs';"),copy=apply(producer,[producerEdit]);add(COPY,producer,copy,[producerEdit]);
  const freezerTestPath=BASE+'test/invocation-local-freezer.test.mjs',freezerTest=read(freezerTestPath),freezerTestFile=syntax(ts,freezerTestPath,freezerTest),freezerImport=one(freezerTestFile.statements.filter(node=>ts.isImportDeclaration(node)&&node.moduleSpecifier.text==='../prepare-invocation-local-freezer.mjs'),'original freezer proposal import'),freezerEdit=edit(freezerTestFile,freezerImport.moduleSpecifier,"'../invocation-local-freezer-receiving-history.mjs'");add(freezerTestPath,apply(freezerTest,[freezerEdit]),apply(freezerTest,[freezerEdit]),[freezerEdit]);
+ const complete=equations(ts,[...history.map(row=>({path:row.path,before:row.before,language:row.after,after:row.after,nativeSelections:row.nativeSelections})),...outputs]);
+ timing('complete-source-equations');
+ for(const [at,row]of history.entries())row.equation=complete[at];
+ const files=complete.slice(history.length).map((row,at)=>({...row,current:outputs[at].current}));
  for(const row of bytePlan.files){const actual=existsSync(resolve(root,row.path))?readFileSync(resolve(root,row.path),'utf8'):null;if(actual!==row.current)fail('complete default producer target changed');}for(const row of bytePlan.prerequisiteInputs)if(readFileSync(resolve(root,row.path),'utf8')!==row.source)fail('complete default producer prerequisite changed');for(const layer of bytePlan.historicalLayers){for(const row of layer.inputs)if(readFileSync(resolve(root,row.path),'utf8')!==row.source)fail('complete historical predecessor input changed');assertSchemarsEnclosingHistoryFresh({root,history:layer.history});}if(readFileSync(resolve(root,bytePlan.fragment.path),'utf8')!==bytePlan.fragment.source)fail('complete authored byte operation changed');
  assertGuardedProofLexingInputsFresh(guarded);
  for(const [path,source]of snapshots)if(readFileSync(resolve(root,path),'utf8')!==source)fail('complete source input changed during history construction');if(!readFileSync(resolve(root,ARCHIVE)).equals(packed)||!readFileSync(resolve(root,defaultArchive)).equals(defaultPacked))fail('complete binary history changed during operation');
- return {schema:'complete-current-receiving-source-history-proposal-v1',files:outputs,records,history,guarded,guardedRecords,defaultByteHistory:bytePlan,freezerPairs,inputs:[...snapshots].map(([path,source])=>({path,source,sha256:hash(source)})),binaryInputs:[{path:ARCHIVE,bytes:packed.length,sha256:PACKED},{path:defaultArchive,bytes:defaultPacked.length,sha256:hash(defaultPacked)}],sourceAuthority:false,ownerAuthority:false,runtimeImplementationChanged:false,originalCaseBodiesAndDeadlinesUnchanged:true,receivingExecuted:false,sourceInstalled:false};
+ return {schema:'complete-current-receiving-source-history-proposal-v1',files,records,history,guarded,guardedRecords,defaultByteHistory:bytePlan,freezerPairs,producerEvolution,fixtureEvolution,progressEvolution,inputs:[...snapshots].map(([path,source])=>({path,source,sha256:hash(source)})),binaryInputs:[{path:ARCHIVE,bytes:packed.length,sha256:PACKED},{path:defaultArchive,bytes:defaultPacked.length,sha256:hash(defaultPacked)}],sourceAuthority:false,ownerAuthority:false,runtimeImplementationChanged:false,originalCaseBodiesAndDeadlinesUnchanged:true,receivingExecuted:false,sourceInstalled:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('use --emit|--write|--check; this is an explicit receiving-history proposal');const plan=prepareCurrentReceivingSourceHistory();if(args[0]==='--write'){for(const row of plan.files)if((existsSync(resolve(ROOT,row.path))?readFileSync(resolve(ROOT,row.path),'utf8'):'')!==row.current)fail('target changed before explicit history write');for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}else if(args[0]==='--check'){if(plan.files.some(row=>row.current!==row.after))fail('complete generated receiving history is stale');console.log('Complete current/historical receiving sources are fresh; no compiler authority.');}else console.log(JSON.stringify(plan));

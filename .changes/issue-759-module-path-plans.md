@@ -7,7 +7,7 @@ namespace, attribute-expansion or runtime authority. Unsafe paths, unknown
 conditions, malformed attributes and unresolved module transformations refuse.
 The module graph consumes private plans while retaining complete original
 files and inline view offsets. Explicitly included files give child modules
-the same sibling rules as mod.rs. Circular file inclusion and the graph's
+the same sibling rules as mod.rs. Circular file inclusion and the module graph's
 module-count, external-file depth and combined inline/file depth bounds retain
 diagnostics. Invalid or reserved raw module names, plain strict/reserved names
 and non-ASCII default filesystem names refuse before file selection. Weak

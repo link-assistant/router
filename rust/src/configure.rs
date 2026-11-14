@@ -49,7 +49,10 @@ pub async fn run(args: &ConfigureArgs) -> ExitCode {
 }
 
 /// Run with an optional explicit client-home isolation boundary.
-pub async fn run_with_home(args: &ConfigureArgs, home: crate::translation_core::Maybe<&Path>) -> ExitCode {
+pub async fn run_with_home(
+    args: &ConfigureArgs,
+    home: crate::translation_core::Maybe<&Path>,
+) -> ExitCode {
     match run_inner(args, home).await {
         Ok(code) => code,
         Err(error) => {
@@ -62,7 +65,10 @@ pub async fn run_with_home(args: &ConfigureArgs, home: crate::translation_core::
     }
 }
 
-async fn run_inner(args: &ConfigureArgs, home: crate::translation_core::Maybe<&Path>) -> crate::translation_core::Outcome<ExitCode, AnyError> {
+async fn run_inner(
+    args: &ConfigureArgs,
+    home: crate::translation_core::Maybe<&Path>,
+) -> crate::translation_core::Outcome<ExitCode, AnyError> {
     let manager = match home {
         Some(home) => ClientManager::isolated(home),
         None => ClientManager::from_env()?,
@@ -368,7 +374,10 @@ async fn configure_one(
     Ok(())
 }
 
-async fn undo(args: &ConfigureArgs, manager: &ClientManager) -> crate::translation_core::Outcome<ExitCode, AnyError> {
+async fn undo(
+    args: &ConfigureArgs,
+    manager: &ClientManager,
+) -> crate::translation_core::Outcome<ExitCode, AnyError> {
     let mut restored = 0_usize;
     let mut failed = Vec::new();
     for client in args.clients() {
@@ -514,7 +523,10 @@ fn management_origin_for(args: &ConfigureArgs, router: &crate::translation_core:
 ///
 /// Undo removes local files and must keep working offline, so this never
 /// resolves a target: it asks only what is already to hand.
-fn admin_token_for(args: &ConfigureArgs, router: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
+fn admin_token_for(
+    args: &ConfigureArgs,
+    router: &crate::translation_core::Str,
+) -> crate::translation_core::Maybe<String> {
     if let Some(token) = args.token.clone() {
         return Some(token);
     }

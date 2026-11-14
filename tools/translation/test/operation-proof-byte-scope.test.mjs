@@ -8,6 +8,7 @@ import {prepareOperationProofByteSources} from '../prepare-operation-proof-byte-
 import {withOperationProofByteComposition as operation} from '../operation-proof-byte-scope.mjs';
 import {createScopedPrivateNativeProofJsonSerializer} from '../private-native-proof-json.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
+import {restoreOperationSizeMeasurementSource} from '../operation-size-measurement-source.mjs';
 const nativeJSON=JSON.stringify,get=Object.getOwnPropertyDescriptor,define=Object.defineProperty,apply=Reflect.apply;
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
@@ -20,6 +21,15 @@ function hashObserver(run){const update=get(Hash.prototype,'update'),digest=get(
 test('complete original native declarations retain both source phases full inverses original budgets and unchanged defaults',()=>{
  const plan=retain('complete-native-source-plan',prepareOperationProofByteSources()),row=plan.files[0];assert.equal(plan.typescriptVersion,'5.9.3');assert.equal(plan.existingDefaultsUnchanged,true);assert.equal(plan.arithmeticScopeUnchanged,true);assert.equal(plan.newAcrossInvocationEncodedCache,false);assert.equal(plan.performanceQualified,false);assert.equal(row.current,row.after);assert.equal(row.before,readFileSync(new URL(plan.input.path,root),'utf8'));assert.equal(row.inverse,row.before);assert.equal(hash(row.before),row.beforeSha256);assert.equal(hash(row.after),row.afterSha256);assert.equal(row.fallbackEdits.length,5);assert.deepEqual(row.nativeBindings.unboundIdentifiers,[]);
  assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const stage of row.stages){assert.equal(stage.completeInverse,true);assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}assert.ok(row.after.includes('ENTRY_BYTES=4194304,TOTAL_BYTES=8388608,ENTRIES=16,CELLS=200000,DEPTH=160'));for(const edit of row.fallbackEdits)assert.equal(row.language.slice(...edit.span),edit.expected);
+ const history=row.measurementSourceHistory;assert.equal(history.after,row.after);assert.equal(history.inverse,history.before);
+ assert.equal(transportConcreteSyntaxMeta(history.equation.beforeMeta).source,history.before);
+ assert.equal(transportConcreteSyntaxMeta(history.equation.afterMeta).source,history.after);
+ assert.equal(history.equation.inverse,history.before);assert.equal(history.maximumRecords,1024);
+ assert.equal(history.originalLogicalBudgetsUnchanged,true);assert.equal(history.newAcrossOperationCache,false);
+ assert.deepEqual(restoreOperationSizeMeasurementSource(row.after,row.path),history);
+ const copied=restoreOperationSizeMeasurementSource(row.after,row.path);copied.languageRules[0].after='untrusted public DATA';
+ assert.deepEqual(restoreOperationSizeMeasurementSource(row.after,row.path),history);
+ assert.throws(()=>restoreOperationSizeMeasurementSource(row.after.replace('sharedMeasurementRecords=0;', 'sharedMeasurementRecords=1;'),row.path),/exact complete source selection/);
 });
 test('one synchronous operation composes repeated complete immutable DATA fields and every exact native hash payload',()=>{
  const common=shared(),inputs=Array.from({length:12},(_,at)=>({compilerMeta:common,recipes:[common],sequence:at,unicode:'\u0000\r\n😀\ud800',negativeZero:-0}));retain('complete-inputs',inputs);
@@ -51,4 +61,21 @@ test('original cell depth and byte refusals fall back without new limits and imm
  const deep={};let tail=deep;for(let at=0;at<165;at++)tail=tail.next={};
  const wide=Array.from({length:200001},()=>0),large={compilerMeta:freeze({source:'x'.repeat(8388609)})},surrogates={compilerMeta:freeze({source:'😀\ud800\u0000'.repeat(256)})};
  for(const value of [deep,wide,large,surrogates]){const old=createScopedPrivateNativeProofJsonSerializer(),expected=old(value),actual=operation(serialize=>serialize(value));retain('complete-budget-case',{value,expected,actual});assert.equal(actual,expected);}assert.equal(wide.length,200001);assert.equal(large.compilerMeta.source.length,8388609);
+});
+test('repeated immutable size measurements preserve complete depth cell text and callback behavior',()=>{
+ const common=shared(),old=createScopedPrivateNativeProofJsonSerializer();
+ const nested=depth=>{let value={compilerMeta:common};for(let at=0;at<depth;at++)value={next:value};return value;};
+ const repeated={recipes:Array.from({length:180},()=>common)};
+ const text=freeze({source:'x'.repeat(65536)}),textBudget={recipes:Array.from({length:130},()=>text)};
+ const values=[nested(5),nested(159),nested(161),repeated,textBudget,{compilerMeta:common}];
+ const expected=values.map(value=>old(value));
+ const actual=operation(serialize=>{
+  for(let at=0;at<3;at++)assert.equal(serialize({compilerMeta:common}),old({compilerMeta:common}));
+  const result=values.map(value=>serialize(value));
+  const tape=[],subject={get changed(){tape.push('getter');return serialize({compilerMeta:common});}};
+  assert.equal(serialize(subject),old(subject));assert.deepEqual(tape,['getter','getter']);
+  assert.equal(serialize({compilerMeta:common}),old({compilerMeta:common}));return result;
+ });
+ retain('complete-warmed-budget-results',{expected,actual});assert.deepEqual(actual,expected);
+ assert.equal(operation(serialize=>serialize({compilerMeta:common})),old({compilerMeta:common}));
 });

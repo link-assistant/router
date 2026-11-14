@@ -61,7 +61,12 @@ pub struct TokenUsage {
 }
 
 impl Metrics {
-    pub fn record_request(&self, surface: Surface, status: u16, account: crate::translation_core::Maybe<&crate::translation_core::Str>) {
+    pub fn record_request(
+        &self,
+        surface: Surface,
+        status: u16,
+        account: crate::translation_core::Maybe<&crate::translation_core::Str>,
+    ) {
         self.requests_total.fetch_add(1, Ordering::Relaxed);
         if status >= 400 {
             self.errors_total.fetch_add(1, Ordering::Relaxed);
@@ -92,7 +97,11 @@ impl Metrics {
     /// Called once per request, right after the token is validated, so the
     /// counter reflects requests the router accepted for that token — the same
     /// unit `max_requests` budgets.
-    pub fn record_token_request(&self, token_id: &crate::translation_core::Str, label: &crate::translation_core::Str) {
+    pub fn record_token_request(
+        &self,
+        token_id: &crate::translation_core::Str,
+        label: &crate::translation_core::Str,
+    ) {
         if let Ok(mut g) = self.token_calls.lock() {
             let entry = g.entry(token_id.to_string()).or_default();
             if entry.label.is_empty() && !label.is_empty() {

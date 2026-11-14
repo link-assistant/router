@@ -1,0 +1,83 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/prepare-owned-runtime-import-current.mjs",
+  "phase": "repository",
+  "beforeSha256": "0be476c1b2853f037d7a27dc8e7a2649914f30e8b4bac79e7e8082273d7e30c6",
+  "afterSha256": "0424f422109b255596d3c6e44816843eabf2a8154c1242d903676ed10d5014c7",
+  "edits": [
+    {
+      "id": "runtime-binding-batch:native-module-checker",
+      "before": "import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';",
+      "after": "import {verifyNativeCopiedSourceBindings,verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';"
+    },
+    {
+      "id": "runtime-binding-batch:private-equation-queue",
+      "before": "function equation(ts,root,path,before,language,after,nativeSelections){",
+      "after": "function equation(ts,root,path,before,language,after,nativeSelections,bindings=null){"
+    },
+    {
+      "id": "runtime-binding-batch:defer-complete-module-scopes",
+      "before": " if(after.split('\\n').length>=1000)fail('complete source must remain below1000lines');return {path,before,language,after,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:proof.beforeMeta,afterMeta:proof.afterMeta,inverse:before,sequence,stages,trace:stages.flatMap(row=>row.trace),nativeSelections,originalHashCalls,nativeCopies:[nativeCopy(ts,path,before),nativeCopy(ts,path,after)],nativeBindings:verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),current:readFileSync(resolve(root,path),'utf8'),semanticAuthority:false};",
+      "after": " if(after.split('\\n').length>=1000)fail('complete source must remain below1000lines');const row={path,before,language,after,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:proof.beforeMeta,afterMeta:proof.afterMeta,inverse:before,sequence,stages,trace:stages.flatMap(row=>row.trace),nativeSelections,originalHashCalls,nativeCopies:[nativeCopy(ts,path,before),nativeCopy(ts,path,after)],nativeBindings:{},current:readFileSync(resolve(root,path),'utf8'),semanticAuthority:false};\n if(bindings)bindings.push(row);else Object.assign(row.nativeBindings,verifyNativeCopiedSourceBindings(ts,resolve(root,path),after));return row;"
+    },
+    {
+      "id": "runtime-binding-batch:fresh-queue-per-operation",
+      "before": " root=resolve(root);const {ts,compilerPath,compilerBytes,compilerSource,lazy,native,parentTail}=freshRuntimeCompilerSourceData(root);",
+      "after": " root=resolve(root);const bindings=[];const {ts,compilerPath,compilerBytes,compilerSource,lazy,native,parentTail}=freshRuntimeCompilerSourceData(root);"
+    },
+    {
+      "id": "runtime-binding-batch:queue-owned",
+      "before": "ownedRow={...equation(ts,root,OWNED,before,language,after,edits)",
+      "after": "ownedRow={...equation(ts,root,OWNED,before,language,after,edits,bindings)"
+    },
+    {
+      "id": "runtime-binding-batch:queue-build",
+      "before": "equation(ts,root,BUILD,buildBefore,buildLanguage,buildAfter,buildEdits)",
+      "after": "equation(ts,root,BUILD,buildBefore,buildLanguage,buildAfter,buildEdits,bindings)"
+    },
+    {
+      "id": "runtime-binding-batch:queue-loader",
+      "before": "equation(ts,root,LOADER,loaderBefore,loaderLanguage,loaderAfter,loaderEdits)",
+      "after": "equation(ts,root,LOADER,loaderBefore,loaderLanguage,loaderAfter,loaderEdits,bindings)"
+    },
+    {
+      "id": "runtime-binding-batch:queue-native",
+      "before": "equation(ts,root,NATIVE,nativeBefore,nativeLanguage,nativeAfter,nativeEdits)",
+      "after": "equation(ts,root,NATIVE,nativeBefore,nativeLanguage,nativeAfter,nativeEdits,bindings)"
+    },
+    {
+      "id": "runtime-binding-batch:join-native-queue",
+      "before": "composeCurrentNativeRegenerationRow(ts,root,equation(ts,root,NATIVE,nativeBefore,nativeLanguage,nativeAfter,nativeEdits,bindings))",
+      "after": "composeCurrentNativeRegenerationRow(ts,root,equation(ts,root,NATIVE,nativeBefore,nativeLanguage,nativeAfter,nativeEdits,bindings),bindings)"
+    },
+    {
+      "id": "runtime-binding-batch:join-loader-queue",
+      "before": "publicCallbackCannotIssueNativeIdentity:true});",
+      "after": "publicCallbackCannotIssueNativeIdentity:true},bindings);"
+    },
+    {
+      "id": "runtime-binding-batch:propagate-NativeRegeneration",
+      "before": "function composeCurrentNativeRegenerationRow(ts,root,original) {\n if(resolve(root)!==resolve(ROOT))fail('current native equation requires its actual repository root');\n const batch=prepareNativeRegenerationBatch();\n if(batch.path!==original.path||batch.before!==original.after)fail('complete native regeneration predecessor differs');\n const current=equation(ts,root,original.path,original.before,original.after,batch.after,original.nativeSelections);\n return {...current,sourceHistory:[original,batch]};\n}",
+      "after": "function composeCurrentNativeRegenerationRow(ts,root,original,bindings) {\n if(resolve(root)!==resolve(ROOT))fail('current native equation requires its actual repository root');\n const batch=prepareNativeRegenerationBatch();\n if(batch.path!==original.path||batch.before!==original.after)fail('complete native regeneration predecessor differs');\n const current=equation(ts,root,original.path,original.before,original.after,batch.after,original.nativeSelections,bindings);\n return {...current,sourceHistory:[original,batch]};\n}"
+    },
+    {
+      "id": "runtime-binding-batch:propagate-LoaderComparison",
+      "before": "function composeCurrentLoaderComparisonRow(ts,root,original) {\n if(resolve(root)!==resolve(ROOT))fail('current loader equation requires its actual repository root');\n const batch=proposeRuntimeLoaderComparison(ts,original.path,original.after);\n const current=equation(ts,root,original.path,original.before,original.after,batch.after,original.nativeSelections);\n return {...original,...current,sourceHistory:[original,batch]};\n}",
+      "after": "function composeCurrentLoaderComparisonRow(ts,root,original,bindings) {\n if(resolve(root)!==resolve(ROOT))fail('current loader equation requires its actual repository root');\n const batch=proposeRuntimeLoaderComparison(ts,original.path,original.after);\n const current=equation(ts,root,original.path,original.before,original.after,batch.after,original.nativeSelections,bindings);\n return {...original,...current,sourceHistory:[original,batch]};\n}"
+    },
+    {
+      "id": "runtime-binding-batch:complete-all-scopes-before-return",
+      "before": " for(const row of files)if(row.current!==row.before&&row.current!==row.after)",
+      "after": " completeRuntimeBindingBatch(ts,root,bindings);\n for(const row of files)if(row.current!==row.before&&row.current!==row.after)"
+    },
+    {
+      "id": "runtime-binding-batch:private-batch-completion",
+      "before": "ter,batch.after,original.nativeSelections,bindings);\n return {...original,...current,sourceHistory:[original,batch]};\n}\n",
+      "after": "ter,batch.after,original.nativeSelections,bindings);\n return {...original,...current,sourceHistory:[original,batch]};\n}\n\n// Fresh programs share library parsing only within distinct external modules.\n// Repeated versions of one path enter separate programs, preserving filenames.\nfunction completeRuntimeBindingBatch(ts,root,rows){\n const groups=[];\n for(const row of rows){\n  let group=groups.find(value=>!value.paths.has(row.path));\n  if(!group){group={paths:new Set(),rows:[]};groups.push(group);}\n  group.paths.add(row.path);group.rows.push(row);\n }\n for(const group of groups){\n  const checked=verifyNativeCopiedModuleBindings(ts,group.rows.map(row=>({path:resolve(root,row.path),source:row.after})));\n  for(let at=0;at<group.rows.length;at++)Object.assign(group.rows[at].nativeBindings,checked[at]);\n }\n}\n"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

@@ -879,5 +879,7 @@ fn stream_request_flag_requires_every_json_level_and_a_real_boolean() {
     ] {
         assert!(!request_asks_for_a_stream(&record), "{record}");
     }
-    assert!(request_asks_for_a_stream(&json!({"body": {"json": {"stream": true}}})));
+    assert!(request_asks_for_a_stream(
+        &json!({"body": {"json": {"stream": true}}})
+    ));
 }

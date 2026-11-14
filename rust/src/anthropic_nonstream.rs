@@ -48,7 +48,10 @@ pub async fn collect_response(response: Response, surface: crate::metrics::Surfa
     Response::from_parts(parts, Body::from(body))
 }
 
-fn upstream_error(surface: crate::metrics::Surface, message: &crate::translation_core::Str) -> Response {
+fn upstream_error(
+    surface: crate::metrics::Surface,
+    message: &crate::translation_core::Str,
+) -> Response {
     crate::api_error::error_response_for_surface(
         surface,
         StatusCode::BAD_GATEWAY,
@@ -64,7 +67,9 @@ fn is_event_stream(content_type: crate::translation_core::Maybe<&HeaderValue>) -
         .is_some_and(|value| value.trim().eq_ignore_ascii_case("text/event-stream"))
 }
 
-fn assemble(body: &[u8]) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
+fn assemble(
+    body: &[u8],
+) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
     let mut buffer = Vec::new();
     let mut message = None;
     let mut blocks = BTreeMap::<u64, Value>::new();
@@ -149,7 +154,9 @@ fn assemble(body: &[u8]) -> crate::translation_core::Outcome<crate::translation_
     Ok(message)
 }
 
-fn event_index(event: &crate::translation_core::Json) -> crate::translation_core::Outcome<u64, String> {
+fn event_index(
+    event: &crate::translation_core::Json,
+) -> crate::translation_core::Outcome<u64, String> {
     event
         .get("index")
         .and_then(crate::translation_core::Json::as_u64)

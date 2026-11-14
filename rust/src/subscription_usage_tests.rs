@@ -254,9 +254,9 @@ async fn vendor_http_failures_are_typed_without_echoing_bodies() {
     ));
     server.abort();
 
-    let unused = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let unused_address = unused.local_addr().unwrap();
-    drop(unused);
+    // Port 1 is privileged, so no parallel test can bind it the way one can
+    // reuse a just-dropped ephemeral port: connections to it stay refused.
+    let unused_address = "127.0.0.1:1";
     assert!(matches!(
         send_json(client.get(format!("http://{unused_address}/transient"))).await,
         VendorResponse::Unavailable

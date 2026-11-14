@@ -64,7 +64,10 @@ pub fn row(record: &crate::translation_core::Json) -> crate::translation_core::T
         .and_then(Value::as_str)
         .filter(|scope| !scope.is_empty())
         .unwrap_or("client");
-    let rpm = number("rate_limit_per_minute").map_or_else(|| crate::translation_core::format!("{}", "-"), |v| v.to_string());
+    let rpm = number("rate_limit_per_minute").map_or_else(
+        || crate::translation_core::format!("{}", "-"),
+        |v| v.to_string(),
+    );
     let revoked = record
         .get("revoked")
         .and_then(Value::as_bool)

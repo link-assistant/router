@@ -31,3 +31,21 @@ boundary; it does not authenticate arbitrary private native-constructor hooks
 installed before that bootstrap. Later constructor-chain and handle-method
 changes are checked and refused or routed to the original lane. Receiving
 controls and unchanged whole original tests are still required.
+
+The separate `node-v20.20.2` profile retains the complete current official
+sources and license. The original 20.19.4 files, generated exports and pins
+remain unchanged. The original complete qualification guard is additionally
+retained as `node-v20.19.4/attribute-owner-bulk-crypto.mjs.gz`; its decoded
+SHA-256 is `9725a02c0c7111635f998cacfe213f529562da6cad41d1348e8702fdfc8831f9`.
+
+| File | Official source | SHA-256 |
+| --- | --- | --- |
+| `crypto.js` | [Node v20.20.2 lib/crypto.js](https://raw.githubusercontent.com/nodejs/node/v20.20.2/lib/crypto.js) | `9a6dc75b3111a4d9926a58d977da58b80769010287ee5cd5ed9c558d6921615c` |
+| `hash.js` | [Node v20.20.2 lib/internal/crypto/hash.js](https://raw.githubusercontent.com/nodejs/node/v20.20.2/lib/internal/crypto/hash.js) | `c5920f63623364cd5dfea5d21d6377f88ea919988ba403f706e7aca6f3dcf050` |
+| `LICENSE.gz` | [Complete Node v20.20.2 LICENSE](https://raw.githubusercontent.com/nodejs/node/v20.20.2/LICENSE) | `326ac2f3e528f3c0f7c80c354b1898700c7f4dcc01a67362d6dd95d5aad26c26` |
+
+The complete current decompressed license has SHA-256
+`70c7a59521f41ccfe5bb0193677b77a44ed43ad4fe59203fa408afa538214949`.
+`node tools/translation/prepare-attribute-owner-node-profile.mjs --check`
+reproduces both complete current outputs while checking every original and
+current source pin. See the [source and runtime boundaries](../../../../docs/development/current-node-crypto-profile.md).

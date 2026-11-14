@@ -7,6 +7,7 @@ import {createHash} from 'node:crypto';
 import {sourceItems,rustTokens} from './rust-structure.mjs';
 import {originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
 import {matchesParserFacts} from './matches-macro-context.mjs';
+import {isProjectMatchesAnalysisPair} from './project-matches-analysis-context.mjs';
 import {extractImplDeclarations} from './impl-resolver.mjs';
 import {nominalTypeIdentities,resolveNominalImplTarget} from './project-nominal.mjs';
 import {originalNestedImplementationObligations} from './nested-implementation-obligations.mjs';
@@ -137,7 +138,7 @@ export function sourceNominalDisplayClosure(receipt,family,consumerParser=null){
 export function sourceNominalDisplayClosureFacts(closure){const state=closures.get(closure);if(!state)fail('copied or forged nominal Display closure');scopeFacts(closure.caller);return state;}
 export function verifySourceNominalDisplayMethod(closure,semantic,checkedMethod){
  const {state,inherent}=sourceNominalDisplayClosureFacts(closure),parsed=originalMethodSemanticFacts(semantic),origin=originalMethodTransformFacts(parsed.transform),member=origin.member,method=origin.method;
- if(origin.context!==state.context)fail('foreign original Display inherent method analysis context');
+ if(origin.context!==state.context&&!isProjectMatchesAnalysisPair(state.context,origin.context))fail('foreign original Display inherent method analysis context');
  if(member.sourcePath!==inherent.module.file||!same(member.modulePath,inherent.module.path)||member.source!==inherent.module.source||member.sourceView.digest!==inherent.module.sourceView.digest||metadataDigest(member.compilationProfile)!==metadataDigest(state.facts.compilationProfile)||!same(member.implementationSpan,inherent.impl.span)||!same(method.span,inherent.method.span)||!same(method.bodySpan,inherent.method.bodySpan)||method.source!==inherent.method.source||method.name!==closure.inherentMethod||method.receiver!==inherent.method.receiver||!same(origin.proof.owner.owner,closure.nominal.family))fail('checked Display inherent method differs from its exact original implementation/member/source');
  if(checkedMethod.sourceMethodProof!==semantic.sourceMethodProof||checkedMethod.name!==semantic.name||checkedMethod.impl.method!==method.name||checkedMethod.impl.receiver!==method.receiver||!same(checkedMethod.modulePath,member.modulePath))fail('checked Display inherent method lost its original semantic declaration association');
  return freezeMacroTree({schema:'original-display-checked-inherent-source-join-v1',originalContextSha256:closure.caller.originalContextSha256,sourcePath:member.sourcePath,modulePath:member.modulePath,sourceSha256:origin.proof.sourceSha256,sourceViewDigest:member.sourceView.digest,implementationSpan:member.implementationSpan,memberSpan:method.span,bodySpan:method.bodySpan,originalMethodDigest:member.methodDigest,originalTransformDigest:metadataDigest(origin.proof),namespaceAuthority:false,runtimeParity:false});

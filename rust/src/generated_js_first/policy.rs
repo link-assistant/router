@@ -1,6 +1,21 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
 // JavaScript -> portable-router-v1 Links IR -> target; IR sha256=d0021328c8826b7998cd0581491779aeb3e03352980c211ee0cdef36921b2938
-#![allow(unused_parens, clippy::needless_return, clippy::float_cmp)]
+#![allow(
+    unused_parens,
+    clippy::needless_return,
+    clippy::float_cmp,
+    clippy::assign_op_pattern,
+    clippy::bool_assert_comparison,
+    clippy::cast_precision_loss,
+    clippy::format_in_format_args,
+    clippy::manual_range_contains,
+    clippy::must_use_candidate,
+    clippy::suboptimal_flops,
+    clippy::to_string_in_format_args,
+    clippy::unicode_not_nfc,
+    clippy::unnecessary_to_owned,
+    clippy::unreadable_literal
+)]
 
 #[rustfmt::skip]
 fn js_min(a: f64, b: f64) -> f64 {
@@ -142,295 +157,293 @@ pub fn model_name_length_permits(value: &str, maximum: f64) -> bool {
 #[cfg(test)]
 #[rustfmt::skip]
 mod shared_fixtures {
-    use super::*;
-
     #[test]
     fn budget_unlimited() {
-        assert_eq!(token_budget_permits(1000.0_f64, 500.0_f64, 20.0_f64, -1.0_f64), true);
+        assert_eq!(super::token_budget_permits(1000.0_f64, 500.0_f64, 20.0_f64, -1.0_f64), true);
     }
 
     #[test]
     fn budget_exact_reservation() {
-        assert_eq!(token_budget_permits(50.0_f64, 30.0_f64, 20.0_f64, 100.0_f64), true);
+        assert_eq!(super::token_budget_permits(50.0_f64, 30.0_f64, 20.0_f64, 100.0_f64), true);
     }
 
     #[test]
     fn budget_over_reservation() {
-        assert_eq!(token_budget_permits(50.0_f64, 30.0_f64, 21.0_f64, 100.0_f64), false);
+        assert_eq!(super::token_budget_permits(50.0_f64, 30.0_f64, 21.0_f64, 100.0_f64), false);
     }
 
     #[test]
     fn budget_exhausted_zero_reserve() {
-        assert_eq!(token_budget_permits(80.0_f64, 20.0_f64, 0.0_f64, 100.0_f64), false);
+        assert_eq!(super::token_budget_permits(80.0_f64, 20.0_f64, 0.0_f64, 100.0_f64), false);
     }
 
     #[test]
     fn budget_zero_cap() {
-        assert_eq!(token_budget_permits(0.0_f64, 0.0_f64, 0.0_f64, 0.0_f64), false);
+        assert_eq!(super::token_budget_permits(0.0_f64, 0.0_f64, 0.0_f64, 0.0_f64), false);
     }
 
     #[test]
     fn cooldown_future() {
-        assert_eq!(cooldown_active(101.0_f64, 100.0_f64), true);
+        assert_eq!(super::cooldown_active(101.0_f64, 100.0_f64), true);
     }
 
     #[test]
     fn cooldown_boundary() {
-        assert_eq!(cooldown_active(100.0_f64, 100.0_f64), false);
+        assert_eq!(super::cooldown_active(100.0_f64, 100.0_f64), false);
     }
 
     #[test]
     fn provider_model_id() {
-        assert_eq!(provider_model_id("openai", "gpt-4.1"), "openai/gpt-4.1");
+        assert_eq!(super::provider_model_id("openai", "gpt-4.1"), "openai/gpt-4.1");
     }
 
     #[test]
     fn provider_unicode_id() {
-        assert_eq!(provider_model_id("提供者", "😀"), "提供者/😀");
+        assert_eq!(super::provider_model_id("提供者", "😀"), "提供者/😀");
     }
 
     #[test]
     fn clamp_low() {
-        assert_eq!(clamp(-2.0_f64, 0.0_f64, 10.0_f64).to_bits(), (0.0_f64).to_bits());
+        assert_eq!(super::clamp(-2.0_f64, 0.0_f64, 10.0_f64).to_bits(), (0.0_f64).to_bits());
     }
 
     #[test]
     fn clamp_high() {
-        assert_eq!(clamp(12.0_f64, 0.0_f64, 10.0_f64).to_bits(), (10.0_f64).to_bits());
+        assert_eq!(super::clamp(12.0_f64, 0.0_f64, 10.0_f64).to_bits(), (10.0_f64).to_bits());
     }
 
     #[test]
     fn clamp_nan() {
-        assert!(clamp(f64::NAN, 0.0_f64, 10.0_f64).is_nan());
+        assert!(super::clamp(f64::NAN, 0.0_f64, 10.0_f64).is_nan());
     }
 
     #[test]
     fn clamp_negative_zero() {
-        assert_eq!(clamp(-0.0_f64, -0.0_f64, 0.0_f64).to_bits(), (-0.0_f64).to_bits());
+        assert_eq!(super::clamp(-0.0_f64, -0.0_f64, 0.0_f64).to_bits(), (-0.0_f64).to_bits());
     }
 
     #[test]
     fn cooldown_never_shortens() {
-        assert_eq!(longest_cooldown(100.0_f64, 50.0_f64).to_bits(), (100.0_f64).to_bits());
+        assert_eq!(super::longest_cooldown(100.0_f64, 50.0_f64).to_bits(), (100.0_f64).to_bits());
     }
 
     #[test]
     fn max_zero_sign() {
-        assert_eq!(longest_cooldown(-0.0_f64, 0.0_f64).to_bits(), (0.0_f64).to_bits());
+        assert_eq!(super::longest_cooldown(-0.0_f64, 0.0_f64).to_bits(), (0.0_f64).to_bits());
     }
 
     #[test]
     fn max_nan_right() {
-        assert!(longest_cooldown(10.0_f64, f64::NAN).is_nan());
+        assert!(super::longest_cooldown(10.0_f64, f64::NAN).is_nan());
     }
 
     #[test]
     fn retry_deadline_capped() {
-        assert_eq!(retry_after_deadline(1000.0_f64, 20.0_f64, 300.0_f64).to_bits(), (320.0_f64).to_bits());
+        assert_eq!(super::retry_after_deadline(1000.0_f64, 20.0_f64, 300.0_f64).to_bits(), (320.0_f64).to_bits());
     }
 
     #[test]
     fn retry_negative() {
-        assert_eq!(retry_after_deadline(-1.0_f64, 20.0_f64, 300.0_f64).to_bits(), (20.0_f64).to_bits());
+        assert_eq!(super::retry_after_deadline(-1.0_f64, 20.0_f64, 300.0_f64).to_bits(), (20.0_f64).to_bits());
     }
 
     #[test]
     fn retry_infinite() {
-        assert_eq!(retry_after_deadline(f64::INFINITY, 20.0_f64, 300.0_f64).to_bits(), (20.0_f64).to_bits());
+        assert_eq!(super::retry_after_deadline(f64::INFINITY, 20.0_f64, 300.0_f64).to_bits(), (20.0_f64).to_bits());
     }
 
     #[test]
     fn retry_nan() {
-        assert_eq!(retry_after_deadline(f64::NAN, 20.0_f64, 300.0_f64).to_bits(), (20.0_f64).to_bits());
+        assert_eq!(super::retry_after_deadline(f64::NAN, 20.0_f64, 300.0_f64).to_bits(), (20.0_f64).to_bits());
     }
 
     #[test]
     fn cost_per_million() {
-        assert_eq!(token_cost(1000000.0_f64, 1000000.0_f64, 2.0_f64, 8.0_f64).to_bits(), (10.0_f64).to_bits());
+        assert_eq!(super::token_cost(1000000.0_f64, 1000000.0_f64, 2.0_f64, 8.0_f64).to_bits(), (10.0_f64).to_bits());
     }
 
     #[test]
     fn cost_fractional() {
-        assert_eq!(token_cost(100.0_f64, 50.0_f64, 2.0_f64, 8.0_f64).to_bits(), (0.0006_f64).to_bits());
+        assert_eq!(super::token_cost(100.0_f64, 50.0_f64, 2.0_f64, 8.0_f64).to_bits(), (0.0006_f64).to_bits());
     }
 
     #[test]
     fn valid_count() {
-        assert_eq!(valid_token_count(42.0_f64), true);
+        assert_eq!(super::valid_token_count(42.0_f64), true);
     }
 
     #[test]
     fn fractional_count() {
-        assert_eq!(valid_token_count(1.5_f64), false);
+        assert_eq!(super::valid_token_count(1.5_f64), false);
     }
 
     #[test]
     fn infinite_count() {
-        assert_eq!(valid_token_count(f64::INFINITY), false);
+        assert_eq!(super::valid_token_count(f64::INFINITY), false);
     }
 
     #[test]
     fn negative_count() {
-        assert_eq!(valid_token_count(-1.0_f64), false);
+        assert_eq!(super::valid_token_count(-1.0_f64), false);
     }
 
     #[test]
     fn settle_refund() {
-        assert_eq!(settled_token_usage(100.0_f64, 40.0_f64, 15.0_f64).to_bits(), (75.0_f64).to_bits());
+        assert_eq!(super::settled_token_usage(100.0_f64, 40.0_f64, 15.0_f64).to_bits(), (75.0_f64).to_bits());
     }
 
     #[test]
     fn settle_floor() {
-        assert_eq!(settled_token_usage(20.0_f64, 40.0_f64, 15.0_f64).to_bits(), (15.0_f64).to_bits());
+        assert_eq!(super::settled_token_usage(20.0_f64, 40.0_f64, 15.0_f64).to_bits(), (15.0_f64).to_bits());
     }
 
     #[test]
     fn remaining_budget() {
-        assert_eq!(remaining_token_budget(20.0_f64, 10.0_f64, 100.0_f64).to_bits(), (70.0_f64).to_bits());
+        assert_eq!(super::remaining_token_budget(20.0_f64, 10.0_f64, 100.0_f64).to_bits(), (70.0_f64).to_bits());
     }
 
     #[test]
     fn remaining_unlimited() {
-        assert_eq!(remaining_token_budget(20.0_f64, 10.0_f64, -1.0_f64).to_bits(), (-1.0_f64).to_bits());
+        assert_eq!(super::remaining_token_budget(20.0_f64, 10.0_f64, -1.0_f64).to_bits(), (-1.0_f64).to_bits());
     }
 
     #[test]
     fn remaining_exhausted() {
-        assert_eq!(remaining_token_budget(80.0_f64, 30.0_f64, 100.0_f64).to_bits(), (0.0_f64).to_bits());
+        assert_eq!(super::remaining_token_budget(80.0_f64, 30.0_f64, 100.0_f64).to_bits(), (0.0_f64).to_bits());
     }
 
     #[test]
     fn completion_context_cap() {
-        assert_eq!(completion_token_limit(1000.0_f64, 500.0_f64, 2000.0_f64).to_bits(), (500.0_f64).to_bits());
+        assert_eq!(super::completion_token_limit(1000.0_f64, 500.0_f64, 2000.0_f64).to_bits(), (500.0_f64).to_bits());
     }
 
     #[test]
     fn completion_floor() {
-        assert_eq!(completion_token_limit(10.9_f64, 20.0_f64, 100.0_f64).to_bits(), (10.0_f64).to_bits());
+        assert_eq!(super::completion_token_limit(10.9_f64, 20.0_f64, 100.0_f64).to_bits(), (10.0_f64).to_bits());
     }
 
     #[test]
     fn completion_negative() {
-        assert_eq!(completion_token_limit(-1.0_f64, 20.0_f64, 100.0_f64).to_bits(), (0.0_f64).to_bits());
+        assert_eq!(super::completion_token_limit(-1.0_f64, 20.0_f64, 100.0_f64).to_bits(), (0.0_f64).to_bits());
     }
 
     #[test]
     fn backoff_zero() {
-        assert_eq!(retry_backoff(0.0_f64, 2.0_f64, 60.0_f64).to_bits(), (2.0_f64).to_bits());
+        assert_eq!(super::retry_backoff(0.0_f64, 2.0_f64, 60.0_f64).to_bits(), (2.0_f64).to_bits());
     }
 
     #[test]
     fn backoff_four() {
-        assert_eq!(retry_backoff(4.0_f64, 2.0_f64, 60.0_f64).to_bits(), (32.0_f64).to_bits());
+        assert_eq!(super::retry_backoff(4.0_f64, 2.0_f64, 60.0_f64).to_bits(), (32.0_f64).to_bits());
     }
 
     #[test]
     fn backoff_cap() {
-        assert_eq!(retry_backoff(10.0_f64, 2.0_f64, 60.0_f64).to_bits(), (60.0_f64).to_bits());
+        assert_eq!(super::retry_backoff(10.0_f64, 2.0_f64, 60.0_f64).to_bits(), (60.0_f64).to_bits());
     }
 
     #[test]
     fn retryable_rate_limit() {
-        assert_eq!(retryable_status(429.0_f64), true);
+        assert_eq!(super::retryable_status(429.0_f64), true);
     }
 
     #[test]
     fn retryable_server_error() {
-        assert_eq!(retryable_status(503.0_f64), true);
+        assert_eq!(super::retryable_status(503.0_f64), true);
     }
 
     #[test]
     fn retryable_client_error() {
-        assert_eq!(retryable_status(400.0_f64), false);
+        assert_eq!(super::retryable_status(400.0_f64), false);
     }
 
     #[test]
     fn retryable_outside_http() {
-        assert_eq!(retryable_status(600.0_f64), false);
+        assert_eq!(super::retryable_status(600.0_f64), false);
     }
 
     #[test]
     fn success_minimum() {
-        assert_eq!(success_status(200.0_f64), true);
+        assert_eq!(super::success_status(200.0_f64), true);
     }
 
     #[test]
     fn success_maximum() {
-        assert_eq!(success_status(299.0_f64), true);
+        assert_eq!(super::success_status(299.0_f64), true);
     }
 
     #[test]
     fn redirect_not_success() {
-        assert_eq!(success_status(300.0_f64), false);
+        assert_eq!(super::success_status(300.0_f64), false);
     }
 
     #[test]
     fn weighted_capacity() {
-        assert_eq!(weighted_capacity(12.0_f64, 3.0_f64).to_bits(), (3.0_f64).to_bits());
+        assert_eq!(super::weighted_capacity(12.0_f64, 3.0_f64).to_bits(), (3.0_f64).to_bits());
     }
 
     #[test]
     fn negative_weight() {
-        assert_eq!(weighted_capacity(-1.0_f64, 0.0_f64).to_bits(), (0.0_f64).to_bits());
+        assert_eq!(super::weighted_capacity(-1.0_f64, 0.0_f64).to_bits(), (0.0_f64).to_bits());
     }
 
     #[test]
     fn infinite_weight() {
-        assert_eq!(weighted_capacity(f64::INFINITY, 0.0_f64).to_bits(), (0.0_f64).to_bits());
+        assert_eq!(super::weighted_capacity(f64::INFINITY, 0.0_f64).to_bits(), (0.0_f64).to_bits());
     }
 
     #[test]
     fn token_expiry_boundary() {
-        assert_eq!(token_expired(110.0_f64, 100.0_f64, 10.0_f64), true);
+        assert_eq!(super::token_expired(110.0_f64, 100.0_f64, 10.0_f64), true);
     }
 
     #[test]
     fn token_before_expiry() {
-        assert_eq!(token_expired(109.0_f64, 100.0_f64, 10.0_f64), false);
+        assert_eq!(super::token_expired(109.0_f64, 100.0_f64, 10.0_f64), false);
     }
 
     #[test]
     fn qualified_model() {
-        assert_eq!(is_qualified_model("openai/gpt-4.1"), true);
+        assert_eq!(super::is_qualified_model("openai/gpt-4.1"), true);
     }
 
     #[test]
     fn unqualified_model() {
-        assert_eq!(is_qualified_model("gpt-4.1"), false);
+        assert_eq!(super::is_qualified_model("gpt-4.1"), false);
     }
 
     #[test]
     fn credential_prefix() {
-        assert_eq!(credential_prefix_matches("la_sk_example", "la_sk_"), true);
+        assert_eq!(super::credential_prefix_matches("la_sk_example", "la_sk_"), true);
     }
 
     #[test]
     fn credential_prefix_case() {
-        assert_eq!(credential_prefix_matches("LA_sk_example", "la_sk_"), false);
+        assert_eq!(super::credential_prefix_matches("LA_sk_example", "la_sk_"), false);
     }
 
     #[test]
     fn utf16_astral() {
-        assert_eq!(utf16_length("a😀é").to_bits(), (4.0_f64).to_bits());
+        assert_eq!(super::utf16_length("a😀é").to_bits(), (4.0_f64).to_bits());
     }
 
     #[test]
     fn utf16_combining() {
-        assert_eq!(utf16_length("é").to_bits(), (2.0_f64).to_bits());
+        assert_eq!(super::utf16_length("é").to_bits(), (2.0_f64).to_bits());
     }
 
     #[test]
     fn model_length_cap() {
-        assert_eq!(model_name_length_permits("😀", 1.0_f64), false);
+        assert_eq!(super::model_name_length_permits("😀", 1.0_f64), false);
     }
 
     #[test]
     fn model_length_accepted() {
-        assert_eq!(model_name_length_permits("😀", 2.0_f64), true);
+        assert_eq!(super::model_name_length_permits("😀", 2.0_f64), true);
     }
 
     #[test]
     fn empty_model() {
-        assert_eq!(model_name_length_permits("", 100.0_f64), false);
+        assert_eq!(super::model_name_length_permits("", 100.0_f64), false);
     }
 }

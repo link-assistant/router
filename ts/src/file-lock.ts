@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=29aa31648dbddfdd310560d10d226282390310d5b08397c79b421764a90d3f4c; dynamic any annotations are explicit draft gaps.
+// Meta sha256=958fc4eeaa2d3a11c88ef1b3af45b3c7e2df2e028d94820fc89e7b20fc21506f; dynamic any annotations are explicit draft gaps.
 import { spawn } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import { dirname, extname } from 'node:path';
@@ -35,17 +35,37 @@ sys.stdout.write('locked\n');sys.stdout.flush()
 sys.stdin.buffer.read()
 os.close(fd)
 `;
+let traceSequence: any = 0;
+function lockTrace(shared?: any): any {
+    if ((process as any).env.ROUTER_FILE_LOCK_TRACE !== '1')
+        return (): void => { };
+    const started: bigint = (process as any).hrtime.bigint(), id: number = ++traceSequence;
+    return (phase?: any, detail: any = {}): void => {
+        try {
+            (process as any).stderr.write((JSON as any).stringify({
+                event: 'router-file-lock', pid: (process as any).pid, id, shared: Boolean(shared), phase,
+                elapsedMs: Number((process as any).hrtime.bigint() - started) / 1e6, ...detail,
+            }) + '\n');
+        }
+        catch {
+        }
+    };
+}
 export function rustLockPath(path?: any): string {
     const extension: string = extname(path);
     return `${extension ? (path.slice as any)(0, -extension.length) : path}.lock`;
 }
-async function acquire(path: any, { shared, timeout, python }: any): Promise<any> {
+async function acquire(path: any, { shared, timeout, python }: any, trace?: any): Promise<any> {
+    (trace as any)('helper-start');
     const child: any = spawn(python, ['-u', '-c', helper, path, shared ? 'shared' : 'exclusive', String(timeout)], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
     child.stdin.on('error', (): void => { });
     let diagnostic: any = '';
     child.stderr.setEncoding('utf8');
     child.stderr.on('data', (chunk?: any): void => { (diagnostic as any) = (diagnostic + chunk).slice(-4096); });
-    const closed: any = new (Promise as any)((resolve?: any): any => child.once('close', (code?: any, signal?: any): void => resolve({ code, signal })));
+    const closed: any = new (Promise as any)((resolve?: any): any => child.once('close', (code?: any, signal?: any): void => {
+        (trace as any)('helper-closed', { code, signal });
+        resolve({ code, signal });
+    }));
     try {
         await new (Promise as any)((resolve?: any, reject?: any): void => {
             let buffer: any = '';
@@ -59,6 +79,7 @@ async function acquire(path: any, { shared, timeout, python }: any): Promise<any
                 if (buffer === 'locked\n') {
                     clearTimeout(timer);
                     child.removeListener('error', fail);
+                    (trace as any)('acquired');
                     resolve();
                 }
                 else if (buffer.length > 1024)
@@ -74,12 +95,15 @@ async function acquire(path: any, { shared, timeout, python }: any): Promise<any
     }
 }
 export async function withAdvisoryFileLock(path?: any, operation?: any, { shared = false, timeout = 30000, python = (process as any).env.ROUTER_LOCK_PYTHON }: any = {}): Promise<any> {
+    const trace: any = lockTrace(shared);
+    trace('start');
     await mkdir(dirname(path), { recursive: true, mode: 0o700 });
+    trace('directory-ready');
     let held: any;
     const commands: Array<string> = python ? [python] : (process as any).platform === 'win32' ? ['python', 'python3'] : ['python3', 'python'];
     for (const command of commands as any) {
         try {
-            (held as any) = await acquire(path, { shared, timeout, python: command });
+            (held as any) = await acquire(path, { shared, timeout, python: command }, trace);
             break;
         }
         catch (error: any) {
@@ -89,12 +113,15 @@ export async function withAdvisoryFileLock(path?: any, operation?: any, { shared
     }
     if (!held)
         throw (Object as any).assign(new (Error as any)('Advisory file locking requires Python 3; configure ROUTER_LOCK_PYTHON'), { code: 'lock_adapter_unavailable' });
+    trace('operation-start');
     try {
         return await operation();
     }
     finally {
+        trace('operation-finished');
         held.child.stdin.end();
-        const timer: any = setTimeout((): any => (held as any).child.kill(), 2000);
+        trace('release-requested');
+        const timer: any = setTimeout((): void => { trace('release-force-kill'); (held as any).child.kill(); }, 2000);
         try {
             await held.closed;
         }

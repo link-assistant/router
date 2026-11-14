@@ -1,0 +1,12 @@
+{
+  "schema": "complete-clone-validation-order-source-v1",
+  "sourceCommit": "b4deee392",
+  "path": "tools/translation/builtin-clone-ast-route.mjs",
+  "bytes": 26091,
+  "sha256": "897306343d7c6ff17ce60c5e966ba96d8bdf4769be61cb57af6569ebc1acd7df",
+  "archive": "original.mjs.gz",
+  "archiveBytes": 8067,
+  "archiveSha256": "21b77b696c7675be6a00730af1338661edb7d156bffaac66d3edbb374273536e",
+  "license": "MIT",
+  "semanticAuthority": false
+}

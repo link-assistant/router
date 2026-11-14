@@ -23,7 +23,14 @@ function stages(ts,path,original,language,after,before){
 }
 export function prepareStaticSourceRelease({root=ROOT}={}){
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('installed TypeScript5.9.3 required');
- const current=readFileSync(resolve(root,FILE),'utf8');let original=current.includes(MARKER)?current.slice(0,current.indexOf(MARKER)):current;const importAt=original.startsWith('#!')?original.indexOf('\n')+1:0;if(original.slice(importAt).startsWith(IMPORT))original=original.slice(0,importAt)+original.slice(importAt+IMPORT.length);
+ const current=readFileSync(resolve(root,FILE),'utf8');if(current.split(MARKER).length>2)fail('one complete generated variant boundary required');let original=current.includes(MARKER)?current.slice(0,current.indexOf(MARKER)):current;
+ const originalFile=grammar(ts,FILE,original),imported=originalFile.statements.filter(node=>ts.isImportDeclaration(node)&&ts.isStringLiteral(node.moduleSpecifier)&&['./original-json-intrinsics.mjs','./static-source-layout-storage.mjs'].includes(node.moduleSpecifier.text)&&node.importClause?.namedBindings&&ts.isNamedImports(node.importClause.namedBindings)&&node.importClause.namedBindings.elements.some(element=>['originalBatchedDataFreezeIntrinsicsUnchanged','encodeStaticSourceStorageIncremental'].includes((element.propertyName??element.name).text)));
+ let importAt=original.startsWith('#!')?original.indexOf('\n')+1:0;
+ if(imported.length){
+  if(imported.length!==2)fail('both complete allocation imports required');importAt=imported[0].getStart(originalFile);
+  if(original.slice(importAt,imported[1].end+1)!==IMPORT)fail('exact adjacent allocation imports required');
+  original=original.slice(0,importAt)+original.slice(importAt+IMPORT.length);
+ }
  const file=grammar(ts,FILE,original),functions=file.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text==='prepareStaticSourceLifecycleProposal');if(functions.length!==1)fail('one complete original producer required');
  const definition=functions[0].getText(file),rules=[
   ['export function prepareStaticSourceLifecycleProposal(','export function prepareStaticSourceLifecycleProposalReleased('],
@@ -62,7 +69,13 @@ export function prepareStaticSourceRelease({root=ROOT}={}){
     if(prefixes.has(key)||prefixes.size<256)prefixes.set(key,selected.nodes);
     out.set(id,selected);
   });return out;`);
- const language=original+MARKER+copied+'\n'+shared+'\n',after=language.slice(0,importAt)+IMPORT+language.slice(importAt);if(current!==original&&current!==after)fail('unexpected complete current producer');
+ const language=original+MARKER+copied+'\n'+shared+'\n',after=language.slice(0,importAt)+IMPORT+language.slice(importAt);
+ // Admit only the exact preceding generated variant during compression repair.
+ // Its authored original is already current; only the copied gzip level differs.
+ const priorVariant=after.slice(0,after.indexOf(MARKER))+MARKER
+  +once(after.slice(after.indexOf(MARKER)+MARKER.length),
+   'packed=gzipSync(stored.raw,{level:9,mtime:0})','packed=gzipSync(stored.raw,{level:1,mtime:0})');
+ if(current!==original&&current!==after&&current!==priorVariant)fail('unexpected complete current producer');
  const consumerPath='tools/translation/test/static-source-lifecycle.test.mjs',consumer=readFileSync(resolve(root,consumerPath),'utf8'),consumerFile=grammar(ts,consumerPath,consumer),imports=consumerFile.statements.filter(node=>ts.isImportDeclaration(node)&&node.moduleSpecifier.text==='../prepare-real-source-fixtures.mjs');if(imports.length!==1)fail('one complete receiving producer import required');
  const bindings=[['prepareStaticSourceLifecycleProposal','prepareStaticSourceLifecycleProposalReleased'],['transportStaticSourceLifecycleCanonicals','transportStaticSourceLifecycleCanonicalsShared']],edits=[];
  for(const [plain,target]of bindings){const elements=imports[0].importClause?.namedBindings?.elements?.filter(node=>node.name.text===plain);if(elements?.length!==1)fail('one receiving binding required');const element=elements[0],selected=element.getText(consumerFile),adapted=target+' as '+plain;if(selected!==plain&&selected!==adapted)fail('unexpected receiving binding');edits.push({start:element.getStart(consumerFile),end:element.end,plain,adapted});}

@@ -1,21 +1,26 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=90f2a4971f39713840a23f29ba8e238dec69a8f89455e4b067b59a2f1362ede2; dynamic any annotations are explicit draft gaps.
+// Meta sha256=d4c11f48cfa2b17368bd17e288aaa4a5e2af162b10dd702d3ca2cf7bb00512f4; dynamic any annotations are explicit draft gaps.
 import { ProtocolError } from "./protocols.js";
 import { responseOwner } from "./responses.js";
 import { matchHTTPRoute } from "./http-route-contract.js";
 import { createHash } from 'node:crypto';
+import { isGeolocationHeader, sharesGeolocation, sanitizeGeolocation, geolocationInferencePath } from "./geolocation.js";
 import { UsageTracker } from "./usage.js";
 import { responseContract, validateResponseCreate, responseReferences, responseNotFound, responseReferenceMissing, responseReferenceConflict, responseAffinityStorageError } from "./response-contracts.js";
 import { conversationContract, conversationNotFound, conversationUnsupported, conversationMethodNotAllowed, conversationAffinityError, conversationUpstreamError, conversationIds, validConversationId } from "./response-contracts.js";
 import { captureSseId, captureJsonId, captureLocationId, resourceCaptureError } from "./response-contracts.js";
 const transport: Set<string> = new (Set as any)(['authorization', 'x-api-key', 'x-goog-api-key', 'anthropic-auth-token', 'proxy-authorization', 'proxy-authenticate', 'host', 'connection', 'proxy-connection', 'keep-alive', 'transfer-encoding', 'upgrade', 'te', 'trailer', 'content-length', 'accept-encoding', 'cookie', 'chatgpt-account-id', 'sec-websocket-key', 'sec-websocket-version', 'sec-websocket-extensions', 'sec-websocket-accept']);
-const ingress: Set<string> = new (Set as any)(['forwarded', 'x-real-ip', 'x-client-ip', 'x-cluster-client-ip', 'cf-connecting-ip', 'true-client-ip', 'fastly-client-ip', 'fly-client-ip', 'x-envoy-external-address', 'x-azure-clientip', 'x-appengine-user-ip', 'cloudfront-viewer-address']);
+const ingress: Set<string> = new (Set as any)(['forwarded', 'x-original-forwarded-for', 'x-real-ip', 'x-client-ip', 'x-cluster-client-ip', 'cf-connecting-ip', 'cf-connecting-ipv6', 'cf-pseudo-ipv4', 'true-client-ip', 'fastly-client-ip', 'fly-client-ip', 'x-envoy-external-address', 'x-azure-clientip', 'x-appengine-user-ip', 'cloudfront-viewer-address']);
 const responseCredentials: Set<string> = new (Set as any)(['authorization', 'x-api-key', 'x-goog-api-key', 'anthropic-auth-token', 'set-cookie', 'cookie', 'chatgpt-account-id']);
 const connectionNames: any = (headers?: any): any => new (Set as any)(((((headers.get as any)('connection') ?? '').split as any)(',').map as any)((v?: any): any => v.trim().toLowerCase()));
+export function isIngressNetworkHeader(name?: any): any {
+    const lower: any = name.toLowerCase();
+    return ingress.has(lower) || (lower.startsWith as any)('x-forwarded-');
+}
 export function nativeRequestHeaders(incoming?: any, candidate?: any): any {
-    const headers: any = new (Headers as any)(), nominated: any = connectionNames(incoming);
+    const headers: any = new (Headers as any)(), nominated: any = connectionNames(incoming), share: boolean = sharesGeolocation(incoming);
     for (const [name, value] of incoming as any)
-        if (!transport.has(name) && !ingress.has(name) && !nominated.has(name) && !(name.startsWith as any)('x-forwarded-') && !(name.startsWith as any)('x-router-') && !(name.startsWith as any)('x-link-assistant-'))
+        if (!transport.has(name) && !isIngressNetworkHeader(name) && !nominated.has(name) && !(name.startsWith as any)('x-router-') && !(name.startsWith as any)('x-link-assistant-') && (share || !isGeolocationHeader(name)))
             headers.append(name, value);
     const credential: any = candidate.apiKey ?? candidate.api_key;
     if (credential)
@@ -343,12 +348,17 @@ export function createNativeService({ core, authorize, routingContext, fetch: up
                 if (admitted === false || typeof admitted === 'string' && admitted !== 'admitted')
                     throw new (ProtocolError as any)(typeof admitted === 'string' ? admitted : 'Token budget exceeded', 429);
             }
-            const bytes: any = await boundedBytes(request, maxBodyBytes);
+            let bytes: any = await boundedBytes(request, maxBodyBytes);
+            const privateInference: boolean = geolocationInferencePath(path) && !sharesGeolocation(request.headers);
+            if (privateInference && !['', 'identity'].includes((request.headers.get as any)('content-encoding') ?? ''))
+                throw new (ProtocolError as any)('Encoded inference requires a supported decoder before location metadata can be protected', 415);
             let document: any;
             try {
                 (document as any) = bytes.length ? (JSON as any).parse((Buffer as any).from(bytes).toString('utf8')) : undefined;
             }
             catch { }
+            if (privateInference && sanitizeGeolocation(document))
+                (bytes as any) = (Buffer as any).from((JSON as any).stringify(document));
             const responses: any = responseContract(request.method, path);
             try {
                 validateResponseCreate(responses, document);

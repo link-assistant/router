@@ -57,9 +57,27 @@ test('shared source fields never move String Vec or unchecked aggregates',()=>{
 });
 
 test('derived Copy field reads consume verified source certificates and preserve exact production getter',async()=>{
-  const source=readFileSync(new URL('../../../rust/src/lefine.rs',import.meta.url),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
+  const source=readFileSync(new URL('./fixtures/lefine-shared-receiver-original.rs.txt',import.meta.url),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
   assert.equal(hash(source),'bb07ea2db551cc85bc19403bfd2c160f439d6c48fe7ffc49a1e0cad249dc2093');
   const pins=[['enum','CatalogFailureKind',347,481,'ba2154daf3f33a700df7129835eb5b4760093a430d1315a140e03ba13fafeb14'],['struct','CatalogFailure',483,586,'6c707cf7b2b840df15afcae49444abd626dc380d6cece9015f7569f1273442a3'],['impl','CatalogFailure',588,818,'da84707a093a370174b5bfa6ea0c4a25768c13ae1c162738e43f2e3f31d4bde5']];
+  const declarations=pins.map(([term,name,start,end,digest])=>{assert.ok(sourceItems(source).some(item=>item.term===term&&item.name===name&&item.start===start&&item.end===end));const text=source.slice(start,end);assert.equal(hash(text),digest);return text;});
+  const full=project({'src/lib.rs':source});assert.equal(full.meta.checkedMethods.some(method=>method.name==='CatalogFailure.kind'),true,'named imports and bang-only uncertainty do not shadow Copy in the attribute subnamespace');assert.equal(full.meta.runtimeParity,false);
+  const result=project({'src/lib.rs':declarations.join('\n')});
+  const checked=program(result),getter=[...checked.declarations.values()].find(entry=>entry.impl?.method==='kind');assert.ok(getter);
+  const projection=find(getter.body,node=>node.k==='routerField');assert.equal(projection.sharedProjectionProof.copy.kind,'source-layout-copy');assert.equal(projection.sharedProjectionProof.copy.copyCertificate.verified,true);
+  const target=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),emitted=[...target.declarations.values()].find(entry=>entry.impl?.method==='kind'),module=await loadJavaScript(result.javascript+`\nexport {${emitted.name} as productionKind};`);
+  const kind=Object.freeze({$:'Unavailable'});assert.strictEqual(module.productionKind(Object.freeze({$:'CatalogFailure',kind,message:'fixture'})),kind);
+  const field=checked.declarations.get('CatalogFailure').ctors[0].fields.find(field=>field.name==='kind'),pointee=getter.params[0].type.rustReference.pointee;
+  for(const mutate of [proof=>{proof.digest='0'.repeat(64)},proof=>{proof.type.name='wrong'}]){
+    const forged=structuredClone(pointee),copy=forged.rustSharedFieldCopies.find(entry=>entry.field==='kind');mutate(copy.copyCertificate);
+    assert.throws(()=>new HostChecker('Rust',[]).sharedFieldCopy(field,{name:'CatalogFailure'},forged,{start:0,end:1}),/matching verified layout evidence/);
+  }
+});
+
+test('current complete Lefine source preserves the shared Copy getter after compatibility-core adoption',async()=>{
+  const source=readFileSync(new URL('../../../rust/src/lefine.rs',import.meta.url),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
+  assert.equal(hash(source),'954a097f721bc7da43be058ab3122d791b074da16d0bf75507870d8811463ec2');
+  const pins=[['enum','CatalogFailureKind',397,531,'ba2154daf3f33a700df7129835eb5b4760093a430d1315a140e03ba13fafeb14'],['struct','CatalogFailure',533,636,'6c707cf7b2b840df15afcae49444abd626dc380d6cece9015f7569f1273442a3'],['impl','CatalogFailure',638,893,'dfb0a505b25e0f6cf9f625253c746db706b2382d2f33553cd7cdc0be1ccbdda2']];
   const declarations=pins.map(([term,name,start,end,digest])=>{assert.ok(sourceItems(source).some(item=>item.term===term&&item.name===name&&item.start===start&&item.end===end));const text=source.slice(start,end);assert.equal(hash(text),digest);return text;});
   const full=project({'src/lib.rs':source});assert.equal(full.meta.checkedMethods.some(method=>method.name==='CatalogFailure.kind'),true,'named imports and bang-only uncertainty do not shadow Copy in the attribute subnamespace');assert.equal(full.meta.runtimeParity,false);
   const result=project({'src/lib.rs':declarations.join('\n')});

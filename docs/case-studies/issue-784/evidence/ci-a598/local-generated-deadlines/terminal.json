@@ -1,0 +1,87 @@
+{
+  "schema": "complete-audited-node-test-run-v1",
+  "root": "/tmp/gh-issue-solver-1794003502595",
+  "command": [
+    "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/toolchain/node20/bin/node",
+    "--test",
+    "--test-reporter=/tmp/gh-issue-solver-1794003502595/scripts/node-case-deadline-reporter.mjs",
+    "tools/translation/test/actual-gain-families.test.mjs",
+    "tools/translation/test/translation.test.mjs"
+  ],
+  "outputDirectory": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-i9aG3J",
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "logs": [
+    {
+      "path": "stdout.raw.tap",
+      "bytes": 10252,
+      "observedBytes": 10252,
+      "sha256": "05d3656d2225be5a821bef7f073a66b90cfc05b450a48dec18d64c6b4dbc4800",
+      "readback": {
+        "bytes": 10252,
+        "sha256": "05d3656d2225be5a821bef7f073a66b90cfc05b450a48dec18d64c6b4dbc4800"
+      },
+      "identity": {
+        "dev": 62,
+        "ino": 10748325,
+        "mode": 33152,
+        "size": 10252,
+        "mtimeMs": 1794330467580.5247,
+        "ctimeMs": 1794330467580.5247
+      }
+    },
+    {
+      "path": "stderr.raw.log",
+      "bytes": 0,
+      "observedBytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "readback": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "identity": {
+        "dev": 62,
+        "ino": 10748326,
+        "mode": 33152,
+        "size": 0,
+        "mtimeMs": 1794330438617.7678,
+        "ctimeMs": 1794330438617.7678
+      }
+    }
+  ],
+  "audit": {
+    "path": "case-deadlines.json",
+    "bytes": 76765,
+    "sha256": "6a348a2ff9fee8c4fa1f4dbe215dd73543fdc9380395370021b0516dc70967ec"
+  },
+  "auditSummary": {
+    "passed": true,
+    "durationBreaches": 0,
+    "errors": []
+  },
+  "auditError": null,
+  "launchError": null,
+  "outputError": null,
+  "interrupted": null,
+  "groupCleanup": {
+    "supported": true,
+    "group": 1475744,
+    "signals": [],
+    "complete": true,
+    "error": null
+  },
+  "elapsedMs": 29054.389196,
+  "outerTimeoutMs": 180000,
+  "childClosed": true,
+  "processGroupCleanupSupported": true,
+  "allCaseLimitsUnchanged": true,
+  "allSelectedWholeFiles": [
+    "tools/translation/test/actual-gain-families.test.mjs",
+    "tools/translation/test/translation.test.mjs"
+  ],
+  "exitCode": 0,
+  "runtimeParity": false,
+  "rustExecuted": false
+}

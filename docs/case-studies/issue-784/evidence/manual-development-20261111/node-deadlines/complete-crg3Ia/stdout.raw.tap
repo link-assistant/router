@@ -1,0 +1,60 @@
+TAP version 13
+# Subtest: exact source spans enforce zero and exact boundaries without rounding or guessed default limits
+ok 1 - exact source spans enforce zero and exact boundaries without rounding or guessed default limits
+  ---
+  duration_ms: 422.286571
+  ...
+# Subtest: duplicate names and nested reports join source positions and preserve every independent observed duration
+ok 2 - duplicate names and nested reports join source positions and preserve every independent observed duration
+  ---
+  duration_ms: 10.226637
+  ...
+# Subtest: lexical numeric constants and unescaped const options work; writes, escape, spread, duplicate or dynamic deadlines refuse
+ok 3 - lexical numeric constants and unescaped const options work; writes, escape, spread, duplicate or dynamic deadlines refuse
+  ---
+  duration_ms: 85.023819
+  ...
+# Subtest: ambiguous locations names and durations fail closed while original failures and later observations remain recorded
+ok 4 - ambiguous locations names and durations fail closed while original failures and later observations remain recorded
+  ---
+  duration_ms: 4.165791
+  ...
+# Subtest: complete source identity changes invalid syntax links and forbidden runner filtering cannot yield success
+ok 5 - complete source identity changes invalid syntax links and forbidden runner filtering cannot yield success
+  ---
+  duration_ms: 22.836038
+  ...
+# Subtest: actual complete synchronous Node pass is independently rejected after all later cases and TAP finish
+ok 6 - actual complete synchronous Node pass is independently rejected after all later cases and TAP finish
+  ---
+  duration_ms: 2152.462214
+  ...
+# Subtest: actual large complete TAP and original failed case are retained beyond small-buffer limits
+ok 7 - actual large complete TAP and original failed case are retained beyond small-buffer limits
+  ---
+  duration_ms: 1160.282532
+  ...
+# Subtest: actual complete positive cohort preserves duplicate names nested cases default cases and successful audit
+ok 8 - actual complete positive cohort preserves duplicate names nested cases default cases and successful audit
+  ---
+  duration_ms: 896.228159
+  ...
+# Subtest: actual ignored-stdio descendant survives TERM only until awaited owned-group escalation
+ok 9 - actual ignored-stdio descendant survives TERM only until awaited owned-group escalation
+  ---
+  duration_ms: 1823.486009
+  ...
+# Subtest: complete wide source cohort fits a bounded heap and still refuses overdue cases at their exact original positions
+ok 10 - complete wide source cohort fits a bounded heap and still refuses overdue cases at their exact original positions
+  ---
+  duration_ms: 7173.915579
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 13967.099049

@@ -74,10 +74,11 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
             match status.credential_kind {
                 link_assistant_router::admin::CredentialKind::Environment =>
                     "provisioned by environment".to_string(),
-                link_assistant_router::admin::CredentialKind::Jwt => crate::translation_core::format!(
-                    "claimed admin JWT {} (first-visitor bootstrap closed)",
-                    status.token_id.as_deref().unwrap_or("<unknown>")
-                ),
+                link_assistant_router::admin::CredentialKind::Jwt =>
+                    crate::translation_core::format!(
+                        "claimed admin JWT {} (first-visitor bootstrap closed)",
+                        status.token_id.as_deref().unwrap_or("<unknown>")
+                    ),
                 link_assistant_router::admin::CredentialKind::LegacyOpaque =>
                     "claimed (first-visitor bootstrap closed)".to_string(),
                 link_assistant_router::admin::CredentialKind::None =>

@@ -1,9 +1,9 @@
 # Stream complete literal-text proposal packets
 
 The additive `iterateCoreLiteralTextCorpusPackets` API emits complete primitive
-JSON packets for the captured source graph and one whole per-file proposal at a
+JSON packets for the captured source module graph and one whole per-file proposal at a
 time. Each proposal retains all original/edited source, serialized/reparsed CST,
-selections, refusals, mappings and inverses. The complete source graph stays live;
+selections, refusals, mappings and inverses. The complete source module graph stays live;
 completed per-file CSTs are serialized before yielding rather than retained in a
 corpus-wide proposal list. No new source, owner, hash, verdict or encoded-result
 cache is introduced. Input snapshots and final checks remain required.
@@ -50,7 +50,7 @@ errors. Fresh sequential Bun processes take 39.368 seconds at 675,987,456 bytes
 sampled peak aggregate RSS. Every case keeps its original deadline and all 2,239
 source input vectors remain unchanged. TypeScript is the installed 5.9.3.
 
-These cases compare the entire graph/proposal result and every old/new CLI
+These cases compare the entire module graph/proposal result and every old/new CLI
 packet, including Core files and unreachable-source refusals. They execute fresh
 whole-function JavaScript and strict TypeScript with an authored Unicode/NUL
 result, round-trip all packets for 256 fixture functions, run the actual cold

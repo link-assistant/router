@@ -1,8 +1,10 @@
 import {createRulePipeline} from './rule-pipeline.mjs';
+import {assertPrivateParserExecution} from './private-parser-execution.mjs';
 import {createRustConcreteSyntaxStage} from './forward-concrete-syntax.mjs';
+import {createRustConcreteSyntaxSourceStages} from './forward-source-origin-concrete-syntax.mjs';
 import {associateOriginalSharedPatternDependencies} from './extensions/shared-source-patterns.mjs';
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
-import {translationProgressReporter} from './translation-progress.mjs';
+import {translationProgressReporter,namespaceProgressRequested} from './translation-progress.mjs';
 // Resolve tracked Rust module edges before semantic checking. External crates,
 // conditional modules, macro expansion and effects remain explicit obligations.
 import { posix } from 'node:path';
@@ -10,8 +12,9 @@ import {captureSourceModuleViews,originalSourceModuleItems,moduleScopeKey} from 
 import {planTrackedModulePath,planConditionalModuleSourcePath,isTrackedModulePathPlan,MODULE_PATH_PROFILE} from './module-paths.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
 import {resolveOwnedEnclosingNamespaceModuleBindings as resolveEnclosingNamespaceModuleBindings} from './owned-enclosing-module-bindings.mjs';
-import {createDeriveBangContext} from './derive-bang-context.mjs';
 import {createDeriveEnclosingNamespaceContext} from './derive-enclosing-namespace-context.mjs';
+import {createDeriveBangContext} from './derive-bang-context.mjs';
+import {withDefaultProofByteConsumers} from './default-proof-byte-operation.mjs';
 import {lockedTomlValueNamespaceBindings} from './toml-value-namespace.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {STANDARD_NAMESPACE_EVIDENCE} from './namespace-standard.mjs';
@@ -20,8 +23,8 @@ import { HostRustParser as MethodRustParser, checkProjectProgram, emitJavaScript
 import {declarationRefusals,withSourceLifetimeRefusals} from './extensions/declaration-refusals.mjs';
 import { extractImplDeclarations, lowerSharedMethodTokens, lowerCopyMethodTokens,originalMethodMember,originalMethodLowering } from './impl-resolver.mjs';
 import {projectCopyEvidence,originalOptionCopyPayload} from './project-copy.mjs';
-import {createDefaultSourceContext,createDefaultEnclosingSourceContext} from './default-trait-source.mjs';
-import {createCloneSourceContext,createCloneEnclosingSourceContext} from './clone-trait-source.mjs';
+import {createDefaultEnclosingSourceContext} from './default-trait-source.mjs';
+import {createCloneEnclosingSourceContext} from './clone-trait-source.mjs';
 import {originalCloneGeneratedMethods,assertOriginalCloneGeneratedMethod} from './clone-source-ir.mjs';
 import {linkOriginalCloneSemantic} from './extensions/clone-source-body.mjs';
 import {originalDefaultGeneratedMethods,assertOriginalDefaultGeneratedMethod} from './default-source-ir.mjs';
@@ -43,7 +46,8 @@ import {createToolAttributeContext} from './tool-attributes.mjs';
 import {configureToolAttributes} from './tool-attribute-layout.mjs';
 import {actualJsonCapabilityProfile} from './json-capabilities.mjs';
 import {createJsonMacroContext,configureJsonMacroParser} from './json-macro-context.mjs';
-import {createMatchesMacroContext,configureMatchesMacroParser,originalMatchesNamespaceBindings,OriginalMethodOwnerUnproved} from './matches-macro-context.mjs';
+import {configureMatchesMacroParser,originalMatchesNamespaceBindings,OriginalMethodOwnerUnproved,originalMethodParserNamespace} from './matches-macro-context.mjs';
+import {createProjectMatchesMacroContexts} from './project-matches-analysis-context.mjs';
 import {captureOriginalCargoEdition,originalCargoEditionEvidence} from './cargo-edition-context.mjs';
 
 // Only the actual original-source project pipeline can issue this identity.
@@ -150,9 +154,37 @@ const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'so
 
 // The separate optional argument leaves every old option read unchanged.
 export function resolveModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null },progressInput=undefined) {
+  const trackedPaths=Array.isArray(paths)?[...paths]:paths,captured=[],trackedInput={value:null};
+  // Discover only the bounded physical input sequence. None of these planning
+  // views or path proofs is returned or supplied to independent semantics.
+  let planning=resolveSourceModuleGraph({entry,paths:trackedPaths,compilationProfile:profileInput,readSource(file){
+    const source=readSource(file);
+    if(typeof source!=='string')throw new TypeError('Forward concrete syntax requires primitive source text');
+    // Preserve the original native refusal before discovery can observe JSON.
+    assertPrivateParserExecution();
+    captured.push({file,source});return source;
+  }},progressInput,source=>({source,document:null}),trackedInput);
+  const profile=planning.compilationProfile;planning=null;
+  const stages=captured.length===1?[createRustConcreteSyntaxStage(captured[0].source)]:createRustConcreteSyntaxSourceStages(captured.map(row=>row.source));
+  let at=0;
+  // Reissue every original view and path proof from reconstructed source. The
+  // first traversal grants no type, ownership, expansion or executable rights.
+  const graph=resolveSourceModuleGraph({entry,paths:trackedPaths,compilationProfile:profile,readSource(file){
+    if(captured[at]?.file!==file)throw new TypeError('Original module input sequence changed after concrete syntax transport');
+    return captured[at].source;
+  }},undefined,source=>{
+    const stage=stages[at++];
+    if(!stage||stage.source!==source)throw new TypeError('Original module source changed after concrete syntax transport');
+    return stage;
+  },trackedInput);
+  if(at!==captured.length)throw new TypeError('Original module input sequence was not consumed completely');
+  return graph;
+}
+
+function resolveSourceModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null },progressInput,sourceStage,trackedInput) {
   const moduleProgress=progressInput==null?null:translationProgressReporter(progressInput);
   const profile=compilationProfile(profileInput);
-  const tracked = new Set(paths);
+  const tracked = trackedInput.value??=new Set(paths);
   if (!tracked.has(entry)) throw new Error(`crate entrypoint is not tracked: ${entry}`);
   const modules = [], edges = [], diagnostics = [], concreteSyntaxMeta = [], visited = new Set();
   const boundedChild=(file,path,item)=>{
@@ -168,7 +200,7 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
     if(moduleProgress)moduleProgress({stage:'module-parse',state:'start',entry,source:file,phase:'source-module',declaration:key||'crate',completed:modules.length});
     // Only whole physical inputs cross the CST boundary. Inline module views
     // reuse their parent's exact reconstructed source and original coordinates.
-    const concrete=original?null:createRustConcreteSyntaxStage(readSource(file));
+    const concrete=original?null:sourceStage(readSource(file));
     const source = original?.source??concrete.source;
     if(concrete)concreteSyntaxMeta.push({source:file,document:concrete.document});
     const fileOffset=original?.offset??offset;
@@ -304,14 +336,14 @@ function declarationProgram(program, root) {
 }
 
 function compileProjectLanguage(options, ownedDefinitionMode=false) {
-  const progress=translationProgressReporter(options.progress);
+  const progressInput=options.progress,progress=translationProgressReporter(progressInput);
   progress({stage:'project-graph',state:'start',entry:options.entry});
   const cargoEditionContext=options.cargoManifest===undefined||options.cargoManifest===null?null:captureOriginalCargoEdition(options.cargoManifest,{sourcePath:options.cargoManifestPath??'Cargo.toml'});
   const graph = resolveModuleGraph(options);
   progress({stage:'project-graph',state:'end',entry:options.entry,total:graph.modules.length});
   progress({stage:'namespace',state:'start',entry:options.entry});
   const enclosingNamespace=ownedDefinitionMode===true||ownedDefinitionMode==='core-json-readers';
-  const namespaceProgress=phase=>{if(enclosingNamespace)progress({stage:'namespace',state:'advance',entry:options.entry,phase});};
+  const namespaceProgress=phase=>{if(enclosingNamespace||namespaceProgressRequested(progressInput))progress({stage:'namespace',state:'advance',entry:options.entry,phase});};
   namespaceProgress('json-context');
   const jsonParserProfile=options.jsonParserProfile??actualJsonCapabilityProfile();
   let jsonMacroContext=null,jsonMacroDiagnostic=null;
@@ -320,30 +352,37 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   const externalModules=registeredStandardHostBindings([...originalMatchesNamespaceBindings(),...lockedTomlValueNamespaceBindings(options.deriveDependencies)]);
   namespaceProgress('derive-inputs');
   const deriveContext=options.deriveDependencies?createDeriveFootprintContext({modules:graph.modules,dependencies:options.deriveDependencies,externalModules,compilationProfile:graph.compilationProfile}):null;
-  // Construct the genuine enclosing issuer once for this project and pass it
-  // explicitly through the independent Default/Clone and binding consumers.
+  // Generated Default/Clone names share one genuine enclosing issuer. Ordinary
+  // project bindings and method parsers still require complete macro evidence.
+  const hasDefaultDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum','impl'].includes(item.term)&&item.tokens.some(token=>token.text==='Default')));
+  const hasCloneDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum'].includes(item.term)&&item.tokens.some(token=>token.text==='Clone')));
   let deriveBangContext=null;
-  if(enclosingNamespace){
+  if(deriveContext&&(enclosingNamespace||hasDefaultDeclarations||hasCloneDeclarations)){
     namespaceProgress('derive-namespace-context');
     deriveBangContext=deriveContext?createDeriveEnclosingNamespaceContext({deriveContext}):null;
   }
   namespaceProgress('default-source');
-  const hasDefaultDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum','impl'].includes(item.term)&&item.tokens.some(token=>token.text==='Default')));
-  const defaultContext=deriveContext&&hasDefaultDeclarations?(enclosingNamespace?createDefaultEnclosingSourceContext(deriveContext,{deriveBangContext}):createDefaultSourceContext(deriveContext)):null;
+  const defaultContext=deriveContext&&hasDefaultDeclarations?createDefaultEnclosingSourceContext(deriveContext,{deriveBangContext}):null;
   namespaceProgress('clone-source');
-  const hasCloneDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum'].includes(item.term)&&item.tokens.some(token=>token.text==='Clone')));
-  const cloneContext=deriveContext&&hasCloneDeclarations?(enclosingNamespace?createCloneEnclosingSourceContext(deriveContext,{deriveBangContext,defaultContext:defaultContext??undefined}):createCloneSourceContext(deriveContext)):null;
+  const cloneContext=deriveContext&&hasCloneDeclarations?withDefaultProofByteConsumers(()=>createCloneEnclosingSourceContext(deriveContext,{deriveBangContext,defaultContext:defaultContext??undefined})):null;
   namespaceProgress('tool-attributes');
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):externalModules;
   const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});
-  // This consumer needs enclosing bindings. Runtime/ownership and generated
-  // Default/Clone checking retain their separate original source contexts.
-  if(!enclosingNamespace)deriveBangContext=deriveContext?createDeriveBangContext({deriveContext}):null;
-  namespaceProgress(enclosingNamespace?'enclosing-bindings':'complete-bindings');
-  const bindingEvidence=(enclosingNamespace?resolveEnclosingNamespaceModuleBindings:resolveModuleBindings)({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
+  // Share only bounded encoded comparison DATA for this synchronous operation.
+  // Every original source, owner, namespace and semantic check still executes.
+  const bindingEvidence=withDefaultProofByteConsumers(()=>{
+    if(!enclosingNamespace)deriveBangContext=deriveContext?createDeriveBangContext({deriveContext}):null;
+    namespaceProgress(enclosingNamespace?'enclosing-bindings':'complete-bindings');
+    return (enclosingNamespace?resolveEnclosingNamespaceModuleBindings:resolveModuleBindings)({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
+  });
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[moduleScopeKey(scope),scope]));
   const configureSourceScope=(parser,module)=>configureParserSourceScope(requestImmutableNamespaceTargets(parser),scopes.get(moduleScopeKey(module)),bindingEvidence.scopes,module.path);
-  const matchesMacroContext=createMatchesMacroContext({modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext});
+  const matchesOptions={modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext};
+  // Parser and methods share one privately captured original project input.
+  // Each still checks its independent enclosing or complete namespace.
+  const matchesAnalysis=createProjectMatchesMacroContexts(matchesOptions);
+  const matchesMacroContext=matchesAnalysis.parser;
+  let methodMatchesMacroContext=null;
   progress({stage:'namespace',state:'end',entry:options.entry,total:bindingEvidence.scopes.length});
   const declarations = [], refused = [], imports = [], unloweredItems = [], moduleAliases = new Map();
   let completedModules=0,completedMethods=0;
@@ -430,7 +469,8 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
           // A closed original owner can acquire source association. Existing
           // independent method checking remains available without that claim;
           // its unconfigured original macro route still refuses explicitly.
-          try{transform=createOriginalMethodTokenTransform(matchesMacroContext,method,lowered);}catch(error){if(!(error instanceof OriginalMethodOwnerUnproved))throw error;}
+          methodMatchesMacroContext??=matchesAnalysis.methods();
+          try{transform=createOriginalMethodTokenTransform(methodMatchesMacroContext,method,lowered);}catch(error){if(!(error instanceof OriginalMethodOwnerUnproved))throw error;}
           let originalParsed=null;
           if(transform){try{originalParsed=parseOriginalMethodTransformGrouped(transform,{immutableNamespaceTargets:true});}catch(error){if(error instanceof TypeError)throw new TranslationError('unsupported','original method source contract: '+error.message,method.span);throw error;}}
           const parser = originalParsed?originalMethodParsedFactsGrouped(originalParsed).parser:new MethodRustParser(copyMetadata(lowered.tokens));
@@ -461,7 +501,7 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
           const semantic=originalParsed?relocateOriginalMethodSemanticGrouped(surface,module.offset):relocate(surface,module.offset);
           if(fieldEvidence)fieldEvidenceBySurface.set(semantic,fieldEvidence);
           if(!originalParsed&&certificate)semantic.impl.copyCertificate=certificate;
-          if(originalParsed)linkProjectMethodDeclaration(parser,originalParsed.entry,surface,semantic,{source:module.source,sourcePath:module.file,memberSpan:method.span,bodySpan:method.bodySpan,globalOffset:module.offset,scope:{bindingEvidence:scopes.get(moduleScopeKey(module)),compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition}});
+          if(originalParsed)linkProjectMethodDeclaration(parser,originalParsed.entry,surface,semantic,{source:module.source,sourcePath:module.file,memberSpan:method.span,bodySpan:method.bodySpan,globalOffset:module.offset,scope:{bindingEvidence:originalMethodParserNamespace(methodMatchesMacroContext,method).scope,compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition}});
           if(originalParsed)captureDeclarationRangeGroupedTokens(semantic,module,globalSpan);
           else captureStructuralMethodRange(semantic,method,lowered,module,globalSpan);
           declarations.push({file:module.file,path:module.path,name:[...module.path,surface.name].join('.'),displayName:display,term:'method',span:method.span,globalSpan,surface:semantic,...(defaultProof?{defaultSourceAdmission:defaultProof}:{})});
@@ -570,19 +610,8 @@ function compileProjectLanguage(options, ownedDefinitionMode=false) {
   meta.matchesMacroContext=matchesMacroContext;
   meta.originalCargoEditionInput=originalCargoEditionEvidence(cargoEditionContext);
   const sourceScopes=graph.modules.map(module=>Object.freeze({source:module.file,module:[...module.path],sourceView:module.sourceView,sha256:sha256(module.source),project:options.entry,compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition,configurationEvidence:Object.freeze([...module.configurationEvidence]),scope:scopes.get(moduleScopeKey(module)),scopes:bindingEvidence.scopes,jsonParserProfile,matchesMacroContext}));
-  const lowerDeclaration=(entry,name)=>function(lowerOptions={}) {
-    const program=declarationProgram(target.program,target.names.get(entry.name));
-    const emitted=emitJavaScript(program,lowerOptions),own=program.declarations.get(target.names.get(entry.name));
-    const targetMapping=emitted.mappings.find(mapping=>mapping.source===own.fullName);
-    const signatures=[...program.declarations.values()].filter(entry=>entry.k==='fn').map(entry=>({target:emitted.mappings.find(mapping=>mapping.source===entry.fullName)?.target,params:entry.params,ret:entry.async?{kind:'routerFuture',value:entry.ret}:entry.ret}));
-    return {own,program,emitted:{...emitted,signatures,mappings:[...emitted.mappings,{...targetMapping,source:name}]}};
-  };
-  const executableDeclarations=entries.map(entry=>({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:entry.name.split('.').at(-1),span:entry.span,project:options.entry,qualifiedName:entry.name,lower:lowerDeclaration(entry,entry.name.split('.').at(-1)),checkedSource:()=>{
-    const own=checked.declarations.get(entry.name),modules=graph.modules.filter(module=>module.file===entry.file&&JSON.stringify(module.path)===JSON.stringify(entry.path));
-    const origin=originalParsedDeclarationEvidence(entry.surface),module=modules.length===1?modules[0]:null;
-    if(entry.term!=='fn'||own?.k!=='fn'||own.fullName!==entry.name||!origin||!module||origin.sourcePath!==entry.file||origin.sourceSha256!==sha256(module.source)||origin.declarationSpan.start!==entry.span.start||origin.declarationSpan.end!==entry.span.end||origin.checkedSpan.start!==entry.surface.span.start||origin.checkedSpan.end!==entry.surface.span.end||own.span.start!==entry.surface.span.start||own.span.end!==entry.surface.span.end)throw new TypeError('Original executable checked source association differs');
-    return freezeMacroTree(structuredClone({schema:'original-checked-executable-source-v1',source:entry.file,sourceSha256:sha256(module.source),qualifiedName:entry.name,module:entry.path,span:entry.span,checkedSpan:own.span,sourceSignature:{params:entry.surface.params,ret:entry.surface.ret},declaration:own}));
-  }}));
+  const lowerDeclaration=(entry,name)=>createProjectLowerer(target,entry,name);
+  const executableDeclarations=entries.map(entry=>({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:entry.name.split('.').at(-1),span:entry.span,project:options.entry,qualifiedName:entry.name,lower:lowerDeclaration(entry,entry.name.split('.').at(-1)),checkedSource:createProjectCheckedSource(checked,{modules:graph.modules},entry)}));
   // This additive facade closes over the same actual checked program. It does
   // not append a synthetic Rust wrapper or count a method as a source fn.
   const checkedMethodDeclarations=methods.map(entry=>{
@@ -691,3 +720,17 @@ const coreReaderDefinitionRules=createRulePipeline([
  {phase:'repository',rules:[{id:'rust-project-core-readers:explicit-owned-library-wrappers',apply:finalize=>finalize()}]},
 ]);
 export function translateProjectOwnedCoreReaderDefinitions(options){return coreReaderDefinitionRules.run(options).value;}
+
+function createProjectLowerer(target,entry,name){return function(lowerOptions={}) {
+    const program=declarationProgram(target.program,target.names.get(entry.name));
+    const emitted=emitJavaScript(program,lowerOptions),own=program.declarations.get(target.names.get(entry.name));
+    const targetMapping=emitted.mappings.find(mapping=>mapping.source===own.fullName);
+    const signatures=[...program.declarations.values()].filter(entry=>entry.k==='fn').map(entry=>({target:emitted.mappings.find(mapping=>mapping.source===entry.fullName)?.target,params:entry.params,ret:entry.async?{kind:'routerFuture',value:entry.ret}:entry.ret}));
+    return {own,program,emitted:{...emitted,signatures,mappings:[...emitted.mappings,{...targetMapping,source:name}]}};
+  };}
+function createProjectCheckedSource(checked,graph,entry){const facade={checkedSource:()=>{
+    const own=checked.declarations.get(entry.name),modules=graph.modules.filter(module=>module.file===entry.file&&JSON.stringify(module.path)===JSON.stringify(entry.path));
+    const origin=originalParsedDeclarationEvidence(entry.surface),module=modules.length===1?modules[0]:null;
+    if(entry.term!=='fn'||own?.k!=='fn'||own.fullName!==entry.name||!origin||!module||origin.sourcePath!==entry.file||origin.sourceSha256!==sha256(module.source)||origin.declarationSpan.start!==entry.span.start||origin.declarationSpan.end!==entry.span.end||origin.checkedSpan.start!==entry.surface.span.start||origin.checkedSpan.end!==entry.surface.span.end||own.span.start!==entry.surface.span.start||own.span.end!==entry.surface.span.end)throw new TypeError('Original executable checked source association differs');
+    return freezeMacroTree(structuredClone({schema:'original-checked-executable-source-v1',source:entry.file,sourceSha256:sha256(module.source),qualifiedName:entry.name,module:entry.path,span:entry.span,checkedSpan:own.span,sourceSignature:{params:entry.surface.params,ret:entry.surface.ret},declaration:own}));
+  }};return facade.checkedSource;}

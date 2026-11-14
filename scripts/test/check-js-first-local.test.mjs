@@ -1,10 +1,11 @@
 import test from 'node:test';
+import './check-profile-typescript.test.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { fingerprint, verifyStamp, stages } from '../check-js-first-local.mjs';
+import { fingerprint, verifyStamp, stages, runStageCommand } from '../check-js-first-local.mjs';
 import {reviewTranslationDraft} from '../review-translation-draft.mjs';
 import {createHash} from 'node:crypto';
 
@@ -143,6 +144,85 @@ test('green stamps require strict parity, every stage and unchanged tracked/untr
   } finally { process.chdir(previous); fs.rmSync(directory, { recursive: true, force: true }); }
 });
 
+test('fingerprints stream regular files with unchanged complete content, mode, link and deleted framing', () => {
+  const previous = process.cwd(), directory = fs.mkdtempSync(path.join(os.tmpdir(), 'router-gate-stream-'));
+  const readFile = fs.readFileSync, read = fs.readSync;
+  try {
+    process.chdir(directory);
+    execFileSync('git', ['init', '-q']);
+    execFileSync('git', ['config', 'user.name', 'Gate Test']);
+    execFileSync('git', ['config', 'user.email', 'gate@example.invalid']);
+    const large = path.join(directory, 'large.bin'), bytes = Buffer.alloc(2 * 65536 + 17);
+    for (let at = 0; at < bytes.length; at++) bytes[at] = at % 251;
+    fs.writeFileSync(large, bytes); fs.chmodSync(large, 0o755);
+    fs.writeFileSync('Ω.js', 'export const value = "😀";\n'); fs.symlinkSync('Ω.js', 'linked');
+    fs.writeFileSync('deleted.js', 'deleted'); fs.writeFileSync('empty', '');
+    execFileSync('git', ['add', '.']); execFileSync('git', ['commit', '-qm', 'stream fixture']);
+    fs.unlinkSync('deleted.js'); fs.writeFileSync('untracked', 'new input');
+    const stampPath = path.join(directory, 'stamp.json'); fs.writeFileSync(stampPath, 'excluded stamp');
+    const names = [...new Set(execFileSync('git', ['ls-files', '-co', '--exclude-standard', '-z'], {encoding:'utf8'}).split('\0').filter(Boolean))].sort();
+    const expected = createHash('sha256'); let expectedBytes = 0;
+    for (const name of names) {
+      if (name === 'stamp.json') continue;
+      let kind = 'deleted', content = Buffer.alloc(0);
+      if (fs.existsSync(name)) {
+        const metadata = fs.lstatSync(name);
+        kind = metadata.isSymbolicLink() ? 'symlink' : metadata.mode & 0o111 ? 'executable' : 'file';
+        content = metadata.isSymbolicLink() ? Buffer.from(fs.readlinkSync(name)) : readFile(name);
+      }
+      expected.update(JSON.stringify([name, kind, content.length]) + '\n').update(content);
+      expectedBytes += content.length;
+    }
+    const identity = {headSha:execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim(),treeHash:expected.digest('hex')};
+    const inode = fs.statSync(large).ino, reads = [];
+    fs.readFileSync = function (name, ...args) {
+      assert.notEqual(path.resolve(String(name)), large, 'regular content must not use a whole-file buffer');
+      return Reflect.apply(readFile, this, [name, ...args]);
+    };
+    fs.readSync = function (descriptor, buffer, offset, length, position) {
+      if (fs.fstatSync(descriptor).ino === inode) { assert.ok(length <= 65536); reads.push({length,position}); }
+      return Reflect.apply(read, this, [descriptor,buffer,offset,length,position]);
+    };
+    assert.deepEqual(fingerprint(stampPath), identity);
+    assert.deepEqual(reads, [{length:65536,position:0},{length:65536,position:65536},{length:17,position:131072}]);
+    const progress = [];
+    assert.deepEqual(fingerprint(stampPath, {progress:row=>progress.push(row)}), identity);
+    assert.deepEqual(progress.map(row=>row.state), ['start','complete']);
+    assert.equal(progress[1].completedFiles, names.length - 1);
+    assert.equal(progress[1].completedBytes, expectedBytes);
+    assert.throws(()=>fingerprint(stampPath, {progress:null}), /progress must be a function/);
+  } finally {
+    fs.readFileSync = readFile; fs.readSync = read;
+    process.chdir(previous); fs.rmSync(directory, {recursive:true,force:true});
+  }
+});
+
+test('optional fingerprint progress identifies a large input without changing its hash or swallowing callback failures', () => {
+  const previous = process.cwd();
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'router-gate-progress-'));
+  try {
+    process.chdir(directory);
+    execFileSync('git', ['init', '-q']);
+    execFileSync('git', ['config', 'user.name', 'Gate Test']);
+    execFileSync('git', ['config', 'user.email', 'gate@example.invalid']);
+    const content = Buffer.alloc(8 * 1024 * 1024 + 1, 65);
+    fs.writeFileSync('large.bin', content);
+    execFileSync('git', ['add', 'large.bin']);
+    execFileSync('git', ['commit', '-qm', 'progress fixture']);
+    const stampPath = path.join(directory, 'stamp.json');
+    const identity = fingerprint(stampPath), progress = [];
+    assert.equal(identity.treeHash, createHash('sha256').update(JSON.stringify(['large.bin', 'file', content.length]) + '\n').update(content).digest('hex'));
+    assert.deepEqual(fingerprint(stampPath, {progress:row=>progress.push(row)}), identity);
+    assert.deepEqual(progress.map(row=>row.state), ['start','opening','advance','complete']);
+    assert.equal(progress[1].relative, 'large.bin');
+    assert.equal(progress[1].completedFiles, 0);
+    assert.equal(progress[2].completedBytes, content.length);
+    assert.equal(progress[3].completedFiles, 1);
+    const failure = new Error('progress callback failed');
+    assert.throws(()=>fingerprint(stampPath, {progress:()=>{throw failure;}}), error=>error === failure);
+  } finally { process.chdir(previous); fs.rmSync(directory, { recursive: true, force: true }); }
+});
+
 test('large tracked path inventories remain fingerprinted beyond the default subprocess buffer', () => {
   const previous = process.cwd();
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'router-gate-large-tree-'));
@@ -159,7 +239,12 @@ test('large tracked path inventories remain fingerprinted beyond the default sub
     const listing = execFileSync('git', ['ls-files', '-z'], { maxBuffer: 2 * 1024 * 1024 });
     assert.ok(listing.length > 1024 * 1024);
     const stampPath = path.join(directory, 'stamp.json');
-    const identity = fingerprint(stampPath);
+    const progress = [], identity = fingerprint(stampPath, {progress:row=>progress.push(row)});
+    assert.equal(progress[0].state, 'start');
+    assert.equal(progress.at(-1).state, 'complete');
+    assert.equal(progress.at(-1).completedFiles, 7000);
+    assert.equal(progress.at(-1).completedBytes, 0);
+    assert.equal(progress.filter(row=>row.state==='advance').length, Math.floor(7000/512));
     fs.writeFileSync(stampPath, JSON.stringify({ version: 1, ...identity, checkedAt: new Date().toISOString(), stages: stages.map(([id]) => id), strictParity: true }));
     assert.deepEqual(verifyStamp(stampPath), identity);
     fs.writeFileSync('00000-' + 'x'.repeat(160) + '.js', 'changed content');
@@ -185,4 +270,35 @@ test('the full translation stage runs every fixture with bounded test-file concu
     }
     assert.equal(started,4);assert.equal(active.size,0);assert.ok(peak<=2);
   } finally {fs.rmSync(directory,{recursive:true,force:true});fs.rmSync(outside,{recursive:true,force:true});}
+});
+
+test('optional command progress retains real successful and failed child statuses',()=>{
+  const quote=value=>"'"+value.replaceAll("'","'\\''")+"'";
+  for(const status of [0,7]) {
+    const command=quote(process.execPath)+' -e '+quote(`process.exit(${status})`), records=[];
+    const plain=runStageCommand('fixture',command);
+    const traced=runStageCommand('fixture',command,{progress:record=>records.push(record)});
+    assert.equal(plain.status,status);assert.equal(traced.status,status);
+    assert.equal(records.length,2);
+    assert.deepEqual(records[0],{stage:'fixture',command,state:'start'});
+    assert.deepEqual({...records[1],elapsedMs:0},{stage:'fixture',command,state:'finish',elapsedMs:0,status,signal:null,error:null});
+    assert.ok(Number.isFinite(records[1].elapsedMs) && records[1].elapsedMs>=0);
+  }
+});
+
+test('invalid and throwing command observers cannot silently launch or qualify a child',()=>{
+  const quote=value=>"'"+value.replaceAll("'","'\\''")+"'";
+  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'router-gate-command-'));
+  const marker=path.join(directory,'child-ran');
+  const command=quote(process.execPath)+' -e '+quote("require('node:fs').writeFileSync(process.argv[1],'ran')")+' '+quote(marker);
+  const failure=new Error('observer failed');
+  try {
+    assert.throws(()=>runStageCommand('fixture',command,{progress:null}),/Command progress must be a function/);
+    assert.equal(fs.existsSync(marker),false);
+    assert.throws(()=>runStageCommand('fixture',command,{progress:()=>{throw failure;}}),error=>error===failure);
+    assert.equal(fs.existsSync(marker),false);
+    const records=[];
+    assert.throws(()=>runStageCommand('fixture',command,{progress:record=>{records.push(record);if(record.state==='finish')throw failure;}}),error=>error===failure);
+    assert.equal(fs.readFileSync(marker,'utf8'),'ran');assert.equal(records[1].status,0);
+  } finally {fs.rmSync(directory,{recursive:true,force:true});}
 });

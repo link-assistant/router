@@ -263,26 +263,26 @@ pub(super) fn redacted_uri(uri: &str) -> String {
     format!("{path}?{query}")
 }
 
+/// Decode `%XY` escapes, and `+` as a space, as a query string does.
+///
+/// The loop takes bytes off the front of a slice instead of advancing an
+/// index, so every step consumes at least one byte and the loop always ends.
+/// With an index, a `Mutants` workflow mutation of `index += 1` to
+/// `index *= 1` left it at 0, pushing bytes until the runner ran out of
+/// memory and was shut down before cargo-mutants' test timeout could fire.
 fn percent_decode(value: &str) -> String {
-    let bytes = value.as_bytes();
-    let mut decoded = Vec::with_capacity(bytes.len());
-    let mut index = 0;
-    while index < bytes.len() {
-        match bytes[index] {
-            b'%' if index + 2 < bytes.len() => {
-                if let (Some(high), Some(low)) =
-                    (hex_digit(bytes[index + 1]), hex_digit(bytes[index + 2]))
-                {
-                    decoded.push(high * 16 + low);
-                    index += 3;
-                    continue;
-                }
-                decoded.push(bytes[index]);
-            }
-            b'+' => decoded.push(b' '),
-            byte => decoded.push(byte),
+    let mut decoded = Vec::with_capacity(value.len());
+    let mut rest = value.as_bytes();
+    while let [byte, tail @ ..] = rest {
+        rest = tail;
+        if let (b'%', [high, low, after @ ..]) = (byte, tail)
+            && let (Some(high), Some(low)) = (hex_digit(*high), hex_digit(*low))
+        {
+            decoded.push(high * 16 + low);
+            rest = after;
+            continue;
         }
-        index += 1;
+        decoded.push(if *byte == b'+' { b' ' } else { *byte });
     }
     String::from_utf8_lossy(&decoded).into_owned()
 }
@@ -309,5 +309,82 @@ mod tests {
         assert_eq!(redacted["metadata"], REDACTED);
         assert!(!redacted.to_string().contains("sensitive-customer"));
         assert!(!redacted.to_string().contains("secret"));
+    }
+
+    /// The shortest value that is partially redacted keeps three characters
+    /// at each end; anything shorter is replaced outright.
+    #[test]
+    fn partial_redaction_starts_at_its_minimum_length() {
+        assert_eq!(partially_redact("abcdefghijkl"), "abc******jkl");
+        assert_eq!(partially_redact("abcdefghijk"), REDACTED);
+    }
+
+    #[test]
+    fn secret_names_match_in_any_case_and_by_suffix() {
+        for name in [
+            "X-API-KEY",
+            "ACCESS_TOKEN",
+            "clientSecret",
+            "db_password",
+            "webhook_secret",
+            "github_token",
+            "openai_api_key",
+        ] {
+            assert!(is_secret_name(name), "{name} names a secret");
+        }
+        for name in ["X-Request-Id", "API", "content-type", "monkey"] {
+            assert!(!is_secret_name(name), "{name} does not name a secret");
+        }
+    }
+
+    #[test]
+    fn only_three_long_base64url_segments_after_a_json_header_are_a_jwt() {
+        let segment = "c2lnbmF0dXJl";
+        assert!(is_jwt(&format!("eyJhbGciOi.{segment}.{segment}")));
+        // A fourth segment, a header that is not JSON, a short segment, or a
+        // character outside base64url is not a JWT.
+        for value in [
+            format!("eyJhbGciOi.{segment}.{segment}.{segment}"),
+            format!("{segment}.{segment}.{segment}"),
+            format!("eyJ.{segment}.{segment}"),
+            format!("eyJhbGciOi.{segment}.sig/nature"),
+        ] {
+            assert!(!is_jwt(&value), "{value} is not a JWT");
+        }
+    }
+
+    #[test]
+    fn a_percent_sign_without_two_following_characters_is_literal() {
+        assert_eq!(percent_decode("100%"), "100%");
+        assert_eq!(percent_decode("%4"), "%4");
+        assert_eq!(percent_decode("%41+b"), "A b");
+        assert_eq!(percent_decode("%zz%41%"), "%zzA%");
+        assert_eq!(redacted_uri("/v1?note=100%"), "/v1?note=100%");
+    }
+
+    #[test]
+    fn every_hex_digit_decodes_in_either_case() {
+        for (value, digit) in (0_u8..).zip("0123456789abcdef".bytes()) {
+            assert_eq!(hex_digit(digit), Some(value), "{}", char::from(digit));
+            assert_eq!(hex_digit(digit.to_ascii_uppercase()), Some(value));
+        }
+        assert_eq!(hex_digit(b'g'), None);
+        assert_eq!(percent_decode("%4a%4A%7e"), "JJ~");
+    }
+
+    #[test]
+    fn header_names_survive_while_secret_values_are_masked() {
+        let mut headers = HeaderMap::new();
+        headers.insert("content-type", "application/json".parse().unwrap());
+        headers.insert("x-api-key", "sk-live-0123456789".parse().unwrap());
+        let redacted = redacted_headers(&headers);
+        assert_eq!(
+            redacted.get("content-type").map(String::as_str),
+            Some("application/json")
+        );
+        assert_eq!(
+            redacted.get("x-api-key").map(String::as_str),
+            Some("sk-************789")
+        );
     }
 }

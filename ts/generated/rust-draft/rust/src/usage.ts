@@ -139,48 +139,48 @@ try {
   const input = (ml_pattern_1)["field1"] as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
   const output = (ml_pattern_1)["field2"] as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
   return (() => {
-    const ml_standard_body_1 = total as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
-    switch (ml_standard_body_1.$) {
+    const ml_standard_body_8 = total as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
+    switch (ml_standard_body_8.$) {
       case "None": {
         return Object.freeze({ $: 'Some', field0: ml_host_rust_fixed_saturating_add_u64((() => {
-          const ml_standard_body_1_2 = input as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
-          const ml_standard_body_2 = 0n;
-          switch (ml_standard_body_1_2.$) {
+          const ml_standard_body_4 = input as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
+          const ml_standard_body_5 = 0n;
+          switch (ml_standard_body_4.$) {
             case "None": {
-              return ml_standard_body_2;
+              return ml_standard_body_5;
             }
             case "Some": {
-              const x = ml_standard_body_1_2.field0;
+              const x = ml_standard_body_4.field0;
               return x;
             }
             default: {
-              return ml_router_unexpected(ml_standard_body_1_2);
+              return ml_router_unexpected(ml_standard_body_4);
             }
           }
         })(), (() => {
-          const ml_standard_body_1_3 = output as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
-          const ml_standard_body_2_2 = 0n;
-          switch (ml_standard_body_1_3.$) {
+          const ml_standard_body_6 = output as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
+          const ml_standard_body_7 = 0n;
+          switch (ml_standard_body_6.$) {
             case "None": {
-              return ml_standard_body_2_2;
+              return ml_standard_body_7;
             }
             case "Some": {
-              const x_2 = ml_standard_body_1_3.field0;
+              const x_2 = ml_standard_body_6.field0;
               return x_2;
             }
             default: {
-              return ml_router_unexpected(ml_standard_body_1_3);
+              return ml_router_unexpected(ml_standard_body_6);
             }
           }
         })()) });
       }
       case "Some": {
-        const ml_standard_alias_field = ml_standard_body_1.field0;
-        const x_3 = ml_standard_body_1 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
+        const ml_standard_alias_field = ml_standard_body_8.field0;
+        const x_3 = ml_standard_body_8 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
         return x_3;
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_1);
+        return ml_router_unexpected(ml_standard_body_8);
       }
     }
   })();
@@ -242,7 +242,7 @@ function rp_75736167652e746f6b656e5f7061727473(value: MLData_72705f3733363537323
         return ml_router_unexpected(ml_standard_body_29);
       }
     }
-  })(), (ml_host_callback_0_0) => { return rp_75736167652e746f6b656e5f7061727473(ml_host_callback_0_0); }, "and_then");
+  })(), (ml_host_callback_29_0) => { return rp_75736167652e746f6b656e5f7061727473(ml_host_callback_29_0); }, "and_then");
 }
 
 function rp_75736167652e66697273745f753634(value: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635, fields: ReadonlyArray<string>): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> {

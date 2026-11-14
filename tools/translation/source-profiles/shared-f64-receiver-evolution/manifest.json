@@ -1,0 +1,104 @@
+{
+  "schema": "original-shared-f64-receiver-evolution-v1",
+  "predecessorCommit": "e88183bb894b9ea62c9d6ae170c3fc099047685b",
+  "files": [
+    {
+      "path": "tools/translation/extensions/host-contracts.mjs",
+      "archive": "host-contracts.mjs.gz",
+      "bytes": 121625,
+      "sha256": "8492a352abc1b1edde29a14e0177f4fb9f77e223b06b7b8c3c624fc8732f58eb",
+      "archiveBytes": 28073,
+      "archiveSha256": "117316c13074845ee72328a94ec5264686abad93298aaeb3f83bb5904f3cf704",
+      "afterSha256": "2207d43a112c05ba4db77143566d57ce7f806c452bf38e65743120d60592f4bc",
+      "edits": [
+        {
+          "phase": "repository",
+          "id": "shared-f64:host-contracts:1",
+          "before": "import {sharedF64Pointee,originalSharedF64CopySource} from './shared-f64-copy-source.mjs';\n",
+          "after": "import {sharedF64Pointee} from './shared-f64-copy-source.mjs';import {captureSharedF64MethodCall,inherentSharedF64Receiver,sharedF64DereferenceSource} from './shared-f64-method-source.mjs';import {parseJointSharedReferenceType} from './joint-shared-reference-type.mjs';\n"
+        },
+        {
+          "phase": "language",
+          "id": "shared-f64:host-contracts:2",
+          "before": "  method(object,name,args,range) {\n",
+          "after": "  method(object,name,args,range) {\n    if(primitiveFloatContract(name.value))return captureSharedF64MethodCall(this,name,super.method(object,name,args,range));\n"
+        },
+        {
+          "phase": "language",
+          "id": "shared-f64:host-contracts:3",
+          "before": "    // && is one lexer token, but two borrows only in a source type position.\n    // Split its coordinates here; boolean expression tokens remain untouched.\n    if(c.is('&&')){const token=c.peek();c.tokens=[...c.tokens.slice(0,c.index),{...token,value:'&',end:token.start+1},{...token,value:'&',start:token.start+1},...c.tokens.slice(c.index+1)];}\n",
+          "after": "    const joint=parseJointSharedReferenceType(this);if(joint)return joint;if(c.is('&&')){const token=c.peek();c.tokens=[...c.tokens.slice(0,c.index),{...token,value:'&',end:token.start+1},{...token,value:'&',start:token.start+1},...c.tokens.slice(c.index+1)];}\n"
+        },
+        {
+          "phase": "language",
+          "id": "shared-f64:host-contracts:4",
+          "before": "      if(value.type.kind==='float'){requireOriginalPrimitiveTryFromChecker(this);return {...node,value,type:sharedF64Pointee(value.type,node.span),dereferenceProof:{kind:'shared-f64-copy',source:originalSharedF64CopySource(),reference:structuredClone(reference),sourceFeature:node.sourceFeature,span:node.span}};}\n",
+          "after": "      if(value.type.kind==='float'){requireOriginalPrimitiveTryFromChecker(this);return {...node,value,type:sharedF64Pointee(value.type,node.span),dereferenceProof:{kind:'shared-f64-copy',source:sharedF64DereferenceSource(node),reference:structuredClone(reference),sourceFeature:node.sourceFeature,span:node.span}};}\n"
+        },
+        {
+          "phase": "language",
+          "id": "shared-f64:host-contracts:5",
+          "before": "        if(contract){requirePrimitiveFloat(receiver,node.span);return this.hostCall([contract],[node.object,...node.args],env,path,expected,node.span);}\n",
+          "after": "        if(contract){const object=inherentSharedF64Receiver(node,receiver,method);if(!receiver.type.rustReference)requirePrimitiveFloat(receiver,node.span);return this.hostCall([contract],[object,...node.args],env,path,expected,node.span);}\n"
+        }
+      ]
+    },
+    {
+      "path": "tools/translation/extensions/pattern-control.mjs",
+      "archive": "pattern-control.mjs.gz",
+      "bytes": 61501,
+      "sha256": "a69252d9764490a48f98267e1125dd51d0459f9254c19226d95cf0530dbc9c91",
+      "archiveBytes": 13827,
+      "archiveSha256": "6d6a0538e957e06a1bd8fc0b0a7ae79867b023e99da2daf9544c3a35530831a6",
+      "afterSha256": "262dc69ea5b55566218bc2ac5190bd3a6e58f8325b06cbcd4b01df807cdfb242",
+      "edits": [
+        {
+          "phase": "repository",
+          "id": "shared-f64:pattern-control:1",
+          "before": "import {hasOriginalStandardCall,requireOriginalStandardCall} from './original-standard-calls.mjs';\n",
+          "after": "import {hasOriginalStandardCall,requireOriginalStandardCall} from './original-standard-calls.mjs';\nimport {originalPrimitiveCopySource} from '../shared-reference-copy-source.mjs';\n"
+        },
+        {
+          "phase": "language",
+          "id": "shared-f64:pattern-control:2",
+          "before": "  if(type.rustReference)return type.rustReference.kind==='shared'&&Boolean(type.rustReference.pointee);\n",
+          "after": "  if(type.rustReference)return type.rustReference.kind==='shared'&&Boolean(type.rustReference.pointee);\n  if(type.kind==='float')return type.rustSourceType===true&&Boolean(originalPrimitiveCopySource(type));\n"
+        }
+      ]
+    }
+  ],
+  "helpers": [
+    {
+      "path": "tools/translation/extensions/joint-shared-reference-type.mjs",
+      "archive": "joint-shared-reference-type.mjs.gz",
+      "bytes": 1698,
+      "sha256": "adad1f8a630005729133e173af8dc5012a899acc84030c8507e36ae65b7eba47",
+      "archiveBytes": 789,
+      "archiveSha256": "d81c494878ec2eb280cc1a096761f6e6c45dd2c05addf7cf36c24883f4d1a234"
+    },
+    {
+      "path": "tools/translation/extensions/shared-f64-method-source.mjs",
+      "archive": "shared-f64-method-source.mjs.gz",
+      "bytes": 5641,
+      "sha256": "2aa62a766d0562494bfce3599acc053b3729d9c492e00d9c61a96dba03ce7f34",
+      "archiveBytes": 2053,
+      "archiveSha256": "1b61d26749e8569f15ab0cb01dcafafe2fd7e00146fc7cece0015387bd222377"
+    },
+    {
+      "path": "tools/translation/extensions/shared-f64-method-prelude.mjs",
+      "archive": "shared-f64-method-prelude.mjs.gz",
+      "bytes": 3929,
+      "sha256": "0876ee06c9aff7bb9660d907b8b4935a1389e4966d563609c879f187b3bc925c",
+      "archiveBytes": 1690,
+      "archiveSha256": "4887346a1cdd7abf18cd2ccfb23acad84e128ec940aea6b7ee4694ec89341070"
+    }
+  ],
+  "phases": [
+    "language",
+    "repository"
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

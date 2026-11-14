@@ -1,0 +1,8 @@
+{
+  "schema": "complete-node-case-deadline-request-v1",
+  "root": "/tmp/gh-issue-solver-1794003502595",
+  "files": [
+    "/tmp/gh-issue-solver-1794003502595/scripts/test/node-case-deadlines.test.mjs"
+  ],
+  "receipt": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-crg3Ia/case-deadlines.json"
+}

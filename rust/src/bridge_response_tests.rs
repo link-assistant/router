@@ -353,7 +353,10 @@ fn source_translation_stop_edges_share_independent_semantic_expectations() {
             Some(actual.chat_finish_reason),
             case["chat_finish_reason"].as_str()
         );
-        assert_eq!(Some(actual.response_status), case["response_status"].as_str());
+        assert_eq!(
+            Some(actual.response_status),
+            case["response_status"].as_str()
+        );
         assert_eq!(actual.incomplete_reason, case["incomplete_reason"].as_str());
         assert_eq!(Some(actual.refusal), case["refusal"].as_bool());
     }
@@ -408,10 +411,13 @@ fn usage_totals_saturate_and_reverse_cache_never_exceeds_input() {
         "input_tokens": 2, "prompt_tokens": 99, "output_tokens": 0,
         "completion_tokens": 9, "input_tokens_details": {"cached_tokens": u64::MAX}
     })));
-    assert_eq!(reversed, json!({
-        "input_tokens": 0, "cache_creation_input_tokens": 0,
-        "cache_read_input_tokens": 2, "output_tokens": 0
-    }));
+    assert_eq!(
+        reversed,
+        json!({
+            "input_tokens": 0, "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 2, "output_tokens": 0
+        })
+    );
 }
 
 #[test]

@@ -3,10 +3,16 @@ import assert from 'node:assert/strict';
 import { writeFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Router, RouterError, catalog, operationNames, version, runProcess } from '../index.js';
 import { temporaryHome, mockUpstream, vendorStub } from '../testing.js';
 
-const binary = resolve(process.env.ROUTER_TEST_BIN ?? '../../target/debug/router');
+// The repository root (with the workspace `target/` directory) is one level
+// above this package; resolve it from this file so the working directory does not matter.
+const repository = fileURLToPath(new URL('../..', import.meta.url));
+const binary = process.env.ROUTER_TEST_BIN
+  ? resolve(process.env.ROUTER_TEST_BIN)
+  : join(repository, 'target/debug/router');
 async function fixture(body) {
   const dir = await mkdtemp(join(tmpdir(), 'router-binding-test-'));
   const path = join(dir, 'router');
@@ -160,6 +166,6 @@ test('native verifier returns its saved versioned document using vendor fixtures
       assert.equal(preparation.status, 'prepared');
     }
     // Unknown areas exercise the shared helper's typed error without running a suite.
-    await assert.rejects(verifyContracts({ router, repository: resolve('../../packages'), areas: ['missing-area'] }), error => error.exitCode === 2 && error.result.operation === 'verify');
+    await assert.rejects(verifyContracts({ router, repository, areas: ['missing-area'] }), error => error.exitCode === 2 && error.result.operation === 'verify');
   } finally { await stub.close(); await home.close(); }
 });

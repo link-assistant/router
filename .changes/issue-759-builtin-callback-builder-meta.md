@@ -14,7 +14,7 @@ Hash method bounds/discriminant flow and all generic dispatch still require exac
 caller/transitive closure. Contracts and inventories explicitly retain false
 selectedOwnerBangComplete/generatedImplBehavior; no namespace consumer changes.
 The eight authored foundation cases are UNRUN. One authentic complete-original
-graph namespace case retains exact SubscriptionProvider and CatalogRecord
+module graph namespace case retains exact SubscriptionProvider and CatalogRecord
 source/declaration pins and both Clone callbacks without a Copy spelling inference;
 it does not request semantic project checking. The verified prior batch and all
 callbacks/Schemars residuals remain independent. No compiler, parser probe,

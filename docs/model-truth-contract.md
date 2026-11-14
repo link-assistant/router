@@ -188,7 +188,7 @@ software behavior; they are never accepted as proof of a provider fact.
 
 ## Thinking controls and scoped evidence
 
-The shared `src/thinking/` pipeline separates `Off`, `Auto`, `Budget(u32)` and
+The shared `rust/src/thinking/` pipeline separates `Off`, `Auto`, `Budget(u32)` and
 six discrete effort levels. Protocol conversion tables describe request
 semantics; they do not establish model capabilities. The suffix grammar and
 precedence are documented in [thinking controls](thinking.md).

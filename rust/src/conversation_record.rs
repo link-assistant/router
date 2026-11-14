@@ -54,7 +54,7 @@ use axum::http::{HeaderMap, HeaderName, HeaderValue, StatusCode};
 use axum::middleware::Next;
 use axum::response::Response;
 use futures_util::StreamExt as _;
-use serde_json::{Value, json};
+use serde_json::Value;
 
 use crate::request_log::{redacted_body, redacted_headers};
 
@@ -76,7 +76,8 @@ pub const REPLAY_TURN_HEADER: &crate::translation_core::Str = "x-router-replay-t
 /// The recorded body is re-framed by this server, so the recorded framing would
 /// contradict the bytes actually sent — a stale `content-length` truncates the
 /// answer and a recorded `transfer-encoding` collides with the one Axum writes.
-const REFRAMED_HEADERS: &[&crate::translation_core::Str] = &["content-length", "transfer-encoding", "connection", "date"];
+const REFRAMED_HEADERS: &[&crate::translation_core::Str] =
+    &["content-length", "transfer-encoding", "connection", "date"];
 
 /// Whether either mode is on, and with which file.
 #[derive(Clone, Debug)]
@@ -104,7 +105,10 @@ impl Mode {
 
     /// Resolve the mode from the two variables' values.
     #[must_use]
-    pub fn from_values(record: crate::translation_core::Maybe<&crate::translation_core::Str>, replay: crate::translation_core::Maybe<&crate::translation_core::Str>) -> Self {
+    pub fn from_values(
+        record: crate::translation_core::Maybe<&crate::translation_core::Str>,
+        replay: crate::translation_core::Maybe<&crate::translation_core::Str>,
+    ) -> Self {
         let record = record.map(str::trim).filter(|value| !value.is_empty());
         let replay = replay.map(str::trim).filter(|value| !value.is_empty());
         match (record, replay) {
@@ -198,7 +202,10 @@ impl Session {
     /// # Errors
     /// Propagates a replay load failure; recording cannot fail here because the
     /// file is created on the first exchange.
-    pub fn from_mode(mode: &Mode, provider: &crate::translation_core::Str) -> crate::translation_core::Outcome<crate::translation_core::Maybe<Self>, LoadError> {
+    pub fn from_mode(
+        mode: &Mode,
+        provider: &crate::translation_core::Str,
+    ) -> crate::translation_core::Outcome<crate::translation_core::Maybe<Self>, LoadError> {
         match mode {
             Mode::Off => Ok(None),
             Mode::Record(path) => Ok(Some(Self::recording(
@@ -316,7 +323,10 @@ const MAX_RECORDED_BODY: usize = 10 * 1024 * 1024;
 /// Outermost, deliberately. A replayed turn must not reach routing, provider
 /// selection, credential loading or the upstream client — that is what lets a
 /// machine holding no subscription at all serve a replay.
-pub fn layer(app: axum::Router, session: crate::translation_core::Maybe<Arc<Session>>) -> axum::Router {
+pub fn layer(
+    app: axum::Router,
+    session: crate::translation_core::Maybe<Arc<Session>>,
+) -> axum::Router {
     match session {
         None => app,
         Some(session) => app.layer(axum::middleware::from_fn_with_state(
@@ -357,7 +367,11 @@ pub async fn record_or_replay(
 }
 
 /// Serve turn `position` from the recording, or fail naming the divergence.
-fn replay_turn(session: &Arc<Session>, position: usize, incoming: &crate::translation_core::Json) -> Response {
+fn replay_turn(
+    session: &Arc<Session>,
+    position: usize,
+    incoming: &crate::translation_core::Json,
+) -> Response {
     let Some(turn) = session.turns.get(position - 1) else {
         return replay_failure(&format!(
             "replay exhausted: the recording {} holds {} turn(s) and the client asked for turn {}",

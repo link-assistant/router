@@ -124,3 +124,22 @@ pub fn merge_safer_record(current: &mut TokenRecord, other: &TokenRecord) {
         current.rate_window_requests = current.rate_window_requests.max(other.rate_window_requests);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{RequestAdmission, admit_request_reserving};
+
+    /// A per-minute rate counts every request inside one window and starts a
+    /// new count only once a full minute has passed since the window began.
+    #[test]
+    fn the_rate_window_resets_only_after_a_full_minute() {
+        let mut record = super::super::tests::sample_record("rated");
+        record.rate_limit_per_minute = Some(2);
+        let mut admit = |now| admit_request_reserving(Some(&mut record), now, 0);
+
+        assert_eq!(admit(1_000), RequestAdmission::Admitted);
+        assert_eq!(admit(1_030), RequestAdmission::Admitted);
+        assert_eq!(admit(1_059), RequestAdmission::RateLimitExceeded);
+        assert_eq!(admit(1_060), RequestAdmission::Admitted);
+    }
+}

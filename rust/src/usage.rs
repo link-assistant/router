@@ -27,15 +27,28 @@ pub fn token_count(value: &crate::translation_core::Json) -> crate::translation_
     total.or_else(|| Some(input.unwrap_or(0).saturating_add(output.unwrap_or(0))))
 }
 
-fn token_parts(value: &crate::translation_core::Json) -> crate::translation_core::Maybe<(crate::translation_core::Maybe<u64>, crate::translation_core::Maybe<u64>, crate::translation_core::Maybe<u64>)> {
+fn token_parts(
+    value: &crate::translation_core::Json,
+) -> crate::translation_core::Maybe<(
+    crate::translation_core::Maybe<u64>,
+    crate::translation_core::Maybe<u64>,
+    crate::translation_core::Maybe<u64>,
+)> {
     if let Some(usage) = value.get("usage") {
-        if let Some(total) = usage.get("total_tokens").and_then(crate::translation_core::Json::as_u64) {
+        if let Some(total) = usage
+            .get("total_tokens")
+            .and_then(crate::translation_core::Json::as_u64)
+        {
             return Some((Some(total), None, None));
         }
         let input = first_u64(usage, &["input_tokens", "prompt_tokens"]).map(|input| {
             ["cache_creation_input_tokens", "cache_read_input_tokens"]
                 .iter()
-                .filter_map(|field| usage.get(*field).and_then(crate::translation_core::Json::as_u64))
+                .filter_map(|field| {
+                    usage
+                        .get(*field)
+                        .and_then(crate::translation_core::Json::as_u64)
+                })
                 .fold(input, u64::saturating_add)
         });
         let output = first_u64(usage, &["output_tokens", "completion_tokens"]);
@@ -44,11 +57,18 @@ fn token_parts(value: &crate::translation_core::Json) -> crate::translation_core
         }
     }
     if let Some(usage) = value.get("usageMetadata") {
-        if let Some(total) = usage.get("totalTokenCount").and_then(crate::translation_core::Json::as_u64) {
+        if let Some(total) = usage
+            .get("totalTokenCount")
+            .and_then(crate::translation_core::Json::as_u64)
+        {
             return Some((Some(total), None, None));
         }
-        let input = usage.get("promptTokenCount").and_then(crate::translation_core::Json::as_u64);
-        let output = usage.get("candidatesTokenCount").and_then(crate::translation_core::Json::as_u64);
+        let input = usage
+            .get("promptTokenCount")
+            .and_then(crate::translation_core::Json::as_u64);
+        let output = usage
+            .get("candidatesTokenCount")
+            .and_then(crate::translation_core::Json::as_u64);
         if input.is_some() || output.is_some() {
             return Some((None, input, output));
         }
@@ -66,7 +86,10 @@ fn streamed_output_chars(value: &crate::translation_core::Json) -> usize {
             .and_then(crate::translation_core::Json::as_str)
             .map_or(0, |text| text.chars().count())
     };
-    match value.get("type").and_then(crate::translation_core::Json::as_str) {
+    match value
+        .get("type")
+        .and_then(crate::translation_core::Json::as_str)
+    {
         // Anthropic Messages.
         Some("content_block_delta") => {
             let delta = value.get("delta");
@@ -125,13 +148,21 @@ fn streamed_output_chars(value: &crate::translation_core::Json) -> usize {
 
 /// Whether one SSE event carries the upstream's final usage for the turn.
 fn reports_final_usage(value: &crate::translation_core::Json) -> bool {
-    match value.get("type").and_then(crate::translation_core::Json::as_str) {
-        Some("message_delta") => value.get("usage").is_some_and(crate::translation_core::Json::is_object),
+    match value
+        .get("type")
+        .and_then(crate::translation_core::Json::as_str)
+    {
+        Some("message_delta") => value
+            .get("usage")
+            .is_some_and(crate::translation_core::Json::is_object),
         Some("response.completed" | "response.incomplete" | "response.failed") => true,
         Some(_) => false,
         None => {
             // OpenAI sends a usage object only on the final chunk.
-            if value.get("usage").is_some_and(crate::translation_core::Json::is_object) {
+            if value
+                .get("usage")
+                .is_some_and(crate::translation_core::Json::is_object)
+            {
                 return true;
             }
             let gemini_value = value.get("response").unwrap_or(value);
@@ -161,10 +192,15 @@ pub struct Settlement {
     pub estimated: bool,
 }
 
-fn first_u64(value: &crate::translation_core::Json, fields: &[&crate::translation_core::Str]) -> crate::translation_core::Maybe<u64> {
-    fields
-        .iter()
-        .find_map(|field| value.get(*field).and_then(crate::translation_core::Json::as_u64))
+fn first_u64(
+    value: &crate::translation_core::Json,
+    fields: &[&crate::translation_core::Str],
+) -> crate::translation_core::Maybe<u64> {
+    fields.iter().find_map(|field| {
+        value
+            .get(*field)
+            .and_then(crate::translation_core::Json::as_u64)
+    })
 }
 
 /// Incrementally collects usage from JSON or Server-Sent Events.

@@ -25,7 +25,7 @@ node tools/translation/propose-source-backed-vector.mjs --review /fresh/outside/
 The materialized `proposeSourceBackedCoreVectorCorpus` API and detached
 `iterateSourceBackedCoreVectorCorpusPackets` API resolve the complete actual
 module graph and instantiate a fresh private original-producer inspection
-context. The graph's complete actual compilation profile is forwarded into
+context. The module graph's complete actual compilation profile is forwarded into
 the vector adopter rather than replaced by its standalone default. Only
 genuinely closed producer attributes and proven inactive items
 are blanked in temporary inspection DATA at identical source offsets. All
@@ -36,7 +36,7 @@ barriers, including nested opaque macro bodies.
 
 Archives retain complete original source rows, module/ancestor/macro-producer
 origins, all optional package/lock/workspace Cargo inputs, inspection CST and
-inverses, complete per-file proposal CST/mappings/inverses, graph edges and
+inverses, complete per-file proposal CST/mappings/inverses, module graph edges and
 diagnostics, and every changed after-source. The writer rechecks the physical
 source and Cargo census before publication. The independent reader consumes
 every listed compressed packet and checks original source associations,
@@ -52,7 +52,7 @@ function gains. Archive summaries count distinct proposed functions, not fresh
 semantic admission or production coverage.
 
 A later formatting-to-vector sequence must pass the complete edited source map
-into a new vector invocation, creating a new real graph and private inspection.
+into a new vector invocation, creating a new real module graph and private inspection.
 Coordinates from the original phase cannot be reused after length-changing
 formatting edits. Both phases' complete source/CST/inverses must be retained;
 the standalone vector command does not install or implicitly compose stages.

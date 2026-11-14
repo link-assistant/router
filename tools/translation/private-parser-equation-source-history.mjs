@@ -4,7 +4,7 @@ import {resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
-import {prepareConcreteEquationTransaction} from './prepare-concrete-equation-transaction.mjs';
+import {prepareConcreteEquationTransaction,isConcreteEquationPhysicalSourceMismatch} from './prepare-concrete-equation-transaction.mjs';
 const EXECUTOR='tools/translation/private-parser-execution.mjs';
 const INPUTS=['tools/translation/private-parser-equation-source-history.mjs','tools/translation/prepare-concrete-equation-transaction.mjs','tools/translation/source-profiles/concrete-equation-transaction/complete-originals.json.gz'];
 const hash=value=>createHash('sha256').update(value).digest('hex'),fail=message=>{throw new TypeError('Later private parser source: '+message);};
@@ -14,7 +14,12 @@ function physical(root,path){
 }
 export function composePrivateParserEquationSourceHistory(row,input,{root}){
  if(row.path!==EXECUTOR||input.path!==EXECUTOR)fail('one exact original executor required');
- const inputs=INPUTS.map(path=>physical(root,path)),proposal=prepareConcreteEquationTransaction({root}),equations=proposal.files.filter(value=>value.path===EXECUTOR);if(equations.length!==1)fail('one complete generated equation required');const equation=equations[0];
+ const inputs=INPUTS.map(path=>physical(root,path));let proposal;
+ try{proposal=prepareConcreteEquationTransaction({root});}catch(error){
+  if(!isConcreteEquationPhysicalSourceMismatch(error))throw error;
+  throw new TypeError('Private DATA source history: physical source is neither exact historical nor exact adopted equation: '+input.path,{cause:error});
+ }
+ const equations=proposal.files.filter(value=>value.path===EXECUTOR);if(equations.length!==1)fail('one complete generated equation required');const equation=equations[0];
  if(equation.before!==row.after||equation.current!==input.source||equation.after!==input.source||!equation.after.startsWith(equation.before)||equation.inverse!==equation.before)fail('complete original/later source equation differs');
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('TypeScript5.9.3 required');const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,row.path),equation.after);
  const verify=()=>{for(const input of inputs){const fresh=physical(root,input.path);if(fresh.source!==input.source||fresh.sha256!==input.sha256||JSON.stringify(fresh.identity)!==JSON.stringify(input.identity))fail('complete later producer input changed');}};

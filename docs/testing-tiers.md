@@ -89,7 +89,7 @@ ROUTER_DEPLOY_TEST_IMAGE=ghcr.io/link-assistant/router:1.10.0 \
   cargo test --test deploy_docker_test -- --test-threads=1
 ```
 
-`tests/deploy_docker_relay_test.rs` also needs an earlier release to update
+`rust/tests/deploy_docker_relay_test.rs` also needs an earlier release to update
 from. It deploys that release, updates while two requests are in flight, and
 asserts the backend and relay images, request continuity, and a single
 published listener (issue #627):
@@ -100,19 +100,19 @@ ROUTER_DEPLOY_TEST_IMAGE=ghcr.io/link-assistant/router:1.14.3 \
   cargo test --test deploy_docker_relay_test
 ```
 
-`tests/deploy_docker_claude_share_test.rs` takes the same variable and proves
+`rust/tests/deploy_docker_claude_share_test.rs` takes the same variable and proves
 `--claude-credentials share` against a stand-in login in a temporary
 `CLAUDE_CONFIG_DIR`; the operator's real `~/.claude` is never read.
-`tests/deploy_docker_host_test.rs` moves a container deployment to
+`rust/tests/deploy_docker_host_test.rs` moves a container deployment to
 `--mode host` and back and checks that a token issued by the backend keeps
-authorizing on the same port. `tests/deploy_host_test.rs` covers host mode
+authorizing on the same port. `rust/tests/deploy_host_test.rs` covers host mode
 without a container runtime and always runs.
 
 The image is named rather than pulled by the tests themselves: a test that
 reaches a registry fails when the network does, which says nothing about the code
 under test. `router deploy` *does* pull an absent image — that is how it works on
 a machine that has never built one — and the pull decision is pinned against a
-fake runtime in `src/deploy_tests.rs`.
+fake runtime in `rust/src/deploy_tests.rs`.
 
 `--test-threads=1` because every test in that file drives the same globally
 named relay, backend namespace, and private Docker network, so they cannot run
@@ -131,7 +131,7 @@ seconds, legacy migration refusal, a true second-run no-op, and read-only
 
 A missing credential is a skip rather than an error: a contributor without a
 subscription must never see red from tier 4. But it is never silent. Every
-live-tier test resolves its credential through `tests/common/tiers.rs`, which on
+live-tier test resolves its credential through `rust/tests/common/tiers.rs`, which on
 absence prints the tier, the test, and the variable that would enable it:
 
 ```
@@ -269,13 +269,21 @@ triggered on pull requests only when the code they guard changes.
 
 | Suite | Proves | Run locally | Workflow |
 | --- | --- | --- | --- |
-| Vendor cassettes (`tests/vendor_fixture_replay_test.rs`, `tests/fixtures/vendor/`) | Recorded Anthropic, Codex, Chat and Gemini exchanges (thinking, tool use, cache reads, 400/429/500/529) replay through every client surface with the same translated output and the same charge (#671) | `cargo test --test vendor_fixture_replay_test` | every change; `release.yml` checks the cassettes with `rust-script scripts/record-vendor-fixtures.rs --check` |
-| Claude Code feature matrix (`tests/claude_code_feature_matrix_test.rs`) | Vision, PDFs, citations, thinking, structured outputs, server tools and beta headers pass through the native surface and are translated or refused cleanly on the Codex bridge (#675) | `cargo test --test claude_code_feature_matrix_test` | every change |
-| Benchmarks (`benches/hot_paths.rs`) | SSE and request translation and token validation do not get more than 25% slower (median) than the pull request's base, measured on the same runner (#672) | `cargo bench --bench hot_paths -- --save-baseline before`, change, `cargo bench --bench hot_paths -- --save-baseline after`, then `rust-script scripts/compare-benchmarks.rs before after` | `benchmarks.yml` |
-| Mutation testing (`.cargo/mutants.toml`) | Tests notice changes to token validation and reservations, the SSRF guard, authentication, credential handling, budget settlement and log redaction (#672) | `cargo install cargo-mutants --locked`, then `cargo mutants --file src/token_validate.rs` | `mutants.yml`: changed lines on pull requests, every listed module nightly |
-| Soak (`tests/soak_test.rs`, ignored) | Streamed, translated, unary and client-abandoned requests leave resident memory and live tasks bounded, with no reservation open; Linux also checks open descriptors (#672, #705) | `SOAK_SECONDS=60 cargo test --release --test soak_test -- --ignored --nocapture` | `soak.yml`: Linux and macOS, one minute on pull requests, ten nightly; diagnostics uploaded even on failure |
-| macOS Keychain (`tests/macos_keychain_test.rs`) | Router finds `Claude Code-credentials` and its `CLAUDE_CONFIG_DIR`-scoped entry in a real keychain, and prefers it to a stale credentials file (#674) | on macOS, against a throwaway keychain seeded as `macos-keychain.yml` does, with `ROUTER_TEST_KEYCHAIN=1` | `macos-keychain.yml` |
-| Upgrade matrix (`scripts/upgrade-matrix.sh`, `tests/upgrade_fixture_test.rs`) | A data directory written by each of the last three releases (capped, admin and revoked tokens, a provider with an encrypted key, a server profile) is listed, served and extended unchanged by the new build (#673) | `cargo test --test upgrade_fixture_test`, or `scripts/upgrade-matrix.sh download v1.15.3 /tmp/old`, `seed /tmp/old/router /tmp/state`, `verify target/debug/router /tmp/state` | `upgrade-matrix.yml` |
+| Vendor cassettes (`rust/tests/vendor_fixture_replay_test.rs`, `rust/tests/fixtures/vendor/`) | Recorded Anthropic, Codex, Chat and Gemini exchanges (thinking, tool use, cache reads, 400/429/500/529) replay through every client surface with the same translated output and the same charge (#671) | `cargo test --test vendor_fixture_replay_test` | every change; `release.yml` checks the cassettes with `rust-script scripts/record-vendor-fixtures.rs --check` |
+| Claude Code feature matrix (`rust/tests/claude_code_feature_matrix_test.rs`) | Vision, PDFs, citations, thinking, structured outputs, server tools and beta headers pass through the native surface and are translated or refused cleanly on the Codex bridge (#675) | `cargo test --test claude_code_feature_matrix_test` | every change |
+| Benchmarks (`rust/benches/hot_paths.rs`) | SSE and request translation and token validation do not get more than 25% slower (median) than the pull request's base, measured on the same runner (#672) | `cargo bench --bench hot_paths -- --save-baseline before`, change, `cargo bench --bench hot_paths -- --save-baseline after`, then `rust-script scripts/compare-benchmarks.rs before after` | `benchmarks.yml` |
+| Mutation testing (`.cargo/mutants.toml`) | Tests notice changes to token validation and reservations, the SSRF guard, authentication, credential handling, budget settlement and log redaction (#672) | `cargo install cargo-mutants --locked`, then `cargo mutants --in-place --file rust/src/token_validate.rs` | `mutants.yml`: changed lines on pull requests (eight shards), every listed module nightly (sixteen shards) |
+| Soak (`rust/tests/soak_test.rs`, ignored) | Streamed, translated, unary and client-abandoned requests leave resident memory and live tasks bounded, with no reservation open; Linux also checks open descriptors (#672, #705) | `SOAK_SECONDS=60 cargo test --release --test soak_test -- --ignored --nocapture` | `soak.yml`: Linux and macOS, one minute on pull requests, ten nightly; diagnostics uploaded even on failure |
+| macOS Keychain (`rust/tests/macos_keychain_test.rs`) | Router finds `Claude Code-credentials` and its `CLAUDE_CONFIG_DIR`-scoped entry in a real keychain, and prefers it to a stale credentials file (#674) | on macOS, against a throwaway keychain seeded as `macos-keychain.yml` does, with `ROUTER_TEST_KEYCHAIN=1` | `macos-keychain.yml` |
+| Upgrade matrix (`scripts/upgrade-matrix.sh`, `rust/tests/upgrade_fixture_test.rs`) | A data directory written by each of the last three releases (capped, admin and revoked tokens, a provider with an encrypted key, a server profile) is listed, served and extended unchanged by the new build (#673) | `cargo test --test upgrade_fixture_test`, or `scripts/upgrade-matrix.sh download v1.15.3 /tmp/old`, `seed /tmp/old/router /tmp/state`, `verify target/debug/router /tmp/state` | `upgrade-matrix.yml` |
+
+Each `Mutants` shard first lists its mutants, then prints every outcome
+(caught, unviable, missed, timeout) as it lands. A mutant that makes a test
+exhaust memory gets the runner shut down before cargo-mutants' test timeout,
+and the shard uploads no report; its log still names the last finished mutant,
+so the next one in the list is the culprit. Loops in mutated modules should
+consume their input (slice patterns, iterators) rather than step an index, so
+no arithmetic mutation can stall them.
 
 The soak uses a non-retaining upstream fixture; ordinary replay and feature
 tests still record complete requests. RSS is measured in KiB through
@@ -291,7 +299,7 @@ The macOS Keychain test never reads a developer's own credential: off macOS, or
 without `ROUTER_TEST_KEYCHAIN=1`, it skips and says so like any other gated
 test. The upgrade fixture holds only throwaway secrets (a test signing secret
 and a fake API key); regenerate it with
-`scripts/upgrade-matrix.sh fixture <released router> tests/fixtures/upgrade/<version>`.
+`scripts/upgrade-matrix.sh fixture <released router> rust/tests/fixtures/upgrade/<version>`.
 
 ## In CI
 

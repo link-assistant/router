@@ -67,7 +67,10 @@ fn first_block_is_identity(blocks: &[crate::translation_core::Json]) -> bool {
 
 /// Apply [`ensure_claude_code_system`] to a body forwarded as raw bytes.
 #[must_use]
-pub fn ensure_claude_code_system_bytes(parsed: &crate::translation_core::Json, raw: Bytes) -> Bytes {
+pub fn ensure_claude_code_system_bytes(
+    parsed: &crate::translation_core::Json,
+    raw: Bytes,
+) -> Bytes {
     if !parsed.is_object() {
         return raw;
     }

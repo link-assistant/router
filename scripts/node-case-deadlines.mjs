@@ -122,10 +122,22 @@ function parseSource(record,ts){
   try{return {kind:'finite-source-deadline',milliseconds:number(ts.isShorthandPropertyAssignment(properties[0])?properties[0].name:properties[0].initializer)};}
   catch(error){return {kind:'ambiguous-declared-deadline',error:error.message};}
  }
- return {file,calls,timeout,nodeTestCall};
+ // Keep the exact source joins and lexical conclusions, without retaining a
+ // TypeScript program and checker for every preselected test file. Every file
+ // is parsed independently, and finish still rereads its complete identity.
+ const lineStarts=[...file.getLineStarts()];
+ const entries=calls.map(call=>{
+  const name=call.arguments[0];
+  return {expressionStart:call.expression.getStart(file),expressionEnd:call.expression.end,
+   start:call.getStart(file),end:call.end,
+   literalName:name&&(ts.isStringLiteral(name)||ts.isNoSubstitutionTemplateLiteral(name))?name.text:null,
+   deadline:timeout(call),nodeTestCall:nodeTestCall(call)};
+ });
+ return {lineStarts,calls:entries};
 }
 export function createCaseDeadlineAudit({root,files}={}){
  root=canonicalCasePath(root);const compiler=installedDeadlineCompiler(root),ts=compiler.ts;
+ const traceSources=process.env.ROUTER_CASE_DEADLINE_PROGRESS==='1';
  const sources=new Map(),records=[],errors=[];let sourceBytes=0,observed=0,overflow=false;
  const fail=message=>{if(errors.length<4096)errors.push(String(message));else overflow=true;};
  function load(filename){
@@ -135,6 +147,7 @@ export function createCaseDeadlineAudit({root,files}={}){
    if(sources.size>=4096)throw Error('Deadline source count bound');const record=readCaseSource(absolute);sourceBytes+=record.bytes;if(sourceBytes>MAX_SOURCE)throw Error('Deadline source total bound');
    const selected={record,parsed:null,seen:new Set(),parseError:null};sources.set(absolute,selected);
    try{selected.parsed=parseSource(record,ts);}catch(error){selected.parseError=error.message;}
+   if(traceSources)process.stderr.write(JSON.stringify({event:'deadline-source-audit',source:absolute,sourceBytes:record.bytes,totalSourceBytes:sourceBytes,selectedFiles:sources.size,callSpans:selected.parsed?.calls.length??0,parseError:selected.parseError,memory:process.memoryUsage()})+'\n');
   }
   const selected=sources.get(absolute);if(selected.parseError)throw Error(selected.parseError);return selected;
  }
@@ -151,17 +164,17 @@ export function createCaseDeadlineAudit({root,files}={}){
    const {record,parsed,seen}=load(entry.file);entry.sourceSha256=record.sha256;
    if(!Number.isFinite(entry.durationMs)||entry.durationMs<0)throw Error('Observed case lacks finite nonnegative duration');
    if(!Number.isSafeInteger(entry.line)||entry.line<1||!Number.isSafeInteger(entry.column)||entry.column<1)throw Error('Observed completed case lacks source position');
-   const starts=parsed.file.getLineStarts();if(entry.line>starts.length)throw Error('Observed case line outside complete source');
+   const starts=parsed.lineStarts;if(entry.line>starts.length)throw Error('Observed case line outside complete source');
    const position=starts[entry.line-1]+entry.column-1;
    if(position>=(starts[entry.line]??record.source.length))throw Error('Observed column lies outside exact source line');
-   const candidates=parsed.calls.filter(call=>call.expression.getStart(parsed.file)<=position&&position<call.expression.end);
+   const candidates=parsed.calls.filter(call=>call.expressionStart<=position&&position<call.expressionEnd);
    if(candidates.length!==1){
     if(!candidates.length&&[record.path,path.relative(root,record.path)].includes(entry.name)){entry.deadline={kind:'file-container-no-case-deadline'};return;}
     throw Error('Ambiguous observed case/source call join');
    }
-   const call=candidates[0],name=call.arguments[0];
-   if(name&&(ts.isStringLiteral(name)||ts.isNoSubstitutionTemplateLiteral(name))&&name.text!==entry.name)throw Error('Observed case name differs from exact source');
-   seen.add(call);entry.sourceCallSpan={start:call.getStart(parsed.file),end:call.end};entry.deadline=parsed.timeout(call);
+   const call=candidates[0];
+   if(call.literalName!==null&&call.literalName!==entry.name)throw Error('Observed case name differs from exact source');
+   seen.add(call);entry.sourceCallSpan={start:call.start,end:call.end};entry.deadline={...call.deadline};
    if(entry.deadline.kind.startsWith('ambiguous'))throw Error(entry.deadline.error);
    if(entry.deadline.kind==='finite-source-deadline'&&entry.durationMs>entry.deadline.milliseconds){entry.durationBreach=true;throw Error(`Observed ${entry.durationMs}ms exceeds unchanged source-declared ${entry.deadline.milliseconds}ms timeout`);}
   }catch(error){entry.auditError=error.message;fail(`${entry.file??'?'}:${entry.line??'?'}:${entry.column??'?'} ${entry.name??'?'}: ${error.message}`);}
@@ -171,7 +184,7 @@ export function createCaseDeadlineAudit({root,files}={}){
   for(const {record,parsed,seen} of sources.values()){
    try{const after=readCaseSource(record.path);if(JSON.stringify({...after,source:undefined})!==JSON.stringify({...record,source:undefined}))throw Error('Full source bytes/identity changed during test reporting');}catch(error){fail(error.message);}
    sourceRecords.push(record);
-   if(parsed)for(const call of parsed.calls){if(!parsed.nodeTestCall(call))continue;const deadline=parsed.timeout(call);if(deadline.kind==='finite-source-deadline'&&!seen.has(call))unobserved.push({file:record.path,span:{start:call.getStart(parsed.file),end:call.end},deadline,observed:false});}
+   if(parsed)for(const call of parsed.calls){if(!call.nodeTestCall)continue;const deadline={...call.deadline};if(deadline.kind==='finite-source-deadline'&&!seen.has(call))unobserved.push({file:record.path,span:{start:call.start,end:call.end},deadline,observed:false});}
   }
   if(overflow)fail('Complete deadline audit record/error count exceeded');
   return {schema:'source-declared-node-case-deadlines-v1',root,node:process.versions,typescript:compiler.observation,originalCaseLimitsChanged:false,sourceRecords,records,unobservedFiniteSourceDeadlines:unobserved,defaultDeadlinesInferred:false,observedCompletedCases:observed,observedFiniteDeadlineCases:records.filter(row=>row.deadline?.kind==='finite-source-deadline').length,originalFailedCompletionEvents:records.filter(row=>row.type==='test:fail').length,durationBreaches:records.filter(row=>row.durationBreach).length,errors,overflow,passed:errors.length===0&&!overflow,runtimeParity:false,rustExecuted:false};

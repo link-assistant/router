@@ -14,14 +14,14 @@ jobs:
   javascript:
     if: ${{ github.event_name != 'pull_request' || toJSON(github.event.pull_request.draft) == 'false' }}
     name: JavaScript first (same commit)
-    uses: ./.github/workflows/javascript-first.yml
+    uses: ./.github/workflows/javascript-manual-development.yml
     with:
       sha: ${{ github.sha }}
     permissions:
       contents: read
 
   bindings:
-    if: needs.javascript.result == 'success'
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
     needs: [javascript]
     strategy:
       fail-fast: false
@@ -74,7 +74,7 @@ jobs:
           python -m build packages/python
   semver:
     needs: [javascript]
-    if: needs.javascript.result == 'success' && (github.event_name == 'pull_request')
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success' && (github.event_name == 'pull_request'))
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -88,9 +88,17 @@ jobs:
       - name: Check documented minor API changes against PR base
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: cargo semver-checks check-release --baseline-rev "$BASE_SHA" --release-type minor
+        # --baseline-rev extracts the base tree through temporary names 43 bytes
+        # longer than each file name, which exceeds the 255-byte limit for the
+        # longest translation fixtures. tar extracts the same tree under the
+        # final names, and --baseline-root reads it as --baseline-rev would.
+        run: |
+          baseline="target/semver-checks/baseline-$BASE_SHA"
+          mkdir -p "$baseline"
+          git archive "$BASE_SHA" | tar -x -C "$baseline"
+          cargo semver-checks check-release --baseline-root "$baseline" --release-type minor
   generated-http:
-    if: needs.javascript.result == 'success'
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
     needs: [javascript]
     runs-on: ubuntu-24.04
     timeout-minutes: 30

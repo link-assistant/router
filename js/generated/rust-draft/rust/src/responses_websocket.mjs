@@ -1,4 +1,4 @@
-// Generated draft from rust/src/responses_websocket.rs; sha256=1e03a85abec3035f957494ec5260309017b9b7c90daf8df8cbb3aa0b9769c123
+// Generated draft from rust/src/responses_websocket.rs; sha256=1dcbe54e76522fc70c85f9ec043dfe2f100678e24914790644e58650828f61ed
 // Carried constructs are data, never runtime parity evidence.
 import { std_time_duration_from_secs as ml_host_std_time_duration_from_secs } from "../../runtime/time-runtime.mjs";
 
@@ -116,4 +116,4 @@ function rp_726573706f6e7365735f776562736f636b65742e6e616d6573706163655f70617468
 }
 
 export const translated = { ["RESPONSES_PATH"]: rp_726573706f6e7365735f776562736f636b65742e524553504f4e5345535f50415448(), ["MAX_NAMED_STREAMS"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f4e414d45445f53545245414d53(), ["MAX_STREAM_ID_CHARS"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f53545245414d5f49445f4348415253(), ["MAX_CONNECTION_AGE"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f434f4e4e454354494f4e5f414745(), ["CONNECT_TIMEOUT"]: rp_726573706f6e7365735f776562736f636b65742e434f4e4e4543545f54494d454f5554(), ["Namespace"]: Object.freeze({ ["OpenAi"]: ml_make_Namespace_OpenAi, ["Codex"]: ml_make_Namespace_Codex }), ["stream_id"]: rp_726573706f6e7365735f776562736f636b65742e73747265616d5f6964, ["namespace_path"]: rp_726573706f6e7365735f776562736f636b65742e6e616d6573706163655f70617468 };
-export const provenance = {"sourcePath":"rust/src/responses_websocket.rs","sourceSha256":"1e03a85abec3035f957494ec5260309017b9b7c90daf8df8cbb3aa0b9769c123","executable":8,"executableFunctions":2,"executableConstants":5,"executableTypes":1,"executableConstructors":2,"carried":47,"preserved":56,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/responses_websocket.rs","sourceSha256":"1dcbe54e76522fc70c85f9ec043dfe2f100678e24914790644e58650828f61ed","executable":8,"executableFunctions":2,"executableConstants":5,"executableTypes":1,"executableConstructors":2,"carried":47,"preserved":56,"runtimeParity":false};

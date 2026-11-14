@@ -1,0 +1,9 @@
+{
+  "originalPath": "experiments/issue-784/current-unit-unicode-source.cpuprofile",
+  "originalBytes": 10401885,
+  "originalSha256": "9b3af88de86456fd628f80b5f3ef6ab930d498e0288688ec23b8cc3b2a6c0281",
+  "archivePath": "experiments/issue-784/current-unit-unicode-source.cpuprofile.gz",
+  "archiveBytes": 710095,
+  "archiveSha256": "d1ab456156e6205dede4095890cbb25ea0b3805124c86c805ffa1ea6cb62663e",
+  "allDecodedOriginalsVerified": true
+}

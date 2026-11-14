@@ -46,7 +46,7 @@ bytes, component bytes/hashes, decoded values, compression format, all storage
 limits, source discovery, isolated worker heap literals and deadlines stay
 required. A field beyond the original limits still refuses.
 
-Root materialization and receiving sequence (unrun by this worker):
+Root materialization and receiving sequence proposed by the original worker:
 
 ```sh
 node tools/translation/prepare-owned-field-bulk.mjs --emit /private/tmp/router-owned-field-bulk-source-v1
@@ -65,6 +65,24 @@ new cases compare complete old/new plans at one physical root and every emitted
 byte, inline and three-component logical/storage inverses, nested mutations,
 fresh physical source joins, source binding refusals and complete CLI outputs.
 They do not filter implementation hashes or compare only selected fields.
-The proposal is source-only and unmaterialized; these tests, full forward run,
-strict typing, matrix workloads, reverse synchronization and the eight-stage
-gate remain unrun. No heap improvement, repaired OOM or coverage gain is claimed.
+The nine sibling sources are now materialized in the repository. During issue
+#784 receiving, all six new cases passed under Node 20.20.2 with the independent
+deadline audit and under Bun 1.4.4. The five unchanged Node dependency files
+reported 39 TAP passes, but their independent audit failed the original matrix
+CLI case: 34678.783762 ms against 30000 ms. This is failed qualification, not a
+passing cohort. The same five-file Bun selection was stopped at the container
+memory guard after 35 reported passes, leaving its remaining cases unqualified.
+The remaining workloads, full forward generation, reverse synchronization and
+the complete gate remain unqualified. See the
+[receiving investigation](../case-studies/issue-784/storage-investigation.md) for
+complete selections and resource observations. No heap improvement, repaired
+OOM or coverage gain is claimed.
+
+The complete four-case three-profile CLI selection subsequently passed on Bun.
+Node passed its two ordinary cases but both retained cases failed an unchanged
+20000 ms child deadline; its retained-check case also exceeded the original
+60000 ms case deadline. All eight full input/output vectors are retained.
+An actual existing owned-definition production generation was separately stopped
+before namespace construction completed at 2868981760 sampled cgroup bytes;
+it wrote no output and did not reach this proposed storage operation. These
+observations preserve failed receiving and do not authorize default adoption.

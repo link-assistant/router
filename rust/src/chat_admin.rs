@@ -254,7 +254,12 @@ impl ChatAdmin {
     /// Callers must have established that the message came from a 1:1
     /// conversation — group traffic is dropped by the transports before it ever
     /// reaches this function.
-    pub fn handle(&self, channel: ChatChannel, user_id: &crate::translation_core::Str, text: &crate::translation_core::Str) -> Reply {
+    pub fn handle(
+        &self,
+        channel: ChatChannel,
+        user_id: &crate::translation_core::Str,
+        text: &crate::translation_core::Str,
+    ) -> Reply {
         self.prune(channel, user_id);
         let text = text.trim();
         if text.is_empty() {
@@ -369,7 +374,12 @@ impl ChatAdmin {
     }
 
     /// `/confirm <token>` — phase two of the shared two-phase claim.
-    fn confirm(&self, channel: ChatChannel, user_id: &crate::translation_core::Str, token: &crate::translation_core::Str) -> Reply {
+    fn confirm(
+        &self,
+        channel: ChatChannel,
+        user_id: &crate::translation_core::Str,
+        token: &crate::translation_core::Str,
+    ) -> Reply {
         if !self.allow(channel, user_id) {
             return Reply::plain(RATE_LIMITED);
         }
@@ -408,7 +418,12 @@ impl ChatAdmin {
     }
 
     /// `/auth <token>` — bind an existing admin credential to this chat user.
-    fn authenticate(&self, channel: ChatChannel, user_id: &crate::translation_core::Str, token: &crate::translation_core::Str) -> Reply {
+    fn authenticate(
+        &self,
+        channel: ChatChannel,
+        user_id: &crate::translation_core::Str,
+        token: &crate::translation_core::Str,
+    ) -> Reply {
         if !self.allow(channel, user_id) {
             return Reply::plain(RATE_LIMITED);
         }
@@ -437,7 +452,11 @@ impl ChatAdmin {
     /// Re-validating on every command is what keeps the platform user id from
     /// becoming an authorisation factor: revoke or rotate the credential and
     /// the binding stops working on the next message.
-    fn authorised_credential(&self, channel: ChatChannel, user_id: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
+    fn authorised_credential(
+        &self,
+        channel: ChatChannel,
+        user_id: &crate::translation_core::Str,
+    ) -> crate::translation_core::Maybe<String> {
         let cached = self
             .locked()
             .get(&(channel, user_id.to_string()))
@@ -471,7 +490,11 @@ impl ChatAdmin {
             .is_some_and(|key| constant_time_eq(token, key))
     }
 
-    fn has_pending_claim(&self, channel: ChatChannel, user_id: &crate::translation_core::Str) -> bool {
+    fn has_pending_claim(
+        &self,
+        channel: ChatChannel,
+        user_id: &crate::translation_core::Str,
+    ) -> bool {
         self.locked()
             .get(&(channel, user_id.to_string()))
             .is_some_and(|session| session.pending_claim.is_some())
@@ -560,7 +583,9 @@ impl ChatAdmin {
 }
 
 /// Split a message into its first word and the remainder.
-fn split_command(text: &crate::translation_core::Str) -> (&crate::translation_core::Str, &crate::translation_core::Str) {
+fn split_command(
+    text: &crate::translation_core::Str,
+) -> (&crate::translation_core::Str, &crate::translation_core::Str) {
     match text.split_once(char::is_whitespace) {
         Some((word, rest)) => (word, rest.trim()),
         None => (text, ""),
@@ -588,7 +613,8 @@ const ALREADY_CLAIMED: &crate::translation_core::Str = "Administration of this r
     `/auth <admin token>` with an admin credential.";
 
 /// Message shown when a user exceeds the sensitive-command budget.
-const RATE_LIMITED: &crate::translation_core::Str = "Too many attempts. Wait a minute and try again.";
+const RATE_LIMITED: &crate::translation_core::Str =
+    "Too many attempts. Wait a minute and try again.";
 
 /// Command list, appended to most replies so the channel is self-documenting.
 pub const HELP: &crate::translation_core::Str = "Commands:\n\

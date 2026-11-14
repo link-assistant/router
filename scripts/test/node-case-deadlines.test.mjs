@@ -115,3 +115,30 @@ test('actual ignored-stdio descendant survives TERM only until awaited owned-gro
   f.dispose();
  }
 });
+
+test('complete wide source cohort fits a bounded heap and still refuses overdue cases at their exact original positions',{timeout:60000},()=>{
+ const directory=fs.mkdtempSync(path.join(root,'js/node_modules/node-deadline-wide-'));
+ const paths=[],count=96;
+ // Finite ordinary whole files reproduce the retained-program growth in the
+ // complete forward launcher. The independent child is limited to 128 MiB.
+ const declarations=Array.from({length:1000},(_,index)=>`const value${index}=input=>input;value${index}(0);`).join('\n');
+ try{
+  for(let index=0;index<count;index++){
+   const file=path.join(directory,`whole-${index}.test.mjs`);
+   const source=`import test from 'node:test';\nconst LIMIT=10;const options={timeout:LIMIT};\ntest('same',options,()=>{});\ntest('unobserved',{timeout:11},()=>{});\n${declarations}\n`;
+   fs.writeFileSync(file,source);paths.push(file);
+  }
+  const module=new URL('../node-case-deadlines.mjs',import.meta.url).href;
+  const script=`import assert from 'node:assert/strict';import fs from 'node:fs';import {createCaseDeadlineAudit} from ${JSON.stringify(module)};
+const root=${JSON.stringify(root)},files=${JSON.stringify(paths)},audit=createCaseDeadlineAudit({root,files});
+for(const [index,file]of files.entries()){const event={type:'test:pass',data:{file,name:'same',line:3,column:1,nesting:0,testNumber:index+1,details:{duration_ms:index===files.length-1?10.000001:10}}};audit.observe(event);if(index===0)audit.observe(event);}
+const result=audit.finish();assert.equal(result.passed,false);assert.equal(result.sourceRecords.length,files.length);assert.equal(result.records.length,files.length+1);assert.equal(result.unobservedFiniteSourceDeadlines.length,files.length);assert.equal(result.durationBreaches,1);assert.equal(result.errors.length,1);assert.equal(result.originalCaseLimitsChanged,false);
+for(const row of result.sourceRecords)assert.equal(row.source,fs.readFileSync(row.path,'utf8'));
+for(const row of result.records){assert.equal(row.deadline.milliseconds,10);assert.equal(row.sourceCallSpan.start,result.sourceRecords.find(source=>source.path===row.file).source.indexOf("test('same'"));}
+const repeated=audit.finish();assert.deepEqual(repeated,result);result.records[0].deadline.milliseconds=999;assert.equal(repeated.records[1].deadline.milliseconds,10);
+console.log(JSON.stringify({sources:result.sourceRecords.length,completed:result.records.length,breaches:result.durationBreaches,unobserved:result.unobservedFiniteSourceDeadlines.length,fullSourceBytes:result.sourceRecords.reduce((sum,row)=>sum+row.bytes,0)}));`;
+  const result=spawnSync(process.execPath,['--max-old-space-size=128','--input-type=module','-e',script],{cwd:root,encoding:'utf8',timeout:20000,maxBuffer:1024*1024});
+  assert.equal(result.error,undefined,result.stderr);assert.equal(result.signal,null,result.stderr);assert.equal(result.status,0,result.stderr);
+  const report=JSON.parse(result.stdout);assert.equal(report.sources,count);assert.equal(report.completed,count+1);assert.equal(report.breaches,1);assert.equal(report.unobserved,count);assert.ok(report.fullSourceBytes>800000);
+ }finally{fs.rmSync(directory,{recursive:true,force:true});}
+});

@@ -272,7 +272,9 @@ export function checkPinnedOptionBody(checker,node,receiver,env,path,expected,Pa
   let specialized=replaceTraitCall(sourceTree(original),selection.evidence.genericParameter,defaultBody,syntax);
   const names=new Map(parameters.slice(0,values.length).map(param=>[param.name,fresh('ml_standard_body_')]));
   if(lazy){specialized=freeNames(specialized,names);specialized=callbackTree(specialized,parameters[1].name,callback.binding);}
-  const bodyEnv=new Map(parameters.slice(0,values.length).map((param,index)=>[lazy?names.get(param.name):param.name,values[index].type]));
+  // The original method has local return/control boundaries inside the caller's
+  // temporary-name supply, just like the other original-source method frames.
+  const bodyEnv=checker.callbackEnvironment(new Map(parameters.slice(0,values.length).map((param,index)=>[lazy?names.get(param.name):param.name,values[index].type])),resultType);
   let body;
   try{body=checker.expr(specialized,bodyEnv,[],resultType);}catch(error){if(!(error instanceof TranslationError))throw error;throw new TranslationError(error.kind,error.reason,node.span,{...error.details,originalStandardDiagnostic:{span:error.span,reason:error.reason,bodySpan:selection.method.bodySpan,sourceInputs:selection.sourceInputs}});}
   if(!sameType(body.type,resultType))throw typeError('original standard body result differs from its actual Rust payload',node.span);

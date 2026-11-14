@@ -269,7 +269,10 @@ impl PtySession {
     }
 
     /// Block until the child exits, returning its exit code.
-    pub fn wait_for_exit(&self, timeout: Duration) -> crate::translation_core::Outcome<crate::translation_core::Maybe<u32>, WaitError> {
+    pub fn wait_for_exit(
+        &self,
+        timeout: Duration,
+    ) -> crate::translation_core::Outcome<crate::translation_core::Maybe<u32>, WaitError> {
         let deadline = Instant::now() + timeout;
         loop {
             if let Some(code) = self.exit_code() {
@@ -287,7 +290,11 @@ impl PtySession {
     /// Requiring a full idle interval after entry prevents old quiet time from
     /// making a post-input settle return before the child has processed the
     /// newly written bytes.
-    pub fn wait_idle(&self, idle: Duration, timeout: Duration) -> crate::translation_core::Outcome<(), WaitError> {
+    pub fn wait_idle(
+        &self,
+        idle: Duration,
+        timeout: Duration,
+    ) -> crate::translation_core::Outcome<(), WaitError> {
         let started = Instant::now();
         let deadline = started + timeout;
         loop {

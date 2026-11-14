@@ -4,23 +4,42 @@ import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { analyzeJavaScript, translateJavaScript, parseMeta, emitRust, emitTypeScript, TranslationError } from '../translator.mjs';
+import { analyzeJavaScript, analyzeJavaScriptIndependentCorpus, translateJavaScript, parseMeta, emitRust, emitTypeScript, TranslationError } from '../translator.mjs';
 import { toLino } from '../vendor/ir.mjs';
 import { evaluate } from '../interpreter.mjs';
 import { loadTypeScript } from '../native-typescript.mjs';
 
 const ROOT = process.env.ROUTER_NATIVE_TS_SOURCE_ROOT ?? resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
+const tracePhase=process.env.ROUTER_NATIVE_NULLABLE_PHASE_TRACE==='1'
+  ? (phase,details={})=>console.error(JSON.stringify({event:'native-nullable-phase',phase,elapsedMs:performance.now(),...details}))
+  : ()=>{};
 
-async function compiledFixture(ts, directory, name, source, output) {
-  const original = join(directory, `${name}-source.mjs`), typed = join(directory, `${name}.ts`), target = join(directory, `${name}-target.mjs`);
-  writeFileSync(original, source); writeFileSync(typed, output);
-  const program = ts.createProgram([typed], { strict: true, noEmit: true, target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext });
+async function compiledFixtures(ts, directory, fixtures) {
+  const paths = fixtures.map(({name,source,output}) => {
+    const original = join(directory, `${name}-source.mjs`), typed = join(directory, `${name}.ts`), target = join(directory, `${name}-target.mjs`);
+    writeFileSync(original, source); writeFileSync(typed, output);
+    return {original,typed,target,output};
+  });
+  // All complete independent modules enter one fresh strict program. Check the
+  // full ES2022 standard library used by these Node fixtures, rather than also
+  // loading browser declarations. Library checking itself remains enabled.
+  const program = ts.createProgram(paths.map(row=>row.typed), { strict: true, noEmit: true, target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, lib: ['lib.es2022.d.ts'] });
+  tracePhase('strict-program-created',{modules:paths.length});
   assert.deepEqual(ts.getPreEmitDiagnostics(program).map(d=>ts.flattenDiagnosticMessageText(d.messageText,'\n')), []);
-  writeFileSync(target, ts.transpileModule(output, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText);
-  return [await import(pathToFileURL(original).href), await import(pathToFileURL(target).href)];
+  tracePhase('strict-program-checked',{modules:paths.length});
+  const result=[];
+  for(const {original,target,output} of paths){
+    writeFileSync(target, ts.transpileModule(output, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText);
+    result.push([await import(pathToFileURL(original).href), await import(pathToFileURL(target).href)]);
+  }
+  return result;
+}
+async function compiledFixture(ts, directory, name, source, output) {
+  return (await compiledFixtures(ts,directory,[{name,source,output}]))[0];
 }
 
 test('four original native functions retain independent nullable and integer goldens', async () => {
+  tracePhase('four-original-functions-start');
   const ts = loadTypeScript(ROOT), directory = mkdtempSync(join(tmpdir(),'router-native-nullable-'));
   const coercion = { [Symbol.toPrimitive]() { throw new Error('number predicate must not coerce'); } };
   const nonstrings = [undefined,null,true,1,1n,Symbol('x'),()=>{},[],new String('text'),new Number(12),coercion];
@@ -31,9 +50,18 @@ test('four original native functions retain independent nullable and integer gol
     { path:'admin.mjs', name:'ttl', type:'number', cases:[...nonstrings.filter(value=>value!==1).map(value=>[value,8760]),[0,8760],[-0,8760],[1,1],[12,12],[8761,8760],[-1,8760],[1.5,8760],[NaN,8760],[Infinity,8760]] },
   ];
   try {
-    for (const fixture of fixtures) {
-      const source = readFileSync(join(ROOT,'js/src',fixture.path),'utf8');
-      const result = analyzeJavaScript(source), fn = result.program.find(item=>item.name===fixture.name);
+    const sources=fixtures.map(({path})=>({path,source:readFileSync(join(ROOT,'js/src',path),'utf8')}));
+    const {analyses,concreteSyntaxCorpus}=analyzeJavaScriptIndependentCorpus(sources);
+    tracePhase('complete-independent-source-analyses');
+    assert.equal(analyses.length,fixtures.length);
+    assert.equal(concreteSyntaxCorpus.totals.rows,fixtures.length);
+    const prepared=[];
+    for (let at=0;at<fixtures.length;at++) {
+      const fixture=fixtures[at],{path,source,analysis:result}=analyses[at];
+      assert.equal(path,fixture.path);assert.equal(source,sources[at].source);
+      assert.equal(concreteSyntaxCorpus.rows[at].source,source);
+      assert.deepEqual(concreteSyntaxCorpus.authority,{type:false,owner:false,executable:false});
+      const fn = result.program.find(item=>item.name===fixture.name);
       assert.equal(fn?.returns,fixture.type,fixture.path);
       assert.equal(fn.params[0].type,'value');
       const item = result.items.find(item=>item.name===fixture.name && item.status==='translated');
@@ -54,14 +82,21 @@ test('four original native functions retain independent nullable and integer gol
         assert.match(rust,/JsNullable::Value\(value\.as_string\(\)\.to_string\(\)\)/u);
         assert.match(rust,/JsNullable::Null/u);
       }
-      const [javascript, translated] = await compiledFixture(ts,directory,`${fixture.name}-${fixture.path}`,original,`${typescript}\nexport { ${fixture.name} };\n`);
+      prepared.push({name:`${fixture.name}-${fixture.path}`,source:original,output:`${typescript}\nexport { ${fixture.name} };\n`,checked});
+      assert.ok(result.diagnostics.length>0,'neighboring dynamic/I/O declarations remain refused');
+    }
+    const modules=await compiledFixtures(ts,directory,prepared);
+    tracePhase('four-complete-target-pairs-imported');
+    assert.equal(modules.length,fixtures.length);
+    for(let at=0;at<fixtures.length;at++){
+      const fixture=fixtures[at],{checked}=prepared[at],[javascript,translated]=modules[at];
       for (const [input,expected] of fixture.cases) {
         assert.ok(Object.is(javascript[fixture.name](input),expected),`JS ${fixture.path}: ${typeof input}`);
         assert.ok(Object.is(evaluate(checked,fixture.name,[input]),expected),`IR ${fixture.path}: ${typeof input}`);
         assert.ok(Object.is(translated[fixture.name](input),expected),`TS ${fixture.path}: ${typeof input}`);
       }
-      assert.ok(result.diagnostics.length>0,'neighboring dynamic/I/O declarations remain refused');
     }
+    tracePhase('all-original-goldens-checked');
   } finally { rmSync(directory,{recursive:true,force:true}); }
 });
 

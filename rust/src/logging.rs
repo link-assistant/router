@@ -63,7 +63,10 @@ pub fn build_lazy(_verbose: bool) -> log_lazy::LogLazy {
 /// Build the tracing filter, treating `RUST_LOG` as an override and the CLI
 /// verbosity as a fallback only.
 #[must_use]
-pub fn env_filter(verbose: bool, rust_log: crate::translation_core::Maybe<&crate::translation_core::Str>) -> EnvFilter {
+pub fn env_filter(
+    verbose: bool,
+    rust_log: crate::translation_core::Maybe<&crate::translation_core::Str>,
+) -> EnvFilter {
     let fallback = if verbose { "debug" } else { "info" };
     rust_log
         .filter(|value| !value.trim().is_empty())

@@ -5,7 +5,7 @@ import {createRequire} from 'node:module';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
-import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
+import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';
 import {prepareOperationProofByteSources} from './prepare-operation-proof-byte-sources.mjs';
 import {prepareWholeOwnerResolverCandidate} from './prepare-whole-owner-resolver-candidate.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
@@ -87,6 +87,7 @@ function relocated(ts,path,source,mapping,{serializers=false}={}){
 }
 function hashCalls(ts,path,source){const file=parse(ts,path,source),rows=[];function visit(node){if(ts.isCallExpression(node)&&ts.isPropertyAccessExpression(node.expression)&&['update','digest'].includes(node.expression.name.text))rows.push(node.getText(file));ts.forEachChild(node,visit);}visit(file);return rows;}
 export function prepareWholeOwnerProofByteCandidate({root=ROOT}={}){
+ const bindingCandidates=[];
  root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3'||createRequire(resolve(root,'js/package.json'))('typescript')!==ts)fail('actual root installed TypeScript5.9.3 required');
  const operation=prepareOperationProofByteSources({root}),resolver=prepareWholeOwnerResolverCandidate({root}),bulk=resolver.wholeOwnerProducer;
  if([...operation.files,...resolver.files,...bulk.files].some(row=>row.current!==row.after))fail('fresh complete materialized operation and existing whole-owner closure required');
@@ -94,7 +95,7 @@ export function prepareWholeOwnerProofByteCandidate({root=ROOT}={}){
  function input(path){if(!inputs.has(path)){const state=lstatSync(resolve(root,path));if(!state.isFile()||state.isSymbolicLink()||state.size>2*1024*1024)fail('bounded regular complete source input required');const source=readFileSync(resolve(root,path),'utf8');inputs.set(path,{path,source,sha256:hash(source)});}return inputs.get(path).source;}
  function whole(path,before,language,after,selection){
   if(after.split('\n').length>=1000)fail('complete generated source line budget');parse(ts,path,language);parse(ts,path,after);
-  const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),rule=(old,value,id)=>({id,edits:[{span:[0,old.length],expected:old,replacement:value}]}),sequence={languageRules:[rule(before,language,'javascript:complete-original-proof-byte-consumer-copy')],repositoryRules:[rule(language,after,'router:single-private-issuer-and-operation-byte-import-closure')]},first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),stages=[];let document=first.document;
+  const nativeBindings={};bindingCandidates.push({path:resolve(root,path),source:after,result:nativeBindings});const rule=(old,value,id)=>({id,edits:[{span:[0,old.length],expected:old,replacement:value}]}),sequence={languageRules:[rule(before,language,'javascript:complete-original-proof-byte-consumer-copy')],repositoryRules:[rule(language,after,'router:single-private-issuer-and-operation-byte-import-closure')]},first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),stages=[];let document=first.document;
   for(const phase of ['language','repository']){
    const from=phase==='language'?before:language,to=phase==='language'?language:after,beforeMeta=serializeConcreteSyntaxMeta(document),fresh=transportConcreteSyntaxMeta(beforeMeta);if(fresh.source!==from)fail('complete current phase source differs');
    const run=applyConcreteSyntaxSubstitutions(fresh.document,{languageRules:phase==='language'?sequence.languageRules:[],repositoryRules:phase==='repository'?sequence.repositoryRules:[]}),afterMeta=serializeConcreteSyntaxMeta(run.value),last=transportConcreteSyntaxMeta(afterMeta);if(last.source!==to)fail('complete phase CST source equation differs');
@@ -144,6 +145,9 @@ export function prepareWholeOwnerProofByteCandidate({root=ROOT}={}){
  if(serializerBindings.length!==5)fail('complete current native/frozen composer consumer import census differs');
  input(BASE+'prepare-whole-owner-proof-byte-candidate.mjs');
  for(const row of [...inputs.values(),...prerequisites])if(hash(readFileSync(resolve(root,row.path)))!==row.sha256)fail('complete current source input/prerequisite changed');
+ // Fresh complete native scope checks precede every returned plan and write.
+ const checkedBindings=verifyNativeCopiedModuleBindings(ts,bindingCandidates);
+ for(let at=0;at<bindingCandidates.length;at++)Object.assign(bindingCandidates[at].result,checkedBindings[at]);
  return {schema:'whole-owner-operation-proof-byte-candidate-v1',typescriptVersion:ts.version,inputs:[...inputs.values()],prerequisiteInputs:prerequisites,files,physicalOverlays,serializerBindings,cycleEvidence,operationProducer:operation,resolverProducer:resolver,existingDefaultsUnchanged:true,existingBulkCopiesUnchanged:true,scope:'one qualified complete synchronous owner operation; no retained encoded bytes',newAcrossInvocationEncodedCache:false,originalHashCallsUnchanged:true,performanceQualified:false,runtimeExecuted:false,sourceAuthority:false,runtimeAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){

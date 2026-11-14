@@ -1,3 +1,5 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
+const root=new URL('../../../',import.meta.url);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -5,7 +7,7 @@ import {translateProject} from '../project.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {lockedTomlValueNamespaceBindings} from '../toml-value-namespace.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-const original=path=>execFileSync('git',['show','HEAD:'+path],{encoding:'utf8',maxBuffer:2_000_000});
+const original=path=>execFileSync('git',['show','HEAD:'+repositorySourcePath(path,root)],{cwd:root,encoding:'utf8',maxBuffer:2_000_000});
 const dependencies=()=>loadDeriveDependencyProof({manifest:original('Cargo.toml'),lock:original('Cargo.lock')});
 const project=(source,deriveDependencies)=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,deriveDependencies});
 

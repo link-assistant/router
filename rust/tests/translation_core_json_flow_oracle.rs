@@ -14,10 +14,16 @@ fn conditional(flag: bool) -> Json {
 
 #[test]
 fn assignments_reinitialize_the_outer_local_on_both_conditional_paths() {
-    assert_eq!(conditional(false), core::json!({"start": true, "first": 1, "last": null}));
-    assert_eq!(conditional(true), core::json!({
-        "start": true, "first": 1, "second": [false, "猫😀"], "last": null
-    }));
+    assert_eq!(
+        conditional(false),
+        core::json!({"start": true, "first": 1, "last": null})
+    );
+    assert_eq!(
+        conditional(true),
+        core::json!({
+            "start": true, "first": 1, "second": [false, "猫😀"], "last": null
+        })
+    );
 }
 
 fn paths(value: Json, branch: bool) -> Json {
@@ -61,7 +67,10 @@ fn optional(branch: bool, text: Maybe<&Str>) -> Maybe<Json> {
 fn question_mark_preserves_the_original_enclosing_optional_boundary() {
     assert_eq!(optional(false, None), None);
     assert_eq!(optional(true, None), Some(core::json!({"early": true})));
-    assert_eq!(optional(false, Some("Ω😀")), Some(core::json!({"text": "Ω😀"})));
+    assert_eq!(
+        optional(false, Some("Ω😀")),
+        Some(core::json!({"text": "Ω😀"}))
+    );
 }
 
 #[test]

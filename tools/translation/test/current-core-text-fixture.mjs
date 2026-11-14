@@ -41,15 +41,27 @@ function receivingBase64LibraryRefusals(){
 function receivingAsciiLibraryRefusal(mappedOriginalRefusals){
  const file='src/translation_core/primitives.rs',source=read(file),before=restoreCorePrimitiveReceivingHistory(source);
  const original=sourceItems(before).find(item=>item.term==='fn'&&item.name==='unicode_scalar_count'),added=sourceItems(source).filter(item=>item.term==='fn'&&item.start>=before.length);
- assert.ok(original);assert.deepEqual(added.map(item=>item.name),['ascii_chars_in']);
+ assert.ok(original);assert.deepEqual(added.map(item=>item.name),['ascii_chars_in','strip_unicode_whitespace','has_unicode_control']);
  const first=source.indexOf('Str',original.start),item=added[0],start=source.indexOf('Str',item.start);
  assert.equal(source.slice(first-8,first+3),'value: &Str');assert.equal(source.slice(start-8,start+3),'value: &Str');assert.ok(start<item.end);
  const mapped=mappedOriginalRefusals.find(row=>row.name==='translation_core.primitives.unicode_scalar_count');assert.ok(mapped);assert.equal(mapped.message,'unknown type crate.translation_core.primitives.Str');
  const globalStart=mapped.span.start-first+start;
  return {file,name:'translation_core.primitives.ascii_chars_in',term:'fn',kind:'type',message:'unknown type crate.translation_core.primitives.Str',span:{start:globalStart,end:globalStart+3}};
 }
+function receivingUnicodeLibraryRefusals(mappedOriginalRefusals){
+ const file='src/translation_core/primitives.rs',source=read(file),before=restoreCorePrimitiveReceivingHistory(source);
+ const original=sourceItems(before).find(item=>item.term==='fn'&&item.name==='unicode_scalar_count'),first=source.indexOf('Str',original.start);
+ const mapped=mappedOriginalRefusals.find(row=>row.name==='translation_core.primitives.unicode_scalar_count');
+ assert.ok(mapped);assert.equal(mapped.message,'unknown type crate.translation_core.primitives.Str');
+ return ['strip_unicode_whitespace','has_unicode_control'].map(name=>{
+  const items=sourceItems(source).filter(item=>item.term==='fn'&&item.name===name&&item.start>=before.length);assert.equal(items.length,1);
+  const item=items[0],start=source.indexOf('Str',item.start);assert.equal(source.slice(start-8,start+3),'value: &Str');assert.ok(start<item.end);
+  const globalStart=mapped.span.start-first+start;
+  return {file,name:'translation_core.primitives.'+name,term:'fn',kind:'type',message:'unknown type crate.translation_core.primitives.Str',span:{start:globalStart,end:globalStart+3}};
+ });
+}
 export function assertCurrentCoreReceivingRefusals(result,path,name,source){
- const row=context(path,name,source),old=row.expectedRefusals;assert.equal(old.length,11);const split=old.findIndex(entry=>!Object.hasOwn(entry,'module'));assert.ok(split>0);assert.ok(old.slice(0,split).every(entry=>Object.hasOwn(entry,'module')));assert.ok(old.slice(split).every(entry=>!Object.hasOwn(entry,'module')));const history=currentCoreFacadeHistory(),delta=history.base64History.actual.length-history.before.length;assert.equal(delta,CORE_BASE64_ADOPTION.length);const late=old.slice(split).map(entry=>{assert.equal(entry.file,'src/translation_core/primitives.rs');assert.equal(entry.kind,'type');assert.ok(['translation_core.primitives.unicode_scalar_count','translation_core.primitives.json_index_str','translation_core.primitives.json_index_usize'].includes(entry.name));assert.deepEqual(Object.keys(entry.span),['start','end']);return {...entry,span:{start:entry.span.start+delta+history.laterHistory.delta,end:entry.span.end+delta+history.laterHistory.delta}};});const expected=[...old.slice(0,split),...receivingBase64LibraryRefusals(),...late,receivingAsciiLibraryRefusal(late)];assert.equal(expected.length,25);assert.deepEqual(result.meta.refused,expected);
+ const row=context(path,name,source),old=row.expectedRefusals;assert.equal(old.length,11);const split=old.findIndex(entry=>!Object.hasOwn(entry,'module'));assert.ok(split>0);assert.ok(old.slice(0,split).every(entry=>Object.hasOwn(entry,'module')));assert.ok(old.slice(split).every(entry=>!Object.hasOwn(entry,'module')));const history=currentCoreFacadeHistory(),delta=history.base64History.actual.length-history.before.length;assert.equal(delta,CORE_BASE64_ADOPTION.length);const late=old.slice(split).map(entry=>{assert.equal(entry.file,'src/translation_core/primitives.rs');assert.equal(entry.kind,'type');assert.ok(['translation_core.primitives.unicode_scalar_count','translation_core.primitives.json_index_str','translation_core.primitives.json_index_usize'].includes(entry.name));assert.deepEqual(Object.keys(entry.span),['start','end']);return {...entry,span:{start:entry.span.start+delta+history.laterHistory.delta,end:entry.span.end+delta+history.laterHistory.delta}};});const expected=[...old.slice(0,split),...receivingBase64LibraryRefusals(),...late,receivingAsciiLibraryRefusal(late),...receivingUnicodeLibraryRefusals(late)];assert.equal(expected.length,27);assert.deepEqual(result.meta.refused,expected);
 }
 
 for(const row of oracle.inputs){let source=row.path==='src/translation_core/primitives.rs'?restoreCorePrimitiveReceivingHistory(read(row.path)):read(row.path);if(row.path==='src/translation_core.rs')source=currentCoreFacadeHistory().before;if(row.path==='Cargo.toml'){assert.equal(cargoLayoutManifestMatches(source,row.sha256),true);source=row.source;}assert.equal(source,row.source,row.path);assert.equal(Buffer.byteLength(source),row.bytes);assert.equal(hash(source),row.sha256);}

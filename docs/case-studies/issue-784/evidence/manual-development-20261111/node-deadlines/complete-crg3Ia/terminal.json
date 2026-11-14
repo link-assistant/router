@@ -1,0 +1,85 @@
+{
+  "schema": "complete-audited-node-test-run-v1",
+  "root": "/tmp/gh-issue-solver-1794003502595",
+  "command": [
+    "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/toolchain/node20/bin/node",
+    "--test",
+    "--test-reporter=/tmp/gh-issue-solver-1794003502595/scripts/node-case-deadline-reporter.mjs",
+    "scripts/test/node-case-deadlines.test.mjs"
+  ],
+  "outputDirectory": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-crg3Ia",
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "logs": [
+    {
+      "path": "stdout.raw.tap",
+      "bytes": 2774,
+      "observedBytes": 2774,
+      "sha256": "7fd30428d6499b8f83f9fc6dd64a72562351c54603f49422e3d088b0d10b2040",
+      "readback": {
+        "bytes": 2774,
+        "sha256": "7fd30428d6499b8f83f9fc6dd64a72562351c54603f49422e3d088b0d10b2040"
+      },
+      "identity": {
+        "dev": 62,
+        "ino": 10748121,
+        "mode": 33152,
+        "size": 2774,
+        "mtimeMs": 1794394153128.1445,
+        "ctimeMs": 1794394153128.1445
+      }
+    },
+    {
+      "path": "stderr.raw.log",
+      "bytes": 0,
+      "observedBytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "readback": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "identity": {
+        "dev": 62,
+        "ino": 10748122,
+        "mode": 33152,
+        "size": 0,
+        "mtimeMs": 1794394139117.285,
+        "ctimeMs": 1794394139117.285
+      }
+    }
+  ],
+  "audit": {
+    "path": "case-deadlines.json",
+    "bytes": 27461,
+    "sha256": "1cee920020a36e18ab3d89a93d9be6aaedd2e355cc4c232f4f87394ba7a77aa3"
+  },
+  "auditSummary": {
+    "passed": true,
+    "durationBreaches": 0,
+    "errors": []
+  },
+  "auditError": null,
+  "launchError": null,
+  "outputError": null,
+  "interrupted": null,
+  "groupCleanup": {
+    "supported": true,
+    "group": 1753283,
+    "signals": [],
+    "complete": true,
+    "error": null
+  },
+  "elapsedMs": 14077.46506,
+  "outerTimeoutMs": 180000,
+  "childClosed": true,
+  "processGroupCleanupSupported": true,
+  "allCaseLimitsUnchanged": true,
+  "allSelectedWholeFiles": [
+    "scripts/test/node-case-deadlines.test.mjs"
+  ],
+  "exitCode": 0,
+  "runtimeParity": false,
+  "rustExecuted": false
+}

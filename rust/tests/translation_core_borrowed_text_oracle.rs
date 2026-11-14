@@ -109,7 +109,12 @@ fn branch_local_same_names_do_not_change_the_outer_borrow() {
 
 #[test]
 fn literal_alternatives_and_unicode_fallback_keep_exact_text() {
-    for (input, expected) in [("a", "first"), ("b", "first"), ("猫", "cat"), ("猫😀", "猫😀")] {
+    for (input, expected) in [
+        ("a", "first"),
+        ("b", "first"),
+        ("猫", "cat"),
+        ("猫😀", "猫😀"),
+    ] {
         let actual = translation_core::format!(
             "{}",
             match input {

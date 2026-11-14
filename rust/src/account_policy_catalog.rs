@@ -2,7 +2,6 @@
 use crate::app_state::AppState;
 use crate::model_catalog::CatalogRecord;
 use crate::subscription::SubscriptionProvider;
-use serde_json::Value;
 
 pub fn project(
     state: &AppState,

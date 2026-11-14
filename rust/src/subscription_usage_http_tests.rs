@@ -751,11 +751,17 @@ async fn concurrent_identical_usage_requests_share_one_provider_probe() {
         .await
     });
 
-    entered.notified().await;
+    // Bounded, so a request that never probes the provider fails the test
+    // instead of leaving it waiting forever.
+    let probe = tokio::time::timeout(std::time::Duration::from_secs(10), entered.notified());
+    probe.await.expect("no usage request reached the provider");
     tokio::task::yield_now().await;
     assert_eq!(*hits.lock().unwrap(), 1, "duplicate provider probe started");
     release.notify_waiters();
-    for result in [first.await.unwrap(), second.await.unwrap()] {
+    let first = tokio::time::timeout(std::time::Duration::from_secs(10), first);
+    let second = tokio::time::timeout(std::time::Duration::from_secs(10), second);
+    let (first, second) = (first.await.unwrap(), second.await.unwrap());
+    for result in [first.unwrap(), second.unwrap()] {
         assert_eq!(result.0, StatusCode::OK);
         assert_eq!(result.1["subscriptions"][0]["state"], "available");
     }

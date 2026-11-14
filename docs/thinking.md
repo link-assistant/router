@@ -68,7 +68,7 @@ debug log level to inspect conversion, clamp and unsupported-drop traces;
 normal logging does not emit these traces.
 
 Conformance tests port all 285 vectors in five CLIProxyAPI v8.0.20 matrices,
-with attribution and the upstream MIT license in `tests/fixtures/thinking/`.
+with attribution and the upstream MIT license in `rust/tests/fixtures/thinking/`.
 The upstream body/suffix conflict order is intentionally adjusted to preserve
 Router's explicit body precedence, and the pipeline adds no upstream default.
 Run the focused suite with:

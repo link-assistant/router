@@ -110,9 +110,9 @@ the original twelve-case whole-library deadline remains red, and no full gate
 or performance gain is established. No Rust command ran locally.
 
 The next source-level target is `decodeBuiltinSourceMeta`'s final complete
-`encodeBuiltinSourceMeta(result)` pass. Sealing first encodes the graph, decoding
+`encodeBuiltinSourceMeta(result)` pass. Sealing first encodes the object graph, decoding
 reconstructs and freezes it, then that final pass traverses and allocates the
-graph again solely to establish canonical wire equality. An explicit stateless
+object graph again solely to establish canonical wire equality. An explicit stateless
 candidate can instead validate the parsed table's reachable postorder, first
 field occurrences, unique node identities and exact final canonical JSON. Any
 changed intrinsic, hook or uncertain value must retain the complete original

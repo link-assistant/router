@@ -6,6 +6,7 @@ import {prepareDefaultProofByteEnclosingHistory} from './prepare-default-proof-b
 import {prepareSchemarsEnclosingAdoption} from './prepare-schemars-enclosing-adoption.mjs';
 import {deriveSchemarsEnclosingImportHistory,assertSchemarsEnclosingHistoryFresh,SCHEMARS_ENCLOSING_ORIGINAL} from './schemars-enclosing-history.mjs';
 import {transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+import {deriveCloneEnclosingNativeSourceHistory} from './prepare-clone-enclosing-source-history.mjs';
 const SELF='tools/translation/schemars-current-enclosing-history.mjs',PROVIDER='tools/translation/prepare-default-proof-byte-adoption.mjs',BASE='tools/translation/',PROFILE=BASE+'source-profiles/default-proof-byte-adoption/';
 const TEXT=[PROVIDER,SELF,PROFILE+'default-proof-byte-operation.mjs.txt',BASE+'operation-proof-byte-bridge.mjs',BASE+'operation-proof-byte-consumer-scope.mjs',BASE+'operation-proof-byte-original-fallback.mjs'],HELPER=BASE+'default-proof-byte-operation.mjs',ARCHIVE=PROFILE+'complete-original-inputs.json.gz',BIRTH_ARCHIVE=BASE+'source-profiles/schemars-enclosing-history/originals.json.gz',LIMIT=2*1024*1024;
 const hash=value=>createHash('sha256').update(value).digest('hex'),fail=message=>{throw new TypeError('Schemars current enclosing history: '+message);};
@@ -23,6 +24,11 @@ function undo(source,edits){
 export function normalizeSchemarsCurrentEnclosingSource({root,original,source}){
  root=resolve(root);const birth=deriveSchemarsEnclosingImportHistory({original,source:original});
  if(source===birth.before||source===birth.after)return {...deriveSchemarsEnclosingImportHistory({original,source}),byteLayer:null,physicalInputs:[],binaryInputs:[],absentInputs:[]};
+ // Reject an unknown complete extension before constructing unrelated source
+ // proposals. This native equation grants no CST or semantic qualification;
+ // the fresh focused producer and independent inverses below remain mandatory.
+ const candidate=deriveCloneEnclosingNativeSourceHistory({path:SCHEMARS_ENCLOSING_ORIGINAL,source});
+ if(candidate.current!==candidate.after)fail('complete current Clone source required');
  // All inputs are captured before the fresh focused operation and checked
  // afterwards; no source, owner, encoded bytes or verdict survives this call.
  const physicalInputs=TEXT.map(path=>capture(root,path)),binaryInputs=[capture(root,ARCHIVE,true),capture(root,BIRTH_ARCHIVE,true)],absentInputs=[];
@@ -32,7 +38,10 @@ export function normalizeSchemarsCurrentEnclosingSource({root,original,source}){
  if(row.path!==SCHEMARS_ENCLOSING_ORIGINAL||!predecessor||predecessor.before!==birth.before||predecessor.after!==birth.after||row.before!==birth.after||source!==row.after||row.inverse!==row.before)fail('source differs from exact import then byte-wrapper equation');
  const add=input=>{const previous=physicalInputs.find(row=>row.path===input.path);if(previous){if(previous.source!==input.source)fail('complete physical input association differs');return;}const actual=capture(root,input.path);if(actual.source!==input.source)fail('focused physical input differs');physicalInputs.push(actual);};
  for(const input of byteLayer.historicalLayers[0].inputs)add(input);for(const input of byteLayer.prerequisiteInputs)add(input);add(byteLayer.fragment);add({path:row.path,source:row.current});
- const repository=undo(source,row.repositorySelections),nativeInverse=undo(repository,row.nativeSelections);if(repository!==row.language||nativeInverse!==row.before)fail('complete independent native wrapper inverse differs');
+ if(row.cloneSourceHistory)for(const input of row.cloneSourceHistory.inputs)add(input);
+ const wrapperSource=row.cloneSourceHistory?row.cloneSourceHistory.inverse:source;
+ if(row.cloneSourceHistory&&(row.cloneSourceHistory.after!==source||wrapperSource!==row.preCloneLayer.after))fail('complete Clone source predecessor differs');
+ const repository=undo(wrapperSource,row.repositorySelections),nativeInverse=undo(repository,row.nativeSelections);if(repository!==row.language||nativeInverse!==row.before)fail('complete independent native wrapper inverse differs');
  if(row.stages.length!==2||row.stages[0].phase!=='language'||row.stages[1].phase!=='repository')fail('complete ordered two-phase source equation required');let inverse=source;const inverseStages=[];
  for(const stage of [...row.stages].reverse()){
   const before=transportConcreteSyntaxMeta(stage.beforeMeta),after=transportConcreteSyntaxMeta(stage.afterMeta);if(before.source!==stage.before||after.source!==stage.after||inverse!==stage.after)fail('complete focused CST phase source differs');

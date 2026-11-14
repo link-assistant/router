@@ -523,16 +523,16 @@ async fn a_rejected_refresh_chain_never_reaches_catalog_or_destination() {
 /// successor, so automation receives no resumable transaction ID.
 #[tokio::test]
 async fn an_inconclusive_exchange_reports_uncertain_retained_state() {
-    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("reserve dead endpoint");
-    let token_url = format!("http://{}/token", listener.local_addr().unwrap());
-    drop(listener);
+    // Port 1 is privileged, so no parallel test can bind it the way one can
+    // reuse a just-dropped ephemeral port: connections to it stay refused.
+    let token_url = "http://127.0.0.1:1/token";
     let root = tempfile::tempdir().expect("import root");
 
     let error = validate_candidate_with(
         root.path(),
         SubscriptionProvider::Claude,
         &candidate_document(SubscriptionProvider::Claude),
-        Some(&token_url),
+        Some(token_url),
         Some("http://127.0.0.1:1"),
     )
     .await

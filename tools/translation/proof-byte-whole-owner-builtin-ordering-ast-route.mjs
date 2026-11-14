@@ -1,6 +1,7 @@
-// Original Ord/PartialOrd construction for nonempty unit enums only. This is
+// Original Ord/PartialOrd construction for unit enums and ordinary structs. This is
 // namespace syntax evidence; comparison and trait implementation are not run.
 import {createHash} from 'node:crypto';
+import {liftBuiltinStructOrderingAstRoute} from './builtin-ordering-struct-ast-route.mjs';
 import {createPrivateFrozenJsonComposer} from "./operation-proof-byte-bridge.mjs";
 import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 import {originalMacroTrees,originalMacroInvocation} from './macro-token-trees.mjs';
@@ -74,6 +75,7 @@ function close(plan,body,statements,input){
 export function liftBuiltinOrderingAstRoute({profile,original,certificate,entry,input}={}){
  const name=original?.name;if(!['Ord','PartialOrd'].includes(name))throw new TypeError('Original ordering requires an exact source-selected owner');const fresh=builtinDeriveDataInputs({source:original.module.source,span:certificate.span});
  if(JSON.stringify(fresh)!==JSON.stringify(input)||input.wholeSourceSha256!==certificate.sourceSha256||input.itemSha256!==certificate.itemSha256||input.name!==certificate.name||input.kind!==certificate.kind)throw new TypeError('Original ordering source syntax differs from its private invocation');
+ if(input.kind==='struct'){const evidence=liftBuiltinStructOrderingAstRoute({profile,original,certificate,input,plan:sourcePlan(profile,entry,name)});return freezeCompleted({...evidence,digest:hash(composeJson(evidence))});}
  if(input.kind!=='enum'||input.style!=='unit-enum'||!input.variants.length||input.variants.length>128||input.fields.length||input.variants.some(row=>row.fields?.length)||input.attributes.some(row=>!['derive','doc'].includes(row.name)))throw new TypeError('Original ordering source route requires a nonempty ordinary unit enum');
  const plan=sourcePlan(profile,entry,name);
  const node=(builder,slots)=>({kind:'Expr',constructor:plan.constructors.get(builder),attrs:[],tokens:null,slots}),root={kind:'Ident',symbol:'kw::DollarCrate',hygiene:'actual std_path def-site'},path=segments=>node('expr_path',{path:{kind:'Path',segments}}),call=(segments,args)=>node('expr_call',{expr:path([root,...segments]),args}),statements=[];let body;

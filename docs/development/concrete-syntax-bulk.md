@@ -69,6 +69,40 @@ rechecks earlier file and ancestor identities, complete compiled source
 associations and caller array descriptors. No source or validation verdict is
 cached across calls. Existing standalone APIs retain their own contract.
 
+Complete project module graphs select this source-origin contract through the separately
+generated `forward-source-origin-concrete-syntax.mjs`. Its owning producer derives
+the entire helper and actual project import/call using both fixed rule phases
+and full serialized/reparsed inverses. Single-source module graphs retain their original
+path. The [receiving record](../case-studies/issue-784/project-source-origin-cst.md)
+keeps complete production comparisons and focused controls distinct from
+generation freshness, strict parity and the full gate.
+
+`concrete-source-origin-equations.mjs` and `concrete-source-origin-phases.mjs`
+provide a separate complete-source substitution domain. Their only inputs are
+bounded primitive before/middle/after sources, languages and fixed phase rule
+names. No stored CST document, caller node array or validation verdict enters
+this domain. The private operation performs the actual exact whole-span edit;
+each initial source, phase and independent inverse then uses the existing
+source-origin transport with two fresh builds, canonical JSON serialization and
+parsing, complete partition comparison and reconstruction. It retains the full
+canonical documents and original traces. Original untrusted-document APIs and
+sequential transactions remain byte-identical. Complete parser authentication,
+aggregate budgets, final source identities, host guards and caller descriptor
+joins still surround the transaction. This distinct operation does not claim
+the redundant intermediate object-validation schedule of the untrusted edit
+API, or grant type, owner or executable authority. Focused receiving controls
+pass in both engines; current producer adoption, original workload deadlines,
+generation freshness and the complete gate require separate qualification.
+
+Native TypeScript regeneration has a separate private grouped source path,
+derived by `tools/translation/prepare-native-regeneration-batch.mjs`. It groups
+complete source files with fresh concrete authentication and preserves the
+original per-file native semantic checks, physical snapshot joins and final host
+checks. Standalone public parser and builder contracts retain their original
+observer schedule. Complete output equivalence and focused tests do not qualify
+the original regeneration deadline or complete JavaScript gate; see the
+[receiving record](../case-studies/issue-784/native-regeneration-batch.md).
+
 ## Independent reverse analysis
 
 `analyzeJavaScriptIndependentCorpus` in `js-to-rust/translator.mjs` analyzes a
@@ -90,7 +124,7 @@ Input is a dense array of 1–256 own-data objects with exactly `path`, then
 they supply no module or ownership context. Each row uses the original default
 frontend with `includeScoped: true`, `sourcePath: null` and `lossless: false`.
 Definitions and failures do not flow between rows. The only optional argument is
-an exact own-data `{constructorGraph}` object; the existing constructor checks
+an exact own-data options object naming the constructor producer; the existing constructor checks
 still decide its validity.
 
 The API uses one existing full CST batch transaction: complete parser-source

@@ -1,0 +1,9 @@
+{"job": 128977139143, "name": "JavaScript first (same commit) / typescript", "bytes": 42840, "reused": false, "downloadExitCode": 0, "validJobLog": true}
+{"job": 128977139157, "name": "JavaScript first (same commit) / parity", "bytes": 72578, "reused": false, "downloadExitCode": 0, "validJobLog": true}
+{"job": 128977139235, "name": "JavaScript first (same commit) / translation (4)", "bytes": 334400, "reused": false, "downloadExitCode": 0, "validJobLog": true}
+{"job": 128977139272, "name": "JavaScript first (same commit) / reverse-translation (7)", "bytes": 38698, "reused": false, "downloadExitCode": 0, "validJobLog": true}
+{"job": 128977139316, "name": "JavaScript first (same commit) / translation (3)", "bytes": 385700, "reused": false, "downloadExitCode": 0, "validJobLog": true}
+{"job": 128977139322, "name": "JavaScript first (same commit) / reverse-translation (3)", "bytes": 42062, "reused": false, "downloadExitCode": 0, "validJobLog": true}
+{"job": 128977139397, "name": "JavaScript first (same commit) / reverse-freshness", "bytes": 25931, "reused": false, "downloadExitCode": 0, "validJobLog": true}
+{"job": 128977139488, "name": "JavaScript first (same commit) / reverse-translation (8)", "bytes": 40584, "reused": false, "downloadExitCode": 0, "validJobLog": true}
+{"job": 128977139535, "name": "JavaScript first (same commit) / reverse-translation (2)", "bytes": 45019, "reused": false, "downloadExitCode": 0, "validJobLog": true}

@@ -1,0 +1,33 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/prepare-whole-owner-core-producer-candidate.mjs",
+  "phase": "repository",
+  "beforeSha256": "773d58240f391609d32fd2b89f1a725cb47233564305b882bb2cc6d6938e26e1",
+  "afterSha256": "76ab05d39f2c667fa8c757aebf90a134f180e038f07cf3808e403c2cbe3d819b",
+  "edits": [
+    {
+      "id": "router.candidate-binding-batch.import.v1",
+      "before": "import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';",
+      "after": "import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';"
+    },
+    {
+      "id": "router.candidate-binding-batch.invocation.v1",
+      "before": "export function prepareWholeOwnerCoreProducerCandidate({root=ROOT}={}){",
+      "after": "export function prepareWholeOwnerCoreProducerCandidate({root=ROOT}={}){\n const bindingCandidates=[];"
+    },
+    {
+      "id": "router.candidate-binding-batch.collect.v1",
+      "before": "const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),",
+      "after": "const nativeBindings={};bindingCandidates.push({path:resolve(root,path),source:after,result:nativeBindings});const "
+    },
+    {
+      "id": "router.candidate-binding-batch.complete.v1",
+      "before": " return {schema:'whole-owner-core-producer-source-candidate-v1',inputs,files,resolverProducer:resolver,productionSelected:false,defaultChanged:false,sourceAuthority:false,runtimeAuthority:false,performanceQualified:false};",
+      "after": " // Fresh complete native scope checks precede every returned plan and write.\n const checkedBindings=verifyNativeCopiedModuleBindings(ts,bindingCandidates);\n for(let at=0;at<bindingCandidates.length;at++)Object.assign(bindingCandidates[at].result,checkedBindings[at]);\n return {schema:'whole-owner-core-producer-source-candidate-v1',inputs,files,resolverProducer:resolver,productionSelected:false,defaultChanged:false,sourceAuthority:false,runtimeAuthority:false,performanceQualified:false};"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

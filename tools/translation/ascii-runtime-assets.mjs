@@ -1,5 +1,14 @@
 // GENERATED: exact selected native asset statements; explicit new read schedule.
-import {readFileSync} from 'node:fs';
+import fs from 'node:fs';
+import {types} from 'node:util';
+const isProxy=types.isProxy;
+function readFileSync(...args){
+ assertReverseConcreteSourceHost();
+ if(!fs||typeof fs!=='object'||isProxy(fs))throw TypeError('ASCII source filesystem host changed');
+ const field=Object.getOwnPropertyDescriptor(fs,'readFileSync');
+ if(!field||!Object.hasOwn(field,'value')||typeof field.value!=='function'||isProxy(field.value))throw TypeError('ASCII source read host changed');
+ return Reflect.apply(field.value,undefined,args);
+}
 import {createHash} from 'node:crypto';
 import {assertReverseConcreteSourceHost} from './js-to-rust/concrete-source.mjs';
 import {ASCII_RUNTIME_ASSET_SOURCE,ASCII_RUNTIME_ASSET_SHA256,ASCII_HOST_ASSET_SOURCE,ASCII_HOST_ASSET_SHA256,ASCII_SELECTED_ASSET_JSON} from './ascii-runtime-assets-source-data.mjs';
@@ -18,7 +27,7 @@ files.set('string-iterator-runtime.mjs', readFileSync(new URL('./extensions/stri
 assertReverseConcreteSourceHost();
 files.set('whitespace-data.mjs', readFileSync(new URL('./extensions/whitespace-data.mjs', import.meta.url), 'utf8'));
 assertReverseConcreteSourceHost();
-files.set('string-iterator-runtime.d.mts', "type RustOption<T> = Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;\nexport declare function stringLines(value: string): IterableIterator<string>;\nexport declare function stringWhitespace(value: string): IterableIterator<string>;\nexport declare function stringNext(value: IterableIterator<string>): RustOption<string>;\nexport declare function stringJoin(values: readonly string[], separator: string): string;\nexport declare function router_core_unicode_scalar_count(value: string): bigint;\nexport declare function router_core_ascii_chars_in(value: string, alphabet: string): boolean;\n");
+files.set('string-iterator-runtime.d.mts', "type RustOption<T> = Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;\nexport declare function stringLines(value: string): IterableIterator<string>;\nexport declare function stringWhitespace(value: string): IterableIterator<string>;\nexport declare function stringNext(value: IterableIterator<string>): RustOption<string>;\nexport declare function stringJoin(values: readonly string[], separator: string): string;\nexport declare function router_core_unicode_scalar_count(value: string): bigint;\nexport declare function router_core_ascii_chars_in(value: string, alphabet: string): boolean;\nexport declare function router_core_strip_unicode_whitespace(value: string): string;\nexport declare function router_core_has_unicode_control(value: string): boolean;\n");
 assertReverseConcreteSourceHost();
 for(const row of pins){const source=apply(get,files,[row.name]);if(hash(source)!==row.sha256||source!==row.source)throw new TypeError("ASCII selected asset source changed: "+row.name); }
 assertReverseConcreteSourceHost();

@@ -1,0 +1,53 @@
+TAP version 13
+# Manual development stage: lint
+# Manual development stage: node-tests
+# Manual development stage: bun-tests
+# Manual development stage: typescript
+# Manual development stage: lint
+# Manual development stage: node-tests
+# Manual development stage: bun-tests
+# Manual development stage: typescript
+# Subtest: actual manual workflow is SHA-pinned, fail-closed, and preserves the complete strict source policy
+ok 1 - actual manual workflow is SHA-pinned, fail-closed, and preserves the complete strict source policy
+  ---
+  duration_ms: 969.735929
+  ...
+# Subtest: manual lane refuses missing, skipped, ignored, reordered or substituted checks
+ok 2 - manual lane refuses missing, skipped, ignored, reordered or substituted checks
+  ---
+  duration_ms: 1878.452316
+  ...
+# Subtest: immutable SHA, read-only permissions and explicit false Rust output cannot be bypassed
+ok 3 - immutable SHA, read-only permissions and explicit false Rust output cannot be bypassed
+  ---
+  duration_ms: 1139.215264
+  ...
+# Subtest: every caller retains its false Rust guard, original dependencies, draft policy and source pins
+ok 4 - every caller retains its false Rust guard, original dependencies, draft policy and source pins
+  ---
+  duration_ms: 1852.759061
+  ...
+# Subtest: malformed and duplicate YAML keys fail closed
+ok 5 - malformed and duplicate YAML keys fail closed
+  ---
+  duration_ms: 258.065558
+  ...
+# Subtest: aggregate executes and rejects failed, cancelled, skipped, missing and unknown stages
+ok 6 - aggregate executes and rejects failed, cancelled, skipped, missing and unknown stages
+  ---
+  duration_ms: 377.323383
+  ...
+# Subtest: local runner executes all active commands and cannot produce strict parity evidence
+ok 7 - local runner executes all active commands and cannot produce strict parity evidence
+  ---
+  duration_ms: 3.337286
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6961.001765

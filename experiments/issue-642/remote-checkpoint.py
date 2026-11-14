@@ -7,7 +7,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-SOURCE = Path(__file__).resolve().parents[2] / "src/deploy/data_checkpoint.js"
+SOURCE = Path(__file__).resolve().parents[2] / "rust/src/deploy/data_checkpoint.js"
 
 
 def exercise(case):

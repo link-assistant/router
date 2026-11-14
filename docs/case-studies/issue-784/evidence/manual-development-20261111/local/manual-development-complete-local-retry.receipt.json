@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "scope": "temporary-manual-development",
+  "stages": [
+    "lint",
+    "node-tests",
+    "bun-tests",
+    "typescript"
+  ],
+  "failures": [],
+  "developmentChecksPassed": true,
+  "strictParity": false,
+  "fullGatePassed": false,
+  "rustAllowed": false,
+  "headSha": "749e2b78c4e44e181a880e2b2e04f9317ce797c9",
+  "treeHash": "400300c187758d2109f2c1a2cdf26bd8d9113fe81293c908c61be1b0a560ccf5",
+  "checkedAt": "2026-11-11T10:50:26.221Z"
+}
