@@ -30,6 +30,10 @@ exclude_re = [
     "tracing::",
 ]
 
+# Build with `[profile.mutants]` from the workspace `Cargo.toml` (no debug
+# symbols), which makes each mutant's incremental build faster.
+profile = "mutants"
+
 # Whole-suite builds are slow; give each mutant's test run generous headroom
 # over the unmutated baseline before calling it a timeout.
 timeout_multiplier = 3.0

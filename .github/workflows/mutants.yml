@@ -4,9 +4,11 @@
 # lives in .cargo/mutants.toml. A surviving mutant (a change no test notices)
 # fails the run; the report is uploaded as an artifact.
 #
-# Nightly runs every module in four shards. A pull request that touches one
-# of the modules mutates only the lines it changed (`--in-diff`), which keeps
-# the run to minutes.
+# Nightly runs every module in sixteen shards. A pull request that touches one
+# of the modules mutates only the lines it changed (`--in-diff`) in eight
+# shards. Each mutant rebuilds and runs the whole test suite (about three
+# minutes), so four shards could not finish the roughly 600 nightly mutants
+# within the job limit.
 name: Mutants
 
 on:
@@ -59,13 +61,13 @@ jobs:
   mutants:
     if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
     needs: [javascript]
-    name: Mutants ${{ matrix.shard }}/4
+    name: Mutants ${{ matrix.shard }}/${{ github.event_name == 'pull_request' && 8 || 16 }}
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3]
+        shard: ${{ fromJSON(github.event_name == 'pull_request' && '[0, 1, 2, 3, 4, 5, 6, 7]' || '[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -95,8 +97,9 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           ONLY_FILE: ${{ inputs.file }}
           SHARD: ${{ matrix.shard }}
+          SHARDS: ${{ github.event_name == 'pull_request' && 8 || 16 }}
         run: |
-          args=(--in-place --shard "$SHARD/4" --no-shuffle)
+          args=(--in-place --shard "$SHARD/$SHARDS" --sharding round-robin --no-shuffle)
           if [ "$EVENT" = pull_request ]; then
             git diff "$BASE_SHA"...HEAD > "$RUNNER_TEMP/pr.diff"
             args+=(--in-diff "$RUNNER_TEMP/pr.diff")
