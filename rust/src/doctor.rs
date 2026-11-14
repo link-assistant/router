@@ -608,7 +608,13 @@ mod tests {
             Some((SubscriptionProvider::Qwen, token_url.as_str())),
         )
         .await;
-        refresh_server.await.expect("refresh server task");
+        // Bounded, so a diagnosis that never refreshes fails this test
+        // instead of leaving the refresh stub waiting forever.
+        let limit = std::time::Duration::from_secs(10);
+        let refreshed = tokio::time::timeout(limit, refresh_server).await;
+        refreshed
+            .expect("the refresh request never arrived")
+            .expect("refresh server task");
         catalog_server.await.expect("catalog server task");
         std::fs::set_permissions(&qwen_home, std::fs::Permissions::from_mode(0o700))
             .expect("restore credential permissions");

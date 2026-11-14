@@ -19,6 +19,15 @@ pub(crate) async fn rendezvous(barrier: &tokio::sync::Barrier) {
     arrival.await.expect("the barrier partner never arrived");
 }
 
+/// Join a stub or request task, failing instead of hanging when the request
+/// it waits for never arrives, for example because routing rejected it first.
+#[allow(clippy::redundant_pub_crate)]
+pub(crate) async fn finished<T: Send>(task: tokio::task::JoinHandle<T>) -> T {
+    let joined = tokio::time::timeout(std::time::Duration::from_secs(10), task);
+    let result = joined.await.expect("the task never finished");
+    result.expect("the task panicked")
+}
+
 #[allow(clippy::redundant_pub_crate)]
 pub(crate) fn auto_state(readers: Vec<SubscriptionReader>, data_dir: &std::path::Path) -> AppState {
     AppState {

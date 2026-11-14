@@ -1,6 +1,6 @@
 //! Inference-surface coverage for credential-generation-aware evidence.
 
-use super::tests::{auto_state, rendezvous};
+use super::tests::{auto_state, finished, rendezvous};
 use super::*;
 use axum::body::Body;
 use axum::extract::{OriginalUri, Query, State};
@@ -989,7 +989,7 @@ async fn native_gemini_records_401_before_an_incomplete_body_fails() {
         }),
     ))
     .await;
-    server.await.unwrap();
+    finished(server).await;
 
     assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
     assert_rejected(&state, SubscriptionProvider::Gemini);
