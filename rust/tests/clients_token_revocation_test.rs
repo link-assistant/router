@@ -474,19 +474,21 @@ impl Router {
             .env("CLAUDE_CODE_HOME", home.join("claude"))
             .env("DISABLE_LOGIN_API", "true")
             .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
+            .stderr(fs::File::create(home.join("router.log")).expect("router log"))
             .spawn()
             .expect("router should start");
         let mut router = Self { child, port };
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
         while matches!(router.child.try_wait(), Ok(None)) {
-            if router_health(router.port) {
+            let last = router_health(router.port);
+            if last.starts_with("HTTP/1.1 200 ") && last.ends_with("ok") {
                 return Some(router);
             }
             assert!(
                 std::time::Instant::now() < deadline,
-                "router never became healthy on port {}",
-                router.port
+                "router never became healthy on port {}; last answer {last:?}; log:\n{}",
+                router.port,
+                fs::read_to_string(home.join("router.log")).unwrap_or_default()
             );
             std::thread::sleep(std::time::Duration::from_millis(100));
         }
@@ -498,25 +500,28 @@ impl Router {
     }
 }
 
-/// Whether the router answers `/api/health` with its bare `ok`, as
+/// The raw answer to `GET /api/health` on `port`, or why there was none.
+///
+/// The router is ready once this is a 200 with its bare `ok`, as
 /// `managed_server::tcp_health` checks. `mock_router` answers the same path
 /// with a JSON body, so a mock that took the router's port is not mistaken for
-/// it.
-fn router_health(port: u16) -> bool {
+/// it, and a start that never gets there reports what it got instead.
+fn router_health(port: u16) -> String {
     use std::io::{Read as _, Write as _};
 
     let Ok(mut stream) = std::net::TcpStream::connect(("127.0.0.1", port)) else {
-        return false;
+        return String::from("connection refused");
     };
     // A listener that accepts and never answers must not stall the start.
     let _ = stream.set_read_timeout(Some(std::time::Duration::from_secs(5)));
     let mut response = String::new();
-    stream
+    match stream
         .write_all(b"GET /api/health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
         .and_then(|()| stream.read_to_string(&mut response))
-        .is_ok()
-        && response.starts_with("HTTP/1.1 200 ")
-        && response.ends_with("ok")
+    {
+        Ok(_) => response,
+        Err(error) => format!("{error} after {response:?}"),
+    }
 }
 
 /// Minimal blocking POST; the crate's `reqwest` is async-only here.
