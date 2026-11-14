@@ -86,3 +86,84 @@ fn a_spent_token_budget_reports_its_counts() {
         "{error:?}"
     );
 }
+
+/// Rotation applies the TTL it was asked for instead of carrying the old one.
+#[test]
+fn rotating_a_token_applies_the_requested_ttl() {
+    let manager = test_manager();
+    let token = manager
+        .issue(&IssueRequest {
+            ttl_hours: 1,
+            label: "short-lived",
+            ..IssueRequest::default()
+        })
+        .unwrap();
+    let id = manager.validate_token(&token).unwrap().sub;
+
+    let rotated = manager.rotate_token(&id, 48, "").unwrap();
+    let sub = manager.validate_token(&rotated).unwrap().sub;
+    let record = manager.store().get(&sub).unwrap().unwrap();
+    assert!(record.expires_at - record.issued_at >= 47 * 3600, "{record:?}");
+}
+
+/// An admin token whose expiry is this very second has already expired, so
+/// a first-visitor claim neither revokes nor reports it again.
+#[test]
+fn an_admin_token_expiring_this_second_is_not_revoked_again() {
+    let manager = test_manager();
+    let admin = |label| {
+        let request = IssueRequest {
+            ttl_hours: 1,
+            label,
+            scope: ADMIN_SCOPE,
+            ..IssueRequest::default()
+        };
+        let token = manager.issue(&request).unwrap();
+        manager.validate_token(&token).unwrap().sub
+    };
+    let (expiring, live, kept) = (admin("expiring"), admin("live"), admin("kept"));
+    let expires_at = manager.store().get(&expiring).unwrap().unwrap().expires_at;
+    let mut live_record = manager.store().get(&live).unwrap().unwrap();
+    live_record.expires_at = expires_at + 60;
+    manager.store().put(live_record).unwrap();
+
+    let context = crate::operation_context::OperationContext {
+        now: chrono::DateTime::from_timestamp(expires_at, 0),
+        ..crate::operation_context::OperationContext::default()
+    };
+    let revoked = context.scope(|| manager.revoke_other_admin_tokens(&kept));
+    assert_eq!(revoked.unwrap(), vec![live]);
+}
+
+/// A signed token that names only a principal, or only a client kind, still
+/// needs its record: either binding alone refuses a token without one.
+#[test]
+fn a_token_with_one_binding_and_no_record_is_refused() {
+    let manager = test_manager();
+    let token = manager
+        .issue(&IssueRequest {
+            ttl_hours: 1,
+            label: "bound",
+            client_kind: Some("codex"),
+            principal_id: Some("primary"),
+            ..IssueRequest::default()
+        })
+        .unwrap();
+    let bound = manager.validate_token(&token).unwrap();
+    assert!(manager.store().delete(&bound.sub).unwrap());
+
+    let key = EncodingKey::from_secret(b"token-mutation-test-secret");
+    for keep_client_kind in [true, false] {
+        let mut claims = bound.clone();
+        if keep_client_kind {
+            claims.principal_id = None;
+        } else {
+            claims.client_kind = None;
+        }
+        let jwt = encode(&Header::default(), &claims, &key).unwrap();
+        let error = manager
+            .validate_token(&format!("{TOKEN_PREFIX}{jwt}"))
+            .unwrap_err();
+        assert!(matches!(error, TokenError::MissingRecord), "{error:?}");
+    }
+}

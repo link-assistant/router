@@ -219,7 +219,9 @@ fn a_reservation_is_settled_with_the_estimate_on_disconnect() {
     let id = manager.validate_token(&token).unwrap().sub;
     manager.enforce_request_budget_reserving(&id, 1000).unwrap();
     {
-        let mut tracker = ReservationGuard::new(manager.clone(), &id, 1000).into_tracker();
+        let guard = ReservationGuard::new(manager.clone(), &id, 1000);
+        assert_eq!(guard.reserved(), 1000);
+        let mut tracker = guard.into_tracker();
         tracker.feed(&sse(&[
             json!({"type": "message_start", "message": {"usage": {"input_tokens": 10, "output_tokens": 1}}}),
             json!({"type": "content_block_delta", "delta": {"type": "text_delta", "text": "z".repeat(40)}}),

@@ -950,3 +950,35 @@ fn a_reopened_store_keeps_every_link_it_holds() {
     reopened.replace_all(&extended).expect("write after reopen");
     assert_eq!(reopened.list().expect("list").len(), extended.len());
 }
+
+/// The request cap admits exactly `max` requests before refusing.
+#[test]
+fn consume_request_admits_exactly_the_request_cap() {
+    let mut record = sample_record("capped");
+    record.max_requests = Some(2);
+    assert!(consume_request(Some(&mut record)));
+    assert!(consume_request(Some(&mut record)));
+    assert!(!consume_request(Some(&mut record)));
+    assert_eq!(record.used_requests, 2);
+}
+
+/// Only the newer of two rate windows, or the larger count within one
+/// window, survives a merge of two copies of one record.
+#[test]
+fn merge_keeps_the_newer_rate_window_or_the_larger_count_in_one_window() {
+    let merged = |current: (i64, u64), other: (i64, u64)| {
+        let mut record = sample_record("merged");
+        (record.rate_window_started_at, record.rate_window_requests) = current;
+        let mut copy = record.clone();
+        (copy.rate_window_started_at, copy.rate_window_requests) = other;
+        merge_safer_record(&mut record, &copy);
+        (record.rate_window_started_at, record.rate_window_requests)
+    };
+    // A newer window replaces the count, even with a smaller one.
+    assert_eq!(merged((100, 9), (200, 1)), (200, 1));
+    // An older window never adds its count to the current one.
+    assert_eq!(merged((100, 1), (50, 9)), (100, 1));
+    // Within one window, the larger count wins from either side.
+    assert_eq!(merged((100, 5), (100, 3)), (100, 5));
+    assert_eq!(merged((100, 2), (100, 7)), (100, 7));
+}

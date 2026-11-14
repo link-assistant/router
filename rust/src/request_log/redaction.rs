@@ -362,6 +362,16 @@ mod tests {
     }
 
     #[test]
+    fn every_hex_digit_decodes_in_either_case() {
+        for (value, digit) in (0_u8..).zip("0123456789abcdef".bytes()) {
+            assert_eq!(hex_digit(digit), Some(value), "{}", char::from(digit));
+            assert_eq!(hex_digit(digit.to_ascii_uppercase()), Some(value));
+        }
+        assert_eq!(hex_digit(b'g'), None);
+        assert_eq!(percent_decode("%4a%4A%7e"), "JJ~");
+    }
+
+    #[test]
     fn header_names_survive_while_secret_values_are_masked() {
         let mut headers = HeaderMap::new();
         headers.insert("content-type", "application/json".parse().unwrap());

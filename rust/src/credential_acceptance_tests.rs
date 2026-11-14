@@ -336,33 +336,120 @@ async fn rejected_external_credentials_leave_no_successor_transaction() {
     }
 }
 
+/// Expired tokens, and tokens with less than the five-minute margin left, are
+/// both refused before any vendor request.
 #[tokio::test]
 async fn near_expiry_external_credential_is_refused_without_any_vendor_request() {
     let (url, requests, server) =
         start_vendor(SubscriptionProvider::Claude, CatalogReply::Accepted).await;
+    for remaining_ms in [0, 4 * 60_000] {
+        let root = tempfile::tempdir().unwrap();
+        let expiring = serde_json::json!({
+            "claudeAiOauth": {
+                "accessToken":"native-secret-access",
+                "refreshToken":"native-secret-refresh",
+                "expiresAt": crate::operation_context::now().timestamp_millis() + remaining_ms
+            }
+        })
+        .to_string();
+
+        let error = accept_external_candidate(
+            root.path(),
+            SubscriptionProvider::Claude,
+            &expiring,
+            Some(&url),
+        )
+        .await
+        .expect_err("the owning vendor client must renew it");
+
+        assert_eq!(error.kind(), AcceptanceFailureKind::NotAttempted);
+        assert!(error.to_string().contains("owning vendor client"));
+        assert!(requests.lock().unwrap().is_empty(), "{remaining_ms} ms");
+    }
+    server.abort();
+}
+
+/// A durable candidate whose refresh token changed during the catalog check
+/// is retained, not accepted, even though its access token is unchanged.
+#[tokio::test]
+async fn a_candidate_rewritten_during_validation_is_retained_not_accepted() {
+    let provider = SubscriptionProvider::Claude;
     let root = tempfile::tempdir().unwrap();
-    let expiring = serde_json::json!({
+    let staging = root.path().join(STAGING_DIRECTORY);
+    let rewritten = serde_json::json!({
         "claudeAiOauth": {
             "accessToken":"native-secret-access",
-            "refreshToken":"native-secret-refresh",
-            "expiresAt": crate::operation_context::now().timestamp_millis()
+            "refreshToken":"rewritten-secret-refresh"
         }
     })
     .to_string();
+    let app = Router::new().fallback(move || {
+        let (staging, rewritten) = (staging.clone(), rewritten.clone());
+        async move {
+            for transaction in std::fs::read_dir(&staging).unwrap() {
+                let home = transaction.unwrap().path().join(provider.as_str());
+                let file = home.join(provider.canonical_credential_filename());
+                std::fs::write(file, rewritten.as_bytes()).unwrap();
+            }
+            Json(serde_json::json!({"data":[{"id":"claude-live"}]}))
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let url = format!("http://{}", listener.local_addr().unwrap());
+    let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
 
-    let error = accept_external_candidate(
-        root.path(),
-        SubscriptionProvider::Claude,
-        &expiring,
-        Some(&url),
-    )
-    .await
-    .expect_err("the owning vendor client must renew it");
+    let candidate = document(provider);
+    let error = accept_external_candidate(root.path(), provider, &candidate, Some(&url))
+        .await
+        .expect_err("a candidate changed after validation must not be accepted");
 
-    assert_eq!(error.kind(), AcceptanceFailureKind::NotAttempted);
-    assert!(error.to_string().contains("owning vendor client"));
-    assert!(requests.lock().unwrap().is_empty());
+    assert_eq!(error.kind(), AcceptanceFailureKind::SuccessorRetained);
+    assert_eq!(error.phase(), AcceptancePhase::Persistence);
+    assert!(error.to_string().contains("changed after validation"), "{error}");
     server.abort();
+}
+
+/// The staging area and each isolated candidate store are owner-only, even
+/// under a umask that would leave new directories readable by others.
+#[cfg(unix)]
+#[tokio::test]
+async fn staging_directories_are_owner_only() {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    let provider = SubscriptionProvider::Claude;
+    let (url, _requests, server) = start_vendor(provider, CatalogReply::Accepted).await;
+    let root = tempfile::tempdir().unwrap();
+    let staging = root.path().join(STAGING_DIRECTORY);
+    std::fs::create_dir(&staging).unwrap();
+    std::fs::set_permissions(&staging, std::fs::Permissions::from_mode(0o755)).unwrap();
+
+    let candidate = document(provider);
+    let accepted = accept_external_candidate(root.path(), provider, &candidate, Some(&url))
+        .await
+        .expect("live external access token is accepted");
+
+    let mode = |path: &Path| std::fs::metadata(path).unwrap().permissions().mode() & 0o777;
+    assert_eq!(mode(&staging), 0o700);
+    let mut transactions = std::fs::read_dir(&staging).unwrap();
+    let transaction = transactions.next().unwrap().unwrap();
+    assert_eq!(mode(&transaction.path().join(provider.as_str())), 0o700);
+    drop(accepted);
+    server.abort();
+}
+
+#[test]
+fn loopback_origins_refuse_any_userinfo() {
+    assert_eq!(
+        loopback_origin("http://127.0.0.1:8080/token").as_deref(),
+        Some("http://127.0.0.1:8080")
+    );
+    for endpoint in [
+        "http://user@127.0.0.1:8080",
+        "http://:secret@127.0.0.1:8080",
+        "http://user:secret@localhost:8080",
+    ] {
+        assert_eq!(loopback_origin(endpoint), None, "{endpoint}");
+    }
 }
 
 fn catalog_path(provider: SubscriptionProvider) -> &'static str {
