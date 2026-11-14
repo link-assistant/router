@@ -290,7 +290,9 @@ A test that starts a router child takes its port from
 binary. The OS can still give that port to a parallel test's listener before
 the child binds it, so the test waits for the router's own `/api/health` to
 answer `ok` (no mock serves that body) and, if the child exits, starts it again
-on another port. A test that needs a refused connection dials `127.0.0.1:1`
+on another port. Router sends that `ok` chunked, as it sends every body, so a
+test reading the raw socket checks it with `health_response::is_ready`, the
+parser `server start` uses, rather than looking for a response ending in `ok`. A test that needs a refused connection dials `127.0.0.1:1`
 rather than a port it reserved and dropped.
 
 The soak uses a non-retaining upstream fixture; ordinary replay and feature

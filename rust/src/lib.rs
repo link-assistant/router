@@ -91,6 +91,7 @@ pub mod github_proxy;
 pub mod gonka;
 #[cfg(test)]
 mod gonka_timeout_tests;
+pub mod health_response;
 mod launcher_log;
 pub mod lefine;
 pub mod lino_json;

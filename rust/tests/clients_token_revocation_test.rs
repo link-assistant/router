@@ -481,7 +481,7 @@ impl Router {
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
         while matches!(router.child.try_wait(), Ok(None)) {
             let last = router_health(router.port);
-            if last.starts_with("HTTP/1.1 200 ") && last.ends_with("ok") {
+            if link_assistant_router::health_response::is_ready(&last) {
                 return Some(router);
             }
             assert!(
@@ -502,8 +502,8 @@ impl Router {
 
 /// The raw answer to `GET /api/health` on `port`, or why there was none.
 ///
-/// The router is ready once this is a 200 with its bare `ok`, as
-/// `managed_server::tcp_health` checks. `mock_router` answers the same path
+/// The router is ready once this is a 200 with its bare `ok`, which arrives
+/// chunked, as `managed_server::tcp_health` checks. `mock_router` answers the same path
 /// with a JSON body, so a mock that took the router's port is not mistaken for
 /// it, and a start that never gets there reports what it got instead.
 fn router_health(port: u16) -> String {

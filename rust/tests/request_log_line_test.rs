@@ -74,13 +74,13 @@ impl Router {
     }
 
     /// Wait until this router answers `/api/health` with its bare `ok`, as
-    /// `managed_server::tcp_health` checks; `false` if it exited first, as it
+    /// `managed_server::tcp_health` checks (it arrives chunked); `false` if it exited first, as it
     /// does when another listener took its port.
     fn wait_until_ready(&mut self) -> bool {
         let deadline = Instant::now() + Duration::from_secs(30);
         while matches!(self.child.try_wait(), Ok(None)) {
             let response = self.get("/api/health").unwrap_or_default();
-            if response.starts_with("HTTP/1.1 200 ") && response.ends_with("ok") {
+            if link_assistant_router::health_response::is_ready(&response) {
                 return true;
             }
             assert!(Instant::now() < deadline, "router did not become ready");

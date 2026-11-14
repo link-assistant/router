@@ -909,9 +909,9 @@ fn tcp_health(port: u16) -> bool {
         return false;
     }
     let mut response = String::new();
-    stream.read_to_string(&mut response).is_ok()
-        && response.starts_with("HTTP/1.1 200")
-        && response.ends_with("ok")
+    // Router's `ok` arrives chunked, so it is decoded rather than matched at
+    // the end of the response.
+    stream.read_to_string(&mut response).is_ok() && crate::health_response::is_ready(&response)
 }
 
 fn new_managed_state() -> ManagedState {
