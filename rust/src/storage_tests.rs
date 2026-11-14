@@ -3,7 +3,7 @@ use std::sync::Barrier;
 use std::thread;
 use tempfile::tempdir;
 
-fn sample_record(id: &str) -> TokenRecord {
+pub(super) fn sample_record(id: &str) -> TokenRecord {
     TokenRecord {
         github_repos: Vec::new(),
         id: id.into(),
