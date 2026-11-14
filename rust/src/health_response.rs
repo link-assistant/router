@@ -16,7 +16,8 @@ pub fn is_ready(response: &str) -> bool {
         return false;
     };
     let mut lines = head.split("\r\n");
-    if !lines.next().unwrap_or_default().starts_with("HTTP/1.1 200 ") {
+    let status = lines.next().unwrap_or_default();
+    if !status.starts_with("HTTP/1.1 200 ") {
         return false;
     }
     if lines.any(is_chunked_encoding) {
