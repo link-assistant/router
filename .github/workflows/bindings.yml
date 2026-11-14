@@ -88,7 +88,15 @@ jobs:
       - name: Check documented minor API changes against PR base
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: cargo semver-checks check-release --baseline-rev "$BASE_SHA" --release-type minor
+        # --baseline-rev extracts the base tree through temporary names 43 bytes
+        # longer than each file name, which exceeds the 255-byte limit for the
+        # longest translation fixtures. tar extracts the same tree under the
+        # final names, and --baseline-root reads it as --baseline-rev would.
+        run: |
+          baseline="target/semver-checks/baseline-$BASE_SHA"
+          mkdir -p "$baseline"
+          git archive "$BASE_SHA" | tar -x -C "$baseline"
+          cargo semver-checks check-release --baseline-root "$baseline" --release-type minor
   generated-http:
     if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
     needs: [javascript]
