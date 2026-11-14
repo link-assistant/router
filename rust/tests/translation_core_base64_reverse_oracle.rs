@@ -37,7 +37,13 @@ export function error_text(error){return displayRuntime(error);}
 "###;
 
 // Produced by the genuine source/CST/semantic reverse pipeline; never handwritten.
-#[allow(clippy::needless_return, clippy::used_underscore_binding)]
+#[allow(
+    clippy::double_must_use,
+    clippy::needless_return,
+    clippy::uninlined_format_args,
+    clippy::unreadable_literal,
+    clippy::used_underscore_binding
+)]
 #[path = "../../tools/translation/js-to-rust/generated/owned-base64-witness.rs"]
 mod reverse_generated;
 
@@ -171,7 +177,7 @@ fn all_shared_decode_errors_keep_fields_utf8_offsets_and_native_display_debug() 
                 observe(reverse_generated::standard_decode_owned_text(input), row);
             }
             "STANDARD_NO_PAD" => {
-                observe(reverse_generated::standard_no_pad_decode_text(input), row)
+                observe(reverse_generated::standard_no_pad_decode_text(input), row);
             }
             "URL_SAFE_NO_PAD" => {
                 observe(reverse_generated::url_no_pad_decode_text(input), row);

@@ -69,6 +69,7 @@ const FIRST: bool = selected(Mode::First);
 const SECOND: bool = selected(Mode::Second);
 
 #[test]
+#[allow(clippy::assertions_on_constants)] // Check the const-evaluated results at run time.
 fn unit_variants_const_and_single_subject_evaluation() {
     assert!(FIRST);
     assert!(!SECOND);

@@ -1,5 +1,5 @@
 //! Native behavior oracle for source substitutions; Rust runs in CI only.
-//! These equations do not translate Option or serde_json library internals.
+//! These equations do not translate `Option` or `serde_json` library internals.
 
 // Keep the explicit branch under test rather than replacing it by a combinator.
 #![allow(clippy::option_if_let_else)]
@@ -108,6 +108,7 @@ fn receiver_evaluates_once_and_only_inside_selected_branch() {
 }
 
 #[test]
+#[allow(clippy::or_fun_call)] // The eager fallback block is the behavior under test.
 fn eager_receiver_fallback_order_is_unchanged_for_some() {
     let root = json!({"nested": {"v": "Ω"}});
     let fallback = json!({"v": "fallback"});

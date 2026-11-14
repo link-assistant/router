@@ -3,7 +3,8 @@
 // This oracle does not pretend to include an ungenerated reverse target.
 use link_assistant_router::translation_core::Json;
 
-#[allow(dead_code)]
+// JavaScript tests extract this witness by its exact r###"..."### delimiters.
+#[allow(dead_code, clippy::needless_raw_string_hashes)]
 const REVERSE_JSON_READER_JS_WITNESS: &str = r###"import {serde_json_value_get_string as getKey,serde_json_value_get_usize as getIndex,serde_json_value_pointer as pointer,serde_json_value_as_str as asText,serde_json_value_as_bool as asBool,serde_json_value_as_u64 as asU64,serde_json_value_as_i64 as asI64,serde_json_value_is_null as isNull} from './runtime/json-runtime.mjs';
 export function read_key(value,key){return getKey(value,key);}
 export function read_index(value,index){return getIndex(value,index);}
@@ -15,6 +16,7 @@ export function read_i64(value){return asI64(value);}
 export function read_null(value){return isNull(value);}
 "###;
 
+#[allow(clippy::option_if_let_else)] // Keep the explicit reader match under test.
 fn borrowed_text<'a>(value: &'a Json, key: &str) -> Option<&'a str> {
     match Json::get(value, key) {
         Some(found) => Json::as_str(found),

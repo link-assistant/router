@@ -8,7 +8,7 @@ fn inclusive_ieee_boundary_cases() {
         (0.0, 1.0, 1.0, true),
         (0.0, 1.0, 0.5, true),
         (0.0, 1.0, -f64::from_bits(1), false),
-        (0.0, 1.0, 1.0000000000000002, false),
+        (0.0, 1.0, 1.000_000_000_000_000_2, false),
         (-2.0, 2.0, -2.0, true),
         (-2.0, 2.0, 2.0, true),
         (-2.0, 2.0, -3.0, false),
@@ -114,7 +114,7 @@ fn binary32_decimal_endpoints_round_before_widening() {
     // from passing just because the production 0/1 and -2/2 bounds are exact.
     assert_eq!(decimal.to_bits(), 0x3dcc_cccd);
     assert_eq!(f64::from(decimal).to_bits(), 0x3fb9_9999_a000_0000);
-    assert_ne!(f64::from(decimal), 0.1_f64);
+    assert_ne!(f64::from(decimal).to_bits(), 0.1_f64.to_bits());
     assert!((decimal..=decimal).contains(&decimal));
     assert!(f64_inclusive_contains(decimal, decimal, decimal));
     assert!(f64_inclusive_contains(0.1, 0.1, decimal));

@@ -113,7 +113,8 @@ fn rhs_is_evaluated_before_the_owned_base_is_replaced() {
 }
 
 #[test]
-#[allow(clippy::nonminimal_bool)] // Preserve the original logical interpolation syntax.
+// Preserve the original logical interpolation and raw-string key syntax.
+#[allow(clippy::nonminimal_bool, clippy::needless_raw_string_hashes)]
 fn raw_strings_and_conditional_writes_keep_literal_bytes() {
     for flag in [true, false] {
         let mut doc = translation_core::json!({"raw": r#"Ω😀 { doc }"#});

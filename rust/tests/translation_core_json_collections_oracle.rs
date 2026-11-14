@@ -81,7 +81,8 @@ fn callback_panic_stops_before_later_rows() {
 }
 
 #[test]
-#[allow(clippy::manual_unwrap_or)] // Compare the explicit adopted branch with unwrap_or.
+// Compare the explicit adopted branches with the Option combinators.
+#[allow(clippy::manual_unwrap_or, clippy::option_if_let_else)]
 fn canonical_option_expansion_preserves_payload_and_default() {
     let input = vec![
         json!({"image": {"url": "猫"}}),
@@ -124,6 +125,7 @@ fn canonical_option_expansion_preserves_payload_and_default() {
 }
 
 #[test]
+#[allow(clippy::or_fun_call)] // The eager default call is the behavior under test.
 fn unwrap_default_evaluates_after_subject_even_for_some() {
     let events = RefCell::new(Vec::new());
     let subject = || {

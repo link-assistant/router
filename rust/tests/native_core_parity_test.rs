@@ -50,8 +50,7 @@ fn shared_token_budget_boundaries() {
         record.reserved_tokens = row["reserved"].as_u64().unwrap();
         record.max_tokens = row["max"]
             .as_i64()
-            .filter(|max| *max >= 0)
-            .map(|max| max as u64);
+            .and_then(|value| u64::try_from(value).ok());
         store.put(record.clone()).unwrap();
         let verdict = store
             .try_admit_request_reserving(

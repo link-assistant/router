@@ -2,6 +2,7 @@
 use link_assistant_router::translation_core::{self, Text};
 
 #[test]
+#[allow(clippy::needless_raw_string_hashes)] // A hashed raw format string is a case.
 fn compatibility_primitive_format_cases() {
     let value: Text = translation_core::format!("core {{text}}");
     assert_eq!(value, "core {text}");

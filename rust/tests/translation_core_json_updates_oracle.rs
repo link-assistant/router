@@ -150,6 +150,7 @@ fn multiple_updates_preserve_conditional_fields_and_the_final_owned_return() {
     }
 }
 
+#[allow(clippy::option_if_let_else)] // Keep the original explicit branch shape.
 fn original_shared_child(value: &Json) -> Json {
     if let Some(child) = value.get("strict") {
         child.clone()
@@ -158,6 +159,7 @@ fn original_shared_child(value: &Json) -> Json {
     }
 }
 
+#[allow(clippy::option_if_let_else)] // Keep the adopted explicit branch shape.
 fn adopted_shared_child(value: &Json) -> Json {
     if let Some(child) = value.get("strict") {
         translation_core::json_copy(child)

@@ -27,6 +27,7 @@ fn input_loan_does_not_borrow_the_separate_output() {
     }
 }
 
+#[allow(clippy::question_mark)] // The let-else early returns are the pattern under test.
 fn optional(input: Maybe<&Json>) -> Maybe<Json> {
     let Some(input) = input else { return None };
     let Some(value) = input.get("data") else {
@@ -54,7 +55,7 @@ fn object_and_string_views_keep_their_actual_receiver() {
     let input = core::json!({"data": {"text": "猫"}});
     let object = input.as_object().unwrap();
     let value = object.get("data").unwrap();
-    assert!(std::ptr::eq(value, &input["data"]));
+    assert!(std::ptr::eq(value, &raw const input["data"]));
     let text = core::json!("猫😀");
     let view = text.as_str().unwrap();
     assert_eq!(
@@ -63,6 +64,7 @@ fn object_and_string_views_keep_their_actual_receiver() {
     );
 }
 
+#[allow(clippy::question_mark)] // The let-else early return is the pattern under test.
 fn branched(left: &Json, right: &Json, flag: bool) -> Maybe<Json> {
     let selected = if flag {
         left.get("pick")
@@ -109,7 +111,7 @@ fn a_returned_reference_still_belongs_to_the_declared_input_lifetime() {
     let input = core::json!({"keep": {"x": true}});
     assert!(std::ptr::eq(
         returned(&input, "keep").unwrap(),
-        &input["keep"]
+        &raw const input["keep"]
     ));
     assert_eq!(returned(&core::json!({}), "keep"), None);
 }

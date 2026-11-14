@@ -1,4 +1,6 @@
 // CI-only oracle source; no local Rust execution. The candidate facade is unused.
+// The shared candidate source is translation input; keep its signatures as written.
+#[allow(clippy::missing_const_for_fn)]
 #[path = "../src/translation_core/json_edit_candidate.rs"]
 mod json_edit_candidate;
 use json_edit_candidate::JsonEditSlot;
