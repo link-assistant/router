@@ -346,7 +346,7 @@ fn release_workflows_pin_actions_tools_and_artifact_identity() {
         release.contains("cargo cyclonedx --format json --all-features --all --spec-version 1.5")
     );
     assert!(release.contains("(.components | length > 1) and (.dependencies | length > 0)"));
-    assert!(release.contains("ref: refs/tags/v${{ env.RELEASE_VERSION }}"));
+    assert!(release.contains("ref: ${{ needs.resolve-release-source.outputs.sha }}"));
     assert!(
         release.contains("link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.tar.gz"),
         "release assets must be named per platform, not per architecture alone"
