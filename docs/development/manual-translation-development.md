@@ -29,6 +29,17 @@ lockfile compiler (currently 5.9.3), with the existing strict options. Existing
 native TypeScript is compiled as checked in; this lane does not regenerate it.
 All original public/native runtime contracts and testing tiers remain in place.
 
+Four lint commands came with this lane: the workflow policy regression file, the
+workflow audit, and the Node and Bun runs of the pipe trace regression file. On
+the caller's own commit (`inputs.sha == github.sha`, the SHA every caller's
+`javascript` job passes) they always run. A caller can also check another commit:
+Benchmarks checks its immutable base before benchmarking it. There, each of these
+commands runs only when that commit has its file (`hashFiles(…) != ''`). A base
+from before the lane cannot carry them, and the workflows in effect come from the
+caller's commit, which has already passed both audits. `LANE_FILES` in
+`scripts/manual-development-policy.mjs` lists these commands, and the policy test
+rejects any other conditional step.
+
 Install dependencies and run the same active commands sequentially:
 
 ```bash

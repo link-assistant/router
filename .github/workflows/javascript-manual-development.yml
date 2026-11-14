@@ -40,10 +40,14 @@ jobs:
       - run: npm ci --prefix js --ignore-scripts
       - run: node scripts/sync-rust-assets.mjs --check
       - run: node scripts/lint-js-first.mjs
-      - run: node --test scripts/test/manual-development.test.mjs
-      - run: node scripts/check-manual-development-workflows.mjs
-      - run: node --test tools/translation/test/matrix-trace-writer.test.mjs
-      - run: bun test tools/translation/test/matrix-trace-writer.test.mjs
+      - if: ${{ inputs.sha == github.sha || hashFiles('scripts/test/manual-development.test.mjs') != '' }}
+        run: node --test scripts/test/manual-development.test.mjs
+      - if: ${{ inputs.sha == github.sha || hashFiles('scripts/check-manual-development-workflows.mjs') != '' }}
+        run: node scripts/check-manual-development-workflows.mjs
+      - if: ${{ inputs.sha == github.sha || hashFiles('tools/translation/test/matrix-trace-writer.test.mjs') != '' }}
+        run: node --test tools/translation/test/matrix-trace-writer.test.mjs
+      - if: ${{ inputs.sha == github.sha || hashFiles('tools/translation/test/matrix-trace-writer.test.mjs') != '' }}
+        run: bun test tools/translation/test/matrix-trace-writer.test.mjs
   node-tests:
     runs-on: ubuntu-24.04
     timeout-minutes: 15

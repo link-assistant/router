@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { auditManualDevelopment, readWorkflowSources } from '../check-manual-development-workflows.mjs';
-import { MANUAL_STAGES, MANUAL_WORKFLOW, MANUAL_AGGREGATE, RUST_BLOCK } from '../manual-development-policy.mjs';
+import { MANUAL_STAGES, MANUAL_WORKFLOW, MANUAL_AGGREGATE, RUST_BLOCK, LANE_FILES } from '../manual-development-policy.mjs';
 import { runManualDevelopment } from '../check-manual-development-local.mjs';
 import { auditWorkflows, STAGES } from '../check-js-first-workflows.mjs';
 const require = createRequire(new URL('../ci/package.json', import.meta.url));
@@ -89,6 +89,24 @@ test('every caller retains its same-SHA Rust admission guard, original dependenc
   assert.ok(mutation('bindings.yml', doc => { delete doc.jobs.javascript.if; }).length);
   assert.ok(mutation('release.yml', doc => { doc.jobs['release-javascript'].with.sha = 'main'; }).length);
   assert.ok(mutation('javascript-first.yml', doc => { doc.jobs.parity.steps = [{ run: 'true' }]; }).length);
+});
+
+test('lane-introduced lint checks always run on the caller commit and elsewhere only when present', { timeout: 30_000 }, () => {
+  const jobs = parse(sources[MANUAL_WORKFLOW]).jobs;
+  for (const [command, file] of Object.entries(LANE_FILES)) {
+    assert.equal(jobs.lint.steps.find(step => step.run === command)?.if,
+      `\${{ inputs.sha == github.sha || hashFiles('${file}') != '' }}`, command);
+    assert.ok(fs.existsSync(file), `${file} must exist on the lane's own commit`);
+  }
+  const conditional = Object.values(jobs).flatMap(job => job.steps).filter(step => step.run && step.if);
+  assert.deepEqual(conditional.map(step => step.run).sort(), Object.keys(LANE_FILES).sort());
+  const step = (doc, command) => doc.jobs.lint.steps.find(entry => entry.run === command);
+  for (const change of [
+    doc => { step(doc, 'node scripts/check-manual-development-workflows.mjs').if = "${{ hashFiles('scripts/check-manual-development-workflows.mjs') != '' }}"; },
+    doc => { step(doc, 'node --test scripts/test/manual-development.test.mjs').if = "${{ inputs.sha == github.sha || hashFiles('package.json') != '' }}"; },
+    doc => { step(doc, 'node scripts/lint-js-first.mjs').if = "${{ inputs.sha == github.sha || hashFiles('scripts/lint-js-first.mjs') != '' }}"; },
+    doc => { delete step(doc, 'bun test tools/translation/test/matrix-trace-writer.test.mjs').if; },
+  ]) assert.ok(mutation(MANUAL_WORKFLOW, change).length);
 });
 
 test('malformed and duplicate YAML keys fail closed', { timeout: 30_000 }, () => {

@@ -26,6 +26,20 @@ export const MANUAL_STAGES = Object.freeze([
   ]],
 ].map(([id, commands]) => Object.freeze([id, Object.freeze(commands)])));
 
+// Lint commands whose files arrived with this lane (pull request #785). They
+// always run on the caller's own commit. A caller may also check another commit
+// (Benchmarks checks its immutable base): there they run when that commit has
+// the file, because a commit from before the lane cannot carry them. The
+// workflows in effect are the caller's, which its own commit already audits.
+export const LANE_FILES = Object.freeze({
+  'node --test scripts/test/manual-development.test.mjs': 'scripts/test/manual-development.test.mjs',
+  'node scripts/check-manual-development-workflows.mjs': 'scripts/check-manual-development-workflows.mjs',
+  'node --test tools/translation/test/matrix-trace-writer.test.mjs': 'tools/translation/test/matrix-trace-writer.test.mjs',
+  'bun test tools/translation/test/matrix-trace-writer.test.mjs': 'tools/translation/test/matrix-trace-writer.test.mjs',
+});
+
+export const laneFileCondition = file => `\${{ inputs.sha == github.sha || hashFiles('${file}') != '' }}`;
+
 export const SHA_VERIFIER = `node --input-type=module -e "
   import {execFileSync} from 'node:child_process';
   const expected = process.env.EXPECTED_SHA;
@@ -67,7 +81,7 @@ export function manualJobs() {
       { uses: 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020', with: { 'node-version': '20' } },
       ...(['lint', 'bun-tests', 'typescript'].includes(id) ? [{ uses: 'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6', with: { 'bun-version': '1.4.3' } }] : []),
       { name: 'Verify immutable source commit', env: { EXPECTED_SHA: '${{ inputs.sha }}' }, run: SHA_VERIFIER },
-      ...[...INSTALLS[id], ...commands].map(run => ({ run })),
+      ...[...INSTALLS[id], ...commands].map(run => (LANE_FILES[run] ? { if: laneFileCondition(LANE_FILES[run]), run } : { run })),
       ...(id === 'typescript' ? [{
         name: 'Preserve complete Node deadline audit and raw streams',
         if: '${{ always() }}',
