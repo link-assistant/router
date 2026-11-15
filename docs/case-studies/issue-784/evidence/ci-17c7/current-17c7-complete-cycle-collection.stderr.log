@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/collect-completed-ci.py", line 81, in <module>
+    raise RuntimeError('Failed to download a workflow with actual job results')
+RuntimeError: Failed to download a workflow with actual job results

@@ -28,7 +28,10 @@ fn encode(value: &crate::translation_core::Str) -> String {
 }
 
 /// Extra OpenSSH options, inserted before `--`. Empty without settings.
-pub fn ssh_options(ssh: &SshSettings, known_hosts: crate::translation_core::Maybe<&Path>) -> Vec<OsString> {
+pub fn ssh_options(
+    ssh: &SshSettings,
+    known_hosts: crate::translation_core::Maybe<&Path>,
+) -> Vec<OsString> {
     let mut options: Vec<OsString> = Vec::new();
     let mut option = |text: String| {
         options.push("-o".into());
@@ -62,7 +65,9 @@ pub fn ssh_options(ssh: &SshSettings, known_hosts: crate::translation_core::Mayb
 }
 
 /// Write the pinned `known_hosts` lines to a private temporary file.
-pub fn pinned_known_hosts(text: &crate::translation_core::Str) -> std::io::Result<tempfile::NamedTempFile> {
+pub fn pinned_known_hosts(
+    text: &crate::translation_core::Str,
+) -> std::io::Result<tempfile::NamedTempFile> {
     // `tempfile` creates the file 0600, so the pin is not world-writable.
     let mut file = tempfile::Builder::new()
         .prefix("router-deploy-known-hosts-")

@@ -8,6 +8,7 @@ import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
 import {readSchemarsEnclosingHistory,assertSchemarsEnclosingHistoryFresh,SCHEMARS_ENCLOSING_ORIGINAL} from './schemars-enclosing-history.mjs';
 import {normalizeSchemarsCurrentEnclosingSource,assertSchemarsCurrentEnclosingHistoryFresh} from './schemars-current-enclosing-history.mjs';
+import {deriveCloneEnclosingContextSourceRules,assertCloneEnclosingSourceInputsFresh} from './prepare-clone-enclosing-source-history.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),PREFIX='tools/translation/';
 const INPUTS=Object.freeze({
@@ -108,10 +109,18 @@ export function prepareSchemarsWithOutputProposal({root=ROOT,inputSources=null}=
    languageEdits.push(edit(file,source,call,wrapper.getText(copied.file),'same-native-bound-private-creator-byte-scope'));language=apply(source,languageEdits);if(apply(language,[enclosingHistory.edit])!==byte.language)fail('complete copied byte call differs from the exact original import predecessor');
    const parsed=native(ts,root,name,language),target=one(parsed.file.statements.filter(row=>ts.isFunctionDeclaration(row)&&row.name?.text==='createDeriveEnclosingNamespaceContext'),'native copied creator insertion boundary'),at=target.getFullStart();repositoryEdits.push({id:'same-native-byte-operation-import',span:[at,at],expected:'',replacement:byte.repositorySelections[0].replacement});
    byteScope={schema:'exact-original-enclosing-byte-scope-copy-v1',source:byte.path,sourceSha256:byte.afterSha256,originalCall:byte.originalCall,nativeCall:languageEdits[0],nativeImport:repositoryEdits.at(-1),scopeCompletesBeforeReturn:true,privateIssuerUnchanged:true,sourceAuthority:false};
+   if(byte.cloneSourceHistory)byteScope.cloneSourceHistory=byte.cloneSourceHistory;
   }
-  const after=header+apply(language,repositoryEdits);
+  let core=apply(language,repositoryEdits),repository=repositoryEdits;
+  if(byteScope?.cloneSourceHistory){
+   const composition=deriveCloneEnclosingContextSourceRules(core);core=composition.after;
+   byteScope.cloneSourceComposition=composition;
+   repository=[{id:'complete-ordered-Clone-and-native-import-composition',span:[0,language.length],expected:language,replacement:core}];
+  }
+  const after=header+core;
   if(byteScope){const byte=enclosingHistory.byteLayer.files[0],copied=native(ts,root,name,byte.after),owner=importBinding(ts,copied.file,copied.checker,'./schemars-enclosing-output-dispatch.mjs','proveSchemarsBangFootprint'),expected=apply(byte.after,[edit(copied.file,byte.after,owner.declaration.moduleSpecifier,"'./schemars-with-bang-candidate.mjs'",'same-original-byte-source-Schemars-relocation')]);if(after.slice(header.length)!==expected)fail('complete candidate source differs from actual byte-scope source and single Schemars import relocation');}
-  files.push(whole(ts,root,OUTPUTS[2],source,language,after,{language:languageEdits,repository:repositoryEdits,repositoryPrefix:header,completeOriginalPrivateIssuerRetained:true,byteScope}));
+  files.push(whole(ts,root,OUTPUTS[2],source,language,after,{language:languageEdits,repository,repositoryConstituents:repositoryEdits,repositoryPrefix:header,completeOriginalPrivateIssuerRetained:true,byteScope}));
+  if(byteScope?.cloneSourceComposition)assertCloneEnclosingSourceInputsFresh(byteScope.cloneSourceComposition);
  }
  const supportBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,PREFIX+SUPPORT),support);
  for(const input of inputs)if(readFileSync(resolve(root,input.path),'utf8')!==input.source)fail('fresh complete source changed before return: '+input.path);

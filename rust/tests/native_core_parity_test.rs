@@ -17,7 +17,11 @@ fn shared_native_token_projection_and_signature() {
     let fixture = fixture();
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("tokens.lino");
-    std::fs::write(&path, include_str!("../../parity/fixtures/core/tokens.lino")).unwrap();
+    std::fs::write(
+        &path,
+        include_str!("../../parity/fixtures/core/tokens.lino"),
+    )
+    .unwrap();
     let store = Arc::new(TextTokenStore::open(path).unwrap());
     let expected: TokenRecord = serde_json::from_value(fixture["token_record"].clone()).unwrap();
     assert_eq!(store.get(&expected.id).unwrap().unwrap(), expected);
@@ -46,8 +50,7 @@ fn shared_token_budget_boundaries() {
         record.reserved_tokens = row["reserved"].as_u64().unwrap();
         record.max_tokens = row["max"]
             .as_i64()
-            .filter(|max| *max >= 0)
-            .map(|max| max as u64);
+            .and_then(|value| u64::try_from(value).ok());
         store.put(record.clone()).unwrap();
         let verdict = store
             .try_admit_request_reserving(

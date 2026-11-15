@@ -103,8 +103,11 @@ pub async fn send(
         if attempt > 1 {
             request.headers_mut().insert(
                 "authorization",
-                HeaderValue::from_str(&crate::translation_core::format!("Bearer {}", selected.token.access_token))
-                    .map_err(|e| UpstreamSendError::Egress(e.to_string()))?,
+                HeaderValue::from_str(&crate::translation_core::format!(
+                    "Bearer {}",
+                    selected.token.access_token
+                ))
+                .map_err(|e| UpstreamSendError::Egress(e.to_string()))?,
             );
             if request.headers_mut().remove("chatgpt-account-id").is_some()
                 && let Some(account_id) = &selected.token.account_id
@@ -126,9 +129,12 @@ pub async fn send(
                         .as_str()
                         .strip_prefix(first.trim_end_matches('/'))
                 {
-                    *request.url_mut() = crate::translation_core::format!("{}{suffix}", next.trim_end_matches('/'))
-                        .parse()
-                        .map_err(|e: url::ParseError| UpstreamSendError::Egress(e.to_string()))?;
+                    *request.url_mut() =
+                        crate::translation_core::format!("{}{suffix}", next.trim_end_matches('/'))
+                            .parse()
+                            .map_err(|e: url::ParseError| {
+                                UpstreamSendError::Egress(e.to_string())
+                            })?;
                 }
             }
         }

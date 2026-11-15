@@ -34,12 +34,12 @@ function rp_6d6f64656c5f636f6e74726163742e7365727665645f6d6f64656c5f66726f6d(pay
   return ml_router_find_map(ml_router_iter(ml_copy_fixed_array(["/model", "/modelVersion", "/response/model", "/response/modelVersion", "/message/model"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":5}}), false), (pointer) => { return (() => {
     const ml_standard_callback_self_2 = ml_host_option_bind(ml_host_serde_json_value_pointer(payload, pointer), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then");
     return (() => {
-    const ml_pattern_1 = ml_standard_callback_self_2;
-    if ((ml_pattern_immutable(ml_pattern_1) && (ml_pattern_1.$ === "Some"))) {
-      const ml_standard_pattern_3 = (ml_pattern_1)["field0"];
+    const ml_pattern_4 = ml_standard_callback_self_2;
+    if ((ml_pattern_immutable(ml_pattern_4) && (ml_pattern_4.$ === "Some"))) {
+      const ml_standard_pattern_3 = (ml_pattern_4)["field0"];
       if ((() => {
-      const ml_standard_callback_arg_2 = ml_standard_pattern_3;
-      const model = ml_standard_callback_arg_2;
+      const ml_standard_callback_arg_5 = ml_standard_pattern_3;
+      const model = ml_standard_callback_arg_5;
       return !(model.length === 0);
     })()) {
         return Object.freeze({ $: 'Some', field0: ml_standard_pattern_3 });

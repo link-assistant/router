@@ -35,6 +35,7 @@ fn activity_validation_preserves_exact_required_field_errors() {
 }
 
 #[test]
+#[allow(clippy::or_fun_call)] // The eager error call is the behavior under test.
 fn ok_or_evaluates_receiver_then_error_once_even_for_some() {
     for value in [Some(0_u64), Some(u64::MAX), None] {
         let calls = RefCell::new(Vec::new());
@@ -49,6 +50,7 @@ fn ok_or_evaluates_receiver_then_error_once_even_for_some() {
         let actual = receive().ok_or(failure());
         #[allow(
             clippy::manual_ok_or,
+            clippy::option_if_let_else,
             reason = "independent match oracle for the eager method"
         )]
         let expected = match value {
@@ -61,6 +63,7 @@ fn ok_or_evaluates_receiver_then_error_once_even_for_some() {
 }
 
 #[test]
+#[allow(clippy::or_fun_call)] // The eager panicking error call is the behavior under test.
 fn ok_or_does_not_defer_or_replace_the_eager_panic_payload() {
     fn failure() -> bool {
         std::panic::panic_any(205_usize)

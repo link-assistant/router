@@ -16,8 +16,10 @@ const SUPPORTED_CODEX_VERSION: &str = "0.154.0";
 const MAX_COOKIE_BYTES: usize = 4_096;
 const MAX_COOKIE_COUNT: usize = 64;
 const MAX_COOKIE_HEADER_BYTES: usize = 16_384;
-const EXACT_HOSTS: &[&crate::translation_core::Str] = &["chatgpt.com", "chat.openai.com", "chatgpt-staging.com"];
-const SUBDOMAIN_SUFFIXES: &[&crate::translation_core::Str] = &[".chatgpt.com", ".chatgpt-staging.com"];
+const EXACT_HOSTS: &[&crate::translation_core::Str] =
+    &["chatgpt.com", "chat.openai.com", "chatgpt-staging.com"];
+const SUBDOMAIN_SUFFIXES: &[&crate::translation_core::Str] =
+    &[".chatgpt.com", ".chatgpt-staging.com"];
 const EXACT_COOKIE_NAMES: &[&crate::translation_core::Str] = &[
     "__cf_bm",
     "__cflb",
@@ -56,7 +58,9 @@ pub fn store_response_headers<'a>(headers: impl Iterator<Item = &'a HeaderValue>
     SHARED_STORE.set_cookies(&mut headers.into_iter(), url);
 }
 
-pub fn websocket_url_to_https(value: &crate::translation_core::Str) -> crate::translation_core::Maybe<Url> {
+pub fn websocket_url_to_https(
+    value: &crate::translation_core::Str,
+) -> crate::translation_core::Maybe<Url> {
     let mut url = Url::parse(value).ok()?;
     (url.scheme() == "wss").then_some(())?;
     url.set_scheme("https").ok()?;

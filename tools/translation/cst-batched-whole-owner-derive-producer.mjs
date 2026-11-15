@@ -8,7 +8,7 @@ import {gunzipSync} from 'node:zlib';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
-import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
+import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),BASE='tools/translation/',PROFILE=BASE+'source-profiles/attribute-owner-bulk/node-v20.19.4/';
 const names=['derive-bang-context.mjs','builtin-derive-bang-footprints.mjs','serde-bang-footprints.mjs','serde-deserialize-bang-footprints.mjs','clap-args-bang-footprints.mjs','clap-value-enum-bang-footprints.mjs','schemars-bang-footprints.mjs'],copies=names.map(name=>[name,'whole-owner-'+name.replace(/\.mjs$/u,'-candidate.mjs')]);
@@ -22,6 +22,7 @@ export function prepareWholeOwnerDeriveCandidate({root=ROOT}={}){
 if(!wholeOwnerSourceCstBatchReady())return __ownerCstOriginal({root});
 const __ownerCstPending=[];
 
+ const bindingCandidates=[];
  root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3'||createRequire(resolve(root,'js/package.json'))('typescript')!==ts)fail('actual source root installed TypeScript5.9.3 required');const inputs=[],files=[],raw=new Map();
  for(const name of Object.keys(pins)){const bytes=readFileSync(resolve(root,PROFILE+name));if(bytes.length>524288||hash(bytes)!==pins[name])fail('complete official source/license pin differs');raw.set(name,bytes);inputs.push({path:PROFILE+name,bytes:bytes.length,sha256:hash(bytes),base64:bytes.toString('base64')});}
  const license=gunzipSync(raw.get('LICENSE.gz'),{maxOutputLength:524288});if(hash(license)!=='3716cab1c1ca53b1be9481b6d20bd8e00a4b9561d1b77427fd95e17aad6fc17e')fail('complete upstream license transport differs');
@@ -33,7 +34,8 @@ const __ownerCstPending=[];
  function whole(path,before,language,after,changes){
 if(after.split('\n').length>=1000)fail('candidate source must remain below1000lines');
 syntax(ts,path,after);
-const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),rule=(old,value,id)=>({id,edits:[{span:[0,old.length],expected:old,replacement:value}]}),sequence={languageRules:[rule(before,language,'javascript:complete-source-whole-owner-operation')],repositoryRules:[rule(language,after,'router:separate-whole-owner-private-module-closure')]};
+const nativeBindings={},rule=(old,value,id)=>({id,edits:[{span:[0,old.length],expected:old,replacement:value}]}),sequence={languageRules:[rule(before,language,'javascript:complete-source-whole-owner-operation')],repositoryRules:[rule(language,after,'router:separate-whole-owner-private-module-closure')]};
+bindingCandidates.push({path:resolve(root,path),source:after,result:nativeBindings});
 const __ownerCstRecord={ path, before, language, after, current: existsSync(resolve(root, path)) ? readFileSync(resolve(root, path), 'utf8') : null, beforeMeta: void 0, afterMeta: void 0, sequence, trace: void 0, inverse: before, nativeBindings, changes };
 files.push(__ownerCstRecord);
 __ownerCstPending.push({record:__ownerCstRecord,request:{source:before,language:'JavaScript',stages:[{phase:'language',expected:language,sequence:{languageRules:sequence.languageRules,repositoryRules:[]},inverseSequence:{languageRules:[rule(language,before,'javascript:restore-complete-original-owner-language')],repositoryRules:[]}},{phase:'repository',expected:after,sequence:{languageRules:[],repositoryRules:sequence.repositoryRules},inverseSequence:{languageRules:[],repositoryRules:[rule(after,language,'router:restore-complete-original-owner-repository')]}}]}});
@@ -64,8 +66,12 @@ __ownerCstPending.push({record:__ownerCstRecord,request:{source:before,language:
   whole(path,before,language,after,{semantic:changes,imports:edits});
  }
  whole(BASE+'attribute-owner-bulk-crypto-source.mjs',raw.get('hash.js').toString('utf8'),profileSource,profileSource,{nativeProfiles,createHash:{source:functionSources.createHash,sourcePath:PROFILE+'crypto.js'},Hash:{source:functionSources.Hash,sourcePath:PROFILE+'hash.js'},license:{path:PROFILE+'LICENSE.gz',originalSha256:hash(license)}});
- finishWholeOwnerSourceCstBatch({root,inputs,files,pending:__ownerCstPending,count:8});
+ const __ownerNativeBindings=verifyNativeCopiedModuleBindings(ts,bindingCandidates);for(let at=0;at<bindingCandidates.length;at++)Object.assign(bindingCandidates[at].result,__ownerNativeBindings[at]);
+finishWholeOwnerSourceCstBatch({root,inputs,files,pending:__ownerCstPending,count:8});
 for(const input of inputs){const actual=readFileSync(resolve(root,input.path));if(hash(actual)!==input.sha256)fail('complete actual source input changed');}
+ // Fresh complete native scope checks precede every returned plan and write.
+ const checkedBindings=verifyNativeCopiedModuleBindings(ts,bindingCandidates);
+ for(let at=0;at<bindingCandidates.length;at++)Object.assign(bindingCandidates[at].result,checkedBindings[at]);
  return {schema:'whole-owner-derive-source-candidate-v1',typescriptVersion:ts.version,inputs,files,originalDefaultsUnchanged:true,originalSingleOwnerAPIsUnchanged:true,newAcrossInvocationSourceOrOwnerCache:false,scope:'one complete synchronous original owner-list operation',performanceQualified:false,sourceAuthority:false,runtimeAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('use --emit|--write|--check');const result=prepareWholeOwnerDeriveCandidate();if(args[0]==='--emit')console.log(JSON.stringify(result));else if(args[0]==='--write'){for(const row of result.files)writeFileSync(resolve(ROOT,row.path),row.after);console.log('Prepared separate whole-owner source closure; old defaults unchanged.');}else{if(result.files.some(row=>row.current!==row.after))fail('complete whole-owner source closure is stale or ungenerated');console.log('Complete whole-owner source equations are current.');}}

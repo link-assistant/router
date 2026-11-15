@@ -35,10 +35,13 @@ jobs:
       - run: npm ci --prefix js --ignore-scripts
       - run: node scripts/sync-rust-assets.mjs --check
       - run: node scripts/prepare-bun-reverse-files.mjs --check
+      - run: node scripts/prepare-bun-reverse-shard.mjs --check
       - run: node scripts/lint-js-first.mjs
       - run: node --test --test-concurrency=1 scripts/test/run-bun-forward-files.test.mjs scripts/test/run-bun-reverse-files.test.mjs scripts/test/bun-reverse-inputs.test.mjs
       - run: node --test scripts/test/check-js-first-workflows.test.mjs
       - run: node --test scripts/test/check-js-first-local.test.mjs
+      - run: node --test scripts/test/run-node-test-shard.test.mjs
+      - run: node --test scripts/test/bun-reverse-shard.test.mjs
       - run: node scripts/check-js-first-workflows.mjs
   node-tests:
     runs-on: ubuntu-24.04
@@ -161,6 +164,12 @@ jobs:
       - run: node scripts/check-router-parity.mjs --strict
   translation:
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    # Each complete file may spawn its own strict TypeScript compiler. Keep
+    # those process trees independent instead of sharing a runner's resources.
     # Cycle nine forward/canonical steps reached 719s/752s; the separate matrix
     # stage prevents their sum exhausting a shared 60-minute job.
     timeout-minutes: 60
@@ -184,15 +193,54 @@ jobs:
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
       - run: npm ci --prefix js --ignore-scripts
-      - run: node scripts/run-node-tests.mjs --outer-timeout-ms=3600000 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs
-      - run: node scripts/translate-router.mjs --check
-      - run: node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check
+      - run: node scripts/run-node-test-shard.mjs --outer-timeout-ms=3600000 --whole-file-shard=${{ matrix.shard }}/16 --test-concurrency=1 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs
+        env:
+          ROUTER_TRANSLATION_TYPED_TARGET_TRACE: '1'
+          ROUTER_FREEZE_COHORT_VECTOR_DIR: js/node_modules/.node-case-deadlines/freeze-cohorts
       - name: Preserve complete Node deadline audit and raw streams
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}
+          name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}-${{ matrix.shard }}
           path: js/node_modules/.node-case-deadlines/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+  translation-freshness:
+    runs-on: ubuntu-24.04
+    env:
+      ROUTER_BULK_DRAFT_DIRECTORY: js/node_modules/.bulk-drafts
+    # Cycle nine forward/canonical steps reached 719s/752s; the separate matrix
+    # stage prevents their sum exhausting a shared 60-minute job.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.sha }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '20'
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: '1.4.3'
+      - name: Verify immutable source commit
+        env:
+          EXPECTED_SHA: ${{ inputs.sha }}
+        run: |
+          node --input-type=module -e "
+            import {execFileSync} from 'node:child_process';
+            const expected = process.env.EXPECTED_SHA;
+            if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
+          "
+      - run: npm ci --prefix js --ignore-scripts
+      - run: node scripts/translate-router-with-draft-custody.mjs --check
+      - run: node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check
+      - name: Preserve complete unqualified canonical drafts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bulk-drafts-${{ inputs.sha }}
+          path: js/node_modules/.bulk-drafts/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
@@ -201,6 +249,9 @@ jobs:
     # Completed cycle-nine matrix checks reached 2166s. Keep a finite independent
     # 60-minute window, the same immutable SHA and unconditional failure.
     timeout-minutes: 60
+    env:
+      ROUTER_MATRIX_DRAFT_DIRECTORY: js/node_modules/.matrix-drafts
+      ROUTER_TRANSLATION_MATRIX_TRACE: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -219,8 +270,127 @@ jobs:
           "
       - run: npm ci --prefix js --ignore-scripts
       - run: node scripts/translate-router.mjs --profile-matrix --check
+      - name: Preserve complete unqualified matrix drafts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: matrix-drafts-${{ inputs.sha }}
+          path: js/node_modules/.matrix-drafts/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+  owned-profile-matrix:
+    runs-on: ubuntu-24.04
+    # Completed cycle-nine matrix checks reached 2166s. Keep a finite independent
+    # 60-minute window, the same immutable SHA and unconditional failure.
+    timeout-minutes: 60
+    env:
+      ROUTER_MATRIX_DRAFT_DIRECTORY: js/node_modules/.matrix-drafts
+      ROUTER_TRANSLATION_MATRIX_TRACE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.sha }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '20'
+      - name: Verify immutable source commit
+        env:
+          EXPECTED_SHA: ${{ inputs.sha }}
+        run: |
+          node --input-type=module -e "
+            import {execFileSync} from 'node:child_process';
+            const expected = process.env.EXPECTED_SHA;
+            if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
+          "
+      - run: npm ci --prefix js --ignore-scripts
       - run: node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check
+      - name: Preserve complete unqualified matrix drafts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: matrix-owned-drafts-${{ inputs.sha }}
+          path: js/node_modules/.matrix-drafts/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
   reverse-translation:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.sha }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '20'
+      - name: Verify immutable source commit
+        env:
+          EXPECTED_SHA: ${{ inputs.sha }}
+        run: |
+          node --input-type=module -e "
+            import {execFileSync} from 'node:child_process';
+            const expected = process.env.EXPECTED_SHA;
+            if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
+          "
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: '1.4.3'
+      - run: npm ci --prefix js --ignore-scripts
+      - run: node scripts/run-node-test-shard.mjs --outer-timeout-ms=900000 --whole-file-shard=${{ matrix.shard }}/16 --test-concurrency=1 tools/translation/js-to-rust/test/*.test.mjs
+      - name: Preserve complete Node deadline audit and Bun file receipts and raw streams
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}-${{ matrix.shard }}
+          path: |
+            js/node_modules/.node-case-deadlines/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+  reverse-bun:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.sha }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '20'
+      - name: Verify immutable source commit
+        env:
+          EXPECTED_SHA: ${{ inputs.sha }}
+        run: |
+          node --input-type=module -e "
+            import {execFileSync} from 'node:child_process';
+            const expected = process.env.EXPECTED_SHA;
+            if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
+          "
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: '1.4.3'
+      - run: npm ci --prefix js --ignore-scripts
+      - run: node scripts/run-bun-reverse-shard.mjs --whole-file-shard ${{ matrix.shard }}/8 --output-root js/node_modules/.bun-reverse-files
+      - name: Preserve complete Node deadline audit and Bun file receipts and raw streams
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}-${{ matrix.shard }}
+          path: |
+            js/node_modules/.bun-reverse-files/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+  reverse-freshness:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -243,27 +413,14 @@ jobs:
         with:
           bun-version: '1.4.3'
       - run: npm ci --prefix js --ignore-scripts
-      - run: node scripts/run-node-tests.mjs --outer-timeout-ms=900000 --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs
-      - run: node scripts/run-bun-reverse-files.mjs --output-root js/node_modules/.bun-reverse-files
       - run: node scripts/regenerate-js-first.mjs --check
       - run: node scripts/regenerate-js-first.mjs --owned-core-definitions --check
       - run: node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check
-      - name: Preserve complete Node deadline audit and Bun file receipts and raw streams
-        if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}
-          path: |
-            js/node_modules/.node-case-deadlines/
-            js/node_modules/.bun-reverse-files/
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 7
   complete:
     name: JavaScript fully green
     runs-on: ubuntu-24.04
     timeout-minutes: 5
-    needs: [lint, node-tests, bun-tests, typescript, parity, translation, profile-matrix, reverse-translation]
+    needs: [lint, node-tests, bun-tests, typescript, parity, translation, translation-freshness, profile-matrix, owned-profile-matrix, reverse-translation, reverse-bun, reverse-freshness]
     if: ${{ always() }}
     steps:
       - name: Require every stage to succeed
@@ -272,7 +429,7 @@ jobs:
         run: |
           node --input-type=module -e "
             const stages = Object.values(JSON.parse(process.env.STAGE_RESULTS));
-            if (stages.length !== 8 || stages.some(stage => stage.result !== 'success')) {
+            if (stages.length !== 12 || stages.some(stage => stage.result !== 'success')) {
               console.error('JavaScript gate rejected:', process.env.STAGE_RESULTS);
               process.exit(1);
             }

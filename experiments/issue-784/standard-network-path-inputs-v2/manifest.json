@@ -1,0 +1,112 @@
+{
+  "schema": "uninstalled-standard-network-path-sources-v1",
+  "tagRef": {
+    "ref": "refs/tags/1.89.0",
+    "node_id": "MDM6UmVmNzI0NzEyOnJlZnMvdGFncy8xLjg5LjA=",
+    "url": "https://api.github.com/repos/rust-lang/rust/git/refs/tags/1.89.0",
+    "object": {
+      "sha": "8b14d85d4e1d87024385e70ac0e1996213c2030a",
+      "type": "tag",
+      "url": "https://api.github.com/repos/rust-lang/rust/git/tags/8b14d85d4e1d87024385e70ac0e1996213c2030a"
+    }
+  },
+  "tagObject": {
+    "node_id": "TA_kwDOAAsO6NoAKDhiMTRkODVkNGUxZDg3MDI0Mzg1ZTcwYWMwZTE5OTYyMTNjMjAzMGE",
+    "sha": "8b14d85d4e1d87024385e70ac0e1996213c2030a",
+    "url": "https://api.github.com/repos/rust-lang/rust/git/tags/8b14d85d4e1d87024385e70ac0e1996213c2030a",
+    "tagger": {
+      "name": "rust-lang/promote-release",
+      "email": "release-team@rust-lang.org",
+      "date": "2025-08-07T10:55:02Z"
+    },
+    "object": {
+      "sha": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "type": "commit",
+      "url": "https://api.github.com/repos/rust-lang/rust/git/commits/29483883eed69d5fb4db01964cdf2af4d86e9cb2"
+    },
+    "tag": "1.89.0",
+    "message": "1.89.0 release\n-----BEGIN PGP SIGNATURE-----\n\nwsFzBAABCgAdFiEEEI9mIF6usKqo3V4chauW5vob5f4FAmiUhgYACgkQhauW5vob\n5f7b4hAA2ZTDWC3gsArmRiP3cx2RZo013Fru+LY0XSEwaoj9MOarOet+05Efg4LT\nxt0AY96Uc94OtwS1M0ZJ2vahwTKzdXxh+AQlXo5jUZ6iy9b4T03W+woR/afTUmOm\nahGhTB9o2n4dafQUrnlGwmkrfis4M9jQGBp25mOe93PZSFD1fwX+2Ch0jh2e5aXB\n5sxxlDKSYtHUD12nsAfDCcV5l6qV1mW11reU1WEOVMa0mGCr0gMoTMwICOU/uRaE\nD6K0IQ4CIUG76Zmj4dW8ZM4JUaOkpj6PPrQiiRQ6uJfGtlde1ZSgzOkCuIjKXrNa\nIxErHRUfy4gMhmfrqVwaHjD6u7Q0Bgvj+/1epOZPPz/POqOCvSML6hmplY6o/33x\neG65AGqo2daDiGqCv/wb9FDxjsdRj9mTRFzq7z+qp7H1khiwe86zM2ENq7Ti6TOx\nCXcMxNfhcdgi/4lSxvCPu0juGP3Fh9QvZzJZ6ok/1LlNcNToswiI4ZhtgtzDf0cT\nJ70GbzxpulHBNwSA6eTZWM7i7eXhXl3RN6pv632dyZukFlH6NdZ3OgtRhFmO+mW1\nR8B9hqJvsgb9bxYEQO4VlWanc2tnK1w+xcgInHmt+F2q8zvkIi/J/S9fXSN+UIyC\n24dkMc5vRqdF1y2XBiipeWVCVY0gBdINliGKqmJcMLcL5AS3qq0=\n=rSi0\n-----END PGP SIGNATURE-----\n",
+    "verification": {
+      "verified": false,
+      "reason": "no_user",
+      "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFzBAABCgAdFiEEEI9mIF6usKqo3V4chauW5vob5f4FAmiUhgYACgkQhauW5vob\n5f7b4hAA2ZTDWC3gsArmRiP3cx2RZo013Fru+LY0XSEwaoj9MOarOet+05Efg4LT\nxt0AY96Uc94OtwS1M0ZJ2vahwTKzdXxh+AQlXo5jUZ6iy9b4T03W+woR/afTUmOm\nahGhTB9o2n4dafQUrnlGwmkrfis4M9jQGBp25mOe93PZSFD1fwX+2Ch0jh2e5aXB\n5sxxlDKSYtHUD12nsAfDCcV5l6qV1mW11reU1WEOVMa0mGCr0gMoTMwICOU/uRaE\nD6K0IQ4CIUG76Zmj4dW8ZM4JUaOkpj6PPrQiiRQ6uJfGtlde1ZSgzOkCuIjKXrNa\nIxErHRUfy4gMhmfrqVwaHjD6u7Q0Bgvj+/1epOZPPz/POqOCvSML6hmplY6o/33x\neG65AGqo2daDiGqCv/wb9FDxjsdRj9mTRFzq7z+qp7H1khiwe86zM2ENq7Ti6TOx\nCXcMxNfhcdgi/4lSxvCPu0juGP3Fh9QvZzJZ6ok/1LlNcNToswiI4ZhtgtzDf0cT\nJ70GbzxpulHBNwSA6eTZWM7i7eXhXl3RN6pv632dyZukFlH6NdZ3OgtRhFmO+mW1\nR8B9hqJvsgb9bxYEQO4VlWanc2tnK1w+xcgInHmt+F2q8zvkIi/J/S9fXSN+UIyC\n24dkMc5vRqdF1y2XBiipeWVCVY0gBdINliGKqmJcMLcL5AS3qq0=\n=rSi0\n-----END PGP SIGNATURE-----\n",
+      "payload": "object 29483883eed69d5fb4db01964cdf2af4d86e9cb2\ntype commit\ntag 1.89.0\ntagger rust-lang/promote-release <release-team@rust-lang.org> 1754564102 +0000\n\n1.89.0 release\n",
+      "verified_at": null
+    }
+  },
+  "sources": [
+    {
+      "path": "library/std/src/net/mod.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "archive": "library--std--src--net--mod.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/std/src/net/mod.rs",
+      "bytes": 3500,
+      "sha256": "0d3fb958c4b6d3db1c3de0d23cd94d6b2c6ede46b2817feb3e4cb910f5ca14ef",
+      "archiveBytes": 1356,
+      "archiveSha256": "73b4f467e5058ebf1a544cffd27294160ec880caf3fc19cc047d5292b7d77e47"
+    },
+    {
+      "path": "library/std/src/net/ip_addr.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "archive": "library--std--src--net--ip_addr.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/std/src/net/ip_addr.rs",
+      "bytes": 381,
+      "sha256": "a9cc0e09565f3ce25f3d1b36563c3741e9ebb03466ac9698ec4b571cf38f15cb",
+      "archiveBytes": 237,
+      "archiveSha256": "0e40c8f31f676e05a043ece0f899712df28c93adc954bcf2eee7d057f8f94725"
+    },
+    {
+      "path": "library/std/src/net/socket_addr.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "archive": "library--std--src--net--socket_addr.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/std/src/net/socket_addr.rs",
+      "bytes": 9400,
+      "sha256": "7a6211cd365870b421b30db7c15b5158135cde32444907ca7cdec9efd7ee1171",
+      "archiveBytes": 2397,
+      "archiveSha256": "50f9a20e0c0e583387c9fde578f659279ed6119c83d8d4598a511d26fffb0398"
+    },
+    {
+      "path": "library/core/src/net/mod.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "archive": "library--core--src--net--mod.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/core/src/net/mod.rs",
+      "bytes": 882,
+      "sha256": "6283e761c7c1f27f4065b23755b75ef48f6760587b3155e10ac788c70045999c",
+      "archiveBytes": 384,
+      "archiveSha256": "21e277185709988b8210d4fa2d68136fea3762a70f3130aa1e40a1c0f4fd574f"
+    },
+    {
+      "path": "library/core/src/net/ip_addr.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "archive": "library--core--src--net--ip_addr.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/core/src/net/ip_addr.rs",
+      "bytes": 86576,
+      "sha256": "60c07aded4c65180446b5a06bff91ecd9a795919a73f13d2dfd5c538366b5474",
+      "archiveBytes": 14067,
+      "archiveSha256": "41efbcdc565ebd33d4df76fefdc4a9ad623b7c2307f9cfaa8e834886633a3785"
+    },
+    {
+      "path": "library/core/src/net/socket_addr.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "archive": "library--core--src--net--socket_addr.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/core/src/net/socket_addr.rs",
+      "bytes": 24574,
+      "sha256": "7f306a789dad6ec700a63ddb169966a5f3d63bbc5b6cde1c74ebe984661e222a",
+      "archiveBytes": 3735,
+      "archiveSha256": "5491c9c665b8112a4c2ff0946982c271c0ae01b6a9da187989021f1cd38251df"
+    },
+    {
+      "path": "library/std/src/path.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "archive": "library--std--src--path.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/std/src/path.rs",
+      "bytes": 123534,
+      "sha256": "769b2c885351f827f07b1755fd51cc9cc2aead4d800c0e76d3e2103d38abf5a5",
+      "archiveBytes": 25336,
+      "archiveSha256": "71c102489dfbc826ece74713de429fb518523524820764f195df2ca4c7224989"
+    }
+  ],
+  "sourceInstalled": false,
+  "namespaceAuthority": false,
+  "runtimeAuthority": false
+}

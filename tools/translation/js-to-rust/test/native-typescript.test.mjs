@@ -280,7 +280,10 @@ test('compiled TypeScript executes the shared native runtime fixture suite in No
       assert.equal(await import(pathToFileURL(join(root,'src/oauth.mjs')).href),canonical);
     `, outDir], { encoding: 'utf8', timeout: 10_000, stdio: 'pipe' });
     const original = tests.map((path) => join(SOURCE, 'js/test', path.slice(path.lastIndexOf('/') + 1)));
-    const nodeArgs = ['--test', '--test-reporter=tap'];
+    // Keep both complete fixture suites within the shared memory budget while
+    // this process retains the TypeScript compiler. Every file and the original
+    // child/case deadlines still apply to both source and compiled execution.
+    const nodeArgs = ['--test', '--test-reporter=tap', '--test-concurrency=2'];
     const env = { ...process.env }; delete env.NODE_TEST_CONTEXT;
     const run = (binary, args, cwd) => {
       const started=Date.now();

@@ -11,5 +11,5 @@ Seven pending cases include eager overflow/panic, observable effect order,
 canonical owner aliases, borrow escapes and helper-name collisions, plus the
 complete unchanged output_limit.rs data_payload declaration at UTF16
 15207..15550 (SHA 04bfbe451d693d4d59236c58510214e7a13b0ff5d9dd3ae18a4e0f8aa42a08cd).
-All original Rust bytes and attributes are retained. No compiler, test, graph,
+All original Rust bytes and attributes are retained. No compiler, test, module graph,
 producer or Rust execution ran on this draft; no executable gain is claimed.

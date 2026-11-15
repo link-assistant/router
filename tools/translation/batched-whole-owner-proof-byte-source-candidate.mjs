@@ -5,7 +5,7 @@ import {createRequire} from 'node:module';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
-import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
+import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';
 import {prepareOperationProofByteSources} from './prepare-operation-proof-byte-sources.mjs';
 import {prepareWholeOwnerResolverCandidate} from './prepare-whole-owner-resolver-candidate.mjs';
 import {assertConcreteSyntaxHost} from './concrete-syntax-meta.mjs';
@@ -91,6 +91,7 @@ export function prepareWholeOwnerProofByteCandidateBatched({root=ROOT}={}){
 const __batchedPending=[];
 function __batchedRequest(row){const {before,language,after,sequence}=row;const rule=(old,value,id)=>({id,edits:[{span:[0,old.length],expected:old,replacement:value}]}),stages=[];for(const phase of ['language','repository']){const from=phase==='language'?before:language,to=phase==='language'?language:after;stages.push({phase,expected:to,sequence:{languageRules:phase==='language'?sequence.languageRules:[],repositoryRules:phase==='repository'?sequence.repositoryRules:[]},inverseSequence:{languageRules:phase==='language'?[rule(to,from,'javascript:restore-complete-original-consumer')]:[],repositoryRules:phase==='repository'?[rule(to,from,'router:restore-complete-original-issuer-imports')]:[]}});}return {source:before,language:'JavaScript',stages};}
 
+ const bindingCandidates=[];
  root=resolve(root);const ts=ownershipCompiler();if(ts.version!=='5.9.3'||createRequire(resolve(root,'js/package.json'))('typescript')!==ts)fail('actual root installed TypeScript5.9.3 required');
  const operation=prepareOperationProofByteSources({root}),resolver=prepareWholeOwnerResolverCandidate({root}),bulk=resolver.wholeOwnerProducer;
  if([...operation.files,...resolver.files,...bulk.files].some(row=>row.current!==row.after))fail('fresh complete materialized operation and existing whole-owner closure required');
@@ -102,7 +103,8 @@ const currentProviderInputs=["tools/translation/batched-whole-owner-proof-byte-s
 if(after.split('\n').length>=1000)fail('complete generated source line budget');
 parse(ts,path,language);
 parse(ts,path,after);
-const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),rule=(old,value,id)=>({id,edits:[{span:[0,old.length],expected:old,replacement:value}]}),sequence={languageRules:[rule(before,language,'javascript:complete-original-proof-byte-consumer-copy')],repositoryRules:[rule(language,after,'router:single-private-issuer-and-operation-byte-import-closure')]};
+const nativeBindings={},rule=(old,value,id)=>({id,edits:[{span:[0,old.length],expected:old,replacement:value}]}),sequence={languageRules:[rule(before,language,'javascript:complete-original-proof-byte-consumer-copy')],repositoryRules:[rule(language,after,'router:single-private-issuer-and-operation-byte-import-closure')]};
+bindingCandidates.push({path:resolve(root,path),source:after,result:nativeBindings});
 if(JSON.stringify(hashCalls(ts,path,before))!==JSON.stringify(hashCalls(ts,path,after)))fail('every complete original Hash update/digest call must stay exact');
 const __batchedRaw={ path, before, language, after, current: existsSync(resolve(root, path)) ? readFileSync(resolve(root, path), 'utf8') : null, beforeSha256: hash(before), afterSha256: hash(after), beforeMeta: void 0, afterMeta: void 0, inverse: before, sequence, stages: void 0, trace: void 0, nativeBindings, selection };
 __batchedPending.push({path,before,language,after,sequence});return __batchedRaw;
@@ -144,6 +146,7 @@ __batchedPending.push({path,before,language,after,sequence});return __batchedRaw
  const facade="// Explicit bytes variant; every issuer belongs to this same copied closure.\nexport * from './"+targets[0].output+"';\nexport * from './"+targets.find(row=>row.physical==='module-bindings.mjs').output+"';\n";
  files.push(whole(BASE+'proof-byte-whole-owner-candidate.mjs','',facade,facade,{explicitOptInOnly:true}));
  
+ const __batchedNativeBindings=verifyNativeCopiedModuleBindings(ts,bindingCandidates);for(let at=0;at<bindingCandidates.length;at++)Object.assign(bindingCandidates[at].result,__batchedNativeBindings[at]);
  // All34 original raw/native records exist before the first bulk transport.
  const __batchedRows=[...files,...physicalOverlays];
  if(__batchedRows.length!==34||__batchedPending.length!==34||new Set(__batchedRows.map(row=>row.path)).size!==34)fail('complete34 original native assemblies required');
@@ -167,6 +170,9 @@ const serializerBindings=files.flatMap(row=>(row.selection.imports??[]).filter(e
  if(serializerBindings.length!==5)fail('complete current native/frozen composer consumer import census differs');
  input(BASE+'prepare-whole-owner-proof-byte-candidate.mjs');
  for(const row of [...inputs.values(),...prerequisites,...currentProviderInputs])if(hash(readFileSync(resolve(root,row.path)))!==row.sha256)fail('complete current source input/prerequisite changed');
+ // Fresh complete native scope checks precede every returned plan and write.
+ const checkedBindings=verifyNativeCopiedModuleBindings(ts,bindingCandidates);
+ for(let at=0;at<bindingCandidates.length;at++)Object.assign(bindingCandidates[at].result,checkedBindings[at]);
  return {currentProviderInputs,schema:'whole-owner-operation-proof-byte-candidate-v1',typescriptVersion:ts.version,inputs:[...inputs.values()],prerequisiteInputs:prerequisites,files,physicalOverlays,serializerBindings,cycleEvidence,operationProducer:operation,resolverProducer:resolver,existingDefaultsUnchanged:true,existingBulkCopiesUnchanged:true,scope:'one qualified complete synchronous owner operation; no retained encoded bytes',newAcrossInvocationEncodedCache:false,originalHashCallsUnchanged:true,performanceQualified:false,runtimeExecuted:false,sourceAuthority:false,runtimeAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){

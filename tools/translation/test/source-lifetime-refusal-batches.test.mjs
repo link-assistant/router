@@ -1,3 +1,4 @@
+import {assertCurrentCoreUnicodeSourceComposition} from './current-unit-unicode-source-composition.mjs';
 import {assertRuntimeImportSourceComposition} from './runtime-import-source-composition.mjs';
 import {assertOwnedCorePrivateAnalysisSourceComposition} from './owned-core-private-analysis-source-composition.mjs';
 import {assertUnitMatchesSourceComposition} from './unit-matches-source-composition.mjs';
@@ -10,7 +11,8 @@ import {declarationRefusals} from '../extensions/declaration-refusals.mjs';
 import {TranslationError} from '../vendor/meta-language/translation/diagnostics.js';
 import {serializeProgram} from '../semantic-meta.mjs';
 import {prepareSourceLifetimeRefusalBatches,prepareCurrentSourceLifetimeRefusalBatches} from '../prepare-source-lifetime-refusal-batches.mjs';
-import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
+import {receiveCompleteSourceMetadataLayers} from './complete-source-metadata-receiving.mjs';
+import {assertStaticResultResidualSourceComposition} from './static-result-residual-source-composition.mjs';
 import {verifyCohortTargets} from './cohort-targets.mjs';
 const project = (files, options = {}) => translateProject({entry: 'src/lib.rs', paths: Object.keys(files), readSource: path => files[path], ...options});
 const refusals = result => result.meta.refused.map(({name, message, span}) => ({name, message, span})).sort((a, b) => a.name.localeCompare(b.name));
@@ -18,8 +20,14 @@ function thrown(run) { try { run(); } catch (error) { return error; } assert.fai
 
 test('complete actual lifetime checker collector and project source copies retain native bindings and serialized CST inverses', {timeout: 60000}, () => {
   const plan = prepareSourceLifetimeRefusalBatches(), current = prepareCurrentSourceLifetimeRefusalBatches();
+  assert.equal(current.birth.schema, 'batched-source-lifetime-refusal-source-v1');
+  assert.deepEqual(current.birth.inputs, plan.inputs);
+  assert.deepEqual(current.birth.files, plan.files);
+  for (const field of ['typescriptVersion','ordinaryCheckerSelectionUnchanged','failedPhaseReturnsProgram','newAcrossInvocationCache','semanticAuthority','executableAdmission']) assert.equal(current.birth[field], plan[field]);
   const finalSources = Object.fromEntries(current.files.map(row => [row.path, row]));
-  assert.equal(current.layers.length,10);assertRuntimeImportSourceComposition(current.layers[9],Object.fromEntries(current.layers.slice(0,9).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
+  assert.equal(current.layers.slice(0,-2).length,11);assert.equal(current.layers.length,13);assert.equal(current.layers.at(-2).schema,'project-facade-retention-source-v1');assert.equal(current.layers.at(-1).schema,'static-result-residual-source-v1');assertRuntimeImportSourceComposition(current.layers[10],Object.fromEntries(current.layers.slice(0,10).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
+  assertStaticResultResidualSourceComposition(current.layers.at(-1),Object.fromEntries(current.layers.slice(0,-1).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
+  const receiving=receiveCompleteSourceMetadataLayers([plan.files.map(row=>({...row,stages:[]})),...current.layers.slice(1).map(layer=>layer.files.map(row=>({...row,stages:layer===current.layers[1]?[]:row.stages})))]),transportConcreteSyntaxMeta=receiving.next;
   assert.equal(current.layers[1].files[0].before, plan.files.find(row => row.path === 'tools/translation/project.mjs').after);
   assert.equal(current.layers[2].files.find(row => row.path === 'tools/translation/project.mjs').before, current.layers[1].files[0].after);
   assert.equal(plan.typescriptVersion, '5.9.3'); assert.equal(plan.files.length, 3); assert.equal(plan.newAcrossInvocationCache, false);
@@ -36,7 +44,8 @@ test('complete actual lifetime checker collector and project source copies retai
   assertAsciiAssetsComposition(current.layers[5], Object.fromEntries(current.layers[4].files.map(row => [row.path, row])), finalSources);
   assertAsciiBaseAssetsComposition(current.layers[6], Object.fromEntries(current.layers[5].files.map(row => [row.path, row])), finalSources);
  assertUnitMatchesSourceComposition(current.layers[7],Object.fromEntries(current.layers.slice(0,7).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
- assertOwnedCorePrivateAnalysisSourceComposition(current.layers[8],Object.fromEntries(current.layers.slice(0,8).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
+ assertCurrentCoreUnicodeSourceComposition(current.layers[8],Object.fromEntries(current.layers.slice(0,8).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
+ assertOwnedCorePrivateAnalysisSourceComposition(current.layers[9],Object.fromEntries(current.layers.slice(0,9).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
   for (const layer of current.layers.slice(1)) for (const row of layer.files) {
     assert.equal(row.current, current.files.find(final => final.path === row.path).after); assert.equal(row.inverse, row.before);
     assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source, row.before);
@@ -59,6 +68,7 @@ test('complete actual lifetime checker collector and project source copies retai
     assert.ok(row.nativeCopies.every(copy => copy.completeNativeAstCopy));
     }
   }
+  receiving.finish();
 });
 
 test('independent signature lifetime failures retain both original owners in one phase and every written source span', {timeout: 60000}, () => {

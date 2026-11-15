@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=22413db3673c447d363f2b1210e7747f27fa4cbb386d3b83b82c6bee1ac7ee4e; dynamic any annotations are explicit draft gaps.
+// Meta sha256=3d1ffe5eed86d268a00be6827a115225b168a5e82bf4b7e50193ecf28608c8af; dynamic any annotations are explicit draft gaps.
 import { createServer } from 'node:http';
 import { createServer as createHTTPSServer } from 'node:https';
 import { lstat, readFile } from 'node:fs/promises';
@@ -9,7 +9,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { ProtocolError, translateRequest, translateResponse, normalizeUsage, projectModels } from "./protocols.js";
 import { translateStream, monitorNativeStream } from "./streams.js";
 import { ResponsesStore, responseOwner, normalizeResponseInput } from "./responses.js";
-import { createNativeService, boundedBytes } from "./native-service.js";
+import { createNativeService, boundedBytes, isIngressNetworkHeader } from "./native-service.js";
 import { estimateRequestBudget } from "./token-reservation.js";
 import { retryableStatus } from "./accounts.js";
 import { managementOperation } from "./http-management.js";
@@ -22,6 +22,7 @@ import { serveAdminAsset, hardenAdmin } from "./admin-assets.js";
 import { matchHTTPRoute, HTTP_ROUTES } from "./http-route-contract.js";
 import { isIP } from 'node:net';
 import { NativeRequestLog } from "./request-log.js";
+import { isGeolocationHeader, sharesGeolocation, sanitizeGeolocation } from "./geolocation.js";
 const JSON_HEADERS: any = { 'content-type': 'application/json; charset=utf-8' };
 const json: any = (body?: any, status: any = 200, headers: any = {}): any => new (Response as any)((JSON as any).stringify(body), { status, headers: { ...JSON_HEADERS, ...headers } });
 const redactedKeys: any = /(?:api[_-]?key|password|secret|authorization|credential|cookie|(?:access|refresh|id)[_-]?token|^token$)/i;
@@ -83,7 +84,9 @@ function upstreamHeaders(candidate?: any, protocol?: any, request?: any): any {
     const forbidden: any = /^(?:authorization|x-api-key|x-goog-api-key|anthropic-auth-token|chatgpt-account-id|cookie|set-cookie|host|connection|content-length|content-encoding|transfer-encoding|upgrade|te|trailer|keep-alive|proxy-.*|forwarded|x-forwarded-.*|x-router-.*|x-link-assistant-.*)$/i;
     const copies: Set<string> = new (Set as any)(['x-request-id', 'x-correlation-id', 'traceparent', 'tracestate', 'x-claude-code-session-id', 'x-codex-session-id', 'x-session-id', 'session-id']);
     for (const [key, value] of (Object as any).entries(candidate.headers ?? candidate.account?.headers ?? {}) as any) {
-        if (forbidden.test(key))
+        if (forbidden.test(key) || isIngressNetworkHeader(key))
+            continue;
+        if (!sharesGeolocation(request.headers) && isGeolocationHeader(key))
             continue;
         if (typeof value !== 'string')
             continue;
@@ -395,6 +398,7 @@ export function createNativeRouter(options: any = {}): any {
             if ((body as any)[key] !== undefined && (!(Number as any).isSafeInteger((body as any)[key]) || (body as any)[key] < 1))
                 throw new (ProtocolError as any)(`${key} must be a positive integer`);
         const claims: any = await authorize(request, false, body.model);
+        sanitizeGeolocation(body, sharesGeolocation(request.headers));
         const retain: boolean = source === 'responses' && body.store !== false;
         const namespace: string = new (URL as any)(request.url).pathname.match(/^\/api\/services\/(?:openai|codex|qwen)\/v1/)?.[0] ?? '/v1';
         const owner: any = retain ? responseOwner(claims, bearer(request.headers)) : undefined;

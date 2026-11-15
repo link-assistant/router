@@ -60,7 +60,11 @@ impl OperationalLog {
         self.record_with_console(message, false)
     }
 
-    fn record_with_console(&self, message: &crate::translation_core::Str, console: bool) -> io::Result<()> {
+    fn record_with_console(
+        &self,
+        message: &crate::translation_core::Str,
+        console: bool,
+    ) -> io::Result<()> {
         let state = self
             .state
             .lock()

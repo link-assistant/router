@@ -40,7 +40,9 @@ impl FailoverMode {
     /// # Errors
     ///
     /// Returns an operator-facing message for any other value.
-    pub fn parse(value: &crate::translation_core::Str) -> crate::translation_core::Outcome<Self, String> {
+    pub fn parse(
+        value: &crate::translation_core::Str,
+    ) -> crate::translation_core::Outcome<Self, String> {
         match value.trim().to_ascii_lowercase().replace('_', "-").as_str() {
             "" | "off" | "false" | "0" | "none" => Ok(Self::Off),
             "pre-first-byte" => Ok(Self::PreFirstByte),
@@ -249,7 +251,8 @@ static INSTALLED: std::sync::RwLock<Option<PoolPolicy>> = std::sync::RwLock::new
 pub fn install(policy: PoolPolicy) {
     *INSTALLED
         .write()
-        .unwrap_or_else(std::sync::PoisonError::into_inner) = crate::translation_core::Maybe::Some(policy);
+        .unwrap_or_else(std::sync::PoisonError::into_inner) =
+        crate::translation_core::Maybe::Some(policy);
 }
 
 /// The installed policy, or the defaults when none was installed.
@@ -267,7 +270,9 @@ pub fn current() -> PoolPolicy {
 /// # Errors
 ///
 /// Returns an operator-facing message for anything else.
-pub fn parse_percent(value: &crate::translation_core::Str) -> crate::translation_core::Outcome<u8, String> {
+pub fn parse_percent(
+    value: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<u8, String> {
     value
         .trim()
         .trim_end_matches('%')

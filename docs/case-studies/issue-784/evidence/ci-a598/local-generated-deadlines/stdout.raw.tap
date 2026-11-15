@@ -1,0 +1,285 @@
+TAP version 13
+# Subtest: all37 stored gains retain complete original source, declaration and generation context
+ok 1 - all37 stored gains retain complete original source, declaration and generation context
+  ---
+  duration_ms: 121.61308
+  ...
+# Subtest: all26 constants including the complete ten-area source table have independent expectations
+ok 2 - all26 constants including the complete ten-area source table have independent expectations
+  ---
+  duration_ms: 1.577665
+  ...
+# Subtest: complete original ClientKind and UsageProvider unit enums cover every package/parse arm
+ok 3 - complete original ClientKind and UsageProvider unit enums cover every package/parse arm
+  ---
+  duration_ms: 4.588487
+  ...
+# Subtest: catalog context variants require exact nonempty Anthropic-owned complete model rows
+ok 4 - catalog context variants require exact nonempty Anthropic-owned complete model rows
+  ---
+  duration_ms: 8.122845
+  ...
+# Subtest: status precedence covers every boolean branch and u64 boundary without floating coercion
+ok 5 - status precedence covers every boolean branch and u64 boundary without floating coercion
+  ---
+  duration_ms: 4.286643
+  ...
+# Subtest: results counts Rust LF/CRLF lines and Rust whitespace while retaining BOM and scalar guards
+ok 6 - results counts Rust LF/CRLF lines and Rust whitespace while retaining BOM and scalar guards
+  ---
+  duration_ms: 3.060755
+  ...
+# Subtest: allfour new record constructors and both source helper constructors retain exact fields/order
+ok 7 - allfour new record constructors and both source helper constructors retain exact fields/order
+  ---
+  duration_ms: 5.159572
+  ...
+# Subtest: constructor immutable ABI isolates owned vector aliases and never retains mutable static-slice aliases
+ok 8 - constructor immutable ABI isolates owned vector aliases and never retains mutable static-slice aliases
+  ---
+  duration_ms: 1.835949
+  ...
+# Subtest: checked arithmetic and branching
+ok 9 - checked arithmetic and branching
+  ---
+  duration_ms: 514.145747
+  ...
+# Subtest: string operations and references
+ok 10 - string operations and references
+  ---
+  duration_ms: 422.853704
+  ...
+# Subtest: machine integer overflow and division
+ok 11 - machine integer overflow and division
+  ---
+  duration_ms: 278.000475
+  ...
+# Subtest: constant and sibling call
+ok 12 - constant and sibling call
+  ---
+  duration_ms: 319.894681
+  ...
+# Subtest: Rust ASCII folding preserves non-ASCII Unicode
+ok 13 - Rust ASCII folding preserves non-ASCII Unicode
+  ---
+  duration_ms: 249.517517
+  ...
+# Subtest: UTF-8 bytes and Unicode scalars differ from UTF-16 units
+ok 14 - UTF-8 bytes and Unicode scalars differ from UTF-16 units
+  ---
+  duration_ms: 274.615825
+  ...
+# Subtest: Rust trim directions and string creation
+ok 15 - Rust trim directions and string creation
+  ---
+  duration_ms: 309.999747
+  ...
+# Subtest: string literal match plus tail return
+ok 16 - string literal match plus tail return
+  ---
+  duration_ms: 290.50533
+  ...
+# Subtest: monomorphic Option constructors and match retain presence
+ok 17 - monomorphic Option constructors and match retain presence
+  ---
+  duration_ms: 354.025782
+  ...
+# Subtest: Result constructors and error match
+ok 18 - Result constructors and error match
+  ---
+  duration_ms: 346.441401
+  ...
+# Subtest: Unicode prefix and suffix Option values
+ok 19 - Unicode prefix and suffix Option values
+  ---
+  duration_ms: 424.080723
+  ...
+# Subtest: Vec values and borrowed immutable slice measurements
+ok 20 - Vec values and borrowed immutable slice measurements
+  ---
+  duration_ms: 379.558751
+  ...
+# Subtest: const function and raw string literals retain exact value
+ok 21 - const function and raw string literals retain exact value
+  ---
+  duration_ms: 230.061502
+  ...
+# Subtest: unwrap_or evaluates its fallback eagerly even for Some
+ok 22 - unwrap_or evaluates its fallback eagerly even for Some
+  ---
+  duration_ms: 241.605063
+  ...
+# Subtest: mutable scalar summation and zero-iteration while
+ok 23 - mutable scalar summation and zero-iteration while
+  ---
+  duration_ms: 222.449801
+  ...
+# Subtest: early return avoids later bounds panic
+ok 24 - early return avoids later bounds panic
+  ---
+  duration_ms: 216.066864
+  ...
+# Subtest: continue and innermost break preserve loop iteration
+ok 25 - continue and innermost break preserve loop iteration
+  ---
+  duration_ms: 230.062234
+  ...
+# Subtest: shadowing immutable local does not overwrite outer mutable binding
+ok 26 - shadowing immutable local does not overwrite outer mutable binding
+  ---
+  duration_ms: 216.470578
+  ...
+# Subtest: compound assignment retains checked overflow and truncating division
+ok 27 - compound assignment retains checked overflow and truncating division
+  ---
+  duration_ms: 224.701113
+  ...
+# Subtest: immutable slice indexing checks usize bounds
+ok 28 - immutable slice indexing checks usize bounds
+  ---
+  duration_ms: 246.798349
+  ...
+# Subtest: named enum constructors and exhaustive typed match
+ok 29 - named enum constructors and exhaustive typed match
+  ---
+  duration_ms: 290.483187
+  ...
+# Subtest: immutable record construction field order and projection
+ok 30 - immutable record construction field order and projection
+  ---
+  duration_ms: 255.815434
+  ...
+# Subtest: record literal evaluates fields in written order
+ok 31 - record literal evaluates fields in written order
+  ---
+  duration_ms: 248.706772
+  ...
+# Subtest: mutable primitive parameters and unit results
+ok 32 - mutable primitive parameters and unit results
+  ---
+  duration_ms: 221.821447
+  ...
+# Subtest: lazy map take preserves unvisited zero-divisor behavior
+ok 33 - lazy map take preserves unvisited zero-divisor behavior
+  ---
+  duration_ms: 338.684428
+  ...
+# Subtest: scalar closure captures and filter map composition
+ok 34 - scalar closure captures and filter map composition
+  ---
+  duration_ms: 260.454795
+  ...
+# Subtest: any and all short circuit lazy upstream transforms
+ok 35 - any and all short circuit lazy upstream transforms
+  ---
+  duration_ms: 254.797883
+  ...
+# Subtest: checked iterator sum fold and empty identity
+ok 36 - checked iterator sum fold and empty identity
+  ---
+  duration_ms: 293.467088
+  ...
+# Subtest: for scalar slices preserve loop controls and enclosing returns
+ok 37 - for scalar slices preserve loop controls and enclosing returns
+  ---
+  duration_ms: 235.930218
+  ...
+# Subtest: for mutable scalar binding and callback lexical shadowing
+ok 38 - for mutable scalar binding and callback lexical shadowing
+  ---
+  duration_ms: 249.00119
+  ...
+# Subtest: integer range endpoints include maximum without overflow or descending iterations
+ok 39 - integer range endpoints include maximum without overflow or descending iterations
+  ---
+  duration_ms: 243.178269
+  ...
+# Subtest: scalar array literals preserve ordering indexing and iteration
+ok 40 - scalar array literals preserve ordering indexing and iteration
+  ---
+  duration_ms: 242.717519
+  ...
+# Subtest: unimplemented async and side effects remain source-bearing diagnostics
+ok 41 - unimplemented async and side effects remain source-bearing diagnostics
+  ---
+  duration_ms: 190.035773
+  ...
+# Subtest: duplicate definitions and dependents are never executable
+ok 42 - duplicate definitions and dependents are never executable
+  ---
+  duration_ms: 204.06768
+  ...
+# Subtest: typed constructors validate inputs and freeze records with ordinary proto-named fields
+ok 43 - typed constructors validate inputs and freeze records with ordinary proto-named fields
+  ---
+  duration_ms: 243.742713
+  ...
+# Subtest: semantic target input round-trips declaration links without source bodies
+ok 44 - semantic target input round-trips declaration links without source bodies
+  ---
+  duration_ms: 2.996895
+  ...
+# Subtest: scalar slice domain rejects holes and accessor data without invoking user validation or iteration
+ok 45 - scalar slice domain rejects holes and accessor data without invoking user validation or iteration
+  ---
+  duration_ms: 183.482318
+  ...
+# Subtest: calls of a carried function stay carried transitively
+ok 46 - calls of a carried function stay carried transitively
+  ---
+  duration_ms: 121.104811
+  ...
+# Subtest: bounded generic lowering rejects non-exhaustiveness, aggregate mutation, callback capture exits and missing inference
+ok 47 - bounded generic lowering rejects non-exhaustiveness, aggregate mutation, callback capture exits and missing inference
+  ---
+  duration_ms: 3507.089837
+  ...
+# Subtest: raw and cooked CRLF and continuation literals preserve source while normalizing values
+ok 48 - raw and cooked CRLF and continuation literals preserve source while normalizing values
+  ---
+  duration_ms: 404.471437
+  ...
+# Subtest: Rust trim preserves NEL and BOM whitespace differences independently from JS trim
+ok 49 - Rust trim preserves NEL and BOM whitespace differences independently from JS trim
+  ---
+  duration_ms: 209.178883
+  ...
+# Subtest: vendored implementations match the pinned integrity inventory
+ok 50 - vendored implementations match the pinned integrity inventory
+  ---
+  duration_ms: 4.180766
+  ...
+# Subtest: TypeScript annotations never rewrite function-like source string data
+ok 51 - TypeScript annotations never rewrite function-like source string data
+  ---
+  duration_ms: 217.388508
+  ...
+# Subtest: TypeScript integer division helpers retain BigInt arithmetic types
+ok 52 - TypeScript integer division helpers retain BigInt arithmetic types
+  ---
+  duration_ms: 159.709815
+  ...
+# Subtest: raw strings, nested comments, lifetimes, Unicode and char escapes retain exact boundaries
+ok 53 - raw strings, nested comments, lifetimes, Unicode and char escapes retain exact boundaries
+  ---
+  duration_ms: 170.556224
+  ...
+# Subtest: regeneration rejects stale, missing, unexpected and tampered semantic fields
+ok 54 - regeneration rejects stale, missing, unexpected and tampered semantic fields
+  ---
+  duration_ms: 5829.898714
+  ...
+# Subtest: all tracked Rust artifacts reconstruct source and all generated JS modules load
+ok 55 - all tracked Rust artifacts reconstruct source and all generated JS modules load
+  ---
+  duration_ms: 6129.638412
+  ...
+1..55
+# tests 55
+# suites 0
+# pass 55
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 28840.16267

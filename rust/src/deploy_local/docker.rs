@@ -122,7 +122,11 @@ impl Docker {
         .map(|answer| answer == "true")
     }
 
-    pub(super) fn label(&self, name: &crate::translation_core::Str, key: &crate::translation_core::Str) -> Option<String> {
+    pub(super) fn label(
+        &self,
+        name: &crate::translation_core::Str,
+        key: &crate::translation_core::Str,
+    ) -> Option<String> {
         self.output(&[
             "inspect".into(),
             "--format".into(),
@@ -142,7 +146,11 @@ impl Docker {
         ])
     }
 
-    pub(super) fn mount_source(&self, name: &crate::translation_core::Str, destination: &crate::translation_core::Str) -> Option<String> {
+    pub(super) fn mount_source(
+        &self,
+        name: &crate::translation_core::Str,
+        destination: &crate::translation_core::Str,
+    ) -> Option<String> {
         self.output(&[
             "inspect".into(),
             "--format".into(),
@@ -155,7 +163,10 @@ impl Docker {
         .filter(|source| !source.is_empty())
     }
 
-    pub(super) fn container_image_id(&self, name: &crate::translation_core::Str) -> Result<String, String> {
+    pub(super) fn container_image_id(
+        &self,
+        name: &crate::translation_core::Str,
+    ) -> Result<String, String> {
         self.output(&[
             "inspect".into(),
             "--format".into(),
@@ -174,7 +185,11 @@ impl Docker {
         ])
     }
 
-    pub(super) fn ensure_image(&self, image: &crate::translation_core::Str, build: Option<&crate::translation_core::Str>) -> Result<String, String> {
+    pub(super) fn ensure_image(
+        &self,
+        image: &crate::translation_core::Str,
+        build: Option<&crate::translation_core::Str>,
+    ) -> Result<String, String> {
         if let Some(context) = build {
             self.output(&["build".into(), "-t".into(), image.into(), context.into()])?;
         } else if self.image_id(image).is_err() {
@@ -198,7 +213,11 @@ impl Docker {
         Ok(())
     }
 
-    pub(super) fn exec(&self, name: &crate::translation_core::Str, arguments: &[&crate::translation_core::Str]) -> Result<String, String> {
+    pub(super) fn exec(
+        &self,
+        name: &crate::translation_core::Str,
+        arguments: &[&crate::translation_core::Str],
+    ) -> Result<String, String> {
         let mut command = vec!["exec".to_string(), name.to_string()];
         command.extend(arguments.iter().map(|value| (*value).to_string()));
         self.output(&command)
@@ -228,7 +247,11 @@ impl Docker {
 
     /// One variable of a container's launch environment, held in memory
     /// only; the caller must not print it.
-    pub(super) fn env_value(&self, name: &crate::translation_core::Str, key: &crate::translation_core::Str) -> Option<String> {
+    pub(super) fn env_value(
+        &self,
+        name: &crate::translation_core::Str,
+        key: &crate::translation_core::Str,
+    ) -> Option<String> {
         let rendered = self
             .output(&[
                 "inspect".into(),
@@ -243,11 +266,17 @@ impl Docker {
             .map(str::to_string)
     }
 
-    pub(super) fn token_inventory(&self, name: &crate::translation_core::Str) -> Result<String, String> {
+    pub(super) fn token_inventory(
+        &self,
+        name: &crate::translation_core::Str,
+    ) -> Result<String, String> {
         self.exec(name, &["router", "tokens", "list", "--json"])
     }
 
-    pub(super) fn relay_connection_count(&self, backend: &crate::translation_core::Str) -> Result<String, String> {
+    pub(super) fn relay_connection_count(
+        &self,
+        backend: &crate::translation_core::Str,
+    ) -> Result<String, String> {
         if !self.exists(&RELAY.value()) || !self.running(&RELAY.value())? {
             // Restarting or stopping the relay necessarily closes all of the
             // TCP connections it owned, even if its last durable count was
@@ -283,7 +312,11 @@ impl Docker {
             .collect())
     }
 
-    pub(super) fn health(&self, from: &crate::translation_core::Str, origin: &crate::translation_core::Str) -> bool {
+    pub(super) fn health(
+        &self,
+        from: &crate::translation_core::Str,
+        origin: &crate::translation_core::Str,
+    ) -> bool {
         let script = format!(
             "const r=await fetch({origin:?}+'/api/health',{{signal:AbortSignal.timeout(5000)}});process.exit(r.status===200?0:1)"
         );
@@ -361,7 +394,12 @@ impl Docker {
         }
     }
 
-    pub(super) fn run_relay(&self, image: &crate::translation_core::Str, root: &Path, port: u16) -> Result<(), String> {
+    pub(super) fn run_relay(
+        &self,
+        image: &crate::translation_core::Str,
+        root: &Path,
+        port: u16,
+    ) -> Result<(), String> {
         self.output(&[
             "run".into(),
             "-d".into(),
@@ -395,7 +433,12 @@ impl Docker {
         Ok(())
     }
 
-    pub(super) fn owned(&self, name: &crate::translation_core::Str, root: &Path, role: &crate::translation_core::Str) -> bool {
+    pub(super) fn owned(
+        &self,
+        name: &crate::translation_core::Str,
+        root: &Path,
+        role: &crate::translation_core::Str,
+    ) -> bool {
         self.label(name, LABEL_KEY).as_deref() == Some("1")
             && self.label(name, &format!("{LABEL_KEY}.root")).as_deref()
                 == Some(root.display().to_string().as_str())

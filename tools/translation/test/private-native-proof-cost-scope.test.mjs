@@ -3,7 +3,7 @@ import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
 import {writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
-import {readCompilerAliasHistory as readFileSync} from './fixtures/compiler-data-alias-history.mjs';
+import {readProofCostScopeHistory as readFileSync} from './current-proof-cost-source-history.mjs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {pathToFileURL} from 'node:url';

@@ -28,7 +28,7 @@ descriptor before decoding and before every later use. A rebound function or
 accessor selects the original inspector without invoking that unknown parser.
 
 Captured rows grant no type, namespace, borrow or execution authority. Before
-each use, the inspector checks the complete original graph, source/view/profile,
+each use, the inspector checks the complete original module graph, source/view/profile,
 private original module items, source hashes and exact source/span association.
 Producer effect rows independently rejoin the genuine original item and item
 hash. The ordinary original inspection CST and every original proposal source
@@ -44,7 +44,7 @@ includes selected items even when their final emitted attribute span list is
 empty. Untouched and immediately failed physical files add no selections.
 
 All captured DATA is invocation-local and cleared when inspection finishes.
-Each of the three stages creates its own complete fresh graph/context/capture.
+Each of the three stages creates its own complete fresh module graph/context/capture.
 The copied production stream calls each materialized stage synchronously,
 finishes it, and then writes its bounded stage packets. There are no private
 frames across iterator yields and no private proof or context shared between

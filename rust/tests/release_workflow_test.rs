@@ -1,8 +1,12 @@
 use std::fs;
 
+#[path = "support/repository.rs"]
+mod repository;
+
 #[test]
 fn dockerfile_builder_uses_supported_rust_toolchain() {
-    let dockerfile = fs::read_to_string("Dockerfile").expect("Dockerfile should be readable");
+    let dockerfile =
+        fs::read_to_string(repository::path("Dockerfile")).expect("Dockerfile should be readable");
     let builder_tag = rust_builder_tag(&dockerfile).expect("Dockerfile should have a Rust builder");
 
     assert!(
@@ -18,7 +22,8 @@ fn dockerfile_builder_uses_supported_rust_toolchain() {
 
 #[test]
 fn dockerfile_builder_installs_native_tls_build_dependencies() {
-    let dockerfile = fs::read_to_string("Dockerfile").expect("Dockerfile should be readable");
+    let dockerfile =
+        fs::read_to_string(repository::path("Dockerfile")).expect("Dockerfile should be readable");
     let builder_stage =
         docker_builder_stage(&dockerfile).expect("Dockerfile should have a builder stage");
     let dependency_build = builder_stage
@@ -50,7 +55,8 @@ fn dockerfile_builder_installs_native_tls_build_dependencies() {
 
 #[test]
 fn dockerfile_builder_copies_embedded_admin_ui_before_building_source() {
-    let dockerfile = fs::read_to_string("Dockerfile").expect("Dockerfile should be readable");
+    let dockerfile =
+        fs::read_to_string(repository::path("Dockerfile")).expect("Dockerfile should be readable");
     let builder_stage =
         docker_builder_stage(&dockerfile).expect("Dockerfile should have a builder stage");
     let ui_copy = builder_stage
@@ -73,7 +79,10 @@ fn release_workflow_prepares_artifacts_before_stable_publication() {
     assert!(workflow.contains("finalize-release:"));
     assert!(workflow.contains("needs.verify-release-provenance.result == 'success'"));
     assert!(workflow.contains("--prerelease=false --latest"));
-    assert!(workflow.contains("ref: refs/tags/v${{ env.RELEASE_VERSION }}"));
+    // Packaging jobs build the commit the release tag names, resolved once.
+    assert!(workflow.contains("ref: ${{ needs.resolve-release-source.outputs.sha }}"));
+    let tag_commit = r#"git rev-parse --verify "refs/tags/v${RELEASE_VERSION}^{commit}""#;
+    assert!(workflow.contains(tag_commit));
 }
 
 #[test]
@@ -88,9 +97,16 @@ fn release_workflows_detect_missing_github_releases() {
         )),
         "each release run should fail if the version it just published lacks a GitHub Release"
     );
+    let finalize = release_workflow
+        .split_once("\n  finalize-release:\n")
+        .expect("release workflow should finalize the release")
+        .1
+        .split_once("\n\n")
+        .expect("the finalize job should end before the next section")
+        .0;
     assert!(
-        release_workflow
-            .contains("ref: refs/tags/v${{ env.RELEASE_VERSION }}\n          fetch-depth: 0"),
+        finalize.contains("fetch-depth: 0")
+            && finalize.contains(&format!("{verification_command} --release-version")),
         "the post-release check should fetch the default branch and complete tag history"
     );
     assert!(
@@ -208,8 +224,10 @@ fn release_workflow_reuses_current_cached_coverage_tools() {
 
 #[test]
 fn cargo_lock_package_version_matches_manifest() {
-    let manifest = fs::read_to_string("Cargo.toml").expect("Cargo.toml should be readable");
-    let lockfile = fs::read_to_string("Cargo.lock").expect("Cargo.lock should be readable");
+    let manifest =
+        fs::read_to_string(repository::path("Cargo.toml")).expect("Cargo.toml should be readable");
+    let lockfile =
+        fs::read_to_string(repository::path("Cargo.lock")).expect("Cargo.lock should be readable");
 
     let manifest_version =
         package_version(&manifest).expect("Cargo.toml should declare a package version");
@@ -278,10 +296,13 @@ fn release_workflow_uses_supported_action_runtimes() {
 fn release_workflows_pin_actions_tools_and_artifact_identity() {
     let release = read_lf(".github/workflows/release.yml");
     let verify = read_lf(".github/workflows/verify-releases.yml");
+    // A local reusable workflow (`uses: ./…`) is part of the same commit and
+    // has no revision to pin.
     for line in release
         .lines()
         .chain(verify.lines())
         .filter(|line| line.trim_start().starts_with("uses:"))
+        .filter(|line| !line.trim_start().starts_with("uses: ./"))
     {
         let revision = line
             .split_once('@')
@@ -325,7 +346,7 @@ fn release_workflows_pin_actions_tools_and_artifact_identity() {
         release.contains("cargo cyclonedx --format json --all-features --all --spec-version 1.5")
     );
     assert!(release.contains("(.components | length > 1) and (.dependencies | length > 0)"));
-    assert!(release.contains("ref: refs/tags/v${{ env.RELEASE_VERSION }}"));
+    assert!(release.contains("ref: ${{ needs.resolve-release-source.outputs.sha }}"));
     assert!(
         release.contains("link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.tar.gz"),
         "release assets must be named per platform, not per architecture alone"
@@ -433,7 +454,7 @@ fn release_workflow_enforces_single_platform_coverage() {
         "instrumentation and coverage failures must fail closed"
     );
     assert!(
-        workflow.contains("needs: [lint, test, coverage]"),
+        workflow.contains("needs: [javascript, lint, test, coverage]"),
         "the package build must be gated by coverage"
     );
 }
@@ -447,7 +468,7 @@ fn coverage_gate_is_behaviorally_tested_in_ci() {
         "CI must test the independent absolute-floor, ratchet, and baseline-update rules"
     );
     assert!(
-        fs::metadata("coverage-baseline.txt").is_ok(),
+        fs::metadata(repository::path("coverage-baseline.txt")).is_ok(),
         "the reviewable line-coverage baseline must be committed"
     );
 }
@@ -516,9 +537,9 @@ fn release_workflow_maps_crates_io_token_fallback_to_cargo_native_env() {
 
 #[test]
 fn release_workflow_adds_crates_io_link_to_github_releases() {
-    let workflow = fs::read_to_string(".github/workflows/release.yml")
+    let workflow = fs::read_to_string(repository::path(".github/workflows/release.yml"))
         .expect("release workflow should be readable");
-    let release_script = fs::read_to_string("scripts/create-github-release.rs")
+    let release_script = fs::read_to_string(repository::path("scripts/create-github-release.rs"))
         .expect("release script should be readable");
 
     let crates_url_arg = "--crates-io-url \"https://crates.io/crates/link-assistant-router\"";
@@ -536,7 +557,7 @@ fn release_workflow_adds_crates_io_link_to_github_releases() {
 
 #[test]
 fn release_script_avoids_unsupported_regex_lookaround() {
-    let release_script = fs::read_to_string("scripts/create-github-release.rs")
+    let release_script = fs::read_to_string(repository::path("scripts/create-github-release.rs"))
         .expect("release script should be readable");
 
     for token in ["(?=", "(?<=", "(?!", "(?<!"] {
@@ -554,7 +575,8 @@ fn release_script_avoids_unsupported_regex_lookaround() {
 
 #[test]
 fn readme_exposes_release_status_badges() {
-    let readme = fs::read_to_string("README.md").expect("README should be readable");
+    let readme =
+        fs::read_to_string(repository::path("README.md")).expect("README should be readable");
 
     assert!(
         readme
@@ -601,14 +623,16 @@ fn readme_exposes_release_status_badges() {
 /// The advertised minimum Rust version must be the one the manifest declares.
 #[test]
 fn readme_rust_badge_tracks_the_manifest() {
-    let manifest = fs::read_to_string("Cargo.toml").expect("manifest should be readable");
+    let manifest =
+        fs::read_to_string(repository::path("Cargo.toml")).expect("manifest should be readable");
     let declared = manifest
         .lines()
         .find_map(|line| line.strip_prefix("rust-version = "))
         .map(|value| value.trim().trim_matches('"').to_string())
         .expect("Cargo.toml should declare rust-version");
 
-    let readme = fs::read_to_string("README.md").expect("README should be readable");
+    let readme =
+        fs::read_to_string(repository::path("README.md")).expect("README should be readable");
     // The badge renders the manifest value, so the README must not also state a
     // different one in prose.
     assert!(
@@ -671,11 +695,11 @@ fn release_workflow_publishes_synced_docker_hub_image_before_crate() {
 
 #[test]
 fn release_scripts_check_all_release_artifacts() {
-    let release_check = fs::read_to_string("scripts/check-release-needed.rs")
+    let release_check = fs::read_to_string(repository::path("scripts/check-release-needed.rs"))
         .expect("release check script should be readable");
-    let wait_for_crate = fs::read_to_string("scripts/wait-for-crate.rs")
+    let wait_for_crate = fs::read_to_string(repository::path("scripts/wait-for-crate.rs"))
         .expect("crate availability wait script should be readable");
-    let release_script = fs::read_to_string("scripts/create-github-release.rs")
+    let release_script = fs::read_to_string(repository::path("scripts/create-github-release.rs"))
         .expect("release script should be readable");
 
     assert!(
@@ -732,7 +756,8 @@ fn dockerfile_apt_installs(section: &str, package: &str) -> bool {
 /// The crate's own `rust-version`, so the floor this test enforces cannot
 /// drift away from the one Cargo enforces.
 fn minimum_supported_rust_version() -> String {
-    let manifest = fs::read_to_string("Cargo.toml").expect("Cargo.toml should be readable");
+    let manifest =
+        fs::read_to_string(repository::path("Cargo.toml")).expect("Cargo.toml should be readable");
     manifest
         .lines()
         .find_map(|line| line.strip_prefix("rust-version = "))
@@ -836,7 +861,7 @@ fn quoted_value<'a>(line: &'a str, key: &str) -> Option<&'a str> {
 /// A Windows checkout may convert these files to CRLF, which would otherwise
 /// break the newline-anchored matching below.
 fn read_lf(path: &str) -> String {
-    fs::read_to_string(path)
+    fs::read_to_string(repository::path(path))
         .unwrap_or_else(|e| panic!("{path} should be readable: {e}"))
         .replace("\r\n", "\n")
 }

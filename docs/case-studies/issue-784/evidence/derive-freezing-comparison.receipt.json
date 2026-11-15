@@ -1,0 +1,92 @@
+{
+  "schema": "complete-evidence-packet-v1",
+  "sourceHead": "23d8843ef8ea4cdd6d7dd964a77f5acb8f137310",
+  "archive": "/tmp/gh-issue-solver-1794003502595/docs/case-studies/issue-784/evidence/derive-freezing-comparison.tar.xz",
+  "archiveBytes": 40472,
+  "archiveSha256": "f72ebb5532bd202470f3a42a0d5c8b5f5854c124cae3353affe2e0c217648407",
+  "manifestSha256": "c99411f1a503f5214b2a27df80822db82f966872a4497a695d79525c6cfd5e7f",
+  "members": [
+    {
+      "path": "ci-logs/issue-784-restart-2/current-derive-context-freezing-archive.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-derive-context-freezing-archive.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-derive-context-freezing-comparison-2.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-derive-context-freezing-comparison-2.log",
+      "bytes": 335,
+      "sha256": "dc9a01108476820761bbfc31aa0b1eb56e743504d09dae6c1c677e7a775ae0b1"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-derive-context-freezing-comparison-2.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-derive-context-freezing-comparison-2.memory.json",
+      "bytes": 992,
+      "sha256": "9ac0377b6b61e0c39c3c9b4b91e8a32c9a8f5e0833654dab496c95b0cff358b4"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-derive-context-freezing-comparison.json.xz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-derive-context-freezing-comparison.json.xz",
+      "bytes": 19660,
+      "sha256": "75a0b8201cae744694cdad7efb45ae9c67f48e5b8a39aa062918c469cf249c77"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-derive-context-freezing-comparison.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-derive-context-freezing-comparison.log",
+      "bytes": 953,
+      "sha256": "79472383858d833bdeae8f0ff52d0ec93fa0b6d0b85a9d27cc972d088e1a2037"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-derive-context-freezing-comparison.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-derive-context-freezing-comparison.memory.json",
+      "bytes": 992,
+      "sha256": "80b727f8b6ef439f93e9bbf242420c98825a1c01de66ad64f86c322fcd7daf2f"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-derive-context-freezing-first-source.mjs.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-derive-context-freezing-first-source.mjs.gz",
+      "bytes": 1531,
+      "sha256": "f3ec1071f2b5d43568abe78163713004bba491710b8b1d1f7daa622aeda0abba"
+    },
+    {
+      "path": "experiments/issue-784/archive-derive-freezing-comparison.py",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/archive-derive-freezing-comparison.py",
+      "bytes": 1452,
+      "sha256": "264e58d761d47dbe6155e7de7a0e66c62abf8cd092f68cc78bed7c11e3604632"
+    },
+    {
+      "path": "experiments/issue-784/compare-derive-context-freezing.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/compare-derive-context-freezing.mjs",
+      "bytes": 3428,
+      "sha256": "7492b1036c70f7e3c599cc9e527507e1a2643d71fe1e2f4d1acf944eea103d36"
+    },
+    {
+      "path": "tools/translation/derive-footprints.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/derive-footprints.mjs",
+      "bytes": 58543,
+      "sha256": "0a6dd964d2de1d09b09c1ce4668739505d41ef11e7337b43754e59789fecdf58"
+    },
+    {
+      "path": "tools/translation/private-data-freeze.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/private-data-freeze.mjs",
+      "bytes": 13357,
+      "sha256": "2e7194268a1a136db9217834e8ce6b62d18dadf367ce2c27d4e9fe7d6ee8cbf6"
+    }
+  ],
+  "completeMembers": 11,
+  "completeOriginalBytes": 101243,
+  "allDecodedOriginalsVerified": true,
+  "allSelectedOriginalsUnchanged": true,
+  "capSeconds": 600,
+  "elapsedSeconds": 0.23643098899628967,
+  "compression": {
+    "format": "xz",
+    "preset": 9,
+    "dictionaryBytes": 67108864
+  },
+  "harnessSha256": "79015998f626aecda125c5e03b6e7fc04951a14a57a7cdbba81771a2abfa08e9",
+  "semanticAuthority": false,
+  "runtimeParity": false,
+  "fullGatePass": false,
+  "rustExecuted": false
+}

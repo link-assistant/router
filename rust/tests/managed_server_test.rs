@@ -52,7 +52,15 @@ fn read_request(stream: &mut std::net::TcpStream) -> String {
     String::from_utf8_lossy(&bytes).into_owned()
 }
 
-fn mock_tcp_health() -> (u16, thread::JoinHandle<()>) {
+/// Router's own answer to `GET /api/health`: the request-log layer re-streams
+/// every body, so the `ok` arrives chunked.
+const ROUTER_HEALTH: &[u8] = b"HTTP/1.1 200 OK\r\ncontent-type: text/plain; charset=utf-8\r\n\
+    connection: close\r\ntransfer-encoding: chunked\r\n\r\n2\r\nok\r\n0\r\n\r\n";
+
+/// The same answer with a length, as a proxy in front of Router may send it.
+const LENGTH_HEALTH: &[u8] = b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok";
+
+fn mock_tcp_health(answer: &'static [u8]) -> (u16, thread::JoinHandle<()>) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind managed health server");
     let port = listener
         .local_addr()
@@ -66,7 +74,7 @@ fn mock_tcp_health() -> (u16, thread::JoinHandle<()>) {
             .expect("read managed health request");
         assert_ne!(amount, 0, "managed health request must not be empty");
         stream
-            .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok")
+            .write_all(answer)
             .expect("write managed health response");
     });
     (port, handle)
@@ -339,7 +347,7 @@ fn managed_server_lifecycle_is_idempotent_and_preserves_data_until_remove() {
     assert!(absent.status.success());
     assert!(String::from_utf8_lossy(&absent.stdout).contains("managed server: absent"));
 
-    let (port, health) = mock_tcp_health();
+    let (port, health) = mock_tcp_health(ROUTER_HEALTH);
     seed_managed_state(&home, port);
     let started = server_command(&home, &bin, &log, "absent", &["start"]);
     assert!(
@@ -366,7 +374,7 @@ fn managed_server_lifecycle_is_idempotent_and_preserves_data_until_remove() {
     assert!(stopped.status.success());
     assert!(managed_state_path(&home).exists());
 
-    let (port, health) = mock_tcp_health();
+    let (port, health) = mock_tcp_health(LENGTH_HEALTH);
     seed_managed_state(&home, port);
     let restarted = server_command(&home, &bin, &log, "stopped", &["start"]);
     assert!(restarted.status.success());

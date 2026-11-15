@@ -32,7 +32,9 @@ test('genuine compiler source commit tree modes complete blobs and installed TS 
 });
 
 test('actual metadata producer is deterministic and full proposal roundtrip preserves installed packet',{timeout:60000},t=>{
- const a=preparePortableGitFixtureProposal({root:ROOT}),b=preparePortableGitFixtureProposal({root:ROOT});assert.deepEqual(a,b);assert.deepEqual(a.trace.map(row=>row.phase),['language','repository']);const parent=temporary(t,'proposal'),output=join(parent,'complete');writePortableGitFixtureProposal(a,output);for(const row of a.files){const bytes=fs.readFileSync(join(output,row.path.split('/').at(-1)));assert.equal(bytes.length,row.bytes);assert.equal(hash(bytes),row.sha256);}assert.deepEqual(readPortableGitFixture({folder:output}).data,readPortableGitFixture().data);retain('03-complete-producer-and-readback',{a,b,readback:readPortableGitFixture({folder:output}).data});
+ const fixture=materializeRegisteredCompilerGit(t,{root:ROOT,registry});assert.throws(()=>portableGit(fixture.root,['rev-parse','--verify','HEAD']));
+ const options={root:fixture.root,currentRevision:registry.sourceHead};
+ const a=preparePortableGitFixtureProposal(options),b=preparePortableGitFixtureProposal(options);assert.deepEqual(a,b);assert.deepEqual(a.trace.map(row=>row.phase),['language','repository']);const parent=temporary(t,'proposal'),output=join(parent,'complete');writePortableGitFixtureProposal(a,output);for(const row of a.files){const bytes=fs.readFileSync(join(output,row.path.split('/').at(-1)));assert.equal(bytes.length,row.bytes);assert.equal(hash(bytes),row.sha256);}assert.deepEqual(readPortableGitFixture({folder:output}).data,readPortableGitFixture().data);retain('03-complete-producer-and-readback',{a,b,readback:readPortableGitFixture({folder:output}).data});
 });
 
 test('forged object type bytes path commit and missing source evidence refuse without authority flags',{timeout:60000},t=>{

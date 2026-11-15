@@ -1,11 +1,12 @@
-import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-edges.mjs';
+import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-current.mjs';
+import {composeProjectFacadeRetention} from './prepare-project-facade-retention.mjs';
 import {composeOwnedCorePrivateAnalysisRetention} from './prepare-owned-core-private-analysis-retention.mjs';
-import {composeCoreUnitMatches} from './prepare-core-unit-matches.mjs';
+import {composeCurrentCoreUnitMatches as composeCoreUnitMatches} from './prepare-current-core-unit-unicode.mjs';
 // Additive original-checker source view. Saved DATA never issues source owners.
 import {composeCoreAscii} from './prepare-core-ascii-sources.mjs';
 import {composeCoreAsciiReverse} from './prepare-core-ascii-reverse-sources.mjs';
-import {composeCoreAsciiAssets} from './prepare-core-ascii-assets.mjs';
-import {composeCoreAsciiBaseAssets} from './prepare-core-ascii-base-assets.mjs';
+import {composeCoreAsciiAssets} from './prepare-current-core-ascii-assets.mjs';
+import {composeCoreAsciiBaseAssets} from './prepare-current-core-ascii-base-assets.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -63,7 +64,8 @@ export function prepareCurrentExecutableCheckedSource(options={}){
  const unit=composeCoreUnitMatches(base.sources,options);
  const retention=composeOwnedCorePrivateAnalysisRetention(unit.sources,options);
  const runtime=composeOwnedRuntimeImportEdges(retention.sources,options);
- return {schema:'current-executable-checked-source-source-v1',birth,layers:[birth,...preserved.layers,...ascii.layers,...reverse.layers, ...assets.layers, ...base.layers,...unit.layers,...retention.layers,...runtime.layers],files:Object.values(runtime.sources),semanticAuthority:false};
+ const facades=composeProjectFacadeRetention(runtime.sources,options);
+ return {schema:'current-executable-checked-source-source-v1',birth,layers:[birth,...preserved.layers,...ascii.layers,...reverse.layers, ...assets.layers, ...base.layers,...unit.layers,...retention.layers,...runtime.layers,...facades.layers],files:Object.values(facades.sources),semanticAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--check','--write'].includes(args[0]))fail('usage: --check|--write');const plan=prepareCurrentExecutableCheckedSource();

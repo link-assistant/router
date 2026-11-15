@@ -14,7 +14,10 @@ pub fn annotate_live_catalog(
     raw.insert("router_source_url".into(), Value::String(source_url.into()));
     raw.insert("router_endpoint".into(), Value::String(endpoint.into()));
     raw.insert("router_account".into(), Value::String(account.into()));
-    raw.insert("router_protocols".into(), crate::translation_core::json!(protocols));
+    raw.insert(
+        "router_protocols".into(),
+        crate::translation_core::json!(protocols),
+    );
     raw.insert(
         "router_fetched_at".into(),
         Value::String(fetched_at.clone()),

@@ -1,0 +1,28 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "scripts/translate-router.mjs",
+  "phase": "repository",
+  "beforeSha256": "1bb29ebb15ef4d3c8176e2230e927c3fb84c89e77fd6b61a4ce872ecb16b2f5b",
+  "afterSha256": "876b84d4b54254fa39e364a2c6361e48be2380c215151283ccbf64a8c4717430",
+  "edits": [
+    {
+      "id": "router.namespace-observer.1.v1",
+      "before": "import { regenerate } from '../tools/translation/bulk.mjs';",
+      "after": "import { regenerate } from '../tools/translation/bulk.mjs';\nimport {namespaceProgressObserver} from '../tools/translation/translation-progress.mjs';"
+    },
+    {
+      "id": "router.namespace-observer.2.v1",
+      "before": "progress:progress?record=>process.stderr.write(",
+      "after": "progress:progress?namespaceProgressObserver(record=>process.stderr.write("
+    },
+    {
+      "id": "router.namespace-observer.3.v1",
+      "before": "+'\\n'):undefined",
+      "after": "+'\\n')):undefined"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

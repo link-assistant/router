@@ -27,6 +27,7 @@ import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_COR
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from '../concrete-syntax-meta.mjs';
 import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
 import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
+import {deriveStructOrderingSourceHistory} from '../struct-ordering-source-history.mjs';
 import {restoreCurrentEnclosingNamespaceSource as restoreEnclosingNamespaceSource} from './fixtures/native-proof-json-format.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
@@ -198,7 +199,7 @@ test('source derived language then repository equations and cold owner parse gua
  for(const rule of DEBUG_LANGUAGE_EDITS){const next=once(language,rule.before,rule.after);language=stage(retain,language,next,rule.id,'language');}
  assert.equal(language,functionSource(actual,'compileBuiltinDebugEnclosingNamespaceModel'));
  const repository=stage(retain,legacy,actual,'router:append-enclosing-only-debug-format','repository');assert.equal(repository,actual);
- const bang=readFileSync(new URL('../builtin-derive-bang-footprints.mjs',import.meta.url),'utf8'),bangLegacy=restoreEnclosingNamespaceSource(bang,(kind,value)=>retain(kind,value));assert.ok(bang.startsWith(bangLegacy));stage(retain,bangLegacy,bang,'router:append-private-enclosing-issuer','repository');
+ const bang=readFileSync(new URL('../builtin-derive-bang-footprints.mjs',import.meta.url),'utf8'),ordering=deriveStructOrderingSourceHistory(ownershipCompiler(),{path:'tools/translation/builtin-derive-bang-footprints.mjs',source:bang}),preceding=ordering.before,bangLegacy=restoreEnclosingNamespaceSource(preceding,(kind,value)=>retain(kind,value));assert.equal(ordering.after,bang);assert.equal(ordering.inverse,preceding);assert.ok(preceding.startsWith(bangLegacy));stage(retain,bangLegacy,preceding,'router:append-private-enclosing-issuer','repository');stage(retain,preceding,bang,'router:installed-private-struct-ordering','repository');retain('complete-current-struct-ordering-source-equation',ordering);
  for(const name of ['derive-enclosing-namespace-context.mjs','module-bindings.mjs','core-adoption-producer-context.mjs','migrate-core-base64.mjs']){
   const source=readFileSync(new URL('../'+name,import.meta.url),'utf8'),reparsed=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(transportConcreteSyntaxSource(source,{language:'JavaScript'}).document));assert.equal(reparsed.source,source);retain('complete-actual-new-format-module-source',{name,source,wire:serializeConcreteSyntaxMeta(reparsed.document)});
  }

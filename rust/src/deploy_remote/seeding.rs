@@ -18,7 +18,11 @@ fn user_home() -> crate::translation_core::Outcome<std::path::PathBuf, String> {
 }
 
 /// Read every requested login. Nothing is marked or sent on error.
-pub fn prepare(merged: &Merged, server: &crate::translation_core::Str, token_secret: &crate::translation_core::Str) -> crate::translation_core::Outcome<Vec<Seed>, String> {
+pub fn prepare(
+    merged: &Merged,
+    server: &crate::translation_core::Str,
+    token_secret: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<Vec<Seed>, String> {
     if merged.seed_credentials.is_empty() {
         return Ok(Vec::new());
     }
@@ -32,7 +36,10 @@ pub fn prepare(merged: &Merged, server: &crate::translation_core::Str, token_sec
 
 /// Mark every source `pending`: from here on this machine does not refresh
 /// the chain, so a lost response can never leave two refreshers.
-pub fn mark_pending(seeds: &[Seed], server: &crate::translation_core::Str) -> crate::translation_core::Outcome<(), String> {
+pub fn mark_pending(
+    seeds: &[Seed],
+    server: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<(), String> {
     seeds.iter().try_for_each(|seed| {
         seed.mark_pending(server).map_err(|error| {
             format!(
@@ -45,7 +52,11 @@ pub fn mark_pending(seeds: &[Seed], server: &crate::translation_core::Str) -> cr
 
 /// Settle every mark from the target's `seed_credential` events, report
 /// each on stderr, and return the `--json` entries.
-pub fn settle(seeds: &[Seed], server: &crate::translation_core::Str, events: &[crate::translation_core::Json]) -> Vec<crate::translation_core::Json> {
+pub fn settle(
+    seeds: &[Seed],
+    server: &crate::translation_core::Str,
+    events: &[crate::translation_core::Json],
+) -> Vec<crate::translation_core::Json> {
     seeds
         .iter()
         .map(|seed| {

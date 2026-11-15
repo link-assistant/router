@@ -281,7 +281,7 @@ first-stage result and constructs a fresh module graph. The standalone
 `scalar-count` sequence replaces source-resolved borrowed owned-core text
 `chars().count()` calls with the qualified owned scalar-count operation; it
 keeps the native iterator implementation outside the translated library boundary. Each stage writes all
-returned fields in their original key order, full source and graph/CST records,
+returned fields in their original key order, full source and module graph/CST records,
 selections, uncertainty reports and per-file substitutions with verified complete
 inverses. Reverse stage order to recover the original source. A single full API
 proposal is retained at a time; actual memory use still needs receiving checks.
@@ -297,7 +297,7 @@ that body's behavior; it does not establish its original parent module or crate
 is translated. Use full-corpus generation to measure application coverage.
 
 The standalone `json-updates` sequence invokes the actual
-`proposeCoreJsonUpdateCorpus` API on a fresh complete receiving source graph and
+`proposeCoreJsonUpdateCorpus` API on a fresh complete receiving source module graph and
 writes the same complete sequence packet schema. It does not append a fourth
 stage to the three-stage JSON sequence or change any old default. To compose the
 operations, review and apply the complete `json-algebraic-primitives` proposal
@@ -470,7 +470,7 @@ Rust/Cargo inputs, including Rust outside `src`, and all 132 installed TypeScrip
 5.9.3 files before invoking the existing whole-`src` gzip proposal CLI. Source
 counts come from that receiving checkout; they are not executable coverage.
 The second independently checks every stored and decoded packet, source/profile
-join, graph, retained refusal, both language/repository CST stages, full mappings
+join, module graph, retained refusal, both language/repository CST stages, full mappings
 and inverses. Its fixed adapter requires the current streaming outer trace.
 Both freshly rejoin the captured inputs and source HEAD after execution. The
 executing controllers and reviewer helpers must themselves be the captured

@@ -22,7 +22,7 @@ the private guarded leaf through native spans and complete CST/source inverses.
 `prepare-original-class-birth.mjs` composes that renderer. Cold unavailable
 native/URI guards skip decoding and remain inert. The original 262,144-byte leaf
 and 4,194,304-byte complete private compiler source bounds remain unchanged;
-the complete original private-compiler receiving file now passes its graph bound.
+the complete original private-compiler receiving file now passes its module graph bound.
 
 The current 181,143-byte class PROGRAM occupies 30,169 stored bytes before its
 37,715-character ASCII85 representation. An independent Python decoder

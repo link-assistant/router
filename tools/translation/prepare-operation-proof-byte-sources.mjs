@@ -5,6 +5,8 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
 import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
+import {deriveGuardedProofLexingConsumerSource} from './prepare-guarded-proof-lexing.mjs';
+import {deriveOperationSizeMeasurementSource} from './operation-size-measurement-source.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const INPUT='tools/translation/private-frozen-json.mjs',OUTPUT='tools/translation/operation-proof-byte-scope.mjs';
@@ -70,18 +72,27 @@ const REPOSITORY_TAIL=String.raw`
 const rule=(before,after,id)=>({id,edits:[{span:[0,before.length],expected:before,replacement:after}]});
 function applyEdits(source,edits){let result=source;for(const edit of [...edits].sort((a,b)=>b.span[0]-a.span[0])){if(result.slice(...edit.span)!==edit.expected)fail('exact native selection changed');result=result.slice(0,edit.span[0])+edit.replacement+result.slice(edit.span[1]);}return result;}
 export function prepareOperationProofByteSources({root=ROOT}={}){
- const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');const before=readFileSync(resolve(root,INPUT),'utf8');if(hash(before)!==PIN)fail('complete current immutable composer differs');
+ const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');const before=readFileSync(resolve(root,INPUT),'utf8'),beforeSha256=hash(before);let sourceEvolution=null;
+ if(beforeSha256!==PIN){
+  // Keep the original whole-source pin. The existing guarded-import producer
+  // must prove that the complete current body has that exact original inverse.
+  const equation=deriveGuardedProofLexingConsumerSource(before,INPUT);
+  if(equation.current!==before||equation.text!==before||equation.sourceSha256!==PIN||hash(equation.inverse)!==PIN||equation.inverse!==equation.source)fail('complete current immutable composer differs');
+  sourceEvolution={producer:'tools/translation/prepare-guarded-proof-lexing.mjs',originalSha256:PIN,currentSha256:beforeSha256,equation,sourceAuthority:false};
+ }
  const parse=(path,text)=>{const file=ts.createSourceFile(path,text,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete native grammar differs');return file;},file=parse(INPUT,before),imports=[],removals=[];
  for(const node of file.statements){if(ts.isImportDeclaration(node)){imports.push(node.getText(file));removals.push({span:[node.getStart(file),node.end],expected:node.getText(file),replacement:''});}for(const modifier of node.modifiers??[])if(modifier.kind===ts.SyntaxKind.ExportKeyword)removals.push({span:[modifier.getStart(file),modifier.end],expected:modifier.getText(file),replacement:''});}
  if(imports.length!==4)fail('complete original import census differs');
  const body=applyEdits(before,removals),language=imports.join('\n')+'\n'+BOUNDARY+body+LANGUAGE_TAIL,native=parse(OUTPUT,language),frames=native.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text==='createOperationByteFrame');if(frames.length!==1)fail('one complete lexical operation frame required');
  const composers=frames[0].body.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text==='createPrivateFrozenJsonComposer');if(composers.length!==1)fail('one original complete composer required');const fallbackEdits=[];
  function visit(node){if(ts.isCallExpression(node)&&node.expression.getText(native)==='JSON.stringify'&&node.arguments.length===1&&ts.isIdentifier(node.arguments[0])&&node.arguments[0].text==='value')fallbackEdits.push({span:[node.getStart(native),node.end],expected:node.getText(native),replacement:'operationLegacy(value)'});ts.forEachChild(node,visit);}visit(composers[0]);if(fallbackEdits.length!==5)fail('complete original composer fallback census differs');
- let after=applyEdits(language,fallbackEdits);if(!after.endsWith(LANGUAGE_TAIL))fail('complete lexical closing tail differs');after=after.slice(0,-LANGUAGE_TAIL.length)+REPOSITORY_TAIL;parse(OUTPUT,after);if(after.split('\n').length>=1000)fail('whole source line budget');
+ let after=applyEdits(language,fallbackEdits);if(!after.endsWith(LANGUAGE_TAIL))fail('complete lexical closing tail differs');after=after.slice(0,-LANGUAGE_TAIL.length)+REPOSITORY_TAIL;
+ const measurementSourceHistory=deriveOperationSizeMeasurementSource(after,OUTPUT);after=measurementSourceHistory.after;
+ parse(OUTPUT,after);if(after.split('\n').length>=1000)fail('whole source line budget');
  const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,OUTPUT),after),first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),stages=[],sequence={languageRules:[rule(before,language,'javascript:copy-complete-immutable-DATA-composer-into-one-operation')],repositoryRules:[rule(language,after,'router:close-operation-bytes-before-original-hook-fallback')]};let document=first.document;
  for(const phase of ['language','repository']){const from=phase==='language'?before:language,to=phase==='language'?language:after,encoded=serializeConcreteSyntaxMeta(document),fresh=transportConcreteSyntaxMeta(encoded);if(fresh.source!==from)fail('complete current stage differs');const run=applyConcreteSyntaxSubstitutions(fresh.document,{languageRules:phase==='language'?sequence.languageRules:[],repositoryRules:phase==='repository'?sequence.repositoryRules:[]}),meta=serializeConcreteSyntaxMeta(run.value),checked=transportConcreteSyntaxMeta(meta);if(checked.source!==to)fail('whole source substitution differs');const inverse=applyConcreteSyntaxSubstitutions(checked.document,{languageRules:phase==='language'?[rule(to,from,'javascript:restore-whole-original-composer')]:[],repositoryRules:phase==='repository'?[rule(to,from,'router:restore-whole-unmodified-fallbacks')]:[]});if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source!==from)fail('complete phase inverse differs');stages.push({phase,before:from,after:to,beforeMeta:encoded,afterMeta:meta,trace:run.trace,completeInverse:true});document=checked.document;}
  if(readFileSync(resolve(root,INPUT),'utf8')!==before)fail('complete original input changed');let current=null;try{current=readFileSync(resolve(root,OUTPUT),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
- return {schema:'operation-proof-byte-source-v1',typescriptVersion:ts.version,input:{path:INPUT,source:before,sha256:PIN},files:[{path:OUTPUT,before,language,after,current,beforeSha256:PIN,afterSha256:hash(after),beforeMeta:first.meta,afterMeta:serializeConcreteSyntaxMeta(document),inverse:before,sequence,stages,removals,fallbackEdits,nativeBindings}],existingDefaultsUnchanged:true,arithmeticScopeUnchanged:true,newAcrossInvocationEncodedCache:false,semanticAuthority:false,performanceQualified:false};
+ return {schema:'operation-proof-byte-source-v1',typescriptVersion:ts.version,input:{path:INPUT,source:before,sha256:beforeSha256},sourceEvolution,files:[{path:OUTPUT,before,language,after,current,beforeSha256,afterSha256:hash(after),beforeMeta:first.meta,afterMeta:serializeConcreteSyntaxMeta(document),inverse:before,sequence,stages,removals,fallbackEdits,nativeBindings,measurementSourceHistory}],existingDefaultsUnchanged:true,arithmeticScopeUnchanged:true,newAcrossInvocationEncodedCache:false,semanticAuthority:false,performanceQualified:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--write','--check','--emit'].includes(args[0]))fail('use --write|--check|--emit');const plan=prepareOperationProofByteSources();

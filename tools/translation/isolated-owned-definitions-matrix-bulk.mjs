@@ -72,7 +72,7 @@ export function regenerateCompilationMatrix({root,matrix,check=false,sources,ent
   const ownedTarget=ownedDefinitionPhysical(root,ownedRelative,true);
   if(expectedBytes+Buffer.byteLength(ownedContent)>MATRIX_BULK_LIMITS.expectedBytes)throw new TypeError("owned matrix output budget");
   const failures=[];
-  failures.push(...isolation.applyAll(outputPlans.map(({plan})=>plan),{check}));
+  failures.push(...isolation.applyAll(outputPlans.map(({plan})=>plan),{check,deferDraft:true}));
   const target=join(root,relative),content=json(manifest);
   if(check){
     if(!existsSync(target))failures.push(`missing: ${relative}`);
@@ -80,6 +80,7 @@ export function regenerateCompilationMatrix({root,matrix,check=false,sources,ent
   }else{mkdirSync(join(root,'profiles'),{recursive:true});writeFileSync(target,content);}
   if(check){if(!existsSync(ownedTarget))failures.push(`missing: ${ownedRelative}`);else if(readFileSync(ownedTarget,'utf8')!==ownedContent)failures.push(`stale: ${ownedRelative}`);}
   else writeFileSync(ownedTarget,ownedContent);
+  isolation.retainComputedIndices([{path:relative,content},{path:ownedRelative,content:ownedContent}]);
   return {manifest,failures};
   }finally{isolation.close();}
 }

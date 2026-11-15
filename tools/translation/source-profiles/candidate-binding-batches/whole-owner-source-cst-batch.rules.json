@@ -1,0 +1,33 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/prepare-whole-owner-source-cst-batch.mjs",
+  "phase": "repository",
+  "beforeSha256": "4cf10364fd278d83dafecca0b2501d9396f9c6ada8403189a4ffc2ef2c77bec0",
+  "afterSha256": "5135085a9bdb53c5796fde7bf9b5d9d897d3924900d85229e6e65e049d5ca66c",
+  "edits": [
+    {
+      "id": "router.candidate-binding-batch.cst-composer-inputs.v1",
+      "before": "const originals=[['prepare-whole-owner-derive-candidate.mjs','prepareWholeOwnerDeriveCandidate',8,'c1a43913e15e5598869ed0a931593dc8ad80d86907da084227872b337841bff8'],['prepare-whole-owner-resolver-candidate.mjs','prepareWholeOwnerResolverCandidate',3,'4c40b2e8578f610a2f3d515df3d3dce7a8676c2a633e0c7dafd48cda7581dcb9'],['prepare-whole-owner-core-producer-candidate.mjs','prepareWholeOwnerCoreProducerCandidate',0,'773d58240f391609d32fd2b89f1a725cb47233564305b882bb2cc6d6938e26e1'],['prepare-whole-owner-core-corpus-candidate.mjs','prepareWholeOwnerCoreCorpusCandidate',0,'b2a56409a0ea4bfd8e6039b66e402187d28dc9a316d24fcb8e8af2e784a6a2ea']];",
+      "after": "const originals=[['prepare-whole-owner-derive-candidate.mjs','prepareWholeOwnerDeriveCandidate',8,'f862a6a99e6d251f55f8e66e848e10220c9575344ae8b97c3f7ef0c03c83719f'],['prepare-whole-owner-resolver-candidate.mjs','prepareWholeOwnerResolverCandidate',3,'0504df642c98f5cfe2ae5a4d24fe1ae28bdaae837ed71fe14ca079a5b193357e'],['prepare-whole-owner-core-producer-candidate.mjs','prepareWholeOwnerCoreProducerCandidate',0,'76ab05d39f2c667fa8c757aebf90a134f180e038f07cf3808e403c2cbe3d819b'],['prepare-whole-owner-core-corpus-candidate.mjs','prepareWholeOwnerCoreCorpusCandidate',0,'aa7e8b2ddcf2a391b5088746c3f383b0721fd99c63ef6df6eb1c057b276d4760']];"
+    },
+    {
+      "id": "router.candidate-binding-batch.cst-composer-registration.v1",
+      "before": " const before=whole.parameters[1].name.getText(file),language=",
+      "after": " const nativeRegistration=ts.isObjectLiteralExpression(native.initializer)?one(body.filter(node=>ts.isExpressionStatement(node)&&node.getText(file)==='bindingCandidates.push({path:resolve(root,path),source:after,result:nativeBindings});'),'complete invocation-local native registration').getText(file):'';\n const before=whole.parameters[1].name.getText(file),language="
+    },
+    {
+      "id": "router.candidate-binding-batch.cst-composer-retain-registration.v1",
+      "before": ".join(',')+';\\nconst __ownerCstRecord='",
+      "after": ".join(',')+';\\n'+nativeRegistration+'\\nconst __ownerCstRecord='"
+    },
+    {
+      "id": "router.candidate-binding-batch.cst-composer-native-before-cst.v1",
+      "before": "replacement:'finishWholeOwnerSourceCstBatch({root,inputs,files,pending:__ownerCstPending,count:'+count+'});\\n'",
+      "after": "replacement:(nativeRegistration?'const __ownerNativeBindings=verifyNativeCopiedModuleBindings(ts,bindingCandidates);for(let at=0;at<bindingCandidates.length;at++)Object.assign(bindingCandidates[at].result,__ownerNativeBindings[at]);\\n':'')+'finishWholeOwnerSourceCstBatch({root,inputs,files,pending:__ownerCstPending,count:'+count+'});\\n'"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

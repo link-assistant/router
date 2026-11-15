@@ -9,6 +9,9 @@
 pub async fn read(
     context: crate::operation_context::OperationContext,
     op: crate::cli::LogsOp,
-) -> crate::translation_core::Outcome<crate::operations::OperationResult, crate::operations::OperationError> {
+) -> crate::translation_core::Outcome<
+    crate::operations::OperationResult,
+    crate::operations::OperationError,
+> {
     crate::operations::request(context, crate::cli::Command::Logs { op }).await
 }

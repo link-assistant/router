@@ -26,7 +26,8 @@ use std::fmt;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
 /// Environment variable naming the address classes a provider may use.
-pub const ALLOW_PRIVATE_NETWORKS_ENV: &crate::translation_core::Str = "UPSTREAM_ALLOW_PRIVATE_NETWORKS";
+pub const ALLOW_PRIVATE_NETWORKS_ENV: &crate::translation_core::Str =
+    "UPSTREAM_ALLOW_PRIVATE_NETWORKS";
 
 /// The class of a refused address.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -230,7 +231,10 @@ impl NetworkPolicy {
     ///
     /// # Errors
     /// Returns the refused host and class, or an unparsable URL.
-    pub fn check_base_url(self, base_url: &crate::translation_core::Str) -> crate::translation_core::Outcome<(), BlockedAddress> {
+    pub fn check_base_url(
+        self,
+        base_url: &crate::translation_core::Str,
+    ) -> crate::translation_core::Outcome<(), BlockedAddress> {
         let url = url::Url::parse(base_url).map_err(|_| BlockedAddress {
             host: base_url.to_string(),
             class: AddressClass::NonUnicast,
@@ -295,14 +299,18 @@ impl NetworkPolicy {
 ///
 /// # Errors
 /// A resolution failure, or every address being refused.
-pub async fn resolve_allowed(host: &crate::translation_core::Str, port: u16) -> std::io::Result<Vec<SocketAddr>> {
+pub async fn resolve_allowed(
+    host: &crate::translation_core::Str,
+    port: u16,
+) -> std::io::Result<Vec<SocketAddr>> {
     let policy = NetworkPolicy::from_env();
     let addrs: Vec<SocketAddr> = tokio::net::lookup_host((host, port)).await?.collect();
     policy.filter(host, addrs).map_err(std::io::Error::other)
 }
 
 /// Host names that only ever name a cloud metadata service.
-const METADATA_NAMES: &[&crate::translation_core::Str] = &["metadata.google.internal", "metadata", "instance-data"];
+const METADATA_NAMES: &[&crate::translation_core::Str] =
+    &["metadata.google.internal", "metadata", "instance-data"];
 
 /// A base URL or address refused by the [`NetworkPolicy`].
 #[derive(Debug, Clone, PartialEq, Eq)]

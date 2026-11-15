@@ -1,0 +1,18 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/builtin-derive-bang-footprints.mjs",
+  "phase": "repository",
+  "beforeSha256": "11468b44ba45e314a7cd037b5a28b7bab1c8abf555bf800bceb461407a32cb0c",
+  "afterSha256": "6a56e031a4b6300231e29f3c794e0f6812a97e6ceba7f783190db4bdc03e8a26",
+  "edits": [
+    {
+      "id": "router.struct-ordering.history.builtin-derive-bang-footprints.mjs.0.v1",
+      "before": "    const evidence={schema:'builtin-unit-enum-ordering-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,inputSyntax:input,originalHelperOwners:helpers,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyKind:'Block',recursivelyClosed:true},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['ordering and discriminant runtime behavior and trait validity remain uncompiled','all sibling derive owners and original ancestor scopes require separate closed output proofs','payload/generic/conditional layouts and compiler errors remain refused']};\n",
+      "after": "    const evidence={schema:input.kind==='struct'?'builtin-struct-ordering-bang-output-v1':'builtin-unit-enum-ordering-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,inputSyntax:input,originalHelperOwners:helpers,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyKind:'Block',recursivelyClosed:true},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['ordering and discriminant runtime behavior and trait validity remain uncompiled','all sibling derive owners and original ancestor scopes require separate closed output proofs',input.kind==='struct'?'enum payload/generic/packed/conditional layouts and compiler errors remain refused':'payload/generic/conditional layouts and compiler errors remain refused']};\n"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

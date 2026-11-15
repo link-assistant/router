@@ -24,6 +24,7 @@ const namespaceTemplates=new WeakMap();
 const immutableBootstrap=immutableNamespaceIntrinsicsUnchanged();
 const immutableTemplates=immutableBootstrap?new WeakSet():null,immutableParsers=immutableBootstrap?new WeakSet():null;
 const immutableTargets=immutableBootstrap?new WeakMap():null;
+const immutableScopeShadows=immutableBootstrap?new WeakMap():null;
 let immutableStorageEnabled=immutableBootstrap;
 function sharingEnvironment(){
   if(!immutableStorageEnabled)return false;
@@ -63,6 +64,7 @@ function sourceNamespaceTemplate(scopes){
     for(const owned of ownedScopes.values())for(const namespace of ['type','value','macro'])for(const target of owned.namespaceAliases[namespace].values())immutableTargets.set(target,Object.freeze([...target]));
     for(const candidate of restricted)immutableTargets.set(candidate,Object.freeze(['crate','ml_inaccessible_source_binding',...candidate.path,candidate.binding.name]));
     immutableTemplates.add(template);
+    for(const candidate of scopes)immutableScopeShadows.set(candidate,{template,shadows:ownedScopes.get(candidate.path.join('.')).namespaceShadows});
   }
   if(reusable)namespaceTemplates.set(scopes,template);
   return template;
@@ -81,6 +83,25 @@ function cloneSourceNamespaces(template,path,immutable=false){
   if(sharingEnvironment()&&!closedNamespaceConsumerPath(path))immutableStorageEnabled=false;
   const mask=sourceVisibilityMask(template,path);
   const share=sharingEnvironment()&&immutable&&immutableTemplates.has(template)&&closedNamespaceVisibilityMask(mask,template.restricted.length);
+  if(share){
+    // All inputs here are private native maps and closed frozen data. Keep
+    // every parser's maps independent without constructing discarded arrays
+    // for the outer map and each namespace's complete binding collection.
+    const result={};
+    for(const namespace of ['type','value','macro']){
+      const scopes=new Map();result[namespace]=scopes;
+      for(const [key,owned] of template.ownedScopes){
+        const aliases=new Map(),restrictions=template.restrictionSlots[namespace].get(key);
+        for(const [name,target] of owned.namespaceAliases[namespace]){
+          const indices=restrictions?.get(name);let inaccessible=null;
+          for(const index of indices??[])if(mask[index])inaccessible=template.restricted[index];
+          aliases.set(name,immutableTargets.get(inaccessible??target));
+        }
+        scopes.set(key,aliases);
+      }
+    }
+    return result;
+  }
   return Object.fromEntries(['type','value','macro'].map(namespace=>[namespace,new Map([...template.ownedScopes].map(([key,owned])=>{
     const restrictions=template.restrictionSlots[namespace].get(key);
     const aliases=new Map([...owned.namespaceAliases[namespace]].map(([name,target])=>{
@@ -98,8 +119,28 @@ export function parserSourceScope(scope,scopes=[scope]){
     shadowedBuiltinMacros:new Set(ancestors.flatMap(scope=>scope.bindings.filter(binding=>macroBindingAffects(binding,'bang')).map(binding=>binding.name))),
     unresolvedTypeScope:scope.unresolvedTypeScope,unresolvedMacroScope:ancestors.some(scope=>scope.unresolvedMacroScope),unresolvedBangMacroScope:ancestors.some(scope=>macroScopeUncertain(scope,'bang')),unresolvedAttributeMacroScope:ancestors.some(scope=>macroScopeUncertain(scope,'attribute'))};
 }
+function configuredScopeEvidence(parser,scope,scopes){
+  // The original public setup keeps every collection callback. For explicitly
+  // opted-in consumers, reuse only private shadow-name DATA from the genuine
+  // closed template. The three alias maps built by parserSourceScope would be
+  // discarded here; each parser still receives all complete independent maps
+  // below and fresh mutable shadow sets. A changed host retires this route.
+  if(immutableBootstrap&&sharingEnvironment()&&immutableParsers.has(parser)){
+    const template=namespaceTemplates.get(scopes),record=immutableScopeShadows.get(scope);
+    if(record&&record.template===template&&immutableTemplates.has(template)){
+      const namespaceShadows={};
+      for(const namespace of ['type','value','macro'])namespaceShadows[namespace]=new Set(record.shadows[namespace]);
+      const ancestors=scopes.filter(candidate=>candidate.path.every((name,index)=>scope.path[index]===name));
+      return {compilationProfile:compilationProfile(scope.compilationProfile),shadowedBindings:namespaceShadows.type,namespaceShadows,
+        shadowedPreludeTypes:new Set(scope.bindings.filter(binding=>binding.namespace==='type').map(binding=>binding.name)),
+        shadowedBuiltinMacros:new Set(ancestors.flatMap(scope=>scope.bindings.filter(binding=>macroBindingAffects(binding,'bang')).map(binding=>binding.name))),
+        unresolvedTypeScope:scope.unresolvedTypeScope,unresolvedBangMacroScope:ancestors.some(scope=>macroScopeUncertain(scope,'bang')),unresolvedAttributeMacroScope:ancestors.some(scope=>macroScopeUncertain(scope,'attribute'))};
+    }
+  }
+  return parserSourceScope(scope,scopes);
+}
 export function configureParserSourceScope(parser,scope,scopes=[scope],path=scope.path){
-  const evidence=parserSourceScope(scope,scopes);
+  const evidence=configuredScopeEvidence(parser,scope,scopes);
   const template=sourceNamespaceTemplate(scopes),{bindings}=template;
   parser.compilationProfile=evidence.compilationProfile;
   // Reuse only private visibility decisions for genuine immutable scopes.

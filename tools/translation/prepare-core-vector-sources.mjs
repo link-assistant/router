@@ -248,12 +248,14 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const boundary = (await import('./prepare-primitive-identity-boundary.mjs')).composePrimitiveIdentityBoundary(matched.sources, {root});
     const ascii = (await import('./prepare-core-ascii-sources.mjs')).composeCoreAscii(boundary.sources, {root});
     const reverse = (await import('./prepare-core-ascii-reverse-sources.mjs')).composeCoreAsciiReverse(ascii.sources, {root});
-    const assets = (await import('./prepare-core-ascii-assets.mjs')).composeCoreAsciiAssets(reverse.sources, {root});
-    const base = (await import('./prepare-core-ascii-base-assets.mjs')).composeCoreAsciiBaseAssets(assets.sources, {root});
-    const unit = (await import('./prepare-core-unit-matches.mjs')).composeCoreUnitMatches(base.sources, {root});
+    const assets = (await import('./prepare-current-core-ascii-assets.mjs')).composeCoreAsciiAssets(reverse.sources, {root});
+    const base = (await import('./prepare-current-core-ascii-base-assets.mjs')).composeCoreAsciiBaseAssets(assets.sources, {root});
+    const unit = (await import('./prepare-current-core-unit-unicode.mjs')).composeCurrentCoreUnitMatches(base.sources, {root});
     const retention = (await import('./prepare-owned-core-private-analysis-retention.mjs')).composeOwnedCorePrivateAnalysisRetention(unit.sources, {root});
-    const runtime = (await import('./prepare-owned-runtime-import-edges.mjs')).composeOwnedRuntimeImportEdges(retention.sources, {root});
-    const composition = {sources: runtime.sources, layers: [...lifetime.layers, ...checked.layers, ...preserved.layers, ...matched.layers, ...boundary.layers, ...ascii.layers, ...reverse.layers, ...assets.layers, ...base.layers, ...unit.layers, ...retention.layers, ...runtime.layers]};
+    const runtime = (await import('./prepare-owned-runtime-import-current.mjs')).composeOwnedRuntimeImportEdges(retention.sources, {root});
+    const facades = (await import('./prepare-project-facade-retention.mjs')).composeProjectFacadeRetention(runtime.sources, {root});
+    const residuals = (await import('./prepare-static-result-residual-source.mjs')).composeStaticResultResidualSource(facades.sources, {root});
+    const composition = {sources: residuals.sources, layers: [...lifetime.layers, ...checked.layers, ...preserved.layers, ...matched.layers, ...boundary.layers, ...ascii.layers, ...reverse.layers, ...assets.layers, ...base.layers, ...unit.layers, ...retention.layers, ...runtime.layers, ...facades.layers, ...residuals.layers]};
     const generated = composition.sources;
     const current = Object.fromEntries(Object.keys(generated).map(name => [name, readFileSync(resolve(root, name), 'utf8')]));
     if (args[2] === '--check') {

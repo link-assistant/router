@@ -40,14 +40,14 @@ jobs:
   javascript:
     if: ${{ github.event_name != 'pull_request' || toJSON(github.event.pull_request.draft) == 'false' }}
     name: JavaScript first (same commit)
-    uses: ./.github/workflows/javascript-first.yml
+    uses: ./.github/workflows/javascript-manual-development.yml
     with:
       sha: ${{ github.sha }}
     permissions:
       contents: read
 
   keychain:
-    if: needs.javascript.result == 'success'
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
     needs: [javascript]
     name: Keychain lookups on macOS
     runs-on: macos-26

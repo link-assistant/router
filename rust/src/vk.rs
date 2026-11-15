@@ -104,7 +104,11 @@ impl VkBot {
     }
 
     /// Poll until VK invalidates the server credentials.
-    async fn poll(&self, chat: &Arc<ChatAdmin>, mut server: LongPollServer) -> crate::translation_core::Outcome<(), String> {
+    async fn poll(
+        &self,
+        chat: &Arc<ChatAdmin>,
+        mut server: LongPollServer,
+    ) -> crate::translation_core::Outcome<(), String> {
         loop {
             let body = self
                 .client
@@ -191,7 +195,11 @@ impl VkBot {
         }
     }
 
-    async fn send(&self, peer_id: i64, text: &crate::translation_core::Str) -> crate::translation_core::Outcome<i64, String> {
+    async fn send(
+        &self,
+        peer_id: i64,
+        text: &crate::translation_core::Str,
+    ) -> crate::translation_core::Outcome<i64, String> {
         let body = self
             .api(
                 "messages.send",
@@ -210,7 +218,11 @@ impl VkBot {
 
     /// `messages.delete` with `delete_for_all`, so the secret leaves the user's
     /// history too. Best effort: VK refuses beyond its own time window.
-    async fn delete(&self, peer_id: i64, message_id: i64) -> crate::translation_core::Outcome<(), String> {
+    async fn delete(
+        &self,
+        peer_id: i64,
+        message_id: i64,
+    ) -> crate::translation_core::Outcome<(), String> {
         self.api(
             "messages.delete",
             &[
@@ -223,7 +235,11 @@ impl VkBot {
         .map(|_| ())
     }
 
-    async fn api(&self, method: &crate::translation_core::Str, params: &[(&crate::translation_core::Str, String)]) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
+    async fn api(
+        &self,
+        method: &crate::translation_core::Str,
+        params: &[(&crate::translation_core::Str, String)],
+    ) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
         let mut form: Vec<(&str, String)> = params.to_vec();
         form.push(("access_token", self.token.clone()));
         form.push(("v", API_VERSION.to_string()));

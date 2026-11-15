@@ -1,0 +1,71 @@
+[
+  {
+    "artifact": "ci-logs/issue-784-restart-2/checkpointa598-artifact-13778994745.zip",
+    "member": "complete-LhVHa2/case-deadlines.json",
+    "errors": [
+      "/home/runner/work/router/router/js/node_modules/node-deadline-fixture-s7jw6T/whole.test.mjs:1:30 synchronous overdue: Observed 81.067121ms exceeds unchanged source-declared 10ms timeout"
+    ]
+  },
+  {
+    "artifact": "ci-logs/issue-784-restart-2/checkpointa598-artifact-13778994745.zip",
+    "member": "complete-W9XeFq/case-deadlines.json",
+    "errors": [
+      "/home/runner/work/router/router/js/node_modules/node-deadline-fixture-b50Ehu/whole.test.mjs:1:50 synchronous overdue: Nonliteral computed option may define timeout"
+    ]
+  },
+  {
+    "artifact": "ci-logs/issue-784-restart-2/checkpointa598-artifact-13778994745.zip",
+    "member": "complete-YIrtW5/case-deadlines.json",
+    "errors": [
+      "/home/runner/work/router/router/js/node_modules/node-deadline-fixture-lJfzAy/whole.test.mjs:1:30 synchronous overdue: Prototype-initialized options cannot qualify an absent timeout"
+    ]
+  },
+  {
+    "artifact": "ci-logs/issue-784-restart-2/checkpointa598-artifact-13779314225.zip",
+    "member": "complete-FuQZfF/case-deadlines.json",
+    "errors": [
+      "/home/runner/work/router/router/tools/translation/js-to-rust/test/owned-json-constructors.test.mjs:35:32 new primitive constructor ABI keeps actual scalar validator refusals and complete hostile tapes: Observed 76007.525585ms exceeds unchanged source-declared 60000ms timeout",
+      "/home/runner/work/router/router/tools/translation/js-to-rust/test/runtime-import-parents.test.mjs:17:24 complete original build and actual scoped public build produce identical full artifact maps without sharing a build result: Observed 95222.29548ms exceeds unchanged source-declared 60000ms timeout"
+    ]
+  },
+  {
+    "artifact": "ci-logs/issue-784-restart-2/checkpointa598-artifact-13779868012.zip",
+    "member": "complete-HVWmu3/case-deadlines.json",
+    "errors": [
+      "/home/runner/work/router/router/tools/translation/js-to-rust/test/forward-owned-core-json-reader-definitions.test.mjs:28:24 all eight actual Rust reader definitions independently roundtrip through source CST meta and strict targets: Observed 66201.765832ms exceeds unchanged source-declared 60000ms timeout",
+      "/home/runner/work/router/router/tools/translation/js-to-rust/test/owned-core-base64.test.mjs:19:24 reverse original JS evaluator and strict targets consume complete shared encode and decode vectors: Observed 110152.414507ms exceeds unchanged source-declared 60000ms timeout"
+    ]
+  },
+  {
+    "artifact": "ci-logs/issue-784-restart-2/checkpointa598-artifact-13780974353.zip",
+    "member": "complete-3wZK6N/case-deadlines.json",
+    "errors": [
+      "/home/runner/work/router/router/tools/translation/serialization-schema/serialization-schema.test.mjs:98:1 generation compares the actual projection before offering any native replacement artifact: Observed 355233.211782ms exceeds unchanged source-declared 30000ms timeout",
+      "/home/runner/work/router/router/tools/translation/test/grouped-original-method-producers.test.mjs:164:1 both complete original derive parents retain the unchanged native and typed behavior: Observed 77259.871315ms exceeds unchanged source-declared 60000ms timeout",
+      "/home/runner/work/router/router/tools/translation/test/method-metadata-digest-adoption.test.mjs:31:25 complete original provider and affinity parents retain independent checked and strict behavior: Observed 62671.362892ms exceeds unchanged source-declared 60000ms timeout",
+      "/home/runner/work/router/router/tools/translation/test/private-data-freeze.test.mjs:133:1 complete original builtin outputs private reissue failures and all cryptographic input bytes stay unchanged: Observed 75371.189437ms exceeds unchanged source-declared 60000ms timeout",
+      "/home/runner/work/router/router/tools/translation/test/private-parser-data-current-sources.test.mjs:23:1 complete three-file default proposal retains historical source inputs before and after actual installed adoption: Observed 84971.701931ms exceeds unchanged source-declared 60000ms timeout",
+      "/home/runner/work/router/router/tools/translation/test/private-parser-data-current-sources.test.mjs:27:1 both explicit candidate current wrappers follow the actual executor while retaining their exact original birth equations: Observed 71507.643931ms exceeds unchanged source-declared 60000ms timeout",
+      "/home/runner/work/router/router/tools/translation/test/router-core-matches.test.mjs:33:29 native source producers retain complete historical inputs actual current outputs and every CST inverse: Observed 95737.951609ms exceeds unchanged source-declared 60000ms timeout",
+      "/home/runner/work/router/router/tools/translation/test/static-source-lifecycle.test.mjs:37:1 actual sibling producer is deterministic and complete without changing the legacy archive: Observed 98118.473806ms exceeds unchanged source-declared 60000ms timeout"
+    ]
+  },
+  {
+    "artifact": "ci-logs/issue-784-restart-2/checkpointa598-artifact-13781707059.zip",
+    "member": "complete-zmgXVd/case-deadlines.json",
+    "errors": [
+      "/home/runner/work/router/router/tools/translation/test/derive-bang-context.test.mjs:120:1 complete unchanged original library closes CatalogRecord owners and retains unrelated root gaps: Observed 203731.74653ms exceeds unchanged source-declared 60000ms timeout",
+      "/home/runner/work/router/router/tools/translation/test/owned-option-json-return-flow.test.mjs:27:24 complete original json_string and its complete current parent retain source CST inverses and independent outcomes: Observed 89173.027471ms exceeds unchanged source-declared 60000ms timeout",
+      "/home/runner/work/router/router/tools/translation/test/source-backed-core-sequence-packets.test.mjs:22:24 source workspace lock and complete physical file census changes refuse even with old packets retained: Observed 94015.978515ms exceeds unchanged source-declared 60000ms timeout"
+    ]
+  },
+  {
+    "artifact": "ci-logs/issue-784-restart-2/checkpointa598-artifact-13782595623.zip",
+    "member": "complete-KRwLF2/case-deadlines.json",
+    "errors": [
+      "/home/runner/work/router/router/tools/translation/test/core-literal-text-adoption.test.mjs:53:1 actual complete corpus graph keeps source and owned facade routes before proposing files: Observed 92554.351966ms exceeds unchanged source-declared 60000ms timeout",
+      "/home/runner/work/router/router/tools/translation/test/grouped-method-refusal-ranges.test.mjs:136:1 both complete original derive parents keep checked methods refusals CST and strict typed behavior: Observed 62530.522256ms exceeds unchanged source-declared 60000ms timeout",
+      "/home/runner/work/router/router/tools/translation/test/primitive-identity-boundary.test.mjs:15:1 source boundary complete HostEmitter equation follows actual native methods with complete parent and inverse: Observed 88767.74699ms exceeds unchanged source-declared 60000ms timeout"
+    ]
+  }
+]

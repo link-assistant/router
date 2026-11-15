@@ -291,7 +291,11 @@ fn hex(bytes: &[u8]) -> String {
 
 /// Logical token export avoids copying a concurrently modified mapped store.
 /// Files are individually consistent; this is not a transaction across writers.
-pub(super) fn capture(root: &Path, records: &[TokenRecord], secret: &crate::translation_core::Str) -> io::Result<PathBuf> {
+pub(super) fn capture(
+    root: &Path,
+    records: &[TokenRecord],
+    secret: &crate::translation_core::Str,
+) -> io::Result<PathBuf> {
     let root = root.canonicalize()?;
     private_directory(&root.join(".state-backups"))?;
     let destination = root
@@ -356,7 +360,12 @@ pub(super) fn capture(root: &Path, records: &[TokenRecord], secret: &crate::tran
 
 /// Caller must establish that all writers are stopped. Validate every entry
 /// before writing anything. Additive restore retains existing records/files.
-pub(super) fn restore(root: &Path, snapshot: &Path, secret: &crate::translation_core::Str, replace: bool) -> io::Result<()> {
+pub(super) fn restore(
+    root: &Path,
+    snapshot: &Path,
+    secret: &crate::translation_core::Str,
+    replace: bool,
+) -> io::Result<()> {
     let root = root.canonicalize()?;
     if fs::symlink_metadata(snapshot)?.file_type().is_symlink() {
         return Err(invalid("checkpoint root is a symlink"));

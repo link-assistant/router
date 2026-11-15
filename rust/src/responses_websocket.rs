@@ -145,6 +145,10 @@ async fn session(
             return;
         }
     };
+    crate::geolocation::sanitize(
+        &mut first_event,
+        crate::geolocation::shares_geolocation(&headers),
+    );
     let first_lane = match validate_stream_id(&first_event) {
         Ok(lane) => lane,
         Err(error) => {

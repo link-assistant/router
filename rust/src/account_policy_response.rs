@@ -27,7 +27,11 @@ pub fn rewrite_value(value: &mut Value, upstream: &str, visible: &str) {
     }
 }
 
-pub async fn rewrite(response: Response, upstream: &crate::translation_core::Str, visible: &crate::translation_core::Str) -> Response {
+pub async fn rewrite(
+    response: Response,
+    upstream: &crate::translation_core::Str,
+    visible: &crate::translation_core::Str,
+) -> Response {
     if !response.status().is_success() {
         return response;
     }
@@ -107,7 +111,11 @@ pub async fn rewrite(response: Response, upstream: &crate::translation_core::Str
     Response::from_parts(parts, Body::from_stream(stream))
 }
 
-fn rewrite_block(block: &crate::translation_core::Str, upstream: &crate::translation_core::Str, visible: &crate::translation_core::Str) -> String {
+fn rewrite_block(
+    block: &crate::translation_core::Str,
+    upstream: &crate::translation_core::Str,
+    visible: &crate::translation_core::Str,
+) -> String {
     let data = block
         .lines()
         .filter_map(|line| line.strip_prefix("data:"))

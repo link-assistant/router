@@ -15,7 +15,9 @@ use serde_json::{Value, json};
 const LABEL: &crate::translation_core::Str = "com.link-assistant.router.staging";
 const MARKER: &crate::translation_core::Str = "staging.json";
 
-fn namespace(name: &crate::translation_core::Str) -> crate::translation_core::Outcome<String, String> {
+fn namespace(
+    name: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<String, String> {
     if name.is_empty()
         || name.len() > 40
         || !name
@@ -41,7 +43,12 @@ fn private_file(path: &Path, bytes: &[u8]) -> crate::translation_core::Outcome<(
         .map_err(|error| error.to_string())
 }
 
-fn owned(docker: &Docker, resource: &crate::translation_core::Str, network: bool, owner: &crate::translation_core::Str) -> crate::translation_core::Outcome<bool, String> {
+fn owned(
+    docker: &Docker,
+    resource: &crate::translation_core::Str,
+    network: bool,
+    owner: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<bool, String> {
     let mut args = if network {
         vec!["network".into(), "inspect".into()]
     } else {
@@ -58,7 +65,10 @@ fn owned(docker: &Docker, resource: &crate::translation_core::Str, network: bool
     Ok(labels[LABEL].as_str() == Some(owner))
 }
 
-fn objects(docker: &Docker, owner: &crate::translation_core::Str) -> crate::translation_core::Outcome<Vec<String>, String> {
+fn objects(
+    docker: &Docker,
+    owner: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<Vec<String>, String> {
     Ok(docker
         .output(&[
             "ps".into(),
@@ -87,7 +97,13 @@ fn free_disk(root: &Path) -> crate::translation_core::Outcome<u64, String> {
     free
 }
 
-fn arguments(name: &crate::translation_core::Str, owner: &crate::translation_core::Str, root: &Path, image: &crate::translation_core::Str, port: u16) -> Vec<String> {
+fn arguments(
+    name: &crate::translation_core::Str,
+    owner: &crate::translation_core::Str,
+    root: &Path,
+    image: &crate::translation_core::Str,
+    port: u16,
+) -> Vec<String> {
     vec![
         "run".into(),
         "-d".into(),
@@ -135,7 +151,11 @@ fn arguments(name: &crate::translation_core::Str, owner: &crate::translation_cor
     ]
 }
 
-fn catalog_report(docker: &Docker, name: &crate::translation_core::Str, token: &crate::translation_core::Str) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
+fn catalog_report(
+    docker: &Docker,
+    name: &crate::translation_core::Str,
+    token: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
     // The report exposes only identities and statuses, never credentials,
     // container environment, request bodies, or provider responses.
     let script = r"const out={};for(const path of ['/api/models','/api/services/anthropic/v1/models']){const r=await fetch('http://127.0.0.1:8080'+path,{signal:AbortSignal.timeout(5000),headers:{authorization:'Bearer '+process.env.ROUTER_STAGE_VERIFY_TOKEN,'x-link-assistant-client':'claude-code'}});let j={};try{j=await r.json()}catch{};out[path]={status:r.status,models:(j.data||[]).map(x=>({id:x.id,owned_by:x.owned_by}))}}console.log(JSON.stringify(out))";
@@ -177,7 +197,11 @@ fn serving_health(port: u16) -> &'static crate::translation_core::Str {
     }
 }
 
-fn client_token(docker: &Docker, name: &crate::translation_core::Str, admin: &crate::translation_core::Str) -> crate::translation_core::Outcome<String, String> {
+fn client_token(
+    docker: &Docker,
+    name: &crate::translation_core::Str,
+    admin: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<String, String> {
     let script = r"const r=await fetch('http://127.0.0.1:8080/api/management/tokens/client',{method:'POST',signal:AbortSignal.timeout(5000),headers:{authorization:'Bearer '+process.env.ROUTER_STAGE_ADMIN,'content-type':'application/json'},body:JSON.stringify({client_kind:'claude',ttl_hours:24,label:'staging-claude'})});if(r.status!==200)process.exit(2);const j=await r.json();if(typeof j.token!=='string'||!j.token.startsWith('la_sk_'))process.exit(3);console.log(j.token)";
     docker
         .exec_with_env(

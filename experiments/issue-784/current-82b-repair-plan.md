@@ -1,0 +1,132 @@
+# Current 82b repair plan
+
+Objective: implement and verify every requirement of issue #784 and every CI
+check in [PR #785](https://github.com/link-assistant/router/pull/785). Keep the
+native goal active and the PR draft and unmerged while criteria remain open.
+
+Current continuation (2026-11-11 UTC): the published head remains
+`f93b01795a935317942adfe7d329f636dcd1848b`. Run 42921384009 has finished:
+23 failed, seven cancelled, 20 successful and 25 skipped jobs. All 30
+nonpassing logs and all 42 artifacts have been fully collected and reviewed;
+see the [terminal report](../../docs/case-studies/issue-784/ci-f93-terminal-20261111.md)
+and [current continuation](current-authoring-source-origin-plan.md).
+The historical checklist below retains its original observations; subsequent
+qualification does not turn failed deadlines into successful checks.
+
+- [x] Compose the exact source-origin CST adoption into both complete project
+      source histories, preserving original predecessors, inverses, both CST
+      phases and refusal controls. The three complete focused files pass all
+      12 cases in Node, including the independent deadline audit. Each file
+      also passes in a fresh Bun process. The combined Bun attempt was stopped
+      at the resource reserve and is retained as failed, not qualified.
+- [ ] Verify all four downstream source-composition files and fix every real
+      failure without changing their original deadlines or whole-file scope.
+      All 24 assertions now pass, but the independent deadline audit fails:
+      checked-source 178157.650047 ms, vectors 230848.050785 ms and lifetime
+      composition 217366.904694 ms, each against its original 60000 ms.
+- [x] Draft the source-backed named/unit struct ordering namespace and verify
+      all 15 cases under Node with the independent deadline audit. The seven
+      new cases pass in isolated Bun. Actual SemanticLink Ord/PartialOrd
+      namespace proofs now close; this grants zero executable functions.
+- [x] Complete the original eight-case ordering file under isolated Bun.
+      All eight cases pass; ClientKind takes 37074.53 ms against 60000 ms.
+- [ ] Retain full positive and negative ordering evidence and commit the
+      coherent rule. An initial custody attempt failed before creating an
+      archive because its Rust input path omitted the repository's rust/ prefix.
+      Completed in local commit df6e63a2b; all 147 complete archive members
+      were independently rechecked after correcting the tar-name reviewer.
+- [ ] Verify the default-off scalar OS-lock trace and its failed-sink cleanup
+      regression, regenerate actual native TypeScript, and run strict checks.
+      Earlier traced full Bun tests pass; persistence CI failures are not yet
+      reproduced or claimed fixed by diagnostics.
+- [ ] Preserve current complete draft sources and receipts in reviewable
+      checkpoint commits, then continue the common deadline/raw compiler/
+      generation/parity repairs. Current focused passes do not qualify the
+      complete JavaScript gate, same-SHA CI, Rust, or issue completion.
+
+- [x] Publish the complete reviewed terminal-939 batch at
+      `82bff66b3eaec603e296f1d888fe909dad4743c8`, including the current isolated
+      compiler registration and exhaustive sixteen-bin Node isolation.
+- [x] Preserve all terminal 939 failures, all 26 complete artifacts and the
+      complete nested canonical custody review. Current freshness, independent
+      semantics and parity remain unqualified; no stale outputs are installed.
+- [x] Verify the exact published PR body and draft status. Preserve `Fixes #784`.
+      The new full CI run is 42895668515, initially queued, with two skipped
+      supplemental workflows. Collect its whole terminal cycle before pushing.
+- [x] Retire 63 exact inactive copies only after complete immutable Git readback
+      and fresh published metadata. Reclaim 101094950 logical bytes and retain
+      complete per-file custody and completion receipts. Evidence is 385965908
+      bytes immediately afterward; continue respecting the 500 MB allocation.
+      A subsequent complete readback retired 69 additional inactive copies,
+      reclaiming 40863582 logical bytes. All original archive members and
+      published CI streams remain retained; completed writer logs were kept.
+- [ ] Investigate actual production namespace and immutable-data traversal costs.
+      Preserve source equations, both CST phases, inverses, all observer tapes,
+      original deadlines and bounded failures. Count actual executable gains.
+      The complete-production completed-DATA candidate was rejected after an
+      ABBA comparison: identical whole contexts, 22.894238% slower mean, both
+      original sources restored. Complete negative evidence is retained in
+      `docs/case-studies/issue-784/completed-derive-data-negative.md`.
+      The fresh requested-module comparison was also declined: its complete
+      outputs match, but the variable 3.855% mean reduction qualifies no original
+      deadline. Full evidence is in `requested-module-data-negative.md`.
+      A complete production CPU diagnostic identifies private CST transport as
+      about 14 of 40 seconds. Investigate the existing separate source-origin
+      domain while preserving two builds, full wire reconstruction and original
+      standalone and untrusted-document APIs.
+      The new complete-production candidate-first ABBA measurements retain
+      identical 397-module/419-certificate outputs. Both candidate runs reduce
+      the workload to about 30 seconds. The complete 12-case Node receiving
+      cohort passes unchanged deadlines in Node and Bun. The broader original
+      five-file Node cohort fails: 39 pass, one original complete three-build
+      case exceeds 60 seconds at 251.087 seconds. No deadline is changed; its
+      entire evidence remains separate. The broader Bun repeat is unrun.
+- [ ] Fix every terminal CI failure, including original case/child deadlines,
+      raw private compiler bounds, actual canonical/owned/profile generation,
+      strict parity and whole-source provenance. No deadline or test weakening.
+      The entire 82b cycle is terminal: 20 failed, nine cancelled, 21 successful,
+      25 skipped. All 41 artifacts and every available non-passing log are
+      reviewed. Forward bin 9 has a GitHub 404 BlobNotFound evidence gap; two
+      direct requests and the run/job fallback are retained. The complete
+      failure inventory is `docs/case-studies/issue-784/ci-82b-terminal-20261110.md`.
+      A complete 443-output CPU diagnostic retains exactly 12698398 output
+      bytes. Repeated original runtime guard conjunctions are a measured cost;
+      the new exact two-consumer common-guard source proposal preserves fresh
+      parses/hash sites and original APIs. Its first Node receiving run fails
+      the unchanged 60000 ms history-case limit at 68505.916 ms. Sharing only a
+      fresh TypeScript program's library parse across complete external modules
+      reduces that case to 54067.657 ms; all five cases and the independent
+      deadline audit then pass. The complete build preserves all 443 outputs
+      byte for byte in 92872.410 ms, without establishing a speed gain. Bun
+      fails the original history case at 75044.12 ms against 60000 ms. The
+      common-guard runtime candidate is withdrawn; every complete source,
+      historical equation, CST and inverse is archived. The five original
+      tracked candidate predecessors are retained; generated runtime files
+      and the receiving test are restored exactly. Only fresh source-preparer
+      module-program sharing remains. Its final seven-case Node cohort and
+      independent deadline audit pass; the original history case takes
+      51626.710 ms. The same seven cases pass in Bun, history 54836.44 ms.
+      See `runtime-common-guard-negative.md` for full negative and final evidence.
+- [ ] Pass the mandatory complete local JavaScript gate and same-head CI.
+      The current registration gate at 73b2b85e7 passes all ten lint commands,
+      259 native Node cases, declaration/freshness checks and strict 167-file
+      TypeScript compilation. Bun has three persistence failures; the complete
+      nine-case native TypeScript file fails its unchanged regeneration deadline
+      at 69340.815/60000 ms. The observer stops parity after 104 assertions at
+      2867978240 container bytes, reaping all owned processes. Later commands
+      remain unrun. Full evidence is `current-runtime-binding-full-gate.md`.
+      Trace Bun lock/storage timing and the genuine CSV namespace context before
+      changing behavior. Focused checks cannot qualify completion or admit Rust.
+- [x] Reproduce and install the complete isolated registration at 90446cc9d,
+      including all 1936 full sources, six complete bootstrap substitutions,
+      their predecessors and 493 genuine Git objects. Both original receiving
+      files pass all 16 cases in Node and Bun; the independent Node audit has
+      zero deadline breaches. Full evidence is in
+      `docs/case-studies/issue-784/current-runtime-binding-registration.md`.
+- [ ] Verify the original universal client/account/tool privacy requirements.
+      Known routed request-header consent does not establish those guarantees.
+- [ ] Refresh main and every issue/PR feedback category, review all final source
+      changes, verify clean Git status and mark ready only after all criteria.
+
+No local Rust, additional workers, raised limits or speculative pushes. Run one
+resource-intensive local workload at a time and retain complete failed evidence.

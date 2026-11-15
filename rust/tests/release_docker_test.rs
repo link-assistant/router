@@ -5,6 +5,9 @@
 
 use std::fs;
 
+#[path = "support/repository.rs"]
+mod repository;
+
 /// The runtime has the small fallback runner but no installed vendor package.
 #[test]
 fn dockerfile_keeps_vendor_clis_out_of_the_single_runtime_image() {
@@ -140,7 +143,7 @@ fn release_workflow_publishes_and_verifies_multi_platform_images() {
 /// A Windows checkout may convert these files to CRLF, which would otherwise
 /// break the newline-anchored matching below.
 fn read_lf(path: &str) -> String {
-    fs::read_to_string(path)
+    fs::read_to_string(repository::path(path))
         .unwrap_or_else(|e| panic!("{path} should be readable: {e}"))
         .replace("\r\n", "\n")
 }

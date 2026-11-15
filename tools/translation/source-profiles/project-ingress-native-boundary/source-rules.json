@@ -1,0 +1,23 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/project.mjs",
+  "phase": "repository",
+  "beforeSha256": "8457d6f3009c8bf0f72da70601c65c062a6ba0c6e8c468b5c7a714ca5ca0f6f7",
+  "afterSha256": "7aaa41e1795936c630eadcfc64ccd4c882e713c389b0408f85a63b66edd530fe",
+  "edits": [
+    {
+      "id": "router.project-ingress-native-boundary.1.v1",
+      "before": "import {createRulePipeline} from './rule-pipeline.mjs';",
+      "after": "import {createRulePipeline} from './rule-pipeline.mjs';\nimport {assertPrivateParserExecution} from './private-parser-execution.mjs';"
+    },
+    {
+      "id": "router.project-ingress-native-boundary.2.v1",
+      "before": "    if(typeof source!=='string')throw new TypeError('Forward concrete syntax requires primitive source text');\n    captured.push({file,source});return source;",
+      "after": "    if(typeof source!=='string')throw new TypeError('Forward concrete syntax requires primitive source text');\n    // Preserve the original native refusal before discovery can observe JSON.\n    assertPrivateParserExecution();\n    captured.push({file,source});return source;"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

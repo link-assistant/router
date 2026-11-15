@@ -25,12 +25,16 @@ fn option_outer() -> Option<u8> {
 }
 
 fn selected(values: &[u8]) -> bool {
-    values.iter().copied().map(|value| 255u8 / value).any(|value| {
-        if value == 255u8 {
-            return true;
-        }
-        false
-    })
+    values
+        .iter()
+        .copied()
+        .map(|value| 255u8 / value)
+        .any(|value| {
+            if value == 255u8 {
+                return true;
+            }
+            false
+        })
 }
 
 fn all_small(values: &[u8]) -> bool {

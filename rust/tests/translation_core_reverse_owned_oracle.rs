@@ -29,7 +29,7 @@ mod reverse_generated;
 use link_assistant_router::translation_core::{
     json_copy, json_index_str, json_index_usize, json_map_index, json_with_field,
 };
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 #[test]
 fn copy_does_not_move_or_mutate_a_reusable_input() {
@@ -83,7 +83,6 @@ fn native_json_has_a_larger_domain_than_the_reverse_resource_contract() {
     // The reverse profile counts this array root too (4097 nodes), so its
     // generated guard must refuse it. The native library has no such cap.
 }
-
 
 #[test]
 fn actual_reverse_emission_compiles_and_matches_independent_native_goldens() {

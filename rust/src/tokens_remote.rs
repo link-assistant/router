@@ -145,7 +145,10 @@ pub fn call_for(op: &TokenOp) -> Call {
     }
 }
 
-async fn execute(server: &ResolvedServer, op: &TokenOp) -> crate::translation_core::Outcome<ExitCode, String> {
+async fn execute(
+    server: &ResolvedServer,
+    op: &TokenOp,
+) -> crate::translation_core::Outcome<ExitCode, String> {
     let call = call_for(op);
     let answer = match call.body {
         Some(body) => crate::auth_remote::post(server, call.path, body).await?,
@@ -184,7 +187,10 @@ async fn execute(server: &ResolvedServer, op: &TokenOp) -> crate::translation_co
 /// Exits 2 for an unknown id, as the local path does, so a script's meaning is
 /// the same against either target.
 #[must_use]
-pub fn show_one(records: &[crate::translation_core::Json], id: &crate::translation_core::Str) -> ExitCode {
+pub fn show_one(
+    records: &[crate::translation_core::Json],
+    id: &crate::translation_core::Str,
+) -> ExitCode {
     records
         .iter()
         .find(|record| record.get("id").and_then(serde_json::Value::as_str) == Some(id))

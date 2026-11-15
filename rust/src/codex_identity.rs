@@ -35,7 +35,10 @@ where
     read(name).filter(|value| !value.trim().is_empty())
 }
 
-fn versioned(name: &crate::translation_core::Str, version: crate::translation_core::Maybe<String>) -> String {
+fn versioned(
+    name: &crate::translation_core::Str,
+    version: crate::translation_core::Maybe<String>,
+) -> String {
     sanitized_token(
         &version.map_or_else(|| name.to_string(), |version| format!("{name}/{version}")),
     )
@@ -129,7 +132,12 @@ fn terminal_user_agent() -> String {
     )
 }
 
-fn user_agent_for(os_type: &crate::translation_core::Str, os_version: &crate::translation_core::Str, architecture: &crate::translation_core::Str, terminal: &crate::translation_core::Str) -> String {
+fn user_agent_for(
+    os_type: &crate::translation_core::Str,
+    os_version: &crate::translation_core::Str,
+    architecture: &crate::translation_core::Str,
+    terminal: &crate::translation_core::Str,
+) -> String {
     format!(
         "{ORIGINATOR}/{} ({os_type} {os_version}; {architecture}) {terminal}",
         client_version()
@@ -151,7 +159,9 @@ pub fn user_agent() -> String {
 
 /// Build the default headers attached by Codex's shared HTTP client.
 #[must_use]
-pub fn headers(account_id: crate::translation_core::Maybe<&crate::translation_core::Str>) -> HeaderMap {
+pub fn headers(
+    account_id: crate::translation_core::Maybe<&crate::translation_core::Str>,
+) -> HeaderMap {
     let mut headers = HeaderMap::new();
     if let Ok(value) = HeaderValue::from_str(&user_agent()) {
         headers.insert("user-agent", value);

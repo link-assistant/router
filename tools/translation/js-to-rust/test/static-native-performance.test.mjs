@@ -1,7 +1,10 @@
+import {historicalNativeSources,materializeHistoricalNativeSources} from './historical-native-source.mjs';
 import {adaptHistoricalTypeScriptLayout} from '../../test/fixtures/historical-language-layout.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 import {dirname,resolve} from 'node:path';
@@ -67,7 +70,8 @@ test('copied, proxy, changed source and foreign span issuers cannot provide lexi
 });
 test('every original native module retains complete top/scoped programs and all705 source refusal identities', {timeout:60000},async()=>{
  const old=(await oracle('scoped-helpers')).module,rows=[];let scoped=0,top=0,modules=0,translatedTop=0,translatedScoped=0,full=0,conditional=0,currentTranslatedScoped=0,currentFull=0,currentConditional=0;
- for(const path of sourceModules(sourceRoot).filter(path=>path.startsWith('js/src/'))){const source=readFileSync(resolve(sourceRoot,path),'utf8'),current=analyzeJavaScript(source,{sourcePath:path}),previous=old.discoverScopedHelpers(source,current.items,analyzeJavaScript,path);
+ const historical=historicalNativeSources();
+ for(const path of historical.paths.filter(path=>path.startsWith('js/src/'))){const source=historical.source(path),current=analyzeJavaScript(source,{sourcePath:path}),previous=old.discoverScopedHelpers(source,current.items,analyzeJavaScript,path);
   const gains=new Map([['js/src/client-status.mjs',2581],['js/src/config.mjs',15324],['js/src/github-proxy.mjs',2346],['js/src/provider-manifest.mjs',737],['js/src/tokens.mjs',4090]]);
   assert.equal(current.scopedFunctions.sourceItems,previous.sourceItems);
   for(const fn of previous.program)assert.deepEqual(current.scopedFunctions.program.find(row=>row.name===fn.name),fn,path+':'+fn.name);
@@ -82,10 +86,11 @@ test('every original native module retains complete top/scoped programs and all7
  retain('complete-native-56-source-vectors',{rows,portableCensus:{modules,top,scoped,translatedTop,translatedScoped,full,conditional},currentPortableCensus:{translatedScoped:currentTranslatedScoped,full:currentFull,conditional:currentConditional}});
  assert.equal(rows.length,56);assert.equal(modules,52);assert.equal(rows.filter(row=>!row.portableCensus).length,4);assert.equal(top,788);assert.equal(scoped,705);assert.equal(translatedTop,73);assert.equal(translatedScoped,61);assert.equal(full,52);assert.equal(conditional,9);assert.equal(currentTranslatedScoped,66);assert.equal(currentFull,54);assert.equal(currentConditional,12);
 });
-test('all59 original native TypeScript source trees and full output artifacts match the previous independent producer',{timeout:60000},async()=>{
- const old=(await oracle('native-typescript')).module,ts=loadTypeScript(sourceRoot),rows=[],paths=sourceModules(sourceRoot);assert.equal(paths.length,59);
- for(const path of paths){const source=readFileSync(resolve(sourceRoot,path),'utf8'),previous=old.parseNativeJavaScript(ts,path,source),current=parseNativeJavaScript(ts,path,source);assert.deepEqual(current,previous,path);rows.push({path,sourceSha256:hash(source),metaSha256:hash(JSON.stringify(current)),nodes:current.nodes});}
- const previous=old.buildNativeTypeScript(sourceRoot),current=buildNativeTypeScript(sourceRoot);assert.deepEqual([...current],[...previous]);retain('complete-59-native-typescript-vectors',{rows,previous:[...previous],current:[...current]});
+test('all59 original native TypeScript source trees and full output artifacts match the previous independent producer',{timeout:60000},async t=>{
+ const originalRoot=mkdtempSync(join(tmpdir(),'router-original-native-typescript-'));t.after(()=>rmSync(originalRoot,{recursive:true,force:true}));materializeHistoricalNativeSources(originalRoot,sourceRoot);
+ const old=(await oracle('native-typescript')).module,ts=loadTypeScript(originalRoot),rows=[],paths=sourceModules(originalRoot);assert.equal(paths.length,59);
+ for(const path of paths){const source=readFileSync(resolve(originalRoot,path),'utf8'),previous=old.parseNativeJavaScript(ts,path,source),current=parseNativeJavaScript(ts,path,source);assert.deepEqual(current,previous,path);rows.push({path,sourceSha256:hash(source),metaSha256:hash(JSON.stringify(current)),nodes:current.nodes});}
+ const previous=old.buildNativeTypeScript(originalRoot),current=buildNativeTypeScript(originalRoot);assert.deepEqual([...current],[...previous]);retain('complete-59-native-typescript-vectors',{rows,previous:[...previous],current:[...current]});
 });
 test('leaf source positions retain raw strings comments Unicode trivia and original ASI semantics',async()=>{
  const old=(await oracle('native-typescript')).module,ts=loadTypeScript(sourceRoot),vectors=[];

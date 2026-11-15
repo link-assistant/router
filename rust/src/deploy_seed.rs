@@ -47,7 +47,9 @@ impl SeedProvider {
     /// # Errors
     ///
     /// Names the accepted spellings for anything else.
-    pub fn parse(value: &crate::translation_core::Str) -> crate::translation_core::Outcome<Self, String> {
+    pub fn parse(
+        value: &crate::translation_core::Str,
+    ) -> crate::translation_core::Outcome<Self, String> {
         match value.trim().to_ascii_lowercase().as_str() {
             "claude" | "anthropic" => Ok(Self::Claude),
             "codex" | "chatgpt" | "openai" => Ok(Self::Codex),
@@ -81,7 +83,9 @@ impl SeedProvider {
 /// # Errors
 ///
 /// Reports the first unknown provider.
-pub fn parse_providers(names: &[String]) -> crate::translation_core::Outcome<Vec<SeedProvider>, String> {
+pub fn parse_providers(
+    names: &[String],
+) -> crate::translation_core::Outcome<Vec<SeedProvider>, String> {
     let mut providers = Vec::new();
     for name in names {
         let provider = SeedProvider::parse(name)?;
@@ -118,7 +122,9 @@ impl fmt::Debug for Seed {
 }
 
 /// The handover recorded in a document, if any: `(server, fingerprint, state)`.
-fn handover_of(value: &crate::translation_core::Json) -> crate::translation_core::Maybe<(String, String, String)> {
+fn handover_of(
+    value: &crate::translation_core::Json,
+) -> crate::translation_core::Maybe<(String, String, String)> {
     let record = value.pointer(&format!("/{METADATA_KEY}/{HANDOVER_KEY}"))?;
     let field = |name: &str| {
         record
@@ -135,7 +141,11 @@ fn handover_of(value: &crate::translation_core::Json) -> crate::translation_core
 /// Keyed by the refresh token when the document has one (it *is* the chain),
 /// otherwise by the access token.
 #[must_use]
-pub fn fingerprint(token_secret: &crate::translation_core::Str, provider: SeedProvider, chain: &crate::translation_core::Str) -> String {
+pub fn fingerprint(
+    token_secret: &crate::translation_core::Str,
+    provider: SeedProvider,
+    chain: &crate::translation_core::Str,
+) -> String {
     crate::deploy_config::value_fingerprint(
         token_secret,
         &format!("seed-credential\0{}\0{chain}", provider.as_str()),
@@ -212,7 +222,12 @@ pub fn prepare(
 }
 
 /// The document with a handover record for `server` in `state`.
-fn marked(original: &crate::translation_core::Str, seed: &Seed, server: &crate::translation_core::Str, state: &crate::translation_core::Str) -> crate::translation_core::Outcome<String, String> {
+fn marked(
+    original: &crate::translation_core::Str,
+    seed: &Seed,
+    server: &crate::translation_core::Str,
+    state: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<String, String> {
     let mut value: Value = serde_json::from_str(original)
         .map_err(|_| "the credential document is not JSON".to_string())?;
     let object = value
@@ -241,7 +256,10 @@ fn marked(original: &crate::translation_core::Str, seed: &Seed, server: &crate::
 }
 
 /// Replace `path` atomically, keeping it private to this user.
-fn replace(path: &Path, text: &crate::translation_core::Str) -> crate::translation_core::Outcome<(), String> {
+fn replace(
+    path: &Path,
+    text: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<(), String> {
     use std::io::Write as _;
     let directory = path.parent().unwrap_or_else(|| Path::new("."));
     let mut file = tempfile::Builder::new()
@@ -262,7 +280,10 @@ impl Seed {
     /// # Errors
     ///
     /// The source could not be rewritten; nothing was sent.
-    pub fn mark_pending(&self, server: &crate::translation_core::Str) -> crate::translation_core::Outcome<(), String> {
+    pub fn mark_pending(
+        &self,
+        server: &crate::translation_core::Str,
+    ) -> crate::translation_core::Outcome<(), String> {
         replace(
             &self.path,
             &marked(&self.original, self, server, "pending")?,
@@ -277,7 +298,11 @@ impl Seed {
     /// # Errors
     ///
     /// The source could not be rewritten.
-    pub fn settle(&self, server: &crate::translation_core::Str, action: crate::translation_core::Maybe<&crate::translation_core::Str>) -> crate::translation_core::Outcome<&'static crate::translation_core::Str, String> {
+    pub fn settle(
+        &self,
+        server: &crate::translation_core::Str,
+        action: crate::translation_core::Maybe<&crate::translation_core::Str>,
+    ) -> crate::translation_core::Outcome<&'static crate::translation_core::Str, String> {
         match action {
             Some("imported" | "already-seeded") => {
                 replace(

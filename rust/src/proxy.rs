@@ -14,7 +14,6 @@
 #![allow(clippy::unused_async)]
 
 mod upstream_headers;
-#[cfg(test)]
 pub(crate) use upstream_headers::INGRESS_NETWORK_HEADERS;
 pub use upstream_headers::MAX_PROXY_REQUEST_BYTES;
 pub(crate) use upstream_headers::build_upstream_headers;

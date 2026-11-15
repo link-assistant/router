@@ -86,6 +86,21 @@ mod tests {
     }
 
     #[test]
+    fn only_fragments_surviving_a_release_are_stale() {
+        let released = vec!["old.md".to_string(), "kept.md".to_string()];
+        let pending = vec!["kept.md".to_string(), "new.md".to_string()];
+        assert_eq!(stale_fragments(&pending, &released), vec!["kept.md".to_string()]);
+        assert!(stale_fragments(&pending, &[]).is_empty());
+    }
+
+    #[test]
+    fn readme_is_not_a_pending_fragment() {
+        assert!(is_pending_fragment_name("20261113_220000_fix.md"));
+        assert!(!is_pending_fragment_name("README.md"));
+        assert!(!is_pending_fragment_name("notes.txt"));
+    }
+
+    #[test]
     fn evidence_and_documentation_do_not_require_a_fragment() {
         for path in [
             "README.md",
@@ -118,7 +133,52 @@ fn is_changelog_fragment(file_path: &str) -> bool {
 /// Generous on purpose. This catches a broken pipeline, not a busy week.
 const MAX_PENDING_FRAGMENTS: usize = 40;
 
-/// Fail when fragments have accumulated past what one release should hold.
+fn is_pending_fragment_name(name: &str) -> bool {
+    name.ends_with(".md") && name != "README.md"
+}
+
+/// Fragments that were already pending at the latest release and are still
+/// pending now. A working release removes everything it collected, so any
+/// survivor is exactly the issue #337 defect.
+fn stale_fragments(pending: &[String], released: &[String]) -> Vec<String> {
+    pending
+        .iter()
+        .filter(|name| released.iter().any(|old| old == *name))
+        .cloned()
+        .collect()
+}
+
+/// The newest release tag reachable from HEAD, if the checkout has tags.
+fn latest_release_tag() -> Option<String> {
+    let tag = exec(
+        "git",
+        &["describe", "--tags", "--abbrev=0", "--match", "v[0-9]*", "HEAD"],
+    );
+    (!tag.is_empty()).then_some(tag)
+}
+
+/// Fragment file names committed at `tag`.
+fn fragments_at(tag: &str) -> Vec<String> {
+    exec(
+        "git",
+        &["ls-tree", "--name-only", &format!("{tag}:changelog.d")],
+    )
+    .lines()
+    .filter(|name| is_pending_fragment_name(name))
+    .map(String::from)
+    .collect()
+}
+
+/// Fail when a release left fragments behind, or when fragments accumulated
+/// past what one release should hold and that cannot be explained.
+///
+/// A growing count alone has two causes: a release that does not remove what
+/// it collected (issue #337), or releases that have not run because the
+/// default branch is red. Only the first is a pipeline defect this check can
+/// fix; the second resolves itself on the next release. When the latest
+/// release tag is available the check distinguishes them precisely; without
+/// it (for example a shallow checkout) the plain count limit still applies so
+/// the guard never passes vacuously.
 fn check_pending_fragments() {
     let directory = std::path::Path::new("changelog.d");
     let Ok(entries) = std::fs::read_dir(directory) else {
@@ -133,26 +193,46 @@ fn check_pending_fragments() {
         );
         exit(1);
     };
-    let pending = entries
+    let mut pending: Vec<String> = entries
         .filter_map(Result::ok)
-        .filter(|entry| {
-            let path = entry.path();
-            path.extension().is_some_and(|extension| extension == "md")
-                && path.file_name().is_some_and(|name| name != "README.md")
-        })
-        .count();
-    if pending > MAX_PENDING_FRAGMENTS {
+        .filter_map(|entry| entry.file_name().to_str().map(String::from))
+        .filter(|name| is_pending_fragment_name(name))
+        .collect();
+    pending.sort();
+    let count = pending.len();
+    println!("Pending changelog fragments: {count}");
+    if count <= MAX_PENDING_FRAGMENTS {
+        return;
+    }
+    let Some(tag) = latest_release_tag() else {
         eprintln!(
-            "changelog.d/ holds {pending} fragments, more than the {MAX_PENDING_FRAGMENTS} a \
-             release should ever collect at once."
+            "changelog.d/ holds {count} fragments, more than the {MAX_PENDING_FRAGMENTS} a \
+             release should ever collect at once, and no release tag is reachable to tell a \
+             blocked release from one that does not remove its fragments."
         );
+        exit(1);
+    };
+    let stale = stale_fragments(&pending, &fragments_at(&tag));
+    if !stale.is_empty() {
+        eprintln!(
+            "{} fragments were already pending at release {tag} and were not removed:",
+            stale.len()
+        );
+        for name in &stale {
+            eprintln!("  changelog.d/{name}");
+        }
         eprintln!(
             "A release collects every pending fragment into one section, so this means a \
              release is not removing them and every version is republishing the archive."
         );
         exit(1);
     }
-    println!("Pending changelog fragments: {pending}");
+    println!(
+        "::warning::changelog.d/ holds {count} fragments, more than the \
+         {MAX_PENDING_FRAGMENTS} one release should collect. All were added after {tag}, so \
+         releases are blocked rather than failing to remove fragments; the next release \
+         collects them all."
+    );
 }
 
 fn main() {

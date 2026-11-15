@@ -74,6 +74,7 @@ const scopedSourcePins={"tools/translation/builtin-debug-ast-route.mjs":{"before
 for(const path of PROOF_JSON_FORMAT_PATHS){Object.freeze(scopedSourcePins[path].before);Object.freeze(scopedSourcePins[path].after);Object.freeze(scopedSourcePins[path]);}
 export const SCOPED_PROOF_JSON_FORMAT_SOURCE_PINS=Object.freeze(scopedSourcePins);
 export function statelessProofConsumerSource(source,retain=()=>{}){
+ source=restoreCurrentNegativeBudgetProofConsumerSource(source,retain);
  source=restoreNegativeBudgetProofConsumerSource(source,retain);
  source=restoreEnclosingNamespaceSource(source,retain);
  if(typeof source!=='string')fail('complete source text required');
@@ -163,6 +164,7 @@ export function restoreEnclosingNamespaceSource(source,retain=()=>{}){
 // Additive receiving history for the later owned-binding import adoption.
 // The original enclosing history API and its exact frozen rules stay unchanged.
 export function restoreCurrentEnclosingNamespaceSource(source,retain=()=>{}){
+ if(typeof source==='string'&&source.includes('export function proveBuiltinCloneEnclosingNamespace('))source=restoreReceivingSourceHistory(source,'clone-enclosing-extension',retain);
  if(typeof source==='string'&&source.includes('export function coreAdoptionProducerClosedAttributeSpans('))source=restoreReceivingSourceHistory(source,'core-attribute-extension',retain);
  if(typeof source!=='string')fail('complete current enclosing source text required');
  const before="import {resolveEnclosingNamespaceModuleBindings} from './module-bindings.mjs';",after="import {resolveOwnedEnclosingNamespaceModuleBindings as resolveEnclosingNamespaceModuleBindings} from './owned-enclosing-module-bindings.mjs';";
@@ -197,5 +199,18 @@ export function restoreNegativeBudgetProofConsumerSource(source,retain=()=>{}){
  const replay=exact(exact(restored,row.before,row.after,'replay-negative-budget-import'),row.factoryBefore,row.factoryAfter,'replay-negative-budget-factory');
  if(replay!==source)fail('whole negative-budget consumer inverse differs');
  retain('complete-negative-budget-consumer-history',{actualSource:source,historicalSource:restored,replayedSource:replay,rules:row,sourceAuthority:false,semanticAuthority:false});
+ return restored;
+}
+
+// The later operation-byte bridge keeps its complete original default call.
+export function restoreCurrentNegativeBudgetProofConsumerSource(source,retain=()=>{}){
+ if(typeof source!=='string')fail('complete current negative-budget consumer source required');
+ const row={"before":"import {createScopedPrivateNativeProofJsonSerializer as createPrivateFrozenJsonComposer} from \"./operation-proof-byte-bridge.mjs\";","after":"import {createScopedPrivateNativeProofJsonSerializer as createPrivateFrozenJsonComposer} from \"./operation-proof-byte-bridge.mjs\";\nimport {createNegativeBudgetPrivateProofJsonSerializer} from './private-negative-budget-proof-json.mjs';","factoryBefore":"const composeJson=createPrivateFrozenJsonComposer();","factoryAfter":"const composeJson=createNegativeBudgetPrivateProofJsonSerializer(createPrivateFrozenJsonComposer());"};
+ if(!source.includes(row.after))return restoreNegativeBudgetProofConsumerSource(source,retain);
+ const unwrapped=exact(source,row.factoryAfter,row.factoryBefore,'restore-current-negative-budget-factory');
+ const restored=exact(unwrapped,row.after,row.before,'restore-current-negative-budget-import');
+ const replay=exact(exact(restored,row.before,row.after,'replay-current-negative-budget-import'),row.factoryBefore,row.factoryAfter,'replay-current-negative-budget-factory');
+ if(replay!==source)fail('whole current negative-budget consumer inverse differs');
+ retain('complete-current-negative-budget-consumer-history',{actualSource:source,historicalSource:restored,replayedSource:replay,rules:row,sourceAuthority:false,semanticAuthority:false});
  return restored;
 }

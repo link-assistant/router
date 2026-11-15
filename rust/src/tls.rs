@@ -143,7 +143,10 @@ pub fn generated_paths(data_dir: &Path) -> (PathBuf, PathBuf) {
 /// # Errors
 ///
 /// Returns a message when the certificate cannot be generated or written.
-pub fn ensure_generated(data_dir: &Path, names: &[String]) -> crate::translation_core::Outcome<(PathBuf, PathBuf), String> {
+pub fn ensure_generated(
+    data_dir: &Path,
+    names: &[String],
+) -> crate::translation_core::Outcome<(PathBuf, PathBuf), String> {
     let (cert_path, key_path) = generated_paths(data_dir);
     if cert_path.is_file() && key_path.is_file() {
         return Ok((cert_path, key_path));
@@ -172,7 +175,9 @@ pub fn ensure_generated(data_dir: &Path, names: &[String]) -> crate::translation
 /// # Errors
 ///
 /// Returns a message when no certificate has been generated yet.
-pub fn read_generated_certificate(data_dir: &Path) -> crate::translation_core::Outcome<String, String> {
+pub fn read_generated_certificate(
+    data_dir: &Path,
+) -> crate::translation_core::Outcome<String, String> {
     let (cert_path, _) = generated_paths(data_dir);
     std::fs::read_to_string(&cert_path).map_err(|error| {
         format!(

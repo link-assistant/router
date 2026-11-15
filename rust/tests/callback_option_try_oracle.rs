@@ -3,6 +3,16 @@
 //! CI-only and unrun locally. These cases specify Rust behavior; they do not
 //! certify a translator's Try/FromResidual ownership or continuation lowering.
 
+// Each `?` case is compared with its hand-expanded `match`/`if let` form, and
+// the callbacks keep their Option signatures, so these shapes stay as written.
+#![allow(
+    clippy::iter_on_single_items,
+    clippy::manual_let_else,
+    clippy::option_if_let_else,
+    clippy::question_mark,
+    clippy::unnecessary_wraps
+)]
+
 use std::cell::RefCell;
 use std::rc::Rc;
 

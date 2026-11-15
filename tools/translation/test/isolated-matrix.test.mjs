@@ -1,6 +1,7 @@
 import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,readdirSync,existsSync,rmSync,symlinkSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -74,9 +75,47 @@ test('a later worker symlink failure preserves all original outputs and external
 test('copied corpus and matrix handles and public staged plan fields grant no private planner authority',{timeout:30000},t=>{
  const directory=fixture(t),selection=matrix(),corpus=captureSourceCorpus({root:directory,paths}),options={root:directory,matrix:selection,corpus,paths,entries:['src/lib.rs'],plannerModule:'bulk.mjs'};
  assert.throws(()=>createIsolatedMatrixSession({...options,matrix:structuredClone(selection)}),/original explicit compilation matrix/);assert.throws(()=>createIsolatedMatrixSession({...options,corpus:structuredClone(corpus)}),/unsealed/);noTemporary(directory);
- const session=createIsolatedMatrixSession(options);try{assert.throws(()=>session.validate({schema:'checked-bulk-output-plan-v1',outputs:[],manifest:{runtimeParity:true}}),/unissued/);assert.throws(()=>session.applyAll([]),/complete selected profile set/);assert.throws(()=>session.applyAll([{}, {}, {}]),/unissued/);assert.throws(()=>validateRegenerationPlan({schema:'checked-bulk-output-plan-v1',outputs:[]}),/Unsealed/);}finally{session.close();}noTemporary(directory);
+ const session=createIsolatedMatrixSession(options);try{assert.throws(()=>session.validate({schema:'checked-bulk-output-plan-v1',outputs:[],manifest:{runtimeParity:true}}),/unissued/);assert.throws(()=>session.retainComputedIndices([]),/complete original application required/);assert.throws(()=>session.applyAll([]),/complete selected profile set/);assert.throws(()=>session.applyAll([{}, {}, {}]),/unissued/);assert.throws(()=>validateRegenerationPlan({schema:'checked-bulk-output-plan-v1',outputs:[]}),/Unsealed/);}finally{session.close();}noTemporary(directory);
 });
 
 test('every complete process-lifetime copy reproduces its original source and CST inverse',{timeout:30000},()=>{
  const proposal=deriveIsolatedMatrixSources(root);assert.equal(proposal.files.length,5);for(const row of proposal.files){assert.equal(readFileSync(join(root,repositorySourcePath(row.path,root)),'utf8'),row.text);assert.equal(row.inverse,row.source);assert.ok(row.beforeMeta);assert.ok(row.afterMeta);assert.equal(row.semanticAuthority,false);}retain('06-complete-source-derivation',proposal);
+});
+
+test('optional complete draft custody retains freshness failures and never updates checked outputs',{timeout:90000},t=>{
+ const directory=fixture(t),previous=process.env.ROUTER_MATRIX_DRAFT_DIRECTORY;
+ process.env.ROUTER_MATRIX_DRAFT_DIRECTORY='js/node_modules/.matrix-drafts';
+ try{
+  const before=vector(directory),result=isolate({root:directory,matrix:matrix(),sources:paths,check:true});
+  assert.ok(result.failures.some(row=>row.startsWith('missing: ')));assert.deepEqual(vector(directory),before);noTemporary(directory);
+  const base=join(directory,process.env.ROUTER_MATRIX_DRAFT_DIRECTORY),attempts=readdirSync(base);assert.equal(attempts.length,1);
+  const attempt=join(base,attempts[0]),record=JSON.parse(readFileSync(join(attempt,'manifest.json')));
+  assert.equal(record.plans.length,3);assert.equal(record.semanticAuthority,false);assert.equal(record.runtimeParity,false);
+  assert.equal(record.members.length,record.plans.reduce((count,plan)=>count+plan.outputs.length,0));
+  assert.equal(record.schema,'unqualified-isolated-matrix-draft-v2');assert.equal(record.indices.length,1);
+  const index=record.indices[0];
+  assert.equal(index.path,'profiles/matrix-'+result.manifest.matrixSha256+'.json');
+  assert.deepEqual(JSON.parse(gunzipSync(readFileSync(join(attempt,index.storedAs)))),result.manifest);
+  for(const row of record.members){const bytes=gunzipSync(readFileSync(join(attempt,row.storedAs)));assert.equal(bytes.length,row.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),row.sha256);}
+ }finally{if(previous===undefined)delete process.env.ROUTER_MATRIX_DRAFT_DIRECTORY;else process.env.ROUTER_MATRIX_DRAFT_DIRECTORY=previous;}
+});
+test('owned custody preserves both actual computed indices against independent original producer bytes',{timeout:90000},async t=>{
+ const directory=fixture(t,true),selection=matrix(),options={root:directory,matrix:selection,sources:paths};
+ const original=await import('../owned-definitions-matrix-bulk.mjs'),current=await import('../isolated-owned-definitions-matrix-bulk.mjs');
+ original.regenerateCompilationMatrix(options);
+ const names=['profiles/matrix-'+selection.sha256+'.json','profiles/owned-definitions-matrix-'+selection.sha256+'.json'];
+ const expected=names.map(path=>({path,bytes:readFileSync(join(directory,path))}));
+ for(const row of expected)rmSync(join(directory,row.path));
+ const before=vector(directory),previous=process.env.ROUTER_MATRIX_DRAFT_DIRECTORY;
+ process.env.ROUTER_MATRIX_DRAFT_DIRECTORY='js/node_modules/.matrix-drafts';
+ try{
+  const result=current.regenerateCompilationMatrix({...options,check:true});
+  for(const row of expected)assert.ok(result.failures.includes('missing: '+row.path));
+  assert.deepEqual(vector(directory),before);noTemporary(directory);
+  const base=join(directory,process.env.ROUTER_MATRIX_DRAFT_DIRECTORY),attempts=readdirSync(base);assert.equal(attempts.length,1);
+  const attempt=join(base,attempts[0]),record=JSON.parse(readFileSync(join(attempt,'manifest.json')));
+  assert.equal(record.schema,'unqualified-isolated-matrix-draft-v2');assert.deepEqual(record.indices.map(row=>row.path),names);
+  for(const [at,row]of record.indices.entries())assert.deepEqual(gunzipSync(readFileSync(join(attempt,row.storedAs))),expected[at].bytes);
+  assert.equal(record.completeIndexBytes,expected.reduce((n,row)=>n+row.bytes.length,0));
+ }finally{if(previous===undefined)delete process.env.ROUTER_MATRIX_DRAFT_DIRECTORY;else process.env.ROUTER_MATRIX_DRAFT_DIRECTORY=previous;}
 });

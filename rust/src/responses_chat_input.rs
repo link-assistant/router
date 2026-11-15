@@ -581,7 +581,7 @@ mod tests {
 
 #[cfg(test)]
 mod nonempty_core_projection_goldens {
-    use super::{nonempty_string, Value};
+    use super::{Value, nonempty_string};
 
     #[test]
     fn complete_json_field_nonempty_edges_keep_the_borrowed_input() {

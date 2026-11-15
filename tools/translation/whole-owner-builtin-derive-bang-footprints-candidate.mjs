@@ -162,7 +162,7 @@ export function proveBuiltinDeriveBangFootprint({context,certificate,invocation}
       if(attribute.position!=='container'&&attribute.name!=='doc'){const proof=deriveFootprintHelperAttributeAt(context,state.original.module,item,attribute.span);if(!isDeriveFootprintHelperAttributeProof(proof))throw new TypeError('Original ordering nested attribute requires its genuine active helper owner');helpers.push(proof);}
     }
     const route=liftBuiltinOrderingAstRoute({...state,original:state.original,input}),attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline','doc',state.original.name,...certificate.attributes.map(attribute=>attribute.name)]));
-    const evidence={schema:'builtin-unit-enum-ordering-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,inputSyntax:input,originalHelperOwners:helpers,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyKind:'Block',recursivelyClosed:true},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['ordering and discriminant runtime behavior and trait validity remain uncompiled','all sibling derive owners and original ancestor scopes require separate closed output proofs','payload/generic/conditional layouts and compiler errors remain refused']};
+    const evidence={schema:input.kind==='struct'?'builtin-struct-ordering-bang-output-v1':'builtin-unit-enum-ordering-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,inputSyntax:input,originalHelperOwners:helpers,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyKind:'Block',recursivelyClosed:true},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['ordering and discriminant runtime behavior and trait validity remain uncompiled','all sibling derive owners and original ancestor scopes require separate closed output proofs',input.kind==='struct'?'enum payload/generic/packed/conditional layouts and compiler errors remain refused':'payload/generic/conditional layouts and compiler errors remain refused']};
     const proof=freezeCompleted({...evidence,digest:hash(composeJson(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
   }
   if(state.original.name==='Hash')return proveHashDataOutput(state,plan,context,certificate,invocation);
@@ -348,5 +348,98 @@ export function reissueBuiltinDebugEnclosingNamespace(token,context,certificate,
  const prior=builtinDebugEnclosingState(token,context,certificate,invocation),fresh=proveBuiltinDebugEnclosingNamespace({context,certificate,invocation});
  if(!fresh)throw new TypeError('Builtin enclosing domain no longer closes');
  const current=builtinDebugEnclosingState(fresh,context,certificate,invocation);
+ if(current.facts.wire!==prior.facts.wire)throw new TypeError('Builtin enclosing complete model changed');return current.facts;
+}
+
+// Separate private Clone namespace issuer; the complete Debug source stays above.
+import {compileBuiltinCloneEnclosingNamespaceModel} from './builtin-clone-ast-route.mjs';
+let cloneEnclosingIssued=null;
+function snapshotBuiltinCloneEnclosingInvocation(value){
+ if(!value||typeof value!=='object'||enclosingProxyOperation.isProxy(value)||Object.getPrototypeOf(value)!==Object.prototype)return null;
+ const names=Reflect.ownKeys(value);if(names.length!==2||!names.includes('path')||!names.includes('attributeSpan'))return null;
+ const path=Object.getOwnPropertyDescriptor(value,'path'),span=Object.getOwnPropertyDescriptor(value,'attributeSpan');
+ if(!path||!span||!Object.hasOwn(path,'value')||!Object.hasOwn(span,'value'))return null;
+ const p=path.value,q=span.value;
+ if(!p||enclosingProxyOperation.isProxy(p)||!Array.isArray(p)||Object.getPrototypeOf(p)!==Array.prototype)return null;
+ const pathNames=Reflect.ownKeys(p);if(pathNames.length!==2||pathNames[0]!=='0'||pathNames[1]!=='length')return null;
+ const first=Object.getOwnPropertyDescriptor(p,'0'),length=Object.getOwnPropertyDescriptor(p,'length');
+ if(!first||!length||!Object.hasOwn(first,'value')||!Object.hasOwn(length,'value')||length.value!==1||first.value!=='Clone')return null;
+ if(!q||typeof q!=='object'||enclosingProxyOperation.isProxy(q)||Object.getPrototypeOf(q)!==Object.prototype)return null;
+ const fields=Reflect.ownKeys(q);if(fields.length!==2||!fields.includes('start')||!fields.includes('end'))return null;
+ const start=Object.getOwnPropertyDescriptor(q,'start'),end=Object.getOwnPropertyDescriptor(q,'end');
+ if(!start||!end||!Object.hasOwn(start,'value')||!Object.hasOwn(end,'value'))return null;
+ for(const n of [start.value,end.value])if(typeof n!=='number'||n<0||n>9007199254740991||n%1!==0)return null;
+ if(end.value<start.value)return null;
+ return {path:['Clone'],attributeSpan:{start:start.value,end:end.value}};
+}
+function finalCloneEnclosingInput(module,source,invocation,selected){
+ if(enclosingProxyOperation.isProxy(module))return false;
+ const field=Object.getOwnPropertyDescriptor(module,'source'),now=snapshotBuiltinCloneEnclosingInvocation(invocation);
+ return !!field&&Object.hasOwn(field,'value')&&field.value===source&&!!now&&sameEnclosingInvocation(now,selected);
+}
+
+function cloneEnclosingDataInput(state,context,certificate){
+  const input=builtinPayloadDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[];
+  for(const attribute of input.attributes){
+    if(attribute.name==='doc'&&attribute.sourceFeature==='original-line-doc-comment'){
+      const declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
+      if(!declaration?.tokens.some(token=>token.type==='comment'&&token.text.startsWith('///')&&token.start+certificate.span.start===attribute.span.start&&token.end+certificate.span.start===attribute.span.end&&token.text===attribute.source))throw new TypeError('Original Clone doc comment differs from the private source invocation');
+      continue;
+    }
+    const actual=certificate.attributes.find(row=>row.name===attribute.name&&row.position===attribute.position&&row.span.start===attribute.span.start&&row.span.end===attribute.span.end);if(!actual)throw new TypeError('Original Clone attribute differs from the private source invocation');
+    if(attribute.position!=='container'&&attribute.name!=='doc'){
+      const proof=deriveFootprintHelperAttributeAt(context,state.original.module,item,attribute.span);if(!isDeriveFootprintHelperAttributeProof(proof))throw new TypeError('Original Clone nested attribute requires its genuine active helper owner');helpers.push(proof);
+    }
+  }
+  return {input,helpers};
+}
+
+export function proveBuiltinCloneEnclosingNamespace({context,certificate,invocation}={}){
+ const original=originalInput(context,certificate,invocation);
+ if(original.name!=='Clone'||!enclosingReady())return null;
+ const selectedInvocation=snapshotBuiltinCloneEnclosingInvocation(invocation);if(!selectedInvocation)return null;
+ const sourceBefore=original.module.source,route=routes.get(original.name),profile=builtinDeriveAstSourceProfile(original.dependencies),entry=originalAstFunction(profile,directory+route.path,route.entry),registry=builtinAstOriginal(profile,'compiler/rustc_builtin_macros/src/lib.rs');
+ const registered='Clone: clone::'+route.entry,registrationStart=registry.source.indexOf(registered);
+ if(registrationStart<0||registry.source.indexOf(registered,registrationStart+1)>=0)throw new TypeError('Builtin enclosing Clone registry owner is not unique');
+ const selected=cloneEnclosingDataInput({original},context,certificate),grammar=compileBuiltinCloneEnclosingNamespaceModel({profile,entry,original,certificate,input:selected.input});
+ if(grammar===null)return null;
+ const attributes=attributeOwners(original,certificate,new Set(['automatically_derived','inline','doc','coverage','Clone',...certificate.attributes.map(attribute=>attribute.name)])),resolver=requireOriginalImplNamespaceSourcePlan(originalImplNamespaceSourcePlan());
+ const model={schema:'original-clone-enclosing-namespace-model-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:original.dependencies.digest,compilationProfile:certificate.compilationProfile,
+  owner:{target:['core','Clone'],invocation:selectedInvocation,registration:{source:registry.path,sourceSha256:registry.sha256,span:{start:registrationStart,end:registrationStart+registered.length}}},profileDigest:profile.digest,
+  grammar,originalHelperOwners:selected.helpers,attributeOwners:attributes,
+  resolverSources:Object.values(resolver.selections).map(row=>({path:row.path,sourceSha256:row.sourceSha256,span:row.span})),
+  enclosingTypeBindings:[],enclosingUsableValueBindings:[],enclosingMacroNames:[],methodBehavior:'opaque-untranslated',generatedImplBehavior:false,namespaceAuthority:false,runtimeAuthority:false};
+ // All candidate aliases are detached through a qualified native parse before
+ // freezing. The bounded canonical wire is DATA, not the source/owner premise.
+ const parseSelection=enclosingParseSelection();if(!parseSelection)return null;
+ const wire=JSON.stringify(model);
+ if(typeof wire!=='string'||wire.length>8388608)throw new TypeError('Builtin enclosing model wire budget exceeded');
+ const reparsed=freezeEnclosingModel(parseSelection.field.value(wire));
+ if(JSON.stringify(reparsed)!==wire)throw new TypeError('Builtin enclosing model canonical roundtrip changed');
+ const digest=hash(wire),current=originalInput(context,certificate,invocation);
+ requireOriginalImplNamespaceSourcePlan(resolver);
+ // Every observer-capable reissue/hash precedes this last callback-free interval.
+ if(current.module!==original.module||!enclosingParseUnchanged(parseSelection)||!finalCloneEnclosingInput(original.module,sourceBefore,invocation,selectedInvocation))throw new TypeError('Builtin enclosing original input changed during model reissue');
+ const facts=Object.freeze({model:reparsed,wire,digest,namespaceAuthority:false,runtimeAuthority:false});
+ const token=Object.freeze({schema:'private-original-clone-enclosing-namespace-v1'});
+ cloneEnclosingIssued??=new WeakMap();
+ cloneEnclosingIssued.set(token,{context,certificate,invocation:selectedInvocation,module:original.module,source:sourceBefore,facts,resolver,parseSelection});return token;
+}
+function builtinCloneEnclosingState(token,context,certificate,invocation){
+ if(!enclosingReady())throw new TypeError('Builtin enclosing native model operations changed');
+ const state=cloneEnclosingIssued?.get(token),selectedInvocation=snapshotBuiltinCloneEnclosingInvocation(invocation);
+ if(!selectedInvocation||!state||state.context!==context||state.certificate!==certificate||!sameEnclosingInvocation(state.invocation,selectedInvocation))throw new TypeError('Builtin enclosing model requires its private original invocation');
+ const current=originalInput(context,certificate,invocation);
+ requireOriginalImplNamespaceSourcePlan(state.resolver);
+ if(current.module!==state.module||!enclosingParseUnchanged(state.parseSelection)||!finalCloneEnclosingInput(state.module,state.source,invocation,state.invocation))throw new TypeError('Builtin enclosing source changed');
+ return state;
+}
+export function requireBuiltinCloneEnclosingNamespace(token,context,certificate,invocation){
+ return builtinCloneEnclosingState(token,context,certificate,invocation).facts;
+}
+export function reissueBuiltinCloneEnclosingNamespace(token,context,certificate,invocation){
+ const prior=builtinCloneEnclosingState(token,context,certificate,invocation),fresh=proveBuiltinCloneEnclosingNamespace({context,certificate,invocation});
+ if(!fresh)throw new TypeError('Builtin enclosing domain no longer closes');
+ const current=builtinCloneEnclosingState(fresh,context,certificate,invocation);
  if(current.facts.wire!==prior.facts.wire)throw new TypeError('Builtin enclosing complete model changed');return current.facts;
 }

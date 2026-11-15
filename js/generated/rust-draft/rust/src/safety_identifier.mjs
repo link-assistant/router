@@ -59,8 +59,8 @@ function rp_7361666574795f6964656e7469666965722e76616c69646174655f6f70656e6169(i
       }
       case "Some": {
         const ml_standard_pattern_2 = ml_standard_callback_self_1.field0;
-        const ml_standard_callback_arg_1 = ml_standard_pattern_2;
-        const value = ml_standard_callback_arg_1;
+        const ml_standard_callback_arg_3 = ml_standard_pattern_2;
+        const value = ml_standard_callback_arg_3;
         return (ml_host_router_core_unicode_scalar_count(value) > rp_7361666574795f6964656e7469666965722e4f50454e41495f4d41585f43484152414354455253());
       }
       default: {
@@ -69,8 +69,8 @@ function rp_7361666574795f6964656e7469666965722e76616c69646174655f6f70656e6169(i
     }
   })()) {
     return Object.freeze({ $: 'Err', field0: (() => {
-    const ml_fmt_2 = rp_7361666574795f6964656e7469666965722e4f50454e41495f4d41585f43484152414354455253();
-    return (("safety_identifier must contain at most " + String(ml_fmt_2)) + " characters");
+    const ml_fmt_4 = rp_7361666574795f6964656e7469666965722e4f50454e41495f4d41585f43484152414354455253();
+    return (("safety_identifier must contain at most " + String(ml_fmt_4)) + " characters");
   })() });
   } else {
   }
@@ -96,8 +96,8 @@ function rp_7361666574795f6964656e7469666965722e76616c69646174655f6f70656e61695f
       }
       if ((ml_ordered_match_1.$ === "Some")) {
         return Object.freeze({ $: 'Err', field0: (() => {
-      const ml_arm_ml_conversion_source_3_1 = "safety_identifier must be a string";
-      return ml_arm_ml_conversion_source_3_1;
+      const ml_arm_ml_conversion_source_3_4 = "safety_identifier must be a string";
+      return ml_arm_ml_conversion_source_3_4;
     })() });
       }
       throw new Error("unreachable exhaustive ordered match");
@@ -115,8 +115,8 @@ function rp_7361666574795f6964656e7469666965722e76616c69646174655f6f70656e61695f
       }
       case "Some": {
         const ml_standard_pattern_2 = ml_standard_callback_self_1.field0;
-        const ml_standard_callback_arg_1 = ml_standard_pattern_2;
-        const value = ml_standard_callback_arg_1;
+        const ml_standard_callback_arg_3 = ml_standard_pattern_2;
+        const value = ml_standard_callback_arg_3;
         return (ml_host_router_core_unicode_scalar_count(value) > rp_7361666574795f6964656e7469666965722e4f50454e41495f4d41585f43484152414354455253());
       }
       default: {
@@ -125,8 +125,8 @@ function rp_7361666574795f6964656e7469666965722e76616c69646174655f6f70656e61695f
     }
   })()) {
     return Object.freeze({ $: 'Err', field0: (() => {
-    const ml_fmt_2 = rp_7361666574795f6964656e7469666965722e4f50454e41495f4d41585f43484152414354455253();
-    return (("user must contain at most " + String(ml_fmt_2)) + " characters");
+    const ml_fmt_4 = rp_7361666574795f6964656e7469666965722e4f50454e41495f4d41585f43484152414354455253();
+    return (("user must contain at most " + String(ml_fmt_4)) + " characters");
   })() });
   } else {
   }
@@ -152,8 +152,8 @@ function rp_7361666574795f6964656e7469666965722e76616c69646174655f6f70656e61695f
       }
       if ((ml_ordered_match_1.$ === "Some")) {
         return Object.freeze({ $: 'Err', field0: (() => {
-      const ml_arm_ml_conversion_source_3_1 = "user must be a string";
-      return ml_arm_ml_conversion_source_3_1;
+      const ml_arm_ml_conversion_source_3_4 = "user must be a string";
+      return ml_arm_ml_conversion_source_3_4;
     })() });
       }
       throw new Error("unreachable exhaustive ordered match");
@@ -180,21 +180,21 @@ try {
   })() });
   }
   const metadata_2 = (ml_pattern_2)["field0"];
-  const ml_pattern_1_2 = ml_host_serde_json_map_get(metadata_2, "user_id");
-  if ((ml_pattern_immutable_view(ml_pattern_1_2) && (ml_pattern_1_2.$ === "Some"))) {
+  const ml_pattern_4 = ml_host_serde_json_map_get(metadata_2, "user_id");
+  if ((ml_pattern_immutable_view(ml_pattern_4) && (ml_pattern_4.$ === "Some"))) {
   } else {
     return ml_snapshot_constructor_value(Object.freeze({ $: 'Ok', field0: Object.freeze({ $: 'None' }) }), {"kind":"data","name":"rp_526f75746572526573756c745f34385f6e616d65645f3532366637353734363537323466373037343639366636653566333635663733373437323639366536375f31375f727573745f6f776e65645f737472696e67"}, ml_constructor_value_schema_615da3b64c69b300d7f130d12543df0835d03d77e67169abc18743ecbfd527c0);
   }
-  const identifier = (ml_pattern_1_2)["field0"];
-  const ml_pattern_2_2 = ml_host_serde_json_value_as_str(identifier);
-  if ((ml_pattern_immutable(ml_pattern_2_2) && (ml_pattern_2_2.$ === "Some"))) {
+  const identifier = (ml_pattern_4)["field0"];
+  const ml_pattern_5 = ml_host_serde_json_value_as_str(identifier);
+  if ((ml_pattern_immutable(ml_pattern_5) && (ml_pattern_5.$ === "Some"))) {
   } else {
     return Object.freeze({ $: 'Err', field0: (() => {
-    const ml_conversion_source_3_2 = "metadata.user_id must be a string";
-    return ml_conversion_source_3_2;
+    const ml_conversion_source_6 = "metadata.user_id must be a string";
+    return ml_conversion_source_6;
   })() });
   }
-  const identifier_2 = (ml_pattern_2_2)["field0"];
+  const identifier_2 = (ml_pattern_5)["field0"];
   ml_router_try(rp_7361666574795f6964656e7469666965722e76616c69646174655f6f70656e6169(Object.freeze({ $: 'Some', field0: identifier_2 })), false);
   return ml_snapshot_constructor_value(Object.freeze({ $: 'Ok', field0: Object.freeze({ $: 'Some', field0: identifier_2 }) }), {"kind":"data","name":"rp_526f75746572526573756c745f34385f6e616d65645f3532366637353734363537323466373037343639366636653566333635663733373437323639366536375f31375f727573745f6f776e65645f737472696e67"}, ml_constructor_value_schema_615da3b64c69b300d7f130d12543df0835d03d77e67169abc18743ecbfd527c0);
 

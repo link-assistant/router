@@ -1,3 +1,4 @@
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
 import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,7 +17,7 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const root=new URL('../../../',import.meta.url),manifest=readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock=readFileSync(repositorySourceURL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const retain=(name,value)=>{if(process.env.ROUTER_UNIT_ENUM_VECTOR_DIR){mkdirSync(process.env.ROUTER_UNIT_ENUM_VECTOR_DIR,{recursive:true});writeFileSync(process.env.ROUTER_UNIT_ENUM_VECTOR_DIR+'/'+name+'.json.gz',gzipSync(JSON.stringify(value,(_,value)=>typeof value==='bigint'?{$integer:value.toString()}:value)+'\n',{mtime:0}));}};
-const source=execFileSync('git',['show','HEAD:src/subscription/types.rs'],{encoding:'utf8'}),recovery=execFileSync('git',['show','HEAD:src/refresh_recovery.rs'],{encoding:'utf8'}),originalItem=sourceItems(recovery).find(item=>item.name==='refresh_failure_diagnostic'),originalFunction=recovery.slice(originalItem.start,originalItem.end),rootSource='pub mod subscription{pub mod types;}mod refresh_recovery{use crate::subscription::types::SubscriptionProvider;'+originalFunction+'}';
+const source=execFileSync('git',['show','HEAD:'+repositorySourcePath("src/subscription/types.rs",root)],{cwd:root,encoding:'utf8'}),recovery=execFileSync('git',['show','HEAD:'+repositorySourcePath("src/refresh_recovery.rs",root)],{cwd:root,encoding:'utf8'}),originalItem=sourceItems(recovery).find(item=>item.name==='refresh_failure_diagnostic'),originalFunction=recovery.slice(originalItem.start,originalItem.end),rootSource='pub mod subscription{pub mod types;}mod refresh_recovery{use crate::subscription::types::SubscriptionProvider;'+originalFunction+'}';
 function setup(source,root='pub mod model;'){
  const files={'src/lib.rs':root,[root===rootSource?'src/subscription/types.rs':'src/model.rs']:source},graph=resolveModuleGraph({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE}),deriveContext=createDeriveFootprintContext({dependencies,modules:graph.modules,compilationProfile:PRODUCTION_PROFILE}),deriveBangContext=createDeriveBangContext({deriveContext}),externalModules=deriveFootprintExternalModules(deriveContext),bindings=resolveModuleBindings({modules:graph.modules,deriveContext,deriveBangContext,externalModules,compilationProfile:PRODUCTION_PROFILE});
  return {files,graph,deriveContext,deriveBangContext,bindings};

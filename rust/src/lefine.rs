@@ -146,8 +146,14 @@ pub(crate) fn configured_catalog(
         .map(|id| LiveProviderModel {
             id: id.clone(),
             raw: serde_json::Map::from_iter([
-                ("id".into(), crate::translation_core::Json::String(id.clone())),
-                ("object".into(), crate::translation_core::Json::String("model".into())),
+                (
+                    "id".into(),
+                    crate::translation_core::Json::String(id.clone()),
+                ),
+                (
+                    "object".into(),
+                    crate::translation_core::Json::String("model".into()),
+                ),
                 (
                     "catalog_source".into(),
                     crate::translation_core::Json::String("configured_fallback".into()),
@@ -157,7 +163,9 @@ pub(crate) fn configured_catalog(
         .collect())
 }
 
-fn exact_models(entries: &[crate::translation_core::Json]) -> crate::translation_core::Outcome<Vec<LiveProviderModel>, CatalogFailure> {
+fn exact_models(
+    entries: &[crate::translation_core::Json],
+) -> crate::translation_core::Outcome<Vec<LiveProviderModel>, CatalogFailure> {
     let mut seen = HashSet::new();
     let mut models = Vec::new();
     for entry in entries {

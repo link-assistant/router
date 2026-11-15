@@ -126,7 +126,7 @@ export function verifyCanonicalDeriveTrial({output}={}){
   if(!original.equals(read(manifest.root,row.path))||!trial.equals(read(manifest.mirror,row.path))||(lstatSync(join(manifest.mirror,row.path)).mode&0o777)!==fact.mode)fail('physical original or trial source changed');
   const selected=proposal.overlays.find(item=>item.path===row.path),expected=selected?Buffer.from(selected.candidate):original;if(!expected.equals(trial))fail('unproposed physical trial delta');if(!original.equals(trial))substitutions++;
  }
- if(substitutions!==proposal.overlays.length||!read(manifest.mirror,TEST).equals(Buffer.from(proposal.test.source)))fail('exactly the complete codec creator and resolver substitutions and unchanged whole test required');
+ if(substitutions!==proposal.overlays.filter(overlay=>overlay.original!==overlay.candidate).length||!read(manifest.mirror,TEST).equals(Buffer.from(proposal.test.source)))fail('exactly the complete codec creator and resolver substitutions and unchanged whole test required');
  equal(discoverCanonicalTrialInputs(manifest.root),manifest.vector,'original source changed across final boundary');return {manifest,proposal};
 }
 export function joinCanonicalTrialCases(expected,observed){

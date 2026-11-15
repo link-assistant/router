@@ -119,6 +119,25 @@ test('opted immutable targets keep every fresh source association and reject mut
  assert.throws(()=>configureMatchesMacroParser(current.requestImmutableNamespaceTargets(new HostRustParser(tokenizeRust(source+' '))),context,{file:'src/lib.rs'}),/source slice/);retain('06-fresh-association',{source,namespaceDigest:frame.namespaceDigest,reboundRefused:true,changedSourceRefused:true});
 });
 
+test('repeated internal setup retains ambiguous shadow names and independent mutable sets',{timeout:30000},()=>{
+ const source='mod left;mod right;use left::Value as Alias;use right::Value as Alias;pub struct Local;',
+   rows=[{file:'src/lib.rs',path:[],source},{file:'src/left.rs',path:['left'],source:'pub struct Value;'},
+     {file:'src/right.rs',path:['right'],source:'pub struct Value;'}].map(row=>({...row,items:sourceItems(row.source)})),
+   scopes=resolveModuleBindings({modules:rows}).scopes;
+ configure(current,scopes,{immutable:true});
+ const expected=inspect(configure(old,scopes)),first=configure(current,scopes,{immutable:true}),second=configure(current,scopes,{immutable:true});
+ assert.ok(first.sourceNamespaceShadows.type.has('Alias'));
+ assert.deepEqual(inspect(first),expected);assert.deepEqual(inspect(second),expected);
+ for(const namespace of ['type','value','macro']){
+  assert.notEqual(first.sourceNamespaceShadows[namespace],second.sourceNamespaceShadows[namespace]);
+  first.sourceNamespaceShadows[namespace].clear();first.sourceNamespaceShadows[namespace].add('forged');
+ }
+ first.shadowedPreludeTypes.clear();first.shadowedBuiltinMacros.add('forged');
+ assert.deepEqual(inspect(second),expected);assert.deepEqual(inspect(configure(current,scopes,{immutable:true})),expected);
+ const copied=structuredClone(scopes);assert.deepEqual(inspect(configure(current,copied,{immutable:true})),inspect(configure(old,copied)));
+ retain('09-shadow-name-isolation',{source,rows,expected,actual:inspect(second),copiedFallback:true});
+});
+
 test('late native hooks retain complete original callback tapes and restoration never revives an escaped template',{timeout:60000},()=>{
  const scopes=resolve();configure(old,scopes);configure(current,scopes,{immutable:true});const apply=Reflect.apply,define=Object.defineProperty;
  const cases=[[Uint8Array,'from'],[Map.prototype,'get'],[WeakMap.prototype,'get'],[Array.prototype,Symbol.iterator],[Object,'freeze'],[JSON,'stringify']],observations=[];

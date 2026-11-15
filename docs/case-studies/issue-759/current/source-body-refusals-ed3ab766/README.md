@@ -24,7 +24,7 @@ expected one JSON console line. Node TAP split that line into 16 diagnostics.
 The complete original raw log and failed receipt remain unchanged in the pack.
 A separate normalized receipt joins only those consecutive diagnostic fragments,
 verifies the original digest and all 806 records against the frozen input manifest,
-and agrees with Bun. This correction ran no engine and repeated no graph.
+and agrees with Bun. This correction ran no engine and repeated no module graph.
 
 The [combined receipt](router-759-current-body-combined-ed3ab766-receipt.json)
 references the [complete archive](router-759-current-body-combined-ed3ab766.tar.gz):

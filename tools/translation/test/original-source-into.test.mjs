@@ -10,9 +10,19 @@ import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from '../concrete-syntax-meta.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';import {compileCurrentBridgeControls} from './original-core-bridge-fixture.mjs';
+import {verifyTypedTargets} from './typed-targets.mjs';
+import {serde_json_from_str} from '../extensions/json-runtime.mjs';
+import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
 const root=new URL('../../../',import.meta.url),hash=text=>createHash('sha256').update(text).digest('hex'),read=file=>readFileSync(repositorySourceURL(file,root),'utf8');
 const dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
-const original=file=>{const source=read(file),result=translateProject({entry:file,paths:[file],readSource:()=>source,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});assert.equal(result.meta.sources.find(row=>row.source===file).sha256,hash(source));return result;};
+function completeInputs(file,source){
+  const files={[file]:source};
+  // This actual source now imports functions from its path-selected child.
+  // Resolve their roles from the complete child, rather than a spelling list.
+  if(file==='src/bridge_request.rs')files['src/bridge_request_tools.rs']=read('src/bridge_request_tools.rs');
+  return {entry:file,paths:Object.keys(files),readSource:path=>{assert.ok(Object.hasOwn(files,path));return files[path];}};
+}
+const original=file=>{const source=read(file),result=translateProject({...completeInputs(file,source),deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});assert.equal(result.meta.sources.find(row=>row.source===file).sha256,hash(source));if(file==='src/bridge_request.rs')assert.equal(result.meta.sources.find(row=>row.source==='src/bridge_request_tools.rs').sha256,hash(read('src/bridge_request_tools.rs')));return result;};
 let retainedBytes=0;
 function retain(name,value){
   const folder=process.env.ROUTER_ORIGINAL_INTO_VECTOR_DIR;if(!folder)return;
@@ -37,7 +47,7 @@ function authoredAnonymousControl(originalResult){
   for(const phase of [language,repository,inverse])assert.deepEqual(phase.trace.map(row=>row.phase),['language','repository']);
   const afterItems=sourceItems(authored).filter(item=>item.term==='fn'&&item.name===name);assert.equal(afterItems.length,1);assert.equal(authored.slice(afterItems[0].start,afterItems[0].end),declaration,'complete actual function and attributes unchanged');
   retain('02-complete-original-and-authored-source-cst',{scope:'authored whole-parent negative; not unchanged-module equivalence',parent,originalResult,file,selected,originalItem,declaration,before,beforeWire,reparsed,language,languageWire,languageReparsed,repository,afterWire,after,mapping,inverse,inverseWire,inverseReparsed,cargo:{manifest:read('Cargo.toml'),lock:read('Cargo.lock')},compilationProfile:PRODUCTION_PROFILE});
-  const result=translateProject({entry:file,paths:[file],readSource:()=>authored,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
+  const result=translateProject({...completeInputs(file,authored),deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
   retain('03-complete-authored-anonymous-route-result',{scope:'explicit authored whole-parent negative only',file,parent,authored,originalSourceSha256:hash(parent),authoredSourceSha256:hash(authored),result});
   assert.equal(result.meta.sources.find(row=>row.source===file).sha256,hash(authored));
   const refusal=result.meta.refused.find(row=>row.name===name);assert.ok(refusal);assert.match(refusal.message,/source conversion namespace.*anonymous trait/u);assert.match(refusal.message,/standard-library anonymous trait reexport lacks its original route source/u);assert.equal(result.meta.executable.some(row=>row.name===name),false);
@@ -45,8 +55,29 @@ function authoredAnonymousControl(originalResult){
 test('the two original whole-file bridge controls gain ordinary functions rather than generated source owners',()=>{
   const standalone=original('src/bridge_controls.rs'),{result}=compileCurrentBridgeControls(standalone);for(const name of ['untranslatable_moderation','untranslatable_chat_prediction']){const qualified='bridge_controls.'+name;assert.ok(result.meta.executable.some(row=>row.name===qualified&&row.term==='fn'));assert.equal(result.meta.refused.some(row=>row.name===qualified),false);}assert.equal(result.meta.runtimeParity,false);assert.ok(standalone.meta.refused.some(row=>row.name==='validate_responses_resource_selectors'));
 });
-test('remaining original borrowed aggregate and anonymous conversion contexts retain explicit barriers',()=>{
-  const result=original('src/bridge_request.rs'),refusal=result.meta.refused.find(row=>row.name==='untranslatable_responses_state');retain('01-complete-current-original-refusal',{source:read('src/bridge_request.rs'),result,refusal});assert.ok(refusal);assert.equal(refusal.message,'source conversion namespace: Original external trait source: original outer item has an unproved attribute producer');assert.equal(result.meta.executable.some(row=>row.name==='untranslatable_responses_state'),false);authoredAnonymousControl(result);
+test('current original conversion closes its complete child route while unproved anonymous and aggregate contexts retain barriers',async()=>{
+  const result=original('src/bridge_request.rs'),name='untranslatable_responses_state';
+  retain('01-complete-current-original-conversion',{source:read('src/bridge_request.rs'),child:read('src/bridge_request_tools.rs'),result});
+  // The current external Engine producer proof closes the former attribute
+  // refusal. The actual relocated child must also close every imported role.
+  assert.equal(result.meta.refused.some(row=>row.name===name),false);
+  assert.equal(result.meta.executable.some(row=>row.name===name&&row.term==='fn'),true);
+  assert.equal(result.meta.runtimeParity,false);
+  for(const field of ['checkedSemanticProgram','targetSemanticProgram']){const wire=JSON.stringify(result.meta[field]);assert.equal(serializeProgram(parseProgram(wire)),wire);}
+  await verifyTypedTargets(result,api=>{
+    const cases=[
+      [{},null],[{previous_response_id:null,conversation:null},null],
+      [{previous_response_id:'response'},'previous_response_id cannot be resolved by an Anthropic bridge; send self-contained input'],
+      [{conversation:'conversation'},'conversation cannot be resolved by an Anthropic bridge; send self-contained input'],
+      [{previous_response_id:'response',conversation:'conversation'},'previous_response_id and conversation are mutually exclusive and cannot be resolved by an Anthropic bridge; send self-contained input'],
+    ];
+    for(const [body,expected]of cases){
+      const input=serde_json_from_str(JSON.stringify(body));assert.equal(input.$,'Ok');
+      const value=api[name](input.field0);
+      assert.deepEqual(value,expected===null?{$:'None'}:{$:'Some',field0:expected});
+    }
+  },{childTimeoutMs:20000});
+  authoredAnonymousControl(result);
   const safety=original('src/safety_identifier.rs');for(const name of ['validate_openai_value','validate_openai_user_value','anthropic_user_id'])assert.ok(safety.meta.refused.some(row=>row.name===name));
 });
 test('original GitHub conversion does not waive derive namespace or later Default obligations',()=>{

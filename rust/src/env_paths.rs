@@ -46,7 +46,10 @@ pub fn router_client_config_root_in(
 
 /// Qwen documents relative and `~/` overrides; resolve them once so later
 /// profile operations never write through a changing process directory.
-pub fn qwen_directory(name: &crate::translation_core::Str, home: &Path) -> crate::translation_core::Outcome<crate::translation_core::Maybe<PathBuf>, String> {
+pub fn qwen_directory(
+    name: &crate::translation_core::Str,
+    home: &Path,
+) -> crate::translation_core::Outcome<crate::translation_core::Maybe<PathBuf>, String> {
     qwen_directory_in(&directory, name, home, || {
         crate::operation_context::current_dir()
             .map_err(|error| format!("cannot resolve {name}: {error}"))
@@ -79,7 +82,9 @@ pub fn qwen_directory_in(
 /// test that manipulated the real environment could neither be written here
 /// nor run reliably beside its neighbours.
 #[must_use]
-pub fn from_value(value: crate::translation_core::Maybe<std::ffi::OsString>) -> crate::translation_core::Maybe<PathBuf> {
+pub fn from_value(
+    value: crate::translation_core::Maybe<std::ffi::OsString>,
+) -> crate::translation_core::Maybe<PathBuf> {
     value.filter(|value| !value.is_empty()).map(PathBuf::from)
 }
 
@@ -92,7 +97,10 @@ pub fn from_value(value: crate::translation_core::Maybe<std::ffi::OsString>) -> 
 /// # Errors
 ///
 /// Returns a message when `root` is relative.
-pub fn require_absolute(root: PathBuf, what: &crate::translation_core::Str) -> crate::translation_core::Outcome<PathBuf, String> {
+pub fn require_absolute(
+    root: PathBuf,
+    what: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<PathBuf, String> {
     if root.is_absolute() {
         return Ok(root);
     }

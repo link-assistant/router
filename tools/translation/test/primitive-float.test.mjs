@@ -60,9 +60,11 @@ test('verified original float tokens and IEEE arithmetic retain primitive receiv
   await verifyTypedTargets(result,api=>{assert.equal(api.literal(),true);assert.equal(api.arithmetic(3.7),3);assert.equal(Object.is(api.negative(),-0),true);});
 });
 
-test('unproved owners, shared receivers, NaN signs and floating constants stay refused',()=>{
+test('unproved owners, UFCS borrowing, NaN signs and floating constants stay refused',()=>{
+  const sharedSource='pub fn bad(value:&f64)->bool{value.is_nan()}',shared=translateSource(sharedSource);
+  assert.equal(shared.ir.items.find(item=>item.name==='bad')?.status,'executable');
+  assert.equal(shared.ir.items.map(item=>item.source).join(''),sharedSource);
   for(const source of [
-    'pub fn bad(value:&f64)->bool{value.is_nan()}',
     'pub fn bad(value:&f64)->bool{f64::is_finite(value)}',
     'pub fn bad(value:&mut f64)->f64{value.floor()}',
     'pub fn bad(value:f64)->bool{value.is_sign_negative()}',

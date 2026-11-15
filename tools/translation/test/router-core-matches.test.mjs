@@ -1,3 +1,5 @@
+import {assertCurrentCoreUnicodeSourceComposition} from './current-unit-unicode-source-composition.mjs';
+import {composeGeolocationModuleSource} from './fixtures/geolocation-module-source-composition.mjs';
 import {assertRuntimeImportSourceComposition} from './runtime-import-source-composition.mjs';
 import {assertOwnedCorePrivateAnalysisSourceComposition} from './owned-core-private-analysis-source-composition.mjs';
 import {assertUnitMatchesSourceComposition} from './unit-matches-source-composition.mjs';
@@ -74,14 +76,15 @@ test('native source producers retain complete historical inputs actual current o
     }
     assert.equal(row.nativeCopies.length, 2); assert.ok(row.nativeCopies.every(copy => copy.completeNativeAstCopy));
   }
-  assert.equal(current.layers.length,9);assertRuntimeImportSourceComposition(current.layers[8],Object.fromEntries(current.layers.slice(0,8).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
+  assert.equal(current.layers.length,10);assertRuntimeImportSourceComposition(current.layers[9],Object.fromEntries(current.layers.slice(0,9).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
   const beforeAscii = Object.fromEntries([...prepared.files, ...current.layers[1].files].map(row => [row.path, row]));
   assertAsciiSourceComposition(current.layers[2], beforeAscii, finalSources);
   assertAsciiReverseComposition(current.layers[3], {...beforeAscii, ...Object.fromEntries(current.layers[2].files.map(row => [row.path, row]))}, finalSources);
   assertAsciiAssetsComposition(current.layers[4], Object.fromEntries(current.layers[3].files.map(row => [row.path, row])), finalSources);
   assertAsciiBaseAssetsComposition(current.layers[5], Object.fromEntries(current.layers[4].files.map(row => [row.path, row])), finalSources);
  assertUnitMatchesSourceComposition(current.layers[6],Object.fromEntries(current.layers.slice(0,6).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
- assertOwnedCorePrivateAnalysisSourceComposition(current.layers[7],Object.fromEntries(current.layers.slice(0,7).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
+ assertCurrentCoreUnicodeSourceComposition(current.layers[7],Object.fromEntries(current.layers.slice(0,7).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
+ assertOwnedCorePrivateAnalysisSourceComposition(current.layers[8],Object.fromEntries(current.layers.slice(0,8).flatMap(layer=>layer.files.map(row=>[row.path,row]))),finalSources);
   const host = prepared.files.find(row => row.path.endsWith('/host-contracts.mjs'));
   assert.ok(host.after.split('\n').length <= 1000); assert.ok(host.before.includes('parseRouterCoreVector')); assert.ok(host.after.includes('parseRouterCoreVector'));
   assert.match(prepared.wrapper.after, /::std::matches!/u);
@@ -135,12 +138,16 @@ test('unknown local qualified Unicode and attribute producers remain whole-funct
 test('both complete original client launch predicates retain their real module parent Cargo and unchanged source bodies', async () => {
   const original = retain('complete-original-production-inputs', fixture().production), physical = readFileSync(new URL(original.application.path, root), 'utf8');
   assert.equal(physical, original.application.source); assert.equal(hash(physical), original.application.sha256);
-  assert.equal(readFileSync(new URL(original.parent.path, root), 'utf8'), original.parent.source);
+  assert.equal(hash(original.parent.source), original.parent.sha256);
+  const parent = retain('complete-original-and-current-production-parent', composeGeolocationModuleSource(original.parent.source));
+  assert.equal(readFileSync(new URL(original.parent.path, root), 'utf8'), parent.after);
+  assert.equal(parent.equation.inverse, original.parent.source);
   assert.equal(readFileSync(new URL(original.workspace.path, root), 'utf8'), original.workspace.source); assert.equal(hash(original.workspace.source), original.workspace.sha256);
   for (const name of ['codex_root_option_takes_value', 'codex_root_boolean_option']) { const item = sourceItems(physical).find(row => row.term === 'fn' && row.name === name); assert.ok(item); retain('complete-original-production-function', {name, span: [item.start, item.end], source: physical.slice(item.start, item.end), sha256: hash(physical.slice(item.start, item.end))}); }
   // This receiving graph keeps the complete real root and selected modules.
   // Missing unrelated root children stay diagnostics; it is not whole-crate coverage.
-  const input = {...core, 'src/lib.rs': original.parent.source, 'src/client_launch.rs': physical, 'src/operation_output.rs': original.operationOutput.source};
+  const geolocation = retain('complete-current-geolocation-module', readFileSync(new URL('rust/src/geolocation.rs', root), 'utf8'));
+  const input = {...core, 'src/lib.rs': parent.after, 'src/geolocation.rs': geolocation, 'src/client_launch.rs': physical, 'src/operation_output.rs': original.operationOutput.source};
   const result = propose(input, original.dependencies), selected = proposalFor(result, 'src/client_launch.rs');
   assert.equal(selected.status, 'proposed', selected.reason); assert.deepEqual(selected.proposal.functions.map(row => row.name).sort(), ['codex_root_boolean_option', 'codex_root_option_takes_value']);
   assert.equal(selected.proposal.inverse, physical); assert.equal(selected.proposal.edits.length, 2);

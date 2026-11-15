@@ -129,8 +129,18 @@ test('serialization joins complete original sibling outputs without erasing unkn
     assert.equal(meta.runtimeAuthority,false);assert.equal(meta.generatedTraitBehavior,false);
     assert.throws(()=>parseSerializationMeta(text,{...context}),/Unsealed/);
   });
+  // Keep the original struct Ord subject and check its current enclosing-only
+  // effect independently of executable trait or serialization authority.
+  const ordering='#[derive(Ord)]struct Sibling{value:u8}';
+  fixture(ordering+selected,options=>{
+    const context=captureSerializationContext(options),text=serializeSerializationMeta(context,{roots:['crate::Record']}),meta=parseSerializationMeta(text,context),descriptor=projectSerializationDescriptor(meta);
+    observations.push({source:ordering+selected,context,text,meta,descriptor});retain('positive-original-Ord-sibling-namespace');
+    assert.deepEqual(plain(descriptor.Record.fields),[{name:'value',type:'String',optional:true},{name:'count',type:'u32',optional:false}]);
+    assert.equal(meta.runtimeAuthority,false);assert.equal(meta.generatedTraitBehavior,false);
+    assert.throws(()=>parseSerializationMeta(text,{...context}),/Unsealed/);
+  });
   // A genuine input registration alone cannot clear these original scopes.
-  for(const prefix of ['#[derive(Ord)]struct Sibling{value:u8}','#[unknown]struct Sibling;','unknown!();','use unknown::*;',complete+'type String=u32;',complete+'struct Option;',complete+'type u32=u64;']){
+  for(const prefix of ['#[derive(Ord,Unknown)]struct Sibling{value:u8}','#[unknown]struct Sibling;','unknown!();','use unknown::*;',complete+'type String=u32;',complete+'struct Option;',complete+'type u32=u64;']){
     let error=null;
     fixture(prefix+selected,options=>{try{projected(options);}catch(cause){error=cause;}});
     observations.push({source:prefix+selected,error:error?{name:error.name,message:error.message,diagnostic:error.diagnostic}:null});

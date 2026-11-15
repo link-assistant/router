@@ -1,4 +1,13 @@
 //! Shared JSON let-else behavior oracle. CI only; unrun locally for issue #759.
+
+// The let-else early returns and the Result-returning constructors are the
+// translated shapes under test, so they stay as written.
+#![allow(
+    clippy::items_after_statements,
+    clippy::missing_const_for_fn,
+    clippy::question_mark,
+    clippy::unnecessary_wraps
+)]
 use link_assistant_router::translation_core::{Json, Maybe, Str};
 use std::cell::Cell;
 
@@ -28,7 +37,8 @@ fn text(body: &Json) -> Maybe<&Str> {
 #[test]
 fn projections_borrow_the_original_value_and_preserve_text() {
     let body = serde_json::json!({"x": {"nested": "Ω😀"}});
-    assert!(std::ptr::eq(selected(&body).unwrap(), &body["x"]));
+    let expected = &raw const body["x"];
+    assert!(std::ptr::eq(selected(&body).unwrap(), expected));
     assert!(selected(&serde_json::json!({})).is_none());
     for value in ["", "Ω😀", "e\u{301}"] {
         let body = serde_json::json!({"metadata": {"user_id": value}});
@@ -150,7 +160,10 @@ fn nested_subjects_run_once_and_empty_error_branches_are_lazy() {
     let reads = Cell::new(0);
     let empty = Cell::new(0);
     let errors = Cell::new(0);
-    assert_eq!(traced(&serde_json::json!({}), &reads, &empty, &errors), Ok(None));
+    assert_eq!(
+        traced(&serde_json::json!({}), &reads, &empty, &errors),
+        Ok(None)
+    );
     assert_eq!((reads.get(), empty.get(), errors.get()), (1, 1, 0));
     assert_eq!(
         traced(&serde_json::json!({"x": false}), &reads, &empty, &errors),

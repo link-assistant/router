@@ -59,7 +59,10 @@ pub struct NativeBody {
 }
 
 impl NativeBody {
-    pub fn encode(&self, value: &crate::translation_core::Json) -> crate::translation_core::Outcome<Vec<u8>, String> {
+    pub fn encode(
+        &self,
+        value: &crate::translation_core::Json,
+    ) -> crate::translation_core::Outcome<Vec<u8>, String> {
         if *value == self.original {
             return Ok(self.bytes.to_vec());
         }
@@ -123,7 +126,10 @@ pub async fn read_native_json(
     })
 }
 
-async fn decode_zstd_async(compressed: Bytes, limit: usize) -> crate::translation_core::Outcome<Vec<u8>, Response> {
+async fn decode_zstd_async(
+    compressed: Bytes,
+    limit: usize,
+) -> crate::translation_core::Outcome<Vec<u8>, Response> {
     let deadline = tokio::time::Instant::now() + ZSTD_DECODE_TIMEOUT;
     let permit = tokio::time::timeout_at(deadline, Arc::clone(&ZSTD_DECODE_SLOTS).acquire_owned())
         .await

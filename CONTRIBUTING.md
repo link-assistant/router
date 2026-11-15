@@ -16,6 +16,11 @@ Disabling a conflicting local hook does not waive CI verification. Rust check fa
 
 ## Development Workflow
 
+The maintainer's 2026-11-11 [temporary manual translation policy](docs/development/manual-translation-development.md)
+defines the currently active development checks. The complete strict gate below
+remains required to qualify translation and authorize Rust or releases. A manual
+development receipt grants neither strict parity nor a green Rust gate stamp.
+
 Create a feature branch or isolated worktree, implement behavior in JavaScript, add targeted behavioral tests and update documentation. Read [the JavaScript-first workflow](docs/development/javascript-first.md) for the parity boundary and generation limitations. Router's JavaScript operations package and a valid parity inventory do not by themselves establish complete Rust runtime parity.
 
 Run the complete local gate:
@@ -39,7 +44,7 @@ For issue #759, do not invoke local Rust tools, including Cargo builds/tests, Cl
 
 The Rust suite continues to define tiers 1-3, which require no credential. The live credentialed tier (tier 4) is a no-op without a subscription and says so rather than passing quietly — see [docs/testing-tiers.md](docs/testing-tiers.md) for what each tier proves. CI runs the relevant Rust checks; the tier documentation also describes targeted diagnostic commands, which must obey the bounded local exception policy.
 
-Changes to stream or request translators, token and credential code, the proxy, storage or keychain lookup also trigger slower path-filtered workflows: benchmarks against the pull request's base (`benches/`), a one-minute soak (`tests/soak_test.rs`), mutation testing of touched lines (`.cargo/mutants.toml`), the macOS Keychain suite and the upgrade matrix over the last three releases. Translator changes can require updated recorded cassettes in `tests/fixtures/vendor/`; the recording tool is `rust-script scripts/record-vendor-fixtures.rs`. During issue #759 this Rust-backed tool may run only in gated CI. Preserve these checks and require the JavaScript gate before Rust compilation.
+Changes to stream or request translators, token and credential code, the proxy, storage or keychain lookup also trigger slower path-filtered workflows: benchmarks against the pull request's base (`rust/benches/`), a one-minute soak (`rust/tests/soak_test.rs`), mutation testing of touched lines (`.cargo/mutants.toml`), the macOS Keychain suite and the upgrade matrix over the last three releases. Translator changes can require updated recorded cassettes in `rust/tests/fixtures/vendor/`; the recording tool is `rust-script scripts/record-vendor-fixtures.rs`. During issue #759 this Rust-backed tool may run only in gated CI. Preserve these checks and require the JavaScript gate before Rust compilation.
 
 For user-facing changes, add a changelog fragment in `changelog.d/` named `YYYYMMDD_HHMMSS_description.md`:
 
@@ -70,6 +75,8 @@ The user explicitly requested the 2026-10-19 checkpoint push and merge of PR #76
 The user's 2026-10-22 instruction authorizes prompt merge of PR #771 once green or at a meaningful completed checkpoint, with remaining requirements tracked in [issue #772](https://github.com/link-assistant/router/issues/772). Use normal merge protections without bypassing required checks. A checkpoint merge does not certify full parity or change the same-SHA JavaScript gate before Rust.
 
 ## Translation rules and shared regressions
+
+Forward CI uses [exhaustive whole-file Node shards](docs/development/whole-node-test-shards.md), preserving original deadlines, complete source joins and independent audits. Both canonical freshness checks remain required in a separate same-SHA job; the local gate retains its complete original cohort.
 
 Profile matrices use the [sequential process contract](docs/development/isolated-profile-matrices.md): run every complete profile in a fresh process, preserve all original compiler checks and validate every staged byte plan and current input before publishing profile outputs. Generate the copied producers and CLI branch through `node tools/translation/prepare-isolated-matrix.mjs --emit /tmp/FRESH_PROPOSAL`, independently review complete CST/native-source inverses, and require `--check` freshness. Preserve whole receiving files, original deadlines and matrix, heap, aggregate RSS and disk limits. Remove only the task's identified inactive temporary generated storage after interruption. This changes compiler-context lifetime, grants no new source or semantic authority, and does not certify full translation or parity.
 
@@ -323,9 +330,21 @@ rust-script scripts/check-terminology.rs
 
 This Rust-backed command is not a local diagnostic during issue #759: the user's no-local-Rust instruction includes `rust-script`. Obtain its result from CI after the same-head JavaScript gate passes.
 
-`dev/log/` and captured third-party text under `docs/case-studies/*/raw/` are
-excluded as records rather than as wording to fix — editing them would falsify
-what was written at the time — and `ui/dist/` is a built bundle.
+`dev/log/`, `ci-logs/`, captured third-party text under
+`docs/case-studies/*/raw/`, recorded tool output under
+`docs/case-studies/*/evidence/`, machine-written `*receipt.json` run receipts
+and `*.mjs.txt` byte snapshots of `.mjs` sources are excluded as records rather
+than as wording to fix — editing them would falsify what was written at the
+time — and `ui/dist/` is a built bundle. The translation tooling's generated
+output (`profiles/`, `parity/rust-source-inventory.json` and the `meta/`,
+`projects/`, `generated/`, `source-profiles/`, `js-to-rust/generated/` and
+`serialization-schema/bulk-generated/` directories under `tools/translation/`),
+its vendored upstream copies (`tools/translation/vendor/`) and its recorded
+fixtures are excluded too: they carry Rust identifiers such as rustc's own
+names, and regeneration would undo any edit. Authored translation
+documentation stays checked; where it means the crate's module structure, it
+says "module graph". An offence is reported as a short excerpt around the hit,
+so a generated single-line file cannot exhaust memory.
 
 ### Documentation Format
 
@@ -492,7 +511,7 @@ Releases are managed through GitHub releases. To trigger a release:
 
 Thank you for contributing!
 
-For the explicit checked-definition receiving lane, prepare and review the complete source-derived bulk modules with `node tools/translation/prepare-owned-definition-bulk.mjs --emit`, then run actual canonical and `--profile-matrix` generation using `node scripts/translate-router.mjs --retain-output-text --owned-core-definitions`. Review and install only actual producer outputs. Generate their independent reverse counterparts with `node scripts/regenerate-js-first.mjs --owned-core-definitions --write` and its `--profile-matrix` variant. Every command's `--check` variant and `node scripts/check-owned-definition-typescript.mjs` are mandatory in the existing complete local and same-SHA CI gates. Preserve all ordinary commands, seven local/eight CI stages, strict TypeScript 5.9.3, original deadlines and the requirement for green JavaScript stages before Rust CI. Definition-only sidecars and witnesses do not count as full-module or crate equivalence; retain all original source and main-module refusal accounting. Keep new observed evidence within the 384 MiB monitor bound, using complete verified lossless terminal compression rather than truncation or waived workloads. See the [workflow](docs/development/javascript-first.md) for exact paths, materialization prerequisites and the separate unresolved parity obligations.
+For the explicit checked-definition receiving lane, prepare and review the complete source-derived bulk modules with `node tools/translation/prepare-owned-definition-bulk.mjs --emit`, then run actual canonical and `--profile-matrix` generation using `node scripts/translate-router.mjs --retain-output-text --owned-core-definitions`. Review and install only actual producer outputs. Generate their independent reverse counterparts with `node scripts/regenerate-js-first.mjs --owned-core-definitions --write` and its `--profile-matrix` variant. Every command's `--check` variant and `node scripts/check-owned-definition-typescript.mjs` are mandatory in the existing complete local and same-SHA CI gates. Preserve all ordinary commands, seven local stages and all eight original CI stages plus the independent owned-profile-matrix stage, strict TypeScript 5.9.3, original deadlines and the requirement for green JavaScript stages before Rust CI. Definition-only sidecars and witnesses do not count as full-module or crate equivalence; retain all original source and main-module refusal accounting. Keep new observed evidence within the 384 MiB monitor bound, using complete verified lossless terminal compression rather than truncation or waived workloads. See the [workflow](docs/development/javascript-first.md) for exact paths, materialization prerequisites and the separate unresolved parity obligations.
 
 ### Language source layout
 

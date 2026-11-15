@@ -8,6 +8,7 @@ import {createHash} from 'node:crypto';
 import {join} from 'node:path';
 import {captureLiteralSourceInputs,originalLiteralInputModules,planOriginalLiteralInput,originalLiteralInputFacts,originalLiteralInputEvidence,literalInputSource,planOriginalLiteralInputGraph,originalLiteralInputGraphFacts} from '../literal-source-inputs.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
+import {restoreUnitPrivacySourceHistory} from './fixtures/unit-privacy-source-composition.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const retain=(name,value)=>{const out=process.env.ROUTER_LITERAL_INPUT_VECTORS;if(out){mkdirSync(out,{recursive:true});writeFileSync(join(out,name+'.json'),JSON.stringify(value)+'\n');}};
 const create=(sources,profile=PRODUCTION_PROFILE,tape=[])=>captureLiteralSourceInputs({paths:Object.keys(sources),readSource:path=>{tape.push(path);return sources[path];},compilationProfile:profile});
@@ -15,7 +16,7 @@ const locate=(source,invocation)=>{const start=source.indexOf(invocation);assert
 const plan=(context,file,invocation,modulePath=[])=>{const module=originalLiteralInputModules(context,file).find(module=>module.path.join('.')===modulePath.join('.'));assert.ok(module);return planOriginalLiteralInput(context,{module,span:locate(literalInputSource(context,file),invocation)});};
 const facts=(edge,context,parent,target)=>originalLiteralInputFacts(edge,{context,parentSource:literalInputSource(context,parent),targetSource:literalInputSource(context,target)});
 const noAuthority=value=>{for(const key of ['macroOwnerResolved','compilerCallbackExecuted','expansionAuthority','namespaceAuthority','itemOutputComplete','availabilitySelected','filesystemIdentityProved','runtimeAuthority','runtimeParity'])assert.equal(value[key],false,key);};
-const read=path=>{try{return readFileSync(repositorySourceURL(path,root),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+repositorySourcePath(path,root)],{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024});}};
+const read=path=>{let source;try{source=readFileSync(repositorySourceURL(path,root),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;source=execFileSync('git',['show','HEAD:'+repositorySourcePath(path,root)],{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024});}return restoreUnitPrivacySourceHistory(repositorySourcePath(path,root),source,(name,value)=>retain(name,value));};
 
 test('literal input candidates retain exact complete sources and ordered language then repository rules',{timeout:5000},()=>{
  const sources={'src/lib.rs':'include!("child.rs");const TEXT:&str=include_str!("../message.txt");','src/child.rs':'pub fn child()->u8{7}','message.txt':'Ω😀\0\r\n'},tape=[],context=create(sources,PRODUCTION_PROFILE,tape);assert.deepEqual(tape,Object.keys(sources).sort());

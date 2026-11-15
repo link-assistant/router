@@ -13,3 +13,10 @@ strip = true
 lto = false
 codegen-units = 16
 strip = false
+
+# cargo-mutants builds every mutant with this profile (`.cargo/mutants.toml`).
+# Each mutant relinks every test binary, and without debug symbols that is
+# faster; a failing test under a mutant needs no debugger.
+[profile.mutants]
+inherits = "test"
+debug = "none"

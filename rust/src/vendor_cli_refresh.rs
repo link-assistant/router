@@ -94,7 +94,9 @@ pub fn probe_args_env_for(provider: SubscriptionProvider) -> String {
 
 /// The probe that exercises a provider's credential, when one is known.
 #[must_use]
-pub const fn probe_for(provider: SubscriptionProvider) -> crate::translation_core::Maybe<&'static [&'static crate::translation_core::Str]> {
+pub const fn probe_for(
+    provider: SubscriptionProvider,
+) -> crate::translation_core::Maybe<&'static [&'static crate::translation_core::Str]> {
     match provider {
         SubscriptionProvider::Claude => Some(CLAUDE_PROBE),
         SubscriptionProvider::Codex => Some(CODEX_PROBE),

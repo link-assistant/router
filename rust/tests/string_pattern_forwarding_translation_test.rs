@@ -28,12 +28,7 @@ fn credential_prefix_keeps_empty_unicode_and_nul_semantics() {
             "{value:?}/{prefix:?}"
         );
     }
-    for (value, prefix) in [
-        ("", "a"),
-        ("abc", "bc"),
-        ("e\u{301}", "é"),
-        ("😀Ω", "Ω"),
-    ] {
+    for (value, prefix) in [("", "a"), ("abc", "bc"), ("e\u{301}", "é"), ("😀Ω", "Ω")] {
         assert!(
             !credential_prefix_matches(value, prefix),
             "{value:?}/{prefix:?}"

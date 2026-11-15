@@ -6,6 +6,10 @@ use std::net::{TcpListener, TcpStream};
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
+#[path = "support/free_port.rs"]
+mod free_port;
+use free_port::free_port;
+
 struct RouterProcess(Child);
 
 impl Drop for RouterProcess {
@@ -15,38 +19,25 @@ impl Drop for RouterProcess {
     }
 }
 
-fn free_port() -> u16 {
-    TcpListener::bind("127.0.0.1:0")
-        .expect("reserve loopback port")
-        .local_addr()
-        .expect("read loopback port")
-        .port()
-}
-
-async fn wait_until_ready(client: &reqwest::Client, url: &str, child: &mut Child) {
+/// Wait for the Router's own `ok` from `/api/health` at `url`; `false` if it
+/// exited first, as it does when another listener took one of its ports.
+async fn wait_until_ready(client: &reqwest::Client, url: &str, child: &mut Child) -> bool {
     let deadline = Instant::now() + Duration::from_secs(30);
-    while Instant::now() < deadline {
-        if client
-            .get(format!("{url}/api/health"))
-            .send()
-            .await
-            .is_ok_and(|response| response.status().is_success())
+    while matches!(child.try_wait(), Ok(None)) {
+        if let Ok(response) = client.get(format!("{url}/api/health")).send().await
+            && response.status().is_success()
+            && response.text().await.is_ok_and(|body| body == "ok")
         {
-            return;
+            return true;
         }
-        assert!(
-            !matches!(child.try_wait(), Ok(Some(_))),
-            "Router exited before {url} became ready"
-        );
+        assert!(Instant::now() < deadline, "Router never made {url} ready");
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
-    panic!("Router did not make {url} ready");
+    false
 }
 
 #[tokio::test]
 async fn one_process_serves_combined_and_inference_only_primary_listeners() {
-    let combined_port = free_port();
-    let inference_port = free_port();
     let data_dir = tempfile::tempdir().expect("data directory");
     let (cert, key) = link_assistant_router::tls::ensure_generated(
         data_dir.path(),
@@ -78,42 +69,6 @@ async fn one_process_serves_combined_and_inference_only_primary_listeners() {
             .await
             .expect("serve upstream");
     });
-    let mut child = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
-        .arg("--listener")
-        .arg(format!("127.0.0.1:{combined_port}=combined,http"))
-        .arg("--listener")
-        .arg(format!("127.0.0.1:{inference_port}=inference-only,tls"))
-        .arg("serve")
-        .env("TOKEN_SECRET", "multi-listener-test-secret")
-        .env("TOKEN_ADMIN_KEY", "multi-listener-admin")
-        .env("HOME", data_dir.path())
-        .env_remove("CODEX_HOME")
-        .env_remove("CLAUDE_CONFIG_DIR")
-        .env_remove("GEMINI_HOME")
-        .env_remove("GEMINI_CLI_HOME")
-        .env_remove("XDG_CONFIG_HOME")
-        .env_remove("QWEN_HOME")
-        .env("DATA_DIR", data_dir.path())
-        .env("CLAUDE_CODE_HOME", data_dir.path().join("claude"))
-        .env("STORAGE_POLICY", "memory")
-        // The mock provider listens on loopback (issue #669).
-        .env("UPSTREAM_ALLOW_PRIVATE_NETWORKS", "loopback")
-        .env("DISABLE_LOGIN_API", "true")
-        .env("TLS_CERT_FILE", &cert)
-        .env("TLS_KEY_FILE", key)
-        .env("UPSTREAM_PROVIDER", "openai-compatible")
-        .env(
-            "OPENAI_COMPATIBLE_BASE_URL",
-            format!("http://{upstream_address}/v1"),
-        )
-        .env("OPENAI_COMPATIBLE_API_KEY", "fixture-key")
-        .env("OPENAI_COMPATIBLE_MODELS", "fixture-model")
-        .env("OPENAI_COMPATIBLE_SUPPORTED_CLIENTS", "opencode")
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-        .expect("start Router");
-
     let mut default_headers = reqwest::header::HeaderMap::new();
     default_headers.insert(
         reqwest::header::CONNECTION,
@@ -133,11 +88,62 @@ async fn one_process_serves_combined_and_inference_only_primary_listeners() {
         .default_headers(default_headers)
         .build()
         .expect("build TLS client");
-    let combined = format!("http://127.0.0.1:{combined_port}");
-    let inference = format!("https://127.0.0.1:{inference_port}");
-    wait_until_ready(&client, &combined, &mut child).await;
-    wait_until_ready(&tls_client, &inference, &mut child).await;
-    let mut process = RouterProcess(child);
+    // The ports are released before the Router binds them, so a parallel
+    // test's listener can take one first; the Router then exits and is started
+    // again on other ports.
+    let mut attempts = 0;
+    let (mut process, combined_port, inference_port, combined, inference) = loop {
+        attempts += 1;
+        assert!(
+            attempts <= 5,
+            "Router never served both listeners on ports of its own"
+        );
+        let combined_port = free_port();
+        let inference_port = free_port();
+        let child = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+            .arg("--listener")
+            .arg(format!("127.0.0.1:{combined_port}=combined,http"))
+            .arg("--listener")
+            .arg(format!("127.0.0.1:{inference_port}=inference-only,tls"))
+            .arg("serve")
+            .env("TOKEN_SECRET", "multi-listener-test-secret")
+            .env("TOKEN_ADMIN_KEY", "multi-listener-admin")
+            .env("HOME", data_dir.path())
+            .env_remove("CODEX_HOME")
+            .env_remove("CLAUDE_CONFIG_DIR")
+            .env_remove("GEMINI_HOME")
+            .env_remove("GEMINI_CLI_HOME")
+            .env_remove("XDG_CONFIG_HOME")
+            .env_remove("QWEN_HOME")
+            .env("DATA_DIR", data_dir.path())
+            .env("CLAUDE_CODE_HOME", data_dir.path().join("claude"))
+            .env("STORAGE_POLICY", "memory")
+            // The mock provider listens on loopback (issue #669).
+            .env("UPSTREAM_ALLOW_PRIVATE_NETWORKS", "loopback")
+            .env("DISABLE_LOGIN_API", "true")
+            .env("TLS_CERT_FILE", &cert)
+            .env("TLS_KEY_FILE", &key)
+            .env("UPSTREAM_PROVIDER", "openai-compatible")
+            .env(
+                "OPENAI_COMPATIBLE_BASE_URL",
+                format!("http://{upstream_address}/v1"),
+            )
+            .env("OPENAI_COMPATIBLE_API_KEY", "fixture-key")
+            .env("OPENAI_COMPATIBLE_MODELS", "fixture-model")
+            .env("OPENAI_COMPATIBLE_SUPPORTED_CLIENTS", "opencode")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("start Router");
+        let mut process = RouterProcess(child);
+        let combined = format!("http://127.0.0.1:{combined_port}");
+        let inference = format!("https://127.0.0.1:{inference_port}");
+        if wait_until_ready(&client, &combined, &mut process.0).await
+            && wait_until_ready(&tls_client, &inference, &mut process.0).await
+        {
+            break (process, combined_port, inference_port, combined, inference);
+        }
+    };
 
     let issued = client
         .post(format!("{combined}/api/management/tokens/client"))

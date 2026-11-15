@@ -370,7 +370,13 @@ async fn relay_list(
     )
 }
 
-fn record(state: &AppState, status: StatusCode, sent: u64, body: &[u8], correlation_id: &crate::translation_core::Str) {
+fn record(
+    state: &AppState,
+    status: StatusCode,
+    sent: u64,
+    body: &[u8],
+    correlation_id: &crate::translation_core::Str,
+) {
     state.request_log.record_upstream_body(correlation_id, body);
     state
         .metrics
@@ -378,7 +384,11 @@ fn record(state: &AppState, status: StatusCode, sent: u64, body: &[u8], correlat
     state.metrics.record_bytes(sent, body.len() as u64);
 }
 
-fn resource_path(completion_id: &crate::translation_core::Str, operation: Operation, query: crate::translation_core::Maybe<&crate::translation_core::Str>) -> String {
+fn resource_path(
+    completion_id: &crate::translation_core::Str,
+    operation: Operation,
+    query: crate::translation_core::Maybe<&crate::translation_core::Str>,
+) -> String {
     let query = query.map_or(String::new(), |query| format!("?{query}"));
     format!(
         "/v1/chat/completions/{}{}{query}",
@@ -395,7 +405,9 @@ fn authenticate(
         .map_err(|error| error.render(crate::api_error::ApiDialect::OpenAi))
 }
 
-fn owner(claims: &crate::token::TokenClaims) -> crate::translation_core::Outcome<ResponseOwner, Response> {
+fn owner(
+    claims: &crate::token::TokenClaims,
+) -> crate::translation_core::Outcome<ResponseOwner, Response> {
     ResponseOwner::from_claims(claims)
         .map_err(|error| openai_error(StatusCode::FORBIDDEN, "permission_error", &error))
 }
@@ -431,7 +443,11 @@ fn bad_gateway(message: &crate::translation_core::Str) -> Response {
     openai_error(StatusCode::BAD_GATEWAY, "api_error", message)
 }
 
-fn openai_error(status: StatusCode, error_type: &crate::translation_core::Str, message: &crate::translation_core::Str) -> Response {
+fn openai_error(
+    status: StatusCode,
+    error_type: &crate::translation_core::Str,
+    message: &crate::translation_core::Str,
+) -> Response {
     crate::api_error::PresentedError {
         status,
         error_type,

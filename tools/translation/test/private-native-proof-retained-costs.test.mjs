@@ -2,7 +2,8 @@ import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
 // Explicit synchronous retention of immutable arithmetic DATA, never authority.
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
+import {writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
+import {readProofRetainedCostHistory as readFileSync} from './current-proof-cost-source-history.mjs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {pathToFileURL} from 'node:url';

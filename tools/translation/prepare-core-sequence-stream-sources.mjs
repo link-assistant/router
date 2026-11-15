@@ -4,7 +4,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
-import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
+import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -61,6 +61,7 @@ export function readWrittenCoreSequencePacket(write,root,ordinal){
 const INPUTS=[['tools/translation/source-backed-core-adoption-sequence.mjs','tools/translation/core-sequence-stage-source.mjs'],['tools/translation/source-backed-core-sequence-packets.mjs','tools/translation/core-sequence-stream-packet-io.mjs']];
 const rule=(a,b,id)=>({id,edits:[{span:[0,a.length],expected:a,replacement:b}]});
 export function prepareCoreSequenceStreamSources({root=ROOT}={}){
+ const bindingCandidates=[];
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');const inputs=[],files=[];
  for(const [at,[originalPath,path]]of INPUTS.entries()){
   const before=readFileSync(resolve(root,originalPath),'utf8'),file=ts.createSourceFile(originalPath,before,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
@@ -79,7 +80,7 @@ export function prepareCoreSequenceStreamSources({root=ROOT}={}){
    const literal=schema[0].initializer;after=language.slice(0,literal.getStart(parsed))+JSON.stringify('router-source-backed-core-sequence-stream-packets-v1')+language.slice(literal.end)+IO_HOOK.replace('@ORIGINAL_SOURCE_SHA256@',hash(before));
   }else after=language+"\nimport {readFileSync as readOriginalSequenceStreamSource} from 'node:fs';\n"+STAGE.replace('@ORIGINAL_SOURCE_SHA256@',hash(before));
   const native=ts.createSourceFile(path,after,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(native.parseDiagnostics.length||after.split('\n').length>=1000)fail('complete generated grammar/line budget differs');
-  const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),sequence={languageRules:[rule(before,language,'javascript:copy-complete-original-native-stage-and-packet-helpers')],repositoryRules:[rule(language,after,'router:explicit-stage-lifecycle-and-stream-only-transport-schema')]};
+  const nativeBindings={};bindingCandidates.push({path:resolve(root,path),source:after,result:nativeBindings});const first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),sequence={languageRules:[rule(before,language,'javascript:copy-complete-original-native-stage-and-packet-helpers')],repositoryRules:[rule(language,after,'router:explicit-stage-lifecycle-and-stream-only-transport-schema')]};
   const languageRun=applyConcreteSyntaxSubstitutions(first.document,{languageRules:sequence.languageRules,repositoryRules:[]}),languageMeta=serializeConcreteSyntaxMeta(languageRun.value);if(transportConcreteSyntaxMeta(languageMeta).source!==language)fail('complete native-selected language CST differs');
   const run=applyConcreteSyntaxSubstitutions(first.document,sequence),afterMeta=serializeConcreteSyntaxMeta(run.value);if(transportConcreteSyntaxMeta(afterMeta).source!==after)fail('complete generated CST differs');
   const stages=[{phase:'language',before,after:language,beforeMeta:first.meta,afterMeta:languageMeta},{phase:'repository',before:language,after,beforeMeta:languageMeta,afterMeta}];
@@ -89,6 +90,9 @@ export function prepareCoreSequenceStreamSources({root=ROOT}={}){
   files.push({path,originalPath,before,language,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta:first.meta,afterMeta,inverse:before,sequence,trace:run.trace,stages,selections,nativeBindings});
  }
  for(const input of inputs)if(readFileSync(resolve(root,input.path),'utf8')!==input.source)fail('complete original input changed');
+ // Fresh complete native scope checks precede every returned plan and write.
+ const checkedBindings=verifyNativeCopiedModuleBindings(ts,bindingCandidates);
+ for(let at=0;at<bindingCandidates.length;at++)Object.assign(bindingCandidates[at].result,checkedBindings[at]);
  return {schema:'core-sequence-stream-source-v1',typescriptVersion:ts.version,inputs,files,defaultAPIsUnchanged:true,sourceAuthority:false,semanticAdmission:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){

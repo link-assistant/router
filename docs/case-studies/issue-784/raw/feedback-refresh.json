@@ -1,0 +1,25 @@
+{
+  "checkedAt": "2026-11-07T00:07:24.378083+00:00",
+  "completeLists": [
+    {
+      "path": "docs/case-studies/issue-784/raw/refreshed-issue-comments.json",
+      "count": 0
+    },
+    {
+      "path": "docs/case-studies/issue-784/raw/refreshed-pr-comments.json",
+      "count": 0
+    },
+    {
+      "path": "docs/case-studies/issue-784/raw/refreshed-pr-inline-comments.json",
+      "count": 0
+    },
+    {
+      "path": "docs/case-studies/issue-784/raw/refreshed-pr-reviews.json",
+      "count": 0
+    },
+    {
+      "path": "docs/case-studies/issue-784/raw/refreshed-sub-issues.json",
+      "count": 0
+    }
+  ]
+}

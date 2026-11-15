@@ -1,6 +1,6 @@
 # Current external source receiving boundaries
 
-The private Cargo parser graph controls now relocate every actual relative module
+The private Cargo parser module graph controls now relocate every actual relative module
 import with the installed native parser. The two ordered rule phases retain full
 CST round trips and byte inverses. Resource URLs deliberately remain local so the
 original changed, missing and linked vendor controls still execute. The old

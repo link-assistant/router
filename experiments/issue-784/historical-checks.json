@@ -1,0 +1,134 @@
+[
+  {
+    "label": "historical-node-repaired",
+    "command": [
+      "node",
+      "scripts/run-node-tests.mjs",
+      "--outer-timeout-ms=900000",
+      "--test-concurrency=1",
+      "tools/translation/js-to-rust/test/callback-inputs.test.mjs",
+      "tools/translation/js-to-rust/test/captured-primitives.test.mjs",
+      "tools/translation/js-to-rust/test/closures.test.mjs",
+      "tools/translation/js-to-rust/test/completions.test.mjs",
+      "tools/translation/js-to-rust/test/historical-native-source.test.mjs",
+      "tools/translation/js-to-rust/test/implicit-completion.test.mjs",
+      "tools/translation/js-to-rust/test/scoped-payloads.test.mjs",
+      "tools/translation/js-to-rust/test/sequence-patterns.test.mjs",
+      "tools/translation/js-to-rust/test/source-calls.test.mjs",
+      "tools/translation/js-to-rust/test/source-constructors.test.mjs",
+      "tools/translation/js-to-rust/test/static-native-performance.test.mjs"
+    ],
+    "exitCode": 1,
+    "completeLog": "experiments/issue-784/historical-node-repaired.log"
+  },
+  {
+    "label": "historical-bun-callback-inputs",
+    "command": [
+      "bun",
+      "test",
+      "tools/translation/js-to-rust/test/callback-inputs.test.mjs"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/historical-bun-callback-inputs.log"
+  },
+  {
+    "label": "historical-bun-captured-primitives",
+    "command": [
+      "bun",
+      "test",
+      "tools/translation/js-to-rust/test/captured-primitives.test.mjs"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/historical-bun-captured-primitives.log"
+  },
+  {
+    "label": "historical-bun-closures",
+    "command": [
+      "bun",
+      "test",
+      "tools/translation/js-to-rust/test/closures.test.mjs"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/historical-bun-closures.log"
+  },
+  {
+    "label": "historical-bun-completions",
+    "command": [
+      "bun",
+      "test",
+      "tools/translation/js-to-rust/test/completions.test.mjs"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/historical-bun-completions.log"
+  },
+  {
+    "label": "historical-bun-historical-native-source",
+    "command": [
+      "bun",
+      "test",
+      "tools/translation/js-to-rust/test/historical-native-source.test.mjs"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/historical-bun-historical-native-source.log"
+  },
+  {
+    "label": "historical-bun-implicit-completion",
+    "command": [
+      "bun",
+      "test",
+      "tools/translation/js-to-rust/test/implicit-completion.test.mjs"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/historical-bun-implicit-completion.log"
+  },
+  {
+    "label": "historical-bun-scoped-payloads",
+    "command": [
+      "bun",
+      "test",
+      "tools/translation/js-to-rust/test/scoped-payloads.test.mjs"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/historical-bun-scoped-payloads.log"
+  },
+  {
+    "label": "historical-bun-sequence-patterns",
+    "command": [
+      "bun",
+      "test",
+      "tools/translation/js-to-rust/test/sequence-patterns.test.mjs"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/historical-bun-sequence-patterns.log"
+  },
+  {
+    "label": "historical-bun-source-calls",
+    "command": [
+      "bun",
+      "test",
+      "tools/translation/js-to-rust/test/source-calls.test.mjs"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/historical-bun-source-calls.log"
+  },
+  {
+    "label": "historical-bun-source-constructors",
+    "command": [
+      "bun",
+      "test",
+      "tools/translation/js-to-rust/test/source-constructors.test.mjs"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/historical-bun-source-constructors.log"
+  },
+  {
+    "label": "historical-bun-static-native-performance",
+    "command": [
+      "bun",
+      "test",
+      "tools/translation/js-to-rust/test/static-native-performance.test.mjs"
+    ],
+    "exitCode": 1,
+    "completeLog": "experiments/issue-784/historical-bun-static-native-performance.log"
+  }
+]

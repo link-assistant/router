@@ -1,12 +1,12 @@
-import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-edges.mjs';
+import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-current.mjs';
 import {composeOwnedCorePrivateAnalysisRetention} from './prepare-owned-core-private-analysis-retention.mjs';
-import {composeCoreUnitMatches} from './prepare-core-unit-matches.mjs';
+import {composeCurrentCoreUnitMatches as composeCoreUnitMatches} from './prepare-current-core-unit-unicode.mjs';
 // A private checked identity selects the existing complete Rust-value boundary.
 // General fixed input bounds and arithmetic retain their original guards.
 import {composeCoreAscii} from './prepare-core-ascii-sources.mjs';
 import {composeCoreAsciiReverse} from './prepare-core-ascii-reverse-sources.mjs';
-import {composeCoreAsciiAssets} from './prepare-core-ascii-assets.mjs';
-import {composeCoreAsciiBaseAssets} from './prepare-core-ascii-base-assets.mjs';
+import {composeCoreAsciiAssets} from './prepare-current-core-ascii-assets.mjs';
+import {composeCoreAsciiBaseAssets} from './prepare-current-core-ascii-base-assets.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';

@@ -158,12 +158,12 @@ function rp_61646d696e2e636c616d705f74746c(ttl_hours: Readonly<{ readonly "$": "
   return ml_host_option_map_or((() => {
     const ml_standard_callback_self_1 = ttl_hours as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
     return (() => {
-    const ml_pattern_1 = ml_standard_callback_self_1 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
-    if ((ml_pattern_immutable(ml_pattern_1) && (ml_pattern_1.$ === "Some"))) {
-      const ml_standard_pattern_2 = (ml_pattern_1)["field0"];
+    const ml_pattern_3 = ml_standard_callback_self_1 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
+    if ((ml_pattern_immutable(ml_pattern_3) && (ml_pattern_3.$ === "Some"))) {
+      const ml_standard_pattern_2 = (ml_pattern_3)["field0"];
       if ((() => {
-      const ml_standard_callback_arg_2 = ml_standard_pattern_2;
-      const hours = ml_standard_callback_arg_2;
+      const ml_standard_callback_arg_4 = ml_standard_pattern_2;
+      const hours = ml_standard_callback_arg_4;
       return (hours > 0n);
     })()) {
         return Object.freeze({ $: 'Some', field0: ml_standard_pattern_2 });

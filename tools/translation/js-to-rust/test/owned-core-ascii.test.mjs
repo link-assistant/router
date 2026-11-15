@@ -1,4 +1,5 @@
 import {assertOwnedCorePrivateAnalysisSourceComposition} from '../../test/owned-core-private-analysis-source-composition.mjs';
+import {assertRuntimeImportSourceComposition} from '../../test/runtime-import-source-composition.mjs';
 import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
@@ -15,7 +16,7 @@ import {ownedCoreRuntimeSources,ownedCoreAsciiRuntimeSources} from '../owned-cor
 import {prepareOwnedCoreRuntime,evaluate} from '../interpreter.mjs';
 import {buildOwnedCoreDocumentArtifacts} from '../owned-core-corpus.mjs';
 import {prepareCoreAsciiReverseSources,composeCoreAsciiReverse} from '../../prepare-core-ascii-reverse-sources.mjs';
-import {prepareCurrentCoreAsciiReverseAssets} from '../../prepare-core-ascii-assets.mjs';
+import {prepareCurrentCoreAsciiReverseAssets} from '../../prepare-current-core-ascii-assets.mjs';
 import {transportConcreteSyntaxMeta} from '../../concrete-syntax-meta.mjs';
 import {parseLinks,textOf,writeLink,encodeWord} from '../vendor/lino.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE} from '../../router-core-source-data.mjs';
@@ -38,7 +39,7 @@ function changed(meta,run){const rows=parseLinks(meta).map(row=>({head:row[0],va
 test('reverse ASCII complete current source equations retain native copies CST phases and full inverses',()=>{
  const current=retain('complete-current-reverse-native-source-plan',prepareCurrentCoreAsciiReverseAssets()),plan=retain('complete-reverse-native-source-plan',current.birth);assert.equal(plan.files.length,4);assert.equal(plan.typescriptVersion,'5.9.3');
  for(const row of plan.files){assert.equal(row.current,current.files.find(final=>final.path===row.path).after,row.path);assert.equal(row.beforeSha256,hash(row.before));assert.equal(row.afterSha256,hash(row.after));assert.equal(row.inverse,row.before);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);assert.equal(row.nativeCopies.length,2);assert.ok(row.nativeCopies.every(copy=>copy.completeNativeAstCopy));for(const stage of row.stages){assert.equal(stage.completeInverse,true);assert.deepEqual(stage.trace.map(event=>event.phase),['language','repository']);}}
- assert.equal(current.layers.length,4);assertOwnedCorePrivateAnalysisSourceComposition(current.layers[3],Object.fromEntries(current.layers.slice(0,3).flatMap(layer=>layer.files.map(row=>[row.path,row]))),Object.fromEntries(current.files.map(row=>[row.path,row])));
+ assert.equal(current.layers.length,5);assertOwnedCorePrivateAnalysisSourceComposition(current.layers[3],Object.fromEntries(current.layers.slice(0,3).flatMap(layer=>layer.files.map(row=>[row.path,row]))),Object.fromEntries(current.files.map(row=>[row.path,row])));assertRuntimeImportSourceComposition(current.layers[4],Object.fromEntries(current.layers.slice(0,4).flatMap(layer=>layer.files.map(row=>[row.path,row]))),Object.fromEntries(current.files.map(row=>[row.path,row])));
  const prior=Object.fromEntries(plan.files.map(row=>[row.path,{after:row.before}]));assert.equal(composeCoreAsciiReverse(prior).layers.length,1);assert.throws(()=>composeCoreAsciiReverse({...prior,[plan.files[0].path]:{after:'changed'}}),/preceding complete source/);
  assert.equal(ownedCoreRuntimeSources().some(row=>row.path.endsWith('string-iterator-runtime.mjs')),false);const oldJs="import {json_macro_bool as boolean} from './runtime/json-macro-runtime.mjs';\n/** @param {boolean} value */\nexport function original(value){return boolean(value);}";assert.equal(receive(oldJs,undefined,{ascii:false}).result.program.length,1);
 });

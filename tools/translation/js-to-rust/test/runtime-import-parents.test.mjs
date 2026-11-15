@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {createRequire,syncBuiltinESMExports} from 'node:module';
 import {createHash,Hash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
-import {prepareOwnedRuntimeImportEdges,prepareOwnedRuntimeImportBaseline,prepareOwnedRuntimeImportVisitReceiving,composeOwnedRuntimeImportEdges} from '../../prepare-owned-runtime-import-edges.mjs';
+import {prepareOwnedRuntimeImportEdges,prepareOwnedRuntimeImportBaseline,prepareOwnedRuntimeImportVisitReceiving,composeOwnedRuntimeImportEdges} from '../../prepare-owned-runtime-import-current.mjs';
 import {withOwnedRuntimeImportEdges as scope,ownedRuntimeImportEdgeFacts as facts,ownedCoreRuntimeSources,ownedCoreAsciiRuntimeSources,ownedCoreAsciiBaseRuntimeSources} from '../owned-core-source.mjs';
 import {transportConcreteSyntaxMeta} from '../../concrete-syntax-meta.mjs';
 import {buildArtifacts} from '../../../../scripts/regenerate-js-first.mjs';
@@ -22,7 +22,7 @@ function fallback(observation){assert.equal(nativeAuthority,false);assert.equal(
 function sourceProposal(name,repeat=false){
  const api={prepareOwnedRuntimeImportEdges,prepareOwnedRuntimeImportVisitReceiving}[name];assert.equal(typeof api,'function');if(nativeAuthority)return repeat?[api(),api()]:api();assert.equal(typeof process.versions.bun,'string');
  if(repeat)assert.throws(()=>api(),{name:'TypeError',message:'Owned runtime import source: actual compiler callable source is absent: Debug.shouldLog'});
- const script=`import {gzipSync} from 'node:zlib';import * as source from ${nativeJSON(new URL('../../prepare-owned-runtime-import-edges.mjs',import.meta.url).href)};const run=source[${nativeJSON(name)}];process.stdout.write(gzipSync(JSON.stringify(${repeat?'[run(),run()]':'run()'}),{mtime:0}));`;
+ const script=`import {gzipSync} from 'node:zlib';import * as source from ${nativeJSON(new URL('../../prepare-owned-runtime-import-current.mjs',import.meta.url).href)};const run=source[${nativeJSON(name)}];process.stdout.write(gzipSync(JSON.stringify(${repeat?'[run(),run()]':'run()'}),{mtime:0}));`;
  const packed=execFileSync(process.env.ROUTER_TRANSLATION_NODE??'node',['--input-type=module','--eval',script],{timeout:Math.max(1,Math.min(50000,caseDeadline-now()-5000)),maxBuffer:16*1024*1024,env:{...process.env,ROUTER_NATIVE_TS_SOURCE_ROOT:resolve(fileURLToPath(root))}}),raw=gunzipSync(packed,{maxOutputLength:256*1024*1024}),value=JSON.parse(raw.toString('utf8'));retain('complete-fresh-Node-source-DATA-only',{name,repeat,packedBase64:packed.toString('base64'),rawBytes:raw.length,rawSha256:hash(raw),BunNativeAuthority:false});return value;
 }
 

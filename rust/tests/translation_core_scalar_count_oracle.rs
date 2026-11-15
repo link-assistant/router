@@ -57,9 +57,22 @@ fn existing_json_validation_keeps_wrong_types_and_missing_identifiers_distinct()
     let missing = serde_json::json!({});
     let unicode = serde_json::json!({"metadata": {"user_id": "Ω😀"}});
     let wrong = serde_json::json!({"metadata": 7});
-    assert_eq!(safety_identifier::anthropic_user_id(&missing).unwrap(), None);
-    assert_eq!(safety_identifier::anthropic_user_id(&unicode).unwrap(), Some("Ω😀"));
+    assert_eq!(
+        safety_identifier::anthropic_user_id(&missing).unwrap(),
+        None
+    );
+    assert_eq!(
+        safety_identifier::anthropic_user_id(&unicode).unwrap(),
+        Some("Ω😀")
+    );
     assert!(safety_identifier::anthropic_user_id(&wrong).is_err());
     assert!(safety_identifier::validate_openai_value(Some(&serde_json::Value::Null)).is_ok());
     assert!(safety_identifier::validate_openai_value(Some(&serde_json::json!(7))).is_err());
+    let null_user = serde_json::Value::Null;
+    let unicode_user = serde_json::json!("Ω😀");
+    let wrong_user = serde_json::json!(7);
+    assert!(safety_identifier::validate_openai_user_value(None).is_ok());
+    assert!(safety_identifier::validate_openai_user_value(Some(&null_user)).is_ok());
+    assert!(safety_identifier::validate_openai_user_value(Some(&unicode_user)).is_ok());
+    assert!(safety_identifier::validate_openai_user_value(Some(&wrong_user)).is_err());
 }

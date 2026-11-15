@@ -1,0 +1,1 @@
+Repair complete HEAD-source Display fixture paths after the Rust package move and relocate all five exact private-parser imports in cold receiving tests. Preserve source inverses, hook refusals, strict typed behavior and original deadlines.

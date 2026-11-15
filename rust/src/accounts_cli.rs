@@ -140,7 +140,10 @@ const DEFAULT_PAUSE_REASON: &crate::translation_core::Str = "paused by an operat
 const LOCAL_NOTE: &crate::translation_core::Str = "note: recorded in this machine's data directory; a router started \
      from it applies the change at startup. Pass --server <URL> to change a running router.";
 
-fn pause_message(name: &crate::translation_core::Str, until: crate::translation_core::Maybe<u64>) -> crate::translation_core::Text {
+fn pause_message(
+    name: &crate::translation_core::Str,
+    until: crate::translation_core::Maybe<u64>,
+) -> crate::translation_core::Text {
     until.map_or_else(
         || crate::translation_core::format!("paused {name} until it is resumed"),
         |until| {
@@ -152,7 +155,10 @@ fn pause_message(name: &crate::translation_core::Str, until: crate::translation_
     )
 }
 
-fn resume_message(name: &crate::translation_core::Str, was_paused: bool) -> crate::translation_core::Text {
+fn resume_message(
+    name: &crate::translation_core::Str,
+    was_paused: bool,
+) -> crate::translation_core::Text {
     if was_paused {
         crate::translation_core::format!("resumed {name}")
     } else {
@@ -292,7 +298,12 @@ pub struct AccountRow<'a> {
 pub fn header() -> crate::translation_core::Text {
     crate::translation_core::format!(
         "{:<16}  {:<8}  {:<12}  {:<6}  {:<9}  {:<9}  home",
-        "name", "healthy", "credential", "used", "limit", "remaining"
+        "name",
+        "healthy",
+        "credential",
+        "used",
+        "limit",
+        "remaining"
     )
 }
 

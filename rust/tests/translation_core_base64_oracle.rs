@@ -1,7 +1,7 @@
 //! Independent shared cases for owned base64, including native error identity.
 //! Rust is UNRUN locally in issue #759. CI must first pass same-SHA JavaScript.
 use link_assistant_router::translation_core::{self as core, Base64Error};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 fn vectors() -> Value {
     serde_json::from_str(include_str!(
@@ -45,8 +45,16 @@ fn observe(value: Result<Vec<u8>, Base64Error>, row: &Value) {
         Ok(value) => assert_eq!(json!({"Ok":value}), row["result"], "{name}"),
         Err(error) => {
             assert_eq!(json!({"Err":error_fields(&error)}), row["result"], "{name}");
-            assert_eq!(error.to_string(), row["display"].as_str().unwrap(), "{name}");
-            assert_eq!(format!("{error:?}"), row["debug"].as_str().unwrap(), "{name}");
+            assert_eq!(
+                error.to_string(),
+                row["display"].as_str().unwrap(),
+                "{name}"
+            );
+            assert_eq!(
+                format!("{error:?}"),
+                row["debug"].as_str().unwrap(),
+                "{name}"
+            );
         }
     }
 }
@@ -60,10 +68,22 @@ fn every_concrete_encoder_uses_the_same_complete_shared_bytes() {
         let name = row["name"].as_str().unwrap();
         let standard = row["standard"].as_str().unwrap();
         let url = row["urlNoPad"].as_str().unwrap();
-        assert_eq!(core::base64_standard_encode_bytes(&input), standard, "{name}");
-        assert_eq!(core::base64_standard_encode_owned_bytes(input.clone()), standard, "{name}");
+        assert_eq!(
+            core::base64_standard_encode_bytes(&input),
+            standard,
+            "{name}"
+        );
+        assert_eq!(
+            core::base64_standard_encode_owned_bytes(input.clone()),
+            standard,
+            "{name}"
+        );
         assert_eq!(core::base64_url_no_pad_encode_bytes(&input), url, "{name}");
-        assert_eq!(core::base64_url_no_pad_encode_owned_bytes(input.clone()), url, "{name}");
+        assert_eq!(
+            core::base64_url_no_pad_encode_owned_bytes(input.clone()),
+            url,
+            "{name}"
+        );
         if input.len() == 32 {
             let array: [u8; 32] = input.as_slice().try_into().unwrap();
             assert_eq!(core::base64_url_no_pad_encode_array32(array), url, "{name}");
@@ -76,7 +96,11 @@ fn every_concrete_encoder_uses_the_same_complete_shared_bytes() {
                 row["standardNoPad"].as_str().unwrap(),
                 "{name}"
             );
-            assert_eq!(core::base64_url_no_pad_encode_owned_text(text.to_owned()), url, "{name}");
+            assert_eq!(
+                core::base64_url_no_pad_encode_owned_text(text.to_owned()),
+                url,
+                "{name}"
+            );
         }
     }
 }
@@ -89,12 +113,18 @@ fn all_shared_decode_errors_keep_fields_utf8_offsets_and_native_display_debug() 
         match row["configuration"].as_str().unwrap() {
             "STANDARD" => {
                 observe(core::base64_standard_decode_text(input), row);
-                observe(core::base64_standard_decode_owned_text(input.to_owned()), row);
+                observe(
+                    core::base64_standard_decode_owned_text(input.to_owned()),
+                    row,
+                );
             }
             "STANDARD_NO_PAD" => observe(core::base64_standard_no_pad_decode_text(input), row),
             "URL_SAFE_NO_PAD" => {
                 observe(core::base64_url_no_pad_decode_text(input), row);
-                observe(core::base64_url_no_pad_decode_owned_text(input.to_owned()), row);
+                observe(
+                    core::base64_url_no_pad_decode_owned_text(input.to_owned()),
+                    row,
+                );
             }
             other => panic!("unknown shared configuration: {other}"),
         }
@@ -108,5 +138,8 @@ fn error_alias_keeps_native_question_mark_conversion_identity() {
         Ok(result)
     }
     assert_eq!(actual("Zg==").unwrap(), b"f");
-    assert_eq!(actual("AA=!"), Err(base64::DecodeError::InvalidByte(2, b'=')));
+    assert_eq!(
+        actual("AA=!"),
+        Err(base64::DecodeError::InvalidByte(2, b'='))
+    );
 }

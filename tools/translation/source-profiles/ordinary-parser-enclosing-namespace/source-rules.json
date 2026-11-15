@@ -1,0 +1,18 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/project.mjs",
+  "phase": "repository",
+  "beforeSha256": "7aaa41e1795936c630eadcfc64ccd4c882e713c389b0408f85a63b66edd530fe",
+  "afterSha256": "f4614977214aa63c213330bb3aae131de55c3661410e6ba6ae76ebc7cc7cd164",
+  "edits": [
+    {
+      "id": "router.ordinary-parser-enclosing-namespace.v1",
+      "before": "  const matchesMacroContext=(enclosingNamespace?createEnclosingMatchesMacroContext:createMatchesMacroContext)(matchesOptions);\n  let methodMatchesMacroContext=enclosingNamespace?null:matchesMacroContext;\n",
+      "after": "  // Parser configuration reissues the same enclosing name domain.\n  // Actual impl methods lazily create their independent complete context.\n  const matchesMacroContext=createEnclosingMatchesMacroContext(matchesOptions);\n  let methodMatchesMacroContext=null;\n"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

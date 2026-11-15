@@ -36,7 +36,10 @@ pub const DEFAULT_UPSTREAM_FIRST_BYTE_TIMEOUT_SECS: u64 = DEFAULT_UPSTREAM_READ_
 /// Parse a timeout in whole seconds; `0` disables the bound and an unset or
 /// unparsable value falls back to `default`.
 #[must_use]
-pub fn parse_timeout_secs(value: crate::translation_core::Maybe<&crate::translation_core::Str>, default: u64) -> crate::translation_core::Maybe<Duration> {
+pub fn parse_timeout_secs(
+    value: crate::translation_core::Maybe<&crate::translation_core::Str>,
+    default: u64,
+) -> crate::translation_core::Maybe<Duration> {
     let seconds = value
         .and_then(|value| value.trim().parse::<u64>().ok())
         .unwrap_or(default);
@@ -45,7 +48,9 @@ pub fn parse_timeout_secs(value: crate::translation_core::Maybe<&crate::translat
 
 /// Parse `UPSTREAM_READ_TIMEOUT_SECS`; `0` disables the bound.
 #[must_use]
-pub fn parse_upstream_read_timeout(value: crate::translation_core::Maybe<&crate::translation_core::Str>) -> crate::translation_core::Maybe<Duration> {
+pub fn parse_upstream_read_timeout(
+    value: crate::translation_core::Maybe<&crate::translation_core::Str>,
+) -> crate::translation_core::Maybe<Duration> {
     parse_timeout_secs(value, DEFAULT_UPSTREAM_READ_TIMEOUT_SECS)
 }
 
@@ -153,7 +158,9 @@ pub fn provider_client(default: &reqwest::Client) -> &reqwest::Client {
 ///
 /// # Errors
 /// Returns the refusal, ready to show to the operator.
-pub fn check_provider_base_url(base_url: &crate::translation_core::Str) -> crate::translation_core::Outcome<(), BlockedAddress> {
+pub fn check_provider_base_url(
+    base_url: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<(), BlockedAddress> {
     NetworkPolicy::from_env().check_base_url(base_url)
 }
 

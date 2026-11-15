@@ -6,7 +6,7 @@
 use axum::extract::State;
 use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
-use serde_json::{Value, json};
+use serde_json::Value;
 
 use crate::proxy::AppState;
 use crate::route_contract::{RouteId, route_template};
@@ -15,7 +15,10 @@ const ACTIVITY_JSON: &crate::translation_core::Str = "application/activity+json"
 
 /// Build the public actor representation for this router instance.
 #[must_use]
-pub fn actor_document(actor_base_url: &crate::translation_core::Str, public_key_pem: &crate::translation_core::Str) -> crate::translation_core::Json {
+pub fn actor_document(
+    actor_base_url: &crate::translation_core::Str,
+    public_key_pem: &crate::translation_core::Str,
+) -> crate::translation_core::Json {
     let base = actor_base_url.trim_end_matches('/');
     let actor = activitypub_url(base, RouteId::ActivityPubActor);
     crate::translation_core::json!({
@@ -42,7 +45,9 @@ pub fn actor_document(actor_base_url: &crate::translation_core::Str, public_key_
 
 /// Build an ordered collection for the local actor outbox.
 #[must_use]
-pub fn outbox_document(actor_base_url: &crate::translation_core::Str) -> crate::translation_core::Json {
+pub fn outbox_document(
+    actor_base_url: &crate::translation_core::Str,
+) -> crate::translation_core::Json {
     let base = actor_base_url.trim_end_matches('/');
     crate::translation_core::json!({
         "@context": activitypub_context(),
@@ -55,7 +60,9 @@ pub fn outbox_document(actor_base_url: &crate::translation_core::Str) -> crate::
 
 /// Build an ordered collection for followers.
 #[must_use]
-pub fn followers_document(actor_base_url: &crate::translation_core::Str) -> crate::translation_core::Json {
+pub fn followers_document(
+    actor_base_url: &crate::translation_core::Str,
+) -> crate::translation_core::Json {
     let base = actor_base_url.trim_end_matches('/');
     crate::translation_core::json!({
         "@context": activitypub_context(),
@@ -68,7 +75,9 @@ pub fn followers_document(actor_base_url: &crate::translation_core::Str) -> crat
 
 /// Build a Follow activity targeting the public problemsets actor.
 #[must_use]
-pub fn follow_problemsets_activity(actor_base_url: &crate::translation_core::Str) -> crate::translation_core::Json {
+pub fn follow_problemsets_activity(
+    actor_base_url: &crate::translation_core::Str,
+) -> crate::translation_core::Json {
     let base = actor_base_url.trim_end_matches('/');
     crate::translation_core::json!({
         "@context": activitypub_context(),
@@ -85,10 +94,15 @@ fn activitypub_url(base: &crate::translation_core::Str, route: RouteId) -> Strin
 }
 
 /// Validate the minimum fields required for an inbound `ActivityStreams` object.
-pub fn validate_activity(activity: &crate::translation_core::Json) -> crate::translation_core::Outcome<(), &'static crate::translation_core::Str> {
+pub fn validate_activity(
+    activity: &crate::translation_core::Json,
+) -> crate::translation_core::Outcome<(), &'static crate::translation_core::Str> {
     require_string(activity, "id")?;
     require_string(activity, "type")?;
-    if activity.get("actor").and_then(crate::translation_core::Json::as_str).is_none()
+    if activity
+        .get("actor")
+        .and_then(crate::translation_core::Json::as_str)
+        .is_none()
         && activity
             .get("attributedTo")
             .and_then(crate::translation_core::Json::as_str)
@@ -196,6 +210,7 @@ fn require_string<'a>(activity: &'a Value, field: &'static str) -> Result<&'a st
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     const BASE: &str = "https://router.example";
     const KEY: &str = "-----BEGIN PUBLIC KEY-----\nabc\n-----END PUBLIC KEY-----";

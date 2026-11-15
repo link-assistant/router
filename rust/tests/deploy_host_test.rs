@@ -14,6 +14,9 @@ use std::path::{Path, PathBuf};
 use std::process::Output;
 
 mod common;
+#[path = "support/free_port.rs"]
+mod free_port;
+use free_port::free_port;
 
 const SECRET: &str = "deploy-host-test-secret";
 
@@ -82,14 +85,6 @@ impl Drop for Host {
                 .status();
         }
     }
-}
-
-fn free_port() -> u16 {
-    std::net::TcpListener::bind(("127.0.0.1", 0))
-        .unwrap()
-        .local_addr()
-        .unwrap()
-        .port()
 }
 
 fn issue_token(home: &Path, data: &Path) -> String {

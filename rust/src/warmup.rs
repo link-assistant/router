@@ -27,7 +27,11 @@ pub fn is_warmup_request(body: &crate::translation_core::Json) -> bool {
     else {
         return false;
     };
-    if message.get("role").and_then(crate::translation_core::Json::as_str) != Some("user") {
+    if message
+        .get("role")
+        .and_then(crate::translation_core::Json::as_str)
+        != Some("user")
+    {
         return false;
     }
     let text = match message.get("content") {
@@ -35,7 +39,11 @@ pub fn is_warmup_request(body: &crate::translation_core::Json) -> bool {
         Some(crate::translation_core::Json::Array(blocks)) if !blocks.is_empty() => {
             let mut text = String::new();
             for block in blocks {
-                if block.get("type").and_then(crate::translation_core::Json::as_str) != Some("text") {
+                if block
+                    .get("type")
+                    .and_then(crate::translation_core::Json::as_str)
+                    != Some("text")
+                {
                     return false;
                 }
                 text.push_str(
@@ -111,7 +119,10 @@ fn sse_response(message: &crate::translation_core::Json) -> Response {
                    "delta": {"stop_reason": "end_turn", "stop_sequence": null},
                    "usage": {"output_tokens": 0}}),
         ),
-        ("message_stop", crate::translation_core::json!({"type": "message_stop"})),
+        (
+            "message_stop",
+            crate::translation_core::json!({"type": "message_stop"}),
+        ),
     ];
     let mut text = String::new();
     for (event, data) in &events {

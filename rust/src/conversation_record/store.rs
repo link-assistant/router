@@ -155,7 +155,10 @@ pub fn load(path: &PathBuf) -> crate::translation_core::Outcome<Recording, LoadE
         let Some(record) = crate::lino_json::decode_line(line) else {
             continue;
         };
-        match record.get("phase").and_then(crate::translation_core::Json::as_str) {
+        match record
+            .get("phase")
+            .and_then(crate::translation_core::Json::as_str)
+        {
             Some(HEADER_PHASE) => provenance = Some(read_provenance(&record)),
             Some(TURN_PHASE) => {
                 if let Some(turn) = read_turn(&record, turns.len() + 1) {
@@ -177,7 +180,10 @@ fn read_provenance(record: &crate::translation_core::Json) -> Provenance {
     }
 }
 
-fn string_field(record: &crate::translation_core::Json, name: &crate::translation_core::Str) -> String {
+fn string_field(
+    record: &crate::translation_core::Json,
+    name: &crate::translation_core::Str,
+) -> String {
     record
         .get(name)
         .and_then(crate::translation_core::Json::as_str)
@@ -190,7 +196,10 @@ fn string_field(record: &crate::translation_core::Json, name: &crate::translatio
 /// The recorded `turn` field is informational: replay counts positions itself,
 /// so a hand-edited recording with a wrong number still replays in file order
 /// rather than silently skipping or repeating an exchange.
-fn read_turn(record: &crate::translation_core::Json, position: usize) -> crate::translation_core::Maybe<Turn> {
+fn read_turn(
+    record: &crate::translation_core::Json,
+    position: usize,
+) -> crate::translation_core::Maybe<Turn> {
     let request = record.get("request")?.clone();
     let response = record.get("response")?;
     let status = u16::try_from(response.get("status")?.as_u64()?).ok()?;

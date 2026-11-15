@@ -49,8 +49,11 @@ pub fn is_placeholder(secret: &crate::translation_core::Str) -> bool {
 /// only invite the question of which one is the real problem.
 #[must_use]
 pub fn refusal() -> crate::translation_core::Text {
-    crate::translation_core::format!("{}", "TOKEN_SECRET environment variable is required: this command signs or encrypts on this \
-     machine, and no signing secret was supplied")
+    crate::translation_core::format!(
+        "{}",
+        "TOKEN_SECRET environment variable is required: this command signs or encrypts on this \
+     machine, and no signing secret was supplied"
+    )
 }
 
 /// Refuse a stand-in before anything is signed or encrypted.
@@ -58,7 +61,9 @@ pub fn refusal() -> crate::translation_core::Text {
 /// # Errors
 ///
 /// Returns [`refusal`] when `secret` is a stand-in.
-pub fn ensure_real(secret: &crate::translation_core::Str) -> crate::translation_core::Outcome<(), String> {
+pub fn ensure_real(
+    secret: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<(), String> {
     if is_placeholder(secret) {
         return Err(refusal());
     }
@@ -96,7 +101,9 @@ pub fn read_file(path: &std::path::Path) -> crate::translation_core::Outcome<Str
 /// # Errors
 ///
 /// When `TOKEN_SECRET_FILE` is set and cannot supply a secret.
-pub fn or_from_file(secret: crate::translation_core::Maybe<String>) -> crate::translation_core::Outcome<crate::translation_core::Maybe<String>, String> {
+pub fn or_from_file(
+    secret: crate::translation_core::Maybe<String>,
+) -> crate::translation_core::Outcome<crate::translation_core::Maybe<String>, String> {
     if secret.as_deref().is_some_and(|secret| !secret.is_empty()) {
         return Ok(secret);
     }

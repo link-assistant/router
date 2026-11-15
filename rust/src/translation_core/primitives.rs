@@ -8,7 +8,7 @@
 pub type Str = ::std::primitive::str;
 
 /// JSON values use the registered immutable checked representation in translation.
-/// The serde_json implementation remains an untranslated native dependency.
+/// The `serde_json` implementation remains an untranslated native dependency.
 pub type Json = ::serde_json::Value;
 
 /// Optional values retain Rust's ordinary variant, borrowing and Drop behavior.
@@ -32,7 +32,8 @@ pub fn json_copy(value: &Json) -> Json {
 }
 
 /// Set a string key on an owned object (or promote Null to an object).
-/// Non-object, non-null bases panic, matching serde_json string indexing.
+///
+/// Non-object, non-null bases panic, matching `serde_json` string indexing.
 /// Arguments evaluate once, left to right. Allocation/Drop internals remain
 /// untranslated; translation admits bounded successful-resource projections.
 #[must_use]
@@ -51,7 +52,7 @@ pub fn json_index_str<'a>(value: &'a Json, key: &Str) -> &'a Json {
 /// Read an array position; absent positions and non-arrays return JSON Null.
 /// The returned reference borrows only `value`.
 #[must_use]
-pub fn json_index_usize<'a>(value: &'a Json, index: usize) -> &'a Json {
+pub fn json_index_usize(value: &Json, index: usize) -> &Json {
     &value[index]
 }
 
@@ -66,9 +67,10 @@ pub fn json_map_index<'a>(
 }
 
 /// Decode canonical JSON text, discarding only the native parser's error value.
+///
 /// Successful JSON null is `Some(Json::Null)`, distinct from invalid JSON.
 /// The checked translation uses its bounded, source-selected roundtrip adapter;
-/// native serde_json allocation, parser and error Drop internals stay untranslated.
+/// native `serde_json` allocation, parser and error Drop internals stay untranslated.
 #[must_use]
 pub fn json_parse(value: &Str) -> Maybe<Json> {
     ::serde_json::from_str::<Json>(value).ok()
@@ -82,9 +84,25 @@ pub fn json_parse_bytes(value: &[u8]) -> Maybe<Json> {
 }
 
 /// Test every UTF-8 byte against an ASCII alphabet, including vacuous empty input.
+///
 /// Non-ASCII alphabet characters never permit a non-ASCII input byte.
 /// Both arguments evaluate once, left to right; native iterator internals stay untranslated.
 #[must_use]
 pub fn ascii_chars_in(value: &Str, alphabet: &Str) -> bool {
-    value.bytes().all(|byte| byte.is_ascii() && alphabet.as_bytes().contains(&byte))
+    value
+        .bytes()
+        .all(|byte| byte.is_ascii() && alphabet.as_bytes().contains(&byte))
+}
+
+/// Remove exactly Rust Unicode `White_Space` scalars, retaining all other scalars.
+/// Native iterator and String collection internals remain untranslated.
+#[must_use]
+pub fn strip_unicode_whitespace(value: &Str) -> String {
+    value.chars().filter(|ch| !ch.is_whitespace()).collect()
+}
+
+/// Detect Rust Unicode `General_Category=Cc` without exposing a char iterator.
+#[must_use]
+pub fn has_unicode_control(value: &Str) -> bool {
+    value.chars().any(char::is_control)
 }

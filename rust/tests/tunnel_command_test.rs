@@ -307,15 +307,16 @@ fn up_refuses_an_unpinned_host_key_and_a_wrong_token_fails_the_check() {
 #[test]
 fn an_up_that_never_answers_leaves_nothing_running() {
     let harness = Harness::new();
-    let unused = std::net::TcpListener::bind(("127.0.0.1", 0)).unwrap();
-    let port = unused.local_addr().unwrap().port().to_string();
-    drop(unused);
+    // Nothing listens on port 1, so the forward never answers. A reserved and
+    // dropped ephemeral port could be bound again by a parallel test's mock,
+    // which would answer for it.
+    let port = "1";
     let known = known(&harness);
     let target = [
         "--server",
         "router@far.example",
         "--local-port",
-        &port,
+        port,
         "--ssh-known-hosts",
         &known,
     ];

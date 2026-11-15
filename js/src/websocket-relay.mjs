@@ -2,14 +2,32 @@ import {request as httpRequest} from 'node:http';
 import {request as httpsRequest} from 'node:https';
 import {createHash,randomBytes} from 'node:crypto';
 import {ProtocolError,normalizeUsage} from './protocols.mjs';
+import {sanitizeGeolocation,sharesGeolocation} from './geolocation.mjs';
 const guid='258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 const accept = key => createHash('sha1').update(key+guid).digest('base64');
+/** Encode one complete bounded message after inspection, with a fresh client mask. */
+export function encodeWebSocketFrame(opcode,payload,masked=true) {
+  const prefix=payload.length<126 ? 2:payload.length<=65535 ? 4:10;
+  const header=Buffer.alloc(prefix+(masked?4:0));header[0]=0x80|opcode;
+  header[1]=(masked?0x80:0)|(prefix===2 ? payload.length:prefix===4 ? 126:127);
+  if(prefix===4)header.writeUInt16BE(payload.length,2);
+  if(prefix===10)header.writeBigUInt64BE(BigInt(payload.length),2);
+  const body=Buffer.from(payload);
+  if(masked){const mask=randomBytes(4);mask.copy(header,prefix);for(let i=0;i<body.length;i++)body[i]^=mask[i%4];}
+  return Buffer.concat([header,body]);
+}
+
+export function privateWebSocketPayload(opcode,payload,share=false) {
+  if(opcode !== 1 || share)return payload;
+  let value;try{value=JSON.parse(payload.toString('utf8'));}catch{return payload;}
+  return sanitizeGeolocation(value) ? Buffer.from(JSON.stringify(value)):payload;
+}
 const closeFrame = (code,reason,masked=false) => {
   const text=Buffer.from(reason).subarray(0,123),payload=Buffer.alloc(2+text.length);payload.writeUInt16BE(code);text.copy(payload,2);
   if(!masked)return Buffer.concat([Buffer.from([0x88,payload.length]),payload]);
   const mask=randomBytes(4);for(let i=0;i<payload.length;i++)payload[i]^=mask[i%4];return Buffer.concat([Buffer.from([0x88,0x80|payload.length]),mask,payload]);
 };
-/** Inspect one bounded RFC6455 message while preserving original frame bytes. */
+/** Inspect complete bounded RFC6455 messages and interleaved control frames. */
 export class WebSocketInspector {
   constructor({masked,maxMessageBytes=4*1024*1024,onMessage=()=>{}}) {this.masked=masked;this.limit=maxMessageBytes;this.onMessage=onMessage;this.buffer=Buffer.alloc(0);this.parts=[];this.size=0;this.opcode=null;}
   async feed(chunk) {
@@ -45,6 +63,7 @@ export async function relayWebSocket(incoming,downstream,head,{target,authorize,
   if(typeof key !== 'string' || !/^[A-Za-z0-9+/]{22}==$/.test(key) || incoming.headers['sec-websocket-version'] !== '13'){reject(downstream,400,'Invalid WebSocket handshake');return;}
   let binding;try{binding=await target();}catch(error){reject(downstream,error.status ?? 500,error.message);return;}
   const {url,headers,claims}=binding,upstreamKey=randomBytes(16).toString('base64');
+  const shareGeolocation=sharesGeolocation(new Headers(incoming.headers));
   const options={method:'GET',headers:{...Object.fromEntries(headers),connection:'Upgrade',upgrade:'websocket','sec-websocket-key':upstreamKey,'sec-websocket-version':'13'},timeout:timeoutMs};
   let connecting=true;
   const request=(url.protocol === 'https:' ? httpsRequest:httpRequest)(url,options);
@@ -63,14 +82,16 @@ export async function relayWebSocket(incoming,downstream,head,{target,authorize,
     const tokenId=claims.sub ?? claims.id;
     const stop=async (code,reason) => {if(closed)return;closed=true;downstream.end(closeFrame(code,reason));upstream.end(closeFrame(code,reason,true));while(inFlight>0){inFlight--;await core.tokens?.settle?.(tokenId,0,0);}};
     const fromClient=new WebSocketInspector({masked:true,maxMessageBytes,onMessage:async(opcode,payload)=>{
-      if(opcode !== 1)return;
-      let event;try{event=JSON.parse(payload.toString('utf8'));}catch{return;}
-      if(event.type !== 'response.create')return;
-      const model=event.response?.model ?? event.model;
-      const allowed=claims.record?.model_policy?.allowed_models ?? [];
-      if(allowed.length && (!model || !allowed.includes(model)))throw new ProtocolError(model?'model_not_allowed':'model_required',403);
-      if(model)await authorize(model);
-      if(tokenId && core.tokens?.admit){const admitted=await core.tokens.admit(tokenId,0);if(admitted === false || typeof admitted === 'string' && admitted !== 'admitted')throw new ProtocolError('Router token budget is exhausted',429);inFlight++;}
+      let event;try{if(opcode===1)event=JSON.parse(payload.toString('utf8'));}catch{/* Preserve non-JSON text. */}
+      if(event?.type === 'response.create') {
+        const model=event.response?.model ?? event.model;
+        const allowed=claims.record?.model_policy?.allowed_models ?? [];
+        if(allowed.length && (!model || !allowed.includes(model)))throw new ProtocolError(model?'model_not_allowed':'model_required',403);
+        if(model)await authorize(model);
+        if(tokenId && core.tokens?.admit){const admitted=await core.tokens.admit(tokenId,0);if(admitted === false || typeof admitted === 'string' && admitted !== 'admitted')throw new ProtocolError('Router token budget is exhausted',429);inFlight++;}
+      }
+      const frame=encodeWebSocketFrame(opcode,privateWebSocketPayload(opcode,payload,shareGeolocation));
+      if(!upstream.write(frame))await new Promise(resolve=>upstream.once('drain',resolve));
     }});
     const fromUpstream=new WebSocketInspector({masked:false,maxMessageBytes,onMessage:async(opcode,payload)=>{
       if(opcode !== 1)return;let event;try{event=JSON.parse(payload.toString('utf8'));}catch{return;}
@@ -78,12 +99,16 @@ export async function relayWebSocket(incoming,downstream,head,{target,authorize,
       completed.add(response.id);if(completed.size>10000)throw new ProtocolError('WebSocket response identity limit exceeded',413);
       const usage=normalizeUsage(response.usage);if(tokenId)await core.tokens?.settle?.(tokenId,0,usage.total);if(inFlight>0)inFlight--;
     }});
-    const forward=(source,sink,inspector,initial)=>{
+    const forward=(source,sink,inspector,initial,raw=true)=>{
       let pending=Promise.resolve();
-      const consume=chunk=>{source.pause();pending=pending.then(async()=>{if(closed)return;await inspector.feed(chunk);if(!sink.write(chunk))await new Promise(resolve=>sink.once('drain',resolve));source.resume();}).catch(()=>stop(1008,'Router rejected WebSocket message'));};
-      source.on('data',consume);source.once('end',()=>{sink.end();});source.once('error',()=>stop(1011,'WebSocket peer disconnected'));source.once('close',()=>{sink.destroy();});if(initial.length)consume(initial);
+      const consume=chunk=>{source.pause();pending=pending.then(async()=>{if(closed)return;await inspector.feed(chunk);if(raw && !sink.write(chunk))await new Promise(resolve=>sink.once('drain',resolve));source.resume();}).catch(()=>stop(1008,'Router rejected WebSocket message'));};
+      source.on('data',consume);
+      source.once('end',()=>{pending=pending.then(()=>sink.end());});
+      source.once('error',()=>stop(1011,'WebSocket peer disconnected'));
+      source.once('close',()=>{if(!source.readableEnded)void pending.then(()=>sink.destroy());});
+      if(initial.length)consume(initial);
     };
-    forward(downstream,upstream,fromClient,head);forward(upstream,downstream,fromUpstream,upstreamHead);
+    forward(downstream,upstream,fromClient,head,false);forward(upstream,downstream,fromUpstream,upstreamHead);
   });
   request.end();
 }

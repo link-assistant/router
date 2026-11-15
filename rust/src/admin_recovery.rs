@@ -108,9 +108,12 @@ pub fn recover(
     let existing_admins = admin_token_ids(store)?;
     let token = manager
         .issue_admin_token(ttl_hours, label)
-        .map_err(|error| crate::translation_core::format!("could not sign a replacement admin token: {error}"))?;
-    let token_id = crate::managed_server::token_subject(&token)
-        .map_err(|error| crate::translation_core::format!("could not read the minted token's subject: {error}"))?;
+        .map_err(|error| {
+            crate::translation_core::format!("could not sign a replacement admin token: {error}")
+        })?;
+    let token_id = crate::managed_server::token_subject(&token).map_err(|error| {
+        crate::translation_core::format!("could not read the minted token's subject: {error}")
+    })?;
 
     let mut revoked = Vec::new();
     if revoke_others {
@@ -118,9 +121,11 @@ pub fn recover(
         // takes the keeper's id and would also retire anything minted between
         // the two calls. The set to retire is the one observed before minting.
         for id in &existing_admins {
-            store
-                .revoke(id)
-                .map_err(|error| crate::translation_core::format!("minted {token_id} but could not revoke {id}: {error}"))?;
+            store.revoke(id).map_err(|error| {
+                crate::translation_core::format!(
+                    "minted {token_id} but could not revoke {id}: {error}"
+                )
+            })?;
             revoked.push(id.clone());
         }
     }
@@ -139,9 +144,9 @@ pub fn recover(
 /// Ids of unexpired, unrevoked admin tokens currently in the store.
 fn admin_token_ids(store: &Arc<dyn TokenStore>) -> Result<Vec<String>, String> {
     let now = crate::operation_context::now().timestamp();
-    let records = store
-        .list()
-        .map_err(|error| crate::translation_core::format!("could not read the token store: {error}"))?;
+    let records = store.list().map_err(|error| {
+        crate::translation_core::format!("could not read the token store: {error}")
+    })?;
     Ok(records
         .into_iter()
         .filter(|record| {

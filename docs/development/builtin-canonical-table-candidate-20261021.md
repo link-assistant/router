@@ -4,7 +4,7 @@ The complete original CatalogRecord test remains over its unchanged 60-second
 deadline. The earlier negative-budget default trial did not qualify: its v6
 CatalogRecord case took 88,028.170667 ms. Production therefore retains the
 original serializer and metadata codec. This separate source draft targets
-the metadata decoder's final full graph re-encoding; it has no default install
+the metadata decoder's final full object graph re-encoding; it has no default install
 and makes no performance claim.
 
 `prepare-builtin-canonical-table.mjs` reads and pins the actual complete original
@@ -20,7 +20,7 @@ removing its two additions. The original physical codec remains unchanged.
 
 The copied decoder still parses, validates, reconstructs and freezes every
 original node in its original order. At its final check, the candidate walks
-the already parsed table, rather than the reconstructed value graph. A positive
+the already parsed table, rather than the reconstructed object graph. A positive
 result requires all of the following:
 
 - First-reachable DFS postorder exactly matches every table index, with no
@@ -101,7 +101,7 @@ The eight complete 60-second receiving cases cover full values/aliases/frozen
 descriptors, noncanonical and malformed tables, original depth/cell/byte
 boundaries, complete JSON/freeze/Hash observations, every listed operation
 hook, intrinsic changes during byte-length and freeze callbacks, mutable inputs
-and repeated 256-node graphs. Actual candidate-selection counters distinguish
+and repeated 256-node object graphs. Actual candidate-selection counters distinguish
 successful optimization from fallback. The complete original codec, native
 consumer and twelve-case derive files remain required receiving checks.
 

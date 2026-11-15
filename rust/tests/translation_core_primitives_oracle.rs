@@ -2,6 +2,10 @@
 //! Run in CI after the complete JavaScript gate for the same source revision.
 //! These native tests do not claim that named lifetime syntax is translated.
 
+// The borrowed-text signatures, including the explicit named lifetime, are the
+// shapes under test.
+#![allow(clippy::missing_const_for_fn, clippy::needless_lifetimes)]
+
 use link_assistant_router::translation_core::Str;
 
 fn identity(value: &Str) -> &Str {

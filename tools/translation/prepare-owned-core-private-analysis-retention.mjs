@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
-import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+import {transportConcreteNamedSourcePhases} from './concrete-source-origin-phases.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const PATH='tools/translation/js-to-rust/owned-core-operations.mjs';
 const ARCHIVE=new URL('./source-profiles/owned-core-private-analysis-retention/original.json.gz',import.meta.url);
@@ -64,18 +64,11 @@ function stage(before,after,id){return {id,edits:[{span:[0,before.length],expect
 export function prepareOwnedCorePrivateAnalysisRetention({root=ROOT}={}){
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');const birth=original(),before=birth.source,derived=derive(ts,before),{language,after}=derived;
  const current=readFileSync(resolve(root,PATH),'utf8');if(current!==before&&current!==after)fail('complete current source equation differs');
- const first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),beforeMeta=serializeConcreteSyntaxMeta(first.document),stages=[];let document=first.document;
- for(const [phase,left,right]of [['language',before,language],['repository',language,after]]){
-  const wire=serializeConcreteSyntaxMeta(document),fresh=transportConcreteSyntaxMeta(wire);if(fresh.source!==left)fail('complete phase input differs');
-  const run=applyConcreteSyntaxSubstitutions(fresh.document,{languageRules:phase==='language'?[stage(left,right,'javascript:retain-existing-private-analysis')]:[],repositoryRules:phase==='repository'?[stage(left,right,'router:preserve-complete-operations-source')]:[]}),afterMeta=serializeConcreteSyntaxMeta(run.value),last=transportConcreteSyntaxMeta(afterMeta);
-  if(last.source!==right)fail('complete phase output differs');
-  const undo=applyConcreteSyntaxSubstitutions(last.document,{languageRules:phase==='language'?[stage(right,left,'javascript:restore-second-private-copy')]:[],repositoryRules:phase==='repository'?[stage(right,left,'router:restore-complete-operations-source')]:[]});
-  if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(undo.value)).source!==left)fail('complete phase inverse differs');
-  stages.push({phase,before:left,after:right,beforeMeta:wire,afterMeta,trace:run.trace,completeInverse:true});document=last.document;
- }
- const nativeCopies=[nativeCopy(ts,before),nativeCopy(ts,after)];
+ const [equation]=transportConcreteNamedSourcePhases([{before,middle:language,after,language:'JavaScript',rules:["javascript:retain-existing-private-analysis","router:preserve-complete-operations-source","javascript:restore-second-private-copy","router:restore-complete-operations-source"]}]);
+ const beforeMeta=equation.beforeMeta,afterMeta=equation.afterMeta,stages=equation.stages.map(({phase,before,after,beforeMeta,afterMeta,trace})=>({phase,before,after,beforeMeta,afterMeta,trace,completeInverse:true}));
+  const nativeCopies=[nativeCopy(ts,before),nativeCopy(ts,after)];
  if(readFileSync(resolve(root,PATH),'utf8')!==current)fail('complete physical source changed during proposal');
- const row={path:PATH,before,language,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta,afterMeta:serializeConcreteSyntaxMeta(document),inverse:before,stages,trace:stages.flatMap(row=>row.trace),nativeCopies,completeNativeAstCopy:true,sourceLanguage:'JavaScript',selection:derived.selection};
+ const row={path:PATH,before,language,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta,afterMeta,inverse:before,stages,trace:stages.flatMap(row=>row.trace),nativeCopies,completeNativeAstCopy:true,sourceLanguage:'JavaScript',selection:derived.selection};
  if(!readFileSync(ARCHIVE).equals(birth.archiveBytes))fail('complete original archive changed during proposal');
  if(readFileSync(resolve(root,PATH),'utf8')!==current)fail('complete physical source changed at final source/hash join');
  return {schema:'owned-core-private-analysis-retention-source-v1',typescriptVersion:ts.version,files:[row],defaultAdoption:true,freshAnalysisCopiesBefore:2,freshAnalysisCopiesAfter:1,sourceChecksUnchanged:true,hashCallbacksUnchanged:true,sourceAuthority:false,runtimeAuthority:false,runtimeExecuted:false,rustExecuted:false};

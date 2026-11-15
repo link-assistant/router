@@ -1,0 +1,9 @@
+{
+  "schema": "project-facade-retention-original-v1",
+  "path": "tools/translation/project.mjs",
+  "bytes": 68243,
+  "sha256": "6d4f79faba62027fa5d3d1b733d99e309a5ae3981f6043bea4842cc58b75d7a0",
+  "archive": "original.mjs.gz",
+  "archiveBytes": 16460,
+  "archiveSha256": "0f6928dff1fcd34b11a12ff8e3da2a5d6bb11c3c4c2842d3e54683485de45b5e"
+}

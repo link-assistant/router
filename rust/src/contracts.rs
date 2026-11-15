@@ -126,7 +126,9 @@ pub fn document() -> crate::translation_core::Json {
 
 /// Canonical operation name for an already-parsed library request.
 #[must_use]
-pub fn operation_name(command: crate::translation_core::Maybe<&Command>) -> crate::translation_core::Text {
+pub fn operation_name(
+    command: crate::translation_core::Maybe<&Command>,
+) -> crate::translation_core::Text {
     fn name(debug: &str) -> String {
         let first = debug.split([' ', '{', '(']).next().unwrap_or_default();
         let mut result = String::new();
@@ -143,19 +145,52 @@ pub fn operation_name(command: crate::translation_core::Maybe<&Command>) -> crat
         Some(Command::Version) => "version".into(),
         Some(Command::Contracts) => "contracts".into(),
         Some(Command::Verify(_)) => "verify".into(),
-        Some(Command::Tokens { op }) => crate::translation_core::format!("tokens.{}", name(&crate::translation_core::format!("{op:?}"))),
-        Some(Command::Accounts { op }) => crate::translation_core::format!("accounts.{}", name(&crate::translation_core::format!("{op:?}"))),
-        Some(Command::Providers { op }) => crate::translation_core::format!("providers.{}", name(&crate::translation_core::format!("{op:?}"))),
+        Some(Command::Tokens { op }) => crate::translation_core::format!(
+            "tokens.{}",
+            name(&crate::translation_core::format!("{op:?}"))
+        ),
+        Some(Command::Accounts { op }) => crate::translation_core::format!(
+            "accounts.{}",
+            name(&crate::translation_core::format!("{op:?}"))
+        ),
+        Some(Command::Providers { op }) => crate::translation_core::format!(
+            "providers.{}",
+            name(&crate::translation_core::format!("{op:?}"))
+        ),
         Some(Command::Clients {
             op: crate::cli::ClientOp::Backup { op },
-        }) => crate::translation_core::format!("clients.backup.{}", name(&crate::translation_core::format!("{op:?}"))),
-        Some(Command::Clients { op }) => crate::translation_core::format!("clients.{}", name(&crate::translation_core::format!("{op:?}"))),
-        Some(Command::Models { op }) => crate::translation_core::format!("models.{}", name(&crate::translation_core::format!("{op:?}"))),
-        Some(Command::Server { op }) => crate::translation_core::format!("server.{}", name(&crate::translation_core::format!("{op:?}"))),
-        Some(Command::Auth { op }) => crate::translation_core::format!("auth.{}", name(&crate::translation_core::format!("{op:?}"))),
-        Some(Command::Tls { op }) => crate::translation_core::format!("tls.{}", name(&crate::translation_core::format!("{op:?}"))),
-        Some(Command::Logs { op }) => crate::translation_core::format!("logs.{}", name(&crate::translation_core::format!("{op:?}"))),
-        Some(Command::Tunnel(args)) => crate::translation_core::format!("tunnel.{}", name(&crate::translation_core::format!("{:?}", args.op))),
+        }) => crate::translation_core::format!(
+            "clients.backup.{}",
+            name(&crate::translation_core::format!("{op:?}"))
+        ),
+        Some(Command::Clients { op }) => crate::translation_core::format!(
+            "clients.{}",
+            name(&crate::translation_core::format!("{op:?}"))
+        ),
+        Some(Command::Models { op }) => crate::translation_core::format!(
+            "models.{}",
+            name(&crate::translation_core::format!("{op:?}"))
+        ),
+        Some(Command::Server { op }) => crate::translation_core::format!(
+            "server.{}",
+            name(&crate::translation_core::format!("{op:?}"))
+        ),
+        Some(Command::Auth { op }) => crate::translation_core::format!(
+            "auth.{}",
+            name(&crate::translation_core::format!("{op:?}"))
+        ),
+        Some(Command::Tls { op }) => crate::translation_core::format!(
+            "tls.{}",
+            name(&crate::translation_core::format!("{op:?}"))
+        ),
+        Some(Command::Logs { op }) => crate::translation_core::format!(
+            "logs.{}",
+            name(&crate::translation_core::format!("{op:?}"))
+        ),
+        Some(Command::Tunnel(args)) => crate::translation_core::format!(
+            "tunnel.{}",
+            name(&crate::translation_core::format!("{:?}", args.op))
+        ),
         Some(Command::With(_)) => "with".into(),
         Some(Command::Configure(_)) => "configure".into(),
         Some(Command::Usage(_)) => "usage".into(),

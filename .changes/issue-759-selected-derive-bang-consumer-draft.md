@@ -19,6 +19,6 @@ The actual pinned proc_macro_derive registration separately establishes the
 Serde helper declaration.
 
 The optional resolveModuleBindings consumer is not automatically enabled in
-translateProject or bulk generation. Its transitive implementation modules are included explicitly in the census fingerprint. Cases cover owner joining, exact helper spans, residual owners, graph/profile mutations, item omissions, family isolation and the unchanged complete original CatalogRecord source pin.
+translateProject or bulk generation. Its transitive implementation modules are included explicitly in the census fingerprint. Cases cover owner joining, exact helper spans, residual owners, module graph/profile mutations, item omissions, family isolation and the unchanged complete original CatalogRecord source pin.
 
 The final 103-case source-output and related scope passed in Node and Bun at clean `e1f10dd8d`, with all initial and retry failures retained in `dev/log/issues/759/translator-derive-bang-verification`. No automatic bulk/project activation, generated trait execution, complete runtime parity or Rust execution is claimed.

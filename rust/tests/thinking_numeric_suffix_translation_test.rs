@@ -33,8 +33,8 @@ fn numeric_suffix_preserves_u32_boundaries_and_signed_zero() {
 #[test]
 fn numeric_suffix_does_not_trim_normalize_or_accept_nondecimal_syntax() {
     for input in [
-        " 1", "1 ", "1\n", "1_000", "0xff", "1.0", "١", "１２", "😀", "\0", "−0", "-０",
-        "-0.0", "-١", "- 0", "-0 ", "-\t0",
+        " 1", "1 ", "1\n", "1_000", "0xff", "1.0", "١", "１２", "😀", "\0", "−0", "-０", "-0.0",
+        "-١", "- 0", "-0 ", "-\t0",
     ] {
         assert_eq!(parse_numeric_suffix(input), None, "{input:?}");
     }

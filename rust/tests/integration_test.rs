@@ -8,6 +8,9 @@ use link_assistant_router::oauth::OAuthProvider;
 use link_assistant_router::proxy::{REQUIRED_FORWARD_HEADERS, resolve_upstream_path};
 use link_assistant_router::token::{TOKEN_PREFIX, TokenManager};
 
+#[path = "support/repository.rs"]
+mod repository;
+
 mod token_integration_tests {
     use super::*;
 
@@ -737,7 +740,8 @@ mod support_docs_tests {
 
     #[test]
     fn forgefed_docs_describe_public_actor_and_inbox() {
-        let docs = fs::read_to_string("docs/forgefed.md").expect("forgefed docs should exist");
+        let docs = fs::read_to_string(super::repository::path("docs/forgefed.md"))
+            .expect("forgefed docs should exist");
 
         assert!(docs.contains("/api/services/activitypub/actor/code"));
         assert!(docs.contains("/api/services/activitypub/inbox/code"));
@@ -747,7 +751,8 @@ mod support_docs_tests {
 
     #[test]
     fn akash_template_exposes_router_and_required_configuration() {
-        let sdl = fs::read_to_string("deploy/akash/deploy.yaml").expect("akash SDL should exist");
+        let sdl = fs::read_to_string(super::repository::path("deploy/akash/deploy.yaml"))
+            .expect("akash SDL should exist");
 
         assert!(sdl.contains("version: \"2.0\""));
         assert!(sdl.contains("port: 8080"));
@@ -757,8 +762,8 @@ mod support_docs_tests {
 
     #[test]
     fn kubernetes_template_includes_deployment_service_and_health_probes() {
-        let manifest =
-            fs::read_to_string("deploy/k8s/router.yaml").expect("k8s manifest should exist");
+        let manifest = fs::read_to_string(super::repository::path("deploy/k8s/router.yaml"))
+            .expect("k8s manifest should exist");
 
         assert!(manifest.contains("kind: Deployment"));
         assert!(manifest.contains("kind: Service"));

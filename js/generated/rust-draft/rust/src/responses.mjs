@@ -50,18 +50,18 @@ function rp_726573706f6e7365732e73747265616d5f636f6e74656e745f6b6579(event) {
       }
     }
   })(), field1: (() => {
-    const ml_standard_body_2_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(event, "content_index"), (ml_host_callback_0_0_2) => { return ml_host_serde_json_value_as_u64(ml_host_callback_0_0_2); }, "and_then");
-    const ml_standard_body_3_2 = 0n;
-    switch (ml_standard_body_2_2.$) {
+    const ml_standard_body_5 = ml_host_option_bind(ml_host_serde_json_value_get_string(event, "content_index"), (ml_host_callback_3_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_3_0); }, "and_then");
+    const ml_standard_body_6 = 0n;
+    switch (ml_standard_body_5.$) {
       case "None": {
-        return ml_standard_body_3_2;
+        return ml_standard_body_6;
       }
       case "Some": {
-        const x_2 = ml_standard_body_2_2.field0;
+        const x_2 = ml_standard_body_5.field0;
         return x_2;
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_2_2);
+        return ml_router_unexpected(ml_standard_body_5);
       }
     }
   })() });

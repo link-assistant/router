@@ -7,7 +7,7 @@ import {createRequire} from 'node:module';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
-import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';
+import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';
 import {prepareWholeOwnerDeriveCandidate} from "./cst-batched-whole-owner-derive-producer.mjs";
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url)),BASE='tools/translation/',BINDINGS=BASE+'module-bindings.mjs',EFFECTS=BASE+'derive-output-effects.mjs',BOOTSTRAP=BASE+'whole-owner-original-binding-bootstrap.mjs',OUTPUT=BASE+'whole-owner-module-bindings-candidate.mjs',EFFECT_OUTPUT=BASE+'whole-owner-derive-output-effects-candidate.mjs';
@@ -20,6 +20,7 @@ export function prepareWholeOwnerResolverCandidate({root=ROOT}={}){
 if(!wholeOwnerSourceCstBatchReady())return __ownerCstOriginal({root});
 const __ownerCstPending=[];
 
+ const bindingCandidates=[];
  root=resolve(root);const inputs=[BINDINGS,EFFECTS,BASE+'attribute-owner-bulk-operation.mjs',BASE+'whole-owner-resolver-inputs.mjs'].map(path=>{const state=lstatSync(resolve(root,path));if(!state.isFile()||state.isSymbolicLink()||state.size>2*1024*1024)fail('bounded complete regular source required');const source=readFileSync(resolve(root,path),'utf8');return {path,source,sha256:hash(source)};}),ts=ownershipCompiler();if(ts.version!=='5.9.3'||createRequire(resolve(root,'js/package.json'))('typescript')!==ts)fail('actual root installed TypeScript5.9.3 required');
  const bulk=prepareWholeOwnerDeriveCandidate({root});if(bulk.files.some(row=>row.current!==row.after))fail('fresh complete original whole-owner private issuer closure required');
  const before=inputs[0].source,file=parse(ts,BINDINGS,before),wrapper=fn(ts,file,'resolveModuleBindings'),unscoped=fn(ts,file,'resolveUnscopedModuleBindings');if(!unscoped.modifiers?.some(node=>node.kind===ts.SyntaxKind.ExportKeyword)||!wrapper.modifiers?.some(node=>node.kind===ts.SyntaxKind.ExportKeyword))fail('actual exported resolver/bootstrap required');
@@ -31,7 +32,8 @@ const __ownerCstPending=[];
  function whole(path,original,mid,after,selection){
 if(after.split('\n').length>=1000)fail('complete candidate source must remain below1000lines');
 parse(ts,path,after);
-const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),rule=(old,replacement,id)=>({id,edits:[{span:[0,old.length],expected:old,replacement}]}),sequence={languageRules:[rule(original,mid,'javascript:complete-original-resolver-and-synchronous-owner-operation')],repositoryRules:[rule(mid,after,'router:whole-private-issuer-and-recursion-free-original-bootstrap')]},inverseSequence={languageRules:[rule(after,original,'javascript:restore-complete-original-resolver-source')],repositoryRules:[]};
+const nativeBindings={},rule=(old,replacement,id)=>({id,edits:[{span:[0,old.length],expected:old,replacement}]}),sequence={languageRules:[rule(original,mid,'javascript:complete-original-resolver-and-synchronous-owner-operation')],repositoryRules:[rule(mid,after,'router:whole-private-issuer-and-recursion-free-original-bootstrap')]},inverseSequence={languageRules:[rule(after,original,'javascript:restore-complete-original-resolver-source')],repositoryRules:[]};
+bindingCandidates.push({path:resolve(root,path),source:after,result:nativeBindings});
 const __ownerCstRecord={ path, before: original, language: mid, after, current: existsSync(resolve(root, path)) ? readFileSync(resolve(root, path), 'utf8') : null, beforeMeta: void 0, afterMeta: void 0, sequence, inverseSequence, inverse: original, trace: void 0, nativeBindings, selection };
 files.push(__ownerCstRecord);
 __ownerCstPending.push({record:__ownerCstRecord,request:{source:original,language:'JavaScript',stages:[{phase:'language',expected:mid,sequence:{languageRules:sequence.languageRules,repositoryRules:[]},inverseSequence:{languageRules:[rule(mid,original,'javascript:restore-complete-original-owner-language')],repositoryRules:[]}},{phase:'repository',expected:after,sequence:{languageRules:[],repositoryRules:sequence.repositoryRules},inverseSequence:{languageRules:[],repositoryRules:[rule(after,mid,'router:restore-complete-original-owner-repository')]}}]}});
@@ -39,8 +41,12 @@ __ownerCstPending.push({record:__ownerCstRecord,request:{source:original,languag
  whole(BOOTSTRAP,before,rename('resolveOriginalWholeOwnerBindingBootstrap'),bootstrap,{originalCompleteWrapper:oldWrapper,unscopedExportSpan:[unscoped.getStart(file),unscoped.end],originalUnscopedSource:unscoped.getText(file),wrapperSpan:[wrapper.getStart(file),wrapper.end],retainedImport:retainedImport.getText(file),publicEntryNeverCalled:true});
  whole(EFFECT_OUTPUT,inputs[1].source,inputs[1].source,effects.source,{imports:effects.edits,completePrivateEffectsIssuer:true});
  const relocatedFile=parse(ts,OUTPUT,relocated.source);whole(OUTPUT,before,language,"import {withWholeOriginalAttributeOwnerOperation} from './whole-owner-serde-bang-footprints-candidate.mjs';\nimport {wholeOwnerResolverInputsCallbackFree} from './whole-owner-resolver-inputs.mjs';\n"+relocated.source,{originalCompleteWrapper:oldWrapper,newCompleteWrapper:newWrapper,argumentSource:arrow.body.arguments[0].getText(file),originalUnscopedSource:unscoped.getText(file),imports:relocated.edits,originalWrapperUnchanged:fn(ts,relocatedFile,'resolveModuleBindings').getText(relocatedFile)===oldWrapper});
- finishWholeOwnerSourceCstBatch({root,inputs,files,pending:__ownerCstPending,count:3});
+ const __ownerNativeBindings=verifyNativeCopiedModuleBindings(ts,bindingCandidates);for(let at=0;at<bindingCandidates.length;at++)Object.assign(bindingCandidates[at].result,__ownerNativeBindings[at]);
+finishWholeOwnerSourceCstBatch({root,inputs,files,pending:__ownerCstPending,count:3});
 for(const input of inputs)if(hash(readFileSync(resolve(root,input.path)))!==input.sha256)fail('actual complete source input changed');
+ // Fresh complete native scope checks precede every returned plan and write.
+ const checkedBindings=verifyNativeCopiedModuleBindings(ts,bindingCandidates);
+ for(let at=0;at<bindingCandidates.length;at++)Object.assign(bindingCandidates[at].result,checkedBindings[at]);
  return {schema:'whole-owner-resolver-source-candidate-v1',inputs,files,wholeOwnerProducer:bulk,originalDefaultResolverUnchanged:true,originalLimitsChanged:false,newAcrossInvocationCache:false,performanceQualified:false,sourceAuthority:false,runtimeAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const result=prepareWholeOwnerResolverCandidate();if(mode==='--emit')console.log(JSON.stringify(result));else if(mode==='--write'){for(const row of result.files)writeFileSync(resolve(ROOT,row.path),row.after);console.log('Prepared separate complete whole-owner resolver and private bootstrap.');}else{if(result.files.some(row=>row.current!==row.after))fail('complete resolver source closure stale or ungenerated');console.log('Complete whole-owner resolver source equations are current.');}}

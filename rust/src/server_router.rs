@@ -496,6 +496,7 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
             state.clone(),
             crate::account_policy_middleware::route,
         ))
+        .route_layer(from_fn_with_state(state.clone(), crate::geolocation::route))
         .route_layer(from_fn_with_state(
             (state, config.enable_anthropic_api),
             authenticate_inference_route,
