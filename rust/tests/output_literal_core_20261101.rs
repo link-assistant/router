@@ -1,6 +1,8 @@
 //! Independent native routing/memory oracle SOURCE; all execution UNRUN.
 //! This checks the actual new explicit backend model, not persistent host log
 //! locking/redaction/rotation parity or an installed canonical facade.
+// The whole literal module is included; this oracle uses only part of it.
+#[allow(dead_code)]
 #[path = "../src/translation_core/literal_arguments_core_20261101.rs"]
 mod literal;
 #[path = "../src/translation_core/output_literal_core_20261101_routing.rs"]

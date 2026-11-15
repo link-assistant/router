@@ -3,7 +3,7 @@ use link_assistant_router::translation_primitive_vectors_core as vectors;
 
 macro_rules! helper_case {
     ($name:ident, $domain:ty, $minimum:expr, $maximum:expr,
-     $from:ident, $push:ident, $truncate:ident, $length:ident, $get:ident) => {
+     $from:ident, $push:ident, $truncate:ident, $length:ident, $get:ident $(,)?) => {
         #[test]
         fn $name() {
             fn seed(value: $domain) -> Vec<$domain> {

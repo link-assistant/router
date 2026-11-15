@@ -1,5 +1,7 @@
 //! Independent explicit owning branch target oracle SOURCE. CI-only UNRUN.
 #[test]
+// The block-wrapped branches are the translated shape under test.
+#[allow(unused_braces)]
 fn complete_branch_and_typed_initializer_contexts_keep_text_values() {
     for value in ["", "é😀", "a\0b"] {
         for flag in [false, true] {

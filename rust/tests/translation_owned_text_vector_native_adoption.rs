@@ -1,4 +1,6 @@
 //! Independent bounded String-vector native oracles. CI only after JS gates.
+// The whole core module is included; each oracle uses only part of it.
+#[allow(dead_code)]
 #[path = "../src/translation_owned_text_vectors_core.rs"]
 mod core;
 

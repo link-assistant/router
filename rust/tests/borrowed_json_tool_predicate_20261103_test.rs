@@ -1,6 +1,8 @@
 // Source oracle compares the actual entire application module, not a copied predicate.
 pub use link_assistant_router::borrowed_json_tool_predicate_20261103;
 pub use link_assistant_router::openai::ChatMessage;
+// The whole application module is included; only part of it is exercised here.
+#[allow(dead_code)]
 mod production {
     include!("../src/openai_tools.rs");
     pub(super) fn actual(value: &serde_json::Value) -> bool {

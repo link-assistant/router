@@ -22,6 +22,6 @@ fn text_views_result_moves_and_json_carriers_preserve_original_behavior() {
         6
     );
     let value = json!({"items":[null,true,1]});
-    let copied = carrier::json_result_to_option(carrier::json_ok(&value));
+    let copied = carrier::json_result_to_option(&carrier::json_ok(&value));
     assert_eq!(copied, Some(value));
 }
