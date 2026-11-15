@@ -261,9 +261,11 @@ it with `pub use child::*`. Every `crate::<core>::<fn>` path and every function
 body stays unchanged, and the largest file is now 591 lines. **Debt:** the
 translator still emits each core as one file, so the split belongs in its
 emitter as well. The pinned `*_NATIVE_SOURCE` constants already differ from the
-committed cores because of the allows. Eight JavaScript tests that read the
-repository's Rust sources fail the same way with and without the split. They
-are not part of the JavaScript-first CI, which is green.
+committed cores because of the allows. Eight `tools/translation/test` files
+that read the repository's Rust sources were run on Node 20 with and without the
+split, and their failures were identical. Those files belong to the 16-shard
+`translation` stage of `javascript-first.yml`. The PR pipeline instead calls
+`javascript-manual-development.yml`, whose jobs are green.
 
 The 63 JavaScript tests that reference any edited test file were rerun locally
 on Node 20. 47 files pass. The other 16 fail identically on the unedited tree
