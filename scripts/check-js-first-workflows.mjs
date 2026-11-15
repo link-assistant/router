@@ -10,11 +10,13 @@ import { parityCheckBudgets } from './parity-check-budgets.mjs';
 import {DRAFT_SUPPLEMENTS,DRAFT_SUPPLEMENT_CONDITION,DRAFT_SUPPLEMENT_PR_TYPES,readFixedNineDraftWorkflowSources} from './fixed-nine-draft-policy.mjs';
 const require = createRequire(new URL('./ci/package.json', import.meta.url));
 const { parseDocument } = require('yaml');
-export const STAGES = ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'reverse-translation'];
+export const STAGES = ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'translation-freshness', 'profile-matrix', 'owned-profile-matrix', 'reverse-translation', 'reverse-bun', 'reverse-freshness'];
+const nodeShards = Array.from({length:16}, (_,index) => index+1);
+const bunShards = Array.from({length:8}, (_,index) => index+1);
 const draftSupplementNames=new Set(DRAFT_SUPPLEMENTS);
 function exact(a,b,depth=0){if(Object.is(a,b))return true;if(depth>=64||!a||!b||typeof a!=='object'||typeof b!=='object'||Array.isArray(a)!==Array.isArray(b)||Array.isArray(a)&&a.length!==b.length)return false;const left=Object.keys(a).sort(),right=Object.keys(b).sort();return left.length===right.length&&left.every((key,index)=>key===right[index]&&exact(a[key],b[key],depth+1));}
 // Immutable reviewed source DATA supplies only this fixed table. It does not
-// make skipped callers eight successful stages or grant Rust admission.
+// make skipped callers successful stages or grant Rust admission.
 const reviewedDraftSupplementals=new Map(readFixedNineDraftWorkflowSources().files.filter(row=>draftSupplementNames.has(path.basename(row.path))).map(row=>{
  const document=parseDocument(row.after,{uniqueKeys:true,version:'1.2'});if(document.errors.length)throw TypeError('Fixed-nine reviewed workflow grammar differs');return [path.basename(row.path),document.toJS()];
 }));
@@ -35,7 +37,7 @@ const shaVerifier = normalizeProgram(`node --input-type=module -e "
 "`);
 const aggregateVerifier = normalizeProgram(`node --input-type=module -e "
   const stages = Object.values(JSON.parse(process.env.STAGE_RESULTS));
-  if (stages.length !== 8 || stages.some(stage => stage.result !== 'success')) {
+  if (stages.length !== 12 || stages.some(stage => stage.result !== 'success')) {
     console.error('JavaScript gate rejected:', process.env.STAGE_RESULTS);
     process.exit(1);
   }
@@ -62,21 +64,32 @@ function nestedGuard(condition, first, second) {
   return guarded(value, first) && guarded(value.slice(success(first).length + 5, -1), second);
 }
 function dependencies(job) { return Array.isArray(job.needs) ? job.needs : job.needs ? [job.needs] : []; }
+// Reuse only a bounded, private, immutable syntax tree for identical complete
+// source text. Every policy assertion and current parity budget still runs on
+// each call; no successful audit or caller-owned object is cached.
+const syntaxCache=new Map();let syntaxBytes=0;
+const syntaxLimit=8*1024*1024;
+function immutableSyntax(value){
+  const pending=[value],objects=[],seen=new Set();
+  while(pending.length){const item=pending.pop();if(!item||typeof item!=='object'||seen.has(item))continue;seen.add(item);
+    if(![Object.prototype,Array.prototype,null].includes(Object.getPrototypeOf(item)))return false;
+    objects.push(item);for(const child of Object.values(item))pending.push(child);
+  }
+  for(const item of objects)Object.freeze(item);return true;
+}
 function parse(source, name, errors) {
+  const cached=syntaxCache.get(name);if(cached&&cached.source===source)return cached.value;
   const document = parseDocument(source, { uniqueKeys: true, version: '1.2' });
   for (const error of document.errors) errors.push(`${name}: ${error.message}`);
-  return document.toJS() ?? {};
+  const value=document.toJS()??{};
+  if(typeof source==='string'&&!document.errors.length&&source.length<=syntaxLimit/2&&immutableSyntax(value)){
+    if(cached){syntaxCache.delete(name);syntaxBytes-=cached.bytes;}
+    const bytes=source.length*2;
+    while(syntaxCache.size>=32||syntaxBytes+bytes>syntaxLimit){const [key,entry]=syntaxCache.entries().next().value;syntaxCache.delete(key);syntaxBytes-=entry.bytes;}
+    syntaxCache.set(name,{source,value,bytes});syntaxBytes+=bytes;
+  }
+  return value;
 }
-// Exact fixed command partitions; their complete matrix result remains one
-// mandatory stage in the unchanged eight-stage SHA aggregate.
-function reviewedCommandPartition(id,job){
- const groups=id==='translation'?[['tests','node scripts/run-node-tests.mjs --outer-timeout-ms=3600000 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs'],['canonical','node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --check'],['owned-definitions','node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check']]:id==='profile-matrix'?[['canonical','node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --profile-matrix --check'],['owned-definitions','node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check']]:null;
- if(!groups)return job?.strategy===undefined?{steps:new Set(),evidenceCondition:'${{ always() }}'}:null;
- const strategy={'fail-fast':false,matrix:{part:groups.map(row=>row[0])}};if(!exact(job?.strategy,strategy))return null;const steps=new Set();
- for(const [part,command]of groups){const matches=(job?.steps??[]).filter(step=>step.run===command);if(matches.length!==1||Object.keys(matches[0]).sort().join(',')!=='if,run'||matches[0].if!=="${{ matrix.part == '"+part+"' }}")return null;steps.add(matches[0]);}
- return {steps,evidenceCondition:id==='translation'?"${{ always() && matrix.part == 'tests' }}":'${{ always() }}'};
-}
-
 export function auditWorkflows(sources) {
   const errors = [];
   const documents = new Map(Object.entries(sources).map(([name, source]) => [name, parse(source, name, errors)]));
@@ -87,38 +100,79 @@ export function auditWorkflows(sources) {
     if (!gate.on?.workflow_call || Object.keys(gate.on).some(key => key !== 'workflow_call')) errors.push(`${gateName}: must only be workflow_call`);
     if (gate.on?.workflow_call?.inputs?.sha?.required !== true) errors.push(`${gateName}: required immutable SHA input missing`);
     const required = {
-      lint: ['node scripts/prepare-bun-reverse-files.mjs --check', 'node scripts/lint-js-first.mjs', 'node --test --test-concurrency=1 scripts/test/run-bun-forward-files.test.mjs scripts/test/run-bun-reverse-files.test.mjs scripts/test/bun-reverse-inputs.test.mjs', 'node --test scripts/test/check-js-first-workflows.test.mjs', 'node --test scripts/test/parallel-js-gate.test.mjs', 'bun test ./scripts/test/parallel-js-gate.test.mjs', 'node scripts/prepare-parallel-js-gate.mjs --check', 'node --test scripts/test/check-js-first-local.test.mjs', 'node scripts/check-js-first-workflows.mjs'],
+      lint: ['node scripts/prepare-bun-reverse-files.mjs --check', 'node scripts/lint-js-first.mjs', 'node --test --test-concurrency=1 scripts/test/run-bun-forward-files.test.mjs scripts/test/run-bun-reverse-files.test.mjs scripts/test/bun-reverse-inputs.test.mjs', 'node --test scripts/test/check-js-first-workflows.test.mjs', 'node --test scripts/test/check-js-first-local.test.mjs', 'node scripts/check-js-first-workflows.mjs'],
       'node-tests': ['npm run native:test --prefix js'],
       'bun-tests': ['npm run native:test:bun --prefix js'],
       typescript: ['node scripts/run-node-tests.mjs --outer-timeout-ms=180000 scripts/test/node-case-deadlines.test.mjs', 'npm run typecheck --prefix js', 'npm run native:typecheck --prefix js', 'node scripts/regenerate-native-typescript.mjs --check', 'node scripts/check-native-typescript.mjs', 'node scripts/run-node-tests.mjs --outer-timeout-ms=900000 tools/translation/js-to-rust/test/native-typescript.test.mjs', 'node js/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json', 'node tools/translation/check-typescript-fixtures.mjs', 'node scripts/check-profile-typescript.mjs', 'node scripts/check-owned-definition-typescript.mjs', 'node tools/translation/serialization-schema/native-descriptor.mjs --check', 'node tools/translation/serialization-schema/check-descriptor-typescript.mjs', 'node tools/translation/serialization-schema/bulk.mjs --check', 'node tools/translation/serialization-schema/check-bulk-typescript.mjs', 'node scripts/build-js-first-ui.mjs'],
       parity: ['node --test --test-concurrency=2 experiments/issue-759/acceptance/*.test.mjs', 'node scripts/check-router-parity.mjs --strict'],
-      translation: ["node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --check", 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check', 'node scripts/run-node-tests.mjs --outer-timeout-ms=3600000 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs'],
-      'profile-matrix': ["node scripts/translate-router-flat-native-owned-field-meta.mjs --retain-output-text --profile-matrix --check", 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check'],
-      'reverse-translation': ['node scripts/regenerate-js-first.mjs --check', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --check', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check', 'node scripts/run-node-tests.mjs --outer-timeout-ms=900000 --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs', 'node scripts/run-bun-reverse-files.mjs --output-root js/node_modules/.bun-reverse-files'],
+      translation: ['node scripts/run-node-test-shard.mjs --outer-timeout-ms=3600000 --whole-file-shard=${{ matrix.shard }}/16 --test-concurrency=1 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs'],
+      'translation-freshness': ['node scripts/translate-router-with-draft-custody.mjs --check', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check'],
+      'profile-matrix': ['node scripts/translate-router.mjs --profile-matrix --check'],
+      'owned-profile-matrix': ['node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check'],
+      'reverse-translation': ['node scripts/run-node-test-shard.mjs --outer-timeout-ms=900000 --whole-file-shard=${{ matrix.shard }}/16 --test-concurrency=1 tools/translation/js-to-rust/test/*.test.mjs'],
+      'reverse-bun': ['node scripts/run-bun-reverse-shard.mjs --whole-file-shard ${{ matrix.shard }}/8 --output-root js/node_modules/.bun-reverse-files'],
+      'reverse-freshness': ['node scripts/regenerate-js-first.mjs --check', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --check', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check'],
     };
+    required.lint.push('node --test scripts/test/run-node-test-shard.test.mjs', 'node scripts/prepare-bun-reverse-shard.mjs --check', 'node --test scripts/test/bun-reverse-shard.test.mjs');
     const packageInstall = 'npm ci --prefix js --ignore-scripts';
     for (const id of STAGES) {
       const job = gate.jobs?.[id];
       if (!job || !job['runs-on'] || Object.hasOwn(job, 'if') || job['continue-on-error'] || job.strategy?.['fail-fast'] === true) errors.push(`${gateName}/${id}: required unconditional failing stage missing`);
       const runs = (job?.steps ?? []).map(step => step.run);
-      const partition=reviewedCommandPartition(id,job);if(!partition)errors.push(`${gateName}/${id}: complete reviewed noncancelling command matrix required; checks cannot be conditional or ignore failures`);
-      const evidenceCondition=partition?.evidenceCondition??'${{ always() }}';
       let deadlineEvidenceUpload = null;
-      if (['typescript', 'translation', 'reverse-translation'].includes(id)) {
+      let matrixEvidenceUpload = null;
+      let bulkEvidenceUpload = null;
+      if(id==='translation'){
+        if(job?.['timeout-minutes']!==60||Object.hasOwn(job??{},'needs')||!exact(job?.strategy,{'fail-fast':false,matrix:{shard:nodeShards}}))errors.push(`${gateName}/${id}: exact exhaustive sixteen whole-file shards with original budget required`);
+        if(runs.filter(run=>run===required.translation[0]).length!==1||runs.some(run=>required['translation-freshness'].includes(run)))errors.push(`${gateName}/${id}: whole-file cohort must run exactly once and freshness must remain independent`);
+      }
+      if(id==='translation-freshness'){
+        if(job?.['timeout-minutes']!==60||Object.hasOwn(job??{},'needs')||Object.hasOwn(job??{},'strategy'))errors.push(`${gateName}/${id}: independent unconditional original freshness job required`);
+        for(const command of required[id])if(runs.filter(run=>run===command).length!==1)errors.push(`${gateName}/${id}: original freshness must run exactly once`);
+        const uploads=(job?.steps??[]).filter(step=>step.uses==='actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
+        const upload=uploads.length===1?uploads[0]:null;
+        const valid=upload&&!Object.hasOwn(upload,'run')&&job.steps.at(-1)===upload&&upload.if==='${{ always() }}'&&!upload['continue-on-error']&&upload.with?.name==='bulk-drafts-${{ inputs.sha }}'&&upload.with?.path==='js/node_modules/.bulk-drafts/'&&upload.with?.['include-hidden-files']===true&&upload.with?.['if-no-files-found']==='error'&&upload.with?.['retention-days']===7&&job.env?.ROUTER_BULK_DRAFT_DIRECTORY==='js/node_modules/.bulk-drafts';
+        if(!valid)errors.push(`${gateName}/${id}: missing mandatory command evidence: complete unqualified canonical draft custody missing`);
+        else bulkEvidenceUpload=upload;
+      }
+      if(['reverse-translation','reverse-bun'].includes(id)){
+        const shards=id==='reverse-translation'?nodeShards:bunShards;
+        if(job?.['timeout-minutes']!==15||Object.hasOwn(job??{},'needs')||!exact(job?.strategy,{'fail-fast':false,matrix:{shard:shards}}))errors.push(`${gateName}/${id}: exact exhaustive ${shards.length} reverse whole-file shards with original budget required`);
+        if(runs.filter(run=>run===required[id][0]).length!==1||runs.some(run=>required['reverse-freshness'].includes(run)||required[id==='reverse-bun'?'reverse-translation':'reverse-bun'].includes(run)))errors.push(`${gateName}/${id}: whole reverse cohort must run exactly once and other engine/freshness must remain independent`);
+      }
+      if(id==='reverse-freshness'){
+        if(job?.['timeout-minutes']!==15||Object.hasOwn(job??{},'needs')||Object.hasOwn(job??{},'strategy'))errors.push(`${gateName}/${id}: independent unconditional original reverse freshness job required`);
+        for(const command of required[id])if(runs.filter(run=>run===command).length!==1)errors.push(`${gateName}/${id}: original reverse freshness must run exactly once`);
+      }
+      if(['profile-matrix','owned-profile-matrix'].includes(id)){
+        const artifact=id==='profile-matrix'?'matrix-drafts-${{ inputs.sha }}':'matrix-owned-drafts-${{ inputs.sha }}';
+        if(job?.['timeout-minutes']!==60||Object.hasOwn(job??{},'needs')||Object.hasOwn(job??{},'strategy'))errors.push(`${gateName}/${id}: independent original 60-minute matrix job required`);
+        if(job?.env?.ROUTER_TRANSLATION_MATRIX_TRACE!=='1')errors.push(`${gateName}/${id}: live matrix worker diagnostics required`);
+        for(const command of required[id])if(runs.filter(run=>run===command).length!==1)errors.push(`${gateName}/${id}: mandatory matrix command must run exactly once`);
+        const other=id==='profile-matrix'?'owned-profile-matrix':'profile-matrix';
+        if(runs.some(run=>required[other].includes(run)))errors.push(`${gateName}/${id}: independent original 60-minute matrix job cannot contain the other complete check`);
+        const uploads=(job?.steps??[]).filter(step=>step.uses==='actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
+        const upload=uploads.length===1?uploads[0]:null;
+        const valid=upload&&!Object.hasOwn(upload,'run')&&job.steps.at(-1)===upload&&upload.if==='${{ always() }}'&&!upload['continue-on-error']&&upload.with?.name===artifact&&upload.with?.path==='js/node_modules/.matrix-drafts/'&&upload.with?.['include-hidden-files']===true&&upload.with?.['if-no-files-found']==='error'&&upload.with?.['retention-days']===7&&job.env?.ROUTER_MATRIX_DRAFT_DIRECTORY==='js/node_modules/.matrix-drafts';
+        if(!valid)errors.push(`${gateName}/${id}: missing mandatory command evidence: complete unqualified matrix draft custody missing`);
+        else matrixEvidenceUpload=upload;
+      }
+      if (['typescript', 'translation', 'reverse-translation', 'reverse-bun'].includes(id)) {
         const uploads = (job?.steps ?? []).filter(step => step.uses === 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
         const upload = uploads.length === 1 ? uploads[0] : null;
-        const evidencePath = id === 'reverse-translation' ? 'js/node_modules/.node-case-deadlines/\njs/node_modules/.bun-reverse-files/\n' : 'js/node_modules/.node-case-deadlines/';
-        const validShape = upload && !Object.hasOwn(upload, 'run') && job.steps.at(-1) === upload && upload.with?.name === 'node-case-deadlines-${{ github.job }}-${{ inputs.sha }}' && upload.with?.path === evidencePath && upload.with?.['include-hidden-files'] === true && upload.with?.['if-no-files-found'] === 'error';
+        const evidencePath = id === 'reverse-translation' ? 'js/node_modules/.node-case-deadlines/\n' : id === 'reverse-bun' ? 'js/node_modules/.bun-reverse-files/\n' : 'js/node_modules/.node-case-deadlines/';
+        const evidenceName='node-case-deadlines-${{ github.job }}-${{ inputs.sha }}'+(['translation','reverse-translation','reverse-bun'].includes(id)?'-${{ matrix.shard }}':'');
+        const validShape = upload && !Object.hasOwn(upload, 'run') && job.steps.at(-1) === upload && upload.with?.name === evidenceName && upload.with?.path === evidencePath && upload.with?.['include-hidden-files'] === true && upload.with?.['if-no-files-found'] === 'error';
         if (!validShape) errors.push(`${gateName}/${id}: missing mandatory command evidence uploader for complete Node deadline receipts/raws`);
-        if (upload && upload.if !== evidenceCondition) errors.push(`${gateName}/${id}: conditional deadline evidence loss is forbidden`);
+        if (upload && upload.if !== '${{ always() }}') errors.push(`${gateName}/${id}: conditional deadline evidence loss is forbidden`);
         if (upload?.['continue-on-error']) errors.push(`${gateName}/${id}: deadline evidence uploader cannot ignore failures`);
         // Only this fully checked non-run action may retain evidence after a
         // failure. A name/uses marker never exempts an executable check.
-        if (validShape && upload.if === evidenceCondition && !upload['continue-on-error']) deadlineEvidenceUpload = upload;
+        if (validShape && upload.if === '${{ always() }}' && !upload['continue-on-error']) deadlineEvidenceUpload = upload;
       }
       for (const command of required[id]) if (!runs.includes(command)) errors.push(`${gateName}/${id}: missing mandatory command ${command}`);
       const installations = id === 'lint'
-        ? [['npm ci --prefix scripts/ci --ignore-scripts', required[id]], [packageInstall, ['node --test scripts/test/check-js-first-local.test.mjs']]]
+        ? [['npm ci --prefix scripts/ci --ignore-scripts', required[id]], [packageInstall, ['node --test scripts/test/check-js-first-local.test.mjs', 'node --test scripts/test/run-node-test-shard.test.mjs', 'node scripts/prepare-bun-reverse-shard.mjs --check', 'node --test scripts/test/bun-reverse-shard.test.mjs']]]
         : [[packageInstall, required[id]]];
       if (id === 'typescript') installations.push(['npm ci --prefix ui --ignore-scripts', ['node scripts/build-js-first-ui.mjs']]);
       for (const [install, consumers] of installations) {
@@ -127,11 +181,11 @@ export function auditWorkflows(sources) {
       }
       if (!(job?.steps ?? []).some(step => step.env?.EXPECTED_SHA === '${{ inputs.sha }}' && normalizeProgram(step.run) === shaVerifier)) errors.push(`${gateName}/${id}: immutable SHA verification missing`);
       for (const step of job?.steps ?? []) {
-        if (step['continue-on-error'] || Object.hasOwn(step, 'if') && step !== deadlineEvidenceUpload && !partition?.steps.has(step)) errors.push(`${gateName}/${id}: checks cannot be conditional or ignore failures`);
+        if (step['continue-on-error'] || Object.hasOwn(step, 'if') && step !== deadlineEvidenceUpload && step !== matrixEvidenceUpload && step !== bulkEvidenceUpload) errors.push(`${gateName}/${id}: checks cannot be conditional or ignore failures`);
         if (step.uses?.startsWith('actions/checkout@') && step.with?.ref !== '${{ inputs.sha }}') errors.push(`${gateName}/${id}: checkout must use inputs.sha`);
         if (/\b(?:cargo|rustc|rust-script|clippy-driver)\b|rust-toolchain|docker\/(?:build|setup-buildx)/.test(`${step.uses ?? ''}\n${step.run ?? ''}`)) errors.push(`${gateName}/${id}: Rust must not execute inside JavaScript gate`);
       }
-      if (['lint', 'bun-tests', 'typescript', 'translation', 'reverse-translation'].includes(id) && !(job?.steps ?? []).some(step => step.uses === 'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6' && step.with?.['bun-version'] === '1.4.3')) errors.push(`${gateName}/${id}: required pinned Bun runtime missing`);
+      if (['lint', 'bun-tests', 'typescript', 'translation', 'translation-freshness', 'reverse-translation', 'reverse-bun', 'reverse-freshness'].includes(id) && !(job?.steps ?? []).some(step => step.uses === 'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6' && step.with?.['bun-version'] === '1.4.3')) errors.push(`${gateName}/${id}: required pinned Bun runtime missing`);
       if (!(job?.steps ?? []).some(step => step.uses?.startsWith('actions/checkout@'))) errors.push(`${gateName}/${id}: immutable checkout missing`);
     }
     const manifest = JSON.parse(fs.readFileSync(new URL('../parity/router-features.json', import.meta.url), 'utf8'));

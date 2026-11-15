@@ -13,7 +13,10 @@ pub struct ProfileSession {
 }
 
 impl ProfileSession {
-    pub async fn prepare(profile: PathBuf, reset: bool) -> crate::translation_core::Outcome<Self, AnyError> {
+    pub async fn prepare(
+        profile: PathBuf,
+        reset: bool,
+    ) -> crate::translation_core::Outcome<Self, AnyError> {
         if reset {
             return Err("direct Claude profile replacement is retired; use router clients reset for a verified settings reset".into());
         }

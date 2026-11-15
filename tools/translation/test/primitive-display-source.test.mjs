@@ -53,8 +53,7 @@ import {proposeCallbackIntegerBodySource} from '../callback-integer-body-source.
 import {proposeCallbackCoreBodySource} from '../callback-core-body-source.mjs';
 import {preparePrimitiveDisplaySources} from '../prepare-primitive-display-sources.mjs';
 const limits={timeout:60000},root=new URL('../../../',import.meta.url),cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},some=field0=>({$:'Some',field0}),none={$:'None'},ok=field0=>({$:'Ok',field0}),err=field0=>({$:'Err',field0}),format='crate::translation_core::format!',domains=['u8','u16','u32','u64','u128','i8','i16','i32','i64','i128'];
-const scalarBodies=domains.map(domain=>'pub fn display_'+domain+'(value:'+domain+')->String{value.to_string()}').join('
-')+`
+const scalarBodies=domains.map(domain=>'pub fn display_'+domain+'(value:'+domain+')->String{value.to_string()}').join('\n')+`
 pub fn display_bool(value:bool)->String{value.to_string()}
 pub fn literal()->String{42_u32.to_string()}
 pub fn bool_literal()->String{true.to_string()}

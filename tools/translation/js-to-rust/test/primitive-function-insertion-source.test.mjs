@@ -90,7 +90,6 @@ async function insertionTargets(t,row){
 import {proposeOwnedPrimitiveFunctionInsertion} from '../owned-primitive-function-insertion.mjs';
 import {preparePrimitiveFunctionInsertionSources} from '../../prepare-primitive-function-insertion-sources.mjs';
 import {PRIMITIVE_BITWISE_TYPES} from '../../primitive-bitwise-types.mjs';
-import {proposeOwnedVectorNativeSynchronization} from '../owned-vector-native-synchronization.mjs';
 const route={rustPath:'src/lib.rs',module:['target']};
 function emptyFixture(){const input=data('pub fn untouched()->bool{false}\npub mod target { /* original empty module */ }','','');input.vectorBindings=[];return input;}
 const boolJavascript='/** @param {boolean} value */\nexport function identity(value){return value;}\n/** @param {boolean} left @param {boolean} right */\nexport function both(left,right){return left&&right;}\n/** @param {boolean} flag @param {boolean} value */\nexport function choose(flag,value){if(flag){return value;}else{return false;}}';

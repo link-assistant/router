@@ -13,7 +13,7 @@ test('prompt mode and model placement follow native client-specific integration 
 });
 test('native mode aliases and forwarded models are not duplicated and model conflicts refuse before lookup',limits,()=>{
  for(const [client,args]of [['claude',['-p','hello']],['gemini',['--prompt','hello']],['qwen',['--prompt','hello']],['grok',['--prompt','hello']],['agent',['-p','hello']],['codex',['exec','hello']],['opencode',['run','hello']]])assert.deepEqual(planNativeClientLaunch(client,{client_args:args},null,true).arguments,args);
- assert.deepEqual(planNativeClientLaunch('claude',{client_args:['--model=chosen','hello']},'ignored',true).arguments,['--print','--model=chosen','hello']);assert.equal(forwardedClientModel(['--model=chosen','-m','chosen']),'chosen');assert.equal(forwardedClientModel(['-memory'] ),null);
+ assert.deepEqual(planNativeClientLaunch('claude',{client_args:['--model=chosen','hello']},'ignored',true).arguments,['--model=chosen','hello']);assert.deepEqual(planNativeClientLaunch('claude',{client_args:['--model=chosen','hello']},'ignored',false).arguments,['--print','--model=chosen','hello']);assert.equal(forwardedClientModel(['--model=chosen','-m','chosen']),'chosen');assert.equal(forwardedClientModel(['-memory'] ),null);
  for(const args of [['--model'],['--model='],['-m','one','--model=two']])assert.throws(()=>forwardedClientModel(args),/model/);assert.throws(()=>preflightNativeClientLaunch('claude',{model:'one',client_args:['--model=two']}),/conflicts/);
 });
 test('flag-only nonterminal sessions avoid consuming a flag as an absent prompt',limits,()=>{

@@ -1,0 +1,22 @@
+
+<--- Last few GCs --->
+
+[939044:0x14002700]    13861 ms: Mark-Compact (reduce) 254.6 (260.7) -> 254.3 (260.9) MB, 36.29 / 0.01 ms  (+ 95.0 ms in 29 steps since start of marking, biggest step 10.0 ms, walltime since start of marking 185 ms) (average mu = 0.353, current mu = 0.485[939044:0x14002700]    14040 ms: Mark-Compact (reduce) 255.5 (261.2) -> 254.8 (261.4) MB, 94.40 / 0.01 ms  (+ 41.6 ms in 14 steps since start of marking, biggest step 5.5 ms, walltime since start of marking 157 ms) (average mu = 0.306, current mu = 0.241)
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 0xb78db3 node::OOMErrorHandler(char const*, v8::OOMDetails const&) [node]
+ 2: 0xee8300 v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [node]
+ 3: 0xee85e7 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [node]
+ 4: 0x10fb205  [node]
+ 5: 0x10fb794 v8::internal::Heap::RecomputeLimits(v8::internal::GarbageCollector) [node]
+ 6: 0x1112684 v8::internal::Heap::PerformGarbageCollection(v8::internal::GarbageCollector, v8::internal::GarbageCollectionReason, char const*) [node]
+ 7: 0x1112e9c v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) [node]
+ 8: 0x10e91f1 v8::internal::HeapAllocator::AllocateRawWithLightRetrySlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [node]
+ 9: 0x10ea385 v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [node]
+10: 0x10c78d6 v8::internal::Factory::NewFillerObject(int, v8::internal::AllocationAlignment, v8::internal::AllocationType, v8::internal::AllocationOrigin) [node]
+11: 0x1524981 v8::internal::Runtime_AllocateInOldGeneration(int, unsigned long*, v8::internal::Isolate*) [node]
+12: 0x195e476  [node]

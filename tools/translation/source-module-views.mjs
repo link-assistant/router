@@ -4,6 +4,7 @@
 import {createHash} from 'node:crypto';
 import {sourceItems} from './rust-structure.mjs';
 import {compilationProfile,itemConfiguration} from './cfg-profile.mjs';
+import {originalStaticSourceIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const identifier=/^[\p{ID_Start}_][\p{ID_Continue}_]*$/u;
 const states=new WeakMap();
@@ -13,9 +14,22 @@ const condition=(parent,own)=>parent==='inactive'||own==='inactive'?'inactive':p
 function originalItems(source,span,budget){
   const text=source.slice(span.start,span.end);budget.parsedBytes+=Buffer.byteLength(text);
   if(budget.parsedBytes>SOURCE_MODULE_VIEW_PROFILE.maxParsedBytes)throw new TypeError('Original module views exceed the parsed-byte bound');
-  const items=sourceItems(text).filter(item=>!item.comment).map(item=>({...item,start:item.start+span.start,end:item.end+span.start,tokens:item.tokens.map(token=>({...token,start:token.start+span.start,end:token.end+span.start}))}));
+  // Only the private lexer under unchanged native operations establishes this
+  // four-field token shape. Every observed/customized route keeps its old copy.
+  const ordinaryTokens=typeof text==='string'&&originalStaticSourceIntrinsicsUnchanged();
+  const items=sourceItems(text).filter(item=>!item.comment).map(item=>({...item,start:item.start+span.start,end:item.end+span.start,tokens:item.tokens.map(ordinaryTokens?token=>({type:token.type,text:token.text,start:token.start+span.start,end:token.end+span.start}):token=>({...token,start:token.start+span.start,end:token.end+span.start}))}));
   budget.items+=items.length;if(budget.items>SOURCE_MODULE_VIEW_PROFILE.maxItems)throw new TypeError('Original module views exceed the item bound');
-  return items;
+  return {items,ordinaryTokens};
+}
+function freezePrivateModuleItems(items,ordinaryTokens){
+  if(!ordinaryTokens||!originalStaticSourceIntrinsicsUnchanged())return freeze(items);
+  // These fresh native lexer records contain only four scalar token fields.
+  // Customized operations retain the complete original recursive freeze route.
+  for(const item of items){
+    for(const token of item.tokens)Object.freeze(token);
+    Object.freeze(item.tokens);Object.freeze(item);
+  }
+  return Object.freeze(items);
 }
 function inlineHeader(item,profile){
   const tokens=item.tokens.filter(token=>token.type!=='comment'),configuration=itemConfiguration(tokens,profile);
@@ -47,14 +61,14 @@ export function captureSourceModuleViews({source,sourcePath,compilationProfile:i
   function visit(path,bodySpan,parent=null,declaration=null,outer='active'){
     if(path.length>SOURCE_MODULE_VIEW_PROFILE.maxDepth||views.length>=SOURCE_MODULE_VIEW_PROFILE.maxModules)throw new TypeError('Original module views exceed their module/depth bound');
     const key=JSON.stringify(path);if(paths.has(key))throw new TypeError('Original module views have duplicate source module paths');paths.add(key);
-    const items=originalItems(source,bodySpan,budget);
+    const {items,ordinaryTokens}=originalItems(source,bodySpan,budget);
     const inner=items.filter(item=>item.tokens[0]?.text==='#'&&item.tokens[1]?.text==='!').map(item=>itemConfiguration(item.tokens,profile));
     const own=inner.some(item=>item.status==='inactive')?'inactive':inner.some(item=>item.status==='unknown')?'unknown':'active';
     const configurationCondition=condition(outer,own),configurationEvidence=items.map(item=>({span:{start:item.start,end:item.end},...itemConfiguration(item.tokens,profile)}));
     const evidence={schema:'original-source-module-view-v1',sourcePath,sourceSha256,modulePath:path,bodySpan,bodySha256:hash(source.slice(bodySpan.start,bodySpan.end)),
       parentDigest:parent?.digest??null,declaration:declaration?{span:{start:declaration.start,end:declaration.end},sha256:hash(source.slice(declaration.start,declaration.end))}:null,
       compilationProfile:profile,configurationCondition,configurationEvidence,namespaceAuthority:false,attributeOwnerAuthority:false,runtimeAuthority:false};
-    const view=freeze({...evidence,digest:hash(JSON.stringify(evidence))});states.set(view,{source,sourceSha256,items:freeze(items),parent});views.push(view);
+    const view=freeze({...evidence,digest:hash(JSON.stringify(evidence))});states.set(view,{source,sourceSha256,items:freezePrivateModuleItems(items,ordinaryTokens),parent});views.push(view);
     for(const item of items.filter(item=>item.term==='mod')){
       const parsed=inlineHeader(item,profile);
       if(!parsed){diagnostics.push({source:sourcePath,modulePath:path,span:{start:item.start,end:item.end},kind:'source-module-view',message:'Original module requires an external-file or unsupported header consumer'});continue;}

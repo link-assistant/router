@@ -91,7 +91,6 @@ import {PRIMITIVE_BITWISE_TYPES} from '../../primitive-bitwise-types.mjs';
 import {proposeOwnedVectorBulkModuleSynchronization} from '../owned-vector-bulk-module-synchronization.mjs';
 import {proposeOwnedPrimitiveFunctionInsertion} from '../owned-primitive-function-insertion.mjs';
 import {proposeOwnedPrimitiveFunctionExtension} from '../owned-primitive-function-extension.mjs';
-import {requestedNativeJsonVectorTree} from '../owned-vector-native-json-control.mjs';
 import {observeRequestedGuardedPrimitiveBody} from '../owned-guarded-primitive-failures.mjs';
 import {prepareGuardedPrimitiveFailureSources} from '../../prepare-guarded-primitive-failure-sources.mjs';
 const operationImport='import {integerArithmetic as math} from "../runtime/primitive-operator-runtime.mjs";\n';

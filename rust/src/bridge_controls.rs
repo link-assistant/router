@@ -72,24 +72,35 @@ const RESPONSE_FIELDS: &[&crate::translation_core::Str] = &[
 ];
 
 #[must_use]
-pub fn unknown_chat_field(body: &crate::translation_core::Json) -> crate::translation_core::Maybe<String> {
+pub fn unknown_chat_field(
+    body: &crate::translation_core::Json,
+) -> crate::translation_core::Maybe<String> {
     unknown_field(body, CHAT_FIELDS)
 }
 
 #[must_use]
-pub fn unknown_responses_field(body: &crate::translation_core::Json) -> crate::translation_core::Maybe<String> {
+pub fn unknown_responses_field(
+    body: &crate::translation_core::Json,
+) -> crate::translation_core::Maybe<String> {
     unknown_field(body, RESPONSE_FIELDS)
 }
 
-fn unknown_field(body: &crate::translation_core::Json, known: &[&crate::translation_core::Str]) -> crate::translation_core::Maybe<String> {
+fn unknown_field(
+    body: &crate::translation_core::Json,
+    known: &[&crate::translation_core::Str],
+) -> crate::translation_core::Maybe<String> {
     let object = body.as_object()?;
     object
         .keys()
         .find(|field| !known.contains(&field.as_str()))
-        .map(|field| crate::translation_core::format!("unsupported translated request field: {field}"))
+        .map(|field| {
+            crate::translation_core::format!("unsupported translated request field: {field}")
+        })
 }
 
-pub fn reject_anthropic_provider_controls(body: &crate::translation_core::Json) -> crate::translation_core::Outcome<(), String> {
+pub fn reject_anthropic_provider_controls(
+    body: &crate::translation_core::Json,
+) -> crate::translation_core::Outcome<(), String> {
     const FIELDS: &[&str] = &[
         "model",
         "max_tokens",
@@ -143,7 +154,10 @@ pub fn reject_anthropic_provider_controls(body: &crate::translation_core::Json) 
     Ok(())
 }
 
-fn reject_nonempty_object(body: &crate::translation_core::Json, field: &crate::translation_core::Str) -> crate::translation_core::Outcome<(), String> {
+fn reject_nonempty_object(
+    body: &crate::translation_core::Json,
+    field: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<(), String> {
     match body.get(field) {
         None | Some(Value::Null) => Ok(()),
         Some(Value::Object(value)) if value.is_empty() => Ok(()),
@@ -154,7 +168,9 @@ fn reject_nonempty_object(body: &crate::translation_core::Json, field: &crate::t
 }
 
 #[must_use]
-pub fn untranslatable_chat_participant_name(body: &crate::translation_core::Json) -> crate::translation_core::Maybe<String> {
+pub fn untranslatable_chat_participant_name(
+    body: &crate::translation_core::Json,
+) -> crate::translation_core::Maybe<String> {
     for (index, message) in body
         .get("messages")
         .and_then(Value::as_array)
@@ -177,7 +193,9 @@ pub fn untranslatable_chat_participant_name(body: &crate::translation_core::Json
                 ));
             }
             Some(_) => {
-                return Some(crate::translation_core::format!("messages[{index}].message.name must be a string"));
+                return Some(crate::translation_core::format!(
+                    "messages[{index}].message.name must be a string"
+                ));
             }
         }
     }
@@ -186,7 +204,9 @@ pub fn untranslatable_chat_participant_name(body: &crate::translation_core::Json
 
 /// Return why an `OpenAI` service tier cannot cross a non-OpenAI bridge.
 #[must_use]
-pub fn untranslatable_openai_service_tier(value: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Maybe<String> {
+pub fn untranslatable_openai_service_tier(
+    value: crate::translation_core::Maybe<&crate::translation_core::Json>,
+) -> crate::translation_core::Maybe<String> {
     match value {
         None | Some(Value::Null) => None,
         Some(Value::String(tier)) if matches!(tier.as_str(), "auto" | "default") => None,
@@ -198,20 +218,26 @@ pub fn untranslatable_openai_service_tier(value: crate::translation_core::Maybe<
 }
 
 #[must_use]
-pub fn untranslatable_moderation(value: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Maybe<String> {
+pub fn untranslatable_moderation(
+    value: crate::translation_core::Maybe<&crate::translation_core::Json>,
+) -> crate::translation_core::Maybe<String> {
     value
         .filter(|value| !value.is_null())
         .map(|_| "moderation cannot be represented by the selected provider".into())
 }
 
 #[must_use]
-pub fn untranslatable_chat_prediction(value: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Maybe<String> {
+pub fn untranslatable_chat_prediction(
+    value: crate::translation_core::Maybe<&crate::translation_core::Json>,
+) -> crate::translation_core::Maybe<String> {
     value
         .filter(|value| !value.is_null())
         .map(|_| "prediction cannot be represented by the selected provider".into())
 }
 
-pub fn validate_responses_resource_selectors(body: &crate::translation_core::Json) -> crate::translation_core::Outcome<(), String> {
+pub fn validate_responses_resource_selectors(
+    body: &crate::translation_core::Json,
+) -> crate::translation_core::Outcome<(), String> {
     if body.get("prompt").is_some_and(|value| !value.is_null()) {
         return Err("prompt templates cannot be resolved by the selected provider bridge".into());
     }
@@ -225,7 +251,10 @@ pub fn validate_responses_resource_selectors(body: &crate::translation_core::Jso
     }
 }
 
-pub fn validate_openai_prompt_cache(body: &crate::translation_core::Json, anthropic_target: bool) -> crate::translation_core::Outcome<(), String> {
+pub fn validate_openai_prompt_cache(
+    body: &crate::translation_core::Json,
+    anthropic_target: bool,
+) -> crate::translation_core::Outcome<(), String> {
     for field in ["prompt_cache_key", "prompt_cache_retention"] {
         if body.get(field).is_some_and(|value| !value.is_null()) {
             return Err(crate::translation_core::format!(
@@ -242,9 +271,9 @@ pub fn validate_openai_prompt_cache(body: &crate::translation_core::Json, anthro
                 "prompt_cache_options cannot be represented by the selected provider".into(),
             );
         }
-        let object = options
-            .as_object()
-            .ok_or_else(|| crate::translation_core::format!("{}", "prompt_cache_options must be an object"))?;
+        let object = options.as_object().ok_or_else(|| {
+            crate::translation_core::format!("{}", "prompt_cache_options must be an object")
+        })?;
         if !object.is_empty()
             && (object.len() != 1 || object.get("mode").and_then(Value::as_str) != Some("explicit"))
         {
@@ -278,7 +307,12 @@ pub fn validate_openai_prompt_cache_breakpoints(
         let Some(object) = breakpoint.as_object() else {
             return Err("prompt_cache_breakpoint must be an object".into());
         };
-        if object.len() != 1 || object.get("mode").and_then(crate::translation_core::Json::as_str) != Some("explicit") {
+        if object.len() != 1
+            || object
+                .get("mode")
+                .and_then(crate::translation_core::Json::as_str)
+                != Some("explicit")
+        {
             return Err("only prompt_cache_breakpoint mode=explicit is supported".into());
         }
     }
@@ -286,7 +320,9 @@ pub fn validate_openai_prompt_cache_breakpoints(
 }
 
 #[must_use]
-pub fn codex_instruction_cache_breakpoint(body: &crate::translation_core::Json) -> crate::translation_core::Maybe<String> {
+pub fn codex_instruction_cache_breakpoint(
+    body: &crate::translation_core::Json,
+) -> crate::translation_core::Maybe<String> {
     for (index, message) in body
         .get("messages")
         .and_then(Value::as_array)
@@ -333,7 +369,9 @@ fn collect_named_values<'a>(value: &'a Value, name: &str, found: &mut Vec<&'a Va
     }
 }
 
-pub fn validate_responses(request: &crate::responses::OpenAIResponseRequest) -> crate::translation_core::Outcome<(), String> {
+pub fn validate_responses(
+    request: &crate::responses::OpenAIResponseRequest,
+) -> crate::translation_core::Outcome<(), String> {
     crate::safety_identifier::validate_openai(request.safety_identifier.as_deref())?;
     crate::safety_identifier::validate_openai_user(request.user.as_deref())?;
     if request

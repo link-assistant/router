@@ -7,19 +7,21 @@ import {serializeProgram} from '../semantic-meta.mjs';
 import {serializeConcreteSyntaxMeta,parseConcreteSyntaxMeta,reconstructConcreteSyntax} from '../concrete-syntax-meta.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {preparePairedProjectAccessorFixture,snapshotProjectAccessors} from './paired-project-accessor-fixture.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const original=readFileSync(new URL('../fixtures/project-before-rule-pipeline-000151.mjs.txt',import.meta.url),'utf8');
 assert.equal(hash(original),'f9ea0ff4818f913f3384a7053c0eda24149420aedab6711f0dd08ca8f69561e0');
-// Only static dependency specifiers change. The complete original function and
-// its private issuer Maps remain owned by this independently loaded module.
-const resolvedOriginal=original.replace(/(\bfrom\s*['"])(\.[^'"]+)(['"])/gu,(_,prefix,path,suffix)=>prefix+new URL(path,new URL('../project.mjs',import.meta.url)).href+suffix);
+// The complete frozen project gains the authenticated later public accessor.
+// Its original functions and private issuer Maps remain independently owned.
+const receiving=preparePairedProjectAccessorFixture();assert.equal(receiving.before,original);
+const resolvedOriginal=receiving.source;
 const prior=await import('data:text/javascript;base64,'+Buffer.from(resolvedOriginal).toString('base64'));
 const retain=(name,value)=>{
   const directory=process.env.ROUTER_PROJECT_RULE_VECTOR_DIR;if(!directory)return;
   mkdirSync(directory,{recursive:true});writeFileSync(directory+'/'+name+'.json',JSON.stringify(value,(_,item)=>typeof item==='bigint'?{$bigint:String(item)}:item)+'\n');
 };
 const options=(files,events=[])=>({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>{events.push({read:path});assert.ok(Object.hasOwn(files,path));return files[path];},progress:record=>events.push({progress:record})});
-function snapshot(result){return {meta:result.meta,javascript:result.javascript,typescript:result.typescript,sourceScopes:result.sourceScopes,executableDeclarations:result.executableDeclarations.map(({lower,...fields})=>fields),checkedMethodDeclarations:result.checkedMethodDeclarations.map(({lower,...fields})=>fields),checkedGeneratedMethodDeclarations:result.checkedGeneratedMethodDeclarations.map(({lower,...fields})=>fields)};}
+function snapshot(result){return {meta:result.meta,javascript:result.javascript,typescript:result.typescript,sourceScopes:result.sourceScopes,executableDeclarations:snapshotProjectAccessors(result.executableDeclarations),checkedMethodDeclarations:result.checkedMethodDeclarations.map(({lower,...fields})=>fields),checkedGeneratedMethodDeclarations:result.checkedGeneratedMethodDeclarations.map(({lower,...fields})=>fields)};}
 function assertConcreteSyntax(result,files){
   const rows=result.meta.concreteSyntaxMeta,expected=result.sourceScopes.filter(row=>row.sourceView.modulePath.length===0).map(row=>row.source);
   assert.ok(Array.isArray(rows));assert.deepEqual(rows.map(row=>row.source),expected);

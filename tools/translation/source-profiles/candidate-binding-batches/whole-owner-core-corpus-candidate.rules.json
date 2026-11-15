@@ -1,0 +1,33 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/prepare-whole-owner-core-corpus-candidate.mjs",
+  "phase": "repository",
+  "beforeSha256": "b2a56409a0ea4bfd8e6039b66e402187d28dc9a316d24fcb8e8af2e784a6a2ea",
+  "afterSha256": "aa7e8b2ddcf2a391b5088746c3f383b0721fd99c63ef6df6eb1c057b276d4760",
+  "edits": [
+    {
+      "id": "router.candidate-binding-batch.import.v1",
+      "before": "import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';",
+      "after": "import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';"
+    },
+    {
+      "id": "router.candidate-binding-batch.invocation.v1",
+      "before": "export function prepareWholeOwnerCoreCorpusCandidate({root=ROOT}={}){",
+      "after": "export function prepareWholeOwnerCoreCorpusCandidate({root=ROOT}={}){\n const bindingCandidates=[];"
+    },
+    {
+      "id": "router.candidate-binding-batch.collect.v1",
+      "before": "const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),",
+      "after": "const nativeBindings={};bindingCandidates.push({path:resolve(root,path),source:after,result:nativeBindings});const "
+    },
+    {
+      "id": "router.candidate-binding-batch.complete.v1",
+      "before": " return {schema:'whole-owner-core-corpus-source-candidate-v1',inputs,files,coreProducer:core,originalTemplateProducers:prerequisites,originalDefaultsUnchanged:true,fullPrimitiveJsonWireContract:true,sourceAuthority:false,semanticAdmission:false,performanceQualified:false,newAcrossInvocationCache:false};",
+      "after": " // Fresh complete native scope checks precede every returned plan and write.\n const checkedBindings=verifyNativeCopiedModuleBindings(ts,bindingCandidates);\n for(let at=0;at<bindingCandidates.length;at++)Object.assign(bindingCandidates[at].result,checkedBindings[at]);\n return {schema:'whole-owner-core-corpus-source-candidate-v1',inputs,files,coreProducer:core,originalTemplateProducers:prerequisites,originalDefaultsUnchanged:true,fullPrimitiveJsonWireContract:true,sourceAuthority:false,semanticAdmission:false,performanceQualified:false,newAcrossInvocationCache:false};"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

@@ -12,6 +12,12 @@
 
 #[path = "../rust/src/bounded_process.rs"]
 mod bounded_process;
+/// `bounded_process.rs` spells `Option` through the library's owned-type alias
+/// (`rust/src/translation_core/primitives.rs`). This script has no
+/// `translation_core`, so it supplies the same alias.
+mod translation_core {
+    pub type Maybe<T> = Option<T>;
+}
 #[path = "release-status.rs"]
 mod release_status;
 

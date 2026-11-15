@@ -25,7 +25,7 @@ These temporary inspection strings retain UTF-16 coordinates and line endings.
 Every inspection has complete original/inspected CST, serialization/reparsing,
 separate language and repository sequences and a whole-source inverse. Emitted
 formatting proposals retain all original attributes and source bytes outside
-the existing explicit formatting/type edits. Inputs, scope sources, graph
+the existing explicit formatting/type edits. Inputs, scope sources, module graph
 diagnostics, producer effects, inspection data, mappings and inverses remain
 available for independent review. No source is installed by this API.
 

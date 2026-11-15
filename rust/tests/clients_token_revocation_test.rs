@@ -10,7 +10,11 @@
 
 mod common;
 
+#[path = "support/free_port.rs"]
+mod free_port;
+
 use common::mock_router;
+use free_port::free_port;
 use link_assistant_router::config::StoragePolicy;
 use link_assistant_router::storage::build_token_store;
 use link_assistant_router::token::{IssueRequest, TokenManager};
@@ -247,14 +251,14 @@ fn repeating_an_identical_setup_does_not_mint_another_token() {
 fn catalog_failure_revokes_the_candidate_minted_before_validation() {
     let home = tempfile::tempdir().expect("temp home");
     let home = home.path();
-    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("reserve port");
-    let base_url = format!("http://{}", listener.local_addr().expect("address"));
-    drop(listener);
+    // Port 1 is privileged, so no parallel test can bind it the way one can
+    // reuse a just-dropped ephemeral port: connections to it stay refused.
+    let base_url = "http://127.0.0.1:1";
 
     let failed = router(
         home,
         "text",
-        &["clients", "setup", "opencode", "--base-url", &base_url],
+        &["clients", "setup", "opencode", "--base-url", base_url],
     );
     assert!(!failed.status.success(), "setup unexpectedly worked");
     let records = tokens(home, "text");
@@ -446,12 +450,19 @@ impl Drop for Router {
 }
 
 impl Router {
+    /// Start a router on a free port, and again on another port if it exits
+    /// before it is healthy: the port is released before the router binds it,
+    /// so a parallel test's listener can take it first.
     fn start(home: &Path, storage: &str) -> Self {
-        let port = std::net::TcpListener::bind("127.0.0.1:0")
-            .expect("ephemeral port")
-            .local_addr()
-            .expect("local address")
-            .port();
+        for _ in 0..5 {
+            if let Some(router) = Self::try_start(home, storage, free_port()) {
+                return router;
+            }
+        }
+        panic!("router never served /api/health on a port of its own");
+    }
+
+    fn try_start(home: &Path, storage: &str, port: u16) -> Option<Self> {
         let child = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
             .arg("serve")
             .env("HOME", home)
@@ -463,22 +474,53 @@ impl Router {
             .env("CLAUDE_CODE_HOME", home.join("claude"))
             .env("DISABLE_LOGIN_API", "true")
             .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
+            .stderr(fs::File::create(home.join("router.log")).expect("router log"))
             .spawn()
             .expect("router should start");
-        let router = Self { child, port };
+        let mut router = Self { child, port };
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
-        while std::time::Instant::now() < deadline {
-            if http_post(&router.url("/api/health"), None, &[], "").is_some() {
-                return router;
+        while matches!(router.child.try_wait(), Ok(None)) {
+            let last = router_health(router.port);
+            if link_assistant_router::health_response::is_ready(&last) {
+                return Some(router);
             }
+            assert!(
+                std::time::Instant::now() < deadline,
+                "router never became healthy on port {}; last answer {last:?}; log:\n{}",
+                router.port,
+                fs::read_to_string(home.join("router.log")).unwrap_or_default()
+            );
             std::thread::sleep(std::time::Duration::from_millis(100));
         }
-        panic!("router never became healthy on port {}", router.port);
+        None
     }
 
     fn url(&self, path: &str) -> String {
         format!("http://127.0.0.1:{}{path}", self.port)
+    }
+}
+
+/// The raw answer to `GET /api/health` on `port`, or why there was none.
+///
+/// The router is ready once this is a 200 with its bare `ok`, which arrives
+/// chunked, as `managed_server::tcp_health` checks. `mock_router` answers the same path
+/// with a JSON body, so a mock that took the router's port is not mistaken for
+/// it, and a start that never gets there reports what it got instead.
+fn router_health(port: u16) -> String {
+    use std::io::{Read as _, Write as _};
+
+    let Ok(mut stream) = std::net::TcpStream::connect(("127.0.0.1", port)) else {
+        return String::from("connection refused");
+    };
+    // A listener that accepts and never answers must not stall the start.
+    let _ = stream.set_read_timeout(Some(std::time::Duration::from_secs(5)));
+    let mut response = String::new();
+    match stream
+        .write_all(b"GET /api/health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
+        .and_then(|()| stream.read_to_string(&mut response))
+    {
+        Ok(_) => response,
+        Err(error) => format!("{error} after {response:?}"),
     }
 }
 

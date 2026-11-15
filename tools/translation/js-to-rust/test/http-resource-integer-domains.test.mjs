@@ -14,13 +14,10 @@ import {prepareResourceIntegerDomainSources} from '../../prepare-resource-intege
 const limits={timeout:60000},widths=[['u8',0n,255n],['u16',0n,65535n],['u32',0n,4294967295n],['u64',0n,18446744073709551615n],['u128',0n,340282366920938463463374607431768211455n],['i8',-128n,127n],['i16',-32768n,32767n],['i32',-2147483648n,2147483647n],['i64',-9223372036854775808n,9223372036854775807n],['i128',-170141183460469231731687303715884105728n,170141183460469231731687303715884105727n]];
 const message=type=>type==='u64'?'Control u64 input outside native range':type==='i64'?'Resource i64 input outside native range':'Resource '+type+' input outside native range';
 const guard=(type,minimum,maximum,name='value')=>'if(typeof '+name+'!=="bigint"||'+name+'<'+minimum+'n||'+name+'>'+maximum+'n){throw new RangeError('+JSON.stringify(message(type))+');}';
-const imports=widths.map(([type])=>'import {router_integer_'+type+'_saturating_add as add_'+type+'} from "./runtime/integer-runtime.mjs";').join('
-')+'
-';
+const imports=widths.map(([type])=>'import {router_integer_'+type+'_saturating_add as add_'+type+'} from "./runtime/integer-runtime.mjs";').join('\n')+'\n';
 const source=imports+widths.map(([type,minimum,maximum])=>`export function display_${type}(value:ReturnType<typeof add_${type}>){${guard(type,minimum,maximum)}return String(value);}
 export function increment_${type}(value:ReturnType<typeof add_${type}>):ReturnType<typeof add_${type}>{${guard(type,minimum,maximum)}return add_${type}(value,1n);}
-`).join('
-')+`export function local_i8():ReturnType<typeof add_i8>{let value=-1n;return value;}
+`).join('\n')+`export function local_i8():ReturnType<typeof add_i8>{let value=-1n;return value;}
 export function assign_i8(value:ReturnType<typeof add_i8>){${guard('i8',-128n,127n)}let current=add_i8(value,0n);current=-1n;return String(current);}
 export function negative_left_i8(value:ReturnType<typeof add_i8>){${guard('i8',-128n,127n)}return -1n<value;}
 `;
@@ -35,10 +32,7 @@ test('twenty-three actual width operations and display/local callers receive ind
  const inverse=translateHttpResourceCallerRust(result.rust,{...input(result.rust,'src/caller.rs'),javascriptPath:'caller.mjs'});assert.ok(sameRustSourceSyntax(inverse.rust,result.rust));assert.equal(inverse.httpResourceRustSourceHistory.equation.inverse,result.rust);assert.equal(result.rustExecuted,false);assert.equal(result.receivingExecuted,false);
 });
 test('all-width canonical native scalar parameters literals and formatting preserve original fixed-width identity',limits,()=>{
- for(const [type,minimum,maximum]of widths){for(const native of ['pub fn display(value: '+type+') -> String { crate::translation_core::format!("{}", value) }
-','pub fn literal() -> '+type+' { '+minimum+'_'+type+' }
-','pub fn literal() -> '+type+' { '+maximum+'_'+type+' }
-']){const result=translateHttpResourceCallerRust(native,{...input(native,'src/caller.rs'),javascriptPath:'caller.mjs'});assert.ok(sameRustSourceSyntax(native,result.rust),native);}}
+ for(const [type,minimum,maximum]of widths){for(const native of ['pub fn display(value: '+type+') -> String { crate::translation_core::format!("{}", value) }\n','pub fn literal() -> '+type+' { '+minimum+'_'+type+' }\n','pub fn literal() -> '+type+' { '+maximum+'_'+type+' }\n']){const result=translateHttpResourceCallerRust(native,{...input(native,'src/caller.rs'),javascriptPath:'caller.mjs'});assert.ok(sameRustSourceSyntax(native,result.rust),native);}}
 });
 test('missing or differing original entry guards and out-of-range scalar literals cannot be supplied by type metadata',limits,()=>{
  for(const [type,minimum,maximum]of widths){const good=guard(type,minimum,maximum);for(const wrong of ['',guard(type,minimum,maximum+1n),good.replace(message(type),'wrong domain')]){const value=imports+'export function bad(value:ReturnType<typeof add_'+type+'>){'+wrong+'return value;}';assert.throws(()=>translateHttpResourceCallerTypeScript(value,input(value)),type);}for(const literal of [minimum-1n,maximum+1n]){const value=imports+'export function bad(){return add_'+type+'('+literal+'n,0n);}';assert.throws(()=>translateHttpResourceCallerTypeScript(value,input(value)),type);}}

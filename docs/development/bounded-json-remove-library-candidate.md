@@ -69,7 +69,7 @@ The existing actual `thinking/apply::remove` parent stays retained in the 49/30
 source packet. The new test keeps its complete source as a negative outside the
 closed registered-namespace route. A source projection or matching function body
 does not turn that original application function into a measured executable gain.
-Real application admission still needs the actual complete graph and Cargo unit,
+Real application admission still needs the actual complete module graph and Cargo unit,
 producer owners, caller/callee checker lifecycle, target emission and native
 ABI qualification. BTreeMap/Borrow/Ord/Eq/Hash internals remain intentionally
 native behind the paired library boundary.

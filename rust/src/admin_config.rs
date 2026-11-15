@@ -17,7 +17,8 @@ use crate::config::{ConfigError, parse_u64_env};
 ///
 /// Returns [`ConfigError::InvalidPort`] for an unparseable `ADMIN_PORT` and
 /// [`ConfigError::InvalidAddress`] when host and port do not form an address.
-pub fn admin_ui_from_env() -> crate::translation_core::Outcome<crate::admin::AdminUiConfig, ConfigError> {
+pub fn admin_ui_from_env()
+-> crate::translation_core::Outcome<crate::admin::AdminUiConfig, ConfigError> {
     let port = crate::operation_context::var("ADMIN_PORT")
         .ok()
         .filter(|value| !value.trim().is_empty())

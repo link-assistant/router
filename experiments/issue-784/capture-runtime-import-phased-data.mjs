@@ -1,0 +1,11 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+import {gzipSync,gunzipSync} from 'node:zlib';
+import {prepareRuntimeImportPhasedData} from '../../tools/translation/prepare-runtime-import-phased-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--install')throw Error('Explicit --install required');
+const plan=prepareRuntimeImportPhasedData(),row=plan.file,raw=Buffer.from(JSON.stringify(plan));
+if(raw.length>32*1024*1024||row.current!==row.original)throw Error('Complete original source proposal required');
+const output='ci-logs/issue-784-restart-2/runtime-import-phased-data-source.json.gz';
+writeFileSync(output,gzipSync(raw),{flag:'wx'});
+if(!gunzipSync(readFileSync(output),{maxOutputLength:32*1024*1024}).equals(raw)||readFileSync(row.path,'utf8')!==row.current)throw Error('Complete capture or physical source changed');
+writeFileSync(row.path,row.after);if(readFileSync(row.path,'utf8')!==row.after)throw Error('Complete afterimage differs');
+console.log(JSON.stringify({logicalBytes:raw.length,originalSha256:row.originalSha256,afterSha256:row.afterSha256,semanticAuthority:false}));

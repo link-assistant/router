@@ -141,7 +141,11 @@ impl ManagementAccess {
         self.failure_at(normalize_ip(ip), Instant::now())
     }
 
-    fn failure_at(&self, ip: IpAddr, now: Instant) -> crate::translation_core::Maybe<ManagementBan> {
+    fn failure_at(
+        &self,
+        ip: IpAddr,
+        now: Instant,
+    ) -> crate::translation_core::Maybe<ManagementBan> {
         if self.exempt(ip) {
             return None;
         }

@@ -2,7 +2,7 @@
 //!
 //! Native proxying preserves the official client's application-level
 //! identity. Only authentication, routing/transport framing, hop-by-hop
-//! fields, and Router-internal metadata may change.
+//! fields, Router-internal metadata and unconsented location metadata may change.
 
 use std::collections::HashSet;
 
@@ -49,6 +49,8 @@ pub const INGRESS_NETWORK_HEADERS: &[&str] = &[
     "x-client-ip",
     "x-cluster-client-ip",
     "cf-connecting-ip",
+    "cf-connecting-ipv6",
+    "cf-pseudo-ipv4",
     "true-client-ip",
     "fastly-client-ip",
     "fly-client-ip",
@@ -71,6 +73,7 @@ pub fn merge_oauth_beta(existing: Option<&str>) -> String {
 
 fn replaced_or_transport_header(name: &str) -> bool {
     INGRESS_NETWORK_HEADERS.contains(&name)
+        || name.starts_with("x-forwarded-")
         || matches!(
             name,
             "authorization"
@@ -109,8 +112,12 @@ pub fn native_request_headers(incoming: &HeaderMap, bearer_token: &str) -> Heade
         .filter_map(|name| HeaderName::from_bytes(name.trim().as_bytes()).ok())
         .collect();
     let mut headers = HeaderMap::new();
+    let share_geolocation = crate::geolocation::shares_geolocation(incoming);
     for (name, value) in incoming {
-        if !replaced_or_transport_header(name.as_str()) && !connection_nominated.contains(name) {
+        if !replaced_or_transport_header(name.as_str())
+            && !connection_nominated.contains(name)
+            && (share_geolocation || !crate::geolocation::is_geolocation_header(name.as_str()))
+        {
             headers.append(name.clone(), value.clone());
         }
     }

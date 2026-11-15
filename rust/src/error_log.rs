@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 
 use futures_util::StreamExt as _;
 use reqwest::ResponseBuilderExt as _;
-use serde_json::{Value, json};
+use serde_json::json;
 
 /// Default total error-file budget when capture is explicitly enabled.
 pub const DEFAULT_MAX_BYTES: u64 = 10 * 1024 * 1024;

@@ -12,16 +12,13 @@ import {prepareResourceContainerDomainSources} from '../../prepare-resource-cont
 const limits={timeout:60000},widths=[['u8',0n,255n],['u16',0n,65535n],['u32',0n,4294967295n],['u64',0n,18446744073709551615n],['u128',0n,340282366920938463463374607431768211455n],['i8',-128n,127n],['i16',-32768n,32767n],['i32',-2147483648n,2147483647n],['i64',-9223372036854775808n,9223372036854775807n],['i128',-170141183460469231731687303715884105728n,170141183460469231731687303715884105727n]];
 const imports=`import {router_text_result_identity as result} from './runtime/owned-result-runtime.mjs';
 import {router_option_identity as option} from './runtime/primitive-option-runtime.mjs';
-`+widths.map(([type])=>'import {router_integer_'+type+'_saturating_add as add_'+type+'} from "./runtime/integer-runtime.mjs";').join('
-')+'
-';
+`+widths.map(([type])=>'import {router_integer_'+type+'_saturating_add as add_'+type+'} from "./runtime/integer-runtime.mjs";').join('\n')+'\n';
 const simple=(tag,label,type,minimum,maximum)=>'if(value.$==='+JSON.stringify(tag)+'&&(typeof value.field0!=="bigint"||value.field0<'+minimum+'n||value.field0>'+maximum+'n)){throw new RangeError('+JSON.stringify('Resource '+label+' '+type+' input outside native range')+');}';
 const nested=(type,minimum,maximum)=>'if(value.$==="Some"&&value.field0.$==="Ok"&&(typeof value.field0.field0!=="bigint"||value.field0.field0<'+minimum+'n||value.field0.field0>'+maximum+'n)){throw new RangeError('+JSON.stringify('Resource '+type+' payload outside native range')+');}';
 const source=imports+widths.map(([type,minimum,maximum])=>`export function optional_${type}(value:ReturnType<typeof option<ReturnType<typeof add_${type}>>>){${simple('Some','optional',type,minimum,maximum)}return value;}
 export function result_${type}(value:ReturnType<typeof result<ReturnType<typeof add_${type}>>>){${simple('Ok','result',type,minimum,maximum)}return value;}
 export function nested_${type}(value:ReturnType<typeof option<ReturnType<typeof result<ReturnType<typeof add_${type}>>>>>){${nested(type,minimum,maximum)}return value;}
-`).join('
-');
+`).join('\n');
 const input=(value=source,sourcePath='caller.mts')=>({sourcePath,...httpResourceReceivingData([{path:sourcePath,source:value}])});
 test('all ten widths retain the exact numeric payload and every actual constructor path in bounded domain DATA',limits,()=>{
  for(const [type,minimum,maximum]of widths)for(const prefix of ['optional','http-result','optional:http-result']){const actual=prefix+':'+type,shape=httpResourceNestedNumericGuardPath(actual);assert.equal(shape.type,actual);assert.equal(shape.integer,type);assert.equal(shape.minimum,minimum.toString());assert.equal(shape.maximum,maximum.toString());assert.equal(httpResourceNumericContainerGuardDomain(actual),true);assert.equal(httpResourcePublicInputDomain(actual,{guarded:true}),true);if(type!=='u64')assert.equal(httpResourcePublicInputDomain(actual),false);}

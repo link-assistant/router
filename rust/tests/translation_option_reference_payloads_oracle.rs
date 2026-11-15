@@ -13,6 +13,7 @@ fn observed<'a>(value: &'a Owner, calls: &Cell<usize>) -> &'a Owner {
 }
 
 #[test]
+#[allow(clippy::or_fun_call)] // The eager fallback call is the behavior under test.
 fn references_copy_without_copying_or_dropping_the_owned_string_record() {
     let first = Owner {
         text: "猫😀".into(),
@@ -24,10 +25,8 @@ fn references_copy_without_copying_or_dropping_the_owned_string_record() {
     for input in [None, Some(&first)] {
         let eager = input.unwrap_or(observed(&fallback, &calls));
         assert_eq!(calls.replace(0), 1);
-        assert!(std::ptr::eq(
-            eager,
-            if input.is_some() { &first } else { &fallback }
-        ));
+        let expected = if input.is_some() { &first } else { &fallback };
+        assert!(std::ptr::eq(eager, expected));
         let lazy = input.unwrap_or_else(|| observed(&fallback, &calls));
         assert_eq!(calls.replace(0), usize::from(input.is_none()));
         assert!(std::ptr::eq(lazy, eager));
@@ -38,7 +37,8 @@ fn references_copy_without_copying_or_dropping_the_owned_string_record() {
 
 #[test]
 fn nested_option_result_and_named_reference_identity_remain_distinct() {
-    #[allow(clippy::unnecessary_lazy_evaluations)] // Keep the lazy Option body under test.
+    // Keep the lazy Option body and the nested Option payload under test.
+    #[allow(clippy::unnecessary_lazy_evaluations, clippy::option_option)]
     fn nested(value: Option<Option<&Owner>>) -> Result<Option<&Owner>, bool> {
         value.ok_or_else(|| false)
     }
@@ -46,18 +46,16 @@ fn nested_option_result_and_named_reference_identity_remain_distinct() {
     fn contextual(value: Option<&Owner>) -> Result<Option<&Owner>, bool> {
         value.map(Some).ok_or_else(|| false)
     }
-    let owner = Owner {
-        text: "Ω".into(),
-    };
+    let owner = Owner { text: "Ω".into() };
     assert!(matches!(nested(None), Err(false)));
     assert!(matches!(nested(Some(None)), Ok(None)));
     assert!(std::ptr::eq(
         nested(Some(Some(&owner))).unwrap().unwrap(),
-        &owner
+        &raw const owner
     ));
     assert!(std::ptr::eq(
         contextual(Some(&owner)).unwrap().unwrap(),
-        &owner
+        &raw const owner
     ));
     assert!(matches!(contextual(None), Err(false)));
 }
@@ -73,7 +71,7 @@ fn json_field_reference_borrows_its_value_and_not_the_short_lived_key() {
         let key = String::from("key");
         field(&value, &key).ok_or_else(|| false).unwrap()
     };
-    assert!(std::ptr::eq(found, &value["key"]));
+    assert!(std::ptr::eq(found, &raw const value["key"]));
     assert!(value.as_object().ok_or(false).is_ok());
     for missing in [Value::Null, json!([]), json!({}), json!(true)] {
         assert!(matches!(field(&missing, "key").ok_or(false), Err(false)));

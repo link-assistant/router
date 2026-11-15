@@ -1,3 +1,4 @@
+import {registerCheckedTypeKey} from './checked-type-keys.mjs';
 // Private source observations, not a public structural type/owner registry.
 // Every observation is rejoined to its genuine original parser and full library.
 import {withOrderedTextMapPairSourceCapture} from './ordered-text-map-callers-20261102-pair-types.mjs';
@@ -154,3 +155,5 @@ export function assertOrderedTextMapOpaqueBoundary(actual,expected){
  if(actual?.kind!=='routerOrderedTextMap'&&expected?.kind!=='routerOrderedTextMap')return false;
  const key=orderedTextMapOpaqueTypeKey(actual);if(key===null||expected&&orderedTextMapOpaqueTypeKey(expected)!==key)fail();return true;
 }
+// checked-types.mjs reads this key through the leaf registry (no import cycle).
+registerCheckedTypeKey('routerOrderedTextMap',orderedTextMapOpaqueTypeKey);

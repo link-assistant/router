@@ -58,8 +58,14 @@ fn simultaneous() -> Json {
 
 #[test]
 fn sibling_if_uses_only_the_selected_binding() {
-    assert_eq!(sibling_if(true), serde_json::json!({"branch": "left", "ok": true}));
-    assert_eq!(sibling_if(false), serde_json::json!({"branch": "right", "ok": false}));
+    assert_eq!(
+        sibling_if(true),
+        serde_json::json!({"branch": "left", "ok": true})
+    );
+    assert_eq!(
+        sibling_if(false),
+        serde_json::json!({"branch": "right", "ok": false})
+    );
 }
 
 #[test]
@@ -70,18 +76,27 @@ fn sibling_match_keeps_alternative_order_and_unicode_fallback() {
         ("input_image", "image", false),
         ("Ω😀", "other", true),
     ] {
-        assert_eq!(sibling_match(kind), serde_json::json!({"kind": expected, "cache": cache}));
+        assert_eq!(
+            sibling_match(kind),
+            serde_json::json!({"kind": expected, "cache": cache})
+        );
     }
 }
 
 #[test]
 fn successive_scopes_keep_distinct_owned_values() {
-    assert_eq!(nested(), serde_json::json!({"first": {"value": true}, "second": {"value": false}}));
+    assert_eq!(
+        nested(),
+        serde_json::json!({"first": {"value": true}, "second": {"value": false}})
+    );
 }
 
 #[test]
 fn distinct_live_bindings_preserve_both_outputs() {
-    assert_eq!(simultaneous(), serde_json::json!({"first": {"a": true}, "second": {"b": false}}));
+    assert_eq!(
+        simultaneous(),
+        serde_json::json!({"first": {"a": true}, "second": {"b": false}})
+    );
 }
 
 #[test]
@@ -98,7 +113,8 @@ fn rhs_is_evaluated_before_the_owned_base_is_replaced() {
 }
 
 #[test]
-#[allow(clippy::nonminimal_bool)] // Preserve the original logical interpolation syntax.
+// Preserve the original logical interpolation and raw-string key syntax.
+#[allow(clippy::nonminimal_bool, clippy::needless_raw_string_hashes)]
 fn raw_strings_and_conditional_writes_keep_literal_bytes() {
     for flag in [true, false] {
         let mut doc = translation_core::json!({"raw": r#"Ω😀 { doc }"#});

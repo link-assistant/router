@@ -51,7 +51,7 @@ async function fixture(t,retain,{foreign=false}={}){
  const language=LANGUAGE_EDITS.map((rule,at)=>({...rule,id:'javascript:native-descriptor-kind-'+at})),proposal=pipeline(before,language,[]);assert.equal(proposal.value.source,current);retain('complete-production-language-repository-CST-equations',{before,current,proposal,authority:{source:false,owner:false,executable:false}});
  const modules={},sources=[];
  for(const [label,original]of [['before',before],['current',current]]){
-  const repository=['private-frozen-json.mjs','original-json-intrinsics.mjs','original-lexing-intrinsics.mjs'].map((name,at)=>({id:'router:receiving-import-'+at,before:"from './"+name+"'",after:"from '"+new URL('../'+name,import.meta.url).href+"'"}));
+  const repository=['private-frozen-json.mjs','original-json-intrinsics.mjs','guarded-proof-lexing-intrinsics.mjs'].map((name,at)=>({id:'router:receiving-import-'+at,before:"from './"+name+"'",after:"from '"+new URL('../'+name,import.meta.url).href+"'"}));
   let transformed=pipeline(original,[],repository),source=transformed.value.source;const steps=[...transformed.value.steps],edit=(a,b)=>{source=once(source,a,b);steps.push({phase:'receiving-diagnostic',before:a,after:b});};
   edit('   if(selected)return apply(stringifyField.value,jsonOwner,[value]);','   if(selected){receivingNative++;return apply(stringifyField.value,jsonOwner,[value]);}');
   edit('  return fallback(value);','  receivingFallback++;return fallback(value);');

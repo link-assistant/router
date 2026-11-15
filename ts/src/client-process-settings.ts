@@ -4,7 +4,7 @@ import {persistentClaudeGatewayModel} from './client-persistent.js';
 import {nativeClientModelAuthorized} from './client-catalog.js';
 const privacyDefaults=["DISABLE_ERROR_REPORTING","DISABLE_AUTOUPDATER","DISABLE_FEEDBACK_COMMAND"];
 export function usableProcessModels(client:string,models:any[]):any[]{
- if(!Array.isArray(models)||models.length>10000)throw clientFailure('Process catalog requires bounded rows');const info=clientIntegration(client),preferred=info.owners.flatMap(owner=>models.filter(row=>row.owned_by===owner));return info.owners.length&&(preferred.length||info.strict)?preferred:[...models];
+ if(!Array.isArray(models)||models.length>10000)throw clientFailure('Process catalog requires bounded rows');const info=clientIntegration(client),preferred=info.owners.flatMap((owner:string)=>models.filter(row=>row.owned_by===owner));return info.owners.length&&(preferred.length||info.strict)?preferred:[...models];
 }
 export function codexProcessCatalog(models:any[],effort:string|null=null,selected:string|null=null):any{
  if(!models.length)throw clientFailure('The Router advertised no models for Codex');const listed:any[]=[],omitted:string[]=[];

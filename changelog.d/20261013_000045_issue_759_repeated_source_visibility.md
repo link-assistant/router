@@ -1,1 +1,0 @@
-Preserve every inaccessible restriction when repeated source bindings share a namespace and name, including mutable caller scopes and warmed parser setup. Add a regression for the observed grant caused by retaining only the final restriction.

@@ -47,8 +47,6 @@ import * as callback from '../primitive-option-callback-runtime.mjs';
 import {PRIMITIVE_OPTION_CALLBACK_CONTRACTS,emitPrimitiveOptionCallbackDeclarations} from '../primitive-option-callback-contracts.mjs';
 import * as option from '../primitive-option-runtime.mjs';
 import {PRIMITIVE_OPTION_CONTRACTS,emitPrimitiveOptionDeclarations} from '../primitive-option-contracts.mjs';
-import {proposeCorePrimitiveOptionMethodCorpus as ordinaryOption} from '../migrate-core-primitive-option-methods.mjs';
-import {proposeCorePrimitiveOptionMethodCorpus as boundOption} from '../source-bound-owned-migrate-core-primitive-option-methods.mjs';
 import {prepareOptionEagerErrorSources,prepareOptionEagerErrorNativeSource} from '../prepare-option-eager-error-sources.mjs';
 const limits={timeout:60000},root=new URL('../../../',import.meta.url),cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},some=field0=>({$:'Some',field0}),none={$:'None'},ok=field0=>({$:'Ok',field0}),err=field0=>({$:'Err',field0});
 const bodies=`pub fn flag(value:Option<bool>,error:String)->Result<bool,String>{value.ok_or(error)}

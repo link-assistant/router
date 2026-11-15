@@ -6,14 +6,11 @@ import {translateHttpResourceCallerRust} from '../http-resource-rust.mjs';
 import {httpResourceReceivingData,verifyHttpResourceTargets} from './http-resource-receiving-data.mjs';
 import {sameRustSourceSyntax} from '../../rust-syntax-cells.mjs';
 import {prepareResourceWidthLoopSources} from '../../prepare-resource-width-loop-sources.mjs';
-const limits={timeout:60000},widths=[['u8',0n,255n],['u16',0n,65535n],['u32',0n,4294967295n],['u64',0n,18446744073709551615n],['u128',0n,340282366920938463463374607431768211455n],['i8',-128n,127n],['i16',-32768n,32767n],['i32',-2147483648n,2147483647n],['i64',-9223372036854775808n,9223372036854775807n],['i128',-170141183460469231731687303715884105728n,170141183460469231731687303715884105727n]],imports=widths.map(([type])=>'import {router_integer_'+type+'_saturating_add as add_'+type+'} from "./runtime/integer-runtime.mjs";').join('
-')+'
-';
+const limits={timeout:60000},widths=[['u8',0n,255n],['u16',0n,65535n],['u32',0n,4294967295n],['u64',0n,18446744073709551615n],['u128',0n,340282366920938463463374607431768211455n],['i8',-128n,127n],['i16',-32768n,32767n],['i32',-2147483648n,2147483647n],['i64',-9223372036854775808n,9223372036854775807n],['i128',-170141183460469231731687303715884105728n,170141183460469231731687303715884105727n]],imports=widths.map(([type])=>'import {router_integer_'+type+'_saturating_add as add_'+type+'} from "./runtime/integer-runtime.mjs";').join('\n')+'\n';
 const source=imports+widths.map(([type,minimum,maximum])=>`export function upper_${type}():ReturnType<typeof add_${type}>{let count=0n;for(let index:ReturnType<typeof add_${type}> = ${maximum-1n}n;index<${maximum}n;index++){count=add_${type}(count,1n);}return count;}
 export function lower_${type}():ReturnType<typeof add_${type}>{let count=0n;for(let index:ReturnType<typeof add_${type}> = ${minimum+1n}n;index>${minimum}n;--index){count=add_${type}(count,1n);}return count;}
 export function continued_${type}():ReturnType<typeof add_${type}>{let count=0n;for(let index:ReturnType<typeof add_${type}> = 0n;index<3n;++index){if(index===1n){continue;}count=add_${type}(count,1n);}return count;}
-`).join('
-');
+`).join('\n');
 const input=(value=source,sourcePath='caller.mts')=>({sourcePath,...httpResourceReceivingData([{path:sourcePath,source:value}])});
 test('thirty actual all-width upper/lower/continue loops receive JS strict TS and complete native inverses',limits,async()=>{
  const result=translateHttpResourceCallerTypeScript(source,input()),javascript=translateHttpResourceCallerJavaScript(result.javascript,input(result.javascript,'caller.mjs'));assert.equal(result.typescript,source);assert.ok(sameRustSourceSyntax(result.rust,javascript.rust));const rows=JSON.parse(result.meta).functions;for(const [type]of widths){const row=rows.find(row=>row.name==='upper_'+type),loop=row.flow.steps.find(row=>row.kind==='scalar-for');assert.equal(loop.initializer.value.type,type);assert.equal(loop.increment.value.operation,'router_integer_'+type+'_saturating_add');}

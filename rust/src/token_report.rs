@@ -64,7 +64,10 @@ pub fn row(record: &crate::translation_core::Json) -> crate::translation_core::T
         ; if let crate::translation_core::Maybe::Some(__router_json_reader_1) = __router_json_reader_0 { crate::translation_core::Json::as_str(__router_json_reader_1) } else { crate::translation_core::Maybe::None } }
         .filter(|scope| !scope.is_empty())
         .unwrap_or("client");
-    let rpm = number("rate_limit_per_minute").map_or_else(|| crate::translation_core::format!("{}", "-"), |v| v.to_string());
+    let rpm = number("rate_limit_per_minute").map_or_else(
+        || crate::translation_core::format!("{}", "-"),
+        |v| v.to_string(),
+    );
     let revoked = { let __router_json_reader_2 = record
         .get("revoked")
         ; if let crate::translation_core::Maybe::Some(__router_json_reader_3) = __router_json_reader_2 { crate::translation_core::Json::as_bool(__router_json_reader_3) } else { crate::translation_core::Maybe::None } }

@@ -1,1 +1,0 @@
-Use fixed-length SHA256 filenames for owned-meta Lino receiving vectors while retaining complete case names and payloads. This prevents the original long case name from exceeding the filesystem's filename limit. Case bodies, workloads and deadlines remain unchanged.

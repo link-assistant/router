@@ -133,8 +133,13 @@ export async function sendRemoteManagement(target?: any, call?: any, { fetch = g
         else
             combined.addEventListener('abort', abort, { once: true });
     });
-    const within: any = (promise?: any): any => (Promise as any).race([promise, aborted]);
+    // Cancellation wins ties: an injected fetch may already be settled when the
+    // caller's signal was aborted, and race order decides between settled inputs.
+    aborted.catch((): void => {});
+    const within: any = (promise?: any): any => (Promise as any).race([aborted, promise]);
     try {
+        if (combined.aborted)
+            await aborted;
         const url: any = target.managementServer + call.path;
         const request: any = { method: call.method, redirect: 'error', signal: combined,
             headers: { accept: 'application/json', ...(call.client ? {'x-link-assistant-client':call.client} : {}), ...(target.token ? { authorization: `Bearer ${target.token}` } : {}), ...(call.body !== undefined ? { 'content-type': 'application/json' } : {}) },

@@ -92,13 +92,20 @@ fn business_code(value: &crate::translation_core::Json) -> crate::translation_co
     let code = value.pointer("/error/code").or_else(|| value.get("code"))?;
     match code {
         crate::translation_core::Json::String(text) => text.trim().parse().ok(),
-        crate::translation_core::Json::Number(number) => number.as_u64().and_then(|n| u32::try_from(n).ok()),
+        crate::translation_core::Json::Number(number) => {
+            number.as_u64().and_then(|n| u32::try_from(n).ok())
+        }
         _ => None,
     }
 }
 
 /// Split `[1113][reason][request id]` into its reason and request id.
-fn bracketed(message: &crate::translation_core::Str) -> (crate::translation_core::Maybe<String>, crate::translation_core::Maybe<String>) {
+fn bracketed(
+    message: &crate::translation_core::Str,
+) -> (
+    crate::translation_core::Maybe<String>,
+    crate::translation_core::Maybe<String>,
+) {
     let parts = message
         .split(']')
         .filter_map(|part| part.trim().strip_prefix('['))
@@ -297,7 +304,8 @@ pub fn load(data_dir: &std::path::Path) -> std::collections::HashMap<String, Zai
     entries
         .into_iter()
         .filter_map(|(name, entry)| {
-            let code = business_code(&crate::translation_core::json!({ "code": entry.get("code")? }))?;
+            let code =
+                business_code(&crate::translation_core::json!({ "code": entry.get("code")? }))?;
             let observed = entry.get("observed_at_unix").and_then(Value::as_u64)?;
             Some((
                 name,

@@ -30,7 +30,7 @@ def allocation(directory):
   if count>ENTRY_LIMIT:fail('observed evidence entry bound')
   try:s=path.lstat()if entry is None else entry.stat(follow_symlinks=False)
   except FileNotFoundError:
-   if path==directory:raise
+   if path==root:raise
    continue
   if stat.S_ISDIR(s.st_mode):
    try:

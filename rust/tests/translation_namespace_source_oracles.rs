@@ -1,6 +1,8 @@
 //! Independent source oracles, executed by Cargo only in gated CI.
 //! No local Rust compilation or execution qualified this source.
 
+// The included fixture is translation input and stays byte-for-byte unchanged.
+#[allow(clippy::missing_const_for_fn)]
 mod literal_include {
     // Keep the fixture's own physical callsites: oracle -> parent -> child.
     include!(concat!(

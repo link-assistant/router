@@ -634,7 +634,12 @@ impl Coordinator<'_> {
 }
 
 #[must_use]
-pub fn run(args: &DeployArgs, root: &Path, image: &crate::translation_core::Str, token_secret: &crate::translation_core::Str) -> ExitCode {
+pub fn run(
+    args: &DeployArgs,
+    root: &Path,
+    image: &crate::translation_core::Str,
+    token_secret: &crate::translation_core::Str,
+) -> ExitCode {
     run_with_docker(args, root, image, token_secret, Docker::default())
 }
 

@@ -1,0 +1,128 @@
+[
+  {
+    "label": "assets",
+    "command": [
+      "node",
+      "scripts/sync-rust-assets.mjs",
+      "--check"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/final-assets.log"
+  },
+  {
+    "label": "bun-reverse-source",
+    "command": [
+      "node",
+      "scripts/prepare-bun-reverse-files.mjs",
+      "--check"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/final-bun-reverse-source.log"
+  },
+  {
+    "label": "syntax",
+    "command": [
+      "node",
+      "scripts/lint-js-first.mjs"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/final-syntax.log"
+  },
+  {
+    "label": "workflow",
+    "command": [
+      "node",
+      "scripts/check-js-first-workflows.mjs"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/final-workflow.log"
+  },
+  {
+    "label": "api-types",
+    "command": [
+      "npm",
+      "run",
+      "typecheck",
+      "--prefix",
+      "js"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/final-api-types.log"
+  },
+  {
+    "label": "native-api-types",
+    "command": [
+      "npm",
+      "run",
+      "native:typecheck",
+      "--prefix",
+      "js"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/final-native-api-types.log"
+  },
+  {
+    "label": "native-node",
+    "command": [
+      "npm",
+      "run",
+      "native:test",
+      "--prefix",
+      "js"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/final-native-node.log"
+  },
+  {
+    "label": "native-bun",
+    "command": [
+      "npm",
+      "run",
+      "native:test:bun",
+      "--prefix",
+      "js"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/final-native-bun.log"
+  },
+  {
+    "label": "native-ts-freshness",
+    "command": [
+      "node",
+      "scripts/regenerate-native-typescript.mjs",
+      "--check"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/final-native-ts-freshness.log"
+  },
+  {
+    "label": "native-ts-strict",
+    "command": [
+      "node",
+      "scripts/check-native-typescript.mjs"
+    ],
+    "exitCode": 0,
+    "completeLog": "experiments/issue-784/final-native-ts-strict.log"
+  },
+  {
+    "label": "native-ts-complete",
+    "command": [
+      "node",
+      "scripts/run-node-tests.mjs",
+      "--outer-timeout-ms=900000",
+      "tools/translation/js-to-rust/test/native-typescript.test.mjs"
+    ],
+    "exitCode": 1,
+    "completeLog": "experiments/issue-784/final-native-ts-complete.log"
+  },
+  {
+    "label": "strict-parity",
+    "command": [
+      "node",
+      "scripts/check-router-parity.mjs",
+      "--strict"
+    ],
+    "exitCode": 1,
+    "completeLog": "experiments/issue-784/final-strict-parity.log"
+  }
+]

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import {resolve,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {withProtectedNativeAsyncWriter} from './protected-reviewed-adoption-20261102.mjs';
-import {captureExplicitSourceMutationPolicy} from './unit-runtime-materialization.mjs';
+import {captureExplicitSourceMutationPolicy} from './protected-source-policy-20261115.mjs';
 import {captureProtectedRecursiveParentSnapshot,inspectProtectedRecursiveParents} from './protected-recursive-cli-writers-20261103.mjs';
 const EXECUTABLE_ROOT=fileURLToPath(new URL('../../',import.meta.url));
 function diagnostic(error,primary){try{emitProtectedSourceDiagnostic('{"schema":"protected-node-evidence-closing-20261103","closingFailed":true}\n',{primary,secondary:error});}catch{}}

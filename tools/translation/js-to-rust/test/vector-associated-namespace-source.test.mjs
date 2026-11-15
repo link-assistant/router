@@ -109,7 +109,7 @@ test('ordinary logical negation is not a macro and unselected vector arithmetic 
 });
 test('unknown macros bare/std allocation aliases and local type declarations remain refused',limits,()=>{
  const domain=PRIMITIVE_BITWISE_TYPES.find(row=>row.name==='u8'),base=fixture(domain),originalRust=base.input.files.find(row=>row.path==='src/lib.rs').source;
- for(const mutate of [source=>source.replace('crate::translation_core::vec!','std::vec!'),source=>source.replace('crate::translation_core::vec!','vec!'),source=>source.replace('crate::translation_core::vec![','{unknown!();crate::translation_core::vec![').replace(/]}/u,']} }'),source=>source.replace('->Vec<u8>{','->Vec<u8>{type core=u8;'),source=>source.replace('->Vec<u8>{','->Vec<u8>{struct u8;')]){
+ for(const mutate of [source=>source.replace('crate::translation_core::vec!','std::vec!'),source=>source.replace('crate::translation_core::vec!','vec!'),source=>source.replace('crate::translation_core::vec![','{unknown!();crate::translation_core::vec![').replace(/\]\}/u,']} }'),source=>source.replace('->Vec<u8>{','->Vec<u8>{type core=u8;'),source=>source.replace('->Vec<u8>{','->Vec<u8>{struct u8;')]){
   const input=structuredClone(base.input);input.files.find(row=>row.path==='src/lib.rs').source=mutate(originalRust);assert.throws(()=>{const context=createOwnedVectorCandidateContext(input);translateOwnedVectorCandidate(input.files.find(row=>row.path===JS).source,{context,sourcePath:JS,typescriptOutputPath:'typed/src/reverse.mts'});});
  }
 });

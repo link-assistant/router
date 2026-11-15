@@ -1,0 +1,1255 @@
+{
+  "schema": "source-declared-node-case-deadlines-v1",
+  "root": "/tmp/gh-issue-solver-1794003502595",
+  "node": {
+    "node": "20.20.2",
+    "acorn": "8.16.0",
+    "ada": "2.9.2",
+    "ares": "1.34.6",
+    "brotli": "1.1.0",
+    "cjs_module_lexer": "2.2.0",
+    "cldr": "48.0",
+    "icu": "78.2",
+    "llhttp": "9.3.1",
+    "modules": "115",
+    "napi": "9",
+    "nghttp2": "1.61.0",
+    "openssl": "3.0.19",
+    "simdutf": "6.4.2",
+    "tz": "2025c",
+    "undici": "6.24.1",
+    "unicode": "17.0",
+    "uv": "1.46.0",
+    "uvwasi": "0.0.23",
+    "v8": "11.3.244.8-node.38",
+    "zlib": "1.3.1-e00f703"
+  },
+  "typescript": {
+    "version": "5.9.3",
+    "resolved": "/tmp/gh-issue-solver-1794003502595/js/node_modules/typescript/lib/typescript.js"
+  },
+  "originalCaseLimitsChanged": false,
+  "sourceRecords": [
+    {
+      "path": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/actual-gain-families.test.mjs",
+      "bytes": 24355,
+      "sha256": "5b11aeb7b4d80a8a7894f25dfd8d4ab45cd5cb6108371c4794c1a84368ed5347",
+      "identity": {
+        "dev": 62,
+        "ino": 8425009,
+        "mode": 33188,
+        "size": 24355,
+        "mtimeMs": 1794003614676.5789,
+        "ctimeMs": 1794003614676.5789
+      },
+      "source": "// Stored complete artifacts, never recompilation with a projected source scope.\n// No translator/Host imports: an explicit historical generation can be checked\n// while an unrelated worker's compiler sources have changed.\nimport assert from 'node:assert/strict';\nimport test,{before,after} from 'node:test';\nimport {createHash} from 'node:crypto';\nimport {execFileSync} from 'node:child_process';\nimport {createRequire} from 'node:module';\nimport {readFileSync,writeFileSync,mkdtempSync,mkdirSync,readdirSync,lstatSync,openSync,closeSync,fstatSync,readSync,constants,cpSync,rmSync} from 'node:fs';\nimport {tmpdir} from 'node:os';\nimport {dirname,join,resolve} from 'node:path';\nimport {fileURLToPath,pathToFileURL} from 'node:url';\n\nconst ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'../../..');\nconst SOURCE=resolve(process.env.ROUTER_ACTUAL_GAIN_ROOT??ROOT);\nconst generation=process.env.ROUTER_ACTUAL_GAIN_GENERATION_REF??null;\nif(generation!==null&&!/^[0-9a-f]{40}$/u.test(generation))throw new Error('Actual gains require a complete committed generation SHA');\nconst hash=value=>createHash('sha256').update(value).digest('hex');\nconst pin=(path,bytes)=>({path,bytes:bytes.length,sha256:hash(bytes)});\nconst relative=path=>{assert.ok(typeof path==='string'&&!path.includes('\\\\')&&!path.includes('\\0')&&!path.includes('\\n')&&!path.includes(':')&&path.split('/').every(part=>part&&part!=='.'&&part!=='..'),'safe artifact path');return path;};\nfunction actualSourcePath(path){\n if(!path.startsWith('src/')||!path.endsWith('.rs'))return path;\n assert.ok(Array.isArray(inventory?.sources),'complete generation source inventory required');\n const matches=inventory.sources.filter(row=>row.source===path||row.source==='rust/'+path);\n assert.equal(matches.length,1,'one exact legacy or nested generation source row '+path);\n return matches[0].source;\n}\nconst read=path=>{\n  relative(path);path=actualSourcePath(path);relative(path);let file=SOURCE;for(const part of path.split('/')){file=join(file,part);assert.ok(!lstatSync(file).isSymbolicLink(),path);}\n  const initial=lstatSync(file,{bigint:true});assert.ok(initial.isFile()&&initial.size<=32n*1024n*1024n,path);\n  const descriptor=openSync(file,constants.O_RDONLY|constants.O_NOFOLLOW);\n  try{\n    const before=fstatSync(descriptor,{bigint:true});assert.equal(before.dev,initial.dev);assert.equal(before.ino,initial.ino);assert.equal(before.size,initial.size);\n    const bytes=Buffer.alloc(Number(before.size));let at=0;\n    while(at<bytes.length){const count=readSync(descriptor,bytes,at,bytes.length-at,null);assert.ok(count>0,'artifact shortened during read '+path);at+=count;}\n    assert.equal(readSync(descriptor,Buffer.alloc(1),0,1,null),0,'artifact grew during read '+path);\n    const after=fstatSync(descriptor,{bigint:true}),current=lstatSync(file,{bigint:true});\n    for(const key of ['dev','ino','size','mtimeNs','ctimeNs']){assert.equal(after[key],before[key],'artifact changed during read '+path);assert.equal(current[key],before[key],'artifact identity changed '+path);}\n    return bytes;\n  }finally{closeSync(descriptor);}\n};\nconst git=paths=>{\n  const bytes=execFileSync('git',['cat-file','--batch'],{cwd:SOURCE,input:paths.map(path=>generation+':'+relative(actualSourcePath(path))+'\\n').join(''),maxBuffer:128*1024*1024});\n  let at=0;const result=new Map();\n  for(const path of paths){const end=bytes.indexOf(10,at),header=bytes.subarray(at,end).toString().split(' ');assert.equal(header[1],'blob',path);const length=Number(header[2]);at=end+1;result.set(path,bytes.subarray(at,at+length));at+=length;assert.equal(bytes[at++],10);}\n  assert.equal(at,bytes.length);return result;\n};\nconst retain=(name,value)=>{if(process.env.ROUTER_ACTUAL_GAIN_VECTOR_DIR)writeFileSync(join(process.env.ROUTER_ACTUAL_GAIN_VECTOR_DIR,name+'.json'),JSON.stringify(value,(_,item)=>typeof item==='bigint'?{$bigint:item.toString()}:item)+'\\n');};\nconst frozen=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))frozen(child);Object.freeze(value);}return value;};\nconst NONE=Object.freeze({$:'None'}),some=field0=>frozen({$:'Some',field0}),tag=($,fields={})=>frozen({$,...fields});\nconst CLIENT_CONSTANTS={CODEX_PROVIDER:'link-assistant',CODEX_TOKEN_ENV:'LINK_ASSISTANT_TOKEN',CLAUDE_TOKEN_ENV:'ANTHROPIC_AUTH_TOKEN',CLAUDE_BASE_ENV:'ANTHROPIC_BASE_URL',ROUTER_TOKEN_ENV:'LINK_ASSISTANT_TOKEN',GROK_TOKEN_ENV:'GROK_API_KEY',GROK_BASE_ENV:'GROK_BASE_URL',ROUTER_PROVIDER:'link-assistant',OWNERSHIP_MARKER:'.link-assistant-router-client.json',CLAUDE_MODEL_ENV:['ANTHROPIC_MODEL','ANTHROPIC_DEFAULT_OPUS_MODEL','ANTHROPIC_DEFAULT_SONNET_MODEL','ANTHROPIC_DEFAULT_HAIKU_MODEL','CLAUDE_CODE_SUBAGENT_MODEL'],CLAUDE_GATEWAY_TARGET_ENV:['ANTHROPIC_MODEL','CLAUDE_CODE_SUBAGENT_MODEL'],CLAUDE_DEFAULT_ROW_ENV:['ANTHROPIC_DEFAULT_OPUS_MODEL','ANTHROPIC_DEFAULT_SONNET_MODEL','ANTHROPIC_DEFAULT_HAIKU_MODEL'],OPENAI_MODEL_OWNER:'openai',ANTHROPIC_MODEL_OWNER:'anthropic',GOOGLE_MODEL_OWNER:'google',QWEN_MODEL_OWNER:'qwen',ZAI_MODEL_OWNER:'z.ai',DEFAULT_OPENAI_REASONING_EFFORT:'xhigh',DOCTOR_MAX_TOKENS:64n,DEFAULT_ANTHROPIC_REASONING_EFFORT:'high'};\nconst DEPLOY_CONSTANTS={RESERVED_ENV:['TOKEN_SECRET','DATA_DIR','STORAGE_POLICY','HOME','PATH','USER','SHELL','PWD','IFS','CLAUDE_CODE_HOME','CLAUDE_CONFIG_DIR','LISTENERS','ROUTER_HOST','ROUTER_PORT','NODE_EXTRA_CA_CERTS'],RESERVED_ENV_PREFIXES:['ROUTER_DEPLOY_','TLS_','VERIFY_','PRESERVATION_'],VERIFIABLE_CLIENTS:['claude','codex','qwen-code','gemini','opencode']};\nconst areas=JSON.parse(readFileSync(new URL('../fixtures/actual-gain-areas.json',import.meta.url)));\nconst runExpected=({targets=[],unit=[],filter=null,serial=false})=>tag('Run',{targets,unit,filter:filter===null?NONE:some(filter),serial});\nconst expectedAreas=areas.map(area=>tag('Area',{...area,runs:area.runs.map(runExpected)}));\nconst GAINS={\n  'src/client_lifecycle/maintenance.rs':{fn:['package']},\n  'src/clients.rs':{const:Object.keys(CLIENT_CONSTANTS)},\n  'src/clients/catalog.rs':{fn:['claude_context_variant_is_authorized']},\n  'src/deploy_config.rs':{const:Object.keys(DEPLOY_CONSTANTS),struct:['DeploySection']},\n  'src/subscription_usage.rs':{fn:['parse_provider']},\n  'src/verification.rs':{const:['SCHEMA','SKIP_LOG','AREAS'],struct:['Run','Area','Counts'],fn:['tests','unit','status','results']},\n};\nconst rows=[],loaded=new Map();let directory,inventory,compilerEvidence,runtimeEvidence,coverage;\nfunction originalBlock(source,kind,name){\n  const pattern=new RegExp('\\\\b'+kind+'\\\\s+'+name+'\\\\b[^\\\\{]*\\\\{','u'),match=pattern.exec(source);assert.ok(match,kind+' '+name);let at=match.index+match[0].length,depth=1,end=at;\n  for(;end<source.length&&depth;end++){if(source[end]==='{')depth++;else if(source[end]==='}')depth--;}\n  assert.equal(depth,0);return source.slice(at,end-1);\n}\nfunction variants(source,name){return [...originalBlock(source,'enum',name).matchAll(/^\\s*([A-Z][A-Za-z0-9_]*)\\s*,?\\s*$/gmu)].map(match=>match[1]);}\nfunction fields(source,name){return [...originalBlock(source,'struct',name).matchAll(/^\\s*(?:pub\\s+)?([a-z_][a-z0-9_]*)\\s*:\\s*([^\\n]+),\\s*$/gmu)].map(match=>({name:match[1],type:match[2].trim()}));}\nfunction outputs(source){const family=loaded.get(source);assert.ok(family,source);return family;}\n\nbefore(async()=>{\n  const inventoryBytes=read('parity/rust-source-inventory.json');inventory=JSON.parse(inventoryBytes);assert.equal(inventory.runtimeParity,false);\n  const compilerPaths=Object.keys(inventory.implementationHashes),originals=generation?git(['parity/rust-source-inventory.json',...compilerPaths]):null;\n  if(originals)assert.deepEqual(originals.get('parity/rust-source-inventory.json'),inventoryBytes,'stored inventory must belong to explicit generation');\n  compilerEvidence=compilerPaths.map(path=>{const bytes=originals?.get(path)??read(path);assert.equal(hash(bytes),inventory.implementationHashes[path],'generation compiler input '+path);return pin(path,bytes);});\n  coverage=[];directory=mkdtempSync(join(tmpdir(),'router-actual-gain-families-'));writeFileSync(join(directory,'package.json'),'{\"type\":\"module\"}\\n');mkdirSync(join(directory,'runtime'),{recursive:true});runtimeEvidence=[];\n  const runtimeCopies=new Map();\n  for(const runtimeRoot of ['js/generated/rust-draft/runtime','ts/generated/rust-draft/runtime']){\n    const names=readdirSync(join(SOURCE,runtimeRoot)).sort(),paths=names.map(name=>runtimeRoot+'/'+name),originalRuntime=generation?git(paths):null;\n    for(const name of names){\n      const path=runtimeRoot+'/'+name,bytes=read(path);assert.ok(!name.includes('/')&&!name.includes('\\\\'));\n      if(originalRuntime)assert.deepEqual(originalRuntime.get(path),bytes,'runtime from exact committed generation '+path);\n      if(runtimeCopies.has(name))assert.deepEqual(runtimeCopies.get(name),bytes,'shared runtime bytes '+name);\n      else{runtimeCopies.set(name,bytes);writeFileSync(join(directory,'runtime',name),bytes);}\n      runtimeEvidence.push(pin(path,bytes));\n    }\n  }\n  const completeArtifacts=[],companionSources=[];\n  for(const source of ['src/subscription_usage_types.rs','src/model_contract.rs']){\n    const physicalSource=actualSourcePath(source),item=inventory.sources.find(row=>row.source===physicalSource),bytes=read(source);assert.ok(item,source);assert.equal(hash(bytes),item.sha256);\n    if(generation)assert.deepEqual(git([source]).get(source),bytes,'companion source from exact generation '+source);\n    companionSources.push({...pin(physicalSource,bytes),logicalSource:source,source:bytes.toString('utf8')});\n  }\n  for(const [source,gains]of Object.entries(GAINS)){\n    const physicalSource=actualSourcePath(source),item=inventory.sources.find(row=>row.source===physicalSource);assert.ok(item,source);const sourceBytes=read(source),metaBytes=read(item.targets.meta),javascript=read(item.targets.javascript),typescript=read(item.targets.typescript),meta=JSON.parse(metaBytes);\n    assert.equal(hash(sourceBytes),item.sha256);assert.equal(meta.sourceSha256,item.sha256);assert.equal(meta.sourcePath,physicalSource);assert.equal(meta.items.map(row=>row.source).join(''),sourceBytes.toString('utf8'));\n    if(generation)for(const [path,bytes]of [[source,sourceBytes],[item.targets.meta,metaBytes],[item.targets.javascript,javascript],[item.targets.typescript,typescript]])assert.deepEqual(git([path]).get(path),bytes,'artifact from exact committed generation '+path);\n    for(const [term,names]of Object.entries(gains))for(const name of names){const matches=meta.items.filter(row=>row.term===term&&row.name===name);assert.equal(matches.length,1);assert.equal(matches[0].status,'executable',source+' '+name);assert.ok(matches[0].semantic?.checkedIR);coverage.push({source:physicalSource,logicalSource:source,term,name,span:matches[0].span,project:matches[0].semantic.project??null});}\n    const relative=physicalSource.slice(0,-3),targetJS=join(directory,relative+'.mjs'),targetTS=join(directory,relative+'.ts');mkdirSync(dirname(targetJS),{recursive:true});writeFileSync(targetJS,javascript);writeFileSync(targetTS,typescript);rows.push({source,artifactSource:physicalSource,relative,targetJS,meta,sourceText:sourceBytes.toString('utf8')});\n    completeArtifacts.push({source:physicalSource,logicalSource:source,sourceBytes:sourceBytes.toString('utf8'),metaBytes:metaBytes.toString('utf8'),javascript:javascript.toString('utf8'),typescript:typescript.toString('utf8')});\n  }\n  assert.equal(coverage.length,37);assert.equal(coverage.filter(row=>row.term==='fn').length,7);assert.equal(coverage.filter(row=>row.term==='const').length,26);assert.equal(coverage.filter(row=>row.term==='struct').length,4);\n  let compiler=process.env.ROUTER_TRANSLATION_TSC,prefix=[];\n  if(compiler===undefined){prefix=[createRequire(join(SOURCE,'js/package.json')).resolve('typescript/bin/tsc')];compiler=process.execPath;}\n  const version=execFileSync(compiler,[...prefix,'--version'],{encoding:'utf8',timeout:30_000}).trim();assert.equal(version,'Version 5.9.3');\n  const compiled=join(directory,'compiled');execFileSync(compiler,[...prefix,'--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--skipLibCheck','--rootDir',directory,'--outDir',compiled,...rows.map(row=>join(directory,row.relative+'.ts'))],{stdio:'pipe',timeout:30_000});\n  cpSync(join(directory,'runtime'),join(compiled,'runtime'),{recursive:true});\n  for(const row of rows){const modules=[];for(const path of [row.targetJS,join(compiled,row.relative+'.js')]){const module=await import(pathToFileURL(path).href);assert.deepEqual(module.provenance,{sourcePath:row.artifactSource,sourceSha256:row.meta.sourceSha256,...row.meta.counts,runtimeParity:false});assert.equal(Object.keys(module.translated).length,row.meta.counts.executable);modules.push(module.translated);}loaded.set(row.source,modules);}\n  retain('complete-original-artifacts',{generation,inventoryBytes:inventoryBytes.toString('utf8'),compilerEvidence,runtimeEvidence,coverage,completeArtifacts,companionSources,compilerVersion:version,localRustExecuted:false});\n},{timeout:60_000});\nafter(()=>{if(directory)rmSync(directory,{recursive:true,force:true});});\n\ntest('all37 stored gains retain complete original source, declaration and generation context',()=>{\n  assert.equal(coverage.length,37);assert.ok(compilerEvidence.length>0);assert.ok(runtimeEvidence.length>0);\n  for(const row of rows)assert.equal(row.meta.items.map(item=>item.source).join(''),row.sourceText);\n  retain('source-classifications',{coverage,sourceRows:rows.map(({source,meta})=>({source,counts:meta.counts,items:meta.items}))});\n});\n\ntest('all26 constants including the complete ten-area source table have independent expectations',()=>{\n  const expected={'src/clients.rs':CLIENT_CONSTANTS,'src/deploy_config.rs':DEPLOY_CONSTANTS,'src/verification.rs':{SCHEMA:'link-assistant-router/verification/v1',SKIP_LOG:'ROUTER_VERIFICATION_SKIPS',AREAS:expectedAreas}};const observations=[];\n  for(const [source,constants]of Object.entries(expected))for(const translated of outputs(source))for(const [name,value]of Object.entries(constants)){assert.deepEqual(translated[name],value,source+' '+name);observations.push({source,name,expected:value,actual:translated[name]});}\n  assert.equal(observations.length,52);retain('all-constants',observations);\n});\n\ntest('complete original ClientKind and UsageProvider unit enums cover every package/parse arm',()=>{\n  const clientSource=read('src/clients.rs').toString('utf8'),providerSource=read('src/subscription_usage_types.rs').toString('utf8');\n  const clients=variants(clientSource,'ClientKind');assert.deepEqual(clients,['Codex','ClaudeCode','Cursor','GeminiCli','GrokCli','Opencode','QwenCode','Agent']);\n  const providers=variants(providerSource,'UsageProvider');assert.deepEqual(providers,['Anthropic','OpenAi','ZAi','Lefine','Gemini','Qwen']);\n  const packages={Codex:'@openai/codex',ClaudeCode:'@anthropic-ai/claude-code',GeminiCli:'@google/gemini-cli',Opencode:'opencode-ai',QwenCode:'@qwen-code/qwen-code'},spellings={anthropic:'Anthropic',openai:'OpenAi','z-ai':'ZAi',lefine:'Lefine',gemini:'Gemini',qwen:'Qwen'},observed=[];\n  for(const translated of outputs('src/client_lifecycle/maintenance.rs'))for(const name of clients){const expected=Object.hasOwn(packages,name)?some(packages[name]):NONE,result=translated.package(tag(name));assert.deepEqual(result,expected);observed.push({client:name,expected,result});}\n  for(const translated of outputs('src/subscription_usage.rs')){for(const [name,variant]of Object.entries(spellings)){const expected=some(tag(variant)),result=translated.parse_provider(name);assert.deepEqual(result,expected);observed.push({provider:name,expected,result});}for(const name of ['','Anthropic','openai ','z.ai','claude','OPENAI','😀']){assert.deepEqual(translated.parse_provider(name),NONE);observed.push({provider:name,result:NONE});}}\n  retain('complete-enum-arms',{clientSource,providerSource,clients,providers,observed});\n});\n\ntest('catalog context variants require exact nonempty Anthropic-owned complete model rows',()=>{\n  const source=read('src/clients/catalog.rs').toString('utf8');assert.deepEqual(fields(source,'RouterModel').map(row=>row.name),['id','owned_by','selector_kind','capability_provenance','default_reasoning_level','provider_created_at','supported_reasoning_levels','client_capabilities','router_unavailable_reason']);\n  const model=(id,owned_by)=>tag('RouterModel',{id,owned_by,selector_kind:tag('Unknown'),capability_provenance:tag('Null'),default_reasoning_level:NONE,provider_created_at:NONE,supported_reasoning_levels:NONE,client_capabilities:tag('RouterClientCapabilities',{claude:NONE}),router_unavailable_reason:NONE});\n  const cases=[{rows:[],requested:'model[1m]',expected:false},{rows:[model('model','anthropic')],requested:'model[1m]',expected:true},{rows:[model('model','openai')],requested:'model[1m]',expected:false},{rows:[model('model','Anthropic')],requested:'model[1m]',expected:false},{rows:[model('','anthropic')],requested:'[1m]',expected:false},{rows:[model('model','anthropic')],requested:'model',expected:false},{rows:[model('model','anthropic')],requested:'model[1M]',expected:false},{rows:[model('Model','anthropic')],requested:'model[1m]',expected:false},{rows:[model('😀','anthropic')],requested:'😀[1m]',expected:true},{rows:[model('model[1m]','anthropic')],requested:'model[1m][1m]',expected:true},{rows:[model('other','anthropic'),model('model','openai')],requested:'model[1m]',expected:false},{rows:[model('model','openai'),model('model','anthropic')],requested:'model[1m]',expected:true}];const results=[];\n  for(const translated of outputs('src/clients/catalog.rs'))for(const row of cases){const actual=translated.claude_context_variant_is_authorized(frozen(row.rows),row.requested);results.push({...row,actual});assert.equal(actual,row.expected);}\n  retain('catalog-complete-rows',{source,cases,results});\n});\n\ntest('status precedence covers every boolean branch and u64 boundary without floating coercion',()=>{\n  const results=[];\n  for(const translated of outputs('src/verification.rs'))for(const succeeded of [false,true])for(const passed of [0n,1n,18446744073709551615n])for(const failed of [0n,1n])for(const ignored of [0n,1n])for(const skipped of [0n,1n])for(const notRun of [0n,1n]){\n    const counts=translated.Counts(passed,failed,ignored),expected=!succeeded||failed!==0n?'failed':passed===0n||ignored!==0n||skipped!==0n||notRun!==0n?'not-proven':'proven',actual=translated.status(succeeded,counts,skipped,notRun);results.push({succeeded,passed,failed,ignored,skipped,notRun,expected,actual});assert.equal(actual,expected);\n  }\n  for(const translated of outputs('src/verification.rs')){assert.throws(()=>translated.Counts(-1n,0n,0n),RangeError);assert.throws(()=>translated.Counts(18446744073709551616n,0n,0n),RangeError);assert.throws(()=>translated.Counts(1,0n,0n),TypeError);}\n  retain('status-truth-table',results);\n});\n\ntest('results counts Rust LF/CRLF lines and Rust whitespace while retaining BOM and scalar guards',()=>{\n  const cases=[['',0n],['test result: ok',1n],['test result: ok\\n',1n],['test result: ok\\r\\nnoise\\r\\ntest result: failed\\r\\n',2n],['test result: ok\\r',1n],['\\n\\n',0n],['\\u0085test result: ok',1n],['\\u2003test result: ok\\u3000',1n],['\\ufefftest result: ok',0n],['prefix test result: ok',0n],['test result: ok\\u2028test result: next',1n],['😀\\ntest result: ok',1n],['test result:',0n],['test result: ',0n],['test result: x\\ntest result: y\\ntest result: z',3n]],observed=[];\n  for(const translated of outputs('src/verification.rs')){for(const [input,expected]of cases){const actual=translated.results(input);observed.push({input,expected,actual});assert.equal(actual,expected);}assert.throws(()=>translated.results('\\ud800'),TypeError);assert.throws(()=>translated.results(null),TypeError);}\n  retain('rust-lines-whitespace',observed);\n});\n\ntest('allfour new record constructors and both source helper constructors retain exact fields/order',()=>{\n  const verification=read('src/verification.rs').toString('utf8'),deploy=read('src/deploy_config.rs').toString('utf8');assert.deepEqual(fields(verification,'Run').map(row=>row.name),['targets','unit','filter','serial']);assert.deepEqual(fields(verification,'Area').map(row=>row.name),['name','covers','enable','runs']);assert.deepEqual(fields(verification,'Counts').map(row=>row.name),['passed','failed','ignored']);\n  const deployFields=['server','instance','port','public_port','image','build','root','mode','claude_credentials','seed_credentials'];assert.deepEqual(fields(deploy,'DeploySection').map(row=>row.name),deployFields);const observations=[];\n  for(const translated of outputs('src/verification.rs')){\n    const targets=frozen(['target','😀']),unit=frozen(['--lib']),run=translated.Run(targets,unit,some('filter'),true);assert.deepEqual(run,runExpected({targets,unit,filter:'filter',serial:true}));assert.ok(Object.isFrozen(run));\n    assert.deepEqual(translated.tests(targets),runExpected({targets}));assert.deepEqual(translated.unit(unit,'filter'),runExpected({unit,filter:'filter'}));\n    const area=translated.Area('area','coverage','enable',frozen([run]));assert.deepEqual(area,tag('Area',{name:'area',covers:'coverage',enable:'enable',runs:[run]}));assert.deepEqual(translated.Counts(7n,2n,1n),tag('Counts',{passed:7n,failed:2n,ignored:1n}));observations.push({run,area});\n  }\n  for(const translated of outputs('src/deploy_config.rs')){const args=[some('server'),NONE,some(65535n),some(0n),some('image'),some('build'),some('/root'),some('host'),some('isolated'),frozen(['seed'])],value=translated.DeploySection(...args);assert.deepEqual(value,tag('DeploySection',Object.fromEntries(deployFields.map((name,index)=>[name,args[index]]))));assert.ok(Object.isFrozen(value));assert.throws(()=>translated.DeploySection(...args.slice(0,2),some(65536n),...args.slice(3)));observations.push({value,args});}\n  retain('four-record-layouts',{verification,deploy,observations});\n});\n\ntest('constructor immutable ABI isolates owned vector aliases and never retains mutable static-slice aliases',()=>{\n  const observations=[];\n  for(const translated of outputs('src/deploy_config.rs')){\n    const seeds=['first'],args=[NONE,NONE,NONE,NONE,NONE,NONE,NONE,NONE,NONE,seeds],value=translated.DeploySection(...args),before=[...value.seed_credentials];seeds[0]='changed';seeds.push('second');const after=[...value.seed_credentials];observations.push({kind:'owned-Vec',before,after,caller:seeds,resultFrozen:Object.isFrozen(value.seed_credentials),sameIdentity:value.seed_credentials===seeds,callerFrozen:Object.isFrozen(seeds)});\n    const server={$:'Some',field0:'original'},record=translated.DeploySection(server,NONE,NONE,NONE,NONE,NONE,NONE,NONE,NONE,frozen([])),original=record.server.field0;server.field0='changed';observations.push({kind:'owned-Option',before:original,after:record.server.field0,resultFrozen:Object.isFrozen(record.server),sameIdentity:record.server===server,callerFrozen:Object.isFrozen(server)});\n  }\n  for(const translated of outputs('src/verification.rs')){\n    const targets=['first'];let result;try{result=translated.Run(targets,[],NONE,false);}catch(error){assert.ok(error instanceof TypeError);observations.push({kind:'static-slice',refused:error.name});continue;}\n    const before=[...result.targets];targets[0]='changed';targets.push('second');observations.push({kind:'static-slice',before,after:[...result.targets],resultFrozen:Object.isFrozen(result.targets),sameIdentity:result.targets===targets});\n  }\n  for(const translated of outputs('src/verification.rs')){const runs=[runExpected({targets:['first']})];let result;try{result=translated.Area('name','covers','enable',runs);}catch(error){assert.ok(error instanceof TypeError);observations.push({kind:'static-area-slice',refused:error.name});continue;}const before=[...result.runs];runs.push(runExpected({unit:['--lib']}));observations.push({kind:'static-area-slice',before,after:[...result.runs],resultFrozen:Object.isFrozen(result.runs),sameIdentity:result.runs===runs});}\n  retain('constructor-alias-isolation',observations);\n  for(const row of observations)if(!row.refused){assert.deepEqual(row.after,row.before,'caller mutation must not change the immutable Rust record');assert.equal(row.resultFrozen,true);assert.equal(row.sameIdentity,false);if(row.kind.startsWith('owned-'))assert.equal(row.callerFrozen,false);}\n});\n"
+    },
+    {
+      "path": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "bytes": 14279,
+      "sha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "identity": {
+        "dev": 62,
+        "ino": 8425801,
+        "mode": 33188,
+        "size": 14279,
+        "mtimeMs": 1794003614949.576,
+        "ctimeMs": 1794003614949.576
+      },
+      "source": "import {repositorySourcePath} from \"./fixtures/repository-paths.mjs\";\nimport assert from 'node:assert/strict';\nimport { execFileSync } from 'node:child_process';\nimport { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';\nimport { tmpdir } from 'node:os';\nimport { dirname, join, resolve } from 'node:path';\nimport { fileURLToPath, pathToFileURL } from 'node:url';\nimport test from 'node:test';\nimport { translateSource, sha256 } from '../translate.mjs';\nimport { regenerate, trackedSource } from '../bulk.mjs';\nimport { parseProgram, serializeProgram } from '../semantic-meta.mjs';\nimport { parseRust, checkProgram } from '../extensions/data.mjs';\nimport {loadJavaScript as load} from './artifact-loader.mjs';\n\nconst root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');\nconst cases = JSON.parse(readFileSync(new URL('../fixtures/portable-cases.json', import.meta.url)));\nconst value = input => Array.isArray(input) ? input.map(value) : input && typeof input === 'object' ? Object.fromEntries(Object.entries(input).map(([key, item]) => [key, value(item)])) : typeof input === 'string' && /^-?\\d+n$/u.test(input) ? BigInt(input.slice(0, -1)) : input;\n\nfor (const fixture of cases) test(`${fixture.name}`, async () => {\n  const result = translateSource(fixture.source);\n  assert.equal(result.ir.counts.carried, 0);\n  const { translated } = await load(result.javascript);\n  for (const call of fixture.calls) {\n    if (call.throws) assert.throws(() => translated[call.name](...call.args.map(value)), { name: call.throws, ...(call.message ? { message: call.message } : {}) });\n    else assert.deepEqual(translated[call.name](...call.args.map(value)), value(call.expected));\n  }\n  for (const [name, expected] of Object.entries(fixture.constants ?? {})) assert.equal(translated[name], value(expected));\n});\n\ntest('unimplemented async and side effects remain source-bearing diagnostics', async () => {\n  const source = 'pub async fn send() { println!(\"sent\"); } fn secret() -> String { std::fs::read_to_string(\"secret\").unwrap() }';\n  const result = translateSource(source);\n  assert.equal(result.ir.counts.executable, 0);\n  assert.equal(result.ir.counts.carried, 2);\n  assert.deepEqual((await load(result.javascript)).translated, {});\n  assert.equal(result.ir.items.map(item => item.source).join(''), source);\n  assert.ok(result.ir.items.filter(item => item.status === 'carried').every(item => item.diagnostic?.span));\n});\n\ntest('duplicate definitions and dependents are never executable', async () => {\n  const result = translateSource('fn duplicate() -> u64 { 1 } fn duplicate() -> u64 { 2 } pub fn caller() -> u64 { duplicate() }');\n  assert.equal(result.ir.counts.executable, 0);\n  assert.deepEqual((await load(result.javascript)).translated, {});\n  assert.equal(result.ir.items.filter(item => item.name === 'duplicate').length, 2);\n});\n\ntest('typed constructors validate inputs and freeze records with ordinary proto-named fields', async () => {\n  const result = translateSource('pub enum State { Ready, Waiting(u8) } pub struct Weird { __proto__: u64 } pub fn field(value: Weird) -> u64 { value.__proto__ }');\n  assert.equal(result.ir.counts.executableTypes, 2);\n  assert.equal(result.ir.counts.executableConstructors, 3);\n  const { translated } = await load(result.javascript);\n  const record = translated.Weird(9n);\n  assert.ok(Object.isFrozen(record));\n  assert.ok(Object.hasOwn(record, '__proto__'));\n  assert.equal(Object.getPrototypeOf(record), Object.prototype);\n  assert.equal(translated.field(record), 9n);\n  assert.deepEqual(translated.State.Ready(), { $: 'Ready' });\n  assert.deepEqual(translated.State.Waiting(255n), { $: 'Waiting', field0: 255n });\n  assert.throws(() => translated.State.Waiting(256n), RangeError);\n  assert.throws(() => translated.State.Waiting('wrong'), TypeError);\n  assert.throws(() => { record.__proto__ = 4n; }, TypeError);\n});\n\ntest('semantic target input round-trips declaration links without source bodies', () => {\n  const checked = checkProgram(parseRust('fn double(n: u64) -> u64 { n + n } fn main() {}'));\n  const serialized = serializeProgram(checked);\n  const reparsed = parseProgram(serialized);\n  assert.equal(serializeProgram(reparsed), serialized);\n  assert.equal(reparsed.declarations.get('double').body.k, 'binary');\n  assert.equal(reparsed.declarations.get('double').body.semantics, 'checked');\n  assert.ok(!serialized.includes('fn double'));\n  assert.throws(() => parseProgram(serialized.replace('checked-rust-semantic-meta-v1', 'opaque-source')), /invalid checked Rust semantic meta/u);\n  assert.throws(() => parseProgram(serialized + ' '), /noncanonical/u);\n});\n\ntest('scalar slice domain rejects holes and accessor data without invoking user validation or iteration', async () => {\n  const { translated } = await load(translateSource('pub fn total(v: &[u8]) -> u8 { v.iter().copied().sum() }').javascript);\n  assert.throws(() => translated.total(new Array(1)), TypeError);\n  let hits = 0;\n  const getter = []; Object.defineProperty(getter, 0, { get() { hits++; return 1n; } });\n  assert.throws(() => translated.total(getter), TypeError);\n  assert.equal(hits, 0);\n  const invalid = ['wrong']; invalid.every = () => true;\n  assert.throws(() => translated.total(invalid), TypeError);\n  const values = [2n, 3n]; values[Symbol.iterator] = function* () { throw new Error('user iterator'); };\n  assert.equal(translated.total(values), 5n);\n});\n\ntest('calls of a carried function stay carried transitively', () => {\n  const result = translateSource('fn missing() -> u64 { extern_call() } fn middle() -> u64 { missing() } fn top() -> u64 { middle() }');\n  assert.equal(result.ir.counts.executable, 0);\n  assert.equal(result.ir.counts.carried, 3);\n});\n\ntest('bounded generic lowering rejects non-exhaustiveness, aggregate mutation, callback capture exits and missing inference', async () => {\n  const sources = [\n    'fn bad(v: Option<u64>) -> u64 { match v { Some(x) => x } }',\n    'fn bad() -> Vec<u64> { let mut v = Vec::new(); v.push(1); v }',\n    'fn bad(v: &[u64]) -> Vec<u64> { v.iter().map(move |x| x + 1).collect() }',\n    'fn bad(v: &[u64]) -> Vec<u64> { v.iter().map(|x| { return x; }).collect() }',\n    'fn bad(v: &[u64]) -> Vec<u64> { let mut x: u64 = 1; v.iter().map(|x| { x += 1; x }).collect() }',\n    'fn bad(v: &[u64]) -> usize { let i = v.iter(); i.count() + i.count() }',\n    'fn bad(v: &[u64]) -> u64 { for &mut x in v { x += 1; } 0 }',\n    'fn bad() -> usize { let values = [1u8; 18446744073709551615]; values.len() }',\n    'fn bad() -> usize { for value in true..false {} 0 }',\n    'fn bad(v: u64) -> usize { for value in v.. {} 0 }',\n    'fn bad() -> u64 { None.unwrap_or(1) }',\n    'fn bad() -> u64 { panic!(\"must abort\"); 7 }',\n    'fn bad(v: u64) -> u64 { v = 9; v }',\n    'fn bad(v: u64) -> u64 { let v = v; v += 1; v }',\n    'fn bad(v: u64) -> u64 { break; v }',\n    'fn bad(v: u64) -> u64 { while true { unknown_effect(); } v }',\n    'fn bad(v: u64) -> u64 { let x: u64 = { return 7; }; x }',\n  ];\n  for (const source of sources) {\n    const result = translateSource(source);\n    assert.equal(result.ir.counts.executableFunctions, 0);\n    assert.deepEqual((await load(result.javascript)).translated, {});\n    assert.equal(result.ir.items.map(item => item.source).join(''), source);\n    assert.ok(result.ir.items.find(item => item.term === 'fn').diagnostic?.span);\n  }\n});\n\ntest('raw and cooked CRLF and continuation literals preserve source while normalizing values', async () => {\n  const source = 'pub fn raw() -> String { r#\"a\\r\\nb\"#.to_string() } pub fn cooked() -> String { \"a\\r\\nb\".to_owned() } pub fn continuation() -> String { \"a\\\\\\r\\n  \\t b\".to_string() }';\n  const result = translateSource(source);\n  assert.equal(result.ir.counts.executableFunctions, 3);\n  assert.equal(result.ir.items.map(item => item.source).join(''), source);\n  const { translated } = await load(result.javascript);\n  assert.equal(translated.raw(), 'a\\nb');\n  assert.equal(translated.cooked(), 'a\\nb');\n  assert.equal(translated.continuation(), 'ab');\n  const invalid = translateSource('fn invalid() -> String { r#\"bare\\rreturn\"#.to_string() }');\n  assert.equal(invalid.ir.counts.executableFunctions, 0);\n  assert.match(invalid.ir.items.find(item => item.name === 'invalid').diagnostic.message, /bare carriage return/u);\n});\n\ntest('Rust trim preserves NEL and BOM whitespace differences independently from JS trim', async () => {\n  const result = translateSource('pub fn trim(value: &str) -> String { value.trim().to_string() }');\n  assert.equal(result.ir.counts.executable, 1);\n  const { translated } = await load(result.javascript);\n  assert.equal(translated.trim('\\u0085x\\u0085'), 'x');\n  assert.equal(translated.trim('\\ufeffx\\ufeff'), '\\ufeffx\\ufeff');\n  assert.equal(translated.trim('\\u200bx\\u200b'), '\\u200bx\\u200b');\n  const whitespace = '\\u0009\\u000a\\u000b\\u000c\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000\\u2001\\u2002\\u2003\\u2004\\u2005\\u2006\\u2007\\u2008\\u2009\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000';\n  assert.equal(translated.trim(whitespace + 'x' + whitespace), 'x');\n  assert.equal(translated.trim(whitespace), '');\n  assert.throws(() => translated.trim('\\ud800'), { name: 'TypeError' });\n});\n\ntest('vendored implementations match the pinned integrity inventory', () => {\n  const vendor = join(root, 'tools/translation/vendor');\n  const lock = JSON.parse(readFileSync(join(vendor, 'upstream-lock.json')));\n  for (const [path, hash] of Object.entries(lock.files)) assert.equal(sha256(readFileSync(join(vendor, path))), hash, path);\n});\n\ntest('TypeScript annotations never rewrite function-like source string data', async () => {\n  const result = translateSource('const TEXT: &str = \"function misleading(value)\"; pub fn echo(value: &str) -> String { value.to_string() }');\n  assert.ok(result.typescript.includes('\"function misleading(value)\"'));\n  assert.ok(result.typescript.includes('function echo(value: string)'));\n  assert.equal((await load(result.javascript)).translated.TEXT, 'function misleading(value)');\n});\n\ntest('TypeScript integer division helpers retain BigInt arithmetic types', () => {\n  const result = translateSource('pub fn quotient(value: i64, divisor: i64) -> i64 { value / divisor } pub fn abort() -> u64 { panic!(\"stop\") }');\n  assert.match(result.typescript, /function ml_divide\\(a: bigint, b: bigint, rounding: string, zero: string \\| null, remainder: boolean, bounds: \\[bigint, bigint, string\\] \\| null\\)/u);\n  assert.match(result.typescript, /function ml_abort\\(message: string\\): never/u);\n});\n\ntest('raw strings, nested comments, lifetimes, Unicode and char escapes retain exact boundaries', () => {\n  const source = '/* outside /* inside */ tail */\\nconst TEXT: &str = r###\"} ; \\\\\" raw\"###;\\nfn plain() -> bool { true }\\nconst C: char = \\'\\\\u{1f600}\\';\\n// café 😀\\n';\n  const result = translateSource(source);\n  assert.equal(result.ir.items.map(item => item.source).join(''), source);\n  assert.equal(result.ir.sourceSha256, sha256(source));\n  for (const item of result.ir.items) {\n    assert.equal(source.slice(item.span.start, item.span.end), item.source);\n    assert.equal(Buffer.from(source).subarray(item.span.byteStart, item.span.byteEnd).toString(), item.source);\n    assert.equal(item.sha256, sha256(item.source));\n  }\n  assert.equal(result.ir.items.find(item => item.name === 'plain').status, 'executable');\n});\n\ntest('regeneration rejects stale, missing, unexpected and tampered semantic fields', () => {\n  const sandbox = mkdtempSync(join(tmpdir(), 'router-translation-'));\n  try {\n    mkdirSync(join(sandbox, 'tools/translation'), { recursive: true });\n    for (const name of ['translate.mjs', 'bulk.mjs', 'rust-structure.mjs']) writeFileSync(join(sandbox, 'tools/translation', name), readFileSync(join(root, 'tools/translation', name)));\n    writeFileSync(join(sandbox, 'sample.rs'), 'pub fn truth() -> bool { true }');\n    const options = { root: sandbox, sources: ['sample.rs'] };\n    assert.deepEqual(regenerate(options).failures, []);\n    assert.deepEqual(regenerate({ ...options, check: true }).failures, []);\n    writeFileSync(join(sandbox, 'js/generated/rust-draft/unexpected.mjs'), '');\n    rmSync(join(sandbox, 'ts/generated/rust-draft/sample.ts'));\n    const meta = join(sandbox, 'tools/translation/meta/sample.meta.json');\n    const ir = JSON.parse(readFileSync(meta));\n    ir.items.find(item => item.semantic).semantic.checkedIR.body.value = false;\n    writeFileSync(meta, JSON.stringify(ir));\n    const errors = regenerate({ ...options, check: true }).failures;\n    assert.ok(errors.includes('unexpected: js/generated/rust-draft/unexpected.mjs'));\n    assert.ok(errors.includes('missing: ts/generated/rust-draft/sample.ts'));\n    assert.ok(errors.includes('stale: tools/translation/meta/sample.meta.json'));\n    regenerate(options);\n    writeFileSync(join(sandbox, 'sample.rs'), 'pub fn truth() -> bool { false }');\n    assert.ok(regenerate({ ...options, check: true }).failures.some(error => error.startsWith('stale:')));\n  } finally { rmSync(sandbox, { recursive: true, force: true }); }\n});\n\ntest('all tracked Rust artifacts reconstruct source and all generated JS modules load', async () => {\n  const inventory = JSON.parse(readFileSync(join(root, 'parity/rust-source-inventory.json')));\n  const tracked = execFileSync('git', ['ls-files', '-z', '--', '*.rs'], { cwd: root, encoding: 'utf8' }).split('\\0').filter(Boolean).sort();\n  assert.deepEqual(inventory.sources.map(item => item.source), tracked);\n  assert.equal(inventory.runtimeParity, false);\n  for (const entry of inventory.sources) {\n    const ir = JSON.parse(readFileSync(join(root,repositorySourcePath(entry.targets.meta,root))));\n    const source = trackedSource(root, repositorySourcePath(entry.source,root));\n    assert.equal(ir.items.map(item => item.source).join(''), source, entry.source);\n    assert.equal(ir.sourceSha256, sha256(source), entry.source);\n    let module;\n    try { module = await import(pathToFileURL(join(root, entry.targets.javascript))); }\n    catch (cause) { throw new Error(`Generated JavaScript failed to load for ${entry.source}: ${entry.targets.javascript}`, { cause }); }\n    assert.equal(Object.keys(module.translated).length, entry.executable, entry.source);\n    assert.equal(module.provenance.runtimeParity, false);\n  }\n});\n"
+    }
+  ],
+  "records": [
+    {
+      "sequence": 1,
+      "type": "test:pass",
+      "name": "all37 stored gains retain complete original source, declaration and generation context",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/actual-gain-families.test.mjs",
+      "line": 116,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 1,
+      "durationMs": 121.61308,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "5b11aeb7b4d80a8a7894f25dfd8d4ab45cd5cb6108371c4794c1a84368ed5347",
+      "sourceCallSpan": {
+        "start": 13103,
+        "end": 13547
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 2,
+      "type": "test:pass",
+      "name": "all26 constants including the complete ten-area source table have independent expectations",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/actual-gain-families.test.mjs",
+      "line": 122,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 2,
+      "durationMs": 1.577665,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "5b11aeb7b4d80a8a7894f25dfd8d4ab45cd5cb6108371c4794c1a84368ed5347",
+      "sourceCallSpan": {
+        "start": 13550,
+        "end": 14258
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 3,
+      "type": "test:pass",
+      "name": "complete original ClientKind and UsageProvider unit enums cover every package/parse arm",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/actual-gain-families.test.mjs",
+      "line": 128,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 3,
+      "durationMs": 4.588487,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "5b11aeb7b4d80a8a7894f25dfd8d4ab45cd5cb6108371c4794c1a84368ed5347",
+      "sourceCallSpan": {
+        "start": 14261,
+        "end": 15916
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 4,
+      "type": "test:pass",
+      "name": "catalog context variants require exact nonempty Anthropic-owned complete model rows",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/actual-gain-families.test.mjs",
+      "line": 138,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 4,
+      "durationMs": 8.122845,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "5b11aeb7b4d80a8a7894f25dfd8d4ab45cd5cb6108371c4794c1a84368ed5347",
+      "sourceCallSpan": {
+        "start": 15919,
+        "end": 17856
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 5,
+      "type": "test:pass",
+      "name": "status precedence covers every boolean branch and u64 boundary without floating coercion",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/actual-gain-families.test.mjs",
+      "line": 146,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 5,
+      "durationMs": 4.286643,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "5b11aeb7b4d80a8a7894f25dfd8d4ab45cd5cb6108371c4794c1a84368ed5347",
+      "sourceCallSpan": {
+        "start": 17859,
+        "end": 18881
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 6,
+      "type": "test:pass",
+      "name": "results counts Rust LF/CRLF lines and Rust whitespace while retaining BOM and scalar guards",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/actual-gain-families.test.mjs",
+      "line": 155,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 6,
+      "durationMs": 3.060755,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "5b11aeb7b4d80a8a7894f25dfd8d4ab45cd5cb6108371c4794c1a84368ed5347",
+      "sourceCallSpan": {
+        "start": 18884,
+        "end": 19824
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 7,
+      "type": "test:pass",
+      "name": "allfour new record constructors and both source helper constructors retain exact fields/order",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/actual-gain-families.test.mjs",
+      "line": 161,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 7,
+      "durationMs": 5.159572,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "5b11aeb7b4d80a8a7894f25dfd8d4ab45cd5cb6108371c4794c1a84368ed5347",
+      "sourceCallSpan": {
+        "start": 19827,
+        "end": 21920
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 8,
+      "type": "test:pass",
+      "name": "constructor immutable ABI isolates owned vector aliases and never retains mutable static-slice aliases",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/actual-gain-families.test.mjs",
+      "line": 173,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 8,
+      "durationMs": 1.835949,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "5b11aeb7b4d80a8a7894f25dfd8d4ab45cd5cb6108371c4794c1a84368ed5347",
+      "sourceCallSpan": {
+        "start": 21923,
+        "end": 24343
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 9,
+      "type": "test:pass",
+      "name": "checked arithmetic and branching",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 9,
+      "durationMs": 514.145747,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 10,
+      "type": "test:pass",
+      "name": "string operations and references",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 10,
+      "durationMs": 422.853704,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 11,
+      "type": "test:pass",
+      "name": "machine integer overflow and division",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 11,
+      "durationMs": 278.000475,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 12,
+      "type": "test:pass",
+      "name": "constant and sibling call",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 12,
+      "durationMs": 319.894681,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 13,
+      "type": "test:pass",
+      "name": "Rust ASCII folding preserves non-ASCII Unicode",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 13,
+      "durationMs": 249.517517,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 14,
+      "type": "test:pass",
+      "name": "UTF-8 bytes and Unicode scalars differ from UTF-16 units",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 14,
+      "durationMs": 274.615825,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 15,
+      "type": "test:pass",
+      "name": "Rust trim directions and string creation",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 15,
+      "durationMs": 309.999747,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 16,
+      "type": "test:pass",
+      "name": "string literal match plus tail return",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 16,
+      "durationMs": 290.50533,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 17,
+      "type": "test:pass",
+      "name": "monomorphic Option constructors and match retain presence",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 17,
+      "durationMs": 354.025782,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 18,
+      "type": "test:pass",
+      "name": "Result constructors and error match",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 18,
+      "durationMs": 346.441401,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 19,
+      "type": "test:pass",
+      "name": "Unicode prefix and suffix Option values",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 19,
+      "durationMs": 424.080723,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 20,
+      "type": "test:pass",
+      "name": "Vec values and borrowed immutable slice measurements",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 20,
+      "durationMs": 379.558751,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 21,
+      "type": "test:pass",
+      "name": "const function and raw string literals retain exact value",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 21,
+      "durationMs": 230.061502,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 22,
+      "type": "test:pass",
+      "name": "unwrap_or evaluates its fallback eagerly even for Some",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 22,
+      "durationMs": 241.605063,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 23,
+      "type": "test:pass",
+      "name": "mutable scalar summation and zero-iteration while",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 23,
+      "durationMs": 222.449801,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 24,
+      "type": "test:pass",
+      "name": "early return avoids later bounds panic",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 24,
+      "durationMs": 216.066864,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 25,
+      "type": "test:pass",
+      "name": "continue and innermost break preserve loop iteration",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 25,
+      "durationMs": 230.062234,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 26,
+      "type": "test:pass",
+      "name": "shadowing immutable local does not overwrite outer mutable binding",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 26,
+      "durationMs": 216.470578,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 27,
+      "type": "test:pass",
+      "name": "compound assignment retains checked overflow and truncating division",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 27,
+      "durationMs": 224.701113,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 28,
+      "type": "test:pass",
+      "name": "immutable slice indexing checks usize bounds",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 28,
+      "durationMs": 246.798349,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 29,
+      "type": "test:pass",
+      "name": "named enum constructors and exhaustive typed match",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 29,
+      "durationMs": 290.483187,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 30,
+      "type": "test:pass",
+      "name": "immutable record construction field order and projection",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 30,
+      "durationMs": 255.815434,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 31,
+      "type": "test:pass",
+      "name": "record literal evaluates fields in written order",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 31,
+      "durationMs": 248.706772,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 32,
+      "type": "test:pass",
+      "name": "mutable primitive parameters and unit results",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 32,
+      "durationMs": 221.821447,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 33,
+      "type": "test:pass",
+      "name": "lazy map take preserves unvisited zero-divisor behavior",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 33,
+      "durationMs": 338.684428,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 34,
+      "type": "test:pass",
+      "name": "scalar closure captures and filter map composition",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 34,
+      "durationMs": 260.454795,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 35,
+      "type": "test:pass",
+      "name": "any and all short circuit lazy upstream transforms",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 35,
+      "durationMs": 254.797883,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 36,
+      "type": "test:pass",
+      "name": "checked iterator sum fold and empty identity",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 36,
+      "durationMs": 293.467088,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 37,
+      "type": "test:pass",
+      "name": "for scalar slices preserve loop controls and enclosing returns",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 37,
+      "durationMs": 235.930218,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 38,
+      "type": "test:pass",
+      "name": "for mutable scalar binding and callback lexical shadowing",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 38,
+      "durationMs": 249.00119,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 39,
+      "type": "test:pass",
+      "name": "integer range endpoints include maximum without overflow or descending iterations",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 39,
+      "durationMs": 243.178269,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 40,
+      "type": "test:pass",
+      "name": "scalar array literals preserve ordering indexing and iteration",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 19,
+      "column": 30,
+      "nesting": 0,
+      "testNumber": 40,
+      "durationMs": 242.717519,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1223,
+        "end": 1841
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 41,
+      "type": "test:pass",
+      "name": "unimplemented async and side effects remain source-bearing diagnostics",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 30,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 41,
+      "durationMs": 190.035773,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 1844,
+        "end": 2457
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 42,
+      "type": "test:pass",
+      "name": "duplicate definitions and dependents are never executable",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 40,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 42,
+      "durationMs": 204.06768,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 2460,
+        "end": 2875
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 43,
+      "type": "test:pass",
+      "name": "typed constructors validate inputs and freeze records with ordinary proto-named fields",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 47,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 43,
+      "durationMs": 243.742713,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 2878,
+        "end": 3904
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 44,
+      "type": "test:pass",
+      "name": "semantic target input round-trips declaration links without source bodies",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 64,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 44,
+      "durationMs": 2.996895,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 3907,
+        "end": 4657
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 45,
+      "type": "test:pass",
+      "name": "scalar slice domain rejects holes and accessor data without invoking user validation or iteration",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 76,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 45,
+      "durationMs": 183.482318,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 4660,
+        "end": 5432
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 46,
+      "type": "test:pass",
+      "name": "calls of a carried function stay carried transitively",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 89,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 46,
+      "durationMs": 121.104811,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 5435,
+        "end": 5737
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 47,
+      "type": "test:pass",
+      "name": "bounded generic lowering rejects non-exhaustiveness, aggregate mutation, callback capture exits and missing inference",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 95,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 47,
+      "durationMs": 3507.089837,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 5740,
+        "end": 7387
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 48,
+      "type": "test:pass",
+      "name": "raw and cooked CRLF and continuation literals preserve source while normalizing values",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 124,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 48,
+      "durationMs": 404.471437,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 7390,
+        "end": 8321
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 49,
+      "type": "test:pass",
+      "name": "Rust trim preserves NEL and BOM whitespace differences independently from JS trim",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 138,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 49,
+      "durationMs": 209.178883,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 8324,
+        "end": 9190
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 50,
+      "type": "test:pass",
+      "name": "vendored implementations match the pinned integrity inventory",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 151,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 50,
+      "durationMs": 4.180766,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 9193,
+        "end": 9532
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 51,
+      "type": "test:pass",
+      "name": "TypeScript annotations never rewrite function-like source string data",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 157,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 51,
+      "durationMs": 217.388508,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 9535,
+        "end": 10013
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 52,
+      "type": "test:pass",
+      "name": "TypeScript integer division helpers retain BigInt arithmetic types",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 164,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 52,
+      "durationMs": 159.709815,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 10016,
+        "end": 10517
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 53,
+      "type": "test:pass",
+      "name": "raw strings, nested comments, lifetimes, Unicode and char escapes retain exact boundaries",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 170,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 53,
+      "durationMs": 170.556224,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 10520,
+        "end": 11346
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 54,
+      "type": "test:pass",
+      "name": "regeneration rejects stale, missing, unexpected and tampered semantic fields",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 183,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 54,
+      "durationMs": 5829.898714,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 11349,
+        "end": 13045
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    },
+    {
+      "sequence": 55,
+      "type": "test:pass",
+      "name": "all tracked Rust artifacts reconstruct source and all generated JS modules load",
+      "file": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/translation.test.mjs",
+      "line": 208,
+      "column": 1,
+      "nesting": 0,
+      "testNumber": 55,
+      "durationMs": 6129.638412,
+      "skip": null,
+      "todo": null,
+      "sourceSha256": "d5378ba916ea931b8ee9e09d0ef390f2bcb3b1c35a04269e8d37bada05c6f630",
+      "sourceCallSpan": {
+        "start": 13048,
+        "end": 14274
+      },
+      "deadline": {
+        "kind": "default-no-source-deadline"
+      }
+    }
+  ],
+  "unobservedFiniteSourceDeadlines": [],
+  "defaultDeadlinesInferred": false,
+  "observedCompletedCases": 55,
+  "observedFiniteDeadlineCases": 0,
+  "originalFailedCompletionEvents": 0,
+  "durationBreaches": 0,
+  "errors": [],
+  "overflow": false,
+  "passed": true,
+  "runtimeParity": false,
+  "rustExecuted": false,
+  "requestSha256": "997ea85eac51ed46b37ca7182a5aef574aec12a7e60d1de4ea3d16eaad4e8d71",
+  "allEventsForwardedToBuiltinTap": true,
+  "reporterNode": {
+    "node": "20.20.2",
+    "acorn": "8.16.0",
+    "ada": "2.9.2",
+    "ares": "1.34.6",
+    "brotli": "1.1.0",
+    "cjs_module_lexer": "2.2.0",
+    "cldr": "48.0",
+    "icu": "78.2",
+    "llhttp": "9.3.1",
+    "modules": "115",
+    "napi": "9",
+    "nghttp2": "1.61.0",
+    "openssl": "3.0.19",
+    "simdutf": "6.4.2",
+    "tz": "2025c",
+    "undici": "6.24.1",
+    "unicode": "17.0",
+    "uv": "1.46.0",
+    "uvwasi": "0.0.23",
+    "v8": "11.3.244.8-node.38",
+    "zlib": "1.3.1-e00f703"
+  }
+}

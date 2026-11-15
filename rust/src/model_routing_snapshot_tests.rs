@@ -1,6 +1,6 @@
 //! Credential-snapshot regressions for model selection and dispatch.
 
-use super::tests::auto_state;
+use super::tests::{auto_state, finished, rendezvous};
 use super::*;
 use axum::extract::{Query, State};
 use axum::http::{HeaderMap, HeaderValue};
@@ -145,8 +145,8 @@ async fn rotation_between_catalog_validation_and_dispatch_reaches_no_upstream() 
         let routed = route_state_with_subscription(&state, &routing_body)
             .await
             .expect("account A owns the selected catalog");
-        selected_in_request.wait().await;
-        rotated_in_request.wait().await;
+        rendezvous(&selected_in_request).await;
+        rendezvous(&rotated_in_request).await;
 
         crate::subscription_proxy::forward_subscription_openai_routed(
             &routed.state,
@@ -164,15 +164,15 @@ async fn rotation_between_catalog_validation_and_dispatch_reaches_no_upstream() 
         .await
     });
 
-    selected.wait().await;
+    rendezvous(&selected).await;
     fs::write(
         &credential_path,
         r#"{"tokens":{"access_token":"codex-b","account_id":"account-b"}}"#,
     )
     .unwrap();
-    rotated.wait().await;
+    rendezvous(&rotated).await;
 
-    let response = request.await.unwrap();
+    let response = finished(request).await;
     assert!(
         !response.status().is_success(),
         "a credential changed after catalog validation must fail closed"

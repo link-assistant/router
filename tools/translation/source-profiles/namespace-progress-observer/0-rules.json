@@ -1,0 +1,23 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/project.mjs",
+  "phase": "repository",
+  "beforeSha256": "2b4ffae9e075f387eb40137d0db1b20ff55c06847902940f571cc333be654412",
+  "afterSha256": "8457d6f3009c8bf0f72da70601c65c062a6ba0c6e8c468b5c7a714ca5ca0f6f7",
+  "edits": [
+    {
+      "id": "router.namespace-observer.1.v1",
+      "before": "import {translationProgressReporter} from './translation-progress.mjs';",
+      "after": "import {translationProgressReporter,namespaceProgressRequested} from './translation-progress.mjs';"
+    },
+    {
+      "id": "router.namespace-observer.2.v1",
+      "before": "if(enclosingNamespace||progressInput!==undefined)",
+      "after": "if(enclosingNamespace||namespaceProgressRequested(progressInput))"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

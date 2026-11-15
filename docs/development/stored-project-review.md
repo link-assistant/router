@@ -40,7 +40,7 @@ unit, container and Clone reviews. Every reuse rereads the complete original
 source set, verifies every original source hash, rejoins actual sealed dependency
 identity and compares the complete module layout. Serialized profile data is
 normalized through the existing `compilationProfile` parser before comparison
-with the normalized graph. A copied dependency or a changed source/profile fails.
+with the normalized module graph. A copied dependency or a changed source/profile fails.
 
 Clone composes the existing `createCloneEnclosingSourceContext` issuer with that
 genuine Default context and a fresh derive enclosing context. Public flags and

@@ -1,1 +1,0 @@
-Document the bulk CST meta-language contracts, stored-document and source-origin validation boundaries, whole-call budgets and fresh semantic checks. Link the contribution and rule guidelines to examples in both translation directions without claiming complete parity or lifting the JavaScript-first CI gate.

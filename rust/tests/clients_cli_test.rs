@@ -4,7 +4,6 @@ mod common;
 
 use common::{bound_client_token, catalog_server, mock_router, router, router_with_env};
 use std::fs;
-use std::net::TcpListener;
 
 fn test_token(client: &str) -> String {
     let canonical = match client {
@@ -168,12 +167,9 @@ fn opencode_reconfiguration_preserves_user_added_models() {
 #[test]
 fn catalog_dependent_setup_fails_before_writing_when_router_is_unreachable() {
     let home = tempfile::tempdir().expect("temp home");
-    let listener = TcpListener::bind("127.0.0.1:0").expect("reserve unused port");
-    let base_url = format!(
-        "http://{}",
-        listener.local_addr().expect("listener address")
-    );
-    drop(listener);
+    // Port 1 is privileged, so no parallel test can bind it the way one can
+    // reuse a just-dropped ephemeral port: connections to it stay refused.
+    let base_url = "http://127.0.0.1:1";
     let token = test_token("opencode");
     let setup = router(
         home.path(),
@@ -184,7 +180,7 @@ fn catalog_dependent_setup_fails_before_writing_when_router_is_unreachable() {
             "--token",
             &token,
             "--base-url",
-            &base_url,
+            base_url,
         ],
     );
     assert!(!setup.status.success());

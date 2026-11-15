@@ -1,0 +1,86 @@
+TAP version 13
+# {"profile":"neutral","profileSha256":"44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c","directory":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c","trees":["/tmp/router-profile-typescript-test-WzDYTI/profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/ts/generated/rust-draft","/tmp/router-profile-typescript-test-WzDYTI/profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/ts/generated/rust-project"],"version":"5.9.3","elapsedMilliseconds":1197,"exitCode":0,"signal":null,"error":null,"strict":true,"noEmit":true,"runtimeParity":false}
+# {"profile":"unix-family","profileSha256":"38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83","directory":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83","trees":["/tmp/router-profile-typescript-test-WzDYTI/profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/packages/typescript/generated/rust-draft","/tmp/router-profile-typescript-test-WzDYTI/profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/packages/typescript/generated/rust-project"],"version":"5.9.3","elapsedMilliseconds":1106,"exitCode":0,"signal":null,"error":null,"strict":true,"noEmit":true,"runtimeParity":false}
+# {"profile":"windows-family","profileSha256":"2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b","directory":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b","trees":["/tmp/router-profile-typescript-test-WzDYTI/profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/packages/typescript/generated/rust-draft","/tmp/router-profile-typescript-test-WzDYTI/profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/packages/typescript/generated/rust-project"],"version":"5.9.3","elapsedMilliseconds":949,"exitCode":0,"signal":null,"error":null,"strict":true,"noEmit":true,"runtimeParity":false}
+# profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/ts/generated/rust-draft/unindexed.ts(1,22): error TS7006: Parameter 'value' implicitly has an 'any' type.
+# {"profile":"neutral","profileSha256":"44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c","directory":"profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c","trees":["/tmp/router-profile-typescript-test-WzDYTI/profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/ts/generated/rust-draft","/tmp/router-profile-typescript-test-WzDYTI/profiles/neutral-44043d96eb18f97016b69e0ec4d192eec25f9d53b1d30180224dcd872b414c6c/ts/generated/rust-project"],"version":"5.9.3","elapsedMilliseconds":1145,"exitCode":2,"signal":null,"error":null,"strict":true,"noEmit":true,"runtimeParity":false}
+# profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/packages/typescript/generated/rust-project/src/lib.ts(1,14): error TS2322: Type 'number' is not assignable to type 'string'.
+# {"profile":"unix-family","profileSha256":"38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83","directory":"profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83","trees":["/tmp/router-profile-typescript-test-WzDYTI/profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/packages/typescript/generated/rust-draft","/tmp/router-profile-typescript-test-WzDYTI/profiles/unix-family-38c47255b415c9649f39ec4c9f7a161c51518e4365a0ce185ab007759efbec83/packages/typescript/generated/rust-project"],"version":"5.9.3","elapsedMilliseconds":1141,"exitCode":2,"signal":null,"error":null,"strict":true,"noEmit":true,"runtimeParity":false}
+# {"profile":"windows-family","profileSha256":"2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b","directory":"profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b","trees":["/tmp/router-profile-typescript-test-WzDYTI/profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/packages/typescript/generated/rust-draft","/tmp/router-profile-typescript-test-WzDYTI/profiles/windows-family-2e4d4eabbd71e29b6e400d6f182e1b73009a0e10be8ad63d470389b559a5536b/packages/typescript/generated/rust-project"],"version":"5.9.3","elapsedMilliseconds":974,"exitCode":0,"signal":null,"error":null,"strict":true,"noEmit":true,"runtimeParity":false}
+# Subtest: strictly compiles all explicit profiles in their declared language-root layouts
+ok 1 - strictly compiles all explicit profiles in their declared language-root layouts
+  ---
+  duration_ms: 6571.628425
+  ...
+# Subtest: refuses missing, mixed, escaped and mismatched profile targets
+ok 2 - refuses missing, mixed, escaped and mismatched profile targets
+  ---
+  duration_ms: 15.296963
+  ...
+# Complete Node deadline evidence: /tmp/router-gate-concurrency-dUzj5n/js/node_modules/.node-case-deadlines/complete-Y73Tw3
+# Subtest: complete corpus review compares unchanged original items and hashes every target without granting parity
+ok 3 - complete corpus review compares unchanged original items and hashes every target without granting parity
+  ---
+  duration_ms: 431.320062
+  ...
+# Subtest: corpus review refuses source/compiler drift and forged item/count evidence
+ok 4 - corpus review refuses source/compiler drift and forged item/count evidence
+  ---
+  duration_ms: 335.787881
+  ...
+# Subtest: corpus review requires complete Rust discovery and bounded ordinary output paths
+ok 5 - corpus review requires complete Rust discovery and bounded ordinary output paths
+  ---
+  duration_ms: 250.409197
+  ...
+# Subtest: local reverse stage discovers a new failing test under both engines before freshness
+ok 6 - local reverse stage discovers a new failing test under both engines before freshness
+  ---
+  duration_ms: 2246.024839
+  ...
+# Subtest: green stamps require strict parity, every stage and unchanged tracked/untracked source
+ok 7 - green stamps require strict parity, every stage and unchanged tracked/untracked source
+  ---
+  duration_ms: 361.545482
+  ...
+# Subtest: fingerprints stream regular files with unchanged complete content, mode, link and deleted framing
+ok 8 - fingerprints stream regular files with unchanged complete content, mode, link and deleted framing
+  ---
+  duration_ms: 165.928176
+  ...
+# Subtest: optional fingerprint progress identifies a large input without changing its hash or swallowing callback failures
+ok 9 - optional fingerprint progress identifies a large input without changing its hash or swallowing callback failures
+  ---
+  duration_ms: 339.241073
+  ...
+# Subtest: large tracked path inventories remain fingerprinted beyond the default subprocess buffer
+ok 10 - large tracked path inventories remain fingerprinted beyond the default subprocess buffer
+  ---
+  duration_ms: 697.455568
+  ...
+# Subtest: the full translation stage runs every fixture with bounded test-file concurrency
+ok 11 - the full translation stage runs every fixture with bounded test-file concurrency
+  ---
+  duration_ms: 1197.142044
+  ...
+# Subtest: optional command progress retains real successful and failed child statuses
+ok 12 - optional command progress retains real successful and failed child statuses
+  ---
+  duration_ms: 229.503465
+  ...
+# Subtest: invalid and throwing command observers cannot silently launch or qualify a child
+ok 13 - invalid and throwing command observers cannot silently launch or qualify a child
+  ---
+  duration_ms: 64.563253
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 15456.654117
+Complete Node deadline evidence: /tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-HDXFvv
+{"exitCode":1,"auditError":"Error: Independent complete source/deadline audit failed\n    at runAuditedNodeTests (file:///tmp/gh-issue-solver-1794003502595/scripts/run-node-tests.mjs:105:110)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async main (file:///tmp/gh-issue-solver-1794003502595/scripts/run-node-tests.mjs:117:15)","firstAuditErrors":["/tmp/gh-issue-solver-1794003502595/scripts/test/check-profile-typescript.test.mjs:26:1 strictly compiles all explicit profiles in their declared language-root layouts: Observed callsite was not among the complete preselected source files","/tmp/gh-issue-solver-1794003502595/scripts/test/check-profile-typescript.test.mjs:44:1 refuses missing, mixed, escaped and mismatched profile targets: Observed callsite was not among the complete preselected source files"],"completeErrorsInReceipt":true}

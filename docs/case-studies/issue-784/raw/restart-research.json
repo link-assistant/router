@@ -1,0 +1,27 @@
+{
+  "retrievedAt": "2026-11-07T00:39:28Z",
+  "method": "Official documentation searched and opened during the restart audit. Observations are paraphrases; client versions and authenticated account state were not captured.",
+  "sources": [
+    {
+      "url": "https://protobuf.dev/programming-guides/json/",
+      "observation": "ProtoJSON parsers accept lowerCamelCase and original proto field names. Inference: Gemini retrieval path components can use aliases independently; filtering only homogeneous paths leaves six mixed combinations."
+    },
+    {
+      "url": "https://developers.openai.com/codex/config-reference/",
+      "resolvedUrl": "https://learn.chatgpt.com/docs/config-file/config-reference",
+      "observation": "tools.web_search permits optional location with country, region, city and timezone. Custom model providers support http_headers and env_http_headers. Documented removal of optional location and the existing Router provider's explicit consent header; no universal geolocation-off control is established."
+    },
+    {
+      "url": "https://code.claude.com/docs/en/env-vars",
+      "observation": "ANTHROPIC_CUSTOM_HEADERS supports newline-separated Name: Value pairs. User settings can supply environment variables. Keep other required headers while adding or removing Router's consent header."
+    },
+    {
+      "url": "https://privacy.claude.com/en/articles/11186740-does-claude-use-my-location",
+      "observation": "Optional coarse product location for consumer Claude plans, including their Claude Code use, has privacy controls. Mandatory security and abuse-prevention country/region inference cannot be turned off. No authenticated account setting was changed."
+    },
+    {
+      "url": "https://developers.openai.com/api/docs/guides/tools-web-search",
+      "observation": "Web search accepts optional approximate user_location; retaining search while removing that metadata is possible. IP-derived and account location are outside this metadata contract."
+    }
+  ]
+}

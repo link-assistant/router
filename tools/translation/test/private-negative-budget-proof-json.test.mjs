@@ -5,10 +5,11 @@ import {tmpdir} from 'node:os';
 import {join,dirname,resolve} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash,Hash} from 'node:crypto';
-import {prepareNegativeBudgetProofJson,negativeBudgetConsumerImport} from '../prepare-negative-budget-proof-json.mjs';
-import {restoreNegativeBudgetProofConsumerSource} from './fixtures/native-proof-json-format.mjs';
+import {prepareNegativeBudgetProofJson,negativeBudgetCurrentConsumerImport as negativeBudgetConsumerImport} from '../prepare-negative-budget-proof-json.mjs';
+import {restoreCurrentNegativeBudgetProofConsumerSource as restoreNegativeBudgetProofConsumerSource} from './fixtures/native-proof-json-format.mjs';
 import {createPrivateFrozenJsonComposer} from '../private-frozen-json.mjs';
 import {createScopedPrivateNativeProofJsonSerializer,withRetainedPrivateNativeProofCostScope} from '../private-native-proof-json.mjs';
+import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url)),subjectURL=new globalThis.URL('../private-negative-budget-proof-json.mjs',import.meta.url),json=JSON.stringify,get=Object.getOwnPropertyDescriptor,define=Object.defineProperty,apply=Reflect.apply,CELLS=200000,DEPTH=160,UNITS=8388608;
 function once(source,before,after){assert.equal(source.split(before).length,2,before);return source.replace(before,()=>after);}
 function capture(run){try{return {value:run()};}catch(error){return {error:{name:error.name,message:error.message}};}}
@@ -26,8 +27,11 @@ function freeze(value){if(value&&typeof value==='object'){for(const child of Obj
 
 test('negative budget source proposal copies actual whole census, matches actual composer bounds and preserves complete source inverses',{timeout:60000},()=>{
  const plan=prepareNegativeBudgetProofJson();assert.equal(plan.typescriptVersion,'5.9.3');assert.deepEqual(plan.proof.limits,{cells:CELLS,depth:DEPTH,units:UNITS});assert.equal(plan.proof.unitFailureIsNotAWitness,true);assert.equal(plan.proof.unseenTailIsNotCertified,true);assert.equal(plan.files.length,3);
+ assert.equal(plan.proof.sourceHistories.length,2);
+ for(const history of plan.proof.sourceHistories){assert.equal(history.text,readFileSync(resolve(ROOT,history.path),'utf8'));assert.equal(history.consumerBodyUnchanged,true);assert.equal(history.inverse,history.source);for(const stage of history.stages){assert.equal(stage.inverse,stage.source);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.text);}}
  for(const row of plan.files){assert.equal(row.current,row.installationSource);assert.equal(row.inverse,row.original);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);assert.equal(row.sequence.languageRules.length,1);assert.equal(row.sequence.repositoryRules.length,1);}
  const consumer=plan.files.find(row=>row.path.endsWith('builtin-derive-bang-footprints.mjs'));assert.equal(restoreNegativeBudgetProofConsumerSource(consumer.after),consumer.original);assert.equal(consumer.after,consumer.original.replace(negativeBudgetConsumerImport.before,()=>negativeBudgetConsumerImport.after).replace(negativeBudgetConsumerImport.factoryBefore,()=>negativeBudgetConsumerImport.factoryAfter));
+ assert.equal(plan.consumerSourceHistory.current,consumer.original);assert.equal(plan.consumerSourceHistory.originalSha256,'a64b2c1d038ff3170af071797dcd75c095edba0c05bad330dd55071707bbb135');assert.equal(plan.consumerSourceHistory.inverse,plan.consumerSourceHistory.source);assert.equal(plan.consumerSourceHistory.sourceAuthority,false);
  assert.equal(consumer.current,consumer.original);assert.equal(consumer.candidateOnly,true);assert.equal(plan.candidateOnly,true);assert.equal(plan.productionDefaultSelected,false);assert.equal(plan.productionInstallationApproved,false);assert.equal(plan.originalHelperAPIsAndBytesUnchanged,true);assert.equal(plan.newAcrossInvocationCache,false);assert.equal(plan.semanticAdmission,false);
 });
 
@@ -90,6 +94,6 @@ test('unit-only estimates, unknown shapes, changed intrinsics and closed frames 
 
 test('the actual additive eligibility export restores every byte of the complete historical native helper',{timeout:60000},()=>{
  const plan=prepareNegativeBudgetProofJson(),row=plan.proof.nativeInputEvolution,sha=text=>createHash('sha256').update(text).digest('hex');
- assert.equal(row.actualSha256,'f23c8f96cddf92af07495e67622fd98d8b9bcf04b9ed62a78693ee7455ba027b');assert.equal(row.historicalSha256,'b02892e676b928339f15d2a529d0467dfd60efedbe8e991df0910400289db338');assert.equal(sha(row.after),row.actualSha256);assert.equal(sha(row.original),row.historicalSha256);assert.equal(row.current,row.after);assert.equal(row.inverse,row.original);
- const added=row.addedDeclaration;assert.equal(added.kind,'FunctionDeclaration');assert.equal(added.name,'privateNativeProofJsonDataWithinBudget');assert.equal(row.after.slice(...added.span),added.source);assert.equal(row.after.slice(0,added.span[0])+row.after.slice(added.span[1]),row.original);assert.equal(row.allOriginalBytesAndAPIsPreserved,true);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);
+ assert.equal(row.additiveSha256,'f23c8f96cddf92af07495e67622fd98d8b9bcf04b9ed62a78693ee7455ba027b');assert.equal(row.historicalSha256,'b02892e676b928339f15d2a529d0467dfd60efedbe8e991df0910400289db338');assert.equal(sha(row.language),row.additiveSha256);assert.equal(sha(row.after),row.actualSha256);assert.equal(sha(row.original),row.historicalSha256);assert.equal(row.current,row.after);assert.equal(row.inverse,row.original);assert.equal(row.sourceHistory.source,row.language);assert.equal(row.sourceHistory.text,row.after);
+ const added=row.addedDeclaration;assert.equal(added.kind,'FunctionDeclaration');assert.equal(added.name,'privateNativeProofJsonDataWithinBudget');assert.equal(row.language.slice(...added.span),added.source);assert.equal(row.language.slice(0,added.span[0])+row.language.slice(added.span[1]),row.original);assert.equal(row.allOriginalBytesAndAPIsPreserved,true);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);
 });

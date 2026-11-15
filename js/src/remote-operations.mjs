@@ -96,8 +96,11 @@ export async function sendRemoteManagement(target,call,{fetch = globalThis.fetch
     const abort = ()=>reject(error('Remote operation cancelled or its deadline elapsed'));
     if (combined.aborted) abort();else combined.addEventListener('abort',abort,{once:true});
   });
-  const within = promise=>Promise.race([promise,aborted]);
+  // Cancellation wins ties: an injected fetch may already be settled when the
+  // caller's signal was aborted, and race order decides between settled inputs.
+  aborted.catch(()=>{});const within = promise=>Promise.race([aborted,promise]);
   try {
+    if (combined.aborted) await aborted;
     const url = target.managementServer+call.path;
     const request = {method:call.method,redirect:'error',signal:combined,
       headers:{accept:'application/json',...(call.client ? {'x-link-assistant-client':call.client} : {}),...(target.token ? {authorization:`Bearer ${target.token}`} : {}),...(call.body !== undefined ? {'content-type':'application/json'} : {})},

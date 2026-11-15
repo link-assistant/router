@@ -1,3 +1,4 @@
+import {registerCheckedTypeKey} from './checked-type-keys.mjs';
 import {borrowedJsonToolTypeSelectionActive} from './borrowed-json-tool-20261103-type-selection.mjs';
 import {originalNamedSourceReferenceLifetime} from './extensions/named-lifetimes.mjs';
 // Original shared JSON type observations. Not a public type registry.
@@ -119,3 +120,5 @@ export function reissueBorrowedJsonToolProgram(program){
  const qualified=new Set();for(const [name,entry]of program.declarations)if(entry.k==='fn'&&hasBorrowedJsonToolCaller(entry)){reissueBorrowedJsonToolFunction(entry,program);qualified.add(name);}
  for(const entry of program.items)if(entry.k==='fn'&&hasBorrowedJsonToolCaller(entry)){if(!qualified.has(entry.fullName))fail('item missing original checked declaration');reissueBorrowedJsonToolFunction(entry,program);}return program;
 }
+// checked-types.mjs reads this key through the leaf registry (no import cycle).
+registerCheckedTypeKey(KIND,borrowedJsonToolTypeKey);

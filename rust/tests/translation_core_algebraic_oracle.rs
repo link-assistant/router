@@ -56,7 +56,10 @@ fn missing_null_and_wrong_scalar_remain_distinct() {
 fn integer_values_preserve_full_i64_domain() {
     for value in [i64::MIN, -7, 0, i64::MAX] {
         let document: Json = serde_json::json!({"update_id": value});
-        assert_eq!(document.get("update_id").and_then(Json::as_i64), Some(value));
+        assert_eq!(
+            document.get("update_id").and_then(Json::as_i64),
+            Some(value)
+        );
     }
 }
 
@@ -80,6 +83,7 @@ fn native_alias_destruction_and_lazy_defaults_are_ordinary_rust() {
     let calls = Cell::new(0);
     {
         let value: Maybe<Dropped<'_>> = Maybe::Some(Dropped(&drops));
+        #[allow(clippy::unnecessary_literal_unwrap)] // A Some receiver must skip the default.
         let _owned = value.unwrap_or_else(|| {
             calls.set(calls.get() + 1);
             Dropped(&drops)

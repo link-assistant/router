@@ -120,3 +120,16 @@ notice/case images, the full notice before/after and the complete license copy.
 Every case is UNRUN. Complete copied dependency and receiving/export/freshness
 scope, independent runtime behavior, all platform/resource bounds and the full
 same-SHA JS gate remain required before any completion or fatal Rust CI claim.
+
+## Vendor notice scope
+
+This paragraph was first drafted inside `tools/translation/vendor/NOTICE.md`.
+It moved here so the pinned private-parser-execution notice bytes stay unchanged.
+
+The adapted reverse frontend files listed by `tools/translation/js-to-rust/provenance.json` also
+retain the complete formal-ai Unlicense in `tools/translation/js-to-rust/vendor/LICENSE`, so that
+subtree carries its declared upstream license alongside the copied adapters.
+The `translation-provenance-20261102.json` catalogue records the current source
+images, declared copied cohorts, preserved license/notice paths and explicit
+receiving dependency boundaries. Its checks establish byte transport only, not
+semantic admission, complete dependency resolution or legal certification.

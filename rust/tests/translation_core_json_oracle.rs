@@ -34,8 +34,8 @@ fn fixed_integer_widening_preserves_sign_and_exact_extremes() {
     assert_eq!(value["u8"].as_u64(), Some(255));
     assert_eq!(value["i16"].as_i64(), Some(-32768));
     assert_eq!(value["u16"].as_u64(), Some(65535));
-    assert_eq!(value["i32"].as_i64(), Some(-2147483648));
-    assert_eq!(value["u32"].as_u64(), Some(4294967295));
+    assert_eq!(value["i32"].as_i64(), Some(-2_147_483_648));
+    assert_eq!(value["u32"].as_u64(), Some(4_294_967_295));
     assert_eq!(value["i64"].as_i64(), Some(i64::MIN));
     assert_eq!(value["u64"].as_u64(), Some(u64::MAX));
     assert_eq!(value["zero"].as_i64(), Some(0));
@@ -85,6 +85,7 @@ fn literal_arrays_preserve_outer_option_flow_and_independent_json_copies() {
 }
 
 #[test]
+#[allow(clippy::assertions_on_constants)] // The local macro expands to a constant on purpose.
 fn qualified_owned_macro_does_not_select_a_local_same_name_macro() {
     macro_rules! json {
         () => {

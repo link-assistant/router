@@ -601,6 +601,10 @@ fn percent_encode(value: &str) -> String {
 }
 
 #[cfg(test)]
+#[path = "auth_mutation_tests.rs"]
+mod mutation_tests;
+
+#[cfg(test)]
 #[path = "auth_native_acceptance_tests.rs"]
 mod native_acceptance_tests;
 

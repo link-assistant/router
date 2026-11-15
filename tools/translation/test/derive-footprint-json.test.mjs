@@ -9,6 +9,7 @@ import {pathToFileURL} from 'node:url';
 import {createHash,Hash} from 'node:crypto';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import * as current from '../derive-footprints.mjs';
+import {prepareDerivePathIndexReentry} from '../prepare-derive-path-index-reentry.mjs';
 import {resolveModuleGraph,translateProject} from '../project.mjs';
 import {originalSourceModuleItems} from '../source-module-views.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
@@ -28,7 +29,16 @@ function test(name,run){testCase(name,{timeout:60_000},async t=>{const vectors=[
 const outcome=run=>{try{return {value:run()};}catch(error){return {error:{type:error instanceof TypeError?'TypeError':error instanceof Error?'Error':typeof error,message:descriptor(error,'message')?.value??null}};}};
 function equal(retain,label,before,current){retain(label,{before,current});assert.deepEqual(current,before);return current;}
 async function fixture(t,retain,source=unit){
- assert.equal(digest(beforeText),BEFORE_SHA256);const actual=readFileSync(new URL('../derive-footprints.mjs',import.meta.url),'utf8');let expected=beforeText;
+ assert.equal(digest(beforeText),BEFORE_SHA256);
+ const physicalActual=readFileSync(new URL('../derive-footprints.mjs',import.meta.url),'utf8'),history=prepareDerivePathIndexReentry(),row=history.files[0];
+ assert.equal(history.files.length,1);assert.equal(row.path,'tools/translation/derive-footprints.mjs');
+ assert.equal(row.current,physicalActual);assert.equal(row.after,physicalActual);
+ assert.equal(row.equation.before,row.before);assert.equal(row.equation.after,physicalActual);
+ assert.equal(row.equation.inverse,row.before);assert.equal(row.evolution.inverse,row.before);
+ assert.deepEqual(row.equation.stages.map(stage=>stage.phase),['language','repository']);
+ assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);
+ retain('complete-current-path-index-inverse',{physicalActual,history});
+ const actual=row.before;let expected=beforeText;
  for(const [before,after]of SUBSTITUTIONS){assert.equal(expected.split(before).length,2);expected=expected.replace(before,after);}assert.equal(actual,expected);
  let undo=actual;for(const [before,after]of [...SUBSTITUTIONS].reverse()){assert.equal(undo.split(after).length,2);undo=undo.replace(after,before);}assert.equal(undo,beforeText);
  const directory=mkdtempSync(join(tmpdir(),'router-footprint-json-before-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const relocation=[];

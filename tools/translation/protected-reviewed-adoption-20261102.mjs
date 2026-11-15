@@ -8,7 +8,7 @@ import {realpathSync,openSync,closeSync,mkdtempSync,lstatSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {resolve,relative,isAbsolute,sep} from 'node:path';
 import {types} from 'node:util';
-import {captureExplicitSourceMutationPolicy} from './unit-runtime-materialization.mjs';
+import {captureExplicitSourceMutationPolicy} from './protected-source-policy-20261115.mjs';
 const contexts=new AsyncLocalStorage();
 const TEMPORARY_EXECUTABLE_ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const nativeTemporaryDirectory=mkdtempSync,nativeTemporaryStat=lstatSync;

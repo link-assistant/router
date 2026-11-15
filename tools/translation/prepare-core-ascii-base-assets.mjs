@@ -1,5 +1,5 @@
 import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
-import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-edges.mjs';
+import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-current.mjs';
 import {composeOwnedStringOperations} from './prepare-owned-string-operations.mjs';
 // New ASCII base-source schedule; original builders and non-ASCII inputs stay exact.
 import {readFileSync,writeFileSync} from 'node:fs';

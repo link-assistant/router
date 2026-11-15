@@ -71,6 +71,12 @@ pub(super) async fn relay<S>(
                             continue;
                         }
                     };
+                    if crate::geolocation::sanitize(
+                        &mut value,
+                        crate::geolocation::shares_geolocation(headers),
+                    ) {
+                        message = Message::Text(value.to_string().into());
+                    }
                     if value.get("type").and_then(Value::as_str) == Some("response.create") {
                         match crate::thinking::normalize_request(&mut value, crate::thinking::ThinkingProtocol::OpenAIResponses) {
                             Ok(true) => message = Message::Text(value.to_string().into()),

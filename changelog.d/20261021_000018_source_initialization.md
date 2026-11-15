@@ -1,1 +1,0 @@
-Reject native copied JavaScript that TypeScript identifies as using a block-scoped binding before declaration. Preserve deferred and hoisted bindings; this check remains separate from strict target typechecking.

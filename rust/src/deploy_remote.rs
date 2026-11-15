@@ -143,7 +143,11 @@ fn remote_command(arguments: &[String], with_payload: bool) -> String {
     command
 }
 
-fn agent_arguments(args: &DeployArgs, mode: RemoteMode, cookie: &crate::translation_core::Str) -> Vec<String> {
+fn agent_arguments(
+    args: &DeployArgs,
+    mode: RemoteMode,
+    cookie: &crate::translation_core::Str,
+) -> Vec<String> {
     let (build_mode, build_value) = args.build.as_ref().map_or_else(
         || {
             if args.image.is_some() {
@@ -182,7 +186,10 @@ fn mapped_exit(status: std::process::ExitStatus) -> ExitCode {
     mapped_exit_code(status.code())
 }
 
-const fn transported_secret(mode: RemoteMode, token_secret: &crate::translation_core::Str) -> &crate::translation_core::Str {
+const fn transported_secret(
+    mode: RemoteMode,
+    token_secret: &crate::translation_core::Str,
+) -> &crate::translation_core::Str {
     if matches!(mode, RemoteMode::Deploy) {
         token_secret
     } else {
@@ -266,7 +273,12 @@ fn prepare(
 
 /// Run the target-side deployment agent and preserve transport/lease identity.
 #[allow(clippy::too_many_lines)]
-fn run_with_ssh(args: &DeployArgs, token_secret: &crate::translation_core::Str, ssh: &OsStr, merged: &Merged) -> ExitCode {
+fn run_with_ssh(
+    args: &DeployArgs,
+    token_secret: &crate::translation_core::Str,
+    ssh: &OsStr,
+    merged: &Merged,
+) -> ExitCode {
     let mode = match mode(args).and_then(|mode| {
         validate(args, mode)?;
         Ok(mode)
@@ -449,7 +461,11 @@ fn exit_number(code: ExitCode) -> u8 {
 
 /// Run the target-side deployment agent and preserve transport/lease identity.
 #[must_use]
-pub fn run(args: &DeployArgs, token_secret: &crate::translation_core::Str, merged: &Merged) -> ExitCode {
+pub fn run(
+    args: &DeployArgs,
+    token_secret: &crate::translation_core::Str,
+    merged: &Merged,
+) -> ExitCode {
     run_with_ssh(args, token_secret, OsStr::new("ssh"), merged)
 }
 

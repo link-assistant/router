@@ -17,6 +17,14 @@ The five original composer fallback calls delegate to the actual original scoped
 serializer after retiring all operation-local encoded entries. The original
 module and every original Hash site remain unchanged.
 
+The producer also accepts the existing guarded lexing import through its shared
+native/CST consumer equation. It retains the original complete composer pin and
+requires the current body's full inverse to match that pin. The proposal records
+both complete sources and both phase inverses in `sourceEvolution`; it generates
+from the current physical source. Unrelated body or import changes remain
+refused. This source equation does not qualify the imported runtime or establish
+parity; those checks remain independent.
+
 The generated `withOperationProofByteComposition(run)` supplies one serializer
 to `run`. The serializer performs the existing complete fresh immutable-data
 preflight and current intrinsic checks. Repeated immutable syntax fields may

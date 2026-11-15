@@ -2,7 +2,7 @@
 
 This source-only batch adds an explicit, narrow ordinary `include!` Bang
 source contract and a private enclosing-type contribution proof. It changes no
-default binder, project graph, existing source input, test or deadline. No
+default binder, project module graph, existing source input, test or deadline. No
 generation, receiving engine, native TypeScript parse or Rust tool was run by
 the worker. The application coverage remains the last receiving measurement;
 the historical 54 first-refusal functions are prospective work, not gains.

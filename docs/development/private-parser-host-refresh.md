@@ -34,7 +34,7 @@ Retain the proposal and failed checks.
 
 Historical parser observation tests also pin complete host source closures. Update their
 test-data evolution with the full original/current bytes and a checked inverse;
-preserve historical graph bytes, case bodies, callbacks and deadlines. Do not
+preserve historical module graph bytes, case bodies, callbacks and deadlines. Do not
 normalize unexpected sources, substitute a saved digest verdict or silently
 accept new source bytes. Then run the complete affected Node and Bun files, including
 source-mutation refusal controls, with their original limits.

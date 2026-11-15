@@ -116,7 +116,10 @@ impl RecoverableCredentialStore {
         hex::encode(crate::refresh::credential_fingerprint(token))
     }
 
-    fn read_recovery(&self) -> crate::translation_core::Outcome<crate::translation_core::Maybe<RecoveryRecord>, String> {
+    fn read_recovery(
+        &self,
+    ) -> crate::translation_core::Outcome<crate::translation_core::Maybe<RecoveryRecord>, String>
+    {
         let bytes = match std::fs::read(&self.recovery_path) {
             Ok(bytes) => bytes,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),

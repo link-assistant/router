@@ -20,6 +20,10 @@ mod management;
 mod fixture;
 use fixture::{Fixture, aliased, value};
 
+#[path = "support/free_port.rs"]
+mod free_port;
+use free_port::free_port;
+
 #[tokio::test]
 async fn alias_catalog_request_response_and_safe_headers() {
     let f = Fixture::new(aliased(), StatusCode::OK, "").await;
@@ -141,6 +145,48 @@ impl Drop for RuntimeProcess {
     }
 }
 
+/// Start the runtime with `args` on a free port and return it with its base URL.
+///
+/// A port reserved and released here can be bound first by a parallel test's
+/// mock upstream, which then answers this test's management requests with a
+/// body that is not JSON: the 2026-11-14 Mutants baseline failed on "EOF while
+/// parsing a value" from `/api/management/tokens/client`. So the runtime counts
+/// as started only once `/api/health` answers `ok`, which no mock upstream
+/// serves; a runtime that exits because its port was taken is retried on
+/// another one.
+async fn start_runtime(
+    args: &[&str],
+    log_dir: &std::path::Path,
+    client: &reqwest::Client,
+) -> (RuntimeProcess, String) {
+    let binary = env!("CARGO_BIN_EXE_router");
+    for _ in 0..5 {
+        let port = free_port().to_string();
+        let log = std::fs::File::create(log_dir.join("runtime.log")).unwrap();
+        let mut process = RuntimeProcess(
+            std::process::Command::new(binary)
+                .args(args)
+                .args(["--host", "127.0.0.1", "--port", &port])
+                .stdout(log.try_clone().unwrap())
+                .stderr(log)
+                .spawn()
+                .unwrap(),
+        );
+        let base = format!("http://127.0.0.1:{port}");
+        let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(10);
+        while tokio::time::Instant::now() < deadline && matches!(process.0.try_wait(), Ok(None)) {
+            if let Ok(response) = client.get(format!("{base}/api/health")).send().await
+                && response.status() == StatusCode::OK
+                && response.text().await.is_ok_and(|body| body == "ok")
+            {
+                return (process, base);
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+        }
+    }
+    panic!("the runtime never answered /api/health on a port of its own");
+}
+
 #[tokio::test]
 async fn runtime_single_primary_without_policy_keeps_legacy_rate_limit_behavior() {
     let f = Fixture::new(
@@ -176,31 +222,7 @@ async fn runtime_single_primary_without_policy_keeps_legacy_rate_limit_behavior(
         .lines()
         .find(|line| line.starts_with(link_assistant_router::token::TOKEN_PREFIX))
         .unwrap();
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let port = listener.local_addr().unwrap().port().to_string();
-    drop(listener);
-    let log = std::fs::File::create(f.homes[0].path().join("runtime.log")).unwrap();
-    let process = RuntimeProcess(
-        std::process::Command::new(binary)
-            .args(args)
-            .args(["--host", "127.0.0.1", "--port", &port])
-            .stdout(log.try_clone().unwrap())
-            .stderr(log)
-            .spawn()
-            .unwrap(),
-    );
-    let base = format!("http://127.0.0.1:{port}");
-    let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(5);
-    while tokio::net::TcpStream::connect(format!("127.0.0.1:{port}"))
-        .await
-        .is_err()
-    {
-        assert!(
-            tokio::time::Instant::now() < deadline,
-            "runtime startup exceeded five seconds"
-        );
-        tokio::time::sleep(std::time::Duration::from_millis(25)).await;
-    }
+    let (process, base) = start_runtime(&args, f.homes[0].path(), &f.state.client).await;
     let token: Value = f
         .state
         .client

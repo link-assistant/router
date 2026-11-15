@@ -8,11 +8,12 @@ import {repositorySourceURL} from './fixtures/repository-paths.mjs';
 import {resolveModuleGraph} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {prepareWholeOwnerCoreProducerCandidate} from '../prepare-whole-owner-core-producer-candidate.mjs';
+import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
 import {wholeOwnerCoreProducerInputsCallbackFree} from '../whole-owner-core-producer-inputs.mjs';
 import {originalAttributeOwnerBulkCryptoReady} from '../attribute-owner-bulk-crypto.mjs';
 import {createWholeOwnerCoreAdoptionProducerContext,createEnclosingCoreAdoptionProducerContext,coreAdoptionProducerClosedAttributeSpans,coreAdoptionProducerBindings,finishCoreAdoptionProducerContext,captureWholeOwnerCoreAdoptionAttributeData} from '../whole-owner-core-producer-candidate.mjs';
 import {createEnclosingCoreAdoptionProducerContext as originalCreate,coreAdoptionProducerBindings as originalBindings} from '../core-adoption-producer-context.mjs';
-import {decodeCompleteHookWire,encodeCompleteHookWire,compareCompleteHookWires} from './fixtures/complete-hook-wire.mjs';
+import {decodeCompleteClosedJsonDagHookWire as decodeCompleteHookWire,encodeCompleteNativeBufferJsonDagHookWire as encodeCompleteHookWire,compareCompleteClosedJsonDagHookWires as compareCompleteHookWires} from './fixtures/complete-native-buffer-json-dag-hook-wire.mjs';
 const root=new URL('../../../',import.meta.url),dependencyInputs=Object.freeze({manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')}),hash=value=>createHash('sha256').update(value).digest('hex');
 function setup(source='#[derive(Clone,Debug,serde::Serialize)] pub struct Record { value:u8 }'){
  const sources=new Map([['src/lib.rs','mod model;'],['src/model.rs',source]]),graph=resolveModuleGraph({entry:'src/lib.rs',paths:[...sources.keys()],readSource:path=>sources.get(path),compilationProfile:PRODUCTION_PROFILE});return {modules:graph.modules,compilationProfile:PRODUCTION_PROFILE,dependencyInputs};
@@ -24,7 +25,17 @@ test('complete Core candidate source copies retain native bindings both CST phas
  const plan=prepareWholeOwnerCoreProducerCandidate();assert.equal(plan.files.length,3);assert.equal(plan.productionSelected,false);assert.equal(plan.defaultChanged,false);assert.equal(plan.performanceQualified,false);
  for(const row of plan.files){assert.equal(row.current,row.after);assert.equal(row.inverse,row.before);assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);assert.equal(row.sequence.languageRules.length,1);assert.equal(row.sequence.repositoryRules.length,1);}
  const core=plan.files.find(row=>row.path.endsWith('whole-owner-core-adoption-producer-context-candidate.mjs'));assert.equal(core.selection.originalAPIsUntouched,true);assert.equal(core.selection.noFrameAcrossYield,true);assert.equal(core.selection.newSelectedRowsRetainedAcrossCalls,false);assert.ok(core.after.includes(core.before));
- const enclosing=plan.files.find(row=>row.path.endsWith('whole-owner-enclosing-context-candidate.mjs'));for(const name of ['serde','serde-deserialize','builtin-derive','clap-args','clap-value-enum','schemars'])assert.ok(enclosing.selection.imports.some(row=>row.replacement.includes(name)));
+ const enclosing=plan.files.find(row=>row.path.endsWith('whole-owner-enclosing-context-candidate.mjs'));for(const name of ['serde','serde-deserialize','builtin-derive','clap-args','clap-value-enum'])assert.ok(enclosing.selection.imports.some(row=>row.replacement.includes(name)));
+ // Schemars now retains the complete checked dispatcher in both sources.
+ // Check its actual import and native bindings rather than inventing a
+ // relocation to the superseded standalone Schemars candidate.
+ const ts=ownershipCompiler();
+ for(const source of [enclosing.before,enclosing.after]){
+  const file=ts.createSourceFile('enclosing.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);assert.deepEqual(file.parseDiagnostics,[]);
+  const imports=file.statements.filter(node=>ts.isImportDeclaration(node)&&ts.isStringLiteral(node.moduleSpecifier)&&node.moduleSpecifier.text==='./schemars-enclosing-output-dispatch.mjs');assert.equal(imports.length,1);
+  const bindings=imports[0].importClause.namedBindings;assert.ok(ts.isNamedImports(bindings));
+  assert.deepEqual(bindings.elements.map(node=>[(node.propertyName??node.name).text,node.name.text]),['proveSchemarsBangFootprint','assertSchemarsBangFootprint','originalSchemarsOutput'].map(name=>[name,name]));
+ }
 });
 
 test('genuine enclosing private creator resolver and complete detached inspection equal the original full source pipeline',{timeout:60000},()=>{

@@ -35,7 +35,13 @@ export function selected_count(value,yes){return yes?count(value):0n;}
 "###;
 
 // This module is produced by the actual source/CST/semantic reverse pipeline.
-#[allow(clippy::needless_return, clippy::used_underscore_binding)]
+#[allow(
+    unused_parens,
+    clippy::blocks_in_conditions,
+    clippy::needless_return,
+    clippy::redundant_else,
+    clippy::used_underscore_binding
+)]
 #[path = "../../tools/translation/js-to-rust/generated/owned-ascii-witness.rs"]
 mod reverse_generated;
 

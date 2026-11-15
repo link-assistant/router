@@ -7,12 +7,12 @@ import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 import {originalBuiltinCopyOutputSyntax} from './builtin-copy-output-syntax.mjs';
 import {deriveFootprintOriginalContext,deriveFootprintOriginalModule,deriveFootprintHelperAttributeAt,isDeriveFootprintHelperAttributeProof} from './derive-footprints.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
-import {builtinCloneDataInputs,builtinDeriveDataInputs,builtinDebugDataInputs,builtinPayloadDataInputs} from './builtin-derive-data-inputs.mjs';
+import {builtinDeriveDataInputs,builtinDebugDataInputs,builtinPayloadDataInputs} from './builtin-derive-data-inputs.mjs';
 import {sourceItems} from './rust-structure.mjs';
 import {liftBuiltinHashAstRoute} from './builtin-hash-ast-route.mjs';
 import {liftBuiltinEqAstRoute} from './builtin-eq-ast-route.mjs';
-import {liftBuiltinCloneAstRoute,compileBuiltinCloneEnclosingNamespaceModel} from './builtin-clone-ast-route.mjs';
-import {liftBuiltinDebugTupleAstRoute,compileBuiltinDebugTupleEnclosingNamespaceModel,liftBuiltinDebugAstRoute} from './builtin-debug-ast-route.mjs';
+import {liftBuiltinCloneAstRoute} from './builtin-clone-ast-route.mjs';
+import {liftBuiltinDebugAstRoute} from './builtin-debug-ast-route.mjs';
 import {liftBuiltinPartialEqAstRoute} from './builtin-partial-eq-ast-route.mjs';
 import {liftBuiltinOrderingAstRoute} from './builtin-ordering-ast-route.mjs';
 import {liftBuiltinDefaultAstRoute,builtinDefaultOriginalSourcePlan,originalBuiltinDefaultAstOutput} from './builtin-default-ast-route.mjs';
@@ -61,7 +61,7 @@ export function planBuiltinDeriveBangOutput({context,certificate,invocation}={})
 }
 export const isBuiltinDeriveBangPlan=value=>!!value&&plans.has(value);
 function proveCloneDataOutput(state,plan,context,certificate,invocation){
-  const input=builtinCloneDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[];
+  const input=builtinPayloadDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[];
   for(const attribute of input.attributes){
     if(attribute.name==='doc'&&attribute.sourceFeature==='original-line-doc-comment'){
       const declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
@@ -78,7 +78,7 @@ function proveCloneDataOutput(state,plan,context,certificate,invocation){
   const proof=freezeCompleted({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
 }
 function debugDataInput(state,context,certificate){
-  const input=builtinCloneDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[],declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
+  const input=builtinDebugDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[],declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
   for(const attribute of input.attributes){
     if(attribute.name==='doc'&&attribute.sourceFeature==='original-line-doc-comment'){
       if(!declaration?.tokens.some(token=>token.type==='comment'&&token.text.startsWith('///')&&token.start+certificate.span.start===attribute.span.start&&token.end+certificate.span.start===attribute.span.end&&token.text===attribute.source))throw new TypeError('Original Debug doc comment differs from its private source invocation');continue;
@@ -139,7 +139,7 @@ export function proveBuiltinDeriveBangFootprint({context,certificate,invocation}
       if(state.original.name==='Clone')return proveCloneDataOutput(state,plan,context,certificate,invocation);
       if(state.original.name==='Default')return proveDefaultDataOutput(state,plan,context,certificate,invocation);
       if(state.original.name!=='Debug')throw new TypeError('Builtin '+state.original.name+' retains typed callback/conditional AST output obligations: '+error.message);
-      const selected=debugDataInput(state,context,certificate),route=(selected.input.style==='tuple-struct'?liftBuiltinDebugTupleAstRoute:liftBuiltinDebugAstRoute)({...state,original:state.original,input:selected.input}),attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline','doc','Debug',...certificate.attributes.map(attribute=>attribute.name)]));
+      const selected=debugDataInput(state,context,certificate),route=liftBuiltinDebugAstRoute({...state,original:state.original,input:selected.input}),attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline','doc','Debug',...certificate.attributes.map(attribute=>attribute.name)]));
       const evidence={schema:'builtin-debug-data-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,inputSyntax:selected.input,originalHelperOwners:selected.helpers,priorScalarRefusal:error.message,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyCallbacksEvaluated:1},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true},fmtDebug:{outcomes:['None','Shallow','Full'],allSelectedInputOutcomesClosed:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['generated Debug/fmt methods and allocator/format execution remain unlowered','all other derives, original scopes, ownership and const eligibility require independent proofs']};
       const proof=freezeCompleted({...evidence,digest:hash(composeJson(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
     }
@@ -162,7 +162,7 @@ export function proveBuiltinDeriveBangFootprint({context,certificate,invocation}
       if(attribute.position!=='container'&&attribute.name!=='doc'){const proof=deriveFootprintHelperAttributeAt(context,state.original.module,item,attribute.span);if(!isDeriveFootprintHelperAttributeProof(proof))throw new TypeError('Original ordering nested attribute requires its genuine active helper owner');helpers.push(proof);}
     }
     const route=liftBuiltinOrderingAstRoute({...state,original:state.original,input}),attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline','doc',state.original.name,...certificate.attributes.map(attribute=>attribute.name)]));
-    const evidence={schema:'builtin-unit-enum-ordering-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,inputSyntax:input,originalHelperOwners:helpers,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyKind:'Block',recursivelyClosed:true},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['ordering and discriminant runtime behavior and trait validity remain uncompiled','all sibling derive owners and original ancestor scopes require separate closed output proofs','payload/generic/conditional layouts and compiler errors remain refused']};
+    const evidence={schema:input.kind==='struct'?'builtin-struct-ordering-bang-output-v1':'builtin-unit-enum-ordering-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,inputSyntax:input,originalHelperOwners:helpers,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyKind:'Block',recursivelyClosed:true},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['ordering and discriminant runtime behavior and trait validity remain uncompiled','all sibling derive owners and original ancestor scopes require separate closed output proofs',input.kind==='struct'?'enum payload/generic/packed/conditional layouts and compiler errors remain refused':'payload/generic/conditional layouts and compiler errors remain refused']};
     const proof=freezeCompleted({...evidence,digest:hash(composeJson(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
   }
   if(state.original.name==='Hash')return proveHashDataOutput(state,plan,context,certificate,invocation);
@@ -222,7 +222,7 @@ export function originalBuiltinDefaultBangOutput({context,certificate,invocation
 import {types} from 'node:util';
 import {compileBuiltinDebugEnclosingNamespaceModel} from './builtin-debug-ast-route.mjs';
 import {originalDataFreezeIntrinsicsUnchanged as enclosingNativeUnchanged,originalCapturedFunctionSource} from './original-json-intrinsics.mjs';
-import {freshOriginalImplNamespaceSourcePlan as originalImplNamespaceSourcePlan,requireOriginalImplNamespaceSourcePlan} from './derive-ancestor-attribute-scope.mjs';
+import {originalImplNamespaceSourcePlan,requireOriginalImplNamespaceSourcePlan} from './derive-ancestor-attribute-scope.mjs';
 let debugEnclosingIssued=null,enclosingProxyOperation=null;
 const enclosingTypeOwner=types;
 // The first explicit operation may refuse after an observed capture. No capture
@@ -308,7 +308,7 @@ export function proveBuiltinDebugEnclosingNamespace({context,certificate,invocat
  const sourceBefore=original.module.source,route=routes.get(original.name),profile=builtinDeriveAstSourceProfile(original.dependencies),entry=originalAstFunction(profile,directory+route.path,route.entry),registry=builtinAstOriginal(profile,'compiler/rustc_builtin_macros/src/lib.rs');
  const registered='Debug: debug::'+route.entry,registrationStart=registry.source.indexOf(registered);
  if(registrationStart<0||registry.source.indexOf(registered,registrationStart+1)>=0)throw new TypeError('Builtin enclosing Debug registry owner is not unique');
- const selected=debugDataInput({original},context,certificate),grammar=(selected.input.style==='tuple-struct'?compileBuiltinDebugTupleEnclosingNamespaceModel:compileBuiltinDebugEnclosingNamespaceModel)({profile,entry,original,certificate,input:selected.input});
+ const selected=debugDataInput({original},context,certificate),grammar=compileBuiltinDebugEnclosingNamespaceModel({profile,entry,original,certificate,input:selected.input});
  if(grammar===null)return null;
  const attributes=attributeOwners(original,certificate,new Set(['automatically_derived','inline','doc','Debug',...certificate.attributes.map(attribute=>attribute.name)])),resolver=requireOriginalImplNamespaceSourcePlan(originalImplNamespaceSourcePlan());
  const model={schema:'original-debug-enclosing-namespace-model-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:original.dependencies.digest,compilationProfile:certificate.compilationProfile,
@@ -351,23 +351,53 @@ export function reissueBuiltinDebugEnclosingNamespace(token,context,certificate,
  if(current.facts.wire!==prior.facts.wire)throw new TypeError('Builtin enclosing complete model changed');return current.facts;
 }
 
-
-// Additive source-issued Clone enclosing dimension; legacy complete APIs stay.
+// Separate private Clone namespace issuer; the complete Debug source stays above.
+import {compileBuiltinCloneEnclosingNamespaceModel} from './builtin-clone-ast-route.mjs';
 let cloneEnclosingIssued=null;
+function snapshotBuiltinCloneEnclosingInvocation(value){
+ if(!value||typeof value!=='object'||enclosingProxyOperation.isProxy(value)||Object.getPrototypeOf(value)!==Object.prototype)return null;
+ const names=Reflect.ownKeys(value);if(names.length!==2||!names.includes('path')||!names.includes('attributeSpan'))return null;
+ const path=Object.getOwnPropertyDescriptor(value,'path'),span=Object.getOwnPropertyDescriptor(value,'attributeSpan');
+ if(!path||!span||!Object.hasOwn(path,'value')||!Object.hasOwn(span,'value'))return null;
+ const p=path.value,q=span.value;
+ if(!p||enclosingProxyOperation.isProxy(p)||!Array.isArray(p)||Object.getPrototypeOf(p)!==Array.prototype)return null;
+ const pathNames=Reflect.ownKeys(p);if(pathNames.length!==2||pathNames[0]!=='0'||pathNames[1]!=='length')return null;
+ const first=Object.getOwnPropertyDescriptor(p,'0'),length=Object.getOwnPropertyDescriptor(p,'length');
+ if(!first||!length||!Object.hasOwn(first,'value')||!Object.hasOwn(length,'value')||length.value!==1||first.value!=='Clone')return null;
+ if(!q||typeof q!=='object'||enclosingProxyOperation.isProxy(q)||Object.getPrototypeOf(q)!==Object.prototype)return null;
+ const fields=Reflect.ownKeys(q);if(fields.length!==2||!fields.includes('start')||!fields.includes('end'))return null;
+ const start=Object.getOwnPropertyDescriptor(q,'start'),end=Object.getOwnPropertyDescriptor(q,'end');
+ if(!start||!end||!Object.hasOwn(start,'value')||!Object.hasOwn(end,'value'))return null;
+ for(const n of [start.value,end.value])if(typeof n!=='number'||n<0||n>9007199254740991||n%1!==0)return null;
+ if(end.value<start.value)return null;
+ return {path:['Clone'],attributeSpan:{start:start.value,end:end.value}};
+}
+function finalCloneEnclosingInput(module,source,invocation,selected){
+ if(enclosingProxyOperation.isProxy(module))return false;
+ const field=Object.getOwnPropertyDescriptor(module,'source'),now=snapshotBuiltinCloneEnclosingInvocation(invocation);
+ return !!field&&Object.hasOwn(field,'value')&&field.value===source&&!!now&&sameEnclosingInvocation(now,selected);
+}
+
 function cloneEnclosingDataInput(state,context,certificate){
-  const input=builtinCloneDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[],declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
+  const input=builtinPayloadDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[];
   for(const attribute of input.attributes){
     if(attribute.name==='doc'&&attribute.sourceFeature==='original-line-doc-comment'){
-      if(!declaration?.tokens.some(token=>token.type==='comment'&&token.text.startsWith('///')&&token.start+certificate.span.start===attribute.span.start&&token.end+certificate.span.start===attribute.span.end&&token.text===attribute.source))throw new TypeError('Original Clone doc comment differs from its private source invocation');continue;
+      const declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
+      if(!declaration?.tokens.some(token=>token.type==='comment'&&token.text.startsWith('///')&&token.start+certificate.span.start===attribute.span.start&&token.end+certificate.span.start===attribute.span.end&&token.text===attribute.source))throw new TypeError('Original Clone doc comment differs from the private source invocation');
+      continue;
     }
-    if(!certificate.attributes.some(row=>row.name===attribute.name&&row.position===attribute.position&&row.span.start===attribute.span.start&&row.span.end===attribute.span.end))throw new TypeError('Original Clone attribute differs from the private source invocation');
-    if(attribute.position!=='container'&&attribute.name!=='doc'){const proof=deriveFootprintHelperAttributeAt(context,state.original.module,item,attribute.span);if(!isDeriveFootprintHelperAttributeProof(proof))throw new TypeError('Original Clone nested attribute requires its genuine active helper owner');helpers.push(proof);}
-  }return {input,helpers};
+    const actual=certificate.attributes.find(row=>row.name===attribute.name&&row.position===attribute.position&&row.span.start===attribute.span.start&&row.span.end===attribute.span.end);if(!actual)throw new TypeError('Original Clone attribute differs from the private source invocation');
+    if(attribute.position!=='container'&&attribute.name!=='doc'){
+      const proof=deriveFootprintHelperAttributeAt(context,state.original.module,item,attribute.span);if(!isDeriveFootprintHelperAttributeProof(proof))throw new TypeError('Original Clone nested attribute requires its genuine active helper owner');helpers.push(proof);
+    }
+  }
+  return {input,helpers};
 }
+
 export function proveBuiltinCloneEnclosingNamespace({context,certificate,invocation}={}){
  const original=originalInput(context,certificate,invocation);
  if(original.name!=='Clone'||!enclosingReady())return null;
- const selectedInvocation=snapshotBuiltinEnclosingInvocation(invocation);if(!selectedInvocation)return null;
+ const selectedInvocation=snapshotBuiltinCloneEnclosingInvocation(invocation);if(!selectedInvocation)return null;
  const sourceBefore=original.module.source,route=routes.get(original.name),profile=builtinDeriveAstSourceProfile(original.dependencies),entry=originalAstFunction(profile,directory+route.path,route.entry),registry=builtinAstOriginal(profile,'compiler/rustc_builtin_macros/src/lib.rs');
  const registered='Clone: clone::'+route.entry,registrationStart=registry.source.indexOf(registered);
  if(registrationStart<0||registry.source.indexOf(registered,registrationStart+1)>=0)throw new TypeError('Builtin enclosing Clone registry owner is not unique');
@@ -389,7 +419,7 @@ export function proveBuiltinCloneEnclosingNamespace({context,certificate,invocat
  const digest=hash(wire),current=originalInput(context,certificate,invocation);
  requireOriginalImplNamespaceSourcePlan(resolver);
  // Every observer-capable reissue/hash precedes this last callback-free interval.
- if(current.module!==original.module||!enclosingParseUnchanged(parseSelection)||!finalEnclosingInput(original.module,sourceBefore,invocation,selectedInvocation))throw new TypeError('Builtin enclosing original input changed during model reissue');
+ if(current.module!==original.module||!enclosingParseUnchanged(parseSelection)||!finalCloneEnclosingInput(original.module,sourceBefore,invocation,selectedInvocation))throw new TypeError('Builtin enclosing original input changed during model reissue');
  const facts=Object.freeze({model:reparsed,wire,digest,namespaceAuthority:false,runtimeAuthority:false});
  const token=Object.freeze({schema:'private-original-clone-enclosing-namespace-v1'});
  cloneEnclosingIssued??=new WeakMap();
@@ -397,11 +427,11 @@ export function proveBuiltinCloneEnclosingNamespace({context,certificate,invocat
 }
 function builtinCloneEnclosingState(token,context,certificate,invocation){
  if(!enclosingReady())throw new TypeError('Builtin enclosing native model operations changed');
- const state=cloneEnclosingIssued?.get(token),selectedInvocation=snapshotBuiltinEnclosingInvocation(invocation);
+ const state=cloneEnclosingIssued?.get(token),selectedInvocation=snapshotBuiltinCloneEnclosingInvocation(invocation);
  if(!selectedInvocation||!state||state.context!==context||state.certificate!==certificate||!sameEnclosingInvocation(state.invocation,selectedInvocation))throw new TypeError('Builtin enclosing model requires its private original invocation');
  const current=originalInput(context,certificate,invocation);
  requireOriginalImplNamespaceSourcePlan(state.resolver);
- if(current.module!==state.module||!enclosingParseUnchanged(state.parseSelection)||!finalEnclosingInput(state.module,state.source,invocation,state.invocation))throw new TypeError('Builtin enclosing source changed');
+ if(current.module!==state.module||!enclosingParseUnchanged(state.parseSelection)||!finalCloneEnclosingInput(state.module,state.source,invocation,state.invocation))throw new TypeError('Builtin enclosing source changed');
  return state;
 }
 export function requireBuiltinCloneEnclosingNamespace(token,context,certificate,invocation){

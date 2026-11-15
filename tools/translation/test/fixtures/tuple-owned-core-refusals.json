@@ -1,0 +1,383 @@
+[
+  {
+    "file": "src/translation_core/primitives.rs",
+    "module": [
+      "translation_core",
+      "primitives"
+    ],
+    "name": "json_copy",
+    "term": "fn",
+    "kind": "syntax",
+    "message": "expected an expression but found \"::\"",
+    "span": {
+      "start": 1335,
+      "end": 1337
+    }
+  },
+  {
+    "file": "src/translation_core/primitives.rs",
+    "module": [
+      "translation_core",
+      "primitives"
+    ],
+    "name": "json_with_field",
+    "term": "fn",
+    "kind": "unsupported",
+    "message": "assignment target: only scalar local bindings are assignable",
+    "span": {
+      "start": 1767,
+      "end": 1774
+    }
+  },
+  {
+    "file": "src/translation_core/primitives.rs",
+    "module": [
+      "translation_core",
+      "primitives"
+    ],
+    "name": "json_map_index",
+    "term": "fn",
+    "kind": "syntax",
+    "message": "expected identifier in type but found \"::\"",
+    "span": {
+      "start": 2450,
+      "end": 2452
+    }
+  },
+  {
+    "file": "src/translation_core/primitives.rs",
+    "module": [
+      "translation_core",
+      "primitives"
+    ],
+    "name": "json_parse",
+    "term": "fn",
+    "kind": "unsupported",
+    "message": "type Maybe<\u2026>: generic types are outside the portable core",
+    "span": {
+      "start": 2917,
+      "end": 2922
+    }
+  },
+  {
+    "file": "src/translation_core/primitives.rs",
+    "module": [
+      "translation_core",
+      "primitives"
+    ],
+    "name": "json_parse_bytes",
+    "term": "fn",
+    "kind": "unsupported",
+    "message": "type Maybe<\u2026>: generic types are outside the portable core",
+    "span": {
+      "start": 3188,
+      "end": 3193
+    }
+  },
+  {
+    "file": "src/translation_core/json_collections.rs",
+    "module": [
+      "translation_core",
+      "json_collections"
+    ],
+    "name": "json_map",
+    "term": "fn",
+    "kind": "unsupported",
+    "message": "generic function: requires contiguous original named lifetime tokens or separately checked monomorphization",
+    "span": {
+      "start": 201,
+      "end": 204
+    }
+  },
+  {
+    "file": "src/translation_core/json_collections.rs",
+    "module": [
+      "translation_core",
+      "json_collections"
+    ],
+    "name": "json_filter_map",
+    "term": "fn",
+    "kind": "unsupported",
+    "message": "generic function: requires contiguous original named lifetime tokens or separately checked monomorphization",
+    "span": {
+      "start": 441,
+      "end": 444
+    }
+  },
+  {
+    "file": "src/translation_core/ranges.rs",
+    "module": [
+      "translation_core",
+      "ranges"
+    ],
+    "name": "f64_inclusive_contains",
+    "term": "fn",
+    "kind": "unsupported",
+    "message": "generic function: requires contiguous original named lifetime tokens or separately checked monomorphization",
+    "span": {
+      "start": 437,
+      "end": 445
+    }
+  },
+  {
+    "file": "src/translation_core/base64.rs",
+    "module": [
+      "translation_core",
+      "base64"
+    ],
+    "name": "base64_standard_encode_bytes",
+    "term": "fn",
+    "kind": "syntax",
+    "message": "expected an expression but found \"::\"",
+    "span": {
+      "start": 386,
+      "end": 388
+    }
+  },
+  {
+    "file": "src/translation_core/base64.rs",
+    "module": [
+      "translation_core",
+      "base64"
+    ],
+    "name": "base64_standard_encode_text",
+    "term": "fn",
+    "kind": "syntax",
+    "message": "expected an expression but found \"::\"",
+    "span": {
+      "start": 616,
+      "end": 618
+    }
+  },
+  {
+    "file": "src/translation_core/base64.rs",
+    "module": [
+      "translation_core",
+      "base64"
+    ],
+    "name": "base64_standard_encode_owned_bytes",
+    "term": "fn",
+    "kind": "syntax",
+    "message": "expected identifier in type but found \"::\"",
+    "span": {
+      "start": 834,
+      "end": 836
+    }
+  },
+  {
+    "file": "src/translation_core/base64.rs",
+    "module": [
+      "translation_core",
+      "base64"
+    ],
+    "name": "base64_standard_no_pad_encode_text",
+    "term": "fn",
+    "kind": "syntax",
+    "message": "expected an expression but found \"::\"",
+    "span": {
+      "start": 1098,
+      "end": 1100
+    }
+  },
+  {
+    "file": "src/translation_core/base64.rs",
+    "module": [
+      "translation_core",
+      "base64"
+    ],
+    "name": "base64_url_no_pad_encode_bytes",
+    "term": "fn",
+    "kind": "syntax",
+    "message": "expected an expression but found \"::\"",
+    "span": {
+      "start": 1328,
+      "end": 1330
+    }
+  },
+  {
+    "file": "src/translation_core/base64.rs",
+    "module": [
+      "translation_core",
+      "base64"
+    ],
+    "name": "base64_url_no_pad_encode_owned_bytes",
+    "term": "fn",
+    "kind": "syntax",
+    "message": "expected identifier in type but found \"::\"",
+    "span": {
+      "start": 1550,
+      "end": 1552
+    }
+  },
+  {
+    "file": "src/translation_core/base64.rs",
+    "module": [
+      "translation_core",
+      "base64"
+    ],
+    "name": "base64_url_no_pad_encode_owned_text",
+    "term": "fn",
+    "kind": "syntax",
+    "message": "expected an expression but found \"::\"",
+    "span": {
+      "start": 1835,
+      "end": 1837
+    }
+  },
+  {
+    "file": "src/translation_core/base64.rs",
+    "module": [
+      "translation_core",
+      "base64"
+    ],
+    "name": "base64_url_no_pad_encode_array32",
+    "term": "fn",
+    "kind": "syntax",
+    "message": "expected an expression but found \"::\"",
+    "span": {
+      "start": 2071,
+      "end": 2073
+    }
+  },
+  {
+    "file": "src/translation_core/base64.rs",
+    "module": [
+      "translation_core",
+      "base64"
+    ],
+    "name": "base64_standard_decode_text",
+    "term": "fn",
+    "kind": "unsupported",
+    "message": "type Outcome<\u2026>: generic types are outside the portable core",
+    "span": {
+      "start": 2285,
+      "end": 2292
+    }
+  },
+  {
+    "file": "src/translation_core/base64.rs",
+    "module": [
+      "translation_core",
+      "base64"
+    ],
+    "name": "base64_standard_decode_owned_text",
+    "term": "fn",
+    "kind": "unsupported",
+    "message": "type Outcome<\u2026>: generic types are outside the portable core",
+    "span": {
+      "start": 2544,
+      "end": 2551
+    }
+  },
+  {
+    "file": "src/translation_core/base64.rs",
+    "module": [
+      "translation_core",
+      "base64"
+    ],
+    "name": "base64_standard_no_pad_decode_text",
+    "term": "fn",
+    "kind": "unsupported",
+    "message": "type Outcome<\u2026>: generic types are outside the portable core",
+    "span": {
+      "start": 2798,
+      "end": 2805
+    }
+  },
+  {
+    "file": "src/translation_core/base64.rs",
+    "module": [
+      "translation_core",
+      "base64"
+    ],
+    "name": "base64_url_no_pad_decode_text",
+    "term": "fn",
+    "kind": "unsupported",
+    "message": "type Outcome<\u2026>: generic types are outside the portable core",
+    "span": {
+      "start": 3049,
+      "end": 3056
+    }
+  },
+  {
+    "file": "src/translation_core/base64.rs",
+    "module": [
+      "translation_core",
+      "base64"
+    ],
+    "name": "base64_url_no_pad_decode_owned_text",
+    "term": "fn",
+    "kind": "unsupported",
+    "message": "type Outcome<\u2026>: generic types are outside the portable core",
+    "span": {
+      "start": 3323,
+      "end": 3330
+    }
+  },
+  {
+    "file": "src/translation_core/primitives.rs",
+    "name": "translation_core.primitives.unicode_scalar_count",
+    "term": "fn",
+    "kind": "type",
+    "message": "unknown type crate.translation_core.primitives.Str",
+    "span": {
+      "start": 4209,
+      "end": 4212
+    }
+  },
+  {
+    "file": "src/translation_core/primitives.rs",
+    "name": "translation_core.primitives.json_index_str",
+    "term": "fn",
+    "kind": "type",
+    "message": "unknown type crate.translation_core.primitives.Json",
+    "span": {
+      "start": 5100,
+      "end": 5104
+    }
+  },
+  {
+    "file": "src/translation_core/primitives.rs",
+    "name": "translation_core.primitives.json_index_usize",
+    "term": "fn",
+    "kind": "type",
+    "message": "unknown type crate.translation_core.primitives.Json",
+    "span": {
+      "start": 5328,
+      "end": 5332
+    }
+  },
+  {
+    "file": "src/translation_core/primitives.rs",
+    "name": "translation_core.primitives.ascii_chars_in",
+    "term": "fn",
+    "kind": "type",
+    "message": "unknown type crate.translation_core.primitives.Str",
+    "span": {
+      "start": 6663,
+      "end": 6666
+    }
+  },
+  {
+    "file": "src/translation_core/primitives.rs",
+    "name": "translation_core.primitives.strip_unicode_whitespace",
+    "term": "fn",
+    "kind": "type",
+    "message": "unknown type crate.translation_core.primitives.Str",
+    "span": {
+      "start": 6989,
+      "end": 6992
+    }
+  },
+  {
+    "file": "src/translation_core/primitives.rs",
+    "name": "translation_core.primitives.has_unicode_control",
+    "term": "fn",
+    "kind": "type",
+    "message": "unknown type crate.translation_core.primitives.Str",
+    "span": {
+      "start": 7195,
+      "end": 7198
+    }
+  }
+]

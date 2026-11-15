@@ -59,8 +59,7 @@ const optionBody='pub fn option(value:Option<u64>)->Option<u64>{let pending=valu
 const resultBody='pub fn result(value:Result<u64,String>)->Result<u64,String>{let pending=value.map(|value|{let mapped=value+1_u64;mapped});pending.map(|value|{let mapped=value+2_u64;mapped})}';
 const ownedBody='pub fn owned(value:Result<String,String>)->Result<String,String>{let pending=value.map(|value|{let mapped=value;mapped});pending.map(|value|{let mapped=value;mapped})}';
 const integerBody='pub fn independent(value:u64,pending:Option<u64>)->u64{let ignored=pending.map(|value|value.saturating_add(9));value.saturating_add(2)}';
-const bodies=[optionBody,resultBody,ownedBody].join('
-');
+const bodies=[optionBody,resultBody,ownedBody].join('\n');
 test('reusable parenthesized prefix grammar preserves complete bounded original groups and leaves following syntax intact',limits,()=>{
  const source='(move||{let value=(1_u64,2_u64);value.0}).map(next)',rows=tokens(source),copy=rows.map(row=>({...row})),group=readParenthesizedSourcePrefixTokens(rows);assert.equal(source.slice(rows[group.start].start,rows[group.end-1].end),'(move||{let value=(1_u64,2_u64);value.0})');assert.equal(rows[group.end].text,'.');assert.deepEqual(rows,copy);assert.equal(group.sourceAuthority,false);assert.equal(group.semanticAuthority,false);for(const bad of ['[1_u64]','(1_u64]','(||{1_u64)','()'+ '']){if(bad==='()')continue;assert.equal(readParenthesizedSourcePrefixTokens(tokens(bad)),null,bad);}assert.equal(readParenthesizedSourcePrefixTokens(tokens('()')).body.length,0);
 });

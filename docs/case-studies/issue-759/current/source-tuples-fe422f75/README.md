@@ -15,7 +15,7 @@ replaced. Scalar inference and pattern plans survive serialized and reparsed
 checked meta before JavaScript and strict TypeScript emission.
 
 The added bulk regression exercises standalone per-file emission and an
-out-of-line helper/consumer graph through `translateSource` with the original
+out-of-line helper/consumer call graph through `translateSource` with the original
 project declarations and source scopes. It checks inferred layout retention,
 the actual qualified owner and the four-case truth table in both emitted JS
 and independently strict-compiled TS. Existing whole-original fixtures retain

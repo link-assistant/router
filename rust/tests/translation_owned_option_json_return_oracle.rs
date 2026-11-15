@@ -75,20 +75,15 @@ fn owned_results_survive_their_inputs_and_intermediate_json_roots() {
         normalized_root_id(&input)
     };
     assert_eq!(result.as_deref(), Some("owned 猫"));
-    let result = translation_core::json_parse(r#"{"v":"猫😀"}"#).and_then(|json| {
-        json.get("v").and_then(Json::as_str).map(str::to_string)
-    });
+    let result = translation_core::json_parse(r#"{"v":"猫😀"}"#)
+        .and_then(|json| json.get("v").and_then(Json::as_str).map(str::to_string));
     assert_eq!(result.as_deref(), Some("猫😀"));
 }
 
 #[test]
 fn standard_filter_and_map_are_lazy_and_the_receiver_runs_once() {
     let trace = RefCell::new(Vec::new());
-    for (input, expected) in [
-        (None, None),
-        (Some(""), None),
-        (Some("猫😀"), Some("猫😀")),
-    ] {
+    for (input, expected) in [(None, None), (Some(""), None), (Some("猫😀"), Some("猫😀"))] {
         trace.borrow_mut().clear();
         let receiver = || {
             trace.borrow_mut().push("receiver");

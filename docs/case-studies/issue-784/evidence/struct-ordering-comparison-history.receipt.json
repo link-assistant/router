@@ -1,0 +1,564 @@
+{
+  "schema": "complete-evidence-packet-v1",
+  "sourceHead": "f4dbf5a6d570f4c20e48f7a28d645c12e1147e19",
+  "archive": "/tmp/gh-issue-solver-1794003502595/docs/case-studies/issue-784/evidence/struct-ordering-comparison-history.tar.xz",
+  "archiveBytes": 643628,
+  "archiveSha256": "3ac38c1781aad8bdd3c8f5051e3fd77644cd33de38baf96805ac2fcca9fe551d",
+  "manifestSha256": "4bc0683af2e00cc43888382668cdb71bb1b3638549c4e7671a5d2f0ed86d318b",
+  "members": [
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-clone-comparison-bun.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-clone-comparison-bun.log",
+      "bytes": 1056,
+      "sha256": "c03fdfe11d03f4126a0006dc663f995f1785413849ef7365a8f03c44fa93d870"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-clone-comparison-bun.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-clone-comparison-bun.memory.json",
+      "bytes": 1043,
+      "sha256": "201ddd6bc2e31bdc7eadcf062574afe41c135145b587ecbec6c7441dc074b33c"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-clone-comparison-node.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-clone-comparison-node.log",
+      "bytes": 2066,
+      "sha256": "3b026d44ad12a62c6c6f6edc95bf90adc1c0d7f0a65bc477c23d269c4a8d899b"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-clone-comparison-node.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-clone-comparison-node.memory.json",
+      "bytes": 1064,
+      "sha256": "4a57da0131bbba1b2a928a091252d3a4ac4079f76c8eb5ca1adb5c0d96d68db2"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-clone-review.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-clone-review.json.gz",
+      "bytes": 2825,
+      "sha256": "29286c2271459e98a20a8e70168585489664cca876dee4a968bd0b80c768009f"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-clone-review.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-clone-review.log",
+      "bytes": 195,
+      "sha256": "4d5ed5446f4e521964cd0afe99ab51cb5de2d3707b60c8c2148ec4e3fc2c7678"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-complete-consumers-bun.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-complete-consumers-bun.log",
+      "bytes": 4899,
+      "sha256": "987f7e403cfca24de45b634069603d8e8c57d1e1b0b335ecf0ca09d7f9c0f31c"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-complete-consumers-bun.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-complete-consumers-bun.memory.json",
+      "bytes": 1299,
+      "sha256": "fc96b413fcb4d63287abb76576d613c4d871f4567eb704e24f7d42bb404dabfc"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-history-before.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-history-before.log",
+      "bytes": 1974,
+      "sha256": "462a0a55a902c87d1f6af79d7b8410fd37ea6d2f4fb72b69bd714452d1508890"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-history-before.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-history-before.memory.json",
+      "bytes": 1028,
+      "sha256": "31a811b6d9bdda0335c515063fe28f7f10831b58e3cbc2ad12baad9ec21a28b6"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-history-check-final.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-history-check-final.log",
+      "bytes": 80,
+      "sha256": "478217b3efa206820d274af14826a4a788ae64bd4f503a92b488e035f247063e"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-history-check-final.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-history-check-final.memory.json",
+      "bytes": 981,
+      "sha256": "b6f006e67c213a8727ef831c6ac57b8151cc96684966aa688ac66828b479cae4"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-history-full.patch.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-history-full.patch.gz",
+      "bytes": 248047,
+      "sha256": "d32392f14b84a65bf0a49d6908e3babff7fead1d1aee91cb0167197dc060f18b"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-history-receiving-node.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-history-receiving-node.log",
+      "bytes": 3045,
+      "sha256": "f56876404cb0719e2eb5b807d7ee8e631f6eb0abb60bd6c269f5ff7b4549b28c"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-history-receiving-node.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-history-receiving-node.memory.json",
+      "bytes": 1185,
+      "sha256": "960113c20dddf007708ccee035406172505a8808ad4aed61dbcc598672774812"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-history-review.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-history-review.json.gz",
+      "bytes": 76497,
+      "sha256": "34f0fa608c5409a638172c99b38c2a3c21162c49f4da3186cd89f4247d0336a9"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-history-review.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-history-review.log",
+      "bytes": 90,
+      "sha256": "20de55fd69ac0de85a543dabf88c81f8995363d866b8d406af041fb3b200bc3e"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-history-write-final.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-history-write-final.log",
+      "bytes": 962,
+      "sha256": "25b8136d9de837605cdfa00e4cdc7f0f8133a11674fd51d7ad830c39dc9a4860"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-history-write-final.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-history-write-final.memory.json",
+      "bytes": 980,
+      "sha256": "2d034af89e33176e017ac41d8d597e2413f56d00a136e91a846e2637e9df3c24"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-history-write.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-history-write.log",
+      "bytes": 962,
+      "sha256": "4159b7ec3a09342ab3e4168c6be406f6a62afa1fa3447d2949d3624a9c4be144"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-history-write.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-history-write.memory.json",
+      "bytes": 981,
+      "sha256": "22c56e50d8aebbe1d7bfcb6e6fe6adefbca8ade80d4c14dc5c3c4677aaa80948"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-initial-archive-failure.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-initial-archive-failure.json.gz",
+      "bytes": 6437,
+      "sha256": "0ec79251fbd24695f4002f9f47ffbb0ea18bcf2e9d02a39910f8ea347f919625"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-inverse-before.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-inverse-before.log",
+      "bytes": 127017,
+      "sha256": "f87cf611e62ad0f49a5130fd08173094ddc7b2e3b25e694c2c758cd6e33a5066"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-inverse-before.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-inverse-before.memory.json",
+      "bytes": 1028,
+      "sha256": "949feb0bea120658dbc0cdae8e3bd05fcea4509ea10aeebcf998edc710039ccb"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-original-consumers-node.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-original-consumers-node.log",
+      "bytes": 7025,
+      "sha256": "fa219a68e86541c232825ae246355fcc409c2c29aafb1d8fe617ec1d0f988544"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-original-consumers-node.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-original-consumers-node.memory.json",
+      "bytes": 1178,
+      "sha256": "fc9118a52989c7570f325fb0014731810965600cad426525ecc0d4de2f3931eb"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-pre-inverse.patch.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-pre-inverse.patch.gz",
+      "bytes": 247970,
+      "sha256": "8cb27be2a91fc642006fde31040dfe25a8434650a72c2edd38526e00bd258877"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-profile-reproduction.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-profile-reproduction.log",
+      "bytes": 414,
+      "sha256": "486c18468e171afab09817e1f184400c33d2c2b30d041ab1ee06e6bba3558e15"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-shared-consumers-bun.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-shared-consumers-bun.log",
+      "bytes": 976,
+      "sha256": "9ee733edebd4be3fbe79c0bdaf240d540e5e2d1a5bd2a45261039b6a42303e9b"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-shared-consumers-bun.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-shared-consumers-bun.memory.json",
+      "bytes": 1043,
+      "sha256": "eeddb45dac57b5c53e695e4be5335076a998d4d50c4b6d79af156b2f8d891d0f"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-shared-consumers-node.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-shared-consumers-node.log",
+      "bytes": 7509,
+      "sha256": "4b3cf452712e11ae0e2c41e93e682e389bee80decccf7baa52c4b924b34fb3dc"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-shared-consumers-node.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-shared-consumers-node.memory.json",
+      "bytes": 1253,
+      "sha256": "22e06b5b40b711c736fa7da852bfce3d55bc72bf60cdca4e70e1201da9b41341"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-whole-owner-write.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-whole-owner-write.log",
+      "bytes": 70,
+      "sha256": "bda824e9438bf9654a24f70a8efca9e3ffd9732c90bcb7551f83d55b9216656a"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-whole-owner-write.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-whole-owner-write.memory.json",
+      "bytes": 977,
+      "sha256": "d8af15df6cb9325298df24733041e8e3ef708793d369bca43ff9502e3c4f7345"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-whole-resolver-check.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-whole-resolver-check.log",
+      "bytes": 60,
+      "sha256": "6a22e20dc295cb840e959bbc3ed20076d2e8f941f8128db77c13072d56030c3c"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-whole-resolver-check.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-whole-resolver-check.memory.json",
+      "bytes": 978,
+      "sha256": "edffd97d97f9b34e79100d85dde63113b7c65d05d0fbd464b67a0213726b3a51"
+    },
+    {
+      "path": "experiments/issue-784/archive-struct-ordering-comparison-history.py",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/archive-struct-ordering-comparison-history.py",
+      "bytes": 2623,
+      "sha256": "837022fe280b5957150e5721c974233c9f0464966f9e4dedf2bfbf6372f0c3f6"
+    },
+    {
+      "path": "experiments/issue-784/current-struct-ordering-history-plan.md",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/current-struct-ordering-history-plan.md",
+      "bytes": 3709,
+      "sha256": "21bdb13a6fe7dbc0fd1b7ce2097da8adb58c5b630f8fab9f283ebb449b992055"
+    },
+    {
+      "path": "experiments/issue-784/prepare-struct-ordering-source-history.py",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/prepare-struct-ordering-source-history.py",
+      "bytes": 2995,
+      "sha256": "656d23319bd1fcab150f1d3296d9d14ef06e745bceee5a0f210701bceda3490a"
+    },
+    {
+      "path": "experiments/issue-784/review-struct-ordering-clone-receiving.py",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/review-struct-ordering-clone-receiving.py",
+      "bytes": 1392,
+      "sha256": "a4fe1c01b44a155dc82517f75edfd0316aef5e3e6e564f12101839885623def7"
+    },
+    {
+      "path": "experiments/issue-784/review-struct-ordering-receiving-history.py",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/review-struct-ordering-receiving-history.py",
+      "bytes": 2996,
+      "sha256": "63a7ccf95184ae9276bb5dcff38e7b2e862d88f2c0fc27c58db6cfd6fa8a21c9"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-BYcXAX/case-deadlines.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-BYcXAX/case-deadlines.json",
+      "bytes": 46546,
+      "sha256": "be89e9282ff4aceb528807265ef432a2af22f487d94c7926d5b5494efa5d4eec"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-BYcXAX/command.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-BYcXAX/command.json",
+      "bytes": 67466,
+      "sha256": "a241e647f7ab9d1691a03029acd31cbb350959d7bd143a46f87f5261347eddb0"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-BYcXAX/request.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-BYcXAX/request.json",
+      "bytes": 667,
+      "sha256": "1c19632eaee43461cf805c324971f0d7948820380e0ec2e598eca575f7ca1d70"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-BYcXAX/stderr.raw.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-BYcXAX/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-BYcXAX/stdout.raw.tap",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-BYcXAX/stdout.raw.tap",
+      "bytes": 7302,
+      "sha256": "0ac67b72094095038dc7de44195b9f9357133b2cbee49d76516f82e1102d9ed2"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-BYcXAX/terminal.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-BYcXAX/terminal.json",
+      "bytes": 2814,
+      "sha256": "884d247dfc90943f2b51c5336ec3f4477b2ad233e53fdb8c8a2c00a0c68b6a66"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-YOlyA7/case-deadlines.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-YOlyA7/case-deadlines.json",
+      "bytes": 7411,
+      "sha256": "e1a50062a4d714c5decbd9c5ad12f63c338aeb44021b378bf4111901bdcba45c"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-YOlyA7/command.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-YOlyA7/command.json",
+      "bytes": 39042,
+      "sha256": "75e4b94d1c05075274cde529e30a3cceff031bf22e989a54e46a6e0985a27cc4"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-YOlyA7/request.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-YOlyA7/request.json",
+      "bytes": 351,
+      "sha256": "307146dc499a2c849eec358ad405cb1c6795546f5852664fb9da97983fa742d9"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-YOlyA7/stderr.raw.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-YOlyA7/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "js/node_modules/.node-case-deadlines/complete-BYcXAX/stderr.raw.log",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-YOlyA7/stdout.raw.tap",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-YOlyA7/stdout.raw.tap",
+      "bytes": 126810,
+      "sha256": "6236347e315af9c16fe4fe3c0b49d8e1ad0fb58fbfeaeeffd9e62e867db88c1a"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-YOlyA7/terminal.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-YOlyA7/terminal.json",
+      "bytes": 2378,
+      "sha256": "8a5b0afa742428699c333d7ed4e112cacc82236cef724e3ed6becb9a41d60c2a"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-v52Vpu/case-deadlines.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-v52Vpu/case-deadlines.json",
+      "bytes": 7226,
+      "sha256": "d08aac9b79561fb2c9b040e69df227c9dc4c83aeaee45cde38b4c7e360af8fc9"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-v52Vpu/command.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-v52Vpu/command.json",
+      "bytes": 38857,
+      "sha256": "8f27a705b11ea8cbf438dfeab2a48497248c280c33e8c68a81c8e928e8c0fd9e"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-v52Vpu/request.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-v52Vpu/request.json",
+      "bytes": 351,
+      "sha256": "b1d4ca96a345d77fa89efe8990dd9593b8bbe75ba7acac591764fcfe7918c570"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-v52Vpu/stderr.raw.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-v52Vpu/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "js/node_modules/.node-case-deadlines/complete-BYcXAX/stderr.raw.log",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-v52Vpu/stdout.raw.tap",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-v52Vpu/stdout.raw.tap",
+      "bytes": 1767,
+      "sha256": "630d36df6f7c61787f2d6ae1df51a9cb5c48fcaf6bff3518b44a18c8dd644c61"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-v52Vpu/terminal.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-v52Vpu/terminal.json",
+      "bytes": 2364,
+      "sha256": "d1d2f805e930bff1651c57d7d3440f8c02fee92bbf20a0761c485ed482f6f59a"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-z0xHAm/case-deadlines.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-z0xHAm/case-deadlines.json",
+      "bytes": 147100,
+      "sha256": "085ae18dc4b9cf5d076605209d6b826b7f03b4f1c4482c202e87fc590939caf1"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-z0xHAm/command.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-z0xHAm/command.json",
+      "bytes": 162304,
+      "sha256": "1e8a65df4e7188f6d38b5720a098e4fe2730cb42cec4cfaab2ce1aa2e799f882"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-z0xHAm/request.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-z0xHAm/request.json",
+      "bytes": 553,
+      "sha256": "67c09f6ddb763ebaa77d5811ef771a2115c6581170bb2d6cd491037d79bb4ab4"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-z0xHAm/stderr.raw.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-z0xHAm/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "js/node_modules/.node-case-deadlines/complete-BYcXAX/stderr.raw.log",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-z0xHAm/stdout.raw.tap",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-z0xHAm/stdout.raw.tap",
+      "bytes": 6904,
+      "sha256": "80347503cb5d018e0dedddaf5f17335999e4f68285ed71b81a506fbaf7d6cd1f"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-z0xHAm/terminal.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-z0xHAm/terminal.json",
+      "bytes": 2660,
+      "sha256": "9e064c1be512b5e251d5fd6253460be5b4cf2d868ede0939b22bcd5010cb2edc"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-z4AKbt/case-deadlines.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-z4AKbt/case-deadlines.json",
+      "bytes": 21579,
+      "sha256": "c217e96d26a7245e84d7b62124d73269108ec99eb74d4a89fa86b3738b626ff0"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-z4AKbt/command.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-z4AKbt/command.json",
+      "bytes": 49710,
+      "sha256": "40854c818d6b92a73511d247a43ba39cef5b1e7113a0439a21a5ad8a12908efe"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-z4AKbt/request.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-z4AKbt/request.json",
+      "bytes": 456,
+      "sha256": "20b9526093990ed1e933efbc6113ca269b083fa46f1b6fdd25a5af029d184b8d"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-z4AKbt/stderr.raw.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-z4AKbt/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "js/node_modules/.node-case-deadlines/complete-BYcXAX/stderr.raw.log",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-z4AKbt/stdout.raw.tap",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-z4AKbt/stdout.raw.tap",
+      "bytes": 1945,
+      "sha256": "99b86ea430e490caae6208083483b1d8d1711e6a7f85fe64a7197db29cd659ed"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-z4AKbt/terminal.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-z4AKbt/terminal.json",
+      "bytes": 2504,
+      "sha256": "ed38e6aca462e03c7b1ef6c1767d21add2ebb1f882f998ca51d75f5df9bd5c82"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-zJYC7O/case-deadlines.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-zJYC7O/case-deadlines.json",
+      "bytes": 26447,
+      "sha256": "2d618edd1605ba00a5ba41f7463bf304ed7ecb518d0deeade509a7695df86b5b"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-zJYC7O/command.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-zJYC7O/command.json",
+      "bytes": 51835,
+      "sha256": "e99a69707a73540996fdf2093c16850031ca8ee4219947ee88659b3ff830303d"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-zJYC7O/request.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-zJYC7O/request.json",
+      "bytes": 561,
+      "sha256": "cae451ee0de10c012920ab5a2dba1409b88e3dd63702dc8c0d7070d1d8f50a44"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-zJYC7O/stderr.raw.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-zJYC7O/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "js/node_modules/.node-case-deadlines/complete-BYcXAX/stderr.raw.log",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-zJYC7O/stdout.raw.tap",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-zJYC7O/stdout.raw.tap",
+      "bytes": 2924,
+      "sha256": "47d14654dae23eeec3aeb407767143c3b7608423a8aa866d0cbc6b257fc92e67"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-zJYC7O/terminal.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-zJYC7O/terminal.json",
+      "bytes": 2673,
+      "sha256": "4ecc3900006e34ec0def9c56405e816941a7b540f910798da58da0c55cdd8e16"
+    },
+    {
+      "path": "tools/translation/compiler-alias-source-evolution.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/compiler-alias-source-evolution.mjs",
+      "bytes": 9326,
+      "sha256": "5f95972b365c3af444820fc1424a1df401459abda9462052d7b63c2e3788b8eb"
+    },
+    {
+      "path": "tools/translation/prepare-current-receiving-source-history.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/prepare-current-receiving-source-history.mjs",
+      "bytes": 26981,
+      "sha256": "1ffe2bf4b9124b89375ad2d9009ca9288fc02edfc6606d1f3ab825c28b699c21"
+    },
+    {
+      "path": "tools/translation/prepare-default-proof-byte-adoption.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/prepare-default-proof-byte-adoption.mjs",
+      "bytes": 34301,
+      "sha256": "bd58b52b6c92d4796df4102d4fd9d3616e664cc033f5301946ec6261f038e441"
+    },
+    {
+      "path": "tools/translation/source-profiles/struct-ordering-source-history/builtin-derive-bang-footprints.rules.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/source-profiles/struct-ordering-source-history/builtin-derive-bang-footprints.rules.json",
+      "bytes": 3248,
+      "sha256": "e90460283e07d0d08ef4548e5c8aa9f1f43e7be9374b2c2e2547e7db1705c474"
+    },
+    {
+      "path": "tools/translation/source-profiles/struct-ordering-source-history/builtin-ordering-ast-route.rules.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/source-profiles/struct-ordering-source-history/builtin-ordering-ast-route.rules.json",
+      "bytes": 2015,
+      "sha256": "ee817bbba54f916cada509ad9b63da474e8f6c78b88d633d518a706217ac88e7"
+    },
+    {
+      "path": "tools/translation/struct-ordering-source-history.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/struct-ordering-source-history.mjs",
+      "bytes": 2250,
+      "sha256": "096dfa3f60940663092f400682f9ad432f8fe205392f288e17b7d96581ee548d"
+    },
+    {
+      "path": "tools/translation/test/clone-enclosing-source-history.test.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/clone-enclosing-source-history.test.mjs",
+      "bytes": 7656,
+      "sha256": "a21f8ed09e00d102b869afa5f41f4755fb144ea54a3a2f66f4f700d1ba48f951"
+    },
+    {
+      "path": "tools/translation/test/fixtures/clone-enclosing-comparison-history.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/fixtures/clone-enclosing-comparison-history.mjs",
+      "bytes": 3348,
+      "sha256": "10735240f8930b651fe62f6d5de446645aea3d0ae88c796e10cf8a994b6acdfe"
+    },
+    {
+      "path": "tools/translation/test/fixtures/current-receiving-source-history.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/fixtures/current-receiving-source-history.mjs",
+      "bytes": 972842,
+      "sha256": "1d0ba57701d8891baf3b5bab209897383c0d5a2da07a877170c5883a8a61c1d6"
+    },
+    {
+      "path": "tools/translation/test/struct-ordering-source-history.test.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/struct-ordering-source-history.test.mjs",
+      "bytes": 6014,
+      "sha256": "49fa498187066561f43f0bfbfed078df8c8c1ec0aa403d922ed38f733f419432"
+    },
+    {
+      "path": "tools/translation/whole-owner-builtin-derive-bang-footprints-candidate.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/whole-owner-builtin-derive-bang-footprints-candidate.mjs",
+      "bytes": 60423,
+      "sha256": "3a6316348cb7c82840fe2809c75cb03976e299fe0597cc9f51bd6b5bbe966ee1"
+    }
+  ],
+  "completeMembers": 88,
+  "completeOriginalBytes": 2728820,
+  "allDecodedOriginalsVerified": true,
+  "allSelectedOriginalsUnchanged": true,
+  "capSeconds": 600,
+  "elapsedSeconds": 1.0624322140356526,
+  "compression": {
+    "format": "xz",
+    "preset": 9,
+    "dictionaryBytes": 67108864
+  },
+  "harnessSha256": "79015998f626aecda125c5e03b6e7fc04951a14a57a7cdbba81771a2abfa08e9",
+  "semanticAuthority": false,
+  "runtimeParity": false,
+  "fullGatePass": false,
+  "rustExecuted": false
+}

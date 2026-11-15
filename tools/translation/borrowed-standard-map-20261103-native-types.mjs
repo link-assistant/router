@@ -1,3 +1,4 @@
+import {registerCheckedTypeKey} from './checked-type-keys.mjs';
 // Original borrowed standard-map type observations. Not a public type registry.
 import {matchesParserFacts} from './matches-macro-context.mjs';
 import {requireOriginalFromNamespaceCallbacks,requireOriginalPrimitiveTryFromChecker,originalJsonCaptureCheckerEligible} from './extensions/host-contracts.mjs';
@@ -132,3 +133,5 @@ export function reissueBorrowedStandardMapProgram(program){
  const qualified=new Set();for(const [name,entry]of program.declarations)if(entry.k==='fn'&&hasBorrowedStandardMapCaller(entry)){reissueBorrowedStandardMapFunction(entry,program);qualified.add(name);}
  for(const entry of program.items)if(entry.k==='fn'&&hasBorrowedStandardMapCaller(entry)){if(!qualified.has(entry.fullName))fail('item missing original checked declaration');reissueBorrowedStandardMapFunction(entry,program);}return program;
 }
+// checked-types.mjs reads this key through the leaf registry (no import cycle).
+registerCheckedTypeKey(KIND,borrowedStandardTextMapTypeKey);

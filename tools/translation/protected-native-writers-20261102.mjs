@@ -5,7 +5,7 @@ import {captureAbsoluteNativeMutationTargets} from './protected-external-mutatio
 import fs from 'node:fs';
 import {resolve} from 'node:path';
 import {types} from 'node:util';
-import {captureExplicitSourceMutationPolicy} from './unit-runtime-materialization.mjs';
+import {captureExplicitSourceMutationPolicy} from './protected-source-policy-20261115.mjs';
 import {requireReconcile as need, RECONCILE_LIMITS} from './paired-sync-reconcile-20261101-support.mjs';
 let active = null, operationDepth = 0;
 function secondary(primary, error) {

@@ -199,7 +199,9 @@ export function originalDerivedOuterBuiltinAttributeRegistrations(){
  if(!readFileSync(new URL('manifest.json',root)).equals(manifest)||!readFileSync(archiveURL).equals(packed))fail('complete builtin attribute inputs changed during source proof');check();
  return freeze({schema:'original-derived-outer-builtin-attribute-registrations-v1',path,source,sourceSha256:pin.sha256,manifestSha256:hash(manifest),concreteSyntax:concrete.meta,inverse:source,registrations,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false,callerOwnerResolved:false,attributeBehaviorExecuted:false,crossInvocationCache:false});
 }
-const derivedAttributeCatalogueNative=originalLexingIntrinsicsUnchanged()&&originalDeriveHelperCryptoUnchanged()&&originalPrivateParserIngressUnchanged()&&originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged();
+// derive-footprints.mjs imports this module, so its crypto qualification is
+// still uninitialized here; every check() below re-runs it at use time.
+const derivedAttributeCatalogueNative=originalLexingIntrinsicsUnchanged()&&originalPrivateParserIngressUnchanged()&&originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged();
 
 // Separate literal metadata registration domain; original catalogue stays exact.
 export function originalSourceMetadataBuiltinAttributeRegistrations(){

@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {types} from 'node:util';
 import {sourceItems} from './rust-structure.mjs';
 import {selectBorrowedTextConversions} from './core-borrowed-text-adoption.mjs';
+import {selectUnicodeStringReturn} from './core-unicode-string-return.mjs';
 import {createCoreAdoptionProducerContext,coreAdoptionDeriveAttributeClosed,finishCoreAdoptionProducerContext} from './core-adoption-producer-context.mjs';
 import {createLiteralTextImportRoles,verifyLiteralTextImportRoles} from './literal-text-import-roles.mjs';
 import {captureSourceModuleViews,originalSourceModuleItems} from './source-module-views.mjs';
@@ -100,7 +101,7 @@ function macroOpen(rows,at){
   if(keywords.has(name)&&!raw)return -1;
   const open=at+(merged?1:2);return (merged||rows[at+1]?.text==='!')&&['(','[','{'].includes(rows[open]?.text)?open:-1;
 }
-function functionSelection(source,item,path,profile,problems,borrowedProblems=[]){
+function functionSelection(source,item,path,profile,problems,borrowedProblems=[],unicodeReturns=false){
   const header=originalDeclarationHeader(item,path),condition=itemConfiguration(item.tokens,profile),rows=significant(item);
   if(!header||header.kind!=='fn')return null;
   const record={function:header.name,module:[...path],span:[item.start,item.end]},skipped=[];
@@ -114,6 +115,11 @@ function functionSelection(source,item,path,profile,problems,borrowedProblems=[]
   if(parameters<0||body>=rows.length||close(rows,body)!==rows.length-1||rows.slice(parameters+1,body).some(row=>row.text==='where'))return stop('complete ordinary function signature/body required');
   const inner=rows.slice(body+1,-1);
   if(inner.some(row=>['fn','trait','impl','use','macro_rules!','macro','type','struct','enum','union','mod'].includes(row.text)))return stop('nested declaration/import/producer');
+  if(unicodeReturns){
+    if(borrowedProblems.length)return stop('borrowed-text namespace uncertainty: '+borrowedProblems.join('; '));
+    const edit=selectUnicodeStringReturn(source,item,rows,parameters,body);
+    return edit?{edits:[edit],selection:{...record,conversions:[],ownedReturnAlias:true,bodyAdmission:false},skipped}:stop('complete borrowed-Str Unicode collection with bare String return required');
+  }
   const macroSpans=[];
   for(let at=body+1;at<rows.length-1;at++){const open=macroOpen(rows,at);if(open<0)continue;const end=close(rows,open);if(end<0)return stop('unclosed macro token tree');macroSpans.push([at,end]);at=end;}
   const edits=[],selected=[];
@@ -139,16 +145,16 @@ function functionSelection(source,item,path,profile,problems,borrowedProblems=[]
   if(bare)edits.push({span:[result[1].start,result[1].end],expected:'String',replacement:textType});
   return {edits,selection:{...record,conversions:selected,ownedReturnAlias:bare,bodyAdmission:false},skipped};
 }
-function propose(source,modules,profile,externalProblems=[],roleFor=createLiteralTextImportRoles(modules,profile),externalConditions=[],producerContext=null,externalBorrowedProblems=[],pathFor=null){
+function propose(source,modules,profile,externalProblems=[],roleFor=createLiteralTextImportRoles(modules,profile),externalConditions=[],producerContext=null,externalBorrowedProblems=[],pathFor=null,unicodeReturns=false){
   const before=transportConcreteSyntaxSource(source,{language:'Rust'}),edits=[],selections=[],skipped=[],importRoles=[],conditionalDeclarations=[...externalConditions];
   for(const module of modules){
     const ancestors=modules.filter(parent=>parent!==module&&parent.path.length<module.path.length&&parent.path.every((word,at)=>word===module.path[at]));
     const items=originalSourceModuleItems(module),problems=[...externalProblems,...ancestors.flatMap(parent=>scopeProblems(originalSourceModuleItems(parent),profile,parent.path,parent,roleFor,importRoles,conditionalDeclarations,producerContext,pathFor)),...scopeProblems(items,profile,module.path,module,roleFor,importRoles,conditionalDeclarations,producerContext,pathFor)];
     if(module.configurationCondition!=='active'){skipped.push({module:module.path,reason:'module configuration is not active'});continue;}
-    for(const item of items){if(item.term!=='fn')continue;let result;try{result=functionSelection(source,item,module.path,profile,problems,[...externalBorrowedProblems,...ancestors.flatMap(parent=>borrowedScopeProblems(originalSourceModuleItems(parent),profile,parent.path)),...borrowedScopeProblems(items,profile,module.path)]);}catch(error){skipped.push({span:[item.start,item.end],reason:error.message});continue;}if(!result)continue;edits.push(...result.edits);skipped.push(...result.skipped);if(result.selection)selections.push(result.selection);}
+    for(const item of items){if(item.term!=='fn')continue;let result;try{result=functionSelection(source,item,module.path,profile,problems,[...externalBorrowedProblems,...ancestors.flatMap(parent=>borrowedScopeProblems(originalSourceModuleItems(parent),profile,parent.path)),...borrowedScopeProblems(items,profile,module.path)],unicodeReturns);}catch(error){skipped.push({span:[item.start,item.end],reason:error.message});continue;}if(!result)continue;edits.push(...result.edits);skipped.push(...result.skipped);if(result.selection)selections.push(result.selection);}
   }
   edits.sort((a,b)=>a.span[0]-b.span[0]);for(let at=0;at<edits.length;at++)if(source.slice(...edits[at].span)!==edits[at].expected||at&&edits[at-1].span[1]>edits[at].span[0])fail('source substitutions overlap or differ');
-  const applied=applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:'literal-text:retain-complete-literal-operands',edits:[]}],repositoryRules:[{id:'router-core:adopt-owned-literal-formatting',edits}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applied.value));
+  const applied=applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:unicodeReturns?'unicode-return:retain-complete-borrowed-tail':'literal-text:retain-complete-literal-operands',edits:[]}],repositoryRules:[{id:unicodeReturns?'router-core:adopt-owned-unicode-return':'router-core:adopt-owned-literal-formatting',edits}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applied.value));
   const mapping=[];let old=0,current=0;
   for(const edit of edits){if(edit.span[0]>old){const size=edit.span[0]-old;mapping.push({kind:'unchanged',before:[old,edit.span[0]],after:[current,current+size]});current+=size;}mapping.push({kind:'substitution',before:[...edit.span],after:[current,current+edit.replacement.length],expected:edit.expected,replacement:edit.replacement});current+=edit.replacement.length;old=edit.span[1];}
   if(old<source.length)mapping.push({kind:'unchanged',before:[old,source.length],after:[current,current+source.length-old]});let inverse=after.source;
@@ -159,6 +165,11 @@ function propose(source,modules,profile,externalProblems=[],roleFor=createLitera
 export function migrateCoreLiteralText(source,{rootSource='',compilationProfile:input=PRODUCTION_PROFILE}={}){
   bounded(source);bounded(rootSource);const profile=normalizeProfile(input),captured=captureSourceModuleViews({source,sourcePath:'src/literal_adoption.rs',compilationProfile:profile}),modules=captured.views.map(view=>({file:'src/literal_adoption.rs',source,path:[...view.modulePath],sourceView:view,compilationProfile:profile,configurationCondition:view.configurationCondition}));
   const conditions=[],problems=rootSource?scopeProblems(sourceItems(rootSource),profile,[],null,null,[],conditions):[];return propose(source,modules,profile,problems,undefined,conditions,null,rootSource?borrowedScopeProblems(sourceItems(rootSource),profile,[]):[]);
+}
+export function adoptCoreUnicodeStringReturns(source,{rootSource='',compilationProfile:input=PRODUCTION_PROFILE}={}){
+  bounded(source);bounded(rootSource);const profile=normalizeProfile(input),captured=captureSourceModuleViews({source,sourcePath:'src/unicode_return_adoption.rs',compilationProfile:profile}),modules=captured.views.map(view=>({file:'src/unicode_return_adoption.rs',source,path:[...view.modulePath],sourceView:view,compilationProfile:profile,configurationCondition:view.configurationCondition}));
+  const conditions=[],problems=rootSource?scopeProblems(sourceItems(rootSource),profile,[],null,null,[],conditions):[],result=propose(source,modules,profile,problems,undefined,conditions,null,rootSource?borrowedScopeProblems(sourceItems(rootSource),profile,[]):[],null,true);
+  return {...result,schema:'router-owned-unicode-return-adoption-v1',migrationSemantics:'explicit bare String to owned Text adoption for a complete borrowed-Str whitespace tail; no original iterator dispatch or executable admission'};
 }
 function sourceMap(input){
   if(!input||typeof input!=='object'||types.isProxy(input)||![null,Object.prototype].includes(Object.getPrototypeOf(input)))fail('own primitive source map required');

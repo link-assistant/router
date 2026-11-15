@@ -88,7 +88,7 @@ async function insertionTargets(t,row){
 }
 
 import {normalizePrimitiveScalarBodyTree} from '../owned-primitive-body-normalization.mjs';
-import {canonicalRequestedNativeJsonVectorTree,requestedNativeJsonVectorTree} from '../owned-vector-native-json-control.mjs';
+import {canonicalRequestedNativeJsonVectorTree} from '../owned-vector-native-json-control.mjs';
 import {emitOwnedCoreProgram} from '../owned-vector-candidate-operations.mjs';
 import {proposeOwnedVectorBulkModuleSynchronization} from '../owned-vector-bulk-module-synchronization.mjs';
 import {proposeOwnedPrimitiveFunctionInsertion} from '../owned-primitive-function-insertion.mjs';

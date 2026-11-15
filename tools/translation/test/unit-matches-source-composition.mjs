@@ -2,9 +2,10 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
+import {receiveCompleteSourceMetadata} from './complete-source-metadata-receiving.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 export function assertUnitMatchesSourceComposition(layer,prior={},finalSources){
+ const receiving=receiveCompleteSourceMetadata(layer.files),transportConcreteSyntaxMeta=receiving.next;
  assert.equal(layer.schema,'router-owned-unit-matches-source-v1');assert.equal(layer.files.length,7);assert.equal(layer.originalLiteralDomainUnchanged,true);assert.equal(layer.newEncodedOrDigestCache,false);assert.equal(layer.semanticAuthority,false);assert.equal(layer.runtimeExecuted,false);assert.equal(layer.rustExecuted,false);
  assert.equal(new Set(layer.files.map(row=>row.path)).size,7);
  for(const row of layer.files){
@@ -15,4 +16,5 @@ export function assertUnitMatchesSourceComposition(layer,prior={},finalSources){
   for(const stage of row.stages){assert.equal(stage.before,stage.phase==='language'?row.before:row.language);assert.equal(stage.after,stage.phase==='language'?row.language:row.after);assert.equal(stage.completeInverse,true);assert.deepEqual(stage.trace.map(event=>event.phase),['language','repository']);assert.equal(stage.trace.find(event=>event.phase===stage.phase).rules.length,1);assert.equal(stage.trace.find(event=>event.phase!==stage.phase).rules.length,0);assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,stage.before);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);}
   assert.equal(row.nativeCopies.length,row.sourceLanguage==='JavaScript'?2:0);assert.ok(row.nativeCopies.every(copy=>copy.completeNativeAstCopy));if(row.nativeBindings)assert.deepEqual(row.nativeBindings.unboundIdentifiers,[]);
  }
+ receiving.finish();
 }

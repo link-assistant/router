@@ -1,3 +1,4 @@
+import {historicalNativeSources} from './historical-native-source.mjs';
 import {historicalNativeSourcePath} from '../../test/fixtures/historical-language-layout.mjs';
 import {rustPackageSourcePath} from "../../repository-layout.mjs";
 import assert from 'node:assert/strict';
@@ -117,8 +118,9 @@ test('every old 136 definition and 301 capture origin survives within the comple
   const old=(await oldModule('scoped-helpers')).module,totals={modules:0,top:0,scoped:0,topDefinitions:0,oldScoped:0,oldFull:0,oldConditional:0,captureRefusals:0,newFull:0,newConditional:0},changes=[];
   const originalPins=JSON.parse(readFileSync(join(ROOT,rustPackageSourcePath(ROOT,'tools/translation/fixtures/sequence-patterns/native-program-baseline.json')))).modules;
   const intended=new Map([['js/src/config.mjs','client => !canonical.has(client)'],['js/src/provider-manifest.mjs','([key])=>fields.has(key)'],['js/src/client-status.mjs','key=>!modelKeys.includes(key)']]);
-  for(const path of sourceModules(ROOT).filter(path=>path.startsWith('js/src/')&&path.endsWith('.mjs'))){
-    const source=readFileSync(join(ROOT,rustPackageSourcePath(ROOT,path)),'utf8'),current=analyzeJavaScript(source,{sourcePath:path}),previous=old.discoverScopedHelpers(source,current.items,analyzeJavaScript,path),sourceSha256=hash(source),oldCaptureOrigins=previous.items.filter(row=>row.diagnostic?.message==='a scoped lexical capture');
+  const historical=historicalNativeSources();
+  for(const path of historical.paths.filter(path=>path.startsWith('js/src/')&&path.endsWith('.mjs'))){
+    const source=historical.source(path),current=analyzeJavaScript(source,{sourcePath:path}),previous=old.discoverScopedHelpers(source,current.items,analyzeJavaScript,path),sourceSha256=hash(source),oldCaptureOrigins=previous.items.filter(row=>row.diagnostic?.message==='a scoped lexical capture');
     const originalPin=originalPins.find(row=>historicalNativeSourcePath(row.path)===path);assert.ok(originalPin);assert.equal(Buffer.byteLength(source),originalPin.originalSourceBytes);assert.equal(sourceSha256,originalPin.sourceSha256);assert.deepEqual(current.program,originalPin.topLevelProgram);
     assert.equal(current.scopedFunctions.sourceItems,previous.sourceItems);
     for(const fn of previous.program)assert.deepEqual(current.scopedFunctions.program.find(row=>row.name===fn.name),fn,path+':'+fn.name);

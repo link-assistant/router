@@ -33,7 +33,10 @@ pub fn default_root(data_dir: &Path) -> PathBuf {
     data_dir.join(link_assistant_router::deploy::instance::qualify("deploy"))
 }
 
-fn resolved_root(args: &DeployArgs, data_dir: &Path) -> crate::translation_core::Outcome<PathBuf, String> {
+fn resolved_root(
+    args: &DeployArgs,
+    data_dir: &Path,
+) -> crate::translation_core::Outcome<PathBuf, String> {
     let root = match args.root.as_deref() {
         Some(root) => link_assistant_router::deploy_config::expand_home(root)?,
         None => default_root(data_dir),
@@ -55,7 +58,10 @@ fn resolved_root(args: &DeployArgs, data_dir: &Path) -> crate::translation_core:
 /// provided data` from the process API — and if it ever stopped doing so, the
 /// deployment would sign tokens nothing can validate. Removal is exempt: it
 /// names a container and deletes it, signing nothing.
-fn secret_refusal(token_secret: &crate::translation_core::Str, does_not_sign: bool) -> crate::translation_core::Maybe<String> {
+fn secret_refusal(
+    token_secret: &crate::translation_core::Str,
+    does_not_sign: bool,
+) -> crate::translation_core::Maybe<String> {
     if does_not_sign {
         return None;
     }
@@ -155,7 +161,9 @@ fn check_target(args: &DeployArgs, remote: bool) -> crate::translation_core::Out
 }
 
 /// Merge `--config` with the flags into the arguments a run uses.
-pub(crate) fn resolve(args: &DeployArgs) -> crate::translation_core::Outcome<(DeployArgs, Merged, bool), String> {
+pub(crate) fn resolve(
+    args: &DeployArgs,
+) -> crate::translation_core::Outcome<(DeployArgs, Merged, bool), String> {
     let remote = args.server.is_some() || args.settings.remote;
     let merged = merge(&args.settings, remote)?;
     let mut resolved = args.clone();
@@ -279,7 +287,11 @@ pub fn run(config: &Config, args: &DeployArgs) -> ExitCode {
 }
 
 /// A missing default image cannot yield an executable container plan.
-fn image_preflight(args: &DeployArgs, root: &Path, image: &crate::translation_core::Str) -> crate::translation_core::Maybe<ExitCode> {
+fn image_preflight(
+    args: &DeployArgs,
+    root: &Path,
+    image: &crate::translation_core::Str,
+) -> crate::translation_core::Maybe<ExitCode> {
     let host = args.mode == Some(DeployMode::Host)
         || (args.mode.is_none() && root.join("state/host").exists());
     if args.image.is_some()

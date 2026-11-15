@@ -1,0 +1,77 @@
+// Preserve the complete declined candidate before restoring its production files.
+import assert from 'node:assert/strict';
+import {readFileSync,existsSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {prepareRuntimeImportCurrentSources} from '../../tools/translation/prepare-runtime-import-current-sources.mjs';
+import {proposeRuntimeImportCommonGuard} from '../../tools/translation/prepare-runtime-import-common-guard.mjs';
+import {ownershipCompiler} from '../../tools/translation/js-to-rust/vendor/module-syntax.mjs';
+import {writeCompleteEvidenceJson,readCompleteEvidenceJson} from './complete-evidence-json.mjs';
+
+assert.equal(process.argv.length,2);
+const stem='ci-logs/issue-784-restart-2/runtime-common-withdrawn';
+const hash=value=>createHash('sha256').update(value).digest('hex');
+const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+const tracked=[
+ 'tools/translation/prepare-runtime-import-current-sources.mjs',
+ 'tools/translation/prepare-owned-runtime-import-current.mjs',
+ 'tools/translation/owned-runtime-node-current-source-data.mjs',
+ 'tools/translation/js-to-rust/owned-core-source.mjs',
+ 'tools/translation/test/runtime-import-current.test.mjs',
+];
+const paths=[...tracked,'tools/translation/prepare-runtime-import-common-guard.mjs',
+ 'tools/translation/test/runtime-import-common-guard.test.mjs',
+ 'tools/translation/source-profiles/runtime-import-common-guard/original.mjs.gz'];
+const files=paths.map(path=>{
+ const bytes=readFileSync(path),before=tracked.includes(path)?execFileSync('git',['show',head+':'+path],{maxBuffer:1048576}):null;
+ return {path,encoding:'base64',bytes:bytes.toString('base64'),sha256:hash(bytes),
+  original:before===null?null:{bytes:before.toString('base64'),sha256:hash(before)}};
+});
+const records=[];
+// Intern complete string values without dropping any keys, tokens or histories.
+// The leading NUL belongs only to the storage encoding, never to source DATA.
+function store(label,value){
+ // Rule closures cannot be serialized as executable authority. Preserve their
+ // complete diagnostic source text alongside every ordinary enumerable field.
+ const data=item=>{
+  if(typeof item==='function')return {diagnosticFunctionSource:Function.prototype.toString.call(item)};
+  if(Array.isArray(item))return item.map(data);
+  if(item!==null&&typeof item==='object')return Object.fromEntries(Object.entries(item).map(([key,child])=>[key,data(child)]));
+  return item;
+ };
+ value=data(value);
+ const strings=[],lookup=new Map();
+ const encode=item=>{
+  if(typeof item==='string'){
+   if(!lookup.has(item)){lookup.set(item,strings.length);strings.push(item);}
+   return '\0'+lookup.get(item);
+  }
+  if(Array.isArray(item))return item.map(encode);
+  if(item!==null&&typeof item==='object')return Object.fromEntries(Object.entries(item).map(([key,child])=>[key,encode(child)]));
+  return item;
+ };
+ const encoded=encode(value);
+ const decode=item=>{
+  if(typeof item==='string'){assert.equal(item[0],'\0');return strings[Number(item.slice(1))];}
+  if(Array.isArray(item))return item.map(decode);
+  if(item!==null&&typeof item==='object')return Object.fromEntries(Object.entries(item).map(([key,child])=>[key,decode(child)]));
+  return item;
+ };
+ const raw=Buffer.from(JSON.stringify({schema:'complete-string-value-interning-v1',strings,value:encoded}));
+ assert.deepEqual(decode(JSON.parse(raw).value),value);
+ const target=stem+'-'+label+'.json';
+ const path=existsSync(target+'.xz')?target+'.xz':writeCompleteEvidenceJson(target,raw);
+ assert.ok(readCompleteEvidenceJson(target).equals(raw));
+ records.push({label,path,completeEncodedBytes:raw.length,sha256:hash(raw)});
+ console.log(JSON.stringify(records.at(-1)));
+}
+store('sources',{head,files,declined:true,semanticAuthority:false,runtimeParity:false});
+const plan=prepareRuntimeImportCurrentSources();
+for(const [at,row]of plan.files.entries())store('row-'+at,row);
+const {files:rows,...header}=plan;store('header',header);
+const original=execFileSync('git',['show',head+':tools/translation/js-to-rust/owned-core-source.mjs'],{encoding:'utf8',maxBuffer:1048576});
+store('owned-proposal',proposeRuntimeImportCommonGuard(ownershipCompiler(),'tools/translation/js-to-rust/owned-core-source.mjs',original));
+for(const row of files)assert.equal(hash(readFileSync(row.path)),row.sha256);
+store('index',{head,records:[...records],completeRows:rows.length,allCompleteCandidateSourcesUnchanged:true,
+ originalDeadlinesQualified:false,wholeBuildSpeedGainQualified:false,declined:true,
+ semanticAuthority:false,runtimeParity:false,rustExecuted:false});

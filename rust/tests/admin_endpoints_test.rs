@@ -468,5 +468,11 @@ fn allow_anonymous_admin_restores_the_open_surface() {
 fn the_binary_under_test_comes_from_this_workspace() {
     let bin = PathBuf::from(env!("CARGO_BIN_EXE_link-assistant-router"));
     assert!(bin.exists(), "{} should exist", bin.display());
-    assert!(bin.starts_with(PathBuf::from(env!("CARGO_MANIFEST_DIR")).parent().expect("workspace root")));
+    assert!(
+        bin.starts_with(
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .parent()
+                .expect("workspace root")
+        )
+    );
 }

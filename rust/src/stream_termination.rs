@@ -27,7 +27,8 @@ use serde_json::json;
 
 /// Message of the error event sent when the upstream body ends before its
 /// terminal event.
-pub const INCOMPLETE_STREAM_MESSAGE: &crate::translation_core::Str = "upstream stream ended before completion";
+pub const INCOMPLETE_STREAM_MESSAGE: &crate::translation_core::Str =
+    "upstream stream ended before completion";
 
 /// Upper bound for the bytes kept while looking for a split terminator.
 pub const MAX_SSE_CARRY_BYTES: usize = 64 * 1024;
@@ -106,7 +107,9 @@ impl FailureKind {
     /// the Chat or Responses dialect, so a bridge relaying that event can
     /// report it in its own dialect instead of as a generic error.
     #[must_use]
-    pub fn of_in_band(event: &crate::translation_core::Json) -> crate::translation_core::Maybe<Self> {
+    pub fn of_in_band(
+        event: &crate::translation_core::Json,
+    ) -> crate::translation_core::Maybe<Self> {
         let code = event
             .pointer("/error/code")
             .or_else(|| event.get("code"))

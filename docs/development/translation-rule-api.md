@@ -29,6 +29,15 @@ Its native-selected transaction copy retains both substitution sequences and
 complete inverses, with fresh original source and native checks on each call.
 These DATA results grant no semantic or owner authority.
 
+`composeOwnedRuntimeImportEdges` obtains its complete original source plan in
+fresh Node when Bun cannot satisfy the producer's exact compiler-callable text
+pins. The receiving composer rechecks whole compiler/archive/current sources,
+both serialized CST phases and native syntax. The original preparation API and
+Bun's runtime-loader refusal remain exact; source DATA transfers no runtime or
+private issuer authority. `prepare-runtime-import-phased-data.mjs --check`
+verifies the complete producer afterimage against its archived original and
+native/CST inverses. Parent deadlines and the complete gate remain required.
+
 The [rule-layer contract](translation-rules.md) defines the required separation
 between language semantics and repository conventions. The implementation in
 [`rule-pipeline.mjs`](../../tools/translation/rule-pipeline.mjs) accepts exactly
@@ -224,10 +233,10 @@ ownership, semantic or executable authority. The original sixteen-case API and
 the default current `originalCsvContext` retain their existing behavior.
 
 The associated CSV helper selects one complete historical universe; it never
-mixes a pinned old file into a current graph. Its twelve original workloads,
+mixes a pinned old file into a current module graph. Its twelve original workloads,
 including the 900000 ms case deadlines, remain separate receiving obligations.
-Telegram's pinned case uses its historical graph while qwen keeps the current
-whole-root graph. Changed bridge/copy parents also have independent current Core
+Telegram's pinned case uses its historical module graph while qwen keeps the current
+whole-root module graph. Changed bridge/copy parents also have independent current Core
 fixture attempts with full parents and source/CST inverses retained. These scoped
 attempts establish neither complete parent/crate admission nor repaired semantic
 or performance frontiers. All ordinary source, dependency, checker and private

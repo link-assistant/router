@@ -184,7 +184,10 @@ async fn bounded_native_response(
     Ok(response)
 }
 
-fn project_catalog_entry(dialect: ApiDialect, mut entry: crate::translation_core::Json) -> Response {
+fn project_catalog_entry(
+    dialect: ApiDialect,
+    mut entry: crate::translation_core::Json,
+) -> Response {
     let Some(model) = entry.as_object_mut() else {
         return error_response(
             dialect,

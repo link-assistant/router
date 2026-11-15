@@ -244,7 +244,10 @@ pub fn read_exchanges(
     Ok((exchanges, unparsable, bytes))
 }
 
-fn log_files(root: &Path, token: crate::translation_core::Maybe<&crate::translation_core::Str>) -> std::io::Result<Vec<PathBuf>> {
+fn log_files(
+    root: &Path,
+    token: crate::translation_core::Maybe<&crate::translation_core::Str>,
+) -> std::io::Result<Vec<PathBuf>> {
     let mut files = Vec::new();
     if !root.is_dir() {
         return Ok(files);
@@ -458,7 +461,9 @@ fn decode_response_stream(
 }
 
 /// The base64 a record stores in place of a body, if it stores one.
-fn stored_bytes(record: &crate::translation_core::Json) -> crate::translation_core::Maybe<&crate::translation_core::Str> {
+fn stored_bytes(
+    record: &crate::translation_core::Json,
+) -> crate::translation_core::Maybe<&crate::translation_core::Str> {
     record
         .get("body")
         .and_then(|body| body.get(crate::request_log::BINARY_BODY_KEY))
@@ -565,7 +570,9 @@ fn settle_encoded_frames(exchange: &mut Exchange) {
 /// handled by `inspectable` instead (issue #255).
 fn body_carries_a_terminator(body: &crate::translation_core::Json) -> bool {
     match body {
-        crate::translation_core::Json::String(text) => crate::request_log::text_terminates_stream(text),
+        crate::translation_core::Json::String(text) => {
+            crate::request_log::text_terminates_stream(text)
+        }
         crate::translation_core::Json::Null => false,
         // A parsed document: search its rendered form, so a terminator that
         // arrived as structured JSON is found too.
@@ -741,7 +748,10 @@ pub fn show_records(
             .lines()
             .filter_map(crate::lino_json::decode_line)
             .filter(|record| {
-                record.get("correlation_id").and_then(crate::translation_core::Json::as_str) == Some(correlation_id)
+                record
+                    .get("correlation_id")
+                    .and_then(crate::translation_core::Json::as_str)
+                    == Some(correlation_id)
             })
             .collect::<Vec<_>>();
         let encoding = records
@@ -771,7 +781,11 @@ pub fn show_records(
 }
 
 /// Render one exchange using the same decoded records as the operation API.
-pub fn show(root: &Path, token: crate::translation_core::Maybe<&crate::translation_core::Str>, correlation_id: &crate::translation_core::Str) -> std::io::Result<String> {
+pub fn show(
+    root: &Path,
+    token: crate::translation_core::Maybe<&crate::translation_core::Str>,
+    correlation_id: &crate::translation_core::Str,
+) -> std::io::Result<String> {
     let records = show_records(root, token, correlation_id)?;
     crate::operation_output::report(crate::operation_reports::LogRecordsReport {
         correlation_id: correlation_id.into(),

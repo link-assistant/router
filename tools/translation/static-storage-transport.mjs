@@ -33,7 +33,11 @@ export function packStaticStorageTransport(payload){
  if(payload.schema!==SCHEMA)return {payload,columnEncoding:'plain-v1',metadataEncoding:'plain-v1'};
  const copy=parse(json(payload)),ids=dictionary(copy),positions=new Map(ids.map((id,index)=>[id,index])),references=slots(copy);
  let metadataEncoding='plain-v1';
- if(references&&references.every(row=>positions.has(row.sourceId))){for(const row of references)row.sourceId=positions.get(row.sourceId);metadataEncoding='source-index-v1';}
+ if(references&&references.every(row=>positions.has(row.sourceId))){
+  const blobs=references.every(row=>typeof row.gitBlob==='string'&&record(copy.payload.sources[row.sourceId])&&row.gitBlob===copy.payload.sources[row.sourceId].gitBlob);
+  for(const row of references){const index=positions.get(row.sourceId);row.sourceId=index;if(blobs)row.gitBlob=index;}
+  metadataEncoding=blobs?'source-and-blob-index-v1':'source-index-v1';
+ }
  check(dense(copy.columnTables)&&copy.columnTables.length===6,'exact six column tables required');
  let total=0;
  copy.columnTables=copy.columnTables.map(table=>{
@@ -43,13 +47,21 @@ export function packStaticStorageTransport(payload){
  return {payload:copy,columnEncoding:'hex-v1',metadataEncoding};
 }
 export function unpackStaticStorageTransport(payload,columnEncoding,metadataEncoding,{columns=true}={}){
- check(['plain-v1','hex-v1'].includes(columnEncoding)&&['plain-v1','source-index-v1'].includes(metadataEncoding),'recognized explicit wire encodings required');
+ check(['plain-v1','hex-v1'].includes(columnEncoding)&&['plain-v1','source-index-v1','source-and-blob-index-v1'].includes(metadataEncoding),'recognized explicit wire encodings required');
  if(columnEncoding==='plain-v1'&&metadataEncoding==='plain-v1')return payload;
  check(payload.schema===SCHEMA,'original column container required');
  const copy=parse(json(payload));
- if(metadataEncoding==='source-index-v1'){
+ if(['source-index-v1','source-and-blob-index-v1'].includes(metadataEncoding)){
   const ids=dictionary(copy),references=slots(copy);check(references,'bounded complete metadata references required');
-  for(const row of references){check(safe(row.sourceId)&&row.sourceId<ids.length,'original source dictionary index required');row.sourceId=ids[row.sourceId];}
+  for(const row of references){
+   check(safe(row.sourceId)&&row.sourceId<ids.length,'original source dictionary index required');
+   if(metadataEncoding==='source-and-blob-index-v1'){
+    check(safe(row.gitBlob)&&row.gitBlob===row.sourceId,'matching original Git blob dictionary index required');
+    const blob=copy.payload.sources[ids[row.gitBlob]].gitBlob;
+    check(typeof blob==='string','complete original Git blob required');row.gitBlob=blob;
+   }
+   row.sourceId=ids[row.sourceId];
+  }
  }
  if(columnEncoding==='hex-v1'&&columns){
   check(dense(copy.columnTables)&&copy.columnTables.length===6,'exact six stored column tables required');let total=0;

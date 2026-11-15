@@ -29,7 +29,7 @@ for(const [file,fileHash,name,start,end,sliceHash]of pins)test(`pending complete
     const method=result.checkedMethodDeclarations.find(entry=>entry.source===file&&entry.displayName.endsWith('Encoding.parse'));assert.ok(method,JSON.stringify(result.meta.refused.filter(entry=>entry.file===file)));assert.equal(method.sourceSha256,fileHash);assert.equal(method.term,'method');
     await verifyTypedTargets(checkedDeclarationTargets(method),api=>{for(const [value,expected]of [['','Identity'],[', ,','Identity'],['identity','Identity'],['gzip','Gzip'],['x-gzip','Gzip'],['gzip, deflate','Deflate'],['gzip, , br, ','Brotli'],['zstd','Zstd'],['GZIP','Gzip'],['other',null],['gzip, unknown',null],['gzip,\u0085', 'Gzip'],['gzip,\uFEFF',null]])assert.deepEqual(api.parse(value),expected===null?none:some({$:expected}));},{childTimeoutMs:30_000});return;
   }
-  if(name==='parse_usize_csv'){assert.ok(result.meta.refused.some(item=>item.name==='config.parse_usize_csv'&&/destruction|no-Drop/.test(item.message)));assert.equal(result.meta.executable.some(item=>item.name==='config.parse_usize_csv'),false);return;}
+  if(name==='parse_usize_csv'){const refused=result.meta.refused.some(item=>item.name==='config.parse_usize_csv'&&/destruction|no-Drop/.test(item.message));assert.ok(refused,refused?undefined:JSON.stringify(result.meta.refused.filter(item=>item.file===file)));assert.equal(result.meta.executable.some(item=>item.name==='config.parse_usize_csv'),false);return;}
   if(name==='from_path'){
     const method=extractImplDeclarations(source).implementations.flatMap(item=>item.methods).find(item=>item.name===name),checked=result.meta.checkedMethods.find(item=>item.source===file&&item.name.endsWith('StreamDialect.from_path'));
     // Classification only for this CSV frontier. The separate Deref method
@@ -38,7 +38,7 @@ for(const [file,fileHash,name,start,end,sliceHash]of pins)test(`pending complete
     return;
   }
   const item=sourceItems(source).find(item=>item.term==='fn'&&item.name===name);assert.deepEqual([item.start,item.end],[start,end]);
-  const declaration=result.executableDeclarations.find(item=>item.source===file&&item.name===name);assert.ok(declaration);assert.equal(declaration.sourceSha256,fileHash);assert.deepEqual(declaration.span,{start,end});
+  const declaration=result.executableDeclarations.find(item=>item.source===file&&item.name===name);assert.ok(declaration,declaration?undefined:JSON.stringify(result.meta.refused.filter(item=>item.file===file)));assert.equal(declaration.sourceSha256,fileHash);assert.deepEqual(declaration.span,{start,end});
   await verifyTypedTargets(checkedDeclarationTargets(declaration),api=>{for(const [value,expected]of [['',[]],[', ,',[]],['one, two,one',['one','two','one']],['\u0085a,\uFEFFb',['a','\uFEFFb']],['😀,Ω',['😀','Ω']]])assert.deepEqual(api[name](value),expected);},{childTimeoutMs:30_000});
 });
 

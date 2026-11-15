@@ -1,0 +1,1 @@
+{"completeMembers": 2873, "completeBytes": 320408059, "differingOutputs": ["parity/rust-source-inventory.json"], "differingInputs": ["tools/translation/isolated-project-batch.mjs", "tools/translation/isolated-project-driver.mjs", "tools/translation/source-profiles/isolated-project-compiler/manifest.json.gz"], "outputsInstalled": false, "semanticAuthority": false}

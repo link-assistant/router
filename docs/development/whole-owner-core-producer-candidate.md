@@ -22,7 +22,7 @@ Source programs, canonical binding bytes, digests and guard verdicts do not cros
 calls. Existing Core context data and legacy selection behavior keep their old
 contracts. Unknown carriers, hooks or intrinsics select the original complete
 pipeline; all source and private-owner checks remain in that pipeline. Each
-eligible operation independently captures the complete original source graph,
+eligible operation independently captures the complete original source module graph,
 reissues its binding program and performs the existing final source/intrinsic
 boundary before returning any data.
 
@@ -46,7 +46,7 @@ genuine modules; it does not justify broadening that guard.
 Root subsequently materialized all three Core source equations and qualified
 the first five new Core cases, alongside all seven packet and seven stage-stream
 cases, with no case deadline breach. The sixth Core observer case failed its
-positive premise: both original JSON-hook graph constructors correctly refused
+positive premise: both original JSON-hook module graph constructors correctly refused
 at native CST ingress before any JSON callback. Its undefined third-context
 placeholder was a fixture artifact. Independent complete child diagnostics
 retained that refusal and all successful Hash traces; each Hash child produced

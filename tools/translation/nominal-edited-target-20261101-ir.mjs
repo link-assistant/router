@@ -46,7 +46,7 @@ export function editedNominalShape(plan,leaves){
  accountPrimitiveVectorIteratorBulkData({plan,leaves});const expected=plan.callback.kind==='constant'?1:plan.callback.cases.length;
  if(!Array.isArray(leaves)||leaves.length!==expected)fail('complete edited leaf census required');
  const checked=leaves.map(leaf=>{if(plan.output==='bool'){if(leaf?.kind!=='bool'||typeof leaf.value!=='boolean'||Object.keys(leaf).sort().join(',')!=='kind,value')fail('actual Boolean leaf required');return {kind:'bool',value:leaf.value};}if(leaf?.kind!=='variant'||!plan.variants.includes(leaf.variant)||Object.keys(leaf).sort().join(',')!=='kind,variant')fail('actual fixed-owner unit variant candidate required');return {kind:'variant',variant:leaf.variant};});
- return {...plan,callback:plan.callback.kind==='constant'?{...plan.callback,leaf:checked[0]}:{...plan.callback,cases:plan.callback.cases.map((row,index)=>({...row,leaf:checked[index]}))};
+ return {...plan,callback:plan.callback.kind==='constant'?{...plan.callback,leaf:checked[0]}:{...plan.callback,cases:plan.callback.cases.map((row,index)=>({...row,leaf:checked[index]}))}};
 }
 export function emitNominalEditedRustBody(plan){
  accountPrimitiveVectorIteratorBulkData(plan);name(plan.owner);if(plan.schema!=='closed-owned-unit-map-native-shape-v1'||!['bool','variant'].includes(plan.output)||!['constant','owned-match'].includes(plan.callback?.kind)||!Array.isArray(plan.variants)||!plan.variants.length||plan.variants.length>32||plan.variants.some(value=>!ident(value))||new Set(plan.variants).size!==plan.variants.length||!ident(plan.input?.name)||!ident(plan.callback.binder))fail('complete bounded native binding/owner/leaf candidate shape required');

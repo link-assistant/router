@@ -1,0 +1,13 @@
+{
+  "schema": "module-token-path-reentry-source-profile-v1",
+  "sourceArchive": "docs/case-studies/issue-784/evidence/derive-effects-history-20261110.tar.gz",
+  "sourceArchiveSha256": "8f5c84925a836dbdf489ac6fbae8c0c2258481b2f4d43452f16013afd8999f64",
+  "member": "ci-logs/issue-784-restart-2/derive-effects-history-source-draft.json.gz",
+  "compressedSha256": "360bfa85af11f7d5a08523c7e579a38096c805652bde5544a1d9e5aafce155b7",
+  "completeJsonSha256": "63e1279e2e8b1d297daa06119e272072d2b1c3a8302107ba794b6bd98246c3dd",
+  "path": "tools/translation/test/derive-output-effects.test.mjs",
+  "beforeSha256": "88343ee52b8b01e2f0b9f4a9db27455d513e2d71154428eea5723d689d7e91ae",
+  "afterSha256": "df0283cad6addd47652cda93b782e008da7589f16a589bf80baa18176454fce4",
+  "sourceAuthority": false,
+  "runtimeAuthority": false
+}

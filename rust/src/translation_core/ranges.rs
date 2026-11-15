@@ -8,7 +8,11 @@
 #[must_use]
 pub fn f64_inclusive_contains<
     T: ::std::convert::Into<::std::primitive::f64> + ::std::marker::Copy,
->(lower: T, upper: T, value: T) -> bool {
+>(
+    lower: T,
+    upper: T,
+    value: T,
+) -> bool {
     let lower: ::std::primitive::f64 = lower.into();
     let upper: ::std::primitive::f64 = upper.into();
     let value: ::std::primitive::f64 = value.into();

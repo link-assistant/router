@@ -52,7 +52,6 @@ import {readCoreCarrierContractSourceRole} from '../core-carrier-call-source.mjs
 import {proposeCallbackIntegerBodySource} from '../callback-integer-body-source.mjs';
 import {proposeCallbackCoreBodySource} from '../callback-core-body-source.mjs';
 import {prepareCallbackTextTargetSources} from '../prepare-callback-text-target-sources.mjs';
-import {proposeCallbackCoreBodySource} from '../callback-core-body-source.mjs';
 import {proposeCallbackTextBodySource} from '../callback-text-body-source.mjs';
 const limits={timeout:60000},root=new URL('../../../',import.meta.url),cargo={manifest:readFileSync(repositorySourceURL('Cargo.toml',root),'utf8'),lock:readFileSync(repositorySourceURL('Cargo.lock',root),'utf8')},some=field0=>({$:'Some',field0}),none={$:'None'},ok=field0=>({$:'Ok',field0}),err=field0=>({$:'Err',field0});
 const bodies=`pub fn direct(value:Option<&str>)->Option<String>{value.map(|text|text.into())}

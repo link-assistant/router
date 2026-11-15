@@ -80,7 +80,10 @@ impl OutputTokenLimiter {
 
 /// Truncate `text` to an output-token budget, returning `None` when it fits.
 #[must_use]
-pub fn truncate(text: &crate::translation_core::Str, limit: u64) -> crate::translation_core::Maybe<String> {
+pub fn truncate(
+    text: &crate::translation_core::Str,
+    limit: u64,
+) -> crate::translation_core::Maybe<String> {
     let mut limiter = OutputTokenLimiter::new(Some(limit));
     let (visible, truncated) = limiter.push(text);
     truncated.then_some(visible)
@@ -109,7 +112,8 @@ pub fn enforce_response_limit(response: &mut Value, limit: u64) {
     }
     if truncated {
         response["status"] = Value::String("incomplete".into());
-        response["incomplete_details"] = crate::translation_core::json!({"reason": "max_output_tokens"});
+        response["incomplete_details"] =
+            crate::translation_core::json!({"reason": "max_output_tokens"});
     }
 }
 
@@ -156,7 +160,10 @@ pub struct ResponsesStreamRewriter {
 impl ResponsesStreamRewriter {
     /// Create a rewriter for one Codex-backed Responses request.
     #[must_use]
-    pub fn new(requested_model: &crate::translation_core::Str, limit: crate::translation_core::Maybe<u64>) -> Self {
+    pub fn new(
+        requested_model: &crate::translation_core::Str,
+        limit: crate::translation_core::Maybe<u64>,
+    ) -> Self {
         Self {
             requested_model: requested_model.to_string(),
             limiter: OutputTokenLimiter::new(limit),
@@ -423,7 +430,10 @@ fn data_payload(block: &crate::translation_core::Str) -> crate::translation_core
 
 /// Re-emit an SSE block with its `data:` payload replaced, keeping `event:`
 /// and comment lines in their original order.
-fn render_block(block: &crate::translation_core::Str, event: &crate::translation_core::Json) -> String {
+fn render_block(
+    block: &crate::translation_core::Str,
+    event: &crate::translation_core::Json,
+) -> String {
     use std::fmt::Write as _;
     let mut rendered = String::new();
     for line in block.lines() {

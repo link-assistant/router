@@ -1,0 +1,33 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/prepare-whole-owner-resolver-candidate.mjs",
+  "phase": "repository",
+  "beforeSha256": "4c40b2e8578f610a2f3d515df3d3dce7a8676c2a633e0c7dafd48cda7581dcb9",
+  "afterSha256": "0504df642c98f5cfe2ae5a4d24fe1ae28bdaae837ed71fe14ca079a5b193357e",
+  "edits": [
+    {
+      "id": "router.candidate-binding-batch.import.v1",
+      "before": "import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';",
+      "after": "import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';"
+    },
+    {
+      "id": "router.candidate-binding-batch.invocation.v1",
+      "before": "export function prepareWholeOwnerResolverCandidate({root=ROOT}={}){",
+      "after": "export function prepareWholeOwnerResolverCandidate({root=ROOT}={}){\n const bindingCandidates=[];"
+    },
+    {
+      "id": "router.candidate-binding-batch.collect.v1",
+      "before": "const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),",
+      "after": "const nativeBindings={};bindingCandidates.push({path:resolve(root,path),source:after,result:nativeBindings});const "
+    },
+    {
+      "id": "router.candidate-binding-batch.complete.v1",
+      "before": " return {schema:'whole-owner-resolver-source-candidate-v1',inputs,files,wholeOwnerProducer:bulk,originalDefaultResolverUnchanged:true,originalLimitsChanged:false,newAcrossInvocationCache:false,performanceQualified:false,sourceAuthority:false,runtimeAuthority:false};",
+      "after": " // Fresh complete native scope checks precede every returned plan and write.\n const checkedBindings=verifyNativeCopiedModuleBindings(ts,bindingCandidates);\n for(let at=0;at<bindingCandidates.length;at++)Object.assign(bindingCandidates[at].result,checkedBindings[at]);\n return {schema:'whole-owner-resolver-source-candidate-v1',inputs,files,wholeOwnerProducer:bulk,originalDefaultResolverUnchanged:true,originalLimitsChanged:false,newAcrossInvocationCache:false,performanceQualified:false,sourceAuthority:false,runtimeAuthority:false};"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

@@ -615,9 +615,9 @@ async fn in_process_websocket_covers_routing_multiplexing_and_rejections() {
         "permission_denied"
     );
 
-    let closed_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let closed_origin = format!("http://{}", closed_listener.local_addr().unwrap());
-    drop(closed_listener);
+    // Port 1 is privileged, so no parallel test can bind it the way one can
+    // reuse a just-dropped ephemeral port: connections to it stay refused.
+    let closed_origin = "http://127.0.0.1:1";
     let mut failed_catalog_state = state.clone();
     failed_catalog_state.openai_compatible.base_url = format!("{closed_origin}/v1");
     let mut failed_catalog_event = json!({

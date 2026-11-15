@@ -47,14 +47,16 @@ function encode(source,start,end){
   flush(end);return packed;
 }
 function decode(packed,units){
-  let at=0,value='';
+  // Own scalar cells resolve overlapping references without repeatedly slicing
+  // and flattening the growing output. No public indexed prototype is read.
+  const cells={__proto__:null};let at=0,written=0,value='';
   while(at<packed.length){
     const tag=charAt(packed,at++);if(at>=packed.length)throw new TypeError('Retained output truncated record');const first=charAt(packed,at++);
-    if(tag===0){if(first===0||at+first>packed.length||value.length+first>units)throw new TypeError('Retained output literal bounds');value+=slice(packed,at,at+first);at+=first;}
-    else if(tag===1){if(at>=packed.length)throw new TypeError('Retained output short match');const length=charAt(packed,at++);if(first===0||first>value.length||length<4||value.length+length>units)throw new TypeError('Retained output match bounds');const seed=slice(value,value.length-first),copies=((length+first-1)/first)|0;value+=slice(repeat(seed,copies),0,length);}
+    if(tag===0){if(first===0||at+first>packed.length||written+first>units)throw new TypeError('Retained output literal bounds');const stop=at+first;value+=slice(packed,at,stop);while(at<stop)cells[written++]=character(charAt(packed,at++));}
+    else if(tag===1){if(at>=packed.length)throw new TypeError('Retained output short match');const length=charAt(packed,at++);if(first===0||first>written||length<4||written+length>units)throw new TypeError('Retained output match bounds');let match='';const stop=written+length;while(written<stop){const cell=cells[written-first];cells[written++]=cell;match+=cell;}value+=match;}
     else throw new TypeError('Retained output tag');
   }
-  if(value.length!==units)throw new TypeError('Retained output complete length');return value;
+  if(written!==units)throw new TypeError('Retained output complete length');return value;
 }
 export function createPrivateOutputTextRetention(){
   requirePrivateCollections();const cells=new weakNew();let used=0;

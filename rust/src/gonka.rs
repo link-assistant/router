@@ -8,7 +8,7 @@ use axum::body::Body;
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use futures_util::{Stream, StreamExt as _};
-use serde_json::{Value, json};
+use serde_json::Value;
 use std::collections::HashSet;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex, RwLock};
@@ -19,7 +19,8 @@ use crate::providers::LiveProviderModel;
 use crate::proxy::AppState;
 
 /// Error shown when Gonka is selected without a broker/API key.
-pub const MISSING_API_KEY_MESSAGE: &crate::translation_core::Str = "Gonka broker mode requires GONKA_API_KEY";
+pub const MISSING_API_KEY_MESSAGE: &crate::translation_core::Str =
+    "Gonka broker mode requires GONKA_API_KEY";
 const CATALOG_TTL: Duration = Duration::from_secs(5 * 60);
 const CATALOG_REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
 const FAILED_REFRESH_RETRY: Duration = Duration::from_secs(15);
@@ -57,7 +58,11 @@ impl std::fmt::Debug for GonkaConfig {
 impl GonkaConfig {
     /// Create Gonka config if all required fields are present.
     #[must_use]
-    pub fn new(api_key: crate::translation_core::Maybe<String>, source_url: crate::translation_core::Maybe<&crate::translation_core::Str>, model: String) -> crate::translation_core::Maybe<Self> {
+    pub fn new(
+        api_key: crate::translation_core::Maybe<String>,
+        source_url: crate::translation_core::Maybe<&crate::translation_core::Str>,
+        model: String,
+    ) -> crate::translation_core::Maybe<Self> {
         let api_key = api_key.filter(|key| !key.is_empty())?;
         let source_url = source_url.filter(|url| !url.is_empty())?;
         Some(Self {
@@ -77,7 +82,10 @@ impl GonkaConfig {
 
 /// Ensure an `OpenAI` request body has a model, using `GONKA_MODEL` when omitted.
 #[must_use]
-pub fn with_default_model(mut body: crate::translation_core::Json, default_model: &crate::translation_core::Str) -> crate::translation_core::Json {
+pub fn with_default_model(
+    mut body: crate::translation_core::Json,
+    default_model: &crate::translation_core::Str,
+) -> crate::translation_core::Json {
     if !default_model.is_empty()
         && !matches!(body.get("model").and_then(Value::as_str), Some(s) if !s.is_empty())
     {
@@ -561,30 +569,15 @@ pub(crate) async fn forward_openai(
     response.headers_mut().insert("content-type", content_type);
     response
 }
+
+#[cfg(test)]
+#[path = "gonka_model_default_tests.rs"]
+mod model_default_tests;
+
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn unconfigured_gonka_injects_no_default() {
-        let body = with_default_model(json!({"messages": []}), "");
-        assert!(body.get("model").is_none());
-    }
-
-    #[test]
-    fn a_missing_or_blank_model_is_filled_from_the_configured_default() {
-        let filled = with_default_model(json!({"messages": []}), "quillon-4-vector");
-        assert_eq!(filled["model"], "quillon-4-vector");
-
-        let blank = with_default_model(json!({"model": ""}), "quillon-4-vector");
-        assert_eq!(blank["model"], "quillon-4-vector");
-    }
-
-    #[test]
-    fn an_explicit_model_is_left_alone() {
-        let explicit = with_default_model(json!({"model": "aurora-2-base"}), "quillon-4-vector");
-        assert_eq!(explicit["model"], "aurora-2-base");
-    }
+    use serde_json::json;
 
     #[test]
     fn provider_errors_carry_their_status_and_message() {

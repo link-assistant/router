@@ -6,7 +6,7 @@ import {resolveForwardSourceEquation} from './forward-output-ownership-20261101-
 // Cooperative/exclusive writers only: Node offers no conditional inode CAS,
 // global atomic publication or durable crash-recovery guarantee here.
 import fs from 'node:fs';
-import {captureExplicitSourceMutationPolicy} from './unit-runtime-materialization.mjs';
+import {captureExplicitSourceMutationPolicy} from './protected-source-policy-20261115.mjs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {randomUUID} from 'node:crypto';

@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/inspect-ci-deadline-artifacts.py", line 25, in <module>
+    artifacts = [row for page in pages for row in page['artifacts']]
+                                                  ~~~~^^^^^^^^^^^^^
+TypeError: string indices must be integers, not 'str'

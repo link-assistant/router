@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/collect-current-completed-artifacts.py", line 24, in <module>
+    assert len(artifacts) == args.count
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import {resolve} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {types} from 'node:util';
-import {readCurrentSourceProposalFile} from './unit-runtime-materialization.mjs';import {captureReadonlySourceProfile} from './ordered-text-map-callers-20261102-source-storage.mjs';
+import {readSourceUnitText as readCurrentSourceProposalFile} from './protected-source-policy-20261115.mjs';import {captureReadonlySourceProfile} from './ordered-text-map-callers-20261102-source-storage.mjs';
 export const RECONCILE_LIMITS=Object.freeze({file:8*1024*1024,raw:64*1024*1024,wire:192*1024*1024,count:4096});
 const L=RECONCILE_LIMITS;
 export const requireReconcile=(condition,message)=>{if(!condition)throw new TypeError('Paired source reconciliation: '+message);};

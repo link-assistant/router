@@ -1,3 +1,4 @@
+import {historicalNativeSources} from './historical-native-source.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -23,9 +24,9 @@ async function runtimes(original,typescript,directory,label){
 function inputs(effects){const revoked=Proxy.revocable({},{});revoked.revoke();return [
  ['undefined',undefined],['null',null],['false',false],['true',true],['zero',0],['negative-zero',-0],['NaN',NaN],['positive-infinity',Infinity],['negative-infinity',-Infinity],['bigint-zero',0n],['huge-bigint',2n**2048n],['symbol',Symbol('opaque')],['function',()=>{}],['array',[]],['object',{}],['boxed-string',new String('boxed')],['boxed-number',new Number(1)],['revoked-proxy',revoked.proxy],['hooks',{get field(){effects.count++;throw Error('no getter');},[Symbol.toPrimitive](){effects.count++;throw Error('no coercion');}}],['empty-string',''],['lone-high','\ud800'],['lone-low','\udc00'],['surrogate-pair','🧪']];}
 test('all52 original modules retain both complete censuses and independently execute all18 genuine empty callback bodies',{timeout:60000},async()=>{
-  const paths=execFileSync('git',['ls-files','-z','--','js/src/*.mjs'],{cwd:WORK,encoding:'utf8'}).split('\0').filter(Boolean);assert.equal(paths.length,52);
+  const historical=historicalNativeSources(),paths=historical.paths.filter(path=>path.startsWith('js/src/')&&path.endsWith('.mjs'));assert.equal(paths.length,52);
   const selected=[],totals={top:0,topTranslated:0,scoped:0,full:0,conditional:0};
-  for(const path of paths){const source=readFileSync(join(WORK,path),'utf8'),analysis=analyzeJavaScript(source,{sourcePath:path}),syntax=ownershipSyntax(source),bySpan=new Map();function visit(node){if(syntax.ts.isArrowFunction(node)||syntax.ts.isFunctionExpression(node)||syntax.ts.isFunctionDeclaration(node))bySpan.set(node.getStart(syntax.file)+':'+node.end,node);syntax.ts.forEachChild(node,visit);}visit(syntax.file);
+  for(const path of paths){const source=historical.source(path),analysis=analyzeJavaScript(source,{sourcePath:path}),syntax=ownershipSyntax(source),bySpan=new Map();function visit(node){if(syntax.ts.isArrowFunction(node)||syntax.ts.isFunctionExpression(node)||syntax.ts.isFunctionDeclaration(node))bySpan.set(node.getStart(syntax.file)+':'+node.end,node);syntax.ts.forEachChild(node,visit);}visit(syntax.file);
     assert.equal(analysis.scopedFunctions.complete,true);totals.top+=analysis.items.length;totals.topTranslated+=analysis.program.length;totals.scoped+=analysis.scopedFunctions.sourceItems;totals.full+=analysis.scopedFunctions.fullDomainTranslatedItems;totals.conditional+=analysis.scopedFunctions.conditionalPrivateBodyDraftItems;
     vectors.census.push({path,bytes:Buffer.byteLength(source),sha256:hash(source),source,analysis});
     for(const row of analysis.scopedFunctions.items){const node=bySpan.get(row.start+':'+row.end);assert.ok(node,'genuine original AST span');if(!syntax.ts.isBlock(node.body)||node.body.statements.length!==0||node.parameters.length!==0)continue;

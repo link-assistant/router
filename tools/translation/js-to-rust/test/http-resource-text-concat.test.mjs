@@ -25,10 +25,7 @@ test('eight actual text concatenation callers preserve owned results scalar conv
  const inverse=translateHttpResourceCallerRust(result.rust,{...input(result.rust,'src/caller.rs'),javascriptPath:'caller.mjs'});assert.ok(sameRustSourceSyntax(inverse.rust,result.rust));assert.equal(inverse.httpResourceRustSourceHistory.equation.inverse,result.rust);assert.equal(result.rustExecuted,false);assert.equal(result.receivingExecuted,false);
 });
 test('canonical two-slot native formatting retains actual primitive and signed literal domains through complete source reproduction',limits,()=>{
- for(const native of ['pub fn joined(left: &str, right: &str) -> String { crate::translation_core::format!("{}{}", left, right) }
-','pub fn primitive(value: u64, flag: bool) -> String { crate::translation_core::format!("{}{}", value, flag) }
-','pub fn narrow() -> String { crate::translation_core::format!("{}{}", -128_i8, "é😀") }
-']){const result=translateHttpResourceCallerRust(native,{...input(native,'src/caller.rs'),javascriptPath:'caller.mjs'});assert.ok(sameRustSourceSyntax(native,result.rust),native);assert.ok(result.javascript.includes('String('));}
+ for(const native of ['pub fn joined(left: &str, right: &str) -> String { crate::translation_core::format!("{}{}", left, right) }\n','pub fn primitive(value: u64, flag: bool) -> String { crate::translation_core::format!("{}{}", value, flag) }\n','pub fn narrow() -> String { crate::translation_core::format!("{}{}", -128_i8, "é😀") }\n']){const result=translateHttpResourceCallerRust(native,{...input(native,'src/caller.rs'),javascriptPath:'caller.mjs'});assert.ok(sameRustSourceSyntax(native,result.rust),native);assert.ok(result.javascript.includes('String('));}
 });
 test('mixed coercions numeric addition object hooks arbitrary templates and wrong native slot counts retain refusals',limits,()=>{
  for(const body of ['export function bad(){return "value"+1n;}','export function bad(){return 1n+2n;}','export function bad(value:string){return value+{toString(){throw Error("hook");}};}','export function bad(value:string){return value+null;}']){const value=imports+body;assert.throws(()=>translateHttpResourceCallerTypeScript(value,input(value)),body);}

@@ -49,6 +49,9 @@ export function operationResult(name, data, diagnostics = [], exitCode = 0) {
   });
 }
 const output = (...lines) => ({ output: lines });
+// with.v1 temporary-launch data is exactly the child status and captured streams;
+// the direct launch API keeps its signal and note lines for local callers.
+const withContractData = ({client_exit_code, stdout, stderr}) => ({client_exit_code, stdout, stderr});
 const unsupported = message => { throw new NativeRouterError(message, { code: 'unsupported' }); };
 export const nativeOperationSupport = Object.freeze({
   ...Object.fromEntries(Object.entries(supportedResourceOperations).map(([name, support]) => [name, support.status])),
@@ -164,7 +167,7 @@ async function dispatch(router, name, options, invocation) {
     core = (await (await import('./core.mjs')).createOperationContext(baseCore,{configOverrides,env,cwd:invocation.cwd,signal:invocation.signal})).core;
   }
   if (invocation.signal?.aborted) throw new NativeRouterError('Operation cancelled',{code:'cancelled'});
-  if(['configure','with'].includes(name)){localOnly(options,['client','all','undo','global','server','management_server','managed','token','token_stdin','ttl_hours','client_args',...(name==='with'?['non_interactive','interactive','extend_global_config','isolated_config','reset_to_default_configuration','yes','pick_model','model','allowed_models','allow_model_substitution','label','run_ttl_hours','fixed_run_ttl','run_max_requests']:[])]);return executeNativeConfigure({name,options,invocation,core,env,fetch:router.options.fetch});}
+  if(['configure','with'].includes(name)){localOnly(options,['client','all','undo','global','server','management_server','managed','token','token_stdin','ttl_hours','client_args',...(name==='with'?['non_interactive','interactive','extend_global_config','isolated_config','reset_to_default_configuration','yes','pick_model','model','allowed_models','allow_model_substitution','label','run_ttl_hours','fixed_run_ttl','run_max_requests']:[])]);if(name==='with'&&!options.global&&!options.undo){try{return withContractData(await executeNativeConfigure({name,options,invocation,core,env,fetch:router.options.fetch}));}catch(error){if(Number.isInteger(error?.data?.client_exit_code))error.data=withContractData(error.data);throw error;}}return executeNativeConfigure({name,options,invocation,core,env,fetch:router.options.fetch});}
   if(['clients.setup','clients.remove'].includes(name)) {
     localOnly(options,name==='clients.setup' ? ['client','token','token_stdin','base_url','management_server','ttl_hours'] : ['client','revoke_supplied','force']);
     return (name==='clients.setup' ? setupNativeClient : removeNativeClient)({options,invocation,core,env,fetch:router.options.fetch});

@@ -842,7 +842,6 @@ function boundedJsonRuntimeRustEdge(files){
 import {BOUNDED_JSON_RUNTIME_OPERATIONS} from './bounded-json-runtime-operations.mjs';
 import {BOUNDED_JSON_CORE_SOURCE} from '../bounded-json-core-source-data.mjs';
 import {selectOriginalBoundedJsonCore} from '../bounded-json-core-call-source.mjs';
-import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 
 import {ownedVectorJsonFieldOperation,requireOwnedVectorJsonFieldSources} from './owned-vector-json-fields.mjs';
 import {ownedSourceIntegerLiteral as ownedIntegerLiteral,narrowOwnedNumericLiteral} from './owned-numeric-literals.mjs';

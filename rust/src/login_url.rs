@@ -39,7 +39,9 @@ pub fn unwrap_terminal_lines(transcript: &crate::translation_core::Str) -> Strin
 /// Returns the last `https://` URL on a known Anthropic host, which is the
 /// most recently painted one.
 #[must_use]
-pub fn extract_login_url(transcript: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
+pub fn extract_login_url(
+    transcript: &crate::translation_core::Str,
+) -> crate::translation_core::Maybe<String> {
     let text = unwrap_terminal_lines(transcript);
     let mut found = None;
     let mut rest = text.as_str();
@@ -59,7 +61,9 @@ pub fn extract_login_url(transcript: &crate::translation_core::Str) -> crate::tr
 
 /// Find the long-lived token a successful `setup-token` run printed, if any.
 #[must_use]
-pub fn extract_token(transcript: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
+pub fn extract_token(
+    transcript: &crate::translation_core::Str,
+) -> crate::translation_core::Maybe<String> {
     let text = unwrap_terminal_lines(transcript);
     let mut found = None;
     for prefix in TOKEN_PREFIXES {
@@ -115,7 +119,10 @@ pub fn redact_secrets(text: &crate::translation_core::Str) -> String {
 }
 
 /// Replace every `prefix`-led credential run with `prefix[redacted]`.
-fn redact_prefix(text: &crate::translation_core::Str, prefix: &crate::translation_core::Str) -> String {
+fn redact_prefix(
+    text: &crate::translation_core::Str,
+    prefix: &crate::translation_core::Str,
+) -> String {
     let mut out = String::with_capacity(text.len());
     let mut rest = text;
     while let Some(idx) = rest.find(prefix) {
@@ -153,7 +160,10 @@ fn secret_run_len(text: &crate::translation_core::Str) -> usize {
 /// Remove a specific known secret — the authorization code the human pasted,
 /// which the terminal echoes back and which no pattern can recognise.
 #[must_use]
-pub fn redact_value(text: &crate::translation_core::Str, secret: &crate::translation_core::Str) -> String {
+pub fn redact_value(
+    text: &crate::translation_core::Str,
+    secret: &crate::translation_core::Str,
+) -> String {
     let secret = secret.trim();
     if secret.len() < 4 {
         return text.to_string();

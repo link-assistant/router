@@ -22,7 +22,7 @@ async function remoteTarget(context:any):Promise<any>{
 async function catalog(context:any,target:any,token:string):Promise<any[]>{
  const info=clientIntegration(context.client),answer=await sendRemoteManagement({server:target.server,managementServer:target.server,managementCaCert:target.caCert,token},{method:'GET',path:'/api/models',client:info.client},{fetch:context.fetch,signal:context.invocation?.signal,deadlineMs:15000,cwd:context.invocation?.cwd});return parseNativeClientCatalog(answer.data);
 }
-function preferred(client:string,all:any[]):any[]{const info=clientIntegration(client),rows=info.owners.flatMap(owner=>all.filter(row=>row.owned_by===owner));return info.owners.length&&(rows.length||info.strict)?rows:all;}
+function preferred(client:string,all:any[]):any[]{const info=clientIntegration(client),rows=info.owners.flatMap((owner:string)=>all.filter(row=>row.owned_by===owner));return info.owners.length&&(rows.length||info.strict)?rows:all;}
 async function revoke(target:any,id:string,context:any):Promise<void>{
  if(typeof id!=='string'||!id||Buffer.byteLength(id)>65536)throw clientFailure('Remote managed token ID is invalid');await sendRemoteManagement(target,{method:'POST',path:'/api/management/tokens/revoke',body:{id}},{fetch:context.fetch,deadlineMs:10000,cwd:context.invocation?.cwd});
 }

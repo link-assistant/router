@@ -24,7 +24,7 @@ for(const family of ['outcome','cancellation'])for(const typed of [false,true])t
  assert.deepEqual(module.callbacks.map(row=>row.operation),['map','filter','map','filter']);
  const vectors=[['mapped',Object.freeze([]),[]],['mapped',Object.freeze([0n,1n,10n]),[2n,3n,12n]],
   ['selected',Object.freeze([0n,2n,1n,18446744073709551615n]),[2n,18446744073709551615n]],
-  ['conditional',Object.freeze([0n,2n,0n]),[7n,2n,7n]],['truthy',Object.freeze([false,true,false,true]),[true,true]];
+  ['conditional',Object.freeze([0n,2n,0n]),[7n,2n,7n]],['truthy',Object.freeze([false,true,false,true]),[true,true]]];
  for(const [name,input,expected]of vectors)assert.deepEqual(api.evaluateOwnedOutcome(checked.program,name,[input],token),expected);
  assert.equal(module.before,text);assert.equal(module.inverse,text);
  assert.equal(module.histories[0].inverse,text);assert.equal(module.histories[2].inverse,text);

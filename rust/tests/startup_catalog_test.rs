@@ -8,9 +8,12 @@
 
 #![cfg(unix)]
 
-use std::net::TcpListener;
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
+
+#[path = "support/free_port.rs"]
+mod free_port;
+use free_port::free_port;
 
 /// Long enough that a listener bound before the refresh is plainly caught.
 const CATALOG_DELAY: Duration = Duration::from_secs(3);
@@ -24,12 +27,24 @@ impl Drop for RouterProcess {
     }
 }
 
-fn free_port() -> u16 {
-    TcpListener::bind("127.0.0.1:0")
-        .expect("reserve loopback port")
-        .local_addr()
-        .expect("read loopback port")
-        .port()
+/// Wait for this Router's own `ok` from `/api/health`; `false` if it exited
+/// first, as it does when another listener took its port.
+async fn wait_for_health(client: &reqwest::Client, base: &str, child: &mut Child) -> bool {
+    let deadline = Instant::now() + Duration::from_secs(60);
+    while matches!(child.try_wait(), Ok(None)) {
+        if let Ok(response) = client.get(format!("{base}/api/health")).send().await
+            && response.status() == reqwest::StatusCode::OK
+            && response.text().await.is_ok_and(|body| body == "ok")
+        {
+            return true;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "Router never accepted connections"
+        );
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    false
 }
 
 /// A Qwen catalog that answers only after `CATALOG_DELAY`.
@@ -54,7 +69,6 @@ async fn slow_qwen_catalog() -> String {
 
 #[tokio::test]
 async fn the_first_models_response_already_contains_a_healthy_subscription() {
-    let port = free_port();
     let home = tempfile::tempdir().expect("home");
     let data = tempfile::tempdir().expect("data");
     let qwen = home.path().join(".qwen");
@@ -72,55 +86,48 @@ async fn the_first_models_response_already_contains_a_healthy_subscription() {
     )
     .expect("write qwen credential");
 
-    let child = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
-        .arg("serve")
-        .env("ROUTER_HOST", "127.0.0.1")
-        .env("ROUTER_PORT", port.to_string())
-        .env("TOKEN_SECRET", "startup-catalog-test-secret")
-        .env("TOKEN_ADMIN_KEY", "startup-catalog-admin")
-        .env("HOME", home.path())
-        .env_remove("CODEX_HOME")
-        .env_remove("CLAUDE_CONFIG_DIR")
-        .env_remove("GEMINI_HOME")
-        .env_remove("GEMINI_CLI_HOME")
-        .env_remove("XDG_CONFIG_HOME")
-        .env_remove("QWEN_HOME")
-        .env("DATA_DIR", data.path())
-        .env("CLAUDE_CODE_HOME", home.path().join("claude"))
-        .env("STORAGE_POLICY", "memory")
-        .env("DISABLE_LOGIN_API", "true")
-        .env("UPSTREAM_PROVIDER", "auto")
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-        .expect("start Router");
-    let mut process = RouterProcess(child);
-    let started = Instant::now();
-
     let client = reqwest::Client::new();
-    let base = format!("http://127.0.0.1:{port}");
-    // The first moment the listener accepts anything at all.
-    let deadline = Instant::now() + Duration::from_secs(60);
-    loop {
-        if client
-            .get(format!("{base}/api/health"))
-            .send()
-            .await
-            .is_ok()
-        {
-            break;
+    // The port is released before the Router binds it, so a parallel test's
+    // listener can take it first; the Router then exits and is started again
+    // on another port.
+    let mut attempts = 0;
+    let (_process, base, accepted_after) = loop {
+        attempts += 1;
+        assert!(
+            attempts <= 5,
+            "Router never accepted connections on a port of its own"
+        );
+        let port = free_port();
+        let child = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+            .arg("serve")
+            .env("ROUTER_HOST", "127.0.0.1")
+            .env("ROUTER_PORT", port.to_string())
+            .env("TOKEN_SECRET", "startup-catalog-test-secret")
+            .env("TOKEN_ADMIN_KEY", "startup-catalog-admin")
+            .env("HOME", home.path())
+            .env_remove("CODEX_HOME")
+            .env_remove("CLAUDE_CONFIG_DIR")
+            .env_remove("GEMINI_HOME")
+            .env_remove("GEMINI_CLI_HOME")
+            .env_remove("XDG_CONFIG_HOME")
+            .env_remove("QWEN_HOME")
+            .env("DATA_DIR", data.path())
+            .env("CLAUDE_CODE_HOME", home.path().join("claude"))
+            .env("STORAGE_POLICY", "memory")
+            .env("DISABLE_LOGIN_API", "true")
+            .env("UPSTREAM_PROVIDER", "auto")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("start Router");
+        let mut process = RouterProcess(child);
+        let started = Instant::now();
+        let base = format!("http://127.0.0.1:{port}");
+        // The first moment the listener accepts anything at all.
+        if wait_for_health(&client, &base, &mut process.0).await {
+            break (process, base, started.elapsed());
         }
-        assert!(
-            !matches!(process.0.try_wait(), Ok(Some(_))),
-            "Router exited before it accepted connections"
-        );
-        assert!(
-            Instant::now() < deadline,
-            "Router never accepted connections"
-        );
-        tokio::time::sleep(Duration::from_millis(20)).await;
-    }
-    let accepted_after = started.elapsed();
+    };
 
     let issued = client
         .post(format!("{base}/api/management/tokens/client"))

@@ -60,8 +60,7 @@ const tryOptionBody=`pub fn try_option(value:Option<u64>)->Option<u64>{let selec
 const tryResultBody=`pub fn try_result(value:Result<u64,String>)->Result<u64,String>{let selected=${R}u64_to_u64_map(value,|item|item+1_u64)?;Ok(selected.saturating_add(2))}`;
 const resultNestedBody=`pub fn result_nested(value:Result<u64,String>)->Result<u64,String>{value.and_then(|item|${R}u64_to_u64_map(${R}u64_ok(item),|number|number+1_u64))}`;
 const optionNestedBody=`pub fn option_nested(value:Option<u64>)->Option<u64>{value.and_then(|item|${C}u64_to_u64_map(${O}u64_some(item),|number|number+1_u64))}`;
-const bodies=[optionBody,callbackBody,resultBody,ownedBody,tryOptionBody,tryResultBody,resultNestedBody,optionNestedBody].join('
-');
+const bodies=[optionBody,callbackBody,resultBody,ownedBody,tryOptionBody,tryResultBody,resultNestedBody,optionNestedBody].join('\n');
 test('actual three-library callback return and Option/Result Try roles compose fresh without body or binding authority',limits,()=>{
  const scope=new Map([['optional',{kind:'option',domain:'u64'}],['result',{kind:'result',domain:'u64'}],['text',{kind:'result',domain:'text'}]]);
  for(const [source,kind,domain]of [[C+'u64_to_u64_map(optional,|item|item)','option','u64'],[C+'u64_to_u64_map(optional,|item|item)?','payload','u64'],[R+'u64_to_u64_map(result,|item|item)','result','u64'],[R+'u64_to_u64_map(result,|item|item)?','payload','u64'],[W+'text_to_text_map(text,|item|item)?','payload','text-owned'],[R+'u64_to_u64_map('+C+'u64_ok_or_else(optional,||"missing".to_owned()),|item|item+1_u64)','result','u64']]){const row=readCoreCallbackCallSource(tokens(source),scope);assert.equal(row.kind,kind,source);assert.equal(row.domain,domain,source);for(const key of ['callbackBodyChecked','callbackTypesChecked','tryTypeProved','sourceBindingProved','semanticAuthority','sourceAuthority','executableAdmission'])assert.equal(row[key],false);}

@@ -1,5 +1,5 @@
 import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
-import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-edges.mjs';
+import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-current.mjs';
 import {composeOwnedStringOperations} from './prepare-owned-string-operations.mjs';
 import {composeOwnedCorePrivateAnalysisRetention} from './prepare-owned-core-private-analysis-retention.mjs';
 // A separate, explicit ASCII asset/read schedule; old full builders stay exact.

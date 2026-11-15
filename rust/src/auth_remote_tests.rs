@@ -802,10 +802,10 @@ fn status_of_preserves_input_strings_and_the_static_default() {
     for (input, expected) in cases {
         let actual = status_of(&input);
         assert_eq!(actual, expected);
-        if let Some(original) = input.get("status").and_then(serde_json::Value::as_str) {
-            if !original.is_empty() {
-                assert!(std::ptr::eq(actual, original));
-            }
+        if let Some(original) = input.get("status").and_then(serde_json::Value::as_str)
+            && !original.is_empty()
+        {
+            assert!(std::ptr::eq(actual, original));
         }
     }
 }

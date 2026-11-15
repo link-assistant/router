@@ -1,7 +1,10 @@
 use std::fs;
 
+#[path = "support/repository.rs"]
+mod repository;
+
 fn read_lf(path: &str) -> String {
-    fs::read_to_string(path)
+    fs::read_to_string(repository::path(path))
         .unwrap_or_else(|error| panic!("failed to read {path}: {error}"))
         .replace("\r\n", "\n")
 }
@@ -57,11 +60,16 @@ fn artifact_download_avoids_the_known_node_buffer_warning() {
     );
 }
 
+/// A new push must not cancel a run that may already be writing a release.
+///
+/// Every run completes its Rust stage, because the push gate waits for all of
+/// them before it pushes.
 #[test]
 fn release_writers_are_not_cancelled_by_a_new_run() {
     let workflow = read_lf(".github/workflows/release.yml");
-    assert!(workflow.contains("cancel-in-progress: ${{ github.event_name == 'pull_request' }}"));
+    assert!(workflow.contains("cancel-in-progress: false"));
     assert!(!workflow.contains("cancel-in-progress: true"));
+    assert!(!workflow.contains("cancel-in-progress: ${{"));
 }
 
 #[test]
@@ -75,7 +83,7 @@ fn lint_builds_and_checks_the_committed_admin_ui_bundle() {
 
 #[test]
 fn committed_admin_ui_chunks_stay_below_vites_warning_threshold() {
-    for entry in fs::read_dir("ui/dist/assets").expect("UI assets should exist") {
+    for entry in fs::read_dir(repository::path("ui/dist/assets")).expect("UI assets should exist") {
         let entry = entry.expect("UI asset should be readable");
         if entry.path().extension().is_some_and(|ext| ext == "js") {
             let size = entry
@@ -116,16 +124,31 @@ fn local_builds_disable_the_unbounded_incremental_cache() {
     );
 }
 
-/// Every commit prunes what its build superseded, so the cache cannot grow
-/// without bound between manual cleanups.
+/// Local commits run only the generic pre-commit checks, never Cargo.
+///
+/// Rust formatting, Clippy, tests and the `cargo-sweep`/`cargo-clean` cache
+/// hooks were removed on purpose: Rust is verified only by the gated CI, so a
+/// commit cannot build (or fill) `target/` behind the developer's back.
 #[test]
-fn each_commit_prunes_superseded_build_artifacts() {
+fn local_commit_hooks_never_run_cargo() {
     let hooks = read_lf(".pre-commit-config.yaml");
 
-    assert!(hooks.contains("cargo-sweep"), "{hooks}");
+    assert!(!hooks.contains("cargo"), "{hooks}");
+    assert!(!hooks.contains("scripts/clear-build-cache.sh"), "{hooks}");
+    for generic in ["trailing-whitespace", "end-of-file-fixer", "check-yaml"] {
+        assert!(
+            hooks.contains(generic),
+            "{generic} must stay enabled:\n{hooks}"
+        );
+    }
+}
+
+/// Whoever builds locally can still reclaim the cache by hand.
+#[test]
+fn manual_build_cache_cleanup_remains_available() {
     assert!(
-        hooks.contains("stages: [post-commit]"),
-        "the sweep must run after the hooks that build, or it prunes their output"
+        read_lf("scripts/clear-build-cache.sh").contains("cargo clean"),
+        "the manual cleanup must reclaim the complete Cargo build cache"
     );
     assert!(
         read_lf(".gitignore").contains("sweep.timestamp"),
@@ -133,21 +156,19 @@ fn each_commit_prunes_superseded_build_artifacts() {
     );
 }
 
-/// The checks above populate `target/`; the last pre-commit hook must reclaim
-/// that complete cache even when optional pruning tooling is unavailable.
+/// The build script must not name a missing file as a rebuild trigger.
+///
+/// Cargo treats a missing `rerun-if-changed` path as changed on every run. CI
+/// checkouts have no `.git/packed-refs`, so the Windows loop, which runs Cargo
+/// once per integration target, rebuilt the whole library for each of them.
 #[test]
-fn each_pre_commit_clears_the_rust_build_cache() {
-    let hooks = read_lf(".pre-commit-config.yaml");
+fn build_script_tracks_only_existing_git_metadata() {
+    let script = read_lf("build.rs");
 
-    assert!(hooks.contains("cargo-clean"), "{hooks}");
-    assert!(hooks.contains("scripts/clear-build-cache.sh"), "{hooks}");
+    assert!(script.contains("cargo:rerun-if-changed={path}"), "{script}");
     assert!(
-        hooks.contains("stages: [pre-commit]"),
-        "the full cleanup must run as part of every pre-commit pass"
-    );
-    assert!(
-        read_lf("scripts/clear-build-cache.sh").contains("cargo clean"),
-        "the hook must reclaim the complete Cargo build cache"
+        script.contains("std::path::Path::new(path).exists()"),
+        "a missing tracked path makes every Cargo invocation rebuild the library"
     );
 }
 
@@ -176,7 +197,8 @@ fn ci_compiles_through_a_compilation_level_cache() {
 fn windows_ci_bounds_every_integration_test_target() {
     let workflow = read_lf(".github/workflows/release.yml");
 
-    assert!(workflow.contains("Get-ChildItem tests -File -Filter '*_test.rs'"));
+    // The package lives in `rust/`, so its integration tests are not in `tests/`.
+    assert!(workflow.contains("Get-ChildItem rust/tests -File -Filter '*_test.rs'"));
     assert!(workflow.contains("$process.WaitForExit(180000)"));
     assert!(workflow.contains("Windows integration target $target exceeded 180 seconds"));
     assert!(workflow.contains("--test', $target, '--', '--test-threads=1"));

@@ -7,7 +7,7 @@ No namespaces, aliases, declarations or executable contexts are concatenated.
 
 The recorded original lib.rs Unix module declaration spans UTF16 4310..4345.
 Default neutral uncertainty is not removed: conditional macro export tests
-retain it, while explicit family analysis records its own active/inactive graph.
+retain it, while explicit family analysis records its own active/inactive module graph.
 Unknown OS, feature, cfg_attr and residual target domains remain obligations.
 The helper emits no common executable and changes no bulk path, parity gap,
 production profile, original Rust source or generated artifact.
@@ -17,7 +17,7 @@ namespace/profile segregation, remain unrun while the publisher owns its
 compiler window. The original pair test explicitly retains all other missing
 crate module obligations; it is not a complete-crate coverage claim.
 
-Source-only review followup freezes the complete original graph before any
+Source-only review followup freezes the complete original module graph before any
 namespace composition callback and verifies its source/profile identity.
 Reads are bounded to 20,000 tracked paths, 16 entries, 8 MiB per original file
 and 64 MiB total; an exceeded budget stops before reading subsequent files.

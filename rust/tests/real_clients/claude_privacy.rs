@@ -72,7 +72,59 @@ fn seed_monitor_feature(home: &Path) {
     .expect("seed the synthetic Monitor feature flag");
 }
 
-fn monitor_is_advertised(environment: &[(&str, &str)]) -> (bool, String) {
+/// The sentence with which Claude Code lists deferred tools in the prompt text.
+const DEFERRED_TOOLS_PREAMBLE: &str = "deferred tools are now available via ToolSearch";
+
+/// How a Claude Code release offers the Monitor tool in the prompted inference.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum MonitorOffer {
+    /// Neither a `tools[]` entry nor a deferred tool.
+    Hidden,
+    /// A full `tools[]` entry. Up to Claude Code 2.1.291 Monitor needs the
+    /// `tengu_amber_sentinel` feature flag, so feature-flag evaluation must be on.
+    Direct,
+    /// Only named in the deferred-tool list. Claude Code 2.1.325 defers Monitor
+    /// behind `ToolSearch` and no longer gates it behind a feature flag.
+    Deferred,
+}
+
+/// Names that the request lists after [`DEFERRED_TOOLS_PREAMBLE`], one per line
+/// until the first blank line, in any system or message text.
+fn deferred_tool_names(value: &Value) -> Vec<String> {
+    match value {
+        Value::String(text) => text
+            .find(DEFERRED_TOOLS_PREAMBLE)
+            .and_then(|start| text[start..].split_once(":\n"))
+            .map_or_else(Vec::new, |(_, list)| {
+                list.lines()
+                    .map(str::trim)
+                    .take_while(|line| !line.is_empty())
+                    .map(str::to_owned)
+                    .collect()
+            }),
+        Value::Array(items) => items.iter().flat_map(deferred_tool_names).collect(),
+        Value::Object(fields) => fields.values().flat_map(deferred_tool_names).collect(),
+        _ => Vec::new(),
+    }
+}
+
+#[test]
+fn deferred_tool_names_read_the_tool_search_list() {
+    let announcement = "The following deferred tools are now available via ToolSearch. Use \
+                        ToolSearch with query \"select:<name>[,<name>...]\" to load tool \
+                        schemas before calling them:\nCronCreate\nMonitor\nWebSearch\n\n\
+                        Available agent types";
+    let body = json!({
+        "messages": [{"role": "user", "content": [{"type": "text", "text": announcement}]}]
+    });
+    assert_eq!(
+        deferred_tool_names(&body),
+        ["CronCreate", "Monitor", "WebSearch"]
+    );
+    assert!(deferred_tool_names(&json!({"tools": [{"name": "Monitor"}]})).is_empty());
+}
+
+fn monitor_offer(environment: &[(&str, &str)]) -> (MonitorOffer, String) {
     let home = tempfile::tempdir().expect("temporary Claude privacy home");
     seed_monitor_feature(home.path());
     let router = MockRouter::start(CLAUDE);
@@ -117,11 +169,18 @@ fn monitor_is_advertised(environment: &[(&str, &str)]) -> (bool, String) {
         .flatten()
         .filter_map(|tool| tool["name"].as_str())
         .collect::<Vec<_>>();
-    let advertised = tool_names.contains(&"Monitor");
+    let deferred = deferred_tool_names(&body);
+    let offer = if tool_names.contains(&"Monitor") {
+        MonitorOffer::Direct
+    } else if deferred.iter().any(|name| name == "Monitor") {
+        MonitorOffer::Deferred
+    } else {
+        MonitorOffer::Hidden
+    };
     (
-        advertised,
+        offer,
         format!(
-            "{diagnostics}\n{}\nadvertised tools: {tool_names:?}",
+            "{diagnostics}\n{}\nadvertised tools: {tool_names:?}\ndeferred tools: {deferred:?}",
             wrapper::launcher_diagnostics(home.path()),
         ),
     )
@@ -179,38 +238,39 @@ fn claude_2_1_265_privacy_matrix_keeps_monitor_when_feature_evaluation_is_enable
         "compatible privacy defaults disabled feature evaluation: {compatible_doctor}"
     );
 
-    let (umbrella_monitor, umbrella_diagnostics) =
-        monitor_is_advertised(&[("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1")]);
-    assert!(!umbrella_monitor, "umbrella unexpectedly exposed Monitor");
-    assert!(
-        umbrella_diagnostics.contains("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"),
-        "Router did not explain the inherited blocker: {umbrella_diagnostics}"
-    );
-
-    let (granular_monitor, granular_diagnostics) = monitor_is_advertised(&all_four);
-    assert!(
-        !granular_monitor,
-        "DISABLE_TELEMETRY unexpectedly exposed Monitor"
-    );
-    assert!(
-        granular_diagnostics.contains("DISABLE_TELEMETRY"),
-        "Router did not explain the inherited blocker: {granular_diagnostics}"
-    );
-
-    let (do_not_track_monitor, do_not_track_diagnostics) =
-        monitor_is_advertised(&[("DO_NOT_TRACK", "1")]);
-    assert!(
-        !do_not_track_monitor,
-        "DO_NOT_TRACK unexpectedly exposed Monitor"
-    );
-    assert!(
-        do_not_track_diagnostics.contains("DO_NOT_TRACK"),
-        "Router did not explain the inherited blocker: {do_not_track_diagnostics}"
-    );
-
-    let (compatible_monitor, compatible_diagnostics) = monitor_is_advertised(&compatible_three);
-    assert!(
+    // Claude Code up to 2.1.291 offers Monitor directly only while feature-flag
+    // evaluation runs, so each privacy variable that disables it must hide Monitor
+    // and Router's compatible defaults must keep it. Claude Code 2.1.325 defers
+    // Monitor without a feature flag, so every environment offers it deferred.
+    let (compatible_monitor, compatible_diagnostics) = monitor_offer(&compatible_three);
+    assert_ne!(
         compatible_monitor,
+        MonitorOffer::Hidden,
         "compatible defaults hid Monitor: {compatible_diagnostics}"
     );
+    let expected_with_blocker = match compatible_monitor {
+        MonitorOffer::Direct => MonitorOffer::Hidden,
+        MonitorOffer::Hidden | MonitorOffer::Deferred => MonitorOffer::Deferred,
+    };
+    let umbrella_only = [("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1")];
+    let do_not_track_only = [("DO_NOT_TRACK", "1")];
+    for (blocker, environment) in [
+        (
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+            umbrella_only.as_slice(),
+        ),
+        ("DISABLE_TELEMETRY", all_four.as_slice()),
+        ("DO_NOT_TRACK", do_not_track_only.as_slice()),
+    ] {
+        let (monitor, diagnostics) = monitor_offer(environment);
+        assert_eq!(
+            monitor, expected_with_blocker,
+            "{blocker} changed how Claude Code offers Monitor (compatible defaults: \
+             {compatible_monitor:?}): {diagnostics}"
+        );
+        assert!(
+            diagnostics.contains(blocker),
+            "Router did not explain the inherited blocker {blocker}: {diagnostics}"
+        );
+    }
 }

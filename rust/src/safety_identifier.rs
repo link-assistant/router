@@ -1,13 +1,14 @@
 //! Lossless end-user safety identifier handling across protocol bridges.
 
-
 /// `OpenAI` accepts at most 64 Unicode characters for `safety_identifier`.
 const OPENAI_MAX_CHARACTERS: usize = 64;
 
 pub fn validate_openai(
     identifier: crate::translation_core::Maybe<&crate::translation_core::Str>,
 ) -> crate::translation_core::Outcome<(), String> {
-    if identifier.is_some_and(|value| crate::translation_core::unicode_scalar_count(value) > OPENAI_MAX_CHARACTERS) {
+    if identifier.is_some_and(|value| {
+        crate::translation_core::unicode_scalar_count(value) > OPENAI_MAX_CHARACTERS
+    }) {
         return Err(crate::translation_core::format!(
             "safety_identifier must contain at most {OPENAI_MAX_CHARACTERS} characters"
         ));
@@ -33,7 +34,9 @@ pub fn validate_openai_value(
 pub fn validate_openai_user(
     user: crate::translation_core::Maybe<&crate::translation_core::Str>,
 ) -> crate::translation_core::Outcome<(), String> {
-    if user.is_some_and(|value| crate::translation_core::unicode_scalar_count(value) > OPENAI_MAX_CHARACTERS) {
+    if user.is_some_and(|value| {
+        crate::translation_core::unicode_scalar_count(value) > OPENAI_MAX_CHARACTERS
+    }) {
         return Err(crate::translation_core::format!(
             "user must contain at most {OPENAI_MAX_CHARACTERS} characters"
         ));
@@ -59,7 +62,10 @@ pub fn validate_openai_user_value(
 /// Read and validate Anthropic's optional metadata identifier for an `OpenAI` target.
 pub fn anthropic_user_id(
     body: &crate::translation_core::Json,
-) -> crate::translation_core::Outcome<crate::translation_core::Maybe<&crate::translation_core::Str>, String> {
+) -> crate::translation_core::Outcome<
+    crate::translation_core::Maybe<&crate::translation_core::Str>,
+    String,
+> {
     let Some(metadata) = body.get("metadata") else {
         return Ok(None);
     };

@@ -30,7 +30,7 @@ Shared source interfaces builtin-derive-ast-meta, builtin-derive-bang-footprints
 derive-footprints, original-csv-context, macro-token-trees and rust-structure
 are unchanged between the reviewed868 baseline and Gatef962. No peer changes
 were replayed. Complete original provider/catalog SHA/declaration pins are still
-unchanged. Their tests request source/module namespace graphs, never semantic
+unchanged. Their tests request source/module-namespace module graphs, never semantic
 originalCsvContext.result. Constructor/member Type/Option/Span/Ident/attributes,
 recovery/hygiene and Fn/StdVec/Clone/Drop/pointer/feature ownership remain explicit
 requirements; positive schema recipes never substitute generated trait behavior.

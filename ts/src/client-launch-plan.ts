@@ -12,7 +12,7 @@ function codexCommand(args:string[]):string|null{
 export function unsupportedClientNativeCommand(client:string,value:unknown):string|null{
  const name=clientIntegration(client).client,args=argumentsData(value),words=args[0]==='--'?args.slice(1):args;
  if(name==='claude'&&(['remote-control','ultrareview'].includes(words[0])||words.some(word=>['--cloud','--environment','--remote-control','--rc','--teleport'].includes(word.split('=')[0]))))return rules.claudeNativeServiceError;
- if(name==='codex'&&['cloud','cloud-tasks'].includes(codexCommand(args)))return rules.codexCloudError;return null;
+ if(name==='codex'&&['cloud','cloud-tasks'].includes(codexCommand(args)??''))return rules.codexCloudError;return null;
 }
 export function nativeClientRequiresModel(client:string):boolean{return ['opencode','qwen','agent'].includes(clientIntegration(client).client);}
 export function planNativeClientLaunch(client:string,options:any={},resolvedModel:string|null=null,attachedToTerminal=false):any{

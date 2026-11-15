@@ -89,8 +89,12 @@ name = "directory_example"
     def test_current_repository_manifest_can_be_parsed(self):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)
+            # Mirror the Dockerfile's manifest-only COPY lines: the root is a
+            # virtual workspace whose only member is the package in rust/.
             shutil.copy(REPO / "Cargo.toml", root)
             shutil.copy(REPO / "Cargo.lock", root)
+            (root / "rust").mkdir()
+            shutil.copy(REPO / "rust/Cargo.toml", root / "rust")
             subprocess.run(["python3", str(GENERATOR)], cwd=root, check=True)
             result = subprocess.run(
                 ["cargo", "metadata", "--no-deps", "--locked", "--format-version", "1"],

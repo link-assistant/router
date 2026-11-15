@@ -1,8 +1,13 @@
 //! Cache-token counting (issue #671) and estimated settlement of streams cut
 //! short (issue #668).
 
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
 use super::*;
 use serde_json::json;
+
+use crate::storage::{StorageError, TokenRecord, TokenStore};
 
 fn tracker() -> (TokenManager, String, UsageTracker) {
     let manager = TokenManager::new("usage-settlement-secret");
@@ -214,7 +219,9 @@ fn a_reservation_is_settled_with_the_estimate_on_disconnect() {
     let id = manager.validate_token(&token).unwrap().sub;
     manager.enforce_request_budget_reserving(&id, 1000).unwrap();
     {
-        let mut tracker = ReservationGuard::new(manager.clone(), &id, 1000).into_tracker();
+        let guard = ReservationGuard::new(manager.clone(), &id, 1000);
+        assert_eq!(guard.reserved(), 1000);
+        let mut tracker = guard.into_tracker();
         tracker.feed(&sse(&[
             json!({"type": "message_start", "message": {"usage": {"input_tokens": 10, "output_tokens": 1}}}),
             json!({"type": "content_block_delta", "delta": {"type": "text_delta", "text": "z".repeat(40)}}),
@@ -234,4 +241,61 @@ fn only_response_delta_events_count_as_streamed_output() {
     assert_eq!(delta("response.output_text.done"), 0);
     assert_eq!(delta("response.created"), 0);
     assert_eq!(delta("thread.message.delta"), 0);
+}
+
+#[test]
+fn gemini_usage_with_only_one_side_still_counts() {
+    assert_eq!(
+        token_count(&json!({"usageMetadata": {"promptTokenCount": 12}})),
+        Some(12)
+    );
+    assert_eq!(
+        token_count(&json!({"usageMetadata": {"candidatesTokenCount": 9}})),
+        Some(9)
+    );
+}
+
+/// A token store that counts settlements and keeps nothing.
+#[derive(Default)]
+struct SettlementCountingStore {
+    settlements: AtomicUsize,
+}
+
+impl TokenStore for SettlementCountingStore {
+    fn list(&self) -> Result<Vec<TokenRecord>, StorageError> {
+        Ok(Vec::new())
+    }
+    fn get(&self, _: &str) -> Result<Option<TokenRecord>, StorageError> {
+        Ok(None)
+    }
+    fn put(&self, _: TokenRecord) -> Result<(), StorageError> {
+        Ok(())
+    }
+    fn delete(&self, _: &str) -> Result<bool, StorageError> {
+        Ok(false)
+    }
+    fn settle_token_usage(&self, _: &str, _: u64, _: u64) -> Result<(), StorageError> {
+        self.settlements.fetch_add(1, Ordering::SeqCst);
+        Ok(())
+    }
+}
+
+/// A finished request settles only when it has usage or a reservation to
+/// settle; one with neither does not write to the store at all.
+#[test]
+fn a_tracker_settles_only_usage_or_a_reservation() {
+    let store = Arc::new(SettlementCountingStore::default());
+    let manager = TokenManager::with_store("usage-settlement-secret", store.clone());
+
+    drop(UsageTracker::new(manager.clone(), "nothing-to-settle"));
+    assert_eq!(store.settlements.load(Ordering::SeqCst), 0);
+
+    let reserved = UsageTracker::with_reservation(manager.clone(), "reservation-only", 5);
+    drop(reserved);
+    assert_eq!(store.settlements.load(Ordering::SeqCst), 1);
+
+    let mut tracker = UsageTracker::new(manager, "usage-only");
+    tracker.feed(br#"{"usage":{"input_tokens":3,"output_tokens":2}}"#);
+    drop(tracker);
+    assert_eq!(store.settlements.load(Ordering::SeqCst), 2);
 }

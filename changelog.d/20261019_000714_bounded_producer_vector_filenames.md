@@ -1,1 +1,0 @@
-Use a fixed SHA256 filename for each whole-producer test vector so long original test titles stay within filesystem component limits. Preserve complete vector contents, test titles, workloads and deadlines.
