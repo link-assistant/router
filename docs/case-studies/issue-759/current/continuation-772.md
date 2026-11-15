@@ -298,6 +298,11 @@ the script crates, and `-Dwarnings` rejected it. That one function now carries
 `#[allow(dead_code)]` with a comment naming both scripts. The scripts and the
 capture behaviour are unchanged.
 
+Run 43736560493 (`473f39694`) confirms it. Lint and Format Check passes, as do
+JavaScript-first, coverage, the changelog check and the dependency audit. The
+Ubuntu (557), macOS (567) and Windows (535) jobs pass every Rust test binary
+and fail only at the BLOCKED native profile step below.
+
 ### Windows transport oracle margin
 
 `translation_http_transport_core::first_byte_and_idle_bounds_are_distinct...`
