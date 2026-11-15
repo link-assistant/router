@@ -215,7 +215,12 @@ Run 43741528933 (`ab6a8ee78`) failed only this step on all three platforms,
 still on Node 24. Two changes follow:
 
 1. The step's `setup-node` now pins Node 20, matching the JavaScript-first
-   workflow. Changing the guards is still left to their owners.
+   workflow. The latest Node 22 (v22.23.5) also prints `isProxy` anonymously,
+   so 20 is the only line the guards accept. `main`'s
+   `release_workflow_uses_supported_action_runtimes` forbids `node-version: '20'`
+   in `release.yml` (run 43749955329, coverage job 132923510496). The test now
+   allows that one exact step and asserts it appears once. Changing the guards is
+   still left to their owners.
 2. A JavaScript-only preflight,
    [`check-native-profile-oracle-sources-20261101.mjs`](../../../../scripts/check-native-profile-oracle-sources-20261101.mjs),
    runs before the oracles. It calls each profile's own portable source visitor,

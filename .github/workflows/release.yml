@@ -610,7 +610,7 @@ jobs:
 
       # Independent native provider/profile oracles. The existing job guard
       # requires all eight JavaScript stages for this exact github.sha first.
-      # Node 20, as in the JavaScript-first workflow: on Node 24 and later
+      # Node 20, as in the JavaScript-first workflow: on Node 22.23, 24 and later
       # util.types.isProxy prints without a name, and the translator guards that
       # pin native function text reject it ("original source operations changed").
       - name: Setup Node for native profile source orchestration
