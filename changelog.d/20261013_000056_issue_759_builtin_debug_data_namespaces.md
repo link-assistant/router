@@ -1,1 +1,0 @@
-Close original bounded Debug data output namespaces through complete compiler AST recipes and recursive initializer/expression grammar, retaining exact field source spans and independent formatting, ownership, const and unresolved derive obligations.

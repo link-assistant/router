@@ -1,1 +1,0 @@
-Added source-owned Serde field-helper output closure for bare field defaults and bounded predicate paths, preserving original Serialize length/skip branches and both normal/in-place Deserialize feature outputs. Two original model namespace obligations close; runtime, Copy, Drop and const checking remain independent.

@@ -1,1 +1,0 @@
-Regenerate complete current Rust/Cargo test data through the existing source lifecycle producer while preserving every pinned historical source and inverse. Full lifecycle resource and deadline qualification remains unfinished.

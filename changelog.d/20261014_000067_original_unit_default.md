@@ -1,1 +1,0 @@
-Translate the original compiler's selected unit enum Default path through the meta-language nominal constructor checker and JavaScript/TypeScript emitters. Keep generated methods separately classified and preserve source, layout, coherence and const-call refusals.

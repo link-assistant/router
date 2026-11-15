@@ -1,1 +1,0 @@
-Fix complete scoped and retained proof-cost comparisons by composing the authentic freezer, scanner and operation-byte bridge source histories. Preserve original complete cases and deadlines; all 19 focused Node and Bun cases pass, with zero Node deadline breaches. Broader generation, parity and CI remain unfinished.

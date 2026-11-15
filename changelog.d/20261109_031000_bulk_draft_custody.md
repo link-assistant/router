@@ -1,1 +1,0 @@
-Retain complete canonical translation drafts as explicitly unqualified CI data with fresh input fingerprints and full compressed readback. Keep every original freshness check and failure fatal; this evidence does not establish source translation or runtime parity.

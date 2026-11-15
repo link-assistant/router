@@ -1,1 +1,0 @@
-Documented prioritizing common translation blockers and using matching Rust/JavaScript compatibility abstractions with explicitly untranslated library internals. Repository CST mappings retain language checks, both meta roundtrips, independent behavioral tests and separate reporting of application coverage and runtime parity.

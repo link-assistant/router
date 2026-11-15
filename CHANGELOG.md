@@ -220,6 +220,7302 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.25.0] - 2026-11-15
+
+Regenerate all 804 tracked Rust sources through semantic meta to JavaScript and
+TypeScript after the checked source conversion, shared pattern, Default and
+macro grammar changes. Independent review retains all original Rust/Cargo bytes
+and prior executable items. Three original bridge-control functions now check;
+the library also checks three additional original methods and three generated
+Default methods, recorded separately from original-body coverage.
+
+Strict TypeScript compilation and the 664-case Node/Bun integration cohort pass.
+The complete draft contains 691 executable items and 11,984 carried items. Full
+native runtime parity and the complete JavaScript gate remain unfinished; Rust
+builds remain gated.
+
+### Added
+
+- Opt-in native JavaScript runtime and CLI for Node and Bun, with subsets of token/provider administration, account routing, Claude/Codex credential adoption, Claude code authorization, managed Node daemons, inference protocols and foreground Responses resources. The existing Rust wrapper API remains available.
+- Automated bulk JavaScript/TypeScript translation drafts with forward and reverse source inventories. Unsupported constructs remain explicitly carried, and full Rust runtime parity remains unverified.
+
+### Changed
+
+- Run JavaScript/TypeScript binding, translation, type and native behavior checks before Rust validation in CI. A strict parity gate keeps Rust checks blocked while partial or unsupported operations, HTTP routes, native features or carried translation logic remain.
+
+### Fixed
+
+- Correct source-selected JSON features, original primitive conversion macros and trait prelude resolution, let-chain control literals and relocated source spans, parser identity checks, declaration-boundary refusal attribution, and module-qualified shared enum patterns in the reusable Rust translator.
+
+### Added
+
+- Translate checked primitive integer shifts, narrowing casts, and monomorphic source type aliases through common meta to JavaScript and TypeScript. Primitive casts and shifts also have bounded constant evaluation. Original formatter namespace, unsafe and floating-point obligations remain explicit; full runtime parity is unfinished.
+
+### Fixed
+
+- Preserve exact primitive conversion bounds as decimal strings in serialized meta, and project nested original source blocks with their lexical scope.
+- Keep original compiler call projections at the first unresolved constructor, preserve the immutable tuple ABI in fixtures, and exercise the unchanged upstream URL body in JavaScript and strict-compiled TypeScript.
+
+The preceding complete 682-case Node and Bun cycle passed 667 cases in each engine with the same 15 failures. This repair batch requires another complete paired check. The original wide-add numeric function still retains unresolved imported trait-scope obligations; no full Router parity, Rust execution or complete compiler translation is claimed.
+
+Extend primitive conversion namespace checks using complete original Rust 1.89 core trait sources and its pinned stdarch source archive. Resolve bounded supertrait and anonymous import routes, retain all original conditional member alternatives, and keep unknown external module candidates carried without executing their bodies. Preserve immutable conversion proof coordinates through source relocation. Restore ordinary argument snapshots for source call frames.
+
+The previous complete Node and Bun source regression pairs each passed 680 of 682 cases. This source batch adds strict independent TypeScript coverage for the unchanged locked formatter carry function and namespace shadow/competing-trait controls; complete successor verification is pending. These bounded proofs grant no complete trait implementation, architecture selection, whole formatter equivalence, or complete Router runtime parity. No local Rust build ran.
+
+Refuse competing original declarations before retaining an unknown external module source candidate, and record the pinned original core architecture reexport bridge in nontrait import evidence. Add bounded original declaration and refusal-phase fields to translation progress diagnostics so bulk-generation stalls can be investigated without exposing source bodies or private proofs.
+
+The preceding source batch passed the complete 75-file, 682-case regression suite independently under Node and Bun with unchanged inputs and no skips or timeouts. The ambiguity and diagnostic changes require successor verification. Complete Router parity remains unfinished and Rust stays gated.
+
+Original-source declaration refusal collection now retains the full parsed
+declaration range and privately associates generated Option, Result and tuple
+layouts with their original parent. Independent layout and signature failures
+can be removed together before all surviving declarations and callers are
+checked again. Public generated flags, copied hashes and unlinked layouts do
+not grant this association; failed phases return no checked program.
+
+Trait member and conditional import candidate names now come from their actual
+declaration headers. Keywords inside macro payloads cannot establish a member
+or nontrait declaration, and raw member identifiers retain their actual name.
+Conditional availability remains unproved. Bulk negative controls retain one
+independent function through JavaScript and separately compiled TypeScript.
+
+The preceding complete Node and Bun pairs each passed 682 checks. The following
+bounded corpus attempt ended at 1200 seconds after 41 checking attempts, with
+unchanged original inputs and no Rust execution. Complete diagnostics are
+retained under the case study. Successor tests and corpus generation are
+pending; this change does not establish complete Router runtime parity.
+
+Primitive From<bool> scope checks refuse both functions and associated constants
+whose actual member name is `from`, including raw identifiers and unknown cfg
+alternatives. Associated types remain in their separate type namespace. Actual
+function headers require a parameter or generic list after the name; keywords
+inside a malformed producer cannot establish a harmless member declaration.
+
+The namespace rule follows the Rust Reference:
+https://doc.rust-lang.org/reference/names/namespaces.html
+
+The preceding complete Node and Bun pairs each passed 682 checks, with no skip,
+timeout, changed source input or Rust execution. Those complete results and the
+source-only associated-constant review are retained in the case study. The
+successor complete pair and bounded bulk corpus generation are pending; full
+native Router and reverse-generation parity remain unfinished.
+
+Original methods whose nominal owner remains unresolved can retain their exact
+source ranges for signature and generated-layout refusals. The actual project
+parser revalidates private original-member and token-lowering associations, the
+unchanged parsed parent and each generated layout. Parser token copies protect
+the original lowering from cursor mutations. No original method semantic proof,
+namespace authority or checked program is issued by this refusal association.
+Body collection keeps its existing requirement for original semantic methods.
+
+The preceding complete Node and Bun pairs each passed 682 checks. The following
+bounded corpus attempt collected 301 type refusals in batches and retained 29
+individual method/layout refusals, then reached its unchanged 1200-second bound
+before writing outputs. Original Rust/Cargo bytes matched the earlier attempt;
+all source inputs stayed unchanged and no Rust ran. Both complete attempts and
+their comparison are retained under the case study.
+
+An additional bulk control uses actual original type-alias members with an
+unresolved owner and checks removal of all methods, layouts and a caller while
+preserving one independent JavaScript and TypeScript function. Its complete
+successor verification and the next corpus run are pending. Complete native
+Router and reverse-generation parity remain unfinished.
+
+Standalone Rust translation now relocates executable subject and pattern spans
+alongside ordinary spans. Immutable original-source proofs keep their original
+coordinates. This resolves the integrity failure reached in the complete bulk
+producer at `src/admin_auth.rs`; the source-link verifier remains unchanged.
+
+The existing Cargo-edition control now places a let-chain after Unicode trivia
+and an independent declaration, checks exact source reconstruction and UTF-16
+and byte offsets, and exercises emitted JavaScript and independently compiled
+strict TypeScript. Changed subject and pattern coordinates must still fail the
+original-source integrity check. Both complete successor engines passed 681 of
+682 cases: the negative control incorrectly supplied a different synthetic
+main shape and failed the source-context guard. Its fixture now uses the exact
+supported form and direct original Cargo capture. The full corrected pair and
+generation remain pending; native Router and reverse parity remain unfinished.
+
+Regenerated the complete tracked 804-file Rust corpus through the automated
+Rust-to-meta-language-to-JavaScript and TypeScript compiler. The bounded run
+completed in 1016 seconds, validated its 2653-artifact plan, and preserved all
+1812 frozen source inputs. Both complete compiler verification engines passed
+682 cases. The canonical emitted TypeScript and typed fixtures compile strictly.
+
+The refreshed inventory honestly records 672 executable and 12003 carried
+items. Stricter original namespace and configuration checks remove some earlier
+standalone admissions. The library has 119 executable functions, 383 constants
+and 55 checked methods. This is a complete fresh bulk draft, with substantial
+translation and native parity still unfinished. Rust remains gated; no local
+Rust build was run. Independent profile regeneration and the full gate remain
+pending. Complete diagnostics, comparisons and output hashes are retained.
+
+Refreshed reverse-generation metadata for every current native JavaScript
+module: 52 modules, 779 source items, 16 translated items and 763 explicit
+refusals. All current source hashes match; regeneration check mode passes.
+Portable generated Rust and TypeScript code is unchanged. Full native Rust
+translation remains unfinished, and no Rust was built locally.
+
+Regenerated every tracked Rust source through meta-language into independent
+JavaScript and TypeScript drafts for neutral, Unix-family and Windows-family
+profiles. All three plans completed within the existing 60-minute matrix bound;
+all 1,812 original compiler/Rust/Cargo inputs remained unchanged. Reviewed all
+7,960 output files and all 552 actual compiler fingerprints per profile.
+
+Stricter source namespace guards retain 134 more canonical refusals and 132 more
+refusals in each platform profile than the previous drafts. These are explicit
+limitations, not complete runtime parity. Archived the complete producer inputs,
+logs, receipts and output census, plus complete locked RustEmbed source archives
+for further translator work. No Rust was built locally.
+
+Preserve the complete unchanged JavaScript gate failure inventory and isolated original-source translator comparisons for issue #759. Compress the full historical member index losslessly so complete new raw logs and input vectors fit the existing evidence cap; strict parity continues to block Rust verification.
+
+Translate bounded lifetime-only derive headers and original literal Schemars range/length helpers through shared source-checked metadata. This admits the original token selectors and model-catalog constants in JavaScript and independently strict-compiled TypeScript while retaining generic, macro, schema-runtime and whole-Router parity obligations.
+
+Preserve original type parameter names and optional nongeneric path defaults, including `OperationResult<T = Value>`, using the pinned Syn input grammar. Generic instantiation and generated trait behavior remain unimplemented. Repair actual preloaded imports, let-else function-name bindings, disabled tool preludes, retained standard-body emission and original Copy certificate integrity. Regenerate the complete serialization registry through metadata; it now retains 84 supported bounded layouts, 457 refusals and 134 exclusions, with runtime authority false.
+
+Update the two remaining original-source fixtures for the bounded generic input grammar. Custom Copy/Deserialize owners remain unresolved, the existing Serde generator routes still refuse generic output, and the builtin Copy zero-item namespace proof grants no runtime copying or generated trait behavior. Preserve the full committed-input failure inventory and verify both boundary cases in Node and Bun.
+
+Compact 22 complete issue #759 commit, comment and timeline API responses into deterministic gzip archives. Preserve every original decoded byte and Git blob identity in the archive map, and verify that all fields of the archived CI measurement report remain equal after normalizing archive locations.
+
+Batch independently attributed original layout refusals in the automated Rust-to-meta Copy prepass, discard failed checkers and recheck every surviving certificate. Preserve custom Copy, Drop and unresolved import refusals, and verify nested consuming execution in JavaScript and compiled strict TypeScript.
+
+Give the two completed Bun timeout cases explicit finite 30-second budgets while retaining every original assertion and source case. Preserve complete successful and failed runs, original input vectors and the lossless CI archive measurement comparison; the coordinated 89-case batch passes in both engines.
+
+### Documentation
+
+- Store 28 complete archived artifact-list API responses losslessly as gzip, verify every decoded original Git byte, and preserve all CI measurement fields. Reclaimed 2,220,032 allocated bytes without changing source snapshots or execution logs.
+
+### Changed
+
+- Discover complete tracked translator modules and descriptors automatically for regeneration fingerprints, while retaining the original bounded byte readers and source-profile inputs. Generated artifacts and fixtures remain excluded; hashes do not grant translation or runtime authority.
+- Restore three isolated gpt-6.1-sol drafting workers under the latest user instruction, with one publication owner and a combined verification cycle.
+
+### Documentation
+
+- Retain the complete canonical 804-source regeneration, all 2,653 committed output hashes, strict TypeScript and emitted-library Node/Bun checks, compiler-discovery regressions and their repairs, and lossless API-archive measurement comparisons in a verified 117-member evidence packet. Full runtime parity and the strict gate remain required.
+
+### Changed
+
+- Translate Option fallback bodies with privately checked Copy nominal payloads, preserving original type identity, callback captures and eager or lazy evaluation in JavaScript and TypeScript.
+- Prove the original Schemars `with` type input and helper output without claiming generated trait execution.
+- Extend native JavaScript through meta to Rust drafts with closed constant expressions and guarded predicates over explicit JavaScript value categories, and infer bounded TypeScript Map/Set containers. Unsupported dynamic, ownership and I/O behavior remains explicit; complete runtime parity is pending.
+
+### Changed
+
+- Require every reverse translator test under Node and pinned Bun before the JavaScript gate can pass. Test discovery includes future compiler test files, and structural checks reject partial suites, filters and ignored failures.
+- Translate the original Clap ValueEnum quote output and resolve original imported Display and TOML function owners, enabling two additional ClientKind methods without changing their Rust source.
+
+### Changed
+
+- Regenerate all native TypeScript drafts and the reverse translation census with the combined compiler, retaining unsupported declarations and reducing explicit dynamic types for checked Map/Set containers.
+- Keep null and undefined distinct through meta, TypeScript and Rust draft tags, and lower four additional original guarded JavaScript functions.
+- Give the complete native regeneration drift test a finite 60-second budget and launch Node-specific fixture checks through Node when Bun hosts the test suite. Both engines retain the full compiled runtime fixture checks; no Rust build is performed.
+
+### Added
+
+- Add a reusable full-corpus draft review command that compares immutable original Rust/Cargo inputs, fingerprints complete outputs, reports actual item gains and losses, and retains project method/refusal inventories for canonical or individual profile outputs. It rejects stale or incomplete evidence and grants no runtime parity or build permission.
+
+### Changed
+
+- Store 259 captured CI job API responses as deterministic gzip archives. Every decoded response is byte-identical to its original Git blob, all 28,586 CI input files retain their complete contents, and the complete before/after measurement reports agree after archive path normalization. This recovers 897,024 allocated bytes within the existing 500 MB evidence budget; original logs, sources and recorded CI outcomes remain available.
+
+### Added
+
+- Extend source-checked Rust lowering with implicit unit-enum casts, immutable constant-array element borrows and bounded original Clap argument derive expansion. Original method projections and the unchanged verification module execute as generated JavaScript and strictly compiled TypeScript; complete corpus generation remains separately required.
+- Extend JavaScript meta-language lowering with Unicode character-class predicates and privately owned primitive Map/Set tables. The regenerated census records 49 translated declarations out of 788 across 52 native modules, retaining 739 refusals. All 59 native TypeScript modules regenerate byte-identically, and generated Rust remains unchanged. These bounded translations do not establish complete runtime parity.
+
+### Changed
+
+- Losslessly compress 255 complete captured API metadata responses, migration vectors and path lists, with three archive-link updates. All decoded original Git bytes and all 29,032 original raw inputs are verified; every other input, all 804 Rust files and both Cargo inputs retain their exact bytes. Complete CI measurements remain equal after archive-path normalization. The compaction recovers 2,723,840 allocated bytes within the unchanged 500 MB evidence budget; repository file and published proposal snapshots remain available in their original locations.
+
+### Changed
+
+- Reuse namespace setup templates only for the original, deeply frozen resolver scope array. Every parser retains independent mutable namespace maps, target arrays, visibility checks and source evidence; caller-created or serialized scope arrays use ordinary fresh setup. The original 391-module resolver and complete root, clients and verification parser configurations agree with the previous implementation. Focused Node/Bun mutation and forgery regressions pass; the isolated setup timings do not establish whole-corpus or CI savings.
+
+### Changed
+
+- Collect independently attributed original constant eligibility refusals before source-link binding or constant evaluation. The project removes failed owners together and checks every survivor and caller afresh; failed phases never return partial checked programs. Ordinary standalone checks, internal exceptions, unattributed failures, constant evaluation and lifetime checks retain their mandatory failure behavior. Node and Bun pass all 39 focused phase and neighboring constant/layout checks.
+
+### Changed
+
+- Preserve 439 complete translator evidence files, including failed attempts, full input vectors, tested implementation snapshots and original-source comparisons, in a lossless archive. Every decoded member's length and SHA256 is verified. The archive preserves 325,255,361 original bytes within the unchanged 500 MB evidence budget.
+- Regenerate the native reverse translation manifest with the integrated translator. It records 55 translated members out of 788 and 733 explicit refusals; all 59 native TypeScript modules and generated Rust remain byte-identical. No Rust build ran. Whole-corpus generation, strict parity and the complete JavaScript gate remain outstanding.
+
+### Changed
+
+- Regenerate all 804 original Rust sources through the integrated Rust → meta-language → JavaScript/TypeScript translator. The finite 2,400-second producer completed in 912.525 seconds with all 1,873 compiler/source inputs and the source commit unchanged. Every original Rust/Cargo input and all 2,653 output hashes passed the reusable complete draft review; the emitted canonical TypeScript passes strict compilation.
+- Preserve the actual incomplete result rather than claiming a gain from focused fixtures: 677 executable and 11,998 carried items. Compared with the previous complete generation, two original functions and two methods become executable while six functions and two methods lose admission. Their complete source/refusal evidence is retained for correction. Strict runtime parity, profile regeneration and the complete JavaScript gate remain unfinished; no Rust build or publication ran.
+
+### Changed
+
+- Recompress 256 complete archived gzip logs into XZ after exact decoded-byte verification, updating only their 109 current storage manifests. Original gzip containers and manifests remain recoverable from the named Git commit; the migration map records every original and stored length/hash. The combined physical case/dev allocation falls from 498,946,048 to 495,546,368 bytes within the unchanged 500 MB budget.
+- Verify continuity for every original repository input and equality of every field in both complete CI measurement reports, without normalization. The complete current archive receipt/hash/decoded-data scan passes with zero errors. Its read-only wrapper counts physical inodes once across the case/dev budget; source archive scripts and historical receipts stay intact. Storage compaction does not establish runtime parity or CI resource savings.
+
+### Added
+
+- Translate thirteen actual private JavaScript Error factories through meta-language, preserving UTF16 messages, own fields, closed primitive defaults and fresh alias identity. Original JavaScript, IR and strict TypeScript pass Node/Bun observations; the Rust target explicitly represents a message/own-field projection and refuses unproved stack, prototype, reflection, throw and aggregate equality observations. The complete reverse census now records 68 translated members out of 788 with no loss from the previous 55; all 59 native TypeScript modules and generated Rust remain byte-identical after regeneration.
+- Automate the complete original scalar Clap Args quote paths for ManagementArgs and EmergencyArgs, including typed defaults, parser macro expressions, ranges, documentation, constructors and updaters. Sixteen pinned original Rust compiler/source/license inputs prove the selected literal concat expression sink. The scalar namespace route remains refused until original caller and all sibling derive output owners are independently closed. Focused checks pass 31 cases under each engine; no runtime trait implementation or full parity is claimed.
+
+### Added
+
+- Add a reusable complete evidence packet CLI using Python's standard XZ/TAR support. It verifies complete pinned originals before/during/after capture, reopens every decoded member, preserves duplicate bytes with backward hardlinks, refuses changed/linked/escaping inputs and preserves existing outputs. Source commits, input bounds, explicit deadlines and every original hash remain in the receipt; storage grants no semantic or gate authority.
+- Node and Bun behavioral tests independently reopen actual archives and verify source/output preservation and refusal boundaries. The development workflow links the reusable tool so other repositories can retain full translation-cycle evidence without copying task-specific archive builders. No Rust or network execution is required.
+
+### Changed
+
+- Store another 1,024 complete CI log streams as lossless XZ archives. Original decoded bytes, all 345 updated receipt semantics and every other original repository input are verified unchanged. Original gzip containers remain recoverable from the named Git head.
+- Reclaim 11,784,192 allocated bytes under the unchanged 500 MB evidence limit. Complete before/after CI measurement reports are equal without normalization, and the full archive scan checks 19,964 references with zero errors. No translation, runtime, Rust or publication authority is inferred from storage checks.
+
+### Added
+
+- Preserve 827 complete pinned translation-cycle evidence files using the reusable packer. The archive retains full successful and failed streams, source/proof snapshots, input vectors, measurements and harnesses, including all eight canonical regressions and their actual refusal reasons. Archive and capture receipt are verified within the unchanged 500 MB evidence limit; incomplete translation and runtime parity remain explicit.
+
+### Added
+
+- Bulk-generate native JavaScript top-level and scoped lexical body drafts through serialized, reparsed and checked meta-language. Retain every refusal and original source/span/owner identity in separate complete censuses, then emit independent TypeScript and uncompiled Rust projections for every native module.
+- Include emitted TypeScript in the existing strict native compilation. Clear newly refused bodies, report stale generated drafts without writing in check mode, and remove only recognized owned stale drafts during regeneration. Preserve the original Rust corpus and explicit incomplete runtime parity.
+
+### Fixed
+
+- Remove the primitive Copy source route import cycle by using the existing parser-independent token engine, retaining all original opaque type captures and private expansion lineage checks.
+- Export the complete production compiler fingerprint closure, including reverse compiler modules, so a relocated translator preserves every implementation hash. Keep all source byte/index/path guards and unchanged finite export bounds.
+- Preserve the original Clone/Debug/Serialize assertion source as a newly supported bang-only case and retain every residual/generic/custom-owner refusal. Accept the earlier source-mutation refusal for forged method metadata without weakening accessor or private-seal protections.
+
+### Fixed
+
+- Verify the original shared-reference Copy compressed archive hash before decoding it. The parser-independent source import route now reports the existing checksum refusal consistently during relocated archive corruption tests, while retaining the full decoded-source hash and shared-reference ownership restrictions.
+
+### Changed
+
+- Serialize complete native body censuses as compact JSON, preserving all source scopes, spans, captures, refusals and artifact hashes while keeping generated metadata within file-length conventions and reducing disk allocation. Every native module still receives all six explicit target files, including empty refused programs.
+
+### Added
+
+- Commit the actual complete native body draft: 52 original JavaScript modules, 312 explicit meta-language/TypeScript/uncompiled Rust files, 73 of 788 admitted top-level items and a separate 34 of 705 additional lexical bodies. Retain all 715 top-level and 671 scoped refusals with exact original scopes/spans/capture diagnostics. Empty output programs are explicit.
+- Strict native TypeScript verifies all 164 files, including all 104 new draft modules; all 804 original Rust sources and Cargo files remain unchanged. These partial body translations do not certify complete native runtime parity.
+
+### Changed
+
+- Regenerate every tracked original Rust source into 2,653 canonical artifacts with the automated translator. The complete review restores all six lost functions and both lost methods in the actual whole library and standalone corpus, adds five further original functions and loses no executable items or checked methods.
+- Actual totals are 688 executable items (131 functions, 381 constants, 176 types), 11,987 carried items and 13,279 preserved items. The library has 127 executable functions and 60 checked original methods. All 804 Rust sources and Cargo remain unchanged, complete compiler/source vectors remain stable, and canonical strict TypeScript passes. Complete runtime parity and the strict gate remain unproved; the bounded local validate_default_detail case still retains its original format! refusal in the corpus.
+
+### Changed
+
+- Losslessly compact another 1,024 complete CI log streams and update their 551 current manifests. Reclaim 6,684,672 allocated bytes under the unchanged 500 MB evidence limit, preserving every decoded byte and all original gzip containers in named Git history.
+- Account for all 43,828 original repository inputs, with every other original file unchanged. Complete CI measurement reports remain equal without normalization; the full archive scan verifies all 19,964 references with zero errors. Source/runtime/strict-gate authority remains separate from storage verification.
+
+### Maintenance
+
+- Preserve complete decoded contents while migrating 1,553 additional referenced CI text containers to XZ; verify all 43,830 prior workspace inputs and retain every original compressed container in Git.
+- Verify all 19,964 archive references with zero errors. Distinct allocated case bytes fall from 488,808,448 to 480,804,864 under the unchanged 500 MB limit.
+- Retain complete before/after measurement reports. Their source inventory adds only the new migration provenance file; every other field remains equal. Storage evidence does not authorize semantic admission, a green JavaScript gate, Rust execution or publication.
+
+Preserve complete canonical recovery and verification evidence, including all recorded full-suite failures and exact source vectors. Keep fourth log compaction continuity, complete measurements and byte-verified immutable Git witnesses; store the four migration JSON records as lossless GZip with unchanged decoded bytes. Translation and strict runtime parity remain incomplete.
+
+Integrate original-source shared constructor patterns and String views, scalar Default bodies, source-proved Into/From delegation, and explicitly conditional private callback drafts. Reuse issued immutable source facts and private visibility decisions while retaining fresh complete parser maps, target paths and identity checks. Separate generated methods and conditional callback drafts from original and full-domain coverage; preserve all unproved producer, ownership and runtime limitations.
+
+Preserve every inaccessible restriction when repeated source bindings share a namespace and name, including mutable caller scopes and warmed parser setup. Add a regression for the observed grant caused by retaining only the final restriction.
+
+Bulk regenerate all 52 native module draft sets through serialized and reparsed meta-language. Preserve 73/788 top-level drafts and split the 705 scoped bodies into 34 full-domain drafts, nine explicit conditional drafts and 662 refusals. Strict native TypeScript compilation passes for all 164 files; emitted Rust projections remain uncompiled and runtime parity remains unproved.
+
+Validate generated scalar Default methods against original source spans, genuine compiler derivation, canonical checked bodies and flattened targets. Record generated counts, gains, losses and body changes separately from original function and method coverage; retain all semantic and runtime authority limits.
+
+Read original compiler repetition FOLLOW rules and single-rule decl_macro syntax through existing private matcher/transcriber engines. Preserve all original source spans, attributes, cfg facts and expansion tokens; these grammar drafts confer no runtime, namespace or Router feature authority.
+
+Bind Into conversion emission to exact finalized original checker computations after recursive argument rewriting, preserving the original computation proof and privately checked source/caller identity. Retain complete body, signature, type and cross-checker forgery guards; use private issuance tokens without retaining failed checker graphs.
+
+### Added
+
+- Automatically lower source-proved unguarded const matches through checked meta-language to JavaScript and strict TypeScript for bounded primitive and Copy unit-enum subjects. Preserve original expansion records, evaluation order, const checks and explicit unsupported-form refusals.
+
+### Changed
+
+- CI evidence readers resolve complete decoded reports from a shared verified archive while returning exact original compressed containers from immutable reachable Git blobs. Current logical paths and receipt hashes remain intact, with physical allocation reported separately and corrupt indices or archive members refused. This adds storage tooling and bounded integrity tests; it does not apply archive migration or change translation/runtime authority.
+
+Separate original Eq data syntax from Serde helper selection and join genuine registered helper owners to the existing type-only compiler AST output proof, retaining all unresolved execution, ownership and namespace obligations.
+
+Prove complete original Clone AST namespace output for bounded named/unit structs and unit enums, including both Copy resolver branches, recursive body/arm/type-only statement closure and genuine helper/source joins. The unchanged model-contract's 46 actual derive invocations retain 22 selected outputs and 24 residuals; runtime trait execution and original method counts remain separate.
+
+Close original bounded Debug data output namespaces through complete compiler AST recipes and recursive initializer/expression grammar, retaining exact field source spans and independent formatting, ownership, const and unresolved derive obligations.
+
+### Fixed
+
+- Assemble the same genuine derive-output namespace context for project bindings and independent original method capture, preserving exact scope equality for source-generated Clone and Default methods. Retain unchanged const-match fixtures as positive checks and refresh the containing fixture hash while keeping its original method body hash.
+
+### Changed
+
+- Store 100 complete CI text reports in a verified shared XZ batch while retaining exact original container recovery through immutable Git witnesses. Preserve all 19,964 current receipt references and unchanged CI measurement facts within the fixed 500 MB evidence allocation.
+- Archive complete passed and failed const-translation evidence and the previously captured coherent source batch, preserving full input vectors, source snapshots and earlier failure records.
+
+### Added
+
+- Lower original shared nested and named constructor patterns through privately checked source frames, retaining actual Option/Result/JSON payload layouts, reference depth and input borrow origins. Check original String Deref/as_str shared views within those frames and reject reconstructed or mutated public proof metadata.
+- Keep original primitive receiver and macro paths, ownership/escape refusals and all independent iterator, conversion and dependency barriers. Preserve complete bounded Node/Bun and unchanged-source before/after evidence without claiming whole-runtime parity.
+
+Add privately source-owned parsed Rust Result.map and nominal/nested Option.map_or output routes with exact generic identity, Copy/no-Drop, shared lifetime, callback and caller-integrity checks. Balance original generic bounds before selecting method parameters. Keep unknown owned/nominal payload and dependent method refusals explicit.
+
+Prove the original locked serde Deserialize trait identity for lifetime-only implementations beside separately checked Copy layouts. Preserve both facade routes, unresolved nested macro facts and all Deserialize execution, Drop, cfg, generic and forged-proof refusals. Execute two additional unchanged ModelSelectorKind methods in the bounded whole-module JS/strict TypeScript regression.
+
+Prove exact nested Serde and Default helper ownership from original source registrations, and assemble existing derive bang evidence for matches while retaining unresolved output, ownership and const refusals.
+
+### Changed
+
+- Reuse unbranded serialization layout metadata only inside its genuine captured source context, with fresh frozen results and unchanged canonical parse checks. Default-body proofs keep live parser/checker guards. Split independent vectors, DTOs and full source graph stages while preserving existing five-second and sixty-second test limits.
+- Avoid unnecessary Rust raw-literal suffix scans and repeated mask copying, preserving exact original tokens, UTF-16 spans and lexer errors across the complete original and locked dependency source inventories.
+- Parse retained compiler recipe syntax once per genuine private source profile, preserving exact source ownership, recipe selectors, fresh definitions and independent semantic checks.
+- Reuse locked Clap source declaration/scalar syntax inventories inside their genuine dependency issuer, preserving source order, predicate effects, duplicate refusals and fresh evidence.
+
+The translator now proves the original Default derive output namespace for
+bounded named/unit structs and unit enums with one genuine default word. The
+proof consumes complete original compiler callbacks, visitor expansions, helper
+lineage and positive AST slots. Runtime Default behavior and unrelated derives
+remain separate obligations.
+
+Added private-source plural AST literal reading and original PartialEq data output namespace closure, preserving both StructuralPartialEq and equality implementations, shared field projections and the unit-enum discriminant locals. Six original model derive obligations close; equality execution, ownership, Copy, no-Drop and const admission remain independent.
+
+JavaScript ordinary function completion and bare return statements now lower to
+explicit undefined in checked portable IR. Original-source ASI preserves
+comments and ECMAScript line terminators; nonundefined return contracts,
+unsupported effects and asynchronous bodies retain their refusals.
+
+The complete 52-module inventories retain 73 translated top-level declarations
+out of 788. The separate 705-body scoped inventory has 52 full-domain drafts and
+nine conditional private drafts, including 18 newly admitted original
+synchronous empty callbacks. Two asynchronous empty callbacks and all enclosing
+refused owners remain refused. Original JavaScript, IR and strict TypeScript
+behavior is checked in Node and Bun; generated Rust remains uncompiled.
+
+Prove the original Copy branch of unit enum Clone output through private source certificates and the complete positive compiler AST. Preserve all original variants and source spans; executable, ownership and const lowering remain separate obligations.
+
+Lower genuine source-selected unit enum Clone methods through the existing private checked Copy/no-Drop layout and shared receiver into meta-language, JavaScript and TypeScript. Preserve unsupported layouts, Drop, written implementations and non-const trait-call refusals; count generated methods separately.
+
+Added source-owned Serde field-helper output closure for bare field defaults and bounded predicate paths, preserving original Serialize length/skip branches and both normal/in-place Deserialize feature outputs. Two original model namespace obligations close; runtime, Copy, Drop and const checking remain independent.
+
+Retain the complete original Rust1.89 module_path macro source and its positive string-expression constructor lineage for Schemars namespace prerequisites. Qualified empty module_path and bounded string/nested-module_path concat inputs keep genuine private source candidates; caller binding, string identity and generated trait execution remain independent.
+
+Retain exact original Cargo strings privately at genuine derive dependency issuance, allowing the existing JSON issuer to validate the same actual inputs. Copied, proxy, getter and forged carriers cannot select source bytes; no output, ownership or runtime authority is added.
+
+Collect original Syn typed quote templates through an explicit source-only inventory mode while preserving default inventories, and join genuine JsonSchema helper registrations to exact nested attributes. Generated outputs and trait behavior remain independent.
+
+Retain exact leading outer-doc attachment and field attribute-to-type token spans through locked proc-macro2/Syn source recipes. These pure input candidates grant no namespace, Span identity, ownership or trait execution authority.
+
+Close all six original Model JsonSchema output namespaces through complete locked quote templates and genuine nested macro expansion, including the full 37-rule JSON definition, field/default/predicate branches and original doc metadata. Main-source standalone observations become 46 selected/zero residual derive outputs; existing checked const matching admits the original permits_resolution method (four to five methods), with all 19 other refusal records unchanged. Schema runtime, Copy/no-Drop and const authority remain false.
+
+Keep complete CI evidence recoverable from immutable Git containers when decoded batch archives are absent. Report declared and physically present batches separately, preserving exact decoded hash checks and the fixed evidence allocation.
+
+Translate the original compiler's selected unit enum Default path through the meta-language nominal constructor checker and JavaScript/TypeScript emitters. Keep generated methods separately classified and preserve source, layout, coherence and const-call refusals.
+
+The translator can now prove bounded original Hash derive output syntax through
+its actual field, singleton-unit and multi-unit discriminant AST branches. The
+source-owned path helpers, generic method signature and caller joins are
+retained. Missing standard-only inputs and unsupported helper owners remain
+explicit; Hash, Hasher and intrinsic execution are not admitted.
+
+Separate the unchanged subscription source and provenance checks from emitted JavaScript and strict TypeScript behavior verification. Both declarations retain the existing test deadlines, the same complete original Rust file, all eight expiry vectors, and the type and range rejection checks. The shared translation is created from the original file in either declaration, so neither depends on test order.
+
+Update the original builtin derive fixtures for the combined Clone, Debug, PartialEq, and Hash namespace routes. Preserve the complete original declarations and callback plans, distinguish closed generated syntax from unimplemented trait behavior, and retain independent refusal checks. The assembled eleven-file cohort passes all 81 cases under Node and Bun with the existing deadlines.
+
+### Added
+- Retain genuine standard-only derive inputs through complete original builtin registration, declaration, symbol and prelude source proofs. Independent Hash output checks now cover three additional original owners. Unknown sibling outputs and ancestor effects remain refused; this adds no Hash runtime or trait execution permission.
+
+Add a checked closure IR prerequisite for private scoped JavaScript bodies that capture unchanged enclosing parameters. Reconstruct exact lexical bindings and the original body from lossless source evidence, then emit a TypeScript callable factory and an uncompiled Rust environment with explicit borrowed lifetimes. Keep parent creation/effects, unproved capture origins and arbitrary-value comparisons refused. The existing native census remains73/788 top-level and61/705 scoped with zero additional native body admissions.
+
+Regenerate all 804 tracked Rust inputs through the automated meta-language pipeline into JavaScript and TypeScript drafts. Independently review all 2,653 current output files and preserve the original input hashes. Coverage remains 691 executable and 11,984 carried items; generated Clone refusals are now included in the library inventory. These drafts do not establish complete runtime parity.
+
+Revalidate registered historical generated methods with their complete immutable compiler graph and exact original/output witnesses. Keep current compiler-plan/body/hash validation intact, compare the actual replayed historical rows separately, and report bounded replay provenance without granting runtime or Rust authority.
+
+### Changed
+
+- Keep whole original derive fixtures aligned with checked Hash and CatalogRecord namespace outputs, while retaining unrelated scope gaps and refusing generated runtime authority.
+- Verify the original token alias function in JavaScript and strict TypeScript, including empty and Unicode suffixes, wrong carriers and invalid Rust string inputs. Preserve the complete original token module hashes and explicit standard-only layout diagnostics.
+
+### Validation
+
+- All four complete affected fixture files pass under Node and Bun: 37 cases per engine, with their original individual deadlines and a 180-second outer bound. No Rust build ran; complete runtime parity and the full JavaScript gate remain unproved.
+
+Extend source-owned generated record Default execution to actual standard String,
+Option and Vec field bodies. Preserve their full pinned original sources and
+caller-bound compiler AST/type evidence, check the complete ordinary IR, and test
+unchanged ClaimFile and TokenUsage defaults in JavaScript and strict TypeScript.
+Generated methods remain separate from original source method counts; allocator
+internals, unknown helpers and complete runtime parity remain unproved.
+
+### Changed
+
+- Report bounded per-module progress for source-generated Default and Clone translation. Long generator work now identifies its current original module independently of written-method parsing.
+
+### Validation
+
+- All five complete progress fixtures pass under Node and Bun. Exact meta, JavaScript and TypeScript output stays identical with tracing enabled, and callback failures propagate without granting admission or writing partial artifacts.
+
+Verify source-owned generated Default bodies through genuine serde helper
+registrations, aliased derive imports and exact original field spans. Execute
+unchanged TtlRequest, ClaudeCredentials and OAuthBlock defaults in JavaScript
+and strict TypeScript while retaining missing crate-child, layout, unknown
+helper and shadow refusals. No production authority or original method count
+is broadened.
+
+### Changed
+
+- Reuse resolved written Default and Clone implementation families within their genuine immutable source contexts, retaining unresolved targets and nominal overlap refusals. Clone reuse also checks the captured module, binding and profile identities before using an entry.
+
+### Validation
+
+- All 32 cases in the three complete related fixture files pass under Node and Bun, including repeated target-specific overlap checks, unresolved generic targets and copied contexts. A bounded full-corpus byte comparison is running separately; this draft records no measured performance gain or parity claim.
+
+Reuse initial matches namespace digests only after exact native-Map order and
+string-array descriptor/value comparison against a private immutable snapshot
+reconstructed by the original source-scope builder. Caller Maps remain fresh
+and mutable; every subsequent parser check retains the complete original digest,
+mutation, descriptor, proxy and metadata-budget validation. Changed serializers
+or Map machinery and mismatched data retain the original fallback.
+
+Bound snapshots to two entries per genuine context, eight globally, 2 MiB per
+entry and 8 MiB globally in serialized bytes (not heap RSS). Global entries hold
+no issuer or module references; eviction clears data immediately and private
+issuer finalization releases unreachable contexts' retained snapshots.
+
+Extend generated record Clone lowering through the complete pinned original `Option<T: Clone>::clone` match and actual primitive Clone bodies. Canonical scoped field identity, compiler AST slots, shared receiver, private Copy/no-Drop proofs and source emission frames remain mandatory. String/Vec, unproved caller macros and sibling trait outputs remain refused. Complete original OutputTokenLimiter/UsagePool probes retain their separate source-closure blockers; this stage claims no new original Router function or method gains.
+
+Container Default review now reissues the genuine original caller-bound compiler output and pinned standard field bodies, then freshly checks the source nominal and dependent generic layouts, owned zero-argument body, and exact flattened target. Persisted source evidence is compared with the complete serialized representation of the newly issued private proof; public schema names and mirrored metadata do not grant authority. Historical replay, primitive Default, unit Default and Clone review remain separate.
+
+Complete original ClaimFile, TokenUsage, TtlRequest, ClaudeCredentials and OAuthBlock review and typed behavior are covered, alongside current ModelRouteScope and ModelAccessPolicy defaults. Model function, written-method, generated-method and refusal censuses remain separate. Serialized proxy/accessor hooks fail before execution; runtime parity and whole-trait/allocator authority remain false.
+
+### Fixed
+
+- Preserve unsupported original Default field type parses as generated-method refusals instead of aborting an otherwise useful whole-source translation. Genuine parser errors retain their original reason and field span; unrelated exceptions still propagate.
+
+### Validation
+
+- All 15 complete container Default fixtures pass in Node and Bun, including unsupported BTreeMap/BTreeSet/Mutex/Arc fields alongside executable original functions and supported Default bodies.
+- Whole original subscription usage, recovery and cookie behavior fixtures run again under both engines. The related 14-case cohort retains one stale deployment certificate-count assertion for the bulk fixture repair; its earlier parser abort is resolved.
+
+### Fixed
+
+- Update complete original-source translation fixtures for independently proved standard input owners, Schemars namespaces and generated container Default bodies. Assert exact remaining refusals and source identities while executing newly admitted original methods in JavaScript and strict TypeScript.
+
+### Validation
+
+- All 110 cases across 13 complete files pass in Node and Bun with unchanged individual deadlines. Preserve earlier failed runs and complete fixture variants for review. Full corpus generation and the complete JavaScript gate remain pending.
+
+Add an optional complete forward-file Bun runner that starts one fresh process
+per discovered test file, preserves all case deadlines, streams full logs and
+records per-child resources. Global-budget exhaustion, interruption, changed
+inputs and newly discovered files remain explicit failures. Existing mandatory
+gate commands and translation admission are unchanged.
+
+### Fixed
+
+- Retain active block-scoped original implementations as unresolved global coherence and ownership obligations before generating Default or Clone bodies or certifying project Copy layouts. Ordinary opaque parameter and return types retain their separate type meaning; genuine module wrappers and inactive items preserve their original lexical scope.
+
+### Validation
+
+- All 76 cases across seven complete files pass in Node and Bun at unchanged individual deadlines, including eight nested implementation probes previously admitted by the original baseline. JavaScript and separately strict-compiled TypeScript retain independent useful code while those implementations remain unproved.
+- Preserve the complete initial fixture failure, overbroad opaque-type guard failure and corrected source variants. Full corpus regeneration and strict runtime parity remain pending.
+
+Complete non-CI evidence archives can now be recovered through an immutable Git
+commit/path/blob witness, with exact original container and physical-present
+byte checks. A bounded streamed reader verifies every original TAR member against
+the unchanged capture receipt and rejects links, traversal, duplicate targets,
+corrupt indices and compression bombs. This enables lossless physical archive
+migration under the fixed case allocation cap without dropping historical logs,
+source variants, original containers or changing translation authority.
+
+### Fixed
+
+- Prefer the installed repository TypeScript compiler for independently compiled forward behavioral fixtures, running its complete strict CLI in the current Node or Bun engine. Preserve explicit compiler overrides and the existing ambient fallback for standalone bundles without repository dependencies.
+
+### Validation
+
+- Both complete related files pass all seven cases in Node and Bun at unchanged individual deadlines, including original provider and affinity behavior, rejection of invalid emitted TypeScript and mandatory explicit override failures. Preserve earlier ambient compiler timeout observations; no causal performance or full gate claim is made.
+
+Add metadata byte/error, budget, hostile descriptor and fresh pre-bound
+intrinsic regression controls. A measured result-assignment experiment was
+rejected because it skipped callbacks installed before module import. The
+production copier remains unchanged; measured timing alone does not justify
+changing observable behavior.
+
+### Fixed
+
+- Discover complete nested macro invocations inside privately checked expanded expressions and forward their own token-tree inputs with exact parent lineage. Preserve opaque expression boundaries and original transparent `ident`, `lifetime` and `tt` forwarding rules, including complete member and call expressions.
+
+### Validation
+
+- All 75 cases across ten complete related files pass in Node and Bun at unchanged deadlines. Six complete original serde_json definition, input and expansion vectors are byte-identical across engines. Copied, changed, foreign, getter and proxy records refuse; unknown payload and allocation macros retain their independent obligations. Source expansion does not confer namespace or runtime authority.
+
+Review generated Option primitive Clone drafts by freshly reissuing the actual original compiler output and pinned Option/primitive bodies. Reparse complete source-owned nominal and canonical Option layouts before independent private checker and flattened target comparisons; preserve signed proof order, separate generated-method counts and runtime authority restrictions. Corresponding fresh local names are checked with lexical scope, with capture, merged binding, forged source/body/type/Copy/no-Drop and nested coherence controls. Existing full Router Option owners remain refused; no original function/method or runtime parity gain is claimed.
+
+### Added
+
+- Preserve complete container, bulk translation and resource verification originals in bounded verified evidence packets. Retain the earlier complete archive through its exact reachable Git witness and unchanged original receipts.
+
+### Validation
+
+- Recover and verify all 4,853 earlier archive members with the physical archive present and absent; reopen all 1,423 newly installed complete members. Three full CI integrity scans pass and whole measurement reports remain identical, with physical allocation under the fixed 500 MB case cap. These storage checks do not establish runtime parity or a green JavaScript gate.
+
+Generated Option-record Clone now inspects the complete original Serialize, both Deserialize feature outputs and JsonSchema outputs before classifying sibling implementations as non-Drop. Each implementation joins an original locked trait declaration and its exact caller or lexical helper target; the original macro expansions and helper owners remain independently checked. The unchanged UsagePool declaration now has an executable generated Clone body, verified in JavaScript and strict TypeScript. This adds a generated method, without changing original function or method counts. Serializer/schema behavior, allocator clones and unknown caller macros remain unsupported.
+
+### Fixed
+
+- Preserve borrowed opaque types, including explicit lifetimes and mutable references, in the original nested implementation census. The unchanged `&impl Fn` and `&impl Serialize` headers in Router no longer become global implementation obligations.
+
+### Validation
+
+- All 87 cases across eight complete related files pass in Node and Bun at unchanged deadlines. The complete 391-module source census contains no nested implementations after this correction; all existing nested Drop, alias, Clone and Default refusal cases remain required. Preserve the earlier complete canonical regression, all 2,653 output comparisons and full changed artifacts; regeneration and runtime parity remain independent checks.
+
+### Translation source prerequisites
+
+Join original Rust1.89 formatting exports and the complete builtin bang registry
+through privately verified full source inputs. Preserve actual callback bodies,
+Boolean/lifetime forwarding and nested macro lineage, with source mutation and
+serialized-authority denials. This source-only stage grants no additional
+namespace, Copy, no-Drop, const or runtime authority. The complete related
+formatting cohort passes38 cases in each host with unchanged fixture deadlines.
+
+The independent generated-method reviewer now tests the complete unchanged standalone UsagePool module, freshly rejoins original sibling Serde and Schemars outputs and executes the emitted Clone under JavaScript and strict TypeScript. Mirrored header, storage, owner, field and authority mutations remain refused. This standalone context does not admit the ancestor library, whose source scope still refuses these Clone bodies; original function and written-method denominators remain unchanged.
+
+### Translation source prerequisites
+
+Retain complete original formatting constructors, parser/error/visitor contexts,
+AST schemas and eight-slot result macro expansion in private source plans.
+Join genuine literal-only syntax candidates to the original implicit-capture
+recipes; retain every unresolved template/default/argument/namespace obligation.
+The related source-only cohort passes17 cases in both hosts. No new executable
+owner, AST closure, namespace, Copy, no-Drop, const or runtime authority is added.
+
+Retain the complete original String Clone storage and allocator/slice source chain as a private source-only prerequisite. Both ConvertVec backends and original UFCS, nested-trait and unsafe parser refusals remain intact. Separate selectors preserve existing standard-body dispatch and confer no storage, loan or runtime authority; no generated body gain is claimed.
+
+### Translation source prerequisites
+
+Capture source-pinned bounded array/slice type fragments in the generic
+source-token macro engine. Keep literal-length syntax separate from const
+execution and layout, and preserve opaque forwarding and existing budgets.
+This expands the complete original eight-slot make_MacEager invocation without
+rewriting its source. Five related complete grammar files pass36 cases in each
+host; no namespace or runtime authority is added.
+
+Publish the user-requested draft CI feedback checkpoint with the integrated translator sources and complete canonical artifacts. Canonical library output contains 130 original functions, 63 written methods and 10 generated Default methods; generated Clone bodies remain refused in this library scope. Complete JavaScript/meta/Rust synchronization, profile freshness and strict native parity remain incomplete, including substantial carried and partial code. The pull request stays draft. Every Rust-capable CI job remains behind the unconditional same-SHA JavaScript gate; this checkpoint does not establish a green gate, runtime parity or Rust verification.
+
+Install pinned Bun in the JavaScript lint job so the local-gate tests can exercise both reverse translator engines. The workflow audit rejects a missing runtime, an unpinned action or an unpinned version for every stage that requires Bun.
+
+Recognize an exact original `extern crate self as name` declaration in derive attribute closure only when the existing source resolver proves that declaration's unique self-crate alias. Foreign crates, ambiguous aliases, procedural attributes and unknown conditional owners retain their existing refusals; no runtime or whole-library gain is inferred from the header repair.
+
+### Changed
+
+- Execute bounded original Rust format-parser, literal-escaper and ASCII
+  identifier helper control to produce implicit capture pieces and UTF8 literal
+  origin ranges. The production formatter consumes genuine private execution
+  results while the existing checker resolves caller bindings and checks
+  primitive Display. Explicit arguments, format options and other existing
+  formatting contracts keep their separate route. Copied proofs, unresolved
+  helpers and unsupported source syntax cannot acquire execution authority;
+  serde Value formatting and enclosing native methods remain unproved.
+
+Retain complete original Rust cfg, module-binding, visitor-restoration and macro-subnamespace source routes for narrowly requested derive owners beside an unrelated conditional module. Conditional availability, child contents, exported bang effects, unknown procedural/internal attributes, aliases and imports keep independent obligations; existing module-wide closure and runtime flags remain unchanged.
+
+Regenerate native affinity metadata and the complete serialization registry against the current original dependency source profiles. All 84 previous runtime descriptors and their serialization directions remain equal; the original UsageState layout is newly supported. The native affinity descriptor is unchanged, and both emitted TypeScript registries pass strict compilation.
+
+Add a sequential synchronization command for the existing JavaScript, Rust, meta-language, TypeScript, platform and serialization producers. Preserve original inputs and complete failure receipts, require an explicit write/check mode, and retain all incomplete translation and runtime parity boundaries.
+
+Reduce repeated reverse-compiler work inside one source analysis by privately indexing the exact lexical tree, original function spans and ordered intrinsic/write checks. Each analysis still creates its own checker; each target still receives fresh source-bound proof and checked IR. Native TypeScript lexical serialization reuses the original token start while retaining exact text and trivia. Full previous-implementation and original native-corpus equivalence checks retain existing 5-second and 60-second deadlines; no runtime or coverage authority is added.
+
+Update the complete original Model Debug regression to retain the exact five current Clone refusal names, source spans, categories and unresolved String/container payload constraints. Preserve all six Debug owners, original method counts and the remaining twelve independent refusals.
+
+Install pinned Bun in the forward-translation CI job, which runs the source metadata regression's actual Bun child. Require the same immutable action and version in the workflow audit, preserving both engine checks.
+
+Avoid repeatedly copying all remaining tokens when the local Rust item scanner checks a closing brace. Preserve the pinned vendored lexer and complete original item boundaries, token slices, comments and UTF-16 source spans.
+
+Extend source-derived formatting with a bounded nominal Display consumer. It
+selects the original caller namespace, coherent Display implementation and
+checked inherent borrowed-str method, then executes the original default
+Formatter pad/write_str and String writer control before lowering the capture.
+The complete eight-case Display file and existing eight-case template file pass
+in Node and Bun; all complete decoded vectors match byte for byte. Preserve
+copied-proof, shadowing, coherence, unsupported syntax and serde Value refusals.
+The original SubscriptionProvider Display control compiles, while its enclosing
+refresh_failure_diagnostic still refuses at its independent ancestor macro
+scope. Original library gains and full runtime parity remain unmeasured.
+
+Parse complete original String and shared str implementation targets with the genuine caller scope and Host type parser. Privately issued target evidence can exclude only a different checked nominal Copy owner; trait bodies, allocator behavior, matching destructors, conditional or procedural targets and unresolved global obligations remain unsupported.
+
+Keep complete conditional ancestor callback and attribute-registration witnesses in authenticated private backing; retain exact source/span/profile/owner references in public metadata. A deeply nested original source fixture with 90 exported macro registrations reproduces the old 200,000-cell source-link failure and verifies the new references under unchanged limits. Conditional availability, child and global bang obligations remain unproved.
+
+Reject broken original-source links and non-directory ancestors before sparse Git fallback during translation synchronization. Preserve all other original-input capture and failure receipts.
+
+Include the synchronization CLI in reusable translator bundles and exercise real receiving JavaScript edits through meta, Rust, strict TypeScript and freshness checks while preserving handwritten Rust.
+
+Draft independent ClaimFile and ModelSelectorKind Default checks using the existing single complete original-crate compilation and both generated JavaScript and strict TypeScript targets. Preserve every existing source and timeout assertion.
+
+Resolve synchronization child compiler dependencies from the explicit receiving repository, including exported bundles, and retain complete nested child errors in reusable-bundle regression diagnostics.
+
+Reverse translation gains a bounded stateless anchored-sequence grammar expressed in checked meta-language ranges and repetition states. Type guards preserve arbitrary native input categories and lossless UTF16 string observations; coercion, mutation, stateful regular expressions and unsupported parent effects remain explicit refusals. Original Rust sources and runtime-parity authority are unchanged.
+
+Bind source Display receipts to their privately issued parser context and keep
+that exact frozen receipt through source relocation. Include the complete
+original module, profile, condition and coherence context fingerprint. Join the
+selected inherent method to its actual checked declaration and private original
+transform, implementation, member and body source; reject copied receipts and
+foreign analysis methods even when caller bytes and local scope hashes match.
+Preserve the earlier sealed evidence and independent original macro refusals.
+Both complete eight-case files pass in Node and Bun with explicit TypeScript
+5.9.3; all complete decoded vectors match byte for byte, including original
+source joins, cross-analysis refusals and both typed output observations.
+
+Copy the reverse translator's complete nested vendor inputs, including its executable construct map, into reusable offline bundles.
+
+Add source-selected externally tagged unit-enum Deserialize output confinement,
+including original generated identifier visitors, unit variant arms, fixed
+Serde macro closure and both in-place feature branches. The original Match
+Block adapter accepts only its private checked fragment and pinned source
+origin. Custom helpers, payloads, unknown/global outputs and foreign proofs
+retain separate obligations. The exact original refresh_failure_diagnostic body
+now executes in its retained namespace projection with the complete original
+SubscriptionProvider source, in JavaScript and strict TypeScript. All five
+complete files pass (34 cases per engine); all full captured vectors match.
+This does not implement Deserialize behavior or establish full-corpus parity.
+
+Retain the complete locked async-trait source and licenses with privately
+joined original syntax dependency inputs. Add compact source plans for its
+actual callbacks, mutation candidates, printers and two original Router impls.
+These plans preserve unresolved attribute, visitor, Verbatim and nested macro
+effects; they do not issue target, no-Drop or runtime certificates.
+
+Draft source-bound primitive collection captures through portable meta IR.
+
+Private original AST/symbol/span and whole-module alias/write/escape checks derive closed array/Set data without caller capture maps. Explicit membership preserves one evaluation and finite SameValueZero cases, including signed zero, and emits strict TypeScript plus uncompiled lossless Rust environments. Source/environment reissue remains mandatory after meta serialization.
+
+Captured collection callbacks remain conditional private body drafts: original method lookup stability and enclosing effects are unproved. Existing full-domain coverage and source census denominators remain unchanged; public/global mutable data, computed/effectful initializers, coercion, NaN, aliases and unsafe intrinsic access remain refused.
+
+Three unchanged native callback bodies now have independently exercised conditional drafts. The complete 52-module census retains 73/788 top-level definitions and all 136 previous definitions; scoped drafts increase from 63 to 66/705 with 54 full-domain and 12 conditional bodies. No enclosing owner is admitted. All 19 reverse test files pass in both engines (82 cases each), and the complete native TypeScript target passes its existing strict compiler check.
+
+Added a bounded private original type-namespace join for named `std::fmt`
+imports used by source Display forwarders. Display, Formatter and Result resolve
+independently through the actual caller module bindings and pinned original
+standard reexports; complete method signatures retain their private source
+member association. Unresolved trait aliases retain same-family coherence
+obligations; only actual local trait declarations or other pinned fmt traits
+prove disjoint owners. Copied/foreign contexts, shadowed owners, unresolved import
+or macro effects and unsupported method bodies remain refused. This does not
+close ClientKind's clap/schemars outputs or prove its full original runtime.
+
+Preserve original module directories when reconstructing macro namespaces so independent conditional derive-helper checks agree with the project graph; reject malformed path metadata and retain unresolved scopes when path evidence is absent.
+
+Retain generic arguments and final record-update operands in original-source
+symbolic control. Transcribe the actual Syn schema macros and helper lineage,
+then consume genuine generated printer bodies directly from their expanded
+token trees with separate original definition/invocation coordinate references.
+Preserve opaque forwarded fragments and incomplete type, loan, callback, macro
+and may-write obligations. No async-trait target, no-Drop or runtime authority
+is granted.
+
+Joined the existing private successful ValueEnum quote output to its exact
+original derive invocation and generated builtin attribute owners. Bounded
+original unit variants and literal name/alias helpers can close that owner's
+bang output without admitting generated CLI trait execution. Full original
+entry/helper bodies and the unclosed syn/error/dummy output boundary are
+retained; bad, custom and unsupported inputs remain refused. This does not
+prove ClientKind's Schemars output, initializer/helper closure or full runtime.
+
+Nested helper joins now read ValueEnum's actual pinned proc-macro registration
+and require the exact private active caller certificate. Copy's attribute
+consumer distinguishes those privately proved inert source helpers from
+generated builtin attributes. Unknown helper imports and attribute shadows
+retain their independent source refusals.
+
+Added candidate control for exact pinned original record declarations and
+private standard declarative expression/pattern AST slots. The original
+CommonAttrs is_default body supplies the first record/matches test program;
+definition and invocation origins remain separate. Default construction,
+attribute parsing, Schemars mutators and complete output/runtime admission
+remain independent source boundaries.
+
+Added source-bound lexical callable creation and direct-call IR prerequisites for
+the reverse translator. The checker reconstructs the complete original caller,
+its immutable parameter captures and every const-local callable use before either
+target consumes the reparsed meta document. Escaping, aliased, mutable, early,
+effectful and unknown calls remain refused.
+
+Owned dense literal `some` uses explicit ordered short-circuit iteration and
+retains a conditional standard-intrinsic obligation. This prerequisite does not
+establish a string-only contract for the original resources `terminates` helper,
+admit its I/O parents, compile Rust, or establish complete runtime parity.
+
+### Changed
+
+- Revalidate complete mutable parser namespace maps against a live, privately issued snapshot without repeatedly serializing that same snapshot. Every binding, insertion order and target data descriptor remains checked.
+- Preserve the original full digest path when the existing bounded snapshot is evicted, metadata differs or the original JSON, Map or iterator machinery changes. The snapshot limits, metadata budgets and source authority checks remain unchanged.
+- Add regression cases for later namespace mutations, hostile descriptors, serializer changes, eviction, metadata budgets and compatible descriptor changes. This optimization does not implement additional Rust behavior or establish runtime parity.
+
+### Changed
+
+- Extend source-selected generated Default lowering to bounded nongeneric local fields with their own proven generated Default constructor, retaining private complete dependency bodies and compact public source references. Recursive or unresolved source graphs remain refused.
+- Retain the complete pinned owned `serde_json::Value` Default method, original declaration, public reexport and Cargo feature chain as source candidates separately from the primitive selector. Execution remains refused until the dependency's trait, prelude and attribute owners are proved; parsing its constructor does not grant dispatch authority. Namespace, destructor, const, allocator and whole-trait authority remain separate.
+- Reissue dependent generated Default proofs in draft review using the complete original child layouts and ordinary checked constructor bodies, with exact canonical and flattened comparisons. Optional CSV verification artifacts retain the complete graph metadata and emitted JavaScript/TypeScript before assertions.
+
+### Fixed
+
+- Keep original nominal Display integration in the Host parser/checker layer and share the unchanged Copy certificate verifier through a pure leaf, so fresh direct data/text imports cannot initialize the Host class through a cycle.
+- Include the unchanged Rust item-boundary scanner in portable JSON-retention runtime assets and check the entire copied module graph in a fresh receiving process.
+
+Require metadata data descriptors to contain their own `value` field before reading it. Inherited descriptor values cannot disguise accessors in source links or namespace validation. This preserves the existing metadata budgets and original-source checks.
+
+Retained complete member and license hashes for the existing locked toml_edit
+source and acquired the exact locked toml_datetime archive from crates.io to
+trace its wildcard reexport. Documented original export, attribute and feature
+obligations for a reusable private dependency namespace proof. These source
+inputs do not change import resolution, admit attribute owners or execute TOML,
+JSON Default or original ClientKind bodies.
+
+Index exact frozen original module paths and scoped modules within each private
+derive issuer. Reuse an issued nested helper only after the existing complete
+caller, original item/view and exact active attribute join. Preserve complete
+requested conditional sibling proofs on the uncached route.
+
+Rejoin every generated-attribute caller and issued native external map before
+reusing its private frozen binding result. Retain its canonical JSON bytes only
+while the original native serializer and plain-data prototype chains remain
+unchanged, and execute the actual hash at every original return point. Changed
+serializers or inherited toJSON hooks use the original full serialization path.
+This changes no namespace, body or runtime admission rule.
+
+Bound consumer-local original-method validation captures to 64 entries and 8 MiB
+of retained snapshot accounting, with a 1 MiB per-entry cutoff. Reinspect mutable
+roots and charge every occurrence against the existing metadata cell, UTF-8 byte
+and depth limits. Reuse only exact recursively frozen descendants under qualified
+unchanged intrinsics; otherwise retain the original metadata digest path. Every
+validation still executes the actual hash with the same canonical JSON bytes.
+An evicted genuine token may recover its snapshot only for its original weakly
+held root, through a complete fresh copy, serialization and hash within those
+same bounds. The consumer continues checking its original signed digest.
+
+Index complete pinned Serde function declarations by privately issued source
+origin, retaining only frozen numeric spans within 16 slots and 1 MiB. Recheck
+dependency identity, run each matching predicate in original order, and hash the
+current source slice on every selection. Changed lexer intrinsics, including
+array species, retain the complete original scan and callback effects.
+
+Qualify collection operations before accepting their initial identities, with
+bounded receiver probes for same-named Array, TypedArray and Object methods.
+Pre-import wrappers and changed collection, iterator or species operations keep
+the complete legacy helper path. Conditional sibling helpers also keep their
+original reproof and crypto callbacks unless the skipped crypto operations are
+genuine unchanged natives; nonconditional helpers retain bounded private reuse.
+
+### Fixed
+
+- Sort the original extension-module filename seed before adding compiler fingerprints. Node and Bun now preserve identical fingerprint property order regardless of filesystem directory enumeration, without changing earlier keys, source hashes or generated bodies. A fresh-process regression reverses the actual native directory enumeration and compares the complete real bulk plan, inventory bytes and every emitted artifact.
+
+The fixed-width TryFrom draft selects complete original Rust numeric macro invocations and method bodies, derives MIN/MAX from their executable original initializers, and binds them to ordinary checker IR through privately captured original caller scopes. The canonical unit-field conversion error uses a separate private standard-source Copy/no-Drop boundary. Pointer-sized and infallible conversions, ambiguous traits, unknown compilation conditions and unproved caller namespaces remain refused. Whole compiler, const-trait and runtime parity claims remain false. The complete eight-case source and behavior file passes in Node and Bun with exact TypeScript 5.9.3: sixty actual source-selected methods, twenty source-derived MIN/MAX constants, all three bounded conversion branches, MAX composition, and the original Rust Err-only regression. Broader forward regressions and actual Router owner gains remain unverified; complete earlier failure streams and source versions are retained.
+
+Add generic source-bound imported Error construction and normal/throw completions to JavaScript → meta-language → TypeScript/Rust drafts. Full original parent and graph rechecks preserve lexical constructor identity, ordered closed arguments/defaults/fields, immutable receiving-runtime proof lineage and collision-safe TypeScript imports. The unchanged original `imageMedia` body passes independent JS, reparsed IR and strict TypeScript behavior under explicit constructor/intrinsic/prototype conditions; its public argument and normal return retain the full unknown domain.
+
+The first complete V4 focused pair retained Node 9/10 and Bun 7/10 failures; V5 retained 9/10 on both hosts. V6 passes all 10 cases in both engines with unchanged 180-second outer, 60-second behavioral-case and 20-second TypeScript-child limits, repository TypeScript 5.9.3, and all 354 executable/source/dependency plus 806 original Git inputs unchanged. Restricted `throw` newline/comment recovery and TypeScript synthetic missing operands are refused. Complete failed/pass streams, source versions, commands, resource receipts and Error diagnostic vectors remain preserved separately.
+
+These remain explicitly conditional drafts: outside-module lookup/prototype closure, host diagnostic locations and runtime parity are unproved (`hostDiagnosticLocationsPreserved: false`, `runtimeParity: false`). TypeScript imports the actual native class; Rust exposes an uncompiled `Result<T, SourceErrorProjection>` with UTF-16 message/ordered fields and fresh identity, without JavaScript Error class/prototype/stack equivalence. The complete synchronization gate and coherent forward regeneration remain required; no Rust build or whole-runtime gain is claimed.
+
+
+Follow-up completes the affected reverse producers and regressions without narrowing the public unknown domain. Legacy three-argument IR evaluation retains its callback behavior; the explicitly supplied constructor runtime freshly validates the exact registered enclosing function before normal or abrupt completion. Unbraced lexical declarations remain invalid JavaScript, while genuine single-statement and dangling-else bodies retain their actual supported value/null/undefined behavior. Historical no-graph programs stay independently compared, and current constructor-bearing meta requires the genuine source graph.
+
+Private graph associations reuse only genuinely issued immutable source parsing. Every source row/string, signature, constructor recipe, effect predicate and proof is still checked afresh; copied/foreign objects reconstruct their graphs. A private original-AST occurrence list and fresh lexical-name necessary filter avoid repeated neutral walks while preserving the old leaf's complete 52-module/832-expression/273-admitted-leaf evidence and ordered failures. These are leaf observations, not additional enclosing-body admissions.
+
+Only the two new constructor-proof IR slots use a copied percent encoder. It executes Buffer.from once, qualifies native operations and actual private regex/byte/iterator state, and otherwise runs the original loop on the same bytes. The trusted initial host-global boundary includes Bun's genuine proxy-classified global wrapper; derived/public proxies remain refused before probing. The copied regex has a distinct private identity. Noniterable replacement Buffer results retain TypeError and one producer call, but native diagnostic expression text/stack locations are explicitly not equivalent. Ordinary IR and the pinned upstream codec remain unchanged.
+
+All earlier failed sources and streams remain retained: complete V2 and V3 semantic/regression failures; V4/V7 unchanged 5-second cold failures; V8b's Node wrong-native qualification assertion and Bun data-URL fragment decode failure; and V9's conservative Bun host-root rejection. None was waived by raising a limit or dropping a case. V10 passes the complete constructor six-case pair, the fresh complete Bun translator twelve-case file (cold case 4824.47 ms), and all nine required affected stages: 99 reverse cases per engine, seven adapter cases per engine, 164 strict native TypeScript files, both real producers and both freshness checks. The combined Bun cold case also passes at 4524.84 ms under the original 5000 ms limit. All 493 source/dependency pins and 806 original Git inputs remain unchanged through the batch, and every one of the 515 generated artifacts is byte-identical to the pre-optimization V2/profile baseline. Complete original JSON vectors use verified lossless Brotli captures; historical gzip containers are retained unchanged.
+
+The actual native top-level census is 74/788 (73 full-domain definitions plus one conditional constructor draft), separately from scoped 66/705 (54 full-domain plus 12 conditional drafts). All 139 previous definitions remain preserved; imageMedia is the one added conditional body. The regenerated native drafts and all original input/refusal records remain reviewable. This does not establish whole-runtime parity or compile the Rust projections.
+
+Retain the complete official Cargo.lock-pinned tracing 0.1.44 and tracing-core
+0.1.36 source archives, original licenses and bounded hashes for every member.
+Record the inspected info/error macro dependency route and its separate log
+feature variants. These are source inputs only; macro ownership, expansion,
+feature closure and runtime behavior remain independently unproved.
+
+Add a separate source-derived format-template entry that executes the pinned Rust parser's implicit, numeric and named argument positions, plus private associations between explicit argument intervals and genuine Host expression ASTs. The existing named-capture entry remains byte-identical. Complete original `endpoint_base` argument sources are covered as syntax associations.
+
+This is a prerequisite only: no production formatter hook or new declaration admission is added. Original constructor/callback execution, evaluation effects, borrowing, temporary lifetimes, Drop behavior and macro ownership remain independently unproved. The complete eight-case file passes under Node and Bun with unchanged case limits; all eight complete observation vectors match byte for byte. The first seven-of-eight pair and the corrected mutation targeting the actual original helper declaration are retained separately.
+
+Large project metadata can now store its two complete semantic programs in separately inventoried components. Small metadata keeps its existing bytes. Readers reconstruct and verify every original logical JSON byte before the existing source and semantic checks; current outputs and immutable Git baselines use their own bounded readers. The 64 MiB file and 512 MiB aggregate limits remain unchanged, and oversized components still refuse.
+
+Eight storage tests cover exact serializer roundtrips, tampering, path and budget refusals, real regeneration outputs and distinct current versus Git-baseline components. Existing reviewer, matrix and progress tests pass in Node and Bun. This storage change does not add executable bodies or establish runtime parity; receiving bundle verification and the retained large-metadata probe are recorded separately.
+
+Draft original formatting argument controls retain complete FormatArguments methods, parse_args recovery branches and lowering declarations, with private associations to genuine caller expression ASTs. A separate authored-control issuer can exercise the existing bounded generic interpreter and statement order without granting original compiler execution authority.
+
+This next-cycle source draft is UNVERIFIED. The original matches!, assert_eq!, exp!, parser/error callbacks and borrowing/temporary/Drop obligations remain unresolved; no Host admission hook or macro-owner guard changes. Original argument construction, evaluation-order and borrow proof fields remain false. Eight whole-file tests are drafted but have not run.
+
+Add a source-only draft for observing complete privately expanded expression
+output, including exact nested expansion lineage, mixed source origins and a
+small generic boolean lowering lane. The new parser entry consumes the entire
+expansion, so selecting a convenient nested body cannot omit surrounding items.
+
+UNVERIFIED: no Node, Bun or TypeScript checks have run for this draft. New tests
+cover authored nested macro source through checked meta and both targets, but
+their results are pending the coordinator's engine window. Existing parser APIs
+and whole tests are unchanged. No caller macro ownership, global namespace,
+runtime, I/O or Router body coverage is granted. Actual matches/assert_eq,
+format_args, tracing and conditional Unix obligations remain explicit.
+
+### Refresh complete automated translation drafts
+
+Regenerate the complete original Rust corpus through meta-language into JavaScript
+and TypeScript, including the neutral, Unix-family and Windows-family profiles.
+Oversized project metadata uses complete verified sidecars within the existing
+file and aggregate limits.
+
+The canonical inventory now contains 141 executable top-level functions, 407
+constants, 180 types and 572 constructors. All 804 original Rust source hashes
+and all 13,279 preserved items match the previous inventory; 11,947 items remain
+carried. These drafts do not establish complete runtime parity.
+
+Fresh canonical generation passed in 877.9 seconds with CPU profiling enabled;
+the three-profile matrix passed in 2,367.7 seconds. Inputs remained unchanged.
+The complete JavaScript gate remains required before Rust verification.
+
+### Refresh source-discovered serialization metadata
+
+Regenerate the complete serialization registry against the integrated compiler
+and original dependency inputs. Both schema producers, both freshness checks
+and both independent strict TypeScript descriptor checks pass.
+
+The native affinity descriptor is byte-identical. Every previous registry entry
+has the same runtime value before and after regeneration in JavaScript and in
+executed TypeScript 5.9.3 output. Complete runtime parity remains unproved.
+
+Review-only generic layout reconstruction now replays complete successful original function, constant and nominal parsing in source order. A later semantic refusal does not erase the original first generic owner, while an incomplete parser cannot register a layout. Genuine scope, macro, edition and attribute contexts remain required; method-first layouts retain an explicit unresolved review obligation. Existing complete checked and flattened layout comparisons remain unchanged. Reachable registered host payload layouts are reconstructed through the existing source-shadow admission, without granting external Default execution. All 244 targeted cases pass in both Node and Bun with TypeScript 5.9.3; complete canonical review remains required. This repair changes no compiler output or runtime authority.
+
+### Changed
+- Clarify separate extensible language and repository substitution-rule sequences, shared Rust/JavaScript edge-case coverage, focused local JavaScript diagnostics and JavaScript-gated Rust CI. Issue #759 prohibits local Rust tests and builds.
+
+### Fixed
+- Treat only the exact generated affinity descriptor as an owned output while preserving handwritten native source checks. Prepare generated Rust before the descriptor, then regenerate reverse and TypeScript outputs from the updated native input; canonical and matrix generation remain single passes. Partial JavaScript-to-Rust runs require descriptor freshness when that input is present.
+- Stream producer stdout and stderr directly to exclusive files with unchanged deadlines, retaining complete large logs and child-start failures without the previous 8 MiB buffering cutoff.
+- Add receiving tests using the seven actual Rust affinity declarations, unchanged native interpreter, strict TypeScript descriptor behavior, independent source preservation, changed-layout refusals, dependency ordering and large raw streams. Generated Rust edge fixtures cover NaN, infinity and signed-zero input; no local Rust compiler is invoked. The complete 10-case file passes under Node 20.19.4 and Bun 1.4.3 with TypeScript 5.9.3, original 60-second case/20-second compiler limits and 300-second outer bounds (42.822/39.535 seconds). All 806 original Git inputs and 1,316 source/dependency pins remain unchanged. This targeted result does not certify the full synchronization gate or runtime parity.
+
+Added explicit, ordered language and repository rule sequences for forward compiler substitutions, checked Rust-to-JavaScript emission, strict JavaScript-to-Rust/TypeScript translation and native TypeScript emission. The reusable synchronous pipeline retains exact substitution failures, stable rule identities and per-run traces while passing original IR/proof objects through unchanged. Further logical layers compose rules or pipelines within the two required sequences. Existing parsing, checking, lowering, printing and disposal operations retain their order; no source admission or translation coverage is added.
+
+Draft source and tests await local Node/Bun verification. Generated byte equality and complete parity are not claimed.
+
+### Added
+- Add four Rust regression cases for shared stop-reason edges, invalid usage updates, saturating totals, cache bounds and Unicode citation offsets. The stop-reason fixtures also exercise complete translated JavaScript and strict TypeScript. Rust execution remains reserved for CI after the full JavaScript gate; these source tests are unrun locally.
+
+Drafted complete-family coverage for the retained 37 source-linked gains: seven functions, 26 constants and four record types. Tests consume complete stored JavaScript and strict-compiled TypeScript with explicit generation/input joins; they do not project a new Rust scope or grant translation admission. Independent expectations cover all enum arms, complete model rows, verification truth tables, Unicode line behavior and the entire verification area table.
+
+The initial historical-generation run exposed constructor aliases outside the
+declared immutable ABI. After the separate immutable-boundary repair and full
+regeneration, all eight complete original-body groups pass under Node and Bun,
+including strict TypeScript and caller-mutation isolation. They join the
+15-file, 140-case receiving group on the complete checkout. The historical
+failure and both engines' complete evidence remain retained. No Rust checks ran
+locally, and these receiving results do not establish complete runtime parity.
+
+Drafted the tracked-project path as two ordered rule sequences: the unchanged language/checking work returns a private finalizer, then the repository rule packages exports, typed annotations and provenance from that same checked program. Existing fixed-point checks, original proof issuers, progress events and lazy declaration closures stay in their original order. Repository packaging grants no semantic admission; this does not make every parser or checker extension independently configurable.
+
+The source-only, unverified regression draft retains the complete prehook project implementation and compares whole outputs, source scopes, callbacks and lazy closures for method-free inputs. Genuine method evidence is independently checked only through the actual module's own issuer, including copied and cross-analysis refusals; complete cross-module method equivalence is not claimed. No tests, generation or Rust builds were run for this draft.
+
+Generated constructors now snapshot complete checked array and record values instead of retaining mutable caller arrays. Descriptor-only constructor guards precede existing parameter guards, preserving ordinary function and slice inputs. The iterative walk preserves large vector and slice lengths, rejects accessors, proxies, holes and cycles, and freezes only fresh results. Existing nominal refinements and private identities remain required. Focused JavaScript and strict TypeScript tests pass all nine cases in both Node and Bun. After complete regeneration, the full receiving checkout passes the complete 15-file, 140-case group in both engines, including every stored original-body behavior group and the constructor alias regression. Earlier sparse-checkout and historical constructor failures remain retained. Full parity, Rust Clone, Copy and allocator behavior remain unproved.
+
+### Added
+- Draft a bounded archive byte-range resolver that verifies the complete regular archive's length and SHA256 before writing an exact range to a fresh, unlinked file. It preserves source identity, rejects invalid ranges and linked paths, retains failed fresh outputs, and does not change packet admission or decode archives.
+- Prepare negative controls and an optional evidence plan for recovering the complete failed archive from its byte-for-byte verified prefix of the final archive. Both originals remain intact. Focused tests, fresh actual-file recovery, continuity checks and final allocation measurements remain unrun; no storage savings or final fit is claimed.
+
+### Fixed
+- Draft an additional receiving-runtime observation using the complete existing closed constructor grammar and direct structured recipe comparison against freshly reissued original evidence. Reflection grants no source authority, and all original/reflected sources, recipes and spans remain separate. Descriptor-only Error ancestry and class/prototype checks reject stale shadowed bases, proxies and getters without invoking them.
+- Retain actual unchanged constructor identity and private successful full-source lineage without reloading modules or relaxing source, Error, prototype or complete-parent checks. This covers only the closed constructor recipe, not whole module-cache provenance or side-effect replay.
+- Preserve the initial complete Node 8/8 and Bun 2/8 failure pair: Bun reformats all four measured ordinary/comment/Unicode/native class sources. The complete shared-grammar successor file passes all nine cases under Node 20.19.4 and Bun 1.4.3 (18.602/6.849 seconds), with TypeScript 5.9.3 and unchanged 180-second outer, 60-second case and 20-second compiler limits. All 1,426 source/dependency pins and 806 original Git inputs remain unchanged. The related two-file regression group remains pending; no runtime parity or full synchronization claim is made.
+
+Drafted Stage A of a reusable complete expansion output-scope observer. It independently inspects the whole privately projected expression and every original token tree, and requires separately issued child scope tokens for all exact nested expansion lineages. Its private tokens do not resolve a macro owner, close a caller namespace or grant runtime admission. Global uncertainty flags are unchanged.
+
+The separate 142 expression-observer prerequisite remains unverified. Item declarations, attributes, opaque expression/pattern/type/meta fragments, generic arguments and every unsupported output grammar remain refused. In particular the original tracing static/use/cfg and format_args closure is not implemented, and no original Router body gain or runtime parity is claimed. Stage B ownership resolution and Stage C consumers are not drafted. No tests or engines were run for this source-only candidate.
+
+Added a private source-only proof for conditional local nominal implementation
+target families. It joins the complete original declaration/import census to
+private resolver and source-view origins, preserving all cfg alternatives and
+their exact source spans. Aliases, unresolved transforms and module-level macro
+outputs remain refused.
+
+This first stage does not change Copy consumers, choose an available type or
+layout, or close nested/global implementation and macro obligations. The actual
+Owned destructor retains its cfg and format output barriers. The new complete
+behavioral file is unverified pending the coordinator's JavaScript engine lease;
+no Rust checks, runtime gains or full-library admission are claimed.
+
+Reject same-key-count array holes before looking up numeric descriptors through
+Object.prototype in source metadata, tokenizer captures, method associations,
+shared enum source collection and live Matches namespace targets. A private
+null-prototype membership table reuses each existing own-key enumeration; it
+adds no reflection or mutable-method calls for valid arrays.
+
+The draft preserves existing metadata limits, valid-input callback
+ordering and inherited toJSON behavior. Tests retain the original copier as a
+valid-domain oracle and demonstrate its inherited-descriptor failure. No runtime
+array ownership, macro or source authority is added. The coordinator ran both
+complete focused files: 15/15 cases passed in Node and Bun, and all five retained
+full ingress vectors were byte-identical. Source inputs, original case caps and
+the TypeScript 5.9.3 dependency pin were unchanged; no local Rust checks ran.
+
+This is focused qualification only. Broader receiving checks, full-gate checks
+and generation with this fix remain unrun. Arbitrary rebound String remapping
+to other inherited keys is outside this narrow numeric-hole repair.
+
+Added a private observer for complete selected macro
+outputs with block-local use/static declarations, full initializer/type/cast
+syntax and exact nested output lineage. Genuine supported opaque expression and
+pattern AST captures require their original private parser context. Existing
+142/155 APIs remain strict; attributes, unproved AST/type forms and actual
+tracing/builtin output closure still refuse. This adds no Host admission,
+namespace, macro ownership, runtime or original Router body authority.
+
+The focused whole ten-case file passed in Node and Bun at source commit
+`6bb72e24d543355de5fa0e6cf2540dff749e2213`, with unchanged case limits and
+TypeScript 5.9.3 inputs. All twelve full vectors (1,886,843 bytes per engine)
+matched byte for byte. The prior eight-of-ten failures remain retained.
+This verifies the selected output observer and its refusal controls; it does
+not establish a full gate, current generated artifacts or runtime parity.
+
+### Added
+- Draft additive reusable contribution and agent templates covering ordered language/repository rules, checked meta round trips, automated synchronization and freshness, focused JavaScript/strict TypeScript followed by the complete same-SHA gate, source-only Rust regressions under stricter user policies, bounded single-workload resources and coordinated publication. Stage an exact patch outside the case allocation; compiler-only exports remain unchanged. The complete two-file guidance/range group passes all seven cases under Node and Bun with unchanged source pins and TypeScript 5.9.3. These structural checks do not establish translator parity or apply the staged patch.
+
+### Changed
+
+- Regenerated the complete JavaScript, TypeScript, serialized meta and project
+  drafts for the canonical, neutral, Unix and Windows profiles using the
+  coordinated translation-rule batch. Generation uses the separately ordered
+  language and repository pipelines and includes constructor value isolation,
+  source-backed reverse constructor checks, and four new Rust edge-case tests
+  preserved as source. No Rust checks ran locally.
+- Both generation commands passed their existing deadlines with unchanged
+  compiler and original inputs: 10,661 output files, totaling 619,176,668 bytes.
+  The canonical profile executes 139 of 2,543 production functions; preserved
+  source, metadata observations and partial project drafts do not establish
+  complete runtime parity. Focused receiving checks and the full gate remain
+  separate requirements.
+
+Documented the exact original Owned destructor and sibling macro output
+obligations that prevent consuming the conditional nominal-family proof as a
+Copy exclusion. The source-only design specifies the ordered dependency-owner,
+builtin-output and independent JS/strict-TS verification prerequisites.
+
+This UNRUN design changes no compiler, Copy/no-Drop consumer, layout selection,
+availability or runtime admission. It preserves unknown cfg, both original
+Owned alternatives, nested/global impl and macro obligations, and both separate
+async-trait target refusals. No local Rust or engine checks were run.
+
+### Added
+- Draft a separate bounded range-index consumer for exact opaque originals backed directly by authenticated packet archives. Reuse the unchanged fresh-file range helper, keep ordinary archive/CI readers intact, and retain full source/index/recovery identities. The complete two-file focused group passes all seven Node and Bun cases, including all 23 Python packet controls and nine unchanged range-helper controls. Both real 25,372,817-byte V1 logical artifacts also recover byte-for-byte through a temporary synthetic Git fixture using the real V2 archive, with archive/logical originals present then absent. This is not real-case adoption; historical member recovery, CI continuity and final fit remain unverified, and no case files or originals are changed.
+
+### Changed
+
+- Refreshed both serialization registries after the coordinated source batch.
+  Both write commands, both freshness checks and both strict TypeScript checks
+  passed. Native JavaScript and TypeScript descriptor bytes stayed identical;
+  every existing bulk runtime projection stayed equal in JavaScript and executed
+  TypeScript. Updated source witnesses do not establish full serde or Router
+  runtime parity. No Rust tools ran locally.
+
+### Fixed
+- Remove automatic local Cargo formatting, Clippy, test and cache-cleanup hooks while preserving the existing generic pre-commit checks. Rust verification remains in gated CI.
+- Install locked JavaScript package dependencies before the complete forward and profile-matrix checks. The workflow audit now rejects missing, unlocked or late dependency installation, including the existing lint and UI dependency boundaries.
+- Add workflow-order and installed-hook regressions. The complete three-file receiving group passes 31/31 cases in both Node and Bun, and the actual structural audit passes all 14 workflows. All existing same-SHA gates, test commands and deadlines remain unchanged. These focused checks do not establish a complete green gate; no local Rust or new CI checks ran.
+
+### Changed
+
+- Consolidated the translation task's worker, cleanup, strict compiler, complete
+  evidence and fixed allocation requirements in CONTRIBUTING, and linked the
+  reusable guidance. Local hooks must not run Rust or clean caches automatically.
+  CI remains responsible for Rust checks after the complete same-SHA JavaScript
+  gate. Copying a compiler or guideline bundle still requires receiving tests.
+
+Added a source-only, unverified language type-constraint draft for an original
+`str.parse().ok()` call with an actual expected fixed-integer `Option` payload.
+It rejoins the privately captured caller syntax, normal receiver and inherent
+method selection, registered integer parser, Result layout and ParseIntError;
+the existing parsing and emission implementations remain in use. It adds no
+float parsing, generic guess, iterator-position rule or namespace authority.
+
+The new complete JS/strict TypeScript test file includes the unchanged original
+thinking parser in its complete original thinking-module context, integer and
+Unicode boundaries, custom methods, shadowed owners and private-source negatives.
+These tests have not run. Full-library admission and generated-output gains are
+unmeasured; the separate original Iterator::position closure remains refused.
+
+### Fixed
+
+- Verified the regenerated original-project constructor repair with the complete
+  original-body and boundary regressions: 140/140 cases in each engine across
+  15 whole files, with strict TypeScript 5.9.3 and unchanged original inputs.
+  The current generated constructors isolate caller mutation. This receiving
+  result remains separate from the full gate and incomplete runtime parity.
+
+Added an independent Rust integration-test source for the original public
+thinking numeric-suffix parser, matching the new JavaScript expectations for
+u32 boundaries, signed zero, malformed prefixes, whitespace and Unicode digits.
+Cargo's default integration-test discovery and the existing complete CI Rust
+test command select this target. No Rust tooling or execution ran locally;
+execution remains reserved for CI after the complete JavaScript gate passes.
+
+### Added
+- Retain the complete current meta-language PR201 JavaScript source tree at commit `63e3b27a32f22e64033aedbd5e0bbed3dcc0d71f`, its Unlicense and locked package metadata as an inactive side-by-side source candidate. Complete large originals use deterministic gzip with per-member Git blob, mode, length and SHA256 witnesses.
+- Document recovery/export limits, existing ordered language/repository and checked-meta boundaries, and an actual refused scalar-state body for a future source-associated adapter. Candidate code, dependencies and tests remain UNRUN; active vendors, runtime/source authority and parity are unchanged.
+- Keep the complete inactive copy under `tools/upstream-translation-candidates/meta-language-63e3b27a/`, outside existing compiler-input/export roots. Correct the earlier placement that selected only 220 of 347 retained paths; preserve all 344 original source/license/lockfile bytes, modes and member pins unchanged. No scanner exception or export limit changes.
+- Store all pristine third-party originals under the existing `raw/original/` source-record exclusion, preserving complete bytes and modes while changing only stored paths in the member index. Keep the full prior index and 201-hit terminology audit; no scanner exceptions or upstream rewrites.
+
+Drafted genuine by-value Rust f64 local and parameter admission in the existing
+typed scalar-control rule. The original while-loop, assignment, serialized-meta
+and direct JavaScript emission paths remain unchanged; references, aggregates,
+f32 and unqualified float shapes remain refused. No loop fuel or iteration cap
+is introduced.
+
+The new whole JS/strict TypeScript file covers the complete original generated
+policy module and retry_backoff helpers, IEEE boundaries with exact binary64
+vector tags, scalar scope and assignment rules, and ordered existing effects.
+All new tests are unrun. Full-library gain, regeneration and parity remain
+unmeasured. Generated Rust files are unchanged.
+
+Added independent integration-test source for the public retry_backoff API,
+covering floored and negative failure counts, maximum early stopping, signed
+zero bits, NaN, terminating infinity inputs and subnormal boundaries. Cargo's
+default tests/ discovery includes the new target; CI executes Rust only after
+the JavaScript gate. The tests remain unrun locally, divergent inputs remain
+unexecuted, and generated policy sources and the seven shared JS cases are
+unchanged. This source draft does not claim runtime qualification or parity.
+
+Replaced test-only HostChecker prototype wrapping with bounded fresh-Node
+precise function coverage for the exact original checker method and source
+range. The three-phase count remains mandatory; parent Node and Bun behavior
+still checks all 64 invalid layouts, the survivor and its dependent without
+altering checker identities. Complete coverage and source witnesses can be
+retained through the test vector directory. Production guards and test
+deadlines are unchanged. This source-only repair remains unrun.
+
+Require the original Host checker when capturing actual original primitive
+TryFrom calls or integer constants, while preserving ordinary checking for
+Host extensions whose programs contain neither. Every actual check, source-body
+issuance and finalization retains its original private identity guards. Empty
+captures revoke previous caller identities; malformed containers are inspected
+without accessor, proxy or iterator callbacks. Keep existing ownership and
+conversion regressions unchanged, and exercise real-source mutation/subclass
+negatives. Source-only candidate: all new and existing tests are UNRUN.
+
+Restored the complete item-parser dependency closure in three changed-archive
+negative fixtures while retaining their corruption checks. The independent
+historical 804-source comparison keeps its original manifest and parser bytes;
+a complete pinned historical bridge-response source fixture supports shallow
+checkouts, and current tracked Rust inputs receive a separate comparison and
+changed/added/deleted census. Added full Clap documentation project-result
+retention before its unchanged diagnostic assertion. These test-only repairs
+remain unrun; the current ProviderKeyMode.parse boundary still needs actual
+paired-engine evidence before its expectation can change.
+
+Synchronization planning loads its native import-scanner TypeScript compiler lazily from the explicit receiving root. An unrelated inherited `ROUTER_NATIVE_TS_SOURCE_ROOT` no longer selects the scanner's dependencies before producer children start. Complete-source syntax validation, ownership/link/byte limits, child environment binding and `ROUTER_TRANSLATION_TSC` handling remain intact.
+
+Source-only draft, unverified: the complete synchronization test file gains receiving-root, missing-receiving-dependency, malformed-source and environment-preservation controls. The existing exported offline CLI receiving/strict-TypeScript test is unchanged. Node, Bun and strict TypeScript checks have not run for this draft; no Rust, generation, runtime-parity or full-gate claim.
+
+### Changed
+- Document upstream implementation review, immutable source pins, inactive complete copies and pristine raw records in contribution guidance. Correct the current serialization inventory counts without changing executable layouts.
+
+The complete JavaScript gate on 9281e72a8 attempted all seven stages with unchanged source and compiler inputs. Native Node/Bun tests, TypeScript, 121 acceptance cases and 102 reverse cases in each engine passed. Forward tests retained 17 failures among 2445 cases; strict parity retained 442 known gaps with zero validation errors. The failed forward test command prevented that stage's subsequent canonical and matrix commands from running. No green stamp or Rust execution occurred. These results remain a failed checkpoint, not complete parity or qualification of the subsequent repair drafts.
+
+Replaced a stale formatting-refusal expectation with checks for the currently
+admitted original ProviderKeyMode.parse method and its source proof. The whole
+Clap documentation source tests now expose the actual checked method by its
+emitted name and test all three variants, exact untrimmed case-sensitive error
+strings, Unicode and NUL inputs, and invalid host arguments in JavaScript and
+strict TypeScript. Existing source, namespace, constants and as_str checks
+remain intact. These added assertions are unrun; this test-only update does
+not attribute a new library gain or establish full-project parity.
+
+Preserve the original shared-reference type, pointee and ampersand source
+coordinates for checked Rust primitive borrow expressions without adding source/type-owner
+or Copy authority to their operands. Reject by-value
+bool/f64 expectations before borrowing, alongside the unchanged fixed-integer
+refusal. Existing source ownership checks now distinguish inferred primitive
+references from values at assignment, argument and return boundaries. String
+and array borrow paths, portable coercion, float Copy/dereference capabilities,
+and the original mutable-f64 negative are unchanged. Source-only candidate;
+new and existing tests remain UNRUN.
+
+The metadata-only case uses the actual lower TextChecker that owns primitive
+reference syntax, without requiring Host program effect state. Keep all six
+cases, source/pointee/portable controls and caps. Initial Main receiving results
+were five of six passing in Node; the context-setup failure is retained, and
+this test-only correction remains UNRUN.
+
+Keep the missing receiving-dependency control outside repository dependency ancestry. The retained post-gate Node and Bun failures resolved the real ancestor gate TypeScript installation after the local fixture link was removed; neither used the hostile unrelated compiler root. The compiler-root test now uses a real external temporary root, verifies all normal TypeScript search locations are absent for the negative control, and preserves the complete fixture and child logs through an exclusive locator and fresh retained copy with verbatim dependency links. Existing positive, missing-dependency, invalid-syntax and environment assertions and all deadlines remain unchanged. Production resolution is unchanged. This test-only correction is source sealed; execution is pending.
+
+### Changed
+- Complete the contribution guidance and reusable templates with requirement tracking, independent source review during CI, upstream reuse and retained defect reproductions. Add compiler test locations and reaffirm that issue #759 runs Rust-backed fixture recording only in gated CI.
+
+Resolve the TypeScript module through the explicit receiving package before loading that exact resolved filename in synchronization planning. The retained Bun 1.4.3 missing-dependency fixture failed later with an incomplete compiler value and an unrelated TypeError; the Node missing-dependency control already rejected correctly. Explicit resolution preserves lazy receiving-root ownership and the ordinary missing-module error without changing TypeScript shape checks, inherited environment, overrides, syntax guards or deadlines. All eleven existing synchronization cases remain unchanged. This narrow source follow-up is unrun; full Node/Bun receiving qualification and the standalone loader diagnostic remain pending.
+
+The retained standalone diagnostic falsified resolve-only sufficiency: Bun 1.4.3 also resolves an absent TypeScript package to its automatic cache (7.0.2), while Node reports MODULE_NOT_FOUND. Require the resolved compiler realpath to belong to a real installed TypeScript package in the receiving require search paths before executing it. Legitimate ancestor packages and receiving dependency symlinks remain supported. Preserve that first inadequate source commit and all diagnostic controls; add an escaped package-entry non-execution control and a genuine ancestor-resolution positive to the existing eleven-case file. This successor is source-only and unrun.
+
+The successor enumerates installed receiving search packages before any resolution or load, then uses standard absolute-directory main resolution to avoid Bun cache/autoinstall behavior. It bounds package metadata to 1 MiB and explicitly refuses package.exports before execution rather than silently overriding its contract; the pinned TypeScript 5.9.3 package has no exports field. Declared-exports and escaped-entry execution markers remain absent in new controls. This loader workaround is narrowly scoped to the installed compiler and grants no translation authority.
+
+Receiving qualification later passed the complete eleven-case synchronization file and eight-case export file in both Node and Bun on integrated Main8366d15efbb703471bff07ab96eee577262fb58e with strict TypeScript 5.9.3 and original deadlines. The full terminal receipt SHA256 is 90555434baa0a20d4b1703ab269d379f7d81f9b3d227d5cb1682ca48a18114cc. All prior failures and the falsified resolve-only source remain retained; this qualification does not establish a full gate or runtime parity.
+
+Add a source-only candidate language rule for `Option::ok_or_else`. It privately selects and parses the complete pinned Rust 1.89 method, checks the actual caller and canonical Option/Result layouts, and specializes its original match through the existing checked IR and emitters. Receiver evaluation precedes the lazy callback; unsupported captures, owners, destruction, constants and proof replay remain refused. No new JavaScript runtime method or repository-specific function rewrite is introduced.
+
+The new complete eight-case JavaScript/strict-TypeScript regression file includes the whole original Anthropic module and independent `event_index` boundary expectations. Focused Rust unit-test source calls the existing private function inside its existing test module. Its 187-byte original declaration is unchanged; the complete module changes only to add tests. A second complete historic source fixture preserves the old immutable 804-input parser comparison while the separate current-input phase reports the legitimate new bytes.
+
+This candidate is UNRUN: no local Rust, JavaScript, TypeScript, generation or parity qualification is claimed. Whole paired verification and coherent regeneration are required before reporting an executable production-body gain.
+
+Select complete original standard String Pattern, Index and RangeFull forwarding
+bodies for nonescaping contains/starts_with temporary arguments. A genuine
+original Host checker and exact captured caller prepare private call-local
+surfaces; retained typed &String origins and source kernels justify the str view
+without general reference erasure. Existing UTF-8/String model boundaries retain
+their unsafe/storage limitations. Keep ordinary borrows, custom/unknown owners,
+static/escaping/mutable/double-depth and original primitive refusals independent.
+Add complete original policy and authored JS/strict-TS controls plus independent
+Rust edge source for CI. Repair qualified original impl-member boundaries after
+the initial receiving failure; keep the legacy whole-file scanner unchanged.
+The complete seven-case file passes in Node and Bun with strict TypeScript 5.9.3;
+all thirteen full vectors match byte-for-byte. Rust edge source remains UNRUN.
+This focused original-module result claims no whole-library gain or new
+runtime/storage/Copy authority.
+
+Add a separate bounded storage reader for exact opaque originals decoded from a direct authenticated gzip packet member. It verifies the complete ordinary archive inventory before a second authenticated extraction, preserves full gzip and raw length/SHA witnesses, rejects arbitrary recipes and writes only fresh outputs. Existing ordinary/range readers, CI decoder limits and packet member limits remain unchanged. Complete source controls cover binary originals, full present/absent Git recovery, unrequested members, invalid/truncated gzip, expansion bounds, strict indices, replacement and symlink failures. This is an unrun source draft; actual large-original recovery, all continuity checks, final fit and adoption remain pending. No original is retired.
+
+Later targeted qualification passes the complete new two-case wrapper (all twenty Python controls), four legacy packet cases and both Node/Bun engines. Four actual present/absent recoveries verify all 1,971 immutable part-1 members each and compare every recovered byte of both large originals, retaining 1,419,433,434 bytes of fresh outputs. Actual terminal SHA2566793a19dc11012212234484500bbb3c8f2890577b048bebce001ec3c87777519 joins complete source, Git and resource evidence. This uses a fresh synthetic repository; durable real-case witnesses, historical/member/CI/measurement continuity, final fit and adoption remain pending.
+
+### Added
+
+- Draft a source-driven language substitution for equality of genuine core
+  `Option<&str>` values. It selects the complete original four-arm `PartialEq`
+  method, retains the lang-trait/prelude/reference/string source routes, and
+  checks that method through private shared-parameter tuple and pattern
+  contexts. Both actual operands are evaluated once in source order through
+  ordinary checked bindings; no tagged-object equality runtime is added.
+- Add a complete eight-case JavaScript/strict-TypeScript test file, including
+  unchanged original Telegram and Qwen caller contexts, Unicode and NUL,
+  `Some`/`None`, operand effects, source ownership and proof mutation controls.
+  Add CI-only Cargo integration source for the actual public Telegram caller.
+
+This is a **partially verified translator draft**. The small complete union
+behavior file passes under Node and Bun with strict TypeScript 5.9.3, as do
+53 cases in eight existing affected files. The complete eight-case original
+caller file remains unqualified: its full-library Qwen compilation exceeded
+the unchanged 60-second case bound. Rust cases remain unrun, and production
+gains and current-project admission are unmeasured. Other payloads, `!=`, arbitrary reference/tuple contexts,
+unknown expansions and whole-core trait/namespace closure remain outside this
+rule. Existing output observers grant no admission authority. Repository
+formatting remains in the separate repository rule phase.
+
+The first integrated complete eight-case Node run failed six cases (two passed).
+Its complete source and vectors remain retained. The successor draft keeps full
+field comparisons by giving only privately associated standard-method products
+an additional complete checked-field identity; it also preserves the three
+existing shared-pattern evidence envelopes during ordinary target retargeting.
+Contextual `Some`/`None` values rejoin their checked constructor and payload to
+an already source-qualified expected Option. The Qwen test now starts from the
+actual `src/lib.rs` root and retains the wrong standalone-entry diagnostics as
+an explicit negative. Those successor checks were unrun at that checkpoint;
+the subsequent results and limits are recorded below.
+
+A later receiving attempt passed the actual operand-effect JavaScript and
+strict-TypeScript case, but reported strict-TypeScript narrowing errors for
+literal algebraic operands. The next source-only repair records complete
+checked union types through the existing local-initializer annotation route,
+including original-declaration target consumers. It adds no runtime helper,
+`any` cast or new source authority. The full-root Qwen case remains an honest
+performance boundary; its original case deadline has not changed. The small
+independent nominal/Option union regression now passes in both engines with
+strict TypeScript. The incomplete full-library run and all failed streams
+remain retained; no CI run or Rust execution was started or cancelled.
+
+Add a reusable tracked literal source-input candidate planner with explicit
+language then repository rules, exact original source-view/token association,
+complete immutable parent/target snapshots, bounded canonical path selection,
+and cycle/missing/stale/copy controls. Retain both include! Rust inputs and
+include_str! text inputs without conflating them. Complete original compiler
+sources are reused in place and remain unexecuted evidence; every macro-owner,
+expansion, namespace, cfg availability and runtime authority stays false.
+The six actual unchanged Router include! edges and six include_str! script
+inputs retain their complete original parents and targets. These are planned
+source inputs, not executable wrapper gains. No project/Host hook or
+unknown-output waiver is added. All new tests remain UNRUN; no local Rust runs.
+
+### Added
+
+Added a reusable, explicitly unverified archive-candidate builder. It validates
+complete existing packet inventories and compares every source archive byte to
+its stored Git blob, then creates real D/I ancestor commits on a fresh private
+ref. The final candidate tree changes only the bounded packet index; the current
+checkout, real index, case files and all original archives stay unchanged. Real
+configured Git identities and actual timestamps are retained with full command,
+source and readback receipts.
+
+Sixteen small synthetic-repository Python controls and the automatically
+discovered complete two-case Node/Bun wrapper are source only and UNRUN. They
+cover source/index isolation, exact recovery through the unchanged packet reader,
+identity, namespace, stale-source, foreign-history and deadline failures. Full
+historical 4,853/1,971-member recovery, shallow-receiver continuity, three CI and
+three measurement reads, fixed-500-MB allocation, adoption and retirement remain
+pending. No source corpus, failed capture or raw original has been removed, and
+there is no semantic, Rust or publication qualification.
+
+### Fixed
+- Draft shared current-Rust test discovery that retains all 804 pinned historical paths and includes every current tracked Rust source. Three original Clap/standard-output test files no longer mistake newly added Rust regressions for an incomplete source census. Behavioral assertions, original source pins and deadlines remain unchanged; receiving checks are pending.
+
+### Added
+
+Drafted language rule `rust.original-complete-derived-enclosing-name-effect.v1`:
+complete privately issued builtin/Clap/Serde/Schemars outputs join the original
+Rust reduced-graph actions before an exact invocation receives an empty enclosing
+type/usable-value name effect. Builtin bodies are freshly reissued through their
+existing complete recursive grammars. Procedural output alternatives retain their
+actual private quote trees, generated attributes and nested-macro owner proofs.
+The small enclosing-shape check handles Impl and anonymous unit-const wrappers;
+it is not a second body parser and leaves 128/158 source proofs intact.
+
+The resolver consumes the private token only for that item's uncertainty. Public
+certificate dimensions remain unchanged. Requested-name observations preserve
+actual lexical shadows; unknown other producers/imports/conditions, unsupported
+or opaque outputs and copied/foreign/fresh-process metadata cannot supply closure.
+Language prerequisites/order and repository construction order are separate.
+
+The immutable pinned resolver witness can share its exact private plan only while
+the unchanged lexer/collection guards, existing native helper-crypto guard and
+actual native string-owner lookup remain qualified. Non-native or changed host
+operations retain the full original plan construction and callback behavior.
+Complete caller output reissue is never cached. Warm identity, late owner/hash
+wrapper fallback and fresh caller-output controls remain within the same cases.
+
+The first complete seven-file receiving pair preserved all 81 old cases, but
+failed two of the new ten controls in both Node and Bun. The V5 successor's full
+nine-file run exposed an incorrect Default-control assumption and schema consumers
+that supplied input evidence without complete output evidence. Both failure
+batches, full sources and all produced vectors remain retained. A plain struct's
+Default derive is standard-only; only an actual unit enum `#[default]` helper
+uses the existing complete builtin-Default input path. The corrected controls
+retain both exact seven- and six-owner sources, the genuine unit-helper control,
+and an unproved Ord output that remains unresolved.
+
+A genuine standard-only input with incomplete output dimensions now contributes
+type/value lookup uncertainty even for builtin derive spellings. Only the private
+complete output effect can discharge this item's uncertainty. Serialization
+capture registers its authentic JSON source table before issuing the whole derive
+context and consumes the same genuine complete-output context as the project
+resolver. Supported sibling outputs can discharge their own contribution;
+unsupported outputs, unknown producers/imports and actual prelude shadows remain
+refusals. Existing payload-enum output grammars remain unproved, so this shared
+join alone does not restore every original schema consumer; a separate complete
+payload-enum output prerequisite is still required. This is a conservative proof-boundary/consumer repair, not a historical
+namespace or formatting-body gain. All four unknown-producer/import/conditional
+observations are retained before assertions; missing conditional siblings retain
+ancestor bang effects without inventing inherited child type uncertainty.
+
+The complete ten-case effect group now passes under Node and Bun. The new
+serialization consumer control remains unrun, and restoring the complete
+original schema fixtures still requires the payload-enum proof prerequisite.
+No scope-wide completion, generated trait behavior, runtime parity or Rust
+verification is claimed. Existing case deadlines remain unchanged; all 810
+original Rust/Cargo inputs were unchanged during the focused receiving pair.
+
+### Changed
+
+Optimize repeated standard-only derive ancestor module membership checks with an invocation-local index over genuine original source views and dense own-data string paths. The complete legacy lookup remains for uncertain inputs or runtime machinery; an unresolved/missing module retires the index before conditional-proof serialization. Caller paths remain mutable and unchanged. All eight complete old/current implementation, context, callback and mutation cases now pass under Node and Bun. No semantic or authority change, performance percentage or complete-gate pass is claimed.
+
+The first receiving pair retains two fixture failures (arbitrary import-count and nonzero program-callback assumptions); the test-only successor checks an independent complete import census and separately probes installed observers while retaining genuine zero-call program tapes. Full first-run sources and outputs remain retained.
+
+The next receiving run exposed a one-call cold-import difference from asymmetric shared compiler initialization. The test-only successor preloads the same active dependency graph and observes two freshly relocated complete leaf copies, retaining the full actual Function.toString return tape. This remains leaf-only equivalence, not an assertion about historical whole-compiler bootstrap callbacks. The earlier 32/33-call failure remains retained.
+
+The final probe compares the full returned source with the same engine's
+pre-observer source for the same function; it preserves the Node/Bun rendering
+difference without normalizing either tape. The final whole-file pair kept all
+source, compiler and 810 original-input bytes unchanged. An earlier four-file
+schema pair passed all 69 cases in both engines, including the original
+five-second Bun cold cases. Subsequent conservative namespace corrections
+exposed separate schema proof prerequisites; those are not timing successes
+or a reason to relax the cold deadlines.
+
+### Changed
+
+- Draft a native-only streaming comparison for privately captured complete
+  namespace maps, retaining every live target check and the original collected
+  fallback under changed intrinsic machinery. This removes temporary entry
+  collections; it changes no metadata copy, digest, bounds or proof authority.
+  Qualification and performance measurements remain unrun.
+
+- Require a genuinely native shared iterator method and exact iterator ancestry
+  before streaming. Retain the complete original leaf and nine whole-file
+  equivalence, mutation, eviction, hostile-input and callback-order controls.
+  These source-only controls are unrun; no allocation, speed, runtime-parity or
+  complete-generation result is claimed.
+
+### Changed
+
+- Extend the source-backed Debug output grammar to complete nongeneric tuple and named enum variants. Preserve every original formatting mode, fieldless specialization, field binding, cutoff branch and source span. Other derives retain their existing input domains.
+- Keep source ownership, helper attributes and private output issuance mandatory. This closes only the selected output grammar; generated formatting execution, type availability, Copy, no-Drop and unrelated macro outputs remain independent obligations.
+- Add complete original StoreError and OAuthError source controls, recursive output checks, helper/opaque/mutation and zero-callback ingress controls, plus JavaScript/strict-TypeScript tests for independent ordinary code. The complete focused eight-case file passes in Node and Bun with TypeScript 5.9.3 and unchanged source pins. Broader receiving checks and regeneration remain pending; no Rust was run.
+
+### Changed
+
+- Require verification jobs and steps after the JavaScript gate to preserve failures. The workflow audit rejects `continue-on-error` bypasses, including dynamic expressions; explicitly false values remain valid.
+- Document that disabling a conflicting local Rust or cache-cleanup hook never waives Rust verification in CI after the same-commit JavaScript gate passes.
+
+### Changed
+
+- Draft a native-qualified successful flat-token validation path before the
+  existing original-parser token copy. Every mutable token descriptor and
+  scalar is freshly checked with the original cell/UTF-8 budgets and exact
+  adjacent `&&` split rule; every difference or unsupported form falls back
+  to the complete unchanged copier and comparator. No caller evidence is
+  cached and no source, checker or runtime authority is added.
+- Retain complete original source-link and intrinsic-issuer fixtures plus
+  eight whole-file equivalence, mutation, budget, inherited-hook, callback
+  and cold-leaf controls. Node's JavaScript `Buffer.byteLength` deliberately
+  keeps the original path. All new tests are unrun; no speed, allocation,
+  sixty-second full-project success or runtime-parity result is claimed.
+
+### Changed
+
+- Draft complete original-source Clone and PartialEq output grammars for tuple/named payload enums, sharing the genuine compiler pattern/parser recipe closure with Debug. Retain every original variant, typed field, Clone resolver branch, PartialEq discriminant/fieldless branch and compiler-generated unreachable block; this proves syntax confinement only, not generated trait execution, Copy/no-Drop, type availability or global namespace completeness.
+- Add explicit payload input opt-in for independently closed Clone/PartialEq/Eq consumers (Eq output closure is the separate 000197 batch). Leave unsupported derives and the legacy unit-only candidate API unchanged.
+- Project structural `>>>` tokens into their three exact original Rust `>` positions, reusing the existing `>>` rule. Keep compound assignments, strict type parsing, source budgets, private caller joins and unrelated macro/attribute obligations unchanged. Retain complete original OAuthProvider/ProviderStore and payload-owner inputs and positive/negative tests.
+- Source-only candidate: all new and affected tests are UNRUN. No schema restoration, execution gain or performance qualification is claimed.
+
+- Receiving follow-up (test-only, UNRUN): retain the failed first pair and compose the complete captured original crate graph with the genuine JSON table registered before derive issuance for original-parent cases. Reuse one private context per test process; retain full inputs/graph/diagnostics and preserve all original cases, assertions, source files and caps.
+
+### Changed
+
+- Retain and type-round-trip every original tuple and named enum field in the source-selected Eq output grammar, including each variant's original position. Keep the original global simple-type deduplication and type-only assertion branches; generated Eq execution and trait validity remain unqualified.
+- Reject changed source candidates and retain complete original affinity/subscription source controls, boundary and private-issuer refusals, plus independent JavaScript/strict-TypeScript cases. This draft depends on the shared payload selector and private dispatch in batch 196; all new tests are UNRUN.
+
+### Source-only bounded private JSON comparison storage
+
+- Add a bounded reusable serializer for immutable plain-data comparison operands after their existing private owner checks. The two consumers retain their exact fresh left-side JSON evaluation, full builtin proof reissue, original errors, and every crypto call and byte sequence. No source, namespace, checker, body, or runtime admission is added.
+- Cache only under the existing native serializer/traversal and lexing qualifications plus a pinned native frozen-object check. Changed host operations and ineligible values use the complete original serializer. Storage is limited to 16 entries, 8 MiB aggregate, and 4 MiB per encoded entry; eligibility traversal is bounded without changing semantic input limits. Global storage retains encoded bytes and scalar bookkeeping, not issuer roots.
+- Add nine complete oracle cases with both original consumer files retained byte for byte. They cover genuine private hits, mutable and foreign fallbacks, full public carrier validation, evaluation order, crypto/JSON callback tapes, bounded eviction, and cold complete leaf copies sharing the actual active issuers. This cold comparison does not qualify the entire common-issuer bootstrap.
+- This draft is UNRUN. No Node, Bun, TypeScript, Rust, generation, timing, memory, parity, or executable-gain result is claimed. The measured profile motivates only a small allocation hypothesis; mandatory hashing and larger component serialization remain unchanged.
+
+Receiving follow-up (still UNRUN): retain the failed first whole nine-case run. Both the main fixture and generated cold child now carry the genuine source view's exact compilation profile; the previous carrier omitted it and failed the source-view join before reaching comparison storage. Production, all nine cases, original limits, and callback assertions are unchanged.
+
+### Added
+
+- Add Rust source regression cases for the real subscription install-result enum: both discriminants, exact path equality, clone preservation, Unicode normalization distinctions, embedded NUL and Unix non-UTF8 payloads. These tests are UNRUN locally and require gated CI after every JavaScript stage passes for the same commit; their presence does not establish translation or runtime parity.
+
+### Fixed
+
+- Resolve the actual Buffer or Number constructor before installing the cold-import proxy fixture. Node can expose Buffer through an accessor descriptor; the control now installs a complete data descriptor and restores the exact original descriptor. Keep both original/current imports, zero-proxy-callback assertions, all eight whole-file cases and their original deadlines.
+
+### Added
+
+- Add deterministic metadata-only complete evidence shard planning under 64 MiB
+  logical bytes and ordinary index-page planning under the existing 64-archive
+  limit. Preserve every declared original row and witness occurrence, keep
+  changing evidence explicitly pending, and leave capture, authentication,
+  adoption, retirement and physical fit to their existing bounded checks.
+- Require complete byte equality, both original hashes and stable fd/path
+  identities before capture emits a backward hardlink. Keep the original XZ
+  preset, decoder limits, complete member readback and existing recovery formats.
+- Draft full Python and automatically discovered Node/Bun controls for shard
+  boundaries, genuine ordinary Git recovery, malformed/changed metadata and
+  matching-digest unequal-byte counterexamples. All new controls are **UNRUN**;
+  no archive capture, compression, case mutation or new fit claim accompanies
+  this source-only batch.
+- Retain the initial unrun source seal and correct finalization after peer
+  review: both planners recheck all complete inputs and component outputs after
+  writing their final ledger, then verify that ledger again. New whole controls
+  mutate inputs, earlier components or the ledger at that exact write boundary;
+  failures retain outputs and cannot return success. These controls are also
+  **UNRUN**; no receiving qualification is claimed.
+
+Adopt the authentic original-evidence D/I history with an ordinary merge and retain the full 1,971-member capture receipt. Complete archive recovery in both present and absent states and three full CI-report/measurement continuity comparisons passed before adoption. The merge changes only the archive index relative to the integrated translator head. The receipt is copied and read back byte-for-byte; no original archive is retired. The case allocation is 499195904 bytes under its unchanged 500,000,000-byte cap, with a 262,144-byte reserve. Complete latest-evidence fit, final actual-tree checks, fresh generation and the full JavaScript gate remain pending. No local Rust execution, runtime parity or publication is claimed.
+
+Repair the complete original-parent Eq fixture to use the genuine complete tracked module graph and its JSON-before-derive source context, rather than treating an unrelated complete file as the crate root. Preserve both original source digests, every field and variant, all seven cases and their deadlines. Retain all three existing mixed Eq/Serialize source controls: payload Eq is independently source-proved, while the existing macro/type/conditional refusals and unsupported Serialize payload obligation remain mandatory. Both whole files remain UNRUN after this fixture-only draft; no production authority, parity, speed or Rust result is claimed.
+
+### Changed
+
+- Add an explicitly unverified language-rule draft for the complete pinned core `Option::ok_or` body. Genuine canonical Option/Result layouts and original caller syntax are checked before ordinary let/match specialization; receiver and eager error bindings are privately retained and freshly reconstructed through serialized meta. Both arguments evaluate once in order, including the unused error for `Some`.
+- Add whole JavaScript/strict-TypeScript source tests for original ActivityPub `require_string` and dependent `validate_activity`, scalar/borrowed-string boundaries, eager effects and errors, custom owners and copied/mutated proofs. Independent Rust edge source is added for gated CI only. No tests or Rust tools have been run for this draft, no generated outputs are edited, and no executable gain or complete parity is claimed.
+
+### Source-only immutable subtree eligibility reuse
+
+- Reuse only complete positive immutable plain-JSON subtree validations through private weak identities. Postorder records retain full logical cell count and maximum relative height; every occurrence, including aliases, still charges the original 200,000-cell and 160-depth eligibility budgets. Incomplete, cyclic and over-budget parents do not gain a positive record. There is no negative mutable-input memo or new semantic authority.
+- Rotate the private WeakMap at 4,096 records without a strong owner/key list. Native initial/live qualification still precedes memo bookkeeping; changed hooks retain the complete original serializer path. Existing encoded-entry limits, every left-side serialization, original hashing and full source/proof reissue are unchanged. Bounded scalar eligibility counters support later measurements.
+- Retain the complete original helper and draft eight independent whole-file oracle cases for exact bytes, repeated aliases, depth, mutable/proxy/accessor/cycle fallbacks, rotation, copied inputs/facts, and late/cold callback traces. All original nine 198 cases remain byte-identical.
+- **UNRUN:** no engine, TypeScript, Rust, generation or performance qualification accompanies this source-only draft. The fresh current-only diagnostic measured immutableJson at 15.315867 sampled self seconds; its 86.1658-second total and complete output equality with a different-compiler baseline do not establish a causal speed comparison. The bounded memo may rotate within a large original subtree; improvement still requires actual measurement.
+
+### Changed
+
+- Draft source-qualified primitive `f64` slots for the existing registered `serde_json` Value/Number contracts from their complete pinned original exports, layout and method signatures. Canonical Option declarations and generic arguments retain the same qualification through checked serialized meta; both original feature branches remain retained, and no serde implementation or feature selection is granted.
+- Draft explicit shared-f64 value reads with a separate narrow original standard Copy boundary, exact reference-depth/type/lifetime preservation and original Host checks. Implicit reference method dispatch remains a separate source-qualified trait-scope prerequisite; no generic reference coercion or runtime adapter changes are added.
+- Add eight whole JavaScript/strict-TypeScript source tests and independent Rust edge-case source, all **UNRUN**. The complete actual-root `safe_number` case also requires the separate private method-dispatch prerequisite and retains its 60-second bound. Preserve the six different historical payload-owner witnesses and the independent float-range refusal; no executable gain, whole-root performance qualification or complete parity is claimed.
+
+Document independent review of reported JavaScript case durations: a synchronous Node case may report a pass despite exceeding its declared timeout. Require duration breaches to remain performance failures, preserve complete cases and limits, and distinguish bounded diagnostics, failed comparisons and changed compiler inputs from verified speed gains. No test limit, gate or implementation is changed by this guidance.
+
+Draft a reusable source-qualified external anonymous-trait closure with the complete checksum-locked base64 package and licenses. Bind source capture to genuine complete Cargo inputs, and preserve root-shadow, unknown-route, producer and alias refusals. Original core prelude Send/Sync, conditional attribute syntax and complete private package capture pass their source cases. Complete external closure remains blocked by sibling derives under unknown conditional documentation/no_std scopes: after two earlier five-case failures, the complete six-case drafting file passes two and fails four in each engine. No positive external namespace or implicit float dispatch is admitted. A private all-branch namespace projection and unchanged complete generated-output proofs remain required. TypeScript execution remains unrun; no Rust tools are used locally.
+
+Stage-one successor drafts private complete builtin output-syntax candidates for the original registered Copy, Clone, Debug, PartialEq and Eq callbacks. Copy shares its exact existing source validator with the owned proof; caller/source-view/item/invocation joins and complete old-leaf/callback oracles are retained. These source-only UNRUN candidates grant no caller-owner, namespace, trait or runtime authority. The conditional namespace projection and full190 reissue remain required; original external trait calls remain refused and no production gain is claimed.
+
+The first complete Stage-one receiving file registered all eight cases and exposed a wrong Copy callback path in the new candidate table plus a fixture error-class expectation. The source-only repair selects the actual `bounds::expand_deriving_copy` registration and retains the established u8 RangeError; the full original registration order is asserted for all eight candidates. Earlier failures remain retained, and the repaired whole file is UNRUN. No caller ownership or runtime admission is added.
+
+Stage two adds an UNRUN private original-source candidate superset. It retains complete module tokens, imports, nested documentation/attributes/bangs, both cfg alternatives and every custom/ambiguous owner alternative alongside registered builtin output syntax. Existing optimistic lint metadata never resolves a caller owner. Expansion-position, whole-package completeness, independent doc/lint noncompetition and fresh complete190 output reissue remain pending; no new external namespace, trait call or runtime behavior is admitted. Eight independent complete-file controls are drafted, including actual unchanged Engine inputs and ordinary JS/strict TypeScript execution separately from source candidates.
+
+### Added
+
+- Draft a reusable sequential complete-evidence capture driver with authenticated
+  resume. Keep each small shard within 64 MiB logical bytes and each oversized
+  original intact under the existing 128 MiB member bound. Preserve preset 9,
+  170-second tool/180-second whole-job budgets, 1 GiB aggregate sampled RSS and
+  all original packet/receipt/source identity checks. Disk pressure stops before
+  the next workload and retains successful outputs, failures and partials.
+- Reuse complete physical or ordinary ancestor-Git archive bodies only after
+  fresh full archive/member/original authentication. Bind the actual producer
+  Git blobs and bytes separately from the strict archive-witness ancestry;
+  genuine byte-preserving cherry-picks do not become fabricated history.
+  Add full-byte/alias/changed-input/finalization controls through existing
+  JavaScript test discovery, preserving every old whole-file control.
+- This source-only driver and all 13 new Python controls are **UNRUN**. The
+  previously measured first archive and corrected readback remain unchanged;
+  no new capture, compression, case adoption, original retirement, fit,
+  translation authority or publication qualification accompanies this draft.
+- Retain the first complete receiving failure. Correct only its synthetic Git
+  fixture: recreate the archive parent Git pruned before injecting the final
+  dangling link. Use a small clean per-test Git repository containing all six
+  exact production code files for default source checks, preserving the real
+  capture/decode/producer/ancestor checks and the original 45-second Python
+  deadline. The first Node file's old seven JavaScript controls passed; its new
+  Python group had 12 passes and one fixture error. This corrective source is
+  **UNRUN** and does not change the production driver or any assertion.
+
+### Changed
+
+- Drafted a generic private census of source-written trait methods, associated values/types, exact receiver signatures and every conditional member alternative. It binds the complete original source/view/module/profile and exact item identity, and retains supertrait/generic, attribute-owner, documentation and nested/global output obligations instead of selecting a target or trusting a public digest.
+- Added eight whole source/identity/refusal and JS/strict TypeScript cases, including the complete retained original `RangeBounds` and `PartialOrd` files. A closed own-trait member absence is not caller namespace closure, receiver applicability, method selection, type/Copy authority or runtime admission. Actual floating range membership remains refused pending complete method-scope and source-body proofs. All new cases are UNRUN; no executable or performance gain is claimed.
+
+### Changed
+
+- Drafted private source-candidate facts for literal `cfg_attr(P, doc = "...")` alternatives using the complete pinned Rust compiler registrations, parser and expansion bodies. Facts retain all input tokens and the unknown predicate; they grant no caller ownership, item availability, namespace, runtime or inert-attribute authority. Active or unknown doc alternatives remain unresolved until a separate complete original caller-namespace proof exists; `no_std`, arbitrary attributes and documentation macro expressions remain unresolved.
+- Added eight whole JavaScript cases covering candidate identity/source mutation, malformed predicates, imported/local/ancestor/unknown-output attribute scopes and unchanged known-false absence through complete parent/child JS and strict TypeScript execution. The earlier global-inert proposal is retained as rejected source evidence, not integrated. Source-only draft: all new tests are UNRUN and no new executable gain is claimed.
+
+### Changed
+
+Separate completed comparison operands from descendant eligibility records in
+the private immutable JSON cache. Both weak-map partitions together retain at
+most the existing 4,096 positive scalar records. Large child walks no longer
+evict every previously checked operand. Logical cell/depth limits, encoded-byte
+limits, source checks and fallback behavior remain unchanged. Preserve the full
+previous helper and add owner churn/rotation regressions. This optimization does
+not establish full translation, runtime parity or a measured performance gain.
+
+### Changed
+
+- Protect larger completed immutable JSON subtrees from small AST-token churn
+  with separate bounded weak-map retention cohorts. Complete operands, small
+  subtrees and large subtrees together keep the existing 4,096-record maximum;
+  all logical validation and encoded-byte limits stay unchanged. Retain the
+  complete previous helper and add boundary/reuse controls. The preceding
+  owner-only partition passed focused tests and preserved all full-graph bytes,
+  but its separate diagnostic established no performance gain. Full translation
+  and runtime parity remain unproved.
+
+### Added
+
+- Draft independent source-declared Node case-duration qualification using the
+  public structured event stream and unchanged built-in TAP reporter. Join
+  complete actual source spans/names with installed TypeScript 5.9.3; reject
+  observed finite-limit breaches and ambiguous source/deadline joins even when
+  a synchronous Node case reports a pass. Retain defaults and unobserved cases
+  honestly, without guessed limits or semantic/runtime authority.
+- Route complete forward, reverse and native-TypeScript compiler test cohorts
+  through a bounded whole-file runner. Preserve original case limits, discovery,
+  concurrency, complete TAP and failed events. Always upload full source/audit
+  and raw receipts in CI and preserve all existing mandatory checks.
+- Add eight complete source/event/subprocess controls and extend existing whole
+  workflow/local guards for audit bypass and receipt loss. All are **UNRUN**;
+  no tests, compilation, Rust, generation, archive adoption or push accompany
+  this isolated source-only draft.
+- Preserve existing string fixture names through explicit template registration;
+  qualify string-producing addition while refusing arbitrary dynamic options.
+- Bound source/control reads before allocation and reject concurrent growth or
+  truncation after positional readback and a one-byte EOF probe. The additional
+  growth-control source is also **UNRUN**.
+- Retain owned Unix group escalation after direct-child close; await group
+  disappearance within the unchanged outer budget before success. Add a ninth
+  complete ignored-stdio/SIGTERM-resistant descendant control with full identity,
+  signal tape and finally cleanup. This successor remains **UNRUN**.
+- Nine core controls passed both receiving engines; related integration exposed
+  a temp-root fixture error and an overbroad conditional-step check. Correct the
+  fixture root/cwd and exempt only the exact validated evidence uploader, while
+  retaining forged conditional/check and continue-on-error refusals. These
+  related whole-suite repairs remain **UNRUN**.
+
+### Fixed
+
+- Inspect every original inherent implementation when selecting the unique
+  source method for a registered JSON float slot. The complete pinned Number
+  source has two separate implementation blocks; retaining both avoids a module
+  initialization failure without admitting duplicate method declarations or
+  selecting Cargo features. Add original-source span and census regressions
+  while preserving the complete existing tests and their deadlines.
+
+### Fixed
+
+- Continue configuration scanning across leading and interleaved outer Rust
+  comments, preserving original token arrays and exact attribute spans. Comments
+  before a configuration attribute can no longer hide an inactive or unresolved
+  condition. Documentation comments gain no owner or inertness authority. Add
+  whole-source and checked JavaScript/strict TypeScript regression coverage.
+- Pass each explicit profile into the documentation-comment regression so its
+  active, absent and unresolved alternatives are all actually exercised.
+
+### Fixed
+
+- Correct the eager Option body fixture's visibility oracle: the existing
+  parser deliberately records its signature from the original `fn` token.
+  Check `pub` independently in the complete pinned source and join the exact
+  original owner, member and function/body spans without changing production
+  selection, the eight complete cases or their deadlines. The added assertions
+  are source-reviewed and UNRUN; no runtime qualification is claimed.
+
+Add an isolated private source parser for namespace-position evidence. It consumes an exact genuine original source-view function or trait/impl member, checks its complete signature/body and EOF, and retains unknown expression, statement and type macros as their original opaque token trees. Private frame and position accessors rejoin the complete original module, item, member, profile and syntax identities. A source-superset collector can retain these positions without selecting any macro or attribute owner.
+
+Retain the complete official Rust 1.89 statement parser (46,706 original bytes), its upstream revision, archive/source hashes and license references alongside the already pinned parser, expander and reduced-resolver originals. The statement delimiter/semicolon/tail distinction follows those actual source routes. Ordinary block-local imports and procedural stubs remain distinct from unresolved global macro exports: the original builtin replacement branch, enclosing attribute transformations, unknown item-position output, caller availability and all owner/namespace/type/runtime obligations remain pending. This adds no Host hook or executable-body admission.
+
+This source-only draft is UNRUN. Its nine complete new cases and eight affected source-superset cases are prepared for a later Node/Bun lease, including the complete original Engine parent, exact Expr/Stmts/Ty positions, all-branch hidden exports, copied/foreign proofs, hostile and changed-intrinsic ingress, partial grammar refusals and separate ordinary JS/strict-TypeScript execution. Unsupported opaque patterns, qualified type paths, async blocks, higher-ranked bounds and local const/static items still refuse. No original Rust body or existing deadline changes, full-gate result or production gain is claimed.
+
+Receiving repair: the first complete Node/Bun groups retained actual Engine range-punctuation, attribute-fixture lookup and Bun cold-query-import failures. Join only contiguous original dot/dot/optional-equals punctuation for exclusive/inclusive ranges, preserve every backing token and missing-inclusive-bound refusal, select the fixture by its actual post-attribute declaration header, and exercise cold guards through complete fresh physical leaf copies with recorded import relocations and distinct issuer identities. All nine and eight whole cases and their original deadlines remain; these repairs are source-only and UNRUN.
+
+### Changed
+
+- Draft bounded syntax-only reuse for private authenticated standard/package
+  source reads. Full original caller, dependency, namespace and hash validation
+  remains fresh. Eligible LF sources replay the original lexer's final native
+  whitespace test to preserve legacy RegExp state; changed intrinsics and
+  uncertain inputs keep the complete original parse. Private frozen snapshots
+  return fresh mutable ordinary AST records, not namespace or proof authority.
+- Retain complete original consumers/parser/license witnesses and eight whole
+  source, callback, state, identity, refusal and JS/strict TypeScript controls.
+  Common-issuer initialization is explicit; fresh helper imports preserve
+  observer tapes and exact original module URLs retain source-profile assets.
+  Initial receiving passed seven of eight cases in both engines; the complete
+  cold-freeze report exceeded its unchanged 8 MiB child transport bound. Retain
+  that failure and losslessly transport entire reports as gzip after restoring
+  observers, with the same child cap and bounded complete logical decoding.
+  A later complete Bun trace exposed the shared issuer loading at a different
+  point; preload its exact relocated file URL before both observers. Full failed
+  wires remain retained. This successor is UNRUN; no full qualification or gain
+  is claimed.
+
+### Changed
+
+- Draft bounded native-only reuse of fully completed plain-data freeze DAGs in
+  original builtin derive proof construction. The exact original recursive
+  freezer remains the whole-input fallback before any new freezing when inputs,
+  intrinsics, cycles, hidden fields, prototypes or optimization limits are
+  uncertain. Every shared occurrence retains its complete relative height and
+  logical cell cost. Weak records contain scalar costs only, never source roots
+  or authorization. All source, namespace, JSON, hashing and private reissue
+  checks remain unchanged.
+- Retain the complete original consumer/qualifier/license and whole behavioral,
+  fallback callback, cold import, private proof and JS/strict TypeScript controls.
+  This source candidate is UNRUN and claims no performance or executable gain.
+- Correct two invalid quoted newline literals in the test-only oracle export and
+  full-vector writer after the first receiving run failed before case registration.
+  The original failed source is retained. All eight cases, bodies and limits and
+  all production bytes remain unchanged; this fixture successor is UNRUN.
+- Saturate diagnostic expanded-DAG cost instead of falling back on that cost
+  alone: the original recursive freezer has no expanded-cell limit. Actual
+  unique scratch, own-cell and shared-path depth limits remain unchanged. Retain
+  the same logical DAG input and complete independent legacy/current node/edge
+  census, descriptor, sharing, freezing and precise-coverage controls under the
+  original case and child limits. This successor is UNRUN and unmeasured.
+- Repair receiving-oracle setup without changing production: canonicalize the
+  genuine inspector leaf URL, retain each complete raw/result before assertions,
+  and compare builtin crypto/proof reports in separate fresh children with the
+  same explicit common issuer bootstrap and genuine source context. Retain full
+  cold/warm/reissue tapes and compressed reports under the original limits.
+  Prior failing reports remain retained; this test-only successor is UNRUN.
+- Add one explicit nonrecursive original `freeze(null)` reporting probe after
+  inspector coverage starts. Require its null return and exact one script and
+  function; retain raw totals and the separate probe/optimizer call counts.
+  Optimized inputs still require zero optimizer legacy calls, while uncertain
+  bounds require additional original calls. No missing report becomes zero.
+  All existing inputs, limits and complete before-assert reports remain.
+
+Added an unverified, source-only standard macro output prerequisite. The narrow
+consumer compiles the complete pinned alloc `vec!` definition, selects its actual
+semicolon arm, and observes the complete genuine expansion with privately parsed
+original expression captures. Exact private function, invocation, token-tree,
+capture and output identities are rejoined. Explicit imports and matching written
+guards remain candidates; competing bindings and every conditional alternative
+remain pending. No caller macro owner, cfg availability, global namespace, Vec
+allocation, Clone, type or runtime authority is granted. No Host consumer changes.
+
+The additive output grammar accepts definition-owner/identifier paths, calls,
+parentheses and exact original expression slots. Unknown output syntax, hidden
+items/attributes/definitions and nested opaque capture macros refuse. Original
+calls inside accepted captures remain unresolved syntax, not effect proofs.
+
+Complete official edition-panic, core/std panic and alloc package sources are
+retained with URLs, revision, decoded/container lengths and SHA256 values and
+licenses, alongside existing complete pinned inputs. The source map retains both
+edition and panic-abort alternatives. Actual panic/unreachable ownership,
+expansion-stack edition and nested formatter output closure remain unproved.
+
+Nine whole JS tests are drafted, including both complete original Engine calls,
+full package/module inputs, alias and competing-owner controls, private identity
+and source mutation refusals, hidden output/capture syntax and zero-callback
+ingress. An independent ordinary checked program exercises JS and strict TS; it
+does not execute Vec output. All new tests are UNRUN. No executable-body gain,
+whole compiler gate, regeneration or parity result is claimed.
+
+The first complete receiving file registered nine cases in each engine and
+finished 4/9 in both; the actual complete Engine two-call case passed. Full
+failed sources, logs and vectors remain retained. A fixture-only successor keeps
+all original statement-position calls as exact refusals, places intended
+positives and negative controls in original let-expression contexts, retains the
+binary capture as the unchanged token engine's explicit unsupported frontier,
+and uses a complete supported method-call capture for the independent positive.
+All nine cases and deadlines remain; production bytes are unchanged. This
+successor is UNRUN and grants no additional authority.
+
+The next complete receiving file finished 8/9 in both engines. Its remaining
+case expected the narrow arm refusal where the unchanged engine instead stops
+at the original repetition-lookahead frontier. A second test-only correction
+retains each complete arm/input and both direct-engine and consumer outcomes
+before assertions, requires that exact TypeError for the four affected inputs,
+and keeps the empty arm's separate selected-rule refusal. Original statement,
+binary and EOF controls and every deadline remain. This correction is UNRUN;
+no engine or production rule changed.
+
+### Tests
+
+- Qualify the complete original namespace parser, conditional namespace syntax,
+  static source syntax cache and local/workflow deadline integration: all 55
+  cases passed under both Node and Bun with unchanged deadlines and installed
+  TypeScript 5.9.3. The nine core deadline controls also passed both engines.
+- Retain the preceding failures and complete observer reports. These focused
+  results do not establish generated freshness, complete translation, native
+  parity or a green full gate. Rust verification remains in CI after every
+  JavaScript stage passes for the same commit; no Rust tools ran locally.
+
+### Refactoring
+
+- Share the unchanged Cargo feature worklist between JSON macro and parser
+  source proofs. Keep normal dependency/default/optional/weak forwarding,
+  original queue bounds, callback text, root-read order and each private
+  source/profile issuer independent. Plain feature maps grant no authority.
+- Retain both complete original consumers and add whole behavioral, refusal,
+  callback-order and exact proof/hash regressions. This source draft is UNRUN.
+  No dependency test/OS flags, complete Cargo profile or runtime parity is inferred.
+
+### Added
+
+- Drafted the reusable language rule `cargo.external-default-positive-features.v1`:
+  genuine project-module/dependency/package association, complete original TOML
+  parsing, bounded feature activation, private positive proof, then source-bound
+  predicate observations. Its repository rule sequence is empty. It consumes
+  the separate 230 worklist without treating the returned Map as authority.
+- The registered ordinary direct default-dependency domain currently covers the
+  complete checksum-locked base64 0.23.1 package. Its original default forwarding
+  proves positive `std`, `alloc` and `simd-unsafe` membership. Additional unified
+  features stay unknown. Root flags, OS, target configuration and `test` do not
+  become dependency configuration; explicit feature overrides refuse.
+- Added private registered-profile and output tokens bound to the complete
+  original project module view, compilation profile, dependency proof and
+  package capture. Fresh complete source parsing and association checks remain
+  required on reissue. Copied tokens, foreign captures, changed profiles and
+  unregistered Cargo inputs refuse.
+- Copied all 20 installed @iarna/toml 3.0.0 package files unchanged (99,960 bytes),
+  including the ISC notice and original package metadata. The source index
+  retains every file's length/SHA and npm lock provenance. The npm tarball was
+  not independently acquired or verified. The upstream 1,421-line parser stays
+  intact as an explicitly identified copied-source exception. Its internal
+  Symbol bookkeeping is omitted only from the bounded fresh-parser Cargo-data
+  projection; every original TOML source byte and string-key value is retained.
+- Drafted five complete parser tests and ten complete private-default tests:
+  independent TOML goldens, full installed-source comparison, actual complete
+  Cargo/package sources, positive predicates and unknown branches, root-profile
+  independence, copied/foreign/mutated input refusals, renamed/default-disabled
+  dependency negatives, zero-callback ingress and an independent ordinary
+  checked/reparsed meta → JavaScript/strict TypeScript control. All fifteen tests
+  are UNRUN; no local Rust, runtime gain or full-gate qualification is claimed.
+
+The predicate observations never select namespace branches or resolve attribute
+owners. In particular, disproving the written `no_std` predicate does not prove
+the dependency's unit role, prelude, macro owners, source effects or runtime
+behavior. Existing acceptance and every unknown source alternative are unchanged.
+
+V1's complete source draft is retained with its peer-reviewed execution-boundary
+failure: public CJS parser prototypes could forge records despite pinned source
+bytes. The successor executes only the fully authenticated copied local CJS
+graph through a privately cached implementation with no public cache/class
+access. Live native qualification covers its used host surface; constructor
+realm and wrong-native receiver checks precede execution. Exact original
+dependency/package strings are the only accepted inputs, and only bounded plain
+Cargo data escapes. Complete fd/path source identities are checked before and
+after execution. No source/hash/proof/refusal result is memoized.
+
+All copied files remain unchanged. The private environment uses primitive string
+inputs (Buffer conversion disabled) and the upstream caught-unavailable optional
+util-inspection branch; broad Buffer/temporal/debug-inspection API equivalence is
+not claimed. The original direct parser API and its tests remain separate. New
+whole receiving controls cover preimport and late public parser/cache poisoning,
+native constructor/getter/proxy/wrong-family substitutions and changed, missing
+or linked executable source. These successor controls remain UNRUN.
+
+Private execution refusals use own diagnostic data with captured TypeError ancestry,
+so rejecting a hostile native stack-limit accessor does not call that accessor.
+Native refusal stack-text equivalence is not claimed. Source and hashing
+infrastructure retain the existing trusted-bootstrap boundary.
+
+The complete V2 draft remains retained with its peer finding: late capture of
+Function.prototype.toString could let a fake Function self-certify while
+retaining the genuine prototype. The successor observes every native candidate
+through the common issuer's original captured function-text operation, exposing
+only text and leaving all existing qualifier domains unchanged. A whole child
+control combines the exact spoof with a fake constructor and requires zero
+spoof or fake-execution callbacks. All fifteen cases and their limits remain
+unchanged and UNRUN.
+
+The first complete receiving pair is retained candidly: copied parser 4/5 and
+private defaults 1/10 under each engine. Node 20.19.4 has its own JavaScript
+ErrorPrepareStackTrace function, and Bun 1.4.3 exposes the initial host root as
+a Proxy. A bounded builtin-only observation retained full descriptors, function
+text and both runtime versions. The source successor permits only the captured
+initial host root in internal global acquisition; all derived/caller proxies
+still refuse. An unused own-data, nonproxy stack formatter is descriptor-pinned
+live. The copied grammar never reads native error .stack; cold/late formatter
+controls cover genuine complete Cargo, private malformed-input refusal and the
+pristine parser's malformed route without executing the hook. Accessors, proxies
+and descriptor changes still refuse.
+
+The exact original multi-key temporal fixture remains an installed/copied parser
+error reproduction. Independent plain local-time EOF and fractional-time
+multi-key positives retain the full temporal and numeric coverage. No upstream
+parser byte changed. All fifteen successor cases and original limits are UNRUN.
+
+A second complete receiving pair remains retained: copied parser 4/5 in each
+engine, private defaults 2/10 in Node and 1/10 in Bun. Its failures identified
+independent copied temporal class identity, private array content-type metadata,
+and actual Bun native accessor shapes. The next source successor is UNRUN:
+
+- Observe the seven exact lexical bookkeeping Symbols after execution of the
+  complete pristine parser module. Only those private identities, original
+  object kinds, exact flags and finite original content labels may be projected;
+  no class or Symbol escapes production. A fresh test-copy observer rejects
+  foreign same-description keys/tags, extra Symbols, wrong flags/content labels
+  and symbol accessors, while retaining the entire source/wrapper and census.
+- Retain exact observed Node shared anonymous and Bun distinct named native
+  poison accessors, Bun's native Symbol description getter and optional native
+  Date.toTemporalInstant field. Every descriptor remains checked live; these
+  operations are never called by parsing. Date's actual instanceof lookup now
+  additionally requires no own hasInstance override and the genuine Function
+  prototype parent, with zero-callback override/proxy-parent controls.
+- Compare independent temporal results by complete own fields, internal Date
+  value, ISO output and full prototype/constructor descriptor-source records,
+  retaining exact copied/installed source provenance. Distinct module class
+  identity is recorded rather than required to coincide. The original complete
+  error reproduction and all numeric/temporal assertions remain.
+
+The broader passive host-family observation is complete and retained separately;
+it executed no translator or parser. No existing source/refusal limit, case
+count, upstream file or namespace acceptance hook changed in this successor.
+
+V5's complete parser/default fifteen-case group passed in both receiving engines,
+while broader original-proof deadline/resource failures remain separate. A later
+source review found a cold-import ingress gap not covered by those passing
+cases: reflection operations were captured and called before qualification.
+
+The next UNRUN successor checks the same common issuer guard before capturing
+or calling reflection. Both helper and consumer latch failed cold qualification
+permanently, even if the host is restored before first use. Registry and source
+URL work begins only after checked entry. One appended common diagnostic
+capability uses its trusted captured TypeError ancestry and own primitive data;
+it calls no late reflection, coercion or native Error constructor. Existing
+common bootstrap/qualifier bodies remain byte-identical.
+
+The existing ninth case now covers cold, late and poison-import/restore-before-
+parse descriptor/prototype/apply/isProxy substitutions for helper and consumer,
+including Proxy isProxy and accessor variants. Every import stays inert, every
+use refuses with actual TypeError ancestry, and reflection plus stack-limit
+getter counters must remain zero. All fifteen cases, old inputs, source pins,
+upstream parser files and original case/child deadlines remain unchanged.
+
+Added an opt-in private source-flow prerequisite for the retained Rust 1.89 edition-panic generators. It preserves complete registered callbacks, both edition branches, arrays, qualified value candidates, shared closure-pattern syntax, original call slots, and the actual `std_path`/`PathSegment::from_ident` bodies. A private merged source capability never exposes its child profile to existing public issuers; existing factory defaults retain their original behavior and complete before-source fixtures.
+
+The initial whole eight-case JS/strict-TS file was drafted without local execution. No compiler-generator execution, concrete iterator/collection result, edition or hygiene selection, caller macro ownership, complete output closure, namespace admission, runtime capability, or parity gain is claimed. The namespace consumer is unchanged. A machine-readable eleven-item worklist retains the exact missing collection, constructor-owner, return-carrier, edition-stack, and nested-format contracts and candidate original input paths. Source-flow receiving checks are only a prerequisite; those genuine source contracts remain required for the planned consumer.
+
+The first complete receiving group retained four failures in each engine: the opt-in source parser mistook the actual edition `loop { ... }` for a record initializer. A source-only successor distinguishes the complete original loop and recursively retains its existing block/branch/assignment structure and unresolved `continue`/`break` operands. It preserves all eight cases and caps, existing default factories, pending authority flags, and complete failed sources and logs. The complete repaired eight-case receiving file passed both engines on Main f91977 (Node 6.786857542 seconds; Bun 6.003962 seconds), including strict TypeScript, with unchanged caps and source pins. This qualifies only the retained source-flow boundary.
+
+A separate source-only follow-up retains nine newly acquired complete official files and seven byte-exact archive aliases, all at the pinned Rust revision with full license and acquisition records. The opt-in private adapter observes the genuine whole `make_MacEager` definition/invocation expansion, all eight fields and methods, exact original type captures, and unresolved attribute/Default updates. A separate candidate return adapter associates actual original callback arguments with the complete retained `ExtCtxt::expr` recipe; it does not prove that method owner or execute unresolved calls. Initial and live native qualification precedes the new private lookups; an initially ineligible observer remains refused after hooks are restored. The preserved parent predates the common syntax/data qualification APIs, so receiving requires the explicit coherent-Main common issuer; no shared source was silently copied.
+
+The new separate eight-case collection-contracts JS/strict-TS file is UNRUN. The original eight-case file is unchanged. Source availability is not transitive collection closure: iterator macro expansion, allocator/specialization, Default/accessor behavior, owners, hygiene, edition stack, and nested formatting remain explicit work items. No complete dimensional theorem, namespace/runtime admission, consumer change, performance benefit, or parity gain is claimed.
+
+Before receiving the new adapter, source review found that its returned collection-source methods reached old private issuer lookups before the live guard. A collection-only successor checks the same permanent initial and fresh syntax/data qualification first in all five returned methods and the source-capability factory. The existing seventh new case independently checks get/set, global WeakMap and reflection hooks with zero callbacks, then verifies restored normal operation. Old source-access entry points remain unchanged; the complete V1 candidate is retained. This follow-up remains UNRUN.
+
+The first complete collection receiving batch passed all 53 cases in Node and 52 of 53 in Bun. Its only failure was the new seventh case: Bun reused the warm module for a query-only import URL. A test-only successor writes the complete original compiler-output leaf to a fresh physical file, mechanically relocates every relative import to the same active issuer and every import.meta.url occurrence to the original URL, verifies complete reverse/readback equality, and retains full original/copied source plus relocation and pre-assert outcome evidence. The file is removed in finally. Distinct function identity, both exact sticky refusal checks, all 36 capability-hook checks, all eight cases and original caps remain required. The original failed batch is retained; this repair is UNRUN.
+
+### Changed
+
+- Draft a bounded native-only allocation reduction in completed-data freezing:
+  validate already-enumerated own keys with individually qualified descriptors,
+  and avoid pending frames for scalar children already classified by that same
+  validation pass. Complete scalar cost accounting, shared-path heights, unique
+  node/own-cell/depth/cache bounds and whole-input fallback remain unchanged.
+  The exact original recursive freezer and every source, JSON, cryptographic and
+  private output reissue check remain unchanged.
+- Extend the existing whole callback oracle with a singular-descriptor observer;
+  keep all eight cases and original limits. The measured prior planner hotspot
+  motivates this source-only candidate, which is UNRUN and claims no speed gain.
+
+### Changed
+
+- Draft independent bounded weak cohorts for fully completed native-data freeze
+  records: 1024 whole-call roots, 2048 descendants of at least 64 logical cells,
+  and 1024 smaller descendants. The total remains 4096 scalar-only weak records.
+  Lookup checks every cohort without promoting hits. Full prevalidation, every
+  shared incoming height/cell charge, existing unique/own-cell/depth limits,
+  exact native guard and original whole-input fallback remain unchanged.
+- Retain the complete 233 helper/license baseline and add three independent
+  native-coverage and full-data controls for retention, threshold/rotation
+  separation and shared-bound refusals. Existing eight-case and whole-13 tests
+  remain byte-exact. This source-only candidate is UNRUN; structural retained
+  sharing motivates the draft without establishing a timing or speed claim.
+
+### Changed
+
+- Draft native-only JSON eligibility traversal without a descriptor table for
+  every object. Read each original own descriptor under the existing live
+  intrinsic guard, link the same child frames without scratch arrays and preserve
+  their order, every scalar frame,
+  alias charges, relative heights, cache cohorts, byte and logical bounds.
+  Accessors, proxies, hidden fields, symbols, sparse arrays and incomplete roots
+  still take the whole original stringify path before receiving memo authority.
+- Extend both existing complete observer matrices with singular-descriptor
+  replacement. Preserve their case counts, complete original source witnesses,
+  callback tapes and deadlines. The prior full-project CPU profile identifies
+  descriptor-table construction as an eligibility hotspot; this source-only
+  candidate is UNRUN and makes no speed, parity or source-authority claim.
+- Keep inherited numeric prototype getters/setters unobserved by private scratch
+  storage. A first source-only draft used an unsafe scratch-array append; retain
+  that draft and add the independent native-stringify callback regression before
+  qualification. All original cases and deadlines remain unchanged.
+
+### Changed
+
+- Draft storage-only reuse of serialized immutable private conditional-source witnesses through the existing bounded JSON cache. Genuine source/caller joins and every fresh hash and byte-length call retain their original bytes and order. No proof, source validation, namespace resolution, or full output reissue is cached.
+- Retain the complete before-source/license and independent fresh-process original/current proof, identity, cryptographic, observer, refusal, and bounded-cache controls. Existing cache limits and old test deadlines remain unchanged. This source-only candidate is UNRUN; no deadline qualification or speed claim is made.
+
+### Changed
+
+- Draft a native-data freeze planner optimization that checks its call-local
+  traversal records before the three bounded completed-object cohorts. Local
+  records and preexisting completed records are disjoint throughout planning:
+  completed records are inserted only after the full plan succeeds and each
+  object freezes. Every unique-node, own-cell, incoming depth and alias charge,
+  native qualifier, whole-input fallback and cache budget remains unchanged.
+  The complete current planner source and its predecessor are retained for
+  receiving checks. This draft is unrun and makes no performance or parity claim.
+
+### Changed
+
+- Connect the existing bounded translator progress reporter to retained evidence
+  for the complete original ActivityPub `Option::ok_or` check. When the test's
+  vector directory is enabled, append full phase records and elapsed times
+  during its existing translation. A prior 300-second outer timeout returned no
+  project result; this diagnostic records the active phase before a timeout.
+  All eight cases, original source inputs, workloads and deadlines remain intact.
+  This source-only diagnostic is unrun and establishes no translation gain.
+
+### Fixed
+
+- Inspect the actual standalone translation IR in the eager `Option::ok_or`
+  refusal fixture. The standalone API returns `ir`, `javascript` and
+  `typescript`; the fixture previously read nonexistent `meta.functions`.
+  All fourteen original rejected inputs and complete source-preservation
+  assertions remain intact. The complete eight-case file still requires
+  receiving qualification; its earlier full-project timeout is retained.
+
+### Changed
+
+- Draft one module-private pool of completed native-data traversal records shared by builtin output consumers. The three lazy weak cohorts retain a combined 4096 scalar-only rows across all factories. Fully validated Debug and PartialEq route roots can therefore be reused by the enclosing proof traversal. Exactly four outer route freezes use the helper; their original self-recursive seen-WeakSet fallback closures remain byte-exact.
+- Every live native guard, whole-input refusal, cycle-specific factory fallback, incoming height/cell charge and real traversal limit remains unchanged. No public object identity, source check, fresh hash, JSON serialization or full output reissue is cached. Complete before sources and four independent equivalence/coverage controls are retained; the old eight, three and thirteen cases remain unchanged. This source-only draft is UNRUN and makes no performance or qualification claim.
+
+- Fixture-only successor (UNRUN): transport the complete proof report through an explicit reference/string envelope, preserving prototypes, own descriptors, array holes/lengths, scalar distinctions and graph sharing. The prior complete payload wire retained 96,273,652 bytes of redundant expanded JSON and correctly exceeded its 64 MiB decode bound. The full envelope, wire and roundtrip are retained before comparison; 60-second cases, 10-second Node children, 8 MiB wire and 64 MiB decoded-envelope limits remain unchanged. No report fields, original source strings or cryptographic inputs are filtered.
+- Source review of the first envelope draft found that nonstandard array prototypes could lose Array identity during reconstruction; the successor explicitly refuses those arrays before reading their own fields and retains zero-getter/unchanged-array controls. The rejected draft remains preserved.
+
+### Added
+
+- Draft a private live-parser association from actual anonymous external trait lookups to the genuine registered Cargo default issuer. The optional context refines only one complete original crate-root `cfg_attr(..., no_std)` from a diagnostic-free unknown predicate to false with a std-only positive fact. Full original tokens, spans, sources and both observations remain available; member conditions, routes, supertraits, all other configuration and owner/effect obligations remain unchanged.
+- Both existing conversion callers pass their actual parser. Copied, stale or explicitly invalid contexts refuse without reverting to the legacy two-argument metadata API, whose complete old source/license and callback reports are retained. No global namespace, prelude, method, runtime or parity authority is added. The old external six cases already had positives; no historical admission gain is claimed.
+- The new complete eight-case JS/strict-TypeScript file is SOURCE ONLY UNRUN, including full private joins, frame mutations, condition/source forgeries, unknown/caller refusals and complete legacy observer controls. Original test files, source profiles, compiler limits and deadlines are unchanged. Receiving and complete gate qualification remain pending.
+- The first coherent receiving pair completed with the new file at 2/8 in both engines and the old external source file at 2/6; the shared refusal comes from unrelated original derives in the complete base64 engine module, whose output effects remain unproved on this path. The old source and complete failed reports remain retained. A source-only cold fixture follow-up now copies the complete helper and consumer to fresh physical module files, reversibly relocates imports to the same authentic issuers, and retains both full sources before import. This prevents the new import cycle from warming the subject before its existing poison/restore checks. All ten default-fact cases, 34 reflection controls and original deadlines remain unchanged; this follow-up is UNRUN and does not weaken the production guard or resolve the derive-output obligation.
+
+Added a source-only private normal-return substitution stage over complete genuine registered compiler sources and independently issued original function/member frames. It retains the whole generated carrier's eight fields/constructors and all nine real MacResult override bodies, then substitutes the selected explicit field through an exact original accessor. Unknown record-update effects, unparsed fallback bodies, wrappers, attributes and type/caller ownership remain obligations.
+
+The same generic rule reduces the complete original P function body by binding the actual Expr argument once into its written Box::new call; it preserves original caller evaluation order separately from body argument order. This is an original-body relation, not a Box allocation/transparency theorem, selected method or macro owner, empty-attribute proof, complete dimensional theorem, namespace consumer admission, runtime capability or parity gain. The complete source/graph/edition/Default/collection worklist remains unresolved.
+
+The new whole eight-case file, including independent strict TypeScript controls, is UNRUN. Existing source/proof APIs and tests remain unchanged. No Rust or engines ran locally. The prerequisite physical-cold collection repair separately passed the complete original eight cases in both receiving engines on Main21451845f6a4c7a2cc6099af8497ba50761f4697 (Node1.108304417s/Bun1.097210375s), with all original caps/source pins and actual TypeScript5.9.3; that result does not qualify these new return contracts.
+
+The source review successor uses own data-property writes for captured options and a hook-free primitive SameValue comparison. Existing eight cases add inherited setter and late Object.is callback controls without changing case or strict TypeScript limits; all new controls remain UNRUN.
+
+The first receiving run exposed a fixture expectation error: installing an inherited setter changes Object.prototype, so the genuine original namespace parser refuses that shape before the setter can execute. The fixture successor requires that exact downstream TypeError and zero callbacks, restores the prototype before assertions and verifies normal private use afterward. Production guards and the late Object.is positive are unchanged; this correction is UNRUN.
+
+A coherent follow-up fixes the same complete object-key comparison exposed by 248 receiving: genuine copyMetadata sorts object keys and uses null-prototype records, while arrays keep exact positional order. The return-carrier scope check now compares every own object key/descriptor/value without requiring raw insertion order. Raw, canonical and reordered non-null profile positives plus changed flags, array order and zero-callback profile accessor negatives extend the existing authored case; no counts/caps or native/private issuer checks change. This latent shared-boundary correction is UNRUN, not a previously observed 242 profile failure.
+
+### Changed
+
+- Draft compact scalar costs for the private completed-data traversal cache. Each already completed immutable data graph records its existing height and saturated logical cell count in one exact integer instead of allocating another record object. The 4096 weak slots, live native guard, original legacy fallback, complete prepass, unique-node/cell/depth limits and public return identities remain unchanged.
+- The encoding uses base 200002, cells 1 through 200001 and height 1 through 160; its maximum 32200321 is below 2^25, so multiplication, remainder and signed integer height extraction preserve both integers exactly. In-progress traversal states remain separate objects and retain their cycle/done checks. Existing whole reuse/rotation/depth/cycle/refusal and complete proof/source/hash controls must qualify this source-only draft in Node and Bun. No speed, memory or complete-parity claim is made before receiving verification.
+- The same draft stores the pending native traversal work as value/depth/exit-state triples in one dense stack, removing per-edge and per-exit frame objects. Reverse child pushes and state completion order remain exact. This allocation-only substitution is valid only under the unchanged native guard; it adds no callback or source admission.
+
+### Changed
+- Keep complete freezer proof reports in lossless bounded reference/string files, compare every old/current envelope byte using fixed windows, and inspect one compact envelope in each parent. Full decoder/re-encoder and original JSON byte roundtrips run after crypto restoration inside each existing proof child; new shared-freezer children remain Node, and the older suite keeps `process.execPath` (including actual Bun children). All original sources, proof graphs, descriptors, cryptographic input bytes and failure alternatives remain retained. The original four/eight cases and 60-second case, 10-second child, 8 MiB wire, 64 MiB envelope and 3 GiB aggregate limits stay unchanged. This source-only draft is UNRUN; moving work into the child may still exceed its existing deadline and does not claim runtime or memory qualification.
+
+### Changed
+
+- Draft a negative-only JSON storage optimization: after the existing encoded-cache hit/LRU path, a live-qualified private completed-data traversal cost above the unchanged 200000-cell JSON budget sends the value directly through the same ordinary JSON.stringify fallback. It never grants JSON eligibility or source, checker or namespace authority, and never caches an oversized proof or skips fresh hashing/reissue.
+- Complete data traversal and JSON eligibility count each unfolded object/scalar occurrence, exclude array length, and charge every shared edge. The completed traversal cost saturates at 200001, which proves this eligibility attempt cannot succeed. Missing or uncertain private costs retain the full prior walk. Cache limits, native guards, public output identity and exact encoded bytes/error behavior remain mandatory.
+- Internal storage telemetry intentionally records completedBudgetRefusals. A skipped doomed eligibility walk also avoids its partial positive-descendant memo warming and associated traversal counters; these statistics are not asserted equivalent to the previous strategy. Complete before implementations, full source/data/byte observations and independent boundary/refusal controls accompany this UNRUN source-only draft. No speed, memory or full-parity claim is made.
+
+The private completed-data freeze planner reuses its temporary own-key array for object edges, counts scalar occurrences during the existing descriptor scan, and completes leaf records without pending exit frames. Every alias occurrence, depth check, bounded cohort, full prevalidation and unchanged legacy fallback remains required; this changes temporary allocation and traversal work, without granting source or runtime authority. Existing complete freezer, JSON-budget and builtin proof suites remain required under their original limits; no performance or full-gate qualification is claimed by the source draft.
+
+Added a private producer-conditional complete-output effect lemma for the exact original standard repeat-vec definition and genuine caller TT/capture/position lineage. The positive grammar walks the whole emitted expression and every original capture, excludes opaque nested macros, attributes, definitions, exports, imports and item-producing slots, and proves only that this selected producer emits none of those namespace producers. Target calls remain unevaluated expression syntax: macro owner selection, standard attribute ownership, configuration, Vec/Clone/allocator behavior, type checking and runtime/namespace authority remain unresolved.
+
+All three actual Engine panic/unreachable inputs retain complete original TT plus both std/core editions, both panic_immediate_abort alternatives, every registered generator and the explicit wrapper/Default/collection/nested-format effect worklist. Their private pending records cannot satisfy the required complete-effect accessor. No Expr-root, source-availability, public boolean or familiar-name shortcut closes them. The new complete eight-case JS/strict TypeScript group is source-only UNRUN; all existing tests and production APIs remain unchanged. No engine or Rust ran locally, and no parity or executable-body gain is claimed.
+
+The first complete receiving group passed both actual-package cases but refused all authored non-null profiles because the new final scope comparison required raw object insertion order to equal the genuine issuer copyMetadata canonical key order. The successor compares every own object key, data descriptor and value independently of insertion order, preserving exact array positions and every existing fresh private profile check. Independent raw/canonical/reordered-profile positives and stale flag, array-order and zero-callback accessor controls remain inside the original eight cases/caps. This repair is source-only UNRUN; all failed receiving sources and streams remain retained.
+
+### Changed
+
+Completed native data-freeze records retain descendant safe-scalar and no-own-toJSON flags in their existing bounded scalar storage. The private JSON byte cache may use those flags with the same cell/depth bounds after both live native qualifications; all unknown inputs retain the full prior eligibility walk and every JSON serialization, hash, private source join and output reissue remains required. The old negative budget shortcut keeps its meaning. Eligibility telemetry explicitly distinguishes the skipped walk and its different descendant warming.
+
+The complete previous helper sources/license and a new whole eight-case equivalence/refusal file are retained. BigInt/symbols, own noncallable toJSON, hostile objects, cycles, repeated DAG costs, depth, saturation, cohort eviction and native hooks remain conservative. Fresh process proof observations keep their actual parent engine and full source/hash/sharing reports under the existing 10-second, 8 MiB wire, 64 MiB decoded envelope and 60-second case limits. All new checks are SOURCE ONLY UNRUN; original whole files and full-gate qualification remain mandatory, with no performance or parity claim.
+
+Original compiler function and schema fragment finalizers use the existing guarded completed-data freezer to seed its bounded scalar records before larger proof traversals encounter those fragments. Function cache identity, fresh schema identities and syntax copies, every source/hash/roundtrip operation, full prevalidation and each unchanged legacy fallback are preserved. No additional cache, record budget or authority is introduced; whole source inventory, freezer/JSON regressions and the original builtin proof suite remain required, with no performance or full-gate claim from this source-only draft.
+
+### Added
+
+- Add a reusable private Cargo invocation planner for explicit modeled root-library build, check and test requests. The complete checked request binds genuine parser, Cargo, lockfile and captured package sources; unsupported flags, wrappers, configuration injection and incomplete or replayed requests refuse.
+- Keep the modeling boundary explicit: the plan observes no actual environment or CI command and grants no dependency-unit, cfg, namespace, runtime or native-parity authority. A later source-derived unit rule must consume the private plan, and Rust CI must independently check its real invocation against the model before claiming parity.
+- Add eight complete source and receiving controls, including full source/hash observation, mutation during source reissue, private identity, zero-callback native ingress, sticky physical cold import, and independent JS/strict TypeScript execution. Source-only draft: every new case is UNRUN; existing compiler consumers and test limits are unchanged.
+
+### Added
+
+- Draft complete pinned Cargo 0.90.0/Rust 1.89.0 unit-source evidence and a private composition with the genuine modeled invocation issuer. Three complete original bodies retain conditional mode transfer and session projection; all 39 package originals and development dependencies remain inputs.
+- Manifest deserialization, schema Option/default ownership and normalized constructor forwarding remain explicit open obligations. The strong unit consumer refuses: no child cfg profile, dev-dependency exclusion, namespace, runtime, actual-environment or native-parity authority is issued. A root Test request can describe a conditional dependency Build transfer without inheriting its root test flag.
+- All eight complete JavaScript/strict-TypeScript controls are source-only and UNRUN; original 60-second case and 20-second TypeScript child deadlines remain. No consumer integration, Rust execution or admission gain is claimed.
+- Reauthenticate complete well-formed decoded source strings against raw length/SHA pins, including all 39 predecessor package texts; check live parsing/reflection guards immediately after callback-capable work. Independent source/package decode forgeries and cold/late parser controls remain within the same eight unrun cases and deadlines.
+- Keep the original raw parser profile in a descriptor-only snapshot for final freshness, while the genuine existing issuer validates normalized profile meaning. Raw, canonical, reordered-key and stale/array-order controls preserve every original case deadline.
+
+- Add an opt-in, complete-source-qualified literal matcher to a separate private declarative engine. Existing default engines retain their literal refusal and private definition/expansion brands. Exact original TT occurrences, minus tokens, transparent exceptions and opaque forwarding remain associated with the actual expansion; unsupported literal syntax fails before a later rule can be selected.
+- Observe complete actual call/block/semicolon/shared-borrow output and every original expression capture. The selected direct 2015 source alternatives have only a producer-conditional absence result for written generated items/attributes/definitions/exports. Every nested invocation retains its exact private input/lineage and an unresolved effect obligation.
+- Retain all six original std/core panic/unreachable definition alternatives, including both panic_immediate_abort configurations, against all three original Engine calls and the full 39-input package. No invocation spelling selects an owner, edition, feature, attribute producer or compilation profile.
+- Keep the complete 2021 nested format_args/const_format_args, Ready/Retry/error, MacEager/Default, Box/wrapper, source namespace and runtime obligations pending. No 248/249 consumer promotion or runtime implementation is added. The new whole eight-case source/JS/strict-TS controls and affected existing whole files are UNRUN until the coordinated engine lease; no gain or parity claim is made.
+
+- Source-review follow-up binds the bounded well-formed primitive decoded text to the complete original UTF-8 SHA before selecting recipes, in addition to all archive/raw checks. Cold/late altered decoder outputs and nonprimitive/unpaired text cannot issue a grammar; full outcomes and restored positives are retained. This grants no TextDecoder authority. All receiving tests remain UNRUN.
+- The same source-review repair adds a final descriptor-only caller association check after all callback-capable reproof work and before issue/return. Full final-hash mutation controls retain every crypto input, refuse the changed caller, then restore the genuine positive. All original rechecks and unresolved effects remain intact.
+- A further source-review repair authenticates every complete decoded standard producer source against its genuine original raw-source SHA before any route is selected and on each fresh rejoin. The old source issuer and all archive/raw checks remain intact. Selective decoder controls leave literal-parser inputs genuine, change only the complete core panic source, and retain full source records/outcomes before asserting capture and consumption refusals plus restored positives. All eight cases and caps remain UNRUN.
+- The new manifest readers authenticate complete decoded manifest text against independent hardcoded SHA pins before parsing, with local initially native and live exact JSON.parse descriptor checks. Direct owned reads/hashes/decompression/decoding are followed by guard checks; the new consumer joins the old plan’s full manifest and every source row to its independent authenticated inventory. Exact direct hash-to-parse hook, forged source-witness manifest, and cold/late parser qualification controls retain full evidence and restored genuine positives. Existing old issuer internals keep their original callback ordering; no zero-hook claim is made for those delegated bodies. All source-only tests remain UNRUN.
+
+### Changed
+
+- Draft a bounded, file-indexed parent reader for complete reference proof reports. Every string, node, field, descriptor, scalar, reference and array constraint is validated before the existing assertions; full original wire/envelope files and byte comparisons remain. Proof children, engines, full source/hash/repack work, codec APIs and all existing deadlines and limits are unchanged.
+- The private file transport explicitly refuses malformed UTF8, duplicate JSON object names, unsupported outer/check shapes, numeric tokens longer than 4096 bytes, reentry and use after scope closure. Generic in-memory codec behavior is unchanged. A reused UTF16 arena and numeric file indexes replace the parent envelope DOM; memory and performance qualification remain unrun.
+
+### Changed
+
+- Draft a bounded, invocation-local equality check for complete deeply frozen JSON data after existing private owner checks and fresh full source/hash reissue. Exact key order, native frozen status, descriptor values, safe primitives and alias-expanded serialized size are checked without retaining proof roots. Mutable data and every uncertain input use the original serializer expression in its original order.
+- Keep existing small operand-cache warming and all storage limits. Complete equal operands that cannot fit that cache avoid allocating two discarded JSON strings. Accessors, proxies, exotic error/buffer views, namespaces, cycles and changed native operations retain the fallback. Whole behavioral and refusal qualification remains unrun; no translation, memory or speed gain is claimed.
+
+### Changed
+
+- Draft a native-only completed-child cost join after the entire existing parent descriptor scan. Only parents whose every child has a completed private scalar record at a valid incoming depth avoid pending child visits and a later parent cost join. Any miss, local state, over-depth record or changed-native qualification keeps the original scheduling. Every alias, saturation, height, JSON flag and cache partition limit is preserved.
+- Retain the complete previous helper and repository license as test witnesses. Add eight whole controls for exact costs, mixed graphs, depth, cycles, scalar eligibility, node/cell/cohort bounds, lazy-stack callback/reentry behavior and actual builtin source/hash outputs plus strict TypeScript targets. The existing source proof and test files are unchanged.
+- Source only, unverified: no runtime, performance, deadline, admission or parity gain is claimed. The extra qualification per nonleaf and cache misses may cost more than the removed work. New synthetic graph reports use an upfront 65 MiB wire / 64 MiB decoded bound; existing 8 MiB reference-proof wire, child deadlines, all old case limits and native qualification domains are unchanged. Native lazy stack behavior remains the original helper behavior, with the original recursive closure recorded separately.
+
+### Changed
+
+- Compute bounded primitive-string JSON lengths with the already-qualified native serializer in the frozen-data equality helper. Unique input, expanded output, alias, depth and pair limits stay unchanged; every original source, ownership and hash reissue still runs. Complete native-result, repeated Unicode pool and cold/late serializer controls retain all eight original case deadlines. Source-only draft; runtime and performance qualification remain pending.
+
+Added a private source prerequisite for Serde and serde_derive 1.0.219, pinned to the complete official Cargo lock and both complete checksum-verified archives. It revalidates all 54 original members and licenses and retains genuine source views. A separate ordered language/repository pipeline preserves original named field slots, type intervals, conditional rename/alias candidates and the complete map-storage source recipes through serialization, canonical reparsing and fresh extraction.
+
+These checked source records do not prove helper or derive ownership, canonical Option/Result constructors, visitor dispatch, completed map traversal, missing-field/default behavior, Cargo normalization, cfg or runtime parity. Missing-sequence errors remain a separate prerequisite. The complete actual Cargo schema retains all fifteen target fields independently; no Cargo field-name or default table is added. Existing 1.0.229 issuers and all consumers are unchanged.
+
+The new complete eight-case file and its independent strict TypeScript regression are UNRUN. Source identities, hostile ingress, altered archives/decoders and cold/late hooks are authored controls awaiting coordinated Node/Bun receiving checks under the original bounds. No local Rust was run.
+
+### Fixed
+
+- Exercise raw Cargo unit profile ingress after parser configuration installs its canonical profile. The complete fixture now supplies and checks the actual raw profile before issuance; reordered object keys preserve the same raw array positions, and positional-array changes remain refusals. All eight cases, deadlines, original sources and production association checks remain unchanged. Source-only repair; receiving qualification is pending.
+
+### Fixed
+
+- Defer frozen-data JSON equality whenever either operand or field container has an own `stack` key, before integrity or property-descriptor queries. Captured stacks can belong to ordinary, non-Error branded objects; plain stack metadata also conservatively uses the original serializer comparison. Complete prior helper source and native/direct-descriptor controls retain runtime-specific capture, freeze and action phases without claiming an unexecuted cross-engine reproduction. Existing native guards, limits, source/hash reissues and all eight deadlines remain unchanged. Source-only repair; receiving checks are pending.
+
+### Changed
+
+- Restore the two complete native JSON comparison expressions used before the bounded JSON equality experiment: full builtin output source/proof/hash reissue still precedes comparison, and module item carriers keep their exact original checks and left-before-right serialization order. Existing bounded immutable operand storage and every refusal remain.
+- Keep the generic equality helper and its whole tests as unadopted code. The complete profiled receiving run found about 18.1 seconds of sampled equality traversal/string-length work while the older private JSON work remained about 10.3 seconds; the original case still exceeded its 60-second deadline. This source-only restoration makes no measured wall-time or deadline improvement claim. No source proof, owner result, new across-call state or storage limit is changed.
+
+### Changed
+
+- Limit the completed-child cost-join attempt to parents with at least 64 direct object-child occurrences, counted after the complete original descriptor scan. Smaller parents use the original pending schedule without an extra full native guard or cache lookup. Larger parents still require the complete unchanged native guard and all-completed valid-depth records before the join; misses and every uncertainty keep the original schedule.
+- Retain the two-alias whole-data control and add exact 63/64 alias boundaries, wide mixed/local/cyclic cases and cached-height paths inside the same eight whole tests with all deadlines, transport caps, source/hash/refusal checks and cache partitions unchanged.
+- Source only and unverified. The original coherent receiving batch with the per-nonleaf guard had a Node case duration of 231188.645 ms against its unchanged 60000 ms deadline. That failure and all earlier sources remain retained. The applicability floor is an unmeasured correction candidate, not a wall-time, deadline or admission improvement claim.
+
+Extend complete deep-freeze regressions with a custom lookup that replaces an
+operation during traversal and a lazy-stack formatter that replaces and restores
+a hook before reentering the freezer. Retain full original/current graphs and
+callback tapes under each engine's actual formatter behavior. The existing
+freezing algorithm, source ownership, fresh proof/hash checks, storage budgets
+and case deadlines remain unchanged. Rust verification stays in CI after the
+complete JavaScript gate.
+
+Request immutable namespace path storage in the project compiler while retaining independent native maps for each parser. Only complete frozen resolver inputs and a closed native template construction permit shared frozen vectors; ordinary setup and unqualified environments retain fresh mutable arrays. This changes storage only and retains fresh source, namespace, owner, meta and target checks. Bulk generation, full parity and runtime coverage still require qualification.
+
+Added a concrete-syntax meta-language representation with one retained source string, compact token/trivia/delimiter tuples, explicit UTF16 and UTF8 node coordinates, canonical serialization/reparse, complete partition validation and exact reconstruction. It follows the pinned vendored `RepresentationLevel.ConcreteSyntax` concept without executing the unrelated language-capability table. Unpaired UTF16 code units remain exact source; their replacement UTF8 encoding is explicitly lossy and does not claim original file-byte preservation.
+
+Declarative exact-span or node substitutions run in the fixed language then repository sequences and rebuild the serialized CST after each rule. Proxy/accessor inputs, fabricated classifications, noncanonical JSON and bounded input/shape violations refuse. Unsupported or malformed lexical regions retain the entire source as opaque/error data. A lexical status is a checked source partition, not grammar acceptance; all type, owner and executable authority fields remain false. Forward and reverse semantic admission remains independently required.
+
+Eight whole source tests retain Rust macro/raw-string/nested-comment/Unicode/CRLF cases, JavaScript/TypeScript templates/regex/ASI, malformed sources, canonical tampering, ordered edits, hostile input and native-hook controls, exact reconstruction and independent JavaScript/strict TypeScript execution. New native captures are guarded; existing common issuer and lexer-provider bootstrap is a stated cold-test boundary. Source-only draft: no engines or qualification/performance claim. The unresolved 268 caller method-scope obligations are unchanged.
+
+The source-only V2 revision conservatively rejects accessor or object-valued `Error.stackTraceLimit` before invoking a lexical provider, including inherited limits when the constructor has no own limit. This closes an unproved host-diagnostic callback boundary; it does not claim an executed native Error callback counterexample. Cold and late controls retain zero-callback refusal and restored malformed-source preservation in the same whole case and deadlines.
+
+Forward Rust translation now serializes, reparses and reconstructs a lossless concrete-syntax meta document before the existing semantic checks. Standalone and tracked-project meta retain the document; an explicit serialized-CST input entry supports edits through the same checked JavaScript and TypeScript path. Opaque syntax preserves its complete text and grants no semantic, source-owner or runtime authority. Source draft and whole integration tests remain unrun pending receiving verification.
+The original standalone option getter order remains intact before source processing. Each complete physical project read retains its own CST, including repeated aliased file reads; inline modules reuse their parent source.
+The V3 receiving-fixture correction keeps repeated-file CST coverage in the actual module graph and separately requires the unchanged same-file macro-origin refusal from complete original and current project translators. It does not admit aliased-file macro semantics. Initial failed Node and Bun reports remain retained.
+
+### Added
+
+- Draft an actual serialized/reparsed concrete-syntax meta stage for JavaScript and TypeScript reverse inputs before the existing native syntax, checked semantic meta and Rust/TypeScript emitters. The explicit canonical-CST entry consumes its reconstructed source; lexical/opaque/error fidelity never supplies grammar, owner, type or executable authority. Native TypeScript keeps its original source/ASI checks. Eight complete integration controls are UNRUN, including strict TypeScript 5.9.3; unsupported typed source, existing class/owner obligations and all original limits remain. No local Rust, generation-freshness, parity or publication qualification is claimed.
+
+- Preserve the original four analysis-option getter reads before the added concrete/native stages, and the later emission option re-reads in their existing phases. Same-case controls retain ordered getter tapes and a restored native JSON parser; the original eight cases and deadlines stay unchanged. This source repair is UNRUN.
+
+Refresh the automatically generated canonical Rust-to-JavaScript and TypeScript
+drafts for all 811 tracked Rust files, including seven new Rust regression
+sources. Preserve complete original text and current compiler fingerprints.
+
+The draft retains unproved bodies as refusals. This refresh does not establish
+runtime parity, profile-matrix freshness or a complete JavaScript gate pass.
+
+Carry the concrete syntax extension requirement into the reusable contribution
+and agent guidance. Keep exact source fidelity separate from checked semantics,
+and verify that the exported compiler consumes concrete source in both directions
+before claiming receiving-project synchronization.
+
+Private concrete syntax source transactions
+
+Adds a fixed private execution graph for the complete unchanged structural Rust and JavaScript lexical providers, plus the complete pre-277 concrete implementation. Every enclosing call freshly authenticates the full raw and decoded source closure before and after use. An independent bounded SHA-256 implementation supplements every retained Node crypto call, so spoofed observer digests cannot authorize newly read executable text. Native qualification precedes private table initialization and follows callback-capable work; only detached data and complete CST artifacts leave the graph. The existing common issuer gains a separate captured-root/Symbol ingress predicate; its old guards retain their domains.
+
+Ordinary forward/reverse CST ingress now performs two independent builds around the canonical serialized/reparsed document and genuine leaf reconstruction, with actual fixed language then repository phases. Standalone validators retain full independent checks. No source/owner/type/runtime authority is inferred, no public parser/cursor class is sealed, and no across-call source/verdict cache is added. The actual module normalization retains full original sources, exact edit/reverse records and executed ordered rules.
+
+Draft source only: whole executor, ingress and independent transaction tests plus existing core/forward/reverse/export, strict installed TypeScript and original deadlines remain required under Node and Bun. No worker engines or Rust ran. The measured whole reverse-file profile motivates this experiment; no speed, deadline, full-gate or parity result is claimed. Filesystem rechecks retain the existing externally concurrent-writer boundary, rather than claiming an atomic filesystem snapshot.
+
+The private original-CST normalization substitutes only its native-source whitespace qualifier with an equivalent primitive scanner, retaining complete original/replacement/reverse evidence. This prevents delayed private bootstrap from clearing caller RegExp legacy captures. Existing whole cases additionally retain first-compilation capture-state comparisons and cold stock diagnostic-scalar/descriptor refusals. These controls remain unrun.
+
+The final bootstrap/refusal draft uses indexed qualification and callback-spanning loops, including the public substitution phase loop, so a hash/read observer cannot trigger a newly installed iterator-close getter during rejection. Public CST initialization first asks the private native-host qualifier before feature probes. The existing eight executor cases retain paired Hash/read-hook and cold public-initialization controls; primitive read counts, file descriptors and own finite stat fields are checked without coercion. These are source-review boundaries, not executed receiving results.
+
+The receiving repair preserves the original CST inherited-descriptor-getter positive. The fixed graph already uses null-prototype descriptor inputs and own accessor-descriptor fields; its initial/live Object-prototype census therefore ignores only the unused string key `get`. Every other key, native descriptor, ancestry and meaningful hook refusal remains qualified. Existing case3 adds full warm/cold/public CST outcomes and zero inherited-getter calls; the original core positive and all whole-case caps remain unchanged. This repair is source-only and unrun.
+
+The combined receiving repair additionally qualifies the two observed stock Bun shared-Iterator accessors only at their exact ancestry owner and keys. Their native getter/setter functions, prototype parents, descriptor flags and live identities are retained without invocation; iterator-return absence and every other check remain. Existing case3 exercises cold and late replacement of each accessor half and unrelated native functions with complete refusals, zero callback counts and restored positives. Actual stock descriptor observations are retained separately; no runtime qualification is inferred from this source draft.
+
+### Fixed
+
+- Preserve complete project concrete-syntax metadata in an optional, independently
+  bounded third storage component. Reconstruct exact logical JSON before existing
+  source and semantic checks, retaining legacy two-component formats and the
+  64 MiB per-file and 512 MiB aggregate limits.
+
+### Changed
+
+- Added a private-parser host guard that evaluates the same ingress, static-source and data-freeze conditions with one fresh shared namespace traversal. Both numeric scans, distinct freeze pins and all original public guard bodies remain unchanged; no verdict is retained between calls.
+- The private executor and independent SHA helper use the combined guard at their existing checkpoints. Every native hash, filesystem read, independent source digest, decode and final source association remains required. Updated only the derived common/SHA host-source pins and manifest digest.
+- Added eight whole-file controls for healthy output, independent static/data failures, namespace descriptors, earliest ingress, ancestry/numeric slots and real hash/read observers installing late hooks. Source reviewed only; receiving tests and any performance improvement remain unqualified. No public parser class, owner or executable authority is added.
+
+- Retained the first Node/Bun receiving failure (five of eight cases passed). The numeric Array.prototype fixture now restores its original length descriptor after removing the temporary cell, and records/asserts complete ordered own-key and descriptor identities including length. Production guard behavior, every original expectation and all eight deadlines remain unchanged; corrected receiving is unrun.
+
+### Changed
+
+- The independent private-parser SHA-256 implementation packs canonical UTF-8 bytes directly into one 64-byte compression block instead of allocating a complete per-byte JavaScript array. Every invocation still performs fresh independent hashing with the same entry/exit native guards, primitive-text and Unicode restrictions, source/byte limits, rounds and exact hexadecimal output. Native crypto calls, full source authentication and callback checks remain required; no source or digest cache is introduced.
+- Extended the existing eight-case suite within its unchanged deadlines: the SHA case retains the complete coherent prior helper and mechanically reversible physical import, compares complete registered inputs, known NIST vectors, block/padding/UTF-8 edges and maximum primitive inputs against both that helper and native crypto, and preserves malformed-Unicode/hostile-argument refusals. All other seven callbacks are unchanged. Updated only the derived SHA host row and manifest digest; no measured performance, memory or deadline improvement is claimed.
+
+Bounded chunks for private parser UTF-8 source decoding
+
+Preserves every strict UTF-8 byte/continuation/overlong/surrogate/range check and the existing native scalar conversion order. Decoded scalars now accumulate in primitive strings of at most 4,096 UTF-16 units, with one final array join, instead of retaining one array slot per codepoint. Whole scalar points are never split. All raw/text hashes, independent SHA, byte/text association, native guards, source reads and freshness checks remain in place; no decoder authority, source memo or new intrinsic is added.
+
+The existing eight-case suite preserves all deadlines and other seven callbacks. Its first case retains complete before/current physical executor copies with reversible imports/module-URL edits and a test-only guarded decoder accessor. Independent complete valid strings cover chunk edges, astral/BMP Unicode, NUL/BOM/CRLF and the full 100,000-byte registered-file boundary; malformed byte sequences keep exact original refusals. Existing full provider outputs and raw-mutation/detachment/getter/proxy/hash-spoof controls remain. The prior whole-file profile motivates this source experiment; all new checks remain unrun and no timing, heap, deadline or parity gain is claimed.
+
+Stable identities for source ancestor directories
+
+Compares authenticated ancestor directories by device, inode and full mode, retaining every path and non-symlink directory check. Unrelated sibling entries may change directory size and timestamps while all source files remain unchanged. Full file size/timestamp/FD/name/byte/hash checks are preserved, with no source memo or filesystem atomicity claim.
+
+The existing eighth-case suite keeps all cases and deadlines. Its source-identity case retains complete old/current executor copies, reversible observation instrumentation, actual directory paths/scalars, full file inventories and hash tapes. A genuine hash callback changes only an unrelated fixture sibling directory and its parent timestamp; the old comparator must refuse and the new comparator must preserve full output. Ancestor symlinks and timestamp-only source-file changes remain refusals. The earlier receiving report did not identify the failing path or writer; this source repair does not attribute that unobserved event. All new controls remain unrun until Root verification; no engines, Rust or push ran here.
+
+Private parser read observation and foreign-value fixtures
+
+Source-only repair: each private source read now selects the genuine builtin filesystem object's current own-data `readSync` function, refuses accessors and proxies without invoking them, and calls through captured apply with the original undefined receiver and five arguments. Actual Node 20.19.4 and Bun 1.4.3 observations showed that Bun retains its old named ESM binding after `syncBuiltinESMExports`. All original source/hash/read/EOF/descriptor/path checks and limits remain; installed read observers are observed on both runtimes rather than silently bypassed.
+
+The ingress fixture separates an ordinary exact-order descriptor clone from a nonproxy callable with every stock own key, descriptor and parent. Node retains the exact callable order assertion; Bun records and asserts its observed function metadata order instead of claiming a false exact-order premise. Both foreign values exercise real live and physically cold refusal, with zero unqualified callbacks. The original failed fixtures, full output streams and independent runtime observations are retained.
+
+Both existing whole eight-case files keep their deadlines, mandatory read callback counts and complete late dual-poison prefix checks. Added controls retain undefined receiver/five-argument read tapes and zero-call getter/proxy refusals, including a hash observer that changes the read operation between reads. All repairs remain UNRUN; no worker engines, local Rust, deadline/performance qualification or publication occurred.
+
+### Added
+
+- Drafted a fixed source transformer and identity-only prerequisite for the original core parser/checker and their complete canonical extension chain. The proposed generated source retains genuine lexical method identities before exposure, with full original source/member selections, language then repository recipes and whole-file reverse equality. Existing class modules and vendor sources are not changed by this A1 draft.
+- Factory evidence is limited to the first genuinely created class and its actual Base. A private saturated entry count makes any extra, failed or recursive public factory invocation permanently unavailable to the new strong context; legacy factory returns and exceptions remain independent. Cursor construction and Rust owner/body/runtime authority remain unproved.
+- Early core source/URL authentication has no import edge back to the extension chain. Context preparation is explicitly async; a future synchronous Host consumer needs a genuinely prepared private context. The bounded bootstrap comparison shares an already trusted common issuer and does not claim cold whole-core equivalence, arbitrary native-addon safety or non-POSIX URL support.
+- Added eight whole controls with 60-second deadlines and a separate 20-second strict TypeScript child. Generated source, controls and any class-context positive remain UNRUN and unqualified until complete generated-source review and receiving. No existing test limits or source semantics are waived.
+- The A1 identity context assumes authentic initialization of all 13 owned ESM modules. Fresh file hashes cannot authenticate historical cached module evaluation or arbitrary exported observers. Only the two raw dynamic core modules have an additional early source-to-data-URL binding. Closing the owned ESM bootstrap remains a separate prerequisite for Part B and any 265 admission.
+- The generator executes a fixed language then repository rule pipeline: complete AST selections produce closed lexical-birth edit plans; repository processing adds core URL bindings, applies and reparses the complete source edits, and packages the private program. Its trace comes from the actual pipeline run.
+- The first Root proposal-only tool attempt failed before output because the leaf guard wrapper was missing. Added the wrapper around the existing availability predicate; no generated class module was written, and that guard correction was unrun at the V5 freeze.
+- A second proposal attempt exposed the selected ordinary private method `PatternControlChecker.#checkedLetChain`. Its complete source, span, kind and arity are retained separately from public prototype identities; no private function is exposed, invoked or treated as body authority. Private fields, accessors, static elements and other unsupported member grammar still refuse with full source diagnostics.
+- The reviewed V6 proposal-only generator later completed within its unchanged limits and emitted complete before/after source for the 13 modules and generated leaf. Its 24 full class selections contain 181 explicit member spans, including the one private method. These generated modules remain inactive and UNRUN pending complete 17-path source review; no Rust or semantic ownership claim follows from source generation.
+- First whole receiving exposed a real cyclic-entry failure: context preparation now plans the same fixed Host entry used by the public compiler, inside its existing transaction after complete source authentication. The Host source is a separately pinned generator input; every original class source check remains. Fresh controls copy the complete static SCC, retain the original missing-main refusal, and add a supported complete-program comparison. The source repair was unrun at its pre-generator freeze.
+- Root then ran the repaired proposal-only generator successfully under its unchanged limits. All 13 generated class modules and recipes are byte-identical to the first reviewed generation; the program adds only the fixed, fully pinned canonical Host entry. The new runtime leaf and all receiving controls remain UNRUN.
+- Canonical-entry receiving exposed two further defects: the missing-token strict TypeScript negative lacked a required parameter annotation, and Bun inferred three anonymous factory class names from the comma wrapper. Root retained complete descriptor and full-module probes. The source generator now proposes a private literal identity call around each fully evaluated returned class, preserving the exact class body and strict original empty names; the public context parameter is explicitly required. Added full original/current factory source, key, name, arity, descriptor and actual-base comparisons inside the existing whole cases. This repair is unrun and its three generated modules and new program remain inactive until Root regenerates and reviews the proposal.
+- Root successfully regenerated the anonymous-name repair proposal within the unchanged bounds. Exactly three modules change through four private identity-call prefixes; the other ten complete module outputs and all 24 class / 181 member selections remain exact. The generated program updates only those file recipes, and the leaf retains the required-token annotation. The mechanically installed seven-path source successor has not run its runtime controls or strict TypeScript receiving yet; no owner, body, cursor or 265 authority follows.
+- Subsequent Node receiving passed the first seven A1 cases and the strict TypeScript child, then exposed a fixture identity comparison between two separate, structurally equal complete emission result objects. The final case now compares those full objects with deep equality, retaining emitted text and every metadata field, both original inputs, refusals, type negatives and all deadlines. This comparator-only repair is unrun; the complete failed receiving remains retained.
+- Comparator receiving passed all eight Node cases; Bun exposed a graph-specific diagnostic sourceURL difference between the original and instrumented raw parser modules. The fixture now plans an exact full source-to-URL association for each graph, replaying every registered language substitution and all import spans before replacing only its authenticated URL with a common logical module marker for comparison. Raw errors, complete URLs, transformed sources and every other diagnostic field remain retained; unknown URLs refuse, and the malformed public-lexer refusal is compared unchanged. This two-path provenance-fixture repair is unrun and changes no production authority or limit.
+
+### Store only expected private parser descriptor shape
+
+The private parser guard stores frozen tuples derived from its six private bootstrap descriptor snapshots. Every current descriptor is still read individually in the original key order, and both numeric scans and every source/hash/read checkpoint remain. A failed current check is never stored; unsupported expected shape uses the complete original guard. All previous guard exports and their complete source prefix remain unchanged.
+
+The new eight-case draft retains the complete original issuer and actual token/CST and JS/strict-TypeScript controls, including BigInt integer results and source-bearing carried output with no export. Native stack controls restore the complete ordered target state, including Bun's observed originalLine/originalColumn fields. The rejected bulk-metadata experiment and failed reports remain preserved separately. Receiving, deadlines and allocation effects of this source draft are unrun by the worker; no speed, memory or owner-authority gain is claimed.
+
+### Changed
+
+- The independent private-parser SHA-256 can use fresh private Uint32Array storage for its eight state and 64 schedule cells. A separate optional qualifier captures the required native constructor, brand, descriptor and realm links at this explicitly trusted common initialization point, then checks the used fields and parents freshly. An uncertain initial or live typed domain preserves the complete original ordinary-array algorithm. This capture proves no earlier constructor birth, semantic owner, parser identity or caller authority.
+- The original SHA entry/exit common guards, canonical UTF-8 conversion, source/byte bounds, constants, block packing, padding, rounds and hexadecimal output remain unchanged. The optional live API qualifies only numerical storage; captured native reflection sees fixed nonproxy owners and never reads lazy stack descriptors. The preceding complete SHA entry check has no intervening callbacks before the fixed numeric allocations. No source/digest cache or native hash/read callback omission is introduced.
+- Extended only existing case 5 of the eight-case suite: complete coherent prior and native SHA oracles cover full registered inputs, NIST/block/Unicode/maxima/refusals; a reversible complete physical helper reports actual same-engine typed cell brands and sizes. Cold/live constructor, descriptor, parent and brand hooks retain the original array route and zero callbacks; unused typed operations are tested separately. Complete real hash/read input and result tapes are retained under typed-only callback-installed hooks. All seven other callbacks, deadlines, child engines and resource limits remain unchanged. Only the common/SHA host rows and derived manifest digest change.
+- Unsigned storage preserves every 32-bit bit pattern: initial signed block words differ only by multiples of 2^32, exact Number sums stay below 2^35, and the unchanged bitwise/unsigned reductions select the same words and state. Work cells and probe views never escape. Added qualification/source-authentication work can offset arithmetic allocation savings; no measured speed, memory or deadline improvement is claimed. Source review and actual Node/Bun receiving remain required.
+
+- Receiving fixture amendment: Node exhausted its unchanged 2 GiB heap while case 5 imported a diagnostic module under a shared TypedArray length accessor hook; that hook also affects Buffer, loader and error infrastructure. The complete failure is retained, and Bun's complete original eight-case pass remains separately recorded. The fixture now creates, hashes, reads, retains and imports all diagnostic artifacts before installing typed hooks. Exact complete source bodies execute synchronously in fixed zero-argument test-only factories with pre-bound imports, preserving actual cold initializer and restored-state coverage without claiming cold ESM-loader equivalence. The complete common factory passes only its three genuine lexical SHA exports into the fixed SHA body. All full source/wrapper/export/import reversal evidence, sixteen hook modes, native/source/hash/read observations, eight case limits and seven other callbacks remain; production common/SHA/executor/manifest bytes do not change. No corrected runtime or memory result is claimed before receiving.
+
+- Native-storage qualification amendment: the retained Node 20.19.4 diagnostic shows util.types.isUint32Array and isTypedArray are JavaScript closures, while Bun 1.4.3 exposes native predicates. The numerical SHA loop does not use either predicate. Removed only that unused production brand-predicate requirement; no JavaScript closure is certified from its source/name. Genuine captured Uint32 constructor/required own fields/realm/prototype links, native TypedArray length receiver and private unsigned-width storage checks remain under the same explicit trusted bootstrap domain. The SHA file stays byte exact. The existing predicate-getter control now explicitly requires typed execution with zero getter calls, while the independent same-engine genuine Uint32 brand/8-and-64 coverage assertions remain strict. Existing source, hash/read tapes, initializer factories, sixteen modes and all limits remain. Node's safe array fallback and failed coverage result are preserved; corrected Node/Bun execution and any performance effect remain unclaimed before receiving.
+
+- A separate bounded diagnostic directly observed Buffer.length invoking the poisoned shared TypedArray length getter once on both Node and Bun, then exact descriptor restoration and length 6. It did not reproduce a loader or heap failure; the earlier heap event and its stack remain retained observations rather than a demonstrated complete causal chain.
+
+The optional private parser guard reuses its existing immutable expected Array/String key sets only after fresh complete current equality, and performs one fresh Object numeric-key scan per eligible invocation. The complete historical guard, cold/unknown-shape fallback, every current descriptor check and all source/hash/read checkpoints remain. This retains the same trusted common bootstrap domain and grants no type, owner or execution authority.
+
+The 290/291/296/297 test oracles now retain and physically materialize their complete immutable 15-file historical dependency packet, including manifest, both host leaves, seven source files, licenses and notices. Historical executors keep their original manifest pins. Both full raw old/current callback tapes remain; exact reversible registered-content recipes permit only the three intentionally changed manifest/common/SHA lanes and their derived digest/read dimensions. Unknown differences refuse, full behavior comparisons remain, and current single/batch raw tape equalities stay exact. The existing decoder/directory direct-source probes retain their explicit limited current-host recipes.
+
+Extended whole-file controls cover canonical/noncanonical prototype keys, zero-callback refusals, complete restoration, real hash/read mutations, corrupt historical packets and genuine full before/current outputs. All original cases, source inputs, strict TypeScript work and deadlines remain. This is a source-only draft: Node/Bun receiving, the unchanged five-second Bun regeneration requirement and the complete JavaScript gate remain unqualified; no speed gain is claimed. No local Rust execution occurred.
+
+### Changed
+
+- Added an explicit data-only CST batch with at most 256 ordered source/language rows and aggregate ceilings of 2,097,152 UTF-16 input units, 8,388,608 UTF-8 bytes, 200,000 nodes and 33,554,432 canonical UTF-16 units. Each row still undergoes two independent builds, canonical serialization/reparse and full reconstruction. All throws abort the batch; successful opaque/error documents retain source without semantic authority. The complete fixed parser packet is freshly authenticated before and after each batch, with per-row native checks and final descriptor/source joins. The existing single executor and source APIs retain their original packet and callback contract.
+- Added separately named batched reverse analysis and native artifact assembly; repository regeneration opts into this new contract. A fresh original AST plans every syntactic scoped wrapper without semantic admission, then the original ordered scoped walk chooses actual checks, conditional callback retries and witnesses. Each attempt receives fresh native grammar and existing semantic/meta checks; only identical same-call CST fidelity data is reused. Complete original default scoped discovery and artifact assembly remain available. The new semantic pipeline actually executes language planning, checked CST and fresh analysis before repository packaging, retaining its actual trace.
+- This new repository contract deliberately groups packet hash/read observations before the semantic walk, including CST work for unused wrappers; it does not preserve old regeneration callback placement or RegExp legacy observations. The delegated rule runner retains its existing IteratorClose, reflection and trace host limitations under arbitrary intrinsic-mutating callbacks. No whole-analyzer native-total closure is claimed. The separate indexed raw batch qualifies its own descriptor, proxy and mutation boundaries; later semantic hashes receive fresh private/core/adapter host checks before a pooled attempt.
+- Added eight whole receiving controls with 60-second caps and a 20-second installed strict TypeScript child: complete original/new native artifacts and censuses, full CST/Unicode/opaque data, dynamic callback chains/refusals, input boundaries and mutations, complete original single versus batch hash/read schedules, later namespace host changes, final caller association, and all three actual repository builds. No generation work is moved outside the original timed regeneration case. Tests and performance remain UNRUN; no deadline, parity, runtime-owner or memory gain is claimed.
+
+- Source review caught native lazy-stack descriptor exposure on ordinary batch Arrays and rows. Both new input snapshots and final rejoins now require the complete exact key census before descriptor reads; the only earlier descriptor is the genuine Array own length. The existing fourth whole case retains genuine unbranded captured-stack inputs, separate direct native capability, zero action formatter calls, complete ordered Node/Bun own-state restoration and restored positives. These source controls remain UNRUN.
+
+- Initial whole-file receiving exposed the shared bodyless nested-function crash: both public and batched analysis reached `node.body.getText` on a TypeScript signature-shaped node. The fresh JavaScript grammar entry now conservatively rejects bodyless function declarations before semantic lexing/scoped discovery with the ordinary syntax diagnostic and no partial program. The exact malformed fixture remains, with independent fresh-AST span/body-absence evidence and full prior Node/Bun failed reports preserved. This repair remains UNRUN.
+
+### Changed
+
+- Added an explicitly named whole-corpus native regeneration path. It plans every original module and syntactic wrapper, transports at most three ordered chunks of 256 rows through the real CST serialization/reparse/reconstruction path, then performs fresh native grammar and semantic/meta checks on every actual module or callback attempt. The pipeline executes language planning, checked chunks and fresh analysis before repository packaging; stages carry no owner or semantic authority.
+- The new raw chunk transaction keeps the existing whole-call aggregate ceilings: 2,097,152 source UTF-16 units, 8,388,608 UTF-8 bytes, 200,000 nodes and 33,554,432 canonical UTF-16 units. It checks output totals per row before retaining that row and freshly authenticates the complete fixed packet before and after every chunk. All earlier chunk paths/source identities and original caller descriptors are rejoined after the final callbacks. The existing single and 256-row APIs remain unchanged.
+- The new corpus API accepts one to 256 module rows and at most 768 planned rows, with a separate 2,097,152-unit aggregate path-text ceiling. It deliberately groups packet hash/read observations across modules; this differs from the previous per-module observer contract. Source/host failures abort the whole operation. The existing delegated rule runner/bootstrap and non-atomic external filesystem limitations remain explicit. No public callback, reusable permit, skip flag or cross-call source/grammar/verdict cache is added.
+- Repository regeneration explicitly selects this new path. All three real builds remain inside the existing workload and its original deadline. Complete old/default/per-module results, source/hash/read schedules, input/aggregate/refusal controls and JavaScript plus strict TypeScript execution are retained in eight whole receiving cases. These changes remain UNRUN; no speed, deadline, parity, owner or Rust execution qualification is claimed.
+
+### Added
+
+- Draft callback-local explicit-return checking with a separate result/loop/effect boundary. The ordinary tail-callback path stays unchanged; nested callbacks receive their own independently checked boundary. Existing iterator/callback ownership, optional parameter checks, borrow and primitive checks still apply; read-only scalar captures and genuine local shadows preserve outer bindings, while captured mutation, patterned control parameters, break, continue and await remain refused.
+- Keep callback `?` refused with an explicit original Try/FromResidual owner obligation. Complete Option source and matching public layout are insufficient to issue that proof. No callback exception channel or changes to the existing outer-function propagation emitter are introduced.
+- Retain three complete reconstructed pre-birth compiler inputs and exact source substitution rules outside the checkout for reviewed generation. The matching three generator input pins changed before generation; the actual Root generator then succeeded and its complete thirteen modules and twenty-four class selections were independently reviewed. Only its three changed module outputs and generated class program were copied mechanically; none were edited manually.
+- Add eight whole source, checked-meta, JavaScript and strict TypeScript controls plus an independent Rust oracle reserved for later CI. Full repository source goals and unresolved prerequisites are retained honestly. Canonical checked-meta parsing remains a shape/canonicalization boundary, not a new untrusted type-proof verifier. The generator succeeded in 0.542 seconds; all new runtime controls and Rust execution remain UNRUN. No production admission, owner proof or performance gain is claimed.
+
+### Added
+
+- Draft a Root-controlled source proposal builder for the original Rust compiler graph. It discovers the complete resolved static graph, classes, calls, dynamic execution sites, top-level awaits and three actual core source substitutions with the installed TypeScript 5.9.3 parser. Dynamic executable providers remain explicit open source/loader gates. It executes language discovery followed by repository URL normalization and candidate packaging, retaining complete originals, exact reversible URL edits, CommonJS candidates and source maps.
+- Keep the private runtime program null and every execution entry unavailable. CommonJS emission, class identity metadata and current source hashes do not establish ESM cycle, TDZ, namespace, native callback or private escape semantics. The proposal records those unresolved gates instead of emitting a usable permit. No public compiler, vendor, cursor, private seven-source executor or semantic rule changes.
+- Plan a future fixed private parse/check/meta/emit operation returning detached data only. The census includes all three actual core awaits, original token adaptation, nested parameter cursor, both token replay sites, Host mixins and emitter constructors. Existing historical owned-ESM bootstrap prerequisites remain explicit; no type, owner, body or runtime authority is added.
+- Add eight whole source-proposal, original compiler, cursor, refusal and strict TypeScript controls. These tests and the builder remain UNRUN pending source review and Root execution. No 265 restoration, Rust execution, generated source installation, performance gain or publication qualification is claimed.
+- Source review corrected proposal-output separation to compare physical source and destination paths before writing, including linked output ancestors while preserving ordinary system path aliases. Source review also corrected the oracle to consume the existing checked-meta JSON document without wrapping it twice. Original draft evidence remains retained; these corrections remain unrun.
+
+Regeneration again supports projects with portable policy sources and no native JavaScript directory. The script passes its internally computed empty native list to the unchanged original native assembler; nonempty lists continue through the explicit corpus CST path. The corpus API still requires one to 256 own-data source rows.
+
+The existing corpus test retains full empty original/per-module assembler outputs, the actual temporary-project inputs and artifacts, and generated-target/source drift checks inside its unchanged case deadline. The original translator tests and all source, grammar, owner, native and hash checks remain unchanged. Root retained the initial empty-native receiving failures; these repair controls are source-only and unrun until receiving. The separate corpus comparison duration and regeneration performance failures remain open.
+
+### Fixed
+
+- Keep callback-local returns out of the enclosing PatternControl nonlocal-exit scan. The shared scan stops at a lambda boundary, while the genuine typed callback checker still checks that callback's complete body and its own result, loop, mutation and effect boundaries. Every scan branch outside a callback remains unchanged; no owner or type authority comes from the lambda label alone.
+- Preserve the three complete callback positive fixtures that exposed the actual receiving defect. Add two full source and canonical-CST refusal controls for return-valued let initializers and binary operands outside callbacks, inside the existing eight cases and deadlines. Captured mutation, unsupported callback control and callback `?` refusals stay in place.
+- The pre-generator draft changed only the PatternControl authored-source generator pin. Root then ran the actual full generator successfully in 0.547 seconds; independent source review verified all thirteen modules, twenty-four class records and 183 member bodies. Only the actual generated PatternControl file and class program were copied mechanically; neither was edited by hand. Runtime controls and Rust for this repair remain UNRUN. The previously reproduced cold-import TextRustParser TDZ remains a separate issue; no deadline, semantic or performance qualification is claimed.
+
+The explicit native corpus CST path uses a separate private source-origin compiler and transport. Both complete independent CST builds, native canonical JSON parse, full canonical-wire equality and leaf reconstruction remain mandatory. Only defensive descriptor copying of the unexposed tree just created by captured native JSON.parse is omitted: its input is the first private complete build’s canonical wire, with no reviver, callback, caller document or semantic permit.
+
+The original executor, compiler, workflow, standalone APIs and old batch/corpus transports remain byte-exact prefixes. The new compiler executes the same registered language then repository rules over all seven freshly authenticated complete originals, with a fixed extra helper suffix and private executable storage. All three-packet native/independent hashes, file/ancestor checks, per-row guards and final earlier-chunk/caller associations remain fresh. Each actual semantic attempt still independently checks current host operations and native JavaScript grammar.
+
+A new whole eight-case test retains complete old/new corpus artifacts and CST rows, reversible compiler evidence, full source/hash/read schedules, limits, lazy-stack/native/caller mutation controls and real JS plus strict TypeScript targets. Existing tests and deadlines are unchanged. All new controls are source-only and unrun; no performance or original regeneration deadline qualification is claimed.
+
+### Added
+
+- Add a separately named canonical CST chunk import API for stored or edited concrete documents. Every row still performs the original complete native JSON preflight/parse, descriptor/schema inspection, two independent token/trivia/delimiter builds, full canonical comparisons and exact leaf reconstruction. It uses the original full-validation private workflow; the source-origin-only optimization is never applied to canonical input. Fidelity grants no type, owner or executable authority.
+- Keep the old single and source-batch APIs and their observer schedules unchanged. The new nonempty import contract accepts at most three chunks of 256 primitive canonical strings, with fresh full source authentication before and after every chunk, fresh guards per row, and final complete earlier source/path/compiled/input joins. Its aggregate canonical, decoded source, UTF8 and node limits stay bounded; no cross-call source or verdict cache is added. The new grouped hash/read schedule deliberately differs from calling the old single validators separately.
+- The complete native corpus audit explicitly uses this API while retaining every original source, canonical document, parsed/reconstructed row and assembler comparison inside the original deadline. Independent whole controls compare full old standalone results and observer tapes, malformed/edited CST, limits, input mutations and real JS/IR/strict TypeScript behavior. These controls remain UNRUN; no timing, deadline, runtime parity or semantic-admission gain is claimed.
+
+The complete pattern-control fixture now orders its existing project import before its lower-level parser and checker imports. This selects the compiler's canonical Host initialization before constructing the fixture's composed classes. No import, preload, test work, callback, assertion or deadline was added or removed.
+
+Both Node and Bun reproduced the same TextRustParser initialization error on the pre-callback branch and the receiving branch; their complete failed reports remain retained. This fixture correction does not establish support for arbitrary cold submodule import orders or close the separate private-compiler source proof. The complete twenty-case fixture still requires receiving checks.
+
+The private Rust compiler source-report test now passes the actual `tokenize(...).tokens` list to the original `TokenCursor`. Its retained oracle includes the complete tokenization result, including comments, alongside the token list. The existing cursor observations, checked compiler output, strict TypeScript checks and all eight case deadlines are unchanged.
+
+The first receiving run passed seven of eight cases on Node; case seven failed before the compiler oracle because the fixture passed the entire tokenization object as a token list. The correction is source-reviewed and remains unrun. It changes no compiler, vendor source or private execution availability.
+
+Added an explicit fresh-child project batch translator that runs the complete registered original compiler through genuine source-corpus capture, project planning and output application. It copies and authenticates the original compiler/assets and complete TypeScript 5.9.3 package, preserves canonical ESM semantics and existing checked CST/meta/body/owner refusals, and returns only bounded detached artifact text after child completion.
+
+A deterministic preparation tool proposes complete registry and bootstrap pins through actual language/repository phases. The new process contract requires trusted stock launch/OS bootstrap and an exclusive private snapshot lifetime; it does not certify hostile filesystem/process equivalence or issue parent semantic tokens. Original cold-entry failures and whole-corpus producer memory remain receiving obligations. Existing same-process APIs, limits and test deadlines are unchanged. Source candidate tests are unrun until coordinator receiving.
+
+Initial receiving exposed an independent baseline that accidentally included unindexed bootstrap extras, a live disk sampler racing ordinary child cleanup, and Node recursive task removal observing a poisoned typed-array getter. The baseline now contains only the registered originals; live sampling tolerates only disappearing discovered descendants, and task cleanup uses captured no-follow census plus direct bottom-up unlink/rmdir. Existing zero-hook controls, primary failures, resource bounds and whole-case deadlines remain mandatory; repaired receiving is pending.
+
+The Node receiving harness now calls each real prelaunch API directly under its
+caller-installed hooks, records the exact spawn-site counter before restoration,
+restores all descriptors on that same stack, and only then observes the returned
+Promise. Node 20.19.4 async_hooks itself reads a shared Float64Array length during
+async context scheduling; keeping the poisoned getter across await can also measure
+host scheduling activity. All eighteen mutation controls, zero replacement calls, empty-task
+checks, restored genuine operation, production bytes, and deadlines remain intact.
+
+### Tests
+
+- Add independent native Rust source oracles for callback-local Option `?`: nearest callback return, continued outer computation, single evaluation, lazy iteration, ordinary same-named methods, differing input/output payload types, sequential propagation and branch order. Drop cases retain complete event tapes, including an already evaluated call-argument temporary on early return.
+- These manually formatted tests remain UNRUN locally. The existing release CI discovers integration tests with `cargo test --locked --all-features` after JavaScript verification for the same commit. No workflow, Cargo configuration or translator permission changes are included; source availability and these oracles do not establish Try/FromResidual ownership, callback lowering, arbitrary Drop support or native parity.
+
+Repair the complete private-parser execution fixture to relocate all four registered parser imports in a cold public CST module. Keep every native-hook refusal, restoration, whole-file case and original deadline. This changes test setup only; translation and runtime parity remain unqualified.
+
+Document the bulk CST meta-language contracts, stored-document and source-origin validation boundaries, whole-call budgets and fresh semantic checks. Link the contribution and rule guidelines to examples in both translation directions without claiming complete parity or lifting the JavaScript-first CI gate.
+
+The standalone concrete-source entry now plans a private source-origin path in the existing compiler graph. Its first genuine build is serialized and parsed natively; a second complete build, full canonical comparisons, leaf reconstruction and the original internal checkpoint replace defensive copying of that unexposed native-created tree. The original foreign-prototype refusal remains before reading the parsed source. All four stringify calls and the complete native hash, independent hash, read and final association checks remain. Stored or edited metadata, batch/chunk entries and the prior corpus helper retain their existing workflows.
+
+The test error observer records the full own-key census without reflecting a lazy stack descriptor; native frame observations remain separate from exact semantic diagnostic comparisons. A new eight-case source test compares the complete old executor on its authentic historical input graph, frozen output descriptors, native/hash/read observations, callback mutation and reentry refusals, source recipes, actual JavaScript and strict TypeScript targets, and complete originals. Source-only draft: tests and performance qualification are UNRUN. The unchanged original Bun regeneration deadline and full JS-first gate remain required; this change grants no type, owner or body authority. No local Rust ran.
+
+Document the original compiler's fresh-process batch API, its CST and checked semantic meta-language boundaries, bounded canonical requests, deterministic two-sequence registration proposals and required receiving checks. Keep unsupported language coverage, generated freshness and the JavaScript-first Rust CI gate explicit.
+
+Replace the qualified constructor-proof encoder’s per-byte branch chain and percent-string assembly with a private literal containing all 256 byte encodings. Keep the existing lazy native qualification, `Buffer.from` call, constants and complete callback-sensitive fallback unchanged. This is fixed encoding data, with no source or verdict cache.
+
+The retained profile supplies sample counts only; the proposed reduction in byte work has no measured speedup or deadline qualification. Existing whole constructor, reverse-translator and isolated-project tests remain unchanged and UNRUN for this change. The registered isolated compiler must be re-prepared and reviewed against the coherent source revision before its new API tests run. No Rust execution or generated outputs.
+
+Add an optional private-parser guard that collects each of six fixed native prototype descriptor sets in one captured native call after exact ordered key preflight. Every descriptor identity, flag, ancestry and numeric check remains fresh. Unavailable native operations, unknown keys, cold expected shapes and native lazy-stack cases retain the complete old guards. The full existing common source remains unchanged as a prefix; external source reads, native/independent hashes and callback checkpoints stay intact.
+
+A new whole eight-case source oracle retains complete old/current guards, descriptor and lazy-stack callback observations, independent source-packet evolution, checked JavaScript and strict TypeScript. Runtime qualification is UNRUN. Native batching adds containers and internal key arrays and may regress allocation or speed; the retained Node sample counts establish no Bun timing or gain. Original deadlines and caps are unchanged. The isolated compiler requires actual coherent source re-registration and review before its API tests. No Rust execution or new semantic authority.
+
+Add explicit `--retain-output-text` source-generation storage mode. The default
+bulk/matrix APIs keep their original raw output strings and observer contract.
+The opt-in mechanically derived planners use captured private collections and
+lossless immutable UTF-16 chunk backing, reconstructing each complete output at
+its original byte-count/hash/write site. Lone surrogates and all CST/semantic
+components remain exact; every profile is still planned and validated before
+writes. This mode does not preserve public Map/WeakMap observer access to private
+output values. It grants no semantic/source authority and caches no current
+verdict. `prepare-retained-bulk.mjs --check` verifies the two generated planners;
+`--emit` produces a full reviewed-update proposal through language then repository
+substitution rules with complete undo. Existing output/resource limits remain.
+Memory reduction and complete Router generation remain unqualified until measured.
+
+Documented reviewable checkpoint commits at least every six hours during active issue #759 development, with accurate passed, failed and unrun check status. Coherent draft commits can proceed while broader translation work remains unfinished; existing publication and JavaScript-first Rust CI gates still apply.
+
+Documented prioritizing common translation blockers and using matching Rust/JavaScript compatibility abstractions with explicitly untranslated library internals. Repository CST mappings retain language checks, both meta roundtrips, independent behavioral tests and separate reporting of application coverage and runtime parity.
+
+Draft an explicit owned Rust compatibility formatting facade and source-bound
+qualified translation into the existing primitive formatting checker and emitter.
+The Rust facade delegates to the intentionally untranslated standard library.
+An exact CST migration proposes maintainer-authorized API adoption with complete source mapping
+and inverse evidence; it does not certify arbitrary implicit-prelude bindings. The first receiving target is the real accounts CLI header.
+Unknown facade bytes, ambiguous migration bindings and unsupported operands remain
+refused. The coordinator ran the actual migration and class-entry producers successfully;
+their reviewed source outputs are installed. JavaScript and strict TypeScript
+receiving checks remain UNRUN; Rust oracle source is CI-only. No corpus
+coverage gain, complete synchronization or runtime parity is claimed.
+
+Add the owned compatibility core's `Str` alias for Rust's primitive UTF-8
+string slice and bind complete qualified shared references to the translator's
+existing checked borrowed-text representation. The source-bound facade and full
+primitive leaf pass through serialized/reparsed lossless CST before the type
+binding; retained token spans and elided or static lifetimes continue through
+independent checked semantic serialization and the existing borrow checker.
+
+The coordinated facade, Host hook and affected-signature CST migration are owned
+by batch 311. This batch adds the primitive leaf, borrowed-reference adapter,
+eight whole integration cases (60 seconds each, strict TypeScript children at
+20 seconds), and independent native oracle source. Named lifetime integration,
+mutable references, unsized values and unknown or altered source bindings remain
+unsupported. The library implementation of `str` is intentionally untranslated;
+this is an explicitly owned API adoption, not an implicit standard-prelude proof.
+
+Source draft only: JavaScript, Bun, strict TypeScript and the Rust oracle are
+UNRUN here. Rust is CI-only after the full JavaScript gate for the same revision.
+The unchanged static error-classifier body was already a bounded legacy positive;
+its core-path fixture does not establish a new application coverage gain. Broad
+application signature migration and coverage measurement remain separate work.
+
+Default and Clone source contexts now consume genuine complete generated-output
+name effects when their enriched namespace resolution is entirely identical to
+the original derive context's resolution. This fixes standard-only derives
+whose input certificates intentionally leave output type names unresolved.
+The resolver retains its complete original graph/profile/external-table and
+per-invocation output checks; no public scope flags are copied or edited.
+
+The adapter executes ordered language resolution/equality/output rules and an
+empty repository sequence. Any namespace enrichment that changes the complete
+binding result keeps the old result and its refusals. Already resolved scopes
+short-circuit without additional resolver work. Uncertain scopes may perform
+additional fresh resolutions; performance is unmeasured. Input certificates,
+source/type/owner checks and existing Default/Clone scope assertions remain.
+Eight receiving cases cover the original generated Default and Clone targets,
+strict TypeScript, genuine output composition, conservative enrichment, copied
+or changed contexts, independent refusals and ordinary manual Default bodies.
+Tests are source-only until coordinator receiving; the existing whole bulk
+fingerprint-order fixture and its coverage assertions are unchanged.
+
+Receiving exposed incorrect new-test assumptions: genuine output legitimately
+resolves the original type binding, and manual-only metadata omits generated
+method rows. Those assertions now check the actual complete result and manual
+method contract. The resolver also joins its genuine private source-scope origin
+to the derive context before the fast path, rejecting foreign or changed original
+modules/views/profiles even when baseline lookup has no type uncertainty.
+
+Draft a corpus-scale source proposal mode for owned formatting adoption. It uses
+the actual module graph and complete ancestor/macro-use sources, reuses the fixed
+CST rules and full inverses, and retains every file with proposed, unchanged or
+skipped status. Ambiguous origins, inactive configurations and unknown producers
+remain explicit skips. Proposed files are written outside the original tree;
+actual source checking and target generation remain separate. Whole JavaScript,
+strict TypeScript and CLI receiving cases are UNRUN in this source draft,
+including the complete real header and both resume-message branches for Unicode
+and empty labels. No
+application coverage gain or standard-library translation is claimed.
+
+Draft the explicitly owned `translation_core::f64_inclusive_contains` operation
+for three by-value f64 arguments. Rust uses ordered IEEE comparisons; JavaScript
+and strict TypeScript use the existing checked float runtime and reject coercion.
+NaN, infinities, signed zero, inverted bounds and evaluation order have shared
+behavior fixtures. The Rust library implementation is intentionally untranslated;
+its independent Rust oracle is CI-only and UNRUN locally.
+
+A conservative CST producer proposes qualified API adoption for fresh decimal
+inclusive ranges with a written `&identifier` argument, preserving complete
+before/after source, canonical CST and inverse mappings. Ambiguous producers,
+nonliteral endpoints and shared closure arguments remain unchanged. This is
+maintainer-authorized API adoption, not a proof of arbitrary standard Range
+method dispatch. The initial real validator proposals retain all other checker
+obligations; source edit counts are not executable coverage gains.
+
+Actual migration/class-entry production and all JavaScript/TypeScript receiving
+checks are UNRUN for this draft. Generated class metadata is not hand-edited.
+No full synchronization or runtime parity is claimed.
+
+Add a reusable lossless CST proposal tool for adopting the owned borrowed-text
+interface in function signatures and constant type annotations, independently
+of whether a function formats text. It structurally visits complete declarations,
+including bounded type arguments, tuples, arrays and simple inherent impls;
+macro templates, function bodies and ordinary field declarations stay unchanged.
+Every proposal keeps complete original/reconstructed source, canonical CST,
+ordered language/repository substitutions, typed selections, skip reasons and a
+full source inverse. The corpus API resolves its own original module graph and
+can consume formatting-proposal files without trusting public proof flags.
+
+The tool retains unknown producer, competing type/import, configuration, module
+alias, unsupported binder and type-grammar boundaries. In particular, the complete
+token module's unknown serde derive effects still block its type adoption. A
+separate closed fixture uses the complete original token-prefix constants and
+callback body to check matching behavior; this does not claim that the whole
+module becomes executable. Newly reconstructed source must pass the existing
+owned-facade, lifetime, checked-meta and independent target checks. No implicit
+standard-prelude ownership or application coverage is inferred from a rewrite.
+
+Eight complete new cases retain full sources and outcomes with 60-second limits
+and 20-second strict TypeScript children. This is a SOURCE-ONLY draft: JavaScript,
+Bun and strict TypeScript are UNRUN here. Native oracle source from batch 312 stays
+CI-only after the full JavaScript gate for the same revision. No generated
+application output or Rust source migration has been installed by this draft.
+
+Source review V2 explicitly excludes trait/unsupported impl headers before method
+traversal, censuses extern-crate type aliases (including Router's unchanged self
+alias), and keeps unknown foreign or header-less declaration producers as scope
+uncertainty. These controls extend the existing eight cases without changing
+workloads or deadlines; runtime checks remain UNRUN.
+
+The existing account-header formatting regression now supplies the complete
+owned formatting facade and primitive alias used by the migrated Rust header.
+It retains the actual function body, exact source-span comparison, independent
+expected text and strict TypeScript execution. The surrounding project fixture
+declares the real qualified interface instead of omitting its dependencies.
+The complete affected test file awaits receiving with the parser repair.
+
+Select the qualified compatibility formatting operation using the exact macro
+kind and value. The cursor spelling helper intentionally accepts only identifier
+and punctuation tokens, so the first receiving group refused qualified format
+calls while accepting the facade type. Complete failed receiving evidence stays
+retained. This repair preserves Host code, the ordinary standard macro gate,
+all eight new formatting tests and their deadlines. Repaired runtime and strict
+TypeScript receiving checks remain UNRUN; no coverage gain is claimed here.
+
+Default's source-derived AST route now retains static shared references to paths
+inside its existing bounded field-type grammar. Complete original Ref/lifetime
+visitor callbacks and their genuine helper expansions join the existing quote
+source-type serialization and reparse. This closes the actual sibling derive
+name effects that blocked EmergencyAuthConfig's unchanged manual Default body.
+
+The change grants no BTreeMap, Mutex, reference Default, trait-body or collection
+runtime implementation. Mutable, elided and named-lifetime references, macros,
+product/array/function types and other unproved syntax remain refused here.
+Eight receiving cases retain the complete Emergency source and independent JS
+and strict TypeScript results, original output/name-effect evidence, source
+lineage, unchanged path cases and copied/changed/unsupported-source controls.
+Existing whole Default/Clone tests and their deadlines are unchanged. Tests
+remain unrun by the source worker; coordinator receiving is required.
+
+Receiving qualified the unchanged whole Default test, including the complete
+EmergencyAuthConfig method. The new test now joins the unique target Default
+method to the checked source/member span and receiver; it no longer expects a
+private admission field to survive target renaming. Its full source, independent
+JS/strict TS values and all eight deadlines remain unchanged.
+
+A proposal-only CLI composes the unchanged formatting-corpus adoption API and
+then the unchanged primitive-corpus adoption API on its proposed source map:
+
+    node tools/translation/propose-core-adoption-corpus.mjs --root SOURCE_ROOT --output FRESH_OUTSIDE_DIRECTORY
+
+Each pass executes language rules before repository packet writing, with a fresh
+complete graph and explicit production profile. Its complete returned evidence
+is recoverable from per-file input/row/source packets, complete graph modules,
+CST documents, edges, diagnostics, skips and key-order metadata. A small hashed
+index references every packet; no whole-corpus JSON serialization is built.
+The first proposal's row/CST objects can be released before the second pass.
+Only source strings and packet references cross the pass boundary.
+
+The new POSIX CLI permits at most 1,024 source files, 32 Mi UTF-16 source units,
+64 MiB per packet and 1 GiB total output. It preserves full source identities and
+fresh census/content checks after each pass and before completed-index writing.
+It never installs sources or grants semantic admission. Review the completed
+index and all evidence before applying proposed Rust source changes. Failures
+after packet writing preserve bounded incomplete evidence and a failure receipt;
+without a completed index those packets must not be installed. Input validation
+failures before the first write create no proposal output.
+
+These are stock-host proposal operations, not an arbitrary hostile-intrinsic or
+concurrent same-UID writer theorem. Source checks are non-atomic snapshots and
+the output directory requires exclusive ownership. Live graph/CST allocation
+and whole-corpus resource qualification still require receiving measurements;
+packetization alone establishes no heap or translation-coverage gain. Existing
+single APIs, source/type/owner checks, limits and runtime refusal behavior stay
+unchanged. Eight receiving cases cover complete API reconstruction, source/CST
+inverses, actual production sources, real hash-time source mutations, incomplete
+packets, input/path bounds and real same-engine CLI plus checked JS/strict TS.
+No engines or Rust ran in the source worker.
+
+The final index is first written as `index.pending.json`, then published by a
+stock atomic rename to `index.json` only after its write succeeds. An injected
+source-paired pre-rename failure retains complete pending bytes and an incomplete
+receipt, with no installable index. This does not make source snapshots atomic
+or qualify arbitrary hostile filesystem wrappers.
+
+The private independent SHA-256 packs four aligned ASCII code units directly
+into one big-endian input word. Unicode, unaligned bytes and short tails retain
+the existing scalar encoder; compression rounds, padding, input bounds, native
+hash/read observers and every fresh validation checkpoint remain unchanged.
+
+This retains immutable source authentication rather than memoizing digests or
+verdicts. The manifest and executor digest change only to pin the complete new
+helper. Work arrays remain private and keep the qualified typed-storage option
+and ordinary-array fallback.
+
+Eight bounded whole cases retain the complete previous helper, compare it with
+the new helper and native crypto over all 64 offsets, SHA padding boundaries,
+NUL/all ASCII, Unicode and malformed surrogates. Reversible complete-source
+factories observe actual typed and synchronous cold/live fallback storage;
+complete source-packet executors compare all 60 native hash inputs and full read
+tapes, with a real hash-time intrinsic mutation and restored positive. Those
+factories are test instrumentation, not executable or source-owner authority.
+
+Four-character lookahead uses the already-qualified native charCodeAt and
+introduces no user callback. Non-ASCII lookahead is not consumed, so surrogate
+refusal remains on the original scalar path. There is no measured Node/Bun gain
+or claim that this change meets the original five-second regeneration deadline.
+No engines or Rust ran in the source worker.
+
+### Fixed
+- Correct the source-f64 fixture's registered empty Map constructor and standalone refusal inventory selector, retaining the malformed map as an explicit rejection control. Preserve all eight test callbacks and deadlines while placing the full-original Router case in its own automatically discovered integration file, so complete small-file checks remain useful during compiler optimization. Receiving qualification is pending.
+- Supply the standalone parser fixture's required entry point and assert the checked metadata copier's null prototypes independently of its canonical key order. The prior complete failed runs remain retained.
+
+### Changed
+- Inspect complete live namespace targets with qualified native per-key reflection, reducing discarded descriptor-table allocations while retaining all key, descriptor, ordering, mutation and original fallback checks. Timing and receiving qualification are pending.
+
+Add a distinct checked Rust `char` scalar domain, preserving each literal's
+original raw spelling, span and decoded Unicode scalar through checked semantic
+serialization and target emission. JavaScript represents one character as a
+validated scalar string; character values remain distinct from ordinary text,
+byte literals and integers. Runtime value layouts and strict TypeScript types
+carry this domain without adding string coercions or public proof flags.
+
+Fresh scalar-array string Patterns now trim by Unicode-scalar membership rather
+than treating a character set as one substring. Receiver and member expressions
+evaluate once in source order, and the existing borrowed-text origin checker
+retains the receiver lifetime. This covers the unchanged punctuation body in
+`login_url::trim_url_punctuation` after actual owned signature adoption. General
+array Copy/borrow permission, arithmetic, ordering, casts and character methods
+remain outside this initial domain. Existing ordinary string patterns retain
+sequence semantics; UTF-8 byte-index slicing remains separate unfinished work.
+
+Eight complete source/behavior/refusal cases keep 60-second limits and strict
+TypeScript children at 20 seconds. Six independent native Rust oracle cases are
+CI-only after the full JavaScript gate for the same revision. SOURCE-ONLY draft:
+JavaScript, Bun, strict TypeScript and native oracles are UNRUN here. Host hooks
+are coordinated with batch 315 and require the actual coherent class-entry
+producer; no historical class/body/owner proof is inferred from these rules.
+
+Apply the actual combined CST producer to the complete 560-file physical Rust
+`src` tree. Fifty application files now use the owned compatibility core through
+265 substitutions: 85 qualified formatting calls, two owned-text aliases and
+178 borrowed-text aliases. The formatting pass selected 34 functions in 15 files;
+the following primitive pass changed 44 files. Both passes retain unsupported
+and ambiguous source with explicit diagnostics.
+
+Before installation, all 4,582 output packets (338,538,667 bytes), every physical
+original source, both complete before/after CST representations, all mapping
+segments and full inverse reconstructions were independently checked. Only the
+actual producer's raw after-source bytes were installed. Existing library
+implementations behind the owned aliases and format wrapper remain untranslated.
+
+The complete new producer suite passed all eight cases in Node and all eight in
+Bun, including strict TypeScript 5.9.3 and failure-publication controls. The actual
+corpus proposal took 312.89 seconds with observed peak aggregate RSS 1,025,359,872
+bytes, below its 3 GiB cap. Original sources remained unchanged during proposal
+and review. Application source adoption does not establish executable coverage:
+fresh canonical/matrix generation, complete JavaScript gates and CI-only Rust
+verification remain required. No Rust tools ran locally.
+
+Keep the owned facade and range source literals in an import-free data module.
+The runtime helpers import and re-export their unchanged public constants; they
+still perform all actual source checks. The range migration CLI reads only the
+data module and no longer boots a formatting/parser import cycle just to obtain
+those literals. This changes no Rust source, runtime operation or admission rule.
+
+The existing whole range suite now starts the actual CLI in a fresh same-engine
+process over the four portable complete originals and actual core source tree.
+It retains the full child terminal, proposal and emitted source, compares every
+proposal against the independent in-process results, checks idempotence and
+verifies the source tree remains untouched. Eight whole cases and the existing
+60-second case and 20-second strict target limits remain unchanged. All receiving
+checks are UNRUN for this source repair; Rust remains CI-only.
+
+Regenerate the compiler class-entry manifest with the actual source producer for
+the integrated range and character rules. All thirteen generated class modules
+remain byte-identical; only the manifest entry pin changes to the complete
+112,483-byte Host source. All twenty-four complete class selections, forward
+edits and full inverse transformations were reviewed before installing the
+producer output. Source-only production passed under TypeScript 5.9.3 with a
+60-second and 1 GiB bound; receiving tests and the complete JavaScript gate remain
+required. No Rust tools ran locally.
+
+Repair the complete character receiving batch without changing scalar, borrowing,
+macro-owner or ordinary text admission boundaries. Empty character sets still
+evaluate the receiver and fresh frozen set once in source order, then return the
+receiver directly. This avoids an unreachable membership call on TypeScript's
+inferred `never[]`; nonempty sets retain their existing lowering.
+
+Character project fixtures now supply the full owned core tree, including the
+new range leaf. The original panic-order workload remains in the same complete
+case with its original static signatures and independent error expectations;
+missing macro-owner evidence is not waived. Target failures retain complete
+child stdout/stderr before rethrowing, under the unchanged strict 20-second
+child bound and eight 60-second cases.
+
+Move the previously refused fresh-character-array trim source into meaningful
+positive execution while preserving every other old refusal. Original string
+function fixtures retain their exact extracted source, source path, span and
+independent expected values within the complete public core/module context.
+All original whole-file workloads and limits remain intact. SOURCE-ONLY draft;
+Node, Bun and strict TypeScript receiving checks are UNRUN for these repairs.
+
+Apply the actual CST range adopter to three original validators: responses
+controls, structured-output controls and the Gemini bridge request contract.
+Their literal inclusive floating bounds now call the owned compatibility API.
+The Rust library retains the original common input width before exact widening:
+top-p and penalty inputs are f32, while Gemini JSON inputs remain f64.
+
+All four complete selected files, before/after CST documents, full mapping
+segments and inverse reconstructions were reviewed. Only raw after-source bytes
+from the actual successful producer were installed; shared closure sites remain
+unchanged. Earlier cold-import, negation and f32-domain review failures are
+retained. The corrected same-type Rust adapter has independent CI-only f32 and
+f64 edge oracles. JavaScript/TypeScript still require genuine f64 and the private
+parser-to-checker association repair before full range receiving can pass.
+Application coverage remains unmeasured; no Rust tools ran locally.
+
+Recognize an actual macro name before retaining a range inside an unexpanded
+macro token tree. Standalone unary negation, including double negation and
+negation after control keywords, no longer masks ordinary inclusive-range
+adoption. Real merged or separately punctuated macro names and contiguous raw
+identifiers still preserve their complete token trees.
+
+Extend the existing whole range tests with negated, double-negated and
+keyword-adjacent source, nested unknown macros and raw macro names. Keep the
+complete original three-validator proposal assertions and fresh cold CLI
+comparison. Existing binding, f64 ownership, source/inverse checks and deadlines
+are unchanged. All JavaScript/TypeScript receiving checks are UNRUN for this
+source repair; Rust remains CI-only. Source adoption is not executable coverage.
+
+Retain the private parser-to-semantic node correspondence at the existing
+approved source relocation boundary for owned inclusive-range calls. The
+actual checker joins that correspondence to the complete unchanged linked
+parent, original parser receipt, argument syntax and exact relocated spans.
+Copied nodes, fabricated callers and nodes swapped from another analysis
+remain refused; no public metadata field grants admission.
+
+Keep the existing whole range tests and deadlines, adding real linked-parser
+relocation, copy, cross-analysis, changed-operand and restored-positive controls
+inside their existing refusal case. The generic Rust library contract may
+accept same-type f32 values; this checked JavaScript operation remains f64-only.
+No standard Range implementation or trait-owner proof is claimed. The Host
+source input pin is derived mechanically; actual class-entry regeneration and
+JavaScript/strict TypeScript receiving are pending Root execution. No local
+Rust oracle has been run.
+
+The low-level regression fixture initializes each genuine checker through its
+ordinary program entry point before directly checking linked calls. This
+creates the normal lexical context maps without assigning private flags.
+Copy, foreign-node, replaced-method and restored-positive assertions remain
+inside the unchanged whole-test deadlines. The initial receiving failure and
+its full output are retained; this fixture successor is source-only and UNRUN.
+
+The owned Rust inclusive-range function now accepts three values of the same
+`Into<f64> + Copy` input type and explicitly widens each local to `f64`. This
+keeps existing `Option<f32>` top-p and penalty callers compilable, including the
+original rounding of unsuffixed endpoints in f32 before exact widening. Gemini's
+f64 input keeps the same comparison. NaN, infinity and signed-zero behavior
+remain IEEE ordered comparisons.
+
+The complete Rust leaf and import-free source literal/hash change together.
+The checked JavaScript/TypeScript operation remains restricted to genuine f64;
+this does not admit f32 translation, generic trait dispatch or Rust library
+internals. Existing f64 oracles are unchanged. Additional CI-only Rust oracles
+compare authored f32 edge answers with original inclusive ranges, pin the exact
+0.1f32 representation and cover the actual Option<f32>/Option<f64> call shapes.
+The 0.1f32 equal-bound witness rejects an incorrect f64-endpoint implementation.
+No Rust or JavaScript engine ran in the source worker.
+
+Refresh the original class-entry registration using the actual source proposal producer after the owned range relocation fix. The complete 13-module forward/inverse substitutions and 24 selected normalized definitions were reviewed; only the generated Host entry pin changes. The Node producer passed under its fixed resource cap. Whole-file JavaScript and strict TypeScript receiving checks remain pending; Rust was not run locally and complete runtime parity remains unproved.
+
+A reusable proposal rule converts direct string-literal `to_string()` and
+`to_owned()` expressions inside ordinary complete functions to the existing
+owned `translation_core::format!("{}", literal)` interface. A selected function's
+unshadowed bare `String` return becomes the existing transparent `Text` alias.
+Other body operations remain intact and may still be refused by fresh checking.
+
+The rule runs actual language then repository CST substitution phases, preserves
+whole source and complete inverses, and reports inactive/unknown attributes,
+trait/type/import competition (including raw names and unclassified named import roles),
+nested declaration producers, macro token trees,
+raw/generic/const/async signatures and comment-bearing conversion trivia. A
+bounded corpus API requires the complete actual owned facade and primitive leaf
+through the original module graph. It proposes sources, never installs them.
+No original standard trait dispatch theorem or new semantic authority is granted.
+
+Eight bounded whole cases retain authored values, Unicode/raw/BOM/CRLF source,
+full refusal inputs, corpus routes, four complete unchanged production function
+bodies and fresh checked JavaScript/strict TypeScript outputs. Original-before
+and adopted results are both retained; coverage gain requires actual receiving
+rather than being inferred from textual match counts. No engine or Rust ran in
+the source worker.
+
+Keep the original string-function fixture strict while acknowledging one exact
+intentional compatibility-library boundary: the generic owned range function
+remains untranslated. The test compares the complete refusal array against that
+single source/module/name/kind/message/span row and its original source slice.
+Every extra library or application refusal fails, and all three unchanged
+application functions must remain executable with their original source paths,
+full declaration spans, source hashes and independent target observations.
+
+Refresh only the whole-provider source hash for the original MAX_RETRY_AFTER
+constant after the actual bulk owned-core adopter changed a later function's
+borrowed-text signature. Complete old/current provider comparison and the
+installation receipt verify that its imports, constant declaration, initializer,
+spans, value and all constant-proof assertions remain unchanged.
+
+All twelve text cases and fourteen source-association cases, their original
+strict TypeScript child limits and full other controls remain intact. This is a
+source-only fixture repair; Node, Bun and strict TypeScript checks are UNRUN for
+this candidate. No production, constant-value or owner/admission rule changes.
+
+Select the existing fresh per-property NumericCommon native guard in the fixed
+private parser executor and independent SHA helper. This changes only the
+optional descriptor-collection implementation choice: all initial/live guard
+checkpoints, complete source reads, native hashes, independent hashes, final
+joins and refusal domains remain. The public batched descriptor guard and its
+complete eight-case workload remain available and unchanged. No guard result,
+source verdict or hash is cached across operations.
+
+Update only the derived current SHA host row, manifest hard pin and test graph
+registration. Historical comparisons preserve the immutable complete 288 graph;
+the exact full reviewed nine-line ASCII packing block and selected guard name
+are reversed before requiring whole-source equality. Unknown body differences
+still refuse. Existing child/native/read tapes and complete callbacks remain.
+
+The fresh original twelve-callback profile measured native qualification as a
+hot path; its samples do not predict a speed gain from this selection. Candidate
+performance is UNMEASURED, and the original Bun regeneration deadline remains
+5000 milliseconds. Root owns complete Node/Bun receiving and deadline/resource
+verification. No engines or local Rust were run for this source draft.
+
+Add source-bound transparent Json, Maybe<T> and Outcome<T, E> aliases to the
+existing owned compatibility primitives leaf. Qualified uses select existing
+registered JSON layouts, canonical Option/Result instantiation, constructor
+checking, ownership and destruction rules. Their native serde_json and Rust
+library implementations are intentionally untranslated. Unknown paths, source
+substitution, unsupported borrowing, payload Drop and old prelude ambiguities
+retain their existing refusals; the contract grants no blanket Try support.
+
+Add a reusable complete-source CST adoption pass over actual type positions,
+resolved imports and qualified constructor/associated paths. It preserves full
+source, fixed language/repository phases, inverses and uncertainty reports;
+later unsupported bodies stay unsupported. Reuse the existing borrowed-text
+position grammar without changing that adopter's default behavior. Keep source
+literals import-free for cold tooling.
+
+New whole JavaScript tests declare eight complete 60-second cases, with strict
+TypeScript target children bounded at 20 seconds, including independent tagged
+results, JSON edge cases, source tampering, ownership refusals and four complete
+Router scalar-helper bodies. Six native Rust oracle tests are CI-only and UNRUN
+locally. All JavaScript and strict TypeScript checks are also UNRUN in this
+source draft. No executable application gains, parity or complete gate result
+are claimed before coherent receiving and actual corpus regeneration. The
+changed Host input row requires the coordinator's actual class-entry producer.
+
+Restrict bare constructor adoption to direct calls in bodies without local
+binders, closure or pattern-control syntax and with an unshadowed registered
+constructor namespace. Preserve method/field/raw identifiers, record keys and
+shorthand, unit variants and uncertain bindings. Qualified owner paths still
+adopt independently. Existing whole-case context controls retain complete
+source, inverse and refusal evidence; these new controls remain UNRUN.
+
+Update the existing borrowed-text refusal fixture to tamper the current grouped
+facade export and assert the original anchor is unique and the mutation changes
+the source. Keep all six original source/module-route negatives and the full
+eight-case workload and limits. This test-only repair is locally UNRUN.
+
+Use the published library compatibility module in the native algebraic oracle,
+matching the other compatibility oracles without reconstructing a local module.
+All six test bodies are unchanged; Rust remains UNRUN locally.
+
+The owned literal-text adopter can now classify named imports from genuine complete module-graph declarations and explicit reexports. It reuses the existing original nontrait candidate API, joins the resolver's exact declaration source/span/kind, and refuses traits, type aliases, ambiguous bindings, unknown producer effects and globs. Complete pinned Rust 1.89 std/core time sources additionally provide declaration-role candidates through the actual std root → time → core time reexport route; this is a generic public-declaration census, not a Duration name allowlist.
+
+These are eligibility facts for maintainer-authorized owned API adoption. They retain `namespaceComplete:false`, `originalDispatchProved:false` and `executableAdmission:false`; they do not close the standard attribute/prelude owner proof or admit original standard-library behavior. Reconstructed owned calls still pass the ordinary checker. The existing eight whole cases retain their deadlines and gain graph aliases/reexports, trait/type/producer/shadowing negatives, and both complete original config_defaults/runtime modules. The former contains two conversion sites; the latter retains its separate derive/method barriers. The complete config default is checked and executed in JavaScript and strict TypeScript.
+
+A source-only text census found 198 modules with 899 quoted-literal conversion matches, of which 189 contain imports; 35 Duration-importing modules account for 197 matches. These counts include unsupported contexts and are not eligibility or admission counts. No tests, engines or Rust compiler ran in the worker; no performance gain is claimed.
+
+Initial whole-file receiving retained all eight cases and exposed a conservative refusal of the imported Instant struct: its original declaration carries cfg_attr(not(test), rustc_diagnostic_item = "Instant"). The adoption-only census now retains both diagnostic annotation alternatives and the complete original declaration, attributes, raw span and hash. A same-width census view has a complete checked inverse; normalized-source hashes are labeled separately and never replace the original-source hash. No configuration is selected and no attribute-owner, standard namespace or dispatch authority is issued. Shared namespace-census behavior and all unknown producer refusals are unchanged. Receiving after this source repair remains unrun.
+
+The private parser's native guard specializes consecutive immutable expected data-descriptor flags while retaining every fresh key census, descriptor read, own-value check and original comparison order. Accessors, irregular flags and unsupported captured shapes retain their existing checks and fallbacks. Historical fixture source comparisons use an exact reversible recipe; original registered sources and archives are retained.
+
+This is an unmeasured source experiment. No deadline or resource limit changed, and no runtime, CI or performance improvement is claimed. Complete Node/Bun guard files and the original reverse regeneration workload remain required before qualification.
+
+Adds an explicit independent-source reverse analysis corpus API. Every row consumes a serialized, reparsed and reconstructed CST and the existing default semantic frontend independently. The existing bounded original CST batch shares its complete source authentication transaction; native host checks and complete caller-input joins remain fresh for each row and at return. Row labels grant no module or ownership context. Existing single-source translation and analysis APIs retain their original implementation and schedules.
+
+JavaScript-first regeneration uses this explicit API for all sixteen existing unsupported fixtures within every build. Original fixture messages, artifact bytes, three-build workload and deadlines remain required. New differential, callback, mutation, fidelity and actual JavaScript/strict TypeScript controls are source drafts; runtime and performance are UNRUN. No speed, whole-program parity or native Rust result is claimed.
+
+Refresh the original class-definition entry through the actual proposal producer
+after integrating qualified owned Json, Maybe and Outcome parsing. Review all
+13 generated modules and their complete forward/inverse substitutions, all 24
+complete normalized definitions and member pins, and the full old/new leaf.
+Only the program's whole Host source entry changes; install the producer's
+exact leaf bytes. The bounded JavaScript producer passed; receiving suites and
+the complete gate remain unrun for this integrated source. No Rust ran locally.
+
+Derive certificate reads retain an internal association with the exact immutable source-view array and original data item. Under the qualified unchanged native find operation, reading that exact issued item uses the association instead of repeating a linear array search. A module's immutable lookup shape is inspected once during the existing context construction. The index stores source-object associations only; no namespace, owner or semantic verdict is cached.
+
+Every original full-source/item hash, current module-view/profile join, term/name check and complete token JSON comparison still runs. Copied items, non-view modules, missing associations and changed find descriptors/prototypes execute the entire original search path. Captured native WeakMap operations keep the private storage out of mutable collection observer routes. Existing compilation passes and public APIs are unchanged.
+
+The original nine whole tests and their deadlines remain. The inline-view case now compares complete prior/current modules and contexts, exact caller getter order during capture, all hash input arguments, successful and refused results, copied/forged items, changed source, wrapper/getter find observers, a hash-installed getter, missing results and function-prototype changes. Reversible test-only full-source instrumentation reports whether the optional native lane actually runs; all hooks are restored synchronously before observations or awaits. Worker checks are source-only: no tests, engines or Rust ran, and no speed gain is claimed.
+
+Apply the actual complete-corpus CST adoption producer's exact bytes to 51 Rust
+source files: 108 Option, 80 Result, 130 JSON type and one constructor path
+substitutions select the owned transparent compatibility aliases. Review all
+7,145 evidence packets, both full source stages, every mapping and inverse, and
+all original physical/Git sources. The literal stage makes zero edits because
+unknown conditional ancestor declarations remain a conservative blocker.
+
+The source-only Node producer passed in 332.03 seconds within its 900-second
+diagnostic cap and 3 GiB memory limit. The new algebraic and literal whole
+eight-case suites passed under Node and Bun with strict installed TypeScript
+before this source adoption. Installed-corpus receiving, fresh executable
+coverage, canonical/profile generation and the complete gate remain unrun.
+These substitutions do not establish application execution or runtime parity.
+No Rust tools ran locally; native oracles remain CI-only.
+
+Allow owned literal-text adoption beside an external module whose valid cfg
+predicate is unknown, when its complete declaration has only recognized inert
+attributes and a noncompeting module name. Retain the absent/present module
+alternatives and the original predicate without choosing a configuration. A
+child module does not import its conversion traits or types into its parent.
+
+Unknown imports, type/trait declarations, inline modules, macro-use modules,
+derives, other producers, malformed conditions and competing module names stay
+refused. Extend existing whole-case source/inverse controls and exercise an
+actual fresh corpus graph with a conditional sibling and both typed targets.
+All eight cases keep their original 60-second limits and strict children their
+20-second limits. This is a source-only draft; checks are UNRUN locally and no
+new corpus adoption or executable gain is claimed until receiving.
+
+Keep ancestor source options when independently replaying conditional-negative
+proposal idempotence. The complete inverse, all negative inputs, eight cases
+and limits remain intact. The receiving fixture repair is locally UNRUN.
+
+Expose fixed literal-only and literal-then-algebraic source-adoption sequences
+through the checked-in proposal CLI and an async API. Preserve the original
+formatting/borrowed-text API, default CLI and schema. Reuse the existing bounded
+snapshot, physical output ownership, writer and incomplete-receipt machinery;
+retain complete returned stage fields, ordered graph/CST data and independently
+verified full source inverses. Each stage releases its full proposal before the
+next builds a fresh graph. No sequence applies source changes or requires Git.
+
+Document invocation and the owned Text/Str/Json/Maybe/Outcome, formatting and
+range interfaces, distinguishing native library delegation from checked JS
+runtime domains and actual application coverage. Add a complete eight-case
+receiving file at 60 seconds per case with strict target children at 20 seconds.
+All new runtime/CLI/strict TypeScript checks are locally UNRUN in this draft.
+
+Constructor-proof percent encoding now accumulates bounded blocks of bytes before extending its output string. The existing byte table, Buffer callback, complete eligibility checks, fallback loop and source/proof serialization calls remain unchanged. Boundary oracles compare complete old/new outputs for bare, escaped and Unicode data and offset native byte views, alongside every existing callback and refusal control.
+
+This is an unmeasured string-construction experiment motivated by the complete Bun profile. It does not establish quadratic behavior in the previous engine implementation, a speed gain or a fixed regeneration deadline. Whole-file Node/Bun and strict TypeScript verification remain UNRUN for this draft; no local Rust was executed.
+
+Refresh the complete request-routing source pin after the actual five owned
+algebraic alias substitutions in its later signatures. The original prefix,
+MAX_RETRY_AFTER declaration, body, spans, declaration hash and expected Duration
+remain byte-for-byte unchanged. Retain the entire fourteen-case source-link
+suite and deadlines. The producer's complete source chain and inverse were
+reviewed; receiving this pin refresh remains unrun. No Rust ran locally.
+
+Literal-text adoption can classify explicit imports through the existing checksum-locked package sources when the caller supplies exact own-data `dependencyInputs: {manifest, lock}`. Missing or different Cargo inputs keep those external imports unclassified. No tool-root manifest or caller binding table is substituted.
+
+The bounded reusable walker reads the registered package's own Cargo library path, follows original module declarations and explicit public reexports, and retains complete declaration slices, spans, attributes and full-source hashes. Public caller paths stay separate from private internal reexport paths. Existing serde_json sources therefore provide Value, Number, Map and Error declaration-kind candidates without a type-name allowlist. Traits, type aliases, globs, unknown routes/attributes and shadowed crate names remain refused.
+
+A pinned exported declarative macro may supply a macro-only import candidate after its original module/declaration and existing compiled-definition source/span join. Explicit root type/reexport competition still refuses. This permits the registered json bang import without expanding or changing any invocation token tree. Namespace completeness, original dispatch and executable admission remain false; reconstructed owned calls still undergo ordinary fresh semantic checks.
+
+Only the new literal CLI sequences capture optional physical Cargo.toml/Cargo.lock, preserve full source/identity packets, and rejoin both files before completed-index publication. The original formatter/primitives API and CLI path are unchanged. Optional input proxies/accessors, Hash-time Cargo mutation, crate shadows, private paths and unsupported imports have source tests alongside complete inverse checks and JS/strict TypeScript execution. All existing eight-case and 20-second strict-compiler caps remain unchanged. Worker validation is source-only; runtime and corpus gain require receiving evidence.
+
+Apply the checked-in literal-only proposal CLI's exact output to config defaults
+and the token-secret error message: three direct literal conversions and two
+owned return aliases. The actual complete 561-file source pass retains every
+selected, unchanged and skipped row. Review all 3,421 packets, source identities,
+full CST mappings and inverses before installing the two raw producer files.
+
+The bounded Node producer passed in 167.19 seconds; complete new and existing
+proposal CLI suites passed 16 cases under each of Node and Bun with strict
+installed TypeScript. Function execution gains, canonical/profile freshness and
+the complete gate remain unmeasured after this source adoption. No Rust ran.
+
+Refresh the isolated project compiler registration through its actual proposal
+producer at c65006e50a27d9f6ebedba25447fff75625ea769. Verify all 1,075 complete
+compiler inputs and all 132 installed TypeScript 5.9.3 inputs, every Git blob,
+the deterministic stored-gzip roundtrip and all six bootstrap substitutions
+with complete inverse restoration. Install only the three producer artifacts.
+
+The bounded JavaScript producer passed. Independent current-compiler API/export
+receiving, full corpus generation and the complete gate remain unrun; the
+registration grants no semantic, owner or runtime authority. No Rust ran.
+
+Regenerate the native affinity descriptor and bulk serialization registry from the complete current Rust/Cargo source corpus using their actual checked producers. All seven native affinity owners and the emitted JavaScript/TypeScript runtime values remain unchanged; its provenance joins the new source set.
+
+Retain an explicit bulk regression: 86 of the previous 88 bounded layouts remain, with byte-identical complete JavaScript and TypeScript schema payloads. `RecoveryRecord` and `RefreshResponse` become refused because sibling standard derives contain nested trait-object fields outside the current source visitor. Their complete original source files and fields are unchanged. Do not treat this checkpoint as restored coverage or completed parity; extend the shared source grammar and regenerate rather than weakening namespace checks.
+
+Both actual producers completed under monitored memory/disk bounds with stable original inputs. A separate complete module-scope diagnostic identifies the missing `Debug`/`Default` output routes. The current compiler's full 17 receiving/export cases passed under both Node and Bun, including strict TypeScript 5.9.3 and edited CST synchronization in both directions. Strict checks on these regenerated registry files, fresh canonical/profile generation, the complete JavaScript gate and Rust CI remain outstanding. No Rust tool ran locally.
+
+Add an owned unicode_scalar_count(&Str) -> usize compatibility operation. Rust
+uses its ordinary chars().count() library implementation, intentionally left
+untranslated; checked JS validates scalar text and returns the existing usize
+BigInt ABI. A Unicode scalar differs from a UTF-8 byte, UTF-16 unit or grapheme.
+Reuse the existing private raw/relocated source association and checked borrowed
+text, ownership and once-only operand rules. No general char iterator is admitted.
+
+Add a generic complete-source CST adoption pass for exact count chains on owned
+borrowed-text parameters and selected owned Maybe borrowed-text callbacks. Keep
+unknown binders, custom receivers, producers and macro inputs unchanged. Reuse
+the reviewed source-backed import-role helper; external candidates require the
+actual Cargo manifest and lock, and visible traits/impls stay refused; retain
+full sources, serialized/reparsed CST, substitutions, inverses and skip evidence.
+The actual application producer remains separate and no app source is hand-edited.
+
+The whole eight-case receiving file preserves 60-second cases and 20-second
+strict target children. Add the matching runtime TypeScript declaration. It retains the complete safety_identifier module and
+checks five actual validators/callers, Unicode limits, error cases and source
+ownership refusals. Native oracle source imports the published compatibility
+core and includes the actual private application module. All JS/strict TS/CLI
+and native Rust checks are locally UNRUN. Application gains are unclaimed.
+The changed Host input row requires the coordinator's actual class-entry tool.
+
+### Fixed
+
+- Retain explicit single-bound `dyn Trait` syntax in original derive fragments and close the matching original Default visitor path. This restores source namespace closure around opaque trait-object fields without executing their Debug, Default or trait methods. Unsupported bounds, binders, modifiers, macros and generated runtime behavior remain refused.
+- Add complete original Router declaration/module evidence, serialization-layout regressions, source/refusal controls and independent JavaScript/strict TypeScript behavior checks. Source draft only: the new whole eight-case file and existing files are unrun locally; no Rust tools were run.
+
+- The new trait-object branch rejects strict/reserved keywords as names, lone or misplaced relative roots, and malformed nested type arguments. Qualified `crate`, `self` and repeated `super` roots remain syntax only; the original non-trait-object type grammar is preserved. Added controls stay inside the existing fifth case and original deadlines.
+
+Run the checked-in literal-only proposal CLI across all 561 physical source files with the caller's complete Cargo inputs. Install its exact output bytes for ten additional substitutions across `bridge_controls.rs`, `structured_output.rs` and `token_report.rs`: nine literal formatting conversions and one transparent owned return-type alias. Complete before/after CST mappings, inverse substitutions, all 3,424 packets and original Rust/Cargo source joins were reviewed before installation.
+
+The full producer completed in 163.301 seconds under monitored memory/disk bounds with stable inputs. All 24 literal-adoption, explicit-sequence and original-packet cases passed under both Node and Bun, including strict TypeScript 5.9.3, original deadlines and dependency mutation refusals. Document explicit Cargo capture and its candidate-only authority boundary. These source edits do not establish executable gains; current compiler registration, canonical/profile regeneration and the complete gate remain outstanding. The two serialization grammar regressions recorded in checkpoint352 remain open. No Rust tool ran locally.
+
+The portable proposal CLI now accepts `--sequence scalar-count`. It calls the actual `proposeCoreScalarsCorpus` API through the existing fixed language then repository pipeline, then retains every returned field, complete source/CST/module graph, selection, skip and inverse mapping with the existing packet quotas and atomic completed index.
+
+Run `node tools/translation/propose-core-adoption-corpus.mjs --root SOURCE_ROOT --output FRESH_OUTSIDE_DIRECTORY --sequence scalar-count`. Optional physical Cargo.toml/Cargo.lock captures and final rejoins use the same source-bound path as literal adoption. The command only proposes source edits; it never installs them, certifies the old iterator dispatch, or grants executable authority. Owned scalar calls still require fresh normal source/checker validation.
+
+The default formatting/primitives producer and the literal/literal-algebraic contracts remain intact. Existing whole-file cases add complete direct-API/packet equality, exact source inverses and Cargo packets, same-engine cold CLI execution, actual Hash-time Cargo mutation with incomplete output and restored success, and independent Unicode scalar expectations through JS and strict TypeScript. Existing 60-second whole-case and 20-second child caps remain unchanged. Worker validation is source-only; receiving and any corpus gain remain unmeasured.
+
+Run the actual class-entry producer for the owned scalar-count Host change. Review all thirteen complete generated modules, their UTF-16 forward/inverse substitutions and all twenty-four original class/member selections. Their bytes remain unchanged; install only the actual generated leaf's whole Host source pin. The producer completed within monitored bounds with all 824 original Rust/Cargo inputs and installed TypeScript sources stable.
+
+The separate trait-object receiving batch passed its new eight-case file and the original quote, Default AST, static-reference and derive-footprint Node files. Its complete full-source serialization file hit the unchanged 300-second outer bound; retain that failure and remaining unrun files. An explicit private source-selection optimization remains required before qualification. Scalar runtime/CLI receiving, fresh compiler registration and canonical/profile generation are still pending. No Rust tool ran locally.
+
+### Changed
+
+- Select the seven original Syn trait-object source bodies through one new authenticated private token-batch operation over both complete pinned source files. Each file is tokenized once per operation; all seven source spans and selected-slice hashes remain independently checked in their original order. No source, hash, owner or verdict is cached across operations.
+- This is an explicit new dependency-syntax selection contract. The sourceType schedule retains two input-source hash pairs (macro token-tree provenance, then sourceType provenance), followed by the existing private graph's complete before/after authentication, reads and native hashes (60 pairs for the current packet), then seven selected-slice pairs: 69 pairs in total. It makes no callback-equivalence claim with the public lexer's escaped mutable punctuation table. The old single-source and CST transaction code remains byte-exact, and application CST serialization/reparse and checked-semantic stages remain intact.
+- Extend the existing whole eight-case source test with complete two-source token equality, all seven old/new span comparisons, full authentication tapes, late source mutation, invalid data, and public-table/private-operation separation. The first Node receiving run exposed a fixture count of 68 that omitted the macro token-tree input hash. The correction checks the complete two-pair input prefix, exact equality of the middle authentication tape to the independent token-batch operation, and all seven complete selected-slice pairs. That corrected fixture and original 300-second serialization-file qualification remain unqualified here; no performance gain or Rust result is claimed.
+
+Record owned scalar-count nodes at the existing private parser-to-project
+relocation boundary, alongside the already supported owned range-call nodes.
+Keep the original complete parent digest, parser identity, raw syntax path,
+relocation comparison, current-node checks and copied/foreign-node refusals.
+The Host source and its generated class-entry input remain unchanged.
+
+Keep BOM at the start of the complete Rust fixture, retain its core declaration,
+CRLF and full inverse, and check the entire unchanged original prefix. Extend
+actual independent-checker and copied-parent refusal controls inside the same
+eight receiving cases with unchanged 60-second and 20-second target limits.
+
+Correct the safety-module fixture's overstated executable expectations using
+its complete observed baseline: two scalar-limit validators already executed;
+two JSON wrappers still require a locked source/feature proof and the Anthropic
+caller still refuses aggregate let-else. Preserve complete before/after modules,
+all baseline exports, exact independent refusals, real validator JS/strict TS
+behavior and the existing native-only oracle. No five-function gain is claimed.
+All repaired receiving and Rust checks are locally UNRUN.
+
+Extend the language checker’s existing let-else lowering to a direct `Some` binding of one shared reference to the registered canonical JSON Value or Map layout. Reuse the original Option/shared-reference Copy sources, exact source-node issuer, constructor/field projections and borrowed immutable-view runtime validation; preserve lifetime escape checks and the scalar rule. Owned, mutable, nested, moving and unknown aggregate payloads remain unsupported. No pointee Copy, Drop, ownership or lifetime authority is added.
+
+The new whole eight-case file retains complete original safety_identifier, bridge_request_tools and subscription_usage_normalize sources. It checks independent JavaScript and strict TypeScript behavior, missing Cargo JSON context, forged/cross-analysis source associations and hostile runtime views. The retained original and complete current physical safety modules are checked with genuine sealed Cargo JSON dependencies; both receive independent target behavior checks when their sources differ. Other complete callers record any remaining semantic refusals rather than counting adoption as execution. Update the scalar regression’s obsolete anthropic_user_id let-else refusal while retaining the two missing JSON-context refusals. All original whole-file caps remain; the new cases use 60 seconds and strict TypeScript children 20 seconds. Add a Rust borrow/identity/evaluation-order oracle for CI only.
+
+Source draft only: worker ran no JavaScript, TypeScript or Rust engine. The class-source INPUTS pin is updated, but the generated class leaf is intentionally unchanged; the coordinator must run the actual producer before receiving tests. No runtime, coverage, parity or performance result is claimed by this draft.
+
+Source-review follow-up: keep the low-level pattern module independent of Host. Guard genuine captured let-else dispatch in the existing Host expression path before delegation and after the final pattern source-digest recheck, retaining all ordinary ownership/type postchecks. The helper starts with private node-membership eligibility before virtual proof hooks and rechecks the complete source after proof consumption. The existing fifth case adds method/getter overrides, captured fake-Host refusal with zero callbacks, restoration, and the unchanged standalone scalar path. The existing trusted owned-ESM bootstrap boundary remains; no new registration API or native-total callback-equivalence claim is added.
+
+Compare both original bang-output item carriers through the existing bounded
+immutable-byte JSON helper. Mutable, accessor, proxy, hook-bearing and changed
+intrinsic inputs retain ordinary JSON serialization. Privately frozen canonical
+carriers can reuse the same immutable comparison bytes already retained for the
+expected operand. This adds no source, namespace, hash or verdict cache.
+
+All original source/item hashes, dependency/issuer joins, profile checks and
+refusal paths remain. A complete before-module witness and eight bounded cases
+compare mutable decisions, callback order, inherited toJSON, stringify and
+isFrozen fallbacks, full hash tapes and actual checked JS/strict TS behavior.
+Original serialization workloads and deadlines are unchanged. All new checks
+are locally UNRUN; speed and complete receiving qualification remain unmeasured.
+
+### Changed
+
+- Clarify the explicitly requested draft CI-feedback checkpoint workflow: one reviewed head, one push owner, all completed failures collected, and exact failed/unrun evidence. Every required same-SHA JavaScript CI stage still gates Rust, and a feedback checkpoint does not establish completed translation or release readiness.
+
+### Changed
+
+- Apply the checked-in `--sequence scalar-count` producer to all 561 application Rust sources: 385 complete proposals select two borrowed-text callback substitutions in `safety_identifier.rs`. Install only its exact raw after bytes after complete packet, Cargo input, CST and UTF-16 forward/inverse review. The owned iterator library internals remain untranslated.
+- The integrated scalar, CLI, source-link, range and derive receiving group passes all 81 cases in each of Node and Bun at `16806785c2922291db8710be4737dc864ab0eb6e`, including installed strict TypeScript 5.9.3 and unchanged deadlines. This source adoption adds no demonstrated executable function: both validators already translated through the old operation. Full corpus freshness, native parity and the JavaScript gate remain incomplete; all Rust execution is CI-only and locally unrun.
+- Document the portable scalar-count sequence alongside the existing literal sequences and their actual Cargo capture contract.
+
+### Changed
+- Regenerate the original class-source program with the actual producer for borrowed JSON let-else rules and guarded Host dispatch. Independently review all 13 complete module substitutions, UTF-16 inverses and 24 class/member selections before installing the exact generated leaf. Other module outputs and method censuses remain byte-identical. Receiving checks and complete coverage regeneration remain pending; no Rust ran locally.
+
+Reduce per-call allocation in the existing qualified deep-data freezer. Its
+bounded depth-first planner now returns each child's scalar cost directly to
+its parent, removing pending triples and the second child-map walk. Complete
+parent descriptor checks, left-to-right children, shared-edge multiplicity,
+cycle/depth/cell/node limits, postorder freezing and existing weak scalar
+records remain. Unqualified or unsupported data keeps the original freezer.
+
+No source, hash, owner or verdict cache is added. Builtin output reissue and all
+source/item hashes and issuer joins remain unchanged. A complete old-helper
+oracle and eight bounded cases cover full graphs, aliases, budgets, fallback
+callbacks, real Debug/PartialEq proof/hash envelopes and checked JS/strict TS.
+
+The motivating timed profile hit its unchanged 300-second cap. It attributed
+25.0% of samples to GC and left 67.9% unaccounted; visible planner/reflection
+stacks justify this allocation change but do not establish a speed gain.
+All new runtime checks are UNRUN locally; original deadlines remain unchanged.
+
+Recognize an empty borrowed variant nested inside a checked constructor, such as `Ok(None)`, by following the actual constructor’s argument count, field types and nested values. Keep the finite borrow walk bound and all inhabited-value input/static lifetime checks. A public empty flag or generic type alone grants no borrow origin.
+
+The existing borrowed-JSON whole eight-case suite retains the full safety-module five-function expectation and both current/retained original source workloads. Extend its shared-string case with nested Option/Result values and independent JavaScript/strict TypeScript outcomes; extend the existing lifetime-negative case with inhabited nested values that try to escape as static. Preserve all cases and their 60-second limits and strict child 20-second limits. The original retained receiving failure is the missing origin on `return Ok(None)`; the other complete usage-normalizer caller already passes and the tool-choice caller keeps its independent `unknown name Some` callback refusal.
+
+Source-only worker draft: JavaScript, TypeScript and Rust checks are unrun here. No Host, pattern or generated class leaf changes are needed; this uses the existing shared lifetime walk and does not claim broader ownership, Drop, residual-conversion or parity coverage.
+
+### Fixed
+- Regenerate the complete serialization registries through the actual JavaScript producers after trait-object source-grammar repairs. Restore RecoveryRecord and RefreshResponse: 88 supported layouts, 453 refusals and 134 exclusions, with no lost owners. All previous 86 printed descriptors and the seven native affinity descriptors retain their values; all 88 JavaScript and TypeScript projections agree. This is data-layout coverage, not complete serde behavior or Router runtime parity. Rust remains unrun locally.
+
+### Added
+
+- Add the qualified owned `translation_core::json!` compatibility interface, with real Rust delegation to `serde_json` and the existing checked immutable JSON target representation. The language rule checks literal trees, borrowed scalar text, canonical JSON copies and exact fixed integers up to 64 bits, including actual direct suffixed literals and Rust’s unsuffixed i32 literal fallback; the repository rule requires the complete genuine owned facade and original source-call association. Rust library internals remain intentionally untranslated.
+- Add a generic CST source-adoption proposal for proven locked JSON macro imports and qualified calls, with complete before/after source, actual language/repository phases and verified inverses. Shadows, globs, unknown producers and unproved imports remain preserved. A private macro import is removed only after every possible written use in its complete leaf module is covered; child modules and unknown uses retain it.
+- Retain four complete original Router caller bodies and their full parent source/span evidence in explicit isolated source carriers. These tests do not establish admission of their original parent modules or the full crate. Nonempty array construction, custom Serialize, floats, owned Text interpolation, mutation and effectful calls remain refused; the old unqualified JSON macro path is unchanged.
+- Add a whole eight-case JavaScript/strict-TypeScript receiving file and independent CI-only Rust oracle source. All are unrun in this source draft; no coverage gain, performance improvement, full synchronization or parity result is claimed. Rust remains forbidden locally and gated on fully green same-SHA JavaScript CI.
+
+Extend the CI-only Rust borrowed-JSON oracle with nested Result/Option empty and inhabited constructors, original string-reference identity, Unicode scalar strings and once/lazy evaluation counters. Mirror the 361/368 JavaScript behavior cases without a compile-fail harness or application Rust changes. Reflow the original long assertion and array by ordinary source editing. All Rust, rustfmt and JavaScript execution remains unrun by the worker; Rust verification is reserved for CI after the required JavaScript gate.
+
+Preserve each written Option/Result argument's original normalized type, lifetime and span when reusing a monomorphic runtime layout. The Host parser previously copied the first declaration's cached argument syntax, allowing a later nested static result to inherit an input's elided lifetime. Retain the existing superclass/layout and add fresh owner normalization for the current source arguments. Add declaration-order, nested, named/static/elided span and escaping/static-call regressions inside the existing whole eight-case borrowed-JSON file; preserve all five complete safety-function expectations and original deadlines. The changed Host input requires the coordinator's genuine class-entry producer; generated class data is not edited here. JavaScript, strict TypeScript and Rust execution remain unrun by the worker.
+
+Retain accessor-bearing freezer test results through a complete descriptor and
+identity graph. Assertions and JSON evidence no longer execute the reentrant
+getter after its native-operation restoration block. The original freezer
+workload and observer tapes stay in place; new checks require one intended
+getter call and exact native descriptor restoration after assertion/retention.
+
+The full diagnostic identified both leaked wrappers as the case-5 getter's
+functions: Object.freeze and Array.prototype.forEach. All six cold child
+comparisons had completed successfully; the later checked translation exposed
+the parent-process contamination. Production guards and initialization remain
+unchanged. All eight cases and child deadlines are preserved. This source-only
+repair is locally UNRUN; complete receiving belongs to the coordinator.
+
+Propagate the actual canonical Result success type through a source-qualified immediate Option.map receiver of ok_or_else. Capture the actual MethodRustParser map wrapper in the existing genuine source-call table, rather than relying on its fallback iterator node. Establish the callback target only after normal receiver/inherent-method checking, revoke its private interval on every exit, and freshly rejoin the original calls and checker before consuming the result. Recheck nested canonical Option payloads down to the existing scalar, borrowed-str or privately certified Copy domain through the selected original ok_or_else body; arbitrary aggregate moves and destructors remain unsupported. Nested classification is bounded to 32 levels and 512 recursive Option visits per request. Add a whole eight-case file with the complete original Anthropic tool-choice module, independent JavaScript/strict-TypeScript outcomes, lazy branches, source/checker counterfeits, expected-type disagreements, borrowed origins, failure recovery and original-body tampering. Existing whole files and deadlines remain unchanged. The ok_or_else path now applies the existing complete original-checker guard before/after its source callback and before returning; no old observer-checkpoint equivalence is claimed. The Host raw pin is updated; actual class-entry generation and all receiving execution belong to the coordinator. All JavaScript, TypeScript and Rust execution remains unrun by the worker; no current function-gain claim is made.
+
+### Fixed
+- Regenerate the authenticated class entry with the actual producer after preserving per-use generic source lifetimes. All 13 complete module outputs, 24 class selections and UTF-16 substitution inverses remain unchanged; only the full Host entry binding advances. Generated bytes are installed exactly from the reviewed producer proposal. Receiving verification remains required; no Rust ran locally.
+
+Keep an actual constructor-tag branch around selected statement-match payload
+projections. An immutable known constructor still evaluates its subject once
+and selects its checked arm, while TypeScript can now narrow the complete Rust
+union before reading its fields. Wildcard/binding blocks, enclosing control
+flow, mutation and collision avoidance remain unchanged. No casts or compiler
+strictness waivers are added.
+
+The unchanged 22-case lifetime-flow regression includes the actual unused-formal
+collision plus known Some/None and alias cases; its captured strict compiler
+output reported TS7053 for the two previously unguarded Some projections.
+The source-only emitter change awaits the actual class-birth producer and
+complete receiving. All runtime checks are locally UNRUN; no generated birth
+leaf or shared generator INPUTS table was manually edited.
+
+### Changed
+- Regenerate the authenticated original class entry with the actual producer for source-qualified Option map context propagation. All 13 complete module rows, forward/inverse substitutions and 24 class selections remain byte-identical to the prior reviewed program; only the full Host entry advances. Install exact producer bytes before receiving checks. Rust remains unrun locally.
+
+Retain per-use canonical Option argument metadata on normally checked constructor results during the private source-qualified Option.map context. The portable core otherwise returns only the data name, which made nested payload verification correctly refuse the missing provenance. Rejoin the expected canonical layout, actual Some/None arity, checked payload ownership and primitive identity, original source calls and original checker before retaining those arguments. Keep existing payload and lifetime refusal checks intact; do not recover written lifetimes from a cached declaration. Standard method planning now returns its already-validated current per-use argument types instead of the shared layout fields. Extend the same whole eight-case regression file with nested callback/constructor metadata, exact borrowed source spans and context-free counterfeit controls; preserve every original negative and timeout. Host source registration is updated and requires coordinator class-entry production. All JavaScript, strict TypeScript and Rust execution remains unrun by the worker; no runtime success or function gain is claimed.
+
+Reuse the existing bounded immutable JSON byte storage for certified derive token comparisons and frozen resolver scope/baseline digest operands. Every source/item hash, certificate issuer, source view, configuration profile, item selection and binding/attribute check still runs. Mutable values and changed JSON, prototype or reflection operations keep ordinary serialization and its callback order. This stores comparison bytes, not source, owner or translation verdicts.
+
+A new complete eight-case before/current leaf oracle retains the original module and reversible import recipe, full contexts and hash/JSON callback tapes, mutation and forgery refusals, restored positives, and actual checked JavaScript/strict TypeScript execution. Existing tests and deadlines are unchanged. Tests are UNRUN in this source-only commit.
+
+The retained 300-second V8 profile has 67.9% UNKNOWN samples and 25.0% GC; it does not establish a wall-time share for these comparisons. Eligible repeated operands avoid rebuilding identical JSON strings; no measured speed gain or resolution of the original serialization deadline is claimed.
+
+Regenerate the original-class birth program from the actual source producer for
+the combined owned JSON hooks and statement-match narrowing. Independently
+review all 13 complete forward/inverse UTF-16 source recipes and all 24 complete
+class selections. Control emitter source changes outside both selected classes;
+the other 12 generated modules and all selected class definitions remain exact.
+The merged Host preserves the earlier per-use lifetime and Option context rules.
+
+The actual Node-only producer passed its 60-second and 1 GiB aggregate bounds;
+whole receiving tests remain pending. No Rust tools ran locally, and this source
+checkpoint does not establish complete translation, parity or CI success.
+
+### Fixed
+
+- Include actual owned JSON call nodes in the existing private parser-to-relocated-syntax association census. The source checker still requires the original parser identity, full original declaration evidence, exact relocation and live node snapshots; a copied node cannot issue a call.
+- Retain the genuine originating module in JSON adoption import records, so the existing complete-leaf import cleanup can inspect its actual source and descendants.
+- The first whole-eight receiving run exposed both defects before strict target execution. This repair leaves all eight cases, counterfeit/refusal controls and deadlines unchanged; receiving and Rust remain unrun for this source checkpoint. No parent-module admission, coverage gain or Rust parity is claimed.
+
+### Added
+
+- Add the fixed `--sequence json-algebraic-primitives` route to the proposal-only core adoption CLI. It runs the actual JSON, transparent algebraic and borrowed primitive source producers in that order, with fresh complete module graphs and actual language/repository stages. JSON receives the captured audited Cargo sources; every stage retains complete inputs, CST substitutions, per-file inverse mappings and source-chain checks.
+- Preserve all existing sequence and default operations, resource bounds, exclusive output publication, source/Cargo mutation checks and review-before-installation requirements. This producer never installs proposed application source or grants semantic admission.
+- Extend the existing whole-eight receiving controls with complete direct-API packet equality, same-engine CLI execution, full three-stage inverses, Cargo mutation/restoration and JavaScript/strict-TypeScript execution of the resulting source. Tests and the actual full Router proposal are unrun at this source checkpoint; isolated callers do not establish full original-module coverage.
+
+### Fixed
+
+- Supply the complete actual Router Cargo manifest to owned JSON receiving projects. The original OpenAI tool-choice body requires Rust 2024 let-chain syntax; its edition remains source-derived and is independently checked against the retained full manifest hash, not a caller edition flag.
+- Distinguish the JSON adopter’s complete-leaf import cleanup from a parent module with descendants. Preserve the original parent import and verify its whole inverse; additionally exercise the same two actual macro selections in a complete physical leaf, retaining the exact single-import-removal expectation there. Descendant uncertainty is not an import-removal permission. Any retained unused imports remain an application-review obligation before installing actual corpus proposals.
+- Keep all eight cases, original caller bodies, counterfeit/refusal controls, strict TypeScript work and deadlines. The repaired source checkpoint is unrun; the preceding complete run passed six of eight cases on both engines, with these two fixture-context failures retained.
+
+Document the owned JSON contract, its explicit unsupported domains and the fixed
+JSON/algebraic/primitive CST adoption sequence. Require complete source chains,
+actual corpus coverage measurements and distinct reporting of isolated function
+carriers. Keep Rust oracle source readable without running local Rust tools.
+
+Source documentation and formatting only; JSON receiving, full generation and
+same-commit CI qualification remain separate obligations.
+
+Compose builtin Debug proof JSON from fresh own-data wrappers and independently frozen syntax substrings. The fixed substrate fields use the existing bounded immutable JSON byte store; fresh wrappers and source/hash/owner verdicts are never stored. All original source checks, private issuers, full hash arguments, proof reissue and canonical comparisons remain. Logical cell/depth limits count shared occurrences, and unsupported values or changed host operations keep the complete ordinary JSON call. Cold lazy stack keys are rejected before descriptor/frozen-state inspection. A captured, currently unchanged native boxed-value predicate prevents altered-prototype wrappers from being treated as records; uncertain availability keeps whole native JSON. Existing cache APIs keep their original behavior.
+
+A new eight-case source oracle retains three complete pristine modules, reversible physical imports, an actual prior 3,085,065-byte Debug hash input, full before/current JSON and native hash tapes, mutable/refused/forged inputs, reversible complete-source synchronous cold-initializer controls (not cold ESM loading), cache bounds and checked JavaScript/strict TypeScript behavior. Every case retains a 60-second cap and typed children 20 seconds. Tests are UNRUN in this source-only commit; existing test files and deadlines are unchanged.
+
+The motivating profile leaves 67.9% of samples unaccounted and includes 25.0% GC. Retained actual Debug evidence contains about 2.95 MB of shared syntax fields; avoiding their repeated serialization is an allocation optimization, not a measured speed gain or qualification of the original serialization deadline.
+
+### Added
+
+- Let core JSON, algebraic and borrowed-text corpus adoption consume the existing private complete derive-output namespace rule. Ordinary captured Cargo sources create a fresh genuine derive/bang context for each changed stage; only an exact original derive attribute whose every retained output has an empty enclosing type/usable-value effect can narrow that producer blocker. Public certificate copies and flags are not accepted.
+- Keep unknown derives, custom attributes, container helper attributes, globs, source type shadows, conditional modules and unproved bang producers conservative. Generated trait bodies receive no execution authority. Existing self-crate alias closure is reused unchanged; the derive issuer and its complete original storage oracle remain byte exact.
+- Thread actual Cargo inputs through all stages of the explicit JSON → algebraic → primitives CLI sequence. Each stage rebuilds its graph/profile and source-bound proof; no context or verdict is shared across changed source generations or calls. Complete source/CST inverses, proof summaries and remaining diagnostics are retained.
+- Add a whole eight-case receiving file with registered builtin/Serde/Clap outputs, stale/forged/changed inputs, actual source-hash observers, the complete original bridge-response module, and independent JavaScript/strict-TypeScript checks. Source drafting only: receiving and the actual full Router producer remain unrun, with no current coverage, performance or full-crate admission claim. Rust stays forbidden locally and gated on fully green same-SHA JavaScript CI.
+
+### Changed
+
+- Check return-bearing ordered matches at the actual tail position of a genuine original function through the existing private shared-pattern frame. Continuation positions through lets and conditionals qualify; operands, subjects, guards, loop bodies and closures do not. The checked result must equal the enclosing function return type. Existing owner, layout, borrow, exhaustiveness and ordered-guard checks remain independent.
+- Emit those checked arms as inline statements in the real enclosing function, preserving once-only subject evaluation, ordered lazy guards and nested returns. The existing discarded-unit emitter remains unchanged. Copied, modified, moved and foreign pattern frames cannot create emission authority.
+- Add eight complete receiving cases, including the complete original OpenAI tool-choice declaration with the 24 shared independent Rust/JS fixture cases, input immutability, generic nominal matches, guard effects, refusal boundaries and checker-hook controls. JavaScript and strict TypeScript child deadlines remain 20 seconds and complete cases retain 60 seconds.
+
+This is an unrun source draft. The coordinator must run the actual registered class producer against the proposed canonical Control and Host sources before receiving the tests; no generated class leaf was edited manually. The tool-choice carrier retains the whole historical parent source and exact original declaration, and does not claim full parent-module or crate admission. Runtime function gains and current full-corpus coverage require receiving and regeneration.
+
+Apply the actual fixed JSON/algebraic/primitive CST proposal to 13 Router source
+files: 41 qualified owned JSON call sites and two proved macro-import cleanups.
+The following alias stages preserve their complete current source maps.
+Independently review every one of 9,142 full packets, both coordinate systems,
+complete CST leaf partitions, source chains and all substitution inverses, then
+install exact producer bytes. No application functions were manually rewritten.
+
+The complete 561-source proposal finished in 454.25 seconds within its original
+900-second and 3 GiB aggregate limits; peak sampled aggregate RSS was about
+1.27 GiB. Source adoption is not executable coverage. Complete regeneration,
+behavioral receiving and all same-commit CI obligations remain pending; no Rust
+ran locally.
+
+Regenerate the checked compiler birth program for the combined source-qualified
+Option constructor metadata repair. Independently verify all 13 complete UTF-16
+forward/inverse source recipes and all 24 full class selections against the
+previous actual producer; every recipe and class remains byte-exact. Only the
+complete current Host source input pin changes in the emitted program.
+
+The actual Node-only producer passed its original 60-second and 1 GiB aggregate
+bounds. Complete receiving remains pending; no local Rust tools ran and complete
+translation, synchronization or parity is not established by this checkpoint.
+
+Add 24 independently authored tool-choice edge cases for the original native
+Router function and the generated JavaScript/strict TypeScript regression.
+Cover nested/flat priority, missing and wrongly typed fields, Unicode, empty
+names and fallback values, with input immutability assertions. Rust oracle
+execution remains CI-only after every same-commit JavaScript stage passes.
+
+Draft source and fixture only; no local Rust tools ran. The matching translator
+rule must still pass complete receiving before these cases establish evidence.
+
+Extend the owned JSON language rule to bounded literal arrays through the same
+registered canonical JSON runtime used for objects. Preserve original parser
+budgets, source joins, typed pure operands, independent JSON copies and outer
+question-mark flow; custom serializers, floats, owned text and effects remain
+refused. Update the old array refusal to a nested unsupported-float refusal and
+require the formerly refused boolean array as a positive behavioral case.
+Document and exercise the unchanged aggregate 4,096-node/depth-32 runtime
+boundary, including repeated individually valid JSON inputs that exceed it.
+
+Add complete Node/strict TypeScript behavioral and boundary tests, including the
+complete physical ActivityPub module under an explicit fixture root, and native
+Rust oracle source for CI only. Draft checks do not establish full crate parity.
+
+### Changed
+
+- Regenerate the class-program entry with the actual producer from the reviewed function-tail Control and Host sources. Independently verify all thirteen complete UTF-16 source transformations and inverses, the unchanged twenty-four class selections and definitions, and the exact complete physical outputs before installing the producer bytes.
+- The bounded JavaScript producer passed with unchanged source and TypeScript inputs. Focused JavaScript and strict TypeScript receiving checks remain unrun at this checkpoint; Rust remains unrun locally.
+
+### Added
+
+- Add owned `translation_core::json_copy(&Json)` and `json_with_field(Json, &Str, Json)` operations with real Rust clone/string-index delegation and matching immutable JavaScript projections. The qualified source rule binds the complete facade and primitive leaf, checks canonical Json and borrowed-text operands, and retains the CST plus checked semantic round trips. It grants no general Clone, IndexMut, mutable-reference or Serialize authority.
+- Reuse canonical JSON copying, Unicode scalar keys and UTF-8 map order. Null becomes an object; other non-object bases panic. Each copy and constructed result keeps the existing 4096-node, depth-32 and dense-4096 runtime limits. Allocation/OOM, allocator callbacks and native payload Drop internals remain outside the bounded successful-resource contract.
+- Add a complete-source adopter for fresh owned local JSON objects and literal-key assignments. It evaluates the complete original RHS in a hygienic temporary before moving the base; aliases, dynamic/nested assignees, nonfresh values, uncertain producers and unknown expansions remain preserved. Every substitution retains full before/after CST, spans and a complete inverse; actual body/ownership checking remains mandatory.
+- Add an eight-case JavaScript/strict-TypeScript receiving file, complete original structured-output/tool-builder parent sources and an independent native Rust oracle. Source-only drafting: tests, actual full-corpus adoption, class-source generation and isolated compiler registration remain unrun. Preserved source and selected edits are not executable coverage gains. Rust remains forbidden locally and gated on fully green same-SHA JavaScript CI.
+
+### Fixed
+
+- Compose nested standard frames and callback loans with the privately checked enclosing function-tail shared-pattern body. Ordered-arm renaming changes free match-binding names after the standard issuer runs. The contained node now needs both its original private proof/type envelope and exact membership in the enclosing checked, source-bound body. The complete caller, signature and layout checks run before a private tail scope is available. Nested scopes restore in `finally`; public metadata and the envelope reader alone grant no emission authority.
+- Keep the ordinary standard frame/body comparison and its two existing Host emission branches unchanged. Standard frames retain their own return IIFE; only the separately checked outer function-tail match emits inline returns.
+- Correct the mutation regression to modify the unique executed declaration rather than the detached `items` metadata copy. Add actual nested frame/loan proof, type, body, movement and wrong-caller mutations, plus independent JS and strict TypeScript behavior. Retain the copied-source negative with its correctly observed earlier nested-control refusal.
+
+All eight original complete cases and their 60-second limits remain; strict target children retain 20 seconds. The complete original tool-choice body and shared 24-case oracle remain receiving workloads. This source draft is unrun. The coordinator must run the actual registered class producer for the changed Host input; no generated class payload or application Rust was edited manually. The earlier 388 source package and failed receiving evidence remain intact.
+
+Keep the complete original Clap Args plus owned-core adoption fixture as an explicit refusal: the existing Args concat caller proof cannot close the real core's exported macro inputs. Retain the full proposal and exact diagnostic, and exercise the actual registered Args producer consumer separately in a complete isolated source graph within the same test case. Serde's complete-core adoption remains positive; no namespace, macro owner or generated-trait behavior grant changes.
+
+All eight cases and their 60-second caps remain, with strict TypeScript children at 20 seconds. Production files are unchanged. Runtime tests are UNRUN in this source-only repair.
+
+Serialize caller-supplied item carriers with the original `JSON.stringify(module[name])` expression before comparing against the separately cached authentic immutable carrier. This preserves native callee and receiver lookup before an item getter can replace JSON operations, and freshly serializes the caller on every check. Source hashes, private owner joins and all other checks remain unchanged.
+
+Update two historical helper export assertions to retain their exact two-export originals and explicitly recognize the added storage-only composer factory. Both still check full original source imports, native bytes, logical budgets, callback tapes and deadlines. The complete existing item-getter observer remains unchanged. Runtime tests are UNRUN in this source-only repair.
+
+### Changed
+
+- Install the exact actual class-program producer bytes for the privately composed nested standard frames in function-tail matches, after independently reviewing all thirteen complete forward/inverse UTF-16 source maps and unchanged twenty-four class selections and definitions. Only the actual Host entry pin changes.
+- The bounded JavaScript generator passed with unchanged complete source and installed TypeScript inputs. Focused receiving checks remain unrun at this checkpoint; no local Rust execution.
+
+Retain already frozen original AST syntax children when an independently checked storage-only clone-compatibility census and unchanged native operations permit it. Every schema request still performs the original JSON stringify/parse and all three native hashes in order; the parsed outer array and private fragment remain fresh. The existing per-profile syntax-root record carries only the additional immutable-data compatibility bit. Unknown values, changed operations and source-root creation under an observer keep the complete old clone. This grants no source, type, owner or executable authority.
+
+A new eight-case source oracle retains the complete pristine module and reversible physical imports, full values/descriptors/hash and JSON callback tapes, temporary mutation/restoration, unsupported data/prototypes, private-source refusals and genuine storage-identity controls. Original full-graph test workloads and deadlines remain unchanged. Tests are UNRUN in this source-only draft; no time or memory gain is claimed.
+
+Retain the explicit u64, i64 and usize source identities of registered JSON signatures through fixed-integer operations. Per-program runtime/layout reuse now builds each operation contract from its current checked receiver qualifiers, including the existing per-use Option payload path, rather than inheriting the first invocation's source evidence. Portable fixed widths without source qualifiers remain unqualified; JSON serialization and its effect/type refusals are unchanged.
+
+Repair the function-tail tampering fixture to join each original executable name to its actual project-flattened declaration before applying all fourteen mutations. Both positive declarations and every existing negative remain; no emission guard is relaxed.
+
+Regression source covers both registration orders with and without source evidence, saturating arithmetic/JSON projection boundaries in JavaScript and strict TypeScript, and the unchanged four complete Router bodies including openai_usage_to_anthropic. Existing whole-file cases and deadlines remain unchanged. All runtime checks are UNRUN in this worker; the coordinator must run the complete affected files under Node and Bun. No Host, class-registration input, generated class program or application Rust changes are included.
+
+### Changed
+
+- Retain the complete original builtin-derive test evidence as two gzip members: the original once-only native JSON serialization and its final newline. Decoding preserves every original byte while avoiding concatenation of another large JSON string.
+- Keep every whole-test body, source, owner proof, case deadline and retention operation in its original test case. The focused writer regressions cover Unicode, BigInt normalization, callback/coercion order, native failures, complete gzip members and large evidence. Execution and memory improvements remain unmeasured at this source checkpoint; the full derive and serialization diagnostics remain required.
+
+Add a per-function linear-use check for the new source-bound owned JSON copy and
+field-update operations. The checked function tracks actual lexical bindings,
+left-to-right argument moves, RHS-before-assignment reinitialization and branch
+joins, including branches that return early and existing checked `?` propagation.
+A narrow fresh-JSON mutable-local lane requires the original caller and operation
+receipts; its whole body must pass before the declaration leaves refusal collection.
+
+Keep the sealed JSON update proposal and existing scalar/aggregate paths intact.
+Stored JSON loans (including borrowed text projected from JSON), loops, closures,
+unknown aggregate Drop, opaque frames and unproved JSON transfers remain refused.
+This is a bounded language rule, not general Rust ownership or historical ESM
+attestation. Whole-eight JavaScript/strict-TypeScript controls and six independent
+native Rust oracle cases are source-only and UNRUN; Rust remains CI-only after all
+required same-SHA JavaScript stages pass. The coordinator must merge additive Host
+changes and run the real class-entry producer before receiving qualification.
+
+Separate the exact historical native-source fixtures from current application files. Preserve the complete original 14,520-byte provenance manifest, every declaration/method hash and span, and all existing independent cases and deadlines. A reusable source producer reads the matching Git revision, validates full source CSTs, selects exact declarations, retains all fifteen complete production/native-test parents and records complete inverses for the three reviewed owned-Core adoption stages. It writes proposals only outside the source tree. The first coordinator run must read the actual complete Git history. An explicit reviewed-archive replay mode validates every original source pin and complete recorded adoption inverse, then freshly captures current physical/HEAD inputs and runs the same full CST/rule phases for shallow CI; it does not re-attest unavailable historical Git objects. Final compressed fixture assets must come from the coordinator's actual producer run and review, not a manual pin refresh.
+
+Three existing test files now share a historical-source reader. It verifies complete archived source bytes and stored lossless partitions; each actual compilation still performs its ordinary fresh CST, grammar and semantic checks. A separate whole-eight suite checks all original parents, producer determinism/publication boundaries, corrupted data and inverses, and all four changed current function bodies through genuine Core carriers with independent JavaScript/strict TypeScript behavior. Complete physical parents, current Core inputs and residual library refusals remain retained. Current isolated carriers do not establish whole parent-module/crate admission, original dispatch equivalence, native execution or runtime parity.
+
+All source drafting checks are UNRUN except source/Git/hash/inverse inspection. The coordinator must run the actual producer before installing its three exact fixture outputs, then complete the existing affected files and new whole-eight suite under Node and Bun without changing their caps. No Rust tools or application source edits are included.
+
+Add the explicit standalone `json-updates` corpus API/CLI sequence using the
+actual owned JSON update adopter. It freshly captures the full physical source
+and receiving Cargo inputs, runs the fixed language/repository stages, retains
+all proposal fields, CSTs, source chains and full inverses, and uses the existing
+exclusive bounded packet writer and atomic completed-index publication.
+
+Keep all old sequences/defaults, schemas, source guards and quotas. Updates are a
+separate operation after reviewed/applied JSON/algebraic/primitives proposals;
+no fourth stage or larger output budget is introduced. Document paired copy/update
+and per-function flow boundaries. Add a focused whole-eight source suite for
+complete transport, staged composition, strict JS/TS, source/Cargo mutations,
+refusals and actual pending-index failure. All new tests and corpus operations
+are UNRUN in this source checkpoint; existing native Rust oracles remain CI-only.
+No application source, generated target or registry is manually changed, and no
+coverage or performance gain is claimed.
+
+Compose builtin plan, Eq, PartialEq and Copy digest input bytes around independently qualified frozen recipe/schema children. Fresh dense recipe arrays retain their current own cells on every call; only fixed syntax-substrate contexts can reuse the existing bounded immutable-byte store. Native hash inputs/order, full source reissue and owner joins remain unchanged. JSON hooks, mutable or unsupported children and unknown operations retain complete native serialization.
+
+The source-only regression retains four complete pristine modules, exact reversible edits and physical imports, complete proof/plan/hash/callback observations, mutation/refusal/budget controls and actual JavaScript/strict TypeScript targets. The older compositor oracle retains its original baseline hashes and behavioral workloads through an exact forward/inverse source recipe. All runtime checks are UNRUN; no time or memory gain is claimed.
+
+Initialize the native-source fixture preparation CLI through the existing canonical project entry before structural method extraction reaches the mutually dependent Host, Formatting and Text classes. No translator class, source-selection rule, owner check or historical fixture pin changes. The first actual coordinator producer attempt failed before its function ran with a FormatRustParser temporal-dead-zone error; it produced no fixture assets and remains retained as failed evidence.
+
+The existing first whole-eight fixture case now also launches the real CLI with the current engine's executable in a fresh process, reads every output back and compares the complete fixture payload. Explicit archive replay preserves shallow-CI support and runs the full CST/language/repository work. Both original in-process producer runs, all seven other cases, the 60-second whole-case deadlines and strict-TypeScript 20-second limits remain unchanged; the new cold CLI child has a 20-second limit. All runtime checks remain UNRUN in this worker. The coordinator must rerun the actual cold Git-mode producer and full receiving suites before qualification. No Rust tools ran.
+
+Repair the shared JSON update adopter after the complete receiving batch found
+the same six failures in both engines. Emit an explicit outer block semicolon,
+recognize the local's actual lexical return block and bounded constructor/owned
+JSON tails with valid trailing commas, and distinguish unary `!` from macros.
+Keep the complete same-spelling alias/shadow census and unknown-producer guards.
+
+Allow owned JSON interpolation to use a genuine privately issued `json_copy`
+call in its current original function. Its complete operand still passes the
+existing recursive purity rule; copied flags, consuming updates, arbitrary calls
+and custom serialization do not gain permission. Old unqualified JSON is unchanged.
+
+All three original whole-eight files remain byte-exact. Add a supplementary
+whole-eight behavioral/refusal suite and two native Rust oracle cases.
+New execution/strict TypeScript/Rust checks are UNRUN here. Complete actual builder
+source and later body refusals remain retained; selecting updates is not an
+executable coverage gain. No generated source, class leaf or registry is hand edited.
+
+Current native-source fixture selection first matches the complete historical declaration SHA256 within the actual top-level kind/name census, allowing unchanged declarations to move past other imports with the same first path component. If no complete content match exists, only a unique changed function or constant can be selected. Duplicate exact declarations, ambiguous changed declarations, changed imports and declarations moved inside another module remain refused. Historical spans, hashes, all fifteen complete original parents and semantic checking remain unchanged.
+
+The existing eight-case fixture suite now includes the complete upstream timeout parent shifted by a Unicode prefix and an additional `std` import, exact selection/partition comparisons, duplicate and changed import refusals, and unique versus ambiguous changed functions/constants. The cold standalone CLI check and all original deadlines are preserved. JavaScript, Bun and strict TypeScript receiving checks are unrun by the source-only worker; the actual producer must still generate and review the complete archive before installation.
+
+Accept genuine checked by-value Rust booleans in the owned qualified JSON route,
+including inferred literal bindings, logical/comparison results and previously
+checked boolean function results. This uses the existing primitive BOOL domain;
+references, ownership markers, unresolved identities and nominal data remain
+refused. Numeric suffix/width rules and ordinary unqualified JSON are unchanged.
+
+Preserve the original repeated-copy source and replace its obsolete refusal
+expectation with independent typed execution/copy checks. Keep a separate actual
+source-call operand refusal. Distinguish the consuming update's earlier source
+syntax refusal from the checked interpolation-purity refusal in the receiving
+suite, and add boolean-domain positives and reference/custom-owner negatives
+inside its existing eight cases. All case counts and deadlines are unchanged.
+
+The prior complete receiving failure evidence is retained. These source repairs
+are UNRUN here; Root owns Node/Bun/strict TypeScript receiving. No Rust execution,
+generated target edits, checkpoint waiver or executable coverage gain is claimed.
+
+The historical native-source contract test enters through the existing canonical project import before structural implementation extraction. This preserves the ordinary Host/Formatting/Text class initialization order when the complete file runs in a fresh Node or Bun process. No compiler implementation, fixture pin, case body, helper, deadline or strict TypeScript option changes.
+
+The source-only repair moves one existing import; its unique substitution and full inverse preserve every other byte. Receiving checks are unrun by the worker and remain required on the integrated revision.
+
+Pinned standard Option bodies now reuse the existing source-backed shared-reference Copy rule for `ok_or`, `ok_or_else`, eager/lazy unwrapping and their contextual nested-Option checks. A reference can be copied independently of an owned, non-Copy pointee; the pointee gains no Copy, Drop, Default, mutation or lifetime permission. The original canonical Option/layout checks, private standard-body rechecks and compound shared-value runtime guards remain required. Reference `unwrap_or_default`, owned aggregate payloads and unsupported lifetime escapes remain refused.
+
+The actual source-resolved `str::is_empty` function item reuses the existing borrowed-string operation. The focused whole eight-case suite retains complete structured-output/tool source parents, keeps already translated `required_type` as a passing control, and records remaining full-body refusals separately. Independent expected JS/strict TypeScript cases cover JSON/Map references, owned-String record references, nested lifetimes, eager/lazy order and emitter/source tampering. Native Rust oracle source is added but unrun locally. No new owned API or claimed application gain is introduced; receiving and actual class-source generation remain required.
+
+Pinned Option-body issuance also retains the actual referenced source layouts for receiver, result, eager arguments and validated callback captures. Semantic re-emission fetches current declarations and compares those layouts before accepting the original specialization; a field-only String-to-bool mutation is refused without requiring Copy or Drop of the pointee. Shared payloads require their private issuance context even if the public digest key is removed or replaced; key-only and combined layout/key mutations are covered. The existing digest input includes the exact layouts for shared payloads so same-name bodies from different genuine source layouts cannot overwrite that context; old scalar digest inputs are unchanged. The existing no-program validator uses its private issuance context. This layout repair and its focused emitter regression remain source-reviewed and unrun locally.
+
+Receiving exposed two additional test/validation gaps: the direct cloned-parser fixture lacked its required empty main, and the original unlabelled body-tamper loop stopped before the layout tests. The fixture now supplies main and retains every labelled mutation. Shared-body emission additionally rejoins both outer result types and the actual receiver against private immutable issuance snapshots, including eager unwrap_or. Nonshared scalar cold reconstruction and existing hash checkpoints remain unchanged. All layout/key/collision controls remain required; this source repair is unrun locally.
+
+The receiver-name tamper is rejected earlier by the original IR renamer; its assertion now requires that exact unbound-variable diagnostic. A separate mutation uses the actual second parameter name to exercise the private receiver-binding check directly. All four original mutations and the complete layout/key/collision controls remain. These additional receiving controls are source-reviewed and unrun.
+
+Extend the existing private owned-JSON function flow analysis with a closed
+lexical loan domain for existing canonical JSON/object readers, borrowed text
+views and actual Option shared payloads. Rejoin registered signatures, full
+canonical layouts and original Option/reference Copy evidence. Checked Some tag
+facts dominate field projections; continuing branches preserve actual lexical
+root identities. An unrelated fresh output document can update while input
+loans remain live. Moving or replacing a live borrowed owned root refuses.
+
+Keep the original source/checker/operation receipts, complete source lifetime
+pass, 100000-cell/160-depth bounds and old whole-eight flow suite unchanged.
+Local loan escapes, unknown source retention/Drop, mutable references, generic
+matches/callbacks/loops/arrays and Result loan transfers remain unsupported.
+Add a whole-eight behavioral/refusal suite and six independent native Rust
+source cases. All execution, strict TypeScript and Rust checks are UNRUN here;
+Root owns receiving under the original caps. No application gain is inferred.
+
+Apply the actual complete three-stage compatibility-core source proposal to 65 Router Rust files: 26 JSON edits, 462 transparent Option/Result alias edits and 437 borrowed-text alias edits. The ordered language and repository rules retain the complete CST, source chains and full inverse mappings. Registered original derive outputs narrow source-producer uncertainty without granting trait behavior or executable admission.
+
+The JavaScript-only producer completed in 850.6 seconds within its original 900-second and 3 GiB limits. Independent full-data review checked all 9,204 packets, 562 source inputs, 3,376 captured compiler/source/dependency files and every complete CST and inverse; its initial concrete-trace schema mismatch was corrected and the failed review is retained. These source adoptions are a draft, not a measured executable coverage gain or runtime parity result. Target regeneration, receiving checks and the full JavaScript gate remain required. Rust was not executed and remains CI-only after all same-commit JavaScript stages pass.
+
+Extend the historical-source fixture producer with the independently reviewed bulk-adoption commit eeb05407b75f32ee46a55913cbf3731760b76d15. Preserve the original three adoption entries and every historical declaration pin, and require complete continuous fourth-stage source mappings and inverses for the five changed fixture parents. The existing whole-file fixture case now checks the exact four revisions, final parent and all five affected paths without changing its other checks or deadlines.
+
+Fixture assets must come from the actual producer and independent full-source review. Source lineage is observational evidence, with no namespace, ownership, executable coverage or runtime parity authority. No Rust was executed.
+
+The existing bounded immutable JSON byte store now protects genuinely reused encodings from streams of one-use values. The same Map retains at most 16 encoded states and 8 MiB, with at most eight hit-protected states; byte pressure can still evict protected states. No owner/root keys, extra cache, eligibility-table changes or budget increases are introduced. Native guards, uncertain JSON callback fallbacks, fresh source/owner checks and every native hash argument remain unchanged.
+
+A whole eight-case regression retains the complete previous helper and exact source/import inverses, exercises hot-stream retention, protected demotion, entry/byte pressure, mutable and hooked fallbacks, captured Map operations, complete scoped original builtin proof/hash tapes, and checked JavaScript/strict TypeScript behavior. Existing historical source fixtures keep their original bytes and pins through exact forward/inverse substitutions. All engine and Rust validation remains unrun locally; unchanged original whole-file deadlines and resources remain decisive. No performance gain is claimed.
+
+Receiving fixture follow-up retains complete raw warmup plan/proof outcomes and native hash tapes for both physical helpers before asserting full warmed selected-source hash equality for Eq, PartialEq, Copy and Debug. Cold-provider schedules are not claimed equal. The historical cohort fixture now asserts its exact original two exports and the exact current three exports, with direct native-value/repetition/mutation checks for the added Composer factory. All original workloads, hash records, limits and deadlines remain; receiving is pending and no worker engines were run.
+
+Named references to the owned `translation_core::Str` alias now use the
+actual enclosing free-function lifetime binder. A private frame reader checks
+its complete original binder tokens, cursor and token-array identities before
+source/CST work and again at the final owned-alias join. It returns only the
+named lifetime identity; it does not erase a binder into `static` or expose a
+frame as authority. Elided/static routes and existing named-reference parser
+methods remain unchanged.
+
+The existing eight borrowed-text tests retain their deadlines and add both
+former named-reference source strings as behavior/strict-TypeScript positives,
+plus undeclared, split, stale-scope, wrong-origin and 33-binder refusals. The
+reader-loan case with independent input/key lifetimes and its Rust oracle remain
+unchanged. Source-only checkpoint: no local engines or Rust were run; receiving
+and compiler registration are Root's follow-up work.
+
+The shared owned Rust compatibility core adds `json_index_str`, `json_index_usize` and `json_map_index`. Each returns a shared reference borrowed only from its first argument. Value indexing preserves serde_json's missing/wrong-kind Null result; Map indexing preserves its missing-entry panic. These library internals remain intentionally untranslated, and no original Index/IndexMut, pointee Copy/Drop or general free-function borrowing authority is claimed.
+
+The checked adapter reuses existing Value runtimes and adds the distinct Map adapter. Genuine qualified calls require the complete current facade, primitive source and exact function declarations. Private call/function receipts and current source-layout checks are required during semantic checking and emission. Lifetime/lexical-loan checking tracks the first argument only; the key cannot provide a lifetime. Only these privately issued fixed projections enter owned JSON interpolation purity. Ordinary JSON macro grammar is unchanged.
+
+A whole eight-case JS/strict TypeScript suite and native Rust oracle source cover identity, Unicode, bounds, Null versus panic, receiver/key lifetimes, moved roots, evaluation order and emitter/layout forgeries. Existing test limits remain unchanged. All execution is unrun locally; source-data changes are a proposal for the actual existing two-phase producer, and Host registration requires actual class-source generation. Automatic application adoption is a separate follow-on; no application gain is claimed here.
+
+The emission registry publishes only immutable call/layout facts after the complete function passes its actual flow and source/body joins. Calls share one immutable function envelope, and its authenticated full name separates identical source in different modules; live checker and visit objects remain in the weak checking registry. The whole-file regression re-emits both identical-source modules after a second genuine analysis. Source-only; all engines remain unrun.
+
+Reuse the existing completed-data freezer for source-selected Eq route records, preserving the complete original recursive closure as the fallback when native operations or data eligibility are uncertain. Source, issuer and owner checks, fresh hashes, stores and limits remain unchanged.
+
+The complete historical Eq source remains embedded with exact reversible evolution rules. The existing eight-case composition suite retains its full hash/JSON/forgery controls and adds explicit warmed Eq hash tapes, full frozen descriptor graphs, original-operation fallback observations and restored positives under unchanged deadlines. These are scoped selected-source checks; cold or full-crate callback equivalence and performance gains are unclaimed. Runtime receiving is pending; no worker engines were run.
+
+The explicit owned-JSON update adopter now associates each fresh mutable local
+with its actual lexical block. Distinct sibling branches may reuse a local
+name; active shadows, aliases, RHS root reads, repeated final reads and nested
+closure/loop uncertainties remain refused within a binding. The original
+RHS-first hygienic substitution, full source/Cargo/producer checks and two
+CST rule phases remain in place; this grants no old IndexMut or ownership proof.
+
+A new whole eight-case test retains source maps and inverses, exercises synthetic
+branch behavior in JavaScript and strict TypeScript, and requires all three
+branch updates in the complete original `translate_parts` parent to be selected.
+That source still needs the separate collection/callback contracts before any
+full-body execution gain can be claimed. A native six-case Rust oracle runs
+only in gated CI. This is a source-only checkpoint: no local engines or Rust
+were run, and existing whole test files/deadlines were not changed.
+
+Store the existing private frozen-JSON eligibility costs as exact positive integer scalars instead of allocating a metadata object for each completed row. The cell count, relative height and independently qualified stack-free bit remain distinct; all weak partitions, rotations, counters, guards, native callbacks and byte-cache limits/policy stay unchanged. This supplies no source, type, hash, owner or verdict authority.
+
+All five historical baselines and their previous source evolution recipes remain intact. A new whole-eight comparison suite preserves complete source/import inverses, actual private row readbacks, exact logical cell/depth and rotation boundaries, native JSON/reflection fallback observations, complete warmed original-profile hash tapes and checked JavaScript/strict TypeScript behavior under fixed limits. Worker runtime checks are UNRUN. The prior original Node full-graph case still exceeds its 60-second deadline; no performance gain or qualification is claimed.
+
+The explicit `json-indices` proposal sequence adopts shared canonical JSON reads into `translation_core::json_index_str`, `json_index_usize` or `json_map_index`. It selects only a complete read interpolation inside the qualified owned `json!` macro. String/usize keys and shared receiver roles come from complete source parameters, Cargo-bound original JSON declarations and bounded immutable reader/Some/`ok_or_else` aliases. Map missing keys still panic; Value missing or wrong-kind keys still produce Null. Receiver and key each evaluate once. Native library internals remain intentionally untranslated.
+
+`proposeCoreJsonIndicesCorpus({entry, files, compilationProfile, dependencyInputs})` returns every complete source, graph, CST, selection, skip, phase trace and reversible mapping. This is an explicit maintainer-authorized API substitution proposal, not proof of the old Index dispatch or executable admission. Unknown traits, imports, producers, aliases, mutable receivers, writes, nested call/operator/method operands, complex binders and unsupported scopes remain unchanged. Existing default and named sequences keep their behavior. Run the new standalone sequence with:
+
+```sh
+node tools/translation/propose-core-adoption-corpus.mjs --root /receiving/repository --output /outside/fresh-index-proposal --sequence json-indices
+```
+
+The CLI reuses complete per-file packets, source/Cargo freshness checks, quotas and atomic completed-index publication. It never installs sources. Eight complete receiving cases retain independent JS/strict TypeScript behavior, exact UTF-16 inverses, Null versus panic, branch laziness, caller input mutation, cold same-engine CLI publication and complete current structured-output/tool parents. The two structured-output read candidates keep their later helpers, owned-text destruction, updates and loan checks; neither a selected edit nor a retained outcome counts as a function gain. Existing ordinary JSON grammar, paired core, Host/source-data producers and Rust oracle sources remain unchanged. All executions are unrun in this source-only worker; Root receiving and the paired index core registration/repair remain prerequisites.
+
+Repair the owned JSON projection receiving paths: declare all three existing runtime exports, flatten the existing JSON-runtime dependency in generated assets, and preserve actual explicit usize literal identity at the source-bound projection boundary. Unsuffixed literals retain their contextual behavior; other integer identities, references, floats and invalid bounds remain subject to the original checker and ownership guards.
+
+The existing eight-case projection suite retains every original workload, title and deadline. It adds an explicit usize target positive, incompatible literal/reference refusals, and numeric checked-metadata emission tampering controls. No Host/facade/generated source or runtime implementation changes are made. Worker runtime/strict-TypeScript/Rust checks are UNRUN; Root receiving is pending.
+
+The shared JSON token-tree syntax adapter now distinguishes prefix unary `!`
+and infix `||` from macro bangs and closure syntax using original operand
+positions. Parenthesized operands recurse through the same bounded scanner;
+unknown macros, closures, mutation and effectful syntax remain refused. This
+syntax selection grants no owner, type, purity or Serialize authority: the
+original semantic parser/checker and existing operand rules still decide those.
+
+The lexical-update Unicode fixture keeps its exact original source, adoption
+maps and expected behavior, and now checks executable membership before target
+calls. A focused whole eight-case suite covers boolean truth tables,
+short-circuit panic behavior, source-field evaluation order, original spans and
+malformed/type/owner/effect refusals with existing 60-second/20-second limits.
+The original native Rust oracle is unchanged. Source-only checkpoint; no local
+engines or Rust were run. Receiving remains Root's work.
+
+Correct the owned JSON projection fixture boundary: ordinary copied scalar syntax remains a supported portable checker input and needs no projection receipt. The fixture now checks that positive explicitly, then attaches a public projection-shaped operation to a copied declaration and requires the actual private source-call refusal. The existing fake-call, lifetime, numeric, emission-tamper and behavior controls remain under the same eight titles and deadlines.
+
+Only test expectations and this explanation change; no runtime, checker or source-link authority is relaxed. Worker receiving checks are UNRUN.
+
+The JSON-index adopter now recognizes bounded single-expression block and parenthesis wrappers around its already supported qualified owned-format error callback. The complete current `chat_to_responses_format` parent uses this form; the prior bare-only preflight skipped its Map read. Extra callback statements and unknown effects still retain the complete original source.
+
+The existing whole eight cases keep their deadlines, strict TypeScript limits and both full structured-parent read expectations. A grouped block-tail positive and effectful block negative exercise the distinction. Full failed receiving vectors remain retained. This is source-only; the repair and the actual two-read producer result are unrun in the worker, with no function-gain claim. Core contracts, ordinary JSON grammar, Host/source-data inputs and every existing CLI path remain unchanged.
+
+### Added
+- Document the three paired JSON indexing contracts, automatic read adoption and logical interpolation boundaries.
+- Add three independent CI-only Rust oracle cases for the shared Boolean truth table, short-circuit division panics and source field evaluation before object key ordering. Rust tooling and execution remain unrun locally; CI requires the same-commit complete JavaScript gate first.
+
+Add explicit paired eager `json_map`/`json_filter_map` library operations and a
+bounded source-checked collection/callback profile. Reuse the existing private
+original-function issuer, lexical root/loan flow and complete source-lifetime
+pass. A standalone proposal stage retains actual Cargo, full CST mappings and
+whole inverses; closed reader Option chains become hygienic checked control,
+without granting original Iterator/Option/Clone dispatch authority. Callback-only
+literal-text alternatives bind the actual original checked match/source order;
+unknown guards, binders, aggregate patterns and outside-callback matches refuse.
+
+Retain the entire original `translate_parts` body and both complete original
+parents in source tests. Actual namespace failures and secondary unsupported
+chains remain explicit; carrier execution is not whole-module coverage. Add two
+whole eight-case suites (60-second cases, strict TS children 20 seconds) and an
+independent native Rust oracle for gated CI. Existing tests/deadlines stay exact.
+
+SOURCE-ONLY / UNRUN: no Node/Bun/Rust engine, generator, corpus installation,
+speed measurement or publication was performed by the source author. Full
+facade/leaf source-data and Host class outputs require Root's actual deterministic
+producers and review before receiving; generated files were not hand-edited.
+
+# Owned JSON copy adoption
+
+The explicit `json-copies` proposal sequence replaces closed shared canonical JSON identifier `.clone()` expressions with `crate::translation_core::json_copy(identifier)`. It shares the bounded CST/graph/Cargo role engine with `json-indices`; the existing index schema, phase IDs and conservative conditional-binder behavior remain unchanged. Function header selection uses the actual original module path, including `pub(super)`.
+
+Only the copy mode follows source-resolved `if let Some` bindings inside their true block. Else branches and continuations retain their original lexical environments. Owned receivers, mutable/deep references, maps, strings, unknown traits/imports/macros/aliases and uncertain producers remain original. Candidate roles do not establish original Clone dispatch, executable admission, lifetime or Drop authority. Normal checking and emission independently validate the new qualified call.
+
+The CLI retains complete fields, sources, CSTs, mappings, inverses and optional Cargo snapshots. Two current `structured_output` shared `strict` copies are receiving targets, with separate fresh index/copy/update proposals and complete remaining refusal evidence. These substitutions alone are not claimed function gains. Whole-eight JS/strict TypeScript and paired native Rust oracle sources were added; all runtime checks are UNRUN by the worker. Existing index tests, limits and deadlines are unchanged.
+
+### Fixed
+- Resolve restricted Rust function visibility in the genuine containing module during JSON update and index adoption. Valid nested `pub(super)` declarations no longer abort the complete corpus; the original ancestor visibility checks remain mandatory.
+- Add eight complete Node/Bun receiving cases for inline, physical and nested modules, unchanged public/private headers, invalid ancestors, the full tool parent and cold CLI packet production with strict TypeScript behavioral checks.
+
+### Fixed
+- Preserve the genuine module context when checking source-producer uncertainty in a module with no derive invocations. Physical child functions with valid ancestor-restricted visibility are no longer mistaken for crate-root declarations; original module-view, attribute and producer checks remain required.
+
+# Linear JSON error-carrier flow
+
+Source draft: extend the existing original owned-JSON function flow only for canonical owned String errors, transient canonical shared-success Result propagation, and fresh closed readonly helper bodies. Text remains linear, Result does not become Copy, and borrowed Results are not granted stored or arbitrary retaining semantics. Normal source lifetimes, current layouts, original standard-method/frame receipts and checked function-tail joins remain mandatory. The Result lifetime exception also requires the actual completed original-function membership held by the existing weak checker registry. Each readonly helper call is checked afresh; no effect summary or verdict is cached.
+
+The full current structured-output builders after the existing index/copy/update proposals are receiving targets. Unknown helpers, cycles, custom Drop/errors, borrowed errors, owned-text escape, mutable or unproved aggregates remain refused. No runtime/library/source rewrite API is added. The minimal Host delegation remains below 1,000 lines; only its exact class-producer input row is updated. Root must generate the registered class payload from these sources. Global emission records contain detached immutable calls, layouts and one shared function envelope, including the actual helper bodies; they retain no Checker, Program or live checking frame. Extra per-invocation checking cost is unmeasured.
+
+Whole-eight JS/strict TypeScript and independent native Rust oracle sources are drafted under the unchanged 60-second/20-second limits. All worker runtime checks are UNRUN; no function gain or performance claim is made before Root receiving.
+
+JSON read/copy and eager collection adoption now recognize an exact original
+`extern crate self as name;` only when the existing module binder resolves that
+same declaration to the tracked crate. The selector joins the current complete
+source/view/profile and original declaration spans, and rejects external,
+malformed, reserved, competing, conditional or producer-uncertain bindings.
+All other scope and canonical-owner checks remain in force. This changes source
+candidate selection; it grants no original trait dispatch or executable authority.
+
+The new whole eight-case fixture preserves full CSTs and inverses, exercises
+root/inline/physical alias scopes and JS/strict TypeScript targets, and retains
+the complete actual library root and structured-output parent separately from
+its explicitly projected entry. Wholecrate migration gains remain unmeasured.
+Source-only draft: no local engines or Rust execution; current generated core
+source/class producers and receiving are required before qualification.
+
+Retain selected Serde Deserialize quote syntax through the existing bounded,
+lossless builtin metadata codec. The explicit Deserialize factory keeps the
+complete expanded syntax, original source spans, fresh fragment envelopes,
+private invocation joins, full serialization/hash arguments and both original
+feature outputs. Its canonical storage is kept in the existing fragment record;
+it grants no trait behavior, namespace, type, owner or executable permission.
+
+The ordinary fragment compiler and its raw 512 KiB metadata contract remain
+unchanged. The selected storage path separately enforces the original logical
+cell/depth/token limits and the existing codec's cell/depth/512 KiB limits.
+Changed serializer, collection/prototype, numeric or Buffer identities retain
+the original raw path and its refusal. Buffer qualification uses the existing
+trusted stock bootstrap domain, including Node's captured accessor and JavaScript
+byte-length function; it does not claim a universal native-host origin proof.
+
+A new eight-case source regression retains complete historical/current modules,
+full source inverses, malformed/copy/limit controls, full native hash and observer
+tapes, both feature branches, the complete original 26-field OpenAI request and
+an independent JS/strict TypeScript boundary. All runtime checks are UNRUN. The
+original request's compact fit, full-corpus effects and performance are unmeasured.
+
+### Changed
+
+- Include the complete owned JSON collection library in current source-fixture snapshots and carriers. Preserve the original fifteen parents and all four historical adoption stages; regenerate the fixture archive from the actual source producer before receiving checks. Rust remains CI-only.
+
+Owned JSON eager collections now accept the actual original checked shared-slice
+representation. Both the outer reference and its array pointee retain the exact
+borrowed/slice ownership qualifier, source reference tokens, matching canonical
+Json elements and unchanged private original-caller checks. Fixed arrays, owned
+vectors, mutable/nested references, custom elements and unresolved owners remain
+refused. The existing whole-function flow and source-lifetime pass stay required;
+no public source marker or collection tag grants permission.
+
+Receiving fixtures preserve every original case, workload and deadline. The
+already supported ordinary literal-text match remains a positive; callback-only
+guards and aggregate patterns remain negative. Null comparison keeps canonical
+value/freeze checks without a cross-runtime singleton identity promise; non-Null
+owned output storage remains independent. The old index source-data oracle now
+executes the complete actual collection source producer after its unchanged four
+substitutions, and actual parent update calls are retained through exact unchanged
+mapping spans rather than obsolete assignment text. The two logical name reads
+remain accounted for after source application: native leaves must each select,
+and already qualified owned calls must remain whole and unchanged.
+
+Source-only repair. New whole-eight-case and strict TypeScript controls are
+UNRUN locally; Root owns Node/Bun receiving. No Rust execution, generated core or
+class writes, deadline change, performance claim or wholecrate coverage claim.
+
+# Preserve owned JSON callback source and Option results
+
+The existing parser marks a pure block tail by shallow-copying it with `block: true`. The JSON issuer now recovers only that exact normalization under the actual unchanged original parsed parent and relocation, using a private original argument-array identity and complete source snapshots. A public block flag, copied argument array or copied source AST grants nothing. Calls nested below an existing conditional keep their original path.
+
+For the fixed source-bound `json_filter_map` signature, the collection checker rejoins the actual current Option declaration, both constructors and the canonical Json payload before retaining the contextual Option result metadata on the checked callback. Flow keeps its strict Option check. The callback result also joins the existing captured emission layout roots, so layout-only mutations remain refused.
+
+The original eight cases and 60-second/20-second deadlines remain. Added source, nested-block, independent JS/strict TypeScript and current Option layout controls are worker-UNRUN. No runtime/Core/Host/source-data/class payload or Rust change, no removed source/guard/hash checks, and no measured gain claim.
+
+The JSON collection source adopter now lowers supported pure reader chains to
+ordinary `Some`/`None` control syntax. The existing standard Option parser and
+checker must establish the actual constructor owner and canonical payload layout;
+no owned-alias spelling or public constructor-owner flag grants admission.
+
+Only normalizations that introduce these patterns add a bounded census of the
+complete original function's parameters, local bindings, declarations, attributes
+and macro producers. Competing or uncertain constructor bindings remain unchanged.
+Existing module/ancestor producer, import, glob, owned-core and source checks stay
+required. Hygienic receivers evaluate once, and eager fallback evaluation remains
+after the receiver and before branch selection. Full CSTs, maps and inverses remain.
+
+All eight original adopter cases, the full original translate_parts body, complete
+parent outcomes and cold CLI workload are retained at unchanged deadlines. The
+reader case adds renamed canonical Value coverage and exact generated ordering;
+refusal controls add local constructor and producer competition. The existing Rust
+Option/order oracle remains unchanged. Source-only draft: no Node/Bun/Rust execution,
+generated outputs or wholecrate coverage claim; Root receiving remains required.
+
+# Error-flow oracle lifetime
+
+Elide the redundant lifetime in the new native error-flow oracle's single-input borrowed-text helper. The source still tests the same success borrow and owned String error. Rust lint and behavior checks remain unrun locally and require the same-commit JavaScript-first CI gate.
+
+# Error-flow class registration
+
+Run the actual class-birth producer against the integrated error-flow Host source. Independently verify all 13 complete source mappings and inverses, 24 unchanged selections, and the sole entry-source pin change; install the producer's exact class payload. The bounded JavaScript producer passed with unchanged inputs. Whole-file receiving, generated corpus freshness, full parity and gated Rust CI remain separate obligations.
+
+# Retain selected original Option identities in JSON flow
+
+The genuine checked original filter body contains internal Some/None and continuation types without per-use generic metadata, while its actual current Option declaration retains the complete shared payload. The JSON flow walker now recovers that metadata only for exact type-object identities in a freshly revalidated original standard body or an already privately issued collection callback body. The lexical scope is restored in `finally`. Existing current Option/field/Copy and canonical Json/Map checks remain conjunctive; conflicting metadata, arbitrary copied types and ordinary outside-scope Options receive no new permission. Semantic IR and source lifetime checks remain unchanged.
+
+The error-flow fixture now freezes its Some/None carrier containers, matching the existing runtime ABI. All eight original cases, complete structured parents, original negatives and 60-second/20-second limits remain, with independent selected-filter and non-error nested get/if-let/None callback controls plus proof/layout tamper refusals. No stored Result, generic Drop/Copy, mutable/deep reference, Host, source-data or generated class change is included. The independently assigned function-tail match repair stays separate.
+
+Worker runtime and Rust checks are UNRUN. Root receiving must establish actual gains; extra source/type traversal cost is unmeasured.
+
+Extend the existing owned literal-text corpus producer with bounded source
+candidates for shared `str` parameters, immutable lexical aliases, literal-text
+matches with a borrowed fallback, and `Option<&str>` conversion function items.
+Repository substitutions use the existing qualified owned `format!` interface;
+they do not establish arbitrary `ToString`, `ToOwned` or `Display` dispatch.
+
+The original literal-only API, source/corpus bounds, serialized/reparsed CST,
+two phases, complete source maps and inverse remain. Actual dependency sources
+may discharge derive effects through the existing private producer context,
+which is reconstructed and rechecked for each operation. Unknown method-return
+roles, producer effects, macros, callbacks and competing names remain refused.
+No source candidate grants type, borrow or executable authority; the ordinary
+independent checker, lifetime pass and existing formatting runtime still decide.
+
+The new whole eight-case file retains complete current application parents and
+the entire original `canonical_provider` body, distinguishing adopted carriers
+from unresolved full-parent scopes. It checks Unicode, Option, lexical scopes,
+source changes, counterfeits and refusals through JavaScript and strict
+TypeScript with 60-second cases and 20-second child limits. Independent native
+Rust oracle source is CI-only. All new receiving checks are UNRUN at this source
+checkpoint; no current whole-crate coverage or performance gain is claimed.
+
+Repair the compact Deserialize regression's original-source fixture by retaining
+both complete active OpenAI child modules and resolving the four-file source
+closure through the ordinary project module path. The unchanged 26-field
+request keeps its exact source, span and all 24 genuine field-helper registrations.
+The former incomplete carrier remains an explicit old/current refusal control.
+
+The same case still requires the historical raw metadata refusal, both complete
+current feature outputs, independent compact/logical limits and strict target
+boundary checks. The other seven cases and all deadlines remain unchanged.
+No production issuer, dependency binding, application source or storage limit
+changes. Receiving checks are UNRUN for this source-only fixture repair.
+
+# Borrowed-text function-tail control
+
+Use the existing original-source function-tail match join for precisely typed shared str subjects, whose source representation uses borrowed ownership rather than a reference wrapper. Keep complete original continuation-position membership, source signature, ordered pattern and nonlocal-control checks, private emission receipts and read-only Copy validation. Owned/mutable text and non-tail value positions remain outside this extension.
+
+Extend the existing whole-eight error-flow suite with independent scalar nested-return behavior and refusal controls under its original deadlines; add a native Rust edge oracle for gated CI only. Runtime qualification is pending; no full parity claim.
+
+# Collection source span assertion
+
+Check reader-normalization spans against the complete original proposal source, including the fixture's core-module declaration prefix. Preserve all reader order, eager fallback, source inverse, typed behavior and negative assertions under the existing whole-file deadlines.
+
+- Prototype invocation-local dense traversal storage in the native-only completed-data freezer. The existing scalar weak records, budgets, source checks and complete legacy planner remain unchanged; any `stack` key retries that planner before its first descriptor observation.
+- Retain the complete historical freezer source through exact forward/inverse fixture evolution. Existing coverage fixtures retain separate old/packed traversal ranges and counts, including both physical traversals on a lazy-stack retry. Add eight whole receiving cases covering complete graph/cost observations, boundaries, rotations, native fallback and lazy-stack callbacks, fresh source-proof hash tapes, and JavaScript/strict TypeScript targets.
+- Source-only checkpoint: receiving tests and performance measurements are unrun. CPU samples motivate the allocation experiment but establish no speed or memory gain; original whole-file deadlines remain required.
+
+# Function-tail text fallback binding
+
+Consume the actual immutable borrowed-str fallback binder emitted by the existing privately checked function-tail match. Its initializer must copy the exact subject already used by the ordered literal conditions. Keep collection callback binding restrictions, guard refusals, canonical source/frame checks and the shared flow budget intact. The complete nested-return and Unicode fallback cases remain in the original eight-case receiving suite; runtime qualification is pending.
+
+# Compact fixture numeric error oracle
+
+Distinguish an out-of-range u8 BigInt (RangeError) from a JavaScript Number supplied to its BigInt boundary (TypeError) in the existing complete compact-storage receiving suite. Preserve the full 26-field source graph, both feature outputs, original metadata refusal, all eight cases and existing deadlines.
+
+# Keep intentional native oracle operations under CI lint checks
+
+A source-only review of the recent JSON/Option Rust oracle tests found no concrete move, borrow or API-signature defect. The workflow enables Clippy all/pedantic/nursery under `RUSTFLAGS=-Dwarnings`. Narrow function-local allowances preserve intentional lazy constant-error calls, the original logical interpolation expression and the explicitly expanded optional default branch; replacing those operations with lint suggestions would remove the syntax being witnessed. The unrelated input-only key lifetime is elided while the required receiver/output lifetime remains named.
+
+All test functions, input cases, expressions and assertions are retained; application Rust, generated sources and Cargo lint policy are unchanged. The current error-flow oracle, including the separately added nested-return cases, is unchanged. This is a source-predicted CI lint cleanup only: no Rust tool, Clippy, formatter, build or test was run by the worker, and it does not qualify the complete Rust gate.
+
+Add bounded first-difference diagnostics after existing owned JSON projection,
+lexical-variable and source-format joins refuse. The source/call/type guard
+predicates, their short-circuit order, native hash inputs and successful paths
+remain unchanged. No comparison result grants authority or changes admission.
+
+The complete `translate_parts` receiving failure reaches projection emission;
+current source inspection also finds different opaque-proof policies in project
+flattening and callback retargeting. This diagnostic batch records the actual
+first differing path before choosing a correction. Formatter diagnostics retain
+free lexical variable names rather than ignoring authentic renaming differences.
+
+Each comparison visits at most 4,096 cells through depth 64, with bounded paths
+and scalar previews; at most three private formatter candidates are reported.
+Existing whole-file cases, source bodies and deadlines remain unchanged. Runtime,
+strict TypeScript and all test engines are UNRUN for this source-only batch.
+
+Document the borrowed-text Rust oracle's intentional exact owned `format!`
+expressions with two narrowly scoped file allowances: `uninlined_format_args`
+and `useless_format`. Every original expression, assertion and eight-case body
+remains byte-identical. No translator, application or generated source changes.
+
+This is source-predicted lint intent, not an observed Clippy failure. The
+exported macro wrapper may already suppress some external-macro diagnostics.
+Clippy and Rust remain UNRUN locally; same-SHA JavaScript gating still applies.
+
+Repair three source-join mismatches exposed by complete owned JSON receiving.
+Existing native hash comparisons run first with their original arguments; when
+key traversal changes alpha counters, a deterministic complete typed-tree
+comparison follows without dropping source proofs or lexical relationships.
+The global alpha-tree/hash implementation and project flattening stay unchanged.
+
+Pinned callback loans retain their actual expected input type at the existing
+private issuance boundary. Only within an independently revalidated standard
+body may a lexical use match that exact detached expected type and the complete
+current loan/proof/value envelope. Fresh ownership, primitive identity, layouts,
+lifetime roots and all ordinary reference/flow refusals remain required. No
+source-coordinate field is globally erased or treated as authority.
+
+An enclosing formatter rename is accepted only inside a privately issued actual
+function-tail match in the current complete checked function. Its original
+source binder must uniquely join the checked immutable fallback binding and
+subject; the entire renamed formatter remains equal. Unknown/ambiguous mappings
+and copied public metadata do not grant admission.
+
+Retain every whole-file case and deadline; extend existing re-emission negatives
+for loan envelope/value/proof changes and a bound-but-wrong fallback receiver,
+plus semantic key-order replay. Original complete translate_parts and structured
+builder behavior remain receiving requirements, not claimed gains. All runtime,
+strict TypeScript, native Rust and build/test engines are UNRUN in this batch.
+
+Adopt the actual full-corpus literal producer output for the annotations error in `bridge_response.rs`. The retained complete proposal and independent source/CST/map/inverse review selected one original literal conversion; the new shared-text families remain blocked by ancestor namespace and producer refusals in this corpus. Focused text rules pass complete Node/Bun fixtures with strict TypeScript. This application checkpoint does not establish executable function coverage, full parity or Rust verification; Rust remains CI-only after the same-SHA JavaScript gate.
+
+### Fixed
+
+- Literal and borrowed-text adoption can classify original local nontrait imports using the same operation's private, source-derived producer/binding context. Complete source views, declaration spans, current configuration, known derive output confinement and original helper registrations remain required; copied candidates grant no compiler admission. The old source-role fallback is retained.
+- The literal scanner reissues the existing tracked module-path plan for an exact `#[path]` declaration and joins its original child source/edge. This closes only that already-proved file selection, not arbitrary attributes, unknown configuration, trait imports or globs.
+
+The actual 458 full-corpus proposal and independent 468 reviewer passed, but selected only one old literal and no new borrowed conversions. That result motivates this source repair; it is not a repository coverage gain. Complete login, canonical-provider and remote parents are retained by the new whole eight-case fixture, including unresolved standard/external dependencies. All old test files and deadlines are unchanged. This batch and strict emitted-target controls are unrun locally; the integration coordinator owns receiving checks and subsequent full-corpus measurement. Local Rust execution and publication remain blocked by the existing constraints.
+
+Correct private completed-child observer assertions left behind when commit
+8d5e8fade replaced pending triples and the second child join with direct recursive
+cost returns. The complete pinned pre-258 helper/license remain unchanged. Both
+historical and current lookup/pop schedules are asserted independently from their
+full source, including the previously unreached 63-child case; production plan
+bytes are unchanged before/after packed-record batch462.
+
+Retain both original custom-lookup/pop-hook workloads and add Map.get callback
+observations. A lookup-installed Map.get throw must propagate with either extra
+boolean value, so the boolean cannot grant a native segment or erase callbacks.
+No private test probe or hand-counted tape issues production/source authority.
+All nine cases, deadlines, complete graph/state/cost/budget comparisons, hostile
+fallback/reentry tapes and complete native-hash/semantic/strict-target proof
+comparisons remain. Production and historical fixture bytes are unchanged.
+
+Source-only correction; Node/Bun, strict TypeScript and all test/build engines
+are UNRUN for this batch. Prior receiving failures and complete reports remain
+retained separately; no runtime pass or performance gain is claimed.
+
+Apply the existing deterministic complete-tree projection comparison to its
+readonly-helper dependency join. The original native hash comparisons remain
+first with unchanged arguments; the additional comparison omits no source,
+type, body or proof fields. Fresh dependency/layout/primitive/private source
+joins remain required. A remaining mismatch now records the bounded actual
+first-difference path rather than implying the cause is already established.
+
+Repair the final semantic forgery fixture to select the exact checked `renamed`
+function and its actual source-backed `other` formatter variable. It still
+changes that variable to the existing bound `kind` parameter and requires
+re-emission refusal. The former compiler-temporary prefix was absent from the
+retained actual target program. All earlier tamper controls and all eight
+original cases/deadlines remain unchanged; no Host or generated file changes.
+
+Source-only: runtime, strict TypeScript and all test/build engines are UNRUN.
+Complete structured-builder execution remains a receiving requirement, not a
+claimed gain or a reason to relax a mismatched helper body.
+
+Include the final historical root Map.get in the private observer fixture. The retained complete pre-258 planner ends with `lookup(value) ?? states.get(value)`, and complete Node/Bun tapes observe that final root after the three child reads. Correct this one expected tape literal while retaining all nine cases, native callback/throw controls, production and historical sources, semantic/hash comparisons and original deadlines. The false/true throw controls and complete file still require receiving after this correction.
+
+### Added
+- Add explicit owned `json_parse` and `json_parse_bytes` compatibility APIs and a proposal-only CST adoption sequence for canonical JSON calls whose errors are already discarded. The JavaScript adapter reuses the locked roundtrip runtime and preserves syntax failure separately from adapter-domain exceptions. Native library internals remain untranslated. Source draft only: JavaScript, strict TypeScript, native Rust, original caller admission and reverse synchronization are unrun or pending receiving; no executable coverage gain is claimed.
+
+Keep named syntax arrays structural in private JSON composition, including after they become frozen or acquire an existing immutable eligibility record. Their independently frozen object children can use the existing bounded byte store even when the complete array exceeds its entry cap. Every call still preflights the whole logical graph and counts repeated edges against the same cell, depth and output bounds.
+
+The byte-cache implementation, 4 MiB entry / 8 MiB total / 16 entry quotas, eviction policy, immutable eligibility storage and all source/checker and native hash call sites are unchanged. No new cache or owner authority is introduced. Uncertain descriptors, hooks, density, cycles and exceeded bounds retain the complete native JSON fallback.
+
+The existing eight-case whole-file oracle keeps its complete historical sources, original cases, deadlines and strict TypeScript cap. Added controls cover mutable-to-frozen arrays, existing nested eligibility, oversized arrays with bounded child reuse, quota eviction, frozen-array fallback behavior and full original Debug plus existing PartialEq/Eq/Copy native hash and private-source refusal tapes. The historical source recipe has two explicit reversible additions for this helper; its embedded originals remain unchanged.
+
+Source-reviewed only; JavaScript, TypeScript and Rust checks are UNRUN by the worker. Speed and memory effects are unmeasured. The original thirteen-case performance suite remains RED from its previously retained unchanged-deadline failures.
+
+Extend the builtin-proof composition, packed eligibility and byte-cache policy test source recipes with the exact two reviewed 480 composer conditions. Each oracle still validates its complete pinned historical source, then retains the complete pre-480 intermediate and current source with unique forward substitutions and full inverses.
+
+Historical fixtures, base64 sources and expected hash constants are unchanged. Every existing case body, workload, timeout, strict TypeScript cap, complete semantic/native-hash comparison and observer control remains unchanged. The owner/subtree/cohort and completed-eligibility/budget oracles need no recipe update because they pin historical originals separately from the freely read current helper.
+
+Source-only full-string fixture replay and inverse checks completed; runtime suites remain UNRUN by the worker. This batch changes tests only and makes no speed or memory claim.
+
+Repair the 480 fitting-array reuse regression without changing byte-cache storage or policy. After the complete existing logical preflight, a fresh bounded UTF16 JSON-size classification keeps a fitting frozen named array as one byte-store operand. Oversized or unmeasured arrays retain structural composition of their bounded children. Classification uses the already checked structural plan where available and complete immutable own-data children otherwise; it retains no size or owner records between calls.
+
+The measurement has independent per-call cell/depth/text work bounds, preserves native quoting including lone surrogates, omitted undefined object fields, array null normalization and nonfinite/negative-zero numbers, and completes before any cache emission. It cannot increase the original two-hundred-thousand-cell, depth160 or eight-million-unit composition domain. The original cache implementation, entry/total/entry-count limits, eviction policy, consumer hash calls and source/checker guards are unchanged.
+
+The retained failing Debug fixture is 3,085,065 bytes. Its recipes/metadata/schema arrays fit the existing 4 MiB entry cap, but 480 split them into hundreds of captures competing for sixteen entries: the actual failed vector recorded zero hits, 798 captures and 782 evictions. This batch preserves that original fixture and its hit assertion. It also preserves the complete historical fixtures and all other whole-case bodies, with explicit reversible 483 source evolution in four strict source oracles. The new 480 small-container expectation now requires container reuse; its oversized child-reuse control remains strict. Exact entry-boundary and UTF16/normalization controls are retained alongside the existing full native-hash/private-refusal tapes.
+
+All runtime checks remain UNRUN by the worker. Speed and memory effects are unmeasured. Original thirteen-case deadline failures remain RED in the retained 480/481 receiving results; this source repair makes no performance qualification claim.
+
+Broaden the optional canonical JSON proposal selector to retain a complete
+balanced original argument, including comments and a unary trailing comma,
+while refusing multiple arguments and trivia that a replacement would delete.
+The old complete comment-in-argument fixture now verifies lossless forward and
+inverse adoption; all other previous refusal controls remain.
+
+A separate language/repository CST pass gives complete tail method chains a
+hygienic immutable Json root when their parse input is an existing borrowed
+parameter. It retains the entire suffix and early-exit order, plus original,
+intermediate and final source/CST/mappings/inverses. Arbitrary argument owners
+are not hoisted across a new let semicolon. No runtime, Host, flow, lifetime,
+private issuer, generic serde or source-data registration changes are included.
+
+The existing whole-eight test keeps its workloads and deadlines, adds balanced
+argument/arity/hygiene controls and complete original/current parents for
+`json_string` and `root_id`, and authors independent JavaScript/strict TypeScript
+outcomes for their full bodies. Those target assertions require the separate
+source-bound Option<String> flow support. All receiving is UNRUN in this
+source-only batch; source proposals do not establish executable coverage,
+runtime equivalence or reverse synchronization.
+
+The owned JSON source-flow checker can finalize a separately qualified canonical `Option<String>` or `Option<Json>` return. It reuses privately checked standard Option bodies and permits only an actual captured standard `str::to_string`/`ToString::to_string` allocating map callback; borrowed input roots end at that allocation while the resulting String remains linear. Source/body, canonical layout, callback and emission joins remain mandatory. This adds no Result residual, arbitrary Drop/Copy, temporary-loan, runtime, Host or source-lifetime permission.
+
+The new whole eight-case receiving file retains both complete original/current `json_string` and `root_id` parents, exact CST adoption inverses, independent JS/strict-TypeScript outcomes and source/layout/loan/move forgeries. Its two intended isolated-body positives require the separate hygienic full-tail adopter normalization (484) and actual source-data preparation (479). Full-parent refusals remain evidence rather than claimed coverage. Rust edge oracles are CI-only. All runtime checks, performance and coverage gains are UNRUN in this source-only worker batch; existing 60s whole-case and 20s strict-child caps are unchanged.
+
+Count JSON quote units with numeric UTF16 code units under the existing fresh lexical intrinsic guard. The previous string-index and lexical-comparison loop now uses the already qualified native charCodeAt method and the same control, quote, backslash and surrogate cases. This changes no cell, text, depth, output or cache limit and retains no new state.
+
+Keep the entire reviewed 483 source stage in all four strict historical source oracles, then record a separate complete numeric-counter substitution and inverse. Every existing whole-case body, payload, assertion, native-hash/observer comparison and deadline remains byte exact. Source-only scalar/boundary arithmetic checks are complete; Node/Bun/strict TypeScript and the original thirteen-case deadline qualification remain UNRUN for this batch. No measured speed gain is claimed. Rust is CI-only after the same-SHA JavaScript gate.
+
+Record the user’s standing issue #759 authorization for the designated publisher to push coordinated fixes and update the draft PR without another approval request after the entire preceding CI cycle finishes and its failures are handled. Same-commit JavaScript-first Rust gating and the single-publisher rule remain mandatory.
+
+Extend the proposal-only optional JSON adopter with direct imported canonical
+Value targets and already-qualified owned parse full tails. Import candidates
+join the genuine current source/view, active named import and resolved consumer
+type namespace; candidate-local alias uncertainty preserves existing qualified
+calls. Already-owned borrowed-parameter tails retain an identity first stage and
+the same hygienic immutable Json-root normalization, including exact fused ?.
+source checks. Preserve full CST/source chains, maps, inverses and all ordinary
+checker/private source, feature, ownership and lifetime requirements.
+
+Keep the original eight receiving subjects and deadlines, and append alias,
+shadow/import, complete actual parent, compact/spaced tail, current-source and
+feature controls. Runtime, Rust, strict TypeScript and original parent admission
+are UNRUN in this source batch. Native parser internals remain untranslated; no
+executable coverage or synchronization completion is claimed.
+
+Recognize the genuine Rust token census's fused `?.` spelling at the initial
+optional parse root and throughout complete tail method chains. Split the
+ASCII question/dot boundary only after exact token/span/source comparison;
+retain every original dot, comment, whitespace and early-exit position.
+
+The original compact hygiene subject remains intact, with additional compact
+and spaced punctuation controls under the same whole-eight deadlines. Correct
+the new stage-trace assertion to the CST API's nested phase/rules records while
+retaining both complete source stages and inverses. No source binding, type,
+ownership, lifetime, runtime, guard or budget changes are included.
+
+Receiving is UNRUN in this source-only repair. Separate owned Option flow and
+layout failures remain independent; no coverage or performance gain is claimed.
+
+Preserve the complete original source-data producer regression after the collection core adds two independent exports. The original four-substitution result and inverse remain checked, and an additional complete call verifies that the actual collection source literal and digest survive unchanged when synchronizing facade and primitive sources. All eight original workloads and deadlines remain. Source draft only; receiving checks pending.
+
+Receiving found that the allocating Option map selector omitted the parser’s existing `routerIteratorOperation` form, and genuine checked Option joins could lack per-use metadata. The source-flow rule now recognizes both privately captured map forms and recovers metadata only for exact current type objects in the completed private body, with fresh canonical constructor/field/ownership checks. Existing Result and ordinary strict paths remain unchanged.
+
+A narrow guarded Host delegation handles a direct genuine owned JSON parser in `let Some(json) = ... else { return ... }`, reusing the checked pattern planner/projections and consuming its owned payload linearly. The ordinary Pattern implementation is unchanged. Existing source checking records exact readonly receiver/Option-question-mark outputs weakly; only those current source-bound receivers may evaluate before the pinned filter’s local return frame. Callback-argument control, other exits, copied/foreign frames, generic Drop/Copy and unknown ownership remain refused. All original eight workloads/controls and 60s/20s caps are retained, with additional owned-pattern/move/forgery controls. Root must regenerate the Host class from actual producer output. Runtime, strict TypeScript, Rust and performance are UNRUN here; no gain is claimed.
+
+Regenerate native affinity and bulk serialization metadata from the complete current Rust source set through the actual JavaScript producers. Preserve all 88 supported layout owners, 453 refusals and 134 exclusions; printed JavaScript and TypeScript descriptors remain byte-identical. Both bounded producers pass without local Rust execution. This updates source provenance and freshness, not whole-source runtime parity; strict TypeScript and the full gate remain separate checks.
+
+Refresh the registered class program with the actual JavaScript producer after
+the owned Option source repair. Independently replay all thirteen complete
+source mappings and inverses and retain all twenty-four class selections. The
+sole generated change is the current Host source length and SHA; install the
+producer's complete output bytes. Node/Bun receiving, strict TypeScript,
+full-corpus regeneration and CI Rust verification remain separate obligations.
+
+Retain the complete original malformed optional JSON `closed` fixture as a
+negative with its full ordinary project diagnostics and lossless error CST.
+Remove its one extra closing parenthesis through one unique source substitution
+with a complete inverse, and run the existing field/null-byte JavaScript and
+strict TypeScript positive checks on that corrected source. Keep all original
+eight subjects, 60-second case deadlines, 20-second child caps and other controls.
+No production rule, private proof, source workload or semantic admission is
+relaxed. Source-only: receiving and resource behavior remain UNRUN.
+
+Regenerate the registered class program from the current owned-pattern and
+reader-wrapper source. Independently replay every complete source mapping and
+inverse, retain all twenty-four selections, and install the actual producer
+output with only its Host source pin changed. Receiving checks remain separate;
+this generated checkpoint does not establish complete translation or parity.
+
+Restore the exact pre-493 numeric quoted-length measurement and its five
+helper/source-oracle files. Remove the experimental 493 fragment from the
+current source tree; the original commit, full snapshots, raw results and seal
+remain in history. No cache limits, guards, source/hash checks, native Hash
+arguments, deadlines or original pre-experiment workloads change.
+
+Actual 493 receiving passed the five focused cache files (41 cases per engine),
+but the original full thirteen-case file remains unqualified. Node reported all
+13 functional cases passing while the unchanged 60-second case took
+141,480.160792 ms (165.75594 s whole file). Bun was stopped at 22.420806 s by the
+unchanged 3 GiB aggregate cap: sampled RSS 3,247,669,248 bytes exceeded
+3,221,225,472 bytes; its thirteen-case run has no terminal pass result.
+
+This removes the experiment's additional primitive native-quote temporaries;
+it does not establish their causal contribution or promise a performance gain.
+The restored numeric path and current complete compiler graph require fresh
+receiving/profile qualification. Original 60-second performance remains RED.
+Source-only rollback: no engines, Rust or generators were run by this worker.
+
+Remove the lower Tuple module dependency on higher pinned standard-method checkers. Ordinary tuple inference keeps its scalar and iterator rules. The genuine Host checker composes the existing private shared-method specialization through two protected existing-method overrides; no public query hook or proof registrar is added.
+
+The canonical Tuple proposal is reconstructed and authored outside the worktree. Root must run the actual class-birth producer and review/install its Tuple and metadata outputs before receiving. The source-only cold-entry, tuple, private-context and independent JavaScript/strict TypeScript fixtures are UNRUN. The historical CI set contains 33 whole-file failures and two fresh-entry failures; current runtime reproduction and repair qualification are pending. No performance gain is claimed.
+
+Send five complete test-only proof programs through module stdin instead of a single --eval argument. This avoids the Linux per-argument size boundary that prevented twelve historical CI cases from launching. Full code artifacts, observations, native error streams, hash tapes, original workloads and child/case/output limits are retained.
+
+The existing eight-case report suite gains small legacy-versus-stdin observations, complete controlled failure streams, raw anonymous-module URL/argv differences and a larger-than-128KiB UTF-8 proof roundtrip. All checks are UNRUN in this source-only checkpoint; no current CI or performance qualification is claimed.
+
+The default JavaScript-to-meta-to-Rust regenerator now has its actual generated owned-core witness, both strict TypeScript and Rust targets, complete receiving runtime, lossless CST/meta, and original input records installed. Root reviewed all 353 proposed artifacts, reparsed 104 native programs and the portable program, re-emitted both targets, and executed independent witness expectations against original and strict-compiled TypeScript JavaScript. Actual installation and fresh check mode each completed within the unchanged 120-second producer limit; every installed artifact exactly matches the reviewed proposal.
+
+The application census remains explicitly incomplete: its two current forward modules contain 574 functions, all refused because the current materialized runtime lacks the registered owned JSON update adapter. The three-function witness contributes zero application items. Existing portable/native outputs and all refusal inventories are unchanged. Complete forward regeneration, original receiving suites, the complete JavaScript gate and native Rust CI remain separate obligations. No local Rust tool was executed.
+
+Materialize the cold tuple import repair through the actual class-source producer from a fresh copy of the current compiler and the canonical Tuple source proposal. Root reviewed all 13 complete source outputs, UTF-16 edits and inverses, 24 class definitions and their full member spans. Only generated Tuple and the registered program change; the other 12 generated modules and 22 class selections remain exact. The private standard-method specialization uses the existing protected Host method chain, while the bare tuple checker no longer imports its higher proof context.
+
+The actual producer completed within its unchanged 60-second and 1-GiB limits. Cold-import, original 35 historical subjects, complete Option/tuple regressions and strict TypeScript receiving remain unrun at this source-generation checkpoint. No local Rust tool was executed.
+
+Correct the cold data/Host entry fixture to check the actual portable unsigned eight-bit return contract. The lower Data parser/checker does not promise a rustPrimitiveName field; the real parse/check succeeds before that incorrect fixture assertion.
+
+The same source and both cold children, all other seven cases, private-context checks, strict TypeScript subjects and original limits remain. Source-only repair; receiving is UNRUN. No production type or source-identity rule changes.
+
+### Changed
+
+- Draft the explicit owned-core reverse adapter for complete matching JS/TS
+  sources: native-AST type erasure, lossless CST reconstruction, full token and
+  declaration joins, existing canonical imported type checks, and independently
+  checked original JavaScript bodies/loans. Capture real application TypeScript
+  and support checked underscore names with Rust collision refusals.
+- Add eight complete receiving cases with original/strict emitted TypeScript,
+  independent values, real full-parent retention and source/alias/body/name
+  counterexamples. All tests are UNRUN in this source-only worker draft.
+- Preserve module preflight, original single/portable/native APIs, three-build
+  regeneration workloads, source/host checks and all deadlines. Historical
+  forward metadata grants no ownership; canonical aliases/packaging remain
+  separate work. No application coverage, speed or full synchronization claim.
+
+Repair the optional JSON adoption dependency-negative fixture: float_roundtrip is activated through the registered incoming dependency graph and is absent from the direct Cargo declaration, so replacing its spelling in Cargo.toml was a no-op. The fixture now uniquely changes the actual serde_json declaration to enable arbitrary_precision, retains complete original/changed Cargo sources and lock, and proves the full inverse before requiring the unchanged audited-dependency refusal.
+
+No production profile, numeric behavior or authority changes. All eight case titles, original workloads, deadlines and strict child limits remain. This source-only repair is UNRUN; the full-parent case timeout remains unresolved.
+
+Add an explicit stdin entry dash to the five complete proof-child transports and the test comparator. The prior bare flag-only invocation printed Bun help without executing its input. Give the two retained native failure controls distinct syntax/runtime names so both complete observations survive exclusive writes.
+
+Complete code, source artifacts, streams, raw argv/module-URL differences, original workloads and all child/case/output limits remain. Official Bun/Node syntax supports an explicit stdin entry; actual installed-runtime qualification is pending. Source-only repair; no engines run and no performance claim.
+
+The complete nine-case native TypeScript suite passed under both Node and Bun on 9591b7e7aff477969bcf5ed312204604d0fda5dc, without filtering or changed deadlines. Independent duration audits kept the four-fresh-regeneration case below its original 60-second limit: Node 23.81 seconds and Bun 17.86 seconds. Both engines completed strict TypeScript 5.9.3 compilation and the shared source/compiled runtime expectations. Source, all 132 installed compiler files and HEAD stayed unchanged; monitored resource limits passed. No local Rust tool ran.
+
+These 18 passing case executions qualify the lexical-receiver optimization and repaired regression fixture. They do not establish current forward/reverse freshness, application coverage, complete JavaScript gating or Rust parity. Earlier failed fixture and CI observations remain retained separately.
+
+### Changed
+
+- Replace a whole-token filter per paired TypeScript annotation with an upper
+  bound search over the same fresh scanner token ends. The chosen predecessor,
+  including comments, and all source, CST, native syntax, type and refusal
+  checks remain unchanged. No across-call source or verdict cache is added.
+- Extend existing case two with complete 1024-function paired sources, all
+  2049 erasures and their whole inverse, plus late-body and comment-boundary
+  negatives. All eight titles and 60-second/strict 20-second limits remain.
+- This is a source-only UNRUN experiment, with no measured speed claim. Full
+  per-item source serialization still duplicates source and remains subject to
+  existing bounds; a separate document-source proposal is not implemented here.
+
+Added explicit owned-context source-document APIs and a corpus sibling that store complete originals once, reconstruct canonical CST and paired/import references, and recheck every expanded function through the unchanged original checker. Existing single/default APIs and the active repository bulk selector remain unchanged. New whole-file controls cover strict TypeScript, independent JSON behavior, source/ownership forgeries, bounds, current corpus discovery and the actual CI Rust witness. Source-only draft: receiving tests, a separately reviewed bulk registration, actual generation/freshness and Rust CI are unrun; no speed or application gain is claimed.
+
+Bound explicit owned-source document accumulation by reserving its context header and each compact item before retaining bounded encoded lines. CST words share the same remaining32MiB budget before their storage serialization; canonical header/CST/items order and every unchanged item-check/hash argument remain. An additive whole-file control uses4096complete item inputs with an independently sized near-limit header and a late invalid sentinel. This corrects a source-review allocation gap in521, not an observed runtime failure. Source-only: receiving tests and actual bulk registration/generation remain unrun.
+
+Align the new owned-document JSON prefilter with the existing distinct data metrics: at most200000 separator characters and161 root-inclusive container levels precede unchanged100000-value/root-depth160 validation. CST limits and all original semantic/data budgets remain unchanged. Add whole-file controls showing a wide unknown record reaches the original semantic refusal while excess actual cells/depth still receive the original data-budget refusal. Source-only correction; no engine result or broader admission is claimed.
+
+Correct two receiving-fixture expectations for explicit owned-source documents: assert all three executed language rules plus the repository rule, and size the early-bound header from the exact received caller originals, including comments and lone UTF16. Retain4096full items, the late invalid sentinel, all eight cases and original60s/strict20s caps. The prior Node run passed6/8 with these two fixture failures; production source checks correctly rejected the mismatched caller. Source-only repair; repaired receiving and bulk activation remain unrun.
+
+Register the qualified owned-source document corpus in default reverse regeneration. The existing portable, native and unsupported-fixture workloads remain; the legacy owned corpus API and receiving witness producer retain their original formats. Each main owned document expands its complete source/CST references before the existing independent per-item semantic checks.
+
+Recognize only the existing fixed stale witness path with its legacy context prefix or the canonical document-v1 profile/context prefix. Unknown document versions and ordinary JSON remain refused. Extend the existing whole synchronization suite with complete actual witness conversions, check-only preservation, deletion and freshness controls, retaining every original case and deadline.
+
+Source draft only: no local engines or Rust tools ran. Actual whole-file receiving, artifact proposal/review/installation and freshness remain Root work. This registration establishes neither an application-coverage gain nor a performance result.
+
+Reuse only successful full size measurements on fresh private JSON composition plan nodes within one invocation. Exact original depth and cell/text charges preserve later size and work bounds; every failed or uncertain probe still runs the complete old measurement walk with its original partial budget effects. Records contain only sizing scalars, remain inaccessible, and never enter the existing cross-call byte or eligibility stores.
+
+Keep the whole preflight, native/source/owner comparisons, hash arguments and ordering, original measurement body, emission and fallback paths. Retain all complete historical 503/507 sources and inverse recipes. Add eight complete behavioral/refusal groups for nested probes, quotas, aliases, Unicode, lazy stacks, late observers, forged sizing data and strict TypeScript targets, without changing old workloads or deadlines.
+
+Source experiment only: no local engines, Rust tools or generation ran. Root must qualify the complete new and existing files and the original thirteen-case Node/Bun workload under unchanged deadlines/resources. No measured speed gain or repaired deadline is claimed.
+
+The complete frozen-JSON cold-consumer fixture now keeps its historical seven-route comparison first, then separately compares the current registered Ord/PartialOrd route-data profile on the same genuine Copy input, including fresh warm proof issuance. Full sources, reversible substitutions, every native callback row and all original deadlines remain checked. This fixture repair is source-reviewed and runtime-unrun here; it makes no performance or full-gate claim.
+
+### Changed
+
+- Apply the reviewed automatic full-corpus JSON-update proposal to two structured-output assignments, preserving complete original RHS evaluation before moving each owned document. Actual CST/source maps and inverse substitutions were verified; whole-function Result and ownership translation remains incomplete. Rust checks remain CI-only after the same-commit JavaScript gate.
+
+### Added
+- Drafted a separate source-bound JavaScript/CST/checked-Links reverse lane for owned JSON copy, update and explicit indices, with actual source symbols, full caller reconstruction, bounded Rust copies and input-root loans. Default reverse regeneration/synchronization inventories the actual forward application corpus and retains complete sources and refusals alongside every old workload.
+- Added two complete eight-case receiving suites, strict TypeScript child checks and independent CI-only Rust oracle source. These checks are UNRUN in the worker; no runtime parity, application coverage, deadline fix, native verification or complete synchronization is claimed. Optional parsing keeps its full 479 resource/numeric-profile obligations and remains reverse-refused; callbacks remain a later phase. No generated application/source-data/class files, Cargo, workflows or publication state were changed.
+- Kept native syntax/compiler traversals private and added JS-language/path checks. Immutable owned-local aliases and repeated operands use explicit paired copies/borrows, with the actual producer-owned CI witness exercising reuse; no Rust execution is claimed.
+
+The fixed native TypeScript build path classifies lexical `this` during its existing semantic symbol-collection traversal. Ordinary functions start independent targets, arrows inherit them, and methods, accessors, constructors and classes mask the enclosing target. The encoder reads the resulting call-local function membership at the original annotation position. It retains annotation order and key insertion, all inference, concrete-source checks, semantic serialization/reparse, runtime AST checks and native hash calls. No compiler, source, AST or verdict is reused across builds.
+
+The complete public serializer and `parseNativeJavaScript` implementation remain unchanged, including custom TypeScript/checker traversal observations. The optimized sibling is mechanically derived from that source and selected only by the private stock-compiler build route; arbitrary replacement TypeScript implementations are not claimed to have identical traversal callback counts.
+
+The existing whole-file tests retain every workload and deadline, including all four independent drift builds. Added controls compare complete private/public metadata and targets, exercise lexical boundaries and unchanged public callback tapes, and compile and execute independent receiver expectations with a 20-second strict TypeScript child cap. Node, Bun, TypeScript and runtime checks are UNRUN by the worker. The current regeneration deadlines remain unqualified; no speed or memory gain is claimed.
+
+### Fixed
+- Validate explicit TypeScript and JSDoc return domains through the same private original-source resolver used for parameters, then compare the checked body ABI. Canonical JsonValue annotations preserve independently inferred ownership and loan roots; unsupported, custom, Promise and mismatched domains refuse.
+- Extend the existing complete eight-case receiving file with original TypeScript CST, strict original/emitted TypeScript and independent golden behavior plus negative return-domain controls. Worker checks remain UNRUN; no generated sources, previous sealed482 bytes, deadlines or native/publication claims are changed.
+
+### Fixed
+- Share the existing precise owned facade source-edge selection between forward parsing and the new reverse profile. Preserve every original forward source/binding comparison and its order, then require actual private resolver origin, source-view/profile and declaration joins; parser/cursor/CST/currentness checks remain.
+- Retain unrelated missing-module/macro diagnostics instead of treating them as a blanket veto of this reserved explicit owned API. This grants no general namespace, producer, trait or runtime authority. Add complete actual-root and strict target controls plus source/cfg/competition/counterfeit negatives; all receiving remains UNRUN in this source-only worker. No generated sources, Host, Rust runtime, deadlines or publication state are changed.
+
+Correct two owned reverse receiving fixture expectations. The borrowed-index case now proves that JSON construction independently copies the supplied child, then requires both original and strict TypeScript results to preserve the identity of the child actually stored in the input. The original pre-construction leaf, input and source remain unchanged.
+
+Keep the original separate-JSDoc negative as an explicit missing-input-domain refusal. Add one attached comment with the genuine JSON parameter and an incorrect boolean return annotation so that the written-return ABI refusal is independently exercised. Production code, eight-case workloads and deadlines are unchanged.
+
+Source-reviewed only; receiving tests are unrun for this repair. The preceding Node receiving run reported these two fixture failures; it does not qualify this successor or the complete gate.
+
+Cycle 499 repairs two source associations found by the complete 492 receiving run. Control patterns now reuse the authenticated owned-algebraic alias interface at the existing registered-owner callback, including nested and parenthesized paths. The fixed seven consumed source tokens, complete facade and primitives leaf, current namespace resolution, constructor and field layouts remain mandatory. Ordinary type, expression, general-pattern and standard-owner paths retain their behavior.
+
+A JSON `as_str` ownership wrapper can retain its reader receipt only after the same returned value has the actual inner fallback receipt. Checking and consumption join both raw identities, complete snapshots, function frame and canonical Option/borrowed-str layout. Copies and public metadata grant no authority. Existing callback-control, ownership, loan, source and emission checks remain.
+
+All eight original return-flow cases and their 60-second and strict-TypeScript 20-second caps remain; controls add nested aliases and current reader/source forgeries. The frozen 498 plan is preserved and superseded only because that identifier belongs to another batch. Host source registration changes require Root's actual class producer. Node, Bun, TypeScript, Rust and producer execution are UNRUN by the worker. No coverage or timing gain is claimed.
+
+Exclude exactly the producer-owned reverse receiving witness Rust output from synchronization's original-input census. Keep the authored native oracle, original Rust, facade/primitive sources and similarly named neighboring Rust files protected. Previously, the first actual witness generation would itself add a newly classified original input; this is a source-derived defect, not a claimed observed sync failure.
+
+Add one complete sync control that generates the real witness from the authored oracle, joins its complete output hash to the artifact manifest, retains its original input/source recipe, and verifies that check mode rejects edited witness bytes without treating them as original-input mutations. Authored oracle and neighboring Rust edits still change the original census. Existing cases and limits are unchanged; this successor is source-reviewed and runtime-unrun. No Rust tool was executed.
+
+This source-only diagnostic identifies the first failed gate in the actual private Option reader-receiver path. It changes no admission predicate, owner/layout requirement or source/checker validation. Failure details contain only bounded primitive gate/type/identity facts and a descriptor-only bounded first difference; private objects and complete source/proof bodies do not escape. Uncaptured public/fake inputs retain their false result without getter callbacks.
+
+Every original comparison and source/hash/checker call remains in its original order. A failed recursive receiver visit still runs the original final current-function check before reporting. The complete existing tests, workloads and deadlines are unchanged. This is diagnostic work only: Node, Bun, TypeScript, Rust and producer execution are UNRUN by the worker; no repair, performance or coverage success is claimed.
+
+The 504 diagnostic identified the inner dispatch receipt where an actual outer JSON `as_str` wrapper was expected. Project relocation duplicates repeated receiver occurrences, so their original shared object identity cannot be required of relocated syntax.
+
+The reader now requires private original-node correspondence for both the actual wrapper and fallback. They must belong to the same current parent/parser, originate from the same original receiver, and independently match their exact relocation and separately captured current identities. Observation still requires the same checked inner reader object; consumption rechecks the complete current source, wrapper, fallback and canonical Option/borrowed-str layout. Public copies or equal-source foreign nodes do not receive this authority. The existing narrowly selected source-node WeakMaps gain only these two `as_str` forms; no global strong parser/checker/program store is added.
+
+All eight existing cases, complete actual callers, refusal controls and 60-second/20-second caps remain. Added controls use genuine parser/project links to demonstrate original sharing, distinct relocated occurrences and copied/foreign node rejection with restoration. Host, generated classes, runtime, data profiles and application source are unchanged. All execution is UNRUN by the worker; no gain or deadline qualification is claimed.
+
+Measure frozen JSON substrate fields through their already certified immutable own data slots. The complete key census, array density checks, logical cell/depth/text budgets, uncertain native fallback, and existing byte-cache quotas and policy remain unchanged. This removes only redundant descriptor allocation inside size measurement; it adds no cache or source/checker authority.
+
+Preserve complete historical helper sources and append one exact reversible source evolution in all four composition/storage oracles. Compare complete 503/507 helpers against native JSON and every existing storage/eligibility counter; retain original native hash tapes, complete compiler subjects, deadlines, and TypeScript caps.
+
+Source-only draft: Node, Bun, TypeScript, and Rust checks are unrun. The original full-graph deadline remains unqualified; no speed or memory gain is claimed.
+
+Retain the complete original lexical-receiver fixture as explicit public-parser coverage, including all eight initialized class fields, three property-initializer arrows, and two static blocks. The unchanged TypeScript assignment-style class-field erasure changes runtime AST structure, so the executable build carrier derives two exact class-line substitutions with a complete inverse: constructor assignments and static methods preserve its independently expected results while keeping class, constructor, accessor, arrow, and static-receiver boundaries.
+
+The production runtime AST identity checker, compiler, all nine original whole-file cases and deadlines, four independent regeneration builds, full private/public metadata comparisons, custom-parser observer tape, and strict TypeScript cap remain unchanged. The previous observed mismatch receipt is retained; no exact erased-AST difference was captured in that run.
+
+Source-only test repair. Node, Bun, TypeScript, and Rust checks are unrun; no speed gain is claimed.
+
+Rejoin complete source spans in owned JSON projection emission after the existing semantic and native-hash comparisons. Alpha equivalence still erases spans for its original purpose; a separate bounded descriptor-only comparison now checks every span path against the existing detached private call/function and readonly-helper envelopes, including nested type and source-proof data. It adds no public permit, cache, or generic JSON admission.
+
+Keep the original failed reader-span mutation and unreached reader-key control unchanged, with additional span-only mutations and complete restored emission. Preserve all eight existing workloads, source/owner/layout/lifetime guards, native hash arguments and order, and deadlines.
+
+Source-only repair. Node, Bun, TypeScript, and Rust checks remain unrun; no coverage or performance gain is claimed. The separate readonly trim flow remains outside this batch.
+
+Owned Option JSON flow now recognizes the existing checked borrowed-str `trim`, `trim_start`, and `trim_end` operations only inside an actual privately completed source function. The original raw operation, checked node identity, complete function snapshot, borrowed-str ownership and primitive checks must agree before and after validation. Flow reads the receiver once and forwards the same loan facts; trimming does not allocate or grant ownership. The existing `is_empty` path, lifetime analysis, string runtime and ordinary JSON grammar are unchanged.
+
+The existing eight-case receiving suite retains its full workloads and deadlines, with independent JS/strict TypeScript trim cases for Rust whitespace (NEL U+0085) and non-whitespace BOM U+FEFF, source/receiver tampering, and owned/mutable/deep/custom receiver refusals. Source-only checks are complete; Node, Bun, TypeScript and Rust execution remain UNRUN here. Root whole-file receiving is required; no coverage or performance gain is claimed.
+
+Source-span emission refusals now include a bounded failure-only first differing span path, join kind, presence and numeric source coordinates. The original semantic/native-hash comparisons and complete source-span rejection predicates remain unchanged and run before this diagnostic. No source text or private proof/checker/frame objects are emitted; the descriptor-only diagnostic has independent finite work, depth and path bounds and grants no authority.
+
+This follows paired Node/Bun receiving failures after the stricter 513 join. The private individual-call and completed-function source stages must be observed before any correspondence repair. All original test files, mutations, workloads and deadlines remain unchanged. Runtime and the exact-field diagnostic are UNRUN by this worker; Root receiving is required. Sealed 513 and 516 remain immutable.
+
+Owned JSON source-span re-emission now accounts for one genuine semantic JSON transition: an absent actual span matches a privately captured own data span whose value is exactly undefined. Standard callback specialization creates such internal variables; the project semantic JSON roundtrip omits undefined object properties. Numeric spans, null/object spans, missing expected spans and every other source subtree keep their complete comparisons. Existing semantic/native-hash checks still run first with unchanged inputs and order.
+
+The original eight-case suite and all prior key/span mutations remain intact. Added full-wire controls cover undefined omission and complete re-emission, reject added null/empty/numeric internal spans, and verify recovery. The existing failure-only diagnostic also reports the span value type. Source-only recipes/inverses are verified; Node/Bun/TypeScript/Rust execution remains UNRUN here, with Root whole-file receiving required. No coverage or performance gain is claimed.
+
+Repair the pre-import observer fixture by retaining the complete historical JSON guard and explicitly re-exporting the genuine current path-membership guard, with an exact identity check. The fixture compares a current derive leaf under historical JSON qualification; it does not claim an old complete module. All original hooks, callbacks, hashes, bodies and child limits remain.
+
+Pass explicit empty options through the format-template test wrapper so the independent deadline audit can identify the unchanged default deadline. No timeout is added or raised. Source-only; receiving is pending and no engines ran.
+
+Correct the two independently authored trim fixture expectations to the existing canonical JSON ABI: successful string parsing returns Some(String(value)), and null parsing returns Some(Null). Actual Node receiving observed the tagged String value. All source subjects, three trim operations, NEL/BOM distinctions, mutations, recovery checks and deadlines remain unchanged; no production code changes. This source-only correction is UNRUN by the worker and requires Root whole-file receiving.
+
+Add a separate checked-project pipeline that emits definition-only receiving sources for actual zero-parameter literal JSON functions. Classification runs inside the genuine private compile closure, rejoins the current complete registered Value/Number/Map/Entry ABI and source-to-target names, and reuses each original checked lowering. Complete main output, source parents and unsupported rows remain retained. No module-startup, unrelated import, generic ownership or JS exception equivalence is claimed.
+
+Canonical JsonValue return imports replace only the exact generated alias prefix and actual return annotation through full CST source recipes and inverses. Registered reverse object/array constructors accept only dense literal containers, static unique scalar keys and independently checked canonical children. All values evaluate once in order; the existing runtime bounds and CI Rust core boundary remain in force. Duplicate literal keys remain refused. Zero-parameter paired sources now also check their actual complete TypeScript pair and written return domain.
+
+The new whole eight-case suite retains both complete actual originals and parents, independent nested JSON goldens, strict TypeScript with 20-second children, copied/type/body/source/runtime refusals and the 60-second case cap. Worker runtime execution is UNRUN. Standalone qualification must precede a separately reviewed actual producer connector and fresh materialization; an unused API alone is not completion or an application gain. Existing project output path and all old test workloads/caps remain unchanged.
+
+Align three historical fixtures with their actual checked source contracts: exact individual Rust Gt token-tree backing and spans replace the obsolete fused-token expectation; the unchanged explicit shared-f64 read now has its genuine primitive Copy source witness and complete IEEE/invalid-input outcomes, with paired strict targets; an unissued Host subclass must fail at its exact earlier source-class guard.
+
+All original subjects, meaningful refusals, private-issuer checks and case/child limits remain. Production and generated source are unchanged. Source-only; receiving is pending, with no engines run or performance/coverage claim.
+
+Added source-selected Ord and PartialOrd generated namespace proofs for nonempty unit enums with at most128 variants. Both complete compiler source files come from the same official Rust1.89.0 revision as the existing profile; the existing full MIT and Apache license inputs remain unchanged. All36 previous manifest entries and the158993-byte historical composition fixture prefix are preserved.
+
+The selected original generic enum dispatch and recursive positive AST constructors produce one associated function inside an Impl. The proof retains actual path-macro expansion lineage, signature/type constructors, discriminant locals, shared borrows, source/span/profile checks, all constness alternatives and fresh hash/reissue operations. It grants no comparison execution, trait validity, nominal Clone/Copy, Drop or const permission. Payloads, explicit discriminants, generics, packed/conditional/unknown attributes and competing producers remain refused.
+
+A new whole eight-case source suite retains complete official archives, full original ServiceKind/service_base_path and ClientKind parent inputs, independent path outcomes, detached/fake-source refusals and complete native hash tapes for all seven old routes. Historical source authentication appends an exact reversible stage without changing any earlier fixture source, workload or deadline. The full ClientKind diagnostic keeps independent unresolved owners and nominal Clone failures; no whole-parent or nine-method gain is asserted.
+
+Source-only: all receiving, strict TypeScript execution, memory/time and coverage results remain unrun. Root actual compiler registry generation/review is required before adopting generated source metadata; no generated class, Host or application source was edited.
+
+The forward owned-definition literal-container regression accepts the exact existing refusal `callee is not the actual import symbol` for the deliberately unregistered `unknown()` child. All six negative expressions, their complete paired TypeScript bodies, and every existing assertion and deadline remain unchanged. This corrects the test diagnostic expectation; it does not admit the call or change production behavior. Source review only; receiving remains unrun in this worker.
+
+Repair the complete actual-source formatting/text fixtures with all owned Core modules and their real Cargo dependency proofs. Compare the full eleven intentionally untranslated library refusals while retaining every application behavior and strict target assertion. Keep all four historical shell/XML parent bytes, hashes and original body spans; replay the complete recorded primitive-adoption substitutions through serialized/reparsed CST, verify the whole inverse, and independently join each current physical body. Default deadlines and every existing case remain. No production translator, native implementation or generated output changes; repaired receiving remains unrun.
+
+Restored ordinary checking for Host subclasses without giving them private JSON frames. Only instances actually created by the source-protected Host constructor with that exact new.target enter a private weak identity set. The read-only eligibility query uses captured native operations without inspecting foreign/proxy objects; genuine instances still require fresh native descriptors and the complete original method/prototype guard. Public flags and copied/prototype-forged objects cannot enroll.
+
+The existing genuine JSON node/entry capture, transitive return-flow frames, source association, ownership/layout checks, fresh hashes and later guards are unchanged. A foreign subclass returns before private JSON state is issued; stale genuine methods, prototypes or native operations still throw. The Host source remains999 lines. The original conversion suite retains all eight subjects and limits, restores its ordinary GOOD constant regression, and adds genuine/stale/foreign/proxy/native restoration and actual parsed owned JSON refusal controls. Its existing falseIssuer still unconditionally fails conversion issuance, now at the correct later conversion guard rather than the unrelated early JSON frame guard.
+
+Source-only: runtime receiving and strict target checks remain unrun. The one canonical Host input pin is authored; Root must run and review the actual19-input class producer before installing generated class/PROGRAM outputs or receiving. No generated files were hand edited and no Rust or comparison/runtime authority was added.
+
+Adds an explicit `--owned-core-definitions` source producer and receiving connector for canonical and independently declared profile outputs. Complete default artifacts and inventories remain separate from definition-only sidecars, full compressed source/CST/inverse evidence and unique physical-original accounting. Fresh actual JavaScript/TypeScript source documents, current core/runtime layouts and actual paired imports remain prerequisites; metadata does not grant admission.
+
+The four derived bulk modules require Root’s actual reviewed generator output. Mandatory CI/local commands cover canonical and matrix forward/reverse freshness and strict `.mts`/`.ts` compilation without changing existing stages, Rust dependencies or deadlines. New observed evidence stays within 384 MiB; full terminal bytes must remain losslessly recoverable. Worker checks are source-only: generated modules, engines, complete materialization and the full gate are UNRUN and the activation is not yet qualified. No speed, native Rust, full-module equivalence or complete crate coverage claim is made.
+
+Corrected two newly authored529 fixture expectations while retaining all eight cases and their60s/strict20s limits. The established by-value nullary enum ABI accepts a mutable known-tag record: the ServiceKind test now checks the same expected path, unchanged own descriptors and no freezing. All ten original target goldens and unknown-tag refusal remain.
+
+The two original new-route observations remain intact and are retained before assertions. The second observation supplies an explicit genuine warmup; two additional fresh warm calls compare complete values and native Hash argument tapes exactly. All seven historical-route comparisons, complete source/profile inputs and observer workloads remain unchanged. No production guard or cache behavior changed.
+
+The initial529 whole8 received6/8 in both engines; the two failures were these new fixture assumptions. Its original ClientKind dependency-projection whole1 independently passed both engines including nine methods and strict TypeScript; no whole-parent or corpus claim follows.536 runtime receiving remains unrun. Original Node TAP skips parts of its assertion diff, and the failed new pair was not separately retained by the original post-assert retainer, so no complete prior pair or fabricated exact count is claimed.
+
+Align the historical text-parent fixture substitutions with complete original Rust identifier leaves. The earlier byte-level diff split str, Result and Option inside identifier tokens; the CST layer correctly refused those partial spans. The replacement recipe rejoins the same complete old and current parent bytes and exact whole inverse, retaining all original source/body pins, behaviors and deadlines. No translator or runtime behavior changes. Repaired whole text receiving remains unrun.
+
+The ordinary Host extension regression now expects the earlier protected checker-identity refusal for its actual recursive conversion subject. The TypeError and no-issuance checks, complete subject, following genuine/foreign/poisoned checker controls, and all eight case workloads and limits remain unchanged. This corrects one new fixture expectation; production guards are unchanged. Source-only; receiving pending.
+
+Default derive namespace output now follows the pinned Rust tuple-type visitor for bounded tuple-bearing fields, including `ResolvedDeploy.env: Vec<(String, String)>`. The existing path parser remains the first route; source/owner/attribute checks and limits remain mandatory. This closes a source-output branch, not tuple Default execution or trait validity.
+
+The complete pre-change helper remains the historical tuple-refusal oracle. New whole-file controls retain full source/AST/private-proof refusals and the unchanged four-file deploy parent with JS/strict TypeScript expectations. Source-only; all new behavior and resource qualification remain pending receiving.
+
+The optional source-syntax association scan now requires its existing fresh native reflection and collection domain before inspecting any node. Changed reflection or collection hooks retain the complete original token/body/source path and callback order, while qualified owned JSON, f64 and let-else associations keep their private joins. No digest, source check or owner check is skipped.
+
+The original flat-token whole-file callback controls remain unchanged. This source repair follows a reproduced 113-versus-8 descriptor callback divergence; Node/Bun receiving is pending. No local Rust execution.
+
+The derive-output-effects regression now retains all eight original subject/action outcomes before applying their unchanged TypeError expectations. Unexpected successful private tokens include their complete joined effect facts, so later supported source-output evolution can be distinguished from a guard regression. All initial actions remain unwrapped; no Hash observer, production permission, case filter, or deadline change is introduced. Source-only; the original refusal expectation remains in force pending actual receiving evidence.
+
+The original bridge conversion and Option-filter fixtures retain their complete standalone missing-Core attempts first, then use an explicitly authored two-module root selected from the complete actual library CST. The scoped project carries the entire unchanged bridge module, all four actual compatibility-core sources and Cargo inputs. Complete source/CST and semantic roundtrips, inverses, unchanged qualified export names and existing behavior goldens are retained. This is a scoped fixture, not a full-crate namespace equivalence or coverage claim. No production rules or deadlines change; source-only, receiving pending.
+
+Use captured native own-enumeration only for the existing private immutable/noStack JSON sizing lane. Its already validated objects have only enumerable own string data fields; dense arrays have enumerable indices plus their immutable own data length. Keep the complete logical key census/order, every size/cell/text/depth charge, successful-only invocation-local measurement records, native fallback and existing byte-store policy/quotas. No new cross-call cache or source/checker/owner authority is introduced.
+
+Retain the complete historical helpers and every full forward/inverse recipe, including the exact original sizing function. Compare actual Debug/PartialEq native hash tapes and private refusals; add enumerable-key ordering, frozen transitions, hidden/symbol/extra array keys, oversized children and changed native observer controls without removing any old case or deadline.
+
+The fresh bounded full-root diagnostic remained in namespace construction; its profile includes frozenUnits but has61% unknown ticks. This is a source-only experiment, not a speed or deadline claim. No worker engines, TypeScript/Rust tools or generation ran. Root must qualify all affected whole files and the original thirteen-case workload under unchanged deadlines/resources.
+
+The derive-output effect regression retains all eight original current actions and complete outcomes first. The original payload-enum subject then proves its exact refusal through six complete closed historical issuer modules with genuine current authenticated dependencies, followed by explicit current Clone AST namespace-only facts for both resolver branches and variants. All seven remaining refusal controls and deadlines stay unchanged. This records source-profile evolution; it makes no historical bootstrap, Hash callback-schedule, Clone runtime or full-crate equivalence claim. Source-only, receiving pending.
+
+The tuple visitor regression retains its exact original vector-of-tuples subject as a legitimate empty-vector Default positive. A separate direct tuple-field subject, produced by one lossless CST substitution with a full inverse, retains the independent tuple Default refusal. Both subjects keep the original BigInt Option<u8> goldens and out-of-range refusal; Number payloads are additional ABI negatives. No production rules, original workloads, or deadlines change. Source-only; receiving pending.
+
+Static original-source fixtures now use a shared proposal-only lifecycle for two complete pinned historical Rust/Cargo universes and independently joined current source parents. Existing file/body/span/value pins, all native observer subjects, and original deadlines remain. Whole-token CST source changes and full inverses describe source evolution only; they grant no namespace, trait, ownership, or executable authority. The original fixture APIs and limits remain unchanged. The three new source-bank assets require an actual reviewed Root producer before receiving; this source draft and all engine/Rust checks are unrun here.
+
+Requested derive-owner closure queries build one bounded, query-local ordered projection of genuinely frozen namespace bindings. The original sibling/configuration/header/owner and conditional proof walks, all fresh native hashes and inner attribute observations remain intact; changed native search methods retain the complete original receiver and predicate. No index or semantic result is cached across queries. Historical source fixtures retain exact reviewed forward/inverse evolution. Source-only experiment; functional, resource and original deadline qualification are pending, with no speed claim.
+
+Keep the complete actual Into bridge parent as a negative control for its current earlier external attribute-producer refusal. Preserve the anonymous-trait obligation separately by changing only the actual complete anonymous import in an explicitly authored full-parent fixture, through serialized language/repository CST phases and a full inverse. The new fixture retains every original function/attribute/body byte and checks the existing unproved standard anonymous-route refusal; it grants no conversion, trait, Drop or namespace authority.
+
+Retain all original bridge, safety and GitHub cases and deadlines. Preserve complete original/authored parents, CST/mapping/inverse traces and full results as bounded optional evidence. Source-only: no worker engines, TypeScript/Rust tools or generation ran, and no production Rust or compiler path changed. Root must run the complete three-case file in Node and Bun; no full-module behavior or coverage gain is claimed.
+
+Make historical original-source tests portable to shallow receiving repositories using genuine raw Git commits, required trees and four complete original source blobs. The test fixture imports each exact typed object with stock Git and verifies its original object ID; it never substitutes HEAD or fabricates Git output. Complete registered compiler and TypeScript sources still come from the actual registry and are individually rechecked.
+
+The isolated compiler proposal now selects unchanged source paths from tree metadata before querying sizes for selected blobs. Its complete selected-body hashing, native hash argument order, compiler/TS limits and bootstrap substitutions remain unchanged. Excluded generated/test blob bodies need not be present in the portable database. This explicitly changes producer Git query scheduling.
+
+Source-only draft; all new and existing runtime tests remain unrun here. Root must first prepare and review the current isolated registry, then generate and review the three portable metadata assets bound to that registry's exact sourceHead, and run the complete new eight and original eight-plus-eight files under their unchanged limits. Missing unselected ancestry is allowed; missing selected objects, changed source/TS bytes and output aliases still refuse. No Rust tools, network, generated applications or publication were used.
+
+Rework only the new static-source lifecycle bank as an explicit bounded bulk CST transaction. Capture every changed full source through the existing Sources API (large rows retain the single route), then independently import every complete canonical document through the full untrusted MetaChunks API. Execute actual language/repository whole-token span rules and retain complete source joins, classification, edits, inverses and canonical hashes. Reader documents live only for one invocation. The original fifteen-source APIs/archive and all sixteen historical test files remain unchanged.
+
+Source-only draft: runtime, producer timing and whole-file receiving remain unrun. The earlier bank producer exceeded its unchanged 60-second bound; this change establishes no speed gain. Native batch limits and the bank's original source/output/resource limits remain unchanged. The new transaction has an explicit authentication/read/hash schedule and makes no old single-API callback-equivalence claim. Root must generate, review and install the three complete bank assets before receiving.
+
+Source-review correction: both original and latest changed-parent canonical documents are mandatory. Metadata grouping uses bounded primitive strings only; it never parses an untrusted document ahead of the existing native length/depth/shape preflight. Missing-side and oversized/deep-input refusal controls were added without changing original deadlines.
+
+Frozen JSON composition now reuses only completed primitive quoted sizes within one successful compose invocation. The existing whole-graph inspection, length/limit checks and full per-occurrence text charge run before memo lookup. A saved size must fit the current limit; misses, smaller limits and partial failures retain the original code-unit loop. The transient table is bounded to 1,024 entries, 65,536 total UTF-16 key units and 256 units per key.
+
+The existing node measurement memo, byte store, quotas, eligibility, counters, native guards, fallback behavior and fresh native hash inputs/order remain unchanged. No source, owner or verdict cache is introduced. Historical helper sources remain complete and reversible through explicit new recipes in every source oracle. Existing whole-file cases and deadlines remain; controls add independent native quoting/charge boundaries, saturation, full counter comparisons and altered Map fallback behavior.
+
+Source-only experiment: Node/Bun, strict TypeScript, complete original thirteen-case qualification and runtime performance are unrun. The sampled whole-file frozenUnits hotspot motivates the bounded experiment; its quotation share and any speed or memory gain remain unmeasured. Existing deadline failures remain open.
+
+Correct the requested-attribute projection fixture to distinguish its actual context envelope from the certificates it contains. The genuine old and current context schemas have no `generatedImplBehavior` field. Case1 now checks that exact context schema and field absence, then independently checks private certificate identity and the certificate's existing `generatedImplBehavior: false` fact. The separate helper no-authority checks remain unchanged.
+
+The original receiving reached all eight cases on Node: seven passed and case1 failed only because it expected the nonexistent envelope field to be false. Complete old/current context evidence was equal. This fixture-only change retains all old private issuer, cross-context and copied-certificate refusals, full source inverses, all eight titles and limits, and the other seven callbacks byte for byte. No production property, issuer or semantic permission was added. Runtime receiving for this successor is pending; no performance or coverage gain is claimed.
+
+Correct the complete static-source lifecycle receiving fixture. Its second independent old-public-CST comparison now uses the actual changed `accounts_cli.rs` parent; `refresh.rs` has no changed lineage in the generated bank. Every259 changed-parent and261 canonical-document check remains.
+
+Inside the existing tamper case, capture one complete validated bank as an immutable data-only JSON preimage, then parse a fresh complete detached packet for each original mutation, missing-side control and checksum corruption. Every altered packet still reaches the unchanged public reader with its fresh full source/hash/untrusted-CST validation. The original native malformed-canonical controls remain unchanged. This removes repeated valid setup transactions within this case; it introduces no production cache, source/owner authority or callback-equivalence claim.
+
+Source-only repair, runtime unrun here. Prior Node receiving had three fixture/location failures and the tamper case took113.035567s against its unchanged60s deadline. The behavior/strict-TypeScript constant and current function case passed in7.062139s. Bun passed the first bank case before the original2GiB disk reserve stopped the run; later cases were unrun. Root will rerun complete files with external temporary output, preserving source-overlap guards, all eight titles,60s cases and20s strict children. No producer/reader/native API or Rust changes. No speed gain or completion is claimed.
+
+Static-source bank production now compares an explicit serialization of every first complete CST document with each freshly rebuilt second document, retaining only whole-token/group boundary data after equality. The reader validates every complete leaf partition before retaining those boundaries. The existing Map-returning helper and all native source/untrusted-metadata batch arguments, rebuilds and checks remain intact.
+
+The new explicit data-only visitor releases full document graphs after each batch. First-document JSON observation moves into the first source pass; this does not claim arbitrary callback equivalence. No cross-call cache, semantic authority, asynchronous scheduling, forced GC or limit change is introduced. The original producer prefix and all eight test cases/deadlines remain. Tests add full installed-byte comparisons and independent visitor/default-Map checks.
+
+Source-reviewed draft only: runtime memory benefit, exact three-asset replay and complete Node/standard-Bun receiving are UNRUN here. Earlier memory-limit failures remain retained.
+
+### Ordinary canonical JSON reader source rules
+
+- Extract the existing collection reader renderer without changing its selected
+  source, rendering, maps, source hashes or native observer schedule.
+- Add an explicit language Option equation followed by owned generated-path
+  binding for fixed scalar readers in ordinary functions, with complete CST
+  transports, source inverses and conservative source/namespace selection.
+- Expose a proposal-only `json-readers` corpus sequence and independent whole-file
+  JavaScript/strict TypeScript plus CI-only Rust receiving workloads, retaining
+  complete actual parents separately from isolated exact-body targets.
+
+Authored source only: receiving, native numerical equivalence, actual caller
+admission and coverage gains remain unmeasured. No runtime, Host, lifetime,
+private issuer, generated asset or application source changes are included.
+
+The static-source lifecycle test now compares complete decoded bank bytes across native gzip implementations. Every proposed and installed manifest field still agrees, except each archive’s independently verified compressed length and SHA-256. Both complete archives also independently verify their decoded length and SHA-256; NOTICE remains byte-exact. Buffer equality avoids formatting a multi-megabyte assertion value.
+
+This corrects only the new cross-runtime installed-byte assertion. All original case-two checks, the other seven complete cases, source/lineage/CST checks and deadlines remain. Root separately proved all three Node-produced asset bytes exactly match installed assets. The earlier Bun mismatch and resource failures remain retained; this source-only correction has not been executed here and makes no memory or full-suite qualification claim.
+
+Static-source archive decoding now returns the complete fresh index and bundle from a short-lived private frame before unchanged full CST, profile, source and inverse validation. Packed and decoded raw buffers no longer share that frame with the later native validation work. No read, hash, parse, independent native build, return field, limit or cache policy changes.
+
+The original case-six negative workload retains its full serialized preimage and original canonical string while releasing the duplicate parsed pristine bundle. It still freshly parses every mutation and runs all ten full negative readers. The complete native canonical transport also remains; its primitive source is retained for the unchanged final comparison. Selecting the original canonical string moves earlier only in this explicit data-only fixture schedule. All eight cases, original caps and strict TypeScript checks remain.
+
+Source-only draft: runtime, memory impact, full asset replay and complete Node/Bun qualification are unrun. Earlier standard-Bun memory-limit and gzip-byte failures remain independent retained evidence.
+
+### JSON reader receiving fixture contracts
+
+- Remove the stray return-type angle bracket from the case3 unknown-callee
+  negative, preserving its intended well-formed original Rust subject.
+- Correct the case8 direct-copy template interpolation and retain its complete
+  malformed sealed source preimage and inverse in the source review packet.
+- Keep the direct `copied(&Json) -> Json` subject and compare its once-evaluated
+  full result and independent object/map/child storage with the input.
+- Exercise a separate genuine `Maybe<Json>` copy wrapper and use that function's
+  actual source-bound checked call for the existing span/type/source-key negatives.
+
+No production rule or private guard changes. The other six callbacks, remaining complete subjects, original caps and strict
+TypeScript children remain unchanged. This is
+source-only fixture authoring; execution and coverage remain receiving work.
+
+The private frozen JSON composer can reuse a successful size measurement when two fresh plan nodes refer to the same object at the same depth during one invocation. The existing node memo is checked first. Its issuance block, order, 1,024-record quota and minimum 64-cell cost remain unchanged; a shared hit still issues a fresh node record when the original block would do so.
+
+The new weak table holds at most 1,024 first successful records containing only depth, output units, cells and text units. A record is used only if its complete costs fit every remaining budget. A different depth or insufficient limit, cells or text runs the original full walk, including its exact partial failure charges. Failed measurements are never stored. All state disappears when the invocation returns; this adds no source, owner, hash or checker cache and changes no byte-store policy or intrinsic guard.
+
+Sharing occurs only in the synchronous sizing phase after the complete original logical preflight. That preflight and the captured native operations exclude callbacks, proxies, accessors and special serialization hooks. A frozen array does not imply frozen descendants; no general immutability permission is added. The existing primitive quotation table grows without eviction: the first successful full walk has already visited every key/string, so a shared hit cannot omit a later eligible primitive insertion. It still debits the complete text cost.
+
+The existing five whole-file source oracles retain their complete historical helpers and add the exact two reversible substitutions. The measurement whole file adds test-only extraction/instrumentation of the complete actual private functions to compare all result units, partial cell/text debits, primitive-table counts and ordered node issuances against the complete 553 helper. Controls cover alias identity, distinct equal values, exact depth, smaller limits, insufficient work, failed first probes, fresh invocations, the 64-cell threshold, both independent 1,024-record capacities, shallow frozen data and changed native weak operations. No production counter or export is added.
+
+Complete unchanged StoreError and OAuthError parents are checked through their genuine existing Debug prover. Tests join the actual repeated recipe objects by identity and compare full native Hash.update/digest arguments and native JSON output. Existing complete PartialEq/Debug proof tapes, private-source refusals, eight oversize children, quotas and every original workload remain.
+
+All source changes and inverse recipes were reviewed without executing a JavaScript, TypeScript or Rust engine. The original eight cases, 60-second case limits, strict TypeScript 20-second child limits and original thirteen-case qualification remain unchanged. Runtime correctness, eligible hit counts, speed and memory effects are UNRUN and unmeasured; this is not a deadline improvement claim.
+
+Retain each complete composition-test vector directly as gzip using a storage-only `writeJsonTextGzip` sibling. The existing captured `json(value, replacer)` expressions still execute exactly once in their original argument order; the helper coerces that result once and retains the full payload plus newline as the existing two gzip members. It does not choose a serializer, change Hash calls, grant semantic authority or change any old test body, assertion, deadline or resource limit. The original `writeJsonGzip` implementation is unchanged.
+
+The five original eight-case files preserve all historical source recipes and full native observer tapes. A seventh helper regression compares complete decoded bytes with the old plaintext write, including captured serializers under a changed live JSON binding, getter/toJSON/replacer order, encoded-result coercions and errors, Unicode and large text. Compression runs inside the original case.
+
+Source-only draft: all JavaScript/Bun/Rust execution is UNRUN here. The prior553 receiving remains RED at the384MiB evidence limit after Node40 passed and Bun measurement8 passed; synchronous gzip retention has no measured storage/runtime qualification until the coordinator runs complete files and independently verifies all retained decoded evidence.
+
+Keep canonical Option and Result constructor lifetime checks tied to the
+current checked expected type. Their shared monomorphic runtime layout no
+longer supplies a previous use's static lifetime to a later borrowed value.
+Nominal static fields, static call arguments and returns, and each tuple
+field's existing fallback still require their original borrow origins.
+
+Add mixed-order, nested-payload, original Option filter, private-frame tamper,
+and incomplete tuple-metadata regressions. Full parent reader receiving and
+both engines remain unrun in the authoring worktree; no coverage or resource
+gain is claimed.
+
+Extend the native compatibility-core reader oracle with static-first and
+borrowed-first Option/Result payloads, nested success/error values, Unicode,
+filter receiver/predicate order, None laziness, and genuine static nominal
+fields and fallback values. Keep all eight existing native oracle cases.
+
+The additional Rust cases run in CI only. They are independent native behavior
+evidence, not translation admission or a local Rust execution claim.
+
+Add explicit gzip packet storage for fixed compatibility-core proposal sequences.
+The default writer, logical index, full source/CST evidence and all source/Cargo
+checks remain unchanged. Successful compressed proposals retain complete raw and
+stored lengths/digests and require fresh packet reads plus final inventory
+verification. The CLI remains proposal-only.
+
+Keep the existing 64 MiB packet and 1 GiB logical bounds; apply a separate 384 MiB
+stored-output bound including pending publication and the failure reserve.
+Incomplete runs retain partial files and their original bounded failure receipt,
+without a recovery protocol or semantic authority. New complete whole-file
+transport, default-observer, failure and JS/strict-TypeScript tests are authored;
+receiving and full-corpus resource qualification remain UNRUN.
+
+Supply the current checked Option/Result field types before recursively checking
+nested constructor arguments. A private synchronous application frame must match
+the exact arguments, environment, path, and range before a temporary field view
+is passed to the unchanged constructor checker. The actual registry stays intact,
+and the frame is restored on every return or throw.
+
+Keep the existing static-origin, canonical layout, payload identity, ownership,
+private-frame, and tuple fallback checks. Add nested Result/Option and context
+cleanup/mismatch regressions without changing existing case or child deadlines.
+Runtime receiving remains unrun in the authoring worktree.
+
+Clarify that issue #759 forbids every local Rust tool, including formatting,
+compiler diagnostics and hooks. Keep same-SHA JavaScript prerequisites and fatal
+Rust CI failures; distinguish authorized feedback drafts from release readiness.
+
+Distinguish presemantic CST API adoption from packaging already checked results,
+and link default synchronization to the separately mandatory definition-only lane.
+Reusable templates retain six-hour checkpoints, paired compatibility-core
+boundaries and the receiving user's own authorization. Router's standing push
+permission is not exported. The staged additive template patch preserves every
+archived original and its workflow hunk. Documentation only; runtime checks unrun.
+
+### Changed
+
+- Label the existing private-state, proof, type or body predicate when original standard frame emission refuses. The original refusal prefix, short-circuit predicates and native hash calls remain unchanged; diagnostics add no object traversal or admission.
+
+### Validation
+
+- Source-only: full before/after and inverse retained. JavaScript, TypeScript, Rust and receiving workloads are unrun; original test cases and deadlines are unchanged.
+
+### Changed
+
+- Add a bounded first-difference diagnostic only after the existing private standard frame body comparison refuses. It inspects the two already-hashed alpha snapshots and retains the original predicates, hash arguments and evaluation order; it grants no source or emission authority.
+
+### Validation
+
+- Source-only: complete before/after and inverses retained. Runtime receiving and Rust are unrun; original cases, workloads and deadlines remain unchanged.
+
+The complete JSON collection-adoption and ordinary-reader normalization tests now retain their vectors directly as gzip evidence using the existing `writeJsonTextGzip` helper. Each original caller JSON expression and its arguments remain unchanged and execute once; the helper stores the complete encoded payload plus its original trailing newline. The original eight cases in each file, their callback bodies, native hash work, 60-second case limits and 20-second strict TypeScript child limits remain unchanged. Compression stays inside each original case deadline.
+
+This source-only receiving repair addresses the observed raw-vector plus pending compressed-evidence peak in the six-file run at `5080b7b4efdea20cd82c370b26054da017d3693a`. That run remains RESOURCE RED/incomplete at its unchanged 384 MiB evidence bound, and the separate reader `[join body]` semantic failure remains open. Earlier failed runs and their missing final source guard are preserved. No resource limit was raised.
+
+The helper's original API and seven complete regressions were already qualified separately under Node and standard Bun. These two changed complete files are unrun here and require fresh receiving tests. The storage contract preserves fully decoded payload bytes and newline; it does not claim identical raw gzip bytes or unchanged filesystem/compression observations. No local Rust tool or test engine was run, and this does not establish whole-source synchronization, performance acceptance or publication readiness.
+
+### Changed
+
+- Retain the compressed-adoption test's complete evidence using the existing `writeJsonTextGzip` helper. Keep the captured `nativeJson` expression and its replacer exactly once, before path construction, while removing the large trailing-newline string copy. The helper stores the full encoded payload and a separate newline gzip member; decoded bytes remain the contract, not raw gzip identity.
+- Preserve all eight original case callbacks, titles, 60-second case limits, 20-second strict TypeScript and cold-child limits, and native hash work. Compression remains inside the original case deadline. No production, serializer, cache or resource-limit change is included.
+
+### Validation
+
+- Source-only: complete originals, two unique substitutions and full UTF-16 forward/inverse proof retained. These changed tests were not run in the authoring worktree. The helper and its seven complete regressions are unchanged and were qualified separately.
+- The previous standard Bun compressed-packet run remains aggregate-memory RED under the original 3 GiB bound, despite its final source and evidence guards passing. Earlier resource and semantic failures remain preserved. Reduced transient allocation is an unmeasured source hypothesis; current application coverage, performance acceptance and full-gate publication readiness are not established. No local Rust tool or test engine was run.
+
+Preserve the checked enclosing Option callback when an ordered match hygienically renames a nested original standard frame. The original private-state, proof, type and body checks run first; only a body mismatch can request a fresh complete callback rebuild and exact current parent/child membership. Weak identity hints retain no checker, program or successful verdict, and are revalidated even after an earlier emitter preparation throws.
+
+All eight original reader tests and their deadlines remain unchanged. Two additional whole cases cover independent JS/strict TypeScript behavior, bound-receiver/proof/type/layout tampering, detached/copied children, reflection refusal, and reuse of the same emitter after failed preparation. Source-only authoring: runtime, cold-entry and performance checks are UNRUN; no coverage or speed gain is claimed.
+
+Keep whole-entry parent hints best effort: a bounded census failure cannot reject an otherwise valid original frame, and a changed frame still refuses without a qualifying hint. Current declaration membership uses the captured native Map lookup without observing a rebound method or accessor. A third additional whole case covers unavailable hints; same-emitter detached-entry controls exercise forged/getter-backed lookups. All eleven cases remain UNRUN in source authoring.
+
+The first focused receiving run exposed a fixture error: the small checked function legitimately passed its standalone frame guards before any actual lexical rename. The two supplemental context cases now apply the existing whole-expression rename with identity parameter bindings, prove the standalone body mismatch, and re-enter the normal authenticated emitter and TypeScript annotation producer. All original eight callbacks, nine forgery controls, stale-emitter obligations and eleven case deadlines remain. This test-only successor is runtime UNRUN.
+
+Reuse complete successful immutable subtree sizing costs only for descendants within the same composition call. Each existing successful root record gains a relative height; all original cell, depth, text, byte and record limits remain unchanged.
+
+Preserve historical source oracles and all original eight measurement callbacks byte-for-byte; add two separate60s cases, keeping strict children at20s for comparisons against the complete562 helper for alias depths, exact bounds, partial failures, quotation insertion order and fresh-call behavior. Native Hash arguments and private source/owner checks are unchanged.
+
+Source-only implementation; Node/Bun receiving, resource behavior and original whole-file deadlines remain unmeasured.
+
+Add a bounded positive-only JSON equality hint after complete builtin source proof reissue. It compares frozen ordinary wrappers and reuses only existing immutable no-stack subtree costs with full logical edge/depth charges. Every difference, unsupported value or uncertainty executes the unchanged complete fresh-to-stored serialization comparison. The hint adds no hash calls, source/checker authority, positive eligibility rows or cross-call cache.
+
+Successful hints intentionally avoid comparison serialization and its byte-cache warming/counters. Those diagnostics are not an arbitrary-observer equivalence contract; mandatory fresh source/semantic work and native Hash arguments/order remain unchanged. Existing cache/composer policy and direct controls stay intact. Source-only: all receiving, strict TypeScript, resource and performance checks are UNRUN. Original13 remains deadline RED; no speed gain is claimed.
+
+The optional walk also invokes the existing captured native boxed-primitive predicate before identity or descriptor comparison, preserving native unboxing even when a String/Number/Boolean/BigInt/Symbol wrapper has an erased ordinary or null prototype. These cases retain the original complete comparison fallback.
+
+Add an explicit reviewed JSON reader packet applicator and a bounded application/recovery controller. They reuse the existing gzip/CST/rule APIs, join the complete original and reviewed source bytes, and retain recoverable per-file preimages and operation journals. Report digests select exact operational data and grant no semantic or owner permission. Preserve producer/reviewer prerequisites, historical inputs, deadlines and generation obligations. Eight whole-file regressions are authored; worker runtime, actual application, resource behavior and recovery remain unrun. Incomplete disk-stopped proposals cannot be applied.
+
+Add a fixed per-file packet stream for the actual CLI's explicit `--sequence json-readers --packet-storage gzip` lane. Both existing materialized API functions remain byte exact. The stream retains the complete graph/context, all selected and preserved source bodies, every language→repository CST serialize/reparse and full inverses; it releases a file's proposal before yielding detached JSON text. All payload bytes and source ordinals are checked against the original materialized API. Whole-file graph setup remains required; no speed or memory gain is measured.
+
+Packet writes and their Hash calls now interleave with later producer work in this explicit lane. That new storage schedule is not the old combined observer schedule; producer-only Hash arguments/order and all fresh source/proof checks remain. No caller callbacks/selectors, source/verdict cache, proof flags or semantic admission are introduced. All limits stay unchanged. The original post-producer source/Cargo guard remains before accepting EOF, and final private-input/physical source/Cargo guards follow all index/storage preparation. Only a complete drain can publish the final index; partial packets and failure receipts remain incomplete evidence.
+
+New independent whole8 covers full payload equality, native Hash tapes, cold CLI, partial/final failures, descriptors/bounds, aliases/CST inverses and JS plus strict TypeScript. Existing whole tests and caps are unchanged. Source-only: all runtime, strict TS, resource and performance receiving are UNRUN. Original13 remains deadline RED.
+
+Added source-only operational receiving controls for the reviewed core application tool: a real bounded Python controller apply/recovery pair and a two-file interruption with complete retained preimages, pending bytes and explicit recovery through the unmodified API. The original eight case bodies and all deadlines remain exact; the two added cases each retain a sixty-second limit. Production application/controller sources are unchanged. Runtime qualification and actual application remain unrun here; no semantic coverage, atomic multi-file update or generated freshness is claimed.
+
+Applied four translator-produced JSON reader substitutions to the complete citation_url and validate_name_and_strict source functions through the reviewed CST/meta pipeline and recoverable application controller. The actual 563-file corpus proposal and independent full-packet review passed before installation; all ten application and recovery cases passed in both Node and Bun within their original deadlines. Complete preimages, inverse evidence and the per-file journal are retained. This source adoption does not establish executable coverage, Rust verification, generated freshness or complete parity; those checks remain required. No Rust tool ran locally.
+
+Fixed streaming test helpers to relocate every repeated import by its exact source span with full forward and inverse reconstruction, and to retain complete JSON and Rust-source gzip packets according to their actual path and kind. Incomplete packet counts and full decoded byte totals remain checked. All eight original regression callbacks, production code and deadlines are unchanged. The prior three failing cases in each engine remain recorded; fresh whole-file receiving is still required. No Rust tool ran locally.
+
+Keep all original 42 JSON storage/composition callbacks and their limits byte exact while making575 historical adapters explicit. The plan comparison rolls back the complete575 source edits before574 and all earlier pinned native helpers; no baseline bytes or hashes are replaced.
+
+Policy and packed adapters validate every actual namespace export and descriptor, including the current-only equality hint, before projecting the original function bindings for historical API callbacks. They retain the complete namespace/source evidence and do not claim that old/current full export sets are identical. Their historical proof consumers use the exact pre575 import and native comparison, with a unique forward replay to the current complete consumer; no fake hint export or callback is supplied.
+
+Production helpers, fresh source/semantic checks and mandatory Hash work are unchanged. Existing whole8 equality tests and all historical workloads, native tapes, observers, callbacks and caps remain intact. Source-only: receiving and performance are UNRUN; original13 remains deadline RED.
+
+Added checked-in bounded capture/proposal and independent full-packet review controllers for the fixed `json-readers` gzip workflow. They reuse the actual complete-source reviewer, retain both CST rule stages and full inverses, dynamically join every tracked Rust/Cargo/compiler/script input and the complete installed TypeScript dependency to an explicit same-HEAD checkout, and preserve the existing proposal/review/resource bounds. The independent adapter requires the current streaming outer trace. The separate reviewed applicator and existing producer/checker/private-proof contracts are unchanged.
+
+New whole-file receiving tests cover source capture, stored/decoded corruption, complete CST partitions, refusal data, fresh source identity, shared accounting, strict targets and explicit application/recovery. Source drafting and static Python AST/source checks only; Node/Bun, strict TypeScript and real-corpus receiving remain unrun for this change. No local Rust tool ran, no generated output was edited, and no coverage, runtime parity or performance gain is claimed. Python workflow inclusion in the standalone compiler bundle remains a separate follow-up.
+
+Source review corrected the asynchronous packet fixture to await the complete proposal before reading packets or cleaning its temporary files. The receiving tests remain unrun. Qualification guidance now ties completed checks to their recorded source checkpoint.
+
+Align static source-lifecycle deltas to the actual independently rebuilt CST boundaries on both sides. The shared start is the greatest common boundary within the unchanged prefix; the before end is the earliest boundary beyond the changed range whose length-shifted endpoint is also an after boundary. Every previously valid complete delta stays byte exact, while repaired inverses cover whole tokens/groups/trivia. Full source substitutions, reverse substitutions, canonical metadata transport and source/Git joins remain mandatory.
+
+The legacy source-fixture producer, existing bank whole8, archived originals, source/profile hashes and limits are unchanged. New independent whole8 covers aligned native tapes, token joining, BOM/CRLF/Unicode, empty/full roots, complete actual parents, both-direction CST roundtrips and stock JS/strict TypeScript values. No source, ownership or semantic authority is introduced.
+
+Root’s bounded stored-data audit found256 of259 existing delta objects already valid and exactly unchanged, plus3 pre-existing non-target inverse defects: one original bridge_response_tests row and two profile rows for mpp. New whole8 retains their four complete original/current source bodies, exact old/new endpoints and both-direction native CST application. Independently reviewing and materializing actual regenerated assets must still authenticate every full source/CST and the exact three proof-only repairs; no non-target waiver or freshness repin is implied. Source-only: all runtime, strict TS, asset and resource receiving are UNRUN.
+
+Regenerated and independently reviewed the complete static source bank after the automated JSON reader adoption in `bridge_response` and `structured_output`. Historical Rust/Cargo sources, source identities, cases and authority boundaries remain intact. The producer also repairs exactly three previously invalid inverse CST endpoint proofs; every other non-target lineage row is unchanged.
+
+The paired-boundary eight-case suite passes in Node and Bun. The actual full-bank producer, independent source/CST/inverse review and fifteen data rejection/recovery controls pass, with complete generated-byte installation readback. The existing complete bank suite still requires receiving checks after installation. The separate reusable adoption suite is 7/8 in both engines because the complete bank exceeds the exporter's existing per-file limit; packaging, full regeneration, strict parity and the complete gate remain open. No local Rust tool ran and no executable coverage or runtime parity is claimed.
+
+Added a deterministic, versioned storage codec for the complete static source fixture bank. Six global varint-column tables, exact earlier-source deltas and validated lineage slices reconstruct every original logical JSON byte before the existing native source/CST checks. The manifest separately authenticates stored transport bytes and full logical bytes; legacy archives remain readable, and unsupported encoder shapes retain their original legacy bytes. Invalid compact archives never fall back.
+
+The original fifteen-case producer, sixteen-case reader contract, six explicit outside-fixture data associations and all eight existing static-bank test callbacks remain intact. Storage data grants no compiler authority, and no cache, source proof or output budget is added. The actual Node producer emits a 4,111,948-byte archive within the existing 4 MiB limit. Independent Python reconstruction compares all 62,574,177 logical bytes and every field with the previous bank, including 261 complete CST documents and all changed-parent inverse proofs; sixty independent data controls pass. The reviewed archive is installed. Freshness, standard Node/Bun whole-file receiving and complete export qualification remain required. No performance or complete translation gain is claimed.
+
+The storage wrappers preserve a leading transport BOM for native JSON rejection and reject malformed UTF8. Owned bundle/raw byte and length joins throw an ordinary TypeError on mismatch; they cannot select unsupported-shape legacy fallback. The new whole8 includes both transport modes and shorter, longer and content-mismatch controls. These wrapper corrections preserve every measured kernel and historical callback; runtime receiving remains unrun.
+
+Amortized complete original-module reconstruction within existing owned reverse program and document invocations. Every requested row still receives fresh own-data validation, genuine context/source checks and full body/ABI/span/import/paired comparisons; standalone item and Links checks remain unchanged. Separate CST, metadata, serialization and emission boundaries keep independent scopes. Native qualification is rechecked after observer-capable source/hash work, stored analyses are separate whole private copies, canonical metadata key order is preserved, transiently exposed input/issuer rows cannot mutate stored data, finite storage saturation reconstructs normally, and guaranteed finalization closes storage before rejoining current inputs.
+
+Redundant internal compiler-work and hash observation counts intentionally change. Complete old/current observations are retained separately; no across-call cache or public semantic permit was added. The new whole-file regressions and original twelve-function deadline are unrun for this source-only change. No Node/Bun, TypeScript, compiler, Rust, generator or corpus ran locally; no generated output or application source was edited. No speed, coverage, synchronization or parity gain is claimed.
+
+Added regression sources that hold complete, genuinely checked standard Option
+specializations while other source layouts and explicit compilation profiles are
+checked, then require the held programs to recheck and re-emit successfully.
+Failure-only layout diagnostics retain the original error prefix and all existing
+comparisons and digest arguments/order, and report the method, source span,
+nominal owner and already computed layout digests.
+
+This source draft does not change issuer keys or grant semantic permission. The
+suspected context collision still requires actual focused reproduction. All new
+Node, Bun and strict TypeScript controls are unrun by the source worker; no
+deadline, resource bound or existing workload has changed.
+
+Bind all three original Option-body context keys to their complete privately
+captured layouts. Actual Node and Bun regressions reproduced distinct genuine
+source layouts sharing a key and overwriting the held program context. Including
+those already captured layouts prevents that collision without granting body or
+ownership authority.
+
+The three existing hash calls keep their order; their input now includes the
+complete layout data for scalar and borrowed-str owners as it already did for
+shared owners. Existing source, layout, body, ownership and emission checks and
+all regression callbacks remain unchanged. This successor is source-only and
+unrun by the worker; Root qualification is still required.
+
+### Fixed
+
+- Preserve the complete historical JSON guard in pre-import helper comparisons
+  while forwarding the current path and completed-freeze compatibility exports.
+- Give relocated historical frozen-JSON fixtures the native stringify composer
+  expected by current proof consumers, recording the bridge in their complete
+  reversible source maps. Original fixtures, assertions and case limits remain
+  unchanged. Full receiving verification and generated freshness stay separate.
+
+Add an explicitly requested, parser-bound ordinary dependency-library input
+domain with complete pinned package and fresh Cargo/default-feature joins.
+Keep actual Cargo/native conformance and namespace authority false. Preserve
+the existing trait/default APIs and all fourteen original receiving callbacks.
+
+Add source-bound literal-documentation inspection and a per-invocation builtin
+derive output-effect lane which reissues every actual owner through existing
+complete output proofs. Inspection candidates do not authorize attributes or
+change source availability. The real base64 Engine closure still refuses its
+unproved original attribute/tool namespace; no CI recovery or executable gain
+is claimed. New whole-file controls are source-only and runtime UNRUN.
+
+### Fixed
+
+- Share the source locations of the proposal producer's lazy reader and packet
+  storage imports. Existing sequence and streaming routes still request their
+  original modules in order, while complete paired-module relocation can reverse
+  every edge unambiguously and reach its original pending-index failure checks.
+
+Repair the derive carrier source oracle to retain the complete byte-cache experiment and its native-left rollback. Add a separate getter-changing-serializer regression for callee lookup, receiver, error order, restoration, and checked JS/strict TypeScript. Production behavior is unchanged; source-only receiving is pending.
+
+Qualify the derive item association native probes with the existing complete data-freeze intrinsic guard. Changed bootstrap function-text observers take the existing ordinary path. Preserve all historical source archives through one additive fixture-evolution stage; no source, owner or semantic permission changes. Source-only receiving is pending.
+
+Complete two test compilation carriers with the genuine owned JSON collections source when their exact current Core facade is present and the child source is absent. Preserve explicitly supplied child values, file accessors, original source inputs, source-adoption workloads and all sixteen original test callbacks and deadlines. Retain the completed compiler inputs separately; ordinary source, namespace, ownership and semantic checks still decide admission.
+
+Bounded helper initialization controls cover missing and changed facades, explicit undefined or changed child sources and accessor preservation. This source-only fixture repair is unrun under Node, Bun and strict TypeScript; it does not establish that the three observed semantic refusals are repaired or that repository coverage increased.
+
+### Fixed
+
+- Keep historical frozen-JSON comparisons on the full native fallback when a
+  current consumer asks for an equality hint. Record both compatibility exports
+  in the complete reversible relocation and check the full consumer interface
+  before running the unchanged original cases.
+
+Keep completed JSON eligibility telemetry honest when current builtin comparison routes avoid whole-root serialization. Preserve the full original proof, fresh Hash, byte, sharing and forgery comparisons; require safe monotonic counters rather than a consumer-specific positive hit. The direct completed-root positive control stays mandatory. This corrects an obsolete internal diagnostic assertion and makes no throughput claim. Source-only receiving is pending.
+
+The explicit owned-core source-document writer now constructs percent-encoded inert JSON words from bounded dense primitive blocks with qualified native joins. Its existing encoded-size reservation runs first. It still calls `Buffer.from` once, rechecks native iteration and encoding operations after that call, and uses the original vendor regex and original byte loop on the same returned bytes when qualification fails. The complete legacy vendor source remains an exact prefix; ordinary `encodeWord`, the constructor-proof encoder, the document reader, and the source/CST/checked-semantic boundaries retain their previous implementations.
+
+This is a source-only allocation experiment prompted by a Bun aggregate-memory failure near the large-header/next-case boundary. The retained resource curve does not prove the allocation responsible, and no memory or speed improvement is established. Full new regressions and the unchanged document whole8 must qualify under Node and standard Bun with the original deadlines and3GiB aggregate limit. There is no new source, owner or semantic-verdict cache, GC call, runtime mode or larger bound.
+
+The new writer operation preserves output bytes, callback receivers/order, IteratorClose and error classes on its fallback. Native non-iterable diagnostic expression and stack text can differ because the already-created bytes are consumed in a separate function; both complete native errors are retained in the regressions. Source/CST/semantic/domain and early encoded-bound refusal messages remain exact. The legacy public encoder has no such diagnostic change. Independent strict TypeScript execution, complete old/new source recipes, hash arguments/order and previously exposed regex-state controls remain required.
+
+Keep current structured-output adoption regressions idempotent after the original copy and index sites have been installed. Preserve complete producer/project stages, sources, CST mappings and inverses, and record the existing qualified call tokens through an independent full-source CST roundtrip. The syntax census grants no translation or executable authority. Existing direct positive adoption tests and limits are unchanged; receiving is pending.
+
+Label the existing Option equality phases and eight existing standard payload
+refusal sites with bounded static diagnostic context. Preserve all original
+predicates, short-circuit order, source checks, native Hash calls, successful
+work, error kind/span/details, and the original reason prefix. Other errors
+propagate unchanged; no unsupported operation becomes admitted.
+
+This is a source-only diagnostic checkpoint for the actual tool-choice and
+ordered-tail failures. All original whole-file callbacks and deadlines remain
+unchanged. Runtime is UNRUN; no semantic repair or CI recovery is claimed.
+
+### Preserve complete source data for six additional historical test associations
+
+Add a separate six-association data manifest and append-only reader sibling for
+original bool/stop/copy/CSV/derive-helper/Telegram fixtures. Keep the original
+sixteen associations, archive producer/assets and default current CSV helper
+unchanged. Original test callbacks, source/declaration pins and deadlines remain
+intact; each historical compilation uses its complete Rust/Cargo universe.
+
+Retain independent current Core bridge/copy attempts and keep qwen's current
+whole-root reader separate. Unchanged config/storage semantic frontiers, CSV and
+qwen performance obligations, and current full-parent admission remain open.
+New whole-file controls have not been executed in the source authoring worktree;
+this change makes no CI recovery, full-crate coverage or timing claim.
+
+After the same complete bank, native CST, current Git/physical source and lineage
+validation, narrow the derive helper's existing retained data to its four full
+original parents and Cargo strings. A separate factory closes over only that
+frozen string table. All original callbacks, compiler/typed-target work and
+native deadlines remain unchanged; copy's full-CST data path is unchanged.
+The three observed Bun timeouts remain open until fresh receiving. This source
+change establishes no timing or memory improvement.
+
+Preserve the complete opaque `cfg_attr` documentation source, private capture,
+and actual source-item selection while asserting the existing exact bounded
+grammar refusal. The previous new fixture expected an empty candidate list;
+production correctly refuses the unsupported macro-valued input earlier.
+
+No production behavior, authority, test title, case count or deadline changes.
+The complete original eight-case file remains required in both engines; this
+fixture-only successor is source-only and runtime UNRUN.
+
+Add failure-only finite type facts to the original Option equality diagnostic when the independently checked right payload refuses. The existing reason prefix, phase, span, details, semantic checks, evaluation order and hash arguments/call order remain intact. Successful checks retain local operand-type references without reflective inspection; nothing is stored across calls.
+
+The diagnostic uses captured descriptor/prototype/proxy operations on already checked metadata. It invokes no getters or proxy traps and reports only fixed labels for the expected and actual Option payload kind, owner, registered-signature prototype, source marker and literal origin. These labels grant no source, ownership, lifetime or emission authority.
+
+This is source-only PhaseA. The existing complete tail whole8 is unchanged. Its actual right-operand prototype must be observed under Root's bounded receiving before any separately reviewed signature-comparison repair. `copyMetadata`, constructor specialization, source lifetime rules and all semantic admission boundaries are unchanged; no fix or executable-coverage gain is established here.
+
+
+PhaseA receiving subsequently confirmed the specific representation difference under both Node and Bun: each failed right operand retained the same checked data/string kind and borrowed `str` owner as its left operand, while the registered signature's prototype was null on the right and ordinary on the left. The complete original tail whole8 retained its two failing cases before repair.
+
+PhaseB adds a closed own-data comparator for that existing borrowed-str signature. It permits the exact ordinary or null-prototype representation, rejects extra/hidden/symbol/accessor signature fields, proxies, foreign prototypes, owned/reference/unresolved payloads, and replaces only the signature alternatives in standard payload classification and borrowed string trim provenance. All original source markers, literal alternatives, owner checks, caller receipts, layouts, constructors and lifetime rules remain intact. `copyMetadata` remains unchanged and supplies no semantic authority. The new fixed `node:util` import edge requires the complete old bootstrap suites as well as the new whole8 and original equality/lifetime/tail files; worker runtime checks remain unrun.
+
+602B receiving found the new match-tail fixture lacked the actual locked serde_json dependency/default-feature proof required by its object patterns. The fixture successor adds current complete Cargo manifest/lock inputs through the existing loadJsonMacroSourceProof and production-profile project path inside that one callback, and retains those complete inputs in its vectors. The Rust source, independent expected results, all eight titles/deadlines, all seven other callbacks, helpers and production rules are unchanged. The observed failed receiving remains retained; this source-only fixture repair has not been executed by the worker.
+
+Add opt-in private receipts for original declarative item expansion, exact forwarded-fragment lineage, and lossless language/repository CST substitutions with complete source inverses. A separate generated-input brand retains the original compiler's Copy/Clone output-envelope and nested-fragment containment source evidence without widening authored derive inputs or tuple/repr materialization.
+
+Generated derive owner and hygiene closure remain unresolved. Conditional envelopes cannot issue a usable enclosing-TypeNS effect, layout, Copy, Drop, or executable permission; every usable-effect request refuses. No existing consumer or default API changes. The eight new source tests retain all four real `types!` invocations and fifteen `as_transmute!` invocations with complete parents, private/copy/stale/observer controls, old tuple/repr refusals, and independent existing JS/strict-TypeScript behavior. They remain unrun pending Root receiving. This prerequisite does not resolve the ten external-trait corpus failures.
+
+Let current issue #759 worker assignments finish, then use at most two active
+workers, including the designated publisher whenever it resumes work. Preserve
+the single publisher, existing worktrees and prohibition on local Rust tools.
+
+Fixed compact source-bank restoration after the measured column decoder returns read-only own entries. The wrapper now constructs a fresh dictionary in the original source order while restoring each complete canonical string. All 28 measured codec kernels, encoder/storage bytes and existing test callbacks remain unchanged.
+
+The actual producer, independent full Python review and 60 data controls passed before installation of the 4,111,948-byte archive. Whole-file JavaScript receiving then exposed this wrapper assignment failure. Corrected whole-file receiving remains pending; this source fix adds no cache, authority, budget increase or asset changes.
+
+Fixed the independent core-adoption review controller's captured reviewer-source variable scope. Its before/after joins now compare freshly read reviewer bytes against the snapshot captured by the same invocation, instead of failing with `NameError` before the review starts. All source reads, guards, resource limits and existing workflow test assertions remain unchanged.
+
+The complete Node and Bun core-adoption files each exposed this failure in their checked-in workflow case. Receiving for the corrected controller remains pending; this change grants no translation, installation or Rust execution authority.
+
+The independent JSON reader packet reviewer now recognizes both exact return shapes of the existing producer. When `producerEffects` is absent, it independently requires every complete before-source to contain no `derive` spelling, including comments, strings, inactive or unreachable sources. This conservative lane issues no effects certificate and does not waive source, namespace, CST, inverse, dependency or semantic checks. Present effects retain their complete validation sequence; null, reordered and unknown metadata still refuse.
+
+Eight new full cases cover actual materialized/stream returns, stripped original derive evidence, malformed metadata, retained unknown-producer refusals and strict emitted-target behavior. Original receiving callbacks and deadlines remain unchanged. This source-only draft has not run under Node, Bun or Rust; receiving and current corpus qualification remain required.
+
+Add a separate original Rust 1.89 hygiene source bundle and private literal-template normalization prerequisites for genuine generated Copy/Clone inputs. Complete original mark, transcription, normalization and resolver-scope callbacks remain inspectable; captured identifiers and opaque fragment contexts cannot be relabelled as literal template tokens. No old source profile, default API, consumer or positive issuer changes.
+
+The emitted semi-opaque mark has an empty opaque contribution under the recorded default-transparency premises. Actual normalized context and eligible owner scopes remain unknown: the original Span mapping, fresh lexer root-context and complete current owner bindings still need independent source-bound proof. Every usable owner-scope request refuses. New whole-file source/negative/actual-parent/JS/strict-TypeScript tests are unrun pending Root receiving; no external-trait coverage gain or tuple Clone execution is claimed. No local Rust tools ran.
+
+Restore the native static-source reader's malformed-input fixtures to their
+original raw JSON and gzip transport. Drop copied compact-storage metadata
+before writing each fixture, and avoid repeatedly encoding these legacy-format
+mutations into the compact format. All eight original test callbacks, source
+mutations, assertions and deadlines are unchanged. Dedicated codec tests retain
+the compact-format controls, while installed-bank and producer tests still use
+the actual compact archive. Whole-file Node and Bun timing and resource checks
+remain required; this source change alone establishes no performance gain.
+
+Fix reviewed JSON reader application to require the actual detached producer's exact ordered language/repository stream trace. The producer and independent reviewer already agree on this pair; application retained the older materialized trace and refused a fully reviewed current proposal.
+
+The complete trace equality, source/CST/effect/private authority checks and all eight original receiving callbacks/deadlines remain unchanged. Old materialized traces are not accepted as an alternative. Source-only change; complete Node/Bun workflow qualification remains pending Root receiving.
+
+Added a separately selected, privately source-bound EOF-versus-required-terminal rule for bounded declarative matching. The original default engine keeps its conservative ambiguity behavior; the generated-item provenance lane explicitly selects the new mode. Capture-prefix uncertainty, real overlaps, nullable alternatives, bounds, and all owner/runtime refusals remain in force.
+
+The new whole eight-case source suite and unchanged original 603/611 suites require receiving. No compiler execution, complete namespace closure, or translated-body coverage is claimed.
+
+Retain the complete original JSON-reader materialized function and its historical digest, then verify the two explicit 591 lazy-import substitutions with a full inverse. The expected current function digest is derived from that authenticated source; neither the original source pin nor a general hash function is replaced.
+
+All eight original packet-stream callbacks and deadlines remain byte exact. A separate ninth 60-second case verifies the complete current function and exact loader bodies and refuses extra, missing, repeated or altered source. Producer behavior, native hash tapes, source guards and storage are unchanged; whole-file Node/Bun receiving remains pending.
+
+Correct the two new hygiene/EOF target fixtures to expect the existing
+`RangeError` for an out-of-range `u8` BigInt. Preserve their separate
+`TypeError` checks for JavaScript numbers, complete workloads and deadlines.
+Production translation and the existing macro test files are unchanged.
+Whole-file Node/Bun verification remains required.
+
+A separate test-data reader authenticates the complete current Git/physical source bank, both full historical source universes, every source hash and source-lineage inverse, then returns only the original parent and Cargo strings used by source-only fixture projections. The complete/default bank reader and its native CST validation remain unchanged. Ordinary compilation still rebuilds all source, namespace, lifetime and semantic proofs.
+
+This source-only change preserves the six Copy and four derive-helper test callbacks and their original deadlines. The additional eight tests distinguish text-data authentication from full CST validation and cover stale storage, physical/Git mismatches, late mutation and fresh calls. Node/Bun receiving and performance remain pending; no deadline gain is claimed.
+
+Negative test evidence stores the complete actual mutated manifest bytes and archive bytes before temporary cleanup, including the late-mutation outcome. Temporary paths are diagnostic locations and are not claimed to remain available.
+
+The native-only metadata copy candidate is inactive and lives only in test fixtures. The production source-links module, including its complete public copier and metadataDigest expression, is restored byte for byte to the pre-622 source. The default compiler performs no candidate import, trial or additional native qualification. There is no new Node fast path, screening threshold, bootstrap allowance or source/hash/owner/verdict cache.
+
+The candidate retains the existing native guard, null-prototype data assignments, complete occurrence/cell/UTF8/depth bounds and unchanged fallback behavior. Its eight regressions directly exercise candidate data, descriptors, certificate key order, malformed-input and budget controls, full native observer/hash tapes, genuine source/private proof boundaries, and complete original parent strings. Data copies grant no compiler or namespace authority. Node/Bun whole-suite qualification after the fixture correction remains pending.
+
+Actual original derive receiving showed no demonstrated gain: Bun cases 1/2 took 5911.47/8592.19 ms versus 620's 5557.34/6580.94 ms, all above their unchanged 5000 ms deadlines. These observations do not establish controlled causal attribution. The active dispatch is withdrawn rather than kept as an unqualified optimization. Original deadline failures and all historical failed cohorts remain recorded; complete generation and the same-source gate remain obligations.
+
+The observer diagnostic found a test-only leak: defining the deliberate Array.prototype index `127` setter grows its array length from `0` to `128`, while deleting that index leaves the length unchanged. That hook now restores its saved length descriptor after removing/restoring index `127`. Complete before/after snapshots of all 37 owners and current guards are retained before exact restoration assertions. The descriptor helper is named `descriptorTree`; no blanket cleanup, parser warmup, guard relaxation, workload reordering or deadline increase was introduced.
+
+Repair stale polling-constant source expectations after the earlier automated owned-alias migration. Retain complete original/current parents and all ten substitutions with lossless CST roundtrips, inverses and unchanged declaration ranges; derive the current golden pin from that exact recorded evolution. All fourteen original source-link test workloads, constant/body hashes, limits and strict runtime checks remain intact. Four additional cases cover the complete source evolution, original-test continuity and refusal of altered pins/anchors. Node and Bun receiving remains unrun at drafting time.
+
+### Changed
+- Refresh the isolated compiler registration from the actual reviewed 1,272-file proposal for source commit f545416a57fce4f25f55d991ba08d29f5526a7f7, including the complete installed TypeScript 5.9.3 package. Preserve all six generated bootstrap substitutions and their full inverses, registry gzip readback, and the existing notice/license tail.
+- Actual proposal and independent full-source review passed their original resource limits. This registration is source data; full receiving qualification, portable fixture refresh, bulk generation, strict parity, and the complete JavaScript gate remain separate obligations. The original two Bun derive deadline failures remain open.
+
+### Changed
+- Refresh the complete portable Git source fixture through its actual proposal producer after the current compiler registration. Independently review every required Git tree, commit and original blob, all registered compiler sources, and all 132 installed TypeScript 5.9.3 files before installing the three assets.
+- The actual producer and independent review passed their original limits. The fixture remains source data; bulk translation, generated freshness, runtime parity and the complete JavaScript gate remain separate obligations. Existing Bun derive deadline failures remain open.
+
+### Changed
+
+Add an explicit grouped reader for the two ranges used when collecting an actual original-method refusal. It shares one complete fresh method/parser/transform/field-evidence validation only when the project privately captured that exact same method and parent path, then independently checks the project range and full parent digest. Other origins use the two existing readers in their original order; both standalone reader bodies remain unchanged. A boolean private-identity query grants no source, type, owner or executable authority.
+
+The grouped contract intentionally changes redundant internal validation/hash observations. It adds no cross-call storage and does not skip independent semantic checking, source/CST reconstruction or caller rechecking. Full old and grouped native hash tapes remain separate.
+
+Initial receiving passed all five existing method/refusal files on both engines. The new eight-case suite remains red: two Node fixture expectations and six Bun association-capture failures; the original two Bun derive-helper cases also exceed their unchanged five-second limits. The fixture expectations now join the actual encoded method name and exact failing source span, retain defineProperty observations under the grouped contract, and use Object.freeze as an actual unchanged-guard fallback control. The test observer now follows the actual Node/Bun frame forms: the exact source-links hash, optional metadataDigest frame, then the immediate project range capture; it retains the complete selected stack before observing the genuine issuance. The successor has not run. Existing test files, full inputs and deadlines are unchanged. No Rust execution, general speed gain or deadline qualification is claimed.
+
+### Changed
+- Materialize the portable test fixture through one native Git hash-object batch per original object kind, then independently reopen and compare every complete object through stock Git. The current fixture has 389 objects; 389 individual writer processes become three bounded batches. Keep original commit/tree/blob types, IDs, source bytes, missing ancestry, the ten-second Git bound, all existing whole tests and strict target checks.
+- This test-data change follows an actual Node fixture failure where a single per-object Git process timed out. Preserve that failed run; batching has no measured performance claim until the original complete files are requalified under Node and Bun. No compiler, source/owner authority or across-call cache changes.
+
+### Changed
+- Refresh the isolated compiler registration from the actual reviewed 1,272-file proposal for source commit c39bd4f983b15fbf168851b94c3d6443a8832e16, including the complete installed TypeScript 5.9.3 package. Preserve all six generated bootstrap substitutions and their full inverses, registry gzip readback, and the existing notice/license tail.
+- Actual proposal and independent full-source review passed their original resource limits. This registration is source data; full receiving qualification, portable fixture refresh, bulk generation, strict parity, and the complete JavaScript gate remain separate obligations. The original two Bun derive deadline failures remain open.
+
+### Changed
+- Refresh the complete portable Git source fixture through its actual proposal producer after the current compiler registration. Independently review every required Git tree, commit and original blob, all registered compiler sources, and all 132 installed TypeScript 5.9.3 files before installing the three assets.
+- The actual producer and independent review passed their original limits. The fixture remains source data; bulk translation, generated freshness, runtime parity and the complete JavaScript gate remain separate obligations. Existing Bun derive deadline failures remain open.
+
+### Changed
+- Add an explicit grouped observation contract for genuine original-method parser token validation, selected by the actual refusal collector through additive private-proof readers. Existing standalone readers and whole-array bounds remain unchanged; every source, parser, namespace, field and semantic proof is still freshly validated.
+- Plan all finite token groups before their first hash, with exact legacy-prefix fallback on unavailable native eligibility or unsupported shapes. The new contract changes token-comparison hash framing/counts and late-drift refusal timing; complete old/new tapes remain distinct. No across-call source or verdict storage is added.
+- Add eight receiving cases with full source/CST/semantic boundaries, hostile-observer controls and complete original derive parents. Source-only draft: engines, strict TypeScript, original five-second Bun cases and original13 performance remain unqualified until receiving.
+
+### Fixed
+- Join the complete fixture module path with the genuine local method name when checking grouped-token refusal rows. Root, external-file and inline-module subjects now require one exact qualified refusal, matching owner file, source-derived span and full parent hash, plus the exact checked survivor.
+- Preserve all original subjects, observations, remaining profile/typed work and deadlines. The failed unqualified-name receiving evidence remains retained; this test-only correction grants no compiler permission or performance qualification. Engines remain unrun for this source checkpoint.
+
+### Changed
+- Refresh the isolated compiler registration from the actual reviewed 1,272-file proposal for source commit 5df0cc72befcc9bb5cb149f4d2eae5d61466a02d, including the complete installed TypeScript 5.9.3 package. Preserve all six generated bootstrap substitutions and their full inverses, registry gzip readback, and the existing notice/license tail.
+- Actual proposal and independent full-source review passed their original resource limits. This registration is source data; full receiving qualification, portable fixture refresh, bulk generation, strict parity, and the complete JavaScript gate remain separate obligations. The original two Bun derive deadline failures remain open.
+
+### Changed
+- Refresh the complete portable Git source fixture through its actual proposal producer after the current compiler registration. Independently review every required Git tree, commit and original blob, all registered compiler sources, and all 132 installed TypeScript 5.9.3 files before installing the three assets.
+- The actual producer and independent review passed their original limits. The fixture remains source data; bulk translation, generated freshness, runtime parity and the complete JavaScript gate remain separate obligations. Existing Bun derive deadline failures remain open.
+
+### Changed
+- Select explicit grouped-token siblings during genuine original-method parsing, field/semantic issuance, relocation, source-range capture and checked facade construction. Existing public producers/readers and all source, namespace, Copy, field, parser and independent semantic checks remain intact.
+- Reuse only the existing guarded per-call token grouping contract. Old/new hash tapes remain separate; Host association and macro rechecks remain independent. No across-call source or verdict cache is introduced, and the real source-capture frame retains its established diagnostic name.
+- Add eight complete receiving cases, including both original derive parents and unchanged strict child bounds. Source-only checkpoint: runtime behavior and the original Bun five-second/whole13 deadlines remain unqualified until Root receiving; no performance gain is claimed.
+
+### Changed
+
+- Measure primitive strings of 257 through 65,536 UTF16 units with the composer's already qualified native JSON encoder after the unchanged raw text debit and cache lookup. Every other input keeps the prior loop, bounds, cache policy and fallback. Append full source evolution to five historical receiver adapters while retaining their 42 original callbacks and deadlines; add eight independent quoting, budget, observer, Hash, concrete syntax, semantic and strict TypeScript controls. This source candidate has not been received under Node or Bun and makes no speed or deadline qualification claim.
+
+Adds an explicit ordinary-file token context equation using complete original constructor/root-table sources and a finite source-evaluated lexer prefix. A fresh data-only sibling reuses the existing source interpreter for actual ASCII lexer/XID predicates. The lazy genuine generated-template consumer keeps owner permission separate. Unsupported earlier literals/block/doc comments and other unimplemented prefix branches refuse.
+
+Five additive raw source-data assets require a separate Root actual producer and independent raw/source/licence/Git validation. Existing lexer/XID/Cargo/licence/capture sources are reused with full fresh joins; public candidate data cannot issue receipts.
+
+Source draft only: engines, asset installation, complete real-parent prefix coverage and original/new receiving are UNRUN. The unchanged complete four-parent15+15 workload remains mandatory and its unsupported prefix frontier is explicitly open. No overall Core/tool/derive-owner or runtime coverage claim.
+
+V4 source successor removes the new source-predicate hash/observer gap. One
+synchronous guarded interval reconstructs finite parameter/body trees from fresh
+canonical native CST, reuses the unchanged source compiler/evaluator, evaluates
+all 128 ASCII characters and deeply freezes detached results before returning.
+Private consumers still reissue complete source/CST/profile/view/span joins;
+public data and frozen shapes do not issue source or owner authority. Call-local
+Maps never escape, and freezing a Map is not treated as entry immutability.
+Strict new-region parseInt/Object prototype checks add refusals without widening
+legacy guards. Actual transient observer, complete whole-parent, strict target
+and standard Bun qualification remain unrun in this source draft.
+
+The same new route also freezes private facts through bounded captured own-data
+descriptor operations and publishes/reads receipt state using captured native
+weak-map operations. It checks original source views are deeply frozen, and
+additionally qualifies the finite Object/Number/type predicates reached by
+profile and source-data checks. Live Object.values and weak-collection hooks
+cannot receive mutable authoritative facts. The source-only observer controls
+cover those boundaries as well; runtime qualification remains required.
+
+### Changed
+
+- Add an explicit metadata digest sibling that replaces property definition only on a still-private native-created null-prototype output, retaining the callee selected before child callbacks and descriptor conversion after them. Select it at three original-method validation fallback sites while preserving public metadata copying, digests, guards, limits and fresh hashes. Add eight complete data, observer, mutation, source and strict TypeScript regressions. This source draft is unreceived; it makes no performance, deadline or coverage qualification claim.
+
+- Qualify the actual legacy `Object` reference at its original create/define position, without reading a captured global root. Foreign or proxy receivers retain the original literal call; native receiver selection remains before child evaluation. Keep full old/current cold-root copy and callback observations, and add actual Object proxy, nonfunction and mutating getter controls. Stock Bun eligibility and performance remain unqualified until receiving.
+
+### Added
+
+Add a proposal-only, reversible rule pipeline for append-only private-parser
+host source pin refreshes. Preserve the complete registered parser graph and
+require independent review and the original receiving checks before admission.
+
+Generate the exact historical test-data inverse automatically while preserving
+all original parser test callbacks and deadlines.
+
+### Changed
+
+- Add a separate invocation-local internal metadata digest copier and explicit language/repository source proposals for 23 Clone digest calls and the private parsed-declaration evidence reader. Existing public copiers, digests, guards and the 645 API remain unchanged; every fresh source, semantic, private-origin and hash check is retained.
+- Keep the complete legacy JSON call expression for native diagnostics and the named digest frame. Extra private factory/copier frames are an explicit observation difference. No across-call state or metadata admission authority is added.
+- Add eight complete receiving cases with source/CST inverses, callback and native-error comparisons, budgets, private Clone refusals and full original provider/affinity parents. This source candidate is unrun; no performance or deadline repair is claimed.
+- Add an independent native Hash frame observation in case 6, retaining complete old/new raw stacks before assertions. Check only hash → metadataDigest → observeHashFrames, or the documented native-inlining form hash → observeHashFrames; existing tapes, comparisons, eight titles and deadlines remain unchanged. Runtime remains unrun.
+- Keep every frame-looking raw line, including opaque alias/malformed frames, in the same parser used by actual stack capture and additive case-6 regression examples. Unsupported intermediate frames refuse instead of being mistaken for native inlining; no full-stack normalization or runtime claim is added.
+### Fixed
+
+- Move the misplaced closing parenthesis after the JSON-error control's value factory so all eight receiving cases can parse. Preserve every subject, assertion and deadline; JavaScript syntax checking and whole-file receiving remain required.
+
+### Changed
+
+- Extend parser-host maintenance proposals with explicit, reversible literal
+  substitution sequences for reviewed changes inside appended helpers. Preserve
+  the original guard/bootstrap prefix and refresh historical test-data inverses
+  automatically without editing complete case bodies or deadlines.
+
+### Changed
+
+- Refresh the private parser host profile and its generated historical test-data
+  inverse for the shared metadata copier. Preserve both complete historical test
+  files and their original deadlines.
+
+### Fixed
+
+- Qualify the genuine native TypedArray brand and length accessors for private original-file source bytes instead of requiring Node's JavaScript util.types.isUint8Array wrapper to appear native. Rejoin both complete accessor descriptors on every private-fact guard; retain Proxy, wrong-brand, source, budget and private-issuer refusals.
+- Preserve the entire original eight-case context file and add a separate eight-case native-brand, late descriptor-drift and cold hostile-accessor suite. Runtime receiving is required; source preparation and native brand data do not establish namespace, type, owner or executable authority.
+
+### Fixed
+
+- Restore deliberately changed byte getters before formatting diagnostic Error properties. Keep private-callback counts separate from runtime/loader behavior; length-guard controls now import the complete API under healthy intrinsics before mutation inside the same bounded child. Native/tag cold controls remain unchanged, and the original failed preimport-length runs remain retained as unqualified loader diagnostics. Production guards, all eight case titles and deadlines remain unchanged.
+
+### Fixed
+
+- Materialize all five pinned compiler-source text members required by the original-file token-context profile through the JavaScript preparation API. Independently verify their complete bytes, original Git blob identifiers, source containers and licenses before installation.
+- Preserve the complete upstream source data and source spans. These assets support source-context checks; namespace, type, owner and executable qualification remain separate obligations.
+
+### Changed
+
+Measure successful frozen JSON descendants once per composition invocation. Repeated aliases recharge the exact original cell, UTF-16 text, depth and output-size costs; all partial or uncertain walks retain the original traversal and native fallback. The same private1024-record quota and64-cell threshold cover both root and descendant measurements. No source, owner, verdict or measurement is retained across invocations.
+
+The original measurement cases still exercise the current implementation and retain complete historical574/643 source oracles. Their storage-counter expectations explicitly include newly learned descendants. Two added60-second cases cover nested DAGs, alias costs, fresh invocations, partial budgets and relative-depth boundaries; existing compiler, native Hash, strict TypeScript and refusal checks remain intact. Four existing fixture schedules append the same reversible source evolution while preserving every callback.
+
+This is a source-only allocation/traversal experiment. Runtime memory, timing, complete original13 and original four-file Node/Bun deadline qualification remain unrun for this change. No speed gain or completed translation is claimed.
+
+### Changed
+
+Select the existing internal digest copier at three method-validation fallback expressions and five method-transform digest expressions. Two import substitutions preserve all existing method bodies, direct-copy calls, native guards, complete canonical bytes and actual Hash calls. A separate fixed two-module source proposal retains ordered language/repository CST transport and complete inverses without changing the old three-source API.
+
+The validation binding intentionally changes its internal 645 frame/JSON-expression contract to the documented 647 contract; full old/new observations remain separate. Eight receiving cases cover actual fallback and issued methods, malformed streams, callback and descriptor drift, source/CST inverses, full Hash observations and complete original parents with strict targets. Source draft only: runtime, performance, current generation and full-gate qualification remain unrun. Original derive4 and original13 deadlines are unchanged, with no speed or coverage claim.
+
+### Fixed
+
+Update three historical frozen JSON storage fixtures to require the exact current four-export namespace while retaining all three original storage names, callability checks, complete historical helpers and original test deadlines. The additive equality hint must remain callable and return no hint for unequal frozen, mutable, accessor and proxy inputs, without reading accessors/proxy traps or changing storage facts.
+
+Production serializers, source/owner checks and cache behavior are unchanged. This source-only fixture repair requires complete Node/Bun receiving qualification; no performance or full CI result is claimed.
+
+### Fixed
+
+Refine strictly valid written ASCII characters only in the independent source-control projection when genuine Rust CST classifies them as strings. Preserve complete raw CST/source/spans and canonical roundtrips; doublequoted, malformed, nonASCII and unsupported literals remain refused. Existing parser, finite IR, native/source guards and private profile/owner obligations are unchanged.
+
+A separate whole-eight receiving file covers all four actual pinned predicates over128 ASCII inputs, source-driven changes without private admission, complete CST/source inverses and malformed literal/operator/observer refusals. Source draft only: JavaScript/Bun execution, the unchanged original context suite and full qualification remain unrun. No namespace, owner, type, runtime or performance authority is added.
+
+### Fixed
+
+- Restore deliberate native getter substitutions after the private API call and before awaiting its rejection, so Node async-hook bookkeeping cannot contaminate the guard callback observations. Preserve all eight cases, original deadlines, exact refusal messages and zero callback assertions.
+
+### Changed
+
+Extend the source-bound ordinary-token prefix rules with pinned line-documentation, decimal-integer, ordinary-string and ASCII-lifetime branches. Six complete original lexer callbacks are freshly joined to serialized and independently reparsed source CSTs; the existing 102 constructor records remain unchanged. Literal records describe token boundaries and grant no cooked-value, type, runtime or owner permission. Raw, byte/C, block-comment, float/base and unknown routes remain refused.
+
+Retain the original context suite's complete inputs, seven unchanged callbacks and deadlines while updating its three obsolete complete-prefix refusal expectations. Add eight source/observer regressions, including all four complete stdarch parents and their 15 root plus 15 nested candidates. Runtime qualification is pending the complete receiving suites; no performance or external-owner coverage improvement is claimed.
+
+### Changed
+- Refresh the isolated compiler registration from the actual reviewed 1,282-file proposal for source commit adb1629cc21395bf80f5c07073bce8c6197b6498, including the complete installed TypeScript 5.9.3 package. Preserve all six generated bootstrap substitutions and their full inverses, registry gzip readback, and the existing notice/license tail.
+- Actual proposal and independent full-source review passed their original resource limits. This registration is source data; full receiving qualification, portable fixture refresh, bulk generation, strict parity, and the complete JavaScript gate remain separate obligations. The original two Bun derive deadline failures remain open.
+
+### Changed
+- Refresh all three portable Git source-data assets through the actual producer and independent review after the current compiler registration. Freshly compare all 390 original Git objects, 1,150 compiler files and 132 installed TypeScript 5.9.3 files, retaining complete installation recovery images.
+- The producer and independent review passed their original resource limits. Bulk generation, generated freshness, runtime parity and the complete JavaScript gate remain open; original derive timing failures remain unresolved. No local Rust tools ran.
+
+### Changed
+
+- Compact immutable JSON eligibility continuations by snapshotting children into the already-private native own-key array. Descriptor order, logical budgets, postorder records, partial warming, existing cache policy, serializer/hash calls, source freshness and proof checks remain unchanged. No cache, guard or authority is added.
+- Retain complete historical helper reconstruction in five existing receivers and add eight complete source, allocation, budget, observer, lazy-stack and genuine proof controls. Existing callbacks and deadlines remain unchanged.
+- This is a source-reviewed candidate. Runtime and performance receiving remain unrun; the original13 and original derive-helper deadlines remain unqualified until unchanged whole-file checks pass.
+
+### Fixed
+- Keep the complete prefix-grammar fixture's unterminated-string case and check its exact source-module parser error before private context capture. Valid unsupported prefixes still require the private API's TypeError. Preserve all eight callbacks, source inputs and deadlines.
+
+### Added
+
+- Add thirteen concrete owned Base64 operations with a matching bounded
+  JavaScript runtime, the native error alias, source-bound checks, affine owned
+  flow and proposal-only lossless source substitutions. Keep native library
+  internals untranslated and unresolved original Engine dispatch refused.
+- Add shared independent behavior/error cases, complete JavaScript/TypeScript
+  test source and a CI-only Rust oracle. Runtime receiving, actual Router
+  coverage, reverse mappings, generation and freshness remain unqualified until
+  their complete checks run.
+
+### Changed
+
+- Pass successful private walk costs through invocation-local scalar results instead of decoding each child cost again, and fold JSON measurement heights locally while retaining the existing checks, quotas, records and callback order. Add paired whole-function controls and reversible historical test-source adapters. This source change has no performance qualification until complete original receiving workloads pass.
+
+### Added
+
+Reverse the fixed owned base64 runtime ABI through genuine source imports,
+lossless CST and freshly reconstructed checked bodies. Borrow public JS text and
+octet inputs in Rust and emit explicit copies for owned operations; validate the
+fixed32 conversion without inventing original ownership. Preserve native result
+moves and error formatting restrictions, retain full leaf/corpus inputs and add
+shared-vector reverse regressions plus a separate CI-only native witness. The
+original unresolved trait-owner lane, generation and complete parity stay open.
+
+### Fixed
+
+Compare the complete owned base64 call against its privately linked source
+relocation, and original source evidence against its bound checked evidence,
+independently of canonical object-key ordering. Preserve exact fields, values,
+spans, array indices and enumerability, together with all original parser,
+parent and receipt checks. Runtime and compiler qualification remain separate;
+the original eight base64 cases and deadlines are unchanged.
+
+### Fixed
+
+- Apply the private measurement test's scalar-result source evolution after its descendant-learning stage. Keep the complete archived/current helper inverses, original instrumentation, twelve test callbacks and deadlines unchanged. This repairs fixture preparation; it adds no production permission or performance qualification.
+
+### Fixed
+
+Preserve genuine owned base64 call custody across the checker's shallow ownership
+qualification while requiring the complete original call data. Rejoin native
+error layouts through the project's exact source-to-flattened name mapping and
+the privately captured original layouts, including encode-only callers. Report
+initial unsupported source contracts and affine source errors as attributed
+translation refusals while preserving hard internal custody/currentness checks.
+Keep the original eight compiler/runtime cases and deadlines unchanged; receiving
+and Rust qualification remain separate.
+
+### Changed
+
+- Regenerate the complete static source bank from the actual JavaScript producer after adding the owned base64 facade and Rust oracle. Retain both historical source universes, all current Rust/Cargo files, full CST partitions and reversible source evolution. Independent review verifies the actual Git sources and preserves the data-only boundary.
+
+### Changed
+
+- Add bounded native measurement for short primitive JSON strings after a fresh own native character-method check. Preserve complete source checks, hash and caller callbacks, raw budgets and exact successful-size warming; uncertain methods retain the old loop. The native operation adds at most1538 temporary UTF16 units. Runtime and performance qualification remain unrun.
+
+### Fixed
+
+Require the checked fixed-array value ownership for the owned base64 `[u8; 32]`
+operation. Preserve primitive u8 identity, exact length, source association and
+native Copy checks; Vec, slices, references and other ownership remain refused.
+Add separate boundary and repeated-Copy target regressions while preserving the
+original eight base64 cases and deadlines. Runtime and CI Rust qualification
+remain separate.
+
+Check the current native error layout before weak transport lookup so malformed
+layouts refuse independently of receipt lifetime. Successful emission retains
+every original live-custody, source and repeated layout check.
+
+### Fixed
+
+- Preserve the complete historical long-string quotation comparison while supplying actual current native captures to its extracted private counters. Keep the short-string lane active on both subjects and retain all eight callbacks, raw observations, cold and strict child deadlines. Runtime receiving remains unrun.
+
+### Fixed
+
+- Restore the complete original intrinsic String prototype key order after deliberate character-method deletion controls. Preserve every quotation, source, Hash and forgery subject plus the final genuine parser and strict-target regression; reject unknown owner drift instead of relaxing native guards. Runtime receiving remains unrun.
+
+### Fixed
+
+- Recognize that a deleted and readded String prototype method moves to the end of the string-key bucket before symbol keys. Keep the exact intrinsic suffix restoration, descriptors, eight callbacks and parser guards unchanged. Runtime receiving remains unrun.
+
+### Changed
+
+- Regenerate the complete static source bank from the actual JavaScript producer after adding the reverse base64 CI-only Rust oracle. Retain both historical source universes, all current Rust/Cargo files, full CST partitions and reversible source evolution. Independent review verifies the actual Git sources and preserves the data-only boundary.
+
+### Changed
+
+Added separate private guard siblings that freshly collect native prototype descriptors in one bounded native operation when existing immutable expected rows are available. Original guards, initialization, callbacks, source checks, JSON/Hash operations and cache budgets remain unchanged; unknown shapes retain the original route. Added complete source-history adapters and eight regression controls. Runtime and performance qualification remain pending.
+
+### Fixed
+
+Attach the reverse base64 fixtures’ written parameter domains to their actual
+functions by placing JSDoc after a line break. Keep both parameters of the
+affine-result branch fixture on separate JSDoc lines. The original eight cases,
+full vectors, observers, refusal assertions and deadlines remain in place; the
+private written-type reader and source authority checks are unchanged.
+
+### Changed
+
+Restored the exact original positive-equality test helper by reversing the complete later source evolution before historical extraction. The actual current algorithms, original source pins, eight behavioral callbacks, Hash/source checks and deadlines remain intact. Runtime receiving is required.
+
+### Fixed
+
+Check the exact native runtime TypeError name and message for both 31-byte and
+33-byte reverse base64 array32 inputs. Preserve the complete original eight
+cases, full vectors and original deadlines. The production fixed-length guard
+and its error are unchanged.
+
+### Changed
+
+Restricted optional fresh descriptor batching to the ordinary type owner already validated by the existing private work-storage capture. Unknown or rebound owners use the original guard before reflection. Added actual module-export rebinding and restoration controls; stock selection and performance require runtime receiving.
+
+Refresh the registered private parser host profile and historical test-data inverse after the descriptor batching and fixed type-owner guard changes. Install the actual matching Node/Bun profile proposals and Python-generated data helper; preserve historical test callbacks and parser checks. Metadata refresh passed independent full-source and inverse review. JavaScript behavioral and performance qualification remains separate; Rust was not run locally.
+
+### Changed
+
+Separated optional descriptor collection counts from observable guard outcomes in owner-rebinding controls. Complete raw counters remain retained, and a clearly unqualified synthetic control skips both installation and synchronization to cover the unchanged-binding path. Production guards and all eight callback bodies and deadlines remain unchanged.
+
+### Added
+
+Append `--progress` to the full core-adoption proposal CLI for bounded scalar JSON diagnostics on stderr. Records identify input discovery, actual module and base64 producer work, candidate lowering, CST roundtrips, inverses and packet writes with monotonic elapsed milliseconds. Default stdout and proposal bytes retain their existing contract; callbacks cannot bypass final source checks or authorize installation. Runtime receiving and performance remain separate checks.
+
+### Fixed
+
+Keep the complete extra-body negative control anchored to the freshly proved current function opening, so progress instrumentation cannot turn it into an unchanged-source fixture. The original loader and historical-source refusals remain required.
+
+### Changed
+
+Add an explicit named-data declaration asset format and select it only for owned-core runtime source traversal. The legacy asset generator remains unchanged; complete selected source equality, independent checked-source fences and strict TypeScript equivalence remain required.
+
+Reject unknown proposal input keys before collecting any descriptors, so rejected native lazy stack fields cannot invoke Error.prepareStackTrace.
+
+Derive the strict consumer census from complete actual declaration AST exports instead of guessed contract counts. Test JSON mutation as an explicit checker-guard refusal, and exercise live Math-only reentrancy separately after restoring all hooks before error inspection.
+
+### Changed
+
+Select the explicit named-data declaration writer in typed-target verification. Keep the legacy asset writer and JavaScript loader unchanged, and retain full syntax checking, strict compilation and independent runtime verification under their original limits.
+
+### Added
+
+Draft reverse translation of eight source-bound read-only JSON operations with explicit optional scalar results, borrowed roots and dominated Some projections. Complete original imports, runtime/declaration inputs, paired bodies, CST and checked-source reissue remain required. Parameterized definition packaging and owned parsing remain separate work; no current generation, native Rust execution or application coverage is claimed.
+
+Refuse optional public parameters before target issuance until exact carrier and payload validation exists. Keep actual reader-produced local Options and dominated projections; static bigint/readonly spelling cannot supply runtime range or descriptor guarantees. The initial unqualified draft and its independent counterexample remain retained.
+
+### Fixed
+
+Evolve the named-host regression explicitly for the newly selected complete JSON declaration: preserve legacy six-root byte equality, verify the expanded current named closure and strict bidirectional JSON signatures, and retain the complete reader-source CST inverse for historical comparison only. Original whole tests and deadlines remain.
+
+Package direct, genuinely checked parameterized JSON-reader definitions through
+the existing producer without removing their guards, schemas, refinement setup
+or actual TypeScript aliases. Keep complete source pairing as data only and
+retain the separate guarded reverse-admission frontier.
+
+Restore historical reader source through a literal replacement callback so
+`$'` in genuine JavaScript source stays data rather than a replacement suffix.
+Keep all nineteen unique source equations, whole inverse and baseline checks.
+
+Keep the direct-reader source fixture's mutable Null view as a valid None
+observation: its actual layout guard does not require frozen containers.
+Descriptor/proxy and numeric-range refusal controls remain separate and exact.
+Keep the new case title precise about descriptor/layout and numeric guards.
+
+Add a separate checked direct-core reader definition target format, retaining
+complete guarded emissions as evidence. New source wrappers use the actual
+shared-core reader ABI and independently re-enter the existing reverse checker;
+old guarded/default outputs and their distinct observer contract stay intact.
+
+The guarded and direct-core identity fixtures now compare strict borrowed-node identity against the actual child stored in the input object. They explicitly retain the constructor-copy witness: json_macro_object copies the standalone String seed, while Null uses the shared singleton. This corrects fixture expectations without changing production readers, weakening alias checks, or qualifying the prior failed runs.
+
+Owned-definition materialization now selects the genuine named runtime declaration format independently of unchanged ordinary main outputs. The direct-core strict-target fixture stages the complete runtime family at both emitted output import roots, preserving all original cases, callbacks and deadlines. Earlier missing-runtime and declaration-format receiving failures remain retained, not qualified by this source change.
+
+### Fixed
+
+Use the checked project-lowering path for the strict compiler smoke fixture containing Rust conditional expressions, and require its function to be executable before testing both emitted targets. Preserve invalid-TypeScript and mandatory-compiler refusal checks and their original limits.
+
+### Added
+
+- Add an explicit stateless native proof-DATA JSON serializer with conservative callback-free own-data, occurrence, depth and output bounds. Unknown inputs retain the complete legacy composer. Native success intentionally uses captured intrinsic owners and omits the legacy global-lookup and warming schedule, including on Bun. The legacy API, caches, proof bytes and source authority are unchanged; caller adoption and runtime/performance qualification remain separate.
+
+- Select the explicit format at the Debug and derive-bang internal factory imports, preserving every consumer body and complete Hash/source/owner fence. Historical comparison helpers retain explicit legacy-mode subjects with full actual-source inverses; a separate integration suite covers genuine proof bytes, reissues and refusals. Runtime and performance receiving remain required.
+
+- Resolve the complete longer derive-bang format anchor before its nested Debug-import suffix. Full unique substitution, rejection of every remaining selected-format anchor and exact forward replay retain duplicate/separate-import refusal. This is test-DATA helper repair; consumer bodies, callbacks and caps are unchanged.
+
+- Measure completed proof-DATA subtrees only within each native serialization call, recharging every alias occurrence and depth against the unchanged 200,000-cell, 160-depth and 8 MiB limits. Count actual JSON string/key escaping units instead of the six-times upper bound; native JSON still produces every byte and all source/owner/hash checks remain. Preserve the former conservative-bound inputs as explicit eligibility evolution, with complete boundary, alias, cycle and intrinsic-drift regressions. Performance qualification remains pending.
+
+- Reuse exact quotation costs only for primitive strings of at most 128 UTF16 units in a fresh, qualified native Map per serialization, with at most 4,096 entries. Every occurrence still charges the original cell, depth and output limits; long strings and saturated tables retain the complete regex scan. No source, owner or eligibility verdict crosses calls. Existing twelve receiving callbacks remain intact; appended controls cover reset, quota, Unicode costs and late/cold Map drift. Performance receiving remains pending.
+
+- Restore Array.prototype's actual own length descriptor after the numeric-index poisoning control: deleting index zero alone leaves the array length enlarged. This receiving-fixture restoration preserves the complete hook workload, raw observations, all fifteen cases and their caps; subsequent fresh native qualification assertions remain strict. No production change or performance claim.
+
+- Reuse only two fresh private dense argument arrays inside each callback-free native proof scan. Every captured native call retains the exact receiver, values, order and all budget/source/Hash fences; argument containers never escape or cross calls. Added regressions exercise recursive/reset/alias operation mixing and numeric prototype accessor/nonwritable poisoning with complete length restoration. Runtime and performance qualification remain separate.
+
+### Changed
+
+Regenerate the owned-definition source planners with the automated producer so canonical and retained modes select the checked shared-core reader API. Replay complete substitutions and inverses for all four proposals; both matrix planners stay exact. Full corpus generation, application coverage and parity remain separate checks.
+
+Refresh the two planners again from the actual producer to select the named runtime declarations for owned definitions. All four complete proposals match the independent source equations and pass freshness; ordinary main runtime selection and both matrix planners stay exact. Runtime receiving remains required.
+
+### Added
+
+- Add a checked optional Json text operation with a closed carrier snapshot,
+  immutable canonical payload validation and controlled results. Only the actual
+  imported operation accepts its opaque input; existing public optional inputs
+  keep their refusal boundary.
+- Extend the explicit core-reader definition format with a finite, independently
+  checked optional text composition and literal decision format. Original source,
+  target and fresh lowering must agree, followed by genuine CST/meta/reverse
+  admission. The real bridge service-tier function is the receiving criterion;
+  source-only authoring does not establish a new application or performance gain.
+- Evolve the explicit core-reader packaging fixture to retain both its direct
+  reader and the genuinely checked bare optional text function. Independent
+  reverse and strict-target checks distinguish its input-rooted return from the
+  service-tier function's static literal results; the other seven cases remain
+  unchanged.
+- Recognize only the actual nested-match immutable guard around the fixed
+  optional text callback, independently in all three checked products. Retain
+  the complete current predicate source/CST and the finite frozen-result equation;
+  other let/discard forms remain refused. The new format does not claim the
+  legacy dynamic guard observer schedule is equivalent.
+
+### Changed
+
+Regenerate the complete current source bank with all 848 tracked Rust/Cargo inputs, including the CI-only JSON reader oracle. Preserve all sixteen historical cases and both original 806/808-input profiles. Review every full source, native Git join, lossless CST partition and inverse before installing the actual producer output; source storage does not establish runtime parity or Rust verification.
+
+Refresh those same 848 inputs after appending the optional service-tier Rust
+goldens. The actual JavaScript producer and independent full source/CST review
+retain the historical cases and profiles and change only that current source
+entry. The Rust goldens remain unrun locally.
+
+Refresh the single `responses_chat_input.rs` entry after adding nonempty-field
+goldens. The actual producer and independent review retain all 848 current
+inputs, historical profiles and complete CST inverses. Native golden execution
+still belongs to CI after the same-commit JavaScript gate.
+
+### Added
+
+- Add an explicit nonempty JSON string-field definition format using the existing
+  get/as_str runtime readers and checked Some dominance. Original, target and
+  fresh lowering independently reissue the private pinned Option filter before
+  checking its exact same-binding shared-str nonempty predicate. Public optional
+  input refusals and legacy formats remain unchanged.
+- Retain real bridge-request/chat-input source functions, complete CST/meta and
+  reverse checks, hostile/refusal controls and CI-only native edge goldens.
+  The changed Rust parent requires an actual source-bank refresh before
+  receiving; source authoring establishes no executable gain or performance pass.
+
+- Pass the original privately captured Parser and Checker as dispatch hints to
+  the unchanged full Option callback reissuer before inspecting the nonempty
+  predicate. Retain original/renamed semantic reparse controls and reject forged
+  public constructor fields; no source or callback authority is added.
+
+### Changed
+
+- Add an optional discriminator for freshly collected native intrinsic descriptors. It preserves the original comparison loop for foreign descriptor realms and inherited writable properties, and keeps all source, JSON, Hash and ownership checks. Performance remains unqualified pending complete receiving.
+
+### Changed
+
+- Store a fresh private native proof scan's active/completed state in one WeakMap
+  using a zero active sentinel and exactly bounded scalar costs. Every logical
+  occurrence still pays its complete cells, output units and relative height.
+- Preserve all native qualification checks, source/owner/reissue fences, JSON
+  and Hash payloads, descriptor order, legacy fallbacks and public defaults.
+  Add complete paired-source, independent cost, cycle, boundary, guard-drift
+  and genuine proof regressions. Runtime and performance remain unqualified
+  until the unchanged complete receiving suites run.
+
+### Changed
+
+- Refresh the registered private-parser host profile and historical test-data
+  inverse from the actual descriptor-kind source substitutions. The genuine
+  Node and Bun producers emitted identical complete proposals; independent
+  review checked every registered input, both ordered rule sequences, full
+  inverses, the generated helper and the unchanged historical consumers before
+  installing the three generated files with retained recovery bytes.
+- Keep parser authority, complete receiving tests, original performance limits,
+  application generation and runtime parity as separate verification steps.
+  This metadata refresh does not qualify those outstanding checks or execute
+  Rust locally.
+
+### Fixed
+
+- Restore the complete intrinsic owner after native stack-capture guard probes.
+  Bun also adds `originalLine` and `originalColumn`; restoring only `stack`
+  left those fields on `Map.prototype` and caused later parser checks to refuse.
+  Reuse the existing full-owner snapshot, restoration and descriptor checks,
+  keeping every hostile probe, callback observation and original deadline.
+  Production guards and registered parser profiles remain unchanged.
+
+### Changed
+
+- Let the private proof-DATA scan distinguish native descriptor kinds with an invocation-local same-realm and inherited-field check. Legacy guards, fallback, JSON bytes and source/owner checks remain unchanged. Added paired whole-file controls; runtime and performance verification remain unrun.
+
+### Fixed
+- Apply the native descriptor regression fixture’s exact substitutions through complete CST root spans, preserving token and trivia boundary validation. Retain the inner literal spans, full inverse roundtrips, all eight original callbacks and their deadlines. Production translation and intrinsic guards are unchanged.
+
+### Changed
+
+Add an explicit synchronous proof-DATA cost scope to the core adoption producer.
+Repeated recursively frozen subtrees reuse bounded arithmetic costs while every
+occurrence retains its full budget charge, fresh intrinsic checks, complete JSON
+encoding and source/owner/Hash fences. Legacy composer and creator bodies remain
+unchanged. The new format explicitly changes internal measurement, warming and
+RegExp scratch observations; fallback invalidates all active scopes before user
+callbacks. No runtime or performance qualification is claimed by this source change.
+
+### Changed
+
+Select the bounded synchronous proof-DATA cost scope through the default derive
+creator while retaining its original argument signature and a genuine unscoped
+control. All private issuer/source checks and complete proof JSON/Hash operations
+remain; the new default explicitly changes internal measurement, warming and
+RegExp scratch observations. Historical comparisons retain their declared old
+format. Original performance tests and deadlines stay unchanged; no gain is claimed.
+
+### Changed
+
+Give the appended scoped proof scanner a distinct private census binding so
+unchanged native-proof receiving fixtures select their original scanner exactly
+once. Preserve the complete old scanner, all test workloads and the scoped
+algorithm; this source correction makes no performance claim.
+
+### Added
+
+- Add an explicit core-reader format for checked literal-key JSON lookup/and_then scalar readers with the genuinely reissued eager Option unwrap_or body.
+- Independently project original, flattened and lowered checked products; retain complete guarded emission and require fresh reverse CST/meta/type admission.
+- Join fitting literal defaults with actual i64 reader payloads in either branch order, without annotation authority or broader optional inputs.
+- Add eight source/ABI/reverse/strict regressions for three complete Router declarations and additive native Rust edge-test source. Runtime and native Rust execution remain unrun; three existing Rust parents require actual static-bank refresh.
+- Preserve all named-declaration regression callbacks through a two-rule historical source inverse; legacy/default selection remains explicit and unchanged.
+
+### Changed
+
+- Add an explicit synchronous proof-DATA policy that retains only completed
+  recursively frozen arithmetic costs across legacy callbacks, with fresh native
+  guards and unchanged logical quotas. The default derive constructor and the
+  core-adoption constructor select this policy; the prior explicit scope retains
+  its clear-before-callback contract. Every scope still closes synchronously and
+  shares its original nonrefundable4096 admission budget. Original13/derive4 and
+  full-corpus CLI deadlines remain unqualified; no source or owner verdict is cached.
+
+### Changed
+
+- Add an explicit core-reader string-fold format that reissues the complete pinned Option body and checks all three current products, preserving actual input versus static literal lifetimes.
+- Independently join genuine input/static string return and conditional origins in reverse source checking; unknown and conflicting roots remain refused. Bool/i64 helpers, guarded defaults and public optional-input refusals remain unchanged.
+- Add complete source/CST/meta, runtime/evaluator, strict caller and hostile-input regressions plus CI-only native `status_of` edge source. Existing scalar case7 evolves only its borrowed-result frontier; named declaration history retains the complete inverse.
+- Source checkpoint only: Node/Bun receiving, actual application generation, the changed 848-source bank refresh and Rust CI remain unrun. No speed, coverage or parity completion is claimed.
+
+### Fixed
+
+- Check each complete retained-creator history source anchor before replay, so
+  duplicated historical default appends retain the existing exact TypeError
+  refusal. Genuine current-source replay, all production proof policies and all
+  whole-test callback bodies/deadlines are unchanged. Runtime receiving remains
+  pending; the earlier706 mixed-history failure is retained separately.
+
+### Changed
+
+- Regenerate the static source bank from the JavaScript producer after adding scalar-fold Rust edge tests. Independently review all 848 Rust/Cargo sources, full lossless CST spans and reversible edits while preserving the 16 historical cases and both historical source profiles. Source preservation does not establish executable translation or runtime parity.
+
+### Fixed
+
+- Distinguish the written-Rust source marker from primitive bool/i64 result identity in the new scalar-fold projector, after unchanged complete original Option-body reissue.
+- Compare only the six primitive body/let/match result positions with true/absent syntax-marker equivalence; preserve every other field, qualifier, Option/DATA/signature check and both complete regression files.
+- Retain the actual failed boolean products as diagnostic DATA. Runtime receiving remains required; no native or performance qualification is claimed.
+
+### Fixed
+
+- Keep scalar-fold negative assertions outside the compiler-exception catch, so an admitted scalar row cannot be disguised as a refusal.
+- Require a genuine compile-stage or projection-stage refusal matching the fixture function in src/lib.rs; unrelated facade diagnostics cannot satisfy the test.
+- Retain all six unchanged negative sources, complete stage diagnostics/results and raw errors, the positive workload, other seven callbacks and original deadlines.
+
+### Changed
+
+Select one synchronous retained arithmetic-cost scope across base64 producer context construction and original binding resolution. Existing producer and derive APIs stay unchanged; source/owner checks and every JSON/Hash call remain fresh, with the same occurrence limits and nonrefundable admission quota. Full-corpus timing and original deadline qualification remain separate receiving requirements.
+
+### Changed
+
+- Scope module binding proof serialization with the existing retained arithmetic policy, reusing only a genuinely current registered frame. Preserve fresh source, owner and native checks, full proof bytes, original parameter evaluation and the nonrefundable admission budget. Add complete binding, lifetime, callback, source-inverse and strict-target controls; performance remains subject to whole-file and actual CLI receiving.
+
+Use a fixed SHA256 filename for each whole-producer test vector so long original test titles stay within filesystem component limits. Preserve complete vector contents, test titles, workloads and deadlines.
+
+### Changed
+
+- Regenerate the static source bank from the JavaScript producer after adding borrowed-string Rust edge tests. Independently review all 848 Rust/Cargo sources, full lossless CST spans and reversible edits while preserving the 16 historical cases and both historical source profiles. Source preservation does not establish executable translation or runtime parity.
+
+### Added
+
+- Add an explicit checked normal-body JSON constructor definition format for borrowed strings, booleans, immutable locals and scalar conditionals. Fresh private original parser/checked-source associations and all three checked products precede lossless JavaScript/TypeScript source proposals; independent reverse admission remains mandatory. Every parameter uses the existing scalar runtime boundary before the body, including unused or condition-only inputs. Existing guarded/default formats stay unchanged.
+- Admit only complete single-expression `if ... { ... } else { ... }` JSON interpolations under the existing source, purity, type and owner limits. Add complete forward/reverse, strict TypeScript, malformed-source, private-copy and per-argument ABI controls plus CI-only native Rust golden cases. The four original declaration copies establish source demand, not full-parent application coverage; the old unknown-producer namespace frontier remains open.
+- Exercise the fresh source-to-model interval with genuine checker inputs retained by a fully inverted test-only project copy, forwarding Hash observations, live body/layout/name mutation and replaced host operations. Actual production-entry cases remain separate; these controls add no public compiler hook.
+
+### Changed
+
+- Add an explicit private enclosing-namespace format for source-checked Debug named structs and unit enums. It retains the actual generated-tree closure, original source/type/owner checks, all branch alternatives, resolver-source relation, and fresh private reissue fences; generated method behavior remains opaque.
+- Select the new format only in the core/base64 producer. Other derive owners retain complete existing output proofs or unresolved residuals. Public/default full-proof APIs remain controls, and the new token grants neither executable trait behavior nor full bang completeness.
+- Preserve complete historical source inverses and add eight whole-file source/private-proof/owner/refusal/strict-target controls. New format JSON/Hash/guard payload observations are explicit. Runtime, performance, and full-corpus qualification require independent receiving; no deadline or quota changes are included.
+
+### Changed
+
+- Regenerate the static source bank from the JavaScript producer after adding JSON constructor and conditional Rust edge tests. Independently review all 848 Rust/Cargo sources, full lossless CST spans and reversible edits while preserving the 16 historical cases and both historical source profiles. Source preservation does not establish executable translation or runtime parity.
+
+### Fixed
+
+- Keep complete declaration and parser-function spans distinct when joining checked JSON constructors; visibility and attribute prefixes remain in the full original source proof.
+- Supply the facade's actual base64 child in constructor receiving fixtures so ordinary JSON macros obtain genuine complete ancestor bindings. Retain the missing-child refusal, complete unissued-carrier control, original declaration bytes and all eight case deadlines.
+
+### Fixed
+
+- Project actual borrowed-string equality using its genuine checked standard PartialEq record and exact primitive domain while retaining both input and static-literal loan types.
+- Recognize only the complete checked nonconst ordinary JSON-macro obligation with identical value type/span; keep constant functions, explicit reference comparisons and all existing source/owner refusal boundaries closed. Preserve the eight complete constructor cases and original limits.
+
+### Changed
+
+- Refresh the reusable isolated compiler registration from the actual independently reviewed 1,296-file proposal for source commit 9f204f8d4c57477f6c71dcec6b74297bcf3d683c, including all 132 installed TypeScript 5.9.3 files. Retain every complete source and Git comparison, all six bootstrap substitutions and inverses, full gzip readback, and the notice/license tail.
+- Production and independent review passed the original 60-second, 1-GiB and 256-MiB bounds. Complete parent/application generation, portable fixtures, synchronization, strict parity, full JavaScript verification and gated Rust CI remain separate obligations.
+
+### Changed
+
+- Refresh the complete portable Git source fixtures through their actual producer after the current compiler registration. Independently compare every required original commit, tree and blob, the full current registered compiler source, and all 132 installed TypeScript 5.9.3 files before installing the three generated assets.
+- The actual producer and independent review retain their original time, memory and disk limits. These fixtures provide source recovery; complete application generation, executable coverage, synchronization, strict parity, the full JavaScript gate and gated Rust CI remain separate obligations.
+
+### Changed
+- Record the explicitly requested issue #759 checkpoint rollover and remaining full-generation, synchronization, parity and CI obligations.
+- Continue with the coordinator as the sole worker and publisher after all existing assignments finish; preserve the no-local-Rust and same-SHA JavaScript-first CI requirements.
+
+### Changed
+- Move native JavaScript into `js/src`, generated TypeScript into `ts/src`, and the Rust crate into `rust/src`, retaining the public native package export and a root Cargo workspace.
+- Retarget ordered translation producers, source capture, independent reverse inputs, package paths, contracts, Docker target discovery and JavaScript-first CI. Generate crate-local shared Rust assets with complete-byte freshness checks.
+- Add nested Rust project translation controls and preserve the open full-corpus generation, synchronization, performance and strict-parity obligations.
+
+### Fixed
+- Import the native proxy utility used by the draft enclosing-namespace issuer and update its exact historical source inverse.
+
+### Fixed
+- Apply ordered, serialized/reparsed CST rules to the three local TypeScript adapter package paths, preserving their complete function bodies and upstream reference pins.
+- Import the repository storage API in the complete source-bank regression; all 11 storage/export cases pass under Node and Bun within their original limits.
+
+### Changed
+- Use the private enclosing-namespace format in the owned-definition project consumer while retaining separate runtime, ownership, Default and Clone source checks. Preserve the ordinary project API selection and expose bounded progress phases for the owned path.
+
+### Fixed
+- Resolve crate-relative fixture reads through parsed, serialized and reparsed CST substitution rules while preserving logical labels and embedded source data.
+- Align TypeScript receiving fixture directories and isolated parity setup with the physical language roots.
+- Mark every generated host support module consistently so standalone authored functions retain their checked executable interface.
+- Record the existing appended Links writer helpers as an adaptation, and independently verify the complete unchanged original frontend prefix.
+
+### Changed
+- Use the private enclosing-namespace format for Default and Clone namespace analysis in owned-definition translation. Ordinary project APIs and independent generated-body checking retain their existing behavior.
+- Avoid constructing unused CST documents for parsed layout inputs with no selected substitutions.
+
+### Changed
+- Construct the enclosing-namespace context inside the existing bounded per-invocation proof DATA-cost scope, matching the complete context's lifetime. Retain all source, owner, namespace and generated-body checks; introduce no across-call source or verdict cache.
+
+### Fixed
+
+- Validate large translated metadata without retaining another complete object tree, preserving canonical bytes, native errors and existing storage limits.
+- Discover the Rust package manifest correctly in repositories with a root workspace and `rust/Cargo.toml`.
+- Show the physical JavaScript, TypeScript and Rust source directories and JavaScript-first commit-hook policy in the README.
+
+### Fixed
+
+- Reduce duplicate allocations while validating and reconstructing complete static source metadata. Keep the original measured decoder and all refusal controls as independent references for the streaming implementation.
+
+### Fixed
+
+- Keep syntax-only JSON validation separate from canonicalization and retain flat bounded canonical chunks, reducing temporary allocations while preserving complete metadata and native error behavior.
+
+### Fixed
+
+- Stream complete source-map JSON rows into byte and digest checks, preserving native JSON output while reducing duplicate metadata serialization buffers.
+
+The explicit retained owned-definition producer now uses a source-derived
+UTF-16 byte codec for private output storage. Ordered language and repository
+rules preserve the complete original/edited CST and source inverse. The
+ordinary producer and existing scalar-cell retention API keep their paths.
+
+Private immutable chunks preserve lone surrogates and use the original raw
+fallback when a compressed trial expands. Chunk and retention limits stay
+unchanged. This format assumes stock Buffer/zlib initialization and rejects
+later operation changes; it grants no source or semantic authority.
+
+Restore the historical scalar-suite source literal and derive its receiving
+bulk/matrix layout without changing either original pin. All 22 complete
+receiving cases pass Node and Bun, including Unicode, matrix, reverse,
+historical observer schedules and source refusal controls. Complete project
+generation remains unqualified after the fourth full producer exhausted its
+unchanged local heap limit. No Rust tools ran locally.
+
+Regenerate ordinary native reverse artifacts from the physical `js/src`
+layout. The actual producer emitted 396 outputs and changed 209 artifacts;
+full input/output byte comparisons, changed source CSTs and inverses preceded
+installation. Fresh ordinary reverse checking and strict compilation of all
+164 native TypeScript files pass. The new Rust base64 witness remains
+uncompiled locally.
+
+Preserve immutable baseline data and names while mapping receiving lookups to
+the physical files. Select fixture import/export relocation by exact syntax
+spans, retaining duplicate sites and embedded source strings independently.
+Both complete affected files pass Node and Bun, including the new duplicate
+specifier regression. Full physical-project performance, owned/profile
+freshness and full parity remain open.
+
+Owned-definition generation now derives an explicit UTF-8 metadata planner and
+fixed JSON field serializer from the complete original sources. This reduces
+large keyed-string lifetimes while preserving complete output bytes and storage
+limits, and adds bounded progress around planning and retention. All 22 complete
+Node and Bun receiving cases pass. Full-project memory, performance, forward
+freshness and runtime parity remain open; Rust execution remains CI-only after
+every required JavaScript stage passes for the same SHA.
+
+Owned packaging now selects keys before reading stored text. The retained lane
+derives immutable per-plan UTF-8 byte/hash descriptions from its complete byte
+implementation, avoiding large restores during the final census. Unicode,
+refusal, zero-restoration and materialization receiving files pass under Node
+and Bun. The full producer still needs qualification under its unchanged limits;
+no source, semantic or parity status is promoted by these storage measurements.
+
+Owned namespace consumers now use a wrapper copied from the actual scoped
+resolver, retaining the complete legacy resolver and all original source/profile
+checks. Complete receiving files pass under Node and Bun, including refusal and
+native mutation controls. Separate fresh-process synthetic results agree in
+full and show lower binding times; full-project performance and parity remain
+unqualified. Historical rule replay now preserves the independently parsed
+additive resolver suffix without changing original recipes or hash pins.
+
+Bulk-generated the complete 847-file Rust corpus through the retained CST/meta
+forward producer under its original memory and time limits. All 3,188 outputs
+and original source partitions were independently reviewed; complete forward
+and canonical owned-definition TypeScript checks pass. Independent reverse
+generation exposed missing paired TypeScript evidence for two JSDoc-annotated
+constructors and remains failed. Profile freshness, complete synchronization,
+strict parity and the JavaScript gate remain open; no local Rust tool ran.
+
+### Fixed
+
+- Check complete paired TypeScript for owned JavaScript definitions with written
+  JSDoc, and resolve registered JSON constructor return domains through actual
+  runtime imports. Preserve independent source, body and refusal checks.
+- Qualify all eight current owned definitions through independent strict forward
+  and reverse TypeScript, JavaScript and meta interpretation. Complete project
+  translation coverage and synchronization freshness remain unfinished.
+
+### Fixed
+
+- Preserve exact historical Cargo inputs after moving the package into `rust/`
+  through a source-derived, stateless comparison of the two reviewed layouts.
+  Keep actual input hashes, archive checks and private proof requirements.
+- Record complete TypeScript witness outputs so synchronization can retire
+  recognized stale files while rejecting edited outputs and authored neighbors.
+- Bulk draft physical serialization discovery and current Git-census repairs.
+  Those groups still require behavioral verification; full translation coverage,
+  synchronization freshness and the JavaScript gate remain unfinished.
+
+### Fixed
+
+- Bulk draft current physical Rust source reads through reusable native syntax
+  and CST substitution rules while preserving historical source text and labels.
+- Retain all current Rust bytes and workspace/package Cargo inputs in original
+  test captures, including moved build and fuzz files.
+- Add literal source substitutions while preserving the existing replacement
+  contract, and keep public serialization source labels crate-relative.
+- Record unfinished full-file, performance, regeneration and parity checks;
+  focused receiving successes do not establish complete project translation.
+
+Keep frozen Copy-getter source pins tied to authenticated complete historical
+parents, and supply the actual compatibility-core files when translating current
+production methods in explicit test carriers. Preserve all cases and deadlines;
+both complete affected files pass under Node and Bun. Full translation and parity
+remain unfinished.
+
+Normalize known physical historical-source URLs before closed parent checks.
+Generate a separate derive-profile adapter from the complete existing layout
+equation, preserving frozen hashes, archive checks and private proof guards.
+The affected complete files pass 21 reader cases and 28 adapter/async-trait cases
+in both Node and Bun. Full generation, performance, parity and CI remain open.
+
+Generate complete owned-core test carriers by copying the original fixture rule
+and selecting all facade children through CST. Update all three consumers and
+repair the constructor-metadata package reader automatically. All 28 cases in
+the four complete files pass in Node and Bun; full parity remains open.
+
+Adapt frozen feature-worklist receivers through exact Cargo-profile CST token
+edits and a reversible whitespace rule, preserving raw modules, checksum pins,
+function bodies and runtime callback comparisons. All nine complete-file cases
+pass in Node and Bun; full generation, performance and parity remain unfinished.
+
+### Fixed
+
+- Use native CST span-based receiving copies for repeated module URLs, preserve frozen corpus and getter parents through explicit layout/history equations, retain complete owned-core children in bridge fixtures, and clarify existing nominal-owner refusal diagnostics. All 93 cases in fifteen complete files pass in Node and fresh sequential Bun processes. The combined Bun process exceeded the unchanged memory cap; current generation, performance and complete runtime parity remain unfinished.
+
+### Added
+
+- Generate a package-only positive Cargo-feature DATA reader from the complete existing facts producer, with two rule sequences, full CST inverses and freshness checks. All fifteen original/new cases pass in Node and Bun. The reader invents no caller, test configuration or namespace permission; complete external sibling-derive closure and runtime parity remain unfinished.
+
+### Fixed
+
+- Generate a stored-project review helper from the complete original guard, and independently validate full CST/source joins before the original semantic review. Both representations retain their existing object/depth bounds; storage limits and compiler admission remain unchanged. All 37 cases across four complete review/storage test files pass in Node and Bun, with zero Node deadline breaches. Complete project review, current output freshness and full parity remain separate obligations.
+- Refresh complete canonical forward inventories and run the actual owned-definition reverse producer and independent freshness check. All 80 canonical owned forward/reverse TypeScript files pass strict TypeScript 5.9.3; profile outputs and whole-project parity remain unfinished.
+
+### Added
+
+- Derive a separate complete project-storage implementation and a scoped copy of pinned MIT fflate 0.8.3 through language/repository rules, CST round trips and full inverses. Four compressor and six storage cases pass in Node and Bun. Complete project qualification preserves all 176 MB of logical metadata and reduces proposed physical storage by 44 MB, while retaining every original physical/decoded bound. Producer integration, current inventories and all canonical/profile regeneration remain unfinished.
+
+### Changed
+
+- Integrate lossless concrete metadata storage through the actual ordinary, retained and owned source producers and the independent reader. Preserve frozen historical fixtures through a separate CST/inverse adapter. All 78 cases across ten complete receiving files pass in Node and Bun, and all four source-producer freshness checks pass. Full canonical/profile regeneration, performance checks and native parity remain unfinished; existing generated inventories require refresh.
+
+### Changed
+
+- Register the complete compiler and lossless metadata storage sources through the actual registration and portable fixture producers. Review all 1,333 registered files, all 411 retained Git objects and the unchanged historical bodies. Both complete receiving files pass all 16 cases in Node and Bun. Full regeneration, native parity and the complete JavaScript gate remain open.
+
+### Changed
+
+- Regenerate the complete 847-file canonical draft through lossless compressed storage, preserving all 176 MB of logical project metadata while reducing physical outputs to 317 MB. Repair complete receiving workflows through CST/native source rules and add a reproducible strict reviewer-profile pin updater with ordered language/repository sequences. All 147 cases across sixteen complete files pass in Node and Bun. Full profile generation, freshness, review performance, native parity and the complete gate remain open.
+
+### Changed
+
+- Add a source-derived stored-project reviewer with fresh invocation-local context sharing, preserve the original direct APIs, and repair complete historical receiving workflows using genuine Git/CST inputs. All 322 cases across ten whole files and three portable-fixture cases pass under Node and Bun. The original full-review deadline, complete matrix memory, native parity and full gate remain unresolved; no native coverage or performance gain is claimed.
+
+### Added
+- Generate sequential profile workers from the complete original matrix producers through separate language and repository CST substitution rules, with full source inverses and unchanged original library APIs.
+
+### Changed
+- Stage complete profile outputs and freshly validate all source, compiler, TypeScript and generated-byte inputs before publishing the batch. Keep existing resource bounds, failure behavior and JavaScript-first Rust gating.
+
+### Fixed
+- Keep the original profile CLI receiving case within its unchanged deadline by consolidating redundant parent scans. Complete Node and Bun receiving cohorts pass; full-corpus matrix generation and runtime parity remain unverified.
+
+### Changed
+- Refresh the complete compiler registration and genuine portable Git fixture for sequential profile workers, retaining all 132 TypeScript sources and all four historical source bodies. The complete 16-case receiving cohort passes under Node and Bun with original deadlines; full production generation and parity remain open.
+
+### Fixed
+
+- Bulk repair 75 compiler test readers through the existing native/CST rule
+  producer, preserving complete original sources and inverses.
+- Distinguish physical workspace Cargo reads from Rust package reads and reuse
+  the existing complete-row mapping in both current-source fixture APIs.
+- Retain the original JSON branch workloads while checking independent sibling
+  behavior in JavaScript and strict TypeScript and preserving shadow refusals.
+
+The full 75-file checks still expose unresolved failures. Complete translation,
+native parity and all same-SHA JavaScript gates remain unfinished; Rust stays
+CI-only after JavaScript passes.
+
+### Changed
+
+- Automate lossless compiler DATA storage, current source-fixture refresh and portable historical parent capture through layered CST rules and complete inverses.
+- Preserve original source/body pins and test workloads while repairing physical package readers and historical comparison formats.
+- Add generator freshness controls. Full translation, strict parity and the original derive performance deadline remain unfinished; no Rust tools run locally.
+
+Record a bounded JavaScript compiler performance experiment. The complete original 12-case derive file kept its source and all deadlines; its long case took 94,651.301 ms and still failed the independent 60,000 ms deadline. Revert the unqualified three-file candidate and its temporary registered-host refresh. Preserve the original 64-cell retention policy and its historical controls. No native parity gain, passing full gate or local Rust execution is claimed.
+
+Derive the fixed native descriptor census through a complete source/CST producer, preserving the original retention policy and all guard domains. Repair repeated fixture imports by reusing the native-span relocation helper through ordered language/repository source rules. Reproduce the registered host, historical adapters and portable producer inputs through their actual producers. Complete receiving qualification gives 375 passing cases across 50 whole files under Node and Bun; the separate original derive deadline, generation/freshness and strict application parity remain open. No local Rust tools run.
+
+Refresh the complete isolated compiler registration and matching portable Git
+fixture after source-producer and receiving repairs. Preserve all four original
+historical source bodies and independently verify every registered source.
+Sixteen complete receiving cases pass in Node and Bun; full generation, original
+performance frontiers, native parity and the same-SHA gate remain unfinished.
+
+Reuse bounded immutable traversal arithmetic within one synchronous retained
+proof invocation, preserving global retention policies, fresh source/owner/hash
+checks and original fallback algorithms. Add reproducible layered CST source
+producers and independent isolation, lifetime, alias and refusal controls.
+Fifty-seven complete control cases pass in each engine. Original derive deadlines
+and Bun source-bank memory qualification remain open, alongside complete parity
+and generation. No Rust tools run locally.
+
+### Changed
+
+- Add reproducible CST substitution producers for reject-only source-bank metadata preflight and invocation-local immutable source/CST allocation variants, preserving the original APIs and complete verification passes.
+
+### Changed
+
+- Add reproducible incremental canonical DATA encoding and complete-bank receiving comparisons within the original resource and deadline bounds, preserving the original public encoders and all validation passes.
+
+### Changed
+
+- Derive standard module import candidates from pinned original source through reproducible CST rules, allowing independently checked Core text adoption while retaining unknown-import and producer refusals.
+
+### Changed
+
+- Generate a detached literal-text proposal packet API and explicit gzip CLI from the existing source producers through CST rules, retaining complete evidence, original APIs and fixed quotas.
+
+### Changed
+
+- Refresh the source-produced isolated compiler snapshot and portable Git fixture
+  with the current module candidates, incremental storage encoder and literal
+  packet APIs. Preserve every historical fixture body and compare all exported
+  compiler sources and Git objects independently.
+- Record the complete 564-file production literal proposal run and complete
+  packet/CST readback, plus all 16 original snapshot receiving cases passing in
+  Node and Bun. The sole selected function was already executable before its
+  proposed rewrite; no application source or coverage gain is claimed. Full
+  translation, parity, remaining CI repairs and the complete gate remain open.
+
+### Changed
+
+- Record the user's renewed allowance of up to three source workers under one
+  publisher and one heavy workload. Prioritize common translation rules using
+  actual production function counts and report executable gains separately from
+  source proposals or cleared diagnostics.
+
+Add a source-backed formatting proposal lane that retains original derive and
+helper attributes while inspecting only freshly proven original producer
+effects. Existing adoption APIs remain unchanged. Application coverage and
+complete receiving/gate qualification remain pending.
+
+Record the exact original external-trait CI failures and the unresolved source
+owner, enclosing producer and tool-prefix proof obligations. Preserve all ten
+positive test expectations and retain their complete original failure blocks
+in a compressed diagnostic receipt. This diagnosis does not claim a namespace
+repair, passing receiving tests or executable coverage gains.
+
+Draft invocation-local primitive string keys for native source metadata
+interning, preserving complete table bytes, original fallbacks and fresh hashes.
+Add complete original-source/native-AST/CST inverse checks and nine behavioral
+controls. TypeScript 5.9.3 source checks passed; runtime and performance checks
+remain unrun and no speed or coverage gain is claimed.
+
+Use one shared call site for paired metadata stack captures and validate actual
+eager Bun or formatter-backed Node stack inputs and full roundtrips, preserving
+all nine controls and their original deadlines.
+
+Add a private conditional source-derived outer Impl range for the actual
+Clone, Copy, Debug, PartialEq and Eq callbacks, including both PartialEq
+emissions and original module path attributes. Preserve caller, generated
+attribute and exported builtin-replacement obligations. Native TypeScript
+5.9.3 source copies and complete CST inverses passed; six new complete controls
+are unrun. This step does not claim to repair the ten external-trait positives.
+
+Retain and privately join original crate feature-list alternatives to pinned
+compiler collection and gate sources, including the independent privileged-span
+branch. Add complete native AST/CST source copies and six unrun controls. Keep
+namespace admission refused while Cargo target normalization and producer
+ownership remain open; the original ten positive cases are unchanged.
+
+Add a private relational Cargo dependency-library source proof that excludes
+development edges without selecting cfg(test) or reconstructing raw target
+defaults. Preserve original pending-unit APIs and add five unrun controls;
+complete native AST/CST source-copy and inverse checks passed.
+
+Refuse changed source ingress before private-brand allocation and recheck JSON
+parser ownership after observable hashes. Preserve complete original source
+snapshots and both inverses; add two unrun hook controls.
+
+Retain the finite registered builtin callback universe, including explicit
+builtin aliases and local procedural dummy branches, and conditional complete
+source transfers for nongeneric data items. Cover all eleven generic derive
+ranges while keeping caller-prelude brands separate. Preserve foreign
+procedural owners, input/token origins and namespace admission as independent
+obligations. Native TypeScript 5.9.3 AST/CST source copies and inverses passed;
+eight new complete controls and the original ten positives remain unrun here.
+
+Join the two original Engine sibling data inputs through private package
+captures, exact spans, complete native parser/token origins and actual Item
+field-projection macro expansions. Preserve foreign callback ownership as a
+separate obligation. Complete native AST/CST inverses passed; six new controls
+remain unrun and no full namespace repair is claimed.
+
+
+Compose the original Engine sibling source closure through a separate private
+pinned standard-library macro ABI, genuine normal-library edge, exact original
+data-token inputs, complete finite builtin transfers, inert generated attribute
+registration and native fragment containment source rules. Preserve the old
+optional default context domain, original Send/Sync owners, all ten original
+positive bodies/deadlines, and modeled base64 namespace refusal. Keep actual
+native invocation/sysroot metadata and runtime parity unproved. Six complete
+native TypeScript 5.9.3 AST copies plus ordered CST inverses passed; eight new
+complete controls and original runtime workloads remain unrun by this worker.
+
+
+Repair the receiving batch's eleven shared nested-comment failures through a
+complete source-derived outer line DocComment lexer/parser/AST/replay/collector
+relation for the five actual variant/field comments. Keep unknown nested
+attributes refused and original full tests unchanged. Freshly hash both genuine
+project manifest/lock strings during each standard-unit ABI qualification,
+repairing the separate Hash observer failure. Seven complete native AST/CST
+source copies and inverses passed; five new controls and the full receiving
+runtime batch remain unrun by this worker.
+
+
+Preserve the original opaque sourceConversionScope through all three syntax
+relocation/evidence tables, repairing private caller-proof forwarding. Add a
+separate genuine source-selected Rust-value boundary for whole direct fixed
+identity From functions; keep ordinary fixed argument and arithmetic RangeError
+contracts. Retain Root's complete lifetime/checkedSource and matches/vector
+parents as exact source equations and provide additive publication producers.
+Five complete native AST/CST source copies and inverses passed; five new controls
+and all original runtime workloads await Root's receiving qualification.
+
+Add a reusable production translation frontier DATA report that joins complete original function/source metadata to stored project first refusals, preserves compiler staleness and input vectors, and ranks distinct function batches and lexical overlaps without claiming new executable coverage.
+
+Add detached complete formatting proposal packets with fresh source/Cargo
+guards and preserved materialized fields, producer inspection CST and inverses.
+Check native copied-source import bindings during both source preparations.
+Full receiving and actual corpus resource qualification remain pending.
+
+### Changed
+- Retain primitive string-key metadata interning as an explicit source-generated experiment after the unchanged whole-library case exceeded60seconds; restore the complete original production codec and preserve every failed result and original test deadline.
+- Qualify all57 current formatting, metadata and priority controls under Node/Bun, and join all2311 stored production refusal records to their original functions without claiming executable coverage gains.
+
+Draft source-bound owned vector comma-list translation and conservative CST adoption, with native TypeScript/CST source producers, primitive/text ownership limits, complete original-module receiving cases and CI-only Rust oracle source. Bind normalized borrowed-vector origins only inside the same checker's original parsed-declaration lifecycle, retaining private copy/mutation refusals and clearing production fingerprints/associations in finally-scoped nested program frames. Historical refusal candidates are not counted as new application coverage.
+
+Add complete-source vector corpus and detached gzip packet drafting through the actual native TypeScript/CST formatting infrastructure, preserving original attributes, module/producer origins, Cargo inputs and exact inverses. Independently validate distinct function/edit counts and read every archive packet. Source equations pass; focused and production qualification remain separate, with no coverage gain claimed.
+
+Add a bounded formatting gzip proposal CLI and independent complete packet
+readback with distinct schemas, retained source/CST/inverses and fresh source,
+lock and workspace Cargo guards. Receiving and actual corpus qualification are
+pending; proposal counts do not establish executable coverage.
+
+Draft an explicitly adopted owned literal `matches!` operation by composing the
+actual ordered-match parser/checker with the genuine compatibility facade.
+Retain complete native-source/CST inverses, original vector source equations,
+conservative corpus adoption barriers and both complete client-launch predicate
+oracles. Bounded native source generation and complete source equations passed;
+receiving runtime, native CI and fresh production gain measurement remain unrun.
+No historical refusal count is claimed as new coverage.
+
+Draft a read-only in-memory formatting→matches→vectors source sequence using the
+actual existing corpus APIs, fresh complete source/Cargo/module joins and full
+CST/inverse history. Separate original-function candidate groups from repeated
+selections and retain mixed-family refusals. Add seven complete receiving cases;
+runtime and whole-project coverage measurement remain unrun for this draft.
+
+### Fixed
+- Keep unresolved body-macro payloads and possible earlier local producer effects unchanged in source-backed formatting adoption; regenerate both producers through complete native/CST source substitutions and preserve the original ordinary API.
+
+Draft a separate native-source proof-byte Core-to-stream closure with complete
+source/CST inverses and original-contract receiving controls. Runtime and
+performance qualification remain unrun; existing defaults are unchanged.
+
+Draft an explicit source-derived byte producer that batches every original CST
+phase and inverse after complete native assembly, with unchanged standalone API
+and complete original tests. Generation and runtime qualification remain unrun.
+
+Draft an actual-source negative budget witness for large internal proof JSON:
+skip a necessarily failing duplicate composer preflight while preserving the
+dynamic full JSON fallback, callbacks, fresh Hash payloads and old helper APIs.
+Add complete source inverses and independent receiving controls. Original
+derive-context performance qualification remains pending.
+
+Pin the complete integrated native helper including its additive stateless
+eligibility export; require a native-AST whole-source inverse back to the prior
+helper and preserve the original copied census and all old APIs.
+
+Compare genuine lazy/eager stack inputs at one paired capture callsite and the
+same retained-scope nesting, preserving full frame results and strict bytes.
+
+Keep the optimization as an explicit candidate after the complete original
+CatalogRecord case remained over its unchanged 60-second deadline. Restore the
+original production serializer and retain the complete proposal and controls.
+
+Reject native copied JavaScript that TypeScript identifies as using a block-scoped binding before declaration. Preserve deferred and hoisted bindings; this check remains separate from strict target typechecking.
+
+Draft an explicit source-derived canonical-table decoder candidate that avoids
+rebuilding the decoded graph solely for canonical equality. Preserve original
+codec APIs, complete fallback, JSON/freeze/Hash observations and original
+bounds, with whole native/CST inverses and eight receiving controls. Production
+selection and complete CatalogRecord performance qualification remain pending.
+
+Qualify Node's actual Buffer accessor provider without accepting arbitrary
+getters, and retain setter-only rebinding and cold getter refusal controls.
+Record the initial positive-control failures separately from source preparation.
+
+Add an explicit isolated canonical-table trial harness that preserves the full
+original twelve-case derive test, fresh complete Rust/Cargo/compiler/TypeScript
+inputs, source/CST inverses, per-file gzip readback and original duration audits.
+Preflight uses the compiler's 8,192-file/32 MiB/256 MiB input limits before source
+body reads and limits mirror/evidence storage to 384 MiB.
+Version-two file frames retain unchanged original bytes once with an explicit
+trial association, preserving complete separate codec candidate bytes and strict
+full-source readback after the first preparation exceeded its unchanged cap.
+Production defaults remain unchanged; the new harness and original workload
+trial await receiving qualification.
+
+Draft an explicit reverse primitive vector candidate joining complete paired
+JavaScript/TypeScript literal functions to fresh actual original Rust Vec
+signatures through the complete forward translator. A native/CST source producer
+copies the private checker/emitter/document into separate candidate modules.
+Defaults remain unchanged; source generation and whole receiving tests are unrun.
+
+Narrow the explicit canonical derive trial archive to both complete compiler
+source contracts, all Rust/Cargo/scripts/installed compiler inputs and the
+unchanged original twelve-case test's native import/helper/file-input closure.
+Retain full source proofs and explicit omitted-path DATA; uncertain dynamic
+dependencies refuse. Preserve the 384 MiB evidence cap and all test deadlines.
+
+The two prior archive preparations failed the unchanged storage cap before
+runtime. This repair and seven new complete controls are source-only and unrun;
+no production codec selection or performance qualification is claimed.
+
+### Changed
+
+- Collect independent original-source signature and body lifetime failures in
+  the project translator before rechecking surviving callers. Preserve ordinary
+  standalone checker errors and all original source ownership checks.
+- Generate the three complete source changes through native syntax selections
+  and separate language/repository CST sequences, retaining complete inverses.
+  Compose the later source layers explicitly with the original vector producer.
+
+### Validation
+
+- All 22 complete Node lifetime/project refusal cases passed their original
+  deadlines. Full-project performance, Bun and full-gate qualification remain
+  open. No Rust tools were executed locally.
+
+Correct the explicit reverse vector candidate's external-module identity join:
+use the genuine module view from the same fresh forward translation instead of
+comparing a full qualified name with locally rooted physical-file views. Clear
+partial profile maps on failure and require the source root's actual installed
+native compiler during source preparation. Add one complete module-identity
+control while preserving the original six workloads and all defaults.
+
+Source review only; generation, syntax/runtime checks, Rust and receiving tests
+remain unrun. This candidate has no qualified coverage or performance claim.
+
+Repair exact inverse joins in the shared source-adoption sequence and add a
+native/CST-produced original checked-source accessor for explicit reverse vector
+candidates. Preserve target lowering and all historical lifetime/vector source
+equations through explicit current composition. Add full source, span, ownership,
+mutation and fresh-invocation controls; integrated generation and receiving tests
+remain pending. No whole-project coverage or Rust verification is claimed.
+
+### Changed
+
+- Materialize the three explicit reverse-vector candidate modules and the
+  original checked-source accessor through their native/CST producers, retaining
+  complete source plans and inverses. Existing lowering and default reverse APIs
+  remain unchanged.
+- Refresh the complete historical/current source archive and current Host input
+  metadata through their actual source producers. Keep all historical originals.
+- Produce identical Unicode Rust oracle text under Node and Bun by using an
+  ordinary template for a tail without escape sequences.
+
+### Validation
+
+- All seven reverse-vector receiving cases pass under Node; all 23 shared bulk,
+  reverse-vector, checked-source and lifetime cases pass under Bun. Both execute
+  independent strict TypeScript targets. Node's original deadlines passed.
+- The affected 73-case Node cohort passed. Full-project performance, native class
+  export refresh, generated parity and the full JavaScript gate remain open.
+  No Rust tools ran locally and no production coverage gain is claimed.
+
+Add a separate source-derived whole-owner derive candidate with a fresh
+invocation-local binding program, actual Node crypto source/ABI qualification,
+complete original creator fallback and eight receiving controls. Nested legacy
+fallbacks suspend and restore any outer private owner frame. Defaults and
+old single-owner APIs remain unchanged. Generation, runtime controls and the
+unchanged whole derive workload remain unrun; the prior canonical trial's
+60-second deadline failure is retained explicitly.
+
+Materialize the source-proof preservation and source-selected primitive identity
+boundary through their native AST and lossless CST producers. All original
+external-trait, primitive and conversion cases passed the complete receiving
+94-case Node cohort; its sole failure was a new observer, repaired separately.
+
+Materialize the eight-module opt-in whole-owner derive candidate with complete
+source, CST, inverse-plan readback and fresh input verification. Defaults remain
+unchanged. Its first eight-case Node receiving run passed seven cases and failed
+the JSON callback-tape comparison; that comparison and three later-composition
+trace observers in the enclosing 33-case batch remain under repair. No case
+deadline was exceeded. Performance, full production coverage, generated profile
+freshness and the complete JavaScript gate remain open. No Rust ran locally.
+
+Draft a separate source-generated isolated trial of the whole-owner creator
+and existing canonical codec over the complete unchanged original derive
+twelve-case workload. Retain complete native/CST overlays, source closure,
+bounded gzip readback, original deadlines and full Node/Bun source joins.
+Defaults remain untouched; generation, receiving and performance are unrun.
+
+Repair the new whole-owner JSON observer comparison to run both complete
+original inputs in paired fresh engine processes, retaining cold, fresh-context
+warm and same-context cached callback tapes. Preserve the original 60-second
+case and full strict wire equality; retain the first 7/8 failed receiving run.
+Production code is unchanged, and this source repair is not yet runtime tested.
+
+Add a separate opt-in gzip proposal/reviewer for the complete physical
+formatting → matches → vectors source sequence. Preserve all source/CST histories,
+inverses, actual fresh native source equations and distinct original function
+identities without a corpus-sized JSON allocation. Existing json-readers/default
+controllers and application routes remain unchanged. Seven complete receiving
+cases are drafted; runtime/resource qualification and whole-project gains remain
+unmeasured. No Rust verification is claimed.
+
+Draft a separate complete source-derived whole-owner resolver and effects
+issuer, with a recursion-free copy of the original private binding bootstrap.
+Keep old defaults and callback fallbacks, add descriptor/source carrier guards
+and six complete controls, and retain all original owner/source checks. Both
+source producers must run before runtime imports; generation and tests are unrun.
+
+Add an explicit source-bound ASCII alphabet predicate to the Rust/JavaScript
+compatibility core, with guarded CST adoption, strict target controls and a
+CI-only native oracle. Add source-qualified JS/TS reverse recognition, explicit
+borrowed-Str projection and a registered CI-only generated Rust witness.
+Complete receiving execution, production coverage and parity remain pending.
+
+Draft the explicit native/CST three-source original derive trial, routing both
+actual public creator/resolver entries with correct physical private issuers.
+Keep the two-source creator trial, full original input closure, bounded complete
+gzip source transport and unchanged Node/Bun twelve-case joins. Add four whole
+controls; generation, receiving and performance remain unrun.
+
+Generate the complete optional resolver, private original bootstrap and both
+isolated original-test trial runners through the native AST and lossless CST
+source equations, with full inverse-plan readback and freshness verification.
+The complete eight creator, six resolver and both four-case trial control files
+passed Node receiving checks under the original deadlines. No default selection
+or performance qualification is implied.
+
+The enclosing receiving batches passed 49/50 and 14/15 cases respectively. The
+packet rejection correctly refused missing Cargo inputs; its diagnostic is now
+explicit. The later negative case passed its assertions but its link cleanup
+ran after parent cleanup; make that owned-link cleanup tolerate an absent path.
+The complete packet file must be rerun. Bun and the actual original twelve-case
+performance trial remain unrun at this checkpoint. No local Rust ran.
+
+Add a separate opt-in complete stagewise formatting → matches → vector source
+proposal and independent gzip reviewer. Native TypeScript/CST source production
+copies the actual complete stage helpers and selected bounded packet IO, retains
+both source phases and full inverses, and preserves all previous APIs/defaults.
+The operation writes and reopens complete packets before releasing each decoded
+stage, rejoins fresh full source/Cargo graphs, inverts original function
+coordinates and publishes its success index last. It installs no source and
+claims no semantic admission, reverse execution or production coverage gain.
+
+Seven complete receiving cases cover native copy/inverse equations, all three
+stages, forged/linked/extra packets, physical source/workspace/lock membership,
+callback exceptions/mutations and final packet corruption, macro barriers,
+original budgets and explicit CLI dispatch. Syntax checks passed. Native source
+generation and runtime tests are unrun pending the coordinator's shared lease;
+the previous complete 564-source production sequence remained RED at 900 seconds.
+
+Draft an explicit source-generated Core producer candidate with matching enclosing
+private issuers and complete synchronous original-owner inspection before packet
+yield. Preserve old APIs and callback fallback, full original source/CST/inverses,
+and invocation-local capture rows. Materialization and receiving verification are
+unrun; related original twelve-case Node/Bun performance remains red.
+
+Retain the failed six-case framed-observer receipt and draft lossless Brotli4
+transport with full decoded-byte comparison and one parsed record. Preserve
+four child workloads, 12.5-second child/60-second case deadlines, per-child
+64 MiB stdout and outer physical evidence bounds. Report sequential sizes
+without treating cumulative decoded bytes as concurrent storage. Receiving
+reruns and the complete four-case wire helper controls remain unrun.
+
+### Changed
+- Materialize the complete forward and reverse ASCII source equations and stagewise source-packet helpers through native TypeScript parsing, serialized/reparsed CST substitutions and full inverse readback. Refresh the current Rust/Cargo source bank and committed Host entry metadata while preserving historical inputs.
+- Correct current receiving assertions to retain every rule-stage trace and compare historical rows with the final composed physical source. Behavioral, strict TypeScript, full regeneration and parity checks remain separate obligations; this source checkpoint does not establish complete translation.
+
+### Changed
+- Materialize three complete, separately named Core producer source copies using native binding validation and lossless CST inverses. Existing producer APIs and defaults remain unchanged; behavior and full production performance still require receiving checks.
+
+### Fixed
+- Make the scalar facade-removal refusal fixture actually remove the current grouped export and fail if its mutation becomes a no-op.
+- Retain Rust CST/inverse checks without incorrectly requiring JavaScript AST copies for Rust rows in the complete lifetime-source test.
+
+Draft an explicit complete formatting/matches/vector corpus source closure using
+fresh synchronous Core owner capture before packet production. Rejoin every
+source/span and preserve lazy original effect order, full JSON wire fields,
+callback fallback, complete CST/inverses and original storage limits. Candidate
+generation and receiving checks are unrun; no default or coverage claim changes.
+
+Draft a separate opt-in synchronous proof DATA byte-composition operation using
+native TypeScript-selected complete existing composer declarations and explicit
+language/repository CST source rules. Preserve every original module/default,
+arithmetic scope, byte/cell/depth policy, Hash site and full source inverse.
+Local encoded entries close on return/throw; nested operations use the original
+serializer, and uncertain/changed-hook cases clear local bytes before original
+fallback. Promise/thenable/proxy results refuse without invoking their getters.
+
+Seven complete receiving cases cover source equations, exact bytes/Hash payloads,
+old hooks and errors, changed intrinsics, nested/closed lifetimes, async refusal
+and original budgets. Syntax checks pass; native generation/runtime are unrun.
+The full CPU/source audit is retained. Actual whole-owner consumer wiring and
+original-twelve performance qualification remain separate unfinished work; this
+standalone draft claims no speed or application coverage gain.
+
+### Changed
+- Materialize the explicit ASCII-only asset reader and the separate synchronous operation-local proof byte composer from their complete native/CST source equations, retaining full inverses and fresh output checks.
+- The ASCII reader validates its declared selected sources and intentionally has a distinct read schedule; it does not claim callback equivalence with the unrelated full asset builder. The byte composer remains an opt-in API, with no production issuer wiring or measured performance gain yet.
+
+Added a separate source proposal for operation-local proof-byte consumer imports,
+a complete coherent physical original-twelve trial, and seven receiving controls.
+Original defaults, bulk candidates, Hash calls and deadlines are retained.
+Generation, runtime and both-engine original-twelve performance are unrun.
+
+Draft an explicit native-symbol/CST-derived private parser DATA copier with
+assignment only for absent ordinary keys and exact defineProperty fallback for
+every inherited key. Preserve the complete original executor, budgets, source
+authentication, callback payloads and old default APIs. Add six complete source,
+descriptor, refusal, Hash-mutation and cold nonwritable-prototype controls.
+Materialization, receiving engines and performance qualification remain unrun.
+
+Retain the failed full corpus observer receipt and draft a separate lossless
+indexed primitive-DATA transport for every callback field and occurrence.
+Avoid monolithic expanded-tape stringify while preserving complete decoded
+frame-byte comparison, actual Buffer bytes, nested mutation controls and
+existing representation/stdout/evidence/deadline limits. Keep the qualified
+Core/v2 transport unchanged. New helper six and corpus receiving remain unrun.
+
+Added a source-only owned Unicode predicate candidate: two checked core APIs,
+complete native/CST source and inverse equations, conservative complete-expression
+adoption, retained actual Router parents/Cargo, seven whole receiving cases and
+a producer-emitted CI-only Rust oracle. Existing scalar/ASCII/matches/vector APIs
+and refusal gates are retained. Generation, runtime, Rust, reverse support and
+whole-project executable gains remain unrun or unmeasured. Syntax checks passed.
+The candidate remains uninstalled: source review found that historical ASCII
+helper physical-parent checks require an explicit later native/CST producer
+composition. Append-only freshness adapters were rejected before generation;
+the original guards and default compositions remain unchanged.
+
+Draft an emit-only native/CST original-module proposal that appends the actual
+private DATA assignment helper and redirects only three native-bound call
+identifiers. Preserve old data(), all other source bytes, APIs, guards and one
+existing compilation state. Retain per-step/per-phase and complete inverses,
+physical source fences and two source controls. No defaults are written;
+generation, full receiving and performance qualification remain unrun.
+
+Draft an explicit native/CST copy of the authenticated private source transaction
+that invokes the existing fixed graph's original concrete substitution APIs.
+Retain complete per-rule CST boundaries, both phase inverses, primitive full-row
+results, source/file/input identity fences and original bounds. Preserve old
+APIs and registry history. Add seven whole-file source/behavior/refusal controls;
+generation, engines and performance qualification remain unrun.
+
+Added an explicit closed JSON DATA DAG test transport with invocation-local complete structural interning, full occurrence references and independent bounded frame readback. Added six complete controls for native JSON projection, aliases, large repeated arrays, callbacks, malformed DAGs, source CST stages and nested mutations. Existing codecs and defaults are unchanged. Source draft only: receiving runtime and original corpus workloads remain unrun by the worker.
+
+Reused one invocation-local complete own-key census per closed JSON DAG object visit, including full byte payloads. Stack refusal, exact byte key counts, ordered field descriptors and all prototype/intrinsic fences remain intact. Preserved Root's qualified SameValue descriptor comparison and diagnostics, all six controls and all limits. Source-only allocation repair; runtime performance remains unrun by the worker.
+
+Drafted a test-only native/CST source adapter for the exact historical native assembler layout roots. It preserves both frozen beforeAssembler literals and complete original test pins, all current js/src corpus inputs, physical loaders and deadlines. Added four complete source/refusal controls and full native/CST inverses. Current APIs/defaults are unchanged; materialization and runtime qualification remain unrun by the source worker.
+
+Add explicit historical and current source composition for the private DATA
+adoption trial. Preserve complete original executor/candidate/producer/test
+beforeimages, original exported producer bodies, full native/CST inverses,
+and all original behavior cases/deadlines. Current candidate CLIs follow the
+actual executor without installing default adoption; the separate three-file
+proposal reports physical installation honestly. Runtime qualification remains
+pending; no default or performance claim is made.
+
+Corrected the historical native assembler adapter to select every original exported stem under either the exact old or current root. Already-current stems are preserved byte-for-byte; only genuinely old stems are edited, and the original old guard still requires the exact current regex suffix equation. Retained all native binding joins, complete frozen sources, source refusals, CST/inverses and deadlines. The initial materializer refusal and unrun receiving repair remain explicit.
+
+Recheck all private DATA birth auxiliary sources after current composition CST
+rounds. Retain actual object-valued phase traces and full applied-rule controls,
+and add a late Hash-callback source-change regression. Original complete cases
+and deadlines remain unchanged; receiving qualification is pending.
+
+Drafted exact genuine original assembler literal recovery from complete pinned Git test sources, preserving the original bulk8f8dfc0a hash assertion and full mixed migration history. Native language rules restore only the literal initializer; repository rules adapt actual guard/stem/TypeScript-template roots through their genuine current bindings and retain complete per-phase/whole inverses. Existing exact mixed-source callers remain supported. Added separate four-case archive controls without dropping the four layout workloads. Source-only; history materialization and receiving runtime remain unrun by the worker.
+
+### Added
+
+- Draft a separate owned unit-enum `matches_unit!` operation using the existing
+  ordered-match checker, genuine original parse custody for const owners and the
+  privately checked Copy/no-Drop unit layout. Preserve old literal/standard
+  ownership decisions and all unknown producer barriers.
+- Add native/CST source producers for complete unit/scalar-call adoption and an
+  explicit enclosing primitive-prefix candidate, complete 564-source/Cargo inputs,
+  seven whole receiving cases and a CI-only Rust oracle. Current source wrappers
+  retain original birth equations and compose the new layer explicitly.
+
+### Verification
+
+- Source-only draft. No generation, engines, native parser, receiving tests, Rust
+  tools or production admission ran. Static archive/anchor/source checks and
+  `git diff --check` only; generated outputs await coordinator materialization.
+- Nine exact complete production targets (eight unit-pattern bodies and one scalar
+  pattern body with an enum formal) are unmeasured. Historical 106 str-first
+  refusals retain unknown producer scopes; neither candidates, preserved source
+  nor a removed first refusal is new executable coverage. Reverse owned-unit
+  semantic recognition and the complete current gate remain unimplemented/unrun.
+
+### Source review follow-up
+
+- Reuse only invocation-local complete native parse trees for detached-copy
+  inspection, retaining independent reparse/AST/binding checks and exact proposed
+  outputs. Strengthen whole-corpus primitive, inspection, source/hash/inverse and
+  fresh physical/Cargo joins; pass the actual Cargo manifest to edition checks.
+- Retain both complete adoption histories in bounded, independently reopened
+  DATA packets before releasing their decoded graphs. Keep all seven original
+  workloads/deadlines and add complete-archive mutation controls. No runtime,
+  generation, native-parser or resource qualification ran; full-corpus fit,
+  speed and executable gain remain unmeasured.
+
+### Receiving repair draft
+
+- Retain Root's first whole seven-case RED (five pass, source-relocation failure
+  and neutral-profile module-cap failure; the latter also exceeded 60 seconds).
+  Replace only the fixture span constructor with a native/CST copy of the actual
+  original relocation callback; keep real verifier/custody negatives unchanged.
+- Explicitly pass existing `PRODUCTION_PROFILE` through the complete production
+  case's project and both adoption phases, retaining actual graph observations
+  and every original cap/deadline. No platform flags are inferred and neutral
+  defaults remain. All 209 historical TYPE-first contexts already used this
+  production profile, so this repair does not explain or claim to resolve them.
+- Source-only/static review; receiving and current resource outcomes are unrun.
+
+Draft an explicit reversible three-file private DATA receiving driver. Retain
+complete native/CST source and byte recovery packets; run all sixteen whole
+files in fresh Node and Bun processes with independent case-duration checks;
+restore only exact owned trial bytes. Source-only draft, execution unrun.
+
+Derive a narrow Core stream prerequisite normalization from its archived native
+source. Preserve strict own-hash checks and all existing physical Hash calls;
+accept an own complete source only when no own hash was supplied. Preserve the
+complete prior adapter as a generation predecessor and add full source/native/
+CST/Hash receiving controls. Source-only draft, runtime unrun.
+
+### Added
+
+- Draft an explicit synchronous builtin-definition position index through a native TypeScript/CST source producer, preserving the complete original issuer and every original parse/hash tail. Defaults stay unwrapped; indexes close with the invocation and retain duplicate positions without source or semantic authority.
+- Add seven whole receiving cases for full source inverses, real compiler definitions, hash payloads, native-hook fallback, copied/foreign evidence, nested/exception/async cleanup and duplicate/budget DATA controls. Source-only: generation, runtime and performance qualification remain unrun.
+
+Native-derive deferred CST rounds for the explicit twelve-file proof-byte Core
+source producer. Retain all native rows and issuer joins, complete original
+record order, per-rule phases/inverses, raw-byte prerequisite fences and final
+Hash checks; use bounded three-row authenticated chunks without lifting caps.
+Add complete source/equality/Hash controls. Source-only draft, runtime unrun.
+
+Draft a native/CST source proposal for operation-local proof byte composition
+inside the original enclosing namespace and Default creators, retaining their
+private issuer identities, classic cache behavior, original source/owner checks
+and Hash call sites. Add seven whole receiving cases and explicit Schemars
+import history composition. Native generation, runtime, original twelve-case
+deadline qualification and production gains remain unrun.
+
+Expose a focused exact enclosing-history equation for downstream current-source
+pin composition, reusing the same full original archive and native/CST selector
+while avoiding generation of unrelated consumer rows. Runtime remains unrun.
+
+Draft a native-selected, complete CST/inverse default source proposal that
+retains the already detached private owned-core analysis instead of copying it
+again. Preserve all reconstruction, Hash/source checks, callbacks, return copies,
+retention bounds and fallbacks. Append the later source layer to current
+compositions while retaining all historical equations, indexes and refusals.
+Add four receiving controls and complete final-source composition checks;
+runtime, strict TypeScript, original three-build deadline and default adoption
+remain unqualified.
+
+Draft a native/CST default source proposal that replaces the redundant middle
+Lino text parse with a detached closed-DATA copy. Preserve the original public
+decoder, fallback, first/canonical parses, both semantic checks and all JSON/Hash
+sites. Add six complete receiving controls, including callback mutation and
+transient-hook regressions. Generation, runtime and deadline gains are unrun.
+
+Draft a native/CST source proposal for operation-local runtime import parsing
+that retains the complete parser while omitting qualified repeated parent-link
+construction. Preserve the original three-build workload, source/Hash/RegExp
+callbacks and fallback behavior; add loader-issued native identity custody,
+full source inverses and seven complete receiving cases. Generation, runtime
+equivalence and performance qualification are unrun.
+
+Keep immediate per-visit qualification before every specialization/retention,
+exercise transient changes in full native/CST receiving copies, and explicitly
+compose current wrappers and CLI freshness after every historical source layer.
+
+Source follow-up: canonicalize only the pinned native AST's finite lazy Debug
+assertion/noop alternatives, keeping exact loader-issued callable identity and
+level/descriptor guards. Add complete repeated-proposal equality and foreign
+noop/descriptor controls. The earlier four-output materialization failed its
+second proposal check and rolled back all outputs. This repair is source-only;
+materialization, seven-case receiving and original whole-file checks are unrun.
+
+The second materialization attempt failed before writes because the native
+compiler bundle nests its noop declaration. The follow-up joins its actual
+recursive declaration through native binder tables to the CommonJS export
+getter and Debug assignment, retaining full source spans. Source-only and unrun.
+
+Receiving harness follow-up: retained Node vectors show the original static
+runtime closure succeeds with 33 source rows and zero Hash calls; preserve that
+exact zero tape while keeping positive Hash tapes for both ASCII closures.
+RegExp tape recording now uses indexed field reads, so observing a changed Array
+iterator cannot recursively observe the recorder itself. Source-only and unrun;
+all seven workloads and original deadlines remain unchanged.
+
+The second whole receiving run retained equal original/scoped before-retention
+tapes: 73 genuine iterator observations followed by the same source-host guard
+refusal. Replace the remaining zero-count harness assumption with positive
+observations and that exact refusal; full tape equality and disabled-frame checks
+remain mandatory. This narrow follow-up is source-only and unrun.
+
+Bun receiving follow-up preserves the actual loader/source-profile refusals and
+strictly checks disabled/zero-retention fallback facts. Complete fresh Node child
+source proposals retain both full plans/receiving copies within the unchanged
+case bounds; they grant no Bun native authority. Qualified Node keeps every
+active-path assertion, and all seven behavioral/negative workloads stay intact.
+Source-only, no receiving rerun; production guards and installed outputs unchanged.
+
+Use null-prototype property descriptors for copied Lino DATA arrays so inherited Object.prototype get/set DATA fields cannot introduce an accessor/data descriptor conflict. Add a complete receiving control with actual parsed networks and original/new semantic parser outcomes. Source-only draft; receiving execution remains unrun.
+
+Add an explicitly unadopted paired owned JSON edit-slot/loan candidate with
+immediate partial-write preservation and scoped reborrow revocation. Retain
+complete source evidence for the 49 mutable-Value-signature functions in 30
+whole parents, and add a two-phase CST/inverse proposal for the real remove leaf
+without erasing `&mut Value` or installing an unresolved facade edge.
+
+Add seven source/behavior/refusal receiving cases and CI-only Rust oracle source.
+Parser/checker/call-site owner and writeback joins remain missing. No function
+admission, executable coverage, native generation, JS/Bun/TS pass or Rust result
+is claimed; this is source-only. Bounded Python evidence capture/readback and
+static diff checks pass.
+
+Draft a separate mutable-JSON parameter/meta/flow component over genuine original
+module/profile origins, freshly reissued registered namespaces and the unchanged
+Host checker owner. Keep an explicit serialized/reparsed loan type, private
+invocation-local associations, checked exclusive-root/reborrow flow and source
+association only for a complete closed remove body.
+
+Add native-selected paired-leaf and local call/writeback CST proposals with
+complete inverses, binding checks and detached AST copies, plus seven receiving
+cases. Original Rust caller ownership/ABI and default Host lifecycle integration
+remain missing; no default adoption or executable gain is claimed. Source-only:
+static diff checks pass; native generation, all JS/Bun/TS and Rust are unrun.
+
+Charge each mutable-JSON loan flow attempt before metadata copying, including
+malformed cyclic/accessor inputs. Add a complete repeated-refusal regression to
+the existing seventh receiving case; keep its original 60-second deadline.
+
+Require the existing private Host checker constructor issuance before checking
+and on subsequent private accesses, in addition to the original method guard.
+Some-owner source checks and all missing Rust caller/Cargo/ABI obligations remain
+unchanged. Static diff checks passed; all engine checks remain unrun here.
+
+Extend the existing detached Lino DATA source proposal to owned checked meta. Capture a working network before header callbacks, replay the genuine syntax LF state at the original lowering position, and preserve the complete original decoder, checked serialization, source joins and fallback domains. Retain exact installed v2 histories with full native/CST inverses and add six complete receiving controls. Source-only; generation, runtime and performance remain unrun.
+
+Add a source-only literal include type-contribution proposal with a separate
+private Bang-owner proof, full original child/function origins, native/CST
+source inverses and seven receiving cases. Default resolution is unchanged;
+Router's macro-heavy caller closure and all executable gains remain unproved.
+
+Resolve the mutable-JSON candidate's already source-resolved external Value
+identity through the genuine canonical root host-type API. Preserve the source
+parser's actual nested module path and full original view; do not synthesize an
+application module in the host-only checker.
+
+Retain the failed nested positive and add a two-level nested import-alias
+positive in the same original 60-second receiving case. The original first
+receiving run remains RED (six of seven cases passed); this source fix has only
+static diff checks, with engine/native/Rust qualification unrun.
+
+Draft a distinct bounded JSON remove library artifact from the existing private
+loan/source plan, with canonical serialized/reparsed flow, complete pinned
+serde_json Value/Map and Rust Option/prelude selections, genuine Cargo feature
+activation and separate 2021/2024 source editions.
+
+Reuse native-selected JavaScript leaf production and add a matching TypeScript
+declaration with both ordered CST phases, full native copies and inverses. Add
+seven receiving cases and CI-only Rust oracle source, including the larger Rust
+input-domain counterexample. No default admission, source installation, Host
+append or application coverage gain is claimed. Static checks pass; every new
+engine, native producer, strict-target and Rust check remains unrun.
+
+Pin the exact native JSON.parse descriptor before literal-include parser/CST
+work. Retain the original complete authored archives and binder pin, with a
+native-selected reversible source continuation. The existing seven receiving
+case bodies and deadlines remain unchanged; worker runtime checks are unrun.
+
+### Changed
+
+- Draft a complete source-derived internal lexing initializer guarded by the
+  preloaded common intrinsic issuer before reflection. Preserve the original
+  lexing module and all private proof bodies, route only two private imports,
+  and retain native/CST whole inverses plus complete cold/late observer controls.
+  Source-only: materialization and all runtime qualification remain unrun.
+
+Add a source-only native/CST proposal for additive private NamespaceParser
+if-let/while-let and genuine explicit Rust2024 let-chain capture, preserving
+the original entrypoint and same-physical-file issuer adoption boundary.
+Retain complete compiler/original source programs, both ordered inverse phases,
+eight whole receiving controls and an unexecuted Rust oracle. Actual include
+owners and executable coverage remain unresolved; runtime qualification is pending.
+
+Add an explicit strict static-fixture refresh proposal/reviewer instead of
+repinning a stale current census. Reauthenticate the complete current HEAD/index,
+mode/blob/physical Rust/Cargo universe, refuse missing/linked/untracked/staged
+or late-changing inputs, and retain all prior fixture bytes and full inverses.
+
+Native-select a separate complete producer copy that replaces only its physical
+ENOENT-to-Git fallback with the original error rethrow, preserving both ordered
+CST phases, full native copies and inverses. Keep every original reader and the
+fixed historical 806/808 source equations unchanged. Add seven receiving
+controls and complete regeneration/qualification guidance. Source-only: static
+checks passed; all native generation, controllers and runtime checks are unrun.
+
+Draft a distinct native retained owned-field storage family through the actual
+installed native parser and both ordered CST phases. Replace only the original
+encode/decode bodies with bounded UTF16LE/deflate/base64 kernels; retain all
+original collection, chunk, threshold, budget and independent-roundtrip bodies.
+
+Copy the complete required retained bulk/matrix/session/profile/CLI routes with
+full native bindings, source captures and inverses. Preserve original APIs and
+all application refusals; expose the trusted native DATA and observation
+boundaries explicitly. Add seven complete receiving cases. Source only:
+generation, all runtime checks and performance remain unrun; no coverage gain.
+
+### Added
+- Materialized six separate whole-owner Core sequence candidates through the native-parser/CST substitution producers, retaining complete source inverses and fresh generation checks.
+
+### Development
+- Complete Node receiving: helper 4/4, Core producer 6/6, corpus 5/6, with no case deadline breaches. The corpus observer still exceeds Node's single-string serialization limit; full qualification, production adoption and translation coverage gains remain unproved. No Rust tools were executed.
+
+### Added
+- Materialized the separate proof-byte consumer closure and complete original-twelve harness from their native-parser/CST producers. Independent readback retained all 19 consumer outputs, all 15 physical overlay equations, all prerequisite histories and every full source inverse.
+
+### Development
+- Generation and fresh source checks passed under the existing resource limits. Original defaults remain unchanged; receiving tests, performance qualification, full regeneration and parity remain open. No Rust tools were executed.
+
+### Added
+- Generated the complete 33-asset ASCII base helper and its checked source data, plus the separate private-parser DATA copying candidate, with native bindings, complete CST/source inverses and fresh regeneration checks.
+
+### Development
+- All four output plans passed independent readback in the corrected driver. The first driver attempt failed before installation because it assumed a different metadata schema. Runtime, original-case performance and complete parity remain unqualified; the parser default remains unchanged. No Rust tools were executed.
+
+### Fixed
+- Preserve the original full JSON projection when transporting complete Core corpus observations, including class-shaped results and every repeated string occurrence. Keep the existing plain-DATA codec and original resource/deadline limits.
+- Compare a copied context refusal with the exact original foreign-context refusal, instead of assuming its error text.
+
+### Development
+- Prior complete Node receiving: private DATA 6/6, indexed transport 6/6, ASCII base 4/4, corpus 5/6; no duration breaches. The complete replacement transport/corpus run is pending. Proof-byte source cases still exceed their original deadlines. No Rust tools were executed.
+
+### Development
+- Retain full native Uint8Array observations as canonical byte substrates, with exact JSON-projection, byte-mutation, extra-field and shared-storage controls. The original frame limits and compiler workloads remain unchanged.
+- All six transport controls pass. The full corpus retains five passing cases and one failed observer case: repeated array expansion still exceeds its bounded representation. Complete qualification remains open; no Rust tools were executed.
+
+### Added
+- An additive private CST source-substitution transaction and an explicit batched producer for all 34 proof-byte source records. They retain the ordered language and repository phases, complete serialized/reparsed CST, inverses, native bindings, original source checks and existing limits. The original standalone producer remains available.
+
+### Validation
+- All seven bulk-transaction cases passed under Node 20.19.4 with the pinned TypeScript 5.9.3 compiler and no duration breaches. The one API module and five provider modules passed independent full-source, native syntax, CST/inverse, archive readback and freshness checks.
+- Provider performance, Bun receiving checks, production selection, complete regeneration and the full JavaScript gate remain open. This draft does not increase measured executable coverage or establish complete bidirectional synchronization. No local Rust tools ran.
+
+Correct the stale solo instruction in the source-reader report to the current up-to-three-worker policy, preserving the single publisher and single heavy-workload lease. Extend reusable guidance and its exact outside-case patch with genuine historical oracle recovery and source-bound private DATA optimization examples; retain all original gates, deadlines and coverage limitations. Documentation source review and static patch-byte equations only; no engines, generation, Rust tools or runtime checks ran for this change.
+
+Draft a separate native/CST source producer for complete Schemars container Type override output on unit enums, retaining the actual documented four-method and no-document six-method branches, original quote/helper ownership and all sibling obligations. Add eight whole-file controls including unchanged complete ClientKind source and explicit copied/callback/cfg/owner refusals. Existing TypePath helper APIs, default issuers and original tests remain unchanged. Static source/archive review only; generation, engines, runtime qualification, adoption and coverage gains are unrun.
+
+Adopt the qualified private-parser DATA sources, regenerate complete canonical reverse artifacts including the ASCII witness, and draft checked Schemars with-Type and scoped syntax-index source proposals. Preserve the original performance failure, full profile/parity obligations and JavaScript-first Rust CI gate; this checkpoint does not establish complete translation.
+
+The Schemars with-output receiving fixture now constructs actual repository
+items from the complete captured original library graph, with its original
+Cargo inputs and production profile. Previously `clients.rs` was supplied as
+an isolated crate root despite declaring external child modules; the private
+nested-helper proof correctly refused that incomplete source universe.
+
+The original eight test bodies and 60-second deadlines are unchanged. The
+helper proof, registration joins and default APIs are unchanged. Root's prior
+receiving run passed 92 of 93 assertions and failed the actual ClientKind case
+at the genuine nested-helper check. This source-only fixture repair has not
+been executed; the complete graph may expose additional ownership refusals or
+exceed the unchanged receiving deadline. The actual graph fixture also uses the
+existing project's source-backed standard/matches/TOML external namespace
+construction, so the imported TOML `value` function keeps its genuine value
+identity rather than an unresolved possible macro slot. No coverage gain is
+established.
+
+Draft a reversible Schemars enclosing-dispatch adoption proposal. The dispatcher
+joins actual private context/certificate membership before reading helper fields
+and selects old/new readers only by private proof membership. The original
+standalone Schemars and full-bang APIs remain available and unchanged.
+
+The source producer selects one actual native import in the original enclosing
+issuer, preserving that issuer's private tables. Its complete language/repository
+CST phases, serialized readbacks, native edits and whole inverses retain the old
+source. A pinned complete Git history packet also preserves the old enclosing
+control and all eight existing candidate test bodies; the receiving adapter
+changes only the old-control import. Actual physical inputs remain separately
+hashed and freshly checked. Later body wrappers require explicit composition.
+
+Add four complete controls for source equations, old/new private dispatch,
+same-issuer effects and copied/foreign/getter/proxy refusals. No history capture,
+native generation, engines, runtime checks, default source installation or Rust
+tools were executed by this worker. The actual ClientKind fixture repair is a
+separate unrun commit; qualification, performance, production coverage and the
+complete JavaScript gate remain open.
+
+Compose the known Schemars import and default-byte creator wrapper through the
+fresh focused byte-history producer. The candidate restores exact repository,
+call and import spans with independent complete native and serialized CST
+inverses, retaining actual physical sources separately from historical inputs.
+The full byte archive is complete typed base64 evidence, not a fake UTF-8 source
+row. Every physical byte and absent helper is rechecked before return.
+
+The birth adoption producer remains independently derivable without recursion;
+a distinct current-history API reports both full source layers. The existing
+eight test bodies and deadlines are unchanged. Three new controls exercise full
+equations, changed-source refusals and text/binary freshness. This worker ran no
+engines, generation or Rust. Root's preceding Node v3 run passed all eight
+assertions but the actual ClientKind case took 81,950.771 ms against 60,000 ms:
+performance remains RED and no production coverage gain is established.
+
+Close the composed Schemars history's final binary-input fence over its complete
+genuine birth archive as well as the default-byte archive. Both are captured
+before the focused source operation; the birth archive's full bytes, size and
+digest must join its genuine returned record. The current composer also repeats
+the birth history's original complete freshness check before returning.
+
+The new three-case control now corrupts each complete binary record independently
+and checks both actual archive paths. The existing four adoption and eight
+candidate case bodies/deadlines are unchanged. Source-only; no engines, source
+generation, default installation, Rust tools or runtime checks ran here.
+
+Extend the source-derived copied Schemars enclosing context to use the same
+actual proven byte operation when the physical original context has that exact
+known wrapper. Native import/call symbols select the original private creator
+and actual scoped helper; the candidate must equal the complete focused byte
+afterimage with only its Schemars import relocated and existing header added.
+Complete language/repository CST and independent native inverses retain the
+genuine original issuer. Its private tables and original call remain intact.
+
+The old/import-only branch keeps its existing unwrapped output. Two complete
+new source controls retain exact whole equations and unknown-source refusals;
+all original eight bodies and deadlines are unchanged. Root must regenerate
+the candidate rows after actual byte adoption. No engines, generation, default
+writes or Rust ran in this worker. The preceding complete ClientKind result
+remains 81,950.771 ms against 60,000 ms; no improvement is claimed.
+
+Add an exact native-derived dispatcher replacement layer to the authored batched
+Core source producer. Retain the same original private Schemars issuer, all old
+source history equations, twelve output paths, source fences and route census;
+add focused complete controls. Generation and runtime checks are unrun; no
+performance or production coverage gain is claimed.
+
+Use fixed-length SHA256 filenames for owned-meta Lino receiving vectors while retaining complete case names and payloads. This prevents the original long case name from exceeding the filesystem's filename limit. Case bodies, workloads and deadlines remain unchanged.
+
+Preserve a bounded source-only common-rule priority audit with complete original
+function memberships and current physical source/hash vectors. Identify HTTP
+state, owned mutation and literal include closure prerequisites without treating
+historical refusals as executable gains; retain the 155/2567 measurement.
+
+Use native separators for the bounded module host and normalize repository-relative
+source metadata independently of absolute native declaration paths. Join each
+actual dispatcher declaration to its exact native source-root path; keep the four
+new control workloads and add a foreign absolute-path refusal. Runtime unrun.
+
+Fence all complete canonical candidate producer inputs and observed outputs after
+late source-generation callbacks, without changing generated codec bytes or
+original Hash call sites. Prevent a late Array iterator hook from observing
+private guard arrays before fallback. Add five complete source/observation
+controls and document exact current trial composition. All new checks unrun.
+
+Propose four explicit native-derived source producer copies that group the complete original whole-owner8 and resolver3 CST work in bounded three-row transactions, with import-only Core/corpus routing and exact original callback fallback. Retain all row fields, native bindings, source Hash fences, both serialized CST phases and whole inverses; preserve previous Core dispatcher source history and all existing limits. Add complete original-result, source-corruption, RegExp-state and independent hook controls. Generation, Node/Bun receiving and performance are unrun; the prior Core source-plan deadline and legacy Hash-child timeout remain open. No default/generated files or executable coverage claims change.
+
+Generated the same-issuer Schemars/default byte scopes, dependent whole-owner
+Core copies and owned-meta Lino DATA layer through full native/CST source rules.
+All thirteen Lino cases pass in both engines with original deadlines. Core's
+original source-plan and hash-observer deadlines remain open; full failed
+receipts are retained. Literal include receiving rules preserve independent
+type, value, Bang, attribute and body obligations. No complete runtime parity,
+production coverage gain or local Rust execution is claimed.
+
+Connect the retained literal-include and Rust2024 conditional fixtures to Cargo
+integration-test discovery, and add exhaustive boolean/Option short-circuit and
+empty/reverse-order while-let cases. Rust remains unrun locally and may execute
+in CI only after all eight JavaScript stages pass for the same SHA; its failures
+remain fatal.
+
+Restore the normal byte/Core source proposer to its exact current dispatcher-only5 output equations and provider census. Isolate the unqualified four-copy upstream route behind explicit source-DRAFT APIs with no CLI writes, and disable batch selection before original input Hash/native work: shared mutable TypeScript closure state is not proved by source hashes or callable identities. Add complete transient input-Hash→JSON/TypeScript install/restore and visible compiler-hook fallback controls without replaying original work or changing existing limits. Generation/receiving are unrun; no performance/default/coverage gain is claimed. Record a possible later single-row CST operation without implementing another scope.
+
+Replace only the parked source-batch hook evidence's monolithic final JSON with the existing complete closed-JSON structural DAG/Brotli frame codec. Retain every source/result field and ordered callback payload, compare every independently decoded representation byte, fully decode the baseline and reject a real nested original-field mutation. Preserve all six whole workloads,12500ms children,60000ms cases,64MiB stdout,384MiB representation and1MiB leaves. Keep Root's prior4/6 failure receipt explicit; corrected transport is unrun. No compiler/source proposal, default, batch-selection or coverage behavior changes.
+
+Bulk-generate four native-bound runtime parser substitutions through separate language/repository CST phases and full inverses; retain full parsing and invocation-local DATA. Qualify all seven Node receiving cases and six parked batching controls in both engines, preserve default producer equations, and keep full coverage, performance and JavaScript-first CI obligations explicit.
+
+Refresh the portable compiler registry from the reviewed source checkpoint with all 1,571 repository compiler and 132 TypeScript 5.9.3 files; independently check every source byte, both complete bootstrap CST equations/inverses and 449 genuine Git fixture objects. Preserve explicit incomplete receiving, freshness and parity status.
+
+Draft bounded operation-local complete-byte-string interning after every original fresh byte-object census in the closed JSON observation codec, preserving its exact DAG/frame schema and every payload/event occurrence. Reuse existing base64 dictionary entries, avoid eligible backing-byte copies, keep unknown storage on the original path and retain uncached oversized/evicted behavior within all existing limits. Preserve the full original codec archive and independent native/language/repository CST inverses; add six complete equality/refusal/mutation/eviction/storage-provider controls without changing original cases or12500ms/60000ms limits. No engines, runtime gain, production changes or coverage qualification; receiving is unrun for the next coordinated cycle.
+
+### Changed
+
+- Draft an exact nine-workflow supplemental PR selector and ready_for_review event extension using eighteen sealed automated source equations with complete native YAML CST/source inverses. Preserve the main release/reusable eight-stage gate, five whole untouched workflows and every original downstream success guard, source gate, timeout and fatal Rust check.
+- Add the finite structural-audit exception and complete positive/refusal controls for malformed draft payloads, conditions, triggers, caller sources, missing/renamed workflows and all downstream failure guards. Non-draft/ready/non-PR work retains all original checks; no public bypass inputs or generic conditional-caller allowance are introduced.
+
+- Source-only draft; Node/Bun receiving, full gate and GitHub skipped/ready behavior are unrun. Root must collect the current full CI cycle, reread applicable rules and observe actual current-SHA caller/child contexts and ready checks before integration. Skips are not eight greens or merge-readiness evidence. No remote writes, cancellations, local Rust or active/published worktree edits were performed.
+
+### Changed
+
+- Draft an explicit complete-project CLI/storage source proposal reusing qualified
+  per-field UTF8 metadata storage without changing the original CLI or project
+  issuer. Retain full native/CST source inverses, both matrix process routes,
+  original bounds and complete output/refusal controls; add returned-project and
+  storage progress boundaries. Materialization, receiving tests and full forward
+  heap qualification are unrun; the prior unchanged-limit OOM remains open.
+
+### Changed
+
+- Add a separate complete receiving file for all three declared profile families
+  through original and proposed owned-field isolated CLI routes. Four whole cases
+  retain ordinary/retained write/check workloads, complete reports and artifact
+  bytes, with 60000 ms cases and 20000 ms subprocess limits. Source-only; engines
+  and heap qualification remain unrun by the worker.
+
+- Draft source-derived receiving history for default-byte consumer imports, the later Core closed-attribute export, literal packet CLI additions, and the stateless native-budget export. Preserve complete current/historical bytes, genuine producer/Git boundaries, native/CST phase inverses, and all original whole cases/deadlines.
+- Keep current compiler/private issuer/runtime bodies and the original generated alias fixture unchanged. Add six full receiving/refusal controls; worker generation and runtime execution remain UNRUN. Guarded lexing, facade and builtin-AST history composition remain explicit follow-ups.
+
+- Draft exact later facade and primitive source histories, preserving original base64/11/24 assertions, every complete source pin, all current runtime/private issuer modules, ordered native/CST equations and whole inverses. Retain the genuine AST position producer's complete 25881→31339 source equation for the original interface fence; leave the separately owned export census untouched.
+- Add three whole receiving/refusal controls. Worker generation/engines remain UNRUN. Current scalar leaf ownership and the genuinely added ASCII workload/refusal remain an explicit semantic receiving follow-up; do not claim a green formatting/text gate or repin counts.
+
+- Draft one native-selected fixture literal relocation to the actual guarded-proof lexing import, retaining the genuine complete producer, all original runtime instrumentation, seventeen cases/deadlines, and independent native/CST inverses. Add three full receiving/refusal controls; worker engines and generation remain UNRUN.
+- Keep the separately missing private-frozen fixture files an environment restoration issue; do not alter their correct tracked URL or source pins.
+
+- Draft the explicit complete 07ed guarded-import layer before C6 receiving source fences and the original alias digest. Retain genuine full producers, current/runtime source bytes, all intermediate native/CST inverses and final physical input fences; preserve all original controls and deadlines.
+- Add a separate original-plan reader import proposal for the private-frozen whole file and three independent controls. Keep actual runtime modules guarded, old alias fixture/producer strict, and every unknown body/import drift refused. Worker generation and engines remain UNRUN.
+
+- Draft guarded-proof V2 with both original exported guards byte exact at top level, preserving Bun/Node function-source observations. Native symbol joins return only genuine captured initializer values; the cold false branch owns all fields to avoid inherited getters before the original qualified short circuit.
+- Preserve the complete known V1 constructor/archive and explicit full native/CST V1→V2 inverses; refuse arbitrary prior targets. Keep all six original controls unchanged and add three complete binding/cold-workload/history-refusal controls. Consumer import afterimages stay exact; worker engines and generation remain UNRUN.
+
+### Fixed
+- Derive the top-level guarded proof functions and seven native retained output siblings through the actual native/CST producer, preserving both rule phases and complete source inverses. Capture numeric helpers so replaced global objects cannot introduce getter calls. Preserve native edit inverses when whole-phase CST transport joins inserted trivia.
+- Record the latest instruction to finish agent work and continue with one coordinator. Local Rust execution remains prohibited.
+
+### Verification
+- Independent bounded materialization passed for all three guarded and seven native retained sources. This source checkpoint precedes runtime qualification; full generation, executable coverage, parity and the complete gate remain open. The previous published CI cycle completed all 132 jobs: 30 succeeded, 40 failed, 20 were cancelled and 42 were skipped. All 60 failed or cancelled streams were retained and verified in full; Rust was not unlocked.
+
+### Fixed
+- Preserve the existing native packet bound with a stored-block fallback when Bun's fast deflater expands incompressible UTF16. Regenerate the codec through its native/CST producer and retain the complete previous-source equation and inverse. Preserve all original chunk, storage, test and monitor limits.
+- Preserve the independent native and CST inverses in the test-only bounded codec copy when inserted source joins existing trivia.
+
+### Verification
+- All 18 guarded/freezer cases passed as complete files in Node and Bun. All seven revised native storage cases passed in Bun. Node returned correct results for all seven, but its complete CLI/profile case took 60.88 seconds against its unchanged 60-second limit, so Node performance qualification remains red. A preceding run hit the original 20-second subprocess limit; no task-owned process survived. Full generation, strict parity and the complete same-SHA gate remain open; no executable coverage gain is claimed.
+
+### Fixed
+- Materialize eleven actual receiving-source and strict fixture-producer outputs through their automated native/CST substitution producers, with both rule sequences, full previous sources, serialized/reparsed concrete representations and independent inverses.
+- Preserve all original receiving cases and deadlines. Historical adapters compose only the registered complete source changes; current runtime issuers and their ownership checks remain in use.
+
+### Verification
+- All bounded source materializations passed. Runtime qualification, the remaining current primitive-source fixture migration, the dynamic complete static-corpus refresh, full generation and strict parity remain open. The new draft supplemental workflow policy is integrated for verification; it retains the unconditional eight-stage primary gate and does not certify skipped checks or unlock Rust.
+
+### Fixed
+- Refresh all three static source fixture assets through the generated strict physical-source producer. The actual current universe contains 865 Rust/Cargo inputs; both complete 806-file and 808-file historical universes retain their original source-set identities and CST checks.
+- Preserve every prior fixture byte, complete source inverse and unchanged reader. Missing, linked, staged, late-mutated and extra physical inputs remain refusals.
+
+### Verification
+- All 38 strict-source and workflow-policy cases passed as complete files in Node and Bun with unchanged deadlines. Full proposal, independent review and installation readback passed under the existing limits. The proposal retained full bytes for 1,745 compiler/TypeScript files plus five explicit bootstrap records, with fresh physical checks before and after.
+- Affected original receiving files, compiler export freshness, full generation, strict parity and the complete same-SHA gate remain required. Node native-storage profile timing remains red; no application coverage gain or Rust verification is claimed.
+
+### Fixed
+- Extend the automated guarded-import substitution to both actual receiving helpers, including short-string instrumentation. Native selections retain each complete helper except its third dependency literal, with both CST rule phases and full inverse source.
+
+### Verification
+- All 38 cases in the five complete receiving/history/private JSON files passed under Node and Bun, including every original private-proof and frozen-JSON case and deadline. All 38 workflow/source-universe cases and all 18 guarded/freezer cases also passed in both engines. The static refresh has independent proposal, review and installation evidence.
+- Broader static-corpus consumers, current primitive fixture migration, native-storage Node timing, generation, compiler export freshness, strict parity and the complete gate remain open. No local Rust was executed and no application coverage gain is claimed.
+
+### Fixed
+- Automate metadata-first selected Git object sizing for the ordinary, strict and physical source-universe producers, following the existing compiler registry builder. Preserve complete membership, object/body, path, mode, byte-bound and CST validation. Use faster lossless outer gzip encoding while retaining every canonical decoded byte and inverse.
+- Derive all three source outputs through native selections and separate language/repository CST sequences. Recheck the complete strict sibling against the actual existing copy producer.
+
+### Verification
+- All three native/CST source materializations passed. Complete original input snapshots and the observed Git substep comparison are retained. Original lifecycle timing remains red pending unchanged complete-file tests; no full-project speed or coverage gain is claimed. No local Rust was executed.
+
+### Fixed
+
+- Advance historical compatibility-core receiving workloads through complete current primitive source using native and CST substitutions, preserving exact library refusals and original tests.
+
+### Fixed
+- Draft complete native import relocation for copied Cargo parser refusal controls, retaining local changed/missing/linked source checks.
+- Distinguish current genuine source-only library producer proofs from the unchanged foreign-issuer refusal and copied-context controls. Runtime qualification remains pending.
+- Retain the exact five current AST source-access/position exports in the closed namespace fixture, with copied source-token refusals and no source authority.
+
+### Changed
+
+- Batch complete development source-history equations through the existing full canonical CST transport, retaining both substitution phases and full inverses without a persisted cache.
+- Derive the facade-history runtime copy from three actual native spans while preserving the complete original factory and both full helper sources. Original workloads and deadlines remain unchanged.
+
+### Verification
+
+- All native/CST source materializations passed. All 41 cases in six complete files pass in Node and Bun with no deadline breaches; original five-second Bun defaults and strict TypeScript checks are retained. Earlier red receipts remain preserved. Full-project generation, parity and synchronization remain open.
+
+### Fixed
+
+- Compose the exact source-generated transaction layer in the private DATA history reader, retaining complete old/adopted/current source equations and fresh physical-input checks. Preserve the installed later API in existing adoption proposals.
+
+### Verification
+
+- Complete native/CST helper substitutions passed. All 34 cases in six complete existing/new CST and DATA files pass in Node and Bun, with no deadline breaches. Earlier failed source-history receipts and the separate Bun derive timeouts remain retained. Full-project parity remains open; no Rust ran locally.
+
+### Documentation
+
+- Record the meaningful #771 translation checkpoint and carry all unfinished
+  #759 requirements, CI failures and parity limitations into continuation #772.
+
+### Fixed
+- Remove explicit location headers and supported inference/search metadata by
+  default, with request-scoped geolocation opt-in. Document vendor-account and
+  network location limits.
+
+### Fixed
+- Apply the default geolocation metadata policy to every mixed camelCase and snake_case spelling of Gemini retrieval coordinates, preserving explicit sharing and application content.
+
+### Fixed
+- Resolve each explicit compilation profile's generated TypeScript trees from its
+  declared project targets, supporting both repository layouts while retaining
+  independent strict compilation of the complete draft and project trees.
+
+### Fixed
+- Reuse the guarded lexing consumer source equation when regenerating operation
+  byte composition, preserving the original whole-source pin and exact inverse
+  while copying the current guarded import.
+
+Use fixed-shape private lexer token copies under unchanged native operations to
+reduce Node 20 module-view heap retention, preserving customized-operation
+fallbacks and complete source-view evidence. Full compiler generation and strict
+parity remain unqualified.
+
+### Fixed
+
+- Stream local JavaScript gate fingerprints in 64 KiB chunks while preserving
+  the complete source, mode, symlink and deletion hash framing, reducing temporary
+  file-content allocation for large checked-in evidence.
+
+### Fixed
+
+- Release unused source-reader and compilation contexts when callers retain
+  project lowering callbacks, while preserving their checked source inputs.
+
+### Fixed
+
+- Preserve the known scanner-producer and module-token source successors when
+  preparing historical compiler tests, while retaining original source pins,
+  complete inverse checks and rejection of unrelated edits.
+
+### Added
+- Add a separate bounded transaction for complete language and repository CST edits, retaining serialized/reparsed stages, full inverses, fresh parser-source authentication and original aggregate bounds. Existing APIs and semantic authority remain unchanged.
+
+### Fixed
+- Refuse oversized privately materialized Clone output before evidence encoding and freezing, preserving the original logical-node/depth limits and complete accepted-output validation. Retain complete source equations and a failing-before/passing-after regression; broader gate failures remain unresolved.
+
+### Fixed
+
+- Refresh the isolated compiler registration and genuine portable Git fixture
+  from complete committed compiler sources and installed TypeScript 5.9.3.
+  Preserve the previous complete registry, bootstrap and portable fixture as
+  compressed history. Registration does not establish parity or a green gate.
+
+### Changed
+
+- Group complete CST source authentication in a separate private native
+  TypeScript regeneration path, preserving standalone builder/parser contracts,
+  generated output bytes and independent semantic checks. Original regeneration
+  deadlines and the complete JavaScript gate remain unqualified.
+
+Retain complete source-bound profile drafts after CI freshness checks so stale
+generated outputs can be reviewed without repeating translation. Freshness
+failures, compiler validation, original deadlines and the JavaScript gate remain
+mandatory; retained drafts do not establish executable or runtime parity.
+
+### Fixed
+- Run ordinary and owned profile matrix freshness checks in independent required
+  CI jobs, preserving their original commands, 60-minute limits and same-commit
+  gate before Rust. Retain complete drafts under distinct artifact names.
+
+Partition the complete forward Node CI cohort into eight required whole-file
+shards, retaining original tests, deadlines, source joins and independent audits.
+Run both original canonical freshness checks in their own required same-SHA job.
+
+### Fixed
+
+- Retain the actual computed ordinary and owned matrix index bytes in optional
+  check-mode draft artifacts after all original freshness comparisons. Missing
+  indices remain fatal, generated files are unchanged, and complete retained
+  indices share the original byte bounds and independent review requirements.
+
+### Fixed
+
+- Run all reverse compiler test files in exhaustive independent Node and Bun
+  CI bins, with unchanged original cases, deadlines and per-job limits. Keep
+  all original regeneration checks mandatory in an independent job, preserve
+  every raw receipt and require every bin before Rust verification.
+
+Keep the original whole-owner crypto qualification profile and add separately
+pinned official Node 20.20.2 wrappers for the current CI runtime. Preserve every
+original descriptor, native-handle and intrinsic refusal. Unknown versions and
+observed wrappers retain the original creator. Source and ABI qualification do
+not establish a generation speed gain, additional executable functions or full
+runtime parity.
+
+### Fixed
+
+- Copy the complete later source-equation producer, history adapter and pinned
+  original archive into private parser receiving fixtures before inspecting
+  the current executor. Retain all original behavior cases and deadlines.
+- Preserve the history API's refusal diagnostic when the complete equation
+  producer refuses an unissued physical source. Identify that specific error
+  privately and propagate unrelated callback exceptions unchanged.
+
+### Fixed
+
+- Fix the scan-cost receiving fixture's stale lexing dependency through the
+  existing native/CST source generator. Preserve all eight complete original
+  tests, instrumentation and deadlines, and add regressions for the complete
+  stale source and unknown or altered dependencies.
+
+### Fixed
+
+- Capture the original apply function when classifying private equation-source
+  mismatches, so a later replacement cannot make a copied exception qualify.
+  Add a regression while preserving all original producer checks and diagnostics.
+
+### Fixed
+
+- Link original project methods with their privately captured parser namespace
+  when owned enclosing output has different macro uncertainty. Preserve complete
+  source and scope checks, unresolved macro refusals and generated source history.
+
+### Fixed
+
+- Use the repository's installed strict TypeScript compiler for complete cohort
+  target checks, preserving explicit overrides, standalone fallback and deadlines.
+  Optional compiler tracing records selection and the installed version.
+
+### Fixed
+- Accept valid complete-file Bun reverse test shards by keeping the argument cursor separate from the selected shard identity; retain duplicate and invalid shard refusals.
+
+### Fixed
+
+- Compose current native TypeScript regeneration with the complete historical
+  runtime-import source equations. Keep the historical producer and runtime
+  issuers unchanged, and check current receiving-source freshness explicitly.
+
+### Fixed
+
+- Regenerate the complete owned-vector candidate source copies from their
+  current checked producers so their native bindings and both CST equations
+  agree with the actual translation sources.
+
+### Fixed
+
+- Check all three added ingress header identities through the complete original
+  static-table fixture, including strict targets and the independent evaluator.
+- Retain the current ASCII string-loan helper in the full string-fold receiving
+  source equation without changing the original cases or their deadlines.
+
+### Fixed
+
+- Use the existing serialized and reparsed source-origin CST transport for native
+  TypeScript regeneration. Keep complete source checks, inference, runtime AST
+  comparisons, output bytes, public standalone APIs and original deadlines.
+
+### Fixed
+
+- Resolve the complete current bridge child in source-conversion receiving
+  fixtures and execute the newly admitted state-selector function in JavaScript
+  and strict TypeScript. Keep independent anonymous-trait and aggregate refusal
+  controls. Broader parity, Bun deadlines and the complete gate remain unfinished.
+
+### Fixed
+
+- Add an explicit Text return adoption for complete core-Str Unicode whitespace
+  filters while preserving the original literal-only migration and refusing
+  shadowed or unsupported contexts. This source adoption does not establish
+  executable parity; complete application receiving remains required.
+
+### Fixed
+
+- Resolve complete Serde and TOML receiving fixtures against the relocated Rust
+  package while retaining their actual committed sources and original cases.
+  The complete JavaScript gate and Serde Bun deadline repair remain unfinished.
+
+### Fixed
+
+- Compose current native regeneration source into runtime-import receiving
+  fixtures while retaining the original producer and complete previous source
+  equation. Verify complete generated outputs for calls, loops and reassignment
+  under Node and Bun; full translation parity remains unfinished.
+
+Keep the complete archived upstream-header source and derive its current privacy
+changes before checking the existing vector-adoption fixture. Retain the original
+forwarding function, seven-header workload, source pins and case deadline.
+
+Add a separate complete CST phase transaction that executes existing explicit
+rule names while preserving fresh source authentication, complete serialized
+stages and inverses, and final input descriptor checks.
+
+Batch the complete unit and Unicode source producer equations with their
+original rule identifiers, native source copies, binding checks and inverses.
+Complete retained-original comparisons pass under Node and Bun. Whole compiler
+deadlines, generation, strict parity and the complete gate remain unqualified.
+
+Improve complete unit source composition by refusing a contradictory ordinary
+predecessor before expensive preparation, while retaining the entire valid
+native/CST operation and deferred accessor behavior. Whole archived-operation
+receiving checks do not certify complete application parity or the full gate.
+
+Join the complete current unit and Unicode source plans in enclosing compiler
+consumers, and compose reviewed privacy parents plus the added geolocation
+module into whole application receiving inputs. Preserve historical archives,
+native/CST checks, original assertions and deadlines. Complete application and
+full-gate qualification remain unfinished.
+
+Compose the complete unit-match and Unicode compatibility source plans while
+preserving both historical plans, all source inverses, and both orders of the
+shared source DATA update. The complete nine-case Unicode receiving file passes
+Node and Bun under its original deadlines. Rust, broader compiler consumers,
+generation, strict parity, and the complete JavaScript gate remain unfinished.
+
+### Fixed
+
+- Derive separate current ASCII asset producers from complete historical
+  sources after the Unicode addition, retaining full source equations,
+  independent builder comparisons and original source freshness checks.
+
+### Changed
+
+- Batch complete reverse-ASCII and private-analysis source equations with
+  their original rule names, preserving entire original producer results,
+  native checks, canonical source documents and inverses.
+
+### Fixed
+
+- Pair fixed historical native compiler regressions with their complete matching
+  manifests and outputs. Retain every original assertion, fresh compiler check
+  and deadline; current regeneration and strict parity remain independent.
+
+### Fixed
+
+- Compose the current Unicode host declaration history with complete historical
+  source comparisons, preserving old source checks, original regression cases
+  and deadlines.
+
+Retain complete historical unit-matches application inputs and check explicit
+whole-file source equations for the reviewed privacy parents and new geolocation
+module. Source reconstruction remains separate from executable qualification.
+
+Repair the reverse ASCII receiving suite's complete current-source history
+association while retaining all original assertions and deadlines. Record the
+remaining audited deadline failures and the actual static-fixture refresh's
+bounded memory failure without claiming full JavaScript or Rust verification.
+
+Fix complete scoped and retained proof-cost comparisons by composing the authentic freezer, scanner and operation-byte bridge source histories. Preserve original complete cases and deadlines; all 19 focused Node and Bun cases pass, with zero Node deadline breaches. Broader generation, parity and CI remain unfinished.
+
+### Fixed
+
+- Compose the current negative-budget fixture history from its original source
+  producer so the receiving proposal reproduces all five complete targets.
+  Original deadline and full-gate failures remain explicit.
+
+### Fixed
+
+- Receive complete source targets through their actual CST phases and share a
+  fresh native module program within each source proposal. Preserve original
+  histories, whole inverses, binding refusals and all original test deadlines.
+  Full-gate, parity and remaining CI requirements stay explicit.
+
+### Fixed
+
+- Regenerate owned-field and native matrix copies through their actual complete
+  source producers. Authenticate whole predecessor sources and retain every CST
+  inverse, original storage boundary and original test deadline. Share a fresh
+  native module binding program within each complete seven-source cohort.
+
+### Fixed
+
+- Resolve overlapping retained-output references through private scalar cells,
+  preserving the original UTF16 wire bytes and refusal boundaries while avoiding
+  repeated slices of accumulated output.
+
+Defer unreachable ordinary compiler imports until after the native retained
+output CLI option guard. Preserve complete archived/current source equations
+and fresh native binding checks; the original CLI regression now passes its
+unchanged deadline under focused Node and Bun checks. Full parity and gate
+qualification remain unfinished.
+
+### Fixed
+- Preserve complete checked-source accessor metadata when comparing the frozen
+  project pipeline fixture with current declarations, retaining original source
+  history, private issuer boundaries and whole-file deadline checks.
+
+### Fixed
+- Regenerate the class-birth host entry pin through its existing source producers so current host imports initialize correctly during independent compiler checks.
+
+### Fixed
+
+- Recognize the existing proof-cost receiving reader in compiler alias history
+  generation, preserving the complete original source histories and native-first
+  read boundary with fresh CST and native syntax validation.
+
+### Fixed
+
+- Reduce allocation while freezing private source-module lexer records under
+  qualified native operations, preserving original hook observations, bounds,
+  complete source-producer inverses and public module-view behavior.
+
+### Fixed
+
+- Use the current guarded lexing import in the complete descriptor-kind receiving
+  tests, preserving their original behavior checks and case deadlines.
+
+### Fixed
+
+- Keep native AST nodes private when serializing the historical selection in
+  current ASCII asset proposals, and retain complete historical helper bytes for
+  receiving tests without requiring old Git objects.
+
+Regenerate complete current Rust/Cargo test data through the existing source lifecycle producer while preserving every pinned historical source and inverse. Full lifecycle resource and deadline qualification remains unfinished.
+
+Repair complete HEAD-source Display fixture paths after the Rust package move and relocate all five exact private-parser imports in cold receiving tests. Preserve source inverses, hook refusals, strict typed behavior and original deadlines.
+
+Repair the complete native proof consumer receiving graph after operation-byte
+adoption while preserving historical source pins, native selection assertions,
+private proof refusals and original case deadlines. Full-gate qualification is
+still required.
+
+Preserve the complete original RefUpdate compilation fixture while separately
+checking its current production parent through the actual primitive source
+equation, retaining all original behavior assertions and refusal checks.
+
+Fix complete historical ASCII production-parent receiving after the private
+geolocation module addition. Derive ASCII source transactions through the
+existing named CST pipeline and retain all original receiving assertions,
+source inverses and deadlines. Complete ASCII deadline qualification remains
+unfinished; focused controls do not establish runtime parity.
+
+Regenerate the complete reverse witness and runtime projections from their
+current JavaScript sources, including existing owned Unicode predicates, and
+verify their actual freshness without changing the required parity gate.
+
+Preserve complete source proposal payloads in verified smaller containers,
+preflight diagnostic storage capacity and retain exact published archive
+custody when removing an inactive local duplicate.
+
+Refresh the complete compiler registry, paired bootstrap pins and genuine
+portable Git fixture through their original producers, preserving all old
+sources and qualifying both complete receiving files under Node and Bun.
+
+### Fixed
+
+- Refresh the complete current production-body fixture through its source
+  producer and supply every actual Core child during receiving. Preserve the
+  historical archive, original source limits and deadlines. All eight existing
+  fixture cases pass under Node and Bun; broader CI and parity remain unfinished.
+
+### Changed
+
+- Preserve the historical owned-matches root and compose its complete current
+  geolocation parent for receiving. The final whole-file graph remains unrun
+  after bounded earlier heap failures; the unsuccessful evidence-writer draft
+  is withdrawn and its complete diagnostics retained.
+
+Refresh the exact compiler registration and portable Git fixture after the
+complete production fixture archive changes. All 32 whole receiving cases pass
+across Node and Bun with original assertions/deadlines; retain all three earlier
+resource stops separately. Full gate and runtime parity remain unqualified.
+
+Record and withdraw an unqualified receiving-helper draft. Preserve both complete
+Node files, all nine assertion results and the three original deadline failures;
+the withdrawal does not qualify performance or complete parity.
+
+Preserve the complete failed owned-matches receiving with optional vector logging
+disabled. Correct the unqualified serialization attribution and retain the
+unreached production-parent case and incomplete deadline audit explicitly.
+
+Retain the complete current CI archive recovery and resource-stopped local
+JavaScript gate without treating unrun stages or unavailable logs as passing.
+
+Compose the existing Unicode host-history addition from retained complete
+producer source, preserving native edit replay and unknown-source refusals.
+
+### Fixed
+- Preserve complete native module binding results in one fresh unit-producer program; retain original source equations and deadlines.
+
+### Fixed
+- Preserve complete preflight import positions and resolve relocated Rust metadata and census paths in their regression tests.
+
+### Fixed
+- Preserve the complete Unicode facade history and independently check batched receiving phase records against their retained original operation.
+
+Preserve current compiler registration and exercise portable metadata generation
+with genuine fixture commits when the checkout has no HEAD. Original assertions
+and deadlines remain; full parity and CI qualification are still unfinished.
+
+### Fixed
+
+- Preserve the exact selected-Git census intermediate source history and
+  regenerate both archive controller copies through the existing checked phases.
+
+Document the complete current private compiler's over-limit static source
+closure and unsupported native imports, retaining full failed and corrected
+diagnostics without changing production bounds or claiming compiler execution.
+
+Add default-off progress diagnostics to complete JavaScript gate fingerprinting,
+preserving full input hashing and stage commands. Verify identical fingerprints,
+bounded large-file progress and unchanged callback errors; retain the gate's
+unresolved container-guard failure separately from focused passing checks.
+
+Retain the complete native regeneration packet at its verified immutable
+published location and retire its inactive local duplicate, reclaiming
+18,508,712 logical bytes within the task evidence allocation.
+
+Authenticate and retain the complete current binder helper history before its
+original historical receiving comparison. Preserve all original assertions,
+refusals and deadlines; verify all eight cases in Node and Bun.
+
+Resolve callback-mutation child Cargo inputs through the repository source
+profile, matching the parent. Preserve the complete six-case file, callback
+refusals and original deadlines; verify it in Node and Bun.
+
+Retain and verify exact complete privacy source history for original literal
+input comparisons. Preserve current privacy behavior and every original
+assertion and deadline; add refusal coverage and pass both complete files in
+Node and Bun.
+
+Follow actual completed gate fingerprint inputs in an optional task-only
+closed-file page-advice experiment. Retain all finite controls and the full
+gate attempt: lint and both native test stages pass, but TypeScript reaches
+the unchanged container memory guard; later stages remain unrun.
+
+Supply the actual complete Core sources in the tuple receiving fixture while
+retaining its missing-Core refusal control and all 27 untranslated library
+refusals. All eight original cases pass in Node and Bun without deadline changes.
+
+Add default-off complete child compiler diagnostics and enable them for CI
+translation receiving checks. Keep original error propagation and all checks;
+render the actual requested function's refusal in large-project assertions.
+
+### Fixed
+
+- Refuse stale ASCII source predecessors after authenticating their complete
+  pinned archive, before preparing unrelated native and concrete source proofs.
+- Reuse sequential concrete source transactions in current source producers,
+  preserving complete documents, inverses, input checks and refusal boundaries.
+  This focused change does not qualify full translation, parity or the remaining
+  whole ASCII deadline failure.
+
+Preserve immutable, byte-verified links to the complete published prior CI
+archive while retiring its inactive task-local copies within the evidence budget.
+
+Include translation child-compiler diagnostics in the workflow's owning source
+equation so complete workflow custody checks accept the reviewed diagnostic step.
+
+Derive one fresh native compiler candidate index for the current runtime-import
+source producer, retaining original uniqueness, binding, hash and complete
+source/CST inverse checks. Focused Node/Bun controls pass; original ASCII
+deadline, regeneration, full-gate and runtime-parity qualification remain open.
+
+Derive a private lifetime for fresh compiler selection nodes while preserving
+the complete original statements, source data and independent source checks.
+Focused controls and Node receiving checks pass; whole ASCII deadline and Bun
+receiving resource failures remain explicitly unqualified.
+
+Add a separate primitive whole-source CST substitution domain with two fresh
+builds, serialized/reparsed documents and independent inverses per transport.
+Keep all existing untrusted-document APIs exact. Complete Node/Bun controls pass;
+producer adoption, original workload deadlines and full-gate checks remain open.
+
+Preserve permanent full-byte custody for 25 inactive published CI artifact ZIPs
+before retiring their working-tree copies to keep new evidence below 500 MB.
+
+Install primitive-source CST phase consumers through their actual owning
+generators, retaining complete prior source histories and independent inverses.
+The original complete ASCII Node file now passes its unchanged deadline audit;
+13 whole receiving cases pass. Bun memory and broader CI remain unqualified.
+
+### Fixed
+
+- Preserve enclosing record temporaries while checking original string and primitive identity conversion bodies, preventing later fields from replacing earlier bindings in generated JavaScript and TypeScript.
+
+Fix enclosing record-field bindings when checking original primitive
+`TryFrom` bodies and integer `MIN`/`MAX` constants during translation.
+
+### Fixed
+
+- Preserve enclosing record bindings when checking original Option methods and
+  borrowed string equality, while keeping their control and proof boundaries.
+
+Preserve the full historical Lefine shared-receiver regression alongside matching current-source getter and Copy-certificate coverage after compatibility-core adoption.
+
+Fix temporary-name collisions between original Option unwrap method bodies
+and surrounding record fields, including lazy/default and nested records.
+
+Fix checked propagation of static string Result errors independently from
+borrowed success origins, and prove absent Result return leaves from actual
+typed constructors. Preserve dynamic lifetime-escape refusals.
+
+Retain the complete historical capabilities source regression and add an
+independent current-source case with unchanged strict checks and deadlines.
+
+Preserve complete historical and current static-consumer comparisons, with separate private-producer boundary checks and portable cold child scripts.
+
+Use explicitly labeled actual-root projections for qualified compatibility-core usages in original Option receiving cases; whole-file deadline and memory failures remain unfinished.
+
+### Fixed
+
+- Compose the complete current static Result lifetime checker through its
+  native and serialized CST source equations while preserving historical
+  producers, independent semantic checks and original receiving deadlines.
+
+### Changed
+
+- Refresh the actual isolated compiler and genuine Git fixture from the
+  complete residual-composition source closure, preserving full historical
+  inputs and failed receiving evidence without claiming runtime parity.
+
+Retain complete canonical translation drafts as explicitly unqualified CI data with fresh input fingerprints and full compressed readback. Keep every original freshness check and failure fatal; this evidence does not establish source translation or runtime parity.
+
+### Fixed
+- Supply the original facade module context explicitly in the complete current capabilities receiving case while preserving its physical source, runtime cases and deadlines. Whole-file receiving qualification remains unfinished after local memory interruptions.
+
+### Fixed
+- Receive complete source-composition metadata in independent bounded calls per declared layer, preserving original document limits, assertions and deadlines. Retain actual CSV refusal details on assertion failure; larger receiving and full-gate qualification remain unfinished.
+
+### Added
+
+- Add optional complete JavaScript gate command progress, preserving the original
+  commands, child statuses, strict checks and failure handling.
+
+### Fixed
+
+- Generate canonical draft custody in separate bulk and CLI companions, preserving the complete original source-copy equations and mandatory freshness failures.
+
+### Changed
+
+- Copy privately cached lexer records with their fixed field layout while preserving fresh mutable results, native observer fallbacks, and bounded storage.
+
+Keep source-adoption allocation scans fresh while avoiding per-entry path
+objects; add filesystem regressions for complete accounting and refusal bounds.
+
+### Changed
+
+- Count private lexer storage directly from its fixed record layouts, preserving
+  cache limits, fresh mutable results and observer fallbacks.
+
+### Fixed
+
+- Preserve private loader descriptor checks while removing their temporary
+  field-name array. Refresh both generated matrix boundary copies through the
+  complete source producers and retain the intermediate native source history.
+- Share identical source equations only within one preparation call, preserving
+  fresh complete semantic checks and all original source bounds and deadlines.
+
+### Fixed
+
+- Release per-file TypeScript programs after independently auditing original
+  Node test sources, retaining exact spans, full source records and all original
+  deadlines. Add a finite regression with a 128 MiB child heap. Complete
+  translation, strict parity and same-commit CI verification remain unfinished.
+
+Refresh the three default reverse artifacts from the complete installed canonical
+JavaScript and TypeScript inputs. The actual producer and an independent check
+agree on all artifact bytes. The additional source items remain unsupported;
+this freshness repair does not establish executable parity or a green full gate.
+
+### Fixed
+- Preserve complete original Clone named and unit output grammar in a separate enclosing representation, including ordered source-history composition and full native/CST inverses. Generated method behavior remains untranslated.
+- Use the genuine enclosing namespace in project matches checks and transport complete reachable project sources in bounded CST batches before reissuing semantic module views.
+- Preserve one-shot tracked-path inputs across both CST graph traversals while retaining the existing external-module path checks.
+
+### Fixed
+- Revalidate complete compiler inputs before privately reusing native TypeScript inference. Preserve original metadata while reducing serializer allocations and grouping fresh CST transactions within unchanged native limits.
+
+Reduce duplicate runtime-tree allocation during native TypeScript regeneration
+and release retained inference before strict target compilation. Preserve
+complete syntax checks and public fingerprint bytes. The original receiving
+deadline and full JavaScript gate remain unresolved.
+
+Avoid repeated empty hint allocations and unneeded gap counters during native
+TypeScript emission. Release unused CST metadata after complete reconstruction.
+Complete freshness checks preserve existing output bytes; the original receiving
+deadline and full gate remain unresolved.
+
+### Fixed
+
+- Preserve complete method parser evidence when sharing genuine enclosing
+  Default and Clone contexts, and compose known project, native regeneration,
+  Clone and receiving-fixture source histories without changing original
+  source pins or test deadlines. Full parity remains unfinished (#784).
+
+### Fixed
+
+- Capture project progress options once, preserve the complete original
+  progress source inverse, and compose existing bounded proof-byte operations
+  at project callers while retaining original owner and semantic checks (#784).
+
+### Fixed
+
+- Regenerate the complete isolated compiler registration and portable Git
+  fixtures from the current checked source, preserving prior source history,
+  integrity guards and original receiving deadlines (#784).
+
+### Fixed
+
+- Freshly qualify derive module-path membership after an unrelated conditional
+  proof retires an earlier index. Preserve complete source/CST inverses, ordinary
+  callback behavior, source and owner checks, and original receiving deadlines
+  (#784). Node receiving and two new Node/Bun cases pass; the larger local Bun
+  cohort still reaches the unchanged container memory guard.
+
+### Fixed
+
+- Preserve ordinary project progress callback events while allowing canonical
+  CLI users to request extra namespace diagnostics explicitly. Compose the
+  complete project, CLI companion and receiving fixture source histories instead
+  of rejecting their known later sources. Full translation parity remains open.
+
+### Fixed
+- Refresh complete compiler candidate copies after namespace changes and share fresh native binding programs within bounded source-generator calls. Complete source, CST, inverse and native checks remain required; receiving deadlines and parity are not certified by source generation.
+
+### Fixed
+
+- Refuse changed native parser operations before module discovery can serialize
+  source data, preserving physical reader errors and complete source histories.
+  The new Node/Bun regression cases pass; complete Core receiving, translation
+  parity and the JavaScript gate remain unfinished (#784).
+
+### Fixed
+
+- Retain every Core callback observation with the lossless DAG transport and
+  a separately checked native Buffer JSON projection. All 22 focused cases
+  pass under Node and Bun with their original deadlines; complete CI and
+  translation parity remain unfinished (#784).
+
+### Fixed
+
+- Preserve native Buffer JSON bytes without observing conversion getters, even
+  above the byte index threshold or with changed storage properties. Refuse own
+  iterator overrides before observing them in either runtime. All 18 codec and
+  source-contract cases pass in Node and Bun; the separate Core Node deadline
+  audit and the complete JavaScript gate remain unfinished (#784).
+
+### Fixed
+
+- Compose the pinned native-binding source history in the complete proof-byte
+  adoption plan and refresh the owned-field CLI through its genuine producer.
+  Preserve the original CST phases, source inverses, native checks and limits.
+
+Repair the derive-effect historical source comparison by composing the complete
+pinned path-index inverse. Preserve source pins, native behavioral actions and
+original test limits; record remaining retention and full-gate failures.
+
+Fixed native CLI source-history composition after explicit namespace progress
+observers were introduced, preserving complete archived inputs and inverses.
+The complete receiving cohort passes in Bun; Node's original CLI child deadline
+remains failed, and this repair does not establish full translation or parity.
+
+Updated the project byte-operation regression to explicitly request namespace
+diagnostics. It still verifies observer-error propagation, cleanup, nested
+translation and independently compiled targets within the original deadlines.
+
+### Fixed
+- Translate source-qualified shared `f64` receivers for `is_finite`, `is_nan`
+  and `floor`, including the unchanged `safe_number` predicate in a small
+  independent project. Preserve competing-trait, mutable-reference and lifetime
+  refusals. Full production generation and runtime parity remain unqualified.
+
+### Changed
+
+- Stream the regeneration-only native runtime fingerprint while comparing fresh
+  complete syntax trees, preserving canonical digests, literal data and
+  optional-chain boundaries. The original regeneration deadline remains unmet.
+
+Keep the ordinary project parser's enclosing names independent of a refused
+generated method body, while preserving full method checks and public binding
+evidence. The complete focused Node and Bun cohorts pass; full CSV receiving,
+generation, strict parity and the complete JavaScript gate remain unqualified.
+
+Repair current static-source and ASCII asset input joins while preserving
+complete historical source equations. Observe live filesystem reads under Bun
+and reject accessor/proxy read hooks without invoking them. Complete producer
+deadline and full parity qualification remain unfinished.
+
+Compose complete current unit/Unicode and shared-f64 receiver source histories,
+batch fresh runtime-import binding checks without retaining verdicts, and join
+the actual derive path-index successor in attribute projection regressions.
+Preserve original sources, CST inverses, strict checks and test deadlines;
+remaining heap, deadline, generated-output and full-parity failures stay explicit.
+
+### Fixed
+
+- Compose the current shared-f64 receiver source history in the class-birth
+  producer, preserving the pinned original and whole CST inverses, and regenerate
+  the current Host entry and class metadata. Full parity remains unfinished.
+
+Restore complete project progress receiving history through the existing
+ordinary-parser namespace layer, retaining original source pins and inverses.
+Both complete receiving files pass in Node and Bun with unchanged deadlines;
+the complete JavaScript gate and parity remain unresolved.
+
+Share bounded positive frozen-subtree size measurements within each synchronous
+proof-byte operation, retaining fresh eligibility, original budgets and fallback
+callbacks. Preserve complete source history and regressions; complete production
+performance and parity remain unqualified.
+
+Fix original Display method admission when one project analysis uses separate
+enclosing parser and complete method contexts. Preserve independent source and
+semantic checks and refuse replay between different analyses.
+
+Compress complete static source fixture archives at gzip level 9 so offline
+compiler export retains every source within its existing per-file limit.
+
+Refresh the isolated compiler registry and genuine portable Git fixture for the
+current source batch, preserving full predecessor bytes and original checks.
+
+Verify the Schemars candidate's complete Clone source composition while retaining
+its original import constituents, inverse checks, native/CST checks and deadlines.
+
+Check all nullable translation fixtures in one fresh strict ES2022 program while
+retaining complete source analysis, runtime goldens and original case deadlines.
+
+Preserve historical operation-composer hashes while verifying the complete
+ordered measurement source evolution and its inverse in receiving tests.
+
+### Fixed
+
+- Preserve the complete archived and guarded-import Default prerequisite source
+  equations while checking the current operation measurement successor and its
+  exact inverse. Keep the original whole-file deadlines and source refusals.
+
+Refresh the 20 stale canonical translation outputs from the complete actual CI
+producer after checking every source input and output byte. Preserve all current
+CI failures and the interrupted independent semantic review; focused source
+reconstruction and strict generated TypeScript pass without changing the gate.
+
+### Fixed
+- Join the selected Git census proposal to the exact known strict-controller
+  history and installed census-only source. Preserve original whole-source
+  inverses and refusals while batching fresh source and native binding checks
+  to keep all five original cases within their unchanged receiving deadlines.
+
+Refresh the reverse draft input capture and manifests from the current complete
+application sources. Keep all 701 unsupported declarations explicit and retain
+the complete Node verification and interrupted Bun attempt in issue #784's case
+study; this update does not establish additional executable coverage or parity.
+
+### Fixed
+
+- Refresh the isolated compiler and genuine portable Git registration after
+  the selected-Git census source composition changed. Preserve the complete
+  predecessor and pass both original receiving files under Node and Bun
+  without changing their deadlines. The complete JavaScript gate remains
+  unfinished.
+
+### Changed
+
+- Run complete Node translation files in sixteen exhaustive CI shards with one
+  worker per runner, preserving every original case and job deadline, independent
+  freshness checks and fatal deadline audits. Bun keeps its eight complete-file
+  shards. Strict parity and the complete JavaScript gate remain required.
+
+Use the separate private source-origin CST transport for complete project
+source batches. Preserve two independent builds, canonical serialization and
+reparsing, complete source reconstruction, parser authentication and bounds.
+Standalone and stored-document APIs retain their original behavior. Full
+generation, parity and the complete JavaScript gate require separate checks.
+
+### Fixed
+- Refresh the isolated compiler and genuine portable Git fixture through their
+  original producers for the current project CST and native module binding
+  changes, preserving complete source history and original receiving limits.
+
+Share one fresh TypeScript program across the complete current runtime-import
+source modules while preserving independent external-module scopes, all source
+histories and the original receiving deadlines. The separate common-guard
+runtime experiment remains withdrawn and recorded as unqualified evidence.
+
+### Added
+- Extend source-backed ordering namespace construction to ordinary named and unit structs, retaining explicit limits on executable trait behavior.
+
+### Fixed
+- Compose the installed source-origin CST adoption into complete project source histories while retaining original predecessors and inverses.
+
+Use the checked primitive-source CST adapters in complete authoring source
+histories while retaining original document readers, native checks and inverses.
+Focused Node/Bun receiving checks pass; original downstream deadlines and full
+translation parity remain unfinished.
+
+Retain the original opaque source-proof preparer and select a separately checked
+primitive-source CST domain in current proof and unit/Unicode composition.
+Complete proof receiving files meet their original Node/Bun deadlines; broader
+unit resource failures, source freshness, strict parity and full CI remain open.
+
+### Fixed
+- Register the complete installed struct-ordering sources in compiler comparison history while retaining the original source pins, inverse substitutions and refusal checks.
+- Refresh generated whole-owner and reverse projections after their input sources change.
+
+Reuse bounded private lexical token data in original builtin builder imports
+while retaining fresh source hashes, macro checks, ownership maps and contracts.
+Add complete source/history, observer, refusal and storage-bound regressions.
+Original Bun deadline and complete translation/parity verification remain open.
+
+Avoid discarded namespace-copy arrays for qualified immutable-target consumers,
+while preserving complete independent native Maps, visibility checks and the
+original observable fallback. Retain whole-file behavior and callback checks.
+
+### Changed
+- Add a temporary manual translation development workflow at the maintainer's request. Keep complete native Node/Bun tests, strict checked-in TypeScript, syntax/policy checks and UI builds active; suspend automated translation checks without claiming parity. Preserve the strict workflow and keep Rust and releases blocked pending resolution of their gate boundary.
+
+### Changed
+- Let the temporary manual translation development lane admit same-SHA Rust CI once every active manual stage (native Node, native Bun, strict TypeScript, UI builds) passes. The `rust_allowed` output is now derived from the aggregate job instead of a literal `false`; Rust failures stay fatal, strict parity stays unverified, and local Rust tools stay forbidden.
+
+### Fixed
+- The pending changelog fragment guard now tells a release that left fragments behind (issue #337, still a failure) from releases that are merely blocked: when every pending fragment postdates the latest release tag it warns instead of failing, so unblocking the default branch is not itself blocked by the backlog it needs to release.
+
+### Security
+- Update locked dependencies to fixed releases for 30 RustSec findings: `rustls` 0.23.46, `rustls-webpki` 0.103.17, `webpki-roots`/`webpki-root-certs` 1.0.12, `quinn-proto` 0.11.19, `quinn-udp` 0.5.16, `zstd` 0.14.4, `zstd-safe` 8.3.0, `zstd-sys` 2.1.3, `ctutils` 0.4.8, `rustix` 1.1.6 and `tokio` 1.53.3.
+- Accept RUSTSEC-2026-0387 (`crypto-bigint` 0.5 timing) with a recorded justification: it is reachable only through `jsonwebtoken`'s elliptic-curve algorithms, while Router signs and verifies every JWT with HMAC secrets.
+
+### Fixed
+- Configured account header overrides can no longer fail to compile outside tests: the reviewed ingress/network header list is now re-exported for non-test code, so overrides keep dropping `forwarded`/`x-forwarded-*` headers in release builds.
+- Generated JavaScript-first policy fixtures call the function under test through `super::`, so a fixture whose id equals the function name (`provider-model-id`, `weighted-capacity`) no longer shadows it, and the fixture module drops its now-unused glob import; `scripts/regenerate-js-first.mjs` emits the same form.
+- Removed unused `serde_json` imports, moved the test-only `json!` imports of `activitypub.rs` and `gonka.rs` into their test modules, and imported `json!` in the deploy seed tests so the library and its tests build with `-D warnings`.
+- The scalar-count oracle integration test now covers `validate_openai_user_value` (absent, `null`, Unicode string and wrong type), which also keeps the path-included module free of dead code under `-D warnings`.
+- The Lint job's `cargo check` and `cargo clippy` steps pass `--keep-going`, so one CI run reports compile errors from every target instead of stopping at the first crate.
+- The logical-JSON oracle test parenthesizes `false || { … }` object values, which `json!` otherwise reads as a bare `false` literal and rejects; the ASCII reverse oracle allows `unused_parens` in the generated witness module it includes, as it already does for the other generated-code lints.
+- The verification-area test resolves `tests/` from `CARGO_MANIFEST_DIR` instead of `file!()`, which became workspace-relative when the crate moved to `rust/` and made every area report "is not a test target".
+- `scripts/verify-contracts.rs` depends on the router package at `../rust` (the repository root is now a virtual workspace manifest), and `scripts/record-vendor-fixtures.rs` finds its cassettes under `rust/tests/fixtures/vendor/` when run from the repository root.
+- `build.rs` folds its nested `git rev-parse` success check into a `let` chain, which Rust 1.98's `clippy::collapsible_if` requires before any other target can be linted.
+- Integration tests that read workflows, scripts, the Dockerfile, deployment templates or documentation resolve them through a shared `tests/support/repository.rs` helper (package directory first, then the repository root), because `cargo test` runs them in `rust/` while those files stay at the repository root.
+- The Unix test step runs `cargo test --no-fail-fast`, so one CI run reports every failing test binary; the Windows integration loop lists `rust/tests/*_test.rs` instead of the `tests/` directory that no longer exists at the repository root.
+- `experiments/issue-642/remote-checkpoint.py`, `experiments/issue-715/check-remote-names.py` and `experiments/issue-697/test_remote_json_consumers.py` read the deploy sources from `rust/src/deploy/`, so the Lint and downstream-contract steps that run them no longer stop with `FileNotFoundError`.
+- `cargo clippy --all-targets -D warnings` (Rust 1.98, pedantic + nursery) passes the library again: the generated JavaScript-first policy module allows the style lints that its literal kernel translation trips, and `scripts/regenerate-js-first.mjs` emits the same attribute; hand-written code uses `let` chains (`auth_remote_tests.rs`, the Realtime relay's geolocation sanitizer), `let … else` (the private-request encoder in `geolocation.rs`), plain `Option` combinators instead of expanded JSON-reader blocks (`bridge_response.rs`, `structured_output.rs`), and backticked identifiers with short first doc paragraphs in `translation_core`.
+- Workflow regression tests follow the deliberate `main` redesign instead of the layout before it: local pre-commit hooks must never run Cargo (the manual `scripts/clear-build-cache.sh` stays available), release runs are never cancelled (`cancel-in-progress: false`), packaging jobs check out `needs.resolve-release-source.outputs.sha` (the commit `refs/tags/v<version>` names), the package build waits for `[javascript, lint, test, coverage]`, local reusable workflows (`uses: ./…`) are exempt from SHA pinning, and `coverage-baseline.txt` is read from the repository root.
+- `build.rs` registers `rerun-if-changed` only for Git metadata paths that exist. A CI checkout has no `.git/packed-refs`, and Cargo treats a missing tracked path as changed, so every Cargo invocation rebuilt the library: the Windows loop, which runs Cargo once per integration target, spent about 55 seconds per target and could not finish its 131 targets within the 45-minute job limit.
+- `cargo clippy --all-targets -D warnings` passes the test targets as well: oracle shapes that are themselves under test (explicit `if let` and `let … else` forms, eager `unwrap_or`/`ok_or` calls, hashed raw strings read by JavaScript tests, generated witnesses and path-included translation inputs) carry scoped `#[allow]`s with a reason, while incidental code is fixed: `&raw const` pointer witnesses, digit separators, `u64::try_from` instead of an `i64 as u64` cast, a bit-exact float comparison, a missing `;` and doc backticks. `tools/translation/prepare-core-unit-matches.mjs` keeps its exact copy of the unit-matches oracle.
+- `coverage-baseline.txt` records the measured 87.286139% line coverage (up from 87.129419%), as the coverage ratchet requires.
+- `rust/src/anthropic_stream.rs` and `rust/src/gonka.rs` are back under the 1000-line file-size limit: rustfmt rewrapping had pushed them to 1014 and 1009 lines, so three stream-error tests moved into `anthropic_stream_termination_tests.rs` and the `GONKA_MODEL` default tests into the new `gonka_model_default_tests.rs`, unchanged.
+- The Lint job's terminology check finishes again instead of hitting the 30-minute job limit. It used to copy the whole line once per hit, so a generated single-line metadata file of 46.8 MB with 4,044 hits (and about 493 GB of copies across the tree) could not complete. Each offence now shows a bounded excerpt, clamped to character boundaries. The check excludes, as records or generated output, `ci-logs/`, case-study `evidence/`, run receipts, `*.mjs.txt` source snapshots and the translation tooling's generated, vendored and fixture paths. It allows "grapheme" and rustc's own `reduced_graph` and `graph_root` names. The remaining authored translation prose says "module graph" (or object graph, call graph, structure) where it said "graph". `CONTRIBUTING.md` lists the new exclusions.
+- `scripts/check-delivery.rs` and `scripts/upload-release-assets.rs` compile again. Both include `rust/src/bounded_process.rs`, which since the owned-type adoption returns `crate::translation_core::Maybe`, so each script now declares the same `Maybe<T> = Option<T>` alias. This also fixes the release job's asset upload, which runs the same script.
+- The Docker cache-stage test copies `rust/Cargo.toml` as well as the root workspace manifest, as the `Dockerfile` does, so `cargo metadata` can load the workspace member again.
+- The JavaScript binding test finds the debug `router` binary at the repository root's `target/` again. It resolved `../../target/debug/router` from the working directory, which pointed outside the checkout once the package moved from `packages/javascript/` to `js/`; the default is now resolved from the test file, and `ROUTER_TEST_BIN` still overrides it. The test's `verifyContracts` call also runs in the repository root again instead of a nonexistent `../../packages` directory.
+- The Claude Code privacy real-client test works with Claude Code 2.1.325, which offers Monitor as a deferred `ToolSearch` tool without a feature flag. Up to 2.1.291 Monitor was a direct tool gated by `tengu_amber_sentinel`. The test now accepts either form under Router's compatible defaults. For the flag-gated form it still requires that each privacy variable hide Monitor, and for the deferred form that each one leave it deferred. A new test covers the deferred-list parser.
+- Benchmarks can check its base commit again. The four lint commands that came with the temporary manual development lane (its policy test, its workflow audit, and the pipe trace test under Node and Bun) always run on the caller's own commit, but on another commit only when that commit has the file. A benchmark base from before the lane therefore no longer fails with "Could not find `scripts/test/manual-development.test.mjs`".
+- The pull-request semver check works again: `cargo semver-checks --baseline-rev` wrote each base file through a temporary name 43 bytes longer, which exceeds the 255-byte limit for the 230-byte translation fixture names. The workflow now extracts the base tree with `git archive` and passes it as `--baseline-root`.
+- The nightly Mutants run can finish within its job limit again. Each mutant rebuilds and runs the whole test suite (about 3 minutes), so with four shards each shard reached only about 80 of its 144 mutants before the 240-minute limit cancelled it (2026-10-18: 574 mutants, 301 tested). Nightly and dispatched runs now use sixteen shards and pull requests eight, with `--sharding round-robin` spreading each module's mutants across shards. Mutants are built with a new `[profile.mutants]` (the test profile without debug symbols), which `.cargo/mutants.toml` selects. `.cargo/mutants.toml` also skips the `Maybe::new(..)`, `Maybe::from(..)` and `Maybe::from_iter(..)` return-value replacements that cargo-mutants generates for functions returning the `crate::translation_core::Maybe` alias. None of them builds (all 1,719 tested were unviable, about 28 seconds each), and they made up two thirds of the 1,590 mutants.
+- `CONTRIBUTING.md`, `docs/testing-tiers.md`, `docs/thinking.md`, `docs/model-truth-contract.md` and the `scripts/upgrade-matrix.sh` usage text name the `rust/src/`, `rust/tests/` and `rust/benches/` paths the crate moved to.
+- Tests now cover the 23 mutants that the last nightly Mutants run to test any (2026-10-18) reported as missed, and the Gemini one-sided usage branch that this PR's reflow brings into `--in-diff`. They cover the Codex device-login errors, `slow_down` handling, callback reasons and the callback server's `Drop`; header and URI redaction; the TTL cap, ephemeral tokens and budget counts in limit errors; and the usage settlement on `Drop for UsageTracker`.
+- Three Codex/Claude retry-evidence tests wait at their barriers through a new `rendezvous` helper, with a 10-second limit. They used to wait forever when a request was rejected before reaching the stub upstream, which turned the 2026-10-18 Mutants run's `is_admin` mutant from caught into a 600-second timeout. The deployment-relay connect-failure test refuses in its connector instead of dialling a just-closed port, which a parallel test could bind again, leaving the relay waiting forever (the same run's timeout for a `redacted_headers` mutant that `deploy_relay` never calls).
+- The staging collision test waits, for up to 10 seconds, until the port of the listener it just dropped can be bound again before it retries the deployment on that port. A child process that a parallel test was spawning could still hold the socket between its fork and its exec, so the retry occasionally saw "staging port has an active listener" (the unmutated baseline of two Mutants shards). If the port stays bound, the test fails with the bind error.
+- Six tests that need a refused connection dial `127.0.0.1:1` instead of an ephemeral port they reserved and dropped: the unreachable-catalog `clients setup` tests in `clients_cli_test.rs`, `clients_token_revocation_test.rs` and `clients_secret_safety_test.rs`, the inconclusive Claude import exchange, the Realtime catalog outage and the transient subscription-usage read. A parallel test could bind the dropped port again. In one coverage run, the OpenCode setup that had to fail reached the Claude setup test's mock catalog on the recycled port 34795 and succeeded, and the Claude setup test failed because its one expected request had been used up. Port 1 is privileged, so no test can listen on it.
+- Four more tests wait with a 10-second limit, where they used to wait forever when the credential store gave them nothing to route with: the credential-rotation snapshot test (its barriers and its request task), the native Gemini 401 evidence test (its stub server, through a new `finished` helper), the Qwen dual-persistence doctor test (its refresh stub) and the coalesced subscription-usage test (its provider probe and both requests). In the full Mutants run, the mutants that make `try_reload` or `lock_path` return nothing timed out after 600 seconds in these tests instead of being caught.
+- New tests cover the 16 mutants that the first full 16-shard Mutants run reported as missed: the request cap in `consume_request` and the rate-window merge in `merge_safer_record`; every hex digit, in both cases, in request-log percent decoding; `ReservationGuard::reserved`; the five-minute expiry margin for external credential candidates, a candidate whose refresh token changes during its catalog check, owner-only staging directories and userinfo in `loopback_origin`; the TTL passed to `rotate_token`, the expiry boundary of `revoke_other_admin_tokens` and signed tokens that carry only one of the client-kind and principal bindings.
+- Request-log percent decoding (`request_log/redaction.rs`) takes bytes off the front of a slice instead of advancing an index, so every step consumes a byte and the loop always ends. With the index, the Mutants mutations of `index += 3` and `index += 1` to `*=` left it at 0, and the loop pushed bytes until the runner ran out of memory: shards 12 and 14 of every full 16-shard run were shut down on their 28th mutant, before cargo-mutants' test timeout, and uploaded no report. The workflow now lists each shard's mutants before testing them and prints caught and unviable outcomes as well, so a lost runner's log names the mutant it was testing.
+- The shared token-endpoint stub of the refresh tests stops waiting for a request after 10 seconds, so `a_refresh_returning_the_same_token_is_not_worth_retrying` and `concurrent_rejections_share_one_refresh` fail instead of hanging when no refresh reaches the endpoint. That hang turned the full Mutants run's default `try_reload` mutant into a 600-second timeout. New tests also cover three more missed `token.rs` mutants from the remaining shards: an admin token expiring this second no longer counts in `has_active_admin_token`, a rotation without a TTL keeps the whole hours the old token had left, `revoke_token` reports a revocation that left the record live, and a per-minute rate window starts a new count only after a full minute (`storage_budget.rs`).
+- Tests that start a router child no longer trust a port they reserved and dropped. A parallel test's mock could bind it first; the router then exited, and the test talked to the mock. In full Mutants run 43609186001 this failed the unmutated baseline of shard 1 with "EOF while parsing a value". Ten test targets now count a router as started only when its own `/api/health` answers `ok`, and start it again on another port when it exits; `rust/tests/support/free_port.rs` hands each port out once per test binary (`deploy_host_test.rs` uses it too), and the tunnel test that needs an unanswered forward uses port 1. The five that read the raw socket check that answer with `health_response::is_ready`, because Router sends the `ok` chunked; a check for a response ending in `ok` never matched, and every router start in `clients_token_revocation_test` timed out in Test Coverage and in all 16 shards of full Mutants run 43618053584.
+- The credential-acceptance test of non-positive catalog verdicts gives validation a one-second client timeout instead of 20 ms. The same client exchanges the token before it reads the catalog, so on a loaded runner the local exchange timed out and the test saw `ExchangeUncertain`; the slow catalog reply now waits 30 seconds, and the assertion names the provider and reply. The coverage baseline is 87.298086%.
+- `slide_expiry` (`storage_budget.rs`) extends a sliding-window token's expiry with `max` instead of `if extended > expires_at`. The comparison's `>=` mutant stored the same value at equality, so no test could catch it, and it was the only mutant full Mutants run 43623530896 missed. A new unit test pins the extend, keep, saturate and fixed-clock cases.
+
+### Fixed
+- The Windows CI test job enables Git long paths before checkout, so the repository's 336 paths longer than 200 characters no longer abort the checkout with "Filename too long" under Windows' 260-character limit.
+
+### Fixed
+- `server start` now recognizes the managed Router container as healthy. It waited for an `/api/health` response that ends in `ok`, but Router's request-log layer re-streams every body, so the `ok` arrives with `transfer-encoding: chunked` as `2\r\nok\r\n0\r\n\r\n` and the start gave up after 20 seconds with "managed router container did not become healthy". The new `health_response::is_ready` decodes a chunked or length-delimited body and accepts only a 200 whose body is exactly `ok`. The managed-server test's health mock now sends Router's chunked answer, so it fails without the fix.
+
+Add optional scalar advisory-lock timing diagnostics that preserve lock cleanup
+and operation errors when synchronous diagnostic writes fail.
+
 ## [1.24.1] - 2026-10-10
 
 bump: minor
