@@ -131,3 +131,57 @@ owned-process-group close test fail here because PID 1 does not reap zombies;
 because UI dependencies were not installed. Remote CI decides all of these.
 Rust was checked only in remote CI. Accounting is unchanged:
 12/70 DRAFTED, 58 OPEN.
+
+### Rust CI repairs after the merge
+
+The merge compiled drafted Rust sources and tests for the first time in CI.
+Repairs used only CI logs; no Rust tool ran locally:
+
+- The native-profile oracle gate now runs the complete manual development
+  workflow audit, which also runs the original strict JavaScript-first audit
+  over its conserved projection (`479da4596`).
+- `cargo fmt --check` diffs were replayed exactly from CI logs with
+  [`apply-rustfmt-log.mjs`](../../../../experiments/merge-main-20261115/apply-rustfmt-log.mjs).
+- Parse, `must_use`, compile and clippy errors in drafted tests were repaired:
+  dead code allowed where a test includes a whole module but uses part of it,
+  typed empty vectors, a `cfg(all(test, unix))` import, explicit
+  `#[allow(unsafe_code)]` on the target-feature oracle, a borrowed `Result`
+  argument and a `$(,)?` trailing comma in `helper_case!`.
+
+### Translator inputs made stale by the merge
+
+`node scripts/translate-router.mjs --check` is not part of current CI, and
+`main` declares automated translation suspended. It still has to pass before
+bulk drafting can continue. Two independent causes break its pins:
+
+1. `main` changed translator inputs, for example `71972481e` changed
+   `tools/translation/extensions/string-iterator-runtime.mjs`, and the release
+   bump changed `rust/Cargo.toml` (1.24.1 → 1.25.0), `Cargo.toml`
+   (`[profile.mutants]`) and `Cargo.lock` (11 dependency versions updated).
+2. The rustfmt replay changed 11 pinned Rust sources.
+
+[`stale-pins.mjs`](../../../../experiments/merge-main-20261115/stale-pins.mjs)
+lists every repository-path pin that matched the pre-merge tip but no longer
+matches the tree: 199 paths. Most holders are generated outputs
+(`generated/owned-definitions/*/index.json`, `parity/rust-source-inventory.json`)
+that the translator write modes produce. Live pins are refreshed one at a time
+with [`refresh-pin.mjs`](../../../../experiments/merge-main-20261115/refresh-pin.mjs),
+which only rewrites a row that matched the pre-merge tip exactly. After the
+`fresh-owned-text-vector-inputs.mjs` refresh, `--check` ran for 9 minutes and
+stopped at the derive dependency proof: `source-profiles/derive/manifest.json`
+pins the old Cargo manifest and lock hashes. None of the pinned derive crates
+(clap, serde, schemars, syn, quote, proc-macro2, heck) changed version.
+
+The existing producer `scripts/refresh-cargo-layout-profiles.py` only accepts
+the readme/profile layout equation with an unchanged lockfile, so it refuses this
+merge. The pre-merge hashes are embedded in 32 hand-maintained source
+profiles, receipts and consumers. They are also in 866 `tools/translation/meta`
+files and 808 files in each of the three `profiles/*` trees. Adding a
+version-bump and unrelated-lock rule to that producer and regenerating the
+meta and profile trees is the next step before bulk drafting. A `#[rustfmt::skip]`
+attribute on `lib.rs` module edges is not an option because module-view spans
+include outer attributes
+([`mod-attribute-span.mjs`](../../../../experiments/merge-main-20261115/mod-attribute-span.mjs)).
+
+**Status: OPEN.** Bulk drafting has not resumed. Accounting is unchanged:
+12/70 DRAFTED, 58 OPEN.
