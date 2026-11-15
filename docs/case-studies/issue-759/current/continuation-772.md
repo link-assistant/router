@@ -301,7 +301,7 @@ capture behaviour are unchanged.
 Run 43736560493 (`473f39694`) confirms it. Lint and Format Check passes, as do
 JavaScript-first, coverage, the changelog check and the dependency audit. The
 Ubuntu (557), macOS (567) and Windows (535) jobs pass every Rust test binary
-and fail only at the BLOCKED native profile step below.
+and fail only at the BLOCKED native profile step (see "Native profile oracle step: BLOCKED").
 
 ### Windows transport oracle margin
 
