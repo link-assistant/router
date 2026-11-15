@@ -9,7 +9,7 @@ fn copied(
     limit: usize,
 ) -> core::Json {
     let mut output = core::json_copy(seed);
-    for item in values
+    for _item in values
         .iter()
         .copied()
         .filter(|item| *item >= minimum)

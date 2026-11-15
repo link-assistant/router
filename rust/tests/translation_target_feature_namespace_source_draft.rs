@@ -1,6 +1,7 @@
 //! Independent target metadata oracle source; gated CI only.
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "sse2")]
+#[allow(unsafe_code)]
 unsafe fn intrinsic(value: u64) -> u64 {
     value
 }
@@ -14,6 +15,7 @@ struct Record {
 }
 
 #[test]
+#[allow(unsafe_code)]
 fn metadata_preserves_ordinary_values_and_original_derived_owner() {
     assert!(!selected(false));
     assert!(selected(true));

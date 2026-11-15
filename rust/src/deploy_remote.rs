@@ -9,7 +9,7 @@ use std::ffi::OsStr;
 use std::io::Write as _;
 use std::process::{ExitCode, Stdio};
 
-#[cfg(test)]
+#[cfg(all(test, unix))]
 use base64::Engine as _;
 use link_assistant_router::cli::DeployArgs;
 use link_assistant_router::deploy_config::{Merged, ResolvedDeploy};
