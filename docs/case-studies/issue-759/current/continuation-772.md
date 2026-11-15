@@ -287,6 +287,17 @@ are reworded by hand. Two note file names are cited byte-for-byte by pinned
 translator source profiles and tools, so they are allowlisted in the check with
 that reason instead of being renamed. The census now reports 0.
 
+### Release automation scripts (job 132877688821)
+
+With the terminology check clean, lint reached "Test release automation".
+`scripts/check-delivery.rs` and `scripts/upload-release-assets.rs` load
+`rust/src/bounded_process.rs` by `#[path]` and call only `output`. The drafted
+`output_limited`, which the library's discovery budget and
+`rust/tests/translation_discovery_bounds.rs` use, was therefore dead code in
+the script crates, and `-Dwarnings` rejected it. That one function now carries
+`#[allow(dead_code)]` with a comment naming both scripts. The scripts and the
+capture behaviour are unchanged.
+
 ### Windows transport oracle margin
 
 `translation_http_transport_core::first_byte_and_idle_bounds_are_distinct...`

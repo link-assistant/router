@@ -97,6 +97,10 @@ pub fn output(command: &mut Command, deadline: Duration) -> Result<Output> {
 
 /// Capture a bounded diagnostic and reject output beyond the explicit byte cap.
 /// Every pipe is drained even after its finite retained buffer is exhausted.
+// `scripts/check-delivery.rs` and `scripts/upload-release-assets.rs` load this
+// file by `#[path]` and call only `output`; there `-Dwarnings` would reject the
+// unused function (lint job 132877688821). The library and its tests call it.
+#[allow(dead_code)]
 pub fn output_limited(command: &mut Command, deadline: Duration, maximum: usize) -> Result<Output> {
     if maximum == 0 || maximum > 8 * 1024 * 1024 {
         return Err(Error::new(
