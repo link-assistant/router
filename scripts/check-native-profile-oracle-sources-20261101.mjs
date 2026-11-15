@@ -13,7 +13,11 @@
 //   exits 0 so the oracle step is skipped visibly. On every other event (push to
 //   the default branch, workflow_dispatch, local runs) it prints what a maintainer
 //   must do and exits 1.
-// - Any other error is rethrown, so a broken visitor never passes as stale.
+// - The runtime has no O_NOFOLLOW (Windows) and the translator's source custody
+//   reader refuses to load for exactly that reason: `supported=false`, handled
+//   like a stale archive (warning on pull_request, maintainer error elsewhere).
+// - Any other error is recorded in the receipt and rethrown, so a broken visitor
+//   never passes as stale.
 //
 // The receipt is written to $RUNNER_TEMP/router-native-profile-oracles/ so the
 // evidence upload step always finds a file.
@@ -23,6 +27,17 @@ import {fileURLToPath} from 'node:url';
 import {NATIVE_PROFILE_ORACLES} from '../tools/translation/native-profile-oracles-20261101-control.mjs';
 
 const STALE = /complete physical source differs: (\S+)$/u;
+const NO_FOLLOW_REQUIRED = 'Compact sparse source Git IO: bounded ordinary precise no-follow source file required';
+
+export function noFollowReadsAvailable(fsConstants = constants) {
+  return Number.isInteger(fsConstants.O_NOFOLLOW) && fsConstants.O_NOFOLLOW > 0 && Number.isInteger(fsConstants.O_NONBLOCK) && fsConstants.O_NONBLOCK > 0;
+}
+
+// True only for the custody reader's own refusal on a runtime that really lacks
+// no-follow/nonblocking descriptors; the same message on a POSIX runtime stays fatal.
+export function isUnsupportedPlatformError(error, fsConstants = constants) {
+  return error instanceof Error && error.message === NO_FOLLOW_REQUIRED && !noFollowReadsAvailable(fsConstants);
+}
 
 export function classifyNativeProfileVisitorError(error) {
   const message = error instanceof Error ? error.message : String(error);
@@ -33,8 +48,15 @@ export function classifyNativeProfileVisitorError(error) {
 export async function inspectNativeProfileOracleSources(profiles = NATIVE_PROFILE_ORACLES) {
   // Load the visitors through the materializer, the module graph the oracle runner
   // uses. Importing a visitor module on its own can hit an import cycle.
-  await import('../tools/translation/native-profile-oracles-20261101-materialize.mjs');
   const rows = [];
+  const base = {schema: 'native-profile-source-freshness-v1', node: process.version, platform: process.platform};
+  try {
+    await import('../tools/translation/native-profile-oracles-20261101-materialize.mjs');
+    for (const profile of profiles) await import(new URL(profile.nativeSourceModule, new URL('../tools/translation/', import.meta.url)).href);
+  } catch (error) {
+    if (!isUnsupportedPlatformError(error)) throw error;
+    return {...base, supported: false, fresh: false, reason: error.message, profiles: rows};
+  }
   for (const profile of profiles) {
     const module = await import(new URL(profile.nativeSourceModule, new URL('../tools/translation/', import.meta.url)).href);
     const visitor = module[profile.nativeSourceVisitor];
@@ -48,7 +70,17 @@ export async function inspectNativeProfileOracleSources(profiles = NATIVE_PROFIL
       rows.push({profileId: profile.id, archive: profile.archive, fresh: false, firstDifferingPath: verdict.path, message: verdict.message});
     }
   }
-  return {schema: 'native-profile-source-freshness-v1', node: process.version, fresh: rows.every(row => row.fresh), profiles: rows};
+  return {...base, supported: true, fresh: rows.every(row => row.fresh), profiles: rows};
+}
+
+export function unsupportedNativeProfileInstructions(result) {
+  return `The native profile oracles cannot load on ${result.platform} (${result.node}): this runtime has no O_NOFOLLOW/O_NONBLOCK, ` +
+    `and readCompactSparsePhysicalFile in tools/translation/compact-sparse-git-io-20261102.mjs refuses to read sources without them ("${result.reason}"). ` +
+    `A maintainer who owns the translator source custody must either decide that this runner may read sources without no-follow descriptors ` +
+    `(as native-profile-oracles-20261101-materialize.mjs already does on win32), port that reader and re-pin ` +
+    `tools/translation/source-profiles/exact-source-successor-adoption-20261103/index.json, ` +
+    `or limit the native profile steps in .github/workflows/release.yml to runners with no-follow reads. Then re-run this job. ` +
+    `See "Native profile oracle step: BLOCKED" in docs/case-studies/issue-759/current/continuation-772.md.`;
 }
 
 export function staleNativeProfileInstructions(result) {
@@ -76,13 +108,21 @@ function writeReceipt(result) {
 }
 
 async function main() {
-  const result = await inspectNativeProfileOracleSources();
+  let result;
+  try {
+    result = await inspectNativeProfileOracleSources();
+  } catch (error) {
+    // Keep evidence of the fatal error for the upload step, then fail.
+    try { writeReceipt({schema: 'native-profile-source-freshness-v1', node: process.version, platform: process.platform, error: String(error?.stack ?? error)}); } catch {}
+    throw error;
+  }
   const receipt = writeReceipt(result);
+  if (!result.supported) console.log(`unsupported runtime: ${result.reason}`);
   for (const row of result.profiles) console.log(`${row.profileId}: ${row.fresh ? 'matches the checkout' : `stale (${row.firstDifferingPath})`}`);
   if (receipt) console.log(`receipt: ${receipt}`);
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `fresh=${result.fresh}\n`);
   if (result.fresh) return 0;
-  const instructions = staleNativeProfileInstructions(result);
+  const instructions = result.supported ? staleNativeProfileInstructions(result) : unsupportedNativeProfileInstructions(result);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Native profile oracles not run\n\n${instructions}\n`);
   if (process.env.GITHUB_EVENT_NAME === 'pull_request') {
     console.log(`::warning title=Native profile oracles skipped on this pull request::${instructions}`);

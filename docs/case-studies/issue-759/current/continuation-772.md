@@ -243,6 +243,33 @@ green.
 a profile producer and update every pinned `archiveSha256`. The alternative is to
 remove the stale profiles from `NATIVE_PROFILE_ORACLES`.
 
+#### Windows: no no-follow reads
+
+In run 43751947603 (`b1b521eb1`), every job passed except Test (windows-latest),
+job 132931812514. The preflight there never reached a visitor. Importing the
+profile modules threw "Compact sparse source Git IO: bounded ordinary precise
+no-follow source file required". The modules read sources at load time
+(`ordered-text-map-callers-20261102-standard-source.mjs`), and
+`readCompactSparsePhysicalFile` in `compact-sparse-git-io-20261102.mjs` requires
+`fs.constants.O_NOFOLLOW` and `O_NONBLOCK`. Node on Windows defines neither. So
+the oracles cannot load on Windows even with fresh archives. The materializer
+already accepts win32 without those flags, but this reader does not. The reader
+is pinned by sha256 in
+`source-profiles/exact-source-successor-adoption-20261103/index.json`, and 125
+translator modules import it. Relaxing it is a custody decision for its owners.
+
+The preflight treats that exact refusal as `supported=false`, but only when the
+runtime really lacks both flags. On POSIX the same message stays fatal. It is
+handled like stale archives: a warning and a skipped oracle step on pull
+requests, and an `::error::` on other events. A fatal error still writes a
+receipt with the stack before the step fails, so the evidence upload no longer
+hides the cause.
+
+**Maintainer action (Windows):** decide whether this runner may read sources
+without no-follow descriptors. If so, port that reader and re-pin the adoption
+profile. Otherwise, limit the native profile steps in `release.yml` to runners
+that have no-follow reads.
+
 ### Coverage after the merge
 
 The first coverage run (job 132825178740) measured 85.99% line coverage against

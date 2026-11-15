@@ -2,7 +2,7 @@
 // drift diagnostic as "stale"; every other visitor error stays fatal.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {classifyNativeProfileVisitorError, staleNativeProfileInstructions} from '../check-native-profile-oracle-sources-20261101.mjs';
+import {classifyNativeProfileVisitorError, isUnsupportedPlatformError, noFollowReadsAvailable, staleNativeProfileInstructions, unsupportedNativeProfileInstructions} from '../check-native-profile-oracle-sources-20261101.mjs';
 
 const options = {timeout: 10000};
 
@@ -30,4 +30,23 @@ test('maintainer instructions name every stale profile, its archive and both way
   assert.match(text, /regenerate tools\/a\.json\.gz/u);
   assert.match(text, /remove the stale profiles from NATIVE_PROFILE_ORACLES/u);
   assert.doesNotMatch(text, /b-20261101/u);
+});
+
+test('the custody reader refusal is a platform gap only where no-follow reads are missing', options, () => {
+  const refusal = new TypeError('Compact sparse source Git IO: bounded ordinary precise no-follow source file required');
+  const windows = {O_RDONLY: 0};
+  const posix = {O_RDONLY: 0, O_NOFOLLOW: 131072, O_NONBLOCK: 2048};
+  assert.equal(noFollowReadsAvailable(windows), false);
+  assert.equal(noFollowReadsAvailable(posix), true);
+  assert.equal(isUnsupportedPlatformError(refusal, windows), true);
+  assert.equal(isUnsupportedPlatformError(refusal, posix), false);
+  assert.equal(isUnsupportedPlatformError(new TypeError('Compact sparse source Git IO: source replaced before open'), windows), false);
+});
+
+test('unsupported-platform instructions name the reader, the pin and the ways out', options, () => {
+  const text = unsupportedNativeProfileInstructions({platform: 'win32', node: 'v20.20.2', reason: 'r'});
+  assert.match(text, /cannot load on win32 \(v20\.20\.2\)/u);
+  assert.match(text, /compact-sparse-git-io-20261102\.mjs/u);
+  assert.match(text, /exact-source-successor-adoption-20261103\/index\.json/u);
+  assert.match(text, /limit the native profile steps/u);
 });
