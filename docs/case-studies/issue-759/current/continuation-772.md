@@ -94,3 +94,40 @@ producer-only blank-line correction has a full retained preimage and exact
 readback; its complete four-case copier file passes again in both engines.
 The packet occupies 1,336,229 bytes and all 94 members were independently read
 back. It does not certify the complete JavaScript gate or a controlled speed gain.
+
+## 2026-11-15 merge of `main` (v1.25.0) and JavaScript-first repairs
+
+Merge commit `4f812e5ea` resolved every conflict with `main`. File-level decisions
+and the reasons for them are kept in
+[`experiments/merge-main-20261115/decisions.txt`](../../../../experiments/merge-main-20261115/decisions.txt).
+Summary:
+
+- Diverged translator history/pin files keep this branch's version. Generated
+  meta and `js`/`ts` draft outputs keep this branch's bytes; regenerating them
+  from the merged `rust/src` is still pending.
+- `vendor/NOTICE.md` is back to the bytes on `main`, which the parser manifest
+  pins. The paragraph this branch had added is now in
+  `docs/development/translation-provenance-20261102.md`.
+- Import cycles through `checked-types.mjs` were removed by moving limits and
+  native key registration into dependency-free leaf modules.
+- The `main` lint now walks `tools/translation`. That exposed pre-existing
+  syntax breakage in drafted files that had never run: duplicate imports or
+  names, raw newlines inside quoted strings, and lost brackets. All were
+  repaired without changing behaviour.
+- Draft native tests that had never run before were repaired. One test
+  expectation now matches the Rust behaviour in `client_launch.rs`. Two
+  cancellation, CRLF and inline-table bugs were found by these tests and fixed
+  in both `js/src` and `ts/src`.
+- The Node deadline test was timing out because its runner imported the whole
+  translator just to reach one source policy. That policy now lives in
+  `tools/translation/protected-source-policy-20261115.mjs`, which cut the import
+  from 14 s to 0.10 s. No budget changed.
+- `configure` and `with` are now partially native, so the fixtures assert their
+  exact refusals instead of "not implemented".
+
+Some failures are specific to this sandbox. Managed-daemon exit and the
+owned-process-group close test fail here because PID 1 does not reap zombies;
+`main` fails the same way in this sandbox. `build-js-first-ui` was not run here
+because UI dependencies were not installed. Remote CI decides all of these.
+Rust was checked only in remote CI. Accounting is unchanged:
+12/70 DRAFTED, 58 OPEN.
