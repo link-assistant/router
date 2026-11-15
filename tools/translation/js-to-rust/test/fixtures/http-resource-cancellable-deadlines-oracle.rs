@@ -11,7 +11,7 @@ async fn cancellable_tail_retains_both_results() {
         .await,
         Ok(Ok(()))
     );
-    control::cancel_set(&cancellation);
+    let _ = control::cancel_set(&cancellation);
     assert_eq!(
         control::with_deadline(1000, &cancellation, |child| async move {
             control::sleep(0, &child).await

@@ -34,7 +34,7 @@ async fn zero_and_precancelled_deadlines_do_not_construct_the_callback_future() 
         Err(ControlError::Timeout)
     );
     assert_eq!(calls.load(Ordering::SeqCst), 0);
-    control::cancel_set(&cancellation);
+    let _ = control::cancel_set(&cancellation);
     let captured = calls.clone();
     assert_eq!(
         control::with_deadline(1000, &cancellation, |_| {
