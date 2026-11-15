@@ -5,14 +5,6 @@
 //! generated core is exercised as a whole rather than by sampled call sites.
 use link_assistant_router::translation_primitive_results_core as r;
 
-fn s() -> String {
-    "é".to_owned()
-}
-
-fn o() -> String {
-    "out".to_owned()
-}
-
 fn e() -> String {
     "bad".to_owned()
 }
