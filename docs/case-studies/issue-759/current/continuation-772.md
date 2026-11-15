@@ -249,6 +249,22 @@ pre-expansion lint and the root allow did not reach the `#[path]` module file.
 It is therefore allowed workspace-wide in `rust/Cargo.toml`, with the fixtures
 left byte-identical.
 
+With Clippy clean (job 132857629710), the lint job reached
+`scripts/check-file-size.rs` for the first time. Three generated cores exceeded
+1,000 lines: `translation_owned_results_core.rs` (1,567),
+`translation_primitive_results_core.rs` (1,082) and
+`translation_json_fields_core.rs` (1,073).
+[`split-generated-core.mjs`](../../../../experiments/clippy-20261115/split-generated-core.mjs)
+moves runs of whole functions into child modules (`signed_and_str`, `owned_text`,
+`text_fields`). Each child starts with `use super::*`, and the parent re-exports
+it with `pub use child::*`. Every `crate::<core>::<fn>` path and every function
+body stays unchanged, and the largest file is now 591 lines. **Debt:** the
+translator still emits each core as one file, so the split belongs in its
+emitter as well. The pinned `*_NATIVE_SOURCE` constants already differ from the
+committed cores because of the allows. Eight JavaScript tests that read the
+repository's Rust sources fail the same way with and without the split. They
+are not part of the JavaScript-first CI, which is green.
+
 The 63 JavaScript tests that reference any edited test file were rerun locally
 on Node 20. 47 files pass. The other 16 fail identically on the unedited tree
 because `owned-primitive-definition-family.mjs` imports
