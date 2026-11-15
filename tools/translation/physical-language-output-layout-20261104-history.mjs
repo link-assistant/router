@@ -8,6 +8,7 @@ import {createRulePipeline} from './rule-pipeline.mjs';
 import {countedLiteralSubstitutionRule} from './counted-literal-substitution-20261102.mjs';
 import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
 import {transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
+import {captureMergeMainSourceSuccessor20261115,composeMergeMainSourceSuccessor20261115} from './merge-main-20261115-source-history.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const PACKET='tools/translation/source-profiles/physical-language-output-adoption-20261104/equations.json';
 const SHA='52f7de0dbf0f366a795fa98f5e07b315c473012d825e1ac16d951994866f1f02';
@@ -38,19 +39,20 @@ function equation(row){
  return {id:'physical-language-output-layout-20261104',path:row.path,before:row.before,after:row.after,inverse:row.before,language:stages[0].after,stages,equation:history,sourceAuthority:false,semanticAuthority:false,verification:'UNRUN'};
 }
 export function capturePhysicalLanguageProducerSourceSuccessor20261104(capture,path,before){
- // Preserve the original helper's null domain for every unrelated coordinate.
- if(!PATHS.slice(0,2).includes(path))return null;
+ // Unrelated coordinates keep the original null domain unless the fixed
+ // 2026-11-15 merge cohort appends a complete reviewed successor to them.
+ if(!PATHS.slice(0,2).includes(path))return captureMergeMainSourceSuccessor20261115(capture,path,before);
  need(typeof before==='string','complete original producer source required');
  const rows=readRows(capture),row=rows.find(item=>item.path===path);
  need(row.before===before,'original producer afterimage must join exactly');
  const control=rows[2];need(capture(control.path).source===control.after,'actual source-history dispatch differs');
- const result=equation(row);need(capture(path).source===result.after,'actual producer is not its complete source successor');
+ const result=composeMergeMainSourceSuccessor20261115(capture,path,before,equation(row));need(capture(path).source===result.after,'actual producer is not its complete source successor');
  return result;
 }
 export function proposePhysicalLanguageProducerSourceAdoption20261104({root=ROOT}={}){
  const captured=createReconcileSourceCapture(root);
  return withCompleteSourceClosingFence(()=>{
-  const rows=readRows(captured.capture).map(row=>{const result=equation(row);need(captured.capture(row.path).source===result.after,'actual adopted producer/history source differs');return result;});
+  const rows=readRows(captured.capture).map(row=>{const result=composeMergeMainSourceSuccessor20261115(captured.capture,row.path,row.before,equation(row));need(captured.capture(row.path).source===result.after,'actual adopted producer/history source differs');return result;});
   return {rows,sourceInstalled:true,sourceAuthority:false,semanticAuthority:false,installationAuthority:false,verification:'UNRUN'};
  },[captured.close]);
 }
