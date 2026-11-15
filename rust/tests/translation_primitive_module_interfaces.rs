@@ -1,3 +1,9 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::cast_sign_loss)]
+#![allow(clippy::invalid_upcast_comparisons)]
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::unreadable_literal)]
 // Independent native module/interface oracle SOURCE. CI after same-SHA JS gates.
 mod primitive_implementation {
     pub fn mask(left: u8, right: u8) -> u8 {

@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 // Independent native Copy scalar edge cases. CI only after all JavaScript gates.
 fn identity<T: ::core::marker::Copy>(value: T) -> T {
     value

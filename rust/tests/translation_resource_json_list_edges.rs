@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 // Independent native oracle SOURCE; no local Rust execution is authorized.
 use link_assistant_router::translation_core::{self as core, Json};
 use link_assistant_router::translation_state_core as state;

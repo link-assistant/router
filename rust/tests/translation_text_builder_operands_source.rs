@@ -1,3 +1,7 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::needless_pass_by_value)]
+#![allow(clippy::uninlined_format_args)]
 // Independent original Rust source oracle. UNRUN; gated CI only.
 fn conditional(value: &str, flag: bool) -> String {
     let mut output = String::new();

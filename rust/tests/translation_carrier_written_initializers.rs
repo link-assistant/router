@@ -1,3 +1,7 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::map_identity)]
+#![allow(clippy::or_fun_call)]
 // Independent typed carrier result-chain oracle SOURCE. Gated Rust CI only.
 use link_assistant_router::{
     translation_owned_results_core as owned,

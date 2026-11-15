@@ -1,3 +1,7 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::items_after_statements)]
+#![allow(clippy::unreadable_literal)]
 // Independent primitive branch oracle SOURCE; CI only after JavaScript gates.
 #[test]
 fn exact_u64_order_preserves_values_above_binary64_and_all_boundaries() {

@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::should_panic_without_expect)]
 // Independent native source oracle. Run only in gated CI; unrun during drafting.
 #[test]
 fn primitive_numeric_boundaries_and_exact_large_values() {

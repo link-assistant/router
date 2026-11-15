@@ -1,4 +1,8 @@
 //! Independent all-width reverse scalar core oracle SOURCE, CI-only UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::assertions_on_constants)]
+#![allow(clippy::uninlined_format_args)]
 use link_assistant_router::translation_integer_core as integer;
 #[test]
 fn every_selected_native_scalar_operation_and_display_keeps_its_own_width() {

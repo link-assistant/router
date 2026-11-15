@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::unreadable_literal)]
 // Independent native alias constant oracle. UNRUN; gated Rust CI only.
 use link_assistant_router::translation_fixed_types_core as scalar;
 #[test]

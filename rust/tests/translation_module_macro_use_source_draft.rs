@@ -1,4 +1,8 @@
 //! Independent actual word module macro_use oracle. Gated CI only.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::doc_markdown)]
+#![allow(clippy::missing_const_for_fn)]
 macro_rules! chosen {
     ($name:ident) => {
         pub fn $name() -> u8 {

@@ -1,4 +1,7 @@
 //! Independent native branch oracle, CI only after all same-SHA JS gates.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::overly_complex_bool_expr)]
 use link_assistant_router::translation_core;
 fn selected(flag: bool, seed: u8) -> Vec<u8> {
     if flag {

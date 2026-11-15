@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::single_char_pattern)]
 // Independent lexical alias and byte-offset oracle SOURCE; gated CI only.
 use link_assistant_router::translation_text_core as core;
 #[test]

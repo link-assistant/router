@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::unreadable_literal)]
 // Independent source-f64 oracle. CI only after every same-SHA JS stage passes.
 fn bounded_float_loop(value: f64) -> f64 {
     let mut current = value;

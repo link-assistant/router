@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::significant_drop_tightening)]
 // Independent HTTP/control oracle SOURCE. UNRUN; Rust belongs to gated CI only.
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use link_assistant_router::{

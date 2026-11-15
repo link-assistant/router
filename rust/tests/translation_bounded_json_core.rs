@@ -1,4 +1,7 @@
 //! Independent bounded canonical JSON library oracle. CI after all JS gates.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::redundant_clone)]
 use link_assistant_router::translation_json_core::{
     json_checked_copy, json_checked_with_field, json_validate,
 };

@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::similar_names)]
 // Independent oracle SOURCE, UNRUN. CI only after all eight same-SHA JS gates.
 use link_assistant_router::translation_async_control_core as control;
 

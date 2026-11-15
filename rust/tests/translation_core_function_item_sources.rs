@@ -1,4 +1,7 @@
 //! Independent exact-path function item callback oracle SOURCE. CI-only, UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::redundant_closure)]
 use link_assistant_router::{
     translation_integer_core as integer, translation_owned_results_core as owned,
     translation_primitive_option_callbacks_core as callback,

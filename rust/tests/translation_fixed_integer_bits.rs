@@ -1,4 +1,7 @@
 //! Independent native integer BITS oracle. SOURCE ONLY; UNRUN. CI after all JS gates.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::cast_lossless)]
 use link_assistant_router::translation_fixed_types_core as scalar;
 #[test]
 fn fixed_integer_bit_widths_are_u32_independent_of_the_receiver_domain() {

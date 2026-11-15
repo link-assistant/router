@@ -1,4 +1,8 @@
 //! Independent target metadata oracle source; gated CI only.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::redundant_clone)]
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "sse2")]
 #[allow(unsafe_code)]

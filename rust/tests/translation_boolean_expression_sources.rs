@@ -1,4 +1,8 @@
 //! Independent original logical/native callback oracle SOURCE. CI-only, UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::nonminimal_bool)]
+#![allow(clippy::single_char_pattern)]
 use link_assistant_router::translation_primitive_option_callbacks_core as callback;
 #[test]
 fn complete_boolean_callback_truth_tables_preserve_precedence() {

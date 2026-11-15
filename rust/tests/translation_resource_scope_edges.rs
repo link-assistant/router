@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 // Independent native oracle SOURCE. Execute only in JavaScript-gated CI.
 use link_assistant_router::translation_integer_core as integer;
 

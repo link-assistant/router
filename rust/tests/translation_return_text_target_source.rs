@@ -1,3 +1,7 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::match_bool)]
+#![allow(clippy::needless_return)]
 // Independent original return context oracle. UNRUN; gated Rust CI only.
 fn selected(value: &str, first: bool, second: bool) -> String {
     if first {

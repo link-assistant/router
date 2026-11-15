@@ -1,4 +1,7 @@
 //! Independent borrowed reader-chain oracle SOURCE. CI only; UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::option_if_let_else)]
 use link_assistant_router::translation_core::{self, Json};
 
 fn original_object<'a>(value: &'a Json, key: &str) -> Option<&'a str> {

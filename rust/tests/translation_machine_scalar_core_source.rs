@@ -1,3 +1,7 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::unreadable_literal)]
 // Independent native machine scalar oracle source. UNRUN; gated Rust CI only.
 use link_assistant_router::translation_fixed_types_core as scalar;
 fn count(value: scalar::Usize) -> scalar::Usize {

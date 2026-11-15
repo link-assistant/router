@@ -1,4 +1,8 @@
 //! Independent native text/carrier/Try oracle SOURCE. CI-only, UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::bool_to_int_with_if)]
+#![allow(clippy::items_after_statements)]
 use link_assistant_router::{
     translation_primitive_option_callbacks_core as callback,
     translation_primitive_option_core as option, translation_text_core as text,

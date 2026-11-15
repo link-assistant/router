@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::useless_vec)]
 // Independent native scalar-vector edge oracles. CI ONLY; NEVER RUN LOCALLY.
 #[test]
 fn vector_items_retain_left_to_right_failure_order() {

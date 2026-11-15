@@ -1,4 +1,8 @@
 //! Primitive constant value oracles. SOURCE ONLY; CI execution only.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::assertions_on_constants)]
+#![allow(clippy::cast_possible_wrap)]
 
 #[test]
 fn primitive_constant_selection_and_total_operations() {

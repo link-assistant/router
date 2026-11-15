@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 // Independent genuine scalar alias endpoint oracle. UNRUN; gated CI only.
 use link_assistant_router::translation_fixed_types_core as scalar;
 type First = scalar::U64;

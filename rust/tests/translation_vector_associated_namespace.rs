@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::if_not_else)]
 // Independent allocation/checked-call namespace oracles. CI ONLY; ALL UNRUN.
 mod translation_core {
     pub use std::vec;

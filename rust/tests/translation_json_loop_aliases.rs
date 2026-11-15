@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::explicit_iter_loop)]
 // Independent original-versus-core loop oracle SOURCE. Gated CI only; UNRUN.
 use link_assistant_router::{
     translation_collections_core as core, translation_state_core as state,

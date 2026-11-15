@@ -1,4 +1,7 @@
 //! Independent std behavior for the combined owned-core source proposal; CI only.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 #[rustfmt::skip]
 fn blank(value: &str) -> bool { value.trim().is_empty() }
 #[rustfmt::skip]

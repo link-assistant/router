@@ -1,4 +1,7 @@
 //! Original token versus string behavior. Native CI runs after the full JS gate.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 mod fixture {
     const TEXT: &str = "#[automatically_derived]";
     #[rustfmt::skip]

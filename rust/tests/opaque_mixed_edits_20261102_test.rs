@@ -1,4 +1,7 @@
 //! Independent mixed helper/local/literal behavior. Gated native CI only.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 fn oldhelper(value: u64) -> Option<u64> {
     value.checked_sub(1)
 }

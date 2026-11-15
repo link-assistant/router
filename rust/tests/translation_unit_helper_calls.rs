@@ -1,3 +1,9 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::let_unit_value)]
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::needless_pass_by_value)]
+#![allow(clippy::semicolon_if_nothing_returned)]
 // Independent native behavior oracle. CI only after all same-SHA JS gates.
 // SOURCE DRAFT ONLY. No local Rust command is authorized.
 fn check(value: u8) {

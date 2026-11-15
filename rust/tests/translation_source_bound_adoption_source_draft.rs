@@ -1,4 +1,7 @@
 //! Independent named-import/no-derive oracle source; gated CI only.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 mod model {
     pub struct Record {
         pub value: u8,

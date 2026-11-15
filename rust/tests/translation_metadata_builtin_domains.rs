@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 // Native oracle SOURCE only. No local Rust invocation is authorized.
 #![allow(dead_code, non_camel_case_types, unused_macros)]
 #![doc = "Inner documentation remains a builtin attribute."]

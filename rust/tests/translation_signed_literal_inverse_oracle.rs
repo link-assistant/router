@@ -1,4 +1,7 @@
 //! Independent numeric oracle SOURCE. Rust executes only in gated CI.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::unreadable_literal)]
 #[test]
 fn actual_signed_extreme_and_cross_zero_values_retain_native_domains() {
     let minimum: i64 = -9223372036854775808_i64;

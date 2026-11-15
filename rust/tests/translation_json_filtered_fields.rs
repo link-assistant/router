@@ -1,4 +1,7 @@
 //! Independent filtered-field native oracle SOURCE. CI-only after all JS gates; UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::iter_on_single_items)]
 use link_assistant_router::{translation_core::Json, translation_json_fields_core as fields};
 
 #[test]

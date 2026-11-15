@@ -1,3 +1,8 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::items_after_statements)]
+#![allow(clippy::missing_const_for_fn)]
 // Independent local constant source oracles. UNRUN; gated Rust CI only.
 use link_assistant_router::translation_fixed_types_core as scalar;
 fn bound() -> scalar::U64 {

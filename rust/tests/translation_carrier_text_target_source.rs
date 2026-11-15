@@ -1,3 +1,7 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::needless_return)]
+#![allow(clippy::useless_conversion)]
 // Independent original carrier target oracle. UNRUN; gated CI only.
 fn selected(value: &str, flag: bool) -> Result<String, String> {
     return if flag {

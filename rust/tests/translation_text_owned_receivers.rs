@@ -1,4 +1,8 @@
 //! Native original/adopted owned String oracle SOURCE. Gated CI only; UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::manual_string_new)]
+#![allow(clippy::needless_pass_by_value)]
 use link_assistant_router::translation_text_core as owned;
 
 fn original(value: String, pattern: String, replacement: &str) -> String {

@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::iter_on_empty_collections)]
 // Independent standard-library oracle SOURCE. UNRUN; schedule only behind the
 // complete same-SHA JavaScript CI gate. No local Rust invocation is authorized.
 #[test]

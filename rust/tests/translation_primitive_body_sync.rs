@@ -1,3 +1,8 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::cast_sign_loss)]
+#![allow(clippy::decimal_bitwise_operands)]
 // Native oracle SOURCE only. CI runs after every required JavaScript gate.
 #[test]
 fn primitive_body_sync_cast_shift_and_eager_boolean_edges() {

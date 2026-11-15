@@ -1,4 +1,9 @@
 //! Standard-library join oracles. Only gated CI may compile this source.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::assign_op_pattern)]
+#![allow(clippy::single_match)]
+#![allow(clippy::unreadable_literal)]
 #[path = "../src/translation_owned_text_vectors_core.rs"]
 pub mod translation_owned_text_vectors_core;
 pub mod translation_text_core {

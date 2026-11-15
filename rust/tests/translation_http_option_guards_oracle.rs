@@ -1,4 +1,9 @@
 //! Independent Option guard/fallback oracle SOURCE. JavaScript-gated CI only.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::manual_let_else)]
+#![allow(clippy::option_if_let_else)]
+#![allow(clippy::single_match_else)]
 use link_assistant_router::{
     translation_http_transport_core as transport, translation_owned_results_core as result,
     translation_text_core as text,

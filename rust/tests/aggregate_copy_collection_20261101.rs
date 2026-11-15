@@ -1,6 +1,10 @@
 //! Independent complete actual owner-declaration excerpt oracle SOURCE, UNRUN.
 //! This compiles the exact private ImportPolicy/CredentialSharing declarations
 //! in a separate fixture scope; it does not admit the original auth_import module.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::doc_markdown)]
+#![allow(clippy::iter_cloned_collect)]
 /// Destination and rejection policy selected by the public import flags.
 #[derive(Debug, Clone, Copy, Default)]
 struct ImportPolicy {

@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 // Independent native scoped-item oracle SOURCE. CI only after same-SHA JS gates.
 #[test]
 fn local_modules_traits_and_implementations_keep_their_native_scopes() {

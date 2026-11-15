@@ -1,4 +1,7 @@
 //! Independent actual source expression block oracle SOURCE, CI-only UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::redundant_closure_call)]
 use link_assistant_router::{translation_core::format, translation_integer_core as integer};
 #[test]
 fn source_expression_blocks_keep_capture_reads_local_mutation_and_child_returns() {

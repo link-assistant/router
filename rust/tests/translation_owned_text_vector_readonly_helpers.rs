@@ -1,4 +1,7 @@
 //! Readonly str/vector helper oracle source; gated CI only.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::cast_possible_truncation)]
 #[path = "../src/translation_owned_text_vectors_core.rs"]
 pub mod core;
 fn repeated(values: &Vec<String>, suffix: &str) -> String {

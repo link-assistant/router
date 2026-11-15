@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::or_fun_call)]
 // Independent JSON carrier alias/branch oracle SOURCE; gated native CI only.
 use link_assistant_router::translation_carriers_core as core;
 use serde_json::{Value, json};

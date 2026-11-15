@@ -1,3 +1,7 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::map_clone)]
+#![allow(clippy::redundant_closure_for_method_calls)]
 // Independent slice/vector alias and iteration oracle SOURCE; gated CI only.
 use link_assistant_router::{translation_collections_core as core, translation_core};
 use serde_json::{Value, json};

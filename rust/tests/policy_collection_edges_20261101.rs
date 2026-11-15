@@ -1,5 +1,11 @@
 //! Independent actual-policy collection oracle SOURCE; entirely UNRUN.
 //! CI runs native tests only after all eight same-SHA JavaScript stages pass.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::collection_is_never_read)]
+#![allow(clippy::iter_cloned_collect)]
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::redundant_closure_for_method_calls)]
 use link_assistant_router::client_policy::{
     ClientProtocol, EntitlementDecision, SubscriptionEntitlementPolicy, SubscriptionOverride,
 };

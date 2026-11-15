@@ -1,4 +1,8 @@
 //! Independent optional JSON operation oracle SOURCE. CI only; UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::option_if_let_else)]
+#![allow(clippy::unreadable_literal)]
 use link_assistant_router::translation_core::{self, Json};
 
 fn text(value: Option<&Json>) -> Option<&str> {

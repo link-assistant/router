@@ -1,4 +1,7 @@
 //! Independent qualified standard String ownership oracle; gated Rust CI only.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::needless_pass_by_value)]
 use link_assistant_router::translation_core;
 fn values(flag: bool, seed: String) -> Vec<String> {
     if flag {

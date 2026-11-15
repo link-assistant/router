@@ -1,4 +1,7 @@
 //! Independent explicitly owning callback text target oracle SOURCE. CI-only UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::redundant_closure_for_method_calls)]
 #[test]
 fn typed_carrier_destinations_keep_allocations_values_and_lazy_error_observation() {
     for value in [None, Some(""), Some("é😀"), Some("a\0b")] {

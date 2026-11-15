@@ -1,3 +1,8 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::items_after_statements)]
+#![allow(clippy::manual_is_ascii_check)]
+#![allow(clippy::missing_const_for_fn)]
 // Independent native oracle SOURCE. CI only after all same-SHA JavaScript gates.
 fn status_class(value: u16) -> u8 {
     match value {

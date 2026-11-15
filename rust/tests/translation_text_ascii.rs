@@ -1,4 +1,7 @@
 //! Independent shared vector/native oracle SOURCE. Gated CI only; UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::option_if_let_else)]
 use link_assistant_router::translation_text_core as owned;
 use serde_json::{Value, json};
 

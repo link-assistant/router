@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::cast_possible_truncation)]
 // Independent native caller oracle SOURCE. Run only in CI after all eight
 // same-SHA JavaScript gates; never compile locally during bulk drafting.
 use link_assistant_router::translation_primitive_vectors_core as core_vectors;

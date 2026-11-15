@@ -1,4 +1,7 @@
 //! Independent JSON Option-Try source oracle. UNRUN; native CI only after JS.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::needless_question_mark)]
 use link_assistant_router::{translation_core::Json, translation_json_fields_core as fields};
 
 fn original<'a>(value: &'a Json, key: &str) -> Option<&'a str> {

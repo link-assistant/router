@@ -1,3 +1,7 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::needless_raw_string_hashes)]
 // Independent Boolean oracle source. Run only in CI after all JavaScript gates.
 const HELPER_JS_WITNESS: &str = r###"/** @param {boolean} a @param {boolean} b @returns {boolean} */
 export function predicate(a,b){return a ? !b : b;}

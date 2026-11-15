@@ -1,4 +1,8 @@
 //! Independent local HTTP oracle source. Only gated CI may execute Rust.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::significant_drop_tightening)]
+#![allow(clippy::unreadable_literal)]
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use link_assistant_router::{
     translation_async_control_core as control, translation_http_protocol_core as value,

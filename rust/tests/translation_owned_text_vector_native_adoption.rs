@@ -1,4 +1,8 @@
 //! Independent bounded String-vector native oracles. CI only after JS gates.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::manual_string_new)]
+#![allow(clippy::vec_init_then_push)]
 // The whole core module is included; each oracle uses only part of it.
 #[allow(dead_code)]
 #[path = "../src/translation_owned_text_vectors_core.rs"]

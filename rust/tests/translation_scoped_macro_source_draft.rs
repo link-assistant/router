@@ -1,4 +1,7 @@
 //! Independent original Rust textual-scope oracle. Gated CI only; never local.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 macro_rules! chosen {
     ($name:ident) => {
         pub fn $name() -> u8 {

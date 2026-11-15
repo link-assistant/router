@@ -1,3 +1,7 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::needless_bool)]
 // Independent terminal guard/conditional oracle SOURCE; gated CI only.
 fn guards(first: bool, second: bool) -> bool {
     if first {

@@ -1,3 +1,8 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::must_use_candidate)]
+#![allow(clippy::unreadable_literal)]
 // Independent native public fixed aliases SOURCE. CI after all same-SHA JS gates.
 mod implementation {
     pub fn mask(left: u8, right: u8) -> u8 {

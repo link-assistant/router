@@ -1,3 +1,10 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::cast_lossless)]
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::cast_possible_wrap)]
+#![allow(clippy::cast_sign_loss)]
+#![allow(clippy::unreadable_literal)]
 // Independent native oracle SOURCE. CI only after all same-SHA JavaScript gates.
 #[test]
 #[allow(clippy::unnecessary_cast)]

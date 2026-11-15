@@ -1,4 +1,7 @@
 //! Independent tool/adoption oracle source. Execution is deferred to gated CI.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 #[rustfmt::skip]
 fn selected(value: bool) -> bool { value }
 

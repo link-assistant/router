@@ -1,5 +1,10 @@
 //! Independent bare builtin-name namespace oracle SOURCE; gated CI only, UNRUN.
 #![allow(non_camel_case_types)]
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::assertions_on_constants)]
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::no_effect_underscore_binding)]
 
 struct inline;
 struct cold;

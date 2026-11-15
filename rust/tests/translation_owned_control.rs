@@ -1,4 +1,7 @@
 //! Independent control-flow oracle SOURCE; only JavaScript-gated CI executes it.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::needless_continue)]
 use link_assistant_router::translation_core::Json;
 
 fn until_null(values: &[Json]) -> Json {

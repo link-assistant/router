@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 // Independent Rust oracle source. Execute only in CI after every JS stage passes.
 macro_rules! make {
     ($name:ident, $ty:ty, $value:literal) => {

@@ -1,5 +1,9 @@
 //! Independent native active cfg_attr oracle SOURCE; unrun.
 #![cfg_attr(all(), forbid(unsafe_code), cfg_attr(not(any()), allow(dead_code)))]
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::doc_markdown)]
+#![allow(clippy::missing_const_for_fn)]
 
 #[cfg_attr(not(any()), macro_use)]
 #[path = "../../tools/translation/test/fixtures/active-conditional/native-provider.rs"]

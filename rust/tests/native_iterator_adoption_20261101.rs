@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::iter_cloned_collect)]
 // Independently authored lazy Rust iterator oracle SOURCE. UNRUN. Existing
 // complete same-SHA JavaScript gates precede Cargo; no local Rust invocation.
 #[test]

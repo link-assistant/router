@@ -1,4 +1,7 @@
 //! Independent local JSON field loan oracle SOURCE. UNRUN; gated native CI only.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::option_if_let_else)]
 use link_assistant_router::{
     translation_core as core, translation_json_fields_core as fields, translation_text_core as text,
 };

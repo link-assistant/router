@@ -1,4 +1,8 @@
 //! Native textual-scope oracle SOURCE only; no Rust tools run locally.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::redundant_pub_crate)]
 
 mod original_scope {
     macro_rules! selected {

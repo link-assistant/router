@@ -1,4 +1,7 @@
 //! Independent paired-core oracle. All native execution is gated CI only.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::unreadable_literal)]
 #[path = "../src/translation_primitive_sequences_core.rs"]
 mod sequences;
 

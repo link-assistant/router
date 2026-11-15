@@ -1,3 +1,9 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::bool_to_int_with_if)]
+#![allow(clippy::let_and_return)]
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::no_effect_underscore_binding)]
 // Independent contextual-choice oracle. CI only after same-SHA JS gates.
 // SOURCE DRAFT ONLY. No local Rust execution is authorized.
 fn unsigned(value: u8, flag: bool) -> Vec<u8> {

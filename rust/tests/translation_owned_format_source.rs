@@ -1,4 +1,7 @@
 //! Independent native stable/computed primitive formatting SOURCE. CI-only UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::uninlined_format_args)]
 use std::cell::RefCell;
 #[test]
 fn primitive_arguments_and_computed_arguments_keep_values_and_evaluation_order() {

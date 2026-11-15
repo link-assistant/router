@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::should_panic_without_expect)]
 // Independent native oracle SOURCE. CI remains gated by all JavaScript stages.
 use link_assistant_router::translation_core::{self as core, Json};
 use link_assistant_router::translation_integer_core as integer;

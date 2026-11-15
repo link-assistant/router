@@ -1,4 +1,9 @@
 //! Independent native unit definition oracle sources. CI-only; all unrun.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::branches_sharing_code)]
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::redundant_else)]
 fn empty() {}
 
 // Explicit returns and identical returning branches are the oracle inputs.

@@ -1,4 +1,8 @@
 //! Independent binary64 vector oracle. CI only after every JS gate passes.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::if_not_else)]
+#![allow(clippy::unreadable_literal)]
 use link_assistant_router::translation_core;
 fn values(flag: bool, seed: f64) -> Vec<f64> {
     if !flag {

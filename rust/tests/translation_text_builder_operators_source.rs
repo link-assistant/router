@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::string_add_assign)]
 // Independent original operators versus existing paired core. UNRUN; gated CI only.
 use link_assistant_router::translation_text_core as text;
 // This source shape is the behavior being translated, so retain the assignment.

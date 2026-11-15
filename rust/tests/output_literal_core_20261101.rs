@@ -1,6 +1,14 @@
 //! Independent native routing/memory oracle SOURCE; all execution UNRUN.
 //! This checks the actual new explicit backend model, not persistent host log
 //! locking/redaction/rotation parity or an installed canonical facade.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::collapsible_if)]
+#![allow(clippy::doc_markdown)]
+#![allow(clippy::items_after_statements)]
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::needless_pass_by_value)]
+#![allow(clippy::struct_excessive_bools)]
 // The whole literal module is included; this oracle uses only part of it.
 #[allow(dead_code)]
 #[path = "../src/translation_core/literal_arguments_core_20261101.rs"]

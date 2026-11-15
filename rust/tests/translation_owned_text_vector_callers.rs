@@ -1,4 +1,7 @@
 //! Independent native ownership/oracle source. Execution is CI-only and UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 use link_assistant_router::translation_owned_text_vectors_core as core;
 
 fn move_text(value: String) -> String {

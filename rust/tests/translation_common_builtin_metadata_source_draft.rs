@@ -1,6 +1,11 @@
 //! Independent native builtin metadata oracle SOURCE; unrun.
 #![forbid(unsafe_code)]
 #![allow(dead_code)]
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::inline_always)]
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::repr_packed_without_abi)]
 
 #[repr(C, align(8))]
 struct Packet {

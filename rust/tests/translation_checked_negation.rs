@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::items_after_statements)]
 // Independent checked-negation oracles; gated CI only, ALL UNRUN.
 macro_rules! signed {
     ($name:ident, $ty:ty) => {

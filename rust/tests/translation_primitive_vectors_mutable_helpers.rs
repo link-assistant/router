@@ -1,4 +1,8 @@
 //! Independent native helper-created mutable Vec behavior. CI only, after JS gates.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::unreadable_literal)]
 use link_assistant_router::translation_primitive_vectors_core as vectors;
 
 macro_rules! helper_case {

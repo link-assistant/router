@@ -1,3 +1,8 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::option_if_let_else)]
+#![allow(clippy::or_fun_call)]
+#![allow(clippy::unnecessary_literal_unwrap)]
 // Independent native oracle SOURCE. CI only after all same-SHA JS gates pass.
 use serde_json::{Value, json};
 

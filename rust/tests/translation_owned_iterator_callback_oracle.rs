@@ -1,4 +1,7 @@
 //! Independent lazy callback oracle SOURCE. Only gated CI may execute Rust.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::never_loop)]
 use link_assistant_router::{translation_core as core, translation_state_core as state};
 use serde_json::json;
 

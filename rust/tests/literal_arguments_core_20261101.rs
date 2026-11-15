@@ -1,6 +1,10 @@
 //! CI-only independent owned carrier oracle. SOURCE ONLY: UNRUN locally.
 //! This imports the real new leaf; the canonical translation_core adoption is
 //! intentionally uninstalled. This is not a std::fmt::Arguments ABI oracle.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::doc_markdown)]
+#![allow(clippy::needless_pass_by_value)]
 #[path = "../src/translation_core/literal_arguments_core_20261101.rs"]
 mod literal_arguments_core;
 use literal_arguments_core::{

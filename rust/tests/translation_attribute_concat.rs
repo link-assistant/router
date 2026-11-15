@@ -1,5 +1,10 @@
 //! Independent native literal concat oracle SOURCE; gated CI only, UNRUN.
 #![doc = concat!("Inner ", "literal documentation.")]
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::empty_docs)]
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::useless_concat)]
 
 #[doc = concat!("A ", "doc.")]
 fn documented(value: bool) -> bool {

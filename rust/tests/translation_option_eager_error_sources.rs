@@ -1,4 +1,9 @@
 //! Independent actual eager/converting Option error oracle SOURCE. CI-only, UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::items_after_statements)]
+#![allow(clippy::needless_question_mark)]
+#![allow(clippy::or_fun_call)]
 use link_assistant_router::translation_primitive_option_core as option;
 #[test]
 fn values_errors_and_ordinary_try_conversion_keep_the_native_contract() {

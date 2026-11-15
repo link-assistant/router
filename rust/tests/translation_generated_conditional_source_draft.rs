@@ -1,5 +1,8 @@
 //! Independent generated conditional native oracle SOURCE; unrun.
 #![forbid(unsafe_code)]
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 
 macro_rules! chosen {
     () => {

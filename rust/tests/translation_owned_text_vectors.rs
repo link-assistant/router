@@ -1,5 +1,9 @@
 //! Independent paired owned String Vec oracle SOURCE. CI only, UNRUN.
 //! The actual public crate edge is used; all execution remains UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::cloned_ref_to_slice_refs)]
+#![allow(clippy::unreadable_literal)]
 use link_assistant_router::translation_owned_text_vectors_core as core;
 
 #[test]

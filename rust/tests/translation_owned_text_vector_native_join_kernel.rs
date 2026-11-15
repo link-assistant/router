@@ -1,5 +1,9 @@
 //! Independent canonical join-fold oracle source; gated CI only.
 //! Standard-library join supplies expectations, not the JavaScript kernel.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::assign_op_pattern)]
+#![allow(clippy::single_match)]
 pub use link_assistant_router::{translation_owned_text_vectors_core, translation_text_core};
 
 fn joined(

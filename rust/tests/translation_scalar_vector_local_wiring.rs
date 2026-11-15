@@ -1,3 +1,7 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::no_effect_underscore_binding)]
+#![allow(clippy::useless_vec)]
 // Independent scalar/unit caller and vector helper ordering. CI ONLY; UNRUN.
 fn helper(value: u8) -> Vec<u8> {
     vec![value.checked_add(1).expect("attempt to add with overflow")]

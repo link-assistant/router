@@ -1,3 +1,8 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::map_clone)]
+#![allow(clippy::redundant_closure_for_method_calls)]
+#![allow(clippy::unreadable_literal)]
 // Independent written immutable alias oracle SOURCE; gated CI only, UNRUN.
 use link_assistant_router::{
     translation_collections_core as collections, translation_integer_core as integer,

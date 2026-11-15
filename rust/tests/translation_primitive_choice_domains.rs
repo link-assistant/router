@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::items_after_statements)]
 // Independent primitive literal-choice oracles. CI ONLY; ALL UNRUN.
 #[test]
 fn typed_values_anchor_both_literal_choice_orders() {

@@ -1,5 +1,8 @@
 //! Independent native oracle SOURCE; execute only in gated CI, never locally.
 #![doc = concat!("Inner documentation ", "keeps module behavior.")]
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 
 #[doc = include_str!("../../tools/translation/test/fixtures/attribute-expression-doc.md")]
 struct Record;

@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 // Independent oracle for scalar callers of implicit unit helpers.
 // CI only after every same-SHA JavaScript gate. ALL UNRUN locally.
 fn check(value: u8) {

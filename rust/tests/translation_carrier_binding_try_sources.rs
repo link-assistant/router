@@ -1,4 +1,7 @@
 //! Independent lexical binding Try oracle SOURCE. CI-only, UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::items_after_statements)]
 use link_assistant_router::translation_integer_core as integer;
 #[test]
 fn bare_binding_try_preserves_native_payload_absence_errors_and_limits() {

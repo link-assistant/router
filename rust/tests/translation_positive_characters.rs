@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::unreadable_literal)]
 // Independent native oracle SOURCE. CI only after all same-SHA JavaScript gates.
 #[test]
 fn rust_character_literals_are_scalars_with_matching_pattern_values() {

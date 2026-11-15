@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::uninlined_format_args)]
 // Independent primitive Display/temporary borrow oracle. UNRUN; gated CI only.
 #[test]
 fn original_temporary_display_borrows_and_integer_edges() {

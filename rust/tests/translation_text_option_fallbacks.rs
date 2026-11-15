@@ -1,4 +1,7 @@
 //! Independent native Option fallback/borrow oracle SOURCE. CI only; UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::map_unwrap_or)]
 use link_assistant_router::translation_text_core as owned;
 
 #[test]

@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::manual_string_new)]
 // Native oracle SOURCE ONLY. Rust executes in CI after the complete JS gate.
 #[path = "../src/borrowed_standard_map_20261102.rs"]
 mod borrowed_map;

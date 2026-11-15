@@ -1,4 +1,9 @@
 //! Independent concrete Option default oracle SOURCE. CI only; UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::collection_is_never_read)]
+#![allow(clippy::manual_unwrap_or_default)]
+#![allow(clippy::option_if_let_else)]
 use link_assistant_router::translation_core::{self, Json};
 
 fn original_text(value: &Json) -> &str {

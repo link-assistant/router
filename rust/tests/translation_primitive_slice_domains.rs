@@ -1,5 +1,8 @@
 //! Independent slice value/Copy oracle. CI only after all JavaScript gates.
 //! These cases do not execute or qualify the JavaScript source translator.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::unreadable_literal)]
 
 macro_rules! primitive_slice_case {
     ($name:ident, $integer:ty, $minimum:expr, $maximum:expr) => {

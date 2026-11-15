@@ -1,3 +1,7 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::manual_range_patterns)]
+#![allow(clippy::missing_const_for_fn)]
 // Independent match-arm and guard order oracles. Gated CI only; ALL UNRUN.
 fn add(left: u8, right: u8) -> u8 {
     ::core::option::Option::expect(left.checked_add(right), "attempt to add with overflow")

@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 // Native oracle source. Run in CI only after the entire same-SHA JS gate.
 #[derive(Clone, Debug)]
 struct Record {

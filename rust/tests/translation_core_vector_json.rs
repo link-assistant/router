@@ -1,4 +1,8 @@
 //! Independent owned JSON vector oracle; CI only after all same-SHA JS gates.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::cloned_ref_to_slice_refs)]
+#![allow(clippy::unreadable_literal)]
 use link_assistant_router::translation_core::{self, Json};
 fn moved(value: Json) -> Vec<Json> {
     translation_core::vec![value]

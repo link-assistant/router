@@ -1,4 +1,9 @@
 //! Independent native attribute examples. Gated CI only; no local Rust execution.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::inline_always)]
+#![allow(clippy::items_after_statements)]
+#![allow(clippy::missing_const_for_fn)]
 
 #[allow(dead_code)]
 #[repr(C)]

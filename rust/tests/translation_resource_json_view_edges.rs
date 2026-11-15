@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::borrow_as_ptr)]
 // Independent native oracle SOURCE; execute only after every JS CI gate passes.
 use link_assistant_router::translation_core::{self as core, Json};
 use link_assistant_router::translation_http_protocol_core as http;

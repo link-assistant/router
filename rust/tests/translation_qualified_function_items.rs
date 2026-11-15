@@ -1,4 +1,9 @@
 //! Independent exact qualified function-item substitution oracle SOURCE, UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::redundant_closure)]
+#![allow(clippy::unnecessary_wraps)]
 use link_assistant_router::{
     translation_owned_results_core as owned,
     translation_primitive_option_callbacks_core as callback,

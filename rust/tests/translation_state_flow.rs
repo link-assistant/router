@@ -1,4 +1,7 @@
 //! Independent oracle source. CI only after all same-SHA JavaScript stages.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::redundant_closure)]
 use link_assistant_router::translation_collections_core::{json_any, json_filter};
 use link_assistant_router::translation_core::{Json, json_copy, json_map};
 use link_assistant_router::translation_state_core::{

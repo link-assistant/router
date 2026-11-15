@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::redundant_pub_crate)]
 // Source oracle compares the actual entire application module, not a copied predicate.
 pub use link_assistant_router::borrowed_json_tool_predicate_20261103;
 pub use link_assistant_router::openai::ChatMessage;

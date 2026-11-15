@@ -1,4 +1,7 @@
 //! Original ordered scalar match semantics. Source drafted; CI execution only.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::match_bool)]
 
 fn text_match(value: &str) -> u64 {
     match value {

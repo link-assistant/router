@@ -1,5 +1,30 @@
 //! Independently written native expectations. Existing CI discovers this test
 //! only after the complete same-SHA JavaScript gate. Never run locally for #759.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::bind_instead_of_map)]
+#![allow(clippy::borrow_as_ptr)]
+#![allow(clippy::if_same_then_else)]
+#![allow(clippy::items_after_statements)]
+#![allow(clippy::let_and_return)]
+#![allow(clippy::manual_let_else)]
+#![allow(clippy::manual_noop_waker)]
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::needless_bool)]
+#![allow(clippy::needless_collect)]
+#![allow(clippy::needless_continue)]
+#![allow(clippy::needless_return)]
+#![allow(clippy::never_loop)]
+#![allow(clippy::option_option)]
+#![allow(clippy::question_mark)]
+#![allow(clippy::redundant_clone)]
+#![allow(clippy::unnecessary_literal_unwrap)]
+#![allow(clippy::unnecessary_map_on_constructor)]
+#![allow(clippy::unnecessary_wraps)]
+#![allow(clippy::unreadable_literal)]
+#![allow(clippy::unused_async)]
+#![allow(clippy::unused_unit)]
+#![allow(clippy::while_immutable_condition)]
 mod translation_core {
     pub type Json = serde_json::Value;
 }

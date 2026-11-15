@@ -1,4 +1,7 @@
 //! Independent original passive macro/attribute source. Gated CI only.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 #[allow(unused_macros)]
 macro_rules! make {
     ($name:ident, $value:literal) => {

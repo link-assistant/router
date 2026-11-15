@@ -1,4 +1,7 @@
 //! Independent standard iterator comparisons; gated CI only, no local Rust.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::redundant_closure_for_method_calls)]
 use link_assistant_router::translation_collections_core::{
     json_all, json_any, json_filter, json_find, json_fold,
 };

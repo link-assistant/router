@@ -1,4 +1,8 @@
 //! Independent optional text oracle SOURCE; CI-only after all JS gates, UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::or_fun_call)]
+#![allow(clippy::unreadable_literal)]
 use link_assistant_router::translation_primitive_option_core as option;
 #[test]
 fn standard_owned_operations_keep_empty_presence_and_eager_values() {

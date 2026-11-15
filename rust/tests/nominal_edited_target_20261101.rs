@@ -1,5 +1,8 @@
 //! Independent actual unit-owner semantic-edit oracle SOURCE. Entirely UNRUN.
 //! Existing complete JavaScript gate precedes native Cargo receiving stages.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::match_same_arms)]
 use link_assistant_router::client_policy::EntitlementDecision;
 
 fn edited_remap(input: &[EntitlementDecision]) -> Vec<EntitlementDecision> {

@@ -1,5 +1,10 @@
 //! Independent actual production unit-enum collection oracle SOURCE. UNRUN.
 //! Existing complete JavaScript gate precedes Cargo; no native invocation here.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::cloned_instead_of_copied)]
+#![allow(clippy::iter_cloned_collect)]
+#![allow(clippy::needless_collect)]
 use link_assistant_router::client_policy::EntitlementDecision;
 
 fn bounded_copy(input: &[EntitlementDecision]) -> Vec<EntitlementDecision> {

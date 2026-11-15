@@ -1,4 +1,7 @@
 //! Independent native primitive ToString/Display oracle SOURCE, CI-only UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::uninlined_format_args)]
 use std::cell::Cell;
 #[test]
 fn primitive_to_string_matches_the_existing_display_abstraction_at_every_width() {

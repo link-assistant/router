@@ -1,3 +1,7 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::no_effect_underscore_binding)]
+#![allow(clippy::useless_vec)]
 // Independent scalar-return/native local vector oracles. CI ONLY; UNRUN.
 fn status(value: u8, other: u16, flag: bool) -> bool {
     let _first = vec![value];

@@ -1,4 +1,11 @@
 //! Independent optional owning callback oracle SOURCE. CI-only after all JS gates; UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::bind_instead_of_map)]
+#![allow(clippy::bool_comparison)]
+#![allow(clippy::bool_to_int_with_if)]
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::if_not_else)]
 use link_assistant_router::translation_primitive_option_callbacks_core as core;
 use std::cell::Cell;
 

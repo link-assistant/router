@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::unreadable_literal)]
 // Independent exact-value oracle; CI only after same-SHA JavaScript gates.
 // SOURCE DRAFT ONLY. Do not compile or test Rust locally.
 fn unsigned(value: u128) -> Vec<u128> {

@@ -1,4 +1,8 @@
 //! Independent source header/member layout oracle SOURCE. CI-only UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::trivially_copy_pass_by_ref)]
 #[repr(C)]
 #[derive(Clone, Copy)]
 struct Packet(u64);

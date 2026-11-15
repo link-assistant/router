@@ -1,3 +1,7 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::no_effect_underscore_binding)]
+#![allow(clippy::useless_vec)]
 // Independent local element domains and evaluation oracles. CI ONLY; UNRUN.
 fn values(value: u8, other: u16) -> Vec<u8> {
     let _first = vec![other.checked_add(1).expect("attempt to add with overflow")];

@@ -1,4 +1,10 @@
 //! Independent real generic Option ABI movement oracle. Gated CI only.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::items_after_statements)]
+#![allow(clippy::needless_return)]
+#![allow(clippy::question_mark)]
+#![allow(clippy::redundant_else)]
 use link_assistant_router::translation_primitive_option_core::option_identity;
 use std::cell::Cell;
 

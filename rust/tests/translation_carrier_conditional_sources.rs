@@ -1,4 +1,7 @@
 //! Independent ordinary conditional callback oracle SOURCE. CI-only, UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::needless_bool)]
 use link_assistant_router::{
     translation_owned_results_core as owned, translation_primitive_option_callbacks_core as option,
     translation_primitive_results_core as result,

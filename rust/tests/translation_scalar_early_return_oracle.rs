@@ -1,4 +1,8 @@
 //! Independent native early-return expectations; UNRUN, CI-only after JS gates.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::no_effect_underscore_binding)]
 use std::panic::catch_unwind;
 fn selected(condition: bool, left: u8, right: u8) -> u8 {
     if condition {

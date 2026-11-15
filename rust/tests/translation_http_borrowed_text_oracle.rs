@@ -1,4 +1,7 @@
 //! Independent root/lifetime oracle SOURCE. Run only in JavaScript-gated CI.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::needless_lifetimes)]
 use link_assistant_router::translation_http_protocol_core as http;
 use serde_json::json;
 

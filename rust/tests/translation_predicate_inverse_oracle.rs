@@ -1,4 +1,8 @@
 //! Independent predicate inverse oracle SOURCE. Rust executes in gated CI only.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::nonminimal_bool)]
+#![allow(clippy::overly_complex_bool_expr)]
 #[test]
 fn equality_and_ordering_edges_preserve_native_u64_semantics() {
     for (a, b) in [(0_u64, 0_u64), (0, 1), (1, 0), (u64::MAX, u64::MAX)] {

@@ -1,4 +1,8 @@
 //! Independent ordinary tool/derive scope oracle source. Gated CI only.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::redundant_clone)]
 #[rustfmt::skip]
 fn root(value: bool) -> bool { value }
 mod model {

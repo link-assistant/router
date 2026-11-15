@@ -1,4 +1,7 @@
 //! Independent Result callback text oracle SOURCE. Gated CI only, UNRUN.
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::bind_instead_of_map)]
 use link_assistant_router::{
     translation_owned_results_core as owned, translation_primitive_results_core as primitive,
     translation_text_core as text,

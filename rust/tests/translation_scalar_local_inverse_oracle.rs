@@ -1,3 +1,6 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 // Independent native scalar-local oracle. CI only after the complete JS gate.
 fn compute(a: bool, b: bool, c: bool) -> bool {
     let first = !a;

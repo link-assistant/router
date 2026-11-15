@@ -1,3 +1,8 @@
+// Drafted translation oracle: these shapes mirror the JavaScript source the
+// translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::needless_pass_by_value)]
+#![allow(clippy::unneeded_wildcard_pattern)]
 // Independent original nonbinding pattern oracle. UNRUN; gated CI only.
 fn optional(value: &str, input: Option<bool>) -> String {
     let saved = value;
