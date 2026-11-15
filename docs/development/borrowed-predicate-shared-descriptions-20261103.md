@@ -3,7 +3,7 @@
 R04 remains OPEN. The initial cohort at5b8186d7 drafted a shared description
 implementation and a complete adoption proposal for the two existing borrowed
 predicate families. The follow-up below installs that source into the actual
-compiler parents and records their complete successor graph. Runtime/source
+compiler parents and records their complete successor network. Runtime/source
 qualification has not been executed; all new cases are UNRUN.
 
 The original contracts are the operation-description inputs:
@@ -55,12 +55,12 @@ map arity, exact reverse type roles, unpaired-surrogate refusal and 64/65
 literal boundary. Expected values are not generated from the new descriptions.
 
 At the initial checkpoint, source installation and a complete guarded-parent
-successor graph were still separate remaining tasks. The follow-up below drafts
+successor network were still separate remaining tasks. The follow-up below drafts
 both. Full receiving must still use the original whole compiler and both reverse
 readers. Do not replace their source guards with a descriptor or run a copied
 unguarded adapter and call that semantic receiving.
 
-## Actual source installation and complete successor graph
+## Actual source installation and complete successor network
 
 Both actual forward adapters now derive native arity from the shared operation
 descriptions. The standard-map emitter and interpreter derive the same 2–66
@@ -86,7 +86,7 @@ consumer and source cases, plus the complete new restriction implementation.
 The ABI history consumer preserves its original afterimage and accepts only a
 complete known terminal successor; it separately reports the current source.
 
-The hot source graph now drafts **361 equations across 256 paths**, preserving
+The hot source network now drafts **361 equations across 256 paths**, preserving
 all original347 equations. Fourteen appended complete source equations retain
 all nine installation parents and five original case continuations, with 28
 full source images totaling164939bytes. The original347 index is losslessly
@@ -99,7 +99,7 @@ whole-input mutation/restoration poisoning, expiry, foreign private receipt
 refusal and preservation of falsy/frozen primary failures. Existing complete
 Router forward/reverse receiving cases now target the actual changed adapters,
 including both original reverse compilers. No such case has been run for this
-cohort; source graph size is not executable coverage or semantic qualification.
+cohort; source network size is not executable coverage or semantic qualification.
 
 ## Remaining R04 scope
 

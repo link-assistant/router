@@ -23,10 +23,10 @@ reach the latest five parents through their existing diagnostic continuation.
 Earlier case files retain complete original cases and additionally recognize
 this complete source chain. No frozen historical afterimage is repinned.
 
-Engine source remains outside its own hashed graph. The independent full
+Engine source remains outside its own hashed network. The independent full
 engine chain is physical127→cold127→198→282→292. Original198 and282 roots do
 not require newer companion files. Engine/control/case sources retain complete
-before/after/inverse records in their own packet. No current graph or native
+before/after/inverse records in their own packet. No current network or native
 qualification is inferred from a public hash alone.
 
 Fixed indexSHA:

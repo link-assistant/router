@@ -24,7 +24,7 @@ source wiring, not qualified behavior or executable application coverage.
 The async sequence yields one complete original proposer result at a time.
 Every next request uses the preceding complete after map and retains original
 before/path equality. Its caller can write or release each complete packet;
-the coordinator does not accumulate earlier graphs, CSTs or full proposal
+the coordinator does not accumulate earlier networks, CSTs or full proposal
 histories. An independent source-string snapshot made before yielding prevents
 mutable public packet DATA from changing the next input. Source, Cargo, profile
 and stage inputs are checked across asynchronous boundaries. Paths, ordinary

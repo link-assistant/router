@@ -321,7 +321,7 @@ drafts a concrete shared-description consumer for two original forward/reverse
 adapter families and their strict declarations. Its six-parent registered rule
 proposal preserves original private guards, declaration pins and complete phase
 histories. Proposal availability is separate from qualified installation into
-the original guarded compiler graph; R04 remains OPEN and all new cases UNRUN.
+the original guarded compiler network; R04 remains OPEN and all new cases UNRUN.
 
 The [primitive collection cohort](primitive-collection-shared-descriptions-20261103.md)
 drafts descriptor-driven candidate shapes and strict declarations for all33

@@ -95,7 +95,7 @@ Original domain limits remain. In particular the constant kernel's full-origin
 16MiB accounting happens before larger-field corpus storage; the new adapter
 does not trim origins to evade it. The original CST/private-parser and 2M-unit
 Cargo guards can still refuse complete larger inputs. Four target accumulations,
-source graphs, metadata and complete history/copy cohorts can coexist; runtime,
+source networks, metadata and complete history/copy cohorts can coexist; runtime,
 RSS, aggregate retention, copying and Windows fit are unmeasured and open.
 No case deadline/copy/storage envelope was increased, and no persistent semantic
 verdict cache or public parser/type/ownership permission was introduced.

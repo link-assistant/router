@@ -38,7 +38,7 @@ The result retains the actual minimal source plan, changed/retained function
 names, original Rust and JavaScript histories, canonical projection history and
 false runtime/whole-synchronization claims. Shared helpers remain unchanged.
 Edited callers still have an explicit helper-decomposition/adoption record;
-this adapter does not invent a unique inverse helper graph. There is no new
+this adapter does not invent a unique inverse helper network. There is no new
 cross-operation source, type, owner or result cache.
 
 The [receiving source](../../tools/translation/js-to-rust/test/copy-scalar-rust-source-reconciliation-20261103.test.mjs)
@@ -48,6 +48,6 @@ TypeScript signatures with paired body edits, interpreter results, unchanged
 network restoration and explicit visibility-change handling. These are unrun
 cases. The two complete implementation/case creation images are retained in
 `source-profiles/copy-scalar-source-reconciliation-20261103/complete-source.json.gz`.
-The installed source graph remains401/270. Finish general helper decomposition,
+The installed source network remains401/270. Finish general helper decomposition,
 remaining type/effect/ownership/module families, actual application adoption and
 the other open source requirements before verification.

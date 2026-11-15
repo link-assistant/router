@@ -127,7 +127,7 @@ first parent; they include any prior accumulated work.
 | Commit | UTC on Nov3 | Since parent | Step and reason supported by source |
 | --- | --- | ---: | --- |
 | `43fb953a4` |17:32:31 |17m57s | Draft helper module graphs/local function binding; complete callers need actual helper ownership and imports, not just recognized call spelling. |
-| `b6d991c03` |17:37:55 |5m24s | Adopt that graph in actual reader source; a draft helper does not install itself in the existing path. |
+| `b6d991c03` |17:37:55 |5m24s | Adopt that network in actual reader source; a draft helper does not install itself in the existing path. |
 | `eef202c08` |17:53:16 |15m21s | Draft scalar early returns with lexical scope and ordered fallthrough, preserving branch results. |
 | `f6a2679de` |17:58:41 |5m25s | Adopt early-return readers while retaining original closing/scope checks. |
 | `d785468c9` |18:21:39 |22m58s | Draft physical source roles and guarded crate-layout planning; authored/generated ownership must be explicit. |

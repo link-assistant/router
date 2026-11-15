@@ -12,12 +12,12 @@ results retain their exact return type. Explicit new-definition insertion also
 accepts a scalar-only exported set when actual checked bodies contain primitive
 vectors; a purely scalar set still uses the original separate insertion family.
 
-The finite source definition validator and complete helper graphs now permit a
+The finite source definition validator and complete helper networks now permit a
 scalar caller to receive a same-module Vec helper result as an owned local.
-Every callee body, ABI, original coordinate, complete graph, cycle/arity/depth and
+Every callee body, ABI, original coordinate, complete network, cycle/arity/depth and
 expanded-work check remains. Actual native discovery and refresh carry the local
 observation through their complete unit transports and source projection. The
-native graph accepts Vec result edges only in the bounded scalar-container or
+native network accepts Vec result edges only in the bounded scalar-container or
 existing vector family. Unused helper calls remain ordered events, preserving
 their failures; pure unused container representation may normalize under the
 existing successful-resource primitive-vector envelope.
@@ -25,7 +25,7 @@ existing successful-resource primitive-vector envelope.
 Both complete native comparison paths recompute the actual scalar container
 observation and reject a mismatch with the freshly issued receiving origin.
 Their local array/conditional rules use that independent actual-domain result.
-The public observation flag, source records and graph summaries are DATA; none
+The public observation flag, source records and network summaries are DATA; none
 can create a source, type, namespace or runtime permission. Original scalar ABI
 and same-result vector observer APIs remain unchanged.
 

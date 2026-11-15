@@ -26,7 +26,7 @@ or hashes alone confer no native authority. Every close still runs, exact
 callback primaries are preserved, and caught/restored failures invalidate an
 enclosing source operation.
 
-The source graph now retains all401 earlier equations and adds two complete
+The source network now retains all401 earlier equations and adds two complete
 reader successors plus nine complete historical case continuations. That gives
 412 equations across271 paths,22 new full source images and703173 retained source
 bytes. The separate401→412 engine history preserves the old401-root domain.

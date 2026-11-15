@@ -4,17 +4,17 @@ This extends the [adopted ordered helper lane](ordered-scalar-helper-adoption-20
 with complete reader source proposals for named inter-helper imports and actual
 same-module function symbols. Both readers are now [source adopted](ordered-helper-graph-adoption-20261104.md). All
 execution is UNRUN, CI NOT_INSPECTED, counts12/70 DRAFTED,58 OPEN and actual
-production coverage UNKNOWN. The installed source graph now retains466/275.
+production coverage UNKNOWN. The installed source network now retains466/275.
 
 ## Separate import layout from executable body proof
 
 The original private reader still owns the real TypeScript Program/checker,
 source/file identity, actual import symbols, unique native declarations and
-whole function bodies. The new graph helper supplies structural orchestration
+whole function bodies. The new network helper supplies structural orchestration
 only. Public callbacks, fake nodes, flags, exported names, returned Maps and
 source hashes do not issue parser/type/body/namespace permission.
 
-A fresh graph operation builds ordinary function/import layouts using the actual
+A fresh network operation builds ordinary function/import layouts using the actual
 native syntax and complete source. It registers a layout before resolving its
 imports, then drains a FIFO worklist through the original import checker. This
 allows benign import cycles without recursively expanding the layout traversal.
@@ -41,7 +41,7 @@ An invocation-local native declaration stack refuses recursive or too-deep body
 calls before uncontrolled recursive compilation. Its entries are removed in
 finally even after failures. Sequential calls and benign import cycles remain
 separate from recursive body execution. There is no positive checked-body or
-verdict cache. Layout metadata and callbacks are cleared when the graph closes;
+verdict cache. Layout metadata and callbacks are cleared when the network closes;
 no source, owner, body verdict, result or permission cache crosses operations.
 
 ## Provenance, failure and resource boundaries
@@ -60,12 +60,12 @@ operation. Caught native/import/current failures poison subsequent selection
 and closing with exact falsy/frozen primary identity. All closing checks and
 cleanup still run. Synchronous callback requirements reject asynchronous work.
 The implementation does not import or execute source modules to inspect them.
-Graph traversal is iterative and bounded; no performance gain has been measured.
+Network traversal is iterative and bounded; no performance gain has been measured.
 
 Both reader proposals select a new seven-input ordered archive, retaining the
-old six inputs and adding the complete graph helper. The old six-input archive,
+old six inputs and adding the complete network helper. The old six-input archive,
 old fourteen-input Copy archive and original Boolean archive stay immutable.
-The graph archive remains nested inside those existing Copy/Boolean guards.
+The network archive remains nested inside those existing Copy/Boolean guards.
 Full original reader before/after images, separate language/repository counted
 substitutions, intermediate whole CST serialization/reparse and exact inverses
 are retained. Source roles and compiler facts still require the original private

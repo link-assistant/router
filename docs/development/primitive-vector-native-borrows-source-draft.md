@@ -13,7 +13,7 @@ parent and signature slot, plus the checked pointee identity. The generic
 ownership qualifier and its prior explicit aggregate-borrow refusal remain
 unchanged. No public verified/owner flag or cached verdict bypasses it. The
 new borrowed value still has to pass the existing complete original helper
-body graph, leading shared entry guards, source closing and emission checks.
+body network, leading shared entry guards, source closing and emission checks.
 
 Flow keeps bounded pending argument loans for the whole synchronous call,
 including later argument evaluation, nested calls and branch states. A move or

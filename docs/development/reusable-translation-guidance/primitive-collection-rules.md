@@ -58,8 +58,8 @@ local's length rewrite without hand-editing generated expressions.
 ## Whole helpers and synchronous loans
 
 An actual signature can select a helper-checking route; it cannot qualify its
-body. Rejoin the complete original caller/callee graph, actual native symbols,
-entry guards and unchanged source/signatures. Retain bounded acyclic graph,
+body. Rejoin the complete original caller/callee network, actual native symbols,
+entry guards and unchanged source/signatures. Retain bounded acyclic network,
 move, branch, loop, root-loan and emission dependency checks. Keep unsupported
 foreign modules, escaping references and callbacks explicit. Do not flip an
 old refusal or owner flag to bypass missing prerequisites.

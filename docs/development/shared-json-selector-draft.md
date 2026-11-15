@@ -4,7 +4,7 @@ Every new implementation and independent case is UNRUN. Source review found that
 the source-bound bulk dispatcher used a separate earlier JSON selector copy.
 Both actual adopter entry points now forward their six source operands to one
 shared current selector implementation. Each retains its original complete input,
-Cargo, configuration, native producer, source graph, namespace and import guards.
+Cargo, configuration, native producer, source network, namespace and import guards.
 The selector returns candidate source DATA; it cannot issue semantic or native
 authority. The source-bound producer context remains distinct from the ordinary
 producer context. This sharing creates no cross-operation cache.

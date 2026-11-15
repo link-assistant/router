@@ -10,7 +10,7 @@ checked actual callee. Unsupported bodies and recursive components refuse.
 Program checking, meta serialization/reparsing and emission require every linked
 checked callee, its exact whole module source, declaration span, argument domains
 and return domain. One genuine source context is required for executable local
-calls. Standalone spelling/metadata/graph helpers issue no semantic authority.
+calls. Standalone spelling/metadata/network helpers issue no semantic authority.
 Both independent interpreters execute the already checked complete call set;
 there is no across-invocation source, owner, verdict or encoded-output cache.
 

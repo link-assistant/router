@@ -247,7 +247,7 @@ no source/hash/verdict cache or benchmark-based qualification is introduced. The
 Native source context rejoins the same private Cargo source for edition and
 dependency proofs, actual active root/leaf scopes, absence of std/String shadows,
 unknown parent producers and no_std/no_core/no_implicit_prelude refusals. Reverse
-constructs the complete supplied native graph and actual original Host parser
+constructs the complete supplied native network and actual original Host parser
 with its original derive/tool/bang context. The receiving fixture retains every
 original core facade leaf, including base64. Native BTreeMap internals remain
 untranslated under the explicitly supported native compatibility abstraction.
@@ -286,7 +286,7 @@ entries validate through the unchanged strict raw constructor. No arbitrary
 array annotation, tagged product or tuple literal issues that native domain.
 All corresponding cases and resource qualification remain UNRUN. Inferred
 pair results without signature context, general tuple locals/literals,
-and general map aliases in the reverse source checker, mutable bindings/assignments, loops, helper graphs,
+and general map aliases in the reverse source checker, mutable bindings/assignments, loops, helper networks,
 record/tuple/serde fields, borrowed map return values, and generalized shared-map
 Copy/lifetime patterns remain refused or OPEN. Ordinary forward owned map locals
 and the closed Some/None consumer are drafted; this is lexical ownership, not
@@ -294,7 +294,7 @@ complete Rust non-lexical lifetime analysis. Returned lookup loans in reverse
 still require an actual input map root; local map loans may only be consumed
 inside the function. Returning a loan from a new/local map refuses.
 
-The source-drafted cold capsule reconstructs the genuine whole original graph
+The source-drafted cold capsule reconstructs the genuine whole original network
 before accepting semantic meta and is scheduled by the explicit receiving
 driver; its source contexts are never persisted permits. Reverse Rust emission
 now derives an explicit ro_map binder from the actual checked map return-loan

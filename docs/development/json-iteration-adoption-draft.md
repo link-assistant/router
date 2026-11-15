@@ -5,7 +5,7 @@ translator, preparer, tests, compiler diagnostics or Rust tools have run.
 Do not execute these commands until the complete bulk draft is present.
 
 `migrate-core-json-iterations.mjs` is a complete derived copy of the existing
-map/filter-map source adopter. It keeps the original complete file/graph,
+map/filter-map source adopter. It keeps the original complete file/network,
 source-role, producer, module, attribute, dependency, scope and snapshot checks.
 The new selector covers terminal `any`, `all`, `filter(...).cloned().collect`,
 `find(...).cloned()` and owned `fold` over an actual unshadowed immutable JSON
@@ -28,7 +28,7 @@ The complete existing packet CLI also has a separate derived copy:
 node tools/translation/propose-json-iteration-adoption-corpus.mjs --root SOURCE_ROOT --output NEW_OUTSIDE_DIRECTORY --sequence json-iterations --packet-storage gzip
 ```
 
-It retains every complete Rust/Cargo input, graph, proposal and inverse under
+It retains every complete Rust/Cargo input, network, proposal and inverse under
 the original packet, source, output and process contracts. It never installs
 application changes. The old source adopter and CLI are physically unchanged;
 `prepare-json-iteration-adoption.mjs` retains both full originals and exact

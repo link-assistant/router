@@ -1,4 +1,4 @@
-# Native owned vector helper graph source draft
+# Native owned vector helper network source draft
 
 Status: SOURCE DRAFT ONLY. All receiving, JavaScript, strict TypeScript,
 freshness, native oracle and performance execution remains UNRUN. No CI
@@ -13,7 +13,7 @@ they do not qualify a callee or grant executable authority.
 
 The flow evaluates arguments in order, admits exact Copy primitives or actual
 shared primitive slices, and recursively walks each complete callee body.
-Graphs are acyclic, at most 32 frames and 128 calls. Results may not retain a
+Networks are acyclic, at most 32 frames and 128 calls. Results may not retain a
 source loan. Every dependency is rejoined after the walk and its detached
 snapshot participates in the existing emission checks. No new cross-operation
 source, owner, verdict or result cache is introduced.

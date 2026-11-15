@@ -76,7 +76,7 @@ See [the bulk contract](primitive-vector-literal-bulk-source-draft.md).
 
 Three source equations draft a separate actual original mutable let/helper
 route, retaining original core-initializer API and owns/refusal flags. The
-existing full private helper graph must still qualify every body, argument,
+existing full private helper network must still qualify every body, argument,
 entry guard, loop, loan and move before issue. Eleven-domain native/target and
 refusal case source is UNRUN. See [the helper contract](primitive-vector-mutable-helpers-source-draft.md).
 Full namespace/production/receiving/parity/freshness and delivery stay OPEN.
@@ -95,7 +95,7 @@ is UNRUN. Native forward explicit helper borrows remain OPEN. See [the contract]
 Four source equations draft actual original borrow/parent/signature and pointee
 joins, an additive independently source-qualified result route, and bounded
 call-interval loans through later arguments/branches. The generic ownership
-qualifier/refusals and full original helper graph stay intact. Immediate move/
+qualifier/refusals and full original helper network stay intact. Immediate move/
 write checks prevent reinitialization from erasing a borrow conflict. Existing
 core shared arguments use the same intervals. Eleven-domain native/target,
 conflict/source/refusal cases and extended Rust oracle source are UNRUN.

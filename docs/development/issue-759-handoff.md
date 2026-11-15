@@ -298,7 +298,7 @@ The subsequent local source drafts add the following complete narrow lanes:
   reconstruct ordinary source, rerun original private admission/native inverse
   and exactly regenerate the entire authoritative edited target.
 - `9e403ab55`: root-owned same-directory scalar leaf relocation through the
-  genuine source graph, complete private before/after compilation and exact
+  genuine source network, complete private before/after compilation and exact
   target reproduction, with no-overwrite destination creation, retained source
   backups and guarded rollback. General topology remains unsupported.
 - `6ce5a9504`: opt-in cross-module composition with both actual owned-definition
@@ -316,7 +316,7 @@ The subsequent local source drafts add the following complete narrow lanes:
   sort dependencies stay explicit. The edited scalar inverse's four-rule
   trace assertion is corrected without execution.
 - `627757cf7`: additive ordered function-body macro source proposals, original
-  graph/view/raw invocation custody, whole source/CST histories and expanded
+  network/view/raw invocation custody, whole source/CST histories and expanded
   project checks. Explicit JS/TS edits compose the existing real expression
   inverse over expanded Rust source; original macro-argument/definition inverse
   and production format_args/Arguments/output transport stay unsupported.
@@ -796,7 +796,7 @@ the two older owned-definition censuses remain original constraints.
 Coordinator independently authored seven additional in-memory native resource
 selection cases in `native-profile-oracles-20261101-resources.test.mjs`, covering
 inactive cfg inputs, target-only packages, Cargo config, external targets,
-manifest-dependent shared includes, cyclic resource graphs, literal paths and
+manifest-dependent shared includes, cyclic resource networks, literal paths and
 fatal unresolved-resource refusal. These are source cases only, not executed
 Git/Rust/parser/translator experiments. No existing case or deadline changed.
 All new verification stays UNRUN; CI/review remains uninspected;8/70 DRAFTED,

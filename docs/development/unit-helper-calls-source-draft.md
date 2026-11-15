@@ -15,7 +15,7 @@ Reusable language rules select a copied complete call-summary/result-domain
 implementation, native continuation observer, immutable tail observer and
 guarded-failure evaluator. Repository rules retain the actual compatibility
 runtime, qualified source/module routes and existing output layout. Actual
-receiving, graph, comparison, discovery, projection, definition lifecycle and
+receiving, network, comparison, discovery, projection, definition lifecycle and
 emission consumers select the copied rules. The old source-call DATA module,
 old native observer and old guarded evaluator retain their original domains;
 the original scalar-only definition insertion family is unchanged.
@@ -23,7 +23,7 @@ the original scalar-only definition insertion family is unchanged.
 Discarded unit calls become local continuation observations of actual checked
 native IR. These reconstructed nodes are DATA and never enter a native issuer
 as original source. The complete comparison still resolves every target in the
-fresh original/lowered declaration graph and checks its real parameter and
+fresh original/lowered declaration network and checks its real parameter and
 return types. Symbolic evaluation retains each call as an ordered event and
 normalizes only its empty unit value. Native discovery can therefore emit a
 statement for that event without inventing a used result. Earlier failures and

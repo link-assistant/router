@@ -102,7 +102,7 @@ Six-form authority/effect/refusal and repeat-sync cases remain UNRUN; see
 Selected same-unit scalar source calls are drafted across private source checking,
 complete meta/program closure, native emission/comparison and bounded interpreter
 composition. Calls retain actual ABIs and original namespace/module boundaries;
-all graph/authority/refusal/repeat-sync cases remain UNRUN. See
+all network/authority/refusal/repeat-sync cases remain UNRUN. See
 [the source contract](owned-source-scalar-calls-source-draft.md).
 
 Existing Unicode scalar count and ASCII membership are source drafted for the
@@ -138,7 +138,7 @@ per-module discovery proposal; it does not qualify execution, freshness, coverag
 existing receiving-module sync, source-call discovery or broader source families.
 
 Automatic scalar helper discovery: current original/lowered callee inventory,
-copied native call observation, bounded complete graph selection, preserving
+copied native call observation, bounded complete network selection, preserving
 receiving source substitutions and independent final source-call checks are
 drafted in [native-helper-closure-source-draft.md](native-helper-closure-source-draft.md).
 ALL UNRUN. Same-module closed primitive helpers are the draft scope; cross-module
@@ -524,9 +524,9 @@ checked wrappers, immutable pattern bindings and optional guards feed the shared
 bounded observer; guard failure retries the next row, selected values continue
 through enclosing operations, and pure matches remain value expressions. Finite
 Boolean predicate joins and statically unreachable comparison traces retain all
-evaluated prefixes and validate both branches first. The actual discovery graph
+evaluated prefixes and validate both branches first. The actual discovery network
 consumer now follows ordered helper events. Six complete source equations and
-all independent all-width paired/native, ordering, graph-refusal and CI-only Rust
+all independent all-width paired/native, ordering, network-refusal and CI-only Rust
 oracle sources are UNRUN. Nonlocal exits, terminal coverage beyond the checked
 wildcard lane, owned patterns, division/remainder and full closure remain OPEN.
 
@@ -581,7 +581,7 @@ Span/visitor/type-prefix/export closure and full translation remain OPEN.
 The [receiving-first primitive Vec definition draft](primitive-vector-definitions-source-draft.md)
 adds an explicit source profile and separate insertion API for actual typed/JS
 JSDoc arrays in a current empty native module. Precise aliases, complete callee
-graphs, every Vec move, actual native ABI/census and full refresh stay mandatory.
+networks, every Vec move, actual native ABI/census and full refresh stay mandatory.
 The primary synchronization export includes the new closure. Six complete
 equations and independent JS/TS/native bulk/refusal cases are UNRUN. Nonempty
 extensions, Vec inputs/mutation/cross-module calls and full drafting remain OPEN.
@@ -657,12 +657,12 @@ The [native scalar/vector local observer draft](scalar-vector-local-observer-sou
 adds complete native local ownership observation for scalar/unit returns while
 retaining original ABI APIs and bounds. Three source equations and actual-native/
 DATA-refusal/CI-only Rust oracle sources are UNRUN. Private receiving, discovery,
-comparison and helper-graph selection still need wiring; full drafting and every
+comparison and helper-network selection still need wiring; full drafting and every
 broader qualification requirement remain OPEN.
 
 The [scalar-return container wiring draft](scalar-vector-local-wiring-source-draft.md)
 selects the bounded native observer in both private captures, discovery/refresh,
-receiving, complete comparisons and source/native helper graphs. Checked local
+receiving, complete comparisons and source/native helper networks. Checked local
 Vec types are emitted explicitly for re-entry; every actual source/native fence
 remains required. Thirteen complete equations and JS/TS/all-width/native/bulk/
 refusal/CI-only Rust sources are UNRUN. Wider Vec operations, native owner
@@ -679,7 +679,7 @@ receiving, native owner closure, full drafting and qualification remain OPEN.
 The [unit helper call draft](unit-helper-calls-source-draft.md) selects complete
 copied source-call, native continuation and guarded-failure rules for genuine
 same-module unit results. Discard/local/tail uses retain ordered events and
-independent whole-callee checks through receiving, native graphs, projection and
+independent whole-callee checks through receiving, native networks, projection and
 copied definition lifecycle. Twenty-two complete equations and JS/TS/all-width/
 native/refusal/CI-only Rust sources are UNRUN. Full drafting, collection/source
 owner requirements and all qualification obligations remain OPEN.
@@ -883,7 +883,7 @@ source contract](primitive-owned-vector-root-source-draft.md). Physical source
 reachability grants no executable coverage; broader contracts and full sync
 remain OPEN. No tests, local compilation or CI feedback were used.
 
-### Native owned primitive vector helper graph draft (2026-10-30)
+### Native owned primitive vector helper network draft (2026-10-30)
 
 Four complete source equations add same-module construction/helper closures
 returning owned primitive vectors, with existing completed-body/private caller
@@ -934,7 +934,7 @@ Shared Vec inputs, owned Vec helper inputs and full synchronization remain OPEN.
 ### Guarded owned primitive vector helper input draft (2026-10-30)
 
 Four complete source equations reuse the actual explicit entry contract for
-owned helper parameters and complete native graph/move flow, including vector,
+owned helper parameters and complete native network/move flow, including vector,
 scalar and copied standard-Option results. Original JS/TS local-call issuing
 remains in place. Eleven-domain emitted/typed/interpreter/CST/inverse and native
 helper receiving case sources remain UNRUN. See [the helper input contract](primitive-owned-vector-helper-inputs-source-draft.md).

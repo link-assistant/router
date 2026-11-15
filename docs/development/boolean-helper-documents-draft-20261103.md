@@ -60,7 +60,7 @@ two-stage CST/inverse history.
 ## Remaining adoption and synchronization work
 
 The subsequent adoption installs the reader continuation, both document copies,
-operation module and native receiving files through the genuine source graph
+operation module and native receiving files through the genuine source network
 and full helper source custody, advancing374/264 to391/269.
 No native source guard is disabled to make these drafts run. The editable `.txt`
 files and immutable compressed creation images are implementation drafts; they
@@ -70,7 +70,7 @@ installed source exports.
 The adoption also drafts original interpreter/evaluation cases and an
 independent Rust edge-case oracle; their execution remains UNRUN. Implement the corresponding Rust-source inverse profile, which must
 preserve or independently reconstruct helper identity and call structure rather
-than claiming that an inlined Boolean expression recovers the original graph.
+than claiming that an inlined Boolean expression recovers the original network.
 Extend the helper family to the remaining production types, effects, ownership,
 generic/trait and module cases. Finish application adoption and the remaining
 58 full acceptance bundles, then perform authorized verification. These source

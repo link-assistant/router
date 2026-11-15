@@ -27,14 +27,14 @@ ordinary struct, const and function imports can be classified through their
 original crate-local declaration. All returned candidates keep executable and
 complete namespace authority false. Stability metadata remains in native source;
 only genuine tool attributes and existing certified derive/helper spans can be
-projected. No graph/source/verdict/result cache is introduced across invocations.
+projected. No network/source/verdict/result cache is introduced across invocations.
 
 The explicit primitive candidate and selected base64 producer now use this same
 source-bound context family. Full original source equations preserve both ordered
 substitution sequences, original owner spans, complete CST transport and inverses
 through the tool-aware adoption history. Independent JS/strict-TS, native and
 refusal regression source covers no-derive imports, unused Cargo data, getter
-refusal, real derive delegation, profile/graph changes, shadowing and body values.
+refusal, real derive delegation, profile/network changes, shadowing and body values.
 All source is unrun. General executable generics, architecture and producer
 bootstrap, broader effects/resources, production adoption/parity, export receiving
 qualification and every required CI/freshness gate still require completion.

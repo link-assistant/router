@@ -1,6 +1,6 @@
-# Native helper graph source adoption
+# Native helper network source adoption
 
-Both original reader successors from the [native graph draft](ordered-scalar-helper-graph-draft-20261104.md)
+Both original reader successors from the [native network draft](ordered-scalar-helper-graph-draft-20261104.md)
 are installed with their complete native receiving source. Named inter-helper
 imports and actual same-module function declarations now route through the
 original private Program/checker, ordinary module-layout worklist and fresh
@@ -31,7 +31,7 @@ stays outside its own hashed index. Earlier412/424/437/451 roots keep their old
 companion requirements. All original512-index/64-per-path/1MiB-index/4MiB-image/
 16MiB-retention limits and original case deadlines remain unchanged.
 
-The seven-input ordered archive adds the complete graph helper while retaining
+The seven-input ordered archive adds the complete network helper while retaining
 the old six-input archive intact. It remains nested inside the unchanged
 fourteen-input Copy and original four-input Boolean guards:25combined sources.
 Independent unrun source cases retain both native successors, full source/CST

@@ -7,7 +7,7 @@ remains open. This source installation draft establishes no executable coverage.
 
 The additive packet planner copies the complete existing readback operation.
 It reexecutes every actual selected proposer, compares every original packet,
-source, graph, CST and inverse, and rejoins current physical Rust and complete
+source, network, CST and inverse, and rejoins current physical Rust and complete
 package/workspace Cargo inputs. It retains the actual Git baseline and exact
 changed original/after source files, their modes and complete source inverses.
 Two ordered rule sequences package this source-only plan. The original packet

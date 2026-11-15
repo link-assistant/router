@@ -5,7 +5,7 @@ with a shared operation family rather than individual caller rewrites. The two
 reader successors are now [source adopted](scalar-helper-total-primitives-adoption-20261103.md).
 All execution is UNRUN,
 CI NOT_INSPECTED, acceptance counting12/70 DRAFTED,58 OPEN and production
-coverage UNKNOWN. The installed source graph now retains437 equations/273 paths.
+coverage UNKNOWN. The installed source network now retains437 equations/273 paths.
 
 The new normalizer handles original checked scalar IR for eager Boolean/fixed
 bitwise operations, fixed complement, all fixed-domain casts, wrapping and

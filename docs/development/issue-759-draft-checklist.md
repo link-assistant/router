@@ -921,8 +921,8 @@ creation images and independent arity/type/literal-boundary cases are retained
 in immutable packet79745b1e3228aba61e90afcf8f26084d7cab2f9f63ac9e96b5e773d7679393ca.
 
 R04 stays OPEN: this proposal is not installed into the guarded compiler parent
-graph; full qualified receiving, other applicable inventory families and shared
-production caller generation remain. The hot graph stays347 equations/247paths.
+network; full qualified receiving, other applicable inventory families and shared
+production caller generation remain. The hot network stays347 equations/247paths.
 All cases UNRUN, CI NOT_INSPECTED; counts stay12/70 DRAFTED,58 OPEN.
 
 ### R04 actual two-family source adoption follow-up
@@ -952,7 +952,7 @@ whole-source/inverse/refusal case source. Immutable complete packet SHA256
 retains both whole candidate modules, both declaration originals and the new
 implementation's creation image. Candidate/data authority remains false.
 Batch qualified installation into the actual guarded parents with later
-related operation work; the current hot graph stays361/256. This removes a
+related operation work; the current hot network stays361/256. This removes a
 source-draft duplication, not a verified translation gap. All execution UNRUN,
 CI NOT_INSPECTED; R04 remains OPEN and counts stay12/70 DRAFTED,58 OPEN.
 
@@ -964,13 +964,13 @@ Batch its later installation with the preceding121-row collection proposal;
 both remain uninstalled. Current continuation details are in the
 [operation-source handoff](issue-759-handoff-20261103-operations.md).
 No new full parent receipt or executable coverage follows:12/70 DRAFTED,58 OPEN,
-hot graph361/256, all execution UNRUN and CI NOT_INSPECTED remain unchanged.
+hot network361/256, all execution UNRUN and CI NOT_INSPECTED remain unchanged.
 
 The [combined source adoption](collection-description-source-adoption-20261103.md)
 now installs all five collection candidate afterimages, preserving all original
 private native/type/body/ownership checks and five declaration byte strings.
 Its seven full adoption parents and six older case continuations preserve the
-original361 graph and draft374 equations/264paths. This closes that cohort's
+original361 network and draft374 equations/264paths. This closes that cohort's
 uninstalled-source gap only: R04 OPEN,12/70 DRAFTED,58 OPEN and all execution
 UNRUN remain. The operation-source handoff records the current images and gaps.
 

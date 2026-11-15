@@ -11,7 +11,7 @@ The collected full-root f64 regression also had an obsolete whole-module hash.
 It now checks the entire module against the fresh complete original input
 receipt already captured by that test. It retains the historical module pin as
 comparison data, the independent unchanged `safe_number` function pin, actual
-root graph and locked macro/dependency/profile checks. The original workload,
+root network and locked macro/dependency/profile checks. The original workload,
 deadline and behavioral assertions remain required.
 
 `prepare-rust-scalar-boundaries.mjs` retains both complete originals and source

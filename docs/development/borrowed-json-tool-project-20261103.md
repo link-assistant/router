@@ -3,7 +3,7 @@
 The actual standard-map project wrapper now keeps its original complete
 twelve-parent compiler guard while recognizing complete current source
 continuations. Host assets use the finite JSON packaging installation equation;
-other older compiler parents use the existing fixed source-history graph.
+other older compiler parents use the existing fixed source-history network.
 Every original source input is still captured and independently closed.
 Original project entrypoints, parser/checker/native ownership requirements,
 case workloads and source refusals remain. This is source composition, not

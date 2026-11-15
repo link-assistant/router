@@ -35,7 +35,7 @@ immutable. The installed-source packet is
 SHA256 `d011041ad959d7d19dd78b80850d32d7c5a73ff7376ea006327f2ee48e95ed3c`.
 The proposer itself grants no installation or native ownership authority.
 
-The hot graph now drafts374 source equations over264 paths, preserving every
+The hot network now drafts374 source equations over264 paths, preserving every
 original361 equation. Thirteen appended equations cover the seven adoption
 parents and six older case/control continuations. Their26 complete source
 images retain128520bytes, with full CST serialization/reparse and inverse

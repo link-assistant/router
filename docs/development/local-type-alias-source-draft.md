@@ -14,7 +14,7 @@ side; generic equalities cannot replace it. Where clauses and unrecognized
 headers remain unsupported. External/standard source catalogues are unchanged.
 
 This establishes only a declaration candidate for an existing source proposal.
-The original graph, private producer context, resolved binding, active condition,
+The original network, private producer context, resolved binding, active condition,
 actual declaration owner, attribute checks and complete source histories remain
 required. Aliases are not expanded or substituted into semantic types; real
 trait dispatch, type, ownership, lifetime and body admission still belong to the
@@ -24,7 +24,7 @@ Span and macro/attribute owner closure remain separate open obligations.
 Six complete compiler source equations retain immutable whole originals and two
 ordered rule phases with full native-selected CST inverses. Independent source
 cases cover positive and refused headers, both importer and adopter APIs, actual
-private owner joins, graph mutation, JavaScript/strict TypeScript targets, native
+private owner joins, network mutation, JavaScript/strict TypeScript targets, native
 standard behavior and compiler exports. Every case is UNRUN; no executable
 coverage, parity or verification gain is claimed. Broader namespace, production,
 reverse, synchronization, freshness and delivery obligations remain OPEN.

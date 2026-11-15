@@ -22,7 +22,7 @@ from committed source, then invokes the actual original leaf planner and require
 exact original revision/input/output/move agreement. Additional source inputs
 record absent root/crate `build.rs` producers; any such producer refuses.
 Both selected root/crate Cargo manifests are independently parsed through the
-complete original private TOML parser graph. An absent `package.build` or exactly
+complete original private TOML parser network. An absent `package.build` or exactly
 `false` is supported; strings, `true`, inherited tables and other values refuse
 before any transaction creation. Complete manifest bytes/modes, package presence
 and exact build-directive presence/value are receipt DATA and are freshly reissued

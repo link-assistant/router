@@ -9,7 +9,7 @@ carry an attached recovery property. No cleanup bypass, source mutation or
 native random naming change is introduced.
 
 The original prefix source adapter now retains its historical complete after
-and, for newer physical source, requires the original fixed graph's complete
+and, for newer physical source, requires the original fixed network's complete
 terminal equation. The prior complete prefix cases retain their cases and use
 that same whole source-continuation check. The three full before/after/inverse
 records remain separate from the immutable original prefix packet, underSHA
@@ -28,7 +28,7 @@ Both are UNRUN. Collector record overflow/no-collector recovery limitations
 remain explicit: diagnostic DATA is bounded, and the original mutable-error
 attachment is only an additional best-effort route.
 
-The shared graph currently has308 earlier equations and still needs these
+The shared network currently has308 earlier equations and still needs these
 three new complete source edges before full current-source qualification.
 No tests, compiler/translator/preparer, Rust tools/hooks or CI feedback were
 run or inspected. Full draft acceptance is unchanged at11/70 DRAFTED,59 OPEN;

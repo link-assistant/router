@@ -46,7 +46,7 @@ The manifest separately lists the three native compatibility source rows, with
 exact bytes and digests, and retains false native-compilation, caller-binding,
 namespace and runtime-parity claims. These are compiler source dependencies,
 not a complete compiled Rust application or a native ownership permit. The
-receiving project's full actual source graph, Cargo inputs and matching pinned
+receiving project's full actual source network, Cargo inputs and matching pinned
 TypeScript dependency remain mandatory for actual forward/reverse caller work.
 This draft does not export Router application root modules or executable state.
 Additional fresh-reader families must explicitly extend the input list and their

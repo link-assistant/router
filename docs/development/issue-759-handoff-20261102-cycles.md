@@ -503,7 +503,7 @@ The actual canonical source/corpus keeps original runtime-import-edge, private
 context/item/native, source reconstruction and paired target checks. Extra map
 inputs are selected through actual application/type/reexport/runtime dependency
 observations; unused assets alone do not force native prerequisites. Active
-native graph selection keeps original512-input/8MiB and context/corpus limits.
+native network selection keeps original512-input/8MiB and context/corpus limits.
 Original complete-byte requireCurrent rereads remain, with an invocation-local
 source DATA index and batched complete closing that avoids quadratic all-prior-
 files checks on every read. No source/hash/body/owner verdict cache is introduced.

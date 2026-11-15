@@ -78,7 +78,7 @@ neither a closure name nor a public catalog row is a substitute.
 ## Reusable language substitution first
 
 The smallest proposed language domain is a nonescaping immutable local closure
-graph with direct calls in the same complete function. It permits no closure
+network with direct calls in the same complete function. It permits no closure
 value ABI, heap closure object, dynamic dispatch or higher-order application
 interface. Candidate selection can use source grammar DATA, but admission
 requires a new private operation-owned binding issuer with all these joins:

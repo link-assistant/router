@@ -16,7 +16,7 @@ metadata, source before/after, input, per-file proposal, module graph and CST
 packet to the decoded original packet. Per-file inverse checks, complete stage
 source maps, exact two-phase traces, change inventory and final native sources
 remain required. Every stored packet must be referenced exactly once; no unknown
-or omitted packet can qualify. Whole graph objects are retained for one stage.
+or omitted packet can qualify. Whole network objects are retained for one stage.
 There is no new across-invocation source, owner, verdict or result cache.
 
 All serialization and source comparison precedes the final stored-packet,
@@ -28,7 +28,7 @@ bytes now both count toward the existing 500 MB task evidence bound.
 Four complete source equations retain native owners, ordered language/repository
 rules, full CST transport and exact source inverses. Independent unrun cases
 require fresh full-stage equality and refuse changed actual Cargo data, forged
-producer authority and changed graph source even after every relevant compressed,
+producer authority and changed network source even after every relevant compressed,
 raw, index and descriptor hash is consistently rebuilt. All-stage receiving and
 resource qualification, architecture/producer bootstrap, broader language/effects,
 production adoption/parity and every original CI/freshness gate remain unfinished.

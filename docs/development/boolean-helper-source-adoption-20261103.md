@@ -20,7 +20,7 @@ reader→helper edges are followed by two helper→provenance edges. Six adoptio
 edges then bind the two source-operation fences, both document copies, the
 complete profile module and the original source proposer. Seven historical
 receiving/control case continuations retain every prior full afterimage. The
-source graph adds17 equations, giving391 equations across269 paths and34 new
+source network adds17 equations, giving391 equations across269 paths and34 new
 full source images/1770084 retained source bytes. Every earlier374 equation is
 preserved. No original512-index,64-edge-per-path, source/image, data or deadline
 bound is raised.
@@ -77,7 +77,7 @@ JavaScript-first gate changed. No local Rust tool ran.
 
 The [canonical Rust inverse draft](boolean-helper-rust-inverse-draft-20261103.md)
 now adds unchanged helper-network restoration and checked edited-caller proposals
-with explicit reconciliation records. General helper-call/source-graph edit
+with explicit reconciliation records. General helper-call/source-network edit
 reconciliation remains open. Expand the Boolean-only family
 to qualified production integer/text/JSON, ownership/effect, generic/trait and
 module cases. Join actual application callers rather than reporting API or case

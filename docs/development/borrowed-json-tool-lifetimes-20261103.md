@@ -48,7 +48,7 @@ whole created sources, including the Rust oracle. The shared index retains all
 342 equations over245 paths,18 images and385750 new source bytes. Index SHA is
 9fd3206365e127c919372bb56e02d72c5282a1a483d92f4c59abb58e133f24f5.
 The separate complete engine source history extends333→342 outside its own
-hashed graph; earlier roots keep their old domains. The source-index builder
+hashed network; earlier roots keep their old domains. The source-index builder
 still has exactly `language`, then `repository` sequences and its original
 retention/CST/inverse bounds.
 

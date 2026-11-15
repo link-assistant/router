@@ -4,7 +4,7 @@ These requirements supplement [CONTRIBUTING.md](../../CONTRIBUTING.md).
 The active source-only phase and all original gates remain mandatory.
 
 Bulk source packet installation must replay every original proposer and compare
-all complete physical packets, sources, graphs, CST and inverses before building
+all complete physical packets, sources, networks, CST and inverses before building
 its plan, then repeat that complete review when applying it. Preserve original
 Git/source guards, byte/worker bounds, atomic file replacements, rollback and
 external edits. Export the entire CLI/source dependency closure and qualify an
@@ -813,7 +813,7 @@ Six-form authority/effect/refusal and repeat-sync cases remain UNRUN; see
 Selected same-unit scalar source calls are drafted across private source checking,
 complete meta/program closure, native emission/comparison and bounded interpreter
 composition. Calls retain actual ABIs and original namespace/module boundaries;
-all graph/authority/refusal/repeat-sync cases remain UNRUN. See
+all network/authority/refusal/repeat-sync cases remain UNRUN. See
 [the source contract](owned-source-scalar-calls-source-draft.md).
 
 Existing Unicode scalar count and ASCII membership are source drafted for the
@@ -849,7 +849,7 @@ per-module discovery proposal; it does not qualify execution, freshness, coverag
 existing receiving-module sync, source-call discovery or broader source families.
 
 Automatic scalar helper discovery: current original/lowered callee inventory,
-copied native call observation, bounded complete graph selection, preserving
+copied native call observation, bounded complete network selection, preserving
 receiving source substitutions and independent final source-call checks are
 drafted in [native-helper-closure-source-draft.md](native-helper-closure-source-draft.md).
 ALL UNRUN. Same-module closed primitive helpers are the draft scope; cross-module

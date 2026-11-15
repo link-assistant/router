@@ -4,7 +4,7 @@ These source and independent regression drafts are unverified. No adopter,
 packet producer, planner, source installation, tests or Rust tools have run.
 
 The new field selector reuses the complete existing corpus adopter and its
-actual source-role, producer, graph, Cargo, scope and snapshot checks. It selects
+actual source-role, producer, network, Cargo, scope and snapshot checks. It selects
 unshadowed shared JSON parameters with literal/borrowed text keys, small native
 index literals, and four closed `get(...).and_then(...)` scalar-reader forms.
 Named lifetimes and exact noncapturing scalar callbacks retain their source.

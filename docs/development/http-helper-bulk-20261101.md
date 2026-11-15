@@ -57,7 +57,7 @@ enters the original native inverse and must reproduce whole Rust syntax.
 Only synchronous helper execution is specialized. The caller's existing cold
 wrapper remains at its exact original location. Async/cold helper inlining is
 refused: erasing an await/thenable boundary could change observable scheduling.
-Existing supported cold helpers are unchanged. Arbitrary helper graphs, recursive
+Existing supported cold helpers are unchanged. Arbitrary helper networks, recursive
 or callback producers, generic alias/lifetime synthesis and outcome-dependent
 non-Boolean error mapping remain separate source work.
 

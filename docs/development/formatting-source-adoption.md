@@ -14,7 +14,7 @@ remain untranslated. Language checking, supported operand domains, ownership,
 format grammar and target runtime validation remain required independently.
 
 The producer preserves 312 file skips, including files outside the entry module
-graph, unresolved derives/attributes, unknown macro producers and ambiguous
+network, unresolved derives/attributes, unknown macro producers and ambiguous
 format bindings. It does not erase these obligations. The producer, independent
 review and application retain every complete source/CST, edit, inverse, original
 input and per-file recovery preimage. No generated JavaScript body is edited.

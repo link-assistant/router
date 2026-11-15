@@ -16,7 +16,7 @@ and inverses. The final TypeScript is independently checked again and must
 emit the authoritative complete Rust syntax. Public proposal program fields,
 old meta documents and the paired body provide no semantic permission.
 
-A type-only paired file can qualify its alias graph through a separate
+A type-only paired file can qualify its alias network through a separate
 reversible scalar witness. The witness never becomes application output or an
 original function premise. Invalid or unsupported nonempty paired APIs refuse
 before synchronization writes anything. Native/runtime failures are not hidden.

@@ -62,10 +62,10 @@ not installed as an active receiving test before the reader APIs exist.
 ## Work still required
 
 The subsequent adoption installs both complete reader successors with their
-genuine exact source graph continuation, helper implementation source custody
+genuine exact source network continuation, helper implementation source custody
 and receiving case source. Do not skip the existing native source guards or treat this
 proposal's packet hash as semantic authority. The proposal itself never writes files. The later adoption advances the
-graph from374/264 to391/269 and preserves these complete source equations.
+network from374/264 to391/269 and preserves these complete source equations.
 
 The [document continuation](boolean-helper-documents-draft-20261103.md) now
 drafts separately declared document/meta APIs, original helper provenance and

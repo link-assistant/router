@@ -31,7 +31,7 @@ Data-only move/local-count refusals and independent CI-only Rust ordering oracle
 are also drafted. Nothing was executed. No cache or limit increase is introduced.
 
 Next, the private capture copies, actual scalar-with-vector source family,
-discovery observations, both complete native comparison paths and helper graphs
+discovery observations, both complete native comparison paths and helper networks
 must independently select and recheck this shape. Input/mutation/iteration,
 borrowed aggregates, cross-unit helpers, native macro/attribute producer closure,
 strict parity/freshness/platform/performance/export/CI and broader application

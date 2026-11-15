@@ -77,7 +77,7 @@ source and safe-error archive bytes are unchanged; nested `currentAfter` records
 this separately named successor. Root's full safe-error case adaptation retains
 the old complete case source instead of changing its historical snapshot.
 
-The direct alias guard uses one invocation-local metadata graph. Symlink target
+The direct alias guard uses one invocation-local metadata network. Symlink target
 components, dangling endpoints and existing dev/ino hardlinks are checked before
 writes. All observed metadata/link closers are attempted independently after
 vetoes and errors, then maps are cleared. Limits are explicit:4096 paths per call,
@@ -92,7 +92,7 @@ protected aliases, unprotected writes through both alias kinds, empty equal-byte
 truncation, dangling policy-self creation, caught-veto poison, six exact falsy/
 frozen lookup primaries and custom array iterators. They exercise real operational
 writers; they grant no compiler authority and are all UNRUN. Case/Unicode missing
-name equivalence, nonUTF8 symlink targets and metadata graph resource limits are
+name equivalence, nonUTF8 symlink targets and metadata network resource limits are
 explicit unresolved compatibility-domain boundaries. The final metadata-check
 to OS-write interval still requires the original cooperative/exclusive writer
 condition. None of these sources closes complete writer/domain coverage.

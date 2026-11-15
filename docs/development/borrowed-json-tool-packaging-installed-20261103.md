@@ -36,6 +36,6 @@ This installs packaging only. Genuine serde/Cargo/source/type/namespace owners,
 private parser/checker/root-loan/meta/whole-body interpretation, both translation
 directions, full caller regeneration and complete receiving qualification remain
 open. Earlier handoff statements about uninstalled parents describe their
-historical checkpoint. The shared current-source graph still needs this new
+historical checkpoint. The shared current-source network still needs this new
 four-parent continuation; no freshness or source-terminal qualification is
 claimed. Acceptance stays11/70 DRAFTED and59 OPEN, executable coverage UNKNOWN.

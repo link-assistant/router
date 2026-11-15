@@ -44,7 +44,7 @@ checked after module linking, relocation, CST serialization and semantic meta
 reparse. Pair wire adaptation remains separate from the raw dense-pair API.
 
 The synchronizer now has a proposed original source successor that captures the
-actual source graph through original `resolveModuleGraph(PRODUCTION_PROFILE)`.
+actual source network through the original `project.mjs` module resolver under `PRODUCTION_PROFILE`.
 It retains the descriptor's original logical-to-physical native mappings,
 derives additional `src/...` reads from the actual declared library directory,
 reads original Cargo/lock inputs and all selected actual modules, and refuses
@@ -77,7 +77,7 @@ physical identities and source namespaces retain their original closers. New
 native index rows are detected during reclose. The original 64 MiB exporter is
 unchanged; the already declared full profile remains 256 MiB logical, 16,384
 files and 384 MiB aggregate. Fit, elapsed time and Windows behavior are UNRUN.
-The transferred Rust tree supplies the actual receiving library/app graph;
+The transferred Rust tree supplies the actual receiving library/app network;
 transferring it does not qualify Cargo, build scripts, rustc invocation or a
 sysroot. The existing source-model ABI still reports actual invocation and
 native sysroot conformance as false and independent native oracle work as UNRUN.

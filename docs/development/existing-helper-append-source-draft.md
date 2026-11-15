@@ -34,7 +34,7 @@ the outer complete-unit header merge. The user's actual complete module then
 enters the ordinary private checker, serialized/reparsed checked meta and native
 synchronization again. This permits retained callers to call a new function
 which calls an older helper, and permits an explicitly edited existing helper
-body to change behavior in the final complete unit. Cyclic old/new graphs,
+body to change behavior in the final complete unit. Cyclic old/new networks,
 missing or removed callees, wrong ABI and stale native source still refuse.
 
 Only genuinely new functions enter addedBindings and the native insertion

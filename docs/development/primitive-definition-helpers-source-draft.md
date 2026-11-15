@@ -33,7 +33,7 @@ bootstrap requirement: partitioning the new-only source does not silently
 include or acquire an older function. Cross-unit helpers, private-only inserted
 helpers, broader aggregates/loans/effects, mixed same-module reconciliation and
 full translation remain OPEN. Independent source cases include forward helper
-graphs, Boolean short circuit, ten exact domains, total complements, cycle/depth,
+networks, Boolean short circuit, ten exact domains, total complements, cycle/depth,
 missing and forged closure data, and empty/nonempty insertion in both languages.
 Seven complete source equations retain all originals/inverses under language then
 repository. Coverage, parity, freshness, resources, receiving export, platforms

@@ -15,7 +15,7 @@ unrun alongside the rest of this draft.
 
 The generic scalar alias draft also accepts transparent scalar type parameters,
 nested alias applications, defaults and constraints over the same finite scalar
-domain. It checks the complete alias graph, argument counts, defaults,
+domain. It checks the complete alias network, argument counts, defaults,
 constraints, recursive aliases and actual instantiated domains. Parameter
 substitution has explicit node, depth and history bounds. Uninstantiated generic
 templates are checked over their admitted domain; they do not create an opaque

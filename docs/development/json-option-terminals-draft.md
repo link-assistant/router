@@ -6,7 +6,7 @@ canonical reader callbacks. The callback must contain one exact ordinary call,
 optionally inside one complete tail block. Written scalar keys retain their
 bounded source roles. Mutation, capture ownership, custom methods, callback
 return/try/control flow and arbitrary bodies remain refused. Known receiver,
-namespace, configuration, original Cargo/graph and shadow checks remain intact.
+namespace, configuration, original Cargo/network and shadow checks remain intact.
 
 After a canonical reader, `unwrap_or` becomes an explicit eager fallback binding
 before payload selection. Both Some and None evaluate that fallback exactly once.

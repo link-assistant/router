@@ -31,7 +31,7 @@ edits, preserving its refusal and every predecessor result. There is no partial
 new body expansion through an unknown producer. Root expansion from the existing
 proposal remains separately visible and unchanged.
 
-Language rules perform original graph/CST capture, raw invocation selection,
+Language rules perform original network/CST capture, raw invocation selection,
 actual engine expansion, whole physical Rust source equations and independent
 expanded-project checking. Repository rules retain original and expanded domains
 separately, paired JS/TS CST equations and complete results. Complete returned DATA
@@ -62,7 +62,7 @@ identity/byte closing and full Rust CST inverses. These four owners are DATA and
 not a complete production module graph. Their actual println/eprintln/print
 transcribers still contain unsupported nested format_args, Arguments lifetimes
 and scoped write transport. They acquire no runtime implementation or original
-source equivalence. Whole actual production graph/configuration/dependency closure,
+source equivalence. Whole actual production network/configuration/dependency closure,
 macro hygiene/native ambiguity resolution and transport compatibility remain open.
 
 All files are additive under this prefix; no earlier source snapshot, root,

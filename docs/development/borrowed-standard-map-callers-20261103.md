@@ -14,7 +14,7 @@ closing callback, a genuine shared standard-map type, original borrowed key,
 and an actual written shared array of at most64 pure scalar string literals.
 It preserves empty lists and checks every literal through the original source
 checker. Pure literal checks share one complete closing boundary instead of
-reparsing the full standard-library source graph once per literal. Map/key
+reparsing the full standard-library source network once per literal. Map/key
 and final source closers remain separate; original limits are unchanged.
 
 Checked operand candidates flatten the pure choices after map/key. Target

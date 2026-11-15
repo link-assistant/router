@@ -519,7 +519,7 @@ remain unrun. No-derive adoption, architecture/producer closure, broader languag
 and effects, production parity and every unfinished requirement remain open.
 
 The [source-bound no-derive adoption draft](source-bound-core-adoption-draft.md)
-adds a separate private context for ordinary source graphs, avoiding derive
+adds a separate private context for ordinary source networks, avoiding derive
 archive/proof construction when no derive is present. Genuine crate-local
 struct/const/function imports retain their original declarations, tool ownership,
 source/profile joins and refusal rules. Actual derives delegate to the existing
@@ -541,7 +541,7 @@ The [bulk source-bound owned-core draft](source-bound-owned-core-bulk-draft.md)
 connects 23 complete original adopter/helper copies and 21 fixed corpus exports
 through the same private source/derive/tool context. A bounded async coordinator
 passes complete after maps between stages and yields whole proposals individually,
-without retaining every prior graph/CST. Independent snapshots isolate later
+without retaining every prior network/CST. Independent snapshots isolate later
 inputs from mutated output DATA; original source/Cargo/profile/stage changes
 refuse across yields. Twenty-seven complete originals, both phases and independent
 JS/strict TS/native/refusal source remain unrun. All-stage receiving, architecture/
@@ -558,7 +558,7 @@ receiving, wider domains, production parity and every open requirement remain.
 The [complete owned packet readback draft](source-bound-owned-readback-draft.md)
 rejoins bounded gzip inventory and current physical source/workspace Cargo,
 reexecutes each actual original proposer, and compares every complete metadata,
-source, graph, CST and inverse packet. Exact traces, changes and full packet
+source, network, CST and inverse packet. Exact traces, changes and full packet
 membership remain required. Four complete originals, both phases and independent
 consistent-hash forgery/physical/refusal source cases remain unrun. No source
 review grants executable or reverse authority; all unfinished requirements remain.

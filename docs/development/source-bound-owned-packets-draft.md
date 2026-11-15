@@ -10,7 +10,7 @@ native per-file inverses, exclusive output ownership and failure receipts.
 Original packet producer APIs remain intact. Complete package and workspace
 Cargo source inputs are captured and rejoined alongside the production source
 census. Each next stage receives the complete previous after map. Whole proposal
-references are released before requesting the next graph; only source strings
+references are released before requesting the next network; only source strings
 and packet descriptors cross stages. Actual heap/RSS remains unqualified.
 
 Every complete proposer result is partitioned through the existing full corpus

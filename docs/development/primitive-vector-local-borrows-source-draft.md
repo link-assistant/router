@@ -14,7 +14,7 @@ An additive emission adapter copies the original local-call rules and adds the
 actual Rust shared borrow for owned Vec operands. JS/TS and both interpreters
 keep the frozen array reference for the synchronous call. The original local
 call helper/emitter APIs are unchanged; complete original private caller
-reissue, actual callee signature/body membership, acyclic graph and CST/meta
+reissue, actual callee signature/body membership, acyclic network and CST/meta
 serialization/reparsing remain mandatory. No copied shape or signature grants
 owner, namespace or execution permission. Shared Vec results remain unsupported.
 

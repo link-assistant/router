@@ -274,6 +274,19 @@ because `owned-primitive-definition-family.mjs` imports
 export. That break predates these edits and these files are not in the
 JavaScript-first CI; it is recorded here, not fixed.
 
+### Terminology check (job 132867684617)
+
+With the file-size check passing, the lint job reached `main`'s
+`scripts/check-terminology.rs` for the first time on this branch. It reported
+309 forbidden uses of the old word for a links network, all in 134 Markdown
+notes that exist only on this branch.
+[`census.mjs`](../../../../experiments/terminology-772/census.mjs) replicates the
+check in Node (it also reported 309) and with `--fix` rewrites each hit to
+"network". Five mentions of the translator's `project.mjs` resolver identifier
+are reworded by hand. Two note file names are cited byte-for-byte by pinned
+translator source profiles and tools, so they are allowlisted in the check with
+that reason instead of being renamed. The census now reports 0.
+
 ### Windows transport oracle margin
 
 `translation_http_transport_core::first_byte_and_idle_bounds_are_distinct...`

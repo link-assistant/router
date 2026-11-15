@@ -56,7 +56,7 @@ SHAa806972794ddf1858ea516c430d62c06642563106110fc5c78cf2a8d66badcb5,
 11636 compressed bytes. It retains both complete original sources, intermediate
 language/repository images, full final source and independent case source.
 The creation/copy profile drafts complete CST/inverse source qualification;
-none has run. No guarded compiler parent changed, so the fixed source graph
+none has run. No guarded compiler parent changed, so the fixed source network
 remains437 equations/273 paths. Broader helper decomposition, interface edits,
 source installation, production adoption and the remaining58 bundles still need
 implementation and independent receiving source.

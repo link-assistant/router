@@ -9,7 +9,7 @@ complete existing enclosing creator in the same private issuer module. It
 selects original tool-aware derive inputs, genuine complete enclosing derive
 output, configured-variant tool ownership and original owned enclosing binding
 resolution together. Existing creators keep their previous implementation.
-Missing Cargo or a source graph without actual derives still returns no context.
+Missing Cargo or a source network without actual derives still returns no context.
 
 `coreAdoptionNamespaceAttributeClosed` checks exact original item/attribute
 coordinates, source, tokens, profile and privately issued tool or derive facts.
@@ -22,7 +22,7 @@ independent checking of its complete reconstructed body and generated outputs.
 The copied named nontrait import selector retains actual declarations, active
 owners, complete nontrait roles, exact imports and every existing unknown/glob
 refusal. It shares the original private context identity and qualified native
-enclosing backend. Fresh context-local source snapshots detect graph changes;
+enclosing backend. Fresh context-local source snapshots detect network changes;
 finalization rejoins all selected tool certificates and original builtin source
 frames. No source/hash/owner/verdict or encoded-result cache is introduced across
 invocations. Candidate results do not grant executable admission.
@@ -37,7 +37,7 @@ The complete native-substitution producer retains four full originals, ordered
 `language` then `repository` phases, exact owner spans and full inverses, chained
 from the token-bound variant source family. Independent regression source covers
 source joins, copied contexts, named imports, stability preservation, unknown
-producers, graph/profile changes, original no-Cargo/no-derive refusals and actual
+producers, network/profile changes, original no-Cargo/no-derive refusals and actual
 JS/strict-TS body behavior. A separate native oracle covers tool attributes,
 original derived declarations, byte boundaries and inactive variants. All cases
 are drafted and unrun. This batch does not close architecture export/producer

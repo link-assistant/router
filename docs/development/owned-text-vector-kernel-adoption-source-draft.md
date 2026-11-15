@@ -21,7 +21,7 @@ The paired copy requires exact original TS-to-JS projection before editing,
 rewrites TS once, derives JS and matches the whole private checked source to that
 projection. Concurrent differing JS remains a conflict. Receiving repositories
 must supply the exact current kernel runtime and declaration plus the existing
-native/vector/text source graph; imports or source flags cannot stand in for
+native/vector/text source network; imports or source flags cannot stand in for
 those files. Descriptor, root, source byte, metadata/cell/depth, 32-module batch,
 128-join-selection, 64-source-literal, 4,096-runtime-value and 1 MiB UTF8 limits
 remain unchanged. No result/source/owner/failure cache or native core ABI is added.

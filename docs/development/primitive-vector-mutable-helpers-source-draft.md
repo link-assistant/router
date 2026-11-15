@@ -8,7 +8,7 @@ checked call target, owned primitive return and source closing joins are require
 The original core-initializer API, owns flag and prior refusals remain unchanged.
 
 This route is temporary checking permission. The complete typed call still
-selects the existing helper graph lane, which must rejoin every complete
+selects the existing helper network lane, which must rejoin every complete
 current caller/callee body and validate argument domains, bounded owned/shared
 entry guards, moves, loops, loans, acyclicity and all dependencies before any
 projection/emission is issued. A public name, signature or return candidate
@@ -23,7 +23,7 @@ mutable Vec local calls and canonical Rust let bindings; no native library API
 or root/history step is added.
 
 Independent eleven-domain native/JS/strict TS source cases cover those callers,
-source extrema, frozen/fresh outputs, nested helper graphs and refusals. Full
+source extrema, frozen/fresh outputs, nested helper networks and refusals. Full
 source/CST inverses and original two-phase preparation cases are drafted.
 An independent public-core Rust oracle also covers helper-created mutable
 accumulation, extrema, bounded moves and copied index/length results in all

@@ -7,11 +7,11 @@ The direct runtime's original declaration remains the single signature source:
 `(tool: unknown) => boolean`. Existing JSON declarations and every other family
 retain their original bytes. The `unknown` input is not a JSON/type owner proof.
 
-The actual project source guard prefers the complete fixed current-source graph
+The actual project source guard prefers the complete fixed current-source network
 and retains the finite installed-packaging fallback for the earlier source
 domain. The installed source adapter keeps its original complete afterimage,
 and, when needed, independently joins it to the actual terminal source through
-the original source graph. Its original before/after/inverse stays unchanged.
+the original source network. Its original before/after/inverse stays unchanged.
 Original native/type/ownership/body/namespace checks are still required.
 
 The prior complete relocation and project cases remain intact. An additional

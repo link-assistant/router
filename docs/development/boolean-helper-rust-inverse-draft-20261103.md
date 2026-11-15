@@ -71,7 +71,7 @@ The [source proposal](../../tools/translation/boolean-helper-rust-20261103-profi
 retains the complete original Rust oracle and both creation images, with
 separate language/repository sequences, full CST reparse and inverses. Packet
 SHA256ff987b0e2dd995e343de83d4462f245e4620470cea27a8f15036c1fc16d5200b,
-5764 compressed bytes. The installed391/269 source graph is unchanged.
+5764 compressed bytes. The installed391/269 source network is unchanged.
 
 ## Remaining requirements
 

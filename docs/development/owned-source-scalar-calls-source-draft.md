@@ -1,6 +1,6 @@
 # Selected scalar source-call composition draft
 
-SOURCE ONLY. Source, graph cases, codec/runtime/native composition and all six
+SOURCE ONLY. Source, network cases, codec/runtime/native composition and all six
 full source equations are UNRUN. CI feedback is uninspected. Full source drafting,
 actual coverage, freshness, performance, runtime parity and delivery remain OPEN.
 
@@ -23,13 +23,13 @@ permission from a name, ABI descriptor or saved source history.
 Every emitted/decoded/serialized program requires its complete selected source
 callee closure, matching original source spans, native names and signatures.
 Small bounded codec summaries preserve the existing full source/CST envelope
-and byte limits. Graph checks retain subtree height as well as cost, refusing
+and byte limits. Network checks retain subtree height as well as cost, refusing
 cycles, depth above 32 edges, over 16384 edges or expanded work above 100000 cells.
 Native whole-function comparison joins each actual resolved call to the fresh
 lowered function declaration and compares every selected callee body separately.
 The interpreter reuses only this invocation's freshly checked program and rejoins
 it on exit. Paths without source calls keep their original checks and avoid the
-new graph walk/closing interpreter compilation. Graph summaries are inert DATA.
+new network walk/closing interpreter compilation. Network summaries are inert DATA.
 
 Cases draft six-function forward/nested call graphs under both authorities,
 signed literal/alias arguments, JSON vector/value/scalar callers, omitted callees,

@@ -68,7 +68,7 @@ direction. Unobserved semantic gaps can exceed the upper numbers.
 With four fully available roles at40focused hours each per week, the arithmetic
 minimum is about3.9–11.8weeks. That assumes perfect parallelism, which this
 project does not have. Shared compiler frames, serialized integration, source
-review, original/final graph composition and the source-before-verification
+review, original/final network composition and the source-before-verification
 phase boundary add critical-path time. The resulting **working planning range
 is6–16 active team weeks**.
 
@@ -125,7 +125,7 @@ flowchart TD
   R --> D
 ```
 
-The graph shows dependencies, not durations. Three source workers improve
+The network shows dependencies, not durations. Three source workers improve
 independent family drafting; they do not remove the coordinator's integration
 path or make full verification run before source completion. The coordinator
 also owns this audit, exact-path commits and publication; that time must not

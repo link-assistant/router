@@ -25,7 +25,7 @@ The bulk routing DATA reader now detects actual arrays in ordinary function
 bodies as eligibility. It excludes nested function/class bodies. Neither that
 selection nor a public inference helper grants source/type permission: the full
 existing insertion procedure still checks the original source, runtime bytes,
-source pairs, complete helper graph, native proposal and all closing fences.
+source pairs, complete helper network, native proposal and all closing fences.
 
 Four complete before/after source equations retain lossless CST transport,
 serialized/reparsed meta, inverse and exactly language then repository phases.

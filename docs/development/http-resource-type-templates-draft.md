@@ -7,7 +7,7 @@ their own parameter bindings, so a caller cannot capture a free name in another
 declaration. Repeated nested identity instantiations remain distinct uses.
 
 Every declaration receives a complete native syntax, dependency and acyclic
-graph check, including unused templates. Supported bodies compose existing
+network check, including unused templates. Supported bodies compose existing
 operation types, identity wrappers, settled futures and successful Result/Option
 selection. Actual instantiated inputs, callbacks, returns, recursion and
 ownership then re-enter the complete original domain/body checks. Expanded JS

@@ -27,7 +27,7 @@ It exposes no parser configuration or genuine private scope array. Both old
 and new operations share the original active-source failure protocol, so a
 caught nested change poisons the enclosing operations even after restoration.
 
-Original full-file CST serialization/reparse, graph resolution and conservative
+Original full-file CST serialization/reparse, network resolution and conservative
 binding resolution remain unchanged. The new16MiB/2-million-cell/depth160 DATA
 inspection and output domains refuse incomplete results rather than truncating
 native observations. No caller can supply a scope list, reviewed flag or native
@@ -38,9 +38,9 @@ owner, verdict, result or failure cache.
 
 `collectSourceBindingGapPlan20261103` owns a real fresh physical source operation.
 Its language sequence obtains the original detached observation; its repository
-sequence retains every original graph/binding diagnostic, true unresolved type/
+sequence retains every original network/binding diagnostic, true unresolved type/
 macro/bang/attribute flag, unresolved/ambiguous binding, nonactive scope condition
-and physical source outside the original graph's binding closure. Duplicate or
+and physical source outside the original network's binding closure. Duplicate or
 overlapping original observations stay separate. No substring classifier can
 clear a native gap. Each row requires L02/B05 review and stays OPEN.
 
@@ -76,9 +76,9 @@ SHA256 `f31eea1305d4464ec0c364d5e1419674d5abd72ee01a085428dfb768791d5594`.
 The11786-byte packet also retains the worklist and complete receiving-case
 creation images. The source proposer and all APIs are exported from the existing
 bulk proposal entrypoint. No hot source-index/engine change is required by this
-parent; the current374-equation/264-path graph and old images remain intact.
+parent; the current374-equation/264-path network and old images remain intact.
 
-New case source uses the actual original graph/binder, complete physical source
+New case source uses the actual original network/binder, complete physical source
 trees and existing parser configuration. It covers detached unbranded mutation
 isolation, ambiguity, unknown producers, unreachable physical sources, Unicode/
 CRLF positions, missing modules,512 versus513 files,4097-source refusal, nested

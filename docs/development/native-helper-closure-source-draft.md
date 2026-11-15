@@ -16,7 +16,7 @@ The reusable source projection replaces qualified native calls with their
 selected local receiving function names, preserving argument order and complete
 body structure. Names colliding with any receiving parameter acquire recorded
 hygienic aliases; the projection also copies the existing receiving Rust keyword
-refusal set. The source graph selector removes callers whose complete helper
+refusal set. The source network selector removes callers whose complete helper
 source is absent or unsupported, recursion, paths beyond 32 active functions and
 excessive expanded DAG work. Operation-local memoization retains subtree height
 as well as cost. Incoming-depth failure is not saved as a false refusal for a
@@ -27,7 +27,7 @@ checker, serialized/reparsed meta representation and whole source-call closure
 checks. The final native comparison uses the independently issued receiving
 program, not the discovery inventory. Shared-file composition and physical
 adoption recompute discovery and native checks as before. There is no saved
-cross-operation source, graph, semantic or result cache.
+cross-operation source, network, semantic or result cache.
 
 Borrowed string call arguments currently require an actual borrowed string input,
 static string or a conditional joining those sources. Passing JSON-derived text

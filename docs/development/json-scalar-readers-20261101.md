@@ -56,7 +56,7 @@ core-call subtree; no synthetic spans or new source-link node permission exist.
 The early owning-field scope runs the **entire original owned flow checker**
 after the actual function completes. It does not skip or defer validation.
 Final checking independently rejoins the checked whole project and helper
-graph. Emission requires that current finalized graph plus the complete exact
+network. Emission requires that current finalized network plus the complete exact
 project signature/body rewrite. Persistent projection DATA selects new owning
 contexts for refusal only. Early, detached, stale and post-frame emission
 refuse; original copied/borrowed contexts retain their old preparer.

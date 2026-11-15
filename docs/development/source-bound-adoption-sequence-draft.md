@@ -19,7 +19,7 @@ are projected only for source inspection, with the entire inverse retained;
 every output application proposal preserves original attributes. Stability
 metadata is never projected through namespace passivity.
 
-Readback rebuilds the actual complete graph and freshly recreates each retained
+Readback rebuilds the actual complete network and freshly recreates each retained
 original-file inspection. It compares the complete inspection and final private
 producer effects, checks unique actual paths, requires inspections for proposed
 files and their original ancestors, and retains every original Cargo, full CST,

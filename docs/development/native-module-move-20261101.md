@@ -47,11 +47,11 @@ method, generated-method, constant and broader source scopes remain unsupported.
 
 ## Genuine source/namespace proof and complete projections
 
-The original `resolveModuleGraph` constructs the actual full graph through Rust
+The original `project.mjs` module resolver constructs the actual full network through Rust
 CST transport. The operation requires exactly one genuine root-to-leaf edge,
 the original privately sealed `isTrackedModulePathPlan` identity, exact original
 module items from `originalSourceModuleItems`, the actual requested logical
-module name, active scope and no graph diagnostics. Filenames, public path-plan
+module name, active scope and no network diagnostics. Filenames, public path-plan
 flags or source hashes never establish namespace/semantic permission.
 
 The actual full original `translateProject` compiles the before universe with
@@ -64,20 +64,20 @@ text, scalar signature and emitted binding is retained. Only source-coordinate
 `span` fields are removed when comparing otherwise complete checked signatures.
 
 The root CST edit selects the exact original module item/path-attribute span
-from that genuine graph. It inserts `#[path = "renamed.rs"]` before the unchanged
+from that genuine network. It inserts `#[path = "renamed.rs"]` before the unchanged
 mod declaration, or replaces only the original path attribute. The full original
 owner passes serialized/reparsed Rust CST in fixed language then repository
 order. A full equation/inverse restores every owner source byte.
 
 The after universe has exactly the old leaf path removed, the new path added
 with identical full bytes/mode, the checked root selection edit, and no other
-source change. The original graph and full compiler run independently on that
+source change. The original network and full compiler run independently on that
 entire after universe. Every admitted function/owner/export must match the
 before set under exactly `to → from` source-path mapping. Complete emitted JS and
 TS sources must be byte-identical before/after. This protects logical namespace,
 actual root consumers and every admitted export rather than merely counting
 module names. The private type/ownership/compiler checks still run in both
-universes; graph/CST comparison alone never supplies them.
+universes; network/CST comparison alone never supplies them.
 
 Original runtime mapping emits fresh physical JS/TS and registered runtime
 proposals. Their current baseline must reproduce the complete original compiler
@@ -90,7 +90,7 @@ equations and both rule phases. It grants no semantic permission.
 After an applied move is committed as a common baseline, the same request can
 produce checked no-op: its old path must be absent, destination must be the sole
 actual original explicitly selected leaf, full current/Git source universe must
-match, and original graph/compiler/namespace/projection checks still run twice.
+match, and original network/compiler/namespace/projection checks still run twice.
 No-op emits no moves, source writes or metadata churn. Missing source plus a
 similarly named destination alone never establishes no-op.
 

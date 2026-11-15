@@ -82,7 +82,7 @@ all original bytes/identities/ancestors and source-failure observers. The newest
 fence replaces rather than bypasses a fixed old installed-source fence.
 
 Original limits remain: each archive 2 MiB packed/4 MiB raw, each source 2 MiB,
-256 versions, complete DATA 16 MiB occurrences, and original graph/flow/call/depth
+256 versions, complete DATA 16 MiB occurrences, and original network/flow/call/depth
 bounds. No merged archive exceeds the old envelope. The small fixture request
 API is still 128 files/4 MiB; it is not the full production input interface.
 `translateOwnedJsonOutputProject(options)` accepts the original project options.

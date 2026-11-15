@@ -28,7 +28,7 @@ image DATA refuse. Other rows retain complete metadata, but their unloaded
 source bodies are not claimed as qualified. Raw input, parsed index metadata and
 the selected source equations share one16MiB DATA accounting limit. Complete
 returned source/CST payloads retain the original separate192MiB wire bound.
-No image, graph, source result or authority survives in a cross-operation cache.
+No image, network, source result or authority survives in a cross-operation cache.
 
 Language rules collect the complete bounded segments. Repository rules invoke
 the actual original unique whole-source chain composer. Ambiguity, cycles and

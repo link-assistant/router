@@ -14,7 +14,7 @@ Numeric conversion and integrity operations retain captured stock primordials.
 
 The original 65536 occurrence-cell, depth-1024 and 1 MiB scalar-text work bounds
 remain unchanged. Proxies, accessors, malformed/extra fields, lazy stack
-properties, nonfrozen graphs, cycles, bad Unicode, invalid numeric tags/ranges
+properties, nonfrozen networks, cycles, bad Unicode, invalid numeric tags/ranges
 and nonfinite floats remain refusals. New borrowed aggregate views keep this
 opaque interface's wider limits; consuming another operation does not raise its
 separate limits. Input carrier records retain their original ordinary own-data

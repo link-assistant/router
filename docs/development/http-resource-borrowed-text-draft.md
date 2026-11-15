@@ -26,6 +26,6 @@ and full CST inverses are retained. The earlier refusal now uses a local owned
 JSON root, with new positive public-root cases and independent negative cases.
 The handwritten native pointer/Unicode oracle remains reserved for gated CI.
 
-General local loan graphs, borrowed resource escapes, broader lifetime syntax,
+General local loan networks, borrowed resource escapes, broader lifetime syntax,
 mixed-error conversion, production adoption, namespace closure and all other
 unfinished requirements remain open. No translator, preparer or test was run.

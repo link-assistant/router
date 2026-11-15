@@ -15,11 +15,11 @@ No synthetic support library is installed or labelled as original source.
 Every selected native function is joined to its complete actual original Rust
 module, source hash, source view and physical function span through the existing
 fresh private source traversal. Changes are grouped per file and substituted
-without overlap. The entire proposed graph is independently forward checked.
+without overlap. The entire proposed network is independently forward checked.
 The actual new checkedSource accessor must reproduce every expected primitive
 literal and parameter reference, the exact returned cardinality, and all native
 input/element domains. Complete executable/refusal/method membership must equal
-the original full graph census from the same fresh original invocation. A
+the original full network census from the same fresh original invocation. A
 partially accepted selected function cannot yield a successful proposal.
 
 The original project census is detached source DATA shared only across rows of

@@ -11,7 +11,7 @@ inverse remain retained when generating JS. Ordinary generic bodies stay open.
 
 Every helper dependency is a genuine current local function checked earlier by
 the original complete call graph. The Rust source proposal independently closes
-its actual whole generic function graph, with its own move/drop census and a
+its actual whole generic function network, with its own move/drop census and a
 bounded acyclic dependency walk. Completed results exist only inside that one
 native projection invocation. No source, owner, verdict or result cache crosses
 an invocation. Native function calls and aliases remain in the emitted body;

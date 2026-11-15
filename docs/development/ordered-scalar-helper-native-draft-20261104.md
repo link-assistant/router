@@ -76,6 +76,6 @@ unrun; Rust execution is CI-only after all same-SHA JavaScript gates.
 The complete two-reader/five-copy/six-creation packet and six-input archive are
 recorded in the operation handoff with their exact digests. The whole cohort
 and native cases now have appended history, preserving all437 previous
-equations. Qualification remains UNRUN. Finish inter-helper import/recursive graph,
+equations. Qualification remains UNRUN. Finish inter-helper import/recursive network,
 statement/ownership/interface, application and other open bundles before any
 verification. This draft closes no acceptance bundle.

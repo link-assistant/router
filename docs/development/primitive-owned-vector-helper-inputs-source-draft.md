@@ -17,7 +17,7 @@ every owned parameter's actual private bounded prefix before walking the full
 callee body. Owned arguments move in evaluation order; copied primitives and
 shared slices keep their prior modes. Duplicate consumption, use after call,
 wrong primitive domain, missing guards, cycles and cross-module helpers remain
-refused. The bounded 128-call/32-frame graph walk is unchanged.
+refused. The bounded 128-call/32-frame network walk is unchanged.
 
 Helpers may return an actual owned primitive Vec, a by-value bool/fixed integer,
 or actual standard Option of a copied primitive. Option layout/source identity

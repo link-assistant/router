@@ -39,14 +39,14 @@ The fixed sampler uses complete actual function DATA and bounded hints only to
 prioritize one candidate. Hints are grouped once by source/module/signature to
 avoid repeated whole-table serialization; candidate work caps2M. Native written
 header and physical call checks still follow. No failed source check is swallowed,
-no tiny substitute graph is fabricated and no missing candidate is skipped.
+no tiny substitute network is fabricated and no missing candidate is skipped.
 The fixed inverse recaptures everything rather than trusting the sampler's DATA.
 
 ## Two ordered rule sequences and full source custody
 
 The language sequence transports/reparses both full targets as CST, captures the
 complete original baseline, builds whole physical Rust candidates and independently
-checks the changed graph. The repository sequence retains complete Rust/JS/TS
+checks the changed network. The repository sequence retains complete Rust/JS/TS
 before/after source/CST/inverses and agreed authored targets. The original complete
 admission/refusal/method census must agree. There are six top-level project
 attempts in the inverse; the independent sample adds three, for nine total.

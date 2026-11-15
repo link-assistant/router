@@ -48,7 +48,7 @@ Census SHA0d2df226458e9645e34bb2608a5548f152f06d332c4f6c7569daaff1e1dc574b.
 Controls SHA3c7f7eae865d1e9bbf87e24d66edafcb42f3f528a543423cbd657eb00a664313.
 Engine SHAeb4999fb776e4db2bc47f859fd3662bfa8aa89a5b0326bd068432dae899a6ccd.
 
-Continue actual inter-helper import graph closure with fresh original private
+Continue actual inter-helper import network closure with fresh original private
 binding/body facts, cycles/recursion and caught-failure handling; ordinary helper
 modules still admit only canonical primitive/type imports. Wider statements,
 ownership and interfaces, actual production caller adoption and remaining

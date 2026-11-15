@@ -62,7 +62,7 @@ Installation
 must retain the original private caller/source/ownership checks, append full
 source successor equations and qualify the actual original forward/reverse
 readers; a candidate shape alone grants no source permission. Full declaration
-freshness, strict TypeScript and compiler receiving remain UNRUN. The hot graph
+freshness, strict TypeScript and compiler receiving remain UNRUN. The hot network
 now contains374 equations over264 paths. There is no measured executable
 coverage gain, new complete requirement receipt or verification result here.
 The acceptance count remains12/70 DRAFTED and58 OPEN. Root works alone; no local

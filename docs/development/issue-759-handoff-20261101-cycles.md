@@ -277,7 +277,7 @@ Root continued alone from `b093d22ead02f652e3b55a3e94034ff447ca8c4b`.
 The new native-candidate source constructor uses actual opaque source paths,
 ordinary exact splices and full Rust CST/inverses, with atomic overlay publication
 after all source/observer checks. The driver freshly checks physical original,
-native candidate and adopted graphs; its actual-context entry keeps one original
+native candidate and adopted networks; its actual-context entry keeps one original
 input epoch open across independent inverse compilations, never a cached verdict.
 
 A complete producer copy adds literal-only current-owner output adoption while

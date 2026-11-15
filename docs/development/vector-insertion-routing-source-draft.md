@@ -12,7 +12,7 @@ compiler's AST and current native runtime guards, and observes written array or
 actual JSDoc return nodes. It reuses the original parenthesized type reader and
 bound. Comments, source spelling or its Boolean result grant no type, lifetime,
 owner or executable authority. The selected full insertion API independently
-checks actual precise aliases, primitive domains, callee graphs, moves and the
+checks actual precise aliases, primitive domains, callee networks, moves and the
 complete proposed native function/ABI/census.
 
 Unsupported array elements, borrowed inputs, invalid source or changed runtime

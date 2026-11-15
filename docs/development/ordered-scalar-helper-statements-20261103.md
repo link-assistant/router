@@ -30,10 +30,10 @@ branches and conditional or short-circuit expressions retain branch structure;
 unselected runtime operations stay lazy. Continuations duplicate only into
 mutually exclusive branches. This avoids mutable join slots and preserves the
 existing statement IR. Complete return trees are required; assignment, loops,
-partial returns, ownership carriers and recursive helper graphs need separate
+partial returns, ownership carriers and recursive helper networks need separate
 rules and remain explicit gaps. Sequential calls to the same helper remain
 allowed because a returned helper's caller continuation uses the caller's
-active graph, not the returned helper's active graph.
+active network, not the returned helper's active network.
 
 Every helper has a separate lexical environment. Original names are reserved
 before fresh allocation. Caller names are not looked up as helper parameters,
@@ -68,7 +68,7 @@ The second required sequence retains fresh binding conventions and existing
 statement/expression IR. Actual reader, document/meta, emitter, inverse and
 source-fence wiring must be bulk drafted together before qualification. Original
 private declarations/imports/receipts and complete source closing must remain;
-the pure normalizer cannot add that authority. The installed source graph stays
+the pure normalizer cannot add that authority. The installed source network stays
 437 equations/273 paths because no guarded native parent changed here.
 
 Independent unrun JavaScript cases assert unused division failure, left-to-right

@@ -18,7 +18,7 @@ Only the direct fixed fresh compiler call supplies actual original associations.
 The language sequence transports/reparses both whole authored targets as CST,
 captures the actual whole original/native/adopted baseline, identifies consistent
 binding/reference token changes, prepares original physical Rust token edits,
-then independently checks the changed complete graphs. No public name or hash
+then independently checks the changed complete networks. No public name or hash
 acts as authority. Genuine type/effect/ownership/caller checks remain the original
 compiler's responsibility. Source epochs are shared through WithContext calls;
 no stale or nested replacement universe is manufactured.

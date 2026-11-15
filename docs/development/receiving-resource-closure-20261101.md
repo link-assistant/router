@@ -36,7 +36,7 @@ integration source. It copies every compiler-fingerprint input and actual native
 source before selecting profile resources from current preflight reads and full
 source-copy custody. Missing original profile resources can be acquired only
 from a fresh source-phase ENOENT hint. Every acquisition starts a new process;
-no private issuer graph or compiler verdict survives. The aggregate is bounded
+no private issuer network or compiler verdict survives. The aggregate is bounded
 at16 attempts,8MiB raw child output,8MiB failed packets,60s whole case and20s
 per child. Already copied missing inputs, runtime failures and paths outside the
 fixed source-profile directory cannot trigger recovery. The intentionally

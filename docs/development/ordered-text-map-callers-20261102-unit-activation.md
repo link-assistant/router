@@ -34,7 +34,7 @@ all additional writes remain charged to the original finite setup deadline and
 The wrapper never installs into the original checkout or imports changed target
 modules in its current process. It retains the complete actual receiving Rust
 production tree and Cargo/lock/build/config inputs supplied by the original
-producer. Actual graph/native checks remain dynamic, including subsequently
+producer. Actual network/native checks remain dynamic, including subsequently
 authored library modules and application changes; no old `lib.rs` image can
 substitute for actual current source. The complete actual borrowed-standard-map
 native oracle `rust/tests/borrowed_standard_map_20261102_test.rs` is an explicit

@@ -24,7 +24,7 @@ simultaneous language/native edits. Runtime source must equal the exact current
 candidate runtime closure; it is not installed from metadata. Rust bindings must
 join actual captured physical source. Native/virtual/script path collisions,
 missing source, symlinks, unknown manifest fields and overlapping review targets
-refuse. The native proposer checks every selected function and its full graph
+refuse. The native proposer checks every selected function and its full network
 before any physical source transaction can be constructed.
 
 The proposal contains complete original/after/inverse Rust and paired source

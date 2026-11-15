@@ -8,7 +8,7 @@ implementation, not a verified coverage increase or complete translation.
 ## Actual composition
 
 The opaque driver now declares this finite sequence, rebuilding its actual
-source graph and lexical ledger after each complete source version:
+source network and lexical ledger after each complete source version:
 
 1. Existing actual whole output owners.
 2. Existing local-language closure candidates.
@@ -30,7 +30,7 @@ it does not enter the new helper, catch its poison and continue.
 The new canonical and callback stages retain complete copies of the existing
 opaque JSON and callback kernels, including real facade/native leaf checks,
 public module edges, original imports/configuration/producer scopes, complete
-graphs and closing. They use separate lazy private result stores consumed by
+networks and closing. They use separate lazy private result stores consumed by
 the fixed view. Every result joins actual view identity, exact stage/revision
 and full before/after bytes. Observer replies grant no update permission.
 Refusal skips advance revision too; ahead-produced tokens cannot become valid.
@@ -120,7 +120,7 @@ The original 20k-path/8MiB-file/64MiB corpus bounds, 2M-unit Cargo guards,
 2MiB scoped-source domain, actual CST/private-parser limits, 16MiB ordinary
 DATA, metadata field storage and original case/child deadlines remain separate.
 Complete alias/retained resource fit, RSS/time/Windows and load-origin results
-are unmeasured. Repeated source-fence/preflight/whole-graph work remains a
+are unmeasured. Repeated source-fence/preflight/whole-network work remains a
 performance obligation; no speedup or successful original full workload is
 claimed. No dependencies, build tree or receiving workspace were created.
 

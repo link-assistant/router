@@ -1,11 +1,11 @@
 # Native scalar early-return control flow
 
-This source draft extends the [adopted helper graph lane](ordered-helper-graph-adoption-20261104.md)
+This source draft extends the [adopted helper network lane](ordered-helper-graph-adoption-20261104.md)
 with ordinary early returns, missing else arms, nonterminating branch bodies,
 unbraced branches and else-if chains. Both complete original reader successors
 are now [source adopted](scalar-early-return-adoption-20261104.md). All execution is UNRUN, CI NOT_INSPECTED,
 counts12/70 DRAFTED,58 OPEN and actual production coverage UNKNOWN. The installed
-source-history graph now retains482/276.
+source-history network now retains482/276.
 
 ## Preserve original native lexical/type proof
 

@@ -32,7 +32,7 @@ executables to cover actual adapter and direct entry paths, nonzero exit cleanup
 Claude min-version and persistent profile, private child environment, temporary
 Codex bridge lifetime, exact normal TOML preservation, cancellation/deadline,
 structured/token stdin separation, model grants and temporary managed cleanup.
-The existing strict TypeScript case compiles/loads the actual launcher graph only
+The existing strict TypeScript case compiles/loads the actual launcher network only
 in the deferred verification phase. No fixture or vendor process was run now.
 
 Support remains partial. Claude profile migration/reset and verified backup,

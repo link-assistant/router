@@ -7,7 +7,7 @@ coverage or parity claim is made.
 
 `tools/translation/network-control-bulk-20261101.mjs` adds a concrete shared
 syntax prerequisite: complete HTTP/control callers may import existing qualified
-operations through a closed graph of actual transparent named-value reexports.
+operations through a closed network of actual transparent named-value reexports.
 The existing HTTP source checker requires direct imports from registered runtime
 modules; it previously refuses these caller modules at the import boundary.
 The new adapter resolves complete actual barrel sources, proposes direct imports
@@ -18,12 +18,12 @@ Each transparent application module must contain only nonempty named value
 reexports from ordinary relative `.mjs` modules. All exports, including unused
 ones, are resolved. Unknown/missing symbols, wrong runtime owners, side effects,
 star/default/type exports, import attributes, ambiguous duplicate exports and
-cycles refuse. Graph depth/count, syntax cells, individual/aggregate dependency
+cycles refuse. Network depth/count, syntax cells, individual/aggregate dependency
 retention and original complete source/CST limits remain bounded. Resolution is
 local to one synchronous operation; no input, binding or verdict cache survives.
 
 The adapter preserves the complete depth-first dependency loading order of each
-erased transparent graph, including modules supplying unselected exports. It
+erased transparent network, including modules supplying unselected exports. It
 emits checked unused named imports for those dependencies before the actual caller
 bindings. Fresh local names avoid every original native identifier; actual local
 aliases and all JSDoc/typed body references retain their original meaning. The
@@ -37,7 +37,7 @@ native import/export selection. The canonical whole caller enters the original
 HTTP checker, semantic meta is independently read/reissued, both JS/TS target
 bodies enter fresh original checks, and the complete canonical Rust source enters
 the original native inverse with whole Rust reproduction. The original complete
-forwarding graph is resolved again before return. All native/runtime/declaration/
+forwarding network is resolved again before return. All native/runtime/declaration/
 Cargo/type/move/loan/effect/Result/cleanup checks remain the existing issuers'
 obligations. Public source names, tables and source hashes grant no authority.
 The shared source-failure protocol revokes enclosing operations on observed
@@ -82,7 +82,7 @@ behavior. Registered runtime/native source checks remain mandatory. External
 packages, initialization side effects in erased barrels, namespaces, default or
 star exports and cyclic forwarding are outside this profile. Broader streaming
 backpressure, settlement, request retries, target/platform matrices, complete
-production graph/dependency/configuration admission, real application coverage,
+production network/dependency/configuration admission, real application coverage,
 performance measurements and all receiving/full same-SHA gates remain OPEN.
 This supplies additional source receipts toward F03/V03/O04/T04 only; it does
 not close those broad rows or authorize local execution/Rust tools.

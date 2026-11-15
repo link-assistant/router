@@ -29,9 +29,9 @@ The additive `ownedCoreMapRuntimeSources()` supplies the fixed separate map
 closure. Unused additional assets alone do not establish a map type or force
 native map facts onto old scalar contexts. Actual source/native import syntax
 selects extra corpus inputs; that selection grants no semantic authority.
-The coverage graph follows actual main/pair runtime imports, type references
+The coverage network follows actual main/pair runtime imports, type references
 and transparent/reachable aggregate exports; unused assets alone do not select
-map native inputs. Original `resolveModuleGraph(PRODUCTION_PROFILE)` captures the complete active
+map native inputs. The original `project.mjs` module resolver under `PRODUCTION_PROFILE` captures the complete active
 Rust root/module closure from actual repository paths and current source reads.
 No small fixture library replaces the receiving application. Each file read retains its own no-follow FD and ancestor before/after checks.
 Complete capture/current and failure boundaries batch-close all retained file

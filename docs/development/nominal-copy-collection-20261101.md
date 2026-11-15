@@ -137,7 +137,7 @@ source-profiles. It excludes unrelated meta/projects/generated/test-evidence
 banks. It retains the complete required installed TypeScript package plus
 package/lock inputs, refuses symlinks, bounds ordinary reads, retains all source
 rows for final byte comparison, and preserves module paths. A fresh subprocess
-loads the fully substituted compiler graph; child exit discards its private
+loads the fully substituted compiler network; child exit discards its private
 issuer/module graph. Parent-process issuer objects are never passed to it.
 
 Emitted target cases then use the existing receiving helper to run actual JS and

@@ -5,7 +5,7 @@ and meta/source assets, and drafts an observed-layout planner for real JS-first
 outputs. It does not close L03/L04/L05: broader receiving/export coverage and verification remain unfinished; actual
 producer import/source-history adoption is now source drafted.
 All execution is UNRUN and CI NOT_INSPECTED. Counts stay12/70 DRAFTED,58 OPEN;
-production coverage remains UNKNOWN. The native source-history graph stays482/276.
+production coverage remains UNKNOWN. The native source-history network stays482/276.
 
 ## Declarations are not write permission
 

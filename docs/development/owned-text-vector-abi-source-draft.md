@@ -25,7 +25,7 @@ and get returns an owned optional String with no returned loan. This is a
 source ABI observation, not a standard type-owner theorem or private caller
 permit. All source/namespace/runtime/type-owner/root/receiving fields stay false.
 Names, signature strings, CST spans and declaration aliases cannot supply the
-missing original owner, method, namespace, move or helper-graph qualification.
+missing original owner, method, namespace, move or helper-network qualification.
 
 Current receiving maps require exact whole native, runtime and declaration
 bytes. The logical native path maps into the physical `rust/src` tree when the

@@ -33,7 +33,7 @@ source equations: two actual readers and fifteen chronological case sources.
 It now has499 equations across277 paths, with34 full before/after images. The
 original reusable language/repository builder, per-path64-edge,512-index-row,
 1MiB-index,4MiB-image and16MiB-retained-source limits remain unchanged. The complete
-482→499 engine transition remains outside its own hashed graph. A root still
+482→499 engine transition remains outside its own hashed network. A root still
 at482 stops before the new companion; all earlier historical root controls remain.
 
 Older case sources retain their full original expectations and source chains,
@@ -41,7 +41,7 @@ then join the exact new control afterimages. Each enclosing control test selects
 its new complete control DATA once and uses that invocation-local array for row
 lookups; no source or permission is cached across operations. Historical complete
 indexes and earlier source archives are unchanged. The newly current index is a
-source-history graph, not a production function census or translation percentage.
+source-history network, not a production function census or translation percentage.
 
 Independent UNRUN case source covers installed reader/copy/creation bytes,
 original482 prefix preservation, actual full reusable index/image construction,

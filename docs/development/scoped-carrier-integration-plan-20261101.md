@@ -124,7 +124,7 @@ Do **not** add a public `selectedCall` setter to the frozen ledger. A candidate
 from a previously unqualified initializer must not manufacture a concrete role
 through arbitrary callback truth. Where a same-pass proposal would need such
 an overlay, finish and close the whole-file source stage, install its actual
-opaque-view update, then rebuild the graph/ledger from the concrete next
+opaque-view update, then rebuild the network/ledger from the concrete next
 source version. A bounded source-only follow-up pass is permissible only as an
 explicit new stage with all preimages/histories retained; it is not a cache or
 compiler permit. Existing original setter behavior remains in old lanes.
@@ -136,7 +136,7 @@ The narrowest useful proposed new closed sequence is:
 | Stage | Reason |
 | --- | --- |
 | Actual output-owner adoption | Retain Sync's complete original three-owner equations and all migration flags |
-| Existing local-language | Remove the original direct local closure graph as explicit unqualified source candidates |
+| Existing local-language | Remove the original direct local closure network as explicit unqualified source candidates |
 | New canonical-readers | Fold only the exact scope/revoked reader blocks before pattern/unknown-scope gates |
 | Existing local-option | Form the actual captured/block-receiver two-arm candidates before their callback bodies are processed |
 | New qualified-callback-bodies | Invoke the existing callback-core-body cascade on actual qualified callback intervals |
@@ -245,7 +245,7 @@ view imports the takers while stages import view, so eager construction would
 form an ESM initialization hazard. The actual store API is `issue(value)` /
 `take(token)`, backed by a private one-use WeakMap using captured private state
 operations. A producing kernel captures the exact view revision before the
-fresh complete graph and source scope are built. It closes every actual
+fresh complete network and source scope are built. It closes every actual
 source/import/context guard and observer event, then asserts the original
 revision again and issues frozen DATA shaped as:
 
@@ -270,7 +270,7 @@ Actual source-event APIs are
 `emitOpaqueSourcePair(view,{path,phase,before,after})` and
 `emitOpaqueStructuredData(view,coordinate,value)`. A changed source pair must
 produce `cstProduced===true`. Retain every full file, actual layered source
-rule, serialized/reparsed CST, inverse, residual and module-graph diagnostic;
+rule, serialized/reparsed CST, inverse, residual and module-network diagnostic;
 use the existing bounded event delivery rather than retaining a giant result.
 Observer throws/invalid DATA/thenables/reentrance are sticky exact-primary
 poison even if caught. A stage catch must never convert poison into a normal

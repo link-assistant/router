@@ -16,7 +16,7 @@ standard-owner checks still close every context. This supplies no invoked-rustc,
 --extern, sysroot, native-body or application permission and caches no verdict.
 
 Complete two-parent before/after/inverse source histories and genuine source-
-graph grammar/refusal/CST case source are retained. Small grammar cases qualify
+network grammar/refusal/CST case source are retained. Small grammar cases qualify
 only this declaration selector, never a miniature production compiler. The full
 actual Router-tree standard-map receiving case remains a separate obligation.
 Other actual root/configuration/macro/native owner constraints may still refuse;

@@ -40,7 +40,7 @@ terminal of the old index needs no new companion. Only absent/unmatched old
 source histories try the fixed additional reader. Missing optional registry
 returns no new source result; malformed or linked registry refuses. Ordinary
 own-data error classification preserves falsy, frozen and accessor-bearing
-primaries without invoking a hostile `code` getter. There is no persisted graph,
+primaries without invoking a hostile `code` getter. There is no persisted network,
 source, owner, body or result cache.
 
 All original source chain, ambiguity, cycle, inverse and private-permission

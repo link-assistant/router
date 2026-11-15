@@ -18,7 +18,7 @@ insufficient. Unknown, partial, effectful and unbounded native shapes refuse.
 Projection depth, work, leaf and item bounds remain explicit. Public tree DATA
 supplies no original source or executable permission. The containing proposer
 still reconstructs private current source, freshly checks the entire proposed
-native graph, and retains the complete original executable/refusal/method census.
+native network, and retains the complete original executable/refusal/method census.
 
 Three complete source equations preserve full original bytes, CST inverses,
 language then repository rules and both preparation roots. Independent unrun

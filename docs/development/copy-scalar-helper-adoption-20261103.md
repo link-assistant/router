@@ -44,7 +44,7 @@ and inverses when eventually executed.
 
 The [new family collector](../../tools/translation/exact-source-copy-scalar-helper-families-20261103.mjs)
 feeds the existing whole-CST index builder with both reader equations and eight
-complete historical case continuations. The graph now has401 equations across270
+complete historical case continuations. The network now has401 equations across270
 paths, retaining every original391 equation. Twenty new full source images retain
 669615 source bytes. The engine's391→401 continuation remains outside its own
 hash; the original391-root domain requires no later Copy companion. Original

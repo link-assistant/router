@@ -7,7 +7,7 @@ test, experiment, generation, local Rust tool or CI-triggering push executed.
 The native source closure copies the complete existing confinement reader and
 retains thirteen current inputs, forty whole callbacks and seven full receiver
 containers. It includes the original attribute/expansion parser and visitor,
-reduced graph visitor, definition collector and parent-module constructors.
+reduced network visitor, definition collector and parent-module constructors.
 The source includes the actual block Item/MacCall predicate, child block module
 construction, parent module/textual scope restoration and separate crate-root
 macro-export path. Whole original files, licenses, manifests, callback spans,

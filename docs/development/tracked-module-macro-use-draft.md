@@ -27,7 +27,7 @@ that precise module declaration. Earlier source remains earlier; local shadows
 and nested macro_use scopes follow actual order, while ordinary child scopes
 still restore the parent. Unknown child producers and unproved exports block
 later inherited candidates. One private engine and source frame serve the full
-fresh original graph. Every physical file retains its original and complete CST
+fresh original network. Every physical file retains its original and complete CST
 inverse. Default source and project APIs retain their previous domains.
 
 The copied project entry compiles the complete expanded source through the

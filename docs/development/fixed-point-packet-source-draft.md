@@ -6,7 +6,7 @@ feedback inspection occurred. Full production synchronization remains unfinished
 
 The bounded whole-stage composition runner now has an additive physical source
 packet, readback and installation route. It copies the complete original packet
-writer, every original graph/CST/source section and the original async guarded
+writer, every original network/CST/source section and the original async guarded
 installer. Each complete round repeats the exact unique requested stage order;
 a completed index requires a terminal receipt from a full unchanged round.
 A changed fourth round still refuses completion. Full original physical source,

@@ -81,7 +81,7 @@ old archive. Current source changes cannot inherit old verification results.
 The new checker and cases are source drafted; existing reader imports still
 select the old helper. Native Rust oracle source is installed but UNRUN. Adopt
 the complete six-reader source/history/receiving cohort before claiming actual
-width-aware generation. The hot native history graph remains499 equations/277
+width-aware generation. The hot native history network remains499 equations/277
 paths and its original512-row cap is unchanged. A bounded composed history design
 must accommodate further complete histories without dropping original cases,
 raising old caps or treating source metadata as compiler authority.

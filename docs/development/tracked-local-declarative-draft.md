@@ -13,10 +13,10 @@ Actual child-local shadows stay inside that child and its descendants. Unknown
 child producers invalidate later parent candidates until a fresh original
 textual definition supplies a supported binding. Original single-file APIs stay.
 
-The graph is recomputed from complete original physical snapshots, serialized
+The network is recomputed from complete original physical snapshots, serialized
 and reparsed CST and actual private tracked-path plans. Module paths, file/view
 associations, source positions and inherited configuration remain exact.
-Missing, cyclic, ambiguous or unresolved graph inputs prevent expansion. Passive
+Missing, cyclic, ambiguous or unresolved network inputs prevent expansion. Passive
 builtin source proofs, existing literal/follow/hygiene/forwarding checks and
 unknown attribute/macro refusals remain. No complete architecture namespace or
 macro_use/export rule is inferred from lexical expansion.
@@ -33,7 +33,7 @@ Four complete source equations retain native owners and language/repository
 sequences. Public synchronization routing includes both new APIs so static
 export closure sees their real dependencies. Independent unrun source covers
 external/inline inheritance, definition timing, lexical shadows, unknown child
-producers, original graph/path/refusal cases, fresh snapshots, complete physical
+producers, original network/path/refusal cases, fresh snapshots, complete physical
 inverses, JS/strict TS targets and unchanged old project behavior. A separate
 multi-file Rust oracle drafts ordinary native scope behavior for gated CI.
 

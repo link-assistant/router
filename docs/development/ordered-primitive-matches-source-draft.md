@@ -1,7 +1,7 @@
 # Ordered primitive match continuation source draft
 
 SOURCE ONLY. All row/kernel, private receiving/native synchronization, paired
-runtime/strict TypeScript, helper-graph, source-history and CI-only Rust oracle
+runtime/strict TypeScript, helper-network, source-history and CI-only Rust oracle
 case sources are UNRUN. Full drafting, freshness, receiving, parity and CI remain
 OPEN; these rules establish no measured translation coverage.
 

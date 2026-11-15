@@ -22,7 +22,7 @@ Native classification now separates initialization components. A cycle with
 only hoisted named functions and type declarations can use the existing direct
 source binding substitutions. A cycle containing any runtime variable
 declaration still refuses: live binding and temporal dead zone semantics need
-their own lowering. The graph scheduler returns data; its public boolean inputs
+their own lowering. The network scheduler returns data; its public boolean inputs
 cannot replace native source classification or the complete semantic checker.
 Component order and original membership remain in module source history.
 
@@ -53,7 +53,7 @@ additional namespace obligations and full Router coverage remain open.
 original cycle refusal regression. Native-selected language substitutions add
 component scheduling; repository substitutions retain initialization history
 and keep the runtime-constant cycle refused. Both complete CST sequences and
-inverses are required. The new graph, JS/TS cycle, identity/refusal and source
+inverses are required. The new network, JS/TS cycle, identity/refusal and source
 copy regression sources are drafted and unrun. No performance or production
 coverage result follows from this source extension.
 

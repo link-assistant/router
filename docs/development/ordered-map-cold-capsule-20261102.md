@@ -23,7 +23,7 @@ paired JS/TS/runtime/native source context and existing vector-binding DATA.
 Unknown fields, duplicate JSON keys, noncanonical text, proxies/coercion objects
 and out-of-domain structure cannot supply a source context.
 
-Forward import reconstructs the source graph, complete lossless CST, original
+Forward import reconstructs the source network, complete lossless CST, original
 Cargo/derive/JSON proofs and actual Host parser/checker through the real installed
 map project API. The saved semantic document must exactly equal the freshly
 qualified original target program. That document is then independently reparsed
@@ -32,7 +32,7 @@ and emitted by the actual Host JavaScript emitter. Its complete emission must
 match the fresh original project's target prefix. Generated JavaScript and strict
 TypeScript remain produced by the original project pipeline; no target body is
 hand patched. Bare semantic JSON or a public source key cannot warm a cold process.
-The source graph reconstructs genuine original context before meta is accepted.
+The source network reconstructs genuine original context before meta is accepted.
 
 Reverse import recreates the complete original private native source context,
 import/type/body checking and original meta reader from the retained actual

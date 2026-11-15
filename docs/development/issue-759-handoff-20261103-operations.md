@@ -123,7 +123,7 @@ written native width-boundary oracle tests are drafted, all UNRUN. Native tests
 use the existing Rust target and remain gated after all same-SHA JS stages.
 Packet SHA7de9bcc926672790f381ee8de0b9751d9f24e976b381f83b9b05d87936ef1fd1
 (713299 compressed bytes) retains6reader/1copy/2creation/1Rust-oracle full source
-equations and serialized/reparsed JS/Rust CST inverses. Hot graph499/277 and
+equations and serialized/reparsed JS/Rust CST inverses. Hot network499/277 and
 original512 cap unchanged; counts12/70 DRAFTED,58 OPEN. No local execution,
 compiler/parser/preparer trials, installs or CI/review inspection occurred.
 
@@ -158,7 +158,7 @@ SHA8d6d8c4912bad515f11694a9443221fa276ea048b26e707ac50dcf8326810055.
 Next: compose original reader/case source-history joins and adopt the complete
 mutable cohort without repinning prior sources or raising the512-row hot-index
 bound. General loops/owned writes/recursion and actual application receiving
-remain unfinished; counts stay12/70 DRAFTED,58 OPEN; graph482/276 unchanged.
+remain unfinished; counts stay12/70 DRAFTED,58 OPEN; network482/276 unchanged.
 
 The existing layout guide was absent from the sparse checkout, but its complete
 tracked source is retained and now links a separate
@@ -199,7 +199,7 @@ fresh meta read, provenance/CST and original target-emitter implementation
 copies. Their [actual source adoption](boolean-helper-source-adoption-20261103.md)
 now installs the complete guarded source cohort and interpreter/native oracle
 case source. The [canonical Rust inverse draft](boolean-helper-rust-inverse-draft-20261103.md)
-adds unchanged graph restoration and checked edited-caller proposals. General
+adds unchanged network restoration and checked edited-caller proposals. General
 helper-network edit reconciliation and full receiving remain gaps; execution UNRUN.
 The [shared Copy scalar draft](copy-scalar-helper-draft-20261103.md) now proposes
 both reader extensions and four complete document/profile/Rust-inverse copies
@@ -237,7 +237,7 @@ now drafts changed-body-only canonical import selection, alias conflict refusal,
 original JS/paired TS import/body composition and complete fresh Rust reproduction.
 It preserves unchanged primitive helpers and the original scalar adapter/API.
 Full two-copy/two-creation CST ancestry and receiving source remain UNRUN.
-No guarded parent changed; graph remains437 equations/273 paths. General helper
+No guarded parent changed; network remains437 equations/273 paths. General helper
 decomposition, interface edits and actual application adoption remain unfinished.
 The [ordered statement rule](ordered-scalar-helper-statements-20261103.md) now
 drafts fallible arithmetic/shift/clamp helpers with once-only eager arguments,
@@ -246,7 +246,7 @@ IR. Linked plans, immutable operand spines and invocation-local structural fork
 metadata avoid flat-list continuation recursion and repeated prefix copies.
 Complete source creation/CST cases and independent JS/native oracle source are
 UNRUN. Native source producer/private checking, document/profile/inverse and
-source-fence adoption remain the next complete batch; graph stays437/273.
+source-fence adoption remain the next complete batch; network stays437/273.
 The [native ordered helper cohort](ordered-scalar-helper-native-draft-20261104.md)
 now drafts both complete reader successors, a separate private constructor,
 two document codecs, source profile, Rust inverse and reconciliation API copies.
@@ -263,14 +263,14 @@ source-history cohort retains all437 previous equations and appends14:
 451equations/274paths. The Copy fourteen-input archive remains unchanged; the
 ordered operation requires its additional six sources inside the original fences.
 All execution UNRUN; counts remain12/70 DRAFTED,58 OPEN. Inter-helper imports,
-recursive graph/source proof and broader application adoption remain gaps.
-The [native helper graph draft](ordered-scalar-helper-graph-draft-20261104.md)
+recursive network/source proof and broader application adoption remain gaps.
+The [native helper network draft](ordered-scalar-helper-graph-draft-20261104.md)
 now adds complete two-reader source proposals for actual inter-helper imports
 and same-file FunctionDeclaration symbols. An iterative module/import layout
 worklist retains original native pointer/type joins, while actual bodies are
 rechecked freshly with a finally-cleaned recursion/depth stack. Transitive
 helper/primitive/operator receipts keep their true source origins. The old
-six-input archive remains intact; a new seven-input archive adds the graph helper.
+six-input archive remains intact; a new seven-input archive adds the network helper.
 Packet SHAa9cb390d61dff0c5088a1ea2f83e3648b3e8d965eebafe2ae4a13f7da0cb6679,
 189808compressed bytes; input archive
 SHA17de382051744162b2e88ab82c4172eb08b3188aa255350c78ddbcb69f84598f.
@@ -309,7 +309,7 @@ Actual JS-first/native-TypeScript caller import successors remain proposals;
 complete producer/source-history adoption is next. Independent operational and
 whole CST/copy/declaration cases remain UNRUN. Packet
 SHAecd4343196a4bfd1f3bbd6b49919a7866687d208eed2f46821b9c13e420ecf9b,
-36963compressed bytes. Native graph remains482/276; L03/L04/L05 remain OPEN,
+36963compressed bytes. Native network remains482/276; L03/L04/L05 remain OPEN,
 and counts remain12/70 DRAFTED,58 OPEN. Contribution guidance links the contract.
 The [earlier chronological journal](issue-759-handoff-20261103-cycles.md) retains
 all old source history and its historical intermediate states.
@@ -337,7 +337,7 @@ invocation-local source restrictions to the original private ABI operations.
 Every corresponding execution remains UNRUN. The current combined adoption is
 detailed below; find its exact commit through SCM.
 
-Hot source graph:412equations/271paths, all original401 equations preserved.
+Hot source network:412equations/271paths, all original401 equations preserved.
 Index SHAf3cd672ae3fc363933166a3fe66ab30239b8766f8d20eebff9d6762cc99e80a9;
 engine SHAd97a527e7693ddfc5d836268ecc471cf50c43163b32770335b969736f2f53fd9.
 The separate engine chronology preserves all original source images and old-root
@@ -403,14 +403,14 @@ checkpoint, not draft completion, a pause or a verification result.
 ## Original binding gap report source adopter
 
 The [native binding-gap worklist](source-binding-gap-plan-20261103.md) now uses
-the actual complete physical source operation, graph and original conservative
+the actual complete physical source operation, network and original conservative
 binder. New `inspectBindings()` returns detached DATA inside fresh original
 source/origin fences. A separate4096-file inspection-only facade preserves the
 old512-file configuration API and all byte/directory/depth/nesting limits; it
 exposes no configuration or original scope array. Both profiles share the same
 source-failure stack and each closure keeps its own fixed census limits.
 
-The actual consumer retains native graph/binding diagnostics, unresolved scope
+The actual consumer retains native network/binding diagnostics, unresolved scope
 flags and bindings, nonactive conditions and physical sources outside the
 binding closure. Every row maps to L02/B05 with OPEN status; full source/profile
 locators, exact native fields and sparse UTF16/UTF8 span coordinates remain
@@ -422,8 +422,8 @@ f31eea1305d4464ec0c364d5e1419674d5abd72ee01a085428dfb768791d5594
 retains original/full final sources and both substitution histories. Independent
 receiving source covers physical mutations/poisoning, ambiguity/unknown macros,
 detached scope identities, Unicode positions, old512/new513/4097 boundaries and
-the actual whole Router source census. All execution UNRUN. No parent hot-graph
-change is needed; graph remains374/264. B05/L02 remain OPEN for complete target/
+the actual whole Router source census. All execution UNRUN. No parent hot-network
+change is needed; network remains374/264. B05/L02 remain OPEN for complete target/
 Cargo/owner/assignment/receiving scope; counts stay12/70 DRAFTED,58 OPEN. Continue
 all58 remaining acceptance bundles alone without local execution or CI reads.
 
@@ -452,7 +452,7 @@ b5911da856b05108ff64a3474fe42f2ba6f1cc2157a4ef644e23eef90ac7b543
 retains actual driver/cases, earlier registry source joins and the source case
 distinction between original native birth and unproved broader export closure.
 Independent JS/TS/native-refusal/origin/expiry/Unicode/input/immutable-driver and
-full source-history case source is drafted, all UNRUN. Graph stays374/264.
+full source-history case source is drafted, all UNRUN. Network stays374/264.
 Module resolution, Cargo/trait/producer ownership, reviewed assignments and
 application receiving remain gaps: L02/B05 OPEN,12/70 DRAFTED,58 OPEN. Root alone;
 no local execution, dependency installs, Rust tools or CI/review reads ran.

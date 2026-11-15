@@ -340,7 +340,7 @@ drafted. All remaining source/native/production/sync/freshness/parity/delivery
 obligations stay open.
 
 The [primitive multi-module unit draft](primitive-project-integration-draft.md)
-extends explicit primitive contexts through the owned-project graph, paired
+extends explicit primitive contexts through the owned-project network, paired
 project signatures, scalar JSDoc redistribution and actual complete receiving
 rechecks. Seven whole source equations and unrun module/local-call/three-language/
 strict TS/refusal cases are drafted. Public native scalar export aliases and all

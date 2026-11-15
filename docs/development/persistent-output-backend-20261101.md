@@ -36,7 +36,7 @@ then recompiles the whole changed universe and reproduces both targets. Public
 DATA, names, hashes and setup flags grant no type/source/ownership authority.
 No `.lower()` facade escapes these frames.
 
-Receiving source uses an isolated complete compiler loader graph, actual lockfile
+Receiving source uses an isolated complete compiler loader network, actual lockfile
 TypeScript5.9.3 with explicit version/diagnostic records, the original 60-second
 case/20-second child deadlines, actual provider files and complete cleanup.
 Independent source cases cover modes/rotation/retained lock identity/recovery,

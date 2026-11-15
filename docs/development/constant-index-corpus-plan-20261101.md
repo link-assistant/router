@@ -6,7 +6,7 @@ SOURCE PLAN ONLY / UNRUN. This document proposes subsequent NEW copies and sourc
 
 `tools/translation/constant-index-profile-20261101-project.mjs` currently calls ordinary `project.translateProject` and accounts the returned whole DATA result. It is not the whole-source opaque-corpus adapter. Its complete projection joins already accommodate the actual semantic-storage transformations in `project.mjs`; that does not establish that the whole corpus fits the current kernel or adapter envelopes.
 
-The concrete predecessor for a new adapter is `tools/translation/json-scalar-readers-20261101-corpus.mjs`. Its `translateJsonScalarReadersFlatProject` invokes `project.translateProjectWithFlatEnclosingSemanticMeta`, and `inspectJsonScalarReadersCorpus` retains the actual complete universe from `withActualPolicySourceUniverse`. It streams native equations, metadata fields and target histories. It currently compiles the adopted graph, rather than separately compiling both the original and adopted graph.
+The concrete predecessor for a new adapter is `tools/translation/json-scalar-readers-20261101-corpus.mjs`. Its `translateJsonScalarReadersFlatProject` invokes `project.translateProjectWithFlatEnclosingSemanticMeta`, and `inspectJsonScalarReadersCorpus` retains the actual complete universe from `withActualPolicySourceUniverse`. It streams native equations, metadata fields and target histories. It currently compiles the adopted network, rather than separately compiling both the original and adopted network.
 
 The universe issuer is `tools/translation/policy-nominal-producer-20261101-corpus.mjs`. Its private token provides the actual entry, complete original paths and bytes, Cargo inputs and original producer configuration. The token remains active only inside the synchronous callback. Its getters are source access, not project permissions; detached records cannot replace them. Actual library, clients, subscription, subscription types and client-policy owners remain in the source universe even when selected output callers refuse.
 
@@ -36,7 +36,7 @@ A private compile-inside-installed-scope function could avoid reentering the sam
 ## Required output and closing chronology
 
 1. Capture the complete original universe through genuine token getters, including all owners, raw source and Cargo inputs. Stream full original source histories without discarding unselected files.
-2. Freshly compile the original graph with the real flat-enclosing API. Retain its full metadata, diagnostics, residuals, target histories and actual output-origin DATA. Ordinary semantic residuals remain visible rather than being converted into missing-probe exceptions.
+2. Freshly compile the original network with the real flat-enclosing API. Retain its full metadata, diagnostics, residuals, target histories and actual output-origin DATA. Ordinary semantic residuals remain visible rather than being converted into missing-probe exceptions.
 3. Apply only the exact reviewed whole-owner adoption proposal to full original files. Preserve complete before/after source and CST inverses, adoption receipts and explicit migration conditions.
 4. Freshly compile the full adopted universe, independently reissuing all original private type/ownership/source/producer checks. Retain its complete metadata, diagnostics, both targets and actual output-origin DATA. Original and adopted admission censuses may legitimately differ; record the change rather than pretending it is an unchanged-program inverse.
 5. Deliver all full native original/final equations, whole-owner adoption equations, metadata fields, raw source/Cargo events and target histories through a synchronous bounded visitor. Callbacks receive DATA pending complete closing, never semantic permission. Unknown event kinds, proxy/getter/thenable results and retained over-budget DATA refuse.
@@ -69,7 +69,7 @@ The current kernel is `tools/translation/constant-index-profile-20261101-kernel.
 | `withEmission` around actual Host `fn` | Calls whole `currentProjection` before and after each function, plus complete wire snapshot/comparison, including unrelated functions. |
 | emitter/project output and operation close | Rechecks whole projections/source/constant dependencies, captures full emitted relation DATA, and closes all actual emitter guards. |
 
-For F emitted functions and a program image of size P, the source visibly contains repeated F-by-P whole-image work. This is not a measured runtime, memory or overall compiler complexity result. Root/flow closure checks and emitter schema/declaration scans may independently repeat whole-graph work. Reducing the kernel work alone cannot establish a linear pipeline or that any deadline fits.
+For F emitted functions and a program image of size P, the source visibly contains repeated F-by-P whole-image work. This is not a measured runtime, memory or overall compiler complexity result. Root/flow closure checks and emitter schema/declaration scans may independently repeat whole-network work. Reducing the kernel work alone cannot establish a linear pipeline or that any deadline fits.
 
 ## Proposed selective successor and exact hook census
 

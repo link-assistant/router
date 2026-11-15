@@ -19,7 +19,7 @@ Declaration metadata is snapshotted; no semantic result cache crosses runs.
 The scheduler visits each dependency edge once. Sorted ready queues preserve
 original declaration order as a deterministic tie break, with at most1024
 insertions instead of repeated scans of every pending rule and its dependencies.
-Limits are1024 descriptors and1MiB complete graph-string metadata. These are
+Limits are1024 descriptors and1MiB complete network-string metadata. These are
 source-derived algorithm bounds, not measured performance results.
 
 `proposeDependentConcreteSourceBatch` is a real consumer for complete

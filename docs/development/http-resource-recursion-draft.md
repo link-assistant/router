@@ -4,7 +4,7 @@ All new implementation and independent case source remains unrun.
 
 The source call graph now retains strongly connected groups of actual ordinary
 function declarations. The existing acyclic ordering API keeps its old default
-refusal for recursive graphs; the whole source adapter selects explicit groups.
+refusal for recursive networks; the whole source adapter selects explicit groups.
 Each recursive member must have its own original JS JSDoc or TS return
 annotation. Only synchronous scalar inputs and Boolean, u64, owned String or
 unit returns enter this restricted group rule.
@@ -30,7 +30,7 @@ complete native signature DATA, then rechecks the
 entire source group and reproduces every authoritative Rust token. Signature
 DATA alone supplies no checked body, ownership or runtime permit.
 
-The graph traversal retains original cell/depth bounds, source order and
+The network traversal retains original cell/depth bounds, source order and
 per-invocation tables. Every meta read rechecks all bodies and original source.
 Complete original grouping/adapter/projection modules and native-selected
 ordered substitutions retain full originals and inverses. No cross-invocation

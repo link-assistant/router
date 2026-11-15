@@ -16,14 +16,14 @@ types, borrowed text loans and same-module identity remain mandatory.
 The current native container observer accepts an actual typed Vec helper call
 only as an owned result. Its arguments cannot contain hidden Vec borrows or
 moves. The complete body/callee issuer separately reconstructs the genuine
-callee, ABI and full source graph. Missing helpers, cycles, width changes,
-foreign source spans and excessive expanded graph work refuse. Observations and
+callee, ABI and full source network. Missing helpers, cycles, width changes,
+foreign source spans and excessive expanded network work refuse. Observations and
 public descriptor strings do not issue ownership or semantic authority.
 
 Returned containers can move through immutable aliases once. Native source
 projection materializes Vec-valued helper events in their original order so
 even unused returned containers execute the helper and retain its panic.
-Guarded calls execute only the selected branch; child graphs are rechecked
+Guarded calls execute only the selected branch; child networks are rechecked
 before any proposal is admitted. Both translation directions, strict receiving
 types, interpreter and native discovery share this abstraction.
 

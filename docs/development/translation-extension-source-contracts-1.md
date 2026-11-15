@@ -669,7 +669,7 @@ widths and independent overflow/type/ownership checks. See the
 [unrun expression call draft](primitive-expression-call-source-draft.md).
 
 When installing repeated-stage source proposals, require a full unchanged round,
-retain every original stage/graph/CST section and independently rerun all actual
+retain every original stage/network/CST section and independently rerun all actual
 proposers during readback and application planning. Preserve round identities,
 source/Cargo/Git guards, evidence/plan bounds and original rollback behavior.
 Stabilization never certifies coverage or reverse execution. See the
@@ -804,7 +804,7 @@ Keep complete child/parent CST inverses and existing proposal limits. See the
 
 Tool-prefix candidates must inspect original module and extern-prelude precedence
 before issuing a tool certificate. Bind every private tool context to complete
-original graph/source/view/profile/external DATA on each resolver consumption,
+original network/source/view/profile/external DATA on each resolver consumption,
 including retained resolver copies. Never reuse a context with changed inputs
 or invoke external DATA callbacks. See [the unrun source draft](tool-prefix-external-source-draft.md);
 global namespace closure remains required and unchanged eight same-SHA JS gates
