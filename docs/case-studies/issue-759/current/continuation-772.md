@@ -193,6 +193,33 @@ sources by hand would falsify the history they record. **Status: BLOCKED** on
 a profile producer, the same class as the derive manifest below. Until then the
 step fails in CI.
 
+On Node 24 the step fails even earlier. Run 43717926225 (Node v24.22.2) stops at
+"Original file token context: original source operations changed". The cause is
+not a source change. On newer Node (observed on v24.22.2 in CI and v26.13.0
+locally), `util.types.isProxy` prints as `function () { [native code] }`, with
+no name. Every translator guard that qualifies natives by their exact
+`function <name>() { [native code] }` text, starting with `pathNative` in
+`tools/translation/original-json-intrinsics.mjs`, therefore treats it as replaced.
+[`exports.mjs`](../../../../experiments/node24-intrinsics/exports.mjs) shows
+every exported guard from path membership upward true on v20.20.2 and false on
+v26.13.0. An anonymous native cannot be told apart from a bound wrapper by its
+text, so accepting it is a security decision for the guard owners, not a
+mechanical fix. More than 30 hash-pinned modules repeat the check. The
+`d638a2de1` message ("no Node 20 requirement") was wrong: the JavaScript-first
+workflow still pins Node 20 for this reason. **Status: BLOCKED** on that
+decision, in addition to the archive producer.
+
+### Coverage after the merge
+
+The first coverage run (job 132825178740) measured 85.99% line coverage against
+the 87.30% baseline: 14,305 of 102,085 lines missed. The drafted
+`translation_owned_results_core.rs` and `translation_primitive_results_core.rs`
+alone missed 1,715 lines. `c7e108eca` adds oracles that drive both arms of every
+accessor and combinator in them (generator:
+[`gen-result-paths.mjs`](../../../../experiments/coverage-772/gen-result-paths.mjs)).
+Reaching the baseline needs about 1,341 more covered lines. The next coverage
+run decides whether that is enough.
+
 ### Translator inputs made stale by the merge
 
 `node scripts/translate-router.mjs --check` is not part of current CI, and
