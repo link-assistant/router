@@ -13,6 +13,5 @@ pub fn borrowed_text_map_matches_literals(
         literals.len() <= BORROWED_MAP_LITERAL_LIMIT,
         "borrowed map literal count"
     );
-    map.get(key)
-        .is_some_and(|value| literals.iter().any(|literal| value.as_str() == *literal))
+    map.get(key).is_some_and(|value| literals.contains(&value.as_str()))
 }

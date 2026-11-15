@@ -258,6 +258,17 @@ pub fn configured_source() -> Result<String, AnyError> {
     Ok("managed local container".to_string())
 }
 
+/// Only trust persisted for the exact inference origin may reach a client bridge.
+pub fn inference_ca_for_origin(origin: &str) -> Result<Option<PathBuf>, AnyError> {
+    let origin = normalize_server(origin)?;
+    if let Some(saved) = load_persisted()?
+        && normalize_server(&saved.server)? == origin
+    {
+        return certificate_path(saved.ca_cert.as_deref());
+    }
+    Ok(None)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -508,15 +519,4 @@ mod tests {
             .join(TRUST_DIRECTORY);
         assert_eq!(fs::read_dir(trust).unwrap().count(), 0);
     }
-}
-
-/// Only trust persisted for the exact inference origin may reach a client bridge.
-pub fn inference_ca_for_origin(origin: &str) -> Result<Option<PathBuf>, AnyError> {
-    let origin = normalize_server(origin)?;
-    if let Some(saved) = load_persisted()? {
-        if normalize_server(&saved.server)? == origin {
-            return certificate_path(saved.ca_cert.as_deref());
-        }
-    }
-    Ok(None)
 }

@@ -45,6 +45,9 @@ pub fn print_table(records: &[crate::translation_core::Json]) {
 
 /// One table row, as the local path formats it.
 #[must_use]
+// The `__router_json_reader_*` blocks are the translator's JSON reader output;
+// they stay byte-identical to the rule that emits them (issue #772 ledger).
+#[allow(clippy::option_if_let_else)]
 pub fn row(record: &crate::translation_core::Json) -> crate::translation_core::Text {
     let text = |key: &str| {
         record

@@ -118,7 +118,7 @@ pub(super) async fn connect_websocket(
             })
         || headers
             .get("sec-websocket-accept")
-            .map(|value| value.as_bytes())
+            .map(http::HeaderValue::as_bytes)
             != Some(expected_accept.as_bytes())
     {
         return Err("invalid upstream WebSocket handshake".into());

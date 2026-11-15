@@ -173,6 +173,7 @@ pub fn command(program: impl AsRef<OsStr>) -> Command {
 }
 
 /// Build a vendor-client command without Router administrative authority.
+///
 /// Callers install only their freshly prepared client credential afterwards.
 /// The scoped operation environment itself remains unchanged for cleanup.
 pub fn client_command(program: impl AsRef<OsStr>) -> Command {

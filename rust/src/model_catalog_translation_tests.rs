@@ -6,13 +6,9 @@ fn core_reader(body: &str) -> Option<String> {
     use crate::translation_json_fields_core as fields;
     let value = crate::translation_core::json_parse(body)?;
     let error = fields::json_field(&value, "error")?;
-    if let Some(value) = fields::json_text_field2(error, "details", "error_code") {
-        Some(value)
-    } else if let Some(value) = fields::json_text_field(error, "error_code") {
-        Some(value)
-    } else {
-        fields::json_text_field(error, "code")
-    }
+    fields::json_text_field2(error, "details", "error_code")
+        .or_else(|| fields::json_text_field(error, "error_code"))
+        .or_else(|| fields::json_text_field(error, "code"))
 }
 
 #[test]
@@ -36,9 +32,9 @@ fn original_reader_and_paired_core_keep_parser_and_field_edge_semantics() {
         r#"{"error":"text"}"#,
         r#"{"error":0}"#,
         r#"{"error":false}"#,
-        r#"{}"#,
-        r#"[]"#,
-        r#"null"#,
+        r"{}",
+        r"[]",
+        r"null",
         r#"{"error":{"code":"bad\uD800"}}"#,
         r#"{"error":{"code":"tail"}} trailing"#,
         r#"{"error":{"code":"unfinished"}"#,
@@ -83,7 +79,7 @@ fn resource_error_code_keeps_priority_empty_strings_and_typed_fallbacks() {
         (r#"{"error":{"error_code":null,"code":false}}"#, None),
         (r#"{"error":null}"#, None),
         (r#"{"error":[]}"#, None),
-        (r#"{}"#, None),
+        (r"{}", None),
         ("not json", None),
     ];
     for (body, expected) in cases {

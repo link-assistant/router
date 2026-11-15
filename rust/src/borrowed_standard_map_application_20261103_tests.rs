@@ -32,7 +32,7 @@ fn stream_query_never_mutates_standard_map_entries() {
     let query = BTreeMap::from([
         ("stream".to_owned(), "true".to_owned()),
         ("Stream".to_owned(), "false".to_owned()),
-        ("".to_owned(), "1".to_owned()),
+        (String::new(), "1".to_owned()),
     ]);
     let before = query.clone();
     assert!(crate::openai::query_stream_requested(&query));

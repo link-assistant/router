@@ -147,10 +147,10 @@ pub(super) async fn discover_local_router(force_managed: bool) -> Option<String>
         return None;
     }
     for port in published_container_ports_with_budget(remaining) {
-        if !conventional.contains(&port) {
-            if let Some(base_url) = probe_local_router(port, deadline).await {
-                return Some(base_url);
-            }
+        if !conventional.contains(&port)
+            && let Some(base_url) = probe_local_router(port, deadline).await
+        {
+            return Some(base_url);
         }
     }
     None

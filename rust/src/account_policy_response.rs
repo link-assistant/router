@@ -179,7 +179,7 @@ mod model_alias_core_oracles_20261104 {
         original: serde_json::Value,
         upstream: &str,
         visible: &str,
-        expected: serde_json::Value,
+        expected: &serde_json::Value,
     ) {
         let owned = crate::translation_state_core::json_rewrite_model_alias(
             original.clone(),
@@ -188,8 +188,8 @@ mod model_alias_core_oracles_20261104 {
         );
         let mut production = original;
         super::rewrite_value(&mut production, upstream, visible);
-        assert_eq!(owned, expected);
-        assert_eq!(production, expected);
+        assert_eq!(&owned, expected);
+        assert_eq!(&production, expected);
     }
 
     #[test]
@@ -198,7 +198,7 @@ mod model_alias_core_oracles_20261104 {
             json!({"model":"native","message":{"model":"native","text":"native"},"response":{"model":"native","modelVersion":"native"},"modelVersion":"native","unrelated":{"model":"native"}}),
             "native",
             "visible 🦀",
-            json!({"model":"visible 🦀","message":{"model":"visible 🦀","text":"native"},"response":{"model":"visible 🦀","modelVersion":"visible 🦀"},"modelVersion":"visible 🦀","unrelated":{"model":"native"}}),
+            &json!({"model":"visible 🦀","message":{"model":"visible 🦀","text":"native"},"response":{"model":"visible 🦀","modelVersion":"visible 🦀"},"modelVersion":"visible 🦀","unrelated":{"model":"native"}}),
         );
     }
 
@@ -208,19 +208,19 @@ mod model_alias_core_oracles_20261104 {
             json!({"model":"native","message":{"model":"models/native"},"response":{"model":"Native"}}),
             "models/native",
             "",
-            json!({"model":"","message":{"model":""},"response":{"model":"Native"}}),
+            &json!({"model":"","message":{"model":""},"response":{"model":"Native"}}),
         );
         check(
             json!({"model":"models/native","response":{"model":"native"}}),
             "models/models/native",
             "visible",
-            json!({"model":"visible","response":{"model":"native"}}),
+            &json!({"model":"visible","response":{"model":"native"}}),
         );
         check(
             json!({"model":" native","message":{"model":"native "}}),
             "native",
             "visible",
-            json!({"model":" native","message":{"model":"native "}}),
+            &json!({"model":" native","message":{"model":"native "}}),
         );
     }
 
@@ -234,13 +234,13 @@ mod model_alias_core_oracles_20261104 {
             json!({"nested":"native"}),
         ] {
             let original = json!({"model":value,"message":[{"model":"native"}],"response":"native","other/model":"native"});
-            check(original.clone(), "native", "visible", original);
+            check(original.clone(), "native", "visible", &original);
         }
         check(
             json!([{"model":"native"}]),
             "native",
             "visible",
-            json!([{"model":"native"}]),
+            &json!([{"model":"native"}]),
         );
     }
 
@@ -250,13 +250,13 @@ mod model_alias_core_oracles_20261104 {
             json!({"model":"é😀\u{0}文"}),
             "é😀\u{0}文",
             "",
-            json!({"model":""}),
+            &json!({"model":""}),
         );
         check(
             json!({"model":""}),
             "models/",
             "empty",
-            json!({"model":"empty"}),
+            &json!({"model":"empty"}),
         );
         let first = crate::translation_state_core::json_rewrite_model_alias(
             json!({"model":"native"}),
