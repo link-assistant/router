@@ -646,18 +646,24 @@ mod translation_record_hygiene_tests {
     }
 }
 
-
 // Independent boundary source for gated CI; no local Rust execution.
 #[cfg(test)]
 mod translation_scalar_boundary_tests {
     use super::{safe_number, safe_numeric_string, safe_percentage, safe_string};
-    use serde_json::{json, Number, Value};
+    use serde_json::{Number, Value, json};
 
     #[test]
     fn absent_and_non_numeric_json_values_do_not_become_numbers() {
         assert!(safe_number(None).is_none());
         assert!(safe_percentage(None).is_none());
-        for value in [Value::Null, json!(false), json!(true), json!("0"), json!([]), json!({})] {
+        for value in [
+            Value::Null,
+            json!(false),
+            json!(true),
+            json!("0"),
+            json!([]),
+            json!({}),
+        ] {
             assert!(safe_number(Some(&value)).is_none());
             assert!(safe_percentage(Some(&value)).is_none());
         }
@@ -665,9 +671,20 @@ mod translation_scalar_boundary_tests {
 
     #[test]
     fn nonnegative_finite_json_numbers_preserve_binary64_bits() {
-        for number in [0.0_f64, -0.0, 0.5, 100.0, f64::MIN_POSITIVE, f64::from_bits(1), f64::MAX] {
+        for number in [
+            0.0_f64,
+            -0.0,
+            0.5,
+            100.0,
+            f64::MIN_POSITIVE,
+            f64::from_bits(1),
+            f64::MAX,
+        ] {
             let value = Value::Number(Number::from_f64(number).unwrap());
-            assert_eq!(safe_number(Some(&value)).unwrap().to_bits(), number.to_bits());
+            assert_eq!(
+                safe_number(Some(&value)).unwrap().to_bits(),
+                number.to_bits()
+            );
         }
         for number in [-1.0_f64, -f64::MIN_POSITIVE, -f64::from_bits(1)] {
             let value = Value::Number(Number::from_f64(number).unwrap());
@@ -679,9 +696,16 @@ mod translation_scalar_boundary_tests {
     fn percentage_bounds_include_both_zeros_and_exclude_adjacent_values() {
         for number in [0.0_f64, -0.0, 50.0, 100.0] {
             let value = Value::Number(Number::from_f64(number).unwrap());
-            assert_eq!(safe_percentage(Some(&value)).unwrap().to_bits(), number.to_bits());
+            assert_eq!(
+                safe_percentage(Some(&value)).unwrap().to_bits(),
+                number.to_bits()
+            );
         }
-        for number in [-f64::from_bits(1), f64::from_bits(100.0_f64.to_bits() + 1), f64::MAX] {
+        for number in [
+            -f64::from_bits(1),
+            f64::from_bits(100.0_f64.to_bits() + 1),
+            f64::MAX,
+        ] {
             let value = Value::Number(Number::from_f64(number).unwrap());
             assert!(safe_percentage(Some(&value)).is_none());
         }

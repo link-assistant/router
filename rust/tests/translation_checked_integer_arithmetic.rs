@@ -14,9 +14,15 @@ macro_rules! checked_arithmetic {
             assert_eq!(<$type>::checked_div(1, 0), None);
             assert_eq!(<$type>::checked_rem(1, 0), None);
             let failure = std::panic::catch_unwind(|| {
-                ::core::option::Option::expect(<$type>::MAX.checked_add(1), "attempt to add with overflow")
-            }).unwrap_err();
-            let message = failure.downcast_ref::<String>().map(String::as_str)
+                ::core::option::Option::expect(
+                    <$type>::MAX.checked_add(1),
+                    "attempt to add with overflow",
+                )
+            })
+            .unwrap_err();
+            let message = failure
+                .downcast_ref::<String>()
+                .map(String::as_str)
                 .or_else(|| failure.downcast_ref::<&str>().copied());
             assert_eq!(message, Some("attempt to add with overflow"));
         }

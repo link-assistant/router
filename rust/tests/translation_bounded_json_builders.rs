@@ -1,9 +1,9 @@
 //! Independent native canonical constructor oracle. CI after all eight JS gates.
 use link_assistant_router::translation_json_core::{
-    json_build_array, json_build_bool, json_build_i64, json_build_null,
-    json_build_object, json_build_string, json_build_u64, json_checked_with_field,
+    json_build_array, json_build_bool, json_build_i64, json_build_null, json_build_object,
+    json_build_string, json_build_u64, json_checked_with_field,
 };
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 #[test]
 fn canonical_scalar_boundaries_preserve_exact_rust_values() {
     assert_eq!(json_build_null(), Value::Null);
@@ -19,7 +19,9 @@ fn the_added_array_root_participates_in_node_and_depth_budgets() {
     assert_eq!(bounded.as_array().unwrap().len(), 4095);
     assert!(std::panic::catch_unwind(|| json_build_array(vec![Value::Null; 4096])).is_err());
     let mut value = Value::Null;
-    for _ in 0..32 { value = Value::Array(vec![value]); }
+    for _ in 0..32 {
+        value = Value::Array(vec![value]);
+    }
     assert!(std::panic::catch_unwind(|| json_build_array(vec![value])).is_err());
 }
 #[test]

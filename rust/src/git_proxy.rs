@@ -268,7 +268,10 @@ pub fn repository_in_git_path(
     let mut parts = rest.split('/');
     let owner = parts.next().filter(|part| !part.is_empty())?;
     let repo = parts.next().filter(|part| !part.is_empty())?;
-    Some(crate::translation_core::format!("{owner}/{}", repo.trim_end_matches(".git")))
+    Some(crate::translation_core::format!(
+        "{owner}/{}",
+        repo.trim_end_matches(".git")
+    ))
 }
 
 /// The upstream git URL for a proxied path.

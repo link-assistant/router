@@ -1,9 +1,15 @@
 // Independent Rust oracle source. Execute only in CI after every JS stage passes.
 macro_rules! make {
-    ($name:ident, $ty:ty, $value:literal) => { fn $name() -> $ty { $value } };
+    ($name:ident, $ty:ty, $value:literal) => {
+        fn $name() -> $ty {
+            $value
+        }
+    };
 }
 macro_rules! outer {
-    ($name:ident, $value:literal) => { make!($name, u8, $value); };
+    ($name:ident, $value:literal) => {
+        make!($name, u8, $value);
+    };
 }
 macro_rules! ignore {
     ($input:tt) => {};
@@ -23,7 +29,10 @@ fn original_literal_type_and_recursive_macro_behavior() {
 #[test]
 fn macro_local_identifier_hygiene_is_observable() {
     macro_rules! hygienic {
-        ($value:expr) => {{ let x = 1_u8; $value + x }};
+        ($value:expr) => {{
+            let x = 1_u8;
+            $value + x
+        }};
     }
     let x = 40_u8;
     assert_eq!(hygienic!(x), 41);

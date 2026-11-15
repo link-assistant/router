@@ -35,7 +35,11 @@ fn json_views_preserve_identity_roots_and_owned_copies() {
     assert_eq!(projected(&core::json!(null)), &core::json!(null));
     assert_eq!(copied(&left), left["child"]);
     for choice in [false, true] {
-        let expected = if choice { &left["child"] } else { &right["child"] };
+        let expected = if choice {
+            &left["child"]
+        } else {
+            &right["child"]
+        };
         assert!(std::ptr::eq(selected(&left, &right, choice), expected));
     }
     let response = http::http_response(200, &core::json!([]), "aGk=").unwrap();

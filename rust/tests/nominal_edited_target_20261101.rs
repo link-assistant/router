@@ -4,16 +4,24 @@ use link_assistant_router::client_policy::EntitlementDecision;
 
 fn edited_remap(input: &[EntitlementDecision]) -> Vec<EntitlementDecision> {
     assert!(input.len() <= 4096, "explicit bounded receiving facade");
-    input.iter().copied().map(|_value| EntitlementDecision::Denied).collect()
+    input
+        .iter()
+        .copied()
+        .map(|_value| EntitlementDecision::Denied)
+        .collect()
 }
 fn edited_flags(input: &[EntitlementDecision]) -> Vec<bool> {
     assert!(input.len() <= 4096, "explicit bounded receiving facade");
-    input.iter().copied().map(|value| match value {
-        EntitlementDecision::Native => false,
-        EntitlementDecision::Proxied => false,
-        EntitlementDecision::Override => true,
-        EntitlementDecision::Denied => false,
-    }).collect()
+    input
+        .iter()
+        .copied()
+        .map(|value| match value {
+            EntitlementDecision::Native => false,
+            EntitlementDecision::Proxied => false,
+            EntitlementDecision::Override => true,
+            EntitlementDecision::Denied => false,
+        })
+        .collect()
 }
 #[test]
 fn actual_unit_variant_and_owned_predicate_branch_edits_change_values_not_nominal_owner() {

@@ -28,7 +28,10 @@ pub async fn collect_response(response: Response, surface: crate::metrics::Surfa
     let payload = match assemble(&body) {
         Ok(payload) => payload,
         Err(error) => {
-            return upstream_error(surface, &crate::translation_core::format!("invalid z.ai event stream: {error}"));
+            return upstream_error(
+                surface,
+                &crate::translation_core::format!("invalid z.ai event stream: {error}"),
+            );
         }
     };
     let body = match serde_json::to_vec(&payload) {
@@ -81,8 +84,9 @@ fn assemble(
         if data.is_empty() {
             continue;
         }
-        let event: Value = serde_json::from_str(&data)
-            .map_err(|error| crate::translation_core::format!("event contains invalid JSON: {error}"))?;
+        let event: Value = serde_json::from_str(&data).map_err(|error| {
+            crate::translation_core::format!("event contains invalid JSON: {error}")
+        })?;
         match event.get("type").and_then(Value::as_str) {
             Some("message_start") => {
                 let started = event
@@ -136,7 +140,11 @@ fn assemble(
                 return Err(detail.to_string());
             }
             Some("ping") => {}
-            Some(other) => return Err(crate::translation_core::format!("unsupported Anthropic event type {other}")),
+            Some(other) => {
+                return Err(crate::translation_core::format!(
+                    "unsupported Anthropic event type {other}"
+                ));
+            }
             None => return Err("event omitted type".to_string()),
         }
     }
@@ -201,12 +209,20 @@ fn apply_delta(
                 .ok_or("content citations is not an array")?
                 .push(citation.clone());
         }
-        other => return Err(crate::translation_core::format!("unsupported Anthropic delta type {other}")),
+        other => {
+            return Err(crate::translation_core::format!(
+                "unsupported Anthropic delta type {other}"
+            ));
+        }
     }
     Ok(())
 }
 
-fn append_string(content: &mut Value, field: &crate::translation_core::Str, addition: Option<&Value>) -> Result<(), String> {
+fn append_string(
+    content: &mut Value,
+    field: &crate::translation_core::Str,
+    addition: Option<&Value>,
+) -> Result<(), String> {
     let addition = addition.and_then(Value::as_str).unwrap_or_default();
     let object = content
         .as_object_mut()
@@ -230,8 +246,9 @@ fn finish_input(
     let Some(input) = partial_inputs.remove(&index) else {
         return Ok(());
     };
-    let parsed = serde_json::from_str(&input)
-        .map_err(|error| crate::translation_core::format!("tool input for block {index} is invalid: {error}"))?;
+    let parsed = serde_json::from_str(&input).map_err(|error| {
+        crate::translation_core::format!("tool input for block {index} is invalid: {error}")
+    })?;
     let block = blocks
         .get_mut(&index)
         .ok_or_else(|| crate::translation_core::format!("tool input preceded block {index}"))?;

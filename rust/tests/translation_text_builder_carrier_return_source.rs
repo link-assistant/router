@@ -12,7 +12,13 @@ fn result(value: &str, success: bool) -> Result<String, String> {
 fn else_if_error(value: &str, first: bool, second: bool) -> Result<u64, String> {
     let mut output = String::new();
     output.push_str(value);
-    if first { Err(output) } else if second { Ok(1) } else { Ok(2) }
+    if first {
+        Err(output)
+    } else if second {
+        Ok(1)
+    } else {
+        Ok(2)
+    }
 }
 #[test]
 fn original_builder_exclusive_carrier_moves_and_empty_paths() {

@@ -639,14 +639,23 @@ async fn selected_tls_trust_rejects_invalid_certificates() {
     }
 }
 
-
 // Independent remote client binding oracle source. UNRUN; Rust stays gated CI only.
 #[test]
 fn source_draft_remote_client_binding_requires_canonical_client_and_principal() {
     use base64::Engine as _;
-    let encoded = |claims: serde_json::Value| format!("la_sk_e30.{}.signature", base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(claims.to_string()));
-    let valid = encoded(serde_json::json!({"sub":"client-id","client_kind":"claude","principal_id":"subscriber"}));
-    assert_eq!(exact_token_binding(&valid, ClientKind::ClaudeCode).expect("exact binding"), "subscriber");
+    let encoded = |claims: serde_json::Value| {
+        format!(
+            "la_sk_e30.{}.signature",
+            base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(claims.to_string())
+        )
+    };
+    let valid = encoded(
+        serde_json::json!({"sub":"client-id","client_kind":"claude","principal_id":"subscriber"}),
+    );
+    assert_eq!(
+        exact_token_binding(&valid, ClientKind::ClaudeCode).expect("exact binding"),
+        "subscriber"
+    );
     assert_eq!(token_subject(&valid).expect("durable subject"), "client-id");
     for claims in [
         serde_json::json!({"sub":"id","client_kind":"claude-code","principal_id":"subscriber"}),
@@ -657,7 +666,6 @@ fn source_draft_remote_client_binding_requires_canonical_client_and_principal() 
         assert!(exact_token_binding(&encoded(claims), ClientKind::ClaudeCode).is_err());
     }
 }
-
 
 // Independent health identity oracle source. UNRUN; gated Rust CI only.
 #[tokio::test]
@@ -670,15 +678,31 @@ async fn source_draft_remote_health_keeps_native_identity_and_status_rules() {
         (200, "", false),
         (503, "ok", false),
     ] {
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("health listener");
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("health listener");
         let origin = format!("http://{}", listener.local_addr().expect("bound address"));
-        let application = axum::Router::new().route("/api/health", axum::routing::get(move |headers: axum::http::HeaderMap| async move {
-            assert!(!headers.contains_key(axum::http::header::AUTHORIZATION));
-            (axum::http::StatusCode::from_u16(status).expect("status"), body)
-        }));
-        let task = tokio::spawn(async move { axum::serve(listener, application).await.expect("health server"); });
+        let application = axum::Router::new().route(
+            "/api/health",
+            axum::routing::get(move |headers: axum::http::HeaderMap| async move {
+                assert!(!headers.contains_key(axum::http::header::AUTHORIZATION));
+                (
+                    axum::http::StatusCode::from_u16(status).expect("status"),
+                    body,
+                )
+            }),
+        );
+        let task = tokio::spawn(async move {
+            axum::serve(listener, application)
+                .await
+                .expect("health server");
+        });
         let result = verify_health_with_client(&reqwest::Client::new(), &origin).await;
         task.abort();
-        assert_eq!(result.is_ok(), accepted, "native health identity {status} {body}");
+        assert_eq!(
+            result.is_ok(),
+            accepted,
+            "native health identity {status} {body}"
+        );
     }
 }

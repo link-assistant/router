@@ -7,7 +7,9 @@ fn values(flag: bool, seed: String) -> Vec<String> {
             ::std::borrow::ToOwned::to_owned(&seed),
             ::std::borrow::ToOwned::to_owned("Ω😀"),
         ]
-    } else { translation_core::vec![] }
+    } else {
+        translation_core::vec![]
+    }
 }
 #[test]
 fn output_strings_have_independent_owned_buffers_without_a_new_text_size_limit() {

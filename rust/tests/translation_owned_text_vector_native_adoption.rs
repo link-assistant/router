@@ -22,7 +22,10 @@ fn operand_is_evaluated_once_before_receiver_move_and_can_read_its_length() {
     original.push(original.len().to_string());
     let mut adopted = core::vec_text_from_slice(&[String::from("seed")]);
     let mut calls = 0;
-    let item = { calls += 1; core::vec_text_len(&adopted).to_string() };
+    let item = {
+        calls += 1;
+        core::vec_text_len(&adopted).to_string()
+    };
     adopted = core::vec_text_push(adopted, item);
     assert_eq!(calls, 1);
     assert_eq!(adopted, original);

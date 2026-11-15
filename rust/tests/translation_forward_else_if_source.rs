@@ -1,6 +1,12 @@
 // Independent source oracle. UNRUN; Rust CI only after all same-SHA JS gates.
 fn original(a: bool, b: bool) -> bool {
-    if a { !b } else if b { true } else { false }
+    if a {
+        !b
+    } else if b {
+        true
+    } else {
+        false
+    }
 }
 #[test]
 fn original_else_if_conditions_and_branch_order() {

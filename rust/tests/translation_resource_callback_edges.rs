@@ -17,7 +17,10 @@ fn collection_callbacks_preserve_order_variants_and_owned_accumulators() {
     );
     assert!(collection::json_any(&values, predicate));
     assert!(!collection::json_all(&values, predicate));
-    assert_eq!(collection::json_find(&values, predicate), Some(first.clone()));
+    assert_eq!(
+        collection::json_find(&values, predicate),
+        Some(first.clone())
+    );
     let optional = core::json_filter_map(&values, |value| {
         if predicate(value) {
             Some(value.clone())
@@ -41,7 +44,11 @@ fn collection_callbacks_preserve_order_variants_and_owned_accumulators() {
 
 #[test]
 fn short_circuit_predicates_run_in_original_order_without_extra_calls() {
-    let values = vec![core::json!("first"), core::json!("second"), core::json!("last")];
+    let values = vec![
+        core::json!("first"),
+        core::json!("second"),
+        core::json!("last"),
+    ];
     let mut seen = Vec::new();
     assert!(collection::json_any(&values, |value| {
         seen.push(value.clone());

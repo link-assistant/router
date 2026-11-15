@@ -9,7 +9,10 @@
 pub fn json_validate(value: &::serde_json::Value) {
     fn visit(value: &::serde_json::Value, depth: usize, nodes: &mut usize) {
         *nodes += 1;
-        assert!(*nodes <= 4096 && depth <= 32, "bounded canonical JSON domain");
+        assert!(
+            *nodes <= 4096 && depth <= 32,
+            "bounded canonical JSON domain"
+        );
         match value {
             ::serde_json::Value::Array(items) => {
                 assert!(items.len() <= 4096, "bounded dense JSON array");
@@ -45,7 +48,10 @@ pub fn json_checked_with_field(
 ) -> ::serde_json::Value {
     json_validate(base);
     json_validate(value);
-    assert!(base.is_null() || base.is_object(), "owned JSON update needs object or null");
+    assert!(
+        base.is_null() || base.is_object(),
+        "owned JSON update needs object or null"
+    );
     let result = crate::translation_core::json_with_field(
         ::std::clone::Clone::clone(base),
         key,
@@ -104,7 +110,9 @@ pub fn json_build_fields(
     json_validate(keys);
     let values = ::serde_json::Value::Array(values);
     json_validate(&values);
-    let keys = keys.as_array().expect("canonical object keys must be an array");
+    let keys = keys
+        .as_array()
+        .expect("canonical object keys must be an array");
     let ::serde_json::Value::Array(values) = values else {
         unreachable!("known canonical array constructor");
     };

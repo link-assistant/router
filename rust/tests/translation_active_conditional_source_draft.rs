@@ -8,8 +8,15 @@ mod provider;
 chosen!(after);
 
 /// Documentation remains attached before conditional attribute expansion.
-#[cfg_attr(all(), doc = "first", cfg_attr(any(), unknown_attribute), doc = "second")]
-fn selected() -> u8 { after() }
+#[cfg_attr(
+    all(),
+    doc = "first",
+    cfg_attr(any(), unknown_attribute),
+    doc = "second"
+)]
+fn selected() -> u8 {
+    after()
+}
 
 #[cfg_attr(all(), cfg(any()), doc = "absent")]
 compile_error!("inactive conditional item must not expand");

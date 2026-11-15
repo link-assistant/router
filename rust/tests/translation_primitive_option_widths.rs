@@ -1,5 +1,7 @@
 //! Independent Option width and combined source oracle. CI-only execution, UNRUN.
-use link_assistant_router::{translation_integer_core as integer, translation_primitive_option_core as option};
+use link_assistant_router::{
+    translation_integer_core as integer, translation_primitive_option_core as option,
+};
 
 #[test]
 fn option_u8_boundaries() {

@@ -147,7 +147,12 @@ pub async fn bind_all(
         };
         let listener = tokio::net::TcpListener::bind(config.address)
             .await
-            .map_err(|error| crate::translation_core::format!("could not bind listener {}: {error}", config.address))?;
+            .map_err(|error| {
+                crate::translation_core::format!(
+                    "could not bind listener {}: {error}",
+                    config.address
+                )
+            })?;
         bound.push(BoundPrimaryListener {
             config: *config,
             listener,

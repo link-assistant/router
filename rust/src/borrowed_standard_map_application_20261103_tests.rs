@@ -9,12 +9,14 @@ fn stream_query_matches_the_original_expression_on_large_standard_maps() {
     }
     query.insert("large-unused".to_owned(), "x".repeat(1_048_577));
     assert!(!crate::openai::query_stream_requested(&query));
-    for value in ["true", "1", "false", "TRUE", "", "true ", " 1", "é", "e\u{301}"] {
+    for value in [
+        "true", "1", "false", "TRUE", "", "true ", " 1", "é", "e\u{301}",
+    ] {
         query.insert("stream".to_owned(), value.to_owned());
         // Independent historical expression, not the new shared helper.
-        let expected = query.get("stream").is_some_and(|text| {
-            matches!(text.as_str(), "true" | "1")
-        });
+        let expected = query
+            .get("stream")
+            .is_some_and(|text| matches!(text.as_str(), "true" | "1"));
         assert_eq!(crate::openai::query_stream_requested(&query), expected);
         assert_eq!(query.len(), 5002);
         assert_eq!(query["large-unused"].len(), 1_048_577);

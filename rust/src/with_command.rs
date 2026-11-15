@@ -160,7 +160,13 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     let codex_bridge = if args.client == ClientKind::Codex
         && crate::codex_loopback_bridge::required(&server.base_url)?
     {
-        Some(crate::codex_loopback_bridge::start_ephemeral_with_ca(&server.base_url, server.ca_cert.as_deref()).await?)
+        Some(
+            crate::codex_loopback_bridge::start_ephemeral_with_ca(
+                &server.base_url,
+                server.ca_cert.as_deref(),
+            )
+            .await?,
+        )
     } else {
         None
     };

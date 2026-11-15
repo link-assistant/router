@@ -11,7 +11,10 @@ fn number_array_and_map_readers_return_their_original_input_storage() {
     let number_read = Json::as_number(&number).expect("number");
     assert!(core::ptr::eq(array_read, array.as_array().expect("array")));
     assert!(core::ptr::eq(object_read, object.as_object().expect("map")));
-    assert!(core::ptr::eq(number_read, number.as_number().expect("number")));
+    assert!(core::ptr::eq(
+        number_read,
+        number.as_number().expect("number")
+    ));
     assert_eq!(Json::as_array(&object), None);
     assert_eq!(Json::as_object(&array), None);
     assert_eq!(Json::as_number(&array), None);

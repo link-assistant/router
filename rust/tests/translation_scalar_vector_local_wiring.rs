@@ -1,5 +1,7 @@
 // Independent scalar/unit caller and vector helper ordering. CI ONLY; UNRUN.
-fn helper(value: u8) -> Vec<u8> { vec![value.checked_add(1).expect("attempt to add with overflow")] }
+fn helper(value: u8) -> Vec<u8> {
+    vec![value.checked_add(1).expect("attempt to add with overflow")]
+}
 fn values(value: u8, flag: bool) -> bool {
     let owned = helper(value);
     let _moved = owned;
@@ -20,7 +22,9 @@ fn scalar_and_unit_results_keep_independent_empty_local_domains() {
         let _moved = selected;
         flag
     }
-    fn unit(value: bool) { let _owned = vec![value]; }
+    fn unit(value: bool) {
+        let _owned = vec![value];
+    }
     assert!(scalar(true));
     assert!(!scalar(false));
     unit(true);

@@ -7,7 +7,10 @@ fn scalar_boundaries_u8() {
     let minimum = u8::MIN;
     assert_eq!(core::u8_saturating_add(maximum, 1), maximum);
     assert_eq!(core::u8_saturating_sub(minimum, 1), minimum);
-    assert_eq!(core::u8_saturating_mul(maximum, 2), maximum.saturating_mul(2));
+    assert_eq!(
+        core::u8_saturating_mul(maximum, 2),
+        maximum.saturating_mul(2)
+    );
     assert_eq!(core::u8_wrapping_add(maximum, 1), minimum);
     assert_eq!(core::u8_wrapping_sub(minimum, 1), maximum);
     assert_eq!(core::u8_wrapping_mul(maximum, 2), maximum.wrapping_mul(2));
@@ -23,7 +26,10 @@ fn scalar_boundaries_i8() {
     let minimum = i8::MIN;
     assert_eq!(core::i8_saturating_add(maximum, 1), maximum);
     assert_eq!(core::i8_saturating_sub(minimum, 1), minimum);
-    assert_eq!(core::i8_saturating_mul(maximum, 2), maximum.saturating_mul(2));
+    assert_eq!(
+        core::i8_saturating_mul(maximum, 2),
+        maximum.saturating_mul(2)
+    );
     assert_eq!(core::i8_wrapping_add(maximum, 1), minimum);
     assert_eq!(core::i8_wrapping_sub(minimum, 1), maximum);
     assert_eq!(core::i8_wrapping_mul(maximum, 2), maximum.wrapping_mul(2));
@@ -40,7 +46,10 @@ fn scalar_boundaries_u16() {
     let minimum = u16::MIN;
     assert_eq!(core::u16_saturating_add(maximum, 1), maximum);
     assert_eq!(core::u16_saturating_sub(minimum, 1), minimum);
-    assert_eq!(core::u16_saturating_mul(maximum, 2), maximum.saturating_mul(2));
+    assert_eq!(
+        core::u16_saturating_mul(maximum, 2),
+        maximum.saturating_mul(2)
+    );
     assert_eq!(core::u16_wrapping_add(maximum, 1), minimum);
     assert_eq!(core::u16_wrapping_sub(minimum, 1), maximum);
     assert_eq!(core::u16_wrapping_mul(maximum, 2), maximum.wrapping_mul(2));
@@ -56,7 +65,10 @@ fn scalar_boundaries_i16() {
     let minimum = i16::MIN;
     assert_eq!(core::i16_saturating_add(maximum, 1), maximum);
     assert_eq!(core::i16_saturating_sub(minimum, 1), minimum);
-    assert_eq!(core::i16_saturating_mul(maximum, 2), maximum.saturating_mul(2));
+    assert_eq!(
+        core::i16_saturating_mul(maximum, 2),
+        maximum.saturating_mul(2)
+    );
     assert_eq!(core::i16_wrapping_add(maximum, 1), minimum);
     assert_eq!(core::i16_wrapping_sub(minimum, 1), maximum);
     assert_eq!(core::i16_wrapping_mul(maximum, 2), maximum.wrapping_mul(2));
@@ -73,7 +85,10 @@ fn scalar_boundaries_u32() {
     let minimum = u32::MIN;
     assert_eq!(core::u32_saturating_add(maximum, 1), maximum);
     assert_eq!(core::u32_saturating_sub(minimum, 1), minimum);
-    assert_eq!(core::u32_saturating_mul(maximum, 2), maximum.saturating_mul(2));
+    assert_eq!(
+        core::u32_saturating_mul(maximum, 2),
+        maximum.saturating_mul(2)
+    );
     assert_eq!(core::u32_wrapping_add(maximum, 1), minimum);
     assert_eq!(core::u32_wrapping_sub(minimum, 1), maximum);
     assert_eq!(core::u32_wrapping_mul(maximum, 2), maximum.wrapping_mul(2));
@@ -89,7 +104,10 @@ fn scalar_boundaries_i32() {
     let minimum = i32::MIN;
     assert_eq!(core::i32_saturating_add(maximum, 1), maximum);
     assert_eq!(core::i32_saturating_sub(minimum, 1), minimum);
-    assert_eq!(core::i32_saturating_mul(maximum, 2), maximum.saturating_mul(2));
+    assert_eq!(
+        core::i32_saturating_mul(maximum, 2),
+        maximum.saturating_mul(2)
+    );
     assert_eq!(core::i32_wrapping_add(maximum, 1), minimum);
     assert_eq!(core::i32_wrapping_sub(minimum, 1), maximum);
     assert_eq!(core::i32_wrapping_mul(maximum, 2), maximum.wrapping_mul(2));
@@ -106,7 +124,10 @@ fn scalar_boundaries_u64() {
     let minimum = u64::MIN;
     assert_eq!(core::u64_saturating_add(maximum, 1), maximum);
     assert_eq!(core::u64_saturating_sub(minimum, 1), minimum);
-    assert_eq!(core::u64_saturating_mul(maximum, 2), maximum.saturating_mul(2));
+    assert_eq!(
+        core::u64_saturating_mul(maximum, 2),
+        maximum.saturating_mul(2)
+    );
     assert_eq!(core::u64_wrapping_add(maximum, 1), minimum);
     assert_eq!(core::u64_wrapping_sub(minimum, 1), maximum);
     assert_eq!(core::u64_wrapping_mul(maximum, 2), maximum.wrapping_mul(2));
@@ -122,7 +143,10 @@ fn scalar_boundaries_i64() {
     let minimum = i64::MIN;
     assert_eq!(core::i64_saturating_add(maximum, 1), maximum);
     assert_eq!(core::i64_saturating_sub(minimum, 1), minimum);
-    assert_eq!(core::i64_saturating_mul(maximum, 2), maximum.saturating_mul(2));
+    assert_eq!(
+        core::i64_saturating_mul(maximum, 2),
+        maximum.saturating_mul(2)
+    );
     assert_eq!(core::i64_wrapping_add(maximum, 1), minimum);
     assert_eq!(core::i64_wrapping_sub(minimum, 1), maximum);
     assert_eq!(core::i64_wrapping_mul(maximum, 2), maximum.wrapping_mul(2));
@@ -139,7 +163,10 @@ fn scalar_boundaries_u128() {
     let minimum = u128::MIN;
     assert_eq!(core::u128_saturating_add(maximum, 1), maximum);
     assert_eq!(core::u128_saturating_sub(minimum, 1), minimum);
-    assert_eq!(core::u128_saturating_mul(maximum, 2), maximum.saturating_mul(2));
+    assert_eq!(
+        core::u128_saturating_mul(maximum, 2),
+        maximum.saturating_mul(2)
+    );
     assert_eq!(core::u128_wrapping_add(maximum, 1), minimum);
     assert_eq!(core::u128_wrapping_sub(minimum, 1), maximum);
     assert_eq!(core::u128_wrapping_mul(maximum, 2), maximum.wrapping_mul(2));
@@ -155,7 +182,10 @@ fn scalar_boundaries_i128() {
     let minimum = i128::MIN;
     assert_eq!(core::i128_saturating_add(maximum, 1), maximum);
     assert_eq!(core::i128_saturating_sub(minimum, 1), minimum);
-    assert_eq!(core::i128_saturating_mul(maximum, 2), maximum.saturating_mul(2));
+    assert_eq!(
+        core::i128_saturating_mul(maximum, 2),
+        maximum.saturating_mul(2)
+    );
     assert_eq!(core::i128_wrapping_add(maximum, 1), minimum);
     assert_eq!(core::i128_wrapping_sub(minimum, 1), maximum);
     assert_eq!(core::i128_wrapping_mul(maximum, 2), maximum.wrapping_mul(2));

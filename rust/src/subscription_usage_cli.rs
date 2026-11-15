@@ -138,7 +138,9 @@ fn format_envelope(
                 output.push('\n');
                 output
             })
-            .map_err(|error| crate::translation_core::format!("could not encode subscription usage: {error}"));
+            .map_err(|error| {
+                crate::translation_core::format!("could not encode subscription usage: {error}")
+            });
     }
     if envelope.subscriptions.is_empty() {
         return Ok("No authorized configured subscriptions.\n".into());

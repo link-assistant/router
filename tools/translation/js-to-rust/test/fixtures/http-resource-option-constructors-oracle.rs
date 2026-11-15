@@ -5,16 +5,26 @@ fn changed(flag: bool, value: bool) -> Option<bool> {
 }
 
 fn extracted(value: Option<bool>) -> Option<bool> {
-    if let Some(payload) = value { Some(!payload) } else { return None; }
+    if let Some(payload) = value {
+        Some(!payload)
+    } else {
+        return None;
+    }
 }
 
 fn outcome<T>(flag: bool, error: String, value: T) -> Result<T, String> {
     if flag { Ok(value) } else { Err(error) }
 }
 
-fn signed() -> Option<i64> { Some(-9223372036854775808_i64) }
-fn unsigned() -> Option<u64> { Some(18446744073709551615_u64) }
-fn nested() -> Option<Option<bool>> { Some(Some(true)) }
+fn signed() -> Option<i64> {
+    Some(-9223372036854775808_i64)
+}
+fn unsigned() -> Option<u64> {
+    Some(18446744073709551615_u64)
+}
+fn nested() -> Option<Option<bool>> {
+    Some(Some(true))
+}
 
 #[test]
 fn original_constructors_keep_branch_payloads_absence_numeric_boundaries_and_nested_tags() {
@@ -30,7 +40,10 @@ fn original_constructors_keep_branch_payloads_absence_numeric_boundaries_and_nes
     assert_eq!(unsigned(), Some(u64::MAX));
     assert_eq!(nested(), Some(Some(true)));
     assert_eq!(outcome(true, String::from("unused"), 17), Ok(17));
-    assert_eq!(outcome(false, String::from("é😀"), 17), Err(String::from("é😀")));
+    assert_eq!(
+        outcome(false, String::from("é😀"), 17),
+        Err(String::from("é😀"))
+    );
 }
 
 #[test]
@@ -38,7 +51,9 @@ fn constructed_opaque_success_values_are_moved_and_discarded_failure_values_drop
     use std::cell::Cell;
     struct Counted<'a>(&'a Cell<usize>);
     impl Drop for Counted<'_> {
-        fn drop(&mut self) { self.0.set(self.0.get() + 1); }
+        fn drop(&mut self) {
+            self.0.set(self.0.get() + 1);
+        }
     }
     let drops = Cell::new(0);
     let success = outcome(true, String::new(), Counted(&drops));

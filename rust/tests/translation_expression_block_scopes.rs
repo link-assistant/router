@@ -20,7 +20,9 @@ const LOCAL_OBSERVATION: (bool, usize) = {
 const EXPORTED_OBSERVATION: u8 = {
     #[macro_export]
     macro_rules! scope_exported_bang {
-        () => { 11_u8 };
+        () => {
+            11_u8
+        };
     }
     scope_exported_bang!()
 };

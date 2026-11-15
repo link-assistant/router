@@ -1,6 +1,9 @@
 // Independent written immutable alias oracle SOURCE; gated CI only, UNRUN.
-use link_assistant_router::{translation_integer_core as integer, translation_text_core as text, translation_collections_core as collections, translation_state_core as state};
-use serde_json::{json, Value};
+use link_assistant_router::{
+    translation_collections_core as collections, translation_integer_core as integer,
+    translation_state_core as state, translation_text_core as text,
+};
+use serde_json::{Value, json};
 #[test]
 fn typed_fixed_integer_aliases_preserve_limits_and_chained_results() {
     for value in [0_u64, 1, u64::MAX - 1, u64::MAX] {
@@ -12,7 +15,10 @@ fn typed_fixed_integer_aliases_preserve_limits_and_chained_results() {
         assert_eq!(integer::u64_saturating_mul(selected, 2), original);
     }
     let minimum: i64 = -9223372036854775808;
-    assert_eq!(integer::i64_saturating_abs(minimum), minimum.saturating_abs());
+    assert_eq!(
+        integer::i64_saturating_abs(minimum),
+        minimum.saturating_abs()
+    );
 }
 #[test]
 fn typed_owned_and_shared_text_and_native_counts_keep_utf8_and_zero() {
@@ -30,9 +36,20 @@ fn typed_json_slice_aliases_preserve_empty_order_null_false_and_unicode() {
     for values in [vec![], vec![Value::Null, json!(false), json!("é😀")]] {
         let items: &[Value] = values.as_slice();
         let mapped: Vec<Value> = items.iter().map(|value| value.clone()).collect();
-        assert_eq!(link_assistant_router::translation_core::json_map(items, |value| value.clone()), mapped);
+        assert_eq!(
+            link_assistant_router::translation_core::json_map(items, |value| value.clone()),
+            mapped
+        );
         let mut original = json!([]);
-        for value in items { original = state::json_append(original, value.clone()); }
-        assert_eq!(collections::json_fold(items, json!([]), |result, value| state::json_append(result, value.clone())), original);
+        for value in items {
+            original = state::json_append(original, value.clone());
+        }
+        assert_eq!(
+            collections::json_fold(items, json!([]), |result, value| state::json_append(
+                result,
+                value.clone()
+            )),
+            original
+        );
     }
 }

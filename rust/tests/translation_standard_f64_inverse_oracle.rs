@@ -15,12 +15,7 @@ fn positive_zero(value: f64) -> bool {
 }
 #[test]
 fn standard_floor_classification_and_zero_refined_signs() {
-    for (value, expected) in [
-        (0.25_f64, 0.0_f64),
-        (-0.25, -1.0),
-        (3.7, 3.0),
-        (-3.7, -4.0),
-    ] {
+    for (value, expected) in [(0.25_f64, 0.0_f64), (-0.25, -1.0), (3.7, 3.0), (-3.7, -4.0)] {
         assert_eq!(value.floor().to_bits(), expected.to_bits());
     }
     assert_eq!((-0.0_f64).floor().to_bits(), (-0.0_f64).to_bits());

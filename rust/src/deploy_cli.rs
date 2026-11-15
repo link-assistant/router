@@ -46,7 +46,9 @@ fn resolved_root(
     } else {
         crate::operation_context::current_dir()
             .map(|directory| directory.join(root))
-            .map_err(|error| crate::translation_core::format!("could not resolve deployment root: {error}"))
+            .map_err(|error| {
+                crate::translation_core::format!("could not resolve deployment root: {error}")
+            })
     }
 }
 
@@ -101,7 +103,9 @@ fn apply_section(args: &mut DeployArgs, merged: &Merged, remote: bool) -> Result
             && let Some(mode) = &section.mode
         {
             args.mode = Some(DeployMode::from_str(mode, true).map_err(|_| {
-                crate::translation_core::format!("--config: mode must be `container` or `host`, not `{mode}`")
+                crate::translation_core::format!(
+                    "--config: mode must be `container` or `host`, not `{mode}`"
+                )
             })?);
         }
         if args.claude_credentials.is_none()

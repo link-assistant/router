@@ -13,20 +13,43 @@ fn empty_missing_and_empty_present_are_distinct() {
 
 #[test]
 fn native_scalar_order_duplicate_values_and_copies() {
-    let pairs = [("😀", "supplementary"), ("\u{e000}", "bmp"), ("a", "old"), ("é", "accent"), ("", "empty"), ("\0", "nul"), ("a", "new")];
-    let map = text_map_from_pairs(pairs.into_iter().map(|(key, value)| (key.to_owned(), value.to_owned())).collect());
-    assert_eq!(text_map_keys(&map), vec!["", "\0", "a", "é", "\u{e000}", "😀"]);
+    let pairs = [
+        ("😀", "supplementary"),
+        ("\u{e000}", "bmp"),
+        ("a", "old"),
+        ("é", "accent"),
+        ("", "empty"),
+        ("\0", "nul"),
+        ("a", "new"),
+    ];
+    let map = text_map_from_pairs(
+        pairs
+            .into_iter()
+            .map(|(key, value)| (key.to_owned(), value.to_owned()))
+            .collect(),
+    );
+    assert_eq!(
+        text_map_keys(&map),
+        vec!["", "\0", "a", "é", "\u{e000}", "😀"]
+    );
     assert_eq!(text_map_get(&map, "a"), Some("new"));
     let changed = text_map_insert(text_map_copy(&map), "a".into(), "changed".into());
     assert_eq!(text_map_get(&changed, "a"), Some("changed"));
     assert_eq!(text_map_get(&map, "a"), Some("new"));
     assert_eq!(text_map_len(&text_map_remove(changed, "a")), 5);
-    assert_eq!(text_map_pairs(&text_map_remove(text_map_copy(&map), "missing")), text_map_pairs(&map));
+    assert_eq!(
+        text_map_pairs(&text_map_remove(text_map_copy(&map), "missing")),
+        text_map_pairs(&map)
+    );
 }
 
 #[test]
 fn scalar_spellings_and_special_names_are_not_normalized() {
-    let map = text_map_from_pairs(vec![("é".into(), "one".into()), ("e\u{301}".into(), "two".into()), ("__proto__".into(), "safe".into())]);
+    let map = text_map_from_pairs(vec![
+        ("é".into(), "one".into()),
+        ("e\u{301}".into(), "two".into()),
+        ("__proto__".into(), "safe".into()),
+    ]);
     assert_eq!(text_map_len(&map), 3);
     assert_eq!(text_map_get(&map, "é"), Some("one"));
     assert_eq!(text_map_get(&map, "e\u{301}"), Some("two"));
@@ -34,14 +57,25 @@ fn scalar_spellings_and_special_names_are_not_normalized() {
 
 #[test]
 fn replacement_at_entry_bound_is_valid() {
-    let map = text_map_from_pairs((0..4096).map(|index| (index.to_string(), String::new())).collect());
-    assert_eq!(text_map_len(&text_map_insert(map, "0".into(), "replace".into())), 4096);
+    let map = text_map_from_pairs(
+        (0..4096)
+            .map(|index| (index.to_string(), String::new()))
+            .collect(),
+    );
+    assert_eq!(
+        text_map_len(&text_map_insert(map, "0".into(), "replace".into())),
+        4096
+    );
 }
 
 #[test]
 #[should_panic(expected = "text map entry bound")]
 fn additional_entry_exceeds_bound() {
-    let map = text_map_from_pairs((0..4096).map(|index| (index.to_string(), String::new())).collect());
+    let map = text_map_from_pairs(
+        (0..4096)
+            .map(|index| (index.to_string(), String::new()))
+            .collect(),
+    );
     text_map_insert(map, "new".into(), String::new());
 }
 
@@ -54,14 +88,20 @@ fn duplicate_input_still_has_an_input_entry_bound() {
 #[test]
 #[should_panic(expected = "text map input byte bound")]
 fn superseded_input_still_counts_toward_input_bytes() {
-    text_map_from_pairs(vec![("a".into(), "x".repeat(1_048_575)), ("a".into(), "replace".into())]);
+    text_map_from_pairs(vec![
+        ("a".into(), "x".repeat(1_048_575)),
+        ("a".into(), "replace".into()),
+    ]);
 }
 
 #[test]
 fn full_byte_bound_can_be_replaced_by_small_value() {
     let map = text_map_from_pairs(vec![("a".into(), "x".repeat(1_048_575))]);
     assert!(text_map_contains(&map, "a"));
-    assert_eq!(text_map_pairs(&text_map_insert(map, "a".into(), "small".into())), vec![("a".into(), "small".into())]);
+    assert_eq!(
+        text_map_pairs(&text_map_insert(map, "a".into(), "small".into())),
+        vec![("a".into(), "small".into())]
+    );
 }
 
 #[test]

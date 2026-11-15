@@ -9,10 +9,7 @@ fn checked_option_text(value: Option<&str>) {
 }
 
 #[must_use]
-pub fn bool_to_bool_map(
-    value: Option<bool>,
-    callback: impl FnOnce(bool) -> bool,
-) -> Option<bool> {
+pub fn bool_to_bool_map(value: Option<bool>, callback: impl FnOnce(bool) -> bool) -> Option<bool> {
     value.map(|value| {
         let output = callback(value);
         output
@@ -31,10 +28,7 @@ pub fn bool_to_bool_and_then(
 }
 
 #[must_use]
-pub fn bool_to_u64_map(
-    value: Option<bool>,
-    callback: impl FnOnce(bool) -> u64,
-) -> Option<u64> {
+pub fn bool_to_u64_map(value: Option<bool>, callback: impl FnOnce(bool) -> u64) -> Option<u64> {
     value.map(|value| {
         let output = callback(value);
         output
@@ -53,10 +47,7 @@ pub fn bool_to_u64_and_then(
 }
 
 #[must_use]
-pub fn bool_to_i64_map(
-    value: Option<bool>,
-    callback: impl FnOnce(bool) -> i64,
-) -> Option<i64> {
+pub fn bool_to_i64_map(value: Option<bool>, callback: impl FnOnce(bool) -> i64) -> Option<i64> {
     value.map(|value| {
         let output = callback(value);
         output
@@ -99,18 +90,12 @@ pub fn bool_to_str_and_then<'output>(
 }
 
 #[must_use]
-pub fn bool_unwrap_or_else(
-    value: Option<bool>,
-    callback: impl FnOnce() -> bool,
-) -> bool {
+pub fn bool_unwrap_or_else(value: Option<bool>, callback: impl FnOnce() -> bool) -> bool {
     value.unwrap_or_else(callback)
 }
 
 #[must_use]
-pub fn u64_to_bool_map(
-    value: Option<u64>,
-    callback: impl FnOnce(u64) -> bool,
-) -> Option<bool> {
+pub fn u64_to_bool_map(value: Option<u64>, callback: impl FnOnce(u64) -> bool) -> Option<bool> {
     value.map(|value| {
         let output = callback(value);
         output
@@ -129,10 +114,7 @@ pub fn u64_to_bool_and_then(
 }
 
 #[must_use]
-pub fn u64_to_u64_map(
-    value: Option<u64>,
-    callback: impl FnOnce(u64) -> u64,
-) -> Option<u64> {
+pub fn u64_to_u64_map(value: Option<u64>, callback: impl FnOnce(u64) -> u64) -> Option<u64> {
     value.map(|value| {
         let output = callback(value);
         output
@@ -151,10 +133,7 @@ pub fn u64_to_u64_and_then(
 }
 
 #[must_use]
-pub fn u64_to_i64_map(
-    value: Option<u64>,
-    callback: impl FnOnce(u64) -> i64,
-) -> Option<i64> {
+pub fn u64_to_i64_map(value: Option<u64>, callback: impl FnOnce(u64) -> i64) -> Option<i64> {
     value.map(|value| {
         let output = callback(value);
         output
@@ -197,18 +176,12 @@ pub fn u64_to_str_and_then<'output>(
 }
 
 #[must_use]
-pub fn u64_unwrap_or_else(
-    value: Option<u64>,
-    callback: impl FnOnce() -> u64,
-) -> u64 {
+pub fn u64_unwrap_or_else(value: Option<u64>, callback: impl FnOnce() -> u64) -> u64 {
     value.unwrap_or_else(callback)
 }
 
 #[must_use]
-pub fn i64_to_bool_map(
-    value: Option<i64>,
-    callback: impl FnOnce(i64) -> bool,
-) -> Option<bool> {
+pub fn i64_to_bool_map(value: Option<i64>, callback: impl FnOnce(i64) -> bool) -> Option<bool> {
     value.map(|value| {
         let output = callback(value);
         output
@@ -227,10 +200,7 @@ pub fn i64_to_bool_and_then(
 }
 
 #[must_use]
-pub fn i64_to_u64_map(
-    value: Option<i64>,
-    callback: impl FnOnce(i64) -> u64,
-) -> Option<u64> {
+pub fn i64_to_u64_map(value: Option<i64>, callback: impl FnOnce(i64) -> u64) -> Option<u64> {
     value.map(|value| {
         let output = callback(value);
         output
@@ -249,10 +219,7 @@ pub fn i64_to_u64_and_then(
 }
 
 #[must_use]
-pub fn i64_to_i64_map(
-    value: Option<i64>,
-    callback: impl FnOnce(i64) -> i64,
-) -> Option<i64> {
+pub fn i64_to_i64_map(value: Option<i64>, callback: impl FnOnce(i64) -> i64) -> Option<i64> {
     value.map(|value| {
         let output = callback(value);
         output
@@ -295,10 +262,7 @@ pub fn i64_to_str_and_then<'output>(
 }
 
 #[must_use]
-pub fn i64_unwrap_or_else(
-    value: Option<i64>,
-    callback: impl FnOnce() -> i64,
-) -> i64 {
+pub fn i64_unwrap_or_else(value: Option<i64>, callback: impl FnOnce() -> i64) -> i64 {
     value.unwrap_or_else(callback)
 }
 

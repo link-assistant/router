@@ -10,11 +10,15 @@ pub struct LiteralArguments {
 /// Implementation entry for the qualified literal macro. Direct calls require
 /// their own source contract and are deliberately outside checked translation.
 #[doc(hidden)]
-pub const fn __literal_arguments_from_static(
-    pieces: &'static [&'static str],
-) -> LiteralArguments {
-    ::std::assert!(pieces.len() <= 1, "literal arguments require zero or one piece");
-    ::std::assert!(pieces.is_empty() || pieces[0].len() <= 2 * 1024 * 1024, "literal piece bound");
+pub const fn __literal_arguments_from_static(pieces: &'static [&'static str]) -> LiteralArguments {
+    ::std::assert!(
+        pieces.len() <= 1,
+        "literal arguments require zero or one piece"
+    );
+    ::std::assert!(
+        pieces.is_empty() || pieces[0].len() <= 2 * 1024 * 1024,
+        "literal piece bound"
+    );
     LiteralArguments { pieces }
 }
 
@@ -27,7 +31,11 @@ pub fn literal_arguments_piece_count(value: LiteralArguments) -> u64 {
 /// Count UTF-8 bytes in the retained static piece, without allocating text.
 #[must_use]
 pub fn literal_arguments_byte_len(value: LiteralArguments) -> u64 {
-    if value.pieces.is_empty() { 0 } else { value.pieces[0].len() as u64 }
+    if value.pieces.is_empty() {
+        0
+    } else {
+        value.pieces[0].len() as u64
+    }
 }
 
 /// Test rendered literal emptiness. This consumes the move-only carrier.

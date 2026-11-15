@@ -18,8 +18,14 @@ fn borrowed_map_lookup_preserves_unicode_null_and_missing_semantics() {
     let mut values = serde_json::Map::new();
     values.insert("λ😀".to_owned(), Json::String("value".to_owned()));
     values.insert("null".to_owned(), Json::Null);
-    assert_eq!(router::translation_core::json_map_index(&values, "λ😀"), &Json::String("value".to_owned()));
-    assert_eq!(router::translation_core::json_map_index(&values, "null"), &Json::Null);
+    assert_eq!(
+        router::translation_core::json_map_index(&values, "λ😀"),
+        &Json::String("value".to_owned())
+    );
+    assert_eq!(
+        router::translation_core::json_map_index(&values, "null"),
+        &Json::Null
+    );
 }
 
 #[test]

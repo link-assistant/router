@@ -8,11 +8,19 @@ macro_rules! integer_methods {
             assert_eq!(<$type>::MAX.saturating_mul(2), <$type>::MAX);
             assert_eq!(<$type>::MAX.wrapping_add(1), <$type>::MIN);
             assert_eq!(<$type>::MIN.wrapping_sub(1), <$type>::MAX);
-            assert_eq!(::core::cmp::Ord::min(<$type>::MAX, <$type>::MIN), <$type>::MIN);
-            assert_eq!(::core::cmp::Ord::max(<$type>::MIN, <$type>::MAX), <$type>::MAX);
+            assert_eq!(
+                ::core::cmp::Ord::min(<$type>::MAX, <$type>::MIN),
+                <$type>::MIN
+            );
+            assert_eq!(
+                ::core::cmp::Ord::max(<$type>::MIN, <$type>::MAX),
+                <$type>::MAX
+            );
             assert_eq!(::core::cmp::Ord::clamp(5 as $type, 2, 4), 4);
             assert_eq!(::core::cmp::Ord::clamp(0 as $type, 2, 2), 2);
-            assert!(std::panic::catch_unwind(|| ::core::cmp::Ord::clamp(0 as $type, 3, 1)).is_err());
+            assert!(
+                std::panic::catch_unwind(|| ::core::cmp::Ord::clamp(0 as $type, 3, 1)).is_err()
+            );
         }
     };
 }

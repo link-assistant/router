@@ -15,10 +15,7 @@ fn scalar_text_views_compare_without_consuming_original_strings() {
 fn immediate_callbacks_read_owned_text_through_shared_views() {
     let needle = String::from("é😀");
     let values = [true, false];
-    let selected: Vec<_> = values
-        .iter()
-        .filter(|_| needle.contains('😀'))
-        .collect();
+    let selected: Vec<_> = values.iter().filter(|_| needle.contains('😀')).collect();
     assert_eq!(selected.len(), 2);
     assert_eq!(needle, "é😀");
 }

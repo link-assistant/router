@@ -1,6 +1,8 @@
 //! Independent owned JSON vector oracle; CI only after all same-SHA JS gates.
 use link_assistant_router::translation_core::{self, Json};
-fn moved(value: Json) -> Vec<Json> { translation_core::vec![value] }
+fn moved(value: Json) -> Vec<Json> {
+    translation_core::vec![value]
+}
 fn copied(value: Json) -> Vec<Json> {
     let first = translation_core::json_copy(&value);
     translation_core::vec![first, value]

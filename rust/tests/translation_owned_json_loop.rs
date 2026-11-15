@@ -13,9 +13,19 @@ fn accumulated(values: &[Json], initial: Json) -> Json {
 
 #[test]
 fn empty_and_ordered_updates_keep_fallback_and_iteration_order() {
-    assert_eq!(accumulated(&[], serde_json::json!([])), serde_json::json!([]));
-    let values = [Json::Null, Json::Bool(false), Json::String("λ😀".to_owned())];
-    assert_eq!(accumulated(&values, serde_json::json!([])), serde_json::json!([null, false, "λ😀"]));
+    assert_eq!(
+        accumulated(&[], serde_json::json!([])),
+        serde_json::json!([])
+    );
+    let values = [
+        Json::Null,
+        Json::Bool(false),
+        Json::String("λ😀".to_owned()),
+    ];
+    assert_eq!(
+        accumulated(&values, serde_json::json!([])),
+        serde_json::json!([null, false, "λ😀"])
+    );
 }
 
 #[test]

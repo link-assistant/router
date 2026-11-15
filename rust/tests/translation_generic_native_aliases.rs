@@ -4,9 +4,15 @@ type Earlier<T> = Identity<T>;
 type Byte = Earlier<u8>;
 type Wide = Earlier<u128>;
 type Signed = Earlier<i128>;
-fn byte_mask(left: Byte, right: Byte) -> Byte { left | right }
-fn wide_mask(left: Wide, right: Wide) -> Wide { left | right }
-fn signed_mask(left: Signed, right: Signed) -> Signed { left | right }
+fn byte_mask(left: Byte, right: Byte) -> Byte {
+    left | right
+}
+fn wide_mask(left: Wide, right: Wide) -> Wide {
+    left | right
+}
+fn signed_mask(left: Signed, right: Signed) -> Signed {
+    left | right
+}
 #[test]
 fn generic_aliases_preserve_native_widths_and_signed_edges() {
     assert_eq!(byte_mask(85, 51), 119);

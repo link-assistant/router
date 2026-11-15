@@ -38,7 +38,14 @@ fn guard_evaluates_only_after_its_pattern_and_false_retries() {
 fn ordered_overlapping_guarded_alternatives_retry_the_guard() {
     let count = std::cell::Cell::new(0u8);
     let result = match 2u8 {
-        1..=3 | 2..=4 if { count.set(count.get() + 1); false } => 1u8,
+        1..=3 | 2..=4
+            if {
+                count.set(count.get() + 1);
+                false
+            } =>
+        {
+            1u8
+        }
         _ => 7u8,
     };
     assert_eq!(result, 7);

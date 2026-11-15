@@ -2,7 +2,18 @@
 use link_assistant_router::translation_fixed_types_core as scalar;
 #[test]
 fn fixed_integer_bit_widths_are_u32_independent_of_the_receiver_domain() {
-    let actual: [u32; 10] = [scalar::U8::BITS, scalar::U16::BITS, scalar::U32::BITS, scalar::U64::BITS, scalar::U128::BITS, scalar::I8::BITS, scalar::I16::BITS, scalar::I32::BITS, scalar::I64::BITS, scalar::I128::BITS];
+    let actual: [u32; 10] = [
+        scalar::U8::BITS,
+        scalar::U16::BITS,
+        scalar::U32::BITS,
+        scalar::U64::BITS,
+        scalar::U128::BITS,
+        scalar::I8::BITS,
+        scalar::I16::BITS,
+        scalar::I32::BITS,
+        scalar::I64::BITS,
+        scalar::I128::BITS,
+    ];
     assert_eq!(actual, [8, 16, 32, 64, 128, 8, 16, 32, 64, 128]);
     let sum: scalar::U32 = scalar::U8::BITS + scalar::U128::BITS;
     assert_eq!(sum, 136);

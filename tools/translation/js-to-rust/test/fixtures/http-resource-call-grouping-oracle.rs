@@ -1,6 +1,10 @@
 //! Independent native expectations; no local Rust execution is authorized.
-fn identity<T>(value: T) -> T { value }
-fn forward<T>(value: T) -> T { identity(value) }
+fn identity<T>(value: T) -> T {
+    value
+}
+fn forward<T>(value: T) -> T {
+    identity(value)
+}
 
 #[test]
 fn generic_grouping_and_noop_erasure_retain_native_values() {
@@ -13,10 +17,16 @@ fn generic_grouping_and_noop_erasure_retain_native_values() {
 
 #[tokio::test]
 async fn deferred_grouped_calls_keep_the_original_cancellation_behavior() {
-    use link_assistant_router::translation_async_control_core::{Cancellation, cancel_new, cancel_is_set, sleep, with_deadline};
+    use link_assistant_router::translation_async_control_core::{
+        Cancellation, cancel_is_set, cancel_new, sleep, with_deadline,
+    };
     let cancellation = cancel_new();
     assert!(sleep(0, &cancellation).await.is_ok());
-    assert_eq!(with_deadline(1000, &cancellation, |child: Cancellation| async move {
-        cancel_is_set(&child)
-    }).await, Ok(false));
+    assert_eq!(
+        with_deadline(1000, &cancellation, |child: Cancellation| async move {
+            cancel_is_set(&child)
+        })
+        .await,
+        Ok(false)
+    );
 }

@@ -73,16 +73,22 @@ impl ClientManager {
         }
         let maximum = 8 * 1024 * 1024;
         if metadata.len() > maximum as u64 {
-            return Err(ClientError::message("Codex model_catalog_json exceeds its 8 MiB bound"));
+            return Err(ClientError::message(
+                "Codex model_catalog_json exceeds its 8 MiB bound",
+            ));
         }
         let file = fs::File::open(&path)?;
         if !file.metadata()?.is_file() {
-            return Err(ClientError::message("Codex model_catalog_json must remain a regular file"));
+            return Err(ClientError::message(
+                "Codex model_catalog_json must remain a regular file",
+            ));
         }
         let mut source = Vec::new();
         file.take(maximum as u64 + 1).read_to_end(&mut source)?;
         if source.len() > maximum {
-            return Err(ClientError::message("Codex model_catalog_json grew beyond its 8 MiB bound"));
+            return Err(ClientError::message(
+                "Codex model_catalog_json grew beyond its 8 MiB bound",
+            ));
         }
         let catalog: Value = serde_json::from_slice(&source).map_err(|error| {
             ClientError::message(format!(

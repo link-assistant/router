@@ -1,9 +1,13 @@
 //! Independent bounded canonical JSON library oracle. CI after all JS gates.
-use link_assistant_router::translation_json_core::{json_checked_copy, json_checked_with_field, json_validate};
-use serde_json::{json, Value};
+use link_assistant_router::translation_json_core::{
+    json_checked_copy, json_checked_with_field, json_validate,
+};
+use serde_json::{Value, json};
 fn nested(count: usize) -> Value {
     let mut value = Value::Null;
-    for _ in 0..count { value = Value::Array(vec![value]); }
+    for _ in 0..count {
+        value = Value::Array(vec![value]);
+    }
     value
 }
 #[test]
@@ -12,7 +16,10 @@ fn copy_preserves_canonical_values_and_independent_nested_buffers() {
     json_validate(&original);
     let copied = json_checked_copy(&original);
     assert_eq!(copied, original);
-    assert_ne!(copied["Ω"].as_array().unwrap().as_ptr(), original["Ω"].as_array().unwrap().as_ptr());
+    assert_ne!(
+        copied["Ω"].as_array().unwrap().as_ptr(),
+        original["Ω"].as_array().unwrap().as_ptr()
+    );
 }
 #[test]
 fn exact_root_inclusive_node_and_depth_boundaries() {

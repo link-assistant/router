@@ -30,15 +30,24 @@ enum Code {
 
 #[test]
 fn data_shapes_const_generics_raw_fields_and_attribute_values_remain_independent() {
-    let packet = Packet { bytes: [1_u8, 2, 3], r#type: true };
+    let packet = Packet {
+        bytes: [1_u8, 2, 3],
+        r#type: true,
+    };
     assert_eq!(packet.bytes, [1, 2, 3]);
     assert!(packet.r#type);
-    let empty: Packet<bool, 0> = Packet { bytes: [], r#type: false };
+    let empty: Packet<bool, 0> = Packet {
+        bytes: [],
+        r#type: false,
+    };
     assert!(empty.bytes.is_empty());
     let Pair(number, flag) = Pair(7, true);
     assert_eq!(number, 7);
     assert!(flag);
-    assert!(matches!(Message::Named { flag: true }, Message::Named { flag: true }));
+    assert!(matches!(
+        Message::Named { flag: true },
+        Message::Named { flag: true }
+    ));
     assert_eq!(Code::Zero as u8, 0);
     assert_eq!(Code::Seven as u8, 7);
 }

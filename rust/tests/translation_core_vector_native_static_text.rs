@@ -1,7 +1,11 @@
 //! Independent static borrowed text oracle. Rust CI only after every JS gate.
 use link_assistant_router::translation_core;
 fn values(flag: bool, seed: &'static str) -> Vec<&'static str> {
-    if flag { translation_core::vec![seed, seed, "Ω😀"] } else { translation_core::vec![] }
+    if flag {
+        translation_core::vec![seed, seed, "Ω😀"]
+    } else {
+        translation_core::vec![]
+    }
 }
 #[test]
 fn static_values_reuse_original_borrowed_storage() {

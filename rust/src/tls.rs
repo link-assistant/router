@@ -151,13 +151,15 @@ pub fn ensure_generated(
     if cert_path.is_file() && key_path.is_file() {
         return Ok((cert_path, key_path));
     }
-    let generated = rcgen::generate_simple_self_signed(names.to_vec())
-        .map_err(|error| crate::translation_core::format!("could not generate a self-signed certificate: {error}"))?;
+    let generated = rcgen::generate_simple_self_signed(names.to_vec()).map_err(|error| {
+        crate::translation_core::format!("could not generate a self-signed certificate: {error}")
+    })?;
     let directory = cert_path
         .parent()
         .ok_or_else(|| "generated certificate has no directory".to_string())?;
-    std::fs::create_dir_all(directory)
-        .map_err(|error| crate::translation_core::format!("could not create {}: {error}", directory.display()))?;
+    std::fs::create_dir_all(directory).map_err(|error| {
+        crate::translation_core::format!("could not create {}: {error}", directory.display())
+    })?;
     crate::durable_file::atomic_write_owner_only(&cert_path, generated.cert.pem().as_bytes())
         .map_err(|error| crate::durable_file::describe_write_failure(&cert_path, &error))?;
     // The private key is written owner-only, like every other secret this

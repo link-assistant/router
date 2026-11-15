@@ -639,7 +639,8 @@ async fn refresh(
         }
         Err(_) => return unavailable("remote-control continuation state is unavailable"),
     };
-    target.url = crate::translation_core::format!("{}{REFRESH_UPSTREAM}", current.record.upstream_base_url);
+    target.url =
+        crate::translation_core::format!("{}{REFRESH_UPSTREAM}", current.record.upstream_base_url);
     let response = match send_buffered(&state, Method::POST, body, target).await {
         Ok(response) => response,
         Err(response) => return response,

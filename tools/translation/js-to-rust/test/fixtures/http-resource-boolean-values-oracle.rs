@@ -2,11 +2,17 @@
 use std::cell::Cell;
 
 fn selected_and(flag: bool, calls: &Cell<u32>) -> bool {
-    flag && { calls.set(calls.get() + 1); true }
+    flag && {
+        calls.set(calls.get() + 1);
+        true
+    }
 }
 
 fn selected_or(flag: bool, calls: &Cell<u32>) -> bool {
-    flag || { calls.set(calls.get() + 1); false }
+    flag || {
+        calls.set(calls.get() + 1);
+        false
+    }
 }
 
 #[test]

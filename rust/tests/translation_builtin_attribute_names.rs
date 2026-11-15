@@ -7,7 +7,9 @@ struct must_use;
 struct repr;
 
 macro_rules! inline {
-    () => { false };
+    () => {
+        false
+    };
 }
 
 #[inline]
@@ -30,7 +32,10 @@ struct Record {
 #[test]
 fn bare_builtin_attributes_keep_their_names_across_type_and_bang_namespaces() {
     let _types = (inline, cold, must_use, repr);
-    let record = Record { enabled: true, count: 7 };
+    let record = Record {
+        enabled: true,
+        count: 7,
+    };
     assert!(record.enabled);
     assert_eq!(record.count, 7);
     assert!(!inline!());

@@ -3,7 +3,9 @@
 fn root(value: bool) -> bool { value }
 mod model {
     #[derive(Clone, Debug)]
-    pub struct Record { pub value: u8 }
+    pub struct Record {
+        pub value: u8,
+    }
 }
 
 #[test]

@@ -1,6 +1,10 @@
 // Independent original carrier target oracle. UNRUN; gated CI only.
 fn selected(value: &str, flag: bool) -> Result<String, String> {
-    return if flag { Ok(value.into()) } else { Err("error".into()) };
+    return if flag {
+        Ok(value.into())
+    } else {
+        Err("error".into())
+    };
 }
 #[test]
 fn original_carrier_payload_contexts_and_borrowed_identity() {

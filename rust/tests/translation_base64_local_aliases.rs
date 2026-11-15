@@ -3,7 +3,13 @@ use base64::{Engine as _, engine::general_purpose::STANDARD};
 use link_assistant_router::translation_core as core;
 #[test]
 fn immutable_parameter_and_byte_aliases_keep_original_values_and_encodings() {
-    for (value, wanted) in [("", ""), ("f", "Zg=="), ("foo", "Zm9v"), ("Hello", "SGVsbG8="), ("😀", "8J+YgA==")] {
+    for (value, wanted) in [
+        ("", ""),
+        ("f", "Zg=="),
+        ("foo", "Zm9v"),
+        ("Hello", "SGVsbG8="),
+        ("😀", "8J+YgA=="),
+    ] {
         let alias = value;
         let original = STANDARD.encode(alias);
         let adopted = core::base64_standard_encode_text(alias);
@@ -11,7 +17,10 @@ fn immutable_parameter_and_byte_aliases_keep_original_values_and_encodings() {
         assert_eq!(adopted, wanted);
         let moved = value.to_owned();
         let raw = moved.as_bytes();
-        assert_eq!(STANDARD.encode(raw), core::base64_standard_encode_bytes(raw));
+        assert_eq!(
+            STANDARD.encode(raw),
+            core::base64_standard_encode_bytes(raw)
+        );
         assert_eq!(moved.as_str(), value);
     }
 }

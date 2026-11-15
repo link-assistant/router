@@ -5,7 +5,9 @@ fn continue_checks_the_condition_and_nested_loops_keep_their_own_control() {
         let mut count = 0_u64;
         loop {
             count += 1;
-            if count >= limit { break; }
+            if count >= limit {
+                break;
+            }
         }
         count
     }
@@ -17,7 +19,9 @@ fn continue_checks_the_condition_and_nested_loops_keep_their_own_control() {
     loop {
         outer += 1;
         inner += post_test(0);
-        if outer >= 2 { break; }
+        if outer >= 2 {
+            break;
+        }
     }
     assert_eq!((outer, inner), (2, 2));
 }
@@ -27,9 +31,13 @@ fn a_body_break_skips_the_condition() {
     let mut evaluated = 0;
     let stop = std::hint::black_box(true);
     loop {
-        if stop { break; }
+        if stop {
+            break;
+        }
         evaluated += 1;
-        if evaluated >= 2 { break; }
+        if evaluated >= 2 {
+            break;
+        }
     }
     assert_eq!(evaluated, 0);
 }

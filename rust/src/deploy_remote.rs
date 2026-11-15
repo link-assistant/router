@@ -249,8 +249,11 @@ fn prepare(
     let known_hosts = merged
         .known_hosts()?
         .map(|text| {
-            session::pinned_known_hosts(&text)
-                .map_err(|error| crate::translation_core::format!("could not write the pinned known_hosts file: {error}"))
+            session::pinned_known_hosts(&text).map_err(|error| {
+                crate::translation_core::format!(
+                    "could not write the pinned known_hosts file: {error}"
+                )
+            })
         })
         .transpose()?;
     let seeds = if mode == RemoteMode::Deploy {
@@ -361,8 +364,10 @@ fn run_with_ssh(
     // Observation and removal do not need the signing secret at all. Besides
     // reducing exposure, this keeps the non-serving placeholder (which may
     // contain NUL) out of a shell variable on those paths.
-    let encoded =
-        crate::translation_core::base64_standard_encode_text(transported_secret(mode, token_secret));
+    let encoded = crate::translation_core::base64_standard_encode_text(transported_secret(
+        mode,
+        token_secret,
+    ));
     let payload = prepared.payload.clone();
     // Written from a thread so a session that never connects cannot block
     // the deadline on a full pipe.

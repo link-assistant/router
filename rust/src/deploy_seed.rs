@@ -125,7 +125,9 @@ impl fmt::Debug for Seed {
 fn handover_of(
     value: &crate::translation_core::Json,
 ) -> crate::translation_core::Maybe<(String, String, String)> {
-    let record = value.pointer(&crate::translation_core::format!("/{METADATA_KEY}/{HANDOVER_KEY}"))?;
+    let record = value.pointer(&crate::translation_core::format!(
+        "/{METADATA_KEY}/{HANDOVER_KEY}"
+    ))?;
     let field = |name: &str| {
         record
             .get(name)
@@ -169,7 +171,9 @@ pub fn prepare(
     let home = subscription.conventional_home(&user_home.to_string_lossy());
     let source = SubscriptionReader::new(subscription, &home)
         .read_document_for_import()
-        .map_err(|error| crate::translation_core::format!("--seed-credential {}: {error}", provider.as_str()))?;
+        .map_err(|error| {
+            crate::translation_core::format!("--seed-credential {}: {error}", provider.as_str())
+        })?;
     let Some(path) = source.path else {
         return Err(crate::translation_core::format!(
             "--seed-credential {}: the login is held only in the platform keychain, which \

@@ -1,17 +1,30 @@
 // Independent original nonbinding pattern oracle. UNRUN; gated CI only.
 fn optional(value: &str, input: Option<bool>) -> String {
     let saved = value;
-    match input { Some(_) => saved.into(), Option::None => "none".into() }
+    match input {
+        Some(_) => saved.into(),
+        Option::None => "none".into(),
+    }
 }
 fn result(value: &str, input: Result<bool, String>) -> String {
-    match input { Ok(_) => value.into(), Err(_) => "error".into() }
+    match input {
+        Ok(_) => value.into(),
+        Err(_) => "error".into(),
+    }
 }
 fn slice_label(input: &[bool]) -> &'static str {
-    match input { [_, ..] => "nonempty", [] => "empty" }
+    match input {
+        [_, ..] => "nonempty",
+        [] => "empty",
+    }
 }
 // Ignored fields are intentional: the source pattern must introduce no binding.
 #[allow(dead_code)]
-enum Shape { Tuple(u64), Record { field: bool }, Empty }
+enum Shape {
+    Tuple(u64),
+    Record { field: bool },
+    Empty,
+}
 fn shape(input: Shape) -> &'static str {
     match input {
         Shape::Tuple(_) => "tuple",

@@ -67,7 +67,9 @@ fn original_chain(value: &Json) -> Option<Json> {
 }
 
 fn owned_chain(value: &Json) -> Option<Json> {
-    Some(translation_core::json_copy(value.get("child")?.get("leaf")?))
+    Some(translation_core::json_copy(
+        value.get("child")?.get("leaf")?,
+    ))
 }
 
 #[test]

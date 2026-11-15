@@ -15,7 +15,10 @@ fn eager_unused_vector_helper_failure_precedes_scalar_return() {
     fn helper(value: u8) -> Vec<u8> {
         vec![value.checked_add(1).expect("attempt to add with overflow")]
     }
-    fn status(value: u8) -> bool { let _owned = helper(value); true }
+    fn status(value: u8) -> bool {
+        let _owned = helper(value);
+        true
+    }
     assert!(status(3));
     assert!(std::panic::catch_unwind(|| status(255)).is_err());
 }

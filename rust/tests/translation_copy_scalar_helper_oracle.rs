@@ -1,5 +1,7 @@
 // Independent native Copy scalar edge cases. CI only after all JavaScript gates.
-fn identity<T: ::core::marker::Copy>(value: T) -> T { value }
+fn identity<T: ::core::marker::Copy>(value: T) -> T {
+    value
+}
 fn selected<T: ::core::marker::Copy>(yes: bool, left: T, right: T) -> T {
     if yes { left } else { right }
 }

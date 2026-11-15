@@ -13,7 +13,10 @@ fn actual_nominal_copy_and_derived_clone_preserve_aliases_order_and_detached_vec
     let input = [Native, Override, Proxied, Override, Denied, Override];
     let copied = bounded_copy(&input);
     let cloned: Vec<_> = input.iter().cloned().collect();
-    assert_eq!(copied, vec![Native, Override, Proxied, Override, Denied, Override]);
+    assert_eq!(
+        copied,
+        vec![Native, Override, Proxied, Override, Denied, Override]
+    );
     assert_eq!(cloned, copied);
     let mut detached = copied;
     detached[0] = Denied;

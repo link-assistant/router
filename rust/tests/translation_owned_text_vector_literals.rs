@@ -29,10 +29,7 @@ fn empty_and_capacity_bound_literal_slice_copies_remain_independent() {
 fn explicit_bounded_text_copies_preserve_repeated_input_uses() {
     use link_assistant_router::translation_text_core as text;
     let input = "🦀\0文";
-    let mut values = core::vec_text_from_slice(&[
-        text::to_owned(input),
-        text::to_owned(input),
-    ]);
+    let mut values = core::vec_text_from_slice(&[text::to_owned(input), text::to_owned(input)]);
     values = core::vec_text_push(values, text::to_owned(input));
     assert_eq!(core::vec_text_len(&values), 3);
     assert_eq!(core::vec_text_get(&values, 2), Some(input.to_owned()));

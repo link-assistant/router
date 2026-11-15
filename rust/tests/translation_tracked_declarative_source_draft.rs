@@ -1,5 +1,11 @@
 //! Independent ordinary external textual inheritance oracle. Gated CI only.
-macro_rules! chosen { ($name:ident) => { pub fn $name() -> u8 { 7 } }; }
+macro_rules! chosen {
+    ($name:ident) => {
+        pub fn $name() -> u8 {
+            7
+        }
+    };
+}
 #[path = "../../tools/translation/test/fixtures/tracked-declarative/native-child.rs"]
 mod child;
 #[path = "../../tools/translation/test/fixtures/tracked-declarative/native-sibling.rs"]

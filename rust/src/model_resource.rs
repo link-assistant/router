@@ -163,7 +163,9 @@ async fn bounded_native_response(
     let mut stream = upstream.bytes_stream();
     let mut body = Vec::new();
     while let Some(chunk) = stream.next().await {
-        let chunk = chunk.map_err(|error| crate::translation_core::format!("upstream model response failed: {error}"))?;
+        let chunk = chunk.map_err(|error| {
+            crate::translation_core::format!("upstream model response failed: {error}")
+        })?;
         if body.len().saturating_add(chunk.len()) > state.max_proxy_request_bytes {
             return Err("upstream model response exceeds the proxy limit".into());
         }

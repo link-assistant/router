@@ -13,7 +13,10 @@ fn unsigned_arithmetic_boundaries() {
     assert_eq!(integer::u64_checked_sub(0, 1), None);
     assert_eq!(integer::u64_checked_mul(u64::MAX, 0), Some(0));
     assert_eq!(integer::u64_checked_div(1, 0), None);
-    assert_eq!(integer::u64_checked_div(u64::MAX, 2), Some(9_223_372_036_854_775_807));
+    assert_eq!(
+        integer::u64_checked_div(u64::MAX, 2),
+        Some(9_223_372_036_854_775_807)
+    );
     assert_eq!(integer::u64_checked_rem(u64::MAX, 2), Some(1));
     assert_eq!(integer::u64_clamp(0, 1, u64::MAX), 1);
 }

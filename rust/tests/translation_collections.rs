@@ -1,5 +1,5 @@
 //! Independent native oracle source. Run only in CI after the full JS gate.
-use link_assistant_router::translation_core::{json_copy, json_filter_map, json_map, Json};
+use link_assistant_router::translation_core::{Json, json_copy, json_filter_map, json_map};
 
 #[test]
 fn map_preserves_order_values_and_independent_owned_storage() {
@@ -18,11 +18,20 @@ fn map_preserves_order_values_and_independent_owned_storage() {
 
 #[test]
 fn filter_map_visits_each_input_once_and_preserves_survivor_order() {
-    let input = vec![Json::Null, Json::Bool(false), Json::Null, Json::String("".into())];
+    let input = vec![
+        Json::Null,
+        Json::Bool(false),
+        Json::Null,
+        Json::String("".into()),
+    ];
     let mut count = 0;
     let output = json_filter_map(&input, |value| {
         count += 1;
-        if value.is_null() { None } else { Some(json_copy(value)) }
+        if value.is_null() {
+            None
+        } else {
+            Some(json_copy(value))
+        }
     });
     assert_eq!(count, 4);
     assert_eq!(output, vec![Json::Bool(false), Json::String("".into())]);
@@ -42,7 +51,9 @@ fn callback_panic_stops_before_later_values() {
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         json_map(&input, |value| {
             seen.borrow_mut().push(value.clone());
-            if value.is_null() { panic!("stop"); }
+            if value.is_null() {
+                panic!("stop");
+            }
             json_copy(value)
         })
     }));

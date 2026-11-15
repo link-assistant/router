@@ -415,9 +415,11 @@ fn served_response(turn: &Turn, position: usize) -> Response {
     // transport split them. Emitting each recorded event as its own frame would
     // assert a chunk boundary the original may not have had.
     let body = turn.events.concat();
-    response
-        .body(Body::from(body))
-        .unwrap_or_else(|_| replay_failure(&crate::translation_core::format!("turn {position} could not be rebuilt")))
+    response.body(Body::from(body)).unwrap_or_else(|_| {
+        replay_failure(&crate::translation_core::format!(
+            "turn {position} could not be rebuilt"
+        ))
+    })
 }
 
 /// How a failed replay reaches the client.

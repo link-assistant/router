@@ -1,7 +1,14 @@
 //! Independent predicate edge oracle source. CI only after all eight JS gates.
 
 fn predicates(left: u64, right: u64) -> [bool; 6] {
-    [left == right, left != right, left < right, left <= right, left > right, left >= right]
+    [
+        left == right,
+        left != right,
+        left < right,
+        left <= right,
+        left > right,
+        left >= right,
+    ]
 }
 
 #[test]
@@ -10,8 +17,16 @@ fn unsigned_boundaries_keep_all_six_relations() {
         (0, 0, [true, false, false, true, false, true]),
         (0, 1, [false, true, true, true, false, false]),
         (1, 0, [false, true, false, false, true, true]),
-        (u64::MAX - 1, u64::MAX, [false, true, true, true, false, false]),
-        (u64::MAX, u64::MAX - 1, [false, true, false, false, true, true]),
+        (
+            u64::MAX - 1,
+            u64::MAX,
+            [false, true, true, true, false, false],
+        ),
+        (
+            u64::MAX,
+            u64::MAX - 1,
+            [false, true, false, false, true, true],
+        ),
         (u64::MAX, u64::MAX, [true, false, false, true, false, true]),
     ];
     for (left, right, expected) in cases {
@@ -51,7 +66,11 @@ fn signed_and_unicode_equality_edges_remain_distinct() {
     for pair in signed.windows(2) {
         assert!(pair[0] < pair[1]);
     }
-    let cases = [("\u{e9}", "e\u{301}", false), ("\u{1f600}", "\u{1f600}", true), ("", "\0", false)];
+    let cases = [
+        ("\u{e9}", "e\u{301}", false),
+        ("\u{1f600}", "\u{1f600}", true),
+        ("", "\0", false),
+    ];
     for (left, right, expected) in cases {
         assert_eq!(left == right, expected);
     }

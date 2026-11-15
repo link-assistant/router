@@ -35,11 +35,23 @@ fn truncation_and_sign_extension_are_distinct() {
 #[test]
 fn boolean_bitwise_evaluates_both_operands_in_order() {
     let mut visits = Vec::new();
-    let value = { visits.push(1); false } & { visits.push(2); true };
+    let value = {
+        visits.push(1);
+        false
+    } & {
+        visits.push(2);
+        true
+    };
     assert!(!value);
     assert_eq!(visits, vec![1, 2]);
     visits.clear();
-    let value = { visits.push(1); false } && { visits.push(2); true };
+    let value = {
+        visits.push(1);
+        false
+    } && {
+        visits.push(2);
+        true
+    };
     assert!(!value);
     assert_eq!(visits, vec![1]);
 }

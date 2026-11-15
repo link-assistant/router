@@ -1,10 +1,20 @@
 //! Independent original explicit generic argument oracle. Gated CI only.
 use std::cell::Cell;
-fn raw<T>(value: T) -> T { value }
-fn option<T>(value: Option<T>) -> Option<T> { value }
-fn result<T>(value: Result<T, String>) -> Result<T, String> { value }
-fn booleans(value: bool) -> bool { raw::<bool>(raw(value)) }
-fn inferred(value: bool) -> bool { raw::<_>(raw::<bool>(value)) }
+fn raw<T>(value: T) -> T {
+    value
+}
+fn option<T>(value: Option<T>) -> Option<T> {
+    value
+}
+fn result<T>(value: Result<T, String>) -> Result<T, String> {
+    value
+}
+fn booleans(value: bool) -> bool {
+    raw::<bool>(raw(value))
+}
+fn inferred(value: bool) -> bool {
+    raw::<_>(raw::<bool>(value))
+}
 fn forwarded<T>(value: Result<T, String>) -> Result<T, String> {
     raw::<Result<T, String>>(result::<T>(value))
 }
@@ -23,13 +33,20 @@ fn original_type_arguments_preserve_boundaries_borrowing_and_nested_carriers() {
     let text = String::from("é😀");
     assert_eq!(raw::<&str>(&text), text);
     for error in ["", "é😀", "\0"] {
-        assert_eq!(result::<bool>(Err(String::from(error))), Err(String::from(error)));
+        assert_eq!(
+            result::<bool>(Err(String::from(error))),
+            Err(String::from(error))
+        );
     }
 }
 #[test]
 fn generic_whole_result_forwarding_moves_one_opaque_value_without_early_drop() {
     struct Counted<'a>(&'a Cell<usize>);
-    impl Drop for Counted<'_> { fn drop(&mut self) { self.0.set(self.0.get() + 1); } }
+    impl Drop for Counted<'_> {
+        fn drop(&mut self) {
+            self.0.set(self.0.get() + 1);
+        }
+    }
     let drops = Cell::new(0);
     let value = forwarded(Ok(Counted(&drops)));
     assert_eq!(drops.get(), 0);

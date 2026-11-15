@@ -24,7 +24,10 @@ fn owned_bool_operations_retain_values_and_return_no_element_loan() {
     let unchanged = vectors::vec_bool_truncate(replaced, u64::MAX);
     assert_eq!(unchanged, vec![maximum, maximum, minimum]);
     assert_eq!(vectors::vec_bool_truncate(unchanged, 1), vec![maximum]);
-    assert_eq!(vectors::vec_bool_truncate(vectors::vec_bool_from_slice(&[minimum]), 0), vec![]);
+    assert_eq!(
+        vectors::vec_bool_truncate(vectors::vec_bool_from_slice(&[minimum]), 0),
+        vec![]
+    );
 }
 
 #[test]
@@ -50,7 +53,10 @@ fn owned_u8_operations_retain_values_and_return_no_element_loan() {
     let unchanged = vectors::vec_u8_truncate(replaced, u64::MAX);
     assert_eq!(unchanged, vec![maximum, maximum, minimum]);
     assert_eq!(vectors::vec_u8_truncate(unchanged, 1), vec![maximum]);
-    assert_eq!(vectors::vec_u8_truncate(vectors::vec_u8_from_slice(&[minimum]), 0), vec![]);
+    assert_eq!(
+        vectors::vec_u8_truncate(vectors::vec_u8_from_slice(&[minimum]), 0),
+        vec![]
+    );
 }
 
 #[test]
@@ -76,7 +82,10 @@ fn owned_i8_operations_retain_values_and_return_no_element_loan() {
     let unchanged = vectors::vec_i8_truncate(replaced, u64::MAX);
     assert_eq!(unchanged, vec![maximum, maximum, minimum]);
     assert_eq!(vectors::vec_i8_truncate(unchanged, 1), vec![maximum]);
-    assert_eq!(vectors::vec_i8_truncate(vectors::vec_i8_from_slice(&[minimum]), 0), vec![]);
+    assert_eq!(
+        vectors::vec_i8_truncate(vectors::vec_i8_from_slice(&[minimum]), 0),
+        vec![]
+    );
 }
 
 #[test]
@@ -102,7 +111,10 @@ fn owned_u16_operations_retain_values_and_return_no_element_loan() {
     let unchanged = vectors::vec_u16_truncate(replaced, u64::MAX);
     assert_eq!(unchanged, vec![maximum, maximum, minimum]);
     assert_eq!(vectors::vec_u16_truncate(unchanged, 1), vec![maximum]);
-    assert_eq!(vectors::vec_u16_truncate(vectors::vec_u16_from_slice(&[minimum]), 0), vec![]);
+    assert_eq!(
+        vectors::vec_u16_truncate(vectors::vec_u16_from_slice(&[minimum]), 0),
+        vec![]
+    );
 }
 
 #[test]
@@ -128,7 +140,10 @@ fn owned_i16_operations_retain_values_and_return_no_element_loan() {
     let unchanged = vectors::vec_i16_truncate(replaced, u64::MAX);
     assert_eq!(unchanged, vec![maximum, maximum, minimum]);
     assert_eq!(vectors::vec_i16_truncate(unchanged, 1), vec![maximum]);
-    assert_eq!(vectors::vec_i16_truncate(vectors::vec_i16_from_slice(&[minimum]), 0), vec![]);
+    assert_eq!(
+        vectors::vec_i16_truncate(vectors::vec_i16_from_slice(&[minimum]), 0),
+        vec![]
+    );
 }
 
 #[test]
@@ -154,7 +169,10 @@ fn owned_u32_operations_retain_values_and_return_no_element_loan() {
     let unchanged = vectors::vec_u32_truncate(replaced, u64::MAX);
     assert_eq!(unchanged, vec![maximum, maximum, minimum]);
     assert_eq!(vectors::vec_u32_truncate(unchanged, 1), vec![maximum]);
-    assert_eq!(vectors::vec_u32_truncate(vectors::vec_u32_from_slice(&[minimum]), 0), vec![]);
+    assert_eq!(
+        vectors::vec_u32_truncate(vectors::vec_u32_from_slice(&[minimum]), 0),
+        vec![]
+    );
 }
 
 #[test]
@@ -180,7 +198,10 @@ fn owned_i32_operations_retain_values_and_return_no_element_loan() {
     let unchanged = vectors::vec_i32_truncate(replaced, u64::MAX);
     assert_eq!(unchanged, vec![maximum, maximum, minimum]);
     assert_eq!(vectors::vec_i32_truncate(unchanged, 1), vec![maximum]);
-    assert_eq!(vectors::vec_i32_truncate(vectors::vec_i32_from_slice(&[minimum]), 0), vec![]);
+    assert_eq!(
+        vectors::vec_i32_truncate(vectors::vec_i32_from_slice(&[minimum]), 0),
+        vec![]
+    );
 }
 
 #[test]
@@ -206,7 +227,10 @@ fn owned_u64_operations_retain_values_and_return_no_element_loan() {
     let unchanged = vectors::vec_u64_truncate(replaced, u64::MAX);
     assert_eq!(unchanged, vec![maximum, maximum, minimum]);
     assert_eq!(vectors::vec_u64_truncate(unchanged, 1), vec![maximum]);
-    assert_eq!(vectors::vec_u64_truncate(vectors::vec_u64_from_slice(&[minimum]), 0), vec![]);
+    assert_eq!(
+        vectors::vec_u64_truncate(vectors::vec_u64_from_slice(&[minimum]), 0),
+        vec![]
+    );
 }
 
 #[test]
@@ -232,7 +256,10 @@ fn owned_i64_operations_retain_values_and_return_no_element_loan() {
     let unchanged = vectors::vec_i64_truncate(replaced, u64::MAX);
     assert_eq!(unchanged, vec![maximum, maximum, minimum]);
     assert_eq!(vectors::vec_i64_truncate(unchanged, 1), vec![maximum]);
-    assert_eq!(vectors::vec_i64_truncate(vectors::vec_i64_from_slice(&[minimum]), 0), vec![]);
+    assert_eq!(
+        vectors::vec_i64_truncate(vectors::vec_i64_from_slice(&[minimum]), 0),
+        vec![]
+    );
 }
 
 #[test]
@@ -258,7 +285,10 @@ fn owned_u128_operations_retain_values_and_return_no_element_loan() {
     let unchanged = vectors::vec_u128_truncate(replaced, u64::MAX);
     assert_eq!(unchanged, vec![maximum, maximum, minimum]);
     assert_eq!(vectors::vec_u128_truncate(unchanged, 1), vec![maximum]);
-    assert_eq!(vectors::vec_u128_truncate(vectors::vec_u128_from_slice(&[minimum]), 0), vec![]);
+    assert_eq!(
+        vectors::vec_u128_truncate(vectors::vec_u128_from_slice(&[minimum]), 0),
+        vec![]
+    );
 }
 
 #[test]
@@ -284,7 +314,10 @@ fn owned_i128_operations_retain_values_and_return_no_element_loan() {
     let unchanged = vectors::vec_i128_truncate(replaced, u64::MAX);
     assert_eq!(unchanged, vec![maximum, maximum, minimum]);
     assert_eq!(vectors::vec_i128_truncate(unchanged, 1), vec![maximum]);
-    assert_eq!(vectors::vec_i128_truncate(vectors::vec_i128_from_slice(&[minimum]), 0), vec![]);
+    assert_eq!(
+        vectors::vec_i128_truncate(vectors::vec_i128_from_slice(&[minimum]), 0),
+        vec![]
+    );
 }
 
 #[test]

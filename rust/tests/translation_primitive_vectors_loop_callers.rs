@@ -23,14 +23,91 @@ macro_rules! accumulation {
         }
     };
 }
-accumulation!(loop_bool, bool, true, core_vectors::vec_bool_new, core_vectors::vec_bool_push, core_vectors::vec_bool_len);
-accumulation!(loop_u8, u8, u8::MAX, core_vectors::vec_u8_new, core_vectors::vec_u8_push, core_vectors::vec_u8_len);
-accumulation!(loop_i8, i8, i8::MIN, core_vectors::vec_i8_new, core_vectors::vec_i8_push, core_vectors::vec_i8_len);
-accumulation!(loop_u16, u16, u16::MAX, core_vectors::vec_u16_new, core_vectors::vec_u16_push, core_vectors::vec_u16_len);
-accumulation!(loop_i16, i16, i16::MIN, core_vectors::vec_i16_new, core_vectors::vec_i16_push, core_vectors::vec_i16_len);
-accumulation!(loop_u32, u32, u32::MAX, core_vectors::vec_u32_new, core_vectors::vec_u32_push, core_vectors::vec_u32_len);
-accumulation!(loop_i32, i32, i32::MIN, core_vectors::vec_i32_new, core_vectors::vec_i32_push, core_vectors::vec_i32_len);
-accumulation!(loop_u64, u64, u64::MAX, core_vectors::vec_u64_new, core_vectors::vec_u64_push, core_vectors::vec_u64_len);
-accumulation!(loop_i64, i64, i64::MIN, core_vectors::vec_i64_new, core_vectors::vec_i64_push, core_vectors::vec_i64_len);
-accumulation!(loop_u128, u128, u128::MAX, core_vectors::vec_u128_new, core_vectors::vec_u128_push, core_vectors::vec_u128_len);
-accumulation!(loop_i128, i128, i128::MIN, core_vectors::vec_i128_new, core_vectors::vec_i128_push, core_vectors::vec_i128_len);
+accumulation!(
+    loop_bool,
+    bool,
+    true,
+    core_vectors::vec_bool_new,
+    core_vectors::vec_bool_push,
+    core_vectors::vec_bool_len
+);
+accumulation!(
+    loop_u8,
+    u8,
+    u8::MAX,
+    core_vectors::vec_u8_new,
+    core_vectors::vec_u8_push,
+    core_vectors::vec_u8_len
+);
+accumulation!(
+    loop_i8,
+    i8,
+    i8::MIN,
+    core_vectors::vec_i8_new,
+    core_vectors::vec_i8_push,
+    core_vectors::vec_i8_len
+);
+accumulation!(
+    loop_u16,
+    u16,
+    u16::MAX,
+    core_vectors::vec_u16_new,
+    core_vectors::vec_u16_push,
+    core_vectors::vec_u16_len
+);
+accumulation!(
+    loop_i16,
+    i16,
+    i16::MIN,
+    core_vectors::vec_i16_new,
+    core_vectors::vec_i16_push,
+    core_vectors::vec_i16_len
+);
+accumulation!(
+    loop_u32,
+    u32,
+    u32::MAX,
+    core_vectors::vec_u32_new,
+    core_vectors::vec_u32_push,
+    core_vectors::vec_u32_len
+);
+accumulation!(
+    loop_i32,
+    i32,
+    i32::MIN,
+    core_vectors::vec_i32_new,
+    core_vectors::vec_i32_push,
+    core_vectors::vec_i32_len
+);
+accumulation!(
+    loop_u64,
+    u64,
+    u64::MAX,
+    core_vectors::vec_u64_new,
+    core_vectors::vec_u64_push,
+    core_vectors::vec_u64_len
+);
+accumulation!(
+    loop_i64,
+    i64,
+    i64::MIN,
+    core_vectors::vec_i64_new,
+    core_vectors::vec_i64_push,
+    core_vectors::vec_i64_len
+);
+accumulation!(
+    loop_u128,
+    u128,
+    u128::MAX,
+    core_vectors::vec_u128_new,
+    core_vectors::vec_u128_push,
+    core_vectors::vec_u128_len
+);
+accumulation!(
+    loop_i128,
+    i128,
+    i128::MIN,
+    core_vectors::vec_i128_new,
+    core_vectors::vec_i128_push,
+    core_vectors::vec_i128_len
+);

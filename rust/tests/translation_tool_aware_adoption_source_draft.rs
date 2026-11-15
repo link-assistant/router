@@ -18,7 +18,10 @@ fn original_tool_attribute_preserves_boolean_body_and_derived_owner() {
         let record = Record { value };
         let copied = record.clone();
         assert_eq!(copied.value, value);
-        assert_eq!(format!("{record:?}"), format!("Record {{ value: {value} }}"));
+        assert_eq!(
+            format!("{record:?}"),
+            format!("Record {{ value: {value} }}")
+        );
     }
 }
 

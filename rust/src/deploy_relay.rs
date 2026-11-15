@@ -35,15 +35,17 @@ fn parse_bindings(
         .split(';')
         .filter(|part| !part.trim().is_empty())
         .map(|part| {
-            let (listen, port) = part
-                .rsplit_once(',')
-                .ok_or_else(|| crate::translation_core::format!("invalid relay listener {part:?}; expected ADDR,PORT"))?;
-            listen
-                .parse::<std::net::SocketAddr>()
-                .map_err(|_| crate::translation_core::format!("invalid relay address {listen:?}"))?;
-            let backend_port = port
-                .parse::<u16>()
-                .map_err(|_| crate::translation_core::format!("invalid relay backend port {port:?}"))?;
+            let (listen, port) = part.rsplit_once(',').ok_or_else(|| {
+                crate::translation_core::format!(
+                    "invalid relay listener {part:?}; expected ADDR,PORT"
+                )
+            })?;
+            listen.parse::<std::net::SocketAddr>().map_err(|_| {
+                crate::translation_core::format!("invalid relay address {listen:?}")
+            })?;
+            let backend_port = port.parse::<u16>().map_err(|_| {
+                crate::translation_core::format!("invalid relay backend port {port:?}")
+            })?;
             Ok(Binding {
                 listen: listen.to_string(),
                 backend_port,
@@ -65,8 +67,9 @@ fn valid_backend(value: &crate::translation_core::Str) -> bool {
 }
 
 fn read_backend(state: &Path) -> crate::translation_core::Outcome<String, String> {
-    let backend = std::fs::read_to_string(state)
-        .map_err(|error| crate::translation_core::format!("could not read relay state {}: {error}", state.display()))?;
+    let backend = std::fs::read_to_string(state).map_err(|error| {
+        crate::translation_core::format!("could not read relay state {}: {error}", state.display())
+    })?;
     let backend = backend.trim();
     if !valid_backend(backend) {
         return Err(crate::translation_core::format!(
@@ -243,8 +246,9 @@ pub async fn run_from_env()
     let state = PathBuf::from(state);
     // Fail before binding a public port if the state is missing or malformed.
     read_backend(&state)?;
-    let raw = crate::operation_context::var(LISTENERS_ENV)
-        .map_err(|_| crate::translation_core::format!("{LISTENERS_ENV} is required in deployment relay mode"))?;
+    let raw = crate::operation_context::var(LISTENERS_ENV).map_err(|_| {
+        crate::translation_core::format!("{LISTENERS_ENV} is required in deployment relay mode")
+    })?;
     let bindings = parse_bindings(&raw)?;
     let connections = Arc::new(Mutex::new(Connections::new(&state)?));
     let servers = bindings

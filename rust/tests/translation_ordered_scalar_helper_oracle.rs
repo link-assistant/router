@@ -1,7 +1,7 @@
 //! Independent native evaluation-order expectations for ordered helper drafts.
 //! UNRUN; Rust execution is CI-only after all same-SHA JavaScript gates pass.
 use std::cell::{Cell, RefCell};
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 fn ignore_with_division(left: u8, right: u8) -> u8 {
     let _unused = left / right;
     7

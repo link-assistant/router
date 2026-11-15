@@ -3,9 +3,10 @@
 //! intentionally uninstalled. This is not a std::fmt::Arguments ABI oracle.
 #[path = "../src/translation_core/literal_arguments_core_20261101.rs"]
 mod literal_arguments_core;
-use literal_arguments_core::{__literal_arguments_from_static as make,
-    literal_arguments_byte_len as bytes, literal_arguments_piece_count as pieces,
-    literal_arguments_is_empty as empty, LiteralArguments};
+use literal_arguments_core::{
+    __literal_arguments_from_static as make, LiteralArguments, literal_arguments_byte_len as bytes,
+    literal_arguments_is_empty as empty, literal_arguments_piece_count as pieces,
+};
 
 #[test]
 fn static_storage_empty_piece_distinctions_and_fixed_u64_counts() {
@@ -19,7 +20,10 @@ fn static_storage_empty_piece_distinctions_and_fixed_u64_counts() {
     assert!(!empty(make(&["x"])));
     assert_eq!(bytes(make(&["é東京😀"])), 12);
     assert_eq!(bytes(make(&["{} {{}}"])), 7);
-    assert_eq!(format!("{}", make(&["{uninterpreted} {{}}"])), "{uninterpreted} {{}}");
+    assert_eq!(
+        format!("{}", make(&["{uninterpreted} {{}}"])),
+        "{uninterpreted} {{}}"
+    );
 }
 
 #[test]

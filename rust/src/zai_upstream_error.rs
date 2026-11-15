@@ -207,9 +207,10 @@ pub(crate) fn speaks_zai_business_codes(provider: &crate::providers::ResolvedPro
             .ok()
             .and_then(|url| url.host_str().map(str::to_ascii_lowercase))
             .is_some_and(|host| {
-                ["z.ai", "bigmodel.cn"]
-                    .iter()
-                    .any(|domain| host == *domain || host.ends_with(&crate::translation_core::format!(".{domain}")))
+                ["z.ai", "bigmodel.cn"].iter().any(|domain| {
+                    host == *domain
+                        || host.ends_with(&crate::translation_core::format!(".{domain}"))
+                })
             })
 }
 

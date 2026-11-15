@@ -8,7 +8,7 @@ mod model {
         value
     }
 }
-use model::{read, Record, FLAG};
+use model::{FLAG, Record, read};
 
 #[rustfmt::skip]
 fn selected(value: bool) -> bool { read(value) }

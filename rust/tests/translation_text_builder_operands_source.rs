@@ -15,6 +15,9 @@ fn original_borrowed_suffix_branches_and_owned_inputs() {
     for value in ["", "é😀", "a\0b", " é😀 "] {
         assert_eq!(conditional(value, true), value);
         assert_eq!(conditional(value, false), "é😀");
-        assert_eq!(borrowed_owned_input(value.to_owned()), format!("{}{}", value, value));
+        assert_eq!(
+            borrowed_owned_input(value.to_owned()),
+            format!("{}{}", value, value)
+        );
     }
 }

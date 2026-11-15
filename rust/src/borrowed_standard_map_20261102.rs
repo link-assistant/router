@@ -9,7 +9,10 @@ pub fn borrowed_text_map_matches_literals(
     key: &str,
     literals: &[&str],
 ) -> bool {
-    assert!(literals.len() <= BORROWED_MAP_LITERAL_LIMIT, "borrowed map literal count");
+    assert!(
+        literals.len() <= BORROWED_MAP_LITERAL_LIMIT,
+        "borrowed map literal count"
+    );
     map.get(key)
         .is_some_and(|value| literals.iter().any(|literal| value.as_str() == *literal))
 }

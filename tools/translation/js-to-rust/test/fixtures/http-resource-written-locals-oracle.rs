@@ -1,6 +1,12 @@
 //! Independent original written-local type and behavior oracle. Gated CI only.
-fn absent() -> Option<bool> { let value: Option<bool> = None; value }
-fn nested() -> Option<Option<bool>> { let value: Option<Option<bool>> = Some(None); value }
+fn absent() -> Option<bool> {
+    let value: Option<bool> = None;
+    value
+}
+fn nested() -> Option<Option<bool>> {
+    let value: Option<Option<bool>> = Some(None);
+    value
+}
 fn selected(flag: bool) -> Option<bool> {
     let value: Option<bool> = if flag { None } else { Some(true) };
     value
@@ -19,6 +25,9 @@ fn original_contextual_locals_keep_empty_nested_success_and_failure_values() {
         assert_eq!(outcome(true, payload, String::from("unused")), Ok(payload));
     }
     for message in ["", "é😀", "\0"] {
-        assert_eq!(outcome(false, true, String::from(message)), Err(String::from(message)));
+        assert_eq!(
+            outcome(false, true, String::from(message)),
+            Err(String::from(message))
+        );
     }
 }

@@ -8,8 +8,10 @@ use link_assistant_router::subscription::SubscriptionProvider;
 use serde_json::Value;
 
 fn vectors() -> Value {
-    serde_json::from_str(include_str!("fixtures/policy-collection-edges-20261101.json"))
-        .expect("independently authored policy edge cases")
+    serde_json::from_str(include_str!(
+        "fixtures/policy-collection-edges-20261101.json"
+    ))
+    .expect("independently authored policy edge cases")
 }
 fn strings<'a>(value: &'a Value, name: &str) -> Vec<&'a str> {
     value[name]
@@ -45,11 +47,7 @@ fn aliases_deduplicate_to_nominal_records_and_sort_independently_of_insertion_or
             }
             let policy = SubscriptionEntitlementPolicy::parse(order).expect("accepted aliases");
             assert_eq!(policy.overrides(), expected_records());
-            let displayed: Vec<_> = policy
-                .overrides()
-                .iter()
-                .map(ToString::to_string)
-                .collect();
+            let displayed: Vec<_> = policy.overrides().iter().map(ToString::to_string).collect();
             assert_eq!(displayed, strings(&cases, "sortedOverrides"));
             // Returned Vec/Copy records belong to the caller, not to the policy set.
             let mut detached = policy.overrides();
@@ -118,12 +116,32 @@ fn explicit_bridges_do_not_override_protocol_identity_or_an_absent_signed_client
         .expect("reviewed proxy");
     // Independent complete cell expectations, not generated from the matcher.
     for (client, provider, protocol, expected) in [
-        (Codex, SubscriptionProvider::Claude, OpenAIResponses, Override),
-        (ClaudeCode, SubscriptionProvider::Codex, AnthropicMessages, Override),
+        (
+            Codex,
+            SubscriptionProvider::Claude,
+            OpenAIResponses,
+            Override,
+        ),
+        (
+            ClaudeCode,
+            SubscriptionProvider::Codex,
+            AnthropicMessages,
+            Override,
+        ),
         (Codex, SubscriptionProvider::Claude, OpenAIChat, Denied),
-        (ClaudeCode, SubscriptionProvider::Codex, OpenAIResponses, Denied),
+        (
+            ClaudeCode,
+            SubscriptionProvider::Codex,
+            OpenAIResponses,
+            Denied,
+        ),
         (Codex, SubscriptionProvider::Codex, OpenAIResponses, Native),
-        (ClaudeCode, SubscriptionProvider::Claude, AnthropicMessages, Native),
+        (
+            ClaudeCode,
+            SubscriptionProvider::Claude,
+            AnthropicMessages,
+            Native,
+        ),
         (GeminiCli, SubscriptionProvider::Gemini, Catalog, Native),
         (QwenCode, SubscriptionProvider::Qwen, OpenAIChat, Denied),
     ] {
@@ -148,10 +166,9 @@ fn actual_duration_formatter_retains_i64_extrema_and_integer_day_boundaries() {
     // Inputs are decimal strings so the receiving JS cases must not round them
     // through Number. The two large adjacent values straddle a day boundary
     // above 2^53, where a float-based translation can give the wrong day.
-    let cases: Value = serde_json::from_str(include_str!(
-        "fixtures/scalar-format-edges-20261101.json"
-    ))
-    .expect("independent signed formatting vectors");
+    let cases: Value =
+        serde_json::from_str(include_str!("fixtures/scalar-format-edges-20261101.json"))
+            .expect("independent signed formatting vectors");
     assert_eq!(cases["integerEncoding"], "signed-decimal-string");
     for row in cases["cases"].as_array().expect("format case array") {
         let minutes = row["minutes"]
@@ -160,7 +177,10 @@ fn actual_duration_formatter_retains_i64_extrema_and_integer_day_boundaries() {
             .parse::<i64>()
             .expect("native i64 input");
         let expected = row["expected"].as_str().expect("independent expected text");
-        assert_eq!(link_assistant_router::auth_import::humanize_minutes(minutes), expected);
+        assert_eq!(
+            link_assistant_router::auth_import::humanize_minutes(minutes),
+            expected
+        );
     }
 }
 

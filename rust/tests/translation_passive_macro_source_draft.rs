@@ -3,12 +3,16 @@
 macro_rules! make {
     ($name:ident, $value:literal) => {
         #[allow(dead_code)]
-        pub fn $name() -> u8 { $value }
+        pub fn $name() -> u8 {
+            $value
+        }
     };
 }
 mod child {
     make!(seven, 7);
-    pub mod nested { make!(nine, 9); }
+    pub mod nested {
+        make!(nine, 9);
+    }
 }
 make!(three, 3);
 

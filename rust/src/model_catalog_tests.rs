@@ -986,6 +986,5 @@ fn successful_catalogs_persist_losslessly_but_restart_fail_closed() {
     );
 }
 
-
 #[path = "model_catalog_translation_tests.rs"]
 mod translation_reader_cases;

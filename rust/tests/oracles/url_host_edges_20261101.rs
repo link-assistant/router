@@ -7,7 +7,8 @@ use std::collections::BTreeSet;
 fn actual_locked_url_parser_retains_numeric_dns_ipv6_and_idna_boundaries() {
     let data: Value = serde_json::from_str(include_str!(
         "../fixtures/persistent-url-host-boundaries-20261101.json"
-    )).expect("independent host-boundary expectations");
+    ))
+    .expect("independent host-boundary expectations");
     assert_eq!(data["upstream"], "url2.5.8");
     let mut seen = BTreeSet::new();
     let rows = data["rows"].as_array().expect("all independent URL cases");
@@ -17,10 +18,19 @@ fn actual_locked_url_parser_retains_numeric_dns_ipv6_and_idna_boundaries() {
         assert!(seen.insert(input), "duplicate native host case");
         let parsed = url::Url::parse(input);
         if row["nativeCanonical"].is_null() {
-            assert!(parsed.is_err(), "invalid numeric-host URL was accepted: {input}");
+            assert!(
+                parsed.is_err(),
+                "invalid numeric-host URL was accepted: {input}"
+            );
         } else {
-            let expected = row["nativeCanonical"].as_str().expect("independent complete canonical URL");
-            assert_eq!(parsed.expect("valid native URL domain").as_str(), expected, "{input}");
+            let expected = row["nativeCanonical"]
+                .as_str()
+                .expect("independent complete canonical URL");
+            assert_eq!(
+                parsed.expect("valid native URL domain").as_str(),
+                expected,
+                "{input}"
+            );
         }
     }
 }

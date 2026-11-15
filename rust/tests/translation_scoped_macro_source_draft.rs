@@ -1,13 +1,29 @@
 //! Independent original Rust textual-scope oracle. Gated CI only; never local.
-macro_rules! chosen { ($name:ident) => { pub fn $name() -> u8 { 7 } }; }
+macro_rules! chosen {
+    ($name:ident) => {
+        pub fn $name() -> u8 {
+            7
+        }
+    };
+}
 
 mod first {
     chosen!(inherited);
-    macro_rules! chosen { ($name:ident) => { pub fn $name() -> u8 { 9 } }; }
+    macro_rules! chosen {
+        ($name:ident) => {
+            pub fn $name() -> u8 {
+                9
+            }
+        };
+    }
     chosen!(shadowed);
-    pub mod deep { chosen!(nested); }
+    pub mod deep {
+        chosen!(nested);
+    }
 }
-mod sibling { chosen!(separate); }
+mod sibling {
+    chosen!(separate);
+}
 chosen!(after);
 
 #[test]

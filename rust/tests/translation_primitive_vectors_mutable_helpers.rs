@@ -50,7 +50,10 @@ macro_rules! helper_case {
             values = vectors::$push(values, maximum);
             assert_eq!(values, vec![minimum, maximum, maximum]);
             for limit in [0_u64, 1, 3] {
-                assert_eq!(accumulate(maximum, limit), vec![maximum; 1 + limit as usize]);
+                assert_eq!(
+                    accumulate(maximum, limit),
+                    vec![maximum; 1 + limit as usize]
+                );
             }
         }
     };

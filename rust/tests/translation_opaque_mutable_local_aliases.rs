@@ -1,5 +1,7 @@
 // Independent opaque-mutable/immutable alias oracle SOURCE; gated native CI only.
-use link_assistant_router::{translation_primitive_option_core as option_core, translation_text_core as text_core};
+use link_assistant_router::{
+    translation_primitive_option_core as option_core, translation_text_core as text_core,
+};
 #[test]
 fn independent_mutable_scalar_locals_preserve_immutable_text_alias_behavior() {
     for value in ["", "é😀", "failure"] {

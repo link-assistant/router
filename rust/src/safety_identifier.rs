@@ -91,7 +91,9 @@ mod json_projection_translation_tests {
     ) -> crate::translation_core::Outcome<(), String> {
         match value {
             None | Some(crate::translation_core::Json::Null) => Ok(()),
-            Some(crate::translation_core::Json::String(identifier)) => validate_openai(Some(identifier)),
+            Some(crate::translation_core::Json::String(identifier)) => {
+                validate_openai(Some(identifier))
+            }
             Some(_) => Err("safety_identifier must be a string".into()),
         }
     }
@@ -108,8 +110,14 @@ mod json_projection_translation_tests {
 
     #[test]
     fn projected_validation_preserves_original_json_patterns() {
-        assert_eq!(super::validate_openai_value(None), validate_openai_value_reference(None));
-        assert_eq!(super::validate_openai_user_value(None), validate_openai_user_value_reference(None));
+        assert_eq!(
+            super::validate_openai_value(None),
+            validate_openai_value_reference(None)
+        );
+        assert_eq!(
+            super::validate_openai_user_value(None),
+            validate_openai_user_value_reference(None)
+        );
         let mut values = vec![
             serde_json::Value::Null,
             serde_json::Value::Bool(false),
@@ -124,8 +132,14 @@ mod json_projection_translation_tests {
             }
         }
         for value in &values {
-            assert_eq!(super::validate_openai_value(Some(value)), validate_openai_value_reference(Some(value)));
-            assert_eq!(super::validate_openai_user_value(Some(value)), validate_openai_user_value_reference(Some(value)));
+            assert_eq!(
+                super::validate_openai_value(Some(value)),
+                validate_openai_value_reference(Some(value))
+            );
+            assert_eq!(
+                super::validate_openai_user_value(Some(value)),
+                validate_openai_user_value_reference(Some(value))
+            );
         }
     }
 }

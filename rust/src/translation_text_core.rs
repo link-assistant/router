@@ -11,9 +11,14 @@ fn replaced(value: &str, pattern: &str, replacement: &str, count: u64) -> String
     checked(replacement);
     let matches = value.matches(pattern).count() as u64;
     let count = count.min(matches);
-    let length = value.len() as u64 - count * pattern.len() as u64 + count * replacement.len() as u64;
+    let length =
+        value.len() as u64 - count * pattern.len() as u64 + count * replacement.len() as u64;
     assert!(length <= LIMIT as u64, "text output bound");
-    value.replacen(pattern, replacement, usize::try_from(count).expect("bounded replacement count"))
+    value.replacen(
+        pattern,
+        replacement,
+        usize::try_from(count).expect("bounded replacement count"),
+    )
 }
 
 #[must_use]
@@ -113,7 +118,9 @@ pub fn replacen(value: &str, pattern: &str, replacement: &str, count: u64) -> St
 #[must_use]
 pub fn repeat(value: &str, count: u64) -> String {
     checked(value);
-    if value.is_empty() { return String::new(); }
+    if value.is_empty() {
+        return String::new();
+    }
     assert!(count <= (LIMIT / value.len()) as u64, "text output bound");
     value.repeat(usize::try_from(count).expect("bounded repeat count"))
 }
@@ -122,8 +129,13 @@ pub fn repeat(value: &str, count: u64) -> String {
 pub fn take_chars(value: &str, count: u64) -> &str {
     checked(value);
     let length = value.chars().count() as u64;
-    if count >= length { return value; }
-    let end = value.char_indices().nth(usize::try_from(count).expect("bounded character count")).map_or(value.len(), |(index, _)| index);
+    if count >= length {
+        return value;
+    }
+    let end = value
+        .char_indices()
+        .nth(usize::try_from(count).expect("bounded character count"))
+        .map_or(value.len(), |(index, _)| index);
     &value[..end]
 }
 
@@ -131,16 +143,26 @@ pub fn take_chars(value: &str, count: u64) -> &str {
 pub fn drop_chars(value: &str, count: u64) -> &str {
     checked(value);
     let length = value.chars().count() as u64;
-    if count >= length { return &value[value.len()..]; }
-    let start = value.char_indices().nth(usize::try_from(count).expect("bounded character count")).map_or(value.len(), |(index, _)| index);
+    if count >= length {
+        return &value[value.len()..];
+    }
+    let start = value
+        .char_indices()
+        .nth(usize::try_from(count).expect("bounded character count"))
+        .map_or(value.len(), |(index, _)| index);
     &value[start..]
 }
 
 #[must_use]
 pub fn slice_bytes(value: &str, start: u64, end: u64) -> Option<&str> {
     checked(value);
-    if start > end || end > value.len() as u64 { return None; }
-    value.get(usize::try_from(start).expect("bounded byte index")..usize::try_from(end).expect("bounded byte index"))
+    if start > end || end > value.len() as u64 {
+        return None;
+    }
+    value.get(
+        usize::try_from(start).expect("bounded byte index")
+            ..usize::try_from(end).expect("bounded byte index"),
+    )
 }
 
 #[must_use]
@@ -301,7 +323,6 @@ pub fn rsplit_once_right_or_self<'a>(value: &'a str, pattern: &str) -> &'a str {
 pub fn rsplit_once_right_or_empty<'a>(value: &'a str, pattern: &str) -> &'a str {
     rsplit_once_right(value, pattern).unwrap_or("")
 }
-
 
 /// Copy a bounded UTF-8 value into independent owned String storage.
 #[must_use]

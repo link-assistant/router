@@ -1,8 +1,14 @@
 //! Independent actual Rust doc-comment token payload oracle. Gated CI only.
 macro_rules! doc_data {
-    (#[doc = $value:literal]) => { $value };
-    (#![doc = $value:literal]) => { $value };
-    () => { "" };
+    (#[doc = $value:literal]) => {
+        $value
+    };
+    (#![doc = $value:literal]) => {
+        $value
+    };
+    () => {
+        ""
+    };
 }
 const OUTER: &str = doc_data! {
     /// original "quote" \ α😀

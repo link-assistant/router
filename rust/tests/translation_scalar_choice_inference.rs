@@ -11,7 +11,13 @@ fn signed(value: i128, flag: bool) -> Vec<i128> {
     vec![copied, selected, value]
 }
 fn scalar(value: u128, first: bool, second: bool) -> u128 {
-    if first { u128::MAX } else if second { 0 } else { value }
+    if first {
+        u128::MAX
+    } else if second {
+        0
+    } else {
+        value
+    }
 }
 fn gate(value: u8) -> bool {
     let _checked = value.checked_add(1).expect("attempt to add with overflow");

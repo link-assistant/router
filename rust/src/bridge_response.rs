@@ -455,13 +455,12 @@ pub fn validate_anthropic_response_citations(
         let Some(citations) = block.get("citations") else {
             continue;
         };
-        let citations = citations
-            .as_array()
-            .ok_or_else(|| crate::translation_core::format!("content[{block_index}].citations must be an array"))?;
-        let text = block
-            .get("text")
-            .and_then(Value::as_str)
-            .ok_or_else(|| crate::translation_core::format!("content[{block_index}].text is required"))?;
+        let citations = citations.as_array().ok_or_else(|| {
+            crate::translation_core::format!("content[{block_index}].citations must be an array")
+        })?;
+        let text = block.get("text").and_then(Value::as_str).ok_or_else(|| {
+            crate::translation_core::format!("content[{block_index}].text is required")
+        })?;
         let mut from = 0;
         for (citation_index, citation) in citations.iter().enumerate() {
             citation_url(citation).ok_or_else(|| {

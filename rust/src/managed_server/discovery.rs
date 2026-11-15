@@ -96,9 +96,7 @@ fn parse_published_ports(listing: &str) -> Vec<u16> {
         };
         // Only bindings a loopback caller can actually reach. A container
         // published to one specific external address is not reachable here.
-        if !matches!(address, "" | "127.0.0.1" | "0.0.0.0" | "[::]")
-            || !mapping.ends_with("/tcp")
-        {
+        if !matches!(address, "" | "127.0.0.1" | "0.0.0.0" | "[::]") || !mapping.ends_with("/tcp") {
             continue;
         }
         if let Ok(port) = port.trim().parse::<u16>()
@@ -106,7 +104,9 @@ fn parse_published_ports(listing: &str) -> Vec<u16> {
             && !ports.contains(&port)
         {
             ports.push(port);
-            if ports.len() == 64 { break; }
+            if ports.len() == 64 {
+                break;
+            }
         }
     }
     ports
@@ -138,13 +138,19 @@ pub(super) async fn discover_local_router(force_managed: bool) -> Option<String>
     let deadline = std::time::Instant::now() + Duration::from_secs(3);
     let conventional = local_candidate_ports();
     for port in &conventional {
-        if let Some(base_url) = probe_local_router(*port, deadline).await { return Some(base_url); }
+        if let Some(base_url) = probe_local_router(*port, deadline).await {
+            return Some(base_url);
+        }
     }
     let remaining = deadline.saturating_duration_since(std::time::Instant::now());
-    if remaining.is_zero() { return None; }
+    if remaining.is_zero() {
+        return None;
+    }
     for port in published_container_ports_with_budget(remaining) {
         if !conventional.contains(&port) {
-            if let Some(base_url) = probe_local_router(port, deadline).await { return Some(base_url); }
+            if let Some(base_url) = probe_local_router(port, deadline).await {
+                return Some(base_url);
+            }
         }
     }
     None
@@ -152,13 +158,27 @@ pub(super) async fn discover_local_router(force_managed: bool) -> Option<String>
 
 async fn probe_local_router(port: u16, deadline: std::time::Instant) -> Option<String> {
     if deadline.saturating_duration_since(std::time::Instant::now()) < Duration::from_millis(150)
-        || !port_accepts(port) { return None; }
+        || !port_accepts(port)
+    {
+        return None;
+    }
     let remaining = deadline.saturating_duration_since(std::time::Instant::now());
-    if remaining.is_zero() { return None; }
+    if remaining.is_zero() {
+        return None;
+    }
     let base_url = format!("http://127.0.0.1:{port}");
-    if matches!(tokio::time::timeout(remaining.min(Duration::from_secs(1)), verify_health(&base_url)).await, Ok(Ok(()))) {
+    if matches!(
+        tokio::time::timeout(
+            remaining.min(Duration::from_secs(1)),
+            verify_health(&base_url)
+        )
+        .await,
+        Ok(Ok(()))
+    ) {
         Some(base_url)
-    } else { None }
+    } else {
+        None
+    }
 }
 
 /// Whether something is accepting connections on a local port.

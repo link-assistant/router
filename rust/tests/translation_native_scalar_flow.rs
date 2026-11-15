@@ -7,7 +7,11 @@ macro_rules! scalar_flow {
             let right: $type = 51;
             let mut value = left | right;
             value ^= right;
-            if value < right { value |= left; } else { value &= right; }
+            if value < right {
+                value |= left;
+            } else {
+                value &= right;
+            }
             assert_eq!(value, 0);
             assert!(<$type>::MIN <= <$type>::MAX);
             assert_eq!(<$type>::MIN < <$type>::MAX, true);

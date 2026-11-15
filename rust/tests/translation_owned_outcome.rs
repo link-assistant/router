@@ -7,7 +7,10 @@ fn null_presence_result_error_and_eager_fallback_are_distinct() {
     let null = Json::Null;
     let some = json_some(&null);
     assert_eq!(json_option_to_result(&some, "missing"), Ok(Json::Null));
-    assert_eq!(json_option_to_result(&json_none(), "missing"), Err("missing".to_owned()));
+    assert_eq!(
+        json_option_to_result(&json_none(), "missing"),
+        Err("missing".to_owned())
+    );
     let failure = json_err("λ😀\0");
     assert_eq!(failure, Err("λ😀\0".to_owned()));
     assert_eq!(json_result_to_option(&failure), None);

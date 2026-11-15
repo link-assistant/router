@@ -1,13 +1,20 @@
 // Independent native module/interface oracle SOURCE. CI after same-SHA JS gates.
 mod primitive_implementation {
-    pub fn mask(left: u8, right: u8) -> u8 { left | right }
-    pub fn unchanged(value: u128) -> u128 { value }
+    pub fn mask(left: u8, right: u8) -> u8 {
+        left | right
+    }
+    pub fn unchanged(value: u128) -> u128 {
+        value
+    }
     pub fn moved(value: u128, count: i8) -> u128 {
-        assert!((count as u128) < 128_u128, "Rust integer shift count overflow");
+        assert!(
+            (count as u128) < 128_u128,
+            "Rust integer shift count overflow"
+        );
         value << count
     }
 }
-use primitive_implementation::{mask as selected_mask, unchanged, moved};
+use primitive_implementation::{mask as selected_mask, moved, unchanged};
 #[test]
 fn private_scalar_module_public_names_preserve_native_types_and_checked_counts() {
     assert_eq!(selected_mask(85, 51), 119);

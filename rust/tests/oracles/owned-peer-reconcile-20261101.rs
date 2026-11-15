@@ -35,14 +35,23 @@ fn scalar_edits_and_original_error_payloads() {
     assert_eq!(original_combined(85, 51), 119);
     assert_eq!(second_combined(85, 51), 17);
     assert_eq!(changed(&Err("input".to_owned())), Err("paired".to_owned()));
-    assert_eq!(changed(&Ok(serde_json::json!(true))), Ok(serde_json::json!(true)));
+    assert_eq!(
+        changed(&Ok(serde_json::json!(true))),
+        Ok(serde_json::json!(true))
+    );
 }
 
 #[test]
 fn result_option_json_composition_clones_the_owned_value_or_fallback() {
     let value = Ok(serde_json::json!({"snow":"雪😀","values":[true, 7]}));
     let fallback = serde_json::json!({"fallback":true});
-    assert_eq!(recovered(&value, &fallback), serde_json::json!({"snow":"雪😀","values":[true, 7]}));
+    assert_eq!(
+        recovered(&value, &fallback),
+        serde_json::json!({"snow":"雪😀","values":[true, 7]})
+    );
     assert_eq!(recovered(&Err("input".to_owned()), &fallback), fallback);
-    assert_eq!(value, Ok(serde_json::json!({"snow":"雪😀","values":[true, 7]})));
+    assert_eq!(
+        value,
+        Ok(serde_json::json!({"snow":"雪😀","values":[true, 7]}))
+    );
 }

@@ -30,7 +30,12 @@ fn synchronous_branch_and_error_boundary() {
     assert_eq!(std::fs::read(&output).expect("read"), b"payload");
     changed(ordinary(&output), "ignored", false).expect("remove");
     assert!(!output.exists());
-    assert_eq!(changed(ordinary(&output), "ignored", false).expect_err("missing").kind(), std::io::ErrorKind::NotFound);
+    assert_eq!(
+        changed(ordinary(&output), "ignored", false)
+            .expect_err("missing")
+            .kind(),
+        std::io::ErrorKind::NotFound
+    );
 }
 
 #[tokio::test]
@@ -47,7 +52,9 @@ async fn future_creation_is_lazy_selected_branch_is_exclusive_and_error_short_ci
     assert!(!left.exists());
     assert_eq!(std::fs::read(&right).expect("right"), b"payload");
     std::fs::remove_file(&input).expect("remove input");
-    let failure = copied(ordinary(&input), ordinary(&left), ordinary(&right), true).await.expect_err("missing input");
+    let failure = copied(ordinary(&input), ordinary(&left), ordinary(&right), true)
+        .await
+        .expect_err("missing input");
     assert_eq!(failure.kind(), std::io::ErrorKind::NotFound);
     assert!(!left.exists());
     assert_eq!(std::fs::read(&right).expect("unchanged right"), b"payload");

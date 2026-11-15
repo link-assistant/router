@@ -14,7 +14,10 @@ fn original_expression_bytes_keep_integer_order_precedence_and_saturation() {
     }
     for value in [-2_i64, -1, 0, 1] {
         let magnitude = -(value + 1);
-        assert_eq!(core::i64_saturating_abs(magnitude), magnitude.saturating_abs());
+        assert_eq!(
+            core::i64_saturating_abs(magnitude),
+            magnitude.saturating_abs()
+        );
     }
     let initial: u64 = 1 + 2 * 3;
     assert_eq!(core::u64_saturating_mul(initial, 2), 14);

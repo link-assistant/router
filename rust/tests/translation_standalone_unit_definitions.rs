@@ -3,7 +3,9 @@
 fn check(value: u8) {
     let _checked = value.checked_add(1).expect("attempt to add with overflow");
 }
-fn relay(value: u8) { check(value); }
+fn relay(value: u8) {
+    check(value);
+}
 fn scalar(value: u8, flag: bool) -> bool {
     check(value);
     flag

@@ -6,7 +6,10 @@ use link_assistant_router::translation_core as core;
 #[test]
 fn production_owned_and_borrowed_base64_inputs_keep_native_results() {
     for text in ["", "f", "foo", "π\0🙂", "line\nline\r\n"] {
-        assert_eq!(core::base64_standard_encode_text(text), STANDARD.encode(text));
+        assert_eq!(
+            core::base64_standard_encode_text(text),
+            STANDARD.encode(text)
+        );
         assert_eq!(
             core::base64_standard_encode_bytes(text.as_bytes()),
             STANDARD.encode(text.as_bytes())
@@ -40,7 +43,9 @@ fn production_owned_and_borrowed_base64_inputs_keep_native_results() {
 
 #[test]
 fn production_decode_error_identity_and_display_remain_native() {
-    for text in ["", "Zg", "Zg=", "Zg==", "Zh", "?", "AP8Q", "π", "Zm9v\n", "AA=A"] {
+    for text in [
+        "", "Zg", "Zg=", "Zg==", "Zh", "?", "AP8Q", "π", "Zm9v\n", "AA=A",
+    ] {
         let original = STANDARD.decode(text);
         let adopted = core::base64_standard_decode_text(text);
         assert_eq!(adopted, original, "standard input: {text:?}");

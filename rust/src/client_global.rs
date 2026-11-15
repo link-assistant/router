@@ -523,14 +523,27 @@ mod tests {
     // Independent JS/TS global restoration oracle source. UNRUN; gated CI only.
     #[test]
     fn source_draft_global_exact_bytes_and_modes_for_both_native_codecs() {
-        for (client, before) in [(ClientKind::ClaudeCode, "{ \"custom\": 42 }\n"), (ClientKind::Codex, "# exact original\nmodel_provider = \"foreign\"\n")] {
+        for (client, before) in [
+            (ClientKind::ClaudeCode, "{ \"custom\": 42 }\n"),
+            (
+                ClientKind::Codex,
+                "# exact original\nmodel_provider = \"foreign\"\n",
+            ),
+        ] {
             let home = tempfile::tempdir().expect("isolated home");
             let manager = ClientManager::isolated(home.path());
             let path = manager.config_path(client);
             std::fs::create_dir_all(path.parent().expect("parent")).expect("directory");
             std::fs::write(&path, before).expect("config");
             set_file_mode(&path, Some(0o640)).expect("mode");
-            apply_with_manager_and_codex_backend(&manager, client, "http://127.0.0.1:8080", &[], None).expect("global configure");
+            apply_with_manager_and_codex_backend(
+                &manager,
+                client,
+                "http://127.0.0.1:8080",
+                &[],
+                None,
+            )
+            .expect("global configure");
             undo_with_manager(&manager, client).expect("global undo");
             assert_eq!(std::fs::read_to_string(&path).expect("config"), before);
             #[cfg(unix)]
@@ -543,11 +556,21 @@ mod tests {
         let home = tempfile::tempdir().expect("isolated home");
         let manager = ClientManager::isolated(home.path());
         let path = manager.config_path(ClientKind::ClaudeCode);
-        apply_with_manager_and_codex_backend(&manager, ClientKind::ClaudeCode, "http://127.0.0.1:8080", &[], None).expect("configure");
+        apply_with_manager_and_codex_backend(
+            &manager,
+            ClientKind::ClaudeCode,
+            "http://127.0.0.1:8080",
+            &[],
+            None,
+        )
+        .expect("configure");
         let edited = format!("{}\n", std::fs::read_to_string(&path).expect("config"));
         std::fs::write(&path, &edited).expect("edit");
         assert!(undo_with_manager(&manager, ClientKind::ClaudeCode).is_err());
-        assert_eq!(std::fs::read_to_string(&path).expect("preserved edit"), edited);
+        assert_eq!(
+            std::fs::read_to_string(&path).expect("preserved edit"),
+            edited
+        );
         assert!(backup_paths(&path).state.exists());
     }
 }

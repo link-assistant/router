@@ -1,8 +1,11 @@
 // Independent new-vector definition edge oracles. CI ONLY; ALL UNRUN.
 fn scalar(left: u8, right: u8) -> u8 {
-    left.checked_add(right).expect("attempt to add with overflow")
+    left.checked_add(right)
+        .expect("attempt to add with overflow")
 }
-fn helper(left: u8, right: u8) -> Vec<u8> { vec![scalar(left, right), right] }
+fn helper(left: u8, right: u8) -> Vec<u8> {
+    vec![scalar(left, right), right]
+}
 fn values(left: u8, right: u8) -> Vec<u8> {
     let first = helper(left, right);
     let moved = first;

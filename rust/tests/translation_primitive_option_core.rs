@@ -36,8 +36,14 @@ fn unsigned_and_signed_boundaries_are_not_truthiness() {
     assert_eq!(option::i64_expect(Some(i64::MAX), "failure"), i64::MAX);
     assert!(option::i64_is_some(Some(i64::MIN)));
     assert!(option::i64_is_none(None));
-    assert_eq!(option::i64_and(Some(i64::MIN), Some(i64::MAX)), Some(i64::MAX));
-    assert_eq!(option::i64_or(Some(i64::MIN), Some(i64::MAX)), Some(i64::MIN));
+    assert_eq!(
+        option::i64_and(Some(i64::MIN), Some(i64::MAX)),
+        Some(i64::MAX)
+    );
+    assert_eq!(
+        option::i64_or(Some(i64::MIN), Some(i64::MAX)),
+        Some(i64::MIN)
+    );
 }
 
 #[test]

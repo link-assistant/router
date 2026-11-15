@@ -6,7 +6,10 @@ fn absent_loop_options_preserve_nearest_break_and_continue() {
         let mut result = 0_u64;
         while count < 2 {
             count += 1;
-            let found = match source.find('x') { Some(value) => value as u64, None => continue };
+            let found = match source.find('x') {
+                Some(value) => value as u64,
+                None => continue,
+            };
             result = found;
             break;
         }
@@ -15,7 +18,10 @@ fn absent_loop_options_preserve_nearest_break_and_continue() {
     let pieces = vec![Some(vec![0_u8, 255]), Some(vec![128]), None];
     let mut output = Vec::new();
     for piece in pieces {
-        let piece = match piece { Some(piece) => piece, None => break };
+        let piece = match piece {
+            Some(piece) => piece,
+            None => break,
+        };
         output.extend(piece);
     }
     assert_eq!(output, vec![0, 255, 128]);

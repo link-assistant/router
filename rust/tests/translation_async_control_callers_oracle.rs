@@ -12,9 +12,15 @@ async fn bounded_channel_data_order_and_explicit_receiver_cleanup() {
         Ok(Some(value)) if value == "aGk="
     ));
     control::close(&mut receiver);
-    assert!(matches!(control::receive(&mut receiver, &cancellation).await, Ok(None)));
+    assert!(matches!(
+        control::receive(&mut receiver, &cancellation).await,
+        Ok(None)
+    ));
     control::dispose(&mut receiver);
-    assert!(matches!(control::receive(&mut receiver, &cancellation).await, Ok(None)));
+    assert!(matches!(
+        control::receive(&mut receiver, &cancellation).await,
+        Ok(None)
+    ));
 }
 
 #[tokio::test]
@@ -23,18 +29,23 @@ async fn lazy_native_future_preserves_cancellation_and_deadline_result_layers() 
     assert!(control::sleep(0, &cancellation).await.is_ok());
     let nested = control::with_deadline(1000, &cancellation, |child| async move {
         control::sleep(0, &child).await
-    }).await;
+    })
+    .await;
     assert!(matches!(nested, Ok(Ok(()))));
     let timed = control::with_deadline(0, &cancellation, |child| async move {
         control::sleep(1000, &child).await
-    }).await;
+    })
+    .await;
     assert!(matches!(timed, Err(control::ControlError::Timeout)));
     let shared = control::cancel_clone(&cancellation);
     assert!(control::cancel_set(&shared));
     assert!(!control::cancel_set(&shared));
     assert!(control::cancel_is_set(&cancellation));
     control::cancel_wait(&cancellation).await;
-    assert!(matches!(control::sleep(0, &cancellation).await, Err(control::ControlError::Cancelled)));
+    assert!(matches!(
+        control::sleep(0, &cancellation).await,
+        Err(control::ControlError::Cancelled)
+    ));
 }
 
 #[tokio::test]

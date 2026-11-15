@@ -23,7 +23,11 @@ async fn endpoint(delay: u64) -> (String, tokio::task::JoinHandle<()>) {
             request.extend_from_slice(&bytes[..count]);
             assert!(request.len() < 65536);
         }
-        if socket.write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 1\r\nConnection: close\r\n\r\n").await.is_ok() {
+        if socket
+            .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 1\r\nConnection: close\r\n\r\n")
+            .await
+            .is_ok()
+        {
             tokio::time::sleep(Duration::from_millis(delay)).await;
             let _ = socket.write_all(b"x").await;
         }
@@ -39,19 +43,30 @@ async fn unstarted_read_keeps_its_stream_and_started_timeout_closes_before_retur
         let (url, server) = endpoint(0).await;
         let request = value::http_request("GET", &url, &json!([]), "").unwrap();
         let mut stream = transport::open(&client, &request, &token).await.unwrap();
-        assert!(matches!(deadline::read(0, &mut stream, &token).await, Err(control::ControlError::Timeout)));
-        assert_eq!(transport::read(&mut stream, &token).await, Ok(Some("eA==".to_owned())));
+        assert!(matches!(
+            deadline::read(0, &mut stream, &token).await,
+            Err(control::ControlError::Timeout)
+        ));
+        assert_eq!(
+            transport::read(&mut stream, &token).await,
+            Ok(Some("eA==".to_owned()))
+        );
         transport::close(&mut stream);
         server.await.unwrap();
         let (url, server) = endpoint(150).await;
         let request = value::http_request("GET", &url, &json!([]), "").unwrap();
         let mut stream = transport::open(&client, &request, &token).await.unwrap();
-        assert!(matches!(deadline::read(5, &mut stream, &token).await, Err(control::ControlError::Timeout)));
+        assert!(matches!(
+            deadline::read(5, &mut stream, &token).await,
+            Err(control::ControlError::Timeout)
+        ));
         assert_eq!(transport::read(&mut stream, &token).await, Ok(None));
         transport::close(&mut stream);
         transport::client_dispose(&mut client);
         server.await.unwrap();
-    }).await.expect("closed HTTP deadline work must terminate");
+    })
+    .await
+    .expect("closed HTTP deadline work must terminate");
 }
 
 #[tokio::test]
@@ -61,11 +76,19 @@ async fn completed_send_retains_nested_results_and_preexisting_cancellation_does
         let mut client = transport::client_new(1000, 0, 1000, "loopback").unwrap();
         let (url, server) = endpoint(0).await;
         let request = value::http_request("GET", &url, &json!([]), "").unwrap();
-        let response = deadline::send(1000, &client, &request, &token).await.unwrap().unwrap();
+        let response = deadline::send(1000, &client, &request, &token)
+            .await
+            .unwrap()
+            .unwrap();
         assert_eq!(value::http_body_text(&response), Ok("x".to_owned()));
         server.await.unwrap();
         assert!(control::cancel_set(&token));
-        assert!(matches!(deadline::open(1000, &client, &request, &token).await, Err(control::ControlError::Cancelled)));
+        assert!(matches!(
+            deadline::open(1000, &client, &request, &token).await,
+            Err(control::ControlError::Cancelled)
+        ));
         transport::client_dispose(&mut client);
-    }).await.expect("closed HTTP deadline work must terminate");
+    })
+    .await
+    .expect("closed HTTP deadline work must terminate");
 }

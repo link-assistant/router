@@ -273,7 +273,9 @@ pub(super) fn predict(root: &Path) -> io::Result<u64> {
 pub(super) fn checkpoint_status(root: &Path) -> Result<String, String> {
     predict(root)
         .map(|bytes| {
-            crate::translation_core::format!("data_checkpoint estimate_bytes={bytes} budget_bytes={LIMIT} excluded=requests")
+            crate::translation_core::format!(
+                "data_checkpoint estimate_bytes={bytes} budget_bytes={LIMIT} excluded=requests"
+            )
         })
         .map_err(|error| checkpoint_remedy(&error))
 }

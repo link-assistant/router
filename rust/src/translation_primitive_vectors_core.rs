@@ -7,7 +7,10 @@ use ::core::convert::TryFrom;
 const MAX_PRIMITIVE_VECTOR_VALUES: usize = 4096;
 
 fn primitive_vector_bound(length: usize) {
-    assert!(length <= MAX_PRIMITIVE_VECTOR_VALUES, "primitive vector resource bound");
+    assert!(
+        length <= MAX_PRIMITIVE_VECTOR_VALUES,
+        "primitive vector resource bound"
+    );
 }
 
 fn primitive_vector_length<T>(values: &[T]) -> ::core::primitive::u64 {
@@ -65,7 +68,10 @@ pub fn vec_bool_push(
     value: ::core::primitive::bool,
 ) -> ::std::vec::Vec<::core::primitive::bool> {
     primitive_vector_bound(values.len());
-    assert!(values.len() < MAX_PRIMITIVE_VECTOR_VALUES, "primitive vector resource bound");
+    assert!(
+        values.len() < MAX_PRIMITIVE_VECTOR_VALUES,
+        "primitive vector resource bound"
+    );
     values.push(value);
     values
 }
@@ -128,7 +134,10 @@ pub fn vec_u8_push(
     value: ::core::primitive::u8,
 ) -> ::std::vec::Vec<::core::primitive::u8> {
     primitive_vector_bound(values.len());
-    assert!(values.len() < MAX_PRIMITIVE_VECTOR_VALUES, "primitive vector resource bound");
+    assert!(
+        values.len() < MAX_PRIMITIVE_VECTOR_VALUES,
+        "primitive vector resource bound"
+    );
     values.push(value);
     values
 }
@@ -191,7 +200,10 @@ pub fn vec_i8_push(
     value: ::core::primitive::i8,
 ) -> ::std::vec::Vec<::core::primitive::i8> {
     primitive_vector_bound(values.len());
-    assert!(values.len() < MAX_PRIMITIVE_VECTOR_VALUES, "primitive vector resource bound");
+    assert!(
+        values.len() < MAX_PRIMITIVE_VECTOR_VALUES,
+        "primitive vector resource bound"
+    );
     values.push(value);
     values
 }
@@ -254,7 +266,10 @@ pub fn vec_u16_push(
     value: ::core::primitive::u16,
 ) -> ::std::vec::Vec<::core::primitive::u16> {
     primitive_vector_bound(values.len());
-    assert!(values.len() < MAX_PRIMITIVE_VECTOR_VALUES, "primitive vector resource bound");
+    assert!(
+        values.len() < MAX_PRIMITIVE_VECTOR_VALUES,
+        "primitive vector resource bound"
+    );
     values.push(value);
     values
 }
@@ -317,7 +332,10 @@ pub fn vec_i16_push(
     value: ::core::primitive::i16,
 ) -> ::std::vec::Vec<::core::primitive::i16> {
     primitive_vector_bound(values.len());
-    assert!(values.len() < MAX_PRIMITIVE_VECTOR_VALUES, "primitive vector resource bound");
+    assert!(
+        values.len() < MAX_PRIMITIVE_VECTOR_VALUES,
+        "primitive vector resource bound"
+    );
     values.push(value);
     values
 }
@@ -380,7 +398,10 @@ pub fn vec_u32_push(
     value: ::core::primitive::u32,
 ) -> ::std::vec::Vec<::core::primitive::u32> {
     primitive_vector_bound(values.len());
-    assert!(values.len() < MAX_PRIMITIVE_VECTOR_VALUES, "primitive vector resource bound");
+    assert!(
+        values.len() < MAX_PRIMITIVE_VECTOR_VALUES,
+        "primitive vector resource bound"
+    );
     values.push(value);
     values
 }
@@ -443,7 +464,10 @@ pub fn vec_i32_push(
     value: ::core::primitive::i32,
 ) -> ::std::vec::Vec<::core::primitive::i32> {
     primitive_vector_bound(values.len());
-    assert!(values.len() < MAX_PRIMITIVE_VECTOR_VALUES, "primitive vector resource bound");
+    assert!(
+        values.len() < MAX_PRIMITIVE_VECTOR_VALUES,
+        "primitive vector resource bound"
+    );
     values.push(value);
     values
 }
@@ -506,7 +530,10 @@ pub fn vec_u64_push(
     value: ::core::primitive::u64,
 ) -> ::std::vec::Vec<::core::primitive::u64> {
     primitive_vector_bound(values.len());
-    assert!(values.len() < MAX_PRIMITIVE_VECTOR_VALUES, "primitive vector resource bound");
+    assert!(
+        values.len() < MAX_PRIMITIVE_VECTOR_VALUES,
+        "primitive vector resource bound"
+    );
     values.push(value);
     values
 }
@@ -569,7 +596,10 @@ pub fn vec_i64_push(
     value: ::core::primitive::i64,
 ) -> ::std::vec::Vec<::core::primitive::i64> {
     primitive_vector_bound(values.len());
-    assert!(values.len() < MAX_PRIMITIVE_VECTOR_VALUES, "primitive vector resource bound");
+    assert!(
+        values.len() < MAX_PRIMITIVE_VECTOR_VALUES,
+        "primitive vector resource bound"
+    );
     values.push(value);
     values
 }
@@ -632,7 +662,10 @@ pub fn vec_u128_push(
     value: ::core::primitive::u128,
 ) -> ::std::vec::Vec<::core::primitive::u128> {
     primitive_vector_bound(values.len());
-    assert!(values.len() < MAX_PRIMITIVE_VECTOR_VALUES, "primitive vector resource bound");
+    assert!(
+        values.len() < MAX_PRIMITIVE_VECTOR_VALUES,
+        "primitive vector resource bound"
+    );
     values.push(value);
     values
 }
@@ -695,7 +728,10 @@ pub fn vec_i128_push(
     value: ::core::primitive::i128,
 ) -> ::std::vec::Vec<::core::primitive::i128> {
     primitive_vector_bound(values.len());
-    assert!(values.len() < MAX_PRIMITIVE_VECTOR_VALUES, "primitive vector resource bound");
+    assert!(
+        values.len() < MAX_PRIMITIVE_VECTOR_VALUES,
+        "primitive vector resource bound"
+    );
     values.push(value);
     values
 }
@@ -741,4 +777,3 @@ pub fn vec_i128_get(
 ) -> ::core::option::Option<::core::primitive::i128> {
     primitive_vector_get(values, index)
 }
-

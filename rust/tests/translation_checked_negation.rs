@@ -6,11 +6,26 @@ macro_rules! signed {
             assert_eq!(<$ty>::checked_neg(0), Some(0));
             assert_eq!(<$ty>::checked_neg(-1), Some(1));
             assert_eq!(<$ty>::checked_neg(<$ty>::MIN), None);
-            assert_eq!(::core::option::Option::expect(<$ty>::checked_neg(-1), "attempt to negate with overflow"), 1);
-            assert!(std::panic::catch_unwind(|| ::core::option::Option::expect(<$ty>::checked_neg(<$ty>::MIN), "attempt to negate with overflow")).is_err());
+            assert_eq!(
+                ::core::option::Option::expect(
+                    <$ty>::checked_neg(-1),
+                    "attempt to negate with overflow"
+                ),
+                1
+            );
+            assert!(
+                std::panic::catch_unwind(|| ::core::option::Option::expect(
+                    <$ty>::checked_neg(<$ty>::MIN),
+                    "attempt to negate with overflow"
+                ))
+                .is_err()
+            );
             fn guarded(value: $ty, flag: bool) -> $ty {
                 if flag {
-                    ::core::option::Option::expect(<$ty>::checked_neg(value), "attempt to negate with overflow")
+                    ::core::option::Option::expect(
+                        <$ty>::checked_neg(value),
+                        "attempt to negate with overflow",
+                    )
                 } else {
                     value
                 }

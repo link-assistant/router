@@ -2,7 +2,12 @@
 use link_assistant_router::translation_integer_core as core;
 #[test]
 fn immutable_alias_and_selected_result_chains_preserve_boundaries() {
-    for (value, wanted) in [(0_u64, 2_u64), (1, 4), (9_223_372_036_854_775_807, u64::MAX), (u64::MAX, u64::MAX)] {
+    for (value, wanted) in [
+        (0_u64, 2_u64),
+        (1, 4),
+        (9_223_372_036_854_775_807, u64::MAX),
+        (u64::MAX, u64::MAX),
+    ] {
         let alias = value;
         let first = alias.saturating_add(1);
         let original = first.saturating_mul(2);

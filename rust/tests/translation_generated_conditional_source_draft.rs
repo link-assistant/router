@@ -4,11 +4,15 @@
 macro_rules! chosen {
     () => {
         #[cfg_attr(not(any()), doc = "generated α😀", allow(dead_code))]
-        fn after() -> u8 { 7 }
+        fn after() -> u8 {
+            7
+        }
 
         // Native configuration must remove this before literal type checking.
         #[cfg_attr(all(), cfg(any()))]
-        fn hidden() -> u8 { 999 }
+        fn hidden() -> u8 {
+            999
+        }
     };
 }
 

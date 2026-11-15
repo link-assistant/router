@@ -4,10 +4,17 @@ fn owned(seed: Json) -> Vec<Json> {
     translation_core::vec![translation_core::json_copy(&seed), seed]
 }
 fn shared(seed: &Json) -> Vec<Json> {
-    translation_core::vec![translation_core::json_copy(seed), translation_core::json_copy(seed)]
+    translation_core::vec![
+        translation_core::json_copy(seed),
+        translation_core::json_copy(seed)
+    ]
 }
 fn conditional(flag: bool, seed: Json) -> Vec<Json> {
-    if flag { translation_core::vec![seed] } else { translation_core::vec![] }
+    if flag {
+        translation_core::vec![seed]
+    } else {
+        translation_core::vec![]
+    }
 }
 #[test]
 fn copies_preserve_values_and_independent_nested_storage() {

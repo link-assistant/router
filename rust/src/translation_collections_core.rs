@@ -6,7 +6,11 @@ pub fn json_filter<F>(values: &[Json], mut predicate: F) -> Vec<Json>
 where
     F: FnMut(&Json) -> bool,
 {
-    values.iter().filter(|value| predicate(value)).cloned().collect()
+    values
+        .iter()
+        .filter(|value| predicate(value))
+        .cloned()
+        .collect()
 }
 
 /// Stop immediately after the first true predicate result.

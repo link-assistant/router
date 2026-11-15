@@ -15,7 +15,11 @@ fn all_condition_inputs_and_native_extrema() {
     for left in [false, true] {
         for right in [false, true] {
             for seed in [u8::MIN, u8::MAX] {
-                let expected = if left && !right { vec![seed, u8::MAX] } else { vec![] };
+                let expected = if left && !right {
+                    vec![seed, u8::MAX]
+                } else {
+                    vec![]
+                };
                 assert_eq!(values(left, right, seed), expected);
             }
         }

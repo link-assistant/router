@@ -1,5 +1,11 @@
 //! Independent actual word module macro_use oracle. Gated CI only.
-macro_rules! chosen { ($name:ident) => { pub fn $name() -> u8 { 7 } }; }
+macro_rules! chosen {
+    ($name:ident) => {
+        pub fn $name() -> u8 {
+            7
+        }
+    };
+}
 chosen!(before);
 #[macro_use]
 #[path = "../../tools/translation/test/fixtures/module-macro-use/native-provider.rs"]

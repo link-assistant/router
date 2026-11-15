@@ -6,7 +6,9 @@ macro_rules! wrapping_constants {
             const ADD: $type = <$type>::MAX.wrapping_add(1);
             const SUB: $type = <$type>::MIN.wrapping_sub(1);
             const ZERO: $type = <$type>::MAX.wrapping_sub(<$type>::MAX);
-            const fn combine(a: $type, b: $type) -> $type { a.wrapping_add(b) }
+            const fn combine(a: $type, b: $type) -> $type {
+                a.wrapping_add(b)
+            }
             const VIA: $type = combine(<$type>::MAX, 1);
             assert_eq!(ADD, <$type>::MIN);
             assert_eq!(SUB, <$type>::MAX);

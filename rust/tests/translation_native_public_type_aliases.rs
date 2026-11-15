@@ -1,6 +1,8 @@
 // Independent native public fixed aliases SOURCE. CI after all same-SHA JS gates.
 mod implementation {
-    pub fn mask(left: u8, right: u8) -> u8 { left | right }
+    pub fn mask(left: u8, right: u8) -> u8 {
+        left | right
+    }
 }
 pub type Word = ::core::primitive::u8;
 pub type Wide = ::core::primitive::u128;

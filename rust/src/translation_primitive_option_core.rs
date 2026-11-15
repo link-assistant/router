@@ -2,7 +2,10 @@
 const TEXT_LIMIT: usize = 1_048_576;
 
 fn checked_text(value: &str) {
-    assert!(value.len() <= TEXT_LIMIT, "primitive Option text input bound");
+    assert!(
+        value.len() <= TEXT_LIMIT,
+        "primitive Option text input bound"
+    );
 }
 
 fn checked_str_option(value: Option<&str>) {
@@ -619,13 +622,25 @@ pub fn text_owned_unwrap_or_default(value: Option<String>) -> String {
 #[must_use]
 pub fn text_owned_filter_nonempty(value: Option<String>, trim_whitespace: bool) -> Option<String> {
     checked_str_option(value.as_deref());
-    value.filter(|text| if trim_whitespace { !text.trim().is_empty() } else { !text.is_empty() })
+    value.filter(|text| {
+        if trim_whitespace {
+            !text.trim().is_empty()
+        } else {
+            !text.is_empty()
+        }
+    })
 }
 
 #[must_use]
 pub fn str_filter_nonempty(value: Option<&str>, trim_whitespace: bool) -> Option<&str> {
     checked_str_option(value);
-    value.filter(|text| if trim_whitespace { !text.trim().is_empty() } else { !text.is_empty() })
+    value.filter(|text| {
+        if trim_whitespace {
+            !text.trim().is_empty()
+        } else {
+            !text.is_empty()
+        }
+    })
 }
 
 #[must_use]
@@ -672,7 +687,10 @@ pub fn str_ok_or<'input>(value: Option<&'input str>, error: String) -> Result<&'
 }
 
 #[must_use]
-pub fn str_ok_or_text<'input>(value: Option<&'input str>, error: &str) -> Result<&'input str, String> {
+pub fn str_ok_or_text<'input>(
+    value: Option<&'input str>,
+    error: &str,
+) -> Result<&'input str, String> {
     checked_str_option(value);
     checked_text(error);
     value.ok_or_else(|| error.to_owned())

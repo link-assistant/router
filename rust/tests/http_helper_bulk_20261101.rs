@@ -1,8 +1,13 @@
 // Independent native behavior oracle SOURCE; UNRUN. Gated CI only.
-use link_assistant_router::{translation_async_control_core as control,
-    translation_http_transport_core as transport};
+use link_assistant_router::{
+    translation_async_control_core as control, translation_http_transport_core as transport,
+};
 
-fn release_if(client: &mut transport::Client, token: &control::Cancellation, immediate: bool) -> bool {
+fn release_if(
+    client: &mut transport::Client,
+    token: &control::Cancellation,
+    immediate: bool,
+) -> bool {
     if immediate {
         let _ = control::cancel_set(token);
         transport::client_dispose(client);
@@ -11,7 +16,11 @@ fn release_if(client: &mut transport::Client, token: &control::Cancellation, imm
     false
 }
 
-async fn release(client: &mut transport::Client, token: &control::Cancellation, immediate: bool) -> bool {
+async fn release(
+    client: &mut transport::Client,
+    token: &control::Cancellation,
+    immediate: bool,
+) -> bool {
     if release_if(client, token, immediate) {
         control::cancel_is_set(token)
     } else {
@@ -21,7 +30,8 @@ async fn release(client: &mut transport::Client, token: &control::Cancellation, 
 }
 
 #[tokio::test]
-async fn branch_sensitive_helper_cleanup_preserves_cold_cancellation_and_exclusive_client_lifetime() {
+async fn branch_sensitive_helper_cleanup_preserves_cold_cancellation_and_exclusive_client_lifetime()
+{
     for immediate in [false, true] {
         let mut client = transport::client_new(0, 0, 0, "").unwrap();
         let token = control::cancel_new();

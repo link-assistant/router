@@ -158,20 +158,41 @@ pub fn json_i64_field2_or(value: &Json, key: &str, second: &str, other: i64) -> 
 
 #[must_use]
 pub fn json_field3<'a>(value: &'a Json, key: &str, second: &str, third: &str) -> Option<&'a Json> {
-    value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third))
+    value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
 }
 
 #[must_use]
-pub fn json_str_field3<'a>(value: &'a Json, key: &str, second: &str, third: &str) -> Option<&'a str> {
-    match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+pub fn json_str_field3<'a>(
+    value: &'a Json,
+    key: &str,
+    second: &str,
+    third: &str,
+) -> Option<&'a str> {
+    match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+    {
         Some(value) => value.as_str(),
         None => None,
     }
 }
 
 #[must_use]
-pub fn json_str_field3_or_empty<'a>(value: &'a Json, key: &str, second: &str, third: &str) -> &'a str {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+pub fn json_str_field3_or_empty<'a>(
+    value: &'a Json,
+    key: &str,
+    second: &str,
+    third: &str,
+) -> &'a str {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+    {
         Some(value) => value.as_str(),
         None => None,
     })
@@ -180,15 +201,29 @@ pub fn json_str_field3_or_empty<'a>(value: &'a Json, key: &str, second: &str, th
 
 #[must_use]
 pub fn json_bool_field3(value: &Json, key: &str, second: &str, third: &str) -> Option<bool> {
-    match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+    match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+    {
         Some(value) => value.as_bool(),
         None => None,
     }
 }
 
 #[must_use]
-pub fn json_bool_field3_or(value: &Json, key: &str, second: &str, third: &str, other: bool) -> bool {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+pub fn json_bool_field3_or(
+    value: &Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    other: bool,
+) -> bool {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+    {
         Some(value) => value.as_bool(),
         None => None,
     })
@@ -197,7 +232,11 @@ pub fn json_bool_field3_or(value: &Json, key: &str, second: &str, third: &str, o
 
 #[must_use]
 pub fn json_u64_field3(value: &Json, key: &str, second: &str, third: &str) -> Option<u64> {
-    match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+    match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+    {
         Some(value) => value.as_u64(),
         None => None,
     }
@@ -205,7 +244,11 @@ pub fn json_u64_field3(value: &Json, key: &str, second: &str, third: &str) -> Op
 
 #[must_use]
 pub fn json_u64_field3_or(value: &Json, key: &str, second: &str, third: &str, other: u64) -> u64 {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+    {
         Some(value) => value.as_u64(),
         None => None,
     })
@@ -214,7 +257,11 @@ pub fn json_u64_field3_or(value: &Json, key: &str, second: &str, third: &str, ot
 
 #[must_use]
 pub fn json_i64_field3(value: &Json, key: &str, second: &str, third: &str) -> Option<i64> {
-    match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+    match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+    {
         Some(value) => value.as_i64(),
         None => None,
     }
@@ -222,7 +269,11 @@ pub fn json_i64_field3(value: &Json, key: &str, second: &str, third: &str) -> Op
 
 #[must_use]
 pub fn json_i64_field3_or(value: &Json, key: &str, second: &str, third: &str, other: i64) -> i64 {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+    {
         Some(value) => value.as_i64(),
         None => None,
     })
@@ -230,21 +281,53 @@ pub fn json_i64_field3_or(value: &Json, key: &str, second: &str, third: &str, ot
 }
 
 #[must_use]
-pub fn json_field4<'a>(value: &'a Json, key: &str, second: &str, third: &str, fourth: &str) -> Option<&'a Json> {
-    value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth))
+pub fn json_field4<'a>(
+    value: &'a Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+) -> Option<&'a Json> {
+    value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth))
 }
 
 #[must_use]
-pub fn json_str_field4<'a>(value: &'a Json, key: &str, second: &str, third: &str, fourth: &str) -> Option<&'a str> {
-    match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+pub fn json_str_field4<'a>(
+    value: &'a Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+) -> Option<&'a str> {
+    match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth))
+    {
         Some(value) => value.as_str(),
         None => None,
     }
 }
 
 #[must_use]
-pub fn json_str_field4_or_empty<'a>(value: &'a Json, key: &str, second: &str, third: &str, fourth: &str) -> &'a str {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+pub fn json_str_field4_or_empty<'a>(
+    value: &'a Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+) -> &'a str {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth))
+    {
         Some(value) => value.as_str(),
         None => None,
     })
@@ -252,16 +335,39 @@ pub fn json_str_field4_or_empty<'a>(value: &'a Json, key: &str, second: &str, th
 }
 
 #[must_use]
-pub fn json_bool_field4(value: &Json, key: &str, second: &str, third: &str, fourth: &str) -> Option<bool> {
-    match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+pub fn json_bool_field4(
+    value: &Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+) -> Option<bool> {
+    match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth))
+    {
         Some(value) => value.as_bool(),
         None => None,
     }
 }
 
 #[must_use]
-pub fn json_bool_field4_or(value: &Json, key: &str, second: &str, third: &str, fourth: &str, other: bool) -> bool {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+pub fn json_bool_field4_or(
+    value: &Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+    other: bool,
+) -> bool {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth))
+    {
         Some(value) => value.as_bool(),
         None => None,
     })
@@ -269,16 +375,39 @@ pub fn json_bool_field4_or(value: &Json, key: &str, second: &str, third: &str, f
 }
 
 #[must_use]
-pub fn json_u64_field4(value: &Json, key: &str, second: &str, third: &str, fourth: &str) -> Option<u64> {
-    match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+pub fn json_u64_field4(
+    value: &Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+) -> Option<u64> {
+    match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth))
+    {
         Some(value) => value.as_u64(),
         None => None,
     }
 }
 
 #[must_use]
-pub fn json_u64_field4_or(value: &Json, key: &str, second: &str, third: &str, fourth: &str, other: u64) -> u64 {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+pub fn json_u64_field4_or(
+    value: &Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+    other: u64,
+) -> u64 {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth))
+    {
         Some(value) => value.as_u64(),
         None => None,
     })
@@ -286,16 +415,39 @@ pub fn json_u64_field4_or(value: &Json, key: &str, second: &str, third: &str, fo
 }
 
 #[must_use]
-pub fn json_i64_field4(value: &Json, key: &str, second: &str, third: &str, fourth: &str) -> Option<i64> {
-    match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+pub fn json_i64_field4(
+    value: &Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+) -> Option<i64> {
+    match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth))
+    {
         Some(value) => value.as_i64(),
         None => None,
     }
 }
 
 #[must_use]
-pub fn json_i64_field4_or(value: &Json, key: &str, second: &str, third: &str, fourth: &str, other: i64) -> i64 {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+pub fn json_i64_field4_or(
+    value: &Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+    other: i64,
+) -> i64 {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth))
+    {
         Some(value) => value.as_i64(),
         None => None,
     })
@@ -342,7 +494,11 @@ pub fn json_text_field2_or_empty(value: &Json, key: &str, second: &str) -> Strin
 
 #[must_use]
 pub fn json_text_field3(value: &Json, key: &str, second: &str, third: &str) -> Option<String> {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+    {
         Some(value) => value.as_str(),
         None => None,
     })
@@ -351,7 +507,11 @@ pub fn json_text_field3(value: &Json, key: &str, second: &str, third: &str) -> O
 
 #[must_use]
 pub fn json_text_field3_or_empty(value: &Json, key: &str, second: &str, third: &str) -> String {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+    {
         Some(value) => value.as_str(),
         None => None,
     })
@@ -360,8 +520,19 @@ pub fn json_text_field3_or_empty(value: &Json, key: &str, second: &str, third: &
 }
 
 #[must_use]
-pub fn json_text_field4(value: &Json, key: &str, second: &str, third: &str, fourth: &str) -> Option<String> {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+pub fn json_text_field4(
+    value: &Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+) -> Option<String> {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth))
+    {
         Some(value) => value.as_str(),
         None => None,
     })
@@ -369,8 +540,19 @@ pub fn json_text_field4(value: &Json, key: &str, second: &str, third: &str, four
 }
 
 #[must_use]
-pub fn json_text_field4_or_empty(value: &Json, key: &str, second: &str, third: &str, fourth: &str) -> String {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+pub fn json_text_field4_or_empty(
+    value: &Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+) -> String {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth))
+    {
         Some(value) => value.as_str(),
         None => None,
     })
@@ -379,7 +561,11 @@ pub fn json_text_field4_or_empty(value: &Json, key: &str, second: &str, third: &
 }
 
 #[must_use]
-pub fn json_str_field_nonempty<'a>(value: &'a Json, key: &str, trim_whitespace: bool) -> Option<&'a str> {
+pub fn json_str_field_nonempty<'a>(
+    value: &'a Json,
+    key: &str,
+    trim_whitespace: bool,
+) -> Option<&'a str> {
     (match value.get(key) {
         Some(value) => value.as_str(),
         None => None,
@@ -394,7 +580,11 @@ pub fn json_str_field_nonempty<'a>(value: &'a Json, key: &str, trim_whitespace: 
 }
 
 #[must_use]
-pub fn json_str_field_nonempty_or_empty<'a>(value: &'a Json, key: &str, trim_whitespace: bool) -> &'a str {
+pub fn json_str_field_nonempty_or_empty<'a>(
+    value: &'a Json,
+    key: &str,
+    trim_whitespace: bool,
+) -> &'a str {
     (match value.get(key) {
         Some(value) => value.as_str(),
         None => None,
@@ -443,7 +633,12 @@ pub fn json_text_field_nonempty_or_empty(value: &Json, key: &str, trim_whitespac
 }
 
 #[must_use]
-pub fn json_str_field2_nonempty<'a>(value: &'a Json, key: &str, second: &str, trim_whitespace: bool) -> Option<&'a str> {
+pub fn json_str_field2_nonempty<'a>(
+    value: &'a Json,
+    key: &str,
+    second: &str,
+    trim_whitespace: bool,
+) -> Option<&'a str> {
     (match value.get(key).and_then(|value| value.get(second)) {
         Some(value) => value.as_str(),
         None => None,
@@ -458,7 +653,12 @@ pub fn json_str_field2_nonempty<'a>(value: &'a Json, key: &str, second: &str, tr
 }
 
 #[must_use]
-pub fn json_str_field2_nonempty_or_empty<'a>(value: &'a Json, key: &str, second: &str, trim_whitespace: bool) -> &'a str {
+pub fn json_str_field2_nonempty_or_empty<'a>(
+    value: &'a Json,
+    key: &str,
+    second: &str,
+    trim_whitespace: bool,
+) -> &'a str {
     (match value.get(key).and_then(|value| value.get(second)) {
         Some(value) => value.as_str(),
         None => None,
@@ -474,7 +674,12 @@ pub fn json_str_field2_nonempty_or_empty<'a>(value: &'a Json, key: &str, second:
 }
 
 #[must_use]
-pub fn json_text_field2_nonempty(value: &Json, key: &str, second: &str, trim_whitespace: bool) -> Option<String> {
+pub fn json_text_field2_nonempty(
+    value: &Json,
+    key: &str,
+    second: &str,
+    trim_whitespace: bool,
+) -> Option<String> {
     (match value.get(key).and_then(|value| value.get(second)) {
         Some(value) => value.as_str(),
         None => None,
@@ -490,7 +695,12 @@ pub fn json_text_field2_nonempty(value: &Json, key: &str, second: &str, trim_whi
 }
 
 #[must_use]
-pub fn json_text_field2_nonempty_or_empty(value: &Json, key: &str, second: &str, trim_whitespace: bool) -> String {
+pub fn json_text_field2_nonempty_or_empty(
+    value: &Json,
+    key: &str,
+    second: &str,
+    trim_whitespace: bool,
+) -> String {
     (match value.get(key).and_then(|value| value.get(second)) {
         Some(value) => value.as_str(),
         None => None,
@@ -507,8 +717,18 @@ pub fn json_text_field2_nonempty_or_empty(value: &Json, key: &str, second: &str,
 }
 
 #[must_use]
-pub fn json_str_field3_nonempty<'a>(value: &'a Json, key: &str, second: &str, third: &str, trim_whitespace: bool) -> Option<&'a str> {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+pub fn json_str_field3_nonempty<'a>(
+    value: &'a Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    trim_whitespace: bool,
+) -> Option<&'a str> {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+    {
         Some(value) => value.as_str(),
         None => None,
     })
@@ -522,8 +742,18 @@ pub fn json_str_field3_nonempty<'a>(value: &'a Json, key: &str, second: &str, th
 }
 
 #[must_use]
-pub fn json_str_field3_nonempty_or_empty<'a>(value: &'a Json, key: &str, second: &str, third: &str, trim_whitespace: bool) -> &'a str {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+pub fn json_str_field3_nonempty_or_empty<'a>(
+    value: &'a Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    trim_whitespace: bool,
+) -> &'a str {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+    {
         Some(value) => value.as_str(),
         None => None,
     })
@@ -538,8 +768,18 @@ pub fn json_str_field3_nonempty_or_empty<'a>(value: &'a Json, key: &str, second:
 }
 
 #[must_use]
-pub fn json_text_field3_nonempty(value: &Json, key: &str, second: &str, third: &str, trim_whitespace: bool) -> Option<String> {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+pub fn json_text_field3_nonempty(
+    value: &Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    trim_whitespace: bool,
+) -> Option<String> {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+    {
         Some(value) => value.as_str(),
         None => None,
     })
@@ -554,8 +794,18 @@ pub fn json_text_field3_nonempty(value: &Json, key: &str, second: &str, third: &
 }
 
 #[must_use]
-pub fn json_text_field3_nonempty_or_empty(value: &Json, key: &str, second: &str, third: &str, trim_whitespace: bool) -> String {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)) {
+pub fn json_text_field3_nonempty_or_empty(
+    value: &Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    trim_whitespace: bool,
+) -> String {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+    {
         Some(value) => value.as_str(),
         None => None,
     })
@@ -571,8 +821,20 @@ pub fn json_text_field3_nonempty_or_empty(value: &Json, key: &str, second: &str,
 }
 
 #[must_use]
-pub fn json_str_field4_nonempty<'a>(value: &'a Json, key: &str, second: &str, third: &str, fourth: &str, trim_whitespace: bool) -> Option<&'a str> {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+pub fn json_str_field4_nonempty<'a>(
+    value: &'a Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+    trim_whitespace: bool,
+) -> Option<&'a str> {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth))
+    {
         Some(value) => value.as_str(),
         None => None,
     })
@@ -586,8 +848,20 @@ pub fn json_str_field4_nonempty<'a>(value: &'a Json, key: &str, second: &str, th
 }
 
 #[must_use]
-pub fn json_str_field4_nonempty_or_empty<'a>(value: &'a Json, key: &str, second: &str, third: &str, fourth: &str, trim_whitespace: bool) -> &'a str {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+pub fn json_str_field4_nonempty_or_empty<'a>(
+    value: &'a Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+    trim_whitespace: bool,
+) -> &'a str {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth))
+    {
         Some(value) => value.as_str(),
         None => None,
     })
@@ -602,8 +876,20 @@ pub fn json_str_field4_nonempty_or_empty<'a>(value: &'a Json, key: &str, second:
 }
 
 #[must_use]
-pub fn json_text_field4_nonempty(value: &Json, key: &str, second: &str, third: &str, fourth: &str, trim_whitespace: bool) -> Option<String> {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+pub fn json_text_field4_nonempty(
+    value: &Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+    trim_whitespace: bool,
+) -> Option<String> {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth))
+    {
         Some(value) => value.as_str(),
         None => None,
     })
@@ -618,8 +904,20 @@ pub fn json_text_field4_nonempty(value: &Json, key: &str, second: &str, third: &
 }
 
 #[must_use]
-pub fn json_text_field4_nonempty_or_empty(value: &Json, key: &str, second: &str, third: &str, fourth: &str, trim_whitespace: bool) -> String {
-    (match value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)) {
+pub fn json_text_field4_nonempty_or_empty(
+    value: &Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+    trim_whitespace: bool,
+) -> String {
+    (match value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth))
+    {
         Some(value) => value.as_str(),
         None => None,
     })
@@ -664,76 +962,109 @@ pub fn json_owned_index_or_null(value: &Json, index: u64) -> Json {
 
 #[must_use]
 pub fn json_field_or_null<'a>(value: &'a Json, key: &str) -> &'a Json {
-    (value.get(key))
-    .unwrap_or(&Json::Null)
+    (value.get(key)).unwrap_or(&Json::Null)
 }
 
 #[must_use]
 pub fn json_owned_field(value: &Json, key: &str) -> Option<Json> {
-    (value.get(key))
-    .cloned()
+    (value.get(key)).cloned()
 }
 
 #[must_use]
 pub fn json_owned_field_or_null(value: &Json, key: &str) -> Json {
-    (value.get(key))
-    .cloned()
-    .unwrap_or(Json::Null)
+    (value.get(key)).cloned().unwrap_or(Json::Null)
 }
 
 #[must_use]
 pub fn json_field2_or_null<'a>(value: &'a Json, key: &str, second: &str) -> &'a Json {
-    (value.get(key).and_then(|value| value.get(second)))
-    .unwrap_or(&Json::Null)
+    (value.get(key).and_then(|value| value.get(second))).unwrap_or(&Json::Null)
 }
 
 #[must_use]
 pub fn json_owned_field2(value: &Json, key: &str, second: &str) -> Option<Json> {
-    (value.get(key).and_then(|value| value.get(second)))
-    .cloned()
+    (value.get(key).and_then(|value| value.get(second))).cloned()
 }
 
 #[must_use]
 pub fn json_owned_field2_or_null(value: &Json, key: &str, second: &str) -> Json {
     (value.get(key).and_then(|value| value.get(second)))
-    .cloned()
-    .unwrap_or(Json::Null)
+        .cloned()
+        .unwrap_or(Json::Null)
 }
 
 #[must_use]
 pub fn json_field3_or_null<'a>(value: &'a Json, key: &str, second: &str, third: &str) -> &'a Json {
-    (value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)))
+    (value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third)))
     .unwrap_or(&Json::Null)
 }
 
 #[must_use]
 pub fn json_owned_field3(value: &Json, key: &str, second: &str, third: &str) -> Option<Json> {
-    (value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)))
+    (value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third)))
     .cloned()
 }
 
 #[must_use]
 pub fn json_owned_field3_or_null(value: &Json, key: &str, second: &str, third: &str) -> Json {
-    (value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)))
+    (value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third)))
     .cloned()
     .unwrap_or(Json::Null)
 }
 
 #[must_use]
-pub fn json_field4_or_null<'a>(value: &'a Json, key: &str, second: &str, third: &str, fourth: &str) -> &'a Json {
-    (value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)))
+pub fn json_field4_or_null<'a>(
+    value: &'a Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+) -> &'a Json {
+    (value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth)))
     .unwrap_or(&Json::Null)
 }
 
 #[must_use]
-pub fn json_owned_field4(value: &Json, key: &str, second: &str, third: &str, fourth: &str) -> Option<Json> {
-    (value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)))
+pub fn json_owned_field4(
+    value: &Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+) -> Option<Json> {
+    (value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth)))
     .cloned()
 }
 
 #[must_use]
-pub fn json_owned_field4_or_null(value: &Json, key: &str, second: &str, third: &str, fourth: &str) -> Json {
-    (value.get(key).and_then(|value| value.get(second)).and_then(|value| value.get(third)).and_then(|value| value.get(fourth)))
+pub fn json_owned_field4_or_null(
+    value: &Json,
+    key: &str,
+    second: &str,
+    third: &str,
+    fourth: &str,
+) -> Json {
+    (value
+        .get(key)
+        .and_then(|value| value.get(second))
+        .and_then(|value| value.get(third))
+        .and_then(|value| value.get(fourth)))
     .cloned()
     .unwrap_or(Json::Null)
 }

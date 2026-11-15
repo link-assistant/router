@@ -30,7 +30,10 @@ fn filesystem_bytes_are_not_utf8_text() {
     let root = Directory::create();
     let file = root.0.join("binary-雪");
     std::fs::write(&file, [0_u8, 127, 128, 255, 239, 187, 191]).unwrap();
-    assert_eq!(std::fs::read(&file).unwrap(), [0, 127, 128, 255, 239, 187, 191]);
+    assert_eq!(
+        std::fs::read(&file).unwrap(),
+        [0, 127, 128, 255, 239, 187, 191]
+    );
     assert_eq!(
         std::fs::read_to_string(&file).unwrap_err().kind(),
         std::io::ErrorKind::InvalidData

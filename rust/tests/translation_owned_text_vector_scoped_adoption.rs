@@ -5,7 +5,11 @@ mod core;
 fn original(flag: bool, input: &[String]) -> Vec<String> {
     let mut values = Vec::new();
     for value in input {
-        if flag { values.push(value.clone()); } else { values.push(String::new()); }
+        if flag {
+            values.push(value.clone());
+        } else {
+            values.push(String::new());
+        }
     }
     values
 }
@@ -13,9 +17,15 @@ fn adopted(flag: bool, input: &[String]) -> Vec<String> {
     let mut values = core::vec_text_new();
     for value in input {
         if flag {
-            { let item = value.clone(); values = core::vec_text_push(values, item); }
+            {
+                let item = value.clone();
+                values = core::vec_text_push(values, item);
+            }
         } else {
-            { let item = String::new(); values = core::vec_text_push(values, item); }
+            {
+                let item = String::new();
+                values = core::vec_text_push(values, item);
+            }
         }
     }
     values
@@ -34,11 +44,26 @@ fn unit_match_arm_blocks_evaluate_each_selected_operand_once() {
         let mut values = core::vec_text_new();
         let mut calls = 0;
         match selected {
-            true => { let item = { calls += 1; String::from("yes") }; values = core::vec_text_push(values, item); },
-            false => { let item = { calls += 1; String::from("no") }; values = core::vec_text_push(values, item); },
+            true => {
+                let item = {
+                    calls += 1;
+                    String::from("yes")
+                };
+                values = core::vec_text_push(values, item);
+            }
+            false => {
+                let item = {
+                    calls += 1;
+                    String::from("no")
+                };
+                values = core::vec_text_push(values, item);
+            }
         }
         assert_eq!(calls, 1);
-        assert_eq!(values, vec![String::from(if selected { "yes" } else { "no" })]);
+        assert_eq!(
+            values,
+            vec![String::from(if selected { "yes" } else { "no" })]
+        );
     }
 }
 #[test]
@@ -47,8 +72,13 @@ fn while_loop_receiver_reads_precede_moves_and_continue_keeps_the_vector_live() 
     let mut at = 0;
     while at < 4 {
         at += 1;
-        if at == 2 { continue; }
-        { let item = core::vec_text_len(&values).to_string(); values = core::vec_text_push(values, item); }
+        if at == 2 {
+            continue;
+        }
+        {
+            let item = core::vec_text_len(&values).to_string();
+            values = core::vec_text_push(values, item);
+        }
     }
     assert_eq!(values, vec!["0", "1", "2"]);
 }

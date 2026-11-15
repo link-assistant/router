@@ -29,7 +29,8 @@ pub fn compare(
         let Some(models) = candidate.get(&(&row.token_id, &row.client_kind)) else {
             return Err(crate::translation_core::format!(
                 "issued-token catalog unavailable for {} ({})",
-                row.token_id, row.client_kind
+                row.token_id,
+                row.client_kind
             ));
         };
         let missing: Vec<_> = row.models.difference(models).collect();

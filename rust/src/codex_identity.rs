@@ -39,9 +39,10 @@ fn versioned(
     name: &crate::translation_core::Str,
     version: crate::translation_core::Maybe<String>,
 ) -> crate::translation_core::Text {
-    sanitized_token(
-        &version.map_or_else(|| name.to_string(), |version| crate::translation_core::format!("{name}/{version}")),
-    )
+    sanitized_token(&version.map_or_else(
+        || name.to_string(),
+        |version| crate::translation_core::format!("{name}/{version}"),
+    ))
 }
 
 fn tmux_value(format: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {

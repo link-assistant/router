@@ -7,7 +7,9 @@ struct macro_use;
 struct allow;
 
 macro_rules! documentation_value {
-    () => { "The argument has its own macro lookup." };
+    () => {
+        "The argument has its own macro lookup."
+    };
 }
 
 #[macro_use]
@@ -16,7 +18,9 @@ mod provider {
     #![doc = "Provider documentation."]
 
     macro_rules! from_provider {
-        () => { true };
+        () => {
+            true
+        };
     }
 }
 

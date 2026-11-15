@@ -41,7 +41,13 @@ fn nested_early_branches_keep_scalar_results() {
     for condition in [false, true] {
         for left in [0, 255] {
             for right in [0, 255] {
-                let expected = if condition { left } else if left < right { right } else { 7 };
+                let expected = if condition {
+                    left
+                } else if left < right {
+                    right
+                } else {
+                    7
+                };
                 assert_eq!(else_if(condition, left, right), expected);
             }
         }

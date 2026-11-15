@@ -4,12 +4,20 @@ use std::cell::Cell;
 
 #[test]
 fn actual_generic_library_retains_success_values_and_exact_owned_string_errors() {
-    for value in [false, true] { assert_eq!(text_result_identity(Ok(value)), Ok(value)); }
+    for value in [false, true] {
+        assert_eq!(text_result_identity(Ok(value)), Ok(value));
+    }
     assert_eq!(text_result_identity(Ok(u64::MAX)), Ok(u64::MAX));
     assert_eq!(text_result_identity(Ok(i64::MIN)), Ok(i64::MIN));
-    assert_eq!(text_result_identity(Ok(String::from("é😀"))), Ok(String::from("é😀")));
+    assert_eq!(
+        text_result_identity(Ok(String::from("é😀"))),
+        Ok(String::from("é😀"))
+    );
     for message in ["", "é😀", "\0"] {
-        assert_eq!(text_result_identity::<bool>(Err(String::from(message))), Err(String::from(message)));
+        assert_eq!(
+            text_result_identity::<bool>(Err(String::from(message))),
+            Err(String::from(message))
+        );
     }
 }
 
@@ -17,7 +25,9 @@ fn actual_generic_library_retains_success_values_and_exact_owned_string_errors()
 fn generic_success_moves_opaque_payloads_without_early_or_duplicate_drop() {
     struct Counted<'a>(&'a Cell<usize>);
     impl Drop for Counted<'_> {
-        fn drop(&mut self) { self.0.set(self.0.get() + 1); }
+        fn drop(&mut self) {
+            self.0.set(self.0.get() + 1);
+        }
     }
     let drops = Cell::new(0);
     let result = text_result_identity(Ok(Counted(&drops)));

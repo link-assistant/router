@@ -99,12 +99,20 @@ pub fn output(command: &mut Command, deadline: Duration) -> Result<Output> {
 /// Every pipe is drained even after its finite retained buffer is exhausted.
 pub fn output_limited(command: &mut Command, deadline: Duration, maximum: usize) -> Result<Output> {
     if maximum == 0 || maximum > 8 * 1024 * 1024 {
-        return Err(Error::new(ErrorKind::InvalidInput, "diagnostic byte cap must be within 1..=8 MiB"));
+        return Err(Error::new(
+            ErrorKind::InvalidInput,
+            "diagnostic byte cap must be within 1..=8 MiB",
+        ));
     }
     capture(command, deadline, maximum, true)
 }
 
-fn capture(command: &mut Command, deadline: Duration, maximum: usize, reject_oversize: bool) -> Result<Output> {
+fn capture(
+    command: &mut Command,
+    deadline: Duration,
+    maximum: usize,
+    reject_oversize: bool,
+) -> Result<Output> {
     let retained = maximum + usize::from(reject_oversize);
     let end = Instant::now() + deadline;
     #[cfg(unix)]
@@ -155,7 +163,10 @@ fn capture(command: &mut Command, deadline: Duration, maximum: usize, reject_ove
         std::io::Error::new(std::io::ErrorKind::TimedOut, "diagnostic deadline exceeded")
     })?;
     if reject_oversize && (stdout.len() > maximum || stderr.len() > maximum) {
-        return Err(Error::new(ErrorKind::InvalidData, "diagnostic output exceeds its explicit byte cap"));
+        return Err(Error::new(
+            ErrorKind::InvalidData,
+            "diagnostic output exceeds its explicit byte cap",
+        ));
     }
     Ok(Output {
         status,

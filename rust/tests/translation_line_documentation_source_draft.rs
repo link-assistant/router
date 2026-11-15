@@ -5,7 +5,9 @@
 macro_rules! chosen {
     ($name:ident) => {
         #[doc = "generated literal"]
-        fn $name() -> u8 { 7 }
+        fn $name() -> u8 {
+            7
+        }
     };
 }
 
@@ -17,16 +19,22 @@ compile_error!("the inactive item must not expand");
 
 /// Outer function documentation.
 #[cfg(all())]
-fn selected() -> u8 { after() }
+fn selected() -> u8 {
+    after()
+}
 
 mod nested {
     //! Inner module documentation.
     /// Consecutive outer line one.
     /// Consecutive outer line two.
-    pub fn value() -> u8 { 9 }
+    pub fn value() -> u8 {
+        9
+    }
 }
 
-fn literal() -> &'static str { "/// literal" }
+fn literal() -> &'static str {
+    "/// literal"
+}
 
 //// Ordinary four-slash comment.
 /**/

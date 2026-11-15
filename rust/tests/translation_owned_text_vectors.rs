@@ -12,7 +12,10 @@ fn owned_text_operations_match_independent_standard_vec_results() {
     let replaced = core::vec_text_replace(copied, 1, String::from("changed"));
     assert_eq!(selected, "λ😀");
     assert_eq!(original[1], "λ😀");
-    assert_eq!(replaced, vec![String::new(), String::from("changed"), String::from("a\0b")]);
+    assert_eq!(
+        replaced,
+        vec![String::new(), String::from("changed"), String::from("a\0b")]
+    );
     assert_eq!(core::vec_text_get(&replaced, u64::MAX), None);
     assert_eq!(core::vec_text_get(&replaced, 3), None);
     assert_eq!(core::vec_text_get(&replaced, 0), Some(String::new()));
@@ -20,8 +23,14 @@ fn owned_text_operations_match_independent_standard_vec_results() {
     let appended = core::vec_text_append(pushed, vec![String::from("last"), String::new()]);
     assert_eq!(appended.last(), Some(&String::new()));
     assert_eq!(core::vec_text_len(&appended), 6);
-    assert_eq!(core::vec_text_truncate(appended.clone(), u64::MAX), appended);
-    assert_eq!(core::vec_text_truncate(appended.clone(), 2), vec![String::new(), String::from("changed")]);
+    assert_eq!(
+        core::vec_text_truncate(appended.clone(), u64::MAX),
+        appended
+    );
+    assert_eq!(
+        core::vec_text_truncate(appended.clone(), 2),
+        vec![String::new(), String::from("changed")]
+    );
     assert!(core::vec_text_truncate(appended, 0).is_empty());
     assert!(core::vec_text_new().is_empty());
 }
@@ -32,9 +41,15 @@ fn bound_accepts_exact_capacity_and_long_valid_strings() {
     assert_eq!(core::vec_text_len(&maximum), 4096);
     assert_eq!(core::vec_text_from_slice(&maximum), maximum);
     assert_eq!(core::vec_text_append(maximum, Vec::new()).len(), 4096);
-    assert_eq!(core::vec_text_push(vec![String::new(); 4095], String::from("last")).len(), 4096);
+    assert_eq!(
+        core::vec_text_push(vec![String::new(); 4095], String::from("last")).len(),
+        4096
+    );
     let long = "λ".repeat(131072);
-    assert_eq!(core::vec_text_get(&core::vec_text_from_slice(&[long.clone()]), 0), Some(long));
+    assert_eq!(
+        core::vec_text_get(&core::vec_text_from_slice(&[long.clone()]), 0),
+        Some(long)
+    );
 }
 
 #[test]

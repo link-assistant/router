@@ -119,9 +119,15 @@ fn compare(
         (Value::Object(expected), Value::Object(actual)) => {
             for (key, value) in expected {
                 let Some(received) = actual.get(key) else {
-                    return Some(crate::translation_core::format!("{path}.{key} is missing from the request"));
+                    return Some(crate::translation_core::format!(
+                        "{path}.{key} is missing from the request"
+                    ));
                 };
-                if let Some(difference) = compare(&crate::translation_core::format!("{path}.{key}"), value, received) {
+                if let Some(difference) = compare(
+                    &crate::translation_core::format!("{path}.{key}"),
+                    value,
+                    received,
+                ) {
                     return Some(difference);
                 }
             }
@@ -143,7 +149,11 @@ fn compare(
                 .zip(actual)
                 .enumerate()
                 .find_map(|(index, (expected, actual))| {
-                    compare(&crate::translation_core::format!("{path}[{index}]"), expected, actual)
+                    compare(
+                        &crate::translation_core::format!("{path}[{index}]"),
+                        expected,
+                        actual,
+                    )
                 })
         }
         _ if recorded == incoming => None,
@@ -162,7 +172,9 @@ fn compare(
 const RENDERED_LIMIT: usize = 120;
 
 /// Render a value for a mismatch report, abbreviated but never elided entirely.
-fn render(value: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Text {
+fn render(
+    value: crate::translation_core::Maybe<&crate::translation_core::Json>,
+) -> crate::translation_core::Text {
     let Some(value) = value else {
         return "nothing".to_string();
     };

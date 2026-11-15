@@ -1,7 +1,13 @@
 // Independent native explicit local annotation oracle. UNRUN; gated Rust CI only.
 use link_assistant_router::translation_fixed_types_core as scalar;
-fn original() -> u64 { let value: u64 = u64::MAX; value }
-fn adopted() -> scalar::U64 { let value: scalar::U64 = scalar::U64::MAX; value }
+fn original() -> u64 {
+    let value: u64 = u64::MAX;
+    value
+}
+fn adopted() -> scalar::U64 {
+    let value: scalar::U64 = scalar::U64::MAX;
+    value
+}
 #[test]
 fn scalar_alias_local_annotations_preserve_native_values_and_borrow_regions() {
     assert_eq!(adopted(), original());

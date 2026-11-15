@@ -1,13 +1,27 @@
 // Independent native machine scalar oracle source. UNRUN; gated Rust CI only.
 use link_assistant_router::translation_fixed_types_core as scalar;
-fn count(value: scalar::Usize) -> scalar::Usize { value }
-fn delta(value: scalar::Isize) -> scalar::Isize { value }
+fn count(value: scalar::Usize) -> scalar::Usize {
+    value
+}
+fn delta(value: scalar::Isize) -> scalar::Isize {
+    value
+}
 #[test]
 fn actual_machine_aliases_retain_native_pointer_width_and_identity() {
-    assert_eq!(std::mem::size_of::<scalar::Usize>(), std::mem::size_of::<usize>());
-    assert_eq!(std::mem::size_of::<scalar::Isize>(), std::mem::size_of::<isize>());
-    for value in [usize::MIN, 1, usize::MAX] { assert_eq!(count(value), value); }
-    for value in [isize::MIN, -1, 0, 1, isize::MAX] { assert_eq!(delta(value), value); }
+    assert_eq!(
+        std::mem::size_of::<scalar::Usize>(),
+        std::mem::size_of::<usize>()
+    );
+    assert_eq!(
+        std::mem::size_of::<scalar::Isize>(),
+        std::mem::size_of::<isize>()
+    );
+    for value in [usize::MIN, 1, usize::MAX] {
+        assert_eq!(count(value), value);
+    }
+    for value in [isize::MIN, -1, 0, 1, isize::MAX] {
+        assert_eq!(delta(value), value);
+    }
 }
 #[cfg(target_pointer_width = "64")]
 #[test]

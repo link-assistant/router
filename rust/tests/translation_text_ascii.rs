@@ -1,6 +1,6 @@
 //! Independent shared vector/native oracle SOURCE. Gated CI only; UNRUN.
 use link_assistant_router::translation_text_core as owned;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 fn option(value: Option<&str>) -> Value {
     match value {
@@ -89,19 +89,41 @@ fn borrowed_results_keep_the_receiver_storage_and_scalar_boundaries() {
 #[test]
 fn all_added_parameters_retain_the_existing_successful_resource_domain() {
     let unary: [fn(&str); 6] = [
-        |value| { let _ = owned::to_ascii_lowercase(value); },
-        |value| { let _ = owned::to_ascii_uppercase(value); },
-        |value| { let _ = owned::is_ascii(value); },
-        |value| { let _ = owned::trim_ascii(value); },
-        |value| { let _ = owned::trim_ascii_start(value); },
-        |value| { let _ = owned::trim_ascii_end(value); },
+        |value| {
+            let _ = owned::to_ascii_lowercase(value);
+        },
+        |value| {
+            let _ = owned::to_ascii_uppercase(value);
+        },
+        |value| {
+            let _ = owned::is_ascii(value);
+        },
+        |value| {
+            let _ = owned::trim_ascii(value);
+        },
+        |value| {
+            let _ = owned::trim_ascii_start(value);
+        },
+        |value| {
+            let _ = owned::trim_ascii_end(value);
+        },
     ];
     let binary: [fn(&str, &str); 5] = [
-        |left, right| { let _ = owned::eq_ignore_ascii_case(left, right); },
-        |left, right| { let _ = owned::split_once_left(left, right); },
-        |left, right| { let _ = owned::split_once_right(left, right); },
-        |left, right| { let _ = owned::rsplit_once_left(left, right); },
-        |left, right| { let _ = owned::rsplit_once_right(left, right); },
+        |left, right| {
+            let _ = owned::eq_ignore_ascii_case(left, right);
+        },
+        |left, right| {
+            let _ = owned::split_once_left(left, right);
+        },
+        |left, right| {
+            let _ = owned::split_once_right(left, right);
+        },
+        |left, right| {
+            let _ = owned::rsplit_once_left(left, right);
+        },
+        |left, right| {
+            let _ = owned::rsplit_once_right(left, right);
+        },
     ];
     let large = "A".repeat(1_048_576);
     assert_eq!(owned::to_ascii_lowercase(&large), "a".repeat(1_048_576));

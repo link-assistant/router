@@ -4,10 +4,14 @@ type First = scalar::U64;
 type Second = First;
 type Flag = scalar::Bool;
 type Real = scalar::F64;
-fn identity(value: Second) -> Second { value }
+fn identity(value: Second) -> Second {
+    value
+}
 #[test]
 fn explicit_native_alias_chains_retain_actual_scalar_assignment_domains() {
-    for value in [0, 1, u64::MAX] { assert_eq!(identity(value), value); }
+    for value in [0, 1, u64::MAX] {
+        assert_eq!(identity(value), value);
+    }
     let flag: Flag = false;
     assert!(!flag);
     let real: Real = -0.0;

@@ -148,7 +148,10 @@ pub async fn start_ephemeral(upstream_origin: &str) -> Result<EphemeralBridge, S
     start_ephemeral_with_ca(upstream_origin, None).await
 }
 
-pub async fn start_ephemeral_with_ca(upstream_origin: &str, ca_cert: Option<&Path>) -> Result<EphemeralBridge, String> {
+pub async fn start_ephemeral_with_ca(
+    upstream_origin: &str,
+    ca_cert: Option<&Path>,
+) -> Result<EphemeralBridge, String> {
     let upstream_origin = canonical_origin(upstream_origin)?;
     let ca_cert = trust::selected_path(&upstream_origin, ca_cert)?;
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
@@ -287,7 +290,10 @@ async fn daemon_shutdown() {
 }
 
 /// Start or reuse the owner-marked bridge for persistent Codex configuration.
-pub async fn ensure_persistent(state_path: &Path, upstream_origin: &str) -> Result<PersistentBridge, String> {
+pub async fn ensure_persistent(
+    state_path: &Path,
+    upstream_origin: &str,
+) -> Result<PersistentBridge, String> {
     ensure_persistent_with_ca(state_path, upstream_origin, None).await
 }
 
@@ -325,13 +331,18 @@ pub async fn ensure_persistent_with_ca(
     } else {
         remove_matching_or_invalid_state(state_path, previous.as_ref())?;
     }
-    let state = match spawn_daemon(state_path, &upstream_origin, preferred, ca_cert.as_deref()).await {
-        Ok(state) => state,
-        Err(first) if preferred.is_some() => spawn_daemon(state_path, &upstream_origin, None, ca_cert.as_deref())
-            .await
-            .map_err(|second| format!("{first}; retry on a new loopback port failed: {second}"))?,
-        Err(error) => return Err(error),
-    };
+    let state =
+        match spawn_daemon(state_path, &upstream_origin, preferred, ca_cert.as_deref()).await {
+            Ok(state) => state,
+            Err(first) if preferred.is_some() => {
+                spawn_daemon(state_path, &upstream_origin, None, ca_cert.as_deref())
+                    .await
+                    .map_err(|second| {
+                        format!("{first}; retry on a new loopback port failed: {second}")
+                    })?
+            }
+            Err(error) => return Err(error),
+        };
     Ok(persistent_handle(state_path, state, true, lock))
 }
 
@@ -400,7 +411,9 @@ async fn spawn_daemon(
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::piped());
-    if let Some(path) = ca_cert { command.env(DAEMON_CA_ENV, path); }
+    if let Some(path) = ca_cert {
+        command.env(DAEMON_CA_ENV, path);
+    }
     command.envs(runtime_environment);
     #[cfg(unix)]
     {
@@ -684,7 +697,11 @@ struct BridgeTarget {
     headers: HeaderMap,
 }
 
-fn bridge_target(state: &BridgeState, incoming: &HeaderMap, uri: &axum::http::Uri) -> Result<BridgeTarget, String> {
+fn bridge_target(
+    state: &BridgeState,
+    incoming: &HeaderMap,
+    uri: &axum::http::Uri,
+) -> Result<BridgeTarget, String> {
     let mut url = format!("{}{}", state.upstream_origin, uri.path());
     if let Some(query) = uri.query() {
         url.push('?');

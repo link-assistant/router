@@ -5,7 +5,10 @@ fn twice(input: bool) -> bool {
     input
 }
 fn inner(input: bool) -> bool {
-    { let input = false; assert!(!input); }
+    {
+        let input = false;
+        assert!(!input);
+    }
     input
 }
 fn identity<T>(value: T) -> T {
@@ -14,7 +17,10 @@ fn identity<T>(value: T) -> T {
 }
 #[test]
 fn initializer_old_binding_scope_exit_and_one_owned_move() {
-    for flag in [false, true] { assert_eq!(twice(flag), flag); assert_eq!(inner(flag), flag); }
+    for flag in [false, true] {
+        assert_eq!(twice(flag), flag);
+        assert_eq!(inner(flag), flag);
+    }
     let text = String::from("é😀");
     assert_eq!(identity(text), "é😀");
 }
@@ -25,7 +31,8 @@ async fn child_shadowing_keeps_the_outer_cancellation_and_inner_value_distinct()
     let cancellation = control::cancel_new();
     let result = control::with_deadline(1000, &cancellation, |cancellation| async move {
         control::cancel_is_set(&cancellation)
-    }).await;
+    })
+    .await;
     assert_eq!(result, Ok(false));
     assert!(!control::cancel_is_set(&cancellation));
 }

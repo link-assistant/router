@@ -36,7 +36,10 @@ fn optional_reads_preserve_absence_unit_scalars_and_borrowed_storage() {
     assert_eq!(Some(&null).and_then(Json::as_null), Some(()));
     assert_eq!(None::<&Json>.and_then(Json::as_null), None);
     let zero = translation_core::json!(-0.0);
-    assert_eq!(decimal(Some(&zero)).expect("float").to_bits(), (-0.0_f64).to_bits());
+    assert_eq!(
+        decimal(Some(&zero)).expect("float").to_bits(),
+        (-0.0_f64).to_bits()
+    );
     let maximum = translation_core::json!(u64::MAX);
     assert_eq!(Some(&maximum).and_then(Json::as_u64), Some(u64::MAX));
     assert_eq!(Some(&maximum).and_then(Json::as_i64), None);

@@ -2,7 +2,12 @@
 #[test]
 fn boolean_bitwise_and_compound_operations_are_eager() {
     use std::cell::RefCell;
-    for (left, right, and, or, xor) in [(false, false, false, false, false), (false, true, false, true, true), (true, false, false, true, true), (true, true, true, true, false)] {
+    for (left, right, and, or, xor) in [
+        (false, false, false, false, false),
+        (false, true, false, true, true),
+        (true, false, false, true, true),
+        (true, true, true, true, false),
+    ] {
         assert_eq!(left & right, and);
         assert_eq!(left | right, or);
         assert_eq!(left ^ right, xor);
@@ -11,7 +16,10 @@ fn boolean_bitwise_and_compound_operations_are_eager() {
         assert_eq!(value, or);
     }
     let trace = RefCell::new(Vec::new());
-    let probe = |name, value| { trace.borrow_mut().push(name); value };
+    let probe = |name, value| {
+        trace.borrow_mut().push(name);
+        value
+    };
     assert!(!(probe("left", false) & probe("right", true)));
     assert_eq!(*trace.borrow(), ["left", "right"]);
     trace.borrow_mut().clear();
@@ -30,8 +38,16 @@ fn fixed_bitwise_operations_keep_width_sign_precedence_and_compound_values() {
             assert_eq!(left ^ right, 102);
         }};
     }
-    domain!(u8); domain!(i8); domain!(u16); domain!(i16); domain!(u32);
-    domain!(i32); domain!(u64); domain!(i64); domain!(u128); domain!(i128);
+    domain!(u8);
+    domain!(i8);
+    domain!(u16);
+    domain!(i16);
+    domain!(u32);
+    domain!(i32);
+    domain!(u64);
+    domain!(i64);
+    domain!(u128);
+    domain!(i128);
     assert_eq!(-1_i128 ^ i128::MIN, i128::MAX);
     assert_eq!(u128::MAX ^ 1, u128::MAX - 1);
     let mut result = 5_u8;

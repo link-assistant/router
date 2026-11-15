@@ -176,7 +176,18 @@ fn complete_translation_edge_rows_match_independent_native_expectations() {
         ),
         (
             r#"{"id":"é😀","scope":"🧱","label":"λ{}\n  tail"}"#,
-            ["é😀", "0", "0", "false", "0/-", "0/-", "0", "-", "🧱", "λ{}\n  tail"],
+            [
+                "é😀",
+                "0",
+                "0",
+                "false",
+                "0/-",
+                "0/-",
+                "0",
+                "-",
+                "🧱",
+                "λ{}\n  tail",
+            ],
         ),
         (
             r#"{"id":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","scope":"unbounded","label":"  "}"#,

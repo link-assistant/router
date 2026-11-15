@@ -1,5 +1,5 @@
 /*! Actual native block documentation oracle SOURCE.
-	Inner tab and Unicode α😀; /* nested comment */ exact content.
+    Inner tab and Unicode α😀; /* nested comment */ exact content.
 */
 #![forbid(unsafe_code)]
 
@@ -11,7 +11,9 @@ macro_rules! chosen {
         /** Generated outer
          * exact content.
          */
-        fn $name() -> u8 { 7 }
+        fn $name() -> u8 {
+            7
+        }
     };
 }
 
@@ -21,7 +23,9 @@ mod nested {
     /*! Actual inner module documentation. */
     /** First outer doc. */
     /// Second outer doc.
-    pub fn value() -> u8 { 9 }
+    pub fn value() -> u8 {
+        9
+    }
 }
 
 /**/

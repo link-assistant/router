@@ -1,6 +1,6 @@
 // Independent native oracle source. Execute only in CI after all JS gates.
-pub use link_assistant_router::openai::ChatMessage;
 pub use link_assistant_router::borrowed_json_tool_predicate_20261103;
+pub use link_assistant_router::openai::ChatMessage;
 use serde_json::{Value, json};
 
 mod production {

@@ -192,7 +192,9 @@ pub fn registry_for_client(
             exposed_id: canonical.to_string(),
             canonical_id: canonical.to_string(),
             owner: "z.ai",
-            display_name: Some(crate::translation_core::format!("z.ai Coding Plan — {canonical}")),
+            display_name: Some(crate::translation_core::format!(
+                "z.ai Coding Plan — {canonical}"
+            )),
             protocol,
         });
     }
@@ -689,7 +691,9 @@ pub(crate) fn authorize_model(
     let mapping = live_registry_for_client(client, live_models)?
         .into_iter()
         .find(|entry| entry.exposed_id == exposed_id && entry.protocol == protocol)
-        .ok_or_else(|| crate::translation_core::format!("model '{exposed_id}' is not permitted for {client}"))?;
+        .ok_or_else(|| {
+            crate::translation_core::format!("model '{exposed_id}' is not permitted for {client}")
+        })?;
     Ok((client, mapping, overridden))
 }
 

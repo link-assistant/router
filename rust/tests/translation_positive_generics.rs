@@ -1,10 +1,18 @@
 // Independent native oracle SOURCE. CI only after all same-SHA JavaScript gates.
-fn identity<T>(value: T) -> T { value }
+fn identity<T>(value: T) -> T {
+    value
+}
 struct Count<const N: usize = 3>;
-impl<const N: usize> Count<N> { fn value() -> usize { N } }
+impl<const N: usize> Count<N> {
+    fn value() -> usize {
+        N
+    }
+}
 struct Settings<const ENABLED: bool = true, const OFFSET: i32 = -7, const CODE: char = 'Ω'>;
 impl<const ENABLED: bool, const OFFSET: i32, const CODE: char> Settings<ENABLED, OFFSET, CODE> {
-    fn values() -> (bool, i32, char) { (ENABLED, OFFSET, CODE) }
+    fn values() -> (bool, i32, char) {
+        (ENABLED, OFFSET, CODE)
+    }
 }
 
 #[test]

@@ -11,5 +11,8 @@ fn nested_control_optional_values_preserve_native_boundaries_and_other_construct
         assert_eq!(nested(Ok(Some(value))), Ok(Some(value)));
     }
     assert_eq!(nested(Ok(None)), Ok(None));
-    assert_eq!(nested(Err(ControlError::Cancelled)), Err(ControlError::Cancelled));
+    assert_eq!(
+        nested(Err(ControlError::Cancelled)),
+        Err(ControlError::Cancelled)
+    );
 }

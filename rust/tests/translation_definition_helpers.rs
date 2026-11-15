@@ -28,11 +28,7 @@ macro_rules! identity_domain {
                 value
             }
             fn use_leaf(flag: bool, value: $kind) -> $kind {
-                if flag {
-                    leaf(value)
-                } else {
-                    value
-                }
+                if flag { leaf(value) } else { value }
             }
             for value in [<$kind>::MIN, 0, <$kind>::MAX] {
                 for flag in [false, true] {

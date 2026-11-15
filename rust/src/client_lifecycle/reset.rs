@@ -103,10 +103,17 @@ fn lock_router_claude_profile(profile: &Profile) -> Result<Option<fs::File>, Str
     if profile.client != ClientKind::ClaudeCode || profile.scope != "router" {
         return Ok(None);
     }
-    let store = profile.stores.iter().find(|store| store.name == "home")
+    let store = profile
+        .stores
+        .iter()
+        .find(|store| store.name == "home")
         .ok_or("Router-owned Claude home store is unavailable")?;
-    let state = store.path.parent().ok_or("Claude home has no state parent")?;
-    fs::create_dir_all(state).map_err(|error| format!("cannot create Claude profile state: {error}"))?;
+    let state = store
+        .path
+        .parent()
+        .ok_or("Claude home has no state parent")?;
+    fs::create_dir_all(state)
+        .map_err(|error| format!("cannot create Claude profile state: {error}"))?;
     super::owner_directory(state)?;
     let mut options = fs::OpenOptions::new();
     options.read(true).write(true).create(true).truncate(false);
@@ -115,9 +122,11 @@ fn lock_router_claude_profile(profile: &Profile) -> Result<Option<fs::File>, Str
         use std::os::unix::fs::OpenOptionsExt as _;
         options.mode(0o600);
     }
-    let file = options.open(state.join("profile-operation.lock"))
+    let file = options
+        .open(state.join("profile-operation.lock"))
         .map_err(|error| format!("cannot open Claude profile-operation lock: {error}"))?;
-    file.try_lock().map_err(|_| "another Claude profile operation is running")?;
+    file.try_lock()
+        .map_err(|_| "another Claude profile operation is running")?;
     Ok(Some(file))
 }
 

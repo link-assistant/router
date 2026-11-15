@@ -33,7 +33,10 @@ fn source_branches_keep_absence_values_lazy_else_and_original_payload_drop() {
         assert_eq!(selected(Some(value)), Some(value));
     }
     assert_eq!(selected(Some(u64::MAX)), Some(u64::MAX));
-    assert_eq!(selected(Some(String::from("é😀"))), Some(String::from("é😀")));
+    assert_eq!(
+        selected(Some(String::from("é😀"))),
+        Some(String::from("é😀"))
+    );
     use std::cell::Cell;
     struct Counted<'a>(&'a Cell<u8>);
     impl Drop for Counted<'_> {

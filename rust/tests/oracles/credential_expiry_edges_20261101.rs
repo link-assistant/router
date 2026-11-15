@@ -6,8 +6,10 @@ use link_assistant_router::subscription::SubscriptionToken;
 use serde_json::Value;
 
 fn cases() -> Value {
-    serde_json::from_str(include_str!("../fixtures/credential-expiry-edges-20261101.json"))
-        .expect("independently authored expiry boundaries")
+    serde_json::from_str(include_str!(
+        "../fixtures/credential-expiry-edges-20261101.json"
+    ))
+    .expect("independently authored expiry boundaries")
 }
 fn context(now_ms: i64) -> OperationContext {
     let mut scope = OperationContext::default();
@@ -34,10 +36,7 @@ fn exact_millisecond_boundaries_and_refresh_presence_keep_native_text_and_token_
             .as_str()
             .map(|delta| now_ms.checked_add(delta.parse().unwrap()).unwrap());
         for refresh in cases["refreshStates"].as_array().unwrap() {
-            let credential = token(
-                expires_at_ms,
-                refresh["token"].as_str().map(str::to_owned),
-            );
+            let credential = token(expires_at_ms, refresh["token"].as_str().map(str::to_owned));
             let before = serde_json::to_value(&credential).expect("token serializes");
             let actual = scope.scope(|| describe_credential(&credential));
             assert_eq!(
@@ -55,7 +54,10 @@ fn exact_millisecond_boundaries_and_refresh_presence_keep_native_text_and_token_
                 "secret-account-do-not-render",
                 "private-origin.invalid",
             ] {
-                assert!(!actual.contains(secret), "credential report disclosed a secret");
+                assert!(
+                    !actual.contains(secret),
+                    "credential report disclosed a secret"
+                );
             }
         }
     }

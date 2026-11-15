@@ -10,9 +10,15 @@ macro_rules! checked_negation {
             assert_eq!((<$type>::MIN + 1).checked_neg(), Some(<$type>::MAX));
             assert_eq!(<$type>::MIN.checked_neg(), None);
             let failure = std::panic::catch_unwind(|| {
-                ::core::option::Option::expect(<$type>::MIN.checked_neg(), "attempt to negate with overflow")
-            }).unwrap_err();
-            let message = failure.downcast_ref::<String>().map(String::as_str)
+                ::core::option::Option::expect(
+                    <$type>::MIN.checked_neg(),
+                    "attempt to negate with overflow",
+                )
+            })
+            .unwrap_err();
+            let message = failure
+                .downcast_ref::<String>()
+                .map(String::as_str)
                 .or_else(|| failure.downcast_ref::<&str>().copied());
             assert_eq!(message, Some("attempt to negate with overflow"));
         }

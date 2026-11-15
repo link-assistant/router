@@ -6,7 +6,10 @@ use ::core::convert::TryFrom;
 const MAX_OWNED_TEXT_VECTOR_VALUES: usize = 4096;
 
 fn owned_text_vector_bound(length: usize) {
-    assert!(length <= MAX_OWNED_TEXT_VECTOR_VALUES, "owned text vector resource bound");
+    assert!(
+        length <= MAX_OWNED_TEXT_VECTOR_VALUES,
+        "owned text vector resource bound"
+    );
 }
 
 fn owned_text_vector_length<T>(values: &[T]) -> ::core::primitive::u64 {
@@ -64,7 +67,10 @@ pub fn vec_text_push(
     value: ::std::string::String,
 ) -> ::std::vec::Vec<::std::string::String> {
     owned_text_vector_bound(values.len());
-    assert!(values.len() < MAX_OWNED_TEXT_VECTOR_VALUES, "owned text vector resource bound");
+    assert!(
+        values.len() < MAX_OWNED_TEXT_VECTOR_VALUES,
+        "owned text vector resource bound"
+    );
     values.push(value);
     values
 }
@@ -110,4 +116,3 @@ pub fn vec_text_get(
 ) -> ::core::option::Option<::std::string::String> {
     owned_text_vector_get(values, index)
 }
-

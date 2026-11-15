@@ -15,10 +15,15 @@ fn constant_array_indices_format_copy_borrowed_str_values() {
 #[test]
 fn changed_native_constant_cell_changes_all_real_uses() {
     const RENAMED_OWNER: [&str; 3] = ["λ🧱", "", "tail"];
-    const fn choose() -> usize { 2 }
+    const fn choose() -> usize {
+        2
+    }
     const INDEX: usize = choose();
     assert_eq!(
-        format!("{0:<6}|{1}|{2}", RENAMED_OWNER[0], RENAMED_OWNER[1], RENAMED_OWNER[INDEX]),
+        format!(
+            "{0:<6}|{1}|{2}",
+            RENAMED_OWNER[0], RENAMED_OWNER[1], RENAMED_OWNER[INDEX]
+        ),
         "λ🧱    ||tail"
     );
     assert_eq!(format!("{0}/{0}", RENAMED_OWNER[0]), "λ🧱/λ🧱");

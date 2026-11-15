@@ -10,7 +10,10 @@ fn generic_library_keeps_absence_scalars_unicode_and_payload_drop_timing() {
     }
     assert_eq!(option_identity(Some(u64::MAX)), Some(u64::MAX));
     assert_eq!(option_identity(Some(i64::MIN)), Some(i64::MIN));
-    assert_eq!(option_identity(Some(String::from("é😀"))), Some(String::from("é😀")));
+    assert_eq!(
+        option_identity(Some(String::from("é😀"))),
+        Some(String::from("é😀"))
+    );
     struct Counted<'a>(&'a Cell<u8>);
     impl Drop for Counted<'_> {
         fn drop(&mut self) {
@@ -33,7 +36,9 @@ fn original_branches<T>(value: Option<T>) -> Option<T> {
 }
 
 fn original_alternative<T>(value: Option<T>) -> Option<T> {
-    let Some(payload) = value else { return None; };
+    let Some(payload) = value else {
+        return None;
+    };
     Some(payload)
 }
 

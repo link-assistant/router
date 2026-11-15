@@ -21,15 +21,34 @@ fn bounded_overrides(input: &[SubscriptionOverride]) -> Vec<SubscriptionOverride
 fn actual_original_policy_owners_preserve_every_client_provider_pair_and_detached_carriers() {
     use ClientKind::{Agent, ClaudeCode, Codex, Cursor, GeminiCli, GrokCli, Opencode, QwenCode};
     use SubscriptionProvider::{Claude, Codex as CodexProvider, Gemini, Qwen};
-    let clients = [Codex, ClaudeCode, Cursor, GeminiCli, GrokCli, Opencode, QwenCode, Agent];
+    let clients = [
+        Codex, ClaudeCode, Cursor, GeminiCli, GrokCli, Opencode, QwenCode, Agent,
+    ];
     let providers = [Claude, CodexProvider, Gemini, Qwen];
-    let input: Vec<_> = clients.iter().flat_map(|client| providers.iter().map(move |provider| SubscriptionOverride { client: *client, provider: *provider })).collect();
+    let input: Vec<_> = clients
+        .iter()
+        .flat_map(|client| {
+            providers.iter().map(move |provider| SubscriptionOverride {
+                client: *client,
+                provider: *provider,
+            })
+        })
+        .collect();
     assert_eq!(input.len(), 32);
     let result = bounded_overrides(&input);
     assert_eq!(result, input);
     assert_ne!(result.as_ptr(), input.as_ptr());
-    assert_eq!(override_clients(&input), clients.iter().flat_map(|client| [*client; 4]).collect::<Vec<_>>());
-    assert_eq!(override_providers(&input), clients.iter().flat_map(|_| providers).collect::<Vec<_>>());
+    assert_eq!(
+        override_clients(&input),
+        clients
+            .iter()
+            .flat_map(|client| [*client; 4])
+            .collect::<Vec<_>>()
+    );
+    assert_eq!(
+        override_providers(&input),
+        clients.iter().flat_map(|_| providers).collect::<Vec<_>>()
+    );
     assert!(copied_overrides(&[]).is_empty());
     assert!(override_clients(&[]).is_empty());
     assert!(override_providers(&[]).is_empty());

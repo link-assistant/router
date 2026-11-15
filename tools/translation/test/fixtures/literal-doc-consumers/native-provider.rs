@@ -4,6 +4,8 @@
 macro_rules! chosen {
     ($name:ident) => {
         #[doc = "Generated function α😀"]
-        pub fn $name() -> u8 { 7 }
+        pub fn $name() -> u8 {
+            7
+        }
     };
 }

@@ -50,9 +50,15 @@ fn carrier(enabled: bool) -> Result<Json, String> {
 fn empty_exclusive_and_iterated_control() {
     let a = Json::String(String::from("a"));
     let b = Json::String(String::from("b"));
-    assert_eq!(until_null(&[a.clone(), Json::Null, b.clone()]), Json::Array(vec![a.clone()]));
+    assert_eq!(
+        until_null(&[a.clone(), Json::Null, b.clone()]),
+        Json::Array(vec![a.clone()])
+    );
     assert_eq!(until_null(&[]), Json::Array(Vec::new()));
-    assert_eq!(skipping_null(&[Json::Null, a.clone(), Json::Null, b.clone()]), Json::Array(vec![a, b]));
+    assert_eq!(
+        skipping_null(&[Json::Null, a.clone(), Json::Null, b.clone()]),
+        Json::Array(vec![a, b])
+    );
     assert_eq!(one_poll(true), Json::Bool(true));
     assert_eq!(one_poll(false), Json::Null);
     assert_eq!(carrier(true), Err(String::from("changed")));
