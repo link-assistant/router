@@ -201,10 +201,13 @@ async fn first_byte_and_idle_bounds_are_distinct_and_active_cancellation_closes_
     let (url, server) = mock(
         0,
         "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\n",
-        vec![(150, b"late".to_vec())],
+        vec![(600, b"late".to_vec())],
     )
     .await;
-    let mut value = client(10, 1000);
+    // reqwest's idle (read) bound also covers reading the response head, so it
+    // needs headroom over loopback scheduling: a 10 ms bound timed out `open`
+    // on a Windows runner (job 132839531233). The body stays 6x later.
+    let mut value = client(100, 1000);
     let mut stream = transport::open(&value, &request(&url), &token)
         .await
         .unwrap();
