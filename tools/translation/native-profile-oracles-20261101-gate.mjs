@@ -1,5 +1,7 @@
 // Operational hosted-CI gate. Never a semantic or translation proof.
 // Importing performs no subprocess, file read, test or Rust invocation.
+// The workflow audit is main's manual development audit; it also runs the original
+// strict JavaScript-first audit over its conserved structural projection.
 import {spawn} from 'node:child_process';
 import {constants,lstatSync,fstatSync,openSync,closeSync,readSync,readdirSync,realpathSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
@@ -35,7 +37,7 @@ async function closing(state){tick(state);const current=context(),report=inspect
 export async function createNativeProfileOracleCiGate(){
  const actual=context(),report=inspectNativeProfileCiContext(actual);if(!report.eligibleContext)fail(report.reasons.join('; '));if(realpathSync(ROOT)!==ROOT)fail('canonical module checkout required');
  const state={context:actual,sourceSha:actual.sourceSha,startedAt:performance.now(),failed:false,rawBytes:0,workflows:workflows()};
- try{const {auditWorkflows}=await import('../../scripts/check-js-first-workflows.mjs');const sources=Object.fromEntries(state.workflows.files.map(row=>[basename(row.path),new TextDecoder('utf8',{fatal:true}).decode(row.bytes)]));const errors=auditWorkflows(sources);if(errors.length)fail('complete existing JavaScript-first workflow audit refused: '+errors.join('; '));await closing(state);const handle=Object.freeze(Object.create(null));gates.set(handle,state);return handle;}catch(error){state.failed=true;throw error;}
+ try{const {auditManualDevelopment}=await import('../../scripts/check-manual-development-workflows.mjs');const sources=Object.fromEntries(state.workflows.files.map(row=>[basename(row.path),new TextDecoder('utf8',{fatal:true}).decode(row.bytes)]));const errors=auditManualDevelopment(sources);if(errors.length)fail('complete manual development workflow audit (with conserved strict JavaScript-first projection) refused: '+errors.join('; '));await closing(state);const handle=Object.freeze(Object.create(null));gates.set(handle,state);return handle;}catch(error){state.failed=true;throw error;}
 }
 export async function requireNativeProfileOracleCiGate(handle){const state=gates.get(handle);if(!state)fail('foreign gate handle; DATA reports cannot unlock Rust');try{await closing(state);return Object.freeze({root:ROOT,sourceSha:state.sourceSha,startedAt:state.startedAt,remainingMs:LIMIT.deadlineMs-(performance.now()-state.startedAt),rawBytes:state.rawBytes,operationalHostedCiOnly:true,semanticAuthority:false});}catch(error){state.failed=true;throw error;}}
 export function poisonNativeProfileOracleCiGate(handle){const state=gates.get(handle);if(!state)fail('foreign gate handle');state.failed=true;}
