@@ -1,4 +1,8 @@
 //! Explicit guarded HTTP/1 pull transport. Implementation internals stay native.
+// Generated translation carrier: the translator emits these shapes to mirror the
+// JavaScript ABI. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::significant_drop_in_scrutinee)]
+#![allow(clippy::significant_drop_tightening)]
 use crate::translation_async_control_core::{Cancellation, cancel_is_set, cancel_wait};
 use crate::translation_core::Json;
 use crate::translation_http_protocol_core::{http_request, http_response};

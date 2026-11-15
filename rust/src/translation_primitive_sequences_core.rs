@@ -1,5 +1,8 @@
 //! Primitive sequence compatibility operations. Library internals remain native.
 //! This draft is compiled by its CI-only integration oracle; root activation is separate.
+// Generated translation carrier: the translator emits these shapes to mirror the
+// JavaScript ABI. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 use ::core::convert::TryFrom;
 
 fn primitive_sequence_length<T>(values: &[T]) -> ::core::primitive::u64 {

@@ -1,4 +1,9 @@
 //! Finite primitive Option interfaces. Standard Option internals stay native.
+// Generated translation carrier: the translator emits these shapes to mirror the
+// JavaScript ABI. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::double_must_use)]
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::needless_lifetimes)]
 const TEXT_LIMIT: usize = 1_048_576;
 
 fn checked_text(value: &str) {

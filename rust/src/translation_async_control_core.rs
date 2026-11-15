@@ -1,4 +1,7 @@
 //! Explicit cancellation and bounded pull-channel interfaces; internals stay native.
+// Generated translation carrier: the translator emits these shapes to mirror the
+// JavaScript ABI. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::significant_drop_tightening)]
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use std::{
     future::Future,

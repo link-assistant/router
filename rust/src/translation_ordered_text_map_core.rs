@@ -1,5 +1,10 @@
 //! Bounded owned text maps. BTreeMap internals intentionally remain native.
 //! A private field protects construction invariants; this is not a compiler proof.
+// Generated translation carrier: the translator emits these shapes to mirror the
+// JavaScript ABI. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::doc_markdown)]
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::must_use_candidate)]
 use std::collections::BTreeMap;
 
 const MAX_ENTRIES: usize = 4096;

@@ -1,4 +1,10 @@
 //! Owned JSON state updates. Native library internals stay untranslated.
+// Generated translation carrier: the translator emits these shapes to mirror the
+// JavaScript ABI. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::default_trait_access)]
+#![allow(clippy::map_unwrap_or)]
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::must_use_candidate)]
 use crate::translation_core::Json;
 
 pub fn json_with_index(mut base: Json, index: u64, value: Json) -> Json {

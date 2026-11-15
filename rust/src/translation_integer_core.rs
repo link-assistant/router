@@ -1,4 +1,7 @@
 //! Explicit fixed-width numeric interfaces; implementations remain native.
+// Generated translation carrier: the translator emits these shapes to mirror the
+// JavaScript ABI. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
 
 #[must_use]
 pub fn u64_saturating_add(value: u64, other: u64) -> u64 {

@@ -1,4 +1,13 @@
 //! Explicit primitive Result interfaces. Standard internals intentionally stay native.
+// Generated translation carrier: the translator emits these shapes to mirror the
+// JavaScript ABI. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::double_must_use)]
+#![allow(clippy::let_and_return)]
+#![allow(clippy::match_wild_err_arm)]
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::needless_lifetimes)]
+#![allow(clippy::needless_pass_by_value)]
+#![allow(clippy::option_if_let_else)]
 fn checked_text(value: &str) {
     let _ = crate::translation_text_core::len_utf8(value);
 }

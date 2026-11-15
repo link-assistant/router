@@ -1,5 +1,8 @@
 //! Explicit owned-library boundary for common immutable JSON field readers.
 //! Library internals remain native; callers retain ordinary source/type checks.
+// Generated translation carrier: the translator emits these shapes to mirror the
+// JavaScript ABI. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::option_if_let_else)]
 use crate::translation_core::Json;
 
 #[must_use]

@@ -1,5 +1,10 @@
 //! Explicit owned JSON carriers; library internals are intentionally native.
 #![allow(clippy::unnecessary_wraps)] // These operations construct the specified carrier ABI.
+// Generated translation carrier: the translator emits these shapes to mirror the
+// JavaScript ABI. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::double_must_use)]
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::option_if_let_else)]
 use crate::translation_core::Json;
 
 #[must_use]

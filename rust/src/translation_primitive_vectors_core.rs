@@ -1,6 +1,10 @@
 //! Bounded owned primitive Vec compatibility operations.
 //! Library internals remain intentionally untranslated. Callers must retain
 //! their actual source-bound moves, shared loans and primitive domains.
+// Generated translation carrier: the translator emits these shapes to mirror the
+// JavaScript ABI. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::must_use_candidate)]
 
 use ::core::convert::TryFrom;
 

@@ -1,5 +1,9 @@
 //! Bounded owned String Vec compatibility draft. Native internals stay untranslated.
 //! Get/from-slice clone owned text; caller moves/shared loans need private checks.
+// Generated translation carrier: the translator emits these shapes to mirror the
+// JavaScript ABI. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::must_use_candidate)]
 
 use ::core::convert::TryFrom;
 

@@ -1,4 +1,13 @@
 //! Finite closed primitive callbacks; Option and FnOnce implementations remain native.
+// Generated translation carrier: the translator emits these shapes to mirror the
+// JavaScript ABI. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::doc_markdown)]
+#![allow(clippy::double_must_use)]
+#![allow(clippy::let_and_return)]
+#![allow(clippy::needless_lifetimes)]
+#![allow(clippy::option_if_let_else)]
+#![allow(clippy::single_match_else)]
+#![allow(clippy::single_option_map)]
 
 fn checked_text(value: &str) {
     let _ = crate::translation_text_core::len_utf8(value);

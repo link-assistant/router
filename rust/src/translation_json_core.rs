@@ -2,6 +2,11 @@
 //!
 //! These library internals remain native. The translator must bind the complete
 //! actual module and canonical serde_json layout before selecting a caller.
+// Generated translation carrier: the translator emits these shapes to mirror the
+// JavaScript ABI. Clippy findings are fixed in its rules, not by hand (#772 ledger).
+#![allow(clippy::doc_markdown)]
+#![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::too_long_first_doc_paragraph)]
 
 /// Validate the same successful-resource envelope as the immutable JS adapter.
 /// JSON depth counts the root as zero; map keys do not add Value nodes.
