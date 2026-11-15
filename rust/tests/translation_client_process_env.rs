@@ -15,11 +15,16 @@ fn administrative_environment_is_removed_before_the_scoped_client_carrier_is_ins
             "LINK_ASSISTANT_TOKEN",
             "TOKEN_SECRET",
         ] {
+            // A scoped command starts from `env_clear()`, after which std drops a
+            // removed name from the map instead of recording `None`. Either way the
+            // child must not inherit the administrative value.
             let entry = command
                 .get_envs()
-                .find(|(key, _)| *key == std::ffi::OsStr::new(name))
-                .expect("explicit removal");
-            assert_eq!(entry.1, None);
+                .find(|(key, _)| *key == std::ffi::OsStr::new(name));
+            assert!(
+                entry.is_none_or(|(_, value)| value.is_none()),
+                "{name} reaches the vendor child"
+            );
             assert!(link_assistant_router::operation_context::var(name).is_ok());
         }
         command.env("LINK_ASSISTANT_TOKEN", "scoped-client-run");

@@ -121,7 +121,7 @@ async fn redirects_duplicate_headers_and_body_bytes_are_preserved_without_a_seco
     assert_eq!(value::http_status(&response), Ok(302));
     assert_eq!(value::http_body_text(&response), Ok("moved".to_owned()));
     assert_eq!(
-        value::http_headers_get_all(&response, "set-cookie"),
+        value::http_headers_get_all(&response["headers"], "set-cookie"),
         Ok(json!(["YT0x", "Yj0y"]))
     );
     let captured = String::from_utf8(server.await.unwrap()).unwrap();

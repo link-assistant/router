@@ -1,5 +1,7 @@
 //! Independent bounded native dependency oracles. SOURCE ONLY; UNRUN. CI after all JS gates.
-use link_assistant_router::{bounded_process, operation_context};
+use link_assistant_router::bounded_process;
+#[cfg(unix)]
+use link_assistant_router::operation_context;
 use std::process::Command;
 use std::time::Duration;
 
