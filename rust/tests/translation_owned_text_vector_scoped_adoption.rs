@@ -3,6 +3,7 @@
 // translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
 #![allow(clippy::manual_assert_eq)]
 #![allow(clippy::match_bool)]
+#![allow(clippy::single_match_else)]
 // The whole core module is included; each oracle uses only part of it.
 #[allow(dead_code)]
 #[path = "../src/translation_owned_text_vectors_core.rs"]

@@ -240,6 +240,15 @@ adds one crate-root `#![allow(clippy::<lint>)]` per reported lint (371 lines,
 that target's root, so the shared fixtures stay byte-identical. **Debt:** the
 same as for the generated cores; the shapes belong in the translator rules.
 
+The next run (job 132850084718) left three findings. `single_match_else` in
+`translation_owned_text_vector_scoped_adoption.rs` had been hidden behind
+`match_bool`; it is now allowed at that root too. `non_minimal_cfg` still fired
+on `#[cfg(all())]` inside the `configured-textual` and `inner-lint-textual`
+fixtures although the configured-textual root already allowed it. It is a
+pre-expansion lint and the root allow did not reach the `#[path]` module file.
+It is therefore allowed workspace-wide in `rust/Cargo.toml`, with the fixtures
+left byte-identical.
+
 The 63 JavaScript tests that reference any edited test file were rerun locally
 on Node 20. 47 files pass. The other 16 fail identically on the unedited tree
 because `owned-primitive-definition-family.mjs` imports
