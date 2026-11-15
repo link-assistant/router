@@ -610,11 +610,14 @@ jobs:
 
       # Independent native provider/profile oracles. The existing job guard
       # requires all eight JavaScript stages for this exact github.sha first.
+      # Node 20, as in the JavaScript-first workflow: on Node 24 and later
+      # util.types.isProxy prints without a name, and the translator guards that
+      # pin native function text reject it ("original source operations changed").
       - name: Setup Node for native profile source orchestration
         if: ${{ always() && !cancelled() }}
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
-          node-version: '24'
+          node-version: '20'
 
       - name: Install locked native profile source dependencies
         if: ${{ always() && !cancelled() }}
@@ -622,8 +625,19 @@ jobs:
           npm ci --prefix scripts/ci --ignore-scripts
           npm ci --prefix js --ignore-scripts
 
-      - name: Run copied native profile oracles after the JavaScript gate
+      # JavaScript-only preflight: runs each profile's own source visitor. If the
+      # 2026-11-01 archives no longer match the checkout it warns and skips the
+      # oracles on pull requests and fails with maintainer instructions elsewhere.
+      - name: Check native profile archives against the checkout
+        id: native-profile-sources
         if: ${{ always() && !cancelled() }}
+        shell: bash
+        run: |
+          node --test scripts/test/check-native-profile-oracle-sources.test.mjs
+          node scripts/check-native-profile-oracle-sources-20261101.mjs
+
+      - name: Run copied native profile oracles after the JavaScript gate
+        if: ${{ always() && !cancelled() && steps.native-profile-sources.outputs.fresh == 'true' }}
         env:
           ROUTER_NATIVE_PROFILE_SHA: ${{ github.sha }}
           ROUTER_NATIVE_PROFILE_JAVASCRIPT: ${{ needs.javascript.result }}

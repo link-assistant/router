@@ -191,7 +191,7 @@ hashes are pinned in nine modules and in the `portable-integration` archive,
 and no producer for them exists in the tree. Editing the embedded "before"
 sources by hand would falsify the history they record. **Status: BLOCKED** on
 a profile producer, the same class as the derive manifest below. Until then the
-step fails in CI.
+step cannot pass (see "CI handling while blocked" below).
 
 On Node 24 the step fails even earlier. Run 43717926225 (Node v24.22.2) stops at
 "Original file token context: original source operations changed". The cause is
@@ -208,6 +208,35 @@ mechanical fix. More than 30 hash-pinned modules repeat the check. The
 `d638a2de1` message ("no Node 20 requirement") was wrong: the JavaScript-first
 workflow still pins Node 20 for this reason. **Status: BLOCKED** on that
 decision, in addition to the archive producer.
+
+#### CI handling while blocked
+
+Run 43741528933 (`ab6a8ee78`) failed only this step on all three platforms,
+still on Node 24. Two changes follow:
+
+1. The step's `setup-node` now pins Node 20, matching the JavaScript-first
+   workflow. Changing the guards is still left to their owners.
+2. A JavaScript-only preflight,
+   [`check-native-profile-oracle-sources-20261101.mjs`](../../../../scripts/check-native-profile-oracle-sources-20261101.mjs),
+   runs before the oracles. It calls each profile's own portable source visitor,
+   the first thing the oracle runner does, and never starts a child process.
+   On Node 20 all three visitors refuse the current tree with "complete physical
+   source differs: tools/translation/extensions/host-contracts.mjs"
+   ([`visit-native-profile.mjs`](../../../../experiments/visit-native-profile.mjs)).
+   Only that diagnostic counts as stale. Any other error, such as the Node 24
+   guard failure, still fails the step.
+
+When the archives are stale, a pull request run skips the oracle step and shows a
+warning with the maintainer action. A push to `main` or a `workflow_dispatch` run
+fails with an `::error::` that says the same thing. The receipt
+`source-freshness-*.json` is written to the evidence directory either way, so
+the upload step still finds files. Once the archives match again, the oracles
+run and remain fatal. The oracles have not run, so they count as **UNRUN**, not
+green.
+
+**Maintainer action:** regenerate the three archives from the current tree with
+a profile producer and update every pinned `archiveSha256`. The alternative is to
+remove the stale profiles from `NATIVE_PROFILE_ORACLES`.
 
 ### Coverage after the merge
 
