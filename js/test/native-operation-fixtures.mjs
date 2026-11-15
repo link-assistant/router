@@ -4,7 +4,7 @@ import { mkdtemp, writeFile, readFile, mkdir, realpath, rm } from 'node:fs/promi
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
-import { NativeRouter, catalog, validateNativeResult } from '../src/operations.mjs';
+import { NativeRouter, catalog, validateNativeResult, nativeOperationSupport } from '../src/operations.mjs';
 
 export const fixtureOperations = Object.freeze([
   'auth.import', 'auth.claude', 'auth.codex', 'auth.clear', 'auth.gh', 'server.start', 'server.stop', 'server.status', 'server.use', 'server.claim', 'server.reap', 'server.remove',
@@ -12,6 +12,9 @@ export const fixtureOperations = Object.freeze([
   'tokens.import', 'tokens.issue', 'tokens.list', 'tokens.show', 'tokens.revoke', 'tokens.expire', 'tokens.rotate', 'tokens.recover-admin',
   'providers.list', 'providers.show', 'providers.add', 'providers.remove', 'providers.import', 'models.explain', 'serve', 'doctor', 'auth.status', 'clients.list','clients.show','clients.setup','clients.remove',
 ]);
+// Partial native operations without a successful fixture here; their success
+// paths are covered by native-client-global-draft and native-client-launch-draft.
+export const partialNativeRefusals = Object.freeze({ configure: 'client: Configure requires a client or --all', with: 'client: Unknown client' });
 export async function runOperationFixtures() {
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'router-native-operation-fixtures-')));
   const router = new NativeRouter({ config: { token_secret: 'native-operation-fixture-secret', storage_policy: 'memory', data_dir: directory,
@@ -151,6 +154,14 @@ export async function runOperationFixtures() {
       const options = Object.fromEntries(operation.options.filter(option => option.required && !option.secret).map(option => [option.name, 'fixture']));
       const result = await router.execute(operation.name, options);
       validateNativeResult(operation.name, result); assert.equal(result.success, false); assert.equal(result.exit_code, 1);
+      // Partially native operations are dispatched; without a client they must
+      // refuse with their exact native diagnostic instead of reaching a client.
+      if (Object.hasOwn(partialNativeRefusals, operation.name)) {
+        assert.equal(nativeOperationSupport[operation.name], 'partial');
+        assert.deepEqual(result.diagnostics, [partialNativeRefusals[operation.name]]);
+        evidence.set(`refused:${operation.name}`, { operation: operation.name, success: false });
+        continue;
+      }
       assert.ok(result.diagnostics.some(detail => detail.includes('not implemented')));
       evidence.set(`unsupported:${operation.name}`, { operation: operation.name, success: false });
     }
