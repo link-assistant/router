@@ -148,6 +148,51 @@ Repairs used only CI logs; no Rust tool ran locally:
   `#[allow(unsafe_code)]` on the target-feature oracle, a borrowed `Result`
   argument and a `$(,)?` trailing comma in `helper_case!`.
 
+### First Clippy and Rust test run (job 43715321030 and siblings)
+
+`cargo clippy -Dwarnings` with pedantic and nursery reported 725 library
+errors, the first time Clippy reached this branch:
+
+- Hand-written modules were fixed directly (`54a079202`). `token_report.rs`
+  keeps its translator JSON reader blocks and allows `option_if_let_else` on
+  `row` with a reason.
+- The 15 generated `translation_*_core.rs` files only get one inner
+  `#![allow(clippy::…)]` per reported lint, under a fixed note (`4dbaac23f`,
+  [`allow-generated-core-lints.mjs`](../../../../experiments/clippy-20261115/allow-generated-core-lints.mjs)
+  with its file-to-lint census). **Debt:** the shapes must be fixed in the
+  translator rules and the allows removed when the cores are regenerated.
+  These edits, like the rustfmt replay, add byte drift to pinned Rust sources.
+- `release.yml` used Node 20 for the native-profile orchestration step, which
+  `main`'s `release_workflow_test.rs` forbids. It now uses Node 24.
+- Three drafted oracles were wrong, not the code (`ad71311a5`).
+  `client_process_env` assumed `env_remove` after `env_clear` records `None`,
+  but std drops the name instead; the test now asserts the child cannot
+  inherit it. The Rust and JS HTTP transport oracles passed a whole response to
+  `http_headers_get_all`, whose own contract takes a headers array.
+  `translation_discovery_bounds` imported a `cfg(unix)`-only module on Windows.
+
+### Native profile oracle step: BLOCKED
+
+`scripts/run-native-profile-oracles-20261101.mjs` (a branch-only `release.yml`
+step) ran for the first time after the merge. Every earlier run failed before
+reaching it. It verifies the working tree against three complete-source
+archives authored on 2026-11-01, and none of them match.
+[`archive-profile-census.mjs`](../../../../experiments/merge-main-20261115/archive-profile-census.mjs)
+shows they were already stale at the pre-merge tip:
+
+| Archive | Version checks that differ now | Already differed before the merge |
+| --- | --- | --- |
+| `persistent-output-backend-20261101` | 44 | 27 |
+| `dynamic-primitive-output-20261101` | 48 | 28 |
+| `json-scalar-readers-20261101` | 14 | 14 |
+
+The archives embed whole files, including `Cargo.toml` and `Cargo.lock`. Their
+hashes are pinned in nine modules and in the `portable-integration` archive,
+and no producer for them exists in the tree. Editing the embedded "before"
+sources by hand would falsify the history they record. **Status: BLOCKED** on
+a profile producer, the same class as the derive manifest below. Until then the
+step fails in CI.
+
 ### Translator inputs made stale by the merge
 
 `node scripts/translate-router.mjs --check` is not part of current CI, and
