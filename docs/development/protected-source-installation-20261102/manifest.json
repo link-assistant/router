@@ -1,0 +1,16 @@
+{
+  "schema": "router-protected-source-installation-source-draft-v1",
+  "sha256": "d08e1ca734116ba0e11e83b378903b144402db3443f0b94ced4de804cdec8a49",
+  "decodedBytes": 426646,
+  "packedBytes": 82192,
+  "completeFiles": 7,
+  "completeEquations": 3,
+  "independentJavaScriptCaseSources": 21,
+  "execution": "UNRUN",
+  "CI": "NOT_INSPECTED",
+  "sourceCounts": {
+    "drafted": 11,
+    "open": 59,
+    "total": 70
+  }
+}

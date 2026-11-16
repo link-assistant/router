@@ -1,0 +1,18 @@
+{
+  "schema": "complete-typescript-receiving-source-frames-20261103-v1",
+  "decodedBytes": 59476,
+  "packedBytes": 8420,
+  "sha256": "ebf18f7e3a1261aa7044d7e7797a1e0145ac1ec884ddfbbbb2c5c7abcd70645f",
+  "parentPaths": [
+    "tools/translation/complete-typescript-receiving-20261103.mjs",
+    "tools/translation/test/complete-typescript-receiving-20261103.test.mjs",
+    "docs/development/complete-typescript-receiving-20261103.md"
+  ],
+  "authoredPaths": [
+    "tools/translation/complete-typescript-receiving-frame-20261103.mjs",
+    "tools/translation/test/complete-typescript-receiving-frame-20261103.test.mjs"
+  ],
+  "verification": "UNRUN",
+  "ci": "NOT_INSPECTED",
+  "semanticAuthority": false
+}

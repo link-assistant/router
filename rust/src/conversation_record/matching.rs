@@ -57,7 +57,7 @@ pub fn describe_difference(
         let expected = recorded.get(*field);
         let actual = incoming.get(*field);
         if expected != actual {
-            return Some(format!(
+            return Some(crate::translation_core::format!(
                 "{field}: recorded {}, received {}",
                 render(expected),
                 render(actual)
@@ -87,7 +87,7 @@ fn header_difference(
         }
         let received = actual.and_then(|actual| actual.get(name));
         if received != Some(value) {
-            return Some(format!(
+            return Some(crate::translation_core::format!(
                 "header {name}: recorded {}, received {}",
                 render(Some(value)),
                 render(received)
@@ -102,7 +102,7 @@ fn header_difference(
         .filter(|(name, _)| header_is_compared(name))
         .find(|(name, _)| !expected.contains_key(name.as_str()))
         .map(|(name, value)| {
-            format!(
+            crate::translation_core::format!(
                 "header {name}: absent from the recording, received {}",
                 render(Some(value))
             )
@@ -119,20 +119,26 @@ fn compare(
         (Value::Object(expected), Value::Object(actual)) => {
             for (key, value) in expected {
                 let Some(received) = actual.get(key) else {
-                    return Some(format!("{path}.{key} is missing from the request"));
+                    return Some(crate::translation_core::format!(
+                        "{path}.{key} is missing from the request"
+                    ));
                 };
-                if let Some(difference) = compare(&format!("{path}.{key}"), value, received) {
+                if let Some(difference) = compare(
+                    &crate::translation_core::format!("{path}.{key}"),
+                    value,
+                    received,
+                ) {
                     return Some(difference);
                 }
             }
             actual
                 .keys()
                 .find(|key| !expected.contains_key(key.as_str()))
-                .map(|key| format!("{path}.{key} is not in the recording"))
+                .map(|key| crate::translation_core::format!("{path}.{key} is not in the recording"))
         }
         (Value::Array(expected), Value::Array(actual)) => {
             if expected.len() != actual.len() {
-                return Some(format!(
+                return Some(crate::translation_core::format!(
                     "{path} has {} element(s), the recording has {}",
                     actual.len(),
                     expected.len()
@@ -143,11 +149,15 @@ fn compare(
                 .zip(actual)
                 .enumerate()
                 .find_map(|(index, (expected, actual))| {
-                    compare(&format!("{path}[{index}]"), expected, actual)
+                    compare(
+                        &crate::translation_core::format!("{path}[{index}]"),
+                        expected,
+                        actual,
+                    )
                 })
         }
         _ if recorded == incoming => None,
-        _ => Some(format!(
+        _ => Some(crate::translation_core::format!(
             "{path}: recorded {}, received {}",
             render(Some(recorded)),
             render(Some(incoming))
@@ -162,7 +172,9 @@ fn compare(
 const RENDERED_LIMIT: usize = 120;
 
 /// Render a value for a mismatch report, abbreviated but never elided entirely.
-fn render(value: crate::translation_core::Maybe<&crate::translation_core::Json>) -> String {
+fn render(
+    value: crate::translation_core::Maybe<&crate::translation_core::Json>,
+) -> crate::translation_core::Text {
     let Some(value) = value else {
         return "nothing".to_string();
     };
@@ -171,8 +183,8 @@ fn render(value: crate::translation_core::Maybe<&crate::translation_core::Json>)
         other => other.to_string(),
     };
     if text.chars().count() <= RENDERED_LIMIT {
-        return format!("{text:?}");
+        return crate::translation_core::format!("{text:?}");
     }
     let head: String = text.chars().take(RENDERED_LIMIT).collect();
-    format!("{head:?}… ({} characters)", text.chars().count())
+    crate::translation_core::format!("{head:?}… ({} characters)", text.chars().count())
 }

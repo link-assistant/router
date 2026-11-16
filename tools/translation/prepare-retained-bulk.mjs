@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import {retainForwardSourceProposalAccounting} from './forward-output-ownership-20261101-source-accounting.mjs';
+import {withFixedForwardWriterSources} from './forward-output-ownership-20261101-source-history.mjs';
 // Deterministic proposal/checker; original compiler semantics remain in the
 // complete source-derived modules. This tool runs under stock host intrinsics.
 import {readFileSync} from 'node:fs';
@@ -50,10 +52,14 @@ function derive(source,languageEdits,repositoryEdits){
   const runner=createRulePipeline([{phase:'language',rules:rules(languageEdits)},{phase:'repository',rules:[...rules(repositoryEdits),{id:'repository:closed-derived-module-header',apply:text=>HEADER+text}]}]);
   const result=runner.run(source);let undo=result.value;if(!undo.startsWith(HEADER))throw Error('Derived module header changed');undo=undo.slice(HEADER.length);
   const all=[...languageEdits,...repositoryEdits];for(let at=all.length-1;at>=0;at--){const row=all[at];if(undo.split(row.after).length!==2)throw Error('Derived full undo anchor changed');undo=undo.replace(row.after,row.before);}
-  if(undo!==source)throw Error('Derived complete source undo changed');return {text:result.value,sourceSha256:hash(source),sha256:hash(result.value),trace:result.trace,wholeUndo:true};
+  if(undo!==source)throw Error('Derived complete source undo changed');return {source,inverse:source,text:result.value,sourceSha256:hash(source),sha256:hash(result.value),trace:result.trace,wholeUndo:true};
 }
 export function deriveRetainedBulkSources({bulk,matrix}){
-  return {schema:'private-output-retention-source-proposal-v1',bulk:derive(bulk,LANGUAGE_EDITS,REPOSITORY_EDITS),matrix:derive(matrix,[],MATRIX_EDITS),authority:{semantic:false,source:false,owner:false}};
+ return withFixedForwardWriterSources(undefined,history=>{
+  const bulkInput=bulk,matrixInput=matrix;bulk=history.before('tools/translation/bulk.mjs',bulk);matrix=history.before('tools/translation/matrix-bulk.mjs',matrix);
+  const result={schema:'private-output-retention-source-proposal-v1',bulk:history.compose({path:'tools/translation/retained-bulk.mjs',...derive(bulk,LANGUAGE_EDITS,REPOSITORY_EDITS)},'text'),matrix:history.compose({path:'tools/translation/retained-matrix-bulk.mjs',...derive(matrix,[],MATRIX_EDITS)},'text'),authority:{semantic:false,source:false,owner:false}};
+  result.currentInputSourceEquations={bulk:{current:bulkInput,historical:bulk,inverse:bulkInput},matrix:{current:matrixInput,historical:matrix,inverse:matrixInput}};return retainForwardSourceProposalAccounting(result);
+ });
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   let root=resolve(dirname(fileURLToPath(import.meta.url)),'../..'),emit=false;const args=process.argv.slice(2);

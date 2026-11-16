@@ -1,5 +1,5 @@
-// GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=86485ac8cb4bcda471545b9bc18882605059b1f5776912903922496dc940df0b; dynamic any annotations are explicit draft gaps.
+// SOURCE DRAFT: complete source substitution; canonical regeneration deferred.
+// New native client header and all verification remain UNRUN.
 import { open } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { resolve } from 'node:path';
@@ -133,11 +133,16 @@ export async function sendRemoteManagement(target?: any, call?: any, { fetch = g
         else
             combined.addEventListener('abort', abort, { once: true });
     });
-    const within: any = (promise?: any): any => (Promise as any).race([promise, aborted]);
+    // Cancellation wins ties: an injected fetch may already be settled when the
+    // caller's signal was aborted, and race order decides between settled inputs.
+    aborted.catch((): void => {});
+    const within: any = (promise?: any): any => (Promise as any).race([aborted, promise]);
     try {
+        if (combined.aborted)
+            await aborted;
         const url: any = target.managementServer + call.path;
         const request: any = { method: call.method, redirect: 'error', signal: combined,
-            headers: { accept: 'application/json', ...(target.token ? { authorization: `Bearer ${target.token}` } : {}), ...(call.body !== undefined ? { 'content-type': 'application/json' } : {}) },
+            headers: { accept: 'application/json', ...(call.client ? {'x-link-assistant-client':call.client} : {}), ...(target.token ? { authorization: `Bearer ${target.token}` } : {}), ...(call.body !== undefined ? { 'content-type': 'application/json' } : {}) },
             ...(call.body !== undefined ? { body: (JSON as any).stringify(call.body) } : {}) };
         const response: any = await within(target.managementCaCert ? trustedFetch(url, request, target.managementCaCert, cwd) : fetch(url, request));
         if (response.url && new (URL as any)(response.url).origin !== target.managementServer)
@@ -145,6 +150,7 @@ export async function sendRemoteManagement(target?: any, call?: any, { fetch = g
         const chunks: any = [];
         let bytes: any = 0;
         (reader as any) = response.body?.getReader();
+    if(call.response==='status-only')return {status:response.status};
         if (reader)
             while (true) {
                 const part: any = await within((reader as any).read());
@@ -158,7 +164,7 @@ export async function sendRemoteManagement(target?: any, call?: any, { fetch = g
         const text: string = new (TextDecoder as any)('utf-8', { fatal: true }).decode((Buffer as any).concat(chunks, bytes));
         let answer: any;
         try {
-            (answer as any) = text ? (JSON as any).parse(text) : {};
+            (answer as any) = call.response==='router-health'&&text.trim()==='ok' ? {status:'ok'} : text ? (JSON as any).parse(text) : {};
         }
         catch {
             throw error(`Selected router ${target.server} returned invalid JSON`);

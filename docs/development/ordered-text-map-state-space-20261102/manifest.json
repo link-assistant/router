@@ -1,0 +1,10 @@
+{
+  "schema": "ordered-map-independent-state-space-source-draft-20261102-v1",
+  "sha256": "8d0c4beb9610ab20d55ccc8b67fb2c092bf9d06ae627ec847f3befeb198989f1",
+  "decodedBytes": 10605,
+  "packedBytes": 3642,
+  "completeFiles": 3,
+  "caseSources": 4,
+  "execution": "UNRUN",
+  "CI": "NOT_INSPECTED"
+}

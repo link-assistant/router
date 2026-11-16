@@ -385,14 +385,14 @@ pub fn openai_annotations_to_anthropic(
 
 fn required_annotation_string<'a>(
     annotation: &'a Value,
-    field: &str,
+    field: &crate::translation_core::Str,
     index: usize,
 ) -> Result<&'a str, String> {
     annotation
         .get(field)
         .and_then(Value::as_str)
         .filter(|value| !value.is_empty())
-        .ok_or_else(|| format!("annotations[{index}].{field} is required"))
+        .ok_or_else(|| crate::translation_core::format!("annotations[{index}].{field} is required"))
 }
 
 fn char_slice(
@@ -455,29 +455,28 @@ pub fn validate_anthropic_response_citations(
         let Some(citations) = block.get("citations") else {
             continue;
         };
-        let citations = citations
-            .as_array()
-            .ok_or_else(|| format!("content[{block_index}].citations must be an array"))?;
-        let text = block
-            .get("text")
-            .and_then(Value::as_str)
-            .ok_or_else(|| format!("content[{block_index}].text is required"))?;
+        let citations = citations.as_array().ok_or_else(|| {
+            crate::translation_core::format!("content[{block_index}].citations must be an array")
+        })?;
+        let text = block.get("text").and_then(Value::as_str).ok_or_else(|| {
+            crate::translation_core::format!("content[{block_index}].text is required")
+        })?;
         let mut from = 0;
         for (citation_index, citation) in citations.iter().enumerate() {
             citation_url(citation).ok_or_else(|| {
-                format!("content[{block_index}].citations[{citation_index}] is not a compatible URL citation")
+                crate::translation_core::format!("content[{block_index}].citations[{citation_index}] is not a compatible URL citation")
             })?;
             let cited = citation
                 .get("cited_text")
                 .and_then(Value::as_str)
                 .filter(|value| !value.is_empty())
                 .ok_or_else(|| {
-                    format!(
+                    crate::translation_core::format!(
                         "content[{block_index}].citations[{citation_index}].cited_text is required"
                     )
                 })?;
             let (_, _, next) = find_char_range(text, cited, from).ok_or_else(|| {
-                format!("content[{block_index}].citations[{citation_index}] does not match its text block")
+                crate::translation_core::format!("content[{block_index}].citations[{citation_index}] does not match its text block")
             })?;
             from = next;
         }

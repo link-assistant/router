@@ -1,0 +1,101 @@
+owned-vector-candidate-source.mjs owned-vector-candidate-operations.mjs: HEAD (main ASCII a3668ad0c/dd6946127 not carried)
+parity/rust-source-inventory.json: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/prepare-batched-proof-byte-source-candidate.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/prepare-builtin-source-meta-string-keys.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/prepare-compiler-alias-history.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/prepare-concrete-equation-transaction.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/prepare-core-vector-sources.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/prepare-current-receiving-source-history.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/prepare-default-proof-byte-adoption.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/prepare-facade-ast-receiving-history.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/prepare-guarded-proof-receiving-imports.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/prepare-native-output-text-retention.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/prepare-operation-proof-byte-sources.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/prepare-owned-core-private-analysis-retention.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/prepare-owned-runtime-import-edges.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/prepare-source-proof-preservation.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/prepare-strict-static-source-producer.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/prepare-whole-owner-proof-byte-candidate.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/project.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/projects/rust/src/lib.meta.json: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/router-core-scalars.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/source-profiles/isolated-project-compiler/manifest.json.gz: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/source-profiles/static-source-lifecycle/manifest.json: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/source-profiles/static-source-lifecycle/originals.json.gz: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/strict-static-source-producer.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/test/fixtures/compiler-data-alias-history.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/test/fixtures/current-receiving-source-history.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/test/fixtures/portable-git/manifest.json: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/test/fixtures/portable-git/objects.json.gz: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/test/primitive-identity-boundary.test.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/test/private-parser-data-current-sources.test.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/test/private-parser-execution.test.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/test/router-core-ascii-assets.test.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/test/router-core-ascii-base-assets.test.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/test/typed-targets.mjs: HEAD whole-file (diverged translator architecture/history pins)
+tools/translation/whole-owner-proof-byte-trial-support.mjs: HEAD whole-file (diverged translator architecture/history pins)
+generated (meta, js/ts generated, lib.meta.json.parts, js-to-rust/generated): HEAD; regeneration from merged rust/src pending
+tools/translation/prepare-native-output-text-retention.mjs: MERGE_HEAD whole-file (satisfies importers from both sides)
+tools/translation/prepare-concrete-equation-transaction.mjs: MERGE_HEAD whole-file (satisfies importers from both sides)
+tools/translation/prepare-guarded-proof-receiving-imports.mjs: MERGE_HEAD whole-file (satisfies importers from both sides)
+tools/translation/prepare-source-proof-preservation.mjs: MERGE_HEAD whole-file (satisfies importers from both sides)
+tools/translation/router-core-scalars.mjs: combined (main unicode predicate contracts + our issuedScalarCalls/facade)
+isolated matrix sessions: removed auto-merged unreachable main draft-custody block (deferDraft undefined in ours); kept main's ROUTER_TRANSLATION_MATRIX_TRACE stdio
+
+## Post-merge load and lint repairs (Node 20, manual lint stage)
+derive-ancestor-attribute-scope.mjs: removed TDZ term (originalDeriveHelperCryptoUnchanged) from eager snapshot; every check() still evaluates it at use time
+vendor/NOTICE.md: restored main bytes (private-parser-execution manifest pin); our appended scope paragraph moved to docs/development/translation-provenance-20261102.md "Vendor notice scope"; provenance JSON NOTICE row updated
+checked-types.mjs: FIXED_ARRAY_MAX_LENGTH moved to dependency-free leaf checked-type-limits.mjs (re-exported first); native key imports (borrowed JSON tool, borrowed standard map, ordered text map) inverted into leaf registry checked-type-keys.mjs, registered by each owner module; reserved kinds refuse until registered. Removes cycles checked-types -> native-types -> host-contracts -> fixed-arrays / json-contracts -> monomorphic
+pre-existing HEAD syntax breakage (written broken at creation; now required by main's lint-js-first walk of tools/translation):
+  duplicate imports removed: owned-vector-candidate-source, checked-negation, guarded-primitive-failures, ordered-primitive-failures, primitive-body-normalization, primitive-function-insertion, opaque-production-adoption layered-format, callback-text-target, closed-match-local, option-eager-error (two)
+  duplicate names renamed: contextual-choice-inference second typeImport -> bitwiseTypeImport; ordered-primitive-failures typeImport(domain) -> domainTypeImport
+  raw newlines re-escaped inside quoted strings (repair-string-newlines.mjs): 13 files (http-resource-*, callback-source-parameters, carrier-method-scope, core-callback-composition, core-try-projection, primitive-display, protected-copy/unit-variants history)
+  lost characters restored: native-profile-oracles resources ('{':'}'} x2), nominal-edited-target ir (closing brace), collection-callback-bulk (closing bracket), protected-generator-cli-writers (extra paren), owned-result-callers (u-mode regex \: escapes), vector-associated-namespace (/\]\}/u)
+
+## Native JS draft test repairs (Node 20, `npm run native:test --prefix js`)
+These six draft tests fail at the pre-merge HEAD too (checked in a separate worktree); they
+were never run when drafted. Fixes keep each original assertion's intent; one expectation
+was corrected to match the Rust behavior.
+- native-client-launch-draft: the fixture core now implements `withConfig`; operations.mjs
+  refuses a core without it when cwd/env are injected. At the dispatcher, `with` data is now
+  projected to the exact with.v1 contract `{client_exit_code, stdout, stderr}`, on success and
+  on a nonzero exit. The direct `executeNativeWith` result keeps `signal`/`output`.
+- native-client-launch-plan-draft: for `claude --model=chosen hello` on a terminal, the test
+  expected `--print`. rust/src/client_launch.rs:56-73 (`carries_a_prompt`) only checks the first
+  forwarded argument, so a leading flag means a session. The expectation now matches Rust,
+  and a new non-terminal case asserts that `--print` is added.
+- native-client-remote-health-draft: `sendRemoteManagement` ignored a signal that was already
+  aborted, because `Promise.race([promise, aborted])` picks the input listed first when both are
+  settled, and an injected fetch had already settled. It now rejects before fetch, and in-flight
+  races list `aborted` first. Effect: no management token was minted after cancellation.
+- native-client-persistent-draft:
+  - CRLF: @iarna/toml rejects CR before LF after a comment, though TOML 1.0 allows CRLF.
+    The semantic parse normalizes CRLF to LF; source edits keep the original bytes.
+  - Inline removal: deleting a run of inline-table entries left `{ a = 1 ,  }`. Inline
+    deletions separated only by spaces/tabs now merge, and a run ending at `}` also drops its
+    leading comma.
+  - Paired TS: 8 `--strict` errors in ts/src. `fail` is now a function declaration so
+    TypeScript narrows on it, explicit `string` params were added, and null was coalesced
+    for `includes`/`credential`. The CRLF and comma fixes are mirrored in ts/src/client-toml-cst.ts.
+- Remaining local failures (2): the managed-daemon fixtures report "Owned managed daemon has not
+  exited". origin/main fails identically in this sandbox, where PID 1 does not reap zombies. CI decides.
+
+Bun launch fixture: the fake client used `#!/usr/bin/env node`; Bun's test PATH
+has no `node`, so the child exited 127. The fixture now writes
+`#!<process.execPath>` so both runtimes launch the same interpreter.
+
+TypeScript mirrors: ts/src/operations.ts and ts/src/remote-operations.ts carry
+the same with.v1 contract projection and cancellation-wins-ties race as js/src.
+
+Node deadline test (typescript stage): scripts/test/node-case-deadlines.test.mjs
+spawns scripts/run-node-tests.mjs with an unchanged 25 s budget. The runner's
+protected diagnostics imported unit-runtime-materialization.mjs only for
+captureExplicitSourceMutationPolicy / readCurrentSourceProposalFile, which
+loaded the complete translator (project.mjs -> namespace-standard.mjs captures
+and re-verifies Rust standard sources at import: ~12-14 s locally). The policy
+and its source reader moved verbatim into protected-source-policy-20261115.mjs;
+unit-runtime-materialization.mjs imports and re-exports them. Runner import:
+14 s -> 0.10 s. No budget, test or check was changed.
+Remaining local failure: test 9 (owned process group close) fails only because
+this sandbox's PID 1 does not reap re-parented session leaders (Zs zombies).
+build-js-first-ui needs vite (UI deps not installed locally); left to CI.

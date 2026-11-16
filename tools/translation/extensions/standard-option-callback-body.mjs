@@ -8,7 +8,7 @@ import {createHash} from 'node:crypto';
 import {BOOL,sameType} from '../checked-types.mjs';
 import {metadataDigest} from './source-links.mjs';
 import {unsupported,typeError,TranslationError} from '../vendor/meta-language/translation/diagnostics.js';
-import {SHARED_REFERENCE_COPY_SOURCE} from '../shared-reference-copy-source.mjs';
+import {SHARED_REFERENCE_COPY_SOURCE} from '../current-standard-copy-source.mjs';
 import {optionNominalContext,restoreOptionNominals} from './option-nominal-proof.mjs';
 import {optionPayload,payloadOwner,validateCallbackCaptures,sourceTree,alphaTree,retargetCheckedCallback,nonlocal} from './standard-body-checker.mjs';
 import {pinnedOptionBody,parsePinnedBody,parsedPinnedBodyEvidence} from './standard-body-source.mjs';

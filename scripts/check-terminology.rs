@@ -128,6 +128,11 @@ const ALLOWED_PHRASES: &[&str] = &[
     "grapheme",
     // URLs to other projects' pages.
     "/graphs/",
+    // File names of two recorded #759 drafting notes. Pinned translator source
+    // profiles and tools cite these paths byte-for-byte, so renaming the files
+    // would falsify those records; links to them must spell the name.
+    "ordered-helper-graph-adoption-20261104",
+    "ordered-scalar-helper-graph-draft-20261104",
 ];
 
 fn is_excluded(path: &Path) -> bool {

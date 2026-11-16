@@ -26,7 +26,7 @@ fn namespace(
     {
         return Err("staging NAME must contain 1-40 lowercase letters, digits or hyphens".into());
     }
-    Ok(format!("router-stage-{name}"))
+    Ok(crate::translation_core::format!("router-stage-{name}"))
 }
 
 fn private_file(path: &Path, bytes: &[u8]) -> crate::translation_core::Outcome<(), String> {
@@ -74,7 +74,7 @@ fn objects(
             "ps".into(),
             "-a".into(),
             "--filter".into(),
-            format!("label={LABEL}={owner}"),
+            crate::translation_core::format!("label={LABEL}={owner}"),
             "--format".into(),
             "{{.Names}}".into(),
         ])?

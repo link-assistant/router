@@ -37,7 +37,7 @@ type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$"
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
-// Generated draft from rust/src/chat_lifecycle.rs; sha256=7ace34474771c43e00ce784730aaa03f49a6119f08b1d3200509fef1f6585709
+// Generated draft from rust/src/chat_lifecycle.rs; sha256=9475272a4e4893feca9cc187aa478abaeadb93e3033f703b25e27a4a0bdce2d4
 // Carried constructs are data, never runtime parity evidence.
 function ml_make_Operation_Retrieve(): Readonly<{ readonly "$": "Retrieve" }> | Readonly<{ readonly "$": "Update" }> | Readonly<{ readonly "$": "Delete" }> | Readonly<{ readonly "$": "Messages" }> {
   return Object.freeze({ $: 'Retrieve' });
@@ -84,4 +84,4 @@ const serde_json = {
 };
 
 export const translated: { "Operation": Readonly<{ "Retrieve": () => Readonly<{ readonly "$": "Retrieve" }> | Readonly<{ readonly "$": "Update" }> | Readonly<{ readonly "$": "Delete" }> | Readonly<{ readonly "$": "Messages" }>; "Update": () => Readonly<{ readonly "$": "Retrieve" }> | Readonly<{ readonly "$": "Update" }> | Readonly<{ readonly "$": "Delete" }> | Readonly<{ readonly "$": "Messages" }>; "Delete": () => Readonly<{ readonly "$": "Retrieve" }> | Readonly<{ readonly "$": "Update" }> | Readonly<{ readonly "$": "Delete" }> | Readonly<{ readonly "$": "Messages" }>; "Messages": () => Readonly<{ readonly "$": "Retrieve" }> | Readonly<{ readonly "$": "Update" }> | Readonly<{ readonly "$": "Delete" }> | Readonly<{ readonly "$": "Messages" }> }> } = { ["Operation"]: Object.freeze({ ["Retrieve"]: ml_make_Operation_Retrieve, ["Update"]: ml_make_Operation_Update, ["Delete"]: ml_make_Operation_Delete, ["Messages"]: ml_make_Operation_Messages }) };
-export const provenance = {"sourcePath":"rust/src/chat_lifecycle.rs","sourceSha256":"7ace34474771c43e00ce784730aaa03f49a6119f08b1d3200509fef1f6585709","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":4,"carried":28,"preserved":30,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/chat_lifecycle.rs","sourceSha256":"9475272a4e4893feca9cc187aa478abaeadb93e3033f703b25e27a4a0bdce2d4","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":4,"carried":28,"preserved":30,"runtimeParity":false};

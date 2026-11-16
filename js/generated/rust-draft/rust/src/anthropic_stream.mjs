@@ -1,4 +1,4 @@
-// Generated draft from rust/src/anthropic_stream.rs; sha256=88567b1c4fb054dcd896e8c847246b95eb840d5d605c7454bb793377e00fedca
+// Generated draft from rust/src/anthropic_stream.rs; sha256=1ee8f466f42eecebc3bf938c548424768762b22d2482a23d5661ecbe426e0c82
 // Carried constructs are data, never runtime parity evidence.
 import { validateJsonNumber as ml_validate_json_number, validateJsonMap as ml_validate_json_map } from "../../runtime/json-values.mjs";
 
@@ -81,4 +81,4 @@ function rp_616e7468726f7069635f73747265616d2e726573706f6e73655f636f6e74656e745f
 }
 
 export const translated = { ["map_stop_reason"]: rp_616e7468726f7069635f73747265616d2e6d61705f73746f705f726561736f6e, ["response_content_key"]: rp_616e7468726f7069635f73747265616d2e726573706f6e73655f636f6e74656e745f6b6579 };
-export const provenance = {"sourcePath":"rust/src/anthropic_stream.rs","sourceSha256":"88567b1c4fb054dcd896e8c847246b95eb840d5d605c7454bb793377e00fedca","executable":2,"executableFunctions":2,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":9,"preserved":12,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/anthropic_stream.rs","sourceSha256":"1ee8f466f42eecebc3bf938c548424768762b22d2482a23d5661ecbe426e0c82","executable":2,"executableFunctions":2,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":9,"preserved":12,"runtimeParity":false};

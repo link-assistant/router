@@ -1,0 +1,1 @@
+Draft reusable nested original-source edit templates and bulk paired literal migration, preserving existing APIs and full CST/private reissue. Add independent all-domain and nested/source/budget refusal case sources. All execution remains unrun; full translation and parity remain unfinished.

@@ -1,0 +1,128 @@
+{
+  "schema": "router-translation-delivery-audit-artifact-index-v1",
+  "auditDate": "2026-11-01",
+  "frozenGitHead": "ba7b1d9f99f9be16628fe433a097b1b8ff036f43",
+  "scope": "Requirements/source review plus read-only Git metadata analytics; not project verification.",
+  "payloadFiles": [
+    {
+      "path": "README.md",
+      "bytes": 19891,
+      "lines": 272,
+      "sha256": "20ba8865d6b22a9b7995bb8a0f983f1110ab65863a3c6166c6581a36b56bd60a"
+    },
+    {
+      "path": "evidence/commit-cadence.json",
+      "bytes": 13004,
+      "lines": 370,
+      "sha256": "87453410adfa0fb3ac5c5a8938a5106b443ba4b9e1dbe8ceb817152d59149789"
+    },
+    {
+      "path": "evidence/commits-01.jsonl",
+      "bytes": 68321,
+      "lines": 250,
+      "sha256": "28df93268600ce4181b5396f64f1afe6767df70ff9106786e8e7f206de717a7f"
+    },
+    {
+      "path": "evidence/commits-02.jsonl",
+      "bytes": 67264,
+      "lines": 250,
+      "sha256": "b3762f71ce213743e72662ba0b6b8079c2317a4f6e6f953ba3538df2f9a79933"
+    },
+    {
+      "path": "evidence/commits-03.jsonl",
+      "bytes": 66988,
+      "lines": 250,
+      "sha256": "140a86ce926008d2f3b48cc66a53eeec221f7a7b3c2cab4ec2fa75c5a53fabc5"
+    },
+    {
+      "path": "evidence/commits-04.jsonl",
+      "bytes": 67720,
+      "lines": 250,
+      "sha256": "797bd8cf820f710e8406cfaf500c381341a4a2c7f86ef56fa68e8c15d064e2f7"
+    },
+    {
+      "path": "evidence/commits-05.jsonl",
+      "bytes": 66275,
+      "lines": 250,
+      "sha256": "36824ac67ad20aa6d6b1accadbde5127fe54dcc0d50c4ca3a46f227c520640a3"
+    },
+    {
+      "path": "evidence/commits-06.jsonl",
+      "bytes": 65893,
+      "lines": 250,
+      "sha256": "88a209f2a8b8532d9334bd301a7534c4a5fed7a559a500cd40f356c94a3ee477"
+    },
+    {
+      "path": "evidence/commits-07.jsonl",
+      "bytes": 65930,
+      "lines": 250,
+      "sha256": "a853cd6da8987b4aa2302ff27315fecf081db1968d09ba1d107c66890c572c9d"
+    },
+    {
+      "path": "evidence/commits-08.jsonl",
+      "bytes": 66876,
+      "lines": 250,
+      "sha256": "283ad2ae648f41f8c79a17a3fc0d9e4c4b74029b95f0f582918264da5abe8b4d"
+    },
+    {
+      "path": "evidence/commits-09.jsonl",
+      "bytes": 67181,
+      "lines": 250,
+      "sha256": "d06c772c3d11e0fb68a7cd4e22accb71b5e2963563076ec3b56121cd4d0576dd"
+    },
+    {
+      "path": "evidence/commits-10.jsonl",
+      "bytes": 66599,
+      "lines": 250,
+      "sha256": "b955a68bbddb70ddde29b50fc0dbfa72955f930b9a53639cc639c59f8818fc7e"
+    },
+    {
+      "path": "evidence/commits-11.jsonl",
+      "bytes": 61095,
+      "lines": 226,
+      "sha256": "ded8b3bdf9116575d4d237da5331abfae39231fb5d6aab459e0d52761238622f"
+    },
+    {
+      "path": "evidence/first-parent-commits.jsonl",
+      "bytes": 220987,
+      "lines": 817,
+      "sha256": "6c211f40be16cad9446afddc2fac7ef5b9c02e0a19308a3274cb685e7cca087b"
+    },
+    {
+      "path": "evidence/issues.json",
+      "bytes": 26443,
+      "lines": 23,
+      "sha256": "2849c96f2d5a24a8213bf3d2a15986b24177c0ce1292e42a86e3a55642261692"
+    },
+    {
+      "path": "evidence/source-batches.json",
+      "bytes": 2584,
+      "lines": 76,
+      "sha256": "c889fd6dc171f0b959aa58ae1dda181f711d352b4a95f6854d0783067a07ab33"
+    },
+    {
+      "path": "evidence/technical-requirements-baseline.json",
+      "bytes": 19855,
+      "lines": 359,
+      "sha256": "f4ebe0bcf7da0bf8f8788d9221ba00590595fd069ff089896d55149a77cdd00b"
+    },
+    {
+      "path": "forecast.md",
+      "bytes": 13787,
+      "lines": 175,
+      "sha256": "ce69e83b54f9e84e487f9b6bcd3c32718511282cda05475646dcffe716ca561f"
+    },
+    {
+      "path": "requirements.md",
+      "bytes": 52485,
+      "lines": 308,
+      "sha256": "2777a4d761dce82abb254c8f5f2d0e311ef96e21a6a5031a96a97a0a2a9943eb"
+    }
+  ],
+  "payloadBytes": 1099178,
+  "projectExecution": "UNRUN",
+  "currentCiFeedback": "uninspected",
+  "manifestSelfExcluded": true,
+  "sourceCompletion": "8/70 local acceptance bundles; not code completion",
+  "codeCompletionPercent": null
+}

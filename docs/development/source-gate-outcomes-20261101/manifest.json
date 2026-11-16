@@ -1,0 +1,10 @@
+{
+  "schema": "same-sha-gate-case-source-copies-v1",
+  "baselineRevision": "d1d3c96aaa6a7ca92762f394125c5e7e8571cc0f",
+  "archive": "complete-source-copies.json.gz",
+  "sha256": "1b2b1188b9655f77cb5e5ed4f1606413269fa6e00b4292c7954bcff4dc465576",
+  "rawBytes": 230333,
+  "packedBytes": 46789,
+  "workflowSources": 14,
+  "executionEvidence": "UNRUN"
+}

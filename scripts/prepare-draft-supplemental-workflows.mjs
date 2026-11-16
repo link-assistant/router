@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
-import {readFixedNineDraftWorkflowSources,DRAFT_SUPPLEMENTS} from './fixed-nine-draft-policy.mjs';
+import {readCurrentFixedNineDraftWorkflowSources as readFixedNineDraftWorkflowSources,DRAFT_SUPPLEMENTS} from './fixed-nine-draft-policy.mjs';
 const require=createRequire(new URL('./ci/package.json',import.meta.url)),{parseDocument,Parser,CST}=require('yaml'),ROOT=fileURLToPath(new URL('../',import.meta.url));
 const fail=message=>{throw TypeError('Fixed-nine workflow proposal: '+message);};
 function grammar(source){const document=parseDocument(source,{version:'1.2',uniqueKeys:true,keepSourceTokens:true});if(document.errors.length)fail('complete native YAML grammar differs');return document;}

@@ -1,0 +1,34 @@
+{
+  "schema": "fixed-Copy-scalar-helper-source-family-census-20261103-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-copy-scalar-helper-families-20261103/index391.before.json.gz",
+    "encodedSha256": "f2c7a0656695261b8f143714dd1f712cd1585730689e9bda91263069ec768d20",
+    "sourceSha256": "35a4314cd505a75f4215e10c797b7bd260b31668039c067038be95588ca8cbf2",
+    "rows": 391
+  },
+  "families": [
+    {
+      "id": "exact-copy-scalar-helper-readers-20261103",
+      "manifest": "tools/translation/source-profiles/copy-scalar-helper-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "copy-scalar-helper-source-20261103-v1",
+      "sha256": "39dbd0b8b50e4b9d9385d0c4bee557f29ef0817cca56c06194186a6772b706a8",
+      "rows": 2,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-copy-scalar-helper-cases-20261103",
+      "manifest": "tools/translation/source-profiles/exact-source-copy-scalar-helper-families-20261103/joins.json.gz",
+      "kind": "archive",
+      "schema": "Copy-scalar-helper-index-joins-20261103-v1",
+      "sha256": "53ee21351386ec19692592ec2ca2254e0a33130344cf3310919ab42bbecc620e",
+      "rows": 8,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 10,
+  "totalRows": 401,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

@@ -1,5 +1,5 @@
-// GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=41b335b19f7e9edb7da76cc5f6ee81e5aaf8210c8300dfd1fd9fae60e33f94c0; dynamic any annotations are explicit draft gaps.
+// SOURCE DRAFT: complete global file allow-list source substitutions.
+// Canonical regeneration and every new verification remain UNRUN.
 import { lstat, mkdir, chmod, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
@@ -17,7 +17,7 @@ export async function clientFileTransaction(paths?: any, operation?: any, { chec
         await requireNativePath(root);
         await mkdir(root, { recursive: true, mode: 0o700 });
         await chmod(root, 0o700);
-        const allowed: any = [paths.config, await (await import("./client-files.js")).preferredClientPath(paths.environment, paths.legacyEnvironment), await (await import("./client-files.js")).preferredClientPath(paths.metadata, paths.legacyMetadata), ...(paths.marker ? [paths.marker] : [])].sort();
+        const allowed: any = [paths.config, await (await import("./client-files.js")).preferredClientPath(paths.environment, paths.legacyEnvironment), await (await import("./client-files.js")).preferredClientPath(paths.metadata, paths.legacyMetadata), ...(paths.marker ? [paths.marker] : []),...await globalClientTransactionFiles(paths)].sort();
         const entries: any = [];
         try {
             for (const [index, path] of [...new (Set as any)(allowed)].entries() as any) {
@@ -75,3 +75,5 @@ export async function clientFileTransaction(paths?: any, operation?: any, { chec
         }
     }));
 }
+
+import {globalClientTransactionFiles} from './client-global-state.js';

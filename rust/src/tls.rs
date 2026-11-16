@@ -151,13 +151,15 @@ pub fn ensure_generated(
     if cert_path.is_file() && key_path.is_file() {
         return Ok((cert_path, key_path));
     }
-    let generated = rcgen::generate_simple_self_signed(names.to_vec())
-        .map_err(|error| format!("could not generate a self-signed certificate: {error}"))?;
+    let generated = rcgen::generate_simple_self_signed(names.to_vec()).map_err(|error| {
+        crate::translation_core::format!("could not generate a self-signed certificate: {error}")
+    })?;
     let directory = cert_path
         .parent()
         .ok_or_else(|| "generated certificate has no directory".to_string())?;
-    std::fs::create_dir_all(directory)
-        .map_err(|error| format!("could not create {}: {error}", directory.display()))?;
+    std::fs::create_dir_all(directory).map_err(|error| {
+        crate::translation_core::format!("could not create {}: {error}", directory.display())
+    })?;
     crate::durable_file::atomic_write_owner_only(&cert_path, generated.cert.pem().as_bytes())
         .map_err(|error| crate::durable_file::describe_write_failure(&cert_path, &error))?;
     // The private key is written owner-only, like every other secret this
@@ -180,7 +182,7 @@ pub fn read_generated_certificate(
 ) -> crate::translation_core::Outcome<String, String> {
     let (cert_path, _) = generated_paths(data_dir);
     std::fs::read_to_string(&cert_path).map_err(|error| {
-        format!(
+        crate::translation_core::format!(
             "no generated certificate at {}: {error}; start the router with TLS_SELF_SIGNED=1 first",
             cert_path.display()
         )
@@ -223,7 +225,7 @@ pub async fn load_config(
     axum_server::tls_rustls::RustlsConfig::from_pem_file(cert, key)
         .await
         .map_err(|error| {
-            format!(
+            crate::translation_core::format!(
                 "could not load the TLS certificate {}: {error}",
                 cert.display()
             )

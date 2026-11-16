@@ -15,6 +15,7 @@ export function sourcePrimitiveAlias(parser,segments,span){
   const aliases=[],seen=new Set();
   const resolve=(route,depth=0)=>{
     if(depth>=32)throw unsupported('primitive type alias','original alias chain exceeds its bound',span);
+    if(route.length===3&&route[0]==='crate'&&route[1]==='translation_fixed_types_core')return originalFixedTypeAliasEndpoint(parser,route,span);
     const path=route.slice(1,-1),name=route.at(-1),scope=scopes.find(scope=>JSON.stringify(scope.path)===JSON.stringify(path));
     const binding=scope?.bindings.find(binding=>binding.namespace==='type'&&binding.name===name);
     if(!binding)return null;
@@ -40,3 +41,5 @@ export function sourcePrimitiveAlias(parser,segments,span){
   };
   const type=resolve(target);return type?{...type,primitiveAliasSource:{schema:'original-monomorphic-primitive-alias-v1',aliases,digest:metadataDigest(aliases),runtimeParity:false}}:null;
 }
+
+import {originalFixedTypeAliasEndpoint} from '../fixed-type-alias-endpoint-source.mjs';

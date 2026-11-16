@@ -207,9 +207,10 @@ pub(crate) fn speaks_zai_business_codes(provider: &crate::providers::ResolvedPro
             .ok()
             .and_then(|url| url.host_str().map(str::to_ascii_lowercase))
             .is_some_and(|host| {
-                ["z.ai", "bigmodel.cn"]
-                    .iter()
-                    .any(|domain| host == *domain || host.ends_with(&format!(".{domain}")))
+                ["z.ai", "bigmodel.cn"].iter().any(|domain| {
+                    host == *domain
+                        || host.ends_with(&crate::translation_core::format!(".{domain}"))
+                })
             })
 }
 
@@ -353,11 +354,11 @@ pub(crate) fn save(
 /// One newline-terminated `key=value` line per recorded exhaustion under
 /// `data_dir`, for `deploy --status` and `router doctor`; empty when none.
 #[must_use]
-pub fn status_report(data_dir: &std::path::Path) -> String {
+pub fn status_report(data_dir: &std::path::Path) -> crate::translation_core::Text {
     let mut lines = load(data_dir)
         .into_iter()
         .map(|(name, exhaustion)| {
-            format!(
+            crate::translation_core::format!(
                 "provider_exhausted provider={name} upstream_code={} observed_at_unix={} reason={}",
                 exhaustion.code,
                 exhaustion.observed_unix(),

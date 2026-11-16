@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,readdirSync,existsSync,rmSync,symlinkSync} from 'node:fs';
+import {statSync,chmodSync,mkdtempSync,mkdirSync,writeFileSync,readFileSync,readdirSync,existsSync,rmSync,symlinkSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -45,11 +45,11 @@ test('full profile drafts execute independent original families through meta int
     }
     assert.deepEqual(regenerateCompilationMatrix({root:directory,matrix:selection,sourceCorpus:corpus,check:true}).failures,[]);
     const unix=result.manifest.profiles.find(member=>member.name==='unix-family'),windows=result.manifest.profiles.find(member=>member.name==='windows-family');
-    rmSync(join(directory,unix.projects[0].targets.javascript));writeFileSync(join(directory,windows.projects[0].targets.typescript),'stale');
+    const knownWindows=readFileSync(join(directory,windows.projects[0].targets.typescript));rmSync(join(directory,unix.projects[0].targets.javascript));writeFileSync(join(directory,windows.projects[0].targets.typescript),'stale');
     const extra=unix.directory+'/js/generated/rust-project/extra.mjs';writeFileSync(join(directory,extra),'extra');
     const failed=regenerateCompilationMatrix({root:directory,matrix:selection,sourceCorpus:corpus,check:true}).failures;
-    assert.ok(failed.includes('missing: '+unix.projects[0].targets.javascript));assert.ok(failed.includes('stale: '+windows.projects[0].targets.typescript));assert.ok(failed.includes('unexpected: '+extra));
-    regenerateCompilationMatrix({root:directory,matrix:selection,sourceCorpus:corpus});assert.equal(existsSync(join(directory,extra)),false);assert.deepEqual(snapshot(directory),baseline);
+    assert.ok(failed.includes('missing: '+unix.projects[0].targets.javascript));assert.ok(failed.includes('edited: '+windows.projects[0].targets.typescript));assert.ok(!failed.includes('unexpected: '+extra));
+    assert.throws(()=>regenerateCompilationMatrix({root:directory,matrix:selection,sourceCorpus:corpus}),/edited .*forward peer retained/);assert.equal(readFileSync(join(directory,windows.projects[0].targets.typescript),'utf8'),'stale');assert.equal(readFileSync(join(directory,extra),'utf8'),'extra');writeFileSync(join(directory,windows.projects[0].targets.typescript),knownWindows);regenerateCompilationMatrix({root:directory,matrix:selection,sourceCorpus:corpus});assert.equal(readFileSync(join(directory,extra),'utf8'),'extra');assert.deepEqual(snapshot(directory),baseline);
   }finally{rmSync(directory,{recursive:true,force:true});}
 });
 
@@ -124,4 +124,11 @@ test('whole unchanged lib and Unix listener retain separate original configured 
       await verifyTypedTargets({meta,javascript:readFileSync(join(directory,project.targets.javascript),'utf8'),typescript:readFileSync(join(directory,project.targets.typescript),'utf8')},()=>{});
     }
   }finally{rmSync(directory,{recursive:true,force:true});}
+});
+
+// Independent source cases appended for exact prior bytes/modes, no adoption.
+test('owned matrix peers retain an edited mode until its exact prior mode is restored',{timeout:60000},()=>{
+ const directory=root();try{sources(directory);const selection=matrix(),options={root:directory,matrix:selection,sources:paths},first=regenerateCompilationMatrix(options),target=first.manifest.profiles[0].projects[0].targets.javascript,file=join(directory,target),original=readFileSync(file),mode=statSync(file).mode&0o777;
+  chmodSync(file,mode&~0o222);const changed=statSync(file).mode&0o777;assert.notEqual(changed,mode);assert.throws(()=>regenerateCompilationMatrix(options),/edited .*forward peer retained/);assert.equal(statSync(file).mode&0o777,changed);assert.ok(readFileSync(file).equals(original));chmodSync(file,mode);regenerateCompilationMatrix(options);assert.deepEqual(regenerateCompilationMatrix({...options,check:true}).failures,[]);
+ }finally{rmSync(directory,{recursive:true,force:true});}
 });

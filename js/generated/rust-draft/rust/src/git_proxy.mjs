@@ -1,4 +1,4 @@
-// Generated draft from rust/src/git_proxy.rs; sha256=a6f351ad1a51d538350edff25817ecf9b21963f4ab171d5a948ad184735b9764
+// Generated draft from rust/src/git_proxy.rs; sha256=2d3412072f49da668a08e2510cf8b6fd379098ccc92a2a8ce41c788e3f13dbc3
 // Carried constructs are data, never runtime parity evidence.
 import { validateJsonNumber as ml_validate_json_number, validateJsonMap as ml_validate_json_map } from "../../runtime/json-values.mjs";
 
@@ -111,26 +111,26 @@ function rp_6769745f70726f78792e616e6365737472795f66726f6d5f636f6d70617265(paylo
   ml_pattern_immutable_view(payload);
   ml_validate_rust_value(payload, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   const ml_s4 = (() => {
-    const ml_match_subject7 = ml_host_option_bind(ml_host_serde_json_value_get_string(payload, "status"), (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_5_0); }, "and_then");
-    ml_pattern_immutable(ml_match_subject7);
-    return ml_match_subject7;
+    const ml_match_subject11 = ml_host_option_bind(ml_host_serde_json_value_get_string(payload, "status"), (ml_host_callback_9_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_9_0); }, "and_then");
+    ml_pattern_immutable(ml_match_subject11);
+    return ml_match_subject11;
   })();
   switch (ml_s4.$) {
     case "None": {
       return Object.freeze({ $: 'Unknown' });
     }
     case "Some": {
-      const ml_f1 = ml_s4.field0;
-      if ((ml_f1 === "ahead")) {
+      const ml_f5 = ml_s4.field0;
+      if ((ml_f5 === "ahead")) {
         return Object.freeze({ $: 'FastForward' });
       } else {
-        if ((ml_f1 === "identical")) {
+        if ((ml_f5 === "identical")) {
           return Object.freeze({ $: 'FastForward' });
         } else {
-          if ((ml_f1 === "behind")) {
+          if ((ml_f5 === "behind")) {
             return Object.freeze({ $: 'Diverged' });
           } else {
-            if ((ml_f1 === "diverged")) {
+            if ((ml_f5 === "diverged")) {
               return Object.freeze({ $: 'Diverged' });
             } else {
               return Object.freeze({ $: 'Unknown' });
@@ -176,4 +176,4 @@ function rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468(path) {
 }
 
 export const translated = { ["ZERO_OID"]: rp_6769745f70726f78792e5a45524f5f4f4944(), ["RefUpdate"]: ml_make_RefUpdate_RefUpdate, ["RefRefusal"]: Object.freeze({ ["Delete"]: ml_make_RefRefusal_Delete, ["NonFastForward"]: ml_make_RefRefusal_NonFastForward, ["Unverifiable"]: ml_make_RefRefusal_Unverifiable }), ["AncestryQuery"]: ml_make_AncestryQuery_AncestryQuery, ["Ancestry"]: Object.freeze({ ["FastForward"]: ml_make_Ancestry_FastForward, ["Diverged"]: ml_make_Ancestry_Diverged, ["Unknown"]: ml_make_Ancestry_Unknown }), ["ancestry_from_compare"]: rp_6769745f70726f78792e616e6365737472795f66726f6d5f636f6d70617265, ["scope_admits"]: rp_6769745f70726f78792e73636f70655f61646d697473, ["canonical_git_path"]: rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468 };
-export const provenance = {"sourcePath":"rust/src/git_proxy.rs","sourceSha256":"a6f351ad1a51d538350edff25817ecf9b21963f4ab171d5a948ad184735b9764","executable":8,"executableFunctions":3,"executableConstants":1,"executableTypes":4,"executableConstructors":8,"carried":21,"preserved":30,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/git_proxy.rs","sourceSha256":"2d3412072f49da668a08e2510cf8b6fd379098ccc92a2a8ce41c788e3f13dbc3","executable":8,"executableFunctions":3,"executableConstants":1,"executableTypes":4,"executableConstructors":8,"carried":21,"preserved":30,"runtimeParity":false};

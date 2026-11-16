@@ -1,0 +1,12 @@
+// Whole unchanged predecessor -> additive owned pair source equation. UNRUN.
+import {fileURLToPath} from 'node:url';
+import {createReconcileSourceCapture,requireReconcile as need,boundedReconcileWireBytes} from './paired-sync-reconcile-20261101-support.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
+const ROOT=fileURLToPath(new URL('../../',import.meta.url));
+export function captureOwnedPeerSourceHistory({root=ROOT}={}){
+ const captured=createReconcileSourceCapture(root);let result,primary,failed=false;try{
+  const originalPath='tools/translation/synchronize-owned-project-units.mjs',snapshot='tools/translation/source-profiles/owned-peer-reconcile-20261101/originals/synchronize-owned-project-units.mjs.txt',path='tools/translation/owned-peer-reconcile-20261101.mjs',before=captured.capture(snapshot).source,original=captured.capture(originalPath).source,after=captured.capture(path).source;need(before!==null&&before===original&&after!==null,'complete unchanged original unit planner and additive adaptation required');const concrete=transportConcreteSyntaxSource(before,{language:'JavaScript'});need(transportConcreteSyntaxMeta(concrete.meta).source===before,'whole original unit planner CST inverse differs');
+  const changed=applyConcreteSyntaxSubstitutions(concrete.meta,{languageRules:[{id:'javascript:retain-original-whole-owned-unit-source-and-private-producer-domain',edits:[]}],repositoryRules:[{id:'router:compose-independent-owned-peers-with-fresh-canonical-native-reproduction',edits:[{span:[0,before.length],expected:before,replacement:after}]}]});need(changed.value.source===after,'complete authored owned pair source equation differs');const history=transportConcreteSourceEquations([{before,after,language:'JavaScript'}])[0];need(history.inverse===before,'complete original unit planner inverse differs');result={schema:'router-owned-peer-reconciliation-source-history-20261101-v1',originalPath,snapshot,path,before,after,inverse:before,history,trace:changed.trace,freshnessQualified:false,sourceAuthority:false,semanticAuthority:false,receivingExecuted:false};boundedReconcileWireBytes(result);
+ }catch(error){failed=true;primary=error;}try{captured.close();}catch(error){if(!failed)throw error;}if(failed)throw primary;return result;
+}

@@ -10,6 +10,7 @@ export const evaluateOwnedVectorCandidate=evaluateOwnedCoreProgram;
 export const parseOwnedVectorCandidateMeta=readOwnedCoreDocument;
 export const emitOwnedVectorCandidateRust=program=>emitOwnedCoreProgram(program,'rust');
 export function translateOwnedVectorCandidate(source,{context,sourcePath,typescriptOutputPath}={}){
+ return withOwnedNativeProjectOperation(()=>{
  const stage=prepareReverseConcreteSource(source);if(!sourcePath?.endsWith('.mjs')||ownedCoreSourceData(context).files.find(row=>row.path===sourcePath)?.source!==stage.source)throw TypeError('Owned vector candidate complete original source/path differs');
  const pipeline=createRulePipeline([
   {phase:'language',rules:[
@@ -20,4 +21,8 @@ export function translateOwnedVectorCandidate(source,{context,sourcePath,typescr
   {phase:'repository',rules:[{id:'router:separate-zero-parameter-primitive-vector-candidate',apply:row=>({...row,concreteSyntax:stage.concreteSyntax,profile:'router-owned-primitive-vector-candidate-v1',productionSelected:false,runtimeParity:false,rustExecuted:false})}]},
  ]);
  const result=pipeline.run(null);requireOwnedCoreSourceCurrent(context);return {...result.value,trace:result.trace};
+
+ });
 }
+
+import {withOwnedNativeProjectOperation} from './owned-native-project-operation.mjs';

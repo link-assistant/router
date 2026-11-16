@@ -25,8 +25,8 @@ pub use crate::stream_termination::INCOMPLETE_STREAM_MESSAGE;
 pub fn anthropic_frame(
     event: &crate::translation_core::Str,
     payload: &crate::translation_core::Json,
-) -> String {
-    format!("event: {event}\ndata: {payload}\n\n")
+) -> crate::translation_core::Text {
+    crate::translation_core::format!("event: {event}\ndata: {payload}\n\n")
 }
 
 /// Map an `OpenAI` `finish_reason` onto an Anthropic `stop_reason`.

@@ -29,6 +29,7 @@
     "schemas",
     "README.md",
     "src",
+    "runtime",
     "portable"
   ],
   "scripts": {

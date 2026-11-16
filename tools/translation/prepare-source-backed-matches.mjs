@@ -1,3 +1,4 @@
+import {writeProtectedAfterCliPlan} from './protected-after-cli-writers-20261102.mjs';
 // Complete actual vector corpus machinery, specialized by native AST/CST.
 import {readFileSync, writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -125,8 +126,7 @@ export function prepareSourceBackedMatches({root = ROOT} = {}) {
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2); if (args.length !== 1 || !['--emit', '--write', '--check'].includes(args[0])) fail('usage: --emit|--write|--check');
-  const result = prepareSourceBackedMatches();
+  const result=args[0] === '--write'?writeProtectedAfterCliPlan(ROOT,()=>prepareSourceBackedMatches(),plan=>{}):prepareSourceBackedMatches();
   if (args[0] === '--emit') console.log(JSON.stringify(result));
-  else if (args[0] === '--write') { for (const row of result.files) writeFileSync(resolve(ROOT, row.path), row.after); }
-  else { if (result.files.some(row => row.current !== row.after)) fail('generated matches corpus is stale'); console.log('Source-backed matches corpus is current.'); }
+  else if (args[0] === '--check') { if (result.files.some(row => row.current !== row.after)) fail('generated matches corpus is stale'); console.log('Source-backed matches corpus is current.'); }
 }

@@ -130,7 +130,7 @@ fn drive_tui_to_login_url(
     loop {
         let remaining = deadline.saturating_duration_since(Instant::now());
         if remaining.is_zero() {
-            return Err(format!(
+            return Err(crate::translation_core::format!(
                 "timed out; last output: {}",
                 session.transcript_tail(400)
             ));
@@ -150,28 +150,38 @@ fn drive_tui_to_login_url(
         let action = next_tui_action(&text, &progress);
         match action {
             Some(TuiAction::AcceptTheme) => {
-                session
-                    .send_key(Key::Enter)
-                    .map_err(|e| format!("could not accept the Claude Code theme screen: {e}"))?;
+                session.send_key(Key::Enter).map_err(|e| {
+                    crate::translation_core::format!(
+                        "could not accept the Claude Code theme screen: {e}"
+                    )
+                })?;
             }
             Some(TuiAction::AcceptWorkspaceTrust) => {
                 session.send_key(Key::Enter).map_err(|e| {
-                    format!("could not accept the Claude Code workspace trust screen: {e}")
+                    crate::translation_core::format!(
+                        "could not accept the Claude Code workspace trust screen: {e}"
+                    )
                 })?;
             }
             Some(TuiAction::SendLogin) => {
                 session
                     .send_text("/login")
                     .and_then(|()| session.send_key(Key::Enter))
-                    .map_err(|e| format!("could not type /login at the Claude Code prompt: {e}"))?;
+                    .map_err(|e| {
+                        crate::translation_core::format!(
+                            "could not type /login at the Claude Code prompt: {e}"
+                        )
+                    })?;
             }
             Some(TuiAction::SelectLoginMethod) => {
                 session.send_key(Key::Enter).map_err(|e| {
-                    format!("could not select the Claude subscription login method: {e}")
+                    crate::translation_core::format!(
+                        "could not select the Claude subscription login method: {e}"
+                    )
                 })?;
             }
             None => {
-                return Err(format!(
+                return Err(crate::translation_core::format!(
                     "Claude Code reached an unrecognized screen; last output: {}",
                     session.transcript_tail(400)
                 ));
@@ -197,18 +207,21 @@ fn wait_for_login_url(
         )
         .map_err(|err| wait_error_detail(session, &err))?;
     extract_login_url(&text).ok_or_else(|| {
-        format!(
+        crate::translation_core::format!(
             "authorization URL disappeared; last output: {}",
             session.transcript_tail(400)
         )
     })
 }
 
-fn wait_error_detail(session: &PtySession, err: &WaitError) -> String {
+fn wait_error_detail(session: &PtySession, err: &WaitError) -> crate::translation_core::Text {
     match err {
-        WaitError::Timeout => format!("timed out; last output: {}", session.transcript_tail(400)),
+        WaitError::Timeout => crate::translation_core::format!(
+            "timed out; last output: {}",
+            session.transcript_tail(400)
+        ),
         WaitError::ChildExited(_) => {
-            format!("{err}; last output: {}", session.transcript_tail(400))
+            crate::translation_core::format!("{err}; last output: {}", session.transcript_tail(400))
         }
     }
 }
@@ -292,7 +305,7 @@ pub fn submit_and_finalize(
 }
 
 /// Turn the CLI's known compacted verdicts back into readable API text.
-fn rejection_verdict(compact: &crate::translation_core::Str) -> String {
+fn rejection_verdict(compact: &crate::translation_core::Str) -> crate::translation_core::Text {
     const STATUS_PREFIX: &str = "OAutherror:Requestfailedwithstatuscode";
 
     if compact.contains("OAutherror:Invalidcode") {
@@ -302,7 +315,9 @@ fn rejection_verdict(compact: &crate::translation_core::Str) -> String {
         let rest = &compact[start + STATUS_PREFIX.len()..];
         let status: String = rest.chars().take_while(char::is_ascii_digit).collect();
         if !status.is_empty() {
-            return format!("OAuth error: Request failed with status code {status}");
+            return crate::translation_core::format!(
+                "OAuth error: Request failed with status code {status}"
+            );
         }
     }
     if compact.contains("invalid_grant") {

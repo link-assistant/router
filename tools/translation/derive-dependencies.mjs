@@ -1,6 +1,6 @@
 import {cargoLayoutManifestMatches} from './cargo-layout-input-compatibility.mjs';
 import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
+import {readSourceProfileFileSync as readFileSync} from './ordered-text-map-callers-20261102-source-storage.mjs';
 import {gunzipSync} from 'node:zlib';
 
 const hash=value=>createHash('sha256').update(value).digest('hex');

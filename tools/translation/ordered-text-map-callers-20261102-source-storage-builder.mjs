@@ -1,0 +1,31 @@
+// Complete source-profile storage authoring DATA only. Never loads SDK/code or
+// materializes a selected fake compiler. All logical profiles are retained.
+import {mkdirSync,writeFileSync,lstatSync,realpathSync} from 'node:fs';
+import {join,resolve,dirname,basename,sep} from 'node:path';
+import {createHash} from 'node:crypto';
+import {createCompactSourceVault,inspectCompactSourceVault,withCompactSourceVault} from './compact-source-vault-20261102.mjs';
+import {writeCompactSourceVaultDirectory} from './compact-source-vault-store-20261102.mjs';
+import {compactSparseGit,compactSparsePhysicalCensus,readCompactSparsePhysicalFile,recloseCompactSparsePhysicalCensus,releaseCompactSparsePhysicalCensus} from './compact-sparse-git-io-20261102.mjs';
+import {createOrderedMapCanonicalSourceCustody} from './ordered-text-map-callers-20261102-canonical-source-custody.mjs';
+import {withCompleteSourceClosingFence} from './complete-source-closing-fence.mjs';
+import {withProtectedNativeWriter,mutateProtectedNativeAbsoluteEntries} from './protected-native-writers-20261102.mjs';
+import {ownSourceFailureField} from './source-error-fields-20261102.mjs';
+const PREFIX='tools/translation/source-profiles/',MAX=268435456;
+const fail=message=>{throw TypeError('Complete readonly source-profile store builder: '+message);};
+const hash=raw=>createHash('sha256').update(raw).digest('hex');
+/** Existing full-export model plus actual original physical/root Git joins.
+ * This profile stores every original SOURCE-PROFILE path, not native/code/SDK.
+ */
+export function createReadonlySourceProfileStore({sourceRoot,model,output}={}){
+ sourceRoot=realpathSync(resolve(sourceRoot));const requested=resolve(output),root=join(realpathSync(dirname(requested)),basename(requested));if(root===sourceRoot||root.startsWith(sourceRoot+sep)||sourceRoot.startsWith(root+sep))fail('fresh separate store required');try{lstatSync(root);fail('fresh store already exists');}catch(error){if(ownSourceFailureField(error,'code')!=='ENOENT')throw error;}
+ const started=performance.now(),tick=()=>{if(performance.now()-started>=60000)fail('original finite whole sixty-second source setup deadline');};return withCompleteSourceClosingFence(()=>withProtectedNativeWriter(sourceRoot,()=>mutateProtectedNativeAbsoluteEntries(sourceRoot,[root],captured=>{if(captured.length!==1||captured[0].canonicalTarget!==root)fail('actual fresh source store differs');
+ const files=inspectCompactSourceVault(model).metadata.files.filter(row=>row.path.startsWith(PREFIX)).sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0),custody=createOrderedMapCanonicalSourceCustody(sourceRoot),author=createCompactSourceVault();let created,watch,stored;const originalHead=compactSparseGit(sourceRoot,['rev-parse','--verify','HEAD'],{maxBytes:1024}).trim();
+ const index=()=>compactSparseGit(sourceRoot,['ls-files','--stage','-z','--',PREFIX],{maxBytes:8388608}).split('\0').filter(Boolean).map(line=>{const row=/^(\d{6}) ([a-f0-9]+) (\d+)\t(.+)$/u.exec(line);if(!row||row[3]!=='0'||!['100644','100755'].includes(row[1]))fail('complete regular original profile index required');return {path:row[4],mode:row[1],gitBlob:row[2]};}).sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0),originalIndex=index();
+ if(!files.length||files.length>8192||files.reduce((sum,row)=>sum+row.bytes,0)>MAX||JSON.stringify(files.map(({path,mode,gitBlob})=>({path,mode,gitBlob})))!==JSON.stringify(originalIndex))fail('complete actual profile source/vault/index census differs');
+ const batches=[];let batch=[],bytes=0;for(const row of files){if(row.bytes>33554432)fail('original per-file bound');if(bytes+row.bytes>67108864){batches.push(batch);batch=[];bytes=0;}batch.push(row);bytes+=row.bytes;}if(batch.length)batches.push(batch);
+ const close=()=>{let failed=false,primary;const check=run=>{try{run();}catch(error){if(!failed){failed=true;primary=error;}}};check(()=>{if(compactSparseGit(sourceRoot,['rev-parse','--verify','HEAD'],{maxBytes:1024}).trim()!==originalHead||JSON.stringify(index())!==JSON.stringify(originalIndex))fail('original complete profile HEAD/index changed');});for(const group of batches)check(()=>withCompactSourceVault(model,reader=>{let failed=false,primary;for(const row of group)try{if(!custody.readBytes(join(sourceRoot,row.path),33554432).equals(reader.read(row.path)))fail('complete original profile bytes changed');}catch(error){if(!failed){failed=true;primary=error;}}if(failed)throw primary;return null;}));check(custody.close);if(watch)check(()=>recloseCompactSparsePhysicalCensus(watch));check(tick);if(failed)throw primary;};
+ try{return withCompleteSourceClosingFence(()=>{
+  for(const group of batches)withCompactSourceVault(model,reader=>{for(const row of group){const raw=reader.read(row.path),actual=custody.readBytes(join(sourceRoot,row.path),33554432);if(!actual.equals(raw))fail('actual original source bytes differ from full export');author.add({...row,domain:'profiles',bytes:raw});}return null;});stored=author.finish();close();mkdirSync(root,{mode:0o700});created=lstatSync(root,{bigint:true});const vault=writeCompactSourceVaultDirectory(join(root,'vault'),stored),descriptor={schema:'readonly-compressed-source-profiles-20261103-v1',logicalPrefix:PREFIX,hotProfilePaths:['tools/translation/source-profiles/exact-source-successor-adoption-20261103/index.json'],vaultDirectory:'vault',files:files.length,logicalBytes:files.reduce((sum,row)=>sum+row.bytes,0),originalSourceHead:originalHead,originalInputs:originalIndex,allLogicalProfilesRetained:true,sourceProfilesPhysicallyHot:false,nativeCodeRustSdkRemainPhysical:true,sourceAuthority:false,semanticAuthority:false,namespaceAuthority:false,compilerQualified:false,receivingQualified:false};writeFileSync(join(root,'descriptor.json'),JSON.stringify(descriptor)+'\n',{flag:'wx',mode:0o600});watch=compactSparsePhysicalCensus(root,{retainBytes:true,maximum:67108864});close();return {root,vault,descriptor,physicalBytes:watch.total,legacyRawAndDecodeLimitsUnchanged:true,verification:'UNRUN'};
+ },[close]);}finally{author.abort();releaseCompactSparsePhysicalCensus(watch);if(stored){stored.volumes.length=0;stored.metadata.files.length=0;stored.metadata.objects.length=0;}batches.length=0;}
+ })),[tick]);
+}

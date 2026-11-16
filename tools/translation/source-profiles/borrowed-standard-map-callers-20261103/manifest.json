@@ -1,0 +1,18 @@
+{
+  "schema": "borrowed-standard-map-caller-fragments-source-draft-20261103-v1",
+  "decodedBytes": 43503,
+  "packedBytes": 12165,
+  "sha256": "a23358b9f5676db3373d53cc09919f1e7aa424387d5f24f81ae3baa125cace3e",
+  "authoredPaths": [
+    "tools/translation/borrowed-standard-map-20261103-contracts.mjs",
+    "tools/translation/borrowed-standard-map-20261103-forward.mjs",
+    "tools/translation/borrowed-standard-map-20261103-reverse.mjs",
+    "tools/translation/borrowed-standard-map-20261103-packaging.mjs",
+    "tools/translation/test/borrowed-standard-map-20261103-caller-fragments.test.mjs",
+    "docs/development/borrowed-standard-map-callers-20261103.md"
+  ],
+  "verification": "UNRUN",
+  "ci": "NOT_INSPECTED",
+  "originalParentHooksInstalled": false,
+  "applicationTranslationQualified": false
+}

@@ -1,0 +1,39 @@
+# Repository paths are operational data; source/namespace checks stay independent.
+def repository_rust_layout(root):
+    root = Path(root).resolve()
+    nested = root / 'rust/Cargo.toml'
+    try:
+        nested_status = nested.lstat()
+    except FileNotFoundError:
+        nested_status = None
+    if nested_status is not None:
+        require(stat.S_ISREG(nested_status.st_mode) and not nested.is_symlink()
+                and not (root / 'rust').is_symlink(),
+                'Rust package manifest must be an ordinary physical file')
+    prefix = 'rust/' if nested_status is not None else ''
+    manifest = prefix + 'Cargo.toml'
+    lock = 'Cargo.lock' if (root / 'Cargo.lock').exists() else prefix + 'Cargo.lock'
+    return {'root': 'rust' if prefix else '.', 'manifest': manifest, 'lock': lock,
+            'cargoInputs': list(dict.fromkeys((['Cargo.toml'] if prefix else [])
+                                              + [manifest, lock])),
+            'entries': [prefix + 'src/lib.rs', prefix + 'src/main.rs'],
+            'productionPrefix': prefix + 'src/'}
+
+
+def rust_package_source_path(root, path):
+    if type(path) is not str:
+        raise TypeError('ordinary repository path required')
+    if path not in ['Cargo.toml', 'Cargo.lock', 'build.rs'] and not re.match(
+            r'^(?:src|tests|benches|examples|fixtures|fuzz|proptest-regressions)(?:/|$)', path):
+        return path
+    layout = repository_rust_layout(root)
+    if path == 'Cargo.toml':
+        return layout['manifest']
+    if path == 'Cargo.lock':
+        return layout['lock']
+    return path if layout['root'] == '.' else layout['root'] + '/' + path
+
+
+def is_rust_cargo_path(path):
+    return type(path) is str and (path.endswith('.rs')
+                                  or PurePosixPath(path).name in ['Cargo.toml', 'Cargo.lock'])

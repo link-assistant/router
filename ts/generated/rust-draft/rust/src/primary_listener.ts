@@ -37,7 +37,7 @@ type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$"
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
-// Generated draft from rust/src/primary_listener.rs; sha256=4ffd6dabbe6d49d06ae134a17a94fb888ef42cc058cf5d8acfc9d67f1ec74b7c
+// Generated draft from rust/src/primary_listener.rs; sha256=001570b8c4cb343a2080d0549b94b6baea4419de2d0ae91a8f063e581850e560
 // Carried constructs are data, never runtime parity evidence.
 function ml_make_ListenerTransport_Http(): Readonly<{ readonly "$": "Http" }> | Readonly<{ readonly "$": "Tls" }> {
   return Object.freeze({ $: 'Http' });
@@ -76,4 +76,4 @@ const serde_json = {
 };
 
 export const translated: { "ListenerTransport": Readonly<{ "Http": () => Readonly<{ readonly "$": "Http" }> | Readonly<{ readonly "$": "Tls" }>; "Tls": () => Readonly<{ readonly "$": "Http" }> | Readonly<{ readonly "$": "Tls" }> }> } = { ["ListenerTransport"]: Object.freeze({ ["Http"]: ml_make_ListenerTransport_Http, ["Tls"]: ml_make_ListenerTransport_Tls }) };
-export const provenance = {"sourcePath":"rust/src/primary_listener.rs","sourceSha256":"4ffd6dabbe6d49d06ae134a17a94fb888ef42cc058cf5d8acfc9d67f1ec74b7c","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":2,"carried":10,"preserved":12,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/primary_listener.rs","sourceSha256":"001570b8c4cb343a2080d0549b94b6baea4419de2d0ae91a8f063e581850e560","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":2,"carried":10,"preserved":12,"runtimeParity":false};

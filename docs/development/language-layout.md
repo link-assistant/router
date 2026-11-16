@@ -147,3 +147,12 @@ CST, historical data or inverse checks. Its three focused cases pass under Node
 and Bun. All 11 complete storage/export cases pass under Node and Bun with their original deadlines and budgets. The malformed
 source refusal case now completes in 22 seconds against its unchanged 60-second
 limit by validating complete metadata and source equations before CST parsing.
+
+## Current source-only receiving continuation
+
+The qualification results above are historical checkpoint evidence. Current
+source-only drafting does not rerun or inherit those results. Follow the
+[physical language receiving/adoption guide](physical-language-receiving-adoption-20261104.md)
+for source roles, exact authored/generated protection, explicit receiving roots,
+role-contract export and the known full-corpus resource gap. All new source
+cases remain UNRUN; full application translation and parity remain unfinished.

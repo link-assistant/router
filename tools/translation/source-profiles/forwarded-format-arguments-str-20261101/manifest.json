@@ -1,0 +1,13 @@
+{
+  "schema": "forwarded-format-arguments-str-source-profile-v1",
+  "archive": "complete-originals.json.gz",
+  "archiveBytes": 6694,
+  "archiveSha256": "95d55ad049ceb7f37a67cbbff48ff7f91b5277006f8344e89bd7070be1aa8167",
+  "decodedBytes": 42503,
+  "decodedSha256": "60caaaa2853ff683aca5790c9674a95f4b98cb49aa49c67e1eaaed32e6a74c90",
+  "paths": [
+    "tools/translation/forwarded-format-arguments-20261101.mjs",
+    "tools/translation/test/forwarded-format-arguments-20261101.test.mjs"
+  ],
+  "execution": "UNRUN"
+}

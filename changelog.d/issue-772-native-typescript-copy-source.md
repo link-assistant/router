@@ -1,0 +1,1 @@
+Draft TypeScript-aware native source-copy parser kinds, lexical scope checks and complete CST histories while retaining JavaScript behavior and both ordered rule phases. All new receiving cases remain unrun.

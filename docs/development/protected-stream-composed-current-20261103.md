@@ -1,0 +1,5 @@
+# Named stream/composed unit source continuation
+
+This one-parent full-source proposal extends the active protected-native-stream-fds history provider after the separately retained stream/read-byte unit composition. The exact named resource provider knownReadonlySourceUnitStreamSuccessor supplies only the finite stream.after to composed unit.after equation and validates actual physical current source. Unknown paths/source/current remain refused. The original stream before/after images and every earlier branch/inverse remain immutable.
+
+The stream history keeps historical after, appends the exact named later history and exposes currentAfter for actual current consumers. Other seven stream paths do not gain a fallback. The composition provider retains all four independent source branches; the new join gives none of those DATA records native/type/writer permission. Source authority is false, production function/writer denominators remain UNKNOWN and all verification is UNRUN. Root must install the exact resource composition/provider before this history successor.

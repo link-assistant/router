@@ -1,0 +1,13 @@
+{
+  "schema": "persistent-output-complete-source-successor-v1",
+  "archive": "complete-sources.json.gz",
+  "sha256": "987bf66da673c7b8de990ffa9ba9aff5fa6711e8be3259f061dba7f723046642",
+  "rawBytes": 3124490,
+  "packedBytes": 648317,
+  "rows": 30,
+  "additions": 42,
+  "resources": 3,
+  "versions": 110,
+  "sourceInstalled": false,
+  "runtimeExecuted": false
+}

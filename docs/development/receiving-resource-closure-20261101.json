@@ -1,0 +1,31 @@
+{
+  "schema": "static-receiving-source-footprint-review-v1",
+  "revision": "7526e120940aa02ebeb8bfba65d3d983528f3d84",
+  "scope": "tracked path selection with source-drafting working-tree sizes; new untracked source paths excluded; lower bounds only",
+  "compiler": {
+    "files": 2761,
+    "bytes": 31455702
+  },
+  "profiles": {
+    "files": 5739,
+    "bytes": 164564056
+  },
+  "native": {
+    "files": 1295,
+    "bytes": 11011521
+  },
+  "originalReceiving": {
+    "files": 8192,
+    "bytes": 67108864,
+    "caseDeadlineMs": 60000,
+    "childDeadlineMs": 20000
+  },
+  "minimumCompilerAndProfile": {
+    "files": 8500,
+    "bytes": 196019758
+  },
+  "minimumCompilerNativeGitPeakBytes": 99745556,
+  "typescript": "not installed in this worktree; no installation attempted",
+  "executionEvidence": "source/SCM path-size reads only; no parser, translator, test, compiler or CI feedback",
+  "semanticAuthority": false
+}

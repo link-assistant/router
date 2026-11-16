@@ -1,0 +1,23 @@
+{
+  "schema": "complete-local-closure-captured-source-copy-v1",
+  "archive": "complete-parent-successor.json.gz",
+  "sha256": "80b12771aeb89c8ab55179eeb0933dcdbc0f34135255952d46bd7a0b096c54c6",
+  "rawBytes": 64840,
+  "packedBytes": 11591,
+  "rows": 3,
+  "parentCommit": "327fa26b76a2a0ef2465115ce1d4d5e04b45344e",
+  "scalarParent": "8a6de0143294b737f6e52f8ec01b513379810d32366a66eebf4a9a92352d8388",
+  "sourceCopyOnly": true,
+  "runtimeExecuted": false,
+  "nativeOracleScheduled": false,
+  "checkpointPaths": [
+    "tools/translation/local-closure-option-captured-20261101.mjs",
+    "tools/translation/local-closure-option-captured-20261101-syntax.mjs",
+    "tools/translation/local-closure-option-captured-20261101-project.mjs",
+    "tools/translation/local-closure-option-captured-20261101-source-history.mjs",
+    "tools/translation/test/local-closure-option-captured-20261101.test.mjs",
+    "docs/development/local-closure-option-captured-20261101.md",
+    "tools/translation/source-profiles/local-closure-option-captured-20261101/complete-parent-successor.json.gz",
+    "tools/translation/source-profiles/local-closure-option-captured-20261101/manifest.json"
+  ]
+}

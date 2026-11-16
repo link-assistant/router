@@ -37,7 +37,7 @@ type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$"
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
-// Generated draft from rust/src/deploy_remote/session.rs; sha256=14502bc60a47c56b429da7989eea1b140d1da1f0416a023f7d2a06620ab87e14
+// Generated draft from rust/src/deploy_remote/session.rs; sha256=204c53ed444381a0ca8eee97f9733e8407dfa48a1d874913ca19d41ae19191f5
 // Carried constructs are data, never runtime parity evidence.
 function rp_6465706c6f795f72656d6f74652e73657373696f6e2e444541444c494e455f45584954(): bigint {
   return 12n;
@@ -88,4 +88,4 @@ const serde_json = {
 };
 
 export const translated: { "DEADLINE_EXIT": bigint; "EVENT_PREFIX": string; "Echo": Readonly<{ "Keep": () => Readonly<{ readonly "$": "Keep" }> | Readonly<{ readonly "$": "Stdout" }> | Readonly<{ readonly "$": "Stderr" }>; "Stdout": () => Readonly<{ readonly "$": "Keep" }> | Readonly<{ readonly "$": "Stdout" }> | Readonly<{ readonly "$": "Stderr" }>; "Stderr": () => Readonly<{ readonly "$": "Keep" }> | Readonly<{ readonly "$": "Stdout" }> | Readonly<{ readonly "$": "Stderr" }> }> } = { ["DEADLINE_EXIT"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e444541444c494e455f45584954(), ["EVENT_PREFIX"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e4556454e545f505245464958(), ["Echo"]: Object.freeze({ ["Keep"]: ml_make_Echo_Keep, ["Stdout"]: ml_make_Echo_Stdout, ["Stderr"]: ml_make_Echo_Stderr }) };
-export const provenance = {"sourcePath":"rust/src/deploy_remote/session.rs","sourceSha256":"14502bc60a47c56b429da7989eea1b140d1da1f0416a023f7d2a06620ab87e14","executable":3,"executableFunctions":0,"executableConstants":2,"executableTypes":1,"executableConstructors":3,"carried":22,"preserved":26,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/deploy_remote/session.rs","sourceSha256":"204c53ed444381a0ca8eee97f9733e8407dfa48a1d874913ca19d41ae19191f5","executable":3,"executableFunctions":0,"executableConstants":2,"executableTypes":1,"executableConstructors":3,"carried":22,"preserved":26,"runtimeParity":false};

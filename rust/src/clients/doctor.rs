@@ -189,7 +189,7 @@ fn claude_gateway_version_supported(output: &str) -> bool {
 #[allow(clippy::redundant_pub_crate)]
 pub(crate) fn require_claude_gateway_version() -> Result<(), ClientError> {
     let Ok(output) = crate::operation_context::process_output(
-        crate::operation_context::command("claude").arg("--version"),
+        crate::operation_context::client_command("claude").arg("--version"),
     ) else {
         return Ok(());
     };

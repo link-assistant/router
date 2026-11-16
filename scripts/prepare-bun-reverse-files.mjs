@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {withProtectedNativeWriter,mutateProtectedNativeAbsoluteDirectWriter} from '../tools/translation/protected-native-writers-20261102.mjs';
 // Copy the qualified whole-file coordinator through checked source rules.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
@@ -40,7 +41,8 @@ export function prepareBunReverseFiles(){
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--emit','--check'].includes(args[0]))throw Error('Usage: node scripts/prepare-bun-reverse-files.mjs --emit|--check');
- const outputs=prepareBunReverseFiles(),changed=[];
- for(const output of outputs){let actual;try{actual=readFileSync(resolve(root,output.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}if(actual!==output.source){changed.push(output.path);if(args[0]==='--emit')writeFileSync(resolve(root,output.path),output.source);}}
- console.log(JSON.stringify({files:outputs.map(row=>row.path),changed,completeSourceInverses:outputs.every(row=>row.wholeInverse),runtimeAuthority:false}));if(args[0]==='--check'&&changed.length)process.exitCode=1;
+ const operation=()=>{const outputs=prepareBunReverseFiles(),changed=[];
+ for(const output of outputs){let actual;try{actual=readFileSync(resolve(root,output.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}if(actual!==output.source){changed.push(output.path);if(args[0]==='--emit')mutateProtectedNativeAbsoluteDirectWriter(root,[resolve(root,output.path)],captured=>writeFileSync(captured[0].canonicalTarget,output.source));}}
+ console.log(JSON.stringify({files:outputs.map(row=>row.path),changed,completeSourceInverses:outputs.every(row=>row.wholeInverse),runtimeAuthority:false}));if(args[0]==='--check'&&changed.length)process.exitCode=1;};
+ if(args[0]==='--emit')withProtectedNativeWriter(root,operation);else operation();
 }

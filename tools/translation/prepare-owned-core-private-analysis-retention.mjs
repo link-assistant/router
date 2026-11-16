@@ -1,11 +1,13 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Default source proposal: retain an already private, detached analysis once.
 import {readFileSync,writeFileSync} from 'node:fs';
+import {restoreOwnedStringOperations,extendOwnedStringOperations} from './owned-string-operation-rules.mjs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
-import {transportConcreteNamedSourcePhases} from './concrete-source-origin-phases.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const PATH='tools/translation/js-to-rust/owned-core-operations.mjs';
 const ARCHIVE=new URL('./source-profiles/owned-core-private-analysis-retention/original.json.gz',import.meta.url);
@@ -63,12 +65,19 @@ function derive(ts,before){
 function stage(before,after,id){return {id,edits:[{span:[0,before.length],expected:before,replacement:after}]};}
 export function prepareOwnedCorePrivateAnalysisRetention({root=ROOT}={}){
  const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');const birth=original(),before=birth.source,derived=derive(ts,before),{language,after}=derived;
- const current=readFileSync(resolve(root,PATH),'utf8');if(current!==before&&current!==after)fail('complete current source equation differs');
- const [equation]=transportConcreteNamedSourcePhases([{before,middle:language,after,language:'JavaScript',rules:["javascript:retain-existing-private-analysis","router:preserve-complete-operations-source","javascript:restore-second-private-copy","router:restore-complete-operations-source"]}]);
- const beforeMeta=equation.beforeMeta,afterMeta=equation.afterMeta,stages=equation.stages.map(({phase,before,after,beforeMeta,afterMeta,trace})=>({phase,before,after,beforeMeta,afterMeta,trace,completeInverse:true}));
-  const nativeCopies=[nativeCopy(ts,before),nativeCopy(ts,after)];
+ const current=readFileSync(resolve(root,PATH),'utf8'),historical=restoreOwnedStringOperations(PATH,current);if(historical!==before&&historical!==after)fail('complete current source equation differs');
+ const first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),beforeMeta=serializeConcreteSyntaxMeta(first.document),stages=[];let document=first.document;
+ for(const [phase,left,right]of [['language',before,language],['repository',language,after]]){
+  const wire=serializeConcreteSyntaxMeta(document),fresh=transportConcreteSyntaxMeta(wire);if(fresh.source!==left)fail('complete phase input differs');
+  const run=applyConcreteSyntaxSubstitutions(fresh.document,{languageRules:phase==='language'?[stage(left,right,'javascript:retain-existing-private-analysis')]:[],repositoryRules:phase==='repository'?[stage(left,right,'router:preserve-complete-operations-source')]:[]}),afterMeta=serializeConcreteSyntaxMeta(run.value),last=transportConcreteSyntaxMeta(afterMeta);
+  if(last.source!==right)fail('complete phase output differs');
+  const undo=applyConcreteSyntaxSubstitutions(last.document,{languageRules:phase==='language'?[stage(right,left,'javascript:restore-second-private-copy')]:[],repositoryRules:phase==='repository'?[stage(right,left,'router:restore-complete-operations-source')]:[]});
+  if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(undo.value)).source!==left)fail('complete phase inverse differs');
+  stages.push({phase,before:left,after:right,beforeMeta:wire,afterMeta,trace:run.trace,completeInverse:true});document=last.document;
+ }
+ const nativeCopies=[nativeCopy(ts,before),nativeCopy(ts,after)];
  if(readFileSync(resolve(root,PATH),'utf8')!==current)fail('complete physical source changed during proposal');
- const row={path:PATH,before,language,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta,afterMeta,inverse:before,stages,trace:stages.flatMap(row=>row.trace),nativeCopies,completeNativeAstCopy:true,sourceLanguage:'JavaScript',selection:derived.selection};
+ const row={path:PATH,before,language,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta,afterMeta:serializeConcreteSyntaxMeta(document),inverse:before,stages,trace:stages.flatMap(row=>row.trace),nativeCopies,completeNativeAstCopy:true,sourceLanguage:'JavaScript',selection:derived.selection};
  if(!readFileSync(ARCHIVE).equals(birth.archiveBytes))fail('complete original archive changed during proposal');
  if(readFileSync(resolve(root,PATH),'utf8')!==current)fail('complete physical source changed at final source/hash join');
  return {schema:'owned-core-private-analysis-retention-source-v1',typescriptVersion:ts.version,files:[row],defaultAdoption:true,freshAnalysisCopiesBefore:2,freshAnalysisCopiesAfter:1,sourceChecksUnchanged:true,hashCallbacksUnchanged:true,sourceAuthority:false,runtimeAuthority:false,runtimeExecuted:false,rustExecuted:false};
@@ -79,8 +88,7 @@ export function composeOwnedCorePrivateAnalysisRetention(prior,options={}){
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('usage: --emit|--write|--check');
- const plan=prepareOwnedCorePrivateAnalysisRetention();
+ const plan=args[0]==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareOwnedCorePrivateAnalysisRetention();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('physical source changed before write');for(const row of plan.files)writer.write(row.path,extendOwnedStringOperations(row.path,row.after));return plan;}):prepareOwnedCorePrivateAnalysisRetention();
  if(args[0]==='--emit')console.log(JSON.stringify(plan));
- else if(args[0]==='--write'){for(const row of plan.files)if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('physical source changed before write');for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}
- else if(plan.files.some(row=>row.current!==row.after))fail('complete default operations source is stale');
+ else if(args[0]==='--check'&&plan.files.some(row=>restoreOwnedStringOperations(row.path,row.current)!==row.after))fail('complete default operations source is stale');
 }

@@ -91,3 +91,6 @@ export const serde_json_error_is_io=value=>serde_json_error_classify(value).$ ==
 export const serde_json_error_is_syntax=value=>serde_json_error_classify(value).$ === 'Syntax';
 export const serde_json_error_is_data=value=>serde_json_error_classify(value).$ === 'Data';
 export const serde_json_error_is_eof=value=>serde_json_error_classify(value).$ === 'Eof';
+
+// Separate unbounded observed projection; existing bounded JSON adapters remain unchanged.
+export {borrowedJsonToolIsTranslatable} from '../borrowed-json-tool-predicate-20261103-runtime.mjs';

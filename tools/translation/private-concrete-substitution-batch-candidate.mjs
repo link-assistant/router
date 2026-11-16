@@ -849,3 +849,46 @@ export function substitutePrivateConcreteSourceBatches(input){
     batchInputCurrent(request.snapshots);return result;
   }finally{request.rows.length=0;request.snapshots.length=0;active=false;}
 }
+
+// Begin generated native-parsed canonical CST constructor.
+const nativeParsedConcreteWorkflow="\nfunction originalNativeWhitespace(text){\n let result='';for(let at=0;at<text.length;at++){\n  const code=text.charCodeAt(at);\n  if(code===9||code===10||code===11||code===12||code===13||code===32||code===160||code===5760||code>=8192&&code<=8202||code===8232||code===8233||code===8239||code===8287||code===12288||code===65279)continue;\n  result+=text[at];\n }return result;\n}\nfunction originalIdentityTransport(input,language,serializedInput){\n checked();let first,wire;\n if(serializedInput){\n  text(input,SERIAL_LIMIT,'serialized CST');serializedPreflight(input);\n  let parsed;try{parsed=parse(input);}catch{fail('invalid serialized JSON');}\n  first=originalNativeParsedConcrete(parsed,input);wire=stringify(first);if(wire!==input)fail('noncanonical serialized CST');\n }else{\n  text(input,SOURCE_LIMIT,'source');languageName(language);first=build(input,language);wire=stringify(first);\n }\n if(wire.length>SERIAL_LIMIT)fail('serialized budget exceeded');\n serializedPreflight(wire);let parsed;try{parsed=parse(wire);}catch{fail('invalid serialized JSON');}\n const document=originalNativeParsedConcrete(parsed,wire);if(stringify(document)!==wire)fail('noncanonical serialized CST');\n const pieces=[];for(let at=1;at<document.nodes.length;at++){const node=document.nodes[at];if(node[0]!=='group')pieces.push(document.source.slice(node[2],node[3]));}\n const source=pieces.join('');if(source!==document.source||source!==first.source)fail('leaf partition does not reconstruct source');\n const trace=[{phase:'language',rules:[]},{phase:'repository',rules:[]}];checked();return {source,document,meta:wire,trace};\n}\n\nfunction originalNativeParsedConcrete(value,wire){\n const row=record(value,['schema','representationLevel','language','source','sourceEncoding','status','nodes','diagnostics','authority'],'document');\n if(row.schema!==CONCRETE_SYNTAX_SCHEMA||row.representationLevel!==CONCRETE_REPRESENTATION)fail('representation schema changed');\n text(row.source,SOURCE_LIMIT,'source');\n languageName(row.language);\n let expected;try{expected=build(row.source,row.language);}catch{return validated(value);}\n if(stringify(expected)!==wire)return validated(value);\n checked();return expected;\n}\n";
+function compileNativeParsedConcretePacket(packet){
+  const cache={__proto__:null},recipes=[],g=state.g;
+  const hosts={__proto__:null,'host:util':{types:{isProxy:proxy}},'host:common':{originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,originalCapturedFunctionSource,throwOriginalCapturedTypeError}};
+  const globals=['Object','Array','String','Number','BigInt','Symbol','RegExp','Function','Error','TypeError','Set','Map','WeakMap','WeakSet','Uint8Array','Math','JSON'];
+  for(let ri=0;ri<packet.manifest.sources.length;ri++){const row=packet.manifest.sources[ri];
+    const original=packet.sources[row.id],suffix=row.id==='concrete'?nativeParsedConcreteWorkflow+'\n'+standaloneParsedWorkflow:'';
+    const declarations=[{phase:'language',rules:[
+      {id:'exact-private-source-substitutions',apply(value){return {...value,rewritten:rewrite(value.original,row)};}},
+      {id:'explicit-strict-wrapper',apply(value){
+        const exports=row.exports.map(name=>name+':'+name);if(row.id==='concrete')exports.push('originalIdentityTransport:originalIdentityTransport','originalStandaloneSourceTransport:originalStandaloneSourceTransport');
+        return {...value,body:'"use strict";\n'+value.rewritten+'\n'+suffix+'\nreturn {'+exports.join(',')+'};'};
+      }},
+    ]},{phase:'repository',rules:[
+      {id:'closed-registered-import-bindings',apply(value){
+        const names=[],values=[];
+        for(let di=0;di<row.imports.length;di++){const dependency=row.imports[di];
+          const module=own(hosts,dependency.module)?hosts[dependency.module]:cache[dependency.module];
+          if(!module)fail('unregistered module order');
+          for(let bi=0;bi<dependency.names.length;bi++){const name=dependency.names[bi];if(!own(module,name))fail('unregistered module binding');names.push(name);values.push(module[name]);}
+        }
+        for(let gi=0;gi<globals.length;gi++){const name=globals[gi];names.push(name);values.push(g[name]);}
+        names.push('globalThis');values.push(root);return {...value,names,values};
+      }},
+      {id:'instantiate-registered-module',apply(value){
+        checked();const factory=apply(g.Function,undefined,[...value.names,value.body]);checked();
+        const module=apply(factory,undefined,value.values);checked();return {...value,module};
+      }},
+    ]}];
+    for(let at=0;at<2;at++){
+      const expected=packet.manifest.rules[at],actual=declarations[at];
+      if(expected.phase!==actual.phase||expected.rules.length!==actual.rules.length||expected.rules.some((id,index)=>id!==actual.rules[index].id))fail('registered executed rule order differs');
+    }
+    const result=fixedPhases({original},declarations);
+    Object.defineProperty(cache,row.id,{__proto__:null,value:result.value.module,enumerable:true});
+    recipes.push({id:row.id,original,rewritten:result.value.rewritten,body:result.value.body,edits:row.edits,trace:result.trace});
+  }
+  return {modules:cache,recipes};
+}
+// Select only this private constructor; the original API functions stay exact.
+compile=compileNativeParsedConcretePacket;

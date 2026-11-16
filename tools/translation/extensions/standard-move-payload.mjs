@@ -2,7 +2,7 @@
 // its payload. Structural tuple authority still starts at genuine Rust syntax.
 import {sameType,rustFixedType} from '../checked-types.mjs';
 import {originalParsedDeclarationEvidence,metadataDigest} from './source-links.mjs';
-import {sharedReferenceCopyIdentity} from '../shared-reference-copy-source.mjs';
+import {currentSharedReferenceCopyIdentity as sharedReferenceCopyIdentity} from '../current-standard-copy-source.mjs';
 import {unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 const contexts=new WeakMap(),tokens=new WeakSet();
 export function captureOriginalMoveTuples(checker,surface){

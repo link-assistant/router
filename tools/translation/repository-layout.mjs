@@ -51,3 +51,7 @@ export function crateModuleSourcePath(modules,path) {
   for(const module of modules)if(module.path.length===0){entry=module.file;count++;}
   return crateEntrySourcePath(count===1?entry:null,path);
 }
+
+// A path label for guards only. Keep actual physical source paths in every
+// source capture, graph, private context and complete inverse history.
+export function crateRelativeRustSourcePath(path){return typeof path==='string'&&path.startsWith('rust/src/')?path.slice(5):path;}

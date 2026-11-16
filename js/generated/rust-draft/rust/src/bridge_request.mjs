@@ -98,31 +98,31 @@ function rp_6272696467655f726571756573742e756e7472616e736c617461626c655f72657370
     }
   })();
   const ml_s20 = (() => {
-    const ml_match_subject5 = Object.freeze({ $: 'Tuple', field0: previous, field1: conversation });
-    ml_pattern_immutable(ml_match_subject5);
-    return ml_match_subject5;
+    const ml_match_subject25 = Object.freeze({ $: 'Tuple', field0: previous, field1: conversation });
+    ml_pattern_immutable(ml_match_subject25);
+    return ml_match_subject25;
   })();
   switch (ml_s20.$) {
     case "Tuple": {
-      const ml_f1 = ml_s20.field0;
-      const ml_f2 = ml_s20.field1;
-      if ((ml_f1 === true)) {
-        if ((ml_f2 === true)) {
+      const ml_f21 = ml_s20.field0;
+      const ml_f22 = ml_s20.field1;
+      if ((ml_f21 === true)) {
+        if ((ml_f22 === true)) {
           return Object.freeze({ $: 'Some', field0: (() => {
-        const ml_conversion_source_6 = "previous_response_id and conversation are mutually exclusive and cannot be resolved by an Anthropic bridge; send self-contained input";
-        return ml_conversion_source_6;
+        const ml_conversion_source_26 = "previous_response_id and conversation are mutually exclusive and cannot be resolved by an Anthropic bridge; send self-contained input";
+        return ml_conversion_source_26;
       })() });
         } else {
           return Object.freeze({ $: 'Some', field0: (() => {
-        const ml_conversion_source_7 = "previous_response_id cannot be resolved by an Anthropic bridge; send self-contained input";
-        return ml_conversion_source_7;
+        const ml_conversion_source_27 = "previous_response_id cannot be resolved by an Anthropic bridge; send self-contained input";
+        return ml_conversion_source_27;
       })() });
         }
       } else {
-        if ((ml_f2 === true)) {
+        if ((ml_f22 === true)) {
           return Object.freeze({ $: 'Some', field0: (() => {
-        const ml_conversion_source_8 = "conversation cannot be resolved by an Anthropic bridge; send self-contained input";
-        return ml_conversion_source_8;
+        const ml_conversion_source_28 = "conversation cannot be resolved by an Anthropic bridge; send self-contained input";
+        return ml_conversion_source_28;
       })() });
         } else {
           return Object.freeze({ $: 'None' });

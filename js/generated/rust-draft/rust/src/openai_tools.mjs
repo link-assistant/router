@@ -38,34 +38,34 @@ function rp_6f70656e61692e746f6f6c732e69735f7472616e736c617461626c65(tool) {
   })();
   if ((kind === "function")) {
     return (() => {
-    const ml_standard_callback_self_8 = ml_host_option_bind(ml_host_serde_json_value_get_string((() => {
-      const ml_standard_body_3 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_get_string(tool, "function"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
-      const ml_standard_body_4 = (() => { const ml_shared_immutable_value = tool; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
-      switch (ml_standard_body_3.$) {
+    const ml_standard_callback_self_17 = ml_host_option_bind(ml_host_serde_json_value_get_string((() => {
+      const ml_standard_body_12 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_get_string(tool, "function"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
+      const ml_standard_body_13 = (() => { const ml_shared_immutable_value = tool; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
+      switch (ml_standard_body_12.$) {
         case "None": {
-          return ml_standard_body_4;
+          return ml_standard_body_13;
         }
         case "Some": {
-          const x_2 = ml_standard_body_3.field0;
+          const x_2 = ml_standard_body_12.field0;
           return x_2;
         }
         default: {
-          return ml_router_unexpected(ml_standard_body_3);
+          return ml_router_unexpected(ml_standard_body_12);
         }
       }
-    })(), "name"), (ml_host_callback_6_0_2) => { return ml_host_serde_json_value_as_str(ml_host_callback_6_0_2); }, "and_then");
-    switch (ml_standard_callback_self_8.$) {
+    })(), "name"), (ml_host_callback_15_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_15_0); }, "and_then");
+    switch (ml_standard_callback_self_17.$) {
       case "None": {
         return false;
       }
       case "Some": {
-        const ml_standard_pattern_9 = ml_standard_callback_self_8.field0;
-        const ml_standard_callback_arg_10 = ml_standard_pattern_9;
-        const name = ml_standard_callback_arg_10;
+        const ml_standard_pattern_18 = ml_standard_callback_self_17.field0;
+        const ml_standard_callback_arg_19 = ml_standard_pattern_18;
+        const name = ml_standard_callback_arg_19;
         return !(name.length === 0);
       }
       default: {
-        return ml_router_unexpected(ml_standard_callback_self_8);
+        return ml_router_unexpected(ml_standard_callback_self_17);
       }
     }
   })();

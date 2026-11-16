@@ -1,7 +1,7 @@
 // Source provenance for the initial audited package. This registry is not
 // macro-call resolution, platform selection or namespace-completeness proof.
 import {cargoLayoutManifestMatches} from './cargo-layout-input-compatibility.mjs';
-import {readFileSync} from 'node:fs';
+import {readSourceProfileFileSync as readFileSync} from './ordered-text-map-callers-20261102-source-storage.mjs';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {freezeMacroTree,originalTopLevelMacroInvocations} from './macro-token-trees.mjs';

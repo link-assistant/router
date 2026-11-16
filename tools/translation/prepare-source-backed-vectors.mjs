@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Copy actual complete corpus/packet producers; no saved compiler verdicts.
 import {readFileSync, writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -173,10 +174,13 @@ export function prepareSourceBackedVectorPacketIO({root = ROOT} = {}) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
   if (args.length !== 1 || !['--check', '--write'].includes(args[0])) fail('usage: --check|--write');
+  const run=writer=>{if(writer)writer.preflight([...OUTPUTS,...IO_SOURCES.map(path=>path.replaceAll('formatting','vector'))]);
   for (const prepare of [prepareSourceBackedVectors, prepareSourceBackedVectorPacketIO]) {
     const plan = prepare();
-    if (args[0] === '--write') for (const row of plan.files) writeFileSync(resolve(ROOT, row.path), row.after);
+    if (args[0] === '--write') for (const row of plan.files) writer.write(row.path, row.after);
     else if (plan.files.some(row => row.current !== row.after)) fail('generated vector corpus/IO producer is stale');
     console.log(JSON.stringify({schema: plan.schema, files: plan.files.map(row => row.path), semanticAuthority: false}));
   }
+  };
+  if(args[0]==='--write')withProtectedSpecialCliWriter(ROOT,run);else run(null);
 }

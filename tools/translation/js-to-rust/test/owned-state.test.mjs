@@ -1,0 +1,49 @@
+// Independent expectations and refusals; execution waits for the entire draft.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync,mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {join,dirname} from 'node:path';
+import {tmpdir} from 'node:os';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+import {execFileSync} from 'node:child_process';
+import {createOwnedStateContext,ownedStateRuntimeSources,translateOwnedStateJavaScript,translateOwnedStateTypeScript,readOwnedStateMeta,prepareOwnedStateRuntime,evaluateOwnedState,evaluateOwnedStateBatch,emitOwnedStateRust} from '../owned-state.mjs';
+import {prepareOwnedState} from '../../prepare-owned-state.mjs';
+import {JSON_STATE_NATIVE_SOURCE} from '../../json-state-native-source.mjs';
+import {JSON_ITERATION_NATIVE_SOURCE} from '../../json-iteration-native-source.mjs';
+import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_JSON_COLLECTIONS_SOURCE} from '../../router-core-source-data.mjs';
+import {json_macro_null as nil,json_macro_bool as bool,json_macro_string as text,json_macro_array as array,json_macro_object as object} from '../../json-macro-runtime.mjs';
+const root=fileURLToPath(new URL('../../../../',import.meta.url)),limits={timeout:60_000};
+const imports='import {router_state_json_with_index as replace,router_state_json_append as append,router_state_json_extend as extend,router_state_json_extend_owned as extendOwned,router_state_json_from_values as fromValues,router_state_json_values_copy as valuesCopy,router_state_json_into_values as intoValues,router_state_json_without_field as without,router_state_json_merge as merge,router_state_json_object_keys as keys,router_state_json_array_len as length,router_state_json_object_has as has} from "./runtime/json-state-runtime.mjs";\nimport {router_core_json_copy as copy} from "./runtime/json-update-runtime.mjs";\n';
+const body='export function changed(base,value,index){return replace(append(base,copy(value)),index,value);}\nexport function merged(base,patch,key){const next=merge(base,patch);return without(next,key);}\nexport function objectKeys(value){return keys(value);}\nexport function arrayLength(value){return length(value);}\nexport function contains(value,key){return has(value,key);}\nexport function listToArray(values){return fromValues(values);}\nexport function arrayToList(value){return intoValues(value);}\nexport function borrowedExtend(base,values){return extend(base,values);}\nexport function movedExtend(base,values){return extendOwned(base,values);}\nexport function copiedValues(values){return valuesCopy(values);}\n';
+const js=imports+body;
+function typed(source){return source.replace(imports,imports+'import type {JsonValue} from "./runtime/json-macro-runtime.mjs";\n').replaceAll('(base,value,index){','(base:JsonValue,value:JsonValue,index:Parameters<typeof replace>[1]){').replaceAll('(base,patch,key){','(base:JsonValue,patch:JsonValue,key:string){').replaceAll('(value,key){','(value:JsonValue,key:string){').replaceAll('(value){','(value:JsonValue){').replaceAll('(values){','(values:Parameters<typeof fromValues>[0]){').replaceAll('(base,values){','(base:JsonValue,values:Parameters<typeof fromValues>[0]){');}
+function data(source=js,typescript=typed(source)){return {runtimeRoot:'runtime',declarationRoot:'runtime',files:[...ownedStateRuntimeSources(),{path:'src/lib.rs',source:'pub mod translation_core;\npub mod translation_collections_core;\npub mod translation_state_core;\n'},{path:'src/translation_core.rs',source:ROUTER_FORMATTING_FACADE_SOURCE},{path:'src/translation_core/primitives.rs',source:ROUTER_CORE_PRIMITIVES_SOURCE},{path:'src/translation_core/json_collections.rs',source:ROUTER_CORE_JSON_COLLECTIONS_SOURCE},{path:'src/translation_collections_core.rs',source:JSON_ITERATION_NATIVE_SOURCE},{path:'src/translation_state_core.rs',source:JSON_STATE_NATIVE_SOURCE},{path:'Cargo.toml',source:readFileSync(join(root,'rust/Cargo.toml'),'utf8')},{path:'Cargo.lock',source:readFileSync(join(root,'Cargo.lock'),'utf8')},{path:'caller.mjs',source},{path:'caller.mts',source:typescript}]};}
+function translate(source=js,typescript=typed(source)){const input=data(source,typescript),context=createOwnedStateContext(input),result=translateOwnedStateJavaScript(source,{context,sourcePath:'caller.mjs',typescriptOutputPath:'reverse.mts'});return {input,context,result};}
+async function targets(t){
+ const row=translate(),directory=mkdtempSync(join(tmpdir(),'router-owned-state-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const write=(path,source)=>{mkdirSync(dirname(join(directory,path)),{recursive:true});writeFileSync(join(directory,path),source);};
+ for(const file of row.input.files.filter(row=>/\.(mjs|mts|ts)$/u.test(row.path)))write(file.path,file.source);write('reverse.mts',row.result.typescript);
+ execFileSync(process.execPath,[join(root,'js/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--outDir',join(directory,'out'),join(directory,'caller.mts'),join(directory,'reverse.mts')],{cwd:root,encoding:'utf8',timeout:20_000,stdio:'pipe'});
+ for(const file of row.input.files.filter(row=>row.path.startsWith('runtime/')))write('out/'+file.path,file.source);
+ const modules=[await import(pathToFileURL(join(directory,'caller.mjs')).href),await import(pathToFileURL(join(directory,'out/caller.mjs')).href),await import(pathToFileURL(join(directory,'out/reverse.mjs')).href)],token=await prepareOwnedStateRuntime(row.result.program);return {...row,modules,token};
+}
+test('all twelve state operations reach actual JS strict TS and both independent interpreters',limits,async t=>{
+ const api=await targets(t),base=array([bool(false)]),value=text('λ😀'),values=Object.freeze([nil(),value]),original=object([['old',bool(false)],['keep',value]]),patch=object([['old',text('new')],['added',nil()]]);
+ for(const module of api.modules){assert.deepEqual(module.changed(base,value,0n),array([value,value]));assert.deepEqual(module.merged(original,patch,'keep'),object([['old',text('new')],['added',nil()]]));assert.deepEqual(module.objectKeys(original),array([text('keep'),text('old')]));assert.equal(module.arrayLength(base),1n);assert.equal(module.contains(original,'old'),true);assert.deepEqual(module.listToArray(values),array(values));assert.deepEqual(module.arrayToList(array(values)),values);assert.deepEqual(module.borrowedExtend(base,values),array([bool(false),...values]));assert.deepEqual(module.movedExtend(base,values),array([bool(false),...values]));assert.deepEqual(module.copiedValues(values),values);}
+ const requests=[['changed',[base,value,0n]],['merged',[original,patch,'keep']],['arrayLength',[base]],['copiedValues',[values]]],expected=[array([value,value]),object([['old',text('new')],['added',nil()]]),1n,values];
+ assert.deepEqual(requests.map(([name,args])=>evaluateOwnedState(api.result.program,name,args,api.token)),expected);assert.deepEqual(evaluateOwnedStateBatch(api.result.program,requests,api.token),expected);assert.deepEqual(base,array([bool(false)]));assert.deepEqual(value,text('λ😀'));assert.match(api.result.rust,/crate::translation_state_core::json_values_copy/);
+});
+test('written operation types admit the actual third operand without broad scalar erasure',limits,()=>{
+ const source=imports+'export function changed(base,index,value){return replace(base,index,value);}',typescript=imports+'export function changed(base:Parameters<typeof replace>[0],index:Parameters<typeof replace>[1],value:Parameters<typeof replace>[2]):ReturnType<typeof replace>{return replace(base,index,value);}';
+ assert.match(translate(source,typescript).result.rust,/json_with_index/);assert.throws(()=>translate(source,typescript.replace('index:Parameters<typeof replace>[1]','index:boolean')),/operand domain differs/);assert.throws(()=>translate(source,typescript.replace('value:Parameters<typeof replace>[2]','value:Parameters<typeof replace>[3]')),/actual unshadowed/);
+});
+test('changed native module runtime bytes and detached operation metadata cannot issue caller permission',limits,()=>{
+ const {input,context,result}=translate(),program=readOwnedStateMeta(result.meta,{context}),forged=structuredClone(program);assert.equal(emitOwnedStateRust(program),result.rust);forged[0].body[0].value.name='router_state_json_merge';assert.throws(()=>emitOwnedStateRust(forged));
+ for(const path of ['src/translation_state_core.rs','runtime/json-state-runtime.mjs']){const changed=structuredClone(input);changed.files.find(row=>row.path===path).source+='\n// changed original\n';assert.throws(()=>createOwnedStateContext(changed));}
+ const noEdge=structuredClone(input);noEdge.files.find(row=>row.path==='src/lib.rs').source='pub mod translation_core;\npub mod translation_collections_core;\n';assert.throws(()=>createOwnedStateContext(noEdge));
+});
+test('authoritative TypeScript retains its full original CST and independent written-domain checks',limits,()=>{
+ const source=typed(js),input=data(js,source);input.files=input.files.filter(row=>row.path!=='caller.mjs');const context=createOwnedStateContext(input),result=translateOwnedStateTypeScript(source,{context,sourcePath:'caller.mts'});assert.equal(result.ownedCollectionTypeScriptHistory.projection.equation.inverse,source);assert.match(result.rust,/json_into_values/);
+});
+test('all five full private implementation copies retain original source and both rule sequences',limits,()=>{
+ const plan=prepareOwnedState();assert.equal(plan.files.length,5);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.ok(row.originalPath.includes('owned-iteration'));assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}
+});

@@ -1,0 +1,138 @@
+{
+  "schema": "source-bound-owned-core-bulk-source-inventory-v1",
+  "stages": [
+    {
+      "stage": "algebraic",
+      "module": "./source-bound-owned-migrate-core-algebraic.mjs",
+      "export": "proposeCoreAlgebraicCorpus"
+    },
+    {
+      "stage": "base64",
+      "module": "./source-bound-owned-migrate-core-base64.mjs",
+      "export": "proposeCoreBase64Corpus"
+    },
+    {
+      "stage": "integer-methods",
+      "module": "./source-bound-owned-migrate-core-integer-methods.mjs",
+      "export": "proposeCoreIntegerMethodCorpus"
+    },
+    {
+      "stage": "json-collections",
+      "module": "./source-bound-owned-migrate-core-json-collections.mjs",
+      "export": "proposeCoreJsonCollectionsCorpus"
+    },
+    {
+      "stage": "json-fields",
+      "module": "./source-bound-owned-migrate-core-json-fields.mjs",
+      "export": "proposeCoreJsonFieldCorpus"
+    },
+    {
+      "stage": "json-iterations",
+      "module": "./source-bound-owned-migrate-core-json-iterations.mjs",
+      "export": "proposeCoreJsonIterationCorpus"
+    },
+    {
+      "stage": "json-loops",
+      "module": "./source-bound-owned-migrate-core-json-loops.mjs",
+      "export": "proposeCoreJsonLoopCorpus"
+    },
+    {
+      "stage": "json-parse",
+      "module": "./source-bound-owned-migrate-core-json-parse.mjs",
+      "export": "proposeCoreJsonParseCorpus"
+    },
+    {
+      "stage": "json-readers",
+      "module": "./source-bound-owned-migrate-core-json-readers.mjs",
+      "export": "proposeCoreJsonReadersCorpus"
+    },
+    {
+      "stage": "json-updates",
+      "module": "./source-bound-owned-migrate-core-json-updates.mjs",
+      "export": "proposeCoreJsonUpdateCorpus"
+    },
+    {
+      "stage": "json",
+      "module": "./source-bound-owned-migrate-core-json.mjs",
+      "export": "proposeCoreJsonCorpus"
+    },
+    {
+      "stage": "literal-text",
+      "module": "./source-bound-owned-migrate-core-literal-text.mjs",
+      "export": "proposeCoreLiteralTextCorpus"
+    },
+    {
+      "stage": "owned-carriers",
+      "module": "./source-bound-owned-migrate-core-owned-carriers.mjs",
+      "export": "proposeCoreOwnedCarrierCorpus"
+    },
+    {
+      "stage": "owned-result-methods",
+      "module": "./source-bound-owned-migrate-core-owned-result-methods.mjs",
+      "export": "proposeCoreOwnedResultMethodCorpus"
+    },
+    {
+      "stage": "primitive-option-callback-methods",
+      "module": "./source-bound-owned-migrate-core-primitive-option-callback-methods.mjs",
+      "export": "proposeCorePrimitiveOptionCallbackMethodCorpus"
+    },
+    {
+      "stage": "primitive-option-methods",
+      "module": "./source-bound-owned-migrate-core-primitive-option-methods.mjs",
+      "export": "proposeCorePrimitiveOptionMethodCorpus"
+    },
+    {
+      "stage": "primitive-result-methods",
+      "module": "./source-bound-owned-migrate-core-primitive-result-methods.mjs",
+      "export": "proposeCorePrimitiveResultMethodCorpus"
+    },
+    {
+      "stage": "primitives",
+      "module": "./source-bound-owned-migrate-core-primitives.mjs",
+      "export": "proposeCorePrimitivesCorpus"
+    },
+    {
+      "stage": "text-methods",
+      "module": "./source-bound-owned-migrate-core-text-methods.mjs",
+      "export": "proposeCoreTextMethodCorpus"
+    },
+    {
+      "stage": "json-indices",
+      "module": "./source-bound-owned-migrate-core-json-indices.mjs",
+      "export": "proposeCoreJsonIndicesCorpus"
+    },
+    {
+      "stage": "json-copies",
+      "module": "./source-bound-owned-migrate-core-json-copies.mjs",
+      "export": "proposeCoreJsonCopiesCorpus"
+    }
+  ],
+  "completeSourceEquations": 27,
+  "copies": [
+    "migrate-core-algebraic.mjs",
+    "migrate-core-base64.mjs",
+    "migrate-core-integer-methods.mjs",
+    "migrate-core-json-collections.mjs",
+    "migrate-core-json-fields.mjs",
+    "migrate-core-json-iterations.mjs",
+    "migrate-core-json-loops.mjs",
+    "migrate-core-json-parse.mjs",
+    "migrate-core-json-readers.mjs",
+    "migrate-core-json-updates.mjs",
+    "migrate-core-json.mjs",
+    "migrate-core-literal-text.mjs",
+    "migrate-core-owned-carriers.mjs",
+    "migrate-core-owned-result-methods.mjs",
+    "migrate-core-primitive-option-callback-methods.mjs",
+    "migrate-core-primitive-option-methods.mjs",
+    "migrate-core-primitive-result-methods.mjs",
+    "migrate-core-primitives.mjs",
+    "migrate-core-text-methods.mjs",
+    "core-json-read-adoption.mjs",
+    "literal-text-import-roles.mjs",
+    "migrate-core-json-indices.mjs",
+    "migrate-core-json-copies.mjs"
+  ],
+  "sourceAuthority": false,
+  "executableCoverage": null
+}

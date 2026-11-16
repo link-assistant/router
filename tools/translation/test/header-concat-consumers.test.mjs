@@ -1,0 +1,23 @@
+// Independent shared original concat consumer SOURCE. Every new case is UNRUN.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
+import {proposeOriginalHeaderConcatLiteralSource,proposeOriginalAttributeConcatLiteralSource} from '../derive-clap-concat.mjs';
+import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
+import {rootHeaderValue,functionHeaderValue,dataHeaderValue} from './header-value-inputs.mjs';
+import {prepareHeaderValueConsumerSources} from '../prepare-header-value-consumer-sources.mjs';
+const limits={timeout:60000},dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')});
+const concat=expression=>rootHeaderValue('#[doc='+expression+']fn selected(){}');
+test('root inner function generic and data field/variant documentation use the complete native concat source path',limits,()=>{
+ const expression='concat!("A ","doc.")',rows=[concat(expression),rootHeaderValue('#![doc='+expression+']\nfn selected(){}'),functionHeaderValue('fn selected(#[doc='+expression+'] value:bool)->bool{value}'),functionHeaderValue('fn selected<#[doc='+expression+'] T>(value:T)->bool{true}'),dataHeaderValue('struct Record{#[doc='+expression+']value:bool}'),dataHeaderValue('enum Record{#[doc='+expression+']Empty}')];for(const input of rows){const result=proposeOriginalHeaderConcatLiteralSource({dependencies,...input}),source=input.options.options.module.source;assert.equal(result.expansion.value,'A doc.');assert.equal(result.before,source);assert.equal(result.after,source.replace(expression,'"A doc."'));assert.equal(result.sourceDomain,'original-header-expression');assert.equal(result.attributeSource.headerDomain,input.options.domain);assert.equal(result.history.inverse,source);assert.equal(transportConcreteSyntaxMeta(result.outputConcreteSyntax).source,'"A doc."');assert.equal(result.expansion.plan.sources.length,16);assert.ok(result.expansion.plan.sources.some(row=>row.path==='LICENSE-MIT'));assert.ok(result.expansion.plan.sources.some(row=>row.path==='LICENSE-APACHE'));assert.deepEqual(result.ruleTrace.map(row=>row.phase),['language','repository']);for(const key of ['callerOwnerResolved','attributeOwnerResolved','argumentMacroOwnerResolved','nativeVisitorConfinementQualified','globalExportsClosed','originalSourceEquivalenceQualified','originalApplicationCoverageQualified','sourceAuthority','semanticAuthority','typeAuthority','namespaceAuthority','runtimeAuthority','runtimeParity','receivingExecuted'])assert.equal(result[key],false,key);}
+});
+test('the same empty/trailing comma domains and literal input bounds remain exact in the new receipt family',limits,()=>{
+ for(const [expression,expected]of [['concat!()',''],['concat!("trailing",)','trailing']])assert.equal(proposeOriginalHeaderConcatLiteralSource({dependencies,...concat(expression)}).expansion.value,expected);for(const expression of ['concat!(unknown!())','concat!(1)','concat!("a\\n")','concat!("π")','other::concat!("value")','concat!('+Array(129).fill('""').join(',')+')','concat!("'+'x'.repeat(4097)+'")'])assert.throws(()=>proposeOriginalHeaderConcatLiteralSource({dependencies,...concat(expression)}),/Concat|concat/u);
+});
+test('legacy receipts consumers copied inputs dependencies and accessors cannot supply new-family authority',limits,()=>{
+ const input={dependencies,...concat('concat!("value")')};assert.throws(()=>proposeOriginalAttributeConcatLiteralSource(input),/copied or foreign/u);for(const field of ['input','position','token'])assert.throws(()=>proposeOriginalHeaderConcatLiteralSource({...input,[field]:{...input[field]}}));assert.throws(()=>proposeOriginalHeaderConcatLiteralSource({...input,dependencies:{...dependencies}}));let touched=false;assert.throws(()=>proposeOriginalHeaderConcatLiteralSource({...input,get options(){touched=true;return input.options;}}));assert.equal(touched,false);const foreign=concat('concat!("value")');assert.throws(()=>proposeOriginalHeaderConcatLiteralSource({...input,input:foreign.input}));
+});
+test('three complete compiler equations retain original full sync/async consumers native owners phases and inverses',limits,()=>{
+ const plan=prepareHeaderValueConsumerSources();assert.equal(plan.files.length,3);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.semanticAuthority,false);assert.equal(plan.receivingExecuted,false);
+});

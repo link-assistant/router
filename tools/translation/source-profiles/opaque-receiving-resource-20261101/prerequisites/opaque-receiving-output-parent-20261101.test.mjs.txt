@@ -1,0 +1,9 @@
+// Source-only directory lifecycle regression cases; no Git/Rust/compiler invocation. UNRUN.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,lstatSync,writeFileSync,mkdirSync,rmSync,symlinkSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {prepareOpaqueReceivingOutputDirectory as prepare} from '../opaque-constant-adoption-20261101-compiler-cohort.mjs';
+test('one prepared output parent keeps root identity/time stable across descendant artifact writes',()=>{const root=mkdtempSync(join(tmpdir(),'router-output-parent-source-'));try{const first=prepare(root);assert.equal(first.created,true);assert.equal(first.sourceAuthority,false);assert.equal(first.semanticAuthority,false);const before=lstatSync(root,{bigint:true});mkdirSync(join(first.path,'native'));writeFileSync(join(first.path,'native/source.txt'),'independent complete artifact');const after=lstatSync(root,{bigint:true});for(const key of ['dev','ino','mode','mtimeNs','ctimeNs'])assert.equal(after[key],before[key],key);assert.equal(prepare(root).created,false);}finally{rmSync(root,{recursive:true,force:true});}});
+test('linked roots or output parents and existing file outputs refuse without replacement',()=>{const parent=mkdtempSync(join(tmpdir(),'router-output-parent-refusal-'));try{const root=join(parent,'root'),target=join(parent,'target');mkdirSync(root);mkdirSync(target);writeFileSync(join(root,'received'),'original');assert.throws(()=>prepare(root));rmSync(join(root,'received'));symlinkSync(target,join(root,'received'),process.platform==='win32'?'junction':'dir');assert.throws(()=>prepare(root));symlinkSync(root,join(parent,'alias'),process.platform==='win32'?'junction':'dir');assert.throws(()=>prepare(join(parent,'alias')));assert.equal(lstatSync(join(root,'received')).isSymbolicLink(),true);}finally{rmSync(parent,{recursive:true,force:true});}});

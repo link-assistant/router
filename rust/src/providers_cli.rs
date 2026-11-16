@@ -214,12 +214,12 @@ pub fn call_for(
         }),
         ProviderOp::Show { name, .. } => Some(Call {
             method: "GET",
-            path: format!("/api/management/providers/{name}"),
+            path: crate::translation_core::format!("/api/management/providers/{name}"),
             body: None,
         }),
         ProviderOp::Remove { name, .. } => Some(Call {
             method: "DELETE",
-            path: format!("/api/management/providers/{name}"),
+            path: crate::translation_core::format!("/api/management/providers/{name}"),
             body: None,
         }),
         ProviderOp::Add {

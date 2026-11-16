@@ -267,6 +267,23 @@ fn release_version_bump_updates_and_commits_cargo_lock() {
 #[test]
 fn release_workflow_uses_supported_action_runtimes() {
     let workflow = read_lf(".github/workflows/release.yml");
+    // One reviewed exception: the native profile oracle step runs the
+    // translator guards, which accept only Node 20. From Node 22.23/24 on,
+    // `util.types.isProxy` prints as an anonymous native and the guards reject
+    // it (see "Native profile oracle step: BLOCKED" in
+    // docs/case-studies/issue-759/current/continuation-772.md).
+    let native_profile_node = "      - name: Setup Node for native profile source orchestration
+        if: ${{ always() && !cancelled() }}
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '20'
+";
+    assert_eq!(
+        workflow.matches(native_profile_node).count(),
+        1,
+        "the Node 20 exception must stay limited to the native profile step"
+    );
+    let workflow = workflow.replacen(native_profile_node, "", 1);
 
     for obsolete in [
         "actions/checkout@v4",

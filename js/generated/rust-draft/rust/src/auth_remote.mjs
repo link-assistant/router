@@ -1,4 +1,4 @@
-// Generated draft from rust/src/auth_remote.rs; sha256=59a923b694e3e2f50541d660593f034245cf46b199bccfb8cffc47e048d6b386
+// Generated draft from rust/src/auth_remote.rs; sha256=9fec326f6518a0bca9da56a5fd7182b83cd973e5b3c142d784d3b893ddf6dd17
 // Carried constructs are data, never runtime parity evidence.
 import { std_time_duration_from_secs as ml_host_std_time_duration_from_secs } from "../../runtime/time-runtime.mjs";
 
@@ -92,4 +92,4 @@ function rp_617574685f72656d6f74652e686f6d655f696e5f6163636f756e7473(body, provi
 }
 
 export const translated = { ["REQUEST_TIMEOUT"]: rp_617574685f72656d6f74652e524551554553545f54494d454f5554(), ["POLL_INTERVAL"]: rp_617574685f72656d6f74652e504f4c4c5f494e54455256414c(), ["status_of"]: rp_617574685f72656d6f74652e7374617475735f6f66, ["home_in_accounts"]: rp_617574685f72656d6f74652e686f6d655f696e5f6163636f756e7473 };
-export const provenance = {"sourcePath":"rust/src/auth_remote.rs","sourceSha256":"59a923b694e3e2f50541d660593f034245cf46b199bccfb8cffc47e048d6b386","executable":4,"executableFunctions":2,"executableConstants":2,"executableTypes":0,"executableConstructors":0,"carried":25,"preserved":30,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/auth_remote.rs","sourceSha256":"9fec326f6518a0bca9da56a5fd7182b83cd973e5b3c142d784d3b893ddf6dd17","executable":4,"executableFunctions":2,"executableConstants":2,"executableTypes":0,"executableConstructors":0,"carried":25,"preserved":30,"runtimeParity":false};

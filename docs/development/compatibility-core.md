@@ -1,5 +1,11 @@
 # Translate application code through a compatibility core
 
+The [ASCII and split source draft](text-ascii-split-draft.md) extends the existing
+text contract catalog in both directions. Keep ASCII whitespace and casing
+distinct from Unicode operations, preserve receiver-root split/trim borrowing,
+and qualify actual application input/resource domains before migration. The
+drafted cases remain unrun during the entire-requirement source drafting phase.
+
 Prioritize rules that remove common blockers in actual Router functions. Rank
 the generated project diagnostics before selecting a batch, then measure newly
 executable application functions after regeneration. A function's first refusal
@@ -598,3 +604,28 @@ through the real source pipeline and has zero application items. Its CI-only
 oracle uses the same complete 15 encode and 252 decode vectors. Local Rust is
 unrun. Source drafting, focused receiving, actual generated output installation,
 current bank/export freshness and complete parity remain distinct obligations.
+
+## Production source-adoption draft
+
+The [production base64 batch](production-core-base64-adoption-draft.md) drafts
+eleven actual caller migrations through existing concrete owned APIs, with full
+pinned originals, unchanged operand conventions, two ordered source rule
+sequences and complete serialized/reparsed Rust CST inverses. Lexical source
+recipes grant no semantic, namespace, ownership or executable permission; actual
+caller translation, native parity and receiving qualification remain required.
+All new implementation and independent JS/native oracle source are unrun under
+the current source-only phase. Broader source drafting and every original
+verification obligation stay open.
+
+The [SHA-256 text draft](text-sha256-draft.md) adds one concrete borrowed-text to
+owned-text operation through the existing text family. It keeps native hash and
+base64 internals outside application translation and the existing bounded scalar
+domain for translated callers. Shared fixed vectors, both translation directions
+and native edge-case oracle source are drafted and unrun; no caller, parity,
+runtime or receiving qualification follows from the additional catalog row.
+
+The [explicit scalar type core source draft](fixed-type-core-source-draft.md)
+provides protected U8–U128/I8–I128/Bool/F64 interfaces using the existing checked
+scalar domains. Native internals remain outside translation; genuine current
+module/scope/cursor/library checks are required. All receiving/native cases are
+UNRUN and source adoption/namespace/global parity obligations remain OPEN.

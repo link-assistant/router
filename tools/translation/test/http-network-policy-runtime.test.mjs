@@ -1,0 +1,11 @@
+// Independent network-policy oracle SOURCE. Unrun during bulk drafting.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {classifyHttpAddress as classify,parseHttpNetworkPolicy as parse,httpAddressAllowed as allowed,httpHostAllowed as host} from '../http-network-policy-runtime.mjs';
+const limits={timeout:60000};
+test('all native address classes include mapped compatible NAT64 and public boundaries',limits,()=>{
+ for(const [address,expected]of [['127.1.2.3','loopback'],['10.0.0.1','private'],['172.15.255.255',null],['172.16.0.0','private'],['172.31.255.255','private'],['172.32.0.0',null],['192.168.1.2','private'],['100.63.255.255',null],['100.64.0.0','private'],['100.127.255.255','private'],['100.128.0.0',null],['169.254.169.254','link-local'],['0.1.2.3','non-unicast'],['224.0.0.1','non-unicast'],['239.255.255.255','non-unicast'],['240.0.0.1',null],['255.255.255.255','non-unicast'],['8.8.8.8',null],['::','non-unicast'],['::1','loopback'],['::ffff:127.0.0.1','loopback'],['::ffff:7f00:1','loopback'],['::10.1.2.3','private'],['64:ff9b::a9fe:a9fe','link-local'],['64:ff9b::808:808',null],['64:ff9b:1::a9fe:a9fe',null],['fc00::1','private'],['fd00:ec2::254','private'],['fe80::1','link-local'],['febf:ffff::1','link-local'],['fec0::1',null],['ff02::1','non-unicast'],['2001:4860:4860::8888',null]])assert.equal(classify(address),expected,address);assert.throws(()=>classify('not-an-address'),TypeError);
+});
+test('explicit policies match native aliases trimming unknown-word refusal and metadata names',limits,()=>{
+ const strict=parse(''),local=parse(' \u0085LOCALHOST\u0085, unknown, private '),all=parse('yes');assert.equal(allowed(strict,'127.0.0.1'),false);assert.equal(allowed(local,'127.0.0.1'),true);assert.equal(allowed(local,'10.0.0.1'),true);assert.equal(allowed(local,'169.254.169.254'),false);assert.equal(allowed(local,'224.0.0.1'),false);assert.equal(allowed(all,'224.0.0.1'),true);for(const name of ['localhost.','a.LOCALHOST','metadata.google.internal.','metadata','instance-data'])assert.equal(host(strict,name),false,name);assert.equal(host(local,'localhost'),true);assert.equal(host(strict,'public.example.test'),true);assert.equal(host(strict,'[::ffff:7f00:1]'),false);assert.equal(host(parse('link_local'),'metadata.google.internal'),true);assert.equal(allowed(parse('\ufeffall'),'127.0.0.1'),false);
+});

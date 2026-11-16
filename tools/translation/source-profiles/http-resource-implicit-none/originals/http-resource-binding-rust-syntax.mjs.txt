@@ -1,0 +1,123 @@
+// Canonical owned-emitter syntax observations are DATA, never checked IR.
+// Complete fresh checked-JS-to-Rust reproduction is required by the consumer.
+import {rustTokens} from '../rust-structure.mjs';
+export class UnsupportedOwnedRustSource extends TypeError {
+ constructor(message){super('Canonical owned Rust source: '+message);this.name='UnsupportedOwnedRustSource';}
+}
+const fail=message=>{throw new UnsupportedOwnedRustSource(message);};
+export function ownedRustString(text){
+ if(typeof text!=='string'||text[0]!=='"'||text.at(-1)!=='"')fail('ordinary emitted Rust string required');let output='';
+ for(let index=1;index<text.length-1;index++){
+  let character=text[index];if(character==='\\'){
+   character=text[++index];const simple={n:'\n',r:'\r',t:'\t','0':'\0','\\':'\\','"':'"'};
+   if(Object.hasOwn(simple,character))output+=simple[character];
+   else if(character==='u'&&text[++index]==='{'){
+    const end=text.indexOf('}',index+1),digits=text.slice(index+1,end);if(end<0||! /^[0-9a-fA-F]{1,6}$/u.test(digits))fail('canonical Unicode scalar escape required');const value=Number.parseInt(digits,16);if(value>0x10ffff||value>=0xd800&&value<=0xdfff)fail('Rust string contains a non-scalar value');output+=String.fromCodePoint(value);index=end;
+   }else fail('string escape is outside the emitted Rust form');
+  }else output+=character;
+ }
+ if(/\p{Surrogate}/u.test(output))fail('Rust string must contain Unicode scalar values');return output;
+}
+const PRECEDENCE=new Map([['||',1],['&&',2],['==',3],['!=',3],['<',4],['<=',4],['>',4],['>=',4]]);
+export class HttpResourceBindingRustReader {
+ constructor(tokens){if(!Array.isArray(tokens)||tokens.length>200000)fail('bounded complete Rust tokens required');this.tokens=tokens.filter(token=>token.type!=='comment');this.index=0;this.cells=0;}
+ peek(ahead=0){return this.tokens[this.index+ahead]??{text:'',type:'end'};}
+ is(text,ahead=0){return this.peek(ahead).text===text&&this.peek(ahead).type!=='string';}
+ next(){const value=this.peek();if(value.type==='end')fail('unexpected end of complete Rust source');this.index++;return value;}
+ eat(text){if(!this.is(text))return false;this.index++;return true;}
+ expect(text){if(!this.eat(text))fail('expected '+text+' in complete owned Rust source');}
+ tick(depth){if(++this.cells>100000||depth>160)fail('original owned source node/depth bound exceeded');}
+ identifier(){const node=this.next();if(node.type!=='ident'||! /^[A-Za-z_][A-Za-z0-9_]*$/u.test(node.text))fail('ordinary original Rust identifier required');this.lastIdentifier=node;return node.text;}
+ path(){let value=this.eat('::')?'::':'';const first=this.next();if(first.type!=='ident')fail('ordinary Rust path required');value+=first.text;while(this.eat('::'))value+='::'+this.next().text;return value;}
+ group(open,close){this.expect(open);const result=[],stack=[close],pairs={'(':')','[':']','{':'}'};while(stack.length){const token=this.next();if(token.type==='punct'){if(pairs[token.text])stack.push(pairs[token.text]);else if([')',']','}'].includes(token.text)&&stack.pop()!==token.text)fail('complete Rust delimiters differ');}if(stack.length)result.push(token);}return result;}
+ skipGuard(){throw new TypeError('Original skipped guards require the unchanged canonical lane');}
+
+ typeUntil(stops){const result=[];let depth=0;while(!(depth===0&&stops.includes(this.peek().text))){const token=this.next();if(['<','[','('].includes(token.text))depth++;if(['>',']',')'].includes(token.text))depth--;if(token.text==='>>')depth-=2;if(depth<0)fail('Rust type delimiters differ');result.push(token.text);}return result.join('');}
+ function(){
+  while(this.eat('#'))this.group('[',']');const exported=this.eat('pub'),asynchronous=this.eat('async');this.expect('fn');const name=this.identifier();
+  let genericParameters=null;if(this.eat('<')){if(!this.eat("'a"))genericParameters=[this.identifier()];this.expect('>');}this.expect('(');const parameters=[];
+  while(!this.eat(')')){const name=this.identifier(),nameSpan={start:this.lastIdentifier.start,end:this.lastIdentifier.end};this.expect(':');const type=this.typeUntil([',',')']);parameters.push({name,type,nameSpan});if(!this.is(')'))this.expect(',');}
+  const unitReturnInsertionAt=this.is('{')?this.peek().start:null;if(unitReturnInsertionAt===null)this.expect('->');const returns=unitReturnInsertionAt===null?this.typeUntil(['{']):'()',body=this.block(new Map(),0);if(this.peek().type!=='end')fail('complete function item was not consumed');return {name,exported,asynchronous,parameters,returns,body,unitReturnInsertionAt,...(genericParameters?{genericParameters}:{})};
+ }
+ conditional(environment,depth){
+  this.tick(depth);
+  if(this.eat('let')){
+   const keyword=this.tokens[this.index-2],constructor=this.peek();this.expect('Some');this.expect('(');const open=this.tokens[this.index-1],mutable=this.eat('mut'),name=this.identifier(),nameSpan={start:this.lastIdentifier.start,end:this.lastIdentifier.end};this.expect(')');const close=this.tokens[this.index-1];this.expect('=');
+   const value=this.expression(environment,0,depth+1),yes=this.block(environment,depth+1),alternative=this.peek();this.expect('else');const otherwise=this.block(environment,depth+1);
+   return {kind:'if-option-let',name,nameSpan,mutable,value,yes,otherwise,keywordSpan:{start:keyword.start,end:keyword.end},constructorSpan:{start:constructor.start,end:constructor.end},openSpan:{start:open.start,end:open.end},closeSpan:{start:close.start,end:close.end},alternativeSpan:{start:alternative.start,end:otherwise.span.end},end:otherwise.span.end};
+  }
+  const condition=this.expression(environment,0,depth+1),yes=this.block(environment,depth+1);let no,missingElseAt=null,elseIf=null;
+  if(this.eat('else')){if(this.eat('if')){const start=this.tokens[this.index-1].start,child=this.conditional(environment,depth+1);no={kind:'block',statements:[child],tail:null};elseIf={start,end:child.end,...(child.kind==='if-option-let'?{patternBlock:true}:{})};}else no=this.block(environment,depth+1);}else{no={kind:'block',statements:[],tail:null};missingElseAt=yes.span.end;}
+  return {kind:'if',condition,yes,no,missingElseAt,elseIf,end:elseIf?.end??no.span?.end??yes.span.end};
+ }
+ block(environment,depth){
+  this.tick(depth);const start=this.peek().start;this.expect('{');const local=new Map(environment),statements=[];let tail=null;
+  while(!this.eat('}')){
+   this.tick(depth);
+   if(this.eat('let')){
+    if(this.is('_')&&this.is('=',1)){const start=this.tokens[this.index-1].start;this.next();this.expect('=');const begin=this.peek().start,value=this.expression(local,0,depth+1);this.expect(';');statements.push({kind:'discard-let',value,prefixSpan:{start,end:begin},statementSpan:{start,end:this.tokens[this.index-1].end}});continue;}
+    if(this.is('Some')&&this.is('(',1)){
+     const constructor=this.next();this.expect('(');const open=this.tokens[this.index-1],mutable=this.eat('mut'),name=this.identifier(),nameSpan={start:this.lastIdentifier.start,end:this.lastIdentifier.end};this.expect(')');const close=this.tokens[this.index-1];this.expect('=');const value=this.expression(local,0,depth+1),alternative=this.peek();this.expect('else');const otherwise=this.block(local,depth+1),semicolon=this.peek();this.expect(';');statements.push({kind:'let-option-else',name,nameSpan,mutable,value,otherwise,constructorSpan:{start:constructor.start,end:constructor.end},openSpan:{start:open.start,end:open.end},closeSpan:{start:close.start,end:close.end},alternativeSpan:{start:alternative.start,end:semicolon.end}});continue;
+    }
+    if(this.eat('(')){const bindings=[];while(!this.eat(')')){const mutable=this.eat('mut'),name=this.identifier(),nameSpan={start:this.lastIdentifier.start,end:this.lastIdentifier.end};bindings.push({name,mutable,nameSpan});if(!this.is(')'))this.expect(',');}this.expect('=');const value=this.expression(local,0,depth+1);this.expect(';');statements.push({kind:'let-tuple',bindings,value});continue;}
+    const mutable=this.eat('mut'),name=this.identifier(),nameSpan={start:this.lastIdentifier.start,end:this.lastIdentifier.end};if(name.startsWith('__ro_'))fail('compiler temporary lineage requires the unchanged canonical lane');let type=null,typeSpan=null;if(this.is(':')){const start=this.peek().start;this.expect(':');type=this.typeUntil(['=']);typeSpan={start,end:this.tokens[this.index-1].end};if(!type)fail('complete original local type required');}this.expect('=');const value=this.expression(local,0,depth+1);this.expect(';');if(name.startsWith('__ro_'))local.set(name,value);else statements.push({kind:'let',name,nameSpan,value,type,typeSpan,...(mutable?{mutable:true}:{})});continue;
+   }
+   if(this.peek().type==='ident'&&this.is('=',1)){const name=this.identifier(),nameSpan={start:this.lastIdentifier.start,end:this.lastIdentifier.end};this.expect('=');const value=this.expression(local,0,depth+1);this.expect(';');statements.push({kind:'assign',name,nameSpan,value});continue;}
+   if(this.is('for')&&this.peek(1).type==='ident'&&this.is('in',2)&&(this.peek(3).type==='ident'&&this.is('{',4)||this.is('&',3)&&this.peek(4).type==='ident'&&this.is('{',5))){this.expect('for');const name=this.identifier(),nameSpan={start:this.lastIdentifier.start,end:this.lastIdentifier.end};this.expect('in');const iterable=this.expression(local,0,depth+1),body=this.block(local,depth+1);statements.push({kind:'for-shared-json',name,nameSpan,iterable,body});continue;}
+   if(this.is('{')){statements.push({kind:'lexical-scope',body:this.block(local,depth+1)});continue;}
+   if(this.eat('loop')){const body=this.block(local,depth+1);statements.push({kind:'loop',body});continue;}
+   if(this.eat('while')){const condition=this.expression(local,0,depth+1),body=this.block(local,depth+1);statements.push({kind:'while',condition,body});continue;}
+   if(this.is('break')||this.is('continue')){const kind=this.next().text;this.expect(';');statements.push({kind});continue;}
+   if(this.eat('return')){const keyword=this.tokens[this.index-1],bareReturn=this.is(';'),value=bareReturn?{kind:'unit'}:this.expression(local,0,depth+1),semicolon=this.peek();this.expect(';');statements.push({kind:'return',value,bareReturn,returnSpan:{start:keyword.start,end:keyword.end},semicolonSpan:{start:semicolon.start,end:semicolon.end}});continue;}
+   if(this.is('assert!')||this.is('for')||this.is('__ro_domain')){this.skipGuard();continue;}
+   if(this.eat('if')){statements.push(this.conditional(local,depth+1));continue;}
+   const value=this.expression(local,0,depth+1);if(this.eat(';')){statements.push({kind:'effect',value});continue;}tail=value;this.expect('}');break;
+  }
+  return {kind:'block',statements,tail,span:{start,end:this.tokens[this.index-1].end}};
+ }
+ expression(environment,minimum=0,depth=0){
+  this.tick(depth);const expressionStart=this.peek().start;let value=this.primary(environment,depth+1);
+  for(;;){
+   if(this.eat('?')){value={kind:'effect-try',value};continue;}
+   if(this.eat('.')){const name=this.identifier();if(this.eat('(')){const args=this.arguments(environment,depth+1);value={kind:'method',name,value,args};}else value={kind:'field',name,value};continue;}
+   const op=this.peek().text,precedence=PRECEDENCE.get(op);if(precedence===undefined||precedence<minimum)break;this.next();const left=value,right=this.expression(environment,precedence+1,depth+1),comparison=operator=>['==','!=','<','<=','>','>='].includes(operator);if(comparison(op)&&[left,right].some(node=>node.kind==='binary'&&comparison(node.op)&&!node.groupSpans?.length))fail('original native chained comparisons require explicit value groups');value={kind:'binary',op,left,right,binarySpan:{start:expressionStart,end:this.tokens[this.index-1].end}};
+  }return value;
+ }
+ arguments(environment,depth){const args=[];while(!this.eat(')')){args.push(this.expression(environment,0,depth+1));if(!this.is(')'))this.expect(',');}return args;}
+ primary(environment,depth){
+  this.tick(depth);
+  if(this.eat('&'))return {kind:'borrow',mutable:this.eat('mut'),value:this.expression(environment,5,depth+1)};
+  if(this.eat('*'))return {kind:'dereference',value:this.expression(environment,5,depth+1)};
+  if(this.eat('!')){const start=this.tokens[this.index-1].start,value=this.expression(environment,5,depth+1);return {kind:'not',value,unarySpan:{start,end:this.tokens[this.index-1].end}};}
+  if(this.eat('(')){const start=this.tokens[this.index-1].start;if(this.eat(')'))return {kind:'unit'};const value=this.expression(environment,0,depth+1);this.expect(')');return {...value,groupSpans:[...(value.groupSpans??[]),{start,end:this.tokens[this.index-1].end}]};}
+  if(this.is('{'))return this.block(environment,depth+1);
+  if(this.eat('if')){const condition=this.expression(environment,0,depth+1),yes=this.block(environment,depth+1);this.expect('else');return {kind:'choose',condition,yes,no:this.block(environment,depth+1)};}
+  if(this.eat('return')){const value=this.is(',')||this.is('}')?{kind:'unit'}:this.expression(environment,0,depth+1);return {kind:'return-expression',value};}
+  if(this.eat('match')){
+   const start=this.tokens[this.index-1].start,inputStart=this.peek().start,value=this.expression(environment,0,depth+1),inputEnd=this.tokens[this.index-1].end;this.expect('{');const arms=[];
+   while(!this.eat('}')){const patternTokens=[];while(!this.eat('=>'))patternTokens.push(this.next());arms.push({pattern:patternTokens.map(row=>row.text).join(''),patternTokens,value:this.expression(environment,0,depth+1)});if(!this.is('}'))this.expect(',');}
+   return {kind:'match',value,arms,matchSpan:{start,end:this.tokens[this.index-1].end},inputSpan:{start:inputStart,end:inputEnd}};
+  }
+  if(this.eat('||'))return {kind:'typed-lambda',parameters:[],body:this.block(environment,depth+1)};
+  if(this.is('|')&&this.peek(1).type==='ident'&&this.is(':',2)){this.expect('|');const parameters=[];while(!this.eat('|')){const name=this.identifier(),nameSpan={start:this.lastIdentifier.start,end:this.lastIdentifier.end};this.expect(':');const type=this.typeUntil([',','|']);parameters.push({name,type,nameSpan});if(!this.is('|'))this.expect(',');}const asynchronous=this.eat('async'),futureMoved=asynchronous&&this.eat('move');return {kind:asynchronous?'typed-async-lambda':'typed-lambda',parameters,...(asynchronous?{futureMoved}:{}),body:this.block(new Map(),depth+1)};}
+  if(this.is('move')||this.is('|')){const moved=this.eat('move');this.expect('|');const parameters=[];while(!this.eat('|')){parameters.push(this.identifier());if(!this.is('|'))this.expect(',');}const asynchronous=this.eat('async'),futureMoved=asynchronous&&this.eat('move');return {kind:asynchronous?'async-lambda':'lambda',parameters,moved,futureMoved,body:this.block(environment,depth+1)};}
+  if(this.eat('-')){const token=this.next(),found=token.type==='number'&&/^(0|[1-9][0-9]{0,18})_i64$/u.exec(token.text);if(!found||BigInt(found[1])>9223372036854775808n)fail('canonical bounded negative i64 literal required');return {kind:'integer',value:(-BigInt(found[1])).toString(),type:'i64'};}
+  const token=this.peek();
+  if(token.type==='string'){this.next();return {kind:'string',value:ownedRustString(token.text)};}
+  if(token.type==='number'){this.next();const found=/^(0|[1-9][0-9]*)_(u64|i64)$/u.exec(token.text);if(!found||found[1].length>20||BigInt(found[1])>(found[2]==='i64'?9223372036854775807n:18446744073709551615n))fail('canonical bounded suffixed integer required');return {kind:'integer',value:found[1],type:found[2]};}
+  if(this.eat('true'))return {kind:'boolean',value:true};if(this.eat('false'))return {kind:'boolean',value:false};
+  const pathStart=this.peek().start,path=this.path(),nameSpan={start:pathStart,end:this.tokens[this.index-1].end};
+  if(path==='::std::vec!'){this.expect('[');if(this.peek().type==='number'&&/_u8$/u.test(this.peek().text)){const values=[];while(!this.eat(']')){this.tick(depth+1);if(values.length>=4096)fail('complete native octet literal element bound');const token=this.next(),found=token.type==='number'&&/^(0|[1-9][0-9]{0,2})_u8$/u.exec(token.text);if(!found||BigInt(found[1])>255n)fail('complete native canonical octet literal required');values.push(found[1]);if(!this.is(']'))this.expect(',');}return {kind:'bytes-literal',values};}const elements=[];while(!this.eat(']')){if(elements.length>=4096)fail('complete native owned JSON list element bound');elements.push(this.expression(environment,0,depth+1));if(!this.is(']'))this.expect(',');}return {kind:'json-list-literal',elements};}
+  if(path==='crate::translation_core::json!')return this.jsonMacro(environment,depth+1);
+  if(this.eat('('))return {kind:'call',path,nameSpan,args:this.arguments(environment,depth+1)};
+  if(environment.has(path))return {kind:'temporary',name:path,nameSpan,value:environment.get(path)};
+  return {kind:'name',name:path,nameSpan};
+ }
+ jsonMacro(environment,depth){
+  this.expect('(');let value;
+  if(this.eat('[')){const elements=[];while(!this.eat(']')){elements.push(this.expression(environment,0,depth+1));if(!this.is(']'))this.expect(',');}value={kind:'json-array',elements};}
+  else if(this.eat('{')){const entries=[];while(!this.eat('}')){const token=this.next();if(token.type!=='string')fail('emitted literal JSON key required');const key=ownedRustString(token.text);this.expect(':');entries.push({key,value:this.expression(environment,0,depth+1)});if(!this.is('}'))this.expect(',');}value={kind:'json-object',entries};}
+  else if(this.eat('null'))value={kind:'json-null'};else value={kind:'json-scalar',value:this.expression(environment,0,depth+1)};this.expect(')');return value;
+ }
+}
+export function readHttpResourceBindingRustFunction(source){if(typeof source!=='string'||source.length>2097152)fail('bounded complete original Rust function required');return new HttpResourceBindingRustReader(rustTokens(source)).function();}

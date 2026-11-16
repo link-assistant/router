@@ -1,5 +1,6 @@
 // A checked modeled request, never an observation of a running Cargo process.
 // Unit semantics and real CI/environment conformance remain separate proofs.
+import {crateModuleSourcePath} from './repository-layout.mjs';
 import {types} from 'node:util';
 import {matchesParserFacts,originalMatchesDependencyProof} from './matches-macro-context.mjs';
 import {deriveDependencyOriginalInputs} from './derive-dependencies.mjs';
@@ -56,8 +57,8 @@ function rootLibrary(parsed,state){
  const packageData=parsed.package,library=parsed.lib;if(!packageData||typeof packageData.name!=='string'||!library||typeof library.name!=='string'||typeof library.path!=='string')fail('complete explicit root package and library required');
  if(library['proc-macro']!==undefined&&library['proc-macro']!==false||library['crate-type']!==undefined)fail('modeled root requires an ordinary library target');
  const path=library.path;if(!path.endsWith('.rs')||path.startsWith('/')||path.includes('\\')||path.includes(':')||path.includes('\0')||path.split('/').some(part=>!part||part==='.'||part==='..'))fail('original root library path is unsupported');
- const modules=state.facts.modules,roots=modules.filter(module=>module.file===path&&module.path.length===0);if(roots.length!==1||typeof roots[0].source!=='string')fail('selected root library lacks its genuine complete original project module');
- return {name:library.name,path,kind:'lib',original:library,source:roots[0].source,sourceView:roots[0].sourceView};
+ const modules=state.facts.modules,sourcePath=crateModuleSourcePath(modules,path),roots=modules.filter(module=>module.file===sourcePath&&module.path.length===0);if(roots.length!==1||typeof roots[0].source!=='string')fail('selected root library lacks its genuine complete original project module');
+ return {name:library.name,path,kind:'lib',original:library,source:roots[0].source,sourceView:roots[0].sourceView,...(sourcePath===path?{}:{sourcePath})};
 }
 function unchanged(state){
  guard();const options=record(state.options,['packageToken','domain']);if(own(options,'packageToken')!==state.packageToken||own(options,'domain')!==state.domain||!sameData(state.domain,state.domainSnapshot))fail('modeled request changed during source reissue');

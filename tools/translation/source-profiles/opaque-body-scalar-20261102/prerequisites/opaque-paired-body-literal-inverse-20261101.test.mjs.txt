@@ -1,0 +1,19 @@
+// Complete paired actual-body inverse receiving case source. All UNRUN.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {performance} from 'node:perf_hooks';
+import {receiveOpaqueBodyLiterals} from '../opaque-body-literal-20261101-receiving.mjs';
+import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
+const limits={timeout:60000,concurrency:false};
+function editActualRowDefault(source,language,replacement){
+ const ts=ownershipCompiler(),file=ts.createSourceFile(language==='JavaScript'?'body.mjs':'body.mts',source,ts.ScriptTarget.Latest,true,language==='JavaScript'?ts.ScriptKind.JS:ts.ScriptKind.TS),bindings=[];assert.equal(file.parseDiagnostics.length,0);
+ function visit(node){if(ts.isPropertyAssignment(node)&&node.name&&ts.isStringLiteral(node.name)&&node.name.text==='token_report.row'&&ts.isIdentifier(node.initializer))bindings.push(node.initializer.text);ts.forEachChild(node,visit);}visit(file);assert.equal(bindings.length,1,'one actual exported complete row binding required');const functions=file.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.text===bindings[0]);assert.equal(functions.length,1);const literals=[];function scan(node){if(ts.isStringLiteral(node)&&node.text==='client')literals.push(node);ts.forEachChild(node,scan);}scan(functions[0].body);assert.equal(literals.length,1,'one actual row default token required');const token=literals[0];return source.slice(0,token.getStart(file))+JSON.stringify(replacement)+source.slice(token.end);
+}
+
+function baseline(t,startedAt){const first=receiveOpaqueBodyLiterals(t,{operation:'inspect'},{startedAt});assert.equal(first.packet.ok,true,JSON.stringify(first.packet.error));assert.equal(first.report.cleanupSucceeded,true);return first.packet.result.targetPhases.find(row=>row.phase==='adopted-project');}
+for(const language of ['JavaScript','TypeScript'])test('paired real row default projections agree using '+language+' inference',limits,t=>{
+ const startedAt=performance.now(),before=baseline(t,startedAt),javascript=editActualRowDefault(before.javascript,'JavaScript','会員😀'),typescript=editActualRowDefault(before.typescript,'TypeScript','会員😀'),received=receiveOpaqueBodyLiterals(t,{operation:'paired-body-literal-inverse',submitted:{language,javascript,typescript}},{startedAt});assert.equal(received.packet.ok,true,JSON.stringify(received.packet.error));const result=received.packet.result;assert.equal(result.javascript,javascript);assert.equal(result.typescript,typescript);assert.equal(result.pairedTargetAgreement,true);assert.equal(result.projectAttemptCount,6);assert.equal(result.selections[0].kind,'actual-checked-body-literal');assert.equal(result.rustEdits[0].history.inverse,result.rustEdits[0].before);assert.ok(result.rustEdits[0].after.includes('会員😀'));assert.equal(result.sourceInstalled,false);assert.equal(result.wholeRouterSynchronization,false);assert.equal(result.semanticAuthority,false);assert.deepEqual(result.ruleTrace.map(row=>row.phase),['language','language','repository']);assert.deepEqual(result.inverseRuleTrace.map(row=>row.phase),['language','language','repository']);assert.equal(received.report.cleanupSucceeded,true);
+});
+for(const variant of ['different-value','stale-peer'])test('paired real row body changes refuse '+variant,limits,t=>{
+ const startedAt=performance.now(),before=baseline(t,startedAt),javascript=editActualRowDefault(before.javascript,'JavaScript','operator'),typescript=variant==='stale-peer'?before.typescript:editActualRowDefault(before.typescript,'TypeScript','other_operator'),received=receiveOpaqueBodyLiterals(t,{operation:'paired-body-literal-inverse',submitted:{language:'JavaScript',javascript,typescript}},{startedAt});assert.equal(received.packet.ok,false);assert.match(received.packet.error.message,/conflicting complete authored JS\/TS projections/u);assert.equal(received.report.cleanupSucceeded,true);
+});

@@ -1,0 +1,4 @@
+// Independent complete source/provenance cases. SOURCE ONLY; UNRUN.
+import test from 'node:test';import assert from 'node:assert/strict';
+import {prepareNativeClientRemoteSources} from '../prepare-native-client-remote-sources.mjs';
+test('seven paired equations retain complete originals two phases CST inverses and fresh actual native inputs',{timeout:60000},()=>{const plan=prepareNativeClientRemoteSources();assert.equal(plan.files.length,7);assert.equal(plan.nativeInputs.length,4);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}for(const row of plan.nativeInputs){assert.equal(row.sourceAuthority,false);assert.equal(row.semanticAuthority,false);assert.ok(row.concreteSyntax);}assert.equal(plan.receivingExecuted,false);assert.equal(plan.rustExecuted,false);});

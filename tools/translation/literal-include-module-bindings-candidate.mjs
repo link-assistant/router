@@ -12,7 +12,7 @@ import {macroBindingAffects} from './macro-subnamespaces.mjs';
 import {deriveFootprintAt,deriveFootprintHelperAttributeAt,isDeriveFootprintContext} from './derive-footprints.mjs';
 import {deriveBangModules,deriveBangOutputAt,deriveBangHelperAttributeAt,isDeriveBangContext} from './derive-bang-context.mjs';
 import {proveDeriveEmptyEnclosingEffect,deriveEmptyEnclosingEffectFacts} from './derive-output-effects.mjs';
-import {toolAttributeAt,isToolAttributeContext,inertInnerLintItem} from './tool-attributes.mjs';
+import {toolAttributeAt,isToolAttributeContext,assertToolAttributeContextInputs,inertInnerLintItem} from './tool-attributes.mjs';
 import {builtinInnerSourceItem} from './inner-source-attributes.mjs';
 const namespaces=['type','value','macro'];
 const identifier=token=>token?.type==='ident' && /^[\p{L}_][\p{L}\p{N}_]*$/u.test(token.text);
@@ -199,6 +199,7 @@ export function resolveUnscopedModuleBindings({modules,externalModules=new Map()
   if(deriveBangContext){if(!isDeriveBangContext(deriveBangContext))throw new TypeError('Unsealed derive bang output context');modules=deriveBangModules(deriveBangContext,{deriveContext,modules,externalModules,compilationProfile:profileInput});}
   if(toolContext&&!isToolAttributeContext(toolContext))throw new TypeError('Unsealed tool attribute context');
   const profile=compilationProfile(profileInput);
+  if(toolContext)assertToolAttributeContextInputs(toolContext,{modules,externalModules,compilationProfile:profile});
   const scopes=new Map(),containers=new Map(),tasks=[],macroUses=[],diagnostics=[];
   const diagnostic=(scope,message,span,extra={})=>{const value={kind:'module-binding',message,source:scope.file,module:[...scope.path],span,...extra};diagnostics.push(value);return value;};
   for(const module of modules) {
@@ -498,6 +499,7 @@ export function resolveEnclosingNamespaceModuleBindings({modules,externalModules
   if(deriveBangContext){if(!isDeriveEnclosingNamespaceContext(deriveBangContext))throw new TypeError('Unsealed derive bang output context');modules=deriveEnclosingNamespaceModules(deriveBangContext,{deriveContext,modules,externalModules,compilationProfile:profileInput});}
   if(toolContext&&!isToolAttributeContext(toolContext))throw new TypeError('Unsealed tool attribute context');
   const profile=compilationProfile(profileInput);
+  if(toolContext)assertToolAttributeContextInputs(toolContext,{modules,externalModules,compilationProfile:profile});
   const scopes=new Map(),containers=new Map(),tasks=[],macroUses=[],diagnostics=[];
   const diagnostic=(scope,message,span,extra={})=>{const value={kind:'module-binding',message,source:scope.file,module:[...scope.path],span,...extra};diagnostics.push(value);return value;};
   for(const module of modules) {

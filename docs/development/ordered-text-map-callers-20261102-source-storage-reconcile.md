@@ -1,0 +1,11 @@
+# Shared reconcile source reader
+
+This separate two-parent source successor retains the full original reconcile-support and unit-runtime modules, their complete successors/inverses and language then repository rules. No original parent is edited by the proposal, and no source or case has run.
+
+`createReconcileSourceCapture` now has a separate genuine compressed-handle branch before its physical stamp walk. It preserves the original strict UTF8,8MiB file,64MiB retained raw and4,096 captured-file bounds. Mode comes from the actual logical Git/vault join exposed by the prior SDK epoch. No NodeStats or physical identity array is synthesized. Stored handles remain private to the capture; returned rows contain actual text/mode DATA. Every retained logical source independently reissues and closes its original compressed FD/descriptor/Git/ancestor identity and complete text at closing. Original physical source and directory closes, Rust census, error aggregation and poison behavior remain unchanged.
+
+The separate `readCurrentSourceProposalFile` byte path can also read the explicit source-storage domain before its original physical walk, retaining strict UTF8 and8MiB bound. This byte API issues no source/namespace/type/body authority. Source installers and physical identity/mutation transactions remain their original physical domain; this packet does not synthesize physical targets, reinterpret a cold source as a writable file, or claim successful installation of proposals with cold input identity requirements.
+
+Independent receiving source covers actual complete cold profile text/mode, original physical/missing file and Rust census, sticky input failure and multiple independent closing failures, plus complete serialized/reparsed source equations. It requires the actual preceding storage/SDK domain and is not a replacement compiler fixture.
+
+Remaining work includes scheduling this receiving file in the dedicated complete driver and selecting this new two-parent epoch in the compiler package. Other custom physical profile readers remain explicit. All qualification, native parity, full receiving fit, source-owner/type/body paths and execution are **UNRUN**. The private compiler still reconstructs all original facts afresh after CST/meta decoding; source rows, names, digests and mode DATA grant none of those facts.

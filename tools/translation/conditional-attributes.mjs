@@ -129,3 +129,13 @@ function originalConditionalDocumentation(){
 }
 // Complete source is evidence only, never a caller-supplied replacement input.
 export function originalConditionalDocumentationInputs(){originalConditionalDocumentation();return documentationOriginalInputs;}
+
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
+
+// Fresh complete original grammar inputs only; no source/namespace capability.
+export function originalFreshConditionalAttributeSourceInputs(){
+ const inventory=readFileSync(new URL('manifest.json',root));if(hash(inventory)!=='cd8ea647208ae2ff5bb67ead9fc896552360654eda42cff3c1d85a3708f7aefa')throw new TypeError('Complete original conditional grammar inventory changed');let retained=inventory.length;const inputs=[];
+ for(const pin of manifest.sources){const url=new URL(pin.archive,root),packed=readFileSync(url),raw=gunzipSync(packed,{maxOutputLength:120000});retained+=packed.length+raw.length;if(retained>8388608||packed.length!==pin.archiveBytes||hash(packed)!==pin.archiveSha256||raw.length!==pin.bytes||hash(raw)!==pin.sha256||!raw.equals(originalSources.get(pin.archive)?.raw))throw new TypeError('Complete current conditional grammar source differs');const source=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw),concrete=transportConcreteSyntaxSource(source,{language:'Rust'});if(transportConcreteSyntaxMeta(concrete.meta).source!==source)throw new TypeError('Complete conditional grammar source inverse differs');inputs.push({path:pin.url,source,concreteSyntax:concrete.meta,inverse:source,url,packed});}
+ for(const row of inputs)if(!readFileSync(row.url).equals(row.packed))throw new TypeError('Complete conditional grammar sources changed during proof');if(!readFileSync(new URL('manifest.json',root)).equals(inventory))throw new TypeError('Complete conditional grammar inventory changed during proof');
+ return freeze({schema:'fresh-original-conditional-attribute-source-inputs-v1',manifestSha256:hash(inventory),sources:inputs.map(({path,source,concreteSyntax,inverse})=>({path,source,concreteSyntax,inverse})),retainedSourceBytes:retained,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false,crossInvocationCache:false});
+}

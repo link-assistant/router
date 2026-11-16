@@ -373,7 +373,7 @@ fn replay_turn(
     incoming: &crate::translation_core::Json,
 ) -> Response {
     let Some(turn) = session.turns.get(position - 1) else {
-        return replay_failure(&format!(
+        return replay_failure(&crate::translation_core::format!(
             "replay exhausted: the recording {} holds {} turn(s) and the client asked for turn {}",
             session.path.display(),
             session.turns.len(),
@@ -381,7 +381,7 @@ fn replay_turn(
         ));
     };
     if let Some(difference) = matching::describe_difference(&turn.request, incoming) {
-        return replay_failure(&format!(
+        return replay_failure(&crate::translation_core::format!(
             "replay mismatch at turn {position} of {} (recorded by Router {} against provider {}): \
              {difference}",
             session.path.display(),
@@ -415,9 +415,11 @@ fn served_response(turn: &Turn, position: usize) -> Response {
     // transport split them. Emitting each recorded event as its own frame would
     // assert a chunk boundary the original may not have had.
     let body = turn.events.concat();
-    response
-        .body(Body::from(body))
-        .unwrap_or_else(|_| replay_failure(&format!("turn {position} could not be rebuilt")))
+    response.body(Body::from(body)).unwrap_or_else(|_| {
+        replay_failure(&crate::translation_core::format!(
+            "turn {position} could not be rebuilt"
+        ))
+    })
 }
 
 /// How a failed replay reaches the client.

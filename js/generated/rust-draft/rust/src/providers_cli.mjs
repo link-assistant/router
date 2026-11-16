@@ -1,4 +1,4 @@
-// Generated draft from rust/src/providers_cli.rs; sha256=ac242910e4d3d0babb35bc64a2f1b1efc2d4fa51396782831db17246538be02f
+// Generated draft from rust/src/providers_cli.rs; sha256=e085369a50e8bbcacb52c12d755e3000ee8d6f33536c9f14c61c24b634a977f4
 // Carried constructs are data, never runtime parity evidence.
 import { validateJsonNumber as ml_validate_json_number, validateJsonMap as ml_validate_json_map } from "../../runtime/json-values.mjs";
 
@@ -51,4 +51,4 @@ const serde_json = {
 };
 
 export const translated = { ["Call"]: ml_make_Call_Call };
-export const provenance = {"sourcePath":"rust/src/providers_cli.rs","sourceSha256":"ac242910e4d3d0babb35bc64a2f1b1efc2d4fa51396782831db17246538be02f","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":1,"carried":23,"preserved":25,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/providers_cli.rs","sourceSha256":"e085369a50e8bbcacb52c12d755e3000ee8d6f33536c9f14c61c24b634a977f4","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":1,"carried":23,"preserved":25,"runtimeParity":false};

@@ -14,7 +14,7 @@ export async function clientFileTransaction(paths,operation,{checkpoint=()=>{}}=
   return serialized(lock,()=>withAdvisoryFileLock(lock,async()=>{
     const id=randomUUID().replaceAll('-',''),root=join(paths.configHome,'link-assistant-router/repairs',id);
     await requireNativePath(root);await mkdir(root,{recursive:true,mode:0o700});await chmod(root,0o700);
-    const allowed=[paths.config,await (await import('./client-files.mjs')).preferredClientPath(paths.environment,paths.legacyEnvironment),await (await import('./client-files.mjs')).preferredClientPath(paths.metadata,paths.legacyMetadata),...(paths.marker ? [paths.marker] : [])].sort();
+    const allowed=[paths.config,await (await import('./client-files.mjs')).preferredClientPath(paths.environment,paths.legacyEnvironment),await (await import('./client-files.mjs')).preferredClientPath(paths.metadata,paths.legacyMetadata),...(paths.marker ? [paths.marker] : []),...await globalClientTransactionFiles(paths)].sort();
     const entries=[];
     try {
       for(const [index,path] of [...new Set(allowed)].entries()) {
@@ -44,3 +44,5 @@ export async function clientFileTransaction(paths,operation,{checkpoint=()=>{}}=
     } catch(error) {throw error;}
   }));
 }
+
+import {globalClientTransactionFiles} from './client-global-state.mjs';

@@ -1,3 +1,4 @@
+import {writeProtectedAfterCliPlan} from './protected-after-cli-writers-20261102.mjs';
 // Native whole-function source copying; detached packets issue no authority.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -72,5 +73,5 @@ export function prepareSourceBackedFormattingPackets({root=ROOT}={}){
  return {schema:'source-backed-formatting-packet-source-preparation-v1',typescriptVersion:ts.version,nativeBindings,inputs:[{path:SOURCE,source},{path:SUPPORT,source:support},{path:TEMPLATE,source:template}],files:[{path:OUTPUT,current,original,language,after,beforeMeta:before.meta,afterMeta,inverse:original,trace:run.trace}],allOriginalMaterializedFunctionsUnchanged:true,newAcrossInvocationCache:false,sourceAuthority:false,executableAdmission:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);if(args.length!==1||!['--emit','--check','--write'].includes(args[0]))fail('usage: prepare-source-backed-formatting-packets.mjs --emit|--check|--write');const plan=prepareSourceBackedFormattingPackets();if(args[0]==='--emit')console.log(JSON.stringify(plan));else if(args[0]==='--write'){for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);console.log('Prepared detached complete formatting packet producer.');}else{if(plan.files.some(row=>row.current!==row.after))fail('generated formatting packet producer is stale');console.log('Formatting packet producer is current.');}
+ const args=process.argv.slice(2);if(args.length!==1||!['--emit','--check','--write'].includes(args[0]))fail('usage: prepare-source-backed-formatting-packets.mjs --emit|--check|--write');const plan=args[0]==='--write'?writeProtectedAfterCliPlan(ROOT,()=>prepareSourceBackedFormattingPackets(),plan=>{}):prepareSourceBackedFormattingPackets();if(args[0]==='--emit')console.log(JSON.stringify(plan));else if(args[0]==='--write'){console.log('Prepared detached complete formatting packet producer.');}else{if(plan.files.some(row=>row.current!==row.after))fail('generated formatting packet producer is stale');console.log('Formatting packet producer is current.');}
 }

@@ -1,0 +1,13 @@
+{
+  "schema": "router-target-scope-native-birth-complete-source-draft-v1",
+  "sha256": "714682d5f5830d783028165c72b440e398d177a037fbeb933438f23b40e84476",
+  "decodedBytes": 393769,
+  "packedBytes": 69425,
+  "completeFiles": 7,
+  "parentAfterimages": 3,
+  "caseSources": 3,
+  "receivingChildModes": 8,
+  "sourceInstalledInOriginal": false,
+  "execution": "UNRUN",
+  "CI": "NOT_INSPECTED"
+}

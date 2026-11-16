@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Explicit receiving reader composition; actual runtime imports remain current.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -20,5 +21,5 @@ export function prepareGuardedBuiltinPlanHistory({root=ROOT}={}){
  return {schema:'guarded-builtin-plan-explicit-receiving-reader-v1',files:[{path:PATH,before:source,after:language,selection,nativeInverse,stages,inverse:source}],history,sourceAuthority:false,runtimeImportsUnchanged:true,originalWholeCasesAndDeadlinesUnchanged:true,receivingExecuted:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('use --emit|--write|--check');const plan=prepareGuardedBuiltinPlanHistory();if(args[0]==='--write'){for(const row of plan.files){if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.before)fail('actual test changed before write');writeFileSync(resolve(ROOT,row.path),row.after);}}else if(args[0]==='--check'){if(plan.files.some(row=>row.before!==row.after))fail('explicit guarded history reader is stale');console.log('Complete historical reader composition is current; runtime imports unchanged.');}else console.log(JSON.stringify(plan));
+ const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('use --emit|--write|--check');const plan=args[0]==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareGuardedBuiltinPlanHistory();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files){if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.before)fail('actual test changed before write');writer.write(row.path,row.after);}return plan;}):prepareGuardedBuiltinPlanHistory();if(args[0]==='--check'){if(plan.files.some(row=>row.before!==row.after))fail('explicit guarded history reader is stale');console.log('Complete historical reader composition is current; runtime imports unchanged.');}else if(args[0]==='--emit')console.log(JSON.stringify(plan));
 }

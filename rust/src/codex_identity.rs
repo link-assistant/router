@@ -38,10 +38,11 @@ where
 fn versioned(
     name: &crate::translation_core::Str,
     version: crate::translation_core::Maybe<String>,
-) -> String {
-    sanitized_token(
-        &version.map_or_else(|| name.to_string(), |version| format!("{name}/{version}")),
-    )
+) -> crate::translation_core::Text {
+    sanitized_token(&version.map_or_else(
+        || name.to_string(),
+        |version| crate::translation_core::format!("{name}/{version}"),
+    ))
 }
 
 fn tmux_value(format: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
@@ -137,8 +138,8 @@ fn user_agent_for(
     os_version: &crate::translation_core::Str,
     architecture: &crate::translation_core::Str,
     terminal: &crate::translation_core::Str,
-) -> String {
-    format!(
+) -> crate::translation_core::Text {
+    crate::translation_core::format!(
         "{ORIGINATOR}/{} ({os_type} {os_version}; {architecture}) {terminal}",
         client_version()
     )

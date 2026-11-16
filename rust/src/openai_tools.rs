@@ -72,20 +72,7 @@ pub fn translate_parts(parts: &[Value]) -> Vec<Value> {
 /// CLI additionally sends `namespace`, `custom` and `tool_search` as part of its
 /// ordinary tool set, and those have no Anthropic equivalent.
 fn is_translatable(tool: &Value) -> bool {
-    let kind = tool
-        .get("type")
-        .and_then(Value::as_str)
-        .unwrap_or("function");
-    match kind {
-        "function" => tool
-            .get("function")
-            .unwrap_or(tool)
-            .get("name")
-            .and_then(Value::as_str)
-            .is_some_and(|name| !name.is_empty()),
-        "web_search" | "web_fetch" => true,
-        _ => false,
-    }
+    crate::borrowed_json_tool_predicate_20261103::borrowed_json_tool_is_translatable(tool)
 }
 
 /// A human-readable name for a tool entry, for reporting what was dropped.

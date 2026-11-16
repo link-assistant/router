@@ -2,7 +2,7 @@
 // issuance. This is the unchanged certificate verifier, not a source issuer.
 import {createHash} from 'node:crypto';
 import {fixedArrayLength,typeKey} from './checked-types.mjs';
-import {sharedReferenceCopyIdentity} from './shared-reference-copy-source.mjs';
+import {currentSharedReferenceCopyIdentity as sharedReferenceCopyIdentity} from './current-standard-copy-source.mjs';
 export const checkedCopyTypeKey=type=>{
   if(!type || typeof type!=='object')return null;
   if(type.rustReference)return sharedReferenceCopyIdentity(type);

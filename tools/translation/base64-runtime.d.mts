@@ -19,3 +19,6 @@ export declare function router_core_base64_url_no_pad_decode_text(value:string):
 export declare function router_core_base64_url_no_pad_decode_owned_text(value:string):Base64Result;
 /** Native Display and Debug have the same text; no arbitrary formatter dispatch. */
 export declare function base64ErrorText(value:Base64Error):string;
+
+/** Snapshot and validate the explicit public owned Base64 Result input ABI. */
+export declare function base64ResultInput(value:unknown):Base64Result;

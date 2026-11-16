@@ -1,0 +1,75 @@
+{
+  "schema": "protected-preparer-writers-source-history-20261102-v1",
+  "baselineRevision": "344196239481420c5a84de6935214efbc6c7e51e",
+  "files": [
+    {
+      "path": "scripts/sync-rust-assets.mjs",
+      "originalRevision": "344196239481420c5a84de6935214efbc6c7e51e",
+      "originalBlob": "1c15581282d4048f83144d593307f19888997759",
+      "mode": "100644",
+      "before": "scripts__sync-rust-assets.mjs.before.txt",
+      "after": "scripts__sync-rust-assets.mjs.after.txt",
+      "beforeBytes": 3177,
+      "afterBytes": 4397,
+      "beforeSha256": "4c96aefdbf6c36524dd21f7f22093e2b7267b3a14f75573410472a0ea123daeb",
+      "afterSha256": "50ddd935ef65edc482afdef9169feb66d6435d6765efdb361f2c58bb31675959",
+      "sequences": [
+        {
+          "phase": "language",
+          "purpose": "retain complete original source/native/Rust-CST/asset-byte checks"
+        },
+        {
+          "phase": "repository",
+          "purpose": "protect actual source and asset writer sinks; retain finite named source chronology"
+        }
+      ]
+    },
+    {
+      "path": "tools/translation/prepare-mixed-native-substitution-copy.mjs",
+      "originalRevision": "344196239481420c5a84de6935214efbc6c7e51e",
+      "originalBlob": "6db7af86c6d4598877d2d7723e7c0ebe112d8251",
+      "mode": "100644",
+      "before": "tools__translation__prepare-mixed-native-substitution-copy.mjs.before.txt",
+      "after": "tools__translation__prepare-mixed-native-substitution-copy.mjs.after.txt",
+      "beforeBytes": 17358,
+      "afterBytes": 18767,
+      "beforeSha256": "90fe9bfc3acc8247bf14d6b23a8385e1b4484d69722cce4abc902bcdd282983b",
+      "afterSha256": "5c549c712e38f7e52fa6c218f94745f94e429ce05ebbbd0762dfcdafacb0faf5",
+      "sequences": [
+        {
+          "phase": "language",
+          "purpose": "retain complete original source/native/Rust-CST/asset-byte checks"
+        },
+        {
+          "phase": "repository",
+          "purpose": "protect actual source and asset writer sinks; retain finite named source chronology"
+        }
+      ]
+    },
+    {
+      "path": "tools/translation/prepare-native-substitution-copy.mjs",
+      "originalRevision": "344196239481420c5a84de6935214efbc6c7e51e",
+      "originalBlob": "3ece65b39d06a8792c1d75bcf789dad8281b84b1",
+      "mode": "100644",
+      "before": "tools__translation__prepare-native-substitution-copy.mjs.before.txt",
+      "after": "tools__translation__prepare-native-substitution-copy.mjs.after.txt",
+      "beforeBytes": 16799,
+      "afterBytes": 18420,
+      "beforeSha256": "dce35a542683159c79326b2b5fd908d3fcc6abeb95dad407a2aeaea375453686",
+      "afterSha256": "4debbaa1b456a87bf365b0cb718768208cef05b8cc848d23042c0434062f24d9",
+      "sequences": [
+        {
+          "phase": "language",
+          "purpose": "retain complete original source/native/Rust-CST/asset-byte checks"
+        },
+        {
+          "phase": "repository",
+          "purpose": "protect actual source and asset writer sinks; retain finite named source chronology"
+        }
+      ]
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

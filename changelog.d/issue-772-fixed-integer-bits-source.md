@@ -1,0 +1,1 @@
+Draft twelve integer BITS associated constants through the shared scalar source rules and genuine native alias parser, preserving u32 result typing, profile guards and full source inverses. Independent cases remain unrun.

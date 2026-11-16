@@ -1,0 +1,15 @@
+{
+  "schema": "bulk-rule-trace-source-profile-v1",
+  "archive": "complete-originals.json.gz",
+  "archiveBytes": 27275,
+  "archiveSha256": "0745154aada22e01d0300cd291c1cbe25e97c3c1561a5df8b65e574692bb3402",
+  "decodedBytes": 168866,
+  "decodedSha256": "76b1c2a686acbd9975c073a6f5e93d7594320614aa483f0d6165701257b48279",
+  "paths": [
+    "tools/translation/test/primitive-vector-iterator-bulk-20261101.test.mjs",
+    "tools/translation/test/collection-callback-bulk-20261101.test.mjs",
+    "tools/translation/test/scalar-chain-bulk-20261101.test.mjs",
+    "tools/translation/scalar-chain-bulk-20261101-source-equations.mjs"
+  ],
+  "execution": "UNRUN"
+}

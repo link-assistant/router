@@ -10,8 +10,10 @@ use axum::Router;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::routing::get;
+#[cfg(test)]
 use base64::Engine as _;
 use serde::Deserialize;
+#[cfg(test)]
 use sha2::{Digest, Sha256};
 use tokio::sync::{mpsc, oneshot};
 
@@ -201,8 +203,8 @@ impl CodexDeviceLogin {
                     tokio::time::sleep(self.interval).await;
                 }
                 DevicePoll::Complete(code) => {
-                    let expected_challenge = base64::engine::general_purpose::URL_SAFE_NO_PAD
-                        .encode(Sha256::digest(code.code_verifier.as_bytes()));
+                    let expected_challenge =
+                        crate::translation_text_core::sha256_base64_url_no_pad(&code.code_verifier);
                     if code.code_challenge != expected_challenge {
                         return Err(
                             "Codex device authorization returned inconsistent PKCE values"
@@ -303,8 +305,7 @@ impl CodexLogin {
         let redirect_uri = format!("http://localhost:{port}{CODEX_CALLBACK_PATH}");
         let state = random_urlsafe();
         let code_verifier = format!("{}{}", random_urlsafe(), random_urlsafe());
-        let challenge = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .encode(Sha256::digest(code_verifier.as_bytes()));
+        let challenge = crate::translation_text_core::sha256_base64_url_no_pad(&code_verifier);
         let authorization_url = authorize_url(
             &config.issuer,
             &config.client_id,

@@ -7,7 +7,7 @@ import {assertOriginalCloneContainerFields} from '../clone-container-fields.mjs'
 import {requireCloneContainerNoDrop} from '../clone-container-no-drop.mjs';
 import {originalPrimitiveCloneExpansion,assertOriginalPrimitiveCloneExpansion} from './primitive-clone-source.mjs';
 import {pinnedCloneBody,parsePinnedBody,parsedPinnedBodyEvidence} from './standard-body-source.mjs';
-import {originalPrimitiveCopySource,STANDARD_OPTION_COPY_SOURCE} from '../shared-reference-copy-source.mjs';
+import {currentPrimitiveCopySource as originalPrimitiveCopySource,STANDARD_OPTION_COPY_SOURCE} from '../current-standard-copy-source.mjs';
 import {sameType} from '../checked-types.mjs';
 import {metadataDigest,copyMetadata} from './source-links.mjs';
 import {renameFunction} from '../vendor/meta-language/translation/ir.js';

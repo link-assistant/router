@@ -1,0 +1,79 @@
+{
+  "schema": "protected-recursive-cli-writers-20261103-source-proposal-v1",
+  "predecessor": "3d159dbb9c8bdc4794d93b7a409a3df86fcd000d",
+  "files": [
+    {
+      "role": "core-unicode-predicates",
+      "path": "tools/translation/prepare-core-unicode-predicates.mjs",
+      "producer": "prepareCoreUnicodePredicates",
+      "originalGuard": "for(const row of plan.files)if(![row.before,row.after].includes(row.current)&&!(row.before===''&&row.current===null))fail('physical complete parent differs: '+row.path);",
+      "physicalOrigin": {
+        "commit": "3d159dbb9c8bdc4794d93b7a409a3df86fcd000d",
+        "path": "tools/translation/prepare-core-unicode-predicates.mjs",
+        "gitBlob": "b71ab6154288fd8bbddaebedfcae624d476fbfaa"
+      },
+      "before": {
+        "path": "core-unicode-predicates.before.txt",
+        "bytes": 14016,
+        "sha256": "22283f8e5bd1b11a5d144e482a8db6f4273321f25d3e6c6e6a1959e0d9d40856"
+      },
+      "after": {
+        "path": "core-unicode-predicates.after.txt",
+        "bytes": 14059,
+        "sha256": "dfe558fa6008f333b444016cd75f03b746390e911113e216e39245c5a63602b8"
+      }
+    },
+    {
+      "role": "core-unit-matches",
+      "path": "tools/translation/prepare-core-unit-matches.mjs",
+      "producer": "prepareCoreUnitMatches",
+      "originalGuard": "for(const row of plan.files)if(![row.before,row.after].includes(row.current)&&!(row.before===''&&row.current===null))fail('actual complete input differs: '+row.path);",
+      "physicalOrigin": {
+        "commit": "3d159dbb9c8bdc4794d93b7a409a3df86fcd000d",
+        "path": "tools/translation/prepare-core-unit-matches.mjs",
+        "gitBlob": "ac8320418ffdd3b1014ea3f7b0b258a32d14f690"
+      },
+      "before": {
+        "path": "core-unit-matches.before.txt",
+        "bytes": 16204,
+        "sha256": "df9adc5d8caa45f017fd427b44734b7193e420334c2ee2d36264fa259858b046"
+      },
+      "after": {
+        "path": "core-unit-matches.after.txt",
+        "bytes": 16244,
+        "sha256": "38bb7a8056af208a507685312c9af191a1560dedcfa70962ce8d3ddcd9780b9a"
+      }
+    },
+    {
+      "role": "zopfli-vendor",
+      "path": "tools/translation/prepare-zopfli-vendor.mjs",
+      "producer": "prepareZopfliVendor",
+      "originalGuard": "for(const row of plan.files){if(row.current!==null&&row.current!==row.after)fail('unknown existing vendor source');}",
+      "physicalOrigin": {
+        "commit": "3d159dbb9c8bdc4794d93b7a409a3df86fcd000d",
+        "path": "tools/translation/prepare-zopfli-vendor.mjs",
+        "gitBlob": "54879c27edf9ff7fed272c63657bef3d72ae3420"
+      },
+      "before": {
+        "path": "zopfli-vendor.before.txt",
+        "bytes": 5315,
+        "sha256": "9ea5d91713c57b9800eb0ee2beea015b6366ba1ce28cbf529027832780b3fb03"
+      },
+      "after": {
+        "path": "zopfli-vendor.after.txt",
+        "bytes": 5364,
+        "sha256": "e28cba7ad560daa04d3124ccbeec49bf7a237770e7cd0f73661102c8bf53f0fe"
+      }
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceInstalled": false,
+  "sourceAuthority": false,
+  "completeOriginalFunctionDenominator": "UNKNOWN",
+  "completeWriterDenominator": "UNKNOWN",
+  "requirements": {
+    "L04": "three actual recursive mkdir/direct source writer CLIs; shared native staged/direct multi-root protection",
+    "S03": "original sequential mkdir/write and ordinary failure/partial creation retained; no atomicity qualification",
+    "L01_L02": "finite exact module/producer/entry mapping; complete original function/writer denominator UNKNOWN"
+  }
+}

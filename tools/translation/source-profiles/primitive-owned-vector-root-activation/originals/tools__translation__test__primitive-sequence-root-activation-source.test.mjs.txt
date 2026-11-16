@@ -1,0 +1,24 @@
+// Independent full-root/history SOURCE cases. All producers/checks UNRUN.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
+import {join,dirname} from 'node:path';
+import {tmpdir} from 'node:os';
+import {gunzipSync} from 'node:zlib';
+import {preparePrimitiveSequenceRootActivation} from '../prepare-primitive-sequence-root-activation.mjs';
+import {preparePrimitiveSequenceRootActivationSources} from '../prepare-primitive-sequence-root-activation-sources.mjs';
+import {prepareNativeSourceHistory,ORIGINAL_NATIVE_SOURCE_HISTORY_PROFILE} from '../native-source-history.mjs';
+import {prepareFixedTypeCoreNativeSources} from '../prepare-fixed-type-core-native-sources.mjs';
+import {prepareJsonIterationCore} from '../prepare-json-iteration-core.mjs';
+const limits={timeout:60000},root=new URL('../../../',import.meta.url),archive='tools/translation/source-profiles/primitive-sequence-root-activation/complete-native-history.json.gz';
+test('the actual complete native root has its exact reversible proposal and every older constructor reaches its known successor',limits,()=>{
+ const plan=preparePrimitiveSequenceRootActivation(),row=plan.files[0];assert.equal(row.current,row.after);assert.equal(row.currentAfter,row.after);assert.equal(row.inverse,row.before);assert.equal(row.after,row.before+'\npub mod translation_primitive_sequences_core;\n');assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);for(const constructor of [prepareFixedTypeCoreNativeSources,prepareJsonIterationCore]){const prior=constructor(),native=prior.files.find(row=>row.path==='rust/src/lib.rs');assert.equal(native.current,row.after);assert.equal(native.currentAfter,row.after);assert.equal(native.inverse,native.before);}assert.equal(plan.sourceAuthority,false);assert.equal(plan.semanticAuthority,false);assert.equal(plan.sourceInstalled,false);assert.equal(plan.rustExecuted,false);
+});
+test('default complete history retains all previous rows and composes one exact root successor with its whole original inverse',limits,()=>{
+ const plan=prepareNativeSourceHistory(),row=plan.files.find(row=>row.path==='rust/src/lib.rs');assert.equal(plan.files.length,17);assert.equal(plan.files.reduce((sum,row)=>sum+row.historyChain.length,0),22);assert.equal(row.historyChain.length,2);assert.equal(row.historyChain[0].after,row.historyChain[1].before);assert.equal(row.inverse,row.historyChain[0].before);assert.equal(row.current,row.after);assert.equal(row.historyChain[1].after,readFileSync(new URL('rust/src/lib.rs',root),'utf8'));assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository','language','repository']);
+ const original=JSON.parse(gunzipSync(readFileSync(new URL(ORIGINAL_NATIVE_SOURCE_HISTORY_PROFILE.archive,root)))).files,current=JSON.parse(gunzipSync(readFileSync(new URL(archive,root)))).files;assert.equal(original.length,21);assert.equal(current.length,22);assert.deepEqual(current.slice(0,21),original);assert.equal(plan.sourceCache,false);assert.equal(plan.receivingExecuted,false);
+});
+test('explicit historical archive still reconstructs its original receiving sources and refuses the unrecorded later root',limits,t=>{
+ const directory=mkdtempSync(join(tmpdir(),'router-root-history-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const write=(path,value)=>{mkdirSync(dirname(join(directory,path)),{recursive:true});writeFileSync(join(directory,path),value);},packed=readFileSync(new URL(ORIGINAL_NATIVE_SOURCE_HISTORY_PROFILE.archive,root)),rows=JSON.parse(gunzipSync(packed)).files;write(ORIGINAL_NATIVE_SOURCE_HISTORY_PROFILE.archive,packed);for(const row of rows){write(row.originalPath,row.before);write(row.path,row.after);}const plan=prepareNativeSourceHistory({root:directory,...ORIGINAL_NATIVE_SOURCE_HISTORY_PROFILE});assert.equal(plan.files.reduce((sum,row)=>sum+row.historyChain.length,0),21);assert.equal(plan.files.find(row=>row.path==='rust/src/lib.rs').historyChain.length,1);write('rust/src/lib.rs',readFileSync(new URL('rust/src/lib.rs',root),'utf8'));assert.throws(()=>prepareNativeSourceHistory({root:directory,...ORIGINAL_NATIVE_SOURCE_HISTORY_PROFILE}),/unknown complete native current source/u);
+});
+test('eleven complete source equations preserve frozen originals both sequences and full inverse bytes',limits,()=>{const plan=preparePrimitiveSequenceRootActivationSources();assert.equal(plan.files.length,11);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.receivingExecuted,false);});

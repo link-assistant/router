@@ -7,7 +7,6 @@
 //! truncated to 128 bits: equal inputs give equal fingerprints, and nobody
 //! without the signing secret can test a guess against one.
 
-use base64::Engine as _;
 use jsonwebtoken::{Algorithm, EncodingKey};
 
 const ENV_CONTEXT: &[u8] = b"link-assistant-router/deploy/runtime-env-fingerprint/v1\0";
@@ -19,8 +18,7 @@ pub fn hmac_sha256_hex(key: &[u8], message: &[u8]) -> String {
     let signature =
         jsonwebtoken::crypto::sign(message, &EncodingKey::from_secret(key), Algorithm::HS256)
             .expect("HMAC-SHA256 accepts any key");
-    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(signature)
+    let bytes = crate::translation_core::base64_url_no_pad_decode_owned_text(signature)
         .expect("jsonwebtoken returns base64url");
     hex::encode(bytes)
 }

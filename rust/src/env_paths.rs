@@ -52,7 +52,7 @@ pub fn qwen_directory(
 ) -> crate::translation_core::Outcome<crate::translation_core::Maybe<PathBuf>, String> {
     qwen_directory_in(&directory, name, home, || {
         crate::operation_context::current_dir()
-            .map_err(|error| format!("cannot resolve {name}: {error}"))
+            .map_err(|error| crate::translation_core::format!("cannot resolve {name}: {error}"))
     })
 }
 
@@ -104,7 +104,7 @@ pub fn require_absolute(
     if root.is_absolute() {
         return Ok(root);
     }
-    Err(format!(
+    Err(crate::translation_core::format!(
         "refusing to use the relative path {} for {what}: check HOME, XDG_CONFIG_HOME and \
          APPDATA, one of which is set to something relative or empty",
         root.display()

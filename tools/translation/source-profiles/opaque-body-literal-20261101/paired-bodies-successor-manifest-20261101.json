@@ -1,0 +1,14 @@
+{
+  "schema": "opaque-paired-body-source-successor-v1",
+  "archive": "tools/translation/source-profiles/opaque-body-literal-20261101/complete-source-copies-paired-bodies.json.gz",
+  "sha256": "777fa7f97e03cdfe4a09488f6aef1b19998aa00617f4376ba748553011d56349",
+  "rawBytes": 324179,
+  "packedBytes": 50344,
+  "copyRows": 6,
+  "additionRows": 3,
+  "currentCases": 6,
+  "evolutionRows": 3,
+  "sourceAuthorAncestors": 2,
+  "sourceHistorySha256": "09ee3a3da05cdd7c18d513bc2afa6e9202e999aebd6390bac2b1b103353157f0",
+  "executionEvidence": "UNRUN"
+}

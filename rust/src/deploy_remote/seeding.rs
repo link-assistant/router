@@ -42,7 +42,7 @@ pub fn mark_pending(
 ) -> crate::translation_core::Outcome<(), String> {
     seeds.iter().try_for_each(|seed| {
         seed.mark_pending(server).map_err(|error| {
-            format!(
+            crate::translation_core::format!(
                 "--seed-credential {}: could not mark the source handed over: {error}",
                 seed.provider.as_str()
             )

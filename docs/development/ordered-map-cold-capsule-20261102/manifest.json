@@ -1,0 +1,12 @@
+{
+  "schema": "ordered-map-cold-source-capsule-source-draft-20261102-v1",
+  "sha256": "b700ef5e9a3745cab76816293409430473dffa35256a89ea8dad5f854ca508fb",
+  "decodedBytes": 27542,
+  "packedBytes": 8508,
+  "completeFiles": 5,
+  "boundaryCaseSources": 4,
+  "receivingCaseSources": 2,
+  "childProbes": 5,
+  "execution": "UNRUN",
+  "CI": "NOT_INSPECTED"
+}

@@ -1,3 +1,4 @@
+import {writeProtectedOwnedVectorCliPlan} from '../protected-owned-vector-cli-20261103.mjs';
 // Copies complete actual private checker/emitter/document sources. Explicit
 // candidate only; no default module or generated artifact is hand edited.
 import {readFileSync,writeFileSync,existsSync,lstatSync} from 'node:fs';
@@ -45,4 +46,7 @@ export function prepareOwnedVectorCandidateSources({root=ROOT}={}){
  for(const input of inputs)if(read(root,input.path)!==input.source)fail('actual original source changed during preparation');if(read(root,BASE+'owned-vector-candidate-support.mjs')!==helper)fail('actual candidate support changed');
  return {schema:'owned-vector-private-source-candidate-v1',typescriptVersion:ts.version,inputs:[...inputs,{path:BASE+'owned-vector-candidate-support.mjs',source:helper}],files,defaultAPIsUnchanged:true,productionSelected:false,sourceAuthority:false,runtimeParity:false,rustExecuted:false};
 }
-if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('use --emit|--write|--check');const result=prepareOwnedVectorCandidateSources();if(args[0]==='--emit')console.log(JSON.stringify(result));else if(args[0]==='--write'){for(const row of result.files)writeFileSync(resolve(ROOT,row.path),row.after);console.log('Prepared distinct vector candidate private source closure; defaults unchanged.');}else{if(result.files.some(row=>row.current!==row.after))fail('actual candidate source closure is stale or ungenerated');console.log('Complete vector candidate source closure is current.');}}
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('use --emit|--write|--check');const result=args[0]==='--write'?writeProtectedOwnedVectorCliPlan(ROOT,()=>prepareCurrentOwnedVectorCandidateSources()):prepareCurrentOwnedVectorCandidateSources();if(args[0]==='--emit')console.log(JSON.stringify(result));else if(args[0]==='--write'){console.log('Prepared distinct vector candidate private source closure; defaults unchanged.');}else{if(result.compilerFiles.some(row=>row.current!==(row.currentAfter??row.after)))fail('actual candidate source closure is stale or ungenerated');console.log('Complete vector candidate source closure is current.');}}
+
+import {prepareCurrentOwnedVectorCandidateSources} from './prepare-current-owned-vector-candidate.mjs';
+export {prepareCurrentOwnedVectorCandidateSources};

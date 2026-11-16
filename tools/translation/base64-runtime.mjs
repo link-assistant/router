@@ -7,7 +7,7 @@
 import {types} from 'node:util';
 
 const array=Array.isArray,keys=Reflect.ownKeys,descriptor=Object.getOwnPropertyDescriptor;
-const define=Object.defineProperty,freeze=Object.freeze,prototype=Object.getPrototypeOf;
+const define=Object.defineProperty,freeze=Object.freeze,frozen=Object.isFrozen,prototype=Object.getPrototypeOf;
 const proxy=types.isProxy,apply=Reflect.apply,charCode=String.prototype.charCodeAt;
 const hasOwn=Object.hasOwn,join=Array.prototype.join,safeInteger=Number.isSafeInteger;
 const number=Number,integer=BigInt,floor=Math.floor,maximum=Math.max;
@@ -44,7 +44,7 @@ function utf8(value){
  }
  return out;
 }
-function octets(value,fixed=null){
+function octets(value,fixed=null,copy=true){
  if(!value||typeof value!=='object'||proxy(value)||!array(value)||prototype(value)!==arrayPrototype)fail('dense ordinary u8 array required');
  const length=own(value,'length');
  if(!safeInteger(length)||length<0||length>LIMIT||fixed!==null&&length!==fixed)fail('byte array length');
@@ -53,9 +53,9 @@ function octets(value,fixed=null){
  // coercion or prototype numeric setter supplies an input or output byte.
  for(let at=0;at<length;at++)if(names[at]!==''+at)fail('byte array own index order');
  if(names[length]!=='length')fail('byte array length field');
- const out=[];
- for(let at=0;at<length;at++){const item=own(value,''+at);if(typeof item!=='bigint'||item<0n||item>255n)fail('actual u8 BigInt required');append(out,number(item));}
- return out;
+ const out=copy?[]:null;
+ for(let at=0;at<length;at++){const item=own(value,''+at);if(typeof item!=='bigint'||item<0n||item>255n)fail('actual u8 BigInt required');if(copy)append(out,number(item));}
+ return copy?out:value;
 }
 function encode(bytes,alphabet,padding){
  const parts=[];let at=0;
@@ -119,4 +119,18 @@ export function base64ErrorText(value){
  const offset=integer('offset',MAX_USIZE),symbol=integer('symbol',255n),symbolValue=integer('symbol_value',255n);
  const hex=apply(padStart,'0x'+apply(integerText,symbol,[16]),[4,' ']),binary='0b'+apply(padStart,apply(integerText,symbolValue,[2]),[8,'0']),character=symbol<128n?fromCharCode(number(symbol)):'\ufffd';
  return `Invalid last symbol ${hex} ('${character}') at offset ${offset}, decoded as ${binary}.`;
+}
+
+/** Snapshot the explicit public owned Result ABI without user callbacks. */
+export function base64ResultInput(value){
+ if(!value||typeof value!=='object'||proxy(value)||array(value)||prototype(value)!==plain&&prototype(value)!==null)fail('native result data required');
+ const names=keys(value);if(names.length!==2||!hasOwn(value,'$')||!hasOwn(value,'field0'))fail('native result fields');for(let at=0;at<names.length;at++)if(names[at]!=='$'&&names[at]!=='field0')fail('native result fields');
+ const tag=own(value,'$'),payload=own(value,'field0'),immutable=frozen(value)&&payload!==null&&typeof payload==='object'&&!proxy(payload)&&frozen(payload);
+ if(tag==='Ok'){const bytes=octets(payload,null,!immutable);if(immutable)return value;const out=[];for(let at=0;at<bytes.length;at++)append(out,integer(bytes[at]));return freeze({$:'Ok',field0:freeze(out)});}
+ if(tag!=='Err')fail('native result variant');base64ErrorText(payload);if(immutable)return value;const variant=own(payload,'$');let error;
+ if(variant==='InvalidByte')error={$:variant,field0:own(payload,'field0'),field1:own(payload,'field1')};
+ else if(variant==='InvalidLength')error={$:variant,field0:own(payload,'field0')};
+ else if(variant==='InvalidLastSymbol')error={$:variant,offset:own(payload,'offset'),symbol:own(payload,'symbol'),symbol_value:own(payload,'symbol_value')};
+ else error={$:'InvalidPadding'};
+ return freeze({$:'Err',field0:freeze(error)});
 }

@@ -1,0 +1,1 @@
+Draft paired JavaScript/TypeScript persistent Claude/Codex configuration, native ownership restoration, lossless TOML field substitutions and private transactional setup/removal. Independent cases remain unrun and full requirements remain unfinished.

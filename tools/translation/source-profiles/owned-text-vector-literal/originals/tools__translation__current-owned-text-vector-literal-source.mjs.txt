@@ -1,0 +1,36 @@
+// Paired wrapper ABI observations are DATA, never native owner/caller authority.
+import {withFreshOwnedTextVectorLiteralInputs,requireFreshOwnedTextVectorLiteralHost} from './fresh-owned-text-vector-literal-inputs.mjs';
+import {withOriginalOwnedTextVectorSourceOperation,requireCurrentOwnedTextVectorOriginalOperationSource,requireCurrentOwnedTextVectorOperationSource} from './current-owned-text-vector-source.mjs';
+import {withCompleteSourceClosingFence,requireSynchronousSourceCallback} from './complete-source-closing-fence.mjs';
+import {withSourceFailureOperation,withSourceInputValidation,invalidateActiveSourceOperations} from './source-failure-operations.mjs';
+import {ownershipCompiler,ownershipCompilerRuntimeNativeCurrent} from './js-to-rust/vendor/module-syntax.mjs';
+import {ownedTextVectorLiteralOperationShape} from './owned-text-vector-literal-call-shape.mjs';
+import {ownedTextVectorReceivingConfiguration} from './owned-text-vector-receiving-paths.mjs';
+const fail=message=>{invalidateActiveSourceOperations();throw new TypeError('Current owned String literal source: '+message);};
+let active=null;
+function guard(){return withSourceInputValidation(()=>{requireFreshOwnedTextVectorLiteralHost();if(!ownershipCompilerRuntimeNativeCurrent(ownershipCompiler()))fail('original native syntax runtime changed');});}
+export function withOriginalOwnedTextVectorLiteralSourceOperation(run){
+ requireSynchronousSourceCallback(run);return withSourceFailureOperation(()=>{
+  guard();if(active){const frame=active;if(frame.depth>=64)fail('bounded synchronous literal source nesting required');frame.depth++;try{return withCompleteSourceClosingFence(run,[guard]);}finally{frame.depth--;}}
+  return withOriginalOwnedTextVectorSourceOperation(()=>withFreshOwnedTextVectorLiteralInputs(inputs=>{const frame={inputs,depth:1,program:null};active=frame;try{return withCompleteSourceClosingFence(run,[guard,()=>{frame.program=null;frame.inputs=null;}]);}finally{active=null;frame.depth=0;}}));
+ });
+}
+function tokens(ts,source){const scanner=ts.createScanner(ts.ScriptTarget.Latest,true,ts.LanguageVariant.Standard,source),rows=[];for(let token=scanner.scan();token!==ts.SyntaxKind.EndOfFileToken;token=scanner.scan()){if(rows.length>=20000)fail('complete literal source token bound');rows.push([token,scanner.getTokenText()]);}return rows;}
+function program(){return withSourceInputValidation(()=>{
+ if(!active)fail('active original literal source operation required');if(active.program)return active.program;const ts=ownershipCompiler(),records=[];
+ for(const [path,language,expected,statements]of [
+  ['owned-text-vector-literal-runtime.mjs','JavaScript',"import {router_owned_text_vec_from_slice as copied_text} from './owned-text-vector-runtime.mjs';const freeze=Object.freeze;export function router_owned_text_vec_literal(...values){return copied_text(freeze(values));}",3],
+  ['owned-text-vector-literal-runtime.d.mts','TypeScript',"import type {OwnedTextVector} from './owned-text-vector-runtime.mjs';export declare function router_owned_text_vec_literal(...values: string[]): OwnedTextVector;",2],
+ ]){const sources=active.inputs.sources.filter(row=>row.path===path);if(sources.length!==1||sources[0].language!==language)fail('one complete actual wrapper source required');const row=sources[0],file=ts.createSourceFile(path,row.source,ts.ScriptTarget.Latest,true,language==='TypeScript'?ts.ScriptKind.TS:ts.ScriptKind.JS);if(file.parseDiagnostics.length||file.statements.length!==statements||JSON.stringify(tokens(ts,row.source))!==JSON.stringify(tokens(ts,expected)))fail('whole literal import/body/strict declaration ABI differs');records.push({path,source:row.source,concreteSyntax:row.concreteSyntax,inverse:row.source});}
+ const native=requireCurrentOwnedTextVectorOriginalOperationSource('vec_text_from_slice');if(native.parameters.length!==1||native.parameters[0]!=='text-owned-list-ref'||native.returns!=='vec:text-owned'||native.clonesOwnedText!==true||native.returnedLoan!==false)fail('complete actual paired String clone-from-slice ABI differs');
+ guard();active.program={records,nativeOperation:native};return active.program;
+});}
+function operation(name,count){return withSourceInputValidation(()=>{const shape=ownedTextVectorLiteralOperationShape(name,count);if(!shape)fail('finite literal name and bounded individual source operands required');const data=program();guard();return {...shape,nativeOperation:data.nativeOperation,literalSources:data.records,nativeCopySourceMatched:true,variadicRuntimeSourceMatched:true,literalDeclarationAbiSourceMatched:true,nativeTypeOwnerQualified:false,privateCallerBindingQualified:false,crossInvocationCache:false};});}
+export function requireCurrentOwnedTextVectorLiteralOriginalOperationSource(name,count){return withOriginalOwnedTextVectorLiteralSourceOperation(()=>operation(name,count));}
+export function requireCurrentOwnedTextVectorLiteralOperationSource(files,configuration,name,count){return withOriginalOwnedTextVectorLiteralSourceOperation(()=>withSourceInputValidation(()=>{
+ const row=operation(name,count),config=ownedTextVectorReceivingConfiguration(configuration),native=requireCurrentOwnedTextVectorOperationSource(files,config,'vec_text_from_slice'),records=[...native.sourceRecords];
+ for(const source of row.literalSources)for(const root of new Set([config.runtimeRoot,config.declarationRoot])){const path=root+'/'+source.path;if(Map.prototype.get.call(files,path)!==source.source)fail('complete original receiving literal source differs: '+path);records.push({...source,path});}
+ guard();return {...row,sourceRecords:records};
+}));}
+// Parent data has already crossed its own ordinary-data/private context boundary.
+export function withOwnedTextVectorLiteralReceivingSource(data,run){return data.files.some(row=>row.path===data.runtimeRoot+'/owned-text-vector-literal-runtime.mjs')?withOriginalOwnedTextVectorLiteralSourceOperation(run):run();}

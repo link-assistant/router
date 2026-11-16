@@ -88,8 +88,8 @@ pub const PROBE_ARGS_ENV: &crate::translation_core::Str = "ROUTER_VENDOR_REFRESH
 /// and a deployment with both would otherwise have to accept one client
 /// running the other's command line.
 #[must_use]
-pub fn probe_args_env_for(provider: SubscriptionProvider) -> String {
-    format!("{PROBE_ARGS_ENV}_{}", provider.as_str().to_uppercase())
+pub fn probe_args_env_for(provider: SubscriptionProvider) -> crate::translation_core::Text {
+    crate::translation_core::format!("{PROBE_ARGS_ENV}_{}", provider.as_str().to_uppercase())
 }
 
 /// The probe that exercises a provider's credential, when one is known.

@@ -89,8 +89,11 @@ pub fn follow_problemsets_activity(
     })
 }
 
-fn activitypub_url(base: &crate::translation_core::Str, route: RouteId) -> String {
-    format!("{base}{}", route_template(route))
+fn activitypub_url(
+    base: &crate::translation_core::Str,
+    route: RouteId,
+) -> crate::translation_core::Text {
+    crate::translation_core::format!("{base}{}", route_template(route))
 }
 
 /// Validate the minimum fields required for an inbound `ActivityStreams` object.

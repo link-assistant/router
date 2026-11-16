@@ -1,0 +1,1 @@
+Document source-only primitive collection contribution and reusable rule contracts: layered CST substitutions, explicit paired bounds and migrations, original helper/source qualification, call-interval loans and transient indexes. Preserve unrun status, existing APIs/refusals and same-SHA JS gates before fatal Rust CI.

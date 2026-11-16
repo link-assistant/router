@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Complete native copy of the existing source-backed matches corpus machinery.
 // Only selection grammar, explicit target name and DATA schema change. The old
 // literal API, inspection issuer, other-macro barriers and callbacks stay exact.
@@ -75,7 +76,7 @@ export function prepareSourceBackedUnitMatches({root=ROOT}={}){
  return {schema:'source-backed-unit-matches-preparation-v1',typescriptVersion:ts.version,input:{path:INPUT,source,sha256:hash(source)},files:[{path:OUTPUT,before:source,language,after,beforeMeta:before.meta,afterMeta,inverse:source,beforeSha256:hash(source),afterSha256:hash(after),nativeCopies:[nativeCopy(ts,INPUT,source,file),nativeCopy(ts,OUTPUT,after,afterFile)],nativeBindings,trace:run.trace,nativeSelections:changes}],semanticAuthority:false,runtimeExecuted:false,rustExecuted:false,originalLiteralApiUnchanged:true};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const [mode]=process.argv.slice(2);if(process.argv.length!==3||!['--write','--check'].includes(mode))fail('usage: --write|--check');const plan=prepareSourceBackedUnitMatches();
- for(const row of plan.files)if(mode==='--write')writeFileSync(resolve(ROOT,row.path),row.after);else if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.after)fail('complete unit corpus source is stale');
+ const [mode]=process.argv.slice(2);if(process.argv.length!==3||!['--write','--check'].includes(mode))fail('usage: --write|--check');const plan=mode==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareSourceBackedUnitMatches();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)writer.write(row.path,row.after);return plan;}):prepareSourceBackedUnitMatches();
+ if(mode==='--check')for(const row of plan.files)if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.after)fail('complete unit corpus source is stale');
  console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),semanticAuthority:false}));
 }

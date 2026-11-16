@@ -125,7 +125,9 @@ impl fmt::Debug for Seed {
 fn handover_of(
     value: &crate::translation_core::Json,
 ) -> crate::translation_core::Maybe<(String, String, String)> {
-    let record = value.pointer(&format!("/{METADATA_KEY}/{HANDOVER_KEY}"))?;
+    let record = value.pointer(&crate::translation_core::format!(
+        "/{METADATA_KEY}/{HANDOVER_KEY}"
+    ))?;
     let field = |name: &str| {
         record
             .get(name)
@@ -145,10 +147,10 @@ pub fn fingerprint(
     token_secret: &crate::translation_core::Str,
     provider: SeedProvider,
     chain: &crate::translation_core::Str,
-) -> String {
+) -> crate::translation_core::Text {
     crate::deploy_config::value_fingerprint(
         token_secret,
-        &format!("seed-credential\0{}\0{chain}", provider.as_str()),
+        &crate::translation_core::format!("seed-credential\0{}\0{chain}", provider.as_str()),
     )
 }
 
@@ -169,9 +171,11 @@ pub fn prepare(
     let home = subscription.conventional_home(&user_home.to_string_lossy());
     let source = SubscriptionReader::new(subscription, &home)
         .read_document_for_import()
-        .map_err(|error| format!("--seed-credential {}: {error}", provider.as_str()))?;
+        .map_err(|error| {
+            crate::translation_core::format!("--seed-credential {}: {error}", provider.as_str())
+        })?;
     let Some(path) = source.path else {
-        return Err(format!(
+        return Err(crate::translation_core::format!(
             "--seed-credential {}: the login is held only in the platform keychain, which \
              cannot be marked handed over; export it to {} first",
             provider.as_str(),
@@ -186,7 +190,7 @@ pub fn prepare(
         .unwrap_or(&source.token.access_token);
     let fingerprint = fingerprint(token_secret, provider, chain);
     let mut value: Value = serde_json::from_str(&source.document).map_err(|_| {
-        format!(
+        crate::translation_core::format!(
             "--seed-credential {}: the credential document is not JSON",
             provider.as_str()
         )
@@ -195,7 +199,7 @@ pub fn prepare(
         && recorded == fingerprint
         && previous != server
     {
-        return Err(format!(
+        return Err(crate::translation_core::format!(
             "--seed-credential {}: this login was already handed over to {previous} ({state}); \
              seeding it to {server} as well would fork its refresh chain. Log in again on this \
              machine to seed a separate login",
@@ -207,7 +211,7 @@ pub fn prepare(
     }
     let document = serde_json::to_string(&value).map_err(|error| error.to_string())?;
     if document.contains(['\n', '\r', '\0']) {
-        return Err(format!(
+        return Err(crate::translation_core::format!(
             "--seed-credential {}: the credential document cannot be encoded",
             provider.as_str()
         ));

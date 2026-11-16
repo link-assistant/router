@@ -1,0 +1,22 @@
+{
+  "schema": "scoped-carrier-complete-originals-and-successors-v1",
+  "archive": "complete-originals-and-successors.json.gz",
+  "sha256": "aa780178678afbdc163b70260b861a1d379ce8002f3a2bc7196b32ccb6f7aaae",
+  "rawBytes": 140175,
+  "packedBytes": 20705,
+  "rows": 16,
+  "physicalInputs": 18,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeExecuted": false,
+  "consumerHooksInstalled": false,
+  "checkpointPaths": [
+    "tools/translation/scoped-carrier-source-20261101.mjs",
+    "tools/translation/scoped-carrier-source-20261101-operands.mjs",
+    "tools/translation/scoped-carrier-source-20261101-source-history.mjs",
+    "tools/translation/source-profiles/scoped-carrier-source-20261101/complete-originals-and-successors.json.gz",
+    "tools/translation/source-profiles/scoped-carrier-source-20261101/manifest.json",
+    "tools/translation/test/scoped-carrier-source-20261101.test.mjs",
+    "docs/development/scoped-carrier-source-20261101.md"
+  ]
+}

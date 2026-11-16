@@ -130,3 +130,38 @@ See [the JavaScript-first workflow](javascript-first.md),
 [synchronization commands](translation-sync.md) and
 [the translator implementation](../../tools/translation/README.md) for current
 commands and limitations.
+
+
+## Bulk family composition and source-only receipts — 2026-11-01
+
+The stable [bulk family entrypoint](bulk-source-family-proposals.md) exposes
+additive narrow lanes for original native helper closure, scalar callback and
+eager chain adoption, checked linear specialization, actual edited specialized
+target inverse, network helpers and concurrent native/JS/TS synchronization.
+Each lane retains its original private source/type/ownership and complete
+closing checks. Imports and operation names never widen those domains.
+
+There are exactly two phases, `language` then `repository`, with any number of
+ordered rules in each. Every applied rule is a separate trace entry: three
+language rules and one repository rule produce four entries. Independent cases
+must retain the complete order and stable rule IDs rather than assuming a
+pipeline with two phases contains only two rules. Dependencies across complete
+source proposals require agreeing after-bytes, not an implicit last writer.
+
+Frozen original/current source snapshots remain immutable when a successor
+changes a producer or implementation. Retain complete successor equations and
+known descendant composition. Source-original archives belong under the
+standard `tools/translation/source-profiles/` export scope; matching archive
+hashes establish integrity only. Invocation-local sharing keeps bounded
+retention, caught-failure poisoning and every original closing validation.
+Never use public receipts, source hashes or a cross-operation verdict cache to
+replace fresh private admission.
+
+The current user instruction permits only source drafting and ordinary SCM
+work. All new cases and implementations are UNRUN: no tests, compilers,
+translator/preparer/interpreter runs, benchmarks or CI-feedback inspection.
+Independent paired receiving and native oracle source must keep original
+workloads/deadlines, strict actual lockfile TypeScript and all eight same-SHA
+JavaScript gates before fatal Rust CI. No Rust tool invocation is permitted
+locally. Full source draft, default production adoption, export receiving,
+current coverage and complete synchronization remain unfinished.

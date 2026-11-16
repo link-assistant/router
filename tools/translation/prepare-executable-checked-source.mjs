@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 import {composeOwnedRuntimeImportEdges} from './prepare-owned-runtime-import-current.mjs';
 import {composeProjectFacadeRetention} from './prepare-project-facade-retention.mjs';
 import {composeOwnedCorePrivateAnalysisRetention} from './prepare-owned-core-private-analysis-retention.mjs';
@@ -68,11 +69,10 @@ export function prepareCurrentExecutableCheckedSource(options={}){
  return {schema:'current-executable-checked-source-source-v1',birth,layers:[birth,...preserved.layers,...ascii.layers,...reverse.layers, ...assets.layers, ...base.layers,...unit.layers,...retention.layers,...runtime.layers,...facades.layers],files:Object.values(facades.sources),semanticAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);if(args.length!==1||!['--check','--write'].includes(args[0]))fail('usage: --check|--write');const plan=prepareCurrentExecutableCheckedSource();
- if(args[0]==='--write'){
+ const args=process.argv.slice(2);if(args.length!==1||!['--check','--write'].includes(args[0]))fail('usage: --check|--write');const plan=args[0]==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareCurrentExecutableCheckedSource();
   for(const row of plan.files)if(!plan.layers.flatMap(layer=>layer.files.filter(part=>part.path===row.path).flatMap(part=>[part.before,part.after])).includes(row.current)||readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('complete current source changed');
-  for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);
- }
- else if(plan.files.some(row=>row.current!==row.after))fail('complete generated project source is stale');
+  writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)writer.write(row.path,row.after);
+ return plan;}):prepareCurrentExecutableCheckedSource();
+ if(args[0]==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete generated project source is stale');
  console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),semanticAuthority:false}));
 }

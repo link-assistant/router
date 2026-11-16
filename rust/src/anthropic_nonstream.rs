@@ -21,14 +21,17 @@ pub async fn collect_response(response: Response, surface: crate::metrics::Surfa
         Err(error) => {
             return upstream_error(
                 surface,
-                &format!("z.ai response could not be buffered: {error}"),
+                &crate::translation_core::format!("z.ai response could not be buffered: {error}"),
             );
         }
     };
     let payload = match assemble(&body) {
         Ok(payload) => payload,
         Err(error) => {
-            return upstream_error(surface, &format!("invalid z.ai event stream: {error}"));
+            return upstream_error(
+                surface,
+                &crate::translation_core::format!("invalid z.ai event stream: {error}"),
+            );
         }
     };
     let body = match serde_json::to_vec(&payload) {
@@ -36,7 +39,7 @@ pub async fn collect_response(response: Response, surface: crate::metrics::Surfa
         Err(error) => {
             return upstream_error(
                 surface,
-                &format!("z.ai response could not be encoded: {error}"),
+                &crate::translation_core::format!("z.ai response could not be encoded: {error}"),
             );
         }
     };
@@ -81,8 +84,9 @@ fn assemble(
         if data.is_empty() {
             continue;
         }
-        let event: Value = serde_json::from_str(&data)
-            .map_err(|error| format!("event contains invalid JSON: {error}"))?;
+        let event: Value = serde_json::from_str(&data).map_err(|error| {
+            crate::translation_core::format!("event contains invalid JSON: {error}")
+        })?;
         match event.get("type").and_then(Value::as_str) {
             Some("message_start") => {
                 let started = event
@@ -136,7 +140,11 @@ fn assemble(
                 return Err(detail.to_string());
             }
             Some("ping") => {}
-            Some(other) => return Err(format!("unsupported Anthropic event type {other}")),
+            Some(other) => {
+                return Err(crate::translation_core::format!(
+                    "unsupported Anthropic event type {other}"
+                ));
+            }
             None => return Err("event omitted type".to_string()),
         }
     }
@@ -175,7 +183,7 @@ fn apply_delta(
         .ok_or("content delta omitted type")?;
     let content = blocks
         .get_mut(&index)
-        .ok_or_else(|| format!("content delta preceded block {index}"))?;
+        .ok_or_else(|| crate::translation_core::format!("content delta preceded block {index}"))?;
     match kind {
         "thinking_delta" => append_string(content, "thinking", delta.get("thinking"))?,
         "signature_delta" => append_string(content, "signature", delta.get("signature"))?,
@@ -201,12 +209,20 @@ fn apply_delta(
                 .ok_or("content citations is not an array")?
                 .push(citation.clone());
         }
-        other => return Err(format!("unsupported Anthropic delta type {other}")),
+        other => {
+            return Err(crate::translation_core::format!(
+                "unsupported Anthropic delta type {other}"
+            ));
+        }
     }
     Ok(())
 }
 
-fn append_string(content: &mut Value, field: &str, addition: Option<&Value>) -> Result<(), String> {
+fn append_string(
+    content: &mut Value,
+    field: &crate::translation_core::Str,
+    addition: Option<&Value>,
+) -> Result<(), String> {
     let addition = addition.and_then(Value::as_str).unwrap_or_default();
     let object = content
         .as_object_mut()
@@ -217,7 +233,7 @@ fn append_string(content: &mut Value, field: &str, addition: Option<&Value>) -> 
         .unwrap_or_default();
     object.insert(
         field.to_string(),
-        Value::String(format!("{current}{addition}")),
+        Value::String(crate::translation_core::format!("{current}{addition}")),
     );
     Ok(())
 }
@@ -230,11 +246,12 @@ fn finish_input(
     let Some(input) = partial_inputs.remove(&index) else {
         return Ok(());
     };
-    let parsed = serde_json::from_str(&input)
-        .map_err(|error| format!("tool input for block {index} is invalid: {error}"))?;
+    let parsed = serde_json::from_str(&input).map_err(|error| {
+        crate::translation_core::format!("tool input for block {index} is invalid: {error}")
+    })?;
     let block = blocks
         .get_mut(&index)
-        .ok_or_else(|| format!("tool input preceded block {index}"))?;
+        .ok_or_else(|| crate::translation_core::format!("tool input preceded block {index}"))?;
     block
         .as_object_mut()
         .ok_or("content block is not an object")?

@@ -443,9 +443,11 @@ pub fn resolve_model_with(
 }
 
 pub(crate) fn query_stream_requested(query: &BTreeMap<String, String>) -> bool {
-    query
-        .get("stream")
-        .is_some_and(|value| matches!(value.as_str(), "true" | "1"))
+    crate::borrowed_standard_map_20261102::borrowed_text_map_matches_literals(
+        query,
+        "stream",
+        &["true", "1"],
+    )
 }
 
 /// Map an explicit `OpenAI` alias to its Anthropic model ID.

@@ -1,4 +1,4 @@
-// Generated draft from rust/src/encoded_request_body.rs; sha256=486ada429cd3a5919ff9925b1a051b344b5553c44b0ae114dec1c9fd091b4db3
+// Generated draft from rust/src/encoded_request_body.rs; sha256=99776a132e22fefccef08274bd2163872864e6e90a2da54e11dae1edebb4324f
 // Carried constructs are data, never runtime parity evidence.
 import { std_time_duration_from_secs as ml_host_std_time_duration_from_secs } from "../../runtime/time-runtime.mjs";
 
@@ -60,4 +60,4 @@ const serde_json = {
 };
 
 export const translated = { ["MAX_DECOMPRESSION_RATIO"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f4445434f4d5052455353494f4e5f524154494f(), ["ZSTD_DECODE_TIMEOUT"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f54494d454f5554(), ["ZSTD_DECODE_CHUNK_BYTES"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f4348554e4b5f4259544553(), ["MAX_PARALLEL_ZSTD_DECODES"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f504152414c4c454c5f5a5354445f4445434f444553(), ["Encoding"]: Object.freeze({ ["Identity"]: ml_make_Encoding_Identity, ["Zstd"]: ml_make_Encoding_Zstd }) };
-export const provenance = {"sourcePath":"rust/src/encoded_request_body.rs","sourceSha256":"486ada429cd3a5919ff9925b1a051b344b5553c44b0ae114dec1c9fd091b4db3","executable":5,"executableFunctions":0,"executableConstants":4,"executableTypes":1,"executableConstructors":2,"carried":23,"preserved":29,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/encoded_request_body.rs","sourceSha256":"99776a132e22fefccef08274bd2163872864e6e90a2da54e11dae1edebb4324f","executable":5,"executableFunctions":0,"executableConstants":4,"executableTypes":1,"executableConstructors":2,"carried":23,"preserved":29,"runtimeParity":false};

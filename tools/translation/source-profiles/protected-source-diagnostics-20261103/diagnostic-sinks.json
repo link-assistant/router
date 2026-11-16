@@ -1,0 +1,272 @@
+{
+  "schema": "protected-source-diagnostics-20261103-source-sink-worklist-v1",
+  "scopeComplete": false,
+  "functionDenominator": "UNKNOWN",
+  "writerDenominator": "UNKNOWN",
+  "records": [
+    {
+      "path": "tools/translation/protected-native-writers-20261102.mjs",
+      "symbols": [
+        "secondary"
+      ],
+      "primitive": "process.stderr.write / descriptor2",
+      "status": "COLLECTOR_CONTEXT_ROUTE_PROPOSED_UNRUN",
+      "physicalOrigin": {
+        "commit": "9349961bee493e77ef8266c53cde88061964ccbd",
+        "path": "tools/translation/protected-native-writers-20261102.mjs",
+        "gitBlob": "ca6bdfb8275780dc3759ed9fa70613d92a5bc896"
+      },
+      "before": {
+        "path": "sync-adapter.before.txt",
+        "bytes": 13032,
+        "sha256": "8f9ecd2f00a0898eaeffdedf02e0efc4ec5109db0d438a98281389a807c145a3"
+      },
+      "after": {
+        "path": "sync-adapter.after.txt",
+        "bytes": 14154,
+        "sha256": "dea5d057b7a8daa748ef8e7fa5e03c563d80345fee9ab85b44cd8cad84e292d7"
+      },
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "sourceAuthority": false
+    },
+    {
+      "path": "tools/translation/protected-reviewed-adoption-20261102.mjs",
+      "symbols": [
+        "secondary",
+        "withReviewedAdoptionClosing"
+      ],
+      "primitive": "process.stderr.write / descriptor2",
+      "status": "COLLECTOR_CONTEXT_ROUTE_PROPOSED_UNRUN",
+      "physicalOrigin": {
+        "commit": "9349961bee493e77ef8266c53cde88061964ccbd",
+        "path": "tools/translation/protected-reviewed-adoption-20261102.mjs",
+        "gitBlob": "195ede4426253487d8ea8d766e104856a230f0fd"
+      },
+      "before": {
+        "path": "async-adapter.before.txt",
+        "bytes": 17855,
+        "sha256": "9c8a02af190dee2f5a6f75d2271762613399c561e9a050607a64a87ebebf9ce5"
+      },
+      "after": {
+        "path": "async-adapter.after.txt",
+        "bytes": 18995,
+        "sha256": "df90589c059f72c6e0cb5fe777fe48de1b373f748151ea574c34676da5a1eda3"
+      },
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "sourceAuthority": false
+    },
+    {
+      "path": "tools/translation/protected-preparer-writers-20261102-alias.mjs",
+      "symbols": [
+        "closingFailure",
+        "stagedSecondary"
+      ],
+      "primitive": "process.stderr.write / descriptor2",
+      "status": "COLLECTOR_CONTEXT_ROUTE_PROPOSED_UNRUN",
+      "physicalOrigin": {
+        "commit": "28ba2c28c5e1a955fa093f4820dfb3677caeaa10",
+        "path": "tools/translation/protected-preparer-writers-20261102-alias.mjs",
+        "gitBlob": "b1caa2bba5f33623f6b3f2efe06ebfcca7dec8ce"
+      },
+      "before": {
+        "path": "alias-observer.before.txt",
+        "bytes": 27002,
+        "sha256": "57053a34813a5b0f7b50a31907e0903bf8fd7b116adef5869e7241fa209d76ef"
+      },
+      "after": {
+        "path": "alias-observer.after.txt",
+        "bytes": 27813,
+        "sha256": "364a57e38e2c1dbf572914a892e2cb695f08ac151dd3e6fda4f49b078d295d23"
+      },
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "sourceAuthority": false
+    },
+    {
+      "path": "tools/translation/unit-runtime-materialization.mjs",
+      "symbols": [
+        "recordProtectedPolicyClosingFailure",
+        "sourceInstallation recovery-path fallback"
+      ],
+      "primitive": "process.stderr.write / descriptor2",
+      "status": "COLLECTOR_CONTEXT_ROUTE_PROPOSED_UNRUN",
+      "physicalOrigin": {
+        "commit": "d88a590b8c558714dd3ace5bf88b260b74cf2e1b",
+        "path": "tools/translation/unit-runtime-materialization.mjs",
+        "gitBlob": "ace24f093fc067c0c37a50e3c5d0e91df1b2eeb1"
+      },
+      "before": {
+        "path": "unit.before.txt",
+        "bytes": 44605,
+        "sha256": "733ec0f38f50c2d2683d74c9230884c43a85c6cdfb842037517c9fe37479f367"
+      },
+      "after": {
+        "path": "unit.after.txt",
+        "bytes": 45482,
+        "sha256": "f7a6989d3c53d0c44537aef5b280eee34f98dd326626589ff3ca7f85440d27d5"
+      },
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "sourceAuthority": false
+    },
+    {
+      "path": "tools/translation/protected-node-evidence-writers-20261103.mjs",
+      "symbols": [
+        "diagnostic"
+      ],
+      "primitive": "process.stderr.write / descriptor2",
+      "status": "COLLECTOR_CONTEXT_ROUTE_PROPOSED_UNRUN",
+      "physicalOrigin": {
+        "commit": "28ba2c28c5e1a955fa093f4820dfb3677caeaa10",
+        "path": "tools/translation/protected-node-evidence-writers-20261103.mjs",
+        "gitBlob": "cd84a48f9421782e61b28261b37baf4aa82642a9"
+      },
+      "before": {
+        "path": "node-helper.before.txt",
+        "bytes": 7077,
+        "sha256": "7c11d54f65757ae0bc7ac0b49ab86fdbf4ae54d75b14036557c4bfbf0f6781ad"
+      },
+      "after": {
+        "path": "node-helper.after.txt",
+        "bytes": 7707,
+        "sha256": "c4f8393914e218194a9a15d6a60d09e1a9794631c602f15a68cfe64406ba377a"
+      },
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "sourceAuthority": false
+    },
+    {
+      "path": "scripts/run-node-tests.mjs",
+      "symbols": [
+        "main completion/summary/fatal paths"
+      ],
+      "primitive": "process.stderr.write / descriptor2",
+      "status": "COLLECTOR_CONTEXT_ROUTE_PROPOSED_UNRUN",
+      "physicalOrigin": {
+        "commit": "28ba2c28c5e1a955fa093f4820dfb3677caeaa10",
+        "path": "scripts/run-node-tests.mjs",
+        "gitBlob": "6dafd7f7a5c957464a3f350b52edf14e8df0fd36"
+      },
+      "before": {
+        "path": "node-runner.before.txt",
+        "bytes": 13389,
+        "sha256": "5a14feda480a76bf1100e1236b319d49ee556bd07fa88c915ee5f1f986491184"
+      },
+      "after": {
+        "path": "node-runner.after.txt",
+        "bytes": 14994,
+        "sha256": "e825d494ccd5717a74a71e01ddc12b4f2f3225cf4c41f0d8b1895983bdd36733"
+      },
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "sourceAuthority": false
+    },
+    {
+      "path": "scripts/node-case-deadline-reporter.mjs",
+      "symbols": [
+        "receipt/closing diagnostic paths"
+      ],
+      "primitive": "process.stderr.write / descriptor2",
+      "status": "COLLECTOR_CONTEXT_ROUTE_PROPOSED_UNRUN",
+      "physicalOrigin": {
+        "commit": "28ba2c28c5e1a955fa093f4820dfb3677caeaa10",
+        "path": "scripts/node-case-deadline-reporter.mjs",
+        "gitBlob": "fc082aa8962500cd9c2b344caeda17a54766402e"
+      },
+      "before": {
+        "path": "node-reporter.before.txt",
+        "bytes": 2714,
+        "sha256": "8a575a29c27575ec3c4705e32a3db1a0c5635b1204d29a8c4069f25046784a35"
+      },
+      "after": {
+        "path": "node-reporter.after.txt",
+        "bytes": 4261,
+        "sha256": "b3bc25b266df1c10b21cb2f58cf8491665ba7019dc28227900d22a263756c947"
+      },
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "sourceAuthority": false
+    },
+    {
+      "path": "tools/translation/protected-source-diagnostics-20261103.mjs",
+      "symbols": [
+        "emitProtectedSourceDiagnostic no-collector compatibility branch"
+      ],
+      "primitive": "process.stderr.write / descriptor2",
+      "status": "LEGACY_NO_COLLECTOR_UNGUARDED_OPEN",
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "sourceAuthority": false
+    },
+    {
+      "path": "tools/translation/protected-trial-vector-writers-20261103.mjs",
+      "symbol": "mkdir parent-closing diagnostic",
+      "primitive": "process.stderr.write / descriptor2",
+      "status": "UNMIGRATED_INDEPENDENT_SINK_OPEN",
+      "sourceOccurrences": [
+        {
+          "line": 14,
+          "source": "  try{lease.source(()=>inspectProtectedRecursiveParents(snapshot,true));}catch(error){if(!failed){failed=true;primary=error;}else try{process.stderr.write('{\"schema\":\"protected-trial-vector-parent-closing-20261103\",\"closingFailed\":true}\\n');}catch{}}"
+        }
+      ],
+      "physicalOrigin": {
+        "commit": "78069f38d88eb0106cb452e3386725caf025fbd3",
+        "gitBlob": "9d9625353560b5f7e88f0b4e712348f07137bf28",
+        "bytes": 2795,
+        "sha256": "b11d3917e099499415fe99a596bc1e9a312fe7ebeb77bd54c98ebf57921be9cb"
+      },
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "sourceAuthority": false
+    },
+    {
+      "path": "tools/translation/protected-recursive-cli-writers-20261103.mjs",
+      "symbol": "recursive parent observation secondary paths",
+      "primitive": "process.stderr.write / descriptor2",
+      "status": "UNMIGRATED_INDEPENDENT_SINK_OPEN",
+      "sourceOccurrences": [
+        {
+          "line": 35,
+          "source": "  try{verifyParents(root,snapshot,true);}catch(error){if(!failed){failed=true;primary=error;}else try{process.stderr.write('{\"schema\":\"protected-recursive-cli-closing-20261103\",\"closingFailed\":true}\\n');}catch{}}"
+        }
+      ],
+      "physicalOrigin": {
+        "commit": "78069f38d88eb0106cb452e3386725caf025fbd3",
+        "gitBlob": "130106d5a5bb17ec1df81cb893ec102782125626",
+        "bytes": 5565,
+        "sha256": "0a0be7d9c1f6578102d0d1b904b63788654c5532be42c6b3f8c1dcf16f8233cf"
+      },
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "sourceAuthority": false
+    }
+  ],
+  "verification": "UNRUN",
+  "limitations": [
+    "Source-reviewed selected cluster, not a complete production sink census.",
+    "Collector adoption is required; labels and error DATA confer no permission.",
+    "Python, builtin TAP and arbitrary transitive child writers are independent OPEN sinks."
+  ]
+}

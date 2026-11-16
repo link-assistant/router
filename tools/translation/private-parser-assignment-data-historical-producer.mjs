@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 import {capturePrivateParserDataSourceHistory} from './private-parser-data-source-history.mjs';
 // Explicit DATA allocation candidate only; no default parser route changes.
 import {readFileSync,writeFileSync,lstatSync,existsSync} from 'node:fs';
@@ -51,6 +52,6 @@ export function prepareHistoricalPrivateParserAssignmentDataCandidate({root=ROOT
  return {historicalSourceArchive:__privateDataHistory.archive,physicalInputs:__privateDataHistory.inputs,schema:'private-parser-assignment-data-source-candidate-v1',inputs:[{path:INPUT,source:before,sha256}],files:[{path:OUTPUT,before,language,after,current:existsSync(resolve(root,OUTPUT))?readFileSync(resolve(root,OUTPUT),'utf8'):null,beforeMeta:first.meta,afterMeta,sequence,inverseSequence,inverse,trace:run.trace,nativeBindings,selection:{data,execute,batch,propertyWrite:{span:[start,end],expected,replacement},originalAPIsUntouched:true,defaultChanged:false}}],defaultChanged:false,performanceQualified:false,sourceAuthority:false,runtimeAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=prepareHistoricalPrivateParserAssignmentDataCandidate();
- if(mode==='--emit')console.log(JSON.stringify(plan));else if(mode==='--write'){for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);console.log('Prepared explicit complete private parser DATA assignment candidate.');}else{if(plan.files.some(row=>row.current!==row.after))fail('complete private executor candidate stale or not materialized');console.log('Complete private executor DATA candidate source equation is current.');}
+ const [mode,...rest]=process.argv.slice(2);if(rest.length||!['--emit','--write','--check'].includes(mode))fail('use --emit|--write|--check');const plan=mode==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareHistoricalPrivateParserAssignmentDataCandidate();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)writer.write(row.path,row.after);return plan;}):prepareHistoricalPrivateParserAssignmentDataCandidate();
+ if(mode==='--emit')console.log(JSON.stringify(plan));else if(mode==='--write'){console.log('Prepared explicit complete private parser DATA assignment candidate.');}else{if(plan.files.some(row=>row.current!==row.after))fail('complete private executor candidate stale or not materialized');console.log('Complete private executor DATA candidate source equation is current.');}
 }

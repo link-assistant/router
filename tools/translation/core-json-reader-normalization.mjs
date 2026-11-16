@@ -51,10 +51,10 @@ export function createLegacyJsonReaderNormalizer(source,tokens,jsonNames,names){
 
 // Fixed canonical Option equation. Both source stages still pass through the
 // untrusted CST transport and the ordinary independent semantic checker.
-const scalarReaders=new Set(['as_str','as_bool','as_u64','as_i64','as_null']);
+const scalarReaders=new Set(['as_str','as_bool','as_u64','as_i64','as_null','as_f64','as_number','as_array','as_object']);
 export function canonicalJsonReaderMember(name){return scalarReaders.has(name);}
 export function expandCanonicalJsonReader(receiver,member,input,payload){
- if(typeof receiver!=='string'||!scalarReaders.has(member)||![input,payload].every(name=>/^__router_json_reader_[0-9]+$/u.test(name))||input===payload)throw new TypeError('Canonical JSON reader requires fixed source-splice operands');
+ if(typeof receiver!=='string'||receiver.length>2000000||!scalarReaders.has(member)||![input,payload].every(name=>typeof name==='string'&&name.length<=64&&/^__router_json_reader_[0-9]+$/u.test(name))||input===payload)throw new TypeError('Canonical JSON reader requires fixed source-splice operands');
  const some='::core::option::Option::Some',none='::core::option::Option::None',callee='::serde_json::Value::'+member;
  const called=callee+'('+payload+')',source=optionReaderBranch(receiver,called,input,payload,some,none),paths=[];
  // Generated regions are joined by construction, never searched in RECEIVER.

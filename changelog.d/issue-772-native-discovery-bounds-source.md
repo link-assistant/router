@@ -1,0 +1,1 @@
+Draft limited native subprocess capture and lazy bounded Rust discovery through retained complete native/CST histories. Preserve existing capture semantics and original provenance pins; all independent verification remains unrun.

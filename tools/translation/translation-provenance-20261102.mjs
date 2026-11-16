@@ -1,0 +1,37 @@
+// Source transport provenance DATA only, never licensing or semantic authority.
+import {createHash} from 'node:crypto';
+import {types} from 'node:util';
+export const TRANSLATION_PROVENANCE_PATH='tools/translation/translation-provenance-20261102.json';
+const fail=message=>{throw TypeError('Translation source provenance: '+message);};
+const path=value=>{if(typeof value!=='string'||!value||value.length>4096||value.startsWith('/')||/[\\:\0\r\n]/u.test(value)||value.split('/').some(part=>!part||part==='.'||part==='..'))fail('ordinary relative source path required');return value;};
+const vendor=name=>name.startsWith('tools/translation/vendor/')||name.startsWith('tools/translation/js-to-rust/vendor/');
+function snapshot(value){let cells=0,bytes=0;const active=new Set();function copy(item,depth){
+ if(++cells>200000||depth>32)fail('catalogue DATA cell/depth bound');if(typeof item==='string'){bytes+=Buffer.byteLength(item);if(bytes>1048576)fail('catalogue string occurrence bound');return item;}if(item===null||typeof item==='boolean')return item;if(typeof item==='number'&&Number.isSafeInteger(item))return item;
+ if(!item||typeof item!=='object'||types.isProxy(item)||active.has(item))fail('ordinary acyclic catalogue DATA required');const array=Array.isArray(item),prototype=Object.getPrototypeOf(item);if(prototype!==(array?Array.prototype:Object.prototype))fail('plain catalogue DATA required');const keys=Reflect.ownKeys(item);if(keys.length>200000-cells)fail('catalogue own-field bound');const result=array?[]:{};active.add(item);
+ try{if(array){const size=Object.getOwnPropertyDescriptor(item,'length');if(!size||!Object.hasOwn(size,'value')||!Number.isSafeInteger(size.value)||size.value<0||size.value>8192||keys.length!==size.value+1)fail('bounded dense catalogue array required');for(let at=0;at<size.value;at++){const field=Object.getOwnPropertyDescriptor(item,String(at));if(!field||!Object.hasOwn(field,'value')||!field.enumerable)fail('dense own-data catalogue required');result.push(copy(field.value,depth+1));}}
+ else for(const key of keys){if(typeof key!=='string')fail('string catalogue keys required');const field=Object.getOwnPropertyDescriptor(item,key);if(!field||!Object.hasOwn(field,'value')||!field.enumerable)fail('own-data catalogue fields required');bytes+=Buffer.byteLength(key);if(bytes>1048576)fail('catalogue key/string bound');Object.defineProperty(result,key,{value:copy(field.value,depth+1),enumerable:true});}return result;}finally{active.delete(item);}
+ }return copy(value,0);}
+const list=(value,max=8192)=>{if(!Array.isArray(value)||value.length>max)fail('bounded catalogue list required');return value;};
+export function translationProvenanceCatalogue(value){
+ const data=snapshot(value);if(!data||data.schema!=='router-translation-provenance-v1'||data.verification!=='UNRUN'||data.semanticAuthority!==false||data.runtimeParity!==false)fail('explicit source-only catalogue required');
+ const groups=new Map(),files=new Map();let declaredBytes=0;for(const group of list(data.groups,64)){if(!group||typeof group.id!=='string'||!group.id||groups.has(group.id)||typeof group.license!=='string'||!group.license||!list(group.licensePaths,64).length||typeof group.sourceBoundary!=='string')fail('complete unique copied-source group required');for(const name of group.licensePaths)path(name);groups.set(group.id,group);}
+ for(const row of list(data.files)){path(row.path);if(files.has(row.path)||!groups.has(row.group)||!Number.isSafeInteger(row.bytes)||row.bytes<0||row.bytes>4194304||typeof row.role!=='string'||!row.role||typeof row.sha256!=='string'||!/^[a-f0-9]{64}$/u.test(row.sha256))fail('unique complete bounded source/notice image required');declaredBytes+=row.bytes;if(declaredBytes>33554432)fail('complete provenance source byte bound');files.set(row.path,row);}
+ for(const group of groups.values())for(const name of group.licensePaths)if(!files.has(name)||files.get(name).bytes===0)fail('group license is absent or empty in exact source catalogue');
+ const notices=list(data.requiredNotices,128);if(new Set(notices).size!==notices.length)fail('duplicate mandatory notice');for(const name of notices){path(name);if(!files.has(name))fail('mandatory notice is absent from exact source catalogue');}
+ for(const reference of list(data.references,64))if(!reference||typeof reference.repository!=='string'||typeof reference.reference!=='string'||typeof reference.commit!=='string'||!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/u.test(reference.commit)||typeof reference.copiedSource!=='boolean'||typeof reference.approach!=='string')fail('pinned copied/design reference required');
+ list(data.receivingDependencies,128);return data;
+}
+export function withTranslationProvenanceData(value,run){
+ if(typeof run!=='function'||types.isProxy(run)||types.isAsyncFunction(run))fail('ordinary synchronous DATA callback required');let data=translationProvenanceCatalogue(value),active=true,invalid=false;const expected=new Map(data.files.map(row=>[row.path,row]));const live=()=>{if(!active||invalid)fail('provenance DATA scope expired or invalidated');};const guarded=operation=>{live();try{return operation();}catch(error){invalid=true;throw error;}};
+ const view=Object.freeze({
+  files(){return guarded(()=>[...expected.keys()]);},
+  paths(input){return guarded(()=>{if(types.isProxy(input)||!Array.isArray(input)||Object.getPrototypeOf(input)!==Array.prototype)fail('ordinary actual export path array required');const size=Object.getOwnPropertyDescriptor(input,'length');if(!size||!Object.hasOwn(size,'value')||!Number.isSafeInteger(size.value)||size.value<0||size.value>8192||Reflect.ownKeys(input).length!==size.value+1)fail('bounded dense actual paths required');const actual=new Set();for(let at=0;at<size.value;at++){const field=Object.getOwnPropertyDescriptor(input,String(at));if(!field||!Object.hasOwn(field,'value')||!field.enumerable)fail('own actual path data required');const name=path(field.value);if(actual.has(name))fail('duplicate actual export source path');actual.add(name);}
+   for(const name of expected.keys())if(!actual.has(name))fail('required declared source/notice missing: '+name);for(const name of actual)if(vendor(name)&&!expected.has(name))fail('uncatalogued vendor source needs explicit provenance review: '+name);
+   return {declaredFiles:expected.size,mandatoryNotices:data.requiredNotices.length,sourceAuthority:false,semanticAuthority:false,runtimeParity:false};});
+  },
+  bytes(name,bytes){return guarded(()=>{path(name);if(types.isProxy(bytes)||!Buffer.isBuffer(bytes))fail('actual complete byte image required');const row=expected.get(name);if(!row||bytes.length!==row.bytes||createHash('sha256').update(bytes).digest('hex')!==row.sha256)fail('declared complete source/notice bytes differ: '+name);return {path:name,bytes:bytes.length,sourceAuthority:false,semanticAuthority:false};});},
+ });
+ try{const result=run(view);live();if(types.isPromise(result)||types.isProxy(result)||result!==null&&(typeof result==='object'||typeof result==='function')&&Reflect.has(result,'then'))fail('DATA callback must finish synchronously');return result;}finally{active=false;expected.clear();data=null;}
+}
+export function requireTranslationProvenancePaths(value,input){return withTranslationProvenanceData(value,view=>view.paths(input));}
+export function requireTranslationProvenanceBytes(value,name,bytes){return withTranslationProvenanceData(value,view=>view.bytes(name,bytes));}

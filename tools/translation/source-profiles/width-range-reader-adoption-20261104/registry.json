@@ -1,0 +1,58 @@
+{
+  "schema": "fixed-width-range-reader-adoption-segments-20261104-v1",
+  "paths": [
+    "tools/translation/js-to-rust/owned-outcome-source.mjs",
+    "tools/translation/js-to-rust/owned-cancellation-source.mjs",
+    "tools/translation/js-to-rust/owned-text-vector-outcome-source.mjs",
+    "tools/translation/js-to-rust/owned-text-vector-cancellation-source.mjs",
+    "tools/translation/js-to-rust/owned-text-vector-join-outcome-source.mjs",
+    "tools/translation/js-to-rust/owned-text-vector-join-cancellation-source.mjs",
+    "tools/translation/prepare-native-substitution-copy.mjs",
+    "tools/translation/protected-contained-direct-20261102-history.mjs",
+    "tools/translation/protected-source-diagnostics-20261103-history.mjs",
+    "tools/translation/test/exact-source-temporary-recovery-families-20261103.test.mjs",
+    "tools/translation/test/borrowed-json-tool-compiler-20261103.test.mjs",
+    "tools/translation/test/borrowed-json-tool-lifetime-source-20261103.test.mjs",
+    "tools/translation/test/borrowed-json-source-context-index-20261103.test.mjs",
+    "tools/translation/test/borrowed-predicate-description-install-20261103.test.mjs",
+    "tools/translation/test/collection-description-install-20261103.test.mjs",
+    "tools/translation/test/boolean-helper-source-adoption-20261103.test.mjs",
+    "tools/translation/test/copy-scalar-helper-adoption-20261103.test.mjs",
+    "tools/translation/test/scalar-helper-locals-adoption-20261103.test.mjs",
+    "tools/translation/test/scalar-helper-arguments-adoption-20261103.test.mjs",
+    "tools/translation/test/scalar-helper-total-primitives-adoption-20261103.test.mjs",
+    "tools/translation/test/ordered-scalar-helper-adoption-20261104.test.mjs",
+    "tools/translation/test/ordered-helper-graph-adoption-20261104.test.mjs",
+    "tools/translation/test/scalar-early-return-adoption-20261104.test.mjs",
+    "tools/translation/test/mutable-scalar-adoption-20261104.test.mjs"
+  ],
+  "segments": [
+    {
+      "id": "original499",
+      "path": "tools/translation/source-profiles/width-counted-range-segments-20261104/index499.before.json.gz",
+      "encoding": "gzip",
+      "sha256": "672c7eb44a5cf6f700755b5aabb0545b4e2843a110629e4da7d499969820973c",
+      "sourceSha256": "e473dffa755395511bb70aa36bb8f849a78b0611c3bd318540b4a0d9b8ee83e0",
+      "rows": 499
+    },
+    {
+      "id": "width-counted-readers6",
+      "path": "tools/translation/source-profiles/width-counted-range-segments-20261104/index6.json",
+      "encoding": "utf8",
+      "sha256": "ce4f3e94f128a434aac71cafa97dc2276cb7b3fe3518b4f702df53cef1837f8e",
+      "sourceSha256": "ce4f3e94f128a434aac71cafa97dc2276cb7b3fe3518b4f702df53cef1837f8e",
+      "rows": 6
+    },
+    {
+      "id": "width-range-adoption-controls18",
+      "path": "tools/translation/source-profiles/width-range-reader-adoption-20261104/index18.json",
+      "encoding": "utf8",
+      "sha256": "5445c95e9c0e1edaf4f09cfd51b486eb2b10575dda3c17ac822bfc7a68c56fdd",
+      "sourceSha256": "5445c95e9c0e1edaf4f09cfd51b486eb2b10575dda3c17ac822bfc7a68c56fdd",
+      "rows": 18
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

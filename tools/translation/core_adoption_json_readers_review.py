@@ -379,7 +379,7 @@ def captured_full_snapshots(root, run, pins, head):
         retained[phase]=(raw,document)
         rust_raw=read_stable(regular(run,'all-rust-cargo-'+phase+'.json'),16*1024*1024)
         rust=parse(rust_raw);fields(rust,['sourceHead','files'],'all current Rust/Cargo snapshot companion')
-        require(rust=={'sourceHead':head,'files':[row for row in document['files']if row['path'].endswith('.rs')or row['path']in ['Cargo.toml','Cargo.lock']]},'complete all-Rust guard universe, including owned witness')
+        require(rust=={'sourceHead':head,'files':[row for row in document['files']if source_review.is_rust_cargo_path(row['path'])]},'complete all-Rust guard universe, including owned witness')
         retained['rust-'+phase]=(rust_raw,rust)
     require(retained['before'][0]==retained['after'][0] and retained['rust-before'][0]==retained['rust-after'][0],'complete before/after retained source identity and bytes')
     after_raw=read_stable(regular(run,'proposal.inputs-after.json'),16*1024*1024)
@@ -426,7 +426,7 @@ def main():
     for name in critical_source_paths:
         require(name in pins,'complete captured selector/controller/reviewer source input '+name)
     prefix = 'js/node_modules/typescript/'
-    expected_git = {p for p in git('ls-files', '-z', '--', '*.rs', 'Cargo.toml', 'Cargo.lock', 'tools/translation', 'scripts').decode().split('\0') if p and (p.endswith('.rs') or not p.startswith(('tools/translation/meta/', 'tools/translation/projects/', 'tools/translation/js-to-rust/generated/')))}
+    expected_git = {p for p in git('ls-files', '-z', '--', '*.rs', 'Cargo.toml', 'Cargo.lock','**/Cargo.toml','**/Cargo.lock', 'tools/translation', 'scripts').decode().split('\0') if p and (p.endswith('.rs') or not p.startswith(('tools/translation/meta/', 'tools/translation/projects/', 'tools/translation/js-to-rust/generated/')))}
     require({p for p in pins if not p.startswith(prefix)} == expected_git, 'complete tracked compiler/Rust/Cargo census')
     compiler = (root / prefix.rstrip('/')).resolve()
     ts_files = sorted(p for p in compiler.rglob('*') if p.is_file())
@@ -460,7 +460,7 @@ def main():
     index = parse(index_raw.decode('utf8','strict'))
     fields(index, ['schema', 'complete', 'sequence', 'entry', 'sourceRoot', 'compilationProfile', 'limits', 'inputs', 'dependencyInputs', 'census', 'stages', 'changes', 'packets', 'packetBytes', 'semanticAdmission', 'installation', 'sourceChain', 'hostBoundary', 'memory'], 'current complete json-readers index')
     require(index['schema'] == 'router-core-adoption-sequence-packets-v1' and index['complete'] is True and
-            index['sequence'] == 'json-readers' and index['entry'] == 'src/lib.rs' and
+            index['sequence'] == 'json-readers' and index['entry'] == source_review.rust_package_source_path(root,'src/lib.rs') and
             Path(index['sourceRoot']) == root and index['semanticAdmission'] is False, 'index fixed contract')
     require(index['compilationProfile'] == {'schemaVersion': 1, 'flags': {'test': False}, 'values': {}, 'closedKeys': []} and index['compilationProfile']['flags']['test'] is False, 'exact production compilation profile')
     require(index['installation']=='proposal only; review every complete stage and inverse before application; this CLI never applies sources' and index['sourceChain']=='each stage before equals previous complete after; reverse stage order and full per-file mappings to recover original sources' and index['hostBoundary']=='stock Node/Bun filesystem/JSON/rule runner; exclusive owned output lifetime; non-atomic source snapshots, no arbitrary concurrent same-UID writer or hostile-intrinsic-total claim' and index['memory']=='one full graph/context and one complete per-file CST at a time; detached packet serialization; actual live heap/RSS requires receiving evidence','unknown actual producer boundary strings')
@@ -505,8 +505,8 @@ def main():
         require(name in pins and sha(raw) == pins[name]['sha256'], 'source input actual HEAD pin')
         check_identity(root / name, row['identity'])
         original[name] = row['source']
-    physical_rs = {p.relative_to(root).as_posix() for p in (root / 'src').rglob('*.rs') if p.is_file()}
-    require(set(original) == physical_rs == {p for p in expected_git if p.startswith('src/') and p.endswith('.rs')} and
+    physical_rs = {p.relative_to(root).as_posix() for p in (root / source_review.repository_rust_layout(root)['productionPrefix']).rglob('*.rs') if p.is_file()}
+    require(set(original) == physical_rs == {p for p in expected_git if p.startswith(source_review.repository_rust_layout(root)['productionPrefix']) and p.endswith('.rs')} and
             len(original) <= limits['files'] and sum(len(u16(v)) // 2 for v in original.values()) <= limits['sourceUnits'], 'full physical/Git src census/limits')
     census = read(index['census']); fields(census, ['root', 'rows', 'sourceFiles', 'sourceUnits'], 'source census')
     actual_census = []
@@ -517,19 +517,19 @@ def main():
         actual_census.append({'path': path.relative_to(root).as_posix(), 'kind': kind, 'dev': value.st_dev, 'ino': value.st_ino, 'mode': value.st_mode})
         if kind == 'directory':
             for child in sorted(path.iterdir()): visit(child)
-    visit(root / 'src')
+    visit(root / source_review.repository_rust_layout(root)['productionPrefix'])
     require(census == {'root': str(root), 'rows': actual_census, 'sourceFiles': len(original), 'sourceUnits': sum(len(u16(s)) // 2 for s in original.values())}, 'complete source directory census identity')
     cargo = {}
     require(len(index['dependencyInputs']) == 2, 'complete Cargo rows')
     for ref in index['dependencyInputs']:
         row = read(ref); fields(row, ['path', 'source', 'identity'], 'present Cargo input')
-        name = row['path']; require(name in ['Cargo.toml', 'Cargo.lock'] and name not in cargo, 'Cargo input kind')
+        name = row['path']; require(name in [source_review.rust_package_source_path(root,'Cargo.toml'), source_review.rust_package_source_path(root,'Cargo.lock')] and name not in cargo, 'Cargo input kind')
         raw = read_stable(regular(root, name), limits['fileBytes']); require(raw == row['source'].encode('utf8') and sha(raw) == pins[name]['sha256'], 'Cargo full physical/Git source')
         check_identity(root / name, row['identity'])
         cargo[name] = row['source']
     # The actual frozen owned source registry must name these complete inputs.
     registry=read_stable(regular(root,'tools/translation/router-core-source-data.mjs'),16*1024*1024).decode('utf8')
-    for name,file in [('ROUTER_FORMATTING_FACADE_SOURCE','src/translation_core.rs'),('ROUTER_CORE_PRIMITIVES_SOURCE','src/translation_core/primitives.rs')]:
+    for name,file in [('ROUTER_FORMATTING_FACADE_SOURCE',source_review.rust_package_source_path(root,'src/translation_core.rs')),('ROUTER_CORE_PRIMITIVES_SOURCE',source_review.rust_package_source_path(root,'src/translation_core/primitives.rs'))]:
         matches=list(re.finditer(r'^export const '+name+r'\s*=\s*',registry,re.M));require(len(matches)==1,'unique owned source data declaration')
         value,end=json.JSONDecoder(object_pairs_hook=pairs).raw_decode(registry[matches[0].end():])
         require(isinstance(value,str) and registry[matches[0].end()+end:].startswith(';') and value==original[file],'full registered owned source/current input equality')
@@ -537,7 +537,7 @@ def main():
     # actual complete archives/members. This still cannot reissue a private proof.
     derive_root=root/'tools/translation/source-profiles/derive'
     derive_raw=read_stable(regular(derive_root,'manifest.json'),16*1024*1024);derive_profile=parse(derive_raw)
-    require(derive_profile['manifestSha256']==sha(cargo['Cargo.toml'].encode()) and derive_profile['lockSha256']==sha(cargo['Cargo.lock'].encode()),'exact original derive Cargo profile')
+    require(derive_profile['manifestSha256']==sha(cargo[source_review.rust_package_source_path(root,'Cargo.toml')].encode()) and derive_profile['lockSha256']==sha(cargo[source_review.rust_package_source_path(root,'Cargo.lock')].encode()),'exact original derive Cargo profile')
     derive_packages=[]
     for package in derive_profile['packages']:
         archive=read_stable(regular(derive_root,package['archive']),32*1024*1024)
@@ -553,12 +553,12 @@ def main():
     with gzip.GzipFile(fileobj=io.BytesIO(core_encoded)) as stream:
         core_raw=stream.read(300001);require(len(core_raw)<=300000 and not stream.read(1),'original standard core source inflation bound')
     require(len(core_raw)==core_pin['bytes'] and sha(core_raw)==core_pin['sha256'],'complete pinned original standard core source')
-    dependency_evidence={'schema':'locked-derive-dependencies-v1','manifestSha256':sha(cargo['Cargo.toml'].encode()),'lockSha256':sha(cargo['Cargo.lock'].encode()),'sourceProfileSha256':sha(derive_raw),'edition':derive_profile['rustEdition'],'rustVersion':derive_profile['rustVersion'],'features':derive_profile['dependencies'],'packages':derive_packages,'standardCore':{'url':core_pin['url'],'sha256':sha(core_raw)}}
+    dependency_evidence={'schema':'locked-derive-dependencies-v1','manifestSha256':sha(cargo[source_review.rust_package_source_path(root,'Cargo.toml')].encode()),'lockSha256':sha(cargo[source_review.rust_package_source_path(root,'Cargo.lock')].encode()),'sourceProfileSha256':sha(derive_raw),'edition':derive_profile['rustEdition'],'rustVersion':derive_profile['rustVersion'],'features':derive_profile['dependencies'],'packages':derive_packages,'standardCore':{'url':core_pin['url'],'sha256':sha(core_raw)}}
     expected_dependency_digest=sha(encoded(dependency_evidence))
     profile_raw = read_stable(root / 'tools/translation/source-profiles/json-macro/manifest.json', 16 * 1024 * 1024)
     require(sha(profile_raw) == 'e42ec7a5f1358da8f077c9fdb77057b52cf6748d26cc4d2b8574e1afae4ae0af', 'exact registered JSON source profile')
     profile = parse(profile_raw); external = {}
-    require(sha(cargo['Cargo.toml'].encode()) == profile['manifestSha256'] and sha(cargo['Cargo.lock'].encode()) == profile['lockSha256'], 'registered import Cargo profile')
+    require(sha(cargo[source_review.rust_package_source_path(root,'Cargo.toml')].encode()) == profile['manifestSha256'] and sha(cargo[source_review.rust_package_source_path(root,'Cargo.lock')].encode()) == profile['lockSha256'], 'registered import Cargo profile')
     for package in profile['packages']:
         archive = read_stable(root / 'tools/translation/source-profiles/json-macro' / package['archive'], 32 * 1024 * 1024)
         require(len(archive) == package['bytes'] and sha(archive) == package['sha256'], 'registered original archive')
@@ -583,14 +583,14 @@ def main():
         before, after = source_rows(packet['before']), source_rows(packet['after'])
         require(before == previous and set(after) == set(original), 'full stage source chain')
         metadata = read(packet['metadata']); values = reader_stage_metadata(metadata, before)
-        require(values['schema'] == stage_schema[name] and values['entry'] == 'src/lib.rs' and values['compilationProfile'] == index['compilationProfile'] and values['executableAdmission'] is False, 'stage source-only contract')
+        require(values['schema'] == stage_schema[name] and values['entry'] == source_review.rust_package_source_path(root,'src/lib.rs') and values['compilationProfile'] == index['compilationProfile'] and values['executableAdmission'] is False, 'stage source-only contract')
         require(values['migrationSemantics']=='canonical shared Json Option equation, followed only by owned generated-path binding; fresh semantic checks required','explicit owned API adoption boundary')
-        require(values['dependencyInputs']=={'manifest':cargo['Cargo.toml'],'lock':cargo['Cargo.lock']},'complete index-stage Cargo inputs retained')
+        require(values['dependencyInputs']=={'manifest':cargo[source_review.rust_package_source_path(root,'Cargo.toml')],'lock':cargo[source_review.rust_package_source_path(root,'Cargo.lock')]},'complete index-stage Cargo inputs retained')
         effect_selections = []
         if 'producerEffects' in values:
             effect = values['producerEffects']
             fields(effect, ['schema', 'dependencyInputs', 'dependenciesDigest', 'compilationProfile', 'deriveDiagnostics', 'bangDiagnostics', 'selections', 'runtimeAuthority', 'generatedImplBehavior'], 'complete producerEffects')
-            require(effect['schema'] == 'core-adoption-original-producer-effects-v1' and effect['dependencyInputs'] == {'manifest': cargo['Cargo.toml'], 'lock': cargo['Cargo.lock']} and effect['compilationProfile'] == index['compilationProfile'] and effect['runtimeAuthority'] is False and effect['generatedImplBehavior'] is False, 'producerEffects source provenance/domain')
+            require(effect['schema'] == 'core-adoption-original-producer-effects-v1' and effect['dependencyInputs'] == {'manifest': cargo[source_review.rust_package_source_path(root,'Cargo.toml')], 'lock': cargo[source_review.rust_package_source_path(root,'Cargo.lock')]} and effect['compilationProfile'] == index['compilationProfile'] and effect['runtimeAuthority'] is False and effect['generatedImplBehavior'] is False, 'producerEffects source provenance/domain')
             digest(effect['dependenciesDigest']); require(effect['dependenciesDigest']==expected_dependency_digest,'full independently reconstructed original dependency digest'); dependency_digest = dependency_digest or effect['dependenciesDigest']; require(effect['dependenciesDigest'] == dependency_digest, 'stage dependency composition drift')
             require(all(isinstance(effect[k], list) for k in ['deriveDiagnostics', 'bangDiagnostics', 'selections']), 'producerEffects complete arrays')
             for selected in effect['selections']:
@@ -651,7 +651,7 @@ def main():
         # This is a complete data-census join, never a private namespace permit.
         # The actual selector excludes this exact core path family, then skips
         # a physical file iff its complete graph has other than one root view.
-        noncore={file for file in before if file!='src/translation_core.rs' and not file.startswith('src/translation_core/')}
+        noncore={file for file in before if file!=source_review.rust_package_source_path(root,'src/translation_core.rs') and not file.startswith(source_review.rust_package_source_path(root,'src/translation_core/'))}
         origin_counts={file:0 for file in noncore}
         for (file,path),module in modules.items():
             if file not in noncore:continue
@@ -708,12 +708,12 @@ def main():
             reverse_sources[file]=units.decode('utf-16-le');require(reverse_sources[file]==row['before']['source'],'whole-chain inverse full source')
     require(reverse_sources==original,'the complete singleton index stage inverts to every original input')
     manifest=parse(read_stable(root/'tools/translation/fixtures/real-source-provenance.json',16*1024*1024))
-    original_paths={row[k] for row in manifest['entries'] for k in ['path','testSource'] if row.get(k)}
+    original_paths={source_review.rust_package_source_path(root,row[k]) for row in manifest['entries'] for k in ['path','testSource'] if row.get(k)}
     fixture_preparer=read_stable(regular(root,'tools/translation/prepare-real-source-fixtures.mjs'),1024*1024).decode('utf8')
     expected_core=['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs','src/translation_core/json_collections.rs','Cargo.toml','Cargo.lock']
     core_declaration=re.search(r'^const CORE=(\[[^\n]+\]);$',fixture_preparer,re.M)
     require(core_declaration and core_declaration[1]==repr(expected_core).replace(', ',','),'actual reviewed six-path fixture CORE declaration')
-    current_paths=original_paths|{'src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs','src/translation_core/json_collections.rs','Cargo.toml','Cargo.lock'}
+    current_paths=original_paths|{source_review.rust_package_source_path(root,'src/translation_core.rs'),source_review.rust_package_source_path(root,'src/translation_core/primitives.rs'),source_review.rust_package_source_path(root,'src/translation_core/ranges.rs'),source_review.rust_package_source_path(root,'src/translation_core/json_collections.rs'),source_review.rust_package_source_path(root,'Cargo.toml'),source_review.rust_package_source_path(root,'Cargo.lock')}
     require(len(original_paths)==15 and len(current_paths)==21,'real-source fixture manifest15/current21 pathset changed')
     closure={'originalParents15':sorted(original_paths),'currentSourceClosure21':sorted(current_paths),'changedOriginalParents':sorted(set(changes)&original_paths),'changedCurrentSourceClosure':sorted(set(changes)&current_paths),'requiredAction':'If either intersection is nonempty: append the separately reviewed actual application adoption commit to prepare-real-source-fixtures ADOPTIONS, verify continuous complete before/after lineage, and run the actual source-fixture producer for fresh assets and notices. This review neither changes nor bypasses historical lineage.'}
     require(used == set(records), 'orphaned/unreviewed packet reference')
@@ -729,7 +729,7 @@ def main():
     require(captured_full_snapshots(root,run,pins,head)==snapshot_digests,'final complete retained snapshot/receipt rejoin')
     require(read_stable(payload / 'index.json', limits['packetBytes']) == index_raw, 'final complete index bytes')
     require(read_stable(run/'inputs.json',16*1024*1024)==captured_raw,'final captured compiler input vector bytes')
-    summary = {'schema': 'complete-json-readers-gzip-producer-review-v1', 'sourceHead': head, 'indexSha256': sha(index_raw), 'capturedInputsSha256':sha(captured_raw), 'sourceFiles': len(original), 'capturedInputs': len(pins), 'installedTypeScriptFiles': 132, 'packets': len(records), 'packetBytes': total, 'stages': stages, 'sourceClosure':closure, 'changedFiles': len(plan), 'deriveSourceProfileSha256':sha(derive_raw), 'sourceOnlyDependenciesDigest':expected_dependency_digest, 'completeReaderEquationsAndGeneratedPathBindingsChecked':True, 'uniqueSelectedCompleteFunctions':len({(row['file'],tuple(row['module']),tuple(row['beforeSpan']))for row in selected_functions}), 'selectedCompleteFunctions':selected_functions, 'selectionIsNotExecutableCoverage':True, 'allTrackedRustCargoGuards':sum(p.endswith('.rs')or p in ['Cargo.toml','Cargo.lock']for p in pins), 'compressedStoredPacketBytes':storage.stored_bytes, 'retainedSnapshotDigests':snapshot_digests, 'completeFullPacketBytesAndSourceChainsChecked': True, 'fullUtf16Utf8LeafGroupParentPartitionsChecked': True, 'allCompleteSourceInversesChecked': True, 'semanticAdmission': False, 'privateIssuerReexecution': False, 'authorityBoundary': 'Source/data review only; private owner/grammar issuance remains the actual pinned producer execution, not copied flags or this Python verifier.', 'RustExecuted': False, 'JavaScriptExecuted': False}
+    summary = {'schema': 'complete-json-readers-gzip-producer-review-v1', 'sourceHead': head, 'indexSha256': sha(index_raw), 'capturedInputsSha256':sha(captured_raw), 'sourceFiles': len(original), 'capturedInputs': len(pins), 'installedTypeScriptFiles': 132, 'packets': len(records), 'packetBytes': total, 'stages': stages, 'sourceClosure':closure, 'changedFiles': len(plan), 'deriveSourceProfileSha256':sha(derive_raw), 'sourceOnlyDependenciesDigest':expected_dependency_digest, 'completeReaderEquationsAndGeneratedPathBindingsChecked':True, 'uniqueSelectedCompleteFunctions':len({(row['file'],tuple(row['module']),tuple(row['beforeSpan']))for row in selected_functions}), 'selectedCompleteFunctions':selected_functions, 'selectionIsNotExecutableCoverage':True, 'allTrackedRustCargoGuards':sum(source_review.is_rust_cargo_path(p)for p in pins), 'compressedStoredPacketBytes':storage.stored_bytes, 'retainedSnapshotDigests':snapshot_digests, 'completeFullPacketBytesAndSourceChainsChecked': True, 'fullUtf16Utf8LeafGroupParentPartitionsChecked': True, 'allCompleteSourceInversesChecked': True, 'semanticAdmission': False, 'privateIssuerReexecution': False, 'authorityBoundary': 'Source/data review only; private owner/grammar issuance remains the actual pinned producer execution, not copied flags or this Python verifier.', 'RustExecuted': False, 'JavaScriptExecuted': False}
     # Reports only. The verifier never installs or changes a source/proposal.
     args.report.mkdir(parents=True, exist_ok=False)
     (args.report / 'review.json').write_text(json.dumps(summary, indent=2) + '\n')

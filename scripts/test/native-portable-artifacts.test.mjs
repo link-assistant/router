@@ -94,6 +94,13 @@ test('regeneration clears newly refused bodies and reports/removes stale drafts 
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+test('authored generated-looking neighbors and edited generated peers are retained', {timeout:30000},()=>{
+ const root=mkdtempSync(join(tmpdir(),'router-js-first-author-'));try{
+  for(const path of ['js/portable/policy.mjs','parity/fixtures/js-first/policy.json','parity/fixtures/js-first/unsupported.json']){mkdirSync(dirname(join(root,path)),{recursive:true});writeFileSync(join(root,path),readFileSync(join(ROOT,path)));}
+  const input=join(root,'js/src/one.mjs');mkdirSync(dirname(input),{recursive:true});writeFileSync(input,source);regenerate(root);const peer=join(root,'ts/src/portable-draft/scoped/one.ts'),neighbor=join(root,'ts/src/portable-draft/neighbor.ts');writeFileSync(neighbor,'// GENERATED: authored neighbor remains mine\n');writeFileSync(peer,'// independent authored peer edit\n');assert.throws(()=>regenerate(root),/authored|edited/u);assert.equal(readFileSync(peer,'utf8'),'// independent authored peer edit\n');assert.equal(readFileSync(neighbor,'utf8'),'// GENERATED: authored neighbor remains mine\n');
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
+
 test('bulk census separates conditional private definitions and retains producer capability refusals', () => {
   const source = "export function outer(input) { return String(input).split(';').map(part => part.trim()); }";
   const { manifest, artifacts } = buildNativePortableArtifacts([row('conditional', source)]);

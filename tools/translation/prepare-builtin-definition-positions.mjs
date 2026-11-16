@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Opt-in immutable traversal DATA. The installed default has no active index.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
@@ -63,8 +64,7 @@ export function prepareBuiltinDefinitionPositionDataProbe({root=ROOT}={}){
  if(readFileSync(path,'utf8')!==before)fail('whole actual probe parent changed');return {schema:'builtin-definition-position-DATA-probe-v1',file:row,selection:{span:[owner.getStart(file),owner.end],source:language},semanticAuthority:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('use --emit|--write|--check');const plan=prepareBuiltinDefinitionPositions();
- if(args[0]==='--write'){for(const row of plan.files){if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('current source changed before explicit write');writeFileSync(resolve(ROOT,row.path),row.after);}}
- else if(args[0]==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete generated source is stale');
+ const args=process.argv.slice(2);if(args.length!==1||!['--emit','--write','--check'].includes(args[0]))fail('use --emit|--write|--check');const plan=args[0]==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareBuiltinDefinitionPositions();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files){if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.current)fail('current source changed before explicit write');writer.write(row.path,row.after);}return plan;}):prepareBuiltinDefinitionPositions();
+ if(args[0]==='--check'&&plan.files.some(row=>row.current!==row.after))fail('complete generated source is stale');
  console.log(JSON.stringify(args[0]==='--emit'?plan:{schema:plan.schema,files:plan.files.map(row=>row.path),semanticAuthority:false,performanceQualified:false}));
 }

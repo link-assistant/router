@@ -9,7 +9,7 @@ import {PRIMITIVE_NAMESPACE_SOURCE_PROFILE} from './primitive-namespace-sources.
 import {primitiveTryFromOriginalSource} from './primitive-try-from-source.mjs';
 import {ORIGINAL_CORE_PRELUDE_ROOT,originalCorePreludeRootSource} from './core-prelude-source.mjs';
 import {pinnedOptionPartialEqBody} from './standard-body-source.mjs';
-import {SHARED_REFERENCE_COPY_SOURCE} from '../shared-reference-copy-source.mjs';
+import {SHARED_REFERENCE_COPY_SOURCE} from '../current-standard-copy-source.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
 const words=tokens=>tokens.filter(token=>token.type!=='comment').map(token=>token.text).join('');

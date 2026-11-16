@@ -1,5 +1,5 @@
-// GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=232eda1f4dff81ed1732be305e3b3e145ad2fb6612c42bfa78f9a19fd2062787; dynamic any annotations are explicit draft gaps.
+// SOURCE DRAFT: paired configure/global undo dispatch substitutions.
+// Canonical regeneration and all new verification remain UNRUN.
 import { readFileSync } from 'node:fs';
 import { executeCredentialOperation, credentialWithdrawal } from "./credential-operations.js";
 import { readNativeText } from "./operation-input.js";
@@ -57,12 +57,15 @@ export function operationResult(name?: any, data?: any, diagnostics: any = [], e
     });
 }
 const output: any = (...lines: any[]): any => ({ output: lines });
+// with.v1 temporary-launch data is exactly the child status and captured streams;
+// the direct launch API keeps its signal and note lines for local callers.
+const withContractData: any = ({client_exit_code, stdout, stderr}: any): any => ({client_exit_code, stdout, stderr});
 const unsupported: any = (message?: any): any => { throw new (NativeRouterError as any)(message, { code: 'unsupported' }); };
 export const nativeOperationSupport: any = (Object as any).freeze({
     ...(Object as any).fromEntries((Object as any).entries(supportedResourceOperations).map(([name, support]: any): any => [name, support.status])),
     ...(Object as any).fromEntries((Object as any).keys(supportedManagedOperations).map((name?: any): any => [name, 'partial'])),
     'auth.import': 'partial', 'auth.claude': 'partial', 'auth.codex': 'partial', 'auth.clear': 'partial', 'auth.gh': 'partial',
-    version: 'implemented', contracts: 'implemented',
+    version: 'implemented', contracts: 'implemented', configure:'partial',with:'partial',
     'accounts.list': 'partial', 'accounts.pause': 'partial', 'accounts.resume': 'partial', 'accounts.policy': 'partial',
     'tokens.issue': 'partial', 'tokens.list': 'partial', 'tokens.show': 'partial', 'tokens.revoke': 'partial',
     'tokens.import': 'partial', 'tokens.expire': 'partial', 'tokens.rotate': 'partial', 'tokens.recover-admin': 'partial',
@@ -197,12 +200,13 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
     if (!(nativeOperationSupport as any)[name])
         unsupported(`Native operation ${name} is not implemented in this draft; use the explicit Rust Router wrapper`);
     for (const key of ['deadlineMs', 'maxOutputBytes'] as any)
-        if ((invocation as any)[key] !== undefined && name !== 'auth.codex')
+        if ((invocation as any)[key] !== undefined && name !== 'auth.codex' && !(name==='with'&&!options.global&&!options.undo))
             unsupported(`Native local per-invocation ${key} requires operation cancellation and output accounting`);
     const configOverrides: any = (Object as any).fromEntries((Object as any).entries(options).filter(([key]: any): boolean => sharedOptions.has(key)));
     for (const key of (Object as any).keys(configOverrides) as any)
         if (!nativeConfigOptions.has(key))
             unsupported(`Native configuration does not implement ${key}`);
+  if(name==='with'&&!options.global&&!options.undo)requestNativeRunModelPolicy(options.client,options);
     const baseCore: any = await runtimeFor(router);
     let core: any = baseCore;
     if ((Object as any).keys(configOverrides).length || invocation.env || invocation.cwd) {
@@ -212,6 +216,7 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
     }
     if (invocation.signal?.aborted)
         throw new (NativeRouterError as any)('Operation cancelled', { code: 'cancelled' });
+    if(['configure','with'].includes(name)){localOnly(options,['client','all','undo','global','server','management_server','managed','token','token_stdin','ttl_hours','client_args',...(name==='with'?['non_interactive','interactive','extend_global_config','isolated_config','reset_to_default_configuration','yes','pick_model','model','allowed_models','allow_model_substitution','label','run_ttl_hours','fixed_run_ttl','run_max_requests']:[])]);if(name==='with'&&!options.global&&!options.undo){try{return withContractData(await executeNativeConfigure({name,options,invocation,core,env,fetch:router.options.fetch}));}catch(error:any){if(Number.isInteger(error?.data?.client_exit_code))error.data=withContractData(error.data);throw error;}}return executeNativeConfigure({name,options,invocation,core,env,fetch:router.options.fetch});}
     if (['clients.setup', 'clients.remove'].includes(name)) {
         localOnly(options, name === 'clients.setup' ? ['client', 'token', 'token_stdin', 'base_url', 'management_server', 'ttl_hours'] : ['client', 'revoke_supplied', 'force']);
         return (name === 'clients.setup' ? setupNativeClient : removeNativeClient)({ options, invocation, core, env, fetch: router.options.fetch });
@@ -471,3 +476,9 @@ export class NativeRouter {
         await (await runtime).close(); }
 }
 export const createNativeRouter: any = (options?: any): any => new (NativeRouter as any)(options);
+
+import {executeNativeConfigure} from './client-configure.js';
+
+import {preflightNativeClientLaunch} from './client-launch-plan.js';
+
+import {requestNativeRunModelPolicy} from './client-run-credential.js';

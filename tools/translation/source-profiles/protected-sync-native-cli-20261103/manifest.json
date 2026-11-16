@@ -1,0 +1,110 @@
+{
+  "schema": "protected-sync-native-cli-20261103-source-proposal-v1",
+  "predecessor": "42912b626e3bab3f08a5abfe65c89c8518e21192",
+  "files": [
+    {
+      "role": "scope-adapter",
+      "path": "tools/translation/protected-native-writers-20261102.mjs",
+      "physicalOrigin": {
+        "commit": "42912b626e3bab3f08a5abfe65c89c8518e21192",
+        "path": "tools/translation/protected-native-writers-20261102.mjs",
+        "gitBlob": "69791e11faf82b431a942ea06bc05276997c9b60"
+      },
+      "before": {
+        "path": "scope-adapter.before.txt",
+        "sha256": "c4a0573e757675ef94f4ba75fc325416cb1a78c6831db3ef6389af4754181100",
+        "bytes": 6732
+      },
+      "after": {
+        "path": "scope-adapter.after.txt",
+        "sha256": "c14940e23aeafb5eaaa018f62a62061cfaa7cb34ea0192201d0d23df3e99829d",
+        "bytes": 9873
+      }
+    },
+    {
+      "role": "contained-history",
+      "path": "tools/translation/protected-contained-direct-20261102-history.mjs",
+      "physicalOrigin": {
+        "commit": "42912b626e3bab3f08a5abfe65c89c8518e21192",
+        "path": "tools/translation/protected-contained-direct-20261102-history.mjs",
+        "gitBlob": "2f74e958ec4b88a6762fe5e1483360886a034e5d"
+      },
+      "before": {
+        "path": "contained-history.before.txt",
+        "sha256": "f7d4e365ecef85f820ccf1af3adf7b9041709b298db1936fabff6ef3aeb7b9bd",
+        "bytes": 5841
+      },
+      "after": {
+        "path": "contained-history.after.txt",
+        "sha256": "2344951bcbc83b1fba1c1c5b2c9e780855659c91d54fe4e406cb05758abf6547",
+        "bytes": 6013
+      }
+    },
+    {
+      "role": "external-history",
+      "path": "tools/translation/protected-external-mutations-20261102-history.mjs",
+      "physicalOrigin": {
+        "commit": "42912b626e3bab3f08a5abfe65c89c8518e21192",
+        "path": "tools/translation/protected-external-mutations-20261102-history.mjs",
+        "gitBlob": "38351ec554c649f98401fb05be8157e0d3ddf551"
+      },
+      "before": {
+        "path": "external-history.before.txt",
+        "sha256": "c8b2b0bafb67a5becda08b7f5b91abd0e0f77246d197acc46430400d8d0d9596",
+        "bytes": 4009
+      },
+      "after": {
+        "path": "external-history.after.txt",
+        "sha256": "d789d8d7c3d64fa90c8b2f86e0ce110a51a4305c4bc493608568968275b96c9b",
+        "bytes": 4353
+      }
+    },
+    {
+      "role": "builtin-cli",
+      "path": "tools/translation/prepare-builtin-source-meta-string-keys.mjs",
+      "physicalOrigin": {
+        "commit": "42912b626e3bab3f08a5abfe65c89c8518e21192",
+        "path": "tools/translation/prepare-builtin-source-meta-string-keys.mjs",
+        "gitBlob": "4d961ca85610cacb17fb0d17df6a7622d8fa58f0"
+      },
+      "before": {
+        "path": "builtin-cli.before.txt",
+        "sha256": "e867ba659c7b95ff19abe23cb4559ae273ddc8475bd60816e3eac81feb3e5834",
+        "bytes": 12379
+      },
+      "after": {
+        "path": "builtin-cli.after.txt",
+        "sha256": "a24b9a0e7ff7b8ed1ece580cfa514e5086ea2ead20aee531dcd1055d04687b7d",
+        "bytes": 13270
+      }
+    },
+    {
+      "role": "bun-cli",
+      "path": "scripts/prepare-bun-reverse-files.mjs",
+      "physicalOrigin": {
+        "commit": "42912b626e3bab3f08a5abfe65c89c8518e21192",
+        "path": "scripts/prepare-bun-reverse-files.mjs",
+        "gitBlob": "9289e3cdab4d4d89cd09fd24eb5f47e4b6656806"
+      },
+      "before": {
+        "path": "bun-cli.before.txt",
+        "sha256": "bf26bbbf4e2ed752f6c3632c5c14c4bc119123c29e57b0fb564a5f703169953f",
+        "bytes": 4937
+      },
+      "after": {
+        "path": "bun-cli.after.txt",
+        "sha256": "4cd94df62d398f716aae449ab0f6bb28ad0c8eec1781ff56b1c35a4b61d78dcf",
+        "bytes": 5275
+      }
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceInstalled": false,
+  "sourceAuthority": false,
+  "completeFunctionDenominator": "UNKNOWN",
+  "requirements": {
+    "L04": "actual builtin write+emit and Bun changed-row source mutations; shared private policy bridge",
+    "S03": "original sequential partial-write/read-error order retained; no atomic claim",
+    "L01_L02": "finite named source predecessor/adoption mapping only; complete production function and writer denominator UNKNOWN"
+  }
+}

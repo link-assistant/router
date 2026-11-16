@@ -64,7 +64,7 @@ export async function relayWebSocket(incoming,downstream,head,{target,authorize,
   let binding;try{binding=await target();}catch(error){reject(downstream,error.status ?? 500,error.message);return;}
   const {url,headers,claims}=binding,upstreamKey=randomBytes(16).toString('base64');
   const shareGeolocation=sharesGeolocation(new Headers(incoming.headers));
-  const options={method:'GET',headers:{...Object.fromEntries(headers),connection:'Upgrade',upgrade:'websocket','sec-websocket-key':upstreamKey,'sec-websocket-version':'13'},timeout:timeoutMs};
+  const options={...(binding.ca?{ca:binding.ca}:{}),method:'GET',headers:{...Object.fromEntries(headers),connection:'Upgrade',upgrade:'websocket','sec-websocket-key':upstreamKey,'sec-websocket-version':'13'},timeout:timeoutMs};
   let connecting=true;
   const request=(url.protocol === 'https:' ? httpsRequest:httpRequest)(url,options);
   request.once('timeout',()=>request.destroy(new Error('WebSocket connect timeout')));

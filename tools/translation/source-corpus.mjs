@@ -1,3 +1,4 @@
+import {readBoundedTrackedSourceBytes} from './forward-output-ownership-20261101-bounded-bytes.mjs';
 import {repositoryRustLayout} from './repository-layout.mjs';
 // Capture complete original tracked bytes once; configured compilation never
 // reconsults a mutable source reader or invents a fragment as an original file.
@@ -14,20 +15,8 @@ export const SOURCE_CORPUS_LIMITS=Object.freeze({trackedPaths:20_000,sourceBytes
 
 // A missing sparse file comes from this checkout's immutable HEAD. A missing
 // ordinary file remains an error; a user's deletion is never resurrected.
-export function trackedSourceBytes(root,path,{maxBytes=32*1024*1024}={}){
-  const absolute=join(root,path);
-  if(existsSync(absolute)){
-    if(statSync(absolute).size>maxBytes)throw new TypeError(`source corpus input exceeds its byte budget at ${path}`);
-    const bytes=readFileSync(absolute);
-    if(bytes.length>maxBytes)throw new TypeError(`source corpus input exceeds its byte budget at ${path}`);
-    return bytes;
-  }
-  const records=execFileSync('git',['ls-files','-v','-z','--',path],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean);
-  if(!records.some(record=>record.startsWith('S ')&&record.slice(2)===path))return readFileSync(absolute);
-  const size=Number(execFileSync('git',['cat-file','-s',`HEAD:${path}`],{cwd:root,encoding:'utf8'}).trim());
-  if(!Number.isSafeInteger(size)||size>maxBytes)throw new TypeError(`source corpus input exceeds its byte budget at ${path}`);
-  return execFileSync('git',['show',`HEAD:${path}`],{cwd:root,maxBuffer:maxBytes});
-}
+export function trackedSourceBytes(root,path,{maxBytes=32*1024*1024}={}){return readBoundedTrackedSourceBytes(root,path,{maxBytes});}
+
 export function trackedSource(root,path){return trackedSourceBytes(root,path).toString('utf8');}
 
 function originalPaths(paths){

@@ -1,3 +1,4 @@
+import {withProtectedSpecialCliWriter} from './protected-special-cli-writers-20261102.mjs';
 // Opt-in source selection only. Reuse the complete original typed-position,
 // lifetime-syntax, cfg, binding, inverse and producer checks with the genuine
 // enclosing creator from the SAME private issuer. No default import changes.
@@ -35,5 +36,5 @@ export function prepareEnclosingCorePrimitivesCandidate({root=ROOT}={}){
  return {schema:'owned-enclosing-primitives-candidate-preparation-v1',typescriptVersion:ts.version,input:{path:INPUT,source,sha256:hash(source)},files:[{path:OUTPUT,before:source,language:source,after,beforeMeta:before.meta,afterMeta,inverse:source,beforeSha256:hash(source),afterSha256:hash(after),trace:run.trace,nativeSelections:changes,nativeCopies:[nativeCopy(ts,INPUT,source,file),nativeCopy(ts,OUTPUT,after,final)],nativeBindings}],semanticAuthority:false,defaultApiUnchanged:true,originalLifetimeAndProducerGuardsUnchanged:true,runtimeExecuted:false,rustExecuted:false};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const [mode]=process.argv.slice(2);if(process.argv.length!==3||!['--write','--check'].includes(mode))fail('usage: --write|--check');const plan=prepareEnclosingCorePrimitivesCandidate();for(const row of plan.files)if(mode==='--write')writeFileSync(resolve(ROOT,row.path),row.after);else if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.after)fail('complete candidate source is stale');console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),semanticAuthority:false}));
+ const [mode]=process.argv.slice(2);if(process.argv.length!==3||!['--write','--check'].includes(mode))fail('usage: --write|--check');const plan=mode==='--write'?withProtectedSpecialCliWriter(ROOT,writer=>{const plan=prepareEnclosingCorePrimitivesCandidate();writer.preflight(plan.files.map(row=>row.path));for(const row of plan.files)writer.write(row.path,row.after);return plan;}):prepareEnclosingCorePrimitivesCandidate();if(mode==='--check')for(const row of plan.files)if(readFileSync(resolve(ROOT,row.path),'utf8')!==row.after)fail('complete candidate source is stale');console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),semanticAuthority:false}));
 }

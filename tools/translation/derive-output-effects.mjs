@@ -2,7 +2,7 @@
 // namespace actions. Repository order merely supplies each genuine invocation.
 import {types} from 'node:util';
 import {originalDeriveBangEnclosingOutputs,deriveBangOutputAt} from './derive-bang-context.mjs';
-import {originalImplNamespaceSourcePlan,requireOriginalImplNamespaceSourcePlan} from './derive-ancestor-attribute-scope.mjs';
+import {freshOriginalImplNamespaceSourcePlan as originalImplNamespaceSourcePlan,requireOriginalImplNamespaceSourcePlan} from './derive-ancestor-attribute-scope.mjs';
 import {moduleScopeKey} from './source-module-views.mjs';
 import {deriveFootprintAt,deriveFootprintStandardInputSource} from './derive-footprints.mjs';
 import {proveBuiltinDeriveBangFootprint,originalBuiltinDeriveEnclosingOutput} from './builtin-derive-bang-footprints.mjs';

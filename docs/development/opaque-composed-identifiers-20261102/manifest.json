@@ -1,0 +1,19 @@
+{
+  "schema": "router-composed-identifiers-source-draft-v1",
+  "sha256": "53c3d3625cf896f97aaf012275812838bddbdb0b97524d8c85ee4d44edb4fdd0",
+  "decodedBytes": 219824,
+  "packedBytes": 43976,
+  "completeSourceFiles": 12,
+  "completeSourceEquations": 6,
+  "javascriptCaseSourceCount": 13,
+  "rustCaseSourceCount": 2,
+  "projectAttempts": 6,
+  "samplingPlusInverseProjectAttempts": 9,
+  "allExecution": "UNRUN",
+  "CI": "NOT_INSPECTED",
+  "sourceCounts": {
+    "drafted": 11,
+    "open": 59,
+    "total": 70
+  }
+}

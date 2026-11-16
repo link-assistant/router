@@ -1,0 +1,33 @@
+{
+  "schema": "scoped-output-binding-original-owner-inputs-v1",
+  "files": [
+    {
+      "logicalPath": "src/lib.rs",
+      "repositoryPath": "rust/src/lib.rs",
+      "originalPath": "tools/translation/source-profiles/scoped-output-binding-20261101/originals/lib.rs.txt",
+      "bytes": 7675,
+      "sha256": "5525534dcae9a34e0df52a420997163410403ab365784ebeafbd79f758d5d6b5"
+    },
+    {
+      "logicalPath": "src/operation_output.rs",
+      "repositoryPath": "rust/src/operation_output.rs",
+      "originalPath": "tools/translation/source-profiles/scoped-output-binding-20261101/originals/operation_output.rs.txt",
+      "bytes": 2661,
+      "sha256": "f138b0e8fa5b112c1c0fbf29c19cd52f57b436dbd662585da8a64b90ec19b54e"
+    },
+    {
+      "logicalPath": "src/auth_remote.rs",
+      "repositoryPath": "rust/src/auth_remote.rs",
+      "originalPath": "tools/translation/source-profiles/scoped-output-binding-20261101/originals/auth_remote.rs.txt",
+      "bytes": 25209,
+      "sha256": "9fec326f6518a0bca9da56a5fd7182b83cd973e5b3c142d784d3b893ddf6dd17"
+    },
+    {
+      "logicalPath": "src/auth_import.rs",
+      "repositoryPath": "rust/src/auth_import.rs",
+      "originalPath": "tools/translation/source-profiles/scoped-output-binding-20261101/originals/auth_import.rs.txt",
+      "bytes": 36614,
+      "sha256": "0410916d8c67ba696216d47f221dc92b725c4d6f6c22e5fe6b46a3e6c815fef1"
+    }
+  ]
+}

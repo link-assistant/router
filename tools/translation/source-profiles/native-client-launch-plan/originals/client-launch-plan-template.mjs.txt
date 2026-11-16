@@ -1,0 +1,28 @@
+/** Native launch policy DATA and argv planning; this module never spawns a process. */
+import {clientIntegration,clientFailure} from './client-files.mjs';
+const rules/*:any*/=NATIVE_LAUNCH_RULE_DATA;
+function argumentsData(value/*:unknown*/)/*:string[]*/{if(!Array.isArray(value)||value.length>10000||value.some(row=>typeof row!=='string'||row.includes('\0'))||Buffer.byteLength(value.join('\0'))>2097152)throw clientFailure('Client argv must contain bounded strings without NUL');return [...value];}
+export function forwardedClientModel(value/*:unknown*/)/*:string|null*/{
+ const args=argumentsData(value);let found/*:string|null*/=null;
+ for(let at=0;at<args.length;at++){const word=args[at];let next/*:string|null*/=null;if(word==='-m'||word==='--model'){if(++at===args.length)throw clientFailure(word+' requires a model id');next=args[at];}else if(word.startsWith('--model='))next=word.slice(8);if(next!==null){if(!next)throw clientFailure('forwarded model id must not be empty');if(found!==null&&found!==next)throw clientFailure('conflicting forwarded model arguments');found=next;}}return found;
+}
+function codexCommand(args/*:string[]*/)/*:string|null*/{
+ let at=0;while(at<args.length){const word=args[at];if(word==='--')return args[at+1]??null;if(!word.startsWith('-')||word==='-')return word;if(rules.codexBooleanOptions.includes(word)){at++;continue;}if(rules.codexValueOptions.includes(word)){if(at+1>=args.length)return null;at+=2;continue;}if(word.startsWith('--')&&word.includes('=')&&rules.codexValueOptions.includes(word.split('=')[0])){at++;continue;}if(['-c','-i','-m','-s','-a','-C'].some(prefix=>word.startsWith(prefix)&&word.length>prefix.length)){at++;continue;}return null;}return null;
+}
+export function unsupportedClientNativeCommand(client/*:string*/,value/*:unknown*/)/*:string|null*/{
+ const name=clientIntegration(client).client,args=argumentsData(value),words=args[0]==='--'?args.slice(1):args;
+ if(name==='claude'&&(['remote-control','ultrareview'].includes(words[0])||words.some(word=>['--cloud','--environment','--remote-control','--rc','--teleport'].includes(word.split('=')[0]))))return rules.claudeNativeServiceError;
+ if(name==='codex'&&['cloud','cloud-tasks'].includes(codexCommand(args)))return rules.codexCloudError;return null;
+}
+export function nativeClientRequiresModel(client/*:string*/)/*:boolean*/{return ['opencode','qwen','agent'].includes(clientIntegration(client).client);}
+export function planNativeClientLaunch(client/*:string*/,options/*:any*/={},resolvedModel/*:string|null*/=null,attachedToTerminal=false)/*:any*/{
+ const info=clientIntegration(client),rule=rules.clients[info.client],forwarded=argumentsData(options.client_args??[]),exact=forwarded[0]==='--';if(exact)forwarded.shift();if(options.interactive&&options.non_interactive)throw clientFailure('interactive and non_interactive conflict');if(resolvedModel!==null&&(typeof resolvedModel!=='string'||!resolvedModel||resolvedModel.includes('\0')))throw clientFailure('Resolved model must be a nonempty string without NUL');
+ const native=exact||rule.commands.includes(forwarded[0]),prompt=forwarded.length>0&&!forwarded[0].startsWith('-')&&!rule.commands.includes(forwarded[0]),oneShot=!native&&(options.non_interactive?true:options.interactive?false:prompt||!attachedToTerminal),commandMode=['codex','opencode'].includes(info.client),hasMode=rule.mode!==null&&(commandMode?[rule.mode,...rule.aliases].includes(forwarded[0]):forwarded.some(word=>[rule.mode,...rule.aliases].includes(word))),result/*:string[]*/=[];let note/*:string|null*/=null;
+ if(commandMode&&hasMode){const first=forwarded.shift();if(first!==undefined)result.push(first);}else if(commandMode&&oneShot&&rule.mode)result.push(rule.mode);
+ if(resolvedModel!==null&&rule.modelFlag&&!forwarded.some(word=>word==='-m'||word==='--model'||word.startsWith('--model='))){result.push(rule.modelFlag,['opencode','agent'].includes(info.client)&&!resolvedModel.includes('/')?'link-assistant/'+resolvedModel:resolvedModel);}
+ if(!commandMode&&oneShot&&!hasMode&&rule.mode){if(rule.modeTakesValue&&!prompt)note=rules.noPromptNote;else result.push(rule.mode);}
+ result.push(...forwarded);return {arguments:result,one_shot:oneShot,note};
+}
+export function preflightNativeClientLaunch(client/*:string*/,options/*:any*/={})/*:any*/{
+ const args=argumentsData(options.client_args??[]),error=unsupportedClientNativeCommand(client,args);if(error)throw clientFailure(error);const forwarded=forwardedClientModel(args);if(options.model!==undefined&&forwarded!==null&&options.model!==forwarded)throw clientFailure('Router model conflicts with forwarded model');return {forwardedModel:forwarded,requiresModel:nativeClientRequiresModel(client)};
+}

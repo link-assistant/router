@@ -1,0 +1,8 @@
+{
+  "schema": "text-sha256-base64url-independent-vectors-v1",
+  "vectors": [
+    {"input": "", "expected": "47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU"},
+    {"input": "abc", "expected": "ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0"},
+    {"input": "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk", "expected": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"}
+  ]
+}

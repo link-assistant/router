@@ -35,7 +35,10 @@ pub fn credential_lock_path(
     data_dir
         .as_ref()
         .join(RECOVERY_DIRECTORY)
-        .join(format!("{}-{account_digest}.lock", provider.as_str()))
+        .join(crate::translation_core::format!(
+            "{}-{account_digest}.lock",
+            provider.as_str()
+        ))
 }
 
 fn recovery_record_path(
@@ -47,7 +50,10 @@ fn recovery_record_path(
     data_dir
         .as_ref()
         .join(RECOVERY_DIRECTORY)
-        .join(format!("{}-{account_digest}.json", provider.as_str()))
+        .join(crate::translation_core::format!(
+            "{}-{account_digest}.json",
+            provider.as_str()
+        ))
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -71,15 +77,16 @@ pub(crate) fn valid_recovery_record_path(
         Ok(bytes) => bytes,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
         Err(_) => {
-            return Err(format!(
+            return Err(crate::translation_core::format!(
                 "the {provider} credential recovery record is unusable"
             ));
         }
     };
-    let record = serde_json::from_slice::<RecoveryRecord>(&bytes)
-        .map_err(|_| format!("the {provider} credential recovery record is unusable"))?;
+    let record = serde_json::from_slice::<RecoveryRecord>(&bytes).map_err(|_| {
+        crate::translation_core::format!("the {provider} credential recovery record is unusable")
+    })?;
     if record.version != RECOVERY_VERSION || record.provider != provider {
-        return Err(format!(
+        return Err(crate::translation_core::format!(
             "the {provider} credential recovery record is unusable"
         ));
     }

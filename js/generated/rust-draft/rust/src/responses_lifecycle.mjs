@@ -1,4 +1,4 @@
-// Generated draft from rust/src/responses_lifecycle.rs; sha256=afdb3dfb799bcf2cdfc324d2a8c76cd49d5a043770cab23434c7f769a4852801
+// Generated draft from rust/src/responses_lifecycle.rs; sha256=4f371cb96a894f015c59eabdc2b2a8e507c6d4a8126f09064bf5d4da35e2ec05
 // Carried constructs are data, never runtime parity evidence.
 function ml_make_Operation_Retrieve() {
   return Object.freeze({ $: 'Retrieve' });
@@ -45,4 +45,4 @@ const serde_json = {
 };
 
 export const translated = { ["Operation"]: Object.freeze({ ["Retrieve"]: ml_make_Operation_Retrieve, ["Delete"]: ml_make_Operation_Delete, ["Cancel"]: ml_make_Operation_Cancel, ["InputItems"]: ml_make_Operation_InputItems }) };
-export const provenance = {"sourcePath":"rust/src/responses_lifecycle.rs","sourceSha256":"afdb3dfb799bcf2cdfc324d2a8c76cd49d5a043770cab23434c7f769a4852801","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":4,"carried":26,"preserved":28,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/responses_lifecycle.rs","sourceSha256":"4f371cb96a894f015c59eabdc2b2a8e507c6d4a8126f09064bf5d4da35e2ec05","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":4,"carried":26,"preserved":28,"runtimeParity":false};

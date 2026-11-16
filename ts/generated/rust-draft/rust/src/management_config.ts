@@ -37,7 +37,7 @@ type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$"
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
-// Generated draft from rust/src/management_config.rs; sha256=a29884b105e413edc8aa89a4d326204918311a489ed3e83ffa93842b15ce3e4b
+// Generated draft from rust/src/management_config.rs; sha256=847910a505d1cf74fd0643307e1e53d767f50ff5ae86af4e1a9776177bc0e30a
 // Carried constructs are data, never runtime parity evidence.
 function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   if (value < min || value > max) throw new RangeError(message);
@@ -85,4 +85,4 @@ const serde_json = {
 };
 
 export const translated: { "ManagementConfig": (allow_remote: boolean, lockout_failures: bigint, lockout_secs: bigint, exempt_loopback: boolean) => Readonly<{ readonly "$": "ManagementConfig"; readonly "allow_remote": boolean; readonly "lockout_failures": bigint; readonly "lockout_secs": bigint; readonly "exempt_loopback": boolean }> } = { ["ManagementConfig"]: ml_make_ManagementConfig_ManagementConfig };
-export const provenance = {"sourcePath":"rust/src/management_config.rs","sourceSha256":"a29884b105e413edc8aa89a4d326204918311a489ed3e83ffa93842b15ce3e4b","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":1,"carried":6,"preserved":8,"runtimeParity":false};
+export const provenance = {"sourcePath":"rust/src/management_config.rs","sourceSha256":"847910a505d1cf74fd0643307e1e53d767f50ff5ae86af4e1a9776177bc0e30a","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":1,"carried":6,"preserved":8,"runtimeParity":false};
