@@ -113,4 +113,19 @@ jobs:
       - run: cargo build --locked --bins
       - run: python3 -m pip install -e packages/python
       - run: bash scripts/generate-http-clients.sh
+      - name: Configure the Maven Central mirror for the generated Java client
+        run: |
+          settings="$RUNNER_TEMP/router-maven-settings.xml"
+          cat > "$settings" <<'EOF'
+          <settings>
+            <mirrors>
+              <mirror>
+                <id>google-maven-central</id>
+                <url>https://maven-central.storage-download.googleapis.com/maven2/</url>
+                <mirrorOf>central</mirrorOf>
+              </mirror>
+            </mirrors>
+          </settings>
+          EOF
+          printf 'MAVEN_ARGS=--settings %s\n' "$settings" >> "$GITHUB_ENV"
       - run: bash scripts/test-http-clients.sh
