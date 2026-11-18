@@ -3,6 +3,7 @@ use std::io;
 use std::sync::Arc;
 
 use axum::body::{Body, Bytes};
+use axum::http::{HeaderValue, header};
 use axum::response::Response;
 use futures_util::{StreamExt, stream};
 
@@ -148,9 +149,13 @@ pub(super) fn restore(response: Response, replacements: Replacements) -> Respons
         "digest",
         "content-digest",
         "etag",
+        "last-modified",
     ] {
         parts.headers.remove(name);
     }
+    parts
+        .headers
+        .insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
     let deltas = (mime == "text/event-stream").then(sse::SseDeltas::default);
     let chunks = stream::unfold(
         (Some(body.into_data_stream()), replacements, deltas),

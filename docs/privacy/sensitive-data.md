@@ -119,7 +119,8 @@ network packets within a record. A bounded window also joins text deltas in
 OpenAI Responses and Chat Completions, Anthropic Messages, and Gemini SSE
 streams. It retains the original fragments when a match is incomplete or the
 window is exhausted. Modified tokens, other streaming event formats and
-tokens divided across WebSocket messages can remain pseudonymized.
+tokens divided across WebSocket messages can remain pseudonymized. Router
+sends `Cache-Control: no-store` on HTTP responses processed for restoration.
 
 To keep output pseudonymized, set `ROUTER_SENSITIVE_DATA_RESTORE=false` on the
 scanner. To restore specific types only, set

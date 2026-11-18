@@ -88,7 +88,8 @@ function restoreStream(response, replacements) {
   if (encoding.toLowerCase() !== 'identity' ||
     !(type === 'application/json' || type.endsWith('+json') || type === 'text/event-stream')) return response;
   const headers = new Headers(response.headers);
-  for (const key of ['content-length','content-md5','digest','content-digest','etag']) headers.delete(key);
+  for (const key of ['content-length','content-md5','digest','content-digest','etag','last-modified']) headers.delete(key);
+  headers.set('cache-control','no-store');
   const start = Buffer.from(wireStart);
   const end = Buffer.from(']]');
   let pending = Buffer.alloc(0);

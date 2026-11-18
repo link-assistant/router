@@ -153,10 +153,12 @@ test('restores an SSE placeholder spanning physical chunks', {timeout:5000}, asy
         controller.enqueue(encoder.encode(part));
       }
       controller.close();
-    }}),{headers:{'content-type':'text/event-stream'}});
+    }}),{headers:{'content-type':'text/event-stream','cache-control':'public, max-age=600','etag':'"masked"'}});
   }});
   const response = await router.fetch(inference({model:'m',input:name,stream:true,store:false}));
   assert.equal(response.status,200);
+  assert.equal(response.headers.get('cache-control'),'no-store');
+  assert.equal(response.headers.has('etag'),false);
   assert.equal(await response.text(),`data: {"type":"response.output_text.delta","delta":"${name}"}\n\ndata: [DONE]\n\n`);
 });
 

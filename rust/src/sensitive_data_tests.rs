@@ -110,10 +110,14 @@ async fn anonymizes_request_metadata_and_restores_json_after_network_rechunking(
     let response = axum::http::Response::builder()
         .header("content-type", "text/event-stream")
         .header("content-length", event.len())
+        .header("cache-control", "public, max-age=600")
+        .header("etag", "\"masked\"")
         .body(Body::from_stream(futures_util::stream::iter(chunks)))
         .unwrap();
     let restored = response::restore(response, replacements);
     assert!(restored.headers().get("content-length").is_none());
+    assert_eq!(restored.headers()["cache-control"], "no-store");
+    assert!(!restored.headers().contains_key("etag"));
     let output = to_bytes(restored.into_body(), 8192).await.unwrap();
     assert_eq!(
         std::str::from_utf8(&output).unwrap(),
