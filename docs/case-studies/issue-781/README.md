@@ -87,7 +87,14 @@ recorded separately.
 - The published package smoke test loads the pinned sanitizer with real
   detection rules, sends synthetic names through the loopback request boundary
   and asserts stable person and company markers, irreversible credentials and
-  caller/session isolation in an echoed response.
+  caller/session isolation in an echoed response. The first run exposed an
+  unsupported option. The adapter uses the published `maxInputLength` option
+  and separately bounds HTTP request and response bytes.
+- The third checkpoint, `ffe31060fdd1ddc933c7047ee9484bfbb9d140ed`,
+  passed all four active JavaScript gates and the Ubuntu Rust suite, including
+  eight privacy tests. CI measured 90,294 covered out of 103,027 lines and
+  required the baseline to rise to 87.641104%.
+  [CI run](https://github.com/link-assistant/router/actions/runs/44260158094)
 - The follow-up's Rust dependency audit passed. The admin UI audit then
   surfaced an unpatched advisory against the base branch's build-only
   `picomatch@4.0.7` dependency. The audit still runs at high severity.
