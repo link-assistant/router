@@ -114,8 +114,10 @@ four simultaneous scans. Over-limit scans fail closed. Two overlapping scans
 for the same session can require an application retry.
 
 Complete, exact placeholders are restored in identity-encoded JSON, SSE
-records and supported JSON WebSocket response events. A placeholder can span
-network packets within a record. A bounded window also joins text deltas in
+records and supported JSON WebSocket response events. When the sanitizer links
+several spellings to one placeholder, Router restores the first original
+spelling stored for that placeholder. A placeholder can span network packets
+within a record. A bounded window also joins text deltas in
 OpenAI Responses and Chat Completions, Anthropic Messages, and Gemini SSE
 streams. It retains the original fragments when a match is incomplete or the
 window is exhausted. Modified tokens, other streaming event formats and
