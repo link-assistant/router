@@ -83,8 +83,12 @@ recorded separately.
 - The follow-up adds cases for independent SSE text lanes, restoration types,
   local model and OPF HTTP adapter reports, gzip expansion, zstd and opaque
   request refusal, malformed scanner output, and masking on both native
-  Rust WebSocket relays. This source awaits same-commit CI.
+  Rust WebSocket relays. [Follow-up CI](https://github.com/link-assistant/router/actions/runs/44257371379)
+- The published package smoke test loads the pinned sanitizer with real
+  detection rules, sends synthetic names through the loopback request boundary
+  and asserts stable person and company markers, irreversible credentials and
+  caller/session isolation in an echoed response.
 - Local tests and compilation remain unrun under the repository instructions.
   The manual development lane runs four JavaScript gates before Rust CI.
-  Strict translation freshness and parity are unverified. Live vendor,
-  published sanitizer and OPF behavior require separate runtime evidence.
+  Strict translation freshness and parity are unverified. Live vendor and
+  OPF behavior require separate runtime evidence.

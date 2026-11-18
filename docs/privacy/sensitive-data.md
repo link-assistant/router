@@ -44,6 +44,16 @@ WebSocket negotiation, have their own forwarding policy. The detector policy
 can be supplied as a private JSON file via
 `ROUTER_SENSITIVE_DATA_SCANNER_POLICY`. For example, add known private names or
 configure per-type thresholds using the [pinned sanitizer API options](https://github.com/link-foundation/sensitive-data-sanitizer/blob/v0.23.0/docs/API.md).
+
+```json
+{
+  "knownPersonal": [
+    {"type": "PERSON", "value": "Mariana Vexley"},
+    {"type": "ORGANIZATION", "value": "Copperfoil Studio"}
+  ]
+}
+```
+
 The file can contain sensitive originals and belongs outside the checkout with
 restricted filesystem permissions. Public-knowledge exemptions are off in the
 adapter's default policy.
