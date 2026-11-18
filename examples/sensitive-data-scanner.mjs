@@ -106,8 +106,8 @@ export function createScannerHandler({
       // union. Occurrence records are unnecessary for derived model text.
       const detectors = createDetectors?.();
       const sanitizer = createSanitizer({
-        profile: 'documents', publicKnowledge: false, maxBytes: maximumBytes, maxFindings: 4096,
-        ...detectorOptions, structured: 'json',
+        profile: 'documents', publicKnowledge: false,
+        ...detectorOptions, structured: 'json', maxInputLength: maximumBytes, maxFindings: 4096,
         ...(detectors?.length ? {detectors} : {}),
         transformation: {mode:'placeholder',format,map},
       });
