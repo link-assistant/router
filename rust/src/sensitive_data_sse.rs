@@ -63,9 +63,7 @@ impl SseDeltas {
         output: &mut Vec<u8>,
         tokens: &HashMap<Vec<u8>, Vec<u8>>,
     ) {
-        let (terminal, joined) = self
-            .parse_line(&original, tokens)
-            .unwrap_or((false, None));
+        let (terminal, joined) = self.parse_line(&original, tokens).unwrap_or((false, None));
         self.queue_bytes += original.len();
         self.queue.push((original, joined));
         if terminal
@@ -84,7 +82,9 @@ impl SseDeltas {
         original: &[u8],
         tokens: &HashMap<Vec<u8>, Vec<u8>>,
     ) -> Option<(bool, Option<Vec<u8>>)> {
-        let payload = std::str::from_utf8(original.strip_prefix(b"data:")?).ok()?.trim();
+        let payload = std::str::from_utf8(original.strip_prefix(b"data:")?)
+            .ok()?
+            .trim();
         if payload == "[DONE]" {
             return Some((true, None));
         }
@@ -125,7 +125,11 @@ impl SseDeltas {
             }
         });
         let joined = if changed {
-            let newline = if original.ends_with(b"\r\n") { "\r\n" } else { "\n" };
+            let newline = if original.ends_with(b"\r\n") {
+                "\r\n"
+            } else {
+                "\n"
+            };
             Some(format!("data: {event}{newline}").into_bytes())
         } else {
             None
@@ -179,7 +183,10 @@ fn visit_deltas(event: &mut Value, mut visit: impl FnMut(&mut Value, &str, Value
     }
     if let Some(candidates) = event.get_mut("candidates").and_then(Value::as_array_mut) {
         for (index, candidate) in candidates.iter_mut().enumerate() {
-            let index = candidate.get("index").cloned().unwrap_or_else(|| json!(index));
+            let index = candidate
+                .get("index")
+                .cloned()
+                .unwrap_or_else(|| json!(index));
             if let Some(parts) = candidate
                 .pointer_mut("/content/parts")
                 .and_then(Value::as_array_mut)
@@ -203,32 +210,61 @@ mod tests {
         let tokens = HashMap::from([(TOKEN.as_bytes().to_vec(), b"private".to_vec())]);
         let mut state = SseDeltas::default();
         let (first, last) = TOKEN.split_at(19);
-        let chat = |text: &str| json!({"id":"chat","choices":[{"index":0,"delta":{"content":text}}]});
-        let anthropic = |text: &str| {
-            json!({"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":text}})
-        };
+        let chat =
+            |text: &str| json!({"id":"chat","choices":[{"index":0,"delta":{"content":text}}]});
+        let anthropic = |text: &str| json!({"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":text}});
         let gemini = |text: &str| json!({"candidates":[{"content":{"parts":[{"text":text}]}}]});
         let frame = |event: Value| format!("data: {event}\r\n\r\n");
-        let input = [chat(first), anthropic(first), gemini(first), gemini(last), anthropic(last), chat(last)]
-            .map(frame).concat();
+        let input = [
+            chat(first),
+            anthropic(first),
+            gemini(first),
+            gemini(last),
+            anthropic(last),
+            chat(last),
+        ]
+        .map(frame)
+        .concat();
         let output = state.feed(input.as_bytes(), false, &tokens);
-        let output: Vec<Value> = std::str::from_utf8(&output).unwrap().lines()
-            .filter_map(|line| serde_json::from_str(line.strip_prefix("data: ")?).ok()).collect();
-        assert_eq!(output, [chat(""), anthropic(""), gemini(""), gemini(TOKEN), anthropic(TOKEN), chat(TOKEN)]);
+        let output: Vec<Value> = std::str::from_utf8(&output)
+            .unwrap()
+            .lines()
+            .filter_map(|line| serde_json::from_str(line.strip_prefix("data: ")?).ok())
+            .collect();
+        assert_eq!(
+            output,
+            [
+                chat(""),
+                anthropic(""),
+                gemini(""),
+                gemini(TOKEN),
+                anthropic(TOKEN),
+                chat(TOKEN)
+            ]
+        );
     }
 
     #[test]
     fn preserves_bytes_when_delta_or_buffer_is_unsupported() {
         let tokens = HashMap::from([(TOKEN.as_bytes().to_vec(), b"private".to_vec())]);
         let mut state = SseDeltas::default();
-        let pending = format!("data: {}\n", json!({"type":"response.text.delta","delta":"[["}));
+        let pending = format!(
+            "data: {}\n",
+            json!({"type":"response.text.delta","delta":"[["})
+        );
         assert!(state.feed(pending.as_bytes(), false, &tokens).is_empty());
         let long = vec![b'x'; LINE_LIMIT + 1];
         let mut expected = pending.into_bytes();
         expected.extend_from_slice(&long);
         assert_eq!(state.feed(&long, false, &tokens), expected);
-        assert_eq!(state.feed(b"still in line\n[unframed]", true, &tokens).as_slice(), b"still in line\n[unframed]");
-        let unknown = b"data: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"input_json_delta\"}}\n";
+        assert_eq!(
+            state
+                .feed(b"still in line\n[unframed]", true, &tokens)
+                .as_slice(),
+            b"still in line\n[unframed]"
+        );
+        let unknown =
+            b"data: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"input_json_delta\"}}\n";
         assert_eq!(state.feed(unknown, false, &tokens).as_slice(), unknown);
         let malformed = b"data: not-valid-json\n";
         assert_eq!(state.feed(malformed, false, &tokens).as_slice(), malformed);

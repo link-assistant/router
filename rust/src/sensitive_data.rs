@@ -565,26 +565,27 @@ fn contains_attachment(value: &Value) -> bool {
                         | "input_image"
                 )
             );
-            attachment_type || object.iter().any(|(name, value)| {
-                (!value.is_null()
-                    && matches!(
-                        name.as_str(),
-                        "audio"
-                            | "b64_json"
-                            | "file_data"
-                            | "file_id"
-                            | "file_uri"
-                            | "file_url"
-                            | "fileData"
-                            | "fileUri"
-                            | "fileUrl"
-                            | "image_url"
-                            | "inlineData"
-                            | "inline_data"
-                            | "input_audio"
-                    ))
-                    || contains_attachment(value)
-            })
+            attachment_type
+                || object.iter().any(|(name, value)| {
+                    (!value.is_null()
+                        && matches!(
+                            name.as_str(),
+                            "audio"
+                                | "b64_json"
+                                | "file_data"
+                                | "file_id"
+                                | "file_uri"
+                                | "file_url"
+                                | "fileData"
+                                | "fileUri"
+                                | "fileUrl"
+                                | "image_url"
+                                | "inlineData"
+                                | "inline_data"
+                                | "input_audio"
+                        ))
+                        || contains_attachment(value)
+                })
         }
         Value::String(text) => text
             .get(..5)

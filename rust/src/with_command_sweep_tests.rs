@@ -104,7 +104,10 @@ fn the_sweep_keeps_a_live_run_between_creating_and_locking_its_lease() {
 
     sweep_stale_directories(&fixture.ours);
 
-    assert!(preparing.is_dir(), "the live run must be able to finish setup");
+    assert!(
+        preparing.is_dir(),
+        "the live run must be able to finish setup"
+    );
     lease.lock().expect("take the lease after the sweep");
 }
 

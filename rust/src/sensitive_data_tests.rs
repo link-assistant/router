@@ -174,7 +174,10 @@ fn caller_credentials_and_session_ids_separate_restore_state() {
 async fn joins_sse_fragments_with_interleaved_outputs() {
     let replacements = Replacements::new(vec![(MARKER.to_owned(), PERSON.to_owned())]).unwrap();
     let delta = |item_id: &str, value: &str| {
-        format!("data: {}\r\n\r\n", json!({"type": "response.output_text.delta", "item_id": item_id, "delta": value}))
+        format!(
+            "data: {}\r\n\r\n",
+            json!({"type": "response.output_text.delta", "item_id": item_id, "delta": value})
+        )
     };
     let wire = delta("first", &format!("Hello {}", &MARKER[..14]))
         + &delta("other", "ordinary output")
@@ -203,8 +206,10 @@ async fn joins_sse_fragments_with_interleaved_outputs() {
 #[tokio::test]
 async fn protected_routes_fail_closed_and_leave_other_routes_available() {
     let mut env = crate::operation_context::OperationContext::isolated("privacy-fixture");
-    env.environment.remove(std::ffi::OsStr::new("ROUTER_SENSITIVE_DATA_SCANNER_URL"));
-    env.environment.remove(std::ffi::OsStr::new("ROUTER_SENSITIVE_DATA_SCANNER_TOKEN"));
+    env.environment
+        .remove(std::ffi::OsStr::new("ROUTER_SENSITIVE_DATA_SCANNER_URL"));
+    env.environment
+        .remove(std::ffi::OsStr::new("ROUTER_SENSITIVE_DATA_SCANNER_TOKEN"));
     assert!(env.scope(|| PrivacyRoute::from_env(LIMIT)).is_none());
     let (endpoint, task) = scanner_stub().await;
     env.set_env("ROUTER_SENSITIVE_DATA_SCANNER_URL", endpoint);
@@ -220,12 +225,22 @@ async fn protected_routes_fail_closed_and_leave_other_routes_available() {
             .layer(axum::middleware::from_fn_with_state(policy, route))
     };
     for (path, status) in [
-        ("/api/services/openai/v1/responses", StatusCode::SERVICE_UNAVAILABLE),
+        (
+            "/api/services/openai/v1/responses",
+            StatusCode::SERVICE_UNAVAILABLE,
+        ),
         ("/health", StatusCode::OK),
     ] {
         let mut request = inference("identity", "{}");
         *request.uri_mut() = path.parse().unwrap();
-        assert_eq!(app(invalid.clone()).oneshot(request).await.unwrap().status(), status);
+        assert_eq!(
+            app(invalid.clone())
+                .oneshot(request)
+                .await
+                .unwrap()
+                .status(),
+            status
+        );
     }
 
     env.set_env("ROUTER_SENSITIVE_DATA_SCANNER_TOKEN", TOKEN);
@@ -235,37 +250,79 @@ async fn protected_routes_fail_closed_and_leave_other_routes_available() {
         (inference("identity", "[]"), StatusCode::BAD_REQUEST),
         (inference("identity", "not-json"), StatusCode::BAD_REQUEST),
         (inference("br", "{}"), StatusCode::UNSUPPORTED_MEDIA_TYPE),
-        (inference("identity", r#"{"nested":[{"fileData":{"type":"file"}}]}"#), StatusCode::UNSUPPORTED_MEDIA_TYPE),
-        (inference("identity", r#"{"nested":[{"type":"input_audio"}]}"#), StatusCode::UNSUPPORTED_MEDIA_TYPE),
-        (inference("identity", r#"{"nested":["DATA:text/plain,opaque"]}"#), StatusCode::UNSUPPORTED_MEDIA_TYPE),
+        (
+            inference("identity", r#"{"nested":[{"fileData":{"type":"file"}}]}"#),
+            StatusCode::UNSUPPORTED_MEDIA_TYPE,
+        ),
+        (
+            inference("identity", r#"{"nested":[{"type":"input_audio"}]}"#),
+            StatusCode::UNSUPPORTED_MEDIA_TYPE,
+        ),
+        (
+            inference("identity", r#"{"nested":["DATA:text/plain,opaque"]}"#),
+            StatusCode::UNSUPPORTED_MEDIA_TYPE,
+        ),
         (inference("gzip", "corrupt-gzip"), StatusCode::BAD_REQUEST),
-        (inference("identity", "x".repeat(1025)), StatusCode::PAYLOAD_TOO_LARGE),
-        (inference("identity", r#"{"fixture":"bad-body"}"#), StatusCode::SERVICE_UNAVAILABLE),
-        (inference("identity", r#"{"fixture":"bad-tokens"}"#), StatusCode::SERVICE_UNAVAILABLE),
-        (inference("identity", r#"{"fixture":"bad-pairs"}"#), StatusCode::SERVICE_UNAVAILABLE),
+        (
+            inference("identity", "x".repeat(1025)),
+            StatusCode::PAYLOAD_TOO_LARGE,
+        ),
+        (
+            inference("identity", r#"{"fixture":"bad-body"}"#),
+            StatusCode::SERVICE_UNAVAILABLE,
+        ),
+        (
+            inference("identity", r#"{"fixture":"bad-tokens"}"#),
+            StatusCode::SERVICE_UNAVAILABLE,
+        ),
+        (
+            inference("identity", r#"{"fixture":"bad-pairs"}"#),
+            StatusCode::SERVICE_UNAVAILABLE,
+        ),
     ] {
         let response = app.clone().oneshot(request).await.unwrap();
         assert_eq!(response.status(), status);
         let detail = to_bytes(response.into_body(), 4096).await.unwrap();
-        assert_eq!(serde_json::from_slice::<Value>(&detail).unwrap()["error"]["type"], "sensitive_data_protection");
+        assert_eq!(
+            serde_json::from_slice::<Value>(&detail).unwrap()["error"]["type"],
+            "sensitive_data_protection"
+        );
     }
     let mut large = GzEncoder::new(Vec::new(), Compression::default());
     large.write_all(&[b' '; 1025]).unwrap();
-    let rejected = app.clone().oneshot(inference("gzip", large.finish().unwrap())).await.unwrap();
+    let rejected = app
+        .clone()
+        .oneshot(inference("gzip", large.finish().unwrap()))
+        .await
+        .unwrap();
     assert_eq!(rejected.status(), StatusCode::PAYLOAD_TOO_LARGE);
     let compressed = zstd::stream::encode_all(&br#"{"input":"original"}"#[..], 1).unwrap();
-    let response = app.clone().oneshot(inference("zstd", compressed)).await.unwrap();
+    let response = app
+        .clone()
+        .oneshot(inference("zstd", compressed))
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(response_json(response).await["body"]["input"], PERSON);
 
     let mut no_session = inference("identity", "");
     no_session.headers_mut().remove(SESSION);
-    no_session.headers_mut().insert("upgrade", HeaderValue::from_static("websocket"));
-    assert_eq!(response_json(app.clone().oneshot(no_session).await.unwrap()).await["scoped"], true);
+    no_session
+        .headers_mut()
+        .insert("upgrade", HeaderValue::from_static("websocket"));
+    assert_eq!(
+        response_json(app.clone().oneshot(no_session).await.unwrap()).await["scoped"],
+        true
+    );
 
     let mut invalid_session = inference("identity", "{}");
-    invalid_session.headers_mut().insert(SESSION, HeaderValue::from_static("bad session"));
-    assert_eq!(app.clone().oneshot(invalid_session).await.unwrap().status(), StatusCode::BAD_REQUEST);
+    invalid_session
+        .headers_mut()
+        .insert(SESSION, HeaderValue::from_static("bad session"));
+    assert_eq!(
+        app.clone().oneshot(invalid_session).await.unwrap().status(),
+        StatusCode::BAD_REQUEST
+    );
     for path in [
         "/api/services/openai/v1/realtime?call_id=rtc_fixture",
         "/api/services/openai/v1/realtime/calls",
@@ -273,8 +330,13 @@ async fn protected_routes_fail_closed_and_leave_other_routes_available() {
     ] {
         let mut request = inference("identity", "");
         *request.uri_mut() = path.parse().unwrap();
-        request.headers_mut().insert("upgrade", HeaderValue::from_static("websocket"));
-        assert_eq!(app.clone().oneshot(request).await.unwrap().status(), StatusCode::UNSUPPORTED_MEDIA_TYPE);
+        request
+            .headers_mut()
+            .insert("upgrade", HeaderValue::from_static("websocket"));
+        assert_eq!(
+            app.clone().oneshot(request).await.unwrap().status(),
+            StatusCode::UNSUPPORTED_MEDIA_TYPE
+        );
     }
     task.abort();
     let _ = task.await;
@@ -297,11 +359,22 @@ async fn validates_scanner_output_and_authenticated_websocket_events() {
         ));
     }
     let mut multipart = inference("identity", "{}");
-    multipart.headers_mut().insert("content-type", HeaderValue::from_static("multipart/form-data"));
-    assert!(matches!(protect(multipart, &scanner, 8192, None).await, Err(Failure::UnsupportedBody)));
+    multipart.headers_mut().insert(
+        "content-type",
+        HeaderValue::from_static("multipart/form-data"),
+    );
+    assert!(matches!(
+        protect(multipart, &scanner, 8192, None).await,
+        Err(Failure::UnsupportedBody)
+    ));
     let mut repeated = inference("identity", "{}");
-    repeated.headers_mut().append("content-encoding", HeaderValue::from_static("gzip"));
-    assert!(matches!(protect(repeated, &scanner, 8192, None).await, Err(Failure::UnsupportedBody)));
+    repeated
+        .headers_mut()
+        .append("content-encoding", HeaderValue::from_static("gzip"));
+    assert!(matches!(
+        protect(repeated, &scanner, 8192, None).await,
+        Err(Failure::UnsupportedBody)
+    ));
 
     let mut socket = WebSocketPrivacy {
         scanner,
@@ -312,7 +385,10 @@ async fn validates_scanner_output_and_authenticated_websocket_events() {
     let input = json!({"type":"response.create", "input":PERSON});
     let protected = socket.scan_event(input.clone()).await.unwrap();
     assert_eq!(protected["input"], MARKER);
-    assert_eq!(socket.restore_event(&protected.to_string()), input.to_string());
+    assert_eq!(
+        socket.restore_event(&protected.to_string()),
+        input.to_string()
+    );
     for invalid in [
         json!([]),
         json!({"type":"input_audio"}),
@@ -323,7 +399,10 @@ async fn validates_scanner_output_and_authenticated_websocket_events() {
     ] {
         assert!(socket.scan_event(invalid).await.is_err());
     }
-    assert_eq!(socket.restore_event(&protected.to_string()), input.to_string());
+    assert_eq!(
+        socket.restore_event(&protected.to_string()),
+        input.to_string()
+    );
     task.abort();
     let _ = task.await;
 }
@@ -336,7 +415,11 @@ async fn respects_replacement_limits_and_response_media_types() {
     duplicate.extend(entries());
     assert!(Replacements::new(duplicate).is_none());
     for (mime, encoding, expected) in [
-        ("application/problem+json", "identity", json!(PERSON).to_string()),
+        (
+            "application/problem+json",
+            "identity",
+            json!(PERSON).to_string(),
+        ),
         ("application/json", "gzip", json!(MARKER).to_string()),
         ("text/plain", "identity", json!(MARKER).to_string()),
     ] {
@@ -346,13 +429,24 @@ async fn respects_replacement_limits_and_response_media_types() {
             .body(Body::from(json!(MARKER).to_string()))
             .unwrap();
         let output = response::restore(response, Replacements::new(entries()).unwrap());
-        assert_eq!(to_bytes(output.into_body(), 1024).await.unwrap().as_ref(), expected.as_bytes());
+        assert_eq!(
+            to_bytes(output.into_body(), 1024).await.unwrap().as_ref(),
+            expected.as_bytes()
+        );
     }
     let mut restorer = Replacements::new(entries()).unwrap();
     let foreign = MARKER.replace("Person", "Company");
-    assert_eq!(restorer.feed(foreign.as_bytes(), true).unwrap().as_ref(), foreign.as_bytes());
+    assert_eq!(
+        restorer.feed(foreign.as_bytes(), true).unwrap().as_ref(),
+        foreign.as_bytes()
+    );
     let oversized = vec![(MARKER.to_owned(), "private".repeat(1024 * 1024))];
-    assert!(Replacements::new(oversized).unwrap().feed(MARKER.repeat(2).as_bytes(), true).is_err());
+    assert!(
+        Replacements::new(oversized)
+            .unwrap()
+            .feed(MARKER.repeat(2).as_bytes(), true)
+            .is_err()
+    );
 }
 
 #[tokio::test]
@@ -379,7 +473,11 @@ async fn native_and_responses_websockets_mask_upstream_events_and_restore_client
                                 "usage": {"input_tokens": 1, "output_tokens": 1}
                             }
                         });
-                        if socket.send(Message::Text(output.to_string().into())).await.is_err() {
+                        if socket
+                            .send(Message::Text(output.to_string().into()))
+                            .await
+                            .is_err()
+                        {
                             break;
                         }
                     }
@@ -388,7 +486,10 @@ async fn native_and_responses_websockets_mask_upstream_events_and_restore_client
         }
     };
     let upstream = Router::new()
-        .route("/v1/models", get(|| async { Json(json!({"data":[{"id":"gpt-unit"}]})) }))
+        .route(
+            "/v1/models",
+            get(|| async { Json(json!({"data":[{"id":"gpt-unit"}]})) }),
+        )
         .route("/v1/responses", get(echo.clone()))
         .route("/v1/realtime", get(echo));
     let (origin, provider) = serve_fixture(upstream).await;
@@ -399,48 +500,82 @@ async fn native_and_responses_websockets_mask_upstream_events_and_restore_client
     state.openai_compatible.api_key = Some("provider-test-credential".to_owned());
     state.openai_compatible.models = vec!["gpt-unit".to_owned()];
     state.openai_compatible.supported_clients = vec!["codex".to_owned()];
-    let token = state.token_manager.issue(&crate::token::IssueRequest {
-        ttl_hours: 1,
-        label: "privacy fixture",
-        account: Some("primary"),
-        client_kind: Some("codex"),
-        principal_id: Some("primary"),
-        ..Default::default()
-    }).unwrap();
+    let token = state
+        .token_manager
+        .issue(&crate::token::IssueRequest {
+            ttl_hours: 1,
+            label: "privacy fixture",
+            account: Some("primary"),
+            client_kind: Some("codex"),
+            principal_id: Some("primary"),
+            ..Default::default()
+        })
+        .unwrap();
     let native_state = state.clone();
     let (endpoint, scanner) = scanner_stub().await;
     let app = Router::new()
-        .route("/api/services/openai/v1/responses", get(crate::responses_websocket::protected_openai))
-        .route("/api/services/openai/v1/realtime", get(move |request: Request| {
-            let state = native_state.clone();
-            let url = format!("{origin}/v1/realtime");
-            async move {
-                let target = crate::native_service::Target { client: state.client.clone(), url, headers: HeaderMap::new() };
-                crate::native_service::upgrade_websocket(state, request, target, None).await
-            }
-        }))
+        .route(
+            "/api/services/openai/v1/responses",
+            get(crate::responses_websocket::protected_openai),
+        )
+        .route(
+            "/api/services/openai/v1/realtime",
+            get(move |request: Request| {
+                let state = native_state.clone();
+                let url = format!("{origin}/v1/realtime");
+                async move {
+                    let target = crate::native_service::Target {
+                        client: state.client.clone(),
+                        url,
+                        headers: HeaderMap::new(),
+                    };
+                    crate::native_service::upgrade_websocket(state, request, target, None).await
+                }
+            }),
+        )
         .with_state(state)
-        .layer(axum::middleware::from_fn_with_state(PrivacyRoute {
-            scanner: Some(Arc::new(Scanner::new(&endpoint, TOKEN.to_owned(), "full").unwrap())),
-            limit: LIMIT,
-        }, route));
+        .layer(axum::middleware::from_fn_with_state(
+            PrivacyRoute {
+                scanner: Some(Arc::new(
+                    Scanner::new(&endpoint, TOKEN.to_owned(), "full").unwrap(),
+                )),
+                limit: LIMIT,
+            },
+            route,
+        ));
     let (origin, router) = serve_fixture(app).await;
     tokio::time::timeout(Duration::from_secs(15), async {
         for surface in ["responses", "realtime"] {
-            let mut request = format!("{}/api/services/openai/v1/{surface}", origin.replacen("http", "ws", 1))
-                .into_client_request().unwrap();
+            let mut request = format!(
+                "{}/api/services/openai/v1/{surface}",
+                origin.replacen("http", "ws", 1)
+            )
+            .into_client_request()
+            .unwrap();
             let headers = request.headers_mut();
             headers.insert("authorization", format!("Bearer {token}").parse().unwrap());
             headers.insert("user-agent", HeaderValue::from_static("codex_exec/0.153.0"));
-            headers.insert("openai-beta", HeaderValue::from_static("responses_websockets=2026-02-06"));
+            headers.insert(
+                "openai-beta",
+                HeaderValue::from_static("responses_websockets=2026-02-06"),
+            );
             headers.insert("originator", HeaderValue::from_static("codex_cli_rs"));
-            headers.insert("x-codex-turn-metadata", HeaderValue::from_static("responses-websocket-unit"));
-            headers.insert("x-openai-internal-codex-responses-lite", HeaderValue::from_static("true"));
+            headers.insert(
+                "x-codex-turn-metadata",
+                HeaderValue::from_static("responses-websocket-unit"),
+            );
+            headers.insert(
+                "x-openai-internal-codex-responses-lite",
+                HeaderValue::from_static("true"),
+            );
             headers.insert(SESSION, HeaderValue::from_static("fixture"));
             let (mut socket, _) = tokio_tungstenite::connect_async(request).await.unwrap();
             for kind in ["response.create", "conversation.item.create"] {
                 let event = json!({"type":kind,"model":"gpt-unit","input":PERSON});
-                socket.send(Frame::Text(event.to_string().into())).await.unwrap();
+                socket
+                    .send(Frame::Text(event.to_string().into()))
+                    .await
+                    .unwrap();
                 let Frame::Text(reply) = socket.next().await.unwrap().unwrap() else {
                     panic!("expected restored JSON");
                 };
@@ -449,11 +584,19 @@ async fn native_and_responses_websockets_mask_upstream_events_and_restore_client
                 assert_eq!(captured.recv().await.unwrap()["input"], MARKER);
             }
             socket.send(Frame::Ping(vec![7, 8].into())).await.unwrap();
-            assert_eq!(socket.next().await.unwrap().unwrap(), Frame::Pong(vec![7, 8].into()));
+            assert_eq!(
+                socket.next().await.unwrap().unwrap(),
+                Frame::Pong(vec![7, 8].into())
+            );
             socket.send(Frame::Binary(vec![1, 2].into())).await.unwrap();
-            assert!(matches!(socket.next().await.unwrap().unwrap(), Frame::Close(Some(_))));
+            assert!(matches!(
+                socket.next().await.unwrap().unwrap(),
+                Frame::Close(Some(_))
+            ));
         }
-    }).await.unwrap();
+    })
+    .await
+    .unwrap();
     assert!(captured.try_recv().is_err());
     for task in [scanner, provider, router] {
         task.abort();
