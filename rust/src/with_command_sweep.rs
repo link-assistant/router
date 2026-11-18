@@ -83,6 +83,11 @@ pub(super) fn sweep_stale_directories(ours: &Path) {
 }
 
 fn run_is_active(path: &Path, pid: u32) -> bool {
+    // A concurrent run can have created the lease file and still be waiting
+    // to lock it. The current process also owns all of its TempDir handles.
+    if pid == std::process::id() {
+        return true;
+    }
     let lease = match fs::OpenOptions::new()
         .read(true)
         .write(true)
@@ -94,10 +99,7 @@ fn run_is_active(path: &Path, pid: u32) -> bool {
         Err(_) => return true,
     };
     match lease.try_lock() {
-        Ok(()) => {
-            let _ = lease.unlock();
-            false
-        }
+        Ok(()) => process_alive(pid),
         Err(TryLockError::WouldBlock | TryLockError::Error(_)) => true,
     }
 }

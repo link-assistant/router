@@ -93,6 +93,25 @@ fn the_sweep_keeps_a_leased_directory_even_if_its_name_claims_a_dead_pid() {
 }
 
 #[test]
+fn the_sweep_keeps_a_live_run_between_creating_and_locking_its_lease() {
+    let fixture = SweepFixture::new();
+    let preparing = fixture.root.path().join(format!(
+        "link-assistant-router-with-{}-preparing",
+        std::process::id()
+    ));
+    fs::create_dir(&preparing).expect("create the live run");
+    let lease = fs::File::create(preparing.join(".active.lock")).expect("open lease");
+
+    sweep_stale_directories(&fixture.ours);
+
+    assert!(
+        preparing.is_dir(),
+        "the live run must be able to finish setup"
+    );
+    lease.lock().expect("take the lease after the sweep");
+}
+
+#[test]
 fn a_concurrent_sweep_cannot_remove_another_fixtures_unlocked_directory() {
     let fixture = SweepFixture::new();
     let leased = fixture.dead_run("lease-not-yet-locked");

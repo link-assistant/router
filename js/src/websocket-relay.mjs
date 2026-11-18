@@ -62,7 +62,7 @@ export async function relayWebSocket(incoming,downstream,head,{target,authorize,
   const key=incoming.headers['sec-websocket-key'];
   if(typeof key !== 'string' || !/^[A-Za-z0-9+/]{22}==$/.test(key) || incoming.headers['sec-websocket-version'] !== '13'){reject(downstream,400,'Invalid WebSocket handshake');return;}
   let binding;try{binding=await target();}catch(error){reject(downstream,error.status ?? 500,error.message);return;}
-  const {url,headers,claims}=binding,upstreamKey=randomBytes(16).toString('base64');
+  const {url,headers,claims,privacy}=binding,upstreamKey=randomBytes(16).toString('base64');
   const shareGeolocation=sharesGeolocation(new Headers(incoming.headers));
   const options={...(binding.ca?{ca:binding.ca}:{}),method:'GET',headers:{...Object.fromEntries(headers),connection:'Upgrade',upgrade:'websocket','sec-websocket-key':upstreamKey,'sec-websocket-version':'13'},timeout:timeoutMs};
   let connecting=true;
@@ -81,8 +81,20 @@ export async function relayWebSocket(incoming,downstream,head,{target,authorize,
     const completed=new Set();let inFlight=0,closed=false;
     const tokenId=claims.sub ?? claims.id;
     const stop=async (code,reason) => {if(closed)return;closed=true;downstream.end(closeFrame(code,reason));upstream.end(closeFrame(code,reason,true));while(inFlight>0){inFlight--;await core.tokens?.settle?.(tokenId,0,0);}};
+    async function write(socket,frame) {
+      if (!socket.write(frame)) await new Promise(resolve=>socket.once('drain',resolve));
+    }
     const fromClient=new WebSocketInspector({masked:true,maxMessageBytes,onMessage:async(opcode,payload)=>{
+      if (privacy && opcode >= 8) {
+        if (opcode === 8) await stop(1000,'WebSocket closed');
+        if (opcode === 9) await write(downstream,encodeWebSocketFrame(10,payload,false));
+        return;
+      }
       let event;try{if(opcode===1)event=JSON.parse(payload.toString('utf8'));}catch{/* Preserve non-JSON text. */}
+      if (privacy) {
+        if (!event || typeof event !== 'object' || Array.isArray(event)) throw new ProtocolError('Sensitive data protection requires JSON events',415);
+        sanitizeGeolocation(event,shareGeolocation);
+      }
       if(event?.type === 'response.create') {
         const model=event.response?.model ?? event.model;
         const allowed=claims.record?.model_policy?.allowed_models ?? [];
@@ -90,10 +102,15 @@ export async function relayWebSocket(incoming,downstream,head,{target,authorize,
         if(model)await authorize(model);
         if(tokenId && core.tokens?.admit){const admitted=await core.tokens.admit(tokenId,0);if(admitted === false || typeof admitted === 'string' && admitted !== 'admitted')throw new ProtocolError('Router token budget is exhausted',429);inFlight++;}
       }
-      const frame=encodeWebSocketFrame(opcode,privateWebSocketPayload(opcode,payload,shareGeolocation));
-      if(!upstream.write(frame))await new Promise(resolve=>upstream.once('drain',resolve));
+      const outgoing = privacy ? await privacy.protectEvent(event) : privateWebSocketPayload(opcode,payload,shareGeolocation);
+      if (outgoing.length > maxMessageBytes) throw new ProtocolError('Protected WebSocket message exceeds limit',413);
+      await write(upstream,encodeWebSocketFrame(opcode,outgoing));
     }});
     const fromUpstream=new WebSocketInspector({masked:false,maxMessageBytes,onMessage:async(opcode,payload)=>{
+      if (privacy) {
+        if (opcode === 9) await write(upstream,encodeWebSocketFrame(10,payload));
+        else if (opcode !== 10) await write(downstream,encodeWebSocketFrame(opcode,opcode === 1 ? privacy.restoreEvent(payload) : payload,false));
+      }
       if(opcode !== 1)return;let event;try{event=JSON.parse(payload.toString('utf8'));}catch{return;}
       const response=event.response;if(!['response.completed','response.done'].includes(event.type) || !response?.id || completed.has(response.id))return;
       completed.add(response.id);if(completed.size>10000)throw new ProtocolError('WebSocket response identity limit exceeded',413);
@@ -108,7 +125,7 @@ export async function relayWebSocket(incoming,downstream,head,{target,authorize,
       source.once('close',()=>{if(!source.readableEnded)void pending.then(()=>sink.destroy());});
       if(initial.length)consume(initial);
     };
-    forward(downstream,upstream,fromClient,head,false);forward(upstream,downstream,fromUpstream,upstreamHead);
+    forward(downstream,upstream,fromClient,head,false);forward(upstream,downstream,fromUpstream,upstreamHead,!privacy);
   });
   request.end();
 }

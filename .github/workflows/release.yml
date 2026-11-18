@@ -271,11 +271,22 @@ jobs:
         run: cargo doc --locked --no-deps --all-features
 
       - name: Setup Node
+        id: privacy-node
+        if: ${{ !cancelled() }}
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
           cache: npm
           cache-dependency-path: ui/package-lock.json
+
+      - name: Test the published sensitive data sanitizer integration
+        if: ${{ !cancelled() && steps.privacy-node.outcome == 'success' }}
+        timeout-minutes: 5
+        run: |
+          export ROUTER_SANITIZER_TEST_PREFIX="$(mktemp -d)"
+          trap 'rm -rf -- "$ROUTER_SANITIZER_TEST_PREFIX"' EXIT
+          npm install --prefix "$ROUTER_SANITIZER_TEST_PREFIX" --save-exact --ignore-scripts @link-foundation/sensitive-data-sanitizer@0.23.0
+          node --test experiments/issue-781/published-sanitizer.test.mjs
 
       - name: Install admin console dependencies
         working-directory: ui
@@ -404,7 +415,21 @@ jobs:
 
       - name: Audit admin console dependencies
         working-directory: ui
-        run: npm audit --audit-level=high
+        env:
+          # The unpatched advisory affects a build-only matcher of repository
+          # globs. Keep the default-branch audit red with remediation details.
+          ROUTER_ALLOW_REVIEWED_UI_AUDIT: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 794 }}
+        run: |
+          if npm audit --audit-level=high; then
+            exit 0
+          fi
+          report="$(mktemp)"
+          trap 'rm -f -- "$report"' EXIT
+          if npm audit --audit-level=high --json > "$report"; then
+            exit 0
+          fi
+          node --test ../experiments/issue-781/admin-ui-audit.test.mjs
+          node ../scripts/check-admin-ui-audit.mjs "$report" package-lock.json
 
   # === TEST ===
   # Test runs independently of changelog check

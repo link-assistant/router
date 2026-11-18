@@ -2262,6 +2262,9 @@ curl -s -X POST http://localhost:8080/api/management/tokens \
 - Router's [geolocation policy](docs/privacy/geolocation.md) defaults to removing
   explicit location metadata from supported inference traffic and documents the
   opt-in and vendor/network limits.
+- [Sensitive data protection](docs/privacy/sensitive-data.md) optionally masks
+  detected personal data before forwarding inference and restores placeholders
+  within the authenticated client session.
 - The `TOKEN_SECRET` must be kept secure — anyone with the secret can forge tokens
 - OAuth tokens from the Claude Code session are never exposed to clients
 - Tokens are validated on every request

@@ -63,6 +63,7 @@ pub async fn upgrade_websocket(
     usage_identity: Option<(String, crate::model_contract::ModelAccessPolicy)>,
 ) -> Response {
     let (mut parts, _) = request.into_parts();
+    let privacy = parts.extensions.remove::<crate::sensitive_data::WebSocketPrivacy>();
     let share_geolocation = crate::geolocation::shares_geolocation(&parts.headers);
     let upgrade = match WebSocketUpgrade::from_request_parts(&mut parts, &state).await {
         Ok(upgrade) => upgrade,
@@ -86,6 +87,7 @@ pub async fn upgrade_websocket(
                 usage_identity,
                 metrics,
                 share_geolocation,
+                privacy,
             )
         });
     for (name, value) in upstream_headers {
@@ -162,6 +164,7 @@ async fn websocket_session(
     usage_identity: Option<(String, crate::model_contract::ModelAccessPolicy)>,
     metrics: Arc<crate::metrics::Metrics>,
     share_geolocation: bool,
+    mut privacy: Option<crate::sensitive_data::WebSocketPrivacy>,
 ) {
     let mut completed_responses = std::collections::HashSet::new();
     loop {
@@ -171,6 +174,12 @@ async fn websocket_session(
                     let _ = upstream.close(None).await;
                     break;
                 };
+                if privacy.is_some() {
+                    let Some(filtered) = crate::sensitive_data::private_control(&mut downstream, message).await else {
+                        continue;
+                    };
+                    message = filtered;
+                }
                 if let Message::Text(text) = &message
                     && let Ok(mut value) = serde_json::from_slice::<serde_json::Value>(text.as_bytes())
                     && crate::geolocation::sanitize(&mut value, share_geolocation)
@@ -213,6 +222,22 @@ async fn websocket_session(
                         }
                     }
                 }
+                if let Some(policy) = &mut privacy {
+                    let protected = match message {
+                        Message::Text(text) => match serde_json::from_slice(text.as_bytes()) {
+                            Ok(value) => policy.scan_event(value).await.map(|value| Message::Text(value.to_string().into())),
+                            Err(_) => Err(()),
+                        },
+                        Message::Binary(_) => Err(()),
+                        message => Ok(message),
+                    };
+                    let Ok(filtered) = protected else {
+                        close(&mut downstream, 1008, "sensitive data scan rejected").await;
+                        let _ = upstream.close(None).await;
+                        break;
+                    };
+                    message = filtered;
+                }
                 let closes = matches!(message, Message::Close(_));
                 if upstream.send(downstream_message(message)).await.is_err() || closes {
                     break;
@@ -238,7 +263,13 @@ async fn websocket_session(
                     false
                 };
                 let closes = matches!(message, tungstenite::Message::Close(_));
-                if downstream.send(upstream_message(message)).await.is_err() || closes {
+                let message = match (message, &mut privacy) {
+                    (tungstenite::Message::Text(text), Some(policy)) => {
+                        Message::Text(policy.restore_event(text.as_str()).into())
+                    }
+                    (message, _) => upstream_message(message),
+                };
+                if downstream.send(message).await.is_err() || closes {
                     break;
                 }
                 metrics.record_bytes(0, message_bytes);

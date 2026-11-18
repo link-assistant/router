@@ -23,6 +23,7 @@ pub(super) async fn relay<S>(
     tracking: &mut TurnTracking,
     mut downstream: WebSocket,
     mut upstream: tokio_tungstenite::WebSocketStream<S>,
+    mut privacy: Option<crate::sensitive_data::WebSocketPrivacy>,
 ) where
     S: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin,
 {
@@ -54,6 +55,20 @@ pub(super) async fn relay<S>(
                     let _ = upstream.close(None).await;
                     break;
                 };
+                if privacy.is_some() {
+                    let Some(filtered) = crate::sensitive_data::private_control(&mut downstream, message).await else {
+                        continue;
+                    };
+                    if matches!(filtered, Message::Binary(_)) {
+                        let _ = downstream.send(Message::Close(Some(CloseFrame {
+                            code: 1003,
+                            reason: "sensitive data protection requires JSON events".into(),
+                        }))).await;
+                        let _ = upstream.close(None).await;
+                        break;
+                    }
+                    message = filtered;
+                }
                 if let Message::Text(text) = &message {
                     let bytes = text.as_bytes();
                     let mut value = match serde_json::from_slice::<Value>(bytes) {
@@ -75,6 +90,18 @@ pub(super) async fn relay<S>(
                         &mut value,
                         crate::geolocation::shares_geolocation(headers),
                     ) {
+                        message = Message::Text(value.to_string().into());
+                    }
+                    if let Some(policy) = &mut privacy {
+                        let Ok(protected) = policy.scan_event(value).await else {
+                            let _ = downstream.send(Message::Close(Some(CloseFrame {
+                                code: 1008,
+                                reason: "sensitive data scan rejected".into(),
+                            }))).await;
+                            let _ = upstream.close(None).await;
+                            break;
+                        };
+                        value = protected;
                         message = Message::Text(value.to_string().into());
                     }
                     if value.get("type").and_then(Value::as_str) == Some("response.create") {
@@ -256,7 +283,13 @@ pub(super) async fn relay<S>(
                     tracking.feed_terminal(&value, text.as_bytes());
                 }
                 let closes = matches!(message, tungstenite::Message::Close(_));
-                if downstream.send(upstream_to_downstream(message)).await.is_err() || closes {
+                let message = match (message, &mut privacy) {
+                    (tungstenite::Message::Text(text), Some(policy)) => {
+                        Message::Text(policy.restore_event(text.as_str()).into())
+                    }
+                    (message, _) => upstream_to_downstream(message),
+                };
+                if downstream.send(message).await.is_err() || closes {
                     break;
                 }
             }

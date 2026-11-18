@@ -144,7 +144,7 @@ function resourceFor(path, method, headers) {
 }
 
 /** Opaque vendor operations: preserve bytes and bind owner resources to an exact account. */
-export function createNativeService({core,authorize,routingContext,fetch:upstreamFetch=globalThis.fetch,maxBodyBytes=4*1024*1024,maxResponseBytes=32*1024*1024,timeoutMs=120000,affinities=core.affinities ?? new NativeAffinityStore()}) {
+export function createNativeService({core,authorize,routingContext,fetch:upstreamFetch=globalThis.fetch,maxBodyBytes=4*1024*1024,maxResponseBytes=32*1024*1024,timeoutMs=120000,affinities=core.affinities ?? new NativeAffinityStore(),identityResponse=false}) {
   async function select(request, claims, service, document, exact) {
     const pathModel = /\/publishers\/anthropic\/models\/([^/:]+)(?:\/count-tokens)?:(?:rawPredict|streamRawPredict)$/.exec(new URL(request.url).pathname)?.[1];
     const context = {...routingContext(request,claims),service,model:document?.model ?? (pathModel ? decodeURIComponent(pathModel) : undefined),protocol:['anthropic','bedrock','vertex'].includes(service) ? 'anthropic' : 'chat'};
@@ -273,7 +273,9 @@ export function createNativeService({core,authorize,routingContext,fetch:upstrea
       const timer = setTimeout(() => controller.abort(new Error('Native upstream timeout')),timeoutMs); timer.unref?.();
       const cleanup = () => {clearTimeout(timer);request.signal.removeEventListener('abort',abort);};
       let upstream;
-      try { upstream = await upstreamFetch(nativeURL(selected.base_url,service,conversation?.forwardPath ?? path,url.search),{method:request.method,headers:nativeRequestHeaders(request.headers,candidate),...(['GET','HEAD'].includes(request.method) ? {} : {body:bytes}),signal:controller.signal,redirect:'manual'}); }
+      const upstreamHeaders = nativeRequestHeaders(request.headers,candidate);
+      if (identityResponse) upstreamHeaders.set('accept-encoding','identity');
+      try { upstream = await upstreamFetch(nativeURL(selected.base_url,service,conversation?.forwardPath ?? path,url.search),{method:request.method,headers:upstreamHeaders,...(['GET','HEAD'].includes(request.method) ? {} : {body:bytes}),signal:controller.signal,redirect:'manual'}); }
       catch { cleanup(); throw new ProtocolError('Native upstream request failed',502); }
       const headers = nativeResponseHeaders(upstream.headers);
       if (conversation) {
