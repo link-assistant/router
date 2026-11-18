@@ -89,7 +89,10 @@ recorded separately.
   and asserts stable person and company markers, irreversible credentials and
   caller/session isolation in an echoed response. The first run exposed an
   unsupported option. The adapter uses the published `maxInputLength` option
-  and separately bounds HTTP request and response bytes.
+  and separately bounds HTTP request and response bytes. The smoke test passed
+  on Node 24 with the pinned release in commit
+  `665ec469ec164f59177cf199b2a624c4c2a9315e`.
+  [Smoke test](https://github.com/link-assistant/router/actions/runs/44265045378/job/134670113275)
 - The third checkpoint, `ffe31060fdd1ddc933c7047ee9484bfbb9d140ed`,
   passed all four active JavaScript gates and the Ubuntu Rust suite, including
   eight privacy tests. CI measured 90,294 covered out of 103,027 lines and
