@@ -88,6 +88,13 @@ recorded separately.
   detection rules, sends synthetic names through the loopback request boundary
   and asserts stable person and company markers, irreversible credentials and
   caller/session isolation in an echoed response.
+- The follow-up's Rust dependency audit passed. The admin UI audit then
+  surfaced an unpatched advisory against the base branch's build-only
+  `picomatch@4.0.7` dependency. The audit still runs at high severity.
+  PR #794 can proceed only when the advisory and affected development
+  dependency paths match the checked exception. The default-branch check
+  directs the maintainer to update the lockfile when a patch is available.
+  [Advisory](https://github.com/advisories/GHSA-fc5q-39xc-vjpf)
 - Local tests and compilation remain unrun under the repository instructions.
   The manual development lane runs four JavaScript gates before Rust CI.
   Strict translation freshness and parity are unverified. Live vendor and
