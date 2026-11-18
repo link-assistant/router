@@ -143,6 +143,7 @@ pub(super) fn restore(response: Response, replacements: Replacements) -> Respons
     {
         return Response::from_parts(parts, body);
     }
+    let headers = &mut parts.headers;
     for name in [
         "content-length",
         "content-md5",
@@ -151,11 +152,9 @@ pub(super) fn restore(response: Response, replacements: Replacements) -> Respons
         "etag",
         "last-modified",
     ] {
-        parts.headers.remove(name);
+        headers.remove(name);
     }
-    parts
-        .headers
-        .insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
     let deltas = (mime == "text/event-stream").then(sse::SseDeltas::default);
     let chunks = stream::unfold(
         (Some(body.into_data_stream()), replacements, deltas),

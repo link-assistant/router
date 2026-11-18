@@ -308,11 +308,7 @@ impl Scanner {
     }
 }
 
-pub async fn route(
-    State(policy): State<PrivacyRoute>,
-    request: Request,
-    next: Next,
-) -> Response {
+pub async fn route(State(policy): State<PrivacyRoute>, request: Request, next: Next) -> Response {
     if !protected_path(request.method(), request.uri().path()) {
         return next.run(request).await;
     }
