@@ -410,7 +410,13 @@ async fn validates_scanner_output_and_authenticated_websocket_events() {
 #[tokio::test]
 async fn respects_replacement_limits_and_response_media_types() {
     let entries = || vec![(MARKER.to_owned(), PERSON.to_owned())];
-    assert!(Replacements::new(entries().repeat(257)).is_none());
+    let oversized_map = (1..=257)
+        .map(|number| {
+            let token = MARKER.replace("_1]]", &format!("_{number}]]"));
+            (token, PERSON.to_owned())
+        })
+        .collect();
+    assert!(Replacements::new(oversized_map).is_none());
     let mut duplicate = entries();
     duplicate.extend(entries());
     assert!(Replacements::new(duplicate).is_none());
