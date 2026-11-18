@@ -105,8 +105,8 @@ async fn anonymizes_request_metadata_and_restores_json_after_network_rechunking(
     );
 
     let event = format!("data: {{\"delta\":\"{MARKER}\"}}\n\ndata: [DONE]\n\n");
-    let (first, second) = event.as_bytes().split_at(28);
-    let chunks = [first, second].map(|part| Ok::<_, std::io::Error>(Bytes::copy_from_slice(part)));
+    let parts: [_; 2] = event.as_bytes().split_at(28).into();
+    let chunks = parts.map(|part| Ok::<_, std::io::Error>(Bytes::copy_from_slice(part)));
     let response = axum::http::Response::builder()
         .header("content-type", "text/event-stream")
         .header("content-length", event.len())

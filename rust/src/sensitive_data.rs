@@ -47,7 +47,7 @@ const STRUCTURAL_HEADERS: &[&str] = &[
 ];
 
 #[derive(Clone)]
-pub(crate) struct PrivacyRoute {
+pub struct PrivacyRoute {
     scanner: Option<Arc<Scanner>>,
     limit: usize,
 }
@@ -61,7 +61,7 @@ struct Scanner {
 }
 
 #[derive(Clone)]
-pub(crate) struct WebSocketPrivacy {
+pub struct WebSocketPrivacy {
     scanner: Arc<Scanner>,
     session: String,
     limit: usize,
@@ -110,7 +110,7 @@ impl WebSocketPrivacy {
     }
 }
 
-pub(crate) async fn private_control(socket: &mut WebSocket, message: Message) -> Option<Message> {
+pub async fn private_control(socket: &mut WebSocket, message: Message) -> Option<Message> {
     match message {
         Message::Ping(bytes) => {
             let _ = socket.send(Message::Pong(bytes)).await;
@@ -308,7 +308,7 @@ impl Scanner {
     }
 }
 
-pub(crate) async fn route(
+pub async fn route(
     State(policy): State<PrivacyRoute>,
     request: Request,
     next: Next,
@@ -420,23 +420,22 @@ async fn protect(
         headers,
         query,
     };
-    let scanned = scanner
+    let result = scanner
         .scan(Scan {
             session,
             document: &document,
         })
         .await?;
-    validate_pairs(&document.headers, &scanned.document.headers)?;
-    validate_pairs(&document.query, &scanned.document.query)?;
-    if document.body.is_null() != scanned.document.body.is_null()
-        || (!scanned.document.body.is_null() && !scanned.document.body.is_object())
+    validate_pairs(&document.headers, &result.document.headers)?;
+    validate_pairs(&document.query, &result.document.query)?;
+    if document.body.is_null() != result.document.body.is_null()
+        || (!result.document.body.is_null() && !result.document.body.is_object())
     {
         return Err(Failure::Unavailable);
     }
     if scanner.full {
-        let query =
-            (document.query != scanned.document.query).then_some(&scanned.document.query[..]);
-        apply_metadata(&mut parts, scanned.document.headers, query)?;
+        let query = (document.query != result.document.query).then_some(&result.document.query[..]);
+        apply_metadata(&mut parts, result.document.headers, query)?;
     }
     for name in [
         "content-length",
@@ -447,12 +446,12 @@ async fn protect(
     ] {
         parts.headers.remove(name);
     }
-    let body = if scanned.document.body.is_null() {
+    let body = if result.document.body.is_null() {
         Body::empty()
     } else {
-        Body::from(serde_json::to_vec(&scanned.document.body).map_err(|_| Failure::Unavailable)?)
+        Body::from(serde_json::to_vec(&result.document.body).map_err(|_| Failure::Unavailable)?)
     };
-    let replacements = Replacements::new(scanned.replacements).ok_or(Failure::Unavailable)?;
+    let replacements = Replacements::new(result.replacements).ok_or(Failure::Unavailable)?;
     Ok((Request::from_parts(parts, body), replacements))
 }
 
