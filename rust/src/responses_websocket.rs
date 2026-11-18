@@ -64,10 +64,8 @@ impl std::fmt::Debug for UpstreamTarget {
 mod tracking;
 use tracking::TurnTracking;
 
-#[allow(
-    clippy::unused_async,
-    reason = "Preserve the public Axum handler signature"
-)]
+// Preserve the public Axum handlers' async signatures.
+#[allow(clippy::unused_async)]
 pub async fn openai(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -76,10 +74,7 @@ pub async fn openai(
     upgrade_response(state, headers, upgrade, Namespace::OpenAi, None)
 }
 
-#[allow(
-    clippy::unused_async,
-    reason = "Preserve the public Axum handler signature"
-)]
+#[allow(clippy::unused_async)]
 pub async fn codex(
     State(state): State<AppState>,
     headers: HeaderMap,
