@@ -6,13 +6,48 @@ import {gzipSync} from 'node:zlib';
 import {createNativeRouter} from '../../../js/src/server.mjs';
 import {WebSocketInspector,encodeWebSocketFrame} from '../../../js/src/websocket-relay.mjs';
 import {createScannerHandler} from '../../../examples/sensitive-data-scanner.mjs';
+import {localDetectorFactory} from '../../../examples/sensitive-data-detectors.mjs';
+
+test('local privacy detectors validate reports and isolate fallback policy', {timeout:5000}, async t => {
+  const text = 'é Alice';
+  const calls = [];
+  const server = createServer(async (incoming,outgoing) => {
+    const chunks = [];
+    for await (const chunk of incoming) chunks.push(chunk);
+    const document = JSON.parse(Buffer.concat(chunks));
+    calls.push(document);
+    const isModel = incoming.url === '/v1/chat/completions';
+    const input = isModel ? document.messages[1].content : document.text;
+    const span = {start:3,end:8,category:isModel ? 'person_name' : 'private_person',confidence:0.9};
+    outgoing.end(JSON.stringify(isModel ? {choices:[{message:{
+      content:JSON.stringify({findings:input === text ? [span] : [{...span,confidence:9}]}),
+    }}]} : {detected_spans:[span]}));
+  });
+  await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
+  t.after(() => new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }));
+  const origin = `http://127.0.0.1:${server.address().port}`;
+  const normalize = (input,entries,{unit}) => entries.map(({start,end,type}) => ({
+    text:Buffer.from(input).subarray(start,end).toString(),type,unit,
+  }));
+  const model = {kind:'model',model:'fixture',endpoint:`${origin}/v1/chat/completions`,timeoutMs:3000};
+  const [strict,opf] = localDetectorFactory([model,{kind:'opf',endpoint:`${origin}/scan`,timeoutMs:3000}],normalize)();
+  const expected = [{text:'Alice',type:'PERSON',unit:'byte'}];
+  assert.deepEqual(await strict.detect(text),expected);
+  assert.deepEqual(await strict.detect(text),expected);
+  assert.deepEqual(await opf.detect(text),expected);
+  assert.equal(calls.length,2);
+  await assert.rejects(strict.detect('invalid fixture'),/detector failed/);
+  const [fallback] = localDetectorFactory([{...model,failPolicy:'regex_only'}],normalize)();
+  assert.deepEqual(await fallback.detect('invalid fixture'),[]);
+  assert.throws(() => localDetectorFactory([{...model,endpoint:'http://detector.test:8080/v1/chat/completions'}],normalize),/loopback/);
+});
 
 const token = 'fixture_loopback_scanner_credential';
 const name = 'Synthetic Person';
 const company = 'Synthetic Company';
 const typed = /^\[\[Router_[a-f0-9]{32}_Person_1\]\]$/;
 
-async function fixtureScanner(t) {
+async function fixtureScanner(t,options = {}) {
   let scans = 0;
   const handler = createScannerHandler({
     token,
@@ -29,6 +64,7 @@ async function fixtureScanner(t) {
         return {text:input.replaceAll('private-fixture-credential','[REDACTED]')};
       },
     }),
+    ...options,
   });
   const server = createServer(handler);
   await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
@@ -124,6 +160,40 @@ test('restores an SSE placeholder spanning physical chunks', {timeout:5000}, asy
   assert.equal(await response.text(),`data: {"type":"response.output_text.delta","delta":"${name}"}\n\ndata: [DONE]\n\n`);
 });
 
+test('restores SSE fragments in their own outputs and retains incomplete text', {timeout:5000}, async t => {
+  const {env} = await fixtureScanner(t);
+  const router = createNativeRouter({env,core:core(),fetch:async (_url,init) => {
+    const marker = JSON.parse(init.body).input;
+    const delta = (item_id,value) => `event: response.output_text.delta\r\ndata: ${JSON.stringify({type:'response.output_text.delta',item_id,delta:value})}\r\n\r\n`;
+    const wire = delta('first',`Hello ${marker.slice(0,14)}`) + delta('other','ordinary output') +
+      delta('first',`${marker.slice(14)}!`) + delta('other','Literal [') + 'data: [DONE]\r\n\r\n';
+    return new Response(wire,{headers:{'content-type':'text/event-stream'}});
+  }});
+  const response = await router.fetch(inference({model:'m',input:name,stream:true,store:false}));
+  assert.equal(response.status,200);
+  const results = (await response.text()).split('\r\n')
+    .filter(line => line.startsWith('data: {')).map(line => JSON.parse(line.slice(6)));
+  assert.deepEqual(results.map(event => [event.item_id,event.delta]),[
+    ['first','Hello '],['other','ordinary output'],['first',`${name}!`],['other','Literal ['],
+  ]);
+});
+
+test('restoration policy can select categories or keep all responses pseudonymized', {timeout:5000}, async t => {
+  for (const options of [{restoreTypes:['company']},{restore:false}]) {
+    const {env} = await fixtureScanner(t,options);
+    const router = createNativeRouter({env,core:core(),fetch:async (_url,init) => {
+      const {input} = JSON.parse(init.body);
+      return Response.json(providerBody(input));
+    }});
+    const response = await router.fetch(inference({model:'m',input:`${name} of ${company}`,store:false}));
+    assert.equal(response.status,200);
+    const text = (await response.json()).output[0].content[0].text;
+    assert.match(text,/^\[\[Router_[a-f0-9]{32}_Person_1\]\] of /);
+    if (options.restore === false) assert.match(text,/_Company_1\]\]$/);
+    else assert.ok(text.endsWith(company));
+  }
+});
+
 test('refuses unauthorized, opaque, invalid and scanner-failed requests before provider access', {timeout:5000}, async t => {
   const {env,scans} = await fixtureScanner(t);
   let calls = 0;
@@ -132,6 +202,8 @@ test('refuses unauthorized, opaque, invalid and scanner-failed requests before p
   const requests = [
     [401,inference({model:'m',input:name},{key:'unknown'})],
     [415,inference({model:'m',input:[{type:'input_image',image_url:'https://example.test/fixture'}]})],
+    [415,inference({model:'m',input:[{type:'input_file',file_url:'https://example.test/fixture'}]})],
+    [415,inference({model:'m',messages:[{role:'user',content:[{type:'image',source:{type:'base64',data:'opaque'}}]}]},{route:'/api/services/anthropic/v1/messages'})],
     [415,inference('opaque',{headers:{'content-type':'application/octet-stream'}})],
     [415,inference({},{route:'/api/services/codex/v1/live'})],
     [400,inference('{')],

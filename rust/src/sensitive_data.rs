@@ -89,7 +89,10 @@ impl WebSocketPrivacy {
         if !scanned.document.body.is_object()
             || !scanned.document.headers.is_empty()
             || !scanned.document.query.is_empty()
-            || serde_json::to_vec(&scanned.document.body).map_err(|_| ())?.len() > self.limit
+            || serde_json::to_vec(&scanned.document.body)
+                .map_err(|_| ())?
+                .len()
+                > self.limit
         {
             return Err(());
         }
@@ -189,7 +192,8 @@ impl PrivacyRoute {
         let scanner = endpoint
             .to_str()
             .and_then(|endpoint| {
-                let token = crate::operation_context::var("ROUTER_SENSITIVE_DATA_SCANNER_TOKEN").ok()?;
+                let token =
+                    crate::operation_context::var("ROUTER_SENSITIVE_DATA_SCANNER_TOKEN").ok()?;
                 let scope = crate::operation_context::var("ROUTER_SENSITIVE_DATA_SCOPE")
                     .unwrap_or_else(|_| "full".to_owned());
                 Scanner::new(endpoint, token, &scope)
@@ -258,8 +262,7 @@ impl Scanner {
             .filter(|value| {
                 (1..=128).contains(&value.len())
                     && value.bytes().all(|byte| {
-                        byte.is_ascii_alphanumeric()
-                            || matches!(byte, b'.' | b'_' | b':' | b'-')
+                        byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b':' | b'-')
                     })
             });
         let session = session.filter(|_| values.next().is_none());
@@ -321,11 +324,15 @@ pub(crate) async fn route(
         .headers()
         .get("upgrade")
         .is_some_and(|value| value.as_bytes().eq_ignore_ascii_case(b"websocket"));
-    if !websocket
-        && (request.headers().contains_key("upgrade")
-            || request.method() == axum::http::Method::CONNECT
-            || path == "/api/services/codex/v1/live"
-            || path.contains("/realtime/calls"))
+    if path == "/api/services/codex/v1/live"
+        || path.starts_with("/api/services/codex/v1/live/")
+        || path.contains("/realtime/calls")
+        || (websocket
+            && request.uri().query().is_some_and(|query| {
+                url::form_urlencoded::parse(query.as_bytes()).any(|(name, _)| name == "call_id")
+            }))
+        || (!websocket && request.headers().contains_key("upgrade"))
+        || request.method() == axum::http::Method::CONNECT
     {
         return Failure::UnsupportedBody.render(&path);
     }
@@ -365,8 +372,8 @@ fn protected_path(method: &axum::http::Method, path: &str) -> bool {
                     | ServiceKind::Bedrock
             )
         )
-    })
-        || path.strip_prefix("/api/services/")
+    }) || path
+        .strip_prefix("/api/services/")
         .and_then(|path| path.split_once('/'))
         .is_some_and(|(service, _)| {
             matches!(
@@ -378,7 +385,10 @@ fn protected_path(method: &axum::http::Method, path: &str) -> bool {
             .strip_prefix("/v1/")
             .and_then(|path| path.split('/').next())
             .is_some_and(|kind| {
-                matches!(kind, "chat" | "conversations" | "messages" | "models" | "responses")
+                matches!(
+                    kind,
+                    "chat" | "conversations" | "messages" | "models" | "responses"
+                )
             })
 }
 
@@ -390,9 +400,7 @@ async fn protect(
 ) -> Result<(Request, Replacements), Failure> {
     let (mut parts, body) = request.into_parts();
     parts.headers.remove(SESSION);
-    let bytes = to_bytes(body, limit)
-        .await
-        .map_err(|_| Failure::TooLarge)?;
+    let bytes = to_bytes(body, limit).await.map_err(|_| Failure::TooLarge)?;
     let value = read_document(&parts.headers, bytes, limit).await?;
     let mut headers = Vec::new();
     let mut query = Vec::new();
@@ -426,7 +434,8 @@ async fn protect(
         return Err(Failure::Unavailable);
     }
     if scanner.full {
-        let query = (document.query != scanned.document.query).then_some(&scanned.document.query[..]);
+        let query =
+            (document.query != scanned.document.query).then_some(&scanned.document.query[..]);
         apply_metadata(&mut parts, scanned.document.headers, query)?;
     }
     for name in [
@@ -438,9 +447,6 @@ async fn protect(
     ] {
         parts.headers.remove(name);
     }
-    parts
-        .headers
-        .insert("accept-encoding", HeaderValue::from_static("identity"));
     let body = if scanned.document.body.is_null() {
         Body::empty()
     } else {
@@ -545,24 +551,41 @@ fn header<'a>(headers: &'a HeaderMap, name: &str) -> Result<Option<&'a str>, Fai
 fn contains_attachment(value: &Value) -> bool {
     match value {
         Value::Array(array) => array.iter().any(contains_attachment),
-        Value::Object(object) => object.iter().any(|(name, value)| {
-            (!value.is_null()
-                && matches!(
-                    name.as_str(),
+        Value::Object(object) => {
+            let attachment_type = matches!(
+                object.get("type").and_then(Value::as_str),
+                Some(
                     "audio"
-                        | "b64_json"
-                        | "file_data"
-                        | "file_id"
-                        | "file_uri"
-                        | "fileData"
-                        | "fileUri"
+                        | "base64"
+                        | "document"
+                        | "image"
                         | "image_url"
-                        | "inlineData"
-                        | "inline_data"
                         | "input_audio"
-                ))
-                || contains_attachment(value)
-        }),
+                        | "input_file"
+                        | "input_image"
+                )
+            );
+            attachment_type || object.iter().any(|(name, value)| {
+                (!value.is_null()
+                    && matches!(
+                        name.as_str(),
+                        "audio"
+                            | "b64_json"
+                            | "file_data"
+                            | "file_id"
+                            | "file_uri"
+                            | "file_url"
+                            | "fileData"
+                            | "fileUri"
+                            | "fileUrl"
+                            | "image_url"
+                            | "inlineData"
+                            | "inline_data"
+                            | "input_audio"
+                    ))
+                    || contains_attachment(value)
+            })
+        }
         Value::String(text) => text
             .get(..5)
             .is_some_and(|prefix| prefix.eq_ignore_ascii_case("data:")),

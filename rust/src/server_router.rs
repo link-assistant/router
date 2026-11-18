@@ -499,7 +499,8 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
             crate::account_policy_middleware::route,
         ))
         .route_layer(from_fn_with_state(state.clone(), crate::geolocation::route));
-    if let Some(policy) = crate::sensitive_data::PrivacyRoute::from_env(state.max_proxy_request_bytes)
+    if let Some(policy) =
+        crate::sensitive_data::PrivacyRoute::from_env(state.max_proxy_request_bytes)
     {
         routes = routes.route_layer(from_fn_with_state(policy, crate::sensitive_data::route));
     }

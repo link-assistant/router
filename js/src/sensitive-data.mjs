@@ -1,7 +1,9 @@
 import {createHash,randomUUID} from 'node:crypto';
+import {request as httpRequest} from 'node:http';
 import * as zlib from 'node:zlib';
 import {boundedBytes} from './native-service.mjs';
 import {ProtocolError} from './protocols.mjs';
+import {joinSensitiveDataDeltas} from './sensitive-data-sse.mjs';
 
 const scannerKey = 'ROUTER_SENSITIVE_DATA_SCANNER_URL';
 const sessionHeader = 'x-router-privacy-session';
@@ -20,8 +22,9 @@ const maxScannerBytes = 4 * 1024 * 1024;
 const maxRestoredBytes = 8 * 1024 * 1024;
 const blockedFields = new Set([
   'audio', 'b64_json', 'file_data', 'file_id', 'file_uri', 'fileData', 'fileUri',
-  'image_url', 'inlineData', 'inline_data', 'input_audio',
+  'file_url', 'fileUrl', 'image_url', 'inlineData', 'inline_data', 'input_audio',
 ]);
+const attachmentTypes = new Set(['audio','base64','document','image','image_url','input_audio','input_file','input_image']);
 
 export function protectsSensitiveData(path) {
   return /^\/api\/services\/(?:anthropic|bedrock|codex|gemini|openai|qwen|vertex)\//.test(path) ||
@@ -29,7 +32,7 @@ export function protectsSensitiveData(path) {
 }
 
 export function opaqueSensitiveDataRoute(path) {
-  return path === '/api/services/codex/v1/live' || /\/realtime\/calls(?:\/|$)/.test(path);
+  return /^\/api\/services\/codex\/v1\/live(?:\/|$)/.test(path) || /\/realtime\/calls(?:\/|$)/.test(path);
 }
 
 function scannerURL(value) {
@@ -41,13 +44,15 @@ function scannerURL(value) {
   return url;
 }
 
-function checkAttachments(value) {
+function checkAttachments(value, depth = 0) {
+  if (depth >= 128) throw new ProtocolError('Sensitive data protection requires JSON nested fewer than 128 levels',400);
   if (Array.isArray(value)) {
-    for (const item of value) checkAttachments(item);
+    for (const item of value) checkAttachments(item,depth + 1);
   } else if (value && typeof value === 'object') {
+    if (attachmentTypes.has(value.type)) throw new ProtocolError('Sensitive data protection cannot inspect attachments or referenced files', 415);
     for (const [key, item] of Object.entries(value)) {
       if (item !== null && blockedFields.has(key)) throw new ProtocolError('Sensitive data protection cannot inspect attachments or referenced files', 415);
-      checkAttachments(item);
+      checkAttachments(item,depth + 1);
     }
   } else if (typeof value === 'string' && /^data:/i.test(value)) {
     throw new ProtocolError('Sensitive data protection cannot inspect data URLs', 415);
@@ -122,14 +127,37 @@ function restoreStream(response, replacements) {
     }
     pending = Buffer.from(input.subarray(cursor));
   }
-  const body = response.body.pipeThrough(new TransformStream({
+  const source = type === 'text/event-stream' ? joinSensitiveDataDeltas(response.body,replacements) : response.body;
+  const body = source.pipeThrough(new TransformStream({
     transform(chunk, controller) { consume(chunk,false,controller); },
     flush(controller) { consume(Buffer.alloc(0),true,controller); },
   }));
   return new Response(body,{status:response.status,statusText:response.statusText,headers});
 }
 
-export function createSensitiveDataProtection(env, fetchScanner = globalThis.fetch) {
+function callScanner(endpoint,token,input,signal) {
+  return new Promise((resolve,reject) => {
+    const outgoing = httpRequest(endpoint,{method:'POST',agent:false,signal,headers:{
+      'content-type':'application/json','content-length':Buffer.byteLength(input),authorization:`Bearer ${token}`,
+    }}, async incoming => {
+      try {
+        if (incoming.statusCode !== 200) { incoming.destroy(); throw new Error('Scanner failed'); }
+        let size = 0;
+        const chunks = [];
+        for await (const chunk of incoming) {
+          size += chunk.length;
+          if (size > maxScannerBytes) throw new Error('Scanner reply exceeds limit');
+          chunks.push(chunk);
+        }
+        resolve(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks,size))));
+      } catch (error) { reject(error); }
+    });
+    outgoing.on('error',reject);
+    outgoing.end(input);
+  });
+}
+
+export function createSensitiveDataProtection(env) {
   if (!(scannerKey in env)) return null;
   const endpoint = scannerURL(env[scannerKey]);
   const token = env.ROUTER_SENSITIVE_DATA_SCANNER_TOKEN;
@@ -141,12 +169,7 @@ export function createSensitiveDataProtection(env, fetchScanner = globalThis.fet
     const input = JSON.stringify({session,document});
     if (Buffer.byteLength(input) > maxScannerBytes) throw new ProtocolError('Sensitive data scanner input exceeds limit',413);
     try {
-      const response = await fetchScanner(endpoint,{
-        method: 'POST', headers: {'content-type':'application/json', authorization:`Bearer ${token}`},
-        body: input, redirect: 'error', signal: AbortSignal.any([signal,AbortSignal.timeout(10000)]),
-      });
-      if (!response.ok) { await response.body?.cancel(); throw new Error('Scanner failed'); }
-      const result = JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await boundedBytes(response,maxScannerBytes)));
+      const result = await callScanner(endpoint,token,input,AbortSignal.any([signal,AbortSignal.timeout(10000)]));
       const cleaned = result.document;
       const replacements = checkedReplacements(result.replacements);
       if (document.body === null ? cleaned.body !== null : !cleaned.body || Array.isArray(cleaned.body) || typeof cleaned.body !== 'object') throw new Error('Invalid document');

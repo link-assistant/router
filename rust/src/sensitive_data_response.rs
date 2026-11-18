@@ -6,6 +6,9 @@ use axum::body::{Body, Bytes};
 use axum::response::Response;
 use futures_util::{StreamExt, stream};
 
+#[path = "sensitive_data_sse.rs"]
+mod sse;
+
 const PREFIX: &[u8] = b"[[Router_";
 const SUFFIX: &[u8] = b"]]";
 const MAX_TOKEN_BYTES: usize = 116;
@@ -49,7 +52,10 @@ impl Replacements {
         let mut output = Vec::with_capacity(input.len());
         let mut remaining = input.as_slice();
         while !remaining.is_empty() {
-            let Some(begin) = remaining.windows(PREFIX.len()).position(|part| part == PREFIX) else {
+            let Some(begin) = remaining
+                .windows(PREFIX.len())
+                .position(|part| part == PREFIX)
+            else {
                 let len = if eof {
                     remaining.len()
                 } else {
@@ -136,29 +142,44 @@ pub(super) fn restore(response: Response, replacements: Replacements) -> Respons
     {
         return Response::from_parts(parts, body);
     }
-    for name in ["content-length", "content-md5", "digest", "content-digest", "etag"] {
+    for name in [
+        "content-length",
+        "content-md5",
+        "digest",
+        "content-digest",
+        "etag",
+    ] {
         parts.headers.remove(name);
     }
+    let deltas = (mime == "text/event-stream").then(sse::SseDeltas::default);
     let chunks = stream::unfold(
-        (Some(body.into_data_stream()), replacements),
-        |(source, mut replacements)| async move {
+        (Some(body.into_data_stream()), replacements, deltas),
+        |(source, mut replacements, mut deltas)| async move {
             let mut source = source?;
             loop {
                 match source.next().await {
-                    Some(Ok(chunk)) => match replacements.feed(&chunk, false) {
-                        Ok(restored) if restored.is_empty() => {}
-                        Ok(restored) => {
-                            return Some((Ok(restored), (Some(source), replacements)));
+                    Some(Ok(chunk)) => {
+                        let joined = deltas
+                            .as_mut()
+                            .map(|state| state.feed(&chunk, false, &replacements.values));
+                        match replacements.feed(joined.as_deref().unwrap_or(&chunk), false) {
+                            Ok(restored) if restored.is_empty() => {}
+                            Ok(restored) => {
+                                return Some((Ok(restored), (Some(source), replacements, deltas)));
+                            }
+                            Err(error) => return Some((Err(error), (None, replacements, deltas))),
                         }
-                        Err(error) => return Some((Err(error), (None, replacements))),
-                    },
+                    }
                     Some(Err(error)) => {
-                        return Some((Err(io::Error::other(error)), (None, replacements)));
+                        return Some((Err(io::Error::other(error)), (None, replacements, deltas)));
                     }
                     None => {
-                        return match replacements.feed(&[], true) {
+                        let tail = deltas
+                            .as_mut()
+                            .map(|state| state.feed(&[], true, &replacements.values));
+                        return match replacements.feed(tail.as_deref().unwrap_or_default(), true) {
                             Ok(tail) if tail.is_empty() => None,
-                            result => Some((result, (None, replacements))),
+                            result => Some((result, (None, replacements, deltas))),
                         };
                     }
                 }

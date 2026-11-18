@@ -3,6 +3,7 @@ import {randomBytes,timingSafeEqual} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {createServer} from 'node:http';
 import {pathToFileURL} from 'node:url';
+import {localDetectorFactory} from './sensitive-data-detectors.mjs';
 
 const maximumBytes = 4 * 1024 * 1024;
 const maximumMapBytes = 128 * 1024;
@@ -12,6 +13,7 @@ const sessionLifetimeMs = 30 * 60 * 1000;
 const format = '[[Router_{Type}_{n}]]';
 const wireToken = /\[\[Router_[a-f0-9]{32}_[A-Za-z][A-Za-z0-9]{0,63}_[1-9][0-9]{0,5}\]\]/;
 const internalToken = /\[\[Router_([A-Za-z][A-Za-z0-9]{0,63})_([1-9][0-9]{0,5})\]\]/g;
+const internalEntry = new RegExp(`^${internalToken.source}$`);
 
 function json(res,status,value) {
   res.writeHead(status,{'content-type':'application/json','cache-control':'no-store'});
@@ -60,9 +62,15 @@ function pairsFromObjects(pairs,objects) {
 }
 
 export function createScannerHandler({
-  token, createSanitizer, createRestoreMap, detectorOptions = {}, clock = Date.now,
+  token, createSanitizer, createRestoreMap, detectorOptions = {}, createDetectors, restore = true, restoreTypes, clock = Date.now,
 }) {
   if (!/^[A-Za-z0-9_-]{32,128}$/.test(token ?? '')) throw new Error('Invalid sensitive data scanner token');
+  if (typeof restore !== 'boolean' || (restoreTypes !== undefined &&
+    (!Array.isArray(restoreTypes) || !restoreTypes.length || restoreTypes.some(type =>
+      typeof type !== 'string' || !/^[A-Za-z][A-Za-z0-9]{0,63}$/.test(type))))) {
+    throw new Error('Invalid sensitive data scanner restoration policy');
+  }
+  const restoredTypes = restoreTypes && new Set(restoreTypes.map(type => type.toLowerCase()));
   const authorization = Buffer.from(`Bearer ${token}`);
   const sessions = new Map();
   const active = new Set();
@@ -96,21 +104,34 @@ export function createScannerHandler({
       if (wireToken.test(input) || input.search(internalToken) !== -1) throw statusError(400);
       // The library verifies the post-transform text with its enabled detector
       // union. Occurrence records are unnecessary for derived model text.
+      const detectors = createDetectors?.();
       const sanitizer = createSanitizer({
-        profile: 'documents', maxBytes: maximumBytes, maxFindings: 4096,
+        profile: 'documents', publicKnowledge: false, maxBytes: maximumBytes, maxFindings: 4096,
         ...detectorOptions, structured: 'json',
+        ...(detectors?.length ? {detectors} : {}),
         transformation: {mode:'placeholder',format,map},
       });
       const sanitized = await sanitizer.sanitize(input);
       map.documents.length = 0;
       if (map.entries.length > maximumMatches || Buffer.byteLength(JSON.stringify(map)) > maximumMapBytes) throw statusError(413);
-      const toWire = (_token,label,number) => `[[Router_${namespace}_${label === 'Organization' ? 'Company' : label}_${number}]]`;
+      const wireLabel = label => label === 'Organization' ? 'Company' : label;
+      const toWire = (_token,label,number) => `[[Router_${namespace}_${wireLabel(label)}_${number}]]`;
       const masked = JSON.parse(sanitized.text.replace(internalToken,toWire));
+      const replacements = [];
+      if (restore) {
+        for (const entry of map.entries) {
+          const match = internalEntry.exec(entry.token);
+          if (!match) throw statusError(503);
+          if (!restoredTypes || restoredTypes.has(wireLabel(match[1]).toLowerCase())) {
+            replacements.push([toWire(...match),entry.values[0]]);
+          }
+        }
+      }
       const output = {
         document: {body: masked.body,
           headers: pairsFromObjects(document.headers,masked.headers),
           query: pairsFromObjects(document.query,masked.query)},
-        replacements: map.entries.map(entry => [entry.token.replace(internalToken,toWire),entry.values[0]]),
+        replacements,
       };
       if (Buffer.byteLength(JSON.stringify(output)) > maximumBytes) throw statusError(413);
       if (session) {
@@ -144,16 +165,20 @@ export function createScannerHandler({
 }
 
 async function main() {
-  const {createSanitizer,createRestoreMap} = await import('@link-foundation/sensitive-data-sanitizer');
+  const {createSanitizer,createRestoreMap,fromOffsetReport} = await import('@link-foundation/sensitive-data-sanitizer');
   const port = Number(process.env.ROUTER_SENSITIVE_DATA_SCANNER_PORT ?? '18082');
   const host = process.env.ROUTER_SENSITIVE_DATA_SCANNER_HOST ?? '127.0.0.1';
   if (!Number.isInteger(port) || port < 1024 || port > 65535 || !['127.0.0.1','::1'].includes(host)) {
     throw new Error('Invalid loopback scanner listener');
   }
   const policy = process.env.ROUTER_SENSITIVE_DATA_SCANNER_POLICY;
-  const detectorOptions = policy ? JSON.parse(await readFile(policy,'utf8')) : {};
+  const {localDetectors = [],...detectorOptions} = policy ? JSON.parse(await readFile(policy,'utf8')) : {};
+  const restore = process.env.ROUTER_SENSITIVE_DATA_RESTORE ?? 'true';
+  if (!['true','false'].includes(restore)) throw new Error('Invalid sensitive data restoration setting');
   const server = createServer({requestTimeout:10000,headersTimeout:5000},createScannerHandler({
     token:process.env.ROUTER_SENSITIVE_DATA_SCANNER_TOKEN,createSanitizer,createRestoreMap,detectorOptions,
+    createDetectors:localDetectorFactory(localDetectors,fromOffsetReport),
+    restore:restore === 'true',restoreTypes:process.env.ROUTER_SENSITIVE_DATA_RESTORE_TYPES?.split(',').map(type => type.trim()),
   }));
   server.maxConnections = 16;
   server.listen(port,host);

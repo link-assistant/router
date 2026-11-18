@@ -21,7 +21,7 @@ pinned detector into a separate directory:
 ```bash
 scanner_dir="$(mktemp -d)"
 chmod 700 "$scanner_dir"
-cp examples/sensitive-data-scanner.mjs "$scanner_dir/"
+cp examples/sensitive-data-{scanner,detectors}.mjs "$scanner_dir/"
 npm install --prefix "$scanner_dir" --save-exact --ignore-scripts @link-foundation/sensitive-data-sanitizer@0.23.0
 
 export ROUTER_SENSITIVE_DATA_SCANNER_TOKEN="$(openssl rand -hex 32)"
@@ -45,7 +45,46 @@ can be supplied as a private JSON file via
 `ROUTER_SENSITIVE_DATA_SCANNER_POLICY`. For example, add known private names or
 configure per-type thresholds using the [pinned sanitizer API options](https://github.com/link-foundation/sensitive-data-sanitizer/blob/v0.23.0/docs/API.md).
 The file can contain sensitive originals and belongs outside the checkout with
-restricted filesystem permissions.
+restricted filesystem permissions. Public-knowledge exemptions are off in the
+adapter's default policy.
+
+### Additional local detectors
+
+The optional `localDetectors` property in the scanner policy adds up to two
+detectors alongside the deterministic sanitizer rules. An OpenAI-compatible
+model receives text at a literal loopback `/v1/chat/completions` endpoint. Its
+completion must contain JSON with a `findings` array. Each entry includes
+`start` and `end` as UTF-8 byte offsets, a configured `category`, and a
+`confidence` from 0 to 1.
+
+```json
+{
+  "localDetectors": [
+    {
+      "kind": "model",
+      "endpoint": "http://127.0.0.1:8080/v1/chat/completions",
+      "model": "local-privacy-model",
+      "timeoutMs": 750,
+      "failPolicy": "fail_closed"
+    }
+  ]
+}
+```
+
+Use `kind: "opf"` with either a loopback `/scan` service or an executable
+`command` and optional `args`. The HTTP adapter sends `text` and `categories`
+as JSON. The CLI adapter writes the text to standard input and requests
+`--format json`. A locally installed wrapper can run the detector in a
+container. Both adapters accept a `findings`, `spans` or `detected_spans` array
+with UTF-8 byte offsets and a recognized `category` or `label`.
+
+Set `categories`, `minConfidence`, `maxBytes` or `timeoutMs` to narrow local
+detector work. The defaults are 0.7 minimum confidence, 8 KiB per value and
+750 milliseconds per call. The scanner limits concurrency, the number of
+values and aggregate processing time. Local detectors receive originals.
+Configure only processes you trust with those originals. Set
+`failPolicy: "regex_only"` to fall back to the sanitizer's deterministic
+rules on a local detector failure. The default policy refuses the request.
 
 ## Session and response behavior
 
@@ -66,10 +105,18 @@ for the same session can require an application retry.
 
 Complete, exact placeholders are restored in identity-encoded JSON, SSE
 records and supported JSON WebSocket response events. A placeholder can span
-network packets within a record. Modified tokens and tokens split between
-logical events can remain pseudonymized. This is reversible pseudonymization
-for a trusted recipient. Treat restored outputs and any client logs of those
-outputs as sensitive.
+network packets within a record. A bounded window also joins text deltas in
+OpenAI Responses and Chat Completions, Anthropic Messages, and Gemini SSE
+streams. It retains the original fragments when a match is incomplete or the
+window is exhausted. Modified tokens, other streaming event formats and
+tokens divided across WebSocket messages can remain pseudonymized.
+
+To keep output pseudonymized, set `ROUTER_SENSITIVE_DATA_RESTORE=false` on the
+scanner. To restore specific types only, set
+`ROUTER_SENSITIVE_DATA_RESTORE_TYPES=Person,Company` using the placeholder's
+type labels, case-insensitively. The scanner sends Router originals only for
+the enabled types. Treat restored outputs and any client logs of them as
+sensitive.
 
 ## Coverage
 

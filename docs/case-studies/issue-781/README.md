@@ -32,11 +32,11 @@ recorded separately.
 | --- | --- |
 | Regex, entropy and structural secret scanning, including JWTs, dotenv and connection strings | The sanitizer supplies provider and contextual rules, structural/encoded checks, Secretlint and entropy heuristics. The `paranoid` policy enables additional entropy heuristics. Add parity fixtures for each adversarial encoding and rule class before claiming equivalent detection. |
 | Partial mask, prefix/suffix controls and typed placeholders | The default add-on uses typed personal placeholders and complete credential redaction. The library exposes partial per-type masking through the optional policy. Exact ai-proxy prefix/suffix behavior for credentials is a policy gap. A dedicated opt-in strategy would need synthetic short/long credential tests and explicit documentation of retained fragments. |
-| Response restoration toggle and category allowlist | Per-type redaction overrides are available through the sanitizer policy. Placeholder absence disables restoration for those types. There is no standalone Router response-only toggle. Add a local no-restore mode if outbound placeholders must remain pseudonymized for clients. |
+| Response restoration toggle and category allowlist | The scanner supports a response-only restoration toggle and an allowlist of restorable placeholder types. Outbound masking uses the same policy for both settings. The fixture checks that disabled categories remain pseudonymized in client responses. |
 | Body or full scan with header exceptions | Supported. Full mode inspects eligible header and query values. Router authentication and transport controls retain their existing behavior. Arbitrary header exemption lists would need tests for defaults and operator trust boundaries. |
-| Local OpenAI-compatible model with hybrid, direct, verify-only and fail-policy modes | Bundled deterministic scanning. The sanitizer exposes a custom detector interface and a Presidio bridge. The example does not implement ai-proxy model modes. A local adapter would need bounded requests, validated offsets and explicit failure policy. Upstream [#217](https://github.com/link-foundation/sensitive-data-sanitizer/issues/217) tracks model adapters. |
-| OpenAI Privacy Filter HTTP, CLI and Docker wrapper | No bundled OPF detector. Use a local custom detector adapter after validating UTF-8 offsets, categories, confidence and timeouts. Upstream [#217](https://github.com/link-foundation/sensitive-data-sanitizer/issues/217) covers this integration. |
-| Streaming with chunk-boundary restoration and compressed responses | JSON/SSE restoration handles actual wire chunks without buffering the full response. Tokens divided between protocol deltas need per-output state. Encoded responses can pass through without transformation. Cover content encoding, delimiters, interleaved deltas and incomplete streams. |
+| Local OpenAI-compatible model with hybrid, direct, verify-only and fail-policy modes | The local model adapter combines deterministic and semantic results with byte-offset normalization, confidence checks and explicit failure policy. Model-only detection and model-assisted filtering of deterministic findings are gaps. Establish whether suppressing deterministic findings is acceptable before adding a policy that permits it. Upstream [#217](https://github.com/link-foundation/sensitive-data-sanitizer/issues/217) tracks model adapters. |
+| OpenAI Privacy Filter HTTP, CLI and Docker wrapper | The optional adapter accepts loopback HTTP and local OPF-compatible CLI reports. An installed wrapper can provide Docker execution. Router does not bundle a model, container or wrapper. Stub cases cover report normalization and failure policy. A live OPF qualification needs a pinned model and executable on the CI runner. Upstream [#217](https://github.com/link-foundation/sensitive-data-sanitizer/issues/217) covers this integration. |
+| Streaming with chunk-boundary restoration and compressed responses | JSON/SSE restoration handles actual wire chunks. A bounded window joins text deltas within the same output for Responses, Chat Completions, Anthropic and Gemini SSE events. Encoded responses can pass through without transformation. Fixtures cover physical chunks, interleaved deltas and incomplete markers. |
 | Anthropic and OpenAI/Codex API and subscription routing, including compact | The scanner is ahead of existing Router routing. Native provider links and credentials keep their existing ownership contracts. Validate vendor envelope retention with credential-free stubs before deployment, then run the separate live credentialed tier when available. |
 | HTTPS CONNECT blind forwarding and host-allowlisted CA MITM | Router's protection covers clients configured to use its API listeners. It does not implement a general outgoing CONNECT proxy or `included_hosts`/`excluded_hosts` MITM filters. A reviewed ingress adapter would need explicit managed certificate trust, tunneling vs denial rules, canonical host matching and independent protocol fixtures. |
 | WebSocket inspect, passthrough and reject modes | The add-on scans supported text frames and restores downstream text. Opaque client frames are refused when enabled. Disabled mode retains Router's native relay. Intermediate forwarding without scanning would require a separate policy that declares the exposure. |
@@ -75,9 +75,16 @@ recorded separately.
   isolated session maps, fail-closed responses, SSE rechunking and WebSocket
   inspection/restoration. It is wired into the normal Node and Bun server
   test entry point.
-- Rust oracle source covers loopback authentication, gzip, rewritten metadata,
-  session ownership and streamed JSON escaping.
-- The source is unverified. Local tests, compilation and strict translation
-  checks are unrun under the repository's drafting instructions. The four
-  active manual JavaScript gates must succeed for the same commit before Rust
-  CI. That workflow does not certify translation parity.
+- The first published checkpoint, `e5f873a28e3a620d29d302e58b07e9178ea33719`,
+  passed the four active JavaScript gates and Ubuntu Rust tests. Formatting,
+  macOS and coverage failed, and the dependency audit surfaced a maintenance
+  advisory on the existing `chrono` dependency. Measured coverage was 87.39%
+  against the 87.578120% baseline. [CI run](https://github.com/link-assistant/router/actions/runs/44252987395)
+- The follow-up adds cases for independent SSE text lanes, restoration types,
+  local model and OPF HTTP adapter reports, gzip expansion, zstd and opaque
+  request refusal, malformed scanner output, and masking on both native
+  Rust WebSocket relays. This source awaits same-commit CI.
+- Local tests and compilation remain unrun under the repository instructions.
+  The manual development lane runs four JavaScript gates before Rust CI.
+  Strict translation freshness and parity are unverified. Live vendor,
+  published sanitizer and OPF behavior require separate runtime evidence.

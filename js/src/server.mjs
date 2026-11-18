@@ -501,8 +501,10 @@ export function createNativeRouter(options = {}) {
         socket.once('close',() => controller.abort());
         const request=new Request(`${useTLS?'https':'http'}://${host.includes(':')?`[${host}]`:host}:${server.address().port}${incoming.url}`,{headers,signal:controller.signal});
         const target = async () => {
-          if (!privacy || !protectsSensitiveData(new URL(request.url).pathname)) return nativeService.websocketTarget(request);
+          const url = new URL(request.url);
+          if (!privacy || !protectsSensitiveData(url.pathname)) return nativeService.websocketTarget(request);
           await authorize(request,false);
+          if (opaqueSensitiveDataRoute(url.pathname) || url.searchParams.has('call_id')) throw new ProtocolError('Sensitive data protection cannot inspect direct media calls',415);
           const policy = await privacy.protect(request,bearer(headers) ?? headers.get('x-goog-api-key'),maxBodyBytes,true);
           return {...await nativeService.websocketTarget(policy.request),privacy:policy};
         };
