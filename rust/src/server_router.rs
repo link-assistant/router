@@ -322,7 +322,8 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
             )
             .route(
                 route_template(RouteId::OpenAiResponses),
-                post(proxy::openai_responses_route).get(crate::responses_websocket::openai),
+                post(proxy::openai_responses_route)
+                    .get(crate::responses_websocket::protected_openai),
             )
             .route(
                 route_template(RouteId::OpenAiResponse),
@@ -379,7 +380,8 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
             )
             .route(
                 route_template(RouteId::CodexResponses),
-                post(proxy::openai_responses_route).get(crate::responses_websocket::codex),
+                post(proxy::openai_responses_route)
+                    .get(crate::responses_websocket::protected_codex),
             )
             .route(
                 route_template(RouteId::CodexResponse),
@@ -491,16 +493,20 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
                 post(gemini::forward_native_vertex),
             );
     }
-    routes
+    let mut routes = routes
         .route_layer(from_fn_with_state(
             state.clone(),
             crate::account_policy_middleware::route,
         ))
-        .route_layer(from_fn_with_state(state.clone(), crate::geolocation::route))
-        .route_layer(from_fn_with_state(
-            (state, config.enable_anthropic_api),
-            authenticate_inference_route,
-        ))
+        .route_layer(from_fn_with_state(state.clone(), crate::geolocation::route));
+    if let Some(policy) = crate::sensitive_data::PrivacyRoute::from_env(state.max_proxy_request_bytes)
+    {
+        routes = routes.route_layer(from_fn_with_state(policy, crate::sensitive_data::route));
+    }
+    routes.route_layer(from_fn_with_state(
+        (state, config.enable_anthropic_api),
+        authenticate_inference_route,
+    ))
 }
 
 fn private_service_routes(state: AppState) -> Router<AppState> {

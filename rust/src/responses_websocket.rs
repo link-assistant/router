@@ -3,7 +3,7 @@
 use std::collections::HashSet;
 use std::time::Duration;
 
-use axum::extract::State;
+use axum::extract::{Extension, State};
 use axum::extract::ws::{CloseFrame, Message, WebSocket, WebSocketUpgrade};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::Response;
@@ -18,6 +18,7 @@ use crate::client_policy::ClientProtocol;
 use crate::config::UpstreamProvider;
 use crate::metrics::Surface;
 use crate::providers::ProviderKind;
+use crate::sensitive_data::WebSocketPrivacy;
 use crate::subscription::SubscriptionProvider;
 
 #[path = "responses_websocket/relay.rs"]
@@ -68,7 +69,7 @@ pub async fn openai(
     headers: HeaderMap,
     upgrade: WebSocketUpgrade,
 ) -> Response {
-    upgrade_response(state, headers, upgrade, Namespace::OpenAi)
+    upgrade_response(state, headers, upgrade, Namespace::OpenAi, None)
 }
 
 pub async fn codex(
@@ -76,7 +77,37 @@ pub async fn codex(
     headers: HeaderMap,
     upgrade: WebSocketUpgrade,
 ) -> Response {
-    upgrade_response(state, headers, upgrade, Namespace::Codex)
+    upgrade_response(state, headers, upgrade, Namespace::Codex, None)
+}
+
+pub(crate) async fn protected_openai(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    privacy: Option<Extension<WebSocketPrivacy>>,
+    upgrade: WebSocketUpgrade,
+) -> Response {
+    upgrade_response(
+        state,
+        headers,
+        upgrade,
+        Namespace::OpenAi,
+        privacy.map(|Extension(policy)| policy),
+    )
+}
+
+pub(crate) async fn protected_codex(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    privacy: Option<Extension<WebSocketPrivacy>>,
+    upgrade: WebSocketUpgrade,
+) -> Response {
+    upgrade_response(
+        state,
+        headers,
+        upgrade,
+        Namespace::Codex,
+        privacy.map(|Extension(policy)| policy),
+    )
 }
 
 /// Qwen does not implement the native Responses WebSocket protocol. Refuse the
@@ -97,6 +128,7 @@ fn upgrade_response(
     headers: HeaderMap,
     upgrade: WebSocketUpgrade,
     namespace: Namespace,
+    privacy: Option<WebSocketPrivacy>,
 ) -> Response {
     if let Err(error) = crate::proxy::authenticate_client_error(&state, &headers) {
         return error.render(crate::api_error::ApiDialect::OpenAi);
@@ -105,7 +137,7 @@ fn upgrade_response(
     upgrade
         .max_message_size(limit)
         .max_frame_size(limit)
-        .on_upgrade(move |socket| session(state, headers, socket, namespace))
+        .on_upgrade(move |socket| session(state, headers, socket, namespace, privacy))
 }
 
 async fn session(
@@ -113,6 +145,7 @@ async fn session(
     headers: HeaderMap,
     mut downstream: WebSocket,
     namespace: Namespace,
+    mut privacy: Option<WebSocketPrivacy>,
 ) {
     let first = match downstream.next().await {
         Some(Ok(Message::Text(text))) => text.to_string(),
@@ -187,6 +220,18 @@ async fn session(
     if let Err(error) = thinking_controls::apply_for_target(&state, &target, &mut first_event) {
         fail_and_close(&mut downstream, error, 1008).await;
         return;
+    }
+    if let Some(policy) = &mut privacy {
+        let Ok(protected) = policy.scan_event(first_event).await else {
+            let _ = downstream
+                .send(Message::Close(Some(CloseFrame {
+                    code: 1008,
+                    reason: "sensitive data scan rejected".into(),
+                })))
+                .await;
+            return;
+        };
+        first_event = protected;
     }
     let first_bytes = serde_json::to_vec(&first_event).expect("JSON values always serialize");
     let first_tracker = match reserve_turn(&state, &claims, &first_event) {
@@ -321,6 +366,7 @@ async fn session(
         &mut tracking,
         downstream,
         upstream,
+        privacy,
     )
     .await;
 }

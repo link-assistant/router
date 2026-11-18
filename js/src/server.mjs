@@ -21,6 +21,7 @@ import {matchHTTPRoute,HTTP_ROUTES} from './http-route-contract.mjs';
 import {isIP} from 'node:net';
 import {NativeRequestLog} from './request-log.mjs';
 import {isGeolocationHeader,sharesGeolocation,sanitizeGeolocation} from './geolocation.mjs';
+import {createSensitiveDataProtection,opaqueSensitiveDataRoute,protectsSensitiveData} from './sensitive-data.mjs';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, ...headers } });
@@ -58,7 +59,7 @@ function upstreamURL(base, protocol, endpointPath) {
   } else u.pathname = `${u.pathname.replace(/\/$/, '')}${/\/v1$/.test(u.pathname.replace(/\/$/, '')) ? '/' : '/v1/'}${paths[protocol]}`;
   return u;
 }
-function upstreamHeaders(candidate, protocol, request) {
+function upstreamHeaders(candidate, protocol, request, identityResponse = false) {
   const headers = new Headers({ 'content-type': 'application/json', accept: 'application/json, text/event-stream' });
   // Only operator-defined static headers are forwarded. Client credentials,
   // cookies, proxy headers and browser origin never become upstream headers.
@@ -79,6 +80,7 @@ function upstreamHeaders(candidate, protocol, request) {
   }
   const requestId = request.headers.get('x-request-id');
   if (requestId && /^[a-zA-Z0-9._:-]{1,128}$/.test(requestId)) headers.set('x-request-id', requestId);
+  if (identityResponse) headers.set('accept-encoding','identity');
   return headers;
 }
 function relayHeaders(upstream) {
@@ -104,6 +106,7 @@ export function createNativeRouter(options = {}) {
   if (!core) throw new TypeError('createNativeRouter requires core; use startNativeServer to create one from configuration');
   const tlsConfig = { ...core.config, ...options };
   const useTLS=Boolean(tlsConfig.tls_self_signed || tlsConfig.tlsSelfSigned || tlsConfig.tls_cert || tlsConfig.tlsCert || tlsConfig.tls_key || tlsConfig.tlsKey || tlsConfig.https || tlsConfig.tls || (Array.isArray(tlsConfig.listeners) ? tlsConfig.listeners : Object.values(tlsConfig.listeners ?? {})).some(listener=>listener?.tls || listener?.https || listener?.protocol === 'https' || typeof listener === 'string' && listener.startsWith('https:')));
+  const privacy = createSensitiveDataProtection(options.env ?? core.env ?? process.env);
   const responseStore = options.responseStore ?? new ResponsesStore({ clock, ...options.responseStoreOptions });
   const logs = []; const counters = { requests: 0, failures: 0, upstream_attempts: 0, input_tokens: 0, output_tokens: 0 };
   const peers=new WeakMap();
@@ -143,7 +146,7 @@ export function createNativeRouter(options = {}) {
     if (pin !== undefined && (typeof pin !== 'string' || !pin)) throw new ProtocolError('Configured service provider pin is invalid', 500);
     return { client, principalAccount: claims.account ?? undefined, provider: pin, service, path };
   }
-  const nativeService = createNativeService({core,authorize,routingContext,fetch:upstreamFetch,maxBodyBytes,maxResponseBytes,timeoutMs,affinities:options.affinities ?? core.affinities});
+  const nativeService = createNativeService({core,authorize,routingContext,fetch:upstreamFetch,maxBodyBytes,maxResponseBytes,timeoutMs,affinities:options.affinities ?? core.affinities,identityResponse:privacy !== null});
   async function models(request, claims) {
     if ((claims.sub ?? claims.id) && !claims.record && !(claims.label==='emergency-bypass' && claims.sub?.startsWith('emergency-bypass-'))) throw new ProtocolError('Durable model authority is unavailable', 403);
     const context = routingContext(request, claims);
@@ -302,7 +305,7 @@ export function createNativeRouter(options = {}) {
               if(body.stream)endpoint.search='?alt=sse';payload=native;
             }
           } else endpoint = upstreamURL(candidate.baseUrl ?? candidate.base_url ?? candidate.provider?.base_url, protocol, candidate.endpointPath);
-          response = await upstreamFetch(endpoint, { method: 'POST', headers: upstreamHeaders(candidate, protocol, request), body: JSON.stringify(payload), signal: controller.signal, redirect: 'error' });
+          response = await upstreamFetch(endpoint, { method: 'POST', headers: upstreamHeaders(candidate, protocol, request, privacy !== null), body: JSON.stringify(payload), signal: controller.signal, redirect: 'error' });
         } catch (error) {
           clearTimeout(timer); request.signal.removeEventListener('abort', abort);
           if (request.signal.aborted) throw new ProtocolError('Client disconnected', 499);
@@ -494,8 +497,16 @@ export function createNativeRouter(options = {}) {
       server.on('upgrade',(incoming,socket,head)=>{
         if(!['combined','inference-only'].includes(listenerKind)){socket.end('HTTP/1.1 404 Not Found\r\nConnection: close\r\nContent-Length: 0\r\n\r\n');return;}
         const headers=new Headers();for(const [name,value] of Object.entries(incoming.headers))if(value !== undefined)headers.set(name,Array.isArray(value)?value.join(', '):value);
-        const request=new Request(`${useTLS?'https':'http'}://${host.includes(':')?`[${host}]`:host}:${server.address().port}${incoming.url}`,{headers});
-        relayWebSocket(incoming,socket,head,{target:()=>nativeService.websocketTarget(request),authorize:model=>authorize(request,false,model),core,maxMessageBytes:maxBodyBytes,timeoutMs:Math.min(timeoutMs,15000)}).catch(()=>socket.destroy());
+        const controller = new AbortController();
+        socket.once('close',() => controller.abort());
+        const request=new Request(`${useTLS?'https':'http'}://${host.includes(':')?`[${host}]`:host}:${server.address().port}${incoming.url}`,{headers,signal:controller.signal});
+        const target = async () => {
+          if (!privacy || !protectsSensitiveData(new URL(request.url).pathname)) return nativeService.websocketTarget(request);
+          await authorize(request,false);
+          const policy = await privacy.protect(request,bearer(headers) ?? headers.get('x-goog-api-key'),maxBodyBytes,true);
+          return {...await nativeService.websocketTarget(policy.request),privacy:policy};
+        };
+        relayWebSocket(incoming,socket,head,{target,authorize:model=>authorize(request,false,model),core,maxMessageBytes:maxBodyBytes,timeoutMs:Math.min(timeoutMs,15000)}).catch(()=>socket.destroy());
       });
       try { await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, host, () => { server.off('error', reject); resolve(); }); }); }
       catch (error) { server = undefined; throw error; }
@@ -503,7 +514,33 @@ export function createNativeRouter(options = {}) {
     },
     async close() { responseStore.close?.(); if (!server) return; const current = server; server = undefined; if (!current.listening) return; await new Promise((resolve, reject) => { current.close(error => error ? reject(error) : resolve()); current.closeIdleConnections?.(); }); },
   };
-  async function dispatch(request) {const run=()=>requestLog ? requestLog.exchange(request,logged=>{if(peers.has(request))peers.set(logged,peers.get(request));return handle(logged);},{core}):handle(request);return core.withAuthenticationScope ? core.withAuthenticationScope(run):run();}
+  async function dispatch(request) {
+    async function run() {
+      const path = new URL(request.url).pathname;
+      const inference = listenerKind === 'combined' || listenerKind === 'inference-only';
+      let restore;
+      if (privacy && inference && protectsSensitiveData(path)) {
+        try {
+          await authorize(request,false);
+          if (opaqueSensitiveDataRoute(path)) throw new ProtocolError('Sensitive data protection cannot inspect direct media calls',415);
+          const protectedRequest = await privacy.protect(request,bearer(request.headers) ?? request.headers.get('x-goog-api-key'),maxBodyBytes);
+          if (peers.has(request)) peers.set(protectedRequest.request,peers.get(request));
+          request = protectedRequest.request;
+          restore = protectedRequest.restore;
+        } catch (error) {
+          const source = path.includes('/gemini/') || path.includes('/publishers/google/') ? 'gemini' :
+            path.includes('/anthropic/') || path.includes('/bedrock/') || path.includes('/publishers/anthropic/') || path.includes('/messages') ? 'anthropic' : 'chat';
+          return errorResponse(error,source);
+        }
+      }
+      const response = requestLog ? await requestLog.exchange(request,logged=>{
+        if (peers.has(request)) peers.set(logged,peers.get(request));
+        return handle(logged);
+      },{core}) : await handle(request);
+      return restore ? restore(response) : response;
+    }
+    return core.withAuthenticationScope ? core.withAuthenticationScope(run) : run();
+  }
   return router;
 }
 export async function startNativeServer(options = {}) {

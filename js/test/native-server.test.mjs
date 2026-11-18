@@ -6,3 +6,5 @@ import '../../parity/fixtures/server/aliases.test.mjs';
 
 import '../../parity/fixtures/server/geolocation.test.mjs';
 import '../../parity/fixtures/server/geolocation-websocket.test.mjs';
+
+import '../../parity/fixtures/server/sensitive-data.test.mjs';
