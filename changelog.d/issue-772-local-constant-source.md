@@ -1,1 +1,0 @@
-Draft complete local const type-position selection through existing guarded scalar source rules, preserving native initializer/hoisting and namespace refusals. Independent cases remain unrun and complete translation remains unfinished.

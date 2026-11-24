@@ -1,1 +1,0 @@
-Draft shared complete lifetime-only where clauses and explicit self receiver forms for paired scalar adoption with whole-owner refusals and complete inverses. Cases remain unrun; full translation is unfinished.

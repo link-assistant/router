@@ -1,1 +1,0 @@
-Draft qualified primitive vector from_slice array callers through the paired literal runtime, actual scalar and linear ownership checks, and private emission routing. Add independent native caller and refusal case source. All execution remains unrun; reverse integration and full translation remain unfinished.

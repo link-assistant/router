@@ -1,1 +1,0 @@
-Draft primitive parameterized vector reverse translation with fresh actual Rust input types, matching JS/TS symbols, native Rust type emission and guarded TypeScript/evaluator inputs. Preserve complete source/CST equations and independent unrun regression source.

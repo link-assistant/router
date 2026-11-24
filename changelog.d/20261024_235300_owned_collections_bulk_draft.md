@@ -1,1 +1,0 @@
-- Draft source-bound JSON map/filter-map callers through copied private checking, checked meta, Rust/TypeScript emission, independent interpreters and native TypeScript projection for #759/#772. Complete source histories and independent JavaScript/TypeScript/Rust regression source are retained; all execution and qualification remain deferred.

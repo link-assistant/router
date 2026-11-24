@@ -1,1 +1,0 @@
-Draft primitive literal calls in both owned JS/TS source lanes, paired type/import validation, Rust emission and canonical inverse, both interpreters and runtime preparation. Add independent all-domain receiving and refusal case source. All checks remain unrun; full translation, receiving qualification and parity remain open.

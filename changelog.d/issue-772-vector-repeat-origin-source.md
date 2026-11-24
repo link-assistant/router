@@ -1,1 +1,0 @@
-Draft fresh original Rust scalar let-prefix selection for repeated Vec reverse candidates while retaining native ownership/type/source checks. Include complete CST equations and independent unrun reverse/refusal cases.

@@ -1,1 +1,0 @@
-Draft bounded Boolean conditional vector reverse flow and matching fresh actual Rust branch-origin selection, preserving exact scalar domains and all leaf guards. Include complete CST equations and independent unrun reverse/native regression source.

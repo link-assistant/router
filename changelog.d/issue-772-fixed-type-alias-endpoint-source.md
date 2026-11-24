@@ -1,1 +1,0 @@
-Draft genuine protected scalar endpoints for existing monomorphic user alias chains while retaining original resolved-scope guards, current native source joins and whole inverses. Cases remain unrun; full translation is unfinished.

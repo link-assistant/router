@@ -1,1 +1,0 @@
-- Draft complete canonical Rust module-envelope inversion through checked meta, native-selected public aliases, closed scalar type APIs and mandatory full Rust reemission for #759/#772. Source histories and independent regression cases are retained; all execution remains deferred.

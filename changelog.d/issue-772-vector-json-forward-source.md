@@ -1,1 +1,0 @@
-Draft canonical owned Json comma-list vectors with registered layout checks and finalized whole-function linear transfer, retaining private source custody and rejecting duplicate moves/loans. Include complete CST equations and independent unrun strict TS/native regression source.

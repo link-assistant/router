@@ -1,1 +1,0 @@
-Draft Copy borrowed-str vector repetition with zero-seed lifetime retention and source-qualified static-str reverse mapping, preserving native static storage and Unicode guards. Include complete CST equations and independent unrun lifetime/native regression source.

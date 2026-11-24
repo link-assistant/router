@@ -1,1 +1,0 @@
-Draft invocation-local final input checks across nested native source copies, histories and metadata, preserving immediate checks and primary errors without cross-operation caches. Include descendant compiler closure and independent unrun regression source.

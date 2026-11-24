@@ -221,6 +221,2301 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.25.1] - 2026-11-24
+
+### Fixed
+
+- Use Bun's native module scanner for typed-target syntax verification, retaining
+  independent strict TypeScript compilation and execution of both target forms.
+- Derive a small metadata dispatcher through complete CST source substitutions
+  while preserving original composite calls, refusals, budgets and callbacks.
+
+### Documentation
+
+- Record the shared-contract translation plan and preserve all 139 failed or
+  cancelled streams from the complete final #771 and merge CI scope for #772.
+
+### Added
+
+- Translate Unicode scalar counts and checked integer ordering from JavaScript and TypeScript through CST/meta into Rust, with executable forward roundtrips and Rust CI witnesses.
+- Generate portable JSON validation bodies from optional JSON variant matches using separate language and repository substitution sequences. Both production safety-identifier JSON validators now translate alongside the module's other three functions.
+
+### Fixed
+
+- Compose the actual guarded-lexing source equations before frozen composer and
+  scanner comparisons, preserving their original pins and native API controls.
+  Regenerate the two affected operation modules through their source producers.
+
+### Tests
+
+- Add complete physical-source and foreign-body refusal controls. Qualify the
+  existing field and native output-storage paths against original bytes and
+  deadlines. Full generation and performance failures remain open.
+
+### Fixed
+
+- Generate a flat UTF16 retained-output compiler closure from the existing byte
+  and native implementations, preserving complete CST inverses, guarded host
+  operations, output bytes and original resource limits.
+- Keep the generated ASCII/scalar reverse witness separate from protected
+  authored Rust inputs during bidirectional synchronization.
+
+### Fixed
+
+- Regenerate the shared source-fixture bank from all 865 committed Rust/Cargo
+  inputs with the strict native/CST producer and independent full-byte review,
+  preserving the complete 806- and 808-file historical universes and inverses.
+
+### Fixed
+
+- Extend the strict source-fixture producer's repository substitution sequence
+  to use level-nine gzip for its complete output archive, preserving every
+  decoded byte while fitting the existing four-MiB compiler export file budget.
+- Refresh the complete isolated compiler registry and portable Git fixtures from
+  the actual current committed compiler and TypeScript sources.
+
+### Fixed
+
+- Route canonical/profile CI and local freshness checks and the synchronizer
+  through the flat retained CLI after its complete 862-source run passed the
+  existing memory/disk bounds; include that CLI in exported compiler closures.
+- Preserve the immutable supplemental-workflow archive through an additive
+  native-CST adapter that reverses exactly the two storage-command edits.
+
+### Fixed
+
+- Preserve caller temporary names while independently checking standard-library conversion bodies. Record fields surrounding `String::from`, `.into()` and primitive identity conversions retain their original values in generated JavaScript and TypeScript.
+- Verify current reverse-compiler source composition with the complete existing string-operation substitutions and their inverse, preserving the historical parent.
+- Add mixed-record conversion boundary cases and Rust source coverage for every provider and field returned by `empty_usage`. Rust verification runs only in CI after all JavaScript stages pass.
+
+### Changed
+
+- Apply the existing automated CST formatting-adoption rules to 125 candidate Router functions across 50 Rust source files, retaining complete proposals, unchanged unsupported cases and full source inverses.
+- Add a complete actual URI-module translation regression, independent shared JavaScript/TypeScript boundary cases and CI-only Rust oracle source. Full production coverage and reverse freshness remain separately checked.
+
+### Fixed
+
+- Keep complete source-composition checks within their original deadline by using the existing whole-source CST-equation transaction with both native copies and complete inverses.
+- Obtain the canonical development compiler profile through a bounded Node process when Bun rewrites callable source spelling, preserving the emitted runtime's identity guard and parser fallback.
+
+### Fixed
+
+- Compress the complete formatting-adoption source bank below the unchanged
+  4 MiB compiler-export file budget using a pinned precompiled Zopfli C/WebAssembly
+  fallback, with complete byte restoration and source/CST inverse checks. Keep
+  native gzip for ordinary inputs, original reader/producer APIs, all storage
+  limits and explicit translation/parity refusals.
+
+### Changed
+
+- Add source-derived semantic storage siblings to the explicit flat bulk
+  translator, preserving exact JSON and every original parser validation while
+  reducing temporary whole-document string copies. Keep original semantic APIs,
+  storage limits, refusals and the same-SHA JavaScript-before-Rust CI gate.
+
+### Fixed
+
+- Keep the flat compiler's method admission and checker on the original private
+  issuer by selecting bounded semantic storage through a separate closed entry.
+  Generate all edits and the delegating adapter from pinned complete source with
+  native AST selection and full CST inverses. Preserve original API defaults,
+  issuer bodies, callback controls and caller-codec refusals.
+
+### Changed
+- Add an automated CST-derived translation path that reuses matching checked project bodies while preserving carried metadata and the original standalone APIs.
+
+Use a separately generated bounded UTF-8 serializer and explicitly consuming
+storage planner for producer-owned translation metadata. Preserve the original
+non-consuming APIs, complete field bytes, validation, and storage limits. Add
+whole retained semantic/concrete field regressions and document partial
+consumption on later errors. Full-corpus generation and parity remain required.
+
+Encode selected components before ordinary fields, restore original output key
+order, and retain root fields as UTF-8 bytes to avoid duplicate root strings.
+Primitive BigInt conversion cannot invoke prototype callbacks. Require pressure
+verification of the complete decoded CST and original logical metadata digest.
+
+### Changed
+
+- Draft Clone and Debug tuple-struct namespace connections from the original
+  compiler source using the layered CST rule producer, retaining legacy APIs,
+  unsupported layouts and separate trait-execution obligations.
+
+### Fixed
+
+- Use the actual Rust package root in the bulk-adoption producer and reviewer,
+  retaining all nested Cargo input guards, logical fixture declarations and
+  complete physical source comparisons through native Python AST/CST rules.
+- Preserve original invalid and foreign CLI diagnostics by deferring the
+  operational helper import until it is needed after validation.
+- Use fresh native directory scans for evidence accounting while retaining
+  every original scan, byte/block count, refusal and resource limit.
+
+Release producer-owned project text immediately after each checked synchronous
+output-map transfer. Generate both transfers through the existing native AST
+and CST rule sequences. Add complete decoded-CST storage, retention and live
+output-census pressure coverage without changing heap, storage or case limits.
+
+Allow exact unchanged members of the complete source-trial closure while
+requiring the codec to change. Keep all sixteen fresh source inputs, full byte
+comparisons and changed-source refusal checks. Avoid a redundant trial payload
+for unchanged files; their complete original source remains in the packet.
+
+Release planner-owned declaration and source-scope arrays after their last
+standalone translation use. Generate the change through native binding and
+consumer-reference checks plus complete language/repository CST substitutions
+and inverses, preserving all output validation and resource limits.
+
+Regenerate the complete 863-source canonical JavaScript/TypeScript draft through
+the automated CST/meta pipeline within the original resource bounds. Qualify
+both whole canonical TypeScript trees and independently execute all six newly
+admitted production functions in Node and Bun, including Unicode, quoting,
+subsecond duration, maximum-u64 and JSON error cases. Preserve every carried
+body and refusal; full native parity and bidirectional freshness remain open.
+
+Schedule the existing complete forward suite, canonical check and owned-definition
+check in independent fixed matrix members; independently schedule both complete
+profile lanes. Keep the same eight required SHA stages, original commands and
+timeouts, all member failures and failed-test evidence. Generate and invert the
+workflow through native YAML CST rules and refuse incomplete or dynamic partitions.
+
+Repair reviewed core-adoption application and recovery for the physical Rust
+package, retaining every tracked nested Cargo manifest and lock in the complete
+source guards. Derive the changes through native syntax selections and separate
+language and repository substitution sequences with full CST inverses.
+
+Apply the independently reviewed full-corpus JSON-reader substitutions to token
+table scope and revoked fields. Add Rust regression source for empty and Unicode
+scopes, wrong JSON kinds and actual boolean handling. The source migration does
+not establish executable coverage or full translation parity.
+
+Draft the complete known default-byte source-history repair family using genuine
+tuple, guarded-import and source-substitution producer chains, full CST inverses
+and fresh physical source guards. Keep unknown-source refusals and original
+receiving case bodies and deadlines.
+
+Draft the additive filesystem effect family, ordered Result/lazy reverse flows,
+native-selected TypeScript scalar/absence constraints, source-bound pure module
+linking, three-language source-unit synchronization and shared reusable compiler
+entrypoint packaging. Include full
+source/CST rules, inverses, runtime declarations and independent JS/TS and CI-only
+Rust regression source. All new changes remain unverified while the complete
+requirement batch is being drafted; tests, experiments and CI publication are
+deferred.
+
+Draft canonical owned Rust source inversion and an owned-state three-language
+source-unit profile with complete fresh checking, physical runtime/native
+inputs, paired signature proposals and full source inverses. Preserve semantic
+metadata through unit packaging. These implementation and regression sources
+are unverified; bulk drafting and the existing complete gates remain open.
+
+Draft an additive original-source Clone enclosing namespace issuer and integrate
+it into complete sibling derive closure. Preserve actual field type roundtrips,
+both Copy resolver branches, helper/attribute owners and private source fences.
+
+Add a reusable native-selected substitution-copy preparer with complete pinned
+originals, separate language/repository sequences and full CST inverses. Draft
+independent positive/refusal regression source. These changes are unrun under
+the requested whole-requirement bulk drafting phase; no coverage, performance
+or complete synchronization qualification is claimed.
+
+Draft owned JSON/vector reassignment, conditional continuation and nested
+collection callbacks through the source checker, checked meta, both
+interpreters, Rust/TypeScript emission and canonical Rust inversion. Preserve
+complete source histories and add independent JS/TS and native Rust oracle
+source. All new behavior remains unverified during bulk drafting.
+
+Draft strongly connected module scheduling for pure JavaScript and TypeScript
+function/type-only cycles. Keep runtime-initialized cycles refused, retain the
+complete native binding and semantic pipeline, and preserve component history
+with per-module CST inverses. Capture the complete original linker and refusal
+case with separate source substitution sequences. New regressions are source
+only and unrun; complete module coverage and synchronization remain open.
+
+Draft complete source-unit runtime initialization through the existing bounded
+proposal/apply transaction, with physical JS/TS assets, retained originals,
+source protection, fresh rechecking and unchanged worker limits. Preserve the
+complete original implementation and CST substitution history. Independent
+regression source is unrun during bulk drafting.
+
+Draft finite-domain TypeScript scalar generic alias substitution, constraints,
+defaults and nested applications. Preserve complete written type histories and
+compare actual instantiated annotations with checked value IR. Retain the full
+original frontend, native-selected source rules and separate language/repository
+CST inverses. Independent module, boundary and refusal regressions are drafted
+and unrun; generic runtime functions and non-scalar families remain open.
+
+Draft automatic source adoption for five shared JSON predicate/fold iterator
+families using complete copies of the existing source adopter and bounded
+packet CLI. Retain original source/CST inverses and all namespace, producer,
+scope and dependency refusals. Independent JS/TS/native oracle source is unrun;
+adoption proposals do not establish executable coverage or native equivalence.
+
+Draft a complete copied scalar absence profile for TypeScript nullable and
+undefined parameters. Recheck strict guards, truthiness, typeof, short circuit
+refinement and matching typed calls before serialized meta emission. Use owned
+Rust string envelopes and preserve the legacy JavaScript parameter refusal.
+Retain all original sources, native-selected substitution rules, complete CST
+inverses and adjacent alias/absence source histories. Independent regressions
+are drafted and unrun; complete translation and receiving qualification remain
+open.
+
+### Added
+
+- Draft ordinary checked TypeScript return annotations and canonical reusable JS input/return docs, sharing the original annotation reader and retaining full erasure/inverse histories with independent unrun round-trip/refusal cases.
+- Draft original TypeScript arrow annotation domains and native spans, nested Parameters/ReturnType queries, full JavaScript erasure inverses and independent unrun nested/loop/strict TS/refusal source.
+- Draft complete existing JSON collection callback composition, checked helper/inline arrow bodies, owning fold accumulators, typed native closures and independent unrun JS/strict TS/native ordering, short-circuit and refusal source.
+- Draft complete existing JSON list state operations with distinct owned Vec/shared slice domains, root/move checks, native and paired-source-unit mappings, and independent unrun JS/strict TS/native oracle cases.
+- Draft borrowed JSON index/alias and local-view rules with all-root owner protection, shared native lifetimes and independent unrun JS/strict TS/native identity and escape cases.
+- Draft existing owned JSON storage/parse composition in resource callers, with actual library/source joins, owned branch/loop state, native inverses and independent unrun JS/strict TS/native oracle/refusal cases.
+- Draft continuing lexical branch/state joins, single-statement and else-if source rules, scope-aware native mutability and independent unrun JS/strict TS/native oracle cases; repair exact native function recipe boundaries without widening source authority.
+- Draft complete resource loop break/continue and function-return flows, Result/Option propagation, distinct exit summaries and native inverses, with independent unrun JS/strict TS/native oracle and refusal source.
+- Drafted text, Option callback and primitive/owned Result compatibility cores,
+  translator integration, automatic adoption packets and complete source inverses.
+- Drafted shared cancellation, deadline and bounded pull-channel interfaces.
+- Drafted cancellation-scoped HTTP implementation plumbing with listener cleanup.
+- Drafted pure HTTP header, request/response, status and body value interfaces,
+  both caller translation directions, interpreter and receiving integration.
+- Drafted guarded HTTP/1 clients, bounded pull streams, buffered sends,
+  explicit cleanup, matching network policy and receiving runtime closure.
+- Drafted native owned-JSON loop flow for while/range/shared iteration,
+  scalar updates, backedge moves, lexical loans and local loop exits.
+- Drafted checked JS/TS counted loops with native Rust ranges, inverse source
+  restoration and both interpreter paths.
+- Drafted shared iterator take chains with native count identity and retained
+  receiver loans through count evaluation.
+- Drafted owned caller flow through the existing source-backed reversed ranges.
+- Drafted inclusive descending JS/TS loops, native reversed-range inversion and
+  literal-bound contextualization.
+- Drafted forward-derived JS/TS string-edit synchronization proposals with
+  complete fresh recompilation and source inverses.
+
+These sources and independent regression cases remain unverified during the
+required bulk-drafting phase. Complete translation, production parity, async
+integration and the remaining requirement ledger are still open.
+
+- Draft fresh source-unit plan/apply and CLI copies for forward-derived JS/TS string edits, with complete originals, inverses and independent unrun conflict/forgery regressions.
+
+- Draft multi-literal forward-derived inverse rules and cross-module source-unit transactions with invocation-local bulk traversal and full unrun regression source.
+
+- Draft shared synchronization exports and retained original entrypoint prefixes, a forwarding API facade, receiving source cases and contribution guidance; all unverified.
+
+- Draft owned loop scalar map/filter callback flow with separate yielded-item and retained receiver/capture facts; independent strict target and Rust oracle source remains unrun.
+
+- Draft compiler-bound bulk string/Boolean/fixed-integer inverse synchronization and fresh source-unit/CLI/API export integration with full unrun regressions.
+
+- Draft signed fixed-integer inverse spans and canonical numeral boundaries with native min/max checks; independent target and Rust oracle source remains unrun.
+
+- Draft compiler-bound predicate expression inverse rules with preserved native trivia and mixed literal batches; independent strict target and Rust oracle source remains unrun.
+
+- Draft shared primitive slice loops and copied/dereferenced item flow in owned JSON callers, preserving optional byte parsing and full unrun target/native oracle source.
+
+- Draft corresponding readonly scalar-slice JS/TS source checking, both interpreters, native/typed emission, paired signatures and full Rust inverse source with independent unrun integration cases.
+
+- Draft complete scalar return-formula inverse proposals, preserved local prefixes, optional compiler signature data and fresh exported transactions/CLI; all independent regression and native oracle source remains unrun.
+
+- Draft checked return arithmetic inverse rules by observing complete pinned emitter helpers, retaining exact bounds/rounding/error metadata and full unrun JS/TS/native oracle source.
+
+- Draft version-control-aware full forward and supported inverse project source transactions, physical JS/TS runtime packaging, complete source histories and independent unrun receiving/conflict/refusal cases.
+
+- Draft explicit genuine enclosing producer/tool-prelude composition with complete original source histories, retained legacy/refusal domains and independent unrun JS/TS/native oracle source.
+
+- Draft checked scalar call and conditional-argument inverse composition with actual module/source associations, complete callee source data and independent unrun target/native oracle cases.
+
+- Draft whole scalar local-initializer/final-return inverse batches, actual lexical scope and native let intervals, exported project mode and independent unrun JS/TS/native oracle source.
+
+- Draft whole scalar control-body inverse rules for immutable locals and nested terminal branches, exact input-guard fences, exported project selection and independent unrun JS/TS/native oracle source.
+
+- Draft whole scalar imperative inverse rules for mutable locals, early returns, while and loop exits with actual native type observations, exported project mode and independent unrun JS/TS/native oracle source.
+
+- Draft actual fixed-range/inclusive/reverse for-of inverse rules with full original generator source observations, native domain proposals, exported project mode and independent unrun JS/TS/native oracle source.
+
+- Draft source-qualified f64 whole-body inverse rules with exact decimal decoder reuse, preserved legacy observations, complete registered standard runtime closure and independent unrun JS/TS/native oracle source.
+
+- Draft actual-import standard f64 inverse calls and checked sign refinements, shared source mechanics, reusable native-selected module extraction and independent unrun JS/TS/native oracle source.
+
+- Draft original fixed-runtime factory numeric call inverses, complete source derivations, project/export integration and independent unrun JS/TS/native boundary cases.
+
+- Draft bulk checked text predicate method-token inverses preserving original temporaries, complete source histories, JS/TS/project/export and unrun native oracle cases.
+
+- Draft deterministic batched composition of existing literal, text and numeric/control inverses, retaining full adjacent sources and final complete checking; all mixed regression source is unrun.
+
+- Draft separate synchronous cancellation caller qualification, linear local moves/shared borrows, checked meta, Rust/TS emission, both interpreters and independent unrun source/native cases; async/forward/inverse integration remains open.
+
+- Draft canonical synchronous Cancellation Rust-to-JS/TS restoration through fresh private move/borrow checking and whole Rust reproduction, with complete original copies and unrun regression source.
+
+- Draft three-language cancellation source-unit synchronization, paired borrow signatures, runtime initialization, complete native/Cargo capture and original fresh atomic installation; receiving cases are unrun.
+
+- Draft independently genuine tool-first derive input composition in the explicit enclosing project path, retaining the original constructor, complete source histories and unrun refusal/typed cases.
+
+- Draft plain-root declarative macro expansion using the complete original private engine, recursive forwarding, conservative hygiene/producer refusals, CST inverses and an original-compiler project adapter; independent JS/strict TS/native oracle source remains unrun. Split source-history and extension-guideline documentation without dropping obligations.
+
+- Draft source-bound cold cancellation/deadline/channel callers using the complete original control adapter, native role/move/borrow flow, explicit receiver cleanup, full CST inverses and independent unrun JS/strict TS/native oracle source.
+
+- Draft canonical async resource Rust inverse translation using complete original reader/consumer copies, tuple and mutable-borrow syntax, actual cleanup/capture proposals, fresh full JS/meta/Rust reproduction and independent unrun receiving/refusal source.
+
+- Draft physical JS/TS/Rust async-control source-unit synchronization, current paired borrow signatures, mirrored native/runtime source capture, original fresh atomic transactions and independent unrun receiving cases.
+
+- Draft complete transitive source-history forwarding through intermediate copy plans while preserving direct file membership, full CST inverses, fresh physical/original source guards and independent unrun regression source.
+
+- Draft source-bound u64 entry guards for async delay/capacity parameters, canonical Rust inverse guard proposals, paired numeric signatures and independent unrun JS/strict TS/native oracle/refusal source.
+
+- Draft fixed native/JS HTTP deadline operations with known-child settlement, explicit interrupted-read and late owned-stream cleanup, complete native root/library source construction, additive receiving closure and independent unrun loopback/strict TS/native oracle source.
+
+- Draft source-bound HTTP resource caller lowering, distinct nested error families, explicit client/stream cleanup, canonical native inverse reproduction and full original substitution histories; independent loopback, strict TS, native oracle and refusal source remains unrun.
+
+- Draft the physical HTTP resource source-unit profile, complete native/Cargo inputs, mirrored opaque runtimes, fresh paired signatures and original synchronization transactions in all three source directions; independent receiving/refusal source remains unrun.
+
+- Draft original-input-rooted HTTP borrowed text Results, checked local/branch root propagation, native lifetime emission and whole inverse reproduction with complete source histories and independent unrun native/refusal source.
+
+- Draft explicit by-value HTTP deadline Result adapters, all five control-error mappings, nested Result move/caller/inverse/unit rules, complete native root/runtime histories and independent unrun JS/strict TS/native/refusal source.
+
+- Draft shared text, callback-free primitive Result and JSON carrier composition in resource callers, explicit Option domains and local string-root loan tracking, with full original substitutions and independent unrun JS/strict TS/native/refusal source.
+
+- Draft complete Option guards in resource callers with absent-exit cleanup, explicit fallback domains, linear Some payloads, same-Option native propagation and full inverse/source histories; independent JS/strict TS/native/refusal source remains unrun.
+
+- Draft whole local helper composition, original call graph/order, cold future and returned-root flow, separate imported/local bindings and canonical complete native inverse proposals with full source histories and independent unrun receiving/native/refusal source.
+
+- Draft complete local helper input-release exit summaries, actual caller disposition and cleanup inverse rules with complete original source histories and independent unrun JS/strict TS/native/refusal source.
+
+- Draft complete multiple-input returned-root sets across helper calls, local views and Result/Option conversions, all-owner move/escape protection and full original source histories with independent unrun receiving/native/refusal source.
+
+- Draft explicit synchronous recursive helper groups with actual written return obligations, complete scalar/owned body checks, native annotation/source inverses and independent unrun JS/strict TS/native/refusal source.
+
+- Draft source-qualified unsigned fixed-width and primitive Option caller composition, strict primitive comparisons, guarded recursive arithmetic and full native/unit/source histories with independent unrun JS/strict TS/native/refusal source.
+
+- Draft checked scalar let/assignment/while fragments, full incoming loopback resource/type invariants, lexical mutability scopes and canonical whole native inverse rules, with complete originals and independent unrun receiving/native/refusal source.
+
+- Draft checked owned String state/reinitialization, all-root live-view replacement protection, loopback/native inverse preservation and complete original source histories with independent unrun receiving/native/refusal source.
+- Draft fresh original generic derive outer-attribute flow, complete builtin registration/collector source joins and shared finite-producer integration, with full CST/source inverses and independent unrun JS/native oracle cases. Caller ownership, namespace closure and all verification remain open.
+- Draft actual shared JSON slice/owned-list borrowing loops, complete element roots and loop/function exits, whole native reader/projection inverses and independent unrun JS/strict TS/native oracle and refusal source.
+- Draft actual read-only scalar/shared callback captures, lexical shadows, nested free uses and native inverse scopes, with complete original histories and independent unrun JS/strict TS/native oracle and refusal source.
+- Draft actual owned public inputs, settled operation-future type queries, cold return obligations, owned recursive signatures and shared native/paired proposals, with complete original histories and independent unrun JS/strict TS/native oracle and refusal source.
+- Draft eighteen original filesystem operation compositions with fresh independent native semantic checks, structured I/O errors, deferred polling and current receiving declarations, retaining complete originals and independent unrun JS/strict TS/native oracle and refusal source.
+- Draft both filesystem byte reads, actual owned Vec/u8/shared slice and JSON byte parsing rules, original successful Result/Option type queries and complete native/source inverses, with independent unrun JS/strict TS/native oracle and refusal source.
+- Draft complete explicit Result failure fallbacks, actual filesystem read-and-parse composition, all-return/root/resource joins and canonical native match inverses, with complete originals and independent unrun JS/strict TS/native oracle and refusal source.
+- Draft complete absent Option nearest-loop exits and actual binary HTTP pull accumulation with full native/source inverses; add unrun JS/strict TS/loopback and native cases and register seven independent oracle fixtures in existing gated Rust CI discovery.
+- Draft actual owning/scalar Result callback composition, complete original library source censuses and native callback inverses, with independent unrun JS/strict TS/native selection, ownership and refusal source registered in existing gated CI.
+- Draft actual Option map/chaining/lazy fallback callbacks, fresh optional native source qualification and original physical transaction fixtures, with independent unrun JS/strict TS/native and three-language source-unit cases and explicit contribution guidance.
+- Draft one-operation private native syntax reuse across all 146 original preparers, typed descendant forwarding, complete overlapping source histories, nested original guards and full descendant CLI status; preserve original family limits, semantic checks and deadlines with independent unrun receiving source.
+
+- Draft actual nongeneric TypeScript alias chains, complete original obligations, expanded JavaScript docs and adjacent erasure inverses, with full source histories and independent unrun callback, signature, ownership and numeric refusal source.
+
+- Draft fresh exported TypeScript alias retention across JavaScript/Rust source-unit edits, complete target reproduction and actual import conflict handling, with full original histories and independent unrun physical three-language and forged-plan source.
+
+- Draft bounded original generic type-alias slot substitution, lexical argument environments, complete unused-declaration/cycle checks and expanded JS docs, with full source histories and independent unrun body, callback, recursion, settlement, ownership and refusal source.
+
+- Draft ordinary JavaScript return-doc obligations, actual original deferred generic type queries and complete native async return docs, with full source histories and independent unrun JS/strict TS/native lazy/value/source-refusal cases in existing gated CI discovery.
+
+- Draft original JS/TS do/while control, nearest-continue condition gates and canonical native inverses, with complete original histories and independent unrun execute-once, nested-loop, break/return and refusal source in gated CI discovery.
+
+- Draft complete conditional values in returns, locals and operation arguments with fresh arm ownership/resource joins, all borrowed roots and native expression inverses, retaining full original histories and independent unrun JS/strict TS/native/refusal source in gated CI discovery.
+
+- Draft complete compiler export partitions with every original source/license, the existing logical compiler bound and unchanged per-file/global-byte/Git/deadline constraints, retaining full original exporter/CLI/receiving histories and independent unrun whole-closure and 2,049-input boundary cases.
+
+- Draft strict Boolean value negation and short-circuit locals/arguments/returns through original state checks and native inverses, with full source histories and independent unrun truth-table, lazy-failure, domain and forged-meta source in gated CI discovery.
+
+- Draft dense actual owned JSON list literals with ordered element/move checks, collection/shared-iteration composition and complete native vector inverses, retaining original histories and independent unrun JS/strict TS/native boundary and refusal source in gated CI discovery.
+
+- Draft source-qualified signed integer operations and Option/Result callbacks, exact original entry guards, local literal constraints, mutable/recursive/cold return composition and complete native inverses, with full original histories and independent unrun JS/strict TS/native limit, overflow, division, callback and refusal source in gated CI discovery.
+
+- Draft source-review corrections for grouped numeric calls and bounded conditional constraints, retaining complete originals/inverses and independent unrun grouped/deep source cases.
+
+- Draft original generic alias constraints/defaults, exact actual descriptor obligations, earlier-slot scope and complete constraint/default query retention across JS/Rust source-unit edits, with full originals and independent unrun strict-target, physical transaction and refusal source.
+- Draft actual lexical block state joins, nearest-loop control and complete native block inverses, with retained full originals and independent unrun oracle/refusal source.
+- Draft populated scalar for loops, scoped initializers, exact continue updates and strictly bounded unit counter increments/decrements; connect existing numeric declaration hints, with full originals and independent unrun boundary/refusal source.
+- Draft independently checked local types and erased TypeScript wrappers, retaining real native domains through expanded JSDoc, complete original source inverses and independent unrun nested/refusal cases.
+- Draft whole actual declaration lists, ordered comma header effects and per-scope counter mutability, with complete original controls and independent unrun ordering/ownership/refusal cases.
+- Draft exact scalar text equality and read-only owned String captures, preserving actual move/root checks, full originals and independent unrun Unicode/native/refusal source.
+- Draft original terminal scalar switches, stacked labels and complete returning case trees, retaining shared-scope rules, full originals and independent unrun native/refusal cases.
+- Draft source-checked executable generic identities, concrete ownership/root-preserving calls, scalar callback specialization and native/unit inverses with full originals and independent unrun refusal/oracle source.
+- Draft checked explicit identity type arguments and native-domain-preserving argument docs, retaining complete original controls and independent unrun nested/range/ownership source.
+- Draft native negation/unit proposal observations for complete Boolean JSON and generic unit inverses, retaining full originals and independent unrun malformed-source controls.
+- Draft common blockless loop bodies, original no-op statements and proved equal-domain comparison spellings in one batch, preserving complete originals and independent unrun native/refusal cases.
+- Draft linear generic aliases and complete checked forwarding chains with independent native dependency/move/drop checks, full original inverses and unrun drop-counter/refusal oracle source.
+- Draft original numeric Option/Result payload ingress guards, guarded signed parameter domains and canonical native inverses, with full originals and independent unrun range/constructor/refusal oracle source.
+- Draft native Promise/PromiseLike type obligations and precise cold/eager return distinctions, retaining complete originals and independent unrun Awaited/alias/refusal source.
+- Draft actual generic deadline type equations and checked control-result witnesses, preserving complete original declaration/source joins and independent unrun constructor/refusal cases.
+- Draft source-typed recursive numeric ingress and exact native constructor/path guards, retaining complete originals and independent unrun ControlError/range/refusal oracle source.
+- Draft source-checked pure generic deadline callbacks through typed native async closures and whole-source inverses, with immutable capture/effect/ownership checks, complete original substitution history and independent unrun JS/TS/Rust cases.
+- Draft complete original macro source/project copies for inline textual scope inheritance and local shadowing, with unchanged private matcher/hygiene bounds, full CST inverses and independent unrun target/native oracle cases.
+- Draft temporary native owner indexing per substitution step while retaining every exact per-edit source boundary, uniqueness, original workload and complete history check; add independent unrun boundary cases without measured performance claims.
+- Draft exact-child cancellable sleep/send deadline tails, nested Result preservation, shared sender capture and physical JS/TS/Rust synchronization cases; retain complete original rules and unrun native timeout/queue cleanup oracle source.
+- Draft actual explicit deadline type arguments and signed callback-domain retention in both source directions; correct the shared scalar/operation tail predicate, preserving full original histories and independent unrun boundary/refusal/native oracle cases.
+- Draft source-backed written stability/automatically_derived attribute namespace handling through complete original parser, AST, registration and collector joins; preserve original resolver domains, complete original histories and independent unrun namespace/native oracle cases.
+- Draft registered builtin initial/output tool contexts and explicit tool-first derive/project composition, preserving original constructors, complete source histories and unrun independent context/refusal/native oracle cases.
+- Draft complete separate macro engine/source/project copies for original passive builtin definition and output attributes, with one-operation source qualification, exact generated-domain spans, unchanged old APIs/bounds and unrun independent target/native cases.
+- Draft consistent actual grouped operation/helper calls, generic forwarding, numeric hints and deferred body selection, preserving complete originals, original bounds and independent unrun JS/TS/native refusal and behavioral source.
+- Draft actual dense bounded byte literals through existing owned-buffer contracts and canonical native u8 vectors, retaining complete source histories and independent unrun target/native boundary and refusal cases.
+- Draft exact original native lexical value renaming through complete separate reader/translator copies and physical source units, preserving old initializer scope, full originals/inverses and independent unrun move, callback, transaction and native oracle cases.
+- Draft original Rust local annotation obligations with one fresh flow index and retained i64 target witnesses, preserving complete source histories and independent unrun native/target/scope/refusal cases.
+- Draft original native final-return targets, empty else insertion and scoped else-if chains through source units, preserving full source inverses, complete body checks and independent unrun target/native/refusal cases.
+- Draft source-checked native Some/None let-else propagation and conservative prelude constructor-pattern refusals, preserving complete originals/inverses and independent unrun range, owned payload, source and native drop cases.
+- Draft original native omitted unit signatures, empty bodies and bare-return targets through the existing unit/cold/disposal contracts, retaining full source histories and independent unrun target/native/refusal cases.
+- Draft original native Some/None extraction matches through checked propagation with exact initializer scope and full source inverses, retaining independent unrun target/native ownership and refusal cases.
+- Draft source-bound native Ok/Err extraction matches with exact captured-error identity and existing whole error/type/ownership checking, retaining full originals/inverses and independent unrun target/native/refusal cases.
+- Draft exact original enum variant configuration through a separate enclosing resolver and complete copied tool contexts, preserving legacy domains, full source histories and independent unrun profile/namespace/derive/project/native cases.
+- Draft actual native wildcard call discards through existing complete effect/ownership rules, retaining full source histories and independent unrun cancellation/disposal/literal/refusal/native cases.
+- Draft exact original token-bound builtin variant attributes through a complete copied source frame, retaining full source histories and independent unrun nested token/string/source/tool/native cases.
+
+- Draft explicit shared-issuer tool-aware adoption contexts, complete original
+  nontrait/primitive selectors and selected base64 composition, preserving Rust
+  stability metadata, source/profile joins and all executable checks. Retain
+  four complete source equations and independent unrun JS/strict-TS/native and
+  refusal case source; no whole translation or verification claim is made.
+
+- Draft a separate original-source adoption lane for no-derive modules and named
+  crate-local imports, avoiding derive archive/proof work and retaining explicit
+  missing dependency authority. Compose the selected primitive/base64 producers,
+  four complete source equations and independent unrun behavioral/refusal source.
+
+- Draft connected source-bound formatting, matches and vector adoption sequences
+  with complete copied inspectors, physical source/Cargo joins and fresh full
+  inspection/effect readback. Export explicit entry points, retain eight complete
+  source equations and add independent unrun physical/refusal/native case source.
+
+- Draft 23 complete original source-bound adopter/helper copies across 21 owned
+  operation stages, a shared-issuer facade and bounded whole-proposal async
+  orchestration. Preserve original selectors/refusals, full source joins and
+  inverses; add independent unrun combined target/native and mutation cases.
+
+- Draft bounded physical gzip packet output for the 21-stage source-bound owned
+  adopter stream, preserving complete source/Cargo joins, original partitions,
+  inverses, failure receipts and final guards. Retain three complete source
+  equations and independent unrun storage/physical/refusal case source.
+
+- Draft complete owned-core packet readback through fresh original proposer
+  execution, exact decoded metadata/source/graph/CST comparisons and physical
+  source/workspace Cargo rejoins. Preserve complete inverse and inventory checks,
+  account for control-index evidence bytes and add unrun consistent-hash forgery cases.
+
+- Draft reusable bounded CLI proposal/readback for bulk owned-core source stages
+  by copying the original cold worker controller and registering complete export
+  closure. Retain source-only receipts, three complete source equations and
+  independent unrun CLI/refusal/offline receiving case source.
+
+- Document the shared private adoption issuer, no-derive Cargo boundary,
+  preservation of stability metadata, asynchronous source snapshots, complete
+  packet readback and deferred CLI/export receiving work in contributor guidance.
+
+- Draft original literal target-feature namespace rules through complete copied
+  builtin registration/parser/collector proofs and coherent tool-aware consumers.
+  Preserve native metadata, unsafe/CPU/body obligations and old API domains;
+  retain six complete source equations and independent unrun refusal/native source.
+
+- Draft original Some/None-return if-let branches through checked Option
+  propagation with exact lexical spans, previous-scope initializers and preserved
+  else-if/return targets. Retain three complete source equations and independent
+  unrun JS/strict-TS/refusal/native drop source; register resource oracle 37.
+
+- Draft a shared generic Option identity ABI in existing native/runtime files,
+  exact source additions and actual Rust/JS/dts identity checks, with a source-only
+  signature descriptor and no extra runtime asset. Retain eleven compiler source
+  equations, complete library inverses and independent unrun receiving/drop cases;
+  generic caller lowering is drafted in the following compiler batch.
+
+- Draft precise generic Option signatures, actual lexical template slots and
+  whole-value helper forwarding through JS/TS/meta/native paths, with freshly
+  joined library inputs and carrier-aware explicit argument docs. Preserve scalar
+  callback refusals, original pure Some/None/propagation body inverses and complete
+  paired-signature checking. Retain fourteen full source equations and independent
+  unrun receiving/refusal/native exact-once-drop case source.
+
+- Draft literal Some/None and contextual String-error Ok/Err constructors through
+  the complete resource flow and native inverse, with actual payload moves,
+  returned roots, strict literal tags and supported nested owned Option signatures.
+  Retain seven full source equations and independent unrun JS/strict TS/refusal/
+  native oracle source. Noncanonical native grouping remains a separate source
+  prerequisite; resource oracle module 38 is drafted.
+
+- Draft original unary/binary/value grouping spans and precedence-preserving
+  canonical native groups through complete CST/source inverses. Compose adjacent
+  lexical/control edits without weakening overlap checks, reject ungrouped native
+  comparison chains and retain three complete source equations plus independent
+  unrun truth-table, scope, constructor, generic, literal and refusal case source.
+
+- Draft original no-else Option branches with an exact final None continuation,
+  returning success arm, preserved lexical/return targets and precise generic
+  unchanged-payload composition. Retain four complete source equations and
+  independent unrun JS/strict TS/refusal/native drop source; resource oracle
+  module 39 is drafted. Whole all-return-loop reconstruction remains separate.
+
+- Draft terminal actual infinite loops with only checked function-return exits,
+  preserving complete return-domain/root/resource joins and original native loop
+  reconstruction. Retain three complete source equations and independent unrun
+  JS/strict TS/native source, Option composition, borrowed-root and refusal cases.
+
+- Draft fresh bulk source packet adoption through a complete readback copy,
+  original asynchronous transaction copy, Git/source guards, atomic file
+  replacement, rollback and bounded cold CLI. Register complete canonical export
+  and synchronization APIs. Retain six complete source equations and independent
+  unrun actual-change, stale-plan, Git, rollback and offline receiving cases;
+  installation remains source-only and supplies no executable coverage result.
+
+- Draft source-bound native local type proposals for None, nested Option and
+  contextual String-error Result initializers. Retain bounded own source records,
+  complete fresh JS/meta/native local-type obligations, four complete source
+  equations and independent unrun JS/strict TS/native/refusal cases; resource
+  oracle module 40 is drafted.
+
+- Draft a generic String-error Result ABI in existing native/runtime assets by
+  copying complete Option source-proof and library-producer implementations.
+  Preserve the original native-copy pin/stages plus a full generic suffix history,
+  retain ten complete source equations and add independent unrun identity, error,
+  mirror, history and native drop source. Generic caller lowering remains open.
+
+- Draft reusable Option/Result carrier descriptor sequences through fresh ABI
+  joins, precise generic signatures, whole-value helper checking, JS/TS/native
+  emission and physical paired signatures. Retain nested String-error Result
+  formats, actual borrowed signature roots, thirteen complete source equations
+  and independent unrun behavioral, native, source/meta and refusal cases.
+- Draft original local Rust generic-call arguments with retained token spans,
+  independent fresh meta/type obligations, full source inverses and unrun
+  JS/TypeScript/refusal/native drop cases; no coverage or parity claim.
+- Draft qualified shared generic Option/Result value calls with current complete
+  library joins, generic forwarding bodies, precise borrowed roots and native
+  inverses; add invocation-local descriptor indexes and unrun independent cases.
+- Draft generic constructor contexts from genuine written/enclosing types and
+  original native call selections, retaining independent value/type checks,
+  complete source inverses and unrun JS/TypeScript/native/refusal cases.
+- Draft ordinary textual macro inheritance across actual tracked external module
+  files with fresh source graphs, complete physical inverses, an exported checked
+  project entry and unrun independent JS/TypeScript/multi-file native cases.
+- Draft plain module macro_use with fresh original builtin/parser/resolver source
+  joins, closed synchronous attribute scopes, tracked textual export and unrun
+  JS/TypeScript/multi-file native/refusal coverage source.
+- Draft explicit-profile outer configuration source substitutions with fresh
+  grammar/compiler joins, complete staged file inverses, immutable profile guards
+  and unrun JS/TypeScript/multi-file native/refusal cases.
+- Draft original inner lint parser/registry scopes and tracked configuration/
+  macro/project successors that preserve every lint byte, with unrun independent
+  JS/TypeScript/multi-file native/refusal source.
+- Draft fresh original literal-doc registry/parser and line-comment lexer/reader/
+  AST source scopes, with complete originals, closed lifetimes and unrun source/
+  native cases; retain the remaining compiler consumer obligation explicitly.
+- Draft actual literal documentation consumers for original/generated/inner
+  source, native binding observation and checked projects; keep one synchronous
+  source frame and close scopes even after final native-guard failure (unrun).
+
+- Draft exact native import span selection, removal of copied repeated bindings,
+  and duplicate declaration refusals in both complete native source checks.
+  Four full source equations and independent regression cases remain unrun.
+
+- Draft original module-gap line documentation attachment, exact literal payload
+  substitutions and complete original/doc/configured/expanded project joins.
+  Four complete source equations and independent receiving/native cases are unrun.
+
+- Draft fresh line/block documentation source scopes, original native payload
+  joins, multiline/nested module attachment, macro lexical projection and full
+  project histories. Six source equations and independent target/native cases
+  are drafted and unrun.
+
+- Draft source-bound recursive active cfg_attr expansion, explicit profile and
+  original payload/order/style joins, independent expanded header checking and
+  five-domain project composition. Five complete source equations and native/
+  JS/strict TS/refusal cases are drafted and unrun.
+
+- Draft complete original native/active/configured generated-source histories,
+  surviving header checks, original generated-inner refusals, aggregate resource
+  charging and checked project integration. Six source equations and independent
+  source/JS/strict TS/native/refusal cases remain unrun.
+
+- Draft bounded synchronous native conditional source scopes, fresh complete
+  input rechecks on every exit, independent nesting and generated-call routing.
+  Five source equations and independent lifecycle/refusal cases remain unrun;
+  no across-operation cache or performance qualification is introduced.
+
+- Draft fifteen original builtin metadata registrations, bounded actual leading
+  attribute grammars, four copied source adapters and scoped generated/project
+  consumers. Eight full source equations and independent source/JS/strict TS/
+  native boundary cases are unrun; layout/CPU/caller-location remain unqualified.
+
+- Draft fresh complete namespace inputs and original recursive architecture
+  types! expansion, private input lineage, complete selected CST inverses and
+  explicit remaining producer obligations. Four source equations and independent
+  source/native cases remain unrun; no type-prefix or export closure is claimed.
+
+- Draft source-backed structured doc metadata, explicit non-availability of doc
+  predicates, inner/current/generated/source/project consumers and full native
+  parser/CST inverses. Nine source equations and independent source/JS/strict TS/
+  stable Rust/refusal cases remain unrun; doc feature semantics stay unqualified.
+
+- Draft native function invocation-position batches with complete current frame
+  checks at both boundaries and unchanged private legacy receipt associations.
+  Three source equations and independent position/refusal/source-change cases
+  remain unrun; global macro/attribute effects and all authority stay separate.
+
+- Draft current complete parser/enclosing archive checks for existing native
+  source-plan receipts and synchronous reuse of the original complete builder.
+  Four source equations and independent guard/lifecycle/refusal cases are unrun;
+  no cache survives the operation and receiving/timing qualification stays open.
+
+- Draft actual architecture output rendering with native EOF rules, complete
+  generated CST and synthetic item units, original function/position receipts,
+  whole original-file inverses and aggregate budgets. Five source equations and
+  independent native-source/refusal cases are unrun; closure/parity stay open.
+
+Draft iterator adoption planning and installation that freshly checks every
+selected complete source function before emitting both targets. Recompute the
+whole proposal against native/workspace Cargo and source inputs before using
+the existing bounded transaction. Preserve full CST/semantic/source inverses
+and prior installer implementations. Independent regression source is unrun.
+
+Draft TypeScript annotation substitutions that preserve explicit closed scalar
+parameter defaults through the existing JavaScript parser/checker/meta/emitters.
+Retain initializer source spans and check signature default presence. Compose
+complete alias, absence and default source histories without rewinding later
+implementations. Missing/undefined, zero/false/empty, signed-zero, arity and
+refusal regression sources are drafted and unrun.
+
+Draft six matching JSON field/index APIs with canonical runtime reuse, actual
+native/import/source checks, finite Option and numeric domains, both
+interpreters and JS/TS/Rust emission/inversion. Retain complete original source
+and successor CST histories. Independent runtime, compiler and Rust oracle
+sources are unrun; the complete bulk draft remains unfinished.
+
+Draft optional TypeScript scalar parameters, native-bound omitted argument
+substitutions and preserved public optional signatures with complete target CST
+inverses. Keep required union parameters required, preserve argument order and
+select return annotation colons from native tokens. Retain original frontend
+and refusal histories. Independent ABI, native binding, trivia and refusal
+regressions are drafted and unrun.
+
+Draft automatic typed JSON field-reader source adoption with preserved named
+lifetimes, complete original CST/inverses, bounded packets and fresh checked
+whole-function installation. Reuse three complete original source producers
+through native-selected substitution rules. Independent regression sources are
+unrun; no source has been adopted or qualified during bulk drafting.
+
+Draft five independent Rust boundary tests for actual normalization helpers,
+covering absence, binary64 bits, adjacent percentage limits, numeric strings,
+UTF8 lengths and controls. Update the stale whole-module assertion in the
+full-root f64 regression to its captured complete original input receipt while
+retaining historical and unchanged function pins. Preserve complete originals,
+ordered source rules and both CST inverses. All changes are unrun; Rust remains
+restricted to CI after the full JavaScript gate passes.
+
+Draft a canonical scalar Rust inverse through complete original CST transport,
+checked serialized meta, full fresh Rust reemission and independently checked
+JS/TS that reproduce the same Rust syntax. Integrate the specific profile into
+portable source-unit synchronization while preserving original forward source
+refusals and propagating infrastructure failures. Retain full copied frontend,
+source equations, original helpers and unrun regressions. Also draft checked
+absence-type Rust library selection for identity-only functions. All changes
+remain unverified; full production synchronization remains open.
+
+Draft finite-pattern inverse rules for canonical Rust scalar absence envelopes,
+constructors, strict tests, guarded projections, typeof and truthiness. Reuse
+the checked absence IR and actual helper source while requiring both complete
+fresh Rust reemission paths. Decode canonical scalar default envelopes,
+Some/None operands, mutable locals, while loops and assignments through the
+existing checked IR. Preserve original frontend/inverse source layers,
+separate rule sequences and full CST inverses. Independent boundary and source
+mutation regressions remain unrun; full synchronization remains open.
+
+Draft preservation of fresh paired TypeScript scalar aliases and optional API
+signatures during Rust-authoritative synchronization. Treat paired source as a
+formatting proposal and require final checked TypeScript to reproduce complete
+authoritative Rust syntax. Preserve both native-selected CST stages, original
+synchronizer source and final source histories. Strict consumers, invalid
+proposals and baseline/Rust-edit integration regressions are drafted and unrun;
+complete project synchronization remains open.
+
+Draft bounded invocation-local Rust syntax cells with direct type/text checks
+under existing native host guards. Share them across canonical inverse helper
+matching and paired API rechecks, retaining complete original sources and both
+CST substitution sequences. Remove repeated JSON encodings without a new
+source/hash/owner/verdict/result cache. Source and regressions remain unrun;
+performance and receiving qualification are not claimed.
+
+- Draft native-selected module reexports, identity-preserving JavaScript/TypeScript aliases, closed scalar Rust type exports and complete source-copy/CST histories for #759/#772. Independent regression sources are unrun; broader module translation and synchronization remain unfinished.
+
+- Draft complete canonical Rust module-envelope inversion through checked meta, native-selected public aliases, closed scalar type APIs and mandatory full Rust reemission for #759/#772. Source histories and independent regression cases are retained; all execution remains deferred.
+
+- Draft source-bound JSON map/filter-map callers through copied private checking, checked meta, Rust/TypeScript emission, independent interpreters and native TypeScript projection for #759/#772. Complete source histories and independent JavaScript/TypeScript/Rust regression source are retained; all execution and qualification remain deferred.
+
+- Draft matching JSON predicate/fold core APIs and a source-bound JavaScript/TypeScript reverse profile with complete private implementation copies, checked meta, ordered emission, short-circuit interpreters and independent native oracle source for #759/#772. All checks remain deferred; forward adoption and full synchronization are unfinished.
+
+- Draft qualified Rust predicate/fold callers through native source frames, checked callback domains, original private issuance, ownership/lifetime passes and guarded JavaScript/TypeScript emission for #759/#772. Complete originals, class-owner source rules and independent regressions are retained; all execution remains deferred.
+
+- Draft twelve matching owned JSON array/object/vector operations through one catalog, original forward source issuance, checked JavaScript/TypeScript reverse copies, both interpreters and complete CST histories for #759/#772. Independent caller, boundary/refusal and native Rust oracle source is unrun; full translation and synchronization remain unfinished.
+
+### Changed
+
+- Draft eleven production base64 call migrations through existing concrete
+  compatibility-core APIs, preserving borrowed/moved operands and native test
+  imports. Retain complete pinned originals, separately ordered language and
+  repository CST substitutions, full inverses and independent JavaScript/native
+  oracle source. All new changes are unverified; no tests, translator, Rust tools
+  or CI ran, and full translation, parity and receiving work remain open.
+
+### Added
+
+- Draft the concrete SHA-256/base64url text operation across the existing native,
+  JavaScript/TypeScript, forward/reverse and interpreter family. Retain full
+  original source substitutions and inverses, existing text bounds, shared fixed
+  vectors and independent unrun JS/strict TypeScript/native oracle source.
+  Production adoption, full translation, parity, receiving and verification
+  remain unfinished; no tests, translator, local Rust or CI ran.
+
+### Changed
+
+- Draft three production PKCE calculations through the concrete shared text
+  SHA-256/base64url operation, retaining native test calculations and complete
+  original/current CST source histories. Extend source recipes with explicit
+  finite operand fusion and bounded adjacent history composition, full native
+  and Cargo guard rechecks, and independent unrun refusal/source cases. Actual
+  caller qualification, full translation, parity, receiving and all verification
+  remain unfinished; no tests, local Rust, translator or CI ran.
+
+### Added
+
+- Draft complete current native textual/module macro lookup premises, including
+  actual parent-module disambiguation and its full callback dependencies. Reuse
+  the existing function inventory as source DATA, preserve original CSTs and
+  both substitution sequences, and add independent unrun source/native scope
+  cases. Caller owner/export closure, full translation and every verification
+  gate remain unfinished; no tests, translator, local Rust or CI ran.
+
+### Added
+
+- Draft original x86 root/definition/caller macro source prefixes alongside the
+  complete generated CST/private-frame pipeline and native textual lookup
+  premises. Retain original bounds, fresh native request/source joins, complete
+  source substitutions/inverses and independent unrun source/refusal cases.
+  Actual owner/export/type-prefix closure and all translation/parity/receiving
+  gates remain unfinished; no tests, translator, local Rust or CI ran.
+
+### Added
+
+- Draft explicit architecture builtin metadata through the complete original
+  source registry/parser and generated/project consumers. Recognize struct-only
+  `repr(simd)` metadata without feature/layout authority, preserve the legacy
+  domain, full CST source equations and original budgets, and add independent
+  unrun grammar/restoration/JS/strict TypeScript cases. Complete translation,
+  namespace/export closure, native parity and every receiving/verification gate
+  remain unfinished; no tests, translator, local Rust or CI ran.
+
+### Added
+
+- Draft direct original equality-attribute expression capture through the
+  existing private native-source parser and whole physical CST, with separate
+  root/member receipts, original combined bounds, source/profile/native rejoins
+  and independent unrun source/refusal cases. Attribute/macro owner, global
+  exports, builtin documentation consumers and all translation/parity/receiving
+  gates remain unfinished; no tests, translator, local Rust or CI ran.
+
+### Fixed
+
+- Draft conservative local/root macro uncertainty for nonliteral documentation
+  arguments and nested source effects, and retain qualified attribute path
+  uncertainty. Add genuine original-expression AST frontier observations,
+  complete source substitutions/inverses and independent unrun cases. Builtin
+  doc/visitor consumers, owner/export closure and every translation/parity/
+  receiving gate remain unfinished; no tests, translator, local Rust or CI ran.
+
+### Added
+
+- Draft full original attribute-expression parser/walker/collector/fragment
+  source premises and receiver containers, preserving fresh private requests,
+  original resource bounds, complete source substitutions/CST inverses and
+  independent unrun cases. Actual documentation consumers, macro/visitor/global
+  qualification and all translation/parity/receiving gates remain unfinished;
+  no tests, translator, local Rust or CI ran.
+
+Draft an explicit source-backed documentation-expression project path with
+original inner/root/member captures, complete native visitor premises, restored
+scope boundaries and retained macro uncertainty. Add independent unrun JS,
+strict TypeScript and native oracle source. This source draft does not establish
+macro ownership, original-source equivalence, runtime parity or completion.
+
+Draft eleven shared ASCII casing/comparison, ASCII trimming and first/last split
+operations through the existing forward/reverse text catalog, matching native
+facade, JavaScript runtime, strict TypeScript declarations and full source
+histories. Add independent unrun fixed vectors, checked caller/inverse cases and
+native borrowing/boundary oracles. Production qualification and parity stay open.
+
+Draft the shared text adoption selector for seven ASCII methods, four complete
+split identity projections and recognized owned receiver chains. Preserve all
+original whole-function checks, limits and source inverses. Add independent
+unrun JS/strict TS/native/refusal source; current production adoption remains open.
+
+Draft actual root/inner/member metadata consumers over complete original and
+expanded x86 source domains, preserving the full private lookup/output pipeline,
+CST inverses, native current-input checks and unresolved producer effects. Add
+independent unrun actual-source/refusal cases. Architecture closure and parity
+remain unqualified.
+
+Draft distinct private attribute invocation position, original-input and
+expression-argument receipts by copying the complete existing issuer paths.
+Retain current whole-source/AST/CST checks and join real documentation consumers.
+Add independent unrun source/refusal cases; native visitor, macro-owner and global
+closure remain unqualified.
+
+Draft a fresh whole-native-source literal concat successor over genuine
+documentation argument receipts, with exact original invocation substitution,
+separate rule phases and complete physical CST inverses. Add independent unrun
+source/refusal/native oracle cases. Macro ownership, visitor/global closure and
+runtime/source equivalence remain unqualified.
+
+Draft a fresh archive-reader successor retaining the original 135 Rust namespace
+members plus the exact core_arch documentation asset from the same pinned tar.
+Preserve full source/license/current-input guards and add independent unrun
+census/hash/Git blob cases. Include macro ownership and source-origin semantics
+remain unqualified.
+
+Draft a fresh include-str native source reader retaining sixteen complete inputs
+and sixteen whole handler/parser/path/loader/output callbacks. Preserve original
+CSTs, current-input guards, bounds and private request identities. Add independent
+unrun source/refusal cases; actual Span, file loader, owner and global closure
+remain unqualified.
+
+Draft a conditional original architecture include-str source proposal joining
+genuine private attribute inputs, the exact same-archive document and complete
+native handler/path/loader premises. Preserve bounded raw literal CST output,
+whole physical inverse and fresh original-input checks. Add independent unrun
+source/refusal cases; actual owner, Span, global closure and parity remain open.
+
+Retain the complete active source-family records in history part four and keep
+the requirements ledger concise and below the repository line bound. All original
+source obligations and unrun qualification limits remain unchanged.
+
+Draft a distinct ordinary macro identifier file-token source domain by copying
+the complete native constructor/CST issuer paths. Keep request state to original
+view/span identities and rebuild current facts on every read. Add independent
+unrun source/private/refusal cases; actual Span and macro-owner authority remain
+unqualified.
+
+Draft an additive asynchronous original architecture document path retaining the
+complete ordinary macro file-token source equation, native constructor inputs
+and original archive/include/CST guards. Recheck private inputs after every await
+and add independent unrun source/refusal cases. Actual Span, owner, global closure
+and parity remain unqualified.
+
+Draft distinct original attribute header receipts with genuine parsed paths and
+empty/delimited/equality arguments over actual root/inner/member items. Preserve
+full CST/native/source guards, private family boundaries and original bounds.
+Add independent unrun source/refusal cases; builtin ownership and global closure
+remain unqualified.
+
+Draft one-document physical CST reuse inside a bounded synchronous header source
+operation, preserving full current native/source/private AST checks and clearing
+all reuse state at exit. Add independent unrun source/refusal/native-change cases.
+No performance or translator/parity qualification is claimed.
+
+Draft private parsed-header builtin-name receipts across all fifteen existing
+metadata grammars and a complete project entry copy. Retain fresh native/source
+joins, explicit conditional caller presence, automatic scope cleanup and all
+separate argument/global/runtime limits. Add independent unrun source/private/
+JS/strict TS/native namespace cases; broad translation and parity stay open.
+
+Draft parsed builtin header consumers for inner lint, module macro_use and
+documentation attributes, with bounded operation-local reuse of current native
+source inputs. Add genuine function parameter/generic and whole struct/enum
+field/variant header source receipts while preserving separate private families
+and unresolved native legality, ownership, macro and global effects.
+
+Extend text source adoption with scalar character patterns, immutable owned
+String receivers, exact as_str borrow bridges and twelve paired total borrowed
+prefix/suffix/split fallback operations. Retain ordered language/repository
+rules, complete source/CST inverses, shared forward/reverse mappings and original
+resource bounds. Add independent unrun JS/strict TS/reverse/refusal and native
+oracle source. All new implementation and cases remain unverified; complete
+production translation, synchronization, parity, CI and receiving work stays open.
+
+Draft automatic discovery of ordinary ungated builtin attributes from the full
+current native registry, using one array inspection and a shared original macro
+constructor per invocation. Copy complete native lookup source joins while
+preserving separate unsafe/gated/internal constructor obligations and all
+caller, legality, argument, global and runtime limits. Add independent unrun
+source/refusal cases; new name discovery grants no executable coverage or parity.
+
+Draft private normal builtin lookup receipts tied to genuine item, function
+parameter/generic and data field/variant headers. Rejoin complete native sources
+and actual header associations while sharing one native source frame only
+inside a bounded explicit operation. Preserve unresolved native grammar,
+availability, attribute, argument, global and runtime behavior and existing
+default scope boundaries. All new implementation and independent cases are unrun.
+
+Draft shared equality-expression source receipts over genuine item, function
+parameter/generic and data field/variant headers. Copy complete private macro
+position, invocation input and contiguous expression capture paths while
+preserving original trees, whole CST/source inverses, bounds and unresolved
+owner/visitor/global/type/runtime authority. All implementation and independent
+source/refusal cases remain unrun; full translation and synchronization stay open.
+
+Draft complete concat and exact architecture include-str source consumer copies
+for genuine shared item/function/data header expressions, including the async
+macro file-token join. Retain full original native inputs, source restrictions,
+literal bounds, both rule phases, whole CST/source inverses and post-await
+rechecks. All new implementation and cases are unrun; actual owner/visitor/Span,
+global and runtime equivalence remain unqualified.
+
+Draft a complete native expression block scope source closure and a separate
+genuine-header source model for item/statement macro child modules and parent
+restoration. Retain exact graph/definition/visitor/module constructor sources,
+explicit pending global bang exports and all original source/budget checks.
+Add independent unrun source/private/refusal and native namespace oracle cases;
+actual receiver/module/visitor and type-isolation authority remain unqualified.
+
+Draft a paired bounded owned text copy contract with shared forward/reverse
+registration, native/JS/TS sources and common text to_owned/to_string/owned clone
+adoption, including literal-only callers. Preserve byte/character/custom owner,
+borrowed clone and source/ownership refusal boundaries, full native histories
+and CST inverses. New implementation, JS/strict TS/reverse/refusal and native
+storage oracle cases are unrun; full translation and parity remain unfinished.
+
+- Draft shared JSON reader-chain clone and optional cloned adoption with a
+  canonical Option language equation, repository substitutions to existing paired
+  copy helpers, complete source/CST inverses and independent JS/strict TS/native
+  regression source. All new changes are UNRUN; full delivery remains open.
+
+- Draft nine canonical JSON Option readers with explicit source lifetimes,
+  standard carrier spellings and composed object/array try/read chains.
+  Preserve ordered language/repository CST substitutions and complete inverses;
+  independent JS/strict TS/native regression sources remain UNRUN.
+
+- Draft positive original block-local data/type/const/static/extern-crate/use
+  syntax and scope-model traversal, retaining complete native external-crate and
+  macro-use source callbacks, all CST inverses and independent unrun regression
+  sources. Actual namespace and production translation qualification remain open.
+
+- Draft six concrete JSON reader default substitutions through explicit language
+  Option branches and repository-owned constructor paths, with complete staged
+  CST/source inverses and independent unrun JS/strict TS/native regression source.
+
+- Draft bounded lexical immutable JSON reader aliases and ordinary formal shadow
+  through the existing two-phase CST adoption path. Retain complete source
+  origins/inverses, conservative ambiguous scopes and independent unrun
+  JS/strict TS/native regression sources.
+
+- Draft reverse mappings for existing JSON float/unit/number/array/object
+  readers, retaining optional payloads and original borrowed input roots.
+  Complete source/CST inverses and independent JS/strict TS/interpreter/native
+  regression sources are drafted; every new case remains UNRUN.
+
+- Draft the immutable JSON alias guard correction that separates actual let
+  binders from qualified type annotations, preserving all original source-role
+  checks, CST inverses and independent unrun refusal sources.
+
+- Clarify that complete focused JavaScript/TypeScript execution and CI begin
+  after the entire required source draft, while preserving all original gates,
+  deadlines, single-publisher rules and CI-only Rust requirements.
+
+- Draft local ordered JSON reader mapping and inverse joins that remove
+  repeated full filtering/string reconstruction while retaining all exact
+  checks, CST stages and complete inverses. Independent regression sources are
+  UNRUN; no performance qualification is claimed.
+
+- Draft distinct original const-item and const/async/async-move block grammar,
+  retaining complete source, opaque roles and recursive scope obligations.
+  Complete CST inverses and independent source/native cases remain UNRUN.
+
+- Draft shared catalogue-derived optional JSON declaration witnesses across
+  seven real reverse emitters, retaining complete source checks, CST inverses
+  and independent unrun receiving/strict TypeScript/runtime regression sources.
+
+- Draft nine opaque immutable optional JSON readers through the original full
+  validator, preserving scalar/borrowed roots and unchanged resource/refusal
+  boundaries across seven reverse paths. Complete CST inverses and independent
+  JS/strict TS/native regression sources are drafted and UNRUN.
+
+- Draft opaque optional JSON operation records from the shared direct-reader
+  catalogue, preserving exact types/roots and independent source admission.
+  Complete source inverses and regression sources remain UNRUN.
+
+Draft positive Rust conditional-let and conjunction syntax with explicit source
+nodes, preserved scopes and independent unrun JavaScript/native regression source.
+
+Draft shared optional JSON field callbacks, eager fallbacks and presence
+substitutions with complete source inverses and independent unrun JS/TS/native cases.
+
+Draft shared JSON predicate registration across seven reverse paths and closed
+optional-predicate source substitutions, with independent unrun JS/TS/Rust cases.
+
+Draft shared JSON map/array field chains and closed filters, preserving payload
+identity, existing lazy errors, source inverses and independent unrun cases.
+
+Draft private Unicode scalar validation for original character expressions and
+patterns, preserving raw lexer spans and independent unrun source/native cases.
+
+Draft one current JSON candidate selector for ordinary and source-bound bulk
+adopters, retaining each proof context and independent unrun integration cases.
+
+Draft shared positive range, slice/rest, at-binding and field pattern syntax
+with original spans and independent unrun source/native boundary cases.
+
+Draft generic expression paths and bounded const argument/default parsing,
+preserving original source and independent unrun syntax/native cases.
+
+Draft checked eager bool/fixed-integer bitwise operations and scalar compound
+assignments across source tokens, meta, JS/TS runtime and bounded const evaluation.
+
+Draft an explicit current-source boolean bitwise helper context across seven
+reverse paths with paired targets, interpreters and independent unrun cases.
+
+Draft one physical primitive operator declaration source for both forward asset
+factories and reverse contexts, with independent unrun reader/ABI regressions.
+
+Draft ten explicit fixed-width scalar ABIs and helper recognition across seven
+reverse paths, with matching Rust/TS projections and independent unrun cases.
+
+Draft checked native integer TypeScript annotations for standalone/project
+forward translation and fresh receiving import-type resolution in all seven
+reverse paths. Preserve existing default layout APIs and independent source/meta
+checks. Every new regression remains unrun during the complete bulk draft.
+
+Draft shared native scalar cast/shift substitutions across all seven reverse
+source, emitter and interpreter paths. Preserve source/meta reissuance, width,
+sign, literal bounds, eager order and fatal invalid counts. Add independent
+unrun JavaScript/TypeScript matrix cases and CI-only native oracle source.
+
+Draft canonical primitive cast/shift/bitwise Rust inverses in the state, outcome
+and cancellation paths, retaining original CST/meta and complete checked source
+reproduction. Add unrun inverse matrices, boolean truth tables and source guard,
+literal, effect and profile refusals. Complete translation remains unfinished.
+
+Draft complete positive parsing of nested modules, traits, implementations,
+associated declarations and foreign functions/statics, preserving original
+source children, opaque macros, private guards and unresolved authority. Add
+unrun JavaScript source/refusal cases and CI-only native oracle source.
+
+Draft private positive syntax for qualified associated paths, higher-ranked
+lifetimes, Fn bounds, ABI function pointers and associated type constraints.
+Retain complete source/CST and unresolved native/type/namespace authority. Add
+unrun source/refusal cases and a CI-only native oracle.
+
+Draft explicit primitive scalar options through state/outcome/cancellation source
+units, mirrored runtime sources, paired signatures and synchronization exports.
+Retain native spans and full inverses for static, dynamic, type and JSDoc module
+relocation. Add unrun three-language, strict TS and receiving export cases.
+
+Draft explicit primitive scalar profiles through multi-module owned-project
+units, paired edited JS signatures, receiving JSDoc redistribution and public
+source-unit routing. Preserve exact module/source/meta rechecks and complete
+Rust reproduction. Add unrun multi-module three-language and strict TS cases.
+
+Draft explicit primitive domain propagation in both complete packaged module
+Rust inverses, preserving full inner and outer source reproduction. Add unrun
+width/envelope/batch/refusal cases and a CI-only native module oracle.
+
+Draft closed static import type leaves through owned alias expansion and bounded
+parenthesized type handling across all seven receiving profiles. Preserve actual
+import/type/body/meta checks and source inverses. Add unrun independent alias,
+primitive, source history and refusal cases; complete translation remains open.
+
+Draft native scalar alias symbol joins for canonical and complete byte-equal
+receiving declaration mirrors across all seven source paths. Preserve fresh
+private source/type checks and add unrun named/inline/meta/runtime/refusal cases.
+
+Draft fresh receiving native scalar alias source observations and complete
+interface proposals with actual canonical/mirrored symbols and full CST/source
+inverses. Add unrun private/source/refusal cases. Public packaging integration
+and complete translation remain unfinished.
+
+Draft native fixed integer public aliases through Rust/TS packaging, canonical
+root interfaces, empty-body inverses and receiving module redistribution.
+Preserve actual symbol/source/meta checks and complete Rust reproduction. Add
+unrun width, strict TS, restoration/refusal cases and CI-only native oracle source.
+
+### Added
+
+- Draft shared checked arithmetic for ten native integer domains across forward JavaScript/TypeScript, seven reverse profiles, canonical Rust inverses and whole-project synchronization, retaining original overflow and zero-divisor messages.
+- Draft source-bound wrapping constant evaluation, fresh bounded wrapping source operations and independent source, boundary, lifetime, strict TypeScript and native oracle cases. All new implementation and cases remain unverified during bulk drafting.
+
+### Added
+
+- Draft checked signed negation through the shared arithmetic carrier across forward JS/TS, seven reverse profiles, canonical Rust inverses and full-project synchronization. Retain five-width edge, exact-error, ordering and refusal case source; every new case remains unrun during bulk drafting.
+
+### Added
+
+- Draft exact guarded u64 comparisons and strict Boolean equality in cold async resource flows and canonical Rust inverses. Preserve original entry guards, cancellation, move and disposal rules; independent JS/TS, source, deadline and native cases remain unrun during bulk drafting.
+
+### Fixed
+
+- Draft preservation of the primary wrapping source/callback failure while final freshness checks still invalidate stale scopes and clear all references. Independent receiving error and cleanup sources remain unrun during bulk drafting.
+
+### Added
+
+- Draft terminal guard continuations, single return branches and else-if chains in checked cold async resource flows. Preserve all path types, move/disposal obligations and original bounds; independent JS/TS, inverse, cleanup and native cases remain unrun during bulk drafting.
+
+### Fixed
+
+- Draft bounded exact decimal selection for async u64 literals, removing host BigInt conversion before the range check. Preserve native extrema and valid separators; independent native-AST, JS/TS and overflow source cases remain unrun during bulk drafting.
+
+### Added
+
+- Draft exact original Rust guard/return reproduction through checked async-control source proposals. Preserve complete native token comparison, resource/cold-flow checks and all bounds; independent original-source, JS/TS, inverse and native cases remain unrun during bulk drafting.
+
+### Changed
+
+- Record the authorized periodic source-checkpoint push policy during bulk drafting. Local tests/compilation remain prohibited; CI feedback inspection and repairs wait until the entire requirement set is source drafted, preserving all same-SHA JavaScript gates before fatal Rust CI.
+
+### Added
+
+- Draft shared base64 argument and immutable-local source rules in both existing adopters and the fixed bulk stage. Preserve borrowed values and complete source inverses through language and repository substitutions; independent receiving, JS/TS, refusal and native cases remain unrun.
+
+### Added
+
+- Draft source-ordered immutable and borrowed base64 argument aliases plus direct selected encode-result aliases in both existing adopters. Preserve lexical scope, complete initializer spans and false authority flags; all receiving, JS/TS, refusal and native oracle sources remain unrun.
+
+Draft shared chronological primitive-local source selection for both integer
+method adopters, genuine language/repository CST substitutions, complete source
+equations and independent JS/strict TS/native regression source. All unrun;
+complete translation, freshness and parity remain unfinished.
+
+Draft one bounded source-order engine copied from the existing primitive alias
+implementation for the separate base64 and integer rules. Retain family censuses,
+whole-source checks and all authority boundaries. Source equations and regression
+cases remain unrun; complete translation and synchronization remain unfinished.
+
+Draft shared scoped text alias selection and exact optional byte-index map
+projections for both existing adopters, including the fixed bulk stage's full
+language/repository CST substitutions. Complete source equations and independent
+JS/strict TS/native oracle sources are unrun. Full translation remains unfinished.
+
+Draft shared scoped immutable Option/Result/payload source selection across
+three existing method/callback selectors, with bounded captures, actual closed
+constructors and no role from unknown annotated initializers. Seven complete source
+equations and independent JS/strict TS/native oracle sources remain unrun.
+
+Draft shared real language then repository CST substitutions across eight
+integer and Option/Result adapters, preserving nested roots, literal/trivia
+contents and whole source inverses. Ten complete source equations and independent
+regression sources remain unrun; full translation and parity remain unfinished.
+
+Draft independent complete compiler-export and five-stage receiving source
+cases for shared local/CST adoption rules, plus reusable contribution guidance.
+All cases remain unrun. Export qualification, emitted-target parity and full
+translation/synchronization remain unfinished.
+
+Draft shared scalar-literal and neutral compatibility call planning for twelve
+existing adapters, preserving complete text histories and base64's original
+progress/CST/inverse checks. Six whole source equations and independent Unicode/
+ordering/refusal cases remain unrun. Full translation and parity stay unfinished.
+
+Draft shared chronological owned String Result aliases/constructors/captures
+and real layered substitutions in both existing owned-result adapters. Five
+complete source equations and independent JS/strict TS/native oracle cases are
+unrun. Full translation, synchronization and parity remain unfinished.
+
+Draft shared chronological owned/shared JSON carrier aliases and selected
+result chains in both existing adapters, retaining original single-use and
+explicit clone requirements. Five whole source equations and independent JS/
+strict TS/native oracle cases remain unrun. Full translation stays unfinished.
+
+Draft native usize text-count aliases, bounded explicit literals and known
+length locals with once-only core count casts in both existing text adopters.
+Three complete source equations and independent JS/strict TS/native cases are
+unrun. Full translation, freshness and parity remain unfinished.
+
+Draft shared chronological JSON receiver/key/index aliases and explicit owned
+key views in both existing field adapters, retaining shadow and source checks.
+Five complete source equations and independent JS/strict TS/native oracle cases
+are unrun. Full translation, synchronization and parity remain unfinished.
+
+Draft one shared original collection selector and chronological Json slice/
+vector aliases across four existing map/iteration adapters, retaining original
+callback and whole-source checks. Eight source equations and independent JS/
+strict TS/native oracle cases are unrun. Full translation remains unfinished.
+
+Draft shared bounded declaration rules that preserve unrelated mutable locals
+as unknown while retaining independent immutable alias facts across existing
+families. Fourteen complete source equations and independent JS/strict TS/native
+oracle cases remain unrun. Full translation and parity stay unfinished.
+
+- Draft shared immutable JSON slice/vector receiver rules for closed single-assignment fold loops, real language/repository source substitutions in both adapters, complete original source equations and independent unrun JS/strict TypeScript/export/native oracle cases. Consuming vector loops remain refused; full translation, synchronization, freshness, parity and CI qualification remain unfinished (#759, #772).
+
+- Draft shared bounded written immutable local rules across seven source families and closed JSON loop prefixes, matching actual initializer/result domains, complete original source equations and independent unrun scalar-boundary, bulk, JS/strict TypeScript, export and native oracle cases. Full translation, synchronization, freshness, parity and CI qualification remain unfinished (#759, #772).
+
+- Draft shared ordinary-for pattern boundaries across immutable alias families and existing adoption selectors, preserving unknown iterator values, shadow refusals, complete source equations and independent unrun loop/JS/strict TypeScript/export/native oracle cases. Full translation, synchronization, freshness, parity and CI qualification remain unfinished (#759, #772).
+
+- Draft optional full local-ancestor source baselines across both unit synchronizers and the forward-project synchronizer, so committed JS/TS/Rust edits remain visible to automatic direction selection. Preserve fresh complete translation, conflict/deletion/atomic apply guards, both source phases and complete original equations, with independent unrun source-history and target cases. Full translation, synchronization, freshness, parity and CI qualification remain unfinished (#759, #772).
+
+- Draft one bounded written initializer projection across four existing Option/Result selectors, preserving actual typed result chains, both source substitution phases, all semantic/source gates, complete original equations and independent unrun JS/strict TypeScript/export/native oracle cases. Full translation, synchronization, freshness, parity and CI qualification remain unfinished (#759, #772).
+
+- Draft shared physical rust/src native-library guard mapping across five canonical inverse APIs, preserving original source identities, every existing refusal and full source equations, with independent unrun path/receiving/JS/strict TypeScript cases. Full translation, synchronization, freshness, parity and CI qualification remain unfinished (#759, #772).
+
+- Draft bounded matching-domain primitive initializer expression aliases without evaluating or rewriting their original arithmetic, shared charged initializer selection, complete source equations and independent unrun grammar/boundary, JS/strict TypeScript/export/native oracle cases. Full translation, synchronization, arithmetic parity, freshness and CI qualification remain unfinished (#759, #772).
+
+- Draft shared qualified native primitive parameter and static-bound source rules across both existing integer adapters, preserving original syntax/trivia, complete source equations and independent unrun JS/strict TypeScript/export/native boundary cases. Full translation, synchronization, freshness, parity and CI qualification remain unfinished (#759, #772).
+
+- Draft automated copies of 76 additional scalar integer operations across eight native widths, preserving the original 30 APIs, matching runtime/declarations, all-width forward rules, guarded reverse native profiles, complete native/JS/TS source equations and independent unrun boundary/receiving/native oracle cases. Broader checked carriers, full translation, synchronization, freshness, parity and CI qualification remain unfinished (#759, #772).
+
+- Draft shared bounded native radix-literal source rules across integer, Option/Result, text counts and JSON indices, with original source equations and independent unrun caller, receiving JS/strict TS and Rust oracle case source. Full translation and parity remain unfinished (#759, #772).
+
+- Draft44 additional checked integer operations from complete existing native/runtime templates, actual Option payload widths, forward/reverse carrier mappings and complete Rust/JS/TS source histories with independent unrun boundary, receiving and native oracle case source. Full translation, synchronization and parity remain unfinished (#759, #772).
+
+- Draft72 copied primitive Option interfaces, matching native/runtime/declaration and forward/reverse width rules, and shared source rules for local/inline checked arithmetic result chains. Add complete source histories and independent unrun caller, JS/strict TS, reverse/export and Rust oracle source; full translation and parity remain unfinished (#759, #772).
+
+- Draft the common borrowed JSON string empty-default boundary by copying the actual native/runtime reader, with matching forward/reverse rules, a reusable bounded Rust CST function-copy producer, full source equations and independent unrun caller, JS/strict TS, freshness/export and native pointer oracle source. Full translation and parity remain unfinished (#759, #772).
+
+- Draft copied JSON boolean/u64/i64 fallback interfaces with matching native/runtime/declaration rules, actual forward and three reverse checker paths, composed native CST source histories and independent unrun caller, JS/strict TS, reverse/export and native oracle source. Full translation and parity remain unfinished (#759, #772).
+
+- Draft27 copied nested JSON reader/default interfaces, shared canonical traversal, exact helper-source provenance, both adoption APIs, actual forward/three reverse paths, full native CST histories and independent unrun JS/strict TS/reverse/export/native lifetime case source. Full translation and parity remain unfinished (#759, #772).
+
+- Draft shared current JSON field result source rules for later text and both Option adopters, preserving actual operands, chronological typed aliases, full two-phase CST histories and independent unrun consecutive-stage JS/strict TS, reverse, export and native oracle cases. Full translation and parity remain unfinished (#759, #772).
+
+- Draft root/nested canonical JSON object-view and immutable shared-key substitutions through existing field APIs, with two complete compiler CST equations and independent unrun adopter, JS/strict TS, consecutive text and native pointer/lifetime cases. Full translation and parity remain unfinished (#759, #772).
+
+- Draft bounded JSON get/scalar/object-view Option Try substitutions retaining the outer question mark, shared text payload projections and four complete compiler CST equations with independent unrun adopter, JS/strict TS, reverse/control, native pointer/effect and export cases. Full translation and parity remain unfinished (#759, #772).
+
+- Draft shared owned JSON input/copy/decode receiver source rules with explicit borrows, actual typed aliases, seven complete compiler CST equations and independent unrun adopter, JS/strict TS, reverse scalar, native and export cases. Full translation and parity remain unfinished (#759, #772).
+
+- Draft all37 existing field contracts into the resource caller checker with fresh complete library guards, preserved local/multi-root loan rules and exact flat runtime imports; retain four full compiler CST equations and independent unrun JS/strict TS/native inverse, local-view and refusal cases. Full translation and parity remain unfinished (#759, #772).
+
+- Draft8 copied owned JSON string interfaces and closed map/default/copy substitutions, actual owning forward/reverse result domains,11 full compiler CST equations and independent unrun JS/strict TS, native lifetime, original-history and export cases. Full translation and parity remain unfinished (#759, #772).
+
+- Draft exact-source scoped Rust Try/dot token views for field and text rules, preserving the shared lexer, original CST/spans, four compiler source equations and independent unrun lexical, adopter, JS/strict TS and export cases. Full translation and parity remain unfinished (#759, #772).
+
+### Changed
+- Draft shared bool/fixed-width primitive vector expression rules across actual
+  native capture, paired JavaScript/TypeScript source, reverse emission,
+  discovery, guarded failures, linear container moves and interpreter paths.
+- Retain fifteen complete source equations and independent paired/native edge
+  cases. All new checks are unrun; full translation and parity remain open.
+
+### Changed
+- Draft actual same-module primitive Vec helper graphs across both translation
+  directions, strict paired source, interpreter and native discovery.
+- Preserve linear result moves, guarded/unused call failures, complete callee
+  checks and the unchanged scalar-only public API. All new checks are unrun.
+
+### Changed
+- Draft separate fixed-width division/remainder round-trip rules across actual
+  source/native checks, guarded failures, receiving helpers and native emission.
+- Preserve original public API refusals, zero/overflow messages and operand
+  evaluation order. All new cases and CI-only Rust oracles remain unrun.
+
+### Changed
+- Draft fresh full native impl namespace source witnesses with bounded pinned
+  reads, whole-source CST reconstruction and closing source fences.
+- Select the additive constructor in existing derive/whole-owner consumers while
+  preserving original public APIs and authority boundaries. All checks unrun.
+
+### Changed
+- Draft current complete conditional-ancestor and enum namespace source witnesses
+  across seven native Rust source files with full CST and closing source fences.
+- Preserve original public APIs and unresolved namespace obligations; make
+  retained-profile path confinement portable. All new cases remain unrun.
+
+### Changed
+- Draft composition of actual source-qualified Router vector allocation with
+  checked primitive associated calls and their original semantic/source guards.
+- Preserve foreign macro/local declaration refusals and distinguish logical
+  negation. All paired/native regression and CI-only Rust case sources unrun.
+
+### Changed
+- Draft separate JS/TS-first primitive vector definition insertion with precise
+  source-derived result domains, complete helper graphs and native ABI checks.
+- Preserve the original scalar API and all move/source fences; export the new
+  reusable API. All new paired/native and CI-only Rust case sources are unrun.
+
+### Changed
+- Draft automatic actual-source selection of vector definition insertion in
+  bulk and physical JS/TS synchronization, retaining complete semantic/native
+  checks, atomic composition and original scalar routing. All cases unrun.
+
+### Added
+
+- Draft JavaScript and TypeScript primitive vector function extension, existing-helper bootstrap, removal, mixed reconciliation and native module adoption with complete source substitution histories, bulk routing and original native/receiving checks. All implementation and regression/oracle sources remain unrun; full translation remains open.
+
+### Added
+
+- Draft independent primitive vector local element domains, exact native branch/alias ownership checking and matching receiving inference while retaining the original same-result observer. All regression and Rust oracle sources are unrun; full translation remains open.
+
+### Added
+
+- Draft exact-domain 128-bit binary literal preparation across core, collection, iteration, vector, state, outcome and cancellation source rules while preserving original default/public literal bounds. All regression and Rust oracle sources remain unrun; full translation remains open.
+
+### Added
+
+- Draft exact typed-domain joins for literal choices across receiving source families and primitive definition return paths, preserving ambiguous vector-width refusals and original operand APIs. All regression and Rust oracle sources remain unrun; full translation remains open.
+
+### Added
+
+- Draft function-local primitive vector return inference for JavaScript and TypeScript source insertion, including typed values, empty branches, immutable aliases and checked helpers. Preserve exact integer widths, ownership rules, source substitution inverses and complete native re-entry. Implementation and regression/oracle sources are unrun; full translation and verification remain open.
+
+### Fixed
+
+- Draft separate native scalar/vector helper definition headers for receiving bootstrap while retaining the original emitter API and complete final public argument validation. All source and behavioral cases remain unrun; full translation remains open.
+
+### Added
+
+- Draft borrowed scalar-string parameters and existing qualified Unicode/ASCII operations for primitive vector definitions and helper lifecycle, retaining exact loans and complete final input validation. All receiving and Rust oracle sources remain unrun; full translation remains open.
+
+### Added
+
+- Draft source-proven unqualified immutable numeric literal aliases for exact primitive vector, operation, helper and return domains while retaining explicit widths and eager checked failures. All receiving and Rust oracle sources remain unrun; full translation remains open.
+
+### Added
+
+- Draft an additive native scalar-return primitive vector-local observer with exact local element/move domains and unchanged bounds. Active receiving/discovery/synchronization wiring and all verification remain open; regression and Rust oracle sources are unrun.
+
+### Added
+
+- Draft complete receiving, native discovery/comparison and helper-graph wiring for scalar/unit functions with primitive vector locals, preserving eager failures, exact local TypeScript domains and original source/ownership checks. All cases are unrun; full translation and verification remain open.
+
+### Added
+
+- Draft source-bound primitive slice core calls in both JavaScript/TypeScript reverse translator families, with matching emitters, interpreters and runtime sources. Complete receiving/refusal cases and source equations remain unrun; native forward integration, Rust inverse and full synchronization remain unfinished.
+
+### Added
+
+- Draft canonical Rust inverse substitutions for primitive slice calls in both owned source families, retaining full original-source reproduction and private JavaScript reissue. Receiving and refusal cases remain unrun; native forward integration and full synchronization remain open.
+
+### Added
+
+- Draft native forward substitutions, private caller/type/loan checks, emission and runtime assets for primitive slice core calls. Complete receiving/refusal source remains unrun; actual root activation, production adoption and full translation remain unfinished.
+
+### Added
+
+- Draft the primitive slice core's actual native module edge and complete reversible root/provenance history, retaining all historical equations and original archive access. Constructor, export and history case sources remain unrun; full translation and parity remain unfinished.
+
+### Added
+
+- Draft automated whole-module proposals for typed primitive slice emptiness checks, with complete CST inverses, paired core imports and private source reissue. The stricter input contract is explicit, nothing is installed by the proposal, and all receiving/refusal cases remain unrun.
+
+### Changed
+
+- Draft complete adjacent native root history composition across fixed aliases, bounded JSON and primitive sequences, preserving strict current-source acceptance separately from source proposals. Independent provenance/refusal cases and all validation remain unrun.
+
+### Added
+
+- Draft an additive whole-module primitive slice presence proposer for common comparisons, negations and Boolean conditions, preserving the original emptiness API. Complete source inverses, private reissue and independent receiving/refusal source are retained; every validation remains unrun.
+
+### Added
+
+- Draft 88 paired bounded primitive vector operations, strict declarations and independent JavaScript/native oracle source. Matching native resource bounds are explicit. Caller/move/loan rules, root activation and full synchronization remain unfinished; every validation is unrun.
+
+### Added
+
+- Draft fresh complete owned-vector source bindings and reversible receiving module/runtime proposals. Complete ten-input closing fences and independent source/refusal cases remain unrun; private caller/ownership rules, root activation and full synchronization remain unfinished.
+
+### Added
+
+- Draft operation-local joins between actual owned-vector JavaScript and Rust wrapper sources, including matching resource declarations and complete receiving source checks. Independent cases remain unrun; no caller, ownership or full-translation qualification is claimed.
+
+### Added
+
+- Draft source-bound local primitive vector calls in both reverse translators, including checked moves/borrow duration, target emission, interpreters and runtime assets. Public Vec parameters and wider ownership/control rules remain explicit refusals; every receiving and native validation remains unrun.
+
+### Added
+
+- Draft canonical owned-vector Rust inverse substitutions with full private JavaScript reissue and whole original Rust reproduction. Additive scalar/reader copies preserve original behavior and error identity. Complete receiving/refusal source remains unrun; wider ownership and full synchronization remain unfinished.
+
+Draft source-bound native owned primitive vector calls across eleven domains,
+using fresh paired core source, existing private caller/emission proofs and
+explicit move/shared-borrow flow. Receiving cases and all verification remain
+UNRUN; full translation, broader Vec contracts and root activation remain open.
+
+Draft the physical owned primitive vector core root edge and complete adjacent
+native history successor, retaining both earlier pinned archives and source
+inverses. All receiving, freshness, parity and native checks remain UNRUN;
+module reachability does not certify full executable translation.
+
+Draft complete same-module native helper graphs returning owned primitive
+vectors, with copied/shared inputs, bounded acyclic body walks and current
+private dependency/emission checks. All receiving and verification remain UNRUN;
+broader vector inputs, mutation and full synchronization remain unfinished.
+
+Draft local owned primitive vector move/rebind rules in both owned JS/TS
+caller families and native checked core callers, preserving alias/loan and
+branch availability checks. Receiving, strict typing, inverse, freshness and
+native verification remain UNRUN; broader mutation and full sync remain open.
+
+Draft bulk CST source proposals for selected empty vector locals, discarded
+pushes and length reads, with complete private after-source checking, inverses
+and explicit representation/resource contract-change flags. No production
+installation or original equivalence is certified; all verification is UNRUN.
+
+Draft owned primitive vector accumulation across checked loops in both JS/TS
+caller families and native fixed-point flow, preserving actual lexical slots,
+move/rebind invariants and early-exit checks. Independent receiving/native
+oracle sources are UNRUN; complete translation and broader contracts remain open.
+
+Draft explicit owned primitive vector inputs guarded by the existing paired
+truncate(input, u64::MAX) entry prefix, preserving the same native resource bound
+and original lexical moves. No core API expansion; receiving/native oracle and
+all verification remain UNRUN. Shared inputs and full synchronization stay open.
+
+Draft owned primitive vector helper arguments under actual bounded entry
+contracts, with complete native caller/callee graph checking and vector/scalar/
+copied-Option results. Independent all-domain JS/TS/meta/inverse/native case
+sources remain UNRUN; shared inputs and full synchronization remain open.
+
+Draft bounded shared primitive vector entry/helper references using actual
+paired len guards, live input roots, original standard Copy/source checks and
+copied outputs across both languages. Existing core APIs are unchanged. All
+receiving/oracle and verification execution remains UNRUN; full sync stays open.
+
+Draft additive whole-module CST proposals for bounded dense primitive vector
+literals, preserving evaluation order, complete originals/inverses and private
+after-source checking. Original empty-only API stays unchanged; migration
+contract differences remain explicit and all verification is UNRUN.
+
+Draft eleven primitive vector literal wrappers over the existing paired
+from_slice core, strict declarations, fresh whole-source ABI bindings and
+complete runtime packaging. No Rust core API expansion. Independent source
+cases and native oracle are UNRUN; caller/inverse integration remains open.
+
+Draft an additive mixed source-copy adapter with a separate complete Rust CST
+path, preserving the original JS/TS-only copier and four explicit family routes.
+Rust grammar/type/compilation claims stay false; CI oracles now use the public
+core module. All source/receiving/freshness/oracle verification remains UNRUN.
+
+Draft qualified primitive vector from_slice array callers through the paired literal runtime, actual scalar and linear ownership checks, and private emission routing. Add independent native caller and refusal case source. All execution remains unrun; reverse integration and full translation remain unfinished.
+
+Draft primitive literal calls in both owned JS/TS source lanes, paired type/import validation, Rust emission and canonical inverse, both interpreters and runtime preparation. Add independent all-domain receiving and refusal case source. All checks remain unrun; full translation, receiving qualification and parity remain open.
+
+Draft reusable nested original-source edit templates and bulk paired literal migration, preserving existing APIs and full CST/private reissue. Add independent all-domain and nested/source/budget refusal case sources. All execution remains unrun; full translation and parity remain unfinished.
+
+Draft actual mutable primitive Vec local initialization from same-module helpers, preserving full source/helper graph and linear ownership checks. Add independent eleven-domain native/target and refusal case source. All execution remains unrun; full translation and synchronization remain unfinished.
+
+Draft synchronous owned-to-shared primitive Vec helper arguments in both reverse source lanes, retaining full callee/source checks and later-argument move refusals. Add all-domain target/interpreter/inverse/refusal case source. All execution is unrun; forward explicit helper borrows and full synchronization remain open.
+
+Draft actual native shared Vec helper operands and a separately source-qualified result route, preserving the generic ownership API and full helper graph. Add transient call-interval move/write protection, all-domain native target/refusal case source and independent Rust oracle extensions. All execution remains unrun; full translation and parity remain unfinished.
+
+Document source-only primitive collection contribution and reusable rule contracts: layered CST substitutions, explicit paired bounds and migrations, original helper/source qualification, call-interval loans and transient indexes. Preserve unrun status, existing APIs/refusals and same-SHA JS gates before fatal Rust CI.
+
+Draft additive failure-aware primitive source readers/operations and actual compiler consumer routes. Preserve legacy APIs, complete closing checks and ordinary callback error identity; caught source failures remain fatal after restoration. Add independent map/physical/cross-family/legacy/fence/depth source cases. All execution remains unrun and full translation unfinished.
+
+Draft reusable finite literal JSON path-search adoption through existing bool/integer/borrowed/owned text field cores, explicit two-stage CST substitutions and bounded complete-module batches. Add actual catalog source selection, independent source/priority/refusal cases and original Rust catalog edge oracles. No production body is installed; all execution remains unrun and full translation unfinished.
+
+Draft actual owned JSON field optional-text type witnesses for TypeScript and canonical Rust inverse in both owned lanes, avoiding unrelated Result native cores for field-only callers. Preserve original fallback/default projection and full source/private checks. Add independent receiving and source/refusal case sources. All execution remains unrun; full translation and parity remain unfinished.
+
+Draft hosted-only native profile oracle orchestration after the unchanged eight-stage JavaScript gate, complete source/CST workflow history, bounded evidence handling, and full Cargo-discovered Windows test scheduling. All new behavior remains unverified.
+Schedule the complete workflow source cases through the existing lint entrypoint that installs locked YAML, retaining every original case and complete source history.
+Draft two portable native source profiles, shared bounded runtime evidence, exact-byte checkout and current-clock/source closing. All native and JavaScript verification remains unrun.
+
+Draft actual policy nominal producer exports and schedule its independent Rust oracle in the existing integration target. Whole policy methods and all execution remain unverified.
+
+Integrate the finite copied-record collection and real JS/TS owned-field inverse
+source APIs with complete predecessor histories and explicit production/resource
+gaps. Document the task-local shared-worktree and serialized publication rules
+for the three source-only workers. All implementation and case execution remains
+unrun; no translation completeness, coverage, parity or performance is claimed.
+
+Draft an independent complete policy decision table and actual native method
+oracles for every client/provider/protocol cell, parse pair, full set order,
+nonadjacent duplicate and detached output. Reuse the existing gated Rust test
+target. All new execution is unrun; this does not claim JavaScript translation
+admission, policy parity or coverage.
+
+Draft shared independent native and JavaScript URL host/redaction boundary
+cases, preserving real URL parser outcomes separately from the portable
+logger's narrower admitted domain. Reuse the existing native integration binary.
+All execution is unrun; whole compiled targets and native logger parity remain
+separate obligations.
+
+Draft an invocation-local monotonic bearer/JWT token scanner, complete original
+text-module source successor/CST inverse and independent whole-predecessor
+comparison cases. Avoid repeated suffix scans and suffix-string construction
+without a benchmark or measured performance claim. Source proposal only; all
+execution and whole persistent/native/strict-TS receiving remain unrun.
+
+Draft complete persistent logging text/URL/time helpers with explicit native
+number, URL, platform and four-digit UTC boundaries. Expose the standalone
+whole-source credential scanner proposal through the shared family API. Full
+logger installation, native wrapper/source closure and all behavior/receiving
+execution remain unrun and incomplete.
+
+Record source-only occurrence worklists and next shared formatting, static-field
+and collection prerequisites, preserving actual whole-function and private
+source/trait obligations. Keep the actual Rust CI toolchain source pin distinct
+from historical captures. No tests, diagnostics or performance measurements ran;
+no occurrence count establishes translation coverage.
+
+Integrate real persistent logging profile and bounded original source-reader
+source APIs, complete native/source histories and independent case sources.
+Keep untranslated setup, unscheduled copied-native oracles and host/platform/
+resource/freshness gaps explicit. All execution remains unrun; complete
+translation and parity are unfinished.
+
+### Added
+- Draft complete checked native join-helper kernel emission, countable requirement/source inventory tracking, and reusable bulk proposal entrypoints for scalar collection loops/callbacks, async control callers, genuine module bindings and paired synchronization/reconciliation.
+- Draft exact concurrent native/JS/TS reconciliation and all edit-set bulk dispatch, checked scalar stage specialization and canonical edited-target inverse, synchronous HTTP helper continuation expansion, and opt-in cross-module vector-helper source qualification with bounded retention.
+- Draft Rust-origin scalar iterator contract migrations with fused lazy evaluation, original owner/equivalence limits and complete production prerequisite/refusal maps; compose cross-module helper scopes with original owned/core-reader APIs.
+- Add reusable exact-SHA checkpoint, resume handoff and PR forms with remaining IDs, independent execution states, cleanup and publication boundaries.
+- Draft original scoped body-macro source proposals and expanded-domain edited-target inverse, retaining production output/formatting ownership gaps; add real policy collection edge oracle source and reusable independent Unicode/alias/order/protocol vectors.
+- Draft private nested format-literal custody and a complete copied nominal Copy collection compiler profile, preserving uninstalled/default/refusal and exact-restoration-only limits. Add independent actual signed-duration vectors at i64 extrema and day boundaries above2^53 in the existing native oracle binary.
+- Draft durable pure-scalar leaf recovery with parent intent and fresh compiler/Cargo proofs; correct raw parser string custody through complete immutable successor equations.
+- Retain complete original source equations when correcting bulk case trace assertions; expose the new narrow lanes through the stable family entrypoint without widening default domains.
+- Add independent JavaScript/strict TypeScript and CI-only Rust oracle source, retaining CST/meta roundtrips, ordered substitution phases, full inverses, source/ownership checks and original resource limits.
+
+All new implementation and case sources remain unrun. Full production translation, synchronization, parity, freshness and receiving qualification remain unfinished; this fragment claims no verified behavior or performance gain.
+- Draft bounded exact-SHA CI evidence acquisition and explicit fixed-member repair worklists for the later feedback phase; retain complete raw streams, artifacts, source workflows, missing evidence and incomplete captures. Execution and CI inspection remain deferred.
+- Draft independent native credential expiry/scoped-clock boundary oracles and shared decimal-string fixtures, retaining exact Option presence and signed truncation semantics without another integration-test binary. All new cases remain unrun.
+- Preserve exact original source-read failures through descriptor/directory close failures in four completed family modules; retain complete source equations and independent fault-case source without weakening source guards or limits.
+- Integrate the copied owned static-literal argument profile and real edited JS/TS-to-native inverse, preserving private move-only custody and complete original source histories. Production output transport and all qualification remain open.
+- Integrate real edited nominal JS/TS-to-Rust semantic inverse with independent whole-native checks, second canonical Rust emission and exact authoritative target reproduction; retain explicit bounded-domain and unverified profile-storage limits.
+- Draft exact historical-output migration after authored application edits, including guarded known-stale removal and unknown/authored neighbor protection; preflight offline archives before materializing the old compiler tree. Source-only and unverified.
+- Integrate complete streamed CST receiving, concurrent owned-source peers and qualified static output routing into the shared API; include owned-outcome native oracle source in an existing integration target. All qualification remains deferred.
+
+### Added
+- Draft unrestricted borrowed JSON predicate integration through original forward/reverse compilers, invocation-scoped project consumption, lifetime handling, complete emitted JS/TS definition export and independent roundtrip/native oracle case source.
+- Draft a bounded immutable-source collector joining original Rust/JS/TS observations with numbered implementation/adoption evidence, including stale receiving/case evidence and unmatched assignments.
+
+### Development status
+- All new execution remains UNRUN; CI feedback is NOT_INSPECTED. Full automated translation and synchronization remain unfinished, with11/70 acceptance bundles source drafted and59 open. Source-history/observation counts are not executable coverage.
+
+### Fixed
+- Draft independent invocation-local caller slots for genuine JSON namespace contexts, preserving separate original source associations when function text matches and reusing the same context during fresh metadata reconstruction.
+
+### Development status
+- Added actual whole-project/interleaved-meta/expiry and complete source-history receiving case source. All execution remains UNRUN; full automated translation is unfinished and11/70 acceptance bundles remain source drafted.
+
+### Added
+- Draft reusable two-phase rule registration, source discovery, transitive prerequisite ordering, conflict/exclusive-label/cycle refusal and stable scheduling without changing the original pipeline API.
+- Draft immutable original-span source composition, complete Rust/JS/TS CST histories, forward/inverse idempotent replay and actual Router caller receiving through both reverse compilers.
+
+### Development status
+- Adopted dependency discovery in the existing complete scope collector. All new execution remains UNRUN; full translation/synchronization and current executable coverage remain unfinished and unverified.
+
+Adopt shared predicate descriptions in both real forward/reverse adapter
+families and add complete source restrictions to the original private ABI
+lifetimes. Preserve declaration/native pins, literal limits and original
+ownership checks. Retain complete source histories in an additive361-equation
+index, with old-root and lifecycle case source. All execution remains unrun;
+full translation and remaining acceptance bundles are unfinished.
+
+Draft contract-derived candidate shapes and strict declaration generation for
+the existing33 slice and88 owned-vector operations. Preserve original candidate
+APIs and declaration bytes, with full four-parent source proposals, CST/inverse
+histories and independent unrun cases. Qualified installation and full
+translation remain unfinished; no executable coverage gain is claimed.
+
+Draft shared operation descriptions and a complete six-parent source adoption
+proposal for the borrowed JSON and standard-map predicates. Forward arities,
+reverse roles and strict declarations derive from the original contracts;
+private source/type/body checks and declaration pins remain intact. Include
+full two-phase CST/inverse histories and independent unrun boundary cases.
+The proposal remains uninstalled; full translation and R04 remain unfinished.
+
+Draft contract-derived owning-text and literal-vector candidate/declaration
+generation for20 existing wrappers. Preserve native clone/Copy distinctions,
+64/4096 limits and strict declaration bytes, with a six-parent two-phase source
+proposal and independent unrun cases. Record the pending combined141-operation
+adoption in a new handoff. Full translation and verification remain unfinished.
+
+Source-install shared descriptions in all five collection candidate modules,
+covering141 existing operation rows/wrappers while preserving native/private
+ownership checks and strict declaration bytes. Retain the original361 source
+index and complete374-equation successor/control histories with independent
+unrun cases. Full translation and receiving qualification remain unfinished.
+
+Draft an actual original-binder gap worklist mapping complete native diagnostics,
+scope flags and unresolved physical sources to L02/B05 review. Add detached
+inspection and a separate4096-file report-only facade while preserving the
+old512-file configuration API and all other source limits. Include complete
+source histories and independent unrun cases; full translation remains open.
+
+Draft original JS/TS binding-gap worklists in the actual immutable-source
+driver without a second native pass. Preserve noResolve lexical boundaries,
+native refusals, source checks and output-capacity handling. Retain complete
+source histories and independent unrun cases; full translation remains open.
+
+### Added
+
+- Source draft of opt-in imported Boolean helper translation in both reverse readers, with separate helper source documents, fresh meta reissuance, original target emission and full source-operation fences. Verification and full synchronization remain unfinished.
+
+### Added
+
+- Source draft of a canonical Boolean Rust inverse that restores rechecked helper sources or produces a checked edited-caller proposal with explicit helper-network reconciliation. All receiving and runtime verification remain unrun.
+
+### Added
+
+- Source draft of shared Boolean/fixed-integer helper substitutions, both document profiles and a scalar Rust inverse, with original native checks and independent edge-case source. Reader adoption and all verification remain unfinished.
+
+### Added
+
+- Source adoption of both scalar helper readers, document profiles and Rust inverse, preserving original guards and adding complete source-operation cases. All receiving/runtime verification and full synchronization remain unfinished.
+
+### Added
+
+- Source draft of canonical scalar Rust reconciliation over original JavaScript and paired TypeScript function bodies, retaining unchanged helpers/trivia and requiring fresh full-source checking. General reconciliation and verification remain unfinished.
+
+### Added
+
+- Source draft of pure scalar helper local-binding normalization, preserving native checks, branch scopes, caller hygiene and shared work limits. Reader adoption and verification remain unfinished.
+
+### Added
+
+- Source adoption of ordered pure scalar helper locals in both original readers, with complete source histories, source-closing cases and native receiving source. Verification and full translation remain unfinished.
+
+### Added
+
+- Draft reusable total scalar helper argument substitutions, complete two-reader
+  source/CST proposals and independent native receiving cases for Boolean and
+  ten fixed integer roles. Preserve inert operand behavior and original private
+  source/type/body checks. Source proposals remain uninstalled and all execution
+  UNRUN; full translation and acceptance completion remain open.
+
+### Added
+
+- Adopt total scalar helper argument substitutions in both original native
+  source readers with eight-input closing guards and full receiving case source.
+  Retain all412 prior source equations and append12 continuations. All execution
+  remains UNRUN and full translation acceptance remains open.
+
+### Added
+
+- Draft shared total primitive-operation substitutions inside scalar helpers,
+  complete native reader/import/provenance successors, a copied checked Rust
+  inverse, independent receiving matrices and CI-only native boundary oracles.
+  Keep potentially failing operations explicit and preserve original compiler
+  checks. Reader adoption and all verification remain unfinished.
+
+### Added
+
+- Adopt total primitive helper substitutions in both original native readers
+  with canonical import checks, retained helper-origin runtime receipts and
+  fourteen-input source closing. Preserve424 prior source equations and append13
+  continuations; add independent native receiving/source cases. All execution
+  remains UNRUN and full translation acceptance remains open.
+
+### Added
+
+- Draft an additive total primitive caller reconciliation adapter that selects
+  changed-body runtime imports, preserves unchanged helper source, refuses alias
+  conflicts and rechecks complete composed JavaScript/paired TypeScript against
+  authoritative Rust. Retain full original copy/CST ancestry and independent
+  receiving source. All execution remains UNRUN and full sync remains unfinished.
+
+### Added
+
+- Draft ordered scalar helper substitution into existing immutable statement
+  IR, preserving eager failures, once-only arguments and lazy branches. Include
+  bounded continuation construction, independent JavaScript/native oracle source
+  and complete mixed-source CST creation histories. Native reader/profile
+  adoption and all verification remain unfinished.
+
+### Added
+
+- Draft complete native ordered helper reader successors, separate private
+  constructor and document/profile/Rust inverse/reconciliation API copies.
+  Preserve original checks, eager failure order, native helper-origin history,
+  source closing and old APIs. Add full CST/source ancestry and independent
+  receiving source. Reader adoption and all verification remain unfinished.
+
+### Added
+
+- Adopt ordered scalar helper source readers, additive document/profile/inverse
+  APIs and native receiving source with nested Copy/ordered source guards.
+  Preserve437 prior source equations and append14 complete continuations. All
+  execution remains UNRUN; full translation and remaining acceptance stay open.
+
+### Added
+
+- Draft native ordered helper import/local-function graph qualification with a
+  bounded iterative layout worklist, fresh body checks, recursive-call refusal
+  and retained transitive helper origins. Preserve original source guards and
+  APIs; add complete native reader/CST proposals and independent receiving
+  source. Adoption and all verification remain unfinished.
+
+### Added
+
+- Adopt ordered helper import/local-function graphs through original private
+  native checks, fresh bodies and seven-input closing guards. Retain451 prior
+  source equations and append15 continuations, with complete native receiving
+  source and old-root/poisoning cases. All verification remains UNRUN.
+
+### Added
+
+- Draft scalar early-return/fallthrough substitutions using original native
+  lexical/type checks, separate copied ordered normalization and existing
+  immutable statement IR. Include complete reader/CST proposals, independent
+  JS/native oracle source and paired receiving cases. Source adoption and all
+  verification remain unfinished.
+
+### Added
+
+- Adopt private native scalar early-return/fallthrough parsing and copied ordered
+  normalization, retaining original lexical/type checks and complete receiving
+  source. Preserve466 prior source equations and append16 continuations. Close
+  all26 combined source inputs; all verification remains UNRUN.
+
+### Added
+
+- Declare physical language/meta source roles and draft a copied exact-producer
+  planner that rejects observed wrong Rust roots and stale other-root deletion.
+  Preserve original capture, limits, receipts, explicit authored protection and
+  installer; include full producer import/CST proposals and independent cases.
+  Actual producer adoption and all verification remain unfinished.
+
+Source draft: adopt observed physical Rust output layout planning in both
+JS-first/native TypeScript producer entry points and append complete original
+producer source-history equations without replacing prior source archives.
+Draft independent chronology, edited-source, dispatch and rereading cases.
+Execution UNRUN; full translation and layout receiving remain unfinished.
+
+Retain the existing physical language layout guide and its historical receipts;
+link a new source-only receiving/adoption guide. Document explicit source-role export,
+authored/generated ownership, receiving package/CLI/root requirements and the
+known full-corpus resource gap. Add independent unrun complete export retention
+and relocated three-tree layout-helper cases; no whole translation claim.
+
+Source draft: add ordered scalar let/reassignment substitution through existing
+immutable statement IR, complete two-reader native source proposals and a fresh
+nine-input fence. Draft independent Boolean/integer/branch/failure/native source
+and inverse cases. Reader/history adoption and all execution remain unfinished;
+no full translation or production coverage claim.
+
+Adopt both original native mutable-scalar readers and their fresh nine-input
+ordered source fence. Preserve all482 source equations and append17 full reader
+and chronological case continuations, with complete copies/CST/inverse histories
+and independent unrun source-lifetime controls. Full translation remains open.
+
+Draft a complete additive counted-range checker for all ten native integer
+widths, with six original reader import proposals and retained private checks.
+Add independent JS/strict TS/interpreter/inverse/refusal case source and ten
+Rust range boundary oracles in the existing JavaScript-gated target. All UNRUN;
+reader/history adoption and full translation remain unfinished.
+
+Draft additive bounded source-history composition using original chain/CST
+algebra, preserving old index APIs and caps. Add fixed immutable499/six-reader
+width-loop histories, shared original reservations, original index production
+and independent unrun source/CST/conflict/limit/closing cases. Actual preparer
+integration, reader adoption and full translation remain unfinished.
+
+Adopt six width-aware counted-loop readers and their actual native-preparer
+source histories. Preserve the original499 index and add bounded6/18 source
+segments, complete engine/preparer/case ancestry and independent unrun cases.
+Keep original native checks and resource limits; full translation remains open.
+
+Draft an application-derived model-alias operation in the existing owned JSON
+state family, with native body-copy provenance, paired immutable JS backend,
+shared forward/reverse registration and TypeScript declarations. Add independent
+production/native, runtime, strict forward, reverse/meta/inverse and refusal
+case source. Production wrapper adoption and all verification remain unfinished.
+
+### Added
+
+- Add opt-in local sensitive data scanning for supported inference requests,
+  with session-scoped typed placeholders and downstream restoration.
+
+Draft shared logical predicate and numeric comparison source composition for
+carrier locals and Option/Result callbacks, with complete CST histories and
+independent unrun JavaScript, TypeScript, reverse and native oracle source.
+Full translation and verification remain unfinished.
+
+Preserve older unverified source records and every open obligation in a fifth
+linked history file, keeping the active requirement ledger below1,000 lines.
+Full translation and verification remain unfinished.
+
+Draft declared qualified callback carrier and Result try-payload source roles
+for chronological/integer locals, with full CST histories and independent unrun
+source, target, invalid-nonadmission and native oracle cases. Actual type/body/
+ownership checks stay independent; full translation remains unfinished.
+
+Draft recursive reuse of existing carrier selectors inside shared callback body
+rules with bounded depth, rounds and full proposal history, retaining complete
+CST inverses and independent unrun source, target, reverse and native oracles.
+Actual type/ownership checks stay independent; full translation remains open.
+
+Draft reusable integer callback body engine copies and bounded composition with
+the existing text rules across Option/Result adopters, retaining full child/CST
+histories and independent unrun source, target, reverse and native oracle cases.
+Temporary source roles grant no semantic admission; full translation remains open.
+
+Draft shared closed callback temporary source parameters and mixed immutable
+local prerequisites for text/integer body composition, with full CST histories
+and independent unrun source, target, refusal and native capture oracle cases.
+Original capture/type/ownership checks stay independent; full translation is open.
+
+Draft callback text-body translation by reusing the existing ordered text rules,
+with full body/parent CST inverses, exact helper source provenance, grouped borrow
+source operands and independent unrun JavaScript/TypeScript/Rust case sources.
+Full translation and verification remain unfinished.
+
+Draft actual lexical Option/Result binding Try source projection through core
+arguments, locals and integer expressions/receivers, retaining full CST histories
+and independent unrun source, target, invalid-context and native storage cases.
+No binding role grants semantic authority; full translation remains unfinished.
+
+Draft shared immutable conditional branch-local source joining through the
+existing chronological reader, retaining full CST histories and independent
+unrun JS, strict TypeScript, reverse, owning and native oracle case sources.
+Full translation and verification remain unfinished.
+
+Draft shared matching conditional source role inference for Option and Result
+callbacks, with complete CST histories and independent unrun JavaScript, strict
+TypeScript, reverse, owning-text and native oracle source cases. Full translation
+and verification remain unfinished.
+
+Draft complete original common carrier callback source scope partitions for
+outer integer/carrier/local rules, retaining each callback body and independent
+semantic checks, with full CST histories and unrun source/target/native cases.
+
+Draft shared declared callback source composition across Option and both Result
+families, including Try payloads and isolated carrier scopes, with complete CST
+histories and independent unrun source/target/refusal/native case sources.
+Actual callback semantics stay independently checked; full translation is open.
+
+Draft known core/callback operand source composition, preserving original
+arguments and independent body/type checks, with full CST histories and unrun
+source, target, refusal and native oracles. Full translation remains unfinished.
+
+Draft a shared qualified-call source reader and repository text/integer/Option
+composition rules, with complete CST history and independent unrun JavaScript,
+TypeScript, reverse and native oracle source. Full translation and verification
+remain unfinished.
+
+Draft an additive bounded streaming source-rule composition runner with full
+original guards, unchanged-round receipts and independent unrun orchestration,
+real-adopter, JavaScript/TypeScript and native oracle source. Full translation,
+corpus integration and verification remain unfinished.
+
+Draft exact canonical formatting macro source-role composition for carrier
+locals and callbacks, retaining complete CST histories, independent actual macro
+and argument checks, and unrun target, nonadmission and native oracle case source.
+Full translation and verification remain unfinished.
+
+Draft exact same-path core function-item callback reification with fresh names,
+closed signatures, full CST histories and independent unrun source, target,
+refusal, hygiene, budget and native oracles. Actual binding/type checks remain
+independent; full translation and verification remain unfinished.
+
+Draft bounded original Option/Result Try payload source composition through
+qualified calls, chronological locals and integer expressions/receivers, with
+full CST histories and independent unrun source/target/refusal/native cases.
+Whole-function Try and type checks remain independent; full translation is open.
+
+Draft bounded repeated-rule packet output, fresh source replay and guarded
+source installation through the original transaction, including complete CST
+histories and independent unrun receiving, concurrency, tamper and export cases.
+Full translation, synchronization and verification remain unfinished.
+
+Draft complete bounded integer method chains in one source substitution, reused
+by callback bodies, with full CST histories and independent unrun source, target,
+reverse, boundary and native evaluation-order oracles. Full translation is open.
+
+Draft paired nonempty/nonblank JSON text field substitution rules at depths one
+through four, with copied whitespace source provenance, borrowed/owned results
+and independent unrun JavaScript/TypeScript/Rust and inverse case source.
+Full translation and verification remain unfinished.
+
+Draft paired JSON child-copy and null-default substitution rules for string
+paths and indices, with same-operation local source composition, complete CST
+histories and independent unrun JavaScript/TypeScript/Rust inverse case source.
+Full translation and verification remain unfinished.
+
+Draft original ordinary type alias candidates across shared source import
+selectors, with complete CST substitution histories and independent unrun
+JavaScript, TypeScript, native and export case sources. Full translation and
+verification remain unfinished.
+
+Draft ten paired eager or borrowed-to-owning Option error operations and their
+actual Result/source/target mappings, retaining complete native/CST/generic source
+histories and independent unrun evaluation-order, ownership, receiving and native
+oracle cases. Full translation and verification remain unfinished.
+
+Draft five paired lazy Option-to-Result error operations with complete native
+and compiler CST histories, actual checked type/source/reverse mappings and
+independent unrun JS, strict TypeScript, branch, ownership and native oracle
+case sources. Full translation and verification remain unfinished.
+
+Draft is_some_and/is_none_or source through existing boolean Option interfaces
+and closed scalar equality candidates, with complete CST histories and unrun
+source, target, reverse and native predicate/order cases. No new runtime ABI
+or semantic permission is issued; full translation remains unfinished.
+
+Draft18 paired owning optional-text map, chain and lazy fallback substitution
+interfaces with complete source history and independent unrun JavaScript,
+TypeScript, resource reverse and native oracle sources. Full translation and
+verification remain unfinished.
+
+Draft consuming optional String and borrowed text-filter substitution rules,
+complete generic identity source-history composition and independent unrun
+JavaScript/TypeScript/Rust ownership and inverse case source. Full translation
+and verification remain unfinished.
+
+Draft scalar core helper joins into integer source rules and bounded JSON-field
+composition, with complete CST source histories and independent unrun JavaScript,
+TypeScript and native oracle case sources. Full translation and verification
+remain unfinished.
+
+Draft shared qualified-call arithmetic and numeric comparison source rules for
+integer adoption and Option/Result callbacks, retaining full CST histories and
+independent unrun JavaScript, TypeScript, reverse and native oracle case sources.
+Full translation and verification remain unfinished.
+
+Draft bounded known callback scope isolation for outer integer/local source
+selection, preserving complete original closures and independent semantic
+checks, with full CST histories and unrun scope, target, refusal and native cases.
+
+Draft shared text-body substitution for Result success/error/recovery callbacks
+and qualified Result source composition, retaining complete CST inverses and
+independent unrun JavaScript/TypeScript/resource reverse/native oracle sources.
+Full translation and verification remain unfinished.
+
+Draft shared closed text/carrier source roles for bare/grouped Try, qualified
+core and callback payloads, with isolated callback/local scopes, full CST
+histories and independent unrun source, target, refusal and native oracle cases.
+Actual type/Try/ownership checks remain independent; full translation is open.
+
+Draft shared owned Base64 Result input boundaries across seven reverse lanes, including native source selection, snapshots, affine moves, TS/Rust/evaluator controls and canonical inverse support. Independent cases remain unrun; full translation is unfinished.
+
+Draft explicit owning callback text source context through shared Option/Result
+body substitutions and complete block wrappers. All paired, source, native,
+lazy-order and refusal cases UNRUN; full translation remains unfinished.
+
+Draft explicit owning Option/Result constructor payload source contexts through
+shared branch/local/match/return rules, preserving borrowed and unknown targets.
+All JS/strict TS/native/source/refusal receiving cases remain UNRUN.
+
+Draft a shared bounded nonbinding match scope inventory across seven chronological
+local readers and actual text/integer/builder scans, with precise pattern pipes
+and preserved callback/closure refusals. All receiving/native checks remain UNRUN.
+
+Draft fresh selected CA trust through paired Codex HTTP/WebSocket and actual temporary/persistent callers, preserve normal TLS verification and fix explicit lock budgets. Retain original native/library pins through full three-language histories; all verification remains unrun.
+
+Draft a shared complete source closing protocol across fresh namespace and Copy
+readers. Attempt every closing check and preserve exact primary throws, including
+null/undefined, while rejecting async/proxy/thenable escape. Independent source
+cases are drafted; all execution and qualification remain UNRUN.
+
+Draft complete current library-bound consuming text inverses for emitted JS/TS,
+mixed edits and physical source units, preserving owned construction witnesses.
+All paired, source, physical and refusal cases UNRUN; translation unfinished.
+
+Draft contextual inference for common default-sized choice locals, preserving
+default behavior until genuine typed uses establish a monomorphic width. Capture
+source history after final inference through a complete copied collector. All
+independent JS/TS/native oracle source and qualification remain UNRUN.
+
+Draft borrowed text Into source adoption for explicit owning destination
+contexts through existing native text operations. Preserve ambiguous targets
+and owning transfers; all independent cases UNRUN and full translation unfinished.
+
+Draft operation-scoped fresh primitive core source sharing and complete paired
+JavaScript wrapper/Rust function signature-body joins for all 33 operations.
+Keep actual caller types, native owners, live loans and admission unqualified;
+public metadata grants no permission. Three equations and independent cases
+remain UNRUN.
+
+Draft fresh operation-scoped standard primitive/shared Copy source rules and
+route active consumers through complete current input and closing fences.
+Preserve original public APIs, source refusals and the two substitution phases.
+Add independent source cases; all execution and qualification remain UNRUN.
+
+Draft complete current vector compiler source copying from unchanged actual core modules with separate private import substitutions, complete CLI checks, preserved historical producer and independent unrun provenance cases.
+
+Document the translator's development timeline through5fa93ebf9, preserving
+2,899 task commits and990 integration checkpoints with timestamps and observed
+gaps. Explain source-supported delays, all58 open acceptance bundles and a
+conditional solo delivery forecast, separately from active effort and verified
+coverage. No tests/builds or CI feedback inspection ran for this report.
+
+Draft bounded empty written attribute grammar, complete retained parser callback
+CST records and copied header/x86 proposal APIs with explicit profile refusals.
+Preserve original caller, namespace and producer/export obligations and old APIs.
+Five complete source equations and independent cases remain UNRUN.
+
+Split detailed translation extension source contracts into a linked companion
+while retaining all instructions and remaining obligations below the file limit.
+No tests, compilation or CI feedback inspection; implementation stays unverified.
+
+Draft general bare cast type-position selection and repository scalar facade substitutions under existing complete source scope guards. Independent numeric, float, JS/TS, native and inverse cases remain unrun; complete translation remains unfinished.
+
+Draft bounded bare integer MIN/MAX owner adoption into the genuine paired core, preserving closed-scope checks, explicit body refusals, source inverses and independently safe header proposals. New cases remain unrun; full translation is unfinished.
+
+Draft twelve integer BITS associated constants through the shared scalar source rules and genuine native alias parser, preserving u32 result typing, profile guards and full source inverses. Independent cases remain unrun.
+
+Draft complete explicit local scalar type adoption through shared type grammar and original lifetime scope with whole-body refusal atomicity. Independent cases remain unrun; full translation is unfinished.
+
+Draft reversible paired scalar type adoption in both source APIs and bulk orchestration. Preserve protected native subtrees, complete source inverses and fresh checking boundaries. All new cases remain unrun; full translation is unfinished.
+
+Draft genuine protected scalar endpoints for existing monomorphic user alias chains while retaining original resolved-scope guards, current native source joins and whole inverses. Cases remain unrun; full translation is unfinished.
+
+Draft shared qualified scalar roles in existing Option/Result readers and four paired method adoption APIs, preserving domain restrictions and fresh checking. New independent cases remain unrun; full translation is unfinished.
+
+Draft genuine paired integer alias MIN/MAX expression translation through existing checked fixed domains, preserving native source joins and source inverses. Independent JS/TS/native cases remain unrun; full translation is unfinished.
+
+Draft explicit paired scalar type aliases with genuine protected module/scope
+binding, existing checked JS/TS meta types, native source construction and paired
+source inverse cases. All receiving/native checks and broad adoption remain OPEN.
+
+Draft shared complete scalar field/type adoption for monomorphic records, tuples, enums, unions, aliases and statics with whole-owner refusals and source inverses. Independent cases remain unrun; full translation is unfinished.
+
+Draft bounded lifetime-only scalar source adoption across signatures, fields, aliases and plain impl owners with explicit reference regions and whole-owner refusals. New cases remain unrun and full translation is unfinished.
+
+Draft shared complete native else-if inverse rules across scalar, control, range,
+floating, owned and mixed source paths with conservative branch-scope comparisons.
+Independent JS/TS/native/source/refusal receiving cases remain UNRUN.
+
+Draft shared exact original Host type/range parameter-prefix composition across
+whole generated-module inverse rules. All ten-width, paired, six-API, native and
+refusal cases UNRUN. Full translation and synchronization remain unfinished.
+
+Draft additive whole-module owned formatting inverse rules and physical source-unit
+registration, with stable primitive forward arguments and preserved computed order.
+All paired, source, native, refusal and export cases UNRUN; full translation unfinished.
+
+Draft actual conditional builtin lookups for generated declaration headers with
+one shared original source operation and complete lifecycle guards. Caller/owner/
+effect/export/type-prefix closure remains OPEN; all receiving cases UNRUN.
+
+Draft exact generated equality-header value and opaque macro input retention
+through genuine native issuers, complete CST inverses and combined resource
+bounds. Owner/effect/export/type-prefix closure remains OPEN; all cases UNRUN.
+
+Draft complete generated declaration/header source inspection through real native
+frames and bounded operation-local sharing. Owner/hygiene/export/type-prefix
+closure remains unresolved; all source, native and receiving cases UNRUN.
+
+Draft additive copied two-phase CST transport for the exact core formatting
+macro and compose it across six source families without hiding macro arguments.
+All cases UNRUN; full translation and verification remain unfinished.
+
+Draft shared complete lifetime-only where clauses and explicit self receiver forms for paired scalar adoption with whole-owner refusals and complete inverses. Cases remain unrun; full translation is unfinished.
+
+Draft complete local const type-position selection through existing guarded scalar source rules, preserving native initializer/hoisting and namespace refusals. Independent cases remain unrun and complete translation remains unfinished.
+
+Draft bounded TCP/Router-health discovery, lazy Docker candidate listing and verified native managed configure references with rollback and partial-success retention. Nine source equations and independent JS/strict TS/native cases remain unrun.
+
+Draft explicit native usize/isize facade aliases and shared source adoption through existing 64-bit checked JS/TS domains, retaining native template inputs and profile refusals. All new independent cases remain unrun; full translation remains unfinished.
+
+Draft reusable closed nonbinding match arm bounds and explicit String-result
+context propagation through existing conversion rules. All actual caller,
+JS/strict TS/native/source/refusal and receiving cases remain UNRUN.
+
+Correct the drafted JavaScript model-alias policy's canonical object rebuild to
+use its actual pair-based constructor. Retain the original runtime image through
+an explicit two-phase whole-source/CST successor and draft independent nested
+object/key-preservation regressions. Source only: tests UNRUN, CI NOT_INSPECTED.
+
+Draft production non-streaming model-alias response adoption of the shared owned
+JSON operation, preserving streaming's existing mutable API. Retain immutable
+whole-source ancestry and current-wrapper projection through both rule phases
+and CST inverses; add three CI-only native response oracle sources and source
+continuation cases. Source only: all execution UNRUN, CI NOT_INSPECTED; full
+translation remains incomplete.
+
+Draft selected CA trust through native Codex bridge HTTP/WebSocket and actual temporary/persistent callers using existing dependencies. Preserve complete native histories and add independent handshake/trust source cases. All verification remains unrun.
+
+Draft reusable complete native source histories with original pins, two-phase CST inverses and callback-boundary rechecks. Align native Rust fresh Codex global catalogue validation/removal/rollback and 8MiB reads with paired JS/TS; all independent verification remains unrun.
+
+Draft reusable Rust client-command environment filtering at actual temporary launch/version call sites to match paired JS/TS, preserving old pins through explicit complete native histories. Independent oracles and all verification remain unrun.
+
+Draft paired native client argv/model/session planning from mechanically copied Rust inventories and early Cloud/control-plane preflight. Seven source equations and independent cases remain unrun; temporary process lifecycle remains open.
+
+Draft actual paired temporary with composition through selected targets, exact run grants, ephemeral Codex bridge, private profiles and owned process supervision; preserve exit/stdin/cleanup behavior and native Claude version gate. All independent cases remain unrun.
+
+Draft paired JavaScript/TypeScript persistent Claude/Codex configuration, native ownership restoration, lossless TOML field substitutions and private transactional setup/removal. Independent cases remain unrun and full requirements remain unfinished.
+
+Draft paired owned-client process supervision with exact argv/environment, bounded output/deadlines, cancellation, owned-handle termination and native exit status. Independent source cases remain unrun; temporary launch integration remains open.
+
+Draft shared paired temporary-client profiles and process-local Claude/Codex settings, private cleanup identities, native privacy defaults and provider codecs. Independent cases remain unrun; run credential and process dispatch integration remains open.
+
+Draft paired JS/TS persistent remote client issuance, exact catalog authentication, origin-bound revocation and rollback using existing bounded HTTP and CA transport. All new verification remains unrun and full requirements remain unfinished.
+
+Draft paired Codex loopback HTTP/WebSocket transport and private nonce-owned Node daemon lifecycle through actual setup/configure/remove/undo paths. All process, runtime, TS and native verification remains unrun; broader lifecycle and translation requirements remain unfinished.
+
+Draft paired bounded Codex catalogue constraint validation and lossless transactional override removal before managed configuration, retaining exact undo and external files. Independent cases remain unrun; native alignment and full translation requirements remain open.
+
+Draft limited native subprocess capture and lazy bounded Rust discovery through retained complete native/CST histories. Preserve existing capture semantics and original provenance pins; all independent verification remains unrun.
+
+Draft paired intact global backend repair preserving first undo backups and credentials, with fresh live catalog/metadata association and post-repair rollback. Independent cases remain unrun and broader translation/lifecycle requirements remain open.
+
+Draft paired native configure/global undo dispatch, exact private backups and edit-aware restoration with credential/catalog transactions and offline reversal. Independent cases remain unrun; broader lifecycle and complete translation requirements remain open.
+
+Draft invocation-local final input checks across nested native source copies, histories and metadata, preserving immediate checks and primary errors without cross-operation caches. Include descendant compiler closure and independent unrun regression source.
+
+Draft shared bounded native source provenance reading, preserved original pins and final metadata receipts across six compiler constructors; eight full source equations and independent boundary cases remain unrun.
+
+Draft concurrent native-shaped Claude activity sessions, actual child registration and verified transactional settings-only reset with bounded profile backup/inventory. Eleven source equations and independent JS/strict TS/native cases remain unrun.
+
+Draft shared native profile-operation locking around Router-Claude reset to serialize with Rust/JS session registration, preserving complete original source histories and old pins. Native and source/export cases remain unrun.
+
+Draft shared exact-model per-run credential minting, narrowed picker replacement, native lease renewal classification and owned candidate revocation through paired JS/TS source rules. Independent cases remain unrun.
+
+Draft TypeScript-aware native source-copy parser kinds, lexical scope checks and complete CST histories while retaining JavaScript behavior and both ordered rule phases. All new receiving cases remain unrun.
+
+Draft shared recursive nonbinding constructor, tuple, record, slice, reference,
+range and alternative source patterns across existing local readers and adopters.
+All actual JS/strict TS/native/source/refusal receiving checks remain UNRUN.
+
+Draft additive mixed owned-format/literal/text/numeric whole-source composition
+and explicit physical source-unit routing with full adjacent inverses. All paired,
+physical, strict TS and refusal cases UNRUN; full translation remains unfinished.
+
+Draft bool/fixed-integer to_string source substitution through the existing core
+formatting abstraction, including literals, aliases and bounded method chains.
+Preserve original namespace and independent checks; all cases UNRUN.
+
+Draft fresh six-input source/CST/closing fences for the primitive sequence core,
+complete reversible receiving root/runtime source sets and whole source/census
+observations. Retain all private caller/type/loan and actual root qualification
+obligations. Five source equations and independent cases remain UNRUN.
+
+Bulk draft 33 matching Rust/JavaScript primitive slice length, emptiness and
+copied lookup operations with TypeScript declarations and two rule sequences.
+Use checked native index conversion and preserve falsy/128-bit option payloads.
+Six complete source equations and independent/CI-only native cases remain UNRUN.
+Root activation, actual caller bindings and full translator integration stay open.
+
+Draft independent complete mixed Base64/fixed-slice and opaque cancellation
+resource cases across original JavaScript, strict emitted TypeScript, single/
+batch interpreters, canonical Rust inversion and automatic boundary proposals.
+Retain validation-before-effects and original deadlines. All cases remain UNRUN.
+
+Draft reusable exact-path qualified callback reification across Option/Result
+source adopters, preserving complete copied CST rules and independent callee/
+type checks. All cases UNRUN; full translation and verification remain unfinished.
+
+Draft bounded unauthenticated remote Router identity before persistent client minting, retaining ordinary JSON management contracts and paired JS/TS source provenance. Independent cases remain unrun and full requirements remain open.
+
+Draft original constructor-dominated numeric ingress guards for all ten scalar
+widths across Option/Result nesting, preserving old u64 behavior and complete
+fresh source checks. All cases/oracles UNRUN; full translation remains unfinished.
+
+Draft all ten fixed-width scalar source domains across checked entry guards,
+literals, source constraints, operation signatures and native inversion. Keep
+original u64/i64 contracts and wider container/loop refusals; all checks UNRUN.
+
+Draft all-width strict source counter rules through existing native update APIs,
+retaining actual range, scope, counter and ownership checks. All paired/native/
+refusal cases UNRUN; full translation and verification remain unfinished.
+
+Draft shared complete return operand bounds and explicit String context through
+if/match/grouped/early returns with preserved callback boundaries. All actual
+JS/strict TS/native/source/refusal and receiving cases remain UNRUN.
+
+Draft checked scalar String/toString source translation and canonical core
+formatting inversion with owned-text loans and complete fresh source checks.
+All independent cases UNRUN; full translation and synchronization remain unfinished.
+
+Draft a shared exact original-span view for native attached Rust macro bang
+tokens across source readers and CST adoption, preserving the original lexer.
+All independent cases UNRUN; full translation and verification remain unfinished.
+
+Draft monomorphic deferred scalar choice locals and wide scalar return joins
+through a copied finite inference engine. Preserve single evaluation, genuine
+typed anchors, old APIs and unresolved/type-conflict refusals. All independent
+JS/TS/native oracle source and qualification remain UNRUN.
+
+Draft a separate source-digest identity guard for complete fresh-source reads,
+preserving valid bootstrap JavaScript wrappers and all full hashing/fences.
+Keep the native-only optimization predicate unchanged. Independent isolated
+boundary cases are source drafts; execution and qualification remain UNRUN.
+
+Draft checked actual source IIFEs/expression blocks, matching canonical native
+closures and explicit checked text conversion witnesses. Preserve read-only
+captures and fresh full inverses; all cases UNRUN and full translation unfinished.
+
+Draft checked text-only concatenation and canonical two-slot native formatting
+inversion, with original operand order and owned-text witnesses. All paired,
+forward, native and refusal cases UNRUN; full translation remains unfinished.
+
+Draft explicit owning text destination propagation through complete if/else and
+expression block tails. All paired, source, native and refusal cases UNRUN;
+full translation and synchronization remain unfinished.
+
+Draft borrowed text builder suffix and initializer aliases through the existing
+chronological source reader, retaining actual scopes and whole-function refusals.
+All paired, native, source and refusal cases UNRUN; full translation unfinished.
+
+Draft existing String builder composition with explicitly owning Option/Result
+and exclusive branch return positions, retaining escape refusal and combined
+source-work bounds. All JS/strict TS/native/refusal receiving cases remain UNRUN.
+
+Draft literal Unicode character String builder substitutions through the original
+scalar decoder with full scalar/statement inverses. All paired, native and
+refusal cases UNRUN; complete translation remains unfinished.
+
+Draft primitive Display temporary borrows in String builders with original core
+rule composition, live-builder self-use refusal and matching emitted JS/TS inverse
+source. All behavioral, native and receiving checks remain UNRUN.
+
+Draft original text method rule composition inside borrowed String-builder
+suffixes and From initializers with whole inner/outer source inverses and bounded
+nested work. All source, behavioral and native receiving checks remain UNRUN.
+
+Draft shared borrowed String-builder suffix source composition for conditional,
+qualified core, grouped and separate owned-input borrow expressions. Whole caller
+ownership/effects and all source/receiving/native cases remain unverified.
+
+Draft closed String += and assignment-add source rules through the existing paired
+consuming append core, with shared borrowed suffixes and complete mutable inverse
+cases. All JS/strict TS/native/source/refusal receiving checks remain UNRUN.
+
+Draft bounded single-local String builder statement substitutions through the
+existing text/format core, preserving receiver order and full-function refusals.
+All paired, native and refusal cases UNRUN; full translation unfinished.
+
+Draft exact borrowed text constructor source forms through existing allocation,
+chronological aliases and text method rules. All paired, native, source and
+refusal cases UNRUN; complete translation remains unfinished.
+
+Draft paired consuming owned String append/clear operations and use them in
+builder substitutions, retaining native capacity and explicit UTF-8 bounds.
+All runtime, paired, reverse, native and refusal cases UNRUN; translation unfinished.
+
+Draft source guards for external rustfmt prefixes and original input association
+across all tool constructors and retained resolver copies. Preserve private
+issuers, complete source substitutions and independent refusal/native oracle
+source. All checks UNRUN; full translation and verification remain unfinished.
+
+Draft standalone scalar/unit helper insertion, lifecycle and absent-module
+adoption, with automatic bulk dispatch and bounded implicit-unit source inference.
+Preserve old scalar/vector APIs and complete original/native checks. Independent
+source cases are drafted; all execution and qualification remain UNRUN.
+
+Draft complete same-module unit-returning primitive helper calls across
+receiving, native continuation observation, graphs, discovery and reverse
+projection. Preserve ordered failures and original API refusals. Add independent
+JS/TS/native cases and CI-only Rust oracle source; every check remains UNRUN.
+
+Draft bounded Boolean conditional vector reverse flow and matching fresh actual Rust branch-origin selection, preserving exact scalar domains and all leaf guards. Include complete CST equations and independent unrun reverse/native regression source.
+
+Draft source-qualified f64 vectors and reverse literal/parameter/conditional support with signed-zero preservation, normal IEEE input classification and fresh numeric-host guards. Preserve complete CST source equations and independent unrun regression/oracle source.
+
+Draft canonical owned Json comma-list vectors with registered layout checks and finalized whole-function linear transfer, retaining private source custody and rejecting duplicate moves/loans. Include complete CST equations and independent unrun strict TS/native regression source.
+
+Draft primitive parameterized vector reverse translation with fresh actual Rust input types, matching JS/TS symbols, native Rust type emission and guarded TypeScript/evaluator inputs. Preserve complete source/CST equations and independent unrun regression source.
+
+Draft fresh original Rust scalar let-prefix selection for repeated Vec reverse candidates while retaining native ownership/type/source checks. Include complete CST equations and independent unrun reverse/refusal cases.
+
+Draft bounded integer/bool owned Vec repetition using existing repeat checks, and reverse scalar const/IIFE array construction with fresh native symbol/type joins. Include complete CST source equations and independent unrun forward/reverse/native cases.
+
+Draft Copy borrowed-str vector repetition with zero-seed lifetime retention and source-qualified static-str reverse mapping, preserving native static storage and Unicode guards. Include complete CST equations and independent unrun lifetime/native regression source.
+
+Draft actual owned String vector reverse literals/parameters, explicit native clones, Unicode-scalar guards and candidate runtime closure. Preserve complete source/CST equations and independent unrun strict TS/native regression source.
+
+Draft private function-local inference for untyped 128-bit constant aliases,
+inline literal choices and exact typed uses. Preserve original APIs, range
+refusals and unresolved-width checks. Independent JS/TS/native oracle source is
+drafted; all execution and qualification remain UNRUN.
+
+Draft all fixed-width shared primitive slice roles through a complete copied
+contract, explicit immutable input guards, canonical source prefix replay,
+single/batch interpreters and Rust source projection. Preserve the old three-
+domain API. Thirteen source equations, independent cases and CI-only Rust oracles
+remain UNRUN; complete translation and qualification remain open.
+
+Draft whole-module immutable slice input migration through CST substitutions,
+collision-free runtime imports and fresh complete private source re-entry in
+both owned families. Retain explicit input-contract changes and full inverses;
+install no source and grant no production authority. Three equations and
+independent bulk/idempotence/refusal cases remain UNRUN.
+
+Draft common empty/delimited written attribute grammar from thirteen complete
+retained parser callbacks, exact CST inverses and copied header/x86 proposal
+rules. Keep caller, lexical, namespace and producer/export qualification separate.
+Five complete equations, independent cases and CI-only native attribute/shadowing
+oracles remain UNRUN.
+
+Publish the crate to crates.io with OIDC trusted publishing: the stable
+finalization job (also used by registry retries) gets `id-token: write` and
+exchanges it via `rust-lang/crates-io-auth-action` for a short-lived token, with
+`CARGO_REGISTRY_TOKEN`/`CARGO_TOKEN` kept only as a fallback until the first OIDC
+release is verified. Stale 2026-11-01 native profile translation archives now
+warn instead of failing release CI (automated translation is temporarily not
+required), `url` is bumped to 2.5.9 (RUSTSEC-2026-0592) and `cookie` to 0.18.3
+(RUSTSEC-2026-0594).
+
 ## [1.25.0] - 2026-11-15
 
 Regenerate all 804 tracked Rust sources through semantic meta to JavaScript and

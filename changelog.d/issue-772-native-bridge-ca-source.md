@@ -1,1 +1,0 @@
-Draft selected CA trust through native Codex bridge HTTP/WebSocket and actual temporary/persistent callers using existing dependencies. Preserve complete native histories and add independent handshake/trust source cases. All verification remains unrun.

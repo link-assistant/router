@@ -1,1 +1,0 @@
-Draft paired intact global backend repair preserving first undo backups and credentials, with fresh live catalog/metadata association and post-repair rollback. Independent cases remain unrun and broader translation/lifecycle requirements remain open.

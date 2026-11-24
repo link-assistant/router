@@ -1,1 +1,0 @@
-Draft paired owned-client process supervision with exact argv/environment, bounded output/deadlines, cancellation, owned-handle termination and native exit status. Independent source cases remain unrun; temporary launch integration remains open.
