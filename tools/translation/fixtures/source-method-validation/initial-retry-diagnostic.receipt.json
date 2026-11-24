@@ -1,0 +1,14 @@
+{
+  "schema": "source-method-full-initial-retry-diagnostic-evidence-v1",
+  "archive": "initial-retry-diagnostic.json.gz",
+  "compressedBytes": 272596,
+  "compressedSha256": "ac7fd594707e2bd7b116ec57feaa94e220dc084b933071441745213f1684f6ba",
+  "decompressedBytes": 1204013,
+  "decompressedSha256": "553372c21c7b21fc3fcfdb3b537239f2b5bf3995e2c31f3b9b8c491709690714",
+  "entryCount": 21,
+  "everyEntryIndependentlyReopened": true,
+  "initialPassed": false,
+  "retryPassed": false,
+  "wholeVerificationAdmission": false,
+  "laterTestsUnrun": true
+}

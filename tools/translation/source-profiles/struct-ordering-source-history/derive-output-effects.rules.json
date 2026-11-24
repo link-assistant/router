@@ -1,0 +1,28 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/test/derive-output-effects.test.mjs",
+  "phase": "repository",
+  "beforeSha256": "df0283cad6addd47652cda93b782e008da7589f16a589bf80baa18176454fce4",
+  "afterSha256": "dc9f1570e136715b3213f8d08d010166462375e76c44c5bc34f5bbd483b06c50",
+  "edits": [
+    {
+      "id": "router.struct-ordering.receiving-effects.0.v1",
+      "before": " assert.equal(model(incompleteBefore).unresolvedTypeScope,true);assert.equal(model(incompleteAfter).unresolvedTypeScope,true,'an unproved output cannot discharge the repaired boundary');\n",
+      "after": " assert.equal(model(incompleteBefore).unresolvedTypeScope,true);assert.equal(model(incompleteAfter).unresolvedTypeScope,false,'the current private struct Ord output discharges only its enclosing boundary');\n const orderingToken=effect(incomplete),orderingFacts=facts(orderingToken,incomplete);assert.equal(orderingFacts.alternatives.length,1);assert.equal(orderingFacts.runtimeAuthority,false);assert.equal(incomplete.context.generatedImplBehavior,false);retain('02-original-Ord-current-private-output',{row:incomplete,token:orderingToken,actual:orderingFacts});\n"
+    },
+    {
+      "id": "router.struct-ordering.receiving-effects.1.v1",
+      "before": " // Preserve the exact seven other initial TypeError obligations. A setup\n",
+      "after": " // Preserve the original Ord subject's historical refusal in the complete\n // pinned issuer graph, then check both current per-invocation alternatives.\n const ordering=states[0],orderingObserved=rows[0],orderingRow=ordering.row,oldOrdering=oldBang.createDeriveBangContext({deriveContext:orderingRow.deriveContext});let oldOrderingToken=null,oldOrderingError=null;\n try{oldOrderingToken=oldEffects.proveDeriveEmptyEnclosingEffect(oldOrdering,orderingRow.deriveContext,orderingRow.module,orderingRow.item);}catch(error){oldOrderingError=error;}\n retain('07-original-Ord-complete-historical-refusal',{fixture,profileJoins,currentSourcePins,copies,row:orderingRow,context:oldOrdering,token:oldOrderingToken,error:oldOrderingError&&{name:oldOrderingError.name,message:oldOrderingError.message}});\n assert.equal(oldOrderingToken,null);assert.ok(oldOrderingError instanceof TypeError);assert.equal(oldOrderingError.message,'Original derive output has unresolved actual owners');const historicalOrdering=oldOrdering.certificates.find(value=>value.source===orderingRow.module.file&&value.span.start===orderingRow.item.start&&value.span.end===orderingRow.item.end);assert.ok(historicalOrdering);assert.ok(historicalOrdering.residualOwners.some(value=>value.path.join('::')==='Ord'));\n assert.equal(ordering.setupError,null);assert.equal(ordering.error,null);assert.ok(ordering.token);assert.equal(orderingObserved.factsError,null);assert.equal(orderingObserved.actual.alternatives.length,2);assert.deepEqual(orderingObserved.actual.alternatives.map(value=>value.invocation.path),[['Clone'],['Ord']]);assert.ok(orderingObserved.actual.alternatives.every(value=>value.kind==='ItemKind::Impl'&&value.originalCompleteOutput.proof.generatedImplBehavior===false));assert.equal(orderingObserved.actual.runtimeAuthority,false);assert.deepEqual(orderingObserved.actual.enclosingTypeBindings,[]);assert.deepEqual(orderingObserved.actual.enclosingUsableValueBindings,[]);retain('07-original-Ord-complete-current-namespace-positive',{row:orderingRow,token:ordering.token,actual:orderingObserved.actual});\n // Preserve the exact six remaining initial TypeError obligations. A setup\n"
+    },
+    {
+      "id": "router.struct-ordering.receiving-effects.2.v1",
+      "before": "  if(index===1)continue; // The exact payload subject retains its historical refusal above and current namespace-only positive.\n",
+      "after": "  if(index===0||index===1)continue; // Both exact subjects retain their historical refusals and current namespace-only positives above.\n"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

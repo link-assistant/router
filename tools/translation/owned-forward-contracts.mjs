@@ -1,0 +1,42 @@
+// Shared DATA catalog. Actual original source/type/loan issuers remain required.
+import {JSON_STATE_CONTRACTS} from './json-state-contracts.mjs';
+import {JSON_FIELD_CONTRACTS} from './json-field-contracts.mjs';
+import {OWNED_OUTCOME_CONTRACTS} from './owned-outcome-contracts.mjs';
+import {JSON_STATE_NATIVE_SOURCE} from './json-state-native-source.mjs';
+import {JSON_FIELDS_NATIVE_SOURCE} from './json-fields-native-source.mjs';
+import {OWNED_OUTCOME_NATIVE_SOURCE} from './owned-outcome-native-source.mjs';
+import {INTEGER_CONTRACTS} from './integer-contracts.mjs';
+import {TEXT_CONTRACTS} from './text-contracts.mjs';
+import {PRIMITIVE_OPTION_CONTRACTS} from './primitive-option-contracts.mjs';
+import {PRIMITIVE_OPTION_CALLBACK_CONTRACTS} from './primitive-option-callback-contracts.mjs';
+import {PRIMITIVE_OPTION_CALLBACK_NATIVE_SOURCE} from './primitive-option-callback-native-source.mjs';
+import {PRIMITIVE_RESULT_CONTRACTS} from './primitive-result-contracts.mjs';
+import {PRIMITIVE_RESULT_NATIVE_SOURCE} from './primitive-result-native-source.mjs';
+import {OWNED_RESULT_CONTRACTS} from './owned-result-contracts.mjs';
+import {OWNED_RESULT_NATIVE_SOURCE} from './owned-result-native-source.mjs';
+import {HTTP_PROTOCOL_CONTRACTS} from './http-protocol-contracts.mjs';
+import {HTTP_PROTOCOL_NATIVE_SOURCE} from './http-protocol-native-source.mjs';
+import {PRIMITIVE_OPTION_NATIVE_SOURCE} from './primitive-option-native-source.mjs';
+import {TEXT_NATIVE_SOURCE} from './text-native-source.mjs';
+import {INTEGER_NATIVE_SOURCE} from './integer-native-source.mjs';
+import {SSE_CONTRACTS} from './sse-contracts.mjs';
+import {SSE_NATIVE_SOURCE,SSE_ORIGINAL_FRAMER_SOURCE} from './sse-native-source.mjs';
+export const FORWARD_OWNED_CONTRACTS=Object.freeze([
+ ...SSE_CONTRACTS.map(row=>Object.freeze({...row,family:'stream',source:SSE_NATIVE_SOURCE,nativeDependencies:Object.freeze([Object.freeze({module:'sse',path:'src/sse.rs',source:SSE_ORIGINAL_FRAMER_SOURCE})])})),
+ ...HTTP_PROTOCOL_CONTRACTS.map(row=>Object.freeze({...row,family:'http-protocol',source:HTTP_PROTOCOL_NATIVE_SOURCE,nativeDependencies:Object.freeze([Object.freeze({module:'translation_text_core',path:'src/translation_text_core.rs',source:TEXT_NATIVE_SOURCE}),Object.freeze({module:'translation_owned_results_core',path:'src/translation_owned_results_core.rs',source:OWNED_RESULT_NATIVE_SOURCE}),Object.freeze({module:'translation_carriers_core',path:'src/translation_carriers_core.rs',source:OWNED_OUTCOME_NATIVE_SOURCE})])})),
+ ...OWNED_RESULT_CONTRACTS.map(row=>Object.freeze({...row,family:'primitive-result',source:OWNED_RESULT_NATIVE_SOURCE,nativeDependencies:Object.freeze([Object.freeze({module:'translation_text_core',path:'src/translation_text_core.rs',source:TEXT_NATIVE_SOURCE})])})),
+ ...PRIMITIVE_RESULT_CONTRACTS.map(row=>Object.freeze({...row,family:'primitive-result',source:PRIMITIVE_RESULT_NATIVE_SOURCE,nativeDependencies:Object.freeze([Object.freeze({module:'translation_text_core',path:'src/translation_text_core.rs',source:TEXT_NATIVE_SOURCE})])})),
+ ...PRIMITIVE_OPTION_CALLBACK_CONTRACTS.map(row=>Object.freeze({...row,family:'primitive-option-callback',source:PRIMITIVE_OPTION_CALLBACK_NATIVE_SOURCE,nativeDependencies:Object.freeze([Object.freeze({module:'translation_primitive_option_core',path:'src/translation_primitive_option_core.rs',source:PRIMITIVE_OPTION_NATIVE_SOURCE}),Object.freeze({module:'translation_text_core',path:'src/translation_text_core.rs',source:TEXT_NATIVE_SOURCE})])})),
+ ...PRIMITIVE_OPTION_CONTRACTS.map(row=>Object.freeze({...row,family:'primitive-option',source:PRIMITIVE_OPTION_NATIVE_SOURCE})),
+ ...TEXT_CONTRACTS.map(row=>Object.freeze({...row,family:'text',source:TEXT_NATIVE_SOURCE})),
+ ...INTEGER_CONTRACTS.map(row=>Object.freeze({...row,family:'integer',source:INTEGER_NATIVE_SOURCE})),
+ ...JSON_STATE_CONTRACTS.map(row=>Object.freeze({...row,family:'state',rustPath:'crate::translation_state_core::'+row.rustName,source:JSON_STATE_NATIVE_SOURCE})),
+ ...JSON_FIELD_CONTRACTS.map(row=>Object.freeze({...row,family:'field',rustModule:'translation_json_fields_core',rustSource:row.nativeSource,returns:row.ret,source:JSON_FIELDS_NATIVE_SOURCE})),
+ ...OWNED_OUTCOME_CONTRACTS.map(row=>Object.freeze({...row,family:'carrier',rustModule:'translation_carriers_core',rustSource:'src/translation_carriers_core.rs',runtimeModule:'owned-outcome-runtime.mjs',source:OWNED_OUTCOME_NATIVE_SOURCE,parameters:Object.freeze(row.parameters.map(role=>role==='json-text-result'?'shared-json-result':role==='json-owned-option'?'shared-json-option':role)),returns:row.returns})),
+]);
+export const forwardOwnedContract=(name,{rustModule=null}={})=>{const rows=FORWARD_OWNED_CONTRACTS.filter(row=>(row.rustName===name||row.javascriptName===name)&&(rustModule===null||row.rustModule===rustModule));return rows.length===1?rows[0]:null;};
+export {FORWARD_OWNED_CONTRACTS as JSON_STATE_CONTRACTS,forwardOwnedContract as jsonStateContract};
+export function forwardOwnedImports(runtimeModule='./runtime/effects.mjs'){
+ const groups=new Map();for(const row of FORWARD_OWNED_CONTRACTS){if(!groups.has(row.runtimeModule))groups.set(row.runtimeModule,[]);groups.get(row.runtimeModule).push(row.javascriptName);}
+ return [...groups].map(([module,names])=>'import { '+names.map(name=>name+' as ml_host_'+name).join(', ')+' } from '+JSON.stringify(runtimeModule.replace(/effects\.mjs$/u,module))+';');
+}

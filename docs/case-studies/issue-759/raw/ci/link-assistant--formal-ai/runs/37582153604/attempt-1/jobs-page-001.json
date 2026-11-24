@@ -1,0 +1,86 @@
+{
+  "total_count": 3,
+  "jobs": [
+    {
+      "id": 112664139851,
+      "run_id": 37582153604,
+      "workflow_name": "Coverage",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37582153604",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaO05YSw",
+      "head_sha": "d2b6a7e68a096267e86ed703247ba6fca7ea7081",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112664139851",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37582153604/job/112664139851",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-07T06:33:48Z",
+      "started_at": "2026-10-07T06:33:48Z",
+      "completed_at": "2026-10-07T06:39:40Z",
+      "name": "Detect Changes",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112664139851",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 0,
+      "runner_name": "",
+      "runner_group_id": 0,
+      "runner_group_name": ""
+    },
+    {
+      "id": 112665890891,
+      "run_id": 37582153604,
+      "workflow_name": "Coverage",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37582153604",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaO2kQSw",
+      "head_sha": "d2b6a7e68a096267e86ed703247ba6fca7ea7081",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112665890891",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37582153604/job/112665890891",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-07T06:39:40Z",
+      "started_at": "2026-10-07T06:39:40Z",
+      "completed_at": "2026-10-07T06:39:40Z",
+      "name": "Code Coverage",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112665890891",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": null,
+      "runner_name": null,
+      "runner_group_id": null,
+      "runner_group_name": null
+    },
+    {
+      "id": 112665891030,
+      "run_id": 37582153604,
+      "workflow_name": "Coverage",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37582153604",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaO2kQ1g",
+      "head_sha": "d2b6a7e68a096267e86ed703247ba6fca7ea7081",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112665891030",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37582153604/job/112665891030",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-07T06:39:40Z",
+      "started_at": "2026-10-07T06:39:40Z",
+      "completed_at": "2026-10-07T06:39:40Z",
+      "name": "Browser Code Coverage",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112665891030",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": null,
+      "runner_name": null,
+      "runner_group_id": null,
+      "runner_group_name": null
+    }
+  ]
+}

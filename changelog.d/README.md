@@ -130,6 +130,17 @@ When multiple PRs are merged before a release, all pending fragments are process
 
 This ensures that breaking changes are never missed, even when combined with smaller changes.
 
+## Pending Fragment Guard
+
+`scripts/check-changelog-fragment.rs` counts pending fragments. Up to 40 is
+normal. Above that it compares them with the latest release tag reachable from
+`HEAD`: a fragment that was already pending at that release means the release
+did not remove what it collected (issue #337) and fails the check. When every
+pending fragment was added after the latest release, releases are blocked (for
+example because the default branch is red); the check emits a warning and the
+next release collects them all. Without a reachable release tag the count limit
+alone fails the check.
+
 ## Default Behavior
 
 If a fragment doesn't include a bump type in the frontmatter, it defaults to `patch`.

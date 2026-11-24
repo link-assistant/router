@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "retrievedDate": "2026-10-11",
+  "rustVersion": "1.89.0",
+  "sources": [
+    {
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/num/mod.rs",
+      "sourceGitBlobSha": "faa41ddf13ca844a8fa3d7e60dac510290c50539",
+      "scope": "from_str_int_impl, from_str_radix and from_ascii_radix",
+      "contracts": ["optional ASCII sign and untrimmed digits", "radix 2 through 36", "InvalidDigit checked before observing multiplication overflow at the same byte", "checked arithmetic stops before later bytes", "radix source panic differs from ParseIntError", "from_str_radix const stability since 1.82.0"]
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/num/error.rs",
+      "sourceGitBlobSha": "6ef2fdd14c1495d21d09b135b1aac4d553d22196",
+      "scope": "ParseIntError and IntErrorKind layout, kind and Display contracts",
+      "contracts": ["five pinned non-exhaustive error kinds", "shared immutable error-kind reader", "source display messages by error kind"]
+    }
+  ],
+  "portableProfile": {"machineIntegerRepresentation": "BigInt", "fixedBits": [8, 16, 32, 64, 128], "pointerBits": 64},
+  "validation": "Independent Node/Bun cases cover every signed/unsigned boundary, invalid syntax, early error precedence, exact large radix values, source panic distinctions and checker-resolved typed Result layouts.",
+  "limitations": [
+    "Frontend method turbofish, trait resolution and registered instantiation proof are required before a Rust source call is executable translation.",
+    "NonZero integer FromStr, floating point FromStr, 32-bit pointer profiles and unknown generic targets are not implemented.",
+    "No Rust executable was invoked and no differential or whole-program parity claim is made."
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "schema": "rust-builtin-default-footprint-source-v1",
+  "rustVersion": "1.89",
+  "standardCoreSha256": "9a950cfa3735eef653b7f9a6a4701e7b218f9876141701dac72ccb8b8e8d3862",
+  "sources": [
+    {
+      "path": "library/core/src/default.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/default.rs",
+      "bytes": 5230,
+      "sha256": "3243a2ab9bef952e885d8d8c241612716e955ea2740426f7d1484f6d392ed69d",
+      "archive": "rust-1.89-default-library_core_src_default.rs.gz",
+      "archiveBytes": 1526,
+      "archiveSha256": "8c61d6172846164659de1be4d0fd0bb67b04daa349918f400546f5fd5084a79e"
+    },
+    {
+      "path": "compiler/rustc_builtin_macros/src/deriving/default.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_builtin_macros/src/deriving/default.rs",
+      "bytes": 11984,
+      "sha256": "4c381dd6ee2196eb3184b4946a0a58f39f2d7d4618e78820a33d010ebf2196cf",
+      "archive": "rust-1.89-default-compiler_rustc_builtin_macros_src_deriving_default.rs.gz",
+      "archiveBytes": 3077,
+      "archiveSha256": "56b9c7ced9506f0c525389099352015e8b273a35eba9f46b5bb350533151999c"
+    },
+    {
+      "path": "compiler/rustc_builtin_macros/src/deriving/generic/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_builtin_macros/src/deriving/generic/mod.rs",
+      "bytes": 61320,
+      "sha256": "a61c43391cbb0c1cf99bbe3e388d502d113c295fa38d818dfac9c374948e3af8",
+      "archive": "rust-1.89-default-compiler_rustc_builtin_macros_src_deriving_generic_mod.rs.gz",
+      "archiveBytes": 14375,
+      "archiveSha256": "fdbd49260d1cb63d483593b68301b4148a7c6734f5765d62901b1cc355b9c92b"
+    }
+  ],
+  "license": "MIT OR Apache-2.0",
+  "generatedImplBehavior": false,
+  "acceptedInput": "nongeneric enum, all unit variants, exactly one plain default attribute; no variant non_exhaustive",
+  "evidence": {
+    "owner": [
+      "library/core/src/default.rs:142"
+    ],
+    "expansion": [
+      "compiler/rustc_builtin_macros/src/deriving/default.rs:15-56",
+      "compiler/rustc_builtin_macros/src/deriving/default.rs:97-154",
+      "compiler/rustc_builtin_macros/src/deriving/default.rs:156-300"
+    ],
+    "confinement": [
+      "compiler/rustc_builtin_macros/src/deriving/generic/mod.rs:525-543",
+      "compiler/rustc_builtin_macros/src/deriving/generic/mod.rs:584-806"
+    ]
+  }
+}

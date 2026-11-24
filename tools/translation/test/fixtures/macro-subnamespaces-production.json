@@ -1,0 +1,154 @@
+{
+  "schema": "macro-subnamespace-production-source-v1",
+  "sourceBodies": "Complete original tracked files are translated unchanged. Root and uncertain sibling modules are synthetic scope fixtures and count separately. No Rust execution.",
+  "sources": [
+    {
+      "file": "src/credential_acceptance.rs",
+      "fileSHA256": "4a10a1e016936d2f4dd8fddc21ed400f8ed72794343b09d5bc2e779525231b10",
+      "types": [
+        {
+          "name": "AcceptancePhase",
+          "term": "enum",
+          "span": {
+            "start": 845,
+            "end": 992
+          },
+          "sha256": "674f9519581217cbe4c291a8839396fa768a2f86d32b1a6ae4cdb7111c121900"
+        },
+        {
+          "name": "AcceptanceFailureKind",
+          "term": "enum",
+          "span": {
+            "start": 1051,
+            "end": 1242
+          },
+          "sha256": "ef1b77cde850f71b1dd287c5ba529b086fada58278f31e42ea71a7d93eb9cd1a"
+        },
+        {
+          "name": "AcceptanceFailure",
+          "term": "struct",
+          "span": {
+            "start": 1323,
+            "end": 1490
+          },
+          "sha256": "bba81aa6936aef5fccbdf8720b8ee14b1e3b2e647f93516fc623d965226714ad"
+        }
+      ],
+      "bodies": [
+        {
+          "owner": "AcceptanceFailure",
+          "name": "kind",
+          "span": {
+            "start": 3322,
+            "end": 3413
+          },
+          "sha256": "5db1342f07a3aa4ff9e4f27d3c8b0b277849c96e16f59446ef1126316c9ec6ce"
+        },
+        {
+          "owner": "AcceptanceFailure",
+          "name": "phase",
+          "span": {
+            "start": 3419,
+            "end": 3506
+          },
+          "sha256": "44512b3bd9903704e721250f7b0d2fb6f91022b1cb7316602747a5dc367c7c66"
+        }
+      ]
+    },
+    {
+      "file": "src/lefine.rs",
+      "fileSHA256": "bb07ea2db551cc85bc19403bfd2c160f439d6c48fe7ffc49a1e0cad249dc2093",
+      "types": [
+        {
+          "name": "CatalogFailureKind",
+          "term": "enum",
+          "span": {
+            "start": 347,
+            "end": 481
+          },
+          "sha256": "ba2154daf3f33a700df7129835eb5b4760093a430d1315a140e03ba13fafeb14"
+        },
+        {
+          "name": "CatalogFailure",
+          "term": "struct",
+          "span": {
+            "start": 483,
+            "end": 586
+          },
+          "sha256": "6c707cf7b2b840df15afcae49444abd626dc380d6cece9015f7569f1273442a3"
+        }
+      ],
+      "bodies": [
+        {
+          "owner": "CatalogFailure",
+          "name": "kind",
+          "span": {
+            "start": 728,
+            "end": 816
+          },
+          "sha256": "94e8ab3912278b56a741af2f4053741defc93021345d921a7ad50cb154efc997"
+        }
+      ]
+    },
+    {
+      "file": "src/zai_coding_plan.rs",
+      "fileSHA256": "47c521e6806fa8d543d939fd6b1751fb48b180874322cf0699957c9c85b79aa2",
+      "types": [
+        {
+          "name": "ZaiProbeFailureKind",
+          "term": "enum",
+          "span": {
+            "start": 1521,
+            "end": 1655
+          },
+          "sha256": "f37aa9cfb6c9931d394489f545cffb0946450e385049c31c261329acb6ab9f5f"
+        },
+        {
+          "name": "ZaiProbeFailure",
+          "term": "struct",
+          "span": {
+            "start": 1719,
+            "end": 1824
+          },
+          "sha256": "8ffb5c13796df40bdcd9bf543e8ebc6ad2a73e5bc44f80c93242f053cfb198cf"
+        }
+      ],
+      "bodies": [
+        {
+          "owner": "ZaiProbeFailure",
+          "name": "kind",
+          "span": {
+            "start": 1968,
+            "end": 2057
+          },
+          "sha256": "4e2b5cfeeca2ba823930b036d1e33887ff66f4a628e9bd68ae3d890a0de75364"
+        }
+      ]
+    }
+  ],
+  "productionMethods": 4,
+  "literalOutcomes": 16,
+  "targets": [
+    "emitted JavaScript",
+    "independently strict-compiled TypeScript"
+  ],
+  "runners": [
+    "Node",
+    "Bun"
+  ],
+  "guardsPerRunner": 8,
+  "namespaceNegatives": [
+    "unknown local procedural attributes",
+    "unknown derives",
+    "unknown glob imports",
+    "item-position macros",
+    "unresolved Copy imports",
+    "duplicate imports",
+    "actual std module/type shadows"
+  ],
+  "remainingObligations": [
+    "Unknown bang exports still block bang intrinsics and unresolved item-position expansion",
+    "Generated serde/schemars trait behavior and namespace certificates remain unimplemented",
+    "Whole-program Rust parity remains incomplete; no corpus regeneration or coverage promotion"
+  ]
+}

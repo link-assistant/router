@@ -1,0 +1,1 @@
+Extended the reusable Rust frontend to preserve named enum variant layouts and translate their named constructors in written field evaluation order. Record construction requires actual source constructor syntax; private adapter records and numeric tuple fields retain explicit translation obligations.

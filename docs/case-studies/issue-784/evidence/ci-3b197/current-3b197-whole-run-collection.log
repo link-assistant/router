@@ -1,0 +1,1 @@
+{"schema": "complete-terminal-workflow-log-archive-v1", "headSha": "3b19785353c0a004efc62ab675a97b99c8a2e5a1", "runId": 42567703134, "bytes": 1760232, "exitCode": 0, "maximumArchiveBytes": 12000000, "byteLimitExceeded": false, "wholeArchiveVerified": true, "sha256": "4687832d16213cd48f04bff4cb7ccddb828ceede7d17559661a260b8ad1b2a2b"}

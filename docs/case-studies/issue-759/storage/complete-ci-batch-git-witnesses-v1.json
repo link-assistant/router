@@ -1,0 +1,115 @@
+{
+  "schema": "complete-ci-batches-reachable-git-storage-v1",
+  "sourceHead": "8f8c41f23d5c0917ee272dbab61b7b32c4ab0167",
+  "caseCapBytes": 500000000,
+  "indexSha256": "b52ccb1acb8d78b3f41e7ae45e378a3f1bd00c709edf37cc46212f8adc80804f",
+  "indexUnchanged": true,
+  "completeBatchArchives": [
+    {
+      "casePath": "raw/ci/object-batches/complete-decoded-objects.tar.xz",
+      "commit": "365205a4bd7951f03df397fb474e9d8da480103b",
+      "gitPath": "docs/case-studies/issue-759/raw/ci/object-batches/complete-decoded-objects.tar.xz",
+      "blob": "c307e2446343b9e712568900b366561e1a5926fc",
+      "bytes": 27823320,
+      "sha256": "bf93544cde0ec474432389b6469b540bcbb3019dcedb83d5406dedc79f78e202",
+      "allocatedBytes": 27824128,
+      "device": 16777234,
+      "inode": 566331850,
+      "links": 1
+    },
+    {
+      "casePath": "raw/ci/object-batches/complete-decoded-ci-job-objects-v2.tar.xz",
+      "commit": "7ce3d90ab25f5eec9831ee7cfee58d55e75ae3d7",
+      "gitPath": "docs/case-studies/issue-759/raw/ci/object-batches/complete-decoded-ci-job-objects-v2.tar.xz",
+      "blob": "df4b3e7571e36a5711544ea6e398f30460dd9732",
+      "bytes": 21891948,
+      "sha256": "1dc91a7136e8242467c2fafbdcb32605580b351eaba5e1b66055137b71434d71",
+      "allocatedBytes": 21893120,
+      "device": 16777234,
+      "inode": 566863511,
+      "links": 1
+    }
+  ],
+  "allOriginalContainerWitnessesRetained": true,
+  "completeCurrentReferences": 19964,
+  "completeLogicalObjects": 18174,
+  "decodedBytesVerified": 2916309416,
+  "allCompleteCiMeasurementsUnchanged": true,
+  "beforePhysical": {
+    "distinctPhysicalFiles": 27782,
+    "physicalStoredBytes": 394577041,
+    "physicalAllocatedBytes": 469553152
+  },
+  "afterPhysical": {
+    "distinctPhysicalFiles": 27780,
+    "physicalStoredBytes": 344861773,
+    "physicalAllocatedBytes": 419835904
+  },
+  "stages": [
+    {
+      "name": "before-complete-current-integrity",
+      "command": [
+        "python3",
+        "docs/case-studies/issue-759/raw/ci/verify-archive.py",
+        "--output",
+        "/tmp/router-759-ci-batch-git-only-migration-v1/before-complete-current-integrity.json"
+      ],
+      "capSeconds": 600,
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedSeconds": 166.87995120882988,
+      "rawBytes": 1003,
+      "rawSha256": "b27e36de32511c3ea1ef1afd6505c4b419b477ca34e0baa17b19a09f4c6ae6f9"
+    },
+    {
+      "name": "before-complete-ci-measurement",
+      "command": [
+        "node",
+        "scripts/measure-js-first.mjs",
+        "docs/case-studies/issue-759/raw",
+        "--output",
+        "/tmp/router-759-ci-batch-git-only-migration-v1/before-complete-ci-measurement.json"
+      ],
+      "capSeconds": 180,
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedSeconds": 12.487586208153516,
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "after-complete-current-integrity",
+      "command": [
+        "python3",
+        "docs/case-studies/issue-759/raw/ci/verify-archive.py",
+        "--output",
+        "/tmp/router-759-ci-batch-git-only-migration-v1/after-complete-current-integrity.json"
+      ],
+      "capSeconds": 600,
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedSeconds": 147.90916625014506,
+      "rawBytes": 1003,
+      "rawSha256": "8c704e835f34b25d6d908ff4ec6a1cb8c4af94c3d7826250f071d11a2b1280cc"
+    },
+    {
+      "name": "after-complete-ci-measurement",
+      "command": [
+        "node",
+        "scripts/measure-js-first.mjs",
+        "docs/case-studies/issue-759/raw",
+        "--output",
+        "/tmp/router-759-ci-batch-git-only-migration-v1/after-complete-ci-measurement.json"
+      ],
+      "capSeconds": 180,
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedSeconds": 18.913224915973842,
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "runtimeParity": false,
+  "fullGatePass": false,
+  "rustExecutions": 0
+}

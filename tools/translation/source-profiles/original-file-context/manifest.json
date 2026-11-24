@@ -1,0 +1,296 @@
+{
+  "schema": "original-file-token-context-sources-v1",
+  "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+  "rustVersion": "1.89.0",
+  "sourceDataOnly": true,
+  "namespaceAuthority": false,
+  "runtimeAuthority": false,
+  "sources": [
+    {
+      "path": "compiler/rustc_parse/src/lexer/mod.rs",
+      "bytes": 50639,
+      "sha256": "dc1985660398ae348e9274dd0aceaea0e28fb1a7fc4254c61496dd94fbec7485",
+      "gitBlobSha": "2845bbed1c0eead1cc53392e2ec4f545a0d584bc",
+      "container": {
+        "kind": "gzip",
+        "file": "../cooked-byte-char/rust-parse-lexer.rs.gz",
+        "bytes": 10857,
+        "sha256": "d813d24d78661c7cf1024c3b98787df7f12ce1a553a387b341d11c3e60a750c9"
+      },
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_parse/src/lexer/mod.rs"
+    },
+    {
+      "path": "compiler/rustc_parse/src/lib.rs",
+      "bytes": 8170,
+      "sha256": "e445ed1d6a197b64a9a605d95bd36b73d3f48f59ad867d858b91bf019e926003",
+      "gitBlobSha": "8ea535599c94c41d41a6a9a971a0bec796ed12b7",
+      "container": {
+        "kind": "gzip",
+        "file": "../conditional-attributes/rust-parse-lib-1.89.0.rs.gz",
+        "bytes": 2803,
+        "sha256": "58eef1a45473a20141f42ea9ec2aa20a82046874b8921dc07a9c4fc8e4c3bd8d"
+      },
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_parse/src/lib.rs"
+    },
+    {
+      "path": "compiler/rustc_parse/src/parser/mod.rs",
+      "bytes": 64389,
+      "sha256": "88e79af509064c441a88eb1b60facbfb50f8024dc0bcbf139a01a1902d111d59",
+      "gitBlobSha": "b2e902513672d58d774bdc41e7e70fc20a739c25",
+      "container": {
+        "kind": "gzip",
+        "file": "../macro-expression/rust-1.89-parser-mod.rs.gz",
+        "bytes": 16588,
+        "sha256": "1ac31573ac1590fbff8c7508572ba21fb139f257d8a7cc5f94b382949d937f05"
+      },
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_parse/src/parser/mod.rs"
+    },
+    {
+      "path": "compiler/rustc_expand/src/module.rs",
+      "bytes": 11205,
+      "sha256": "ffd5ab103a966ee584b99c99fb8009f52c9aa6f7fce592f86498924c513e65e5",
+      "gitBlobSha": "e925052c6070915482403496cf1fd99af3e2db89",
+      "container": {
+        "kind": "gzip",
+        "file": "../module-paths/rustc-module.rs.gz",
+        "bytes": 3376,
+        "sha256": "da7866ffceab3b6550a09a2ec3e62f2afbe0ff82681eb6b1c1e7853d30a2d583"
+      },
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_expand/src/module.rs"
+    },
+    {
+      "path": "compiler/rustc_span/src/source_map.rs",
+      "bytes": 54212,
+      "sha256": "7f8e24554c3c5eee4eeab882fabfb2658842159803031b75cf36e2928c0982b6",
+      "gitBlobSha": "8a3644163caf377a32374676a7f66d14abc41622",
+      "container": {
+        "kind": "gzip",
+        "file": "../builtin-derive-bang/original-compiler_rustc_span_src_source_map.rs.gz",
+        "bytes": 13708,
+        "sha256": "5de42bde8a45bc04b29487e7ec6378f2ba69dee1e00a643f5a99558d0712bda8"
+      },
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_span/src/source_map.rs"
+    },
+    {
+      "path": "compiler/rustc_span/src/lib.rs",
+      "bytes": 95677,
+      "sha256": "44319ab9e28354c971728334bf5cba29251ac2f5b2e4dbddf8fe0d033ccaeed4",
+      "gitBlobSha": "c8a29a2f68fd95d2759fa22026de30f0a01c8849",
+      "container": {
+        "kind": "gzip",
+        "file": "../generated-item-hygiene/rust-1.89-span-lib.rs.gz",
+        "bytes": 23836,
+        "sha256": "5c787608d8cd263eee833a078576d0d46ed2ee39fc6e1715bccdda2a12328117"
+      },
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_span/src/lib.rs"
+    },
+    {
+      "path": "compiler/rustc_span/src/hygiene.rs",
+      "bytes": 60179,
+      "sha256": "917fb2e9410ebc7dfac8fe5cfeb23db5befe33ec64593232335d9f91ace9ec2d",
+      "gitBlobSha": "29be3b73ee99df06a90183aa52f62e962e3ed290",
+      "container": {
+        "kind": "gzip",
+        "file": "../generated-item-hygiene/rust-1.89-hygiene.rs.gz",
+        "bytes": 15231,
+        "sha256": "375747b22dabd39f25f323cb9385f9059e1d3125f7591b232f346e704f092b16"
+      },
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_span/src/hygiene.rs"
+    },
+    {
+      "path": "compiler/rustc_ast/src/token.rs",
+      "bytes": 40118,
+      "sha256": "a15e0c1152f601a82bad4f08553ce68dc88aad6cde52c618e30a6d292c4d1751",
+      "gitBlobSha": "54781e8235e2f000a7c67ca463e2cf861a147162",
+      "container": {
+        "kind": "gzip",
+        "file": "../clap-concat/rust-1.89-token.rs.gz",
+        "bytes": 9485,
+        "sha256": "6c6d97093c0ccd49f83fa700e5ba23af25a3a26547e37fd236ea2a148fc8607c"
+      },
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_ast/src/token.rs"
+    },
+    {
+      "path": "compiler/rustc_span/src/span_encoding.rs",
+      "bytes": 18505,
+      "sha256": "d37def798da7b8c42bbaa6d73f5ede0dc56a7723b83ad862e9be94e8eeae3384",
+      "gitBlobSha": "a4a47dc99b084cfbf26efe348ce91ca21d9a91e4",
+      "container": {
+        "kind": "raw",
+        "file": "compiler__rustc_span__src__span_encoding.rs.txt",
+        "bytes": 18505,
+        "sha256": "d37def798da7b8c42bbaa6d73f5ede0dc56a7723b83ad862e9be94e8eeae3384"
+      },
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_span/src/span_encoding.rs"
+    },
+    {
+      "path": "compiler/rustc_parse/src/lexer/tokentrees.rs",
+      "bytes": 10880,
+      "sha256": "de84f96b8624367489e4b1667788b9d4c8c3d4ed08aab3548410fae95a3135d6",
+      "gitBlobSha": "fbea958dcc598f2659546dee8cefe314e81985a9",
+      "container": {
+        "kind": "raw",
+        "file": "compiler__rustc_parse__src__lexer__tokentrees.rs.txt",
+        "bytes": 10880,
+        "sha256": "de84f96b8624367489e4b1667788b9d4c8c3d4ed08aab3548410fae95a3135d6"
+      },
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_parse/src/lexer/tokentrees.rs"
+    },
+    {
+      "path": "compiler/rustc_ast/src/tokenstream.rs",
+      "bytes": 41946,
+      "sha256": "21406bba5ebb2a15389b1dd045fcc793f58a7ccf2da61c7890ffe5f7ed3bfc50",
+      "gitBlobSha": "3c231be20dce568caa1388c3fee63e5b0cdbf18e",
+      "container": {
+        "kind": "raw",
+        "file": "compiler__rustc_ast__src__tokenstream.rs.txt",
+        "bytes": 41946,
+        "sha256": "21406bba5ebb2a15389b1dd045fcc793f58a7ccf2da61c7890ffe5f7ed3bfc50"
+      },
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_ast/src/tokenstream.rs"
+    },
+    {
+      "path": "compiler/rustc_expand/src/mbe/quoted.rs",
+      "bytes": 19273,
+      "sha256": "2b4255ba0ec05e01bd99f43d5711a2e457753dfefcf7eeff9ccb9a52c3adaa72",
+      "gitBlobSha": "0c2362f23bcfc32170bc976dc35f7a006021944d",
+      "container": {
+        "kind": "raw",
+        "file": "compiler__rustc_expand__src__mbe__quoted.rs.txt",
+        "bytes": 19273,
+        "sha256": "2b4255ba0ec05e01bd99f43d5711a2e457753dfefcf7eeff9ccb9a52c3adaa72"
+      },
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_expand/src/mbe/quoted.rs"
+    },
+    {
+      "path": "compiler/rustc_lexer/src/lib.rs",
+      "bytes": 39129,
+      "sha256": "7d99b37ea77e0d81049c5c81558e047c61e83209c2d376a80d5815764af8afe8",
+      "gitBlobSha": "b2bd5e188efdcff8d31104e1ecde9f9607dbb853",
+      "container": {
+        "kind": "gzip",
+        "file": "../source-format-template/compiler-rustc_lexer-src-lib.rs.gz",
+        "bytes": 9950,
+        "sha256": "670be1a4fedbce4508f26bcb75ec6e8315d38015270926ba0f5de2728483fa1a"
+      },
+      "provenance": "official-rust-source"
+    },
+    {
+      "path": "compiler/rustc_lexer/src/cursor.rs",
+      "bytes": 3747,
+      "sha256": "8b99d2db118ed5eb85de28317a1ea75ad7a66fba1000b373d6fe50324334ab1e",
+      "gitBlobSha": "165262b82c75dc5b48ede89da5548acbb6eab5ec",
+      "container": {
+        "kind": "raw",
+        "file": "compiler__rustc_lexer__src__cursor.rs.txt",
+        "bytes": 3747,
+        "sha256": "8b99d2db118ed5eb85de28317a1ea75ad7a66fba1000b373d6fe50324334ab1e"
+      },
+      "provenance": "official-rust-source"
+    },
+    {
+      "path": "unicode-xid-0.2.6/src/lib.rs",
+      "bytes": 2979,
+      "sha256": "5ec8dbe7a10106d8798e8469986408ecfb60710e7f6a936e265283753c8d1a94",
+      "gitBlobSha": "973783aff2a1a890d33668c912df319590266eee",
+      "container": {
+        "kind": "gzip",
+        "file": "../source-format-template/unicode-xid-0.2.6_src_lib.rs.gz",
+        "bytes": 1173,
+        "sha256": "406489597f95b341bc9548a05ce155da1d8aee61c00fb0fde5ca49244b2ac4d0"
+      },
+      "provenance": "captured-third-party-crate-data"
+    }
+  ],
+  "licenses": [
+    {
+      "file": "../generated-item-hygiene/LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+    },
+    {
+      "file": "../generated-item-hygiene/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+    }
+  ],
+  "auxiliary": [
+    {
+      "path": "Cargo.lock",
+      "bytes": 149714,
+      "sha256": "47e4d2ad5e3b87fba150a3cee11a6c657d5d7648be075588e7f3aa9d8a8e847c",
+      "gitBlobSha": "a170ece0a0ddce439257e889964c679dc33e6ed6",
+      "container": {
+        "kind": "gzip",
+        "file": "../cooked-byte-char/rust-Cargo.lock.gz",
+        "bytes": 33573,
+        "sha256": "a7dd37ec561ba908b8516eecc327854dbeed2acab56dd9a10dd8d88b80204e3b"
+      }
+    },
+    {
+      "path": "unicode-xid-0.2.6/Cargo.toml",
+      "bytes": 1518,
+      "sha256": "030ed8e60fcd73b831f174ab2df10e0f913d5d1476909c92aee26849323370f3",
+      "gitBlobSha": "3d5fd9140709ca28ed5abd301403a66b207e684b",
+      "container": {
+        "kind": "gzip",
+        "file": "../source-format-template/unicode-xid-0.2.6_Cargo.toml.gz",
+        "bytes": 796,
+        "sha256": "4df08d8c56fd8ab8c50438dc06662103ec95dcbec5e1905bc068d3722c716b26"
+      }
+    },
+    {
+      "path": "retained-xid-profile/unicode-xid-capture.json",
+      "file": "../source-format-template/unicode-xid-capture.json",
+      "bytes": 2001,
+      "sha256": "47632870088726b8ec126dd54349ccd5c82f426c738cdcf54afe53e1b5e36b04",
+      "kind": "complete-original-profile-or-captured-crate-data"
+    },
+    {
+      "path": "retained-xid-profile/manifest.json",
+      "file": "../source-format-template/manifest.json",
+      "bytes": 3924,
+      "sha256": "098331076dab9b8876c110a4a0feb3442bf57aa4adac3f0abc230036c1e839cc",
+      "kind": "complete-original-profile-or-captured-crate-data"
+    },
+    {
+      "path": "unicode-xid-0.2.6/src/tables.rs",
+      "bytes": 52866,
+      "sha256": "6a886d9107d42e8dbec81fa7f4acbb6a82adcec4976b56f757551c7a61cf788d",
+      "gitBlobSha": "e5252f84ad135426e35f65735efed09b7c4406a1",
+      "container": {
+        "kind": "gzip",
+        "file": "../source-format-template/unicode-xid-0.2.6_src_tables.rs.gz",
+        "bytes": 7180,
+        "sha256": "c96dea4ae58be9884a81331a8f0441869af8ca5e94d55da559f0739561522cd7"
+      }
+    },
+    {
+      "path": "unicode-xid-0.2.6/LICENSE-MIT",
+      "bytes": 1071,
+      "sha256": "7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0",
+      "gitBlobSha": "e69282e381bc07152cc7598f21f3162e4bbb1f22",
+      "container": {
+        "kind": "gzip",
+        "file": "../source-format-template/unicode-xid-0.2.6_LICENSE-MIT.gz",
+        "bytes": 652,
+        "sha256": "f4865d8e80f887255a0b449f8b0d4d5961ab0b2db8003eae84829d96af02e587"
+      }
+    },
+    {
+      "path": "unicode-xid-0.2.6/LICENSE-APACHE",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "gitBlobSha": "16fe87b06e802f094b3fbb0894b137bca2b16ef1",
+      "container": {
+        "kind": "gzip",
+        "file": "../source-format-template/unicode-xid-0.2.6_LICENSE-APACHE.gz",
+        "bytes": 3940,
+        "sha256": "31cd5c988a03f359c79ffd86104335779b692f972595e34078367b1f5f5d77eb"
+      }
+    }
+  ],
+  "constructorOriginals": 12,
+  "lexicalOriginals": 3,
+  "rawProposalAssets": 5
+}

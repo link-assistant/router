@@ -1,0 +1,96 @@
+{
+  "schema": "focused-declarative-closure-validation-v1",
+  "sourceHead": "f9b77efa7",
+  "ownQueue": [
+    "b012ffe09",
+    "a34a3d99c",
+    "4a649ec5d",
+    "f9b77efa7"
+  ],
+  "runners": {
+    "node": {
+      "cases": 19,
+      "pass": 19,
+      "fail": 0,
+      "skip": 0,
+      "milliseconds": 1376.326459
+    },
+    "bun": {
+      "cases": 19,
+      "pass": 19,
+      "fail": 0,
+      "skip": 0,
+      "milliseconds": 789
+    }
+  },
+  "groups": {
+    "newClosure": 4,
+    "newItem": 3,
+    "newOwner": 2,
+    "relatedEngine": 9,
+    "relocatedJavaScriptAndStrictTypeScript": 1
+  },
+  "initialEqualsFinal": true,
+  "repairsRequired": false,
+  "logs": [
+    {
+      "runtime": "node",
+      "initialAndFinal": "initial-final-node.log",
+      "bytes": 4781,
+      "sha256": "ddd6d8e14db7485863285f8a739f3d5883f6ed918ece89827f5feb7885eb0d63",
+      "compressed": "initial-final-node.log.gz",
+      "compressedBytes": 1267,
+      "compressedSha256": "071bcaa9d869c23440dd65915ea15cf21d6a6904ed5097486e41a9e3d3df2d97",
+      "reopenedSha256": "ddd6d8e14db7485863285f8a739f3d5883f6ed918ece89827f5feb7885eb0d63"
+    },
+    {
+      "runtime": "bun",
+      "initialAndFinal": "initial-final-bun.log",
+      "bytes": 2475,
+      "sha256": "b9edbacfb88b9a524ce3049ceddd6d26f86147f00d82210446f330e4db54b57f",
+      "compressed": "initial-final-bun.log.gz",
+      "compressedBytes": 1079,
+      "compressedSha256": "87b51fcb06748afb2c54f69f6582498ab3db793bf6b73eb7fa4d8125a0de7a47",
+      "reopenedSha256": "b9edbacfb88b9a524ce3049ceddd6d26f86147f00d82210446f330e4db54b57f"
+    }
+  ],
+  "sourceHashes": {
+    "tools/translation/declarative-closure.mjs": "79700057d82cff922e385ae2a6933d36c2822a5bad9589624c2416cf24a229d3",
+    "tools/translation/declarative-owner-frontier.mjs": "06da9f340f56a78611299c4ce922c5b10ece6cfd423c656962c9fcf00d10f582",
+    "tools/translation/declarative-source-profile.mjs": "e9eda0ed10a197d898254e729ce42f1ef0d73eb8fe2823077534fdc0d08fbcc1",
+    "tools/translation/declarative-macros.mjs": "6c62a6efd666da1c6eb37cd4acef92a29048b8011f57c5bbd61d1b1d3402359a",
+    "tools/translation/macro-items.mjs": "81b5a6cb34aeecdacb8b332b5dd38c754967ed56707c2a87a5a504dfaee21735",
+    "tools/translation/macro-token-trees.mjs": "5fccc9130afcf0fe0828b53dc4ac197758a62b8aa089f3435f66131a1ea63af6",
+    "tools/translation/bulk.mjs": "070699c26862528e375fdf35672d469215aa9370786ea479177ba64a486ee8f4",
+    "tools/translation/test/declarative-closure.test.mjs": "3e919ead8f3c63f6c506b17c0fcfe445e56ecc35062fdabda4c31c5a109ec3e6",
+    "tools/translation/test/declarative-owner-frontier.test.mjs": "7201b18bd305c89f4578cda874a02556ca3afe72cafec04b8b8df0c4329868f4",
+    "tools/translation/test/macro-items.test.mjs": "de5b3a3f5c40f10f6638dde34094a1d118b5c0c0bb34d524c185839f5a950178",
+    "tools/translation/test/declarative-macros.test.mjs": "5e6a6cba87db2d55519501b6d10d7e7d5587c6fc0c229249f64d9dce250036eb",
+    "tools/translation/test/reuse-translation.test.mjs": "2be15d17ca71968970d502aa5ecaa1e2160095cdd9ed38690ae13e0bafe5d4e2"
+  },
+  "sourceProfileHashes": {
+    "tools/translation/source-profiles/declarative/LICENSE-RUST-MIT": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1",
+    "tools/translation/source-profiles/declarative/NOTICE.md": "fb61bd79dfe81957062430da2571ee7c389c0e6083611868d026aa9116e7be6a",
+    "tools/translation/source-profiles/declarative/cfg-if-1.0.1.crate": "9555578bc9e57714c812a1f84e4fc5b4d21fcb063490c624de019f7464c91268",
+    "tools/translation/source-profiles/declarative/manifest.json": "f1b0582e049761c844aca326c25cfe8577e679210026a27e6b8b4162d35a7ee9",
+    "tools/translation/source-profiles/declarative/rust-1.89-compiler_rustc_parse_src_parser_mod.rs.gz": "1ac31573ac1590fbff8c7508572ba21fb139f257d8a7cc5f94b382949d937f05",
+    "tools/translation/source-profiles/declarative/rust-1.89-compiler_rustc_parse_src_parser_nonterminal.rs.gz": "5a8680f93bd4822919abf0f6090d2ecbd2d68085849cbc8804879a7122a2742a",
+    "tools/translation/source-profiles/declarative/rust-1.89-library_Cargo.lock.gz": "5676ed531a06a4f63741f49b5c6c0dc912f59f157b4fc2a9f4f2ae5017e087ea",
+    "tools/translation/source-profiles/declarative/rust-1.89-library_std_Cargo.toml.gz": "07b4e9455a0a6a6b414954e2ce1472248a93fb6f57160105f423fd948f3db886",
+    "tools/translation/source-profiles/declarative/rust-1.89-library_std_src_sys_thread_local_mod.rs.gz": "7c324eee1f70980517d5414333402004065921b3bd68099d7891910b7f10181a",
+    "tools/translation/source-profiles/declarative/rust-1.89-library_std_src_sys_thread_local_native_mod.rs.gz": "44ec78fe3e65728de86dcd1a38e24d4d8efff3481b5cbb2fb5e8b84e4c4fa308",
+    "tools/translation/source-profiles/declarative/rust-1.89-library_std_src_sys_thread_local_no_threads.rs.gz": "f98643e7c34d1ed7bfd5f44f739cfdac3696a5de28f297e5642c6634da9cbf90",
+    "tools/translation/source-profiles/declarative/rust-1.89-library_std_src_sys_thread_local_os.rs.gz": "d4dd49c92b845ec3f64489f3f4b9696ff8fa1a46bb641440b2b9145ffa3d1c3c",
+    "tools/translation/source-profiles/declarative/rust-1.89-library_std_src_thread_local.rs.gz": "8d2f415e8e5809e5e2a00b8405376eaa8e0d09c023926fdfcf916fe2d764d506",
+    "tools/translation/source-profiles/declarative/rust-1.89-library_std_src_thread_mod.rs.gz": "1925b6da6bc19388830d5f0c09fb591bafd0f3fcea1e0b2a8fc1b83ca875c6e3",
+    "tools/translation/source-profiles/declarative/tokio-1.53.2.crate": "e95f91fcc7a621e8b030f6aa23c71fe9838ae2fb4d8118b75602a328f5144044"
+  },
+  "limits": {
+    "macroCallOwnerResolved": false,
+    "namespaceComplete": false,
+    "generatedRuntimeBehavior": false,
+    "rustExecuted": false,
+    "productionRegenerated": false,
+    "published": false
+  }
+}

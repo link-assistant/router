@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "retrievedDate": "2026-10-11",
+  "rustVersion": "1.89.0",
+  "sources": [
+    {
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/num/int_macros.rs",
+      "sourceGitBlobSha": "5683d5ec92dc7a7334e9733cf53a75db746d0908",
+      "sourceSha256": "8f10aa188b14de4af8330ee67ebe39f189a3b7272e12276959d8978d9fba3702",
+      "scope": "signed checked_add/sub/mul and saturating_add/sub/mul",
+      "contracts": [
+        "checked overflow returns None",
+        "saturation selects the signed range bound",
+        "pinned arithmetic methods are const stable since 1.47"
+      ]
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/num/uint_macros.rs",
+      "sourceGitBlobSha": "079032f2f96d486ac8168ba930f1f176982d2d6e",
+      "sourceSha256": "7abb468c8871599a3e9802d741c65d210b59466c497ba36aaf8f11e4e8681f3d",
+      "scope": "unsigned checked_add/sub/mul and saturating_add/sub/mul",
+      "contracts": [
+        "underflow returns None or saturates to zero",
+        "overflow returns None or saturates to maximum",
+        "pinned arithmetic methods are const stable since 1.47"
+      ]
+    },
+    {
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/cmp.rs",
+      "sourceGitBlobSha": "5cb1a148477026dda10bb72174e5c99101d0bc2e",
+      "sourceSha256": "4d99f17bff4740a566d839f9ec990ebb5f593cbfe369334fac5f08463203e1c4",
+      "scope": "Ord min, max, clamp and primitive integer implementation",
+      "contracts": [
+        "primitive exact ordering",
+        "equal clamp bounds are valid",
+        "reversed bounds panic",
+        "Ord methods are ordinary non-const trait methods in the pinned source"
+      ]
+    }
+  ],
+  "portableProfile": {
+    "machineIntegerRepresentation": "BigInt",
+    "fixedBits": [
+      8,
+      16,
+      32,
+      64,
+      128
+    ],
+    "pointerBits": 64
+  },
+  "validation": "Independent Node/Bun literal overflow, underflow, signed saturation, exact 128-bit boundaries, clamp panic and invalid-domain fixtures; no Rust execution.",
+  "limitations": [
+    "The frontend must consume each actual fixed-type contract before an original Rust body is executable.",
+    "No arbitrary ADT Ord implementation, mixed operands, floats, wrapping or unchecked arithmetic, division or clocks are registered.",
+    "No source panic message byte equivalence, Rust differential execution or full program parity is claimed."
+  ]
+}

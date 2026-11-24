@@ -1,0 +1,34 @@
+{
+  "schema": "fixed-borrowed-json-context-source-family-census-20261103-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-borrowed-json-context-families-20261103/index342.before.json.gz",
+    "encodedSha256": "154afd54f4f1159971d435d80c22bc38e11ba5959af023c0bff9aabc77c40252",
+    "sourceSha256": "9fd3206365e127c919372bb56e02d72c5282a1a483d92f4c59abb58e133f24f5",
+    "rows": 342
+  },
+  "families": [
+    {
+      "id": "exact-borrowed-json-context-context-20261103",
+      "manifest": "tools/translation/source-profiles/borrowed-json-source-context-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "borrowed-json-source-context-20261103-v1",
+      "sha256": "f7d94cabcffb1477c9b35019172bd47efe550adbe26ad99c51c00033d354660c",
+      "rows": 1,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-borrowed-json-context-cases-20261103",
+      "manifest": "tools/translation/source-profiles/exact-source-borrowed-json-context-families-20261103/joins.json.gz",
+      "kind": "archive",
+      "schema": "borrowed-json-context-index-joins-20261103-v1",
+      "sha256": "5723a4b331b95a290dee334f854350816f4581ab3e739845f227a6437f669f00",
+      "rows": 4,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 5,
+  "totalRows": 347,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

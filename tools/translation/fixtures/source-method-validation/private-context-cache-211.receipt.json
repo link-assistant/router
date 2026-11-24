@@ -1,0 +1,55 @@
+{
+  "schema": "private-matches-context-cache-paired-evidence-v1",
+  "head": "a3bce47dd1d9a7a23b7e667eb0ab1fc6a344baa2",
+  "baseline": "37c6b515960eef76b8fff4df9b1043273863107f",
+  "archive": {
+    "path": "tools/translation/fixtures/source-method-validation/private-context-cache-211.json.gz",
+    "bytes": 184481,
+    "sha256": "1fe12348620570f5c452ce0637f03397d09b43c71a17ec5a7abc497ff6517719",
+    "decompressedBytes": 734435,
+    "decompressedSha256": "4e84b7c062217e8e9ffc106f199aa32b80a0d13c3744b35740b13456304327ac",
+    "entries": 8
+  },
+  "runner": {
+    "path": "/tmp/router-759-context-cache-a3bce4-initial211-run.py",
+    "bytes": 5283,
+    "sha256": "db3ca8515c2bac5ad1b9e03c238248069d1c1e6ba075bf34b38352d49b2b1fce"
+  },
+  "inputsCount": 1537,
+  "inputsSha256": "aaeb7406f08bd8ee8719f1bac51217271098c22f739860f4e7447cdbee12109f",
+  "files": 28,
+  "authoredCasesPerEngine": 211,
+  "node": {
+    "pass": 211,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "elapsedSeconds": 80.45299566700123,
+    "exitCode": 0,
+    "timedOut": false
+  },
+  "bun": {
+    "pass": 211,
+    "fail": 0,
+    "elapsedSeconds": 50.180023584049195,
+    "exitCode": 0,
+    "timedOut": false
+  },
+  "scopeValidation": "Each first original issued scope digest uses existing full metadata shape/cycle/depth/cell/byte validation. Every cache reuse requires original four root identities and original owner checks; mutable AST/member/token/parser/Map/evidence guards remain active.",
+  "authorityUnchanged": true,
+  "runtimeParity": false,
+  "performanceGainMeasured": false,
+  "canonicalRetryRun": false,
+  "producerRun": false,
+  "rustRun": false,
+  "originalTemporaryFilesRetained": [
+    "/tmp/router-759-context-cache-a3bce4-initial211-run.py",
+    "/tmp/router-759-context-cache-a3bce4-initial211-plan.json",
+    "/tmp/router-759-context-cache-a3bce4-initial211-inputs.json",
+    "/tmp/router-759-context-cache-a3bce4-initial211-node.raw.log",
+    "/tmp/router-759-context-cache-a3bce4-initial211-node-receipt.json",
+    "/tmp/router-759-context-cache-a3bce4-initial211-bun.raw.log",
+    "/tmp/router-759-context-cache-a3bce4-initial211-bun-receipt.json",
+    "/tmp/router-759-context-cache-a3bce4-source.patch"
+  ]
+}

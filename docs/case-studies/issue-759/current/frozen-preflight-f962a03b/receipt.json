@@ -1,0 +1,107 @@
+{
+  "schema": "frozen-preflight-evidence-v1",
+  "testedHead": "f962a03bf38ccb5da198f55cd1d1ccf467d65cb5",
+  "sourceAndGeneratedArtifactsHead": "f962a03bf38ccb5da198f55cd1d1ccf467d65cb5",
+  "createdAtUtc": "2026-10-12T05:30:28.487184+00:00",
+  "allSevenTerminal": true,
+  "preflight": {
+    "schema": "frozen-local-preflight-v1",
+    "headShaBefore": "f962a03bf38ccb5da198f55cd1d1ccf467d65cb5",
+    "headShaAfter": "f962a03bf38ccb5da198f55cd1d1ccf467d65cb5",
+    "cleanBefore": true,
+    "cleanAfter": true,
+    "startedAtUtc": "2026-10-12T04:17:17.845067+00:00",
+    "elapsedSeconds": 4354.62,
+    "argv": [
+      "node",
+      "scripts/check-js-first-local.mjs"
+    ],
+    "cwd": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate",
+    "exitCode": 1,
+    "stageMeasurements": [
+      {
+        "stage": "lint",
+        "observedElapsedSeconds": 14.622
+      },
+      {
+        "stage": "node-tests",
+        "observedElapsedSeconds": 29.501
+      },
+      {
+        "stage": "bun-tests",
+        "observedElapsedSeconds": 25.07
+      },
+      {
+        "stage": "typescript",
+        "observedElapsedSeconds": 108.483
+      },
+      {
+        "stage": "parity",
+        "observedElapsedSeconds": 1884.942
+      },
+      {
+        "stage": "translation",
+        "observedElapsedSeconds": 2286.355
+      },
+      {
+        "stage": "reverse-translation",
+        "observedElapsedSeconds": 0.753
+      }
+    ],
+    "measurementScope": "Observed stage-marker intervals for this sequential full preflight, including each stage command and marker buffering; not isolated command timing.",
+    "stagesStarted": [
+      "lint",
+      "node-tests",
+      "bun-tests",
+      "typescript",
+      "parity",
+      "translation",
+      "reverse-translation"
+    ],
+    "failures": [
+      "parity: node scripts/check-router-parity.mjs --strict"
+    ],
+    "allExecutableStagesPass": true,
+    "strictParityPass": false,
+    "strictValidationErrors": 0,
+    "strictDraftGaps": 442,
+    "onlyExpectedStrictBlockers": true,
+    "greenStampPath": "/tmp/router-js-first-gate.json",
+    "greenStampExists": false,
+    "stdoutPath": "/tmp/router-759-final-preflight-f962a03b.log",
+    "stdoutBytes": 464748,
+    "stdoutSha256": "87892cb675539761a79bf6aaad69e4a211e574449479e0721616946936093d89"
+  },
+  "archive": {
+    "path": "preflight-evidence.tar.gz",
+    "bytes": 114328,
+    "sha256": "78afd57efe3c5257c8d4dde1fb882724eddc651071575009886eadea0a27f869",
+    "members": [
+      {
+        "path": "archive-recipe.py",
+        "bytes": 4021,
+        "sha256": "2ee6104e48187951bbc5500cab0ffe6c2a15efe9f0895fa850bc72c3f1a4fec4"
+      },
+      {
+        "path": "frozen-preflight-runner.py",
+        "bytes": 4118,
+        "sha256": "10d38ec71fa24964f3bb4dd1fe0a78454215dc4e5cbdd2691653fea1b1d08373"
+      },
+      {
+        "path": "router-759-final-preflight-f962a03b.json",
+        "bytes": 1888,
+        "sha256": "5da67f93c1bdf9e5d306b600d62033935695b4c30201e5971227c008aff4e848"
+      },
+      {
+        "path": "router-759-final-preflight-f962a03b.log",
+        "bytes": 464748,
+        "sha256": "87892cb675539761a79bf6aaad69e4a211e574449479e0721616946936093d89"
+      }
+    ],
+    "reopenedErrors": 0
+  },
+  "rustExecuted": false,
+  "fullParityClaimed": false,
+  "publicationHead": null,
+  "publicationNote": "This evidence commit follows the exact tested commit; remote CI must attest the eventual published commit independently."
+}

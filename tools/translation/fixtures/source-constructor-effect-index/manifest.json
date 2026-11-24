@@ -1,0 +1,12 @@
+{
+  "schema": "original-constructor-effect-index-oracle-v1",
+  "sourcePath": "tools/translation/js-to-rust/vendor/source-constructors.mjs",
+  "bytes": 19030,
+  "sha256": "9456536747f92dd461c2e174c4d9dca0e3c73975dc03069f1441e3f0aeec2525",
+  "fullSourceFixture": "source-constructors-v5.source.txt",
+  "capturedFromFullFrozenSnapshotSha256": "521b9e3088832eace72bb2dee13471e031987fd57ebec1ac509c770ec28e4070",
+  "baseCommit": "950e3db8396c760830ae8c796fa56a064c761877",
+  "sourceStatus": "complete pre-index source with privately bound graph reuse and scalar/loader repair; no effect index",
+  "license": "Complete original repository-authored translator leaf; retain repository licensing and authorship. JavaScript package declares Unlicense; this fixture does not alter licensing.",
+  "privateIssuersMustRemainSeparate": true
+}

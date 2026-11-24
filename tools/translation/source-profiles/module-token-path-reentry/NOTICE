@@ -1,0 +1,4 @@
+Complete Router derive-output-effects receiving source before and after its
+2026-11-10 path-index reentry. Original source and pins remain unchanged.
+Copyright Router contributors. Licensed under the repository LICENSE.
+Source: docs/case-studies/issue-784/evidence/derive-effects-history-20261110.tar.gz

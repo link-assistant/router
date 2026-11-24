@@ -1,0 +1,195 @@
+{
+  "schema": "complete-followup-control-records-v1",
+  "archive": {
+    "path": "complete-control-records.tar.gz",
+    "bytes": 2067585,
+    "sha256": "ce21b37c131201bfcb6a41b37da17fd4b16a0ff748058e590cbdc720a09cee06",
+    "physicalAllocatedBytes": 2068480
+  },
+  "members": [
+    {
+      "path": "bounded-parts-plan.json",
+      "bytes": 1353,
+      "sha256": "fcc3ff6082e6decbb33d9c622113d42b0b59f6a901a06b47eb3b7097873bb843"
+    },
+    {
+      "path": "complete-current-inventory.json",
+      "bytes": 2216397,
+      "sha256": "e2a3075ecb2d1bbd3accc15f579341663de55be9891fbf99dc80f309c67b5960"
+    },
+    {
+      "path": "complete-logical-member-index.json",
+      "bytes": 4999911,
+      "sha256": "b04d3211b11866582b79df7fe10622091a215bb97888a9b0a01c15824c1ffcb0"
+    },
+    {
+      "path": "complete-logical-member-index.json.gz",
+      "bytes": 172159,
+      "sha256": "95d3894a083145bc209981627f838847daa8ce8ad0baa571d30fd8a8d9252af5"
+    },
+    {
+      "path": "complete-logical-member-recovery-plan.json",
+      "bytes": 3632126,
+      "sha256": "7b0756c228abb16cdb0a3bc0e3feff85333765cbd029cf1eb66c3576dab81f62"
+    },
+    {
+      "path": "complete-part-1-receipt.json",
+      "bytes": 19104,
+      "sha256": "0a3969f91e8cc169406bad863496e9bfd54e186413e81af064844e8f009009c3"
+    },
+    {
+      "path": "complete-part-1-receipt.json.gz",
+      "bytes": 1794,
+      "sha256": "f9a1d351fb81552711e65ffe402637335fde78617347e4971645da0f46312085"
+    },
+    {
+      "path": "complete-part-1-resource.json",
+      "bytes": 1034,
+      "sha256": "d8f793242ed4458055c88bb8be7847fa5a0d00fe6a1ebd1d0d2cb4c46e5a2963"
+    },
+    {
+      "path": "complete-part-1.raw.log",
+      "bytes": 955,
+      "sha256": "78c06b75145d88eb0b902e72a2e495d3d16e9ab2358fe48235262c2e282a58de"
+    },
+    {
+      "path": "complete-part-2-receipt.json",
+      "bytes": 108604,
+      "sha256": "9464c38cff0bf26ed27e8ff5bff1882da768438bdde72e1ab7030bd49a2c6459"
+    },
+    {
+      "path": "complete-part-2-receipt.json.gz",
+      "bytes": 6582,
+      "sha256": "cb978066adf5376a95cf02007d337b1b22a764e09711295ae4419f1609899c9d"
+    },
+    {
+      "path": "complete-part-2-resource.json",
+      "bytes": 1033,
+      "sha256": "07f0fd4915f934689fa2c678b5fa6e77c3bb8c45a3057214393edf7505489fb9"
+    },
+    {
+      "path": "complete-part-2.raw.log",
+      "bytes": 957,
+      "sha256": "4a3f94c25b7514c7ebb83a064960b42196acf983001370be3a6e51060a84a68a"
+    },
+    {
+      "path": "complete-part-3-receipt.json",
+      "bytes": 2030443,
+      "sha256": "7b065c89263dc8d8cb3b19b9ad2aa79e099b765b7415d932b4aae6211c45f87c"
+    },
+    {
+      "path": "complete-part-3-receipt.json.gz",
+      "bytes": 215226,
+      "sha256": "c80f1702fb89cdd4218a5b47291853fd333b987b6c6f549c303ef3ef9fa7c777"
+    },
+    {
+      "path": "complete-part-3-resource.json",
+      "bytes": 1034,
+      "sha256": "12fcb1ccf99a006031c638bbf48be5b6c46ceabbc0b9067aeec61d225f203e17"
+    },
+    {
+      "path": "complete-part-3.raw.log",
+      "bytes": 958,
+      "sha256": "ec4d32b3dafb63e8a5cc435603162b03e8f33c5ebf26f24af34f33d4b14374a8"
+    },
+    {
+      "path": "complete-prior-alias-recovery-receipt.json",
+      "bytes": 953,
+      "sha256": "d8021c6ff3d7311f9ebedce3cbf005239c4debe330030e47a12491d5f35e2c13"
+    },
+    {
+      "path": "complete-prior-alias-recovery.raw.log",
+      "bytes": 845,
+      "sha256": "707dcea36afae451df31bc0ea3a4c2207aaea67f27388f769a47638005b82a06"
+    },
+    {
+      "path": "complete-prior-packet-hash-matches.json",
+      "bytes": 1196523,
+      "sha256": "fcb86d3fce55a0ff85eecef3674460d8d2b0c60341d89be6d1716dc926e711c2"
+    },
+    {
+      "path": "final-all-originals-manifest.json",
+      "bytes": 2286128,
+      "sha256": "fb644fee46540f2832da8eaf06f43684a29d22e38c8d68cd85f550149b8e4955"
+    },
+    {
+      "path": "final-capped-plan.json",
+      "bytes": 1159,
+      "sha256": "c4f1d57ea20dc302be1b3e92a2a13aa67898be013ff621dabf78d8a4b17112cc"
+    },
+    {
+      "path": "final-complete-logical-member-index.json",
+      "bytes": 3731559,
+      "sha256": "96a6b647bd62c6b7347b4b269db39fc2dafd567558b80db1306a118da3fa9e29"
+    },
+    {
+      "path": "final-part-1-manifest.json",
+      "bytes": 15873,
+      "sha256": "14951057fa1f0db78946fd1a5f718592a5dbe45856c709471dd03d8f271e2dff"
+    },
+    {
+      "path": "final-part-2-manifest.json",
+      "bytes": 93181,
+      "sha256": "ec59da4e41cbc528994cbd907bf6077fd75e456335fa150b7f6e7c8bf7d7af4a"
+    },
+    {
+      "path": "final-part-3-manifest.json",
+      "bytes": 1734739,
+      "sha256": "85f0d567e5e7b0e804cfe4902b61e655593b16cd1e3a0f68f552ff4e452a09b2"
+    },
+    {
+      "path": "inventory-report.json",
+      "bytes": 3622,
+      "sha256": "aa1f55d6dad42ba8dda19db673d57c815f41b21eb210a6bab419a1f9ed4b0f30"
+    },
+    {
+      "path": "metadata-lossless-container-receipt.json",
+      "bytes": 1652,
+      "sha256": "04ee02e6aeece4998502e3503b176887261929b10643d42efd05e0f2ea01aa31"
+    },
+    {
+      "path": "part-1-manifest.json",
+      "bytes": 89849,
+      "sha256": "a92520d9bf1af7bf0e9602a806246c72fe51eaa14fbd13bc83eb89359eedf9ff"
+    },
+    {
+      "path": "part-2-manifest.json",
+      "bytes": 103934,
+      "sha256": "2155aa838e0225aa53aa0822658ac13569eff6dc5349776dbd3f99481459871f"
+    },
+    {
+      "path": "part-3-manifest.json",
+      "bytes": 2022658,
+      "sha256": "28cd3d11d676511cba39674939452f148b6c984805fd84e86b6f9c69ea534fa4"
+    },
+    {
+      "path": "run-part.py",
+      "bytes": 1514,
+      "sha256": "990a73494e7124702a30c55672553ddf1ff1cea6ee272d20d10f29ea04d85664"
+    },
+    {
+      "path": "verify-prior-aliases.py",
+      "bytes": 3144,
+      "sha256": "0aa378f7e9c52859b238aac4c0bef0558d32e739a3d34bf1eea55fc83dc7af97"
+    },
+    {
+      "path": "witnessed-part-1-manifest.json",
+      "bytes": 24617,
+      "sha256": "32271dcb1ac2df5e741533cf782863dcf52433a925922968c1cb7e119b9af9df"
+    },
+    {
+      "path": "witnessed-part-2-manifest.json",
+      "bytes": 1749423,
+      "sha256": "2a2e9037c96a80dfaa98c099140e51a63da506c3cfa07050152a24ae1a31cb55"
+    },
+    {
+      "path": "witnessed-parts-plan.json",
+      "bytes": 666,
+      "sha256": "c9a19151bfc467dc259291beb3ff1695ea0dd7930c7ee12e97a322b826927d9c"
+    }
+  ],
+  "completeMembers": 36,
+  "completeOriginalBytes": 26471709,
+  "allDecodedOriginalsVerified": true,
+  "caseInstalled": false
+}

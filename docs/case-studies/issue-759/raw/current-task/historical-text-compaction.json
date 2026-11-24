@@ -1,0 +1,49 @@
+{
+  "schema": "lossless-historical-evidence-compaction-v1",
+  "sourceHead": "e0b405361ed24f9eedb035b1dec84a6047e845c1",
+  "compactedAtUtc": "2026-10-12T04:11:39.892502+00:00",
+  "files": [
+    {
+      "originalPath": "docs/case-studies/issue-759/raw/sources/formal-ai/paths.txt",
+      "storedPath": "docs/case-studies/issue-759/raw/sources/formal-ai/paths.txt.gz",
+      "originalBytes": 4550996,
+      "originalSha256": "7d68759aa2cfcd1563d5549b7111ffbfeea5923d1f1374daf278d2e6bd17a0eb",
+      "originalAllocatedBytes": 4554752,
+      "storedBytes": 854463,
+      "storedSha256": "94485a0993273f9f2f0bb05b3219b64d499d166584fb6da3d5477f8033f28872",
+      "storedAllocatedBytes": 856064
+    },
+    {
+      "originalPath": "docs/case-studies/issue-759/raw/ci/source-manifest.jsonl",
+      "storedPath": "docs/case-studies/issue-759/raw/ci/source-manifest.jsonl.gz",
+      "originalBytes": 2415789,
+      "originalSha256": "25be9d84bf54ed29f43c6262298c5c9a112bfc3b7158548c8a7248279e9abb94",
+      "originalAllocatedBytes": 2416640,
+      "storedBytes": 309217,
+      "storedSha256": "09e9ccd4580bbcf3d79be2bab20724953d554cde0fcf3644d87ee12597c97767",
+      "storedAllocatedBytes": 311296
+    },
+    {
+      "originalPath": "docs/case-studies/issue-759/raw/ci/metadata-compression-provenance.jsonl",
+      "storedPath": "docs/case-studies/issue-759/raw/ci/metadata-compression-provenance.jsonl.gz",
+      "originalBytes": 1043403,
+      "originalSha256": "00a49778c2effadab7cda23ac1c38229be188a2a5eb8b8d96a034e90c4ef0446",
+      "originalAllocatedBytes": 1044480,
+      "storedBytes": 199169,
+      "storedSha256": "f1169e06df9d09a6ab32cb272df26d6525a30fdc06f16882ae5cc4f91ea057c8",
+      "storedAllocatedBytes": 200704
+    },
+    {
+      "originalPath": "docs/case-studies/issue-759/raw/ci/log-compression-migrations.jsonl",
+      "storedPath": "docs/case-studies/issue-759/raw/ci/log-compression-migrations.jsonl.gz",
+      "originalBytes": 966646,
+      "originalSha256": "3edef0500e5184d970894fa7914eafcbaa89547c9c9c329bb757e6310356a269",
+      "originalAllocatedBytes": 966656,
+      "storedBytes": 220145,
+      "storedSha256": "ca1f8fabd22ba3e86ebf509fc80b510d41f36a894de241685a50800864faa07f",
+      "storedAllocatedBytes": 221184
+    }
+  ],
+  "allocatedBytesSaved": 7393280,
+  "method": "Deterministic gzip, reopened exact original bytes before plaintext replacement. Cumulative JSONL writers append gzip members; readers decode all members. Every historical entry and original byte remains recoverable. No logs or original Rust inputs removed."
+}

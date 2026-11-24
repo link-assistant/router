@@ -1,0 +1,5 @@
+fix: keep the original Cargo edition unknown for unmatched bulk Rust sources
+
+The bulk draft inherits the complete original Cargo manifest only through genuine captured project scopes. Unrelated scripts, experiments and archived foreign source files retain an unknown edition unless a caller supplies their actual manifest through the explicit standalone API. Compound Rust 2024 let syntax therefore stays carried for those unmatched sources; ordinary functions and complete original source bytes remain preserved.
+
+One additional authored control uses actual tracked temporary sources and bounded fixture generation, then executes emitted JavaScript and strict compiled TypeScript for the genuine project and the unrelated file. This source-only draft is UNRUN. The preceding 49-file/412-case freeze is preserved and superseded by a 49-file/413-case future scope. No compiler engine, full repository producer, complete JavaScript gate or Rust build has run for this successor. The current verified namespace/field-reference cohort remains separate.

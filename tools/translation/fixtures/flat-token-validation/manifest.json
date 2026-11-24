@@ -1,0 +1,20 @@
+{
+  "schema": "complete-original-source-links-v1",
+  "commit": "02cd65c3990f8cef18a2b448e5a5659b47e8c28b",
+  "path": "tools/translation/extensions/source-links.mjs",
+  "mode": "100644",
+  "blob": "6ddc3b8713f7c2f0519d6550fd6119c936dfda53",
+  "storedPath": "source-links.original.txt",
+  "bytes": 23739,
+  "sha256": "126659b1fc39776647692bc27f538182baa9eba8b692b553f3869277ff889d6d",
+  "scope": "Complete original/current leaf copies relocate ONLY import specifiers to SAME active dependency issuers. Generic captured parser uses the actual pinned RustParser; no Host source/checker admission is inferred from that fixture.",
+  "qualifierBaseline": {
+    "commit": "02cd65c3990f8cef18a2b448e5a5659b47e8c28b",
+    "path": "tools/translation/original-json-intrinsics.mjs",
+    "mode": "100644",
+    "blob": "0e62c0e9a5c08563b283710fcad2982c6c235a5d",
+    "storedPath": "original-json-intrinsics.original.txt",
+    "bytes": 14131,
+    "sha256": "e4bc1c870a5881ba31ecc49f68ba47a89aa3e6ee4c382232d44ed7588529b62b"
+  }
+}

@@ -1,0 +1,1 @@
+Collect token-based Rust macro definitions and import bindings before builtin dispatch. Named shadows, unresolved glob imports and macro_use scopes supply explicit provenance obligations, so carried custom macros and failed imports cannot silently acquire unrelated standard behavior.

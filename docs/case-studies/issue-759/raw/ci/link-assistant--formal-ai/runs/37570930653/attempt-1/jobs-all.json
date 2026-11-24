@@ -1,0 +1,118 @@
+[
+  {
+    "id": 112629149164,
+    "run_id": 37570930653,
+    "workflow_name": "Benchmark Corpus Gate",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37570930653",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAaOTht7A",
+    "head_sha": "6872307e4cdc6657abcd5ffe82cce8b197607d35",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112629149164",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37570930653/job/112629149164",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-07T04:19:47Z",
+    "started_at": "2026-10-07T04:20:16Z",
+    "completed_at": "2026-10-07T04:55:44Z",
+    "name": "no benchmark prompt reaches the unknown opener",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-07T04:20:17Z",
+        "completed_at": "2026-10-07T04:20:18Z"
+      },
+      {
+        "name": "Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-07T04:20:18Z",
+        "completed_at": "2026-10-07T04:20:29Z"
+      },
+      {
+        "name": "Setup Rust",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3,
+        "started_at": "2026-10-07T04:20:29Z",
+        "completed_at": "2026-10-07T04:20:38Z"
+      },
+      {
+        "name": "Run ./.github/actions/setup-sccache",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4,
+        "started_at": "2026-10-07T04:20:38Z",
+        "completed_at": "2026-10-07T04:20:40Z"
+      },
+      {
+        "name": "Run ./.github/actions/cache-cargo-registry",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5,
+        "started_at": "2026-10-07T04:20:40Z",
+        "completed_at": "2026-10-07T04:20:51Z"
+      },
+      {
+        "name": "Build the corpus gate binary",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6,
+        "started_at": "2026-10-07T04:20:51Z",
+        "completed_at": "2026-10-07T04:26:28Z"
+      },
+      {
+        "name": "Run the benchmark corpus gate",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "number": 7,
+        "started_at": "2026-10-07T04:26:28Z",
+        "completed_at": "2026-10-07T04:55:41Z"
+      },
+      {
+        "name": "Post Run ./.github/actions/cache-cargo-registry",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 12,
+        "started_at": "2026-10-07T04:55:41Z",
+        "completed_at": "2026-10-07T04:55:41Z"
+      },
+      {
+        "name": "Post Run ./.github/actions/setup-sccache",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 13,
+        "started_at": "2026-10-07T04:55:41Z",
+        "completed_at": "2026-10-07T04:55:41Z"
+      },
+      {
+        "name": "Post Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 14,
+        "started_at": "2026-10-07T04:55:41Z",
+        "completed_at": "2026-10-07T04:55:41Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 15,
+        "started_at": "2026-10-07T04:55:41Z",
+        "completed_at": "2026-10-07T04:55:41Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112629149164",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 1000147295,
+    "runner_name": "GitHub Actions 1000147295",
+    "runner_group_id": 0,
+    "runner_group_name": "GitHub Actions"
+  }
+]

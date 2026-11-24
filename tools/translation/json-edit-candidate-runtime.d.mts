@@ -1,0 +1,10 @@
+import type {JsonValue} from './json-macro-runtime.mjs';
+declare const slotBrand: unique symbol;
+declare const loanBrand: unique symbol;
+export type JsonEditSlot=Readonly<{[slotBrand]:true}>;
+export type JsonEditLoan=Readonly<{[loanBrand]:true}>;
+export declare function createJsonEditSlot(value:JsonValue):JsonEditSlot;
+export declare function jsonEditSnapshot(slot:JsonEditSlot):JsonValue;
+export declare function withJsonEdit<R>(slot:JsonEditSlot,run:(loan:JsonEditLoan)=>R):R;
+export declare function withJsonEditReborrow<R>(loan:JsonEditLoan,run:(child:JsonEditLoan)=>R):R;
+export declare function jsonEditRemoveIfObject(loan:JsonEditLoan,key:string):Readonly<{$:'None'}>|Readonly<{$:'Some';field0:JsonValue}>;

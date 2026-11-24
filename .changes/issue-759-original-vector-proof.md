@@ -1,0 +1,1 @@
+- Execute the unchanged Claude first-block identity reader through checked JavaScript and strict compiled TypeScript in Node and Bun. Verify exact source spans and hashes, first-element-only behavior and malformed input guards; existing original-source expectations also run independently in both targets without claiming full parity.

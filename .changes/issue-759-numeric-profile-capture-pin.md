@@ -1,0 +1,1 @@
+Preserve the numeric stage’s exact original profile bytes while recording completed offline archive capture in its separate receipt and NOTICE. Source review caught a descriptive profile edit that invalidated its strict checksum before any engine ran; the original source identities and authority flags remain unchanged.

@@ -1,0 +1,1 @@
+Record standard Option and Result provenance on checked JSON, Duration, vector and integer parser declarations so generic callback and error-propagation lowering can consume their actual layouts. Reusing a same-shaped user declaration without standard provenance is explicitly refused.

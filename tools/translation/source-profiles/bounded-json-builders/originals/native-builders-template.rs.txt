@@ -1,0 +1,40 @@
+
+/// Build canonical scalar values without invoking caller Serialize implementations.
+#[must_use]
+pub fn json_build_null() -> ::serde_json::Value {
+    ::serde_json::Value::Null
+}
+
+#[must_use]
+pub fn json_build_bool(value: bool) -> ::serde_json::Value {
+    ::serde_json::Value::Bool(value)
+}
+
+#[must_use]
+pub fn json_build_string(value: &str) -> ::serde_json::Value {
+    ::serde_json::Value::String(::std::borrow::ToOwned::to_owned(value))
+}
+
+#[must_use]
+pub fn json_build_u64(value: u64) -> ::serde_json::Value {
+    ::serde_json::Value::from(value)
+}
+
+#[must_use]
+pub fn json_build_i64(value: i64) -> ::serde_json::Value {
+    ::serde_json::Value::from(value)
+}
+
+/// Move an owned canonical vector into a JSON array and validate its added root.
+#[must_use]
+pub fn json_build_array(value: ::std::vec::Vec<::serde_json::Value>) -> ::serde_json::Value {
+    let result = ::serde_json::Value::Array(value);
+    json_validate(&result);
+    result
+}
+
+/// Empty objects can be populated through the checked shared field-update boundary.
+#[must_use]
+pub fn json_build_object() -> ::serde_json::Value {
+    ::serde_json::Value::Object(::serde_json::Map::new())
+}

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "status": "READ_ONLY_ORIGINAL_SOURCE_PINS_NOT_PROFILE_ADMISSION",
+  "sourceHead": "d66268f68a2be984b321ebddc180b779d7dadebf",
+  "sources": [
+    {"path": "src/lib.rs", "sha256": "3c9605387b5454634325dbbf7604e0ad919931be17dac05905a60ea0268286af"},
+    {"path": "src/unix_listener.rs", "sha256": "f2697b44c95c5f9a7aab7d2fc55a03c80360da08b1f987a4caaf4d47fe0441b5"}
+  ],
+  "declaration": {
+    "span": {"start": 4310, "end": 4345},
+    "text": "#[cfg(unix)]\npub mod unix_listener;",
+    "sha256": "bbd798bf397e64d175508de7aa85c84faf397d6ba95317a6e883f2ab7fbe00ab"
+  },
+  "scope": "Whole-file byte pins and bounded graph analysis only. No executable, namespace closure or cross-platform completeness is asserted."
+}

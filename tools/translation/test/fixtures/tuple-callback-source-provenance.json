@@ -1,0 +1,29 @@
+{
+  "family": "checked anonymous tuple callbacks in standard Option",
+  "fullParity": false,
+  "runtimeParity": false,
+  "rustExecution": false,
+  "executedProductionBodies": 1,
+  "path": "src/deploy.rs",
+  "name": "immutable_ref",
+  "sourceSha256": "0acc07b144b6b63a32e337d38c4d74685b04c83d0f202b193ba999f160f9435a",
+  "span": {
+    "start": 5667,
+    "end": 6428,
+    "unit": "utf16"
+  },
+  "declarationSha256": "0c3f7137aaa9edbd24b4a04cc45d3d2aed36d6211578786b562460e21b89993a",
+  "bodyRewritten": false,
+  "translationScope": "complete unchanged function declaration selected structurally; complete tracked source hash pins the reviewed lexical context",
+  "rustTest": {
+    "path": "src/deploy_tests.rs",
+    "sourceSha256": "824bc90ce08fbeae2ea7ed13a107e0e637569677798416b4ff3ce3a647d5b53e",
+    "name": "a_moving_image_reference_is_refused_with_the_reason"
+  },
+  "literalOutcomes": 16,
+  "domainGuards": 2,
+  "unresolved": [
+    "All tracked dependency closures and full Router runtime parity",
+    "Iterator reference payloads, aggregate callback moves and unrestricted closure borrowing"
+  ]
+}

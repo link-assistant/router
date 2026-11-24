@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "profile": "rust-1.89-cooked-byte-character-u8",
+  "rust": "1.89.0",
+  "sources": [
+    {
+      "file": "../floating-standard/rust-lexer-1.89.0.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_lexer/src/lib.rs",
+      "bytes": 39129,
+      "sha256": "7d99b37ea77e0d81049c5c81558e047c61e83209c2d376a80d5815764af8afe8",
+      "compressedSha256": "670be1a4fedbce4508f26bcb75ec6e8315d38015270926ba0f5de2728483fa1a",
+      "gitBlobSha": "b2bd5e188efdcff8d31104e1ecde9f9607dbb853"
+    },
+    {
+      "file": "rust-parse-lexer.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_parse/src/lexer/mod.rs",
+      "bytes": 50639,
+      "sha256": "dc1985660398ae348e9274dd0aceaea0e28fb1a7fc4254c61496dd94fbec7485",
+      "compressedSha256": "d813d24d78661c7cf1024c3b98787df7f12ce1a553a387b341d11c3e60a750c9",
+      "gitBlobSha": "2845bbed1c0eead1cc53392e2ec4f545a0d584bc"
+    },
+    {
+      "file": "rust-parse-Cargo.toml.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_parse/Cargo.toml",
+      "bytes": 827,
+      "sha256": "dcd564ccb4528be0c13cce6b00718577cf9cb562c33d35f5fab9ed80c554d314",
+      "compressedSha256": "fdf6daa7145f064de451e92adeb3dc85d9de0aab8275eb6cdaa3792bab874204",
+      "gitBlobSha": "6504081f0b9ced521788b3d81cd441096d3cc15b"
+    },
+    {
+      "file": "rust-Cargo.lock.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/Cargo.lock",
+      "bytes": 149714,
+      "sha256": "47e4d2ad5e3b87fba150a3cee11a6c657d5d7648be075588e7f3aa9d8a8e847c",
+      "compressedSha256": "a7dd37ec561ba908b8516eecc327854dbeed2acab56dd9a10dd8d88b80204e3b",
+      "gitBlobSha": "a170ece0a0ddce439257e889964c679dc33e6ed6"
+    }
+  ],
+  "package": {
+    "name": "rustc-literal-escaper",
+    "version": "0.0.2",
+    "file": "rustc-literal-escaper-0.0.2.crate",
+    "url": "https://static.crates.io/crates/rustc-literal-escaper/rustc-literal-escaper-0.0.2.crate",
+    "bytes": 11073,
+    "sha256": "0041b6238913c41fe704213a4a9329e2f685a156d1781998128b4149c230ad04",
+    "members": [
+      {
+        "path": "rustc-literal-escaper-0.0.2/src/lib.rs",
+        "bytes": 15244,
+        "sha256": "28673f5d4b45c0fb78d6b6b7294c398511bc2a6bee9b97aec531e2a1ea4979f0",
+        "anchors": [
+          {
+            "startLine": 201,
+            "endLine": 226,
+            "text": "    /// Are `\\x80`..`\\xff` allowed?\n    fn allow_high_bytes(self) -> bool {\n        match self {\n            Char | Str => false,\n            Byte | ByteStr | CStr => true,\n            RawStr | RawByteStr | RawCStr => unreachable!(),\n        }\n    }\n\n    /// Are unicode (non-ASCII) chars allowed?\n    #[inline]\n    fn allow_unicode_chars(self) -> bool {\n        match self {\n            Byte | ByteStr | RawByteStr => false,\n            Char | Str | RawStr | CStr | RawCStr => true,\n        }\n    }\n\n    /// Are unicode escapes (`\\u`) allowed?\n    fn allow_unicode_escapes(self) -> bool {\n        match self {\n            Byte | ByteStr => false,\n            Char | Str | CStr => true,\n            RawByteStr | RawStr | RawCStr => unreachable!(),\n        }\n    }"
+          },
+          {
+            "startLine": 237,
+            "endLine": 273,
+            "text": "fn scan_escape<T: From<char> + From<u8>>(\n    chars: &mut Chars<'_>,\n    mode: Mode,\n) -> Result<T, EscapeError> {\n    // Previous character was '\\\\', unescape what follows.\n    let res: char = match chars.next().ok_or(EscapeError::LoneSlash)? {\n        '\"' => '\"',\n        'n' => '\\n',\n        'r' => '\\r',\n        't' => '\\t',\n        '\\\\' => '\\\\',\n        '\\'' => '\\'',\n        '0' => '\\0',\n        'x' => {\n            // Parse hexadecimal character code.\n\n            let hi = chars.next().ok_or(EscapeError::TooShortHexEscape)?;\n            let hi = hi.to_digit(16).ok_or(EscapeError::InvalidCharInHexEscape)?;\n\n            let lo = chars.next().ok_or(EscapeError::TooShortHexEscape)?;\n            let lo = lo.to_digit(16).ok_or(EscapeError::InvalidCharInHexEscape)?;\n\n            let value = (hi * 16 + lo) as u8;\n\n            return if !mode.allow_high_bytes() && !value.is_ascii() {\n                Err(EscapeError::OutOfRangeHexEscape)\n            } else {\n                // This may be a high byte, but that will only happen if `T` is\n                // `MixedUnit`, because of the `allow_high_bytes` check above.\n                Ok(T::from(value))\n            };\n        }\n        'u' => return scan_unicode(chars, mode.allow_unicode_escapes()).map(T::from),\n        _ => return Err(EscapeError::InvalidEscape),\n    };\n    Ok(T::from(res))\n}"
+          },
+          {
+            "startLine": 332,
+            "endLine": 353,
+            "text": "#[inline]\nfn ascii_check(c: char, allow_unicode_chars: bool) -> Result<char, EscapeError> {\n    if allow_unicode_chars || c.is_ascii() {\n        Ok(c)\n    } else {\n        Err(EscapeError::NonAsciiCharInByte)\n    }\n}\n\nfn unescape_char_or_byte(chars: &mut Chars<'_>, mode: Mode) -> Result<char, EscapeError> {\n    let c = chars.next().ok_or(EscapeError::ZeroChars)?;\n    let res = match c {\n        '\\\\' => scan_escape(chars, mode),\n        '\\n' | '\\t' | '\\'' => Err(EscapeError::EscapeOnlyChar),\n        '\\r' => Err(EscapeError::BareCarriageReturn),\n        _ => ascii_check(c, mode.allow_unicode_chars()),\n    }?;\n    if chars.next().is_some() {\n        return Err(EscapeError::MoreThanOneChar);\n    }\n    Ok(res)\n}"
+          }
+        ]
+      }
+    ]
+  },
+  "item": "u8",
+  "domain": "one ASCII scalar or bounded cooked escape; hexadecimal escapes allow all256 byte values; Unicode escapes are invalid",
+  "namespaceComplete": false,
+  "runtimeParity": false,
+  "completeEscaperTranslation": false
+}

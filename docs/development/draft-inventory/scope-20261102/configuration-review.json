@@ -1,0 +1,329 @@
+{
+  "schema": "router-source-config-review-v1",
+  "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+  "origins": {
+    "rust/Cargo.toml": {
+      "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+      "path": "rust/Cargo.toml",
+      "blob": "d17e8fad588ca797379f7b5382dc18871ec57cfa",
+      "mode": "100644",
+      "bytes": 4805
+    },
+    "js/package.json": {
+      "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+      "path": "js/package.json",
+      "blob": "e571fcb42aa02a15c5c7892e28c3f5f4cb1e1a6d",
+      "mode": "100644",
+      "bytes": 1496
+    },
+    "ts/package.json": {
+      "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+      "path": "ts/package.json",
+      "blob": "020508c708d65d65539bf5ff20a6959ca5193d10",
+      "mode": "100644",
+      "bytes": 538
+    },
+    "rust/src/lib.rs": {
+      "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+      "path": "rust/src/lib.rs",
+      "blob": "3554ed42299bdbeacbe066a0a10da79608303991",
+      "mode": "100644",
+      "bytes": 7719
+    }
+  },
+  "cargoSourceIdenticalToHistoricalManualReview": true,
+  "historicalRevision": "9d29e99dce4874a9c646e19db30f83fd04ee516c",
+  "cargoTargetsAndFeatures": {
+    "entrypoints": {
+      "rustLibrary": {
+        "name": "link_assistant_router",
+        "path": "src/lib.rs"
+      },
+      "rustBinaries": [
+        {
+          "name": "router",
+          "path": "src/main.rs"
+        },
+        {
+          "name": "link-assistant-router",
+          "path": "src/bin/link-assistant-router.rs"
+        },
+        {
+          "name": "with-router",
+          "path": "src/bin/with-router.rs"
+        }
+      ],
+      "rustExamples": [
+        {
+          "name": "host_library_consumer",
+          "test": true,
+          "harness": false
+        }
+      ],
+      "rustBenchmarks": [
+        {
+          "name": "hot_paths",
+          "harness": false
+        }
+      ],
+      "jsPackage": "js/package.json",
+      "jsNative": "js/src/index.mjs",
+      "jsCommand": "js/src/cli.mjs"
+    },
+    "cargoFeatures": {},
+    "dependencyFeatures": {
+      "axum": {
+        "version": "0.8",
+        "features": [
+          "macros",
+          "ws"
+        ]
+      },
+      "hyper": {
+        "version": "1.11",
+        "features": [
+          "full"
+        ]
+      },
+      "hyper-util": {
+        "version": "0.1",
+        "features": [
+          "tokio"
+        ]
+      },
+      "reqwest": {
+        "version": "0.13",
+        "features": [
+          "stream",
+          "json",
+          "form",
+          "query",
+          "cookies",
+          "socks"
+        ]
+      },
+      "tokio": {
+        "version": "1.53",
+        "features": [
+          "rt-multi-thread",
+          "macros",
+          "time",
+          "signal",
+          "fs",
+          "process",
+          "sync",
+          "net"
+        ]
+      },
+      "serde": {
+        "version": "1.0",
+        "features": [
+          "derive"
+        ]
+      },
+      "schemars": {
+        "version": "1.2",
+        "features": [
+          "chrono04"
+        ]
+      },
+      "jsonschema": {
+        "version": "0.58",
+        "default-features": false
+      },
+      "jsonwebtoken": {
+        "version": "11.0",
+        "default-features": false,
+        "features": [
+          "rust_crypto"
+        ]
+      },
+      "chrono": {
+        "version": "0.4",
+        "features": [
+          "serde"
+        ]
+      },
+      "uuid": {
+        "version": "1.26",
+        "features": [
+          "v4"
+        ]
+      },
+      "tower": {
+        "version": "0.5",
+        "features": [
+          "util"
+        ]
+      },
+      "tower-http": {
+        "version": "0.7",
+        "features": [
+          "trace",
+          "cors"
+        ]
+      },
+      "tracing-subscriber": {
+        "version": "0.3",
+        "features": [
+          "env-filter",
+          "json"
+        ]
+      },
+      "tokio-tungstenite": {
+        "version": "0.30",
+        "features": [
+          "rustls-tls-webpki-roots"
+        ]
+      },
+      "clap": {
+        "version": "4",
+        "features": [
+          "derive",
+          "env",
+          "string"
+        ]
+      },
+      "rust-embed": {
+        "version": "8.12.0",
+        "default-features": false
+      },
+      "axum-server": {
+        "version": "0.8.0",
+        "features": [
+          "tls-rustls"
+        ]
+      }
+    },
+    "targetSpecificDependencies": {
+      "cfg(windows)": {
+        "dependencies": {
+          "process-wrap": {
+            "version": "10.0.1",
+            "default-features": false,
+            "features": [
+              "std",
+              "job-object"
+            ]
+          }
+        }
+      }
+    },
+    "platformProfiles": [
+      "neutral",
+      "unix",
+      "windows"
+    ]
+  },
+  "jsPackage": {
+    "name": "@link-assistant/router",
+    "version": "1.24.1",
+    "description": "Official typed Router operations and testing helpers for Node and Bun",
+    "type": "module",
+    "engines": {
+      "node": ">=20"
+    },
+    "main": "index.js",
+    "types": "index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./index.d.ts",
+        "import": "./index.js"
+      },
+      "./testing": {
+        "types": "./testing.d.ts",
+        "import": "./testing.js"
+      },
+      "./native": {
+        "types": "./native.d.ts",
+        "import": "./src/index.mjs"
+      }
+    },
+    "files": [
+      "*.js",
+      "*.d.ts",
+      "catalog.json",
+      "schemas",
+      "README.md",
+      "src",
+      "runtime",
+      "portable"
+    ],
+    "scripts": {
+      "test": "node --test test/*.test.js",
+      "typecheck": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext test/types.ts",
+      "native:test": "node --test test/native-*.test.*",
+      "native:test:bun": "bun test test/native-*.test.*",
+      "native:typecheck": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext test/native-types.ts"
+    },
+    "dependencies": {
+      "@iarna/toml": "3.0.0",
+      "ajv": "^8.17.1"
+    },
+    "devDependencies": {
+      "@types/node": "^20.19.0",
+      "typescript": "^5.9.3"
+    },
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/link-assistant/router.git",
+      "directory": "js"
+    },
+    "license": "Unlicense",
+    "publishConfig": {
+      "access": "public",
+      "provenance": true
+    },
+    "bin": {
+      "router-native": "src/cli.mjs"
+    }
+  },
+  "tsPackage": {
+    "name": "@link-assistant/router-typescript-draft",
+    "version": "1.24.1",
+    "private": true,
+    "type": "module",
+    "engines": {
+      "node": ">=20"
+    },
+    "exports": {
+      ".": "./dist/index.js",
+      "./native": "./dist/src/index.js",
+      "./testing": "./dist/testing.js"
+    },
+    "scripts": {
+      "build": "node ../scripts/check-native-typescript.mjs --out-dir ts/dist"
+    },
+    "dependencies": {
+      "@iarna/toml": "3.0.0",
+      "ajv": "^8.17.1"
+    },
+    "devDependencies": {
+      "@types/node": "^20.19.0",
+      "typescript": "^5.9.3"
+    }
+  },
+  "platformSourceReviewedExamples": [
+    {
+      "source": "rust/src/lib.rs",
+      "declaration": "pub mod unix_listener;",
+      "condition": "cfg(unix)",
+      "status": "OPEN"
+    },
+    {
+      "source": "rust/Cargo.toml",
+      "declaration": "process-wrap",
+      "condition": "cfg(windows)",
+      "status": "OPEN"
+    }
+  ],
+  "unresolved": [
+    "Cargo-auto-target-discovery-and-all-target-feature-unit-closure",
+    "all-transitive-dependency-source-boundaries-and-expansions",
+    "all-platform-cfg-target_feature-atoms-and-feature-overrides",
+    "package-export-closure-outside-original-1512-selection",
+    "all-impl-trait-inline-module-local-function-and-closure-census"
+  ],
+  "productionFunctionDenominator": null,
+  "verification": "UNRUN"
+}

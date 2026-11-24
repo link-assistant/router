@@ -1,0 +1,1 @@
+Preserve both nested alternative source evidence and match-return control evidence on checked match initializers. The composed regression checks original pattern token coordinates, executes unchanged JavaScript and independently strict compiled TypeScript, and verifies real function returns and zero hostile boundary reads under Node and Bun.

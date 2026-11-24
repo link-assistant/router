@@ -1,0 +1,2 @@
+// Candidate selection DATA only; complete source/type/private checking follows.
+export function ownedTextVectorHelperCallCandidate(node){const candidate=type=>type?.kind==='array'&&['Vec','slice'].includes(type.rustOwnership?.source)&&type.element?.kind==='string'&&type.element.rustOwnership?.source==='String';return node?.k==='call'&&(candidate(node.type)||node.args?.some(argument=>candidate(argument.type)));}

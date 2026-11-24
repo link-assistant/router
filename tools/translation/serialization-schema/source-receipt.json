@@ -1,0 +1,80 @@
+{
+  "schema": "serialization-schema-draft-source-receipt-v1",
+  "source_only": true,
+  "tests_run": false,
+  "generated_descriptors_written": false,
+  "native_runtime_changes": false,
+  "prior_verified_checkpoint": "80cd4724b",
+  "roots": [
+    "crate::response_affinity::AffinityFile"
+  ],
+  "compilation_profile": {
+    "flags": {
+      "test": false,
+      "unix": true,
+      "windows": false
+    }
+  },
+  "profile_note": "Explicit schema extraction profile; host/Cargo conditions are never inferred. Unsupported conditions/owners remain refused.",
+  "scope": "Bounded original source data layout and namespace evidence; whole serde/trait/runtime authority remains unproved",
+  "original_inputs": [
+    {
+      "file": "src/response_affinity.rs",
+      "bytes": 16649,
+      "sha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41"
+    },
+    {
+      "file": "src/providers.rs",
+      "bytes": 36509,
+      "sha256": "80e6c02411fd9473c2704a49130b29edd122ddc66d233b0d586f44e61f8dbdf8"
+    },
+    {
+      "file": "src/subscription.rs",
+      "bytes": 40091,
+      "sha256": "e0949d81ba1a62586fd99dc79fb3e889346bc2fb60e17aa5e3e30f252018ce28"
+    },
+    {
+      "file": "src/subscription/types.rs",
+      "bytes": 7788,
+      "sha256": "74996ec0b4a32cb6e8d8c6a5e4cf2057a09238acff6d141ad58b592184c12c26"
+    },
+    {
+      "file": "src/lib.rs",
+      "bytes": 6649,
+      "sha256": "3c9605387b5454634325dbbf7604e0ad919931be17dac05905a60ea0268286af"
+    },
+    {
+      "file": "Cargo.toml",
+      "bytes": 5296,
+      "sha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476"
+    },
+    {
+      "file": "Cargo.lock",
+      "bytes": 124800,
+      "sha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa"
+    }
+  ],
+  "source_dependencies": [
+    "tools/translation/source-corpus.mjs",
+    "tools/translation/project.mjs",
+    "tools/translation/derive-dependencies.mjs",
+    "tools/translation/derive-footprints.mjs",
+    "tools/translation/module-bindings.mjs",
+    "tools/translation/source-module-views.mjs",
+    "tools/translation/derive-inputs.mjs",
+    "tools/translation/cfg-profile.mjs",
+    "tools/translation/source-profiles/derive/manifest.json",
+    "tools/translation/source-scopes.mjs",
+    "tools/translation/extensions/source-namespaces.mjs"
+  ],
+  "authored_tests": 17,
+  "future_checks": [
+    "paired focused Node/Bun14 initial inventories",
+    "actual original7 descriptor equality",
+    "shared generated TS strict validation",
+    "native descriptor replacement only after checked equality",
+    "prior149 runtime regression after replacement"
+  ],
+  "literal_profile": "Bounded common Rust/JSON string escapes only; JSON-only Unicode, backspace, form-feed and slash escapes refuse",
+  "field_visibility": "Production configureParserSourceScope/resolveSourceNamespace; private roots are introspectable, written field references obey consuming module privacy and checked alias suffix policies"
+}

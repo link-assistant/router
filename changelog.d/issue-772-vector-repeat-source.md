@@ -1,0 +1,1 @@
+Draft bounded integer/bool owned Vec repetition using existing repeat checks, and reverse scalar const/IIFE array construction with fresh native symbol/type joins. Include complete CST source equations and independent unrun forward/reverse/native cases.

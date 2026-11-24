@@ -8,8 +8,14 @@
 //! process-wrap = { version = "10.0.1", default-features = false, features = ["std", "job-object"] }
 //! ```
 
-#[path = "../src/bounded_process.rs"]
+#[path = "../rust/src/bounded_process.rs"]
 mod bounded_process;
+/// `bounded_process.rs` spells `Option` through the library's owned-type alias
+/// (`rust/src/translation_core/primitives.rs`). This script has no
+/// `translation_core`, so it supplies the same alias.
+mod translation_core {
+    pub type Maybe<T> = Option<T>;
+}
 use serde_json::Value;
 use std::collections::BTreeSet;
 use std::process::Command;

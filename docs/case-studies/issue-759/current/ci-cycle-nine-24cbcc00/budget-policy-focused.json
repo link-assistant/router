@@ -1,0 +1,31 @@
+{
+  "head": "f474f79dd2ea324d49acc82d05415429fbee53ee",
+  "command": [
+    "node",
+    "--test",
+    "--test-concurrency=1",
+    "scripts/test/check-js-first-workflows.test.mjs",
+    "scripts/test/check-js-first-local.test.mjs"
+  ],
+  "exitCode": 0,
+  "seconds": 6.763530625030398,
+  "logBytes": 4424,
+  "logSha256": "5d70e8c957522d73c78f10c58b2849f96f37bbe98e814e4d04b2b8513a8a557c",
+  "headUnchanged": true,
+  "tests": {
+    "pass": 20,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "standaloneWorkflowAudit": {
+    "exitCode": 0,
+    "seconds": 0.10874779196456075,
+    "stdout": "JavaScript-first gate verified in 14 workflows.\n"
+  },
+  "fullGateExecuted": false,
+  "rustExecuted": false,
+  "sourceImmutable": true,
+  "compressedLogSha256": "32d3a0ade86ac551a0192e32796ce38805f89f23a67c914546001816b15cfcfa",
+  "logFile": "budget-policy-focused.log.gz"
+}

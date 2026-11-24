@@ -1,0 +1,70 @@
+{
+  "name": "relative-meta-logic",
+  "version": "0.39.0",
+  "description": "A prototype for logic framework that can reason about anything relative to given probability of input statements",
+  "type": "module",
+  "main": "src/rml-links.mjs",
+  "bin": {
+    "rml": "src/rml-links.mjs",
+    "rml-check": "src/rml-check.mjs",
+    "rml-meta": "src/rml-meta.mjs",
+    "rml-lsp": "src/rml-lsp.mjs"
+  },
+  "scripts": {
+    "test": "node ../scripts/run-with-cache.mjs -- node --test --test-concurrency=2 tests/*.test.mjs ../scripts/*.test.mjs",
+    "test:bootstrap": "node ../scripts/run-with-cache.mjs -- node --test --test-concurrency=2 --test-name-pattern \"replays self corpus|measures the complete host semantic surface\" tests/self-evaluator.test.mjs tests/linked-program.test.mjs",
+    "report:bootstrap-metrics": "node ../scripts/report-bootstrap-metrics.mjs",
+    "report:foundation-search": "node ../scripts/report-foundation-search.mjs",
+    "report:link-ontology": "node ../experiments/link-ontology-symmetry.mjs",
+    "check:issue-183-final": "node ../scripts/check-issue-183-completion.mjs",
+    "docs": "node ../scripts/run-with-cache.mjs -- node ../scripts/build-docs.mjs",
+    "build:playground": "node ../scripts/run-with-cache.mjs -- node ../scripts/build-playground.mjs",
+    "test:playground": "node ../scripts/run-with-cache.mjs -- node --test --test-concurrency=2 ../scripts/playground.test.mjs",
+    "demo": "node src/rml-links.mjs ../examples/demo.lino",
+    "check": "node src/rml-check.mjs",
+    "meta": "node src/rml-meta.mjs",
+    "lsp": "node src/rml-lsp.mjs",
+    "lint:english": "node ../scripts/lint-english.mjs --allowlist ../scripts/lint-english.allowlist.json ../examples/*.lino ../lib/*/*.lino",
+    "prepare": "node -e \"const p='../scripts/bootstrap.mjs'; if(require('node:fs').existsSync('../.git') && require('node:fs').existsSync(p)) import(p).then(m=>m.bootstrap())\"",
+    "cache:clean": "node ../scripts/build-cache.mjs",
+    "cache:full": "node ../scripts/build-cache.mjs --full",
+    "test:cache": "node --test --test-concurrency=2 ../scripts/build-cache*.test.mjs",
+    "prepack": "node ../scripts/check-linked-implementation.mjs"
+  },
+  "keywords": [
+    "logic",
+    "probability",
+    "reasoning",
+    "relative",
+    "meta",
+    "lino"
+  ],
+  "author": "",
+  "license": "Unlicense",
+  "dependencies": {
+    "events": "^3.3.0",
+    "links-notation": "0.25.1",
+    "web-tree-sitter": "0.27.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "jsdoc": "^4.0.5",
+    "@babel/parser": "8.0.7"
+  },
+  "engines": {
+    "node": "^22.18.0 || >=24.11.0"
+  },
+  "imports": {
+    "#meta-language": "./vendor/meta-language/js/src/index.js"
+  },
+  "files": [
+    "src",
+    "vendor/meta-language/js/src",
+    "vendor/meta-language/js/package.json",
+    "vendor/meta-language/js/README.md",
+    "vendor/meta-language/LICENSE",
+    "vendor/LICENSE.meta-language",
+    "vendor/meta-language-provenance.json",
+    "README.md"
+  ]
+}

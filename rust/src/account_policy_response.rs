@@ -1,0 +1,333 @@
+//! Rewrite model metadata after the provider's response validation and translation.
+use axum::body::Body;
+use axum::response::Response;
+use bytes::Bytes;
+use futures_util::StreamExt;
+use serde_json::Value;
+
+const MAX_RESPONSE_BYTES: usize = 32 * 1024 * 1024;
+const MAX_EVENT_BYTES: usize = 1024 * 1024;
+
+pub fn rewrite_value(value: &mut Value, upstream: &str, visible: &str) {
+    for pointer in [
+        "/model",
+        "/message/model",
+        "/response/model",
+        "/modelVersion",
+        "/response/modelVersion",
+    ] {
+        if let Some(model) = value.pointer_mut(pointer)
+            && (model.as_str() == Some(upstream)
+                || upstream
+                    .strip_prefix("models/")
+                    .is_some_and(|id| model.as_str() == Some(id)))
+        {
+            *model = Value::String(visible.to_string());
+        }
+    }
+}
+
+pub async fn rewrite(
+    response: Response,
+    upstream: &crate::translation_core::Str,
+    visible: &crate::translation_core::Str,
+) -> Response {
+    if !response.status().is_success() {
+        return response;
+    }
+    let streamed = response
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|v| v.contains("text/event-stream"));
+    let (mut parts, body) = response.into_parts();
+    parts.headers.remove("content-length");
+    parts.headers.remove("etag");
+    if parts
+        .headers
+        .get("content-encoding")
+        .is_some_and(|v| v != "identity")
+    {
+        return crate::proxy::error_response(
+            axum::http::StatusCode::BAD_GATEWAY,
+            "routing_policy_error",
+            "upstream compression prevents model alias rewriting",
+        );
+    }
+    if !streamed {
+        let bytes = match axum::body::to_bytes(body, MAX_RESPONSE_BYTES).await {
+            Ok(bytes) => bytes,
+            Err(error) => {
+                return crate::proxy::error_response(
+                    axum::http::StatusCode::BAD_GATEWAY,
+                    "routing_policy_error",
+                    &error.to_string(),
+                );
+            }
+        };
+        let bytes = if let Ok(mut value) = serde_json::from_slice::<Value>(&bytes) {
+            value =
+                crate::translation_state_core::json_rewrite_model_alias(value, upstream, visible);
+            serde_json::to_vec(&value).map_or(bytes, Bytes::from)
+        } else {
+            bytes
+        };
+        return Response::from_parts(parts, Body::from(bytes));
+    }
+    let upstream = upstream.to_string();
+    let visible = visible.to_string();
+    let mut buffer = Vec::new();
+    // An explicit EOF item preserves trailing bytes even when the vendor omits
+    // the final separator. Bound each pending event, rather than a whole chunk.
+    let chunks = body
+        .into_data_stream()
+        .map(|item| item.map(Some).map_err(std::io::Error::other))
+        .chain(futures_util::stream::once(async { Ok(None) }));
+    let stream = chunks.map(move |chunk| {
+        let mut output = String::new();
+        if let Some(chunk) = chunk? {
+            for piece in chunk.chunks(16 * 1024) {
+                for block in crate::sse::push_blocks(&mut buffer, piece) {
+                    if block.len() > MAX_EVENT_BYTES {
+                        return Err(std::io::Error::other(
+                            "model alias SSE event exceeded 1 MiB",
+                        ));
+                    }
+                    output.push_str(&rewrite_block(&block, &upstream, &visible));
+                    output.push_str("\n\n");
+                }
+                if buffer.len() > MAX_EVENT_BYTES {
+                    return Err(std::io::Error::other(
+                        "model alias SSE buffer exceeded 1 MiB",
+                    ));
+                }
+            }
+        } else if !buffer.is_empty() {
+            let block = std::str::from_utf8(&buffer).map_err(std::io::Error::other)?;
+            output.push_str(&rewrite_block(block, &upstream, &visible));
+            buffer.clear();
+        }
+        Ok::<_, std::io::Error>(Bytes::from(output))
+    });
+    Response::from_parts(parts, Body::from_stream(stream))
+}
+
+fn rewrite_block(
+    block: &crate::translation_core::Str,
+    upstream: &crate::translation_core::Str,
+    visible: &crate::translation_core::Str,
+) -> crate::translation_core::Text {
+    let data = block
+        .lines()
+        .filter_map(|line| line.strip_prefix("data:"))
+        .map(str::trim_start)
+        .collect::<Vec<_>>()
+        .join("\n");
+    let Ok(mut value) = serde_json::from_str::<Value>(&data) else {
+        return block.to_string();
+    };
+    rewrite_value(&mut value, upstream, visible);
+    let mut emitted = false;
+    block
+        .lines()
+        .filter_map(|line| {
+            if line.starts_with("data:") {
+                if emitted {
+                    None
+                } else {
+                    emitted = true;
+                    Some(crate::translation_core::format!("data: {value}"))
+                }
+            } else {
+                Some(line.to_string())
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[tokio::test]
+    async fn sse_rewriting_handles_fragments_multiline_data_and_unterminated_tail() {
+        // Multiline JSON, UTF-8 content and an unterminated final event, split into tiny chunks.
+        let source = "event: message_start\r\ndata: {\"message\":\r\ndata: {\"model\":\"native\",\"text\":\"é native\"}}\r\n\r\ndata: {\"model\":\"native\"}";
+        let split = source
+            .as_bytes()
+            .chunks(3)
+            .map(|b| Ok::<_, std::io::Error>(bytes::Bytes::copy_from_slice(b)))
+            .collect::<Vec<_>>();
+        let response = Response::builder()
+            .header("content-type", "text/event-stream")
+            .body(Body::from_stream(futures_util::stream::iter(split)))
+            .unwrap();
+        let result = crate::account_policy_response::rewrite(response, "native", "friendly").await;
+        let bytes = axum::body::to_bytes(result.into_body(), 4096)
+            .await
+            .unwrap();
+        let output = std::str::from_utf8(&bytes).unwrap();
+        assert_eq!(output.matches("friendly").count(), 2, "{output}");
+    }
+}
+
+#[cfg(test)]
+mod model_alias_core_oracles_20261104 {
+    use serde_json::json;
+
+    fn check(
+        original: serde_json::Value,
+        upstream: &str,
+        visible: &str,
+        expected: &serde_json::Value,
+    ) {
+        let owned = crate::translation_state_core::json_rewrite_model_alias(
+            original.clone(),
+            upstream,
+            visible,
+        );
+        let mut production = original;
+        super::rewrite_value(&mut production, upstream, visible);
+        assert_eq!(&owned, expected);
+        assert_eq!(&production, expected);
+    }
+
+    #[test]
+    fn all_five_policy_locations_preserve_unrelated_text() {
+        check(
+            json!({"model":"native","message":{"model":"native","text":"native"},"response":{"model":"native","modelVersion":"native"},"modelVersion":"native","unrelated":{"model":"native"}}),
+            "native",
+            "visible 🦀",
+            &json!({"model":"visible 🦀","message":{"model":"visible 🦀","text":"native"},"response":{"model":"visible 🦀","modelVersion":"visible 🦀"},"modelVersion":"visible 🦀","unrelated":{"model":"native"}}),
+        );
+    }
+
+    #[test]
+    fn prefix_is_stripped_once_and_matching_remains_exact() {
+        check(
+            json!({"model":"native","message":{"model":"models/native"},"response":{"model":"Native"}}),
+            "models/native",
+            "",
+            &json!({"model":"","message":{"model":""},"response":{"model":"Native"}}),
+        );
+        check(
+            json!({"model":"models/native","response":{"model":"native"}}),
+            "models/models/native",
+            "visible",
+            &json!({"model":"visible","response":{"model":"native"}}),
+        );
+        check(
+            json!({"model":" native","message":{"model":"native "}}),
+            "native",
+            "visible",
+            &json!({"model":" native","message":{"model":"native "}}),
+        );
+    }
+
+    #[test]
+    fn absent_non_string_and_array_pointer_shapes_do_not_coerce() {
+        for value in [
+            json!(null),
+            json!(false),
+            json!(7),
+            json!(["native"]),
+            json!({"nested":"native"}),
+        ] {
+            let original = json!({"model":value,"message":[{"model":"native"}],"response":"native","other/model":"native"});
+            check(original.clone(), "native", "visible", &original);
+        }
+        check(
+            json!([{"model":"native"}]),
+            "native",
+            "visible",
+            &json!([{"model":"native"}]),
+        );
+    }
+
+    #[test]
+    fn unicode_empty_ids_and_repeat_application_keep_value_semantics() {
+        check(
+            json!({"model":"é😀\u{0}文"}),
+            "é😀\u{0}文",
+            "",
+            &json!({"model":""}),
+        );
+        check(
+            json!({"model":""}),
+            "models/",
+            "empty",
+            &json!({"model":"empty"}),
+        );
+        let first = crate::translation_state_core::json_rewrite_model_alias(
+            json!({"model":"native"}),
+            "native",
+            "visible",
+        );
+        assert_eq!(
+            crate::translation_state_core::json_rewrite_model_alias(first, "native", "visible"),
+            json!({"model":"visible"})
+        );
+    }
+    #[tokio::test]
+    async fn nonstream_response_rewrites_model_fields_and_retires_stale_entity_headers() {
+        let response = axum::response::Response::builder()
+            .header("content-type", "application/json")
+            .header("content-length", "77")
+            .header("etag", "old")
+            .header("x-preserved", "kept")
+            .body(axum::body::Body::from(
+                r#"{"model":"native","response":{"modelVersion":"models/native"},"text":"native"}"#,
+            ))
+            .unwrap();
+        let result = super::rewrite(response, "models/native", "visible").await;
+        assert_eq!(result.status(), axum::http::StatusCode::OK);
+        assert!(result.headers().get("content-length").is_none());
+        assert!(result.headers().get("etag").is_none());
+        assert_eq!(result.headers().get("x-preserved").unwrap(), "kept");
+        let bytes = axum::body::to_bytes(result.into_body(), 4096)
+            .await
+            .unwrap();
+        let value: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(
+            value,
+            json!({"model":"visible","response":{"modelVersion":"visible"},"text":"native"})
+        );
+    }
+
+    #[tokio::test]
+    async fn unsuccessful_response_keeps_original_body_and_entity_headers() {
+        let response = axum::response::Response::builder()
+            .status(axum::http::StatusCode::TOO_MANY_REQUESTS)
+            .header("content-type", "application/json")
+            .header("content-encoding", "gzip")
+            .header("content-length", "18")
+            .header("etag", "original")
+            .body(axum::body::Body::from(r#"{"model":"native"}"#))
+            .unwrap();
+        let result = super::rewrite(response, "native", "visible").await;
+        assert_eq!(result.status(), axum::http::StatusCode::TOO_MANY_REQUESTS);
+        assert_eq!(result.headers().get("etag").unwrap(), "original");
+        assert_eq!(result.headers().get("content-length").unwrap(), "18");
+        let bytes = axum::body::to_bytes(result.into_body(), 4096)
+            .await
+            .unwrap();
+        assert_eq!(&bytes[..], br#"{"model":"native"}"#);
+    }
+
+    #[tokio::test]
+    async fn successful_nonidentity_encoding_stays_an_explicit_policy_error() {
+        let response = axum::response::Response::builder()
+            .header("content-type", "application/json")
+            .header("content-encoding", "gzip")
+            .body(axum::body::Body::from(r#"{"model":"native"}"#))
+            .unwrap();
+        let result = super::rewrite(response, "native", "visible").await;
+        assert_eq!(result.status(), axum::http::StatusCode::BAD_GATEWAY);
+        let bytes = axum::body::to_bytes(result.into_body(), 4096)
+            .await
+            .unwrap();
+        let text = std::str::from_utf8(&bytes).unwrap();
+        assert!(text.contains("routing_policy_error"));
+        assert!(text.contains("upstream compression prevents model alias rewriting"));
+    }
+}

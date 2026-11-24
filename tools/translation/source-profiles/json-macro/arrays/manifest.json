@@ -1,0 +1,95 @@
+{
+  "schema": "rust-1.89-json-array-construction-inputs-v1",
+  "rust": "1.89.0",
+  "sources": [
+    {
+      "path": "alloc-macros.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/alloc/src/macros.rs",
+      "sourcePath": "library/alloc/src/macros.rs",
+      "bytes": 3982,
+      "sha256": "f493a323ef1ab77759d9a04877219e4932d7689a29bccaa8d4da7c57a8dbfac1",
+      "archiveSha256": "c486e0d8d08910a089f44bc30e3d96dc84566b1e736938a75b91717d74aa3eb2"
+    },
+    {
+      "path": "alloc-boxed.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/alloc/src/boxed.rs",
+      "sourcePath": "library/alloc/src/boxed.rs",
+      "bytes": 74883,
+      "sha256": "079d731f42a02e9691b8e5502dcb79b15f3a6635531f47845037f1f1024dcd0c",
+      "archiveSha256": "c51682871ca6d4fd46e553365a00c6f5a5a4e166a8a1545fc5de5d19677b4a2c"
+    },
+    {
+      "path": "alloc-slice.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/alloc/src/slice.rs",
+      "sourcePath": "library/alloc/src/slice.rs",
+      "bytes": 33675,
+      "sha256": "3f31367d3d827a397653618120d2326d96f60e9149bde3991a7d06e2518f0a68",
+      "archiveSha256": "2e3d016cebadbfbfea33f65d0eea304ab20573535f7538f85f4825d83ec9424a"
+    },
+    {
+      "path": "box-thir.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_mir_build/src/thir/cx/expr.rs",
+      "sourcePath": "compiler/rustc_mir_build/src/thir/cx/expr.rs",
+      "bytes": 61385,
+      "sha256": "fd240d245794ce81311af2e67c1aebfa09c06ca6d0fea6d87b200663ca978b05",
+      "archiveSha256": "abcddd10be5f2ef23a5a2aae7e750b49c5a8e4d4379b0c6f9112438eea7bbe2e"
+    },
+    {
+      "path": "box-rvalue.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_mir_build/src/builder/expr/as_rvalue.rs",
+      "sourcePath": "compiler/rustc_mir_build/src/builder/expr/as_rvalue.rs",
+      "bytes": 38336,
+      "sha256": "80de50dbdafc0d0526715773474bd089b8b6d1c35df54084de6edf766dc17e4b",
+      "archiveSha256": "4c685da4f99e801abc27f4cbd14e97b5f7099951fa87d1a2a3beadef0ac5796f"
+    },
+    {
+      "path": "raw-vec.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/alloc/src/raw_vec/mod.rs",
+      "sourcePath": "library/alloc/src/raw_vec/mod.rs",
+      "bytes": 30186,
+      "sha256": "1ecaf9091db7f0ff3256d37e81f8e4a69b76e98011b9821bf83cb870d45e8a20",
+      "archiveSha256": "8555953a38a04567c7c7289dc8071e292431df5f96c660d3c508705c4b2443f1"
+    },
+    {
+      "path": "../../slice-membership/rust-vec-mod-1.89.0.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/alloc/src/vec/mod.rs",
+      "sourcePath": "library/alloc/src/vec/mod.rs",
+      "bytes": 149006,
+      "sha256": "550d150a5f0a546ea94e6a3b29a70007980f42c930d042d044e2d03ae9e36ae5",
+      "archiveSha256": "23c0282775cc91c9405559d55e8bbb5df1b87445e164ae7f9205b7161f434e70"
+    },
+    {
+      "path": "alloc-global.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/alloc/src/alloc.rs",
+      "sourcePath": "library/alloc/src/alloc.rs",
+      "bytes": 17344,
+      "sha256": "7fca794c21219715fd2e1699e3e4cf593e5d2d04ad36e79b812c5afb367d61a6",
+      "archiveSha256": "00ccba352f849bb6cc7de2884dbc6cc145f83f3ed5c2b683824dba99e332c458"
+    }
+  ],
+  "contract": {
+    "empty": "serde_json::__private::vec![] -> alloc::vec! -> Vec::new",
+    "nonempty": "alloc::vec! -> <[_]>::into_vec(alloc::boxed::box_new([checked Value elements]))",
+    "intrinsicOwner": "compiler recognized actual FnDef intrinsic box_new and original path expression",
+    "evaluation": "boxed storage allocation precedes array element initialization; original element order, each once",
+    "conversion": "slice::into_vec consumes Box and reuses buffer without clones or allocation",
+    "profile": "successful ordinary standard Global allocation; no custom global allocator/OOM handlers; no runtime allocation equivalence promised"
+  },
+  "namespaceAuthority": false,
+  "runtimeParity": false,
+  "generatedTraitBehavior": false,
+  "closedConstructionSubset": "empty array literals only: original Vec::new -> RawVec::new_in Global cap0, no element Drop or heap allocation/deallocation",
+  "nonemptyFrontier": "boxed intrinsic performs allocation before element initialization; linked-crate global allocator/OOM effects are not proven by caller scopes or incoming serde_json feature graph",
+  "licenses": [
+    {
+      "path": "../standard/LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+    },
+    {
+      "path": "../standard/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+// Independent counted-loop oracle SOURCE. Unrun during bulk drafting.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join,dirname} from 'node:path';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+import {execFileSync} from 'node:child_process';
+import {ownedStateReceivingData} from './owned-state-receiving-data.mjs';
+import {createOwnedOutcomeContext,ownedOutcomeRuntimeSources,translateOwnedOutcomeJavaScript,translateOwnedOutcomeTypeScript,prepareOwnedOutcomeRuntime,evaluateOwnedOutcome,evaluateOwnedOutcomeBatch} from '../owned-outcome.mjs';
+import {translateOwnedOutcomeRust} from '../owned-outcome-rust.mjs';
+import {prepareOwnedScalarSliceReverseSources} from '../../prepare-owned-scalar-slice-reverse-sources.mjs';
+import {sameRustSourceSyntax} from '../../rust-syntax-cells.mjs';
+const limits={timeout:60000},root=fileURLToPath(new URL('../../../../',import.meta.url));
+const source=`import {router_state_json_append as append} from './runtime/json-state-runtime.mjs';
+import {json_macro_array as array,json_macro_null as nil,json_macro_u64 as unsigned,json_macro_i64 as signed} from './runtime/json-macro-runtime.mjs';
+/** @param {readonly (Parameters<typeof unsigned>[0])[]} values */
+export function copied(values){let result=array([]);for(const item of values){if(item===0n){continue;}result=append(result,unsigned(item));}return result;}
+/** @param {readonly (Parameters<typeof signed>[0])[]} values */
+export function negative(values){let result=array([]);for(const item of values){if(item<0n){result=append(result,signed(item));}}return result;}
+/** @param {readonly boolean[]} values */
+export function flags(values){let result=array([]);for(const item of values){if(item){result=append(result,nil());}}return result;}
+/** @param {readonly (Parameters<typeof unsigned>[0])[]} values */
+export function early(values){for(const item of values){if(item>0n){return nil();}}return array([]);}
+/** @param {readonly boolean[]} values */
+export function nested(values){let result=array([]);for(const item of values){for(const inner of values){if(!inner){continue;}result=append(result,nil());break;}if(item){break;}}return result;}
+`;
+function input(caller=source,path='caller.mjs'){const data=ownedStateReceivingData([{path,source:caller}]);data.files=data.files.filter(row=>!row.path.startsWith('runtime/')).concat(ownedOutcomeRuntimeSources());return data;}
+const nil={$:'Null'},array=field0=>({$:'Array',field0}),unsigned=field0=>({$:'Number',field0:{$:'PosInt',field0}}),signed=field0=>({$:'Number',field0:{$:'NegInt',field0}}),cases=[['copied',[Object.freeze([])],array([])],['copied',[Object.freeze([0n,1n,18446744073709551615n])],array([unsigned(1n),unsigned(18446744073709551615n)])],['negative',[Object.freeze([-9223372036854775808n,-1n,0n,9223372036854775807n])],array([signed(-9223372036854775808n),signed(-1n)])],['flags',[Object.freeze([false,true,false,true])],array([nil,nil])],['early',[Object.freeze([])],array([])],['early',[Object.freeze([0n,2n])],nil],['nested',[Object.freeze([false,true])],array([nil,nil])]];
+test('actual JS strict TS and both interpreters preserve primitive slice values domains nested exits and original JS behavior',limits,async t=>{const data=input(),result=translateOwnedOutcomeJavaScript(source,{context:createOwnedOutcomeContext(data),sourcePath:'caller.mjs'}),directory=mkdtempSync(join(tmpdir(),'router-primitive-slices-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const write=(path,value)=>{mkdirSync(dirname(join(directory,path)),{recursive:true});writeFileSync(join(directory,path),value);};for(const file of data.files.filter(row=>/\.(mjs|mts|ts)$/u.test(row.path)))write(file.path,file.source);write('typed.mts',result.typescript);execFileSync(process.execPath,[join(root,'js/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--outDir',join(directory,'out'),join(directory,'typed.mts')],{cwd:root,stdio:'pipe',timeout:20000});for(const file of data.files.filter(row=>row.path.startsWith('runtime/')))write('out/'+file.path,file.source);for(const path of ['caller.mjs','out/typed.mjs']){const api=await import(pathToFileURL(join(directory,path)).href);for(const [name,args,expected]of cases)assert.deepEqual(api[name](...args),expected);}const token=await prepareOwnedOutcomeRuntime(result.program);for(const [name,args,expected]of cases)assert.deepEqual(evaluateOwnedOutcome(result.program,name,args,token),expected);assert.deepEqual(evaluateOwnedOutcomeBatch(result.program,cases.map(([name,args])=>[name,args]),token),cases.map(row=>row[2]));assert.match(result.rust,/__ro_scalar_values_\d+\.iter\(\)\.copied\(\)/u);});
+test('typed source and the complete canonical Rust inverse retain actual copied primitive slice bodies',limits,()=>{const data=input(),result=translateOwnedOutcomeJavaScript(source,{context:createOwnedOutcomeContext(data),sourcePath:'caller.mjs'}),typed=translateOwnedOutcomeTypeScript(result.typescript,{context:createOwnedOutcomeContext(input(result.typescript,'caller.mts')),sourcePath:'caller.mts'});assert.ok(sameRustSourceSyntax(result.rust,typed.rust));const inverse=translateOwnedOutcomeRust(result.rust,{context:createOwnedOutcomeContext({...data,files:[...data.files,{path:'caller.rs',source:result.rust}]}),sourcePath:'caller.rs',javascriptPath:'caller.mjs'});assert.ok(sameRustSourceSyntax(result.rust,inverse.rust));assert.equal(inverse.ownedRustSourceHistory.equation.inverse,result.rust);});
+test('mutable or unresolved bigint arrays and async/destructured loop syntax remain refused',limits,()=>{for(const caller of [source.replace('readonly (Parameters<typeof unsigned>[0])[]','(Parameters<typeof unsigned>[0])[]'),source.replace('readonly (Parameters<typeof unsigned>[0])[]','readonly bigint[]'),source.replace('for(const item of values)','for(let item of values)'),source.replace('for(const item of values)','for(const [item] of values)')])assert.throws(()=>translateOwnedOutcomeJavaScript(caller,{context:createOwnedOutcomeContext(input(caller)),sourcePath:'caller.mjs'}));});
+test('complete scalar slice reverse source copies retain every original and both rule sequences',limits,()=>{const plan=prepareOwnedScalarSliceReverseSources();assert.equal(plan.files.length,6);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.receivingExecuted,false);});

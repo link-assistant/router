@@ -1,0 +1,135 @@
+{
+  "schema": "source-inferred-serde-json-roundtrip-counterexample-v1",
+  "originalArchiveSha256": "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14",
+  "sourceProfileSha256": "253d7a8c492fdb6840e024b7641845a69b3808eb00ba241befe4eaef501f3983",
+  "originalSources": [
+    {
+      "path": "src/de.rs",
+      "bytes": 86840,
+      "sha256": "4998d7e252eb513be85b298e287048b4fb283882e9ba7df905f572f07200f3f3"
+    },
+    {
+      "path": "src/lexical/bhcomp.rs",
+      "bytes": 7035,
+      "sha256": "26f39d52008225a6b377d7246d326940d44200e160a7b4652733e712e1a45a04"
+    },
+    {
+      "path": "src/lexical/cached_float80.rs",
+      "bytes": 5782,
+      "sha256": "0f8f74a22cb7d871322a9893bffd0255ca10bf9dffd13afb2462dd3d7f51805f"
+    },
+    {
+      "path": "src/lexical/errors.rs",
+      "bytes": 5082,
+      "sha256": "3d9f6de6245533bcb101dfd718cfed61d59dc293f6768cedae28aa13ace164f5"
+    },
+    {
+      "path": "src/lexical/float.rs",
+      "bytes": 5482,
+      "sha256": "fe356213c92a049f4bef2f58bc0e3a26866ca06b8c1d74d0f961c5b883852cad"
+    },
+    {
+      "path": "src/lexical/num.rs",
+      "bytes": 11179,
+      "sha256": "2d06111d28616221995f7b4d4f13625b8d902884921268b0e02e544f871a5339"
+    },
+    {
+      "path": "src/lexical/parse.rs",
+      "bytes": 2241,
+      "sha256": "c2bfac4c70a19938ced61e991f4ec606764887cf12bac1a0978b5b5318a56aac"
+    },
+    {
+      "path": "src/lexical/rounding.rs",
+      "bytes": 7388,
+      "sha256": "4762af3612880b17468ff2a1bb800c8e99f08330ae439699dd53d8dc5463ad13"
+    },
+    {
+      "path": "build.rs",
+      "bytes": 1206,
+      "sha256": "a681e754be844c7dbef957f5d2d00b01f37c5dca160ef1055a8d8f975697a881"
+    },
+    {
+      "path": "src/read.rs",
+      "bytes": 33041,
+      "sha256": "17a2efe49e5a6937c8d7d4a5c0b9eac84453de0f86bf8e7ee421387e82341bb3"
+    },
+    {
+      "path": "src/error.rs",
+      "bytes": 17221,
+      "sha256": "a13add05a63adf53d89e37effa03221d897a60486cfe360a5a958c0dd2a7e90d"
+    }
+  ],
+  "reproductionText": "1000000000000000111022302462515654042363166809082031250000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e-768",
+  "construction": "((2^53+1)*5^53)*10^715 followed by e-768",
+  "integerDigits": 769,
+  "exactValue": "1 + 2^-53",
+  "nearestEvenBits": "3ff0000000000000",
+  "sourceInferredBits": "3ff0000000000001",
+  "handTrace": {
+    "u64Prefix": "10000000000000001110",
+    "mantissaExponent": -19,
+    "smallProductMantissa": "6250000000000000694",
+    "largeCacheMantissa": "13611294676837538538",
+    "largeCacheExponent": -130,
+    "roundedProductMantissa": "4611686018427388416",
+    "roundedProductInequalityRemainder": "7385260164874040924",
+    "normalizedMantissa": "9223372036854776832",
+    "normalizedExponent": -63,
+    "errorCount": 26,
+    "extraBits": 1024,
+    "halfway": 1024,
+    "moderateAccepted": false,
+    "downwardBits": "3ff0000000000000",
+    "keptDigits": 768,
+    "discardedIntegerTail": "0",
+    "synthesizedCoefficient": "originalCoefficient+1",
+    "scaledExponent": -768,
+    "halfwayComparison": "synthesizedCoefficient is exactly one greater than theoretical coefficient",
+    "sourceBranch": "small_atof Greater -> f.next_positive"
+  },
+  "originalSnippets": [
+    {
+      "path": "src/lexical/parse.rs",
+      "span": {
+        "start": 1498,
+        "end": 1594
+      },
+      "sha256": "280a0f065e0efab2c76a47d91ae66bdfa9a9784b9aa2219b90e49f00ce89b1a1",
+      "source": "while fraction.last() == Some(&b'0') {\n        fraction = &fraction[..fraction.len() - 1];\n    }"
+    },
+    {
+      "path": "src/lexical/bhcomp.rs",
+      "span": {
+        "start": 2046,
+        "end": 2152
+      },
+      "sha256": "bde73ab22e19ea4d0afe248ac4fa1e2f4c19bed25d723f47616439c506fade68",
+      "source": "if i < integer.len() + fraction.len() {\n        result.imul_small(10);\n        result.iadd_small(1);\n    }"
+    },
+    {
+      "path": "src/lexical/errors.rs",
+      "span": {
+        "start": 1567,
+        "end": 1672
+      },
+      "sha256": "154974699d652612c2a7f2440cc20428cb39f2cc163447c741d837c450055437",
+      "source": "let cmp1 = halfway.wrapping_sub(errors) < extra;\n        let cmp2 = extra < halfway.wrapping_add(errors);"
+    },
+    {
+      "path": "src/lexical/bhcomp.rs",
+      "span": {
+        "start": 5844,
+        "end": 5888
+      },
+      "sha256": "92b7af10f46251712da1fa8fab69403f54d147874a4e4b97153b541b3b1e3d17",
+      "source": "cmp::Ordering::Greater => f.next_positive(),"
+    }
+  ],
+  "classification": "SOURCE-INFERRED; exact integer inequalities authored but UNRUN; not a Rust measurement",
+  "rustExecution": false,
+  "productionBodyTranslatedOrExecuted": false,
+  "parseAdmission": false,
+  "algorithmEquivalenceVerified": false,
+  "applicationEffectCompleteness": false,
+  "runtimeParity": false
+}

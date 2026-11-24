@@ -1,0 +1,171 @@
+//! Per-record budget arithmetic and record reconciliation.
+//!
+//! Split from `storage.rs` to keep that file within the repository's
+//! 1000-line limit. These are pure functions over a [`TokenRecord`]: they
+//! decide whether a request fits the record's bounds and how two copies of
+//! one record reconcile, with no knowledge of how records are stored.
+
+use super::{RequestAdmission, TokenRecord};
+
+pub(super) fn consume_request(record: Option<&mut TokenRecord>) -> bool {
+    let Some(record) = record else {
+        return true;
+    };
+    if record
+        .max_requests
+        .is_some_and(|max| record.used_requests >= max)
+    {
+        return false;
+    }
+    record.used_requests = record.used_requests.saturating_add(1);
+    true
+}
+
+/// Apply every pre-request control, reserving `reserve` tokens against the spend cap.
+///
+/// The spend check compares `used + reserved + reserve` against `max_tokens`, so a
+/// request is only admitted when its own declared output budget still fits. Reserving
+/// inside the same locked read-modify-write as the counters is what makes concurrent
+/// admissions unable to overshoot together.
+pub(super) fn admit_request_reserving(
+    record: Option<&mut TokenRecord>,
+    now: i64,
+    reserve: u64,
+) -> RequestAdmission {
+    let Some(record) = record else {
+        return RequestAdmission::Admitted;
+    };
+    if record
+        .max_requests
+        .is_some_and(|max| record.used_requests >= max)
+    {
+        return RequestAdmission::RequestLimitExceeded;
+    }
+    if let Some(max) = record.max_tokens {
+        let committed = record.used_tokens.saturating_add(record.reserved_tokens);
+        // `>= max` (not `>`) keeps an exhausted budget rejecting even when the
+        // request declares no output budget of its own.
+        if committed >= max || committed.saturating_add(reserve) > max {
+            return RequestAdmission::TokenLimitExceeded;
+        }
+    }
+    if let Some(max) = record.rate_limit_per_minute {
+        if now.saturating_sub(record.rate_window_started_at) >= 60 {
+            record.rate_window_started_at = now;
+            record.rate_window_requests = 0;
+        }
+        if record.rate_window_requests >= max {
+            return RequestAdmission::RateLimitExceeded;
+        }
+        record.rate_window_requests = record.rate_window_requests.saturating_add(1);
+    }
+    record.used_requests = record.used_requests.saturating_add(1);
+    record.reserved_tokens = record.reserved_tokens.saturating_add(reserve);
+    slide_expiry(record, now);
+    RequestAdmission::Admitted
+}
+
+/// Push an active token's expiry ahead of the request that just used it.
+///
+/// Only for a token issued with a window. The expiry a fixed-clock token was
+/// given at issue time is final, which is what every token did before.
+///
+/// Serving the request *is* the evidence that the run is still alive, and it
+/// is the evidence the old design threw away: `--run-ttl-hours` was raised
+/// from 1 to 24 because interactive sessions outlived an hour, and a session
+/// then died against the 24-hour wall while the user was typing into it. Any
+/// fixed clock can only fire early; the question was how often (issue #354).
+///
+/// Never shortens. A window smaller than the remaining life leaves the longer
+/// expiry alone, so lowering the window cannot revoke a token early.
+///
+/// `max` rather than `if extended > expires_at`: the comparison's `>=` mutant
+/// stored the same value at equality, so no test could tell it apart and the
+/// full Mutants run reported it missed.
+fn slide_expiry(record: &mut TokenRecord, now: i64) {
+    let Some(window) = record.sliding_window_seconds else {
+        return;
+    };
+    record.expires_at = record.expires_at.max(now.saturating_add(window));
+}
+
+pub(super) const fn add_token_usage(record: Option<&mut TokenRecord>, tokens: u64) {
+    if let Some(record) = record {
+        record.used_tokens = record.used_tokens.saturating_add(tokens);
+    }
+}
+
+/// Replace a request's reservation with the usage the upstream actually reported.
+///
+/// `reserved` is released whether or not the request produced usage, so cancelled
+/// requests, upstream errors, and responses with no usage block all free their budget.
+/// `actual` is recorded in full even when it exceeds the reservation: the persisted
+/// total must stay truthful about what was really spent.
+pub(super) const fn settle_token_usage(
+    record: Option<&mut TokenRecord>,
+    reserved: u64,
+    actual: u64,
+) {
+    if let Some(record) = record {
+        record.reserved_tokens = record.reserved_tokens.saturating_sub(reserved);
+        record.used_tokens = record.used_tokens.saturating_add(actual);
+    }
+}
+
+/// Fold `other` into `current` so neither revocation nor recorded spend is lost.
+pub fn merge_safer_record(current: &mut TokenRecord, other: &TokenRecord) {
+    current.revoked |= other.revoked;
+    current.used_requests = current.used_requests.max(other.used_requests);
+    current.used_tokens = current.used_tokens.max(other.used_tokens);
+    current.reserved_tokens = current.reserved_tokens.max(other.reserved_tokens);
+    if other.rate_window_started_at > current.rate_window_started_at {
+        current.rate_window_started_at = other.rate_window_started_at;
+        current.rate_window_requests = other.rate_window_requests;
+    } else if other.rate_window_started_at == current.rate_window_started_at {
+        current.rate_window_requests = current.rate_window_requests.max(other.rate_window_requests);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{RequestAdmission, admit_request_reserving};
+
+    /// A per-minute rate counts every request inside one window and starts a
+    /// new count only once a full minute has passed since the window began.
+    #[test]
+    fn the_rate_window_resets_only_after_a_full_minute() {
+        let mut record = super::super::tests::sample_record("rated");
+        record.rate_limit_per_minute = Some(2);
+        let mut admit = |now| admit_request_reserving(Some(&mut record), now, 0);
+
+        assert_eq!(admit(1_000), RequestAdmission::Admitted);
+        assert_eq!(admit(1_030), RequestAdmission::Admitted);
+        assert_eq!(admit(1_059), RequestAdmission::RateLimitExceeded);
+        assert_eq!(admit(1_060), RequestAdmission::Admitted);
+    }
+
+    /// A windowed token's expiry moves to `now + window` when that is later,
+    /// and stays where it is when it is not; a fixed-clock token never moves.
+    #[test]
+    fn a_sliding_window_extends_expiry_and_never_shortens_it() {
+        let mut record = super::super::tests::sample_record("sliding");
+        record.expires_at = 1_000;
+        record.sliding_window_seconds = Some(100);
+        let mut admit_at = |now| {
+            let admission = admit_request_reserving(Some(&mut record), now, 0);
+            assert_eq!(admission, RequestAdmission::Admitted);
+            record.expires_at
+        };
+
+        assert_eq!(admit_at(950), 1_050, "a later expiry is taken");
+        assert_eq!(admit_at(950), 1_050, "an equal expiry is kept");
+        assert_eq!(admit_at(900), 1_050, "an earlier expiry is ignored");
+        assert_eq!(admit_at(i64::MAX - 10), i64::MAX, "the expiry saturates");
+
+        let mut fixed = super::super::tests::sample_record("fixed");
+        let now = fixed.expires_at - 1;
+        let admission = admit_request_reserving(Some(&mut fixed), now, 0);
+        assert_eq!(admission, RequestAdmission::Admitted);
+        assert_eq!(fixed.expires_at, 1_700_001_000);
+    }
+}

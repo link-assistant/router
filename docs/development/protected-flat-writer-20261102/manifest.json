@@ -1,0 +1,12 @@
+{
+  "schema": "router-protected-flat-and-shared-policy-draft-20261102-v1",
+  "sha256": "b117d30179375d248f988ad2a3eab5b2375a47da228b8e9e57fdcc8680ebcb3b",
+  "decodedBytes": 848471,
+  "packedBytes": 110320,
+  "completeFiles": 14,
+  "completeEquations": 6,
+  "newCaseSources": 23,
+  "historicalCaseAdaptations": 1,
+  "execution": "UNRUN",
+  "CI": "NOT_INSPECTED"
+}

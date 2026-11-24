@@ -1,0 +1,76 @@
+{
+  "schema": "source-batch-path-metadata-v1",
+  "commits": [
+    {
+      "sha": "6325195740861e9dc561ead109e90bebe21bad30",
+      "changedPaths": 20,
+      "addedPaths": 20,
+      "modifiedPaths": 0,
+      "sourceProfilePaths": 2,
+      "docsPaths": 1,
+      "testOrOraclePaths": 5,
+      "pathClassWarning": "Categories overlap; counts are artifact changes, not independent features or translated functions."
+    },
+    {
+      "sha": "684845832993fb96583b7fae780a44a61dfbb6c6",
+      "changedPaths": 8,
+      "addedPaths": 8,
+      "modifiedPaths": 0,
+      "sourceProfilePaths": 3,
+      "docsPaths": 1,
+      "testOrOraclePaths": 2,
+      "pathClassWarning": "Categories overlap; counts are artifact changes, not independent features or translated functions."
+    },
+    {
+      "sha": "474f35dcb5b8eb78596ceaa74b59fe1cb3008b5b",
+      "changedPaths": 15,
+      "addedPaths": 4,
+      "modifiedPaths": 11,
+      "sourceProfilePaths": 1,
+      "docsPaths": 4,
+      "testOrOraclePaths": 5,
+      "pathClassWarning": "Categories overlap; counts are artifact changes, not independent features or translated functions."
+    },
+    {
+      "sha": "fc8e183a06c44f5fe4ce7c23f79a0a4f6492b196",
+      "changedPaths": 5,
+      "addedPaths": 3,
+      "modifiedPaths": 2,
+      "sourceProfilePaths": 0,
+      "docsPaths": 3,
+      "testOrOraclePaths": 2,
+      "pathClassWarning": "Categories overlap; counts are artifact changes, not independent features or translated functions."
+    },
+    {
+      "sha": "1ffa47320b817ec827941447efbf13de57300be3",
+      "changedPaths": 301,
+      "addedPaths": 253,
+      "modifiedPaths": 48,
+      "sourceProfilePaths": 207,
+      "docsPaths": 1,
+      "testOrOraclePaths": 13,
+      "pathClassWarning": "Categories overlap; counts are artifact changes, not independent features or translated functions."
+    },
+    {
+      "sha": "327fa26b76a2a0ef2465115ce1d4d5e04b45344e",
+      "changedPaths": 6,
+      "addedPaths": 6,
+      "modifiedPaths": 0,
+      "sourceProfilePaths": 0,
+      "docsPaths": 2,
+      "testOrOraclePaths": 1,
+      "pathClassWarning": "Categories overlap; counts are artifact changes, not independent features or translated functions."
+    },
+    {
+      "sha": "ba7b1d9f99f9be16628fe433a097b1b8ff036f43",
+      "changedPaths": 8,
+      "addedPaths": 8,
+      "modifiedPaths": 0,
+      "sourceProfilePaths": 2,
+      "docsPaths": 1,
+      "testOrOraclePaths": 1,
+      "pathClassWarning": "Categories overlap; counts are artifact changes, not independent features or translated functions."
+    }
+  ],
+  "verification": "UNRUN"
+}

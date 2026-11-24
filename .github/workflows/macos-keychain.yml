@@ -11,15 +11,16 @@ name: macOS Keychain
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - 'src/platform_keychain*.rs'
-      - 'src/subscription.rs'
-      - 'src/subscription/**'
-      - 'src/deploy_local/claude_share.rs'
-      - 'src/deploy_local/host_runtime.rs'
-      - 'src/deploy_local/host_login_tests.rs'
-      - 'src/auth_cli.rs'
-      - 'tests/macos_keychain_test.rs'
+      - 'rust/src/platform_keychain*.rs'
+      - 'rust/src/subscription.rs'
+      - 'rust/src/subscription/**'
+      - 'rust/src/deploy_local/claude_share.rs'
+      - 'rust/src/deploy_local/host_runtime.rs'
+      - 'rust/src/deploy_local/host_login_tests.rs'
+      - 'rust/src/auth_cli.rs'
+      - 'rust/tests/macos_keychain_test.rs'
       - '.github/workflows/macos-keychain.yml'
   schedule:
     - cron: '9 5 * * 1'
@@ -30,13 +31,24 @@ permissions:
 
 concurrency:
   group: macos-keychain-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  javascript:
+    if: ${{ github.event_name != 'pull_request' || toJSON(github.event.pull_request.draft) == 'false' }}
+    name: JavaScript first (same commit)
+    uses: ./.github/workflows/javascript-manual-development.yml
+    with:
+      sha: ${{ github.sha }}
+    permissions:
+      contents: read
+
   keychain:
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
+    needs: [javascript]
     name: Keychain lookups on macOS
     runs-on: macos-26
     timeout-minutes: 45

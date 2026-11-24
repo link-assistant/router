@@ -1,0 +1,98 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/6047ead280e851dfaf1c8f39349ffbd5b275abf7/.github",
+    "start_line": 45,
+    "start_column": null,
+    "end_line": 45,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 1.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/6047ead280e851dfaf1c8f39349ffbd5b275abf7/.github",
+    "start_line": 27,
+    "start_column": null,
+    "end_line": 27,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Broken live links were detected.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/6047ead280e851dfaf1c8f39349ffbd5b275abf7/.github",
+    "start_line": 55,
+    "start_column": null,
+    "end_line": 55,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 1.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/6047ead280e851dfaf1c8f39349ffbd5b275abf7/.github",
+    "start_line": 44,
+    "start_column": null,
+    "end_line": 44,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "Broken link - No Web Archive fallback",
+    "message": "Broken link detected: https://www.wikifunctions.org/wiki/Wikifunctions",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/6047ead280e851dfaf1c8f39349ffbd5b275abf7/.github",
+    "start_line": 37,
+    "start_column": null,
+    "end_line": 37,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "Broken link - Web Archive available (2026-06-07)",
+    "message": "Broken link detected: https://habr.com/ru/companies/deepfoundation/articles/",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/6047ead280e851dfaf1c8f39349ffbd5b275abf7/.github",
+    "start_line": 33,
+    "start_column": null,
+    "end_line": 33,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "Broken link - Web Archive available (2026-10-04)",
+    "message": "Broken link detected: https://rosettacode.org/wiki/Rosetta_Code",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/6047ead280e851dfaf1c8f39349ffbd5b275abf7/.github",
+    "start_line": 1377,
+    "start_column": null,
+    "end_line": 1377,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "Summary report available at: https://github.com/link-assistant/formal-ai/actions/runs/37780074575#summary-113320662731",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/6047ead280e851dfaf1c8f39349ffbd5b275abf7/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+    "raw_details": ""
+  }
+]

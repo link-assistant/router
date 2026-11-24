@@ -1,0 +1,648 @@
+{
+  "schema": "router-759-canonical-a7de-progress-timeout-lossless-v1",
+  "verifiedSourceHead": "a7de9a11d7dca260da686a0edf47958a20550389",
+  "attempt": {
+    "schema": "bounded-coherent-corpus-producer-v3",
+    "mode": "canonical",
+    "sourceHead": "a7de9a11d7dca260da686a0edf47958a20550389",
+    "headAfter": "a7de9a11d7dca260da686a0edf47958a20550389",
+    "argv": [
+      "node",
+      "scripts/translate-router.mjs",
+      "--progress"
+    ],
+    "capSeconds": 1200,
+    "startedUtc": "2026-10-12T17:49:47.186853+00:00",
+    "elapsedSeconds": 1200.251,
+    "elapsedScope": "Direct waited producer including bounded termination; excludes post-input snapshot",
+    "wrapperElapsedSeconds": 1200.571,
+    "exitCode": -15,
+    "timedOut": true,
+    "sourceInputFiles": 1723,
+    "sourceInputSha256": "3ddd69beb6ad4592b331d492439830e5fe1cff2ab3dc5f164bc1d6f87dd673bc",
+    "sourceInputsUnchanged": true,
+    "inputReceipt": "/tmp/router-759-cohort-v3-canonical-a7de9a11d-inputs.json",
+    "freeBytesBefore": 37285060608,
+    "freeBytesAfter": 33848549376,
+    "statusAfter": "",
+    "stdout": {
+      "path": "/tmp/router-759-cohort-v3-canonical-a7de9a11d.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stderr": {
+      "path": "/tmp/router-759-cohort-v3-canonical-a7de9a11d-time.log",
+      "bytes": 96337,
+      "sha256": "522d34af82081b1b36137a7fecf88b9b8b3e87c5f172cd4a73cc8b6d56d38912"
+    },
+    "rustExecuted": false,
+    "harnessSha256": "c6cba8fa9c639467353f8de9e874596fae0f1e6bdb423298fedc9be8c304ab43",
+    "resource": {
+      "scope": "Python waited producer children; max RSS is maximum recorded child, not aggregate concurrent memory or peak footprint",
+      "userCpuSeconds": 1179.5438100000001,
+      "systemCpuSeconds": 162.15134799999998,
+      "maxRss": 2692988928,
+      "maxRssUnits": "bytes on Darwin; KiB on Linux",
+      "platform": "Darwin"
+    },
+    "progress": {
+      "enabled": true,
+      "events": 494,
+      "first": {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "corpus",
+        "state": "start",
+        "elapsedMilliseconds": 0
+      },
+      "last": {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 42,
+        "remaining": 2352,
+        "elapsedMilliseconds": 1195755
+      },
+      "completeRawRetained": true
+    }
+  },
+  "progressSummary": {
+    "schema": "router-759-observed-canonical-stage-summary-v1",
+    "sourceHead": "a7de9a11d7dca260da686a0edf47958a20550389",
+    "events": 494,
+    "boundaries": [
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "corpus",
+        "state": "start",
+        "elapsedMilliseconds": 0
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "corpus",
+        "state": "end",
+        "total": 804,
+        "elapsedMilliseconds": 105
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "project",
+        "state": "start",
+        "entry": "src/lib.rs",
+        "elapsedMilliseconds": 105
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "project-graph",
+        "state": "start",
+        "entry": "src/lib.rs",
+        "elapsedMilliseconds": 106
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "project-graph",
+        "state": "end",
+        "entry": "src/lib.rs",
+        "total": 390,
+        "elapsedMilliseconds": 957
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "namespace",
+        "state": "start",
+        "entry": "src/lib.rs",
+        "elapsedMilliseconds": 957
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "namespace",
+        "state": "end",
+        "entry": "src/lib.rs",
+        "total": 390,
+        "elapsedMilliseconds": 7760
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "module-parse",
+        "state": "start",
+        "entry": "src/lib.rs",
+        "total": 390,
+        "elapsedMilliseconds": 7760
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "module-parse",
+        "state": "end",
+        "entry": "src/lib.rs",
+        "completed": 390,
+        "total": 390,
+        "elapsedMilliseconds": 297893
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "method-parse",
+        "state": "start",
+        "entry": "src/lib.rs",
+        "elapsedMilliseconds": 297898
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "method-parse",
+        "state": "end",
+        "entry": "src/lib.rs",
+        "completed": 1564,
+        "elapsedMilliseconds": 475220
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "start",
+        "entry": "src/lib.rs",
+        "remaining": 2394,
+        "elapsedMilliseconds": 475278
+      }
+    ],
+    "semanticRounds": [
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "start",
+        "entry": "src/lib.rs",
+        "remaining": 2394,
+        "elapsedMilliseconds": 475278
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 0,
+        "remaining": 2394,
+        "elapsedMilliseconds": 475278
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 1,
+        "remaining": 2393,
+        "elapsedMilliseconds": 490983
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 2,
+        "remaining": 2392,
+        "elapsedMilliseconds": 506788
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 3,
+        "remaining": 2391,
+        "elapsedMilliseconds": 522420
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 4,
+        "remaining": 2390,
+        "elapsedMilliseconds": 538176
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 5,
+        "remaining": 2389,
+        "elapsedMilliseconds": 555751
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 6,
+        "remaining": 2388,
+        "elapsedMilliseconds": 572170
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 7,
+        "remaining": 2387,
+        "elapsedMilliseconds": 588145
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 8,
+        "remaining": 2386,
+        "elapsedMilliseconds": 603450
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 9,
+        "remaining": 2385,
+        "elapsedMilliseconds": 620403
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 10,
+        "remaining": 2384,
+        "elapsedMilliseconds": 649131
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 11,
+        "remaining": 2383,
+        "elapsedMilliseconds": 672314
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 12,
+        "remaining": 2382,
+        "elapsedMilliseconds": 688115
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 13,
+        "remaining": 2381,
+        "elapsedMilliseconds": 704026
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 14,
+        "remaining": 2380,
+        "elapsedMilliseconds": 720068
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 15,
+        "remaining": 2379,
+        "elapsedMilliseconds": 735900
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 16,
+        "remaining": 2378,
+        "elapsedMilliseconds": 752754
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 17,
+        "remaining": 2377,
+        "elapsedMilliseconds": 771963
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 18,
+        "remaining": 2376,
+        "elapsedMilliseconds": 789237
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 19,
+        "remaining": 2375,
+        "elapsedMilliseconds": 806214
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 20,
+        "remaining": 2374,
+        "elapsedMilliseconds": 823799
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 21,
+        "remaining": 2373,
+        "elapsedMilliseconds": 840298
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 22,
+        "remaining": 2372,
+        "elapsedMilliseconds": 857929
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 23,
+        "remaining": 2371,
+        "elapsedMilliseconds": 874619
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 24,
+        "remaining": 2370,
+        "elapsedMilliseconds": 893051
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 25,
+        "remaining": 2369,
+        "elapsedMilliseconds": 909317
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 26,
+        "remaining": 2368,
+        "elapsedMilliseconds": 924960
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 27,
+        "remaining": 2367,
+        "elapsedMilliseconds": 940884
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 28,
+        "remaining": 2366,
+        "elapsedMilliseconds": 957092
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 29,
+        "remaining": 2365,
+        "elapsedMilliseconds": 975141
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 30,
+        "remaining": 2364,
+        "elapsedMilliseconds": 992447
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 31,
+        "remaining": 2363,
+        "elapsedMilliseconds": 1008906
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 32,
+        "remaining": 2362,
+        "elapsedMilliseconds": 1025042
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 33,
+        "remaining": 2361,
+        "elapsedMilliseconds": 1043321
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 34,
+        "remaining": 2360,
+        "elapsedMilliseconds": 1062931
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 35,
+        "remaining": 2359,
+        "elapsedMilliseconds": 1083259
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 36,
+        "remaining": 2358,
+        "elapsedMilliseconds": 1099931
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 37,
+        "remaining": 2357,
+        "elapsedMilliseconds": 1114752
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 38,
+        "remaining": 2356,
+        "elapsedMilliseconds": 1131501
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 39,
+        "remaining": 2355,
+        "elapsedMilliseconds": 1149044
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 40,
+        "remaining": 2354,
+        "elapsedMilliseconds": 1164820
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 41,
+        "remaining": 2353,
+        "elapsedMilliseconds": 1179874
+      },
+      {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "semantic-check",
+        "state": "advance",
+        "entry": "src/lib.rs",
+        "attempt": 42,
+        "remaining": 2352,
+        "elapsedMilliseconds": 1195755
+      }
+    ],
+    "last": {
+      "schema": "rust-meta-translation-progress-v1",
+      "stage": "semantic-check",
+      "state": "advance",
+      "entry": "src/lib.rs",
+      "attempt": 42,
+      "remaining": 2352,
+      "elapsedMilliseconds": 1195755
+    },
+    "parsedMethodCandidatesAreNotAcceptedMethodCount": true,
+    "noPlanOrStandalonePhaseReached": true,
+    "stdoutBytes": 0,
+    "newCorpusCensusAvailable": false
+  },
+  "archive": {
+    "path": "docs/case-studies/issue-759/current/canonical-a7de9a11-progress-timeout/complete-timeout.tar.xz",
+    "bytes": 86128,
+    "sha256": "0f2025950a71df3f914ea1569a4de1f348e573c486916f9bf454bc72d2187fcf",
+    "tarBytes": 399360,
+    "tarSha256": "d225eec420024439240fef5b0a4ea944d18265c9e41f7359cf91597943736518",
+    "entries": 9
+  },
+  "members": [
+    {
+      "name": "router-759-cohort-v3-canonical-a7de9a11d.json",
+      "originalPath": "/tmp/router-759-cohort-v3-canonical-a7de9a11d.json",
+      "bytes": 2201,
+      "sha256": "ba18033fc24ff81f3d22791419eaca365a869784d1031c0c89a4a89081b3f02e"
+    },
+    {
+      "name": "router-759-cohort-v3-canonical-a7de9a11d.log",
+      "originalPath": "/tmp/router-759-cohort-v3-canonical-a7de9a11d.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "router-759-cohort-v3-canonical-a7de9a11d-time.log",
+      "originalPath": "/tmp/router-759-cohort-v3-canonical-a7de9a11d-time.log",
+      "bytes": 96337,
+      "sha256": "522d34af82081b1b36137a7fecf88b9b8b3e87c5f172cd4a73cc8b6d56d38912"
+    },
+    {
+      "name": "router-759-cohort-v3-canonical-a7de9a11d-inputs.json",
+      "originalPath": "/tmp/router-759-cohort-v3-canonical-a7de9a11d-inputs.json",
+      "bytes": 254257,
+      "sha256": "14aa1c95ad95c523a8ceb525dffa36592c45eafcb85a6189551860afea67506a"
+    },
+    {
+      "name": "router-759-bounded-cohort-producer-v5.py",
+      "originalPath": "/tmp/router-759-bounded-cohort-producer-v5.py",
+      "bytes": 4663,
+      "sha256": "c6cba8fa9c639467353f8de9e874596fae0f1e6bdb423298fedc9be8c304ab43"
+    },
+    {
+      "name": "router-759-gate-progress-frame-final-integration.json",
+      "originalPath": "/tmp/router-759-gate-progress-frame-final-integration.json",
+      "bytes": 4380,
+      "sha256": "4bcbfea05c892fd360b034997bfdc2b5db71b4e2d5d3bf44cb61297af5776855"
+    },
+    {
+      "name": "router-759-gate-publisher222-direct-git-check.json",
+      "originalPath": "/tmp/router-759-gate-publisher222-direct-git-check.json",
+      "bytes": 1929,
+      "sha256": "7e16087ca8b5d89794bac33bd80d943539d781275eba6fc40cf8bda6ffa351e0"
+    },
+    {
+      "name": "router-759-publisher-progress-private-frame222-run-v3.py",
+      "originalPath": "/tmp/router-759-publisher-progress-private-frame222-run-v3.py",
+      "bytes": 6938,
+      "sha256": "498a12906e8d3ee0e08ed7109bc4baac4d60b1f649512d4fedb897d20990894f"
+    },
+    {
+      "name": "router-759-canonical-a7de-progress-stage-summary.json",
+      "originalPath": "/tmp/router-759-canonical-a7de-progress-stage-summary.json",
+      "bytes": 13233,
+      "sha256": "e2b223b27500604360bd3447c955ff7bfc492ae5536f6fc5419ee99072492ab5"
+    }
+  ],
+  "reopenErrors": 0,
+  "originalByteComparisonErrors": 0,
+  "artifactWrites": 0,
+  "artifactWriteEvidence": "No plan/write phase reached; exact tracked status remained clean; regenerate writes only after complete plan construction",
+  "newCanonicalCensusAvailable": false,
+  "nativeProfileFull7Executed": false,
+  "prior37c6TimeoutPreserved": true,
+  "futureDraftsExcluded": true
+}

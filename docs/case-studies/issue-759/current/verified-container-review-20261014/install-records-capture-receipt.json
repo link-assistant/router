@@ -1,0 +1,506 @@
+{
+  "schema": "complete-evidence-packet-v1",
+  "sourceHead": "e2960e39e6b4aaf09bbda6f53c4a2ce139e3f881",
+  "archive": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-record-v2/complete-install-records.tar.xz",
+  "archiveBytes": 680448,
+  "archiveSha256": "92b6c813240d77d93fe8765146fb0a8efc9da0de36c297b83d8fb51db18135c4",
+  "manifestSha256": "39d3ba5a6b4dcbca9355bb19dd388f9bf9c38cd6d1072b028c1c13f986b2334a",
+  "members": [
+    {
+      "path": "root-install/apply.py",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/apply.py",
+      "bytes": 5301,
+      "sha256": "6c09b5e1f0bbd22dcade08d64263cf9ea8e0a2ebaec23311453677155c00b0ad"
+    },
+    {
+      "path": "root-install/ci-absent.command.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/ci-absent.command.json",
+      "bytes": 627,
+      "sha256": "738f8c1fb38636b628720c4c1b1658c40cfa7c1e70b43c592b1f399248ebb1d7"
+    },
+    {
+      "path": "root-install/ci-absent.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/ci-absent.json",
+      "bytes": 1087,
+      "sha256": "bf3a3a96e8a9798705706007ecb74a20a971797ca86db72d9a49d1ceb7fc33ba"
+    },
+    {
+      "path": "root-install/ci-absent.stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/ci-absent.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "root-install/ci-absent.stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/ci-absent.stdout.raw.log",
+      "bytes": 1003,
+      "sha256": "bbf3355b3ddc1202d8b7b0597313934e07f9e7bc6a903271e633c76dc3e49614"
+    },
+    {
+      "path": "root-install/ci-before.command.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/ci-before.command.json",
+      "bytes": 627,
+      "sha256": "ff0d74d5c8e3eeedbab90b9978051e52efbc63cf378ac94fb4bfe8910049f0a1"
+    },
+    {
+      "path": "root-install/ci-before.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/ci-before.json",
+      "bytes": 1087,
+      "sha256": "f579854aa4ff2a612fbee777a66b5ade8bc6121fe00973204c2476a39cd9af98"
+    },
+    {
+      "path": "root-install/ci-before.stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/ci-before.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "root-install/ci-absent.stderr.raw.log"
+    },
+    {
+      "path": "root-install/ci-before.stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/ci-before.stdout.raw.log",
+      "bytes": 1003,
+      "sha256": "6bc7eb7aea0019a5b504a4e94c226cbf75f143343d3194a48ebf1df93f908c70"
+    },
+    {
+      "path": "root-install/ci-installed.command.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/ci-installed.command.json",
+      "bytes": 633,
+      "sha256": "65425e87737af150a5c8e9aeddf3a956cd02b7a1afc08faf73a432b7092a519f"
+    },
+    {
+      "path": "root-install/ci-installed.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/ci-installed.json",
+      "bytes": 1087,
+      "sha256": "d9e357f24a1c85c0d297e19409f8dc11ebee0ef3154ef8844031f1ce1d243198"
+    },
+    {
+      "path": "root-install/ci-installed.stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/ci-installed.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "root-install/ci-absent.stderr.raw.log"
+    },
+    {
+      "path": "root-install/ci-installed.stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/ci-installed.stdout.raw.log",
+      "bytes": 1003,
+      "sha256": "4eaf80570ff655e645d55a51d8b349e117ee17055f5e5c65de1112a887cb1e32"
+    },
+    {
+      "path": "root-install/initial-allocation.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/initial-allocation.json",
+      "bytes": 99,
+      "sha256": "97f874644e4b123b23285b55e9c9c6793862cb01daa0ad7ebb79efbbdeedb702"
+    },
+    {
+      "path": "root-install/installation-receipt.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/installation-receipt.json",
+      "bytes": 602,
+      "sha256": "d3ab0065cc1b17f5fe276dd79e8d4a314d3cf352810e74bfc0736cd67502f7d6"
+    },
+    {
+      "path": "root-install/measure-absent.command.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/measure-absent.command.json",
+      "bytes": 493,
+      "sha256": "284ce47ef05e23ac2deef44306dc101249c7e0a49e751dc8ef5c1549a924ec57"
+    },
+    {
+      "path": "root-install/measure-absent.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/measure-absent.json",
+      "bytes": 9320199,
+      "sha256": "9d5c3b0a179591b98044792503682ff48e2b12e83fe351901351269af94ade51"
+    },
+    {
+      "path": "root-install/measure-absent.stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/measure-absent.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "root-install/ci-absent.stderr.raw.log"
+    },
+    {
+      "path": "root-install/measure-absent.stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/measure-absent.stdout.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "root-install/ci-absent.stderr.raw.log"
+    },
+    {
+      "path": "root-install/measure-before.command.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/measure-before.command.json",
+      "bytes": 493,
+      "sha256": "c5a7365f2450dfd4fe3377aebc06a03384a03d15e8b33ad9bd72ead20f539725"
+    },
+    {
+      "path": "root-install/measure-before.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/measure-before.json",
+      "bytes": 9320199,
+      "sha256": "9d5c3b0a179591b98044792503682ff48e2b12e83fe351901351269af94ade51",
+      "storedAsHardlink": "root-install/measure-absent.json"
+    },
+    {
+      "path": "root-install/measure-before.stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/measure-before.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "root-install/ci-absent.stderr.raw.log"
+    },
+    {
+      "path": "root-install/measure-before.stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/measure-before.stdout.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "root-install/ci-absent.stderr.raw.log"
+    },
+    {
+      "path": "root-install/measure-installed.command.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/measure-installed.command.json",
+      "bytes": 499,
+      "sha256": "6287561ade36da6da273138b8b1a75c91cf22b794e3414c86f37c1597a32d9c0"
+    },
+    {
+      "path": "root-install/measure-installed.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/measure-installed.json",
+      "bytes": 9320199,
+      "sha256": "9d5c3b0a179591b98044792503682ff48e2b12e83fe351901351269af94ade51",
+      "storedAsHardlink": "root-install/measure-absent.json"
+    },
+    {
+      "path": "root-install/measure-installed.stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/measure-installed.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "root-install/ci-absent.stderr.raw.log"
+    },
+    {
+      "path": "root-install/measure-installed.stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/measure-installed.stdout.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "root-install/ci-absent.stderr.raw.log"
+    },
+    {
+      "path": "root-install/old-absent.command.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/old-absent.command.json",
+      "bytes": 707,
+      "sha256": "58a9678df50b671656745c613df6eeb28dd40f643cb161fdd8a4169ef8795c69"
+    },
+    {
+      "path": "root-install/old-absent.stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/old-absent.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "root-install/ci-absent.stderr.raw.log"
+    },
+    {
+      "path": "root-install/old-absent.stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/old-absent.stdout.raw.log",
+      "bytes": 232,
+      "sha256": "2d35210f2a5e51ecdcd4e8ac30377ca85da71eb7aba95e3eb120d5df1693eda8"
+    },
+    {
+      "path": "root-install/old-present.command.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/old-present.command.json",
+      "bytes": 708,
+      "sha256": "cd7b72eb014fc564813365b2df5c4de3f63df05d27aaa32c3962ae7b1c9e24a7"
+    },
+    {
+      "path": "root-install/old-present.stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/old-present.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "root-install/ci-absent.stderr.raw.log"
+    },
+    {
+      "path": "root-install/old-present.stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-v1/old-present.stdout.raw.log",
+      "bytes": 232,
+      "sha256": "2d35210f2a5e51ecdcd4e8ac30377ca85da71eb7aba95e3eb120d5df1693eda8",
+      "storedAsHardlink": "root-install/old-absent.stdout.raw.log"
+    },
+    {
+      "path": "source/tools/evidence/capture-packet.py",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/evidence/capture-packet.py",
+      "bytes": 12330,
+      "sha256": "a7ee5de4075d81697d7afeccc46089f0e91f9b1a438e917dc067e75ee3bca7be"
+    },
+    {
+      "path": "worker-complete/changelog.d/20261014_000088_complete_packet_git_recovery.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/packages/javascript/node_modules/.issue-759-verification/complete-packet-install-record-v2/git-source-snapshots/changelog.d/20261014_000088_complete_packet_git_recovery.md",
+      "bytes": 548,
+      "sha256": "c728572e5913d02edc9ea96e1cfa66d4011b1d8250be1be48ddc1af0ef3fa7d8"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/absent-overlay-complete-ci-integrity.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/absent-overlay-complete-ci-integrity.json",
+      "bytes": 1087,
+      "sha256": "5b8d1aed990514267c94335d5fd95f9356c73a482624285e03ea74f10c2292b9"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/absent-overlay-complete-ci-integrity.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/absent-overlay-complete-ci-integrity.raw.log",
+      "bytes": 1003,
+      "sha256": "07428c87ac55a9c5cad62c4a7a27e25fc0e67bcbde7beb457a79c9d380270994"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/absent-overlay-complete-ci-measurement.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/absent-overlay-complete-ci-measurement.json",
+      "bytes": 9571526,
+      "sha256": "6c9ffaddef858a233335ca1a48b802af1f65cbfc6c4eb66b7b27e2edefa6e2bd"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/absent-overlay-complete-ci-measurement.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/absent-overlay-complete-ci-measurement.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "root-install/ci-absent.stderr.raw.log"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/capture-receipt-v2.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/capture-receipt-v2.json",
+      "bytes": 702614,
+      "sha256": "f4269e31f663e31e980d5947be008d5ad986e1ff91461b13f3ebd1d64fb34b46"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/capture-v2.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/capture-v2.raw.log",
+      "bytes": 1068,
+      "sha256": "31c0d24068f60b9078f9dadb0f7be1e3e55df00d5ec85dd62c87e7a43829a325"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/capture.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/capture.raw.log",
+      "bytes": 406,
+      "sha256": "1ac776c445c9941b66555985e2a3a4cadf6b58ec2a14a175a56bd7e2138d14fc"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/complete-manifest-v2.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/complete-manifest-v2.json",
+      "bytes": 562760,
+      "sha256": "831b721965f5e0b630c7d2d2b447185c13ca32594a3aa87690bc768aacce2ee0"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/complete-manifest.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/complete-manifest.json",
+      "bytes": 560555,
+      "sha256": "64c311cd3d7f389f6ca3308e2523b6a7c42d2717187ab105d4a7e0fb60084e61"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/current-complete-ci-measurement.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/current-complete-ci-measurement.json",
+      "bytes": 7641527,
+      "sha256": "bf846060e3ec109aaedb5117ec66daadc99fa1070f4ed6f47e72275bcd2bfde9"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/current-complete-ci-measurement.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/current-complete-ci-measurement.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "root-install/ci-absent.stderr.raw.log"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/first-failure-source-variation.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/first-failure-source-variation.json",
+      "bytes": 1272,
+      "sha256": "dcc43e109f9262a6b3e7dedf2fcf7acf8aff05fcaf583c81e3fc92aeb61d8631"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/inventory.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/inventory.json",
+      "bytes": 843,
+      "sha256": "353b040289c1463fb1730aefbb512ce96d2cde2d53706104f2dd7fcc7ae74baa"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/measure-js-first-pinned.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/measure-js-first-pinned.mjs",
+      "bytes": 11757,
+      "sha256": "dcd92bea6a36b9307cb955b411e4f3fbd71bce68a5376426c779495afa781932"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/old-absent-full-member-recovery-final.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/old-absent-full-member-recovery-final.raw.log",
+      "bytes": 232,
+      "sha256": "2d35210f2a5e51ecdcd4e8ac30377ca85da71eb7aba95e3eb120d5df1693eda8",
+      "storedAsHardlink": "root-install/old-absent.stdout.raw.log"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/old-absent-full-member-recovery-first.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/old-absent-full-member-recovery-first.raw.log",
+      "bytes": 232,
+      "sha256": "2d35210f2a5e51ecdcd4e8ac30377ca85da71eb7aba95e3eb120d5df1693eda8",
+      "storedAsHardlink": "root-install/old-absent.stdout.raw.log"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/old-archive-full-git-witness.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/old-archive-full-git-witness.json",
+      "bytes": 761,
+      "sha256": "1c18133594278afefae899a31d230c2f3e05ed6fe0d64ee7ee6c4c9130156a1e"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/old-present-full-member-recovery-final.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/old-present-full-member-recovery-final.raw.log",
+      "bytes": 232,
+      "sha256": "2d35210f2a5e51ecdcd4e8ac30377ca85da71eb7aba95e3eb120d5df1693eda8",
+      "storedAsHardlink": "root-install/old-absent.stdout.raw.log"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/old-present-resource.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/old-present-resource.json",
+      "bytes": 1094,
+      "sha256": "91ecaede7ac63c5cda1bead48c2676e2cea1f0b49f3edc8da9596aaa74d4c35c"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-bun-final.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-bun-final.raw.log",
+      "bytes": 308,
+      "sha256": "c8046d3e85068c4e7f82dc9f67078b7adaae5a9ece466f32581596ed877ef6fe"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-bun-sealed.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-bun-sealed.raw.log",
+      "bytes": 308,
+      "sha256": "6ea9653d1d2975b9ec707e0e1b0e93526ccbd46a7b909db04cd80402e80ff44b"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-first-source.py",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-first-source.py",
+      "bytes": 10759,
+      "sha256": "881f566b6d159f82a98456ca9639fc8d87fa487a438f7f90b07c5adb7ba8527a"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-node-cli-final.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-node-cli-final.raw.log",
+      "bytes": 551,
+      "sha256": "0036807b5c2a12f0d8b538bd44203fafde106b93bb5945ec76d19c4c83c6b548"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-node-final.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-node-final.raw.log",
+      "bytes": 551,
+      "sha256": "548213fe5f609e201f4d9afcea731c91b2e6c35f1e9279f64339d2ca726488a8"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-node-first.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-node-first.raw.log",
+      "bytes": 551,
+      "sha256": "2d1250cd51016a1a7fdaf9ec1f15105986b612e1aed4ab9cbe5582efc52410d6"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-node-sealed.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-node-sealed.raw.log",
+      "bytes": 551,
+      "sha256": "98dd6bf2c66875b19d9a5b1d8026debc7e55cdb37da1a3ab43dbbbd6e1b0976b"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-python-cli-final.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-python-cli-final.raw.log",
+      "bytes": 110,
+      "sha256": "eb64b6b4aaf444c362152a740c230816060f56e9651c23996c4f21e3f1bd4e84"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-python-first.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-python-first.raw.log",
+      "bytes": 5179,
+      "sha256": "76e645f5e6567a119433902ca695116c8a01219eab0858ac51c6ac0618e8996c"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-python-second.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-python-second.raw.log",
+      "bytes": 106,
+      "sha256": "a91d78e6247c075ea857c1697f1d5ba37873458ea5e642300d6cd88dbeb61aeb"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-python-third.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-python-third.raw.log",
+      "bytes": 109,
+      "sha256": "8f9fa882f41ae1d18d81dc5628323cfebb4110845ab4a2eec2cf7e37f9a19225"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/supplement-capture-receipt.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/supplement-capture-receipt.json",
+      "bytes": 73383,
+      "sha256": "a5ca57afd5940c2f25252b5c55d48636da83c6faf0d8c3eb84a4132b8a30b364"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/supplement-capture.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/supplement-capture.raw.log",
+      "bytes": 953,
+      "sha256": "b776f04b15fd90a9234dabe7ba9e7de2a9b36d07e2d80d045893696feb1f326d"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/supplement-complete-manifest.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/supplement-complete-manifest.json",
+      "bytes": 60719,
+      "sha256": "6d4240b72464cc3c1a13eb922a968dc4d78d752418b947f77ec7cb6d6207ee2e"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/supplement-resource.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/supplement-resource.json",
+      "bytes": 947,
+      "sha256": "f043e6591776f264906c5dae91b811a735221c0cb2260eb73fd0a398cab88b8f"
+    },
+    {
+      "path": "worker-complete/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/whole-ci-measurement-continuity.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/whole-ci-measurement-continuity.json",
+      "bytes": 2058249,
+      "sha256": "8e03db6a4b76d091ff96af39d14f9ae19c6d257ad82b6fe860c58d39fe95a517"
+    },
+    {
+      "path": "worker-complete/tools/evidence/README.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/tools/evidence/README.md",
+      "bytes": 8712,
+      "sha256": "063221f2cfd57a07ed7aa9b619d83fbd0ccf2c732f69bf3f59eba1bec287096f"
+    },
+    {
+      "path": "worker-complete/tools/evidence/packet.py",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/tools/evidence/packet.py",
+      "bytes": 11619,
+      "sha256": "7cda70870ced8050d4ac6258c410682925175fe14b4477d8b92f4b60cce862d5"
+    },
+    {
+      "path": "worker-complete/tools/evidence/packet.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/tools/evidence/packet.test.mjs",
+      "bytes": 1076,
+      "sha256": "73d9ed20cb4ae936d8f789d9c8072dda4a1660ecfbde84dcb3c4e1d9522af623"
+    },
+    {
+      "path": "worker-complete/tools/evidence/packet_test.py",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/tools/evidence/packet_test.py",
+      "bytes": 8701,
+      "sha256": "e5731c6e51ef378b3c6ba6e3984574077ac3eaa0c2d82117f9b0204c3893b06d"
+    },
+    {
+      "path": "worker-reader/reader-verification-receipt.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/reader-verification-receipt.json",
+      "bytes": 15951,
+      "sha256": "368983e9da69a3718c43ab15b0f86ede8e18c7496c34d342ff2ced420791a5d2"
+    },
+    {
+      "path": "worker-reader/reviewable-case-install/migration-plan.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/reviewable-case-install/migration-plan.json",
+      "bytes": 6695,
+      "sha256": "3bad33a110436e98c0c268b892dbd8aff5198f30c82756a04dda7b8ea19bd89d"
+    },
+    {
+      "path": "worker-reader/reviewable-case-install/packet-git-index.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/reviewable-case-install/packet-git-index.json",
+      "bytes": 517,
+      "sha256": "e4060b9e756e94fdf046c85e6f495b9bf3c42e0ffa9f73df714d83bd0e7242f3"
+    }
+  ],
+  "completeMembers": 77,
+  "completeOriginalBytes": 49316572,
+  "allDecodedOriginalsVerified": true,
+  "allSelectedOriginalsUnchanged": true,
+  "capSeconds": 600,
+  "elapsedSeconds": 5.555061207996914,
+  "compression": {
+    "format": "xz",
+    "preset": 9,
+    "dictionaryBytes": 67108864
+  },
+  "harnessSha256": "a7ee5de4075d81697d7afeccc46089f0e91f9b1a438e917dc067e75ee3bca7be",
+  "semanticAuthority": false,
+  "runtimeParity": false,
+  "fullGatePass": false,
+  "rustExecuted": false
+}

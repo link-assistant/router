@@ -1,0 +1,34 @@
+{
+  "schema": "fixed-temporary-source-family-census-20261103-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-temporary-families-20261103/index282.before.json.gz",
+    "encodedSha256": "61687ce02e3c35a6aaadcc9221c532fef33ab05170d299b7959de2078dcbebdf",
+    "sourceSha256": "677a8c2d39a476a67591e0c4ced422773703975e6eaab435bfdab04b2fad8a55",
+    "rows": 282
+  },
+  "families": [
+    {
+      "id": "exact-temporary-native-prefix-20261103",
+      "manifest": "tools/translation/source-profiles/protected-native-temporary-prefix-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "protected-native-temporary-prefix-source-20261103-v1",
+      "sha256": "6a1c904e8ee4da15c7b8b0ce9762eb022e5f6ab5da6004dfce5af9aef4796eb8",
+      "rows": 6,
+      "includeNewFiles": true
+    },
+    {
+      "id": "exact-temporary-temporary-joins-20261103",
+      "manifest": "tools/translation/source-profiles/exact-source-temporary-families-20261103/joins.json.gz",
+      "kind": "archive",
+      "schema": "exact-source-temporary-join-source-20261103-v1",
+      "sha256": "66ed7257e4adbf16e33643a0d666597e6dee73312127c9f1a8e53d6bfcf14993",
+      "rows": 4,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 10,
+  "totalRows": 292,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

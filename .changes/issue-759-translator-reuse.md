@@ -1,0 +1,1 @@
+- Document the reusable bulk Rust-to-meta-to-JavaScript/TypeScript pipeline, separate executable bodies from constructor and projection evidence, and describe current checked capabilities, refusals and portable validation commands.

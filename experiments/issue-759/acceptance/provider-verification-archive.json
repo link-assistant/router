@@ -1,0 +1,26 @@
+{
+  "head": "db1a1bc1973ea8e2496c07c68abe59b9a47bbbb8",
+  "archive": "provider-verification-raws.tar.gz",
+  "sha256": "71904aa7d46a25928dac78dd3558d7b15c232aaea607c5a6b0b670c31e838111",
+  "compressed_bytes": 19974,
+  "full_raw_bytes": 126799,
+  "reopened_member_hashes": {
+    "prerequisites.json": "cb69ef14741e7420d9f36f6be9be3188bc74b0c67c8280ba2178f24a48411412",
+    "provider42/bun.log": "23ca0c4ac8bd7cb8157906809704c5871e83d0b9a2b8d3a8b4b43b74c2c750b7",
+    "provider42/harness.py": "4ba65d4844c6443b44e70fb2a28b8ac106060b6f00dfa94ca56c551c94279fd0",
+    "provider42/inputs.json": "4a1adc821c845cb941bcbbc749f4d2cfbbcd0fea7b55fec245187383b23e257c",
+    "provider42/node.log": "8fdf48b6c3d93fd34afa2e64d2e10a799ae61333b929322a28f1907c64276960",
+    "provider42/receipt.json": "4851d403b2ed4dff3a89df3f21b59ad1f221991e2f9379ef37dd456ec0c7f1b1",
+    "related63/bun.log": "46adf176c55a5dc5795b9ee39cfa665cb0e40144025b1a722cad8ea98166cec3",
+    "related63/harness.py": "1c32c192657827adb3617a5ae956217c8157e9e9dadcad32e3a5c733e2b41159",
+    "related63/inputs.json": "97c6a550bbd03543f955a9263610b6a309ff86b08e1f36956089e2c5fb063743",
+    "related63/node.log": "8363f256d093c4eac3b66b135ba5848b5517a68462e61f7963865c9574461a11",
+    "related63/receipt.json": "5e24ac8a29b881b98c19766b5fd5afb786efa31bb62a41502242879c19f60803"
+  },
+  "scopes": {
+    "provider42": 42,
+    "related63": 63
+  },
+  "lossless": true,
+  "universal_rust_parity": false
+}

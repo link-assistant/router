@@ -1,0 +1,146 @@
+{
+  "schema": "router-759-coherent-complete-repair-pair-archive-v1",
+  "testedHead": "2b5a2c5b4913a95966d0f149cca413a441eebc03",
+  "casesPerEngine": 682,
+  "counts": {
+    "node": {
+      "tests": 682,
+      "pass": 682,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "bun": {
+      "pass": 682,
+      "fail": 0,
+      "skipped": 0,
+      "tests": 682,
+      "cancelled": null,
+      "todo": null
+    }
+  },
+  "passed": true,
+  "bothTerminal": true,
+  "timedOut": false,
+  "sourceInputs": 1910,
+  "sourceInputsUnchanged": true,
+  "runtimeParity": false,
+  "rustExecutions": 0,
+  "members": [
+    {
+      "name": "router-759-coherent-repair-packet-builder-v10.py",
+      "bytes": 10647,
+      "sha256": "ca93b3a6b45a87be904cc51d0b31883f015eeae4396ff251af5de426b98f5063",
+      "originalPath": "/tmp/router-759-coherent-repair-packet-builder-v10.py"
+    },
+    {
+      "name": "router-759-coherent-2b5a2c-pair-run-v10.py",
+      "bytes": 8256,
+      "sha256": "d351840a9021b1d414c52025b124e61851f4460d146e9b965d7e149ec52f8d92",
+      "originalPath": "/tmp/router-759-coherent-2b5a2c-pair-run-v10.py"
+    },
+    {
+      "name": "router-759-coherent-2b5a2c-repair-plan.json",
+      "bytes": 27115,
+      "sha256": "bf86a82907c9f2dd88833bd1aafa5dfea56e1714d2f39ab004706d98b760a703",
+      "originalPath": "/tmp/router-759-coherent-2b5a2c-repair-plan.json"
+    },
+    {
+      "name": "router-759-coherent-2b5a2c-repair-inputs.json",
+      "bytes": 414733,
+      "sha256": "9c27099aa24587aa522d2e54ac8c2b87d04dc01c94e55de69e3c331e01154735",
+      "originalPath": "/tmp/router-759-coherent-2b5a2c-repair-inputs.json"
+    },
+    {
+      "name": "router-759-coherent-2b5a2c-repair-fingerprints.json",
+      "bytes": 110546,
+      "sha256": "8a04a6332c21277fb970e53ddb359b88b423bd66b2c87a91df20028b3bccd9d4",
+      "originalPath": "/tmp/router-759-coherent-2b5a2c-repair-fingerprints.json"
+    },
+    {
+      "name": "router-759-coherent-2b5a2c-direct-source-audit.json",
+      "bytes": 642,
+      "sha256": "6c5a8ac2dcb7197aacf8b56a47dbed70360c05b445a2d00fac4514d614ac9d37",
+      "originalPath": "/tmp/router-759-coherent-2b5a2c-direct-source-audit.json"
+    },
+    {
+      "name": "router-759-coherent-2b5a2c-complete-failures-v1.json",
+      "bytes": 774,
+      "sha256": "3bc02d69faef92542068a210f364e5bfc653acf67141c4891e0b04614f7f1af9",
+      "originalPath": "/tmp/router-759-coherent-2b5a2c-complete-failures-v1.json"
+    },
+    {
+      "name": "router-759-coherent-repair-eight-direct-git-v1.json",
+      "bytes": 4124,
+      "sha256": "4b1bd78bd41b35e2a9cb614854f3f28c4b406a032d566339a01b5f262cfc80c7",
+      "originalPath": "/tmp/router-759-coherent-repair-eight-direct-git-v1.json"
+    },
+    {
+      "name": "router-759-canonical-be19f5-direct-git-v1.json",
+      "bytes": 180,
+      "sha256": "5ca525226ea98cd54096a2b77e00da25e91881e18e0f8d286fc280a634969579",
+      "originalPath": "/tmp/router-759-canonical-be19f5-direct-git-v1.json"
+    },
+    {
+      "name": "router-759-coherent-repair-nine-archive-v1.py",
+      "bytes": 3229,
+      "sha256": "e1aa3d85c7af9d3563f6b454f3f3b02ab719df3b50827a0d931ab08703dbf96f",
+      "originalPath": "/tmp/router-759-coherent-repair-nine-archive-v1.py"
+    },
+    {
+      "name": "router-759-corrected-let-chain-focused-v1.raw.log",
+      "bytes": 1305,
+      "sha256": "03df9a517b74fc18c1c3321eec1bf58c9ddb72098819e349deb9e428c089e933",
+      "originalPath": "/tmp/router-759-corrected-let-chain-focused-v1.raw.log"
+    },
+    {
+      "name": "router-759-corrected-let-chain-focused-v1.json",
+      "bytes": 303,
+      "sha256": "97b17a82ceabfbce5b1772e33c49673286f056399ca5ef5679e53e9176e0cead",
+      "originalPath": "/tmp/router-759-corrected-let-chain-focused-v1.json"
+    },
+    {
+      "name": "router-759-coherent-2b5a2c5b4-repair-nine-preflight.json",
+      "bytes": 5444,
+      "sha256": "233fbd6c9606bad2e65232ae040005876ef5b693c50cabbc23d5cb7cbea5a096",
+      "originalPath": "/tmp/router-759-coherent-2b5a2c5b4-repair-nine-preflight.json"
+    },
+    {
+      "name": "router-759-coherent-2b5a2c5b4-repair-nine-node.raw.log",
+      "bytes": 167603,
+      "sha256": "85e879b0b021cdf501a4414bd0c705e086836f6e35b2bf37040b44afbb1d903b",
+      "originalPath": "/tmp/router-759-coherent-2b5a2c5b4-repair-nine-node.raw.log"
+    },
+    {
+      "name": "router-759-coherent-2b5a2c5b4-repair-nine-node-receipt.json",
+      "bytes": 6423,
+      "sha256": "8a5ba2c19498592cc175fa9aa4b93066cad04c949aee2a825320f5ad409c6828",
+      "originalPath": "/tmp/router-759-coherent-2b5a2c5b4-repair-nine-node-receipt.json"
+    },
+    {
+      "name": "router-759-coherent-2b5a2c5b4-repair-nine-bun.raw.log",
+      "bytes": 85927,
+      "sha256": "d536202d3fde5dda86d46aad027862f0161565c25ae9961ed053e4f96b46230f",
+      "originalPath": "/tmp/router-759-coherent-2b5a2c5b4-repair-nine-bun.raw.log"
+    },
+    {
+      "name": "router-759-coherent-2b5a2c5b4-repair-nine-bun-receipt.json",
+      "bytes": 6456,
+      "sha256": "b0a9d8e43e470631f9b2bc7517278905360666198a021698621f1085a24e5001",
+      "originalPath": "/tmp/router-759-coherent-2b5a2c5b4-repair-nine-bun-receipt.json"
+    },
+    {
+      "name": "router-759-coherent-2b5a2c5b4-repair-nine-summary.json",
+      "bytes": 14339,
+      "sha256": "31b692f9f21f304c6e299068633086e3e2aec153be489906895971851c23280f",
+      "originalPath": "/tmp/router-759-coherent-2b5a2c5b4-repair-nine-summary.json"
+    }
+  ],
+  "archive": {
+    "path": "docs/case-studies/issue-759/current/coherent-2b5a2c-repair-nine/complete-repair-nine.tar.xz",
+    "bytes": 135376,
+    "sha256": "e1ca25976573927db5a0247b9391807549060e9bbb98e321a14e1a3d6992205b"
+  },
+  "directGitFullBytesVerification": "required after commit before any original cleanup"
+}

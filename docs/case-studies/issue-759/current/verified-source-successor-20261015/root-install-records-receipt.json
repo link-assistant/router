@@ -1,0 +1,229 @@
+{
+  "schema": "complete-root-install-records-v1",
+  "archive": "root-install-records.tar.gz",
+  "bytes": 1161819,
+  "sha256": "ffee720abd9f3555bc43ee4c59cd69c2d6c1ef296a5249f0efec7f76ab69cbfa",
+  "members": [
+    {
+      "path": "root-install-records/before.json",
+      "bytes": 365,
+      "sha256": "64ce57b9a3d14e0cd49f84f4ba6587ccb437caac7e00e722f30221ff4944d712"
+    },
+    {
+      "path": "root-install-records/measure-absent.json",
+      "bytes": 9320199,
+      "sha256": "9d5c3b0a179591b98044792503682ff48e2b12e83fe351901351269af94ade51"
+    },
+    {
+      "path": "root-install-records/measure-before.command.json",
+      "bytes": 495,
+      "sha256": "daddfaa2b2147bd8d000894e7d8e99c00822718ac4013559b42cfc98f421e589"
+    },
+    {
+      "path": "root-install-records/measure-absent.command.json",
+      "bytes": 497,
+      "sha256": "445df4a39853c1147f7d8c21290101df237155812684a78fb3fd283d74e36343"
+    },
+    {
+      "path": "root-install-records/measure-before.json",
+      "bytes": 9320199,
+      "sha256": "9d5c3b0a179591b98044792503682ff48e2b12e83fe351901351269af94ade51"
+    },
+    {
+      "path": "root-install-records/measure-installed.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "root-install-records/old-present.command.json",
+      "bytes": 720,
+      "sha256": "c05a5d708f50fbaef56aac8d3ba1a01f8c78a9fef017bc856ab0808d53cfd8ea"
+    },
+    {
+      "path": "root-install-records/ci-before.json",
+      "bytes": 1087,
+      "sha256": "b16411f1e23073edb45d6fea4cf647d8aee68977bb6d65c734d1535c2d1e6e5b"
+    },
+    {
+      "path": "root-install-records/measure-installed.command.json",
+      "bytes": 501,
+      "sha256": "13eec40b455e7ba1e3b414bc221802e440674512f661f144c50927c1d3c71ca4"
+    },
+    {
+      "path": "root-install-records/old-present.stdout.raw.log",
+      "bytes": 233,
+      "sha256": "640bec60e18e89b35de8bc78e61efd72815a9a1f6897b0517a41af4f18ff30db"
+    },
+    {
+      "path": "root-install-records/old-absent-aliases.json",
+      "bytes": 374,
+      "sha256": "c9a801983f5e6d424242ded8eb7c44629d675547a34d5d23ff5f3a1f3e5e4300"
+    },
+    {
+      "path": "root-install-records/ci-absent.json",
+      "bytes": 1087,
+      "sha256": "065566ecc9981b5186ef614bb43d114bfa5c29c9ff7d7b1061d3c8a8b4aae5c7"
+    },
+    {
+      "path": "root-install-records/old-absent.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "root-install-records/ci-absent.command.json",
+      "bytes": 637,
+      "sha256": "be510b405c13d4c1c32d08f0b0f550d9f97fbc78e2d67dfa7bbef31dc48ca491"
+    },
+    {
+      "path": "root-install-records/original-index.json",
+      "bytes": 517,
+      "sha256": "e4060b9e756e94fdf046c85e6f495b9bf3c42e0ffa9f73df714d83bd0e7242f3"
+    },
+    {
+      "path": "root-install-records/ci-before.command.json",
+      "bytes": 637,
+      "sha256": "4c916f54ba37805e0ce527d8d2b5600bbf89bc2fff3b719c89a24ffc55163c4e"
+    },
+    {
+      "path": "root-install-records/measure-absent.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "root-install-records/measure-before.stdout.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "root-install-records/ci-absent.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "root-install-records/ci-installed.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "root-install-records/ci-before.stdout.raw.log",
+      "bytes": 1003,
+      "sha256": "8648ad3fcb9b61d71a1556bb2d2d71ab8c07e8836f9477b696db3285c1643f1f"
+    },
+    {
+      "path": "root-install-records/old-absent.stdout.raw.log",
+      "bytes": 233,
+      "sha256": "640bec60e18e89b35de8bc78e61efd72815a9a1f6897b0517a41af4f18ff30db"
+    },
+    {
+      "path": "root-install-records/old-present.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "root-install-records/measure-installed.stdout.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "root-install-records/measure-installed.json",
+      "bytes": 9320199,
+      "sha256": "9d5c3b0a179591b98044792503682ff48e2b12e83fe351901351269af94ade51"
+    },
+    {
+      "path": "root-install-records/ci-installed.json",
+      "bytes": 1087,
+      "sha256": "4086b24e1a6ad95c8770dee3caca8b4a1711bce9c2c1df3e2126d220490ae52a"
+    },
+    {
+      "path": "root-install-records/old-present-aliases.json",
+      "bytes": 374,
+      "sha256": "c9a801983f5e6d424242ded8eb7c44629d675547a34d5d23ff5f3a1f3e5e4300"
+    },
+    {
+      "path": "root-install-records/ci-absent.stdout.raw.log",
+      "bytes": 1003,
+      "sha256": "e0dfdeddd07c4b1ff596d36636ba35d6ca75eb0a70afe3284fb7f485994b337c"
+    },
+    {
+      "path": "root-install-records/ci-before.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "root-install-records/ci-installed.stdout.raw.log",
+      "bytes": 1003,
+      "sha256": "7ab034f35036569938bf0c541272c511244b1ea570dad8ddc92427f7cf6693e9"
+    },
+    {
+      "path": "root-install-records/installation-receipt.json",
+      "bytes": 849,
+      "sha256": "d50fba61a7a328ac69d3276a47d741ddaa17e086f91eca52c2c1f1f9397769fb"
+    },
+    {
+      "path": "root-install-records/ci-installed.command.json",
+      "bytes": 640,
+      "sha256": "4ffc92a15bf080e9de2a9a77a58096908fe000d1bb0210c69c9f5f0189531bd0"
+    },
+    {
+      "path": "root-install-records/complete-controls.json",
+      "bytes": 104,
+      "sha256": "a730a240dcebb18472717240192e15d989a3cf8fc6297b81eb40e7810017dd5b"
+    },
+    {
+      "path": "root-install-records/measure-absent.stdout.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "root-install-records/old-absent.command.json",
+      "bytes": 720,
+      "sha256": "d11ce1020a23ea55c875b8d103a57de3a3896763f116cbc3f9d3e721a829ec4d"
+    },
+    {
+      "path": "root-install-records/complete-source-witnesses.json",
+      "bytes": 173,
+      "sha256": "8245ef118847c147f8bb0714076ce6a7464fb96873026e59d0a363b74e3490e2"
+    },
+    {
+      "path": "root-install-records/measure-before.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "root-install-script/apply.py",
+      "bytes": 17515,
+      "sha256": "6b9e66900debe74241ef9106491fa66f5c7b1aa9d42cea45d64114ea62b4e5e5"
+    },
+    {
+      "path": "root-install-script/install-plan.json",
+      "bytes": 9413,
+      "sha256": "7cb4f6cf79f1fe6e848e82fb55b7d95917dedc9b986047323ddd0ef9d50c1176"
+    },
+    {
+      "path": "root-install-script/packet-git-index.previous.json",
+      "bytes": 517,
+      "sha256": "e4060b9e756e94fdf046c85e6f495b9bf3c42e0ffa9f73df714d83bd0e7242f3"
+    },
+    {
+      "path": "root-install-script/packet-git-index.successor.json",
+      "bytes": 969,
+      "sha256": "9787e8456097b2b48d99fddec907b0c93375227049a5cbe509ac9e1194a26d54"
+    },
+    {
+      "path": "root-install-script/prepared-script-receipt.json",
+      "bytes": 1235,
+      "sha256": "b4ee4fe3f51419d27b424b476d5cf5557f7d5846532c319092cbed1a54ee0f75"
+    },
+    {
+      "path": "root-install-script/README.md",
+      "bytes": 2644,
+      "sha256": "7aa2293cd00697d7ded74cb0c91d6c92f75cfbb0fb4c33eb2475803426d9bd96"
+    }
+  ],
+  "allMembersReopened": true,
+  "originalsDeleted": false,
+  "sourceHead": "0b758f75e20e86272566fe4b1211f311b1d5c5e0",
+  "capBytes": 500000000,
+  "runtimeParity": false,
+  "fullGatePass": false
+}

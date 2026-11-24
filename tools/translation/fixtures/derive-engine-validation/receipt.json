@@ -1,0 +1,124 @@
+{
+  "schema": "focused-derive-declarative-validation-v1",
+  "baseline": "2eaf8531e",
+  "initial": {
+    "node": {
+      "pass": 19,
+      "fail": 3,
+      "cases": 22
+    },
+    "bun": {
+      "pass": 19,
+      "fail": 3,
+      "errors": 1,
+      "cases": 22
+    },
+    "unreachableEngineCases": 9
+  },
+  "retry": {
+    "node": {
+      "pass": 29,
+      "fail": 1,
+      "cases": 30
+    },
+    "bun": {
+      "pass": 29,
+      "fail": 1,
+      "cases": 30
+    }
+  },
+  "final": {
+    "node": {
+      "pass": 30,
+      "fail": 0,
+      "skip": 0,
+      "milliseconds": 6107.851959
+    },
+    "bun": {
+      "pass": 30,
+      "fail": 0,
+      "skip": 0,
+      "seconds": 3.68
+    }
+  },
+  "logs": [
+    {
+      "phase": "initial",
+      "runtime": "node",
+      "path": "initial-node.log",
+      "bytes": 9192,
+      "sha256": "65d6c8664af735dbc7da32c2609bc4ea002d2f9550a28d358a63d35d3421cf07"
+    },
+    {
+      "phase": "initial",
+      "runtime": "bun",
+      "path": "initial-bun.log",
+      "bytes": 7516,
+      "sha256": "ed31dd62c23af29f83c77833f1ae8c607dda78c29dea18689059ec1a3411d188"
+    },
+    {
+      "phase": "retry",
+      "runtime": "node",
+      "path": "retry-node.log",
+      "bytes": 8630,
+      "sha256": "1046f6320a99984f1da7333246d213e0d01875790a10bb17719ecda64d166482"
+    },
+    {
+      "phase": "retry",
+      "runtime": "bun",
+      "path": "retry-bun.log",
+      "bytes": 5396,
+      "sha256": "ef8205da3b5bd1912f802055e253bf3657bd923bab2d14b112cfce387e6e9a37"
+    },
+    {
+      "phase": "fixed",
+      "runtime": "node",
+      "path": "fixed-node.log",
+      "bytes": 7164,
+      "sha256": "fd19fe401c2ad1ea55e86b6971cda8f4cb494b7e12c8d294e19313b2c72f5604"
+    },
+    {
+      "phase": "fixed",
+      "runtime": "bun",
+      "path": "fixed-bun.log",
+      "bytes": 3655,
+      "sha256": "3512f28ef7d2b5274b29f054e0544a0dbe44492ed5a9ab3d03e0c25930963934"
+    }
+  ],
+  "sourceHashes": {
+    "tools/translation/declarative-macros.mjs": "8a0fdfaca2441e4f3f218a9c094f12f221415397556f61072b8fecfd453f02a5",
+    "tools/translation/macro-token-trees.mjs": "5fccc9130afcf0fe0828b53dc4ac197758a62b8aa089f3435f66131a1ea63af6",
+    "tools/translation/macro-fragments.mjs": "b5aca30799f19ea8bc288fae25fe7529ba1236e7d08af1c61c3f257d0fa1dd45",
+    "tools/translation/declarative-source-profile.mjs": "8e85dd9b0d7e78afff908efb42f813d305c8c2c69594df47df72d881ff35bf4b",
+    "tools/translation/source-profiles/declarative/manifest.json": "f1b0582e049761c844aca326c25cfe8577e679210026a27e6b8b4162d35a7ee9",
+    "tools/translation/test/declarative-macros.test.mjs": "5e6a6cba87db2d55519501b6d10d7e7d5587c6fc0c229249f64d9dce250036eb",
+    "tools/translation/test/derive-helper-originals.test.mjs": "e82e962525e9ed856160bd20a08b52ed897f0b28815090700bceac7b8a22cd41",
+    "tools/translation/fixtures/derive-helper-originals.json": "8d7cdcf57c7d351369be673b6703044e481c15683f92af1ff0b3e011e2adbe34",
+    "tools/translation/test/derive-helper-paths.test.mjs": "555c37024468d02a6129e273f7c3c762b0a13e8893c90a309bae1c2c4b776750"
+  },
+  "originalEvidence": {
+    "newWholeFileCheckedMethods": [
+      "ProviderProvisionFailure.kind",
+      "BridgeModelPolicy.name",
+      "SelectionStrategy.from_str_opt"
+    ],
+    "literalOutcomes": 14,
+    "hostileDomainRejections": 3,
+    "retainedWholeFileMethods": [
+      "ResponseNamespace.from_path",
+      "ResponseNamespace.conversations_from_path"
+    ],
+    "retainedReason": "unresolved original inner lint attribute owner and source scope",
+    "tokioOriginalInvocations": 7,
+    "standardPlatformLeafTranscribers": 3,
+    "targetSelected": false
+  },
+  "limits": {
+    "corpusGenerated": false,
+    "rustExecuted": false,
+    "generatedTraitBehavior": false,
+    "macroOwnerVerified": false,
+    "macroNamespaceComplete": false,
+    "runtimeParity": false
+  }
+}

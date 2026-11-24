@@ -1,0 +1,1 @@
+- Add stable recursive TypeScript algebraic aliases and serializable checked value schemas for the automated translator. Validate exact constructor fields, Unicode strings, BigInt ranges, shared acyclic values and explicit refinements while rejecting cycles, sparse arrays and accessor properties.

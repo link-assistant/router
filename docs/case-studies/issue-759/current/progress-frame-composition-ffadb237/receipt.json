@@ -1,0 +1,162 @@
+{
+  "schema": "router-759-publisher-progress-frame-222-validation-v1",
+  "verifiedSourceHead": "ffadb2370346fbc28f40786291072c320776c58a",
+  "files": 30,
+  "testsPerEngine": 222,
+  "results": {
+    "node": {
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedSeconds": 87.08598604192957,
+      "inputsUnchanged": true,
+      "stateUnchanged": true,
+      "engineVersion": "v20.19.4",
+      "resource": {
+        "scope": "Python waited harness children; descendant accounting as provided by RUSAGE_CHILDREN; maximum RSS is maximum recorded child, not aggregate concurrent memory",
+        "userCpuSeconds": 128.42684799999998,
+        "systemCpuSeconds": 10.902016,
+        "maxRss": 206848000,
+        "maxRssUnits": "bytes on Darwin; KiB on Linux",
+        "platform": "Darwin"
+      },
+      "freeBytesBefore": 37337665536,
+      "freeBytesAfter": 37335625728
+    },
+    "bun": {
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedSeconds": 54.29480366688222,
+      "inputsUnchanged": true,
+      "stateUnchanged": true,
+      "engineVersion": "1.4.3",
+      "resource": {
+        "scope": "Python waited harness children; descendant accounting as provided by RUSAGE_CHILDREN; maximum RSS is maximum recorded child, not aggregate concurrent memory",
+        "userCpuSeconds": 102.90803600000001,
+        "systemCpuSeconds": 11.263269,
+        "maxRss": 329809920,
+        "maxRssUnits": "bytes on Darwin; KiB on Linux",
+        "platform": "Darwin"
+      },
+      "freeBytesBefore": 37335617536,
+      "freeBytesAfter": 37318701056
+    }
+  },
+  "sourceInputCount": 1819,
+  "sourceInputSha256": "d389db398ebb782869a6480264a2f642408b49c4b14ce579693511ffc0df3ec7",
+  "originalRustCargoUnchanged": true,
+  "archive": {
+    "path": "docs/case-studies/issue-759/current/progress-frame-composition-ffadb237/complete-focused.tar.xz",
+    "bytes": 103264,
+    "sha256": "d8b3a391db159a2593fbe5e13485bbf46e857b4327445c2674e16ca37465111e",
+    "tarBytes": 552960,
+    "tarSha256": "72157cd86d3f2c84a71cb8ca517ca793b3aaa814f8f9eb7df60797cb389adf6e",
+    "entries": 15
+  },
+  "members": [
+    {
+      "name": "router-759-publisher-progress-frame222-ffadb2370-inputs.json",
+      "originalPath": "/tmp/router-759-publisher-progress-frame222-ffadb2370-inputs.json",
+      "bytes": 394320,
+      "sha256": "c245dad3e3a95129677be5f29694a445158a13b3bc3138a51edf74e301f314d6"
+    },
+    {
+      "name": "router-759-publisher-progress-frame222-ffadb2370-node.raw.log",
+      "originalPath": "/tmp/router-759-publisher-progress-frame222-ffadb2370-node.raw.log",
+      "bytes": 52655,
+      "sha256": "bd4a647652dd66b10f0950a117a31cf55e4f68dc856543f65200d855ec89287b"
+    },
+    {
+      "name": "router-759-publisher-progress-frame222-ffadb2370-node-receipt.json",
+      "originalPath": "/tmp/router-759-publisher-progress-frame222-ffadb2370-node-receipt.json",
+      "bytes": 3313,
+      "sha256": "d216096e7fb9cc8524565d4a1d1e1d0360bac5ec830b442e4d4429890f23bd16"
+    },
+    {
+      "name": "router-759-publisher-progress-frame222-ffadb2370-bun.raw.log",
+      "originalPath": "/tmp/router-759-publisher-progress-frame222-ffadb2370-bun.raw.log",
+      "bytes": 25548,
+      "sha256": "e7e51f032608e5b37d3634ecfe6c34d82a6075ff8fbe038f6f0c2108215916c4"
+    },
+    {
+      "name": "router-759-publisher-progress-frame222-ffadb2370-bun-receipt.json",
+      "originalPath": "/tmp/router-759-publisher-progress-frame222-ffadb2370-bun-receipt.json",
+      "bytes": 3226,
+      "sha256": "6f0d500eccad847955032d89270f29c4af30149a457e010ad00d107417698fa4"
+    },
+    {
+      "name": "router-759-publisher-progress-private-frame222-run-v1.py",
+      "originalPath": "/tmp/router-759-publisher-progress-private-frame222-run-v1.py",
+      "bytes": 5983,
+      "sha256": "8bbba0292a060b31e12d137ea87ee90bf173741b989fb5a33ef9fa0ebd8ba065"
+    },
+    {
+      "name": "router-759-publisher-progress-private-frame222-run-v2.py",
+      "originalPath": "/tmp/router-759-publisher-progress-private-frame222-run-v2.py",
+      "bytes": 6816,
+      "sha256": "0cf56c2f7adc9ffaa555454e3f7df537d521d01679dc2f951afcb67bbd4db63c"
+    },
+    {
+      "name": "router-759-publisher-progress-private-frame222-run-v3.py",
+      "originalPath": "/tmp/router-759-publisher-progress-private-frame222-run-v3.py",
+      "bytes": 6938,
+      "sha256": "498a12906e8d3ee0e08ed7109bc4baac4d60b1f649512d4fedb897d20990894f"
+    },
+    {
+      "name": "router-759-bounded-cohort-producer-v3.py",
+      "originalPath": "/tmp/router-759-bounded-cohort-producer-v3.py",
+      "bytes": 4440,
+      "sha256": "7d3e9b3fc3d426ee87053ad80a9bdd0ff2a93193c10da02fdeb5b09e41c99102"
+    },
+    {
+      "name": "router-759-bounded-cohort-producer-v4.py",
+      "originalPath": "/tmp/router-759-bounded-cohort-producer-v4.py",
+      "bytes": 4630,
+      "sha256": "b2382571382dfdf0645da678ae4fb5b38986c70205ab1537dda95b04783b49d0"
+    },
+    {
+      "name": "router-759-bounded-cohort-producer-v5.py",
+      "originalPath": "/tmp/router-759-bounded-cohort-producer-v5.py",
+      "bytes": 4663,
+      "sha256": "c6cba8fa9c639467353f8de9e874596fae0f1e6bdb423298fedc9be8c304ab43"
+    },
+    {
+      "name": "router-759-gate-progress-frame-source-composition-v1.json",
+      "originalPath": "/tmp/router-759-gate-progress-frame-source-composition-v1.json",
+      "bytes": 5115,
+      "sha256": "079093141d2283617c1a9d1ed8ed239e1a70544f16f405fadbe247af1a04571e"
+    },
+    {
+      "name": "router-759-gate-progress-frame-final-integration.json",
+      "originalPath": "/tmp/router-759-gate-progress-frame-final-integration.json",
+      "bytes": 4380,
+      "sha256": "4bcbfea05c892fd360b034997bfdc2b5db71b4e2d5d3bf44cb61297af5776855"
+    },
+    {
+      "name": "router-759-gate-private-parser-frame-218-direct-git-check.json",
+      "originalPath": "/tmp/router-759-gate-private-parser-frame-218-direct-git-check.json",
+      "bytes": 6890,
+      "sha256": "df78970b87640cbe8412493965af0c4c9b462988817e2151556d2e64438b02d8"
+    },
+    {
+      "name": "router-759-gate-progress-f040-direct-git-check.json",
+      "originalPath": "/tmp/router-759-gate-progress-f040-direct-git-check.json",
+      "bytes": 3399,
+      "sha256": "9ccbcfb59d2ea104e74d783f188ac496d7a6d2026496cea018abdc9087c2bc54"
+    }
+  ],
+  "reopenErrors": 0,
+  "originalByteComparisonErrors": 0,
+  "preservedEarlierGuard217Of218AndSuccessful218Evidence": "tools/translation/fixtures/source-method-validation/private-parser-frame-218.json.gz",
+  "preservedProgress215Evidence": "docs/case-studies/issue-759/current/translation-progress-8e7c1bd3/complete-focused.tar.xz",
+  "sourceOnlyUnrunHarnessVersions": [
+    "publisher-v1",
+    "publisher-v2",
+    "producer-v3",
+    "producer-v4",
+    "producer-v5"
+  ],
+  "repositoryCorpusProducerRuns": 0,
+  "runtimeParity": false,
+  "rustExecuted": false,
+  "futureCargo413AndFrom75Excluded": true
+}

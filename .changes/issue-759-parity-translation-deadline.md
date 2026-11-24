@@ -1,0 +1,1 @@
+- Keep deterministic Rust draft freshness checks mandatory with a bounded 180-second subprocess deadline and explicit elapsed, signal, killed and exit diagnostics for inventory failures.

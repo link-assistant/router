@@ -1,0 +1,90 @@
+{
+  "schema": "focused-serde-success-frontier-validation-v1",
+  "sourceHead": "25fed4675",
+  "ownQueue": [
+    "25fed4675"
+  ],
+  "runners": {
+    "node": {
+      "cases": 18,
+      "pass": 18,
+      "fail": 0,
+      "skip": 0,
+      "milliseconds": 351.671792
+    },
+    "bun": {
+      "cases": 18,
+      "pass": 18,
+      "fail": 0,
+      "skip": 0,
+      "milliseconds": 212.0
+    }
+  },
+  "groups": {
+    "newFrontier": 3,
+    "relatedDeriveFootprints": 6,
+    "relatedDeclarativeEngine": 9
+  },
+  "initialEqualsFinal": true,
+  "repairsRequired": false,
+  "logs": [
+    {
+      "runtime": "node",
+      "initialAndFinal": "initial-final-node.log",
+      "bytes": 4512,
+      "sha256": "7f61d9be67058e5c249bbdd9f501c1ec3663b5edad787854b88beaffbfc1c839",
+      "compressed": "initial-final-node.log.gz",
+      "compressedBytes": 1223,
+      "compressedSha256": "4dd7d44873f89176991edf03bc680d38e89bdf4ef06f584158225881d71d7c63",
+      "reopenedSha256": "7f61d9be67058e5c249bbdd9f501c1ec3663b5edad787854b88beaffbfc1c839"
+    },
+    {
+      "runtime": "bun",
+      "initialAndFinal": "initial-final-bun.log",
+      "bytes": 2246,
+      "sha256": "e1e69a69f3681b60ed02e52019b1ad1d8f06c8a0d808ea188a45628a90a4f7f4",
+      "compressed": "initial-final-bun.log.gz",
+      "compressedBytes": 1023,
+      "compressedSha256": "bcda59abaece37ae94e64045d369abf80d923cce7a6b627eaba1cab86a56061c",
+      "reopenedSha256": "e1e69a69f3681b60ed02e52019b1ad1d8f06c8a0d808ea188a45628a90a4f7f4"
+    }
+  ],
+  "sourceHashes": {
+    "tools/translation/derive-success-frontier.mjs": "32609102300d22c581a1d81c4e1aab4c2b937b5d596f058d3303cc605c46ce61",
+    "tools/translation/derive-dependencies.mjs": "2e97fe779526630db073e8674853b576e53cd4c264120265b94f7e5c835aae92",
+    "tools/translation/derive-footprints.mjs": "fbaa633205000d895257ac518795515e45a9336799f3ddd1688867a5fec7c865",
+    "tools/translation/declarative-macros.mjs": "6c62a6efd666da1c6eb37cd4acef92a29048b8011f57c5bbd61d1b1d3402359a",
+    "tools/translation/macro-token-trees.mjs": "5fccc9130afcf0fe0828b53dc4ac197758a62b8aa089f3435f66131a1ea63af6",
+    "tools/translation/bulk.mjs": "ee0aaeb91f2c268a69921e4593517ff536d54afd95862b433aec16a64d7829b8",
+    "tools/translation/test/derive-success-frontier.test.mjs": "cb68782dd16e2c3a1762ce33928aabaf0016b08e584067b79031b85c3bbeac1b",
+    "tools/translation/test/derive-footprints.test.mjs": "92ae630cc0acf44f7b27356e083f7bb5dac5a39b5b09ac27405ac7e691f44006",
+    "tools/translation/test/declarative-macros.test.mjs": "5e6a6cba87db2d55519501b6d10d7e7d5587c6fc0c229249f64d9dce250036eb"
+  },
+  "sourceProfileHashes": {
+    "tools/translation/source-profiles/derive/NOTICE.md": "26e526c9d4a1532c4e1c015ad80a0b1af4e1c1e12707abafba11e32de20c46bf",
+    "tools/translation/source-profiles/derive/builtin-default-manifest.json": "c0155dfa01d1491c6dbe6df6e7f752a8dad1d87a70b0689370e8198bb1dd2bde",
+    "tools/translation/source-profiles/derive/manifest.json": "cff7ffcc14120b11613e77d4c384f77c9d34f30cf7f782e098bce23dc3a8925b",
+    "tools/translation/source-profiles/derive/proc-macro2-1.0.107.crate": "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9",
+    "tools/translation/source-profiles/derive/quote-1.0.47.crate": "1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001",
+    "tools/translation/source-profiles/derive/rust-1.89-default-compiler_rustc_builtin_macros_src_deriving_default.rs.gz": "56b9c7ced9506f0c525389099352015e8b273a35eba9f46b5bb350533151999c",
+    "tools/translation/source-profiles/derive/rust-1.89-default-compiler_rustc_builtin_macros_src_deriving_generic_mod.rs.gz": "fdbd49260d1cb63d483593b68301b4148a7c6734f5765d62901b1cc355b9c92b",
+    "tools/translation/source-profiles/derive/rust-1.89-default-library_core_src_default.rs.gz": "8c61d6172846164659de1be4d0fd0bb67b04daa349918f400546f5fd5084a79e",
+    "tools/translation/source-profiles/derive/rust-core-macros-1.89.0.rs.gz": "8506fde0d40b33c2336337b7282358b44f09a010434807b6e0e06d7a896ab49e",
+    "tools/translation/source-profiles/derive/schemars-1.2.2.crate": "687274d293b6cdc6e73e0fee520bf2049650090d7164f87672d212a3c530cf4a",
+    "tools/translation/source-profiles/derive/schemars_derive-1.2.2.crate": "d98c67716b46af2f0b8cf752abc930f6f9aecfbf671ecfb531db8a31dbe4e2ba",
+    "tools/translation/source-profiles/derive/serde-1.0.229.crate": "4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba",
+    "tools/translation/source-profiles/derive/serde_derive-1.0.229.crate": "e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348",
+    "tools/translation/source-profiles/derive/serde_derive_internals-0.30.0.crate": "f852137cce035d6a4df67ccce505ff6b3e9fd3a10e3e52b24dc71e650bb1a9bd",
+    "tools/translation/source-profiles/derive/syn-3.0.5.crate": "12df2e0110f65b775f769bb17ef989067a1d931b2eb822bd4346631eeada89f9"
+  },
+  "limits": {
+    "successfulBranchSelectionComplete": false,
+    "emittedQuoteClosureComplete": false,
+    "macroCallOwnerResolved": false,
+    "namespaceComplete": false,
+    "generatedImplBehavior": false,
+    "rustExecuted": false,
+    "productionRegenerated": false,
+    "published": false
+  }
+}

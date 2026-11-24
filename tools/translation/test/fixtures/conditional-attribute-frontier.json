@@ -1,0 +1,54 @@
+{
+  "schema": "original-conditional-attribute-frontier-v1",
+  "files": [
+    {
+      "path": "src/token_admin.rs",
+      "bytes": 19511,
+      "sha256": "c310d637422fd0334bbd709c47f2fbe8c8f6b345b1f9e77af17aff90a9269044",
+      "attributes": [
+        {
+          "literal": "#[cfg_attr(test, derive(serde::Serialize))]",
+          "span": {
+            "start": 17792,
+            "end": 17835
+          },
+          "sha256": "0c731fd1c33298a4ec1a42c809270c2efffeef1fc4f77344f79388d62c1aab3b"
+        }
+      ]
+    },
+    {
+      "path": "src/client_lifecycle/active.rs",
+      "bytes": 17870,
+      "sha256": "6429b7a699dc500b96f0b9b84fbf9364db604158d7ee4e41cdd133a03e9fbf07",
+      "attributes": [
+        {
+          "literal": "#![cfg_attr(windows, allow(dead_code))]",
+          "span": {
+            "start": 780,
+            "end": 819
+          },
+          "sha256": "f2c66f2d0474c70ec9f513e6a6a03ed64bc50943c7bf36a8413f56044d188c61"
+        },
+        {
+          "literal": "#[cfg_attr(target_os = \"linux\", allow(dead_code))]",
+          "span": {
+            "start": 9610,
+            "end": 9660
+          },
+          "sha256": "4255ec86dd94bef2083510797020b477535fd5007634e8e168aa3f4b33153fbe"
+        },
+        {
+          "literal": "#[cfg_attr(target_os = \"linux\", allow(dead_code))]",
+          "span": {
+            "start": 11146,
+            "end": 11196
+          },
+          "sha256": "4255ec86dd94bef2083510797020b477535fd5007634e8e168aa3f4b33153fbe"
+        }
+      ]
+    }
+  ],
+  "runtimeAuthority": false,
+  "namespaceAuthority": false,
+  "activeExpansionAuthority": false
+}

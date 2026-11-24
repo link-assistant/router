@@ -1,0 +1,237 @@
+// Additive source-only draft. Every result is DATA; private compiler checks stay
+// inside the original fresh planners. No cross-invocation source/verdict cache.
+import * as fs from 'node:fs';
+import {resolve} from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {types} from 'node:util';
+import {captureSourceUnitGitBaseline, resolveSourceUnitGitBaseline} from './source-unit-git-baseline.mjs';
+import {planUnitSynchronization} from './synchronize-owned-project-units.mjs';
+import {planForwardProjectUnitSynchronization} from './forward-project-unit-synchronization.mjs';
+import {readCurrentSourceProposalFile, installFreshAsyncSourceProposal} from './unit-runtime-materialization.mjs';
+import {transportConcreteSourceEquations} from './concrete-source-equations.mjs';
+import {transportConcreteSyntaxSource, transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
+import {repositoryRustLayout} from './repository-layout.mjs';
+
+const SCHEMA='router-paired-sync-bulk-20261101-v1';
+const LANGUAGES=['Rust','JavaScript','TypeScript'];
+const LIMIT=64*1024*1024, FILE=8*1024*1024, COUNT=4096;
+const need=(condition,message)=>{if(!condition)throw new TypeError('Paired sync bulk: '+message);};
+const order=(a,b)=>a<b?-1:a>b?1:0;
+function path(value){
+ need(typeof value==='string'&&value.length>0&&value.length<=4096&&!value.startsWith('/')&&!/[\\:\0\r\n]/u.test(value)&&value.split('/').every(part=>part&&part!=='.'&&part!=='..'),'canonical repository-relative path required');
+ return value;
+}
+function plain(value,keys){
+ need(value!==null&&typeof value==='object'&&!types.isProxy(value)&&Object.getPrototypeOf(value)===Object.prototype,'ordinary own DATA required');
+ need(Reflect.ownKeys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key)),'closed DATA fields required');
+ for(const key of keys){const item=Object.getOwnPropertyDescriptor(value,key);need(item&&Object.hasOwn(item,'value')&&item.enumerable,'own enumerable DATA fields required');}
+}
+function dense(value,min,max){
+ need(Array.isArray(value)&&!types.isProxy(value)&&Object.getPrototypeOf(value)===Array.prototype,'ordinary dense array required');
+ need(value.length>=min&&value.length<=max&&Reflect.ownKeys(value).length===value.length+1,'bounded dense array required');
+ for(let at=0;at<value.length;at++){const item=Object.getOwnPropertyDescriptor(value,String(at));need(item&&Object.hasOwn(item,'value')&&item.enumerable,'dense own array DATA required');}
+}
+function source(value){need(value===null||typeof value==='string'&&Buffer.byteLength(value)<=FILE,'bounded complete source or explicit absence required');return value;}
+function mode(value,text){need(text===null?value===null:[0o644,0o755].includes(value),'ordinary exact source mode required');return value;}
+const same=(a,b)=>a.source===b.source&&a.mode===b.mode;
+
+/** Bookkeeping only: equality never grants compiler, semantic or install authority. */
+export function inspectPairedSyncEdits(rows){
+ dense(rows,1,COUNT);const seen=new Set();let retained=0;
+ const records=rows.map(row=>{
+  plain(row,['path','language','baseline','current']);path(row.path);need(!seen.has(row.path),'duplicate source path');seen.add(row.path);need(LANGUAGES.includes(row.language),'known source language required');
+  for(const state of [row.baseline,row.current]){plain(state,['source','mode']);source(state.source);mode(state.mode,state.source);retained+=state.source===null?0:Buffer.byteLength(state.source);need(retained<=LIMIT,'whole edit byte limit');}
+  return {path:row.path,language:row.language,baseline:{...row.baseline},current:{...row.current}};
+ }).sort((a,b)=>order(a.path,b.path));
+ const edits=records.filter(row=>!same(row.baseline,row.current));
+ const changes=LANGUAGES.filter(language=>edits.some(row=>row.language===language));
+ const removed=edits.filter(row=>row.baseline.source!==null&&row.current.source===null);
+ const added=edits.filter(row=>row.baseline.source===null&&row.current.source!==null);
+ // Git similarity scores and filenames are not rename authority. Report only
+ // unique complete-byte/mode matches; import and module edits still need checks.
+ const renames=[];
+ for(const old of removed){
+  const candidates=added.filter(next=>old.language===next.language&&same(old.baseline,next.current));
+  if(candidates.length===1&&removed.filter(other=>other.language===old.language&&same(other.baseline,candidates[0].current)).length===1)renames.push({language:old.language,from:old.path,to:candidates[0].path});
+ }
+ const renamed=new Set(renames.flatMap(row=>[row.from,row.to]));
+ const topology=edits.filter(row=>row.baseline.source===null||row.current.source===null);
+ let disposition='no-op';
+ if(topology.length)disposition='topology-reconciliation';
+ else if(changes.length>1)disposition='concurrent-reconciliation';
+ else if(changes.length===1)disposition='translate';
+ return {disposition,authority:disposition==='translate'?changes[0]:null,changedLanguages:changes,
+  edits:edits.map(row=>({path:row.path,language:row.language,before:row.baseline.source,after:row.current.source,inverse:row.baseline.source,beforeMode:row.baseline.mode,afterMode:row.current.mode})),
+  renames,deletions:removed.filter(row=>!renamed.has(row.path)).map(row=>row.path),
+  additions:added.filter(row=>!renamed.has(row.path)).map(row=>row.path),
+  sourceAuthority:false,semanticAuthority:false,runtimeParity:false};
+}
+
+function gitHead(root){
+ const empty=process.platform==='win32'?'NUL':'/dev/null';
+ const env={...Object.fromEntries(Object.entries(process.env).filter(([key])=>!key.startsWith('GIT_'))),GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:empty,GIT_CONFIG_SYSTEM:empty,GIT_NO_LAZY_FETCH:'1',GIT_NO_REPLACE_OBJECTS:'1'};
+ const result=execFileSync(process.platform==='win32'?'git':'/usr/bin/git',['-C',root,'rev-parse','HEAD'],{env,encoding:'utf8',timeout:30000,maxBuffer:4096}).trim();
+ need(/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/u.test(result),'full current Git commit required');return result;
+}
+const directoryStamp=row=>[row.dev,row.ino,row.mode,row.mtimeMs,row.ctimeMs];
+function checkedDirectory(root,name){
+ let full=root,last=fs.lstatSync(root);need(last.isDirectory()&&!last.isSymbolicLink(),'ordinary current root required');
+ for(const part of name?path(name).split('/'):[]){full=resolve(full,part);last=fs.lstatSync(full);need(last.isDirectory()&&!last.isSymbolicLink(),'linked or replaced source ancestor refused');}
+ return last;
+}
+function signature(root,name){
+ const parent=path(name).split('/').slice(0,-1).join('/');
+ // Missing output parents are permitted by the existing installer. Every
+ // existing prefix must still be an ordinary directory, before any leaf read.
+ let full=root;checkedDirectory(root,'');
+ for(const part of parent?parent.split('/'):[]){full=resolve(full,part);try{const row=fs.lstatSync(full);need(row.isDirectory()&&!row.isSymbolicLink(),'linked or non-directory source parent');}catch(error){if(error.code==='ENOENT')return null;throw error;}}
+ let row;try{row=fs.lstatSync(resolve(root,path(name)));}catch(error){if(error.code==='ENOENT')return null;throw error;}
+ need(row.isFile()&&!row.isSymbolicLink(),'ordinary watched source required');
+ return [row.dev,row.ino,row.size,row.mode,row.mtimeMs,row.ctimeMs];
+}
+function equalSignature(a,b){return JSON.stringify(a)===JSON.stringify(b);}
+function directoryEntries(full){
+ const directory=fs.opendirSync(full),entries=[];
+ try{for(;;){const row=directory.readSync();if(row===null)break;need(entries.length<COUNT,'bounded complete directory census required');entries.push(row);}}finally{directory.closeSync();}
+ return entries.sort((a,b)=>order(a.name,b.name));
+}
+function scanNative(root,prefix){
+ const names=[],directories=[],parents=[];let count=0;
+ const parts=path(prefix).split('/');for(let at=0;at<parts.length;at++){const name=parts.slice(0,at+1).join('/');parents.push({path:name,identity:directoryStamp(checkedDirectory(root,name))});}
+ const walk=name=>{
+  const full=resolve(root,path(name)),before=checkedDirectory(root,name);
+  const entries=directoryEntries(full);
+  directories.push({path:name,identity:directoryStamp(before),entries:entries.map(row=>row.name)});
+  for(const row of entries){need(++count<=COUNT,'native tree entry bound');const child=path(name+'/'+row.name);need(!row.isSymbolicLink(),'linked native tree entry refused');if(row.isDirectory())walk(child);else if(row.isFile()&&child.endsWith('.rs'))names.push(child);else need(row.isFile(),'special native tree entry refused');}
+ };
+ walk(prefix);return {names,directories,parents};
+}
+function closeTree(root,tree){
+ const errors=[];
+ for(const row of tree.parents)try{need(equalSignature(directoryStamp(checkedDirectory(root,row.path)),row.identity),'native ancestor identity changed');}catch(error){errors.push(error);}
+ for(const row of tree.directories)try{const full=resolve(root,row.path),stat=checkedDirectory(root,row.path);need(equalSignature(directoryStamp(stat),row.identity),'native source directory identity changed');need(JSON.stringify(directoryEntries(full).map(row=>row.name))===JSON.stringify(row.entries),'complete native directory census changed');}catch(error){errors.push(error);}
+ if(errors.length)throw new AggregateError(errors,'Complete native directory closing failures');
+}
+
+// Count the complete JSON wire representation before the installer stringifies
+// it. Every occurrence of a shared subobject/string counts; a DAG is not a cache
+// credit. No full-result stringify or unbounded intermediate string is needed.
+function serializedBytes(value){
+ let bytes=0;const active=new Set(),add=count=>{bytes+=count;need(bytes<=LIMIT*3,'complete serialized proposal byte bound');};
+ const quoted=text=>{add(2);for(let at=0;at<text.length;at++){const code=text.charCodeAt(at);if(code===34||code===92)add(2);else if(code<32)add([8,9,10,12,13].includes(code)?2:6);else if(code>=0xd800&&code<=0xdbff){const next=text.charCodeAt(at+1);if(next>=0xdc00&&next<=0xdfff){add(4);at++;}else add(6);}else if(code>=0xdc00&&code<=0xdfff)add(6);else add(code<128?1:code<2048?2:3);}};
+ const visit=item=>{
+  if(item===null){add(4);return;}if(typeof item==='string'){quoted(item);return;}
+  if(typeof item==='boolean'){add(item?4:5);return;}if(typeof item==='number'){add(Number.isFinite(item)?String(item).length:4);return;}
+  need(item!==null&&typeof item==='object'&&!types.isProxy(item)&&!active.has(item),'acyclic ordinary serializable proposal required');
+  need(Array.isArray(item)||[Object.prototype,null].includes(Object.getPrototypeOf(item)),'ordinary serialized proposal objects required');active.add(item);
+  if(Array.isArray(item)){add(2);for(let at=0;at<item.length;at++){if(at)add(1);const field=Object.getOwnPropertyDescriptor(item,String(at));need(field&&Object.hasOwn(field,'value'),'dense own serialized proposal required');visit(field.value===undefined?null:field.value);}}
+  else{add(2);let count=0;for(const key of Object.keys(item)){const field=Object.getOwnPropertyDescriptor(item,key);need(field&&Object.hasOwn(field,'value'),'own serialized proposal DATA required');if(field.value===undefined)continue;if(count++)add(1);quoted(key);add(1);visit(field.value);}}
+  active.delete(item);
+ };
+ visit(value);return bytes;
+}
+function manifest(value){
+ plain(value,['schema','baselineRevision','units']);need(value.schema===SCHEMA,'known bulk schema required');
+ need(value.baselineRevision===null||typeof value.baselineRevision==='string','explicit baseline coordinate or current commit required');
+ dense(value.units,1,128);const ids=new Set(),manifests=new Set();
+ for(const unit of value.units){
+  plain(unit,['id','planner','manifestPath','nativeRoot','watched']);
+  need(typeof unit.id==='string'&&/^[_a-zA-Z0-9-]{1,96}$/u.test(unit.id)&&!ids.has(unit.id),'unique bounded unit ID required');ids.add(unit.id);
+  need(['owned','forward-project'].includes(unit.planner),'actual supported planner required');path(unit.manifestPath);path(unit.nativeRoot);need(!manifests.has(unit.manifestPath),'unique unit manifests required');manifests.add(unit.manifestPath);
+  dense(unit.watched,1,COUNT);const names=new Set();for(const row of unit.watched){plain(row,['path','language']);path(row.path);need(LANGUAGES.includes(row.language)&&!names.has(row.path),'unique watched language source required');names.add(row.path);}
+ }
+ return value;
+}
+function requiredSources(unit,actual){
+ if(unit.planner==='forward-project'){
+  need(actual.schema==='router-forward-project-unit-v1','actual forward manifest required');
+  return [{path:actual.entry,language:'Rust'},{path:actual.javascript,language:'JavaScript'},{path:actual.typescript,language:'TypeScript'}];
+ }
+ need(actual.schema==='router-source-unit-sync-v1'&&Array.isArray(actual.units),'actual owned manifest required');
+ return actual.units.flatMap(row=>[
+  ...LANGUAGES.map(language=>({path:row.paths?.[language],language})),
+  ...LANGUAGES.flatMap(language=>(row.dependencies?.[language]??[]).map(path=>({path,language}))),
+  ...(row.nativeSources??[]).map(row=>({path:row.sourcePath,language:'Rust'})),
+ ]);
+}
+
+/** Fresh bulk planning. No-op certifies only declared byte/mode equality. */
+export function planPairedSyncBulk({root,manifestPath}={}){
+ root=resolve(root);need(fs.lstatSync(root).isDirectory()&&!fs.lstatSync(root).isSymbolicLink(),'ordinary project root required');root=fs.realpathSync(root);path(manifestPath);
+ const rootIdentity=directoryStamp(checkedDirectory(root,'')),revision=gitHead(root),captures=new Map(),inputs=new Map(),outputs=new Map(),trees=[],reviews=[],authored=new Set();let retained=0,primary,failed=false,result;
+ const capture=name=>{
+  path(name);if(captures.has(name))return captures.get(name);
+  need(captures.size<COUNT,'complete source capture count bound');
+  const before=signature(root,name),text=readCurrentSourceProposalFile(root,name),after=signature(root,name);need(equalSignature(before,after),'source identity changed during capture');
+  retained+=text===null?0:Buffer.byteLength(text);need(retained<=LIMIT,'whole captured source byte bound');
+  const row={source:text,mode:text===null?null:after[3]&0o777,signature:after};mode(row.mode,text);captures.set(name,row);inputs.set(name,{path:name,source:text});return row;
+ };
+ const output=row=>{
+  path(row.path);source(row.before);source(row.after);need(typeof row.after==='string'&&row.inverse===row.before,'complete original planner output inverse required');
+  const actual=capture(row.path);need(actual.source===row.before,'planner original output differs');
+  const prior=outputs.get(row.path);if(prior){need(JSON.stringify(prior)===JSON.stringify(row),'competing bulk outputs refuse');return;}
+  retained+=Buffer.byteLength(row.after);need(retained<=LIMIT,'whole bulk retained byte bound');outputs.set(row.path,row);
+ };
+ try{
+  const manifestSource=capture(manifestPath).source;need(manifestSource!==null,'bulk manifest is missing');const description=manifest(JSON.parse(manifestSource));
+  const baselineRevision=resolveSourceUnitGitBaseline(root,revision,description.baselineRevision??undefined);
+  for(const unit of description.units){
+   const actualSource=capture(unit.manifestPath).source;need(actualSource!==null,'actual unit manifest is missing');const actual=JSON.parse(actualSource),watched=new Map(unit.watched.map(row=>[row.path,row.language]));
+   for(const row of requiredSources(unit,actual)){path(row.path);need(watched.get(row.path)===row.language,'actual unit entry/dependency omitted from watched source closure');}
+   if(unit.planner==='forward-project')for(const name of repositoryRustLayout(root).cargoInputs)need(watched.get(name)==='Rust','complete Cargo/workspace dependency omitted from watched closure');
+   // Child planners must use exactly the same complete baseline coordinate.
+   need((actual.baselineRevision??revision)===baselineRevision,'child and bulk baseline coordinates differ');
+   const tree=scanNative(root,unit.nativeRoot);trees.push(tree);for(const name of tree.names){need(!watched.has(name)||watched.get(name)==='Rust','native source language differs');watched.set(name,'Rust');}
+   const baseline=captureSourceUnitGitBaseline(root,baselineRevision,{prefix:unit.nativeRoot,paths:[...watched.keys()]});
+   for(const row of baseline.values()){retained+=Buffer.byteLength(row.source);need(retained<=LIMIT,'whole exact baseline byte bound');}
+   for(const name of baseline.keys())if(name.startsWith(unit.nativeRoot+'/')&&name.endsWith('.rs'))watched.set(name,'Rust');
+   need(watched.size<=COUNT,'whole watched source count bound');
+   const rows=[...watched].map(([name,language])=>{const previous=baseline.get(name),current=capture(name);return {path:name,language,baseline:{source:previous?.source??null,mode:previous?.mode??null},current:{source:current.source,mode:current.mode}};});
+   for(const row of rows)need(row.baseline.source!==null||row.current.source!==null,'watched input is missing from baseline and current source: '+row.path);
+   const review=inspectPairedSyncEdits(rows);reviews.push({id:unit.id,...review});
+   for(const row of review.edits)authored.add(row.path);
+   if(['topology-reconciliation','concurrent-reconciliation'].includes(review.disposition)){
+    const error=new TypeError('Paired sync bulk: unit '+unit.id+' requires '+review.disposition+'; originals retained');
+    error.unit=unit.id;error.review=review;throw error;
+   }
+   if(review.disposition==='no-op')continue;
+   const plan=(unit.planner==='owned'?planUnitSynchronization:planForwardProjectUnitSynchronization)({root,manifestPath:unit.manifestPath});
+   need(plan.root===root&&plan.baseRevision===revision&&plan.sourceBaselineRevision===baselineRevision,'fresh child root/revision/baseline differs');
+   for(const row of plan.inputs){need(capture(row.path).source===row.source,'complete fresh child input differs');}
+   for(const row of plan.outputs)output(row);
+  }
+  // A generated output may not overwrite the enclosing coordination manifest.
+  need(!outputs.has(manifestPath),'bulk manifest cannot be an output');
+  for(const unit of description.units)need(!outputs.has(unit.manifestPath),'unit manifest cannot be an output');
+  for(const name of authored)if(outputs.has(name))need(outputs.get(name).after===capture(name).source,'bulk output would overwrite an independently authored source: '+name);
+  // Preserve full source equations even where the existing planner's review is
+  // metadata-only. Initialization retains explicit absence and a full CST.
+  const equations=[];
+  for(const row of [...outputs.values()].sort((a,b)=>order(a.path,b.path))){
+   const language=row.path.endsWith('.rs')?'Rust':/\.(?:mts|ts)$/u.test(row.path)?'TypeScript':/\.(?:mjs|js)$/u.test(row.path)?'JavaScript':null;
+   if(!language)continue;
+   if(row.before!==null)equations.push({path:row.path,equation:transportConcreteSourceEquations([{before:row.before,after:row.after,language}])[0]});
+   else{const concrete=transportConcreteSyntaxSource(row.after,{language});need(transportConcreteSyntaxMeta(concrete.meta).source===row.after,'initialized complete target CST inverse differs');equations.push({path:row.path,language,before:null,after:row.after,inverse:null,afterMeta:concrete.meta});}
+  }
+  result={schema:SCHEMA,root,manifestPath,baseRevision:revision,sourceBaselineRevision:baselineRevision,manifestSource,
+   units:reviews,inputs:[...inputs.values()].sort((a,b)=>order(a.path,b.path)),outputs:[...outputs.values()].sort((a,b)=>order(a.path,b.path)),equations,retainedSourceBytes:retained,
+   sourceAuthority:false,semanticAuthority:false,runtimeParity:false,wholeRouterSynchronization:false,crossInvocationCache:false,rustExecuted:false};
+  serializedBytes(result);
+ }catch(error){failed=true;primary=error;}
+ // Run every closing validator even after a primary failure. Failure remains
+ // latched for this operation; restoring bytes cannot turn it into success.
+ const closing=[];
+ for(const [name,row]of captures)try{need(readCurrentSourceProposalFile(root,name)===row.source&&equalSignature(signature(root,name),row.signature),'captured complete source/identity changed: '+name);}catch(error){closing.push(error);}
+ for(const tree of trees)try{closeTree(root,tree);}catch(error){closing.push(error);}
+ try{need(equalSignature(directoryStamp(checkedDirectory(root,'')),rootIdentity),'project root identity changed');}catch(error){closing.push(error);}
+ try{need(gitHead(root)===revision,'current revision changed during bulk proposal');}catch(error){closing.push(error);}
+ captures.clear();
+ if(failed)throw primary;
+ if(closing.length)throw new AggregateError(closing,'Paired sync bulk closing source failures');
+ return result;
+}
+
+/** Existing guarded installer reissues every child plan and exact full bytes. */
+export async function applyPairedSyncBulk(serialized,options){
+ return installFreshAsyncSourceProposal(serialized,()=>planPairedSyncBulk(options));
+}

@@ -1,0 +1,1 @@
+Include every verified matches source bridge, original module context and portable original-rule/profile input in canonical and family-profile compiler fingerprints. Preserve actual original Rust bodies, source ownership and false completeness flags; focused source expansion evidence does not establish full runtime parity.

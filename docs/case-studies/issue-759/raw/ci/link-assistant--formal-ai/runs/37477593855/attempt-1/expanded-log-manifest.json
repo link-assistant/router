@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37477593855/attempt-1/logs/0_boundary.txt.gz",
+    "sha256": "51eeb26fbe53260ae01ef2eb6ea1f9faed604a1038094ba9e492eea0332ee3fb",
+    "bytes": 4613,
+    "uncompressed_bytes": 19978,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477593855/attempt-1/logs/boundary/system.txt.gz",
+    "sha256": "607192895e5e6f67e386ed3ea765d05cd20098f9f2aa731b929446e873cb9c02",
+    "bytes": 391,
+    "uncompressed_bytes": 749,
+    "redacted": false
+  }
+]

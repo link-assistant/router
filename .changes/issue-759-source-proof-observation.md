@@ -1,0 +1,1 @@
+Give source and strict TypeScript compilation fixture cases a bounded 30-second deadline. A complete Bun run exceeded its default five-second observation cap while competing compiler processes were active; Bun killed the compiler and reported a dangling SIGTERM in the following case. Literal behavior, source pins, strict compilation and runtime guard assertions are unchanged.

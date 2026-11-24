@@ -1,0 +1,133 @@
+# Callable opt-in contract. Repository-controlled callers supply real commands.
+name: JavaScript-first complete gate
+on:
+  workflow_call:
+    inputs:
+      source-sha:
+        type: string
+        required: true
+      setup-command:
+        type: string
+        required: true
+      lint-command:
+        type: string
+        required: true
+      node-command:
+        type: string
+        required: true
+      bun-command:
+        type: string
+        required: true
+      types-command:
+        type: string
+        required: true
+      strict-parity-command:
+        type: string
+        required: true
+      forward-check-command:
+        type: string
+        required: true
+      reverse-check-command:
+        type: string
+        required: true
+      rust-command:
+        type: string
+        default: ''
+    outputs:
+      tested-sha:
+        description: Immutable source head verified by the complete JavaScript gate
+        value: ${{ jobs.javascript-gate.outputs.tested-sha }}
+permissions:
+  contents: read
+concurrency:
+  group: javascript-first-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  javascript-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      tested-sha: ${{ steps.tested.outputs.sha }}
+    steps:
+      - name: Require immutable source identity
+        env:
+          SOURCE_SHA: ${{ inputs.source-sha }}
+        run: '[[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]'
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.source-sha }}
+      - name: Verify checked-out source
+        env:
+          SOURCE_SHA: ${{ inputs.source-sha }}
+        run: 'test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24'
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+      - name: Install declared dependencies
+        env:
+          COMMAND: ${{ inputs.setup-command }}
+        run: bash -euo pipefail -c "$COMMAND"
+      - name: Lint and workflow bypass checks
+        env:
+          COMMAND: ${{ inputs.lint-command }}
+        run: bash -euo pipefail -c "$COMMAND"
+      - name: Native Node behavior
+        env:
+          COMMAND: ${{ inputs.node-command }}
+        run: bash -euo pipefail -c "$COMMAND"
+      - name: Native Bun behavior
+        env:
+          COMMAND: ${{ inputs.bun-command }}
+        run: bash -euo pipefail -c "$COMMAND"
+      - name: Types
+        env:
+          COMMAND: ${{ inputs.types-command }}
+        run: bash -euo pipefail -c "$COMMAND"
+      - name: Strict parity
+        env:
+          COMMAND: ${{ inputs.strict-parity-command }}
+        run: bash -euo pipefail -c "$COMMAND"
+      - name: Forward generated diff
+        env:
+          COMMAND: ${{ inputs.forward-check-command }}
+        run: bash -euo pipefail -c "$COMMAND"
+      - name: Reverse generated diff
+        env:
+          COMMAND: ${{ inputs.reverse-check-command }}
+        run: bash -euo pipefail -c "$COMMAND"
+      - name: Publish verified source identity
+        id: tested
+        env:
+          SOURCE_SHA: ${{ inputs.source-sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test -z "$(git status --porcelain)"
+          echo "sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+  rust-verification:
+    needs: javascript-gate
+    if: ${{ inputs.rust-command != '' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CARGO_BUILD_JOBS: '2'
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: '0'
+      CARGO_PROFILE_TEST_DEBUG: '0'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ needs.javascript-gate.outputs.tested-sha }}
+      - name: Verify tested source identity
+        env:
+          SOURCE_SHA: ${{ inputs.source-sha }}
+          TESTED_SHA: ${{ needs.javascript-gate.outputs.tested-sha }}
+        run: |
+          [[ "$TESTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$TESTED_SHA" = "$SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$TESTED_SHA"
+      # Install the repository's pinned Rust toolchain here before adoption.
+      - name: Reviewed Rust verification after complete gate
+        env:
+          COMMAND: ${{ inputs.rust-command }}
+        run: bash -euo pipefail -c "$COMMAND"

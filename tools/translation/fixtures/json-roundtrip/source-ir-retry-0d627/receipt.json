@@ -1,0 +1,79 @@
+{
+  "schema": "corrected-original-arithmetic-source-ir-focused-evidence-v1",
+  "sourceHead": "0d627d9049ca79e519aa05ba9bd1bab7849d19fe",
+  "sourceTrackedClean": true,
+  "sourceUntracked": "shared packages/javascript/node_modules symlink only",
+  "scope": "Exactly the same five pure files and30 cases; generic source-derived mathematical arithmetic IR, not application/native/parser or emitted-TS verification. No TSC, Rust or producer.",
+  "runners": {
+    "node": {
+      "pass": 30,
+      "fail": 0,
+      "skip": 0,
+      "seconds": 1.1379079818725586,
+      "childMaxRssBytes": 171868160
+    },
+    "bun": {
+      "pass": 30,
+      "fail": 0,
+      "skip": 0,
+      "seconds": 0.7382230758666992,
+      "childMaxRssBytes": 167231488
+    }
+  },
+  "initialEvidence": "../source-ir-initial-4302/receipt.json",
+  "initialOutcomes": {
+    "node": {
+      "pass": 26,
+      "fail": 4
+    },
+    "bun": {
+      "pass": 26,
+      "fail": 4
+    }
+  },
+  "repairs": [
+    "Genuine original empty token-tree input supplied to fixtures; private input guard unchanged",
+    "Snapshot immutable source module list; memoize checked aliases/import graph within projection; unchanged100000 step budget and original arithmetic expectations"
+  ],
+  "sourceOwnerVerified": false,
+  "sourceBehaviorFidelityVerified": false,
+  "parseAdmission": false,
+  "applicationEffectCompleteness": false,
+  "runtimeParity": false,
+  "rustExecution": false,
+  "compressedInputs": [
+    {
+      "path": "node.log.gz",
+      "decodedBytes": 7708,
+      "decodedSha256": "7ccdfb4e317c79c9d94a2a28f6fa9145542c54d37c93f20b77f21bd59493df04",
+      "gzipBytes": 1991,
+      "gzipSha256": "cfce0e34b81ed7b122528de10ed64ae22b91213ff00ea65dfb87e7655998ced1",
+      "reopenedExact": true
+    },
+    {
+      "path": "bun.log.gz",
+      "decodedBytes": 3866,
+      "decodedSha256": "036a20199f47db76a39b108e41770dab3d6d1189cb494377eccb50b9591a884c",
+      "gzipBytes": 1664,
+      "gzipSha256": "18f33f56b405e3ac7627e0fcc64ed04aeda0abe01aa2090f70fe29c9638364d4",
+      "reopenedExact": true
+    },
+    {
+      "path": "node-receipt.json.gz",
+      "decodedBytes": 24849,
+      "decodedSha256": "844ba4be1cf99e8f4d16fc97eb9e09e534212f8d66936662011b038117526d34",
+      "gzipBytes": 7154,
+      "gzipSha256": "3d063b2b7898bc3b33dbeb508680137358b03b77a8fcfe9991bbe2c49f6d8a6d",
+      "reopenedExact": true
+    },
+    {
+      "path": "bun-receipt.json.gz",
+      "decodedBytes": 24806,
+      "decodedSha256": "efd3f39eb1390dd913156cca5898bcb7d89490a936ed17861a3f6169cfc8ba8c",
+      "gzipBytes": 7127,
+      "gzipSha256": "15a37f3ce03a399e52eda3d3ae5181cfbfb6d638c7b38ecae3f9d8c28298e90e",
+      "reopenedExact": true
+    }
+  ],
+  "runnerSha256": "ba8aa2075121a995177cd68628ed15b99045fe3782181559dbb3694a948b6968"
+}

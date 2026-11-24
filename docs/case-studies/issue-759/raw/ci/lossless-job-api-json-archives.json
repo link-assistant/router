@@ -1,0 +1,2605 @@
+{
+  "schema": "router-759-original-ci-job-api-json-lossless-compaction-v1",
+  "sourceHead": "1c8a2e0a409e45d08075999e40e7eb375e1ba880",
+  "combinedEvidenceCapBytes": 500000000,
+  "allocatedBytesBefore": 498110464,
+  "allOriginalGitBytesVerified": true,
+  "allDecodedOriginalsByteIdentical": true,
+  "scope": "Complete original paged or combined CI job API responses only; log payloads, downloaded artifacts, original source snapshots and historical receipt vectors remain unchanged",
+  "semanticAuthority": false,
+  "appliedSourceHead": "1c8a2e0a409e45d08075999e40e7eb375e1ba880",
+  "entries": [
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36707093271/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36707093271/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4338,
+      "originalSha256": "ea8138e41f89049bbe60de6349263ed8d794c218c5cd28951010c363fbc236a5",
+      "originalGitBlob": "a1aaecfbeeee338bc7de9d93a5ecfd44ed2ddd99",
+      "archiveBytes": 825,
+      "archiveSha256": "fa717f003b6528c95dc36ae199cb4089632e6e2797bf79458c8c02b608e85922",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36707093374/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36707093374/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4791,
+      "originalSha256": "6eba534ad057ba0cc5477235e1a9ac03bc9abdafe1bcbb3242ec2301824fe1ae",
+      "originalGitBlob": "e5ab6929796d119814cf1b059c99460ba6626a6f",
+      "archiveBytes": 882,
+      "archiveSha256": "55584dc6b376d57433be7c74c1a7c2c429a5d52a820dbe5acb92205f1dabc1e4",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36742615915/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36742615915/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4791,
+      "originalSha256": "8917fad9d058b2ab141dc85f8b18799421c2fdf172bd35bb3e5fada88e07c1eb",
+      "originalGitBlob": "57704a851dd93d0e4627771924d87e4f18f41fe2",
+      "archiveBytes": 864,
+      "archiveSha256": "e3e0aa04a220967218ae2a5c21e3163574f9a65c00deb4b14fa0a68d6e09375e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36742615944/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36742615944/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4273,
+      "originalSha256": "6ccf4214b834650d6d29a8913e3f7f6ea64cf0fa8427371e0237123abb6bbedd",
+      "originalGitBlob": "8c2b8ce0d62d43c9e5d9991c0e8cd009586a2a46",
+      "archiveBytes": 792,
+      "archiveSha256": "04f397c4dc5ae556107a5bbe7407e68470d3154626b98496da8fe2602373840d",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36742615944/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36742615944/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4573,
+      "originalSha256": "15da5181792ece1de673a7c142d3bc21ae15052c1b0e2651bf10eef4aa1c31cb",
+      "originalGitBlob": "f6a9e6c4e4b6843ca1a8698b6b9190ddcd436276",
+      "archiveBytes": 816,
+      "archiveSha256": "3b49beb85d0b88b15359ed2a27f08bd34a07c46ea1d731bcdf81725464490b76",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36742616104/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36742616104/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4338,
+      "originalSha256": "6514ac57e7a21a04ed75a4f57ce4b2568b57e190310c8b578e2ea77ad61eb3df",
+      "originalGitBlob": "1c75437f01cbf9394229e457eb7dce5711bfa3b1",
+      "archiveBytes": 825,
+      "archiveSha256": "ca686e22213acc57b7f474da3e291e9384b9be9c9e4a11dedd9888becfd9daf9",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37470365584/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37470365584/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4338,
+      "originalSha256": "56347f9d9f023874ce892aadec21811f3998bfd27b4d0e236eaadf529fc9bb01",
+      "originalGitBlob": "90b9340b28d21f438e6fe22af11c46d3f7034faf",
+      "archiveBytes": 824,
+      "archiveSha256": "e4cef63a878488b97e9c7f7466430d73b8108f6e7e8ee6ed1f752587ceb2ff71",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37470365629/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37470365629/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4791,
+      "originalSha256": "c012480b8d758417b34bfd62429a6d298d19fcb55c803a0451359bc0a06e07a7",
+      "originalGitBlob": "a951fd3858031648c9a380736e1bc95a5d8088d2",
+      "archiveBytes": 868,
+      "archiveSha256": "85575d9d6c20254adaef240f90fc254ed51dc37112ede4cc5858f5c283f40ac2",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37470365704/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37470365704/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4273,
+      "originalSha256": "76a4aa21d84328cc49fbf860967c2e1d2fd46922a532a02a0c577cde6635e72c",
+      "originalGitBlob": "662dc782950d738afac2eb668f4fd5b0a1773cb3",
+      "archiveBytes": 779,
+      "archiveSha256": "6bc4bff44c74f58626259c3309e05cbc40f1a50fa307f09a125ff1f99bd73520",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37470365704/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37470365704/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4573,
+      "originalSha256": "437ec935d89e8ce1ef68f0f44757e843242dd1ec1fab83908fa549a2cf708436",
+      "originalGitBlob": "ee20ee2fb80b46ef59bc07e2485d62bb5324d1b3",
+      "archiveBytes": 804,
+      "archiveSha256": "3866379d3613733ad5c0b50d29aaf2a18207595d42ffa30b77dea4014ccb277e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37471465809/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37471465809/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "c39c8a26bddf48b503449e5e7aba3fbd388c244a2a81bc9f4df5aabff83171d2",
+      "originalGitBlob": "5884513c2a8999ead159b9ee495bf3838bd1ec68",
+      "archiveBytes": 873,
+      "archiveSha256": "52c17ca036ad4185a7ccb29a9263ab797b4c8c28d3a2f9288d700b784921f536",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37471465860/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37471465860/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4340,
+      "originalSha256": "a7769a98787f8ece67171907afd857cbae6339e52bb111526df29b30f292bc9c",
+      "originalGitBlob": "9389b9fd280d36a8d79d310a70a35d6b04bffcc9",
+      "archiveBytes": 821,
+      "archiveSha256": "4e1354c3b4b48dc7e6160f2bf4874fb6b456046f280a39959901dd2b32ac0702",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37472267614/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37472267614/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4278,
+      "originalSha256": "8ada1b617d5878d72af1f29c662048c54e3ed7304d413e2ccf9394b4071def9d",
+      "originalGitBlob": "4b1882e28f3797dd1e7097ccc0c1436379e26a58",
+      "archiveBytes": 673,
+      "archiveSha256": "1c338177fde30472c1b0b6ea690cb2de24768874d7e6a316b72ca803ca2079e5",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37472267614/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37472267614/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4530,
+      "originalSha256": "bdda4b321756f3d103dc9f5497385a9f8fd05bf058630b004f9b507f0f65de5a",
+      "originalGitBlob": "4e4fa023ee41c59818c27df2bda4d7f2ab2faa1d",
+      "archiveBytes": 699,
+      "archiveSha256": "d77eaecac06615b84f2e308e1235d0ab5f954d305e4350c4340d65ad2ca984d4",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37472267652/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37472267652/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4184,
+      "originalSha256": "e2078bb7a6891adf03afbd5065ab459eed0071874013ce6fe448d2aadf07b26a",
+      "originalGitBlob": "b619ca7068cc3d94337c25b72dcd01da2662a9ee",
+      "archiveBytes": 576,
+      "archiveSha256": "230098dee2873aba4477a2613cece1bccd44dd49c6c29ff8bca193831ad2605f",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37472267652/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37472267652/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4436,
+      "originalSha256": "2afbefe2757cd4faa054ad5bc05e1acd0f4713c5ad85272daf4a80b6e020a44c",
+      "originalGitBlob": "8f9a96ef06c6e233cff2f875da253ae305f0194c",
+      "archiveBytes": 599,
+      "archiveSha256": "74dde338ef813b5dc24a8405a7af14f13c902c18b192451ab998962e29d495e4",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37472290041/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37472290041/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "5c5eb4e955bb7317882a3bc40263b8d86d6d4586507ce0829ee8aae14bbe7a69",
+      "originalGitBlob": "07db1c6ac602a9486189a28175e9083b284e42e7",
+      "archiveBytes": 872,
+      "archiveSha256": "100752c1e0210ae87ed20371c5848c2ec2d28e2758120585f4c3228390339677",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37473914352/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37473914352/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4277,
+      "originalSha256": "a87a7806b8c22ab6e9d076c58874fb337e99e490de5e4e25270ead5531ad440d",
+      "originalGitBlob": "58f967cd45f766834bdac81bb6e1b02dfd9224f0",
+      "archiveBytes": 800,
+      "archiveSha256": "f402ae587a03e035996d589abcfa0f21bc2567135ebd3caf1f226a68149beea9",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37473914352/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37473914352/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4577,
+      "originalSha256": "663a83e9f55e1eaf3ffb8cd435e4ddf77c18b92a2d4c21ffd23f66bebe66aa07",
+      "originalGitBlob": "0f3691adbb1f97c8377d69c5000fb2858b9df8d2",
+      "archiveBytes": 825,
+      "archiveSha256": "3f49554fcc5c2ffbb02f29ef4ac5fce4f3dd63ae1d766107a18068538fa973dc",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37473914457/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37473914457/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4099,
+      "originalSha256": "0b99c59aeb938d1470b636368450a6031af7c035e88ede84535fdf33ede79f48",
+      "originalGitBlob": "67702d06fb263721e81de18f3272a6d7f94bab40",
+      "archiveBytes": 806,
+      "archiveSha256": "28e970aeef5717fff30b76ba98474763f0cc692810cc28fa73e2532e471d45bd",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37473914591/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37473914591/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "de94697ee89e97e1b355b8e39fec1b327e39aad9bf731c49b560431e45365212",
+      "originalGitBlob": "43b508df9542405d95302090500eef1be2592e1c",
+      "archiveBytes": 871,
+      "archiveSha256": "6e0b3f96fb692e4cc63275f27788c23d1015c978ed92ab7834aeda5e7d7dc514",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37474764224/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37474764224/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4205,
+      "originalSha256": "f3ea836c67a9499cc1afa18aa23bda0a40aa695469b60f3a6690b7409069475d",
+      "originalGitBlob": "119d6bb05764b4509f676c9324122b599c7f612d",
+      "archiveBytes": 809,
+      "archiveSha256": "b0ee4e99af5500e7ce80735def030f25e0db1ab417acd8ca607913b0669cb3c4",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37474764334/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37474764334/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4277,
+      "originalSha256": "848f45e1abec37c8a760b9be16cb1860ef5a14d391d0c705514b8c1303596703",
+      "originalGitBlob": "4a6efadfd3d7e795825107de825b264a6c2e4ef2",
+      "archiveBytes": 793,
+      "archiveSha256": "6b87667dc6b38c6843341ad5cc5cbb95aeafa4740aaae7c0f450a1894a904003",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37474764334/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37474764334/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4577,
+      "originalSha256": "47d250f95dc61d2015a426b56368312ce12c147ba8a122467517ec0b623b5eff",
+      "originalGitBlob": "f38a32aa6cb4e6b015a1628047c6cb7ff9f1afd2",
+      "archiveBytes": 817,
+      "archiveSha256": "2064f4819c00ab4829b557c2f594a30f1e6bd330d62009e800483d7cc2a36ecd",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37474764344/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37474764344/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "b9a2900faebf5e81818e43ab7ccfca03bf215a837411b7f6d8e96536f47dc0d4",
+      "originalGitBlob": "003776717ff2328449ec1742d9765cf2c37cfdef",
+      "archiveBytes": 858,
+      "archiveSha256": "55663325cfee1d464a289618c7c15cb1a8d5f5fe984f099d6fae977786dd2621",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37474764348/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37474764348/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4278,
+      "originalSha256": "7fd68c1c4f5716f480c9f189570e497fdabf59f5aa24064196333df9f85d6dbc",
+      "originalGitBlob": "032ad7597b4070319e32b4eeefc24edeed445fef",
+      "archiveBytes": 675,
+      "archiveSha256": "57a0da89984b40550a2f69d5f7cae55be7cf49fa54a8be40b086dee499c7dfcc",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37474764348/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37474764348/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4530,
+      "originalSha256": "ac12c6f146183aea561d45669b1f293aadc8fbf954f850184b3759149cd0b9a2",
+      "originalGitBlob": "0ab2fd75b353e701b044b7ca42ad66c8be1159e3",
+      "archiveBytes": 702,
+      "archiveSha256": "680c37451b2734acacca2882c6a725d1b6cdb2a7ac226208498f04338764cfff",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37474764417/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37474764417/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4342,
+      "originalSha256": "a880b742b78b75ead33889176c5e413c6d0008d26e24db9e6f6d27af365cc904",
+      "originalGitBlob": "04affcfa1a7b068a334e133a89597a17995d9ef2",
+      "archiveBytes": 827,
+      "archiveSha256": "677fb5917f52faf027344ee932e605637b6d806d56b5b503c2c112d5616ea52c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37475175358/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37475175358/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "0ef383f16f088d4dea36a89f03553ad023e79b58004ab66edc48386269223630",
+      "originalGitBlob": "cd49b7e7de0f6967710e6a69ef33b2270579996b",
+      "archiveBytes": 870,
+      "archiveSha256": "c12b44885394f16a6ecc9bdd6a38633ff7ad9760550d69f9dac79fb20eff59b7",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477593777/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477593777/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4342,
+      "originalSha256": "4c89eef40fb816a439bf8165b6d8f22f98e667ecfc0085e247551f581b188136",
+      "originalGitBlob": "5f61d188b65039a37d7da5e6be7aa06b9bf3cdd5",
+      "archiveBytes": 818,
+      "archiveSha256": "6d3fe8d203839c09eb5f5c8d65efc1714fa2d9d2ceedc45eec96403cd4e4740e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477594040/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477594040/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4277,
+      "originalSha256": "23ce306a4097f13bc4f8f989769626b649b3614e518fba33081f68a0e055ab2f",
+      "originalGitBlob": "e2d68ec6d73a437782788ffeb7f84dde31aa2b49",
+      "archiveBytes": 794,
+      "archiveSha256": "f209d4701bcac79dbffaf3b704d0800b2b39fff2a0a33180df42e628e48497b4",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477594040/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477594040/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4577,
+      "originalSha256": "13f8d497ed869509d27523942e7e7d34fd39291e79ace0a3d9b3f2ee1a67a34f",
+      "originalGitBlob": "6494ca283f1d98a9a41194a8083eec5597d35089",
+      "archiveBytes": 816,
+      "archiveSha256": "b5624942954baea5bef516cd7c2c541dd63392dad738955a9e5ef2533ac91852",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477594145/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477594145/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4817,
+      "originalSha256": "141c23cfe2678067725cceca30206c3fc2bb36d9eb963327e66a2a928cf15c54",
+      "originalGitBlob": "cb8f13b714462f851ffd7ffe302f45e0ac388547",
+      "archiveBytes": 770,
+      "archiveSha256": "dd96f977c74ede294016525c3666902e4376cfa1d6b929f865ec1647dd0d053f",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477594428/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477594428/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4099,
+      "originalSha256": "ed5fd67ad44aeca5f241c3f9664e313753a20559c2c247b2c08f04d2e3003495",
+      "originalGitBlob": "00fa7b031cb4f0ef9cd7954f90b6e83a7958ed17",
+      "archiveBytes": 788,
+      "archiveSha256": "9f0338b0dfc23f8d2dc4fc84957efcd3af288038aa3a5b73b3423404f2297234",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477908370/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477908370/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4275,
+      "originalSha256": "b67e2dee6f44d64d918a3bcde57dd895023ec09ffcdb1710c5a407a346615b8b",
+      "originalGitBlob": "2da29ce09410a3739d1cfbd19e5646ed26ecfffc",
+      "archiveBytes": 787,
+      "archiveSha256": "1ea0ef8cc55c2c24ead15f96cf8d914c177287f84f2a48046e623b06d1cb27ac",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477908370/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477908370/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4575,
+      "originalSha256": "044fc2a63c5e971b251faeed283df869842b292bf732a40e90792ea9e7b73c01",
+      "originalGitBlob": "64eb07eaca9bd8d06f4d2d95b007246eaced6210",
+      "archiveBytes": 808,
+      "archiveSha256": "b6e7026e03b9e75d272f2d311ab6eea46613ce75cfc98be6f6ce9df08434a54a",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477908432/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477908432/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "c99b64c2f09dc98aef0759419ea3caf97b60a6d903820e928fdc2c4aa5432336",
+      "originalGitBlob": "be043cd484dc4cbe898c121f7c9209d2a3f62115",
+      "archiveBytes": 882,
+      "archiveSha256": "6e67c43819f9a97675fd0a5bb47029d807b98e264365111affbd9ed2a528271b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37479268992/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37479268992/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "fd97337e9b9ba69f975915c2e9ea54b6e3a20e1e193f6f3901a3dfb999405dd8",
+      "originalGitBlob": "2a28db594e93c405248c0a4890a0d987f249976d",
+      "archiveBytes": 867,
+      "archiveSha256": "b9bd5333c15aea3524e3a8bc9f3d23c49b0921b722600ecad42831656502b284",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37482885176/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37482885176/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "de8294413dc91d72b7c390052e23de20a17e66a74e8f9f4d695cddba6d533989",
+      "originalGitBlob": "f12fb55a0edc6b7fa01c644d9690e668346f045c",
+      "archiveBytes": 865,
+      "archiveSha256": "f975eecc5c695241520414ee84977761c7a9b80ed2c980a6deca653363844a6f",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37485465408/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37485465408/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "2d0f6c4540a5de3c7e024bfbbc5c9beb57605088733cfd0599e6715bb709eb9e",
+      "originalGitBlob": "64bb8e32e0d94936f3a7a56c7508141913460678",
+      "archiveBytes": 862,
+      "archiveSha256": "075ca2b7e12958de698834256de4333409ce9346287af90344fe2bdd78fade3e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488472352/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488472352/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4839,
+      "originalSha256": "6fef58158820fdb7b52bfaa54bbceca15fe834eff3bc808efcac762b22ceeb0d",
+      "originalGitBlob": "d5a23079308d06515f7688fadaeb9c9c4655d2c8",
+      "archiveBytes": 776,
+      "archiveSha256": "c1c633706bcd38646bc8b9ecd4c3f8f65e3deba4abdd81114da9019fe218da03",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488472369/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488472369/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4099,
+      "originalSha256": "f8d5761ee451de91306bb148f08a1d42b0bed01295bd311c5fd761591252da54",
+      "originalGitBlob": "f900d3a23bca2182aed0d7ce50d8472ed9374239",
+      "archiveBytes": 809,
+      "archiveSha256": "21f25086399ab232928fbd8f98aaf4d8ec86f7188ce7622194aa003dc616f7b8",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488472381/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488472381/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4278,
+      "originalSha256": "3af7cecc52f78332213e28ee3a1614730707f48500cb2ab890e0f05948483913",
+      "originalGitBlob": "680110a69d4cfe87a0317969e77af2b46a562492",
+      "archiveBytes": 667,
+      "archiveSha256": "da4f5328af761d2389e5ebda788084565a3591da88b3007feb067f1e182db0d4",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488472381/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488472381/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4530,
+      "originalSha256": "6f2b0592259434499c64de80bc3b1fb3d5e836443b934229a3ebe4ecb1dfd6fb",
+      "originalGitBlob": "be310e44c13112c154c785838517e591491252ca",
+      "archiveBytes": 694,
+      "archiveSha256": "d498a68dd1bc51e9082d960108c16c774c1199a3ff1370c0a95adece2e99dec0",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488623903/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488623903/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "ef6173ff6a9d3b432885d3abd8abda53b02a241efe1d2725df6e6c601848ebd7",
+      "originalGitBlob": "4ded6bfa331b36716953958686077121d9c5d5a8",
+      "archiveBytes": 852,
+      "archiveSha256": "75a522f42eb99004178d5172e0e25e4c529aa82ee46e9b6d9219f36f7120be41",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488623925/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488623925/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4277,
+      "originalSha256": "daf16ae3d9aa3bc99c7a72a3c4f9d5d53a6fe22c5e9aa84fed6d60c363b09c3a",
+      "originalGitBlob": "8b0db1fcd8ca10fd8add1aa98f4ed9ebe442ef9c",
+      "archiveBytes": 799,
+      "archiveSha256": "fa5c925c2215e76caa1f34e831182ead57f23d093dbf58999302e926c4a0d547",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488623925/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488623925/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4577,
+      "originalSha256": "d930375108815339f36a582c4c8c44914ca25d96411663e693ba04ae7c5e3fad",
+      "originalGitBlob": "7ed6078ebdde5f89c8770e7a0db9ba0e9006cef5",
+      "archiveBytes": 821,
+      "archiveSha256": "5e00aff2411f1b91ac0ddf17133bc8c53425cbcc63c09cc4b872c7794b15ed31",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488985271/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488985271/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4278,
+      "originalSha256": "1cc7866ca22dc357dba08f3e1c3c7d81a72190c44c719da1e1094907a4f39c5a",
+      "originalGitBlob": "4c0b7f6ff8656fb5fce0eb09e8e4f0a3bc3c97e4",
+      "archiveBytes": 667,
+      "archiveSha256": "10df2339c3acb2fe43d48bc7435586ddc876b8975a2189b1f4708e62f678a5bc",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488985271/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488985271/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4530,
+      "originalSha256": "bae6b0d112df0d840f26bc189c9f9b3c7238bf5a678fe26a7cbd46708c2584bc",
+      "originalGitBlob": "1e89288870cf5953db07bdbbc91204f59e334f3a",
+      "archiveBytes": 693,
+      "archiveSha256": "f543da948da188d4f4642db553384d1dc1f1ccb5e3eaf9ad07f987e911583fbe",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488985324/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488985324/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4207,
+      "originalSha256": "5e484ac9a168fedc1b1a688c7b5f95b44be123b0371079da3b07305865750349",
+      "originalGitBlob": "0a626bdd6f1abe3664dbf9d52d25ce9070787f9c",
+      "archiveBytes": 801,
+      "archiveSha256": "1afeb066a4b8aab4b96bbcde9571872995522fd63aa70f772b4c49b4765fd943",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488985400/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488985400/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4099,
+      "originalSha256": "bf8cc2062df852faf9f31c696f7cdef5b08d800aa01ee2eb4c843fdbd059bd79",
+      "originalGitBlob": "b951b66727f6bdb4e91d08e61caa7107d10afc25",
+      "archiveBytes": 799,
+      "archiveSha256": "fed5596f7af6e092ee2bb18d40c282862584531c42aa7b080edf5b9d4618cd2d",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37489139378/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37489139378/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4100,
+      "originalSha256": "def6c9aa7903a0bde228557986bf42ed2470ec1c7dcb4d9ec113ac35b7c941e8",
+      "originalGitBlob": "e97fcf725ecf6d82ad4223dafb36496e21527f0c",
+      "archiveBytes": 754,
+      "archiveSha256": "f88eec6a6cd64fc45d91494ad057f96b861582825904ce54d04b0fc10dc70e4b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37489139378/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37489139378/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4374,
+      "originalSha256": "62d78863bc5adc14958da58a95d62b24da8ed046cd8b4272f09b8f91872c9a4d",
+      "originalGitBlob": "ae4112cd9922c7b3f1ef0c8fede88d989606176e",
+      "archiveBytes": 780,
+      "archiveSha256": "eb82ca0302db59999e596f8dceee89590cbd5934cf4f0caa17d7a8f60c49f3e8",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37489139401/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37489139401/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4817,
+      "originalSha256": "76f180c3e7b0ab2d8e886b5623bb65e9edbbcaa5c6bc75f4f9ba4bbb619b3121",
+      "originalGitBlob": "8524a41866af0267b342914a86c38f1693151ba4",
+      "archiveBytes": 774,
+      "archiveSha256": "3ccc7850cbf65f0049a802ca24846acdb7673988c520e5006fef10b6dc2af752",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37489139586/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37489139586/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4342,
+      "originalSha256": "c55ea9c9a9fa331773a9426d2575da7afe7655a57293322db2a85de391622324",
+      "originalGitBlob": "58c0d46d65d79ae1d3e9e047db292e801d25c96e",
+      "archiveBytes": 828,
+      "archiveSha256": "61d4521fa6baddfaa1bbbf39cd73e1b05c0c30bff96ec88303fedf46c3ee159e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37489942910/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37489942910/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "d72c7753b571472f3481501aeb27a1efec8f0a7352a374f736a6d20e968f19a7",
+      "originalGitBlob": "d9a5b5084c6c0c434cbbbade4506ec6b72098b51",
+      "archiveBytes": 887,
+      "archiveSha256": "ea10ae30ac89960a0470296bee9b2350151eb650543741ad82bef7bdc82fac7b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37491306327/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37491306327/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4791,
+      "originalSha256": "964551a84eba7e74a87eb5252fd4ab0708691757c2e231479d8f0f0ade394ea6",
+      "originalGitBlob": "71f9d58cabccfa9e8ef7d6634029a33f4cc12d3d",
+      "archiveBytes": 877,
+      "archiveSha256": "25ef55871909b4645bbd7d43c7371394a70db9bf9f0d06b016b9f1f83234dfff",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37513028485/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37513028485/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4273,
+      "originalSha256": "f12729de9f7f3e170b1b20be854e98ee40f6cacc1db6bba8b8e216ec1488db1f",
+      "originalGitBlob": "2a27b7e32d3d3ea90242b2fb13d6493ce2d348a3",
+      "archiveBytes": 786,
+      "archiveSha256": "e5aa28a72a5d93fd6a82a8c87f43d15838c40560039674c1e117698dbd6d54df",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37513028485/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37513028485/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4573,
+      "originalSha256": "ad913e1f45e751523a675dce2a4317195c205550740f5e9f631c1edf7d0d1568",
+      "originalGitBlob": "b33acb8da4274b3688510857c9c77776edb48af6",
+      "archiveBytes": 811,
+      "archiveSha256": "c2f69d9db6dc2d789dba6ada7e00a2e49ea3b57c8986b1e9efe663631c3196d1",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37513028499/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37513028499/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4338,
+      "originalSha256": "27a49ad61e9bd55eb285d73c8ab7b33190a9b60d61caf48e1c212191bd90699d",
+      "originalGitBlob": "d1194dc4aea9fafecc96553ce124e153509e9366",
+      "archiveBytes": 823,
+      "archiveSha256": "e3291dbcde7190ea3f0ff3f3a4242b3f6e1657afa98dbb75b447d49d8212518e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37513028575/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37513028575/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4791,
+      "originalSha256": "71e127b1dc2f360e77ef8b608b5b0c2a8069f40c4d8b5023cdfd66c9d4c5f410",
+      "originalGitBlob": "f40dd57ddd6626978f627fdc30ddfe4a58482c66",
+      "archiveBytes": 860,
+      "archiveSha256": "90b22c511c36fb03aaa88c91f483b851174aa3f9b4bb3e686c53dd563893b26f",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543171/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543171/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "3a96eb094ccca5e66da86e076c94a06371cde6957ea2013eb1c542258c17704a",
+      "originalGitBlob": "be5f0496b883b8ef9b9a7ae2814ec3fb44c4223b",
+      "archiveBytes": 875,
+      "archiveSha256": "af27fa88262b789bd8a86a2737034b35cb1ba4aa7b4649aac042ab904b65f15e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516755494/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516755494/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "5d4efb26bb66041d6cc8acd8898847dff5871b3adb404650231a6debd5d805ff",
+      "originalGitBlob": "150c1a7b2b8f0e1fface62f246147fac37002910",
+      "archiveBytes": 871,
+      "archiveSha256": "7011ce64cc6930edfc53f674245130dee6572a6bb039086ab1776438191ee71b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335193/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335193/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4277,
+      "originalSha256": "03397031fbd66b99f72f967ddb1a987d9ca7c9fe5903f069de2d45797c6effe9",
+      "originalGitBlob": "001c023fbf5f69106549f2e7bef8c79267744b26",
+      "archiveBytes": 797,
+      "archiveSha256": "2f0acd9fec75c64aa7dde3b64213453fd7b8207cdfbfae05ca5eb29883191eef",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335193/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335193/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4577,
+      "originalSha256": "8d8cbd874a0104f7d400fbf9cf2d03525d7b9ff24f5c54cfe587acfd81c3f3c9",
+      "originalGitBlob": "aa8bee1357410ea98d6364ec090b32a98dfe7f26",
+      "archiveBytes": 822,
+      "archiveSha256": "6ccde45b6a33b51949fd0e1f12abea0907cd0dd0870d5d1d3883ae7c44fc4656",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335274/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335274/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4184,
+      "originalSha256": "f279ad7e8bfa4922d58cacdf340186f2598539e82ed30fd5ec28272e71851846",
+      "originalGitBlob": "6eca4cfa3dde9fb12e20a2bc82612ee0be66c558",
+      "archiveBytes": 583,
+      "archiveSha256": "64fcd899ef71b02a32241c2b074eaac19e2ee0e7cfbf4a401f3a7802276e949f",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335274/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335274/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4436,
+      "originalSha256": "b154f0d086d2631b182ce753425cbbc04a9b9a4356cad808b896eac12a0c940f",
+      "originalGitBlob": "57b7fc58e3353d7e0857b0cb3ca22f7af92c0e94",
+      "archiveBytes": 609,
+      "archiveSha256": "abf0c173eed8690e6b4a07a78e7867f3e8751c42dc1a0e6febafea95a9d6a5d6",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335319/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335319/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4205,
+      "originalSha256": "5466a76db47ae806efdda47adcd8b651d203eee114dea763dda12475ff802252",
+      "originalGitBlob": "4ad1fae5857c2217ae0b2d9c40339f3c81dfc442",
+      "archiveBytes": 805,
+      "archiveSha256": "6a74f475f91f6390fa46cb820251b2720ff25dce4babb588bd66b06ef1ec006d",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335388/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335388/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4099,
+      "originalSha256": "0eabf52c822593267b6bfd0cbc737231d23128bc3d955d401e940cea4836048a",
+      "originalGitBlob": "1e67a4cd36dda491607b6eec535e900b95121cb8",
+      "archiveBytes": 804,
+      "archiveSha256": "a188b4abde2851e3c563009955bb8be7d6565ac6591b4663ea78962e4f0060a1",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520653633/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520653633/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "9d9f83c656a5f6a761feb8283d60e3d5e51f1079805180053d5b22042e7196fe",
+      "originalGitBlob": "91cbfa0d33ed4ac8dcdf6592a2a177fedbc3c676",
+      "archiveBytes": 856,
+      "archiveSha256": "41a454139145dda476b51d33311161b5282efd092c9a2f261b7d9143711edddf",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522181900/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522181900/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "7c8895be03f2bed4b81072d9ff9588c98869518aed89a8e825a843449cdb64ee",
+      "originalGitBlob": "802cbe0f2e130b772f4278f05723d37adc14249d",
+      "archiveBytes": 880,
+      "archiveSha256": "c809c8b9ba58e456c43ed003abfc048ad14c11bf18f6825c3f97029b8866d797",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708131/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708131/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "323af0c58642257d283607bc3f9cec62fd44739c74a63d1033783f997cde10b3",
+      "originalGitBlob": "50f82633fd85ff596536413c3d9d92ac0905ff70",
+      "archiveBytes": 874,
+      "archiveSha256": "75d96e086d337ad4b5d6517783da29b369c2b63c4cc9471f89949a10c2340444",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37527776556/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37527776556/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4342,
+      "originalSha256": "3c1e4732c1992303c291b51ab35b69cb8cb01998063e76040d4967815e1505ab",
+      "originalGitBlob": "507023b3dc67cbc612573dc0229a53253838d0d0",
+      "archiveBytes": 819,
+      "archiveSha256": "4e3fd9c0f6801035ca47e0726e202766586990d4d5652e5d41fe6041425326ef",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37528573037/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37528573037/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "ab0fefff733f3b03038a7ebc9f31e678add4bdfafe412c769cc46f35cf0ae1c4",
+      "originalGitBlob": "617989add26b8418e0249cb96517bfb533423781",
+      "archiveBytes": 870,
+      "archiveSha256": "f9e921a4135686b219eef2eb60a1e884a3b12740ee7fe5647623848fcf308084",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37528573095/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37528573095/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4277,
+      "originalSha256": "6b81555f4ccb09fac64b082b6850d15c8597560f7fb71e0ef671eeeaad3d1386",
+      "originalGitBlob": "590a93114783308cd9c7c2cdb30dde1ed78d4c8a",
+      "archiveBytes": 782,
+      "archiveSha256": "0f2d676d5cbc2e4932000f26d690b2bc9e9af6ace752cbe910ed979b9ee8ea18",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37528573095/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37528573095/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4577,
+      "originalSha256": "70f8254b39514f4130820d3807efbdcf989ab6390793b6fd65476f4743ffcee5",
+      "originalGitBlob": "24b38d160f2634b50d0ecbae3fcdfc950c762f12",
+      "archiveBytes": 807,
+      "archiveSha256": "75461a8916671587d2786273724fbaacbc4eab83cb3cdbe4545311a2e47a23f9",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37528573123/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37528573123/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4817,
+      "originalSha256": "28701e094710540689b4bb29c3ae9481b750a2a80939a2f950b0f2a5f8563deb",
+      "originalGitBlob": "8ae3144b9ce63f9c170e18667c96ba80f3dc591a",
+      "archiveBytes": 768,
+      "archiveSha256": "2495d943ad7eb4ce2336ab5cb8833ff7848aff721881e0999e023e1776acc5be",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37529112803/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37529112803/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4817,
+      "originalSha256": "3d4de1df58dfc29cd52e1c4895b581cbad6891cd7d065c7f4b7b84d0f123f283",
+      "originalGitBlob": "2833d0189a2768b20f793a4d7b94f0eaec9972ae",
+      "archiveBytes": 773,
+      "archiveSha256": "74381de5e0d7bb7d44b6c181b0aaa8c6d733370b709626421bf4980a1fd75ae9",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37529112881/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37529112881/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4099,
+      "originalSha256": "9e7a429fe9602ff6d48c60d68b736860046f9f5f347fd5dbbad37df6b2ddf91a",
+      "originalGitBlob": "df3d2ed036c88bb9f902a0a19ba2cef06fdfc782",
+      "archiveBytes": 810,
+      "archiveSha256": "795257dd8ef890c4ca5376677d666f4dfb60e78bda41f22f2753d3d013ac0627",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37529112984/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37529112984/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "d27a8edbb7cc585d319fb44871f17c7052ae3931aaec60ad06f7853e9957f539",
+      "originalGitBlob": "54d80c7a513a7200f58f194e2690873fa34734cb",
+      "archiveBytes": 866,
+      "archiveSha256": "b996637268cc208a9d9f956abe21e9cb45f04f118fe00b63bb1c0ced6550ecf5",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37529797144/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37529797144/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4099,
+      "originalSha256": "944e73b27baf53af350063bef57d4d44b5addc028a8523f8fa204234a4ec2a86",
+      "originalGitBlob": "847699c8f5040d573ead4297373ddd60b7b47b5a",
+      "archiveBytes": 808,
+      "archiveSha256": "20c7577d2c4fbd51a9c769fc7c65ac4c74da716d6c874842500bfb97bc533308",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37529797878/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37529797878/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "2de0730543426e119e99ccde2c9d218d338b5a8428cdac7ce0bfb4286781b3b9",
+      "originalGitBlob": "37de56eb79e6bc932648c27d6a50ee9b6041dfbb",
+      "archiveBytes": 870,
+      "archiveSha256": "227f43fefb8c1cdbdfba86862cde30f4ab938105f2ab987768ed61640511eaeb",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37531066280/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37531066280/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "edbadd24cfacab09da86b1275fbf7afd14a627c075af168efe01a8147935596a",
+      "originalGitBlob": "f3cdc924f657b7dbc91fa8434c32c170fa594fdc",
+      "archiveBytes": 875,
+      "archiveSha256": "cc662acf30f9ce8037e8ee43a8c778873329d5dedcda4d1d89221aa3f79871ff",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37533199594/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37533199594/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "5f2a14cb4ef6550415d1f441ed808e4e20f99f1ca0b64a5feb6070e75ca88bd4",
+      "originalGitBlob": "36a28cef2fc5fa933fc22b59ec97f819c9ea1ed9",
+      "archiveBytes": 853,
+      "archiveSha256": "a21c2cd0ddd65af714574ebd20fd73fd8f7b6416860dd56a9f0992b3768b8946",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37533199658/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37533199658/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4342,
+      "originalSha256": "f9ee9fa45962f635446d8d0e3955178219f6a12c346c32646280fb833a04e898",
+      "originalGitBlob": "0d1fe574a6ff93896f311e17b15d8305110ef99f",
+      "archiveBytes": 835,
+      "archiveSha256": "ff0cd6f6ba1642e7739a323c3f77dcc945cb960b3018631d1cc18fa0aa87dcd0",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37534052482/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37534052482/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "813f5856b23459d520398ebc4c6d7c1265af11dc879f1670ff55297216d454fd",
+      "originalGitBlob": "9cf373dd3f07917d762a760443d567f356c39fc8",
+      "archiveBytes": 865,
+      "archiveSha256": "cdb8c908feb6fc1be23958cc3516289dcb18eb56bfd82d809074dbffbe1815c7",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37539023739/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37539023739/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "accf1c14dd370bd59114d00e93b3de2484bc64b7eee24c9979bd1010fa5c7054",
+      "originalGitBlob": "ae4c6136440abe884dc8af1216f808acf2806491",
+      "archiveBytes": 872,
+      "archiveSha256": "01a8fa03590cb8fd5b546d4dca1b86a2073a15377334898eda245fa4e2c5e5e5",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37539023965/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37539023965/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4817,
+      "originalSha256": "89529efb0994db4f97930f5d966a41e5b7a1f0ab3662227c67cccfa2aaa7f6ac",
+      "originalGitBlob": "9b7fab68d16947fffa668f18ad75d1adb4cd36e4",
+      "archiveBytes": 777,
+      "archiveSha256": "9739fc25dd32e6b5cc8d74b3406b232285c16ffa898c734ea5c71b8831fbc8f1",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37539923544/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37539923544/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "93cf38a8051e5bd9ff25a3f24fd8a1556e41c1141ce24f1f906098a36db928fb",
+      "originalGitBlob": "10dbf9ea6b4e7942237c023f3c0c439e700d2b09",
+      "archiveBytes": 872,
+      "archiveSha256": "d1a4a4cde4b7df3d9e3d72835f330db43abdedfc174ab5cb93524b61ce7f7e21",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37539923581/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37539923581/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4817,
+      "originalSha256": "3526436e986c239eddd9cf508fc837785ab124aa8e2b5b1507f1c15c8b28aae1",
+      "originalGitBlob": "dedc15def33a77a7f3c45d77727c82cc1f1ae6da",
+      "archiveBytes": 779,
+      "archiveSha256": "908c79ee3e35c05a018cda31ff169171cb03c1a67a5304698d3fe7d7dd08a950",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37540756486/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37540756486/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "f34e16345de89c3ad383fcef2e766cf0aa0de5910128448b5ec57a7c8524bff4",
+      "originalGitBlob": "035617b503c27818221fa76e75b997b1abb4476b",
+      "archiveBytes": 872,
+      "archiveSha256": "bfd8ccd195814c2ecb17c49c8fc83fe8af81ab04de6348e82948dadf66e411ec",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37541942287/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37541942287/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "4285fe56b91165d85b662994a57da86f2644635da6abea1900f7f5a43c37c3bf",
+      "originalGitBlob": "97266bc12ae584223eaf6814c3f98dc31b56cdad",
+      "archiveBytes": 882,
+      "archiveSha256": "1ea42c34a71512c25ca5e88a50625578558af81d68d4958f103f577894a5cd13",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37547113532/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37547113532/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "2f083a4e8084fc0221d7920b1d71faba69f7ca39fbe8234b8b55b04802cdf4a7",
+      "originalGitBlob": "d43bfb7b998f439288d9cf11a462d81122803a80",
+      "archiveBytes": 875,
+      "archiveSha256": "04edbcdf7a27b1363953351754031c8381aa47bf7c23a5fcf9f01b4056de9e18",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37549001431/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37549001431/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "52e13d5e74eeab3c0bc88147be77f9c9dd2d494814a89f2afbba74c8bc54250a",
+      "originalGitBlob": "ee10f62c510081a1f2d6f78f08cce661561a2bd8",
+      "archiveBytes": 865,
+      "archiveSha256": "5ae57659881615dfb196e28ba7ff65051e5be32e818173a4fa11d6a3eaf1b7dd",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37552547871/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37552547871/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4839,
+      "originalSha256": "8c393b02cb3d6224dad8337ecdc1eb9336da0dd98789efc54565c997828cf39a",
+      "originalGitBlob": "6e7619b7e6fd5256fecf74ba0641bdbcec577e8d",
+      "archiveBytes": 766,
+      "archiveSha256": "5cf01b70d7ee94fae970bae65b78c493cb1247ca2bbd1fe9a7d26704a0ccfafd",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37552547916/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37552547916/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4340,
+      "originalSha256": "98abf707fa401eb234fb6f1634854217ab537f9aae435763efa143b28bd814f8",
+      "originalGitBlob": "ab6fec3a5e65bd9145a3e14728c48489514caee5",
+      "archiveBytes": 820,
+      "archiveSha256": "90e1960122ea201a3bea9597697ff77648f0b4fadaeaff0bcce91af85c14bf97",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37560605788/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37560605788/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "7412cd0684b3156bce4c7f3130b091b12fb7ae73d3a5d78c07ff79350b0fc520",
+      "originalGitBlob": "6f74574c407f5f23f2d17b051762e64b36f8b0f8",
+      "archiveBytes": 857,
+      "archiveSha256": "f3c7e9b3ba0471d49b151890a547eca30d5334713c6acdc4215e8096a0621363",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37560605837/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37560605837/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4342,
+      "originalSha256": "2b8554ecb3c5c1b9f25cc302a8b16a53b891fc47eb85bc6c2b2c5bb6124b9930",
+      "originalGitBlob": "40f2e7ebc3c987597e12b7bcc56248bfcb5bedee",
+      "archiveBytes": 827,
+      "archiveSha256": "efd26526e177524cce6469b79c7b43e9149175f5548173ae36b303c83a5ce7af",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37560998462/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37560998462/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "89263e0e6d49f0d363728e5b48f0e0ca8ccaa866f0d93e8bb8daf867cc2970da",
+      "originalGitBlob": "3ebef871383e0f34a690e7dc06a7f0dd38ee2278",
+      "archiveBytes": 883,
+      "archiveSha256": "a490724dbdd3ec14280fdcd9a88d8201f97491af6538cf4bae305a76c407fa6e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37562515496/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37562515496/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "f5464655b5b6c83fb37a94a55d3f34a349727dab02cc76dbf95baf9c70745edb",
+      "originalGitBlob": "3f5d38e2091b0ad95b41f7b36a1fc6a608573659",
+      "archiveBytes": 855,
+      "archiveSha256": "eb91b5e11ce31a7dff9101411775acaff7d30ea313ad2b6426223ab611901796",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37562515533/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37562515533/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4342,
+      "originalSha256": "33b2545e8ca78e7c9c5fd9ca9f71889403d0ee7b4efebbb6da425aea89b10e0b",
+      "originalGitBlob": "d903161bdc2beb59893d5d1c2d559b80d833ca41",
+      "archiveBytes": 825,
+      "archiveSha256": "46e787d153d1ddcf8bbd4f28c8e13e029dbed422eca3dd7e50863cf9ceb0c2b0",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37562515649/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37562515649/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4817,
+      "originalSha256": "dcbec084530554b6d90f8eac1c375d9d9f4b3823f25fb273c0ac499533862dbb",
+      "originalGitBlob": "47e1853961528818b3500308eab13d96d371a0fe",
+      "archiveBytes": 769,
+      "archiveSha256": "d1bed8200e285f6b1e8a9e24a6a1d957398cb5cd788ec814c4d38a9ca9eabe9c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37562904341/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37562904341/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "46c629a19bf8ac8a134aa2e1c7306c65cf4c20b1188d25cddeab72ecd607b7d0",
+      "originalGitBlob": "e48d3de6b383f940a2e79422b19c4908dc8b05f3",
+      "archiveBytes": 873,
+      "archiveSha256": "842debb6ab9403490880b14679fa90961b53c1a94b5e96783ffdbf241a148550",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37565116387/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37565116387/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "5deee437a3b5bc3acebb33b990f96729b67e904d1fb006c69d83c26651772849",
+      "originalGitBlob": "34ae16e32f292b01cd9ff1c4f8eaa291b6059b56",
+      "archiveBytes": 870,
+      "archiveSha256": "c5de84ca5b7e800e3251cff70a37783d29569cfa5a3c3ce3c04e18402d997caa",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37566313313/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37566313313/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "b64c850ebb0264c7fdf17a670b168dcfe5635cb6da47bb581c19729258833a37",
+      "originalGitBlob": "99da962a57253c0eb6c4e8caaf951444a50e9836",
+      "archiveBytes": 870,
+      "archiveSha256": "5d7e4a7750783e2df5bfd466871ba8b320b3dd0b194c47bc69e617743c19ddbf",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37570930628/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37570930628/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "df3e4775e71e7ad3904906c33490ec9bccb02a35841e354af66f5a6e35887344",
+      "originalGitBlob": "56facd1537acdf6a567f22f62c783fb3f86c2541",
+      "archiveBytes": 872,
+      "archiveSha256": "f8bca016ad1dda04c9da73403799a7445dabddf29534455f607501dd7b36824d",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37573787974/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37573787974/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4817,
+      "originalSha256": "ce264b0289f25c8fa444d0595f38f5b6aa5af208fe2d7f2e74cb49797d737b3e",
+      "originalGitBlob": "217624bdebff17c310e9564f063bf0f5fb3dda79",
+      "archiveBytes": 768,
+      "archiveSha256": "0820207d24ec61311bf7d16c464e5b16c7b813da835283ec7adacdc1eb216492",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37573787989/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37573787989/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "b4afb6884a7462de07faf144020c942b4c62eee22e61e1499c61d6797342f318",
+      "originalGitBlob": "bb9ddc560a90725a038b44c61eb6952d28c5bbf4",
+      "archiveBytes": 863,
+      "archiveSha256": "417de6e1dd9e4e2050099ed0ffe5aa89d533a5e2d1a51c9742e573782fe34c99",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37573788160/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37573788160/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4342,
+      "originalSha256": "5f76cdda43a9faeb8d3813b65eba454239e4bfe205bbca0df7a1e6d58eb88414",
+      "originalGitBlob": "000e9520d07d0692bea6361b102c978218969cf8",
+      "archiveBytes": 831,
+      "archiveSha256": "299f8d4ecc9636d312b6471859e79b2a806bb6de67b3efb244670290b23b5ab4",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37582153526/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37582153526/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4342,
+      "originalSha256": "c1e93e43f906d4bbf2875f595132065955087080cae8ce7d8d4b5c51ea4355e8",
+      "originalGitBlob": "a3f8f75fe2bfad7b433bed4fedd02bd444587fa4",
+      "archiveBytes": 826,
+      "archiveSha256": "d26039da9e6625ea411c477bbb8a1a9cd5aeab70df8d9fbc6f796f849e713087",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37582153678/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37582153678/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "2c757f3f01c8eca2d5c097d1f19b6bacfd2c952a3a03aa45e1fc403d9beaadd7",
+      "originalGitBlob": "648c44d031ce9271623e087b7c23fac575e81b75",
+      "archiveBytes": 865,
+      "archiveSha256": "1ff94efd91a9bd6ea571a230168b2c34e101cad45931dd0419cbae01b90f132e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37582153732/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37582153732/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4277,
+      "originalSha256": "f58b48ee60398645087652d4f41970ac196ca94e7f9b77aa388b9424ecb5edd5",
+      "originalGitBlob": "1c816c855596f5473c4c77ac3071a50b66338d8d",
+      "archiveBytes": 793,
+      "archiveSha256": "b316fa676ffbc5dcd76bb73b30359883d0eb57897fe1b5b4c47399653f6b87c9",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37582153732/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37582153732/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4577,
+      "originalSha256": "528cd3d104ae41349d527e45fe06b3a35d29b0514193e9ff99967a55d33a069c",
+      "originalGitBlob": "2dd521d5bb855908a2f4012e61cf5f5d24dcadbc",
+      "archiveBytes": 817,
+      "archiveSha256": "9788c8a049d189874676899255bbd8cdce0d4c61c416f15950ee75b3bb4343df",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37582735599/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37582735599/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "07d00e096ca78c8c9aeb3465d87620abb4a288d8a1f88e7e5c69d4e93ea87592",
+      "originalGitBlob": "c6f6ba507fb581a2c4c8cd78347e486ee36367ea",
+      "archiveBytes": 863,
+      "archiveSha256": "9143ab8adec652a7de8a787954a4210d921543f1a8d2b5a760a4336bc413ca68",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37582735622/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37582735622/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4100,
+      "originalSha256": "4bde61f1f541291e3c22cfbc3c108ff24cb71407f18db6e1f812e80551a638e9",
+      "originalGitBlob": "29f07a296f533186ba9537681a70122c689f2536",
+      "archiveBytes": 746,
+      "archiveSha256": "8ce4937b0f64abac45a00a75e85e72f1db689668d2a3c124b626dd9f01b045a5",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37582735622/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37582735622/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4374,
+      "originalSha256": "44a5bf6ccc0baeda9f5ccc05abb93d6f69855ca09eb83126a112f286aaa51fa8",
+      "originalGitBlob": "f79f6b79ffcc37e67d54e8de133145aa86dc69ca",
+      "archiveBytes": 772,
+      "archiveSha256": "88ba4015f98a228e0b9e4e3a7b9e750d97dae616635adfe16cf68ad5cfa2ba70",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37583529183/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37583529183/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "628d0c64f1e03d3df11dfe4a03bed4533718ac57dfffa3c6c5fe1c842b599f82",
+      "originalGitBlob": "8cc8f2451895d88b5a6cd5a5916147a347014c05",
+      "archiveBytes": 874,
+      "archiveSha256": "3a26f1d34476069793f79316060ca0f663de0a62aff8e367413410b62d184868",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37587719390/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37587719390/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "3103995385577972ade8895a45ee58a3cdafd34e452c2564e6b00faf83499b08",
+      "originalGitBlob": "ac136eafb13eb536cc5eb7559109984b2d05e0fb",
+      "archiveBytes": 863,
+      "archiveSha256": "e015ae079230b917f2c25c08bed2c4dee6ca71536f3876e38443a63daaf0c91c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37594789469/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37594789469/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "02fc64b0dc366232adbe219fb90a833e7965ffb0bb32d7966902514e72f9677a",
+      "originalGitBlob": "0042e190535bcc634a1220b4fd4cfc92865289dc",
+      "archiveBytes": 869,
+      "archiveSha256": "8fbd8d024dfe57729ccebdf920fe207ccf4b66d7e5fa4f03cc8208d12b7143ba",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37599699478/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37599699478/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "7bbb5c30bdff9558d3aae49d138c69b8af675191c3fa9fa035c707a1ed93bbfd",
+      "originalGitBlob": "fa0500620d6773b2105cb95324934425fee36ea5",
+      "archiveBytes": 874,
+      "archiveSha256": "b8a1fb7ef219ff249864a22e20f38f3922c5327ee18f9e116d10f30e0ecee9d0",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37613770464/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37613770464/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "6563467a2728d1d8913d72c22daa95ad66cb8deeed1efe40187a70991e32f866",
+      "originalGitBlob": "7b4b2cf0927284138be6e4979749f273445f252c",
+      "archiveBytes": 873,
+      "archiveSha256": "1aa0287e1f072d3fcdefb333517526b176d1643ab2674c7d559675ff4eb4780d",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37618593632/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37618593632/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "a3fb9e02df7053e77f42fa1d1ab578bcd7053388c033ea8db9a10ba2a983d169",
+      "originalGitBlob": "6e7a8ec88d4a73f2382675906d01e3f97481657e",
+      "archiveBytes": 868,
+      "archiveSha256": "e131a95955fccbbf6402df7acd7155990ef6371c1c9a3f6b94dc4178e6c43470",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37622404335/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37622404335/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4184,
+      "originalSha256": "ba42bf619f9d8edbdf3470bac369c53ce8167058925559a53c521e3b2b1d2959",
+      "originalGitBlob": "f338bb80426789710bdffc312b909a8946470590",
+      "archiveBytes": 576,
+      "archiveSha256": "915a5877b5739272381ff7f1fe9fdd048d809b9e7c09635ba07486ccc84535d1",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37622404335/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37622404335/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4436,
+      "originalSha256": "2914f0108522051deb8b21a94c2de43865efa8fd4b3c0822db81a9ad80dfe55d",
+      "originalGitBlob": "7d949cf45a54aeceffbe325291854293950530e1",
+      "archiveBytes": 603,
+      "archiveSha256": "006b610e1f6dfcaebae693e662e35dc0a44cbbf32d75841b9dd7f152c94e1c0c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37622437738/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37622437738/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "c8db9a460cbf65f9dc8703587072a83655551c2d784fd2766e9854c644798886",
+      "originalGitBlob": "8e0db3cebb1c3868175429f46394fec9978b4e44",
+      "archiveBytes": 865,
+      "archiveSha256": "c6a88b3f4f058fea0e7ae6fefebb465d31e2f65f110eca8d3fa35f9a4f88bfb6",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37628151867/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37628151867/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "dcdd369b9aa8d879b5fcdbcdc6090d7a2b05c296e93e97d4cedcc74849e8f9a4",
+      "originalGitBlob": "d25ab93532cb28705589d8551c9cbcf3826b6942",
+      "archiveBytes": 875,
+      "archiveSha256": "07a8ac77596ffb4645ff0edf8f6c8fe354cbcc1d7076837c8a05a6a83fe64f53",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37634164290/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37634164290/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4795,
+      "originalSha256": "da1d3670d3a42d255a0cde2f41a22fe3ea7e4fa7e04393e98ceb521e3abd555c",
+      "originalGitBlob": "3080235e6d7c6a498dafc15eeefb6e6ae0190db7",
+      "archiveBytes": 868,
+      "archiveSha256": "07f3dc36479c23031e50724b0bccd865d456281aff442f4d7674c723c1627886",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37652295748/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37652295748/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4791,
+      "originalSha256": "0546a210af8e301fcdc1dd6caf12e4acc9995b3b81fb44104aa83d94b0cf1cb8",
+      "originalGitBlob": "91437f19c51b73958d3932496bf8b8c53f83825a",
+      "archiveBytes": 874,
+      "archiveSha256": "01dddb404c878337983fa433dd8b8f5855f21d00390d09ef1843aa8df0d4b9d9",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37663996930/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37663996930/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4791,
+      "originalSha256": "a72a7e2b37859c01a5633c369840d9185b1c8da6979b16ddd7505503ae443927",
+      "originalGitBlob": "4bd904c27ace1978fe1daef6fbe4ec652990211a",
+      "archiveBytes": 869,
+      "archiveSha256": "cdf4982dd00417c9893ce6fe12ecfb6fa7422f569dd7ed566ec9160bf1fb5a3f",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37706284834/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37706284834/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4338,
+      "originalSha256": "163bdab955924584940531d8b85c403bd4cd726eb547c280f76eb9b849c625f7",
+      "originalGitBlob": "788016339191088d403d2492c7893bd8f2251e4e",
+      "archiveBytes": 827,
+      "archiveSha256": "fcd720f1132d4cd3c6bcc189ca14131182bcc20af13c4dc7df347b3613ba7ee7",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37706284841/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37706284841/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4273,
+      "originalSha256": "8c87b74b236f743f82baf02a1bbbbb27e450783747bd89c1fffb2123a52c8583",
+      "originalGitBlob": "9a99c3616b656b51f863838c878d639687b8c0d4",
+      "archiveBytes": 786,
+      "archiveSha256": "b76c44658f287e2b29e36eb3da08eedf40b853a38b8a3399444544777a09511e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37706284841/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37706284841/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4573,
+      "originalSha256": "fc32e0dddc3ccffc927518ccc54192cb10448faf0ef7bfddd2695fbb13956667",
+      "originalGitBlob": "29931cd3576a7a876fdfeccdce85c2eb5f8c14f4",
+      "archiveBytes": 809,
+      "archiveSha256": "585a8f50190d6782e1318c441173ec188e0881f7d358eb129eb5ba0bb8a10609",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37752832065/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37752832065/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4707,
+      "originalSha256": "1c3f01381c6155ed87e94868a3afc9b21ed16a171a0a46bb21a43adbc018272e",
+      "originalGitBlob": "76832bc43506a50ced017d999a17ffc325142fbe",
+      "archiveBytes": 814,
+      "archiveSha256": "8c8a3d38830d2a022768696348e73a7488ac1790a0ae6053abc50bcdaf293a5e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37752832232/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37752832232/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4273,
+      "originalSha256": "a55277647a61b4cfe36bb67e442d0ef81803ad48051ded1e688702da8f1b216d",
+      "originalGitBlob": "642db19e9e410199d663085f01ad0a9f089e6089",
+      "archiveBytes": 785,
+      "archiveSha256": "ce51a87e29a495ccb59d10322b4879f343c011b3dc0d150dc58388cc594aeb9e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37752832232/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37752832232/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4573,
+      "originalSha256": "cc536565c1a98cb6d78d5eadac086f4896ecdc90d74b7e9a243912d9b8c26365",
+      "originalGitBlob": "dae7e77ee0fb8ebcb7bc6414485dd0cf362fadf2",
+      "archiveBytes": 808,
+      "archiveSha256": "d7aabf1dd22ca7c2f1e01cc1fbed43fd5c34b29e2cc12355c30b272bdcb6bcac",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37752832256/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37752832256/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4338,
+      "originalSha256": "c12b37c70ef1c869eb64c680ff907e030dba0837f1d63e546a148438643eab0f",
+      "originalGitBlob": "a3a45c108eb10df256eaf2aca7e2990168a61194",
+      "archiveBytes": 809,
+      "archiveSha256": "e42ef7a1693b57dafc62691da369a1ba929f8def6365f33945731617ea617dd7",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37768965527/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37768965527/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4273,
+      "originalSha256": "24d83a426e16aa1c0bf5421f3cd90ab89c656a779a501bd8e8714ab172722847",
+      "originalGitBlob": "f28f6051365965579a264aaf04de0043c9103320",
+      "archiveBytes": 796,
+      "archiveSha256": "bf8e5aeeb66311f836678c824940a65a852ddfa6ad853a83a9046664a21c93a7",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37768965527/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37768965527/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4573,
+      "originalSha256": "341749bb34bb6fa3b5367b3971cc03b27f62de292e829b124d8657fed9883f42",
+      "originalGitBlob": "8d9914c066f39dec337f09aa57189ed79418e0c2",
+      "archiveBytes": 818,
+      "archiveSha256": "5f4b79d4ccf2d5f694e52f519b7bbeac8fee52ebdb42be699540bf4d422e3f71",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37768966037/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37768966037/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4338,
+      "originalSha256": "b2f713c7dba62e4a3b3af323b24e1937a6317025d6f46fd03fa98b9fc1e14e87",
+      "originalGitBlob": "383cdf431b18e0fe66a9dd5955d0de543058860f",
+      "archiveBytes": 819,
+      "archiveSha256": "57a4e85227b3351288cb23a502a08ba069b9a99302d122ec4ce95d65dbcfff2e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37776620332/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37776620332/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4340,
+      "originalSha256": "1df9ef13aead6ac13664aeabefba36f9b408e3e5a7ac258ae1600a6f312a8f89",
+      "originalGitBlob": "5a0ecd75ae144e3c258f12a53d38e98af79c8b45",
+      "archiveBytes": 826,
+      "archiveSha256": "6c2ca804ce936a3ee1c348e7b52b8cba2772bc46adedb9349cdd859fa855174e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37777994047/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37777994047/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4205,
+      "originalSha256": "71391cf3b18f613f53e521b4650244183ccaa52f446a11076067880370d40520",
+      "originalGitBlob": "d08f4b70813a2a7bd6be9fce915833f227aa6651",
+      "archiveBytes": 814,
+      "archiveSha256": "225342b649bba1b5ca2ed923cf2b313bb5899347d70ab28b8699b80a79e6847c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37777994097/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37777994097/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4723,
+      "originalSha256": "d263d306b07d4c5c37b432c32e80f0b117b987124b174dbd9bd056ee6e720cfc",
+      "originalGitBlob": "341d935f0b948d056c41ab901b7b9fd4a1ce308b",
+      "archiveBytes": 791,
+      "archiveSha256": "992c0836e0fdd7623eaaf96a56f8c3becbd9ffe23242a8c3505b1e1692d53082",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37777994455/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37777994455/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4184,
+      "originalSha256": "d7ec4d0dbd2cbdf5660badc667607c4ccbca65f536f5638700e564cded49c045",
+      "originalGitBlob": "1f4b4c28636d150a1ded787e81565b0e954d9503",
+      "archiveBytes": 577,
+      "archiveSha256": "3f932d5c136e0158f87a670a3ac3449d1d8f5ab12bd542882c83e0c85902acb6",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37777994455/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37777994455/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4436,
+      "originalSha256": "54b24b7d6f02b8cc20dc6c63c7a4983bbb0609beb03ec3a7ee931908753de52b",
+      "originalGitBlob": "9cb85c57b92e8746e436f33945805e790337cef1",
+      "archiveBytes": 603,
+      "archiveSha256": "3bd6bae0ba7e4800c7b617d846a596d06b371780f81830a57d3f2d1fd6da092a",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37778965419/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37778965419/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4205,
+      "originalSha256": "15f24eaa724729d2627c553262ecbbca1daf2fee40cd7df57d757f094ea193d9",
+      "originalGitBlob": "1785518159f0897174c5d3db9e4b127a4b448092",
+      "archiveBytes": 815,
+      "archiveSha256": "8179411028c7602102c73eafb50c2ca8b4fee1021765880a03039b34fa1c545b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37779626165/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37779626165/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4723,
+      "originalSha256": "b49625613860ec701ed8110be6c369662c520ae6099cef3625a750c4e371d348",
+      "originalGitBlob": "e8d7f5a2baa7d1f04a0c1193a369a07a3ad03b11",
+      "archiveBytes": 786,
+      "archiveSha256": "38fae768c5e576a439b94e70c67f537b9f29faaaf4b1c9da4d8314e500250031",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37779626225/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37779626225/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4205,
+      "originalSha256": "cbc7c077b3d3cce812a2329a66b5f7a42b370def1e0023f4dc0a0655f4aaf01e",
+      "originalGitBlob": "144463c2541af71d60712fe61ec3f011c2b8c31d",
+      "archiveBytes": 788,
+      "archiveSha256": "6c6d9322af4aa27e72f23d2bd350d6dd54e8ac6f8db7b0305d5623819fc5a312",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37780074252/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37780074252/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4205,
+      "originalSha256": "4f7b7e95a63150062a147008df53d5ea431aaf7d8b6d7313abc24709e3f774ab",
+      "originalGitBlob": "0fb7c7001b62701af8011d9514f8b83ae3323176",
+      "archiveBytes": 811,
+      "archiveSha256": "1d6be8056aaf57af11a7404471904432f17a30a8e9e2e4890a345580b2c4f684",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37794331127/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37794331127/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4342,
+      "originalSha256": "e73b227d386128a6cd6c0defaed7d1d8dd1d174f4de9ff42fa0de4ede84ef9cd",
+      "originalGitBlob": "ab7912c9e33f0aeb64bfd904a54484646f4b152f",
+      "archiveBytes": 818,
+      "archiveSha256": "b5ed856c98d431d2fb926122a6f5a6fe04c02daf452683f4f78ba667d4a250c8",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37794331130/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37794331130/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4277,
+      "originalSha256": "89773216ac56613ec10858ec8dd686a122780c05c131c3d0a574249627792794",
+      "originalGitBlob": "668e7575857afd49d8561dfa6bf9d33913f65939",
+      "archiveBytes": 791,
+      "archiveSha256": "86128fafc772db79d345280e16a5058700bf049f36933dc4db04c9b1e77991ee",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37794331130/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37794331130/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4577,
+      "originalSha256": "94cacce4e3d615ef233c1d399f8950f20fcaecff285b2c74fe9326d194648ae3",
+      "originalGitBlob": "8c79ef7bac46167de67213168776e2f8d7df9d24",
+      "archiveBytes": 815,
+      "archiveSha256": "70afbeca2a005b90587c5a4ffc13afbcb4d070337ddddb4479f4cf6b8b25343b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37798906782/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37798906782/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4184,
+      "originalSha256": "51a93f05c6017010d4d50ef154b2ffe7776ef867657058beb71fca3431af4dc0",
+      "originalGitBlob": "47247f34a68c00daf35a2750f1352ac7383401e6",
+      "archiveBytes": 585,
+      "archiveSha256": "00492c61040bb099685f3c1c20935f9abfb58f5883f4826ebb3ff312e92dcfa2",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37798906782/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37798906782/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4436,
+      "originalSha256": "e7b854e9c2b9b39bf85a493cacf06c7614ebe26595ec24cefa1ad556fab4f91a",
+      "originalGitBlob": "52612c70175df93ef07972179be828644366ec14",
+      "archiveBytes": 612,
+      "archiveSha256": "1b824b70d7e5e931f07fbefcc2c168d8a3c906047c57b8523ba04c3c01cd3c5e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37798967459/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37798967459/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4184,
+      "originalSha256": "5679701a424a80bcbb3e9134bc609514903ee614d9a6856d7dcc44b0b7581fef",
+      "originalGitBlob": "05f51fb08f3ea90769960b077723f8b9fea026bd",
+      "archiveBytes": 578,
+      "archiveSha256": "f5743d49c1e417d42d067960c260d2feb3407db7897073b34dc4c917dbe30a22",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37798967459/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37798967459/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4436,
+      "originalSha256": "0566848be779b1d6ab87a1f47250d0e7c8f14b9c6b9f45dfc26042b079447cb0",
+      "originalGitBlob": "9704cd5fee10c534147ca5dac0e60b7f5b5c3e9b",
+      "archiveBytes": 604,
+      "archiveSha256": "816884f3f7ba007b5780887331fb1d0a4bb26c95bf079ea206e2444ce1ff7ed7",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37799594743/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37799594743/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4100,
+      "originalSha256": "87d459ac03c780388cd01193c33d92ee57f6f8aa98b8178788bc7e67e6c1a9e9",
+      "originalGitBlob": "d9ba4bda45cd0dea58952846e14e2898c6c80211",
+      "archiveBytes": 747,
+      "archiveSha256": "be127bf8a816df3516e2669e36546c2b5c3c6dbfd8403d169b7850576e0ae19e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37799594743/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37799594743/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4374,
+      "originalSha256": "6a66758d9d82a3b89c1532899e3655bed39d18206aa9274271c1054899cecb6e",
+      "originalGitBlob": "61359b72ddfa5dfe19935cd6ec67a7b395b46851",
+      "archiveBytes": 773,
+      "archiveSha256": "602414557da79cdb78602988ccb31aa05da9b3f7a9de807d969a1f194f6e4ef0",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37799594927/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37799594927/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4184,
+      "originalSha256": "d72f8e3316f968b2ff079f315dbd6fd4314e1f2b370d4104a596c99d5383ac26",
+      "originalGitBlob": "af21fad7fd7b86a6039ad25911057d1f91c69694",
+      "archiveBytes": 582,
+      "archiveSha256": "b5fbcdebfe91a6e5bc47c575fcfdcae47a726d940acc462a5f842bfd279f6f6e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37799594927/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37799594927/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4436,
+      "originalSha256": "da189a05bbde226fbe49e8e36b93d9d29b2677924d9fb9a15afbd48dcd384b60",
+      "originalGitBlob": "a14a9a8fff65b159e702d41a645228315d2e97a4",
+      "archiveBytes": 610,
+      "archiveSha256": "fec36d2aa40061cae942df2cb4f28a520910416385e4bb00f80ee1edae53ea12",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37799594933/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37799594933/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4277,
+      "originalSha256": "a8b45ef798d363c672a373d3b9499491d28f4f9640636f9d63ad7b9df2253c22",
+      "originalGitBlob": "b9ddda9c62c511c0d7366f79c0a42e5adaf7c2a8",
+      "archiveBytes": 789,
+      "archiveSha256": "d7229fdef7d65128bc7532d3b4275ba03815053a298c5edcfc9e42c3b9790c58",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37799594933/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37799594933/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4577,
+      "originalSha256": "4c8d90d6643b5d68caa6e0f376db0bb1eebc80f9116e43b3937dc49344251542",
+      "originalGitBlob": "82af728d509b7cb0db91cb27607d086258c7d942",
+      "archiveBytes": 815,
+      "archiveSha256": "3501fc1967b006f10551a6316317dd1eb61300ce034c42a38b934d0d1413fbc3",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806534704/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806534704/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4184,
+      "originalSha256": "b963014fe4240d188aa28d978b17bf399bcd9b490fb8a697090f521ed623129f",
+      "originalGitBlob": "9f4404045c85bb221d6d6566455cc9ab3ec312c0",
+      "archiveBytes": 582,
+      "archiveSha256": "1aeff8cf170610bde2b423a49b1a9184f533fb48e940e91c8754238497cfab86",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806534704/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806534704/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4436,
+      "originalSha256": "2c92219e90d234f14829fe6f742e2dbff8a524595881fe3c29f5f594633460d1",
+      "originalGitBlob": "66d0c0bf071d199bd25ef84c1a1f64bed2a67ca5",
+      "archiveBytes": 608,
+      "archiveSha256": "740bafce0e16fc8387a19b6c62e540ecc18db2dae8d19dfda108b955ad72167d",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806534926/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806534926/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4277,
+      "originalSha256": "0d9fbe29686c9ca9725e5ab553e8fd2b7dbbeb618e4c12980ccbd3eaf38f2de0",
+      "originalGitBlob": "4cf697a5d1375f5d69983d9bdf4026dc19d62f55",
+      "archiveBytes": 784,
+      "archiveSha256": "a9db5223cc03a3f4431f192f54b155e4afbe5bcf0da5bb70dbc4dbc900d5008c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806534926/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806534926/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4577,
+      "originalSha256": "b63292c1a5ae46f6aa6774f7c2e3e98465e0cf7a500463bfc9855b86c5bcb63f",
+      "originalGitBlob": "2e5c2ab1390f1ba8ea72119aded6f254e18ea3d8",
+      "archiveBytes": 810,
+      "archiveSha256": "2998ea0b969272104ae61628e77ef770ea44e5e1cd95016d0235ba0d9e1b3734",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806671826/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806671826/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4184,
+      "originalSha256": "7c23f8987ee647924b0cad29da405c835b248358d287e40600e485ec73ad860b",
+      "originalGitBlob": "47752b5229093f9ab9b79d14232ea02d2878f03d",
+      "archiveBytes": 584,
+      "archiveSha256": "17ac8dbae594de81269191de29eb8dfa4fbc671551577c2d349f6b5b7e1692c9",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806671826/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806671826/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4436,
+      "originalSha256": "40a6ba5eb99981e950295907ea5422f24c34849565b8d3e3b36472ffd01af110",
+      "originalGitBlob": "b39bcc170853b24c22b3bd3b5f3e0e3343fae849",
+      "archiveBytes": 610,
+      "archiveSha256": "500d3a40e730f6581c4cdb88362c65b2032ad8415f3d9a2b518fde1f1da8e7df",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806999675/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806999675/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4184,
+      "originalSha256": "5b76d0c8bd09d0b1b21c47bbe39e7558f878fb397c77e8e5134cec4fe3a352c4",
+      "originalGitBlob": "52a702c88f23e87ecd0b43461e5e7753da24e500",
+      "archiveBytes": 588,
+      "archiveSha256": "20358e2b8752b435c588563765586a061a68a68c86a28eace91b639c36395331",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806999675/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806999675/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4436,
+      "originalSha256": "9562099811795bb6b9799c6eda71302a0b0397e982bc0d8403aec4dd66b0d616",
+      "originalGitBlob": "2bacab08c672dc73ae9585c5ea20288495f49b6c",
+      "archiveBytes": 616,
+      "archiveSha256": "b6151d54b3b96ab8a8d5229b207b3f891bd2534332c287db37bf344a528472d2",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806999767/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37806999767/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4205,
+      "originalSha256": "35c5fcdbeb03167743dd8212a8545204d5e4cbb0085b58edd895f496a3934d31",
+      "originalGitBlob": "dc5a8daca827e71a918806246e2d1f38ac8714f6",
+      "archiveBytes": 794,
+      "archiveSha256": "a6690d35da5a02550913bad6dcecb5a526166cc38c29c6205bf42509e1a50578",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37807416263/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37807416263/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4342,
+      "originalSha256": "bdfba58dce189558684c5820b35dd031976ec269c042bf8b4cc215e4f6b2648c",
+      "originalGitBlob": "5dbfe5dbfce9350ecb8d44eafeb888beb82eddd7",
+      "archiveBytes": 816,
+      "archiveSha256": "148ed3c97b00fa576e6ccca0e05cf18d2286b131f5c47a603cd7f0c0158476bc",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37807416290/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37807416290/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4205,
+      "originalSha256": "31fc09a9d8fa9ffab073751789c8d177b60ed4b9de966ec4029fa17c109a5aad",
+      "originalGitBlob": "90532f9e341dcd0df153f6d0f6d0a0b03d6a753f",
+      "archiveBytes": 798,
+      "archiveSha256": "c7a120ae0dddcd0f3cbb8a32bfdcbeda8ae373e9ea3901e106de5648722081ab",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37807900879/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37807900879/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4342,
+      "originalSha256": "238a6ad30bbaf995c853cd21c6c52a7bf7f22fd8eac9563418689954b59c7bb3",
+      "originalGitBlob": "99f49936d5441594eaf2b347a400a7a2fdd900da",
+      "archiveBytes": 822,
+      "archiveSha256": "8466c35a26c8069ea83919714ae4b71d56e5eb124a68dfd46964dfcafb4dab08",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37807901011/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37807901011/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4184,
+      "originalSha256": "a556266840df86979b874f582c3b94540b650dd14eb50af2ae10527752de298a",
+      "originalGitBlob": "a0c731f9db75f1410a73dbcaa8cf7033388b8125",
+      "archiveBytes": 581,
+      "archiveSha256": "f6c8953e213957fc55975eb327e854235f12915057a72a293aadd3e166291033",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37807901011/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37807901011/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4436,
+      "originalSha256": "f193db1af580e32c696e64335ba5f373f3e1bbf8c5e3d7493c6b0279fd77de06",
+      "originalGitBlob": "5d126c33e400f3a8d7e7f4c11e18cfed84fbc022",
+      "archiveBytes": 606,
+      "archiveSha256": "fbf9e3de2cc06f6803ad167821dcd9ab3a0eb6bdefba3a9351e0041a6e90e053",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37811196855/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37811196855/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4277,
+      "originalSha256": "782c71f14a433984d93d083860ddfd1ea2608b6a025ddda6192126560659aaf4",
+      "originalGitBlob": "e31befdd39b29306121471544ae94bc5228fb636",
+      "archiveBytes": 788,
+      "archiveSha256": "19921490b8ad5412ad19ede5cce9165e3531a012882127ff3dd729f6e9fb980a",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37811196855/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37811196855/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4577,
+      "originalSha256": "011308a68369c3697f297509416873ec11346a9dccf125c4f31ba40536cf3ff2",
+      "originalGitBlob": "27b81bb0f2c90264207e44e3301d6f6bea62adae",
+      "archiveBytes": 814,
+      "archiveSha256": "bf6613458b9c6d5b0a029920bd090364e9708747ae3c1d2fb51f672fbdc0931c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37811382717/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37811382717/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4277,
+      "originalSha256": "c09a65bb4dbf74403d8ed21a61d655dad1bf9898ebb2583d49e55305fcefbaca",
+      "originalGitBlob": "fa84f46d230c05771d191ae7b67f6984888e4136",
+      "archiveBytes": 779,
+      "archiveSha256": "0abe219c8b562d3b8ba030019a3080d1dc5291de0b951cdacee074ace7a1c90a",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37811382717/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37811382717/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4577,
+      "originalSha256": "040c45f4084bd1663288a50795c0810f4d004d0cf7926582551fdb14b3532fe6",
+      "originalGitBlob": "e2ef3d21d3621f7cadc84676307a0c37fa469cfd",
+      "archiveBytes": 804,
+      "archiveSha256": "a40154fe01edba060f1247d67acd6f9779f99d98439688530fc42b3e6784f871",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37823048017/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37823048017/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4100,
+      "originalSha256": "5db3f6b2b04d7e66900e490e0eaa871b90b2a1f1bfa7149dc4cd695acc900108",
+      "originalGitBlob": "64c65e8ea057d1480082e9acf61df2bb6caf81f3",
+      "archiveBytes": 751,
+      "archiveSha256": "de8d6ce59f37cc6fb9426afc4d1acda9d8aa5cdba92dfe9701a4c9fb1c600116",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37823048017/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37823048017/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4374,
+      "originalSha256": "05dbb5dfde88ad4a5682842b4a5dae33cd8fcd16a151cee5480320c6516ab180",
+      "originalGitBlob": "e6b76143209b038ec685399bfcb2b8c071ae17d9",
+      "archiveBytes": 778,
+      "archiveSha256": "5c175bfd3aabb7b3efa3dbb1ae5dbebcd8b8b156ebc093869dd8dd070be98200",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37823048079/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37823048079/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4275,
+      "originalSha256": "b1cd522b124bef64e97c4494302985dfd15adee32268f14a40aece0754aac818",
+      "originalGitBlob": "f597f988ca7adf5bf1a0bdc2fc357501b0acffa1",
+      "archiveBytes": 793,
+      "archiveSha256": "bdeeea6263da3ed766436bf960e24161f504b1bfea7b60bd0f79488057280d67",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37823048079/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37823048079/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4575,
+      "originalSha256": "729ec5b3d87b65f0734e68cb1c73d4091e03845c4d9ab07afe9963e3fcd0d9c6",
+      "originalGitBlob": "4a65625d1d557eb47afd4111d0e43b22ce1476f2",
+      "archiveBytes": 815,
+      "archiveSha256": "6ce01d51afd57c6affbbb711ebd57b1b2f68c84e376ea885433e470e62f38c9f",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37823689073/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37823689073/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4723,
+      "originalSha256": "1f89c19879ead89e193f53d6a8843c5060c5fb7c68b3a0929197962b7a04f7e7",
+      "originalGitBlob": "e08abd333039a55a3343ee1f226d2b329cff48b3",
+      "archiveBytes": 779,
+      "archiveSha256": "e0b3dae3136b15e1c243498d40fec92d0ee4dc4ef3da1339c5eae3d53c343de9",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37823689240/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37823689240/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4102,
+      "originalSha256": "b210f7f7f09d3e14f62e86a685e07637f814ced2cd5a9fc0da7289de52d42776",
+      "originalGitBlob": "f7f8cc60691e51eb1886ff5b18818b82cf75f6aa",
+      "archiveBytes": 740,
+      "archiveSha256": "6e85eaed2dde40f8da7d380d4d096b3c76c19a564c04e309e9456421d5598b8e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37823689240/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37823689240/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "f729df8469797d4a8a4891734a1ced98d83fbef793dad3482456ef677c8850bd",
+      "originalGitBlob": "207861f871ebc75615fc8f36694979eef1fb9683",
+      "archiveBytes": 767,
+      "archiveSha256": "ca9a5b5981ce1ea0696949ae4064e8e89da86b3afb96bb8ce05ba5dfbadf20f4",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37838534232/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37838534232/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4100,
+      "originalSha256": "ec8a80da962ee47aceaac97c7d522bca52aabde863335e21062f4c463c883218",
+      "originalGitBlob": "db1365709a1d05985fc11f6df468b6ed98e67872",
+      "archiveBytes": 744,
+      "archiveSha256": "6e981b103e90fe6c70a3e2cdcbb791a6ff214e6c7831326dc86a81d904bc57fe",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37838534232/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37838534232/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4374,
+      "originalSha256": "d6c6849073970f89416f232fea17b8eb105a7d9963026a24bae725b63df41c68",
+      "originalGitBlob": "0ce07892c2e0a0ccd4e0d36a10a06384a106a98c",
+      "archiveBytes": 771,
+      "archiveSha256": "82fa655bb817f759db7aee3a7f9d67a1646e54dc4399f7a05b734afa894ae29e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37839396435/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37839396435/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4721,
+      "originalSha256": "fadd404ac1301539e82f5447e0da8916a5b99a0a5539d98893026d8c9eb7581d",
+      "originalGitBlob": "3141e534031db30c4220e3f50a458d67d0c1db10",
+      "archiveBytes": 784,
+      "archiveSha256": "a9b96db127b63c86eff1a48cc631ef9504de8343795c818e3ff6201daa4a0321",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37840425618/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37840425618/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4102,
+      "originalSha256": "5b4329d7164fd83069c0bc6e8d8d5159c7fcd4d69e56eb52768354c7995d08e9",
+      "originalGitBlob": "7427b30578c427290fed0e9b92fcf502d0af9964",
+      "archiveBytes": 736,
+      "archiveSha256": "f39f2db519f5722b3bd9868ab79270cb26872d3bc8940f6adaacb3ea5f1c925a",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37840425618/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37840425618/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "fafc6f2cd5e2b74e850d7a25144306ea8fafc71de82ea820b743a07349ea282c",
+      "originalGitBlob": "8553e0662546471bfd152c4dcbc95655b67d1ac5",
+      "archiveBytes": 763,
+      "archiveSha256": "148bdc8fb2c31f0237064ed0a667a168dd0075651183d1f4fda813097a23c299",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37840425692/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37840425692/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4184,
+      "originalSha256": "ba2cc022858847f905fd0987312f7ef6ef4d30bc1a945de938d0381e0204b2c8",
+      "originalGitBlob": "d10edc08c5f0a8d988a0bab9fec8e07e6d12681d",
+      "archiveBytes": 586,
+      "archiveSha256": "1426b02c939b9dee30b9a3525e3d94f3990e925fcdab2927d806c318bcacb551",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37840425692/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37840425692/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4436,
+      "originalSha256": "1bb3d11400ac5cc6dd2164372b088d57d22874f5ee32271e775d8b552612b58c",
+      "originalGitBlob": "67d1547535f5ca4275627a14cd737cc9de2200aa",
+      "archiveBytes": 611,
+      "archiveSha256": "d27d8a07a0de79b1c85861a2ffc10389dfb39a86c98ec57ee53add2fdfbf0112",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37840593316/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37840593316/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4184,
+      "originalSha256": "9dd68940914f212e1f3d007d6f5c3d8ef75fd80b15e16a9c1149b03c3d5280af",
+      "originalGitBlob": "ddeb61e5d0d113e812499f2c521c4e3a57eff6cf",
+      "archiveBytes": 575,
+      "archiveSha256": "715618d39fdeabe5949ccce3f64a91debb09f3abe1b5e8281675df0f99c86d42",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37840593316/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37840593316/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4436,
+      "originalSha256": "97c22e59b4b157071788953849ce8f0d31231627c0684c25c32ea9e09e5e5d94",
+      "originalGitBlob": "dfc512be32e642da0e5f7647ec23624a75fbc682",
+      "archiveBytes": 599,
+      "archiveSha256": "7e47e1bee9aa0873e84aeeb72724fea25cb066f2c1fc127652c03a0b2960a455",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37865733497/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37865733497/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4707,
+      "originalSha256": "96e1b775876a11195646ab9a1f1b8e23fcb155d7f4926efc411e52706407f63d",
+      "originalGitBlob": "906a1fff48e4850bd90ea30ac6997c8ae2e09124",
+      "archiveBytes": 809,
+      "archiveSha256": "41d40d31228533715a3e5edaa4b8e58f014daf5be62518b5950a8d446078d984",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37865733519/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37865733519/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4273,
+      "originalSha256": "abc2dfde8ec2560698b5867e3db8f21e9b3a606caaff3269c1c1695c4721d4b5",
+      "originalGitBlob": "7f4aee6c6d7775df4e066578282a4f388bb53d81",
+      "archiveBytes": 790,
+      "archiveSha256": "6f18694a7854a81d1df76aad4bb884f11367958a21309750b502813cfc8a87b7",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37865733519/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37865733519/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4573,
+      "originalSha256": "4e9ce01c59e64351e0e12e0d160b159ff8b02be9cb1aa9e0f45bcef828716f3b",
+      "originalGitBlob": "567edd90d5fa26eab26df9d37c37b00b35828cca",
+      "archiveBytes": 815,
+      "archiveSha256": "9d3a49cdeeea5872709d3044bb461db205e4b99fd7b77fb69ec2063e1489414b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37865733568/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37865733568/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4338,
+      "originalSha256": "9b26cc53fb8fffbcb42aa45cffbbe9abbb61f8c7b6e55b2affbfcb1df0a2f043",
+      "originalGitBlob": "4636c9c18adc98cdc9f30fd055cc5fd7f051623e",
+      "archiveBytes": 822,
+      "archiveSha256": "93be9f84b56aaebdf56318d4122922f75b1f6ef268c8615e1a2ed9b81f4bf91b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37891069059/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37891069059/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4338,
+      "originalSha256": "4ff8441eea68f156e07fcc79c7c0189ce1a4de2b23236839badd52ad42d40515",
+      "originalGitBlob": "e583a9f764762e3e5d92f8bfca4ee945ea9f391f",
+      "archiveBytes": 826,
+      "archiveSha256": "a85dafa4b38382ce9fdfb2ede65680a993ff66cd44c2fffe0505cc6acce8f250",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37891069233/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37891069233/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4273,
+      "originalSha256": "1d9c76747aa1b060b31bc3f8b373eb90ebd301ca0293f1c38ad2c6a3d84d514c",
+      "originalGitBlob": "be00bf5565f11ab8080f8879fb68e5c21c5659ff",
+      "archiveBytes": 803,
+      "archiveSha256": "bbf4d1eaa669eb658d73b046cc54b3cb6dfc874c7dc7a641fa342eb0f1bfb55b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37891069233/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37891069233/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4573,
+      "originalSha256": "0b5a58cb1b90423d381e48093da3de088fd57af47a3b3469e2d1069b24044876",
+      "originalGitBlob": "c5efe4fcba42ffdf42f708c87a621af0fe354b04",
+      "archiveBytes": 826,
+      "archiveSha256": "fe3ed339aab6f9d9baaa8574e8d3ddf759cb11004d8a2c270e0ffb5d5b13b81d",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37978703298/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37978703298/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4273,
+      "originalSha256": "5fbc9f4dc9867d85d939ead4f79af2a3ee264ecf1b25e8c0801928fa8edef7b1",
+      "originalGitBlob": "0bf6eea89d8b48d5af8f93120e6428e56832ddbe",
+      "archiveBytes": 789,
+      "archiveSha256": "ecddd8ac7897621623f2f932214d0f04a1b735d3541409252ac31c0acf375d13",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37978703298/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37978703298/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4573,
+      "originalSha256": "f83f65c427d7b4b637c03ce3d6287afb93c156d984f9c43f7fb2acdfcc542192",
+      "originalGitBlob": "c0865d86f8d0381659ebb06a614e4a38629b7ade",
+      "archiveBytes": 813,
+      "archiveSha256": "eb27de150823f697d1c6618d1871ebfd238dcbaea0526f41e576f1e862dba948",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37978703372/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37978703372/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4338,
+      "originalSha256": "fe73e7895e7847cbba1afa67c4985d88c2d78549c40101d9ae383667486ad3f1",
+      "originalGitBlob": "7731693931f0e77b0c3ba742f9c1842f0495976e",
+      "archiveBytes": 818,
+      "archiveSha256": "018c95d17f60eb411e790fdb786a0f9bd99bf5cfc9893647ecfe52761396f6e1",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38017973069/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38017973069/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4273,
+      "originalSha256": "4dddd5f965eb5dc2d40e49d6c3f4800e82136d471f24c057fb463e4bc5fb2648",
+      "originalGitBlob": "a929228cfe8a26d1db220ee5f8cf0f72e6a2814b",
+      "archiveBytes": 782,
+      "archiveSha256": "c76abf43f86c0ce9bd4813a840ecca13d65d08c2e7629603b97e16807fd736ec",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38017973069/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38017973069/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4573,
+      "originalSha256": "5836e5a2023b1669ce499bec034150785b973a9fedfdea8b67784ba5c3b93b93",
+      "originalGitBlob": "990aa6679aded9fb2b26912c75045daf4373fd12",
+      "archiveBytes": 807,
+      "archiveSha256": "226b2953bb85f300a1484a8b44d0c1fcaacbd595a4091a70f63580608aa10149",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38017973224/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38017973224/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4338,
+      "originalSha256": "bee059fd005e2e7dfd437c35c1c285b1d6adef6e1bc6a4d231b400e578b5ada2",
+      "originalGitBlob": "f06d2c2c3c58150a8311db7458ab747656f793dd",
+      "archiveBytes": 818,
+      "archiveSha256": "fdef0e2f3b2bf7c510b595ac494d2eabb1949fe710d9cb007767b88b1538d4f4",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38039395422/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38039395422/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4338,
+      "originalSha256": "59e31318346f84fce912b72ba07f4181813aba55179f1ed56ea4acd3cc801701",
+      "originalGitBlob": "66dca9cf63beb82141bcffbaa589473a0a6f195f",
+      "archiveBytes": 823,
+      "archiveSha256": "b5b04554542469659eec2610abfe2f625bc254f0b9602fd7bb0a28626da3ed23",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38039395431/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38039395431/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4273,
+      "originalSha256": "07f76a6cf1863baad9fc169b7d61277f4e40d8112b222b25496814a8c9133941",
+      "originalGitBlob": "a19c5be5c59c50f19905e34b6a80202e010db83e",
+      "archiveBytes": 791,
+      "archiveSha256": "fb3080d39bd671a8a942f70355374435324f29aa352642f997c9a6ee8ddf679d",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38039395431/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38039395431/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4573,
+      "originalSha256": "0f75b4bdaaac902b8813b7b785a2fcfa590d54a53c4b8d5972aad4ca47d183fb",
+      "originalGitBlob": "13bda78701a9e608fe681af7f967e18d6950d709",
+      "archiveBytes": 815,
+      "archiveSha256": "9fe9bbfcae6a98d008c06d9afa486ab07ba7b2a3a2a5feca394c9680ba1fbe8b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38050091309/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38050091309/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4338,
+      "originalSha256": "75f0739a8727524bfc1da8f937c690dbfa1633c1dd64be38d27112d78b743983",
+      "originalGitBlob": "c53a030f49082c09c49178e468c910d236a78b24",
+      "archiveBytes": 816,
+      "archiveSha256": "95d6cdc4f6e8233e794b05008962fc29e8241ae7ba7adbfc83b6d7cd32a6b0fb",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38050091406/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38050091406/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4273,
+      "originalSha256": "e3d403ef0d32ff2c3779a41336a9fafee4b14bc9e29e667efd17d7be951d12e5",
+      "originalGitBlob": "74fdea853a3148a25ac48b1b8701807dcbda17a3",
+      "archiveBytes": 783,
+      "archiveSha256": "6b333b3d6a3401feaa1c2c9fde12920b9225f043143074072cadb8f4b29aac44",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38050091406/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38050091406/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4573,
+      "originalSha256": "42d2290eaa2ded4366b181a2754ba594ef68069c6bcd4626a70ca1ae64d954e0",
+      "originalGitBlob": "7c8f867e27853659479b9440fd382156e83a330c",
+      "archiveBytes": 807,
+      "archiveSha256": "59905293282c8e33ad724a10971a8dd95c2e04146960a102088a078b53626c89",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38073189629/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38073189629/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4338,
+      "originalSha256": "62be62baffe037218211af51a214ac8a52dcc0297b31e479133cb54d3916d587",
+      "originalGitBlob": "b8a97b8ffe64af6be070062573bc78370ae3cf0c",
+      "archiveBytes": 818,
+      "archiveSha256": "6cf5f85a5daacc7f99396bd623cf42dd4848f54f8084f33f64a721ff1d2a5f6c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38073189690/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38073189690/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4321,
+      "originalSha256": "d5674b790671b6300c983fb2fb8aed1a6b70a9a6949b0f28a9f9debe28755d46",
+      "originalGitBlob": "2e4bdc88cfbc9e0ca6e83cdeac0f5eb63da7e58c",
+      "archiveBytes": 791,
+      "archiveSha256": "13e5336655e36d4495a58fa90d9aaecb7331b20520154e41cd7258dfaff15155",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38073189690/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38073189690/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4621,
+      "originalSha256": "e9a5a4c983e34646a25f0d8792b404922e0c4a25044eb03db153f5d376d8be81",
+      "originalGitBlob": "4937be7ae828ada6e61d6bf7c8b488ade51e69be",
+      "archiveBytes": 815,
+      "archiveSha256": "005e5dca040ce792215851de16095973a0a63deb0fc7b8535cbc0be4f6e219d5",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38073189696/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38073189696/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4273,
+      "originalSha256": "e7e5ea46d8ef7b8d96464159b9e7fbe4a0c197d2fc518fd2e4e8d6c0e79fe808",
+      "originalGitBlob": "2a77e6359dd9a4d963d4feb72b7ecd053f83b16e",
+      "archiveBytes": 784,
+      "archiveSha256": "f16043daaeffff8f31ecb16e86a9b678be36f0f3f61945dd3338c96b77468cfc",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38073189696/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38073189696/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4573,
+      "originalSha256": "b85dd4480804dae9ba313146fd409a1938e65ade8a26753e32398a3bdd85c517",
+      "originalGitBlob": "e9337df1f74b507519428e9b5be9df78e85c9bfd",
+      "archiveBytes": 808,
+      "archiveSha256": "bad77a224e91be4dd5d46391969a08850f6837859f4d334cb42b04b3c43eb35b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37892592319/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37892592319/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4211,
+      "originalSha256": "5ceabec169710f8a809d160244b8e20f9b15028edf6bac89c2fea8c9b43d3136",
+      "originalGitBlob": "2ccc66e3e26d41b3e383a40f0ec40bde5551dc54",
+      "archiveBytes": 900,
+      "archiveSha256": "2a1cddd65d7caf1e8126e46ac4f9dabf4c555bcffe90e60987767b9f86b23d85",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37892592319/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37892592319/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4495,
+      "originalSha256": "97c7e1937e128bd59d587b6c9d82d592509c68895d4af65144e1e62e48e629e4",
+      "originalGitBlob": "3f634dc78e3db2cda08ac0411625799118a35dbd",
+      "archiveBytes": 924,
+      "archiveSha256": "c8f9922ecc85f3f70e21354a407d61ccf5b6c086133447de96a7addae6f56db0",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37990162700/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37990162700/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4207,
+      "originalSha256": "575b88562f0d8fa1ea5c4fdfd41f0269c4b931593029997f7662a11c6431b92e",
+      "originalGitBlob": "f67880d39b529f61e45cbd962fd7be12ea82a554",
+      "archiveBytes": 884,
+      "archiveSha256": "2d23d6074693b3b1f65486259a2b22f6e12cc75c833f3994c81e2628e83c149b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37990162700/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37990162700/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4491,
+      "originalSha256": "05061f271dc915c2f2b1c6872a79fb9f46a979c61ef249380ec4908a1d901dfc",
+      "originalGitBlob": "a0c080bcb8a05e2d87fce5bef23a86897fdde4f2",
+      "archiveBytes": 905,
+      "archiveSha256": "7c6808b478b93f7c364a1f7d2692f580798bf8235626f5092273f5ab2047ac04",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37990162700/attempt-2/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37990162700/attempt-2/jobs-all.json.gz",
+      "originalBytes": 4207,
+      "originalSha256": "3d23d62ad37ef1d176257e3627fd3a25c485e1f0e6d412f8a9110a098a424118",
+      "originalGitBlob": "d16bb996828831a727b830a160c04ae0c742b31e",
+      "archiveBytes": 896,
+      "archiveSha256": "a1ae80db9bee7a5bf43e985da1767660ccdf08d2a87a83e3d3e8ae31d3ecad9e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37990162700/attempt-2/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37990162700/attempt-2/jobs-page-001.json.gz",
+      "originalBytes": 4491,
+      "originalSha256": "34b73da795809d8fdab2129192f2d627476dcfd0bc9d22177af2b8d8d2b5dc83",
+      "originalGitBlob": "ad3e587a905b3fd215acc2c741f787856712be8d",
+      "archiveBytes": 919,
+      "archiveSha256": "daf39f1fbe1b8f919e43ff8ebc34acfe06b603ffe18fa06c3cb677e49028d277",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37990162700/attempt-3/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37990162700/attempt-3/jobs-all.json.gz",
+      "originalBytes": 4207,
+      "originalSha256": "fdc9ec89808563cff889309f975a90f69e12e583884140b9ce1a68b52b3e7bd2",
+      "originalGitBlob": "cf9913a66d81a990d5237ee08152c4e5deddc294",
+      "archiveBytes": 891,
+      "archiveSha256": "1df52ebf1e7db864cec10309276ca3c5242cdf93372f689bac4c5c1a5376143b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37990162700/attempt-3/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/runs/37990162700/attempt-3/jobs-page-001.json.gz",
+      "originalBytes": 4491,
+      "originalSha256": "80e5d6202cad80ab63a51d864c5e772553748d91a859dae4a9a749c777d6c474",
+      "originalGitBlob": "a4856526090118905f65fcef2de0cd208304972a",
+      "archiveBytes": 913,
+      "archiveSha256": "4bc95c26d89d6903d5a3072650aa915b5a72afb96f3b49cfffb3e73b1a46b27f",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35698121310/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35698121310/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4219,
+      "originalSha256": "754915f8d0fdf0dacdad91fb565746f9e6c843161cfc9f6407230d75990651ef",
+      "originalGitBlob": "6ec04556dc51127966ee180b921be831237764c6",
+      "archiveBytes": 755,
+      "archiveSha256": "1fb9ceb0fb50660728fe2535c08daaa95c0d6b7f01f48aadae406c9e26973b8b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35698121310/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35698121310/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4519,
+      "originalSha256": "c09b7b900500fbe67bc3cd0351780bafb78ca862f5cabb7f1ed66bb473b15115",
+      "originalGitBlob": "22ad2e4e44bdc80ddf4ba7c545b4f5ddfaba3989",
+      "archiveBytes": 783,
+      "archiveSha256": "12145dbb62ef656ea285b223ef48224d2e9adeaaafe1d5b08cfb8787a2e3faa3",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35847870312/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35847870312/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4155,
+      "originalSha256": "e9452c33a3d359c5cd0486bd3f69985c8850e24e296119f9e9225cfa77a4db20",
+      "originalGitBlob": "3737cac62949ec1db029d18446a326cf9f9a6787",
+      "archiveBytes": 723,
+      "archiveSha256": "6d9821db5ae3ffa858fcb34ebee86132637f855231fd29977e23162e09a3fdbc",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35847870312/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35847870312/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4431,
+      "originalSha256": "a626eb636e62d2cc75763806f79208096ec1056c8780414c9bc50b808b8de41f",
+      "originalGitBlob": "4a5049a5101f662182a038c372a67960b2d3cc39",
+      "archiveBytes": 747,
+      "archiveSha256": "e7c6953f4f1be0feb7958ae3777f19ec9f84f0e5cb3661019a1a4344b4309c69",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35883370894/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35883370894/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4655,
+      "originalSha256": "d5ca04705649a189fc6629a4701ccba2244ed88ae01c6dc7f667d1095ecc51e0",
+      "originalGitBlob": "c06a64ebf65f584dc16b656ddd7b0f99ef2da158",
+      "archiveBytes": 758,
+      "archiveSha256": "959cbc77fda9b0ba4640b7e75cd4f1e462ccc9e0793f5ca206f5dc54a5e9446a",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35883370894/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35883370894/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4963,
+      "originalSha256": "8bc9b7771c78ea3dae27ee6ea15513fadabe2d3fb74a9377dade0c5f6caae0b2",
+      "originalGitBlob": "49f39b9b5b004b28814093d807f6fa26278e807f",
+      "archiveBytes": 785,
+      "archiveSha256": "4d9647e3adcff11e06bd9d321b6832b2ede2ee0e2e782be7e1a7d48f2c6362e1",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35902821417/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35902821417/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4160,
+      "originalSha256": "eda12d4d2760e5eb0042b3681c84dd79c680a8e99aa71052d3b7f984f85e8a44",
+      "originalGitBlob": "6b4e262ad973b881c6a991705faca2322805ca38",
+      "archiveBytes": 734,
+      "archiveSha256": "572bc537a2becbacc403b276a671073b5df4ccd86a265cb9bbfcf0c1e13fbd3e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35902821417/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/35902821417/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4436,
+      "originalSha256": "36267b79e21e0ce54f1420e8483ed60a612afc8ef7e40a702aab362ebc783dc1",
+      "originalGitBlob": "76357a78626de848ae522be0a5a87ff4a9e3faed",
+      "archiveBytes": 761,
+      "archiveSha256": "56b6526dae3481e67fd3a7fe2854821856b393b332ebc0393e963ea7195e0125",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37661822512/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37661822512/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "15105e9060f91025d99e6240496bac88259eae195b57b8405c1f282f28c9288b",
+      "originalGitBlob": "fcbede7e284051c1c5121a2d1434d36b5ee40e88",
+      "archiveBytes": 856,
+      "archiveSha256": "98a6161a7fc42e14d4146ebec95f158a9346991daccfaad312560fbaae66f38d",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37681319489/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37681319489/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "67cd7b0b2dd17a0940f55985f0a4fafc1d9c9a87ed7ccaa41609a4e2fb55bdd8",
+      "originalGitBlob": "0c767f8f8df2b248a1502e3060ed6ab2e0c92dc3",
+      "archiveBytes": 849,
+      "archiveSha256": "26b4a263859a31357e7d4f1f6a1755fd8c74195e0281008af72c3fde17e93bc2",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37687636936/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37687636936/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "0b856a20687e0a7f90849bf181e4f70b2756aafa5ccf8cc534bbbcbcf21cdd9b",
+      "originalGitBlob": "426da31a4c6543e4c8d06b48080abc7a8903d20f",
+      "archiveBytes": 858,
+      "archiveSha256": "d346ba2e2eed7de1d6c4de93430c20ada0f3267d785c8d49408a1617c35958ee",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37693094296/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37693094296/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "a521ee55ad117a2e72f8c264cabf4d410a58778a16e74a8065ceaf01096796b6",
+      "originalGitBlob": "73979bfa6760c2bb7aba60423ffef5b0328300c3",
+      "archiveBytes": 864,
+      "archiveSha256": "bf0a21ae1ed288222ed10cab5a02b054cd940aa4215843ce13b3a33883472633",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37699415126/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37699415126/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "d05fe1fe5e2fcd36a641eba1182117a07707db39c30878f654421971e84438cd",
+      "originalGitBlob": "5af7dd03675333ef874df109be5ed3fed3357574",
+      "archiveBytes": 850,
+      "archiveSha256": "b8848ba0115dfd3367025d0d2a038348ae5246b54fe3c42e730baf6c44304105",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37701833370/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37701833370/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4380,
+      "originalSha256": "ad9398bd5e7018c257e040e14c4d5621ec8854c1773f8cea8444aedc3e750b23",
+      "originalGitBlob": "5f17f6c38122a6be6c584b5df9aef67b32fc9795",
+      "archiveBytes": 849,
+      "archiveSha256": "d0b88f8fc1db67648aaf10c28afe837f19a943e2f54e53fee12619903ef1e091",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37702855452/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37702855452/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "283a361dfdffae44379127a55c1fb40be9a6e74048ba2469c0f64e6addd0db60",
+      "originalGitBlob": "81586f1eb497bc0a39a6b53994a3c6ee747e4df1",
+      "archiveBytes": 864,
+      "archiveSha256": "5ad0693afa221f60e3140a9252290e3449463b4c64277ec85e18da4060219021",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37705856125/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37705856125/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "056e111e01eb98f3320b0228316dea5ebd8756fb9dc75c6591a081e68fe7d195",
+      "originalGitBlob": "a5035618ef0c139981a8099bc2424d8b17e079a8",
+      "archiveBytes": 847,
+      "archiveSha256": "4cabf432d6191c81c83e4e81183d32182ab97ca485ea6788f6a355cc859d9b0f",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37712036041/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37712036041/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "ea51a566e3a7b95a0f41227cbcff2019952e5b6dd77f65c5988fb6d4335011e3",
+      "originalGitBlob": "a14e9de2f60ca7632b7b11259d8d6a85dc34948c",
+      "archiveBytes": 861,
+      "archiveSha256": "0fb199efe21977b780b6d242fef29211de431321669c1778f8d59a2c901ed902",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37715252842/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37715252842/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "0a55fa97e1b397e632dc687d7e809de05e0d2f5c843c5b4e5e75d634407d466c",
+      "originalGitBlob": "035a6122872dfe2a97c5bb67b9b6ec886639244c",
+      "archiveBytes": 839,
+      "archiveSha256": "8db5b1ec4ca47b814768597356c7961a1f6f608f45398ab7716d0a9a22ad66b0",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37716936128/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37716936128/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "0d2376de585778f9f32305dc44a87a02680cda465eb3291744065af90e8d27e2",
+      "originalGitBlob": "1486192a2320fa97c5a67a815c12137eaa18a563",
+      "archiveBytes": 852,
+      "archiveSha256": "053b231719b5287add933f57314d775f971e674bac0961e895370fc088a60213",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37720205092/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37720205092/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "e6c59654fe78f0aa3a7262bf24eb3685061752ff44134ec4d906a1b4d9efc6fe",
+      "originalGitBlob": "6fb4c01699a790ff00da299663e085d3b5923314",
+      "archiveBytes": 857,
+      "archiveSha256": "cb102da58194a5b545ac02afbbadff6a165ba7ba3c14e79461c9d41f25b98ff8",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37725910296/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37725910296/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "c9266012c64a334e7df1c7d90a331954e4a903f08bc553cd16bd54ec240dfac9",
+      "originalGitBlob": "9135adc4c99e01c2fde5f1feb7f5dda671c827a5",
+      "archiveBytes": 847,
+      "archiveSha256": "47678b6cdc6b2a26273f56eafe21e1d2bbfbc63ed79be601b8852087dbc263c4",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37727267812/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37727267812/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "392d7cca4bcaaadf45f9fcd1bce03ac02f6e18c70fdc13b97681280de47e91c9",
+      "originalGitBlob": "cff92e5c39794d25c1078edc06ea7fd73c846285",
+      "archiveBytes": 850,
+      "archiveSha256": "e4419c698e41b56fc6c6df977520807afff5ffd3e0201907c8f243fc5712a6f7",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37729747798/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37729747798/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "726695bae0fb17721f945020404a590487ba45df11d09dc1af5c0458ca4486e6",
+      "originalGitBlob": "e777c31e51ca4137b93908711eb4da36329dc62b",
+      "archiveBytes": 842,
+      "archiveSha256": "7af641468fb6b29d3db79ef0adfa438ba0b9b6b2fa14dad05078a17d7a7b1cfe",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37731409958/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37731409958/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "c4dea1282e21e2e19ef9c13c767bef5a7b16b11b11bdecb606db2498d6ea8062",
+      "originalGitBlob": "eca1b20974595f9a9a5ad3f821299ead791a9915",
+      "archiveBytes": 842,
+      "archiveSha256": "33a7bbe1fb3deffc35f7737629160e8adabf27a6c83ebac0ae8ef09e679a9611",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37744692851/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37744692851/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "691749cfa8c8fe74b872cde04de47a7ce91a819856f7b9c61ba868b643e3bb8e",
+      "originalGitBlob": "af56b14bb4b16a0b9ccbc5cc74f6812868671170",
+      "archiveBytes": 856,
+      "archiveSha256": "40faa13ef9f21da50341aa4eadf3ad28b64031ce1a88fbe219d60eac6a77f63c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37744693006/attempt-1/jobs-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37744693006/attempt-1/jobs-all.json.gz",
+      "originalBytes": 4869,
+      "originalSha256": "425b72ace0223f007242ace4357eefdacbb352576a2c35502762bc3d965484e0",
+      "originalGitBlob": "75d56513ae8ad8234d69d2d28ea83e659453df04",
+      "archiveBytes": 951,
+      "archiveSha256": "4e49e0e5862d68b6641a219fda14d1355015f8f6d1ec69bbf55142c5feede37b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37831346731/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37831346731/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "5b086b22851ddb7c1a0a049e8a7410bf556dadb9dadfa8ce6957e735d260466f",
+      "originalGitBlob": "4d96d195ac32db095897279109366a7e3554841a",
+      "archiveBytes": 852,
+      "archiveSha256": "ed046bdb64c88b7bbf8a0f7c89006cd7983a10983c7e69feb4202af7c0efc583",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37837996776/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37837996776/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "de27c3fd5b75bec8f7a3673c0e9febe8b89400ffd65d9d36c6df8d1793710809",
+      "originalGitBlob": "f92dd8ed0b1c68cb4c4ce85668b25df3b35185cc",
+      "archiveBytes": 838,
+      "archiveSha256": "058790477ef6a940edb709a55e2d539181f5d7af5df7845c752c7e8cca102e0d",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37845449858/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37845449858/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "99258a9e38e13b50a8d6095891f596fb03b342735e59886cf9ed74645617d387",
+      "originalGitBlob": "0e582d21510a899763d0cec8009547118013a132",
+      "archiveBytes": 858,
+      "archiveSha256": "bdaa06d66aa2c727b14964fe4b75e813203b7f3b4867f35c139be077ea32a25b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37900493179/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37900493179/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "f6622b34b35e1a08ebce26df48d3d81b7aa7f43d524225d57a4a12f5b83fbfd8",
+      "originalGitBlob": "ca158cf0343ce0ee01c2f2dc6e9362aeb86dcaa5",
+      "archiveBytes": 849,
+      "archiveSha256": "2b137fae0a0c6ef95cab075cad4bd1b1af3029837ba52f4c0767c7d8fc1d77b6",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37982698853/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37982698853/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "4278501089bc0265588efde28434804ca7b6afb0d6a42b5221cfe17144487830",
+      "originalGitBlob": "f0d12443b0d29ec39afe48f019d1959102dcf256",
+      "archiveBytes": 850,
+      "archiveSha256": "9e26dbfbeac67ec7c59cfde95380fb4237f8a42a1fdb4657226529923e22a55c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37985634118/attempt-1/jobs-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/runs/37985634118/attempt-1/jobs-page-001.json.gz",
+      "originalBytes": 4376,
+      "originalSha256": "db77940bb46421ad7c8aca9aa8af23929cc518920214d17e7f015aef5bc10058",
+      "originalGitBlob": "7222c2d15846e67d89b6fff3a7c4c9c5f363f4e1",
+      "archiveBytes": 853,
+      "archiveSha256": "bedbd0c72c089822a4e81275a1052051fc05a33ba08ec4adfc99fc2635137c0d",
+      "originalAllocatedBytes": 8192
+    }
+  ],
+  "citationUpdates": [],
+  "decode": "gzip -dc ARCHIVE.json.gz; verify complete decoded length and SHA256 against entries"
+}

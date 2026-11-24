@@ -1,0 +1,31 @@
+// Closed interface DATA. Actual source context, imports and whole bodies must
+// be freshly checked; table membership supplies no type or loan permission.
+import {ASYNC_CONTROL_CONTRACTS} from '../async-control-contracts.mjs';
+import {HTTP_TRANSPORT_CONTRACTS} from '../http-transport-contracts.mjs';
+import {HTTP_DEADLINE_CONTRACTS} from '../http-deadline-contracts.mjs';
+import {HTTP_DEADLINE_RESULT_CONTRACTS} from '../http-deadline-result-contracts.mjs';
+import {HTTP_PROTOCOL_CONTRACTS} from '../http-protocol-contracts.mjs';
+import {asyncControlCallerContract} from './async-control-caller-flow.mjs';
+const role=Object.freeze({'shared-cancellation':'cancel-ref','shared-sender':'sender-ref','exclusive-receiver':'receiver-mut','shared-http-client':'http-client-ref','exclusive-http-client':'http-client-mut','shared-http-stream':'http-stream-ref','exclusive-http-stream':'http-stream-mut'});
+const returns=Object.freeze({'http-client-text-result':'http-result:http-client-owned','http-stream-text-result':'http-result:http-stream-owned','owned-text-option-text-result':'http-result:option-text','json-text-result':'http-result:json','u64-text-result':'http-result:u64','bool-text-result':'http-result:bool','str-text-result':'http-result:str','text-text-result':'http-result:text-owned','control-http-stream-result':'result:http-result:http-stream-owned','control-http-option-text-result':'result:http-result:option-text','control-http-json-result':'result:http-result:json'});
+const operations=[
+ ...ASYNC_CONTROL_CONTRACTS.map(row=>({...asyncControlCallerContract(row.javascriptName),family:'control',release:row.rustName==='dispose'?'receiver-owned':null})),
+ ...HTTP_TRANSPORT_CONTRACTS.map(row=>({...row,family:'http-transport',args:row.parameters.map(value=>role[value]??value),ret:returns[row.returns]??row.returns,release:row.rustName==='client_dispose'?'http-client-owned':row.rustName==='close'?'http-stream-owned':null})),
+ ...HTTP_DEADLINE_CONTRACTS.map(row=>({...row,family:'http-deadline',args:row.parameters.map(value=>role[value]??value),ret:returns[row.returns],release:null})),
+ ...HTTP_DEADLINE_RESULT_CONTRACTS.map(row=>({...row,family:'http-deadline-result',args:[...row.parameters],ret:row.returns,release:null})),
+ ...HTTP_PROTOCOL_CONTRACTS.map(row=>({...row,async:false,family:'http-protocol',args:row.parameters,ret:returns[row.returns],borrowedResult:row.root!==null,rootArgument:row.root,release:null})),
+ ...[['null',[]],['array',['empty-json-list']],['bool',['bool']],['string',['str']],['u64',['u64']]].map(([name,args])=>({rustName:'json_'+name,javascriptName:'json_macro_'+name,rustPath:'crate::translation_core::json!',runtimeModule:'json-macro-runtime.mjs',family:'json-macro',args,ret:'json',async:false,nativeForm:name,release:null,sourceAuthority:false,semanticAuthority:false})),
+ {rustName:'json_copy',javascriptName:'router_core_json_copy',rustPath:'crate::translation_core::json_copy',runtimeModule:'json-update-runtime.mjs',family:'json-copy',args:['json-ref'],ret:'json',async:false,release:null,sourceAuthority:false,semanticAuthority:false},
+];
+export function httpResourceCallerContract(name){const rows=operations.filter(row=>row.javascriptName===name);if(rows.length>1)throw new TypeError('Ambiguous actual HTTP resource operation');return rows.length?{...rows[0],args:[...rows[0].args]}:null;}
+export function httpResourceCallerOperationNames(){return operations.map(row=>row.javascriptName);}
+export const httpResourceOwned=type=>['cancel-owned','sender-owned','receiver-owned','http-client-owned','http-stream-owned','json','text-owned','option-text'].includes(type);
+export const httpResourceNeedsDisposal=type=>['receiver-owned','http-client-owned','http-stream-owned'].includes(type);
+export function httpResourceBorrowRole(type){return ({'cancel-owned':'cancel-ref','sender-owned':'sender-ref','receiver-owned':'receiver-mut','http-client-owned':'http-client-ref','http-stream-owned':'http-stream-ref',json:'json-ref','text-owned':'str'})[type]??type;}
+export function httpResourceResult(type){if(typeof type!=='string')return null;return type.startsWith('http-result:')?{error:'text',value:type.slice(12)}:type.startsWith('result:')?{error:'control',value:type.slice(7)}:null;}
+export function httpResourceResultOwnsDisposal(type,depth=0){if(depth>8)throw new TypeError('Closed HTTP result nesting bound');const result=httpResourceResult(type);if(result)return httpResourceResultOwnsDisposal(result.value,depth+1);return type==='channel-pair'||httpResourceNeedsDisposal(type);}
+export function httpResourceCallerRustType(type,{borrowedLifetime=false}={},depth=0){
+ if(depth>8)throw new TypeError('Closed HTTP resource type nesting bound');const result=httpResourceResult(type);if(result)return 'Result<'+httpResourceCallerRustType(result.value,{borrowedLifetime},depth+1)+', '+(result.error==='control'?'crate::translation_async_control_core::ControlError':'String')+'>';
+ const lifetime=borrowedLifetime?"'a ":'',table={'cancel-owned':'crate::translation_async_control_core::Cancellation','cancel-ref':'&'+lifetime+'crate::translation_async_control_core::Cancellation','sender-owned':'crate::translation_async_control_core::Sender','sender-ref':'&'+lifetime+'crate::translation_async_control_core::Sender','receiver-owned':'crate::translation_async_control_core::Receiver','receiver-mut':'&'+lifetime+'mut crate::translation_async_control_core::Receiver','http-client-owned':'crate::translation_http_transport_core::Client','http-client-ref':'&'+lifetime+'crate::translation_http_transport_core::Client','http-client-mut':'&'+lifetime+'mut crate::translation_http_transport_core::Client','http-stream-owned':'crate::translation_http_transport_core::Stream','http-stream-ref':'&'+lifetime+'crate::translation_http_transport_core::Stream','http-stream-mut':'&'+lifetime+'mut crate::translation_http_transport_core::Stream',json:'crate::translation_core::Json','json-ref':'&'+lifetime+'crate::translation_core::Json','text-owned':'String','channel-pair':'(crate::translation_async_control_core::Sender, crate::translation_async_control_core::Receiver)','option-text':'Option<String>',unit:'()',bool:'bool',str:'&'+lifetime+'str',u64:'u64'};
+ if(!Object.hasOwn(table,type))throw new TypeError('Unsupported HTTP resource type domain');return table[type];
+}

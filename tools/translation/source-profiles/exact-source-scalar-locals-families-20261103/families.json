@@ -1,0 +1,34 @@
+{
+  "schema": "fixed-scalar-locals-source-family-census-20261103-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-scalar-locals-families-20261103/index401.before.json.gz",
+    "encodedSha256": "303ec34f33060bfaf1ea0aa94e8af2f7bdded2d85a0775e8cd1a0434210740ad",
+    "sourceSha256": "0af8c06eb7ad1acc294f7c88e62168e07fee9980649451c0df77fabefe8bf3b4",
+    "rows": 401
+  },
+  "families": [
+    {
+      "id": "exact-scalar-locals-readers-20261103",
+      "manifest": "tools/translation/source-profiles/copy-scalar-helper-locals-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "copy-scalar-helper-locals-source-20261103-v1",
+      "sha256": "46aef360dae27dd89b22d0aca9744b6a9c222baa8e2bddf395fdcf94e749f7f8",
+      "rows": 2,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-scalar-locals-cases-20261103",
+      "manifest": "tools/translation/source-profiles/exact-source-scalar-locals-families-20261103/joins.json.gz",
+      "kind": "archive",
+      "schema": "scalar-locals-index-joins-20261103-v1",
+      "sha256": "e28b5d6fed115ac828dc4069f2a5086d41634e030a84909174ffa91f12266b00",
+      "rows": 9,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 11,
+  "totalRows": 412,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

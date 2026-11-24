@@ -1,0 +1,68 @@
+{
+  "schema": "pinned-fixed-wrapping-source-inputs-v1",
+  "rust": "1.89.0",
+  "sources": [
+    {
+      "path": "library/core/src/num/int_macros.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/num/int_macros.rs",
+      "file": "library-core-src-num-int_macros.rs.gz",
+      "bytes": 160914,
+      "sha256": "8f10aa188b14de4af8330ee67ebe39f189a3b7272e12276959d8978d9fba3702",
+      "gitBlobSha": "5683d5ec92dc7a7334e9733cf53a75db746d0908",
+      "compressedBytes": 17031,
+      "compressedSha256": "c720fbf9131de0f2bdaf4c98496a4a18f78b133c635ad532ad9a9e7a9fb191ec"
+    },
+    {
+      "path": "library/core/src/num/uint_macros.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/num/uint_macros.rs",
+      "file": "library-core-src-num-uint_macros.rs.gz",
+      "bytes": 150866,
+      "sha256": "7abb468c8871599a3e9802d741c65d210b59466c497ba36aaf8f11e4e8681f3d",
+      "gitBlobSha": "079032f2f96d486ac8168ba930f1f176982d2d6e",
+      "compressedBytes": 17432,
+      "compressedSha256": "6e28459eb6987e394321d76b2dbb76341085c3f707fb78e0bdb3cbf9becd319f"
+    },
+    {
+      "path": "library/core/src/intrinsics/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/intrinsics/mod.rs",
+      "file": "library-core-src-intrinsics-mod.rs.gz",
+      "bytes": 119226,
+      "sha256": "3a6a7a10055e3125f9a28012415a4fe64a6f230a111f2b5cf207380e99d581b1",
+      "gitBlobSha": "b5c3e91d04687f9247aad19b50290c5facd67d1b",
+      "compressedBytes": 22574,
+      "compressedSha256": "a5c7a0017c9ae28c5f13a0af136f562da27fbdfb05e93132ecd781e00a13d9c3"
+    },
+    {
+      "path": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/LICENSE-MIT",
+      "file": "LICENSE-MIT.gz",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1",
+      "gitBlobSha": "a2070c4be7acd5316f8d0357ca3c12419a2f3c62",
+      "compressedBytes": 646,
+      "compressedSha256": "e675109f90bf15b2d8120a8bd7a7d062a8f62a7efa9b09a2c25e030dae5de841"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/LICENSE-APACHE",
+      "file": "LICENSE-APACHE.gz",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "gitBlobSha": "1b5ec8b78e237b5c3b3d812a7c0a6589d0f7161d",
+      "compressedBytes": 3554,
+      "compressedSha256": "743f15542c6a31637b66b952a6d7da62ac00374b5caae6530e8d7317c29b0fd6"
+    },
+    {
+      "path": "library/core/src/num/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/num/mod.rs",
+      "file": "library-core-src-num-mod.rs.gz",
+      "bytes": 56479,
+      "sha256": "ca7b5755b6eddf8f138b91e841d83ce9b51f502b72b183f4e3ec40c5037c9b22",
+      "gitBlobSha": "faa41ddf13ca844a8fa3d7e60dac510290c50539",
+      "compressedBytes": 9623,
+      "compressedSha256": "8b7ccb720e40bc9dfa4226892f50d89e6d1ea50c58d9a1e1cd46b193dae8cd94"
+    }
+  ],
+  "scope": "Original primitive wrapping_add/sub method bodies, generic intrinsic contract and licensed complete sources; no whole core or formatter authority",
+  "retrieval": "Initial Python TLS failed with local issuer error and wrote no source files; curl used its normal trusted TLS store, no validation bypass"
+}

@@ -18,12 +18,12 @@ mod operation_context {
     }
 }
 
-#[path = "../../src/with_command_sweep.rs"]
+#[path = "../../rust/src/with_command_sweep.rs"]
 mod sweep;
 use sweep::{DisposableRunDirectory, owner_of, process_alive, sweep_stale_directories};
 
 #[cfg(test)]
-#[path = "../../src/with_command_sweep_tests.rs"]
+#[path = "../../rust/src/with_command_sweep_tests.rs"]
 mod tests;
 
 #[test]

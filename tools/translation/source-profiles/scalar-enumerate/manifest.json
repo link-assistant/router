@@ -1,0 +1,39 @@
+{
+  "profile": "rust-1.89-scalar-enumerate-next-v1",
+  "rust": "1.89.0",
+  "constEligible": false,
+  "usizeBits": 64,
+  "overflowChecks": true,
+  "sources": [
+    {
+      "file": "core-enumerate.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/iter/adapters/enumerate.rs",
+      "gitBlobSha": "f7b9f0b7a5e9d4794eb74872aca4e9de7b6f5b9b",
+      "bytes": 9689,
+      "sha256": "82b139ab80c433cb095adca865ddd19db80ebdd6e0c05be95f097401877d0a3a",
+      "compressedSha256": "a7eefa5cb06a65b7af41d4ed246665838951ec53b3a1b703ef4b42c7740aed17"
+    },
+    {
+      "file": "../whitespace-iterators/iterator-trait.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/iter/traits/iterator.rs",
+      "bytes": 138915,
+      "sha256": "d57130b6a4d3f18f8d28fedf5bd953da80492e2f809813ecd3dba0b3276b99ab",
+      "compressedSha256": "4fd197a902bffa96b81e1c83dbaa7d9b6ff471aa69fe34dda47a179f3d75de82"
+    }
+  ],
+  "evaluationOrder": [
+    "upstream-next",
+    "copy-original-count",
+    "checked-usize-increment",
+    "yield-original-index-and-item"
+  ],
+  "supportedConsumption": "forward next-based immutable scalar/product iterator adapters, preserving actual shared scalar Items",
+  "limitations": [
+    "borrowed aggregate, mutable, owned or nominal tuple fields",
+    "custom Iterator owners",
+    "Drop/allocation/feature closure",
+    "nth/advance/backward/unchecked/fold-specialized methods",
+    "non-64-bit usize and wrapping-overflow profiles",
+    "complete namespace and runtime parity"
+  ]
+}

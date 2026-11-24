@@ -1,0 +1,120 @@
+{
+  "schema": "serde-alias-default-initial-validation-v1",
+  "head": "c1dc6ec460a55ce4928a0b4b9f510561a9f87d62",
+  "results": [
+    {
+      "engine": "node",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/serialization-schema/bulk.test.mjs",
+        "tools/translation/serialization-schema/serialization-schema.test.mjs",
+        "tools/translation/serialization-schema/scalars-direction.test.mjs",
+        "tools/translation/serialization-schema/aliases-defaults.test.mjs"
+      ],
+      "exit_code": 1,
+      "timed_out": false,
+      "wall_seconds": 21.064,
+      "temporary_bytes_before_cleanup": 491,
+      "remaining_temporary_entries_before_cleanup": [
+        "xcrun_db"
+      ],
+      "authoredCases": 64,
+      "passed": 55,
+      "failed": 9,
+      "skipped": 0
+    },
+    {
+      "engine": "bun",
+      "command": [
+        "bun",
+        "test",
+        "--timeout",
+        "15000",
+        "tools/translation/serialization-schema/bulk.test.mjs",
+        "tools/translation/serialization-schema/serialization-schema.test.mjs",
+        "tools/translation/serialization-schema/scalars-direction.test.mjs",
+        "tools/translation/serialization-schema/aliases-defaults.test.mjs"
+      ],
+      "exit_code": 1,
+      "timed_out": false,
+      "wall_seconds": 13.722,
+      "temporary_bytes_before_cleanup": 491,
+      "remaining_temporary_entries_before_cleanup": [
+        "xcrun_db"
+      ],
+      "authoredCases": 64,
+      "passed": 55,
+      "failed": 9,
+      "skipped": 0
+    }
+  ],
+  "failuresBothEngines": [
+    "ambiguous cross-field aliases remain source-bearing refusals instead of guessed field precedence",
+    "bare primitive defaults use checked original Rust bodies for missing map and sequence fields",
+    "primitive defaults apply only to missing values and preserve supplied integer and boolean visitor failures",
+    "an aliased primitive default shares canonical duplicate and missing-field behavior",
+    "local Default trait spelling cannot override the private Serde core trait route",
+    "edited Default source identities and values cannot be reissued as checked metadata or copied codec authority",
+    "one-way traits keep their actual callable direction with aliases and primitive defaults",
+    "actual ProviderUpsert combines optional aliases with its original primitive if_absent default",
+    "shared emitted JS and TS descriptors retain aliases and source-checked defaults without target body templates"
+  ],
+  "commonFailure": "Original primitive Default body is unproved: Cannot read properties of undefined (reading get)",
+  "immutableInputCount": 1315,
+  "immutableInputs": true,
+  "beforeStatus": "?? packages/javascript/node_modules",
+  "afterStatus": "?? packages/javascript/node_modules",
+  "sourceNativeArtifactWrites": false,
+  "productionImportsChanged": false,
+  "rawDirectory": "/var/folders/cl/831lqjgd58v5mb_m74cfdfcw0000gn/T/router-759-serialization64-2y7ptcra",
+  "rawArchive": {
+    "file": "aliases-defaults-initial-raws.tar.gz",
+    "bytes": 278110,
+    "sha256": "1082d001b8d00d412133e847aec38a31afd88ce28584c4bdcbb4c08e5935aa38",
+    "deterministicCompression": true,
+    "reopenedExactMembers": {
+      "bun.log": {
+        "bytes": 33778,
+        "sha256": "d0f24b2c2303b0e7c4028adc6129ef16fd2e97b17b82e8a08c2ffa4b5408fc4f"
+      },
+      "frozen-inputs.json": {
+        "bytes": 138715,
+        "sha256": "4668844f7160c483f51a30187c9ea04a6864796a3d3d58fc0693a27d17e0ec89"
+      },
+      "frozen-plan.json": {
+        "bytes": 1262,
+        "sha256": "ccaee4d9408524694b85aec943afec7ff897a43047d3eeae090d874ea76e24d5"
+      },
+      "harness.py": {
+        "bytes": 5483,
+        "sha256": "ccd58d7b2530d80a6758d404a77061a9cc2e0d6fdb883aace3085bec467948cd"
+      },
+      "inputs.json": {
+        "bytes": 160284,
+        "sha256": "aa71eb66bfafb81cc427cdd9b993149cdb53ad9b190fdce403635642b331c809"
+      },
+      "node.log": {
+        "bytes": 34092,
+        "sha256": "1c12388fe0e010f2ce7bf503867c0fb75274a5df7b46f31c145673d2a0784a16"
+      },
+      "prerequisite-hydration.json": {
+        "bytes": 157501,
+        "sha256": "eb2b0053729d1a8d3f6799e5349ed64c1fbf43a1fd29b3cbdee0c89458dceb8f"
+      },
+      "receipt.json": {
+        "bytes": 321213,
+        "sha256": "d8a07a248374bf25d2ffb0c6b222c27a8a7d2dfd52edbac2d07f7d9a857268d5"
+      }
+    },
+    "duplicateFrozenHarnessAliases": [
+      "harness.py",
+      "frozen run.py"
+    ]
+  },
+  "superseded825PlanWasUnexecuted": true,
+  "enginesReleased": true,
+  "runtimeAuthority": false,
+  "generatedTraitBehavior": false
+}

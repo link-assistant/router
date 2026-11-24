@@ -1,0 +1,55 @@
+import {repositoryCratePaths} from "./fixtures/repository-paths.mjs";
+import {repositorySourcePath} from "./fixtures/repository-paths.mjs";
+import {repositorySourceURL} from "./fixtures/repository-paths.mjs";
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {execFileSync} from 'node:child_process';import {createHash} from 'node:crypto';
+import {translateProject} from '../project.mjs';import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';import {parseProgram} from '../semantic-meta.mjs';import {sourceItems} from '../rust-structure.mjs';import {serde_json_from_str} from '../extensions/json-runtime.mjs';import {verifyTypedTargets} from './typed-targets.mjs';
+const root=new URL('../../../',import.meta.url),hash=text=>createHash('sha256').update(text).digest('hex'),tag=($,fields={})=>Object.freeze({$,...fields}),some=field0=>tag('Some',{field0}),none=tag('None');
+const read=path=>{try{return readFileSync(repositorySourceURL(path,root),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+repositorySourcePath(path,root)],{cwd:root,encoding:'utf8',maxBuffer:10000000});}};
+const compile=(entry,readSource=read)=>{const paths=repositoryCratePaths(execFileSync('git',['ls-tree','-r','--name-only','HEAD','--',repositorySourcePath('src',root)],{cwd:root,encoding:'utf8'}).trim().split('\n'),root);return translateProject({entry,paths,readSource,deriveDependencies:loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),compilationProfile:PRODUCTION_PROFILE});};
+const original=entry=>{const result=compile(entry);assert.equal(result.meta.sources.find(item=>item.source===entry).sha256,hash(read(entry)));return result;};
+// These current parents use the explicit owned facade. A leaf compiled as a
+// crate root has no genuine translation_core edge and must remain refused.
+// Select original root declarations only; retain each complete physical parent
+// and all of its module descendants. This is a labeled root projection, not
+// qualification of Router's complete original crate graph or production gain.
+const originalWithCore=entry=>{
+ const originalRoot=read('src/lib.rs'),owner=entry.slice(4,-3),declarations=sourceItems(originalRoot).filter(item=>item.term==='mod'&&['translation_core',owner].includes(item.name));
+ assert.equal(declarations.length,2);const projection=declarations.map(item=>originalRoot.slice(item.start,item.end)).join('\n');assert.notEqual(hash(projection),hash(originalRoot));
+ const projectedRead=path=>path==='src/lib.rs'?projection:read(path),result=compile('src/lib.rs',projectedRead);
+ assert.equal(result.meta.sources.find(item=>item.source==='src/lib.rs').sha256,hash(projection));
+ for(const item of result.meta.sources.filter(item=>item.source!=='src/lib.rs'))assert.equal(item.sha256,hash(read(item.source)),item.source+' complete physical parent');
+ assert.ok(result.meta.sources.some(item=>item.source===entry));assert.ok(result.meta.sources.some(item=>item.source==='src/translation_core.rs'));assert.ok(result.meta.sources.some(item=>item.source==='src/translation_core/primitives.rs'));
+ assert.equal(result.meta.runtimeParity,false);return result;
+};
+const canonical=value=>{const parsed=serde_json_from_str(JSON.stringify(value));assert.equal(parsed.$,'Ok');return parsed.field0;};
+const token=(access,expiry)=>tag('SubscriptionToken',{access_token:access,refresh_token:none,expires_at_ms:expiry,account_id:none,resource_url:none});
+function aliasMethod(result,method,alias){const program=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),entry=[...program.declarations.values()].find(item=>item.impl?.method===method);assert.ok(entry,method);assert.equal(entry.sourceMethodProof.originalTokenTransformVerified,true);const suffix=`\nexport {${entry.fullName} as ${alias}};`;return {...result,javascript:result.javascript+suffix,typescript:result.typescript+suffix};}
+
+test('labeled original-root projection retains whole output-limit and all assistant-content branches',{timeout:60000},async()=>{
+ const result=originalWithCore('src/output_limit.rs');assert.ok(result.meta.executable.some(item=>item.name==='output_limit.event_contains_assistant_content'));await verifyTypedTargets(result,api=>{for(const [event,wanted]of [[{},false],[{type:'response.output_text.delta'},true],[{type:'content_block_delta'},true],[{type:'response.function_call_arguments.delta'},true],[{type:'other',choices:[]},false],[{choices:[{}]},true],[{candidates:[{}]},true],[{response:{candidates:[{}]}},true],[{candidates:[],response:{candidates:[{}]}},false],[{choices:null},false]])assert.equal(api['output_limit.event_contains_assistant_content'](canonical(event)),wanted);},{childTimeoutMs:20000});
+});
+
+test('labeled original-root projection retains whole usage tuple moves and token-count recursion',{timeout:60000},async()=>{
+ const result=originalWithCore('src/usage.rs');for(const name of ['usage.token_parts','usage.token_count'])assert.ok(result.meta.executable.some(item=>item.name===name));await verifyTypedTargets(result,api=>{const tuple=(total,input,output)=>some(tag('Tuple',{field0:total,field1:input,field2:output}));for(const [event,parts,count]of [[{},none,none],[{usage:{total_tokens:7}},tuple(some(7n),none,none),some(7n)],[{usage:{input_tokens:3,output_tokens:2,cache_creation_input_tokens:4,cache_read_input_tokens:1}},tuple(none,some(8n),some(2n)),some(10n)],[{usageMetadata:{totalTokenCount:11}},tuple(some(11n),none,none),some(11n)],[{response:{usage:{prompt_tokens:5,completion_tokens:6}}},tuple(none,some(5n),some(6n)),some(11n)],[{message:{usage:{input_tokens:1}}},tuple(none,some(1n),none),some(1n)],[{response:{},message:{usage:{total_tokens:9}}},none,none]]){assert.deepEqual(api['usage.token_parts'](canonical(event)),parts);assert.deepEqual(api['usage.token_count'](canonical(event)),count);}assert.deepEqual(api['usage.token_count'](canonical({usage:{input_tokens:0,output_tokens:0}})),some(0n));},{childTimeoutMs:20000});
+});
+
+test('labeled original-root projection retains whole VK owned-String fallback and Unicode',{timeout:60000},async()=>{
+ const result=originalWithCore('src/vk.rs');assert.ok(result.meta.executable.some(item=>item.name==='vk.json_ts'));await verifyTypedTargets(result,api=>{for(const [value,wanted]of [['42','42'],['É😀','É😀'],['',''],[42,'42'],[-42,'-42'],[null,null],[false,null],[{},null],[[],null],[1.5,null]])assert.deepEqual(api['vk.json_ts'](canonical(value)),wanted===null?none:some(wanted));},{childTimeoutMs:20000});
+});
+
+test('unchanged actual subscription-usage parent graph restores reset-credit fallback priority',{timeout:60000},async()=>{
+ const result=original('src/subscription_usage.rs'),name='normalize.reset_credits_available';assert.ok(result.meta.executable.some(item=>item.name===name));await verifyTypedTargets(result,api=>{for(const [value,wanted]of [[{},none],[{rate_limit_reset_credits:{available_count:5}},some(5n)],[{rate_limit_reset_credits_summary:{available_count:7}},some(7n)],[{rate_limit_reset_credits:null,rate_limit_reset_credits_summary:{available_count:7}},none],[{rate_limit_reset_credits:{available_count:0}},some(0n)],[{rate_limit_reset_credits:{available_count:-1}},none]])assert.deepEqual(api[name](canonical(value)),wanted);},{childTimeoutMs:20000});
+});
+
+test('unchanged whole subscription type source restores original shared Option integer Copy read',{timeout:60000},async()=>{
+ const result=aliasMethod(original('src/subscription/types.rs'),'is_expired','originalExpired');assert.ok(result.meta.checkedMethods.some(item=>item.name==='SubscriptionToken.is_expired'));await verifyTypedTargets(result,(_api,_result,module)=>{for(const [expiry,now,wanted]of [[none,0n,false],[some(0n),-1n,false],[some(0n),0n,true],[some(0n),1n,true],[some(-(1n<<63n)),-(1n<<63n),true],[some((1n<<63n)-1n),(1n<<63n)-2n,false]])assert.equal(module.originalExpired(token('access',expiry),now),wanted);assert.throws(()=>module.originalExpired(token('access',some(1n<<63n)),0n),TypeError);},{childTimeoutMs:20000});
+});
+
+test('labeled original-root projection retains whole stream termination in-band failure priority',{timeout:60000},async()=>{
+ const result=aliasMethod(originalWithCore('src/stream_termination.rs'),'of_in_band','originalInBand');assert.ok(result.meta.checkedMethods.some(item=>item.name==='stream_termination.FailureKind.of_in_band'));await verifyTypedTargets(result,(_api,_result,module)=>{for(const [value,wanted]of [[{},none],[{code:'upstream_timeout'},some(tag('Stalled'))],[{error:{code:'upstream_interrupted'}},some(tag('Interrupted'))],[{error:{code:'upstream_incomplete'},code:'upstream_timeout'},some(tag('Truncated'))],[{error:{code:null},code:'upstream_timeout'},none],[{code:'other'},none]])assert.deepEqual(module.originalInBand(canonical(value)),wanted);},{childTimeoutMs:20000});
+});
+
+test('labeled original-root declaration projection verifies original recovery dependency behavior',{timeout:90000},async()=>{
+ const originalRoot=read('src/lib.rs'),declarations=sourceItems(originalRoot).filter(item=>item.term==='mod'&&['refresh','subscription'].includes(item.name));assert.equal(declarations.length,2);const projection=declarations.map(item=>originalRoot.slice(item.start,item.end)).join('\n'),result=compile('src/lib.rs',path=>path==='src/lib.rs'?projection:read(path)),name='refresh.refresh_recovery.is_usable';assert.ok(result.meta.executable.some(item=>item.name===name));assert.equal(result.meta.sources.find(item=>item.source==='src/lib.rs').sha256,hash(projection));assert.notEqual(hash(projection),hash(originalRoot));for(const source of result.meta.sources.filter(item=>item.source!=='src/lib.rs'))assert.equal(source.sha256,hash(read(source.source)));
+ await verifyTypedTargets(result,api=>{const base=token('old',some(10000000n)),candidate=(access,expires)=>token(access,some(expires)),mode=name=>tag(name);assert.equal(api[name](candidate('old',10000000n),base,mode('Proactive'),0n),true);assert.equal(api[name](candidate('old',0n),base,mode('Proactive'),0n),false);assert.equal(api[name](candidate('new',10000000n),base,mode('AfterRejection'),0n),true);assert.equal(api[name](candidate('old',10000000n),base,mode('AfterRejection'),0n),false);assert.equal(api[name](candidate('new',0n),base,mode('AfterRejection'),0n),false);assert.equal(api[name](candidate('new',10000000n),base,mode('ImportValidation'),0n),false);assert.equal(api[name](token('new',none),base,mode('AfterRejection'),0n),true);},{childTimeoutMs:20000});
+});

@@ -1,0 +1,1 @@
+Preserve a bounded primary-source recheck of meta-language pull request #201: its current Rust parser, checker, type definitions and JavaScript emitter are byte-identical to the pinned local copies. Record exact source hashes and removal of the temporary downloads without claiming additional translation coverage.

@@ -1,0 +1,1000 @@
+//! Inference-surface coverage for credential-generation-aware evidence.
+
+use super::tests::{auto_state, finished, rendezvous};
+use super::*;
+use axum::body::Body;
+use axum::extract::{OriginalUri, Query, State};
+use axum::http::{HeaderMap, HeaderValue, Request, StatusCode};
+use http_body_util::BodyExt as _;
+use std::collections::BTreeMap;
+use std::fs;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex};
+use tempfile::{TempDir, tempdir};
+use tokio::sync::Barrier;
+
+const MODEL: &str = "generation-evidence-model";
+
+#[path = "proxied_codex_tests.rs"]
+mod proxied_codex_tests;
+
+#[path = "model_routing_failure_tests.rs"]
+mod failure_tests;
+
+struct StreamDropSignal(Option<tokio::sync::oneshot::Sender<()>>);
+
+impl Drop for StreamDropSignal {
+    fn drop(&mut self) {
+        if let Some(signal) = self.0.take() {
+            let _ = signal.send(());
+        }
+    }
+}
+
+async fn rejecting_upstream() -> (String, tokio::task::JoinHandle<()>) {
+    let app = axum::Router::new().fallback(|| async {
+        (
+            StatusCode::UNAUTHORIZED,
+            axum::Json(json!({"error": {"message": "credential rejected"}})),
+        )
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let task = tokio::spawn(async move {
+        axum::serve(listener, app).await.unwrap();
+    });
+    (base_url, task)
+}
+
+async fn counting_upstream() -> (String, Arc<AtomicUsize>, tokio::task::JoinHandle<()>) {
+    let requests = Arc::new(AtomicUsize::new(0));
+    let seen = Arc::clone(&requests);
+    let app = axum::Router::new().fallback(move || {
+        seen.fetch_add(1, Ordering::SeqCst);
+        async { (StatusCode::OK, "{}") }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let task = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    (base_url, requests, task)
+}
+
+fn write_credential(provider: SubscriptionProvider, home: &TempDir, base_url: &str) {
+    let (name, document) = match provider {
+        SubscriptionProvider::Claude => (
+            ".credentials.json",
+            json!({
+                "claudeAiOauth": {
+                    "accessToken": "claude-access-a",
+                    "expiresAt": 9_999_999_999_999_i64
+                }
+            }),
+        ),
+        SubscriptionProvider::Codex => (
+            "auth.json",
+            json!({
+                "tokens": {
+                    "access_token": "codex-access-a",
+                    "account_id": "account-a"
+                },
+                "expiry_date": 9_999_999_999_999_i64
+            }),
+        ),
+        SubscriptionProvider::Gemini => (
+            "oauth_creds.json",
+            json!({
+                "access_token": "gemini-access-a",
+                "expiry_date": 9_999_999_999_999_i64,
+                "account_id": "account-a",
+                "resource_url": base_url
+            }),
+        ),
+        SubscriptionProvider::Qwen => (
+            "oauth_creds.json",
+            json!({
+                "access_token": "qwen-access-a",
+                "refresh_token": "qwen-refresh-a",
+                "expiry_date": 9_999_999_999_999_i64,
+                "account_id": "account-a",
+                "resource_url": base_url
+            }),
+        ),
+    };
+    fs::write(home.path().join(name), document.to_string()).unwrap();
+}
+
+fn state_for(
+    provider: SubscriptionProvider,
+    data: &TempDir,
+    home: &TempDir,
+    base_url: &str,
+) -> AppState {
+    write_credential(provider, home, base_url);
+    let reader = SubscriptionReader::new(provider, home.path());
+    let mut state = auto_state(vec![reader.clone()], data.path());
+    state.subscription_reader = Some(reader);
+    state.upstream_provider = match provider {
+        SubscriptionProvider::Claude => UpstreamProvider::Anthropic,
+        SubscriptionProvider::Codex => UpstreamProvider::Codex,
+        SubscriptionProvider::Gemini => UpstreamProvider::Gemini,
+        SubscriptionProvider::Qwen => UpstreamProvider::Qwen,
+    };
+    state.upstream_base_url = base_url.to_string();
+    state.subscription_base_url = Some(base_url.to_string());
+    state.register_credential_recovery_in(data.path(), &crate::app_state::VendorClis::default());
+    state.model_catalogs.record_success_for(
+        provider,
+        (provider != SubscriptionProvider::Claude).then(|| "account-a".to_string()),
+        vec![MODEL.to_string()],
+    );
+    state
+}
+
+#[tokio::test]
+async fn gemini_translated_surfaces_reject_lossy_fields_without_inference() {
+    let (base_url, requests, task) = counting_upstream().await;
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Gemini, &data, &home, &base_url);
+
+    let chat = crate::gemini::forward_chat_completions_as(
+        &state,
+        &managed_headers(&state, crate::clients::ClientKind::Opencode),
+        json!({
+            "model": MODEL,
+            "messages": [{"role": "user", "content": "hello"}],
+            "future_field": true
+        }),
+        crate::metrics::Surface::OpenAIChat,
+    )
+    .await;
+    assert_eq!(chat.status(), StatusCode::BAD_REQUEST);
+    let chat_body = chat.into_body().collect().await.unwrap().to_bytes();
+    let chat_body: Value = serde_json::from_slice(&chat_body).unwrap();
+    assert_eq!(chat_body["error"]["type"], "invalid_request_error");
+
+    let responses = crate::gemini::forward_responses(
+        &state,
+        &managed_headers(&state, crate::clients::ClientKind::Codex),
+        json!({
+            "model": MODEL,
+            "input": "hello",
+            "tools": [{"type": "web_search"}]
+        }),
+    )
+    .await;
+    assert_eq!(responses.status(), StatusCode::BAD_REQUEST);
+    let body = responses.into_body().collect().await.unwrap().to_bytes();
+    let body: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(body["error"]["type"], "invalid_request_error");
+    assert_eq!(requests.load(Ordering::SeqCst), 0);
+    task.abort();
+}
+
+#[tokio::test]
+async fn native_gemini_client_rejects_safety_and_storage_policy_on_other_providers() {
+    let (base_url, requests, task) = counting_upstream().await;
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Codex, &data, &home, &base_url);
+    state
+        .provider_store
+        .set_subscription_entitlement_policy(
+            crate::client_policy::SubscriptionEntitlementPolicy::parse(["gemini:codex"]).unwrap(),
+        )
+        .unwrap();
+    let mut headers = managed_headers(&state, crate::clients::ClientKind::GeminiCli);
+    headers.insert(
+        "x-gemini-api-privileged-user-id",
+        HeaderValue::from_static("fixture"),
+    );
+
+    for policy in [
+        json!({"safetySettings": [{
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "BLOCK_LOW_AND_ABOVE"
+        }]}),
+        json!({"store": true}),
+        json!({"store": false}),
+    ] {
+        let mut body = json!({"contents": [{"role": "user", "parts": [{"text": "hello"}]}]});
+        body.as_object_mut()
+            .unwrap()
+            .extend(policy.as_object().unwrap().clone());
+        let response = crate::gemini::forward_native_gemini(
+            State(state.clone()),
+            axum::extract::Path(format!("models/{MODEL}:generateContent")),
+            headers.clone(),
+            Ok(axum::Json(body)),
+        )
+        .await;
+        let status = response.status();
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let body: Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(status, StatusCode::BAD_REQUEST, "{body}");
+        assert_eq!(body["error"]["status"], "INVALID_ARGUMENT");
+    }
+    assert_eq!(requests.load(Ordering::SeqCst), 0);
+    task.abort();
+}
+
+/// A Code Assist SSE upstream whose final event is held behind a channel.
+/// Returning the Router response and its first body frame before `release` is
+/// sent proves that the production path is truly incremental.
+async fn gated_gemini_streaming_upstream() -> (
+    String,
+    tokio::sync::oneshot::Sender<()>,
+    Arc<Mutex<Vec<String>>>,
+    tokio::sync::oneshot::Receiver<()>,
+    tokio::task::JoinHandle<()>,
+) {
+    let (release, wait_for_release) = tokio::sync::oneshot::channel();
+    let (stream_dropped, observe_stream_drop) = tokio::sync::oneshot::channel();
+    let wait_for_release = Arc::new(Mutex::new(Some(wait_for_release)));
+    let stream_dropped = Arc::new(Mutex::new(Some(stream_dropped)));
+    let requests = Arc::new(Mutex::new(Vec::new()));
+    let wait_for_stub = Arc::clone(&wait_for_release);
+    let stream_dropped_for_stub = Arc::clone(&stream_dropped);
+    let requests_for_stub = Arc::clone(&requests);
+    let app = axum::Router::new().fallback(
+        move |OriginalUri(uri): OriginalUri, body: bytes::Bytes| {
+            let wait_for_release = wait_for_stub
+                .lock()
+                .expect("release channel lock")
+                .take()
+                .expect("one streaming request");
+            let stream_drop_signal = StreamDropSignal(
+                stream_dropped_for_stub
+                    .lock()
+                    .expect("stream drop channel lock")
+                    .take(),
+            );
+            requests_for_stub
+                .lock()
+                .expect("request capture lock")
+                .push(format!("{}\n{}", uri, String::from_utf8_lossy(&body)));
+            async move {
+                use futures_util::StreamExt as _;
+
+                let first = bytes::Bytes::from_static(
+                    b"data: {\"response\":{\"modelVersion\":\"generation-evidence-model\",\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hello\"}]}}]}}\n\n",
+                );
+                let final_event = bytes::Bytes::from_static(
+                    b"data: {\"response\":{\"modelVersion\":\"generation-evidence-model\",\"candidates\":[{\"content\":{\"parts\":[{\"text\":\" world\"},{\"functionCall\":{\"id\":\"call-live\",\"name\":\"lookup\",\"args\":{\"q\":\"router\"}}}]},\"finishReason\":\"STOP\"}],\"usageMetadata\":{\"promptTokenCount\":2,\"candidatesTokenCount\":3,\"totalTokenCount\":5}}}\n\n",
+                );
+                let stream = futures_util::stream::once(async move {
+                    Ok::<_, std::io::Error>(first)
+                })
+                .chain(futures_util::stream::once(async move {
+                    let _ = wait_for_release.await;
+                    Ok::<_, std::io::Error>(final_event)
+                }))
+                .map(move |event| {
+                    let _keep_signal_until_stream_drop = &stream_drop_signal;
+                    event
+                });
+                let mut response = axum::response::Response::new(Body::from_stream(stream));
+                response.headers_mut().insert(
+                    "content-type",
+                    HeaderValue::from_static("text/event-stream"),
+                );
+                response
+            }
+        },
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let task = tokio::spawn(async move {
+        axum::serve(listener, app).await.unwrap();
+    });
+    (base_url, release, requests, observe_stream_drop, task)
+}
+
+#[tokio::test]
+async fn gemini_openai_stream_returns_the_first_event_before_upstream_completion() {
+    let (base_url, release, requests, _stream_dropped, task) =
+        gated_gemini_streaming_upstream().await;
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Gemini, &data, &home, &base_url);
+    let response = tokio::time::timeout(
+        std::time::Duration::from_secs(1),
+        crate::gemini::forward_chat_completions_as(
+            &state,
+            &managed_headers(&state, crate::clients::ClientKind::Opencode),
+            json!({
+                "model": MODEL,
+                "stream": true,
+                "messages": [{"role": "user", "content": "hello"}]
+            }),
+            crate::metrics::Surface::OpenAIChat,
+        ),
+    )
+    .await
+    .expect("response headers must precede the final upstream event");
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers()["content-type"], "text/event-stream");
+
+    let mut body = response.into_body();
+    let first = tokio::time::timeout(std::time::Duration::from_secs(1), body.frame())
+        .await
+        .expect("first translated event must be immediately available")
+        .expect("stream must have a first frame")
+        .expect("first frame must be valid")
+        .into_data()
+        .expect("first frame is data");
+    let first = String::from_utf8(first.to_vec()).unwrap();
+    assert!(first.contains("hello"), "{first}");
+    assert!(first.contains(MODEL), "{first}");
+
+    release.send(()).expect("release final upstream event");
+    let rest = body.collect().await.unwrap().to_bytes();
+    let rest = String::from_utf8(rest.to_vec()).unwrap();
+    assert!(rest.contains(" world"), "{rest}");
+    assert!(rest.contains("call-live"), "{rest}");
+    assert!(rest.contains("tool_calls"), "{rest}");
+    assert!(rest.contains(r#""total_tokens":5"#), "{rest}");
+    assert!(rest.ends_with("data: [DONE]\n\n"), "{rest}");
+
+    let requests = requests.lock().unwrap();
+    assert!(
+        requests[0].starts_with("/v1internal:streamGenerateContent?alt=sse\n"),
+        "{:?}",
+        *requests
+    );
+    assert!(requests[0].contains(&format!(r#""model":"{MODEL}""#)));
+    drop(requests);
+    task.abort();
+}
+
+#[tokio::test]
+async fn native_gemini_stream_returns_the_first_event_before_upstream_completion() {
+    let (base_url, release, requests, _stream_dropped, task) =
+        gated_gemini_streaming_upstream().await;
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Gemini, &data, &home, &base_url);
+    let response = tokio::time::timeout(
+        std::time::Duration::from_secs(1),
+        crate::gemini::forward_native_gemini_authorized(
+            &state,
+            &format!("models/{MODEL}:streamGenerateContent"),
+            &managed_headers(&state, crate::clients::ClientKind::GeminiCli),
+            json!({
+                "contents": [{"role": "user", "parts": [{"text": "hello"}]}]
+            }),
+        ),
+    )
+    .await
+    .expect("response headers must precede the final upstream event");
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers()["content-type"], "text/event-stream");
+
+    let mut body = response.into_body();
+    let first = tokio::time::timeout(std::time::Duration::from_secs(1), body.frame())
+        .await
+        .expect("first native event must be immediately available")
+        .expect("stream must have a first frame")
+        .expect("first frame must be valid")
+        .into_data()
+        .expect("first frame is data");
+    let first = String::from_utf8(first.to_vec()).unwrap();
+    assert!(first.contains("hello"), "{first}");
+    assert!(!first.contains(r#""response""#), "{first}");
+
+    release.send(()).expect("release final upstream event");
+    let rest = body.collect().await.unwrap().to_bytes();
+    let rest = String::from_utf8(rest.to_vec()).unwrap();
+    assert!(rest.contains(" world"), "{rest}");
+    assert!(rest.contains("functionCall"), "{rest}");
+    assert!(rest.contains("finishReason"), "{rest}");
+    assert!(rest.contains("usageMetadata"), "{rest}");
+
+    let requests = requests.lock().unwrap();
+    assert!(
+        requests[0].starts_with("/v1internal:streamGenerateContent?alt=sse\n"),
+        "{:?}",
+        *requests
+    );
+    assert!(requests[0].contains(&format!(r#""model":"{MODEL}""#)));
+    drop(requests);
+    task.abort();
+}
+
+#[tokio::test]
+async fn cancelling_the_downstream_gemini_body_drops_the_upstream_stream() {
+    let (base_url, _release, _requests, stream_dropped, task) =
+        gated_gemini_streaming_upstream().await;
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Gemini, &data, &home, &base_url);
+    let response = crate::gemini::forward_chat_completions_as(
+        &state,
+        &managed_headers(&state, crate::clients::ClientKind::Opencode),
+        json!({
+            "model": MODEL,
+            "stream": true,
+            "messages": [{"role": "user", "content": "cancel after first event"}]
+        }),
+        crate::metrics::Surface::OpenAIChat,
+    )
+    .await;
+    let mut body = response.into_body();
+    tokio::time::timeout(std::time::Duration::from_secs(1), body.frame())
+        .await
+        .expect("first event must arrive")
+        .expect("stream must have a first frame")
+        .expect("first frame must be valid");
+    drop(body);
+
+    tokio::time::timeout(std::time::Duration::from_secs(1), stream_dropped)
+        .await
+        .expect("downstream cancellation must drop the upstream stream")
+        .expect("upstream drop signal");
+    task.abort();
+}
+
+fn managed_headers(state: &AppState, client: crate::clients::ClientKind) -> HeaderMap {
+    let token = super::tests::bound_client_token(state, client, None);
+    let mut headers = HeaderMap::new();
+    match client {
+        crate::clients::ClientKind::ClaudeCode => {
+            headers.insert("x-api-key", HeaderValue::from_str(&token).unwrap());
+            headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
+            headers.insert("user-agent", HeaderValue::from_static("claude-cli/2.1.259"));
+        }
+        crate::clients::ClientKind::Codex => {
+            headers.insert(
+                "authorization",
+                HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
+            );
+            headers.insert("user-agent", HeaderValue::from_static("codex_exec/0.153.0"));
+            headers.insert("x-codex-turn-metadata", HeaderValue::from_static("fixture"));
+        }
+        crate::clients::ClientKind::GeminiCli => {
+            headers.insert("x-goog-api-key", HeaderValue::from_str(&token).unwrap());
+            headers.insert(
+                "x-goog-api-client",
+                HeaderValue::from_static("router-test-fixture"),
+            );
+        }
+        crate::clients::ClientKind::Opencode => {
+            headers.insert(
+                "authorization",
+                HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
+            );
+            headers.insert(
+                "user-agent",
+                HeaderValue::from_static("opencode/test-fixture"),
+            );
+            headers.insert("x-session-id", HeaderValue::from_static("test-session"));
+        }
+        _ => unreachable!("only evidence fixtures used here"),
+    }
+    headers
+}
+
+fn assert_rejected(state: &AppState, provider: SubscriptionProvider) {
+    assert_eq!(
+        state.subscription_cache.evidence_for(provider, "primary"),
+        Some(crate::refresh::CredentialEvidence::Rejected),
+        "the final upstream credential on {provider} must own its rejection evidence"
+    );
+}
+
+/// Account A's delayed 401 must neither retry with nor poison replacement B.
+#[tokio::test]
+async fn validated_401_never_retries_or_poisons_a_post_dispatch_replacement() {
+    let data = tempdir().unwrap();
+    let codex = tempdir().unwrap();
+    let credential_path = codex.path().join("auth.json");
+    fs::write(
+        &credential_path,
+        r#"{"tokens":{"access_token":"codex-a","refresh_token":"refresh-a","account_id":"account-a"}}"#,
+    )
+    .unwrap();
+
+    let reached_upstream = Arc::new(Barrier::new(2));
+    let may_answer = Arc::new(Barrier::new(2));
+    let authorizations = Arc::new(Mutex::new(Vec::<String>::new()));
+    let reached_for_stub = Arc::clone(&reached_upstream);
+    let answer_for_stub = Arc::clone(&may_answer);
+    let authorizations_for_stub = Arc::clone(&authorizations);
+    let stub = axum::Router::new().fallback(move |headers: HeaderMap| {
+        let reached = Arc::clone(&reached_for_stub);
+        let may_answer = Arc::clone(&answer_for_stub);
+        let authorizations = Arc::clone(&authorizations_for_stub);
+        async move {
+            let authorization = headers
+                .get("authorization")
+                .and_then(|value| value.to_str().ok())
+                .unwrap_or_default()
+                .to_string();
+            authorizations.lock().unwrap().push(authorization.clone());
+            if authorization == "Bearer codex-a" {
+                reached.wait().await;
+                may_answer.wait().await;
+                (StatusCode::UNAUTHORIZED, "rejected account A")
+            } else {
+                (StatusCode::OK, r#"{"object":"response","model":"account-b-model","status":"completed","output":[]}"#)
+            }
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let stub_url = format!("http://{}", listener.local_addr().unwrap());
+    let stub_task = tokio::spawn(async move {
+        axum::serve(listener, stub).await.unwrap();
+    });
+
+    let mut state = auto_state(
+        vec![SubscriptionReader::new(
+            SubscriptionProvider::Codex,
+            codex.path(),
+        )],
+        data.path(),
+    );
+    state.subscription_base_url = Some(stub_url);
+    state.model_catalogs.record_success_for(
+        SubscriptionProvider::Codex,
+        Some("account-a".into()),
+        vec!["account-a-model".into()],
+    );
+    let client_headers = managed_headers(&state, crate::clients::ClientKind::Codex);
+    let body = json!({"model": "account-a-model", "input": "hello"});
+    let routed = route_state_with_subscription(&state, &body)
+        .await
+        .expect("account A owns the selected catalog");
+    let post_race_state = routed.state.clone();
+    let request_body = body.clone();
+    let request_headers = client_headers.clone();
+    let request = tokio::spawn(async move {
+        crate::subscription_proxy::forward_subscription_openai_routed(
+            &routed.state,
+            &request_headers,
+            request_body.clone(),
+            &request_body,
+            "/v1/responses",
+            crate::metrics::Surface::OpenAIResponses,
+            crate::subscription_proxy::RoutedSubscriptionContext {
+                validated: routed.subscription.as_ref(),
+                entitlement: None,
+                native_route: false,
+            },
+        )
+        .await
+    });
+
+    rendezvous(&reached_upstream).await;
+    fs::write(
+        &credential_path,
+        r#"{"tokens":{"access_token":"codex-b","refresh_token":"refresh-b","account_id":"account-b"}}"#,
+    )
+    .unwrap();
+    let credential_b = post_race_state
+        .subscription_cache
+        .load_authoritative(SubscriptionProvider::Codex, "primary")
+        .await
+        .unwrap()
+        .expect("account B is the new authority");
+    post_race_state
+        .subscription_cache
+        .record_status_for_credential(SubscriptionProvider::Codex, "primary", &credential_b, 200)
+        .await;
+    rendezvous(&may_answer).await;
+
+    let response = request.await.unwrap();
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    assert_eq!(
+        post_race_state
+            .subscription_cache
+            .evidence_for(SubscriptionProvider::Codex, "primary"),
+        Some(crate::refresh::CredentialEvidence::Working),
+        "account A's delayed rejection must not poison reconciled account B"
+    );
+
+    post_race_state.model_catalogs.record_success_for(
+        SubscriptionProvider::Codex,
+        Some("account-b".into()),
+        vec!["account-b-model".into()],
+    );
+    let second_body = json!({"model": "account-b-model", "input": "hello again"});
+    let second_routed = route_state_with_subscription(&post_race_state, &second_body)
+        .await
+        .expect("account B remains eligible after A's delayed rejection");
+    let second_response = crate::subscription_proxy::forward_subscription_openai_routed(
+        &second_routed.state,
+        &client_headers,
+        second_body.clone(),
+        &second_body,
+        "/v1/responses",
+        crate::metrics::Surface::OpenAIResponses,
+        crate::subscription_proxy::RoutedSubscriptionContext {
+            validated: second_routed.subscription.as_ref(),
+            entitlement: None,
+            native_route: false,
+        },
+    )
+    .await;
+    assert_eq!(second_response.status(), StatusCode::OK);
+    assert_eq!(
+        authorizations.lock().unwrap().as_slice(),
+        ["Bearer codex-a", "Bearer codex-b"],
+        "the validated request returns A's rejection without sending B"
+    );
+    stub_task.abort();
+}
+
+#[tokio::test]
+async fn raw_anthropic_records_the_current_claude_credential_rejection() {
+    let (base_url, task) = rejecting_upstream().await;
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Claude, &data, &home, &base_url);
+    let body = json!({
+        "model": MODEL,
+        "max_tokens": 8,
+        "messages": [{"role": "user", "content": "hello"}]
+    });
+    let request = Request::builder()
+        .method("POST")
+        .uri("/v1/messages")
+        .header(
+            "x-api-key",
+            managed_headers(&state, crate::clients::ClientKind::ClaudeCode)
+                .get("x-api-key")
+                .unwrap(),
+        )
+        .header("anthropic-version", "2023-06-01")
+        .header("user-agent", "claude-cli/2.1.259")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap();
+
+    let response = crate::proxy::proxy_handler(State(state.clone()), request).await;
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    assert_rejected(&state, SubscriptionProvider::Claude);
+    task.abort();
+}
+
+#[tokio::test]
+async fn openai_anthropic_bridge_records_the_current_claude_credential_rejection() {
+    let (base_url, task) = rejecting_upstream().await;
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Claude, &data, &home, &base_url);
+    state
+        .provider_store
+        .set_subscription_entitlement_policy(
+            crate::client_policy::SubscriptionEntitlementPolicy::parse(["opencode:claude"])
+                .unwrap(),
+        )
+        .unwrap();
+    let response = crate::proxy::openai_chat_completions(
+        State(state.clone()),
+        Query(BTreeMap::new()),
+        managed_headers(&state, crate::clients::ClientKind::Opencode),
+        Ok(axum::Json(json!({
+            "model": MODEL,
+            "messages": [{"role": "user", "content": "hello"}]
+        }))),
+    )
+    .await;
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    assert_rejected(&state, SubscriptionProvider::Claude);
+    task.abort();
+}
+
+#[tokio::test]
+async fn subscription_openai_records_the_codex_credential_rejection() {
+    let (base_url, task) = rejecting_upstream().await;
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Codex, &data, &home, &base_url);
+    let body = json!({"model": MODEL, "input": "hello"});
+    let response = crate::subscription_proxy::forward_subscription_openai(
+        &state,
+        &managed_headers(&state, crate::clients::ClientKind::Codex),
+        body.clone(),
+        &body,
+        "/v1/responses",
+        crate::metrics::Surface::OpenAIResponses,
+    )
+    .await;
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    assert_rejected(&state, SubscriptionProvider::Codex);
+    task.abort();
+}
+
+#[tokio::test]
+async fn gemini_openai_bridge_is_denied_but_native_records_the_credential_rejection() {
+    let (base_url, task) = rejecting_upstream().await;
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Gemini, &data, &home, &base_url);
+    let response = crate::gemini::forward_chat_completions_as(
+        &state,
+        &managed_headers(&state, crate::clients::ClientKind::Opencode),
+        json!({
+            "model": MODEL,
+            "messages": [{"role": "user", "content": "hello"}]
+        }),
+        crate::metrics::Surface::OpenAIChat,
+    )
+    .await;
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    assert_rejected(&state, SubscriptionProvider::Gemini);
+
+    let native_data = tempfile::tempdir().unwrap();
+    let native_home = tempfile::tempdir().unwrap();
+    let native_state = state_for(
+        SubscriptionProvider::Gemini,
+        &native_data,
+        &native_home,
+        &base_url,
+    );
+    let native_headers = managed_headers(&native_state, crate::clients::ClientKind::GeminiCli);
+    let native = Box::pin(crate::gemini::forward_native_gemini_authorized(
+        &native_state,
+        &format!("models/{MODEL}:generateContent"),
+        &native_headers,
+        json!({
+            "contents": [{"role": "user", "parts": [{"text": "hello"}]}]
+        }),
+    ))
+    .await;
+    assert_eq!(native.status(), StatusCode::UNAUTHORIZED);
+    assert_rejected(&native_state, SubscriptionProvider::Gemini);
+    task.abort();
+}
+
+/// A retry-capable surface must attribute the final response to the token that
+/// produced it. Recording the initial rejected token would be ignored after B
+/// reconciliation and leave B's prior rejection evidence in place.
+#[tokio::test]
+async fn subscription_retry_records_the_final_actual_credential_without_leaking_it() {
+    let reached_a = Arc::new(Barrier::new(2));
+    let release_a = Arc::new(Barrier::new(2));
+    let authorizations = Arc::new(Mutex::new(Vec::<String>::new()));
+    let reached_for_stub = Arc::clone(&reached_a);
+    let release_for_stub = Arc::clone(&release_a);
+    let authorizations_for_stub = Arc::clone(&authorizations);
+    let app = axum::Router::new().fallback(move |headers: HeaderMap| {
+        let reached = Arc::clone(&reached_for_stub);
+        let release = Arc::clone(&release_for_stub);
+        let authorizations = Arc::clone(&authorizations_for_stub);
+        async move {
+            let authorization = headers
+                .get("authorization")
+                .and_then(|value| value.to_str().ok())
+                .unwrap_or_default()
+                .to_string();
+            authorizations.lock().unwrap().push(authorization.clone());
+            if authorization == "Bearer codex-access-a" {
+                reached.wait().await;
+                release.wait().await;
+                (StatusCode::UNAUTHORIZED, "{}")
+            } else {
+                (StatusCode::OK, r#"{"object":"response","model":"generation-evidence-model","status":"completed","output":[]}"#)
+            }
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let task = tokio::spawn(async move {
+        axum::serve(listener, app).await.unwrap();
+    });
+
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Codex, &data, &home, &base_url);
+    let body = json!({"model": MODEL, "input": "hello"});
+    let request_state = state.clone();
+    let request_body = body.clone();
+    let request_headers = managed_headers(&state, crate::clients::ClientKind::Codex);
+    let request = tokio::spawn(async move {
+        crate::subscription_proxy::forward_subscription_openai(
+            &request_state,
+            &request_headers,
+            request_body.clone(),
+            &request_body,
+            "/v1/responses",
+            crate::metrics::Surface::OpenAIResponses,
+        )
+        .await
+    });
+
+    rendezvous(&reached_a).await;
+    fs::write(
+        home.path().join("auth.json"),
+        json!({
+            "tokens": {
+                "access_token": "codex-access-b",
+                "account_id": "account-a"
+            },
+            "expiry_date": 9_999_999_999_999_i64
+        })
+        .to_string(),
+    )
+    .unwrap();
+    let credential_b = state
+        .subscription_cache
+        .load_authoritative(SubscriptionProvider::Codex, "primary")
+        .await
+        .unwrap()
+        .expect("replacement B is authoritative");
+    crate::refresh::test_support::seed_cached_token(
+        &state.subscription_cache,
+        SubscriptionProvider::Codex,
+        "primary",
+        credential_b.clone(),
+    );
+    state
+        .subscription_cache
+        .record_status_for_credential(SubscriptionProvider::Codex, "primary", &credential_b, 403)
+        .await;
+    rendezvous(&release_a).await;
+
+    let response = request.await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+        state
+            .subscription_cache
+            .evidence_for(SubscriptionProvider::Codex, "primary"),
+        Some(crate::refresh::CredentialEvidence::Working),
+        "the successful retry with B must replace B's earlier rejection"
+    );
+    assert_eq!(
+        authorizations.lock().unwrap().as_slice(),
+        ["Bearer codex-access-a", "Bearer codex-access-b"]
+    );
+    let response_body = response.into_body().collect().await.unwrap().to_bytes();
+    let public_body = String::from_utf8_lossy(&response_body);
+    assert!(!public_body.contains("codex-access"), "{public_body}");
+    assert!(!public_body.contains("account-a"), "{public_body}");
+    task.abort();
+}
+
+/// Once a response from A has caused this process to mint B, failure to obtain
+/// any HTTP response from B must not fall back to recording A's old 401.
+#[tokio::test]
+async fn retry_transport_failure_does_not_attribute_the_old_response_to_self_minted_b() {
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+
+    let reached_a = Arc::new(Barrier::new(2));
+    let release_a = Arc::new(Barrier::new(2));
+    let reached_for_stub = Arc::clone(&reached_a);
+    let release_for_stub = Arc::clone(&release_a);
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let upstream = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.unwrap();
+        let mut request = [0u8; 8192];
+        let read = socket.read(&mut request).await.unwrap();
+        assert!(
+            String::from_utf8_lossy(&request[..read])
+                .contains("authorization: Bearer codex-access-a")
+        );
+        reached_for_stub.wait().await;
+        release_for_stub.wait().await;
+        socket
+            .write_all(
+                b"HTTP/1.1 401 Unauthorized\r\ncontent-type: application/json\r\ncontent-length: 2\r\nconnection: close\r\n\r\n{}",
+            )
+            .await
+            .unwrap();
+        // The listener and socket now close. B's retry receives no HTTP
+        // response, deterministically exercising the transport-error branch.
+    });
+
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Codex, &data, &home, &base_url);
+    let body = json!({"model": MODEL, "input": "hello"});
+    let request_state = state.clone();
+    let request_headers = managed_headers(&state, crate::clients::ClientKind::Codex);
+    let request_body = body.clone();
+    let request = tokio::spawn(async move {
+        crate::subscription_proxy::forward_subscription_openai(
+            &request_state,
+            &request_headers,
+            request_body.clone(),
+            &request_body,
+            "/v1/responses",
+            crate::metrics::Surface::OpenAIResponses,
+        )
+        .await
+    });
+
+    rendezvous(&reached_a).await;
+    fs::write(
+        home.path().join("auth.json"),
+        json!({
+            "tokens": {
+                "access_token": "codex-access-b",
+                "account_id": "account-a"
+            },
+            "expiry_date": 9_999_999_999_999_i64
+        })
+        .to_string(),
+    )
+    .unwrap();
+    let token_b = state
+        .subscription_cache
+        .load_authoritative(SubscriptionProvider::Codex, "primary")
+        .await
+        .unwrap()
+        .expect("replacement B is authoritative");
+    crate::refresh::test_support::seed_cached_token(
+        &state.subscription_cache,
+        SubscriptionProvider::Codex,
+        "primary",
+        token_b.clone(),
+    );
+    state
+        .subscription_cache
+        .record_status_for_credential(SubscriptionProvider::Codex, "primary", &token_b, 200)
+        .await;
+    rendezvous(&release_a).await;
+
+    let response = request.await.unwrap();
+    upstream.await.unwrap();
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    assert_eq!(
+        state
+            .subscription_cache
+            .evidence_for(SubscriptionProvider::Codex, "primary"),
+        Some(crate::refresh::CredentialEvidence::Working),
+        "a transport failure for B must not commit A's superseded 401"
+    );
+    let response_body = response.into_body().collect().await.unwrap().to_bytes();
+    let public_body = String::from_utf8_lossy(&response_body);
+    assert!(!public_body.contains("codex-access"), "{public_body}");
+    assert!(!public_body.contains("account-a"), "{public_body}");
+}
+
+/// Receiving a 401 is enough to reject the credential even if the upstream
+/// closes before its declared body is complete. Body-read failure remains a
+/// sanitized 502, but cannot erase the authentication verdict already known.
+#[tokio::test]
+async fn native_gemini_records_401_before_an_incomplete_body_fails() {
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let server = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.unwrap();
+        let mut request = [0u8; 8192];
+        let _ = socket.read(&mut request).await.unwrap();
+        socket
+            .write_all(
+                b"HTTP/1.1 401 Unauthorized\r\ncontent-type: application/json\r\ncontent-length: 200\r\nconnection: close\r\n\r\n{\"error\":\"sentinel-account/path",
+            )
+            .await
+            .unwrap();
+    });
+
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Gemini, &data, &home, &base_url);
+    let headers = managed_headers(&state, crate::clients::ClientKind::GeminiCli);
+    let response = Box::pin(crate::gemini::forward_native_gemini_authorized(
+        &state,
+        &format!("models/{MODEL}:generateContent"),
+        &headers,
+        json!({
+            "contents": [{"role": "user", "parts": [{"text": "hello"}]}]
+        }),
+    ))
+    .await;
+    finished(server).await;
+
+    assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
+    assert_rejected(&state, SubscriptionProvider::Gemini);
+    let public_body = response.into_body().collect().await.unwrap().to_bytes();
+    let public_body = String::from_utf8_lossy(&public_body);
+    assert!(!public_body.contains("sentinel-account"), "{public_body}");
+    assert!(!public_body.contains("/path"), "{public_body}");
+}

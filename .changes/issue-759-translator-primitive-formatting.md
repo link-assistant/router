@@ -1,0 +1,1 @@
+Added checked primitive format macro lowering with source-order argument evaluation, independent implicit positional indexing, repeated arguments, named arguments and captures, and exact fixed integer radix, sign and bounded width formatting through the default semantic translation pipeline.

@@ -1,0 +1,11 @@
+# Original shared constructor patterns
+
+The forward compiler reads nested and named constructor patterns from privately associated original Rust match syntax. It retains each selected original declaration, constructor and payload field, including the actual canonical Option/Result arguments and the locked serde_json Value layout. Shared projections retain their reference depth and input lifetime origins. By-value canonical containers require the original standard Copy derive and checked primitive or shared-reference payload evidence; borrowing a nominal payload grants no pointee Copy, move or Drop authority.
+
+Each selected match has a private checking frame. Its immutable field bindings and source-pinned String Deref/as_str coercions can be used only within that original frame. The complete final caller body, signature, original layouts and emitted local rename must match private checking records. Cloning or refreezing public certificates, extracting projections, modifying metadata or loading serialized metadata in a fresh process cannot recreate those records. Retranslating genuine source reconstructs them.
+
+String views use the retained original alloc String Deref implementation and checked as_str adapter. They preserve Unicode scalar validation and the source borrow origin. They grant no general Deref, allocation, pointer identity or destructor authority. JSON source inputs and their private seals now live in a parser-independent module; the existing macro-source API reexports the same functions and still owns macro definition compilation.
+
+The existing primitive receiver and matches! paths remain separate. Mutable pattern bindings, unproved field-place copies, escaping aggregate/String loans, owned payload movement, unsupported nonlocal control, map iteration, Clone and formatting remain refused. These reads do not establish full Rust runtime parity.
+
+The bounded ten-owner census retains all unchanged originals and every before/after refusal. New pattern checks advance several bodies to independent iterator, Into, Clone or dependency refusals; the selected cohort has no newly admitted complete original owner. The RefreshAttempt comparison uses a labeled declaration-only root projection for behavioral source closure, rather than whole-library admission. Whole-library gains require the coordinator's fresh canonical audit.

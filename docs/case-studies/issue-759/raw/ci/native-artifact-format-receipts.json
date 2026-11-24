@@ -1,0 +1,60 @@
+[
+  {
+    "artifact_id": 10680768472,
+    "repository": "link-foundation/relative-meta-logic",
+    "selection": "native_dockerbuild_record_metadata_only_not_a_textual_failure_report",
+    "earlier_zip_parser_result": "File is not a zip file",
+    "source_receipts": [
+      {
+        "retrieved_at": "2026-10-10T19:49:52.741499+00:00",
+        "download_sha256": "890c9198cd9985d38aa6547bacf41eac36003d2c2301528a0c6c758135779c65",
+        "download_bytes": 20156
+      },
+      {
+        "retrieved_at": "2026-10-10T20:11:22.325685+00:00",
+        "download_sha256": "890c9198cd9985d38aa6547bacf41eac36003d2c2301528a0c6c758135779c65",
+        "download_bytes": 20156
+      },
+      {
+        "retrieved_at": "2026-10-10T20:16:19.046834+00:00",
+        "download_sha256": "890c9198cd9985d38aa6547bacf41eac36003d2c2301528a0c6c758135779c65",
+        "download_bytes": 20156
+      },
+      {
+        "retrieved_at": "2026-10-10T20:25:27.700751+00:00",
+        "download_sha256": "890c9198cd9985d38aa6547bacf41eac36003d2c2301528a0c6c758135779c65",
+        "download_bytes": 20156
+      }
+    ],
+    "note": "The repository name logic accidentally matched the broad log-name filter. Native .dockerbuild records are metadata-only; source bytes were hashed but not retained as an opaque binary archive."
+  },
+  {
+    "artifact_id": 10680563666,
+    "repository": "link-foundation/relative-meta-logic",
+    "selection": "native_dockerbuild_record_metadata_only_not_a_textual_failure_report",
+    "earlier_zip_parser_result": "File is not a zip file",
+    "source_receipts": [
+      {
+        "retrieved_at": "2026-10-10T19:49:54.647556+00:00",
+        "download_sha256": "ac3b1652a96c45ab0da6cee63a5079b4232f328cdf39ecbdd4d1cd60defcf665",
+        "download_bytes": 37126
+      },
+      {
+        "retrieved_at": "2026-10-10T20:11:24.085699+00:00",
+        "download_sha256": "ac3b1652a96c45ab0da6cee63a5079b4232f328cdf39ecbdd4d1cd60defcf665",
+        "download_bytes": 37126
+      },
+      {
+        "retrieved_at": "2026-10-10T20:16:19.050911+00:00",
+        "download_sha256": "ac3b1652a96c45ab0da6cee63a5079b4232f328cdf39ecbdd4d1cd60defcf665",
+        "download_bytes": 37126
+      },
+      {
+        "retrieved_at": "2026-10-10T20:25:27.704354+00:00",
+        "download_sha256": "ac3b1652a96c45ab0da6cee63a5079b4232f328cdf39ecbdd4d1cd60defcf665",
+        "download_bytes": 37126
+      }
+    ],
+    "note": "The repository name logic accidentally matched the broad log-name filter. Native .dockerbuild records are metadata-only; source bytes were hashed but not retained as an opaque binary archive."
+  }
+]

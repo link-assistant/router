@@ -18,7 +18,7 @@ mod operation_context {
     }
 }
 
-#[path = "../../src/with_command_sweep.rs"]
+#[path = "../../rust/src/with_command_sweep.rs"]
 mod sweep;
 
 fn main() {

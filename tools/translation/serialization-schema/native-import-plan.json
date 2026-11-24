@@ -1,0 +1,14 @@
+{
+  "schema": "native-affinity-descriptor-import-plan-v1",
+  "patch": "native-import.patch",
+  "original_native_source_sha256": "b5e3ebccdc622f61e68760ee35319a895a7a3b81fde7e2bb43d02585ee04dbdb",
+  "planned_native_source_sha256": "1b1b7347d1aa596d0551adfa4f95b386ceb7472e0fe32c6ca4f4a08f47ba977b",
+  "interpreter_body_sha256": "a84490a8c4082e2b5b2323f20ab0e2998c125aa5427739bd0de6ed31212ca665",
+  "interpreter_body_unchanged": true,
+  "actual_native_file_changed": false,
+  "generated_descriptor_written": false,
+  "baseline": "55a28008bbe4b2c75928e1239c3657cdb6768ed2",
+  "source_meta_root": "crate::response_affinity::AffinityFile",
+  "actual_original_types": 7,
+  "execution_requires_separate_gate_grant": true
+}

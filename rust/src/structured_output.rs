@@ -1,0 +1,329 @@
+//! Structured-output validation shared by OpenAI-to-Anthropic bridges.
+
+use serde_json::{Value, json};
+
+pub fn chat_format(
+    value: crate::translation_core::Maybe<&crate::translation_core::Json>,
+) -> crate::translation_core::Outcome<
+    crate::translation_core::Maybe<crate::translation_core::Json>,
+    String,
+> {
+    let Some(value) = value else {
+        return Ok(None);
+    };
+    let kind = required_type(value, "response_format")?;
+    match kind {
+        "text" => Ok(None),
+        "json_object" => Ok(Some(generic_object_format())),
+        "json_schema" => {
+            let definition = value
+                .get("json_schema")
+                .and_then(Value::as_object)
+                .ok_or_else(|| {
+                    crate::translation_core::format!(
+                        "{}",
+                        "response_format.json_schema must be an object"
+                    )
+                })?;
+            validate_name_and_strict(
+                definition.get("name"),
+                definition.get("strict"),
+                "response_format.json_schema",
+            )?;
+            schema_format(
+                definition.get("schema"),
+                "response_format.json_schema.schema",
+            )
+            .map(Some)
+        }
+        other => Err(crate::translation_core::format!(
+            "unsupported response_format type: {other}"
+        )),
+    }
+}
+
+pub fn responses_format(
+    text: crate::translation_core::Maybe<&crate::translation_core::Json>,
+) -> crate::translation_core::Outcome<
+    crate::translation_core::Maybe<crate::translation_core::Json>,
+    String,
+> {
+    let Some(text) = text else {
+        return Ok(None);
+    };
+    let object = text
+        .as_object()
+        .ok_or_else(|| crate::translation_core::format!("{}", "text must be an object"))?;
+    let Some(format) = object.get("format").filter(|value| !value.is_null()) else {
+        return Ok(None);
+    };
+    let kind = required_type(format, "text.format")?;
+    match kind {
+        "text" => Ok(None),
+        "json_object" => Ok(Some(generic_object_format())),
+        "json_schema" => {
+            validate_name_and_strict(format.get("name"), format.get("strict"), "text.format")?;
+            schema_format(format.get("schema"), "text.format.schema").map(Some)
+        }
+        other => Err(crate::translation_core::format!(
+            "unsupported text.format type: {other}"
+        )),
+    }
+}
+
+pub fn chat_to_responses_format(
+    value: crate::translation_core::Maybe<&crate::translation_core::Json>,
+) -> crate::translation_core::Outcome<
+    crate::translation_core::Maybe<crate::translation_core::Json>,
+    String,
+> {
+    let Some(value) = value else {
+        return Ok(None);
+    };
+    let kind = required_type(value, "response_format")?;
+    match kind {
+        "text" => Ok(Some(crate::translation_core::json!({"type": "text"}))),
+        "json_object" => Ok(Some(
+            crate::translation_core::json!({"type": "json_object"}),
+        )),
+        "json_schema" => {
+            let definition = value
+                .get("json_schema")
+                .and_then(Value::as_object)
+                .ok_or_else(|| {
+                    crate::translation_core::format!(
+                        "{}",
+                        "response_format.json_schema must be an object"
+                    )
+                })?;
+            validate_name_and_strict(
+                definition.get("name"),
+                definition.get("strict"),
+                "response_format.json_schema",
+            )?;
+            let schema = definition
+                .get("schema")
+                .filter(|schema| schema.is_object())
+                .ok_or_else(|| {
+                    crate::translation_core::format!(
+                        "{}",
+                        "response_format.json_schema.schema must be an object"
+                    )
+                })?;
+            let mut format = crate::translation_core::json!({
+                "type": "json_schema",
+                "name": crate::translation_core::json_map_index(definition, "name"),
+                "schema": schema,
+            });
+            if let Some(strict) = definition.get("strict") {
+                {
+                    let __router_json_rhs_394 = crate::translation_core::json_copy(strict);
+                    format = crate::translation_core::json_with_field(
+                        format,
+                        "strict",
+                        __router_json_rhs_394,
+                    );
+                };
+            }
+            Ok(Some(format))
+        }
+        other => Err(crate::translation_core::format!(
+            "unsupported response_format type: {other}"
+        )),
+    }
+}
+
+pub fn responses_to_chat_format(
+    text: crate::translation_core::Maybe<&crate::translation_core::Json>,
+) -> crate::translation_core::Outcome<
+    crate::translation_core::Maybe<crate::translation_core::Json>,
+    String,
+> {
+    let Some(text) = text else {
+        return Ok(None);
+    };
+    let object = text
+        .as_object()
+        .ok_or_else(|| crate::translation_core::format!("{}", "text must be an object"))?;
+    let Some(format) = object.get("format").filter(|value| !value.is_null()) else {
+        return Ok(None);
+    };
+    match required_type(format, "text.format")? {
+        "text" => Ok(Some(crate::translation_core::json!({"type": "text"}))),
+        "json_object" => Ok(Some(
+            crate::translation_core::json!({"type": "json_object"}),
+        )),
+        "json_schema" => {
+            validate_name_and_strict(format.get("name"), format.get("strict"), "text.format")?;
+            let schema = format
+                .get("schema")
+                .filter(|schema| schema.is_object())
+                .ok_or_else(|| {
+                    crate::translation_core::format!("{}", "text.format.schema must be an object")
+                })?;
+            let mut definition = crate::translation_core::json!({
+                "name": crate::translation_core::json_index_str(format, "name"),
+                "schema": schema,
+            });
+            if let Some(strict) = format.get("strict") {
+                {
+                    let __router_json_rhs_394 = crate::translation_core::json_copy(strict);
+                    definition = crate::translation_core::json_with_field(
+                        definition,
+                        "strict",
+                        __router_json_rhs_394,
+                    );
+                };
+            }
+            Ok(Some(
+                crate::translation_core::json!({"type": "json_schema", "json_schema": definition}),
+            ))
+        }
+        other => Err(crate::translation_core::format!(
+            "unsupported text.format type: {other}"
+        )),
+    }
+}
+
+pub fn install_format(body: &mut Value, format: Option<Value>) {
+    if let Some(format) = format {
+        if !body.get("output_config").is_some_and(Value::is_object) {
+            body["output_config"] = json!({});
+        }
+        body["output_config"]["format"] = format;
+    }
+}
+
+pub fn install_parallel_tool_policy(
+    body: &mut Value,
+    parallel_tool_calls: Option<bool>,
+    has_tools: bool,
+) {
+    if parallel_tool_calls != Some(false) || !has_tools {
+        return;
+    }
+    if !body.get("tool_choice").is_some_and(Value::is_object) {
+        body["tool_choice"] = json!({"type": "auto"});
+    }
+    body["tool_choice"]["disable_parallel_tool_use"] = Value::Bool(true);
+}
+
+pub fn unsupported_chat_output_contract(
+    request: &crate::openai::OpenAIChatCompletionRequest,
+) -> crate::translation_core::Maybe<String> {
+    if request.n.is_some_and(|count| count != 1) {
+        return Some("n must be 1 on the selected translated provider route".into());
+    }
+    if let Some(modalities) = request.modalities.as_ref() {
+        let text_only = modalities.as_array().is_some_and(|modalities| {
+            modalities.len() == 1 && modalities[0].as_str() == Some("text")
+        });
+        if !text_only {
+            return Some(
+                "non-text modalities cannot be represented by the selected translated provider"
+                    .into(),
+            );
+        }
+    }
+    if request.audio.as_ref().is_some_and(|audio| !audio.is_null()) {
+        return Some(
+            "audio output cannot be represented by the selected translated provider".into(),
+        );
+    }
+    if request.logprobs == Some(true) || request.top_logprobs.is_some_and(|count| count > 0) {
+        return Some(
+            "log probabilities cannot be represented by the selected translated provider".into(),
+        );
+    }
+    None
+}
+
+/// Reject Chat generation controls that Anthropic cannot honour.
+///
+/// Native OpenAI-compatible routes forward their original JSON body before
+/// this validation is reached. Zero penalties and an empty bias map are the
+/// only semantically neutral representations on a translated route.
+pub fn unsupported_chat_generation_control(
+    request: &crate::openai::OpenAIChatCompletionRequest,
+) -> crate::translation_core::Maybe<String> {
+    for (name, value) in [
+        ("frequency_penalty", request.frequency_penalty),
+        ("presence_penalty", request.presence_penalty),
+    ] {
+        if let Some(value) = value {
+            if !crate::translation_core::f64_inclusive_contains(-2.0, 2.0, value) {
+                return Some(crate::translation_core::format!(
+                    "{name} must be between -2 and 2"
+                ));
+            }
+            if value != 0.0 {
+                return Some(crate::translation_core::format!(
+                    "{name} cannot be represented by the selected translated provider"
+                ));
+            }
+        }
+    }
+    if request
+        .logit_bias
+        .as_ref()
+        .is_some_and(|biases| !biases.is_empty())
+    {
+        return Some("logit_bias cannot be represented by the selected translated provider".into());
+    }
+    request.seed.map(|_| {
+        crate::translation_core::format!(
+            "{}",
+            "seed cannot be represented by the selected translated provider"
+        )
+    })
+}
+
+fn required_type<'a>(
+    value: &'a Value,
+    path: &crate::translation_core::Str,
+) -> Result<&'a str, String> {
+    value
+        .as_object()
+        .and_then(|object| object.get("type"))
+        .and_then(Value::as_str)
+        .filter(|kind| !kind.is_empty())
+        .ok_or_else(|| crate::translation_core::format!("{path}.type must be a non-empty string"))
+}
+
+fn validate_name_and_strict(
+    name: crate::translation_core::Maybe<&crate::translation_core::Json>,
+    strict: crate::translation_core::Maybe<&crate::translation_core::Json>,
+    path: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<(), String> {
+    if name
+        .and_then(crate::translation_core::Json::as_str)
+        .is_none_or(str::is_empty)
+    {
+        return Err(crate::translation_core::format!(
+            "{path}.name must be a non-empty string"
+        ));
+    }
+    if strict.is_some_and(|value| !value.is_boolean()) {
+        return Err(crate::translation_core::format!(
+            "{path}.strict must be a boolean"
+        ));
+    }
+    Ok(())
+}
+
+fn schema_format(
+    schema: crate::translation_core::Maybe<&crate::translation_core::Json>,
+    path: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
+    let schema = schema
+        .filter(|schema| schema.is_object())
+        .ok_or_else(|| crate::translation_core::format!("{path} must be an object"))?;
+    Ok(crate::translation_core::json!({"type": "json_schema", "schema": schema}))
+}
+
+fn generic_object_format() -> crate::translation_core::Json {
+    crate::translation_core::json!({
+        "type": "json_schema",
+        "schema": {"type": "object", "additionalProperties": true}
+    })
+}

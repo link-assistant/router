@@ -1,0 +1,1 @@
+Archive complete neutral and three-profile generation, freshness, strict TypeScript and source-identity receipts. Preserve all actual coverage losses and reconstructible complete project diagnostics. Full strict parity remains blocked; no Rust execution or green stamp.

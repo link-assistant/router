@@ -227,7 +227,7 @@ def generate(catalog):
     for operation in catalog['operations'] + [{'name':'cli-error'}]:
         embedded.append('    ('+json.dumps(operation['name'])+', include_str!("../../schemas/'+operation['name'].replace('.', '-')+'.v1.json")),')
     embedded += ['];','pub(super) const HTTP: &str = include_str!("../../openapi/router.yaml");','']
-    write('src/contracts/generated.rs', '\n'.join(embedded))
+    write('rust/src/contracts/generated.rs', '\n'.join(embedded))
     write('schemas/operation-catalog.v1.json',catalog)
     # Components are copied into each response schema so validation is offline.
     for operation in catalog['operations'] + [{'name':'cli-error','schema':'link-assistant-router/cli-error/v1'}]:
@@ -295,12 +295,12 @@ def generate(catalog):
         matrix.append(f"| `{op['name']}` | `operations::request` | `{re.sub(r'[-_]([a-z])', lambda m:m[1].upper(), op['name'])}` | `{'.'.join((part.replace('-', '_') + ('_' if part in ['with','import'] else '')) for part in op['name'].split('.'))}` | v1 |")
     matrix += ['', 'PHP, Go and Java HTTP clients are generated from the complete OpenAPI document and compiled/probed in CI. Their HTTP methods cover all documented management and model routes; process orchestration is supported by the official Rust, JS/TS and Python packages.','']
     write('docs/integration/operations.md','\n'.join(matrix))
-    js=ROOT/'packages/javascript'; py=ROOT/'packages/python/link_assistant_router'
-    write('packages/javascript/catalog.json',catalog)
+    js=ROOT/'js'; py=ROOT/'packages/python/link_assistant_router'
+    write('js/catalog.json',catalog)
     write('packages/python/link_assistant_router/catalog.json',catalog)
     for path, content in list(outputs.items()):
         if path.startswith('schemas/') and path!='schemas/operation-catalog.v1.json':
-            write('packages/javascript/'+path,content); write('packages/python/link_assistant_router/'+path,content)
+            write('js/'+path,content); write('packages/python/link_assistant_router/'+path,content)
     return outputs
 
 

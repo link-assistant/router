@@ -1,0 +1,31 @@
+{
+  "schema": "matches-original-context-negative-v1",
+  "records": [
+    {
+      "path": "src/proxy.rs",
+      "name": "is_operator_subscription_header",
+      "sourceSha256": "f8c24bc7d6da63a9371fd19f0f540432dba7f748ba0951a9da733a610ec12df9",
+      "originalSpan": {
+        "start": 5202,
+        "end": 5600
+      },
+      "declarationSha256": "fea9083a15f97e005f2493502dd86cdeac220140f59f4ef9aa88c1b7043bde93",
+      "expected": "whole-original-context-or-method-provenance-refusal",
+      "runtimeParity": false,
+      "productionAdmissionClaim": false
+    },
+    {
+      "path": "src/model_contract.rs",
+      "name": "ModelSelectorKind.permits_resolution",
+      "sourceSha256": "98bcf7cc0d91d5b0a4f2b30f6f79aebf6d8e761e9cb54372cd135379e5c3e11b",
+      "originalSpan": {
+        "start": 2964,
+        "end": 3094
+      },
+      "declarationSha256": "3b7e4ef817b57548d1178959f2d2b5c3afe4369467183ef7cafa9a4449251eee",
+      "expected": "whole-original-context-or-method-provenance-refusal",
+      "runtimeParity": false,
+      "productionAdmissionClaim": false
+    }
+  ]
+}

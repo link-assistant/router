@@ -1,0 +1,17 @@
+{
+  "schema": "owned-json-output-immutable-parent-delta-v1",
+  "archive": "delta-sources.json.gz",
+  "sha256": "86da3f00604825cfde50162ad3ab8d53c65c37189863ff818925428caf3fff1a",
+  "rawBytes": 542148,
+  "packedBytes": 114495,
+  "parent": {
+    "path": "tools/translation/source-profiles/generalized-primitive-output-20261101/complete-sources.json.gz",
+    "sha256": "57c54e54b3693328597c9433b83bace69ebf2e231df8c703977d2cc5de24b7df",
+    "versions": 138
+  },
+  "newVersions": 10,
+  "virtualRows": 3,
+  "additions": 6,
+  "sourceInstalled": false,
+  "runtimeExecuted": false
+}

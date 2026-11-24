@@ -1,0 +1,552 @@
+{
+  "schema": "derive-bang-verification-v1",
+  "scope": "Source-selected quote/AST namespace outputs and optional sealed per-invocation consumer; no automatic project/bulk activation or generated trait/runtime behavior",
+  "sourceCommits": [
+    "fcaa5fb3dabdc7444fd824cf5e1c95a7de3498bf",
+    "e1f10dd8d1e78100824f7c9b18ed9802d867354d"
+  ],
+  "runs": [
+    {
+      "attempt": "initial",
+      "engine": "node",
+      "inputMember": "inputs/38f7220cd35a9fe4fd5073c30d51da1df53ddc177abf00f7705b6ec9ed07d7b9.json",
+      "receiptMember": "receipts/router-759-derive-fcaa-node-initial.json",
+      "rawMember": "logs/router-759-derive-fcaa-node-initial.log",
+      "counts": {
+        "tests": 102,
+        "pass": 86,
+        "fail": 16,
+        "skipped": 0
+      },
+      "receipt": {
+        "head": "fcaa5fb3dabdc7444fd824cf5e1c95a7de3498bf",
+        "engine": "node",
+        "scope": "coherent",
+        "files": [
+          "tools/translation/test/derive-bang-footprints.test.mjs",
+          "tools/translation/test/serde-deserialize-bang-footprints.test.mjs",
+          "tools/translation/test/derive-bang-context.test.mjs",
+          "tools/translation/test/builtin-derive-bang-footprints.test.mjs",
+          "tools/translation/test/derive-footprints.test.mjs",
+          "tools/translation/test/derive-layout.test.mjs",
+          "tools/translation/test/source-module-views.test.mjs",
+          "tools/translation/test/module-bindings.test.mjs",
+          "tools/translation/test/macro-subnamespaces.test.mjs",
+          "tools/translation/test/source-namespaces.test.mjs"
+        ],
+        "command": [
+          "/Users/konard/.nvm/versions/node/v20.19.4/bin/node",
+          "--test",
+          "--test-concurrency=1",
+          "tools/translation/test/derive-bang-footprints.test.mjs",
+          "tools/translation/test/serde-deserialize-bang-footprints.test.mjs",
+          "tools/translation/test/derive-bang-context.test.mjs",
+          "tools/translation/test/builtin-derive-bang-footprints.test.mjs",
+          "tools/translation/test/derive-footprints.test.mjs",
+          "tools/translation/test/derive-layout.test.mjs",
+          "tools/translation/test/source-module-views.test.mjs",
+          "tools/translation/test/module-bindings.test.mjs",
+          "tools/translation/test/macro-subnamespaces.test.mjs",
+          "tools/translation/test/source-namespaces.test.mjs"
+        ],
+        "capSeconds": 180,
+        "exitCode": 1,
+        "timedOut": false,
+        "wallSeconds": 32.270454291952774,
+        "userSeconds": 38.476509,
+        "systemSeconds": 2.4209549999999997,
+        "maxRssBytes": 775864320,
+        "resourceScope": "one engine child plus reaped strict-TS/runtime descendants; macOS RUSAGE_CHILDREN maxrss bytes",
+        "inputsSha256": "38f7220cd35a9fe4fd5073c30d51da1df53ddc177abf00f7705b6ec9ed07d7b9",
+        "logSha256": "d44934f4f3f98d91a82967de9d7ab8ea3bd3b02bcee0382966fd251e7dee017b"
+      }
+    },
+    {
+      "attempt": "initial",
+      "engine": "bun",
+      "inputMember": "inputs/38f7220cd35a9fe4fd5073c30d51da1df53ddc177abf00f7705b6ec9ed07d7b9.json",
+      "receiptMember": "receipts/router-759-derive-fcaa-bun-initial.json",
+      "rawMember": "logs/router-759-derive-fcaa-bun-initial.log",
+      "counts": {
+        "pass": 85,
+        "fail": 17,
+        "skipped": 0,
+        "tests": 102
+      },
+      "receipt": {
+        "head": "fcaa5fb3dabdc7444fd824cf5e1c95a7de3498bf",
+        "engine": "bun",
+        "scope": "coherent",
+        "files": [
+          "tools/translation/test/derive-bang-footprints.test.mjs",
+          "tools/translation/test/serde-deserialize-bang-footprints.test.mjs",
+          "tools/translation/test/derive-bang-context.test.mjs",
+          "tools/translation/test/builtin-derive-bang-footprints.test.mjs",
+          "tools/translation/test/derive-footprints.test.mjs",
+          "tools/translation/test/derive-layout.test.mjs",
+          "tools/translation/test/source-module-views.test.mjs",
+          "tools/translation/test/module-bindings.test.mjs",
+          "tools/translation/test/macro-subnamespaces.test.mjs",
+          "tools/translation/test/source-namespaces.test.mjs"
+        ],
+        "command": [
+          "/Users/konard/.bun/bin/bun",
+          "test",
+          "tools/translation/test/derive-bang-footprints.test.mjs",
+          "tools/translation/test/serde-deserialize-bang-footprints.test.mjs",
+          "tools/translation/test/derive-bang-context.test.mjs",
+          "tools/translation/test/builtin-derive-bang-footprints.test.mjs",
+          "tools/translation/test/derive-footprints.test.mjs",
+          "tools/translation/test/derive-layout.test.mjs",
+          "tools/translation/test/source-module-views.test.mjs",
+          "tools/translation/test/module-bindings.test.mjs",
+          "tools/translation/test/macro-subnamespaces.test.mjs",
+          "tools/translation/test/source-namespaces.test.mjs"
+        ],
+        "capSeconds": 180,
+        "exitCode": 1,
+        "timedOut": false,
+        "wallSeconds": 21.023933166870847,
+        "userSeconds": 25.636369000000002,
+        "systemSeconds": 1.518288,
+        "maxRssBytes": 1206370304,
+        "resourceScope": "one engine child plus reaped strict-TS/runtime descendants; macOS RUSAGE_CHILDREN maxrss bytes",
+        "inputsSha256": "38f7220cd35a9fe4fd5073c30d51da1df53ddc177abf00f7705b6ec9ed07d7b9",
+        "logSha256": "8123885ae34cce67d5b3e869e9827c1373efaaedf11cade7ac8015149fc09a13"
+      }
+    },
+    {
+      "attempt": "retry1",
+      "engine": "node",
+      "inputMember": "inputs/dbcc320c48d26573794eeb83941274b3509bd2b31a6a308d0cc804707478ab7a.json",
+      "receiptMember": "receipts/router-759-derive-fcaa-node-retry1.json",
+      "rawMember": "logs/router-759-derive-fcaa-node-retry1.log",
+      "counts": {
+        "tests": 102,
+        "pass": 100,
+        "fail": 2,
+        "skipped": 0
+      },
+      "receipt": {
+        "head": "fcaa5fb3dabdc7444fd824cf5e1c95a7de3498bf",
+        "engine": "node",
+        "scope": "coherent",
+        "files": [
+          "tools/translation/test/derive-bang-footprints.test.mjs",
+          "tools/translation/test/serde-deserialize-bang-footprints.test.mjs",
+          "tools/translation/test/derive-bang-context.test.mjs",
+          "tools/translation/test/builtin-derive-bang-footprints.test.mjs",
+          "tools/translation/test/derive-footprints.test.mjs",
+          "tools/translation/test/derive-layout.test.mjs",
+          "tools/translation/test/source-module-views.test.mjs",
+          "tools/translation/test/module-bindings.test.mjs",
+          "tools/translation/test/macro-subnamespaces.test.mjs",
+          "tools/translation/test/source-namespaces.test.mjs"
+        ],
+        "command": [
+          "/Users/konard/.nvm/versions/node/v20.19.4/bin/node",
+          "--test",
+          "--test-concurrency=1",
+          "tools/translation/test/derive-bang-footprints.test.mjs",
+          "tools/translation/test/serde-deserialize-bang-footprints.test.mjs",
+          "tools/translation/test/derive-bang-context.test.mjs",
+          "tools/translation/test/builtin-derive-bang-footprints.test.mjs",
+          "tools/translation/test/derive-footprints.test.mjs",
+          "tools/translation/test/derive-layout.test.mjs",
+          "tools/translation/test/source-module-views.test.mjs",
+          "tools/translation/test/module-bindings.test.mjs",
+          "tools/translation/test/macro-subnamespaces.test.mjs",
+          "tools/translation/test/source-namespaces.test.mjs"
+        ],
+        "capSeconds": 180,
+        "exitCode": 1,
+        "timedOut": false,
+        "wallSeconds": 77.78835212485865,
+        "userSeconds": 84.978544,
+        "systemSeconds": 5.070328,
+        "maxRssBytes": 1265811456,
+        "resourceScope": "one engine child plus reaped strict-TS/runtime descendants; macOS RUSAGE_CHILDREN maxrss bytes",
+        "inputsSha256": "dbcc320c48d26573794eeb83941274b3509bd2b31a6a308d0cc804707478ab7a",
+        "logSha256": "14ee3f15ea070db0bac0800ebf3625544c793546b41ab84b592fcbc3f7ca3315"
+      }
+    },
+    {
+      "attempt": "retry1",
+      "engine": "bun",
+      "inputMember": "inputs/dbcc320c48d26573794eeb83941274b3509bd2b31a6a308d0cc804707478ab7a.json",
+      "receiptMember": "receipts/router-759-derive-fcaa-bun-retry1.json",
+      "rawMember": "logs/router-759-derive-fcaa-bun-retry1.log",
+      "counts": {
+        "pass": 100,
+        "fail": 2,
+        "skipped": 0,
+        "tests": 102
+      },
+      "receipt": {
+        "head": "fcaa5fb3dabdc7444fd824cf5e1c95a7de3498bf",
+        "engine": "bun",
+        "scope": "coherent",
+        "files": [
+          "tools/translation/test/derive-bang-footprints.test.mjs",
+          "tools/translation/test/serde-deserialize-bang-footprints.test.mjs",
+          "tools/translation/test/derive-bang-context.test.mjs",
+          "tools/translation/test/builtin-derive-bang-footprints.test.mjs",
+          "tools/translation/test/derive-footprints.test.mjs",
+          "tools/translation/test/derive-layout.test.mjs",
+          "tools/translation/test/source-module-views.test.mjs",
+          "tools/translation/test/module-bindings.test.mjs",
+          "tools/translation/test/macro-subnamespaces.test.mjs",
+          "tools/translation/test/source-namespaces.test.mjs"
+        ],
+        "command": [
+          "/Users/konard/.bun/bin/bun",
+          "test",
+          "tools/translation/test/derive-bang-footprints.test.mjs",
+          "tools/translation/test/serde-deserialize-bang-footprints.test.mjs",
+          "tools/translation/test/derive-bang-context.test.mjs",
+          "tools/translation/test/builtin-derive-bang-footprints.test.mjs",
+          "tools/translation/test/derive-footprints.test.mjs",
+          "tools/translation/test/derive-layout.test.mjs",
+          "tools/translation/test/source-module-views.test.mjs",
+          "tools/translation/test/module-bindings.test.mjs",
+          "tools/translation/test/macro-subnamespaces.test.mjs",
+          "tools/translation/test/source-namespaces.test.mjs"
+        ],
+        "capSeconds": 180,
+        "exitCode": 1,
+        "timedOut": false,
+        "wallSeconds": 57.60232879105024,
+        "userSeconds": 62.302343,
+        "systemSeconds": 2.126766,
+        "maxRssBytes": 1683996672,
+        "resourceScope": "one engine child plus reaped strict-TS/runtime descendants; macOS RUSAGE_CHILDREN maxrss bytes",
+        "inputsSha256": "dbcc320c48d26573794eeb83941274b3509bd2b31a6a308d0cc804707478ab7a",
+        "logSha256": "e96045737070eb26dcbc4513e1466bd0318e300c9e00a74fb91da327d06835cf"
+      }
+    },
+    {
+      "attempt": "final1",
+      "engine": "node",
+      "inputMember": "inputs/229e296ee0580636a1270e78d0928a06472d92e0b0776ada0de99b44debf1884.json",
+      "receiptMember": "receipts/router-759-derive-fcaa-node-final1.json",
+      "rawMember": "logs/router-759-derive-fcaa-node-final1.log",
+      "counts": {
+        "tests": 103,
+        "pass": 103,
+        "fail": 0,
+        "skipped": 0
+      },
+      "receipt": {
+        "head": "e1f10dd8d1e78100824f7c9b18ed9802d867354d",
+        "engine": "node",
+        "scope": "coherent",
+        "files": [
+          "tools/translation/test/derive-bang-footprints.test.mjs",
+          "tools/translation/test/serde-deserialize-bang-footprints.test.mjs",
+          "tools/translation/test/derive-bang-context.test.mjs",
+          "tools/translation/test/builtin-derive-bang-footprints.test.mjs",
+          "tools/translation/test/derive-footprints.test.mjs",
+          "tools/translation/test/derive-layout.test.mjs",
+          "tools/translation/test/source-module-views.test.mjs",
+          "tools/translation/test/module-bindings.test.mjs",
+          "tools/translation/test/macro-subnamespaces.test.mjs",
+          "tools/translation/test/source-namespaces.test.mjs"
+        ],
+        "command": [
+          "/Users/konard/.nvm/versions/node/v20.19.4/bin/node",
+          "--test",
+          "--test-concurrency=1",
+          "tools/translation/test/derive-bang-footprints.test.mjs",
+          "tools/translation/test/serde-deserialize-bang-footprints.test.mjs",
+          "tools/translation/test/derive-bang-context.test.mjs",
+          "tools/translation/test/builtin-derive-bang-footprints.test.mjs",
+          "tools/translation/test/derive-footprints.test.mjs",
+          "tools/translation/test/derive-layout.test.mjs",
+          "tools/translation/test/source-module-views.test.mjs",
+          "tools/translation/test/module-bindings.test.mjs",
+          "tools/translation/test/macro-subnamespaces.test.mjs",
+          "tools/translation/test/source-namespaces.test.mjs"
+        ],
+        "capSeconds": 180,
+        "exitCode": 0,
+        "timedOut": false,
+        "wallSeconds": 80.32732391706668,
+        "userSeconds": 88.02494200000001,
+        "systemSeconds": 5.139364,
+        "maxRssBytes": 1258242048,
+        "resourceScope": "one engine child plus reaped strict-TS/runtime descendants; macOS RUSAGE_CHILDREN maxrss bytes",
+        "inputsSha256": "229e296ee0580636a1270e78d0928a06472d92e0b0776ada0de99b44debf1884",
+        "logSha256": "9a62ce725da8e2251611032cf9bb213826d202aaa02f13880840c8d0c7fe5b61"
+      }
+    },
+    {
+      "attempt": "final1",
+      "engine": "bun",
+      "inputMember": "inputs/229e296ee0580636a1270e78d0928a06472d92e0b0776ada0de99b44debf1884.json",
+      "receiptMember": "receipts/router-759-derive-fcaa-bun-final1.json",
+      "rawMember": "logs/router-759-derive-fcaa-bun-final1.log",
+      "counts": {
+        "pass": 103,
+        "fail": 0,
+        "skipped": 0,
+        "tests": 103
+      },
+      "receipt": {
+        "head": "e1f10dd8d1e78100824f7c9b18ed9802d867354d",
+        "engine": "bun",
+        "scope": "coherent",
+        "files": [
+          "tools/translation/test/derive-bang-footprints.test.mjs",
+          "tools/translation/test/serde-deserialize-bang-footprints.test.mjs",
+          "tools/translation/test/derive-bang-context.test.mjs",
+          "tools/translation/test/builtin-derive-bang-footprints.test.mjs",
+          "tools/translation/test/derive-footprints.test.mjs",
+          "tools/translation/test/derive-layout.test.mjs",
+          "tools/translation/test/source-module-views.test.mjs",
+          "tools/translation/test/module-bindings.test.mjs",
+          "tools/translation/test/macro-subnamespaces.test.mjs",
+          "tools/translation/test/source-namespaces.test.mjs"
+        ],
+        "command": [
+          "/Users/konard/.bun/bin/bun",
+          "test",
+          "tools/translation/test/derive-bang-footprints.test.mjs",
+          "tools/translation/test/serde-deserialize-bang-footprints.test.mjs",
+          "tools/translation/test/derive-bang-context.test.mjs",
+          "tools/translation/test/builtin-derive-bang-footprints.test.mjs",
+          "tools/translation/test/derive-footprints.test.mjs",
+          "tools/translation/test/derive-layout.test.mjs",
+          "tools/translation/test/source-module-views.test.mjs",
+          "tools/translation/test/module-bindings.test.mjs",
+          "tools/translation/test/macro-subnamespaces.test.mjs",
+          "tools/translation/test/source-namespaces.test.mjs"
+        ],
+        "capSeconds": 180,
+        "exitCode": 0,
+        "timedOut": false,
+        "wallSeconds": 59.367652541957796,
+        "userSeconds": 64.169819,
+        "systemSeconds": 2.182425,
+        "maxRssBytes": 1587822592,
+        "resourceScope": "one engine child plus reaped strict-TS/runtime descendants; macOS RUSAGE_CHILDREN maxrss bytes",
+        "inputsSha256": "229e296ee0580636a1270e78d0928a06472d92e0b0776ada0de99b44debf1884",
+        "logSha256": "8147a0cf22612deab714de26f34f62125faaeab0e981f3d6740ac3b4179a23c7"
+      }
+    }
+  ],
+  "attemptSourceState": {
+    "initial": "committed fcaa, tracked clean",
+    "retry1": "uncommitted coherent route repairs on fcaa; exact input ledger retained; not represented as committed HEAD",
+    "final1": "committed e1f, tracked clean before and after both engines"
+  },
+  "frontierOriginalBytes": {
+    "path": "tools/translation/fixtures/formatting-owner-frontier.json",
+    "sourceHead": "e1f10dd8d1e78100824f7c9b18ed9802d867354d",
+    "gitBlob": "ced07bea373ee361279e5aafad1a7da5b3f77ca4",
+    "bytes": 317742,
+    "sha256": "cc48336ea9e2b69e1dc52a972fbbe6ab53a59bec47ba5789e8e0e90e346860d4",
+    "publisherLaterFormatting": "not part of this frozen verification"
+  },
+  "limits": {
+    "tokenBytes": 256000,
+    "metadataBytes": 524288,
+    "cells": 16000,
+    "depth": 64,
+    "otherSourceFieldLeafSequenceCaps": "unchanged"
+  },
+  "measuredOriginalCatalogRecord": {
+    "metadataBytes": 368373,
+    "cells": 4641
+  },
+  "sourcePins": [
+    {
+      "path": "src/subscription/types.rs",
+      "name": "SubscriptionProvider",
+      "sourceSha256": "74996ec0b4a32cb6e8d8c6a5e4cf2057a09238acff6d141ad58b592184c12c26",
+      "span": {
+        "start": 105,
+        "end": 639
+      },
+      "declarationSha256": "09c856cbd3b8c3b18b2215b9759acf347aad5ecd81ba3d0ba6e1bc3c837b04dd"
+    },
+    {
+      "path": "src/model_catalog.rs",
+      "name": "CatalogRecord",
+      "sourceSha256": "2972dab979148c9b1deb3ec2cfb4e2800e8445585044d93c629e83538be01ed5",
+      "span": {
+        "start": 1956,
+        "end": 2355
+      },
+      "declarationSha256": "3a3ce14fae59aa072caeee14af08b6e3810b15caccb661c9165ccab3dc43132a"
+    }
+  ],
+  "residualOwners": [
+    "Clone",
+    "Debug",
+    "PartialEq",
+    "Hash",
+    "Schemars",
+    "unselected Deserialize routes"
+  ],
+  "fullSemanticProjectExecuted": false,
+  "producerExecuted": false,
+  "rustExecuted": false,
+  "runtimeParity": false,
+  "members": [
+    {
+      "path": "diagnostics/router-759-derive-fcaa-attribute-diagnosis.log",
+      "bytes": 4078,
+      "sha256": "9ed4299e75cd1e28af33144a7e3b4c309c8ecb4c5b5226f678aa14d0af658f16"
+    },
+    {
+      "path": "diagnostics/router-759-derive-fcaa-catalog-budget-diagnosis.log",
+      "bytes": 3808,
+      "sha256": "b24f85a5866e01acb856d679b03d4603cbdb666d1ff48b50c91d0b7bae5d402d"
+    },
+    {
+      "path": "diagnostics/router-759-derive-fcaa-route-diagnosis-1.log",
+      "bytes": 1718,
+      "sha256": "e2a7418503ece3877c452fefb4d5ae9c02c705606f540fb1e5274d240f79d436"
+    },
+    {
+      "path": "diagnostics/router-759-derive-fcaa-route-diagnosis-2.log",
+      "bytes": 990,
+      "sha256": "7a8c527882f1e24a424149344f8bb9bf260b9cd4a9bf3b5d4e7de47af25e39f6"
+    },
+    {
+      "path": "diagnostics/router-759-derive-fcaa-template-diagnosis-2.log",
+      "bytes": 9386,
+      "sha256": "6c739acf497146a139ae649accbe0bc0547584a3fded02bcb75afb0fcec467dd"
+    },
+    {
+      "path": "diagnostics/router-759-derive-fcaa-template-diagnosis.log",
+      "bytes": 2554,
+      "sha256": "514dd6f87320230d19ff759ced4471ee703a3ae684582eb3be6f5c1d6a90b74e"
+    },
+    {
+      "path": "harness.py",
+      "bytes": 2919,
+      "sha256": "7948043185fc4ab0eaa9f771639260fb22f256dafbef80820ee23fd91871a8d7"
+    },
+    {
+      "path": "inputs/229e296ee0580636a1270e78d0928a06472d92e0b0776ada0de99b44debf1884.json",
+      "bytes": 305818,
+      "sha256": "229e296ee0580636a1270e78d0928a06472d92e0b0776ada0de99b44debf1884"
+    },
+    {
+      "path": "inputs/38f7220cd35a9fe4fd5073c30d51da1df53ddc177abf00f7705b6ec9ed07d7b9.json",
+      "bytes": 305818,
+      "sha256": "38f7220cd35a9fe4fd5073c30d51da1df53ddc177abf00f7705b6ec9ed07d7b9"
+    },
+    {
+      "path": "inputs/dbcc320c48d26573794eeb83941274b3509bd2b31a6a308d0cc804707478ab7a.json",
+      "bytes": 305818,
+      "sha256": "dbcc320c48d26573794eeb83941274b3509bd2b31a6a308d0cc804707478ab7a"
+    },
+    {
+      "path": "inventories/bun-final1.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "inventories/bun-initial.json",
+      "bytes": 1870,
+      "sha256": "6bea19fa93bb4e5f77e671598aacd35f75b564b7feb91b0f761f642dc87a541e"
+    },
+    {
+      "path": "inventories/bun-retry1.json",
+      "bytes": 205,
+      "sha256": "53884e5ac57ab1121afd33b224ef70dc6c7fd359d0c03f7c06a46f4bd065cb70"
+    },
+    {
+      "path": "inventories/node-final1.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "inventories/node-initial.json",
+      "bytes": 6793,
+      "sha256": "5f129e48fc48e2a6c0470b0ff7ac9b6cab71c340991c8ac041ac2f7fcaaa3cb6"
+    },
+    {
+      "path": "inventories/node-retry1.json",
+      "bytes": 820,
+      "sha256": "47eb68a3d7537cbe3ca7f3d902f18e8b4692c3201ff0d4243dca54e6bbf2bfbf"
+    },
+    {
+      "path": "logs/router-759-derive-fcaa-bun-final1.log",
+      "bytes": 11343,
+      "sha256": "8147a0cf22612deab714de26f34f62125faaeab0e981f3d6740ac3b4179a23c7"
+    },
+    {
+      "path": "logs/router-759-derive-fcaa-bun-initial.log",
+      "bytes": 37735,
+      "sha256": "8123885ae34cce67d5b3e869e9827c1373efaaedf11cade7ac8015149fc09a13"
+    },
+    {
+      "path": "logs/router-759-derive-fcaa-bun-retry1.log",
+      "bytes": 14184,
+      "sha256": "e96045737070eb26dcbc4513e1466bd0318e300c9e00a74fb91da327d06835cf"
+    },
+    {
+      "path": "logs/router-759-derive-fcaa-node-final1.log",
+      "bytes": 23781,
+      "sha256": "9a62ce725da8e2251611032cf9bb213826d202aaa02f13880840c8d0c7fe5b61"
+    },
+    {
+      "path": "logs/router-759-derive-fcaa-node-initial.log",
+      "bytes": 45292,
+      "sha256": "d44934f4f3f98d91a82967de9d7ab8ea3bd3b02bcee0382966fd251e7dee017b"
+    },
+    {
+      "path": "logs/router-759-derive-fcaa-node-retry1.log",
+      "bytes": 26068,
+      "sha256": "14ee3f15ea070db0bac0800ebf3625544c793546b41ab84b592fcbc3f7ca3315"
+    },
+    {
+      "path": "receipts/router-759-derive-fcaa-bun-final1.json",
+      "bytes": 1857,
+      "sha256": "3aac005e3587d942e46529331469547e1949da0f2878f8c2c4b3ae359a7b3fb9"
+    },
+    {
+      "path": "receipts/router-759-derive-fcaa-bun-initial.json",
+      "bytes": 1866,
+      "sha256": "503a3758d58250d4bc46837f78d2a606ed562c5f742bb39b09ef4a63d22d1d9d"
+    },
+    {
+      "path": "receipts/router-759-derive-fcaa-bun-retry1.json",
+      "bytes": 1856,
+      "sha256": "19ca8e07e029d31bc62bcd1dc7ad451b612bf89a55d2fedb0af3715424196851"
+    },
+    {
+      "path": "receipts/router-759-derive-fcaa-node-final1.json",
+      "bytes": 1919,
+      "sha256": "7acb945e0ab78c43de0e5fc8d7cb1dd22df65208427f60c172bd8ed60f2d8904"
+    },
+    {
+      "path": "receipts/router-759-derive-fcaa-node-initial.json",
+      "bytes": 1921,
+      "sha256": "1ce471525fb329fcf32e93b1c9a693848c14826869f8bbefa9de7f6f74febf20"
+    },
+    {
+      "path": "receipts/router-759-derive-fcaa-node-retry1.json",
+      "bytes": 1911,
+      "sha256": "9603ea56ebdfe91841bff9579ea9bde3ed683d97b8e878b100a66d9e3e44ffba"
+    },
+    {
+      "path": "source-patches/e1f10dd8d1e78100824f7c9b18ed9802d867354d.patch",
+      "bytes": 23200,
+      "sha256": "d68f2a1c34e78a2be55654a31494d4b9924c8695341c97e3bb9504cbfe034e09"
+    },
+    {
+      "path": "source-patches/fcaa5fb3dabdc7444fd824cf5e1c95a7de3498bf.patch",
+      "bytes": 29803,
+      "sha256": "4676feedd022d43146a20c470ebf9d219d2dd7bed5b11e865f9aa4150e9479ad"
+    }
+  ],
+  "archive": {
+    "path": "derive-bang-verification.tar.xz",
+    "bytes": 119376,
+    "sha256": "078a6cb818e56bdb540515b1b27dcffa9f8b0109f12b8f84afa537212e3ceb54"
+  }
+}

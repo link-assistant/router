@@ -1,0 +1,52 @@
+{
+  "schema": "fixed-json-packaging-source-family-census-20261103-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-json-packaging-families-20261103/index292.before.json.gz",
+    "encodedSha256": "c6332800dc2db5cd33ae5141a8687fb6a7f031375ce1caa2852a63b1c4fe0d36",
+    "sourceSha256": "14b8c80139dec174b67e3fbd3dcfc647db5d123d913c1982e93bc47c93077b52",
+    "rows": 292
+  },
+  "families": [
+    {
+      "id": "exact-json-packaging-installed-20261103",
+      "manifest": "tools/translation/source-profiles/borrowed-json-tool-packaging-installed-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "borrowed-json-tool-packaging-installed-source-20261103-v1",
+      "sha256": "4e796493d01ef8d87c4be87efde83c2eed3b74b7c251a5bae540526a70c9c640",
+      "rows": 4,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-json-packaging-project-20261103",
+      "manifest": "tools/translation/source-profiles/borrowed-json-tool-project-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "borrowed-json-tool-project-source-20261103-v1",
+      "sha256": "cb5d68cde1aaf5154997de33421c85aba5669d83b76e4313a1ba89476b230793",
+      "rows": 3,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-json-packaging-typescript-20261103",
+      "manifest": "tools/translation/source-profiles/borrowed-json-tool-typescript-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "borrowed-json-tool-typescript-source-20261103-v1",
+      "sha256": "b35cd3f173933288e3513bcd18ac082af11ec321e48902b2ba918c297afef4b6",
+      "rows": 6,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-json-packaging-cases-20261103",
+      "manifest": "tools/translation/source-profiles/exact-source-json-packaging-families-20261103/joins.json.gz",
+      "kind": "archive",
+      "schema": "exact-source-json-packaging-join-source-20261103-v1",
+      "sha256": "d474dbf52c2bcece7ea4c259a6c47bba6edc43b81abf91f669ac20f37be73f2f",
+      "rows": 3,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 16,
+  "totalRows": 308,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

@@ -1,0 +1,31 @@
+{
+  "profile": "rust-1.89-immutable-while-let-control-v1",
+  "rust": "1.89.0",
+  "constEligible": false,
+  "namespaceComplete": false,
+  "dropSemanticsComplete": false,
+  "sources": [{
+    "file": "rustc-lowering-expr.rs.gz",
+    "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_ast_lowering/src/expr.rs",
+    "gitBlobSha": "f297bf9f4cfed5db32ac8c6d4d1f0b0f2b103a0a",
+    "bytes": 95140,
+    "sha256": "adb238929d9c3f718bdb015bc133b2aec41633bc619576744f72e75cb925a2a4",
+    "compressedSha256": "f19c288dab9f24ed2ca67f3c565314f164f54d0b232df5313f9e99ef6be5f25f",
+    "lines": [169, 172, 174, 181, 182, 186, 549, 553, 575, 601, 608, 609, 610, 614, 618]
+  }],
+  "limits": {"conditionTokens": 1024, "conditionCharacters": 65536},
+  "evaluationOrder": [
+    "enter-original-loop-scope",
+    "evaluate-original-subject-once-per-condition",
+    "check-existing-immutable-pattern-domain-and-constructor-owner",
+    "bind-original-success-pattern-in-loop-body-scope",
+    "execute-original-body-or-break-on-failure",
+    "continue-rechecks-subject-break-and-return-stop"
+  ],
+  "limitations": [
+    "let chains and labelled or value-carrying loop control",
+    "mutable references, owned aggregate bindings and unproved Drop behavior",
+    "stored iterator cursor and async/effect owners without their own contracts",
+    "complete trait, namespace, allocation and runtime parity"
+  ]
+}

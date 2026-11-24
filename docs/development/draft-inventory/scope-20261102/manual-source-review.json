@@ -1,0 +1,839 @@
+{
+ "schema": "router-source-scope-v2",
+ "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+ "sources": [
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/Cargo.toml",
+    "blob": "d17e8fad588ca797379f7b5382dc18871ec57cfa",
+    "mode": "100644",
+    "bytes": 4805
+   },
+   "role": "build",
+   "itemReview": "OPEN",
+   "unresolved": [
+    "remaining-enclosing-module-producer-configuration-review",
+    "actual-forward-reverse-adoption-and-independent-cases"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/build.rs",
+    "blob": "790532681675a37e091624e947b670ff10e54be9",
+    "mode": "100644",
+    "bytes": 1400
+   },
+   "role": "build",
+   "itemReview": "OPEN",
+   "unresolved": [
+    "remaining-enclosing-module-producer-configuration-review",
+    "actual-forward-reverse-adoption-and-independent-cases"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/lib.rs",
+    "blob": "3554ed42299bdbeacbe066a0a10da79608303991",
+    "mode": "100644",
+    "bytes": 7719
+   },
+   "role": "application",
+   "itemReview": "OPEN",
+   "unresolved": [
+    "remaining-enclosing-module-producer-configuration-review",
+    "actual-forward-reverse-adoption-and-independent-cases"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/main.rs",
+    "blob": "543b57a6e8c469495dac7178402ab1553dcc1503",
+    "mode": "100644",
+    "bytes": 265
+   },
+   "role": "application",
+   "itemReview": "OPEN",
+   "unresolved": [
+    "remaining-enclosing-module-producer-configuration-review",
+    "actual-forward-reverse-adoption-and-independent-cases"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/bin/link-assistant-router.rs",
+    "blob": "ffdae31154c2e1a8e2258f1fc65a8a3c257abe53",
+    "mode": "100644",
+    "bytes": 815
+   },
+   "role": "application",
+   "itemReview": "OPEN",
+   "unresolved": [
+    "remaining-enclosing-module-producer-configuration-review",
+    "actual-forward-reverse-adoption-and-independent-cases"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/bin/with-router.rs",
+    "blob": "2a02249ebd662ac5c6bd0d7251bb9cdcd5f418fb",
+    "mode": "100644",
+    "bytes": 1701
+   },
+   "role": "application",
+   "itemReview": "OPEN",
+   "unresolved": [
+    "remaining-enclosing-module-producer-configuration-review",
+    "actual-forward-reverse-adoption-and-independent-cases"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/entrypoint.rs",
+    "blob": "a041d36ee04bd810cd087ac927025f01a15c64cf",
+    "mode": "100644",
+    "bytes": 1697
+   },
+   "role": "application",
+   "itemReview": "OPEN",
+   "unresolved": [
+    "remaining-enclosing-module-producer-configuration-review",
+    "actual-forward-reverse-adoption-and-independent-cases"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/security_headers.rs",
+    "blob": "76cc8c53f1b3d674ef62625893a6311ec74cc5c4",
+    "mode": "100644",
+    "bytes": 3349
+   },
+   "role": "application",
+   "itemReview": "OPEN",
+   "unresolved": [
+    "remaining-enclosing-module-producer-configuration-review",
+    "actual-forward-reverse-adoption-and-independent-cases"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "js/package.json",
+    "blob": "e571fcb42aa02a15c5c7892e28c3f5f4cb1e1a6d",
+    "mode": "100644",
+    "bytes": 1496
+   },
+   "role": "build",
+   "itemReview": "OPEN",
+   "unresolved": [
+    "remaining-enclosing-module-producer-configuration-review",
+    "actual-forward-reverse-adoption-and-independent-cases"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "ts/package.json",
+    "blob": "020508c708d65d65539bf5ff20a6959ca5193d10",
+    "mode": "100644",
+    "bytes": 538
+   },
+   "role": "build",
+   "itemReview": "OPEN",
+   "unresolved": [
+    "remaining-enclosing-module-producer-configuration-review",
+    "actual-forward-reverse-adoption-and-independent-cases"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "js/src/index.mjs",
+    "blob": "72c40ee3c524ec2858efb6a80788cbb15d628ae9",
+    "mode": "100644",
+    "bytes": 431
+   },
+   "role": "application",
+   "itemReview": "OPEN",
+   "unresolved": [
+    "remaining-enclosing-module-producer-configuration-review",
+    "actual-forward-reverse-adoption-and-independent-cases"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/operation_context.rs",
+    "blob": "ab046df591f4f74232ad8c05d6c8ce1d269be52d",
+    "mode": "100644",
+    "bytes": 8678
+   },
+   "role": "application",
+   "itemReview": "OPEN",
+   "unresolved": [
+    "complete-production-item-enumeration",
+    "authored-generated-test-dependency-role-review",
+    "configuration-and-producer-closure"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/entrypoint_tests.rs",
+    "blob": "c21638532fc57132a6b45e6684ebaaa0771f43b1",
+    "mode": "100644",
+    "bytes": 1570
+   },
+   "role": "test",
+   "itemReview": "OPEN",
+   "unresolved": [
+    "complete-production-item-enumeration",
+    "authored-generated-test-dependency-role-review",
+    "configuration-and-producer-closure"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/generated_js_first/mod.rs",
+    "blob": "b528cfcaa22e0caf6712dff817645d83b3cf2816",
+    "mode": "100644",
+    "bytes": 75
+   },
+   "role": "generated-application",
+   "itemReview": "OPEN",
+   "unresolved": [
+    "complete-production-item-enumeration",
+    "authored-generated-test-dependency-role-review",
+    "configuration-and-producer-closure"
+   ]
+  }
+ ],
+ "entries": [
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/main.rs",
+    "blob": "543b57a6e8c469495dac7178402ab1553dcc1503",
+    "mode": "100644",
+    "bytes": 265
+   },
+   "kind": "entrypoint",
+   "role": "application",
+   "name": "router::main",
+   "owner": [],
+   "span": [
+    111,
+    265
+   ],
+   "configuration": [],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "actual-private-callers-and-complete-adoption-unproved"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/build.rs",
+    "blob": "790532681675a37e091624e947b670ff10e54be9",
+    "mode": "100644",
+    "bytes": 1400
+   },
+   "kind": "function",
+   "role": "build",
+   "name": "main",
+   "owner": [],
+   "span": [
+    102,
+    1400
+   ],
+   "configuration": [],
+   "producer": "router-build-source-commit",
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "actual-private-callers-and-complete-adoption-unproved"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/entrypoint.rs",
+    "blob": "a041d36ee04bd810cd087ac927025f01a15c64cf",
+    "mode": "100644",
+    "bytes": 1697
+   },
+   "kind": "function",
+   "role": "application",
+   "name": "run_on_a_deep_stack",
+   "owner": [
+    "entrypoint"
+   ],
+   "span": [
+    927,
+    1640
+   ],
+   "configuration": [],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "actual-private-callers-and-complete-adoption-unproved"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/entrypoint.rs",
+    "blob": "a041d36ee04bd810cd087ac927025f01a15c64cf",
+    "mode": "100644",
+    "bytes": 1697
+   },
+   "kind": "closure",
+   "role": "application",
+   "name": "spawn-worker",
+   "owner": [
+    "entrypoint",
+    "run_on_a_deep_stack"
+   ],
+   "span": [
+    1215,
+    1479
+   ],
+   "configuration": [],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "actual-private-callers-and-complete-adoption-unproved"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/security_headers.rs",
+    "blob": "76cc8c53f1b3d674ef62625893a6311ec74cc5c4",
+    "mode": "100644",
+    "bytes": 3349
+   },
+   "kind": "function",
+   "role": "application",
+   "name": "apply",
+   "owner": [
+    "security_headers"
+   ],
+   "span": [
+    2331,
+    2603
+   ],
+   "configuration": [],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "actual-private-callers-and-complete-adoption-unproved"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/security_headers.rs",
+    "blob": "76cc8c53f1b3d674ef62625893a6311ec74cc5c4",
+    "mode": "100644",
+    "bytes": 3349
+   },
+   "kind": "module",
+   "role": "test",
+   "name": "tests",
+   "owner": [
+    "security_headers"
+   ],
+   "span": [
+    2604,
+    3349
+   ],
+   "configuration": [
+    "cfg(test)"
+   ],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "actual-private-callers-and-complete-adoption-unproved"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/security_headers.rs",
+    "blob": "76cc8c53f1b3d674ef62625893a6311ec74cc5c4",
+    "mode": "100644",
+    "bytes": 3349
+   },
+   "kind": "function",
+   "role": "test",
+   "name": "the_policy_pins_scripts_to_this_origin_and_forbids_framing",
+   "owner": [
+    "security_headers",
+    "tests"
+   ],
+   "span": [
+    2648,
+    3083
+   ],
+   "configuration": [
+    "cfg(test)"
+   ],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "actual-private-callers-and-complete-adoption-unproved"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/security_headers.rs",
+    "blob": "76cc8c53f1b3d674ef62625893a6311ec74cc5c4",
+    "mode": "100644",
+    "bytes": 3349
+   },
+   "kind": "function",
+   "role": "test",
+   "name": "every_hardening_header_has_a_valid_value",
+   "owner": [
+    "security_headers",
+    "tests"
+   ],
+   "span": [
+    3085,
+    3346
+   ],
+   "configuration": [
+    "cfg(test)"
+   ],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "actual-private-callers-and-complete-adoption-unproved"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/bin/link-assistant-router.rs",
+    "blob": "ffdae31154c2e1a8e2258f1fc65a8a3c257abe53",
+    "mode": "100644",
+    "bytes": 815
+   },
+   "kind": "entrypoint",
+   "role": "application",
+   "name": "link-assistant-router::included-main",
+   "owner": [],
+   "span": [
+    0,
+    815
+   ],
+   "configuration": [],
+   "producer": "legacy-router-main-include",
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "actual-private-callers-and-complete-adoption-unproved"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/lib.rs",
+    "blob": "3554ed42299bdbeacbe066a0a10da79608303991",
+    "mode": "100644",
+    "bytes": 7719
+   },
+   "kind": "module",
+   "role": "application",
+   "name": "rust/src/lib.rs",
+   "owner": [],
+   "span": [
+    0,
+    7719
+   ],
+   "configuration": [],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "actual-private-callers-and-complete-adoption-unproved"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/bin/with-router.rs",
+    "blob": "2a02249ebd662ac5c6bd0d7251bb9cdcd5f418fb",
+    "mode": "100644",
+    "bytes": 1701
+   },
+   "kind": "module",
+   "role": "application",
+   "name": "rust/src/bin/with-router.rs",
+   "owner": [],
+   "span": [
+    0,
+    1701
+   ],
+   "configuration": [],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "actual-private-callers-and-complete-adoption-unproved"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "js/src/index.mjs",
+    "blob": "72c40ee3c524ec2858efb6a80788cbb15d628ae9",
+    "mode": "100644",
+    "bytes": 431
+   },
+   "kind": "module",
+   "role": "application",
+   "name": "js/src/index.mjs",
+   "owner": [],
+   "span": [
+    0,
+    431
+   ],
+   "configuration": [],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "actual-private-callers-and-complete-adoption-unproved"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/Cargo.toml",
+    "blob": "d17e8fad588ca797379f7b5382dc18871ec57cfa",
+    "mode": "100644",
+    "bytes": 4805
+   },
+   "kind": "entrypoint",
+   "role": "build",
+   "name": "router",
+   "owner": [],
+   "span": [
+    981,
+    1017
+   ],
+   "configuration": [],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "actual-private-callers-and-complete-adoption-unproved"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/Cargo.toml",
+    "blob": "d17e8fad588ca797379f7b5382dc18871ec57cfa",
+    "mode": "100644",
+    "bytes": 4805
+   },
+   "kind": "entrypoint",
+   "role": "build",
+   "name": "link-assistant-router",
+   "owner": [],
+   "span": [
+    1027,
+    1099
+   ],
+   "configuration": [],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "actual-private-callers-and-complete-adoption-unproved"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/Cargo.toml",
+    "blob": "d17e8fad588ca797379f7b5382dc18871ec57cfa",
+    "mode": "100644",
+    "bytes": 4805
+   },
+   "kind": "entrypoint",
+   "role": "build",
+   "name": "with-router",
+   "owner": [],
+   "span": [
+    1109,
+    1161
+   ],
+   "configuration": [],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "actual-private-callers-and-complete-adoption-unproved"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/operation_context.rs",
+    "blob": "ab046df591f4f74232ad8c05d6c8ce1d269be52d",
+    "mode": "100644",
+    "bytes": 8678
+   },
+   "kind": "trait-method",
+   "role": "application",
+   "name": "output",
+   "owner": [
+    "operation_context",
+    "ProcessRunner"
+   ],
+   "span": [
+    437,
+    528
+   ],
+   "configuration": [],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "complete-actual-owner-producer-configuration-and-adoption-review"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/operation_context.rs",
+    "blob": "ab046df591f4f74232ad8c05d6c8ce1d269be52d",
+    "mode": "100644",
+    "bytes": 8678
+   },
+   "kind": "trait-method",
+   "role": "application",
+   "name": "spawn",
+   "owner": [
+    "operation_context",
+    "ProcessRunner"
+   ],
+   "span": [
+    611,
+    725
+   ],
+   "configuration": [],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "complete-actual-owner-producer-configuration-and-adoption-review"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/operation_context.rs",
+    "blob": "ab046df591f4f74232ad8c05d6c8ce1d269be52d",
+    "mode": "100644",
+    "bytes": 8678
+   },
+   "kind": "impl-method",
+   "role": "application",
+   "name": "default",
+   "owner": [
+    "operation_context",
+    "impl Default for OperationContext"
+   ],
+   "span": [
+    2273,
+    2849
+   ],
+   "configuration": [],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "complete-actual-owner-producer-configuration-and-adoption-review"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/operation_context.rs",
+    "blob": "ab046df591f4f74232ad8c05d6c8ce1d269be52d",
+    "mode": "100644",
+    "bytes": 8678
+   },
+   "kind": "impl-method",
+   "role": "application",
+   "name": "scope",
+   "owner": [
+    "operation_context",
+    "impl OperationContext"
+   ],
+   "span": [
+    3728,
+    3849
+   ],
+   "configuration": [],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "complete-actual-owner-producer-configuration-and-adoption-review"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/entrypoint_tests.rs",
+    "blob": "c21638532fc57132a6b45e6684ebaaa0771f43b1",
+    "mode": "100644",
+    "bytes": 1570
+   },
+   "kind": "function",
+   "role": "test",
+   "name": "a_deep_call_chain_completes",
+   "owner": [
+    "entrypoint",
+    "tests"
+   ],
+   "span": [
+    993,
+    1570
+   ],
+   "configuration": [
+    "cfg(test)"
+   ],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "complete-actual-owner-producer-configuration-and-adoption-review"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/entrypoint_tests.rs",
+    "blob": "c21638532fc57132a6b45e6684ebaaa0771f43b1",
+    "mode": "100644",
+    "bytes": 1570
+   },
+   "kind": "nested-function",
+   "role": "test",
+   "name": "descend",
+   "owner": [
+    "entrypoint",
+    "tests",
+    "a_deep_call_chain_completes"
+   ],
+   "span": [
+    1036,
+    1323
+   ],
+   "configuration": [
+    "cfg(test)"
+   ],
+   "producer": null,
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "complete-actual-owner-producer-configuration-and-adoption-review"
+   ]
+  },
+  {
+   "origin": {
+    "revision": "2e56446e4256d97bc5ec21867d3f6dadbb99dde9",
+    "path": "rust/src/generated_js_first/mod.rs",
+    "blob": "b528cfcaa22e0caf6712dff817645d83b3cf2816",
+    "mode": "100644",
+    "bytes": 75
+   },
+   "kind": "module",
+   "role": "generated-application",
+   "name": "generated_js_first",
+   "owner": [],
+   "span": [
+    0,
+    75
+   ],
+   "configuration": [],
+   "producer": "generated-js-first-policy",
+   "evidence": "manual-source-review",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "complete-actual-owner-producer-configuration-and-adoption-review"
+   ]
+  }
+ ],
+ "producers": [
+  {
+   "id": "legacy-router-main-include",
+   "kind": "include!(concat!(env!(CARGO_MANIFEST_DIR), /src/main.rs))",
+   "sourcePath": "rust/src/bin/link-assistant-router.rs",
+   "inputs": [
+    "rust/src/main.rs"
+   ],
+   "outputs": [],
+   "expansion": "unknown",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "complete-included-module-namespace-and-target-origin-closure"
+   ]
+  },
+  {
+   "id": "router-build-source-commit",
+   "kind": "build-script-env-and-git-inputs",
+   "sourcePath": "rust/build.rs",
+   "inputs": [
+    "rust/build.rs"
+   ],
+   "outputs": [],
+   "expansion": "unknown",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "ROUTER_SOURCE_COMMIT-environment-value-and-Git-HEAD-refs-packed-refs-outside-selected-physical-files",
+    "build-script-execution-unrun",
+    "emitted-env-owner-and-package-unit-closure"
+   ]
+  },
+  {
+   "id": "generated-js-first-policy",
+   "kind": "generated-authoritative-JavaScript-policy-kernels",
+   "sourcePath": "rust/src/generated_js_first/mod.rs",
+   "inputs": [],
+   "outputs": [
+    "rust/src/generated_js_first/mod.rs"
+   ],
+   "expansion": "unknown",
+   "reviewStatus": "OPEN",
+   "unresolved": [
+    "actual-authoritative-kernel-generator-input-binding-and-complete-output-closure"
+   ]
+  }
+ ]
+}

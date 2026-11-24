@@ -1,0 +1,1 @@
+- Add reusable checked serde_json Value, exact integer, default floating-point decoding, JSON-pointer, map and error contracts for automated Rust → meta → JavaScript/TypeScript translation. Preserve explicit limitations for mutable borrowing, generic derived serialization and complete Rust differential validation.

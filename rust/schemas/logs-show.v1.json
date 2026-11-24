@@ -1,0 +1,127 @@
+{
+  "$defs": {
+    "LogRecordsReport": {
+      "additionalProperties": false,
+      "properties": {
+        "correlation_id": {
+          "type": "string"
+        },
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "records": {
+          "description": "Vendor and request records retain their open-ended fields.",
+          "items": true,
+          "type": "array"
+        }
+      },
+      "required": [
+        "correlation_id",
+        "records",
+        "output"
+      ],
+      "title": "LogRecordsReport",
+      "type": "object"
+    }
+  },
+  "$id": "link-assistant-router/logs-show/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "properties": {
+          "exit_code": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "success": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "exit_code": {
+            "const": 0
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "data": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "output": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "output": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/LogRecordsReport"
+        }
+      ]
+    },
+    "diagnostics": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "exit_code": {
+      "maximum": 255,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "operation": {
+      "const": "logs.show"
+    },
+    "schema": {
+      "const": "link-assistant-router/logs-show/v1"
+    },
+    "success": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "operation",
+    "success",
+    "exit_code",
+    "data",
+    "diagnostics"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,86 @@
+[
+  {
+    "reason": null,
+    "chat_finish_reason": "stop",
+    "response_status": "completed",
+    "incomplete_reason": null,
+    "refusal": false
+  },
+  {
+    "reason": "end_turn",
+    "chat_finish_reason": "stop",
+    "response_status": "completed",
+    "incomplete_reason": null,
+    "refusal": false
+  },
+  {
+    "reason": "stop_sequence",
+    "chat_finish_reason": "stop",
+    "response_status": "completed",
+    "incomplete_reason": null,
+    "refusal": false
+  },
+  {
+    "reason": "tool_use",
+    "chat_finish_reason": "tool_calls",
+    "response_status": "completed",
+    "incomplete_reason": null,
+    "refusal": false
+  },
+  {
+    "reason": "refusal",
+    "chat_finish_reason": "content_filter",
+    "response_status": "incomplete",
+    "incomplete_reason": "content_filter",
+    "refusal": true
+  },
+  {
+    "reason": "max_tokens",
+    "chat_finish_reason": "length",
+    "response_status": "incomplete",
+    "incomplete_reason": "max_output_tokens",
+    "refusal": false
+  },
+  {
+    "reason": "pause_turn",
+    "chat_finish_reason": "length",
+    "response_status": "incomplete",
+    "incomplete_reason": "max_output_tokens",
+    "refusal": false
+  },
+  {
+    "reason": "model_context_window_exceeded",
+    "chat_finish_reason": "length",
+    "response_status": "incomplete",
+    "incomplete_reason": "max_output_tokens",
+    "refusal": false
+  },
+  {
+    "reason": "",
+    "chat_finish_reason": "length",
+    "response_status": "incomplete",
+    "incomplete_reason": "max_output_tokens",
+    "refusal": false
+  },
+  {
+    "reason": "END_TURN",
+    "chat_finish_reason": "length",
+    "response_status": "incomplete",
+    "incomplete_reason": "max_output_tokens",
+    "refusal": false
+  },
+  {
+    "reason": "end_turn\u0000",
+    "chat_finish_reason": "length",
+    "response_status": "incomplete",
+    "incomplete_reason": "max_output_tokens",
+    "refusal": false
+  },
+  {
+    "reason": "未知😀",
+    "chat_finish_reason": "length",
+    "response_status": "incomplete",
+    "incomplete_reason": "max_output_tokens",
+    "refusal": false
+  }
+]

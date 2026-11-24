@@ -1,0 +1,154 @@
+// Explicit receiving-environment execution only. No source graph is executed
+// during analysis, checking, serialization, emission or ordinary evaluation.
+import {readFile,lstat,realpath} from 'node:fs/promises';
+import {resolve,join,posix} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {createHash} from 'node:crypto';
+import {types} from 'node:util';
+import {check} from './vendor/ir.mjs';
+import {sourceConstructorItem} from './vendor/constructor-bodies.mjs';
+import {originalImportedErrorConstructor,reissueImportedErrorConstructor,assertConstructorProofData,observeOriginalImportedErrorConstructorClass} from './vendor/source-constructors.mjs';
+import {ownershipSyntax} from './vendor/module-syntax.mjs';
+
+const runtimes=new WeakMap(),observedSourceVersions=new Map(),attestedSourceVersions=new Map();
+// The same trusted initial-host boundary as the existing captured constructor
+// intrinsic. Do not consult an exported class's overridable toString method.
+const construct=Reflect.construct,apply=Reflect.apply,describe=Function.prototype.toString;
+const trustedRoot=globalThis,trustedError=Error,trustedErrorPrototype=Error.prototype;
+const ownDescriptor=Object.getOwnPropertyDescriptor,prototypeOf=Object.getPrototypeOf,keysOf=Reflect.ownKeys,hasOwn=Object.hasOwn,isProxy=types.isProxy;
+const trustedErrorPrototypeParent=prototypeOf(trustedErrorPrototype);
+const hash=source=>createHash('sha256').update(Buffer.from(source,'utf16le')).digest('hex');
+function data(object,key) {
+  const descriptor=ownDescriptor(object,key);
+  return descriptor&&hasOwn(descriptor,'value')?descriptor:null;
+}
+function constructorStructure(constructor,proof) {
+  const refuse=()=>{throw new trustedError('original constructor runtime ancestry or prototype differs from its checked source');};
+  // The initial host root is trusted infrastructure, never caller supplied.
+  // Descriptor checks must not invoke a replaced global Error accessor.
+  const liveError=data(trustedRoot,'Error'),errorPrototype=data(trustedError,'prototype');
+  if(!liveError||liveError.value!==trustedError||!errorPrototype||errorPrototype.value!==trustedErrorPrototype
+    ||isProxy(constructor)||prototypeOf(constructor)!==trustedError)refuse();
+  const prototype=data(constructor,'prototype');
+  if(!prototype||prototype.writable!==false||prototype.enumerable!==false||prototype.configurable!==false
+    ||!prototype.value||typeof prototype.value!=='object'||isProxy(prototype.value)
+    ||prototypeOf(prototype.value)!==trustedErrorPrototype||prototypeOf(trustedErrorPrototype)!==trustedErrorPrototypeParent)refuse();
+  const inheritedConstructor=data(trustedErrorPrototype,'constructor'),ownConstructor=data(prototype.value,'constructor');
+  if(!inheritedConstructor||inheritedConstructor.value!==trustedError||!ownConstructor||ownConstructor.value!==constructor
+    ||ownConstructor.writable!==true||ownConstructor.enumerable!==false||ownConstructor.configurable!==true)refuse();
+  const prototypeKeys=keysOf(prototype.value),staticKeys=keysOf(constructor);
+  if(prototypeKeys.length!==1||prototypeKeys[0]!=='constructor'||staticKeys.length!==3
+    ||staticKeys[0]!=='length'||staticKeys[1]!=='name'||staticKeys[2]!=='prototype')refuse();
+  let length=0;
+  for(let index=0;index<proof.original.params.length;index++){if(hasOwn(proof.original.params[index],'default'))break;length++;}
+  const actualLength=data(constructor,'length'),actualName=data(constructor,'name');
+  if(!actualLength||actualLength.value!==length||actualLength.writable!==false||actualLength.enumerable!==false||actualLength.configurable!==true
+    ||!actualName||actualName.value!==proof.original.name||actualName.writable!==false||actualName.enumerable!==false||actualName.configurable!==true)refuse();
+}
+async function originalFile(root,path) {
+  let current=root;
+  for(const [index,part]of path.split('/').entries()) {
+    current=join(current,part);const status=await lstat(current);
+    if(status.isSymbolicLink()||(index===path.split('/').length-1?!status.isFile():!status.isDirectory()))throw Error('linked or nonregular original constructor runtime source');
+  }
+  return readFile(current,'utf8');
+}
+export async function prepareOriginalConstructorRuntime(program,{sourceRoot,executeOriginalModules=false}={}) {
+  if(executeOriginalModules!==true||typeof sourceRoot!=='string')throw Error('original constructor evaluation requires an explicit receiving source root and module-execution opt-in');
+  const root=resolve(sourceRoot);
+  if(await realpath(root)!==root)throw Error('linked original constructor receiving root');
+  const expected=new Map(),definitions=new Map(),parents=new Map();
+  for(const item of program)if(sourceConstructorItem(item)) {
+    const checked=check(item,new Map());
+    if(parents.has(checked.name))throw Error('duplicate original constructor runtime parent');
+    parents.set(checked.name,JSON.stringify(checked));
+    for(const source of checked.sourceConstructors.sources) {
+      if(expected.has(source.path)&&expected.get(source.path)!==source.source)throw Error('conflicting original constructor runtime sources');
+      expected.set(source.path,source.source);
+    }
+    for(const proof of checked.sourceConstructors.constructors) {
+      const fresh=originalImportedErrorConstructor(reissueImportedErrorConstructor(proof)).proof;
+      const key=fresh.import.target+'#'+fresh.import.exported;
+      let entry=definitions.get(key);
+      if(!entry){entry={proof:fresh,proofs:new Set()};definitions.set(key,entry);}
+      // Retain every actual callsite, including its entire source graph, not
+      // merely the exported class name or one last-seen constructor recipe.
+      entry.proofs.add(JSON.stringify(fresh));
+    }
+  }
+  const verify=async()=>{
+    for(const [path,source]of expected) {
+      if(await originalFile(root,path)!==source)throw Error('original constructor runtime source differs from its checked graph');
+      const before=observedSourceVersions.get(join(root,path));
+      if(before!==undefined&&before!==hash(source))throw Error('original constructor module cache source changed; reload convergence is unsupported');
+      const attested=attestedSourceVersions.get(join(root,path));
+      if(attested!==undefined&&attested!==source)throw Error('original constructor attested module source changed; reload convergence is unsupported');
+    }
+  };
+  await verify();
+  // Only constructor owners and their actual relative static import closure
+  // may execute. The other supplied original modules are byte witnesses only.
+  const closure=new Set();
+  const collect=path=>{
+    if(closure.has(path))return;closure.add(path);
+    const source=expected.get(path);if(source===undefined)throw Error('missing original constructor runtime import');
+    const {ts,file}=ownershipSyntax(source);
+    for(const statement of file.statements)if(ts.isImportDeclaration(statement)||ts.isExportDeclaration(statement)&&statement.moduleSpecifier) {
+      const specifier=statement.moduleSpecifier;
+      if(!ts.isStringLiteral(specifier)||!specifier.text.startsWith('./')&&!specifier.text.startsWith('../'))throw Error('unproved external constructor bootstrap import');
+      const next=posix.normalize(posix.join(posix.dirname(path),specifier.text));
+      if(!expected.has(next))throw Error('escaping or missing original constructor runtime import');
+      collect(next);
+    }
+    const visit=node=>{if(ts.isCallExpression(node)&&node.expression.kind===ts.SyntaxKind.ImportKeyword)throw Error('dynamic constructor bootstrap imports remain unsupported');ts.forEachChild(node,visit);};visit(file);
+  };
+  for(const {proof}of definitions.values())collect(proof.import.target);
+  // Record before importing: a failed/effectful receiving module is not safely
+  // reusable with changed bytes in this process's immutable ESM URL cache.
+  for(const path of closure)observedSourceVersions.set(join(root,path),hash(expected.get(path)));
+  const actual=new Map();
+  for(const [key,{proof,proofs}]of definitions) {
+    const module=await import(pathToFileURL(join(root,proof.import.target)).href),constructor=module[proof.import.exported];
+    if(typeof constructor!=='function')throw Error('missing actual original exported Error constructor');
+    // A receiving environment may have imported this URL before this helper
+    // ever observed it. Current disk bytes alone do not describe that cache.
+    constructorStructure(constructor,proof);
+    const observation=observeOriginalImportedErrorConstructorClass(reissueImportedErrorConstructor(proof),apply(describe,constructor,[]));
+    actual.set(key,{constructor,proofs,observation});
+  }
+  await verify();
+  // Retain exact successful full source lineage as well as the original
+  // before-import hash guard. This is private runtime state, never proof input.
+  for(const path of closure)attestedSourceVersions.set(join(root,path),expected.get(path));
+  const token=Object.freeze({});runtimes.set(token,{constructors:actual,parents});return token;
+}
+export function constructOriginalError(proof,runtime) {
+  const state=originalImportedErrorConstructor(reissueImportedErrorConstructor(proof)),actual=runtimes.get(runtime);
+  const entry=actual?.constructors.get(state.proof.import.target+'#'+state.proof.import.exported);
+  if(!entry)throw Error('original constructor evaluation requires its verified receiving runtime');
+  if(!entry.proofs.has(JSON.stringify(state.proof)))throw Error('foreign original constructor runtime graph, caller or proof');
+  const args=[];
+  for(let index=0;index<state.proof.arguments.length;index++) {
+    const value=state.proof.arguments[index];args[index]=value.kind==='null'?null:value.kind==='undefined'?undefined:value.value;
+  }
+  return construct(entry.constructor,args);
+}
+
+
+// New receiving-runtime mode authenticates the complete original parent before
+// either a normal branch or construction. An ordinary/copied map cannot issue it.
+export function checkedOriginalConstructorRuntimeFunction(item,runtime) {
+  const actual=runtimes.get(runtime);if(!actual)throw Error('original constructor evaluation requires its verified receiving runtime');
+  assertConstructorProofData(item);
+  const checked=check(item,new Map()),expected=actual.parents.get(checked.name);
+  if(expected===undefined||JSON.stringify(checked)!==expected)throw Error('foreign original constructor runtime parent, changed or missing');
+  return checked;
+}
+
+
+export function assertOriginalConstructorRuntimeProgram(program,runtime) {
+  if(!runtimes.has(runtime))throw Error('original constructor evaluation requires its verified receiving runtime');
+  // Reject proxies/accessors before the interpreter reads declaration names.
+  // Payload arguments are deliberately outside this metadata validation.
+  assertConstructorProofData(program);
+}

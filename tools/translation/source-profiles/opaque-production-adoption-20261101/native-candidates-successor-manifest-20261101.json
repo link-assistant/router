@@ -1,0 +1,15 @@
+{
+  "schema": "opaque-native-candidate-source-evolution-v1",
+  "archive": "complete-source-copies-native-candidates-20261101.json.gz",
+  "sha256": "81f8be6dd95930ef84f9c3bc46c3c906d3002503c96773cfc0d95c855a0bd87c",
+  "rawBytes": 2163788,
+  "packedBytes": 271931,
+  "sourceHistorySha256": "4580854abd2bfad866889bb59e6aff5a55c493d0a519abd976bb98d013321f8a",
+  "preservedArchives": [
+    "complete-source-copies.json",
+    "complete-source-copies-case-custody-20261101.json"
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "executionEvidence": "UNRUN"
+}

@@ -1,0 +1,110 @@
+[
+  {
+    "id": 113528098453,
+    "run_id": 37840425610,
+    "workflow_name": "Task Ladder",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37840425610",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAabs1OlQ",
+    "head_sha": "cadee1db0b45c543eeed04c1690bbb7b57aa43de",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113528098453",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37840425610/job/113528098453",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-08T20:34:13Z",
+    "started_at": "2026-10-08T20:35:21Z",
+    "completed_at": "2026-10-08T20:36:22Z",
+    "name": "Task Ladder (issue #840 dataset)",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-08T20:35:22Z",
+        "completed_at": "2026-10-08T20:35:23Z"
+      },
+      {
+        "name": "Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-08T20:35:23Z",
+        "completed_at": "2026-10-08T20:35:39Z"
+      },
+      {
+        "name": "Test the falsifiable ladder judge",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3,
+        "started_at": "2026-10-08T20:35:39Z",
+        "completed_at": "2026-10-08T20:35:39Z"
+      },
+      {
+        "name": "Run ./.github/actions/formal-ai-binary",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4,
+        "started_at": "2026-10-08T20:35:39Z",
+        "completed_at": "2026-10-08T20:35:42Z"
+      },
+      {
+        "name": "Run the ladder against the committed baseline",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5,
+        "started_at": "2026-10-08T20:35:42Z",
+        "completed_at": "2026-10-08T20:36:17Z"
+      },
+      {
+        "name": "Record the score in the run summary",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6,
+        "started_at": "2026-10-08T20:36:17Z",
+        "completed_at": "2026-10-08T20:36:17Z"
+      },
+      {
+        "name": "Retain the ladder results",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7,
+        "started_at": "2026-10-08T20:36:17Z",
+        "completed_at": "2026-10-08T20:36:19Z"
+      },
+      {
+        "name": "Post Run ./.github/actions/formal-ai-binary",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 13,
+        "started_at": "2026-10-08T20:36:19Z",
+        "completed_at": "2026-10-08T20:36:19Z"
+      },
+      {
+        "name": "Post Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 14,
+        "started_at": "2026-10-08T20:36:19Z",
+        "completed_at": "2026-10-08T20:36:19Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 15,
+        "started_at": "2026-10-08T20:36:19Z",
+        "completed_at": "2026-10-08T20:36:19Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113528098453",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 1000155072,
+    "runner_name": "GitHub Actions 1000155072",
+    "runner_group_id": 0,
+    "runner_group_name": "GitHub Actions"
+  }
+]

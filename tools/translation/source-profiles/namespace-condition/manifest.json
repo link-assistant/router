@@ -1,0 +1,83 @@
+{
+  "schema": "original-namespace-condition-source-v1",
+  "rustVersion": "1.89.0",
+  "source": {
+    "path": "compiler/rustc_parse/src/parser/expr.rs",
+    "archive": "source-profiles/clap-concat/rust-1.89-parser-expr.rs.gz",
+    "archiveBytes": 39761,
+    "archiveSha256": "766d1475d1cb721aab4db4cfb6bfa5ebaf4990f1f485290fe925f8ff5e5dc36d",
+    "bytes": 180686,
+    "sha256": "32847f9b0bf01f448493367833adf7503532f6038883f055a98fafdb3bd0ba69"
+  },
+  "callbacks": [
+    {
+      "name": "parse_expr_if",
+      "span": {
+        "start": 112344,
+        "end": 112827
+      },
+      "bytes": 483,
+      "sha256": "e52fbf93a017415718db59fe2ae9efa4b53b447eb6a390be51089c63cb2d299c"
+    },
+    {
+      "name": "parse_expr_cond",
+      "span": {
+        "start": 118584,
+        "end": 118953
+      },
+      "bytes": 369,
+      "sha256": "532ac7a416e64bc03e5e65ae5ad0b70885e16d60f98e0e5a2c3e44dc3d55f881"
+    },
+    {
+      "name": "parse_expr_let",
+      "span": {
+        "start": 119014,
+        "end": 120588
+      },
+      "bytes": 1574,
+      "sha256": "27f0a02108a61268e896b7a6a975b9d6bd04662b7e3918cec7955ea034995fac"
+    },
+    {
+      "name": "parse_expr_while",
+      "span": {
+        "start": 131058,
+        "end": 132165
+      },
+      "bytes": 1107,
+      "sha256": "237f320b33ca5a89d9f86e7bd2697fa83a452c000f50ee990415253f2170a704"
+    },
+    {
+      "name": "visit_expr",
+      "span": {
+        "start": 174799,
+        "end": 180679
+      },
+      "bytes": 5880,
+      "sha256": "abb940f50c8a82332d7fe75c7aac7b52a555beda6913c7a372452fe579fea936"
+    },
+    {
+      "name": "parse_expr_bottom",
+      "span": {
+        "start": 61821,
+        "end": 69324
+      },
+      "bytes": 7503,
+      "sha256": "96356561d042e78e394b026502b8657d7e1ef48f401f1e6cc7ee9c8c0fcc6cef"
+    }
+  ],
+  "licenses": [
+    {
+      "path": "source-profiles/namespace-standard/LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+    },
+    {
+      "path": "source-profiles/namespace-standard/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+    }
+  ],
+  "compilerExecuted": false,
+  "typeAuthority": false,
+  "runtimeAuthority": false
+}

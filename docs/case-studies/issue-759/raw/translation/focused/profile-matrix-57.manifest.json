@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "kind": "focused-profile-matrix-verification",
+  "sourceHead": "992691aace6751d62a61c1454506cae8b4cb148c",
+  "scope": "5-file independent profile-matrix/cfg/binding focus; lines queue excluded",
+  "limitSecondsPerEngine": 180,
+  "sourceInputsUnchangedDuringRun": true,
+  "initialEqualsFinal": true,
+  "engines": [
+    {
+      "passed": 57,
+      "failed": 0,
+      "skipped": 0,
+      "engine": "node",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/test/compilation-matrix.test.mjs",
+        "tools/translation/test/cfg-profile.test.mjs",
+        "tools/translation/test/cfg-production.test.mjs",
+        "tools/translation/test/module-bindings.test.mjs",
+        "tools/translation/test/registered-bindings.test.mjs"
+      ],
+      "exitCode": 0,
+      "timeout": false,
+      "elapsedSeconds": 3.1101880830246955,
+      "log": "/tmp/router-759-matrix-992-initial-node.log",
+      "logSHA256": "81b790eaca1accece531caaa89a5c5af0e1c5fcf05d5af006fbe82dacbdd6e15"
+    },
+    {
+      "passed": 57,
+      "failed": 0,
+      "skipped": 0,
+      "engine": "bun",
+      "command": [
+        "bun",
+        "test",
+        "tools/translation/test/compilation-matrix.test.mjs",
+        "tools/translation/test/cfg-profile.test.mjs",
+        "tools/translation/test/cfg-production.test.mjs",
+        "tools/translation/test/module-bindings.test.mjs",
+        "tools/translation/test/registered-bindings.test.mjs"
+      ],
+      "exitCode": 0,
+      "timeout": false,
+      "elapsedSeconds": 2.6026429161429405,
+      "log": "/tmp/router-759-matrix-992-initial-bun.log",
+      "logSHA256": "9655ce7f131df8817e89d343f5de26f9988d715cd033f2d018174565f77134d1"
+    }
+  ],
+  "profileNames": [
+    "neutral",
+    "unix-family",
+    "windows-family"
+  ],
+  "runtimeParity": false,
+  "platformDomainComplete": false,
+  "executableOutputSharing": false,
+  "corpusGainClaim": false,
+  "archive": {
+    "path": "profile-matrix-57.tar.gz",
+    "bytes": 64340,
+    "sha256": "ed216badb3436ac8cc281abee245c98914f9d5af125c21e9bab8f207846a9c53"
+  },
+  "members": {
+    "router-759-matrix-992-initial-bun.log": {
+      "bytes": 5975,
+      "sha256": "9655ce7f131df8817e89d343f5de26f9988d715cd033f2d018174565f77134d1"
+    },
+    "router-759-matrix-992-initial-node.log": {
+      "bytes": 12661,
+      "sha256": "81b790eaca1accece531caaa89a5c5af0e1c5fcf05d5af006fbe82dacbdd6e15"
+    },
+    "router-759-matrix-992-initial.receipt.json": {
+      "bytes": 168455,
+      "sha256": "c565d91fd7e1a0bef804c7a76cade556a2237e041c73a8663421f7aadf37d2b4"
+    }
+  }
+}

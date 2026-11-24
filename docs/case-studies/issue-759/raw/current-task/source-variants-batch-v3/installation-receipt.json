@@ -1,0 +1,34 @@
+{
+  "schema": "complete-source-variants-fixed-cap-install-v5",
+  "sourceHead": "0299544de095c430288c0dd2a5bc3f5fa6cfced5",
+  "capturedSourceHead": "039f187072bb69c1448f74fdda6eb1ece6e32491",
+  "completeMembersReopened": 4853,
+  "completeOriginalBytes": 264132564,
+  "archive": {
+    "path": "raw/current-task/source-variants-batch-v3/complete-evidence.tar.xz",
+    "bytes": 75670080,
+    "sha256": "cb01766ddc7b6a08336c68b08d2fe26eeed2da0ae1840d91a01060281f60aaab"
+  },
+  "originalCaptureReceiptBytes": 1738826,
+  "originalCaptureReceiptSha256": "bfa4674f777a6db8253647390ae82d11d8d438f917772504bfa4c2cc2e0b11f6",
+  "storedCaptureReceiptBytes": 318158,
+  "storedCaptureReceiptSha256": "4ab5aa5a7cb994b4d57d8153b12a2de34d1edb8f2a5fbc79bd1b57a8e4258600",
+  "losslessReorderReceiptSha256": "74028f21871866f2b5357f84a0772e7b5c070764ca60e2f69d190312625abc61",
+  "caseCapBytes": 500000000,
+  "beforePhysical": {
+    "distinctPhysicalFiles": 27781,
+    "physicalStoredBytes": 344865782,
+    "physicalAllocatedBytes": 419840000
+  },
+  "afterPhysical": {
+    "distinctPhysicalFiles": 27784,
+    "physicalStoredBytes": 420854952,
+    "physicalAllocatedBytes": 495837184
+  },
+  "allFullSourceAndRawVariantsRetained": true,
+  "originalCaptureArchiveRetained": "/private/tmp/router-759-new-complete-source-packet-v3/complete-evidence.tar.xz",
+  "sourceFilesRemoved": false,
+  "currentFullGatePass": false,
+  "runtimeParity": false,
+  "rustExecuted": false
+}

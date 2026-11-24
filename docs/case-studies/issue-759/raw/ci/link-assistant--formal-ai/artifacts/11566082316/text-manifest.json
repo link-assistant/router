@@ -1,0 +1,12 @@
+[
+  {
+    "path": "text-objects/b1/b11e7af78adde345e86ab5a540bc88f0f72cab6a1ce6f8fde3e7b802e1d00801.xz",
+    "artifact_member_name": "browser-lcov.info",
+    "scrubbed_content_sha256": "b11e7af78adde345e86ab5a540bc88f0f72cab6a1ce6f8fde3e7b802e1d00801",
+    "sha256": "bff19ae85fecdacc345ed93dc26f2f04d1f9b602477205dbb056adbaa91b5815",
+    "compressed_bytes": 491140,
+    "original_bytes": 3323845,
+    "redacted": false,
+    "compression": "xz"
+  }
+]

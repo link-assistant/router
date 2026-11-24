@@ -1,0 +1,1 @@
+Include all five consumed original-method parser, transform, admission, identity, and standard binding modules in canonical and profile compiler fingerprints. Changes to this checked source path now invalidate generated artifacts before freshness checks.

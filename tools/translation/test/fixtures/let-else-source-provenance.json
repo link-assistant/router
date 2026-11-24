@@ -1,0 +1,30 @@
+{
+  "family": "checked scalar let-else control",
+  "runtimeParity": false,
+  "fullParity": false,
+  "newExecutedProductionBodies": 0,
+  "sourceObligations": [
+    {
+      "path": "src/request_log/stream_outcome.rs",
+      "sourceSha256": "92452a28069d0b7055a62026b34c241153c21059c18943df97e165790b6f1f29",
+      "name": "frame_terminates_stream",
+      "span": { "start": 7460, "end": 7791, "unit": "utf16" },
+      "declarationSha256": "dced525fc9817d647f69994a780db7029c518d5363f11a0085f12404bb426af0",
+      "status": "carried",
+      "remainingObligation": "std::str::from_utf8 host adapter and its actual checked Result/error domain; downstream text_terminates_stream dependency",
+      "bodyRewritten": false
+    }
+  ],
+  "supportedProfile": [
+    "Actual checked constructor layout and standard-generic owner provenance",
+    "Immutable fixed integer, boolean, shared string view and unit bindings",
+    "Once-evaluated immutable subject and success-only continuation bindings",
+    "Failure blocks with proven return or enclosing-loop break/continue on every path"
+  ],
+  "unresolved": [
+    "Aggregate moves, aliases, mutable and non-string reference bindings",
+    "Annotated let-else patterns, generic pattern arguments, guards and let chains",
+    "Never-returning calls and infinite-loop divergence certificates",
+    "Full tracked Router runtime parity and all dependency closures"
+  ]
+}

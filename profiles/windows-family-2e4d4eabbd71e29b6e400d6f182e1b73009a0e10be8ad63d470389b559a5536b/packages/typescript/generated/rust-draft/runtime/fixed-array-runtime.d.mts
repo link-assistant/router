@@ -1,0 +1,1 @@
+export declare function copyFixedArray<T, N extends number>(value: ReadonlyArray<T>, type: Readonly<{kind:'array';rustFixedArray:Readonly<{length:N}>;element:unknown}>): ReadonlyArray<T> & { readonly length:N };

@@ -98,7 +98,7 @@ def main():
         if name=='with':typ='('+typ+') & ((client: string, args: readonly string[], options?: WithOptions, invocation?: Invocation) => Promise<Result<{ client_exit_code: number | null; stdout: string; stderr: string }>>)'
         declarations.append('  '+name+': '+typ+';')
     declarations.append('  deployStatus(options?: DeployOptions, invocation?: Invocation): ReturnType<Router["deploy"]>;')
-    declarations+=['}','export function createRouter(options?: RouterOptions): Router;', 'export function resolveBinary(options?: RouterOptions): Promise<string>;','export function validateOperation(name: string, result: unknown): Result;','export function runProcess(binary: string, args: string[], options?: Invocation): Promise<{ stdout: string; stderr: string; exitCode: number }>;','']
+    declarations+=['}','export function createRouter(options?: RouterOptions): Router;', 'export function resolveBinary(options?: RouterOptions): Promise<string>;','export function validateOperation(name: string, result: unknown): Result;','export function runProcess(binary: string, args: string[], options?: Invocation): Promise<{ stdout: string; stderr: string; exitCode: number }>;','',"export { NativeRouter, NativeRouterError, createNativeRouter } from './native.js';","export type { NativeRouterOptions, NativeHttpRouter, NativeTokenOptions, NativeTokenManager } from './native.js';",'']
     def pytree(node,classname):
         lines=[]; body=['class '+classname+':']
         for name,child in node.items():
@@ -119,10 +119,10 @@ def main():
         return lines+body+['']
     py+=pytree(pytrees,'Router')
     py+=['def create_router(**options: Any) -> Router: ...','def resolve_binary(**options: Any) -> str: ...','def run_process(binary: str, args: list[str], **options: Any) -> tuple[int, str, str]: ...','']
-    package=json.loads((ROOT/'packages/javascript/package.json').read_text());package['version']=catalog['version']
+    package=json.loads((ROOT/'js/package.json').read_text());package['version']=catalog['version']
     project=(ROOT/'packages/python/pyproject.toml').read_text();project=re.sub(r'(?m)^version = ".*"$',f'version = "{catalog["version"]}"',project)
-    lock=json.loads((ROOT/'packages/javascript/package-lock.json').read_text());lock['version']=catalog['version'];lock['packages']['']['version']=catalog['version']
-    outputs={'packages/javascript/index.d.ts':'\n'.join(declarations),'packages/python/link_assistant_router/__init__.pyi':'\n'.join(py),'packages/javascript/package.json':json.dumps(package,indent=2)+'\n','packages/javascript/package-lock.json':json.dumps(lock,indent=2)+'\n','packages/python/pyproject.toml':project}
+    lock=json.loads((ROOT/'js/package-lock.json').read_text());lock['version']=catalog['version'];lock['packages']['']['version']=catalog['version']
+    outputs={'js/index.d.ts':'\n'.join(declarations),'packages/python/link_assistant_router/__init__.pyi':'\n'.join(py),'js/package.json':json.dumps(package,indent=2)+'\n','js/package-lock.json':json.dumps(lock,indent=2)+'\n','packages/python/pyproject.toml':project}
     stale=[]
     for path,content in outputs.items():
         target=ROOT/path

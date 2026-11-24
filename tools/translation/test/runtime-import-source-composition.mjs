@@ -1,0 +1,10 @@
+// Complete final source equations only; no semantic or performance authority.
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
+const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
+export function assertRuntimeImportSourceComposition(layer,prior={},finalSources){
+ assert.equal(layer.schema,'owned-runtime-import-parent-link-source-v1');assert.equal(layer.files.length,4);assert.equal(layer.semanticAuthority,false);assert.equal(layer.runtimeExecuted,false);assert.equal(layer.performanceQualified,false);assert.equal(layer.fullNativeParserRunsEveryTime,true);assert.equal(layer.firstActualUseKeepsParents,true);assert.equal(layer.noAcrossInvocationCache,true);
+ for(const row of layer.files){if(Object.hasOwn(prior,row.path))assert.equal(row.before,prior[row.path].after,row.path+': exact complete predecessor');const final=finalSources[row.path];assert.ok(final,row.path+': explicit final source');assert.equal(row.current,final.after,row.path);assert.equal(readFileSync(new URL(row.path,root),'utf8'),final.after,row.path);assert.equal(row.beforeSha256,hash(row.before));assert.equal(row.afterSha256,hash(row.after));assert.equal(row.inverse,row.before);assert.equal(transportConcreteSyntaxMeta(row.beforeMeta).source,row.before);assert.equal(transportConcreteSyntaxMeta(row.afterMeta).source,row.after);assert.equal(row.nativeCopies.length,2);assert.ok(row.nativeCopies.every(copy=>copy.completeNativeAstCopy));assert.equal(row.nativeBindings.nativeSemanticScopeChecked,true);assert.deepEqual(row.trace,row.stages.flatMap(stage=>stage.trace));assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);let source=row.before;for(const stage of row.stages){assert.equal(stage.before,source);assert.equal(stage.completeInverse,true);assert.equal(transportConcreteSyntaxMeta(stage.beforeMeta).source,source);assert.equal(transportConcreteSyntaxMeta(stage.afterMeta).source,stage.after);source=stage.after;}assert.equal(source,row.after);}
+}

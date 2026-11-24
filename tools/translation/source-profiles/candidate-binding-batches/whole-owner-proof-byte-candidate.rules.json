@@ -1,0 +1,33 @@
+{
+  "schema": "pinned-repository-source-evolution-v1",
+  "path": "tools/translation/prepare-whole-owner-proof-byte-candidate.mjs",
+  "phase": "repository",
+  "beforeSha256": "73061bdd569c8b34f0b66b99e77f77c16856880575cb7e0c8007b0954ef10a15",
+  "afterSha256": "3060302a58774821fcaa89a4cf9352fd0c6fb3f7faf462b9470b4bb4a53b7617",
+  "edits": [
+    {
+      "id": "router.candidate-binding-batch.import.v1",
+      "before": "import {verifyNativeCopiedSourceBindings} from './source-copy-native-bindings.mjs';",
+      "after": "import {verifyNativeCopiedModuleBindings} from './source-copy-native-bindings.mjs';"
+    },
+    {
+      "id": "router.candidate-binding-batch.invocation.v1",
+      "before": "export function prepareWholeOwnerProofByteCandidate({root=ROOT}={}){",
+      "after": "export function prepareWholeOwnerProofByteCandidate({root=ROOT}={}){\n const bindingCandidates=[];"
+    },
+    {
+      "id": "router.candidate-binding-batch.collect.v1",
+      "before": "const nativeBindings=verifyNativeCopiedSourceBindings(ts,resolve(root,path),after),",
+      "after": "const nativeBindings={};bindingCandidates.push({path:resolve(root,path),source:after,result:nativeBindings});const "
+    },
+    {
+      "id": "router.candidate-binding-batch.complete.v1",
+      "before": " return {schema:'whole-owner-operation-proof-byte-candidate-v1',typescriptVersion:ts.version,inputs:[...inputs.values()],prerequisiteInputs:prerequisites,files,physicalOverlays,serializerBindings,cycleEvidence,operationProducer:operation,resolverProducer:resolver,existingDefaultsUnchanged:true,existingBulkCopiesUnchanged:true,scope:'one qualified complete synchronous owner operation; no retained encoded bytes',newAcrossInvocationEncodedCache:false,originalHashCallsUnchanged:true,performanceQualified:false,runtimeExecuted:false,sourceAuthority:false,runtimeAuthority:false};",
+      "after": " // Fresh complete native scope checks precede every returned plan and write.\n const checkedBindings=verifyNativeCopiedModuleBindings(ts,bindingCandidates);\n for(let at=0;at<bindingCandidates.length;at++)Object.assign(bindingCandidates[at].result,checkedBindings[at]);\n return {schema:'whole-owner-operation-proof-byte-candidate-v1',typescriptVersion:ts.version,inputs:[...inputs.values()],prerequisiteInputs:prerequisites,files,physicalOverlays,serializerBindings,cycleEvidence,operationProducer:operation,resolverProducer:resolver,existingDefaultsUnchanged:true,existingBulkCopiesUnchanged:true,scope:'one qualified complete synchronous owner operation; no retained encoded bytes',newAcrossInvocationEncodedCache:false,originalHashCallsUnchanged:true,performanceQualified:false,runtimeExecuted:false,sourceAuthority:false,runtimeAuthority:false};"
+    }
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeAuthority": false,
+  "productionExecutableGain": 0
+}

@@ -1,0 +1,4 @@
+# GENERATED: checked portable-router-v1 bodies; no source envelopes.
+(function error (parameters (message utf16-string) (exit_code value (default (number 1)))) (returns error%3A%5B%5B%22code%22%2C%22string%22%5D%2C%5B%22exitCode%22%2C%22value%22%5D%5D) (body (return (error (message (variable message)) (field code (string remote-operation)) (field exitCode (variable exit_code))))))
+(function out (parameters (output array-value (rest))) (returns record%3A%5B%5B%22output%22%2C%22array-value%22%5D%5D) (body (return (record (field output (variable output))))))
+(function nullish (parameters (value value)) (returns value) (body (return (choose (binary equal (variable value) (undefined)) (null) (variable value)))))

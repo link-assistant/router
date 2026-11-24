@@ -1,0 +1,53 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {resolveModuleGraph} from '../project.mjs';
+
+test('physical source discovery retains the original JSON-hook refusal before any callback',
+  {timeout:60000},()=>{
+  const field=Object.getOwnPropertyDescriptor(JSON,'stringify'),calls=[],reads=[];
+  const define=Object.defineProperty,apply=Reflect.apply;
+  let error;
+  try{
+    define(JSON,'stringify',{...field,value:function(...args){
+      calls.push(args);return apply(field.value,this,args);
+    }});
+    try{resolveModuleGraph({entry:'src/lib.rs',paths:['src/lib.rs'],
+      readSource(path){reads.push(path);return 'pub fn answer()->u8{7u8}';}});}
+    catch(value){error=value;}
+  }finally{define(JSON,'stringify',field);}
+  assert.ok(error instanceof TypeError);
+  assert.equal(error.message,'Private parser execution: native source operations changed');
+  assert.deepEqual(reads,['src/lib.rs']);assert.deepEqual(calls,[]);
+});
+
+test('a source reader that changes JSON still refuses at the original ingress boundary',
+  {timeout:60000},()=>{
+  const field=Object.getOwnPropertyDescriptor(JSON,'stringify'),calls=[],reads=[];
+  const define=Object.defineProperty,apply=Reflect.apply;
+  let error;
+  try{
+    try{resolveModuleGraph({entry:'src/lib.rs',paths:['src/lib.rs'],readSource(path){
+      reads.push(path);define(JSON,'stringify',{...field,value:function(...args){
+        calls.push(args);return apply(field.value,this,args);
+      }});return 'mod child;';}});}
+    catch(value){error=value;}
+  }finally{define(JSON,'stringify',field);}
+  assert.ok(error instanceof TypeError);
+  assert.equal(error.message,'Private parser execution: native source operations changed');
+  assert.deepEqual(reads,['src/lib.rs']);assert.deepEqual(calls,[]);
+});
+
+test('source-reader errors remain first and restored native state admits fresh changed sources',
+  {timeout:60000},()=>{
+  const failure=new Error('original physical read failed');
+  assert.throws(()=>resolveModuleGraph({entry:'src/lib.rs',paths:['src/lib.rs'],
+    readSource(){throw failure;}}),error=>error===failure);
+  let source='pub fn answer()->u8{7u8}';
+  const options={entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source};
+  const before=resolveModuleGraph(options);source='pub fn changed()->u8{9u8}';
+  const after=resolveModuleGraph(options);
+  assert.equal(before.modules[0].source,'pub fn answer()->u8{7u8}');
+  assert.equal(after.modules[0].source,source);
+  assert.deepEqual(before.diagnostics,[]);assert.deepEqual(after.diagnostics,[]);
+  assert.notDeepEqual(before.concreteSyntaxMeta,after.concreteSyntaxMeta);
+});

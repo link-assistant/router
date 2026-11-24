@@ -1,0 +1,15 @@
+{
+  "completeSourceVersions": 3120,
+  "rootReachableSourceVersions": 3120,
+  "missing": 0,
+  "containerBytes": 242633,
+  "containerSha256": "c52a16208c7d907199e28049ec882a2a8eee95e2b858dbb484546d622878d21b",
+  "decodedBytes": 1309024,
+  "decodedSha256": "87a5ed9d2e25ab222b9a73936de98328705f5f7486c9a9c491c378dc9f2ae4b3",
+  "rootCommitCounts": {
+    "12b4353ac912b99e1eb1aad0662ae0b23d41557e": 3119,
+    "a40901b8145d15f51aa0714e78294540827c8add": 1,
+    "32cbf93df679f03c8e344383d3fc38485a6edddc": 0
+  },
+  "originalWorkerSourceReceiptsUnchanged": true
+}

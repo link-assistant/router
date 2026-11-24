@@ -1,0 +1,38 @@
+{
+  "schema": "borrowed-standard-map-context-substitutions-20261103-v1",
+  "language": [
+    {
+      "id": "language:select-distinct-unrestricted-native-source-context-0",
+      "before": "proveOrderedTextMapNativeSourceContext",
+      "after": "proveBorrowedStandardMapNativeSourceContext",
+      "count": 1
+    },
+    {
+      "id": "language:select-distinct-unrestricted-native-source-context-1",
+      "before": "requireOrderedTextMapNativeSourceContext",
+      "after": "requireBorrowedStandardMapNativeSourceContext",
+      "count": 1
+    },
+    {
+      "id": "language:select-distinct-unrestricted-native-source-context-2",
+      "before": "module.path.join('::')==='translation_ordered_text_map_core'",
+      "after": "module.path.join('::')==='borrowed_standard_map_20261102'",
+      "count": 1
+    },
+    {
+      "id": "language:select-distinct-unrestricted-native-source-context-3",
+      "before": "Ordered-map native original source context: ",
+      "after": "Borrowed standard-map native original source context: ",
+      "count": 1
+    },
+    {
+      "id": "language:select-distinct-unrestricted-native-source-context-4",
+      "before": "ordered-map-native-source-context-v1",
+      "after": "borrowed-standard-map-native-source-context-20261103-v1",
+      "count": 1
+    }
+  ],
+  "repository": [],
+  "sourceAuthority": false,
+  "verification": "UNRUN"
+}

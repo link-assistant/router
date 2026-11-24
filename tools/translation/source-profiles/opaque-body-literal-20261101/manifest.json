@@ -1,0 +1,13 @@
+{
+  "schema": "opaque-body-literal-complete-source-copies-v1",
+  "archive": "complete-source-copies.json.gz",
+  "sha256": "f901f3452d34e92ad0bde7adb3bb767b597f8a087de9880867b91938bde869a7",
+  "rawBytes": 176418,
+  "packedBytes": 27845,
+  "copyRows": 6,
+  "additionRows": 1,
+  "prerequisites": 2,
+  "currentCases": 3,
+  "sourceHistorySha256": "b745bd846f85e4417763b827ba81e5f9339aec184759f7f55b1933e341011350",
+  "executionEvidence": "UNRUN"
+}

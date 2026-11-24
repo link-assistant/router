@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {gzipSync} from 'node:zlib';
+import {translateProject} from '../../tools/translation/project.mjs';
+import {sha256} from '../../tools/translation/translate.mjs';
+import {sourceItems} from '../../tools/translation/rust-structure.mjs';
+const root=new URL('../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8');
+const source=read('rust/src/anthropic_stream.rs'),item=sourceItems(source).find(row=>row.term==='fn'&&row.name==='response_content_key');
+assert.ok(item);
+const original=source.slice(item.start,item.end),files={'src/lib.rs':'pub mod translation_core;\nuse serde_json::Value;\n'+original};
+for(const path of ['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/json_collections.rs','src/translation_core/ranges.rs','src/translation_core/base64.rs'])files[path]=read('rust/'+path);
+const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>{assert.ok(Object.hasOwn(files,path));return files[path];}});
+const target=new URL('../../ci-logs/issue-784-restart-2/current-tuple-core-probe.json.gz',import.meta.url);
+writeFileSync(target,gzipSync(JSON.stringify({scope:'Authored scoped fixture, not original full-crate equivalence',files,original,result})),{flag:'wx'});
+console.log(JSON.stringify({originalSha256:sha256(original),executable:result.meta.executable.map(row=>row.name),refused:result.meta.refused.map(row=>({file:row.file,name:row.name,kind:row.kind,message:row.message,span:row.span})),diagnostics:result.meta.diagnostics}));

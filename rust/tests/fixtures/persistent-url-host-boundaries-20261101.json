@@ -1,0 +1,118 @@
+{
+  "schema": "persistent-url-host-boundaries-20261101-v1",
+  "status": "source-only-unrun",
+  "upstream": "url2.5.8",
+  "upstreamSource": "https://raw.githubusercontent.com/servo/rust-url/v2.5.8/url/src/host.rs",
+  "nativeBoundary": "null-nativeCanonical-means-actual-native-parser-error",
+  "targetBoundary": "null-launcher-or-operational-means-explicit-closed-domain-refusal",
+  "rows": [
+    {
+      "input": "https://EXAMPLE.COM:443/a/../b?token=sentinel#state",
+      "nativeCanonical": "https://example.com/b?token=sentinel#state",
+      "launcher": "https://example.com/b?token=%5Bredacted%5D#redacted",
+      "operational": "https://example.com/b"
+    },
+    {
+      "input": "http://user:pass@example.com:80/a?x=hello%20world&api_key=sentinel",
+      "nativeCanonical": "http://user:pass@example.com/a?x=hello%20world&api_key=sentinel",
+      "launcher": "http://redacted@example.com/a?x=hello+world&api_key=%5Bredacted%5D",
+      "operational": "http://example.com/a"
+    },
+    {
+      "input": "http://127.0.0.1:8080/a/./b?keep=one",
+      "nativeCanonical": "http://127.0.0.1:8080/a/b?keep=one",
+      "launcher": "http://127.0.0.1:8080/a/./b?keep=one",
+      "operational": "http://127.0.0.1:8080/a/b"
+    },
+    {
+      "input": "https://EXAMPLE.com:443/path",
+      "nativeCanonical": "https://example.com/path",
+      "launcher": "https://EXAMPLE.com:443/path",
+      "operational": "https://EXAMPLE.com:443/path"
+    },
+    {
+      "input": "https://example.com/?accessToken=a%2Bb&keep=one%20two",
+      "nativeCanonical": "https://example.com/?accessToken=a%2Bb&keep=one%20two",
+      "launcher": "https://example.com/?accessToken=%5Bredacted%5D&keep=one+two",
+      "operational": "https://example.com/"
+    },
+    {
+      "input": "https://example.com/?to%6ben=sentinel&token=again",
+      "nativeCanonical": "https://example.com/?to%6ben=sentinel&token=again",
+      "launcher": "https://example.com/?token=%5Bredacted%5D&token=%5Bredacted%5D",
+      "operational": "https://example.com/"
+    },
+    {
+      "input": "http://example.com:/?token=sentinel",
+      "nativeCanonical": "http://example.com/?token=sentinel",
+      "launcher": "http://example.com/?token=%5Bredacted%5D",
+      "operational": "http://example.com/"
+    },
+    {
+      "input": "http://[2001:0DB8:0:0:0:0:0:1]:80/a?secret=sentinel",
+      "nativeCanonical": "http://[2001:db8::1]/a?secret=sentinel",
+      "launcher": null,
+      "operational": "http://[2001:db8::1]/a"
+    },
+    {
+      "input": "http://[::ffff:192.0.2.128]/?token=sentinel",
+      "nativeCanonical": "http://[::ffff:c000:280]/?token=sentinel",
+      "launcher": null,
+      "operational": "http://[::ffff:c000:280]/"
+    },
+    {
+      "input": "http://127.1/?token=sentinel",
+      "nativeCanonical": "http://127.0.0.1/?token=sentinel",
+      "launcher": null,
+      "operational": null
+    },
+    {
+      "input": "http://0x7f.0.0.1/?token=sentinel",
+      "nativeCanonical": "http://127.0.0.1/?token=sentinel",
+      "launcher": null,
+      "operational": null
+    },
+    {
+      "input": "http://0177.0.0.1/?token=sentinel",
+      "nativeCanonical": "http://127.0.0.1/?token=sentinel",
+      "launcher": null,
+      "operational": null
+    },
+    {
+      "input": "http://bücher.example/?token=sentinel",
+      "nativeCanonical": "http://xn--bcher-kva.example/?token=sentinel",
+      "launcher": null,
+      "operational": null
+    },
+    {
+      "input": "http://example.com/a\\b?token=sentinel",
+      "nativeCanonical": "http://example.com/a/b?token=sentinel",
+      "launcher": null,
+      "operational": null
+    },
+    {
+      "input": "http://example.0xff/?token=sentinel",
+      "nativeCanonical": null,
+      "launcher": null,
+      "operational": null
+    },
+    {
+      "input": "http://x.0x/?token=sentinel",
+      "nativeCanonical": null,
+      "launcher": null,
+      "operational": null
+    },
+    {
+      "input": "http://x.0xBAD./?token=sentinel",
+      "nativeCanonical": null,
+      "launcher": null,
+      "operational": null
+    },
+    {
+      "input": "http://999.0.0.1/?token=sentinel",
+      "nativeCanonical": null,
+      "launcher": null,
+      "operational": null
+    }
+  ]
+}

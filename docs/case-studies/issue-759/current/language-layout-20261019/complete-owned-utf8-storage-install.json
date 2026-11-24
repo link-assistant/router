@@ -1,0 +1,17 @@
+{
+  "schema": "complete-owned-utf8-evidence-install-v1",
+  "archive": "docs/case-studies/issue-759/current/language-layout-20261019/complete-owned-utf8-storage.tar.xz",
+  "archiveBytes": 1541256,
+  "archiveSha256": "facc07a17df971c5b343a081603c3ea589d09f57e4cf9c999d59e6edf8b6228e",
+  "receipt": "docs/case-studies/issue-759/current/language-layout-20261019/complete-owned-utf8-storage-capture.json.gz",
+  "completeMembers": 150,
+  "captureSourceHead": "6ee92bf133ddc8f549970d685b6cc0c853e33c45",
+  "allMemberBytesReopened": true,
+  "fixedCaseStudyCapBytes": 500000000,
+  "allocatedBefore": 498106368,
+  "allocatedAfter": 499662848,
+  "originalsRetained": true,
+  "rustExecuted": false,
+  "fullGatePass": false,
+  "scope": "Complete declared source derivations, whole-file logs/audits and export proposals. Large actual CST observation input remains local; this archive does not qualify the live compiler."
+}

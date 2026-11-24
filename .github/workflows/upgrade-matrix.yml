@@ -10,17 +10,18 @@ name: Upgrade matrix
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - 'src/storage.rs'
-      - 'src/storage/**'
-      - 'src/storage_*.rs'
-      - 'src/token*.rs'
-      - 'src/providers.rs'
-      - 'src/managed_server*.rs'
-      - 'src/managed_server/**'
-      - 'tests/upgrade_fixture_test.rs'
-      - 'tests/fixtures/upgrade/**'
-      - 'src/lino_json.rs'
+      - 'rust/src/storage.rs'
+      - 'rust/src/storage/**'
+      - 'rust/src/storage_*.rs'
+      - 'rust/src/token*.rs'
+      - 'rust/src/providers.rs'
+      - 'rust/src/managed_server*.rs'
+      - 'rust/src/managed_server/**'
+      - 'rust/tests/upgrade_fixture_test.rs'
+      - 'rust/tests/fixtures/upgrade/**'
+      - 'rust/src/lino_json.rs'
       - 'scripts/upgrade-matrix.sh'
       - '.github/workflows/upgrade-matrix.yml'
   schedule:
@@ -36,13 +37,24 @@ permissions:
 
 concurrency:
   group: upgrade-matrix-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  javascript:
+    if: ${{ github.event_name != 'pull_request' || toJSON(github.event.pull_request.draft) == 'false' }}
+    name: JavaScript first (same commit)
+    uses: ./.github/workflows/javascript-manual-development.yml
+    with:
+      sha: ${{ github.sha }}
+    permissions:
+      contents: read
+
   releases:
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
+    needs: [javascript]
     name: Pick releases
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -61,6 +73,8 @@ jobs:
           echo "tags=$tags" >> "$GITHUB_OUTPUT"
 
   build:
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
+    needs: [javascript]
     name: Build router
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -93,8 +107,9 @@ jobs:
           retention-days: 1
 
   upgrade:
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
     name: Upgrade from ${{ matrix.tag }}
-    needs: [releases, build]
+    needs: [javascript, releases, build]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     strategy:

@@ -1,0 +1,1 @@
+Preserve item derive traits, constructor syntax and separate field and variant attributes through checked Rust meta-language data layouts. A Default derive allows its unchanged data layout to translate while generated trait methods remain explicit refusals; conditional and procedural attributes retain their diagnostics.

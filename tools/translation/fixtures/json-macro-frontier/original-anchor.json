@@ -1,0 +1,143 @@
+{
+  "schema": "original-json-macro-anchor-frontier-v1",
+  "sourceHead": "547f51a83",
+  "file": "src/bridge_request_tools.rs",
+  "fileSha256": "5ba0389968e32e9c99eebd7a38d32c80c8278e86278ace56290025c71a636941",
+  "fileBytes": 5308,
+  "function": "translate_tool_choice",
+  "functionSpan": {
+    "start": 1790,
+    "end": 2218,
+    "unit": "UTF-16"
+  },
+  "functionSha256": "2f9f0e36e37a38d89000e15f7cadad89f3855bbd245c6c38049d1955985e288e",
+  "originalImport": "use serde_json::{Value, json};",
+  "invocationsInFunction": 4,
+  "compilerCasesExecuted": 0,
+  "originalBodiesExecuted": 0,
+  "namespaceAuthority": false,
+  "expansionAuthority": false,
+  "runtimeParity": false,
+  "generatedTraitBehavior": false,
+  "expectedCases": [
+    {
+      "choice": {
+        "type": "auto"
+      },
+      "expected": {
+        "some": "auto"
+      }
+    },
+    {
+      "choice": {
+        "type": "any"
+      },
+      "expected": {
+        "some": "required"
+      }
+    },
+    {
+      "choice": {
+        "type": "none"
+      },
+      "expected": {
+        "some": "none"
+      }
+    },
+    {
+      "choice": {
+        "type": "tool",
+        "name": "alpha"
+      },
+      "expected": {
+        "some": {
+          "type": "function",
+          "function": {
+            "name": "alpha"
+          }
+        }
+      }
+    },
+    {
+      "choice": {
+        "type": "tool",
+        "name": "α💡"
+      },
+      "expected": {
+        "some": {
+          "type": "function",
+          "function": {
+            "name": "α💡"
+          }
+        }
+      }
+    },
+    {
+      "choice": {
+        "type": "tool",
+        "name": ""
+      },
+      "expected": {
+        "some": {
+          "type": "function",
+          "function": {
+            "name": ""
+          }
+        }
+      }
+    },
+    {
+      "choice": {
+        "type": "tool"
+      },
+      "expected": {
+        "none": true
+      }
+    },
+    {
+      "choice": {
+        "type": "tool",
+        "name": 23
+      },
+      "expected": {
+        "none": true
+      }
+    },
+    {
+      "choice": {
+        "type": "unknown"
+      },
+      "expected": {
+        "none": true
+      }
+    },
+    {
+      "choice": {},
+      "expected": {
+        "none": true
+      }
+    },
+    {
+      "choice": null,
+      "expected": {
+        "none": true
+      }
+    },
+    {
+      "choice": {
+        "type": 42
+      },
+      "expected": {
+        "none": true
+      }
+    }
+  ],
+  "pending": [
+    "actual resolved serde_json::json caller owner",
+    "canonical generated Value/Map paths and mixed-site key Into<String> owner",
+    "unified Cargo features",
+    "existing checked JSON get/and_then/match/? composition",
+    "sealed original checked interpolation IR and canonical Serialize profiles",
+    "shared runtime/assets integration not assigned"
+  ]
+}

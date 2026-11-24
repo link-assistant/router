@@ -1,0 +1,80 @@
+{
+  "schema": "response-affinity-selector-repair-evidence-v1",
+  "sourceContext": "1c780434e2fb1fb942dfb93088434f8a93308549",
+  "originalSource": {
+    "path": "src/response_affinity.rs",
+    "sha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+    "methods": [
+      {
+        "owner": "ResponseNamespace",
+        "name": "from_path",
+        "span": {
+          "start": 1179,
+          "end": 1953
+        },
+        "sha256": "ada188f51465b090bb836191fc7124f4b8248e7b4050d4473a3ae06f48027c57",
+        "expectation": "verified-whole-original-file-js-and-strict-typescript"
+      },
+      {
+        "owner": "ResponseNamespace",
+        "name": "conversations_from_path",
+        "span": {
+          "start": 1959,
+          "end": 2533
+        },
+        "sha256": "91604f53f5d3df033a1105003d5f24ed4134896f8150239731d52f68be8fc95b",
+        "expectation": "verified-whole-original-file-js-and-strict-typescript"
+      }
+    ]
+  },
+  "initialFailure": {
+    "runner": "node",
+    "suite": "derive-helper-originals",
+    "message": "stale zero-certificate expectation: expected 0, actual 5",
+    "fullBatchLog": "/tmp/router-759-final-preflight-1c780434.log",
+    "boundedRawFailureArchived": true
+  },
+  "final": {
+    "node": {
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 2538.499458
+    },
+    "bun": {
+      "passed": 3,
+      "failed": 0,
+      "durationMs": 1780
+    },
+    "targets": [
+      "javascript",
+      "strict-compiled-typescript"
+    ],
+    "literalRoutingOutcomesPerTarget": 54,
+    "inputDomainGuardsPerTarget": 10
+  },
+  "limits": {
+    "runtimeParity": false,
+    "rustExecution": false,
+    "wholeFileBehavior": false,
+    "generatedTraitBehavior": false,
+    "bangMacroClosure": false,
+    "storageBehavior": false
+  },
+  "archives": {
+    "diagnostic.json.gz": {
+      "bytes": 9327,
+      "uncompressedBytes": 127327,
+      "sha256": "04eae83ca8bf3c8960a8d8ec541d12ba238b5cd0ea3ff3f7e52b894fc630a9e3",
+      "uncompressedSha256": "58c8608631d3e24b6d13dd62fbefb6f380157f0d8edf6dd598de255278ef2b50",
+      "reopenedBytesEqual": true
+    },
+    "logs.json.gz": {
+      "bytes": 1853,
+      "uncompressedBytes": 5035,
+      "sha256": "1ded92a065a78b626402149bdd0658bd15be0315f51f90418eb7c6b4561fd867",
+      "uncompressedSha256": "01a0c944175114566bbb78b0dcc7a7826332d4edf409827aa58da74a6278278d",
+      "reopenedBytesEqual": true
+    }
+  }
+}

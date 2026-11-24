@@ -1,0 +1,108 @@
+{
+  "schema": "serde-alias-default-repair-validation-v1",
+  "head": "f90e8f8dca0c6a7dc0b28469bfe6c0284d9d192f",
+  "results": [
+    {
+      "engine": "node",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/serialization-schema/bulk.test.mjs",
+        "tools/translation/serialization-schema/serialization-schema.test.mjs",
+        "tools/translation/serialization-schema/scalars-direction.test.mjs",
+        "tools/translation/serialization-schema/aliases-defaults.test.mjs"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 20.361,
+      "temporary_bytes_before_cleanup": 491,
+      "remaining_temporary_entries_before_cleanup": [
+        "xcrun_db"
+      ],
+      "authoredCases": 64,
+      "passed": 64,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "engine": "bun",
+      "command": [
+        "bun",
+        "test",
+        "--timeout",
+        "15000",
+        "tools/translation/serialization-schema/bulk.test.mjs",
+        "tools/translation/serialization-schema/serialization-schema.test.mjs",
+        "tools/translation/serialization-schema/scalars-direction.test.mjs",
+        "tools/translation/serialization-schema/aliases-defaults.test.mjs"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 12.612,
+      "temporary_bytes_before_cleanup": 491,
+      "remaining_temporary_entries_before_cleanup": [
+        "xcrun_db"
+      ],
+      "authoredCases": 64,
+      "passed": 64,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "retainedInitialFailureCheckpoint": "6353e7151",
+  "retainedInitialFailuresPerEngine": 9,
+  "immutableInputCount": 1317,
+  "immutableInputs": true,
+  "beforeStatus": "?? packages/javascript/node_modules",
+  "afterStatus": "?? packages/javascript/node_modules",
+  "sourceNativeArtifactWrites": false,
+  "productionImportsChanged": false,
+  "rawDirectory": "/var/folders/cl/831lqjgd58v5mb_m74cfdfcw0000gn/T/router-759-serialization64-nyn0jzed",
+  "rawArchive": {
+    "file": "aliases-defaults-repair-raws.tar.gz",
+    "bytes": 221632,
+    "sha256": "8fadd2ca2627fc5a691bbcc38505ebecc5470c4cf35407910ccfaf91ef4fd1e7",
+    "deterministicCompression": true,
+    "reopenedExactMembers": {
+      "bun.log": {
+        "bytes": 7430,
+        "sha256": "f9dc46e02b8520ff60af3b41b4927f6c7d127cb18ea9e1b2d91ec66235fa4d3e"
+      },
+      "frozen-plan.json": {
+        "bytes": 1521,
+        "sha256": "7517bc173b380fbba8b52d4c039b027898d2cf25506bdb773ed07cc8e0774b70"
+      },
+      "harness.py": {
+        "bytes": 5483,
+        "sha256": "ccd58d7b2530d80a6758d404a77061a9cc2e0d6fdb883aace3085bec467948cd"
+      },
+      "inputs.json": {
+        "bytes": 160592,
+        "sha256": "a48cee93946865020d48d2fe440074c0177967508c29452f3bb3c6c08ec62ebc"
+      },
+      "node.log": {
+        "bytes": 15661,
+        "sha256": "9ffe024eb55ea50301b9a8c428f8aed4c7188f18961914f41236893d4366421a"
+      },
+      "prerequisite-hydration.json": {
+        "bytes": 157501,
+        "sha256": "eb2b0053729d1a8d3f6799e5349ed64c1fbf43a1fd29b3cbdee0c89458dceb8f"
+      },
+      "receipt.json": {
+        "bytes": 321829,
+        "sha256": "cab915e8d7569d888c7c50c1facd96abf22882a569727a046f2f76c89004af03"
+      }
+    }
+  },
+  "caseFiles": {
+    "tools/translation/serialization-schema/bulk.test.mjs": "d1bb985f3dcbd0493d0987e86281ee4a1a708dceaa8cad99378318b4f2cde4e7",
+    "tools/translation/serialization-schema/serialization-schema.test.mjs": "d4d31a9681b8847b547cc7ac21deff442364f69e1ce9370865679492d49e47d9",
+    "tools/translation/serialization-schema/scalars-direction.test.mjs": "7de024807fd37e6dfba3b9010c68a81efea0c84ddf572c3824388bed13692b44",
+    "tools/translation/serialization-schema/aliases-defaults.test.mjs": "352837becd9e9b9c12595d6312cae5b9e132c20d77f6a1f780f957771b1d93a9"
+  },
+  "engineSlotReleased": true,
+  "persistentBulkProducerRun": false,
+  "runtimeAuthority": false,
+  "generatedTraitBehavior": false
+}

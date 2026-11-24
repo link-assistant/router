@@ -1,0 +1,5 @@
+# GENERATED: checked portable-router-v1 bodies; no source envelopes.
+(constant strategy_aliases (type table-map-string) (value (table-map (entry (string rr) (string round-robin)) (entry (string roundrobin) (string round-robin)) (entry (string weighted_round_robin) (string weighted-round-robin)) (entry (string prio) (string priority)) (entry (string fill-first) (string priority)) (entry (string leastused) (string least-used)) (entry (string quota-first) (string least-used)) (entry (string lru) (string least-used)))))
+(function retryable_status (exported) (parameters (status value)) (returns boolean) (body (return (includes (values (number 401) (number 429) (number 529) (number 500) (number 502) (number 503) (number 504)) (argument (variable status))))))
+(constant subscription_kinds (type table-set) (value (table-set (string anthropic) (string claude) (string codex) (string gemini) (string qwen) (string vertex) (string vertex-ai) (string bedrock))))
+(constant stored_kinds (type table-set) (value (table-set (string openai-compatible) (string openai) (string litellm) (string lefine) (string z.ai-coding-plan))))

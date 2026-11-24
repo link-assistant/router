@@ -1,0 +1,70 @@
+[
+  {
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/2_bindings (macos-15, 20).txt.xz",
+    "sha256": "79c73910f08e2bc124b74c8e1c2f475d649c1e04bda13664378d43616eb28fb8",
+    "bytes": 28676,
+    "uncompressed_bytes": 225575,
+    "redacted": false,
+    "original_gzip_sha256": "a8cda73c5b94139241e316eb159f3d7b253448a87879d05106d2fd297e08b6e1",
+    "compression": "xz",
+    "decoded_sha256": "f0e869b4ccf8dd537a675898d5da439f834852d9170ea168f69046a1067cb09d"
+  },
+  {
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/bindings (macos-15, 20)/system.txt.gz",
+    "sha256": "30ccd108247e26fc3103f5d6b6764cc3cd06742b82fd8a77708d8ea3116fbedf",
+    "bytes": 387,
+    "uncompressed_bytes": 728,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/3_bindings (macos-15, 24).txt.xz",
+    "sha256": "9ef49716b5ec98ff4dbb1e0096a09f9a042df5d9f9df4ae8fc08e7f4aec50f60",
+    "bytes": 27896,
+    "uncompressed_bytes": 222417,
+    "redacted": false,
+    "original_gzip_sha256": "5f37be5d7a54fcdd8a4b5ca35928cb8dfec71caf3d8fda605573062558bdaf7c",
+    "compression": "xz",
+    "decoded_sha256": "a172e24b566ca3429435fdf6a9ae4daaa983cf7a26cca7773bd5ebe10e75b42d"
+  },
+  {
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/bindings (macos-15, 24)/system.txt.gz",
+    "sha256": "909b1a00f85c2d72343782bfd0dfb8472b775e11afbad183b99b9547e4ab0eab",
+    "bytes": 391,
+    "uncompressed_bytes": 728,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/4_semver.txt.xz",
+    "sha256": "39fb2d6d3200691be5b1e1e74c22ac697e4b291c2686a1dfeb7e30569cd50e87",
+    "bytes": 16848,
+    "uncompressed_bytes": 121447,
+    "redacted": false,
+    "original_gzip_sha256": "c06166062de3ee2d9817753eaa3543092ad087c6b76b575be8f5cece5437dcf6",
+    "compression": "xz",
+    "decoded_sha256": "7c1cc358d3b876630a3a380205ebb3ff7d5eac41f7023a34717ac5417bebbcc1"
+  },
+  {
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/semver/system.txt.gz",
+    "sha256": "a0f2f27508a825af6c41522a762a6845075df8710bef3ee5ea41c1a7d5a3339c",
+    "bytes": 446,
+    "uncompressed_bytes": 863,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/5_generated-http.txt.xz",
+    "sha256": "aa9a2b7d230f36509422e04dd19b0947826170f463f6e2df75658fdd451b5a5a",
+    "bytes": 35160,
+    "uncompressed_bytes": 433655,
+    "redacted": false,
+    "original_gzip_sha256": "9d66458ad54a69dabb63f83a813070fed164fa1947d89f9ed306e91d37060290",
+    "compression": "xz",
+    "decoded_sha256": "77e967e36a861b073765e50e57fd49be2fa1b1ec6cdc75039413b9522391b53a"
+  },
+  {
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/generated-http/system.txt.gz",
+    "sha256": "76020cbaee0fe92ec783be5870efc2da73f97d985bf7deba2dcac064a3186b63",
+    "bytes": 404,
+    "uncompressed_bytes": 742,
+    "redacted": false
+  }
+]

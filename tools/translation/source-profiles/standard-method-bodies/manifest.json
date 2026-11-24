@@ -1,0 +1,55 @@
+{
+  "schema": "original-standard-method-body-source-profile-v1",
+  "profile": "rust-1.89-source-standard-method-bodies",
+  "rust": "1.89.0",
+  "sources": [
+    {
+      "file": "../option-deref/core-option.rs.gz",
+      "rustPath": "library/core/src/option.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/option.rs",
+      "role": "Option inherent method bodies",
+      "bytes": 86718,
+      "sha256": "4c172731ebf0ef2ae6fc3e9b5127096d3c5c400c3757cfe5e38223de91bc3efd",
+      "compressedBytes": 18396,
+      "compressedSha256": "2f8986530d23db3ed08f32fbe8b0c82b7ffb1c3abe6b407b38ff989998739cb1",
+      "gitBlobSha": "f2a1e901188ffca8280d6fd3d6de5eccbc888686"
+    },
+    {
+      "file": "../utf16-fixed-f64/core-str-mod.rs.gz",
+      "rustPath": "library/core/src/str/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/str/mod.rs",
+      "role": "borrowed str Default impl",
+      "bytes": 109322,
+      "sha256": "c4d2f7564389d6007eb62f287a0efdda865a7133ec0a7d47d66be581794ac416",
+      "compressedBytes": 17614,
+      "compressedSha256": "5c41e64ff9a819e50600e8db67f4738c0f5ef805eae3946cfdfa3aa139deb6f0",
+      "gitBlobSha": "3b9b9809c8584f41a991a6ebfeb7014eca447f7e"
+    },
+    {
+      "file": "../derive/rust-1.89-default-library_core_src_default.rs.gz",
+      "rustPath": "library/core/src/default.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/default.rs",
+      "role": "Default trait and original primitive default_impl macro",
+      "bytes": 5230,
+      "sha256": "3243a2ab9bef952e885d8d8c241612716e955ea2740426f7d1484f6d392ed69d",
+      "compressedBytes": 1526,
+      "compressedSha256": "8c61d6172846164659de1be4d0fd0bb67b04daa349918f400546f5fd5084a79e",
+      "gitBlobSha": "0a15cedfb552d968f8dc79e016c2dafd83071b3d"
+    },
+    {
+      "file": "../result-iterators/core-result.rs.gz",
+      "rustPath": "library/core/src/result.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/result.rs",
+      "bytes": 69180,
+      "compressedBytes": 14134,
+      "sha256": "9166f16035d67e4b42b9439b3f2400a07866a8ff111d7d544584c593d39e2ecc",
+      "compressedSha256": "30d240da09888014cec8e916965cf9631a9552f5995250ca44a4c198ea40953d",
+      "gitBlobSha": "7f3f29649854496857f961a6c1bdebbf4dfeeb1b"
+    }
+  ],
+  "automaticCallerBodies": true,
+  "wholeCoreTranslated": false,
+  "namespaceComplete": false,
+  "traitComplete": false,
+  "dropSemanticsComplete": false
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "router-portable-original-git-v1",
+  "sourceHead": "f9167f806f9da5143cfde7671fd4cac40fedfef0",
+  "archive": "objects.json.gz",
+  "bytes": 391586,
+  "sha256": "81edbc87daba7e98ca2bdb9f006a73e3403625a1d373f322821910f4c99f1d00",
+  "rawBytes": 1056705,
+  "rawSha256": "6fb74dbc34d739a81d980f3febfe188474ae4bf549e87924805ad9d6f4bfe37f",
+  "trace": [
+    {
+      "phase": "language",
+      "id": "portable-git.capture-complete-original-objects"
+    },
+    {
+      "phase": "repository",
+      "id": "portable-git.fixed-test-data-packet"
+    }
+  ]
+}

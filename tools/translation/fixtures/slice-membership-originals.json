@@ -1,0 +1,296 @@
+{
+  "sourceContext": "d66268f68",
+  "purpose": "Whole unchanged files; four historical first refusals were expected string but found array:string. No emitted-body recovery is claimed before execution.",
+  "validationStatus": "unrun-source-only-draft",
+  "rustExecution": false,
+  "runtimeParity": false,
+  "productionBodiesVerified": 0,
+  "entries": [
+    {
+      "path": "src/codex_cloudflare_cookies.rs",
+      "sourceSha256": "c5acf2c32401baf01633f5d3b702d71f203698a7fd84b96b51562416d02d8e42",
+      "bytes": 13751,
+      "declarations": [
+        {
+          "name": "is_allowed_chatgpt_host",
+          "term": "fn",
+          "span": {
+            "start": 2244,
+            "end": 2426
+          },
+          "sha256": "63d6239a61135b56c25bae420c97c2819855b396db8e9deeaaaca37eb6be15f6",
+          "cases": [
+            [
+              "chatgpt.com",
+              true
+            ],
+            [
+              "chat.openai.com",
+              true
+            ],
+            [
+              "chatgpt-staging.com",
+              true
+            ],
+            [
+              "a.chatgpt.com",
+              true
+            ],
+            [
+              "a.chatgpt-staging.com",
+              true
+            ],
+            [
+              ".chatgpt.com",
+              true
+            ],
+            [
+              "ChatGPT.com",
+              false
+            ],
+            [
+              "chatgpt.com.evil",
+              false
+            ],
+            [
+              "openai.com",
+              false
+            ],
+            [
+              "",
+              false
+            ],
+            [
+              "evilchatgpt.com",
+              false
+            ],
+            [
+              "a.chat.openai.com",
+              false
+            ]
+          ]
+        },
+        {
+          "name": "is_allowed_cookie_name",
+          "term": "fn",
+          "span": {
+            "start": 2428,
+            "end": 2547
+          },
+          "sha256": "10f4ee14815180e27e9ea872572ae8a05de0f8a739f40231a2c883c7b58cbf32",
+          "cases": [
+            [
+              "__cf_bm",
+              true
+            ],
+            [
+              "__cflb",
+              true
+            ],
+            [
+              "__cfruid",
+              true
+            ],
+            [
+              "__cfseq",
+              true
+            ],
+            [
+              "__cfwaitingroom",
+              true
+            ],
+            [
+              "_cfuvid",
+              true
+            ],
+            [
+              "cf_clearance",
+              true
+            ],
+            [
+              "cf_ob_info",
+              true
+            ],
+            [
+              "cf_use_ob",
+              true
+            ],
+            [
+              "cf_chl_",
+              true
+            ],
+            [
+              "cf_chl_xyz",
+              true
+            ],
+            [
+              "",
+              false
+            ],
+            [
+              "session_token",
+              false
+            ],
+            [
+              "account-secret",
+              false
+            ],
+            [
+              "__cf_bm_suffix",
+              false
+            ],
+            [
+              "CF_CHL_x",
+              false
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/conversation_record/matching.rs",
+      "sourceSha256": "4ea90da483eab727d44addc6a982b35876429401ad8780f31641d7036792075d",
+      "bytes": 6336,
+      "declarations": [
+        {
+          "name": "header_is_compared",
+          "term": "fn",
+          "span": {
+            "start": 1639,
+            "end": 1767
+          },
+          "sha256": "4bffb0b9c8f427be39929adff8bb2b3dc1188ee1ed438ba95e70fc2a6b0f9d92",
+          "cases": [
+            [
+              "authorization",
+              false
+            ],
+            [
+              "content-length",
+              false
+            ],
+            [
+              "host",
+              false
+            ],
+            [
+              "proxy-authorization",
+              false
+            ],
+            [
+              "user-agent",
+              false
+            ],
+            [
+              "x-api-key",
+              false
+            ],
+            [
+              "x-request-id",
+              false
+            ],
+            [
+              "date",
+              false
+            ],
+            [
+              "cookie",
+              false
+            ],
+            [
+              "AUTHORIZATION",
+              false
+            ],
+            [
+              "X-API-KEY",
+              false
+            ],
+            [
+              "x-test",
+              true
+            ],
+            [
+              "x-api-key-more",
+              true
+            ],
+            [
+              "héader",
+              true
+            ],
+            [
+              " host",
+              true
+            ],
+            [
+              "",
+              true
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/token_secret.rs",
+      "sourceSha256": "a158416f1f1bd591e909a43ea5ee6dc1fcd5bebdf864e3e0b8684a453e1d5aae",
+      "bytes": 6260,
+      "declarations": [
+        {
+          "name": "is_placeholder",
+          "term": "fn",
+          "span": {
+            "start": 1862,
+            "end": 1995
+          },
+          "sha256": "02060962725a447442a47ccd5385615a7a3db0d134c6642cd8a927a6d9efe829",
+          "cases": [
+            [
+              "unused-by-remote-command",
+              true
+            ],
+            [
+              "unused-by-auth",
+              true
+            ],
+            [
+              "unused-by-this-client-command",
+              true
+            ],
+            [
+              "\u0000link-assistant-router:no-token-secret:",
+              true
+            ],
+            [
+              "\u0000link-assistant-router:no-token-secret:reason",
+              true
+            ],
+            [
+              "",
+              false
+            ],
+            [
+              "real-secret",
+              false
+            ],
+            [
+              "🦀-secret",
+              false
+            ],
+            [
+              "UNUSED-BY-AUTH",
+              false
+            ],
+            [
+              "unused-by-auth-extra",
+              false
+            ],
+            [
+              "\u0000other-prefix",
+              false
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "plannedLiteralOutcomesPerTarget": 55
+}

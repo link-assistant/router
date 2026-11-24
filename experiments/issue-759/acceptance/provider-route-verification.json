@@ -1,0 +1,193 @@
+{
+  "schema": "provider-route-census-verification-v1",
+  "verified_head": "a6e464b91d0e06f82a3dac5a336a0791226c4ab8",
+  "runtime_checkpoint": "b82fecdb89f114c6687e98caf9c7da10fb4721fb",
+  "scope": [
+    "packages/javascript/test/native-routes.test.mjs"
+  ],
+  "authored_tests_per_engine": 1,
+  "route_rows_per_engine": 368,
+  "initial": {
+    "results": [
+      {
+        "engine": "node",
+        "command": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "packages/javascript/test/native-routes.test.mjs"
+        ],
+        "exit_code": 1,
+        "timed_out": false,
+        "wall_seconds": 0.146,
+        "temporary_bytes_before_cleanup": 0,
+        "remaining_temporary_entries_before_cleanup": []
+      },
+      {
+        "engine": "bun",
+        "command": [
+          "bun",
+          "test",
+          "--timeout",
+          "120000",
+          "packages/javascript/test/native-routes.test.mjs"
+        ],
+        "exit_code": 1,
+        "timed_out": false,
+        "wall_seconds": 0.089,
+        "temporary_bytes_before_cleanup": 0,
+        "remaining_temporary_entries_before_cleanup": []
+      }
+    ],
+    "failure": "Missing sparse openapi/router.yaml before census execution",
+    "original_immutable_inputs_field_invalid": true,
+    "independent_inputs_unchanged": true
+  },
+  "retry": {
+    "results": [
+      {
+        "engine": "node",
+        "command": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "packages/javascript/test/native-routes.test.mjs"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "wall_seconds": 68.718,
+        "temporary_bytes_before_cleanup": 0,
+        "remaining_temporary_entries_before_cleanup": []
+      },
+      {
+        "engine": "bun",
+        "command": [
+          "bun",
+          "test",
+          "--timeout",
+          "120000",
+          "packages/javascript/test/native-routes.test.mjs"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "wall_seconds": 49.175,
+        "temporary_bytes_before_cleanup": 0,
+        "remaining_temporary_entries_before_cleanup": []
+      }
+    ],
+    "input_count": 172,
+    "immutable_inputs": true
+  },
+  "archive": {
+    "file": "provider-route-verification-raws.tar.gz",
+    "sha256": "de2b045dc59dd81505cf27445ef409fa6775dfdc5439e5902386f5ee9f7d62cf",
+    "bytes": 24946,
+    "members": [
+      {
+        "file": "initial-runner/plan.json",
+        "bytes": 534,
+        "sha256": "02609f260d9fac8c1bbaa6ffed22e8c26d8ccb33376fa21d7aebd66b50680c5c",
+        "reopened_verified": true
+      },
+      {
+        "file": "initial-runner/run.py",
+        "bytes": 5004,
+        "sha256": "2eac2a7442ba9501db19692ea7d84ff089232df7153e7b288b7e7ed3d704df45",
+        "reopened_verified": true
+      },
+      {
+        "file": "initial/bun.log",
+        "bytes": 1388,
+        "sha256": "cb1ce6d5e3c319e2cdcfb973e742e73f929e8fc0e16f9d6aa0aadf6ecb922d94",
+        "reopened_verified": true
+      },
+      {
+        "file": "initial/harness.py",
+        "bytes": 5004,
+        "sha256": "2eac2a7442ba9501db19692ea7d84ff089232df7153e7b288b7e7ed3d704df45",
+        "reopened_verified": true
+      },
+      {
+        "file": "initial/inputs.json",
+        "bytes": 21705,
+        "sha256": "a98282289491b1b4aede45eff75cc04eb09efc0fc3c5d0dd77195310f274080c",
+        "reopened_verified": true
+      },
+      {
+        "file": "initial/node.log",
+        "bytes": 1284,
+        "sha256": "6ef3fd1c3a2b06e61cb487b137a64c6d77035605c328d4b79475e48b9dbf8d4d",
+        "reopened_verified": true
+      },
+      {
+        "file": "initial/receipt.json",
+        "bytes": 43839,
+        "sha256": "26891987b1c548040ba9f2f9f82859598a6ddfa0bf1c423e4a1301039ad8d80d",
+        "reopened_verified": true
+      },
+      {
+        "file": "prerequisites/openapi-materialization.json",
+        "bytes": 342,
+        "sha256": "c4c63223704857feed4cb4c54f668a38697bec5bb9cc711f526addc438836836",
+        "reopened_verified": true
+      },
+      {
+        "file": "retry-runner/initial-run-audit.json",
+        "bytes": 346,
+        "sha256": "af767675da9725691c3c0137836da01d2c2a5e0ab717f73c9f87f668e3f88091",
+        "reopened_verified": true
+      },
+      {
+        "file": "retry-runner/plan.json",
+        "bytes": 482,
+        "sha256": "a4c512f4306587a682abe5cdc51afc24306e659321d479763b45587efac8e11a",
+        "reopened_verified": true
+      },
+      {
+        "file": "retry-runner/run.py",
+        "bytes": 5051,
+        "sha256": "1fd89544e5a51ca5a06834f8230c2cc636f3ff2200b8555bd48a0a8a813caa37",
+        "reopened_verified": true
+      },
+      {
+        "file": "retry/bun.log",
+        "bytes": 218,
+        "sha256": "fc246b762d87221a540dc307bc0bcff99aae3656df541ca0d6ad3aedc7592cfd",
+        "reopened_verified": true
+      },
+      {
+        "file": "retry/harness.py",
+        "bytes": 5051,
+        "sha256": "1fd89544e5a51ca5a06834f8230c2cc636f3ff2200b8555bd48a0a8a813caa37",
+        "reopened_verified": true
+      },
+      {
+        "file": "retry/inputs.json",
+        "bytes": 21800,
+        "sha256": "bac061f5b61e467005a8f071961276d02f92299f144731c82f3ec2c5132c95d5",
+        "reopened_verified": true
+      },
+      {
+        "file": "retry/node.log",
+        "bytes": 315,
+        "sha256": "96655e0d0b21e9d921923711a798ee31bdec19d1770ac19e45ae643ffb1b109d",
+        "reopened_verified": true
+      },
+      {
+        "file": "retry/receipt.json",
+        "bytes": 43953,
+        "sha256": "a7b766c012042b943a57a8dcf06d733a452692f3da7dfacc4c5f197ca44b907e",
+        "reopened_verified": true
+      },
+      {
+        "file": "runtime-proof.json",
+        "bytes": 93,
+        "sha256": "23548ea889fc0f601407277e12a03312e3c711bcd1e85878358fc72552bf15c2",
+        "reopened_verified": true
+      }
+    ]
+  },
+  "runtime_unchanged_from_prefix149": true,
+  "fullParity": false,
+  "automation_or_rust_claim": false
+}

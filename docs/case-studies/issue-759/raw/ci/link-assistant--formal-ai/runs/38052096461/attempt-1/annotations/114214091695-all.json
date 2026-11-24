@@ -1,0 +1,62 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/a6e369c074e57b5c78334e447d721435fb87bb1f/.github",
+    "start_line": 47,
+    "start_column": null,
+    "end_line": 47,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "sccache stats - ladder",
+    "message": "37% - 553 hits, 927 misses, 0 errors",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/a6e369c074e57b5c78334e447d721435fb87bb1f/.github",
+    "start_line": 112,
+    "start_column": null,
+    "end_line": 112,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 124.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/a6e369c074e57b5c78334e447d721435fb87bb1f/.github",
+    "start_line": 73,
+    "start_column": null,
+    "end_line": 73,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "Agent CLI primary verification exceeded its execution budget",
+    "message": "The command was terminated after 1200s, its full 1200s execution budget. The budget expires before `timeout-minutes` so this reports as a failure instead of a cancelled job (issue #977, issue #1017). Speed up or repartition the work, or raise the budget together with the job timeout.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/a6e369c074e57b5c78334e447d721435fb87bb1f/.github",
+    "start_line": 29,
+    "start_column": null,
+    "end_line": 29,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "Agent CLI primary verification is approaching its timeout",
+    "message": "The command is still running after 840s (70% of its 1200s execution budget). Speed up or repartition it before the budget terminates the step.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/a6e369c074e57b5c78334e447d721435fb87bb1f/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+    "raw_details": ""
+  }
+]

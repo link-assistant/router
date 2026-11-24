@@ -1,0 +1,357 @@
+{
+  "schema": "whole-source-format-template-engine-receipt-v1",
+  "baseCommit": "ed9dddc979fc09f88ec3bfbc444c98ed7645f3c9",
+  "commands": {
+    "node": "ROUTER_FORMAT_VECTOR_DIR=/tmp/source-format-vector-node node --test tools/translation/test/source-format-template.test.mjs",
+    "bun": "ROUTER_FORMAT_VECTOR_DIR=/tmp/source-format-vector-bun bun test tools/translation/test/source-format-template.test.mjs"
+  },
+  "completeTestFiles": 1,
+  "testCasesPerEngine": 8,
+  "passesPerEngine": 8,
+  "skipsPerEngine": 0,
+  "decodedVectorBytesPerEngine": 13551572,
+  "vectors": [
+    {
+      "name": "actual literal escaper and Parser::new preserve cooked UTF8 origins and raw literal offsets",
+      "bytes": 3495,
+      "sha256": "b9682af8828e8bd2fbab7c1542e0fd8435f52f33b00714130fcb3fbbf1305666",
+      "decodedByteForByteEqual": true
+    },
+    {
+      "name": "copied/forged/proxy/getter programs and output receipts cannot be used as executable proofs",
+      "bytes": 1751,
+      "sha256": "1b77e0952a11fde03a4e2b42622b7a9d2a458fccf398dde97ca32339f1f172d6",
+      "decodedByteForByteEqual": true
+    },
+    {
+      "name": "original parser control executes named captures, repetitions, doubled braces and literal segments",
+      "bytes": 3422138,
+      "sha256": "97c81c0c5eba768d9dad5cce4e3677f375ccabba1a2abe092cef5f251b64eb0d",
+      "decodedByteForByteEqual": true
+    },
+    {
+      "name": "production consumer retains source macro ownership, unresolved caller and serde Value refusals",
+      "bytes": 24274,
+      "sha256": "efc1d755429813208a5fd01e92f13eb026d0562ad377ee0b58d8c698509662cf",
+      "decodedByteForByteEqual": true
+    },
+    {
+      "name": "production routerFormat consumer executes source pieces and retains checked caller shadowing",
+      "bytes": 330796,
+      "sha256": "086e7751b0c3034880b4b441c48aa76924a51aa93c2f33a8cb76a579315e9970",
+      "decodedByteForByteEqual": true
+    },
+    {
+      "name": "source helper mutations change executed control and never borrow production authority",
+      "bytes": 4556870,
+      "sha256": "1249d80b8689a8ec8d08838fbc6cd687392468957d9d15665916233d5092fee0",
+      "decodedByteForByteEqual": true
+    },
+    {
+      "name": "source literal constructor identity feeds the executable template stage without caller binding",
+      "bytes": 5209353,
+      "sha256": "a396f01dc5f899393af61b6450372699c15f2e47d4cf728afc9f99dd8a87d28b",
+      "decodedByteForByteEqual": true
+    },
+    {
+      "name": "unsupported template syntax, explicit indexes, nonASCII names and invalid escapes stay outside the source route",
+      "bytes": 2895,
+      "sha256": "ff460d518b6ff9866380629cfe60ecac00ba642d2eb757a397a5d1ec8c77fa93",
+      "decodedByteForByteEqual": true
+    }
+  ],
+  "records": [
+    {
+      "archive": "node-vector-0.gz",
+      "kind": "complete-test-case-vector",
+      "origin": "actual literal escaper and Parser::new preserve cooked UTF8 origins and raw literal offsets",
+      "bytes": 3495,
+      "sha256": "b9682af8828e8bd2fbab7c1542e0fd8435f52f33b00714130fcb3fbbf1305666",
+      "archiveBytes": 794,
+      "archiveSha256": "509a8e425c6ee1449279485091bb56b5db573432945cb51fbe2e7d9005bd24fd"
+    },
+    {
+      "archive": "node-vector-1.gz",
+      "kind": "complete-test-case-vector",
+      "origin": "copied/forged/proxy/getter programs and output receipts cannot be used as executable proofs",
+      "bytes": 1751,
+      "sha256": "1b77e0952a11fde03a4e2b42622b7a9d2a458fccf398dde97ca32339f1f172d6",
+      "archiveBytes": 305,
+      "archiveSha256": "7df50604898f871f056596d9933d3e23d41ca4028f43fc844332c583ff36a083"
+    },
+    {
+      "archive": "node-vector-2.gz",
+      "kind": "complete-test-case-vector",
+      "origin": "original parser control executes named captures, repetitions, doubled braces and literal segments",
+      "bytes": 3422138,
+      "sha256": "97c81c0c5eba768d9dad5cce4e3677f375ccabba1a2abe092cef5f251b64eb0d",
+      "archiveBytes": 330172,
+      "archiveSha256": "3364837bd896350e62ec2ba0bb2f15bd2ee7025ebabf4c8729549537b7ff7147"
+    },
+    {
+      "archive": "node-vector-3.gz",
+      "kind": "complete-test-case-vector",
+      "origin": "production consumer retains source macro ownership, unresolved caller and serde Value refusals",
+      "bytes": 24274,
+      "sha256": "efc1d755429813208a5fd01e92f13eb026d0562ad377ee0b58d8c698509662cf",
+      "archiveBytes": 3440,
+      "archiveSha256": "9e9da5dd809a744e82a2cbed182cd6e8dae114fa81f2b569af44acb510bf1366"
+    },
+    {
+      "archive": "node-vector-4.gz",
+      "kind": "complete-test-case-vector",
+      "origin": "production routerFormat consumer executes source pieces and retains checked caller shadowing",
+      "bytes": 330796,
+      "sha256": "086e7751b0c3034880b4b441c48aa76924a51aa93c2f33a8cb76a579315e9970",
+      "archiveBytes": 26194,
+      "archiveSha256": "a5e8065b82005dae55c84afea685daeffa0e234ce54126e6996aed512c21fe40"
+    },
+    {
+      "archive": "node-vector-5.gz",
+      "kind": "complete-test-case-vector",
+      "origin": "source helper mutations change executed control and never borrow production authority",
+      "bytes": 4556870,
+      "sha256": "1249d80b8689a8ec8d08838fbc6cd687392468957d9d15665916233d5092fee0",
+      "archiveBytes": 439683,
+      "archiveSha256": "d70d599fcceb70c94626811958041291d35095ef7c932f414079c902671d5d27"
+    },
+    {
+      "archive": "node-vector-6.gz",
+      "kind": "complete-test-case-vector",
+      "origin": "source literal constructor identity feeds the executable template stage without caller binding",
+      "bytes": 5209353,
+      "sha256": "a396f01dc5f899393af61b6450372699c15f2e47d4cf728afc9f99dd8a87d28b",
+      "archiveBytes": 338219,
+      "archiveSha256": "993a792619f76e9afd8c97ab9e117352cf80158ac52cd6a56fea5af4f86a0812"
+    },
+    {
+      "archive": "node-vector-7.gz",
+      "kind": "complete-test-case-vector",
+      "origin": "unsupported template syntax, explicit indexes, nonASCII names and invalid escapes stay outside the source route",
+      "bytes": 2895,
+      "sha256": "ff460d518b6ff9866380629cfe60ecac00ba642d2eb757a397a5d1ec8c77fa93",
+      "archiveBytes": 472,
+      "archiveSha256": "a204e6c5dff1a45a6749861c460bad5d3298ecfd4fa074fc15e242ff24be92fb"
+    },
+    {
+      "archive": "bun-vector-0.gz",
+      "kind": "complete-test-case-vector",
+      "origin": "actual literal escaper and Parser::new preserve cooked UTF8 origins and raw literal offsets",
+      "bytes": 3495,
+      "sha256": "b9682af8828e8bd2fbab7c1542e0fd8435f52f33b00714130fcb3fbbf1305666",
+      "archiveBytes": 794,
+      "archiveSha256": "509a8e425c6ee1449279485091bb56b5db573432945cb51fbe2e7d9005bd24fd"
+    },
+    {
+      "archive": "bun-vector-1.gz",
+      "kind": "complete-test-case-vector",
+      "origin": "copied/forged/proxy/getter programs and output receipts cannot be used as executable proofs",
+      "bytes": 1751,
+      "sha256": "1b77e0952a11fde03a4e2b42622b7a9d2a458fccf398dde97ca32339f1f172d6",
+      "archiveBytes": 305,
+      "archiveSha256": "7df50604898f871f056596d9933d3e23d41ca4028f43fc844332c583ff36a083"
+    },
+    {
+      "archive": "bun-vector-2.gz",
+      "kind": "complete-test-case-vector",
+      "origin": "original parser control executes named captures, repetitions, doubled braces and literal segments",
+      "bytes": 3422138,
+      "sha256": "97c81c0c5eba768d9dad5cce4e3677f375ccabba1a2abe092cef5f251b64eb0d",
+      "archiveBytes": 330172,
+      "archiveSha256": "3364837bd896350e62ec2ba0bb2f15bd2ee7025ebabf4c8729549537b7ff7147"
+    },
+    {
+      "archive": "bun-vector-3.gz",
+      "kind": "complete-test-case-vector",
+      "origin": "production consumer retains source macro ownership, unresolved caller and serde Value refusals",
+      "bytes": 24274,
+      "sha256": "efc1d755429813208a5fd01e92f13eb026d0562ad377ee0b58d8c698509662cf",
+      "archiveBytes": 3440,
+      "archiveSha256": "9e9da5dd809a744e82a2cbed182cd6e8dae114fa81f2b569af44acb510bf1366"
+    },
+    {
+      "archive": "bun-vector-4.gz",
+      "kind": "complete-test-case-vector",
+      "origin": "production routerFormat consumer executes source pieces and retains checked caller shadowing",
+      "bytes": 330796,
+      "sha256": "086e7751b0c3034880b4b441c48aa76924a51aa93c2f33a8cb76a579315e9970",
+      "archiveBytes": 26194,
+      "archiveSha256": "a5e8065b82005dae55c84afea685daeffa0e234ce54126e6996aed512c21fe40"
+    },
+    {
+      "archive": "bun-vector-5.gz",
+      "kind": "complete-test-case-vector",
+      "origin": "source helper mutations change executed control and never borrow production authority",
+      "bytes": 4556870,
+      "sha256": "1249d80b8689a8ec8d08838fbc6cd687392468957d9d15665916233d5092fee0",
+      "archiveBytes": 439683,
+      "archiveSha256": "d70d599fcceb70c94626811958041291d35095ef7c932f414079c902671d5d27"
+    },
+    {
+      "archive": "bun-vector-6.gz",
+      "kind": "complete-test-case-vector",
+      "origin": "source literal constructor identity feeds the executable template stage without caller binding",
+      "bytes": 5209353,
+      "sha256": "a396f01dc5f899393af61b6450372699c15f2e47d4cf728afc9f99dd8a87d28b",
+      "archiveBytes": 338219,
+      "archiveSha256": "993a792619f76e9afd8c97ab9e117352cf80158ac52cd6a56fea5af4f86a0812"
+    },
+    {
+      "archive": "bun-vector-7.gz",
+      "kind": "complete-test-case-vector",
+      "origin": "unsupported template syntax, explicit indexes, nonASCII names and invalid escapes stay outside the source route",
+      "bytes": 2895,
+      "sha256": "ff460d518b6ff9866380629cfe60ecac00ba642d2eb757a397a5d1ec8c77fa93",
+      "archiveBytes": 472,
+      "archiveSha256": "a204e6c5dff1a45a6749861c460bad5d3298ecfd4fa074fc15e242ff24be92fb"
+    },
+    {
+      "archive": "source-format-template-bun-final.log.gz",
+      "kind": "complete-engine-stream",
+      "origin": "source-format-template-bun-final.log",
+      "bytes": 1038,
+      "sha256": "3abde58d8e536b85e74f69aa293616e5b46a90e10f53edbde9f0c4be87b1a8ca",
+      "archiveBytes": 583,
+      "archiveSha256": "70a8f92d44139296aea8a1c00da3538a1ebb05c17b7ce8f88cd006e270f91cef"
+    },
+    {
+      "archive": "source-format-template-bun-first.log.gz",
+      "kind": "complete-engine-stream",
+      "origin": "source-format-template-bun-first.log",
+      "bytes": 15697,
+      "sha256": "376add4642ffc3ded1383314f826bc991b360c1ca5ed841284851fc8dd399b8d",
+      "archiveBytes": 1327,
+      "archiveSha256": "3648bd7638cedb5935dd9616b801464e90e1a00848f8b539fa908bdca52488e4"
+    },
+    {
+      "archive": "source-format-template-bun-vectors.log.gz",
+      "kind": "complete-engine-stream",
+      "origin": "source-format-template-bun-vectors.log",
+      "bytes": 1038,
+      "sha256": "7869927c56b34c2845b44e148fc39084f1cb706617da4df75b04c8571bc5ebd2",
+      "archiveBytes": 581,
+      "archiveSha256": "eced7f1876e821c0127cd172ef3e97a4faec110620df61b17280e0d76ba95804"
+    },
+    {
+      "archive": "source-format-template-node-fifth.log.gz",
+      "kind": "complete-engine-stream",
+      "origin": "source-format-template-node-fifth.log",
+      "bytes": 11327,
+      "sha256": "2e0aafc1e5bfae10adfabf7d269de6e76baa09ac628a9d99c9cf46af8eaa61f4",
+      "archiveBytes": 1261,
+      "archiveSha256": "13f1d3fec178d6abaf61c7a18ad18701d6fbe87dad215f0f364a377779becce7"
+    },
+    {
+      "archive": "source-format-template-node-first.log.gz",
+      "kind": "complete-engine-stream",
+      "origin": "source-format-template-node-first.log",
+      "bytes": 116052,
+      "sha256": "22b5db553dd33b09c0821f57585b4704b96ea5b62265bf9d3999f7248f9d5b06",
+      "archiveBytes": 28195,
+      "archiveSha256": "126cc1cb4485298ae90303599ee98a153262aaed6103accccfaff871f995390d"
+    },
+    {
+      "archive": "source-format-template-node-fourth.log.gz",
+      "kind": "complete-engine-stream",
+      "origin": "source-format-template-node-fourth.log",
+      "bytes": 12626,
+      "sha256": "7575e02a4e20b26fbf1b7f9b171b36f18ca634c6c7998c4a8970bf6feadf607c",
+      "archiveBytes": 1339,
+      "archiveSha256": "6a595fdf6bfcf83639c3b18eb9ba934732312283af42abe04ece367442a51df6"
+    },
+    {
+      "archive": "source-format-template-node-second.log.gz",
+      "kind": "complete-engine-stream",
+      "origin": "source-format-template-node-second.log",
+      "bytes": 12426,
+      "sha256": "d1728cda37b0bcddb128411dde948f39588d6a16c0156c445c3e04eb46709d4d",
+      "archiveBytes": 1500,
+      "archiveSha256": "969c8f8ada6747fc88b017a91b8482c4ea8fc696b77bdd444ab56ebceba5b8fe"
+    },
+    {
+      "archive": "source-format-template-node-seventh.log.gz",
+      "kind": "complete-engine-stream",
+      "origin": "source-format-template-node-seventh.log",
+      "bytes": 2081,
+      "sha256": "a44db90b8ace8ae339e47a13c150ac255455b7c131f1a6c57399f2940c324e0f",
+      "archiveBytes": 679,
+      "archiveSha256": "76178b06ca76ee00b64c2df17ebbf67612e6381087891588bb71713d05d88fbc"
+    },
+    {
+      "archive": "source-format-template-node-sixth.log.gz",
+      "kind": "complete-engine-stream",
+      "origin": "source-format-template-node-sixth.log",
+      "bytes": 3352,
+      "sha256": "ca3f724e258a5da432315969385e67e40f1d4ce13b7c645a4bb9cc2a5fe61f07",
+      "archiveBytes": 1162,
+      "archiveSha256": "dfd7c477fd9960f6cd7a6f8913c90f6dd72facbdf0c7e00ca82ae32d233726e6"
+    },
+    {
+      "archive": "source-format-template-node-third.log.gz",
+      "kind": "complete-engine-stream",
+      "origin": "source-format-template-node-third.log",
+      "bytes": 11724,
+      "sha256": "1061f16d717665314cb05b4a58cc5505664f671c1bbc930438ce96934a42e9ee",
+      "archiveBytes": 1324,
+      "archiveSha256": "a141e1f0772b22e7b960137d28d3c24b5ac2060977467fe87fd4ee82750ee1f8"
+    },
+    {
+      "archive": "source-format-template-node-vectors.log.gz",
+      "kind": "complete-engine-stream",
+      "origin": "source-format-template-node-vectors.log",
+      "bytes": 2084,
+      "sha256": "73b170db1bf622a7b45b06d0e3d9918ea4a2c01e459e9f58378117572396a460",
+      "archiveBytes": 684,
+      "archiveSha256": "f81808e112345ca22e6bafe5321bf6b5c0a43211b42ca5eafe22e147eacd625b"
+    },
+    {
+      "archive": "source-format-template.mjs.gz",
+      "kind": "exact-final-tested-source",
+      "origin": "tools/translation/source-format-template.mjs",
+      "bytes": 38788,
+      "sha256": "3553c3337a6418a91a492b29c16762ac986411c603f8af4f1119b8d47661f4e4",
+      "archiveBytes": 11297,
+      "archiveSha256": "42c8f4ee05b9da29c05ceb537785f33a1747a9fc54a156f6dad37c7787a9c76a"
+    },
+    {
+      "archive": "formatting.mjs.gz",
+      "kind": "exact-final-tested-source",
+      "origin": "tools/translation/extensions/formatting.mjs",
+      "bytes": 11142,
+      "sha256": "10d64cb3cd39bece9c610af66c79dcb5a26f3b9655abd15707b905722ad803da",
+      "archiveBytes": 3887,
+      "archiveSha256": "b47283a7eb3eb876544363f3be79b5bc6df903391bb42a61d38abe5b3b012149"
+    },
+    {
+      "archive": "source-format-template.test.mjs.gz",
+      "kind": "exact-final-tested-source",
+      "origin": "tools/translation/test/source-format-template.test.mjs",
+      "bytes": 11350,
+      "sha256": "9cebed9052c375587d1de1e28b85e2226a06a50e74a74bf31e8ee9413e67d9f1",
+      "archiveBytes": 3642,
+      "archiveSha256": "d375a9105189a0b2389ed8b61b3588f9b6ab3dbe7ca2b467919246665759f520"
+    },
+    {
+      "archive": "original-output-limit.rs.gz",
+      "kind": "original-tracked-rust-source",
+      "origin": "src/output_limit.rs",
+      "bytes": 16144,
+      "sha256": "b165be6e33444a5811b33e52567de74ca144e7208a24c161b231bd332cf899e0",
+      "archiveBytes": 4430,
+      "archiveSha256": "bc7b3dae596e18dec2bcd4ce68dd9abc4c15883facffbbab3ef60b64c352da8b"
+    },
+    {
+      "archive": "complete-compiler-input-hashes.json.gz",
+      "kind": "complete-isolated-compiler-input-hashes",
+      "origin": "tracked tools/translation + new owned input files",
+      "bytes": 291101,
+      "sha256": "c536f6cf6f1f4c0b0d3de82eb2aa5ba741bda79e91663ad289ad431183ad17a5",
+      "archiveBytes": 75618,
+      "archiveSha256": "819372850da2c4604a140c53235b52ca3a10c4e2863e38808f9a6f44076f6c08"
+    }
+  ],
+  "historicalSourceSnapshotLimit": "Failed complete streams are retained. Source archives capture the exact final whole-file evidence run; intermediate edited source states were not separately snapshotted.",
+  "namespaceAuthority": false,
+  "traitSelectionVerified": false,
+  "runtimeParity": false
+}

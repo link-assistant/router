@@ -1,0 +1,23 @@
+{
+  "schema": "opaque-source-case-custody-successor-v1",
+  "archive": "complete-source-copies-case-custody-20261101.json",
+  "sha256": "726cb9f3011e480ac0dcbc82aecff538de606340b571613650751b0a4a0ec3fe",
+  "rawBytes": 2063649,
+  "preservedArchive": "complete-source-copies.json",
+  "preservedSha256": "333b3c46bba39ec7e681f87c6bb54f700cd53a2874a6ddb5bed90ff36ddbf33e",
+  "sourceHistorySha256": "45480003ac99b42788e3ee4c6cd6ea0d112d0e9275985add8bc5a7a6f4c07727",
+  "checkpointPaths": [
+    "tools/translation/unrun-source-case-custody-20261101.mjs",
+    "tools/translation/source-profiles/opaque-production-adoption-20261101/authored/unrun-source-case-custody-20261101.mjs.txt",
+    "tools/translation/opaque-production-adoption-20261101-source-history.mjs",
+    "tools/translation/source-profiles/opaque-production-adoption-20261101/originals/source-history-before-case-custody-20261101.mjs.txt",
+    "tools/translation/source-profiles/opaque-production-adoption-20261101/complete-source-copies-case-custody-20261101.json",
+    "tools/translation/source-profiles/opaque-production-adoption-20261101/authored/source-history-case-custody-20261101.mjs.txt",
+    "tools/translation/source-profiles/opaque-production-adoption-20261101/case-custody-successor-manifest-20261101.json",
+    "tools/translation/test/unrun-source-case-custody-20261101.test.mjs",
+    "docs/development/opaque-production-adoption-20261101.md"
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "executionEvidence": "UNRUN"
+}

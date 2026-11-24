@@ -1,0 +1,92 @@
+{
+  "schema": "original-clone-sibling-trait-sources-v1",
+  "packages": [
+    {
+      "name": "serde_core",
+      "version": "1.0.229",
+      "archive": "../json-macro/serde_core-1.0.229.crate",
+      "bytes": 63100,
+      "sha256": "67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48",
+      "url": "https://static.crates.io/crates/serde_core/serde_core-1.0.229.crate",
+      "members": [
+        {
+          "path": "src/lib.rs",
+          "bytes": 4351,
+          "sha256": "4e5c396d38ff5d9abf45b826a67ec3444654ed0802d057f46400ebe26f5879f8"
+        },
+        {
+          "path": "src/crate_root.rs",
+          "bytes": 7081,
+          "sha256": "157ca402e23c32f11a4f1797c81afb5e9f08df96768012cf3e3199153aafb2dd"
+        },
+        {
+          "path": "build.rs",
+          "bytes": 4252,
+          "sha256": "7bc6b1eec8913ff4cd8e4b9b92cd04a82a4f38beb30a0b73a64c1e6e49f07b5f"
+        },
+        {
+          "path": "src/de/mod.rs",
+          "bytes": 83879,
+          "sha256": "5ec8602d593915e0cf480b0ce67b02f6ab066dac34725237d2c7b4a6ef12a845"
+        },
+        {
+          "path": "src/ser/mod.rs",
+          "bytes": 65231,
+          "sha256": "ec097d92c8545356961e977a4c9650361cadd1d3a243d805ae7b0e0e589ae803"
+        },
+        {
+          "path": "LICENSE-MIT",
+          "bytes": 1023,
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        },
+        {
+          "path": "LICENSE-APACHE",
+          "bytes": 9723,
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        }
+      ]
+    }
+  ],
+  "references": [
+    "../derive/manifest.json",
+    "../json-macro/manifest.json"
+  ],
+  "license": "MIT OR Apache-2.0",
+  "namespaceAuthority": false,
+  "runtimeParity": false,
+  "traitExecution": false,
+  "compilerSources": [
+    {
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_resolve/src/macros.rs",
+      "archive": "../tool-attributes/rust-resolve-macros-1.89.0.rs.gz",
+      "bytes": 49779,
+      "sha256": "301b413a2fe0c2aaee658165993272a9fa39f4aca6cc22b0ca38d08ef80b405e",
+      "archiveSha256": "f8b07424cafe525fb9ab14238a7c71c2cde9b2d3b52ab6dffb1b1b0224a5a697"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_resolve/src/ident.rs",
+      "archive": "../tool-attributes/rust-resolve-ident-1.89.0.rs.gz",
+      "bytes": 80854,
+      "sha256": "aa296cdcb826154034b13eb55e09bd477f4bb4a3f3f966e01f94e61a8bcfeadd",
+      "archiveSha256": "c676462dc5004d03d5d811603e1692890c4838fa5019f74f5b074ed07a4590cf"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_expand/src/config.rs",
+      "archive": "../conditional-attributes/rust-expand-config-1.89.0.rs.gz",
+      "bytes": 19343,
+      "sha256": "164793e06f844ef96778a8d5593cc3e44cea542d764f49a27aebc42daa711f0e",
+      "archiveBytes": 5323,
+      "archiveSha256": "a87988a492b51b47fe9984e0afb5475c6f88770580fe95d998a18cf045471db6",
+      "anchors": [
+        {
+          "anchor": "fn process_cfg_attr(",
+          "line": 271
+        },
+        {
+          "anchor": "pub(crate) fn expand_cfg_attr(",
+          "line": 286
+        }
+      ]
+    }
+  ]
+}

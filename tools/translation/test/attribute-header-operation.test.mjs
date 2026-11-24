@@ -1,0 +1,27 @@
+// Independent current-source/lifetime boundary SOURCE. Every case is UNRUN.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {captureSourceModuleViews,originalSourceModuleItems} from '../source-module-views.mjs';
+import {itemConfiguration} from '../cfg-profile.mjs';
+import {captureOriginalNamespaceAttributeHeader,originalNamespaceAttributeHeaderFacts,withOriginalNamespaceAttributeHeaderSourceOperation} from '../original-namespace-parser.mjs';
+import {assertConcreteSyntaxSourceOperationsCurrent} from '../concrete-syntax-meta.mjs';
+import {prepareAttributeHeaderOperationSources} from '../prepare-attribute-header-operation-sources.mjs';
+const limits={timeout:60000};
+function inputs(source='#[cold]#[inline]fn selected(){}'){
+ const file='src/lib.rs',capture=captureSourceModuleViews({source,sourcePath:file}),module={file,path:[],source,sourceView:capture.views[0],compilationProfile:null},item=originalSourceModuleItems(module).find(row=>!row.comment);return itemConfiguration(item.tokens,null).attributes.map(attribute=>({module,item,memberIndex:null,attributeSpan:{...attribute.span}}));
+}
+test('multiple genuine header receipts retain distinct paths and current source associations inside and after an operation',limits,()=>{
+ const [cold,inline]=inputs();const rows=withOriginalNamespaceAttributeHeaderSourceOperation(()=>{const a=captureOriginalNamespaceAttributeHeader(cold),b=captureOriginalNamespaceAttributeHeader(inline);assert.notStrictEqual(a,b);assert.equal(originalNamespaceAttributeHeaderFacts(a,cold).source.attributeName,'cold');assert.equal(originalNamespaceAttributeHeaderFacts(b,inline).source.attributeName,'inline');return [a,b];});assert.equal(originalNamespaceAttributeHeaderFacts(rows[0],cold).source.attributeName,'cold');assert.equal(originalNamespaceAttributeHeaderFacts(rows[1],inline).source.attributeName,'inline');assert.throws(()=>originalNamespaceAttributeHeaderFacts(rows[0],inline));
+});
+test('nested and failed synchronous operations restore scope while preserving all original private facts',limits,()=>{
+ const first=inputs()[0],other=inputs('#[must_use]fn other()->bool{true}')[0],sentinel=new Error('operation error');withOriginalNamespaceAttributeHeaderSourceOperation(()=>{const token=captureOriginalNamespaceAttributeHeader(first);withOriginalNamespaceAttributeHeaderSourceOperation(()=>{const otherToken=captureOriginalNamespaceAttributeHeader(other);assert.equal(originalNamespaceAttributeHeaderFacts(otherToken,other).source.attributeName,'must_use');});assert.equal(originalNamespaceAttributeHeaderFacts(token,first).source.attributeName,'cold');assert.throws(()=>withOriginalNamespaceAttributeHeaderSourceOperation(()=>{throw sentinel;}),value=>value===sentinel);assert.equal(originalNamespaceAttributeHeaderFacts(token,first).source.attributeName,'cold');});assert.equal(originalNamespaceAttributeHeaderFacts(captureOriginalNamespaceAttributeHeader(first),first).source.attributeName,'cold');
+});
+test('reusing a physical CST cannot bypass changes to actual source views spans or current native operations',limits,()=>{
+ const options=inputs()[0];withOriginalNamespaceAttributeHeaderSourceOperation(()=>{const token=captureOriginalNamespaceAttributeHeader(options),source=options.module.source;options.module.source+='\n';assert.throws(()=>originalNamespaceAttributeHeaderFacts(token,options));options.module.source=source;assert.throws(()=>originalNamespaceAttributeHeaderFacts(token,{...options,attributeSpan:{start:options.attributeSpan.start+1,end:options.attributeSpan.end}}));const native=Object.getOwnPropertyDescriptor(Math,'min');try{Object.defineProperty(Math,'min',{...native,value:()=>0});assert.throws(()=>assertConcreteSyntaxSourceOperationsCurrent());assert.throws(()=>originalNamespaceAttributeHeaderFacts(token,options));}finally{Object.defineProperty(Math,'min',native);}assert.equal(originalNamespaceAttributeHeaderFacts(token,options).source.attributeName,'cold');});
+});
+test('async proxy Promise and own thenable or accessor operations are refused without invoking accessors',limits,()=>{
+ let touched=false;assert.throws(()=>withOriginalNamespaceAttributeHeaderSourceOperation(async()=>{touched=true;}),/synchronous/u);assert.equal(touched,false);assert.throws(()=>withOriginalNamespaceAttributeHeaderSourceOperation(new Proxy(()=>1,{})));assert.throws(()=>withOriginalNamespaceAttributeHeaderSourceOperation(()=>Promise.resolve(1)),/synchronously/u);assert.throws(()=>withOriginalNamespaceAttributeHeaderSourceOperation(()=>({then(){}})),/thenable\/accessor/u);assert.throws(()=>withOriginalNamespaceAttributeHeaderSourceOperation(()=>Object.defineProperty({},'then',{get(){touched=true;return ()=>{};}})),/thenable\/accessor/u);assert.equal(touched,false);assert.equal(withOriginalNamespaceAttributeHeaderSourceOperation(()=>7),7);const guard=assertConcreteSyntaxSourceOperationsCurrent();assert.equal(guard.sourceAuthority,false);assert.equal(guard.namespaceAuthority,false);assert.equal(guard.runtimeAuthority,false);
+});
+test('all four complete source equations retain current original implementations native spans and both phases',limits,()=>{
+ const plan=prepareAttributeHeaderOperationSources();assert.equal(plan.files.length,4);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.semanticAuthority,false);assert.equal(plan.receivingExecuted,false);
+});

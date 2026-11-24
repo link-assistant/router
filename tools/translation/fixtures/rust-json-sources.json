@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "checkedOn": "2026-10-11",
+  "serdeJsonVersion": "1.0.151",
+  "zmijVersion": "1.0.23",
+  "profile": {
+    "preserve_order": false,
+    "arbitrary_precision": false,
+    "float_roundtrip": false
+  },
+  "sourceMode": "read-only local pre-existing Cargo registry; no Rust execution",
+  "files": [
+    {
+      "packagePath": "serde_json-1.0.151/src/de.rs",
+      "sha256": "4998d7e252eb513be85b298e287048b4fb283882e9ba7df905f572f07200f3f3"
+    },
+    {
+      "packagePath": "serde_json-1.0.151/src/read.rs",
+      "sha256": "17a2efe49e5a6937c8d7d4a5c0b9eac84453de0f86bf8e7ee421387e82341bb3"
+    },
+    {
+      "packagePath": "serde_json-1.0.151/src/number.rs",
+      "sha256": "70b83c36286f6c58123f544f27db2b54a1135f928fe33b08b521b2997773f862"
+    },
+    {
+      "packagePath": "serde_json-1.0.151/src/value/mod.rs",
+      "sha256": "6331d59ea362a74b6cd3d302d08114a63a73a384ff56fef737de29edea2f8d91"
+    },
+    {
+      "packagePath": "serde_json-1.0.151/src/error.rs",
+      "sha256": "a13add05a63adf53d89e37effa03221d897a60486cfe360a5a958c0dd2a7e90d"
+    },
+    {
+      "packagePath": "serde_json-1.0.151/src/ser.rs",
+      "sha256": "f2b8cc0b97e30c49dbc58698fa22c14a7d56ea616cdb57b067835a59af49a75f"
+    },
+    {
+      "packagePath": "zmij-1.0.23/src/lib.rs",
+      "sha256": "0bdb8cd6a8835af08b5ca60956df283732f1b5aa940c750b1ec5dc78bf245b61"
+    }
+  ],
+  "references": [
+    "https://docs.rs/serde_json/latest/serde_json/enum.Value.html",
+    "https://docs.rs/serde_json/latest/serde_json/struct.Number.html",
+    "https://docs.rs/serde_json/latest/serde_json/error/struct.Error.html"
+  ],
+  "validationLimits": [
+    "No Rust differential execution until the complete JavaScript gate passes.",
+    "Default-profile Value instantiations only; profile unification and arbitrary derived serialization require frontend evidence.",
+    "Mutable borrowing and ownership-sensitive map mutation remain unimplemented.",
+    "Bounded binary64 round-trip and source-derived notation fixtures do not prove every malformed-input or Rust floating-point output."
+  ]
+}

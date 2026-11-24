@@ -1,0 +1,34 @@
+{
+  "schema": "fixed-borrowed-predicate-source-family-census-20261103-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-borrowed-predicate-families-20261103/index347.before.json.gz",
+    "encodedSha256": "cb20915385a58b04461aec62342136e8e7c3243101a8932545decb18e101979d",
+    "sourceSha256": "0573a8d2e4f2ea284b9a7531d02c4fbf27fd10843781c13862841ca0a393a73c",
+    "rows": 347
+  },
+  "families": [
+    {
+      "id": "exact-borrowed-predicate-adapters-20261103",
+      "manifest": "tools/translation/source-profiles/borrowed-predicate-description-install-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "borrowed-predicate-description-installed-source-20261103-v1",
+      "sha256": "a19f0ab5ff50ede659000d1ac42cdad9f430b2a23ba193e4528ab799eff20ef5",
+      "rows": 9,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-borrowed-predicate-cases-20261103",
+      "manifest": "tools/translation/source-profiles/exact-source-borrowed-predicate-families-20261103/joins.json.gz",
+      "kind": "archive",
+      "schema": "borrowed-predicate-index-joins-20261103-v1",
+      "sha256": "aa65e1e00c9487e5ab50a36ebe95d4671379fced26bd13b5dd565a1f02cabf02",
+      "rows": 5,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 14,
+  "totalRows": 361,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

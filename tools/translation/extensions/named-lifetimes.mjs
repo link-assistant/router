@@ -1,0 +1,92 @@
+// Actual free-function lifetime binders, never rewritten as 'static tokens.
+// https://doc.rust-lang.org/reference/lifetime-elision.html
+import {STRING} from '../checked-types.mjs';
+import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
+import {isPlainSourceIdentifier} from '../module-paths.mjs';
+
+const frames=new WeakMap();
+const range=(first,last)=>({start:first.start,end:last.end});
+const tokenCopy=token=>({kind:token.kind,value:token.value,span:range(token,token)});
+function declarations(cursor) {
+  const prefix=['async','const'].includes(cursor.peek().value)&&cursor.peek(1).value==='fn'?1:0;
+  let at=cursor.index+prefix+2;
+  if(cursor.tokens[at]?.value!=='<')return null;
+  const first=cursor.tokens[at],names=[],tokens=[first];at++;
+  while(cursor.tokens[at]?.value!=='>') {
+    const quote=cursor.tokens[at++],name=cursor.tokens[at++];
+    if(quote?.value!=="'"||name?.kind!=='identifier'||quote.end!==name.start)throw unsupported('generic function','requires contiguous original named lifetime tokens or separately checked monomorphization',range(first,name??quote??first));
+    if(!isPlainSourceIdentifier(name.value)||names.includes(name.value))throw typeError('Lifetime parameters require distinct nonreserved source names',range(quote,name));
+    names.push(name.value);tokens.push(quote,name);
+    if(names.length>32)throw unsupported('named lifetime binders','exceeds the checked 32-parameter bound',range(first,name));
+    if(cursor.tokens[at]?.value==='>')break;
+    const comma=cursor.tokens[at++];
+    if(comma?.value!==',')throw unsupported('lifetime bounds','require separately checked outlives and trait constraints',range(first,comma??name));
+    tokens.push(comma);
+  }
+  const last=cursor.tokens[at];
+  if(!last||!names.length)throw typeError('Lifetime parameter list requires actual source binders',first);
+  tokens.push(last);
+  return {start:cursor.index+prefix+2,end:at+1,names,tokens,span:range(first,last),cursor,tokenArray:cursor.tokens,copies:tokens.map(tokenCopy)};
+}
+
+// Read the active original function binder without exposing its private frame.
+// The owned Str adapter calls this both before and after source/CST callbacks.
+export function originalNamedSourceReferenceLifetime(parser) {
+  const frame=frames.get(parser);
+  if(!frame)return null;
+  const c=parser.cursor;
+  if(c!==frame.cursor||c.tokens!==frame.tokenArray||frame.names.length<1||frame.names.length>32||frame.tokens.some((token,index)=>{
+    const copy=frame.copies[index];
+    return c.tokens[frame.start+index]!==token||token.kind!==copy.kind||token.value!==copy.value||token.start!==copy.span.start||token.end!==copy.span.end;
+  }))throw unsupported('named lifetime source','requires its unchanged original function cursor and complete binder token group',frame.span);
+  if(!c.is('&')||!c.is("'",1))return null;
+  const first=c.peek(),name=c.peek(2);
+  if(name.kind!=='identifier'||c.peek(1).end!==name.start)throw unsupported('source reference lifetime','requires contiguous original apostrophe and lifetime name tokens',range(first,name));
+  if(name.value==='static')return null;
+  if(!frame.names.includes(name.value))throw unsupported('named reference lifetime','requires a contiguous declared lifetime in this actual free function',range(first,name));
+  if(c.is('mut',3))throw unsupported('mutable reference','mutation is outside the portable core',range(first,c.peek(3)));
+  return `named:${name.value}`;
+}
+
+export function withNamedLifetimeParser(Base) {return class extends Base {
+  fn(path) {
+    const previous=frames.get(this),frame=declarations(this.cursor);
+    frames.set(this,frame);
+    try {return super.fn(path);}
+    finally {if(previous===undefined)frames.delete(this);else frames.set(this,previous);}
+  }
+  sourceLifetimeParameters() {
+    const frame=frames.get(this),c=this.cursor;
+    if(!frame)return null;
+    if(c.index!==frame.start||frame.tokens.some((token,index)=>c.tokens[frame.start+index]!==token))throw unsupported('named lifetime source','requires its unchanged original function token group',c.peek());
+    c.index=frame.end;
+    return {profile:'source-named-shared-lifetimes-v1',names:[...frame.names],span:{...frame.span},tokens:frame.tokens.map(tokenCopy)};
+  }
+  namedSourceReferenceType() {
+    const c=this.cursor,start=c.index,first=c.peek();
+    if(!c.is('&')||!c.is("'",1))return null;
+    const frame=frames.get(this),name=c.peek(2);
+    if(name.kind!=='identifier'||c.peek(1).end!==name.start)throw unsupported('source reference lifetime','requires contiguous original apostrophe and lifetime name tokens',range(first,name));
+    if(name.value==='static')return null;
+    if(!frame?.names.includes(name.value))throw unsupported('named reference lifetime','requires a contiguous declared lifetime in this actual free function',range(first,name));
+    c.next();c.next();c.next();
+    if(c.is('mut'))throw unsupported('mutable reference','mutation is outside the portable core',range(first,c.peek()));
+    const depth=this.referenceTypeDepth??0,ownershipDepth=this.ownershipReferenceDepth??0;
+    if(depth>=32)throw unsupported('shared reference type nesting','exceeds the checked depth bound',first);
+    let pointee;
+    if(c.is('str')) {
+      // This shortcut bypasses the ordinary ownership parser. Resolve the
+      // actual type namespace before granting primitive string semantics.
+      if(typeof this.builtinShadow!=='function'||this.builtinShadow('str',this.modulePath))throw unsupported('shadowed borrowed str type','requires actual standard primitive identity in the source type namespace',range(first,c.peek()));
+      c.next();pointee=STRING;
+    }
+    else {
+      this.referenceTypeDepth=depth+1;this.ownershipReferenceDepth=ownershipDepth+1;
+      try {pointee=this.type();}
+      finally {this.referenceTypeDepth=depth;this.ownershipReferenceDepth=ownershipDepth;}
+    }
+    const tokens=c.tokens.slice(start,c.index),location=range(first,tokens.at(-1));
+    if(pointee===STRING)return {...STRING,rustSourceType:true,rustOwnership:{kind:'borrowed',source:'str'},rustBorrowLifetime:{kind:`named:${name.value}`,source:'borrowed-str-type',span:location,tokens:tokens.map(tokenCopy)}};
+    return {...pointee,patternOwnershipRefusal:'shared source reference',rustReference:{kind:'shared',pointee:structuredClone(pointee),span:location,tokens:tokens.map(tokenCopy)}};
+  }
+};}

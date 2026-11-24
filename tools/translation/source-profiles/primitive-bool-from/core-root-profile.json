@@ -1,0 +1,15 @@
+{
+  "schema": "original-core-prelude-root-v1",
+  "rust": "1.89.0",
+  "path": "library/core/src/lib.rs",
+  "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/lib.rs",
+  "file": "library-core-src-lib.rs.gz",
+  "bytes": 12944,
+  "sha256": "77f88730f9698a9942dd06069f75fc8e015a98662e74fc1cf4f589df05e78b2c",
+  "gitBlobSha": "39d5399101da6af26fd77299b2540fb7a6de286d",
+  "compressedBytes": 4089,
+  "compressedSha256": "22b7044f6f7b8d57ed2485a004e344f398d57ba60bc8cdf9c523064b411fa95c",
+  "licenses": "../fixed-wrapping/LICENSE-MIT.gz and LICENSE-APACHE.gz",
+  "wholeCoreAuthority": false,
+  "runtimeParity": false
+}

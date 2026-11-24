@@ -1,0 +1,1 @@
+Preserve complete bounded canonical progress evidence: the full corpus reached the existing 1,200-second limit during main-library semantic validation, with unchanged source inputs and no artifact writes. Keep the paired 222-test source validation separate from unproved corpus gains and full parity.

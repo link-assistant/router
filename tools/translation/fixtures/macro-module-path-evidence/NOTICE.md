@@ -1,0 +1,3 @@
+This packet preserves complete failed and passed streams, the complete original-library failure, full source scope comparisons, exact source versions and full captured vectors for the original module-directory repair. Every regular archive member was reopened and hash-verified. Original-source and dependency provenance stays with the committed compiler/source-profile files.
+
+The final nine-file cohort passes 63 cases in each engine. The complete-library rerun, complete parity and Rust verification remain pending. These test execution records are fixture evidence and are excluded from production translator exports.

@@ -1,0 +1,59 @@
+{
+  "schema": "retained-focus-evidence-v1",
+  "status": "FOCUSED_PASS_NOT_FULL_GATE",
+  "pack": "cycle-8-ranges.tar.gz",
+  "bytes": 12833,
+  "sha256": "060458c60396b5d9dc6bfba6a5e998eaba516eab063af75d173963e5b844a5a1",
+  "members": [
+    {
+      "path": "router-759-cycle8-ranges-final-bun.log",
+      "bytes": 11840,
+      "sha256": "cbb4650d356e69fe31ba5124cc5d5b76c44dca140a87a3504940883bd2c17948"
+    },
+    {
+      "path": "router-759-cycle8-ranges-final-node.log",
+      "bytes": 24407,
+      "sha256": "454bb767fb481b3e27012294ea3b244330b0a474ca06361bd99d045df9f540db"
+    },
+    {
+      "path": "router-759-cycle8-ranges-final-receipt.json",
+      "bytes": 890,
+      "sha256": "dac5168ecdc8634baf7ebc1ac4c057dff99e7b1956b98ae3c39a63520c03a29f"
+    },
+    {
+      "path": "router-759-cycle8-ranges-initial-bun.log",
+      "bytes": 16298,
+      "sha256": "ee10f6165abd1d4edd31c8e358197298d205e4a2f083082c43de7b04b06bc22e"
+    },
+    {
+      "path": "router-759-cycle8-ranges-initial-node.log",
+      "bytes": 26467,
+      "sha256": "357741b5bb2e0dd6fe0c566e68fae5955fa1e7719b03abfd42afa583a0d6bd25"
+    },
+    {
+      "path": "router-759-cycle8-ranges-initial-receipt.json",
+      "bytes": 1235,
+      "sha256": "212340a91f512ecd3618b532b014d3c537eab0190664a52601a229acb4d5285b"
+    }
+  ],
+  "receiptSha256": "dac5168ecdc8634baf7ebc1ac4c057dff99e7b1956b98ae3c39a63520c03a29f",
+  "ownSourceCommits": [
+    "a83a73ed7e754f6c0b6addd6569717c972b367a1",
+    "e1453c86d"
+  ],
+  "publishedVerificationBaseline": "7bfc51aa447c8929f7b88540986b18f50554ef3d",
+  "initial": {
+    "nodePass": 103,
+    "bunPass": 103,
+    "testsPerRunner": 105,
+    "failuresPerRunner": 2
+  },
+  "final": {
+    "nodePass": 106,
+    "bunPass": 106,
+    "testsPerRunner": 106,
+    "failuresPerRunner": 0,
+    "files": 14
+  },
+  "claimScope": "Focused selected source declarations only; no fresh corpus/full-gate or whole Thinking file claim."
+}

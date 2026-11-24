@@ -1,0 +1,80 @@
+{
+  "schema": "retained-focus-evidence-v1",
+  "status": "FOCUSED_PASS_NOT_FULL_GATE",
+  "pack": "cycle-9-10-float-utf16.tar.gz",
+  "bytes": 21920,
+  "sha256": "661362431cca1c27e8a50712cd2fb4788a25706f60dbde0dd103cd3f4585bbd8",
+  "members": [
+    {
+      "path": "router-759-combined-float-utf16-final-bun.log",
+      "bytes": 13937,
+      "sha256": "d0df87062c32c8c4335bc95c98a3984c34c48766298171946bb28c6a315d2ed4"
+    },
+    {
+      "path": "router-759-combined-float-utf16-final-node.log",
+      "bytes": 26301,
+      "sha256": "35c5fd9cbe7b47fc5bf2cb24b07ff08d9b7c5097a942963181258d661a9e0cb8"
+    },
+    {
+      "path": "router-759-combined-float-utf16-initial-bun.log",
+      "bytes": 16378,
+      "sha256": "f90c83c41841789e807a40df8c296dc6365deee686d31dd7c5e659843644e39b"
+    },
+    {
+      "path": "router-759-combined-float-utf16-initial-node.log",
+      "bytes": 28716,
+      "sha256": "eb849c59d101a703bee2795bba4923794e240f48f2e98a09b4432da1e08f1277"
+    },
+    {
+      "path": "router-759-combined-float-utf16-receipt.json",
+      "bytes": 8518,
+      "sha256": "f9f66451b2a6f7aa84dbcd497845727e2ffe48eddfc84b35e4cdccd2c1f8753c"
+    },
+    {
+      "path": "router-759-combined-float-utf16-verified-bun.log",
+      "bytes": 12707,
+      "sha256": "b04645588a2ba8190ad11121fec5dca5cbc86dbc7b2093aed194760a9b80b4f8"
+    },
+    {
+      "path": "router-759-combined-float-utf16-verified-node.log",
+      "bytes": 25655,
+      "sha256": "e906a1fd370b7a1a88afb217988e69b10c5050ac5b9c0e79341e66cccc547728"
+    },
+    {
+      "path": "router-759-combined-temporary-borrow-diagnostic.log",
+      "bytes": 4310,
+      "sha256": "c566459df032397dd0e3bcde703607e715cc1cffe2f1a3272c7867473c65a162"
+    }
+  ],
+  "receiptSha256": "f9f66451b2a6f7aa84dbcd497845727e2ffe48eddfc84b35e4cdccd2c1f8753c",
+  "ownSourceCommits": [
+    "d4883e8b9",
+    "7dcbe2e36",
+    "60f80b973514c7babdd377b763b1462f630c8ab7",
+    "446c3f6c1fd95de1e674e5515a88525bc4b50c8d"
+  ],
+  "combinedBaseline": "65c4065578575feb2b25554a40cedda7298ab99e",
+  "verifiedBranchBase": "e9d8b808e2eb4835c0ca641279014362011ebef5",
+  "initial": {
+    "nodePass": 110,
+    "bunPass": 110,
+    "testsPerRunner": 112,
+    "failuresPerRunner": 2
+  },
+  "sourceRetry": {
+    "nodePass": 111,
+    "bunPass": 111,
+    "testsPerRunner": 112,
+    "failuresPerRunner": 1
+  },
+  "final": {
+    "nodePass": 112,
+    "bunPass": 112,
+    "testsPerRunner": 112,
+    "failuresPerRunner": 0,
+    "files": 20,
+    "nodeSeconds": 36.620114083,
+    "bunSeconds": 24.43
+  },
+  "claimScope": "All authored literal, guard and byte/span assertions retained. Each typed-target test executes unchanged emitted JavaScript and separately strict compiled TypeScript. Actual selected attributed source declarations remain unchanged. No corpus regeneration, full-gate, whole-policy-file, Rust execution or runtime-parity claim."
+}

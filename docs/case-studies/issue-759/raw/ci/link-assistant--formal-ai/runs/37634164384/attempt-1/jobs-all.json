@@ -1,0 +1,70 @@
+[
+  {
+    "id": 112835861595,
+    "run_id": 37634164384,
+    "workflow_name": "Web UI boundary",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37634164384",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAaRYqcWw",
+    "head_sha": "e55a00de1c1e6d5b8ec4d926dee471455e14915a",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112835861595",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37634164384/job/112835861595",
+    "status": "completed",
+    "conclusion": "failure",
+    "created_at": "2026-10-07T14:08:06Z",
+    "started_at": "2026-10-07T14:18:40Z",
+    "completed_at": "2026-10-07T14:19:00Z",
+    "name": "boundary",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-07T14:18:42Z",
+        "completed_at": "2026-10-07T14:18:42Z"
+      },
+      {
+        "name": "Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-07T14:18:42Z",
+        "completed_at": "2026-10-07T14:18:57Z"
+      },
+      {
+        "name": "Prevent additional business logic in the UI",
+        "status": "completed",
+        "conclusion": "failure",
+        "number": 3,
+        "started_at": "2026-10-07T14:18:57Z",
+        "completed_at": "2026-10-07T14:18:57Z"
+      },
+      {
+        "name": "Post Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6,
+        "started_at": "2026-10-07T14:18:57Z",
+        "completed_at": "2026-10-07T14:18:57Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7,
+        "started_at": "2026-10-07T14:18:57Z",
+        "completed_at": "2026-10-07T14:18:57Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112835861595",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 1000149012,
+    "runner_name": "GitHub Actions 1000149012",
+    "runner_group_id": 0,
+    "runner_group_name": "GitHub Actions"
+  }
+]

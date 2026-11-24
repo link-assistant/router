@@ -1,0 +1,1 @@
+Added checked contextual Rust tuple products and literal numeric field projections to the reusable compiler. Tuple types retain original field syntax and stay distinct from nominal tuple structs; unconstrained tuple inference, mutable aggregates and unresolved product ownership remain explicit obligations.

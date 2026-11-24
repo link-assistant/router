@@ -1,0 +1,418 @@
+{
+  "schema": "complete-locked-serde-source-profile-v1",
+  "cargoCommit": "c24e1064277fe51ab72011e2612e556ac56addf7",
+  "lock": {
+    "path": "Cargo.lock",
+    "bytes": 117119,
+    "sha256": "fd7b70edb83b6cdb7b04931b25e0366389044f36c76344ea1578e12872d8a931",
+    "gitBlobSha1": "cdba1134b414e7fa79e348331ef84b925cd69674",
+    "url": "https://raw.githubusercontent.com/rust-lang/cargo/c24e1064277fe51ab72011e2612e556ac56addf7/Cargo.lock",
+    "archive": "Cargo.lock.gz",
+    "archiveBytes": 28639,
+    "archiveSha256": "442f7d9f62cd431068fce554cd5c66a118211a140a9b437bfcd841a9405f05b5",
+    "encoding": "gzip"
+  },
+  "packages": [
+    {
+      "name": "serde",
+      "version": "1.0.219",
+      "url": "https://static.crates.io/crates/serde/serde-1.0.219.crate",
+      "archiveBytes": 78983,
+      "archiveSha256": "5f0e2c6ed6606019b4e29e69dbaba95b11854410e5347d525002456dbbb786b6",
+      "decodedTarBytes": 548864,
+      "members": [
+        {
+          "path": "serde-1.0.219/.cargo_vcs_info.json",
+          "kind": "file",
+          "bytes": 99,
+          "sha256": "beca9e8c6f6cde0c55f77a33653d43be0745b9c80e3215fc3d80465286d80525",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/Cargo.lock",
+          "kind": "file",
+          "bytes": 2287,
+          "sha256": "da4953e290aebe86c5a9554b270fc27b05227a326cfc51e3d6e471cea99f32de",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/Cargo.toml",
+          "kind": "file",
+          "bytes": 1887,
+          "sha256": "b1f51ec5dbcb19613d6fabb9c021cebcc5a0f296a70bac81eb3c7207b65782f9",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/Cargo.toml.orig",
+          "kind": "file",
+          "bytes": 2586,
+          "sha256": "71000277d9fdb77e171989c23ca98c0a843ccc37cabdd9a6789e9717e79728c2",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/LICENSE-APACHE",
+          "kind": "file",
+          "bytes": 9723,
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/LICENSE-MIT",
+          "kind": "file",
+          "bytes": 1023,
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/README.md",
+          "kind": "file",
+          "bytes": 4379,
+          "sha256": "56dd9b1d02be861a2c2a88c06005adc61f8b1d4330cd6db304ee330bcfdc4310",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/build.rs",
+          "kind": "file",
+          "bytes": 4923,
+          "sha256": "8bce1d4e3594972da27e54bac89058e1a73024205535d58008f7d0db5c4b4461",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/crates-io.md",
+          "kind": "file",
+          "bytes": 2539,
+          "sha256": "407d92b2932923f8708aaf31db266fd7db32e2b0afa6c569d134b680b74a1920",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/de/ignored_any.rs",
+          "kind": "file",
+          "bytes": 6154,
+          "sha256": "6480f2b2a83dc4764d01b2eec7309729eef2492eede2e5ee98d23a60b05198eb",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/de/impls.rs",
+          "kind": "file",
+          "bytes": 97685,
+          "sha256": "18ed2d8221b04c7fe8f7a757445a04cd1d28c887f46f7a8717afff10eada146f",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/de/mod.rs",
+          "kind": "file",
+          "bytes": 81911,
+          "sha256": "15d008ddf31fdfc5a39d2a301b6df79798969468daee0bcc3ebbcd3b78585e7a",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/de/seed.rs",
+          "kind": "file",
+          "bytes": 563,
+          "sha256": "045d890712a04eb33ffc5a021e5d948a63c89402b8ffeea749df2171b7484f8f",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/de/size_hint.rs",
+          "kind": "file",
+          "bytes": 644,
+          "sha256": "fff83dc39d30e75e8e611991f9c5399188a1aad23a6462dbca2c8b62655cfedb",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/de/value.rs",
+          "kind": "file",
+          "bytes": 48828,
+          "sha256": "8b6055d90e1ee4637fadaa11c87cc3599fe74b83db9d5791e604016cb349ae37",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/format.rs",
+          "kind": "file",
+          "bytes": 726,
+          "sha256": "c85071b016df643b161859682d21ce34fa0ebf2a3bdbeeea69859da48f5d934f",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/integer128.rs",
+          "kind": "file",
+          "bytes": 243,
+          "sha256": "29ef30b7d94507b34807090e68173767cdc7aff62edccd38affe69e75338dddc",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/lib.rs",
+          "kind": "file",
+          "bytes": 13946,
+          "sha256": "50dd6bf086cb41aa82cf2de869d9a257397ee391686d0652a8ada1f68bf09b89",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/macros.rs",
+          "kind": "file",
+          "bytes": 8279,
+          "sha256": "8cf477d0406006f8fbf76833c40a0fd2ed0ba6e01e5afd346c07119f72588ded",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/private/de.rs",
+          "kind": "file",
+          "bytes": 85891,
+          "sha256": "07e3346f224342a8599c8c84630fa218408aa4a547e667290c440bbeef61d40d",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/private/doc.rs",
+          "kind": "file",
+          "bytes": 4930,
+          "sha256": "b222decb40321190155209e1b8a5a52e3adfaa470047e379e664b71e0320655a",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/private/mod.rs",
+          "kind": "file",
+          "bytes": 1567,
+          "sha256": "b8f0c348621d91dd9da3db83d8877e70bc61ad0a2dc2d6fb57c6fc2c2cbafa26",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/private/ser.rs",
+          "kind": "file",
+          "bytes": 40012,
+          "sha256": "19c075b8f26f0170283a64a81bdd53622e83251ebd92510b820dd4bc7534baba",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/ser/fmt.rs",
+          "kind": "file",
+          "bytes": 4166,
+          "sha256": "bd129d9f085933b76dafef6eb43ffac893c1f6484a3064dcd82faeeebc3b203c",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/ser/impls.rs",
+          "kind": "file",
+          "bytes": 30970,
+          "sha256": "00b58a84f7c07b2f575219d6d0745fd1258dae9b9c8ec5b9b299a712c482b1a3",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/ser/impossible.rs",
+          "kind": "file",
+          "bytes": 5298,
+          "sha256": "8e4473db23faeed1accb35e6d2d4e058b6bfaa0746f49f0f3b95a76efbf97878",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/ser/mod.rs",
+          "kind": "file",
+          "bytes": 63248,
+          "sha256": "debdf82e14a219f61e43facb04aad5fba1c2166d8cfdd80c603b2560fe782714",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde-1.0.219/src/std_error.rs",
+          "kind": "file",
+          "bytes": 1347,
+          "sha256": "25a07149e2e468747ffa5a58051c7f93d7b3c0fa0372f012a96c97ec8ab03b97",
+          "archiveMode": 420
+        }
+      ],
+      "archive": "serde-1.0.219.crate"
+    },
+    {
+      "name": "serde_derive",
+      "version": "1.0.219",
+      "url": "https://static.crates.io/crates/serde_derive/serde_derive-1.0.219.crate",
+      "archiveBytes": 57798,
+      "archiveSha256": "5b0276cf7f2c73365f7157c8123c21cd9a50fbbd844757af28ca1f5925fc2a00",
+      "decodedTarBytes": 346624,
+      "members": [
+        {
+          "path": "serde_derive-1.0.219/.cargo_vcs_info.json",
+          "kind": "file",
+          "bytes": 106,
+          "sha256": "1ba5f1ea864eff81a07cf4de4540f7538527ef9115017d67a24e7599e61751f4",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/Cargo.lock",
+          "kind": "file",
+          "bytes": 2873,
+          "sha256": "1912a1811b4af5ce7792fa8f362dc9a7a03088e4da333dc69d446b8d3835a66c",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/Cargo.toml",
+          "kind": "file",
+          "bytes": 2065,
+          "sha256": "e3146884595654ff934208c0d9f99e2f8f388d07e4d893a62e0bc792f006002c",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/Cargo.toml.orig",
+          "kind": "file",
+          "bytes": 1341,
+          "sha256": "07baae5ce86bae5076434f3ae1a3e519e0d94653641ecc2b5b95a7fd2e25feae",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/LICENSE-APACHE",
+          "kind": "file",
+          "bytes": 9723,
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/LICENSE-MIT",
+          "kind": "file",
+          "bytes": 1023,
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/README.md",
+          "kind": "file",
+          "bytes": 4379,
+          "sha256": "56dd9b1d02be861a2c2a88c06005adc61f8b1d4330cd6db304ee330bcfdc4310",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/crates-io.md",
+          "kind": "file",
+          "bytes": 2539,
+          "sha256": "407d92b2932923f8708aaf31db266fd7db32e2b0afa6c569d134b680b74a1920",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/bound.rs",
+          "kind": "file",
+          "bytes": 14691,
+          "sha256": "eda458b2adf8d4b75eccba18621301f846e2a84a04ef2b54e7421f69574e24bc",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/de.rs",
+          "kind": "file",
+          "bytes": 113634,
+          "sha256": "92dc9d8fccee08887b030b13a7ca0c0f205320f76658a4292bafe4f451c7c2c0",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/dummy.rs",
+          "kind": "file",
+          "bytes": 694,
+          "sha256": "4f7347536113434bffe3d04f3d240a3cf47483cf96aa580b16c7ad467735982f",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/fragment.rs",
+          "kind": "file",
+          "bytes": 2116,
+          "sha256": "6757cb4c3131d4300f093572efc273c4ab5a20e3e1efb54a311dcfa52d0bd6eb",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/internals/ast.rs",
+          "kind": "file",
+          "bytes": 6248,
+          "sha256": "171478e83d203193cd96f2c9c922bd240214e05fdf76add73fb7e029784bace8",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/internals/attr.rs",
+          "kind": "file",
+          "bytes": 67874,
+          "sha256": "7be1f043d99af3169737a473137426296d6bba5d8ee9b2963c1d61ec24c27a70",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/internals/case.rs",
+          "kind": "file",
+          "bytes": 7121,
+          "sha256": "10c8dda2b32d8c6c6b63cf09cdc63d02375af7e95ecefe8fecb34f93b65191bb",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/internals/check.rs",
+          "kind": "file",
+          "bytes": 16744,
+          "sha256": "86ea817316638ec33f70ecdf9634a31c934fd3df84533e3e315816dc130f0bff",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/internals/ctxt.rs",
+          "kind": "file",
+          "bytes": 2021,
+          "sha256": "83a4e6fbe0e439d578478883594407e03f2f340541be479bdf0b04a202633a37",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/internals/mod.rs",
+          "kind": "file",
+          "bytes": 395,
+          "sha256": "c1ece6bbce5a5e8a2bf5d6d9a29e85551258db9c610fab73ac19c6b7d8cf98fd",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/internals/name.rs",
+          "kind": "file",
+          "bytes": 2806,
+          "sha256": "9bc1553d7b493794cd436664ee6b43fccb914f271fa86705ae2937ae923a876f",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/internals/receiver.rs",
+          "kind": "file",
+          "bytes": 10533,
+          "sha256": "901c12f5b5d3935f2757f4cfcb05f4fcdb36a2520f62167679410099e44510c0",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/internals/respan.rs",
+          "kind": "file",
+          "bytes": 451,
+          "sha256": "899753859c58ce5f532a3ec4584796a52f13ed5a0533191e48c953ba5c1b52ff",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/internals/symbol.rs",
+          "kind": "file",
+          "bytes": 2509,
+          "sha256": "d2590f1c8356d6a10923476b558c39a85b77392ba09c92fa97e05e2c403e73c7",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/lib.rs",
+          "kind": "file",
+          "bytes": 3125,
+          "sha256": "e64c6eaef2b5e87ad48677ba6a1564007f100b7411c39924c33ae315cb9fd26d",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/pretend.rs",
+          "kind": "file",
+          "bytes": 5802,
+          "sha256": "7facc10a5b805564dd95735ae11118ec17ca6adcc49a59764e7c920e27b9fc4a",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/ser.rs",
+          "kind": "file",
+          "bytes": 45500,
+          "sha256": "7ecc28b3829ec87f73a71be74c04bdb8657351ddd817b43819fed90f6ac11da0",
+          "archiveMode": 420
+        },
+        {
+          "path": "serde_derive-1.0.219/src/this.rs",
+          "kind": "file",
+          "bytes": 1007,
+          "sha256": "87818dc80cbb521b51938a653d09daf10aafc220bb10425948de82ad670fcb85",
+          "archiveMode": 420
+        }
+      ],
+      "archive": "serde_derive-1.0.219.crate"
+    }
+  ],
+  "semanticAuthority": false
+}

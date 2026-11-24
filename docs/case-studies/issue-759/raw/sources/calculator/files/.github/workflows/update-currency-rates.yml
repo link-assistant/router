@@ -1,0 +1,75 @@
+name: Update Currency Rates
+
+on:
+  # Run daily at 17:00 UTC (after ECB publishes rates around 16:00 CET)
+  schedule:
+    - cron: '0 17 * * 1-5'
+  # Allow manual trigger
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  GIT_CONFIG_COUNT: 1
+  GIT_CONFIG_KEY_0: init.defaultBranch
+  GIT_CONFIG_VALUE_0: main
+
+jobs:
+  update-rates:
+    name: Update Currency Rates from Central Banks
+    runs-on: ubuntu-latest
+    concurrency:
+      group: main-writer-main
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Download latest rates from Central Banks
+        run: |
+          echo "Downloading currency rates from official Central Bank APIs..."
+          echo "- European Central Bank (ECB) via Frankfurter API (frankfurter.dev)"
+          echo "- Central Bank of Russia (CBR)"
+          python scripts/download_historical_rates.py
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet data/currency/; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No changes in currency rates"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Currency rates have been updated"
+            git diff --stat data/currency/
+          fi
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git add data/currency/
+          git commit -m "chore: update currency rates from Central Banks [skip ci]
+
+          Updated rates from:
+          - European Central Bank (ECB) via frankfurter.dev
+          - Central Bank of Russia (CBR) via cbr.ru
+
+          This is an automated daily update."
+          node scripts/git-push-with-rebase.mjs --branch main

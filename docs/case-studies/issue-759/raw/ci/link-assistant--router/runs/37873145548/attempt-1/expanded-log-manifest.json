@@ -1,0 +1,104 @@
+[
+  {
+    "path": "link-assistant--router/runs/37873145548/attempt-1/logs/0_bindings (macos-15, 24).txt.xz",
+    "sha256": "a25a0e7caf4d8134c41107714ee2b907068823b30c2e7338ee8521ec6dd1c63b",
+    "bytes": 27896,
+    "uncompressed_bytes": 221963,
+    "redacted": false,
+    "original_gzip_sha256": "a410fc97893db55cbf404c3bceed82a9715739fdaa268e17cace7a125aff7e09",
+    "compression": "xz",
+    "decoded_sha256": "f43897162b20d4b0bdd6bc32c9a72a65a63195bc4008d8ef108852b6ad4daf58"
+  },
+  {
+    "path": "link-assistant--router/runs/37873145548/attempt-1/logs/bindings (macos-15, 24)/system.txt.gz",
+    "sha256": "11580ab06281d21a99665cea857cac24dc827cc0259cc2915e3946d329a49f07",
+    "bytes": 309,
+    "uncompressed_bytes": 578,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37873145548/attempt-1/logs/1_bindings (ubuntu-24.04, 20).txt.xz",
+    "sha256": "f18af802be472f294c95d36b2b885a42046bf3bcfaae3d4664f379bc186caf23",
+    "bytes": 28752,
+    "uncompressed_bytes": 221025,
+    "redacted": false,
+    "original_gzip_sha256": "8c89d9a0b6f39c24626c644df4b5fc21dc96f50eed8bbef36aec487998e965e2",
+    "compression": "xz",
+    "decoded_sha256": "6f8dfc9eb112806be92eb9b36c59fd4b365b23d850503c119a667f3ee68ec1db"
+  },
+  {
+    "path": "link-assistant--router/runs/37873145548/attempt-1/logs/bindings (ubuntu-24.04, 20)/system.txt.gz",
+    "sha256": "21dd49130c954411f6828432f1dbc1f6ae2794eb493e7b125e7b7ceb6bf42e6b",
+    "bytes": 315,
+    "uncompressed_bytes": 582,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37873145548/attempt-1/logs/2_bindings (macos-15, 20).txt.xz",
+    "sha256": "ba39f5242e47f03148577330deaf2aff7600d70dd49ee9b21a23e2ce784c283f",
+    "bytes": 28736,
+    "uncompressed_bytes": 224749,
+    "redacted": false,
+    "original_gzip_sha256": "3b5aa4a97552e2177488683273e6c0ea7b984bb56b3ed620a582f5d85e948b77",
+    "compression": "xz",
+    "decoded_sha256": "f77a49bfbe72288ea9e4aef66563fdb81638bd06342eb50906cc32ab40d8a303"
+  },
+  {
+    "path": "link-assistant--router/runs/37873145548/attempt-1/logs/bindings (macos-15, 20)/system.txt.gz",
+    "sha256": "4aff663ec5c6074062e412b39f4f0063479efd233f2120f698a56f9965eda66f",
+    "bytes": 312,
+    "uncompressed_bytes": 578,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37873145548/attempt-1/logs/3_semver.txt.xz",
+    "sha256": "ba16038c75713a36a8d215ec6cd878a474ce1eed8ba7a624ec0f0904277d3fc6",
+    "bytes": 19588,
+    "uncompressed_bytes": 146897,
+    "redacted": false,
+    "original_gzip_sha256": "0efa731e42d66aa9ca4e82ad8ff3b0e427da80d7a015cad8d7c9086c61ceed3e",
+    "compression": "xz",
+    "decoded_sha256": "df168adbf13c89ec017f10d37ef9e0f57efcebf708c14cff5fa5888bf162d5f4"
+  },
+  {
+    "path": "link-assistant--router/runs/37873145548/attempt-1/logs/semver/system.txt.gz",
+    "sha256": "baa36a93dd27cadbad7d30813a79f5c7acf8999b82f48d2cbcaf309cce52fbe2",
+    "bytes": 369,
+    "uncompressed_bytes": 709,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37873145548/attempt-1/logs/4_bindings (ubuntu-24.04, 24).txt.xz",
+    "sha256": "6920c3c91aaf9f706a1437461f8807a2da7c9e8fcb2f2cd3c66828fe84d70ca1",
+    "bytes": 28196,
+    "uncompressed_bytes": 218290,
+    "redacted": false,
+    "original_gzip_sha256": "a40bcb581f9535363edd52ce5b96c09d59c2e85372838778a7200e76590e1054",
+    "compression": "xz",
+    "decoded_sha256": "eaf3558e6a2a8b580d4e6d5d0df1877c22208660c7631b775cfb119c481dad5d"
+  },
+  {
+    "path": "link-assistant--router/runs/37873145548/attempt-1/logs/bindings (ubuntu-24.04, 24)/system.txt.gz",
+    "sha256": "6185a84900c34305ad3795a640bf359d248eb21cac14330d703186884a67b67f",
+    "bytes": 317,
+    "uncompressed_bytes": 582,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37873145548/attempt-1/logs/5_generated-http.txt.xz",
+    "sha256": "44aa46cf6952257b9f2f63e4b97e050065a64b16ee497a354775a1321626ff53",
+    "bytes": 35132,
+    "uncompressed_bytes": 431012,
+    "redacted": false,
+    "original_gzip_sha256": "0f5573464c1ae439ed079880aa25d7835be9e75974ab81a41cb9ef2d1a0618c5",
+    "compression": "xz",
+    "decoded_sha256": "2ce718f0ffa1ac50842a1b86320e782f8156ffa3cd0b96588e07a7d9c78264a8"
+  },
+  {
+    "path": "link-assistant--router/runs/37873145548/attempt-1/logs/generated-http/system.txt.gz",
+    "sha256": "d00ec58f477b205250112041909c4dabe20e64943b6895bd6024ba591df59808",
+    "bytes": 326,
+    "uncompressed_bytes": 588,
+    "redacted": false
+  }
+]

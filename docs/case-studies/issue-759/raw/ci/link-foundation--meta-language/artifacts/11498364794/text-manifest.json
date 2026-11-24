@@ -1,0 +1,20 @@
+[
+  {
+    "path": "text-objects/c4/c415efd620f8cd6edddc5ad332748d022bd0bddc13d5e86a927ec49c8d0919ec.gz",
+    "artifact_member_name": "self-translation-report.json",
+    "scrubbed_content_sha256": "c415efd620f8cd6edddc5ad332748d022bd0bddc13d5e86a927ec49c8d0919ec",
+    "sha256": "b51bca40607860628b9982ef63f85bd93b3146106369fa6bd6c86b9619005352",
+    "compressed_bytes": 878,
+    "original_bytes": 8254,
+    "redacted": false
+  },
+  {
+    "path": "text-objects/2c/2c98bf0d331ab92436b28856f48471f46ca9f4107241bf05d6beea1de2168cff.gz",
+    "artifact_member_name": "self-translation-report.md",
+    "scrubbed_content_sha256": "2c98bf0d331ab92436b28856f48471f46ca9f4107241bf05d6beea1de2168cff",
+    "sha256": "d2a750230b5748cfae7fe8372483afb3d32f5f311c4044647423faeb539d2655",
+    "compressed_bytes": 673,
+    "original_bytes": 2210,
+    "redacted": false
+  }
+]

@@ -1,0 +1,1 @@
+Connected checked if-let parsing, typed projection plans and guarded control flow to the default Rust-to-meta-to-JavaScript/TypeScript pipeline. The highest host emitter honors the pattern boundary guard before inspecting source data layouts.

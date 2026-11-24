@@ -1,0 +1,46 @@
+{
+  "schema": "csv-node-baseline-reproduction-v1",
+  "scope": "NEW independently executed exact baseline reproduction; NOT recovery of overwritten initial attempt",
+  "sourceHead": "c5136463f196125531fdcda14917972b24504509",
+  "pass": 20,
+  "fail": 8,
+  "originalInitialNodeRaw": "overwritten and still unavailable",
+  "originalObservedInputSha256": "b6eefa9ab8c5bf5db2a957c09b84f0bff2b7e312a4418f2d98a03f988fde55e9",
+  "sourceChanged": false,
+  "bunExecuted": false,
+  "originalGraphExecuted": false,
+  "producerExecuted": false,
+  "rustExecuted": false,
+  "members": [
+    {
+      "path": "complete-failure-inventory.json",
+      "bytes": 3629,
+      "sha256": "daa79c240abb8f2246036375bd29d365ad813ad3596184dbc2ee6153a0bf399f"
+    },
+    {
+      "path": "reproduction-harness.py",
+      "bytes": 2975,
+      "sha256": "92164d0257753d468ceff995b9d74a6c326047dfcd809dc385201e7e647188fd"
+    },
+    {
+      "path": "router-759-csv-c513-baseline-reproduction-node-inputs.json",
+      "bytes": 300423,
+      "sha256": "b6eefa9ab8c5bf5db2a957c09b84f0bff2b7e312a4418f2d98a03f988fde55e9"
+    },
+    {
+      "path": "router-759-csv-c513-baseline-reproduction-node-receipt.json",
+      "bytes": 1157,
+      "sha256": "b0b2ac597b9e55bcdf04cfa1446ccde4683d0f81ea7baf8ea11bd93c1739e1fb"
+    },
+    {
+      "path": "router-759-csv-c513-baseline-reproduction-node.log",
+      "bytes": 221427,
+      "sha256": "175c2acebaf2ad2dfe8eb9fee5f1dbe988f5fbd5c3226a900ddfdf62868be34f"
+    }
+  ],
+  "archive": {
+    "path": "baseline-reproduction.tar.xz",
+    "bytes": 102888,
+    "sha256": "dab5eda2dc052cbfa398b3d365ce7eed31be04d3ac52670c2469e5b62eaa46a3"
+  }
+}

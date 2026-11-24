@@ -1,0 +1,31 @@
+// Complete reviewable reverse source equations. Source copies confer no authority.
+import {readFileSync,writeFileSync} from 'node:fs';
+import {gunzipSync} from 'node:zlib';
+import {createHash} from 'node:crypto';
+import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {ownershipCompiler} from './js-to-rust/vendor/module-syntax.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from './concrete-syntax-meta.mjs';
+const ROOT=fileURLToPath(new URL('../../',import.meta.url)),hash=value=>createHash('sha256').update(value).digest('hex');
+const fail=message=>{throw TypeError('Owned ASCII reverse source preparation: '+message);};
+function packet(name,bytes,sha,archiveBytes,archiveSha){const packed=readFileSync(new URL('./source-profiles/core-ascii/'+name,import.meta.url));if(packed.length!==archiveBytes||hash(packed)!==archiveSha)fail('complete source archive differs');const raw=gunzipSync(packed,{maxOutputLength:200000});if(raw.length!==bytes||hash(raw)!==sha)fail('complete source packet differs');const result=JSON.parse(raw.toString('utf8'));for(const row of result.files)if(hash(row.source)!==row.sha256)fail('complete source program differs');return result.files;}
+function nativeCopy(ts,path,source){
+ const parse=text=>{const file=ts.createSourceFile(path,text,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);if(file.parseDiagnostics.length)fail('complete native grammar differs: '+path);return file;},file=parse(source),nodes=file.statements.map(node=>ts.getSynthesizedDeepClone(node)),detach=node=>{ts.setTextRange(node,{pos:-1,end:-1});ts.setOriginalNode(node,undefined);ts.forEachChild(node,detach);};nodes.forEach(detach);
+ const copy=ts.createPrinter({newLine:ts.NewLineKind.LineFeed,removeComments:true}).printFile(ts.factory.updateSourceFile(file,nodes)),shape=node=>{const children=[];ts.forEachChild(node,child=>{children.push(shape(child));});return [node.kind,ts.isIdentifier(node)?node.escapedText:ts.isLiteralExpression(node)?node.text:null,children];};if(JSON.stringify(shape(file))!==JSON.stringify(shape(parse(copy))))fail('complete native AST copy differs');return {source,copy,completeNativeAstCopy:true};
+}
+function prepare(row,after,root,ts){
+ const before=row.source,first=transportConcreteSyntaxSource(before,{language:'JavaScript'}),beforeMeta=serializeConcreteSyntaxMeta(first.document),rule=(left,right,id)=>({id,edits:[{span:[0,left.length],expected:left,replacement:right}]}),stages=[];let document=transportConcreteSyntaxMeta(beforeMeta).document;
+ for(const phase of ['language','repository']){
+  const target=phase==='language'?before:after,wire=serializeConcreteSyntaxMeta(document),fresh=transportConcreteSyntaxMeta(wire);if(fresh.source!==before)fail('complete stage parent differs');const run=applyConcreteSyntaxSubstitutions(fresh.document,{languageRules:phase==='language'?[rule(before,before,'reverse-ascii:retain-full-native-program')]:[],repositoryRules:phase==='repository'?[rule(before,after,'router-core:bind-source-qualified-reverse-ascii')]:[]}),encoded=serializeConcreteSyntaxMeta(run.value),parsed=transportConcreteSyntaxMeta(encoded);if(parsed.source!==target)fail('complete substitution differs');
+  const inverse=applyConcreteSyntaxSubstitutions(parsed.document,{languageRules:phase==='language'?[rule(target,before,'reverse-ascii:restore-language-source')]:[],repositoryRules:phase==='repository'?[rule(target,before,'router-core:restore-before-reverse-ascii')]:[]});if(transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source!==before)fail('complete inverse differs');stages.push({phase,before,after:target,beforeMeta:wire,afterMeta:encoded,trace:run.trace,completeInverse:true});document=parsed.document;
+ }
+ let current=null;try{current=readFileSync(resolve(root,row.path),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
+ return {path:row.path,before,language:before,after,current,beforeSha256:hash(before),afterSha256:hash(after),beforeMeta,afterMeta:serializeConcreteSyntaxMeta(document),inverse:before,stages,trace:stages.flatMap(stage=>stage.trace),nativeCopies:[nativeCopy(ts,row.path,before),nativeCopy(ts,row.path,after)],completeNativeAstCopy:true,sourceLanguage:'JavaScript'};
+}
+export function prepareCoreAsciiReverseSources({root=ROOT}={}){
+ const ts=ownershipCompiler();if(ts.version!=='5.9.3')fail('actual TypeScript5.9.3 required');
+ const before=packet('reverse-originals.json.gz',95207,'a28aa97550a34ade20bf914f195f6432ea99451ed4913cfd26e707a7d8c50b2f',23654,'e01b43a2b2b4ae3e6ba784523e0fc4587e908ca89be1c08cebfee6076ca7cc82'),after=packet('reverse-afterimages.json.gz',104959,'86b0016bcb8613c751da2de6f1530bc288412d35fa6f2ef218a98b16047425fb',24907,'1323c22bf69df0a319b17d03fc7e961e4b5c96c87d0eda23c7c54565e3fda803');
+ if(before.length!==4||after.length!==4||before.some((row,at)=>row.path!==after[at].path))fail('complete source census differs');return {schema:'router-owned-ascii-reverse-sources-v1',typescriptVersion:ts.version,files:before.map((row,at)=>prepare(row,after[at].source,root,ts)),runtimeExecuted:false,rustExecuted:false,semanticAuthority:false};
+}
+export function composeCoreAsciiReverse(prior,options={}){const plan=prepareCoreAsciiReverseSources(options),sources={...prior};for(const row of plan.files){if(sources[row.path]&&sources[row.path].after!==row.before)fail('preceding complete source equation differs: '+row.path);sources[row.path]=row;}return {sources,layers:[plan],historicalSources:prior};}
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){const args=process.argv.slice(2);if(args.length!==1||!['--check','--write'].includes(args[0]))fail('usage: --check|--write');const plan=prepareCoreAsciiReverseSources();if(args[0]==='--write'){for(const row of plan.files)if(row.current!==row.after&&row.current!==row.before&&!(row.before===''&&row.current===null))fail('complete physical predecessor differs: '+row.path);for(const row of plan.files)writeFileSync(resolve(ROOT,row.path),row.after);}else if(plan.files.some(row=>row.current!==row.after))fail('generated source is stale');console.log(JSON.stringify({schema:plan.schema,files:plan.files.map(row=>row.path),semanticAuthority:false}));}

@@ -1,0 +1,1 @@
+Require two Node test workers for the complete translation and acceptance cohorts in JavaScript-first CI and its reusable template. The workflow policy rejects removing the cap, changing the glob, or filtering cases; strict parity, exact-SHA checks, aggregate dependencies, and Rust gating stay mandatory.

@@ -1,0 +1,66 @@
+// Allocation-only syntax reuse. Callers still authenticate their complete
+// original source, dependencies, namespaces and every resulting obligation.
+import {types} from 'node:util';
+import {sourceItems} from './rust-structure.mjs';
+import {originalStaticSourceIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+export {STATIC_SOURCE_ITEM_LIMITS} from './original-json-intrinsics.mjs';
+// Lexical budgets do not depend on the diagnostic export or a rebound freeze.
+const ENTRY_LIMIT=16,SOURCE_CHAR_LIMIT=128000,ENTRY_CELL_LIMIT=200000,CELL_LIMIT=400000,CHAR_LIMIT=1000000;
+function inspect(items,source){
+ // Called only for private results of sourceItems after the complete native
+ // guard. Each item contributes its object and six fields; each token its
+ // object and four fields. The tokens array is one of the six item fields.
+ // Count the same complete storage before freezing anything, including on a
+ // refusal. No caller record or cached record reaches this cold-only path.
+ const nodes=[items];let cells=1,chars=source.length;
+ for(let index=0;index<items.length;index++){
+  const item=items[index];cells+=7+5*item.tokens.length;
+  if(cells>ENTRY_CELL_LIMIT)return null;
+  chars+=item.term.length+(typeof item.name==='string'?item.name.length:0);
+  nodes.push(item,item.tokens);
+  for(let at=0;at<item.tokens.length;at++){
+   const token=item.tokens[at];chars+=token.type.length+token.text.length;
+   if(chars>CHAR_LIMIT)return null;
+   nodes.push(token);
+  }
+  if(chars>CHAR_LIMIT)return null;
+ }
+ return {nodes,cells,chars};
+}
+function fresh(items){
+ // These private records come only from the unchanged sourceItems lexer, not
+ // caller metadata. Literals define own data fields even with inherited named
+ // setters; the existing native guard excludes inherited numeric array cells.
+ const result=[];
+ for(let index=0;index<items.length;index++){
+  const item=items[index],tokens=[];
+  for(let at=0;at<item.tokens.length;at++){
+   const token=item.tokens[at];
+   tokens[at]={type:token.type,text:token.text,start:token.start,end:token.end};
+  }
+  result[index]={start:item.start,end:item.end,comment:item.comment,tokens,term:item.term,name:item.name};
+ }
+ return result;
+}
+// Each consumer receives independent bounded private storage. The exported
+// utility parses syntax only; neither a frozen record nor cached AST grants
+// original-source identity or an authorization token.
+export function createStaticSourceItemReader(){
+ let entries=[],cells=0,chars=0;
+ return function staticSourceItems(pin){
+  // Preserve the old source read, including its ordering/exception behavior.
+  const source=pin.source;
+  if(!originalStaticSourceIntrinsicsUnchanged()||typeof source!=='string'||source.length>SOURCE_CHAR_LIMIT||source[source.length-1]!=='\n'||types.isProxy(pin)||Object.getPrototypeOf(pin)!==Object.prototype||!Object.isFrozen(pin))return sourceItems(source);
+  const descriptor=Object.getOwnPropertyDescriptor(pin,'source');
+  if(!descriptor||!Object.hasOwn(descriptor,'value')||descriptor.value!==source)return sourceItems(source);
+  for(let index=0;index<entries.length;index++)if(entries[index].source===source){
+   // The complete unchanged lexer ends an LF-terminated source with exactly
+   // this operation. Replay its native legacy RegExp state, not just AST bytes.
+   /\s/u.test('\n');return fresh(entries[index].items);
+  }
+  const items=sourceItems(source),state=inspect(items,source);if(!state)return items;
+  for(let index=state.nodes.length-1;index>=0;index--)Object.freeze(state.nodes[index]);
+  if(entries.length>=ENTRY_LIMIT||cells+state.cells>CELL_LIMIT||chars+state.chars>CHAR_LIMIT){entries=[];cells=0;chars=0;}
+  entries.push({source,items,cells:state.cells,chars:state.chars});cells+=state.cells;chars+=state.chars;return fresh(items);
+ };
+}

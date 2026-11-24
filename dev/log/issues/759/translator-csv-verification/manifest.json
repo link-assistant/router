@@ -1,0 +1,260 @@
+{
+  "schema": "csv-source-verification-receipt-v1",
+  "baseline": "c5136463f196125531fdcda14917972b24504509",
+  "sourceHead": "4bc5de345d79e599b9888f6df8815d02aab440af",
+  "initialNarrow": {
+    "node": {
+      "pass": 20,
+      "fail": 8,
+      "rawStatus": "overwritten; NOT recovered; observed receipt and complete bounded failure inventory only"
+    },
+    "bun": {
+      "pass": 20,
+      "fail": 8,
+      "rawStatus": "retained"
+    }
+  },
+  "initialOriginal": {
+    "node": {
+      "pass": 0,
+      "fail": 9,
+      "graphAttempts": 0
+    },
+    "bun": {
+      "pass": 0,
+      "fail": 9,
+      "graphAttempts": 0
+    },
+    "failure": "sparse absent tracked Rust evidence file before compilation"
+  },
+  "final": {
+    "narrow": {
+      "node": {
+        "pass": 28,
+        "fail": 0
+      },
+      "bun": {
+        "pass": 28,
+        "fail": 0
+      }
+    },
+    "original": {
+      "node": {
+        "pass": 9,
+        "fail": 0
+      },
+      "bun": {
+        "pass": 9,
+        "fail": 0
+      }
+    },
+    "distinctCasesPerEngine": 37,
+    "scope": "one cached complete src/lib.rs graph per engine, all804 tracked Rust+Cargo+PRODUCTION_PROFILE; emittedJS and separatelystrictTS for executable fixtures"
+  },
+  "originalInput": {
+    "digest": "d535be7da58ada7e0445cef93fd9fe791c82956b38b016221279bd26406c28d5",
+    "trackedRust": 804,
+    "originalBytes": 9952429,
+    "sourceReadOrigins": {
+      "workingTree": 763,
+      "capturedCommitBlob": 43
+    }
+  },
+  "retainedRefusals": [
+    "config.parse_usize_csv nominal ConfigError no-Drop",
+    "StreamDialect.from_path classification preserves actual checked/refused result"
+  ],
+  "runtimeParity": false,
+  "rustExecuted": false,
+  "producerExecuted": false,
+  "aliases": {
+    "router-759-csv-c513-narrow-bun-final1-inputs.json": "router-759-csv-c513-narrow-node-final1-inputs.json",
+    "router-759-csv-c513-narrow-bun-frozen1-inputs.json": "router-759-csv-c513-narrow-node-frozen1-inputs.json",
+    "router-759-csv-c513-original-node-initial-inputs.json": "router-759-csv-c513-narrow-node-final1-inputs.json",
+    "router-759-csv-c513-original-bun-initial-inputs.json": "router-759-csv-c513-narrow-node-final1-inputs.json",
+    "router-759-csv-c513-original-node-retry1-inputs.json": "router-759-csv-c513-narrow-node-frozen1-inputs.json",
+    "router-759-csv-c513-original-bun-retry1-inputs.json": "router-759-csv-c513-narrow-node-frozen1-inputs.json"
+  },
+  "members": [
+    {
+      "path": "original-pins/csv-frontier.json",
+      "bytes": 1640,
+      "sha256": "52fcc83f8b8045666c753e606c186fae5155b2d52f9bb2719decf88e002054af"
+    },
+    {
+      "path": "original-pins/csv-original-source.test.mjs",
+      "bytes": 7635,
+      "sha256": "e30f06903546cc09149344aace1913ef4a9a782ade07129c4590f0c29b027511"
+    },
+    {
+      "path": "original-pins/option-deref-frontier.json",
+      "bytes": 4421,
+      "sha256": "05edfd72ec7563c88114444ef038862bbaaa85b60394f4ded60eadc1f32cd7d8"
+    },
+    {
+      "path": "original-source-inputs.json",
+      "bytes": 129773,
+      "sha256": "1c0e46426da50cad6e3f9092ae12c84b99ebac653d364f4b8fe013154718c49b"
+    },
+    {
+      "path": "own-source-repair.patch",
+      "bytes": 24445,
+      "sha256": "a95271aa5dffe90b7865dac7e61c3528906274df1970862497b0fc8b2cd86ede"
+    },
+    {
+      "path": "router-759-csv-c513-diagnosis.log",
+      "bytes": 3762,
+      "sha256": "7fbf8b7e3b31769ca748f56302e747e14a723d966bca0ef105cca75046e40fdb"
+    },
+    {
+      "path": "router-759-csv-c513-expected.log",
+      "bytes": 14853,
+      "sha256": "ca6d1680a7e6f805d2b47e16442811c0f2b4b21d11b9bc6dcfda3f7059df63ae"
+    },
+    {
+      "path": "router-759-csv-c513-harness.py",
+      "bytes": 2851,
+      "sha256": "c85360775be051dbe78a6b5060b508b621528d163dc8f747e054d65cfa3f2849"
+    },
+    {
+      "path": "router-759-csv-c513-initial-node-observed-receipt-sidecar.json",
+      "bytes": 1066,
+      "sha256": "124f3ae6cf182da152a601daed409bf9819e5032cab1f7ef2951c754f4c583b9"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-bun-final1-receipt.json",
+      "bytes": 1088,
+      "sha256": "6b222220fb3195e44133146d35f0f5beebaea404d4487eb5e267c25e813ab566"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-bun-final1.log",
+      "bytes": 3121,
+      "sha256": "9bb2c216c20893f763f0f5a4fba1c1632be3923c7ddb7da76f150d81db3997f1"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-bun-frozen1-receipt.json",
+      "bytes": 1090,
+      "sha256": "f0f3837b25c6b18770c596af03ce59a94bd75ec486f66ac560dc0736115ea19e"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-bun-frozen1.log",
+      "bytes": 3121,
+      "sha256": "4503ec240960b63ad2b04595acdf2d5446d815c18356ccfc7f8451577f9395be"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-bun-initial-inputs.json",
+      "bytes": 300423,
+      "sha256": "b6eefa9ab8c5bf5db2a957c09b84f0bff2b7e312a4418f2d98a03f988fde55e9"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-bun-initial-receipt.json",
+      "bytes": 1090,
+      "sha256": "37eafd738e0e1c3ffd085a9d9b106f76645e496b7b37facce786f9e28b065669"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-bun-initial.log",
+      "bytes": 322729,
+      "sha256": "3c775803c11a5eec9e7f96368bd4fac2eba0aa336fe659fbbab0233ff92d6da4"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-node-failures.json",
+      "bytes": 4046,
+      "sha256": "06b87bd4514d194750281597ea8b65a4d80c6c6e0dadd10217c6653675f36779"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-node-final1-inputs.json",
+      "bytes": 300423,
+      "sha256": "15b93bf3bea250921d704b0867372e137e2c2df80ebc6a05eba31153c5ee7ed3"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-node-final1-receipt.json",
+      "bytes": 1145,
+      "sha256": "d586f168240e0c566406aeb86f0474701c63a9215ad4ab07380a58cca6dbb987"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-node-final1.log",
+      "bytes": 6399,
+      "sha256": "2b2b6f1b8d8b83eaa8f82e453c6e3767a0f7115ee57f427d04999505d3758012"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-node-frozen1-inputs.json",
+      "bytes": 300423,
+      "sha256": "8275315e6f444560ad77a4560c2cf084178a22e8dafe8b2de83724ec11448f67"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-node-frozen1-receipt.json",
+      "bytes": 1145,
+      "sha256": "6b189cabe2412073b4b15a79418b8813944fdbe0acf0e75fd191b01a99ee0f06"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-node-frozen1.log",
+      "bytes": 6399,
+      "sha256": "95fa725375e8f055320f057b7a5991fe2f10ce2c7349f4e7afe39fbd4b23d548"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-node-retry1-inputs.json",
+      "bytes": 300423,
+      "sha256": "7d87dfee45c27237366de37e33f732c0195531f77632179f5804524fa1780906"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-node-retry1-receipt.json",
+      "bytes": 1157,
+      "sha256": "a686aab4c53092d59105bb7c40e4131b82c538d8f066e571b553bd93dd368919"
+    },
+    {
+      "path": "router-759-csv-c513-narrow-node-retry1.log",
+      "bytes": 6400,
+      "sha256": "88843a05379002cbc05d8b750c2f26c4c9e933aed7bdc310bad4df387f8955bd"
+    },
+    {
+      "path": "router-759-csv-c513-original-bun-initial-receipt.json",
+      "bytes": 766,
+      "sha256": "55837c48d969550f4d1dc79b9b6dc993f260636cf63504c0fcb0e8fbc384408a"
+    },
+    {
+      "path": "router-759-csv-c513-original-bun-initial.log",
+      "bytes": 16573,
+      "sha256": "d3745ff481d332b0bf3b326dc78a1af65ecd5723165bb1977aa9458357ce52bc"
+    },
+    {
+      "path": "router-759-csv-c513-original-bun-retry1-receipt.json",
+      "bytes": 768,
+      "sha256": "66e1f6bb829cf2a6c1535638d331ce5b9934b5d52553c32b89cb0772658d7850"
+    },
+    {
+      "path": "router-759-csv-c513-original-bun-retry1.log",
+      "bytes": 130947,
+      "sha256": "72e64a54133832741d79935f9efd7b6c7d16a0d69e916bbacda2635eb393845a"
+    },
+    {
+      "path": "router-759-csv-c513-original-initial-failures.json",
+      "bytes": 3038,
+      "sha256": "b5f4f38e4319e121490c8889b29da06c417da13cb04e4463f71e77cf5d2b2d3b"
+    },
+    {
+      "path": "router-759-csv-c513-original-node-initial-receipt.json",
+      "bytes": 844,
+      "sha256": "5c6ff3480613bbba5fd673f60b065fb3dea3af05dc21e322291cda9d4efc2691"
+    },
+    {
+      "path": "router-759-csv-c513-original-node-initial.log",
+      "bytes": 14010,
+      "sha256": "69756fe11abc2710211e4bbc5edc7867d9120533a828cde5b90909b7d819a3d5"
+    },
+    {
+      "path": "router-759-csv-c513-original-node-retry1-receipt.json",
+      "bytes": 833,
+      "sha256": "640cad2d5f3e0b9d554dae70552640d50d8127c9ab0c6884fe2b6697d7aadc53"
+    },
+    {
+      "path": "router-759-csv-c513-original-node-retry1.log",
+      "bytes": 132176,
+      "sha256": "624bc04f37f2f60a53153cd234172aceabb8c80e430094527dc911d194128938"
+    }
+  ],
+  "archive": {
+    "path": "csv-verification.tar.xz",
+    "bytes": 132584,
+    "sha256": "3d03ec6b8da85f60d9a0d26d04edbb7b3172c98b87b169ebfd272bd5d1a144cb"
+  }
+}

@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-foundation--relative-meta-logic/runs/36045470151/attempt-1/logs/0_Rust (cargo test).txt.gz",
+    "sha256": "410eed1dd8e23c6fbde16c9281433306c4fb26961d929aaa19273e4616eaa31c",
+    "bytes": 949,
+    "uncompressed_bytes": 2591,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/36045470151/attempt-1/logs/Rust (cargo test)/system.txt.gz",
+    "sha256": "8d6f9a555e43f9f3c48823892f547f12cde1c231b7c18cf22e6e80174ca406c7",
+    "bytes": 319,
+    "uncompressed_bytes": 590,
+    "redacted": false
+  }
+]

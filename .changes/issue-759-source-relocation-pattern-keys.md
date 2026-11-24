@@ -1,0 +1,3 @@
+Align per-source translation relocation with the exact standard/method/pattern proof-key policy already used by project and original-source linking. Raw evidence retains its original bytes; checked AST spans still relocate normally. Preserve the existing bounded CTFE refusal for a call to a patterned const fn, and prove the supported out-of-line patterned runtime function using original source spans and JavaScript/strict-TypeScript targets instead.
+
+The preceding 89-case pair passed 85 cases in each engine; all four failure logs remain retained. These narrow corrections are UNRUN. The original whole-verification AREAS assertion remains unchanged pending an explicit diagnostic slot. No caller-owner, Copy, CTFE, allocator, native or whole-application guard is weakened.

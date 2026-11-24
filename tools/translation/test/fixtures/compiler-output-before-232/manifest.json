@@ -1,0 +1,26 @@
+{
+  "schema": "complete-translator-before-232-v1",
+  "sources": [
+    {
+      "path": "tools/translation/builtin-derive-ast-meta.mjs",
+      "fixture": "builtin-derive-ast-meta.mjs.txt",
+      "bytes": 13555,
+      "sha256": "a02dba7fdc80211fc86cfddf4c45aad770a58dcc5e8a41f3c4c9412a718b0559",
+      "commit": "0d6c69efb35bd543401d1bb1294b4b8c8723408d"
+    },
+    {
+      "path": "tools/translation/builtin-ast-builder-meta.mjs",
+      "fixture": "builtin-ast-builder-meta.mjs.txt",
+      "bytes": 18773,
+      "sha256": "5982d9b84b4215e18134c82ac4652b0f94db9b58b5fcd6e9c575a41daba429cb",
+      "commit": "0d6c69efb35bd543401d1bb1294b4b8c8723408d"
+    },
+    {
+      "path": "tools/translation/builtin-ast-source-substitution.mjs",
+      "fixture": "builtin-ast-source-substitution.mjs.txt",
+      "bytes": 31552,
+      "sha256": "6b97b894e05f9bccf406ba6f0a05caf4a5a5899996d43edb1c2a1d3c1565bf1a",
+      "commit": "0d6c69efb35bd543401d1bb1294b4b8c8723408d"
+    }
+  ]
+}

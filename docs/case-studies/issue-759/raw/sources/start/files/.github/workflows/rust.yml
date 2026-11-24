@@ -1,0 +1,793 @@
+name: Rust CI/CD
+
+# Only the JavaScript workflow calls this after its complete successful stage.
+# A relative reusable-workflow call uses exactly the caller's commit and event.
+on:
+  workflow_call:
+    inputs:
+      release_mode:
+        type: string
+        default: instant
+      bump_type:
+        type: string
+        default: patch
+      description:
+        type: string
+        default: ''
+    secrets:
+      # Obtained from release-main only, rather than passed by the caller.
+      START_RELEASE_SSH_KEY:
+        required: false
+      CARGO_REGISTRY_TOKEN:
+        required: false
+      CARGO_TOKEN:
+        required: false
+
+# Least-privilege default; jobs that publish or push to main opt back in to
+# `contents: write` individually.
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: '0'
+  CARGO_BUILD_JOBS: '2'
+  # Harden Cargo registry access against transient sparse-index/download
+  # failures like the HTTP/2 framing error in run 28246415639.
+  CARGO_NET_RETRY: '10'
+  CARGO_HTTP_MULTIPLEXING: 'false'
+  RUSTFLAGS: -Dwarnings
+  # Force JavaScript-based actions to use Node 24 (already on the runner).
+  # Silences the "Node.js 20 actions are deprecated" annotation that fired
+  # on every job in run 25282945820. Adopted from `link-assistant/hive-mind`.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Silence the `hint: Using 'master' as the name for the initial branch`
+  # block that `actions/checkout` printed 15 times in run 31380353470.
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: init.defaultBranch
+  GIT_CONFIG_VALUE_0: main
+
+jobs:
+  # === SYNTAX PRE-CHECK ===
+  # ~7 s sanity check for shared `.mjs` helpers; catches broken merge
+  # resolutions before the slow lint / test matrix has to spin up.
+  syntax-check:
+    concurrency:
+      group: check-rust-${{ github.ref }}-syntax-check
+      cancel-in-progress: false
+    name: Syntax Pre-Check (.mjs)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+
+      - name: Run syntax check on all .mjs files
+        run: bash scripts/check-mjs-syntax.sh
+
+      - name: Simulate merge with main (PRs only)
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: bash scripts/simulate-fresh-merge.sh --base-ref "origin/$GITHUB_BASE_REF"
+
+  # === DETECT CHANGES ===
+  detect-changes:
+    concurrency:
+      group: check-rust-${{ github.ref }}-detect-changes
+      cancel-in-progress: false
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name != 'workflow_dispatch'
+    outputs:
+      rs-changed: ${{ steps.changes.outputs.rs-changed }}
+      toml-changed: ${{ steps.changes.outputs.toml-changed }}
+      mjs-changed: ${{ steps.changes.outputs.mjs-changed }}
+      docs-changed: ${{ steps.changes.outputs.docs-changed }}
+      workflow-changed: ${{ steps.changes.outputs.workflow-changed }}
+      any-rust-code-changed: ${{ steps.changes.outputs.any-rust-code-changed }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+
+      - name: Detect changes
+        id: changes
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/detect-code-changes.mjs
+
+  # === VERSION CHANGE CHECK ===
+  # Prohibit manual version changes in Cargo.toml - versions should only be changed by CI/CD
+  version-check:
+    concurrency:
+      group: check-rust-${{ github.ref }}-version-check
+      cancel-in-progress: false
+    name: Check for Manual Version Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Check for version changes in Cargo.toml
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: |
+          # Get the diff for Cargo.toml
+          VERSION_DIFF=$(git diff "origin/$GITHUB_BASE_REF...HEAD" -- rust/Cargo.toml | grep -E '^\+version\s*=' || true)
+
+          if [ -n "$VERSION_DIFF" ]; then
+            echo "::error::Manual version change detected in rust/Cargo.toml"
+            echo ""
+            echo "Version changes in Cargo.toml are prohibited in pull requests."
+            echo "Versions are managed automatically by the CI/CD pipeline using changelog fragments."
+            echo ""
+            echo "To request a release:"
+            echo "  1. Add a changelog fragment in rust/changelog.d/ describing your changes"
+            echo "  2. The release workflow will automatically bump the version when merged"
+            echo ""
+            echo "Detected change:"
+            echo "$VERSION_DIFF"
+            exit 1
+          fi
+
+          echo "No manual version changes detected - check passed"
+
+  # === CHANGELOG CHECK ===
+  changelog:
+    concurrency:
+      group: check-rust-${{ github.ref }}-changelog
+      cancel-in-progress: false
+    name: Changelog Fragment Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [detect-changes]
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-rust-code-changed == 'true'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Check for changelog fragments
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: |
+          # Get changed files in PR
+          CHANGED_FILES=$(git diff --name-only "origin/$GITHUB_BASE_REF...HEAD")
+
+          # Check if any Rust source files changed
+          SOURCE_CHANGED=$(echo "$CHANGED_FILES" | grep -cE "^rust/(src/|tests/|Cargo\.toml)" || true)
+
+          # Check if a changelog fragment was ADDED in this PR (not just existing)
+          # We need to check the diff, not just the directory contents
+          FRAGMENT_ADDED=$(echo "$CHANGED_FILES" | grep -E "^rust/changelog\.d/.*\.md$" | grep -cv "README.md" || true)
+
+          echo "Source files changed: $SOURCE_CHANGED"
+          echo "Changelog fragments added in PR: $FRAGMENT_ADDED"
+
+          if [ "$SOURCE_CHANGED" -gt 0 ] && [ "$FRAGMENT_ADDED" -eq 0 ]; then
+            echo "::error::No changelog fragment found in this PR. Please add a changelog entry in rust/changelog.d/"
+            echo ""
+            echo "To create a changelog fragment:"
+            echo "  Create a new .md file in rust/changelog.d/ with your changes"
+            echo "  Name it after your PR number, e.g., '123.md'"
+            echo ""
+            echo "See rust/changelog.d/README.md for more information."
+            exit 1
+          fi
+
+          echo "Changelog check passed"
+
+  # === LINT AND FORMAT CHECK ===
+  lint:
+    concurrency:
+      group: check-rust-${{ github.ref }}-lint
+      cancel-in-progress: false
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [detect-changes]
+    if: ${{ !cancelled() }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master @ 2026-10-09
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+
+      - name: Cache cargo registry
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('rust/Cargo.lock', 'rust/Cargo.toml') }}
+
+      - name: Check formatting
+        working-directory: rust
+        run: cargo fmt --all -- --check
+
+      - name: Run Clippy
+        working-directory: rust
+        run: cargo clippy --all-targets --all-features
+
+      - name: Check file size limit
+        run: node scripts/check-file-size.mjs
+
+  # === TEST ===
+  test:
+    concurrency:
+      group: check-rust-${{ github.ref }}-test-${{ matrix.os }}
+      cancel-in-progress: false
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    needs: [detect-changes, changelog]
+    if: ${{ !cancelled() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.changelog.result == 'success' || needs.changelog.result == 'skipped') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master @ 2026-10-09
+        with:
+          toolchain: stable
+
+      - name: Setup Node.js (Linux doc examples)
+        if: runner.os == 'Linux'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+
+      - name: Cache cargo registry
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('rust/Cargo.lock', 'rust/Cargo.toml') }}
+
+      - name: Prepare Docker integration images (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          python3 experiments/issue-195-ci-image-preparation.py
+          bash scripts/prepare-docker-test-images.sh
+
+      - name: Run tests
+        working-directory: rust
+        run: cargo test --all-features --verbose
+
+      - name: Run doc tests
+        working-directory: rust
+        run: cargo test --doc --verbose
+
+      # Build the binary for execution tracking tests
+      - name: Build release
+        working-directory: rust
+        run: cargo build --release
+
+      - name: Check documented examples (Rust)
+        if: runner.os == 'Linux'
+        run: node scripts/check-doc-examples.mjs --implementation rust
+
+      # Test execution tracking (Unix)
+      - name: Test execution tracking (Unix)
+        if: runner.os != 'Windows'
+        working-directory: rust
+        env:
+          START_VERBOSE: '1'
+        run: |
+          ./target/release/start echo "Testing execution tracking"
+          ls -la ~/.start-command/
+          cat ~/.start-command/executions.lino
+          echo "Execution tracking test passed"
+
+      # Test execution tracking (Windows)
+      - name: Test execution tracking (Windows)
+        if: runner.os == 'Windows'
+        working-directory: rust
+        env:
+          START_VERBOSE: '1'
+        shell: bash
+        run: |
+          ./target/release/start.exe echo "Testing execution tracking"
+          ls -la "$USERPROFILE/.start-command/"
+          cat "$USERPROFILE/.start-command/executions.lino"
+          echo "Execution tracking test passed"
+
+  # === TEST PARITY CHECK ===
+  # Enforce feature evidence; test counts remain a secondary diagnostic.
+  test-parity:
+    concurrency:
+      group: check-rust-${{ github.ref }}-test-parity
+      cancel-in-progress: false
+    name: Feature Parity and Test Count Signal
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [detect-changes]
+    if: ${{ !cancelled() }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+
+      - name: Verify per-feature evidence
+        env:
+          PARITY_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: node scripts/check-feature-parity.mjs
+
+      - name: Check Rust/JS test count parity (secondary signal)
+        run: node scripts/check-test-parity.mjs
+
+  # === CODE COVERAGE ===
+  # Fail if Rust test coverage drops below the configured threshold
+  coverage:
+    concurrency:
+      group: check-rust-${{ github.ref }}-coverage
+      cancel-in-progress: false
+    name: Code Coverage (Rust, Linux only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [detect-changes, changelog]
+    if: ${{ !cancelled() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.changelog.result == 'success' || needs.changelog.result == 'skipped') }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master @ 2026-10-09
+        with:
+          toolchain: stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-coverage-${{ hashFiles('rust/Cargo.lock', 'rust/Cargo.toml') }}
+
+      - name: Cache cargo-tarpaulin binary
+        uses: actions/cache@v5
+        with:
+          path: ~/.cargo/bin/cargo-tarpaulin
+          key: ${{ runner.os }}-cargo-tarpaulin-bin
+
+      - name: Install cargo-tarpaulin (if not cached)
+        run: |
+          if ! command -v cargo-tarpaulin >/dev/null 2>&1; then
+            cargo install cargo-tarpaulin
+          else
+            echo "Using cached cargo-tarpaulin: $(cargo tarpaulin --version)"
+          fi
+
+      - name: Prepare Docker integration images
+        run: |
+          python3 experiments/issue-195-ci-image-preparation.py
+          bash scripts/prepare-docker-test-images.sh
+
+      - name: Run coverage
+        working-directory: rust
+        run: |
+          # tarpaulin.toml excludes src/bin/main.rs (CLI entry point, not library logic)
+          mkdir -p coverage
+          cargo tarpaulin --all-features --timeout 120 --out Xml --output-dir coverage/ 2>&1 | tee coverage/tarpaulin.log
+          # tarpaulin outputs: "50.73% coverage, 908/1790 lines covered"
+          COVERAGE=$(grep -oP '^\d+\.\d+(?=% coverage)' coverage/tarpaulin.log | tail -1)
+          echo "Coverage: ${COVERAGE}%"
+          echo "coverage=${COVERAGE}" >> "$GITHUB_OUTPUT"
+          # Fail if coverage is below 50% (lib code only; main.rs excluded via tarpaulin.toml)
+          if python3 -c "import sys; c=float('${COVERAGE}') if '${COVERAGE}' else 0; sys.exit(0 if c >= 50.0 else 1)"; then
+            echo "✅ Coverage ${COVERAGE}% meets the 50% threshold"
+          else
+            echo "❌ Coverage ${COVERAGE}% is below the 50% threshold"
+            exit 1
+          fi
+
+  # === BUILD ===
+  # Only build on push to main, not on PRs (tests already verify the code builds)
+  build:
+    concurrency:
+      group: check-rust-${{ github.ref }}-build
+      cancel-in-progress: false
+    name: Build Package
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [lint, test]
+    if: ${{ !cancelled() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && needs.lint.result == 'success' && needs.test.result == 'success' }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master @ 2026-10-09
+        with:
+          toolchain: stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('rust/Cargo.lock', 'rust/Cargo.toml') }}
+
+      - name: Build release
+        working-directory: rust
+        run: cargo build --release --verbose
+
+      - name: Check package
+        working-directory: rust
+        run: cargo package --allow-dirty
+
+  # === AUTO RELEASE ===
+  # Automatic release on push to main using changelog fragments.
+  # `!cancelled()` is required so this job runs even though its transitive
+  # dependencies (build, test) are themselves conditional. Without it, GitHub
+  # Actions propagates the `skipped` status down the chain and no Rust release
+  # is ever created (see docs/case-studies/issue-108/).
+  auto-release:
+    # Shared with every other job that writes to main, including
+    # jobs in the other workflow file, so releases never race.
+    concurrency:
+      group: main-writer-${{ github.repository }}-main
+      cancel-in-progress: false
+    name: Auto Release
+    needs: [lint, test, build]
+    if: |
+      !cancelled() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.build.result == 'success'
+    environment: release-main
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      # Writer job: the checkout credentials are what pushes the version
+      # commit/tag back to main, so `persist-credentials: false` (applied to
+      # every read-only checkout in this file) must not be set here.
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ssh-key: ${{ secrets.START_RELEASE_SSH_KEY }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master @ 2026-10-09
+        with:
+          toolchain: stable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+
+      - name: Preflight credential checks
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PREFLIGHT_PACKAGE_NAME: start-command
+        run: |
+          node scripts/preflight-credentials.mjs \
+            --require gh-token \
+            --require crates-io
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Determine bump type from changelog fragments
+        id: bump_type
+        run: node scripts/get-bump-type.mjs
+
+      - name: Check if a release is needed (self-healing vs. crates.io)
+        id: check
+        env:
+          HAS_FRAGMENTS: ${{ steps.bump_type.outputs.has_fragments }}
+        run: node scripts/check-release-needed.mjs --working-dir rust --registry crates.io
+
+      - name: Collect changelog and bump version
+        id: version
+        if: steps.check.outputs.should_release == 'true' && steps.check.outputs.skip_bump != 'true'
+        run: |
+          node scripts/version-and-commit.mjs \
+            --bump-type "${{ steps.bump_type.outputs.bump_type }}" \
+            --working-dir rust \
+            --mode changelog
+
+      - name: Get current version
+        id: current_version
+        if: steps.check.outputs.should_release == 'true'
+        working-directory: rust
+        run: |
+          CURRENT_VERSION=$(grep -Po '(?<=^version = ")[^"]*' Cargo.toml)
+          echo "version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build release
+        if: steps.check.outputs.should_release == 'true'
+        working-directory: rust
+        run: cargo build --release
+
+      - name: Preflight crates.io publish token
+        if: steps.check.outputs.should_release == 'true'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
+          CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
+        run: node scripts/preflight-credentials.mjs --require crates-token
+
+      - name: Publish start-command to crates.io
+        id: publish_start_command
+        if: steps.check.outputs.should_release == 'true'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
+          CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
+        run: node scripts/publish-to-crates.mjs --working-dir rust
+
+      - name: Create GitHub Release
+        if: steps.publish_start_command.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/create-github-release.mjs \
+            --release-version "${{ steps.current_version.outputs.version }}" \
+            --repository "${{ github.repository }}" \
+            --prefix "rust-" \
+            --changelog-file "rust/CHANGELOG.md" \
+            --badge-type "crates" \
+            --package-name "start-command"
+
+      - name: Verify release contains the crates badge (false-positive guard)
+        if: steps.publish_start_command.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/verify-release-badge.mjs \
+            --repository "${{ github.repository }}" \
+            --tag "rust-v${{ steps.current_version.outputs.version }}" \
+            --badge-type crates \
+            --package-name start-command \
+            --release-version "${{ steps.current_version.outputs.version }}"
+
+  # === MANUAL RELEASE ===
+  # Same `!cancelled()` guard as `auto-release` — without it the job is
+  # silently skipped when its dependencies are conditional.
+  manual-release:
+    # Shared with every other job that writes to main, including
+    # jobs in the other workflow file, so releases never race.
+    concurrency:
+      group: main-writer-${{ github.repository }}-main
+      cancel-in-progress: false
+    name: Manual Release
+    needs: [lint, test, build]
+    if: |
+      !cancelled() &&
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.release_mode == 'instant' &&
+      needs.build.result == 'success'
+    environment: release-main
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      # Writer job: the checkout credentials are what pushes the version
+      # commit/tag back to main, so `persist-credentials: false` (applied to
+      # every read-only checkout in this file) must not be set here.
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ssh-key: ${{ secrets.START_RELEASE_SSH_KEY }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master @ 2026-10-09
+        with:
+          toolchain: stable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+
+      - name: Preflight credential checks
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PREFLIGHT_PACKAGE_NAME: start-command
+        run: |
+          node scripts/preflight-credentials.mjs \
+            --require gh-token \
+            --require crates-io
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Version and commit
+        id: version
+        env:
+          BUMP_TYPE: ${{ inputs.bump_type }}
+          DESCRIPTION: ${{ inputs.description }}
+        run: |
+          node scripts/version-and-commit.mjs \
+            --bump-type "$BUMP_TYPE" \
+            --description "$DESCRIPTION" \
+            --working-dir rust \
+            --mode manual
+
+      - name: Build release
+        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
+        working-directory: rust
+        run: cargo build --release
+
+      - name: Preflight crates.io publish token
+        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
+          CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
+        run: node scripts/preflight-credentials.mjs --require crates-token
+
+      - name: Publish start-command to crates.io
+        id: publish_start_command
+        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
+          CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
+        run: node scripts/publish-to-crates.mjs --working-dir rust
+
+      - name: Create GitHub Release
+        if: steps.publish_start_command.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/create-github-release.mjs \
+            --release-version "${{ steps.version.outputs.new_version }}" \
+            --repository "${{ github.repository }}" \
+            --prefix "rust-" \
+            --changelog-file "rust/CHANGELOG.md" \
+            --badge-type "crates" \
+            --package-name "start-command"
+
+      - name: Verify release contains the crates badge (false-positive guard)
+        if: steps.publish_start_command.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/verify-release-badge.mjs \
+            --repository "${{ github.repository }}" \
+            --tag "rust-v${{ steps.version.outputs.new_version }}" \
+            --badge-type crates \
+            --package-name start-command \
+            --release-version "${{ steps.version.outputs.new_version }}"
+
+  cargo-audit:
+    name: Cargo Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: check-rust-${{ github.ref }}-cargo-audit
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b # v2.87.4
+        with:
+          tool: cargo-audit@0.22.2
+
+      - name: Audit committed Cargo.lock
+        working-directory: rust
+        run: cargo audit --file Cargo.lock
+
+  rust-codeql:
+    name: CodeQL (Rust)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: check-rust-${{ github.ref }}-codeql-rust
+      cancel-in-progress: false
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: rust
+          # Keeps archived third-party evidence under dev/log/ out of the
+          # analysis; see the file for why (issue #168).
+          config-file: .github/codeql/codeql-config.yml
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v4
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4
+
+  # === PIPELINE STATUS ===
+  # Aggregates every job so a run cannot look green while a job failed or was
+  # silently cancelled. A job killed by `timeout-minutes` is reported as
+  # `cancelled`, which would otherwise hide the failure (issue #158).
+  pipeline-status:
+    name: Rust Stage
+    needs:
+      - syntax-check
+      - detect-changes
+      - version-check
+      - changelog
+      - lint
+      - test
+      - test-parity
+      - coverage
+      - build
+      - auto-release
+      - manual-release
+      - cargo-audit
+      - rust-codeql
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Check aggregate pipeline status
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+          IS_MAIN: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+        run: node scripts/check-stage-status.mjs --required syntax-check,lint,test,test-parity,coverage,cargo-audit,rust-codeql

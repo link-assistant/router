@@ -1,0 +1,107 @@
+{
+  "scope": "Unchanged source inventory for pending generic declarative expansion tests; no runtime behavior or namespace admission.",
+  "tokio": {
+    "version": "1.53.2",
+    "archiveBytes": 928280,
+    "archiveSha256": "e95f91fcc7a621e8b030f6aa23c71fe9838ae2fb4d8118b75602a328f5144044",
+    "manifestSha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476",
+    "lockSha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
+    "members": [
+      {
+        "path": "src/task/task_local.rs",
+        "bytes": 14177,
+        "sha256": "72be75ead1802bc3f51d9703f807babe2534fea0944416a6472bc5a00c6eab03"
+      },
+      {
+        "path": "src/macros/cfg.rs",
+        "bytes": 17565,
+        "sha256": "07c26bad8a45322fb89df498dd22e1d7a083761155a579d73370510af13a15be"
+      },
+      {
+        "path": "Cargo.toml",
+        "bytes": 17621,
+        "sha256": "d5da534aec653dc20626a50578d87da105303bbcfd3adbc912054d9cf138dc57"
+      }
+    ]
+  },
+  "invocations": [
+    {
+      "file": "src/auth_diagnostics.rs",
+      "sourceSha256": "4adfdd83495f6cadeb33c3c17658134c4e6a3a7947cb1c733f92bde63dd9690a",
+      "span": {
+        "start": 6785,
+        "end": 6933
+      },
+      "invocationSha256": "529f1bbbdf2eee1ef0772ab741861ca0e39911f32845306bfd518137b46452b9",
+      "original": "tokio::task_local! {\n    /// Set once the current request's authentication outcome was counted.\n    static OUTCOME_COUNTED: std::cell::Cell<bool>;\n}"
+    },
+    {
+      "file": "src/account_policy_scope.rs",
+      "sourceSha256": "3541bb2b886c0ae3638febead8947a7dfd62bef56bab0a35c31332963dc86e27",
+      "span": {
+        "start": 815,
+        "end": 877
+      },
+      "invocationSha256": "3c4b405e21ade9c7810d829c88eb8c36ac16148c2acfe310fcd8acb069136626",
+      "original": "tokio::task_local! { pub static REQUEST: Arc<PolicyRequest>; }"
+    },
+    {
+      "file": "src/launcher_log.rs",
+      "sourceSha256": "be755843f641b92af9b9bbcf46120ab477fdcc4ee1f75a8238aa7a069c9b3a9b",
+      "span": {
+        "start": 448,
+        "end": 509
+      },
+      "invocationSha256": "ee8099733e85288e707e0ab78bc16f5c9a58d33b3aba62060850baec4efa81a1",
+      "original": "tokio::task_local! {\n    static ACTIVE: Arc<DiagnosticLog>;\n}"
+    },
+    {
+      "file": "src/request_log.rs",
+      "sourceSha256": "659faec12e15116eb27b0c65037bb86dda6a3e64fefa87266313fee23eaf2e4d",
+      "span": {
+        "start": 20433,
+        "end": 20497
+      },
+      "invocationSha256": "11fb6801684d4e33972192d18a3ec151b897fe4d7476a945e7c97c4d278ad302",
+      "original": "tokio::task_local! {\n    static ACTIVE_CORRELATION_ID: String;\n}"
+    },
+    {
+      "file": "src/operation_context.rs",
+      "sourceSha256": "ebd65e3863cbf232d23542c9f769502bfd3a043c0e5a5de8025cf86d16bc6e7f",
+      "span": {
+        "start": 4305,
+        "end": 4375
+      },
+      "invocationSha256": "749d5ad6ec5eab7ef212b4d246ec3ffdb7cf2096b13c02e38f23448b43d1127e",
+      "original": "tokio::task_local! {\n    pub(crate) static ACTIVE: OperationContext;\n}"
+    },
+    {
+      "file": "src/thinking/mod.rs",
+      "sourceSha256": "26a39c5916007a8fd5ca6c65b25e2135b788ba6831d9ba77674b7b80da1e1b3b",
+      "span": {
+        "start": 3119,
+        "end": 3197
+      },
+      "invocationSha256": "705cdf025a8838ccb36db0d6d3ece3d23e894f7e496183e456c09446eb8bf78d",
+      "original": "tokio::task_local! {\n    pub(crate) static ORIGIN: (ThinkingProtocol, bool);\n}"
+    },
+    {
+      "file": "src/logging/process.rs",
+      "sourceSha256": "19d6776aca949b23edb64c6ec830729d3947ccf8fe36bd8c0615b051fa84d9e7",
+      "span": {
+        "start": 395,
+        "end": 459
+      },
+      "invocationSha256": "ea1a222450684ab1d291e7917120c364d0ab0d0a0210c0b5989b46f99b73547d",
+      "original": "tokio::task_local! { pub(crate) static FILE_DIAGNOSTICS: bool; }"
+    }
+  ],
+  "count": 7,
+  "requiredAdditionalClosure": [
+    "Actual pinned std thread_local! and all enabled conditional macro branches",
+    "Actual Tokio extern-crate/alias and std call-site owners",
+    "Input fragment parsing for meta/vis/ident/ty/tt with repetitions and $crate provenance",
+    "Unknown forwarded attrs/type macro/const-generic inputs remain refused",
+    "Task-local runtime LocalKey behavior unsupported"
+  ]
+}

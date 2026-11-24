@@ -1,0 +1,269 @@
+{
+  "schema": "protected-source-diagnostics-20261103-source-proposal-v1",
+  "predecessor": "92458c2d97ec2c1912d3bd49d410f8f05cee20c6",
+  "files": [
+    {
+      "role": "sync-adapter",
+      "path": "tools/translation/protected-native-writers-20261102.mjs",
+      "physicalOrigin": {
+        "commit": "9349961bee493e77ef8266c53cde88061964ccbd",
+        "path": "tools/translation/protected-native-writers-20261102.mjs",
+        "gitBlob": "ca6bdfb8275780dc3759ed9fa70613d92a5bc896"
+      },
+      "before": {
+        "path": "sync-adapter.before.txt",
+        "bytes": 13032,
+        "sha256": "8f9ecd2f00a0898eaeffdedf02e0efc4ec5109db0d438a98281389a807c145a3"
+      },
+      "after": {
+        "path": "sync-adapter.after.txt",
+        "bytes": 14154,
+        "sha256": "dea5d057b7a8daa748ef8e7fa5e03c563d80345fee9ab85b44cd8cad84e292d7"
+      }
+    },
+    {
+      "role": "async-adapter",
+      "path": "tools/translation/protected-reviewed-adoption-20261102.mjs",
+      "physicalOrigin": {
+        "commit": "9349961bee493e77ef8266c53cde88061964ccbd",
+        "path": "tools/translation/protected-reviewed-adoption-20261102.mjs",
+        "gitBlob": "195ede4426253487d8ea8d766e104856a230f0fd"
+      },
+      "before": {
+        "path": "async-adapter.before.txt",
+        "bytes": 17855,
+        "sha256": "9c8a02af190dee2f5a6f75d2271762613399c561e9a050607a64a87ebebf9ce5"
+      },
+      "after": {
+        "path": "async-adapter.after.txt",
+        "bytes": 18995,
+        "sha256": "df90589c059f72c6e0cb5fe777fe48de1b373f748151ea574c34676da5a1eda3"
+      }
+    },
+    {
+      "role": "alias-observer",
+      "path": "tools/translation/protected-preparer-writers-20261102-alias.mjs",
+      "physicalOrigin": {
+        "commit": "28ba2c28c5e1a955fa093f4820dfb3677caeaa10",
+        "path": "tools/translation/protected-preparer-writers-20261102-alias.mjs",
+        "gitBlob": "b1caa2bba5f33623f6b3f2efe06ebfcca7dec8ce"
+      },
+      "before": {
+        "path": "alias-observer.before.txt",
+        "bytes": 27002,
+        "sha256": "57053a34813a5b0f7b50a31907e0903bf8fd7b116adef5869e7241fa209d76ef"
+      },
+      "after": {
+        "path": "alias-observer.after.txt",
+        "bytes": 27813,
+        "sha256": "364a57e38e2c1dbf572914a892e2cb695f08ac151dd3e6fda4f49b078d295d23"
+      }
+    },
+    {
+      "role": "node-helper",
+      "path": "tools/translation/protected-node-evidence-writers-20261103.mjs",
+      "physicalOrigin": {
+        "commit": "28ba2c28c5e1a955fa093f4820dfb3677caeaa10",
+        "path": "tools/translation/protected-node-evidence-writers-20261103.mjs",
+        "gitBlob": "cd84a48f9421782e61b28261b37baf4aa82642a9"
+      },
+      "before": {
+        "path": "node-helper.before.txt",
+        "bytes": 7077,
+        "sha256": "7c11d54f65757ae0bc7ac0b49ab86fdbf4ae54d75b14036557c4bfbf0f6781ad"
+      },
+      "after": {
+        "path": "node-helper.after.txt",
+        "bytes": 7707,
+        "sha256": "c4f8393914e218194a9a15d6a60d09e1a9794631c602f15a68cfe64406ba377a"
+      }
+    },
+    {
+      "role": "node-runner",
+      "path": "scripts/run-node-tests.mjs",
+      "physicalOrigin": {
+        "commit": "28ba2c28c5e1a955fa093f4820dfb3677caeaa10",
+        "path": "scripts/run-node-tests.mjs",
+        "gitBlob": "6dafd7f7a5c957464a3f350b52edf14e8df0fd36"
+      },
+      "before": {
+        "path": "node-runner.before.txt",
+        "bytes": 13389,
+        "sha256": "5a14feda480a76bf1100e1236b319d49ee556bd07fa88c915ee5f1f986491184"
+      },
+      "after": {
+        "path": "node-runner.after.txt",
+        "bytes": 14994,
+        "sha256": "e825d494ccd5717a74a71e01ddc12b4f2f3225cf4c41f0d8b1895983bdd36733"
+      }
+    },
+    {
+      "role": "node-reporter",
+      "path": "scripts/node-case-deadline-reporter.mjs",
+      "physicalOrigin": {
+        "commit": "28ba2c28c5e1a955fa093f4820dfb3677caeaa10",
+        "path": "scripts/node-case-deadline-reporter.mjs",
+        "gitBlob": "fc082aa8962500cd9c2b344caeda17a54766402e"
+      },
+      "before": {
+        "path": "node-reporter.before.txt",
+        "bytes": 2714,
+        "sha256": "8a575a29c27575ec3c4705e32a3db1a0c5635b1204d29a8c4069f25046784a35"
+      },
+      "after": {
+        "path": "node-reporter.after.txt",
+        "bytes": 4261,
+        "sha256": "b3bc25b266df1c10b21cb2f58cf8491665ba7019dc28227900d22a263756c947"
+      }
+    },
+    {
+      "role": "unit",
+      "path": "tools/translation/unit-runtime-materialization.mjs",
+      "physicalOrigin": {
+        "commit": "d88a590b8c558714dd3ace5bf88b260b74cf2e1b",
+        "path": "tools/translation/unit-runtime-materialization.mjs",
+        "gitBlob": "ace24f093fc067c0c37a50e3c5d0e91df1b2eeb1"
+      },
+      "before": {
+        "path": "unit.before.txt",
+        "bytes": 44605,
+        "sha256": "733ec0f38f50c2d2683d74c9230884c43a85c6cdfb842037517c9fe37479f367"
+      },
+      "after": {
+        "path": "unit.after.txt",
+        "bytes": 45482,
+        "sha256": "f7a6989d3c53d0c44537aef5b280eee34f98dd326626589ff3ca7f85440d27d5"
+      }
+    },
+    {
+      "role": "stream-history",
+      "path": "tools/translation/protected-native-stream-fds-20261103-history.mjs",
+      "physicalOrigin": {
+        "commit": "464fa399238135354b0ef3682be4cc5282b33f1c",
+        "path": "tools/translation/protected-native-stream-fds-20261103-history.mjs",
+        "gitBlob": "7cb8e0581eb30d5d40695881efbf9b610d51c5fa"
+      },
+      "before": {
+        "path": "stream-history.before.txt",
+        "bytes": 5091,
+        "sha256": "787179ac4d6cd24635755bd562e55954536d7a7d7158d2bb7c46bc5e1fd8e70a"
+      },
+      "after": {
+        "path": "stream-history.after.txt",
+        "bytes": 5272,
+        "sha256": "637dfbb76c0117db7fb4ac61aeedcc6a5d6152cc93435b9db46d46c16d359035"
+      }
+    },
+    {
+      "role": "stream-join-history",
+      "path": "tools/translation/protected-stream-composed-current-20261103-history.mjs",
+      "physicalOrigin": {
+        "commit": "464fa399238135354b0ef3682be4cc5282b33f1c",
+        "path": "tools/translation/protected-stream-composed-current-20261103-history.mjs",
+        "gitBlob": "3cd347d52ce23cf2e88e476e1f0c90225f56c746"
+      },
+      "before": {
+        "path": "stream-join-history.before.txt",
+        "bytes": 4121,
+        "sha256": "5b8bac58a05fde95966421555b34a0cdce8f5ce2a8182614187971d8904424eb"
+      },
+      "after": {
+        "path": "stream-join-history.after.txt",
+        "bytes": 4473,
+        "sha256": "43edd5fc1b9d4a108fc808a29120fac3f687b21891499e9374bdbe2b4b4a8dea"
+      }
+    },
+    {
+      "role": "node-forward-history",
+      "path": "tools/translation/protected-node-stream-forwarding-20261103-history.mjs",
+      "physicalOrigin": {
+        "commit": "464fa399238135354b0ef3682be4cc5282b33f1c",
+        "path": "tools/translation/protected-node-stream-forwarding-20261103-history.mjs",
+        "gitBlob": "96e335f3ec14493ac6c6f77ab64f44881d3eafb1"
+      },
+      "before": {
+        "path": "node-forward-history.before.txt",
+        "bytes": 4326,
+        "sha256": "3a1970731d7e928731c6de6d68c9c4114fb90f836f13d46757672cb763801192"
+      },
+      "after": {
+        "path": "node-forward-history.after.txt",
+        "bytes": 4678,
+        "sha256": "d921d124488f8d4b6525d1be014a94722e757b8c49901141ad376c2122e2a4f2"
+      }
+    },
+    {
+      "role": "resource-current",
+      "path": "tools/translation/ordered-text-map-callers-20261102-source-storage-reconcile-stream-current.mjs",
+      "physicalOrigin": {
+        "commit": "464fa399238135354b0ef3682be4cc5282b33f1c",
+        "path": "tools/translation/ordered-text-map-callers-20261102-source-storage-reconcile-stream-current.mjs",
+        "gitBlob": "bfde797b465b009eb3ae02b828983e3b83756e6b"
+      },
+      "before": {
+        "path": "resource-current.before.txt",
+        "bytes": 2170,
+        "sha256": "2fb3bea54a0161d2b8579243b9f58654be603f85a7348e52ae103355017ca53c"
+      },
+      "after": {
+        "path": "resource-current.after.txt",
+        "bytes": 2460,
+        "sha256": "f42ee611fae13b16c406dd749cfbf30d8f95d2d6ff2f0959adb93d32a2dc88e4"
+      }
+    },
+    {
+      "role": "prior-stream-join-case",
+      "path": "tools/translation/test/protected-stream-composed-current-20261103-history.test.mjs",
+      "physicalOrigin": {
+        "commit": "521934c1d9b08b58503704d8e26e5824e6fcf662",
+        "path": "tools/translation/test/protected-stream-composed-current-20261103-history.test.mjs",
+        "gitBlob": "8b76ef6e2155df71f5c55ff21ea770b275db8da4"
+      },
+      "before": {
+        "path": "prior-stream-join-case.before.txt",
+        "bytes": 4550,
+        "sha256": "24b0e84590bc309b1eb89e820e7f6c2df2319ca9015ebc4b76c11ac36b8f0acf"
+      },
+      "after": {
+        "path": "prior-stream-join-case.after.txt",
+        "bytes": 4894,
+        "sha256": "9bb105038b3fc48431d1c029cb18adf7617a8909dacf8d1aab92ee3d03fb3dab"
+      }
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceInstalled": false,
+  "sourceAuthority": false,
+  "completeOriginalFunctionDenominator": "UNKNOWN",
+  "completeWriterDenominator": "UNKNOWN",
+  "open": [
+    "Legacy generic callers without additive collector retain original unguarded stderr route",
+    "Bounded diagnostic overflow is explicit DATA and is not complete raw error expansion",
+    "Native mkdtemp precreation",
+    "Builtin TAP consumer streams",
+    "Python/transitive children"
+  ],
+  "physicalOriginContract": "All beforeimages equal this actual complete SCM cohort; original per-file epochs retained separately.",
+  "newFiles": [
+    {
+      "role": "collector-module",
+      "path": "tools/translation/protected-source-diagnostics-20261103.mjs",
+      "beforeAbsent": true,
+      "sourceRole": "NEW_PRODUCTION_APPLICATION_MODULE",
+      "physicalOrigin": {
+        "kind": "AUTHORED_SOURCE_NOT_IN_PREDECESSOR",
+        "path": "tools/translation/protected-source-diagnostics-20261103.mjs"
+      },
+      "before": {
+        "path": "collector-module.before.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "after": {
+        "path": "collector-module.after.txt",
+        "bytes": 10051,
+        "sha256": "b00450b5848db37c9a2b3bf27059f5e15c4187b82843ccf433b47c3f7d1cf277"
+      }
+    }
+  ]
+}

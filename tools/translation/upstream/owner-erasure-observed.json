@@ -1,0 +1,120 @@
+{
+  "schema": "router-pinned-upstream-owner-erasure-reproduction-v1",
+  "upstream": {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "lockSha256": "ee126e234437d23b62fefa4f4c6b59baa09f89918613412570d32bfd652a50c1",
+    "verifiedFiles": 27,
+    "fileHashes": {
+      "program-translation.js": "9917b100b0898b1bf22007d07893b1af437478899908e6285afc553ef49a8d60",
+      "translation/rust.js": "46775f6787eea0e89faccaf1bbc55a21912410682fc7d93dce1583e690d7d332",
+      "translation/check.js": "14544917cda1bd3c6c129629c7a99710d1d8b72194bcd8116a373f66721c2232",
+      "translation/emit-javascript.js": "8af569ed4f08b81ddf38b1d3120fc55b41f67c2249cf226e52ef94ba52aed06a"
+    }
+  },
+  "nodeVersion": "v20.19.4",
+  "rustExecuted": false,
+  "fullParity": false,
+  "routerProductionBodyCount": 0,
+  "cases": [
+    {
+      "owner": "String",
+      "callee": "String::from",
+      "source": "mod String {pub fn from(value:&str)->&'static str{\"CUSTOM\"}} fn caller()->&'static str{String::from(\"x\")} fn main(){println!(\"{}\",caller());}",
+      "sourceSha256": "7c40d3297d35e095489c483d7933f9ca741c6126f6234e0c7dfec33e55288310",
+      "sourceBytes": 141,
+      "support": "semantic-translation",
+      "diagnostic": null,
+      "emittedJavaScript": "// meta-language:translation-provenance:v1 source=Rust sha256=7c40d3297d35e095489c483d7933f9ca741c6126f6234e0c7dfec33e55288310 bytes=141\n// Translated from Rust by meta-language: portable core, JavaScript target.\n'use strict';\n\nfunction caller() {\n  return \"x\";\n}\n\nconst String_ = {\n  from(value) {\n    return \"CUSTOM\";\n  },\n};\n\nfunction main() {\n  console.log(caller());\n}\n\nmain();\n",
+      "emittedSha256": "a42233f01a30410a1303d9254aa5c6296184c54a878b77494bd4fe31b1329c4f",
+      "node": {
+        "status": 0,
+        "stdout": "x\n",
+        "stderr": ""
+      },
+      "rustExpectation": {
+        "stdout": "CUSTOM\n",
+        "basis": "Source-derived name resolution: the local module supplies this function; no Rust compiler was executed."
+      },
+      "isWorkaroundControl": false
+    },
+    {
+      "owner": "String",
+      "callee": "crate::String::from",
+      "source": "mod String {pub fn from(value:&str)->&'static str{\"CUSTOM\"}} fn caller()->&'static str{crate::String::from(\"x\")} fn main(){println!(\"{}\",caller());}",
+      "sourceSha256": "b180847f1aeba980150023472a0fac2372202a544f8da8314c790e8068ae4905",
+      "sourceBytes": 148,
+      "support": "semantic-translation",
+      "diagnostic": null,
+      "emittedJavaScript": "// meta-language:translation-provenance:v1 source=Rust sha256=b180847f1aeba980150023472a0fac2372202a544f8da8314c790e8068ae4905 bytes=148\n// Translated from Rust by meta-language: portable core, JavaScript target.\n'use strict';\n\nfunction caller() {\n  return String_.from(\"x\");\n}\n\nconst String_ = {\n  from(value) {\n    return \"CUSTOM\";\n  },\n};\n\nfunction main() {\n  console.log(caller());\n}\n\nmain();\n",
+      "emittedSha256": "e350cf54d4a7b2a591223d5c8aeb09f08ebd62bb52aaaf1f12ec7b687227d2de",
+      "node": {
+        "status": 0,
+        "stdout": "CUSTOM\n",
+        "stderr": ""
+      },
+      "rustExpectation": {
+        "stdout": "CUSTOM\n",
+        "basis": "Source-derived name resolution: the local module supplies this function; no Rust compiler was executed."
+      },
+      "isWorkaroundControl": true
+    },
+    {
+      "owner": "Box",
+      "callee": "Box::new",
+      "source": "mod Box {pub fn new(value:&str)->&'static str{\"CUSTOM\"}} fn caller()->&'static str{Box::new(\"x\")} fn main(){println!(\"{}\",caller());}",
+      "sourceSha256": "562b97b5574357a67f1c245b2782d942a5a55897e907b57c572a43afdbc556f7",
+      "sourceBytes": 133,
+      "support": "semantic-translation",
+      "diagnostic": null,
+      "emittedJavaScript": "// meta-language:translation-provenance:v1 source=Rust sha256=562b97b5574357a67f1c245b2782d942a5a55897e907b57c572a43afdbc556f7 bytes=133\n// Translated from Rust by meta-language: portable core, JavaScript target.\n'use strict';\n\nfunction caller() {\n  return \"x\";\n}\n\nconst Box = {\n  new_(value) {\n    return \"CUSTOM\";\n  },\n};\n\nfunction main() {\n  console.log(caller());\n}\n\nmain();\n",
+      "emittedSha256": "b89aa09bdc744dc21b885b1922461e6e28919c27143f2cfb41fb3faeb6bb4869",
+      "node": {
+        "status": 0,
+        "stdout": "x\n",
+        "stderr": ""
+      },
+      "rustExpectation": {
+        "stdout": "CUSTOM\n",
+        "basis": "Source-derived name resolution: the local module supplies this function; no Rust compiler was executed."
+      },
+      "isWorkaroundControl": false
+    },
+    {
+      "owner": "Box",
+      "callee": "crate::Box::new",
+      "source": "mod Box {pub fn new(value:&str)->&'static str{\"CUSTOM\"}} fn caller()->&'static str{crate::Box::new(\"x\")} fn main(){println!(\"{}\",caller());}",
+      "sourceSha256": "722465280cda8655b43824acebb953786f4e43f2b1d8ee801a48c1653f0064bc",
+      "sourceBytes": 140,
+      "support": "semantic-translation",
+      "diagnostic": null,
+      "emittedJavaScript": "// meta-language:translation-provenance:v1 source=Rust sha256=722465280cda8655b43824acebb953786f4e43f2b1d8ee801a48c1653f0064bc bytes=140\n// Translated from Rust by meta-language: portable core, JavaScript target.\n'use strict';\n\nfunction caller() {\n  return Box.new_(\"x\");\n}\n\nconst Box = {\n  new_(value) {\n    return \"CUSTOM\";\n  },\n};\n\nfunction main() {\n  console.log(caller());\n}\n\nmain();\n",
+      "emittedSha256": "cfac5330b2fb8974959e6706422662ab3e79bfc032506aa778ea5af92929de46",
+      "node": {
+        "status": 0,
+        "stdout": "CUSTOM\n",
+        "stderr": ""
+      },
+      "rustExpectation": {
+        "stdout": "CUSTOM\n",
+        "basis": "Source-derived name resolution: the local module supplies this function; no Rust compiler was executed."
+      },
+      "isWorkaroundControl": true
+    }
+  ],
+  "macroControl": {
+    "source": "macro_rules! marker { () => { \"CUSTOM\" }; } fn main() { println!(\"{}\", marker!()); }",
+    "sourceSha256": "156277a53a1a9559e193d6c1961c090d6e583e7a951c2ca1f840563286ae5f00",
+    "support": "portable-encoding",
+    "diagnostic": {
+      "kind": "syntax",
+      "message": "expected a Rust item but found \"macro_rules!\" at 0..12",
+      "span": {
+        "start": 0,
+        "end": 12
+      }
+    },
+    "executed": false,
+    "scope": "Whole-source upstream macro definition is refused. Router per-item macro-context erasure is a separate downstream issue."
+  }
+}

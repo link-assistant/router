@@ -1,0 +1,32 @@
+// Independent restoration regression SOURCE; unrun during bulk drafting.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join,dirname} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {translateOwnedModuleProject} from '../owned-module-project.mjs';
+import {restoreOwnedModuleProject} from '../owned-module-restore.mjs';
+import {ownedModuleFunctionNames} from '../owned-module-function-names.mjs';
+import {createOwnedOutcomeContext,ownedOutcomeRuntimeSources} from '../owned-outcome.mjs';
+import {ownedStateReceivingData} from './owned-state-receiving-data.mjs';
+import {OWNED_OUTCOME_NATIVE_SOURCE} from '../../owned-outcome-native-source.mjs';
+import {prepareOwnedModuleDistributionSources} from '../../prepare-owned-module-distribution-sources.mjs';
+import {transportConcreteSyntaxMeta} from '../../concrete-syntax-meta.mjs';
+import {sameRustSourceSyntax} from '../../rust-syntax-cells.mjs';
+import {json_macro_null as nil} from '../../json-macro-runtime.mjs';
+const limits={timeout:60000};
+function fixture(language='JavaScript'){
+ const typed=language==='TypeScript',extension=typed?'mts':'mjs',types=typed?"import type {JsonValue} from './runtime/json-macro-runtime.mjs';\n":'',parameter=typed?'value: JsonValue':'value',docs=typed?'':"/** @param {import('./runtime/json-macro-runtime.mjs').JsonValue} value */\n",project={entry:'entry.'+extension,language,modules:[{path:'entry.'+extension,source:"import {cloned as selected} from './helper.mjs';\nexport {cloned as publicTitle} from './helper.mjs';\n"+types+docs+'export function run('+parameter+'){return selected(value);}\n'},{path:'helper.'+extension,source:types+"import {router_core_json_copy as copy} from './runtime/json-update-runtime.mjs';\nimport {router_carrier_json_err as err} from './runtime/owned-outcome-runtime.mjs';\n"+docs+'export function cloned('+parameter+"){const observed=copy(value);return err('old');}\n"}]};
+ const data=ownedStateReceivingData(project.modules);data.files=data.files.filter(row=>!row.path.startsWith('runtime/')).concat(ownedOutcomeRuntimeSources());data.files.find(row=>row.path==='src/lib.rs').source+='pub mod translation_carriers_core;\n';data.files.push({path:'src/translation_carriers_core.rs',source:OWNED_OUTCOME_NATIVE_SOURCE});const forward=translateOwnedModuleProject(project,{context:createOwnedOutcomeContext(data)}),source=forward.rust.replace('"old"','"new"');assert.notEqual(source,forward.rust);data.files.push({path:'generated/project.rs',source});return {project,data,source,forward,options:{project,context:createOwnedOutcomeContext(data),sourcePath:'generated/project.rs'}};
+}
+test('edited whole Rust returns checked bodies to actual original JavaScript module names and aliases',limits,async t=>{
+ const row=fixture(),result=restoreOwnedModuleProject(row.source,row.options);assert.ok(sameRustSourceSyntax(row.source,result.rust));assert.equal(result.restoredModules.length,2);const helper=result.restoredModules.find(item=>item.path==='helper.mjs');assert.match(helper.source,/function cloned\(/u);assert.ok(helper.source.includes('new'));for(const module of result.restoredModules){assert.equal(module.before,row.project.modules.find(item=>item.path===module.path).source);assert.equal(module.equation.inverse,module.before);assert.equal(transportConcreteSyntaxMeta(module.equation.afterMeta).source,module.source);}
+ const directory=mkdtempSync(join(tmpdir(),'router-owned-restore-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const write=(path,source)=>{mkdirSync(dirname(join(directory,path)),{recursive:true});writeFileSync(join(directory,path),source);};for(const file of row.data.files.filter(item=>item.path.startsWith('runtime/')))write(file.path,file.source);for(const module of result.restoredModules)write(module.path,module.source);const module=await import(pathToFileURL(join(directory,row.project.entry)).href);assert.deepEqual(Object.keys(module).sort(),['publicTitle','run']);assert.deepEqual(module.run(nil()),{$:'Err',field0:'new'});assert.deepEqual(module.publicTitle(nil()),{$:'Err',field0:'new'});assert.equal(result.rustExecuted,false);
+});
+test('TypeScript redistribution retains physical modules and freshly checks the complete Rust root',limits,()=>{const row=fixture('TypeScript'),result=restoreOwnedModuleProject(row.source,row.options);assert.ok(sameRustSourceSyntax(row.source,result.rust));assert.deepEqual(result.restoredModules.map(item=>item.path),['entry.mts','helper.mts']);assert.match(result.restoredModules[1].source,/value: JsonValue/u);assert.equal(result.moduleRestorationHistory.originalModuleHistory.language,'TypeScript');});
+test('actual source joins unknown native effects and forged name proposals refuse',limits,()=>{
+ const row=fixture();assert.throws(()=>restoreOwnedModuleProject(row.source+'\n',row.options),/actual authoritative Rust/u);const changed=structuredClone(row.project);changed.modules[1].source+='\n// changed\n';assert.throws(()=>restoreOwnedModuleProject(row.source,{...row.options,project:changed}),/actual original project/u);const source=row.source+'\npub fn injected(){}\n',data={...row.data,files:row.data.files.map(item=>item.path==='generated/project.rs'?{...item,source}:item)};assert.throws(()=>restoreOwnedModuleProject(source,{...row.options,context:createOwnedOutcomeContext(data)}));
+ let called=false;const getter={path:'entry.mjs',name:'run'};Object.defineProperty(getter,'linked',{get(){called=true;return 'run';}});assert.throws(()=>ownedModuleFunctionNames([getter]),/own proposal data/u);assert.equal(called,false);assert.throws(()=>ownedModuleFunctionNames(new Proxy([],{get(){throw Error('proxy read');}})),/ordinary proposal/u);const plan=ownedModuleFunctionNames([{path:'entry.mjs',name:'run',linked:'run'}]);assert.throws(()=>plan.finish(),/every proposed name/u);assert.equal(plan.select('entry.mjs','run','ignored'),'run');plan.finish();
+});
+test('complete receiving linker copy retains its full original and both ordered source substitutions',limits,()=>{const plan=prepareOwnedModuleDistributionSources();assert.equal(plan.files.length,1);for(const row of plan.files){assert.equal(row.current,row.currentAfter);assert.equal(row.inverse,row.before);assert.deepEqual(row.stages.map(stage=>stage.phase),['language','repository']);}assert.equal(plan.receivingExecuted,false);});

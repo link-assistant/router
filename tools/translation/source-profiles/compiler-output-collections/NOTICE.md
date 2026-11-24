@@ -1,0 +1,5 @@
+These complete original Rust 1.89.0 files are retained for source-qualified compiler-output and immutable collection contracts. They remain licensed under MIT OR Apache-2.0. Complete license notices are referenced by exact byte/hash in `manifest.json`.
+
+Nine new files come from the exact official revision `29483883eed69d5fb4db01964cdf2af4d86e9cb2`; the other seven entries alias existing complete pinned archives without duplicating them. New archives are deterministic gzip (level 6, mtime 0), with full decoded and archive byte lengths/hashes. The acquisition retained full uncompressed originals, official URLs, TLS failure/retry receipts, and per-file resource observations outside the fixed case tree. A system CA bundle was used with certificate and hostname verification after Python's default CA lookup failed; TLS verification was never disabled.
+
+Retention establishes source availability only. It does not execute the compiler, select a caller macro, resolve Rust namespaces or feature branches, prove an iterator/collection body, or grant runtime authority.

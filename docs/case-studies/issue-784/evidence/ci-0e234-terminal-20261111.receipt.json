@@ -1,0 +1,1492 @@
+{
+  "schema": "complete-evidence-packet-v1",
+  "sourceHead": "5eddc871164c334cc63b2af3c2d34b88d279c904",
+  "archive": "/tmp/gh-issue-solver-1794003502595/docs/case-studies/issue-784/evidence/ci-0e234-terminal-20261111.tar.xz",
+  "archiveBytes": 5971740,
+  "archiveSha256": "957aec2606232aeb0abb7b4d3560c98d42dd6dba0887aa43151c3d1ba3b18a74",
+  "manifestSha256": "dd215414558f3368dcba4261ab1d47b1557df7db054ab06c69555e2a4c582fda",
+  "members": [
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-collection-1.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-collection-1.json.gz",
+      "bytes": 8784,
+      "sha256": "a51547ba20e53d1478c0950f1316b42838796a37e74fc333ce8dfdc03326744a"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-collection-2.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-collection-2.json.gz",
+      "bytes": 9996,
+      "sha256": "e9cd100ee7800ffe38ca5ec80d4a378c0cd10cd66887fc0e0c11342b0c90c4b9"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-collection-3.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-collection-3.json.gz",
+      "bytes": 12225,
+      "sha256": "858d7854960398ef6f15d4534290104e049be2ed789facd62b47552c641df604"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-collection-4.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-collection-4.json.gz",
+      "bytes": 14375,
+      "sha256": "1ac0b07eaddf8261c1134221b4bcf6275d2464526c606d8d992ee66080c5a02e"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-collection-5.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-collection-5.json.gz",
+      "bytes": 16159,
+      "sha256": "3315e76d22876770e807692cb4a392827dfdda428848ac2c88112129ce80052e"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-collection-6.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-collection-6.json.gz",
+      "bytes": 17052,
+      "sha256": "129801e55418801974a174dead28925cb6558e9bb939c30fe1c9b9bf868a6279"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-collection-7.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-collection-7.json.gz",
+      "bytes": 17572,
+      "sha256": "9f3fa5d6e86ebaf699a731f0e193504aa1dae8404c636b3a69ccabbf7e61126e"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-collection-8.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-collection-8.json.gz",
+      "bytes": 19357,
+      "sha256": "858d95499002c6f78c093e362dcf2f46a12bb4ea818aea8ec23bd8509fcbaac2"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.json",
+      "bytes": 4191,
+      "sha256": "1057aa908e8efb1551b1462ca3f31f73d75437f41d1c7150780967eac6865f5e"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.log.gz",
+      "bytes": 7540,
+      "sha256": "07041ab48b3171fc00bd3a3c148ea79fa2f532ad41052ec7e0984eca8e0e9d78"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321669.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321669.json",
+      "bytes": 4074,
+      "sha256": "1519da5b1f9d56abaae35289d7407d137f47d2f3649fd92bb0ef870c2c19a492"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321669.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321669.log.gz",
+      "bytes": 7534,
+      "sha256": "aac08126cfcca2eebb98640c95f6756ca643653904a3d4923909d586a514f9e6"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321669.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321669.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321710.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321710.json",
+      "bytes": 4086,
+      "sha256": "c7b88898250fad03ad9cbeeea9b9c1e73c775e6ed85b8393facced196eb89dc7"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321710.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321710.log.gz",
+      "bytes": 21178,
+      "sha256": "a68fcd31fb9d80faa3aabd05043a8e7a62b48826c8c2f4cf0c07829754cd5f0f"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321710.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321710.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321718.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321718.json",
+      "bytes": 4072,
+      "sha256": "f1b08dcd6ef13758d6f235adb24b8c85214b0925c99b63e179a4b8ca105b119a"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321718.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321718.log.gz",
+      "bytes": 9463,
+      "sha256": "e5df60f40f23567374ebf7ff814dc98522386bb2d8a0d6ee9b1ed0855177339b"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321718.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321718.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321739.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321739.json",
+      "bytes": 4083,
+      "sha256": "f1ebba70f9828b61355401d577ac0e3fbe0b826588e647cd3a05780eb5cce14d"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321739.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321739.log.gz",
+      "bytes": 146547,
+      "sha256": "f2f671c918f3cd3019c83ec89112771ad7a3432521c56a1587746cf11dcbf671"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321739.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321739.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321742.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321742.json",
+      "bytes": 3557,
+      "sha256": "950baea626e147c29fb2db7c2c3bf6697fc10a2ddd4dab49dba728a6ef6d8dde"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321742.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321742.log.gz",
+      "bytes": 88905,
+      "sha256": "9b2506eb216c87d2615446d40f7f723f3d55add560072da1bb5575e03352df3b"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321742.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321742.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321749.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321749.json",
+      "bytes": 4070,
+      "sha256": "ee458b949d336a345450fc10a39331e89b25e4da17e5ff0357a27bab133b2ada"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321749.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321749.log.gz",
+      "bytes": 9577,
+      "sha256": "8742bd00febea5394062e7ac22ba1c5a38a02b40e24b2c0d2a0042914ed18411"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321749.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321749.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321761.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321761.json",
+      "bytes": 4081,
+      "sha256": "b3d536c5ad5d8f5f0c5ad58c6cf259b8cc3d36571d2f282ec9b4d22c6b400c17"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321761.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321761.log.gz",
+      "bytes": 53907,
+      "sha256": "c3a3102dc4dde5c0f9718c3215c1234263a8143ca1d1ce7231db182b76464172"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321761.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321761.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321773.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321773.json",
+      "bytes": 4081,
+      "sha256": "412d1f04b91fb3906b682221b1b25acac8ce59b3e9193807ad7a243d1275f460"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321773.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321773.log.gz",
+      "bytes": 36177,
+      "sha256": "562ecd8b1fdc0f2b9d0a242aea0a6b2bd38496780f6ea2948db5a7076594c6e5"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321773.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321773.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321775.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321775.json",
+      "bytes": 7190,
+      "sha256": "1c38929bb8270b0c71aff49419deaa963bb7ce480f066b270c4925ef3bb14efe"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321775.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321775.log.gz",
+      "bytes": 10831,
+      "sha256": "1b7de47d737e262cc1fb7d11ea82e416a722431c3f4ae497e85644d60e0e0dda"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321775.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321775.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321792.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321792.json",
+      "bytes": 4070,
+      "sha256": "c0098a3a7b94eb21260b2dd445bd5776e7fb5d37d683e685dcb48531e3ee465b"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321792.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321792.log.gz",
+      "bytes": 8432,
+      "sha256": "1ba3ae8ba0b143b2edcf238c6aba50a1c635b6ad77cd9edb8d6f2bac772cfe99"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321792.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321792.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321798.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321798.json",
+      "bytes": 4083,
+      "sha256": "0ce1e55d057d59c77ccc0299b8cfc5e7d82001c5ebf59fc0884b39f16931691f"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321798.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321798.log.gz",
+      "bytes": 34321,
+      "sha256": "078974ce0d5fd989fb49eb7426be737a1d018e2c89dcf8e5777a6fba4b783c6a"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321798.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321798.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321838.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321838.json",
+      "bytes": 3515,
+      "sha256": "57d5fc269a431a4026b624d122fb66e1f6f4a39de128daab572435f006d3e02f"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321838.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321838.log.gz",
+      "bytes": 17236,
+      "sha256": "b8ec0b499be98754a02f48f1421bcf7c92ce48be5d3d683dc24005d74734b211"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321838.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321838.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321844.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321844.json",
+      "bytes": 3505,
+      "sha256": "c799d4df7c03a1993f23d5997d1ede2ec0535807a842880ae685a5ba4adcc461"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321844.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321844.log.gz",
+      "bytes": 89184,
+      "sha256": "579bef1c5ecd4fb386fbef1417875d2b29c9daae9c010f949f65dfca78aedca8"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321844.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321844.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321860.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321860.json",
+      "bytes": 4020,
+      "sha256": "45dc38f5f15bd428a6bc7169548ed1c8cd5197cfc58861cfc0c64642ae729126"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321860.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321860.log.gz",
+      "bytes": 7045,
+      "sha256": "317d6ee07ae723ca69509a5757b13838e968b722f000cfcd58276486bce3df49"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321860.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321860.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321874.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321874.json",
+      "bytes": 4083,
+      "sha256": "b458a458e0b7a154fac78a21aac7c3fdee193d0cec25d105f428760e0db52108"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321874.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321874.log.gz",
+      "bytes": 122981,
+      "sha256": "16a430f396782b52cd6480e4f28914ca7100dfa555b124d7d8a8cb6572dd6a2e"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321874.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321874.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321877-retry-1.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321877-retry-1.json",
+      "bytes": 3740,
+      "sha256": "bf8fb3eca6895e2618558a001e1eeb68bcb53a32186e6a6bdbf9a753d878643d"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321877-retry-1.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321877-retry-1.log.gz",
+      "bytes": 247,
+      "sha256": "25374ee60acdc3e00964aec8f49dcd7d02936859a889c285908d564b2237b9d8"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321877-retry-1.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321877-retry-1.stderr",
+      "bytes": 13,
+      "sha256": "6c5ec582d3b25e97273d17fd4088d0e13837c8384ee94aba555afc35856ec3ae"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321877.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321877.json",
+      "bytes": 3724,
+      "sha256": "eb0cc1e249dd4ffc31e10e22c0016aa50c6b77c65f1e5d1e70512943ecd47157"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321877.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321877.log.gz",
+      "bytes": 240,
+      "sha256": "8581075ed0d91675bb8e61fd972f7349c0a2fabd2b1326f297982e05e6c59b08"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321877.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321877.stderr",
+      "bytes": 13,
+      "sha256": "6c5ec582d3b25e97273d17fd4088d0e13837c8384ee94aba555afc35856ec3ae",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321877-retry-1.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321878.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321878.json",
+      "bytes": 4081,
+      "sha256": "9d70a6106fc6ea43322cf6a1a1e4eb179fd57d9ce79ccc23d8adaeb1333f3bb9"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321878.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321878.log.gz",
+      "bytes": 35278,
+      "sha256": "761b1c57b3908790c79e6ed99bfdcf1fbea64d30edfc0221f1dd4e5ff9aa5d68"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321878.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321878.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321900.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321900.json",
+      "bytes": 4197,
+      "sha256": "3582a26a212366afd43668a67c9b2327c1f52ef536feedf17713705ad8c670e8"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321900.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321900.log.gz",
+      "bytes": 6456,
+      "sha256": "957d892a8e32c1bec4bc36dd224aeec1838c660f318bd7e559773082c346f782"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321900.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321900.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321905.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321905.json",
+      "bytes": 4081,
+      "sha256": "48b68c6e9e37e5347c20e3f7faa8c8ea0027721026e37c348b7c416401261a75"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321905.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321905.log.gz",
+      "bytes": 36012,
+      "sha256": "9ba8bc21b5a8f35746224e7da2286d0aa6b23566dae45cc6a340e52b5a7b4cab"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321905.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321905.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321909.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321909.json",
+      "bytes": 4081,
+      "sha256": "cde4011adcd29af3a832cf16ccd85c538dad403d4b67c71f05e9fcc1fa160e36"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321909.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321909.log.gz",
+      "bytes": 32737,
+      "sha256": "f07060762d46d234888da67156672569a2a3cdf1f618aa62d397c3e71cada8c7"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321909.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321909.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321933.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321933.json",
+      "bytes": 4070,
+      "sha256": "9890e3291ac3027f4a946c363bdc80c028ae4c7f895ae8bd71e87268a5614ea7"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321933.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321933.log.gz",
+      "bytes": 9449,
+      "sha256": "ad25355769b1f5fd7844a53f5d90a69237a53c6dc4d6c6188dc86029df55100a"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321933.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321933.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321952.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321952.json",
+      "bytes": 4081,
+      "sha256": "988a570204b5bed7e514afe102867fdd44ad0539301d1481e711006678d02d3f"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321952.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321952.log.gz",
+      "bytes": 36299,
+      "sha256": "f1ebc9bd03bbd354b4d483155b5548f5320e16743a4527560f8bf852456f0c28"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321952.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321952.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322011.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322011.json",
+      "bytes": 4083,
+      "sha256": "5a01380dbe6f2e341a3766aa81a75058aec57248eb65f8b0b6d36837a5fb0b38"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322011.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322011.log.gz",
+      "bytes": 59649,
+      "sha256": "6e3b35aef173b0cf8c435c045aa18c6da8e5a49a1a7a551372567e1e48637043"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322011.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322011.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322017.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322017.json",
+      "bytes": 4083,
+      "sha256": "c5cacab7af0e4b00a5c305086edd2d122569cf6f4d0ceb28f372054720d18fe9"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322017.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322017.log.gz",
+      "bytes": 52533,
+      "sha256": "06d94e0f6c01c6a8467b065ac02de5e04d08b7d1b6e45addec63cd3433d90b35"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322017.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322017.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322041.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322041.json",
+      "bytes": 4081,
+      "sha256": "4b38293d90536c493b642811802fb892381f3391aae4e25d08640199cae6b9e2"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322041.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322041.log.gz",
+      "bytes": 35281,
+      "sha256": "932e4894fdb5f41dc170c37127a0356ecb8767eeb0706bfdb40b629b3542485e"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322041.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322041.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322072.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322072.json",
+      "bytes": 4024,
+      "sha256": "1059a8e44bcf42c8c3f04131e75939346251d22c9e1859d2a2cac119b9399d5b"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322072.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322072.log.gz",
+      "bytes": 7074,
+      "sha256": "2de1ea661be8e02880ea42f052fc5716afd2ca3c393f6c1fcabab0fa5c94e8ae"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322072.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322072.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322122.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322122.json",
+      "bytes": 4081,
+      "sha256": "38e2ca18b30a52e2aae41f74d919ba6d1dcd96c8c293f486da2720f35c420c44"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322122.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322122.log.gz",
+      "bytes": 38317,
+      "sha256": "462c44feb50e6496bd2e44e48e62ff1f8a0da453b5a36961c87e1381663fb1bf"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322122.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322122.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322126.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322126.json",
+      "bytes": 4070,
+      "sha256": "4b6caf2b8c2ba473f97129ed3112f4990b0c86129c2259b4f5c95910d37ef947"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322126.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322126.log.gz",
+      "bytes": 10489,
+      "sha256": "b81cd41ad4f44439fbdf08a491f48b3ecc63b7ccf66c0823f34dce0760f22549"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322126.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322126.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322131.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322131.json",
+      "bytes": 4074,
+      "sha256": "704712662af6e35dcc2919c40e945950bd93a78839826ac9647838fe5c8a7c50"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322131.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322131.log.gz",
+      "bytes": 7335,
+      "sha256": "728ac3f23a86687ba2ef6ddc4e477fc23ae3522029c80bd3c03037d444561e13"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322131.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322131.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322169.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322169.json",
+      "bytes": 4081,
+      "sha256": "f7a86a86212379607da0b3b988a7e4f713e40134697b8ccfc4efca423674c1a0"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322169.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322169.log.gz",
+      "bytes": 33674,
+      "sha256": "ecd8aab9a113984a77a39ffdfce3fb04f7981ae6b61e225c1e2cdaf350a87a4f"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322169.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322169.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322190.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322190.json",
+      "bytes": 4024,
+      "sha256": "5867972e54c5fadc3444a8a7d138dca4a69f56e878a8e28edcb49b20a5647b69"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322190.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322190.log.gz",
+      "bytes": 7044,
+      "sha256": "1a9d10f8a05e4098aa12622f21d55cb8586cf5274e0363bed1b3c454b0d611df"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322190.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130281322190.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130310765299.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130310765299.json",
+      "bytes": 2030,
+      "sha256": "d0a6ec91d98b3c79bc6022f879322c925a9b61d75f0ae14cc4565c2525b95a2f"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130310765299.log.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130310765299.log.gz",
+      "bytes": 1705,
+      "sha256": "7c03fb1d1704591def53d94a7ff8cceaf158eed18886c25e8ea9e73fef8b6564"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130310765299.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-job-130310765299.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-terminal-deadline-index.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-terminal-deadline-index.json.gz",
+      "bytes": 2842,
+      "sha256": "ada5d9f71b004dc8a4dda50a9734f6d965595f8b499918fdf16b2ff5f2712975"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-terminal-deadline-reports.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-terminal-deadline-reports.json.gz",
+      "bytes": 40079,
+      "sha256": "bd54ff98b74e089f5874201f068e75ba5ebac9a42b8fbb7b9bf3ba6a66507249"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-terminal-deadline-reports.tar.xz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-terminal-deadline-reports.tar.xz",
+      "bytes": 2578716,
+      "sha256": "9de403be29e899bb2da52797b07678089e5b9e4bae3e3d20599b7f229bb7940e"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-terminal-feedback-16.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-terminal-feedback-16.json.gz",
+      "bytes": 9200,
+      "sha256": "64c7f145c36e482fa39ae1c9bc5e411fd3965cff6550cd09453a4738a5745c57"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-terminal-full-log-index.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-terminal-full-log-index.json.gz",
+      "bytes": 8061,
+      "sha256": "a0e4bbbc53ff4a9f244fe2ed784b0e695a97bf25cc36a52d020f4f9fcf132868"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-terminal-whole-run-verification.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-terminal-whole-run-verification.json.gz",
+      "bytes": 14049,
+      "sha256": "d494fdc814489183ec884c9f773b17f8599e07c4439ea6952f2667ed9f56ffc0"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-terminal-whole-run.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-terminal-whole-run.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/checkpoint0e234-terminal-whole-run.zip",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/checkpoint0e234-terminal-whole-run.zip",
+      "bytes": 1795675,
+      "sha256": "78719c6491b9cc857f29a7cb9b349cdd12bb1e800f4a08f69654e5866f943a18"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-artifacts-3.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-artifacts-3.json",
+      "bytes": 5414,
+      "sha256": "9af0cf7930ea927b327469d8bea5d0d8baf2551ed405837f4965f50efeb38347"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-deadlines-3.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-deadlines-3.json.gz",
+      "bytes": 112190,
+      "sha256": "f2b94278053fe91f6f3b8915371f758922c3474c55374dde156488812e7ec4f0"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-deadlines-3.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-deadlines-3.log",
+      "bytes": 647,
+      "sha256": "4962f6c37baa64de0bdabbe7590d62c504756bc8fee526b574a0323308cedc5d"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-early-log-collection-2.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-early-log-collection-2.log",
+      "bytes": 1202,
+      "sha256": "d18e22f1bdf91c384ec259277de56a8e5e3c06b961762b7e929b70077dea58ff"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-early-log-collection-3.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-early-log-collection-3.log",
+      "bytes": 1986,
+      "sha256": "95ef454c517f0788013dd9ad390202b03aca451707d5aece6473b622126dbf00"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-early-log-collection-4.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-early-log-collection-4.log",
+      "bytes": 2643,
+      "sha256": "c2fb3c74cf19bc5c129ec1d8d6abdaa4f9b0e18229d6ecfc4c1d8eeee0ec460f"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-early-log-collection-5.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-early-log-collection-5.log",
+      "bytes": 3430,
+      "sha256": "d42b9615d614f1d6182178890bd7ff85078c58c5d33944de39f70a82657e382a"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-early-log-collection-6.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-early-log-collection-6.log",
+      "bytes": 3954,
+      "sha256": "c57085c7b88c125fb98723427b1c873aeff357ebcf9b384e34f682e6e438fb80"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-early-log-collection-7.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-early-log-collection-7.log",
+      "bytes": 4210,
+      "sha256": "cbf8e5d2cacd57175223647db94c02687e32932458b05c06902a91c01ae7bfb9"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-early-log-collection-8.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-early-log-collection-8.log",
+      "bytes": 4463,
+      "sha256": "946d9b104ff9dada16eb85cbda38e1f70713fe018951ee12f7715f2a09ccc283"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-early-log-collection.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-early-log-collection.log",
+      "bytes": 816,
+      "sha256": "eac471e0d0169dea4ddb42c99ed377a0be569c05c8f7036d5caee05476b00f87"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-incomplete-archive-retirement.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-incomplete-archive-retirement.json.gz",
+      "bytes": 339,
+      "sha256": "c1e73eff3a3763a1020c6b2f91fff6f270adf0d89fa415dc422d771f75e25489"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-jobs-3.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-jobs-3.json",
+      "bytes": 113517,
+      "sha256": "c2130dea8d63ca47300cd21f87e81b619f219fe66d5e9dae866bd2a7427f3a69"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-jobs-7.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-jobs-7.json",
+      "bytes": 166335,
+      "sha256": "70446a5fc6f2d2526dbeb057027c69a8415945f192f911e081171d01ecac923e"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-progress-1.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-progress-1.json",
+      "bytes": 56797,
+      "sha256": "0299ee2f89152f5487ce082a20516fc469d0427f2ff6db97c881a7dbf444bfce"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-progress-2.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-progress-2.json",
+      "bytes": 75628,
+      "sha256": "94e53108a7fcfa422068300a8c5252b7de2254a4337f70c96dff4d26b8370e59"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-recent-runs-3.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-recent-runs-3.json",
+      "bytes": 685,
+      "sha256": "4bf8ba7ed8a525d7cb673d66fa96f4895095939c7aa5aca00605f78dde30ceb2"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-recent-runs-4.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-recent-runs-4.json",
+      "bytes": 962,
+      "sha256": "3d7a9573a5fd5515dd3180efdb40e10932c9f2ef05407f2e87ad1368f5b8aca2"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-recent-runs-5.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-recent-runs-5.json",
+      "bytes": 792,
+      "sha256": "e96b3e8a92d76909a797dcd5c755cb4b50b723a6a2284941fd8b6371e72e3f90"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-recent-runs-6.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-recent-runs-6.json",
+      "bytes": 967,
+      "sha256": "74c37775bffd691ea7bda72238d1b86a84aeda83c4860a54554fe84135a47e2d"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-recent-runs-7.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-recent-runs-7.json",
+      "bytes": 792,
+      "sha256": "a5026e50674133dbf68f87abb251006bb4094dbf7116b51516b9c1ca5f25dc1d"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-recent-runs-8.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-recent-runs-8.json",
+      "bytes": 685,
+      "sha256": "ae0d858c60edd7ba1af4381b5fa32008c8a12ddd78432d1981d29d1278319e88"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-terminal-artifact-retention.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-terminal-artifact-retention.log",
+      "bytes": 452,
+      "sha256": "63f223e6bbb6dc36809f6054e368a73662c509b0b642c2a27b705cee306ee0cf"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-terminal-index-check.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-terminal-index-check.log",
+      "bytes": 370,
+      "sha256": "b21a7239ebd3723ee6d27c4b21af079f30e1b4d4d7f9deef90d8673f88f75c9d"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-terminal-log-recovery.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-terminal-log-recovery.log",
+      "bytes": 505,
+      "sha256": "6ef799fab973f3ac4d4d77aa26d053f6f23d4dfaef5621831e7a8d88534fc4d2"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-terminal-report-retention.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-terminal-report-retention.log",
+      "bytes": 2870,
+      "sha256": "8c3826fbe990e7e800360c9535b5b03b6fa8cbd56a7ea951593eebb77ba6a7f6"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-0e234-unfinished-jobs-5.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-0e234-unfinished-jobs-5.json",
+      "bytes": 958,
+      "sha256": "ef67fb339cdd2686086d3a0f43d5e75ba6eee3097396f0df6b11f5d79568fbc8"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-complete-checkpoint-retirement.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-complete-checkpoint-retirement.json",
+      "bytes": 51403,
+      "sha256": "77aa2f19a6f5278b8cb18fe2568dd5c64fa68fc112bb8118d1ef5206156cecd7"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-json-comparison-ingress-probe.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-json-comparison-ingress-probe.log",
+      "bytes": 4224,
+      "sha256": "5a89a8b1479121509b46ae2bd3a691536eaf8c542cffd32b21ca4b14832cad01"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-json-comparison-ingress-probe.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-json-comparison-ingress-probe.memory.json",
+      "bytes": 961,
+      "sha256": "47179e0f63abab9d798777791e725aaed0e5a52419820250dc6b2dc806edf190"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-main-fetch-5edd.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-main-fetch-5edd.log",
+      "bytes": 96,
+      "sha256": "e93c8b373153d73be1cedfa153170eec9198b80678ab85ecab59c54e023bb193"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-proof-composition-bun.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-proof-composition-bun.log",
+      "bytes": 1078,
+      "sha256": "4b50298e42b26f7495e114cc7c842b07d8b81ccc96e68eacd4702853b824a704"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-proof-composition-bun.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-proof-composition-bun.memory.json",
+      "bytes": 976,
+      "sha256": "b62087527e89f7e97046c1f5a71c035b80ec0919a5f3248c60b76c2facbb2ab8"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-proof-composition-node.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-proof-composition-node.log",
+      "bytes": 3817,
+      "sha256": "ac558de0637e47a48745bf3d784829c6668566f3188379f6b800b1b918653c87"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-proof-composition-node.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-proof-composition-node.memory.json",
+      "bytes": 998,
+      "sha256": "21d5dba0e50311babe2ae9968f3dba4fba8b979ccdad07a1f8da45bb54e1c4e5"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-proof-composition-node20.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-proof-composition-node20.log",
+      "bytes": 2263,
+      "sha256": "8323c299b476dece72d86017586a908efb31d160ae514d5b3a9cb63e7290362f"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-struct-ordering-proof-composition-node20.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-struct-ordering-proof-composition-node20.memory.json",
+      "bytes": 1000,
+      "sha256": "6f80ce6139576a1925dc904c78834d845222896e2fcd7461ee1e79a480380ad5"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-artifact-13825090953.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-artifact-13825090953.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-artifact-13825457606.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-artifact-13825457606.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-artifact-13825691026.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-artifact-13825691026.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-artifact-13826435546.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-artifact-13826435546.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13822483556.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13822483556.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13822609788.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13822609788.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13822779653.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13822779653.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13823013985.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13823013985.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13823093810.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13823093810.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13823129761.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13823129761.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13823399106.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13823399106.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13823494711.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13823494711.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13823513699.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13823513699.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13823539230.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13823539230.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13823614835.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13823614835.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13823618283.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13823618283.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13823633078.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13823633078.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13823660669.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13823660669.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13823668480.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13823668480.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13823703051.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13823703051.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13823706107.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13823706107.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13823762478.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13823762478.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13823890409.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13823890409.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824003004.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824003004.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824111731.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824111731.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824178909.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824178909.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824241645.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824241645.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824255875.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824255875.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824380271.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824380271.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824406359.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824406359.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824413212.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824413212.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824461045.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824461045.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824466314.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824466314.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824476124.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824476124.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824682808.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824682808.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824741371.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824741371.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824806534.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824806534.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824831285.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824831285.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824871138.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824871138.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13824910410.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13824910410.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13825090953.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13825090953.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13825457606.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13825457606.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13825691026.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13825691026.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/terminal-report-artifact-13826435546.stderr",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/terminal-report-artifact-13826435546.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "experiments/issue-784/archive-terminal-0e234.py",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/archive-terminal-0e234.py",
+      "bytes": 2247,
+      "sha256": "920e9edabeaa82000e95d5ac814d58a071170e913cb925a485b22c655d513390"
+    },
+    {
+      "path": "experiments/issue-784/current-terminal-ci-repair-plan.md",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/current-terminal-ci-repair-plan.md",
+      "bytes": 3001,
+      "sha256": "a44305572e3074c2f70ed1147a2ca084ffa4a1d07a4640225958c4e470dbb16f"
+    },
+    {
+      "path": "experiments/issue-784/index-terminal-checkpoint-reports.py",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/index-terminal-checkpoint-reports.py",
+      "bytes": 2916,
+      "sha256": "acc9f347a01f464bd01b490300e5bf234f0d8dad9027a7425c053235d496a371"
+    },
+    {
+      "path": "experiments/issue-784/probe-json-comparison-ingress.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/probe-json-comparison-ingress.mjs",
+      "bytes": 2227,
+      "sha256": "e6ecaa1dcacafc356845cb8bc37bac104a85a1cc906ff91180272720a4fbeb3d"
+    },
+    {
+      "path": "experiments/issue-784/recover-terminal-cancelled-log.py",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/recover-terminal-cancelled-log.py",
+      "bytes": 3570,
+      "sha256": "17f863a9891f6a6d6769e281d09423d2806a21292829b7641cb32ab6d5c8f886"
+    },
+    {
+      "path": "experiments/issue-784/retain-terminal-artifact-members.py",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/retain-terminal-artifact-members.py",
+      "bytes": 7564,
+      "sha256": "39953251fe96174fae03e6f16e611fcbba200f57bf96278e9d3bb0428c3f2a45"
+    },
+    {
+      "path": "experiments/issue-784/retire-complete-checkpoint-duplicates.py",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/retire-complete-checkpoint-duplicates.py",
+      "bytes": 3778,
+      "sha256": "8138a1ce1baa508a9c30787ee1a8911e5ff453ce9ce59b3f165d247e32c51382"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-JNsKLf/case-deadlines.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-JNsKLf/case-deadlines.json",
+      "bytes": 430263,
+      "sha256": "bffc7b130839c61dc2365f6f201a762434f5d9a62f404848aae0806b819add8f"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-JNsKLf/command.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-JNsKLf/command.json",
+      "bytes": 457354,
+      "sha256": "799d6c536550bfff9282d5f6b0add7fbbde6bed6a302404f83dcbbd8aaecf44d"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-JNsKLf/request.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-JNsKLf/request.json",
+      "bytes": 351,
+      "sha256": "17fcfb7728a438d24e1d35f1db117f1f4cf3e5c779f2c6a19fabc9fa7eedee3c"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-JNsKLf/stderr.raw.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-JNsKLf/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-JNsKLf/stdout.raw.tap",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-JNsKLf/stdout.raw.tap",
+      "bytes": 3610,
+      "sha256": "9c399cefb824f38ba5aee2700ce8b365ff2de23634e01d8e1eb35e770c5eb945"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-JNsKLf/terminal.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-JNsKLf/terminal.json",
+      "bytes": 2329,
+      "sha256": "f21113f39d0de6e2293441cb5017c6e18349d3d5afb25a5944d5e5490da2df74"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-S787cA/case-deadlines.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-S787cA/case-deadlines.json",
+      "bytes": 429835,
+      "sha256": "d24b5d7362f9aee9ce805518ddab5fd22ce69886a4c53c5a2f168bbff14b33c2"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-S787cA/command.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-S787cA/command.json",
+      "bytes": 457170,
+      "sha256": "5b3073dc3e48cfc75a1052ad164ecbc881518a49914fd92f624fc09da2e0ea13"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-S787cA/request.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-S787cA/request.json",
+      "bytes": 351,
+      "sha256": "de72ebd9e8b526101e1034f442dc8a3c6729eb9a339a6a5cba1ec9d8842fe5b2"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-S787cA/stderr.raw.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-S787cA/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/checkpoint0e234-job-130281321405.stderr",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-S787cA/stdout.raw.tap",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-S787cA/stdout.raw.tap",
+      "bytes": 2142,
+      "sha256": "60f6fe30c18bd67eaba6e5eba4b8e243e101d72b5bafd3f2c02b5ff2e849334a"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-S787cA/terminal.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-S787cA/terminal.json",
+      "bytes": 2372,
+      "sha256": "373abedb16afc9a5fbfb672c283e58a46a994b7e445eb53a259a9d889ccc354e"
+    }
+  ],
+  "completeMembers": 218,
+  "completeOriginalBytes": 8223797,
+  "allDecodedOriginalsVerified": true,
+  "allSelectedOriginalsUnchanged": true,
+  "capSeconds": 600,
+  "elapsedSeconds": 4.336603614035994,
+  "compression": {
+    "format": "xz",
+    "preset": 9,
+    "dictionaryBytes": 67108864
+  },
+  "harnessSha256": "79015998f626aecda125c5e03b6e7fc04951a14a57a7cdbba81771a2abfa08e9",
+  "semanticAuthority": false,
+  "runtimeParity": false,
+  "fullGatePass": false,
+  "rustExecuted": false
+}

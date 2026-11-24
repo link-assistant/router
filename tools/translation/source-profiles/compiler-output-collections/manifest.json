@@ -1,0 +1,237 @@
+{
+  "schema": "original-compiler-output-collection-inputs-v1",
+  "rustVersion": "1.89.0",
+  "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+  "license": "MIT OR Apache-2.0",
+  "licenses": [
+    {
+      "license": "LICENSE-MIT",
+      "file": "../conditional-attributes/LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/LICENSE-MIT",
+      "provenance": "complete existing official Rust license notice reused byte-exact"
+    },
+    {
+      "license": "LICENSE-APACHE",
+      "file": "../conditional-attributes/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/LICENSE-APACHE",
+      "provenance": "complete existing official Rust license notice reused byte-exact"
+    }
+  ],
+  "sources": [
+    {
+      "path": "compiler/rustc_ast/src/format.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_ast/src/format.rs",
+      "archive": "../format-arguments/compiler-rustc_ast-src-format.rs.gz",
+      "bytes": 8344,
+      "sha256": "f0ad326e0b8335f2ce2e112bdbe57d9ff3ebab5ea3c1e63d35b54e6799cd588a",
+      "archiveBytes": 2316,
+      "archiveSha256": "6fbe5dd46c2063cb79b0b1a7d619e10409972a40bb42d21b55203772a21ad9de",
+      "provenance": "complete existing pinned original archive reused byte-exact; original URL and archive retained",
+      "originalManifest": "tools/translation/source-profiles/format-arguments/manifest.json"
+    },
+    {
+      "path": "compiler/rustc_ast/src/lib.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_ast/src/lib.rs",
+      "bytes": 1329,
+      "sha256": "d77c6c040630b4815edcaa1b243f6bbe1d3820fcb8e262de873d176324d34403",
+      "archiveBytes": 672,
+      "archiveSha256": "4b56e894967f8ca697b6d0f258d6f543922a5520d6fcd2a6dcf14606058a8965",
+      "archive": "compiler__rustc_ast__src__lib.rs.gz",
+      "provenance": "complete official source acquired with verified TLS; full raw retained outside case tree"
+    },
+    {
+      "path": "compiler/rustc_builtin_macros/src/format.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_builtin_macros/src/format.rs",
+      "archive": "../format-arguments/compiler-rustc_builtin_macros-src-format.rs.gz",
+      "bytes": 39952,
+      "sha256": "c996ad70339e2915897ddd4e3aed4ed11f6e168e9e7d5562fc7139c45dc6a4ea",
+      "archiveBytes": 9557,
+      "archiveSha256": "40da921172000ffd2cdd3a938caa08ba1ec026de6dbe9516c6416b32619adca4",
+      "provenance": "complete existing pinned original archive reused byte-exact; original URL and archive retained",
+      "originalManifest": "tools/translation/source-profiles/format-arguments/manifest.json"
+    },
+    {
+      "path": "compiler/rustc_builtin_macros/src/format_foreign.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_builtin_macros/src/format_foreign.rs",
+      "bytes": 26715,
+      "sha256": "632cf54d7a263f37ec8dd9e0465aac4679b3db885bf74b69c786a24535058d1d",
+      "archiveBytes": 5753,
+      "archiveSha256": "4b531e04970362b83d926a48dfdbb69f52221196bd696cc945ea64c377c23503",
+      "archive": "compiler__rustc_builtin_macros__src__format_foreign.rs.gz",
+      "provenance": "complete official source acquired with verified TLS; full raw retained outside case tree"
+    },
+    {
+      "path": "compiler/rustc_parse_format/src/lib.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_parse_format/src/lib.rs",
+      "archive": "../format-arguments/compiler-rustc_parse_format-src-lib.rs.gz",
+      "bytes": 35564,
+      "sha256": "d2f014b090b8cac635f1fe57c2ea28f0af6bfbcf35c2268a2c93939baa53c204",
+      "archiveBytes": 8244,
+      "archiveSha256": "e0ecf6244fec99d6e65335f43f70ac02333db0f12567ff237de8cdadeb62d92e",
+      "provenance": "complete existing pinned original archive reused byte-exact; original URL and archive retained",
+      "originalManifest": "tools/translation/source-profiles/format-arguments/manifest.json"
+    },
+    {
+      "path": "compiler/rustc_span/src/symbol.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_span/src/symbol.rs",
+      "archive": "../module-paths/rustc-symbol.rs.gz",
+      "bytes": 77781,
+      "sha256": "35b84de01138877958228c55fcfbbff7749f7b97dd4e089fc3e4cad1733196b2",
+      "archiveBytes": 19825,
+      "archiveSha256": "0fe76fef2e6a0d434b6a4a2baaae292705ded8b6aa1c172d1e0028a8ee1454f9",
+      "provenance": "complete existing pinned original archive reused byte-exact; original URL and archive retained",
+      "originalManifest": "tools/translation/source-profiles/format-registered-inputs/manifest.json"
+    },
+    {
+      "path": "library/alloc/src/vec/into_iter.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/alloc/src/vec/into_iter.rs",
+      "bytes": 19324,
+      "sha256": "4ad00e0858c26db8744c8f06157597bb3ca49c02009b84d18a2180056f840f95",
+      "archiveBytes": 5225,
+      "archiveSha256": "7b41cc04e0e592de80a94656ec60db79befd033cab7812f9893ff469f6a881de",
+      "archive": "library__alloc__src__vec__into_iter.rs.gz",
+      "provenance": "complete official source acquired with verified TLS; full raw retained outside case tree"
+    },
+    {
+      "path": "library/alloc/src/vec/mod.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/alloc/src/vec/mod.rs",
+      "archive": "../builtin-derive-bang/rust-1.89-library_alloc_src_vec_mod.rs.gz",
+      "bytes": 149006,
+      "sha256": "550d150a5f0a546ea94e6a3b29a70007980f42c930d042d044e2d03ae9e36ae5",
+      "archiveBytes": 31835,
+      "archiveSha256": "23c0282775cc91c9405559d55e8bbb5df1b87445e164ae7f9205b7161f434e70",
+      "provenance": "complete existing pinned original archive reused byte-exact; original URL and archive retained",
+      "originalManifest": "tools/translation/source-profiles/default-containers/manifest.json"
+    },
+    {
+      "path": "library/alloc/src/vec/spec_from_iter.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/alloc/src/vec/spec_from_iter.rs",
+      "bytes": 2378,
+      "sha256": "d779483086d6ada0fb482f4e00e2e89806cd5f22d0a1c1e36692134eea634cde",
+      "archiveBytes": 939,
+      "archiveSha256": "2ae83210d767165ee7bb94fdfcafb89e9445f68ef0aa2582c3cf02e2319b876c",
+      "archive": "library__alloc__src__vec__spec_from_iter.rs.gz",
+      "provenance": "complete official source acquired with verified TLS; full raw retained outside case tree"
+    },
+    {
+      "path": "library/alloc/src/vec/spec_from_iter_nested.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/alloc/src/vec/spec_from_iter_nested.rs",
+      "bytes": 2420,
+      "sha256": "5033a13600dc0b890ad456b10d8f0d9fa0d7ada225abc16a11f147a0990cefc2",
+      "archiveBytes": 999,
+      "archiveSha256": "503a22794e84b8a369340f626029c81daf6daff8a3b3f07d839c26da74e5ffd5",
+      "archive": "library__alloc__src__vec__spec_from_iter_nested.rs.gz",
+      "provenance": "complete official source acquired with verified TLS; full raw retained outside case tree"
+    },
+    {
+      "path": "library/core/src/iter/adapters/chain.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/core/src/iter/adapters/chain.rs",
+      "bytes": 9487,
+      "sha256": "6e2fdd122d14a81d665adb9fa0b56818b146501fc7d44c3107a945a1b30ae6c5",
+      "archiveBytes": 2541,
+      "archiveSha256": "dd08dcab80255cbcb1906082c9722840829a077f1fdb6879b3196f5c708d7a21",
+      "archive": "library__core__src__iter__adapters__chain.rs.gz",
+      "provenance": "complete official source acquired with verified TLS; full raw retained outside case tree"
+    },
+    {
+      "path": "library/core/src/iter/adapters/map.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/iter/adapters/map.rs",
+      "archive": "../reverse-string-iterators/core-map.rs.gz",
+      "bytes": 6839,
+      "sha256": "2a9cb86b5110b292f271ec1cd8904a9bad27f8d553af0141837f41e753fe83d3",
+      "archiveBytes": 2160,
+      "archiveSha256": "26711a590b05efc5a433c152d434fa0f8350171bad728bd3976b9452597348b2",
+      "provenance": "complete existing pinned original archive reused byte-exact; original URL and archive retained",
+      "originalManifest": "tools/translation/source-profiles/reverse-string-iterators/manifest.json"
+    },
+    {
+      "path": "library/core/src/iter/sources/once.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/core/src/iter/sources/once.rs",
+      "bytes": 2772,
+      "sha256": "3a75684ba4bf7da8fc0db61a83f7a28012c537d0e7daadcdbbd8a7a9a9f4bc3c",
+      "archiveBytes": 1125,
+      "archiveSha256": "d87682881f0bf312317b0709576381a668723f40cb6174afc7a4146c36be4015",
+      "archive": "library__core__src__iter__sources__once.rs.gz",
+      "provenance": "complete official source acquired with verified TLS; full raw retained outside case tree"
+    },
+    {
+      "path": "library/core/src/iter/traits/collect.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/core/src/iter/traits/collect.rs",
+      "bytes": 23173,
+      "sha256": "02ec182923a5e3ee62b4972ccf79b760cde1995f36c0037aa2a644efe9998f35",
+      "archiveBytes": 5620,
+      "archiveSha256": "414c930de1a844c58a6bbce3356ad72e33128058c1f17e7474e3e898f7eeda3f",
+      "archive": "library__core__src__iter__traits__collect.rs.gz",
+      "provenance": "complete official source acquired with verified TLS; full raw retained outside case tree"
+    },
+    {
+      "path": "library/core/src/iter/traits/iterator.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/iter/traits/iterator.rs",
+      "archive": "../whitespace-iterators/iterator-trait.rs.gz",
+      "bytes": 138915,
+      "sha256": "d57130b6a4d3f18f8d28fedf5bd953da80492e2f809813ecd3dba0b3276b99ab",
+      "archiveBytes": 28823,
+      "archiveSha256": "4fd197a902bffa96b81e1c83dbaa7d9b6ff471aa69fe34dda47a179f3d75de82",
+      "provenance": "complete existing pinned original archive reused byte-exact; original URL and archive retained",
+      "originalManifest": "tools/translation/source-profiles/scalar-enumerate/manifest.json"
+    },
+    {
+      "path": "library/core/src/slice/iter.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/core/src/slice/iter.rs",
+      "bytes": 111609,
+      "sha256": "4a12a3f67f0bdc1370e5c5627aeef2a070503cedcd9127d8748ada4d8d3585e9",
+      "archiveBytes": 12977,
+      "archiveSha256": "0278f8dabf62b1e7aeeac3c2b6b195659761e99bc9669b6726a541bdc368d7c4",
+      "archive": "library__core__src__slice__iter.rs.gz",
+      "provenance": "complete official source acquired with verified TLS; full raw retained outside case tree"
+    }
+  ],
+  "sourceCount": 16,
+  "newSourceCount": 9,
+  "existingArchiveAliases": 7,
+  "newRawBytes": 199207,
+  "newArchiveBytes": 35851,
+  "allRawBytes": 655608,
+  "callerNamespaceResolved": false,
+  "collectionSemanticsProved": false,
+  "runtimeAuthority": false,
+  "scope": "Complete original source inputs only. Iterator/collection/constructor/owner/effect contracts remain independent obligations; no engine, compiler, namespace or runtime admission.",
+  "transitiveSourceClosureComplete": false,
+  "remainingTransitiveInputs": [
+    {
+      "path": "library/core/src/slice/iter/macros.rs",
+      "reason": "slice/iter.rs declares #[macro_use] mod macros and uses iterator!; source/expansion contract not acquired or proved",
+      "pathStatus": "normal Rust child-module candidate; independent module-owner proof still required"
+    },
+    {
+      "path": "library/alloc/src/vec/spec_extend.rs",
+      "reason": "SpecFromIterNested calls actual SpecExtend; specialization/allocator/raw-pointer effects unresolved",
+      "pathStatus": "direct source-module candidate; not acquired"
+    },
+    {
+      "path": "library/alloc/src/raw_vec/mod.rs",
+      "reason": "SpecFromIterNested imports crate::raw_vec::RawVec; actual module route/allocator/source effects unresolved",
+      "pathStatus": "unresolved source-path candidate, not an authenticated source input"
+    }
+  ]
+}

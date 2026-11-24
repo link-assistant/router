@@ -1,0 +1,31 @@
+{
+  "schema": "complete-meta-compression-original-source-v1",
+  "name": "fflate",
+  "version": "0.8.3",
+  "license": "MIT",
+  "upstream": "https://github.com/101arrowz/fflate",
+  "metadataUrl": "https://registry.npmjs.org/fflate/0.8.3",
+  "tarballUrl": "https://registry.npmjs.org/fflate/-/fflate-0.8.3.tgz",
+  "tarballIntegrity": "sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==",
+  "files": [
+    {
+      "path": "fflate-0.8.3.umd.js",
+      "bytes": 33044,
+      "sha256": "462ef8041fc970e3615a20a9dd2b2e3047a073b2da729ef4f02b634bba8b7b83"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1069,
+      "sha256": "0a1df3a083d0c010560aa342e87959c8c1070e6fd54545741f083f22d0c8b551"
+    },
+    {
+      "path": "upstream-package.json",
+      "bytes": 3543,
+      "sha256": "5922d8150b307bc0e4e441491c779c45379e9913d348848fca8d5cf02db4d134"
+    }
+  ],
+  "sourceCopiedCompletely": true,
+  "namespaceAuthority": false,
+  "semanticAuthority": false,
+  "runtimeParity": false
+}

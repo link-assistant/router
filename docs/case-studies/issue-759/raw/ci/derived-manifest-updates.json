@@ -1,0 +1,21 @@
+[
+  {
+    "path": "link-assistant--router/artifacts/artifact-selection-manifest.json.gz",
+    "previous_derived_manifest_decoded_sha256": "42d464c13406b8cec495a0f7299ef610abaf8b6527a3d91c5045954f8424b52b",
+    "previous_derived_manifest_compressed_sha256": "0692a08832b08079f75b5043fddf43f7d9f9e5bf9c7b1f7ef2d60d695c79edae",
+    "current_compressed_sha256": "8ad2c8ff0e335f8b751c623fe0953ab391f61f80c9a6f28ba0f5829a1e80086e",
+    "current_decoded_sha256": "f25844ca59ed0c31924170d3962eb491c11d33990221730ca4a3a03ecd1345a6",
+    "updated_at": "2026-10-10T20:33:46.442165+00:00",
+    "reason": "The collector rewrites derived artifact-selection summaries on each pass from archived artifact metadata and current bundle manifests. The final native Dockerbuild classification demonstrably changes three Router selection reasons. Other effects from earlier member/object remapping are an inference; exact byte-by-byte reconstruction of the overwritten old derived JSON was not recovered. Original expectations and actual current hashes remain recorded separately.",
+    "collector_code": "archive-artifacts.py: collect_artifact and final artifact-selection-manifest write",
+    "failed_full_scan_receipt": "archive-integrity-before-derived-update.json",
+    "current_reference_check": {
+      "verified_at": "2026-10-10T20:34:32.859700+00:00",
+      "summary_artifact_records": 162,
+      "pinned_metadata_records": 162,
+      "text_references": 22,
+      "errors": [],
+      "native_dockerbuild_reclassified_records": 3
+    }
+  }
+]

@@ -1,0 +1,197 @@
+{
+  "schema": "fixed-current-source-family-census-20261103-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-current-families-20261103/index198.before.json.gz",
+    "encodedSha256": "95b2dbafa5495919ae8ab7454728cbde14392d342242fb50a1bf2192ed67960b",
+    "sourceSha256": "e720c5793893b8587b7b800fc0b3c10d62ac96e4b21c0c9d8bd7bf366923bacd",
+    "rows": 198
+  },
+  "families": [
+    {
+      "id": "exact-current-self-alias-20261103",
+      "manifest": "tools/translation/source-profiles/original-self-crate-alias-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "original-self-crate-alias-native-context-source-20261103-v1",
+      "sha256": "0caa6dc5ac5020c77a5b9c738de02e2260d023521cc015cea085a00908390745",
+      "rows": 2,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-self-alias-lineage-20261103",
+      "manifest": "tools/translation/source-profiles/original-self-crate-alias-lineage-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "original-self-crate-alias-lineage-20261103-v1",
+      "sha256": "812fc237deaabdd77df630729ff35688f5d1f9f04bfa6c74e6cd27892df579eb",
+      "rows": 2,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-trial-vector-20261103",
+      "manifest": "tools/translation/source-profiles/protected-trial-vector-writers-20261103/manifest.json",
+      "kind": "images",
+      "schema": "protected-trial-vector-writers-20261103-source-proposal-v1",
+      "sha256": "4fc5d7d00d1bbae578ddcffe809a2826aab8b87e9b1511a4829802db8aecde4c",
+      "rows": 3,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-trial-source-20261103",
+      "manifest": "tools/translation/source-profiles/protected-trial-vector-source-boundaries-20261103/manifest.json",
+      "kind": "images",
+      "schema": "protected-trial-vector-source-boundaries-20261103-source-proposal-v1",
+      "sha256": "f0a8503bcfd8ba557f5992e01257435a8ffb1e7f31de48b4775eadef522fbab1",
+      "rows": 5,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-storage-reexport-20261103",
+      "manifest": "tools/translation/source-profiles/ordered-text-map-callers-20261102-source-storage-reexport/ordered-text-map-callers-20261102-source-storage-reexport-source-history.json.gz",
+      "kind": "archive",
+      "schema": "readonly-source-profile-reexport-successors-20261103-v1",
+      "sha256": "83fee32603e75319f6e72a0470c562ed3a056b69536c19c46e9f8a4699141fd4",
+      "rows": 6,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-storage-sdk-20261103",
+      "manifest": "tools/translation/source-profiles/ordered-text-map-callers-20261102-source-storage-sdk/ordered-text-map-callers-20261102-source-storage-sdk-source-history.json.gz",
+      "kind": "archive",
+      "schema": "readonly-source-profile-sdk-successors-20261103-v1",
+      "sha256": "087b98fd61ffc3e17724ce13c28984ad37770f2577f4e77e385f8ea13bf69dea",
+      "rows": 10,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-native-stream-20261103",
+      "manifest": "tools/translation/source-profiles/protected-native-stream-fds-20261103/manifest.json",
+      "kind": "images",
+      "schema": "protected-native-stream-fds-20261103-source-proposal-v1",
+      "sha256": "cc5056f64de5efaf3468b0069e71d782414beabfd81d09edc2dda1378456ab82",
+      "rows": 8,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-reconcile-stream-20261103",
+      "manifest": "tools/translation/source-profiles/ordered-text-map-callers-20261102-source-storage-reconcile-stream/ordered-text-map-callers-20261102-source-storage-reconcile-stream-source-history.json.gz",
+      "kind": "archive",
+      "schema": "readonly-source-profile-reconcile-stream-successors-20261103-v1",
+      "sha256": "56eb47ca59f8ff01f357d9990e3d0465da7ad1694d079536636684eb2e3c7846",
+      "rows": 3,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-storage-lease-20261103",
+      "manifest": "tools/translation/source-profiles/ordered-text-map-callers-20261102-source-storage-lease/ordered-text-map-callers-20261102-source-storage-lease-source-history.json.gz",
+      "kind": "archive",
+      "schema": "readonly-source-profile-lease-successors-20261103-v1",
+      "sha256": "7337568b4e38b78cb77f2ff7710183fd42cfa978cfb403c820ddfb7fa6620741",
+      "rows": 3,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-authored-current-20261103",
+      "manifest": "tools/translation/source-profiles/ordered-text-map-callers-20261102-authored-current/ordered-text-map-callers-20261102-authored-current-source-history.json.gz",
+      "kind": "archive",
+      "schema": "ordered-map-authored-current-successors-20261103-v1",
+      "sha256": "56a2d19fafc7e2561a944fa077bcb07ea8e063aa3f274e6e300f7649d928bb93",
+      "rows": 1,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-storage-operational-20261103",
+      "manifest": "tools/translation/source-profiles/ordered-text-map-callers-20261102-source-storage-operational/ordered-text-map-callers-20261102-source-storage-operational-source-history.json.gz",
+      "kind": "archive",
+      "schema": "readonly-source-profile-operational-successors-20261103-v1",
+      "sha256": "1dfd565a2025770e108cad0fd047c335f942a33967fec79d303b8f3724d99d86",
+      "rows": 6,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-node-evidence-20261103",
+      "manifest": "tools/translation/source-profiles/protected-node-evidence-writers-20261103/manifest.json",
+      "kind": "images",
+      "schema": "protected-node-evidence-writers-20261103-source-proposal-v1",
+      "sha256": "1b4d09ffd3379dc594d23f2ee032782d5ae6f68e9498e8cf95c1dfe686093fdd",
+      "rows": 2,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-node-forward-20261103",
+      "manifest": "tools/translation/source-profiles/protected-node-stream-forwarding-20261103/manifest.json",
+      "kind": "images",
+      "schema": "protected-node-stream-forwarding-20261103-source-proposal-v1",
+      "sha256": "a31476abe837761a4504653f41dd3c19d60727d4d8d447a519b2130872432c83",
+      "rows": 4,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-diagnostics-20261103",
+      "manifest": "tools/translation/source-profiles/protected-source-diagnostics-20261103/manifest.json",
+      "kind": "images",
+      "schema": "protected-source-diagnostics-20261103-source-proposal-v1",
+      "sha256": "fce7461051aab4a825ccdcf28374fb283ab52ff27632b623d94aece143f0e2ff",
+      "rows": 13,
+      "includeNewFiles": true
+    },
+    {
+      "id": "exact-current-diagnostic-fd-20261103",
+      "manifest": "tools/translation/source-profiles/protected-source-diagnostics-native-fd-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "protected-source-diagnostics-native-fd-source-20261103-v1",
+      "sha256": "ab9664de6ddbbcef807b8bf621c058dfe90218a8b8d93563688ac4b300c8013d",
+      "rows": 3,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-standard-map-reverse-20261103",
+      "manifest": "tools/translation/source-profiles/borrowed-standard-map-reverse-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "borrowed-standard-map-reverse-source-20261103-v1",
+      "sha256": "7982479bdcd25bdd4f5fbcb3a05141940482061a9f08a5836134c5ca73fb02d5",
+      "rows": 4,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-standard-map-library-20261103",
+      "manifest": "tools/translation/source-profiles/borrowed-standard-map-library-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "borrowed-standard-map-library-source-20261103-v1",
+      "sha256": "52328ad177033cd21a61f89107814762255845c133a6afd313388e910beae897",
+      "rows": 3,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-map-ts-target-20261103",
+      "manifest": "tools/translation/source-profiles/checked-map-typescript-target-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "checked-map-typescript-target-20261103-v1",
+      "sha256": "849e78e4a4cd1880353698b565ec053a445a1416fdc642abd72b603503392e02",
+      "rows": 1,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-json-application-20261103",
+      "manifest": "tools/translation/source-profiles/borrowed-json-tool-application-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "borrowed-json-tool-application-source-20261103-v1",
+      "sha256": "ff404e44b7e23b241db514620c6c9c56b750b811d9b2ac4e76d81996c6c01d40",
+      "rows": 4,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-current-index-builder-20261103",
+      "manifest": "tools/translation/source-profiles/exact-source-current-families-20261103/index-builder-source.json.gz",
+      "kind": "archive",
+      "schema": "exact-source-index-builder-layout-source-20261103-v1",
+      "sha256": "916290b05864d995f296cbd03c9dc8dcbb21554e2807d988da3b8b0060a98fc7",
+      "rows": 1,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 84,
+  "totalRows": 282,
+  "scope": "Source ancestry only; production function/writer census incomplete",
+  "verification": "UNRUN",
+  "sourceAuthority": false,
+  "semanticAuthority": false
+}

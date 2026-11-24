@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "sourceKind": "official-library-contracts",
+  "retrievedDate": "2026-10-11",
+  "repositoryMinimumRustVersion": "1.89",
+  "documentationVersionObserved": "1.99.0",
+  "sources": [
+    {
+      "url": "https://doc.rust-lang.org/std/primitive.slice.html#method.get",
+      "sourceScope": "Shared slice position lookup through Vec dereference",
+      "semantics": "Position lookup returns a borrowed element when in bounds and None otherwise. Range indexing is outside this adapter.",
+      "stableSince": "1.0.0"
+    },
+    {
+      "url": "https://doc.rust-lang.org/std/primitive.slice.html#method.first",
+      "sourceScope": "Shared first-element lookup",
+      "semantics": "An empty slice returns None; a nonempty slice returns its borrowed first element.",
+      "stableSince": "1.0.0"
+    },
+    {
+      "url": "https://doc.rust-lang.org/std/primitive.slice.html#method.last",
+      "sourceScope": "Shared last-element lookup",
+      "semantics": "An empty slice returns None; a nonempty slice returns its borrowed final element.",
+      "stableSince": "1.0.0"
+    }
+  ],
+  "portableProfile": {
+    "usizeBits": 64,
+    "receiver": "checked immutable array",
+    "elementRepresentation": "actual checked primitive, array or algebraic layout",
+    "returnRepresentation": "monomorphic Option carrying the original element",
+    "constEligible": false
+  },
+  "validation": "Node and Bun tests use actual checker-resolved recursive serde_json layouts, primitive domains, records, independent boundary expectations and typed failure fixtures.",
+  "limitations": [
+    "Frontend registration and receiver/borrow proofs are required before a source call becomes executable translation.",
+    "Mutation, interior mutability, ownership transfer, iterator behavior, ranges and unchecked indexing are not implemented.",
+    "No Rust execution or whole-program parity claim is made."
+  ]
+}

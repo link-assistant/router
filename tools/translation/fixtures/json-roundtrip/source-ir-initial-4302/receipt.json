@@ -1,0 +1,66 @@
+{
+  "schema": "initial-original-arithmetic-source-ir-focused-evidence-v1",
+  "sourceHead": "4302f07d0f9f5dc5c5028ab36388f9576bbbd68d",
+  "sourceTrackedClean": true,
+  "sourceUntracked": "shared packages/javascript/node_modules symlink only",
+  "scope": "Five pure files; emitted Rust source arithmetic IR models, not a native/parser or application-effect grant. No TSC, Rust or producer.",
+  "runners": {
+    "node": {
+      "pass": 26,
+      "fail": 4,
+      "skip": 0,
+      "seconds": 1.3947620391845703
+    },
+    "bun": {
+      "pass": 26,
+      "fail": 4,
+      "skip": 0,
+      "seconds": 0.9793989658355713
+    }
+  },
+  "failures": [
+    "Two associated fixtures supply unsealed empty input; guard correctly rejects",
+    "Unequal original multiplication and source power-five cases exhaust unchanged100000 interpreter step budget"
+  ],
+  "correctionsStatus": "source-only pending retry; no failure expectation removed, budget unchanged",
+  "sourceOwnerVerified": false,
+  "sourceBehaviorFidelityVerified": false,
+  "parseAdmission": false,
+  "applicationEffectCompleteness": false,
+  "runtimeParity": false,
+  "compressedInputs": [
+    {
+      "path": "node.log.gz",
+      "decodedBytes": 14025,
+      "decodedSha256": "5089f563438b78b4e9b911ff7f91d367fa787282e9c5018dd212abab3ff4997b",
+      "gzipBytes": 2714,
+      "gzipSha256": "5f26002ce6d941d7ac7469d0c41be3fc392f17cb559914dfafff8d62823e4985",
+      "reopenedExact": true
+    },
+    {
+      "path": "bun.log.gz",
+      "decodedBytes": 12620,
+      "decodedSha256": "3fcdaf583dc82db37351d14969539e32738702bf6c14d25101a61a640bdee7cd",
+      "gzipBytes": 2893,
+      "gzipSha256": "db0cba51a8d52730f50949f31baa276e1f6fb678faa527ae1906cb7539826af4",
+      "reopenedExact": true
+    },
+    {
+      "path": "node-receipt.json.gz",
+      "decodedBytes": 24840,
+      "decodedSha256": "d95a4cbc11e9d9a7053d6fde146d4916629e4a618d3a84efce56baeaa51a378e",
+      "gzipBytes": 7143,
+      "gzipSha256": "0ec7f88e21457ade7a6e07031a5d1beb65509342943c6ae3b892aef62e12dd8a",
+      "reopenedExact": true
+    },
+    {
+      "path": "bun-receipt.json.gz",
+      "decodedBytes": 24808,
+      "decodedSha256": "00b4a812ab813ac5593910ff0faabc71701796a2a82e4d74f54de1a1464b5a98",
+      "gzipBytes": 7128,
+      "gzipSha256": "2f6320d7be42e5b79f2189219bc9fb4aa74a53d34c7c5d14f7f6d1e4c99f3327",
+      "reopenedExact": true
+    }
+  ],
+  "runnerSha256": "95026b06e5c87e75e8d004c65e78f82b2ff2301071f08b7aa98d03f5ea53aed3"
+}

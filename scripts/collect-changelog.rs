@@ -43,14 +43,14 @@ fn get_rust_root() -> String {
         return root;
     }
 
-    if Path::new("./Cargo.toml").exists() {
-        eprintln!("Detected single-language repository (Cargo.toml in root)");
-        return ".".to_string();
-    }
-
     if Path::new("./rust/Cargo.toml").exists() {
         eprintln!("Detected multi-language repository (Cargo.toml in rust/)");
         return "rust".to_string();
+    }
+
+    if Path::new("./Cargo.toml").exists() {
+        eprintln!("Detected single-language repository (Cargo.toml in root)");
+        return ".".to_string();
     }
 
     eprintln!("Error: Could not find Cargo.toml in expected locations");
@@ -66,7 +66,7 @@ fn get_cargo_toml_path(rust_root: &str) -> String {
 }
 
 fn get_changelog_dir(rust_root: &str) -> String {
-    if rust_root == "." {
+    if rust_root == "." || (rust_root == "rust" && Path::new("./changelog.d").is_dir()) {
         "./changelog.d".to_string()
     } else {
         format!("{}/changelog.d", rust_root)
@@ -74,7 +74,7 @@ fn get_changelog_dir(rust_root: &str) -> String {
 }
 
 fn get_changelog_path(rust_root: &str) -> String {
-    if rust_root == "." {
+    if rust_root == "." || (rust_root == "rust" && Path::new("./CHANGELOG.md").is_file()) {
         "./CHANGELOG.md".to_string()
     } else {
         format!("{}/CHANGELOG.md", rust_root)

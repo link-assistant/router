@@ -1,0 +1,185 @@
+{
+  "$defs": {
+    "ProviderProvisionResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "api_key_env": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "base_url": {
+          "type": "string"
+        },
+        "default_model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "has_encrypted_api_key": {
+          "type": "boolean"
+        },
+        "intermediary_risk_acknowledged": {
+          "type": "boolean"
+        },
+        "kind": {
+          "$ref": "#/$defs/ProviderRecord_ProviderKind"
+        },
+        "models": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "outcome": {
+          "enum": [
+            "created",
+            "replaced",
+            "already_present"
+          ]
+        },
+        "subscriber_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "supported_clients": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "unsupported_clients": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "kind",
+        "base_url",
+        "models",
+        "supported_clients",
+        "has_encrypted_api_key",
+        "enabled",
+        "intermediary_risk_acknowledged",
+        "unsupported_clients",
+        "outcome"
+      ],
+      "type": "object"
+    },
+    "ProviderRecord_ProviderKind": {
+      "description": "Supported persisted provider kinds.",
+      "oneOf": [
+        {
+          "const": "openai-compatible",
+          "description": "Generic OpenAI-compatible upstream such as `LiteLLM`.",
+          "type": "string"
+        },
+        {
+          "const": "lefine",
+          "description": "Lefine `OpenAI` Chat Completions API with live catalog validation.",
+          "type": "string"
+        },
+        {
+          "const": "zai-coding-plan",
+          "description": "Personal z.ai GLM Coding Plan with client/subscriber policy gates.",
+          "type": "string"
+        }
+      ]
+    }
+  },
+  "$id": "link-assistant-router/providers-add/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "properties": {
+          "exit_code": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "success": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "exit_code": {
+            "const": 0
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "data": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ProviderProvisionResponse"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "output": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "diagnostics": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "exit_code": {
+      "maximum": 255,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "operation": {
+      "const": "providers.add"
+    },
+    "schema": {
+      "const": "link-assistant-router/providers-add/v1"
+    },
+    "success": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "operation",
+    "success",
+    "exit_code",
+    "data",
+    "diagnostics"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,94 @@
+//! The release archive must contain every binary the manifest declares.
+//!
+//! Split from `release_workflow_test.rs` to keep that file within the
+//! repository's 1000-line limit.
+
+#[path = "support/repository.rs"]
+mod repository;
+
+fn read_lf(path: &str) -> String {
+    std::fs::read_to_string(repository::path(path))
+        .unwrap_or_else(|error| panic!("read {path}: {error}"))
+        .replace("\r\n", "\n")
+}
+
+/// The `name` of every `[[bin]]` table, and of no other table (`[[bench]]`
+/// targets have names too, but are never packaged).
+fn declared_binaries(manifest: &str) -> Vec<String> {
+    let mut in_bin = false;
+    let mut binaries = Vec::new();
+    for line in manifest.lines() {
+        if line.starts_with('[') {
+            in_bin = line.trim() == "[[bin]]";
+        } else if in_bin
+            && let Some(name) = line
+                .strip_prefix("name = \"")
+                .and_then(|rest| rest.strip_suffix('"'))
+        {
+            binaries.push(name.to_string());
+        }
+    }
+    binaries
+}
+
+/// Every binary the manifest declares must be packaged into the release
+/// archive, and must be smoke-tested there.
+///
+/// `router` was added to `Cargo.toml` in v0.92.0 but not to the packaging step,
+/// so it built in CI, passed every test, and was still absent from all eight
+/// published archives — reaching only users who install with `cargo install`
+/// (issue #222). The packaging list is hand-written, so this asserts it against
+/// the manifest rather than against itself.
+#[test]
+fn every_declared_binary_is_packaged_and_smoke_tested() {
+    let manifest = read_lf("Cargo.toml");
+    let workflow = read_lf(".github/workflows/release.yml");
+
+    let binaries = declared_binaries(&manifest);
+    assert!(
+        binaries.len() >= 3,
+        "expected the declared binaries, found {binaries:?}"
+    );
+
+    for binary in binaries {
+        assert!(
+            workflow.contains(&format!("release/{binary}\"")),
+            "{binary} is declared in Cargo.toml but never copied into the release package"
+        );
+        assert!(
+            workflow.contains(&format!("dist/package/{binary} ")),
+            "{binary} is packaged but never smoke-tested in the published archive"
+        );
+    }
+}
+
+/// Every command name the release archive ships must also resolve inside the
+/// published container image.
+///
+/// The image copied one binary under its long name while `cargo install` put
+/// both names on a workstation's PATH, so `docker exec … router --version`
+/// failed with "executable file not found" on the exact command the docs
+/// prescribe (issue #243). The two installation paths are described in
+/// different files, which is how they drifted; this ties them together.
+#[test]
+fn every_packaged_binary_is_reachable_in_the_container_image() {
+    let manifest = read_lf("Cargo.toml");
+    let dockerfile = read_lf("Dockerfile");
+
+    let binaries = declared_binaries(&manifest);
+    assert!(
+        binaries.len() >= 3,
+        "expected the declared binaries, found {binaries:?}"
+    );
+
+    for binary in binaries {
+        let copied = dockerfile.contains(&format!("/usr/local/bin/{binary}\n"));
+        let linked = dockerfile.contains(&format!(
+            "ln -s link-assistant-router /usr/local/bin/{binary}"
+        ));
+        assert!(
+            copied || linked,
+            "{binary} is packaged for release but is not on PATH in the container image"
+        );
+    }
+}

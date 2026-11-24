@@ -1,0 +1,72 @@
+{
+  "schema": "default-byte-source-history-receiving-checkpoint-v1",
+  "sourceHead": "77f17cc3d016ab2ad1044e916127a5b7c6197344",
+  "files": 4,
+  "cases": 26,
+  "node": {
+    "passed": true,
+    "durationBreaches": 0
+  },
+  "bun": {
+    "passed": true,
+    "files": [
+      {
+        "file": "tools/translation/test/default-byte-source-successors.test.mjs",
+        "passed": true,
+        "originalCases": 10
+      },
+      {
+        "file": "tools/translation/test/default-proof-byte-adoption.test.mjs",
+        "passed": true,
+        "originalCases": 7
+      },
+      {
+        "file": "tools/translation/test/current-receiving-source-history.test.mjs",
+        "passed": true,
+        "originalCases": 6
+      },
+      {
+        "file": "tools/translation/test/guarded-builtin-plan-history.test.mjs",
+        "passed": true,
+        "originalCases": 3
+      }
+    ]
+  },
+  "originalCaseBodiesAndDeadlinesChanged": false,
+  "firstNodeRun": "RED; all assertions passed but one original 60000ms case took94593.244125ms",
+  "guardedOriginalPhaseControlSeconds": 1.8882933750282973,
+  "profiledGuardedCaseMs": 46520.7385,
+  "freshWholeNodeGuardedCaseMs": 41823.970083,
+  "phaseOptimizationInstalled": false,
+  "originalStageFunctionsChanged": false,
+  "earlierFailureErased": false,
+  "speedGainOrRootCauseEstablished": false,
+  "sourceAuthority": false,
+  "runtimeParity": false,
+  "productionCoverageGainMeasured": false,
+  "wholeGate": false,
+  "rustExecuted": false,
+  "evidence": {
+    "path": "complete-receiving-and-profile-evidence.json.gz",
+    "bytes": 267977,
+    "sha256": "d77630cd342ae7fc2430bff529b884b4f9333e25390ad5ff322955c3f0bee667",
+    "decodedBytes": 1547286,
+    "decodedSha256": "d658c875f73e82073392efd9d04f9c0a4caabebd273ba9d700711d2f5384de14"
+  },
+  "completeRawV8Logs": [
+    {
+      "path": "/private/tmp/router-layout-check-issue772-complete-guarded-profile-v1/temporary/isolate-0x148008000-45650-guarded-history-v8.log",
+      "bytes": 37951088,
+      "sha256": "ab625d4b317041eb71ba4b67837386174804d97a3d19516b3c5345983eeb8f4e",
+      "retainedCompletePrivately": true
+    },
+    {
+      "path": "/private/tmp/router-layout-check-issue772-complete-guarded-profile-v1/temporary/isolate-0x150008000-45644-guarded-history-v8.log",
+      "bytes": 13726569,
+      "sha256": "af0aa8ddcb7529105bf7060d122a539944723406e36a13fe3cb08e506aa85dfc",
+      "retainedCompletePrivately": true
+    }
+  ],
+  "notPortableCompilerQualification": true,
+  "remaining": "Current canonical/platform/owned/reverse regeneration, other collected CI failures, strict parity and complete same-SHA JavaScript gate before Rust CI."
+}

@@ -1,0 +1,57 @@
+{
+  "schema": "static-source-syntax-complete-originals-v1",
+  "commit": "621f132debd99f1dc7de748614fe6529ee86fcb3",
+  "members": [
+    {
+      "path": "tools/translation/extensions/external-trait-sources.mjs",
+      "storedPath": "raw/external-trait-sources.mjs",
+      "bytes": 13031,
+      "sha256": "ff692fafc3c4f23e9071a3b05eba80da5907da819324d3ce25a006e540af59ff",
+      "gitBlob": "204559b1bd6b582a03c5c574cf1019c2c3f00501"
+    },
+    {
+      "path": "tools/translation/extensions/primitive-trait-closure.mjs",
+      "storedPath": "raw/primitive-trait-closure.mjs",
+      "bytes": 16752,
+      "sha256": "d4f31ce6a278d44883793a94e88e2811ea5621111e1c0c8c712fd2b90d464db4",
+      "gitBlob": "388fd084128dede2af471694eded3db7b1a740e3"
+    },
+    {
+      "path": "tools/translation/rust-structure.mjs",
+      "storedPath": "raw/rust-structure.mjs",
+      "bytes": 3853,
+      "sha256": "ea09bde0452ff0e8021454e2c0040b6bdd8493163b0ab48cea496353e6b92261",
+      "gitBlob": "f7197fc4e3c186bc1980ffa576356ce8064e6288"
+    },
+    {
+      "path": "tools/translation/rust-item-boundaries.mjs",
+      "storedPath": "raw/rust-item-boundaries.mjs",
+      "bytes": 2795,
+      "sha256": "4487a37155041881c9519b1cd0fa8f141199189497835cf5be8524c9170156f6",
+      "gitBlob": "b2e39da100d90281daae24aa0022b8706e8fcfc0"
+    },
+    {
+      "path": "tools/translation/vendor/formal-ai/lexer.mjs",
+      "storedPath": "raw/lexer.mjs",
+      "bytes": 9236,
+      "sha256": "de63554d12ba030a9a8cf82b3d950d8baa07f55dd20623e711b4a292a6d8f94d",
+      "gitBlob": "9de24e8e61719256b515c06a5839bee6b7d7cbb4"
+    },
+    {
+      "path": "tools/translation/original-json-intrinsics.mjs",
+      "storedPath": "raw/original-json-intrinsics.mjs",
+      "bytes": 17321,
+      "sha256": "c5a478eba7f828aba4f822363528682ec1d81b7fa669ae3e531cb31babf7df2e",
+      "gitBlob": "237d712a20d9569fa9e1dcd866f1fa87fdfcb49b"
+    },
+    {
+      "path": "tools/translation/vendor/formal-ai/LICENSE",
+      "storedPath": "raw/LICENSE",
+      "bytes": 1211,
+      "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e",
+      "gitBlob": "fdddb29aa445bf3d6a5d843d6dd77e10a9f99657"
+    }
+  ],
+  "license": "raw/LICENSE",
+  "scope": "Complete original consumer leaves and unchanged full parser/issuer witnesses. Oracle consumers mechanically relocate import specifiers and import.meta.url to exact original module URLs, preserving source-profile asset resolution, and share the active common qualifier issuer; whole issuer bootstrap equivalence is not claimed."
+}

@@ -1,0 +1,2689 @@
+{
+  "schema": "complete-translator-source-batch-evidence-v1",
+  "sourceHead": "69ca4df41aa34945d1af10bb1b55617903599b13",
+  "archive": "complete-evidence.tar.xz",
+  "archiveBytes": 4312928,
+  "archiveSha256": "e4995fdf206afb27f2c48571cfc4caa63f9666c8cd9c81f82ac3ce4ffee77589",
+  "members": [
+    {
+      "path": "implementation/tools/translation/derive-inputs.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/derive-inputs.mjs",
+      "bytes": 12553,
+      "sha256": "1c21deb87e022e891205a93ecaad7a1a013f9389d67a9912d5c69d578d107bff"
+    },
+    {
+      "path": "observations/router-759-bulk-integrated-syntax-v1-inputs.json",
+      "originalPath": "/tmp/router-759-bulk-integrated-syntax-v1-inputs.json",
+      "bytes": 9533654,
+      "sha256": "b2a689a66d923500b5aaf6317458ec388a8bc17128991471b7f8eb29da5538c5"
+    },
+    {
+      "path": "observations/router-759-ci-job-compaction-after-measurements-v1-inputs.json",
+      "originalPath": "/tmp/router-759-ci-job-compaction-after-measurements-v1-inputs.json",
+      "bytes": 9535609,
+      "sha256": "5f4a03577ec8dbde33b7baf535ff0aa4b1d85d31a9edb1861ea238f7a18d262f"
+    },
+    {
+      "path": "observations/router-759-ci-job-compaction-before-measurements-v1-inputs.json",
+      "originalPath": "/tmp/router-759-ci-job-compaction-before-measurements-v1-inputs.json",
+      "bytes": 9534918,
+      "sha256": "6ba4455173383b49789ab4645843c60389f3c0400beac9c8000bb679da89ab04"
+    },
+    {
+      "path": "observations/router-759-clientkind-forward-integrated-bun-v1-inputs.json",
+      "originalPath": "/tmp/router-759-clientkind-forward-integrated-bun-v1-inputs.json",
+      "bytes": 9534299,
+      "sha256": "1e25a11a43247998bdb5b34a12eb424cbc15642d7568c26474ad0bd9a982092e"
+    },
+    {
+      "path": "observations/router-759-clientkind-forward-integrated-node-v1-inputs.json",
+      "originalPath": "/tmp/router-759-clientkind-forward-integrated-node-v1-inputs.json",
+      "bytes": 9534299,
+      "sha256": "1e25a11a43247998bdb5b34a12eb424cbc15642d7568c26474ad0bd9a982092e",
+      "storedAsHardlink": "observations/router-759-clientkind-forward-integrated-bun-v1-inputs.json"
+    },
+    {
+      "path": "observations/router-759-native-artifacts-v2-5c83e7451-inputs.json",
+      "originalPath": "/tmp/router-759-native-artifacts-v2-5c83e7451-inputs.json",
+      "bytes": 393127,
+      "sha256": "11ece15baf1e97576b3f132ddefa3150feb55f8667aa303c5c964f6cdde7ba46"
+    },
+    {
+      "path": "observations/router-759-native-artifacts-v2-cebe907e5-inputs.json",
+      "originalPath": "/tmp/router-759-native-artifacts-v2-cebe907e5-inputs.json",
+      "bytes": 393892,
+      "sha256": "45baee64ce93e74016309098fb7efdc943ab6b263a3c83b19f9efb365007770c"
+    },
+    {
+      "path": "observations/router-759-native-runtime-harness-bun-v3-inputs.json",
+      "originalPath": "/tmp/router-759-native-runtime-harness-bun-v3-inputs.json",
+      "bytes": 9534299,
+      "sha256": "1e25a11a43247998bdb5b34a12eb424cbc15642d7568c26474ad0bd9a982092e",
+      "storedAsHardlink": "observations/router-759-clientkind-forward-integrated-bun-v1-inputs.json"
+    },
+    {
+      "path": "observations/router-759-native-runtime-harness-node-v3-inputs.json",
+      "originalPath": "/tmp/router-759-native-runtime-harness-node-v3-inputs.json",
+      "bytes": 9534299,
+      "sha256": "1e25a11a43247998bdb5b34a12eb424cbc15642d7568c26474ad0bd9a982092e",
+      "storedAsHardlink": "observations/router-759-clientkind-forward-integrated-bun-v1-inputs.json"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-bun-v2-inputs.json",
+      "originalPath": "/tmp/router-759-reusable-draft-review-bun-v2-inputs.json",
+      "bytes": 9534918,
+      "sha256": "6aa6f69fab734b00c3a21a7a358a621ebfa48851c44a6b89d0434d64118bed58"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-bun-v3-inputs.json",
+      "originalPath": "/tmp/router-759-reusable-draft-review-bun-v3-inputs.json",
+      "bytes": 9534918,
+      "sha256": "6b48935bf9d128772970f4fbadeb9fb2fb12ca86500079894a2e90c0c32410ed"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-node-v1-inputs.json",
+      "originalPath": "/tmp/router-759-reusable-draft-review-node-v1-inputs.json",
+      "bytes": 9534918,
+      "sha256": "6d91219d3bb8b61140a86c9a2ea3bd682229ec26a65c12e701c041cc5720e0cd"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-node-v2-inputs.json",
+      "originalPath": "/tmp/router-759-reusable-draft-review-node-v2-inputs.json",
+      "bytes": 9534918,
+      "sha256": "6aa6f69fab734b00c3a21a7a358a621ebfa48851c44a6b89d0434d64118bed58",
+      "storedAsHardlink": "observations/router-759-reusable-draft-review-bun-v2-inputs.json"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-node-v3-inputs.json",
+      "originalPath": "/tmp/router-759-reusable-draft-review-node-v3-inputs.json",
+      "bytes": 9534918,
+      "sha256": "6b48935bf9d128772970f4fbadeb9fb2fb12ca86500079894a2e90c0c32410ed",
+      "storedAsHardlink": "observations/router-759-reusable-draft-review-bun-v3-inputs.json"
+    },
+    {
+      "path": "observations/router-759-reverse-complete-integrated-bun-v1-inputs.json",
+      "originalPath": "/tmp/router-759-reverse-complete-integrated-bun-v1-inputs.json",
+      "bytes": 9534126,
+      "sha256": "18a84d161d35215f4f5a1573670e5e2b515b979e78a300b6269dc98a5a193583"
+    },
+    {
+      "path": "observations/router-759-reverse-complete-integrated-node-v1-inputs.json",
+      "originalPath": "/tmp/router-759-reverse-complete-integrated-node-v1-inputs.json",
+      "bytes": 9534126,
+      "sha256": "18a84d161d35215f4f5a1573670e5e2b515b979e78a300b6269dc98a5a193583",
+      "storedAsHardlink": "observations/router-759-reverse-complete-integrated-bun-v1-inputs.json"
+    },
+    {
+      "path": "observations/router-759-reverse-complete-integrated-node-v2-inputs.json",
+      "originalPath": "/tmp/router-759-reverse-complete-integrated-node-v2-inputs.json",
+      "bytes": 9534126,
+      "sha256": "18a84d161d35215f4f5a1573670e5e2b515b979e78a300b6269dc98a5a193583",
+      "storedAsHardlink": "observations/router-759-reverse-complete-integrated-bun-v1-inputs.json"
+    },
+    {
+      "path": "observations/router-759-reverse-gate-discovery-audit-v1-inputs.json",
+      "originalPath": "/tmp/router-759-reverse-gate-discovery-audit-v1-inputs.json",
+      "bytes": 9533654,
+      "sha256": "b2a689a66d923500b5aaf6317458ec388a8bc17128991471b7f8eb29da5538c5",
+      "storedAsHardlink": "observations/router-759-bulk-integrated-syntax-v1-inputs.json"
+    },
+    {
+      "path": "observations/router-759-reverse-gate-discovery-bun-v1-inputs.json",
+      "originalPath": "/tmp/router-759-reverse-gate-discovery-bun-v1-inputs.json",
+      "bytes": 9533654,
+      "sha256": "8dd5f31724ebcc4ecc72d20612ed8ebfd34c31e611d3e42158ed861f646174aa"
+    },
+    {
+      "path": "observations/router-759-reverse-gate-discovery-bun-v2-inputs.json",
+      "originalPath": "/tmp/router-759-reverse-gate-discovery-bun-v2-inputs.json",
+      "bytes": 9533654,
+      "sha256": "b2a689a66d923500b5aaf6317458ec388a8bc17128991471b7f8eb29da5538c5",
+      "storedAsHardlink": "observations/router-759-bulk-integrated-syntax-v1-inputs.json"
+    },
+    {
+      "path": "observations/router-759-reverse-gate-discovery-node-v1-inputs.json",
+      "originalPath": "/tmp/router-759-reverse-gate-discovery-node-v1-inputs.json",
+      "bytes": 9533654,
+      "sha256": "8dd5f31724ebcc4ecc72d20612ed8ebfd34c31e611d3e42158ed861f646174aa",
+      "storedAsHardlink": "observations/router-759-reverse-gate-discovery-bun-v1-inputs.json"
+    },
+    {
+      "path": "observations/router-759-reverse-gate-discovery-node-v2-inputs.json",
+      "originalPath": "/tmp/router-759-reverse-gate-discovery-node-v2-inputs.json",
+      "bytes": 9533654,
+      "sha256": "b2a689a66d923500b5aaf6317458ec388a8bc17128991471b7f8eb29da5538c5",
+      "storedAsHardlink": "observations/router-759-bulk-integrated-syntax-v1-inputs.json"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-candidate-bun-v3-inputs.json",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-bun-v3-inputs.json",
+      "bytes": 171468,
+      "sha256": "40d7242f26f19e1be2466f568aae0b5a800ab2222c996e18205fc1257b3fa01f"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-candidate-node-v1-inputs.json",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-node-v1-inputs.json",
+      "bytes": 170654,
+      "sha256": "0777116b473459670ce10356ff0cdbe921191a167b60932ad9d81174e431be9f"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-candidate-node-v2-inputs.json",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-node-v2-inputs.json",
+      "bytes": 171345,
+      "sha256": "1e22c35f36ce74c46066407c9f1661b5219f56a27df798769d76bfa586c62f90"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-candidate-node-v3-inputs.json",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-node-v3-inputs.json",
+      "bytes": 171468,
+      "sha256": "40d7242f26f19e1be2466f568aae0b5a800ab2222c996e18205fc1257b3fa01f",
+      "storedAsHardlink": "observations/router-759-source-scope-cache-candidate-bun-v3-inputs.json"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-candidate-original-inputs-v1.json",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-original-inputs-v1.json",
+      "bytes": 206192,
+      "sha256": "39177d885e85e4d6cadf41a269275ae7a4800cce185247149a08f3d098e2dc46"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-original-corpus-review-run-v1-inputs.json",
+      "originalPath": "/tmp/router-759-source-scope-cache-original-corpus-review-run-v1-inputs.json",
+      "bytes": 171468,
+      "sha256": "40d7242f26f19e1be2466f568aae0b5a800ab2222c996e18205fc1257b3fa01f",
+      "storedAsHardlink": "observations/router-759-source-scope-cache-candidate-bun-v3-inputs.json"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-final-inputs-02.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-final-inputs-02.json",
+      "bytes": 284895,
+      "sha256": "94c11a246448ff7be392bf4d6e1d1b6eac3e30a26b6f5be495ea9b33d1e420ed"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-final-inputs-03.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-final-inputs-03.json",
+      "bytes": 285141,
+      "sha256": "9e6700776f8213713cbab3c7d069f1714ac9488963ad726441cb60d8624280ee"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-final-inputs-04.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-final-inputs-04.json",
+      "bytes": 63697,
+      "sha256": "827b6c6b7f4919fc267e31eb7f211832dc2d912e85b5efb6030031a45ce9a931"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-final-inputs-05.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-final-inputs-05.json",
+      "bytes": 66779,
+      "sha256": "c6882b82461058b07b61d705199a89856d88a0af8323e5ea83a903ec0bc9637d"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-final-inputs-06.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-final-inputs-06.json",
+      "bytes": 334251,
+      "sha256": "18b1bbf268294ba5a278bb8178ec46a94dab3b2d9fb94315d6199bafadb1b4d7"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-validation-02-inputs.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-validation-02-inputs.json",
+      "bytes": 45227,
+      "sha256": "f4d8178aa4444cd2600ebf74a51ffe41dc1755a653f17463158601db75eae671"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/original-inputs/Cargo.lock",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/original-inputs/Cargo.lock",
+      "bytes": 124800,
+      "sha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/original-inputs/Cargo.toml",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/original-inputs/Cargo.toml",
+      "bytes": 5296,
+      "sha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/original-inputs/src/clients.rs",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/original-inputs/src/clients.rs",
+      "bytes": 40903,
+      "sha256": "2f12c5aa34a65ec62b793902cdefe8f36c1b6c414c673e6499ef40c7dbfb8c2d"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/original-inputs/src/lib.rs",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/original-inputs/src/lib.rs",
+      "bytes": 6649,
+      "sha256": "3c9605387b5454634325dbbf7604e0ad919931be17dac05905a60ea0268286af"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/original-inputs/src/route_contract.rs",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/original-inputs/src/route_contract.rs",
+      "bytes": 28720,
+      "sha256": "a4a58d9a6054aada46879b16dbf9593c3a1c939e5602cc503dd1c327c5795ec1"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/original-inputs/src/route_contract_types.rs",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/original-inputs/src/route_contract_types.rs",
+      "bytes": 5148,
+      "sha256": "9fa5ae69e2dc7aed3a5766a5c7ef79ca236a045840a6305afc92f9573b54629b"
+    },
+    {
+      "path": "candidate-implementation/tools/translation/module-bindings.mjs",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-v1/tools/translation/module-bindings.mjs",
+      "bytes": 41037,
+      "sha256": "685066bea7e09e2b4eb6cc8ee2516d6bc5ace4731283570e10f51f5a0d79023e"
+    },
+    {
+      "path": "candidate-implementation/tools/translation/source-scopes.mjs",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-v1/tools/translation/source-scopes.mjs",
+      "bytes": 5200,
+      "sha256": "6e39be2d419ed34fc438604093b02f8abc3d75a2ee23e9d6e32fdc4d3a5013dd"
+    },
+    {
+      "path": "candidate-implementation/tools/translation/test/source-scope-templates.test.mjs",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-v1/tools/translation/test/source-scope-templates.test.mjs",
+      "bytes": 4330,
+      "sha256": "d1c301de2ffda2b8e1e9cf01ad7b9a13fb881fa10cf71001bcea7ae65a9916e4"
+    },
+    {
+      "path": "implementation/.github/workflows/javascript-first.yml",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/.github/workflows/javascript-first.yml",
+      "bytes": 10239,
+      "sha256": "9671ffaec72920019e7abd30f93655094f89b920c1c28e80ca5e1094b7521fd2"
+    },
+    {
+      "path": "implementation/changelog.d/20261013_000019_issue_759_bulk_translator_source_batch.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/changelog.d/20261013_000019_issue_759_bulk_translator_source_batch.md",
+      "bytes": 621,
+      "sha256": "29b23e1f133084a4d34b7b1b16dd054630e8090a60281bd8d3c89158709fee71"
+    },
+    {
+      "path": "implementation/changelog.d/20261013_000020_issue_759_reverse_test_discovery.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/changelog.d/20261013_000020_issue_759_reverse_test_discovery.md",
+      "bytes": 439,
+      "sha256": "83618cf1b95cc0fe147973ae67f8f25284d2600e43b21bdf2cbf3ca83cff76a4"
+    },
+    {
+      "path": "implementation/changelog.d/20261013_000021_issue_759_native_regeneration_verification.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/changelog.d/20261013_000021_issue_759_native_regeneration_verification.md",
+      "bytes": 618,
+      "sha256": "5fcd7775dfb160ddd07a0feefc5280b74ba9b1a55a74a36516d86c29be3efd7f"
+    },
+    {
+      "path": "implementation/changelog.d/20261013_000022_issue_759_reusable_draft_review.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/changelog.d/20261013_000022_issue_759_reusable_draft_review.md",
+      "bytes": 364,
+      "sha256": "5df94a1ab195355c75a9a97d7cb0cf443cc344a8d887f04fc616ea57042f1715"
+    },
+    {
+      "path": "implementation/changelog.d/20261013_000023_issue_759_lossless_job_api_json.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/changelog.d/20261013_000023_issue_759_lossless_job_api_json.md",
+      "bytes": 450,
+      "sha256": "aff60fc39629bcbef7249d33b13691520b35f11fae61bc2bcdf618f34d6adb6d"
+    },
+    {
+      "path": "implementation/changelog.d/20261013_000024_issue_759_enum_args_table_translation.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/changelog.d/20261013_000024_issue_759_enum_args_table_translation.md",
+      "bytes": 779,
+      "sha256": "07ccbef34cdc4e75e11e75a33e9c75d5438a2f3cd11c27cbe177f89bb58e25c2"
+    },
+    {
+      "path": "implementation/docs/development/clientkind-source-methods.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/docs/development/clientkind-source-methods.md",
+      "bytes": 1929,
+      "sha256": "0984db8bb08e7f98e939c2453af441013255744f67d45b62119989d729b5e4a7"
+    },
+    {
+      "path": "implementation/docs/development/javascript-first.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/docs/development/javascript-first.md",
+      "bytes": 11835,
+      "sha256": "9f48190cf0df35fd0c0331cb2d4c588897ee4b5a8332ea930bcba8f953864ee7"
+    },
+    {
+      "path": "implementation/docs/development/option-nominal-source-bodies.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/docs/development/option-nominal-source-bodies.md",
+      "bytes": 2390,
+      "sha256": "a08f3e95e0e6b8af4765a975372ab3579b292dff37cfd8670372a9c5835923fa"
+    },
+    {
+      "path": "implementation/docs/development/unit-enum-constant-elements.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/docs/development/unit-enum-constant-elements.md",
+      "bytes": 2467,
+      "sha256": "589e62538ca0648771a2c63d23b6fcd67f59c93fda4aa4efd3dfcd256c23bef2"
+    },
+    {
+      "path": "implementation/parity/fixtures/js-first/unsupported.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/parity/fixtures/js-first/unsupported.json",
+      "bytes": 1895,
+      "sha256": "fab4a1cd5863c6c092c9c6878b6a4b1fcb41d3d963c57479860edda591fefcb0"
+    },
+    {
+      "path": "implementation/scripts/check-js-first-local.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/scripts/check-js-first-local.mjs",
+      "bytes": 6090,
+      "sha256": "6977478f3e1b9d63c59d7a17dfecac88776e34b750247b8a3a2a575e219c9d43"
+    },
+    {
+      "path": "implementation/scripts/check-js-first-workflows.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/scripts/check-js-first-workflows.mjs",
+      "bytes": 12110,
+      "sha256": "63adce597c651f8b866928d9f4226eb7d420fbf11f5d97d33bc6dd93931a08b5"
+    },
+    {
+      "path": "implementation/scripts/review-translation-draft.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/scripts/review-translation-draft.mjs",
+      "bytes": 15636,
+      "sha256": "3e0ca5a5525a4da4e54660c520ec8942aa8fea28358981685665f63f460d2e16"
+    },
+    {
+      "path": "implementation/scripts/test/check-js-first-local.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/scripts/test/check-js-first-local.test.mjs",
+      "bytes": 14807,
+      "sha256": "2ea805ae2d2a41a5c5963aef71b03fb2753b72380d58971d982620ec272e3c8c"
+    },
+    {
+      "path": "implementation/scripts/test/check-js-first-workflows.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/scripts/test/check-js-first-workflows.test.mjs",
+      "bytes": 14179,
+      "sha256": "e6739aca9bf0111bee42be641c311945e5a243e2c0fe89c4707d3e1177ea3b7e"
+    },
+    {
+      "path": "implementation/tools/translation/copy-trait-owners.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/copy-trait-owners.mjs",
+      "bytes": 7198,
+      "sha256": "3265aa575866326c7c76f176b2f4349cf04ad74156619eddc4e370fc08149168"
+    },
+    {
+      "path": "implementation/tools/translation/derive-clap-args.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/derive-clap-args.mjs",
+      "bytes": 23930,
+      "sha256": "6c05ae575e3467d564ddc155fc7738703616e629102cfe39babae6976a70b686"
+    },
+    {
+      "path": "implementation/tools/translation/derive-clap-helpers.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/derive-clap-helpers.mjs",
+      "bytes": 2032,
+      "sha256": "35152a2447341ee94fccd36b0bfcfec8a3f2edd94af68fc17f7401ab849b9b33"
+    },
+    {
+      "path": "implementation/tools/translation/derive-clap-value-enum.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/derive-clap-value-enum.mjs",
+      "bytes": 17435,
+      "sha256": "27ec0a2ba20659b1bd090b38aefea8888921c087ff98d482714811fb3dedbdad"
+    },
+    {
+      "path": "implementation/tools/translation/derive-dependencies.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/derive-dependencies.mjs",
+      "bytes": 7019,
+      "sha256": "80906b191256ea5b6547544b6bcd6d05c4fe1e14cd855e0c10a5fed9864f24e4"
+    },
+    {
+      "path": "implementation/tools/translation/derive-footprints.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/derive-footprints.mjs",
+      "bytes": 21622,
+      "sha256": "bc82f7468d8c9718ed0f02b17aee311e2f1676d8320293ae455e136fd70c3f42"
+    },
+    {
+      "path": "implementation/tools/translation/derive-generic-parameters.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/derive-generic-parameters.mjs",
+      "bytes": 3757,
+      "sha256": "15331585d3b6923e015df964477cf812df6f82a99436bfce9d62f5d0449987aa"
+    },
+    {
+      "path": "implementation/tools/translation/derive-quote-meta.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/derive-quote-meta.mjs",
+      "bytes": 19197,
+      "sha256": "d251ba37fefe4da35957fad5b786de8c1be6683240c6f904a5f2b1efa9f646eb"
+    },
+    {
+      "path": "implementation/tools/translation/derive-schemars-with.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/derive-schemars-with.mjs",
+      "bytes": 7620,
+      "sha256": "2087e6562d018ea27d398d84128c7b46e78f850421336a25a677dac0548e8633"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/array-borrows.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/extensions/array-borrows.mjs",
+      "bytes": 8192,
+      "sha256": "8c07e755ccf3436149f18eebb1640533a0350a2b84eeb7d59b1c916971ff94fc"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/constant-evaluation.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/extensions/constant-evaluation.mjs",
+      "bytes": 31705,
+      "sha256": "c05f5892705e86abcdee441bf16d000f820f9a53eac717b70937df11b8f5d09a"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/data.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/extensions/data.mjs",
+      "bytes": 22038,
+      "sha256": "be6d2bd786e9069e1f7ee9ce37a8850255a552bf8622e5315aab7768b1c9d7ec"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/fixed-array-runtime.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/extensions/fixed-array-runtime.mjs",
+      "bytes": 3036,
+      "sha256": "da157cc0fc1a1ea08e20ba82388389291952db961e5c80b0618eda6a99c0f033"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/fixed-arrays.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/extensions/fixed-arrays.mjs",
+      "bytes": 9337,
+      "sha256": "fc79db8522e3e8965dba9d16a771f2f65b237df24e92701a0a1145ee671fcc19"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/host-contracts.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/extensions/host-contracts.mjs",
+      "bytes": 95602,
+      "sha256": "f2fc7b2d86c9e2923203db4e895dc73cba795d5c9d6def1ed14a73a9d8bbbaef"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/option-nominal-proof.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/extensions/option-nominal-proof.mjs",
+      "bytes": 3923,
+      "sha256": "f46c416085583d381c774307c65c06a3c496954cabdc448cfea4274ff507f51e"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/source-lifetimes.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/extensions/source-lifetimes.mjs",
+      "bytes": 43131,
+      "sha256": "dc96e6d6629384c0c4980776ea728829487cc8534d73cc9a30a0eb0b5cb7a5f5"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/standard-body-checker.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/extensions/standard-body-checker.mjs",
+      "bytes": 23983,
+      "sha256": "11071cfc83764221064a46c46b0d04905a3c9e3cb4b3e62cd9d974fc428d6cdc"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/standard-body-source.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/extensions/standard-body-source.mjs",
+      "bytes": 9141,
+      "sha256": "da6451f2ef86bc68bccf27fbd7c54b69f684584bb401bad095cffb280a0ba601"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/static-array-element.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/extensions/static-array-element.mjs",
+      "bytes": 7949,
+      "sha256": "dc0076eb183f75b766b2a3f49a77e2c3478a04c29c8fa46df410b69a12c17d15"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/unit-enum-cast.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/extensions/unit-enum-cast.mjs",
+      "bytes": 3474,
+      "sha256": "c5a62e37826d60fdc84cb83f197f35d6389f3c354a14c269dca1fc0f77832cd0"
+    },
+    {
+      "path": "implementation/tools/translation/impl-resolver.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/impl-resolver.mjs",
+      "bytes": 27765,
+      "sha256": "2291552e2d6974046325422b159b2b4fa627b7049ec5dee570652f5691cf69f4"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/README.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/README.md",
+      "bytes": 14099,
+      "sha256": "db84301364df1d6c76a23ee6a5f35afc2e2b417200abd9ede86a35e73c900be4"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/interpreter.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/interpreter.mjs",
+      "bytes": 5472,
+      "sha256": "78b460bb5720b8b273510664c558d88156dc87732d19223c0c105019f01dccf5"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/native-inference.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/native-inference.mjs",
+      "bytes": 6681,
+      "sha256": "352c04289f6f84b5c6920172c37ee9e68c2a7b6ddaea26bc38fbeaf19c3b25d9"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/provenance.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/provenance.json",
+      "bytes": 3900,
+      "sha256": "b3424b00e5e5bea5f660bc1b2772a149d6fac078584b2b439d4083fcf1f38706"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/targets.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/targets.mjs",
+      "bytes": 17653,
+      "sha256": "8b292ff3627d649d480017d0717f70d0e19ec1f7b4caf87e515409f7662dd835"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/test/constants.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/test/constants.test.mjs",
+      "bytes": 3090,
+      "sha256": "0aa34d74fef373999751060e4d57eb7a5c8835bea6e6eb8d1a0a30d4974c53d9"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/test/guarded-predicates.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/test/guarded-predicates.test.mjs",
+      "bytes": 8267,
+      "sha256": "59275e8ba8c6904ca1a35b4f93f64afa6d77d43de87227f933b999e962a51c4b"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/test/native-containers.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/test/native-containers.test.mjs",
+      "bytes": 4517,
+      "sha256": "22eaae3929bc06ef9cbc8ce4530bc186cdf924f7a9e0727e31d3b305ba030ad9"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/test/native-nullable.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/test/native-nullable.test.mjs",
+      "bytes": 10740,
+      "sha256": "ab761e9d928ec1d603e2d4d4907effa0ea602c14ff4245b6ef46fea83d1ee5ea"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/test/native-typescript.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/test/native-typescript.test.mjs",
+      "bytes": 18402,
+      "sha256": "be6eaa930cb44b85e4d30e145ff4cddac0a22792b04743047841a8000803f1e1"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/test/static-tables.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/test/static-tables.test.mjs",
+      "bytes": 9553,
+      "sha256": "c1b227601fd05ada3a37301d40a29fe9db0b0630d2fefbcf988a5df4faadecac"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/test/unicode-strings.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/test/unicode-strings.test.mjs",
+      "bytes": 10014,
+      "sha256": "1a69b9344d20ded03d68eb6e7dbeed984be8262f437554e5c2e2df412a6685fa"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/translator.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/translator.mjs",
+      "bytes": 5371,
+      "sha256": "43402a8364cbe80abc78a10fef2b18e527c232aade886f2f37fe42a0c22acbff"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/vendor/builtin-ownership.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/vendor/builtin-ownership.mjs",
+      "bytes": 2953,
+      "sha256": "565409c64677fb253260912d62c681104f2293ee72a5876e28521c3d96ec3af2"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/vendor/character-classes.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/vendor/character-classes.mjs",
+      "bytes": 4061,
+      "sha256": "c5311dae03e89d1686d538932156bf03ad89a62f56964a79dccd01b23096a390"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/vendor/constants.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/vendor/constants.mjs",
+      "bytes": 2858,
+      "sha256": "892ac914627ce00bc770a69d8c8bfe7aea4f77cbdcf4f9bb9859206797356fd7"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/vendor/constructs.lino",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/vendor/constructs.lino",
+      "bytes": 8313,
+      "sha256": "6ddb28108ff8105899d1707703440e708f399652e0f444552895401279fd4e7a"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/vendor/frontends.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/vendor/frontends.mjs",
+      "bytes": 22636,
+      "sha256": "51d0925fa54a6dd04bc7d7eab4ec679cf8238d80dcff8f77020dca02df13c9cd"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/vendor/guards.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/vendor/guards.mjs",
+      "bytes": 1492,
+      "sha256": "6b6c3102be823b7f33cf48929bef75cbb5863017a05f9c9868885a728f95ddbb"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/vendor/ir.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/vendor/ir.mjs",
+      "bytes": 25741,
+      "sha256": "9d7be76476f0dbcfa7d286efbc9a12fb9f8a9577810824d47175d8a91fe38408"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/vendor/return-types.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/vendor/return-types.mjs",
+      "bytes": 1471,
+      "sha256": "1e54bd43263c67e4d3d7f063a2494e22128de35484453f35cac1936c34f4568f"
+    },
+    {
+      "path": "implementation/tools/translation/js-to-rust/vendor/static-tables.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/js-to-rust/vendor/static-tables.mjs",
+      "bytes": 8772,
+      "sha256": "7f87ecafb14227e049bd36eabd23651932b2b51c533f4bbf22c9941fd3e4dfe4"
+    },
+    {
+      "path": "implementation/tools/translation/macro-token-trees.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/macro-token-trees.mjs",
+      "bytes": 5875,
+      "sha256": "a9af282225212bee0625e221d9ddcf5faa55ce3610ecae691386b87a129c5ac5"
+    },
+    {
+      "path": "implementation/tools/translation/matches-macro-context.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/matches-macro-context.mjs",
+      "bytes": 24812,
+      "sha256": "177a2f810ac393c110827619e77dd7bf0d46f5bd1015b8c437a3e1f49219fd5c"
+    },
+    {
+      "path": "implementation/tools/translation/project-copy.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/project-copy.mjs",
+      "bytes": 8377,
+      "sha256": "ed09050e9e77e476a4974c354c92892ea3921eaba975173362b8a341e2596c19"
+    },
+    {
+      "path": "implementation/tools/translation/project.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/project.mjs",
+      "bytes": 45164,
+      "sha256": "a6cf468f8c2f4043c3b69a4cec6a591609ef381c2ffe3520f11dc735f40392b0"
+    },
+    {
+      "path": "implementation/tools/translation/shared-reference-copy-source.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/shared-reference-copy-source.mjs",
+      "bytes": 3641,
+      "sha256": "41351c011e1b5af920674115f079cb2a59efbb541ff66f893807709b0b3cb118"
+    },
+    {
+      "path": "implementation/tools/translation/source-profiles/derive/CLAP-ARGS.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/source-profiles/derive/CLAP-ARGS.md",
+      "bytes": 3453,
+      "sha256": "0ad5b6310c08a34a5b6031575020fd4ed86095e7a9128d5a439de2af0629b15f"
+    },
+    {
+      "path": "implementation/tools/translation/source-profiles/derive/CLAP-VALUE-ENUM.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/source-profiles/derive/CLAP-VALUE-ENUM.md",
+      "bytes": 3330,
+      "sha256": "946306d619a50c444eea9710a9d7d968e4fd158df76dc6b6a3523dc7240ad38a"
+    },
+    {
+      "path": "implementation/tools/translation/source-profiles/derive/NOTICE.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/source-profiles/derive/NOTICE.md",
+      "bytes": 2077,
+      "sha256": "e4a3a3be8b6064d4133a9a99961b1320e5e948340fa627ef965dd63fa266ac27"
+    },
+    {
+      "path": "implementation/tools/translation/source-profiles/derive/SCHEMARS-WITH.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/source-profiles/derive/SCHEMARS-WITH.md",
+      "bytes": 2087,
+      "sha256": "a2faec753bd10ca81caa74889fca0b89c0d5832caadaa72c374b68d73dc13c64"
+    },
+    {
+      "path": "implementation/tools/translation/source-profiles/derive/clap-4.6.7.crate",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/source-profiles/derive/clap-4.6.7.crate",
+      "bytes": 65831,
+      "sha256": "aa8876b300ab35ba921adea3dfd70157a46249b33f95c9084ae5709785478946"
+    },
+    {
+      "path": "implementation/tools/translation/source-profiles/derive/clap_builder-4.6.7.crate",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/source-profiles/derive/clap_builder-4.6.7.crate",
+      "bytes": 171709,
+      "sha256": "ec0797fb7aeb1406c84efac526901f7ec3ead2124f946b494e72879d4b54704d"
+    },
+    {
+      "path": "implementation/tools/translation/source-profiles/derive/clap_derive-4.6.7.crate",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/source-profiles/derive/clap_derive-4.6.7.crate",
+      "bytes": 33942,
+      "sha256": "f9c751b79415d4e559e3d1fcf128e09e720eb673a06d26cf6f392d37d75b66e0"
+    },
+    {
+      "path": "implementation/tools/translation/source-profiles/derive/heck-0.5.0.crate",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/source-profiles/derive/heck-0.5.0.crate",
+      "bytes": 11517,
+      "sha256": "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
+    },
+    {
+      "path": "implementation/tools/translation/source-profiles/derive/manifest.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/source-profiles/derive/manifest.json",
+      "bytes": 27727,
+      "sha256": "7cac220e8a2de28a4255366f46fd37071c2a7c3ecea3affed0cc364dd619dd1f"
+    },
+    {
+      "path": "implementation/tools/translation/source-profiles/toml-value-namespace/NOTICE.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/source-profiles/toml-value-namespace/NOTICE.md",
+      "bytes": 524,
+      "sha256": "6e1196a617e874a1faeac1da25bdf3bb4ccf890eb578d4ab2693c7041d7feb33"
+    },
+    {
+      "path": "implementation/tools/translation/source-profiles/toml-value-namespace/manifest.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/source-profiles/toml-value-namespace/manifest.json",
+      "bytes": 842,
+      "sha256": "82094eb2a608b2df46d3eab121aab24e01a403bdd2639c79f9cfc9901ee5bfee"
+    },
+    {
+      "path": "implementation/tools/translation/source-profiles/toml-value-namespace/toml_edit-0.25.15.crate",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/source-profiles/toml-value-namespace/toml_edit-0.25.15.crate",
+      "bytes": 68207,
+      "sha256": "1340ea94a5856333492c9064b02c778b191dd2c853778d9609debdcdfea3a614"
+    },
+    {
+      "path": "implementation/tools/translation/test/clientkind-source-methods.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/test/clientkind-source-methods.test.mjs",
+      "bytes": 3316,
+      "sha256": "04bdad41acfacdd4ac508687ca29d66e9a1a1abc1730a2b7f49a4b8af4bfd7c8"
+    },
+    {
+      "path": "implementation/tools/translation/test/clientkind-static-projection.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/test/clientkind-static-projection.test.mjs",
+      "bytes": 4242,
+      "sha256": "4194af92c40f5e38a96f4d7b823b536dd744147cb2dbc82cca4d31eca3af82b8"
+    },
+    {
+      "path": "implementation/tools/translation/test/copy-trait-owners.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/test/copy-trait-owners.test.mjs",
+      "bytes": 8428,
+      "sha256": "5e4abde0e0e0c21294f1eeed2dbbdb7a29e1af58c0922049877a50ade7c7d9af"
+    },
+    {
+      "path": "implementation/tools/translation/test/derive-clap-args.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/test/derive-clap-args.test.mjs",
+      "bytes": 9825,
+      "sha256": "4d01b30f31eb8171933bbee6324077fe0f5caacf1da2511af2b485085000d29b"
+    },
+    {
+      "path": "implementation/tools/translation/test/derive-clap-value-enum.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/test/derive-clap-value-enum.test.mjs",
+      "bytes": 8860,
+      "sha256": "a29f4af6cc04d11633fa37af83c7bf8b19c9a2ad7cfe8d2ca9e0dd06e571cc28"
+    },
+    {
+      "path": "implementation/tools/translation/test/derive-footprints.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/test/derive-footprints.test.mjs",
+      "bytes": 11273,
+      "sha256": "189329979859c604ee323e0bf702c27bb12bc5687b05041c0891c6eebdad963f"
+    },
+    {
+      "path": "implementation/tools/translation/test/derive-schemars-with.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/test/derive-schemars-with.test.mjs",
+      "bytes": 7772,
+      "sha256": "09127975d48e934adba809a90ed0f4f642a4bc1672748bf15bd91000fec54edd"
+    },
+    {
+      "path": "implementation/tools/translation/test/option-nominal-cycle.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/test/option-nominal-cycle.test.mjs",
+      "bytes": 7091,
+      "sha256": "2c546553d5dfcf0a866ce5c02e7ed1bca3c4ab6431516726644594a9b6462242"
+    },
+    {
+      "path": "implementation/tools/translation/test/option-unwrapping-types.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/test/option-unwrapping-types.test.mjs",
+      "bytes": 5249,
+      "sha256": "a3c5fba1e58d368418b6b9da8640491b75b50386885e59b217c9fbd7f6be7a2e"
+    },
+    {
+      "path": "implementation/tools/translation/test/static-array-elements.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/test/static-array-elements.test.mjs",
+      "bytes": 6795,
+      "sha256": "697499119a76dac083485a2681dbd25a850cd9de6d265df19a5110f9a8a33040"
+    },
+    {
+      "path": "implementation/tools/translation/test/toml-value-namespace.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/test/toml-value-namespace.test.mjs",
+      "bytes": 2691,
+      "sha256": "b485d0826e5d4b92c0c3d510be61502c0dcbed407dd44072ac2cc52fb01f6a5d"
+    },
+    {
+      "path": "implementation/tools/translation/toml-value-namespace.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/toml-value-namespace.mjs",
+      "bytes": 4599,
+      "sha256": "f99833d41e6482fc9f86f182532bf3b3c8d5066eea08436fa46d422a322aa75a"
+    },
+    {
+      "path": "implementation/tools/translation/translate.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate/tools/translation/translate.mjs",
+      "bytes": 33560,
+      "sha256": "af08112c9394f13cf98e4c8133ce240a2565069a403a21045e302aa8717b9c30"
+    },
+    {
+      "path": "observations/router-759-bounded-cohort-producer-v5.py",
+      "originalPath": "/tmp/router-759-bounded-cohort-producer-v5.py",
+      "bytes": 4663,
+      "sha256": "c6cba8fa9c639467353f8de9e874596fae0f1e6bdb423298fedc9be8c304ab43"
+    },
+    {
+      "path": "observations/router-759-bounded-native-artifacts-v2.py",
+      "originalPath": "/tmp/router-759-bounded-native-artifacts-v2.py",
+      "bytes": 6427,
+      "sha256": "fb58c9187782bc9ba74f29b756dda920e1e92c5fcb0fb0dcb1d99b57ddec9ea6"
+    },
+    {
+      "path": "observations/router-759-bulk-integrated-syntax-v1.json",
+      "originalPath": "/tmp/router-759-bulk-integrated-syntax-v1.json",
+      "bytes": 1005,
+      "sha256": "df7501b6f293cf87c4768f19938707d3aa34e50154d049d6092f2a37d5d36ba9"
+    },
+    {
+      "path": "observations/router-759-bulk-integrated-syntax-v1.raw.log",
+      "originalPath": "/tmp/router-759-bulk-integrated-syntax-v1.raw.log",
+      "bytes": 44,
+      "sha256": "baf23ec0c10285f2ced7a4db77449a87c2175b48f2f715e3ca32632e2ee61479"
+    },
+    {
+      "path": "observations/router-759-ci-job-api-json-compaction-complete-input-continuity-v1.json",
+      "originalPath": "/tmp/router-759-ci-job-api-json-compaction-complete-input-continuity-v1.json",
+      "bytes": 12933486,
+      "sha256": "41b0703fd8d7e59d13280488725f5f6af7dc923e3382c624f8af9f67ee345588"
+    },
+    {
+      "path": "observations/router-759-ci-job-api-json-compaction-measurement-verification-v1.json",
+      "originalPath": "/tmp/router-759-ci-job-api-json-compaction-measurement-verification-v1.json",
+      "bytes": 59761,
+      "sha256": "93a17c7a529cf4a6a8e8b3cef0ceda592feef72779a3747f0ad111b216d19545"
+    },
+    {
+      "path": "observations/router-759-ci-job-api-json-compaction-measurement-verification-v1.py",
+      "originalPath": "/tmp/router-759-ci-job-api-json-compaction-measurement-verification-v1.py",
+      "bytes": 2172,
+      "sha256": "ed8df78de66551fd1079766a6929e3f402baffe210061aa51d0ae5b430af3631"
+    },
+    {
+      "path": "observations/router-759-ci-job-api-json-compaction-v1.applied.json",
+      "originalPath": "/tmp/router-759-ci-job-api-json-compaction-v1.applied.json",
+      "bytes": 789,
+      "sha256": "c033a3a12fee996f8e61d941a92ce67dd34ba9978f6c245fc78ffc4f12916225"
+    },
+    {
+      "path": "observations/router-759-ci-job-api-json-compaction-v1.plan.json",
+      "originalPath": "/tmp/router-759-ci-job-api-json-compaction-v1.plan.json",
+      "bytes": 187052,
+      "sha256": "e325a6bec88bd64b8d0b6513cecfc3f841eeaf0edb4b4bb4f814fd460bf02d61"
+    },
+    {
+      "path": "observations/router-759-ci-job-api-json-compaction-v1.py",
+      "originalPath": "/tmp/router-759-ci-job-api-json-compaction-v1.py",
+      "bytes": 5884,
+      "sha256": "6cd310a32a2d055c2dd64b39047d8b3ce118da422017d10cba31a3fb195081e2"
+    },
+    {
+      "path": "observations/router-759-ci-job-compaction-after-complete-report-v1.json",
+      "originalPath": "/tmp/router-759-ci-job-compaction-after-complete-report-v1.json",
+      "bytes": 7137044,
+      "sha256": "6e0e5e48eea555ef361bf406eff4203d8ea9269dd3a80c2bbb3d7be480d0300e"
+    },
+    {
+      "path": "observations/router-759-ci-job-compaction-after-measurements-v1.json",
+      "originalPath": "/tmp/router-759-ci-job-compaction-after-measurements-v1.json",
+      "bytes": 1165,
+      "sha256": "2908b6952e87fd04bc2d97b9a85fe59355153f94a26864dc2c29d0bacbf9bc62"
+    },
+    {
+      "path": "observations/router-759-ci-job-compaction-after-measurements-v1.raw.log",
+      "originalPath": "/tmp/router-759-ci-job-compaction-after-measurements-v1.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "observations/router-759-ci-job-compaction-before-complete-report-v1.json",
+      "originalPath": "/tmp/router-759-ci-job-compaction-before-complete-report-v1.json",
+      "bytes": 7135574,
+      "sha256": "f7e49ce48fdcacca0b2798bd0c923902cbe30c14e6e9b3e385db7d5a61d49887"
+    },
+    {
+      "path": "observations/router-759-ci-job-compaction-before-measurements-v1.json",
+      "originalPath": "/tmp/router-759-ci-job-compaction-before-measurements-v1.json",
+      "bytes": 1168,
+      "sha256": "cf4d72d4574a8eda04b287a9d485b47bf0b4c8f8fbdae81d968610ea3a1b0ecf"
+    },
+    {
+      "path": "observations/router-759-ci-job-compaction-before-measurements-v1.raw.log",
+      "originalPath": "/tmp/router-759-ci-job-compaction-before-measurements-v1.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "observations/router-759-ci-job-compaction-after-measurements-v1.raw.log"
+    },
+    {
+      "path": "observations/router-759-clientkind-forward-integrated-bun-v1.json",
+      "originalPath": "/tmp/router-759-clientkind-forward-integrated-bun-v1.json",
+      "bytes": 1911,
+      "sha256": "d261c18008bc0053f19136d6b07331fa585b34bd73986af11945d41cef95837b"
+    },
+    {
+      "path": "observations/router-759-clientkind-forward-integrated-bun-v1.raw.log",
+      "originalPath": "/tmp/router-759-clientkind-forward-integrated-bun-v1.raw.log",
+      "bytes": 11361,
+      "sha256": "2e063ace72a3d7e2f9f11964ca97b01190162ee92f896764e49422e2d2d8a9c3"
+    },
+    {
+      "path": "observations/router-759-clientkind-forward-integrated-node-v1.json",
+      "originalPath": "/tmp/router-759-clientkind-forward-integrated-node-v1.json",
+      "bytes": 1943,
+      "sha256": "84f009404f921478dff12482362b469d2b476ed4cf9d8ee4cea7e7f6e8751fa5"
+    },
+    {
+      "path": "observations/router-759-clientkind-forward-integrated-node-v1.raw.log",
+      "originalPath": "/tmp/router-759-clientkind-forward-integrated-node-v1.raw.log",
+      "bytes": 23087,
+      "sha256": "460977b458e3cbe0207c9bf5b1fe25573183350dcc6d6cbf325fa374573ce4de"
+    },
+    {
+      "path": "observations/router-759-coordinated-repair-diagnostic-v1.py",
+      "originalPath": "/tmp/router-759-coordinated-repair-diagnostic-v1.py",
+      "bytes": 2746,
+      "sha256": "15658da6498a7e0997562a7f275bc2ea6206122a5c3c0d5a136910160ca2a764"
+    },
+    {
+      "path": "observations/router-759-native-artifacts-v2-5c83e7451-native-typescript.log",
+      "originalPath": "/tmp/router-759-native-artifacts-v2-5c83e7451-native-typescript.log",
+      "bytes": 81,
+      "sha256": "4c4525d31ef60ac1392c6275b80e6bc089a31f08ac106ec029951c534941e376"
+    },
+    {
+      "path": "observations/router-759-native-artifacts-v2-5c83e7451-native-typescript.receipt.json",
+      "originalPath": "/tmp/router-759-native-artifacts-v2-5c83e7451-native-typescript.receipt.json",
+      "bytes": 41972,
+      "sha256": "77d3869ad4511767f07d64d0061c1474fb8c30c333ea18ec1368832defde17b0"
+    },
+    {
+      "path": "observations/router-759-native-artifacts-v2-5c83e7451-portable-reverse-manifest.log",
+      "originalPath": "/tmp/router-759-native-artifacts-v2-5c83e7451-portable-reverse-manifest.log",
+      "bytes": 65,
+      "sha256": "4b87cd882b66ce75d0231ba1f284b355c2e465a992894866f5d63d7b3f69438a"
+    },
+    {
+      "path": "observations/router-759-native-artifacts-v2-5c83e7451-portable-reverse-manifest.receipt.json",
+      "originalPath": "/tmp/router-759-native-artifacts-v2-5c83e7451-portable-reverse-manifest.receipt.json",
+      "bytes": 42025,
+      "sha256": "c8b19d69744a8df713289687a4adba179968e561b2b0b724d390bb55d6488e01"
+    },
+    {
+      "path": "observations/router-759-native-artifacts-v2-5c83e7451-terminal.json",
+      "originalPath": "/tmp/router-759-native-artifacts-v2-5c83e7451-terminal.json",
+      "bytes": 171004,
+      "sha256": "91f1044b9ddb5161277ef672d4ff7d90a10c8d5f94a38e263652771b93634f80"
+    },
+    {
+      "path": "observations/router-759-native-artifacts-v2-cebe907e5-native-typescript.log",
+      "originalPath": "/tmp/router-759-native-artifacts-v2-cebe907e5-native-typescript.log",
+      "bytes": 80,
+      "sha256": "66696c24bd3e50b4c41e821761782c552a2d3ac37c51026fc297802b1b2eccbf"
+    },
+    {
+      "path": "observations/router-759-native-artifacts-v2-cebe907e5-native-typescript.receipt.json",
+      "originalPath": "/tmp/router-759-native-artifacts-v2-cebe907e5-native-typescript.receipt.json",
+      "bytes": 40071,
+      "sha256": "3953c06065f1318bab16b8e875b7e3207bbfd488fd740144aa54fa72adc37299"
+    },
+    {
+      "path": "observations/router-759-native-artifacts-v2-cebe907e5-portable-reverse-manifest.log",
+      "originalPath": "/tmp/router-759-native-artifacts-v2-cebe907e5-portable-reverse-manifest.log",
+      "bytes": 65,
+      "sha256": "6d02a0d013b270f50c74db86a1e894cedc5440c94abd084c37f666e669c09ae3"
+    },
+    {
+      "path": "observations/router-759-native-artifacts-v2-cebe907e5-portable-reverse-manifest.receipt.json",
+      "originalPath": "/tmp/router-759-native-artifacts-v2-cebe907e5-portable-reverse-manifest.receipt.json",
+      "bytes": 40129,
+      "sha256": "569c7ea63b67c9fbdd5ca1b5c4d73b0f51c883bdfc37fbc28f94edd0a8126222"
+    },
+    {
+      "path": "observations/router-759-native-artifacts-v2-cebe907e5-terminal.json",
+      "originalPath": "/tmp/router-759-native-artifacts-v2-cebe907e5-terminal.json",
+      "bytes": 167207,
+      "sha256": "d3cef447754867fb06b5ba007390e9075078c071bc82be537cd4058b926b9ee1"
+    },
+    {
+      "path": "observations/router-759-native-runtime-harness-bun-v3.json",
+      "originalPath": "/tmp/router-759-native-runtime-harness-bun-v3.json",
+      "bytes": 1062,
+      "sha256": "c1ab3a9975efe2129eacb24008ee4faf28bb204ee1835ae03d3730225644127f"
+    },
+    {
+      "path": "observations/router-759-native-runtime-harness-bun-v3.raw.log",
+      "originalPath": "/tmp/router-759-native-runtime-harness-bun-v3.raw.log",
+      "bytes": 1394,
+      "sha256": "3f602a03cb8a0900b5a678c7a9ed644ed9f9c206f81e5f74bea1a443fcbcf264"
+    },
+    {
+      "path": "observations/router-759-native-runtime-harness-node-v3.json",
+      "originalPath": "/tmp/router-759-native-runtime-harness-node-v3.json",
+      "bytes": 1067,
+      "sha256": "a534ec7443250c7fa59e3d789e420067bed67f34819887b7deecdf8d152645f9"
+    },
+    {
+      "path": "observations/router-759-native-runtime-harness-node-v3.raw.log",
+      "originalPath": "/tmp/router-759-native-runtime-harness-node-v3.raw.log",
+      "bytes": 2517,
+      "sha256": "12619d708c3c8f0b77b8a008bbeefa5b97633c7056d4450c95be55c6185606f5"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-bun-v2.json",
+      "originalPath": "/tmp/router-759-reusable-draft-review-bun-v2.json",
+      "bytes": 1096,
+      "sha256": "9d1a77db68b1d8a6b0ee4c868408709d5280c3ea43b61a8f7ded37483dcd4dba"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-bun-v2.raw.log",
+      "originalPath": "/tmp/router-759-reusable-draft-review-bun-v2.raw.log",
+      "bytes": 2743,
+      "sha256": "fad630be45419bc350a0833759900d0dd72941f2c34499d9747a0de431ef0ef9"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-bun-v3.json",
+      "originalPath": "/tmp/router-759-reusable-draft-review-bun-v3.json",
+      "bytes": 1095,
+      "sha256": "0792352d54a5286a740d57f474f7ab1ed5ccc1384850b5895cb4f97648b5069c"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-bun-v3.raw.log",
+      "originalPath": "/tmp/router-759-reusable-draft-review-bun-v3.raw.log",
+      "bytes": 2748,
+      "sha256": "86a48e42e502a447fc396f8b5590a8ad4ecdd458fe2b7cc725c70f28dd6691dc"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-node-v1.json",
+      "originalPath": "/tmp/router-759-reusable-draft-review-node-v1.json",
+      "bytes": 1100,
+      "sha256": "10e1086a7819c1dd9802ca67e58ec3a34dc5b436c7e2376ac1afd82c6de1fe5a"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-node-v1.raw.log",
+      "originalPath": "/tmp/router-759-reusable-draft-review-node-v1.raw.log",
+      "bytes": 5800,
+      "sha256": "7ae836ad9077f1d6a8fd16a55c58c5ec47f00a10d08d7b3fda493dcad010c264"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-node-v2.json",
+      "originalPath": "/tmp/router-759-reusable-draft-review-node-v2.json",
+      "bytes": 1099,
+      "sha256": "1f377c9e6dff3186160a227d5f97ed6cd33ed93ad132c5dc67f74541248831e1"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-node-v2.raw.log",
+      "originalPath": "/tmp/router-759-reusable-draft-review-node-v2.raw.log",
+      "bytes": 5798,
+      "sha256": "b5ce9a528ce4f0777b6f54b79dbba2ce1698c3ed3008f3b10e3d71438750e313"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-node-v3.json",
+      "originalPath": "/tmp/router-759-reusable-draft-review-node-v3.json",
+      "bytes": 1101,
+      "sha256": "4b9aaaf9f03294c4d7e0af2f9a30bbb3f710c0f3da010bbd5a32c2542b3e6caa"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-node-v3.raw.log",
+      "originalPath": "/tmp/router-759-reusable-draft-review-node-v3.raw.log",
+      "bytes": 5810,
+      "sha256": "748238725adc32059a954c56d56f77ce4b2d8b245addb76468521c45474cad57"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-tested-implementation-v1.tar.gz",
+      "originalPath": "/tmp/router-759-reusable-draft-review-tested-implementation-v1.tar.gz",
+      "bytes": 12670,
+      "sha256": "892bcf826d21d8362d10aeaafba5b487d9c5798866a26ed17d17289385affaa8"
+    },
+    {
+      "path": "observations/router-759-reusable-draft-review-tested-implementation-v2.tar.gz",
+      "originalPath": "/tmp/router-759-reusable-draft-review-tested-implementation-v2.tar.gz",
+      "bytes": 13265,
+      "sha256": "7981fa641cc78999f68c5ceb7c30a16d03f9b499b7c86148a842520666680cff"
+    },
+    {
+      "path": "observations/router-759-reverse-complete-integrated-bun-v1.json",
+      "originalPath": "/tmp/router-759-reverse-complete-integrated-bun-v1.json",
+      "bytes": 1397,
+      "sha256": "3838de343f20228b9c0acd5d1da20d1121158057731dbf4e801b78528d672c26"
+    },
+    {
+      "path": "observations/router-759-reverse-complete-integrated-bun-v1.raw.log",
+      "originalPath": "/tmp/router-759-reverse-complete-integrated-bun-v1.raw.log",
+      "bytes": 10837,
+      "sha256": "e885f48529453d6eeb3d6c6608b4019596fbefe4df687df7426a1992c90f01a7"
+    },
+    {
+      "path": "observations/router-759-reverse-complete-integrated-node-v1.json",
+      "originalPath": "/tmp/router-759-reverse-complete-integrated-node-v1.json",
+      "bytes": 1431,
+      "sha256": "dfb79c09af8c902fa9012ecd765f595822c0949133fe36b79786945e71d6385e"
+    },
+    {
+      "path": "observations/router-759-reverse-complete-integrated-node-v1.raw.log",
+      "originalPath": "/tmp/router-759-reverse-complete-integrated-node-v1.raw.log",
+      "bytes": 36653,
+      "sha256": "1117778399f39185b762eb96b866015cddb431ec3785154a9b76fa9231b8fa57"
+    },
+    {
+      "path": "observations/router-759-reverse-complete-integrated-node-v2.json",
+      "originalPath": "/tmp/router-759-reverse-complete-integrated-node-v2.json",
+      "bytes": 1428,
+      "sha256": "a2032b4bdb8e8a779573a37312d9ca61e88e05a6b1881e2647f232da22e5d184"
+    },
+    {
+      "path": "observations/router-759-reverse-complete-integrated-node-v2.raw.log",
+      "originalPath": "/tmp/router-759-reverse-complete-integrated-node-v2.raw.log",
+      "bytes": 8217,
+      "sha256": "1521e430d9dc910b08954d420a685cef0eacc18987704d7e85611197aa5fe135"
+    },
+    {
+      "path": "observations/router-759-reverse-gate-discovery-audit-v1.json",
+      "originalPath": "/tmp/router-759-reverse-gate-discovery-audit-v1.json",
+      "bytes": 1029,
+      "sha256": "64a909d0da8b8d718089ca04d4cef42be47fbfad79c881ac382a0fb874bd999f"
+    },
+    {
+      "path": "observations/router-759-reverse-gate-discovery-audit-v1.raw.log",
+      "originalPath": "/tmp/router-759-reverse-gate-discovery-audit-v1.raw.log",
+      "bytes": 48,
+      "sha256": "7913c93d2d67695b0cfb118ae5ca80361b5898fe3a7e90afcc7fc7329d9103a1"
+    },
+    {
+      "path": "observations/router-759-reverse-gate-discovery-bun-v1.json",
+      "originalPath": "/tmp/router-759-reverse-gate-discovery-bun-v1.json",
+      "bytes": 1097,
+      "sha256": "1a70a0775e11ab55a90d0882baeae901a988306047bf5834ddba8d73e92a307b"
+    },
+    {
+      "path": "observations/router-759-reverse-gate-discovery-bun-v1.raw.log",
+      "originalPath": "/tmp/router-759-reverse-gate-discovery-bun-v1.raw.log",
+      "bytes": 7386,
+      "sha256": "c2937e344af0bd9738c9049a4207007a0b915da8400bee605826fac51ca22f59"
+    },
+    {
+      "path": "observations/router-759-reverse-gate-discovery-bun-v2.json",
+      "originalPath": "/tmp/router-759-reverse-gate-discovery-bun-v2.json",
+      "bytes": 1095,
+      "sha256": "53cecdaf110078987dc31c9bec67cda19aa11748c8d36fa7586cbd842c030e5a"
+    },
+    {
+      "path": "observations/router-759-reverse-gate-discovery-bun-v2.raw.log",
+      "originalPath": "/tmp/router-759-reverse-gate-discovery-bun-v2.raw.log",
+      "bytes": 2427,
+      "sha256": "488835e2904d30a15e2c0f418d6dc2681408b7d6986d81ef684ed29aa34be8a0"
+    },
+    {
+      "path": "observations/router-759-reverse-gate-discovery-failed-implementation-v1.tar.gz",
+      "originalPath": "/tmp/router-759-reverse-gate-discovery-failed-implementation-v1.tar.gz",
+      "bytes": 15625,
+      "sha256": "b70273485a38403316e39e21dbd3c33fa547319593ccbbb9eb0c9ac3d320cfbe"
+    },
+    {
+      "path": "observations/router-759-reverse-gate-discovery-node-v1.json",
+      "originalPath": "/tmp/router-759-reverse-gate-discovery-node-v1.json",
+      "bytes": 1102,
+      "sha256": "f08d7f7f86095d87813c5f0231551fde459485df9cab038e6e2f2c5abcfa0a77"
+    },
+    {
+      "path": "observations/router-759-reverse-gate-discovery-node-v1.raw.log",
+      "originalPath": "/tmp/router-759-reverse-gate-discovery-node-v1.raw.log",
+      "bytes": 5108,
+      "sha256": "5b24588f742ae5b1eff575940274f26d0188c82279ae0aa4de0429bd1203c456"
+    },
+    {
+      "path": "observations/router-759-reverse-gate-discovery-node-v2.json",
+      "originalPath": "/tmp/router-759-reverse-gate-discovery-node-v2.json",
+      "bytes": 1102,
+      "sha256": "d1f11b6d42ead5bf7b2d0354a10a3f6a39d7d552f160e9b01e4324609a08a4dc"
+    },
+    {
+      "path": "observations/router-759-reverse-gate-discovery-node-v2.raw.log",
+      "originalPath": "/tmp/router-759-reverse-gate-discovery-node-v2.raw.log",
+      "bytes": 5112,
+      "sha256": "497b57aaf589c0ec0360c96fbbef106b31941a3d77c7f2c5a1bd0bd0a7951f55"
+    },
+    {
+      "path": "observations/router-759-run-source-scope-cache-candidate-v1.py",
+      "originalPath": "/tmp/router-759-run-source-scope-cache-candidate-v1.py",
+      "bytes": 2622,
+      "sha256": "7f46dd78499e7e76f5a540479aea7bbad49056671c2aca1eab3b8c0ade32080f"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-candidate-bun-v3.json",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-bun-v3.json",
+      "bytes": 1352,
+      "sha256": "030b82c2b486ff855c65eff282396222e580fcd609b6c4ec022fa98e9f69962a"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-candidate-bun-v3.raw.log",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-bun-v3.raw.log",
+      "bytes": 4929,
+      "sha256": "1c69da1ad50d2fba5010fc659234334e392b99578b360c17a48ebd94a7e53c0a"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-candidate-final-source-review-v1.json",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-final-source-review-v1.json",
+      "bytes": 207966,
+      "sha256": "0791ffc720a41cb43898ab0625d22c5210092573e8200f224495cdc719e57dfe"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-candidate-node-v1.json",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-node-v1.json",
+      "bytes": 1387,
+      "sha256": "d19c94c1848658707f4fce65eb3383be63df3c88b54302065b0885e4e5c124a5"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-candidate-node-v1.raw.log",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-node-v1.raw.log",
+      "bytes": 10979,
+      "sha256": "da1184a5296c4c1542e7f8dbe0cc867c391037526b7ce120e5e4057cd2e19edc"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-candidate-node-v2.json",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-node-v2.json",
+      "bytes": 1387,
+      "sha256": "8ececed45553414d62345588cf747d9b42250b19d8707325481e1e8c9a77629f"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-candidate-node-v2.raw.log",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-node-v2.raw.log",
+      "bytes": 10992,
+      "sha256": "c85c3d9f6cdb008e6ffcfa9fd50dfbd170b9e1750e53df457243923d939bedda"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-candidate-node-v3.json",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-node-v3.json",
+      "bytes": 1387,
+      "sha256": "5da05285c86039a560cfae20359fb59faf37df649794b535e5c4608240f26182"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-candidate-node-v3.raw.log",
+      "originalPath": "/tmp/router-759-source-scope-cache-candidate-node-v3.raw.log",
+      "bytes": 10117,
+      "sha256": "e5b5761068d9aabbf2d4c83be131de0a152e8b8b7d1fe251edba77abf2df8e31"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-original-corpus-review-run-v1.json",
+      "originalPath": "/tmp/router-759-source-scope-cache-original-corpus-review-run-v1.json",
+      "bytes": 1071,
+      "sha256": "56db93bd07d368a70fd653c18276b740c85f75d7be19651c6fff61bacf924313"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-original-corpus-review-run-v1.raw.log",
+      "originalPath": "/tmp/router-759-source-scope-cache-original-corpus-review-run-v1.raw.log",
+      "bytes": 1276,
+      "sha256": "5ac7fbb0968e51da2ad3dbbc74f6a7ade95bfe4eb024de402f400fee2fc3a488"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-original-corpus-review-v1.json",
+      "originalPath": "/tmp/router-759-source-scope-cache-original-corpus-review-v1.json",
+      "bytes": 95475013,
+      "sha256": "2870eb701c44452becd05b4b105cf25ef223d2cb7aa25c76155403ff5c621ca2"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-original-corpus-review-v1.mjs",
+      "originalPath": "/tmp/router-759-source-scope-cache-original-corpus-review-v1.mjs",
+      "bytes": 4347,
+      "sha256": "dcb3a776149feb95c18d766727f07e41e806398f06cb246c1967fc25a19f8411"
+    },
+    {
+      "path": "observations/router-759-source-scope-cache-tested-implementation-v1.tar.gz",
+      "originalPath": "/tmp/router-759-source-scope-cache-tested-implementation-v1.tar.gz",
+      "bytes": 13878,
+      "sha256": "06d8a1c1ca8449cb6366ec9e99315608bafaa1d535ec1a59db5e789cc2cc3797"
+    },
+    {
+      "path": "observations/router-759-translator-source-batch-complete-evidence-v1.py",
+      "originalPath": "/tmp/router-759-translator-source-batch-complete-evidence-v1.py",
+      "bytes": 11325,
+      "sha256": "26cc530eb5c871085577d874f2c01fbf50177843a94579b3a7bf767da8a151b1"
+    },
+    {
+      "path": "observations/router-759-translator-source-batch-evidence-initial-setup-failure-v1.json",
+      "originalPath": "/tmp/router-759-translator-source-batch-evidence-initial-setup-failure-v1.json",
+      "bytes": 530,
+      "sha256": "a89de6183372d67c34ebdfccca6a3691b10221e34f749d040c2f12af8fddec36"
+    },
+    {
+      "path": "observations/router-759-translator-source-batch-evidence-initial-setup-failure-v1.py",
+      "originalPath": "/tmp/router-759-translator-source-batch-evidence-initial-setup-failure-v1.py",
+      "bytes": 11171,
+      "sha256": "31966c719b8b2d16fd519ae7af25a717dc12e4b0eedc24568b20d9ad51278531"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-coverage-02.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-coverage-02.json",
+      "bytes": 679292,
+      "sha256": "70d73753d690fb7b26016db7bd4a688f21040d2b847c937f99deaa3b1ab9517e"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-coverage-03.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-coverage-03.json",
+      "bytes": 684051,
+      "sha256": "7d838c19001e7b4c7bf3050c924a4ff28d10db61020363a671c74bfbc54f428c"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-coverage-04.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-coverage-04.json",
+      "bytes": 684051,
+      "sha256": "7d838c19001e7b4c7bf3050c924a4ff28d10db61020363a671c74bfbc54f428c",
+      "storedAsHardlink": "workers/reverse/router-759-reverse-cycle-coverage-03.json"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-coverage-05.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-coverage-05.json",
+      "bytes": 692252,
+      "sha256": "0fb1a5242e1d66afb2abe77189b5fe96d4064f6c6ce0ecda2ccc02b7832aa7ee"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-coverage-06.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-coverage-06.json",
+      "bytes": 703671,
+      "sha256": "43aa8886642a7b3429af2c69db49ccd24d002db0b9f23b2efad8ead1928be256"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-finaltests-03-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-finaltests-03-1.log",
+      "bytes": 1271,
+      "sha256": "1d147183ac405af4cbd7b2223aa1a57da8eab36f43a36fbe5fc4650308a52d95"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-finaltests-03-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-finaltests-03-2.log",
+      "bytes": 665,
+      "sha256": "83bd5d2aa364d16fd6295d9c969776a9cd82aeb145d449b38b82526e50bae316"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-finaltests-03.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-finaltests-03.json",
+      "bytes": 516,
+      "sha256": "97c33522354c71e0b7d1cd6f167a3a0544b3479ba3eb1656aa1d0f018790dbb5"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-fixture-migration-03.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-fixture-migration-03.json",
+      "bytes": 1826,
+      "sha256": "7d1c33ac09119d0b7c305bd962e09befae5e48a32733f2d491dbd73669c2ecc0"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-guarded-01.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-guarded-01.json",
+      "bytes": 352,
+      "sha256": "54ddfcfa5296bef6985a2e874b00739cefa1afcf926f8fb0e6be1964b452ca30"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-guarded-01.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-guarded-01.log",
+      "bytes": 2937,
+      "sha256": "3bf92e6d6360a6672a6a49b2381db4a4e9745a371ac07751c40ccee53e75b829"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-guarded-02-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-guarded-02-1.log",
+      "bytes": 1991,
+      "sha256": "5377f56f110b36653b5f8ecae9e668fbc4a4d57a6420940bc81ce66b0883310d"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-guarded-02-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-guarded-02-2.log",
+      "bytes": 1105,
+      "sha256": "09fa9167707796c7a43a67f0a6a9aa17a5c7c08b5b287171068437ffcc2bb4fd"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-guarded-02.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-guarded-02.json",
+      "bytes": 781,
+      "sha256": "3398ee9913302f51825a465498fbfb66ab5d685afe6911c69a74c5328361dd7d"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-native-build-01.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-native-build-01.json",
+      "bytes": 1151,
+      "sha256": "4915ef460dff58e925686beb76fa9cf1647032fc764e7986fec265d0df3acdfa"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-native-build-01.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-native-build-01.log",
+      "bytes": 12370,
+      "sha256": "99d4e74f95fd9ddb692d626f65ecc8846ddfbcddb92d04f78892a62a9afa2436"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-native-manifest-02.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-native-manifest-02.json",
+      "bytes": 87362,
+      "sha256": "3b0169a8e687b7a2abd340c80c16abcada24046bb6f905feaa3b495999fa1d0d"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-native-manifest-03.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-native-manifest-03.json",
+      "bytes": 87362,
+      "sha256": "3b0169a8e687b7a2abd340c80c16abcada24046bb6f905feaa3b495999fa1d0d",
+      "storedAsHardlink": "workers/reverse/router-759-reverse-cycle-native-manifest-02.json"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-nullable-01.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-nullable-01.json",
+      "bytes": 221,
+      "sha256": "1b4574e85df5a0dbc35c7ba2a16e252c610b7b0b605276a102543a8f3da1995d"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-nullable-01.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-nullable-01.log",
+      "bytes": 1675,
+      "sha256": "14ccb368ee4c9e08685f631abe3b35ac908b0dd1621f588ea7a2421cd7cc48f0"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-nullable-02-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-nullable-02-1.log",
+      "bytes": 2926,
+      "sha256": "3832497ec98e45eb35ea9b519e806717a82f016b3b2e35650066c7b18bce9128"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-nullable-02-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-nullable-02-2.log",
+      "bytes": 1587,
+      "sha256": "e0644b69e054e4d9e108e143fa3e27bee4b9da6bb2aba20971c443ec3cbc2625"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-nullable-02.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-nullable-02.json",
+      "bytes": 918,
+      "sha256": "2655f61d16f09cffb042bc174df5bb3e756c6df081133d7507107667520e6e1b"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-nullable-03-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-nullable-03-1.log",
+      "bytes": 2923,
+      "sha256": "261869f4146c9e702e4a0728c0f7149f2669f9f663cb3c1eb34e4495d13043ca"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-nullable-03-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-nullable-03-2.log",
+      "bytes": 1587,
+      "sha256": "037fcc5d0625ccf9c86b2485a90c5c2da5a2603d80215a038e77978568de9af9"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-nullable-03.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-nullable-03.json",
+      "bytes": 918,
+      "sha256": "2a5db8790264264ceb71ab8ab7bb0a793b69bfa70864c353a043e1b9fc46c35f"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-ownership-03-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-ownership-03-1.log",
+      "bytes": 1154,
+      "sha256": "a93366b0293b022bf01cec6e46f89149d4feae4670b8aec20e64a1dd6605a677"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-ownership-03-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-ownership-03-2.log",
+      "bytes": 255,
+      "sha256": "3cceea46cd765fe74b0d888a1ece1b2d82b12cfa9095e8a7cf519ae650cd68a1"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-ownership-03.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-ownership-03.json",
+      "bytes": 628,
+      "sha256": "5b27f2e42f05b57b47779d7aa423f9245e7a3e7bbbc09b0b5b15554014cd38fe"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-02-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-02-1.log",
+      "bytes": 444,
+      "sha256": "9add0ef8a464cd7c2a4fe83bee91c3c7d33ddfbb84b3fc86b37c07aecc0d3d34"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-02-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-02-2.log",
+      "bytes": 444,
+      "sha256": "9add0ef8a464cd7c2a4fe83bee91c3c7d33ddfbb84b3fc86b37c07aecc0d3d34",
+      "storedAsHardlink": "workers/reverse/router-759-reverse-cycle-regression-02-1.log"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-02.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-02.json",
+      "bytes": 467,
+      "sha256": "1d34c61aaf31619a8b0fb17fcb8509a26092b5dce46712f336ee39b45c4c25f2"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-03-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-03-1.log",
+      "bytes": 444,
+      "sha256": "9add0ef8a464cd7c2a4fe83bee91c3c7d33ddfbb84b3fc86b37c07aecc0d3d34",
+      "storedAsHardlink": "workers/reverse/router-759-reverse-cycle-regression-02-1.log"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-03-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-03-2.log",
+      "bytes": 444,
+      "sha256": "9add0ef8a464cd7c2a4fe83bee91c3c7d33ddfbb84b3fc86b37c07aecc0d3d34",
+      "storedAsHardlink": "workers/reverse/router-759-reverse-cycle-regression-02-1.log"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-03.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-03.json",
+      "bytes": 466,
+      "sha256": "825ea826b771a86e10b47fa44ba91088580533f8dc973ea5b30d8ab38443da7e"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-04-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-04-1.log",
+      "bytes": 420,
+      "sha256": "8c7836aea24a2fead17e397a8bf14625d0b343511d3f9ee3aefd7638f50200a3"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-04-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-04-2.log",
+      "bytes": 420,
+      "sha256": "8c7836aea24a2fead17e397a8bf14625d0b343511d3f9ee3aefd7638f50200a3",
+      "storedAsHardlink": "workers/reverse/router-759-reverse-cycle-regression-04-1.log"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-04.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-04.json",
+      "bytes": 765,
+      "sha256": "8da4021b83020a8b9fa390194e0ccf3c1d1acfc557c6eff30999148d6b3f6eb4"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-05-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-05-1.log",
+      "bytes": 420,
+      "sha256": "8c7836aea24a2fead17e397a8bf14625d0b343511d3f9ee3aefd7638f50200a3",
+      "storedAsHardlink": "workers/reverse/router-759-reverse-cycle-regression-04-1.log"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-05-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-05-2.log",
+      "bytes": 420,
+      "sha256": "8c7836aea24a2fead17e397a8bf14625d0b343511d3f9ee3aefd7638f50200a3",
+      "storedAsHardlink": "workers/reverse/router-759-reverse-cycle-regression-04-1.log"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-05.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-05.json",
+      "bytes": 760,
+      "sha256": "9c9bf1464afb38592c30caa6a3872af04c7aae2d4ded70814534f15e05ba733d"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-06-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-06-1.log",
+      "bytes": 481,
+      "sha256": "178e3903549e3c0dc7bc6d80bc6f7bd9e8da91f7ceca5c9a324250289775ba10"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-06-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-06-2.log",
+      "bytes": 481,
+      "sha256": "178e3903549e3c0dc7bc6d80bc6f7bd9e8da91f7ceca5c9a324250289775ba10",
+      "storedAsHardlink": "workers/reverse/router-759-reverse-cycle-regression-06-1.log"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-06.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-06.json",
+      "bytes": 641,
+      "sha256": "4705f950003abd6f47d8dc67849a866c1c1b3bb34c34defde960a08637e01676"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-final-06-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-final-06-1.log",
+      "bytes": 481,
+      "sha256": "178e3903549e3c0dc7bc6d80bc6f7bd9e8da91f7ceca5c9a324250289775ba10",
+      "storedAsHardlink": "workers/reverse/router-759-reverse-cycle-regression-06-1.log"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-final-06-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-final-06-2.log",
+      "bytes": 481,
+      "sha256": "178e3903549e3c0dc7bc6d80bc6f7bd9e8da91f7ceca5c9a324250289775ba10",
+      "storedAsHardlink": "workers/reverse/router-759-reverse-cycle-regression-06-1.log"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-final-06.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-final-06.json",
+      "bytes": 652,
+      "sha256": "24722df9d3547a0a68f8c99ffba89e7a1dbe60eead6cc47ce548a0ea97a288b7"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-script-02.txt",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-script-02.txt",
+      "bytes": 3934,
+      "sha256": "f8c2e61dc5126b939df471ca465eda20d0c758b6447385c3488e1697c83ac4c9"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-script-03.txt",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-script-03.txt",
+      "bytes": 4012,
+      "sha256": "881ab269290cd983b4dab4d3ff0527a89ff83a8d860ad83eb93cf4de03d72985"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-script-04.txt",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-script-04.txt",
+      "bytes": 3700,
+      "sha256": "ffc2f170c2608aa15626a91dd275d0477e8255b588f01a49efb9b0e074fa3a18"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-script-05.txt",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-script-05.txt",
+      "bytes": 3700,
+      "sha256": "eb5fbf09551828845f5a9bd980336f6fa1ae8710ca74985a2870b171418e45bf"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-regression-script-06.txt",
+      "originalPath": "/tmp/router-759-reverse-cycle-regression-script-06.txt",
+      "bytes": 3914,
+      "sha256": "b5bcc51d60c2e0d2a33c171f5b1efae85aee886e49da8bf99ea5be8d1eed4147"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-signatures-03-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-signatures-03-1.log",
+      "bytes": 1422,
+      "sha256": "7ffc3dbb36099704d86551966437d52a41fbe121954bcfff762f88e5d2eddcb8"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-signatures-03-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-signatures-03-2.log",
+      "bytes": 263,
+      "sha256": "dedc3141761afea58c4e45c9009cf7499d2a0e20472f1a6929962cafad3e426d"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-signatures-03.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-signatures-03.json",
+      "bytes": 632,
+      "sha256": "f5eed557119bb07260d3514148204b4df7c5e684c79418bfa9426b32dd9cee2e"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-table-sanity-01.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-table-sanity-01.json",
+      "bytes": 274,
+      "sha256": "a88ab8917dacd6246bfd52dfe957f4fed64ecefb21e4efcf2c037a8627125b5c"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-table-sanity-01.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-table-sanity-01.log",
+      "bytes": 711,
+      "sha256": "705f94cb4c91f43b33d2a2a81014dce1caf140d2653bc3a6b01febe080415a32"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-01.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-01.json",
+      "bytes": 218,
+      "sha256": "687fcfd7dcb09f10c6c8ce22f7019f39caf25485add30807cff6ffbc9700d01a"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-01.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-01.log",
+      "bytes": 1582,
+      "sha256": "d86081300d68de14038c83956a5739e3532bf19e50bdfff86e01fe65f42c51ba"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-02-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-02-1.log",
+      "bytes": 878,
+      "sha256": "a138c3328439ba12eaaf5caac93721ea9de89ecc979d66618900d8f119493357"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-02-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-02-2.log",
+      "bytes": 489,
+      "sha256": "e2b1f2620b4a67de01fccf7e53076e386440cc6045eb9aef4c50e95d92dc6789"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-02.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-02.json",
+      "bytes": 502,
+      "sha256": "de9db8353762120269b4f313f41106de0e9c5ce071e98db649324eee0776250a"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-ast-03-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-ast-03-1.log",
+      "bytes": 879,
+      "sha256": "afe8662d078f5c28ea33c4414c1ebed4fb0eac7afa8e7907bfc33243cfa4c961"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-ast-03-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-ast-03-2.log",
+      "bytes": 488,
+      "sha256": "1a02cac7bdd040069b298de8c4644cb256c7cc7af13d130672973f8d195e47fe"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-ast-03.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-ast-03.json",
+      "bytes": 511,
+      "sha256": "4db53f28b6a110d64233d01cf2ea532f6b4561f2c70e78da41b89d73cc8f4db7"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-full-04-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-full-04-1.log",
+      "bytes": 4630,
+      "sha256": "3b2a84c2ad8adad32e25fb3ff31e97a2854ad6a30784b61e7dca2ca2cbf1ac0d"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-full-04-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-full-04-2.log",
+      "bytes": 2489,
+      "sha256": "933e6a6335e5ef3610b1c82ac5b9ae68cdd2cd5b52d9479b84a36f858dacd22e"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-full-04.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-full-04.json",
+      "bytes": 1191,
+      "sha256": "02bcca5c9b85bb6f4654a5aa81c375f9384c63d39196f25df43a3568e4d33977"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-global-05-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-global-05-1.log",
+      "bytes": 880,
+      "sha256": "2e5866b1475fd0fe00750307b6f8e9874ce92c75cb71d1163c2381d713d003c7"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-global-05-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-global-05-2.log",
+      "bytes": 489,
+      "sha256": "743b2bb25ed104da2e1625d484418701cccdf38ce1ee0b6f6b23f5105488c1b2"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-global-05.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-global-05.json",
+      "bytes": 510,
+      "sha256": "671a322729fb53016cf2701b07bdbe753a57fd15d0f0f7c8ac5b9e1082c204da"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-targets-06-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-targets-06-1.log",
+      "bytes": 880,
+      "sha256": "05fa8ebd5d71d0ec228428cb28b74fbe44c00c9e82bd64970b86ab5be706cb87"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-targets-06-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-targets-06-2.log",
+      "bytes": 488,
+      "sha256": "58a534878260359dd641472267f091941d2148940221e8983e4d134bbaec6b45"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tables-targets-06.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-tables-targets-06.json",
+      "bytes": 512,
+      "sha256": "c0b22c054588bf3d4413134e85f0088ab854c0b8e1bc4bae9e440f2db6dca3b3"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tests-01.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-tests-01.json",
+      "bytes": 281,
+      "sha256": "4fba3f4a2026b9a64d08b51230e7b33c0d65d0c6b27c078d65c4d5a3f138757c"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-tests-01.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-tests-01.log",
+      "bytes": 946,
+      "sha256": "bc724c6b97882cd9346fe63d3d35d8fd21d8f85672ceef135624ade8d4494527"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-unicode-01.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-unicode-01.json",
+      "bytes": 221,
+      "sha256": "8340d7830049115561cd2da6e764e7ba2ee0d848fbb8d2561c477cfbf55d7851"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-unicode-01.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-unicode-01.log",
+      "bytes": 1543,
+      "sha256": "ec0f67ebe942429d07727262f591cc00c2269b589d354736357a1d76d6c367a8"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-unicode-02-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-unicode-02-1.log",
+      "bytes": 832,
+      "sha256": "57ea8328d58841963599ea7e1fc841ec2ff5c5df144a4af1fd802e45b8d3bbf2"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-unicode-02-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-unicode-02-2.log",
+      "bytes": 472,
+      "sha256": "81a17661ae7d8d0a9478fd9caed52bd8079674044370ac00624d2f85f375ff9e"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-unicode-02.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-unicode-02.json",
+      "bytes": 511,
+      "sha256": "9f528f8a502ecbc13a04fd5c2d95e8230c0130d77aa544f9dc9db9f2c71f1206"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-unicode-full-03-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-unicode-full-03-1.log",
+      "bytes": 3873,
+      "sha256": "0420bf3579126de7327208909aef6ee57d7979c09a67c39d89bd360d2f943b62"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-unicode-full-03-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-unicode-full-03-2.log",
+      "bytes": 2077,
+      "sha256": "1b7cf854473201cf6dce96eca64237727a704dbc7d2e1316ba124f9dcde7ccc2"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-unicode-full-03.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-unicode-full-03.json",
+      "bytes": 1062,
+      "sha256": "c853b34d05ec6ba9b2ca09a7347ff6c7da4059f238134b5fddb3bc366501b972"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-unsupported-before-03.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-unsupported-before-03.json",
+      "bytes": 1900,
+      "sha256": "3112cbd7876db1cc83f2ce15318d18c70dcc9c611ebe2ba763acbc50cccf851b"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-validation-02-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-validation-02-1.log",
+      "bytes": 1121,
+      "sha256": "577ff4f7d0f70b922711d0bbaff9a35555799d847795ad80865c9e86a9b22633"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-validation-02-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-validation-02-2.log",
+      "bytes": 2370,
+      "sha256": "5ec32cfbe1d5133aa4bb439f4acc60dc04ec7561deb10b4a6310a1afe25b3d26"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-validation-02-3.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-validation-02-3.log",
+      "bytes": 1938,
+      "sha256": "07e46a8bc55b8ae8b1ee8c5b20b65fa5e1cad3edfc57478a814eb2f099a986f1"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-validation-02-4.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-validation-02-4.log",
+      "bytes": 739,
+      "sha256": "2f36da7e16185244196a85f8ce2ed4f846aaf39622fe6f6017789ccb9f36d70c"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-validation-02.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-validation-02.json",
+      "bytes": 1420,
+      "sha256": "b15cf067fdf2a1daa10412cd247aa4f08373149b6ced25c6b3e1dbe1670caca9"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-validation-03-1.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-validation-03-1.log",
+      "bytes": 1128,
+      "sha256": "5c8794672d2e352d5fff2277577549e9c9f6f3afa27aac44a39910b8b131cafa"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-validation-03-2.log",
+      "originalPath": "/tmp/router-759-reverse-cycle-validation-03-2.log",
+      "bytes": 654,
+      "sha256": "2b40d3b906070faab0f945059cc80f2767d62844041bdb547f7d616014431cf9"
+    },
+    {
+      "path": "workers/reverse/router-759-reverse-cycle-validation-03.json",
+      "originalPath": "/tmp/router-759-reverse-cycle-validation-03.json",
+      "bytes": 645,
+      "sha256": "c7165b55803b39b8810f0bd60ad5b48a3cfd46de3f428e35889851fe358a76bb"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/Cargo.lock",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/Cargo.lock",
+      "bytes": 124800,
+      "sha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
+      "storedAsHardlink": "workers/router-759-option-cycle-20261013-static-v1/original-inputs/Cargo.lock"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/Cargo.toml",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/Cargo.toml",
+      "bytes": 5296,
+      "sha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476",
+      "storedAsHardlink": "workers/router-759-option-cycle-20261013-static-v1/original-inputs/Cargo.toml"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/baseline-comparison.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/baseline-comparison.log",
+      "bytes": 1244,
+      "sha256": "03e24371048d5c37b159bf0c6b0751383e853d493378e59126f71aca6f7490e3"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/bun-commit-source.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/bun-commit-source.log",
+      "bytes": 3613,
+      "sha256": "07d4148d72756dbadf11c527303980ccc899048bfa97d4ed716a8f15dfd310b0"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/bun-final-owner-rule.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/bun-final-owner-rule.log",
+      "bytes": 828,
+      "sha256": "3bcd156bac32cc560a0088d88781376b85dcf90ddbe30a89d7d2b1a6c173ffc1"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/bun-final-source.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/bun-final-source.log",
+      "bytes": 3610,
+      "sha256": "05a67b6bf0a0c113143d7b8b641147248b6c770e71ceb8592fec308f881522d9"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/derive-clap-args.test.mjs",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/derive-clap-args.test.mjs",
+      "bytes": 9825,
+      "sha256": "4d01b30f31eb8171933bbee6324077fe0f5caacf1da2511af2b485085000d29b",
+      "storedAsHardlink": "implementation/tools/translation/test/derive-clap-args.test.mjs"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/manifest.json",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/manifest.json",
+      "bytes": 27727,
+      "sha256": "7cac220e8a2de28a4255366f46fd37071c2a7c3ecea3affed0cc364dd619dd1f",
+      "storedAsHardlink": "implementation/tools/translation/source-profiles/derive/manifest.json"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/node-commit-source.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/node-commit-source.log",
+      "bytes": 7229,
+      "sha256": "3badbb5bb489d8bcef71c619391c10e1ee2ea6765ad176bea36066280a8ccc55"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/node-final-owner-rule.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/node-final-owner-rule.log",
+      "bytes": 1625,
+      "sha256": "4f75b6a2a9b61284873c40e5ca2d3d6c3f2713462876968254babbc13ef0afe7"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/node-final-source.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/node-final-source.log",
+      "bytes": 7228,
+      "sha256": "063efc3674612fb1a9cf6124106f655ce67a246436019840e4666c71452e7cb9"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/node-final.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/node-final.log",
+      "bytes": 7219,
+      "sha256": "c27a5176e809ae0f2f6b6909f17361896fdd1cffac1b5dc5bedf4ce4d91e274b"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/node-first.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/node-first.log",
+      "bytes": 1633,
+      "sha256": "e04cc244ada88699a03a048b76fa3210cdc60deb5696e0010de7eb76417ec9c7"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/original-context.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/original-context.log",
+      "bytes": 308,
+      "sha256": "271a3ab451b9140c54a94cd5774f857cfe923fdd1a21e69ea380eb8995c5dac5"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/original-translation.log.gz",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/original-translation.log.gz",
+      "bytes": 33305,
+      "sha256": "7e018db5ae6b40e685cdfe11162fe5e5a03e7edd26b03f5521c9220b45f94cf1"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/proof-fifth.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/proof-fifth.log",
+      "bytes": 1114,
+      "sha256": "a4eed51c86cc8ef3fdf8d982833519eb2034d717264100796ff379def3b47b27"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/proof-final.log.gz",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/proof-final.log.gz",
+      "bytes": 28864,
+      "sha256": "917528f60a924e0a734d700f7f43bb6ab22c1dd880850569cdc8212bf883cb87"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/proof-first.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/proof-first.log",
+      "bytes": 1302,
+      "sha256": "fd92023696f724d65bcc26e9071811820a0bdce1579a18e77d1f3c862bf0fc7d"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/proof-fourth.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/proof-fourth.log",
+      "bytes": 1801,
+      "sha256": "abf3c5b89aca048c976f29346ca20d4773d4f0bd8885061e555ee10a8213307e"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/proof-second.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/proof-second.log",
+      "bytes": 1212,
+      "sha256": "31e6442e3f7379d73819e25ac017c194f0e42e310b285c609b7abe379a491ba5"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/proof-sixth.log.gz",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/proof-sixth.log.gz",
+      "bytes": 27884,
+      "sha256": "84584c69d75c9d476e165bd2817f6b436f3fe9f1ec8d8bd4f1620ea198afbd19"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/proof-third.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/proof-third.log",
+      "bytes": 1802,
+      "sha256": "9a3fc079d34185c7fbe83da573de5744c83263131b1e06eb0af02dcb5b0da5a6"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/source-preservation.json",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/source-preservation.json",
+      "bytes": 614,
+      "sha256": "8f8edd77c8cce85183ae6b8db6dc5d87cf0f8c1d5b62d60e47b6ff4567f68ab2"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-args-v1/verification.rs",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-args-v1/verification.rs",
+      "bytes": 25437,
+      "sha256": "839dc354baff84b057fd6ec5c84d1f52d9dd4e0ed657843626a500425ef2ffa4"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/Cargo.lock",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/Cargo.lock",
+      "bytes": 124800,
+      "sha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
+      "storedAsHardlink": "workers/router-759-option-cycle-20261013-static-v1/original-inputs/Cargo.lock"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/Cargo.toml",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/Cargo.toml",
+      "bytes": 5296,
+      "sha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476",
+      "storedAsHardlink": "workers/router-759-option-cycle-20261013-static-v1/original-inputs/Cargo.toml"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/bun-final-source.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/bun-final-source.log",
+      "bytes": 2592,
+      "sha256": "1a8efed96dcd07b5a52e5d4dac30632c69c15ba7d917ef7dd300dfbf4362ce99"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/bun-final.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/bun-final.log",
+      "bytes": 2591,
+      "sha256": "25a76e2e83c4605a03f1d55f207d792ff36250deb179c740b2e081b469d97552"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/bun-regressions.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/bun-regressions.log",
+      "bytes": 10496,
+      "sha256": "5abeb3dacc9b034f2e0394a215987aa44bed48eec2b654048e9bccbedd68b5e1"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/clients.rs",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/clients.rs",
+      "bytes": 40903,
+      "sha256": "2f12c5aa34a65ec62b793902cdefe8f36c1b6c414c673e6499ef40c7dbfb8c2d",
+      "storedAsHardlink": "workers/router-759-option-cycle-20261013-static-v1/original-inputs/src/clients.rs"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/derive-clap-value-enum.test.mjs",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/derive-clap-value-enum.test.mjs",
+      "bytes": 8967,
+      "sha256": "6597a2f9cb5f47b0f8552955d1b8274b10eb0948a5693b36aad7cbd0e17188e8"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/inventory-first.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/inventory-first.log",
+      "bytes": 1860,
+      "sha256": "dab4f4d28e102ad44aa91ef724af49cf9b6eb0afd54650a3536b75216d04a00e"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/inventory-second.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/inventory-second.log",
+      "bytes": 7,
+      "sha256": "9998ecc9581327e6f17aefafb79d9cd75ecead9442ffdbc12107d082cd2691c1"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/node-final-source.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/node-final-source.log",
+      "bytes": 5237,
+      "sha256": "b822daa5259d717789cb268e3e7b0a1cde464adb2b82c78811706232400c4a80"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/node-final.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/node-final.log",
+      "bytes": 5245,
+      "sha256": "e6bdd8d78d72c3ce6115730ef7066d82a8e1fc75e30a84bfba53d99b37602591"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/node-first.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/node-first.log",
+      "bytes": 1852,
+      "sha256": "1371cc4fb4cd1761cb54713be34747141e8c6e279870b53a41c32bcc822d144d"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/node-regressions.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/node-regressions.log",
+      "bytes": 20996,
+      "sha256": "ab6fde37bf9a5fec91fb888c52d44679f353930d1561b968db8bfb7492c2e922"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/original-baseline-comparison.log.gz",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/original-baseline-comparison.log.gz",
+      "bytes": 121353,
+      "sha256": "e9fedd252fc4478d1454926f0d04919b8e794ce23d5226bcf0c5fde609dc4bc1"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/original-context-first.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/original-context-first.log",
+      "bytes": 108,
+      "sha256": "ef6b5932189cb7923525da4300703939c15bc9488b1a4735167f804691992997"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/original-copy-diagnostics.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/original-copy-diagnostics.log",
+      "bytes": 5372,
+      "sha256": "6fb5be27b0743c1711dc65ca0d4663c7c9ed34767f5d597063395a669a7e0a3d"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/original-translation-first.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/original-translation-first.log",
+      "bytes": 18936,
+      "sha256": "5e19ea12ed8b15faeb014e653be5a69b26956af88b7ed5d97a32c7d5c00e83c8"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/profile-preservation.json",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/profile-preservation.json",
+      "bytes": 1129,
+      "sha256": "20435b647de371384ce4db45d1d40ac4af634e2acc7f7fa75b8c740743f6ba98"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/source-proof-first.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/source-proof-first.log",
+      "bytes": 1231,
+      "sha256": "633389beceb1a494f122113cd6a29df237a77a776441b8c8f587c921de4bad6b"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-clap-v1/source-proof-second.log.gz",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-clap-v1/source-proof-second.log.gz",
+      "bytes": 6871,
+      "sha256": "d5cfd4702a9865b7200585f2c60d8eba990c00cc77c67951ec3a52b932137801"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-v1/Cargo.lock",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-v1/Cargo.lock",
+      "bytes": 124800,
+      "sha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
+      "storedAsHardlink": "workers/router-759-option-cycle-20261013-static-v1/original-inputs/Cargo.lock"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-v1/Cargo.toml",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-v1/Cargo.toml",
+      "bytes": 5296,
+      "sha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476",
+      "storedAsHardlink": "workers/router-759-option-cycle-20261013-static-v1/original-inputs/Cargo.toml"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-v1/bun-final.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-v1/bun-final.log",
+      "bytes": 3231,
+      "sha256": "1caa0e4dd823279531f0f9c14a3048eadb1dde3941dbba25347546fdd9169353"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-v1/bun-success.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-v1/bun-success.log",
+      "bytes": 3230,
+      "sha256": "7a2082c1511402af0c799f9a28f809fe96e3aa43d11d41c7a96179b890512c55"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-v1/clap-item-original.rs",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-v1/clap-item-original.rs",
+      "bytes": 56366,
+      "sha256": "e62a263bbfece319b5b844d592b2f362f9b9c3f4c5b04759d4d14edb66aca67f"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-v1/clients.rs",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-v1/clients.rs",
+      "bytes": 40903,
+      "sha256": "2f12c5aa34a65ec62b793902cdefe8f36c1b6c414c673e6499ef40c7dbfb8c2d",
+      "storedAsHardlink": "workers/router-759-option-cycle-20261013-static-v1/original-inputs/src/clients.rs"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-v1/derive-schemars-with.test.mjs",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-v1/derive-schemars-with.test.mjs",
+      "bytes": 7716,
+      "sha256": "1e41b4eb744bf3f32daeb45cce743182f0840b3b5ff05d20582303566fca560f"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-v1/first-proof.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-v1/first-proof.log",
+      "bytes": 68259,
+      "sha256": "410967b58e83a14cdccdb5bb1f3ca6e9395b6a67a603c874cc368d8166c665ee"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-v1/node-final.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-v1/node-final.log",
+      "bytes": 6435,
+      "sha256": "dccd524765985e283c20adc511b615b33aa6656f3fb7bf94548d2fe6b0563b0c"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-v1/node-first.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-v1/node-first.log",
+      "bytes": 2349,
+      "sha256": "3e7f9274f2d15b2fad8025a7dd8bc2480858703704c4e305badb622c872af815"
+    },
+    {
+      "path": "workers/router-759-derive-cycle-20261013-v1/node-success.log",
+      "originalPath": "/tmp/router-759-derive-cycle-20261013-v1/node-success.log",
+      "bytes": 6434,
+      "sha256": "6f208e6dcb2beeb76cc00eb48fe3d0bfd9ec99b2381113b86626b09512460ff0"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/adjacent-node-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/adjacent-node-first.log",
+      "bytes": 25446,
+      "sha256": "099f8805937b10e64269fb320e3aa152e5110e2632a0480a6afc756f1fb13e5e"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/bun-corrected-final.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/bun-corrected-final.log",
+      "bytes": 89216,
+      "sha256": "398ee03834044a153e3def373b06d2fdb3df798f8b0d04d7c1351d784de0cff5"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/bun-final.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/bun-final.log",
+      "bytes": 91012,
+      "sha256": "847bd0007d09903918e366abe8f204062389811880c493fd15637c49c0296eac"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/corrected-final-runs.json",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/corrected-final-runs.json",
+      "bytes": 3301,
+      "sha256": "b737f8b380e5efd0259a775c3da35e582d98794a4d584b823444d54d0ccfe36e"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/final-runs.json",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/final-runs.json",
+      "bytes": 3281,
+      "sha256": "f33271acf904453c8a3b97dbed5f179ff1cef5ff7dffd56772eb3681905a4e5a"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/input-resource-receipt.json",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/input-resource-receipt.json",
+      "bytes": 13816,
+      "sha256": "9ed5056f24189ba8262ddd84ff2ede007a3d58b33d47b498a164515effb29a47"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/node-corrected-final.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/node-corrected-final.log",
+      "bytes": 44363,
+      "sha256": "22b7c36c3c2e33a2d7a799a816ced2d5cbb6c08d2f0799e97774dcd4c19c6224"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/node-final.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/node-final.log",
+      "bytes": 44186,
+      "sha256": "9ca3b520e8819e5dcac5128ea3c636748af7b3b5672e76c3dc7a9a2e3f4ea15b"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/original-clientkind-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/original-clientkind-first.log",
+      "bytes": 25919,
+      "sha256": "c63eb1aa1130ac5c743a1dfd361f8c54696474321e186eda05b29c1ac411ff05"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/original-lib-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/original-lib-first.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "observations/router-759-ci-job-compaction-after-measurements-v1.raw.log"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/original-lib-interruption-receipt.json",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/original-lib-interruption-receipt.json",
+      "bytes": 2397,
+      "sha256": "2134687930d8432c9779b54d55afe334b182b431f93b80e0c134ce7ae3e809a5"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/original-projection-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/original-projection-first.log",
+      "bytes": 9481,
+      "sha256": "679c82939fdff70d37e2b014cf0d47ed59ac6c5e346a2e433028f261063f6d0f"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/original-projection-second.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/original-projection-second.log",
+      "bytes": 3445,
+      "sha256": "21f7ccc0127f80a273575b594f2c0929abb97ee9f1c3e2e15e1b3d66946229ab"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/original-projection-third.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/original-projection-third.log",
+      "bytes": 383,
+      "sha256": "3447777855984ee5ba898f15a1e9efce9e703c613c7af1c375788a55dd6e174e"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/original-src-git-tree.txt",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/original-src-git-tree.txt",
+      "bytes": 44741,
+      "sha256": "e5333825ca493e7c69df8e767e2a991e0295035b148a80e06d1e59f95eee2363"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/static-elements-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/static-elements-first.log",
+      "bytes": 2918,
+      "sha256": "e02356d37cab76b8b8fcb8ba0838d55956ef0a9f66bbf13bc1c4a3c8fa238791"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/static-elements-second.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/static-elements-second.log",
+      "bytes": 1060,
+      "sha256": "94e4ac300b504cdacfbe65b69b9f5235a59a48f94602298597b15a6c6e7e86b5"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/static-latest-node.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/static-latest-node.log",
+      "bytes": 9949,
+      "sha256": "fd80ae714005696bd8093caa80f142814f8a52792b0819cbdec202ce6d5aa878"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/static-test-diagnostics-second.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/static-test-diagnostics-second.log",
+      "bytes": 1747,
+      "sha256": "1afcc31ead3698a3c0b82cd109eca2c9139c7de74997ddf0a010af07db32a337"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013-static-v1/static-test-diagnostics.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013-static-v1/static-test-diagnostics.log",
+      "bytes": 1312,
+      "sha256": "d00d9faf3f73331fb080bae1289873e6ff01229538eb34c3459332a204972fcf"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/bun-45-final.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/bun-45-final.log",
+      "bytes": 5112,
+      "sha256": "911f6621f917d3da0a3976fcf59889a8af3736ebf09724ad7725f245194bcb5e"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/bun-combined-corrected-final.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/bun-combined-corrected-final.log",
+      "bytes": 11361,
+      "sha256": "73aecfab22eb8215a401f305dc3ed6e0fb0703a565f803cfd5726014be3082c3"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/bun-combined-final.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/bun-combined-final.log",
+      "bytes": 15713,
+      "sha256": "4a6cb469fd868fb4cb56309c55d6d34562b233f5ed74e771b3c07b198c917886"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/capture-difference.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/capture-difference.log",
+      "bytes": 1766,
+      "sha256": "c402a182a5dc83b24f85ab415dd1dc988ba3f33a7161076f2efa79b13beaee76"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/capture-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/capture-first.log",
+      "bytes": 307,
+      "sha256": "b43ba72efa53df5e373779600e11ca9d34f4905c9ffd8bc0f8461bb1c0183299"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/capture-fourth.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/capture-fourth.log",
+      "bytes": 68,
+      "sha256": "c7caaf6e12fcba93e5dc3acb8455b0fe666d7b279424360ea8099cc0cdf6f98f"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/capture-second.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/capture-second.log",
+      "bytes": 1470,
+      "sha256": "5259a9bfa87df813b0f0c78f91c3f6a73767e0d87aa276d412ea518f0c192388"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/capture-third.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/capture-third.log",
+      "bytes": 1507,
+      "sha256": "25e82da873156b971ba7abdd293f47c691949d4e7749be4e98a8e1556609eee6"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/checker-save-old.mjs",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/checker-save-old.mjs",
+      "bytes": 20310,
+      "sha256": "0699573d3337e82e69900035e04437ed67fcd2375d3e2a522a105a8b988d4651"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/clientintegration-copy-diagnostics.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/clientintegration-copy-diagnostics.log",
+      "bytes": 11047,
+      "sha256": "45d933493c0b774d8e526641926e9cca7cf3e4e5f69b192d2eec3793dfd30e45"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/clientkind-combined-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/clientkind-combined-first.log",
+      "bytes": 2551,
+      "sha256": "eeda892d8568441115c4a72096ac240ab4646d6b33225e05461b155f071c9c77"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/clientkind-corrected-final-input-resource-receipt.json",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/clientkind-corrected-final-input-resource-receipt.json",
+      "bytes": 10703,
+      "sha256": "ce4e39549bd761c6bf85cd6a142dd89bef0a3ceec692392cf3653be33472a03d"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/clientkind-final-input-resource-receipt.json",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/clientkind-final-input-resource-receipt.json",
+      "bytes": 10788,
+      "sha256": "559658c4cba4c38f4b6bfbfa9ba7e83a69eb1b01abdbe67b64772b90d4910994"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/clientkind-index-source-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/clientkind-index-source-first.log",
+      "bytes": 4397,
+      "sha256": "c64863bd6044be46b9375a1ffea3fa6947756ca5476c5c885808cd377cbb57bf"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/clientkind-index-source-neutral-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/clientkind-index-source-neutral-first.log",
+      "bytes": 4397,
+      "sha256": "c64863bd6044be46b9375a1ffea3fa6947756ca5476c5c885808cd377cbb57bf",
+      "storedAsHardlink": "workers/router-759-option-cycle-20261013/clientkind-index-source-first.log"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/clientkind-meta-first.json.gz",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/clientkind-meta-first.json.gz",
+      "bytes": 516993,
+      "sha256": "c22da2dc721bca76a943256ca7e7cdaea5641f5b98e48632cbbd18f4f8cc047f"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/clientkind-projected-index-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/clientkind-projected-index-first.log",
+      "bytes": 3201,
+      "sha256": "9f0165dc4f4191b7c9c80be4edf5e573725c5d27c2a6f512c38b3ef1fa904571"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/clientkind-source-test-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/clientkind-source-test-first.log",
+      "bytes": 367,
+      "sha256": "e2a05b3ef4d01c47eb2eb21502ec41c207bfab9ed2302947c04f6e274f4107f2"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/combined-repair-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/combined-repair-first.log",
+      "bytes": 5621,
+      "sha256": "2ed719068fe56bba94cb357a5c554ce9e6a50a3a6ed2930b00adae7c0b668818"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/cycle-test-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/cycle-test-first.log",
+      "bytes": 7137,
+      "sha256": "e086c538c3457d8bba3e2d3ac5fe4c8c88e0e286c0cde8b7ce9a7e5d6ae335df"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/cycle-test-second.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/cycle-test-second.log",
+      "bytes": 37301,
+      "sha256": "2e65d49dbe914508da1044edd44df06c192d88fd9c81098dcf5ac8f22ce30ce0"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/display-alias-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/display-alias-first.log",
+      "bytes": 1828,
+      "sha256": "825b4cd6d9ae95417d2f5b65ddac073efed3903924fd40a39c4dacff6337debf"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/display-toml-source-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/display-toml-source-first.log",
+      "bytes": 2446,
+      "sha256": "a8991c007a67281e08bb51131a5837267b03928c81b881348c39d930152c3a51"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/enum-cast-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/enum-cast-first.log",
+      "bytes": 9,
+      "sha256": "1be84098fe5cfe2bd1df68a5c34190160b05406156757f54fca5543db901b9a3"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/final-input-resource-receipt.json",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/final-input-resource-receipt.json",
+      "bytes": 6451,
+      "sha256": "a5845b70f125fab0f6471c738fde7cfc8c62dedf23ce672a4944d2a18c878f5c"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/lazy-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/lazy-first.log",
+      "bytes": 515,
+      "sha256": "a12534892368fe18d6c23f70e23dd3dc1ac723becf503d3ef418b6816ca20077"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/lazy-fourth.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/lazy-fourth.log",
+      "bytes": 5,
+      "sha256": "7385cc02ea8e90b49da47a7754fb95baafeabfa58000b24b4133ae1d7fbe5ace"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/lazy-second.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/lazy-second.log",
+      "bytes": 154,
+      "sha256": "f2b5f149423d6d518fcbbdfbcc18364f14e0bedaa75752baa22eb81822a7ee96"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/lazy-third.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/lazy-third.log",
+      "bytes": 215,
+      "sha256": "c7c81c29fb10b6d9f720e1efdc6fc2c1630065156ad08937a19ad2ef6d46bb0b"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/nested-proof-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/nested-proof-first.log",
+      "bytes": 1616,
+      "sha256": "459715faf3efae5fd50df575aa594f393e25159d2e25369ab643956d6be1b19c"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/node-45-final.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/node-45-final.log",
+      "bytes": 10509,
+      "sha256": "6973864b3392a85e28e2fd327a6cf9110579088c6566e2a27a5bc194279cedca"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/node-combined-corrected-final.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/node-combined-corrected-final.log",
+      "bytes": 23141,
+      "sha256": "ad769d0c040ba6eaef6fa761d41cf1ca922d33a65cf7511b49747e823238d71f"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/node-combined-final.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/node-combined-final.log",
+      "bytes": 26067,
+      "sha256": "d8a55c840b31c426c596293aedefdc31b3080c43e0dc850b27d49de0299b9fb8"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/nominal-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/nominal-first.log",
+      "bytes": 69045,
+      "sha256": "0e2e1ff066198deda3e70768ed8901b86d506f25bd3e4994ea51c6123dc33879"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/nominal-second.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/nominal-second.log",
+      "bytes": 34,
+      "sha256": "3fda3fcbce235c4e1766d0d81d912d28cc3271f8433bfcd651f47065faf6140f"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/nominal-third.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/nominal-third.log",
+      "bytes": 109,
+      "sha256": "3cc7692bb44cfdbf5c44a50ea6d0eaf2767a7679b7f7419ef278cd66dd04ff1f"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/option-copy-source-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/option-copy-source-first.log",
+      "bytes": 378,
+      "sha256": "1fcc6f60842343ac6a8b8d374030fd2f43610c0a5be21de13d5380252a021169"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/project-copy-stage.mjs",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/project-copy-stage.mjs",
+      "bytes": 8377,
+      "sha256": "ed09050e9e77e476a4974c354c92892ea3921eaba975173362b8a341e2596c19",
+      "storedAsHardlink": "implementation/tools/translation/project-copy.mjs"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/reference-copy-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/reference-copy-first.log",
+      "bytes": 121,
+      "sha256": "c3129b9c2a3c76765a94454578ac260e254f7e7a594bc2ca002cc23943f8bb51"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/selected-bun-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/selected-bun-first.log",
+      "bytes": 5129,
+      "sha256": "e22b5de504042357cdffca4ee686bc75db08618b5ee2149edba6cc46663d5906"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/selected-node-final.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/selected-node-final.log",
+      "bytes": 10418,
+      "sha256": "9e3f8a146dc30d9700e6c361a9b40e5511e1c781e0f14236c5b7b75fc086664b"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/selected-node-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/selected-node-first.log",
+      "bytes": 10143,
+      "sha256": "4a8e0ac33eede7d345b70e882537e397b2adb1d6ef2236a548b22f5caa384d46"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/selected-node-second.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/selected-node-second.log",
+      "bytes": 10307,
+      "sha256": "50a51f61f81932912b036096f67550961ce3fce4ee9f7f27bc08b1c0231064c3"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/static-element-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/static-element-first.log",
+      "bytes": 854,
+      "sha256": "4af746ab8a925c3cffb1b5d80d63278fe8d394756d7c50f9628a6159a34c814f"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/static-element-fourth.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/static-element-fourth.log",
+      "bytes": 67,
+      "sha256": "3e12565e970524d9c30d088b3fc6b24b11f7686ac0f03e54d53a7821e94ceaed"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/static-element-second.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/static-element-second.log",
+      "bytes": 1443,
+      "sha256": "48085e9da31103f32c78d8752d5b1e6f45cf0359d987ee628f5b6c3f3f99c5ff"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/static-element-third.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/static-element-third.log",
+      "bytes": 1187,
+      "sha256": "b02ece73ed988426eee6c5207f922bd0a52c392674ea57e908d62393714ea86c"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/static-helper-stage.mjs",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/static-helper-stage.mjs",
+      "bytes": 4738,
+      "sha256": "4756959420c86231eb3b83856f5c318afd136636d753667181ad879e3d5778e8"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/static-proof-difference.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/static-proof-difference.log",
+      "bytes": 1968,
+      "sha256": "8c484f9a6a72cff7c4ff6987138800c2df7f2011226e18699a3df96f44b144c1"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/toml-identity-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/toml-identity-first.log",
+      "bytes": 1108,
+      "sha256": "710d7daac1482b2ea5f8c2cd5ab020d2d9bcef5c5f302525f600152482e55d06"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/toml-identity-second.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/toml-identity-second.log",
+      "bytes": 1109,
+      "sha256": "25a72d8a2e3068c5749d318342c59d63b557f30e67769976d836487c538efc7e"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/toml-identity-third.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/toml-identity-third.log",
+      "bytes": 708,
+      "sha256": "aa2b1367896bcad3a6cda8d443e2045cdebc76ad82975b155f8af4dca17dd563"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/toml-test-first.log",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/toml-test-first.log",
+      "bytes": 814,
+      "sha256": "0ebaaac699b1cdae9d659807815f0c3a29a2d93ab5c7848ae51534bbd72b9bea"
+    },
+    {
+      "path": "workers/router-759-option-cycle-20261013/toml_edit-0.25.15.crate",
+      "originalPath": "/tmp/router-759-option-cycle-20261013/toml_edit-0.25.15.crate",
+      "bytes": 68207,
+      "sha256": "1340ea94a5856333492c9064b02c778b191dd2c853778d9609debdcdfea3a614",
+      "storedAsHardlink": "implementation/tools/translation/source-profiles/toml-value-namespace/toml_edit-0.25.15.crate"
+    }
+  ],
+  "allDecodedOriginalsVerified": true,
+  "originalRustInputs": 804,
+  "completeOriginalBytes": 325255361,
+  "semanticAuthority": false,
+  "runtimeParity": false,
+  "fullGatePass": false,
+  "rustExecutions": 0
+}

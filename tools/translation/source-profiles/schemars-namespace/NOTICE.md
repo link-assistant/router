@@ -1,0 +1,1 @@
+Original Rust1.89 compiler source for namespace-only Schemars output prerequisites. Full source_util.rs is retained unchanged from the pinned URL in manifest.json; reused archives retain their exact original provenance. Rust is licensed under Apache2.0 or MIT; both license texts are included. These sources grant no caller identity or trait execution authority.

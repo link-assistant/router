@@ -1,0 +1,72 @@
+{
+  "schema": "original-generated-template-hygiene-sources-v1",
+  "rustVersion": "1.89.0",
+  "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+  "sourceAuthority": "complete original source data only",
+  "namespaceAuthority": false,
+  "runtimeAuthority": false,
+  "sourceContextAuthority": false,
+  "sources": [
+    {
+      "path": "compiler/rustc_span/src/hygiene.rs",
+      "archive": "rust-1.89-hygiene.rs.gz",
+      "bytes": 60179,
+      "sha256": "917fb2e9410ebc7dfac8fe5cfeb23db5befe33ec64593232335d9f91ace9ec2d",
+      "gitBlobSha": "29be3b73ee99df06a90183aa52f62e962e3ed290",
+      "archiveBytes": 15231,
+      "archiveSha256": "375747b22dabd39f25f323cb9385f9059e1d3125f7591b232f346e704f092b16",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_span/src/hygiene.rs",
+      "newPackaging": true
+    },
+    {
+      "path": "compiler/rustc_span/src/lib.rs",
+      "archive": "rust-1.89-span-lib.rs.gz",
+      "bytes": 95677,
+      "sha256": "44319ab9e28354c971728334bf5cba29251ac2f5b2e4dbddf8fe0d033ccaeed4",
+      "gitBlobSha": "c8a29a2f68fd95d2759fa22026de30f0a01c8849",
+      "archiveBytes": 23836,
+      "archiveSha256": "5c787608d8cd263eee833a078576d0d46ed2ee39fc6e1715bccdda2a12328117",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_span/src/lib.rs",
+      "newPackaging": true
+    },
+    {
+      "path": "compiler/rustc_expand/src/mbe/macro_rules.rs",
+      "bytes": 56723,
+      "sha256": "8e6dbbb0ec8bcb49b2f8e5b943621a95039c2779131a34930f516db13ff7a8d5",
+      "archiveBytes": 14900,
+      "archiveSha256": "ee1c5bd38944837a73044b3879966e612876ab169c8a8547ff05cd5af27b74d2",
+      "archive": "../source-clone/rust-1.89-macro_rules.rs.gz",
+      "newPackaging": false
+    },
+    {
+      "path": "compiler/rustc_expand/src/mbe/transcribe.rs",
+      "bytes": 40107,
+      "sha256": "acda5fe47ef2ea8f896d9bef65757174e194b7a0b9ca5d4af17961bc91875a8d",
+      "archiveBytes": 11336,
+      "archiveSha256": "3a6de8d134cc8e58206df89e45471eb024c32e659aebec9bbc11c947ed5cd009",
+      "archive": "../macro-metavar/rust-1.89-compiler_rustc_expand_src_mbe_transcribe.rs.gz",
+      "newPackaging": false
+    },
+    {
+      "path": "compiler/rustc_resolve/src/ident.rs",
+      "bytes": 80854,
+      "sha256": "aa296cdcb826154034b13eb55e09bd477f4bb4a3f3f966e01f94e61a8bcfeadd",
+      "archiveBytes": 14969,
+      "archiveSha256": "c676462dc5004d03d5d811603e1692890c4838fa5019f74f5b074ed07a4590cf",
+      "archive": "../tool-attributes/rust-resolve-ident-1.89.0.rs.gz",
+      "newPackaging": false
+    }
+  ],
+  "licenses": [
+    {
+      "path": "LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+    }
+  ]
+}

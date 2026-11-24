@@ -22,6 +22,8 @@
 //!   - GITHUB_EVENT_NAME: 'pull_request' or 'push'
 //!   - GITHUB_BASE_SHA: Base commit SHA for PR
 //!   - GITHUB_HEAD_SHA: Head commit SHA for PR
+//!   - GITHUB_EVENT_ACTION / GITHUB_BEFORE_SHA: on `synchronize`, a push whose
+//!     own delta touches only non-build files skips code checks
 //!
 //! Outputs (written to GITHUB_OUTPUT):
 //!   - rs-changed: 'true' if any .rs files changed
@@ -86,7 +88,18 @@ fn get_changed_files() -> Vec<String> {
 
             let output = exec("git", &["diff", "--name-only", &base, &head]);
             if !output.is_empty() {
-                return output.lines().filter(|s| !s.is_empty()).map(String::from).collect();
+                let pr_files: Vec<String> =
+                    output.lines().filter(|s| !s.is_empty()).map(String::from).collect();
+                if let Some(pushed) = incremental_push_files(&head) {
+                    if !pushed.iter().any(|f| !is_excluded_from_code_changes(f)) {
+                        println!(
+                            "This push only changes non-build files; the previous head was \
+                             already checked, so code checks are skipped for it."
+                        );
+                        return pushed;
+                    }
+                }
+                return pr_files;
             }
         }
     }
@@ -105,9 +118,53 @@ fn get_changed_files() -> Vec<String> {
     output.lines().filter(|s| !s.is_empty()).map(String::from).collect()
 }
 
+/// Files changed by this push alone (`synchronize` only), or `None` when the
+/// previous head is unknown or unreachable (force push, first push, ...).
+/// A push such as reverting a task-details `.gitkeep` commit must not rerun
+/// the whole pipeline just because the cumulative PR diff contains code.
+fn incremental_push_files(head: &str) -> Option<Vec<String>> {
+    if env::var("GITHUB_EVENT_ACTION").ok().as_deref() != Some("synchronize") {
+        return None;
+    }
+    let before = env::var("GITHUB_BEFORE_SHA").ok().filter(|s| !s.is_empty())?;
+    if before.chars().all(|c| c == '0') {
+        return None;
+    }
+    exec_silent("git", &["fetch", "origin", &before]);
+    // Only trust the delta when the old head is an ancestor (no force push).
+    let ancestor = Command::new("git")
+        .args(["merge-base", "--is-ancestor", &before, head])
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false);
+    if !ancestor {
+        return None;
+    }
+    let output = Command::new("git")
+        .args(["diff", "--name-only", &before, head])
+        .output()
+        .ok()
+        .filter(|o| o.status.success())?;
+    let files: Vec<String> = String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .filter(|s| !s.is_empty())
+        .map(String::from)
+        .collect();
+    if files.is_empty() {
+        return None;
+    }
+    println!("Comparing push: {}..{}", before, head);
+    Some(files)
+}
+
 fn is_excluded_from_code_changes(file_path: &str) -> bool {
     // Exclude markdown files in any folder
     if file_path.ends_with(".md") {
+        return true;
+    }
+
+    // Placeholder files carry no build input (e.g. task-details commits).
+    if file_path == ".gitkeep" || file_path.ends_with("/.gitkeep") {
         return true;
     }
 
@@ -249,6 +306,8 @@ mod tests {
             "changelog.d/fix.md",
             "examples/demo.rs",
             "experiments/repro.sh",
+            ".gitkeep",
+            "data/.gitkeep",
         ]));
 
         assert!(!kinds.any_code);

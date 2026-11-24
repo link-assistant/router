@@ -1,0 +1,101 @@
+// Storage DATA only. This validates canonical JSON text without retaining a
+// second complete object tree. No semantic, source or owner permit is issued.
+// Invalid or unusually deep input uses the original native parse/stringify,
+// preserving its exact error behavior and canonicalization rules.
+function canonicalSyntax(source,syntaxOnly=false){
+ let at=0;
+ const stop=()=>{throw Error('Use complete native JSON validation');};
+ const white=()=>{if(!syntaxOnly)return;for(;;){const code=source.charCodeAt(at);if(code!==32&&code!==9&&code!==10&&code!==13)return;at++;}};
+ const digit=()=>{const code=source.charCodeAt(at);return code>=48&&code<=57;};
+ function string(key=false){
+  if(source.charCodeAt(at++)!==34)stop();
+  const begin=at-1;let escaped=false;
+  while(at<source.length){
+   const code=source.charCodeAt(at++);
+   if(code===34){
+    // Values need no decoded copy. Only object keys need strings for native
+    // duplicate/integer-key ordering; validate every escape directly below.
+    if(escaped&&key)return JSON.parse(source.slice(begin,at));
+    return key?source.slice(begin+1,at-1):undefined;
+   }
+   if(code<32)stop();
+   if(code===92){
+    escaped=true;const next=source.charCodeAt(at++);
+    if(syntaxOnly){
+     if(next===117){for(let count=0;count<4;count++){const hex=source.charCodeAt(at++);if(!(hex>=48&&hex<=57||hex>=65&&hex<=70||hex>=97&&hex<=102))stop();}}
+     else if(next!==34&&next!==92&&next!==47&&next!==98&&next!==102&&next!==110&&next!==114&&next!==116)stop();
+    }else if(next===117){
+     let value=0;
+     for(let count=0;count<4;count++){
+      const hex=source.charCodeAt(at++),digit=hex>=48&&hex<=57?hex-48:hex>=97&&hex<=102?hex-87:-1;
+      if(digit<0)stop();value=value*16+digit;
+     }
+     // Native stringify uses short escapes where available, literal ordinary
+     // characters and paired surrogates, and lowercase escapes for lone ones.
+     if(value<32){if(value===8||value===9||value===10||value===12||value===13)stop();}
+     else if(value>=0xd800&&value<=0xdfff){
+      if(value<=0xdbff){
+       const following=source.charCodeAt(at),lowHex=source.charCodeAt(at+3);
+       if(following>=0xdc00&&following<=0xdfff||following===92&&source.charCodeAt(at+1)===117&&source.charCodeAt(at+2)===100&&lowHex>=99&&lowHex<=102)stop();
+      }
+     }else stop();
+    }else if(next!==34&&next!==92&&next!==98&&next!==102&&next!==110&&next!==114&&next!==116){
+     stop();
+    }
+    continue;
+   }
+   if(!syntaxOnly){
+    if(code>=0xd800&&code<=0xdbff){const next=source.charCodeAt(at);if(!(next>=0xdc00&&next<=0xdfff))stop();at++;}
+    else if(code>=0xdc00&&code<=0xdfff)stop();
+   }
+  }
+  stop();
+ }
+ function value(depth){
+  // This is the optimization domain, not a new acceptance/depth limit.
+  // Deeper documents receive the identical original native operation.
+  if(depth>512)stop();
+  white();
+  const code=source.charCodeAt(at);
+  if(code===34){string();return;}
+  if(code===123){
+   at++;white();if(source.charCodeAt(at)===125){at++;return;}
+   const names=syntaxOnly?null:new Set();let lastIndex=-1,ordinary=false;
+   while(at<source.length){
+    const name=string(!syntaxOnly);
+    if(!syntaxOnly){if(names.has(name))stop();names.add(name);const index=Number(name),numeric=Number.isInteger(index)&&index>=0&&index<4294967295&&String(index)===name;if(numeric){if(ordinary||index<=lastIndex)stop();lastIndex=index;}else ordinary=true;}
+    white();if(source.charCodeAt(at++)!==58)stop();value(depth+1);white();
+    const separator=source.charCodeAt(at++);if(separator===125)return;if(separator!==44)stop();white();
+   }
+   stop();
+  }
+  if(code===91){
+   at++;white();if(source.charCodeAt(at)===93){at++;return;}
+   while(at<source.length){value(depth+1);white();const separator=source.charCodeAt(at++);if(separator===93)return;if(separator!==44)stop();}
+   stop();
+  }
+  const literal=code===116?'true':code===102?'false':code===110?'null':null;
+  if(literal&&source.startsWith(literal,at)){at+=literal.length;return;}
+  if(code!==45&&!(code>=48&&code<=57))stop();
+  const begin=at;
+  if(source.charCodeAt(at)===45)at++;
+  if(source.charCodeAt(at)===48)at++;
+  else {const first=source.charCodeAt(at);if(!(first>=49&&first<=57))stop();while(digit())at++;}
+  if(source.charCodeAt(at)===46){at++;if(!digit())stop();while(digit())at++;}
+  if(source.charCodeAt(at)===101||source.charCodeAt(at)===69){at++;if(source.charCodeAt(at)===43||source.charCodeAt(at)===45)at++;if(!digit())stop();while(digit())at++;}
+  if(syntaxOnly)return;
+  const raw=source.slice(begin,at),parsed=JSON.parse(raw);if(typeof parsed!=='number'||JSON.stringify(parsed)!==raw)stop();
+ }
+ try{value(0);white();if(at!==source.length)stop();return true;}
+ catch{return false;}
+}
+export function isCanonicalJsonText(source){
+ if(typeof source!=='string')throw TypeError('Complete JSON text required');
+ return canonicalSyntax(source)||JSON.stringify(JSON.parse(source))===source;
+}
+// Match a discarded native JSON.parse exactly, including acceptance of valid
+// noncanonical and deep input. The canonical fast path needs no object tree.
+export function assertJsonSyntax(source){
+ if(typeof source!=='string')throw TypeError('Complete JSON text required');
+ if(!canonicalSyntax(source,true))JSON.parse(source);
+}

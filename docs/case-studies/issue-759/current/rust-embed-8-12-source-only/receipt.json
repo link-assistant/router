@@ -1,0 +1,107 @@
+{
+  "schema": "router-759-complete-original-rust-embed-source-packet-v1",
+  "sourceFrozenHead": "5662d363cdbf2aca11378c60d3dfacca24720f57",
+  "lockedVersion": "8.12.0",
+  "completeOriginalCrates": [
+    "rust-embed",
+    "rust-embed-impl",
+    "rust-embed-utils"
+  ],
+  "allLockedArchiveChecksumsVerified": true,
+  "allOriginalMembersAndLicensesRetained": true,
+  "members": [
+    {
+      "name": "router-759-rust-embed-source-acquisition-v1.py",
+      "originalPath": "/tmp/router-759-rust-embed-source-acquisition-v1.py",
+      "bytes": 2339,
+      "sha256": "97f09ce1bd08aca37eeed0f05f778d08fb1985701960e80c9b008706a613a07d"
+    },
+    {
+      "name": "router-759-rust-embed-source-acquisition-v1-failure.json",
+      "originalPath": "/tmp/router-759-rust-embed-source-acquisition-v1-failure.json",
+      "bytes": 558,
+      "sha256": "d9b6c0b57665f01e68377462eae2dea863388e2d04904727fb4512fe16a474e5"
+    },
+    {
+      "name": "router-759-rust-embed-source-acquisition-v2.py",
+      "originalPath": "/tmp/router-759-rust-embed-source-acquisition-v2.py",
+      "bytes": 2686,
+      "sha256": "2f7fa4c1ea781ad826721ae586215b991177ca2bf7564dc743834ea2a7153f5d"
+    },
+    {
+      "name": "router-759-rust-embed-source-acquisition-v2.json",
+      "originalPath": "/tmp/router-759-rust-embed-source-acquisition-v2.json",
+      "bytes": 13204,
+      "sha256": "546e181663cabe8ad2c969907d69045085d739b9b909c06506eff2ba759dba80"
+    },
+    {
+      "name": "router-759-rust-embed-source-only-analysis-v1.json",
+      "originalPath": "/tmp/router-759-rust-embed-source-only-analysis-v1.json",
+      "bytes": 2220,
+      "sha256": "8a5aa76990b3f21fb01669780edbf138eacb2b43704cb76e94a0b7f536ea4b3d"
+    },
+    {
+      "name": "router-759-rust-embed-impl-lib-original-v2.rs",
+      "originalPath": "/tmp/router-759-rust-embed-impl-lib-original-v2.rs",
+      "bytes": 20128,
+      "sha256": "6657cbd634d56b9687234005ec0f81a097759a85b6e6d45b93341c9657529a09"
+    },
+    {
+      "name": "router-759-rust-embed-full-source-archive-v1.py",
+      "originalPath": "/tmp/router-759-rust-embed-full-source-archive-v1.py",
+      "bytes": 2265,
+      "sha256": "8f2f14c736fa9aa22914dcd20eb27a818ef1a83be63a1a42f4640605e2a8e038"
+    },
+    {
+      "name": "router-759-rust-embed-8.12.0-original-v2.crate",
+      "originalPath": "/tmp/router-759-rust-embed-8.12.0-original-v2.crate",
+      "bytes": 902584,
+      "sha256": "e9e7760e252aaba7b09f4be00e36476cf585bdb68a53552ac954cdf504ab4bc9"
+    },
+    {
+      "name": "router-759-rust-embed-8.12.0-original-v2.headers",
+      "originalPath": "/tmp/router-759-rust-embed-8.12.0-original-v2.headers",
+      "bytes": 645,
+      "sha256": "f419f3dd00ca739d8f063bb8cc4ad8a49b9340822a58565b48127551a99c8b00"
+    },
+    {
+      "name": "router-759-rust-embed-impl-8.12.0-original-v2.crate",
+      "originalPath": "/tmp/router-759-rust-embed-impl-8.12.0-original-v2.crate",
+      "bytes": 10451,
+      "sha256": "3bcfc4d6f53af43755f7a723e4b6b8794fcce052a178dd8c6c1dadc5f5343097"
+    },
+    {
+      "name": "router-759-rust-embed-impl-8.12.0-original-v2.headers",
+      "originalPath": "/tmp/router-759-rust-embed-impl-8.12.0-original-v2.headers",
+      "bytes": 624,
+      "sha256": "921d2e7aae5fe89726d2b220f7e4cda52816e8ff3d5d066baba2557257f3e4a8"
+    },
+    {
+      "name": "router-759-rust-embed-utils-8.12.0-original-v2.crate",
+      "originalPath": "/tmp/router-759-rust-embed-utils-8.12.0-original-v2.crate",
+      "bytes": 8218,
+      "sha256": "42ffa149f6aa81b58a5b3011d01a857c4ed12c7a732d2c51947a4c7c692185f0"
+    },
+    {
+      "name": "router-759-rust-embed-utils-8.12.0-original-v2.headers",
+      "originalPath": "/tmp/router-759-rust-embed-utils-8.12.0-original-v2.headers",
+      "bytes": 623,
+      "sha256": "2cc70c3e05bbf7b2f8da441b49ee0adbae4a27195990d65ea7283979c04c46dc"
+    }
+  ],
+  "archive": {
+    "path": "docs/case-studies/issue-759/current/rust-embed-8-12-source-only/complete-source.tar.xz",
+    "bytes": 934644,
+    "sha256": "fcfdf95052303a744dacd0af9f79a2644dc504ca388a16ca339253f7c17a7e7d"
+  },
+  "firstAcquisitionFailedBeforeSourceArchiveWrite": true,
+  "firstFailureMetadataRetained": true,
+  "initialFailureRawStderrCapturedSeparately": false,
+  "successfulAcquisitionUsesNormalTlsVerification": true,
+  "compilerProfileImplemented": false,
+  "namespaceAuthority": false,
+  "runtimeParity": false,
+  "rustExecutions": 0,
+  "compilerChanges": 0,
+  "directGitFullOriginalBytesVerification": "required after publication before original cleanup"
+}

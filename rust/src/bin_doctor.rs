@@ -1,0 +1,346 @@
+//! The `doctor` report: what this deployment is and whether it can work.
+//!
+//! Split from `main.rs` to keep that file within the repository's 1000-line
+//! limit.
+
+use crate::operation_reports::{Check, DeploymentHealth, DoctorReport, ModelRecommendation};
+use link_assistant_router::config::{Config, StoragePolicy};
+use link_assistant_router::subscription::SubscriptionReader;
+use std::process::ExitCode;
+
+pub async fn run_doctor(config: &Config) -> ExitCode {
+    println!("Link.Assistant.Router v{}", link_assistant_router::VERSION);
+    println!("listen_addr            : {}", config.listen_addr);
+    println!("upstream_base_url      : {}", config.upstream_base_url);
+    println!("upstream_provider      : {:?}", config.upstream_provider);
+    println!(
+        "openai_provider        : {} ({})",
+        config.openai_compatible.provider_name, config.openai_compatible.base_url
+    );
+    println!(
+        "crater_inbox           : {}",
+        config.crater.inbox.as_deref().unwrap_or("<unset>")
+    );
+    println!("crater_actor           : {}", config.crater.actor);
+    println!("claude_code_home       : {}", config.claude_code_home);
+    println!("routing_mode           : {:?}", config.routing_mode);
+    println!("storage_policy         : {:?}", config.storage_policy);
+    println!("data_dir               : {}", config.data_dir.display());
+    println!("enable_openai_api      : {}", config.enable_openai_api);
+    println!("enable_anthropic_api   : {}", config.enable_anthropic_api);
+    println!("enable_metrics         : {}", config.enable_metrics);
+    println!(
+        "additional_account_dirs: {} configured",
+        config.additional_account_dirs.len()
+    );
+    println!(
+        "account_routing_strategy: {:?}",
+        config.account_routing_strategy
+    );
+    println!("account_cooldown_secs   : {}", config.account_cooldown_secs);
+    println!(
+        "account_request_limits  : {:?}",
+        config.account_request_limits
+    );
+    println!(
+        "session_affinity_ttl   : {}",
+        config.session_affinity_ttl_secs
+    );
+    println!(
+        "admin_key              : {}",
+        if config.admin_key.is_some() {
+            "set"
+        } else {
+            "<unset>"
+        }
+    );
+    println!(
+        "admin_ui               : {}",
+        if config.admin_ui.enabled {
+            crate::translation_core::format!("enabled on {}", config.admin_ui.listen_addr)
+        } else {
+            "disabled".to_string()
+        }
+    );
+    {
+        let claim = link_assistant_router::admin::AdminClaim::load(
+            config.admin_key.clone(),
+            &config.data_dir,
+            config.admin_ui.candidate_ttl,
+        );
+        let status = claim.status();
+        println!(
+            "admin_credential       : {}",
+            match status.credential_kind {
+                link_assistant_router::admin::CredentialKind::Environment =>
+                    "provisioned by environment".to_string(),
+                link_assistant_router::admin::CredentialKind::Jwt =>
+                    crate::translation_core::format!(
+                        "claimed admin JWT {} (first-visitor bootstrap closed)",
+                        status.token_id.as_deref().unwrap_or("<unknown>")
+                    ),
+                link_assistant_router::admin::CredentialKind::LegacyOpaque =>
+                    "claimed (first-visitor bootstrap closed)".to_string(),
+                link_assistant_router::admin::CredentialKind::None =>
+                    "UNCLAIMED (bootstrap open)".to_string(),
+            }
+        );
+        if status.credential_kind == link_assistant_router::admin::CredentialKind::LegacyOpaque {
+            println!(
+                "admin_credential_warning: WARNING legacy opaque `la_admin_` credential; \
+                 it carries no expiry, scope or revocation. Rotate it into an admin JWT \
+                 with POST /api/management/admin/rotate (or /rotate in the chat admin bot)."
+            );
+        }
+    }
+    println!(
+        "admin_endpoints        : {}",
+        if config.allow_anonymous_admin {
+            "OPEN (--allow-anonymous-admin)"
+        } else {
+            "closed (admin key or admin-scoped token required)"
+        }
+    );
+    if config.emergency_auth.enabled {
+        println!(
+            "emergency_auth         : WARNING ON for {} min (--emergency-accept-any-token): \
+             client routes accept any non-empty Router token; management routes stay closed",
+            config.emergency_auth.duration_minutes
+        );
+    } else {
+        println!("emergency_auth         : off");
+    }
+    println!(
+        "telegram_admin_bot     : {}",
+        if config.chat_admin.telegram_enabled() {
+            "enabled (private chats only)"
+        } else {
+            "disabled"
+        }
+    );
+    println!(
+        "vk_admin_bot           : {}",
+        if config.chat_admin.vk_enabled() {
+            "enabled (private chats only)"
+        } else {
+            "disabled"
+        }
+    );
+    println!(
+        "login_api              : {}",
+        if config.login.enabled {
+            "enabled (POST /api/management/login)"
+        } else {
+            "disabled"
+        }
+    );
+    println!(
+        "login_cli              : {} {}",
+        config.login.command,
+        config.login.args.join(" ")
+    );
+    // Whether each auth mode can run here, before any login is attempted.
+    for line in link_assistant_router::doctor::login_mode_report(&config.login) {
+        println!("{line}");
+    }
+    // What this deployment discloses upstream, so the property can be checked
+    // without reading the source or the request store (issue #332).
+    for line in link_assistant_router::doctor::forwarded_header_report() {
+        println!("{line}");
+    }
+    println!(
+        "mpp_openai_charge      : {}",
+        if config.mpp.is_configured() {
+            "enabled"
+        } else {
+            "disabled"
+        }
+    );
+
+    // Probe the active pool with its vendor-specific credential layout.
+    let (active_provider, primary_home) = config.subscription_pool();
+    let primary = SubscriptionReader::new(active_provider, &primary_home);
+    match primary.discover_credential_path() {
+        Some(path) => {
+            let status = primary.read_token().map_or("found, NO TOKEN", |token| {
+                if token.is_expired(crate::operation_context::now().timestamp_millis()) {
+                    "found, token EXPIRED on disk"
+                } else {
+                    "found, token OK"
+                }
+            });
+            println!("primary credentials    : {} ({})", path.display(), status);
+        }
+        None => println!(
+            "primary credentials    : {} (MISSING)",
+            primary_home.display()
+        ),
+    }
+    for (i, dir) in config.additional_account_dirs.iter().enumerate() {
+        let reader = SubscriptionReader::new(active_provider, dir);
+        match reader.discover_credential_path() {
+            Some(path) => println!(
+                "extra account {}        : {} (found)",
+                i + 1,
+                path.display()
+            ),
+            None => println!(
+                "extra account {}        : {} (MISSING)",
+                i + 1,
+                dir.display()
+            ),
+        }
+    }
+
+    let (catalog_error, providers) = link_assistant_router::doctor::subscription_catalog_report(
+        config.subscription_readers(),
+        Some(&config.data_dir),
+    )
+    .await;
+
+    // Probe data dir.
+    if config.data_dir.exists() {
+        println!("data_dir                : present");
+    } else {
+        println!("data_dir                : will be created on first write");
+    }
+
+    if matches!(
+        config.storage_policy,
+        StoragePolicy::Text | StoragePolicy::Both
+    ) {
+        let p = config.data_dir.join("tokens.lino");
+        println!(
+            "lino store              : {} ({})",
+            p.display(),
+            if p.exists() { "present" } else { "<empty>" }
+        );
+    }
+    if matches!(
+        config.storage_policy,
+        StoragePolicy::Binary | StoragePolicy::Both
+    ) {
+        let p = config.data_dir.join("tokens.bin");
+        println!(
+            "binary store            : {} ({})",
+            p.display(),
+            if p.exists() { "present" } else { "<empty>" }
+        );
+    }
+    let p = config.data_dir.join("providers.lenv");
+    println!(
+        "provider store         : {} ({})",
+        p.display(),
+        if p.exists() { "present" } else { "<empty>" }
+    );
+
+    // A z.ai plan the serving process saw refused as exhausted (issue #657).
+    // A local deployment at the default root records it under its own data
+    // directory, not this process's (issue #664).
+    // Every deployment `router deploy` registered is inspected too, so one
+    // started with `--root DIR` is no longer invisible here (issue #684).
+    let (registered, unseen) = link_assistant_router::deploy::registry::doctor_targets(
+        &link_assistant_router::deploy::registry::path(&config.data_dir),
+    );
+    let data_dirs: Vec<std::path::PathBuf> = [
+        config.data_dir.clone(),
+        crate::deploy_cli::default_root(&config.data_dir).join("data"),
+    ]
+    .into_iter()
+    .chain(registered)
+    .collect();
+    print!("{unseen}");
+    let (exhausted, found) = link_assistant_router::zai_upstream_error::doctor_report(&data_dirs);
+    print!("{exhausted}");
+
+    // Pool failover and vendor rate-limit state (issues #676, #677). A cooling
+    // or paused account is the pool working as configured, not a fault, so it
+    // does not change the exit code.
+    print!("{}", config.pool.doctor_lines());
+    let (limits, _) = link_assistant_router::account_limits::doctor_report(&data_dirs);
+    print!("{limits}");
+    println!(
+        "management_allow_remote: {}",
+        config.management.allow_remote
+    );
+    println!(
+        "management_lockout     : failures={} secs={} exempt_loopback={}",
+        config.management.lockout_failures,
+        config.management.lockout_secs,
+        config.management.exempt_loopback
+    );
+    let management_bans = link_assistant_router::management_access::doctor_report(&data_dirs);
+    print!("{management_bans}");
+
+    let failed = catalog_error || found;
+    let deployments =
+        crate::deploy::registry::read(&crate::deploy::registry::path(&config.data_dir))
+            .into_iter()
+            .map(|deployment| DeploymentHealth {
+                present: deployment.root.join("data").is_dir(),
+                deployment,
+            })
+            .collect();
+    let recommended_models = providers
+        .iter()
+        .filter(|provider| provider.state == "usable")
+        .filter_map(|provider| {
+            provider.models.first().map(|model| ModelRecommendation {
+                provider: provider.provider,
+                model: model.clone(),
+                reason: "first exact model returned by the accepted live provider catalog".into(),
+            })
+        })
+        .collect();
+    crate::operation_output::report(DoctorReport {
+        status: if failed { "unhealthy" } else { "healthy" }.into(),
+        version: crate::VERSION.into(),
+        data_dir: config.data_dir.clone(),
+        listen_addr: config.listen_addr.to_string(),
+        forwarded_headers: crate::proxy::forwarded_client_headers()
+            .iter()
+            .map(|name| (*name).to_owned())
+            .collect(),
+        checks: vec![
+            Check {
+                name: "management-lockout".into(),
+                state: if management_bans.is_empty() {
+                    "inactive"
+                } else {
+                    "active"
+                }
+                .into(),
+                detail: (!management_bans.is_empty()).then_some(management_bans),
+            },
+            Check {
+                name: "subscription-catalogs".into(),
+                state: if catalog_error { "failed" } else { "passed" }.into(),
+                detail: None,
+            },
+            Check {
+                name: "provider-exhaustion".into(),
+                state: if found { "failed" } else { "passed" }.into(),
+                detail: None,
+            },
+            Check {
+                name: "data-directory".into(),
+                state: if config.data_dir.exists() {
+                    "present"
+                } else {
+                    "absent"
+                }
+                .into(),
+                detail: None,
+            },
+        ],
+        providers,
+        deployments,
+        recommended_models,
+        output: Vec::new(),
+    });
+    if failed {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    }
+}

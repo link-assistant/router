@@ -1,0 +1,218 @@
+{
+  "schema": "json-arithmetic-source-queue-review-v1",
+  "status": "SOURCE_ONLY_UNRUN",
+  "reviewedHead": "ee5f6082ee0e2f1464b1c27f78b771ff003513a5",
+  "coreCases": 79,
+  "coreFiles": 15,
+  "relatedCases": 23,
+  "completeCases": 102,
+  "files": [
+    {
+      "path": "tools/translation/test/arithmetic-source-fragments.test.mjs",
+      "authoredCases": 7,
+      "bytes": 5155,
+      "sha256": "34ad1bdbb9b532528565d25fe305db487c34fd459510ed11abb7bd6470e6439a",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "main79"
+    },
+    {
+      "path": "tools/translation/test/arithmetic-source-data.test.mjs",
+      "authoredCases": 5,
+      "bytes": 4806,
+      "sha256": "51e56dfebe5aa47abebc64009c578008ac1e0bda909ca7657b9344e35f08959e",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "main79"
+    },
+    {
+      "path": "tools/translation/test/arithmetic-associated-source.test.mjs",
+      "authoredCases": 2,
+      "bytes": 3083,
+      "sha256": "927f72003a1954a3c7e0897d722ad69b54a3366d77e1b28f901df907f1e4a995",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "main79"
+    },
+    {
+      "path": "tools/translation/test/json-roundtrip-num-expansions.test.mjs",
+      "authoredCases": 4,
+      "bytes": 4387,
+      "sha256": "d638e42af515429819f52b7133d887b4256c9ac9238ec46c5436de5e95fa26a6",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "main79"
+    },
+    {
+      "path": "tools/translation/test/json-roundtrip-limb-fragments.test.mjs",
+      "authoredCases": 12,
+      "bytes": 10966,
+      "sha256": "ed7a350a75fcb6ce38ec191e1582769ad51e48a0e67bfe44f0670cd9c1a5b23e",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "main79"
+    },
+    {
+      "path": "tools/translation/test/json-roundtrip-storage-fragments.test.mjs",
+      "authoredCases": 7,
+      "bytes": 8818,
+      "sha256": "371e8a276573bfc845039c7ed651b63dcc668412b0812caccf7e7936671ba5d3",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "main79"
+    },
+    {
+      "path": "tools/translation/test/json-roundtrip-reference-fragments.test.mjs",
+      "authoredCases": 2,
+      "bytes": 3650,
+      "sha256": "8b315762c8a93b6ae3f9ec0fec3336bf54d7972575e1b49761cd1aa0a59507c8",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "main79"
+    },
+    {
+      "path": "tools/translation/test/arithmetic-reference-forwarding.test.mjs",
+      "authoredCases": 4,
+      "bytes": 6581,
+      "sha256": "40f6cadb30a15eca6fc545110bc111a93ce8c4fe38db9c605fffd67139c4948b",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "main79"
+    },
+    {
+      "path": "tools/translation/test/arithmetic-copy-source.test.mjs",
+      "authoredCases": 3,
+      "bytes": 3808,
+      "sha256": "50f10a7e47e7041fb305dd62413f3c28cbb5b9a07d4d5ee4b20f48e332ce2200",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "main79"
+    },
+    {
+      "path": "tools/translation/test/declarative-macros.test.mjs",
+      "authoredCases": 9,
+      "bytes": 14382,
+      "sha256": "5e6a6cba87db2d55519501b6d10d7e7d5587c6fc0c229249f64d9dce250036eb",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "main79"
+    },
+    {
+      "path": "tools/translation/test/declarative-closure.test.mjs",
+      "authoredCases": 4,
+      "bytes": 7771,
+      "sha256": "3e919ead8f3c63f6c506b17c0fcfe445e56ecc35062fdabda4c31c5a109ec3e6",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "main79"
+    },
+    {
+      "path": "tools/translation/test/declarative-owner-frontier.test.mjs",
+      "authoredCases": 2,
+      "bytes": 3774,
+      "sha256": "7201b18bd305c89f4578cda874a02556ca3afe72cafec04b8b8df0c4329868f4",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "main79"
+    },
+    {
+      "path": "tools/translation/test/format-source-stages.test.mjs",
+      "authoredCases": 5,
+      "bytes": 6033,
+      "sha256": "2738fd62812ce16c7f357963728cc8f041b24abbdcec2d454788da0a7e159721",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "main79"
+    },
+    {
+      "path": "tools/translation/test/format-builtin-bridge.test.mjs",
+      "authoredCases": 7,
+      "bytes": 8992,
+      "sha256": "472c784c311b088689cc678084fe159fbebb0f6811b49e15e6930d55ee62cf1a",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "main79"
+    },
+    {
+      "path": "tools/translation/test/json-roundtrip-retention.test.mjs",
+      "authoredCases": 6,
+      "bytes": 7630,
+      "sha256": "6a6bf39084cbf4f23373f6320377815ebd485440925a3f47825cb6ddc48a5482",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "main79"
+    },
+    {
+      "path": "tools/translation/test/json-roundtrip.test.mjs",
+      "authoredCases": 6,
+      "bytes": 7700,
+      "sha256": "92da6d56aee76546a523305498984a75cf8afa0d42b9b509b01e29467807f042",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "necessary-related"
+    },
+    {
+      "path": "tools/translation/test/json-roundtrip-source-trace.test.mjs",
+      "authoredCases": 3,
+      "bytes": 5325,
+      "sha256": "1bb94680d34232692ea995db97fe689d493bbe7bf73f51b692a23abaf76a3dac",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "necessary-related"
+    },
+    {
+      "path": "tools/translation/test/json-roundtrip-lexical.test.mjs",
+      "authoredCases": 5,
+      "bytes": 5021,
+      "sha256": "32d01e233986bd3f0796c06696aea4918e41a9f58965f1e065d3b202893019cf",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "necessary-related"
+    },
+    {
+      "path": "tools/translation/test/json-runtime.test.mjs",
+      "authoredCases": 8,
+      "bytes": 8788,
+      "sha256": "56e7c496540a5ca92377f58165422b67b688ae015486cf021f8b09c0f987dc56",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "necessary-related"
+    },
+    {
+      "path": "tools/translation/test/reuse-translation.test.mjs",
+      "authoredCases": 1,
+      "bytes": 8346,
+      "sha256": "7b9ed020f97baa7e18ee73d47b99fd4ff26c7dc0628553a4d83d37eff3eefe6d",
+      "status": "UNRUN_ON_COMPOSED_QUEUE",
+      "scope": "necessary-related"
+    }
+  ],
+  "priorVerified39EvidencePreserved": "fixtures/json-roundtrip/source-ir-initial-final-39",
+  "historical769ReceiptPreserved": "fixtures/json-roundtrip/source-counterexample.json",
+  "packagingRepair": {
+    "module": "json-retention-runtime-assets.mjs",
+    "consumer": "host-assets.mjs",
+    "relocation": "import specifiers only",
+    "newRustArchiveBytes": 0,
+    "license": "vendor/formal-ai/LICENSE plus existing serde_json MIT/Apache assets"
+  },
+  "remainingPow5Boundary": {
+    "currentSourceProjectionCap": 1099,
+    "conservativeRaw769Ceiling": 1100,
+    "capChanged": false,
+    "originalTableFacts": {
+      "source": "src/lexical/math.rs",
+      "sha256": "c5452d3ef9cc9ebd74a99f22dcabf74f4f062bbaeade46301260b79e4662d5df",
+      "cutoff": 32,
+      "largestSelectedPower": 1024,
+      "tableIndex": 10,
+      "word32TableLimbs": 75,
+      "word64TableLimbs": 38
+    },
+    "notAClosureProof": "Table size and ideal limb bounds do not prove source dispatch/trait/allocator behavior; caps/refusals are retained.",
+    "newReaderCase": "769 digits of9, exponent-1100: expected original moderate accepted underflow0; no fallback power grant",
+    "missingFullProof": [
+      "actual moderate error acceptance predicate to bounded fallback demand",
+      "actual small::imul_pow5 + large::imul selected dispatch across both word sizes",
+      "Math data/data_mut/Default and AsRef/Copy/linked allocator contracts"
+    ]
+  },
+  "prerequisites": [
+    "Gate-issued exclusive serial Node1 then Bun window; no engines have run current changes",
+    "retain CURRENT authoritative Cargo float_roundtrip guard from guarded integration baseline",
+    "exact future formatter registry lib input if testing registry-presence branch; missing-input diagnostic remains valid otherwise",
+    "future producer implementation fingerprints must include arithmetic-digit-retention.mjs and json-retention-runtime-assets.mjs",
+    "existing tsc dependency for formatter/retention/reuse strict target cases"
+  ],
+  "plannedRun": "20 named files102 cases, Node --test --test-concurrency=1 then Bun, publisher-coordinated per-run ceiling180s; no Rust/producer",
+  "authority": {
+    "parseAdmission": false,
+    "namespaceAuthority": false,
+    "numericTraitOwnerVerified": false,
+    "allocatorEffectsVerified": false,
+    "sourceBehaviorFidelityVerified": false,
+    "applicationEffectCompleteness": false,
+    "runtimeParity": false
+  }
+}

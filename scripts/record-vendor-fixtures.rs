@@ -1,5 +1,5 @@
 #!/usr/bin/env rust-script
-//! Re-record the vendor cassettes under `tests/fixtures/vendor/` (#671).
+//! Re-record the vendor cassettes under `rust/tests/fixtures/vendor/` (#671).
 //!
 //! Every cassette with a `record` section is re-sent to the real vendor with a
 //! real key, and its `response` is replaced by what the vendor answered —
@@ -33,6 +33,8 @@ use std::process::ExitCode;
 use serde_json::{Map, Value, json};
 
 const SCHEMA: &str = "link-assistant-router/vendor-cassette/v1";
+/// Cassette directory relative to the repository root, then to `rust/`.
+const VENDOR_FIXTURES: [&str; 2] = ["rust/tests/fixtures/vendor", "tests/fixtures/vendor"];
 /// Headers worth keeping: the ones Router's translators and error mapping read.
 const KEPT_HEADERS: &[&str] = &["content-type", "retry-after"];
 /// Substrings that must never appear in a committed cassette.
@@ -54,16 +56,16 @@ fn main() -> ExitCode {
         .iter()
         .position(|arg| arg == "--only")
         .and_then(|index| args.get(index + 1).cloned());
+    // rust-script compiles in a cache directory, so the working directory is
+    // searched as well; the package (and its cassettes) lives under `rust/`.
+    let cwd = std::env::current_dir().ok();
     let root = Path::new(env!("CARGO_MANIFEST_DIR"))
         .ancestors()
-        .find(|dir| dir.join("tests/fixtures/vendor").is_dir())
-        .map(|dir| dir.join("tests/fixtures/vendor"))
-        .or_else(|| {
-            let cwd = std::env::current_dir().ok()?.join("tests/fixtures/vendor");
-            cwd.is_dir().then_some(cwd)
-        });
+        .chain(cwd.iter().map(PathBuf::as_path))
+        .flat_map(|dir| VENDOR_FIXTURES.map(|relative| dir.join(relative)))
+        .find(|candidate| candidate.is_dir());
     let Some(root) = root else {
-        eprintln!("run from the repository root: tests/fixtures/vendor not found");
+        eprintln!("run from the repository root: rust/tests/fixtures/vendor not found");
         return ExitCode::FAILURE;
     };
     let mut failures = 0;

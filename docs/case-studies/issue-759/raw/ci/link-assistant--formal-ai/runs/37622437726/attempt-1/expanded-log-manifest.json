@@ -1,0 +1,78 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37622437726/attempt-1/logs/0_rust tier (dogfood regeneration gate).txt.gz",
+    "sha256": "868beee93c05197334b28cbb5f27f1415c25974a90fbb01906c7ef5cc7047d0e",
+    "bytes": 6627,
+    "uncompressed_bytes": 27185,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37622437726/attempt-1/logs/rust tier (dogfood regeneration gate)/system.txt.gz",
+    "sha256": "aeceb0d74b97cb0587702368b116c4d133fbb8a86fd3c3dd6f82b25bec19dad9",
+    "bytes": 489,
+    "uncompressed_bytes": 1138,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37622437726/attempt-1/logs/1_server parity (JavaScript server vs Rust server).txt.gz",
+    "sha256": "e7379eda8abfeb9a7f44057f22b9cf40d5646292e34b861169668f8317236834",
+    "bytes": 6610,
+    "uncompressed_bytes": 27114,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37622437726/attempt-1/logs/server parity (JavaScript server vs Rust server)/system.txt.gz",
+    "sha256": "46340bb2580df52e31284d312500265339c2843c123fbed5493129e03765bef4",
+    "bytes": 498,
+    "uncompressed_bytes": 1147,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37622437726/attempt-1/logs/2_ts tier (js-ts file-set parity).txt.gz",
+    "sha256": "9c1033a352373222c3d6cbcbf3ef217ba6ccda62ae359ea0891a80d3b02ec84e",
+    "bytes": 5239,
+    "uncompressed_bytes": 22107,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37622437726/attempt-1/logs/ts tier (js-ts file-set parity)/system.txt.gz",
+    "sha256": "185f210b969a27bd2ade001af586f65410bcad3c201f715fe7437679de84dbf3",
+    "bytes": 477,
+    "uncompressed_bytes": 998,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37622437726/attempt-1/logs/3_js tier (node --check over js).txt.xz",
+    "sha256": "fb3f207ac5ef7b4563d4d9613296aa9d700ea09a7c7936f918150a5dcf5476c6",
+    "bytes": 52748,
+    "uncompressed_bytes": 363826,
+    "redacted": false,
+    "original_gzip_sha256": "4746197715f0e23f3282ebb6cfa8bfb20f86c3fb8860340eb3148c875dc9d8d6",
+    "compression": "xz",
+    "decoded_sha256": "f8b72e41394487d4f6612fa1e4dd77a06782d03f994bc0e987189e65f1eedbc9"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37622437726/attempt-1/logs/js tier (node --check over js)/system.txt.gz",
+    "sha256": "8d2202061317d88095a4f838b9189c815d90e0a80776db7a6aca4ee9cbb5afd2",
+    "bytes": 441,
+    "uncompressed_bytes": 858,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37622437726/attempt-1/logs/4_Detect tier changes.txt.xz",
+    "sha256": "b56f237d23013c18c8b1c417e0f6c721069df7953b25ac53bd665d60cce05f87",
+    "bytes": 49548,
+    "uncompressed_bytes": 554175,
+    "redacted": false,
+    "original_gzip_sha256": "b24c4a991bffc4da3a8f5f825b326beee923dfbe59cbc70179e215ef7acfe9e8",
+    "compression": "xz",
+    "decoded_sha256": "7905a7d2724c1c84f1fe8485081408c46986a618abedc3598ad345e2d131d7db"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37622437726/attempt-1/logs/Detect tier changes/system.txt.gz",
+    "sha256": "1b9f25aa745d74ef20225f81646e8082abba9c6a858e002bbe509b4d73e16653",
+    "bytes": 390,
+    "uncompressed_bytes": 743,
+    "redacted": false
+  }
+]

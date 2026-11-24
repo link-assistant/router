@@ -1,0 +1,5 @@
+Preserve checked module type, value and macro alias maps separately. Value-only functions named `Option`, `Result`, `Vec` or `String` cannot capture type syntax or associated-function owners. Actual value shadows of `Some` and `None` retain their source implementations. Unknown imports, procedural expansion and actual type shadows continue to carry.
+
+Parameter/local collisions with module value aliases are explicitly refused until a checked lexical alias environment is available. Namespace evidence records only consumed binding targets and their original source spans. A pinned unchanged `account_http::non_empty` body is a bounded regression fixture with an explicit carrier declaration; it is not a newly recovered whole-module function or a claim about the published procedural-uncertainty counts.
+
+Pure binding adapter units have passed Node and Bun. Compiler, emitted JavaScript and strict compiled TypeScript integration checks remain pending under the sole publisher's compiler lock; this next cohort is excluded from the frozen publication candidate.

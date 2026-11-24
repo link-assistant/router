@@ -1,0 +1,191 @@
+{
+  "schema": "protocol-source-projection-paired-validation-v1",
+  "verifiedSourceHead": "798838090cb8f8225cdc9f262c276fdaaee025dd",
+  "trackedStatusDuringRunners": "clean",
+  "casesPerFinalEngine": 134,
+  "finalFailedCases": 0,
+  "finalSkippedCases": 0,
+  "files": 24,
+  "targets": [
+    "emitted JavaScript",
+    "strict compiled TypeScript"
+  ],
+  "sourceBodyRewritten": false,
+  "oneOriginalFunctionProof": {
+    "file": "src/bridge_request_tools.rs",
+    "fileSha256": "5ba0389968e32e9c99eebd7a38d32c80c8278e86278ace56290025c71a636941",
+    "function": "translate_tool_choice",
+    "span": {
+      "start": 1790,
+      "end": 2218,
+      "unit": "UTF-16"
+    },
+    "functionSha256": "2f9f0e36e37a38d89000e15f7cadad89f3855bbd245c6c38049d1955985e288e",
+    "literalExpectationsPerTargetPerEngine": 12,
+    "context": "complete unchanged child file with authored module carrier, not full Router admission"
+  },
+  "retentionCounterexample": "Source-inferred pinned original retained-prefix/sticky behavior; checked JS/strict TS fixture execution is not a Rust observation",
+  "authority": {
+    "RustExecuted": false,
+    "producerExecuted": false,
+    "actualCargoFloatRoundtripAdmission": false,
+    "namespaceAuthority": false,
+    "wholeReaderAuthority": false,
+    "applicationEffectCompleteness": false,
+    "nativeParity": false,
+    "runtimeParity": false
+  },
+  "attemptSummaries": [
+    {
+      "label": "initial131",
+      "head": "8ce9690373ef90b66862f7f1dacd2854e705384a",
+      "runners": [
+        {
+          "engine": "node",
+          "counts": {
+            "tests": 131,
+            "pass": 118,
+            "fail": 13,
+            "skipped": 0,
+            "cancelled": 0
+          },
+          "elapsedSeconds": 7.587848916882649,
+          "rawSha256": "d2a635d5a278eac492dcf8caa9d1cbfe3de09b1a5aab5bc1846943d4975f4b0d",
+          "rawBytes": 154447,
+          "resources": {
+            "scope": "harness children; CPU deltas for this runner; RSS cumulative harness-child peak",
+            "userCpuSeconds": 10.650415,
+            "systemCpuSeconds": 0.8270219999999999,
+            "ruMaxRss": 197607424,
+            "ruMaxRssUnits": "bytes",
+            "harnessPlatform": "darwin"
+          }
+        },
+        {
+          "engine": "bun",
+          "counts": {
+            "tests": 131,
+            "pass": 118,
+            "fail": 13,
+            "skipped": 0,
+            "cancelled": 0
+          },
+          "elapsedSeconds": 4.291328874882311,
+          "rawSha256": "de133794b46de0c673db74d9b4c4398f4acc037330b0271dcf19f5b5e60e3b0b",
+          "rawBytes": 151046,
+          "resources": {
+            "scope": "harness children; CPU deltas for this runner; RSS cumulative harness-child peak",
+            "userCpuSeconds": 6.5154510000000005,
+            "systemCpuSeconds": 0.723081,
+            "ruMaxRss": 352600064,
+            "ruMaxRssUnits": "bytes",
+            "harnessPlatform": "darwin"
+          }
+        }
+      ]
+    },
+    {
+      "label": "retry134",
+      "head": "ee4b4239b81c627ab701bf38e9845537ab1a1194",
+      "runners": [
+        {
+          "engine": "node",
+          "counts": {
+            "tests": 134,
+            "pass": 131,
+            "fail": 3,
+            "skipped": 0,
+            "cancelled": 0
+          },
+          "elapsedSeconds": 11.495110374875367,
+          "rawSha256": "fbdabfa94e55654b8bca3ee367d2947ab97f6ecbd278afcf93c412cb240d3d1d",
+          "rawBytes": 96656,
+          "resources": {
+            "scope": "harness children; CPU deltas for this runner; RSS cumulative harness-child peak",
+            "userCpuSeconds": 15.825632,
+            "systemCpuSeconds": 1.26276,
+            "ruMaxRss": 191971328,
+            "ruMaxRssUnits": "bytes",
+            "harnessPlatform": "darwin"
+          }
+        },
+        {
+          "engine": "bun",
+          "counts": {
+            "tests": 134,
+            "pass": 131,
+            "fail": 3,
+            "skipped": 0,
+            "cancelled": 0
+          },
+          "elapsedSeconds": 6.952532832976431,
+          "rawSha256": "258930522a55d3d59bfebbca58f2ee527a18420aca1650f631255f231386ae80",
+          "rawBytes": 82296,
+          "resources": {
+            "scope": "harness children; CPU deltas for this runner; RSS cumulative harness-child peak",
+            "userCpuSeconds": 11.388739,
+            "systemCpuSeconds": 1.435024,
+            "ruMaxRss": 329236480,
+            "ruMaxRssUnits": "bytes",
+            "harnessPlatform": "darwin"
+          }
+        }
+      ]
+    },
+    {
+      "label": "final134",
+      "head": "798838090cb8f8225cdc9f262c276fdaaee025dd",
+      "runners": [
+        {
+          "engine": "node",
+          "counts": {
+            "tests": 134,
+            "pass": 134,
+            "fail": 0,
+            "skipped": 0,
+            "cancelled": 0
+          },
+          "elapsedSeconds": 12.07142150006257,
+          "rawSha256": "cac1c8efecd9e5af8de76e50d5d6d6da29f050c5467c5f78001c5cb446bd514a",
+          "rawBytes": 42847,
+          "resources": {
+            "scope": "harness children; CPU deltas for this runner; RSS cumulative harness-child peak",
+            "userCpuSeconds": 16.505148,
+            "systemCpuSeconds": 1.347143,
+            "ruMaxRss": 202620928,
+            "ruMaxRssUnits": "bytes",
+            "harnessPlatform": "darwin"
+          }
+        },
+        {
+          "engine": "bun",
+          "counts": {
+            "tests": 134,
+            "pass": 134,
+            "fail": 0,
+            "skipped": 0,
+            "cancelled": 0
+          },
+          "elapsedSeconds": 7.352084249956533,
+          "rawSha256": "03b581c3d697768e2706da2e7523d245d3c6560df1288b65355761a6a17a5c0d",
+          "rawBytes": 26893,
+          "resources": {
+            "scope": "harness children; CPU deltas for this runner; RSS cumulative harness-child peak",
+            "userCpuSeconds": 11.790792,
+            "systemCpuSeconds": 1.486302,
+            "ruMaxRss": 340901888,
+            "ruMaxRssUnits": "bytes",
+            "harnessPlatform": "darwin"
+          }
+        }
+      ]
+    }
+  ],
+  "archive": {
+    "path": "complete-initial-retry-final.json.gz",
+    "bytes": 319078,
+    "sha256": "e1e07013b815e25e6cb577c2887af09396d2941e2f6e821b8bb0a365c7ef1430",
+    "uncompressedBytes": 1121791,
+    "reopenedEqual": true
+  }
+}

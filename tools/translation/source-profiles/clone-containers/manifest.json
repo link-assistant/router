@@ -1,0 +1,43 @@
+{
+  "schema": "original-option-clone-bodies-v1",
+  "rustVersion": "1.89",
+  "license": "MIT OR Apache-2.0",
+  "sources": [
+    {
+      "path": "library/core/src/option.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/core/src/option.rs",
+      "archive": "../option-deref/core-option.rs.gz",
+      "bytes": 86718,
+      "sha256": "4c172731ebf0ef2ae6fc3e9b5127096d3c5c400c3757cfe5e38223de91bc3efd",
+      "archiveBytes": 18396,
+      "archiveSha256": "2f8986530d23db3ed08f32fbe8b0c82b7ffb1c3abe6b407b38ff989998739cb1",
+      "provenance": "complete existing licensed pinned original; archive bytes unchanged"
+    },
+    {
+      "path": "LICENSE-MIT",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/LICENSE-MIT",
+      "archive": "../builtin-derive-bang/rust-1.89-LICENSE-MIT.gz",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1",
+      "archiveBytes": 646,
+      "archiveSha256": "e675109f90bf15b2d8120a8bd7a7d062a8f62a7efa9b09a2c25e030dae5de841",
+      "provenance": "complete existing licensed pinned original; archive bytes unchanged"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/LICENSE-APACHE",
+      "archive": "../builtin-derive-bang/rust-1.89-LICENSE-APACHE.gz",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "archiveBytes": 3554,
+      "archiveSha256": "743f15542c6a31637b66b952a6d7da62ac00374b5caae6530e8d7317c29b0fd6",
+      "provenance": "complete existing licensed pinned original; archive bytes unchanged"
+    }
+  ],
+  "cloneFromCompiled": false,
+  "wholeTraitTranslated": false,
+  "runtimeParity": false
+}

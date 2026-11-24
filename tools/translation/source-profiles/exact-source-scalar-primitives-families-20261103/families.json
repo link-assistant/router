@@ -1,0 +1,34 @@
+{
+  "schema": "fixed-scalar-primitives-source-family-census-20261103-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-scalar-primitives-families-20261103/index424.before.json.gz",
+    "encodedSha256": "71bbe13707c44c409c49aae9b950f9b701df1c3d81c9c94ef05a983ff2676da1",
+    "sourceSha256": "872f6c66861d9bd7f1a7a9882dd7a8456780011bcae0815a4756fc5dcc5057cc",
+    "rows": 424
+  },
+  "families": [
+    {
+      "id": "exact-scalar-primitives-readers-20261103",
+      "manifest": "tools/translation/source-profiles/copy-scalar-helper-total-primitives-20261103/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "copy-scalar-helper-total-primitives-source-20261103-v1",
+      "sha256": "0429f315caed59bcecc889ad936dfe5dcb1140787c4716a0e1521522b0f06ef9",
+      "rows": 2,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-scalar-primitives-cases-20261103",
+      "manifest": "tools/translation/source-profiles/exact-source-scalar-primitives-families-20261103/joins.json.gz",
+      "kind": "archive",
+      "schema": "scalar-primitives-index-joins-20261103-v1",
+      "sha256": "cd19736b8218d161eb0e73bfa242f82f825f70e0a1ae08bcc8521f9a2f140e41",
+      "rows": 11,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 13,
+  "totalRows": 437,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

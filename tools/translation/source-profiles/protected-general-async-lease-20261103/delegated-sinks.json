@@ -1,0 +1,171 @@
+{
+  "schema": "protected-general-async-lease-20261103-delegated-sink-source-inventory-v1",
+  "sourceRevision": "c44013fa354d6dd8b406f47c3d5383395be808e7",
+  "scopeComplete": false,
+  "allOriginalFunctionDenominator": "UNKNOWN",
+  "completeWriterDenominator": "UNKNOWN",
+  "records": [
+    {
+      "path": "tools/translation/private-parser-data-physical-trial.mjs",
+      "symbol": "replace(root,row,expected,next)",
+      "role": "IN_PROCESS_SOURCE",
+      "operations": "Sibling .private-DATA-trial-PID.tmp wx write/mode/readback, actual temp->Root source rename, final temp unlink; reused by reverse-order restoration.",
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "retainedOriginalContract": "Original exact3 source files;8MiB/file, original modes and complete before/after/inverse/recovery packet must remain.",
+      "status": "ADAPTER_REQUIRED_NOT_INTEGRATED",
+      "physicalOrigin": {
+        "commit": "c44013fa354d6dd8b406f47c3d5383395be808e7",
+        "gitBlob": "dfa13c67a21f62ee0af9bba3c056e57e7ea8dc2e",
+        "sha256": "89b5a3adc509e773db513fba83ec392a6e380a837966b6c87f050cc64bc0e47a",
+        "bytes": 19331
+      },
+      "verification": "UNRUN"
+    },
+    {
+      "path": "tools/translation/private-parser-data-physical-trial.mjs",
+      "symbol": "runPrivateParserDataPhysicalTrial/save",
+      "role": "IN_PROCESS_DATA_AND_NAMESPACE",
+      "operations": "Recursive output mkdir, gzip wx snapshots/results/raw logs, per-engine dirs, request/progress/receipt JSON and post-compression log unlinks.",
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "retainedOriginalContract": "Output may be inside OR outside Root;384MiB compressed evidence,30min enclosing cap and original signal/restore guards remain.",
+      "status": "ADAPTER_REQUIRED_NOT_INTEGRATED",
+      "physicalOrigin": {
+        "commit": "c44013fa354d6dd8b406f47c3d5383395be808e7",
+        "gitBlob": "dfa13c67a21f62ee0af9bba3c056e57e7ea8dc2e",
+        "sha256": "89b5a3adc509e773db513fba83ec392a6e380a837966b6c87f050cc64bc0e47a",
+        "bytes": 19331
+      },
+      "verification": "UNRUN"
+    },
+    {
+      "path": "scripts/run-node-tests.mjs",
+      "symbol": "runAuditedNodeTests",
+      "role": "DELEGATED_JS_FUNCTION",
+      "operations": "Output mkdir/mkdtemp; request.json/command.json/result.json/finalization-refusal.json wx0600 writes; retain() wx+0600 owned FD open, chunk writeSync, readback and close.",
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "retainedOriginalContract": "Original source/deadline bounds, raw256MiB threshold and original per-file/process-group/deadline/resource logic cannot be weakened.",
+      "status": "UNGUARDED_DELEGATED_SINK_OPEN",
+      "physicalOrigin": {
+        "commit": "c44013fa354d6dd8b406f47c3d5383395be808e7",
+        "gitBlob": "223690e7b866840f8d0437efdb1701d01df1bf46",
+        "sha256": "5d2fcf586868691fb6882c19370ae0f3dbfd1f6e0359229e9be07d31167b592b",
+        "bytes": 12768
+      },
+      "verification": "UNRUN"
+    },
+    {
+      "path": "scripts/node-case-deadline-reporter.mjs",
+      "symbol": "deadlineReporter finally",
+      "role": "DELEGATED_NODE_CHILD",
+      "operations": "Child reads ROUTER_NODE_DEADLINE_REQUEST and writes request.receipt via wx0600; parent AsyncLocalStorage/native leases do not cross process.",
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "retainedOriginalContract": "Original128MiB receipt bound; all events to actual TAP/deadline audit unchanged.",
+      "status": "UNGUARDED_CHILD_SINK_OPEN",
+      "physicalOrigin": {
+        "commit": "c44013fa354d6dd8b406f47c3d5383395be808e7",
+        "gitBlob": "98b0fc6a89e3214ed686f5e47baf53b3b10fe351",
+        "sha256": "f8ba7c0bf56dccae2f0e22b241c7b57d706c377362aaeffd86f8ce483dabd7b3",
+        "bytes": 2229
+      },
+      "verification": "UNRUN"
+    },
+    {
+      "path": "scripts/bun-file-resource.py",
+      "symbol": "module main",
+      "role": "DELEGATED_PYTHON_CHILD",
+      "operations": "open(stdout,xb), open(stderr,xb); Path(pidFile).write_text; Path(resourceFile).write_text; launches Bun with those open stdio descriptors.",
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "retainedOriginalContract": "Original wait4/process group/remainingMs/resource/null fallback scope preserved; native JavaScript policy context does not cover Python or inherited Bun FDs.",
+      "status": "UNGUARDED_CHILD_SINK_OPEN",
+      "physicalOrigin": {
+        "commit": "c44013fa354d6dd8b406f47c3d5383395be808e7",
+        "gitBlob": "42a9386d562d7b566090d6000eff0367fbf9d068",
+        "sha256": "e4d41afeb904e1e1148d7a0d5cfdf34df7e10ed698b1acbd51840b409dd7711f",
+        "bytes": 4943
+      },
+      "verification": "UNRUN"
+    },
+    {
+      "path": "tools/translation/private-parser-data-physical-trial.mjs",
+      "symbol": "Node/Bun selected test child processes",
+      "role": "DELEGATED_DYNAMIC_PROGRAM",
+      "operations": "16 selected complete test files and their transitive fixture/child filesystem outputs; Node/Bun/Python argv may be caller-selected.",
+      "requirements": [
+        "L01",
+        "L02",
+        "L04",
+        "S03"
+      ],
+      "retainedOriginalContract": "Source-only inventory has NOT expanded every test/transitive spawned source writer or actual output path. No claim all writer/function denominator known.",
+      "status": "TRANSITIVE_DYNAMIC_OUTPUT_EXPANSION_UNKNOWN",
+      "physicalOrigin": {
+        "commit": "c44013fa354d6dd8b406f47c3d5383395be808e7",
+        "gitBlob": "dfa13c67a21f62ee0af9bba3c056e57e7ea8dc2e",
+        "sha256": "89b5a3adc509e773db513fba83ec392a6e380a837966b6c87f050cc64bc0e47a",
+        "bytes": 19331
+      },
+      "verification": "UNRUN"
+    },
+    {
+      "path": "tools/translation/prepare-core-vector-sources.mjs",
+      "symbol": "CLI --root --refresh --receipt",
+      "role": "ASYNC_IN_PROCESS_SOURCE_AND_RECEIPT",
+      "operations": "Source compositions through await import; gzip wx receipt first, then per-row current guard/direct source write. process.exit(0) must follow lease close rather than bypass it.",
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "retainedOriginalContract": "128MiB refresh inverse bound, old stdout/check behavior and late per-row stale/write order stay.",
+      "status": "ADAPTER_REQUIRED_NOT_INTEGRATED",
+      "physicalOrigin": {
+        "commit": "c44013fa354d6dd8b406f47c3d5383395be808e7",
+        "gitBlob": "fe53a39d1396123806edfb8a0f96fcc981c7ae5c",
+        "sha256": "00b35f672fb3d5d78ecea8f199a3c5c9f100668b735e0d7c46609d0e4c134e03",
+        "bytes": 32251
+      },
+      "verification": "UNRUN"
+    },
+    {
+      "path": "tools/translation/prepare-core-vector-sources.mjs",
+      "symbol": "CLI --root --facade-root --receipt --write [--extend-checker]",
+      "role": "IN_PROCESS_SOURCE_AND_RECEIPT",
+      "operations": "Original selected producer, wx JSON receipt first, per-source recursive parent mkdir/direct source writes.",
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "retainedOriginalContract": "Original facade/root source inputs, row bytes/modes and actual two variant producer domains stay; no new source execution qualified.",
+      "status": "ADAPTER_REQUIRED_NOT_INTEGRATED",
+      "physicalOrigin": {
+        "commit": "c44013fa354d6dd8b406f47c3d5383395be808e7",
+        "gitBlob": "fe53a39d1396123806edfb8a0f96fcc981c7ae5c",
+        "sha256": "00b35f672fb3d5d78ecea8f199a3c5c9f100668b735e0d7c46609d0e4c134e03",
+        "bytes": 32251
+      },
+      "verification": "UNRUN"
+    }
+  ],
+  "limitations": [
+    "This is an actual source-reviewed worklist, not complete runtime destination expansion.",
+    "General lease methods only cover the actual guarded in-process primitive callbacks.",
+    "No inherited process policy, child FD protection, test/deadline/resource qualification or safe restoration is inferred from a wrapper."
+  ],
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

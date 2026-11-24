@@ -1,0 +1,26 @@
+{
+  "schema": "complete-original-project-semantic-storage-v1",
+  "sourceHead": "2905818c6a38bec6f10dc543fcd1c58b17fdab18",
+  "files": [
+    {
+      "originalPath": "tools/translation/project.mjs",
+      "path": "project.original.mjs",
+      "bytes": 68243,
+      "sha256": "6d4f79faba62027fa5d3d1b733d99e309a5ae3981f6043bea4842cc58b75d7a0"
+    },
+    {
+      "originalPath": "tools/translation/project-flat-semantic.mjs",
+      "path": "project-flat-semantic.original.mjs",
+      "bytes": 68340,
+      "sha256": "7db4f7775839da17d3eb235e1ee7ba223fe00d820962acf8a62a902990d83561"
+    },
+    {
+      "originalPath": "LICENSE",
+      "path": "LICENSE",
+      "bytes": 1211,
+      "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e"
+    }
+  ],
+  "license": "Unlicense",
+  "sourceAuthority": false
+}

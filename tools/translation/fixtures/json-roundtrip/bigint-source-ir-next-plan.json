@@ -1,0 +1,188 @@
+{
+  "schema": "original-bigint-source-ir-next-helper-plan-v1",
+  "status": "source IR storage/Math forwarding/core slice AsRef coherent seven-file39 focus passes both Node/Bun; whole-reader/default ownership/allocation still unsupported",
+  "archiveSha256": "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14",
+  "declarations": [
+    {
+      "path": "src/lexical/bignum.rs",
+      "declaration": "Bigint",
+      "fileBytes": 679,
+      "fileSha256": "db688e8112389998d0f91906f6857e28f9b510a8b4065ad476c8e8be2f77becf",
+      "syntax": {
+        "span": {
+          "start": 231,
+          "end": 356
+        },
+        "bytes": 125,
+        "sha256": "683497258745b645211a8b51108feee3a7fdb5e48214da1b387c17aea64c7365"
+      },
+      "attributes": [
+        "derive(Clone, PartialEq, Eq)"
+      ],
+      "layout": "Named record, one source-declared data: Vec<Limb> field; owner and generated derive semantics remain unresolved."
+    },
+    {
+      "path": "src/lexical/bignum.rs",
+      "declaration": "Default::default",
+      "fileSha256": "db688e8112389998d0f91906f6857e28f9b510a8b4065ad476c8e8be2f77becf",
+      "syntax": {
+        "span": {
+          "start": 384,
+          "end": 485
+        },
+        "bytes": 101,
+        "sha256": "8bd64cc92626bfbbae1546a96b67a55415af6c197e44fd28a2f952f658cac804"
+      },
+      "originalConstructor": "Vec::with_capacity(20)",
+      "allocationClosure": false
+    },
+    {
+      "path": "src/lexical/bignum.rs",
+      "declaration": "Math::data",
+      "fileSha256": "db688e8112389998d0f91906f6857e28f9b510a8b4065ad476c8e8be2f77becf",
+      "syntax": {
+        "span": {
+          "start": 526,
+          "end": 585
+        },
+        "bytes": 59,
+        "sha256": "86c0edd9716ad86da98c690a541b7bbcc98c4dd145d90a8c7415c7b05783484c"
+      },
+      "receiver": "shared original &self; explicit borrowed named field"
+    },
+    {
+      "path": "src/lexical/bignum.rs",
+      "declaration": "Math::data_mut",
+      "fileSha256": "db688e8112389998d0f91906f6857e28f9b510a8b4065ad476c8e8be2f77becf",
+      "syntax": {
+        "span": {
+          "start": 601,
+          "end": 676
+        },
+        "bytes": 75,
+        "sha256": "187b468cad50ac06f2ee524634aa2eecda98d2b3584ed8add2923304c44f1734"
+      },
+      "receiver": "original mutable shared receiver, explicit mutable field borrow"
+    },
+    {
+      "path": "src/lexical/math.rs",
+      "declaration": "Math::hi64",
+      "fileSha256": "c5452d3ef9cc9ebd74a99f22dcabf74f4f062bbaeade46301260b79e4662d5df",
+      "syntax": {
+        "span": {
+          "start": 24641,
+          "end": 24720
+        },
+        "bytes": 79,
+        "sha256": "653b8a20c8e2d824d61dd746a54e75c6bf9677c37a7b6bbd45e71757dc8b5298"
+      }
+    },
+    {
+      "path": "src/lexical/math.rs",
+      "declaration": "Math::imul_pow5",
+      "fileSha256": "c5452d3ef9cc9ebd74a99f22dcabf74f4f062bbaeade46301260b79e4662d5df",
+      "syntax": {
+        "span": {
+          "start": 25928,
+          "end": 26017
+        },
+        "bytes": 89,
+        "sha256": "ca252ece58ca1ccebb39f7cefd701bad8d0f4a859063fc24eadaec44b57a7f7c"
+      }
+    },
+    {
+      "path": "src/lexical/math.rs",
+      "declaration": "Math::from_u64",
+      "fileSha256": "c5452d3ef9cc9ebd74a99f22dcabf74f4f062bbaeade46301260b79e4662d5df",
+      "syntax": {
+        "span": {
+          "start": 25074,
+          "end": 25261
+        },
+        "bytes": 187,
+        "sha256": "daa921775b62ff8fee9a7eea4ad9daf4d8ea1a11369aab576dd397989d2b300a"
+      }
+    }
+  ],
+  "genericImplementation": [
+    "Private original named-record layout metadata with actual attribute/field token provenance and module/file identity; no field-name proof shortcut.",
+    "Same arithmetic parser emits named-field, explicit field-borrow and named-record constructor IR from original bodies; no copied getter/default/math body.",
+    "Private original trait/impl selection joins Math default procedures and Bigint data accessors; unknown/duplicate/cfg or mismatched owners remain unsupported.",
+    "Borrowed record/Vec view projection preserves actual receiver mutability, rejects shared aggregate moves, and uses descriptors without Proxy/getter dispatch.",
+    "Nonempty associated constructor remains an explicit allocation/owner boundary; original default must not be replaced by a successful fake allocator."
+  ],
+  "authoredFixturePlan": [
+    {
+      "kind": "source-shape-and-seal",
+      "expectation": "Full-original bignum file hashes/spans/attrs remain exact; cloned layout or cross-module source context refused."
+    },
+    {
+      "kind": "data-shared-projection",
+      "expectation": "Original data getter reads modeled typed vector field without mutating; extra fields/Proxy/getter and aggregate shared move refused."
+    },
+    {
+      "kind": "data-mut-source-place",
+      "expectation": "Original data_mut yields actual mutable source field place; shared receiver cannot be upgraded."
+    },
+    {
+      "kind": "default-allocation-boundary",
+      "expectation": "Original Default IR retains Vec::with_capacity(20), then refuses unclosed allocator/ownership rather than returning fabricated storage."
+    },
+    {
+      "kind": "math-forwarding",
+      "expectation": "Exact original Math hi64/pow5 procedures dispatch through their original accessors and existing source-derived limb IR only after the source record/trait profile is checked; no native/parser grant."
+    }
+  ],
+  "initialArithmeticFocus": {
+    "sourceHead": "4302f07d0f9f5dc5c5028ab36388f9576bbbd68d",
+    "files": 5,
+    "cases": 30,
+    "node": {
+      "pass": 26,
+      "fail": 4
+    },
+    "bun": {
+      "pass": 26,
+      "fail": 4
+    },
+    "repairHead": "0d627d904",
+    "repairStatus": "paired corrected30/30 verified before this new storage draft; storage changes require later affected regressions",
+    "retryEvidence": "source-ir-retry-0d627/receipt.json"
+  },
+  "remainingObligations": [
+    "Actual trait/default impl source owners and primitive Copy/Vec/AsRef/borrow contracts",
+    "Builtin/procedural attribute phase and external source/config uncertainty",
+    "Linked global allocator, allocation failure/abort and Drop behavior",
+    "Whole original de.rs reader dispatch, numeric conversion, exponent/error-byte behavior and domain source equivalence"
+  ],
+  "sourceOwnerVerified": false,
+  "sourceBehaviorFidelityVerified": false,
+  "parseAdmission": false,
+  "applicationEffectCompleteness": false,
+  "runtimeParity": false,
+  "rustExecution": false,
+  "forwardingSelections": [
+    "trait::Math::hi64",
+    "trait::Math::imul_pow5",
+    "trait::Math::from_u64"
+  ],
+  "coherentRegressionPlan": {
+    "previouslyVerifiedArithmeticCases": 30,
+    "newStorageCases": 4,
+    "newForwardingCases": 3,
+    "totalAuthoredCases": 39,
+    "newCasesExecuted": true,
+    "authorityGranted": false,
+    "newReferenceCases": 2,
+    "finalPassBoth": 39,
+    "evidence": "source-ir-initial-final-39/receipt.json"
+  },
+  "privateContextExtension": "Private WeakMap data/callee/associated contexts are extended only with actual matching source seals; serialized public records and clones are denied.",
+  "referenceSource": {
+    "path": "library/core/src/convert/mod.rs",
+    "sha256": "0b05be0bc9c7d92d788abd6817d648b4479ed6e29ffe24cfd6879e09ee9fbdab",
+    "selected": "impl::AsRef::slice_T::as_ref",
+    "archiveReused": true,
+    "traitOwnerVerified": false
+  }
+}

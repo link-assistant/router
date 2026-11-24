@@ -1,0 +1,234 @@
+{
+  "schemaVersion": 1,
+  "kind": "complete-focused-original-declaration-type-refusal-source-evidence",
+  "status": "FOCUSED_PASS_NOT_FULL_GATE",
+  "testedSourceHead": "39277c5611dd98fadb69a0fd7d1e949bdaac6b8b",
+  "testFiles": 18,
+  "finalCountsPerEngine": {
+    "tests": 155,
+    "pass": 155,
+    "fail": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "sourceInputSha256": "d21cbb8f8fe59e880f5f5bed12a50b5f3fd4862d5df25872495c59050e5ff782",
+  "attempts": [
+    {
+      "schemaVersion": 1,
+      "scope": "independent original declaration type-refusal phases, complete survivor and transitive caller rechecking; not a corpus producer or full parity gate",
+      "evidenceStatus": "FOCUSED_PASS_NOT_FULL_GATE",
+      "phase": "initial-all",
+      "engine": "node",
+      "engineVersion": "v20.19.4",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/test/project-refusal-batches.test.mjs",
+        "tools/translation/test/project.test.mjs",
+        "tools/translation/test/project-copy-context.test.mjs",
+        "tools/translation/test/public-reexports.test.mjs",
+        "tools/translation/test/module-bindings.test.mjs",
+        "tools/translation/test/source-namespaces.test.mjs",
+        "tools/translation/test/source-namespace-bindings.test.mjs",
+        "tools/translation/test/module-path-project.test.mjs",
+        "tools/translation/test/module-paths.test.mjs",
+        "tools/translation/test/source-links.test.mjs",
+        "tools/translation/test/constant-evaluation.test.mjs",
+        "tools/translation/test/const-qualification.test.mjs",
+        "tools/translation/test/local-lifetime-constraints.test.mjs",
+        "tools/translation/test/ownership.test.mjs",
+        "tools/translation/test/generated-type-owners.test.mjs",
+        "tools/translation/test/copy-methods.test.mjs",
+        "tools/translation/test/host-instantiations.test.mjs",
+        "tools/translation/test/conditional-attributes.test.mjs"
+      ],
+      "testFiles": 18,
+      "timeoutSeconds": 360,
+      "testStageTimeoutSeconds": 360,
+      "sourceTableCheckTimeoutSeconds": null,
+      "maximumTestAndTableWallSeconds": 360,
+      "startedUtc": "2026-10-12T01:29:38.464976+00:00",
+      "finishedUtc": "2026-10-12T01:30:11.053304+00:00",
+      "elapsedSeconds": 32.588,
+      "exitCode": 0,
+      "timedOut": false,
+      "sourceHeadBefore": "39277c5611dd98fadb69a0fd7d1e949bdaac6b8b",
+      "sourceHeadAfter": "39277c5611dd98fadb69a0fd7d1e949bdaac6b8b",
+      "trackedStatusBefore": "",
+      "trackedStatusAfter": "",
+      "sourceHeadUnchanged": true,
+      "sourceInputSha256Before": "d21cbb8f8fe59e880f5f5bed12a50b5f3fd4862d5df25872495c59050e5ff782",
+      "sourceInputSha256After": "d21cbb8f8fe59e880f5f5bed12a50b5f3fd4862d5df25872495c59050e5ff782",
+      "sourceInputsUnchanged": true,
+      "inputManifest": "/tmp/router-759-core-signature-refusals-initial-all-node.inputs.json",
+      "inputManifestBytes": 244967,
+      "inputManifestSha256": "6f6be536552e4a1e861d5edb28d8d1cca08e7d4cb0c85f808f9058e8dd2d6768",
+      "inputFiles": 1380,
+      "log": "/tmp/router-759-core-signature-refusals-initial-all-node.log",
+      "logBytes": 35581,
+      "logSha256": "e2ae050eb1c70de8249fb980c2ee9d758a54e999323f0a8425402db4799a8d28",
+      "counts": {
+        "tests": 155,
+        "pass": 155,
+        "fail": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "sourceTableCheckCommand": null,
+      "sourceTableCheckExitCode": null,
+      "sourceTableCheckRuns": 0,
+      "producerRuns": 0,
+      "rustBuilds": 0,
+      "fullGateRuns": 0,
+      "measurement": {
+        "timeFormat": "posix",
+        "ownedChildrenMaxRssBytes": 205733888,
+        "rssScope": "all terminated harness child processes, including git and engine version; not process-tree peak or peak footprint"
+      },
+      "sourceTableCheckTimedOut": false,
+      "sourceTableCheckElapsedSeconds": null
+    },
+    {
+      "schemaVersion": 1,
+      "scope": "independent original declaration type-refusal phases, complete survivor and transitive caller rechecking; not a corpus producer or full parity gate",
+      "evidenceStatus": "FOCUSED_PASS_NOT_FULL_GATE",
+      "phase": "initial-all",
+      "engine": "bun",
+      "engineVersion": "1.4.3",
+      "command": [
+        "bun",
+        "test",
+        "--max-concurrency",
+        "1",
+        "tools/translation/test/project-refusal-batches.test.mjs",
+        "tools/translation/test/project.test.mjs",
+        "tools/translation/test/project-copy-context.test.mjs",
+        "tools/translation/test/public-reexports.test.mjs",
+        "tools/translation/test/module-bindings.test.mjs",
+        "tools/translation/test/source-namespaces.test.mjs",
+        "tools/translation/test/source-namespace-bindings.test.mjs",
+        "tools/translation/test/module-path-project.test.mjs",
+        "tools/translation/test/module-paths.test.mjs",
+        "tools/translation/test/source-links.test.mjs",
+        "tools/translation/test/constant-evaluation.test.mjs",
+        "tools/translation/test/const-qualification.test.mjs",
+        "tools/translation/test/local-lifetime-constraints.test.mjs",
+        "tools/translation/test/ownership.test.mjs",
+        "tools/translation/test/generated-type-owners.test.mjs",
+        "tools/translation/test/copy-methods.test.mjs",
+        "tools/translation/test/host-instantiations.test.mjs",
+        "tools/translation/test/conditional-attributes.test.mjs"
+      ],
+      "testFiles": 18,
+      "timeoutSeconds": 360,
+      "testStageTimeoutSeconds": 360,
+      "sourceTableCheckTimeoutSeconds": null,
+      "maximumTestAndTableWallSeconds": 360,
+      "startedUtc": "2026-10-12T01:34:02.502182+00:00",
+      "finishedUtc": "2026-10-12T01:34:21.616242+00:00",
+      "elapsedSeconds": 19.114,
+      "exitCode": 0,
+      "timedOut": false,
+      "sourceHeadBefore": "39277c5611dd98fadb69a0fd7d1e949bdaac6b8b",
+      "sourceHeadAfter": "39277c5611dd98fadb69a0fd7d1e949bdaac6b8b",
+      "trackedStatusBefore": "",
+      "trackedStatusAfter": "",
+      "sourceHeadUnchanged": true,
+      "sourceInputSha256Before": "d21cbb8f8fe59e880f5f5bed12a50b5f3fd4862d5df25872495c59050e5ff782",
+      "sourceInputSha256After": "d21cbb8f8fe59e880f5f5bed12a50b5f3fd4862d5df25872495c59050e5ff782",
+      "sourceInputsUnchanged": true,
+      "inputManifest": "/tmp/router-759-core-signature-refusals-initial-all-bun.inputs.json",
+      "inputManifestBytes": 244967,
+      "inputManifestSha256": "6f6be536552e4a1e861d5edb28d8d1cca08e7d4cb0c85f808f9058e8dd2d6768",
+      "inputFiles": 1380,
+      "log": "/tmp/router-759-core-signature-refusals-initial-all-bun.log",
+      "logBytes": 17035,
+      "logSha256": "25b14cdcd22c9c570a03a8ed7d671862af7a545b45e674fbaa314e2b23371f55",
+      "counts": {
+        "tests": 155,
+        "pass": 155,
+        "fail": 0,
+        "skipped": 0,
+        "todo": null
+      },
+      "sourceTableCheckCommand": null,
+      "sourceTableCheckExitCode": null,
+      "sourceTableCheckRuns": 0,
+      "producerRuns": 0,
+      "rustBuilds": 0,
+      "fullGateRuns": 0,
+      "measurement": {
+        "timeFormat": "posix",
+        "ownedChildrenMaxRssBytes": 322617344,
+        "rssScope": "all terminated harness child processes, including git and engine version; not process-tree peak or peak footprint"
+      },
+      "sourceTableCheckTimedOut": false,
+      "sourceTableCheckElapsedSeconds": null
+    }
+  ],
+  "archive": {
+    "path": "router-759-current-declaration-refusals-39277c56.tar.gz",
+    "bytes": 92523,
+    "sha256": "b5f2ebb968fdad093a3fa29f39e76cb4d499f8c389bf8da9462cfa2847d192a8",
+    "members": [
+      {
+        "name": "router-759-core-signature-refusals-focused.py",
+        "bytes": 7040,
+        "sha256": "0e4b123d6fadaf83f1f99697a2608f9a5891ce31f7aab03c728d9bb7af1bc22e"
+      },
+      {
+        "name": "router-759-core-signature-refusals-archive.py",
+        "bytes": 5434,
+        "sha256": "b9a6d05cb2ac5462539ebdb4fdfe268ae6eebbc051f13faac0747d485f3a209c"
+      },
+      {
+        "name": "router-759-core-signature-refusals-initial-all-node.json",
+        "bytes": 3179,
+        "sha256": "1a1c037c50b8351a5ef8834dcaf23c1ee2b9edf8f187ecdb802187cf54484ff4"
+      },
+      {
+        "name": "router-759-core-signature-refusals-initial-all-node.log",
+        "bytes": 35581,
+        "sha256": "e2ae050eb1c70de8249fb980c2ee9d758a54e999323f0a8425402db4799a8d28"
+      },
+      {
+        "name": "router-759-core-signature-refusals-initial-all-node.inputs.json",
+        "bytes": 244967,
+        "sha256": "6f6be536552e4a1e861d5edb28d8d1cca08e7d4cb0c85f808f9058e8dd2d6768"
+      },
+      {
+        "name": "router-759-core-signature-refusals-initial-all-bun.json",
+        "bytes": 3179,
+        "sha256": "ee39246b63f5e845c08503a0271b4d5257693063573d4e9c9c2d25b588aa1b61"
+      },
+      {
+        "name": "router-759-core-signature-refusals-initial-all-bun.log",
+        "bytes": 17035,
+        "sha256": "25b14cdcd22c9c570a03a8ed7d671862af7a545b45e674fbaa314e2b23371f55"
+      },
+      {
+        "name": "router-759-core-signature-refusals-initial-all-bun.inputs.json",
+        "bytes": 244967,
+        "sha256": "6f6be536552e4a1e861d5edb28d8d1cca08e7d4cb0c85f808f9058e8dd2d6768"
+      }
+    ],
+    "reopenedMembers": 8,
+    "reopenErrors": 0,
+    "identicalContentHardlinks": 1,
+    "hardlinkExtractionVerified": true
+  },
+  "measurementLimitations": [
+    "Owned terminated-child max RSS includes git and version queries; it is neither aggregate process-tree peak nor physical footprint.",
+    "Focused execution supplies no canonical full-corpus gain or cross-language whole-runtime parity."
+  ],
+  "verificationLimits": {
+    "canonicalProducerRuns": 0,
+    "profileProducerRuns": 0,
+    "fullGateRuns": 0,
+    "rustBuilds": 0,
+    "strictParityGapsCleared": 0,
+    "completeTranslation": false,
+    "nativeParity": false
+  }
+}

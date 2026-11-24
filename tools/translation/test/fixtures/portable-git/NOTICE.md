@@ -1,0 +1,1 @@
+Genuine original Router Git commit/tree objects and four complete original source blobs. Original repository LICENSE applies. Commit parents may be absent; required commit/tree/selected source objects are exact, with no network or HEAD substitution. This test data grants no source, namespace, semantic or execution authority.

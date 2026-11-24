@@ -1,0 +1,25 @@
+{
+  "schema": "root-verified-complete-packet-install-v1",
+  "sourceHead": "12b4353ac912b99e1eb1aad0662ae0b23d41557e",
+  "caseCapBytes": 500000000,
+  "beforeAllocatedBytes": 495841280,
+  "oldCaseAllocationRetiredBytes": 75673600,
+  "afterAllocatedBytes": 495308800,
+  "allOldMembersRecoveredFromGit": true,
+  "allNewCompleteMembersReopened": true,
+  "originalReceiptsRewritten": false,
+  "allCIIntegrityChecksPassed": true,
+  "wholeMeasurementsIdentical": true,
+  "volumeDiskReclamationClaim": false,
+  "runtimeParity": false,
+  "fullGatePass": false,
+  "rustExecuted": false,
+  "pushExecuted": false,
+  "installationEvidence": {
+    "archive": "complete-install-records.tar.xz",
+    "receipt": "install-records-capture-receipt.json",
+    "completeMembers": 77,
+    "completeOriginalBytes": 49316572
+  },
+  "afterInstallationRecordsAllocatedBytes": 496033792
+}

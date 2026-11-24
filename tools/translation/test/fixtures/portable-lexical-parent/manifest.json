@@ -1,0 +1,59 @@
+{
+  "schema": "portable-lexical-parent-original-git-v1",
+  "revision": "5de1dea8b777dcd6e637758efc2c260150735af5",
+  "archive": "objects.json.gz",
+  "bytes": 270077,
+  "sha256": "660c5e484ceffb5e631bed5862e8b83be6d4802157daf5964840dee4d83bdc3c",
+  "rawBytes": 1514203,
+  "rawSha256": "994bff322938c652fa07711da0dbc52a0a62160f5f7188c0fe4608305a16f1d0",
+  "trace": [
+    {
+      "phase": "language",
+      "id": "git:retain-complete-native-commit-tree-blob-and-source-CST"
+    },
+    {
+      "phase": "repository",
+      "id": "router:select-five-genuine-lexical-parent-history-sources"
+    }
+  ],
+  "files": [
+    {
+      "path": "src/bridge_request.rs",
+      "mode": "100644",
+      "gitBlob": "43415179d08d8e9f8c7e5899e3f80de5f2664a57",
+      "bytes": 40322,
+      "sha256": "acdba5185dc63148a8a8821c10208ec8ba5c965313df900ee23eecb526695236"
+    },
+    {
+      "path": "src/chat_admin.rs",
+      "mode": "100644",
+      "gitBlob": "2e45da90e66b7bb976a1bd112b2bf8b8118ed426",
+      "bytes": 34549,
+      "sha256": "2ea36d953cacc699736b2c5e6c96dd8ac607142839db5ee3ff161b28634d90fd"
+    },
+    {
+      "path": "src/login_pty_backend.rs",
+      "mode": "100644",
+      "gitBlob": "88e42c0510de98cf7dab7d0194359ae6882dfd4e",
+      "bytes": 12724,
+      "sha256": "c808f2dc1cb7c07f2a78c4f4ad4edee6d43fb2f0f37ed4bb0c63a3fc968547e8"
+    },
+    {
+      "path": "src/mpp.rs",
+      "mode": "100644",
+      "gitBlob": "ee0bb13fd4bf263d514afbebace9b548a70ac36e",
+      "bytes": 6000,
+      "sha256": "eeeb0629ebaf10b333867903abd5eba90886d63ec11bd9a8157a13eec3c6cc01"
+    },
+    {
+      "path": "src/provider_import.rs",
+      "mode": "100644",
+      "gitBlob": "0160080e7e5358ec2e1b0e497381d936272074e0",
+      "bytes": 6879,
+      "sha256": "20277b79472978275b615a15b0b8dd99f785cc18a1030337d9f11889d9d045b6"
+    }
+  ],
+  "objects": 9,
+  "runtimeParity": false,
+  "rustExecuted": false
+}

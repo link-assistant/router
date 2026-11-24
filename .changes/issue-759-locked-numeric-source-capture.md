@@ -1,0 +1,1 @@
+Retain the complete original locked Zmij source and license with byte-for-byte archive/member verification for the numeric source-stage draft. Source capture grants no formatter, floating-point or runtime parity authority.

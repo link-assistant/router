@@ -1,0 +1,17 @@
+{
+  "schema": "router-independent-duration-format-cases-v1",
+  "integerEncoding": "signed-decimal-string",
+  "cases": [
+    {"minutes": "-9223372036854775808", "expected": "-9223372036854775808 minutes"},
+    {"minutes": "-1", "expected": "-1 minutes"},
+    {"minutes": "0", "expected": "0 minutes"},
+    {"minutes": "1439", "expected": "23 hours"},
+    {"minutes": "1440", "expected": "24 hours"},
+    {"minutes": "2879", "expected": "47 hours"},
+    {"minutes": "4319", "expected": "2 days"},
+    {"minutes": "4320", "expected": "3 days"},
+    {"minutes": "9007199254742399", "expected": "6254999482459 days"},
+    {"minutes": "9007199254742400", "expected": "6254999482460 days"},
+    {"minutes": "9223372036854775807", "expected": "6405119470038038 days"}
+  ]
+}

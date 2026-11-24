@@ -1,0 +1,1299 @@
+name: CI
+
+# The JavaScript workflow runs first; the Rust workflow and the issue 195
+# acceptance stages run only after every JavaScript job passes, and each Rust
+# acceptance stage runs only after its JavaScript counterpart. When a
+# JavaScript job fails, the jobs after it show as skipped, and the Full
+# Requirements Aggregate reports one gate error naming the failed JavaScript
+# jobs. js.yml and rust.yml keep their release and dispatch triggers, so a
+# release runs them standalone; here a release runs only the acceptance
+# release-delivery checkpoint. Every push and pull request runs, without path
+# filters, because Full Requirements Aggregate is a required check.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+# A new push to a pull request cancels that pull request's older run; push runs
+# are grouped by their own run id, so a release on main is never cancelled.
+# The called workflows use their own literal js- and rust- prefixes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  # The Rust workflow used to run only for the paths below; a change outside
+  # them (for example js/** alone) runs the JavaScript workflow and skips Rust.
+  changes:
+    name: Changed Paths
+    if: ${{ github.event_name != 'release' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      rust: ${{ steps.paths.outputs.rust }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Detect whether the Rust workflow is needed
+        id: paths
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          rust_paths='^(rust/|parity/|docs/|scripts/|\.github/workflows/(ci|rust)\.yml$|\.secretlintrc\.json$)'
+          if [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            rust=true
+          elif git diff --name-only "$BASE_SHA" HEAD | grep -Eq "$rust_paths"; then
+            rust=true
+          else
+            rust=false
+          fi
+          echo "rust=$rust" >> "$GITHUB_OUTPUT"
+          echo "Rust workflow needed: $rust"
+
+  js:
+    name: JavaScript
+    # js.yml has its own release trigger; calling it here too would publish twice.
+    if: ${{ github.event_name != 'release' }}
+    uses: ./.github/workflows/js.yml
+    secrets: inherit
+    # A called workflow gets at most the caller's permissions; publish asks for
+    # id-token although it runs only on a release or a dispatch of js.yml.
+    permissions:
+      contents: read
+      id-token: write
+
+  rust:
+    name: Rust
+    needs: [changes, js]
+    if: ${{ needs.changes.outputs.rust == 'true' }}
+    uses: ./.github/workflows/rust.yml
+    secrets: inherit
+    # The release and website jobs run on a push to main and ask for these.
+    permissions:
+      contents: write
+      actions: write
+      pull-requests: write
+      pages: write
+      id-token: write
+
+  # Publishes, per module, how far the self-translation of each JavaScript
+  # module is from its hand-written Rust. The whole of js/src takes over an
+  # hour on one runner, so the modules are split into shards of about the same
+  # size. It runs beside the JavaScript and Rust workflows; acceptance verifies
+  # every published module before recording the reporting assertion.
+  self-translation-report:
+    name: Self-Translation Report (${{ matrix.shard }}/8)
+    if: ${{ github.event_name != 'release' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: js
+
+      - name: Report self-translation against the hand-written Rust
+        run: |
+          node scripts/generate-self-translation-report.mjs --shard ${{ matrix.shard }}/8 --out-dir ../self-translation-report > /dev/null
+          cat ../self-translation-report/self-translation-report.md >> "$GITHUB_STEP_SUMMARY"
+        working-directory: js
+
+      - name: Upload the self-translation report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: self-translation-report-${{ github.sha }}-${{ matrix.shard }}
+          path: self-translation-report
+          if-no-files-found: error
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  # The bulk grammar pipeline (I195-GRAMMAR-BULK-PIPELINE) imports, compiles,
+  # parses and merges the tree-sitter and grammars-v4 grammars of every
+  # catalog language with a grammar and publishes the matrix in the job
+  # summary and as an artifact. A language that fails is a matrix row listing
+  # its missing features, not a failed job; the job fails only when the
+  # pipeline itself cannot run. It runs beside the JavaScript and Rust
+  # workflows and holds neither back.
+  grammar-bulk-pipeline:
+    name: Bulk Grammar Pipeline
+    if: ${{ github.event_name != 'release' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: js
+
+      - name: Fetch the pinned grammar crates
+        run: cargo fetch --locked
+        working-directory: rust
+
+      - name: Run the bulk grammar pipeline
+        run: node js/scripts/run-grammar-bulk-pipeline.mjs --out-dir grammar-bulk --jobs 4 --timeout 240
+
+      - name: Publish the matrix in the job summary
+        if: ${{ !cancelled() && hashFiles('grammar-bulk/grammar-bulk-matrix.md') != '' }}
+        run: cat grammar-bulk/grammar-bulk-matrix.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the matrix
+        if: ${{ !cancelled() && hashFiles('grammar-bulk/grammar-bulk-matrix.json') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: grammar-bulk-matrix
+          path: grammar-bulk/
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  # The issue 195 acceptance stages (I195-CI-ACCEPTANCE-AFTER-JAVASCRIPT).
+  candidates:
+    name: Delivery Candidates
+    # The acceptance stages start only after every JavaScript job passed. On a
+    # release, js.yml runs by its own trigger and the js job here is skipped.
+    needs: js
+    if: ${{ !cancelled() && (needs.js.result == 'success' || (github.event_name == 'release' && needs.js.result == 'skipped')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: issue-195-candidates-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.99.0
+
+      # The evidence runner reads the language catalog, whose native grammar
+      # source names are parsed with links-notation.
+      - name: Install JavaScript dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - name: Pack candidates or download the published release
+        env:
+          ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
+        run: >-
+          node js/scripts/run-issue-195-evidence.mjs
+          --checkpoint "$ACCEPTANCE_CHECKPOINT"
+          --commit "$GITHUB_SHA"
+          --prepare-candidates .issue-195-work/candidates
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-candidates-${{ github.sha }}
+          path: .issue-195-work/candidates/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  consumers:
+    name: Clean Consumer (${{ matrix.os }})
+    needs: candidates
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    concurrency:
+      group: issue-195-consumer-${{ github.ref }}-${{ matrix.os }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.99.0
+
+      - name: Setup MSVC environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installationPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installationPath) {
+            throw "Visual Studio with C++ tools not found"
+          }
+          $vcvars = Join-Path $installationPath "VC\Auxiliary\Build\vcvars64.bat"
+          $vcvarsEnvironment = @{}
+          $existingPath = $env:Path -split ";" | Where-Object { $_ }
+          cmd /s /c "`"$vcvars`" && set" | ForEach-Object {
+            if ($_ -match "^(.*?)=(.*)$") {
+              $name = $matches[1]
+              $value = $matches[2]
+              $vcvarsEnvironment[$name] = $value
+              if ($name -eq "Path") {
+                # GITHUB_PATH prepends to the existing PATH; a Path entry in GITHUB_ENV would add a
+                # second, differently cased variable that child processes may resolve instead.
+                # Only the directories vcvars added are prepended: re-prepending the runner's own
+                # entries would put WindowsApps (whose bash.exe is the WSL launcher) ahead of Git Bash.
+                $value -split ";" | Where-Object { $_ -and ($existingPath -notcontains $_) } | ForEach-Object {
+                  $_ | Out-File -FilePath $env:GITHUB_PATH -Append
+                }
+              } elseif ($name -match "^(INCLUDE|LIB|LIBPATH|VCINSTALLDIR|VCToolsInstallDir|VCToolsVersion|VSINSTALLDIR|WindowsSdkDir|WindowsSDKVersion|UniversalCRTSdkDir|UCRTVersion)$") {
+                "$name=$value" | Out-File -FilePath $env:GITHUB_ENV -Append
+              }
+            }
+          }
+          $msvcLinker = Join-Path $vcvarsEnvironment["VCToolsInstallDir"] "bin\Hostx64\x64\link.exe"
+          if (-not (Test-Path $msvcLinker)) {
+            throw "MSVC link.exe not found at $msvcLinker"
+          }
+          "CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER=$msvcLinker" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: issue-195-candidates-${{ github.sha }}
+          path: .issue-195-work/candidates
+
+      - name: Install and parse the exact artifacts in clean consumers
+        shell: bash
+        run: >-
+          node js/scripts/run-issue-195-consumer.mjs
+          --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
+          --crate "$(ls .issue-195-work/candidates/*.crate)"
+          --work-dir "$RUNNER_TEMP/issue-195-consumer"
+          --out issue-195-artifacts/platform/report.json
+
+      # The delivery gate: every retained item is current or at its verified
+      # newest compatible release, and the clean consumer resolves the audited
+      # npm releases. A pull request compares offline against the committed
+      # audit; the live registries change outside the pull request.
+      - name: Check delivered dependencies against the committed audit
+        if: ${{ !cancelled() && matrix.os == 'ubuntu-latest' }}
+        shell: bash
+        run: >-
+          node js/scripts/check-dependencies.mjs --delivery --offline
+          --consumer-lock "$RUNNER_TEMP/issue-195-consumer/npm-consumer/package-lock.json"
+
+      # Post-merge report: a release published after the audit date is moved to
+      # by the scheduled dependency refresh, never by failing a check.
+      - name: Compare the delivered dependencies with the live registries
+        if: ${{ !cancelled() && matrix.os == 'ubuntu-latest' && github.event_name != 'pull_request' }}
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          node js/scripts/check-dependencies.mjs --delivery --live
+          --consumer-lock "$RUNNER_TEMP/issue-195-consumer/npm-consumer/package-lock.json"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-platform-${{ matrix.os }}-${{ github.sha }}
+          path: issue-195-artifacts/platform/report.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload consumer logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-consumer-logs-${{ matrix.os }}-${{ github.sha }}
+          path: ${{ runner.temp }}/issue-195-consumer/*.log
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: node scripts/clean-caches.mjs --event ci-teardown --target-dir "$RUNNER_TEMP/issue-195-consumer/crate-target"
+
+  rml-workloads:
+    name: Relative Meta Logic Workloads
+    needs: candidates
+    runs-on: ubuntu-latest
+    # theory-network.test.mjs alone takes minutes, and the Rust workloads build RML from scratch.
+    timeout-minutes: 90
+    concurrency:
+      group: issue-195-rml-workloads-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.99.0
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: issue-195-candidates-${{ github.sha }}
+          path: .issue-195-work/candidates
+
+      - name: Run the relative-meta-logic pull request 184 workloads on the exact artifacts
+        shell: bash
+        run: >-
+          node js/scripts/run-rml-pr184-workloads.mjs
+          --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
+          --crate "$(ls .issue-195-work/candidates/*.crate)"
+          --work-dir "$RUNNER_TEMP/issue-195-rml-workloads"
+          --out issue-195-artifacts/rml-workloads/report.json
+
+      # The report is uploaded even when a workload fails: the aggregate validates it and
+      # records nothing for the assertions it does not support.
+      - name: Upload the workload report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-rml-workloads-${{ github.sha }}
+          path: issue-195-artifacts/rml-workloads/report.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload workload logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-rml-workload-logs-${{ github.sha }}
+          path: ${{ runner.temp }}/issue-195-rml-workloads/*.log
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: node scripts/clean-caches.mjs --event ci-teardown --target-dir "$RUNNER_TEMP/issue-195-rml-workloads/rml-target"
+
+  formal-ai-workloads:
+    name: Formal AI Workloads
+    needs: candidates
+    runs-on: ubuntu-latest
+    # The Rust workloads build formal-ai and its dependencies from scratch.
+    timeout-minutes: 120
+    concurrency:
+      group: issue-195-formal-ai-workloads-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.99.0
+
+      # The runner was shut down (signal 15, status 143) without output while cargo built
+      # formal-ai's test targets from scratch. The workload runner bounds the
+      # build (two jobs, no debuginfo; see js/scripts/run-formal-ai-workloads.mjs);
+      # this frees the disk the preinstalled SDKs the job never uses take, and
+      # the registry cache spares the dependency downloads.
+      - name: Free runner disk space
+        shell: bash
+        run: |
+          df -h / "$RUNNER_TEMP"
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          df -h / "$RUNNER_TEMP"
+          free -h
+
+      - name: Cache cargo registry
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-formal-ai-${{ hashFiles('parity/fixtures/formal-ai-workloads.json', 'rust/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-formal-ai-
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: issue-195-candidates-${{ github.sha }}
+          path: .issue-195-work/candidates
+
+      - name: Run the link-assistant/formal-ai workloads on the exact artifacts
+        shell: bash
+        run: >-
+          node js/scripts/run-formal-ai-workloads.mjs
+          --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
+          --crate "$(ls .issue-195-work/candidates/*.crate)"
+          --work-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads"
+          --out issue-195-artifacts/formal-ai-workloads/report.json
+
+      # The report is uploaded even when a workload fails: the aggregate validates it and
+      # records nothing for the assertions it does not support.
+      - name: Upload the workload report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-formal-ai-workloads-${{ github.sha }}
+          path: issue-195-artifacts/formal-ai-workloads/report.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload workload logs and runtime outputs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-formal-ai-workload-logs-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/*.log
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/*-outputs.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: node scripts/clean-caches.mjs --event ci-teardown --target-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads/formal-ai-target"
+
+  # The checkpoint evidence runs as separate stage jobs (js/scripts/issue-195-evidence-stages.mjs),
+  # each on its own runner with only the toolchains it uses, and each uploading
+  # its record. The Full Requirements Aggregate only merges and evaluates them.
+  runtime-parity:
+    name: Evidence Stage (runtime-parity)
+    needs: js
+    if: ${{ github.event_name != 'release' && needs.js.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: issue-195-stage-runtime-parity-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.99.0
+
+      - name: Install JavaScript dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - name: Compare the JavaScript and Rust runtimes
+        env:
+          ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
+        run: >-
+          node js/scripts/run-issue-195-evidence.mjs
+          --checkpoint "$ACCEPTANCE_CHECKPOINT"
+          --commit "$GITHUB_SHA"
+          --results-dir issue-195-results
+          --stage runtime-parity
+
+      # The record, execution records, logs and artifacts are uploaded even when
+      # the stage fails: the aggregate reports the failure as one gate error.
+      - name: Upload the stage outputs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-stage-runtime-parity-${{ github.sha }}
+          path: |
+            issue-195-results/work/stage-*
+            issue-195-results/work/native/
+            issue-195-results/logs/
+            issue-195-results/artifacts/
+            issue-195-results/runtime-parity/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  # The JavaScript stages run before the Rust stages: native-rust needs
+  # native-javascript and rust-suite needs javascript-suite, so a failed
+  # JavaScript stage shows its Rust stage as skipped. The aggregate reports a
+  # skipped stage's missing record as one gate error.
+  native-javascript:
+    name: Evidence Stage (native-javascript)
+    needs: [js, runtime-parity]
+    # A failed runtime-parity stage still uploads its record; this stage then
+    # records why it has no translations to validate.
+    if: ${{ !cancelled() && github.event_name != 'release' && needs.js.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: issue-195-stage-native-${{ github.ref }}-javascript
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.99.0
+
+      - name: Install JavaScript dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - name: Download the runtime-parity stage outputs
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: issue-195-stage-runtime-parity-${{ github.sha }}
+          path: issue-195-results
+
+      - name: Validate the emitted translations with the native toolchain
+        env:
+          ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
+          TARGET: native-javascript
+        run: >-
+          node js/scripts/run-issue-195-evidence.mjs
+          --checkpoint "$ACCEPTANCE_CHECKPOINT"
+          --commit "$GITHUB_SHA"
+          --results-dir issue-195-results
+          --stage "$TARGET"
+
+      # The record, execution records, logs and artifacts are uploaded even when
+      # the stage fails: the aggregate reports the failure as one gate error.
+      - name: Upload the stage outputs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-stage-native-javascript-${{ github.sha }}
+          path: |
+            issue-195-results/work/stage-*
+            issue-195-results/work/native/
+            issue-195-results/logs/
+            issue-195-results/artifacts/
+            issue-195-results/runtime-parity/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  native-rust:
+    name: Evidence Stage (native-rust)
+    needs: [runtime-parity, native-javascript]
+    if: ${{ !cancelled() && github.event_name != 'release' && needs.native-javascript.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: issue-195-stage-native-${{ github.ref }}-rust
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.99.0
+
+      - name: Install JavaScript dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - name: Download the runtime-parity stage outputs
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: issue-195-stage-runtime-parity-${{ github.sha }}
+          path: issue-195-results
+
+      - name: Validate the emitted translations with the native toolchain
+        env:
+          ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
+          TARGET: native-rust
+        run: >-
+          node js/scripts/run-issue-195-evidence.mjs
+          --checkpoint "$ACCEPTANCE_CHECKPOINT"
+          --commit "$GITHUB_SHA"
+          --results-dir issue-195-results
+          --stage "$TARGET"
+
+      # The record, execution records, logs and artifacts are uploaded even when
+      # the stage fails: the aggregate reports the failure as one gate error.
+      - name: Upload the stage outputs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-stage-native-rust-${{ github.sha }}
+          path: |
+            issue-195-results/work/stage-*
+            issue-195-results/work/native/
+            issue-195-results/logs/
+            issue-195-results/artifacts/
+            issue-195-results/runtime-parity/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  native-translations:
+    name: Evidence Stage (native-${{ matrix.target }})
+    needs: [js, runtime-parity]
+    # A failed runtime-parity stage still uploads its record; this stage then
+    # records why it has no translations to validate.
+    if: ${{ !cancelled() && github.event_name != 'release' && needs.js.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: issue-195-stage-native-${{ github.ref }}-${{ matrix.target }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [lean, rocq]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.99.0
+
+      - name: Setup Lean
+        if: ${{ matrix.target == 'lean' }}
+        env:
+          ELAN_HOME: ${{ runner.temp }}/elan-home
+          ELAN_VERSION: v4.2.4
+          ELAN_ARCHIVE_SHA256: 42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63
+        run: |
+          archive="${RUNNER_TEMP}/elan-x86_64-unknown-linux-gnu.tar.gz"
+          curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail \
+            "https://github.com/leanprover/elan/releases/download/${ELAN_VERSION}/elan-x86_64-unknown-linux-gnu.tar.gz" \
+            --output "$archive"
+          echo "${ELAN_ARCHIVE_SHA256}  ${archive}" | sha256sum --check --strict
+          tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
+          "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.34.1
+          echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
+          "${ELAN_HOME}/bin/lean" --version
+
+      - name: Setup OCaml
+        if: ${{ matrix.target == 'rocq' }}
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: "5.4"
+          opam-pin: false
+
+      - name: Install Rocq 9.3
+        if: ${{ matrix.target == 'rocq' }}
+        run: |
+          opam repository add rocq-released https://rocq-prover.org/opam/released
+          opam install --yes 'rocq-core=9.3.0' 'rocq-stdlib=9.2.0' 'rocq-prover=meta.1'
+          opam var bin >> "$GITHUB_PATH"
+          opam exec -- rocq --version
+
+      - name: Install JavaScript dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - name: Download the runtime-parity stage outputs
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: issue-195-stage-runtime-parity-${{ github.sha }}
+          path: issue-195-results
+
+      - name: Validate the emitted translations with the native toolchain
+        env:
+          ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
+          TARGET: native-${{ matrix.target }}
+        run: >-
+          node js/scripts/run-issue-195-evidence.mjs
+          --checkpoint "$ACCEPTANCE_CHECKPOINT"
+          --commit "$GITHUB_SHA"
+          --results-dir issue-195-results
+          --stage "$TARGET"
+
+      - name: Verify Unicode string length execution
+        run: >-
+          node js/scripts/check-translation-corpus-native.mjs
+          --target "${{ matrix.target }}" --fixture string-length
+
+      # The record, execution records, logs and artifacts are uploaded even when
+      # the stage fails: the aggregate reports the failure as one gate error.
+      - name: Upload the stage outputs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-stage-native-${{ matrix.target }}-${{ github.sha }}
+          path: |
+            issue-195-results/work/stage-*
+            issue-195-results/work/native/
+            issue-195-results/logs/
+            issue-195-results/artifacts/
+            issue-195-results/runtime-parity/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  javascript-suite:
+    name: Evidence Stage (javascript-suite)
+    needs: [candidates, consumers, rml-workloads, formal-ai-workloads, self-translation-report]
+    if: ${{ !cancelled() && github.event_name != 'release' && needs.candidates.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    concurrency:
+      group: issue-195-stage-${{ github.ref }}-javascript-suite
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.99.0
+        with:
+          # JavaScript self-translation acceptance checks the emitted Rust.
+          components: clippy
+
+      - name: Setup Lean
+        env:
+          ELAN_HOME: ${{ runner.temp }}/elan-home
+          ELAN_VERSION: v4.2.4
+          ELAN_ARCHIVE_SHA256: 42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63
+        run: |
+          archive="${RUNNER_TEMP}/elan-x86_64-unknown-linux-gnu.tar.gz"
+          curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail \
+            "https://github.com/leanprover/elan/releases/download/${ELAN_VERSION}/elan-x86_64-unknown-linux-gnu.tar.gz" \
+            --output "$archive"
+          echo "${ELAN_ARCHIVE_SHA256}  ${archive}" | sha256sum --check --strict
+          tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
+          "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.34.1
+          echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
+          "${ELAN_HOME}/bin/lean" --version
+
+      - name: Setup OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: "5.4"
+          opam-pin: false
+
+      - name: Install Rocq 9.3
+        run: |
+          opam repository add rocq-released https://rocq-prover.org/opam/released
+          opam install --yes 'rocq-core=9.3.0' 'rocq-stdlib=9.2.0' 'rocq-prover=meta.1'
+          opam var bin >> "$GITHUB_PATH"
+          opam exec -- rocq --version
+
+      - name: Install JavaScript dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - name: Download the relative-meta-logic workload report
+        # A missing report leaves I195-DOWNSTREAM-RML-WORKLOADS unobserved instead of stopping the stage.
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: issue-195-rml-workloads-${{ github.sha }}
+          path: issue-195-artifacts/rml-workloads
+
+      - name: Download the formal-ai workload report
+        # A missing report leaves I195-DOWNSTREAM-FORMAL-AI-WORKLOADS unobserved instead of stopping the stage.
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: issue-195-formal-ai-workloads-${{ github.sha }}
+          path: issue-195-artifacts/formal-ai-workloads
+
+      - name: Download the complete self-translation reports
+        # Missing reports fail their assertion while the other suite tests still run.
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          pattern: self-translation-report-${{ github.sha }}-*
+          path: issue-195-artifacts/self-translation-report
+
+      - name: Produce the stage evidence
+        env:
+          ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY: ${{ github.workspace }}/issue-195-artifacts/self-translation-report
+          ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.json
+          ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.json
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_SHA: ${{ github.sha }}
+          ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
+          STAGE: javascript-suite
+        run: >-
+          node js/scripts/run-issue-195-evidence.mjs
+          --checkpoint "$ACCEPTANCE_CHECKPOINT"
+          --commit "$GITHUB_SHA"
+          --results-dir issue-195-results
+          --stage "$STAGE"
+          --candidates .issue-195-work/candidates
+          --platform-reports issue-195-artifacts/platform-reports
+
+      # The record, execution records, logs and artifacts are uploaded even when
+      # the stage fails: the aggregate reports the failure as one gate error.
+      - name: Upload the stage outputs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-stage-javascript-suite-${{ github.sha }}
+          path: |
+            issue-195-results/work/stage-*
+            issue-195-results/work/native/
+            issue-195-results/logs/
+            issue-195-results/artifacts/
+            issue-195-results/runtime-parity/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  rust-suite:
+    name: Evidence Stage (rust-suite)
+    needs: [candidates, consumers, rml-workloads, formal-ai-workloads, javascript-suite]
+    if: ${{ !cancelled() && github.event_name != 'release' && needs.candidates.result == 'success' && needs.javascript-suite.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    concurrency:
+      group: issue-195-stage-${{ github.ref }}-rust-suite
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.99.0
+        with:
+          # The self-translation tests check translated Rust with clippy-driver.
+          components: clippy
+
+      - name: Setup Lean
+        env:
+          ELAN_HOME: ${{ runner.temp }}/elan-home
+          ELAN_VERSION: v4.2.4
+          ELAN_ARCHIVE_SHA256: 42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63
+        run: |
+          archive="${RUNNER_TEMP}/elan-x86_64-unknown-linux-gnu.tar.gz"
+          curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail \
+            "https://github.com/leanprover/elan/releases/download/${ELAN_VERSION}/elan-x86_64-unknown-linux-gnu.tar.gz" \
+            --output "$archive"
+          echo "${ELAN_ARCHIVE_SHA256}  ${archive}" | sha256sum --check --strict
+          tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
+          "${RUNNER_TEMP}/elan-init" -y --no-modify-path --default-toolchain leanprover/lean4:v4.34.1
+          echo "${ELAN_HOME}/bin" >> "$GITHUB_PATH"
+          "${ELAN_HOME}/bin/lean" --version
+
+      - name: Setup OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: "5.4"
+          opam-pin: false
+
+      - name: Install Rocq 9.3
+        run: |
+          opam repository add rocq-released https://rocq-prover.org/opam/released
+          opam install --yes 'rocq-core=9.3.0' 'rocq-stdlib=9.2.0' 'rocq-prover=meta.1'
+          opam var bin >> "$GITHUB_PATH"
+          opam exec -- rocq --version
+
+      - name: Install JavaScript dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - name: Download the relative-meta-logic workload report
+        # A missing report leaves I195-DOWNSTREAM-RML-WORKLOADS unobserved instead of stopping the stage.
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: issue-195-rml-workloads-${{ github.sha }}
+          path: issue-195-artifacts/rml-workloads
+
+      - name: Download the formal-ai workload report
+        # A missing report leaves I195-DOWNSTREAM-FORMAL-AI-WORKLOADS unobserved instead of stopping the stage.
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: issue-195-formal-ai-workloads-${{ github.sha }}
+          path: issue-195-artifacts/formal-ai-workloads
+
+      - name: Download the complete self-translation reports
+        # Missing reports fail their assertion while the other suite tests still run.
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          pattern: self-translation-report-${{ github.sha }}-*
+          path: issue-195-artifacts/self-translation-report
+
+      - name: Produce the stage evidence
+        env:
+          ISSUE_195_SELF_TRANSLATION_REPORT_DIRECTORY: ${{ github.workspace }}/issue-195-artifacts/self-translation-report
+          ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.json
+          ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.json
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_SHA: ${{ github.sha }}
+          ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
+          STAGE: rust-suite
+        run: >-
+          node js/scripts/run-issue-195-evidence.mjs
+          --checkpoint "$ACCEPTANCE_CHECKPOINT"
+          --commit "$GITHUB_SHA"
+          --results-dir issue-195-results
+          --stage "$STAGE"
+          --candidates .issue-195-work/candidates
+          --platform-reports issue-195-artifacts/platform-reports
+
+      # The record, execution records, logs and artifacts are uploaded even when
+      # the stage fails: the aggregate reports the failure as one gate error.
+      - name: Upload the stage outputs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-stage-rust-suite-${{ github.sha }}
+          path: |
+            issue-195-results/work/stage-*
+            issue-195-results/work/native/
+            issue-195-results/logs/
+            issue-195-results/artifacts/
+            issue-195-results/runtime-parity/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  delivery:
+    name: Evidence Stage (delivery)
+    needs: [candidates, consumers, rml-workloads, formal-ai-workloads]
+    if: ${{ !cancelled() && needs.candidates.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: issue-195-stage-${{ github.ref }}-delivery
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.99.0
+
+      - name: Install JavaScript dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - name: Download delivery candidates
+        uses: actions/download-artifact@v8
+        with:
+          name: issue-195-candidates-${{ github.sha }}
+          path: .issue-195-work/candidates
+
+      - name: Download platform consumer reports
+        uses: actions/download-artifact@v8
+        with:
+          pattern: issue-195-platform-*-${{ github.sha }}
+          path: issue-195-artifacts/platform-reports
+
+      - name: Produce the stage evidence
+        env:
+          ISSUE_195_RML_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/rml-workloads/report.json
+          ISSUE_195_FORMAL_AI_WORKLOAD_REPORT: ${{ github.workspace }}/issue-195-artifacts/formal-ai-workloads/report.json
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_SHA: ${{ github.sha }}
+          ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
+          STAGE: delivery
+        run: >-
+          node js/scripts/run-issue-195-evidence.mjs
+          --checkpoint "$ACCEPTANCE_CHECKPOINT"
+          --commit "$GITHUB_SHA"
+          --results-dir issue-195-results
+          --stage "$STAGE"
+          --candidates .issue-195-work/candidates
+          --platform-reports issue-195-artifacts/platform-reports
+
+      # The record, execution records, logs and artifacts are uploaded even when
+      # the stage fails: the aggregate reports the failure as one gate error.
+      - name: Upload the stage outputs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-stage-delivery-${{ github.sha }}
+          path: |
+            issue-195-results/work/stage-*
+            issue-195-results/work/native/
+            issue-195-results/logs/
+            issue-195-results/artifacts/
+            issue-195-results/runtime-parity/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  # Post-merge checks run on main only, as a non-blocking report: the live
+  # default-branch rules exist outside any pull request, so no pull request
+  # check depends on them, and a failure here is fixed in a follow-up commit.
+  post-merge:
+    name: Post-merge Report
+    needs: js
+    if: ${{ github.event_name == 'push' && needs.js.result == 'success' }}
+    continue-on-error: true
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: issue-195-post-merge-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install JavaScript dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - name: Inspect the default-branch rules with the workflow token
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: >-
+          node js/scripts/run-issue-195-evidence.mjs
+          --checkpoint post-merge
+          --commit "$GITHUB_SHA"
+          --results-dir issue-195-results
+
+      - name: Evaluate the post-merge cells
+        if: ${{ !cancelled() }}
+        run: >-
+          node js/scripts/check-issue-195-acceptance.mjs
+          --evaluate
+          --checkpoint post-merge
+          --results-dir issue-195-results
+          --json-report issue-195-artifacts/post-merge-report.json
+          --markdown-report issue-195-artifacts/post-merge-report.md
+
+      - name: Publish the post-merge report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-post-merge-report-${{ github.sha }}
+          path: |
+            issue-195-artifacts/
+            issue-195-results/logs/
+            issue-195-results/artifacts/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  acceptance:
+    name: Full Requirements Aggregate
+    needs: [js, candidates, consumers, rml-workloads, formal-ai-workloads, runtime-parity, native-javascript, native-rust, native-translations, javascript-suite, rust-suite, delivery]
+    # GitHub reports a skipped job as a successful required check. This job
+    # always runs and fails itself when there are no candidates to evaluate.
+    if: ${{ always() }}
+    # actions: read lists the failed JavaScript jobs for the gate error.
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: issue-195-acceptance-${{ github.ref }}
+      cancel-in-progress: true
+    # When a JavaScript job failed, no acceptance stage ran: the first step
+    # reports that as one gate error naming the failed JavaScript jobs, not one
+    # per stage or requirement.
+    steps:
+      - name: Require delivery candidates
+        if: ${{ needs.candidates.result != 'success' }}
+        env:
+          CANDIDATES_RESULT: ${{ needs.candidates.result }}
+          JAVASCRIPT_RESULT: ${{ needs.js.result }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$JAVASCRIPT_RESULT" = failure ] || [ "$JAVASCRIPT_RESULT" = cancelled ]; then
+            failed=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs" --paginate \
+              --jq '.jobs[] | select(.name | startswith("JavaScript / ")) | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out") | .name' 2>/dev/null | paste -sd ',' - | sed 's/,/, /g')
+            echo "::error::${failed:-The JavaScript workflow} finished as '${JAVASCRIPT_RESULT}'; the acceptance stages run only after every JavaScript job passes, so none of them ran"
+          else
+            echo "::error::Delivery Candidates finished as '${CANDIDATES_RESULT}'; the Full Requirements Aggregate cannot pass without them"
+          fi
+          exit 1
+
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install JavaScript dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - name: Validate atomic manifest and protected scope baseline
+        env:
+          BASELINE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || github.event.release.target_commitish }}
+          ISSUE_195_SCOPE_CHANGE_APPROVED: ${{ contains(github.event.pull_request.labels.*.name, 'issue-195-scope-change-approved') }}
+        run: node js/scripts/check-issue-195-acceptance.mjs --scope-baseline "$BASELINE_SHA"
+
+      # A stage whose job failed before uploading has no record here; the
+      # aggregate reports it as one gate error naming the stage.
+      - name: Download the evidence stage outputs
+        if: ${{ !cancelled() && needs.candidates.result == 'success' }}
+        uses: actions/download-artifact@v8
+        with:
+          pattern: issue-195-stage-*-${{ github.sha }}
+          path: issue-195-results
+          merge-multiple: true
+
+      - name: Merge the evidence stages
+        if: ${{ !cancelled() && needs.candidates.result == 'success' }}
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
+        run: >-
+          node js/scripts/run-issue-195-evidence.mjs
+          --checkpoint "$ACCEPTANCE_CHECKPOINT"
+          --commit "$GITHUB_SHA"
+          --results-dir issue-195-results
+          --aggregate
+
+      - name: Evaluate every required verification cell
+        if: ${{ always() && needs.candidates.result == 'success' }}
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          ACCEPTANCE_CHECKPOINT: ${{ github.event_name == 'release' && 'release-delivery' || 'pre-merge' }}
+        run: >-
+          node js/scripts/check-issue-195-acceptance.mjs
+          --produce-gate-results issue-195-results/gate-faults.json
+          --evaluate
+          --checkpoint "$ACCEPTANCE_CHECKPOINT"
+          --results-dir issue-195-results
+          --json-report issue-195-artifacts/report.json
+          --markdown-report issue-195-artifacts/report.md
+
+      - name: Publish per-requirement evidence report
+        if: ${{ always() && needs.candidates.result == 'success' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-requirement-report-${{ github.sha }}
+          path: |
+            issue-195-artifacts/
+            issue-195-results/logs/
+            issue-195-results/artifacts/
+            issue-195-results/runtime-parity/
+            issue-195-results/work/native/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown

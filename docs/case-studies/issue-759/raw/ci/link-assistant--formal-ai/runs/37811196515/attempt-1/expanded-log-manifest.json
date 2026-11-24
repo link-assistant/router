@@ -1,0 +1,19 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37811196515/attempt-1/logs/6_Detect tier changes.txt.xz",
+    "sha256": "c21825f1b8911c6bae13ae83f681e20f7066d01bb3fafb1992de1737d5613f67",
+    "bytes": 16792,
+    "uncompressed_bytes": 136257,
+    "redacted": false,
+    "original_gzip_sha256": "5db14ddf143495190fae3606c6528217872731fab82e15d87e6f6bfd4ffb53d6",
+    "compression": "xz",
+    "decoded_sha256": "dae122fec46e7d455107516bf8ed31ad649865f1fd71857ddfe709af14684b82"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37811196515/attempt-1/logs/Detect tier changes/system.txt.gz",
+    "sha256": "9bd15dec1287ec7eeb8ca7e60095e3c07e416119b7445ebbbdfcdb8a5ec83153",
+    "bytes": 393,
+    "uncompressed_bytes": 743,
+    "redacted": false
+  }
+]

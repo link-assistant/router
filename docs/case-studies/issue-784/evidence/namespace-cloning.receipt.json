@@ -1,0 +1,350 @@
+{
+  "schema": "complete-evidence-packet-v1",
+  "sourceHead": "8552c8e17737161111b54ee1d8f6b1afa43b054d",
+  "archive": "/tmp/gh-issue-solver-1794003502595/docs/case-studies/issue-784/evidence/namespace-cloning.tar.xz",
+  "archiveBytes": 110168,
+  "archiveSha256": "12510eb14dbff98144bc9651484ffc1ef6fcba16e763490c90334fc1ca79ccc3",
+  "manifestSha256": "9e24d3d5a2a2ec14e0e09cbc694c546dd33b35ff2d1935847c27f2f2e1a304b3",
+  "members": [
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-archive-retention.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-archive-retention.log",
+      "bytes": 226,
+      "sha256": "2c68b4d53c59688109c07fc63d75027f8eaad2fc4a5834a57c48f829d1df1f2e"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-checkpoint-commit.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-checkpoint-commit.log",
+      "bytes": 3019,
+      "sha256": "04b3a9f4dd0fb1915f723542db17f808c5e9dff89c5737c3b2aa1349e7029401"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-cloning-archive.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-cloning-archive.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-cloning-native-bun.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-cloning-native-bun.json.gz",
+      "bytes": 5526,
+      "sha256": "a7fc3f8bad26865b7fadcec38018c5f6b46dddfa11c3f6bae8e09f88607ffb56"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-cloning-native-node20.json.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-cloning-native-node20.json.gz",
+      "bytes": 5221,
+      "sha256": "04bdcb3ed41f7d11633f575327f191fed65cd834926cee41ad17a09a32103595"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-cloning-source-equation.json.xz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-cloning-source-equation.json.xz",
+      "bytes": 22856,
+      "sha256": "335de550a22ed20d91c6ca70a39dd7a9e1de5533264316a2ab9a61a2ecdcc60c"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-cloning-source-equation.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-cloning-source-equation.log",
+      "bytes": 133,
+      "sha256": "b3955b711162e82d77d96839f2c53af864983d0c758dfe5c17ba2399a47f492f"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-cloning-source-equation.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-cloning-source-equation.memory.json",
+      "bytes": 963,
+      "sha256": "5b73c9e873b780f037bfc0e72e125353de8e301a50352e207c59a0b1f7eb80d1"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-source-review-2.diff",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-source-review-2.diff",
+      "bytes": 13018,
+      "sha256": "19b75a9f502b7aca348583f9c191a97c1247fbdb8d9207c3d1928aa8fdf69b50"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-streaming-bun.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-streaming-bun.log",
+      "bytes": 1837,
+      "sha256": "48b730c89a82a0a8f2cdc571930dcaa25f58f9653ce7b0bfbd3a04aead35df95"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-streaming-bun.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-streaming-bun.memory.json",
+      "bytes": 1035,
+      "sha256": "24a4cb5a81e6d1225379423246fe15d950d5c26f0efdda321c3042cc6399ba58"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-streaming-controls-bun.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-streaming-controls-bun.log",
+      "bytes": 371,
+      "sha256": "250086999d0d4bcc3cd13c574af10c5fd72ff822db7dba81f6acc3f06a5ec328"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-streaming-controls-bun.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-streaming-controls-bun.memory.json",
+      "bytes": 971,
+      "sha256": "da103d3a1782c5a7d818a81f1d8fdc9db0f04fbce8c561026c82ba37f0df54fa"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-streaming-controls-first-source.mjs.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-streaming-controls-first-source.mjs.gz",
+      "bytes": 1908,
+      "sha256": "c9f26b9ed770a51927daa56ae744ea8808fd474c234f9f3d6069a1169ecc5c70"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-streaming-controls-node20-2.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-streaming-controls-node20-2.log",
+      "bytes": 735,
+      "sha256": "fbc50dc7743d4d3b4a2b83473d2fdc2998836e4b39b97244a63e3e5d8b41ba38"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-streaming-controls-node20-2.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-streaming-controls-node20-2.memory.json",
+      "bytes": 994,
+      "sha256": "bea1ae60db9a8d791779dc682b628a66a96821ad40d472a2d9dff04350b68c87"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-streaming-controls-node20.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-streaming-controls-node20.log",
+      "bytes": 2126,
+      "sha256": "61276fafb62a6f39de558303f93aa4a5c239e04fbea2fa40a2a9e258f2bd6d05"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-streaming-controls-node20.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-streaming-controls-node20.memory.json",
+      "bytes": 994,
+      "sha256": "3510a1b24dc6690906465d1d015410b619a98de05a79c4dcfe8c02e867099657"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-streaming-node20.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-streaming-node20.log",
+      "bytes": 3828,
+      "sha256": "755c396e9f6b752ba68d5547cb258ec7b2e897002e85e7e206451f755829266a"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-namespace-streaming-node20.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-namespace-streaming-node20.memory.json",
+      "bytes": 1060,
+      "sha256": "99eb9011152c3ebdb1744876237a81730f6584f072a70f031dbf28f4e54363fc"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-namespace-cloning-comparison.json.xz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-namespace-cloning-comparison.json.xz",
+      "bytes": 28392,
+      "sha256": "faf4e8c266af9c003981dd91f0ce23b62ceae4a6564568b4ae9fdb7fab6a1e95"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-namespace-cloning-comparison.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-namespace-cloning-comparison.log",
+      "bytes": 396,
+      "sha256": "2a7f25ec055ee13c3cdb4b97989c7437b2a7a75453d973c5bf1bb3a70ad756b4"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-native-namespace-cloning-comparison.memory.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-native-namespace-cloning-comparison.memory.json",
+      "bytes": 964,
+      "sha256": "fce43a3354bb2da0eaf1dacf6b7d53ca8146586fcfcdfbee204469375c50c818"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-terminal-0e234-retirement.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-terminal-0e234-retirement.json",
+      "bytes": 109202,
+      "sha256": "283d4d2b9263d307e93554487a2038d2b8cc08d4f565d28f05c6703d574f6af9"
+    },
+    {
+      "path": "ci-logs/issue-784-restart-2/current-terminal-0e234-retirement.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/ci-logs/issue-784-restart-2/current-terminal-0e234-retirement.log",
+      "bytes": 202,
+      "sha256": "9160d74b05c9147ec4dc3dfed8abedc670ab9cdaa34c59c69c35aa2750020a16"
+    },
+    {
+      "path": "experiments/issue-784/archive-namespace-cloning.py",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/archive-namespace-cloning.py",
+      "bytes": 2315,
+      "sha256": "5bd844621ec7d5246979ffb4663e9b30588705f64474e200e7bb5e82356fd15c"
+    },
+    {
+      "path": "experiments/issue-784/check-comparison-native-syntax.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/check-comparison-native-syntax.mjs",
+      "bytes": 2043,
+      "sha256": "a6f212272aaa41ac7311f2127d7a910c24549616147358a197eb9d476331961c"
+    },
+    {
+      "path": "experiments/issue-784/check-namespace-cloning-source.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/check-namespace-cloning-source.mjs",
+      "bytes": 3447,
+      "sha256": "b751b033ad234a02714881b20d4875d96669e3125a37e877a378f9a9251d3335"
+    },
+    {
+      "path": "experiments/issue-784/compare-native-namespace-cloning.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/compare-native-namespace-cloning.mjs",
+      "bytes": 4428,
+      "sha256": "61783f2bf246153e4bcdcd339b53855a8aca61e64a06a4146f4a09f1a444a372"
+    },
+    {
+      "path": "experiments/issue-784/complete-evidence-json.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/complete-evidence-json.mjs",
+      "bytes": 2227,
+      "sha256": "2f3e5d6695ad7946a6e37a61f136220c7765f45a6478da404f5c0d5b1f69ad02"
+    },
+    {
+      "path": "experiments/issue-784/run-observed-check.py",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/experiments/issue-784/run-observed-check.py",
+      "bytes": 12182,
+      "sha256": "e3c53ad28dc6896b6f67ad328826d2a8ed0299efd86050fcc903da67ad4850a1"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-IUan0R/case-deadlines.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-IUan0R/case-deadlines.json",
+      "bytes": 38609,
+      "sha256": "79d6db909cf33ed379634ff629a55531a71231c088c1e96905e9716c80b1ca48"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-IUan0R/command.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-IUan0R/command.json",
+      "bytes": 61388,
+      "sha256": "edc32a20f60c76bb93f727c65c408012c1c63b62d89942eadd1cc0df8d86fff1"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-IUan0R/request.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-IUan0R/request.json",
+      "bytes": 450,
+      "sha256": "d8f88d225d71dd3fd1e71f2931c50136357aefbd7bc981dcd41da0004988e3bd"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-IUan0R/stderr.raw.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-IUan0R/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/current-namespace-cloning-archive.log",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-IUan0R/stdout.raw.tap",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-IUan0R/stdout.raw.tap",
+      "bytes": 3707,
+      "sha256": "b79003a83963a92c2090e072268e4eea3a75022e7bfb04c27f34bfe65f26d6ad"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-IUan0R/terminal.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-IUan0R/terminal.json",
+      "bytes": 2492,
+      "sha256": "46be40bdf765c1a15aa92e639e66411ac83575a5f1f2286bc5b56a43138b1c99"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-bb2Ihd/case-deadlines.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-bb2Ihd/case-deadlines.json",
+      "bytes": 8354,
+      "sha256": "c0370a121f2f45bada134e4b8eee3c804c38803e344c7c541ad8ec0f654b3d70"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-bb2Ihd/command.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-bb2Ihd/command.json",
+      "bytes": 40009,
+      "sha256": "5b535a752af1ed1b2446e73d9439454dddd76d10ec89f965d967790bdfbf7d0e"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-bb2Ihd/request.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-bb2Ihd/request.json",
+      "bytes": 346,
+      "sha256": "7d5d9469fdbbfd414b5109f75ce41686ba9786a82298cdb50521aea1c35a5c32"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-bb2Ihd/stderr.raw.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-bb2Ihd/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/current-namespace-cloning-archive.log",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-bb2Ihd/stdout.raw.tap",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-bb2Ihd/stdout.raw.tap",
+      "bytes": 1919,
+      "sha256": "d79d1afd60264affc3c54d4ce8a803a973001b915aec035fd644ad4755301751"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-bb2Ihd/terminal.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-bb2Ihd/terminal.json",
+      "bytes": 2353,
+      "sha256": "8b86079fd081007529ea7e0a68d2fbcd3bf5db605d113128812d8b7bedefb030"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-frMsuw/case-deadlines.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-frMsuw/case-deadlines.json",
+      "bytes": 8542,
+      "sha256": "4cf3949a7a1cbe09c2eceb2d19224b7af783da18fc07a972f69882655137e3ba"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-frMsuw/command.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-frMsuw/command.json",
+      "bytes": 40196,
+      "sha256": "530027f973af19efcdfc341fb70b18ffab81550c7d7a864ae84a723cd508ed4c"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-frMsuw/request.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-frMsuw/request.json",
+      "bytes": 346,
+      "sha256": "f7dbf8ef7f43121034f3affc5f4bef917157c8e8b6d35767f57ea49ffb6ac718"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-frMsuw/stderr.raw.log",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-frMsuw/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "ci-logs/issue-784-restart-2/current-namespace-cloning-archive.log",
+      "fullByteEqualityBeforeHardlink": true
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-frMsuw/stdout.raw.tap",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-frMsuw/stdout.raw.tap",
+      "bytes": 614,
+      "sha256": "fa86816c327a92339ecba5468a3f683257758df51e8018f2b9d98642db4bc18d"
+    },
+    {
+      "path": "js/node_modules/.node-case-deadlines/complete-frMsuw/terminal.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/js/node_modules/.node-case-deadlines/complete-frMsuw/terminal.json",
+      "bytes": 2350,
+      "sha256": "d9a28eee030f0827a76537cabdec87537905fc0e0e472ca13857744fd7b2dacb"
+    },
+    {
+      "path": "tools/translation/source-scopes.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/source-scopes.mjs",
+      "bytes": 9716,
+      "sha256": "138e68191208170d48a508748b082fd41c97612aa80950d99df44c9703782258"
+    },
+    {
+      "path": "tools/translation/test/fixtures/namespace-clone-streaming/manifest.json",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/fixtures/namespace-clone-streaming/manifest.json",
+      "bytes": 544,
+      "sha256": "42c53f35b57391fea8c0d359186282baf764f7753cc96e4b5552ee35a8803e35"
+    },
+    {
+      "path": "tools/translation/test/fixtures/namespace-clone-streaming/source-scopes.before.mjs.gz",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/fixtures/namespace-clone-streaming/source-scopes.before.mjs.gz",
+      "bytes": 2646,
+      "sha256": "7b35ecc38c41ae06a94b5a41338d76f625585597affb3ad24537cd299c171990"
+    },
+    {
+      "path": "tools/translation/test/namespace-clone-streaming.test.mjs",
+      "originalPath": "/tmp/gh-issue-solver-1794003502595/tools/translation/test/namespace-clone-streaming.test.mjs",
+      "bytes": 4809,
+      "sha256": "f5e69f181a760c89ccb6c9ca10a14862cfad8ff014fc0abd713d52c499328cc9"
+    }
+  ],
+  "completeMembers": 53,
+  "completeOriginalBytes": 462009,
+  "allDecodedOriginalsVerified": true,
+  "allSelectedOriginalsUnchanged": true,
+  "capSeconds": 600,
+  "elapsedSeconds": 0.7017176129156724,
+  "compression": {
+    "format": "xz",
+    "preset": 9,
+    "dictionaryBytes": 67108864
+  },
+  "harnessSha256": "79015998f626aecda125c5e03b6e7fc04951a14a57a7cdbba81771a2abfa08e9",
+  "semanticAuthority": false,
+  "runtimeParity": false,
+  "fullGatePass": false,
+  "rustExecuted": false
+}

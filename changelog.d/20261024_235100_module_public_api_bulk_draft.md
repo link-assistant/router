@@ -1,0 +1,1 @@
+- Draft native-selected module reexports, identity-preserving JavaScript/TypeScript aliases, closed scalar Rust type exports and complete source-copy/CST histories for #759/#772. Independent regression sources are unrun; broader module translation and synchronization remain unfinished.

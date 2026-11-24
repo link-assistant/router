@@ -1,0 +1,1 @@
+- Draft shared current JSON field result source rules for later text and both Option adopters, preserving actual operands, chronological typed aliases, full two-phase CST histories and independent unrun consecutive-stage JS/strict TS, reverse, export and native oracle cases. Full translation and parity remain unfinished (#759, #772).

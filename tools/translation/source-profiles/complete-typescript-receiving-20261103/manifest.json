@@ -1,0 +1,20 @@
+{
+  "schema": "complete-typescript-receiving-source-draft-20261103-v1",
+  "decodedBytes": 36240,
+  "packedBytes": 10381,
+  "sha256": "175c62fb347db6b7e735b62dff2e0ce9304db009fe1c3c1825246cf0a62ec059",
+  "authoredPaths": [
+    "tools/translation/complete-typescript-receiving-20261103.mjs",
+    "tools/translation/test/complete-typescript-receiving-20261103.test.mjs",
+    "tools/translation/test/complete-typescript-receiving-20261103-full.mjs",
+    "docs/development/complete-typescript-receiving-20261103.md"
+  ],
+  "originalComposedPaths": [
+    "tools/translation/compact-typescript-source-vault-20261102.mjs",
+    "tools/translation/compact-source-materialization-20261102.mjs"
+  ],
+  "verification": "UNRUN",
+  "ci": "NOT_INSPECTED",
+  "compilerQualified": false,
+  "receivingQualified": false
+}

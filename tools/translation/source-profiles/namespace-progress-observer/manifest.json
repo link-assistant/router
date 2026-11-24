@@ -1,0 +1,26 @@
+{
+  "schema": "namespace-progress-observer-originals-v1",
+  "revision": "08554e93489cbd2df7786898cb60bb3bab5e169f",
+  "sources": [
+    {
+      "path": "tools/translation/project.mjs",
+      "archive": "0-original.mjs.gz",
+      "archiveBytes": 17132,
+      "archiveSha256": "76d01db36f7ab3e286fcdb5cbde46e69388f341363ef6182d948019bd7ac4b45",
+      "bytes": 70812,
+      "sha256": "2b4ffae9e075f387eb40137d0db1b20ff55c06847902940f571cc333be654412",
+      "rules": "0-rules.json",
+      "rulesSha256": "23eabe8f329efc2534b7da89442c3273fea75056b1d05469987124ef7ff5cf46"
+    },
+    {
+      "path": "scripts/translate-router.mjs",
+      "archive": "1-original.mjs.gz",
+      "archiveBytes": 1437,
+      "archiveSha256": "3486326c22d17354271cec150dfa9c1993ae5a7505e382311b84c6709de273f9",
+      "bytes": 5558,
+      "sha256": "1bb29ebb15ef4d3c8176e2230e927c3fb84c89e77fd6b61a4ce872ecb16b2f5b",
+      "rules": "1-rules.json",
+      "rulesSha256": "76fd46c143c5599a94a29df82ffdfe22b4fdb77e430f4d78c9b90a88dcadb2c1"
+    }
+  ]
+}

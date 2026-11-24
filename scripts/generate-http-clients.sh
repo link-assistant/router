@@ -2,19 +2,35 @@
 # Pin and verify the generator; generate full HTTP clients without hand lists.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
-tool="$root/target/http-clients/openapi-generator-7.25.0.jar"
+version=7.25.0
+artifact="openapi-generator-cli-$version.jar"
+artifact_path="org/openapitools/openapi-generator-cli/$version/$artifact"
+tool="$root/target/http-clients/openapi-generator-$version.jar"
 mkdir -p "$(dirname "$tool")"
+candidate="$tool"
 if [[ ! -f "$tool" ]]; then
-  curl -fsSL 'https://repo.maven.apache.org/maven2/org/openapitools/openapi-generator-cli/7.25.0/openapi-generator-cli-7.25.0.jar' -o "$tool"
+  candidate="$(mktemp "$tool.XXXXXX")"
+  trap 'rm -f -- "$candidate"' EXIT
+  # The mirror serves the Maven release archive with the checksum below.
+  curl -fsSL --proto '=https' --proto-redir '=https' \
+    "https://maven-central.storage-download.googleapis.com/maven2/$artifact_path" -o "$candidate" ||
+    curl -fsSL --proto '=https' --proto-redir '=https' \
+      "https://repo.maven.apache.org/maven2/$artifact_path" -o "$candidate"
 fi
-python3 - "$tool" <<'PY'
-import hashlib,sys
-with open(sys.argv[1],'rb') as jar:
+python3 - "$candidate" <<'PY'
+import hashlib
+import sys
+
+with open(sys.argv[1], 'rb') as jar:
     digest = hashlib.sha256()
     for chunk in iter(lambda: jar.read(1024 * 1024), b''):
         digest.update(chunk)
-    assert digest.hexdigest()=='41ce4f6b07f196676439d710759fa1ced7a08066d06ff1bf314681470289efae', 'Generator checksum mismatch'
+if digest.hexdigest() != '41ce4f6b07f196676439d710759fa1ced7a08066d06ff1bf314681470289efae':
+    sys.exit('Generator checksum mismatch')
 PY
+if [[ "$candidate" != "$tool" ]]; then
+  mv -- "$candidate" "$tool"
+fi
 java -Xmx512m -jar "$tool" validate -i "$root/openapi/router.yaml"
 for language in php go java; do
   properties='packageName=router,hideGenerationTimestamp=true'

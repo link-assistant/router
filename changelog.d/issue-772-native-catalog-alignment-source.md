@@ -1,0 +1,1 @@
+Draft reusable complete native source histories with original pins, two-phase CST inverses and callback-boundary rechecks. Align native Rust fresh Codex global catalogue validation/removal/rollback and 8MiB reads with paired JS/TS; all independent verification remains unrun.

@@ -1,0 +1,33 @@
+{
+  "profile": "rust-1.89-checked-result-collection",
+  "rust": "1.89.0",
+  "constEligible": false,
+  "sources": [
+    {
+      "file": "core-result.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/result.rs",
+      "bytes": 69180,
+      "sha256": "9166f16035d67e4b42b9439b3f2400a07866a8ff111d7d544584c593d39e2ecc",
+      "compressedSha256": "30d240da09888014cec8e916965cf9631a9552f5995250ca44a4c198ea40953d",
+      "lines": [
+        911,
+        916,
+        2005,
+        2052
+      ]
+    },
+    {
+      "file": "core-iter-adapters.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/iter/adapters/mod.rs",
+      "bytes": 8467,
+      "sha256": "11a06e5004ce6bb5ec71fa3cba109a4723967004abd0df82f3c0d1b2598c0e30",
+      "compressedSha256": "352657b6ca248ec8a2bc121f528aee48db91debc22f2ef89422e4c9b29b5b058",
+      "lines": [
+        151,
+        170,
+        192,
+        208
+      ]
+    }
+  ]
+}

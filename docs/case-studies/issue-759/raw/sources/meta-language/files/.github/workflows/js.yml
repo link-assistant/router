@@ -1,0 +1,437 @@
+name: JavaScript
+
+# .github/workflows/ci.yml calls this workflow on pushes to main and on pull
+# requests, before the Rust workflow, so the Rust jobs run only after the
+# JavaScript jobs pass. A release and a manual dispatch run it standalone, so
+# the npm trusted publisher stays this file.
+on:
+  workflow_call:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Expected package version (optional safety check)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+# A new push to a pull request cancels that pull request's older runs. Push,
+# release and dispatch runs each get their own group, so a release is never
+# cancelled; the write jobs also share the release queue below. The group has
+# its own literal prefix: called from ci.yml, github.workflow names the caller,
+# and a group equal to the caller's would deadlock with it.
+concurrency:
+  group: js-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: init.defaultBranch
+  GIT_CONFIG_VALUE_0: main
+
+jobs:
+  # The test files run in groups, one job each, so no job holds the whole
+  # suite in one process. scripts/test-groups.mjs fails when a test file is in
+  # no group or in more than one.
+  tests:
+    name: JavaScript Tests (${{ matrix.group }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: check-js-${{ github.ref }}-javascript-tests-${{ matrix.group }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [grammar, translation, conformance, downstream, tooling]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Simulate fresh merge with base branch
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: bash js/scripts/simulate-fresh-merge.sh
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: js
+
+      - name: Run the test group
+        env:
+          TEST_GROUP: ${{ matrix.group }}
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node scripts/test-groups.mjs --run "$TEST_GROUP"
+        working-directory: js
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  test:
+    name: JavaScript Package
+    needs: tests
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: check-js-${{ github.ref }}-javascript-test
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Simulate fresh merge with base branch
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: bash js/scripts/simulate-fresh-merge.sh
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: js
+
+      - name: Check that every test file is in exactly one test group
+        run: node scripts/test-groups.mjs --check
+        working-directory: js
+
+      - name: Check the cache cleanup policy
+        if: ${{ !cancelled() }}
+        run: node scripts/check-cache-policy.mjs
+
+      - name: Install and verify the development hook in this clone
+        if: ${{ !cancelled() }}
+        run: |
+          node scripts/install-dev-hooks.mjs
+          node scripts/install-dev-hooks.mjs --check
+
+      - name: Check Rust/JavaScript parity manifest
+        if: ${{ !cancelled() }}
+        run: npm run check:parity
+        working-directory: js
+
+      - name: Check that every JavaScript export maps to a public Rust item
+        if: ${{ !cancelled() }}
+        run: npm run check:export-parity
+        working-directory: js
+
+      - name: Check grammar-derived default CST expectations
+        if: ${{ !cancelled() }}
+        run: npm run check:default-cst
+        working-directory: js
+
+      - name: Check the official links-notation LiNo grammar cases
+        if: ${{ !cancelled() }}
+        run: npm run check:lino-grammar
+        working-directory: js
+
+      - name: Check the pdf-lib PDF grammar cases
+        if: ${{ !cancelled() }}
+        run: npm run check:pdf-grammar
+        working-directory: js
+
+      - name: Check the native grammars imported from their pinned sources
+        if: ${{ !cancelled() }}
+        run: npm run check:native-imports
+        working-directory: js
+
+      - name: Check the native merged grammar fixtures against their oracles
+        if: ${{ !cancelled() }}
+        run: npm run check:native-grammars
+        working-directory: js
+
+      - name: Check the independent built-in grammar CST expectations
+        if: ${{ !cancelled() }}
+        run: npm run check:builtin-cst
+        working-directory: js
+
+      - name: Check the shared language catalog
+        if: ${{ !cancelled() }}
+        run: npm run check:language-catalog
+        working-directory: js
+
+      - name: Check the shared concept records
+        if: ${{ !cancelled() }}
+        run: npm run check:concept-records
+        working-directory: js
+
+      - name: Check the native grammar concept reuse report
+        if: ${{ !cancelled() }}
+        run: npm run check:concept-reuse
+        working-directory: js
+
+      - name: Check the native grammar merge quality evidence
+        if: ${{ !cancelled() }}
+        run: npm run check:merge-quality
+        working-directory: js
+
+      - name: Check the foundation models are neutral data
+        if: ${{ !cancelled() }}
+        run: npm run check:foundations
+        working-directory: js
+
+      - name: Check issue 195 atomic requirement manifest
+        if: ${{ !cancelled() }}
+        run: npm run check:issue-195
+        working-directory: js
+
+      # A pull request checks only what exists before merge: the committed
+      # register. Live comment edits are compared on main as a non-blocking
+      # report and registered in a follow-up commit.
+      - name: Check issue 195 source register against the ledger
+        if: ${{ !cancelled() }}
+        run: npm run check:issue-195:sources
+        working-directory: js
+
+      - name: Compare the issue 195 source register with the live discussion (post-merge report)
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        continue-on-error: true
+        run: npm run check:issue-195:sources -- --online
+        working-directory: js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check the downstream consumer matrix against the ledger and the tests
+        if: ${{ !cancelled() }}
+        run: npm run check:downstream-consumers
+        working-directory: js
+
+      - name: Compare the pinned RML audit with the live pull request head (post-merge report)
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+        continue-on-error: true
+        run: node scripts/issue-195-rml-pr184.mjs --online
+        working-directory: js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check that every dependency, toolchain, action and image is inventoried at its current stable release or records why not
+        if: ${{ !cancelled() }}
+        run: npm run check:dependencies
+        working-directory: js
+
+      - name: Check readable English names against WordNet, the concept records and the source inventory
+        if: ${{ !cancelled() }}
+        run: npm run check:naming
+        working-directory: js
+
+      - name: Check that the documentation agrees with the requirement ledger
+        if: ${{ !cancelled() }}
+        run: npm run check:documentation
+        working-directory: js
+
+      - name: Check the shared self-translation cases
+        if: ${{ !cancelled() }}
+        run: npm run check:self-translation
+        working-directory: js
+
+      - name: Setup Rust formatting for generated frontend rules
+        if: ${{ !cancelled() }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Check the generated Rust frontend rules against JavaScript
+        if: ${{ !cancelled() }}
+        run: npm run check:frontend-rules
+        working-directory: js
+
+      - name: Check generated frontend rule compilation and style
+        if: ${{ !cancelled() }}
+        run: npm run check:frontend-rule-styles
+        working-directory: js
+
+      # The pull request description and the release reports are live texts
+      # outside the commit; they are compared on main as a non-blocking report.
+      - name: Compare the pull request description and the release reports with the requirement ledger (post-merge report)
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        continue-on-error: true
+        run: npm run check:documentation -- --online
+        working-directory: js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify npm package contents
+        if: ${{ !cancelled() }}
+        run: node ../scripts/with-cache-cleanup.mjs --event package -- npm pack --dry-run
+        working-directory: js
+
+      - name: Scan repository for secrets
+        if: ${{ !cancelled() }}
+        run: npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint --secretlintignore .gitignore "**/*"
+
+      # Checked last, so the package checks above still report their own
+      # failures when a test group failed.
+      - name: Require every JavaScript test group
+        if: ${{ !cancelled() }}
+        env:
+          TESTS_RESULT: ${{ needs.tests.result }}
+        run: |
+          if [ "$TESTS_RESULT" != "success" ]; then
+            echo "::error::JavaScript test groups finished with '$TESTS_RESULT'; see the JavaScript Tests jobs."
+            exit 1
+          fi
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown
+
+  publish:
+    name: Publish npm Package
+    needs: test
+    if: |
+      !cancelled() && needs.test.result == 'success' && (
+        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'release' && github.event.action == 'published')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: release-${{ github.repository }}-main-write
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Update npm for trusted publishing
+        run: |
+          npm install -g npm@12
+          npm --version
+
+      # actions/setup-node writes `_authToken=${NODE_AUTH_TOKEN}` and exports the
+      # placeholder `XXXXX-XXXXX-XXXXX-XXXXX` whenever no token is supplied. npm
+      # then skips the OIDC exchange and the registry rejects the anonymous PUT
+      # with a misleading `E404`. Strip that placeholder so trusted publishing is
+      # actually attempted; keep it when a real NPM_TOKEN bootstrap secret exists.
+      # See actions/setup-node#1551 and issue #191.
+      - name: Prepare npm authentication
+        id: npm_auth
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          PACKAGE_NAME: meta-language
+          PUBLISH_WORKFLOW_FILE: .github/workflows/js.yml
+          # Set to '1' (or add --verbose) to trace npm credential resolution.
+          NPM_AUTH_DEBUG: ${{ vars.NPM_AUTH_DEBUG }}
+        run: node scripts/prepare-npm-auth.mjs
+        working-directory: js
+
+      - name: Read package metadata
+        id: package
+        working-directory: js
+        run: |
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+
+          if [ "$name" != "meta-language" ]; then
+            echo "::error::Expected package name meta-language, got $name"
+            exit 1
+          fi
+
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Package: $name@$version"
+
+      - name: Verify requested release version
+        env:
+          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          REQUESTED_VERSION: ${{ github.event.inputs.release_version }}
+        run: |
+          if [ -n "$RELEASE_TAG" ]; then
+            normalized_tag="${RELEASE_TAG#v}"
+            if [ "$normalized_tag" != "$PACKAGE_VERSION" ]; then
+              echo "::error::Release tag $RELEASE_TAG does not match js/package.json version $PACKAGE_VERSION"
+              exit 1
+            fi
+          fi
+
+          if [ -n "$REQUESTED_VERSION" ] && [ "$REQUESTED_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "::error::Requested version $REQUESTED_VERSION does not match js/package.json version $PACKAGE_VERSION"
+            exit 1
+          fi
+
+      - name: Check npm registry
+        id: npm
+        env:
+          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
+        working-directory: js
+        run: |
+          if npm view "meta-language@$PACKAGE_VERSION" version >/dev/null 2>&1; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # npm treats a refused trusted-publisher exchange as "no credential" and
+      # reports only ENEEDAUTH. Perform the same exchange first so the log shows
+      # the registry's answer, the OIDC claims it compared, and the exact
+      # settings docs/ci-cd/npm-trusted-publishing.md asks for.
+      - name: Verify the trusted-publisher exchange
+        if: steps.npm.outputs.already_published != 'true' && steps.npm_auth.outputs.auth_mode == 'oidc'
+        env:
+          PACKAGE_NAME: meta-language
+          PUBLISH_WORKFLOW_FILE: .github/workflows/js.yml
+        run: node scripts/prepare-npm-auth.mjs --verify-exchange
+        working-directory: js
+
+      - name: Publish to npm
+        if: steps.npm.outputs.already_published != 'true'
+        # Optional NPM_TOKEN bootstrap fallback. OIDC trusted publishing is the
+        # steady-state mechanism; the token path only matters until a trusted
+        # publisher is configured for the package on npmjs.com.
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance
+        working-directory: js
+
+      - name: Explain npm publish failure
+        if: failure() && steps.npm.outputs.already_published != 'true'
+        env:
+          AUTH_MODE: ${{ steps.npm_auth.outputs.auth_mode }}
+        run: |
+          echo "::error::npm publish failed with auth mode '$AUTH_MODE'."
+          if [ "$AUTH_MODE" = "oidc" ]; then
+            echo "An E404 on PUT or an ENEEDAUTH means the registry treated the request as"
+            echo "anonymous. The trusted publisher of meta-language on npmjs.com must name"
+            echo "${{ github.repository }} and the workflow filename js.yml with no environment;"
+            echo "see docs/ci-cd/npm-trusted-publishing.md. An NPM_TOKEN secret bootstraps the publish."
+          fi
+
+      - name: Verify published package
+        if: steps.npm.outputs.already_published != 'true'
+        env:
+          PACKAGE_VERSION: ${{ steps.package.outputs.version }}
+        run: npm view "meta-language@$PACKAGE_VERSION" version
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        run: node scripts/clean-caches.mjs --event ci-teardown

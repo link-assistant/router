@@ -11,7 +11,9 @@
 //! Usage: rust-script scripts/publish-crate.rs [--token <token>] [--rust-root <path>]
 //!
 //! Environment variables (checked in order of priority):
-//!   - CARGO_REGISTRY_TOKEN: Cargo's native crates.io token (preferred)
+//!   - CARGO_REGISTRY_TOKEN: Cargo's native crates.io token (preferred). In
+//!     release.yml this is the short-lived token from
+//!     rust-lang/crates-io-auth-action (OIDC trusted publishing, issue #797).
 //!   - CARGO_TOKEN: Alternative token name for backwards compatibility
 //!
 //! Outputs (written to GITHUB_OUTPUT):
@@ -53,14 +55,14 @@ fn get_rust_root() -> String {
         }
     }
 
-    if Path::new("./Cargo.toml").exists() {
-        eprintln!("Detected single-language repository (Cargo.toml in root)");
-        return ".".to_string();
-    }
-
     if Path::new("./rust/Cargo.toml").exists() {
         eprintln!("Detected multi-language repository (Cargo.toml in rust/)");
         return "rust".to_string();
+    }
+
+    if Path::new("./Cargo.toml").exists() {
+        eprintln!("Detected single-language repository (Cargo.toml in root)");
+        return ".".to_string();
     }
 
     eprintln!("Error: Could not find Cargo.toml in expected locations");
@@ -132,7 +134,10 @@ fn main() {
     if token.is_none() {
         println!("::warning::Neither CARGO_REGISTRY_TOKEN nor CARGO_TOKEN is set, attempting publish without explicit token");
         println!();
-        println!("To fix this, ensure one of the following secrets is configured:");
+        println!("Preferred fix: configure crates.io trusted publishing for this repository and");
+        println!("workflow, grant the job `id-token: write` and pass the token from");
+        println!("rust-lang/crates-io-auth-action as CARGO_REGISTRY_TOKEN.");
+        println!("Fallback: ensure one of the following secrets is configured:");
         println!("  - CARGO_REGISTRY_TOKEN (Cargo's native env var, preferred)");
         println!("  - CARGO_TOKEN (alternative for backwards compatibility)");
         println!();

@@ -1,0 +1,6 @@
+# GENERATED: checked portable-router-v1 bodies; no source envelopes.
+(constant MAX_BYTES (type number) (value (binary multiply (binary multiply (number 256) (number 1024)) (number 1024))))
+(constant MAX_FILES (type number) (value (number 10000)))
+(constant MAX_DEPTH (type number) (value (number 128)))
+(function unsupported (parameters (message utf16-string)) (returns error%3A%5B%5B%22code%22%2C%22string%22%5D%5D) (body (return (error (message (variable message)) (field code (string unsupported))))))
+(function bad (parameters (message utf16-string)) (returns error%3A%5B%5B%22code%22%2C%22string%22%5D%5D) (body (return (error (message (variable message)) (field code (string invalid_resource))))))

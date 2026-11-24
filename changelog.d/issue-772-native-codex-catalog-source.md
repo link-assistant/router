@@ -1,0 +1,1 @@
+Draft paired bounded Codex catalogue constraint validation and lossless transactional override removal before managed configuration, retaining exact undo and external files. Independent cases remain unrun; native alignment and full translation requirements remain open.

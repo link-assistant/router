@@ -1,0 +1,25 @@
+# Complete byte observation string interning
+
+This source draft changes only the complete closed-JSON DAG observation codec. It does not change compiler, source-proposal, owner or runtime operations. Root's published checkpoint `c6bed6215e157de4381e39e04b4cb1ef02720384` remains separate; integration and qualification belong to the next coordinated cycle.
+
+The native Core child diagnostic attributed4,842ms self time to `Reflect.ownKeys` on byte views. A full fresh own-key census cannot be removed while preserving the codec's domain. The draft leaves `visit`, `domain` and `normalized` byte-for-byte unchanged, as well as the entire decoder and original framing codec. It does not repeat the neutral ownKeys-versus-ownNames benchmark or claim a gain from those operations.
+
+The avoidable work follows that census. Previously every fresh equal byte object was copied into a Buffer and base64-encoded before the string dictionary found its existing complete value. The new observation-local index uses a complete Latin1 string as an exact byte key: every byte maps to one code unit, with no UTF8 replacement, normalization, truncation or digest. Equal fresh objects must still independently pass the original key/prototype/refusal checks. Only the subsequent existing base64 dictionary index is reused. Node tags, canonical string order, every parent occurrence, payload/event ordering and the complete framed representation remain byte-identical.
+
+For ordinary byte storage with no own fields and the unchanged complete stock ArrayBuffer prototype, a native Buffer view avoids copying its backing bytes. The full storage prototype descriptor/key census runs around the callback-free operation; each fresh storage object still has its own complete key check. Own byteLength getters, foreign/subclass storage, changed storage prototypes and detached/out-of-bounds view construction take the original Buffer-copy path. Unknown input callbacks are not invoked to qualify this path. Shared storage and all original extra-field/proxy/accessor/stack/toJSON refusals remain in the original unchanged visitor before byte interning.
+
+Scratch admission is1,048,576 units, charging the complete Latin1 length plus64 per entry. Entries are cleared at the bound and when the remaining existing representation allowance shrinks; oversized payloads use the exact original uncached path. The index is cleared on every return/error, and later invocations freshly consume mutated bytes. This is complete observation DATA interning within one synchronous encoding, not a persistent byte/encoded/source/owner/verdict cache. The existing384MiB representation,64MiB stdout and1MiB frame limits are unchanged. `Map.get` replaces paired has/get only where private dictionaries contain integer IDs, including ID0.
+
+`prepare-closed-json-dag-byte-index.mjs` reads the complete pinned original codec archive (4,674 stored bytes,13,994 raw bytes), joins its exact source hash, and selects the actual original/current encoder and intrinsic declaration using installed TypeScript5.9.3 spans. The complete unchanged visitor/refusal bodies are checked by native AST declarations. Independent native inverses restore every original source byte; separately ordered language and repository CST phases retain full serialization/reparse and canonical inverses. The proposal is emit/check only and grants no semantic authority. The original receiver import is selected through its actual native ImportDeclaration, fully inverted, and loaded inside receiving cases; no original workload or compiler warmup is moved outside a deadline.
+
+The new complete receiving file covers exact original/current framed wire equality on512 fresh equal byte events, all256 byte values, offsets and Buffer/Uint8/array representations; differing alias layouts; one real nested byte mutation; fresh equal objects with forbidden fields/proxies/shared storage/stack/accessors; ignored backing-storage getters and late storage-provider changes; detached storage; bounded index eviction and an oversized uncached payload; mutation between invocations; and late Map/Buffer hooks. The original six codec cases remain unchanged.
+
+Root's receiving order, under its existing monitor and lease, is:
+
+```sh
+node tools/translation/prepare-closed-json-dag-byte-index.mjs --check
+```
+
+Then run the complete `test/closed-json-dag-byte-index.test.mjs` and original `test/complete-closed-json-dag-hook-wire.test.mjs` with the existing Node/Bun wrapper, followed by the unchanged complete Core hook children/whole files. Keep each child at12500ms/64MiB and each case at60000ms. Repeat the full real child diagnostic only if needed for source attribution; a diagnostic extension is not deadline qualification.
+
+All generation, Node/Bun receiving and performance are **unrun** for this draft. The4,842ms key-census cost is deliberately retained. The new string/index work may outweigh removed copying/base64 work for some inputs; only complete actual receiving can establish whether it helps the current timed-out children. No coverage, default compiler behavior or gate completion is claimed.

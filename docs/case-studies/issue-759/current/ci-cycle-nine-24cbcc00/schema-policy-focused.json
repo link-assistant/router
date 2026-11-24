@@ -1,0 +1,59 @@
+{
+  "archive": {
+    "bytes": 4138,
+    "members": [
+      {
+        "bytes": 4740,
+        "name": "router-759-gate-schema-policy-d088-0.log",
+        "sha256": "fc726d26953e91c11d4a9b1d394fc7c76cb11e87b747892ea2c678ef095a952d"
+      },
+      {
+        "bytes": 154,
+        "name": "router-759-gate-schema-policy-d088-1.log",
+        "sha256": "5194ecb98027dfed238455f19dfc870bf011397d623182a775237b718c668f00"
+      },
+      {
+        "bytes": 2579,
+        "name": "router-759-gate-schema-policy-d088-plan.json",
+        "sha256": "e6ce33f2639337982c55bb0a0b0a5b450a5ff375948ce91e83aaa78a8e3d365c"
+      },
+      {
+        "bytes": 6185,
+        "name": "router-759-gate-schema-policy-d088-receipt.json",
+        "sha256": "3c07c8cc98324d3d7318f0a0284b87793d81d19d3fcaa76e7d06609db2c34a07"
+      },
+      {
+        "bytes": 4630,
+        "name": "router-759-gate-schema-policy-d088-retry-0.log",
+        "sha256": "4eea7376c69a0de2cae55cdb7087f8f1fc5e7e3f2b723c1456d838ee693078ed"
+      },
+      {
+        "bytes": 48,
+        "name": "router-759-gate-schema-policy-d088-retry-1.log",
+        "sha256": "7913c93d2d67695b0cfb118ae5ca80361b5898fe3a7e90afcc7fc7329d9103a1"
+      },
+      {
+        "bytes": 6771,
+        "name": "router-759-gate-schema-policy-d088-retry-receipt.json",
+        "sha256": "9abee589d4f6c2685b0bd8ebba9eb71f736bdee0317ccbe25a930ccdce7ff2e4"
+      }
+    ],
+    "path": "schema-policy-focused-complete.tar.gz",
+    "reopenErrors": 0,
+    "sha256": "78a024b92b55fb96ff7748f28b82d8601416eac10343687d9f540907555c8592"
+  },
+  "fullLocalGatePassed": false,
+  "immutableSourceInputs": 20,
+  "initialAttempt": "Both child outputs passed; POSIX time -l exited 1 after sandbox denied sysctl kern.clockrate. Full initial wrapper failure preserved.",
+  "originalSourcesChanged": false,
+  "resourceScope": "CPU deltas over terminated children; reported RSS cumulative within runner, not aggregate process-tree peak",
+  "retry": "Direct child exit capture, exact same source; tests exit 0 in 7.309337833197787s, auditor exit 0 in 0.1276662079617381s",
+  "runnerSource": "Executed Python stdin wrappers; commands, finite process-group bounds and results retained in receipts. No file-backed runner source claimed.",
+  "rustExecuted": false,
+  "schema": "gate-schema-policy-focused-v1",
+  "scope": "Mandatory schema freshness/strict TS and complete two-glob forward test wiring policy only; no schema producer or whole-source translation executed",
+  "status": "PASS",
+  "testCases": 21,
+  "testedHead": "d0888af63faca2e3d159634a76ed95449e936c8e",
+  "workflowsAudited": 14
+}

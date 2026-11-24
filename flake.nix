@@ -19,7 +19,7 @@
       forEachSystem = f:
         nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
 
-      cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
+      cargoToml = builtins.fromTOML (builtins.readFile ./rust/Cargo.toml);
 
       # Only the inputs the Rust build actually reads. Keeping the source
       # filtered this way means editing docs or CI configuration does not
@@ -29,12 +29,10 @@
         fileset = nixpkgs.lib.fileset.unions [
           ./Cargo.toml
           ./Cargo.lock
-          ./src
-          ./tests
+          ./rust
           ./README.md
           # RustEmbed compiles the committed admin UI bundle into the binary,
-          # so the build fails without it (see src/admin_ui.rs).
-          ./ui/dist
+          # so the build fails without it (see rust/src/admin_ui.rs).
         ];
       };
 

@@ -1,0 +1,107 @@
+{
+  "schema": "router-unit-privacy-source-rules-v1",
+  "files": [
+    {
+      "path": "rust/src/account_routing_policy.rs",
+      "beforeSha256": "64d863e769dc0dc64d81868e88bb0ab0a6dd45f3d09be61bade739a18fd13d92",
+      "afterSha256": "ed9fe34c15b1b3808f426b2b9f0a66353d85dee9a5da605488623fd113e50a67",
+      "edits": [
+        {
+          "expected": "\n    /// Copy only reviewed fields, after upstream authentication has been installed.\n    pub fn apply_headers(&self, incoming: &HeaderMap, outgoing: &mut HeaderMap) {\n        for (name, value) in &self.headers {\n            let Ok(name) = HeaderName::from_bytes(name.as_bytes()) else {\n                continue;\n            };\n            if !permitted_destination(name.as_str()) {\n                continue;\n            }\n            let value = if let Some(source) = value.strip_prefix('$') {\n",
+          "replacement": "\n    /// Copy only reviewed fields, after upstream authentication has been installed.\n    pub fn apply_headers(&self, incoming: &HeaderMap, outgoing: &mut HeaderMap) {\n        let share_geolocation = crate::geolocation::shares_geolocation(incoming);\n        for (name, value) in &self.headers {\n            let Ok(name) = HeaderName::from_bytes(name.as_bytes()) else {\n                continue;\n            };\n            if !permitted_destination(name.as_str())\n                || crate::proxy::INGRESS_NETWORK_HEADERS.contains(&name.as_str())\n                || name.as_str().starts_with(\"x-forwarded-\")\n                || (!share_geolocation && crate::geolocation::is_geolocation_header(name.as_str()))\n            {\n                continue;\n            }\n            let value = if let Some(source) = value.strip_prefix('$') {\n"
+        }
+      ]
+    },
+    {
+      "path": "rust/src/lib.rs",
+      "beforeSha256": "7ec5955c5ea7d8fb8d27b243626fcc1af5a13f4cf0fdc180ffd83f3d293e90a5",
+      "afterSha256": "de421977929eeddd60e396cea2b22647e9b47fa1378b8d357f2ba56934a25835",
+      "edits": [
+        {
+          "expected": "pub mod gemini;\npub mod gemini_bridge;\npub mod generated_js_first;\npub mod git_proxy;\npub mod github_proxy;\npub mod gonka;\n",
+          "replacement": "pub mod gemini;\npub mod gemini_bridge;\npub mod generated_js_first;\nmod geolocation;\npub mod git_proxy;\npub mod github_proxy;\npub mod gonka;\n"
+        }
+      ]
+    },
+    {
+      "path": "rust/src/native_service_relay.rs",
+      "beforeSha256": "5ef693242ff7081a899872ba1a9f19e540a982102670eaa6c01a14b88d7b7e69",
+      "afterSha256": "28c33a558c9112da0f40ab532bcdd9f647af8dff737d4a7b076e4dff80d1191b",
+      "edits": [
+        {
+          "expected": "    usage_identity: Option<(String, crate::model_contract::ModelAccessPolicy)>,\n) -> Response {\n    let (mut parts, _) = request.into_parts();\n    let upgrade = match WebSocketUpgrade::from_request_parts(&mut parts, &state).await {\n        Ok(upgrade) => upgrade,\n        Err(rejection) => return rejection.into_response(),\n",
+          "replacement": "    usage_identity: Option<(String, crate::model_contract::ModelAccessPolicy)>,\n) -> Response {\n    let (mut parts, _) = request.into_parts();\n    let share_geolocation = crate::geolocation::shares_geolocation(&parts.headers);\n    let upgrade = match WebSocketUpgrade::from_request_parts(&mut parts, &state).await {\n        Ok(upgrade) => upgrade,\n        Err(rejection) => return rejection.into_response(),\n"
+        },
+        {
+          "expected": "        .max_message_size(limit)\n        .max_frame_size(limit)\n        .on_upgrade(move |downstream| {\n            websocket_session(downstream, upstream, token_manager, usage_identity, metrics)\n        });\n    for (name, value) in upstream_headers {\n        if let Some(name) = name {\n",
+          "replacement": "        .max_message_size(limit)\n        .max_frame_size(limit)\n        .on_upgrade(move |downstream| {\n            websocket_session(\n                downstream,\n                upstream,\n                token_manager,\n                usage_identity,\n                metrics,\n                share_geolocation,\n            )\n        });\n    for (name, value) in upstream_headers {\n        if let Some(name) = name {\n"
+        },
+        {
+          "expected": "    token_manager: crate::token::TokenManager,\n    usage_identity: Option<(String, crate::model_contract::ModelAccessPolicy)>,\n    metrics: Arc<crate::metrics::Metrics>,\n) {\n    let mut completed_responses = std::collections::HashSet::new();\n    loop {\n        tokio::select! {\n            message = downstream.next() => {\n                let Some(Ok(message)) = message else {\n                    let _ = upstream.close(None).await;\n                    break;\n                };\n                let message_bytes = websocket_message_len(&message);\n                if let (Some((token_id, model_policy)), Message::Text(text)) = (&usage_identity, &message) {\n                    let event = serde_json::from_slice::<serde_json::Value>(text.as_bytes()).ok();\n",
+          "replacement": "    token_manager: crate::token::TokenManager,\n    usage_identity: Option<(String, crate::model_contract::ModelAccessPolicy)>,\n    metrics: Arc<crate::metrics::Metrics>,\n    share_geolocation: bool,\n) {\n    let mut completed_responses = std::collections::HashSet::new();\n    loop {\n        tokio::select! {\n            message = downstream.next() => {\n                let Some(Ok(mut message)) = message else {\n                    let _ = upstream.close(None).await;\n                    break;\n                };\n                if let Message::Text(text) = &message {\n                    if let Ok(mut value) = serde_json::from_slice::<serde_json::Value>(text.as_bytes()) {\n                        if crate::geolocation::sanitize(&mut value, share_geolocation) {\n                            message = Message::Text(value.to_string().into());\n                        }\n                    }\n                }\n                let message_bytes = websocket_message_len(&message);\n                if let (Some((token_id, model_policy)), Message::Text(text)) = (&usage_identity, &message) {\n                    let event = serde_json::from_slice::<serde_json::Value>(text.as_bytes()).ok();\n"
+        }
+      ]
+    },
+    {
+      "path": "rust/src/proxy/upstream_headers.rs",
+      "beforeSha256": "4ff0d415248394ab0f70ceb7a26702a11988cdcd8be1441587a59dac5f8daa48",
+      "afterSha256": "2598264fedcc6f55404e03f651141ca1c9892f3cc80b33ec30dc7e5b163565fd",
+      "edits": [
+        {
+          "expected": "//!\n//! Native proxying preserves the official client's application-level\n//! identity. Only authentication, routing/transport framing, hop-by-hop\n//! fields, and Router-internal metadata may change.\n\nuse std::collections::HashSet;\n\n",
+          "replacement": "//!\n//! Native proxying preserves the official client's application-level\n//! identity. Only authentication, routing/transport framing, hop-by-hop\n//! fields, Router-internal metadata and unconsented location metadata may change.\n\nuse std::collections::HashSet;\n\n"
+        },
+        {
+          "expected": "    \"x-client-ip\",\n    \"x-cluster-client-ip\",\n    \"cf-connecting-ip\",\n    \"true-client-ip\",\n    \"fastly-client-ip\",\n    \"fly-client-ip\",\n",
+          "replacement": "    \"x-client-ip\",\n    \"x-cluster-client-ip\",\n    \"cf-connecting-ip\",\n    \"cf-connecting-ipv6\",\n    \"cf-pseudo-ipv4\",\n    \"true-client-ip\",\n    \"fastly-client-ip\",\n    \"fly-client-ip\",\n"
+        },
+        {
+          "expected": "\nfn replaced_or_transport_header(name: &str) -> bool {\n    INGRESS_NETWORK_HEADERS.contains(&name)\n        || matches!(\n            name,\n            \"authorization\"\n",
+          "replacement": "\nfn replaced_or_transport_header(name: &str) -> bool {\n    INGRESS_NETWORK_HEADERS.contains(&name)\n        || name.starts_with(\"x-forwarded-\")\n        || matches!(\n            name,\n            \"authorization\"\n"
+        },
+        {
+          "expected": "        .filter_map(|name| HeaderName::from_bytes(name.trim().as_bytes()).ok())\n        .collect();\n    let mut headers = HeaderMap::new();\n    for (name, value) in incoming {\n        if !replaced_or_transport_header(name.as_str()) && !connection_nominated.contains(name) {\n            headers.append(name.clone(), value.clone());\n        }\n    }\n",
+          "replacement": "        .filter_map(|name| HeaderName::from_bytes(name.trim().as_bytes()).ok())\n        .collect();\n    let mut headers = HeaderMap::new();\n    let share_geolocation = crate::geolocation::shares_geolocation(incoming);\n    for (name, value) in incoming {\n        if !replaced_or_transport_header(name.as_str())\n            && !connection_nominated.contains(name)\n            && (share_geolocation || !crate::geolocation::is_geolocation_header(name.as_str()))\n        {\n            headers.append(name.clone(), value.clone());\n        }\n    }\n"
+        }
+      ]
+    },
+    {
+      "path": "rust/src/responses_websocket.rs",
+      "beforeSha256": "1e03a85abec3035f957494ec5260309017b9b7c90daf8df8cbb3aa0b9769c123",
+      "afterSha256": "1dcbe54e76522fc70c85f9ec043dfe2f100678e24914790644e58650828f61ed",
+      "edits": [
+        {
+          "expected": "            return;\n        }\n    };\n    let first_lane = match validate_stream_id(&first_event) {\n        Ok(lane) => lane,\n        Err(error) => {\n",
+          "replacement": "            return;\n        }\n    };\n    crate::geolocation::sanitize(\n        &mut first_event,\n        crate::geolocation::shares_geolocation(&headers),\n    );\n    let first_lane = match validate_stream_id(&first_event) {\n        Ok(lane) => lane,\n        Err(error) => {\n"
+        }
+      ]
+    },
+    {
+      "path": "rust/src/responses_websocket/relay.rs",
+      "beforeSha256": "4a6e31f7939f80fb429e4d178c2dc8c79c694415281a11faa91091bf1265482b",
+      "afterSha256": "655dccae4da6f184e6c5f8df35cdebcb432ee69e9712c6ee2cc8fa581afe0dac",
+      "edits": [
+        {
+          "expected": "                            continue;\n                        }\n                    };\n                    if value.get(\"type\").and_then(Value::as_str) == Some(\"response.create\") {\n                        match crate::thinking::normalize_request(&mut value, crate::thinking::ThinkingProtocol::OpenAIResponses) {\n                            Ok(true) => message = Message::Text(value.to_string().into()),\n",
+          "replacement": "                            continue;\n                        }\n                    };\n                    if crate::geolocation::sanitize(\n                        &mut value,\n                        crate::geolocation::shares_geolocation(headers),\n                    ) {\n                        message = Message::Text(value.to_string().into());\n                    }\n                    if value.get(\"type\").and_then(Value::as_str) == Some(\"response.create\") {\n                        match crate::thinking::normalize_request(&mut value, crate::thinking::ThinkingProtocol::OpenAIResponses) {\n                            Ok(true) => message = Message::Text(value.to_string().into()),\n"
+        }
+      ]
+    },
+    {
+      "path": "rust/src/server_router.rs",
+      "beforeSha256": "aea0826354d5bd661a9cd5d04a3f78b7d60cf9b4f120c127b6e485b90c4c01d3",
+      "afterSha256": "45da005f001c4254edd338d3c1f3f3c64b1eb31187897dc47514cda75d4864af",
+      "edits": [
+        {
+          "expected": "            state.clone(),\n            crate::account_policy_middleware::route,\n        ))\n        .route_layer(from_fn_with_state(\n            (state, config.enable_anthropic_api),\n            authenticate_inference_route,\n",
+          "replacement": "            state.clone(),\n            crate::account_policy_middleware::route,\n        ))\n        .route_layer(from_fn_with_state(state.clone(), crate::geolocation::route))\n        .route_layer(from_fn_with_state(\n            (state, config.enable_anthropic_api),\n            authenticate_inference_route,\n"
+        }
+      ]
+    }
+  ],
+  "addition": {
+    "path": "rust/src/geolocation.rs",
+    "sha256": "fb8d870bb7461c29abad39f84cdac5d5abacdb0999a583f9954f5593a02297df"
+  },
+  "semanticAuthority": false
+}

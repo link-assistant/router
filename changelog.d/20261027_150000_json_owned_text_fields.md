@@ -1,0 +1,1 @@
+- Draft8 copied owned JSON string interfaces and closed map/default/copy substitutions, actual owning forward/reverse result domains,11 full compiler CST equations and independent unrun JS/strict TS, native lifetime, original-history and export cases. Full translation and parity remain unfinished (#759, #772).

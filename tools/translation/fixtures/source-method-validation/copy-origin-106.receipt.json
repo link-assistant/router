@@ -1,0 +1,36 @@
+{
+  "schema": "original-method-private-copy-origin-validation-v1",
+  "verifiedSourceHead": "24983a34cef28b0bc6ce264086a0aed2ece8ad12",
+  "implementationSourceHead": "e55a46a496b9b4aa2b314f19cb4c6169cf12d0a4",
+  "archive": "copy-origin-106.json.gz",
+  "compressedBytes": 273804,
+  "compressedSha256": "d615c434e524cc6f7d1a74f8aa5b5ed55f7e2dcdedf592976f36eb051ab2a9d2",
+  "decompressedBytes": 1102632,
+  "decompressedSha256": "4427b57c4a5718ffa818a8e6c2b033a5777e11ec7af5bf2e4ff6cee0e4c451bd",
+  "entryCount": 24,
+  "everyEntryIndependentlyReopened": true,
+  "scopeFiles": 16,
+  "nodePassed": 106,
+  "bunPassed": 106,
+  "finalFailures": 0,
+  "skips": 0,
+  "timeouts": 0,
+  "initialPairsPreserved": [
+    {
+      "node": 105,
+      "bun": 105,
+      "total": 106
+    },
+    {
+      "node": 105,
+      "bun": 105,
+      "total": 106
+    }
+  ],
+  "supersededSetupPlanPreserved": true,
+  "sourceBytesUnchanged": true,
+  "implementationBytesUnchangedAcrossFixtureCorrections": true,
+  "runtimeParity": false,
+  "producerRun": false,
+  "rustRun": false
+}

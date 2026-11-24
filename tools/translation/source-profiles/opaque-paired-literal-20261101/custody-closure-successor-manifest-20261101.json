@@ -1,0 +1,9 @@
+{
+  "schema": "opaque-source-custody-closure-successor-v1",
+  "archive": "tools/translation/source-profiles/opaque-paired-literal-20261101/complete-source-copies-custody-closure-20261101.json.gz",
+  "sha256": "0a00bd93f87cb275f97b74ec965bb5a67d3812f4f0d895d6d6c513009e6c9ce7",
+  "packedBytes": 12182,
+  "sourceHistorySha256": "1f2a10df0b0d08aced4a58cc11ffba21302d7394796208cce34c62f2868bc658",
+  "beforeSourceHistorySha256": "fd13aee0117c30f23e31b58c8738362cf46838f9558ecdab61d8e2298b8c2eb4",
+  "executionEvidence": "UNRUN"
+}

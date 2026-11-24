@@ -1,0 +1,91 @@
+// Generated draft from rust/src/gemini/stream.rs; sha256=7679cc0876c4893defd551a9c92b19006fd4aaf5ede8250c752b8b2164676389
+// Carried constructs are data, never runtime parity evidence.
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../../../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 = {"schemaVersion":1,"types":{}};
+
+const ml_constructor_value_schema_61ff3576f2f30911e8214fc756b023949340286b323d02efc3e0e6a436bcbb8f = {"schemaVersion":1,"types":{"SseJsonDecoder":{"kind":"data","name":"SseJsonDecoder","ctors":[{"name":"SseJsonDecoder","fields":[{"name":"buffered","type":{"kind":"array","element":{"kind":"fixed","bits":8,"signed":false}}}]}]}}};
+
+function ml_router_array(values, validate) {
+  if (!Array.isArray(values)) return false;
+  for (let index = 0; index < values.length; index++) {
+    const descriptor = Object.getOwnPropertyDescriptor(values, String(index));
+    if (!descriptor || !('value' in descriptor) || !validate(descriptor.value)) return false;
+  }
+  return true;
+}
+
+import { validateRustValue as ml_validate_rust_value } from "../../../runtime/type-layout-runtime.mjs";
+
+const ml_constructor_value_schema_b2e2ab543b74c878e89220f679a5649b479089d5f71f61fa2396bc0a23f08bdb = {"schemaVersion":1,"types":{"NativeStreamTranslator":{"kind":"data","name":"NativeStreamTranslator","ctors":[{"name":"NativeStreamTranslator","fields":[{"name":"decoder","type":{"kind":"data","name":"SseJsonDecoder"}}]}]},"SseJsonDecoder":{"kind":"data","name":"SseJsonDecoder","ctors":[{"name":"SseJsonDecoder","fields":[{"name":"buffered","type":{"kind":"array","element":{"kind":"fixed","bits":8,"signed":false}}}]}]}}};
+
+const ml_host_value_schema_61ff3576f2f30911e8214fc756b023949340286b323d02efc3e0e6a436bcbb8f = {"schemaVersion":1,"types":{"SseJsonDecoder":{"kind":"data","name":"SseJsonDecoder","ctors":[{"name":"SseJsonDecoder","fields":[{"name":"buffered","type":{"kind":"array","element":{"kind":"fixed","bits":8,"signed":false}}}]}]}}};
+
+const ml_host_value_refinements_61ff3576f2f30911e8214fc756b023949340286b323d02efc3e0e6a436bcbb8f = new Map([]);
+
+const ml_constructor_value_schema_242eb99fe65b7be0b480824203eaa01d3ba5c96acba1a9a20f843afa951caf6c = {"schemaVersion":1,"types":{"OpenAiStreamTranslator":{"kind":"data","name":"OpenAiStreamTranslator","ctors":[{"name":"OpenAiStreamTranslator","fields":[{"name":"decoder","type":{"kind":"data","name":"SseJsonDecoder"}},{"name":"id","type":{"kind":"string"}},{"name":"created","type":{"kind":"fixed","bits":64,"signed":true}},{"name":"model","type":{"kind":"string"}},{"name":"role_emitted","type":{"kind":"bool"}},{"name":"done","type":{"kind":"bool"}},{"name":"saw_tool_call","type":{"kind":"bool"}},{"name":"next_tool_index","type":{"kind":"fixed","bits":64,"signed":false}}]}]},"SseJsonDecoder":{"kind":"data","name":"SseJsonDecoder","ctors":[{"name":"SseJsonDecoder","fields":[{"name":"buffered","type":{"kind":"array","element":{"kind":"fixed","bits":8,"signed":false}}}]}]}}};
+
+function ml_fixed(value, min, max, message) {
+  if (value < min || value > max) throw new RangeError(message);
+  return value;
+}
+
+function ml_make_SseJsonDecoder_SseJsonDecoder(buffered) {
+  ml_assert_constructor_input(buffered, {"kind":"array","element":{"kind":"fixed","bits":8,"signed":false}}, ml_constructor_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085);
+  if (!ml_router_array(buffered, (element0) => (typeof element0 === 'bigint' && element0 >= 0n && element0 <= 255n))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_snapshot_constructor_value(Object.freeze({ $: "SseJsonDecoder", ["buffered"]: buffered }), {"kind":"data","name":"SseJsonDecoder"}, ml_constructor_value_schema_61ff3576f2f30911e8214fc756b023949340286b323d02efc3e0e6a436bcbb8f);
+}
+
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+  num: {
+
+  },
+};
+
+const router_core_base64 = {
+
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+function ml_make_NativeStreamTranslator_NativeStreamTranslator(decoder) {
+  ml_assert_constructor_input(decoder, {"kind":"data","name":"SseJsonDecoder"}, ml_constructor_value_schema_61ff3576f2f30911e8214fc756b023949340286b323d02efc3e0e6a436bcbb8f);
+  ml_validate_rust_value(decoder, {"kind":"data","name":"SseJsonDecoder"}, ml_host_value_schema_61ff3576f2f30911e8214fc756b023949340286b323d02efc3e0e6a436bcbb8f, { refinements: ml_host_value_refinements_61ff3576f2f30911e8214fc756b023949340286b323d02efc3e0e6a436bcbb8f });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "NativeStreamTranslator", ["decoder"]: decoder }), {"kind":"data","name":"NativeStreamTranslator"}, ml_constructor_value_schema_b2e2ab543b74c878e89220f679a5649b479089d5f71f61fa2396bc0a23f08bdb);
+}
+
+function ml_make_OpenAiStreamTranslator_OpenAiStreamTranslator(decoder, id, created, model, role_emitted, done, saw_tool_call, next_tool_index) {
+  ml_assert_constructor_input(decoder, {"kind":"data","name":"SseJsonDecoder"}, ml_constructor_value_schema_61ff3576f2f30911e8214fc756b023949340286b323d02efc3e0e6a436bcbb8f);
+  ml_validate_rust_value(decoder, {"kind":"data","name":"SseJsonDecoder"}, ml_host_value_schema_61ff3576f2f30911e8214fc756b023949340286b323d02efc3e0e6a436bcbb8f, { refinements: ml_host_value_refinements_61ff3576f2f30911e8214fc756b023949340286b323d02efc3e0e6a436bcbb8f });
+  if (!(typeof id === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(id))) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof created !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(created, -9223372036854775808n, 9223372036854775807n, "i64 argument created out of range");
+  if (!(typeof created === 'bigint' && created >= -9223372036854775808n && created <= 9223372036854775807n)) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof model === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(model))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof role_emitted === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof done === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof saw_tool_call === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof next_tool_index !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(next_tool_index, 0n, 18446744073709551615n, "u64 argument next_tool_index out of range");
+  if (!(typeof next_tool_index === 'bigint' && next_tool_index >= 0n && next_tool_index <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  return ml_snapshot_constructor_value(Object.freeze({ $: "OpenAiStreamTranslator", ["decoder"]: decoder, ["id"]: id, ["created"]: created, ["model"]: model, ["role_emitted"]: role_emitted, ["done"]: done, ["saw_tool_call"]: saw_tool_call, ["next_tool_index"]: next_tool_index }), {"kind":"data","name":"OpenAiStreamTranslator"}, ml_constructor_value_schema_242eb99fe65b7be0b480824203eaa01d3ba5c96acba1a9a20f843afa951caf6c);
+}
+
+export const translated = { ["SseJsonDecoder"]: ml_make_SseJsonDecoder_SseJsonDecoder, ["NativeStreamTranslator"]: ml_make_NativeStreamTranslator_NativeStreamTranslator, ["OpenAiStreamTranslator"]: ml_make_OpenAiStreamTranslator_OpenAiStreamTranslator };
+export const provenance = {"sourcePath":"rust/src/gemini/stream.rs","sourceSha256":"7679cc0876c4893defd551a9c92b19006fd4aaf5ede8250c752b8b2164676389","executable":3,"executableFunctions":0,"executableConstants":0,"executableTypes":3,"executableConstructors":3,"carried":16,"preserved":20,"runtimeParity":false};

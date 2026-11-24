@@ -1,0 +1,302 @@
+{
+  "schema": "protected-residual-cli-writers-20261103-source-proposal-v1",
+  "predecessor": "3d8ebadea0a377dc03c0fa74815aff45f596e53a",
+  "files": [
+    {
+      "role": "batched-proof-byte-source-candidate",
+      "path": "tools/translation/prepare-batched-proof-byte-source-candidate.mjs",
+      "producer": "prepareBatchedProofByteSourceCandidate",
+      "planLocal": "plan",
+      "writeCondition": "mode==='--write'",
+      "physicalOrigin": {
+        "commit": "3d8ebadea0a377dc03c0fa74815aff45f596e53a",
+        "path": "tools/translation/prepare-batched-proof-byte-source-candidate.mjs",
+        "gitBlob": "a926bf81e17aa305cc2df48441e8136372ae0489"
+      },
+      "before": {
+        "path": "batched-proof-byte-source-candidate.before.txt",
+        "bytes": 43993,
+        "sha256": "9bff214a11ee23b255ee690893c93a13742c298735d68cc2d34080cf00e7437c"
+      },
+      "after": {
+        "path": "batched-proof-byte-source-candidate.after.txt",
+        "bytes": 44217,
+        "sha256": "700c0ba9f616ed565496024f20cf7eff830bf63c7baa8c038e0415346680782d"
+      }
+    },
+    {
+      "role": "core-ascii-assets",
+      "path": "tools/translation/prepare-core-ascii-assets.mjs",
+      "producer": "prepareCurrentCoreAsciiAssets",
+      "planLocal": "plan",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "3d8ebadea0a377dc03c0fa74815aff45f596e53a",
+        "path": "tools/translation/prepare-core-ascii-assets.mjs",
+        "gitBlob": "0170d51dbd5ad7ebc1a34ac98506849294ea6813"
+      },
+      "before": {
+        "path": "core-ascii-assets.before.txt",
+        "bytes": 16584,
+        "sha256": "0e5f11db1b96583ab3226392612a8159d3960cbc0c277dda419956d7b8f7d185"
+      },
+      "after": {
+        "path": "core-ascii-assets.after.txt",
+        "bytes": 16820,
+        "sha256": "c584f7b5431e9b88f16008012a54f2f157b41336447a5f0b853efb4d2e82d46e"
+      }
+    },
+    {
+      "role": "core-ascii-base-assets",
+      "path": "tools/translation/prepare-core-ascii-base-assets.mjs",
+      "producer": "prepareCurrentCoreAsciiBaseAssets",
+      "planLocal": "plan",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "3d8ebadea0a377dc03c0fa74815aff45f596e53a",
+        "path": "tools/translation/prepare-core-ascii-base-assets.mjs",
+        "gitBlob": "5526d2e5f3560aadc5697ea66a25fe769c08b5a4"
+      },
+      "before": {
+        "path": "core-ascii-base-assets.before.txt",
+        "bytes": 23533,
+        "sha256": "8da1818a5d707c3cd5c01cdc85d5a68cafe1f7dbb9047ebd597b3c247265774c"
+      },
+      "after": {
+        "path": "core-ascii-base-assets.after.txt",
+        "bytes": 23773,
+        "sha256": "f157aa80f7fb52b263444c2cba7cdd6cea8201a5a9cf466121bf334c39c13453"
+      }
+    },
+    {
+      "role": "core-ascii-reverse-sources",
+      "path": "tools/translation/prepare-core-ascii-reverse-sources.mjs",
+      "producer": "prepareCoreAsciiReverseSources",
+      "planLocal": "plan",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "3d8ebadea0a377dc03c0fa74815aff45f596e53a",
+        "path": "tools/translation/prepare-core-ascii-reverse-sources.mjs",
+        "gitBlob": "d580b6a8411c65caad4d99356fefea7a92a729af"
+      },
+      "before": {
+        "path": "core-ascii-reverse-sources.before.txt",
+        "bytes": 6278,
+        "sha256": "0310658857d41271c78a943f0407064bd3913d2c2f95fbfa980aa3e8e042429c"
+      },
+      "after": {
+        "path": "core-ascii-reverse-sources.after.txt",
+        "bytes": 6517,
+        "sha256": "1c8cc1bf46367cd7a8a8ff7888e4d9dce6f063eba34a705274988cf8574fd836"
+      }
+    },
+    {
+      "role": "core-ascii-sources",
+      "path": "tools/translation/prepare-core-ascii-sources.mjs",
+      "producer": "prepareCurrentCoreAsciiSources",
+      "planLocal": "plan",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "3d8ebadea0a377dc03c0fa74815aff45f596e53a",
+        "path": "tools/translation/prepare-core-ascii-sources.mjs",
+        "gitBlob": "bcfa4e61ae7d360e8db65327d53c90587b8d7529"
+      },
+      "before": {
+        "path": "core-ascii-sources.before.txt",
+        "bytes": 11357,
+        "sha256": "4609814b623a94b66bb39015f6944c3bd4c4d871979709db0f9ed744bb27b10d"
+      },
+      "after": {
+        "path": "core-ascii-sources.after.txt",
+        "bytes": 11596,
+        "sha256": "8c42849a7461c749b0f523762090c5da90f4e760dbecb9f204610ac4493f93b2"
+      }
+    },
+    {
+      "role": "core-matches-sources",
+      "path": "tools/translation/prepare-core-matches-sources.mjs",
+      "producer": "prepareCurrentCoreMatchesComposition",
+      "planLocal": "result",
+      "writeCondition": "args[0] === '--write'",
+      "physicalOrigin": {
+        "commit": "3d8ebadea0a377dc03c0fa74815aff45f596e53a",
+        "path": "tools/translation/prepare-core-matches-sources.mjs",
+        "gitBlob": "b6b2cfb85f7898980b76597fa36163a14a69efb2"
+      },
+      "before": {
+        "path": "core-matches-sources.before.txt",
+        "bytes": 19587,
+        "sha256": "0bf16a2d12e28ffb5dfaf3a35a02595d7ad645406935399798c1ef5ea98b3720"
+      },
+      "after": {
+        "path": "core-matches-sources.after.txt",
+        "bytes": 19831,
+        "sha256": "5d7f2d43182a90a0aafebb439cc2edcca16a0d3b9133ee56f56e3b32bbff3731"
+      }
+    },
+    {
+      "role": "core-sequence-stream-sources",
+      "path": "tools/translation/prepare-core-sequence-stream-sources.mjs",
+      "producer": "prepareCoreSequenceStreamSources",
+      "planLocal": "plan",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "3d8ebadea0a377dc03c0fa74815aff45f596e53a",
+        "path": "tools/translation/prepare-core-sequence-stream-sources.mjs",
+        "gitBlob": "8d9749bcfaa72012fcd0ab2dfae19d57ad18e08f"
+      },
+      "before": {
+        "path": "core-sequence-stream-sources.before.txt",
+        "bytes": 11823,
+        "sha256": "01fe5ad4d62a29b36d87caff35c2f2eedffc4766d5a1bdbc6dffb801eb10414f"
+      },
+      "after": {
+        "path": "core-sequence-stream-sources.after.txt",
+        "bytes": 12062,
+        "sha256": "5dd26631fc5eca260bd1cc3a41d3f90ddf447f441150848c78fe6e0f54dcef01"
+      }
+    },
+    {
+      "role": "current-receiving-source-history",
+      "path": "tools/translation/prepare-current-receiving-source-history.mjs",
+      "producer": "prepareCurrentReceivingSourceHistory",
+      "planLocal": "plan",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "3d8ebadea0a377dc03c0fa74815aff45f596e53a",
+        "path": "tools/translation/prepare-current-receiving-source-history.mjs",
+        "gitBlob": "86e73222ab2e36a314faa7f460b861ec197e313e"
+      },
+      "before": {
+        "path": "current-receiving-source-history.before.txt",
+        "bytes": 24139,
+        "sha256": "6f4e39e858314e0a92ca0a55d878e927fbab6f70576f2fc79bcb7a400ca87805"
+      },
+      "after": {
+        "path": "current-receiving-source-history.after.txt",
+        "bytes": 24385,
+        "sha256": "c33af1278c775a5131e590aa8a5820aa2e1f6dad712a53b54be1748a568db636"
+      }
+    },
+    {
+      "role": "executable-checked-source",
+      "path": "tools/translation/prepare-executable-checked-source.mjs",
+      "producer": "prepareCurrentExecutableCheckedSource",
+      "planLocal": "plan",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "3d8ebadea0a377dc03c0fa74815aff45f596e53a",
+        "path": "tools/translation/prepare-executable-checked-source.mjs",
+        "gitBlob": "382e347a3bc5840b48cf3fff9a46bc43cec5dd64"
+      },
+      "before": {
+        "path": "executable-checked-source.before.txt",
+        "bytes": 9190,
+        "sha256": "22206f2f34949b336c7d737d3b249c2055b4f771e3da4d6ce9f057fd0197f3aa"
+      },
+      "after": {
+        "path": "executable-checked-source.after.txt",
+        "bytes": 9434,
+        "sha256": "0b459cf70e17653f2ef3fcb203a346ea881abf4ca5553155862ff860e990ea75"
+      }
+    },
+    {
+      "role": "facade-ast-receiving-history",
+      "path": "tools/translation/prepare-facade-ast-receiving-history.mjs",
+      "producer": "prepareFacadeAstReceivingHistory",
+      "planLocal": "plan",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "3d8ebadea0a377dc03c0fa74815aff45f596e53a",
+        "path": "tools/translation/prepare-facade-ast-receiving-history.mjs",
+        "gitBlob": "158d43e7b5dc224f60076694a737c0c5a58a6802"
+      },
+      "before": {
+        "path": "facade-ast-receiving-history.before.txt",
+        "bytes": 35125,
+        "sha256": "7851a5775c9245a24b94f5b66ce4cbdfe5bc2fe7a394f43b038cfdca771bbb81"
+      },
+      "after": {
+        "path": "facade-ast-receiving-history.after.txt",
+        "bytes": 35367,
+        "sha256": "436d57b6622aacb0d736d7c2d10f55fd108a2e95a7e5a131aae5f52ed97ad90a"
+      }
+    },
+    {
+      "role": "whole-owner-proof-byte-candidate",
+      "path": "tools/translation/prepare-whole-owner-proof-byte-candidate.mjs",
+      "producer": "prepareWholeOwnerProofByteCandidate",
+      "planLocal": "plan",
+      "writeCondition": "mode==='--write'",
+      "physicalOrigin": {
+        "commit": "3d8ebadea0a377dc03c0fa74815aff45f596e53a",
+        "path": "tools/translation/prepare-whole-owner-proof-byte-candidate.mjs",
+        "gitBlob": "88dfc990918f40a0a20ff26eb2355d255ab9c91d"
+      },
+      "before": {
+        "path": "whole-owner-proof-byte-candidate.before.txt",
+        "bytes": 22696,
+        "sha256": "0683ffb9e90a4a1f51783aa0287f40fc812dfaebbbb6d6c7111b05f759c9092d"
+      },
+      "after": {
+        "path": "whole-owner-proof-byte-candidate.after.txt",
+        "bytes": 22917,
+        "sha256": "cc3c39c77b84d9359fe447c22791617fcc876ce1df7b9d0bbb4d95c1a740cfbe"
+      }
+    },
+    {
+      "role": "whole-owner-proof-byte-original-trial",
+      "path": "tools/translation/prepare-whole-owner-proof-byte-original-trial.mjs",
+      "producer": "prepareWholeOwnerProofByteOriginalTrial",
+      "planLocal": "plan",
+      "writeCondition": "mode==='--write'",
+      "physicalOrigin": {
+        "commit": "3d8ebadea0a377dc03c0fa74815aff45f596e53a",
+        "path": "tools/translation/prepare-whole-owner-proof-byte-original-trial.mjs",
+        "gitBlob": "d1d5813d7c690fa8ec82b6917030645d606f3c1e"
+      },
+      "before": {
+        "path": "whole-owner-proof-byte-original-trial.before.txt",
+        "bytes": 7525,
+        "sha256": "bba25af53cff882ce2c7d48ba1c5984ecd68c0ff13165a1c29f00925ac6085c0"
+      },
+      "after": {
+        "path": "whole-owner-proof-byte-original-trial.after.txt",
+        "bytes": 7754,
+        "sha256": "6c3c4fe2e752f8b297d80884777d16a2227eaac4d21b83171669f985f9c4c540"
+      }
+    },
+    {
+      "role": "whole-owner-original-trial",
+      "path": "tools/translation/prepare-whole-owner-original-trial.mjs",
+      "producer": "prepareWholeOwnerOriginalTrial",
+      "planLocal": "proposal",
+      "writeCondition": "mode==='--write'",
+      "physicalOrigin": {
+        "commit": "3d8ebadea0a377dc03c0fa74815aff45f596e53a",
+        "path": "tools/translation/prepare-whole-owner-original-trial.mjs",
+        "gitBlob": "07cec3366583488f11e38c03b0e976edbde243d5"
+      },
+      "before": {
+        "path": "whole-owner-original-trial.before.txt",
+        "bytes": 10272,
+        "sha256": "8f02039cf518534635c651508b3bc5ce601188ea3e3ccb11be08a7c9dab8d8e9"
+      },
+      "after": {
+        "path": "whole-owner-original-trial.after.txt",
+        "bytes": 10555,
+        "sha256": "ffc4845b1d6f364d34bb1c1faed4a92b41587ff8072e4efc0a14710224ad5392"
+      }
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceInstalled": false,
+  "sourceAuthority": false,
+  "completeOriginalFunctionDenominator": "UNKNOWN",
+  "completeWriterDenominator": "UNKNOWN",
+  "requirements": {
+    "L04": "13 actual CLI source sink entrypoints guarded by committed private policy runtime",
+    "S03": "original direct sequential/partial failure unchanged; no atomicity claim",
+    "L01_L02": "finite named source/module/producer/entry mapping; complete original function/writer denominator UNKNOWN"
+  }
+}

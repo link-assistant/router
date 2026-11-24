@@ -1,0 +1,1 @@
+Retain the complete frozen seven-stage failure inventory, including original public-reexport and explicit Cargo-capability fixture failures, unreached freshness commands, exact stage timings and no publication/Rust/stamp.

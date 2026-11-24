@@ -1,0 +1,1 @@
+Draft bounded unauthenticated remote Router identity before persistent client minting, retaining ordinary JSON management contracts and paired JS/TS source provenance. Independent cases remain unrun and full requirements remain open.

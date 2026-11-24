@@ -1,0 +1,161 @@
+{
+  "schema": "router-759-builtin-callback-related-verification-v1",
+  "head": "fa652208e811dcbca90606b29509e82dc4f4d3bf",
+  "implementationHead": "e548c0d90577a81f5b09f8515446c3cd53613017",
+  "runs": [
+    {
+      "engine": "node",
+      "tests": 103,
+      "passed": 103,
+      "failed": 0,
+      "skipped": 0,
+      "command": [
+        "/Users/konard/.nvm/versions/node/v20.19.4/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/test/derive-bang-footprints.test.mjs",
+        "tools/translation/test/serde-deserialize-bang-footprints.test.mjs",
+        "tools/translation/test/derive-bang-context.test.mjs",
+        "tools/translation/test/builtin-derive-bang-footprints.test.mjs",
+        "tools/translation/test/derive-footprints.test.mjs",
+        "tools/translation/test/derive-layout.test.mjs",
+        "tools/translation/test/source-module-views.test.mjs",
+        "tools/translation/test/module-bindings.test.mjs",
+        "tools/translation/test/macro-subnamespaces.test.mjs",
+        "tools/translation/test/source-namespaces.test.mjs"
+      ],
+      "head": "fa652208e811dcbca90606b29509e82dc4f4d3bf",
+      "capSeconds": 180,
+      "exitCode": 0,
+      "timedOut": false,
+      "wallSeconds": 90.47602341719903,
+      "userSeconds": 95.167681,
+      "systemSeconds": 7.675529999999999,
+      "maxRssBytes": 1262567424,
+      "resourceScope": "single engine child including reaped runtime/strict-TS descendants; no Rust/producer; entire process group bounded180s",
+      "inputsSha256": "9f7c4afd19e4a2f165b380875a1f2110f45ae6baa8465efac050aeef9510e1db",
+      "afterSha256": "9f7c4afd19e4a2f165b380875a1f2110f45ae6baa8465efac050aeef9510e1db",
+      "sourceUnchanged": true,
+      "logSha256": "002fe523ad99ceab320b743d584743f3f251f200020de7228968920bf9b864d7",
+      "binarySha256": "d1c54537f00093999715de0617c0ef2191dbf1875720201d4c2fde16195a9287"
+    },
+    {
+      "engine": "bun",
+      "tests": 103,
+      "passed": 103,
+      "failed": 0,
+      "skipped": 0,
+      "command": [
+        "/Users/konard/.bun/bin/bun",
+        "test",
+        "tools/translation/test/derive-bang-footprints.test.mjs",
+        "tools/translation/test/serde-deserialize-bang-footprints.test.mjs",
+        "tools/translation/test/derive-bang-context.test.mjs",
+        "tools/translation/test/builtin-derive-bang-footprints.test.mjs",
+        "tools/translation/test/derive-footprints.test.mjs",
+        "tools/translation/test/derive-layout.test.mjs",
+        "tools/translation/test/source-module-views.test.mjs",
+        "tools/translation/test/module-bindings.test.mjs",
+        "tools/translation/test/macro-subnamespaces.test.mjs",
+        "tools/translation/test/source-namespaces.test.mjs"
+      ],
+      "head": "fa652208e811dcbca90606b29509e82dc4f4d3bf",
+      "capSeconds": 180,
+      "exitCode": 0,
+      "timedOut": false,
+      "wallSeconds": 60.456517584156245,
+      "userSeconds": 65.20678099999999,
+      "systemSeconds": 2.339601,
+      "maxRssBytes": 1656012800,
+      "resourceScope": "single engine child including reaped runtime/strict-TS descendants; no Rust/producer; entire process group bounded180s",
+      "inputsSha256": "9f7c4afd19e4a2f165b380875a1f2110f45ae6baa8465efac050aeef9510e1db",
+      "afterSha256": "9f7c4afd19e4a2f165b380875a1f2110f45ae6baa8465efac050aeef9510e1db",
+      "sourceUnchanged": true,
+      "logSha256": "87889afed6b0673047c24d0dbadfca05119fd39c499ffc715ef0490ad0b894ce",
+      "binarySha256": "28c7dd0a06916aba284d570ef44a2d70e9c538eaf2ba58dfe0910525563b3f79"
+    }
+  ],
+  "members": [
+    {
+      "name": "router-759-callback-fa652-related-initial1-node.log",
+      "payload": "payloads/002fe523ad99ceab320b743d584743f3f251f200020de7228968920bf9b864d7",
+      "bytes": 23787,
+      "sha256": "002fe523ad99ceab320b743d584743f3f251f200020de7228968920bf9b864d7"
+    },
+    {
+      "name": "router-759-callback-fa652-related-initial1-node.inputs.json",
+      "payload": "payloads/9f7c4afd19e4a2f165b380875a1f2110f45ae6baa8465efac050aeef9510e1db",
+      "bytes": 408844,
+      "sha256": "9f7c4afd19e4a2f165b380875a1f2110f45ae6baa8465efac050aeef9510e1db"
+    },
+    {
+      "name": "router-759-callback-fa652-related-initial1-node.after.json",
+      "payload": "payloads/9f7c4afd19e4a2f165b380875a1f2110f45ae6baa8465efac050aeef9510e1db",
+      "bytes": 408844,
+      "sha256": "9f7c4afd19e4a2f165b380875a1f2110f45ae6baa8465efac050aeef9510e1db"
+    },
+    {
+      "name": "router-759-callback-fa652-related-initial1-node.receipt.json",
+      "payload": "payloads/babe05ee5f587d4ab4ed2d752a0a398e963ceebd62b2e63d9e2a834852421cb6",
+      "bytes": 1498,
+      "sha256": "babe05ee5f587d4ab4ed2d752a0a398e963ceebd62b2e63d9e2a834852421cb6"
+    },
+    {
+      "name": "router-759-callback-fa652-related-initial1-node.failure-inventory.json",
+      "payload": "payloads/99c650c3592f7bef1a5b790de2d14031c356c6625c60165c6842e28e067733e3",
+      "bytes": 105,
+      "sha256": "99c650c3592f7bef1a5b790de2d14031c356c6625c60165c6842e28e067733e3"
+    },
+    {
+      "name": "router-759-callback-fa652-related-initial1-bun.log",
+      "payload": "payloads/87889afed6b0673047c24d0dbadfca05119fd39c499ffc715ef0490ad0b894ce",
+      "bytes": 11343,
+      "sha256": "87889afed6b0673047c24d0dbadfca05119fd39c499ffc715ef0490ad0b894ce"
+    },
+    {
+      "name": "router-759-callback-fa652-related-initial1-bun.inputs.json",
+      "payload": "payloads/9f7c4afd19e4a2f165b380875a1f2110f45ae6baa8465efac050aeef9510e1db",
+      "bytes": 408844,
+      "sha256": "9f7c4afd19e4a2f165b380875a1f2110f45ae6baa8465efac050aeef9510e1db"
+    },
+    {
+      "name": "router-759-callback-fa652-related-initial1-bun.after.json",
+      "payload": "payloads/9f7c4afd19e4a2f165b380875a1f2110f45ae6baa8465efac050aeef9510e1db",
+      "bytes": 408844,
+      "sha256": "9f7c4afd19e4a2f165b380875a1f2110f45ae6baa8465efac050aeef9510e1db"
+    },
+    {
+      "name": "router-759-callback-fa652-related-initial1-bun.receipt.json",
+      "payload": "payloads/244963257188e827559d16076b70a2ee9c46d52e2870443d4802950926744e08",
+      "bytes": 1443,
+      "sha256": "244963257188e827559d16076b70a2ee9c46d52e2870443d4802950926744e08"
+    },
+    {
+      "name": "router-759-callback-fa652-related-initial1-bun.failure-inventory.json",
+      "payload": "payloads/72411f01d930978d2e8c3af295b727aad2433d2ed0f7abb9942879793d5682a8",
+      "bytes": 104,
+      "sha256": "72411f01d930978d2e8c3af295b727aad2433d2ed0f7abb9942879793d5682a8"
+    },
+    {
+      "name": "runner.py",
+      "payload": "payloads/37b006c127f001e210139c33efdab635f7c54050b8b42e612bebd1f9b758b6e9",
+      "bytes": 4075,
+      "sha256": "37b006c127f001e210139c33efdab635f7c54050b8b42e612bebd1f9b758b6e9"
+    }
+  ],
+  "archive": {
+    "path": "callback-related-verification.tar.xz",
+    "bytes": 108400,
+    "sha256": "5230f7f2d220887143ec96b93272e2740a4bf5ab3716515023c3fe4db958297f",
+    "payloadMembers": 8,
+    "logicalMembers": 11,
+    "reopenedAndVerified": true
+  },
+  "scope": "Exact ten related derive/source-view/binding files; existing selected or small-module emitted JS/strictTS checks included. No authentic full semantic804 project graph. No producer or Rust execution. No source changes or skips.",
+  "compilerSlotReleasedBeforeArchive": true,
+  "runtimeParity": false,
+  "selectedOwnerBangComplete": false,
+  "generatedImplBehavior": false,
+  "automaticProjectConsumer": false,
+  "priorFocusedArchiveUnchanged": true
+}

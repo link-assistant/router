@@ -1,0 +1,62 @@
+import { projectTypeScriptTyping as projectTypeScriptTypingDetails } from './typescript-portable-typing.js';
+
+export * from './access.js';
+export * from './api-style-fixtures.js';
+export * from './grammar.js';
+export * from './grammar-importers.js';
+export * from './grammar-emitters.js';
+export * from './grammar-merge.js';
+export * from './grammar-round-trip.js';
+export * from './grammar-validate.js';
+export * from './grammar-interchange.js';
+export * from './grammar-links.js';
+export * from './grammar-lossless.js';
+export * from './grammar-lowering.js';
+export * from './grammar-reverse.js';
+export * from './grammar-runtime.js';
+export * from './graphql-adapter.js';
+export * from './language-catalog.js';
+export * from './concept-records.js';
+export * from './concept-distinctions.js';
+export * from './global-concept-space.js';
+export { createDiscoveredConceptLinks, readDiscoveredConceptLinks } from './discovered-concept-links.js';
+export { createConceptViews, readConceptOntology, readConceptTaxonomy } from './concept-ontology.js';
+export { BinaryLinksError, encodeLinkNetworkBinary, decodeLinkNetworkBinary } from './link-network-binary.js';
+export { ResourceDescriptionNTriplesError, importResourceDescriptionNTriples, emitResourceDescriptionNTriples, readResourceDescriptionNTriplesSource } from './resource-description-ntriples.js';
+export { importResourceDescriptionGraph, decodeResourceDescriptionGraph,
+  mergeResourceDescriptionGraphs, verifyResourceDescriptionGraphWitnesses } from './resource-description-graphs.js';
+export { verifyGlobalConceptCorrespondence } from './global-concept-rules.js';
+export { encodeFormalConceptDefinition, readFormalConceptDefinition, proveFormalConceptEquivalence, verifyFormalConceptEquivalence } from './formal-concept-definition.js';
+export * from './decorators.js';
+export * from './grammar-decorators.js';
+export * from './grammar-concepts.js';
+export * from './language-profile.js';
+export * from './language-support.js';
+export * from './network.js';
+export * from './parser-registry.js';
+export { grammarNames } from './programming-language-parser.js';
+export * from './program-representation.js';
+export * from './program-snapshot.js';
+export * from './program-translation.js';
+export * from './primitives.js';
+export * from './query.js';
+export * from './query-algebra.js';
+export * from './query-plan.js';
+export * from './regions.js';
+export * from './self-translation.js';
+export { eraseTypeScript } from './typescript-erasure.js';
+/** Project supported TypeScript annotations into the shared frontend's JSDoc form. */
+export function projectTypeScriptTyping(source) {
+  return projectTypeScriptTypingDetails(source).code;
+}
+export { createTypedProgramLinks, encodeTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks } from './typed-program-links.js';
+export { encodeFormalFunctionDefinition } from './formal-function-links.js';
+export { encodeSharedNumericFunctionDefinition } from './shared-numeric-function-links.js';
+export * from './semantics.js';
+export * from './sql-adapter.js';
+export * from './substitution.js';
+export { encodeStructuredDataLinks, decodeStructuredDataLinks, structuredDataToLino, readStructuredDataLino } from './structured-data-links.js';
+export { structuredDataRecordToLino, readStructuredDataRecords } from './structured-data-records.js';
+export * from './transform.js';
+export * from './translation.js';
+export { readSourceTextUnits, readSourceTextByteLength, readSourceTextByte, sliceSourceTextBytes } from './translation/source-text-bytes.js';

@@ -1,0 +1,9 @@
+{
+  "schema": "complete-pre-211-builtin-output-leaf-v1",
+  "originalCommit": "6341cb5a8038ca87c631ed1fd62d11b491cddfd9",
+  "path": "tools/translation/builtin-derive-bang-footprints.mjs",
+  "bytes": 38154,
+  "sha256": "3f2162d6adc2a10660f5359ce7b0cd7df62f03102e8e50c784710dfed9482862",
+  "blob": "2af9b81d51f7d6bdbdd5aef455a85d8e2de224da",
+  "sourceScope": "Complete original leaf; source-only fixture, not an output owner proof"
+}

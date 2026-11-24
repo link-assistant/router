@@ -1,0 +1,79 @@
+{
+  "profile": "rust-1.89-literal-char-split-string-items",
+  "rust": "1.89.0",
+  "constEligible": false,
+  "sources": [
+    {
+      "file": "core-pattern.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/str/pattern.rs",
+      "bytes": 72547,
+      "sha256": "22d0e4e3e51a3a55dfaf16a5559117899bbeb4a53dc8ed8b6837b38dd4cf518a",
+      "compressedSha256": "529f33f71c3c16546d25ee78ddbcb13a87b8349f0e470895bd8be3897898e0e6",
+      "lines": [
+        400,
+        432,
+        561,
+        577
+      ]
+    },
+    {
+      "file": "std-prelude-v1.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/src/prelude/v1.rs",
+      "bytes": 4246,
+      "sha256": "8db0d69ae9539ec53440b11c45473271d3c22762f12ecd951d89089aaef0af53",
+      "compressedSha256": "6c807ef253a39ccd60bee180988a19328a5723bba9ccfa185faacda29e235658",
+      "lines": [
+        125,
+        127
+      ]
+    },
+    {
+      "file": "core-fmt.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/fmt/mod.rs",
+      "bytes": 101081,
+      "sha256": "3991bf79cfb4a9ba2e5915472063d7e195cd4242ae0eb8d6bad6ebb55349beb4",
+      "compressedSha256": "b78d4f20a84422d7cc7f47d88d5e4ce8183d42c880a0e0479216cb37243ba417",
+      "lines": [
+        2747,
+        2752
+      ]
+    },
+    {
+      "file": "../utf16-fixed-f64/core-str-mod.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/str/mod.rs",
+      "bytes": 109322,
+      "sha256": "c4d2f7564389d6007eb62f287a0efdda865a7133ec0a7d47d66be581794ac416",
+      "compressedSha256": "5c41e64ff9a819e50600e8db67f4738c0f5ef805eae3946cfdfa3aa139deb6f0",
+      "lines": [
+        1607,
+        1615
+      ]
+    },
+    {
+      "file": "../utf16-fixed-f64/core-str-iter.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/str/iter.rs",
+      "bytes": 48918,
+      "sha256": "07f8dd0655c57a3da5b620fae00ba06b2957d17d119a870253b762b9e51e7122",
+      "compressedSha256": "39ce57a49956bc3ff6edf3008da87050e92a957e4c38f4d59ac182cf720a5665",
+      "lines": [
+        643,
+        674,
+        789,
+        805
+      ]
+    },
+    {
+      "file": "../utf16-fixed-f64/alloc-string.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/alloc/src/string.rs",
+      "bytes": 111988,
+      "sha256": "46dadb69bbe909b50146366020dc23d4fa88f53b93435b7e0f70c6692d0ba629",
+      "compressedSha256": "3f9bb719280924aa34b9f3693879b5a65e45eecc78f4fa8dea84219bf1105523",
+      "lines": [
+        2780,
+        2809,
+        2817,
+        2833
+      ]
+    }
+  ]
+}

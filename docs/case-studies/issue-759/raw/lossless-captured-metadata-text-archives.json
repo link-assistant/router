@@ -1,0 +1,2581 @@
+{
+  "schema": "router-759-original-captured-metadata-text-lossless-compaction-v1",
+  "sourceHead": "69ca4df41aa34945d1af10bb1b55617903599b13",
+  "combinedEvidenceCapBytes": 500000000,
+  "allocatedBytesBefore": 497213440,
+  "allOriginalGitBytesVerified": true,
+  "allDecodedOriginalsByteIdentical": true,
+  "scope": "Complete captured API metadata, migration vectors and path lists only; published proposal and repository file snapshots, Rust/Cargo/production/compiler inputs and historical receipt vectors remain unchanged",
+  "semanticAuthority": false,
+  "appliedSourceHead": "69ca4df41aa34945d1af10bb1b55617903599b13",
+  "entries": [
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/archive-integrity-initial.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/archive-integrity-initial.json.gz",
+      "originalBytes": 6461,
+      "originalSha256": "4908392ba333aaf1827bc986ca147b81ecd2ab1cf9b56540b4c2e88e42d762d2",
+      "originalGitBlob": "dead7218dc902778a9df0e337ec9c248f895ec86",
+      "archiveBytes": 793,
+      "archiveSha256": "cf02bf84bbb3bedf951062bee3ead999d21763a6ad0df1d8685cc992ea1d302d",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/artifact-object-compression-migrations.jsonl",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/artifact-object-compression-migrations.jsonl.gz",
+      "originalBytes": 120219,
+      "originalSha256": "24a7cc13255f0458fffda330533d6afc0d640bda17ef215d256adbdc0bfc8eed",
+      "originalGitBlob": "e1edf41e66491388313f40b704ad7425499b17e2",
+      "archiveBytes": 26168,
+      "archiveSha256": "235ef92ba6d5fe9d7a9d1f2089fd08573b5f75b3a484773ca850531bbd1648cf",
+      "originalAllocatedBytes": 122880
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/artifact-storage-migrations.jsonl",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/artifact-storage-migrations.jsonl.gz",
+      "originalBytes": 414530,
+      "originalSha256": "297158b16d1ca357e216911ea00385ef324fb34d5a6aca7373068a87b51e4477",
+      "originalGitBlob": "435e13242b50eb8a620a49e5289682b5560613b9",
+      "archiveBytes": 79178,
+      "archiveSha256": "a14655455b7a6099736d0b40db3c143e985e63e359dcec72ca9797ad0c048492",
+      "originalAllocatedBytes": 417792
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/collection-final-summary.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/collection-final-summary.json.gz",
+      "originalBytes": 5255,
+      "originalSha256": "d896697c371c28f2607064aef1be2d222915b9b6a5e3e07a61c164c7231e01bd",
+      "originalGitBlob": "deacfb2cc64a5ffcd521672147b7d516c242af3f",
+      "archiveBytes": 1216,
+      "archiveSha256": "0d3748958d8a6f4ed4864609c96b5e0e928b345b09647d985473d52c69a05119",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/computed-metrics.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/computed-metrics.json.gz",
+      "originalBytes": 26285,
+      "originalSha256": "27b922c6e094860b9dcb604452840b839e3593d4c2177332578ed6fcf53b081e",
+      "originalGitBlob": "75f11e9b3404a7a32c15bf35956da7ebed9071f0",
+      "archiveBytes": 3259,
+      "archiveSha256": "e27c09b1e493a958a66394fb22269ae8182af9239d94755e8e36de5d269c262f",
+      "originalAllocatedBytes": 28672
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/existing-compression-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/existing-compression-manifest.json.gz",
+      "originalBytes": 5488,
+      "originalSha256": "3f666b19b7360b5a2333c9252262430189b0fe302a58bc449b38663515a169ae",
+      "originalGitBlob": "b3aa6193f4ba4232fa4a0b8cb240ec2c7b2c4b23",
+      "archiveBytes": 1313,
+      "archiveSha256": "57eb82daf8d07b5daf416ff3100eb511b2c1c3cace9482c1fc13b63a33c28fe6",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2889/comments-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2889/comments-all.json.gz",
+      "originalBytes": 6728,
+      "originalSha256": "a1b4654a690a58510eb5fc2f43b683bd1cad40e8daf9887f2f305e0b3abcd9d5",
+      "originalGitBlob": "a38864be59e4afbada27f75e9d51bab11f7c2d9f",
+      "archiveBytes": 2108,
+      "archiveSha256": "b140fb30ba89f218dc972965d7d5258f04574c3cd2bb6bc4de8e0a40fc104e15",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2889/comments-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2889/comments-page-001.json.gz",
+      "originalBytes": 6728,
+      "originalSha256": "a1b4654a690a58510eb5fc2f43b683bd1cad40e8daf9887f2f305e0b3abcd9d5",
+      "originalGitBlob": "a38864be59e4afbada27f75e9d51bab11f7c2d9f",
+      "archiveBytes": 2108,
+      "archiveSha256": "b140fb30ba89f218dc972965d7d5258f04574c3cd2bb6bc4de8e0a40fc104e15",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2889/issue.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2889/issue.json.gz",
+      "originalBytes": 8094,
+      "originalSha256": "3a9941905237d46efefec50f29991e0a75e10c51701b21205be42ec29afff00d",
+      "originalGitBlob": "d2173712c20e7e3c57424c27afae335ccc7ab79f",
+      "archiveBytes": 3431,
+      "archiveSha256": "70f9514132c270057636b3b167c0f439dcf04ef3ca6794a8a2ddff03daca0a94",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2892/issue.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2892/issue.json.gz",
+      "originalBytes": 7975,
+      "originalSha256": "8fc3967d3ff91ed4afeb3f096b623ae96380150788993a63395ff22afa1b3891",
+      "originalGitBlob": "b8e5b7045dcf0c884ffb81e05dab6e8e44290844",
+      "archiveBytes": 3272,
+      "archiveSha256": "50992180ab92a8e9a22710e264ae53ce0cf1ec449957e548ba6e47a6e112e807",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/724/issue.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/724/issue.json.gz",
+      "originalBytes": 6726,
+      "originalSha256": "4d6592f58ba8c180d618120bb0ba08b9d78e242ff023f2afa830582e50dfc282",
+      "originalGitBlob": "5fa75ddda433a099e09408cbdc59f55e8012120a",
+      "archiveBytes": 2222,
+      "archiveSha256": "8929c0306c0c20572b40d18750e2f12256909e058d18fedc835bbf0324f923df",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/725/issue.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/725/issue.json.gz",
+      "originalBytes": 6420,
+      "originalSha256": "cb3ee4269c1a3e311b3225da22be473d86ab88ba138bb17931d26e80ce66b121",
+      "originalGitBlob": "9ac8a9d373fb943f58527c8150f6c2da54e9dd66",
+      "archiveBytes": 2121,
+      "archiveSha256": "5efafba15f557bfa29fa3f4ee80b354d9fa835020baea44ac942e47b446b4bf4",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/727/issue.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/727/issue.json.gz",
+      "originalBytes": 6162,
+      "originalSha256": "6658aab7a6153e950886d2b0d66b35fe4ccd4b61df8a4b4b8ed57bf46d2fb42a",
+      "originalGitBlob": "63dc346bf21875ec0e602b4a5d9fef5a1a402754",
+      "archiveBytes": 1971,
+      "archiveSha256": "035b8f67369808f3213949ed18a7169fa55fc43db2ce20099915ecace1c3ff69",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/728/issue.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/728/issue.json.gz",
+      "originalBytes": 6369,
+      "originalSha256": "0888b32898fd88672f1a2986c6cdd9c2fd300f509c4983733b3f3c4ff44f08e0",
+      "originalGitBlob": "a007d466ab5ee13d2c0c87073e67e9305e8e684e",
+      "archiveBytes": 2000,
+      "archiveSha256": "69205071ebc3069ca141484ebad42f0eac03c895cb36bb73d40fe8d14ccf49c7",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/759/comments-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/759/comments-all.json.gz",
+      "originalBytes": 4658,
+      "originalSha256": "8660877af5cf8b37f61caae9be43d958dae79661f61d1c3f00a61add4246cd79",
+      "originalGitBlob": "43be78295e22a093bec8284a14d670c1f9e0236f",
+      "archiveBytes": 1890,
+      "archiveSha256": "86049872e37fbefc2105222b36bcd268c8e86db9dca7e5876a3cf2e7faaae33c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/759/comments-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/759/comments-page-001.json.gz",
+      "originalBytes": 4658,
+      "originalSha256": "8660877af5cf8b37f61caae9be43d958dae79661f61d1c3f00a61add4246cd79",
+      "originalGitBlob": "43be78295e22a093bec8284a14d670c1f9e0236f",
+      "archiveBytes": 1890,
+      "archiveSha256": "86049872e37fbefc2105222b36bcd268c8e86db9dca7e5876a3cf2e7faaae33c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/759/issue.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/759/issue.json.gz",
+      "originalBytes": 14795,
+      "originalSha256": "f6cb29aaf22e132a151b0d1813dbf40240e7a062de679774cb38af4cbce7934e",
+      "originalGitBlob": "08d6c81bd4bcb81ee931e90c09b4ec26b9b21e00",
+      "archiveBytes": 5902,
+      "archiveSha256": "d5f42e4992369220a4b79cab5d3d2ae04a1b16021dff1e66cb3269d2c2685167",
+      "originalAllocatedBytes": 16384
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-foundation--disk-space-saviour/36/issue.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-foundation--disk-space-saviour/36/issue.json.gz",
+      "originalBytes": 8357,
+      "originalSha256": "6d68254dc80331e8aaa6a02ebb91d0cedee63d7b74f749b6adcb4278195f560e",
+      "originalGitBlob": "469104d03fbdb2c18c98b3086452d065b9e5de6c",
+      "archiveBytes": 3013,
+      "archiveSha256": "a01cd8586a595f3130ce80d23efafd340ed0f82027dd7071db6aa32ecd078e99",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/source-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/source-manifest.json.gz",
+      "originalBytes": 8219,
+      "originalSha256": "263c65df081d9ddd59a6562dc0e9a0ce4ccc9bf400ae0dbebbffca3b0db5c929",
+      "originalGitBlob": "7173c34a49f8ce12397601b35b5e6342cc66fae2",
+      "archiveBytes": 1432,
+      "archiveSha256": "ac58b688a1320609a54733039e1d39cbb5e9df8e4d0b3bd3ae6b450651820334",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/pull.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/pull.json.gz",
+      "originalBytes": 64516,
+      "originalSha256": "c1f724d6304ae6f725f9f0beeec8363d51aa59256aaf1053b2c2a531d858a3e5",
+      "originalGitBlob": "f6c279a03ffa78326f81391afe130ade5ece4599",
+      "archiveBytes": 20708,
+      "archiveSha256": "1e4a22c89f79e43cfc6939b376682977152a94388691b7b40dffdfb04c5591b8",
+      "originalAllocatedBytes": 65536
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36742616566/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36742616566/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 7058,
+      "originalSha256": "00fce150aaa494e474177b7f8ae13c33c54246acdb76444e35c2cd03f89e5eb1",
+      "originalGitBlob": "db8454820cc748b41c03e4cbd3afca77176a2be1",
+      "archiveBytes": 1663,
+      "archiveSha256": "23bd12ec497d74f0e479adf68e908e22c606c628eeed86cf8d8fc1ab3f3bba33",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37470366011/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37470366011/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 7058,
+      "originalSha256": "c4f6875d085e415b519687e9991a7b8440e22332ee0bb6b5d02087e0859f9296",
+      "originalGitBlob": "29849973b272b7abfd7dfe5ea7cc0cd7a0806a10",
+      "archiveBytes": 1652,
+      "archiveSha256": "a5669fadce7f1f26416339d38455210a87b8ac22d3c1f95bc8fec29ce6c743f5",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37471466551/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37471466551/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 7058,
+      "originalSha256": "cc446a2ff58eedacd78ca8d1cc53cdaae322868f90834bbdfd4c6c27da63c42f",
+      "originalGitBlob": "bf3a206493475cca4aad0a487a54af5dcbc8e93c",
+      "archiveBytes": 1652,
+      "archiveSha256": "9f044e7d18ebfb6862396182a2aeb53a2229548c1c6642c164b7a0052892cf0e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37472268001/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37472268001/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 6514,
+      "originalSha256": "0b7244b356fb60fea69e22afc0918556f065f469fc25c774bbd322238480fe1d",
+      "originalGitBlob": "f21db2ef67b169ce22058bc10c64219376e5b20b",
+      "archiveBytes": 1536,
+      "archiveSha256": "7a1832c743a458343bf33def97320fcef84b1e302d0cd634c89319031cf0cabf",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37472289946/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37472289946/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 7058,
+      "originalSha256": "2e698e95e3c3f20945bebb55f9810325a86643d1380411564db16aca10089b47",
+      "originalGitBlob": "9428f9478dcf8184ccf315163aedb2b6ec9f5730",
+      "archiveBytes": 1652,
+      "archiveSha256": "9cc8ff853e3a1c90129bcc97b089d0151002fce0b0df38db566a2622ea3d7e45",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37473915031/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37473915031/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 7058,
+      "originalSha256": "aa7db7456f3cd0f3da80de0b3b6c0e99113962a8dc1d65551d4e1c519a6d8ad6",
+      "originalGitBlob": "52a472cf3b4f9674dd1796c9408f33a6f65986c6",
+      "archiveBytes": 1649,
+      "archiveSha256": "90126d89dc14ff2cc26e4775fd557e9bb650a9e4f709442515c34ed4d821d56b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37474764786/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37474764786/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 6514,
+      "originalSha256": "e00c13c7bb80b2ea0f857a263c73ee7c13e0de00fcff2fa73c82aadcd149991b",
+      "originalGitBlob": "798edd4cb4028ab97047b0ef59b3c573acacf080",
+      "archiveBytes": 1520,
+      "archiveSha256": "5c517e6834935ce29f2d75e8a0576d5af1075ec8e5c98a5f46d582f40bc1722a",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37475175709/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37475175709/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 7058,
+      "originalSha256": "0b71b2210c57ec16b95083e629d2aef850a0c89c77643b832be50d85ef0b9e7d",
+      "originalGitBlob": "1336683aba40475afd955c14dfb83baae56252c5",
+      "archiveBytes": 1658,
+      "archiveSha256": "44de3f156366dfbea89aa50adc4bda6bb1fe799ec0d6b7ae0836e1d2cad85b7d",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477594699/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477594699/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 6514,
+      "originalSha256": "0de4548a6a2de6375bc7f2ac73cccb7bbedb0dc4d69b3284129db6dd7b0cd58a",
+      "originalGitBlob": "ed6d811fd01db29e72ea02b7b6b4a1a5ab2a9f4b",
+      "archiveBytes": 1525,
+      "archiveSha256": "d6e01dde2793c1c9458c273f318ba0160d2dd9399dfd4742eb0297a8bd702120",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477908680/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477908680/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 11152,
+      "originalSha256": "aee4b740634f4fdce11cca55e6d7d9bdd3a599a0a859079de7f779100c0098b7",
+      "originalGitBlob": "936d482f3e494c74efbb06f7543ae8a6e1d39189",
+      "archiveBytes": 2571,
+      "archiveSha256": "6c784a969e98684ee91e2a196713c928e9e9a1875858507d1f00090e3e8b05ae",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477908721/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37477908721/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 7058,
+      "originalSha256": "6fa9d3bef43178d7230b17293084023d9b26042ac2f8218affef6a16cec64382",
+      "originalGitBlob": "39cfb783d18fb42ec5127ddad21925fd81c3c7f5",
+      "archiveBytes": 1672,
+      "archiveSha256": "f29ac5a900c6086b53fa80555e112642af4fa47c290e486f229532928cf5730a",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37479269590/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37479269590/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 7058,
+      "originalSha256": "37a9046843c13126200a856e5f401274315d9e8e8e88b81ebba42208da36e560",
+      "originalGitBlob": "4b52d8ee316ee4d08419282bf60874fe94260b8c",
+      "archiveBytes": 1660,
+      "archiveSha256": "4fbcf1908436a0bb14202fac12d5984fd19492890f6162837f3617d6b46a8155",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37482885717/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37482885717/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 7058,
+      "originalSha256": "802109cdfc3d19bfcf2fa5f1e7938179985a59331bac1f91ee9d7f7833fe9702",
+      "originalGitBlob": "0cc7af0e0f2bc82f2cc37c35de82ae3b44712ff7",
+      "archiveBytes": 1650,
+      "archiveSha256": "a1ff24483d0674f57ccd5dba6272ba1ab5da2a4f5eca7ec0efda7248f4170891",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37485477332/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37485477332/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 7058,
+      "originalSha256": "aafa3808fa0aa0f42da4c3ad3613b935db96bd8309191d53383a8a3023c86aa2",
+      "originalGitBlob": "cf42b36209d257976b34b27c04addf5e8568a395",
+      "archiveBytes": 1649,
+      "archiveSha256": "8a0ce3af7fa4cc9352674acff639b03a13f2fc1c79aa441dfe7168458cff8e3c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488473022/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488473022/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 6514,
+      "originalSha256": "f01f2a4dc845536d51182b943a9f3ec306436d30ce9093acb8576c193f2919b8",
+      "originalGitBlob": "feba6e77e975949cae1c87a236a2f77004147f19",
+      "archiveBytes": 1524,
+      "archiveSha256": "ca8c8ae0d35e46d37d79a776605d132eafedbbbb4a8e171ec92b3f4d7b9f92e9",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488624850/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488624850/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 7058,
+      "originalSha256": "7b63729445053cea20fcfc8f65ac444c5f5cb10126d0bb44b0ca103e2e4b9766",
+      "originalGitBlob": "8d901517dc4e4c262379f206101d319e13c97fb2",
+      "archiveBytes": 1651,
+      "archiveSha256": "4511d613a4d80c8565221452522fe8a7c9665dace97ab7168bc59f7621a687db",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488985662/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37488985662/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 6514,
+      "originalSha256": "ae6e57b0b4e70be3a0921696be7d9312d510217479db7a41f9a6482f0001ef7c",
+      "originalGitBlob": "1e7ffc75228682388d2efffa79a4aa5c52d72061",
+      "archiveBytes": 1526,
+      "archiveSha256": "69ec817d32e8a82a764cc1ba4f05c7fd00400696335edc17df88b5e7c636aaa9",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37489139761/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37489139761/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 6514,
+      "originalSha256": "06c64838a2fc6dc37fcb81d854ca56167dd09319ec7cf51aa6cc847ab4601194",
+      "originalGitBlob": "85320eba507df2478d91ec765620309ff070f5ea",
+      "archiveBytes": 1527,
+      "archiveSha256": "cb6567ba79249699ee05b4bec9c36445f25b7c75c67bcb5931ac52cb0626ef8e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37489943445/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37489943445/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 7058,
+      "originalSha256": "846a5ec2018fdfaea7d4e03fce7c2ad91810177a9d9889168564db2f11b3bf13",
+      "originalGitBlob": "5b68d4b27c36fa5cfef0679e8f730722bd52f05c",
+      "archiveBytes": 1663,
+      "archiveSha256": "973d78ab0b4418e355f862333228cb7d1a3460f20a63320d42dbff54aa086a04",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447563684-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447563684-all.json.gz",
+      "originalBytes": 4461,
+      "originalSha256": "8d074d08f221cd2098246f24f9d6dff8ff73b416e0addc9decff7e505bfc9e41",
+      "originalGitBlob": "3d2cd7e6c908a6adaa960f2068e237cbb219c5c8",
+      "archiveBytes": 1010,
+      "archiveSha256": "7fb90cf2e2bedbf3c76750c60e7a6e5f99fff20c49482ae162b34589413d4d93",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447563684-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447563684-page-001.json.gz",
+      "originalBytes": 4461,
+      "originalSha256": "8d074d08f221cd2098246f24f9d6dff8ff73b416e0addc9decff7e505bfc9e41",
+      "originalGitBlob": "3d2cd7e6c908a6adaa960f2068e237cbb219c5c8",
+      "archiveBytes": 1010,
+      "archiveSha256": "7fb90cf2e2bedbf3c76750c60e7a6e5f99fff20c49482ae162b34589413d4d93",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447563900-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447563900-all.json.gz",
+      "originalBytes": 4461,
+      "originalSha256": "1b1d0d009bdc18fc245d744dc8c5073abd130745862ff6ce4efedebd56c024d8",
+      "originalGitBlob": "1402eb6f6032de36ff4c366970d9cc225712469f",
+      "archiveBytes": 1008,
+      "archiveSha256": "531106ee5cea57120dafb7fd05afe4a61b5ffbcf937ab9a987eafd6d6f2f8a97",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447563900-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447563900-page-001.json.gz",
+      "originalBytes": 4461,
+      "originalSha256": "1b1d0d009bdc18fc245d744dc8c5073abd130745862ff6ce4efedebd56c024d8",
+      "originalGitBlob": "1402eb6f6032de36ff4c366970d9cc225712469f",
+      "archiveBytes": 1008,
+      "archiveSha256": "531106ee5cea57120dafb7fd05afe4a61b5ffbcf937ab9a987eafd6d6f2f8a97",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447563931-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447563931-all.json.gz",
+      "originalBytes": 4852,
+      "originalSha256": "18919359e6963f5ac1be7d9ce433b9c7ae640636472af264d8be238d0d0757f7",
+      "originalGitBlob": "058c13f1a4fb4a02aa5b155816fc3de7a5902ec6",
+      "archiveBytes": 1065,
+      "archiveSha256": "10d6cbfe80aa1615d6b4ff07500a56aee99642ec666afb00c67e5e1fe1160244",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447563931-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447563931-page-001.json.gz",
+      "originalBytes": 4852,
+      "originalSha256": "18919359e6963f5ac1be7d9ce433b9c7ae640636472af264d8be238d0d0757f7",
+      "originalGitBlob": "058c13f1a4fb4a02aa5b155816fc3de7a5902ec6",
+      "archiveBytes": 1065,
+      "archiveSha256": "10d6cbfe80aa1615d6b4ff07500a56aee99642ec666afb00c67e5e1fe1160244",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447564040-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447564040-all.json.gz",
+      "originalBytes": 4852,
+      "originalSha256": "2120e2cc109362e1ca6fa7a9edd6c5d05fd850a2435661ab46fe6812a9373fd5",
+      "originalGitBlob": "c4ffff4dec3c015a429b11d746f8e6f02573531e",
+      "archiveBytes": 1065,
+      "archiveSha256": "513bdd74f7b830a75cec6733f8c2b0231534daa16683d330aeb4b8afc4813718",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447564040-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447564040-page-001.json.gz",
+      "originalBytes": 4852,
+      "originalSha256": "2120e2cc109362e1ca6fa7a9edd6c5d05fd850a2435661ab46fe6812a9373fd5",
+      "originalGitBlob": "c4ffff4dec3c015a429b11d746f8e6f02573531e",
+      "archiveBytes": 1065,
+      "archiveSha256": "513bdd74f7b830a75cec6733f8c2b0231534daa16683d330aeb4b8afc4813718",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447564044-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447564044-all.json.gz",
+      "originalBytes": 4852,
+      "originalSha256": "f455270a238e5138a5c3ebf5ae28896c4980e5e87972c895ea9f68945576e683",
+      "originalGitBlob": "f221bfcfd5bf3b9d315114674b8be938453bd744",
+      "archiveBytes": 1064,
+      "archiveSha256": "38d78e518bfc5d05e4aa22bc79dd40e04680458a3e74751bad24b760526e4b79",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447564044-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37515543618/attempt-1/annotations/112447564044-page-001.json.gz",
+      "originalBytes": 4852,
+      "originalSha256": "f455270a238e5138a5c3ebf5ae28896c4980e5e87972c895ea9f68945576e683",
+      "originalGitBlob": "f221bfcfd5bf3b9d315114674b8be938453bd744",
+      "archiveBytes": 1064,
+      "archiveSha256": "38d78e518bfc5d05e4aa22bc79dd40e04680458a3e74751bad24b760526e4b79",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452178128-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452178128-all.json.gz",
+      "originalBytes": 4852,
+      "originalSha256": "96166e42d433a6401152a3d8de7b15cd55325158ce214468e1872db4f16a7c5f",
+      "originalGitBlob": "bc3ae3d74e69ecf9a745b81e05c01e671ddf2a48",
+      "archiveBytes": 1064,
+      "archiveSha256": "9988aa22a4a15477e7b1e9733f4159d63b4396953536a39daf7900125cdcff81",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452178128-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452178128-page-001.json.gz",
+      "originalBytes": 4852,
+      "originalSha256": "96166e42d433a6401152a3d8de7b15cd55325158ce214468e1872db4f16a7c5f",
+      "originalGitBlob": "bc3ae3d74e69ecf9a745b81e05c01e671ddf2a48",
+      "archiveBytes": 1064,
+      "archiveSha256": "9988aa22a4a15477e7b1e9733f4159d63b4396953536a39daf7900125cdcff81",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452178198-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452178198-all.json.gz",
+      "originalBytes": 4852,
+      "originalSha256": "f4ebaf7bfeb4e6ec141e324f974952bc71a9eb6a17db05c71d93b32a597a2deb",
+      "originalGitBlob": "9cdfd81c2237591ecf56de48113035e37770948a",
+      "archiveBytes": 1063,
+      "archiveSha256": "d47915cd9ca2c01232a6f3f5261aeb85125494d49c8d7ab41c2386942e80ef11",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452178198-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452178198-page-001.json.gz",
+      "originalBytes": 4852,
+      "originalSha256": "f4ebaf7bfeb4e6ec141e324f974952bc71a9eb6a17db05c71d93b32a597a2deb",
+      "originalGitBlob": "9cdfd81c2237591ecf56de48113035e37770948a",
+      "archiveBytes": 1063,
+      "archiveSha256": "d47915cd9ca2c01232a6f3f5261aeb85125494d49c8d7ab41c2386942e80ef11",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452179102-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452179102-all.json.gz",
+      "originalBytes": 4851,
+      "originalSha256": "566ad68b45347d66c0f35dec9d4d26d4e204c7ad827e48a13c0bd90428e90cdf",
+      "originalGitBlob": "4356b9aabe068dacc570f3d53dd1d8b5b8d1ba40",
+      "archiveBytes": 1063,
+      "archiveSha256": "03a7ecbb32c51a727d824fbe6e13e497a5ca20f53678768541c8cbfbefe1d6ec",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452179102-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452179102-page-001.json.gz",
+      "originalBytes": 4851,
+      "originalSha256": "566ad68b45347d66c0f35dec9d4d26d4e204c7ad827e48a13c0bd90428e90cdf",
+      "originalGitBlob": "4356b9aabe068dacc570f3d53dd1d8b5b8d1ba40",
+      "archiveBytes": 1063,
+      "archiveSha256": "03a7ecbb32c51a727d824fbe6e13e497a5ca20f53678768541c8cbfbefe1d6ec",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452179244-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452179244-all.json.gz",
+      "originalBytes": 4461,
+      "originalSha256": "040f4fda70a1a625973e3bdf0c21a9739a1440189429820f785722713fd7b6cf",
+      "originalGitBlob": "955ebff88e33328c97c85aeba71a9e71c55fd5a7",
+      "archiveBytes": 1009,
+      "archiveSha256": "5ea93f455e634f4345104dc18f37a5a42d89ec0eb85e94aaa9beecc6dcc170c6",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452179244-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452179244-page-001.json.gz",
+      "originalBytes": 4461,
+      "originalSha256": "040f4fda70a1a625973e3bdf0c21a9739a1440189429820f785722713fd7b6cf",
+      "originalGitBlob": "955ebff88e33328c97c85aeba71a9e71c55fd5a7",
+      "archiveBytes": 1009,
+      "archiveSha256": "5ea93f455e634f4345104dc18f37a5a42d89ec0eb85e94aaa9beecc6dcc170c6",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452179429-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452179429-all.json.gz",
+      "originalBytes": 4461,
+      "originalSha256": "56198bf6a652cf7f7aa9ff433e28374700e35c7eb2ef0410705a57d95bdf5df9",
+      "originalGitBlob": "e532038b324be885434d6c825ef14338b0da110b",
+      "archiveBytes": 1008,
+      "archiveSha256": "9b4f4fe19c29c1e4d3b43936d2b9f2774e353d29a3beac742c2ea9a439fe92d7",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452179429-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37516756179/attempt-1/annotations/112452179429-page-001.json.gz",
+      "originalBytes": 4461,
+      "originalSha256": "56198bf6a652cf7f7aa9ff433e28374700e35c7eb2ef0410705a57d95bdf5df9",
+      "originalGitBlob": "e532038b324be885434d6c825ef14338b0da110b",
+      "archiveBytes": 1008,
+      "archiveSha256": "9b4f4fe19c29c1e4d3b43936d2b9f2774e353d29a3beac742c2ea9a439fe92d7",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335742/attempt-1/annotations/112464909880-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335742/attempt-1/annotations/112464909880-all.json.gz",
+      "originalBytes": 4461,
+      "originalSha256": "75bbab9b9ef0bd0085763a26cc7861665b7ea2e9f66ee91038d2e1b6e24b186a",
+      "originalGitBlob": "95e01d87fb8389301e8ea0adbad59a9edf7b94e0",
+      "archiveBytes": 1010,
+      "archiveSha256": "c4da45849fc41aee5fc86d49b3241045ab840b536632c944becc11fe622633f7",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335742/attempt-1/annotations/112464909880-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335742/attempt-1/annotations/112464909880-page-001.json.gz",
+      "originalBytes": 4461,
+      "originalSha256": "75bbab9b9ef0bd0085763a26cc7861665b7ea2e9f66ee91038d2e1b6e24b186a",
+      "originalGitBlob": "95e01d87fb8389301e8ea0adbad59a9edf7b94e0",
+      "archiveBytes": 1010,
+      "archiveSha256": "c4da45849fc41aee5fc86d49b3241045ab840b536632c944becc11fe622633f7",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335742/attempt-1/annotations/112464909941-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335742/attempt-1/annotations/112464909941-all.json.gz",
+      "originalBytes": 4461,
+      "originalSha256": "fceddb91dc8fd13c99814709b20911b1cffa546e51e2d2618ecd04259a592d82",
+      "originalGitBlob": "9a1a8520248d1904f53a1fc0c72e1412a61fa1fc",
+      "archiveBytes": 1008,
+      "archiveSha256": "58d2da0052067a4b5c240f884c86d75b1106b49815269534389635b1d91ef83d",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335742/attempt-1/annotations/112464909941-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335742/attempt-1/annotations/112464909941-page-001.json.gz",
+      "originalBytes": 4461,
+      "originalSha256": "fceddb91dc8fd13c99814709b20911b1cffa546e51e2d2618ecd04259a592d82",
+      "originalGitBlob": "9a1a8520248d1904f53a1fc0c72e1412a61fa1fc",
+      "archiveBytes": 1008,
+      "archiveSha256": "58d2da0052067a4b5c240f884c86d75b1106b49815269534389635b1d91ef83d",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335742/attempt-1/annotations/112464910041-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335742/attempt-1/annotations/112464910041-all.json.gz",
+      "originalBytes": 4851,
+      "originalSha256": "e7813df3f5b538771ce875c6d347bfa721f03fc9d1a4c0c1f797df5dc6477298",
+      "originalGitBlob": "667fd7cb9f0a136af966068cfe85b7a8a99a8e34",
+      "archiveBytes": 1066,
+      "archiveSha256": "755f11cd98e5ef89478aa8ad96917deb96ff40af8b4fdad1243e49f6e5eee8a4",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335742/attempt-1/annotations/112464910041-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335742/attempt-1/annotations/112464910041-page-001.json.gz",
+      "originalBytes": 4851,
+      "originalSha256": "e7813df3f5b538771ce875c6d347bfa721f03fc9d1a4c0c1f797df5dc6477298",
+      "originalGitBlob": "667fd7cb9f0a136af966068cfe85b7a8a99a8e34",
+      "archiveBytes": 1066,
+      "archiveSha256": "755f11cd98e5ef89478aa8ad96917deb96ff40af8b4fdad1243e49f6e5eee8a4",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335742/attempt-1/annotations/112464910063-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335742/attempt-1/annotations/112464910063-all.json.gz",
+      "originalBytes": 4852,
+      "originalSha256": "11f2526199d8cd77c3cae02ccecd14f03709e4df6415306c0e42938b7cf8d283",
+      "originalGitBlob": "9eb3087fd9bd832756568f876329faae9259ddac",
+      "archiveBytes": 1066,
+      "archiveSha256": "45778a68f7f00dec1d4168ce4e0a46993861456c3e36876615f1fbfb8538f173",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335742/attempt-1/annotations/112464910063-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520335742/attempt-1/annotations/112464910063-page-001.json.gz",
+      "originalBytes": 4852,
+      "originalSha256": "11f2526199d8cd77c3cae02ccecd14f03709e4df6415306c0e42938b7cf8d283",
+      "originalGitBlob": "9eb3087fd9bd832756568f876329faae9259ddac",
+      "archiveBytes": 1066,
+      "archiveSha256": "45778a68f7f00dec1d4168ce4e0a46993861456c3e36876615f1fbfb8538f173",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467181364-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467181364-all.json.gz",
+      "originalBytes": 4854,
+      "originalSha256": "e225e4b87f2efe85f54b50c699ab2eda5940288fcd1a9821a402f98fc58421de",
+      "originalGitBlob": "9cff80764b1946ce9658c94b89c438b49d4aef4d",
+      "archiveBytes": 1063,
+      "archiveSha256": "e6be1e3b4494f4f58aee8a72e415d55e54409185fea24339a6717f986ab676ec",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467181364-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467181364-page-001.json.gz",
+      "originalBytes": 4854,
+      "originalSha256": "e225e4b87f2efe85f54b50c699ab2eda5940288fcd1a9821a402f98fc58421de",
+      "originalGitBlob": "9cff80764b1946ce9658c94b89c438b49d4aef4d",
+      "archiveBytes": 1063,
+      "archiveSha256": "e6be1e3b4494f4f58aee8a72e415d55e54409185fea24339a6717f986ab676ec",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467181444-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467181444-all.json.gz",
+      "originalBytes": 4853,
+      "originalSha256": "32ca871febc1a58df1e3d7e1f46de01515222d84a7c10db40ae8c492378f8f72",
+      "originalGitBlob": "0ec2392d820f251e88591895b8c117e8159ef2ce",
+      "archiveBytes": 1063,
+      "archiveSha256": "8b7acd1b7552226f90f11a0ec9937b32edd9e7883963de2c8bb99d97ebd05634",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467181444-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467181444-page-001.json.gz",
+      "originalBytes": 4853,
+      "originalSha256": "32ca871febc1a58df1e3d7e1f46de01515222d84a7c10db40ae8c492378f8f72",
+      "originalGitBlob": "0ec2392d820f251e88591895b8c117e8159ef2ce",
+      "archiveBytes": 1063,
+      "archiveSha256": "8b7acd1b7552226f90f11a0ec9937b32edd9e7883963de2c8bb99d97ebd05634",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467181935-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467181935-all.json.gz",
+      "originalBytes": 4463,
+      "originalSha256": "b499b6a7b95bcdc29465f5cc0ea185cd0a0ff534b08022d3e001559f28702f64",
+      "originalGitBlob": "a4e76626f34878992353ac8a0348565ef3f61390",
+      "archiveBytes": 1007,
+      "archiveSha256": "7f3643192c0d792eade24f8bfa17d70552773247f5cdfecdd176b95e5e167442",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467181935-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467181935-page-001.json.gz",
+      "originalBytes": 4463,
+      "originalSha256": "b499b6a7b95bcdc29465f5cc0ea185cd0a0ff534b08022d3e001559f28702f64",
+      "originalGitBlob": "a4e76626f34878992353ac8a0348565ef3f61390",
+      "archiveBytes": 1007,
+      "archiveSha256": "7f3643192c0d792eade24f8bfa17d70552773247f5cdfecdd176b95e5e167442",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467182258-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467182258-all.json.gz",
+      "originalBytes": 4854,
+      "originalSha256": "13a540587a74b609a52e1e4c902e7472e1da3617a72c665a4a99c578358679d4",
+      "originalGitBlob": "16ee632d27a62014ea0c55b8348c2b173183a672",
+      "archiveBytes": 1064,
+      "archiveSha256": "3d481f31a44b72af7b8bdff82162e0b1fff44f84f3ca29abe9496d38b94ed655",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467182258-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467182258-page-001.json.gz",
+      "originalBytes": 4854,
+      "originalSha256": "13a540587a74b609a52e1e4c902e7472e1da3617a72c665a4a99c578358679d4",
+      "originalGitBlob": "16ee632d27a62014ea0c55b8348c2b173183a672",
+      "archiveBytes": 1064,
+      "archiveSha256": "3d481f31a44b72af7b8bdff82162e0b1fff44f84f3ca29abe9496d38b94ed655",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467182407-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467182407-all.json.gz",
+      "originalBytes": 4463,
+      "originalSha256": "fc2c62bb5df9f05f0453708de297974cbd7aa023b3af29e2feaf2bf10aef290c",
+      "originalGitBlob": "1f211e9cb64fad6d7b7316e0094cfcc9fd9a4553",
+      "archiveBytes": 1007,
+      "archiveSha256": "ad38e6464b51f096989798a0066825e07119118ddbbc2c60f6647a8af22074c9",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467182407-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37520654155/attempt-1/annotations/112467182407-page-001.json.gz",
+      "originalBytes": 4463,
+      "originalSha256": "fc2c62bb5df9f05f0453708de297974cbd7aa023b3af29e2feaf2bf10aef290c",
+      "originalGitBlob": "1f211e9cb64fad6d7b7316e0094cfcc9fd9a4553",
+      "archiveBytes": 1007,
+      "archiveSha256": "ad38e6464b51f096989798a0066825e07119118ddbbc2c60f6647a8af22074c9",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522182243/attempt-1/annotations/112470903691-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522182243/attempt-1/annotations/112470903691-all.json.gz",
+      "originalBytes": 4854,
+      "originalSha256": "ce98acaa57baf1bb513302efa671c9c08ee26ac1a0381c3ac3331e8efd9f68b4",
+      "originalGitBlob": "0128c5536f95e044b54a76d5e74e34c0b294ee6e",
+      "archiveBytes": 1064,
+      "archiveSha256": "c57795415103adb50110be0b64f0e7650abc1927088c20815bcaca9aeaca3f0c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522182243/attempt-1/annotations/112470903691-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522182243/attempt-1/annotations/112470903691-page-001.json.gz",
+      "originalBytes": 4854,
+      "originalSha256": "ce98acaa57baf1bb513302efa671c9c08ee26ac1a0381c3ac3331e8efd9f68b4",
+      "originalGitBlob": "0128c5536f95e044b54a76d5e74e34c0b294ee6e",
+      "archiveBytes": 1064,
+      "archiveSha256": "c57795415103adb50110be0b64f0e7650abc1927088c20815bcaca9aeaca3f0c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522182243/attempt-1/annotations/112470904829-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522182243/attempt-1/annotations/112470904829-all.json.gz",
+      "originalBytes": 4463,
+      "originalSha256": "f49cecf34f8977eb28e714ff8088376c4cf50b53f38a8feba701eceb739ff974",
+      "originalGitBlob": "54ea72aa02d9fc7f092e008353f4a9b654df9cd5",
+      "archiveBytes": 1007,
+      "archiveSha256": "e811484f777390681696971d7fc6cf5330b854d6d51a5993a6ac862d07dcf487",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522182243/attempt-1/annotations/112470904829-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522182243/attempt-1/annotations/112470904829-page-001.json.gz",
+      "originalBytes": 4463,
+      "originalSha256": "f49cecf34f8977eb28e714ff8088376c4cf50b53f38a8feba701eceb739ff974",
+      "originalGitBlob": "54ea72aa02d9fc7f092e008353f4a9b654df9cd5",
+      "archiveBytes": 1007,
+      "archiveSha256": "e811484f777390681696971d7fc6cf5330b854d6d51a5993a6ac862d07dcf487",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522182243/attempt-1/annotations/112470904908-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522182243/attempt-1/annotations/112470904908-all.json.gz",
+      "originalBytes": 4463,
+      "originalSha256": "aae424808ec6348d15a848bb2a2425353d9a6f20b9dfab2df06ff4ae39985897",
+      "originalGitBlob": "ca06ce0f60b561da3cabfaccb57c02cc064e7607",
+      "archiveBytes": 1010,
+      "archiveSha256": "cf6f8712ccf74b1c9bce0eb8591d0edfc2f08f2ac171008049563c313bd57966",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522182243/attempt-1/annotations/112470904908-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522182243/attempt-1/annotations/112470904908-page-001.json.gz",
+      "originalBytes": 4463,
+      "originalSha256": "aae424808ec6348d15a848bb2a2425353d9a6f20b9dfab2df06ff4ae39985897",
+      "originalGitBlob": "ca06ce0f60b561da3cabfaccb57c02cc064e7607",
+      "archiveBytes": 1010,
+      "archiveSha256": "cf6f8712ccf74b1c9bce0eb8591d0edfc2f08f2ac171008049563c313bd57966",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522182243/attempt-1/annotations/112470905025-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522182243/attempt-1/annotations/112470905025-all.json.gz",
+      "originalBytes": 4853,
+      "originalSha256": "cdc1beeb984fed133afe3773543c716cb77d796aa80bb9add80e650c7b3aca3c",
+      "originalGitBlob": "d22dd1bb8e749441d463b2bda4dd80a18ddb8331",
+      "archiveBytes": 1068,
+      "archiveSha256": "0ad670c00bc90af1e2b548872dee18992d3332314607ab8bcaf0215659b80aba",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522182243/attempt-1/annotations/112470905025-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37522182243/attempt-1/annotations/112470905025-page-001.json.gz",
+      "originalBytes": 4853,
+      "originalSha256": "cdc1beeb984fed133afe3773543c716cb77d796aa80bb9add80e650c7b3aca3c",
+      "originalGitBlob": "d22dd1bb8e749441d463b2bda4dd80a18ddb8331",
+      "archiveBytes": 1068,
+      "archiveSha256": "0ad670c00bc90af1e2b548872dee18992d3332314607ab8bcaf0215659b80aba",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708198/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708198/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4599,
+      "originalSha256": "8dae8ef52887ef882d3b9acad69227af7bba6ae390634bec1029e8675538f1fc",
+      "originalGitBlob": "a10d21b2f02474291b3f9f7c8df7c99f6dbc871c",
+      "archiveBytes": 1392,
+      "archiveSha256": "11343dede65ca415df80a1d3fe7774469debbf47a7bc36a0cfc726bd93390811",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708602/attempt-1/annotations/112484788554-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708602/attempt-1/annotations/112484788554-all.json.gz",
+      "originalBytes": 4854,
+      "originalSha256": "9b7ca35b664f1fb7636118923bf0ad14f654ce9053100b4cb54ec9096619a56d",
+      "originalGitBlob": "983f4c3660e67e3782a8a282317c3626778e588c",
+      "archiveBytes": 1063,
+      "archiveSha256": "4bbabcb6f61a766fa5cb8e13a33b51a8899dc23205705010c5ed6d31de2f4d33",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708602/attempt-1/annotations/112484788554-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708602/attempt-1/annotations/112484788554-page-001.json.gz",
+      "originalBytes": 4854,
+      "originalSha256": "9b7ca35b664f1fb7636118923bf0ad14f654ce9053100b4cb54ec9096619a56d",
+      "originalGitBlob": "983f4c3660e67e3782a8a282317c3626778e588c",
+      "archiveBytes": 1063,
+      "archiveSha256": "4bbabcb6f61a766fa5cb8e13a33b51a8899dc23205705010c5ed6d31de2f4d33",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708602/attempt-1/annotations/112484788824-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708602/attempt-1/annotations/112484788824-all.json.gz",
+      "originalBytes": 4854,
+      "originalSha256": "e9216d4cc496fe653cba2c73481ad635bb6c7628dd3ae6c1d08f488f53321d1d",
+      "originalGitBlob": "8b4350429ac12277afeb3e0a12e06cb7bc886a37",
+      "archiveBytes": 1063,
+      "archiveSha256": "9789e4a20f053a581b7da94c735b0edf5da32214eb8f25a3dcc053e12a6c7b55",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708602/attempt-1/annotations/112484788824-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708602/attempt-1/annotations/112484788824-page-001.json.gz",
+      "originalBytes": 4854,
+      "originalSha256": "e9216d4cc496fe653cba2c73481ad635bb6c7628dd3ae6c1d08f488f53321d1d",
+      "originalGitBlob": "8b4350429ac12277afeb3e0a12e06cb7bc886a37",
+      "archiveBytes": 1063,
+      "archiveSha256": "9789e4a20f053a581b7da94c735b0edf5da32214eb8f25a3dcc053e12a6c7b55",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708602/attempt-1/annotations/112484788932-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708602/attempt-1/annotations/112484788932-all.json.gz",
+      "originalBytes": 4463,
+      "originalSha256": "e29240882a08389b4b841e032d5f62c1dd42a94a075fdb943f05bd4395a2b580",
+      "originalGitBlob": "aeb75aa339f7466d0254b5a14e39400b3fd85981",
+      "archiveBytes": 1008,
+      "archiveSha256": "e897aa2249f5ebbeb066a10abe0ca6f5dff99ce66c0fcd5d6a8db0f2a45c1409",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708602/attempt-1/annotations/112484788932-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708602/attempt-1/annotations/112484788932-page-001.json.gz",
+      "originalBytes": 4463,
+      "originalSha256": "e29240882a08389b4b841e032d5f62c1dd42a94a075fdb943f05bd4395a2b580",
+      "originalGitBlob": "aeb75aa339f7466d0254b5a14e39400b3fd85981",
+      "archiveBytes": 1008,
+      "archiveSha256": "e897aa2249f5ebbeb066a10abe0ca6f5dff99ce66c0fcd5d6a8db0f2a45c1409",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708602/attempt-1/annotations/112484789471-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708602/attempt-1/annotations/112484789471-all.json.gz",
+      "originalBytes": 4463,
+      "originalSha256": "06b9893ab43e257db6b7ac132288f714b7d028a841dcaf8b3608373142f0b86c",
+      "originalGitBlob": "457342a2be7ebb76b1af85182c4dbff4759d787d",
+      "archiveBytes": 1006,
+      "archiveSha256": "baeffbf198d10093a01d0b1879f36308664cc7e959c5f2ede3d9b7801d9fcc59",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708602/attempt-1/annotations/112484789471-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37525708602/attempt-1/annotations/112484789471-page-001.json.gz",
+      "originalBytes": 4463,
+      "originalSha256": "06b9893ab43e257db6b7ac132288f714b7d028a841dcaf8b3608373142f0b86c",
+      "originalGitBlob": "457342a2be7ebb76b1af85182c4dbff4759d787d",
+      "archiveBytes": 1006,
+      "archiveSha256": "baeffbf198d10093a01d0b1879f36308664cc7e959c5f2ede3d9b7801d9fcc59",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37539924044/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37539924044/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4182,
+      "originalSha256": "a1b8286a30799d38111377cf4bdcf40db1a5d4fc6d4fda19eb1541e91de5203c",
+      "originalGitBlob": "5a07fdd1d0aed910d75c86e8b8413c5a4d1b1969",
+      "archiveBytes": 1240,
+      "archiveSha256": "cb6a4acf0673f1f6f6e63ab8da76ac12af40c2c43363128ff093e22ea2981a6b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37652296393/attempt-1/prior-capture-expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37652296393/attempt-1/prior-capture-expanded-log-manifest.json.gz",
+      "originalBytes": 11127,
+      "originalSha256": "37134717fa260d189b73c45f781d946d15c8d2c7f069cc5f8c7d952d99194174",
+      "originalGitBlob": "52a77df83d66feaff524ccb4baa880ee804330f1",
+      "archiveBytes": 2648,
+      "archiveSha256": "4544b9c9d479c0d10080ec462cdd1ec79738772251d434eeac78230df36798c9",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37652296737/attempt-1/annotations/112899516757-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37652296737/attempt-1/annotations/112899516757-all.json.gz",
+      "originalBytes": 4166,
+      "originalSha256": "940efcc1aa0b12dcc8722ef204980d8c4a27218a18e833ab26069198fded4069",
+      "originalGitBlob": "df509bf302a4cb7b97025d3cdbc328012f021cae",
+      "archiveBytes": 991,
+      "archiveSha256": "f96b937afe387b244970f4c19b738875e68827ad92a399b5e0d0319ef42d47f3",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37652296737/attempt-1/annotations/112899516757-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37652296737/attempt-1/annotations/112899516757-page-001.json.gz",
+      "originalBytes": 4166,
+      "originalSha256": "940efcc1aa0b12dcc8722ef204980d8c4a27218a18e833ab26069198fded4069",
+      "originalGitBlob": "df509bf302a4cb7b97025d3cdbc328012f021cae",
+      "archiveBytes": 991,
+      "archiveSha256": "f96b937afe387b244970f4c19b738875e68827ad92a399b5e0d0319ef42d47f3",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37652296737/attempt-1/annotations/112899516762-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37652296737/attempt-1/annotations/112899516762-all.json.gz",
+      "originalBytes": 4229,
+      "originalSha256": "d7a95093585bc4d109220783659c9b7a1be3a53c63da247f342d89a59ce7295c",
+      "originalGitBlob": "c30107280b4a502eebf703f3b3ed856000293556",
+      "archiveBytes": 1020,
+      "archiveSha256": "44df78e7fe0e7eabbff9685afbd5dbefa16ba147d3317f739330b4ab9bd882a6",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37652296737/attempt-1/annotations/112899516762-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37652296737/attempt-1/annotations/112899516762-page-001.json.gz",
+      "originalBytes": 4229,
+      "originalSha256": "d7a95093585bc4d109220783659c9b7a1be3a53c63da247f342d89a59ce7295c",
+      "originalGitBlob": "c30107280b4a502eebf703f3b3ed856000293556",
+      "archiveBytes": 1020,
+      "archiveSha256": "44df78e7fe0e7eabbff9685afbd5dbefa16ba147d3317f739330b4ab9bd882a6",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37707863702/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37707863702/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4597,
+      "originalSha256": "11e71d8d0ce013056f9fe31b02b78a0f90ece842a54a554f1fc79e353dfaec49",
+      "originalGitBlob": "7105fbba039a3123cba12da2541f64c94fa5e937",
+      "archiveBytes": 1395,
+      "archiveSha256": "e9fad79e030a7c90a4c76aadc6e91e57edd5814111aba92aa585135eb240eebf",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37707863719/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37707863719/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4592,
+      "originalSha256": "579210ff2383dd1491fcb42467d812893e07d1e7fefe30784064a6a2ff3be468",
+      "originalGitBlob": "ca4c572b8f51344347002e4179a2ed688bc1aace",
+      "archiveBytes": 1344,
+      "archiveSha256": "511e6f29ab2404238ce61c5e93dd254dde18f32519c1403e2bbd3b3410fb562f",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37707863806/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37707863806/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4645,
+      "originalSha256": "3e86f0206bb5869a1c84f0e60e1e115bc11e42564923826a952201c956d2903f",
+      "originalGitBlob": "e89c6b14ef3d4f65ca3d20540c90a63107f89f84",
+      "archiveBytes": 1334,
+      "archiveSha256": "93a3ebbd6cfd57b3cf670b938f9f9db80ec446fa11e0644fc76e8f84888188ab",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37768965670/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37768965670/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4102,
+      "originalSha256": "10770b5eee36a34c12148476d1b0edc33a80fd46809493dc85741d38b07df453",
+      "originalGitBlob": "f683fa13829d9ba39e2f5a9b201bc91882885706",
+      "archiveBytes": 1192,
+      "archiveSha256": "b1ebd3694510ac1458a737219a8182d8b0ed6412a9d2d5f6a3a8991a1cf3e72a",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37772887864/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37772887864/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4647,
+      "originalSha256": "c98c6dffa595ea0c5dc11008dc4e6a36cce2ac5db480b40dda1ebc36963fc6d5",
+      "originalGitBlob": "729f0ee761768990f4d0709807b3b6eade46b405",
+      "archiveBytes": 1331,
+      "archiveSha256": "a962059625236cc7ce94454efd0c3c6c6524235c4dc1a4ef5db6ae61ed90217c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37772887994/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37772887994/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4102,
+      "originalSha256": "ddf0ace3a86d359283ddb0cb0bcee568c3a809abb518c83c9dad69e25649e2b8",
+      "originalGitBlob": "cbcc1a84a7ab0c093b5572fb7d1d68d72a3ce62e",
+      "archiveBytes": 1206,
+      "archiveSha256": "85485570bc92f10e9c52e4a131dc1ec62cc52ac6f18acd219cf05cb381d6a78b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37781788482/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37781788482/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4645,
+      "originalSha256": "285b693222489a720cf0542074539bfdfb2627dd0a0a0b1d8f75558378407f1e",
+      "originalGitBlob": "f743c3f8045f034c8e90d141df58e22d044f5835",
+      "archiveBytes": 1330,
+      "archiveSha256": "7f916623b7da5b6bc33dcf948e4a1eab171078864ca775f49c890105369dc690",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37781788866/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37781788866/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4102,
+      "originalSha256": "3a6d2cd17210ce1d5b4640573a258b6c17a32cb4783bdc90d06944c30117cea0",
+      "originalGitBlob": "ab0864db6c5ffce9e371abd0cf8cff86226bcd01",
+      "archiveBytes": 1186,
+      "archiveSha256": "921a29400b8c28b53c3075f0de3ff6147e09f4ff288fe325d09f5aa7739254c4",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37788072874/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37788072874/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4313,
+      "originalSha256": "8e4200eac7179480e75b3e3e45c95fa1dd8699a1b16930bd1c269798176f4121",
+      "originalGitBlob": "fa3474b18eab5d76aca3e6e539d7295172871ebd",
+      "archiveBytes": 1278,
+      "archiveSha256": "54617e754d84da4a2800cf0e971aba3ca64e2926bd0f5917aed06d87a78a972f",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37791036431/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37791036431/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4592,
+      "originalSha256": "e2e73659cd9623a430a6dc59530ffb62932b49b40fb330eae30998b224516d34",
+      "originalGitBlob": "7b2f07493ba4ca90976f91c679c3f11e8a3479b0",
+      "archiveBytes": 1342,
+      "archiveSha256": "65b880a57841e168b806fcbee99df9ba1235567be7716879c4514f490c5b3a30",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37794700610/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37794700610/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4647,
+      "originalSha256": "80a50f18d367a3002f5bff965cfd73d198dfccb011fe27a7d41977c617d87445",
+      "originalGitBlob": "bead06de7fa3aafccf74c29f8fe17f4690fc7656",
+      "archiveBytes": 1331,
+      "archiveSha256": "87c0da719d9643024394ab6ea398ff63d8ea55a9a756ca3d8d55926b8af56fd8",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37800269991/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37800269991/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4102,
+      "originalSha256": "efca3f1541cc2193af44e55f9ffd8262124cfb7a5fc50896b61cb68f97a9bd74",
+      "originalGitBlob": "1fefdfdc96859cc1898a15174f79cb69bea6fc50",
+      "archiveBytes": 1189,
+      "archiveSha256": "7502f1b3021e56afbaa0dbdbe3cc547e8633f69ccd47e22be0eab2bdc42db539",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37800271080/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37800271080/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4159,
+      "originalSha256": "910bbd821f304669d2a78ef5319732e5640516de1098f990a225bbf6697f8f29",
+      "originalGitBlob": "fdd83d30a1aeefe4a88ad93a39985a93b4e0b7a2",
+      "archiveBytes": 1170,
+      "archiveSha256": "b9d28d8fd63db4e9e0a91e61b7af3d6b27227e433b1638f9ce84d15cf645ed12",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37802763069/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37802763069/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4102,
+      "originalSha256": "1c3f34a8dc86c7387f4392d3d5c2925420a23b4822112a47d84d2a9a1e1dbc0c",
+      "originalGitBlob": "f455d189b9b274af4e5c2d54b4b19d42641970de",
+      "archiveBytes": 1196,
+      "archiveSha256": "9d0fad2c6b44e320f7d4907b9a0b672d59865f844d8a2510b8cfc972172e5990",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37811592486/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37811592486/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4647,
+      "originalSha256": "6e2a70e7404604c6676ca7e115e588a565375d0344b26118c22116f7a9778b05",
+      "originalGitBlob": "ae5ff232ccd2c5c703f66fa5bca6f08f15b913c6",
+      "archiveBytes": 1342,
+      "archiveSha256": "71e0f68d83fe9dae523bfaa81c454cd1055b713ab0bd68b389d3e2ee3edb9616",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37811593050/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37811593050/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4791,
+      "originalSha256": "f947031543fcb5733ccca5aeee1fe97fe211c8f89209bd0e9e9706b4124fb9b3",
+      "originalGitBlob": "fa8130046cdba1ccb56a48c044d5090edd4e08eb",
+      "archiveBytes": 1276,
+      "archiveSha256": "3f8648741a90149faaf770c2b79f0e98dff41e6f66e6dc8ce83abc0ebf79493f",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37820815819/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37820815819/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4646,
+      "originalSha256": "a00feb22b65c1d13134ba17ef67276ca035bcb8f341536b7fc8810962696cc34",
+      "originalGitBlob": "5d8bde92e07bb7889bb6f6a9d7ed5446cd3c6937",
+      "archiveBytes": 1332,
+      "archiveSha256": "da1e41d518c2af9ef0c1dc3a95949a70aaafe4b027850b2b77c4fd0de051016f",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37820816473/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37820816473/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4671,
+      "originalSha256": "a9a38175887519a5946b0c3349780542bdfe3b6b77caf973d1229e622baf6dfb",
+      "originalGitBlob": "1c0950aee8583d123e0fcd60c64605775e1f8759",
+      "archiveBytes": 1391,
+      "archiveSha256": "81027e0e30cdd34ee8abbfde1dcab7690baa97b9f3a735e915f7e865b46e102e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37820816712/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37820816712/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4176,
+      "originalSha256": "3f50ba3f01c8609b9b5994aed963fa3600cef40a1270b0e4137079022b966edf",
+      "originalGitBlob": "154154dcacf22e1cacf619472414fc535baebfbb",
+      "archiveBytes": 1178,
+      "archiveSha256": "83cf20a7194310284ecded04120cbfa0d3fc7863d490b8e423f4c3f49a1c880a",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37826590019/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37826590019/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4696,
+      "originalSha256": "1cec1c7eba81396463611297c2c0d0a60f35ebd09182315c6ca3e4bb341656fb",
+      "originalGitBlob": "144016d665de26736f559e8ba606086d63b9d335",
+      "archiveBytes": 1361,
+      "archiveSha256": "961cc1c6360a9ff921cbfedce7d90752e432e723ef392fe51a65cba1a300b385",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37826590518/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37826590518/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4792,
+      "originalSha256": "f857ff67aa6ece462510106d0b069645f08a2b637fe802ea10a6ebf4d2e6533f",
+      "originalGitBlob": "0f99ef9bbb54c276b49aebbcdec44cffb23e349f",
+      "archiveBytes": 1282,
+      "archiveSha256": "3ed1e6d12f33c54ad692e19b0f5940ebe03803ebaaf84294d6ead7ad75228a44",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37830767734/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37830767734/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4687,
+      "originalSha256": "4a4e195ec6b5f7166854aaf23d53b46aa0ebff237b23e98cac539713f60dd4bc",
+      "originalGitBlob": "51e9f911823ecb5e9a34cfac208b3f7ab2a78b48",
+      "archiveBytes": 1285,
+      "archiveSha256": "9e9fec7d355b1f3d25293769546d25864b80e738e8725b3f86b27408b0cecec3",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37833154582/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37833154582/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4647,
+      "originalSha256": "41820fab6b643aeff8417f0599f566aac9ebd370b10ac5ee52714e90d1cec029",
+      "originalGitBlob": "61fa8ea0544d55f3a01f68791f319e55fa92a9b3",
+      "archiveBytes": 1328,
+      "archiveSha256": "de362b13a3aeb73e20641280de6f4fd881116b4673a753ee3d793ae5162ef296",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37840425973/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37840425973/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4545,
+      "originalSha256": "fc3c39995ae8cee05a572e1fd77ca0cb5456b1597218344d22600355bc4e7094",
+      "originalGitBlob": "c1a1d6553eed3c75751ab44e773336a449e96ffe",
+      "archiveBytes": 1437,
+      "archiveSha256": "d04180fd2157aa5cb858e33bda2dc33f9a48aa6c6905be21bb359ac87cf75a60",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37860242657/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37860242657/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4312,
+      "originalSha256": "5a3d9d8fa5cb4e3e82ca596b667524534e25ccdc6eca165373470fa2c89d9b98",
+      "originalGitBlob": "0f5858d1714a7e77a14dad88e8b9917aafea491d",
+      "archiveBytes": 1277,
+      "archiveSha256": "4d2e56b3d07e185909942d111655cdbdffffafbdc523b51efaa9ee71d8a0f056",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37866292512/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37866292512/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4646,
+      "originalSha256": "0ace6281cfa631b1dad46b0a649130ef5bb0c7c6ded348e51734321bf0535b0a",
+      "originalGitBlob": "755e68da16a93e3ed973273b723c670037317636",
+      "archiveBytes": 1329,
+      "archiveSha256": "637e8a030b106ad589c277154250c9d07f3ae89242f67c0483e6ac1efc07d84a",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37866292577/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37866292577/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4525,
+      "originalSha256": "0c72863faab6a7d5eb0d232cea481d1c8919a4c7c3beaefae3b6562b8bf2d0be",
+      "originalGitBlob": "784c58fc102263302f2fdc88bac5a80ea0b36c5e",
+      "archiveBytes": 1367,
+      "archiveSha256": "c8d759645c37266006eda369a25e37ea92fd6855c6a74ef6f4fda1efa6f9e3ab",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37870721257/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37870721257/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4525,
+      "originalSha256": "21854340a5fbf25f6007e52de27b2e871a0202c4e56713d7f88b81c404e960b8",
+      "originalGitBlob": "7456b95a84f05bc3c3e60a215595e726e3055c65",
+      "archiveBytes": 1367,
+      "archiveSha256": "95e6145957d92c8a9109e296e42fdb460cee8a54b9f2bae528d7622dc214cb7c",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37978703541/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37978703541/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4811,
+      "originalSha256": "7a721faef2d9e8fb070d720fad9f67989c3b14eb3da627d427dd1e244e1072d3",
+      "originalGitBlob": "066ecf11958b1629b8bf93a848a88bfd069f40f0",
+      "archiveBytes": 1226,
+      "archiveSha256": "68554f7b1a5bb7776f8f23b821fb60db734dbc5873c1157537e2c896bfca6258",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37989420638/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/37989420638/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4925,
+      "originalSha256": "be0d8c9937e7d539987a9b8a964df035f72c43c493049bc85fded260812ab8d1",
+      "originalGitBlob": "ed53ec3b5e0669ca389f175c20506047d1992d8e",
+      "archiveBytes": 1418,
+      "archiveSha256": "2f77e09a428b4a129c2ea40f11ed7390b14422d7a8f255599d55fc5411a6c25e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38005341210/attempt-1/annotations/114081050834-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38005341210/attempt-1/annotations/114081050834-all.json.gz",
+      "originalBytes": 4321,
+      "originalSha256": "a552913a2bfe46f670c4ce174421356b4f0cd55fc414962aad075dd1005450ef",
+      "originalGitBlob": "c236ce2298d654e418a9ec5c30756415f4536162",
+      "archiveBytes": 1038,
+      "archiveSha256": "42bd9a8052a3c623144bf1729595f61f4593598d641bae19f363e6458d15951b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38005341210/attempt-1/annotations/114081050834-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38005341210/attempt-1/annotations/114081050834-page-001.json.gz",
+      "originalBytes": 4321,
+      "originalSha256": "a552913a2bfe46f670c4ce174421356b4f0cd55fc414962aad075dd1005450ef",
+      "originalGitBlob": "c236ce2298d654e418a9ec5c30756415f4536162",
+      "archiveBytes": 1038,
+      "archiveSha256": "42bd9a8052a3c623144bf1729595f61f4593598d641bae19f363e6458d15951b",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38052096479/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/38052096479/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 4736,
+      "originalSha256": "6fe2de354f9b665057381132008ad9cb931685e2b5216de076adc28de065993a",
+      "originalGitBlob": "bffb4f3c54d3227285ef18fc44b1e45eeeab89d8",
+      "archiveBytes": 1296,
+      "archiveSha256": "7e9c92e53569345ccfa515a6d227e49c8dce61dad73865a0afee0c8754e227dd",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/pull.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/pull.json.gz",
+      "originalBytes": 28678,
+      "originalSha256": "da53113914177ff0352f0a41b206340e3599e242dcad749068d08a5b3dfb8b62",
+      "originalGitBlob": "c65df8718d23dca6978319c74b393004df0a4639",
+      "archiveBytes": 5247,
+      "archiveSha256": "d6405941ee78e38b9a3b980134f6f38f29a65df08c309002847478b65df7500a",
+      "originalAllocatedBytes": 32768
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11487091696/text-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11487091696/text-manifest.json.gz",
+      "originalBytes": 5132,
+      "originalSha256": "1f2323a5a5f650e77e1a32ac51e3a4ec5c412bf7acef8d31b33b5434f77fa8f1",
+      "originalGitBlob": "f1ff86cce23a5d0a4eac9501d7f4ed2bbbb1cf17",
+      "archiveBytes": 1485,
+      "archiveSha256": "da79fd971745ba2b18852958712c336e5bf7a5cecb93b8ca250785dbe5a13e01",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11487436047/text-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11487436047/text-manifest.json.gz",
+      "originalBytes": 26956,
+      "originalSha256": "4e6c8a3e24c72260e693bb98d885d8f766a699783ccddbef6593d675842f6c4c",
+      "originalGitBlob": "df22ec16112aa41ac7330a413e9cadcaba72905d",
+      "archiveBytes": 5649,
+      "archiveSha256": "0f9a748c2f912c1848df6bf9c61367d4e29bc8d496740cb28eef11202d349149",
+      "originalAllocatedBytes": 28672
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11490292785/text-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11490292785/text-manifest.json.gz",
+      "originalBytes": 26956,
+      "originalSha256": "319cb597d85f6eb6247962283dbd7eed1fc060a64338d3dd21f37a65893fb3f2",
+      "originalGitBlob": "962b76793cfb12d7d6c76c55a36f7771da2ece35",
+      "archiveBytes": 5647,
+      "archiveSha256": "c436be5123cb5cda5a09c21ca6cf7c956e9f1f995138b087357a0f02f894df4b",
+      "originalAllocatedBytes": 28672
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11490772260/text-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11490772260/text-manifest.json.gz",
+      "originalBytes": 5132,
+      "originalSha256": "06a400cb1c0540b91ca4c51246acb21cb7547b663767739cbf01fe8e3c822c87",
+      "originalGitBlob": "d002613c38417be0c4023ed628124ca946dff3fa",
+      "archiveBytes": 1486,
+      "archiveSha256": "12cd822baff84cd342866683eb9a9c2ba063f3a51c7ab833c2059d67a720ef0f",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11501879357/text-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11501879357/text-manifest.json.gz",
+      "originalBytes": 26956,
+      "originalSha256": "b0deaff02f0138a3aa4da39fdeaa779b33fd5b3ca2fe929b3ecc673a7e922910",
+      "originalGitBlob": "924d790f7d3333b07221d3f895ebb76be6f7d9d2",
+      "archiveBytes": 5651,
+      "archiveSha256": "074e2194d8aecc7a3d46a2c7923d3f82d5b26baef247ddd68145a8a7cd94cc7a",
+      "originalAllocatedBytes": 28672
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11502202696/text-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11502202696/text-manifest.json.gz",
+      "originalBytes": 5132,
+      "originalSha256": "5045f60a1de7d559279584c4ba44fe3550f83744ed1c7da1c8f04cbc6eb60cdb",
+      "originalGitBlob": "81bc0c26836455e3afc305bfd2eb4c353635005a",
+      "archiveBytes": 1491,
+      "archiveSha256": "c453873ac8edb23d001f4ef2bf90284e062caa505e98359c1af632eac0b19506",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11557219772/text-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11557219772/text-manifest.json.gz",
+      "originalBytes": 5132,
+      "originalSha256": "76897317eb9184fd8efbfa6af3032b14cb684dcb6e84f0ba03635c3d647288a6",
+      "originalGitBlob": "9d316e9222e4f6a0614e80a1aeec33898e81dabb",
+      "archiveBytes": 1489,
+      "archiveSha256": "cba2e1859fdcb964cfa8f547b584b538811f4cd4384026d68a0f6368833be485",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11558616296/text-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11558616296/text-manifest.json.gz",
+      "originalBytes": 26956,
+      "originalSha256": "a78787932f9a6f3fe9ce8e94216a7836c439e032bf45f21c8c301aed6f414092",
+      "originalGitBlob": "53a7cbdfd04d95cb174d0bff820721b78446a3ab",
+      "archiveBytes": 5660,
+      "archiveSha256": "8afd8e35183db8767797884e918adaf1fe694ea609959c563afd4717ceb31475",
+      "originalAllocatedBytes": 28672
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11561424506/text-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11561424506/text-manifest.json.gz",
+      "originalBytes": 6219,
+      "originalSha256": "e0b514d1d5327b3589addfac09ba9b227f126ec4b4657ea806eaa4e34e3c8e52",
+      "originalGitBlob": "8da211130c43d37814f8a92012699ecee08d34d7",
+      "archiveBytes": 1731,
+      "archiveSha256": "80ba5ee832ddc2385bf92b8db9109463a46ada235abc3ff57a13763c6a02992f",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11563048124/text-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11563048124/text-manifest.json.gz",
+      "originalBytes": 35587,
+      "originalSha256": "4b7ca50bbc5b8a530e6a55f5e1c74ca4ec0a1c98ddb222975dd1b9d58e256e4a",
+      "originalGitBlob": "7a61529f0d444e7c946765830f873ef6bd2799e3",
+      "archiveBytes": 7748,
+      "archiveSha256": "a2685314d0a315ee05956a522e8387045dc39c71cf3e34046065ef3dae754daf",
+      "originalAllocatedBytes": 36864
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11569829744/text-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11569829744/text-manifest.json.gz",
+      "originalBytes": 4402,
+      "originalSha256": "0de798e8d2d62f469f8f314dc508d4c85203aadaff55998eb7b570ee136c0f97",
+      "originalGitBlob": "08f3409e4a0cb169c04434df4edbd5aac70fee39",
+      "archiveBytes": 1266,
+      "archiveSha256": "27b66ec9e1b984626d73fb4da49f0434a0327f9f9dd3f52be8c26998a57b30e3",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11569924955/text-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11569924955/text-manifest.json.gz",
+      "originalBytes": 5915,
+      "originalSha256": "bc88c96ab16938492aab5360eae6fb9eff367e6b6e8f29f1898d01580a4ea859",
+      "originalGitBlob": "6a321cc358074e87ac2ebfd81b0c84706d739704",
+      "archiveBytes": 1667,
+      "archiveSha256": "84b3cf165ab62f209adb17788b35907deba1bee096278775d9d106785a96bcd8",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11570339093/text-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11570339093/text-manifest.json.gz",
+      "originalBytes": 4402,
+      "originalSha256": "9fb933ad0795cb70f6dbb01e6ba9be64ee2a3389e4eacc8a80a36dad627c8ec0",
+      "originalGitBlob": "f96f09e70395dbc9f68cdac585760d47d3be5961",
+      "archiveBytes": 1270,
+      "archiveSha256": "76c78a980010672eb076c868f03930dc8ea98adbbb2cd6172b691eb147bb9734",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11571121504/text-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11571121504/text-manifest.json.gz",
+      "originalBytes": 4402,
+      "originalSha256": "f2fcd45c556801f05f361958f0e2b23aa3e07c96614a4ac835ddba8644e19b79",
+      "originalGitBlob": "5a0c6fd23748b0fbb25fc20d506b316990b58b3d",
+      "archiveBytes": 1263,
+      "archiveSha256": "41b0167948c7b448e0bd28ab01f954f8947bc459c0a7b7c08806edef2a450697",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11572723146/text-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11572723146/text-manifest.json.gz",
+      "originalBytes": 9035,
+      "originalSha256": "fc0d4b7733dfad27f6ea148034185affc8fdf48076c2024adabc4aa8d15144c9",
+      "originalGitBlob": "49dd7b4a2cd4220dfd7a44b3e437d62812bc543f",
+      "archiveBytes": 2392,
+      "archiveSha256": "52c7d08b962dc20f02be42ffe471240cf5537d7f3d3a983793a6942c67fbcefa",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11576078662/text-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/artifacts/11576078662/text-manifest.json.gz",
+      "originalBytes": 56601,
+      "originalSha256": "344da526e456e0b3a4e3afa8d1fac10c0e682c4a0d6ccd0549fa2412dcc8929b",
+      "originalGitBlob": "4c2852507adfc997f1f885386755d5fd8b9ac8a0",
+      "archiveBytes": 11581,
+      "archiveSha256": "a851ea5c7f3f2467434c887afd0c29289d435c00a5b5e8b1a2cfa593a3f4c03b",
+      "originalAllocatedBytes": 57344
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/pull.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/pull.json.gz",
+      "originalBytes": 22807,
+      "originalSha256": "c5bd744b840c287f384089d588ea03aa42b7eb08812e1c3ec291b1a322f01cf8",
+      "originalGitBlob": "10e71d93d873ebea563f71c3fb89dd14ce004d1d",
+      "archiveBytes": 3707,
+      "archiveSha256": "e0c251c62ba8f4f62e5a45c8e640c2c4ea553228d0464995ccfe2e7435a70284",
+      "originalAllocatedBytes": 24576
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37632083636/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37632083636/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "b0dd4ce2a852cc24930031612fa409babd76f63c40844b5fc032a0fb84db317c",
+      "originalGitBlob": "7b27b7fe55eba3fc9a65f25482b9dfa8d5de5444",
+      "archiveBytes": 2104,
+      "archiveSha256": "38167abb506de0cbbeeb3ac0874e7605e707fc3af1e28b4fe1e1ed37ed0bc5c8",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37638044427/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37638044427/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "65a0d60bbd0baa48e5c0ded87e241484acfd244a3aa57d8acee4af6435e6fe55",
+      "originalGitBlob": "cc00ac6bb99a82e1b82af79465d611caa9083262",
+      "archiveBytes": 2113,
+      "archiveSha256": "f01aa27c98f8170f657338323816c9ddbd0492d148170aae36d270367c717b22",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37641651646/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37641651646/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 8596,
+      "originalSha256": "4b0f8ee187374c4009d7c54283c948bd64b2fb66e971212cac39c70fa0ec2dc9",
+      "originalGitBlob": "fee1203ab5bad4a6082984384b7204f090b3cc94",
+      "archiveBytes": 1854,
+      "archiveSha256": "6e4fdc851dd696741dc94b1b88060bcc6d5976a3047ccb3190ddb29c67749e1f",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37656156573/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37656156573/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "89038604c05c5d2149d1e69042e384376e08c34810e8e02c54bb7e1a992003e5",
+      "originalGitBlob": "6bc7ae3a8f5e5268a2ff5f4940c7443bcc80f3b4",
+      "archiveBytes": 2101,
+      "archiveSha256": "1a064d16289e3f7db28a1176572092aa7cfdca6fffd285b7759f10bbd42e6e6f",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37664596796/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37664596796/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9157,
+      "originalSha256": "2c09ab8c2ef90e8faf1a091239782fa8e803fe649201d42723409a5af7a0b221",
+      "originalGitBlob": "f04cace202d1165631bad8e2cee3ca380e7a5a90",
+      "archiveBytes": 1993,
+      "archiveSha256": "c44e41195dee6be76f05d66c3acbdb7f8c38f7af00463e2ec4417fcb05883f57",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37665703931/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37665703931/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "0f5534ed60b1cf74feb0b6a2f06f504921f9ed96bf1dea9ce3eda1175d17db67",
+      "originalGitBlob": "7a03345fd0cd0467d50547b689b6d81a4027efc5",
+      "archiveBytes": 2123,
+      "archiveSha256": "6a14d45849426f5c0885969c97a82fede46790bfb42d50beb732b4b8610f00bd",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37673386956/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37673386956/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "0f8918ec0e373791dd1cabafd391a74b8eb4f4496990cac09acf9ee24a9210bc",
+      "originalGitBlob": "2b21691951477ce36294328cf248ad97997ad01d",
+      "archiveBytes": 2120,
+      "archiveSha256": "cb169125dae37a5e71473967169838673af30c4d1c5f927615d19b0ab1578419",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37680733971/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37680733971/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "129e40e2de05dfe25a529d85bf9358e00e54456c50edc0d5bc8dd6a26f6d5681",
+      "originalGitBlob": "94b494310754e543715161bb798d790c0a3027a8",
+      "archiveBytes": 2112,
+      "archiveSha256": "3969e08c07a7b05a638b843c07e086db1a17b636174f59d4e517d20ebc334b4b",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37687592358/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37687592358/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "40479166a3837e85254ed44203fc76955fbd65a7315aeaf841326cac82686626",
+      "originalGitBlob": "5696af55d025d3ed6c2a46d0a5c69d1d3837f2db",
+      "archiveBytes": 2114,
+      "archiveSha256": "a139a15e3d22525ce90075010fda8dab9d82f58422e611933ea32748a9b5adb1",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37691738253/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37691738253/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "b01f0745fd5437ba25e9bfa80d1f9966cadc79d906a6a34aeaffa7d4cb2da068",
+      "originalGitBlob": "52ff126ef0b7e62cb34555bf59daa412cc088789",
+      "archiveBytes": 2109,
+      "archiveSha256": "812f3358131a674803cf4252cbd34cd34d680cd6c60aeb7e8ad6d1d648b34603",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37697569132/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37697569132/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "672e03fc58ea1aa6b985267ce856b8f6222619785551e5792c5c52026b6747bd",
+      "originalGitBlob": "e079633f4714f79a8fe21320e8fef63cfd8026a1",
+      "archiveBytes": 2112,
+      "archiveSha256": "208e23db78151309ef6a4cc25899261faf996945091af79becbc23a8eb51f0c3",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37743974064/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37743974064/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9157,
+      "originalSha256": "9bae70fa4f127a7d2816f424103c4e7fc855fe3c32dda896950fdb3a2b7a2864",
+      "originalGitBlob": "eaed4442fcf67a8574829ca5cb76e0603bc18d1e",
+      "archiveBytes": 1992,
+      "archiveSha256": "261234da7afc8a9dc8832e2ccc6fc9c915323c15f35ecc7585db2e9bef2e5c46",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37744373347/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37744373347/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9729,
+      "originalSha256": "5bfd2147fd5af2bb91a22611c2724126244036c9f7a9f83ce0dc321e831f2c2f",
+      "originalGitBlob": "20ebf23a5d05e2b0607eeb11f3b1ae15ec3fe273",
+      "archiveBytes": 2118,
+      "archiveSha256": "d7e921af29c13b783bb996070f328482632113435f03af6d6c1852436a860d57",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37745561739/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37745561739/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "ce597f1802230dee2599ead65925af11fd0d8e8f9b04ee3a8974b9fea96bc913",
+      "originalGitBlob": "5da812864aa5fb04fc8d2de52ff4854297542929",
+      "archiveBytes": 2104,
+      "archiveSha256": "9b2f24fee983d0f51d1e3dbb0093531552c0f7e61e54be980a123240178663af",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37787373194/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37787373194/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "943e754eafe0c5d62ded6ec3fed84417f138648c62e918880cc8b8a8da1fd54f",
+      "originalGitBlob": "3b951034b1db2a5dfd47aa1a8d541f06aae78408",
+      "archiveBytes": 2113,
+      "archiveSha256": "aeebcbd5652b142949857c93a5a90ec4c23690844e4f98e6b5ca27d9d9d20204",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37813947237/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37813947237/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "7d29db4f7eadf994fa46b217c396468329e8ddb6f478d34380937aa06dad6bce",
+      "originalGitBlob": "8377c1a4a7b06999a2e5b1382f59f55ae7319497",
+      "archiveBytes": 2107,
+      "archiveSha256": "9101fec164911e25ceccef056375dd559817c2a43184cd5d14a3d17bd049e600",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37815429631/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37815429631/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "d8928b4be1fd7a90b34ff843c38cf8da27e830f562302eed224708b7b46cbbf6",
+      "originalGitBlob": "ee15c18a70f2ff5ee184aae10fbf9b413241c1c9",
+      "archiveBytes": 2113,
+      "archiveSha256": "a23eafde511349bbb106933b06f38a099582baa7f9442cc350ec05dd1f0889c3",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37819531979/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37819531979/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "746fe6a02144932eadebbe37cface9c4e6b38fb6bba93aef83ec72eb41cbb9df",
+      "originalGitBlob": "374518fdfeb03928025ff5c729b2e58040c148bf",
+      "archiveBytes": 2118,
+      "archiveSha256": "13360b1b1d313209d6143400c1b8d794de91c5320d4b50f296690e5ef633c9ed",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37840764153/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37840764153/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9722,
+      "originalSha256": "ec0352ae3968950aebf61604b2e4610e8b16f961eecf668a16a38e8e162441b7",
+      "originalGitBlob": "80db92c5e481e1f82f06c4cac8af84142e3f5286",
+      "archiveBytes": 2094,
+      "archiveSha256": "d962bf251cec85b8d2fe1822ab5907868fae5de7be11af70b0b91198a263b7cd",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37936405361/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37936405361/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "d677e36ef4e0f1e349c1c7ae04b857378dddead7828013890ddbbb8ee77a4b4f",
+      "originalGitBlob": "bcc8090a16bdeb6f145aa341ea0d87663c59ff16",
+      "archiveBytes": 2102,
+      "archiveSha256": "ef16d84880a3407d6cbe12d681f17db2b17350226d80457ba783eae35a1b8c1e",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37937982560/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37937982560/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9768,
+      "originalSha256": "096eea2c89a843c177887350eefe7ac231de9945edf98522f19575ad560b80b6",
+      "originalGitBlob": "2fd8a3cefb96aaeac98925b4b20da42cdc66be93",
+      "archiveBytes": 2142,
+      "archiveSha256": "ce2110d0ecd5455739d88114b1f924ba41cdb1a8fda50f8231c1349e2d13cf1b",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37939535878/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37939535878/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "d2867dbf475649f3661d4e61807da2ab539dd8533469b06e25594353f84335c9",
+      "originalGitBlob": "3e6d54dd73213aecc400f5465d35da3802c18b47",
+      "archiveBytes": 2106,
+      "archiveSha256": "46342e961d1b32082fe22cdcfb7caee06c393a5e0a14bfdfcc9e7bc021cf5f10",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37982778667/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37982778667/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9157,
+      "originalSha256": "ba2b2ad5b7694c0303ca4be3f92aa1cb5eb0b9bd83ddf8a119e01d0221da1d2a",
+      "originalGitBlob": "0ed2a9309ec3f6dbd0192d4cf5bf6651ef8bc3ac",
+      "archiveBytes": 2000,
+      "archiveSha256": "7cada7ab5a156ba7e93c3eadfc4aad4bc7feac7f7d9b08c72e552442eb9b4ecc",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37983826390/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37983826390/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9155,
+      "originalSha256": "280771a210a1b7e10f4cfbac94543d8b9c7d755039822812d05adb325050acfe",
+      "originalGitBlob": "fc0ba7b646e4847dded0251ff8c93a143884e70e",
+      "archiveBytes": 2005,
+      "archiveSha256": "d89fef86fd0e907428afc9a72ac3a71c936337b6f0b47b2372ecc21a234ba3e1",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37984094004/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37984094004/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9157,
+      "originalSha256": "80666f2aba7d577f50ebef0fee47c9487b0a8c0cedb3eaee9f8ab154f4505cf2",
+      "originalGitBlob": "d642daefc5ec89b36040d03155cb5f06351e76e8",
+      "archiveBytes": 1999,
+      "archiveSha256": "ac0b53b0fbbe4adcc250159e44d3ff25e9a892e44872359e2141b7bbd7a73551",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37984660603/attempt-1/prior-capture-expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/37984660603/attempt-1/prior-capture-expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "13d04ce800e996e8fd0d6a159ee0b3487aad54fa86caed72b8e0504a1fbe2aec",
+      "originalGitBlob": "202bccb4f91d51a5542d26820e2fc5ac5d301ea4",
+      "archiveBytes": 2102,
+      "archiveSha256": "04e221c96d0e41f7c61aa0d30bcbd7f3934c8a56eb5c32906c2143e74d73a4bf",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38018166125/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38018166125/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9157,
+      "originalSha256": "1b1bd3d092d1ae9dafbe3847a019e9cd927430864863c7359dce52764285f79f",
+      "originalGitBlob": "5c0cfb41da14a396446e0f06846f3ac615c01a99",
+      "archiveBytes": 1988,
+      "archiveSha256": "49b91a01e0d9019be652300750564af658bab479341ce82b34f57b67d4527128",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38018614879/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38018614879/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "36b16755d3e800c4a3ee8216e12a8975eeb194fc2c408f5d6dd47e34127c3856",
+      "originalGitBlob": "1a74ab1ce3e7a4ebc843575ab8c376b82151b97b",
+      "archiveBytes": 2113,
+      "archiveSha256": "dc895711c0400b4b8bfa8869de8117d3401fff062c909e762d101982df74bd19",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38019548501/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38019548501/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9156,
+      "originalSha256": "886b43a3bd7b6841dbc38b734f4b99f108ac366facf3b132b15f5d97d592106b",
+      "originalGitBlob": "3a18bc891f738cc4ca3f7bccdf8457b127873728",
+      "archiveBytes": 1981,
+      "archiveSha256": "4163fa4434abe8e3a4ba26d3463a820faaf30adf5cff730d7f9a81c0a87575d1",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38019916722/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38019916722/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9729,
+      "originalSha256": "690a4655bffbb406fd3fffc3686bea105910725e1c6b1036a8129d053342bef3",
+      "originalGitBlob": "63d6f90171cfd9ce6939fc5efff7eb0e627c1ca1",
+      "archiveBytes": 2115,
+      "archiveSha256": "54eb4b3c8891a396f1e9ca5287ef2da3200a11e93478807cf814c72164cc0d11",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38022056959/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38022056959/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "a186f31ed76adffc3f075b43a01524fa803b9a3e786f5fa5573a0c425a667e82",
+      "originalGitBlob": "f0ab201215a6b47eea8212387096dca66ebfebd3",
+      "archiveBytes": 2099,
+      "archiveSha256": "76652889da6eaa18981f1d84ab3dcd4408f0fd7a758aded412b6c5459ab467f1",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38026425372/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38026425372/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "37658d1f41def133321298ac90512994b45e52218ddf4c29ad8e3d80bec8c16f",
+      "originalGitBlob": "839e4365254d85cb10370e6f49076d8c1fa891e7",
+      "archiveBytes": 2100,
+      "archiveSha256": "78589e184ab2a96cd6f6f096aad612fc22c765f95cde902cff20af440c2540b8",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38029353887/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38029353887/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "183e9465d3ec3da5d3846c95b852923e1f9a852fe26c4d72ed09fabfc09d2804",
+      "originalGitBlob": "ece91f285155150d6a3801c9a24fdad07004f4e7",
+      "archiveBytes": 2098,
+      "archiveSha256": "546ecdadd62dc4c7f048c22479085f9383dfcb5b84306d9ec0e6dd910614c884",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38037670456/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38037670456/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "bbfad884b5fc8ac8659857d8439e50de74f9f3ff1bb862ac2dd0f2f00c680513",
+      "originalGitBlob": "a96dcd44b3cade9f780ed16a737d235e623c3043",
+      "archiveBytes": 2093,
+      "archiveSha256": "5a397af2a1d4a2eabd0c5de23fb43ad29668b262ecd6bf7513d9a0baeaf5ea65",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38039216484/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38039216484/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "ab3214b5bf8fe6cb984a5bf8a83aa01c7d20533a4ced1155e2416cff2b2ea250",
+      "originalGitBlob": "48c329b02b236273d6c60c7fb4e0c617ee899e87",
+      "archiveBytes": 2099,
+      "archiveSha256": "782b6a48d84b89418b99e0475e913dd1f22d5faf5e87b16f7cd954a303398034",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38041523997/attempt-1/expanded-log-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/runs/38041523997/attempt-1/expanded-log-manifest.json.gz",
+      "originalBytes": 9730,
+      "originalSha256": "e8408793d42fe095882e821129a88d76e5dd3ec1419b004f7f0b6a8022100190",
+      "originalGitBlob": "f1375b64fd1ecbcf7728bf219a9044b70e197d82",
+      "archiveBytes": 2110,
+      "archiveSha256": "fe7de371d2f716e8b914fcf7647bd5ac87dc72e62768d4b9fd69b8eca6bd7d76",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/pull.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/pull.json.gz",
+      "originalBytes": 35175,
+      "originalSha256": "e7d48c3b82ce0f28c4ea2c9119b5e69121a3a7bae04057cd8c92673379da2894",
+      "originalGitBlob": "6d2dc7d18034ef99a22e27666fe9c6886b3cdf9f",
+      "archiveBytes": 7742,
+      "archiveSha256": "b99143c922123c918d904834dbf8ae827b71ed50affe58b08620fdfebc96c86b",
+      "originalAllocatedBytes": 36864
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/local-incident/source-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/local-incident/source-manifest.json.gz",
+      "originalBytes": 9763,
+      "originalSha256": "3efa85092332be5d370b0d0e6a73b259665e54fd702b654c5478f37c5ffb3c9d",
+      "originalGitBlob": "d923f667e1638fe95bc83f861e4435234a37a963",
+      "archiveBytes": 2445,
+      "archiveSha256": "84c7ae8576d436858827f6fafda9075174e87dc8c41fb82a5d3723bca177e868",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/source-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/source-manifest.json.gz",
+      "originalBytes": 55752,
+      "originalSha256": "d6a101b1b0162185b107eded8300c029365db8ca58e8cdc27bab7e0a81cd8608",
+      "originalGitBlob": "f19e5ed439b2a4a1e35c5c9a1cf07a989f719f59",
+      "archiveBytes": 7274,
+      "archiveSha256": "51900ff76e3ef23d7dd14d13c59e526f6e942e8b0e9ec3cd2d35d97115d99b61",
+      "originalAllocatedBytes": 57344
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/current-task/index.json",
+      "archivePath": "docs/case-studies/issue-759/raw/current-task/index.json.gz",
+      "originalBytes": 169278,
+      "originalSha256": "334a88a0aaa420976ec306928dfca25084912200764e6d049b3946983b8d8d41",
+      "originalGitBlob": "3e11b31d9da2cd629253ffb1bbbd03236e4ca505",
+      "archiveBytes": 11726,
+      "archiveSha256": "055f35a73115541b4106514800209f2d5526f5a0823577b0dc26b84396371800",
+      "originalAllocatedBytes": 172032
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/additional-repository-audit-summary.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/additional-repository-audit-summary.json.gz",
+      "originalBytes": 6204,
+      "originalSha256": "5bc5f31f108404317cbda55efbb276d604237588c7b8d660560344f6e871bd05",
+      "originalGitBlob": "0ff7f1a42d8f685472a1b1c6747689d24c09fd00",
+      "archiveBytes": 1372,
+      "archiveSha256": "0fdae8ddbdf746748f6d4f8134f72fa27ec98aabb4825c7884cd035ac126bc76",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/calculator/default-branch.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/calculator/default-branch.json.gz",
+      "originalBytes": 4293,
+      "originalSha256": "523e2c4718f5467bef184d1f334473e768c7e29280c9c5796fe38e3d8ca4b7df",
+      "originalGitBlob": "5715a3692fa4f5f6970d0f7d1da29e12de0051e3",
+      "archiveBytes": 1015,
+      "archiveSha256": "664f41f0890fa5c3414e4eaeca19029d3b51fe2a15fd2583fa15e606eff83e9e",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/calculator/default-head-paths.txt",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/calculator/default-head-paths.txt.gz",
+      "originalBytes": 26518,
+      "originalSha256": "3aaac1ddaca60b229f2c0a03a2c7d3a5a50ad0eb337e4d728836bc3a9e0d32b7",
+      "originalGitBlob": "cb18f67802d918b57db465f5b1280d16cb51e2c5",
+      "archiveBytes": 4808,
+      "archiveSha256": "81a27310e043b4b868edb0bd2a28338a680d8140962b2118faf63de47ab84ff8",
+      "originalAllocatedBytes": 28672
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/calculator/head-commit.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/calculator/head-commit.json.gz",
+      "originalBytes": 42793,
+      "originalSha256": "8defe0854970450956bbf86637e09dc75593fe0f70543a39b4bb993cf199933e",
+      "originalGitBlob": "3902a48176cb3255390724ef8d381e1a08205c16",
+      "archiveBytes": 4696,
+      "archiveSha256": "d53d0c55677aac4748f9a4fa2e89e63cdf23757043c778c4195160a441edd834",
+      "originalAllocatedBytes": 45056
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/calculator/issue-254.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/calculator/issue-254.json.gz",
+      "originalBytes": 9929,
+      "originalSha256": "c05cc3e6b29571055cb8c4f387649801db93897e5ca0f554f2fb37645df2f3cf",
+      "originalGitBlob": "3f3b0ca2e84d81b852a9916a408b23b56d080be4",
+      "archiveBytes": 4201,
+      "archiveSha256": "db001263e5bdbf2226c6e22aa648face49342bf4aa511e2d9bba34cf05f438c8",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/calculator/open-pulls.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/calculator/open-pulls.json.gz",
+      "originalBytes": 29845,
+      "originalSha256": "d706478cb2d892d6811411b6c71a2498807d6b7e29f84f76e5774ec6537f7a37",
+      "originalGitBlob": "fa2d6f0fc1c9c3d9f8d40eb24b54c143e85680f1",
+      "archiveBytes": 5196,
+      "archiveSha256": "66d69a5b54a7b92fb0714239850db9d0be972947b0141fc39d4a6a5bebb25794",
+      "originalAllocatedBytes": 32768
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/calculator/repository.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/calculator/repository.json.gz",
+      "originalBytes": 16562,
+      "originalSha256": "c95296b049b99895967a4c97cdcb9b264b534f80244be0cf627f40a21013af09",
+      "originalGitBlob": "944870a8ebee846d81e54ca3b1859e32885b0125",
+      "archiveBytes": 2409,
+      "archiveSha256": "62149c9ac00ee3f6de3d101369419acfdf1a73de39fe78980b2b8781ea1e2fe8",
+      "originalAllocatedBytes": 20480
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/capture-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/capture-manifest.json.gz",
+      "originalBytes": 70848,
+      "originalSha256": "5d5fde6300cbbfb8dcff231c4fd59c883c7d56615dc5dced46c7d4d08deaadd1",
+      "originalGitBlob": "ca702bc445545880faade3c712f77977d26da0b2",
+      "archiveBytes": 16738,
+      "archiveSha256": "e50a5347a65afc8f331ad535cda9fa95e83fa5bf5aea21c25cce7fe4d97dc3ba",
+      "originalAllocatedBytes": 73728
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/formal-ai/issue-1191.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/formal-ai/issue-1191.json.gz",
+      "originalBytes": 10812,
+      "originalSha256": "9c8d1b39db93b3e48c7f225d3d3a74a7a97fd1e16cc4008202d9d71ed4fa4316",
+      "originalGitBlob": "b76631554da9801f50eea9c8cd6694a561a57393",
+      "archiveBytes": 4414,
+      "archiveSha256": "383f7a27d889e32f66937ae4a6764759bc0c51726841c534c39643e4001a85d0",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/formal-ai/pr-1188.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/formal-ai/pr-1188.json.gz",
+      "originalBytes": 61726,
+      "originalSha256": "e52b084aa2ab87265abdb43cf60aafed27855197aca5912ea6f929c29389246e",
+      "originalGitBlob": "fa99fa32a3fa5e656dcbae7567ae42733046ad42",
+      "archiveBytes": 20547,
+      "archiveSha256": "c9f73827f8d56ebf577c3cb7facad697477da744d52a3911fdab0356b25a8720",
+      "originalAllocatedBytes": 65536
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/hive-mind/paths.txt",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/hive-mind/paths.txt.gz",
+      "originalBytes": 488800,
+      "originalSha256": "1b8da1623ecdb026007ef4b7be8171e0e378971f9fdfbf2333228e800b4cca60",
+      "originalGitBlob": "94889b740990e3cf3961545b712eaa50bde1fef0",
+      "archiveBytes": 65384,
+      "archiveSha256": "a688fd1220af92f91735e1bb935d285eb84d7a4d1cc7050b47fc782846d35454",
+      "originalAllocatedBytes": 491520
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/issue-searches/hive-mind-0.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/issue-searches/hive-mind-0.json.gz",
+      "originalBytes": 7702,
+      "originalSha256": "609c90fad6db6b48518c19aab5ef64424a83fabb4b113b67baa16601fa02954c",
+      "originalGitBlob": "d96dcd343a57a24f3ed809553ed294bf180e6d82",
+      "archiveBytes": 3426,
+      "archiveSha256": "c82361ee43d5806346463c07e14b3d738a5303bd0c9281448bc0c1e46d6583dc",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/paths.txt",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/paths.txt.gz",
+      "originalBytes": 19949,
+      "originalSha256": "5fed4811c105481fa7a70fef6545d44a60db3df1ab2aa5dfa6bd9d195b1a17b4",
+      "originalGitBlob": "323bccf8db814e4dba72b08f6e4ffea055d7373c",
+      "archiveBytes": 3638,
+      "archiveSha256": "e00f8133e3c2ae20c87eb5dbcfc42d3efc70b09f8b3a7278da8ff798c9682f06",
+      "originalAllocatedBytes": 20480
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/link-cli/default-branch.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/link-cli/default-branch.json.gz",
+      "originalBytes": 4100,
+      "originalSha256": "a5bc50de32875857ae365aedfbfbed89df7a84facddfe658f0835e65d0e1f1b7",
+      "originalGitBlob": "4fb4844f91473f217fb3e6dec04e4d8df0a3b5c6",
+      "archiveBytes": 907,
+      "archiveSha256": "791795f264e549c6b714954787f9dc31878337433f171efa4a527f36c4cb2fcf",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/link-cli/default-head-paths.txt",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/link-cli/default-head-paths.txt.gz",
+      "originalBytes": 41852,
+      "originalSha256": "fdabebab813f65ba1e3027f07650e2cf01a3c03cecf33cc6ae8f0b018bca4891",
+      "originalGitBlob": "396c594c02e3414f6f358c58e68a32128cccc423",
+      "archiveBytes": 5794,
+      "archiveSha256": "d14ddf67f3f9f603f4913d8850599fbfcf92547d200275bd08906df9a5c8aaaa",
+      "originalAllocatedBytes": 45056
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/link-cli/head-commit.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/link-cli/head-commit.json.gz",
+      "originalBytes": 11000,
+      "originalSha256": "2d307255422781de748031a49034d567c38e8fa41f73fb24f93a0a4394368155",
+      "originalGitBlob": "ac7a68c5c32c86fd0b23b8f513c48294509e6682",
+      "archiveBytes": 2293,
+      "archiveSha256": "1251cea4524fa3128244288f7e956ae049f99923b9a540e183f181c9c5f3624b",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/link-cli/issue-111.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/link-cli/issue-111.json.gz",
+      "originalBytes": 10426,
+      "originalSha256": "b606dc0d0fd59d7bd113efe498f1d00a94fd7a65f2f61fa881fb1d32e8f888c0",
+      "originalGitBlob": "b1ee7740aa13af573cd23127cd4fea2a37ad639e",
+      "archiveBytes": 4309,
+      "archiveSha256": "3f374c4bae923f9d158afaf0bfc81870cad6c71be27c720f65615f20ca50d946",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/link-cli/repository.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/link-cli/repository.json.gz",
+      "originalBytes": 8163,
+      "originalSha256": "2dddc6390962ebfd340b55b3e3b129b0ebffc5c38cb8946f1f75666d73c6ab14",
+      "originalGitBlob": "8a2a024ac2f60a53ee0a8e2053cba89cd84102d9",
+      "archiveBytes": 1607,
+      "archiveSha256": "dc543959164145b1a1f6b499b3c60010eb81d2e4e0548cf8cb73571044e3f2e8",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/links-notation/default-branch.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/links-notation/default-branch.json.gz",
+      "originalBytes": 5682,
+      "originalSha256": "2d667f69562db6bd6e323856b2d356e234c67d96e96d54a7ac2932422ca64853",
+      "originalGitBlob": "953a476a333d2741af542fabdfe3c1a8e2b199b8",
+      "archiveBytes": 1882,
+      "archiveSha256": "41b7af544dadd1e2a06dccd15b2bb52aedff8f7db9188299c51edf90d9653dda",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/links-notation/default-head-paths.txt",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/links-notation/default-head-paths.txt.gz",
+      "originalBytes": 61574,
+      "originalSha256": "2bdb0333f23b018697a5145cf22e4d5d9273264c7fe6138a368d148321c4b420",
+      "originalGitBlob": "42fe2eeae06d2f7df3748a1c5802d7701d342a9b",
+      "archiveBytes": 8498,
+      "archiveSha256": "25b5aeb26721e3e84f5242c4289216bb0296df810a03e786014fa26ac9a5e858",
+      "originalAllocatedBytes": 65536
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/links-notation/head-commit.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/links-notation/head-commit.json.gz",
+      "originalBytes": 7211,
+      "originalSha256": "67f980a0cf6aafdccd52f4ccebcc3d3aac9f634fb939f23462a7a07e7d502cb5",
+      "originalGitBlob": "d3b5ed715fc30e00fde00c6927565f732b19d5af",
+      "archiveBytes": 2213,
+      "archiveSha256": "6e430f77f5713974c6354e6610dbd26147e1517857cb8fd4b5e745a739a98aa0",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/links-notation/issue-339.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/links-notation/issue-339.json.gz",
+      "originalBytes": 10116,
+      "originalSha256": "378d955e49383481457828c348985cc23ce08ae6651445fa863447bece12b6c1",
+      "originalGitBlob": "e2fb845899c0caaeaee8b9456cd5b40f792c5202",
+      "archiveBytes": 4183,
+      "archiveSha256": "ce2014eddd1bca1e4bfa89a303ffb8a3be332e245c19155004508b422c975e06",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/links-notation/repository.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/links-notation/repository.json.gz",
+      "originalBytes": 8480,
+      "originalSha256": "de8a5b027456c65ac4ee082b5be06c4b8945bb2305d75b6a943850561b0c9933",
+      "originalGitBlob": "9722150cb72adad5fe01426c6594ea6b403f4919",
+      "archiveBytes": 1648,
+      "archiveSha256": "7793c662f55251018d4091c2c68ee8014366f95244e751c903435cd3cf7dd500",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/local-verification/provenance.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/local-verification/provenance.json.gz",
+      "originalBytes": 20443,
+      "originalSha256": "ea3af87875d6e7ecda0c939ed70aee8b49c9eceef77beaa370b557ffa6b1d14b",
+      "originalGitBlob": "e8f50f8881b97ceee0cc3355ee89e46e5914357b",
+      "archiveBytes": 3325,
+      "archiveSha256": "9e2a8843accbd37779959c94831fa463f4149d9eec1ffc46f7b9923d136b610d",
+      "originalAllocatedBytes": 20480
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/local-verification/summary.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/local-verification/summary.json.gz",
+      "originalBytes": 9858,
+      "originalSha256": "30b719a2b47e899c682fd0babc6b5f2e3fce91e3d0ca27fe28e12043ddf20e16",
+      "originalGitBlob": "9c34535313cc59a52d6892cdbad692aaf46c4a1d",
+      "archiveBytes": 1904,
+      "archiveSha256": "f2296e9cd18966224c9b4e07fa6e828c82b754bcca4ba16907f9b0bb021f2fba",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/meta-language/comment-6101425254.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/meta-language/comment-6101425254.json.gz",
+      "originalBytes": 4108,
+      "originalSha256": "c183e3466e482441895c23d5f993215511ffd99b43cfccc414bedc8dfc391ee1",
+      "originalGitBlob": "676020fa800ce670b6bbc538c1f5d86bb15571cb",
+      "archiveBytes": 1854,
+      "archiveSha256": "61d0f694f6511a81d6db88f080ac5ef664c6f2041171c741bf69ee791d1f89b9",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/meta-language/issue-221.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/meta-language/issue-221.json.gz",
+      "originalBytes": 11872,
+      "originalSha256": "5d8bb6a924f14868e4c6912edd18e7f201e21731e8ea7a5fac54e267e73c8d6a",
+      "originalGitBlob": "5366a1fdcb691e7cf7e19600b45263641ffdb062",
+      "archiveBytes": 4786,
+      "archiveSha256": "6fd89cac31d2aeb432db71afa148ff18f6e4d599084181d68f89439888d8cf4e",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-195.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-195.json.gz",
+      "originalBytes": 13676,
+      "originalSha256": "866d667155b03de56fc9ef451fedc58ec4b7fca9361d48c70b42bc4931f75d15",
+      "originalGitBlob": "4736d3b06499ea38971187a09eabb2a5c86167b5",
+      "archiveBytes": 4774,
+      "archiveSha256": "eb216251430ccdb92caa6ec52680269f3f90e075b7465a5d7dce42eab806571c",
+      "originalAllocatedBytes": 16384
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-199-comments.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-199-comments.json.gz",
+      "originalBytes": 7932,
+      "originalSha256": "de83841f8fc19bcf78744aaa08c47ce7788374b7de348f4ab0418242a1c03ae3",
+      "originalGitBlob": "08e9d612176e429f31576361ebc4ad716c6f1843",
+      "archiveBytes": 2977,
+      "archiveSha256": "6616d1a726ade199e4be26567bf9330dc14562ceb6384abe5798464da38e4f60",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-199.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-199.json.gz",
+      "originalBytes": 17194,
+      "originalSha256": "3f01160dbdbb5aa40127f78ab9e301f9b3b7280e93646ed50f0b7677ace1a753",
+      "originalGitBlob": "282f84627b60372680289778ef466ae2cd84a808",
+      "archiveBytes": 7113,
+      "archiveSha256": "597366990b2bd42cb16b27197080c2e4bb9fa77dc64317f6f1d3b117470b2d28",
+      "originalAllocatedBytes": 20480
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-204.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-204.json.gz",
+      "originalBytes": 5542,
+      "originalSha256": "0d19ffcb6b55da5731df2907e758349ca5d03a4c4d6e950e9435c107521bb823",
+      "originalGitBlob": "c66bdf1bdfaa216b4ac06c6eb472a6e78333286a",
+      "archiveBytes": 2156,
+      "archiveSha256": "76b35c531e7873276b254aa92ef35d0b596e1d347e24699e209d47447b349084",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-205.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-205.json.gz",
+      "originalBytes": 6056,
+      "originalSha256": "d054ab5bbccc26317d8e0e1bae305d8b16122f1fc3e509138d9f4cb6cee834f0",
+      "originalGitBlob": "a59959aee7a0320d5f6afdfd81f0a5fc3eb3b015",
+      "archiveBytes": 2336,
+      "archiveSha256": "b2677a16da5cd95cf37bf196d0158344d10e0775155293041c3cb9ed267aef2a",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-209.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-209.json.gz",
+      "originalBytes": 6483,
+      "originalSha256": "443008a817491cd1e24eff81c65fe9ded4e90acc8a231aba7b5538b91b7b74db",
+      "originalGitBlob": "c762fc02c417a37842625809df7e158e24c7c4c3",
+      "archiveBytes": 2534,
+      "archiveSha256": "3d1b0f9813b27a74f8a6761747d088e1bc7d710ffa3a6644c549bc93a330ba73",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-222.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-222.json.gz",
+      "originalBytes": 4729,
+      "originalSha256": "c80e05c691f0e582f80391ddae3a8740b11d577897e1bdb6b3959cdf92289424",
+      "originalGitBlob": "8e77bd1ff867c3861300e953f71c155d46acb468",
+      "archiveBytes": 1893,
+      "archiveSha256": "b76b8bebc71e954ec078f3f494365efcddeb7deb30f51f8264531cbc719a84ea",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-223.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-223.json.gz",
+      "originalBytes": 4223,
+      "originalSha256": "a2740655c5fe3dda807c6997378194f4d76a29e5f936a35b9f5582b63278978f",
+      "originalGitBlob": "70b0a831c880af6498598a46113cea6fcd92382b",
+      "archiveBytes": 1685,
+      "archiveSha256": "68bb8749f3f4c6849bc24576cc870f6c2a5edc6e9c5503f4a8bcbd80311a18e6",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/meta-language/paths.txt",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/meta-language/paths.txt.gz",
+      "originalBytes": 135698,
+      "originalSha256": "cb78186eea14791bb5c4d006a2c15f0824f04b32ec81b8ef4f952e8d003fc6f8",
+      "originalGitBlob": "be1dbaea86972cfed807f3a307ada5fb56453edd",
+      "archiveBytes": 19164,
+      "archiveSha256": "5a1d3685c58d6aaa7bc292a394a810b1c351563fb22bf4509bdd8f6019d601d0",
+      "originalAllocatedBytes": 139264
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/meta-language/pr-201.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/meta-language/pr-201.json.gz",
+      "originalBytes": 20147,
+      "originalSha256": "cbce90539dc476563406674b633ed8c5f246a251c8ebc72139e912d5438c381c",
+      "originalGitBlob": "3c9422d13dff6575b5bea9f2d527ed7c25cd3e16",
+      "archiveBytes": 3488,
+      "archiveSha256": "0ec284d471ba71e6a0966d7d74129628047cece167bc586cb3995bb3b9b941fb",
+      "originalAllocatedBytes": 20480
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/issue-187.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/issue-187.json.gz",
+      "originalBytes": 12200,
+      "originalSha256": "e5292c747c721281f3cf48f69bf62a7c3f0792c8c5b425d5d378ba2475fa6c36",
+      "originalGitBlob": "36f44c21f07b171c6e78ded36f1421a3e8814cc0",
+      "archiveBytes": 4776,
+      "archiveSha256": "96df173cebe0a59e7b717a3294e77a8b34b38c587b4c1e837055570af891dc68",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/paths.txt",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/paths.txt.gz",
+      "originalBytes": 37736,
+      "originalSha256": "dc025b89b687142999ab721b72fd10880d9161e5bed86f205bd6436e5d3652fb",
+      "originalGitBlob": "49ea7d8323ac64c74862556c34a3314b4097f215",
+      "archiveBytes": 6784,
+      "archiveSha256": "9bd31111870e1dd645c6c409c353f78efc3767a96b7d296d5521500efa2ca051",
+      "originalAllocatedBytes": 40960
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/pr-184.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/pr-184.json.gz",
+      "originalBytes": 32221,
+      "originalSha256": "a0e37ef7504c6b5176062f3056dfda5291ee33f7d44d2057cf6bb16fb6a1975f",
+      "originalGitBlob": "62a2eed4069e988e68f48aa1940ae615d690422a",
+      "archiveBytes": 7446,
+      "archiveSha256": "4858b0969ea1b8a2fe69139598cc89e8dc4eadfb69b46e0732cacf093c537405",
+      "originalAllocatedBytes": 32768
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/router/issue-760.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/router/issue-760.json.gz",
+      "originalBytes": 9963,
+      "originalSha256": "e234e4f6077d0c6e3e64864a9c2b5526f13775be38fdd8dfec205553757f6791",
+      "originalGitBlob": "da5191d0646159f1e5d2f0bebc0996b9d407eddd",
+      "archiveBytes": 4131,
+      "archiveSha256": "ec7bef9e0da8acabf32c52ad4c0df94723af20f27393d8eba34c35baab2fc5ce",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/provenance.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/provenance.json.gz",
+      "originalBytes": 4328,
+      "originalSha256": "960b90765f76e6d8fc52ab4cebaf379c9b1b3b2d0a1756f5cf7cb6eab6afb8b3",
+      "originalGitBlob": "02826420f153fc06158b32599f93d14d5482ea1a",
+      "archiveBytes": 1360,
+      "archiveSha256": "43498a0525d633287c6f334fd5446a67036f168915f324818d16be50cd5eeb2f",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/summary.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/summary.json.gz",
+      "originalBytes": 5043,
+      "originalSha256": "850f00f81294646b8bc4af5a4666295422201f409cee669fa2b2f521343c3a52",
+      "originalGitBlob": "f3dcd468dee5331332ab9433aae17b0eec4f8294",
+      "archiveBytes": 1663,
+      "archiveSha256": "17464dd256025fecbc636c17d008fd7b5a9c3ebfe82f809d36b0025ff3b04d58",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/paths.txt",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/paths.txt.gz",
+      "originalBytes": 7050,
+      "originalSha256": "c99461e4f32b9e1b18b23708f39f6d6126a79ccbdc1b6483875106d5a36230a8",
+      "originalGitBlob": "90b8da984c132fb49047c34c2949f82ed491f0b0",
+      "archiveBytes": 1565,
+      "archiveSha256": "596cb213cbb1f37f2f625e9f742ee1c5c8056b0552c983a510b32bdad2c0cd30",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/start/default-head-paths.txt",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/start/default-head-paths.txt.gz",
+      "originalBytes": 48528,
+      "originalSha256": "543ca74946d9663c7e0f2caaa47fa6209c7bd93d7666041fea70ee2797cdb08d",
+      "originalGitBlob": "6eb87529e12aad578139e93a534b97d5d208cd9a",
+      "archiveBytes": 7312,
+      "archiveSha256": "f02a1f83d83799ac587a97b59c4e4364510dc0b5d1272a99165ea40c04a56107",
+      "originalAllocatedBytes": 49152
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/start/head-commit.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/start/head-commit.json.gz",
+      "originalBytes": 8204,
+      "originalSha256": "12e1fa1a3a1dc3949e1464660fd3d5220a7d23551b6af77d3f4be772b832ec6d",
+      "originalGitBlob": "3715847703335aea57aba3cff38bab6ee594d715",
+      "archiveBytes": 1744,
+      "archiveSha256": "3b4871203d9440385fd75f959b02896118829c7ec28fbd321276c0a94ff76bd0",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/start/issue-197.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/start/issue-197.json.gz",
+      "originalBytes": 10827,
+      "originalSha256": "9f0e317f1641286e953a2f845b6f5ad612421cb008c4c6a3d8dc63a555ee9778",
+      "originalGitBlob": "db2138df3f31973431f232ad712d5b04f4384281",
+      "archiveBytes": 4054,
+      "archiveSha256": "aab0e8eaee2ba77d42036ca4e021d88d301611c237b79671ec4a5c8b7ea3bdf5",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/start/repository.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/start/repository.json.gz",
+      "originalBytes": 8054,
+      "originalSha256": "c7f2a6c299538f0b7927091c521f93fb54425099bd347e4ba152c433b8febaa6",
+      "originalGitBlob": "54b1cfdab442d7a230e4e2aca4e15223e0485275",
+      "archiveBytes": 1621,
+      "archiveSha256": "1954445baa3dd35a3eaf51d23af3fe671d1349b3ac8d1f16ccd6930d15fa4241",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-3043.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-3043.json.gz",
+      "originalBytes": 4585,
+      "originalSha256": "8667de43be86dbd4a848a9ff1e531fd0abcaaba69fdb79bfd1fcc9b4c65ebefa",
+      "originalGitBlob": "719984e3d450c201e4d9ad2a8a58ab4565a8ba7e",
+      "archiveBytes": 1836,
+      "archiveSha256": "d9d450bbea3a77703532debc07261b6c834b571210028eecda7e21324c7ffafa",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-files.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-files.json.gz",
+      "originalBytes": 4774,
+      "originalSha256": "e738c57e19fcb6463413246bf2b5dc13fdad74549d220f1e21c76aba37536717",
+      "originalGitBlob": "b8838935d464ed520f1619ed76df3535e62e3631",
+      "archiveBytes": 2297,
+      "archiveSha256": "4c69efdd1178281f735e74e0ebfc20768adabd05d7397424db6a9321885919d4",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-metadata.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-metadata.json.gz",
+      "originalBytes": 17620,
+      "originalSha256": "b2ac67877b07cc8b7290e80f3bc6bc834fb5fda1515147b8fbe2d8933aef27b7",
+      "originalGitBlob": "1e35cb6abc5ac4603ab77983486b8edd906a9a98",
+      "archiveBytes": 2557,
+      "archiveSha256": "a90cd804921c3abf90cabf1095d4209c872e1a01b5a6fbee87bbe8ccec64f696",
+      "originalAllocatedBytes": 20480
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-scheduler-files.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-scheduler-files.json.gz",
+      "originalBytes": 16044,
+      "originalSha256": "92180db228819d62b8fdbddbe8cb1534c9a6142b49f841ea6c1af0d3e437988d",
+      "originalGitBlob": "59cfcd6c662b1c962cccdadc92b8898f7c95162c",
+      "archiveBytes": 6349,
+      "archiveSha256": "f954474eb5334edb74d67053ac86574054029ffd5da8fba80244baaf2962760f",
+      "originalAllocatedBytes": 16384
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-scheduler-metadata.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-scheduler-metadata.json.gz",
+      "originalBytes": 18226,
+      "originalSha256": "38b672beca2d07dfddc0c12823a5dac6132ccdd86f38a6d464c5e55da45bbdde",
+      "originalGitBlob": "68361047b510ce522d7dc4a3112ece45e2ff54d5",
+      "archiveBytes": 2872,
+      "archiveSha256": "b09ab66346095b9aa984e82b5df31ad0720ce32820c5e6cee890e6e77d7936c5",
+      "originalAllocatedBytes": 20480
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/js-ai-driven-development-pipeline-template-230.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/js-ai-driven-development-pipeline-template-230.json.gz",
+      "originalBytes": 6947,
+      "originalSha256": "1cfaa200f6c76beeb6105951f5c4c774b809b2e0795444b32a1d8a9dac2a42d5",
+      "originalGitBlob": "ca7acfcb9fd8fe8f03c9314da06c9b917ccc2b68",
+      "archiveBytes": 2700,
+      "archiveSha256": "60783e1afc6b7afe8d6225628c8322ff0bee50d4418eb889e75d088e298bd6ac",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/js-ai-driven-development-pipeline-template-pr-231-files.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/js-ai-driven-development-pipeline-template-pr-231-files.json.gz",
+      "originalBytes": 10528,
+      "originalSha256": "4e828c202b8a4e38830d2c0889bbc3d350695f79c03e7cf9562ed68d0feb8f89",
+      "originalGitBlob": "16718cf3f4ef5f0921cb44718c4a662fac8bfa71",
+      "archiveBytes": 3615,
+      "archiveSha256": "51629f2468b2ae3aed6e9e460d40476c97ada84edecc992fce729938d8acdebc",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/js-ai-driven-development-pipeline-template-pr-231-metadata.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/js-ai-driven-development-pipeline-template-pr-231-metadata.json.gz",
+      "originalBytes": 21259,
+      "originalSha256": "c2d821b8281e0b4c5ac6a6227e29fb86a451f8013e5808b7e5ca0c57dface675",
+      "originalGitBlob": "48bc52016da54072b526e85e2abacc680fdeaee2",
+      "archiveBytes": 2602,
+      "archiveSha256": "66fe177dd377514ca8234e0fb094d4f91788472381285cee9017c235ff8ee3bb",
+      "originalAllocatedBytes": 24576
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/rust-ai-driven-development-pipeline-template-196.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/rust-ai-driven-development-pipeline-template-196.json.gz",
+      "originalBytes": 6969,
+      "originalSha256": "7513649d8ad8842c04f7115e7efc74e39296eb543b7ee84412aaf70763bf0a1e",
+      "originalGitBlob": "e07c5b293693ee5367883569d3d1adfb0990971e",
+      "archiveBytes": 2705,
+      "archiveSha256": "74380c49b87087fe8bc19e1b878674122cac9419b0bad005ee8afd4803f9b201",
+      "originalAllocatedBytes": 8192
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/rust-ai-driven-development-pipeline-template-pr-197-files.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/rust-ai-driven-development-pipeline-template-pr-197-files.json.gz",
+      "originalBytes": 10579,
+      "originalSha256": "e4833a985cb1737acf0db72b33be3ee5b30cf8ce2005d401975283d67d007311",
+      "originalGitBlob": "c63435101c75a46e77ba541b3f36f3e0a7beae05",
+      "archiveBytes": 3632,
+      "archiveSha256": "869b5fd122130ff9f1bb7e461679990cbff6988a1b7e13ab048d198d82d5daee",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/rust-ai-driven-development-pipeline-template-pr-197-metadata.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/upstream-proposals/rust-ai-driven-development-pipeline-template-pr-197-metadata.json.gz",
+      "originalBytes": 21427,
+      "originalSha256": "9e60d0d459920332c14a8973e02ece72ef5e02e16247cd8a4e30ed64339d73f5",
+      "originalGitBlob": "62b40be8c7f398d9ebfb0bcd5cea9d4002d6692a",
+      "archiveBytes": 2613,
+      "archiveSha256": "7a0d51a4a9322da7e9916e4a1a7fc60a115142a51d813f4a463134ee8394d1ba",
+      "originalAllocatedBytes": 24576
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/translation/focused/cycle-12-13-module-consumers/receipt.json",
+      "archivePath": "docs/case-studies/issue-759/raw/translation/focused/cycle-12-13-module-consumers/receipt.json.gz",
+      "originalBytes": 11209,
+      "originalSha256": "f44b3a7f4b4cc31feeafede08f973098f850eecbe920520f24b7c5d6218fdee6",
+      "originalGitBlob": "9bb6d600218783c913dd19eeb2dc17c03a833da9",
+      "archiveBytes": 3284,
+      "archiveSha256": "2803c205351c34442b65982f91d90b43347b53066d71e64b817f08e64b51f0c2",
+      "originalAllocatedBytes": 12288
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/receipt.json",
+      "archivePath": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/receipt.json.gz",
+      "originalBytes": 32623,
+      "originalSha256": "f25341af76670377ff9fb471e9e0a32878036a54db86c8a714892671b3b9a96d",
+      "originalGitBlob": "fbc719df2da83d111c769274b046172be6236a1f",
+      "archiveBytes": 5984,
+      "archiveSha256": "96daf92878bfd2315bdb1ec051b005b46f77a802780dbfe5091d85ecbbe3532d",
+      "originalAllocatedBytes": 32768
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/receipt.json",
+      "archivePath": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/receipt.json.gz",
+      "originalBytes": 12575,
+      "originalSha256": "9002e02d20c3e26a633441875dc586eeb02bbe3c92638c7c6a72c2980d8b4090",
+      "originalGitBlob": "d6a411f56f506b183d46a7c83e051d25b43c6e6b",
+      "archiveBytes": 2859,
+      "archiveSha256": "f8bff655ffda6c4b9bdc7d9d30adda3c7cdaee8553deac990211d9178ed698c8",
+      "originalAllocatedBytes": 16384
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/translation/focused/cycle-16-conditional-copy/receipt.json",
+      "archivePath": "docs/case-studies/issue-759/raw/translation/focused/cycle-16-conditional-copy/receipt.json.gz",
+      "originalBytes": 20412,
+      "originalSha256": "696f18b275a32626007beeda5b78d2560baf2112251653e7e0580a52fb4f8870",
+      "originalGitBlob": "e67fdf16d9399055cfec09c4fd630395517766c8",
+      "archiveBytes": 3057,
+      "archiveSha256": "9e407de05c6416972e833e501c14f4aa652eb67af66a66a5abb573d0530cfbc0",
+      "originalAllocatedBytes": 20480
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/translation/focused/lines-then-some-76.manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/translation/focused/lines-then-some-76.manifest.json.gz",
+      "originalBytes": 5292,
+      "originalSha256": "bc43af6b71bd44765679c64222938a1e8d3c4d3ad2e81b62971d720f42b2b880",
+      "originalGitBlob": "f4158bcabb4e72f331600cecedeee363c216263b",
+      "archiveBytes": 1613,
+      "archiveSha256": "e6b32a84f7c3d5c6cd4b9a12dfd1f7f0636c46e88faf5069f4a49b97e37fbd47",
+      "originalAllocatedBytes": 8192
+    }
+  ],
+  "citationUpdates": [
+    {
+      "path": "docs/case-studies/issue-759/README.md",
+      "oldSha256": "c034380a4f190b0aff761bd0f7523a961b5709825296888238e9c48156dcb1f8",
+      "newSha256": "a80459cbf051be2e3c4d0e2dd90219191c860fbf6f84885d65956175989080ef"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/current-task/README.md",
+      "oldSha256": "14643c6de8bfc48c773766bee7860ca4aac2a07861f33df6a3433ece956ff587",
+      "newSha256": "09fc65f530bc879ef4f425c041b4a87a30c7a0d0bca0f3473d22d929c8c51ac1"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-16-conditional-copy/README.md",
+      "oldSha256": "a71ec2835cf3f5ca3ba12ac5e0d496e6cd505d3f06e810e646824599e868aeae",
+      "newSha256": "0ae56665d238da804b1d8f03151d1c36a214ecf70339ebe9d3641bd0644c15c2"
+    }
+  ],
+  "decode": "gzip -dc ARCHIVE.gz; verify complete decoded length and SHA256 against entries"
+}

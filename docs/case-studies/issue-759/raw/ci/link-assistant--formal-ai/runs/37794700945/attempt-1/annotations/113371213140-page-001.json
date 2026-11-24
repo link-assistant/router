@@ -1,0 +1,26 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/aada2f87ae83d5e68d23d4dc74f0187596497a9b/.github",
+    "start_line": 47,
+    "start_column": null,
+    "end_line": 47,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "sccache stats - cli",
+    "message": "94% - 954 hits, 59 misses, 0 errors",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/aada2f87ae83d5e68d23d4dc74f0187596497a9b/.github",
+    "start_line": 31,
+    "start_column": null,
+    "end_line": 31,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Failed to CreateArtifact: Unable to make request: ETIMEDOUT\nIf you are using self-hosted runners, please make sure your runner has access to all GitHub endpoints: https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#communication-between-self-hosted-runners-and-github",
+    "raw_details": ""
+  }
+]

@@ -1,0 +1,1 @@
+- Add reusable typed pattern plans for automated Rust record, tuple-struct and enum destructuring. Preserve source spans, exact field projections and refutability, and refuse unresolved mutable borrowing or conditional branch bindings.

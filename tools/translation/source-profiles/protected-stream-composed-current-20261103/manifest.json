@@ -1,0 +1,31 @@
+{
+  "schema": "protected-stream-composed-current-20261103-source-proposal-v1",
+  "predecessor": "28ba2c28c5e1a955fa093f4820dfb3677caeaa10",
+  "files": [
+    {
+      "role": "stream-history",
+      "path": "tools/translation/protected-native-stream-fds-20261103-history.mjs",
+      "physicalOrigin": {
+        "commit": "28ba2c28c5e1a955fa093f4820dfb3677caeaa10",
+        "path": "tools/translation/protected-native-stream-fds-20261103-history.mjs",
+        "gitBlob": "fc0763d7943246bb718817505c9cfe16aff8bc0b"
+      },
+      "before": {
+        "path": "stream-history.before.txt",
+        "bytes": 4713,
+        "sha256": "1d6c6408c4e59774969f0f035b29ad7abaa0ef6d97258ffce6d07d30dcb07374"
+      },
+      "after": {
+        "path": "stream-history.after.txt",
+        "bytes": 5091,
+        "sha256": "787179ac4d6cd24635755bd562e55954536d7a7d7158d2bb7c46bc5e1fd8e70a"
+      }
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceInstalled": false,
+  "sourceAuthority": false,
+  "requiresNamedProvider": "ordered-text-map-callers-20261102-source-storage-reconcile-stream-current.mjs",
+  "completeOriginalFunctionDenominator": "UNKNOWN",
+  "completeWriterDenominator": "UNKNOWN"
+}

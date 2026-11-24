@@ -1,0 +1,192 @@
+{
+  "$defs": {
+    "TokenImportReport": {
+      "additionalProperties": false,
+      "description": "The outcome of one import, printed as the command's result.",
+      "properties": {
+        "added": {
+          "description": "Records the target lacked and now holds (or would, in a dry run).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "backup": {
+          "description": "Export of the target's records taken before `--replace` wrote.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "conflicts": {
+          "description": "Records that differ and were left as they are.",
+          "items": {
+            "$ref": "#/$defs/TokenImportReport_Conflict"
+          },
+          "type": "array"
+        },
+        "dry_run": {
+          "type": "boolean"
+        },
+        "kept_revoked": {
+          "description": "Replaced records that stayed revoked because the target had revoked\nthem: an import never revives a credential.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "missing_from_source": {
+          "description": "`--id` values the source does not hold.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "replaced": {
+          "description": "Records overwritten by `--replace`.",
+          "items": {
+            "$ref": "#/$defs/TokenImportReport_Conflict"
+          },
+          "type": "array"
+        },
+        "source_records": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "target_records_before": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "unchanged": {
+          "description": "Records already identical on both sides.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "mode",
+        "dry_run",
+        "source_records",
+        "target_records_before",
+        "added",
+        "unchanged",
+        "conflicts",
+        "replaced",
+        "kept_revoked",
+        "missing_from_source"
+      ],
+      "title": "ImportReport",
+      "type": "object"
+    },
+    "TokenImportReport_Conflict": {
+      "additionalProperties": false,
+      "description": "One record both sides hold with different contents.",
+      "properties": {
+        "fields": {
+          "description": "The record fields whose values differ.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "fields"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "link-assistant-router/tokens-import/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "properties": {
+          "exit_code": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "success": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "exit_code": {
+            "const": 0
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "data": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TokenImportReport"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "output": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "diagnostics": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "exit_code": {
+      "maximum": 255,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "operation": {
+      "const": "tokens.import"
+    },
+    "schema": {
+      "const": "link-assistant-router/tokens-import/v1"
+    },
+    "success": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "operation",
+    "success",
+    "exit_code",
+    "data",
+    "diagnostics"
+  ],
+  "type": "object"
+}

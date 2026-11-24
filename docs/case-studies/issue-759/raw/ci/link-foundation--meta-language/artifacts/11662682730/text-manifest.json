@@ -1,0 +1,24 @@
+[
+  {
+    "path": "text-objects/94/9458d3586d6eb2319e5866d58b8dcc3ba19dcc2268d672a97a07f01040024f7f.gz",
+    "sha256": "e73875405dd6227329fbe5a4887f2e5a2ea52b6b1ae52eaafac6276d11f42047",
+    "compressed_bytes": 2770,
+    "original_bytes": 20186,
+    "redacted": false,
+    "original_compressed_sha256": "52653d8e723766adfee80001bb923cf7047e64f306d2336fab5c7eee2ea9f430",
+    "original_storage_path": "link-foundation--meta-language/artifacts/11662682730/text/self-translation-report.json.gz",
+    "artifact_member_name": "self-translation-report.json",
+    "scrubbed_content_sha256": "9458d3586d6eb2319e5866d58b8dcc3ba19dcc2268d672a97a07f01040024f7f"
+  },
+  {
+    "path": "text-objects/66/6633e91bdc8b265694e19040ce9124a193ae57c4085b84ea9a0d06ecbe1e9ae5.gz",
+    "sha256": "1923e14842e40703d6ca27991cb502edd4781e0f5651df553bfe3322aec3f75b",
+    "compressed_bytes": 1052,
+    "original_bytes": 3631,
+    "redacted": false,
+    "original_compressed_sha256": "b48694aaf14014e9d240f289f9cc11609ea3c8a265303fbc95e9e0e6ec73722f",
+    "original_storage_path": "link-foundation--meta-language/artifacts/11662682730/text/self-translation-report.md.gz",
+    "artifact_member_name": "self-translation-report.md",
+    "scrubbed_content_sha256": "6633e91bdc8b265694e19040ce9124a193ae57c4085b84ea9a0d06ecbe1e9ae5"
+  }
+]

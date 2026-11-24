@@ -1,0 +1,50 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/7065828299defa1eb7d8ff32e95c2cd803dd1325/.github",
+    "start_line": 158,
+    "start_column": null,
+    "end_line": 158,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 13.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github/workflows/release.yml",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/7065828299defa1eb7d8ff32e95c2cd803dd1325/.github/workflows/release.yml",
+    "start_line": 719,
+    "start_column": null,
+    "end_line": 719,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "secrets-inherit",
+    "message": "release.yml:719: secrets unconditionally inherited by called workflow: this reusable workflow",
+    "raw_details": ""
+  },
+  {
+    "path": ".github/workflows/release.yml",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/7065828299defa1eb7d8ff32e95c2cd803dd1325/.github/workflows/release.yml",
+    "start_line": 683,
+    "start_column": null,
+    "end_line": 683,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "secrets-inherit",
+    "message": "release.yml:683: secrets unconditionally inherited by called workflow: this reusable workflow",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/7065828299defa1eb7d8ff32e95c2cd803dd1325/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+    "raw_details": ""
+  }
+]

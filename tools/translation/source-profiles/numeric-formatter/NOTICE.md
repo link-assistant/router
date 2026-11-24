@@ -1,0 +1,3 @@
+This complete original Zmij 1.0.23 source archive is the dependency selected by the retained Cargo lock. Its 28,612 bytes match checksum `29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b`. All 17 archive members, including the complete MIT license, were reopened and verified against the preexisting numeric source profile. The archive was copied offline from the existing source cache.
+
+These pins enable bounded source inspection and future checked arithmetic stages. No formatter equivalence, floating-point output, unsafe memory, trait completeness, runtime parity or parser admission is established by capture. No Rust compiler, installation, download or producer ran. Earlier draft receipts correctly record capture as pending at their own creation.

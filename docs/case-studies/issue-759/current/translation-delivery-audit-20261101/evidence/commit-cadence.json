@@ -1,0 +1,370 @@
+{
+  "schema": "router-development-cadence-source-audit-v1",
+  "frozenHead": "ba7b1d9f99f9be16628fe433a097b1b8ff036f43",
+  "issueCreatedAt": "2026-10-10T02:33:04Z",
+  "method": "Read-only Git metadata; committer timestamps sorted chronologically for cadence. Not tests, CPU benchmark, CI status or developer active time.",
+  "allReachablePostIssue": {
+    "commits": 2726,
+    "mergeCommits": 5,
+    "firstCommit": {
+      "sha": "0a161526a33b543bfca7f8314e0b37b3a7af867d",
+      "authorTime": "2026-10-10T10:25:22+07:00",
+      "committerTime": "2026-10-10T10:25:22+07:00",
+      "parents": [
+        "d0a695b2aac8418f5c1eca1bbbaa31e005bf85a0",
+        "ac061bf2b7efaf86c05464e0b1e40c06bb9be7b7"
+      ],
+      "subject": "Merge pull request #749 from link-assistant/issue-724-878028a21e67"
+    },
+    "lastCommit": {
+      "sha": "ba7b1d9f99f9be16628fe433a097b1b8ff036f43",
+      "authorTime": "2026-11-01T17:32:21+07:00",
+      "committerTime": "2026-11-01T17:32:21+07:00",
+      "parents": [
+        "300ac16abf2b24d2817f08410a7aa15fbdb884da"
+      ],
+      "subject": "Draft captured block-receiver Option source migration candidates"
+    },
+    "elapsedHours": 535.1163888888889,
+    "commitsPerElapsedHour": 5.094218858929444,
+    "adjacentTimestampGaps": 2725,
+    "sameTimestampGaps": 556,
+    "positiveGapMedianMinutes": 6.133333333333334,
+    "positiveGapP75Minutes": 13.05,
+    "positiveGapP90Minutes": 27.783333333333335,
+    "largestTimestampGapHours": 25.108333333333334,
+    "gapsOverSixHours": 7
+  },
+  "firstParentPostIssue": {
+    "commits": 817,
+    "mergeCommits": 3,
+    "firstCommit": {
+      "sha": "0a161526a33b543bfca7f8314e0b37b3a7af867d",
+      "authorTime": "2026-10-10T10:25:22+07:00",
+      "committerTime": "2026-10-10T10:25:22+07:00",
+      "parents": [
+        "d0a695b2aac8418f5c1eca1bbbaa31e005bf85a0",
+        "ac061bf2b7efaf86c05464e0b1e40c06bb9be7b7"
+      ],
+      "subject": "Merge pull request #749 from link-assistant/issue-724-878028a21e67"
+    },
+    "lastCommit": {
+      "sha": "ba7b1d9f99f9be16628fe433a097b1b8ff036f43",
+      "authorTime": "2026-11-01T17:32:21+07:00",
+      "committerTime": "2026-11-01T17:32:21+07:00",
+      "parents": [
+        "300ac16abf2b24d2817f08410a7aa15fbdb884da"
+      ],
+      "subject": "Draft captured block-receiver Option source migration candidates"
+    },
+    "elapsedHours": 535.1163888888889,
+    "commitsPerElapsedHour": 1.5267706558126763,
+    "adjacentTimestampGaps": 816,
+    "sameTimestampGaps": 0,
+    "positiveGapMedianMinutes": 8.283333333333333,
+    "positiveGapP75Minutes": 15.05,
+    "positiveGapP90Minutes": 30.533333333333335,
+    "largestTimestampGapHours": 219.2213888888889,
+    "gapsOverSixHours": 5
+  },
+  "continuationAfter771Merge": {
+    "commits": 813,
+    "mergeCommits": 0,
+    "firstCommit": {
+      "sha": "f54a999da6f9b7c5dbf3870b38d8ab70779d7fb2",
+      "authorTime": "2026-10-23T01:21:22+07:00",
+      "committerTime": "2026-10-23T01:21:22+07:00",
+      "parents": [
+        "eb2dad1c0a18394dc1aad46413e11401e74eb502"
+      ],
+      "subject": "Improve translator feedback with native Bun checks and derived metadata dispatch"
+    },
+    "lastCommit": {
+      "sha": "ba7b1d9f99f9be16628fe433a097b1b8ff036f43",
+      "authorTime": "2026-11-01T17:32:21+07:00",
+      "committerTime": "2026-11-01T17:32:21+07:00",
+      "parents": [
+        "300ac16abf2b24d2817f08410a7aa15fbdb884da"
+      ],
+      "subject": "Draft captured block-receiver Option source migration candidates"
+    },
+    "elapsedHours": 232.18305555555557,
+    "commitsPerElapsedHour": 3.501547509807276,
+    "adjacentTimestampGaps": 812,
+    "sameTimestampGaps": 0,
+    "positiveGapMedianMinutes": 8.266666666666667,
+    "positiveGapP75Minutes": 14.916666666666666,
+    "positiveGapP90Minutes": 30.283333333333335,
+    "largestTimestampGapHours": 25.108333333333334,
+    "gapsOverSixHours": 2
+  },
+  "utc20261101": {
+    "commits": 67,
+    "mergeCommits": 0,
+    "firstCommit": {
+      "sha": "6ce5a9504245363b98f98b9fa6dd8ffe1a1cdd08",
+      "authorTime": "2026-11-01T07:11:37+07:00",
+      "committerTime": "2026-11-01T07:11:37+07:00",
+      "parents": [
+        "6c3fbfa2dd3a53cc981fc1cafc8fd3566ee69edb"
+      ],
+      "subject": "Compose opt-in cross-module owned project projections with whole production owners"
+    },
+    "lastCommit": {
+      "sha": "ba7b1d9f99f9be16628fe433a097b1b8ff036f43",
+      "authorTime": "2026-11-01T17:32:21+07:00",
+      "committerTime": "2026-11-01T17:32:21+07:00",
+      "parents": [
+        "300ac16abf2b24d2817f08410a7aa15fbdb884da"
+      ],
+      "subject": "Draft captured block-receiver Option source migration candidates"
+    },
+    "elapsedHours": 10.345555555555556,
+    "commitsPerElapsedHour": 6.476210933304693,
+    "adjacentTimestampGaps": 66,
+    "sameTimestampGaps": 0,
+    "positiveGapMedianMinutes": 5.741666666666666,
+    "positiveGapP75Minutes": 13.05,
+    "positiveGapP90Minutes": 21.233333333333334,
+    "largestTimestampGapHours": 0.5994444444444444,
+    "gapsOverSixHours": 0
+  },
+  "since0857UTC20261101": {
+    "commits": 10,
+    "mergeCommits": 0,
+    "firstCommit": {
+      "sha": "1115846eb27a21ffc9c39ee2b0006968b0e6c697",
+      "authorTime": "2026-11-01T16:29:24+07:00",
+      "committerTime": "2026-11-01T16:29:24+07:00",
+      "parents": [
+        "bcbf96dcc009c8c844a21375678c6cc89d86ee9f"
+      ],
+      "subject": "Draft source-bound constant array formatter operand proofs"
+    },
+    "lastCommit": {
+      "sha": "ba7b1d9f99f9be16628fe433a097b1b8ff036f43",
+      "authorTime": "2026-11-01T17:32:21+07:00",
+      "committerTime": "2026-11-01T17:32:21+07:00",
+      "parents": [
+        "300ac16abf2b24d2817f08410a7aa15fbdb884da"
+      ],
+      "subject": "Draft captured block-receiver Option source migration candidates"
+    },
+    "elapsedHours": 1.0491666666666666,
+    "commitsPerElapsedHour": 9.531374106433677,
+    "adjacentTimestampGaps": 9,
+    "sameTimestampGaps": 0,
+    "positiveGapMedianMinutes": 4.05,
+    "positiveGapP75Minutes": 10.316666666666666,
+    "positiveGapP90Minutes": 11.216666666666667,
+    "largestTimestampGapHours": 0.2822222222222222,
+    "gapsOverSixHours": 0
+  },
+  "commitsByUtcDate": {
+    "2026-10-10": 79,
+    "2026-10-11": 319,
+    "2026-10-12": 293,
+    "2026-10-13": 116,
+    "2026-10-14": 66,
+    "2026-10-15": 209,
+    "2026-10-16": 178,
+    "2026-10-17": 238,
+    "2026-10-18": 101,
+    "2026-10-19": 72,
+    "2026-10-20": 71,
+    "2026-10-21": 171,
+    "2026-10-22": 10,
+    "2026-10-23": 54,
+    "2026-10-24": 86,
+    "2026-10-25": 114,
+    "2026-10-26": 97,
+    "2026-10-27": 125,
+    "2026-10-28": 84,
+    "2026-10-29": 99,
+    "2026-10-30": 52,
+    "2026-10-31": 25,
+    "2026-11-01": 67
+  },
+  "rawChunks": [
+    {
+      "path": "commits-01.jsonl",
+      "records": 250
+    },
+    {
+      "path": "commits-02.jsonl",
+      "records": 250
+    },
+    {
+      "path": "commits-03.jsonl",
+      "records": 250
+    },
+    {
+      "path": "commits-04.jsonl",
+      "records": 250
+    },
+    {
+      "path": "commits-05.jsonl",
+      "records": 250
+    },
+    {
+      "path": "commits-06.jsonl",
+      "records": 250
+    },
+    {
+      "path": "commits-07.jsonl",
+      "records": 250
+    },
+    {
+      "path": "commits-08.jsonl",
+      "records": 250
+    },
+    {
+      "path": "commits-09.jsonl",
+      "records": 250
+    },
+    {
+      "path": "commits-10.jsonl",
+      "records": 250
+    },
+    {
+      "path": "commits-11.jsonl",
+      "records": 226
+    }
+  ],
+  "firstParentRaw": "first-parent-commits.jsonl",
+  "taskAttributionWarning": "Post-issue reachable history includes merges and potentially other work; continuation and first-parent windows are reported separately.",
+  "verification": "UNRUN",
+  "ciFeedback": "uninspected",
+  "lastPublishedBaseToAuditHead": {
+    "baseSha": "bcbf96dcc009c8c844a21375678c6cc89d86ee9f",
+    "baseUtc": "2026-11-01T08:56:43+00:00",
+    "headSha": "ba7b1d9f99f9be16628fe433a097b1b8ff036f43",
+    "headUtc": "2026-11-01T10:32:21+00:00",
+    "newCommits": 10,
+    "elapsedHours": 1.593888888888889,
+    "newCommitsPerElapsedHour": 6.273963053328686,
+    "commitsWithIntervals": [
+      {
+        "sha": "bcbf96dcc009c8c844a21375678c6cc89d86ee9f",
+        "authorTime": "2026-11-01T15:56:43+07:00",
+        "committerTime": "2026-11-01T15:56:43+07:00",
+        "parents": [
+          "780e9914e328a7a2c01f88f6a1456d1b2405f564"
+        ],
+        "subject": "Checkpoint source-only handoff and next bulk drafting scopes",
+        "committerUtc": "2026-11-01T08:56:43+00:00",
+        "secondsSincePrevious": null
+      },
+      {
+        "sha": "1115846eb27a21ffc9c39ee2b0006968b0e6c697",
+        "authorTime": "2026-11-01T16:29:24+07:00",
+        "committerTime": "2026-11-01T16:29:24+07:00",
+        "parents": [
+          "bcbf96dcc009c8c844a21375678c6cc89d86ee9f"
+        ],
+        "subject": "Draft source-bound constant array formatter operand proofs",
+        "committerUtc": "2026-11-01T09:29:24+00:00",
+        "secondsSincePrevious": 1961.0
+      },
+      {
+        "sha": "e5aabb2ef088980cac4a790e10c46d923b4c337f",
+        "authorTime": "2026-11-01T16:46:20+07:00",
+        "committerTime": "2026-11-01T16:46:20+07:00",
+        "parents": [
+          "1115846eb27a21ffc9c39ee2b0006968b0e6c697"
+        ],
+        "subject": "Schedule independent constant-index Rust baselines in existing target",
+        "committerUtc": "2026-11-01T09:46:20+00:00",
+        "secondsSincePrevious": 1016.0
+      },
+      {
+        "sha": "6325195740861e9dc561ead109e90bebe21bad30",
+        "authorTime": "2026-11-01T16:56:07+07:00",
+        "committerTime": "2026-11-01T16:56:07+07:00",
+        "parents": [
+          "e5aabb2ef088980cac4a790e10c46d923b4c337f"
+        ],
+        "subject": "Draft qualified JSON scalar reader and owned field successor",
+        "committerUtc": "2026-11-01T09:56:07+00:00",
+        "secondsSincePrevious": 587.0
+      },
+      {
+        "sha": "684845832993fb96583b7fae780a44a61dfbb6c6",
+        "authorTime": "2026-11-01T16:58:17+07:00",
+        "committerTime": "2026-11-01T16:58:17+07:00",
+        "parents": [
+          "6325195740861e9dc561ead109e90bebe21bad30"
+        ],
+        "subject": "Draft complete portable scalar native source visitor",
+        "committerUtc": "2026-11-01T09:58:17+00:00",
+        "secondsSincePrevious": 130.0
+      },
+      {
+        "sha": "474f35dcb5b8eb78596ceaa74b59fe1cb3008b5b",
+        "authorTime": "2026-11-01T17:00:41+07:00",
+        "committerTime": "2026-11-01T17:00:41+07:00",
+        "parents": [
+          "684845832993fb96583b7fae780a44a61dfbb6c6"
+        ],
+        "subject": "Draft qualified JSON scalar integration and gated native oracle history",
+        "committerUtc": "2026-11-01T10:00:41+00:00",
+        "secondsSincePrevious": 144.0
+      },
+      {
+        "sha": "fc8e183a06c44f5fe4ce7c23f79a0a4f6492b196",
+        "authorTime": "2026-11-01T17:11:54+07:00",
+        "committerTime": "2026-11-01T17:11:54+07:00",
+        "parents": [
+          "474f35dcb5b8eb78596ceaa74b59fe1cb3008b5b"
+        ],
+        "subject": "Draft independent original token row precision and Unicode cases",
+        "committerUtc": "2026-11-01T10:11:54+00:00",
+        "secondsSincePrevious": 673.0
+      },
+      {
+        "sha": "1ffa47320b817ec827941447efbf13de57300be3",
+        "authorTime": "2026-11-01T17:14:27+07:00",
+        "committerTime": "2026-11-01T17:14:27+07:00",
+        "parents": [
+          "fc8e183a06c44f5fe4ce7c23f79a0a4f6492b196"
+        ],
+        "subject": "Draft exact forward output ownership and source successor closure",
+        "committerUtc": "2026-11-01T10:14:27+00:00",
+        "secondsSincePrevious": 153.0
+      },
+      {
+        "sha": "327fa26b76a2a0ef2465115ce1d4d5e04b45344e",
+        "authorTime": "2026-11-01T17:17:59+07:00",
+        "committerTime": "2026-11-01T17:17:59+07:00",
+        "parents": [
+          "1ffa47320b817ec827941447efbf13de57300be3"
+        ],
+        "subject": "Draft whole-source local closure and lazy Option candidates",
+        "committerUtc": "2026-11-01T10:17:59+00:00",
+        "secondsSincePrevious": 212.0
+      },
+      {
+        "sha": "300ac16abf2b24d2817f08410a7aa15fbdb884da",
+        "authorTime": "2026-11-01T17:22:02+07:00",
+        "committerTime": "2026-11-01T17:22:02+07:00",
+        "parents": [
+          "327fa26b76a2a0ef2465115ce1d4d5e04b45344e"
+        ],
+        "subject": "Integrate forward custody and closure draft entrypoints and guidance",
+        "committerUtc": "2026-11-01T10:22:02+00:00",
+        "secondsSincePrevious": 243.0
+      },
+      {
+        "sha": "ba7b1d9f99f9be16628fe433a097b1b8ff036f43",
+        "authorTime": "2026-11-01T17:32:21+07:00",
+        "committerTime": "2026-11-01T17:32:21+07:00",
+        "parents": [
+          "300ac16abf2b24d2817f08410a7aa15fbdb884da"
+        ],
+        "subject": "Draft captured block-receiver Option source migration candidates",
+        "committerUtc": "2026-11-01T10:32:21+00:00",
+        "secondsSincePrevious": 619.0
+      }
+    ]
+  }
+}

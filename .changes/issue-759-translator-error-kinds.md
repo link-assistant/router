@@ -1,0 +1,1 @@
+- Correct translated filesystem error categories against Rust 1.89 Unix errno conversion. Preserve uncategorized I/O and file-descriptor exhaustion errors and classify errno aliases by their actual platform numbers instead of inventing Rust error kinds.

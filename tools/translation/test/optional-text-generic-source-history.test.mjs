@@ -1,0 +1,17 @@
+// Independent complete generic source-history fixtures SOURCE, all UNRUN.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync,mkdtempSync,mkdirSync,rmSync,existsSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join,dirname} from 'node:path';
+import {gunzipSync} from 'node:zlib';
+import {currentOptionalTextGenericLibraryHistory} from '../optional-text-generic-source-history.mjs';
+import {PRIMITIVE_OPTION_NATIVE_SOURCE} from '../primitive-option-native-source.mjs';
+const limits={timeout:60000},root=new URL('../../../',import.meta.url);
+function fixture(t){const target=mkdtempSync(join(tmpdir(),'router-optional-history-'));t.after(()=>rmSync(target,{recursive:true,force:true}));const paths=new Set(['tools/translation/source-profiles/primitive-option-width-source/complete-native-template-rules.json.gz','tools/translation/source-profiles/optional-text-source/complete-native-template-rules.json.gz','tools/translation/source-profiles/optional-text-source/complete-generic-width-history.json.gz','tools/translation/source-profiles/optional-text-source/complete-generic-current-history.json.gz','tools/translation/source-profiles/option-eager-error-source/complete-native-template-rules.json.gz','tools/translation/source-profiles/option-eager-error-source/complete-generic-current-history.json.gz','tools/translation/primitive-option-runtime.mjs','tools/translation/primitive-option-runtime.d.mts']);for(const path of [...paths].filter(path=>path.endsWith('.gz'))){const value=JSON.parse(gunzipSync(readFileSync(new URL(path,root))));if(value.originalPath)paths.add(value.originalPath);for(const row of value.earlierOriginals??[])paths.add(row.path);for(const row of value.files??[])if(row.originalPath)paths.add(row.originalPath);}for(const path of paths){mkdirSync(dirname(join(target,path)),{recursive:true});writeFileSync(join(target,path),readFileSync(new URL(path,root)));}return target;}
+test('complete current identity histories replay with source DATA and no physical Rust checkout',limits,t=>{
+ const target=fixture(t);assert.equal(existsSync(join(target,'rust')),false);const result=currentOptionalTextGenericLibraryHistory({root:target,source:PRIMITIVE_OPTION_NATIVE_SOURCE});assert.equal(result.files.length,3);for(const row of result.files){assert.equal(row.inverse,row.before);assert.equal(row.current,row.currentAfter);}assert.equal(result.receivingExecuted,false);assert.equal(result.semanticAuthority,false);assert.throws(()=>currentOptionalTextGenericLibraryHistory({root:target,source:PRIMITIVE_OPTION_NATIVE_SOURCE+'// changed\n'}),/current native|current source|unknown current/u);
+});
+test('copied compiler library originals remain freshly guarded after stale edits and restoration',limits,t=>{
+ const target=fixture(t),path=join(target,'tools/translation/source-profiles/optional-text-source/originals/primitive-option-runtime.mjs.txt'),original=readFileSync(path,'utf8');assert.equal(currentOptionalTextGenericLibraryHistory({root:target,source:PRIMITIVE_OPTION_NATIVE_SOURCE}).files.length,3);writeFileSync(path,original+'// stale\n');assert.throws(()=>currentOptionalTextGenericLibraryHistory({root:target,source:PRIMITIVE_OPTION_NATIVE_SOURCE}),/original|source/u);writeFileSync(path,original);assert.equal(currentOptionalTextGenericLibraryHistory({root:target,source:PRIMITIVE_OPTION_NATIVE_SOURCE}).files.length,3);
+});

@@ -1,0 +1,7 @@
+# Source-reviewed native resource route expectations
+
+Separate expectation-only draft, no verified runtime changes. Forty-six census rows are corrected from pinned source: eleven Qwen Conversations branches use original400 refusal before resource/method lookup, twenty OpenAI/Codex Conversation branches have no owned parent and use exact Conversation404 envelopes, twelve Codex/Qwen Responses lifecycle misses use exact Response404 envelopes, and three native HEAD calls preserve outbound HEAD. The driver now checks complete error envelopes for these resource cases. HEAD bodies stay empty through the public dispatcher.
+
+All existing fullParity flags remain false and no successful outcome count is promoted. Six explicitly seeded OpenAI local responseStore success rows remain unchanged and are not used as provider-owned resource proof; the independent provider42 cohort covers native lifecycle behavior. Parent-first lookup explains Conversation not-found even on missing-child paths, and lookup precedes method policy for these empty-owner fixtures. No Axum route-precedence guess or runtime architecture change is made.
+
+The JSON receipt records all before/after rows, original Rust hashes, and exact fixture assumptions. ALL CHANGED CENSUS EXPECTATIONS ARE UNRUN. The completed140 runtime/evidence checkpoint and separate BOM repair draft remain intact. No engines, generators, TS/meta/Rust production or push occurred.

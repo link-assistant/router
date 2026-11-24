@@ -1,0 +1,107 @@
+{
+  "schema": "source-serialization-verification-v1",
+  "verified_head": "55a28008bbe4b2c75928e1239c3657cdb6768ed2",
+  "scope": [
+    "tools/translation/serialization-schema/serialization-schema.test.mjs"
+  ],
+  "authored_cases": 17,
+  "engines": [
+    {
+      "engine": "node",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/serialization-schema/serialization-schema.test.mjs"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 8.747,
+      "temporary_bytes_before_cleanup": 491,
+      "remaining_temporary_entries_before_cleanup": [
+        "xcrun_db"
+      ]
+    },
+    {
+      "engine": "bun",
+      "command": [
+        "bun",
+        "test",
+        "--timeout",
+        "15000",
+        "tools/translation/serialization-schema/serialization-schema.test.mjs"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 5.821,
+      "temporary_bytes_before_cleanup": 491,
+      "remaining_temporary_entries_before_cleanup": [
+        "xcrun_db"
+      ]
+    }
+  ],
+  "input_count": 1107,
+  "immutable_inputs": true,
+  "actual_original_reachable_types": 7,
+  "actual_existing_projection_equality": true,
+  "emitted_JS_runtime_data_equality": true,
+  "generated_native_artifacts_written": false,
+  "TypeScript_compile_run": false,
+  "native_runtime_changes": false,
+  "fullParity": false,
+  "archive": {
+    "file": "verification-raws.tar.gz",
+    "bytes": 187148,
+    "sha256": "e67f481a3860c19aa9b6e627f0a348098fcede8ee86b9f54abbf9ce0eb3244d6",
+    "members": [
+      {
+        "file": "prerequisites/helper-materialization.json",
+        "bytes": 80484,
+        "sha256": "8102e2c97f416be2970065315ae214c5ca0a81340f032877d748adb6496f1742",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/bun.log",
+        "bytes": 1810,
+        "sha256": "9cd58a09a2ebc12f23c21d0055bcb85906669c80275ee29966dc3c6f2f699546",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/harness.py",
+        "bytes": 5051,
+        "sha256": "a106bff738e65f59bef78a29d8d79face98d88c94f9499f86f3c40b286a1adda",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/inputs.json",
+        "bytes": 130402,
+        "sha256": "a927519f25d317f202586408f1323ef9209b5138cec07b2e691db272b1488c41",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/node.log",
+        "bytes": 3799,
+        "sha256": "45cb69737573703eb485aaf26106e5433f3953740a9cce3cc34a72842ee21c52",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/receipt.json",
+        "bytes": 261218,
+        "sha256": "bf3a1bf648584e812810ae47f4e0b0ad25e711efb07421315cd25b96b0c0a381",
+        "reopened_verified": true
+      },
+      {
+        "file": "runner/plan.json",
+        "bytes": 349,
+        "sha256": "2ebb3342aa115e1b237367494307735f2f88b7cf7e5c9192180769f9c839f6fb",
+        "reopened_verified": true
+      },
+      {
+        "file": "runner/run.py",
+        "bytes": 5051,
+        "sha256": "a106bff738e65f59bef78a29d8d79face98d88c94f9499f86f3c40b286a1adda",
+        "reopened_verified": true
+      }
+    ]
+  }
+}

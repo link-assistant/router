@@ -1,0 +1,32 @@
+{
+  "schema": "original-gap-source-file-index-receipt-v1",
+  "sourceHead": "5eb88d4721683d44cc3ec620d68bbc93d6d326e9",
+  "sidecar": {
+    "path": "docs/case-studies/issue-759/raw/current-task/source-identities-5eb88d472/f0cdae698ac26d11b92a165a1463aa60886fa4b76e720094ca56c378dc0e6fad.json.gz",
+    "sha256": "f0cdae698ac26d11b92a165a1463aa60886fa4b76e720094ca56c378dc0e6fad",
+    "bytes": 51118
+  },
+  "sourceFiles": 558,
+  "rows": 18177,
+  "ambiguousAssociations": 0,
+  "validationFailures": [],
+  "checks": [
+    "original archived member exact bytes",
+    "exact source-head inventory",
+    "original full Rust file SHA256",
+    "original item source SHA256",
+    "UTF16 span source bytes",
+    "UTF8 span source bytes when recorded",
+    "byte-reopened sidecar"
+  ],
+  "archiveUnmodified": true,
+  "inventoryUnmodified": true,
+  "compilerRuns": 0,
+  "rustBuilds": 0,
+  "helper": {
+    "path": "docs/case-studies/issue-759/raw/current-task/source-identities-5eb88d472/d5dd1d67d44404ae702c702fbd1017d3dc875b35f867a1a55e051410501b6ba3.py.gz",
+    "sha256": "d5dd1d67d44404ae702c702fbd1017d3dc875b35f867a1a55e051410501b6ba3",
+    "originalSha256": "e39a461ce4c34298fe63b9febfc968f0e5abb7356c6556f838a3e7b047e517b4",
+    "bytes": 2379
+  }
+}

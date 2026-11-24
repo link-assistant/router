@@ -1,0 +1,232 @@
+[
+  {
+    "name": "required string",
+    "input": "required",
+    "expected": {
+      "type": "any"
+    }
+  },
+  {
+    "name": "none string",
+    "input": "none",
+    "expected": {
+      "type": "none"
+    }
+  },
+  {
+    "name": "auto string",
+    "input": "auto",
+    "expected": {
+      "type": "auto"
+    }
+  },
+  {
+    "name": "unknown string",
+    "input": "unknown",
+    "expected": {
+      "type": "auto"
+    }
+  },
+  {
+    "name": "case-sensitive mode",
+    "input": "Required",
+    "expected": {
+      "type": "auto"
+    }
+  },
+  {
+    "name": "empty string",
+    "input": "",
+    "expected": {
+      "type": "auto"
+    }
+  },
+  {
+    "name": "null",
+    "input": null,
+    "expected": {
+      "type": "auto"
+    }
+  },
+  {
+    "name": "boolean",
+    "input": true,
+    "expected": {
+      "type": "auto"
+    }
+  },
+  {
+    "name": "number",
+    "input": 42,
+    "expected": {
+      "type": "auto"
+    }
+  },
+  {
+    "name": "array",
+    "input": [],
+    "expected": {
+      "type": "auto"
+    }
+  },
+  {
+    "name": "empty object",
+    "input": {},
+    "expected": {
+      "type": "auto"
+    }
+  },
+  {
+    "name": "nested function without type",
+    "input": {
+      "function": {
+        "name": "nested"
+      }
+    },
+    "expected": {
+      "type": "tool",
+      "name": "nested"
+    }
+  },
+  {
+    "name": "nested function takes priority",
+    "input": {
+      "function": {
+        "name": "nested"
+      },
+      "type": "function",
+      "name": "flat"
+    },
+    "expected": {
+      "type": "tool",
+      "name": "nested"
+    }
+  },
+  {
+    "name": "nested Unicode name",
+    "input": {
+      "function": {
+        "name": "é猫😀"
+      }
+    },
+    "expected": {
+      "type": "tool",
+      "name": "é猫😀"
+    }
+  },
+  {
+    "name": "empty nested name remains data",
+    "input": {
+      "function": {
+        "name": ""
+      }
+    },
+    "expected": {
+      "type": "tool",
+      "name": ""
+    }
+  },
+  {
+    "name": "flat function name",
+    "input": {
+      "type": "function",
+      "name": "flat"
+    },
+    "expected": {
+      "type": "tool",
+      "name": "flat"
+    }
+  },
+  {
+    "name": "flat Unicode name",
+    "input": {
+      "type": "function",
+      "name": "Ω😀"
+    },
+    "expected": {
+      "type": "tool",
+      "name": "Ω😀"
+    }
+  },
+  {
+    "name": "wrong nested shape uses flat branch",
+    "input": {
+      "function": true,
+      "type": "function",
+      "name": "flat"
+    },
+    "expected": {
+      "type": "tool",
+      "name": "flat"
+    }
+  },
+  {
+    "name": "wrong nested name uses flat branch",
+    "input": {
+      "function": {
+        "name": 7
+      },
+      "type": "function",
+      "name": "flat"
+    },
+    "expected": {
+      "type": "tool",
+      "name": "flat"
+    }
+  },
+  {
+    "name": "nested missing name uses flat branch",
+    "input": {
+      "function": {},
+      "type": "function",
+      "name": "flat"
+    },
+    "expected": {
+      "type": "tool",
+      "name": "flat"
+    }
+  },
+  {
+    "name": "flat branch requires function type",
+    "input": {
+      "type": "other",
+      "name": "ignored"
+    },
+    "expected": {
+      "type": "auto"
+    }
+  },
+  {
+    "name": "flat name must be string",
+    "input": {
+      "type": "function",
+      "name": 3
+    },
+    "expected": {
+      "type": "auto"
+    }
+  },
+  {
+    "name": "null nested and flat names",
+    "input": {
+      "function": {
+        "name": null
+      },
+      "type": "function",
+      "name": null
+    },
+    "expected": {
+      "type": "auto"
+    }
+  },
+  {
+    "name": "wrong mode type",
+    "input": {
+      "type": true,
+      "name": "ignored"
+    },
+    "expected": {
+      "type": "auto"
+    }
+  }
+]

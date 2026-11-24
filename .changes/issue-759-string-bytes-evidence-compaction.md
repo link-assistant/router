@@ -1,0 +1,1 @@
+Recompress the complete string-bytes verification archive with XZ while preserving its exact tar bytes, all 31 raw member hashes, and prior gzip provenance in Git. Reduce evidence storage by 1,443,133 bytes without changing source or verification claims.

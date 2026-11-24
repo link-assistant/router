@@ -1,0 +1,101 @@
+{
+  "schema": "format-builtin-source-bridge-next-plan-v1",
+  "status": "SOURCE_ONLY_UNRUN",
+  "originalCompilerSource": {
+    "path": "compiler/rustc_builtin_macros/src/format.rs",
+    "sha256": "c996ad70339e2915897ddd4e3aed4ed11f6e168e9e7d5562fc7139c45dc6a4ea",
+    "bytes": 39952,
+    "functions": [
+      {
+        "name": "expand_format_args",
+        "sourceSpan": {
+          "start": 39582,
+          "end": 39759,
+          "unit": "utf16"
+        },
+        "sourceSha256": "e8c264dc4d5fe7636d963e6063486ddd95f5e52f7b7c5f48af8986275d51050c",
+        "bodySpan": {
+          "start": 39707,
+          "end": 39759
+        },
+        "bodySha256": "1f7677a6647ed80ed474256d5a938a337f8614e0784bb93861528e9cdedb30f9",
+        "runtimeExecutionVerified": false
+      },
+      {
+        "name": "expand_format_args_nl",
+        "sourceSpan": {
+          "start": 39772,
+          "end": 39951,
+          "unit": "utf16"
+        },
+        "sourceSha256": "9f486c389279b22d03f68ae85d2e2fc172c3d5a6388cfcaa73b8c06aa77246c2",
+        "bodySpan": {
+          "start": 39900,
+          "end": 39951
+        },
+        "bodySha256": "21d8ed5ff817855bd2cc07acd82c64e7109c5af0d367551fd8bf4a2b9680187c",
+        "runtimeExecutionVerified": false
+      },
+      {
+        "name": "expand_format_args_impl",
+        "sourceSpan": {
+          "start": 38768,
+          "end": 39569,
+          "unit": "utf16"
+        },
+        "sourceSha256": "026c65eb30decbfe320f4a19413afcde7d1c07dedc06aec593e528904419428f",
+        "bodySpan": {
+          "start": 38916,
+          "end": 39569
+        },
+        "bodySha256": "d6a4da9fe5dadfc9949ea88d8a3d2aeffe2c921d438f91a4f1a8d01e29341acb",
+        "runtimeExecutionVerified": false
+      }
+    ]
+  },
+  "requiredPeerInput": {
+    "sourcePath": "compiler/rustc_builtin_macros/src/lib.rs",
+    "sourceSha256": "7af7c77b36351c3ea41e1ebb62605c2f74aeee3ee76ba9ea0b1f511356f85f07",
+    "sourceBytes": 5277,
+    "input": "source-profiles/builtin-derive-bang/rust-1.89-compiler_rustc_builtin_macros_src_lib.rs.gz",
+    "compressedSha256": "87b25549db475e3644a4f89b27348d0a15fba8dfd72338ae37d97e2095ebae0d",
+    "requiredDiagnostic": "ERR_FORMAT_SOURCE_INPUT_UNAVAILABLE",
+    "availableOnOwnBranch": false
+  },
+  "tests": [
+    {
+      "path": "test/format-source-stages.test.mjs",
+      "cases": 5,
+      "status": "UNRUN"
+    },
+    {
+      "path": "test/format-builtin-bridge.test.mjs",
+      "cases": 7,
+      "status": "UNRUN"
+    }
+  ],
+  "existingPrimitiveFormatter": "extensions/formatting.mjs",
+  "additionalDeclarationsAdmitted": 0,
+  "wholeOriginalRouterFile": {
+    "path": "src/account_http.rs",
+    "sha256": "876e7e38985d93f896c9d191f9d7591abb66697f93504a202d4fd208217bdd09",
+    "bytes": 17892,
+    "manualSourceReplacement": false
+  },
+  "flags": {
+    "callerMacroOwnerResolved": false,
+    "builtinBuilderOwnerResolved": false,
+    "sourceSemanticClosureVerified": false,
+    "traitSelectionVerified": false,
+    "allocatorEffectsVerified": false,
+    "ioEffectsVerified": false,
+    "namespaceAuthority": false,
+    "runtimeParity": false
+  },
+  "remaining": [
+    "Private registry source dependency must be integrated; source paths alone do not prove callback module identity.",
+    "Original compiler parser/ExtCtxt/AST constructors, retry/error behavior and lowering lifetime/ABI remain unexecuted.",
+    "Existing checked primitive formatter admission is unchanged; source staging adds no format owner admissions.",
+    "Standalone fmt::Arguments and print/eprintln I/O remain refused; full Display/radix/custom traits/allocation/Drop/OOM remain unimplemented."
+  ]
+}

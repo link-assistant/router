@@ -1,0 +1,64 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37539023828/attempt-1/logs/1_rust tier (dogfood regeneration gate).txt.gz",
+    "sha256": "c241cc16e5723b4effd6d8731ddde981f5c448663702ba53fa1da7f4585cf6f1",
+    "bytes": 6713,
+    "uncompressed_bytes": 27388,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37539023828/attempt-1/logs/rust tier (dogfood regeneration gate)/system.txt.gz",
+    "sha256": "bf167e93f0a58e58fbb41121b76de0842582ee07682f0475c4cff8e74f92bb53",
+    "bytes": 485,
+    "uncompressed_bytes": 1138,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37539023828/attempt-1/logs/2_ts tier (js-ts file-set parity).txt.gz",
+    "sha256": "dfe1e439205d6c7610633ad40385ce355b174234f2cbecd52d9105f3ba05c9bb",
+    "bytes": 5205,
+    "uncompressed_bytes": 21942,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37539023828/attempt-1/logs/ts tier (js-ts file-set parity)/system.txt.gz",
+    "sha256": "b3c98639c3108430e27e90f49209072a3a9f4241cea957747aaccf34500caf8b",
+    "bytes": 473,
+    "uncompressed_bytes": 998,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37539023828/attempt-1/logs/3_js tier (node --check over js).txt.xz",
+    "sha256": "6688f120a7c557f130d36498349940ebfeb19cd2aee81d0e4933aafc61ed5247",
+    "bytes": 39640,
+    "uncompressed_bytes": 269465,
+    "redacted": false,
+    "original_gzip_sha256": "a704a9307db18917f1f1223786f3ebe700247060a9a326d4b59c4a11612829cf",
+    "compression": "xz",
+    "decoded_sha256": "387b354ce3d858cb6335696c1618c6da510a8b2d33842cbb68d78e8b0f16d23c"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37539023828/attempt-1/logs/js tier (node --check over js)/system.txt.gz",
+    "sha256": "f2ecf0187498e4a5b3e4c571d73f55358b777dacb407745412cf2d0d5c49d909",
+    "bytes": 445,
+    "uncompressed_bytes": 858,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37539023828/attempt-1/logs/4_Detect tier changes.txt.xz",
+    "sha256": "306d3ebb09bdb5e385d17eee8a6b2469e15f67ca260fefa5db66a6f9f77feb66",
+    "bytes": 39416,
+    "uncompressed_bytes": 407702,
+    "redacted": false,
+    "original_gzip_sha256": "5fea2b17f89603555081ffb3dd844a36f368411a8a29492909030775f9a7577e",
+    "compression": "xz",
+    "decoded_sha256": "86cbd7553195d8b29fc040a6afc0804ea46d670f55fce48906979a6a809aa242"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37539023828/attempt-1/logs/Detect tier changes/system.txt.gz",
+    "sha256": "6f5d2615e2509b7a7adbafb731f5df84c2087576f951184d3109e04895ca7b57",
+    "bytes": 312,
+    "uncompressed_bytes": 588,
+    "redacted": false
+  }
+]

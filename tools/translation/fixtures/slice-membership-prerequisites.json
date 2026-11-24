@@ -1,0 +1,47 @@
+{
+  "profile": "slice-membership-verified-prerequisites-v1",
+  "evidenceKind": "synthetic source prerequisite refusal, not a production body",
+  "originalDraftHead": "9d77cf46f31584b8daf82b1c5ab8826b51f41b0a",
+  "source": "pub fn slice(v:&[&str],n:&str)->bool{v.contains(&n)} pub fn owned_vec(v:Vec<&str>,n:&str)->bool{v.contains(&n)} pub fn borrowed_vec(v:&Vec<&str>,n:&str)->bool{v.contains(&n)} pub fn fixed(v:[&str;2],n:&str)->bool{v.contains(&n)} pub fn borrowed_fixed(v:&[&str;2],n:&str)->bool{v.contains(&n)} pub fn shared_needle(v:&[&str],n:&&str)->bool{v.contains(n)} pub fn temporary(v:&[&str],n:&str)->bool{v.contains(&n.to_ascii_lowercase().as_str())} pub fn substring(v:&str,n:&str)->bool{v.contains(n)}",
+  "sourceSha256": "eb98820ae5d114dd177dac8ce54c63631f8434590eae9e9f9ded09a5a2e529fc",
+  "bodySha256": "5b919881f5a8abdf50399ef314f93faf8b4f38d6c52388684c4f206e894f651a",
+  "runtimeParity": false,
+  "rustExecution": false,
+  "initialRefusal": {
+    "file": "src/lib.rs",
+    "name": "borrowed_fixed",
+    "term": "fn",
+    "kind": "unsupported",
+    "message": "fixed source array: shared aggregate references require a separate Copy and lifetime profile",
+    "span": {
+      "start": 233,
+      "end": 292
+    }
+  },
+  "currentRefusal": {
+    "file": "src/lib.rs",
+    "name": "borrowed_fixed",
+    "term": "fn",
+    "kind": "unsupported",
+    "message": "borrowed string slice membership: requires actual standard slice/Vec/fixed-array source ownership, &str elements and one checked &&str argument; custom equality and other borrow adjustments remain unsupported",
+    "span": {
+      "start": 277,
+      "end": 291
+    }
+  },
+  "reason": "Initial checking reached the shared aggregate Copy/lifetime prerequisite; the corrected planner explicitly excludes shared fixed arrays and now rejects the membership call earlier. Neither path admits the function.",
+  "receiverSpanRepair": {
+    "previousRefusal": {
+      "file": "src/lib.rs",
+      "name": "borrowed_fixed",
+      "term": "fn",
+      "kind": "unsupported",
+      "message": "borrowed string slice membership: requires actual standard slice/Vec/fixed-array source ownership, &str elements and one checked &&str argument; custom equality and other borrow adjustments remain unsupported",
+      "span": {
+        "start": 278,
+        "end": 292
+      }
+    },
+    "basis": "Complete original receiver through the actual closing parenthesis; original source and source/body hashes unchanged"
+  }
+}

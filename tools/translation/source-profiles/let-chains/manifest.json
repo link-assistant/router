@@ -1,0 +1,65 @@
+{
+  "profile": "rust-1.89-immutable-statement-let-chains-v1",
+  "rust": "1.89.0",
+  "edition": "2024",
+  "differentEditionAdmission": false,
+  "constEligible": false,
+  "namespaceComplete": false,
+  "dropSemanticsComplete": false,
+  "sources": [
+    {
+      "file": "../while-let/rustc-lowering-expr.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_ast_lowering/src/expr.rs",
+      "gitBlobSha": "f297bf9f4cfed5db32ac8c6d4d1f0b0f2b103a0a",
+      "bytes": 95140,
+      "sha256": "adb238929d9c3f718bdb015bc133b2aec41633bc619576744f72e75cb925a2a4",
+      "compressedSha256": "f19c288dab9f24ed2ca67f3c565314f164f54d0b232df5313f9e99ef6be5f25f",
+      "anchors": [
+        {
+          "startLine": 169,
+          "endLine": 179
+        },
+        {
+          "startLine": 528,
+          "endLine": 582
+        },
+        {
+          "startLine": 601,
+          "endLine": 618
+        }
+      ]
+    }
+  ],
+  "licenses": [
+    {
+      "file": "../copy-standard/LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+    },
+    {
+      "file": "../copy-standard/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+    }
+  ],
+  "limits": {
+    "conditionTokens": 1024,
+    "conditionCharacters": 65536,
+    "clauses": 16
+  },
+  "evaluationOrder": [
+    "evaluate-original-clauses-left-to-right",
+    "short-circuit-at-first-false-or-pattern-failure",
+    "bind-checked-immutable-let-pattern-only-for-later-clauses-and-success-body",
+    "check-and-execute-one-else-in-original-outer-scope",
+    "return-break-and-continue-target-original-enclosing-control",
+    "while-rechecks-all-original-clauses-and-recreates-binding-scope"
+  ],
+  "limitations": [
+    "Only unit statement joins; value-producing chains remain refused",
+    "The syntax profile is Rust 2024; different Cargo edition admission is not proved",
+    "No mutable references, owning moves, unproved Drop or nonlocal subject exits",
+    "The original compiler pin records the source basis; its full implementation is not claimed translated",
+    "No const, complete namespace, trait, effect or full runtime parity authority"
+  ]
+}

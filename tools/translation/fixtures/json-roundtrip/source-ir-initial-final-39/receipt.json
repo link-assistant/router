@@ -1,0 +1,149 @@
+{
+  "schema": "original-arithmetic-source-ir-seven-file-initial-final-evidence-v1",
+  "sourceHeads": {
+    "initial": "1a4acd031037e6eb855c403f8ae66d7c1f63912c",
+    "final": "e3cef044239bdbbc8c17d15948704504a2e3f65c"
+  },
+  "sourceTrackedClean": true,
+  "sourceUntracked": "shared packages/javascript/node_modules symlink only",
+  "scope": "Seven files39 pure generic original source IR mathematical projection cases; no emitted-TypeScript/parser/application/native/Rust or producer verification",
+  "files": {
+    "arithmetic-source-fragments.test.mjs": 7,
+    "arithmetic-source-data.test.mjs": 5,
+    "arithmetic-associated-source.test.mjs": 2,
+    "json-roundtrip-num-expansions.test.mjs": 4,
+    "json-roundtrip-limb-fragments.test.mjs": 12,
+    "json-roundtrip-storage-fragments.test.mjs": 7,
+    "json-roundtrip-reference-fragments.test.mjs": 2
+  },
+  "runners": {
+    "initial": {
+      "node": {
+        "pass": 38,
+        "fail": 1,
+        "skip": 0,
+        "seconds": 1.6105079650878906,
+        "childMaxRssBytes": 177192960,
+        "timeoutSeconds": 180
+      },
+      "bun": {
+        "pass": 38,
+        "fail": 1,
+        "skip": 0,
+        "seconds": 1.0847959518432617,
+        "childMaxRssBytes": 215007232,
+        "timeoutSeconds": 180
+      }
+    },
+    "final": {
+      "node": {
+        "pass": 39,
+        "fail": 0,
+        "skip": 0,
+        "seconds": 1.6308228969573975,
+        "childMaxRssBytes": 174784512,
+        "timeoutSeconds": 180
+      },
+      "bun": {
+        "pass": 39,
+        "fail": 0,
+        "skip": 0,
+        "seconds": 1.026677131652832,
+        "childMaxRssBytes": 189612032,
+        "timeoutSeconds": 180
+      }
+    }
+  },
+  "initialFailure": "Both engines retained correct TypeError Unproved arithmetic expression token < for unsupported UFCS; fixture expected case-sensitive /Arithmetic/",
+  "repairCommit": "e3cef044239bdbbc8c17d15948704504a2e3f65c",
+  "repair": "Exact TypeError instance and retained message required; no implementation, guard, budget or source body changes",
+  "previousThirtyCaseEvidence": [
+    "../source-ir-initial-4302/receipt.json",
+    "../source-ir-retry-0d627/receipt.json"
+  ],
+  "sourceOwnerVerified": false,
+  "sourceBehaviorFidelityVerified": false,
+  "parseAdmission": false,
+  "namespaceAuthority": false,
+  "applicationEffectCompleteness": false,
+  "runtimeParity": false,
+  "rustExecution": false,
+  "compilerWindowReleased": true,
+  "resourceScope": "Python harness subprocess and children only; not machine-wide or per-case. macOS cumulative RUSAGE_CHILDREN high-water bytes.",
+  "compressedInputs": [
+    {
+      "path": "initial-node.log.gz",
+      "decodedBytes": 12541,
+      "decodedSha256": "03a86388ec7fe8c301cee986ff1b0446b3d57cd572f89021b44aae3566382aaf",
+      "gzipBytes": 3061,
+      "gzipSha256": "b9ccd5db5bb16f09e2396998daa20fbf41a1ddaf633e5e34ee193e63a8dc005e",
+      "reopenedExact": true
+    },
+    {
+      "path": "initial-node-receipt.json.gz",
+      "decodedBytes": 25977,
+      "decodedSha256": "5ba10bbfd16715682718fd5900da462038d29de185b4c2c6feb194711907452a",
+      "gzipBytes": 7440,
+      "gzipSha256": "3b3ca8ae200ecd5acd92d5a7955f8bf21f24ce81d17d12329f9e5855e68a71b9",
+      "reopenedExact": true
+    },
+    {
+      "path": "initial-bun.log.gz",
+      "decodedBytes": 9832,
+      "decodedSha256": "a6b447da7796e189dee66f5c9c5298005efc5230baa27b38b382e0011e641114",
+      "gzipBytes": 3560,
+      "gzipSha256": "6fbc6273c860ad95b3ee463965e7f63d40161ba192f1b1fb1371f59663681381",
+      "reopenedExact": true
+    },
+    {
+      "path": "initial-bun-receipt.json.gz",
+      "decodedBytes": 25965,
+      "decodedSha256": "8b4de5eb51264c2f3565680d80aec7df0766da5ba456fdbb9905c6267a9b6b8d",
+      "gzipBytes": 7418,
+      "gzipSha256": "b857f8aeeb86ac4bcd1fa4620a37494d66dcbd964e30cf13142b89539f694baf",
+      "reopenedExact": true
+    },
+    {
+      "path": "final-node.log.gz",
+      "decodedBytes": 10076,
+      "decodedSha256": "fa8eeea539c56d4cca2bf8dbf28323a061e962b9fa8ad7e1713b7f51a4007376",
+      "gzipBytes": 2498,
+      "gzipSha256": "9b20432652228059a7f713beefcccc492ee2a2957b0ea0eba325e92f8c0c7575",
+      "reopenedExact": true
+    },
+    {
+      "path": "final-node-receipt.json.gz",
+      "decodedBytes": 25995,
+      "decodedSha256": "cd86f4dad3e0ce9a48dfb96a0a8041cf790cdc2949139b515f0f4dacadd964bd",
+      "gzipBytes": 7442,
+      "gzipSha256": "f4b732188c4445a15f0bc8e0712c89b059015f51817c7e7ee402e77726d35489",
+      "reopenedExact": true
+    },
+    {
+      "path": "final-bun.log.gz",
+      "decodedBytes": 5072,
+      "decodedSha256": "4e5949731b3a5beebcc0aceb40118a3a211bd1002eaa79dd85391bd4b9cd825c",
+      "gzipBytes": 2062,
+      "gzipSha256": "9115ae24845a7cec863c200df373ace66fda59e7e7bc39f7924f56efdc1980b0",
+      "reopenedExact": true
+    },
+    {
+      "path": "final-bun-receipt.json.gz",
+      "decodedBytes": 25951,
+      "decodedSha256": "9427ec12eec73890e661e03e5b5e6b358be181b5fd4be421f2e5b950c9698a35",
+      "gzipBytes": 7421,
+      "gzipSha256": "043e3da9f763d6c802cff75273ca7bfd7e7a2efa65df874061c5fdfb09313e91",
+      "reopenedExact": true
+    }
+  ],
+  "harnesses": [
+    {
+      "path": "initial-run.py",
+      "sha256": "2b65dbd5f1d510eac3b80e8fba5b246b75f5ba555692cb3b5b24eb207091f939"
+    },
+    {
+      "path": "final-run.py",
+      "sha256": "87c1a6e6db6e17c190cd76d7c1aa3be67368d784fc004e75de7a6fab1dff0910"
+    }
+  ]
+}

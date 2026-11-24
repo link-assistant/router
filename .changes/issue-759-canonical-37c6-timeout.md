@@ -1,0 +1,1 @@
+Retain the complete bounded canonical timeout after the verified namespace repair: 2400.438 seconds, unchanged 1715 inputs, no diagnostics or artifact writes. Focused 204-case and namespace evidence remain separate; no new corpus census, full gate or runtime-parity claim is made.

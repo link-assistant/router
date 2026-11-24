@@ -1,0 +1,2 @@
+- Add source-spanned Rust constructor, record, tuple and or-pattern syntax for the checked translator binding planner. Preserve literal suffix obligations and qualified paths while explicitly refusing unresolved reference, mutation, range and ownership-sensitive patterns.
+- Require actual checked tuple metadata for bare tuple patterns instead of inferring tuples from positional fields on unrelated data types.

@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {compileDeclarativeMacro,expandDeclarativeMacro} from '../declarative-macros.mjs';
+import {originalMacroTrees} from '../macro-token-trees.mjs';
+import {compileArithmeticSourceFragments,projectArithmeticSource,isArithmeticSourceFragments,compileArithmeticExpansionFragments} from '../arithmetic-source-fragments.mjs';
+test('source block scopes share outer mutable places while branch-local shadow bindings stay local',()=>{
+  const source='fn update(x:u64)->u64{let mut total=x;if x != 0 {total=total+1;let total=x;}total}';
+  const program=compileArithmeticSourceFragments(source,['update']);assert.equal(projectArithmeticSource(program,'update',[4n]).value,5n);assert.equal(projectArithmeticSource(program,'update',[0n]).value,0n);
+});
+test('source immutable assignments and arithmetic identity/overflow changes explicitly refuse',()=>{
+  const immutable=compileArithmeticSourceFragments('fn bad(x:u64)->u64{let local=x;local=x;local}',['bad']);assert.throws(()=>projectArithmeticSource(immutable,'bad',[1n]),/mutable binder/);
+  const overflow=compileArithmeticSourceFragments('fn add(x:u64)->u64{x+1}',['add']);assert.throws(()=>projectArithmeticSource(overflow,'add',[(1n<<64n)-1n]),RangeError);
+  const identity=compileArithmeticSourceFragments('fn bad(x:u32,y:u64)->u32{x+y}',['bad']);assert.throws(()=>projectArithmeticSource(identity,'bad',[1n,1n]),/identities differ/);
+  const call=compileArithmeticSourceFragments('fn helper(x:u32)->u32{x} fn bad(x:u64)->u32{helper(x)}',['helper','bad']);assert.throws(()=>projectArithmeticSource(call,'bad',[1n]),/parameter identity differs/);
+});
+test('serialized arithmetic fragments carry source evidence and cannot manufacture a private executable seal',()=>{
+  const program=compileArithmeticSourceFragments('fn high(x:u64)->u64{x>>1}',['high']);assert.equal(isArithmeticSourceFragments(program),true);assert.equal(isArithmeticSourceFragments(JSON.parse(JSON.stringify(program))),false);assert.throws(()=>projectArithmeticSource(JSON.parse(JSON.stringify(program)),'high',[2n]),/private source/);
+  const result=projectArithmeticSource(program,'high',[2n]);assert.equal(result.value,1n);assert.equal(result.projectionOnly,true);assert.equal(result.parseAdmission,false);assert.equal(result.sourceBehaviorFidelityVerified,false);
+});
+
+test('actual duplicate source owners refuse; singleton tuple punctuation survives private meta roundtrip',()=>{
+  assert.throws(()=>compileArithmeticSourceFragments('fn a(x:u64)->u64{x} fn a(x:u64)->u64{x+1}',['a']),/ambiguous/);
+  const program=compileArithmeticSourceFragments('fn one(x:u64)->(u64,){(x,)}',['one']);assert.deepEqual(projectArithmeticSource(program,'one',[3n]).value,[3n]);assert.equal(program.privateMetaRoundtrip,true);assert.match(program.checkedMetaSha256,/^[0-9a-f]{64}$/u);
+  assert.throws(()=>compileArithmeticSourceFragments('fn one(x:u64)->(u64,){(x,,)}',['one']),/empty separated/);
+});
+
+test('source tail conditionals and mutable reference parameter rebinding preserve actual expression results',()=>{
+  const program=compileArithmeticSourceFragments('fn pick(x:u64)->u64{if x < 2 {x}else if x < 5 {x+1}else{x+2}}',['pick']);assert.equal(projectArithmeticSource(program,'pick',[1n]).value,1n);assert.equal(projectArithmeticSource(program,'pick',[3n]).value,4n);assert.equal(projectArithmeticSource(program,'pick',[6n]).value,8n);
+  const scopes=compileArithmeticSourceFragments('const C:u64=3; fn compare(x:u64)->u64{if x < C {x}else{C}}',['compare']);assert.equal(projectArithmeticSource(scopes,'compare',[7n]).value,3n);
+});
+
+test('actual checked helper bodies take precedence over arithmetic cast spellings',()=>{
+  const source='fn as_limb(x:u64)->u64{x+1} fn call(x:u64)->u64{as_limb(x)}',program=compileArithmeticSourceFragments(source,['as_limb','call']);assert.equal(projectArithmeticSource(program,'call',[4n]).value,5n);
+  const missing=compileArithmeticSourceFragments('fn call(x:u64)->u64{as_limb(x)}',['call']);assert.throws(()=>projectArithmeticSource(missing,'call',[4n]),/callable absent/);
+});
+
+test('generic private expansion lowering retains original source/capture identity and rejects clones or changed definitions',()=>{
+  const source='trait Read{fn read(self)->u32;} macro_rules! make{($t:ident)=>{impl Read for $t{fn read(self)->u32{self as u32}}}}',proof=expandDeclarativeMacro(compileDeclarativeMacro(source,{name:'make',owner:['fixture']}),originalMacroTrees('u64')),program=compileArithmeticExpansionFragments(source,[proof],['impl::Read::u64::read']);
+  assert.equal(projectArithmeticSource(program,'impl::Read::u64::read',[(1n<<32n)+3n]).value,3n);assert.equal(program.expansionSources[0].ownerVerified,false);assert.equal(program.privateMetaRoundtrip,true);
+  assert.throws(()=>compileArithmeticExpansionFragments(source,[structuredClone(proof)],['impl::Read::u64::read']),/private original/);assert.throws(()=>compileArithmeticExpansionFragments(source+' ',[proof],['impl::Read::u64::read']),/source differs/);assert.throws(()=>compileArithmeticExpansionFragments(source,[proof,proof],['impl::Read::u64::read']),/ambiguous/);
+});

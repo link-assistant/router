@@ -1,0 +1,999 @@
+//! Safe local configuration for agentic CLI clients.
+//!
+//! The writer deliberately owns only one Codex provider table and a recorded
+//! set of Claude Code gateway environment keys. Unknown settings are parsed and merged, never
+//! replaced wholesale, and every changed existing file is backed up first.
+
+use std::fmt;
+use std::fs;
+use std::path::{Path, PathBuf};
+
+use clap::ValueEnum;
+use serde_json::{Value, json};
+use toml_edit::{DocumentMut, Item, Table, value};
+
+mod analysis;
+mod catalog;
+#[path = "clients/codex_catalog_constraint.rs"]
+mod codex_catalog_constraint;
+mod codex_loopback;
+pub mod credentials;
+pub(crate) mod doctor;
+mod files;
+mod json_config;
+mod repair;
+mod types;
+
+pub use analysis::{ClientConfigAnalysis, ConfigSource, ObservedFile, OwnershipState};
+pub use repair::{RepairPlan, RepairResult};
+pub use types::{ClientError, ClientStatus, SetupResult};
+
+#[cfg(test)]
+pub(crate) use catalog::RouterClientCapabilities;
+pub(crate) use catalog::RouterModel;
+#[cfg(test)]
+pub(crate) use catalog::RouterReasoningLevel;
+use catalog::doctor_model;
+pub(crate) use catalog::{
+    claude_context_variant_is_authorized, claude_gateway_model, codex_supports_websockets,
+    model_is_authorized, parse_router_models,
+};
+pub use catalog::{select_model, unavailable as model_unavailable, usable_models};
+pub use credentials::{ManagedCredential, TokenSource};
+pub(crate) use doctor::require_claude_gateway_version;
+use files::{
+    atomic_write, claude_marker, read_codex_marker, read_environment_value, read_or_empty,
+    unchanged, write_claude_marker, write_codex_marker, write_if_changed,
+};
+use json_config::{read_json_provider_base_url, read_qwen_base_url};
+
+const CODEX_PROVIDER: &str = "link-assistant";
+const CODEX_TOKEN_ENV: &str = "LINK_ASSISTANT_TOKEN";
+const CLAUDE_TOKEN_ENV: &str = "ANTHROPIC_AUTH_TOKEN";
+const CLAUDE_BASE_ENV: &str = "ANTHROPIC_BASE_URL";
+const ROUTER_TOKEN_ENV: &str = "LINK_ASSISTANT_TOKEN";
+const GROK_TOKEN_ENV: &str = "GROK_API_KEY";
+const GROK_BASE_ENV: &str = "GROK_BASE_URL";
+const ROUTER_PROVIDER: &str = "link-assistant";
+const OWNERSHIP_MARKER: &str = ".link-assistant-router-client.json";
+pub(crate) const CLAUDE_MODEL_ENV: [&str; 5] = [
+    "ANTHROPIC_MODEL",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    "CLAUDE_CODE_SUBAGENT_MODEL",
+];
+/// The smallest pair Claude Code needs when its only compatible live catalog
+/// is supplied by z.ai. Family overrides deliberately stay unset: assigning
+/// one GLM id to Opus, Sonnet, and Haiku creates three fake selectable rows.
+pub(crate) const CLAUDE_GATEWAY_TARGET_ENV: [&str; 2] =
+    ["ANTHROPIC_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL"];
+/// The family variables Claude Code resolves its `/model` Default row from.
+/// Claude 2.1.284 describes Default as its tier's Opus or Sonnet default, so on
+/// a z.ai-only catalog an unpinned family advertises an unauthorized Anthropic
+/// model even while the main pair is pinned (issue #630). `router with` pins
+/// them only where its picker replaces the built-in family rows, so the pin
+/// cannot surface as a fake family row.
+pub(crate) const CLAUDE_DEFAULT_ROW_ENV: [&str; 3] = [
+    "ANTHROPIC_DEFAULT_OPUS_MODEL",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+];
+
+/// Catalog owner whose models suit an `OpenAI`-dialect client.
+pub const OPENAI_MODEL_OWNER: &str = "openai";
+/// Catalog owner whose models suit an Anthropic-dialect client.
+pub const ANTHROPIC_MODEL_OWNER: &str = "anthropic";
+/// Catalog owner the server labels a Gemini subscription with.
+pub const GOOGLE_MODEL_OWNER: &str = "google";
+/// Catalog owner the server labels a Qwen subscription with.
+pub const QWEN_MODEL_OWNER: &str = "qwen";
+/// Catalog owner for personal z.ai Coding Plan models.
+pub const ZAI_MODEL_OWNER: &str = "z.ai";
+pub const DEFAULT_OPENAI_REASONING_EFFORT: &str = "xhigh";
+/// Output budget for the `clients doctor` reachability probe.
+///
+/// "Reply OK" needs a handful of tokens, and a 200 with any body proves what
+/// `doctor` is asking. The floor is the right setting for a connectivity check
+/// (issue #309).
+const DOCTOR_MAX_TOKENS: u32 = 64;
+pub const DEFAULT_ANTHROPIC_REASONING_EFFORT: &str = "high";
+
+/// How a client can be isolated from its normal user configuration.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ClientIsolation {
+    Home,
+    ClaudeConfig,
+    GeminiHome,
+    ConfigFile,
+    Environment,
+    Unsupported,
+}
+
+/// Declarative client integration data shared by setup, status, and `with`.
+#[derive(Clone, Copy, Debug)]
+pub struct ClientIntegration {
+    pub kind: ClientKind,
+    pub name: &'static str,
+    pub command: &'static str,
+    pub dialect: &'static str,
+    pub token_env: Option<&'static str>,
+    pub base_url_env: Option<&'static str>,
+    pub endpoint_suffix: &'static str,
+    /// Catalog owners whose models suit this client, best first.
+    ///
+    /// The router holds no default model *name*: the concrete id is chosen from
+    /// the account's live catalog at execution time (issue #192). Empty means
+    /// the client accepts any advertised model.
+    ///
+    /// A single owner used to be declared per client, and two of the eight
+    /// named the wrong vendor: Gemini CLI and Qwen Code were declared
+    /// `OpenAI` clients, so a Google model could never be selected for the Gemini
+    /// CLI and a Qwen model never for Qwen Code. On a deployment serving only a
+    /// Gemini subscription the run aborted with a message reading as though
+    /// the router were short of models (issue #301).
+    pub model_owners: &'static [&'static str],
+    /// Whether a model of another owner is refused rather than substituted.
+    ///
+    /// True where substituting is known to mislead: launching Claude Code on
+    /// an `OpenAI` model made the client blame its own model name rather than
+    /// the lapsed subscription (issue #225). False for the generic
+    /// `OpenAI`-dialect gateways, which the router routes for whatever it
+    /// serves — that is the rule `clients doctor` already used, and it is now
+    /// the only one.
+    pub strict_owner: bool,
+    pub default_reasoning_effort: &'static str,
+    pub model_arg: Option<&'static str>,
+    pub non_interactive_arg: Option<&'static str>,
+    /// Other spellings of the same mode the client already accepts.
+    ///
+    /// The comparison used to be exact against one string, so Claude Code's
+    /// own `-p` was not recognised as the `--print` it is and both ended up on
+    /// the command line (issue #297).
+    pub non_interactive_aliases: &'static [&'static str],
+    /// Whether the mode argument takes the prompt as its value.
+    ///
+    /// `-p` for gemini, grok and qwen and `--prompt` for agent do; `--print`
+    /// and the `exec`/`run` subcommands do not. Injecting one immediately
+    /// before a user's *flag* put that flag where the prompt value belongs,
+    /// which is a silent change of meaning rather than an error (issue #297).
+    pub non_interactive_arg_takes_a_value: bool,
+    pub isolation: ClientIsolation,
+    pub setup_limitation: Option<&'static str>,
+}
+
+/// Documented local clients, including clients whose vendor gates prevent setup.
+/// A supported client, named as the user's own shell names it.
+///
+/// The canonical value of each variant is the **installed command**, because
+/// that is the name the user typed to install the tool and types to run it. The
+/// descriptive long forms (`claude-code`, `qwen-code`, …) are kept as aliases so
+/// existing scripts and documented commands keep working.
+///
+/// Before this, the advertised names were the descriptive ones while the short
+/// names existed only as invisible aliases — so `--help` and the `invalid value`
+/// error taught a name the user's shell does not have (issue #220). The
+/// invariant that keeps the two in step is asserted in the tests below: every
+/// variant's canonical string equals its [`ClientIntegration::command`].
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum, schemars::JsonSchema)]
+#[schemars(with = "String")]
+pub enum ClientKind {
+    Codex,
+    #[value(name = "claude", alias = "claude-code")]
+    ClaudeCode,
+    #[value(name = "cursor-agent", alias = "cursor")]
+    Cursor,
+    #[value(name = "gemini", alias = "gemini-cli")]
+    GeminiCli,
+    #[value(name = "grok", alias = "grok-cli")]
+    GrokCli,
+    Opencode,
+    #[value(name = "qwen", alias = "qwen-code")]
+    QwenCode,
+    Agent,
+}
+
+/// Single source of truth for supported client launch mechanics.
+pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
+    ClientIntegration {
+        kind: ClientKind::Codex,
+        name: "Codex CLI",
+        command: "codex",
+        dialect: "OpenAI Responses",
+        token_env: Some(CODEX_TOKEN_ENV),
+        base_url_env: None,
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::Codex,
+        ),
+        model_owners: &[OPENAI_MODEL_OWNER, ZAI_MODEL_OWNER],
+        strict_owner: true,
+        default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
+        model_arg: Some("--model"),
+        non_interactive_arg: Some("exec"),
+        non_interactive_aliases: &[],
+        non_interactive_arg_takes_a_value: false,
+        isolation: ClientIsolation::Home,
+        setup_limitation: None,
+    },
+    ClientIntegration {
+        kind: ClientKind::ClaudeCode,
+        name: "Claude Code",
+        command: "claude",
+        dialect: "Anthropic Messages",
+        token_env: Some(CLAUDE_TOKEN_ENV),
+        base_url_env: Some(CLAUDE_BASE_ENV),
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::Anthropic,
+        ),
+        model_owners: &[ANTHROPIC_MODEL_OWNER, ZAI_MODEL_OWNER],
+        strict_owner: true,
+        default_reasoning_effort: DEFAULT_ANTHROPIC_REASONING_EFFORT,
+        model_arg: Some("--model"),
+        non_interactive_arg: Some("--print"),
+        non_interactive_aliases: &["-p"],
+        non_interactive_arg_takes_a_value: false,
+        isolation: ClientIsolation::ClaudeConfig,
+        setup_limitation: None,
+    },
+    ClientIntegration {
+        kind: ClientKind::Cursor,
+        name: "Cursor CLI",
+        command: "cursor-agent",
+        dialect: "Cursor private",
+        token_env: None,
+        base_url_env: None,
+        endpoint_suffix: "",
+        model_owners: &[],
+        strict_owner: false,
+        default_reasoning_effort: "",
+        model_arg: None,
+        non_interactive_arg: None,
+        non_interactive_aliases: &[],
+        non_interactive_arg_takes_a_value: false,
+        isolation: ClientIsolation::Unsupported,
+        setup_limitation: Some(
+            "Cursor CLI accepts CURSOR_API_ENDPOINT, but speaks Connect-RPC over an unversioned private agent.v1/aiserver.v1 protocol rather than a supported vendor API; native Cursor routing is not implemented. See docs/use-cases/cli-cursor.md for the support tier, the scoped adapter work, and the opt-in TLS-proxy route",
+        ),
+    },
+    ClientIntegration {
+        kind: ClientKind::GeminiCli,
+        name: "Gemini CLI",
+        command: "gemini",
+        dialect: "Gemini native",
+        token_env: Some("GEMINI_API_KEY"),
+        base_url_env: Some("GOOGLE_GEMINI_BASE_URL"),
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::Gemini,
+        ),
+        model_owners: &[GOOGLE_MODEL_OWNER],
+        strict_owner: false,
+        default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
+        model_arg: Some("--model"),
+        non_interactive_arg: Some("-p"),
+        non_interactive_aliases: &["--prompt"],
+        non_interactive_arg_takes_a_value: true,
+        isolation: ClientIsolation::GeminiHome,
+        setup_limitation: Some(
+            "Gemini CLI permanent setup is unavailable because its individual Code Assist flow aborts with IneligibleTierError; use `link-assistant-router with gemini` for isolated API-key mode",
+        ),
+    },
+    ClientIntegration {
+        kind: ClientKind::GrokCli,
+        name: "Grok CLI",
+        command: "grok",
+        dialect: "OpenAI Chat",
+        token_env: Some(GROK_TOKEN_ENV),
+        base_url_env: Some(GROK_BASE_ENV),
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::OpenAi,
+        ),
+        model_owners: &[],
+        strict_owner: false,
+        default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
+        model_arg: Some("--model"),
+        non_interactive_arg: Some("-p"),
+        non_interactive_aliases: &["--prompt"],
+        non_interactive_arg_takes_a_value: true,
+        isolation: ClientIsolation::Home,
+        setup_limitation: None,
+    },
+    ClientIntegration {
+        kind: ClientKind::Opencode,
+        name: "OpenCode",
+        command: "opencode",
+        dialect: "OpenAI Chat",
+        token_env: Some(ROUTER_TOKEN_ENV),
+        base_url_env: None,
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::OpenAi,
+        ),
+        model_owners: &[],
+        strict_owner: false,
+        default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
+        model_arg: Some("--model"),
+        non_interactive_arg: Some("run"),
+        non_interactive_aliases: &[],
+        non_interactive_arg_takes_a_value: false,
+        isolation: ClientIsolation::ConfigFile,
+        setup_limitation: None,
+    },
+    ClientIntegration {
+        kind: ClientKind::QwenCode,
+        name: "Qwen Code",
+        command: "qwen",
+        dialect: "OpenAI Chat",
+        token_env: Some(ROUTER_TOKEN_ENV),
+        base_url_env: Some("OPENAI_BASE_URL"),
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::Qwen,
+        ),
+        model_owners: &[QWEN_MODEL_OWNER],
+        strict_owner: false,
+        default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
+        model_arg: Some("--model"),
+        non_interactive_arg: Some("-p"),
+        non_interactive_aliases: &["--prompt"],
+        non_interactive_arg_takes_a_value: true,
+        isolation: ClientIsolation::Home,
+        setup_limitation: None,
+    },
+    ClientIntegration {
+        kind: ClientKind::Agent,
+        name: "Link.Assistant Agent",
+        command: "agent",
+        dialect: "OpenAI Chat",
+        token_env: Some(ROUTER_TOKEN_ENV),
+        base_url_env: None,
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::OpenAi,
+        ),
+        model_owners: &[],
+        strict_owner: false,
+        default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
+        model_arg: Some("--model"),
+        non_interactive_arg: Some("--prompt"),
+        non_interactive_aliases: &["-p"],
+        non_interactive_arg_takes_a_value: true,
+        isolation: ClientIsolation::ConfigFile,
+        setup_limitation: None,
+    },
+];
+
+impl ClientKind {
+    pub const ALL: [Self; 8] = [
+        Self::Codex,
+        Self::ClaudeCode,
+        Self::Cursor,
+        Self::GeminiCli,
+        Self::GrokCli,
+        Self::Opencode,
+        Self::QwenCode,
+        Self::Agent,
+    ];
+
+    #[must_use]
+    pub const fn command(self) -> &'static str {
+        self.integration().command
+    }
+
+    #[must_use]
+    pub const fn display_name(self) -> &'static str {
+        self.integration().name
+    }
+
+    #[must_use]
+    pub const fn dialect(self) -> &'static str {
+        self.integration().dialect
+    }
+
+    #[must_use]
+    pub const fn token_env(self) -> Option<&'static str> {
+        self.integration().token_env
+    }
+
+    #[must_use]
+    pub const fn setup_limitation(self) -> Option<&'static str> {
+        self.integration().setup_limitation
+    }
+
+    #[must_use]
+    pub const fn base_url_env(self) -> Option<&'static str> {
+        self.integration().base_url_env
+    }
+
+    #[must_use]
+    pub const fn integration(self) -> &'static ClientIntegration {
+        &CLIENT_INTEGRATIONS[self as usize]
+    }
+
+    /// Parse a canonical client adapter name or one of its documented aliases.
+    #[must_use]
+    pub fn from_str_opt(value: &str) -> Option<Self> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "codex" => Some(Self::Codex),
+            "claude" | "claude-code" => Some(Self::ClaudeCode),
+            "cursor" | "cursor-agent" => Some(Self::Cursor),
+            "gemini" | "gemini-cli" => Some(Self::GeminiCli),
+            "grok" | "grok-cli" => Some(Self::GrokCli),
+            "opencode" => Some(Self::Opencode),
+            "qwen" | "qwen-code" => Some(Self::QwenCode),
+            "agent" => Some(Self::Agent),
+            _ => None,
+        }
+    }
+}
+
+impl ClientKind {
+    /// The canonical name: the command the client installs as.
+    ///
+    /// This is the single source of the name every surface shows, so
+    /// `clients list`, `--help` and the `invalid value` error cannot disagree
+    /// (issue #220). It is asserted equal to [`ClientIntegration::command`] in
+    /// the tests, which is the invariant that keeps them from drifting.
+    #[must_use]
+    pub const fn canonical_name(self) -> &'static str {
+        self.integration().command
+    }
+
+    /// The name this client used before v0.91.0.
+    ///
+    /// Kept because it names files already on disk — the managed environment
+    /// and credential-metadata paths are derived from the client name, so a
+    /// rename alone would orphan an existing installation's `claude-code.env`
+    /// rather than migrate it.
+    #[must_use]
+    pub const fn legacy_name(self) -> &'static str {
+        match self {
+            Self::ClaudeCode => "claude-code",
+            Self::Cursor => "cursor",
+            Self::GeminiCli => "gemini-cli",
+            Self::GrokCli => "grok-cli",
+            Self::Codex => "codex",
+            Self::Opencode => "opencode",
+            Self::QwenCode => "qwen-code",
+            Self::Agent => "agent",
+        }
+    }
+}
+
+impl fmt::Display for ClientKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.pad(self.canonical_name())
+    }
+}
+
+/// Reads and updates supported clients below their normal user config roots.
+#[derive(Debug)]
+pub struct ClientManager {
+    home: PathBuf,
+    codex_home: PathBuf,
+    claude_home: PathBuf,
+    config_home: PathBuf,
+    qwen_home: PathBuf,
+    gemini_home: PathBuf,
+    cursor_home: PathBuf,
+    /// Whether ambient process environment may answer "is the token set?".
+    ///
+    /// An isolated root exists to prove a lifecycle without touching real user
+    /// settings, so it must not report a variable exported in the calling shell
+    /// as if the isolated setup had produced it.
+    respect_environment: bool,
+}
+
+impl ClientManager {
+    /// Resolve client directories, respecting the clients' own override vars.
+    pub fn from_env() -> Result<Self, ClientError> {
+        // An empty variable is unset, not configured: `Some("")` made every
+        // path below relative to the working directory (issue #340). The
+        // clients' own override variables get the same treatment, since a
+        // harness that empties one means "do not use it".
+        let directory = crate::env_paths::directory;
+        let home = directory("HOME")
+            .ok_or_else(|| ClientError::message("HOME is unset; cannot locate client configs"))?;
+        let home = crate::env_paths::require_absolute(home, "the client home")
+            .map_err(ClientError::message)?;
+        let codex_home = directory("CODEX_HOME").unwrap_or_else(|| home.join(".codex"));
+        let claude_home = directory("CLAUDE_CONFIG_DIR").unwrap_or_else(|| home.join(".claude"));
+        let config_home = directory("XDG_CONFIG_HOME").unwrap_or_else(|| home.join(".config"));
+        let qwen_home = crate::env_paths::qwen_directory("QWEN_HOME", &home)
+            .map_err(ClientError::message)?
+            .unwrap_or_else(|| home.join(".qwen"));
+        let gemini_home = directory("GEMINI_CLI_HOME")
+            .unwrap_or_else(|| home.clone())
+            .join(".gemini");
+        let cursor_home = directory("CURSOR_CONFIG_DIR").unwrap_or_else(|| home.join(".cursor"));
+        Ok(Self {
+            home,
+            codex_home,
+            claude_home,
+            config_home,
+            qwen_home,
+            gemini_home,
+            cursor_home,
+            respect_environment: true,
+        })
+    }
+
+    /// Build a manager whose every client path is rooted below `home`.
+    #[must_use]
+    pub fn isolated(home: &Path) -> Self {
+        Self {
+            home: home.to_path_buf(),
+            codex_home: home.join(".codex"),
+            claude_home: home.join(".claude"),
+            config_home: home.join(".config"),
+            qwen_home: home.join(".qwen"),
+            gemini_home: home.join(".gemini"),
+            cursor_home: home.join(".cursor"),
+            respect_environment: false,
+        }
+    }
+
+    /// Read a process environment variable unless this root is isolated.
+    pub(super) fn environment_var(&self, name: &str) -> Option<String> {
+        self.respect_environment
+            .then(|| crate::operation_context::var(name).ok())
+            .flatten()
+    }
+
+    #[must_use]
+    pub fn config_path(&self, client: ClientKind) -> PathBuf {
+        match client {
+            ClientKind::Codex => self.codex_home.join("config.toml"),
+            ClientKind::ClaudeCode => self.claude_home.join("settings.json"),
+            ClientKind::Cursor => self.cursor_home.join("cli-config.json"),
+            ClientKind::GeminiCli => self.gemini_home.join("settings.json"),
+            ClientKind::GrokCli => self.home.join(".grok/user-settings.json"),
+            ClientKind::Opencode => self.config_home.join("opencode/opencode.json"),
+            ClientKind::QwenCode => self.qwen_home.join("settings.json"),
+            ClientKind::Agent => self.config_home.join("link-assistant-agent/opencode.json"),
+        }
+    }
+
+    #[must_use]
+    pub fn environment_path(&self, client: ClientKind) -> PathBuf {
+        self.managed_path(client, "env")
+    }
+
+    /// The managed file for `client`, preferring the canonical name but
+    /// honouring a file already written under the pre-v0.91.0 name.
+    ///
+    /// The client names became the real command names in v0.91.0 (issue #220),
+    /// and these paths are derived from the name — so without this an existing
+    /// installation's `claude-code.env` would simply stop being found, and the
+    /// user would be told to run a setup they had already run.
+    fn managed_path(&self, client: ClientKind, extension: &str) -> PathBuf {
+        let directory = self.config_home.join("link-assistant-router/clients");
+        let canonical = directory.join(format!("{}.{extension}", client.canonical_name()));
+        if canonical.exists() {
+            return canonical;
+        }
+        let legacy = directory.join(format!("{}.{extension}", client.legacy_name()));
+        if legacy.exists() {
+            return legacy;
+        }
+        canonical
+    }
+
+    /// Where the secret-free record of the managed credential is kept.
+    #[must_use]
+    pub fn credential_metadata_path(&self, client: ClientKind) -> PathBuf {
+        self.managed_path(client, "credential.json")
+    }
+
+    /// Read the credential record written by the last `clients setup`.
+    pub fn credential_metadata(
+        &self,
+        client: ClientKind,
+    ) -> Result<Option<ManagedCredential>, ClientError> {
+        credentials::read(&self.credential_metadata_path(client))
+    }
+
+    /// Read the token from Router's private managed environment file.
+    pub(crate) fn managed_token(&self, client: ClientKind) -> Result<Option<String>, ClientError> {
+        let Some(name) = client.token_env() else {
+            return Ok(None);
+        };
+        read_environment_value(&self.environment_path(client), name)
+    }
+
+    /// Record which token the managed environment file now holds.
+    pub fn write_credential_metadata(
+        &self,
+        client: ClientKind,
+        credential: &ManagedCredential,
+    ) -> Result<(), ClientError> {
+        credentials::write(&self.credential_metadata_path(client), credential)
+    }
+
+    /// Ownership marker used to make a managed configuration reversible.
+    #[must_use]
+    pub fn ownership_marker_path(&self, client: ClientKind) -> Option<PathBuf> {
+        match client {
+            ClientKind::Codex => Some(self.codex_home.join(OWNERSHIP_MARKER)),
+            ClientKind::ClaudeCode => Some(self.claude_home.join(OWNERSHIP_MARKER)),
+            ClientKind::Opencode | ClientKind::Agent => Some(
+                self.config_path(client)
+                    .parent()
+                    .expect("client config has a parent")
+                    .join(OWNERSHIP_MARKER),
+            ),
+            ClientKind::QwenCode => Some(self.qwen_home.join(OWNERSHIP_MARKER)),
+            ClientKind::Cursor | ClientKind::GeminiCli | ClientKind::GrokCli => None,
+        }
+    }
+
+    /// What this machine holds for `client`, whatever shape its files are in.
+    ///
+    /// Never fails on a damaged configuration: the reason is carried in the
+    /// row instead, so one hand-edited file cannot take the rest of the
+    /// listing away from the reader (issue #304).
+    pub(super) fn raw_status(&self, client: ClientKind) -> ClientStatus {
+        let path = self.config_path(client);
+        let read = match client {
+            ClientKind::Codex => read_codex_base_url(&path),
+            ClientKind::ClaudeCode => read_claude_base_url(&path),
+            ClientKind::Opencode | ClientKind::Agent => read_json_provider_base_url(&path),
+            // Gemini and Grok are configured by the environment rather than a
+            // file the router owns. Grok has always had a reader for it; a
+            // hardcoded `None` for Gemini reported "not configured" whether it
+            // was or not, so `clients list` and `clients show gemini` contradicted
+            // a setup that had just succeeded (issue #303). `clients doctor` still
+            // refuses Gemini earlier, on its `setup_limitation`: the probe has no
+            // shape for it.
+            ClientKind::QwenCode => read_qwen_base_url(&path),
+            ClientKind::GeminiCli | ClientKind::GrokCli => {
+                let name = client
+                    .base_url_env()
+                    .expect("environment-configured clients name their variable");
+                Ok(self.environment_var(name).or_else(|| {
+                    read_environment_value(&self.environment_path(client), name)
+                        .ok()
+                        .flatten()
+                }))
+            }
+            ClientKind::Cursor => Ok(None),
+        };
+        let (base_url, unreadable) = match read {
+            Ok(base_url) => (base_url, None),
+            Err(error) => (None, Some(error.to_string())),
+        };
+        let token_env = client.token_env();
+        ClientStatus {
+            client: client.to_string(),
+            installed: command_exists(client.command()),
+            configured: base_url.is_some(),
+            config_path: path,
+            dialect: client.dialect(),
+            base_url,
+            token_env,
+            token_env_set: token_env.is_some_and(|name| {
+                self.environment_var(name).is_some()
+                    || read_environment_value(&self.environment_path(client), name)
+                        .ok()
+                        .flatten()
+                        .is_some()
+            }),
+            ownership_state: OwnershipState::Unconfigured,
+            effective_source: None,
+            conflicts: Vec::new(),
+            unreadable,
+            unsupported: client.setup_limitation(),
+        }
+    }
+
+    /// Analyze endpoint ownership and routing-critical precedence without
+    /// retaining any credential value.
+    pub fn analyze(&self, client: ClientKind) -> Result<ClientConfigAnalysis, ClientError> {
+        analysis::analyze_client(self, client)
+    }
+
+    /// What this machine holds for `client`, including explicit ownership.
+    pub fn status(&self, client: ClientKind) -> Result<ClientStatus, ClientError> {
+        let mut status = self.raw_status(client);
+        let analysis = self.analyze(client)?;
+        status.configured = analysis.state == OwnershipState::ManagedIntact;
+        status.base_url.clone_from(&analysis.safe_origin);
+        status.ownership_state = analysis.state;
+        status.effective_source = analysis.effective_source;
+        status.conflicts = analysis.conflicts;
+        Ok(status)
+    }
+
+    #[allow(dead_code)]
+    pub(crate) fn setup(
+        &self,
+        client: ClientKind,
+        base_url: &str,
+        models: &[RouterModel],
+    ) -> Result<SetupResult, ClientError> {
+        self.setup_with_codex_backend(client, base_url, models, None)
+    }
+
+    pub(crate) fn setup_with_codex_backend(
+        &self,
+        client: ClientKind,
+        base_url: &str,
+        models: &[RouterModel],
+        codex_backend_base_url: Option<&str>,
+    ) -> Result<SetupResult, ClientError> {
+        self.setup_with_codex_backend_and_model(
+            client,
+            base_url,
+            models,
+            codex_backend_base_url,
+            None,
+        )
+    }
+
+    pub(crate) fn setup_with_codex_backend_and_model(
+        &self,
+        client: ClientKind,
+        base_url: &str,
+        models: &[RouterModel],
+        codex_backend_base_url: Option<&str>,
+        selected_model: Option<&str>,
+    ) -> Result<SetupResult, ClientError> {
+        if let Some(limitation) = client.setup_limitation() {
+            return Err(ClientError::message(limitation));
+        }
+        let base_url = normalize_base_url(base_url)?;
+        let endpoint = format!(
+            "{}{}",
+            base_url.trim_end_matches('/'),
+            client.integration().endpoint_suffix
+        );
+        match client {
+            ClientKind::Codex => self.setup_codex(
+                &endpoint,
+                codex_backend_base_url,
+                codex_supports_websockets(models, selected_model),
+            ),
+            ClientKind::ClaudeCode => self.setup_claude(&endpoint, models),
+            ClientKind::Opencode | ClientKind::Agent => {
+                self.setup_json_provider(client, &endpoint, models)
+            }
+            ClientKind::QwenCode => self.setup_qwen(&endpoint, models),
+            ClientKind::GrokCli => Ok(unchanged(self.config_path(client))),
+            ClientKind::Cursor | ClientKind::GeminiCli => unreachable!(),
+        }
+    }
+
+    pub fn remove(&self, client: ClientKind) -> Result<SetupResult, ClientError> {
+        let mut result = match client {
+            ClientKind::Codex => self.remove_codex(),
+            ClientKind::ClaudeCode => self.remove_claude(),
+            ClientKind::Opencode | ClientKind::Agent => self.remove_json_provider(client),
+            ClientKind::QwenCode => self.remove_qwen(),
+            ClientKind::GrokCli | ClientKind::Cursor | ClientKind::GeminiCli => {
+                Ok(unchanged(self.config_path(client)))
+            }
+        }?;
+        let environment = self.environment_path(client);
+        if environment.exists() {
+            fs::remove_file(&environment)?;
+            if !result.changed {
+                result.path = environment;
+                result.changed = true;
+            }
+        }
+        // The credential record only describes a secret that no longer exists
+        // locally, so it goes last and never outlives the environment file.
+        credentials::remove(&self.credential_metadata_path(client))?;
+        Ok(result)
+    }
+
+    fn setup_claude(
+        &self,
+        base_url: &str,
+        models: &[RouterModel],
+    ) -> Result<SetupResult, ClientError> {
+        let path = self.config_path(ClientKind::ClaudeCode);
+        let source = read_or_empty(&path)?;
+        let mut document: Value = if source.trim().is_empty() {
+            json!({})
+        } else {
+            serde_json::from_str(&source).map_err(|error| {
+                ClientError::message(format!("invalid JSON in {}: {error}", path.display()))
+            })?
+        };
+        let root = document.as_object_mut().ok_or_else(|| {
+            ClientError::message(format!("{} must contain a JSON object", path.display()))
+        })?;
+        let saved_model = root
+            .get("model")
+            .and_then(Value::as_str)
+            .map(str::to_string);
+        let has_anthropic = usable_models(ClientKind::ClaudeCode, models)
+            .iter()
+            .any(|model| model.owned_by == ANTHROPIC_MODEL_OWNER);
+        let semantic_default = saved_model
+            .as_deref()
+            .is_some_and(|saved| saved.trim().eq_ignore_ascii_case("default"));
+        if let Some(saved) = &saved_model
+            && !semantic_default
+            && !catalog::model_is_authorized(ClientKind::ClaudeCode, models, saved.trim())
+            && !(has_anthropic
+                && ["opus", "sonnet", "haiku"].iter().any(|family| {
+                    saved
+                        .trim()
+                        .split('[')
+                        .next()
+                        .is_some_and(|base| base.eq_ignore_ascii_case(family))
+                }))
+        {
+            return Err(ClientError::message(
+                "the saved Claude model is no longer authorized; choose an advertised model explicitly",
+            ));
+        }
+        let env = root.entry("env").or_insert_with(|| json!({}));
+        let env = env.as_object_mut().ok_or_else(|| {
+            ClientError::message(format!("{}.env must be a JSON object", path.display()))
+        })?;
+        let marker_path = self.claude_home.join(OWNERSHIP_MARKER);
+        let existing_marker = claude_marker(&marker_path)?;
+        // Claude Code treats presence, including the old Router value `"0"`,
+        // as the disable switch. Migrate only a value our marker proves we
+        // installed; an unmarked value belongs to the user and stays intact.
+        if let Some((_, _, entries)) = existing_marker.as_ref()
+            && let Some((_, _, previous)) = entries.iter().find(|(key, managed, _)| {
+                key == "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC" && managed.as_deref() == Some("0")
+            })
+            && env
+                .get("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
+                .and_then(Value::as_str)
+                == Some("0")
+        {
+            match previous {
+                Some(previous) => {
+                    env.insert(
+                        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC".into(),
+                        Value::String(previous.clone()),
+                    );
+                }
+                None => {
+                    env.remove("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC");
+                }
+            }
+        }
+        // Recorded before it is replaced, so removal can put it back — the
+        // mechanism `setup_codex` already uses for `model_provider` (#302).
+        let previous = env
+            .get(CLAUDE_BASE_ENV)
+            .and_then(Value::as_str)
+            .map(str::to_string)
+            .filter(|previous| previous != base_url);
+        env.insert(CLAUDE_BASE_ENV.into(), Value::String(base_url.into()));
+        // Only replace a model value the ownership marker still identifies as
+        // ours. A /model selection or an edited environment belongs to the user.
+        let user_model_keys: Vec<_> = CLAUDE_MODEL_ENV
+            .into_iter()
+            .filter(|key| {
+                env.get(*key).is_some_and(|value| {
+                    !existing_marker.as_ref().is_some_and(|(_, _, entries)| {
+                        entries.iter().any(|(recorded, managed, _)| {
+                            recorded == key && matches!(managed, Some(previous) if value.as_str() == Some(previous.as_str()))
+                        })
+                    })
+                })
+            })
+            .collect();
+        let mut managed_gateway_env = Vec::new();
+        let mut manage = |key: &str, managed: Option<&str>| {
+            let previous = existing_marker
+                .as_ref()
+                .and_then(|(_, _, entries)| {
+                    entries
+                        .iter()
+                        .find(|(recorded, _, _)| recorded == key)
+                        .map(|(_, _, previous)| previous.clone())
+                })
+                .unwrap_or_else(|| env.get(key).and_then(Value::as_str).map(str::to_string));
+            if let Some(managed) = managed {
+                env.insert(key.into(), Value::String(managed.into()));
+            } else {
+                env.remove(key);
+            }
+            managed_gateway_env.push((key.to_string(), managed.map(str::to_string), previous));
+        };
+        manage("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", Some("1"));
+        manage("ANTHROPIC_AUTH_TOKEN", None);
+        manage("ANTHROPIC_API_KEY", None);
+        let gateway_model = claude_gateway_model(models, None);
+        for key in CLAUDE_MODEL_ENV {
+            if user_model_keys.contains(&key) {
+                continue;
+            }
+            let managed = CLAUDE_GATEWAY_TARGET_ENV
+                .contains(&key)
+                .then_some(gateway_model.as_deref())
+                .flatten();
+            manage(
+                key,
+                if saved_model.is_some() && !semantic_default {
+                    None
+                } else {
+                    managed
+                },
+            );
+        }
+        let rendered = format!("{}\n", serde_json::to_string_pretty(&document)?);
+        let result = write_if_changed(&path, &source, &rendered)?;
+        // A marker already present names the value the *first* takeover
+        // replaced; a second configure must not overwrite it with its own URL.
+        let previous = match claude_marker(&marker_path)? {
+            Some((_, recorded, _)) => recorded,
+            None => previous,
+        };
+        write_claude_marker(
+            &marker_path,
+            base_url,
+            previous.as_deref(),
+            &managed_gateway_env,
+            &user_model_keys,
+        )?;
+        Ok(result)
+    }
+
+    fn remove_claude(&self) -> Result<SetupResult, ClientError> {
+        let path = self.config_path(ClientKind::ClaudeCode);
+        let source = read_or_empty(&path)?;
+        if source.trim().is_empty() {
+            return Ok(unchanged(path));
+        }
+        let marker_path = self.claude_home.join(OWNERSHIP_MARKER);
+        let Some((managed_url, previous_url, gateway_env)) = claude_marker(&marker_path)? else {
+            return Ok(unchanged(path));
+        };
+        let mut document: Value = serde_json::from_str(&source).map_err(|error| {
+            ClientError::message(format!("invalid JSON in {}: {error}", path.display()))
+        })?;
+        let owns_current_url = document
+            .get("env")
+            .and_then(|env| env.get(CLAUDE_BASE_ENV))
+            .and_then(Value::as_str)
+            == Some(managed_url.as_str());
+        if let Some(env) = document.get_mut("env").and_then(Value::as_object_mut) {
+            if owns_current_url {
+                match previous_url.as_deref() {
+                    // Restore what the takeover replaced rather than deleting the
+                    // key: the value was the user's, not the router's (#302).
+                    Some(previous) => {
+                        env.insert(CLAUDE_BASE_ENV.into(), Value::String(previous.into()));
+                        println!("restored {CLAUDE_BASE_ENV}={previous}");
+                    }
+                    None => {
+                        env.remove(CLAUDE_BASE_ENV);
+                    }
+                }
+            }
+            for (key, managed, previous) in gateway_env {
+                let owns_current = managed.as_deref().map_or_else(
+                    || !env.contains_key(&key),
+                    |managed| env.get(&key).and_then(Value::as_str) == Some(managed),
+                );
+                if !owns_current {
+                    continue;
+                }
+                if let Some(previous) = previous {
+                    env.insert(key, Value::String(previous));
+                } else {
+                    env.remove(&key);
+                }
+            }
+        }
+        let rendered = format!("{}\n", serde_json::to_string_pretty(&document)?);
+        let result = write_if_changed(&path, &source, &rendered)?;
+        if marker_path.exists() {
+            fs::remove_file(marker_path)?;
+        }
+        Ok(result)
+    }
+}
+mod util;
+use util::{
+    command_exists, compact_body, normalize_base_url, read_claude_base_url, read_codex_base_url,
+};
+#[cfg(test)]
+#[path = "clients_tests.rs"]
+mod tests;

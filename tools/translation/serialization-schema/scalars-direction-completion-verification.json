@@ -1,0 +1,954 @@
+{
+  "schema": "scalar-directions-bulk-completion-verification-v1",
+  "sourceHead": "80affd91269a942dbb45b2be4f82983e8bcdf46e",
+  "artifactHead": "4f9f45551bdbb893ea435d108dfbe0cd60bd3fc8",
+  "retainedInitial47EvidenceHead": "267ca70de87dba673887e51d4a2458b73ff2d2d7",
+  "retainedRepaired49EvidenceHead": "80affd91269a942dbb45b2be4f82983e8bcdf46e",
+  "scope": [
+    "tools/translation/serialization-schema/bulk.test.mjs",
+    "tools/translation/serialization-schema/serialization-schema.test.mjs",
+    "tools/translation/serialization-schema/scalars-direction.test.mjs",
+    "experiments/issue-759/acceptance/affinity-prefix.test.mjs",
+    "experiments/issue-759/acceptance/affinity-file.test.mjs",
+    "experiments/issue-759/acceptance/provider-responses.test.mjs",
+    "experiments/issue-759/acceptance/provider-conversations.test.mjs",
+    "experiments/issue-759/acceptance/provider-resource-capture.test.mjs",
+    "packages/javascript/test/native-core.test.mjs",
+    "packages/javascript/test/native-service.test.mjs",
+    "packages/javascript/test/native-server.test.mjs",
+    "packages/javascript/test/native-storage.test.mjs"
+  ],
+  "authoredCasesPerEngine": 198,
+  "inputCount": 1145,
+  "immutableInputs": true,
+  "producer": {
+    "command": [
+      "node",
+      "tools/translation/serialization-schema/bulk.mjs",
+      "--write"
+    ],
+    "harness_sha256": "c0f8a786b2abbe06da29c1978b38a476809f44b95072b98f3aa021128cbd5cc3",
+    "cap_seconds": 60,
+    "exit_code": 0,
+    "timed_out": false,
+    "wall_seconds": 3.824,
+    "unchanged_all_original_inputs": true,
+    "only_expected_mutation_paths": true,
+    "all_four_artifacts_changed": true,
+    "before_output_sha256": {
+      "tools/translation/serialization-schema/bulk-generated/router-serialization.meta.json": "dbe186486fb978c244d6969c38fb422e9aafd1c6ffb31d428c7eb97d05ab21f4",
+      "tools/translation/serialization-schema/bulk-generated/router-serialization.mjs": "c8994972e532654902a0be1adb81d68ee93ba07f91075fc9c50acb3f715d6c87",
+      "tools/translation/serialization-schema/bulk-generated/router-serialization.ts": "3735efbf61618ccf909ed33f89d99b9a2d657e41c7a61da15e18ac406500a60e",
+      "tools/translation/serialization-schema/bulk-generated/router-serialization-inventory.json": "9110ef58556c394a91af62e764565b8c9ea031fca529462faf4653fe45c08bd8"
+    },
+    "outputs": [
+      {
+        "file": "tools/translation/serialization-schema/bulk-generated/router-serialization.meta.json",
+        "bytes": 3761588,
+        "sha256": "eb9a7a14f52c5353fca8288c8692ff8c1cec11f307927fd102c6835aec5cae80"
+      },
+      {
+        "file": "tools/translation/serialization-schema/bulk-generated/router-serialization.mjs",
+        "bytes": 54931,
+        "sha256": "3cd5ccd2e1ab733f082423f2a034e16556f2b7ae6349858cd5c0a345ce34fcfe"
+      },
+      {
+        "file": "tools/translation/serialization-schema/bulk-generated/router-serialization.ts",
+        "bytes": 55597,
+        "sha256": "2b36a8954eb9386a01a26a2e7f26a9ce1261c9036af060b3c3486286cb2f9a92"
+      },
+      {
+        "file": "tools/translation/serialization-schema/bulk-generated/router-serialization-inventory.json",
+        "bytes": 918061,
+        "sha256": "45d344bd8603379dd5be972cfa52cd47ed9eb58c065f2e2eeb59bdc99003aa17"
+      }
+    ],
+    "temporary_entries_before_cleanup": [
+      "xcrun_db"
+    ],
+    "temporary_bytes_before_cleanup": 491
+  },
+  "results": [
+    {
+      "engine": "artifact-check",
+      "command": [
+        "node",
+        "tools/translation/serialization-schema/bulk.mjs",
+        "--check"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 3.672,
+      "temporary_bytes_before_cleanup": 0,
+      "remaining_temporary_entries_before_cleanup": []
+    },
+    {
+      "engine": "descriptor-tsc",
+      "command": [
+        "node",
+        "tools/translation/serialization-schema/check-bulk-typescript.mjs"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 0.351,
+      "temporary_bytes_before_cleanup": 0,
+      "remaining_temporary_entries_before_cleanup": []
+    },
+    {
+      "engine": "node",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/serialization-schema/bulk.test.mjs",
+        "tools/translation/serialization-schema/serialization-schema.test.mjs",
+        "tools/translation/serialization-schema/scalars-direction.test.mjs",
+        "experiments/issue-759/acceptance/affinity-prefix.test.mjs",
+        "experiments/issue-759/acceptance/affinity-file.test.mjs",
+        "experiments/issue-759/acceptance/provider-responses.test.mjs",
+        "experiments/issue-759/acceptance/provider-conversations.test.mjs",
+        "experiments/issue-759/acceptance/provider-resource-capture.test.mjs",
+        "packages/javascript/test/native-core.test.mjs",
+        "packages/javascript/test/native-service.test.mjs",
+        "packages/javascript/test/native-server.test.mjs",
+        "packages/javascript/test/native-storage.test.mjs"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 28.348,
+      "temporary_bytes_before_cleanup": 0,
+      "remaining_temporary_entries_before_cleanup": []
+    },
+    {
+      "engine": "bun",
+      "command": [
+        "bun",
+        "test",
+        "--timeout",
+        "15000",
+        "tools/translation/serialization-schema/bulk.test.mjs",
+        "tools/translation/serialization-schema/serialization-schema.test.mjs",
+        "tools/translation/serialization-schema/scalars-direction.test.mjs",
+        "experiments/issue-759/acceptance/affinity-prefix.test.mjs",
+        "experiments/issue-759/acceptance/affinity-file.test.mjs",
+        "experiments/issue-759/acceptance/provider-responses.test.mjs",
+        "experiments/issue-759/acceptance/provider-conversations.test.mjs",
+        "experiments/issue-759/acceptance/provider-resource-capture.test.mjs",
+        "packages/javascript/test/native-core.test.mjs",
+        "packages/javascript/test/native-service.test.mjs",
+        "packages/javascript/test/native-server.test.mjs",
+        "packages/javascript/test/native-storage.test.mjs"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 16.537,
+      "temporary_bytes_before_cleanup": 0,
+      "remaining_temporary_entries_before_cleanup": []
+    }
+  ],
+  "perEngineInventory": {
+    "pass": 198,
+    "fail": 0,
+    "skip": 0,
+    "timeouts": 0
+  },
+  "supportedOwners": 73,
+  "supportedDirections": {
+    "both": 48,
+    "serialize": 9,
+    "deserialize": 16
+  },
+  "refusedOwners": 468,
+  "excludedOwners": 134,
+  "manualHeadersUnproved": 170,
+  "sourceCoverage": 558,
+  "additionalOwnersAgainstVerified29": 44,
+  "actualOriginalOwners": [
+    {
+      "owner": "crate::account_limits::LimitStatus",
+      "source": "src/account_limits.rs",
+      "sourceSha256": "2eabc27d4a716f27d202c3b72a311a929002edc1f5351cef71aee571155ed51b",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::account_limits::Pause",
+      "source": "src/account_limits.rs",
+      "sourceSha256": "2eabc27d4a716f27d202c3b72a311a929002edc1f5351cef71aee571155ed51b",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::account_limits::PauseKind",
+      "source": "src/account_limits.rs",
+      "sourceSha256": "2eabc27d4a716f27d202c3b72a311a929002edc1f5351cef71aee571155ed51b",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::account_routing_policy::ErrorAction",
+      "source": "src/account_routing_policy.rs",
+      "sourceSha256": "64d863e769dc0dc64d81868e88bb0ab0a6dd45f3d09be61bade739a18fd13d92",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::admin::AdminStatus",
+      "source": "src/admin.rs",
+      "sourceSha256": "6ff7905bacd552ef1da7cde41c172e824668ef8913087a670a04bdabe377bf1e",
+      "directions": {
+        "deserialize": false,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::admin::CredentialKind",
+      "source": "src/admin.rs",
+      "sourceSha256": "6ff7905bacd552ef1da7cde41c172e824668ef8913087a670a04bdabe377bf1e",
+      "directions": {
+        "deserialize": false,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::admin_api::ConfirmRequest",
+      "source": "src/admin_api.rs",
+      "sourceSha256": "4f4a28b55fa4e3a07700dd0560eaa745dfeec127785c7cac2efbdf61e23c78f8",
+      "directions": {
+        "deserialize": true,
+        "serialize": false
+      }
+    },
+    {
+      "owner": "crate::admin_api::TtlRequest",
+      "source": "src/admin_api.rs",
+      "sourceSha256": "4f4a28b55fa4e3a07700dd0560eaa745dfeec127785c7cac2efbdf61e23c78f8",
+      "directions": {
+        "deserialize": true,
+        "serialize": false
+      }
+    },
+    {
+      "owner": "crate::auth::DeviceAuthorizationResponse",
+      "source": "src/auth.rs",
+      "sourceSha256": "e4222da65913ce755353d55ea06053cd0885a89dc05949f9c1db6e9a0f153336",
+      "directions": {
+        "deserialize": true,
+        "serialize": false
+      }
+    },
+    {
+      "owner": "crate::auth::TokenResponse",
+      "source": "src/auth.rs",
+      "sourceSha256": "e4222da65913ce755353d55ea06053cd0885a89dc05949f9c1db6e9a0f153336",
+      "directions": {
+        "deserialize": true,
+        "serialize": false
+      }
+    },
+    {
+      "owner": "crate::capabilities::AdaptiveThinkingEvidence",
+      "source": "src/capabilities.rs",
+      "sourceSha256": "7a8bb8a76288590bbc9d556b77d4415cd513837a45d88edb278dc5c6b7b6b222",
+      "directions": {
+        "deserialize": true,
+        "serialize": false
+      }
+    },
+    {
+      "owner": "crate::claude_auth::PendingLogin",
+      "source": "src/claude_auth.rs",
+      "sourceSha256": "4e28b3626da69d2444e2cc548cdd3894449520be2c2b601d9de72d19453c563c",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::claude_auth::TokenResponse",
+      "source": "src/claude_auth.rs",
+      "sourceSha256": "4e28b3626da69d2444e2cc548cdd3894449520be2c2b601d9de72d19453c563c",
+      "directions": {
+        "deserialize": true,
+        "serialize": false
+      }
+    },
+    {
+      "owner": "crate::client_lifecycle::backup::Entry",
+      "source": "src/client_lifecycle/backup.rs",
+      "sourceSha256": "5d9c7ca28d351b6a5b19b5fb5d54cc360e7fb50f31028db640eb433bd2e17285",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::client_lifecycle::backup::StoreRecord",
+      "source": "src/client_lifecycle/backup.rs",
+      "sourceSha256": "5d9c7ca28d351b6a5b19b5fb5d54cc360e7fb50f31028db640eb433bd2e17285",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::client_lifecycle::maintenance::Plan",
+      "source": "src/client_lifecycle/maintenance.rs",
+      "sourceSha256": "3bcbcaee67d7f3c957baf43dabdd393639ce96250d5afdc112b2492deb1f16bf",
+      "directions": {
+        "deserialize": false,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::client_policy::ClientProtocol",
+      "source": "src/client_policy.rs",
+      "sourceSha256": "65fe77ca79296f5335a57ebc134c57b5b343a8762d9ca8faaef52d90a9b71bfb",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::clients::analysis::ConfigSource",
+      "source": "src/clients/analysis.rs",
+      "sourceSha256": "9112dfdd95f43c66601b4b3c5e59cae1fe198af2ac0a904b3c4ddfe024794c66",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::clients::analysis::OwnershipState",
+      "source": "src/clients/analysis.rs",
+      "sourceSha256": "9112dfdd95f43c66601b4b3c5e59cae1fe198af2ac0a904b3c4ddfe024794c66",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::clients::catalog::ClaudeModelCapabilities",
+      "source": "src/clients/catalog.rs",
+      "sourceSha256": "6fff6e91d5940ce7457af9d565d872f372d1ebcce7835e8ad3f377a77cc54e97",
+      "directions": {
+        "deserialize": true,
+        "serialize": false
+      }
+    },
+    {
+      "owner": "crate::clients::catalog::RouterClientCapabilities",
+      "source": "src/clients/catalog.rs",
+      "sourceSha256": "6fff6e91d5940ce7457af9d565d872f372d1ebcce7835e8ad3f377a77cc54e97",
+      "directions": {
+        "deserialize": true,
+        "serialize": false
+      }
+    },
+    {
+      "owner": "crate::clients::credentials::ManagedCredential",
+      "source": "src/clients/credentials.rs",
+      "sourceSha256": "3ebc9d4d27338ddf2097e4ae31013d613856e511cf29a240e126e3ef551430e5",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::clients::credentials::TokenSource",
+      "source": "src/clients/credentials.rs",
+      "sourceSha256": "3ebc9d4d27338ddf2097e4ae31013d613856e511cf29a240e126e3ef551430e5",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::codex_loopback_bridge::PersistentState",
+      "source": "src/codex_loopback_bridge.rs",
+      "sourceSha256": "6e93120f6cebbce644471086d38f2b1443eb2e0d8e7d25fdae23f7e9123c4b9e",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::codex_remote_control::EnrollmentIdentity",
+      "source": "src/codex_remote_control.rs",
+      "sourceSha256": "43cb591d410ee78d98ee810bc696c521ace0317df1536c54a8daf9b4d15d8cf0",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::codex_remote_control::EnrollmentRecord",
+      "source": "src/codex_remote_control.rs",
+      "sourceSha256": "43cb591d410ee78d98ee810bc696c521ace0317df1536c54a8daf9b4d15d8cf0",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::codex_remote_control::StoreFile",
+      "source": "src/codex_remote_control.rs",
+      "sourceSha256": "43cb591d410ee78d98ee810bc696c521ace0317df1536c54a8daf9b4d15d8cf0",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::codex_remote_control::StoredEnrollment",
+      "source": "src/codex_remote_control.rs",
+      "sourceSha256": "43cb591d410ee78d98ee810bc696c521ace0317df1536c54a8daf9b4d15d8cf0",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::credential_recovery_store::RecoveryRecord",
+      "source": "src/credential_recovery_store.rs",
+      "sourceSha256": "91af0053ff35f899efd181962f0492665e10bfab06b59e2c30b261dfabbc8f5e",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::credential_status::CredentialAcceptanceReport",
+      "source": "src/credential_status.rs",
+      "sourceSha256": "a1505729929f3325892064b5903b4dac0a89dd294bd1cf44f9b68296ca5604a8",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::credential_status::CredentialAcceptanceState",
+      "source": "src/credential_status.rs",
+      "sourceSha256": "a1505729929f3325892064b5903b4dac0a89dd294bd1cf44f9b68296ca5604a8",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::deploy_local::inventory::Run",
+      "source": "src/deploy_local/inventory.rs",
+      "sourceSha256": "0e10cb035695fa23bb3fb8c72191a657ac6b04df319694856aceffd3a5a03e96",
+      "directions": {
+        "deserialize": false,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::deploy_local::inventory::RunState",
+      "source": "src/deploy_local/inventory.rs",
+      "sourceSha256": "0e10cb035695fa23bb3fb8c72191a657ac6b04df319694856aceffd3a5a03e96",
+      "directions": {
+        "deserialize": false,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::deploy_local::service::Manager",
+      "source": "src/deploy_local/service.rs",
+      "sourceSha256": "11acbe449d5b18fec6e4935bdbcb8414a15fa63eb1a3be6815d59218f2ab007d",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::deploy_local::state::Active",
+      "source": "src/deploy_local/state.rs",
+      "sourceSha256": "a0dc2974d80cc4307749c585cf8aa67aa1926656648d1d49003723ae5fd2b9c7",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::deploy_local::state::Host",
+      "source": "src/deploy_local/state.rs",
+      "sourceSha256": "a0dc2974d80cc4307749c585cf8aa67aa1926656648d1d49003723ae5fd2b9c7",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::deploy_local::state::Phase",
+      "source": "src/deploy_local/state.rs",
+      "sourceSha256": "a0dc2974d80cc4307749c585cf8aa67aa1926656648d1d49003723ae5fd2b9c7",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::deploy_local::state::PreviousKind",
+      "source": "src/deploy_local/state.rs",
+      "sourceSha256": "a0dc2974d80cc4307749c585cf8aa67aa1926656648d1d49003723ae5fd2b9c7",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::deploy_local::state::Transaction",
+      "source": "src/deploy_local/state.rs",
+      "sourceSha256": "a0dc2974d80cc4307749c585cf8aa67aa1926656648d1d49003723ae5fd2b9c7",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::github_proxy::PolicyEffect",
+      "source": "src/github_proxy.rs",
+      "sourceSha256": "3c65440f41bef37e9f55641ae298a8083884a42cffa9797e6c8ab40e81ef4e37",
+      "directions": {
+        "deserialize": true,
+        "serialize": false
+      }
+    },
+    {
+      "owner": "crate::login::LoginStatus",
+      "source": "src/login.rs",
+      "sourceSha256": "fbe7b5cbe73c68dfe53ed0c8b0f343595ed100de9f7175fcd240d69d83b6c0c5",
+      "directions": {
+        "deserialize": false,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::login_api::BeginLoginRequest",
+      "source": "src/login_api.rs",
+      "sourceSha256": "b60b17c7777dc6c3fc6bfea570baed1f8d7adf40737f431a4cf7d04697ca55b0",
+      "directions": {
+        "deserialize": true,
+        "serialize": false
+      }
+    },
+    {
+      "owner": "crate::login_api::SubmitCodeRequest",
+      "source": "src/login_api.rs",
+      "sourceSha256": "b60b17c7777dc6c3fc6bfea570baed1f8d7adf40737f431a4cf7d04697ca55b0",
+      "directions": {
+        "deserialize": true,
+        "serialize": false
+      }
+    },
+    {
+      "owner": "crate::managed_server::PersistedServer",
+      "source": "src/managed_server.rs",
+      "sourceSha256": "761e3824977dd68506291bbe97aa5aea5ee26f6b5750dd381ac8926f051beb33",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::metrics::TokenUsage",
+      "source": "src/metrics.rs",
+      "sourceSha256": "24c7c235d98a359ae594483e102713449813da7187cb87b1e04828c7e93dc5ef",
+      "directions": {
+        "deserialize": false,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::model_contract::ModelAccessError",
+      "source": "src/model_contract.rs",
+      "sourceSha256": "98bcf7cc0d91d5b0a4f2b30f6f79aebf6d8e761e9cb54372cd135379e5c3e11b",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::model_contract::ModelRouteScope",
+      "source": "src/model_contract.rs",
+      "sourceSha256": "98bcf7cc0d91d5b0a4f2b30f6f79aebf6d8e761e9cb54372cd135379e5c3e11b",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::model_contract::ModelSelectorKind",
+      "source": "src/model_contract.rs",
+      "sourceSha256": "98bcf7cc0d91d5b0a4f2b30f6f79aebf6d8e761e9cb54372cd135379e5c3e11b",
+      "directions": {
+        "deserialize": false,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::model_contract::ServedModelError",
+      "source": "src/model_contract.rs",
+      "sourceSha256": "98bcf7cc0d91d5b0a4f2b30f6f79aebf6d8e761e9cb54372cd135379e5c3e11b",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::operation_reports::BackupVerificationReport",
+      "source": "src/operation_reports.rs",
+      "sourceSha256": "ecadd0e28eb79c1f07ce584cd0115dbccad8b148d8e36bc70c389552b064aaa1",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::operation_reports::Check",
+      "source": "src/operation_reports.rs",
+      "sourceSha256": "ecadd0e28eb79c1f07ce584cd0115dbccad8b148d8e36bc70c389552b064aaa1",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::operation_reports::ModelRecommendation",
+      "source": "src/operation_reports.rs",
+      "sourceSha256": "ecadd0e28eb79c1f07ce584cd0115dbccad8b148d8e36bc70c389552b064aaa1",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::operation_reports::ProviderHealth",
+      "source": "src/operation_reports.rs",
+      "sourceSha256": "ecadd0e28eb79c1f07ce584cd0115dbccad8b148d8e36bc70c389552b064aaa1",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::operation_reports::ServerSelection",
+      "source": "src/operation_reports.rs",
+      "sourceSha256": "ecadd0e28eb79c1f07ce584cd0115dbccad8b148d8e36bc70c389552b064aaa1",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::operation_reports::TunnelStatusReport",
+      "source": "src/operation_reports.rs",
+      "sourceSha256": "ecadd0e28eb79c1f07ce584cd0115dbccad8b148d8e36bc70c389552b064aaa1",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::provider_acceptance::ProviderProvisionFailureKind",
+      "source": "src/provider_acceptance.rs",
+      "sourceSha256": "10691cf39c506c67bc415d28339ec96859f2304f813411e924b13b2cda9df1fa",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::provider_acceptance::ProviderProvisionOutcome",
+      "source": "src/provider_acceptance.rs",
+      "sourceSha256": "10691cf39c506c67bc415d28339ec96859f2304f813411e924b13b2cda9df1fa",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::provider_acceptance::ProviderProvisionResponse",
+      "source": "src/provider_acceptance.rs",
+      "sourceSha256": "10691cf39c506c67bc415d28339ec96859f2304f813411e924b13b2cda9df1fa",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::providers::ProviderKind",
+      "source": "src/providers.rs",
+      "sourceSha256": "80e6c02411fd9473c2704a49130b29edd122ddc66d233b0d586f44e61f8dbdf8",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::providers::RedactedProviderRecord",
+      "source": "src/providers.rs",
+      "sourceSha256": "80e6c02411fd9473c2704a49130b29edd122ddc66d233b0d586f44e61f8dbdf8",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::refresh::RefreshResponse",
+      "source": "src/refresh.rs",
+      "sourceSha256": "dac860972f9c160d8730146477e82177dd1e6e1da97bc2e12e45ed398fa24108",
+      "directions": {
+        "deserialize": true,
+        "serialize": false
+      }
+    },
+    {
+      "owner": "crate::response_affinity::AffinityDestination",
+      "source": "src/response_affinity.rs",
+      "sourceSha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::response_affinity::AffinityFile",
+      "source": "src/response_affinity.rs",
+      "sourceSha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::response_affinity::ResponseAffinity",
+      "source": "src/response_affinity.rs",
+      "sourceSha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::response_affinity::ResponseNamespace",
+      "source": "src/response_affinity.rs",
+      "sourceSha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::response_affinity::ResponseOwner",
+      "source": "src/response_affinity.rs",
+      "sourceSha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::routing_api::RoutingSettings",
+      "source": "src/routing_api.rs",
+      "sourceSha256": "06f785e968c7578c2265d2fee68b37f669e9b8a61497c699c15532c382334ac4",
+      "directions": {
+        "deserialize": false,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::subscription::types::SubscriptionProvider",
+      "source": "src/subscription/types.rs",
+      "sourceSha256": "74996ec0b4a32cb6e8d8c6a5e4cf2057a09238acff6d141ad58b592184c12c26",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::subscription::types::SubscriptionToken",
+      "source": "src/subscription/types.rs",
+      "sourceSha256": "74996ec0b4a32cb6e8d8c6a5e4cf2057a09238acff6d141ad58b592184c12c26",
+      "directions": {
+        "deserialize": true,
+        "serialize": true
+      }
+    },
+    {
+      "owner": "crate::token_admin::IssueTokenRequest",
+      "source": "src/token_admin.rs",
+      "sourceSha256": "c310d637422fd0334bbd709c47f2fbe8c8f6b345b1f9e77af17aff90a9269044",
+      "directions": {
+        "deserialize": true,
+        "serialize": false
+      }
+    },
+    {
+      "owner": "crate::token_admin::RevokeTokenRequest",
+      "source": "src/token_admin.rs",
+      "sourceSha256": "c310d637422fd0334bbd709c47f2fbe8c8f6b345b1f9e77af17aff90a9269044",
+      "directions": {
+        "deserialize": true,
+        "serialize": false
+      }
+    },
+    {
+      "owner": "crate::token_admin::RotateClientTokenRequest",
+      "source": "src/token_admin.rs",
+      "sourceSha256": "c310d637422fd0334bbd709c47f2fbe8c8f6b345b1f9e77af17aff90a9269044",
+      "directions": {
+        "deserialize": true,
+        "serialize": false
+      }
+    },
+    {
+      "owner": "crate::token_admin::RotateTokenRequest",
+      "source": "src/token_admin.rs",
+      "sourceSha256": "c310d637422fd0334bbd709c47f2fbe8c8f6b345b1f9e77af17aff90a9269044",
+      "directions": {
+        "deserialize": true,
+        "serialize": false
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "router-serialization-inventory.json",
+      "bytes": 918061,
+      "lines": 1,
+      "sha256": "45d344bd8603379dd5be972cfa52cd47ed9eb58c065f2e2eeb59bdc99003aa17"
+    },
+    {
+      "file": "router-serialization.meta.json",
+      "bytes": 3761588,
+      "lines": 1,
+      "sha256": "eb9a7a14f52c5353fca8288c8692ff8c1cec11f307927fd102c6835aec5cae80"
+    },
+    {
+      "file": "router-serialization.mjs",
+      "bytes": 54931,
+      "lines": 220,
+      "sha256": "3cd5ccd2e1ab733f082423f2a034e16556f2b7ae6349858cd5c0a345ce34fcfe"
+    },
+    {
+      "file": "router-serialization.ts",
+      "bytes": 55597,
+      "lines": 220,
+      "sha256": "2b36a8954eb9386a01a26a2e7f26a9ce1261c9036af060b3c3486286cb2f9a92"
+    }
+  ],
+  "artifactBytes": 4790177,
+  "productionImportsChanged": false,
+  "nativeRuntimeFilesChanged": false,
+  "genericCodecScope": "Privately source-checked descriptor consumer only. Exact finite scalar/nullable Option behavior is bounded; no whole generated serde trait bodies or whole-router parity claim. Missing directions/custom helpers/defaults/ownership remain refused.",
+  "runtimeAuthority": false,
+  "generatedTraitBehavior": false,
+  "archive": {
+    "file": "scalars-direction-completion-raws.tar.gz",
+    "bytes": 328219,
+    "sha256": "1315ce1f7adaea8a90908b234911f9f99c07a1597c3e35d0d65be8b0d65ed251",
+    "members": [
+      {
+        "file": "producer-plan/plan.json",
+        "bytes": 784,
+        "sha256": "54e15d67947c6ca294c6ff128e9714dd2f710553a36bc36d6fa99a7ae56570f9",
+        "reopened_verified": true
+      },
+      {
+        "file": "producer-plan/run.py",
+        "bytes": 4626,
+        "sha256": "c0f8a786b2abbe06da29c1978b38a476809f44b95072b98f3aa021128cbd5cc3",
+        "reopened_verified": true
+      },
+      {
+        "file": "producer/harness.py",
+        "bytes": 4626,
+        "sha256": "c0f8a786b2abbe06da29c1978b38a476809f44b95072b98f3aa021128cbd5cc3",
+        "reopened_verified": true
+      },
+      {
+        "file": "producer/inputs.json",
+        "bytes": 122204,
+        "sha256": "5a81d08c187b3a19deb9332a4d2cd98469ab1bebf08e738151f746c0928c909d",
+        "reopened_verified": true
+      },
+      {
+        "file": "producer/producer.log",
+        "bytes": 498,
+        "sha256": "2a94e6420ff9d3dff41c70cbf7c912e858f0f7e75ac32057ea7e02833e5fb733",
+        "reopened_verified": true
+      },
+      {
+        "file": "producer/receipt.json",
+        "bytes": 245471,
+        "sha256": "bdc5215d096ee23653675e43c9d0bfbe9b4b2a00f4a155f928dd5d7839383426",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation-plan/plan.json",
+        "bytes": 499,
+        "sha256": "3767d7fd727c2fc40fcf149fdac26e38e143c3eea8ea8cd03bb2eb684ebac864",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation-plan/run.py",
+        "bytes": 6677,
+        "sha256": "96508136da9b738fd28d23ac2983f45525a6d4000d49b559480884d90b4338f6",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/artifact-check.log",
+        "bytes": 499,
+        "sha256": "7b2e99c6f0bb701dc6a9191eeea1ef4fbfeb8c490a27ab713cfa6c21a00fbab6",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/bun.log",
+        "bytes": 21910,
+        "sha256": "3d54a2d6993f5ee990621ba1066899015c9f629f2dc810b2a91e56551cbad97d",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/descriptor-tsc.log",
+        "bytes": 270,
+        "sha256": "4feb26d987dd470d4f5e10f1b8615b1c322df340239e9e00287afc348381d3c3",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/harness.py",
+        "bytes": 6677,
+        "sha256": "96508136da9b738fd28d23ac2983f45525a6d4000d49b559480884d90b4338f6",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/inputs.json",
+        "bytes": 136637,
+        "sha256": "191a175c340375c75a4f71bda42d1f014aa06e6834ec2acaa1f34ae06e3bb600",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/node.log",
+        "bytes": 46818,
+        "sha256": "2424b5ac93c17f4bd6ae5ac6b4acf79f62f0dfd5d2df642dccacaea8d2687136",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/receipt.json",
+        "bytes": 275023,
+        "sha256": "5bafea7e428230d21a9127123f601c283156c30115643cc4df05b31ef6853315",
+        "reopened_verified": true
+      }
+    ]
+  }
+}

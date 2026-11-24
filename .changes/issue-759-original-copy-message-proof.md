@@ -1,0 +1,1 @@
+- Prove the unchanged FailureKind.message production method in JavaScript and strict compiled TypeScript on Node and Bun, checking exact original messages, retained Copy derives and receiver certificate integrity. Independently reject mutable, accessor, proxy and invalid-tag inputs without executing Rust or claiming generated Copy trait behavior.

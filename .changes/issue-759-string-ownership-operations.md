@@ -1,0 +1,3 @@
+Preserve written standard string ownership operations through Rust → checked meta → JavaScript/TypeScript. Prove owned `to_owned`/`to_string` results separately from `String::as_str` receiver borrows, retain actual receiver origin evidence, and keep JSON/inherent method dispatch checked independently. Unsupported nested references and borrowed escapes remain source-bearing refusals.
+
+Generated JavaScript and strict-compiled TypeScript cover Unicode, trimming, actual shared String inputs, temporary owned receivers, JSON readers, and invalid ownership boundaries in the 115-case Node/Bun repair matrix. Bulk regeneration and the complete gate must verify the integrated change.

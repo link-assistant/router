@@ -1,0 +1,34 @@
+{
+  "schema": "fixed-mutable-scalar-source-family-census-20261104-v1",
+  "baseline": {
+    "path": "tools/translation/source-profiles/exact-source-mutable-scalar-families-20261104/index482.before.json.gz",
+    "encodedSha256": "b7619904ea638522fd785e325b61e18c43d5b39c739af0bc7da729aec9bc04a6",
+    "sourceSha256": "7ab8081a3139fdcfe17647c957c074a564d5f23aea0000e780921de3588b057d",
+    "rows": 482
+  },
+  "families": [
+    {
+      "id": "exact-mutable-scalar-readers-20261104",
+      "manifest": "tools/translation/source-profiles/ordered-mutable-scalars-20261104/complete-source.json.gz",
+      "kind": "archive",
+      "schema": "ordered-mutable-scalar-source-20261104-v1",
+      "sha256": "b1e1e2c83ec432d3072b0d410e08a42689c9e103875c47f0db2a9694521097a9",
+      "rows": 2,
+      "includeNewFiles": false
+    },
+    {
+      "id": "exact-mutable-scalar-cases-20261104",
+      "manifest": "tools/translation/source-profiles/exact-source-mutable-scalar-families-20261104/joins.json.gz",
+      "kind": "archive",
+      "schema": "mutable-scalar-index-joins-20261104-v1",
+      "sha256": "b7d4b538f6bbb67482aaf8229416bc37f2a06c3e69bcdd4fbdeafd4080c66969",
+      "rows": 15,
+      "includeNewFiles": false
+    }
+  ],
+  "sourceRows": 17,
+  "totalRows": 499,
+  "sourceAuthority": false,
+  "semanticAuthority": false,
+  "verification": "UNRUN"
+}

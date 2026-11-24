@@ -1,0 +1,143 @@
+// Generated from complete actual vector and formatting corpus producers.
+import {captureCoreMacroAdoptionBinding} from './migrate-core-formatting.mjs';
+import {itemConfiguration} from './cfg-profile.mjs';
+// Generated complete original formatting producers; prepare-source-backed-formatting.mjs owns this file.
+import {createHash} from 'node:crypto';
+import {types} from 'node:util';
+import {rustTokens,sourceItems} from './rust-structure.mjs';
+import {macroProvenance} from './macro-provenance.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
+import {crateModuleSourcePath} from './repository-layout.mjs';
+import {resolve,join,dirname,basename,posix} from 'node:path';
+import {resolveModuleGraph} from './project.mjs';
+import {PRODUCTION_PROFILE} from './cfg-profile.mjs';
+import {originalSourceModuleItems} from './source-module-views.mjs';
+import {ROUTER_FORMATTING_FACADE_SOURCE} from './router-core-formatting.mjs';
+import {ROUTER_CORE_PRIMITIVES_SOURCE} from './router-core-primitives.mjs';
+import {createSourceBackedFormattingInspection} from "./whole-owner-source-backed-formatting-support-candidate.mjs";
+import {macroAdoptionFunctionBarriers} from './macro-adoption-function-boundary.mjs';
+const hash=source=>createHash('sha256').update(source).digest('hex');
+const fail=message=>{throw new TypeError('Core formatting migration: '+message);};
+
+
+
+
+const identifiers = token => token?.type === 'ident' && /^[A-Za-z_][A-Za-z0-9_]*!?$/u.test(token.text);
+function migrateOriginalProducerVectors(source, {rootSource = '', macroUseSources = {}, compilationProfile = PRODUCTION_PROFILE, inspection} = {}) {
+  const scope = captureCoreMacroAdoptionBinding(inspection.source, {rootSource: inspection.rootSource, macroUseSources: inspection.macroUseSources, macroName: 'vec'});
+  const before = transportConcreteSyntaxSource(source, {language: 'Rust'}), edits = [], functions = [], skipped = [];
+  const declarations = sourceItems(source);
+  for (const item of declarations) {
+    if (!inspection.inactiveItemSpans.some(span => item.start >= span[0] && item.end <= span[1]) && item.term === 'opaque' && item.tokens.some(token => token.text === '!' || token.text.endsWith('!'))) fail('unresolved module-level macro producer');
+  }
+  for (const item of declarations) {
+    if (item.term !== 'fn' || inspection.inactiveItemSpans.some(span => item.start >= span[0] && item.end <= span[1])) continue;
+    const tokens = item.tokens.filter(token => !['comment', 'string', 'char'].includes(token.type));
+    const candidates = tokens.map((token, at) => ({token, at})).filter(({token, at}) =>
+      (token.text === 'vec!' || token.text === 'vec' && tokens[at + 1]?.text === '!') && !['::', '.', '#'].includes(tokens[at - 1]?.text));
+    if (!candidates.length) continue;
+    const condition = itemConfiguration(item.tokens, compilationProfile);
+    if (condition.status !== 'active') { skipped.push({name: item.name, reason: 'function compilation condition is not active', span: [item.start, item.end]}); continue; }
+    // An unknown expression/statement macro or local item can emit a competing
+    // textual macro in this function. Keep the complete original function.
+    const fn = tokens.findIndex(token => token.text === 'fn');
+    let open = -1, parameters = 0;
+    for (let at = fn + 2; at < tokens.length; at++) {
+      if (tokens[at].text === '(') parameters++; if (tokens[at].text === ')') parameters--;
+      if (!parameters && tokens[at].text === '{') { open = at; break; }
+    }
+    const uncertain = tokens.slice(open + 1).some((token, index, body) =>
+      ['#', 'use', 'extern', 'fn', 'mod', 'struct', 'enum', 'union', 'trait', 'impl', 'type', 'macro_rules!', 'macro'].includes(token.text) ||
+      token.text !== '!' && token.text.endsWith('!') && token.text !== 'vec!' ||
+      token.text === '!' && identifiers(body[index - 1]) && body[index - 1].text !== 'vec' && ['(', '[', '{'].includes(body[index + 1]?.text));
+    if (open < 0 || uncertain || macroAdoptionFunctionBarriers(tokens, open, 'vec').length) { skipped.push({name: item.name, reason: 'local item or other macro producer requires original owner closure', span: [item.start, item.end]}); continue; }
+    const selected = candidates.map(({token, at}) => {
+      // Preserve every byte of whitespace/comments between name and bang.
+      return {span: [token.start, token.end], expected: source.slice(token.start, token.end), replacement: 'crate::translation_core::' + token.text};
+    });
+    edits.push(...selected); functions.push({name: item.name, span: [item.start, item.end], macroCalls: selected.length});
+  }
+  edits.sort((a, b) => a.span[0] - b.span[0]);
+  const applied = applyConcreteSyntaxSubstitutions(before.document, {
+    languageRules: [{id: 'vector-adoption:retain-complete-expression-source', edits: []}],
+    repositoryRules: [{id: 'router-core:adopt-owned-vector-comma-list', edits}],
+  });
+  const after = transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applied.value)), mapping = [];
+  let old = 0, current = 0;
+  for (const edit of edits) {
+    if (old < edit.span[0]) { const length = edit.span[0] - old; mapping.push({kind: 'unchanged', before: [old, edit.span[0]], after: [current, current + length]}); current += length; }
+    mapping.push({kind: 'substitution', before: edit.span, after: [current, current + edit.replacement.length], expected: edit.expected, replacement: edit.replacement});
+    old = edit.span[1]; current += edit.replacement.length;
+  }
+  if (old < source.length) mapping.push({kind: 'unchanged', before: [old, source.length], after: [current, current + source.length - old]});
+  const inverse = applyConcreteSyntaxSubstitutions(applied.value, {languageRules: [], repositoryRules: [{id: 'router-core:restore-original-vector-source', edits: [{span: [0, after.source.length], expected: after.source, replacement: source}]}]});
+  if (transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(inverse.value)).source !== source) fail('complete source inverse differs');
+  return {schema: 'owned-vector-source-adoption-v1', before: {source, meta: before.meta, sha256: hash(source)},
+    after: {source: after.source, meta: after.meta, sha256: hash(after.source)}, inverse: source, rootSource, scope,
+    functions, skipped, edits, mapping, trace: applied.trace, executableAdmission: false,
+    migrationSemantics: 'explicit-owned-API-adoption; original standard vec ownership/implementation is not an executable verdict',
+    libraryImplementation: 'untranslated-rust-std-vec'};
+}
+const samePath=(left,right)=>left.length===right.length&&left.every((word,index)=>word===right[index]);
+function inputFiles(files){
+  if(!files||typeof files!=='object'||types.isProxy(files)||Array.isArray(files)||![null,Object.prototype].includes(Object.getPrototypeOf(files)))fail('complete own source map required');
+  const keys=Reflect.ownKeys(files);if(keys.length>4096)fail('source file count exceeded');
+  const result=Object.create(null);let size=0;
+  for(const path of keys){
+    if(typeof path!=='string'||!path.endsWith('.rs')||path.length>4096||path.includes('\\')||/[\x00-\x1f:]/u.test(path)||posix.isAbsolute(path)||posix.normalize(path)!==path||path.split('/').some(part=>!part||part==='.'||part==='..'))fail('canonical relative Rust source path required');
+    const row=Object.getOwnPropertyDescriptor(files,path);if(!row||!Object.hasOwn(row,'value')||typeof row.value!=='string'||row.value.length>2_000_000)fail('source rows require bounded primitive strings');
+    size+=row.value.length;if(size>32*1024*1024)fail('complete source corpus budget exceeded');result[path]=row.value;
+  }
+  return result;
+}
+function context(module,graph){
+  const ancestors=[];
+  for(let depth=0;depth<module.path.length;depth++){
+    const found=graph.modules.filter(candidate=>samePath(candidate.path,module.path.slice(0,depth)));
+    if(found.length!==1||found[0].configurationCondition!=='active')fail('ancestor origin or configuration is ambiguous');
+    ancestors.push(found[0]);
+  }
+  const sources=[],seen=new Set(),macroUseSources=Object.create(null),macroUseOrigins=[];
+  for(const ancestor of ancestors){
+    if(!seen.has(ancestor.file)){sources.push({path:ancestor.file,source:ancestor.source,sha256:hash(ancestor.source)});seen.add(ancestor.file);}
+    for(const item of originalSourceModuleItems(ancestor))if(item.term==='mod'&&item.tokens.some(token=>token.text==='macro_use')){
+      const children=graph.modules.filter(candidate=>samePath(candidate.path,[...ancestor.path,item.name]));
+      if(children.length!==1||children[0].configurationCondition!=='active')fail('parent macro_use has no unique active complete source');
+      const child=children[0];
+      if(Object.hasOwn(macroUseSources,item.name)&&macroUseSources[item.name]!==child.source)fail('same-name parent macro imports have different source origins');
+      macroUseSources[item.name]=child.source;macroUseOrigins.push({name:item.name,path:child.file,module:[...child.path],source:child.source,sha256:hash(child.source)});
+    }
+  }
+  return {ancestors:sources,macroUseOrigins,rootSource:sources.map(row=>row.source).join('\n'),macroUseSources};
+}
+export function proposeSourceBackedCoreVectorCorpus({entry='src/lib.rs',files,compilationProfile=PRODUCTION_PROFILE,dependencyInputs}={}){
+  const original=inputFiles(files);if(typeof entry!=='string'||!Object.hasOwn(original,entry))fail('actual tracked entry source required');
+  const paths=Object.keys(original).sort(),graph=resolveModuleGraph({entry,paths,readSource:path=>original[path],compilationProfile}),rows=[],inspection=createSourceBackedFormattingInspection(graph,dependencyInputs);
+  const roots=graph.modules.filter(module=>module.path.length===0),cores=graph.modules.filter(module=>samePath(module.path,['translation_core'])),leaves=graph.modules.filter(module=>samePath(module.path,['translation_core','primitives']));
+  if(roots.length!==1||cores.length!==1||leaves.length!==1||cores[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core.rs')||cores[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaves[0].file!==crateModuleSourcePath(graph.modules,'src/translation_core/primitives.rs')||leaves[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||cores[0].configurationCondition!=='active'||leaves[0].configurationCondition!=='active')fail('actual complete owned facade and primitive leaf must be present before corpus adoption');
+  const declarations=originalSourceModuleItems(roots[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');
+  if(declarations.length!==1||roots[0].source.slice(declarations[0].start,declarations[0].end).trim()!=='pub mod translation_core;')fail('actual unadorned public core declaration required');
+  if(originalSourceModuleItems(roots[0]).some(item=>item.term==='use'&&item.tokens.some(token=>token.text==='translation_core')))fail('competing root core alias is unsupported');
+  for(const path of paths){
+    // Inline views are retained by the graph, but the existing per-file rule
+    // selects only free functions in the physical module's top-level body.
+    const origins=graph.modules.filter(module=>module.file===path&&module.sourceView?.modulePath.length===0),originFacts=origins.map(module=>({module:[...module.path],condition:module.configurationCondition,sourceViewDigest:module.sourceView.digest}));
+    if(origins.length!==1){rows.push({path,status:'skipped',reason:origins.length?'multiple physical module origins':'not in the actual entry module graph',origins:originFacts});continue;}
+    const module=origins[0];
+    if(module.configurationCondition!=='active'){rows.push({path,status:'skipped',reason:'module configuration is not active',origins:originFacts});continue;}
+    const candidates=originalSourceModuleItems(module).filter(item=>item.term==='fn').some(item=>{
+      const tokens=item.tokens.filter(token=>token.type!=='comment');
+      return tokens.some((token,index)=>(token.text==="vec!"||token.text==="vec"&&tokens[index+1]?.text==='!')&&!['::','#'].includes(tokens[index-1]?.text));
+    });
+    if(!candidates){rows.push({path,status:'unchanged',reason:"no bare vec macro in the supported top-level function domain",origins:originFacts});continue;}
+    let scope,proposal;
+    try{scope=context(module,graph);proposal=migrateOriginalProducerVectors(original[path],{rootSource:scope.rootSource,macroUseSources:scope.macroUseSources,compilationProfile:graph.compilationProfile,inspection:inspection.forModule(path,scope)});}
+    catch(error){if(!(error instanceof TypeError))throw error;rows.push({path,status:'skipped',reason:error.message,origins:originFacts,...(scope?{scope}:{} )});continue;}
+    if(proposal.before.source!==original[path])fail('complete original source association changed');
+    rows.push({path,status:proposal.edits.length?'proposed':'unchanged',origins:originFacts,scope,proposal,
+      untouchedInlineModules:graph.modules.filter(candidate=>candidate.file===path&&candidate.sourceView?.modulePath.length).map(candidate=>({module:[...candidate.path],bodySpan:candidate.sourceView.bodySpan,reason:'inline module function traversal is outside this initial per-file rule'}))});
+  }
+  const inputs=paths.map(path=>({path,source:original[path],sha256:hash(original[path])})),summary={files:paths.length,proposed:rows.filter(row=>row.status==='proposed').length,unchanged:rows.filter(row=>row.status==='unchanged').length,skipped:rows.filter(row=>row.status==='skipped').length,selectedFunctions:rows.reduce((total,row)=>total+(row.proposal?.functions.length??0),0)};
+  return {schema:"router-owned-source-backed-vector-corpus-proposal-v1",...inspection.finish(),entry,compilationProfile:graph.compilationProfile,inputs,rows,summary,moduleEdges:graph.edges,moduleDiagnostics:graph.diagnostics,
+    semanticAdmission:false,migrationSemantics:'maintainer-authorized source adoption; all checked source/meta/target obligations remain',libraryImplementation:"untranslated-rust-std-vec"};
+}

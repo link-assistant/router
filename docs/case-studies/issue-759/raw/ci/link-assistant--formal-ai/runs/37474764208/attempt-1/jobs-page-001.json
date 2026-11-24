@@ -1,0 +1,113 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 112307176373,
+      "run_id": 37474764208,
+      "workflow_name": "Self-development status",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37474764208",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaJgeDtQ",
+      "head_sha": "dfef87e143433154e510ffb6d82815ce01225f81",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112307176373",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37474764208/job/112307176373",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2026-10-06T13:56:08Z",
+      "started_at": "2026-10-06T14:03:47Z",
+      "completed_at": "2026-10-06T14:05:02Z",
+      "name": "Self-development floor and debt ratchet since the last tag",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-06T14:03:48Z",
+          "completed_at": "2026-10-06T14:03:49Z"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-06T14:03:49Z",
+          "completed_at": "2026-10-06T14:04:15Z"
+        },
+        {
+          "name": "Setup Rust",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-06T14:04:15Z",
+          "completed_at": "2026-10-06T14:04:27Z"
+        },
+        {
+          "name": "Install rust-script",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-06T14:04:27Z",
+          "completed_at": "2026-10-06T14:04:59Z"
+        },
+        {
+          "name": "Test the metric and the ratchet checker",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 5,
+          "started_at": "2026-10-06T14:04:59Z",
+          "completed_at": "2026-10-06T14:05:00Z"
+        },
+        {
+          "name": "Measure the share since the last tag (metric version 3)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 6,
+          "started_at": "2026-10-06T14:05:00Z",
+          "completed_at": "2026-10-06T14:05:00Z"
+        },
+        {
+          "name": "Debt ratchet holds (ceilings move down, never up)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7,
+          "started_at": "2026-10-06T14:05:00Z",
+          "completed_at": "2026-10-06T14:05:00Z"
+        },
+        {
+          "name": "Self-development floor (issue #924, #1066, #1085)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-06T14:05:00Z",
+          "completed_at": "2026-10-06T14:05:00Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-06T14:05:00Z",
+          "completed_at": "2026-10-06T14:05:01Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-06T14:05:01Z",
+          "completed_at": "2026-10-06T14:05:01Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112307176373",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000144522,
+      "runner_name": "GitHub Actions 1000144522",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

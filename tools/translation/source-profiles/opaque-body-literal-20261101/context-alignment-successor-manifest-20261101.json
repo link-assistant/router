@@ -1,0 +1,12 @@
+{
+  "schema": "opaque-complete-source-successor-v1",
+  "archive": "tools/translation/source-profiles/opaque-body-literal-20261101/complete-source-copies-context-alignment.json.gz",
+  "sha256": "6db68c15092919032e0c95c735a76fe3353b78004011a0aa84eb3096819d57d9",
+  "rawBytes": 248801,
+  "packedBytes": 39799,
+  "sourceHistorySha256": "be83c9bc5d29ba3d8d9c2aef1cfc1a76b78ddc46ced3aeb6ef094db9cda695b5",
+  "sourceHistoryBeforeSha256": "b745bd846f85e4417763b827ba81e5f9339aec184759f7f55b1933e341011350",
+  "evolutionRows": 2,
+  "currentCases": 5,
+  "executionEvidence": "UNRUN"
+}

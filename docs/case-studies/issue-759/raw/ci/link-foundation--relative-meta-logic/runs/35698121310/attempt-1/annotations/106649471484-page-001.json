@@ -1,0 +1,26 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-foundation/relative-meta-logic/blob/a45ba8667e3a4f9543abde0190d68fed7fb4f340/.github",
+    "start_line": 326,
+    "start_column": null,
+    "end_line": 326,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "buildx failed with: failed to build: failed to solve: process \"/bin/sh -c cargo build --release --bin rml --bin rml-check --bin rml-meta\" did not complete successfully: exit code: 101",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-foundation/relative-meta-logic/blob/a45ba8667e3a4f9543abde0190d68fed7fb4f340/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+    "raw_details": ""
+  }
+]

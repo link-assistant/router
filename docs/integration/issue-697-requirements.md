@@ -8,7 +8,7 @@ All six issues and their comments were read on 2026-10-05. None is already resol
 | 697 | One PR, no deferred issue | Implement on `issue-697-deffbafb3bb4`, update PR 698. |
 | 697 | Close parent and all six children with full syntax | Seven separate `Fixes #…` lines in the PR description. |
 | 697 | Report already-resolved/nonreproducible issues explicitly | None identified; document reproductions and limitations. |
-| 691 | Official ESM JS/TS package, Node 20+ and Bun | `packages/javascript`, runtime tests plus TypeScript declarations. |
+| 691 | Official ESM JS/TS package, Node 20+ and Bun | `js`, runtime tests plus TypeScript declarations. |
 | 691 | Deploy local/container/host/remote/config/service and status | Expose the same operation catalog and options as Rust/CLI. |
 | 691 | Tunnel up/status/down | Named namespace operations backed by the JSON contract. |
 | 691 | Tokens issue/list/revoke/import, providers add/list, accounts pause/resume | Namespace operations generated from the canonical catalog. |

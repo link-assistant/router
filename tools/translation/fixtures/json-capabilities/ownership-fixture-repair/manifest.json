@@ -1,0 +1,18 @@
+{
+  "bun.log.gz": {
+    "bytes": 820,
+    "sha256": "a3f1a833cb87bf450273a088f39a36730090414aecd3da39da5c59e5bfa19a59"
+  },
+  "initial-failure.log.gz": {
+    "bytes": 785,
+    "sha256": "26563c5908dfd1e4aad2b82ddf07e5a659b6cee9b7cfc551ac5cd5d98f399bec"
+  },
+  "node.log.gz": {
+    "bytes": 964,
+    "sha256": "ce5047473e1c4e19575b3e47cc3588b4255261b2bd38132aa9e67c9d12816774"
+  },
+  "receipt.json.gz": {
+    "bytes": 29576,
+    "sha256": "9443f108be64aa127f8f56a37d2b233d93d55002c1049b70c4b9f528ececaae2"
+  }
+}

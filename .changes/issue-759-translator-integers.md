@@ -1,0 +1,1 @@
+- Add generic checked fixed-integer parsing contracts for Rust str.parse, FromStr and stable radix parsing, with exact BigInt ranges, typed ParseIntError layouts and source-derived digit-versus-overflow behavior. Preserve source panic distinctions and refuse unbound numeric targets.

@@ -1,0 +1,1 @@
+- Draft matching JSON predicate/fold core APIs and a source-bound JavaScript/TypeScript reverse profile with complete private implementation copies, checked meta, ordered emission, short-circuit interpreters and independent native oracle source for #759/#772. All checks remain deferred; forward adoption and full synchronization are unfinished.

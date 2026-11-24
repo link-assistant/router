@@ -1,0 +1,603 @@
+{
+  "schema": "router-759-builtin-callback-focused-verification-v1",
+  "sourceHead": "e548c0d90577a81f5b09f8515446c3cd53613017",
+  "sourceRepairQueue": [
+    "ea303bc4fbdd6b4ccca7e3ff969745f57662ba34",
+    "e4d779eaad41b34b70b4df6a3b6370b4f961f1d7",
+    "e548c0d90577a81f5b09f8515446c3cd53613017"
+  ],
+  "originalSourceDraftBase": "344a5d598c7fd0d9cbace4dab57ca085670df49f",
+  "capturedUtc": "2026-10-12T06:17:42.266508+00:00",
+  "archive": {
+    "path": "callback-verification.tar.xz",
+    "bytes": 120600,
+    "sha256": "20d6a0e5cf54e0a9bc50a571d91d685a0988a6f307642bc14b4ad398e2d9b85b",
+    "payloadMembers": 41,
+    "logicalMembers": 53,
+    "reopenedAndVerified": true
+  },
+  "members": [
+    {
+      "name": "router-759-callback-344a-initial1-node.failures.json",
+      "payload": "payloads/a9f17616166f51a5ac994426e9d25540c3ad2a6ff5b70bdce975ee615f82ac3a",
+      "bytes": 47289,
+      "sha256": "a9f17616166f51a5ac994426e9d25540c3ad2a6ff5b70bdce975ee615f82ac3a"
+    },
+    {
+      "name": "router-759-callback-344a-initial1-node.log",
+      "payload": "payloads/b25b915fb02e027259720bb51ee2aedeafb3a5301afb36499e5efddf7ff0dfbd",
+      "bytes": 48984,
+      "sha256": "b25b915fb02e027259720bb51ee2aedeafb3a5301afb36499e5efddf7ff0dfbd"
+    },
+    {
+      "name": "router-759-callback-344a-initial1-node.inputs.json",
+      "payload": "payloads/3d3a8f79a89488d34928e6352dc407cd292a9ef119d95648afedb2757d52c79a",
+      "bytes": 408496,
+      "sha256": "3d3a8f79a89488d34928e6352dc407cd292a9ef119d95648afedb2757d52c79a"
+    },
+    {
+      "name": "router-759-callback-344a-initial1-node.after.json",
+      "payload": "payloads/3d3a8f79a89488d34928e6352dc407cd292a9ef119d95648afedb2757d52c79a",
+      "bytes": 408496,
+      "sha256": "3d3a8f79a89488d34928e6352dc407cd292a9ef119d95648afedb2757d52c79a"
+    },
+    {
+      "name": "router-759-callback-344a-initial1-node.receipt.json",
+      "payload": "payloads/0765acf7e7f25ef4969d3249e9b8700fb8ec0d72d9c947dda960cdf6ee8519ac",
+      "bytes": 1242,
+      "sha256": "0765acf7e7f25ef4969d3249e9b8700fb8ec0d72d9c947dda960cdf6ee8519ac"
+    },
+    {
+      "name": "router-759-callback-344a-initial1-bun.failures.json",
+      "payload": "payloads/9f6ebbfb4fe5941b0ad5ff3d6ca85b019beab9f346bd7f6c9d8a12411a1922af",
+      "bytes": 3625,
+      "sha256": "9f6ebbfb4fe5941b0ad5ff3d6ca85b019beab9f346bd7f6c9d8a12411a1922af"
+    },
+    {
+      "name": "router-759-callback-344a-initial1-bun.log",
+      "payload": "payloads/f7adcf82cb20333e8a5c9081ede8d737414a45d79c77ffea7c839d7f217a57b1",
+      "bytes": 56697,
+      "sha256": "f7adcf82cb20333e8a5c9081ede8d737414a45d79c77ffea7c839d7f217a57b1"
+    },
+    {
+      "name": "router-759-callback-344a-initial1-bun.inputs.json",
+      "payload": "payloads/3d3a8f79a89488d34928e6352dc407cd292a9ef119d95648afedb2757d52c79a",
+      "bytes": 408496,
+      "sha256": "3d3a8f79a89488d34928e6352dc407cd292a9ef119d95648afedb2757d52c79a"
+    },
+    {
+      "name": "router-759-callback-344a-initial1-bun.after.json",
+      "payload": "payloads/3d3a8f79a89488d34928e6352dc407cd292a9ef119d95648afedb2757d52c79a",
+      "bytes": 408496,
+      "sha256": "3d3a8f79a89488d34928e6352dc407cd292a9ef119d95648afedb2757d52c79a"
+    },
+    {
+      "name": "router-759-callback-344a-initial1-bun.receipt.json",
+      "payload": "payloads/9f6f87392a0d772f13a0db183a07a56f800de1c6680627e393043be0602f1cab",
+      "bytes": 1186,
+      "sha256": "9f6f87392a0d772f13a0db183a07a56f800de1c6680627e393043be0602f1cab"
+    },
+    {
+      "name": "router-759-callback-ea303-retry1-node.failures.json",
+      "payload": "payloads/fe7a9e8541ab6a25a89dec19e6a645cefc307f6c23a653e2f659bcd08c81b5e7",
+      "bytes": 8707,
+      "sha256": "fe7a9e8541ab6a25a89dec19e6a645cefc307f6c23a653e2f659bcd08c81b5e7"
+    },
+    {
+      "name": "router-759-callback-ea303-retry1-node.log",
+      "payload": "payloads/0d5704531c95a99742ff0792487134d4e75a5838b55cfc1c94ad1bce64c89071",
+      "bytes": 17965,
+      "sha256": "0d5704531c95a99742ff0792487134d4e75a5838b55cfc1c94ad1bce64c89071"
+    },
+    {
+      "name": "router-759-callback-ea303-retry1-node.inputs.json",
+      "payload": "payloads/ef5a42a19666c073e790f8c78039e0da2c8454031ce56fbf19fd435370efc7c0",
+      "bytes": 408667,
+      "sha256": "ef5a42a19666c073e790f8c78039e0da2c8454031ce56fbf19fd435370efc7c0"
+    },
+    {
+      "name": "router-759-callback-ea303-retry1-node.after.json",
+      "payload": "payloads/ef5a42a19666c073e790f8c78039e0da2c8454031ce56fbf19fd435370efc7c0",
+      "bytes": 408667,
+      "sha256": "ef5a42a19666c073e790f8c78039e0da2c8454031ce56fbf19fd435370efc7c0"
+    },
+    {
+      "name": "router-759-callback-ea303-retry1-node.receipt.json",
+      "payload": "payloads/234409cb31d1bc731b2ded429c1bc555c969e07160f46c1f4a8398aa32459a5e",
+      "bytes": 1243,
+      "sha256": "234409cb31d1bc731b2ded429c1bc555c969e07160f46c1f4a8398aa32459a5e"
+    },
+    {
+      "name": "router-759-callback-ea303-retry1-bun.failures.json",
+      "payload": "payloads/e6c6e999f2279a89bdfc72f1828588890e8027337d294ab56d71213d24fca23a",
+      "bytes": 1625,
+      "sha256": "e6c6e999f2279a89bdfc72f1828588890e8027337d294ab56d71213d24fca23a"
+    },
+    {
+      "name": "router-759-callback-ea303-retry1-bun.log",
+      "payload": "payloads/53a934ebcbfdcb9d0fc091cbee3664d5ce185505d5e0020ae9db54fde08511eb",
+      "bytes": 17923,
+      "sha256": "53a934ebcbfdcb9d0fc091cbee3664d5ce185505d5e0020ae9db54fde08511eb"
+    },
+    {
+      "name": "router-759-callback-ea303-retry1-bun.inputs.json",
+      "payload": "payloads/ef5a42a19666c073e790f8c78039e0da2c8454031ce56fbf19fd435370efc7c0",
+      "bytes": 408667,
+      "sha256": "ef5a42a19666c073e790f8c78039e0da2c8454031ce56fbf19fd435370efc7c0"
+    },
+    {
+      "name": "router-759-callback-ea303-retry1-bun.after.json",
+      "payload": "payloads/ef5a42a19666c073e790f8c78039e0da2c8454031ce56fbf19fd435370efc7c0",
+      "bytes": 408667,
+      "sha256": "ef5a42a19666c073e790f8c78039e0da2c8454031ce56fbf19fd435370efc7c0"
+    },
+    {
+      "name": "router-759-callback-ea303-retry1-bun.receipt.json",
+      "payload": "payloads/27f4de7d1856f83d832b8d30d9767cba8da5f1131a1bb1caf55b4e6e4ad478ee",
+      "bytes": 1188,
+      "sha256": "27f4de7d1856f83d832b8d30d9767cba8da5f1131a1bb1caf55b4e6e4ad478ee"
+    },
+    {
+      "name": "router-759-callback-e4d779-final1-node.failures.json",
+      "payload": "payloads/f146bab207203e0f0faf7d6ed80118f8a96a4ccdb3afaf66ca1be1454936c382",
+      "bytes": 1843,
+      "sha256": "f146bab207203e0f0faf7d6ed80118f8a96a4ccdb3afaf66ca1be1454936c382"
+    },
+    {
+      "name": "router-759-callback-e4d779-final1-node.log",
+      "payload": "payloads/44043d893c78408a0c7336c8730b8ff586c430fae0d4e2873fa38510bb5140a3",
+      "bytes": 12749,
+      "sha256": "44043d893c78408a0c7336c8730b8ff586c430fae0d4e2873fa38510bb5140a3"
+    },
+    {
+      "name": "router-759-callback-e4d779-final1-node.inputs.json",
+      "payload": "payloads/43c32750562784df344137e48e1d494560c44b682d001af508d85a4020f9927a",
+      "bytes": 408667,
+      "sha256": "43c32750562784df344137e48e1d494560c44b682d001af508d85a4020f9927a"
+    },
+    {
+      "name": "router-759-callback-e4d779-final1-node.after.json",
+      "payload": "payloads/43c32750562784df344137e48e1d494560c44b682d001af508d85a4020f9927a",
+      "bytes": 408667,
+      "sha256": "43c32750562784df344137e48e1d494560c44b682d001af508d85a4020f9927a"
+    },
+    {
+      "name": "router-759-callback-e4d779-final1-node.receipt.json",
+      "payload": "payloads/7a0a839eee286aa38d334346b18af7418ef3da75e192e1cf14e666989773a6c6",
+      "bytes": 1253,
+      "sha256": "7a0a839eee286aa38d334346b18af7418ef3da75e192e1cf14e666989773a6c6"
+    },
+    {
+      "name": "router-759-callback-e4d779-final1-bun.failures.json",
+      "payload": "payloads/9e15c1ae607590b83af24cb3953a37dbdf3078080d1b9ac7b78fb7be7861b67a",
+      "bytes": 358,
+      "sha256": "9e15c1ae607590b83af24cb3953a37dbdf3078080d1b9ac7b78fb7be7861b67a"
+    },
+    {
+      "name": "router-759-callback-e4d779-final1-bun.log",
+      "payload": "payloads/8a47bdadc31f5e30b48a5956558e263097a0186cb99253fcd57c3b0100b59d97",
+      "bytes": 7403,
+      "sha256": "8a47bdadc31f5e30b48a5956558e263097a0186cb99253fcd57c3b0100b59d97"
+    },
+    {
+      "name": "router-759-callback-e4d779-final1-bun.inputs.json",
+      "payload": "payloads/43c32750562784df344137e48e1d494560c44b682d001af508d85a4020f9927a",
+      "bytes": 408667,
+      "sha256": "43c32750562784df344137e48e1d494560c44b682d001af508d85a4020f9927a"
+    },
+    {
+      "name": "router-759-callback-e4d779-final1-bun.after.json",
+      "payload": "payloads/43c32750562784df344137e48e1d494560c44b682d001af508d85a4020f9927a",
+      "bytes": 408667,
+      "sha256": "43c32750562784df344137e48e1d494560c44b682d001af508d85a4020f9927a"
+    },
+    {
+      "name": "router-759-callback-e4d779-final1-bun.receipt.json",
+      "payload": "payloads/16e87d56db50763664819d70cffbc861afeb1c9e0ecc27702650a6f3d507f917",
+      "bytes": 1188,
+      "sha256": "16e87d56db50763664819d70cffbc861afeb1c9e0ecc27702650a6f3d507f917"
+    },
+    {
+      "name": "router-759-callback-e548-final2-node.failures.json",
+      "payload": "payloads/ff09fce3a4e61ae987263b6d9c1ce38381c3e3650b9ece5da59cf8c1bde9598a",
+      "bytes": 133,
+      "sha256": "ff09fce3a4e61ae987263b6d9c1ce38381c3e3650b9ece5da59cf8c1bde9598a"
+    },
+    {
+      "name": "router-759-callback-e548-final2-node.log",
+      "payload": "payloads/efb6565b01b8ebf97c1f12b8dcf8305c678daad2829c3bfaf6edf2b34d33c70e",
+      "bytes": 11356,
+      "sha256": "efb6565b01b8ebf97c1f12b8dcf8305c678daad2829c3bfaf6edf2b34d33c70e"
+    },
+    {
+      "name": "router-759-callback-e548-final2-node.inputs.json",
+      "payload": "payloads/a6015893718a7237646ffd866f16b4d66d4a387fbdca9263ca805f55e138043f",
+      "bytes": 408667,
+      "sha256": "a6015893718a7237646ffd866f16b4d66d4a387fbdca9263ca805f55e138043f"
+    },
+    {
+      "name": "router-759-callback-e548-final2-node.after.json",
+      "payload": "payloads/a6015893718a7237646ffd866f16b4d66d4a387fbdca9263ca805f55e138043f",
+      "bytes": 408667,
+      "sha256": "a6015893718a7237646ffd866f16b4d66d4a387fbdca9263ca805f55e138043f"
+    },
+    {
+      "name": "router-759-callback-e548-final2-node.receipt.json",
+      "payload": "payloads/1574c6a53ca8b75b44d1e3c365611045fbe7e9e2ea1e8b998b1df82e02db6ece",
+      "bytes": 1243,
+      "sha256": "1574c6a53ca8b75b44d1e3c365611045fbe7e9e2ea1e8b998b1df82e02db6ece"
+    },
+    {
+      "name": "router-759-callback-e548-final2-bun.failures.json",
+      "payload": "payloads/963751bde12469555911fcf4422d0de08a23708b2909c129bf87bdde3510ad77",
+      "bytes": 132,
+      "sha256": "963751bde12469555911fcf4422d0de08a23708b2909c129bf87bdde3510ad77"
+    },
+    {
+      "name": "router-759-callback-e548-final2-bun.log",
+      "payload": "payloads/0f9091d41749add01225284edb746503082f6a2d96dbedec6dd41ce0ccefd840",
+      "bytes": 5591,
+      "sha256": "0f9091d41749add01225284edb746503082f6a2d96dbedec6dd41ce0ccefd840"
+    },
+    {
+      "name": "router-759-callback-e548-final2-bun.inputs.json",
+      "payload": "payloads/a6015893718a7237646ffd866f16b4d66d4a387fbdca9263ca805f55e138043f",
+      "bytes": 408667,
+      "sha256": "a6015893718a7237646ffd866f16b4d66d4a387fbdca9263ca805f55e138043f"
+    },
+    {
+      "name": "router-759-callback-e548-final2-bun.after.json",
+      "payload": "payloads/a6015893718a7237646ffd866f16b4d66d4a387fbdca9263ca805f55e138043f",
+      "bytes": 408667,
+      "sha256": "a6015893718a7237646ffd866f16b4d66d4a387fbdca9263ca805f55e138043f"
+    },
+    {
+      "name": "router-759-callback-e548-final2-bun.receipt.json",
+      "payload": "payloads/4c02ce2ae1c26799de37686db90de3bce2e677fbdf64dc5a45882f4967e8592e",
+      "bytes": 1189,
+      "sha256": "4c02ce2ae1c26799de37686db90de3bce2e677fbdf64dc5a45882f4967e8592e"
+    },
+    {
+      "name": "router-759-callback-repair-diagnostic.log",
+      "payload": "payloads/972997c88fa439c6b74a82c48d326fa0f1671db346fce35f5a50eb0cc8458c40",
+      "bytes": 2789,
+      "sha256": "972997c88fa439c6b74a82c48d326fa0f1671db346fce35f5a50eb0cc8458c40"
+    },
+    {
+      "name": "router-759-callback-repair-diagnostic2.log",
+      "payload": "payloads/ea4ef0c34f2b3d1de59d19fbfe52a089d9fb0e95c27f5aa6e2d2b31f234466d7",
+      "bytes": 1992,
+      "sha256": "ea4ef0c34f2b3d1de59d19fbfe52a089d9fb0e95c27f5aa6e2d2b31f234466d7"
+    },
+    {
+      "name": "router-759-callback-repair-diagnostic3.log",
+      "payload": "payloads/79dbc1022633a4d312f3f80ca71adfda560d2031db616524e55ec43c6637a621",
+      "bytes": 1989,
+      "sha256": "79dbc1022633a4d312f3f80ca71adfda560d2031db616524e55ec43c6637a621"
+    },
+    {
+      "name": "router-759-callback-repair-diagnostic4.log",
+      "payload": "payloads/fe68ce045a87fd70a27e25f486240a164329031a193089e340dae802baa90352",
+      "bytes": 1920,
+      "sha256": "fe68ce045a87fd70a27e25f486240a164329031a193089e340dae802baa90352"
+    },
+    {
+      "name": "router-759-callback-repair-diagnostic5.log",
+      "payload": "payloads/4ea67b270cb2fa3060d1fea22177c6bbd176ddad18780e6bc5acd8b7ea19792b",
+      "bytes": 175,
+      "sha256": "4ea67b270cb2fa3060d1fea22177c6bbd176ddad18780e6bc5acd8b7ea19792b"
+    },
+    {
+      "name": "router-759-callback-sharing-diagnostic.log",
+      "payload": "payloads/ba5f0842baa92d9ba8ef812c6d4273d2df7e32997eec6a464c4da668cc69c03f",
+      "bytes": 190,
+      "sha256": "ba5f0842baa92d9ba8ef812c6d4273d2df7e32997eec6a464c4da668cc69c03f"
+    },
+    {
+      "name": "router-759-callback-family-diagnostic.log",
+      "payload": "payloads/4544b5e0198ee1347d4d0f3cdf4ba8c1ed5b06af10e23646ee75a3dd5105695b",
+      "bytes": 157,
+      "sha256": "4544b5e0198ee1347d4d0f3cdf4ba8c1ed5b06af10e23646ee75a3dd5105695b"
+    },
+    {
+      "name": "router-759-callback-debug-size2.log",
+      "payload": "payloads/712c252b33ea5cafff41f34ea5e932144f5010ca1e20af69115e1665bd5396c3",
+      "bytes": 58,
+      "sha256": "712c252b33ea5cafff41f34ea5e932144f5010ca1e20af69115e1665bd5396c3"
+    },
+    {
+      "name": "router-759-callback-debug-size3.log",
+      "payload": "payloads/10ccb478f3de1839a213c555f9f172ceae430625719cdee9206bb18062ff30a1",
+      "bytes": 58,
+      "sha256": "10ccb478f3de1839a213c555f9f172ceae430625719cdee9206bb18062ff30a1"
+    },
+    {
+      "name": "router-759-callback-final-sharing-diagnostic.log",
+      "payload": "payloads/84435a29a50ab28936fa201a9c85990ad609ec1eff2d92bb65a70cc343fbd5c3",
+      "bytes": 210,
+      "sha256": "84435a29a50ab28936fa201a9c85990ad609ec1eff2d92bb65a70cc343fbd5c3"
+    },
+    {
+      "name": "router-759-callback-diagnostic.mjs",
+      "payload": "payloads/85047960656f293e829c9c16a53e62e83b2b2c874c3740302828ffe9bb1d9319",
+      "bytes": 2471,
+      "sha256": "85047960656f293e829c9c16a53e62e83b2b2c874c3740302828ffe9bb1d9319"
+    },
+    {
+      "name": "router-759-callback-focused-run.py",
+      "payload": "payloads/4492476ad7a90e1cd78c4b1a47a3c89dd81e510b974f080d9316b1a156aa79a8",
+      "bytes": 3706,
+      "sha256": "4492476ad7a90e1cd78c4b1a47a3c89dd81e510b974f080d9316b1a156aa79a8"
+    },
+    {
+      "name": "setup-failure-observed.json",
+      "payload": "payloads/f93794a6f6ac98818c8c261281db55ad77f7a3bcf17a0b5572f8dcd828f07b7b",
+      "bytes": 440,
+      "sha256": "f93794a6f6ac98818c8c261281db55ad77f7a3bcf17a0b5572f8dcd828f07b7b"
+    }
+  ],
+  "attempts": [
+    {
+      "attempt": "router-759-callback-344a-initial1",
+      "engine": "node",
+      "tests": 45,
+      "passed": 16,
+      "failed": 29,
+      "command": [
+        "/Users/konard/.nvm/versions/node/v20.19.4/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/test/builtin-ast-builder-meta.test.mjs",
+        "tools/translation/test/builtin-ast-container-inputs.test.mjs",
+        "tools/translation/test/builtin-ast-callback-bridge.test.mjs",
+        "tools/translation/test/builtin-ast-field-construction.test.mjs",
+        "tools/translation/test/builtin-ast-closure-application.test.mjs",
+        "tools/translation/test/builtin-parsed-field-values.test.mjs"
+      ],
+      "head": "344a5d598c7fd0d9cbace4dab57ca085670df49f",
+      "capSeconds": 180,
+      "exitCode": 1,
+      "timedOut": false,
+      "wallSeconds": 10.68953595799394,
+      "userSeconds": 9.254297,
+      "systemSeconds": 1.169293,
+      "maxRssBytes": 235421696,
+      "resourceScope": "single engine child including reaped test workers; no TS/Rust/producer",
+      "inputsSha256": "3d3a8f79a89488d34928e6352dc407cd292a9ef119d95648afedb2757d52c79a",
+      "afterSha256": "3d3a8f79a89488d34928e6352dc407cd292a9ef119d95648afedb2757d52c79a",
+      "sourceUnchanged": true,
+      "logSha256": "b25b915fb02e027259720bb51ee2aedeafb3a5301afb36499e5efddf7ff0dfbd",
+      "binarySha256": "d1c54537f00093999715de0617c0ef2191dbf1875720201d4c2fde16195a9287"
+    },
+    {
+      "attempt": "router-759-callback-344a-initial1",
+      "engine": "bun",
+      "tests": 45,
+      "passed": 16,
+      "failed": 29,
+      "command": [
+        "/Users/konard/.bun/bin/bun",
+        "test",
+        "tools/translation/test/builtin-ast-builder-meta.test.mjs",
+        "tools/translation/test/builtin-ast-container-inputs.test.mjs",
+        "tools/translation/test/builtin-ast-callback-bridge.test.mjs",
+        "tools/translation/test/builtin-ast-field-construction.test.mjs",
+        "tools/translation/test/builtin-ast-closure-application.test.mjs",
+        "tools/translation/test/builtin-parsed-field-values.test.mjs"
+      ],
+      "head": "344a5d598c7fd0d9cbace4dab57ca085670df49f",
+      "capSeconds": 180,
+      "exitCode": 1,
+      "timedOut": false,
+      "wallSeconds": 6.76020612497814,
+      "userSeconds": 5.866826,
+      "systemSeconds": 0.412987,
+      "maxRssBytes": 388546560,
+      "resourceScope": "single engine child including reaped test workers; no TS/Rust/producer",
+      "inputsSha256": "3d3a8f79a89488d34928e6352dc407cd292a9ef119d95648afedb2757d52c79a",
+      "afterSha256": "3d3a8f79a89488d34928e6352dc407cd292a9ef119d95648afedb2757d52c79a",
+      "sourceUnchanged": true,
+      "logSha256": "f7adcf82cb20333e8a5c9081ede8d737414a45d79c77ffea7c839d7f217a57b1",
+      "binarySha256": "28c7dd0a06916aba284d570ef44a2d70e9c538eaf2ba58dfe0910525563b3f79"
+    },
+    {
+      "attempt": "router-759-callback-ea303-retry1",
+      "engine": "node",
+      "tests": 46,
+      "passed": 40,
+      "failed": 6,
+      "command": [
+        "/Users/konard/.nvm/versions/node/v20.19.4/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/test/builtin-ast-builder-meta.test.mjs",
+        "tools/translation/test/builtin-ast-container-inputs.test.mjs",
+        "tools/translation/test/builtin-ast-callback-bridge.test.mjs",
+        "tools/translation/test/builtin-ast-field-construction.test.mjs",
+        "tools/translation/test/builtin-ast-closure-application.test.mjs",
+        "tools/translation/test/builtin-parsed-field-values.test.mjs"
+      ],
+      "head": "ea303bc4fbdd6b4ccca7e3ff969745f57662ba34",
+      "capSeconds": 180,
+      "exitCode": 1,
+      "timedOut": false,
+      "wallSeconds": 23.33144412492402,
+      "userSeconds": 25.360813,
+      "systemSeconds": 2.014672,
+      "maxRssBytes": 626524160,
+      "resourceScope": "single engine child including reaped test workers; no TS/Rust/producer",
+      "inputsSha256": "ef5a42a19666c073e790f8c78039e0da2c8454031ce56fbf19fd435370efc7c0",
+      "afterSha256": "ef5a42a19666c073e790f8c78039e0da2c8454031ce56fbf19fd435370efc7c0",
+      "sourceUnchanged": true,
+      "logSha256": "0d5704531c95a99742ff0792487134d4e75a5838b55cfc1c94ad1bce64c89071",
+      "binarySha256": "d1c54537f00093999715de0617c0ef2191dbf1875720201d4c2fde16195a9287"
+    },
+    {
+      "attempt": "router-759-callback-ea303-retry1",
+      "engine": "bun",
+      "tests": 46,
+      "passed": 40,
+      "failed": 6,
+      "command": [
+        "/Users/konard/.bun/bin/bun",
+        "test",
+        "tools/translation/test/builtin-ast-builder-meta.test.mjs",
+        "tools/translation/test/builtin-ast-container-inputs.test.mjs",
+        "tools/translation/test/builtin-ast-callback-bridge.test.mjs",
+        "tools/translation/test/builtin-ast-field-construction.test.mjs",
+        "tools/translation/test/builtin-ast-closure-application.test.mjs",
+        "tools/translation/test/builtin-parsed-field-values.test.mjs"
+      ],
+      "head": "ea303bc4fbdd6b4ccca7e3ff969745f57662ba34",
+      "capSeconds": 180,
+      "exitCode": 1,
+      "timedOut": false,
+      "wallSeconds": 15.594590625027195,
+      "userSeconds": 16.76217,
+      "systemSeconds": 0.799807,
+      "maxRssBytes": 644694016,
+      "resourceScope": "single engine child including reaped test workers; no TS/Rust/producer",
+      "inputsSha256": "ef5a42a19666c073e790f8c78039e0da2c8454031ce56fbf19fd435370efc7c0",
+      "afterSha256": "ef5a42a19666c073e790f8c78039e0da2c8454031ce56fbf19fd435370efc7c0",
+      "sourceUnchanged": true,
+      "logSha256": "53a934ebcbfdcb9d0fc091cbee3664d5ce185505d5e0020ae9db54fde08511eb",
+      "binarySha256": "28c7dd0a06916aba284d570ef44a2d70e9c538eaf2ba58dfe0910525563b3f79"
+    },
+    {
+      "attempt": "router-759-callback-e4d779-final1",
+      "engine": "node",
+      "tests": 46,
+      "passed": 45,
+      "failed": 1,
+      "command": [
+        "/Users/konard/.nvm/versions/node/v20.19.4/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/test/builtin-ast-builder-meta.test.mjs",
+        "tools/translation/test/builtin-ast-container-inputs.test.mjs",
+        "tools/translation/test/builtin-ast-callback-bridge.test.mjs",
+        "tools/translation/test/builtin-ast-field-construction.test.mjs",
+        "tools/translation/test/builtin-ast-closure-application.test.mjs",
+        "tools/translation/test/builtin-parsed-field-values.test.mjs"
+      ],
+      "head": "e4d779eaad41b34b70b4df6a3b6370b4f961f1d7",
+      "capSeconds": 180,
+      "exitCode": 1,
+      "timedOut": false,
+      "wallSeconds": 28.381742750061676,
+      "userSeconds": 29.36713,
+      "systemSeconds": 2.9199349999999997,
+      "maxRssBytes": 605143040,
+      "resourceScope": "single engine child including reaped test workers; no TS/Rust/producer",
+      "inputsSha256": "43c32750562784df344137e48e1d494560c44b682d001af508d85a4020f9927a",
+      "afterSha256": "43c32750562784df344137e48e1d494560c44b682d001af508d85a4020f9927a",
+      "sourceUnchanged": true,
+      "logSha256": "44043d893c78408a0c7336c8730b8ff586c430fae0d4e2873fa38510bb5140a3",
+      "binarySha256": "d1c54537f00093999715de0617c0ef2191dbf1875720201d4c2fde16195a9287"
+    },
+    {
+      "attempt": "router-759-callback-e4d779-final1",
+      "engine": "bun",
+      "tests": 46,
+      "passed": 45,
+      "failed": 1,
+      "command": [
+        "/Users/konard/.bun/bin/bun",
+        "test",
+        "tools/translation/test/builtin-ast-builder-meta.test.mjs",
+        "tools/translation/test/builtin-ast-container-inputs.test.mjs",
+        "tools/translation/test/builtin-ast-callback-bridge.test.mjs",
+        "tools/translation/test/builtin-ast-field-construction.test.mjs",
+        "tools/translation/test/builtin-ast-closure-application.test.mjs",
+        "tools/translation/test/builtin-parsed-field-values.test.mjs"
+      ],
+      "head": "e4d779eaad41b34b70b4df6a3b6370b4f961f1d7",
+      "capSeconds": 180,
+      "exitCode": 1,
+      "timedOut": false,
+      "wallSeconds": 19.07904720795341,
+      "userSeconds": 19.033393,
+      "systemSeconds": 1.220376,
+      "maxRssBytes": 635994112,
+      "resourceScope": "single engine child including reaped test workers; no TS/Rust/producer",
+      "inputsSha256": "43c32750562784df344137e48e1d494560c44b682d001af508d85a4020f9927a",
+      "afterSha256": "43c32750562784df344137e48e1d494560c44b682d001af508d85a4020f9927a",
+      "sourceUnchanged": true,
+      "logSha256": "8a47bdadc31f5e30b48a5956558e263097a0186cb99253fcd57c3b0100b59d97",
+      "binarySha256": "28c7dd0a06916aba284d570ef44a2d70e9c538eaf2ba58dfe0910525563b3f79"
+    },
+    {
+      "attempt": "router-759-callback-e548-final2",
+      "engine": "node",
+      "tests": 46,
+      "passed": 46,
+      "failed": 0,
+      "command": [
+        "/Users/konard/.nvm/versions/node/v20.19.4/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/test/builtin-ast-builder-meta.test.mjs",
+        "tools/translation/test/builtin-ast-container-inputs.test.mjs",
+        "tools/translation/test/builtin-ast-callback-bridge.test.mjs",
+        "tools/translation/test/builtin-ast-field-construction.test.mjs",
+        "tools/translation/test/builtin-ast-closure-application.test.mjs",
+        "tools/translation/test/builtin-parsed-field-values.test.mjs"
+      ],
+      "head": "e548c0d90577a81f5b09f8515446c3cd53613017",
+      "capSeconds": 180,
+      "exitCode": 0,
+      "timedOut": false,
+      "wallSeconds": 27.438590875128284,
+      "userSeconds": 28.55987,
+      "systemSeconds": 2.541189,
+      "maxRssBytes": 598835200,
+      "resourceScope": "single engine child including reaped test workers; no TS/Rust/producer",
+      "inputsSha256": "a6015893718a7237646ffd866f16b4d66d4a387fbdca9263ca805f55e138043f",
+      "afterSha256": "a6015893718a7237646ffd866f16b4d66d4a387fbdca9263ca805f55e138043f",
+      "sourceUnchanged": true,
+      "logSha256": "efb6565b01b8ebf97c1f12b8dcf8305c678daad2829c3bfaf6edf2b34d33c70e",
+      "binarySha256": "d1c54537f00093999715de0617c0ef2191dbf1875720201d4c2fde16195a9287"
+    },
+    {
+      "attempt": "router-759-callback-e548-final2",
+      "engine": "bun",
+      "tests": 46,
+      "passed": 46,
+      "failed": 0,
+      "command": [
+        "/Users/konard/.bun/bin/bun",
+        "test",
+        "tools/translation/test/builtin-ast-builder-meta.test.mjs",
+        "tools/translation/test/builtin-ast-container-inputs.test.mjs",
+        "tools/translation/test/builtin-ast-callback-bridge.test.mjs",
+        "tools/translation/test/builtin-ast-field-construction.test.mjs",
+        "tools/translation/test/builtin-ast-closure-application.test.mjs",
+        "tools/translation/test/builtin-parsed-field-values.test.mjs"
+      ],
+      "head": "e548c0d90577a81f5b09f8515446c3cd53613017",
+      "capSeconds": 180,
+      "exitCode": 0,
+      "timedOut": false,
+      "wallSeconds": 20.872052374994382,
+      "userSeconds": 19.851284,
+      "systemSeconds": 1.260118,
+      "maxRssBytes": 812384256,
+      "resourceScope": "single engine child including reaped test workers; no TS/Rust/producer",
+      "inputsSha256": "a6015893718a7237646ffd866f16b4d66d4a387fbdca9263ca805f55e138043f",
+      "afterSha256": "a6015893718a7237646ffd866f16b4d66d4a387fbdca9263ca805f55e138043f",
+      "sourceUnchanged": true,
+      "logSha256": "0f9091d41749add01225284edb746503082f6a2d96dbedec6dd41ce0ccefd840",
+      "binarySha256": "28c7dd0a06916aba284d570ef44a2d70e9c538eaf2ba58dfe0910525563b3f79"
+    }
+  ],
+  "diagnosticStatus": "Bounded working-tree metadata diagnostics, not frozen verification or runtime admission. Complete engine inputs use frozen committed heads.",
+  "authority": {
+    "selectedOwnerBangComplete": false,
+    "generatedImplBehavior": false,
+    "runtimeParity": false,
+    "automaticProjectConsumer": false,
+    "fullSemanticGraphRun": false,
+    "rustExecuted": false
+  },
+  "scope": "Only six named source-generator metadata tests, including four authentic namespace-only original-source contexts. No native TS, producer, or generated implementation behavior."
+}

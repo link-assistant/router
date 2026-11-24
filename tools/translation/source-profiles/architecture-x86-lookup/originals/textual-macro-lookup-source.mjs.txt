@@ -1,0 +1,29 @@
+// Complete original native lookup premises. No callsite owner is resolved here.
+import {readFileSync} from 'node:fs';
+import {gunzipSync} from 'node:zlib';
+import {createHash} from 'node:crypto';
+import {originalRustFunctionInventoryData} from './registered-builtin-caller-attribute-source.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
+import {createRulePipeline} from './rule-pipeline.mjs';
+import {originalPrivateParserIngressUnchanged,originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+const initiallyNative=originalPrivateParserIngressUnchanged()&&originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged(),requests=initiallyNative?new WeakSet():null;
+const PROFILE=new URL('./source-profiles/textual-macro-lookup/complete-native-lookup-inputs.json.gz',import.meta.url),PIN='e71524feb693749d75f1b1d76ef379adca212396af7fcfd00f7c41cbe37cf486';
+const need=(value,message)=>{if(!value)throw new TypeError('Original textual macro lookup: '+message);};
+function guard(){need(initiallyNative&&originalPrivateParserIngressUnchanged()&&originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged(),'original native source operations required');}
+const hash=value=>{const result=createHash('sha256').update(value).digest('hex');guard();return result;};
+function facts(){
+ guard();let retained=0;const inputs=[];function read(url){const bytes=readFileSync(url);retained+=bytes.length;need(bytes.length<=2097152&&retained<=8388608,'complete native input byte bound');inputs.push({url,bytes});return bytes;}
+ const packed=read(PROFILE);need(hash(packed)===PIN,'complete original lookup profile differs');const raw=gunzipSync(packed,{maxOutputLength:2097152});retained+=raw.length;need(retained<=8388608,'complete decoded source-profile bound');const profile=JSON.parse(raw.toString('utf8'));need(profile.schema==='original-textual-macro-lookup-native-source-v1'&&profile.inputs.length===8&&profile.callbacks.length===11,'complete native source profile required');
+ const sources=[],inventories=new Map();for(const pin of profile.inputs){
+  need(typeof pin.archive==='string'&&pin.archive.startsWith('tools/translation/source-profiles/')&&!pin.archive.includes('..')&&!pin.archive.includes('\\'),'canonical original native archive required');const url=new URL('../../'+pin.archive,import.meta.url),bytes=read(url);need(bytes.length===pin.archiveBytes&&hash(bytes)===pin.archiveSha256,'complete original native archive differs');const decoded=pin.kind==='Rust'?gunzipSync(bytes,{maxOutputLength:2097152}):bytes;if(pin.kind==='Rust')retained+=decoded.length;need(retained<=8388608&&decoded.length===pin.bytes&&hash(decoded)===pin.sha256,'complete original decoded native input differs');const source=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(decoded),row={path:pin.path,source,sourceSha256:pin.sha256,kind:pin.kind};
+  if(pin.kind==='Rust'){const concrete=transportConcreteSyntaxSource(source,{language:'Rust'});need(transportConcreteSyntaxMeta(concrete.meta).source===source,'complete original native CST inverse differs');row.concreteSyntax=concrete.meta;row.inverse=source;inventories.set(pin.path,originalRustFunctionInventoryData({path:pin.path,source,sourceSha256:pin.sha256}));}sources.push(row);
+ }
+ const callbacks={};for(const selected of profile.callbacks){const inventory=inventories.get(selected.path),found=inventory?.rows.filter(row=>row.name===selected.name);need(found?.length===1,'one whole original native lookup callback required');const actual=found[0];need(actual.original===selected.original&&actual.span.start===selected.span[0]&&actual.span.end===selected.span[1]&&hash(actual.original)===selected.sha256,'whole original native callback equation differs');need(!Object.hasOwn(callbacks,selected.name),'unique native callback key required');callbacks[selected.name]=actual;}
+ const run=createRulePipeline([
+  {phase:'language',rules:[{id:'rust:retain-complete-textual-module-and-ambiguity-lookup-callbacks',apply:()=>({sources,callbacks})}]},
+  {phase:'repository',rules:[{id:'router:retain-explicit-lookup-premises-and-pending-owner-obligations',apply:value=>({...value,conditionalPremises:{ordinaryUnqualifiedBangPath:true,localInnerMacrosDollarCrateRewriteMustBeExcluded:true,delegationMustBeAbsent:true,actualParentMacroRulesScopeRequired:true,textualBindingBeforeModuleCandidates:true,invocationScopeMayRemainUndetermined:true,macroRulesVersusModularizedAmbiguityMustBeResolved:true,sameNearestModuleAndModularizedAncestorRequiredForNativeDisambiguation:true,missingBindingParentModulePreventsNativeDisambiguation:true,actualHygieneAndBindingIdentitiesRequired:true},remaining:['actual macro owner and binding identity','actual module parent and invocation scope','every modularized candidate and global export','outer attribute/derive transformations','target/configuration selection','generated namespace and type-prefix closure']})}]},
+ ]).run(null);
+ for(const row of inputs)need(readFileSync(row.url).equals(row.bytes),'complete native lookup input changed during read');guard();return {...run.value,profileSha256:PIN,retainedSourceBytes:retained,trace:run.trace,originalCallerResolved:false,modularizedCandidatesClosed:false,macroOwnerResolved:false,hygieneResolved:false,sourceAuthority:false,namespaceAuthority:false,runtimeAuthority:false,wholeCompilerExecuted:false,crossInvocationCache:false};
+}
+export function captureOriginalTextualMacroLookupSource(){facts();guard();const token=Object.freeze({schema:'private-original-textual-macro-lookup-source-request-v1'});requests.add(token);return token;}
+export function originalTextualMacroLookupSourceFacts(token){guard();need(requests.has(token),'copied or foreign original lookup request');return facts();}

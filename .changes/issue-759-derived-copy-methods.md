@@ -1,0 +1,1 @@
+Translate consuming inherent methods only with checked source-derived Copy evidence and complete implementation targets. Enforce immutable receiver records at generated boundaries and preserve exact source qualifiers and certificates; owned, mutable, trait and unresolved receiver semantics remain explicit refusals.

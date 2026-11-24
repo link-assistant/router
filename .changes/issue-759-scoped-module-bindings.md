@@ -1,0 +1,1 @@
+Resolve tracked Rust module imports and local reexports with namespace and visibility evidence, then reuse unique hash-matched checked declaration closures in bulk translation. Keep ambiguous crate contexts, unregistered external globs and procedural expansion unresolved, and expose failed Copy proof diagnostics without claiming runtime parity.

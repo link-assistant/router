@@ -1,0 +1,20 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37836902468/attempt-1/logs/6_Coding ladder binary.txt.gz",
+    "sha256": "be10f0e816bf52127ff739b7a8a4696f7174337222ba48b4076105c5303e5fdb",
+    "bytes": 6360,
+    "uncompressed_bytes": 26092,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "2e20d37868fa1726e2e7c7c78218d822da22c65c570582b7872f100da962e7db"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37836902468/attempt-1/logs/Coding ladder binary/system.txt.gz",
+    "sha256": "0fd5cd4abee005ab2dd3972940e299814cfea4d0872ae7308fe09613d7ee851b",
+    "bytes": 393,
+    "uncompressed_bytes": 752,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "0ea0b0d25302033df1dcf24dc7a09903674d79364340ff02bb68978f7a5407cf"
+  }
+]

@@ -1,0 +1,2 @@
+# GENERATED: checked portable-router-v1 bodies; no source envelopes.
+(function fail (parameters (message utf16-string)) (returns error%3A%5B%5B%22code%22%2C%22string%22%5D%2C%5B%22exitCode%22%2C%22number%22%5D%5D) (body (return (error (message (variable message)) (field code (string operation_input)) (field exitCode (number 2))))))

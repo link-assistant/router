@@ -1,0 +1,280 @@
+{
+  "schema": "protected-ordinary-cli-writers-20261103-source-proposal-v1",
+  "predecessor": "09a5d9d71b8c2ea871fd95ac2e8f91b5e735a560",
+  "files": [
+    {
+      "role": "builtin-canonical-table",
+      "path": "tools/translation/prepare-builtin-canonical-table.mjs",
+      "producer": "prepareBuiltinCanonicalTable",
+      "planLocal": "plan",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "09a5d9d71b8c2ea871fd95ac2e8f91b5e735a560",
+        "path": "tools/translation/prepare-builtin-canonical-table.mjs",
+        "gitBlob": "df1e76f67559c8a4c3eae0cbc26dff29e7e8eb19"
+      },
+      "before": {
+        "path": "builtin-canonical-table.before.txt",
+        "bytes": 9821,
+        "sha256": "f99fcfbb1e34e0da9d30135051d1017bd949fd0d219cc7275eee0853ab4eaeed"
+      },
+      "after": {
+        "path": "builtin-canonical-table.after.txt",
+        "bytes": 10067,
+        "sha256": "e3e5fffe32e81f0a6d18cbe0681bbf5e77c82cbbd44924891a4e116aba2bc915"
+      }
+    },
+    {
+      "role": "builtin-definition-positions",
+      "path": "tools/translation/prepare-builtin-definition-positions.mjs",
+      "producer": "prepareBuiltinDefinitionPositions",
+      "planLocal": "plan",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "09a5d9d71b8c2ea871fd95ac2e8f91b5e735a560",
+        "path": "tools/translation/prepare-builtin-definition-positions.mjs",
+        "gitBlob": "858dc75899a87504f6e0a57531e2ac9a15d9a4df"
+      },
+      "before": {
+        "path": "builtin-definition-positions.before.txt",
+        "bytes": 11267,
+        "sha256": "13cec0c232c3048c9f5b7d16d7caab99bd6040a384b5371ab34b5de891749927"
+      },
+      "after": {
+        "path": "builtin-definition-positions.after.txt",
+        "bytes": 11486,
+        "sha256": "f1ea0a1ff6d3ec5f7f814ce9463fc0adcc747f6ee3ef532af7c8eea9fc46a3de"
+      }
+    },
+    {
+      "role": "default-proof-byte-adoption",
+      "path": "tools/translation/prepare-default-proof-byte-adoption.mjs",
+      "producer": "prepareDefaultProofByteAdoption",
+      "planLocal": "plan",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "09a5d9d71b8c2ea871fd95ac2e8f91b5e735a560",
+        "path": "tools/translation/prepare-default-proof-byte-adoption.mjs",
+        "gitBlob": "bd3497742915d9f48ee041b8cda32ab6d1bbb420"
+      },
+      "before": {
+        "path": "default-proof-byte-adoption.before.txt",
+        "bytes": 22408,
+        "sha256": "5f4335feb2427260adfb99e8294ca705873c2f13d913fe53035ef79305399b07"
+      },
+      "after": {
+        "path": "default-proof-byte-adoption.after.txt",
+        "bytes": 22625,
+        "sha256": "1ef6200c43577fb1c32b46a27c5fd4cd3059c6fe43905ee11e4452ea9ac35331"
+      }
+    },
+    {
+      "role": "enclosing-core-primitives-candidate",
+      "path": "tools/translation/prepare-enclosing-core-primitives-candidate.mjs",
+      "producer": "prepareEnclosingCorePrimitivesCandidate",
+      "planLocal": "plan",
+      "writeCondition": "mode==='--write'",
+      "physicalOrigin": {
+        "commit": "09a5d9d71b8c2ea871fd95ac2e8f91b5e735a560",
+        "path": "tools/translation/prepare-enclosing-core-primitives-candidate.mjs",
+        "gitBlob": "9e61a63d1aae4cf18c3c3851b4c11f6754f816c0"
+      },
+      "before": {
+        "path": "enclosing-core-primitives-candidate.before.txt",
+        "bytes": 7292,
+        "sha256": "16d7fac2f95eb9da4631f24aef73402ec95a0b780067eed3e85b13ff07619cfc"
+      },
+      "after": {
+        "path": "enclosing-core-primitives-candidate.after.txt",
+        "bytes": 7569,
+        "sha256": "9e61caa13b730faefc10803cae6028c41e2a7a9c1a6976bce086a78dd34bfac9"
+      }
+    },
+    {
+      "role": "generic-option-library",
+      "path": "tools/translation/prepare-generic-option-library.mjs",
+      "producer": "prepareGenericOptionLibrary",
+      "planLocal": "proposal",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "09a5d9d71b8c2ea871fd95ac2e8f91b5e735a560",
+        "path": "tools/translation/prepare-generic-option-library.mjs",
+        "gitBlob": "5ad4795398f350e981f307afc4f3a01f4bef7cbb"
+      },
+      "before": {
+        "path": "generic-option-library.before.txt",
+        "bytes": 4822,
+        "sha256": "dc6a6f33998fcc6861ac56ee692d849fad55f4c380ca460ba3509bd2350db7ae"
+      },
+      "after": {
+        "path": "generic-option-library.after.txt",
+        "bytes": 5056,
+        "sha256": "2a1063d761fbc39efad338398494eb115ee465adce9ed6df96d60ee5f62528d9"
+      }
+    },
+    {
+      "role": "generic-text-result-library",
+      "path": "tools/translation/prepare-generic-text-result-library.mjs",
+      "producer": "prepareGenericTextResultLibrary",
+      "planLocal": "proposal",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "09a5d9d71b8c2ea871fd95ac2e8f91b5e735a560",
+        "path": "tools/translation/prepare-generic-text-result-library.mjs",
+        "gitBlob": "dc94f1d16ada00ede0a46fd6d82eee7c7ec1875d"
+      },
+      "before": {
+        "path": "generic-text-result-library.before.txt",
+        "bytes": 4911,
+        "sha256": "d68eaccd15507408284fabd24906eee15c21a3cc9c1d9e55ec8ed55ce638d686"
+      },
+      "after": {
+        "path": "generic-text-result-library.after.txt",
+        "bytes": 5149,
+        "sha256": "5e6792070995eec2d094ce6017318a92c6cc88049c740db8aba708dffd272d9c"
+      }
+    },
+    {
+      "role": "formatting-packet-cli",
+      "path": "tools/translation/prepare-formatting-packet-cli.mjs",
+      "producer": "prepareFormattingPacketCli",
+      "planLocal": "plan",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "09a5d9d71b8c2ea871fd95ac2e8f91b5e735a560",
+        "path": "tools/translation/prepare-formatting-packet-cli.mjs",
+        "gitBlob": "c30ea5788f66ef0e4585d3dcf36c3dbccee65739"
+      },
+      "before": {
+        "path": "formatting-packet-cli.before.txt",
+        "bytes": 8103,
+        "sha256": "d683e625818e08fdb7419e2c7e0a66ce5df1d1b71ef8e7ba23c1700319733767"
+      },
+      "after": {
+        "path": "formatting-packet-cli.after.txt",
+        "bytes": 8347,
+        "sha256": "7bc7e63bfa774adfcae0d38b02c94338dfd9156c4b98b864e23e2faf0db4b2ac"
+      }
+    },
+    {
+      "role": "filesystem-effects",
+      "path": "tools/translation/prepare-filesystem-effects.mjs",
+      "producer": "prepareFilesystemEffects",
+      "planLocal": "plan",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "09a5d9d71b8c2ea871fd95ac2e8f91b5e735a560",
+        "path": "tools/translation/prepare-filesystem-effects.mjs",
+        "gitBlob": "c835b666190e714f0da8b09e41dbf12a8029eb7a"
+      },
+      "before": {
+        "path": "filesystem-effects.before.txt",
+        "bytes": 10054,
+        "sha256": "2a435e7327cdbf6b082c3e85d5541f761ae3d93b2987cb2875f57471547ec6bf"
+      },
+      "after": {
+        "path": "filesystem-effects.after.txt",
+        "bytes": 10273,
+        "sha256": "5fe98b3ebb67bbf45cc2db7faf341fa906bc2e6acf2a86ab8ea4209a6bcfa251"
+      }
+    },
+    {
+      "role": "whole-owner-core-corpus-candidate",
+      "path": "tools/translation/prepare-whole-owner-core-corpus-candidate.mjs",
+      "producer": "prepareWholeOwnerCoreCorpusCandidate",
+      "planLocal": "plan",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "09a5d9d71b8c2ea871fd95ac2e8f91b5e735a560",
+        "path": "tools/translation/prepare-whole-owner-core-corpus-candidate.mjs",
+        "gitBlob": "4f6edd712b29304587e61357afea29fa475bd9d2"
+      },
+      "before": {
+        "path": "whole-owner-core-corpus-candidate.before.txt",
+        "bytes": 13453,
+        "sha256": "b2a56409a0ea4bfd8e6039b66e402187d28dc9a316d24fcb8e8af2e784a6a2ea"
+      },
+      "after": {
+        "path": "whole-owner-core-corpus-candidate.after.txt",
+        "bytes": 13707,
+        "sha256": "18b8874c16aa6a18a47e18876c7541ee8d0b110a6e09c97fb9b8cb3d944ba0cb"
+      }
+    },
+    {
+      "role": "whole-owner-core-producer-candidate",
+      "path": "tools/translation/prepare-whole-owner-core-producer-candidate.mjs",
+      "producer": "prepareWholeOwnerCoreProducerCandidate",
+      "planLocal": "result",
+      "writeCondition": "mode==='--write'",
+      "physicalOrigin": {
+        "commit": "09a5d9d71b8c2ea871fd95ac2e8f91b5e735a560",
+        "path": "tools/translation/prepare-whole-owner-core-producer-candidate.mjs",
+        "gitBlob": "9fc14fee05056b517440e61827ba7859981e4f5e"
+      },
+      "before": {
+        "path": "whole-owner-core-producer-candidate.before.txt",
+        "bytes": 17187,
+        "sha256": "773d58240f391609d32fd2b89f1a725cb47233564305b882bb2cc6d6938e26e1"
+      },
+      "after": {
+        "path": "whole-owner-core-producer-candidate.after.txt",
+        "bytes": 17446,
+        "sha256": "0675d40cda59db2682eff0999a8e9ef796c49066999a8ffc23f242c842276c1d"
+      }
+    },
+    {
+      "role": "whole-owner-derive-candidate",
+      "path": "tools/translation/prepare-whole-owner-derive-candidate.mjs",
+      "producer": "prepareWholeOwnerDeriveCandidate",
+      "planLocal": "result",
+      "writeCondition": "args[0]==='--write'",
+      "physicalOrigin": {
+        "commit": "09a5d9d71b8c2ea871fd95ac2e8f91b5e735a560",
+        "path": "tools/translation/prepare-whole-owner-derive-candidate.mjs",
+        "gitBlob": "5ad48b7ac48cface2333e8aada2736738771f440"
+      },
+      "before": {
+        "path": "whole-owner-derive-candidate.before.txt",
+        "bytes": 11997,
+        "sha256": "c1a43913e15e5598869ed0a931593dc8ad80d86907da084227872b337841bff8"
+      },
+      "after": {
+        "path": "whole-owner-derive-candidate.after.txt",
+        "bytes": 12253,
+        "sha256": "a47034f1c8ad4e38f5bc3fe81c07086f0b2e7d451d51fb53cb42cda4d60807d1"
+      }
+    },
+    {
+      "role": "whole-owner-resolver-candidate",
+      "path": "tools/translation/prepare-whole-owner-resolver-candidate.mjs",
+      "producer": "prepareWholeOwnerResolverCandidate",
+      "planLocal": "result",
+      "writeCondition": "mode==='--write'",
+      "physicalOrigin": {
+        "commit": "09a5d9d71b8c2ea871fd95ac2e8f91b5e735a560",
+        "path": "tools/translation/prepare-whole-owner-resolver-candidate.mjs",
+        "gitBlob": "07b8f120e6991cc908b6f865f04c449b7a0045f9"
+      },
+      "before": {
+        "path": "whole-owner-resolver-candidate.before.txt",
+        "bytes": 9815,
+        "sha256": "4c40b2e8578f610a2f3d515df3d3dce7a8676c2a633e0c7dafd48cda7581dcb9"
+      },
+      "after": {
+        "path": "whole-owner-resolver-candidate.after.txt",
+        "bytes": 10070,
+        "sha256": "fee300360cd9299d106bfe53ef07954c1da09f421531c70a26a1265f178d08e0"
+      }
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceInstalled": false,
+  "sourceAuthority": false,
+  "completeOriginalFunctionDenominator": "UNKNOWN",
+  "completeWriterDenominator": "UNKNOWN",
+  "requirements": {
+    "L04": "twelve actual current CLI sinks protected through committed shared policy runtime",
+    "S03": "original sequential/direct partial failure order retained; no atomicity claim",
+    "L01_L02": "finite source/module producer/entry mapping only; generic historical sourcebank ancestry OPEN"
+  }
+}

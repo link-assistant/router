@@ -1,0 +1,26 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/034eac299055e2a80f04e74c2cbfd36ff60394b6/.github",
+    "start_line": 48,
+    "start_column": null,
+    "end_line": 48,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "sccache stats - native",
+    "message": "13% - 126 hits, 871 misses, 1 error",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/034eac299055e2a80f04e74c2cbfd36ff60394b6/.github",
+    "start_line": 1192,
+    "start_column": null,
+    "end_line": 1192,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 101.",
+    "raw_details": ""
+  }
+]

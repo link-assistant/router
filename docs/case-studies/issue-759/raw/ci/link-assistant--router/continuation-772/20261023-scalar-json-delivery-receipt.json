@@ -1,0 +1,14 @@
+{
+  "archive": "20261023-scalar-json-delivery.tar.gz",
+  "bytes": 5133844,
+  "sha256": "91ad48454a70cbbcde176980e8938da0e3f5ee199da2eed25fa7e496c6191298",
+  "members": 427,
+  "selectedOriginalBytes": 7459260,
+  "allMembersReadBack": true,
+  "credentialPatternScan": "no matches; complete selected gzip and zip members scanned",
+  "rustExecuted": false,
+  "wholeGate": false,
+  "localSelection": "All scalar/string/production/common-alias/base-retention/source-review monitor evidence, excluding task JS caches. Intermediate failures retained.",
+  "ciSelection": "Three completed head runs; all nine ran primary job logs and all three artifacts, full terminal job metadata.",
+  "head": "f54a999da6f9b7c5dbf3870b38d8ab70779d7fb2"
+}

@@ -1,0 +1,1 @@
+Verify the composed translation progress and private matches parser-frame repair with 222 focused tests passing in both Node and Bun, unchanged original source inputs and complete lossless validation evidence. Whole-corpus translation gains and full JavaScript-first parity remain subject to the separate bounded producer and gate.

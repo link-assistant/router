@@ -1,0 +1,889 @@
+//! Transparent API proxy for forwarding requests to upstream APIs.
+//!
+//! Supports three API formats required by the Claude Code LLM Gateway spec:
+//! - Anthropic Messages (`/v1/messages`, `/v1/messages/count_tokens`)
+//! - Bedrock `InvokeModel` (`/invoke`, `/invoke-with-response-stream`)
+//! - Vertex AI rawPredict (`:rawPredict`, `:streamRawPredict`)
+//!
+//! Handles token swap (custom -> OAuth), header forwarding, and
+//! pass-through of streaming (SSE) responses.
+
+// Several handlers are `async fn` purely to match axum's handler signature
+// even when their body is currently synchronous; they may grow await points
+// later, and removing `async` would force a uniform sync signature here.
+#![allow(clippy::unused_async)]
+
+mod upstream_headers;
+pub(crate) use upstream_headers::INGRESS_NETWORK_HEADERS;
+pub use upstream_headers::MAX_PROXY_REQUEST_BYTES;
+pub(crate) use upstream_headers::build_upstream_headers;
+pub(crate) use upstream_headers::native_request_headers;
+pub(crate) use upstream_headers::translated_request_id;
+pub use upstream_headers::{
+    DEFAULT_ANTHROPIC_VERSION, OAUTH_BETA_FLAG, forwarded_client_headers, merge_oauth_beta,
+};
+mod upstream_path;
+
+pub use upstream_path::resolve_upstream_path;
+
+use axum::body::Body;
+use axum::extract::rejection::JsonRejection;
+use axum::extract::{Query, Request, State};
+use axum::http::{HeaderMap, HeaderValue, StatusCode};
+use axum::response::{IntoResponse, Response};
+use futures_util::StreamExt;
+use std::collections::{BTreeMap, HashSet};
+
+pub(crate) use crate::api_error::error_response;
+use crate::api_error::malformed_json_response;
+pub use crate::app_state::AppState;
+use crate::config::UpstreamProvider;
+pub use crate::model_routing::models as openai_models;
+pub use crate::monitoring_api::{
+    accounts_endpoint, credential_status_endpoint, metrics_endpoint, usage_endpoint,
+};
+use crate::openai;
+pub(crate) use crate::request_routing::{request_routing_context, retry_after_duration};
+use crate::responses;
+
+/// The canonical Anthropic service path prefix used by the proxy.
+pub const API_PREFIX: &str = "/api/services/anthropic/";
+
+/// Required Anthropic protocol headers logged during native forwarding.
+///
+/// Other end-to-end official-client fields, including session and version
+/// metadata, are preserved by the reviewed native header policy.
+pub const REQUIRED_FORWARD_HEADERS: &[&str] = &["anthropic-beta", "anthropic-version"];
+
+/// Hop-by-hop headers that must not be forwarded.
+const HOP_BY_HOP_HEADERS: &[&str] = &[
+    "host",
+    "connection",
+    "keep-alive",
+    "proxy-authenticate",
+    "proxy-authorization",
+    "te",
+    "trailer",
+    "transfer-encoding",
+    "upgrade",
+];
+
+/// Upstream response fields that can contain credentials or establish client state.
+const RESPONSE_CREDENTIAL_HEADERS: &[&str] = &[
+    "authorization",
+    "proxy-authorization",
+    "set-cookie",
+    "set-cookie2",
+    "x-api-key",
+    "x-goog-api-key",
+    "anthropic-auth-token",
+];
+
+/// The dialect a successful streamed body may carry an in-band error in.
+///
+/// `None` keeps the transport abort for bodies Router relays opaquely: a
+/// non-streamed reply, an error status, or a compressed stream (issue #668).
+pub(crate) fn in_band_dialect(
+    status: StatusCode,
+    headers: &reqwest::header::HeaderMap,
+    path: &str,
+) -> Option<crate::stream_termination::StreamDialect> {
+    (status.is_success()
+        && crate::request_log::response_is_streamed(headers)
+        && crate::request_log::body_is_inspectable(headers))
+    .then(|| crate::stream_termination::StreamDialect::from_path(path))
+    .flatten()
+}
+
+/// Select end-to-end upstream response headers that are safe to relay to a client.
+///
+/// This policy is shared by Claude and subscription provider paths so vendor
+/// quota fields and request IDs are preserved consistently. Besides standard
+/// hop-by-hop fields, it removes fields named by `Connection`, upstream
+/// credentials, and `Content-Length` (response bodies may be translated).
+pub(crate) fn relay_response_headers(headers: &HeaderMap) -> HeaderMap {
+    let connection_headers: HashSet<String> = headers
+        .get_all("connection")
+        .iter()
+        .filter_map(|value| value.to_str().ok())
+        .flat_map(|value| value.split(','))
+        .map(|name| name.trim().to_ascii_lowercase())
+        .filter(|name| !name.is_empty())
+        .collect();
+    let mut relayed = HeaderMap::new();
+    for (name, value) in headers {
+        // `HeaderMap` normalises names on parse, so this is already lowercase;
+        // named for what it holds rather than left to read as a value that had
+        // been lowered and had not.
+        let name_lower = name.as_str();
+        if HOP_BY_HOP_HEADERS.contains(&name_lower)
+            || RESPONSE_CREDENTIAL_HEADERS.contains(&name_lower)
+            || is_operator_subscription_header(name_lower)
+            || name_lower.starts_with("x-router-")
+            || name_lower.starts_with("x-link-assistant-")
+            || name_lower == "content-length"
+            || connection_headers.contains(name_lower)
+        {
+            continue;
+        }
+        relayed.append(name.clone(), value.clone());
+    }
+    relayed
+}
+
+fn is_operator_subscription_header(name: &str) -> bool {
+    matches!(
+        name,
+        "x-codex-plan-type"
+            | "x-codex-active-limit"
+            | "x-codex-credits-balance"
+            | "x-codex-entitlement"
+            | "x-codex-entitlements"
+            | "x-codex-state-token"
+    ) || name.starts_with("x-codex-credits-")
+        || name.starts_with("x-codex-entitlement-")
+}
+
+/// Liveness endpoint: is this process up and serving?
+///
+/// Deliberately independent of subscription health. `/api/health` is wired to both
+/// the liveness *and* readiness probes in `deploy/k8s/router.yaml`, so failing
+/// it for a revoked credential would make Kubernetes restart a container that
+/// is running perfectly — and a restart cannot mint a new OAuth token, so the
+/// deployment would crash-loop instead of serving the providers that still
+/// work. Subscription health is reported by
+/// [`crate::subscription_health::subscription_health`] and by the
+/// `link_assistant_subscription_healthy` gauge on `/metrics` (issue #318).
+#[allow(clippy::unused_async)]
+///
+/// The body stays a bare `ok` for every existing probe; while the emergency
+/// any-token mode is on, a warning header says so (issue #645).
+pub async fn health(State(state): State<AppState>) -> Response {
+    let mut response = (StatusCode::OK, "ok").into_response();
+    if let Some(value) = crate::emergency_auth_api::health_header(&state)
+        .and_then(|value| axum::http::HeaderValue::from_str(&value).ok())
+    {
+        response
+            .headers_mut()
+            .insert(crate::emergency_auth::HEALTH_HEADER, value);
+    }
+    response
+}
+
+/// Decide whether a request may touch the administrative endpoints.
+///
+/// Thin HTTP wrapper over [`crate::admin_auth::admin_access_granted`], which
+/// documents and tests the rule itself.
+pub(crate) fn is_admin_authorised(state: &AppState, headers: &HeaderMap) -> bool {
+    let provided = extract_bearer_token(headers);
+    // A credential claimed through the admin UI (see [`crate::admin`]) is an
+    // admin credential everywhere, not only on the admin port.
+    if provided.is_some_and(|token| state.admin.verify(token)) {
+        return true;
+    }
+    crate::admin_auth::admin_access_granted(
+        &state.token_manager,
+        provided,
+        state.admin_key.as_deref(),
+        state.allow_anonymous_admin,
+    )
+}
+
+/// Whether `token` is an administrator credential that is not itself a JWT —
+/// the flat `TOKEN_ADMIN_KEY` or a legacy claimed `la_admin_…` value.
+fn is_admin_credential(state: &AppState, token: &str) -> bool {
+    if state.admin.verify(token) {
+        return true;
+    }
+    state
+        .admin_key
+        .as_deref()
+        .is_some_and(|required| crate::token::constant_time_eq(token, required))
+}
+
+/// Synthetic claims describing a non-JWT administrator credential, so the
+/// proxy path downstream can treat every caller uniformly. The subject is
+/// stable and carries no stored budget, matching how the flat key has always
+/// behaved on the admin endpoints.
+fn admin_credential_claims(token: &str) -> crate::token::TokenClaims {
+    crate::token::TokenClaims {
+        sub: format!("admin-credential-{}", crate::admin::sha256_hex(token)),
+        iat: 0,
+        exp: i64::MAX,
+        label: "admin credential".to_string(),
+        scope: crate::token::ADMIN_SCOPE.to_string(),
+        // An administrative credential is the operator themselves, so it is
+        // never narrowed to a repository subset.
+        github_repos: Vec::new(),
+        client_kind: None,
+        principal_id: None,
+    }
+}
+
+/// Bearer credential presented for an administrative request, if any.
+pub(crate) fn extract_admin_bearer(headers: &HeaderMap) -> Option<&str> {
+    extract_bearer_token(headers)
+}
+
+fn extract_bearer_token(headers: &HeaderMap) -> Option<&str> {
+    headers
+        .get("authorization")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|value| {
+            let (scheme, token) = value.split_once(' ')?;
+            (scheme.eq_ignore_ascii_case("bearer") || scheme.eq_ignore_ascii_case("token"))
+                .then_some(token)
+        })
+        .filter(|token| !token.is_empty())
+}
+
+/// Headers that may carry the router's own client token.
+///
+/// Every vendor dialect names its credential differently, and a client sends
+/// the name its own SDK uses: Anthropic's send `x-api-key`, Google's send
+/// `x-goog-api-key` (which is what `GEMINI_API_KEY` becomes), and everything
+/// else sends `Authorization: Bearer`. The router speaks all of these dialects,
+/// so it accepts the credential in whichever one the caller chose — a valid
+/// token in the wrong header was a `401` that cost real time to diagnose
+/// (issue #206).
+///
+/// These are checked after `Authorization`, in order. Keep
+/// [`ACCEPTED_CREDENTIAL_CARRIERS`] and [`CREDENTIAL_CARRIER_HINT`] in step:
+/// the hint is what an unauthenticated caller is told, and it is only useful
+/// while it names exactly what is accepted.
+pub(crate) const ACCEPTED_CREDENTIAL_CARRIERS: &[&str] = &["x-api-key", "x-goog-api-key"];
+
+/// What a caller presenting no recognised credential is told.
+pub(crate) const CREDENTIAL_CARRIER_HINT: &str = "Missing client token. Present it as `Authorization: Bearer <token>`, `x-api-key: <token>` \
+     or `x-goog-api-key: <token>`. The `?key=` query parameter is deliberately not accepted, \
+     because a URL is recorded by proxies and server logs.";
+
+pub(crate) fn extract_client_token(headers: &HeaderMap) -> Option<&str> {
+    extract_bearer_token(headers).or_else(|| {
+        ACCEPTED_CREDENTIAL_CARRIERS.iter().find_map(|carrier| {
+            headers
+                .get(*carrier)
+                .and_then(|value| value.to_str().ok())
+                .filter(|value| !value.is_empty())
+        })
+    })
+}
+
+/// Whether `token` satisfies a Codex route's `at-` carrier requirement.
+///
+/// The explicit emergency mode accepts any token in any spelling, so a Codex
+/// session holding an `la_sk_` or foreign token is not refused by a
+/// route-specific carrier check the mode would otherwise hide (issue #645).
+pub(crate) fn codex_carrier_accepted(state: &AppState, token: Option<&str>) -> bool {
+    token.is_some_and(|token| {
+        token.starts_with(crate::token::CODEX_TOKEN_PREFIX)
+            || state.token_manager.emergency().is_active()
+    })
+}
+
+/// Why a caller credential was refused, before it is rendered in any dialect.
+///
+/// Kept separate from the rendered response so the same verdict can be
+/// presented in the vendor dialect of whichever surface the caller used: a
+/// Gemini client must receive a Gemini error envelope even when the failure is
+/// authentication (issue #206).
+pub(crate) struct ClientAuthError {
+    pub status: StatusCode,
+    pub message: String,
+}
+
+impl ClientAuthError {
+    pub(crate) fn render(&self, dialect: crate::api_error::ApiDialect) -> Response {
+        crate::api_error::PresentedError {
+            status: self.status,
+            error_type: "authentication_error",
+            message: &self.message,
+        }
+        .render(dialect)
+    }
+}
+
+/// Validate the caller credential, returning the verdict unrendered.
+///
+/// This is the primitive: [`authenticate_client`] renders the same verdict in
+/// the Anthropic dialect for callers that have no surface context.
+pub(crate) fn authenticate_client_error(
+    state: &AppState,
+    headers: &HeaderMap,
+) -> Result<crate::token::TokenClaims, ClientAuthError> {
+    let Some(token) = extract_client_token(headers) else {
+        state.logger.debug(|| "Missing client credential");
+        // Even the emergency any-token mode requires *a* token (issue #645).
+        state
+            .token_manager
+            .diagnostics()
+            .record(crate::auth_diagnostics::reason::MISSING_CREDENTIAL, None);
+        return Err(ClientAuthError {
+            status: StatusCode::UNAUTHORIZED,
+            message: CREDENTIAL_CARRIER_HINT.to_string(),
+        });
+    };
+    // An administrator credential is a superset of client access: the person
+    // who administers the router must be able to call the models with the same
+    // credential they manage tokens with. Admin-scoped JWTs already validate
+    // below; this covers the flat `TOKEN_ADMIN_KEY` and a legacy claimed
+    // `la_admin_` credential. Anonymous admin access is deliberately *not*
+    // consulted — it opens the admin surface, never the proxy.
+    if is_admin_credential(state, token) {
+        return Ok(admin_credential_claims(token));
+    }
+    state
+        .token_manager
+        .authenticate_incoming(token, headers)
+        .map_err(|error| {
+            let status = if matches!(error, crate::token::TokenError::Revoked) {
+                StatusCode::FORBIDDEN
+            } else {
+                StatusCode::UNAUTHORIZED
+            };
+            state
+                .logger
+                .debug(|| format!("Token validation failed: {error}"));
+            ClientAuthError {
+                status,
+                message: error.client_message().to_string(),
+            }
+        })
+}
+
+/// Validate the caller credential without exposing token parser internals.
+pub(crate) fn authenticate_client(
+    state: &AppState,
+    headers: &HeaderMap,
+) -> Result<crate::token::TokenClaims, Box<Response>> {
+    authenticate_client_error(state, headers)
+        .map_err(|error| Box::new(error.render(crate::api_error::ApiDialect::Anthropic)))
+}
+
+/// Read model authority for authenticated claims, including the two legacy
+/// administrator credentials that predate durable token records.
+///
+/// A flat `TOKEN_ADMIN_KEY` or claimed `la_admin_…` credential is represented
+/// by synthetic admin claims after constant-time authentication above. It has
+/// always been an unpinned inference credential and has no record to load. No
+/// ordinary or JWT-backed token gets this compatibility path.
+pub(crate) fn model_policy_for_claims(
+    state: &AppState,
+    claims: &crate::token::TokenClaims,
+) -> Result<crate::model_contract::ModelAccessPolicy, crate::token::TokenError> {
+    match state.token_manager.model_policy_for(&claims.sub) {
+        Ok(policy) => Ok(policy),
+        Err(crate::token::TokenError::NotFound(_))
+            if claims.is_admin()
+                && claims.label == "admin credential"
+                && claims.sub.starts_with("admin-credential-") =>
+        {
+            Ok(crate::model_contract::ModelAccessPolicy::default())
+        }
+        Err(error) => Err(error),
+    }
+}
+
+/// Enforce the durable model grant before provider selection or upstream I/O.
+pub(crate) fn authorize_model_for_claims(
+    state: &AppState,
+    claims: &crate::token::TokenClaims,
+    requested: &str,
+    dialect: crate::api_error::ApiDialect,
+) -> Result<crate::model_contract::ModelAccessPolicy, Response> {
+    let policy = model_policy_for_claims(state, claims).map_err(|_| {
+        let error = crate::model_contract::ModelAccessError::policy_unavailable(requested);
+        crate::api_error::PresentedError {
+            status: StatusCode::SERVICE_UNAVAILABLE,
+            error_type: &error.code,
+            message: &error.to_string(),
+        }
+        .render(dialect)
+    })?;
+    if policy.permits(crate::thinking::base_model(requested)) {
+        Ok(policy)
+    } else {
+        state
+            .token_manager
+            .diagnostics()
+            .record(crate::auth_diagnostics::reason::MODEL_POLICY, None);
+        let error = crate::model_contract::ModelAccessError::new(requested, &policy);
+        Err(crate::api_error::PresentedError {
+            status: StatusCode::FORBIDDEN,
+            error_type: &error.code,
+            message: &error.to_string(),
+        }
+        .render(dialect))
+    }
+}
+
+/// Provider-independent fields owned by the Anthropic Messages surface.
+///
+/// Validate these before automatic model routing or a concrete provider can
+/// inspect the request. Provider extensions remain untouched and token-count,
+/// Bedrock, and Vertex requests keep their existing contracts.
+#[derive(serde::Deserialize)]
+struct RequiredAnthropicMessagesFields {
+    model: String,
+    max_tokens: u64,
+    messages: Vec<serde_json::Value>,
+}
+
+async fn validate_anthropic_messages_request(
+    state: &AppState,
+    claims: &crate::token::TokenClaims,
+    request: Request,
+) -> Result<Request, Response> {
+    if !request.uri().path().ends_with("/v1/messages") {
+        return Ok(request);
+    }
+
+    let (mut parts, body) = request.into_parts();
+    let body_bytes = axum::body::to_bytes(body, state.max_proxy_request_bytes)
+        .await
+        .map_err(|error| {
+            error_response(
+                StatusCode::PAYLOAD_TOO_LARGE,
+                "invalid_request_error",
+                &format!(
+                    "request body exceeds the {} byte proxy limit: {error}",
+                    state.max_proxy_request_bytes
+                ),
+            )
+        })?;
+    let mut body: serde_json::Value = serde_json::from_slice(&body_bytes)
+        .map_err(|error| malformed_json_response(&error.to_string()))?;
+    let required: RequiredAnthropicMessagesFields =
+        serde_json::from_value(body.clone()).map_err(|error| {
+            error_response(
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                &format!("invalid Anthropic Messages request: {error}"),
+            )
+        })?;
+    if required.model.trim().is_empty() {
+        return Err(error_response(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "invalid Anthropic Messages request: model must not be empty",
+        ));
+    }
+    if crate::thinking::suffix_applies(
+        &body,
+        &required.model,
+        crate::thinking::ThinkingProtocol::Anthropic,
+    ) {
+        parts.extensions.insert(crate::thinking::SuffixIntent);
+    }
+    let changed =
+        crate::thinking::normalize_request(&mut body, crate::thinking::ThinkingProtocol::Anthropic)
+            .map_err(|reason| {
+                error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &reason)
+            })?;
+    authorize_model_for_claims(
+        state,
+        claims,
+        body["model"].as_str().unwrap_or(&required.model),
+        crate::api_error::ApiDialect::Anthropic,
+    )?;
+    if required.max_tokens == 0 {
+        return Err(error_response(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "invalid Anthropic Messages request: max_tokens must be greater than zero",
+        ));
+    }
+    if required.messages.is_empty() {
+        return Err(error_response(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "invalid Anthropic Messages request: messages must contain at least one message",
+        ));
+    }
+
+    let body_bytes = if changed {
+        parts.headers.remove(axum::http::header::CONTENT_LENGTH);
+        axum::body::Bytes::from(serde_json::to_vec(&body).map_err(|error| {
+            error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &error.to_string(),
+            )
+        })?)
+    } else {
+        body_bytes
+    };
+    Ok(Request::from_parts(parts, Body::from(body_bytes)))
+}
+
+/// Proxy handler for upstream API forwarding.
+///
+/// Catches all requests, validates the custom token, swaps it for OAuth
+/// credentials, and forwards the request upstream -- preserving SSE streaming.
+///
+/// Supports all three Claude Code LLM Gateway API formats:
+/// - Anthropic Messages: `/v1/messages`, `/v1/messages/count_tokens`
+/// - Bedrock `InvokeModel`: `/invoke`, `/invoke-with-response-stream`
+/// - Vertex rawPredict: paths ending in `:rawPredict`, `:streamRawPredict`
+/// - Legacy: `/api/latest/anthropic/*`
+pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Response {
+    proxy_handler_with_subscription(state, req, None).await
+}
+
+async fn proxy_handler_with_subscription(
+    state: AppState,
+    req: Request,
+    subscription: Option<crate::model_routing::ValidatedSubscription>,
+) -> Response {
+    let path = req.uri().path().to_string();
+    let method = req.method().clone();
+    let incoming_headers = req.headers().clone();
+    if state.upstream_provider == UpstreamProvider::Auto {
+        let claims = match authenticate_client(&state, &incoming_headers) {
+            Ok(claims) => claims,
+            Err(response) => return *response,
+        };
+        let entitled = match crate::client_policy::entitled_subscription_providers_for_claims(
+            &state,
+            &claims,
+            &incoming_headers,
+            crate::client_policy::ClientProtocol::AnthropicMessages,
+            &path,
+        ) {
+            Ok(entitled) => entitled,
+            Err(response) => return response,
+        };
+        let req = match validate_anthropic_messages_request(&state, &claims, req).await {
+            Ok(request) => request,
+            Err(response) => return response,
+        };
+        let (routed, request) =
+            match crate::model_routing::route_anthropic_request_with_subscription_for_providers(
+                &state, req, &entitled,
+            )
+            .await
+            {
+                Ok(routed) => routed,
+                Err(response) => return response,
+            };
+        return Box::pin(proxy_handler_with_subscription(
+            routed.state,
+            request,
+            routed.subscription,
+        ))
+        .await;
+    }
+    state.logger.verbose(|| format!("Incoming {method} {path}"));
+    // Resolve the upstream path based on which API format the request matches
+    let upstream_path = resolve_upstream_path(&path);
+    state
+        .logger
+        .debug(|| format!("Resolved upstream path: {upstream_path}"));
+
+    // Build upstream URL
+    let upstream_url = format!(
+        "{}{}",
+        state.upstream_base_url.trim_end_matches('/'),
+        upstream_path
+    );
+
+    let upstream_url = if let Some(query) = req.uri().query() {
+        format!("{upstream_url}?{query}")
+    } else {
+        upstream_url
+    };
+
+    // A protocol-compatible request is not authority to spend a consumer
+    // subscription. Decide the exact signed client/provider cell before the
+    // bridge or any upstream credential lookup can run.
+    let claims = match authenticate_client(&state, &incoming_headers) {
+        Ok(claims) => claims,
+        Err(response) => return *response,
+    };
+    if let Some(provider) = state.upstream_provider.subscription_provider()
+        && let Err(response) = crate::client_policy::enforce_subscription_for_claims(
+            &state,
+            &claims,
+            &incoming_headers,
+            provider,
+            crate::client_policy::ClientProtocol::AnthropicMessages,
+            &path,
+        )
+    {
+        return response;
+    }
+    let req = match validate_anthropic_messages_request(&state, &claims, req).await {
+        Ok(request) => request,
+        Err(response) => return response,
+    };
+    let from_thinking_suffix = req
+        .extensions()
+        .get::<crate::thinking::SuffixIntent>()
+        .is_some();
+
+    // Log session tracking header if present
+    if let Some(session_id) = incoming_headers.get("x-claude-code-session-id") {
+        state
+            .logger
+            .verbose(|| format!("Session: {}", session_id.to_str().unwrap_or("<invalid>")));
+    }
+
+    // Anthropic-dialect requests aimed at a non-Anthropic upstream are handed
+    // to the bridge, which translates both directions and delegates to the
+    // provider's own forwarder (that forwarder owns token validation, budget
+    // enforcement, and account selection, so none of it is done twice here).
+    // Every other provider keeps the pass-through path below unchanged.
+    if crate::anthropic_bridge::is_bridged(state.upstream_provider) {
+        let body_bytes =
+            match axum::body::to_bytes(req.into_body(), state.max_proxy_request_bytes).await {
+                Ok(bytes) => bytes,
+                Err(e) => {
+                    return error_response(
+                        StatusCode::PAYLOAD_TOO_LARGE,
+                        "invalid_request_error",
+                        &format!(
+                            "request body exceeds the {} byte proxy limit: {e}",
+                            state.max_proxy_request_bytes
+                        ),
+                    );
+                }
+            };
+        let body = match serde_json::from_slice(&body_bytes) {
+            Ok(body) => body,
+            Err(error) => return malformed_json_response(&error.to_string()),
+        };
+        if let Some(response) = intercept_warmup(&state, &path, &body) {
+            return response;
+        }
+        return crate::anthropic_bridge::handle_anthropic_surface_routed(
+            &state,
+            &incoming_headers,
+            &path,
+            body,
+            subscription.as_ref(),
+        )
+        .await;
+    }
+
+    // Read the body before account selection so the router gets a copy of
+    // stable request metadata and can preserve conversation affinity. It is
+    // also what the spend reservation below is computed from.
+    let body_bytes =
+        match axum::body::to_bytes(req.into_body(), state.max_proxy_request_bytes).await {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                return error_response(
+                    StatusCode::PAYLOAD_TOO_LARGE,
+                    "invalid_request_error",
+                    &format!(
+                        "request body exceeds the {} byte proxy limit: {e}",
+                        state.max_proxy_request_bytes
+                    ),
+                );
+            }
+        };
+    let routing_body = match serde_json::from_slice(&body_bytes) {
+        Ok(body) => body,
+        Err(error) => return malformed_json_response(&error.to_string()),
+    };
+    if let Some(response) = intercept_warmup(&state, &path, &routing_body) {
+        return response;
+    }
+
+    // Enforce the per-token budgets (max_requests, rate limit, and the token
+    // spend cap). The spend cap reserves this request's declared output budget
+    // so one response cannot push the persisted total past it (issue #195).
+    let reservation = crate::token_reservation::estimate(&routing_body).total();
+    if let Err(e) = state
+        .token_manager
+        .enforce_request_budget_reserving(&claims.sub, reservation)
+    {
+        state
+            .logger
+            .debug(|| format!("Token budget check failed: {e}"));
+        return crate::token_http::budget_error_response(&e);
+    }
+    // Every early return from here on must release the reservation, so bind it
+    // to a guard that settles on drop.
+    let mut reservation = crate::usage::ReservationGuard::new(
+        state.token_manager.clone(),
+        claims.sub.clone(),
+        reservation,
+    );
+
+    crate::audit::record_authorised_request(
+        &state,
+        &claims,
+        crate::metrics::Surface::Anthropic,
+        &path,
+        Some(&routing_body),
+    );
+    let pinned_account = match state.token_manager.account_for(&claims.sub) {
+        Ok(account) => account,
+        Err(error) => {
+            return error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &format!("failed to resolve token account binding: {error}"),
+            );
+        }
+    };
+    let routing_context = request_routing_context(&incoming_headers, &routing_body, pinned_account);
+
+    let correlation_id = crate::request_log::correlation_id(&incoming_headers);
+    // Select an account and send; with pool failover on, retried on another
+    // account until the first byte is relayed (issue #676).
+    let reply = match dispatch::dispatch(dispatch::Dispatch {
+        state: &state,
+        method: &method,
+        upstream_url: &upstream_url,
+        incoming_headers: &incoming_headers,
+        body: body_bytes,
+        routing_body: &routing_body,
+        from_thinking_suffix,
+        context: routing_context,
+        subscription: subscription.as_ref(),
+        correlation_id: &correlation_id,
+    })
+    .await
+    {
+        Ok(reply) => reply,
+        Err(response) => return response,
+    };
+    let status = reply.status;
+    // One request, one recorded outcome: the attempts it took are counted
+    // separately as pool failovers.
+    state.metrics.record_request(
+        crate::metrics::Surface::Anthropic,
+        status.as_u16(),
+        reply.account.as_deref(),
+    );
+
+    // Build the response -- stream it back to preserve SSE
+    let response_headers = relay_response_headers(&reply.headers);
+
+    // Stream the response body
+    let response_log = std::sync::Arc::clone(&state.request_log);
+    // On success the reservation follows the response body and is settled with
+    // the real usage; otherwise dropping the guard releases it immediately.
+    let mut usage = status
+        .is_success()
+        .then(|| reservation.take().into_tracker());
+    // Track how the stream ends, not only how it started: `status` above was
+    // decided by the response headers, so it cannot report a turn that is cut
+    // mid-flight (issue #230).
+    let started = std::time::Instant::now();
+    // A failure after the first byte reaches the client as one in-band error
+    // event in its own dialect, never as a synthesized success (issue #668).
+    let in_band_dialect = in_band_dialect(status, &reply.headers, &upstream_path);
+    // A single-shot JSON reply has no terminator to miss, so settling it as a
+    // cut stream warned once per successful request and filled `logs anomalies`
+    // with healthy traffic (issue #252).
+    let outcome = std::sync::Arc::new(std::sync::Mutex::new(crate::request_log::StreamOutcome {
+        streamed: crate::request_log::response_is_streamed(&reply.headers),
+        terminated: false,
+        // A compressed body is relayed byte for byte, so its frames cannot be
+        // scanned for a terminator (issue #255).
+        inspectable: crate::request_log::body_is_inspectable(&reply.headers),
+        detail: None,
+        frames: 0,
+        bytes: 0,
+        duration_ms: 0,
+    }));
+    let end_outcome = std::sync::Arc::clone(&outcome);
+    let end_log = std::sync::Arc::clone(&response_log);
+    let end_id = correlation_id.clone();
+    let logger = state.logger.clone();
+    let stream = reply.body.map(move |chunk| {
+        let mut state = outcome.lock().expect("stream outcome lock");
+        match &chunk {
+            Ok(bytes) => {
+                response_log.record_upstream_body(&correlation_id, bytes);
+                state.frames += 1;
+                state.bytes += bytes.len() as u64;
+                if crate::request_log::frame_terminates_stream(bytes) {
+                    state.terminated = true;
+                }
+                if let Some(tracker) = &mut usage {
+                    tracker.feed(bytes);
+                }
+            }
+            Err(error) => state.detail = Some(error.to_string()),
+        }
+        drop(state);
+        chunk.map_err(std::io::Error::other)
+    });
+    let stream = crate::stream_termination::in_band_errors(stream, in_band_dialect)
+        .chain(futures_util::stream::once(async move {
+            crate::request_log::settle_stream(
+                &end_log,
+                &end_id,
+                &end_outcome,
+                started.elapsed().as_millis(),
+                &logger,
+            );
+            Err(std::io::Error::other(
+                crate::request_log::STREAM_END_MARKER,
+            ))
+        }))
+        .take_while(|item| {
+            futures_util::future::ready(
+                !matches!(item, Err(error) if error.to_string() == crate::request_log::STREAM_END_MARKER),
+            )
+        });
+
+    let body = Body::from_stream(stream);
+
+    let mut response = Response::new(body);
+    *response.status_mut() = status;
+    *response.headers_mut() = response_headers;
+
+    response
+}
+
+/// Answer Claude Code's "Warmup" probe locally when `INTERCEPT_WARMUP` is on,
+/// so it spends no subscription quota (issue #677).
+fn intercept_warmup(state: &AppState, path: &str, body: &serde_json::Value) -> Option<Response> {
+    if !path.ends_with("/v1/messages")
+        || !crate::pool_failover::current().intercept_warmup
+        || !crate::warmup::is_warmup_request(body)
+    {
+        return None;
+    }
+    state.metrics.record_warmup_intercepted();
+    state
+        .logger
+        .verbose(|| "Answered a warmup probe locally".to_string());
+    Some(crate::warmup::warmup_response(body))
+}
+
+#[path = "proxy_dispatch.rs"]
+mod dispatch;
+use dispatch::resolve_upstream_credentials;
+pub(crate) use dispatch::{log_stop, note_failover};
+
+/// `POST /v1/chat/completions` — `OpenAI` Chat Completions.
+///
+/// Translates to Anthropic Messages, forwards via the same OAuth-substituting
+/// pipeline used by [`proxy_handler`], and converts the response back.
+#[path = "proxy_openai.rs"]
+pub(crate) mod openai_handlers;
+
+pub(crate) use openai_handlers::openai_chat_completions_routed;
+pub use openai_handlers::{
+    openai_chat_completions, openai_chat_completions_native, openai_chat_completions_route,
+    openai_responses, openai_responses_native, openai_responses_route,
+};
+pub(crate) use openai_handlers::{rewrite_routed_model, route_openai_request};
+
+#[path = "proxy_openai_forward.rs"]
+mod openai_forward;
+use openai_forward::{OpenAIForwardContext, OpenAIShape, forward_openai};
+
+pub(crate) fn maybe_mpp_challenge(
+    state: &AppState,
+    headers: &HeaderMap,
+    path: &str,
+) -> Option<Response> {
+    openai_forward::maybe_mpp_challenge(state, headers, path)
+}

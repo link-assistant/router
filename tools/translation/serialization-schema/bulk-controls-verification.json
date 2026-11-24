@@ -1,0 +1,101 @@
+{
+  "schema": "bulk-original-scope-controls-verification-v1",
+  "head": "ce3a47181d8245139fb56875bf1d8d630ae2f533",
+  "scope": [
+    "tools/translation/serialization-schema/bulk.test.mjs",
+    "tools/translation/serialization-schema/serialization-schema.test.mjs"
+  ],
+  "authored_cases_per_engine": 31,
+  "input_count": 1128,
+  "immutable_inputs": true,
+  "results": [
+    {
+      "engine": "node",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/serialization-schema/bulk.test.mjs",
+        "tools/translation/serialization-schema/serialization-schema.test.mjs"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 13.035,
+      "temporary_bytes_before_cleanup": 491,
+      "remaining_temporary_entries_before_cleanup": [
+        "xcrun_db"
+      ]
+    },
+    {
+      "engine": "bun",
+      "command": [
+        "bun",
+        "test",
+        "--timeout",
+        "15000",
+        "tools/translation/serialization-schema/bulk.test.mjs",
+        "tools/translation/serialization-schema/serialization-schema.test.mjs"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 8.066,
+      "temporary_bytes_before_cleanup": 491,
+      "remaining_temporary_entries_before_cleanup": [
+        "xcrun_db"
+      ]
+    }
+  ],
+  "post_DTO_alias_import_reexport_controls_passed": true,
+  "production_imports_changed": false,
+  "persistent_bulk_outputs_written": false,
+  "archive": {
+    "file": "bulk-controls-verification-raws.tar.gz",
+    "bytes": 164881,
+    "sha256": "9b4b88805993cbcc29c16b20ed21dced9ff05079fd2db76d799d84897d2f8ba4",
+    "members": [
+      {
+        "file": "run/bun.log",
+        "bytes": 3581,
+        "sha256": "dcda805ab237df61605867dd631e48acc17746aaa2f1c57d6836c7d947755bac",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/harness.py",
+        "bytes": 5106,
+        "sha256": "4efb121aff742468e8b2db1eaeaf7b61fc8aa9b71f94d5bca743b6171a7c1808",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/inputs.json",
+        "bytes": 133373,
+        "sha256": "3820e4e27f86080aeb3717e96ab61d456648c0fb6155a99c38a39c02782cef37",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/node.log",
+        "bytes": 7521,
+        "sha256": "7e980a44fed88b3d6599350f9246c5417f78742774817ceaa02734257d81568f",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/receipt.json",
+        "bytes": 267229,
+        "sha256": "0ae41e5dde422d350a780cdbfb1c18fdf330ce316b56aa73ca7da6fcd55d937b",
+        "reopened_verified": true
+      },
+      {
+        "file": "runner/plan.json",
+        "bytes": 494,
+        "sha256": "1012f0df179ee8e2f4c59bb556766da69d363109e28e0a014f6f461761b3d7ee",
+        "reopened_verified": true
+      },
+      {
+        "file": "runner/run.py",
+        "bytes": 5106,
+        "sha256": "4efb121aff742468e8b2db1eaeaf7b61fc8aa9b71f94d5bca743b6171a7c1808",
+        "reopened_verified": true
+      }
+    ]
+  },
+  "runtimeAuthority": false
+}

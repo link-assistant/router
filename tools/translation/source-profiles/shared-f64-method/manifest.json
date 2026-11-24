@@ -1,0 +1,49 @@
+{
+  "schema": "original-rust-reference-shared-f64-method-v1",
+  "rust": "1.89.0",
+  "referenceRevision": "9571d4d38cc580bd9fe926f97fccd98f215564a9",
+  "files": [
+    {
+      "path": "src/expressions/method-call-expr.md",
+      "archive": "method-call-expr.md.gz",
+      "bytes": 4962,
+      "sha256": "bbd1109653b2d2bc41d66f9214b43838e0b6cbfba91e11e0617d41be1015fe19",
+      "archiveSha256": "8b306525eb6d381e54bced29c8066f864ba66fe7b6a731d2e919140093d07318",
+      "url": "https://github.com/rust-lang/reference/blob/9571d4d38cc580bd9fe926f97fccd98f215564a9/src/expressions/method-call-expr.md"
+    },
+    {
+      "path": "src/expressions/operator-expr.md",
+      "archive": "operator-expr.md.gz",
+      "bytes": 35234,
+      "sha256": "cd20e653dd8c862ad910615c63db9ea126112ce0165e674720c7dad9cf5b8037",
+      "archiveSha256": "43b418ce9641395533010df7d56d6f6a12b630c59b997a876c5efbd44095e541",
+      "url": "https://github.com/rust-lang/reference/blob/9571d4d38cc580bd9fe926f97fccd98f215564a9/src/expressions/operator-expr.md"
+    },
+    {
+      "path": "src/expressions.md",
+      "archive": "expressions.md.gz",
+      "bytes": 14579,
+      "sha256": "2631cc1c168ebb0f3ca220d735e536573631e4f2d8199944e8d22411c085757c",
+      "archiveSha256": "34bcbab8454400785b50fc0287876c389bbbd026412e3c255db46fa6bb4a722f",
+      "url": "https://github.com/rust-lang/reference/blob/9571d4d38cc580bd9fe926f97fccd98f215564a9/src/expressions.md"
+    },
+    {
+      "path": "LICENSE-MIT",
+      "archive": "LICENSE-MIT.gz",
+      "bytes": 1071,
+      "sha256": "0621878e61f0d0fda054bcbe02df75192c28bde1ecc8289cbd86aeba2dd72720",
+      "archiveSha256": "bf00343cf36b95db268c2bf6c07c2f0a8e810169f590b4037741b11f00c5444e",
+      "url": "https://github.com/rust-lang/reference/blob/9571d4d38cc580bd9fe926f97fccd98f215564a9/LICENSE-MIT"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "archive": "LICENSE-APACHE.gz",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "archiveSha256": "9ce8cda6967beed2c8cbf5a024f9d59c00f79854055ed2716c42da73354e5f0e",
+      "url": "https://github.com/rust-lang/reference/blob/9571d4d38cc580bd9fe926f97fccd98f215564a9/LICENSE-APACHE"
+    }
+  ],
+  "rustSubmodule": "https://github.com/rust-lang/rust/tree/1.89.0/src/doc/reference",
+  "scope": "complete source evidence; no receiver or executable authority"
+}

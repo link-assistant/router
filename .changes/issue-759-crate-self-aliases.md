@@ -1,0 +1,3 @@
+Resolve exact extern crate self aliases to the tracked crate's type namespace. Rust 2018 root aliases enter the extern prelude in descendant modules with lower priority than local declarations and imports; nested aliases remain local. Preserve conditional, visibility, raw-identifier and absolute-path evidence without resolving real external dependency identities.
+
+Original Router crate-alias source plus checked cross-module calls executes unchanged JavaScript and strict compiled TypeScript. Unknown dependencies, source shadowing and conditional aliases cannot acquire standard host contracts. Runtime parity remains false.

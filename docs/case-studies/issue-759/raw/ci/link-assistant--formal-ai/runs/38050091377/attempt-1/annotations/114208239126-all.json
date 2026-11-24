@@ -1,0 +1,50 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/aabf6d4ea012d9b67843ee7bb4e33b7e0730ecc6/.github",
+    "start_line": 17,
+    "start_column": null,
+    "end_line": 17,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "No files were found with the provided path: /home/runner/work/_temp/coding-ladder-results.json\n/home/runner/work/_temp/coding-ladder.log\n/home/runner/work/_temp/coding-ladder-shards. No artifacts will be uploaded.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/aabf6d4ea012d9b67843ee7bb4e33b7e0730ecc6/.github",
+    "start_line": 19,
+    "start_column": null,
+    "end_line": 19,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 1.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/aabf6d4ea012d9b67843ee7bb4e33b7e0730ecc6/.github",
+    "start_line": 18,
+    "start_column": null,
+    "end_line": 18,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "Coding ladder is incomplete",
+    "message": "not every shard succeeded (ladder-binary=failure, ladder-shard=skipped). A failed, timed-out (cancelled) or skipped shard is a missing measurement, never a pass.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/aabf6d4ea012d9b67843ee7bb4e33b7e0730ecc6/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+    "raw_details": ""
+  }
+]

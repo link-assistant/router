@@ -1,0 +1,22 @@
+// Independent actual native caller/body case SOURCE. All execution UNRUN.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {translateProject} from '../project.mjs';
+import {loadJsonMacroSourceProof} from '../json-macro-sources.mjs';
+import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
+import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
+import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_RANGES_SOURCE,ROUTER_CORE_JSON_COLLECTIONS_SOURCE} from '../router-core-source-data.mjs';
+import {verifyTypedTargets} from './text-typed-targets.mjs';
+import {requireOriginalJsonProjectionEmission,hasOriginalRouterCoreJsonProjection} from '../router-core-json-updates.mjs';
+import {hostRuntimeAssets} from '../host-assets.mjs';
+import {preparePrimitiveOwnedVectorLoopStateSources} from '../prepare-primitive-owned-vector-loop-state-sources.mjs';
+const limits={timeout:60000},namespace='crate::translation_primitive_vectors_core::',native=readFileSync(new URL('../../../rust/src/translation_primitive_vectors_core.rs',import.meta.url),'utf8'),sequence=readFileSync(new URL('../../../rust/src/translation_primitive_sequences_core.rs',import.meta.url),'utf8'),dependencies={manifest:readFileSync(new URL('../../../rust/Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')};
+// Deliberately independent extrema, never read from translation rule/catalog DATA.
+const domains=[['bool',false,true],['u8',0n,255n],['i8',-128n,127n],['u16',0n,65535n],['i16',-32768n,32767n],['u32',0n,4294967295n],['i32',-2147483648n,2147483647n],['u64',0n,18446744073709551615n],['i64',-9223372036854775808n,9223372036854775807n],['u128',0n,340282366920938463463374607431768211455n],['i128',-170141183460469231731687303715884105728n,170141183460469231731687303715884105727n]];
+function files(source,leaf=native,slice=sequence){return {'src/lib.rs':'pub mod translation_core;\npub mod translation_primitive_sequences_core;\npub mod translation_primitive_vectors_core;\n'+source,'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE,'src/translation_core/json_collections.rs':ROUTER_CORE_JSON_COLLECTIONS_SOURCE,'src/translation_primitive_sequences_core.rs':slice,'src/translation_primitive_vectors_core.rs':leaf};}
+function project(input){return translateProject({entry:'src/lib.rs',paths:Object.keys(input),readSource:path=>input[path],jsonMacroDependencies:loadJsonMacroSourceProof(dependencies),deriveDependencies:loadDeriveDependencyProof(dependencies),cargoManifest:dependencies.manifest,compilationProfile:PRODUCTION_PROFILE});}
+const admitted=(result,name)=>result.meta.executable.some(row=>row.name===name);
+for(const [domain,minimum,maximum]of domains)test(domain+' native range/while accumulation reuses the whole loop fixed point and actual vector core callers',limits,async()=>{const t='::core::primitive::'+domain,v='::std::vec::Vec<'+t+'>',n=operation=>namespace+'vec_'+domain+'_'+operation,text=`pub fn counted(value:${t},limit: ::core::primitive::u64)->${v}{let mut values=${n('new')}();for index in 0_u64..limit{values=${n('push')}(values,value);}values}
+pub fn countdown(value:${t},limit: ::core::primitive::u64)->${v}{let mut values=${n('new')}();let mut left=limit;while left>0_u64{values=${n('push')}(values,value);left=left-1_u64;}values}`,result=project(files(text));for(const name of ['counted','countdown'])assert.equal(admitted(result,name),true,JSON.stringify(result.meta.refused));await verifyTypedTargets(result,api=>{for(const value of [minimum,maximum])for(const limit of [0n,1n,3n])for(const name of ['counted','countdown'])assert.deepEqual(api[name](value,limit),Array(Number(limit)).fill(value));},{childTimeoutMs:20000});});
+test('a native moved vector cannot escape via a backedge or break after zero-or-more iterations',limits,()=>{const n=operation=>namespace+'vec_u8_'+operation;for(const ending of ['', 'break;', 'continue;']){const text='pub fn bad(value: ::core::primitive::u8,limit: ::core::primitive::u64)->::core::primitive::u64{let mut values='+n('new')+'();for index in 0_u64..limit{let moved='+n('push')+'(values,value);'+ending+'}'+n('len')+'(&values)}';assert.equal(admitted(project(files(text)),'bad'),false);}});

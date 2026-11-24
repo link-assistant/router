@@ -1,0 +1,2 @@
+# GENERATED: checked portable-router-v1 bodies; no source envelopes.
+(function scoped_srcc88af6ad19a278ff_at2201 (lossless) (parameters (model value)) (returns value) (body (return (logical and (binary equal (typeof (variable model)) (string string)) (method trim (variable model))))))

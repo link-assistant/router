@@ -1,0 +1,206 @@
+{
+  "schema": "protected-private-cli-lineage-20261103-source-proposal-v1",
+  "predecessor": "ff528cbd34ac54024dc21d81466350683b051f85",
+  "files": [
+    {
+      "role": "cst-history",
+      "path": "tools/translation/protected-cst-cli-writers-20261102-history.mjs",
+      "before": {
+        "path": "cst-history.before.txt",
+        "sha256": "b6aeae3c0b38b4846ae113a32b7218a43028b148fa962739f858993dc4b11908",
+        "bytes": 3579
+      },
+      "after": {
+        "path": "cst-history.after.txt",
+        "sha256": "b75b766fea6f0b73fdeda1e4b529fdd5ffcc00a6006cd0409e5b089a56860272",
+        "bytes": 4098
+      },
+      "physicalOrigin": {
+        "commit": "ff528cbd34ac54024dc21d81466350683b051f85",
+        "path": "tools/translation/protected-cst-cli-writers-20261102-history.mjs",
+        "gitBlob": "4213efac26ccd2d8ac4c126a628874844640b2c5"
+      }
+    },
+    {
+      "role": "adapter-producer",
+      "path": "tools/translation/prepare-private-parser-data-current-sources.mjs",
+      "before": {
+        "path": "adapter-producer.before.txt",
+        "sha256": "8e8e67667a861353dfa9bce8e17796e5aad4cd706a125b4f19b7631ca6ae9c24",
+        "bytes": 22096
+      },
+      "after": {
+        "path": "adapter-producer.after.txt",
+        "sha256": "ed6ac30b1354544f7f84bfc87f4fb75cc5825d22d76ca9fe14c60ce92ef081e3",
+        "bytes": 23144
+      },
+      "physicalOrigin": {
+        "commit": "ff528cbd34ac54024dc21d81466350683b051f85",
+        "path": "tools/translation/prepare-private-parser-data-current-sources.mjs",
+        "gitBlob": "2d8e24d39f0893f234806efa6d3f5229ae3ff3f0"
+      }
+    },
+    {
+      "role": "current-consumer",
+      "path": "tools/translation/private-parser-data-current-sources.mjs",
+      "before": {
+        "path": "current-consumer.before.txt",
+        "sha256": "cdaa88acab83bb5512e7067d3380f743f6a4ff0347cf9084473182e39a67a788",
+        "bytes": 6624
+      },
+      "after": {
+        "path": "current-consumer.after.txt",
+        "sha256": "73a79917ab1b40640cae63529fd04346acfa6ad4c4e2f426f9646798a1284890",
+        "bytes": 6733
+      },
+      "physicalOrigin": {
+        "commit": "ff528cbd34ac54024dc21d81466350683b051f85",
+        "path": "tools/translation/private-parser-data-current-sources.mjs",
+        "gitBlob": "9dd439f6ea54fc94b7d00ee8aa2a2298303bca83"
+      }
+    },
+    {
+      "role": "assignment-cli",
+      "path": "tools/translation/prepare-private-parser-assignment-data-candidate.mjs",
+      "before": {
+        "path": "assignment-cli.before.txt",
+        "sha256": "6ca9c23d4e51cebf92e807ca7182d66b223f3857d1f090fb188aa6647e582188",
+        "bytes": 9227
+      },
+      "after": {
+        "path": "assignment-cli.after.txt",
+        "sha256": "48563df74f7d8c97686fac2d77b78ce43fe2caa8a6a2c4eed840de915c0edb51",
+        "bytes": 9492
+      },
+      "physicalOrigin": {
+        "commit": "ff528cbd34ac54024dc21d81466350683b051f85",
+        "path": "tools/translation/prepare-private-parser-assignment-data-candidate.mjs",
+        "gitBlob": "0f29f2ce776fa61a42ad9429616ca52da93ccde4"
+      }
+    },
+    {
+      "role": "batch-cli",
+      "path": "tools/translation/prepare-private-concrete-substitution-batch-candidate.mjs",
+      "before": {
+        "path": "batch-cli.before.txt",
+        "sha256": "48e6e9dc47036c34a07eeaf8622db72a80b3b9bf544190e54bb936162381d39e",
+        "bytes": 13190
+      },
+      "after": {
+        "path": "batch-cli.after.txt",
+        "sha256": "d95c6aa33883c5d71b60c421884f997f4b1c8c7f9ab41773c4814e6e30ac7357",
+        "bytes": 13455
+      },
+      "physicalOrigin": {
+        "commit": "ff528cbd34ac54024dc21d81466350683b051f85",
+        "path": "tools/translation/prepare-private-concrete-substitution-batch-candidate.mjs",
+        "gitBlob": "4efa932d9a18e420fc374ded538f5e80c3f1f0ce"
+      }
+    },
+    {
+      "role": "current-case",
+      "path": "tools/translation/test/private-parser-data-current-sources.test.mjs",
+      "before": {
+        "path": "current-case.before.txt",
+        "sha256": "eaf0dba5084e71a024ac7da283109a78c164956fb5249cf96c44c52e46c0b875",
+        "bytes": 11734
+      },
+      "after": {
+        "path": "current-case.after.txt",
+        "sha256": "461adce2ca0a56a9dfeb997c9b2ab688d4f24353ed360712df4f662c044cd5cc",
+        "bytes": 12382
+      },
+      "physicalOrigin": {
+        "commit": "ff528cbd34ac54024dc21d81466350683b051f85",
+        "path": "tools/translation/test/private-parser-data-current-sources.test.mjs",
+        "gitBlob": "08ab9e775d990ac34487bf0f15a8ed0fe8630a7e"
+      }
+    },
+    {
+      "role": "native-history-producer",
+      "path": "tools/translation/prepare-native-parsed-cst-history.mjs",
+      "before": {
+        "path": "native-history-producer.before.txt",
+        "sha256": "a932337c3ab68910d59f6c2856f0fdba8a2eb7a5880565a05f870b1afa5320d0",
+        "bytes": 11720
+      },
+      "after": {
+        "path": "native-history-producer.after.txt",
+        "sha256": "2adf199cb778017eec11b119b1ffb4e265dd5a0383036b12ee00247fd0eb7f24",
+        "bytes": 11920
+      },
+      "physicalOrigin": {
+        "commit": "ff528cbd34ac54024dc21d81466350683b051f85",
+        "path": "tools/translation/prepare-native-parsed-cst-history.mjs",
+        "gitBlob": "60e208192253c0a22354d202b3ab129d1cfa7089"
+      }
+    },
+    {
+      "role": "lineage-history",
+      "path": "tools/translation/protected-cli-source-lineage-20261103-history.mjs",
+      "before": {
+        "path": "lineage-history.before.txt",
+        "sha256": "fa27d34c98650eda38ab2871ff54cf117777ce857687c3823246654760ed2a17",
+        "bytes": 4347
+      },
+      "after": {
+        "path": "lineage-history.after.txt",
+        "sha256": "2f785c5b22905699c67a8aac50ea4445daf0210a29d0c3b1f50090876e381702",
+        "bytes": 4699
+      },
+      "physicalOrigin": {
+        "commit": "ff528cbd34ac54024dc21d81466350683b051f85",
+        "path": "tools/translation/protected-cli-source-lineage-20261103-history.mjs",
+        "gitBlob": "7460f05a2357b2ac48b2a39b5670c49eb308a4c8"
+      }
+    },
+    {
+      "role": "native-history-case",
+      "path": "tools/translation/test/native-parsed-cst.test.mjs",
+      "before": {
+        "path": "native-history-case.before.txt",
+        "sha256": "34cbde3a1a78059d670d8d5d825ffcd7c1f7522e73d0c4c88bdd5ff95a300ce2",
+        "bytes": 7087
+      },
+      "after": {
+        "path": "native-history-case.after.txt",
+        "sha256": "8c38583b575fb099be6bdec2aa0bb0878c88d469d5417bcb0ab13ca0df63782f",
+        "bytes": 7402
+      },
+      "physicalOrigin": {
+        "commit": "ff528cbd34ac54024dc21d81466350683b051f85",
+        "path": "tools/translation/test/native-parsed-cst.test.mjs",
+        "gitBlob": "da857db079029c59cc4af0de414cf35e7c4e59dc"
+      }
+    },
+    {
+      "role": "lineage-producer-case",
+      "path": "tools/translation/test/protected-cli-source-lineage-20261103-producer.test.mjs",
+      "before": {
+        "path": "lineage-producer-case.before.txt",
+        "sha256": "5cad226254f66181b293d5717645c4c8bd559f06b6939f084ae31f4e0da487f1",
+        "bytes": 2063
+      },
+      "after": {
+        "path": "lineage-producer-case.after.txt",
+        "sha256": "1f6cf0263bfe2a3437ecc797dd4344d54b27e6f459c4e591172b0cecd06f9255",
+        "bytes": 2350
+      },
+      "physicalOrigin": {
+        "commit": "ff528cbd34ac54024dc21d81466350683b051f85",
+        "path": "tools/translation/test/protected-cli-source-lineage-20261103-producer.test.mjs",
+        "gitBlob": "3852734b920ac7a40aeb6a414feeefc4b242c7de"
+      }
+    }
+  ],
+  "verification": "UNRUN",
+  "sourceInstalled": false,
+  "sourceAuthority": false,
+  "completeFunctionDenominator": "UNKNOWN",
+  "requirements": {
+    "L01": "finite source/producer bindings only; full denominator UNKNOWN",
+    "L02": "four generated CLI adoption successors, complete original histories retained",
+    "L04": "three current CLI sinks guarded by shared operational policy",
+    "S03": "sequential direct writes retain partial failure; not all-files atomic"
+  }
+}

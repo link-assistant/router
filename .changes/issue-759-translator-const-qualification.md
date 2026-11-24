@@ -1,0 +1,1 @@
+Retain the original const fn qualification and token spans during Rust lexical normalization and direct data parsing. Checked meta keeps the qualification for source const-call legality; ordinary pure functions are not automatically promoted to const functions.

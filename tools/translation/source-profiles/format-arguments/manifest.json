@@ -1,0 +1,142 @@
+{
+  "schema": "rust-1.89-original-format-source-stages-v1",
+  "rust": "1.89.0",
+  "inputs": [
+    {
+      "sourcePath": "library/std/src/macros.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/src/macros.rs",
+      "input": "library-std-src-macros.rs.gz",
+      "sourceBytes": 11671,
+      "sourceSha256": "490613d8c599b6a7d2b07573680ba37a84f863f3e55dd21f6a5327906a0796eb",
+      "compressedBytes": 3435,
+      "compressedSha256": "33228439233129e9b4953c3a7c774f6eb9226381f2145fb33ba3aff3f1634923",
+      "macroOwnerHint": [
+        "std"
+      ]
+    },
+    {
+      "sourcePath": "compiler/rustc_builtin_macros/src/format.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_builtin_macros/src/format.rs",
+      "input": "compiler-rustc_builtin_macros-src-format.rs.gz",
+      "sourceBytes": 39952,
+      "sourceSha256": "c996ad70339e2915897ddd4e3aed4ed11f6e168e9e7d5562fc7139c45dc6a4ea",
+      "compressedBytes": 9557,
+      "compressedSha256": "40da921172000ffd2cdd3a938caa08ba1ec026de6dbe9516c6416b32619adca4"
+    },
+    {
+      "sourcePath": "compiler/rustc_ast/src/format.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_ast/src/format.rs",
+      "input": "compiler-rustc_ast-src-format.rs.gz",
+      "sourceBytes": 8344,
+      "sourceSha256": "f0ad326e0b8335f2ce2e112bdbe57d9ff3ebab5ea3c1e63d35b54e6799cd588a",
+      "compressedBytes": 2316,
+      "compressedSha256": "6fbe5dd46c2063cb79b0b1a7d619e10409972a40bb42d21b55203772a21ad9de"
+    },
+    {
+      "sourcePath": "compiler/rustc_parse_format/src/lib.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_parse_format/src/lib.rs",
+      "input": "compiler-rustc_parse_format-src-lib.rs.gz",
+      "sourceBytes": 35564,
+      "sourceSha256": "d2f014b090b8cac635f1fe57c2ea28f0af6bfbcf35c2268a2c93939baa53c204",
+      "compressedBytes": 8244,
+      "compressedSha256": "e0ecf6244fec99d6e65335f43f70ac02333db0f12567ff237de8cdadeb62d92e"
+    },
+    {
+      "sourcePath": "compiler/rustc_ast_lowering/src/format.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_ast_lowering/src/format.rs",
+      "input": "compiler-rustc_ast_lowering-src-format.rs.gz",
+      "sourceBytes": 24901,
+      "sourceSha256": "78722534929e1ceb8e9b1a7ceb78a91334c52fb7b6913a2261c301dd2748d0fa",
+      "compressedBytes": 5963,
+      "compressedSha256": "2fc096f9a6ab1409eba0e1d82b6a138826e4877c152a13c5b6bef1b8c629f445"
+    },
+    {
+      "sourcePath": "library/core/src/fmt/rt.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/fmt/rt.rs",
+      "input": "library-core-src-fmt-rt.rs.gz",
+      "sourceBytes": 9394,
+      "sourceSha256": "bc46fe9e726cce43b28304d14d98c80fbd236b21ab6dcdc1d022090672048014",
+      "compressedBytes": 3048,
+      "compressedSha256": "e4c66bfc40d27537db130df395aeccced833eb26ab4838a4202b60e62bd4ffc3"
+    },
+    {
+      "sourcePath": "library/alloc/src/macros.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/alloc/src/macros.rs",
+      "input": "../json-macro/arrays/alloc-macros.rs.gz",
+      "sourceBytes": 3982,
+      "sourceSha256": "f493a323ef1ab77759d9a04877219e4932d7689a29bccaa8d4da7c57a8dbfac1",
+      "compressedBytes": 1655,
+      "compressedSha256": "c486e0d8d08910a089f44bc30e3d96dc84566b1e736938a75b91717d74aa3eb2",
+      "reused": true,
+      "macroOwnerHint": [
+        "alloc"
+      ]
+    },
+    {
+      "sourcePath": "library/core/src/macros/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/macros/mod.rs",
+      "input": "../derive/rust-core-macros-1.89.0.rs.gz",
+      "sourceBytes": 65222,
+      "sourceSha256": "9a950cfa3735eef653b7f9a6a4701e7b218f9876141701dac72ccb8b8e8d3862",
+      "compressedBytes": 14787,
+      "compressedSha256": "8506fde0d40b33c2336337b7282358b44f09a010434807b6e0e06d7a896ab49e",
+      "reused": true,
+      "macroOwnerHint": [
+        "core"
+      ]
+    },
+    {
+      "sourcePath": "library/core/src/fmt/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/fmt/mod.rs",
+      "input": "../copy-standard/rust-fmt-1.89.0.rs.gz",
+      "sourceBytes": 101081,
+      "sourceSha256": "3991bf79cfb4a9ba2e5915472063d7e195cd4242ae0eb8d6bad6ebb55349beb4",
+      "compressedBytes": 21255,
+      "compressedSha256": "b78d4f20a84422d7cc7f47d88d5e4ce8183d42c880a0e0479216cb37243ba417",
+      "reused": true
+    },
+    {
+      "sourcePath": "library/alloc/src/fmt.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/alloc/src/fmt.rs",
+      "input": "../namespace-standard/rust-alloc-fmt-1.89.0.rs.gz",
+      "sourceBytes": 26962,
+      "sourceSha256": "57dcacb88971f404249b3479623548b1baea51a71d7b2ffc0960b66871a7b879",
+      "compressedBytes": 8721,
+      "compressedSha256": "6c1e69c9c777ab5de83e6f2e2469c8165fce242c167113f55778eabc7f5b4bdf",
+      "reused": true
+    },
+    {
+      "sourcePath": "compiler/rustc_builtin_macros/src/lib.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_builtin_macros/src/lib.rs",
+      "input": "../builtin-derive-bang/rust-1.89-compiler_rustc_builtin_macros_src_lib.rs.gz",
+      "sourceBytes": 5277,
+      "sourceSha256": "7af7c77b36351c3ea41e1ebb62605c2f74aeee3ee76ba9ea0b1f511356f85f07",
+      "compressedBytes": 1631,
+      "compressedSha256": "87b25549db475e3644a4f89b27348d0a15fba8dfd72338ae37d97e2095ebae0d",
+      "reused": true,
+      "requiredFor": "builtin-registration-owner-proof"
+    }
+  ],
+  "licenses": [
+    {
+      "input": "../copy-standard/LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+    },
+    {
+      "input": "../copy-standard/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+    }
+  ],
+  "newCompressedBytes": 32563,
+  "callerMacroOwnerResolved": false,
+  "builtinBuilderOwnerResolved": false,
+  "sourceSemanticClosureVerified": false,
+  "traitSelectionVerified": false,
+  "allocatorEffectsVerified": false,
+  "ioEffectsVerified": false,
+  "namespaceAuthority": false,
+  "runtimeParity": false,
+  "remaining": "Original wrappers/compiler parse/builder/lowering/Arguments trait+ABI flow only. Standard caller macro/type/trait owners, cfg/optimizer flags, allocator/OOM, I/O/locking/panic and complete compiler dependencies require separate proofs."
+}

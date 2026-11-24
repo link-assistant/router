@@ -1,0 +1,125 @@
+name: Update Screenshots
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'web/**'
+      - 'src/**'
+      - 'data/examples.lino'
+  workflow_dispatch:
+    inputs:
+      update_readme:
+        description: 'Update README.md with new screenshots'
+        type: boolean
+        default: true
+      update_use_cases:
+        description: 'Update USE-CASES.md with new screenshots'
+        type: boolean
+        default: true
+  workflow_call:
+
+env:
+  GIT_CONFIG_COUNT: 1
+  GIT_CONFIG_KEY_0: init.defaultBranch
+  GIT_CONFIG_VALUE_0: main
+  CARGO_NET_RETRY: '10'
+  CARGO_HTTP_MULTIPLEXING: 'false'
+
+jobs:
+  update-screenshots:
+    name: Update Screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: main-writer-main
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Always checkout latest main so we have the version-bumped Cargo.toml
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install wasm-pack
+        uses: ./.github/actions/install-wasm-pack
+
+      - name: Build WASM package
+        run: wasm-pack build --target web --out-dir web/public/pkg
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: web
+        run: npx playwright install chromium --with-deps
+
+      - name: Copy currency data files to web public directory
+        run: |
+          mkdir -p web/public/data/currency
+          cp data/currency/*.lino web/public/data/currency/
+          echo "Copied $(ls data/currency/*.lino | wc -l) .lino files to web/public/data/currency/"
+
+      - name: Build web app
+        working-directory: web
+        run: npm run build
+
+      - name: Start preview server and take screenshots
+        working-directory: web
+        run: |
+          npm run preview &
+          PREVIEW_PID=$!
+          # Wait for server to be ready (up to 30 seconds)
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:4173 > /dev/null 2>&1 && break
+            sleep 1
+          done
+          # Take screenshots using browser-commander
+          node scripts/take-screenshots.mjs
+          kill $PREVIEW_PID || true
+
+      - name: Upload screenshot failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshot-failure-${{ github.run_id }}
+          path: |
+            docs/use-cases/
+            docs/screenshots/
+            web/test-results/
+            web/playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git commit -m "chore: update screenshots [skip ci]"
+          node scripts/git-push-with-rebase.mjs --branch main

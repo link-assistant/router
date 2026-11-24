@@ -1,0 +1,77 @@
+{
+  "schema": "official-action-pin-verification-v1",
+  "observedAtUtc": "2026-10-10 20:27:43 UTC",
+  "verification": "Read-only GitHub REST git/commits, contents/action.yml and full git/trees endpoints at each immutable pin. Actual commits, action definitions and declared bundled entrypoints all exist.",
+  "pins": [
+    {
+      "repository": "actions/checkout",
+      "commitSha": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "commitUrl": "https://github.com/actions/checkout/commit/3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "actionDefinitionPath": "action.yml",
+      "actionDefinitionBlobSha": "5b0524f730db83f9513c18ab31a6c086c7239076",
+      "actionRuntime": "node24",
+      "entrypoints": [
+        {
+          "path": "dist/index.js",
+          "sha": "06ae5d221b3dc83259d396ec60027972181e51b9",
+          "size": 1452503,
+          "type": "blob"
+        }
+      ],
+      "truncated": false
+    },
+    {
+      "repository": "actions/setup-node",
+      "commitSha": "820762786026740c76f36085b0efc47a31fe5020",
+      "commitUrl": "https://github.com/actions/setup-node/commit/820762786026740c76f36085b0efc47a31fe5020",
+      "actionDefinitionPath": "action.yml",
+      "actionDefinitionBlobSha": "dc1cefd59528621f6952ef3309bb6c551925b330",
+      "actionRuntime": "node24",
+      "entrypoints": [
+        {
+          "path": "dist/cache-save/index.js",
+          "sha": "640a5499a1d97097afc77009c1fcb4f4c0ea4b40",
+          "size": 3279429,
+          "type": "blob"
+        },
+        {
+          "path": "dist/setup/index.js",
+          "sha": "5776175662bce5c8dd2f3139dead26666c418f2e",
+          "size": 3545625,
+          "type": "blob"
+        }
+      ],
+      "truncated": false
+    },
+    {
+      "repository": "oven-sh/setup-bun",
+      "commitSha": "0c5077e51419868618aeaa5fe8019c62421857d6",
+      "commitUrl": "https://github.com/oven-sh/setup-bun/commit/0c5077e51419868618aeaa5fe8019c62421857d6",
+      "actionDefinitionPath": "action.yml",
+      "actionDefinitionBlobSha": "bee9fcdababda1c62fea605aa6a7262920cfb486",
+      "actionRuntime": "node24",
+      "entrypoints": [
+        {
+          "path": "dist/cache-save/index.js",
+          "sha": "ff8183ba69a6c11f2a1c40c899c86b693d09c8f2",
+          "size": 1381456,
+          "type": "blob"
+        },
+        {
+          "path": "dist/setup/index.js",
+          "sha": "fe78ec71a0704bd28917f7df61b253ca586aec82",
+          "size": 1448657,
+          "type": "blob"
+        }
+      ],
+      "truncated": false
+    }
+  ],
+  "bunRelease": {
+    "repository": "oven-sh/bun",
+    "tag": "bun-v1.4.3",
+    "linuxX64ZipExists": true,
+    "linuxX64BaselineZipExists": true
+  },
+  "failures": []
+}

@@ -1,0 +1,284 @@
+{
+  "schema": "bulk-original-serialization-completion-verification-v1",
+  "producer_head": "aa3e62a9270fc80037b8e180e6d47d5a04ea2184",
+  "generated_head": "289561be2db3767d6be40aacde9ad6c6375add20",
+  "scope": [
+    "tools/translation/serialization-schema/bulk.test.mjs",
+    "tools/translation/serialization-schema/serialization-schema.test.mjs",
+    "experiments/issue-759/acceptance/affinity-prefix.test.mjs",
+    "experiments/issue-759/acceptance/affinity-file.test.mjs",
+    "experiments/issue-759/acceptance/provider-responses.test.mjs",
+    "experiments/issue-759/acceptance/provider-conversations.test.mjs",
+    "experiments/issue-759/acceptance/provider-resource-capture.test.mjs",
+    "packages/javascript/test/native-core.test.mjs",
+    "packages/javascript/test/native-service.test.mjs",
+    "packages/javascript/test/native-server.test.mjs",
+    "packages/javascript/test/native-storage.test.mjs"
+  ],
+  "authored_cases_per_engine": 180,
+  "input_count": 1134,
+  "immutable_inputs": true,
+  "producer_receipt_fields": {
+    "head": "aa3e62a9270fc80037b8e180e6d47d5a04ea2184",
+    "before_status": "?? packages/javascript/node_modules",
+    "command": [
+      "node",
+      "tools/translation/serialization-schema/bulk.mjs",
+      "--write"
+    ],
+    "cap_seconds": 60,
+    "harness_sha256": "e4ec9de1f34b1bc0d6f5c0e44a8b85d917efc5d700b0b7a6bc86fa343d718731",
+    "disk_before": {
+      "total": 494384795648,
+      "used": 459783385088,
+      "free": 34601410560
+    },
+    "exit_code": 0,
+    "timed_out": false,
+    "wall_seconds": 3.992,
+    "after_head": "aa3e62a9270fc80037b8e180e6d47d5a04ea2184",
+    "after_status": "?? packages/javascript/node_modules\n?? tools/translation/serialization-schema/bulk-generated/",
+    "temporary_entries_before_cleanup": [
+      "xcrun_db"
+    ],
+    "temporary_bytes_before_cleanup": 491,
+    "unchanged_all_original_inputs": true,
+    "outputs": [
+      {
+        "file": "tools/translation/serialization-schema/bulk-generated/router-serialization.meta.json",
+        "bytes": 2595162,
+        "sha256": "dbe186486fb978c244d6969c38fb422e9aafd1c6ffb31d428c7eb97d05ab21f4"
+      },
+      {
+        "file": "tools/translation/serialization-schema/bulk-generated/router-serialization.mjs",
+        "bytes": 19886,
+        "sha256": "c8994972e532654902a0be1adb81d68ee93ba07f91075fc9c50acb3f715d6c87"
+      },
+      {
+        "file": "tools/translation/serialization-schema/bulk-generated/router-serialization.ts",
+        "bytes": 20156,
+        "sha256": "3735efbf61618ccf909ed33f89d99b9a2d657e41c7a61da15e18ac406500a60e"
+      },
+      {
+        "file": "tools/translation/serialization-schema/bulk-generated/router-serialization-inventory.json",
+        "bytes": 962568,
+        "sha256": "9110ef58556c394a91af62e764565b8c9ea031fca529462faf4653fe45c08bd8"
+      }
+    ],
+    "after_status_all": "?? packages/javascript/node_modules\n?? tools/translation/serialization-schema/bulk-generated/router-serialization-inventory.json\n?? tools/translation/serialization-schema/bulk-generated/router-serialization.meta.json\n?? tools/translation/serialization-schema/bulk-generated/router-serialization.mjs\n?? tools/translation/serialization-schema/bulk-generated/router-serialization.ts\n",
+    "only_expected_mutation_paths": true,
+    "disk_after": {
+      "total": 494384795648,
+      "used": 459785195520,
+      "free": 34599600128
+    }
+  },
+  "results": [
+    {
+      "engine": "artifact-check",
+      "command": [
+        "node",
+        "tools/translation/serialization-schema/bulk.mjs",
+        "--check"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 3.527,
+      "temporary_bytes_before_cleanup": 0,
+      "remaining_temporary_entries_before_cleanup": []
+    },
+    {
+      "engine": "descriptor-tsc",
+      "command": [
+        "node",
+        "tools/translation/serialization-schema/check-bulk-typescript.mjs"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 0.394,
+      "temporary_bytes_before_cleanup": 0,
+      "remaining_temporary_entries_before_cleanup": []
+    },
+    {
+      "engine": "node",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/serialization-schema/bulk.test.mjs",
+        "tools/translation/serialization-schema/serialization-schema.test.mjs",
+        "experiments/issue-759/acceptance/affinity-prefix.test.mjs",
+        "experiments/issue-759/acceptance/affinity-file.test.mjs",
+        "experiments/issue-759/acceptance/provider-responses.test.mjs",
+        "experiments/issue-759/acceptance/provider-conversations.test.mjs",
+        "experiments/issue-759/acceptance/provider-resource-capture.test.mjs",
+        "packages/javascript/test/native-core.test.mjs",
+        "packages/javascript/test/native-service.test.mjs",
+        "packages/javascript/test/native-server.test.mjs",
+        "packages/javascript/test/native-storage.test.mjs"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 24.115,
+      "temporary_bytes_before_cleanup": 0,
+      "remaining_temporary_entries_before_cleanup": []
+    },
+    {
+      "engine": "bun",
+      "command": [
+        "bun",
+        "test",
+        "--timeout",
+        "15000",
+        "tools/translation/serialization-schema/bulk.test.mjs",
+        "tools/translation/serialization-schema/serialization-schema.test.mjs",
+        "experiments/issue-759/acceptance/affinity-prefix.test.mjs",
+        "experiments/issue-759/acceptance/affinity-file.test.mjs",
+        "experiments/issue-759/acceptance/provider-responses.test.mjs",
+        "experiments/issue-759/acceptance/provider-conversations.test.mjs",
+        "experiments/issue-759/acceptance/provider-resource-capture.test.mjs",
+        "packages/javascript/test/native-core.test.mjs",
+        "packages/javascript/test/native-service.test.mjs",
+        "packages/javascript/test/native-server.test.mjs",
+        "packages/javascript/test/native-storage.test.mjs"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 14.521,
+      "temporary_bytes_before_cleanup": 0,
+      "remaining_temporary_entries_before_cleanup": []
+    }
+  ],
+  "supported_owner_count": 29,
+  "refused_owner_count": 512,
+  "excluded_owner_count": 134,
+  "manual_trait_headers_unproved": 170,
+  "source_coverage_count": 558,
+  "artifacts": [
+    {
+      "file": "router-serialization-inventory.json",
+      "bytes": 962568,
+      "lines": 1,
+      "sha256": "9110ef58556c394a91af62e764565b8c9ea031fca529462faf4653fe45c08bd8"
+    },
+    {
+      "file": "router-serialization.meta.json",
+      "bytes": 2595162,
+      "lines": 1,
+      "sha256": "dbe186486fb978c244d6969c38fb422e9aafd1c6ffb31d428c7eb97d05ab21f4"
+    },
+    {
+      "file": "router-serialization.mjs",
+      "bytes": 19886,
+      "lines": 88,
+      "sha256": "c8994972e532654902a0be1adb81d68ee93ba07f91075fc9c50acb3f715d6c87"
+    },
+    {
+      "file": "router-serialization.ts",
+      "bytes": 20156,
+      "lines": 88,
+      "sha256": "3735efbf61618ccf909ed33f89d99b9a2d657e41c7a61da15e18ac406500a60e"
+    }
+  ],
+  "artifact_total_bytes": 3597772,
+  "production_imports_changed": false,
+  "runtimeAuthority": false,
+  "generatedTraitBehavior": false,
+  "archive": {
+    "file": "bulk-completion-verification-raws.tar.gz",
+    "bytes": 322902,
+    "sha256": "4616cfb0ab2cbecd26fb343c4f43c808543a36e19cdfe0b63b0bd08d66adbb60",
+    "members": [
+      {
+        "file": "producer-plan/plan.json",
+        "bytes": 629,
+        "sha256": "4c1e7ab4ce9c8a11f054572802c580b290f10af9e81c0df6c68f1d660a4cc230",
+        "reopened_verified": true
+      },
+      {
+        "file": "producer-plan/run.py",
+        "bytes": 3995,
+        "sha256": "e4ec9de1f34b1bc0d6f5c0e44a8b85d917efc5d700b0b7a6bc86fa343d718731",
+        "reopened_verified": true
+      },
+      {
+        "file": "producer/harness.py",
+        "bytes": 3995,
+        "sha256": "e4ec9de1f34b1bc0d6f5c0e44a8b85d917efc5d700b0b7a6bc86fa343d718731",
+        "reopened_verified": true
+      },
+      {
+        "file": "producer/inputs.json",
+        "bytes": 119922,
+        "sha256": "8c918546d51752392888a8e80ee9c7fe80eb1bed20e02aca5b86f0259f503f83",
+        "reopened_verified": true
+      },
+      {
+        "file": "producer/producer.log",
+        "bytes": 498,
+        "sha256": "b3c57b66bb1a1d68e3515fb1dbc81f72bd7bc3113752cd95d2b529a12bdd7e58",
+        "reopened_verified": true
+      },
+      {
+        "file": "producer/receipt.json",
+        "bytes": 241245,
+        "sha256": "e8a2f2f72567a48414a2b5e709e9fafaef21cf277e4ce6dd0ec641edae2f6bba",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation-plan/plan.json",
+        "bytes": 478,
+        "sha256": "e5a629616d0f3e7bc21fa9c14c8465352584085422c72cd91da0b9c98c62baf9",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation-plan/run.py",
+        "bytes": 6608,
+        "sha256": "c8c75053e7a0187e3f2fa707389321efba1f0b40fd655a900afd48ad543d6d15",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/artifact-check.log",
+        "bytes": 499,
+        "sha256": "b96df795b406596cba73f48faa764c98312cc9fdb3e71f8d142d7b39d66bcc6d",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/bun.log",
+        "bytes": 19819,
+        "sha256": "523bd72b651566f8d7171db6059341122377bd903484e70964bda9f88bc284fd",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/descriptor-tsc.log",
+        "bytes": 270,
+        "sha256": "4feb26d987dd470d4f5e10f1b8615b1c322df340239e9e00287afc348381d3c3",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/harness.py",
+        "bytes": 6608,
+        "sha256": "c8c75053e7a0187e3f2fa707389321efba1f0b40fd655a900afd48ad543d6d15",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/inputs.json",
+        "bytes": 134946,
+        "sha256": "8c493ca80e7d3467e5da5b4f973ad868ebe0f98f1373d195e540a3b40ff3d725",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/node.log",
+        "bytes": 42368,
+        "sha256": "983905884456d7307d03d519ef69a6926f9568a5c41716528cf335b48ff0d83f",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/receipt.json",
+        "bytes": 271560,
+        "sha256": "43d2706e6cc1d5c63bb8214c49f86f294bf6fd09607131d2d588fee8efc18ec7",
+        "reopened_verified": true
+      }
+    ]
+  }
+}

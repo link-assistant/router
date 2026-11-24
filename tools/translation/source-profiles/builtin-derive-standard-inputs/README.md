@@ -1,0 +1,9 @@
+# Original standard derive inputs
+
+This profile retains complete immutable Rust 1.89 sources and licensed existing archives. The new Hash module is the full original file from revision `29483883eed69d5fb4db01964cdf2af4d86e9cb2`, 31,735 bytes, SHA256 `442cd165a25b33b73517b760aa32961427b9f3e66bcf72558c9b6e65d448f88a`. Existing source rows and bytes remain unchanged.
+
+The pure reader expands the complete original twelve-entry `register_derive` invocation using its actual declarative matcher and transcriber. Every registration retains its source callback path and module declaration, original resolver parameter and imports, and emitted `LegacyDerive` call. Plain original symbol slots join the actual `SameAsName` parser and generator. Nine original builtin macro declarations join their actual core and std prelude reexports and the caller's edition-to-v1 routes.
+
+The input issuer separately checks the complete original module and active ancestor attributes, relevant imports, shadows, tracked module bodies and prelude roots. A standard-only input retains original declaration, derive and attribute spans. It rejects generics, helpers, conditional/layout attributes and unknown effects. Its type, value and bang namespace dimensions are false; helper-free original attributes are independently checked. Full registration lineage is shared privately and available only through the genuine certificate/context accessor. Serialized digests cannot issue or restore that capability.
+
+Independent output readers may select supported callbacks from this input. Unsupported sibling derives, payload/layout branches, generated attributes and ancestor namespaces retain their own refusals. This profile grants no trait execution, runtime Hash, Copy, no-Drop, const or generated method authority. Compiler-generated methods remain separate from original Rust function and method counts.

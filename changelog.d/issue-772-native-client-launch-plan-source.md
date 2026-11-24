@@ -1,0 +1,1 @@
+Draft paired native client argv/model/session planning from mechanically copied Rust inventories and early Cloud/control-plane preflight. Seven source equations and independent cases remain unrun; temporary process lifecycle remains open.

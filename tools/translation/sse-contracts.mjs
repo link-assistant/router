@@ -1,0 +1,4 @@
+// Closed operation DATA. The complete original source checker issues authority.
+export const SSE_CONTRACTS=Object.freeze([Object.freeze({id:'owned-sse:sse_push_base64',rustName:'sse_push_base64',javascriptName:'router_sse_push_base64',rustPath:'crate::translation_stream_core::sse_push_base64',rustModule:'translation_stream_core',rustSource:'src/translation_stream_core.rs',runtimeModule:'sse-runtime.mjs',parameters:Object.freeze(['str','str']),returns:'json-text-result',sourceAuthority:false,semanticAuthority:false})]);
+export const sseContract=name=>SSE_CONTRACTS.find(row=>row.rustName===name||row.javascriptName===name)??null;
+export function emitSseDeclarations(){return "import type {OwnedJsonResult} from './owned-outcome-runtime.mjs';\nexport declare function router_sse_push_base64(pending:string,chunk:string):OwnedJsonResult;\n";}

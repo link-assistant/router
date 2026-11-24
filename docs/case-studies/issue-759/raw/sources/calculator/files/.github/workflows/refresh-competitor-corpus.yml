@@ -1,0 +1,81 @@
+name: Refresh Competitor Corpus
+
+on:
+  schedule:
+    # Sunday at 06:00 UTC, ahead of Monday's coverage gap report.
+    - cron: '0 6 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: refresh-competitor-corpus
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    name: Import Upstream Calculator Suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+
+      - name: Fetch current upstream suites
+        run: make checkout-corpus CORPUS_CHECKOUTS="$RUNNER_TEMP/calculator-upstreams" CORPUS_LATEST=--latest
+
+      - name: Refresh corpus, revision lock and inventory
+        run: make import-corpus CORPUS_CHECKOUTS="$RUNNER_TEMP/calculator-upstreams"
+
+      - name: Verify importer and checkout tests
+        run: node --test scripts/import-competitor-corpus.test.mjs scripts/corpus-literals.test.mjs scripts/checkout-competitor-suites.test.mjs
+
+      - name: Prepare changelog when corpus changes
+        id: changes
+        run: |
+          if git diff --quiet -- docs/case-studies/issue-227/corpus/open-source-tests.tsv docs/case-studies/issue-227/competitor-inventory.md scripts/competitor-upstreams.json; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+            cat > changelog.d/competitor_corpus_refresh.md <<'FRAGMENT'
+          ---
+          bump: patch
+          ---
+
+          ### Changed
+          - Refresh imported open-source calculator assertions and their upstream revision provenance.
+          FRAGMENT
+          fi
+
+      - name: Open or update refresh PR
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          # A dedicated token allows the new PR to trigger the normal CI checks.
+          token: ${{ secrets.CORPUS_REFRESH_TOKEN || secrets.GITHUB_TOKEN }}
+          branch: automation/competitor-corpus
+          delete-branch: true
+          title: 'chore: refresh upstream calculator test corpus'
+          commit-message: 'chore: refresh upstream calculator test corpus'
+          body: |
+            Refresh all nine suites using their upstream default branches.
+            The corpus headers, revision lock and competitor inventory record
+            the exact commit SHA, date, original license and source URLs.
+
+            Validation: importer, literal extraction and checkout tests passed.
+            Review the corpus diff for changed expectations or retired cases.
+            The coverage baseline is preserved so the normal CI coverage gate
+            can flag regressions and removals for review.
+
+            Reproduce with `make checkout-corpus` followed by `make import-corpus`.
+            See [the refresh guide](https://github.com/link-assistant/calculator/blob/main/docs/competitor-corpus.md).
+          add-paths: |
+            docs/case-studies/issue-227/corpus/open-source-tests.tsv
+            docs/case-studies/issue-227/competitor-inventory.md
+            scripts/competitor-upstreams.json
+            changelog.d/competitor_corpus_refresh.md

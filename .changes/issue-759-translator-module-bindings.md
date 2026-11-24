@@ -1,0 +1,1 @@
+Resolve tracked Rust 2018+ module bindings through source use trees, namespace-specific aliases, local globs, visibility and bounded fixed-point reexports. Unknown extern tables, procedural or conditional scopes, ambiguities and glob cycles keep explicit evidence and refusals; declaration ownership does not make its body executable or expand macros.

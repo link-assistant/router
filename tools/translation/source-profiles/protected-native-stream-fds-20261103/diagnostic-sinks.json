@@ -1,0 +1,117 @@
+{
+  "schema": "protected-native-stream-fds-20261103-secondary-sink-source-inventory-v1",
+  "scopeComplete": false,
+  "completeWriterDenominator": "UNKNOWN",
+  "records": [
+    {
+      "path": "tools/translation/protected-native-writers-20261102.mjs",
+      "symbols": [
+        "secondary"
+      ],
+      "actualPrimitive": "process.stderr.write",
+      "descriptor": 2,
+      "status": "UNGUARDED_SECONDARY_DIAGNOSTIC_SINK_OPEN",
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "physicalOrigin": {
+        "commit": "c7292674e0e0cd7cb4a2defd29adf931228d7633",
+        "gitBlob": "2d2086c044e85f1b181add5309027c9b9c286779",
+        "bytes": 12852,
+        "sha256": "1b83c4a51f6b699272c448be22688e3c8ef509e4ffbb893085504990d436efe7"
+      },
+      "verification": "UNRUN",
+      "boundary": "Do not recursively use a veto path that diagnoses back through the denied stderr descriptor. Preserve exact fatal primary and complete retained error/recovery DATA."
+    },
+    {
+      "path": "tools/translation/protected-reviewed-adoption-20261102.mjs",
+      "symbols": [
+        "secondary",
+        "withReviewedAdoptionClosing"
+      ],
+      "actualPrimitive": "process.stderr.write",
+      "descriptor": 2,
+      "status": "UNGUARDED_SECONDARY_DIAGNOSTIC_SINK_OPEN",
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "physicalOrigin": {
+        "commit": "c7292674e0e0cd7cb4a2defd29adf931228d7633",
+        "gitBlob": "62e6e3137cc44cd434b35e1ed7513e848e285c49",
+        "bytes": 17418,
+        "sha256": "91b95c4484fe762b614383316c73ee6c0d1bff4019eb5afb6a979624bb0a960b"
+      },
+      "verification": "UNRUN",
+      "boundary": "Do not recursively use a veto path that diagnoses back through the denied stderr descriptor. Preserve exact fatal primary and complete retained error/recovery DATA."
+    },
+    {
+      "path": "tools/translation/protected-preparer-writers-20261102-alias.mjs",
+      "symbols": [
+        "closingFailure",
+        "stagedSecondary"
+      ],
+      "actualPrimitive": "process.stderr.write",
+      "descriptor": 2,
+      "status": "UNGUARDED_SECONDARY_DIAGNOSTIC_SINK_OPEN",
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "physicalOrigin": {
+        "commit": "c7292674e0e0cd7cb4a2defd29adf931228d7633",
+        "gitBlob": "826cc7c6edd67c8b594d537ed7ac5ab251bd6f03",
+        "bytes": 26526,
+        "sha256": "2725f30ceed9f32ae233cca2dc33323ecee398a659da45427cceddf077e09a95"
+      },
+      "verification": "UNRUN",
+      "boundary": "Do not recursively use a veto path that diagnoses back through the denied stderr descriptor. Preserve exact fatal primary and complete retained error/recovery DATA."
+    },
+    {
+      "path": "tools/translation/unit-runtime-materialization.mjs",
+      "symbols": [
+        "recordProtectedPolicyClosingFailure",
+        "installFreshUnitRuntimeOutputs retained recovery-path stderr fallback"
+      ],
+      "actualPrimitive": "process.stderr.write",
+      "descriptor": 2,
+      "status": "UNGUARDED_SECONDARY_DIAGNOSTIC_SINK_OPEN",
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "physicalOrigin": {
+        "commit": "c7292674e0e0cd7cb4a2defd29adf931228d7633",
+        "gitBlob": "1469ec32cfac64cdd4157fca26d676f274ce5932",
+        "bytes": 43879,
+        "sha256": "4ad35d287dd2864ab46c758108413e0a16baa85fd73536d170dbdffd63af0617"
+      },
+      "verification": "UNRUN",
+      "boundary": "Do not recursively use a veto path that diagnoses back through the denied stderr descriptor. Preserve exact fatal primary and complete retained error/recovery DATA."
+    },
+    {
+      "path": "tools/translation/protected-node-evidence-writers-20261103.mjs",
+      "symbols": [
+        "diagnostic"
+      ],
+      "actualPrimitive": "process.stderr.write",
+      "descriptor": 2,
+      "status": "UNGUARDED_SECONDARY_DIAGNOSTIC_SINK_OPEN",
+      "requirements": [
+        "L04",
+        "S03"
+      ],
+      "physicalOrigin": {
+        "sourceProposal": "protected-node-evidence-writers-20261103",
+        "physicalCurrent": false,
+        "bytes": 6607,
+        "sha256": "3416e7de699024a3d97d3a038fcb3031ddca2d9047b7ed676c5d89a54fcdab4e"
+      },
+      "verification": "UNRUN",
+      "boundary": "Do not recursively use a veto path that diagnoses back through the denied stderr descriptor. Preserve exact fatal primary and complete retained error/recovery DATA."
+    }
+  ],
+  "sourceAuthority": false,
+  "verification": "UNRUN"
+}

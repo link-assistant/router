@@ -1,0 +1,17 @@
+// Reuse of privately computed JSON bytes is valid only under the same ordinary
+// native serializer and plain-data prototype chains. This issues no authority.
+import {types} from 'node:util';
+const descriptor=Object.getOwnPropertyDescriptor,prototype=Object.getPrototypeOf,apply=Reflect.apply,keys=Reflect.ownKeys,hasOwn=Object.hasOwn;
+const originalObject=Object,originalArray=Array,originalJson=JSON,objectPrototype=Object.prototype,arrayPrototype=Array.prototype;
+const globalJson=descriptor(globalThis,'JSON'),globalObject=descriptor(globalThis,'Object'),globalArray=descriptor(globalThis,'Array'),stringify=descriptor(JSON,'stringify');
+const functionText=Function.prototype.toString;
+const mapPrototype=Map.prototype,setPrototype=Set.prototype,arrayDescriptors=keys(arrayPrototype).map(key=>[key,descriptor(arrayPrototype,key)]),mapDescriptors=keys(mapPrototype).map(key=>[key,descriptor(mapPrototype,key)]),setDescriptors=keys(setPrototype).map(key=>[key,descriptor(setPrototype,key)]);
+const globalMap=descriptor(globalThis,'Map'),globalSet=descriptor(globalThis,'Set');
+const objectHasOwn=descriptor(originalObject,'hasOwn'),objectDescriptor=descriptor(originalObject,'getOwnPropertyDescriptor');
+const globalsAreData=globalJson&&hasOwn(globalJson,'value')&&globalJson.value===originalJson&&globalObject&&hasOwn(globalObject,'value')&&globalObject.value===originalObject&&globalArray&&hasOwn(globalArray,'value')&&globalArray.value===originalArray&&globalMap&&hasOwn(globalMap,'value')&&globalSet&&hasOwn(globalSet,'value');
+const ordinaryNative=globalsAreData&&stringify&&hasOwn(stringify,'value')&&typeof stringify.value==='function'&&!types.isProxy(stringify.value)&&apply(functionText,stringify.value,[]).replace(/\s+/gu,' ')==='function stringify() { [native code] }';
+function same(actual,expected){if(!actual||!expected||hasOwn(actual,'value')!==hasOwn(expected,'value'))return false;return actual.enumerable===expected.enumerable&&actual.configurable===expected.configurable&&(hasOwn(expected,'value')?actual.value===expected.value&&actual.writable===expected.writable:hasOwn(actual,'get')&&hasOwn(actual,'set')&&hasOwn(expected,'get')&&hasOwn(expected,'set')&&actual.get===expected.get&&actual.set===expected.set);}
+function samePrototype(owner,expectedDescriptors){const actual=keys(owner);if(actual.length!==expectedDescriptors.length)return false;for(let index=0;index<actual.length;index++){const entry=expectedDescriptors[index],key=entry[0],expected=entry[1];if(actual[index]!==key||!same(descriptor(owner,key),expected))return false;}return true;}
+export function originalJsonIntrinsicsUnchanged(){
+ return ordinaryNative&&same(descriptor(globalThis,'JSON'),globalJson)&&same(descriptor(globalThis,'Object'),globalObject)&&same(descriptor(globalThis,'Array'),globalArray)&&same(descriptor(globalThis,'Map'),globalMap)&&same(descriptor(globalThis,'Set'),globalSet)&&same(descriptor(originalObject,'hasOwn'),objectHasOwn)&&same(descriptor(originalObject,'getOwnPropertyDescriptor'),objectDescriptor)&&same(descriptor(originalJson,'stringify'),stringify)&&originalObject.prototype===objectPrototype&&originalArray.prototype===arrayPrototype&&prototype(objectPrototype)===null&&prototype(arrayPrototype)===objectPrototype&&!descriptor(objectPrototype,'toJSON')&&!descriptor(arrayPrototype,'toJSON')&&samePrototype(arrayPrototype,arrayDescriptors)&&samePrototype(mapPrototype,mapDescriptors)&&samePrototype(setPrototype,setDescriptors);
+}

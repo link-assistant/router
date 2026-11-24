@@ -1,0 +1,29 @@
+[
+  {
+    "id": 113412647054,
+    "run_id": 37806671281,
+    "workflow_name": "Stock Rust Install",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37806671281",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAaZ-uojg",
+    "head_sha": "5371f281b06e4fb3835216132cba7ca7fa9d5606",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113412647054",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37806671281/job/113412647054",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-08T16:10:15Z",
+    "started_at": "2026-10-08T16:10:15Z",
+    "completed_at": "2026-10-08T16:12:44Z",
+    "name": "stock-rust-install",
+    "steps": [],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113412647054",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 0,
+    "runner_name": "",
+    "runner_group_id": 0,
+    "runner_group_name": ""
+  }
+]

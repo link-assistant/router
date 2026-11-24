@@ -1,0 +1,9 @@
+// Native parser observations select proposals only. Fresh private complete
+// JS caller reissue and reproduction of the entire original Rust are mandatory.
+import {primitiveOwnedVectorOperationShape} from '../primitive-owned-vector-call-shape.mjs';
+export function ownedRustPrimitiveVectorCall(node){if(node?.kind!=='call'||typeof node.path!=='string')return null;const prefix='crate::translation_primitive_vectors_core::';if(!node.path.startsWith(prefix))return null;const row=primitiveOwnedVectorOperationShape(node.path.slice(prefix.length));if(!row||row.rustPath!==node.path||!Array.isArray(node.args)||node.args.length!==row.parameters.length)throw new TypeError('Canonical owned vector call proposal differs');return row;}
+export function ownedRustPrimitiveVectorPresence(functions){let cells=0,found=false;function visit(node,depth){if(++cells>100000||depth>160)throw new TypeError('Canonical owned vector observation budget exceeded');if(node===null||typeof node!=='object')return;if(ownedRustPrimitiveVectorCall(node))found=true;for(const value of Object.values(node))if(value&&typeof value==='object')visit(value,depth+1);}visit(functions,0);return found;}
+export function ownedRustPrimitiveVectorReturnWitness(text){const match=typeof text==='string'&&/^::std::vec::Vec<::core::primitive::(bool|[ui](?:8|16|32|64|128))>$/u.exec(text);return match&&match[0]===text?'router_vec_'+match[1]+'_new':null;}
+export function ownedRustPrimitiveVectorOptionalWitness(text){const match=typeof text==='string'&&/^::std::option::Option<(?:::core::primitive::)?(bool|[ui](?:8|16|32|64|128))>$/u.exec(text);return match&&match[0]===text?'router_vec_'+match[1]+'_get':null;}
+
+export function ownedRustSharedPrimitiveVectorWitness(text){const match=typeof text==='string'&&/^&::std::vec::Vec<::core::primitive::(bool|[ui](?:8|16|32|64|128))>$/u.exec(text);return match&&match[0]===text?'router_vec_'+match[1]+'_len':null;}
