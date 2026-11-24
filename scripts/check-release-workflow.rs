@@ -16,7 +16,7 @@ fn main() {
         "publish-docker-images:",
         "publish-docker-manifests:",
         "packages: write",
-        "CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}",
+        "CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token || secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}",
         "DOCKERHUB_IMAGE: konard/link-assistant-router",
         "rust-script scripts/wait-for-crate.rs",
         "cargo install rust-script --version 0.36.0 --locked",
@@ -239,7 +239,7 @@ fn main() {
 
     if count_occurrences(
         &workflow,
-        "CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}",
+        "CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token || secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}",
     ) != 1
     {
         failures.push(
@@ -261,6 +261,15 @@ fn main() {
                 if !job.contains(&format!("needs.{required}.result == 'success'")) {
                     failures.push(format!("stable release must wait for {required}"));
                 }
+            }
+            if !job.contains("      id-token: write\n")
+                || !job.contains("uses: rust-lang/crates-io-auth-action@")
+                || !job.contains("id: crates-io-auth")
+            {
+                failures.push(
+                    "crates.io publication must authenticate with OIDC trusted publishing (issue #797)"
+                        .to_string(),
+                );
             }
             if !job.contains("scripts/publish-crate.rs")
                 || !job.contains("--prerelease=false --latest")
