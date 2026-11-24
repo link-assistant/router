@@ -526,8 +526,7 @@ fn lockfile_package_version_handles_windows_line_endings() {
 fn release_workflow_maps_crates_io_token_fallback_to_cargo_native_env() {
     let workflow = read_lf(".github/workflows/release.yml");
 
-    let mapping =
-        "CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}";
+    let mapping = "CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token || secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}";
     assert!(
         workflow.contains(mapping),
         "release workflow should support both CARGO_REGISTRY_TOKEN and CARGO_TOKEN secrets"
@@ -550,6 +549,34 @@ fn release_workflow_maps_crates_io_token_fallback_to_cargo_native_env() {
             .contains("CARGO_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}"),
         "workflow should not map fallback secrets only to the non-native CARGO_TOKEN env var"
     );
+}
+
+#[test]
+fn release_workflow_publishes_crates_io_with_oidc_trusted_publishing() {
+    // Issue #797: the crate job exchanges its OIDC token for a short-lived
+    // crates.io token; long-lived secrets are only an explicit fallback.
+    let workflow = read_lf(".github/workflows/release.yml");
+    let job = workflow
+        .split_once("\n  finalize-release:\n")
+        .expect("release workflow should define finalize-release")
+        .1;
+    let job = job
+        .split_once("\n  # === MANUAL CHANGELOG PR")
+        .map_or(job, |(job, _)| job);
+    assert!(
+        job.contains("      id-token: write\n"),
+        "crate publishing needs id-token: write"
+    );
+    let auth = job
+        .find("uses: rust-lang/crates-io-auth-action@")
+        .expect("crate publishing must use rust-lang/crates-io-auth-action");
+    let publish = job
+        .find("rust-script scripts/publish-crate.rs")
+        .expect("publish step");
+    assert!(auth < publish, "authenticate before publishing");
+    assert!(job.contains("id: crates-io-auth"));
+    assert!(job.contains("if: vars.CRATES_IO_TOKEN_FALLBACK != 'true'"));
+    assert!(!job.contains("continue-on-error"));
 }
 
 #[test]
