@@ -1830,10 +1830,12 @@ jobs:
       # crates.io trusted publishing (issue #797): exchange the job's OIDC token
       # for a short-lived crates.io token. Both the normal release and the
       # retry-registries path publish through this job. The long-lived secrets
-      # remain only as a fallback until the first OIDC release is verified.
+      # remain only as an explicit fallback until the first OIDC release is
+      # verified: set the repository variable CRATES_IO_TOKEN_FALLBACK=true to
+      # skip the exchange and publish with CARGO_REGISTRY_TOKEN / CARGO_TOKEN.
       - name: Authenticate with crates.io (OIDC trusted publishing)
         id: crates-io-auth
-        continue-on-error: true
+        if: vars.CRATES_IO_TOKEN_FALLBACK != 'true'
         uses: rust-lang/crates-io-auth-action@3268eb413133e2960fa4ae0e963ca76380c54cd9 # v1.0.6
       - name: Publish to Crates.io
         env:
