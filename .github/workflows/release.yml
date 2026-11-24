@@ -657,6 +657,10 @@ jobs:
         id: native-profile-sources
         if: ${{ always() && !cancelled() }}
         shell: bash
+        # Automated translation is temporarily not required (issue #797): stale
+        # archives warn and skip the oracles. Set to '1' to make them fatal again.
+        env:
+          ROUTER_REQUIRE_NATIVE_PROFILE_ORACLES: '0'
         run: |
           node --test scripts/test/check-native-profile-oracle-sources.test.mjs
           node scripts/check-native-profile-oracle-sources-20261101.mjs
@@ -1809,6 +1813,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: write
+      id-token: write
     env:
       RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version || needs.prepare-registry-retry.outputs.release-version }}
     steps:
@@ -1822,9 +1827,17 @@ jobs:
           toolchain: 1.98.1
       - name: Install rust-script
         run: cargo install rust-script --version 0.36.0 --locked
+      # crates.io trusted publishing (issue #797): exchange the job's OIDC token
+      # for a short-lived crates.io token. Both the normal release and the
+      # retry-registries path publish through this job. The long-lived secrets
+      # remain only as a fallback until the first OIDC release is verified.
+      - name: Authenticate with crates.io (OIDC trusted publishing)
+        id: crates-io-auth
+        continue-on-error: true
+        uses: rust-lang/crates-io-auth-action@3268eb413133e2960fa4ae0e963ca76380c54cd9 # v1.0.6
       - name: Publish to Crates.io
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token || secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
         run: rust-script scripts/publish-crate.rs
       - name: Wait for Crate availability on Crates.io
         run: rust-script scripts/wait-for-crate.rs --release-version "${{ env.RELEASE_VERSION }}"

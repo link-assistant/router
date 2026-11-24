@@ -9,10 +9,10 @@
 // - Every profile accepts the checkout: `fresh=true`; the oracle step runs and
 //   stays fatal.
 // - A profile refuses with its explicit "complete physical source differs"
-//   diagnostic: `fresh=false`. On pull_request events this prints a warning and
-//   exits 0 so the oracle step is skipped visibly. On every other event (push to
-//   the default branch, workflow_dispatch, local runs) it prints what a maintainer
-//   must do and exits 1.
+//   diagnostic: `fresh=false`. It prints a warning and exits 0 so the oracle step
+//   is skipped visibly. Automated translation is temporarily not a release
+//   requirement (issue #797); set ROUTER_REQUIRE_NATIVE_PROFILE_ORACLES=1 to make
+//   non-pull_request events print what a maintainer must do and exit 1 again.
 // - The runtime has no O_NOFOLLOW (Windows) and the translator's source custody
 //   reader refuses to load for exactly that reason: `supported=false`, handled
 //   like a stale archive (warning on pull_request, maintainer error elsewhere).
@@ -124,8 +124,10 @@ async function main() {
   if (result.fresh) return 0;
   const instructions = result.supported ? staleNativeProfileInstructions(result) : unsupportedNativeProfileInstructions(result);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Native profile oracles not run\n\n${instructions}\n`);
-  if (process.env.GITHUB_EVENT_NAME === 'pull_request') {
-    console.log(`::warning title=Native profile oracles skipped on this pull request::${instructions}`);
+  // Automated translation is temporarily not a release requirement (issue #797):
+  // stale archives warn on every event unless ROUTER_REQUIRE_NATIVE_PROFILE_ORACLES=1.
+  if (process.env.GITHUB_EVENT_NAME === 'pull_request' || process.env.ROUTER_REQUIRE_NATIVE_PROFILE_ORACLES !== '1') {
+    console.log(`::warning title=Native profile oracles skipped::${instructions}`);
     return 0;
   }
   console.log(`::error title=Native profile oracles need a maintainer::${instructions}`);
