@@ -85,7 +85,10 @@ fn darwin_release_artifact_legs_have_room_to_finish_the_release_build() {
             other => panic!("unexpected release artifact platform {other}"),
         }
     }
-    assert_eq!(darwin_legs, 2, "both Darwin slices must get the longer deadline");
+    assert_eq!(
+        darwin_legs, 2,
+        "both Darwin slices must get the longer deadline"
+    );
 }
 
 #[test]
