@@ -31,7 +31,7 @@ fn release_workflow_uses_the_cyclonedx_filename_that_the_generator_creates() {
 /// 54 minutes in total. On v1.25.3 both Darwin legs were cancelled at the
 /// shared 30-minute limit while still in `Build release binaries`. The SBOM,
 /// attestation and upload steps never ran, so provenance verification and the
-/// npm and PyPI publication stayed blocked (issue #803).
+/// npm and Python package publication stayed blocked (issue #803).
 #[test]
 fn darwin_release_artifact_legs_have_room_to_finish_the_release_build() {
     let workflow = read_lf(".github/workflows/release.yml");
