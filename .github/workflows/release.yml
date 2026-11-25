@@ -1319,16 +1319,26 @@ jobs:
     if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success' && (needs.release-javascript.result == 'success' && (always() && !cancelled() && needs.create-github-release.result == 'success' && github.ref == format('refs/tags/v{0}', needs.create-github-release.outputs.release-version))))
     strategy:
       fail-fast: false
+      # Each leg carries its own deadline. The release profile (fat LTO,
+      # one codegen unit) links three binaries. Linux builds it in about
+      # 8 minutes. The 3-vCPU, 7 GiB macos-26 VM needs 20-37 minutes, and
+      # swaps during the parallel LTO links. Its checkout alone has taken
+      # 11 minutes. On v1.25.3 both Darwin legs were cancelled at the old
+      # shared 30-minute limit while still building (issue #803; measurements
+      # in docs/case-studies/issue-803). Keep Linux tight so a hang surfaces
+      # quickly.
       matrix:
         include:
           - os: linux
             arch: amd64
             runner: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
+            timeout-minutes: 30
           - os: linux
             arch: arm64
             runner: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
+            timeout-minutes: 30
           # Both Darwin slices are produced on the Apple Silicon runner: the
           # Xcode SDK it ships builds either architecture, so the x86_64 asset
           # does not depend on the shrinking pool of Intel macOS runners.
@@ -1336,12 +1346,14 @@ jobs:
             arch: arm64
             runner: macos-26
             target: aarch64-apple-darwin
+            timeout-minutes: 90
           - os: darwin
             arch: amd64
             runner: macos-26
             target: x86_64-apple-darwin
+            timeout-minutes: 90
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 30
+    timeout-minutes: ${{ matrix.timeout-minutes }}
     permissions:
       contents: write
       id-token: write
