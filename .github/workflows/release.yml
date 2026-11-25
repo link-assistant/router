@@ -1321,10 +1321,12 @@ jobs:
       fail-fast: false
       # Each leg carries its own deadline. The release profile (fat LTO,
       # one codegen unit) links three binaries. Linux builds it in about
-      # 8 minutes. The macOS runner needs roughly three times as long: the
-      # v1.25.1/v1.25.2 Darwin builds took 21-27 minutes, and on v1.25.3 both
-      # Darwin legs were cancelled at the old shared 30-minute limit while still
-      # building (issue #803). Keep Linux tight so a hang surfaces quickly.
+      # 8 minutes. The 3-vCPU, 7 GiB macos-26 VM needs 20-37 minutes, and
+      # swaps during the parallel LTO links. Its checkout alone has taken
+      # 11 minutes. On v1.25.3 both Darwin legs were cancelled at the old
+      # shared 30-minute limit while still building (issue #803; measurements
+      # in docs/case-studies/issue-803). Keep Linux tight so a hang surfaces
+      # quickly.
       matrix:
         include:
           - os: linux
@@ -1344,12 +1346,12 @@ jobs:
             arch: arm64
             runner: macos-26
             target: aarch64-apple-darwin
-            timeout-minutes: 75
+            timeout-minutes: 90
           - os: darwin
             arch: amd64
             runner: macos-26
             target: x86_64-apple-darwin
-            timeout-minutes: 75
+            timeout-minutes: 90
     runs-on: ${{ matrix.runner }}
     timeout-minutes: ${{ matrix.timeout-minutes }}
     permissions:

@@ -26,11 +26,12 @@ fn release_workflow_uses_the_cyclonedx_filename_that_the_generator_creates() {
 /// Linux.
 ///
 /// The fat-LTO release build of the three binaries takes about 8 minutes on
-/// the Linux runners. It takes roughly three times as long on `macos-26`. On
-/// v1.25.3 both Darwin legs were cancelled at the shared 30-minute limit while
-/// still in `Build release binaries`. The SBOM, attestation and upload steps
-/// never ran, so the npm, PyPI and crates.io publication stayed blocked
-/// (issue #803).
+/// the Linux runners and 20-37 minutes on the 3-vCPU `macos-26` VM. Checkout
+/// on that runner has taken another 11 minutes, so a Darwin leg can need about
+/// 54 minutes in total. On v1.25.3 both Darwin legs were cancelled at the
+/// shared 30-minute limit while still in `Build release binaries`. The SBOM,
+/// attestation and upload steps never ran, so provenance verification and the
+/// npm and PyPI publication stayed blocked (issue #803).
 #[test]
 fn darwin_release_artifact_legs_have_room_to_finish_the_release_build() {
     let workflow = read_lf(".github/workflows/release.yml");
@@ -73,8 +74,8 @@ fn darwin_release_artifact_legs_have_room_to_finish_the_release_build() {
             "darwin" => {
                 darwin_legs += 1;
                 assert!(
-                    minutes >= 60,
-                    "a Darwin release build needs at least 60 minutes, found {minutes}"
+                    minutes >= 75,
+                    "a Darwin release leg needs at least 75 minutes, found {minutes}"
                 );
             }
             "linux" => assert!(

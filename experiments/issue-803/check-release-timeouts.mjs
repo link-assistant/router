@@ -31,7 +31,7 @@ for (const leg of legs) {
   if (!line) { failures.push(`matrix leg ${os} must declare timeout-minutes`); continue; }
   const minutes = Number(line.slice('timeout-minutes: '.length));
   if (!Number.isInteger(minutes)) { failures.push(`matrix leg ${os} timeout must be a number`); continue; }
-  if (os === 'darwin') { darwin += 1; if (minutes < 60) failures.push(`Darwin leg needs >= 60 minutes, found ${minutes}`); }
+  if (os === 'darwin') { darwin += 1; if (minutes < 75) failures.push(`Darwin leg needs >= 75 minutes, found ${minutes}`); }
   else if (os === 'linux') { if (minutes < 30 || minutes > 45) failures.push(`Linux leg deadline out of range: ${minutes}`); }
   else failures.push(`unexpected platform ${os}`);
 }
