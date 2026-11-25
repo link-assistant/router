@@ -13,8 +13,13 @@ fn read_lf(path: &str) -> String {
 fn release_workflow_uses_the_cyclonedx_filename_that_the_generator_creates() {
     let workflow = read_lf(".github/workflows/release.yml");
     assert!(workflow.contains("--override-filename link-assistant-router.cdx\n"));
-    assert!(workflow.contains("mv link-assistant-router.cdx.json \\\n"));
     assert!(!workflow.contains("--override-filename link-assistant-router.cdx.json"));
+    // The root manifest is a virtual workspace; cargo-cyclonedx writes the SBOM
+    // beside the member manifest, so the release job must read it from rust/
+    // (issue #801).
+    assert!(workflow.contains("--manifest-path rust/Cargo.toml \\\n"));
+    assert!(workflow.contains("mv rust/link-assistant-router.cdx.json \\\n"));
+    assert!(!workflow.contains("mv link-assistant-router.cdx.json"));
 }
 
 #[test]

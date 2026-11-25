@@ -1395,9 +1395,14 @@ jobs:
             "target/${{ matrix.target }}/release/link-assistant-router" \
             "target/${{ matrix.target }}/release/with-router" dist/package/
           cp LICENSE README.md dist/package/
+          # The repository root is a virtual workspace (`members = ["rust"]`), and
+          # cargo-cyclonedx writes each SBOM beside its member's Cargo.toml, so the
+          # generated file is rust/link-assistant-router.cdx.json (issue #801).
+          rm -f rust/link-assistant-router.cdx.json
           cargo cyclonedx --format json --all-features --all --spec-version 1.5 \
+            --manifest-path rust/Cargo.toml \
             --override-filename link-assistant-router.cdx
-          mv link-assistant-router.cdx.json \
+          mv rust/link-assistant-router.cdx.json \
             "dist/link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.cdx.json"
           jq -e '.bomFormat == "CycloneDX" and (.components | length > 1) and (.dependencies | length > 0)' \
             "dist/link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.cdx.json" >/dev/null

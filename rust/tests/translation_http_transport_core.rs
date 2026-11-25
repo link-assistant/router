@@ -251,10 +251,13 @@ async fn idle_bound_does_not_become_a_total_stream_deadline_and_buffering_is_bou
     let (url, server) = mock(
         0,
         "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\n",
-        vec![(60, b"a".to_vec()); 4],
+        vec![(150, b"a".to_vec()); 4],
     )
     .await;
-    let mut value = client(100, 0);
+    // Each gap stays well inside the idle bound while the whole body (600 ms)
+    // outlasts it. A 60 ms gap under a 100 ms bound left too little headroom
+    // for a loaded macOS runner's timer slack (job 139084595204).
+    let mut value = client(400, 0);
     let token = control::cancel_new();
     let response = transport::send(&value, &request(&url), &token)
         .await

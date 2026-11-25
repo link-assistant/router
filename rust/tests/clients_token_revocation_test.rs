@@ -129,8 +129,26 @@ fn recorded_token_id(home: &Path, client: &str) -> String {
         .to_string()
 }
 
+/// Serializes a catalog mock's lifetime with a live router's start.
+///
+/// `free_port` releases the router's port before the child binds it, so a
+/// mock created in that window can bind the same number. The start's
+/// `/api/health` probe then reaches the mock, which counts it as its only
+/// expected request and closes; the router child binds the freed port, and
+/// the setup's catalog request reaches that router instead of the mock and
+/// fails with `401 invalid token` (CI job 139084595237). Once the router is
+/// healthy it owns its port and a mock can no longer be handed it, so the
+/// lock only covers the start window and the mock's lifetime.
+fn port_window() -> std::sync::MutexGuard<'static, ()> {
+    static WINDOW: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    WINDOW
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
 /// Run `clients setup <client>`, minting a token unless `token` is given.
 fn setup(home: &Path, storage: &str, client: &str, token: Option<&str>) -> Output {
+    let _window = needs_catalog(client).then(port_window);
     let catalog = needs_catalog(client).then(|| {
         let model = if client == "claude" {
             ("claude-future-test", "anthropic")
@@ -454,6 +472,7 @@ impl Router {
     /// before it is healthy: the port is released before the router binds it,
     /// so a parallel test's listener can take it first.
     fn start(home: &Path, storage: &str) -> Self {
+        let _window = port_window();
         for _ in 0..5 {
             if let Some(router) = Self::try_start(home, storage, free_port()) {
                 return router;
