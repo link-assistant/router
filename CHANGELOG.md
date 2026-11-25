@@ -223,6 +223,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.25.3] - 2026-11-25
+
+### Fixed
+- Release artifact jobs now generate the CycloneDX SBOM with `--manifest-path rust/Cargo.toml` and read it from `rust/link-assistant-router.cdx.json`. The repository root is a virtual workspace, and cargo-cyclonedx writes each SBOM beside its member's `Cargo.toml`, so the old root-level `mv` failed and blocked binary, npm and PyPI publication (issue #801).
+
 ## [1.25.2] - 2026-11-25
 
 ### Changed
