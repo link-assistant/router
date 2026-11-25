@@ -38,6 +38,8 @@ fn main() {
         "docker/build-push-action@",
         "actions/attest-build-provenance@",
         "publish-release-artifacts:",
+        // Darwin legs need a longer deadline than Linux (issue #803).
+        "timeout-minutes: ${{ matrix.timeout-minutes }}",
         "publish-integration-artifacts:",
         "publish-npm:",
         "publish-python:",

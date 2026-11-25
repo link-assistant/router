@@ -22,6 +22,71 @@ fn release_workflow_uses_the_cyclonedx_filename_that_the_generator_creates() {
     assert!(!workflow.contains("mv link-assistant-router.cdx.json"));
 }
 
+/// The Darwin legs of the release artifact matrix need a longer deadline than
+/// Linux.
+///
+/// The fat-LTO release build of the three binaries takes about 8 minutes on
+/// the Linux runners. It takes roughly three times as long on `macos-26`. On
+/// v1.25.3 both Darwin legs were cancelled at the shared 30-minute limit while
+/// still in `Build release binaries`. The SBOM, attestation and upload steps
+/// never ran, so the npm, PyPI and crates.io publication stayed blocked
+/// (issue #803).
+#[test]
+fn darwin_release_artifact_legs_have_room_to_finish_the_release_build() {
+    let workflow = read_lf(".github/workflows/release.yml");
+    let job = workflow
+        .split_once("\n  publish-release-artifacts:\n")
+        .expect("release workflow should publish attested binaries")
+        .1
+        .split_once("\n  publish-integration-artifacts:\n")
+        .expect("integration artifacts should follow the binary matrix")
+        .0;
+    let job_level: Vec<&str> = job
+        .lines()
+        .filter(|line| line.starts_with("    timeout-minutes:"))
+        .collect();
+    assert_eq!(
+        job_level,
+        ["    timeout-minutes: ${{ matrix.timeout-minutes }}"],
+        "the job deadline must come from each matrix leg, not one shared value"
+    );
+
+    let matrix = job
+        .split_once("        include:\n")
+        .expect("the binary matrix should list its legs explicitly")
+        .1
+        .split_once("\n    runs-on:")
+        .expect("the matrix should precede the runner selection")
+        .0;
+    let legs: Vec<&str> = matrix.split("          - os: ").skip(1).collect();
+    assert_eq!(legs.len(), 4, "two Linux and two Darwin legs are expected");
+    let mut darwin_legs = 0;
+    for leg in legs {
+        let os = leg.lines().next().unwrap_or_default().trim();
+        let minutes: u32 = leg
+            .lines()
+            .find_map(|line| line.trim().strip_prefix("timeout-minutes: "))
+            .unwrap_or_else(|| panic!("matrix leg {os} must declare timeout-minutes"))
+            .parse()
+            .unwrap_or_else(|error| panic!("matrix leg {os} timeout must be a number: {error}"));
+        match os {
+            "darwin" => {
+                darwin_legs += 1;
+                assert!(
+                    minutes >= 60,
+                    "a Darwin release build needs at least 60 minutes, found {minutes}"
+                );
+            }
+            "linux" => assert!(
+                (30..=45).contains(&minutes),
+                "Linux legs build in about 8 minutes; keep their deadline tight, found {minutes}"
+            ),
+            other => panic!("unexpected release artifact platform {other}"),
+        }
+    }
+    assert_eq!(darwin_legs, 2, "both Darwin slices must get the longer deadline");
+}
+
 #[test]
 fn image_attestation_can_persist_artifact_metadata_without_warnings() {
     let workflow = read_lf(".github/workflows/release.yml");
