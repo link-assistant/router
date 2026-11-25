@@ -222,6 +222,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.25.2] - 2026-11-25
+
+### Changed
+- CI change detection: a pull-request push whose own delta touches only non-build files (for example reverting a `.gitkeep` task-details commit) no longer reruns the full pipeline. crates.io publishing keeps OIDC trusted publishing with the token-secret fallback from #800.
+
 ## [1.25.1] - 2026-11-24
 
 ### Fixed
