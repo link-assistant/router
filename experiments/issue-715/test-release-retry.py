@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """Offline exact-byte and source-gate regressions, using production helpers."""
 import base64
+import contextlib
 import hashlib
 import importlib.util
+import io
 from pathlib import Path
+import sys
 import tempfile
 import unittest
+from unittest import mock
 import urllib.error
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -60,6 +64,70 @@ class Distributions(unittest.TestCase):
             record['urls'].pop()
             with self.assertRaisesRegex(ValueError, 'set differs'):
                 registry.python_identity('1.18.2', assets, lambda _: record)
+
+    def test_python_distribution_assets_ignore_publish_attestation_sidecars(self):
+        # Issue #806: after pypa/gh-action-pypi-publish uploads 1.25.4, dist/
+        # also holds its .publish.attestation sidecars. They are not
+        # distributions and must not fail the post-publication verification.
+        version = '1.25.4'
+        wheel, sdist = f'link_assistant_router-{version}-py3-none-any.whl', f'link_assistant_router-{version}.tar.gz'
+        with tempfile.TemporaryDirectory() as root:
+            dist = Path(root)
+            for name in [wheel, sdist, f'{wheel}.publish.attestation', f'{sdist}.publish.attestation']:
+                (dist/name).write_bytes(name.encode())
+            assets = registry.python_distribution_assets(dist, version)
+            self.assertEqual([a.name for a in assets], [wheel, sdist])
+            record = {'info': {'name': 'link_assistant_router', 'version': version}, 'urls': [
+                {'filename': a.name, 'url': a.name, 'digests': {'sha256': hashlib.sha256(a.read_bytes()).hexdigest()}, 'yanked': False}
+                for a in assets]}
+            self.assertTrue(registry.python_identity(version, assets, lambda _: record, lambda name: (dist/name).read_bytes()))
+            # The exact-set check against PyPI still fails closed on an unexpected third distribution.
+            record['urls'].append({**record['urls'][0], 'filename': f'link_assistant_router-{version}-cp312-abi3-manylinux_2_28_x86_64.whl'})
+            with self.assertRaisesRegex(ValueError, 'set differs'):
+                registry.python_identity(version, assets, lambda _: record)
+
+    def test_python_distribution_assets_reject_missing_or_extra_local_distributions(self):
+        version = '1.25.4'
+        wheel, sdist = f'link_assistant_router-{version}-py3-none-any.whl', f'link_assistant_router-{version}.tar.gz'
+        cases = {
+            'missing wheel': [sdist, f'{sdist}.publish.attestation'],
+            'missing sdist': [wheel, f'{wheel}.publish.attestation'],
+            'only sidecars': [f'{wheel}.publish.attestation', f'{sdist}.publish.attestation'],
+            'extra wheel': [wheel, sdist, f'link_assistant_router-{version}-cp312-abi3-manylinux_2_28_x86_64.whl'],
+            'extra format': [wheel, sdist, f'link_assistant_router-{version}.zip'],
+            'other version': [wheel, sdist, 'link_assistant_router-1.25.40.tar.gz'],
+            'prefix only': ['link_assistant_router-1.25.40-py3-none-any.whl', 'link_assistant_router-1.25.40.tar.gz'],
+            'empty': [],
+        }
+        for case, names in cases.items():
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as root:
+                for name in names:
+                    (Path(root)/name).write_bytes(name.encode())
+                with self.assertRaisesRegex(ValueError, 'exact attested Python wheel and sdist'):
+                    registry.python_distribution_assets(Path(root), version)
+
+    def test_python_cli_verifies_dist_with_attestation_sidecars(self):
+        # Drive main() as the workflow does, with only the network replaced.
+        version = '1.25.4'
+        wheel, sdist = f'link_assistant_router-{version}-py3-none-any.whl', f'link_assistant_router-{version}.tar.gz'
+        with tempfile.TemporaryDirectory() as root:
+            dist = Path(root)
+            for name in [wheel, sdist, f'{wheel}.publish.attestation', f'{sdist}.publish.attestation']:
+                (dist/name).write_bytes(name.encode())
+            record = {'info': {'name': 'link-assistant-router', 'version': version}, 'urls': [
+                {'filename': n, 'url': n, 'digests': {'sha256': hashlib.sha256(n.encode()).hexdigest()}, 'yanked': False}
+                for n in [wheel, sdist]]}
+            installed = []
+            argv = ['registry-distributions.py', 'python', '--version', version, '--assets', str(dist)]
+            network = (lambda _: record, lambda name: (dist/name).read_bytes())
+            with mock.patch.object(registry.python_identity, '__defaults__', network), \
+                    mock.patch.object(registry, 'install', lambda *call: installed.append(call)):
+                for extra, expected in [([], 'Verified registry hashes'), (['--probe'], 'present=true')]:
+                    output = io.StringIO()
+                    with mock.patch.object(sys, 'argv', argv + extra), contextlib.redirect_stdout(output):
+                        registry.main()
+                    self.assertIn(expected, output.getvalue())
+            self.assertEqual([call[:2] for call in installed], [('python', version)])
 
     def test_retry_requires_exact_tag_repository_workflow_and_successful_gates(self):
         record = {'head_sha': 'commit', 'path': '.github/workflows/release.yml', 'repository': {'full_name': 'link-assistant/router'}, 'head_branch': 'v1.18.2', 'event': 'workflow_dispatch'}

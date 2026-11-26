@@ -104,9 +104,11 @@ which is why the post-publication path had never run before.
 
 `python_distribution_assets` now selects exactly one
 `link_assistant_router-VERSION-*.whl` and `link_assistant_router-VERSION.tar.gz`.
-It ignores other files and still fails when the wheel or the sdist is missing,
+It ignores sidecar files and still fails when the wheel or the sdist is missing,
 when there are two wheels, or when only a different version such as
-`1.25.40` is present.
+`1.25.40` is present. Issue #806 later made it also reject any other local
+distribution (for example a `.zip`), because the publish action uploads every
+distribution in `dist/`.
 
 Before/after on the real `v1.25.4` GitHub assets plus the two attestation
 file names (`experiments/issue-805/pypi-verifier-before-after.log`):

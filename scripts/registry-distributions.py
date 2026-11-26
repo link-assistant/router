@@ -5,6 +5,10 @@ A missing exact version permits publishing the attested asset. Network/auth
 errors and a different distribution for the same version never do. After
 publication, verify all registry bytes, then ordinary exact-version installs
 and imports, before any stable promotion.
+
+Python assets are selected by exact distribution name, so the
+`.publish.attestation` sidecars the PyPI publish action writes into the same
+directory never count as distributions (issue #806).
 """
 
 import argparse
@@ -75,21 +79,6 @@ def npm_publish_preflight(version, token_configured, source_run="", repository="
     return exists
 
 
-def python_distribution_assets(directory, version):
-    """Select exactly the attested wheel and sdist, ignoring publish byproducts.
-
-    pypa/gh-action-pypi-publish writes `<distribution>.publish.attestation`
-    files next to the uploaded distributions (issue #805), so a broad
-    `link_assistant_router-<version>*` glob is not the distribution set.
-    """
-    stem = f"link_assistant_router-{version}"
-    wheels = sorted(directory.glob(f"{stem}-*.whl"))
-    sdist = directory / f"{stem}.tar.gz"
-    if len(wheels) != 1 or not sdist.is_file():
-        raise ValueError("expected the exact attested Python wheel and sdist")
-    return [*wheels, sdist]
-
-
 def npm_identity(version, asset, load=metadata, download=fetch):
     record = load(f"https://registry.npmjs.org/@link-assistant%2frouter/{version}")
     if record is None:
@@ -123,6 +112,34 @@ def python_identity(version, assets, load=metadata, download=fetch):
         if hashlib.sha256(expected).hexdigest() != item["digests"]["sha256"] or download(item["url"]) != expected:
             raise ValueError(f"PyPI distribution differs from the attested asset: {asset.name}")
     return True
+
+
+# Every distribution format PyPI accepts or has accepted. Anything else in the
+# directory, such as the `.publish.attestation` files pypa/gh-action-pypi-publish
+# writes beside each uploaded file, is a sidecar and never a distribution.
+DISTRIBUTION_SUFFIXES = (".whl", ".tar.gz", ".zip", ".tar.bz2", ".tar.xz", ".tgz", ".egg", ".exe", ".msi", ".rpm", ".dmg")
+
+
+def python_distribution_assets(directory, version):
+    """Return exactly the attested wheel and sdist, ignoring publication sidecars.
+
+    pypa/gh-action-pypi-publish writes `<distribution>.publish.attestation`
+    files next to the uploaded distributions (issues #805 and #806), so a broad
+    `link_assistant_router-<version>*` glob is not the distribution set.
+
+    Fails closed when the wheel or sdist is missing, or when any other
+    distribution (another wheel, another version, another format) is present,
+    because the PyPI publish action uploads every distribution in the directory.
+    """
+    distributions = sorted(path for path in directory.iterdir()
+                           if path.is_file() and path.name.endswith(DISTRIBUTION_SUFFIXES))
+    prefix = f"link_assistant_router-{version}"
+    wheels = [path for path in distributions if path.name.startswith(f"{prefix}-") and path.name.endswith(".whl")]
+    sdists = [path for path in distributions if path.name == f"{prefix}.tar.gz"]
+    if len(wheels) != 1 or len(sdists) != 1 or len(distributions) != 2:
+        names = ", ".join(path.name for path in distributions) or "none"
+        raise ValueError(f"expected the exact attested Python wheel and sdist, found: {names}")
+    return [*wheels, *sdists]
 
 
 def install(kind, version, root):
