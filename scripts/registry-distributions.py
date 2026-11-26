@@ -68,6 +68,30 @@ def python_identity(version, assets, load=metadata, download=fetch):
     return True
 
 
+# Every distribution format PyPI accepts or has accepted. Anything else in the
+# directory, such as the `.publish.attestation` files pypa/gh-action-pypi-publish
+# writes beside each uploaded file, is a sidecar and never a distribution.
+DISTRIBUTION_SUFFIXES = (".whl", ".tar.gz", ".zip", ".tar.bz2", ".tar.xz", ".tgz", ".egg", ".exe", ".msi", ".rpm", ".dmg")
+
+
+def python_assets(directory, version):
+    """Return exactly the attested wheel and sdist, ignoring publication sidecars.
+
+    Fails closed when the wheel or sdist is missing, or when any other
+    distribution (another wheel, another version, another format) is present,
+    because the PyPI publish action uploads every distribution in the directory.
+    """
+    distributions = sorted(path for path in directory.iterdir()
+                           if path.is_file() and path.name.endswith(DISTRIBUTION_SUFFIXES))
+    prefix = f"link_assistant_router-{version}"
+    wheels = [path for path in distributions if path.name.startswith(f"{prefix}-") and path.name.endswith(".whl")]
+    sdists = [path for path in distributions if path.name == f"{prefix}.tar.gz"]
+    if len(wheels) != 1 or len(sdists) != 1 or len(distributions) != 2:
+        names = ", ".join(path.name for path in distributions) or "none"
+        raise ValueError(f"expected the exact attested Python wheel and sdist, found: {names}")
+    return [*wheels, *sdists]
+
+
 def install(kind, version, root):
     if kind == "npm":
         subprocess.run(["npm", "install", "--ignore-scripts", "--no-audit", "--no-fund",
@@ -90,10 +114,7 @@ def main():
     if args.kind == "npm":
         exists = npm_identity(args.version, args.assets / f"link-assistant-router-{args.version}.tgz")
     else:
-        assets = sorted(args.assets.glob(f"link_assistant_router-{args.version}*"))
-        if len(assets) != 2 or not any(a.suffix == ".whl" for a in assets) or not any(a.name.endswith(".tar.gz") for a in assets):
-            raise ValueError("expected the exact attested Python wheel and sdist")
-        exists = python_identity(args.version, assets)
+        exists = python_identity(args.version, python_assets(args.assets, args.version))
     if args.probe:
         print("present=true" if exists else "present=false")
     elif not exists:
