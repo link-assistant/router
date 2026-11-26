@@ -3,4 +3,4 @@ bump: patch
 ---
 
 ### Fixed
-- Release verification of the PyPI package no longer fails after a successful upload because of the `.publish.attestation` sidecar files that `pypa/gh-action-pypi-publish` writes into `dist/`. The verifier now selects only the attested wheel and sdist. It still fails when either is missing, when any other distribution is present, and when PyPI lists a yanked, missing, extra or mismatched distribution (issue #806).
+- The PyPI release verifier now also rejects any extra local distribution in `dist/`, such as a second wheel, another version or a `.zip`, because the publish action uploads every distribution there. It still ignores `.publish.attestation` sidecars, and the regression tests drive the verifier's command line exactly as the release workflow runs it (issue #806).

@@ -343,6 +343,7 @@ jobs:
           rust-script --test scripts/create-github-release.rs
           python3 experiments/issue-709/release-preparation.py
           python3 experiments/issue-715/test-release-retry.py
+          python3 experiments/issue-805/test-registry-bootstrap.py
           python3 experiments/issue-715/check-remote-names.py
           rust-script --test scripts/check-delivery.rs
           rust-script --test scripts/upload-release-assets.rs
@@ -1779,6 +1780,15 @@ jobs:
       - name: Check for an already delivered identical npm distribution
         id: registry
         run: python3 scripts/registry-distributions.py npm --version "$RELEASE_VERSION" --assets . --probe >> "$GITHUB_OUTPUT"
+      # A package that has never existed cannot have an npm trusted publisher,
+      # so its first publication needs the approved NPM_TOKEN bootstrap secret
+      # (issue #805). Fail with the exact human steps instead of ENEEDAUTH.
+      - name: Require npm publication authority
+        if: steps.registry.outputs.present != 'true'
+        env:
+          NPM_TOKEN_CONFIGURED: ${{ secrets.NPM_TOKEN != '' }}
+          SOURCE_RUN: ${{ inputs.source_run }}
+        run: python3 scripts/registry-distributions.py npm --version "$RELEASE_VERSION" --assets . --publish-preflight
       - name: Publish the attested npm distribution
         if: steps.registry.outputs.present != 'true'
         # Optional approved bootstrap token. Ordinary releases use npm OIDC.

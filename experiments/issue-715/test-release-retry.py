@@ -65,7 +65,7 @@ class Distributions(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'set differs'):
                 registry.python_identity('1.18.2', assets, lambda _: record)
 
-    def test_python_assets_ignore_publish_attestation_sidecars(self):
+    def test_python_distribution_assets_ignore_publish_attestation_sidecars(self):
         # Issue #806: after pypa/gh-action-pypi-publish uploads 1.25.4, dist/
         # also holds its .publish.attestation sidecars. They are not
         # distributions and must not fail the post-publication verification.
@@ -75,7 +75,7 @@ class Distributions(unittest.TestCase):
             dist = Path(root)
             for name in [wheel, sdist, f'{wheel}.publish.attestation', f'{sdist}.publish.attestation']:
                 (dist/name).write_bytes(name.encode())
-            assets = registry.python_assets(dist, version)
+            assets = registry.python_distribution_assets(dist, version)
             self.assertEqual([a.name for a in assets], [wheel, sdist])
             record = {'info': {'name': 'link_assistant_router', 'version': version}, 'urls': [
                 {'filename': a.name, 'url': a.name, 'digests': {'sha256': hashlib.sha256(a.read_bytes()).hexdigest()}, 'yanked': False}
@@ -86,7 +86,7 @@ class Distributions(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'set differs'):
                 registry.python_identity(version, assets, lambda _: record)
 
-    def test_python_assets_reject_missing_or_extra_local_distributions(self):
+    def test_python_distribution_assets_reject_missing_or_extra_local_distributions(self):
         version = '1.25.4'
         wheel, sdist = f'link_assistant_router-{version}-py3-none-any.whl', f'link_assistant_router-{version}.tar.gz'
         cases = {
@@ -104,7 +104,7 @@ class Distributions(unittest.TestCase):
                 for name in names:
                     (Path(root)/name).write_bytes(name.encode())
                 with self.assertRaisesRegex(ValueError, 'exact attested Python wheel and sdist'):
-                    registry.python_assets(Path(root), version)
+                    registry.python_distribution_assets(Path(root), version)
 
     def test_python_cli_verifies_dist_with_attestation_sidecars(self):
         # Drive main() as the workflow does, with only the network replaced.

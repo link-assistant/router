@@ -36,7 +36,7 @@ anything with PyPI.
 
 ## Fix
 
-`python_assets()` now looks at every file in the directory whose name ends with a
+`python_distribution_assets()` now looks at every file in the directory whose name ends with a
 known distribution suffix (`.whl`, `.tar.gz`, `.zip`, and so on). It requires
 exactly one `link_assistant_router-{version}-*.whl` and exactly
 `link_assistant_router-{version}.tar.gz`, and no other distribution. Files without a
