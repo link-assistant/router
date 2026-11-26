@@ -11,8 +11,10 @@ import argparse
 import base64
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import urllib.error
 import urllib.request
@@ -31,6 +33,61 @@ def metadata(url):
         if error.code == 404:
             return None
         raise
+
+
+NPM_PACKAGE_URL = "https://registry.npmjs.org/@link-assistant%2frouter"
+
+
+class NpmBootstrapRequired(RuntimeError):
+    """The package has never been published and no bootstrap token exists.
+
+    npm Trusted Publishing can only be configured for a package that already
+    exists, so the first publication needs a human-approved credential
+    (issue #805). Fail before `npm publish` with the actions to take instead of
+    npm's generic ENEEDAUTH.
+    """
+
+
+def npm_bootstrap_message(version, source_run, repository):
+    asset = f"link-assistant-router-{version}.tgz"
+    run = source_run or "<tagged release run id>"
+    return (
+        "@link-assistant/router has never been published to npm, and the repository secret NPM_TOKEN is empty. "
+        "npm Trusted Publishing (OIDC) cannot be configured until the package exists, so this first publication "
+        "needs a human-approved credential (see docs/ci-cd/registry-publishers.md, issue #805). Do ONE of: "
+        "(a) add an npm granular access token with read and write permission for the @link-assistant scope "
+        f"as the repository secret NPM_TOKEN, then retry the existing release without rebuilding it: "
+        f"gh workflow run release.yml --repo {repository} --ref main -f release_mode=retry-registries "
+        f"-f release_version={version} -f source_run={run} -f bump_type=patch; or "
+        f"(b) as an npm owner of @link-assistant, run scripts/bootstrap-npm-package.sh {version} --publish "
+        f"to publish the attested GitHub asset {asset} after npm login with MFA, then rerun the retry command. "
+        "Afterwards add the npm trusted publisher (organization link-assistant, repository router, "
+        "workflow release.yml, no environment), publish the next release through OIDC within npm's validation "
+        "window and revoke NPM_TOKEN."
+    )
+
+
+def npm_publish_preflight(version, token_configured, source_run="", repository="link-assistant/router", load=metadata):
+    """Return whether the package exists; raise when no credential can create it."""
+    exists = load(NPM_PACKAGE_URL) is not None
+    if not exists and not token_configured:
+        raise NpmBootstrapRequired(npm_bootstrap_message(version, source_run, repository))
+    return exists
+
+
+def python_distribution_assets(directory, version):
+    """Select exactly the attested wheel and sdist, ignoring publish byproducts.
+
+    pypa/gh-action-pypi-publish writes `<distribution>.publish.attestation`
+    files next to the uploaded distributions (issue #805), so a broad
+    `link_assistant_router-<version>*` glob is not the distribution set.
+    """
+    stem = f"link_assistant_router-{version}"
+    wheels = sorted(directory.glob(f"{stem}-*.whl"))
+    sdist = directory / f"{stem}.tar.gz"
+    if len(wheels) != 1 or not sdist.is_file():
+        raise ValueError("expected the exact attested Python wheel and sdist")
+    return [*wheels, sdist]
 
 
 def npm_identity(version, asset, load=metadata, download=fetch):
@@ -86,14 +143,29 @@ def main():
     parser.add_argument("--version", required=True)
     parser.add_argument("--assets", type=Path, required=True)
     parser.add_argument("--probe", action="store_true")
+    parser.add_argument("--publish-preflight", action="store_true",
+                        help="npm only: fail with bootstrap instructions when the package does not exist and NPM_TOKEN is empty")
     args = parser.parse_args()
+    if args.publish_preflight:
+        if args.kind != "npm":
+            parser.error("--publish-preflight applies to npm only")
+        try:
+            exists = npm_publish_preflight(
+                args.version,
+                os.environ.get("NPM_TOKEN_CONFIGURED") == "true",
+                os.environ.get("SOURCE_RUN") or os.environ.get("GITHUB_RUN_ID", ""),
+                os.environ.get("GITHUB_REPOSITORY") or "link-assistant/router",
+            )
+        except NpmBootstrapRequired as error:
+            print(f"::error title=npm first-publish bootstrap required (issue #805)::{error}")
+            sys.exit(1)
+        print("Package exists; npm publishes through the trusted publisher (OIDC)." if exists
+              else "Package is new; publishing with the approved NPM_TOKEN bootstrap credential.")
+        return
     if args.kind == "npm":
         exists = npm_identity(args.version, args.assets / f"link-assistant-router-{args.version}.tgz")
     else:
-        assets = sorted(args.assets.glob(f"link_assistant_router-{args.version}*"))
-        if len(assets) != 2 or not any(a.suffix == ".whl" for a in assets) or not any(a.name.endswith(".tar.gz") for a in assets):
-            raise ValueError("expected the exact attested Python wheel and sdist")
-        exists = python_identity(args.version, assets)
+        exists = python_identity(args.version, python_distribution_assets(args.assets, args.version))
     if args.probe:
         print("present=true" if exists else "present=false")
     elif not exists:

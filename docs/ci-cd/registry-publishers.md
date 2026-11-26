@@ -43,6 +43,51 @@ GitHub-only credentials cannot perform steps 1–2. An npm E404 is insufficient
 to distinguish a missing package from insufficient scope permissions;
 inspect the account's scope/package access instead of guessing an owner.
 
+### npm first publication (issue #805)
+
+`@link-assistant/router` did not exist on npm when `v1.25.4` was released.
+npm only lets a trusted publisher be added to a package that already exists,
+so OIDC cannot create the package. With the `NPM_TOKEN` secret empty,
+`npm publish` failed with `ENEEDAUTH`. Before publishing, the
+`Require npm publication authority` step of `publish-npm` now checks
+`https://registry.npmjs.org/@link-assistant%2frouter`. If that returns 404 and
+`NPM_TOKEN` is empty, the step fails with an `npm first-publish bootstrap
+required` error that lists the steps below. If the package exists, the
+step passes and publication uses OIDC. Registry or network errors still fail.
+
+An npm owner of the `@link-assistant` scope must do one of these:
+
+- **Bootstrap token.** Create an npm granular access token with read and
+  write permission for the `@link-assistant` scope. If the account requires
+  2FA for writes, also allow the token to bypass 2FA. Store it as the
+  repository secret `NPM_TOKEN`
+  (`gh secret set NPM_TOKEN --repo link-assistant/router`), then run the
+  retry below.
+- **Owner login.** Run `npm login` (with MFA), then
+  `scripts/bootstrap-npm-package.sh VERSION` and, after reviewing its
+  dry-run output, `scripts/bootstrap-npm-package.sh VERSION --publish`. The
+  script downloads the release's `link-assistant-router-VERSION.tgz`,
+  verifies its GitHub attestation against the tag commit and publishes those
+  exact bytes with `--access public`. It never rebuilds the package. It then
+  checks the registry tarball bytes, the `integrity` value and an ordinary
+  exact-version install. After that, run the retry below so the remaining
+  jobs (PyPI verification, crate, stable promotion) finish.
+
+Once the package exists, open the npm package settings, choose **Trusted
+Publisher → GitHub Actions** and enter organization `link-assistant`,
+repository `router`, workflow `release.yml`, no environment. Publish the next
+release through OIDC within npm's validation window, confirm it succeeded,
+and then delete the `NPM_TOKEN` secret and revoke the token.
+
+### PyPI verification after attestation upload (issue #805)
+
+`pypa/gh-action-pypi-publish` writes `*.publish.attestation` files next to
+the uploaded distributions in `dist/`. The post-publication verifier used to
+glob `link_assistant_router-VERSION*`, so it saw four files and rejected the
+correct `v1.25.4` upload with `expected the exact attested Python wheel and
+sdist`. It now selects exactly one wheel and the sdist by name. A missing
+or extra distribution still fails.
+
 ## Retry an existing release
 
 After publisher configuration is repaired and this workflow is merged, run:
@@ -51,6 +96,14 @@ After publisher configuration is repaired and this workflow is merged, run:
 gh workflow run release.yml --repo link-assistant/router --ref main \
   -f release_mode=retry-registries -f release_version=1.18.2 \
   -f source_run=37578930768 -f bump_type=patch
+```
+
+For `v1.25.4` (issue #805) the tagged run is `45694212338`:
+
+```sh
+gh workflow run release.yml --repo link-assistant/router --ref main \
+  -f release_mode=retry-registries -f release_version=1.25.4 \
+  -f source_run=45694212338 -f bump_type=patch
 ```
 
 The current approved workflow resolves the old immutable tag and verifies
