@@ -226,6 +226,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.25.6] - 2026-11-26
+
+### Fixed
+- The PyPI release verifier now also rejects any extra local distribution in `dist/`, such as a second wheel, another version or a `.zip`, because the publish action uploads every distribution there. It still ignores `.publish.attestation` sidecars, and the regression tests drive the verifier's command line exactly as the release workflow runs it (issue #806).
+
 ## [1.25.5] - 2026-11-26
 
 ### Fixed
