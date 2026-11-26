@@ -74,6 +74,15 @@ retrying:
 - Dispatching `release_mode: retry-registries` with `release_version: 1.25.4` and
   `source_run: 45694212338` from `main`.
 
-`finalize-release` also requires `publish-npm` to succeed. For 1.25.4 that is blocked
-on the npm bootstrap token described in issue #805. Once #805 is resolved, a single
-`retry-registries` dispatch completes both registries and the stable promotion.
+`finalize-release` also requires `publish-npm` to succeed. PR #808 (issue #805) made
+that job fail early with the exact bootstrap steps, but publishing a package that has
+never existed on npm still needs a human npm owner: either the `NPM_TOKEN` secret or
+`scripts/bootstrap-npm-package.sh`. After that, a single `retry-registries` dispatch
+completes both registries and the stable promotion.
+
+## Relation to PR #808
+
+PR #808 (issue #805) fixed the same sidecar bug independently with
+`python_distribution_assets`. This change keeps that name and makes it stricter: any
+extra local distribution in the directory (another wheel, another version, a `.zip`)
+also fails closed, because the publish action would upload it too.
