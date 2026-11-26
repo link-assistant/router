@@ -5,6 +5,10 @@ A missing exact version permits publishing the attested asset. Network/auth
 errors and a different distribution for the same version never do. After
 publication, verify all registry bytes, then ordinary exact-version installs
 and imports, before any stable promotion.
+
+Python assets are selected by exact distribution name, so the
+`.publish.attestation` sidecars the PyPI publish action writes into the same
+directory never count as distributions (issue #806).
 """
 
 import argparse
