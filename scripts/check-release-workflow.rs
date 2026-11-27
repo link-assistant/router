@@ -30,7 +30,7 @@ fn main() {
         "--override-filename link-assistant-router.cdx",
         "mv rust/link-assistant-router.cdx.json",
         "artifact-metadata: write",
-        "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+        "actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333",
         "cancel-in-progress: false",
         "npm run build 2>&1 | tee /tmp/admin-ui-build.log",
         "git diff --exit-code -- ui/dist",
