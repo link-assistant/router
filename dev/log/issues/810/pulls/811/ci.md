@@ -125,6 +125,14 @@ The previous Intel macOS Nix build installed Nix 2.35.6 and reached Router's rel
 | Soak | The Ubuntu and macOS jobs passed the bounded soak test in 66.81 and 66.58 seconds, recorded at lines 1285 and 1326 respectively. [Soak workflow](https://github.com/link-assistant/router/actions/runs/46042635376) |
 | Other complete gates | The dependency audit, Docker runtime build and probes, upgrade matrix, both fuzz targets, all eight mutation shards, macOS Keychain, and current and historical vendor capture cases passed. [Audit](https://github.com/link-assistant/router/actions/runs/46042635555/job/140665475795), [Docker](https://github.com/link-assistant/router/actions/runs/46042635365), [upgrade](https://github.com/link-assistant/router/actions/runs/46042635369), [fuzz](https://github.com/link-assistant/router/actions/runs/46042635479), [mutation](https://github.com/link-assistant/router/actions/runs/46042635416), [keychain](https://github.com/link-assistant/router/actions/runs/46042635449), [real clients](https://github.com/link-assistant/router/actions/runs/46042635434) |
 | Pull request benchmark | Both JavaScript gates passed. Archived lines 1948–2117 record JWT and terminal type errors compiling `1f11272a6c93a552eb3b0a47243e524a5fb27663`. Line 2120 names the immutable failed base. The head benchmark completed and uploaded Criterion data, confirmed at lines 2607–2608. [Benchmark job](https://github.com/link-assistant/router/actions/runs/46042635631/job/140667225609), [head results](https://github.com/link-assistant/router/actions/runs/46042635631/artifacts/15223457767) |
+| Release coverage | The full instrumented suite ran, including 2,373 library cases at line 7108. Its measurement exactly reproduces `f1093db4` across all 429 covered files. The ratchet fails at lines 12576–12592 against the older compiler's baseline. [Coverage job](https://github.com/link-assistant/router/actions/runs/46042635555/job/140667756071), [coverage reports](https://github.com/link-assistant/router/actions/runs/46042635555/artifacts/15222913515) |
+
+Download the two GitHub artifact ZIP files and use the [coverage comparison experiment](../../../../../../experiments/issue-810/compare-coverage.py) from the repository root. It compares total and per-file counts, and uses the supplied Git revisions to identify byte-identical files.
+
+```bash
+python experiments/issue-810/compare-coverage.py coverage-main.zip coverage-head.zip \
+  860153652 dff074e9 --details coverage-delta.tsv
+```
 
 ## Cargo tool advisories
 
