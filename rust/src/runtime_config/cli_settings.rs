@@ -29,54 +29,59 @@ fn flag(arg: &Arg) -> Option<&str> {
 
 pub(super) fn schema() -> Value {
     let command = Cli::command();
-    let properties = command.get_arguments().filter_map(|arg| {
-        let name = flag(arg)?;
-        let parser = arg.get_value_parser().type_id();
-        let boolean = matches!(arg.get_action(), ArgAction::SetTrue | ArgAction::SetFalse)
-            || parser == clap::builder::ValueParser::bool().type_id();
-        let mut property = if boolean {
-            json!({"type": "boolean"})
-        } else {
-            macro_rules! integer {
-                ($type:ty, $maximum:expr) => {{
-                    let parser: clap::builder::ValueParser = clap::value_parser!($type).into();
-                    (arg.get_value_parser().type_id() == parser.type_id()).then_some($maximum)
-                }};
+    let properties = command
+        .get_arguments()
+        .filter_map(|arg| {
+            let name = flag(arg)?;
+            let parser = arg.get_value_parser().type_id();
+            let boolean = matches!(arg.get_action(), ArgAction::SetTrue | ArgAction::SetFalse)
+                || parser == clap::builder::ValueParser::bool().type_id();
+            let mut property = if boolean {
+                json!({"type": "boolean"})
+            } else {
+                macro_rules! integer {
+                    ($type:ty, $maximum:expr) => {{
+                        let parser: clap::builder::ValueParser = clap::value_parser!($type).into();
+                        (arg.get_value_parser().type_id() == parser.type_id()).then_some($maximum)
+                    }};
+                }
+                integer!(u16, u64::from(u16::MAX))
+                    .or_else(|| integer!(u32, u64::from(u32::MAX)))
+                    .or_else(|| integer!(u64, u64::MAX))
+                    .or_else(|| integer!(usize, usize::MAX as u64))
+                    .map_or_else(
+                        || {
+                            let possible = arg.get_possible_values();
+                            if possible.is_empty() {
+                                json!({"type": "string"})
+                            } else {
+                                let values: Vec<_> = possible
+                                    .iter()
+                                    .map(clap::builder::PossibleValue::get_name)
+                                    .collect();
+                                json!({"type": "string", "enum": values})
+                            }
+                        },
+                        |maximum| json!({"type": "integer", "minimum": 0, "maximum": maximum}),
+                    )
+            };
+            if matches!(arg.get_action(), ArgAction::Append) {
+                property = json!({"type": "array", "items": property});
             }
-            integer!(u16, u64::from(u16::MAX))
-                .or_else(|| integer!(u32, u64::from(u32::MAX)))
-                .or_else(|| integer!(u64, u64::MAX))
-                .or_else(|| integer!(usize, usize::MAX as u64))
-                .map_or_else(
-                    || {
-                        let possible = arg.get_possible_values();
-                        if possible.is_empty() {
-                            json!({"type": "string"})
-                        } else {
-                            let values: Vec<_> = possible
-                                .iter()
-                                .map(clap::builder::PossibleValue::get_name)
-                                .collect();
-                            json!({"type": "string", "enum": values})
-                        }
-                    },
-                    |maximum| json!({"type": "integer", "minimum": 0, "maximum": maximum}),
-                )
-        };
-        if matches!(arg.get_action(), ArgAction::Append) {
-            property = json!({"type": "array", "items": property});
-        }
-        if let Some(help) = arg.get_help() {
-            property["description"] = json!(help.to_string());
-        }
-        if let Some(environment) = arg.get_env() {
-            property["x-environment"] = json!(environment.to_string_lossy());
-        }
-        if arg.is_hide_env_values_set() || crate::contracts::secret_option(arg.get_id().as_str()) {
-            property["writeOnly"] = json!(true);
-        }
-        Some((name.to_owned(), property))
-    }).collect::<Map<_, _>>();
+            if let Some(help) = arg.get_help() {
+                property["description"] = json!(help.to_string());
+            }
+            if let Some(environment) = arg.get_env() {
+                property["x-environment"] = json!(environment.to_string_lossy());
+            }
+            if arg.is_hide_env_values_set()
+                || crate::contracts::secret_option(arg.get_id().as_str())
+            {
+                property["writeOnly"] = json!(true);
+            }
+            Some((name.to_owned(), property))
+        })
+        .collect::<Map<_, _>>();
     json!({"type": "object", "properties": properties, "additionalProperties": false})
 }
 

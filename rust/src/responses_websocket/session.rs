@@ -251,7 +251,13 @@ pub(super) async fn run(
         named_streams.insert(lane);
     }
     let mut tracking = TurnTracking::new();
-    tracking.push(first_lane, first_tracker, &target, &first_event, first_limit);
+    tracking.push(
+        first_lane,
+        first_tracker,
+        &target,
+        &first_event,
+        first_limit,
+    );
     relay(
         &state,
         &headers,

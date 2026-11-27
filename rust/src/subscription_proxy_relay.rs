@@ -98,8 +98,10 @@ pub(super) async fn relay(
             .with_include_usage(include_usage)
             .with_stop_sequences(stop_sequences)
             .with_output_token_limit(emulated_output_limit);
-        let rewriter =
-            crate::output_limit::ResponsesStreamRewriter::new(requested_model, emulated_output_limit);
+        let rewriter = crate::output_limit::ResponsesStreamRewriter::new(
+            requested_model,
+            emulated_output_limit,
+        );
         let rewriter = if native_protocol {
             rewriter
         } else {

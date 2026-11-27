@@ -38,14 +38,11 @@ impl TurnTracking {
                     .map(str::to_string),
             )
         });
-        self.by_lane
-            .entry(lane)
-            .or_default()
-            .push_back(Turn {
-                tracker,
-                observer,
-                output: ResponsesEventLimit::new(output_limit),
-            });
+        self.by_lane.entry(lane).or_default().push_back(Turn {
+            tracker,
+            observer,
+            output: ResponsesEventLimit::new(output_limit),
+        });
     }
 
     pub(super) fn observe(&mut self, value: &mut Value, bytes: &[u8]) -> ResponsesFrame {

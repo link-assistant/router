@@ -471,7 +471,11 @@ async fn native_codex_request_records_scoped_rules_and_enforces_the_output_cap()
     };
     let scoped_token = issue_token();
     let unscoped_token = issue_token();
-    let scoped_id = state.token_manager.validate_token(&scoped_token).unwrap().sub;
+    let scoped_id = state
+        .token_manager
+        .validate_token(&scoped_token)
+        .unwrap()
+        .sub;
     state
         .request_log
         .runtime_config()
@@ -488,7 +492,10 @@ async fn native_codex_request_records_scoped_rules_and_enforces_the_output_cap()
         .unwrap();
     let path = "/api/services/codex/v1/responses";
     let app = Router::new()
-        .route(path, axum::routing::post(crate::proxy::openai_responses_route))
+        .route(
+            path,
+            axum::routing::post(crate::proxy::openai_responses_route),
+        )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             super::egress::scope,
@@ -515,7 +522,12 @@ async fn native_codex_request_records_scoped_rules_and_enforces_the_output_cap()
             .to_owned();
         let status = response.status();
         let bytes = to_bytes(response.into_body(), 16_384).await.unwrap();
-        assert_eq!(status, StatusCode::OK, "{}", String::from_utf8_lossy(&bytes));
+        assert_eq!(
+            status,
+            StatusCode::OK,
+            "{}",
+            String::from_utf8_lossy(&bytes)
+        );
         let body: Value = serde_json::from_slice(&bytes).unwrap();
         let text = body.pointer("/output/0/content/0/text").unwrap();
         let entries = state.request_log.lookup(&correlation).unwrap();
@@ -558,7 +570,10 @@ async fn canonical_codex_refuses_sampling_and_uses_a_local_websocket_cap() {
         }))
     };
     store
-        .edit(rules(json!({"temperature": 0.1, "max_output_tokens": 1})), "test")
+        .edit(
+            rules(json!({"temperature": 0.1, "max_output_tokens": 1})),
+            "test",
+        )
         .unwrap();
     let url = "https://chatgpt.com/backend-api/codex/responses";
     let mut request = reqwest::Client::new()

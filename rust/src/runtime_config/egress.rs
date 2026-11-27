@@ -90,7 +90,9 @@ fn check_codex_sampling(body: &Value, applied: &[Applied]) -> Result<(), &'stati
             body.get(*field).is_some() && applied.iter().any(|change| change.affects(path))
         })
     {
-        return Err("the Codex subscription backend does not support configured sampling parameters");
+        return Err(
+            "the Codex subscription backend does not support configured sampling parameters",
+        );
     }
     Ok(())
 }
