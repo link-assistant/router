@@ -1,0 +1,150 @@
+# CLIProxyAPI test inventory (snapshot 0f96f56)
+
+## Counts
+test files: 918
+test lines: 366826
+
+## Test files per directory
+    143 ./internal/runtime/executor
+    118 ./sdk/cliproxy/auth
+     70 ./internal/runtime/executor/helps
+     51 ./internal/api/handlers/management
+     42 ./internal/config
+     37 ./sdk/cliproxy
+     31 ./internal/pluginhost
+     25 ./sdk/api/handlers/openai
+     20 ./internal/translator/common
+     16 ./sdk/api/handlers
+     16 ./internal/registry
+     15 ./internal/api
+     13 ./internal/translator/claude/openai/responses
+     12 ./internal/util
+     10 ./sdk/auth
+     10 ./internal/translator/gemini/openai/responses
+     10 ./internal/signature
+     10 ./internal/logging
+     10 ./internal/cache
+      9 ./test
+      9 ./internal/watcher/diff
+      9 ./internal/translator/openai/openai/responses
+      9 ./internal/pluginstore
+      8 ./internal/translator/openai/interactions/responses
+      8 ./internal/translator/gemini/openai/chat-completions
+      8 ./examples/plugin/claude-web-search-router/go
+      7 ./internal/translator/codex/claude
+      7 ./internal/translator/claude/openai/chat-completions
+      7 ./internal/auth/claude
+      6 ./sdk/cliproxy/session
+      6 ./internal/translator/antigravity/openai/chat-completions
+      6 ./internal/client/codex/live
+      5 ./internal/translator/gemini/interactions
+      5 ./internal/translator/antigravity/interactions
+      5 ./internal/thinking
+      5 ./internal/home
+      4 ./internal/watcher/synthesizer
+      4 ./internal/translator/openai/interactions/chat-completions
+      4 ./internal/translator/openai/claude
+      4 ./internal/translator/gemini/claude
+      4 ./internal/translator/codex/openai/chat-completions
+      4 ./internal/translator/claude/gemini
+      4 ./internal/translator/antigravity/claude
+      4 ./internal/auth/codex
+      3 ./sdk/translator
+      3 ./sdk/cliproxy/usage
+      3 ./sdk/cliproxy/executor
+      3 ./sdk/cliproxy/executionregistry
+      3 ./sdk/api/handlers/gemini
+      3 ./internal/translator/interactions/claude
+      3 ./internal/translator/codex/interactions
+      3 ./internal/translator/codex/gemini
+      3 ./internal/translator/claude/interactions
+      3 ./internal/translator/antigravity/openai/responses
+      3 ./internal/translator/antigravity/gemini
+      3 ./internal/store
+      3 ./internal/client/codex/models
+      3 ./internal/auth/kimi
+      3 ./internal/auth/devin
+      2 ./sdk/pluginstore
+      2 ./sdk/pluginhost
+      2 ./sdk/api/handlers/claude
+      2 ./internal/watcher
+      2 ./internal/tui
+      2 ./internal/translator/openai/openai/chat-completions
+      2 ./internal/translator/openai/gemini
+      2 ./internal/translator/codex/openai/responses
+      2 ./internal/translator
+      2 ./internal/redisqueue
+      2 ./internal/misc
+      2 ./internal/httpwire
+      2 ./internal/homeplugins
+      2 ./internal/client/grokbuild
+      2 ./internal/client/codex/tool-schema
+      2 ./internal/client/codex/optimize-multi-agent-v2
+      2 ./internal/api/middleware
+      1 ./sdk/proxyutil
+      1 ./sdk/pluginapi
+      1 ./sdk/pluginabi
+      1 ./sdk/access
+      1 ./internal/wsrelay
+      1 ./internal/translator/interactions
+      1 ./internal/translator/gemini/gemini
+      1 ./internal/safemode
+      1 ./internal/modelconfig
+      1 ./internal/managementasset
+      1 ./internal/httpfetch
+      1 ./internal/htmlsanitize
+      1 ./internal/githubauth
+      1 ./internal/discovery
+      1 ./internal/credentialweight
+      1 ./internal/cmd
+      1 ./internal/clienterror
+      1 ./internal/client/codex/apply-patch
+      1 ./internal/client/claude/models
+      1 ./internal/auth/xai
+      1 ./internal/auth/meta
+      1 ./internal/auth/antigravity
+      1 ./examples/realtime-openai-go
+      1 ./examples/plugin/request-lifecycle/go
+      1 ./examples/plugin/executor/go
+      1 ./cmd/server
+      1 ./cmd/fetch_devin_models
+      1 ./cmd/fetch_codex_models
+      1 ./cmd/fetch_antigravity_models
+
+## Cross-module tests in test/
+builtin_tools_translation_test.go
+claude_code_compatibility_sentinel_test.go
+codex_claude_parallel_function_calls_test.go
+codex_incomplete_stream_error_type_test.go
+codex_quota_failover_test.go
+codex_stream_disconnect_failover_test.go
+summary_intent_translation_test.go
+thinking_conversion_test.go
+usage_logging_test.go
+
+func TestCodexIncompleteStreamIsNotTypedAsInvalidRequest
+func TestCodexToClaudeParallelFunctionCallsHaveValidLifecycle
+func TestClaudeCodeSentinel_ToolProgressShape
+func TestClaudeCodeSentinel_SessionStateShape
+func TestClaudeCodeSentinel_ToolUseSummaryShape
+func TestClaudeCodeSentinel_ControlRequestCanUseToolShape
+func TestCodexTerminalQuotaCoolsAccountAcrossModels
+func TestCodexModelLevelCoolingPreservesSiblingModel
+func TestGeminiExecutorRecordsSuccessfulZeroUsageInQueue
+func TestOpenAIToCodex_PreservesBuiltinTools
+func TestOpenAIResponsesToOpenAI_IgnoresBuiltinTools
+func TestCodexStreamDisconnectAfterHeadersFailsOver
+func TestCodexStreamDisconnectExhaustionNotInvalidRequestError
+func TestCodexStreamDisconnectAfterOutputDoesNotFailOver
+func TestCodexStreamAbnormalDisconnectBeforeOutputFailsOver
+func TestSummaryIntentTranslation
+func TestInvalidInteractionsSummaryDoesNotWriteTargetControl
+func TestSummaryIntentFinalPipeline
+func TestGeminiSummaryOnlyProducesValidClaudeThinking
+func TestNativeClaudeMissingDisplayPreservesSignatureOnlyHistory
+func TestAntigravityIncludeThoughtsPreservesExplicitness
+func TestThinkingE2EMatrix_Suffix
+func TestThinkingE2EMatrix_Body
+func TestThinkingE2EProviderTargets
+func TestThinkingE2EInteractionsMatrix
+func TestThinkingE2EClaudeAdaptive_Body
