@@ -277,18 +277,24 @@ pub(crate) fn forgefed(model: &str, activity: &mut Value) -> Result<(), &'static
             token_id: Some(&request.token_id),
             token_label: Some(&request.token_label),
         };
-        let applied = apply(&rules, activity, &context, request.share_geolocation).inspect_err(|reason| {
-            request.log.record(
-                &request.correlation,
-                "payload_rules_rejected",
-                json!({"protocol": "forgefed", "error": reason}),
-            );
-        })?;
+        let applied = apply(&rules, activity, &context, request.share_geolocation)
+            .and_then(|applied| {
+                if !applied.is_empty()
+                    && serde_json::to_vec(activity).map_err(|_| FAILURE)?.len() > request.limit
+                {
+                    return Err(FAILURE);
+                }
+                Ok(applied)
+            })
+            .inspect_err(|reason| {
+                request.log.record(
+                    &request.correlation,
+                    "payload_rules_rejected",
+                    json!({"protocol": "forgefed", "error": reason}),
+                );
+            })?;
         if applied.is_empty() {
             return Ok(());
-        }
-        if serde_json::to_vec(activity).map_err(|_| FAILURE)?.len() > request.limit {
-            return Err(FAILURE);
         }
         request.log.record(
             &request.correlation,
@@ -306,6 +312,7 @@ pub(crate) struct NativeContext {
     headers: HeaderMap,
     claims: TokenClaims,
     protocol: &'static str,
+    default_model: String,
 }
 
 impl NativeContext {
@@ -314,7 +321,16 @@ impl NativeContext {
         headers: &HeaderMap,
         claims: TokenClaims,
         protocol: &'static str,
+        target_url: &str,
     ) -> Self {
+        let default_model = url::Url::parse(target_url)
+            .ok()
+            .and_then(|url| {
+                url.query_pairs()
+                    .find(|(key, _)| key == "model")
+                    .map(|(_, model)| model.into_owned())
+            })
+            .unwrap_or_default();
         Self {
             log: std::sync::Arc::clone(&state.request_log),
             limit: state.max_proxy_request_bytes,
@@ -322,6 +338,7 @@ impl NativeContext {
             headers: headers.clone(),
             claims,
             protocol,
+            default_model,
         }
     }
 
@@ -341,9 +358,12 @@ impl NativeContext {
         source: &str,
         body: &mut Value,
     ) -> Result<Vec<Applied>, &'static str> {
-        let model = body.get("model").or_else(|| body.pointer("/session/model"))
-            .or_else(|| body.pointer("/response/model"))
-            .and_then(Value::as_str).unwrap_or_default().to_owned();
+        let model = ["/model", "/session/model", "/response/model"]
+            .into_iter()
+            .filter_map(|pointer| body.pointer(pointer).and_then(Value::as_str))
+            .find(|model| !model.is_empty())
+            .unwrap_or(&self.default_model)
+            .to_owned();
         apply(
             rules, body, &self.context(source, &model),
             crate::geolocation::shares_geolocation(&self.headers),

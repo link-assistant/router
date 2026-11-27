@@ -2,7 +2,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { isObject, pointerSegments } from './runtime-config.mjs';
 
 const stages = ['default', 'default-raw', 'override', 'override-raw', 'filter'];
-const protectedFields = new Set(['model', 'modelId', 'stream', 'type', 'stream_id', 'previous_response_id']);
+const protectedFields = new Set(['model', 'modelId', 'stream', 'type', 'stream_id', 'conversation']);
 
 function pathParts(path) {
   if (path.startsWith('/')) {
@@ -141,6 +141,9 @@ export function applyPayloadRules(rules, body, context) {
       const filter = stage === 'filter';
       for (const [path, input] of filter ? rule.params.map((path) => [path, null]) : Object.entries(rule.params).sort()) {
         const parts = pathParts(path);
+        if (parts[0] === 'previous_response_id' && (!filter || parts.length !== 1)) {
+          throw new Error('payload rules may only remove a continuation ID');
+        }
         if (protectedFields.has(parts[0])) throw new Error('payload rule changes a protected field');
         const targets = paths(result, parts);
         if (!filter && targets.length === 0) throw new Error('payload rule matches no parameter');

@@ -18,10 +18,11 @@ fn secret_key(key: &str) -> bool {
 
 fn secret_string(text: &str) -> bool {
     let text = text.trim();
-    text.starts_with("la_sk_")
-        || text.starts_with("la_admin_")
+    text.starts_with(crate::token::TOKEN_PREFIX)
+        || text.starts_with(crate::admin::ADMIN_TOKEN_PREFIX)
         || text.starts_with("sk-")
         || text.get(..7).is_some_and(|prefix| prefix.eq_ignore_ascii_case("bearer "))
+        || crate::request_log::is_jwt(text.strip_prefix(crate::token::CODEX_TOKEN_PREFIX).unwrap_or(text))
         || (text.contains("://") && url::Url::parse(text).is_ok_and(|url| {
             !url.username().is_empty()
                 || url.password().is_some()

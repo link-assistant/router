@@ -221,7 +221,7 @@ fn is_secret_value(value: &str) -> bool {
         )
 }
 
-fn is_jwt(value: &str) -> bool {
+pub(crate) fn is_jwt(value: &str) -> bool {
     let mut segments = value.split('.');
     let Some(header) = segments.next() else {
         return false;

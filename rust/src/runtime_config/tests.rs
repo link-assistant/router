@@ -139,6 +139,7 @@ fn every_clap_secret_and_nested_payload_secret_is_redacted() {
                     "metadata": "{\"access_token\":\"secret-test-fixture\"}",
                     "/headers/authorization": "secret-test-fixture",
                     "upstream": "https://user:secret-test-fixture@example.test",
+                    "context": "at-eyJhbGci.encoded_payload.signature-secret-test-fixture",
                     "max_tokens": "200"
                 }
             }]
@@ -198,6 +199,11 @@ async fn writer_is_scoped_and_can_replace_merge_and_edit_pointers() {
     assert_eq!(call(&app, "PATCH", ROOT, &writer, Some(forbidden)).await.0, StatusCode::BAD_REQUEST);
     let trust = json!({"cli": {"token-secret": "another-signing-key"}});
     assert_eq!(call(&app, "PATCH", ROOT, &writer, Some(trust)).await.0, StatusCode::BAD_REQUEST);
+    let destination = json!({"cli": {"upstream-base-url": "https://another-provider.example"}});
+    assert_eq!(
+        call(&app, "PATCH", ROOT, &writer, Some(destination)).await.0,
+        StatusCode::BAD_REQUEST
+    );
     let audit = std::fs::read_to_string(root.path().join("runtime-config-audit.jsonl")).unwrap();
     assert!(audit.contains("\"action\":\"put_pointer\""));
     assert!(audit.contains("\"port\""));
@@ -310,7 +316,7 @@ async fn rebuilt_attempts_and_url_selected_models_share_the_final_barrier() {
                  "params": {"service_tier": "priority"}}
             ],
             "filter": [{"models": [{"name": "*", "protocol": "codex"}],
-                "params": ["tools.#(type==\"image_generation\")#"]}]
+                "params": ["tools.#(type==\"image_generation\")#", "previous_response_id"]}]
         }
     })), "test").unwrap();
 
@@ -328,6 +334,7 @@ async fn rebuilt_attempts_and_url_selected_models_share_the_final_barrier() {
     };
     let original = json!({
         "model": "gpt-example", "service_tier": "auto",
+        "previous_response_id": "resp_previous",
         "tools": [{"type": "function"}, {"type": "image_generation"}]
     });
     for id in ["codex-first", "codex-rebuilt"] {
@@ -335,9 +342,10 @@ async fn rebuilt_attempts_and_url_selected_models_share_the_final_barrier() {
             .await.unwrap().json().await.unwrap();
         assert_eq!(received["service_tier"], "priority");
         assert_eq!(received["tools"], json!([{"type": "function"}]));
+        assert!(received.get("previous_response_id").is_none());
         let entries = state.request_log.lookup(id).unwrap();
         let applied = entries.iter().find(|row| row["phase"] == "payload_rules_applied").unwrap();
-        assert_eq!(applied["changes"].as_array().unwrap().len(), 2);
+        assert_eq!(applied["changes"].as_array().unwrap().len(), 3);
     }
     let body = json!({"contents": [], "generationConfig": {}});
     let gemini: Value = send("gemini", "/v1beta/models/gemini-test:generateContent", &body)
@@ -378,4 +386,34 @@ fn conditions_and_token_scopes_use_the_destination_payload() {
     let other = payload::Context { token_label: Some("other"), ..context };
     assert_eq!(rules.apply(&mut body, &other).unwrap().len(), 1);
     assert_eq!(body["metadata"]["score"], 1);
+}
+
+#[test]
+fn native_realtime_rules_use_the_connection_model_for_implicit_turns() {
+    let root = tempfile::tempdir().unwrap();
+    let state = state(root.path());
+    let store = state.request_log.runtime_config().unwrap();
+    let document = json!({
+        "payload": {
+            "override": [{"models": [{"name": "gpt-realtime", "protocol": "openai"}],
+                "params": {"response.max_output_tokens": 24}}]
+        }
+    });
+    store.edit(super::Edit::Replace(document), "test").unwrap();
+    let token = issue(&state, "");
+    let claims = state.token_manager.validate_token(&token).unwrap();
+    let context = super::egress::NativeContext::new(
+        &state,
+        &axum::http::HeaderMap::new(),
+        claims,
+        "openai",
+        "https://api.example/v1/realtime?model=gpt-realtime",
+    );
+    let event = br#"{"type":"response.create","response":{}}"#;
+    let bytes = context.realtime(event).unwrap().unwrap();
+    let changed = serde_json::from_slice::<Value>(&bytes).unwrap();
+    assert_eq!(changed["response"]["max_output_tokens"], 24);
+
+    let explicit = br#"{"type":"response.create","response":{"model":"other"}}"#;
+    assert!(context.realtime(explicit).unwrap().is_none());
 }

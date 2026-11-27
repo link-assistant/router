@@ -53,6 +53,20 @@ test('matched rules fail closed on incompatible sampling, protected fields and s
   assert.throws(() => applyPayloadRules(rules({ model: 'another' }), {}, context), /protected field/u);
 });
 
+test('a final filter can clear a continuation without permitting a different response ID', { timeout: 1000 }, () => {
+  const context = { protocol: 'codex', model: 'gpt-test' };
+  const models = [{ name: '*' }];
+  const body = { previous_response_id: 'resp_original', input: ['next'] };
+  assert.deepEqual(
+    applyPayloadRules({ filter: [{ models, params: ['previous_response_id'] }] }, body, context).body,
+    { input: ['next'] },
+  );
+  assert.throws(
+    () => applyPayloadRules({ override: [{ models, params: { previous_response_id: 'resp_other' } }] }, body, context),
+    /only remove a continuation ID/u,
+  );
+});
+
 test('config redaction covers dotted keys and embedded credentials', { timeout: 1000 }, async () => {
   const { redactRuntimeConfig } = await import('../src/runtime-config.mjs');
   const document = {

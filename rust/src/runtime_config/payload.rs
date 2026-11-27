@@ -169,9 +169,15 @@ fn compile_rule(
             let (path, value) = value?;
             let steps = parse_path(&path)?;
             match &steps[0] {
+                Step::Key(key)
+                    if key == "previous_response_id"
+                        && (!matches!(stage, Stage::Filter) || steps.len() != 1) =>
+                {
+                    return Err("payload rules may only remove a continuation ID");
+                }
                 Step::Key(key) if matches!(
                     key.as_str(),
-                    "model" | "modelId" | "stream" | "type" | "stream_id" | "previous_response_id"
+                    "model" | "modelId" | "stream" | "type" | "stream_id" | "conversation"
                 ) => return Err("payload rule changes a protected routing or transport field"),
                 Step::Query { .. } => return Err("payload rule must start at an object member"),
                 Step::Key(_) => {}
@@ -309,6 +315,7 @@ impl Rules {
         let protected = |root: &Value| {
             ["/request/model", "/request/modelId", "/request/stream", "/object/model",
                 "/response/model", "/session/model", "/object/context", "/object/attributedTo", "/object/type", "/actor", "/target",
+                "/response/previous_response_id", "/response/conversation",
                 "/@context", "/id"]
                 .map(|path| root.pointer(path).cloned())
         };

@@ -73,7 +73,8 @@ stores the same JSON document.
 
 Reads mask secrets with `[REDACTED]`. Sending a masked value back preserves
 the stored value. Local TOML also supports the signing and administrator keys,
-external CLI commands, audit/request log paths, and the management admission
+credential-bearing upstream destinations, account credential directories,
+external CLI commands, audit and request log paths, and management admission
 and lockout settings. Change those fields on the host. Subscription bridge
 eligibility and proxy-client trust still require
 their explicit command-line or environment opt-ins.

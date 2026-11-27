@@ -82,6 +82,7 @@ pub async fn upgrade_websocket(
             &parts.headers,
             claims,
             protocol,
+            &target.url,
         ))
     } else {
         None
