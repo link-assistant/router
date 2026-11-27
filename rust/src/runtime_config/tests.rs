@@ -510,6 +510,7 @@ async fn native_codex_request_records_scoped_rules_and_enforces_the_output_cap()
             .header(header::AUTHORIZATION, format!("Bearer {token}"))
             .header(header::USER_AGENT, "codex_exec/0.154.0")
             .header("originator", "codex_exec")
+            .header("x-codex-turn-metadata", "fixture-turn")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(
                 json!({"model": "gpt-live", "input": "hi", "store": false}).to_string(),
