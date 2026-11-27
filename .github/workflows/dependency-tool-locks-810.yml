@@ -1,0 +1,61 @@
+name: Resolve Cargo tool locks for issue 810
+
+on:
+  push:
+    branches: [issue-810-987988cb60a3]
+    paths: [.github/workflows/dependency-tool-locks-810.yml]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-tool-locks-810-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  javascript:
+    name: JavaScript first (same commit)
+    uses: ./.github/workflows/javascript-manual-development.yml
+    with:
+      sha: ${{ github.sha }}
+    permissions:
+      contents: read
+
+  cargo-locks:
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
+    needs: [javascript]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+        with:
+          toolchain: 1.100.0
+      - name: Refresh the source bundles' published locks
+        run: |
+          cd "$RUNNER_TEMP"
+          mkdir refreshed-locks
+          while read -r name version checksum; do
+            archive="$name-$version.crate"
+            curl -fsSL --proto '=https' "https://static.crates.io/crates/$name/$archive" -o "$archive"
+            printf '%s  %s\n' "$checksum" "$archive" | sha256sum --check --strict
+            tar -xzf "$archive"
+            cargo update --manifest-path "$name-$version/Cargo.toml"
+            mkdir "refreshed-locks/$name-$version"
+            cp "$name-$version/Cargo.lock" "refreshed-locks/$name-$version/Cargo.lock"
+          done <<'TOOLS'
+          cargo-audit 0.23.0 956f85aedfb64db887ec38466f982fc2b1ae55de726d4a12f2fddd5b812c6446
+          cargo-cyclonedx 0.5.10 705522d9b1837be5dfdd3829791140a85cbba18f64b9af577c932bbbe5dbdba7
+          cargo-fuzz 0.13.2 5acfd01930e49823e58c30dd8012d3338a620377d7c7d4cc140ca4b2169400e2
+          cargo-mutants 27.1.0 07072e7bcdeb425d5e5fdbfd9f15a2c749e23cb2edf5ef40aee5876760ae1cf9
+          cargo-semver-checks 0.51.0 484e65e62077aed1a119d04ab414038d20b9013302b7353487ff69a461842bf8
+          rust-script 0.36.0 23e059746299df5ffc93ef9178c90ec6d1e82097ca7352fbaef87b2761cd801f
+          TOOLS
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cargo-tool-locks-${{ github.sha }}
+          path: ${{ runner.temp }}/refreshed-locks
+          if-no-files-found: error
+          retention-days: 7
