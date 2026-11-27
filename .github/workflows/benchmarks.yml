@@ -137,7 +137,9 @@ jobs:
         run: |
           cargo install cargo-llvm-cov --version "$LLVM_COV_VERSION" --locked --force
           cd "$RUNNER_TEMP/base"
-          export CARGO_LLVM_COV_TARGET_DIR="$RUNNER_TEMP/base-coverage-target"
+          # The admin integration suite verifies the executable belongs to
+          # this workspace. Keep the instrumented target in the detached base.
+          export CARGO_LLVM_COV_TARGET_DIR="$PWD/target/llvm-cov-target"
           cargo llvm-cov clean --workspace
           # The historical host consumer accepts an explicit executable path.
           # Cargo 1.100 runs its harness outside the CLI's output directory.
