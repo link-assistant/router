@@ -29,15 +29,16 @@ BASH
 cat > "$work/bin/cargo" <<'BASH'
 #!/usr/bin/env bash
 set -euo pipefail
-[[ "$#" == 5 && "$1" == install && "$2" == --path && "$4" == --locked && "$5" == --quiet ]]
+[[ "$#" == 6 && "$1" == install && "$2" == --path && "$4" == --locked && "$5" == --force && "$6" == --quiet ]]
 [[ "$(cat "$3/Cargo.lock")" == 'reviewed lock' ]]
-touch "$ROUTER_TOOL_TEST_CALLED"
+printf 'installed from reviewed lock\n' > "$ROUTER_TOOL_TEST_CALLED"
 BASH
 chmod +x "$work/bin/curl" "$work/bin/cargo"
 export PATH="$work/bin:$PATH" ROUTER_TOOL_TEST_CALLED="$work/installed"
 
+printf 'cached binary from earlier lock\n' > "$ROUTER_TOOL_TEST_CALLED"
 bash "$work/scripts/install-ci-cargo-tool.sh" demo --quiet
-[[ -f "$ROUTER_TOOL_TEST_CALLED" ]]
+grep -Fx 'installed from reviewed lock' "$ROUTER_TOOL_TEST_CALLED"
 rm "$ROUTER_TOOL_TEST_CALLED"
 printf 'demo\t1.0.0\t%s\n' "$(printf '%064d' 0)" > "$manifest"
 if bash "$work/scripts/install-ci-cargo-tool.sh" demo --quiet 2> "$work/error"; then

@@ -104,7 +104,7 @@ mod version_tests {
 
     #[test]
     fn test_version_is_not_empty() {
-        assert!(!VERSION.is_empty());
+        assert_ne!(VERSION, "");
     }
 
     #[test]

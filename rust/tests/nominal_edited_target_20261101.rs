@@ -33,8 +33,8 @@ fn actual_unit_variant_and_owned_predicate_branch_edits_change_values_not_nomina
     assert_eq!(edited_remap(&input), vec![Denied, Denied, Denied, Denied]);
     assert_eq!(edited_flags(&input), vec![false, false, true, false]);
     assert_eq!(input, [Native, Proxied, Override, Denied]);
-    assert!(edited_remap(&[]).is_empty());
-    assert!(edited_flags(&[]).is_empty());
+    assert_eq!(edited_remap(&[]).len(), 0);
+    assert_eq!(edited_flags(&[]).len(), 0);
     assert_eq!(edited_remap(&vec![Native; 4096]), vec![Denied; 4096]);
     assert_eq!(edited_flags(&vec![Native; 4096]), vec![false; 4096]);
     assert!(std::panic::catch_unwind(|| edited_remap(&vec![Native; 4097])).is_err());

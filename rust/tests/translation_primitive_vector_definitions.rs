@@ -25,7 +25,7 @@ fn empty_boolean_vector_has_a_precise_domain_and_new_ownership() {
     let second: Vec<bool> = vec![];
     first.push(true);
     assert_eq!(first, vec![true]);
-    assert!(second.is_empty());
+    assert_eq!(second.len(), 0);
 }
 #[test]
 fn repeated_returned_allocations_do_not_alias() {

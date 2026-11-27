@@ -197,13 +197,14 @@ fn release_workflow_publishes_one_native_image_per_architecture() {
 }
 
 #[test]
-fn release_workflow_refreshes_cached_cargo_audit_binary() {
+fn release_workflow_refreshes_cached_audit_and_sbom_tools() {
     let workflow = read_lf(".github/workflows/release.yml");
+    let installer = read_lf("scripts/install-ci-cargo-tool.sh");
 
-    assert!(
-        workflow.contains("bash scripts/install-ci-cargo-tool.sh cargo-audit --force"),
-        "the audit job should overwrite a cargo-audit binary restored from its cache"
-    );
+    for tool in ["cargo-audit", "cargo-cyclonedx"] {
+        assert!(workflow.contains(&format!("bash scripts/install-ci-cargo-tool.sh {tool}")));
+    }
+    assert!(installer.contains("--locked --force"));
 }
 
 #[test]
@@ -343,8 +344,7 @@ fn release_workflows_pin_actions_tools_and_artifact_identity() {
     {
         let revision = line
             .split_once('@')
-            .map(|(_, revision)| revision.split_whitespace().next().unwrap_or_default())
-            .unwrap_or_default();
+            .map_or_default(|(_, revision)| revision.split_whitespace().next().unwrap_or_default());
         assert_eq!(
             revision.len(),
             40,

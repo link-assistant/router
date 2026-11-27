@@ -98,8 +98,8 @@ fn recursive_copy_record_identity_and_actual_owned_fields_preserve_original_valu
     assert!(result[0].router_owned_candidate);
     assert!(!result[1].router_owned_candidate);
     assert!(copied(&[]).is_empty());
-    assert!(flags(&[]).is_empty());
-    assert!(sharing(&[]).is_empty());
+    assert_eq!(flags(&[]).len(), 0);
+    assert_eq!(sharing(&[]).len(), 0);
     let full = vec![values[0]; 4096];
     assert_eq!(checked_copy(&full).len(), 4096);
     assert_eq!(edited_flags(&full), vec![false; 4096]);

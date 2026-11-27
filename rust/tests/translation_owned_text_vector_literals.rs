@@ -18,7 +18,7 @@ fn individual_strings_move_into_a_temporary_and_clone_out_independently() {
 #[test]
 fn empty_and_capacity_bound_literal_slice_copies_remain_independent() {
     let empty = core::vec_text_from_slice(&[]);
-    assert!(empty.is_empty());
+    assert_eq!(empty.len(), 0);
     let input = vec![String::new(); 4096];
     let copied = core::vec_text_from_slice(&input);
     assert_eq!(copied, input);

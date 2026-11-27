@@ -18,5 +18,5 @@ fn owned_values_preserve_order_and_shared_elements_keep_their_list_owner() {
     let moved = vec![owned];
     assert_eq!(moved, vec![serde_json::json!("moved")]);
     let empty: Vec<Json> = vec![];
-    assert!(empty.is_empty());
+    assert_eq!(empty.len(), 0);
 }

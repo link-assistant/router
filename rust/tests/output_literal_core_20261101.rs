@@ -125,7 +125,7 @@ fn explicit_backend_borrow_has_no_ambient_inheritance_and_unwind_changes_no_othe
     assert_eq!(inner.snapshot().stdout, "inner");
     std::thread::spawn(|| {
         let child = MemoryBackend::new(options());
-        assert!(child.snapshot().events.is_empty());
+        assert_eq!(child.snapshot().events.len(), 0);
     })
     .join()
     .unwrap();

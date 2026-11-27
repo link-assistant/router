@@ -121,7 +121,7 @@ fn deferred_tool_names_read_the_tool_search_list() {
         deferred_tool_names(&body),
         ["CronCreate", "Monitor", "WebSearch"]
     );
-    assert!(deferred_tool_names(&json!({"tools": [{"name": "Monitor"}]})).is_empty());
+    assert_eq!(deferred_tool_names(&json!({"tools": [{"name": "Monitor"}]})).len(), 0);
 }
 
 fn monitor_offer(environment: &[(&str, &str)]) -> (MonitorOffer, String) {

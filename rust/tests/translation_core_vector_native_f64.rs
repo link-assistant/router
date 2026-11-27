@@ -31,7 +31,7 @@ fn all_binary64_inputs_retain_native_value_class_and_zero_sign() {
             }
         }
         assert_eq!(result[2].to_bits(), (-0.0_f64).to_bits());
-        assert!(values(true, seed).is_empty());
+        assert_eq!(values(true, seed).len(), 0);
     }
 }
 #[test]

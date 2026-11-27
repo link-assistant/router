@@ -202,7 +202,7 @@ async fn real_lefine_catalog_and_operator_surfaces_are_secret_free() {
         .and_then(|model| model["id"].as_str())
         .expect("live Lefine model")
         .to_string();
-    assert!(!model.is_empty());
+    assert_ne!(model, "");
 
     let management = app
         .oneshot(request(

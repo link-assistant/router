@@ -27,6 +27,6 @@ fn copies_preserve_values_and_independent_nested_storage() {
     assert!(!std::ptr::eq(a.as_ptr(), b.as_ptr()));
     assert!(!std::ptr::eq(a.as_ptr(), original.as_ptr()));
     assert_eq!(owned(seed.clone()), values);
-    assert!(conditional(false, seed.clone()).is_empty());
+    assert_eq!(conditional(false, seed.clone()).len(), 0);
     assert_eq!(conditional(true, seed.clone()), [seed]);
 }

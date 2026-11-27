@@ -37,6 +37,6 @@ fn reassigning_the_original_vector_does_not_change_its_iteration_snapshot() {
         active = Vec::new();
         observed.push(value.clone());
     }
-    assert!(active.is_empty());
+    assert_eq!(active.len(), 0);
     assert_eq!(observed, vec![Json::Null, Json::Bool(false)]);
 }

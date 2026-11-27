@@ -41,4 +41,5 @@ fi
 
 tar -xzf "$archive" -C "$work"
 cp -- "$tool_dir/$tool/Cargo.lock" "$work/$archive_name/Cargo.lock"
-cargo install --path "$work/$archive_name" --locked "$@"
+# The restored binary can have the same tool version but a different lock.
+cargo install --path "$work/$archive_name" --locked --force "$@"

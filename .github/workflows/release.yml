@@ -413,7 +413,7 @@ jobs:
             ${{ runner.os }}-cargo-audit-
 
       - name: Install cargo-audit
-        run: bash scripts/install-ci-cargo-tool.sh cargo-audit --force
+        run: bash scripts/install-ci-cargo-tool.sh cargo-audit
 
       - name: Audit Rust dependencies
         run: |

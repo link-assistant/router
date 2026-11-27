@@ -56,7 +56,7 @@ fn standard_owned_operations_keep_empty_presence_and_eager_values() {
             );
             assert_eq!(
                 option::text_owned_or(value.clone(), other.clone()),
-                value.clone().or(other.clone())
+                value.clone().or(other)
             );
         }
     }

@@ -36,7 +36,7 @@ fn launch(environment: &[(&str, &str)], options: &[&str]) -> (Output, String, St
 fn ordinary_claude_launch_is_quiet_and_records_child_exit() {
     let (output, log, server) = launch(&[], &[]);
     assert!(output.status.success());
-    assert!(output.stdout.is_empty());
+    assert_eq!(output.stdout.len(), 0);
     assert_eq!(output.stderr, b"FAKE_CLAUDE_LAUNCHED\n");
     for event in [
         "process_start",
@@ -195,7 +195,7 @@ fn json_launch_keeps_the_vendor_output_inside_its_result() {
         "{}",
         String::from_utf8_lossy(&output.stdout)
     );
-    assert!(output.stderr.is_empty());
+    assert_eq!(output.stderr.len(), 0);
     let result: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(result["data"]["client_exit_code"], 0);
     assert_eq!(result["data"]["stderr"], "FAKE_CLAUDE_LAUNCHED\n");

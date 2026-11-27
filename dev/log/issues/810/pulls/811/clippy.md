@@ -14,3 +14,5 @@ The `23e65c27fb308c109bcc59b1c19873c67b58587a` release pipeline passed the same-
 | `redundant_clone` | 1 | Move the test value at its final use. |
 
 The edits were matched against the archived source for each diagnostic and reviewed against the current files. The Clippy flags and full test cases stay in place. These source edits await exact-commit hosted formatting, lint and tests.
+
+The `f1de77c3` run passed `cargo fmt` and reached the complete `--all-targets --all-features` lint step. The hosted log records 87 additional diagnostic locations at lines 1371–2669. These include 65 empty-collection assertions, 11 explicit-guard expressions, eight map-and-default calls, two equivalent duration constructors, and one redundant clone. The test assertions retain their original conditions. Four translation-oracle files retain intentional callback returns and original map-and-default forms with narrow lint attributes because those expressions are part of the test subject. The full Clippy command and warnings-as-errors stay in effect. [All-targets lint job](https://github.com/link-assistant/router/actions/runs/46029317166/job/140614971209).
