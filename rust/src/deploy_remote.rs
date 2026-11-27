@@ -688,20 +688,15 @@ mod tests {
 
     #[cfg(unix)]
     fn fake_ssh(exit: i32) -> (tempfile::TempDir, std::path::PathBuf) {
-        use std::os::unix::fs::PermissionsExt as _;
-
         let directory = tempfile::tempdir().unwrap();
         let executable = directory.path().join("ssh");
-        std::fs::write(
-            &executable,
-            format!(
-                "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$0.arguments\"\ncat > \"$0.input\"\nexit {exit}\n"
-            ),
-        )
-        .unwrap();
-        let mut permissions = std::fs::metadata(&executable).unwrap().permissions();
-        permissions.set_mode(0o700);
-        std::fs::set_permissions(&executable, permissions).unwrap();
+        let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let fixture = crate_root.join("tests/fixtures/fake-ssh.sh");
+        std::fs::write(executable.with_extension("exit"), format!("{exit}\n")).unwrap();
+        // A concurrent fork can inherit a writable descriptor to a temporary
+        // executable and cause ETXTBSY until that child execs. Reuse a fixture
+        // that the tests never open for writing.
+        std::os::unix::fs::symlink(fixture, &executable).unwrap();
         (directory, executable)
     }
 
