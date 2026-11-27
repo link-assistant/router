@@ -191,6 +191,10 @@ The exact release candidate gained 0.00132906 percentage points on the same cove
 
 The exact release report's `86.39121496264353` rounds to `86.391215` at the baseline file's six-decimal precision. The same-toolchain evidence supports the recalibration from `87.641104` under the existing `coverage-exception` PR policy. The coverage floor is 80% and the existing drift tolerance is 0.01 percentage points. The release pipeline must confirm the committed value and complete Build Package. [Coverage policy](../../../../../../docs/test-coverage.md), [Rust instrumentation change](https://github.com/rust-lang/rust/pull/161517).
 
+### SSH deployment test fixture
+
+The related #813 candidate failed its mutation shard's unmutated baseline with `Text file busy (os error 26)` while launching the freshly written SSH stub. Archived log line 6551 records the spawn error. Lines 8498–8508 show that `status_and_down_open_ssh_without_transporting_a_signing_secret` returned transport exit 10 where the test expected success. The fixture also serves the secret delivery and exit mapping tests. A concurrent fork can hold the stub's writable descriptor across the attempted launch. The fixture now runs its program with `/bin/sh -c` and keeps the same capture and exit assertions. The Linux probe `python experiments/issue-810/check-ssh-fixture.py` reproduced `ETXTBSY` for the file-based launch with a writable descriptor held and passed all three exit-status probes through the shell with exact argv and stdin. Hosted Rust verification is pending. [Mutation baseline job](https://github.com/link-assistant/router/actions/runs/46069973067/job/140753877736).
+
 ## Cargo tool advisories
 
 The published archives for seven Cargo tools were downloaded from crates.io and matched to the registry SHA-256. OSV scanned the bundled locks before any changes. Each original installed version, latest registry version, upstream dependency constraint and advisory identifier is in the inventory. Advisory counts can include aliases and optional or development dependencies. [Published inventory A](cargo-tools-published-a.tsv), [published inventory B](cargo-tools-published-b.tsv).

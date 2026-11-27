@@ -5,9 +5,8 @@
 //! random cookie inherited through the agent's environment identifies every
 //! child which may still be changing deployment state.
 
-use std::ffi::OsStr;
 use std::io::Write as _;
-use std::process::{ExitCode, Stdio};
+use std::process::{Command, ExitCode, Stdio};
 
 #[cfg(all(test, unix))]
 use base64::Engine as _;
@@ -279,7 +278,7 @@ fn prepare(
 fn run_with_ssh(
     args: &DeployArgs,
     token_secret: &crate::translation_core::Str,
-    ssh: &OsStr,
+    mut command: Command,
     merged: &Merged,
 ) -> ExitCode {
     let mode = match mode(args).and_then(|mode| {
@@ -318,7 +317,6 @@ fn run_with_ssh(
         &agent_arguments(args, mode, &cookie),
         prepared.payload.is_some(),
     );
-    let mut command = crate::operation_context::command(ssh);
     command
         .args(["-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=yes"])
         .args(session::ssh_options(
@@ -469,7 +467,12 @@ pub fn run(
     token_secret: &crate::translation_core::Str,
     merged: &Merged,
 ) -> ExitCode {
-    run_with_ssh(args, token_secret, OsStr::new("ssh"), merged)
+    run_with_ssh(
+        args,
+        token_secret,
+        crate::operation_context::command("ssh"),
+        merged,
+    )
 }
 
 #[cfg(test)]
@@ -685,32 +688,28 @@ mod tests {
     }
 
     #[cfg(unix)]
-    fn fake_ssh(exit: i32) -> (tempfile::TempDir, std::path::PathBuf) {
-        use std::os::unix::fs::PermissionsExt as _;
-
-        let directory = tempfile::tempdir().unwrap();
-        let executable = directory.path().join("ssh");
-        std::fs::write(
-            &executable,
-            format!(
-                "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$0.arguments\"\ncat > \"$0.input\"\nexit {exit}\n"
-            ),
-        )
-        .unwrap();
-        let mut permissions = std::fs::metadata(&executable).unwrap().permissions();
-        permissions.set_mode(0o700);
-        std::fs::set_permissions(&executable, permissions).unwrap();
-        (directory, executable)
+    fn fake_ssh(output: &std::path::Path, exit: i32) -> Command {
+        // A concurrent fork can inherit a writable script descriptor and
+        // temporarily prevent its execution with ETXTBSY.
+        let mut command = crate::operation_context::command("/bin/sh");
+        command
+            .arg("-c")
+            .arg(format!(
+                "printf '%s\\n' \"$@\" > \"$0.arguments\"\ncat > \"$0.input\"\nexit {exit}\n"
+            ))
+            .arg(output);
+        command
     }
 
     #[cfg(unix)]
     #[test]
     fn ssh_session_carries_only_the_secret_and_agent_on_stdin() {
-        let (_directory, ssh) = fake_ssh(0);
+        let directory = tempfile::tempdir().unwrap();
+        let ssh = directory.path().join("ssh");
         let secret = "operator-only-signing-secret";
 
         assert_eq!(
-            run_with_ssh(&args(), secret, ssh.as_os_str(), &Merged::default()),
+            run_with_ssh(&args(), secret, fake_ssh(&ssh, 0), &Merged::default()),
             ExitCode::SUCCESS
         );
 
@@ -738,12 +737,12 @@ mod tests {
             (AGENT_LEASE_EXIT, LEASE_EXIT),
             (9, 1),
         ] {
-            let (_directory, ssh) = fake_ssh(remote);
+            let directory = tempfile::tempdir().unwrap();
             assert_eq!(
                 run_with_ssh(
                     &args(),
                     "operator-secret",
-                    ssh.as_os_str(),
+                    fake_ssh(&directory.path().join("ssh"), remote),
                     &Merged::default()
                 ),
                 ExitCode::from(public)
@@ -754,7 +753,7 @@ mod tests {
             run_with_ssh(
                 &args(),
                 "operator-secret",
-                missing.as_os_str(),
+                crate::operation_context::command(missing),
                 &Merged::default()
             ),
             ExitCode::from(TRANSPORT_EXIT)
@@ -765,7 +764,8 @@ mod tests {
     #[test]
     fn status_and_down_open_ssh_without_transporting_a_signing_secret() {
         for remote_mode in [RemoteMode::Status, RemoteMode::Down] {
-            let (_directory, ssh) = fake_ssh(0);
+            let directory = tempfile::tempdir().unwrap();
+            let ssh = directory.path().join("ssh");
             let mut candidate = args();
             candidate.status = remote_mode == RemoteMode::Status;
             candidate.down = remote_mode == RemoteMode::Down;
@@ -776,7 +776,7 @@ mod tests {
                 run_with_ssh(
                     &candidate,
                     &placeholder,
-                    ssh.as_os_str(),
+                    fake_ssh(&ssh, 0),
                     &Merged::default()
                 ),
                 ExitCode::SUCCESS
@@ -797,7 +797,7 @@ mod tests {
             run_with_ssh(
                 &candidate,
                 "operator-secret",
-                missing.as_os_str(),
+                crate::operation_context::command(missing),
                 &Merged::default()
             ),
             ExitCode::from(2)
@@ -809,7 +809,7 @@ mod tests {
             run_with_ssh(
                 &candidate,
                 &placeholder,
-                missing.as_os_str(),
+                crate::operation_context::command(missing),
                 &Merged::default()
             ),
             ExitCode::from(2)
