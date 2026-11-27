@@ -50,11 +50,37 @@ The current Chrono release is 0.4.45. The maintenance advisory assigns no CVSS s
 
 The root and fuzz locks resolve `rsa` 0.10.0 and `crypto-bigint` 0.7.11. Both versions meet the applicable RustSec fixed-version boundaries. The audit configuration drops the two corresponding exceptions so hosted CI can detect any regression to affected versions. [RSA advisory](https://rustsec.org/advisories/RUSTSEC-2023-0071.html), [crypto-bigint advisory](https://rustsec.org/advisories/RUSTSEC-2026-0387.html).
 
+At `23e65c27fb308c109bcc59b1c19873c67b58587a` the hosted Dependency Audit job passed after the four-stage gate. Its log shows scans for the root, fuzz and active sharder locks at lines 1239, 1243 and 1247. The four npm audits reported zero vulnerabilities at lines 1303–1337. [Audit job](https://github.com/link-assistant/router/actions/runs/46011019197/job/140572880276).
+
 ## Hosted client failures and regressions
 
 The downstream check at `2f0e32b1f8dc4f0eaf57c0a708fed8c7a76642dc` passed the JavaScript gate, the semver contract and all six binding jobs. The generated HTTP job reached JDK and PHP setup, then stopped at its Maven distribution download. The archived log records HTTP 429 at line 597. Both Google’s Maven Central mirror and Apache Maven Central supplied Maven 3.10.2 locally with the pinned SHA-512. The setup now tries the mirror first with Central as fallback and verifies the distribution digest before extracting it. [Downstream run](https://github.com/link-assistant/router/actions/runs/46009357161), [generated HTTP job](https://github.com/link-assistant/router/actions/runs/46009357161/job/140552598231).
 
 The initial real-client scan found two advisories in the Sharp 0.35.3 package pinned by Qwen Code 0.23.1. Qwen Code 0.28.7 pins Sharp 0.35.5, which includes both upstream fixes. The final installed graph scan reported zero findings. A loopback mock with an isolated Qwen configuration received one `/v1/chat/completions` request and returned the expected response for the updated positional prompt. The launch regression covers inferred positional prompts, explicit legacy flags and the `sessions` subcommand. [Real-client inventory](real-clients.tsv), [libheif advisory](https://github.com/advisories/GHSA-rgj7-g3m4-5g8c), [librsvg advisory](https://github.com/advisories/GHSA-wq5f-xc86-pv6w).
+
+The mutation workflow at `2f0e32b1f8dc4f0eaf57c0a708fed8c7a76642dc` compiled the stable test binary and reported 2,371 passes and one failure. At archived log lines 8702–8709, `refresh_contract_tests.rs:50` rejected the updated client versions because it required exact old workflow pins. The revised test preserves the exact fixture identities and separately checks the installed pins and version floor. [Mutation workflow](https://github.com/link-assistant/router/actions/runs/46009357499), [representative failed job](https://github.com/link-assistant/router/actions/runs/46009357499/job/140552759476).
+
+The Windows job tested the merge candidate `e6d7525dd15080fa8ae903c5b50575ccc130b0a4` for the `23e65c27f` checkpoint. It passed 2,315 Rust library cases and hit the same fixture test failure at lines 8993–8997. Its native-profile preflight then ran under Node 26.13.1 and hit the `isProxy` qualification error at lines 9098–9110. The subsequent `a59704186` checkpoint repaired the fixture test and pinned Node 20.20.2 for that preflight. Verification on the current merge candidate is pending. [Windows job](https://github.com/link-assistant/router/actions/runs/46011019197/job/140576757241).
+
+The benchmark run at the same checkpoint passed all four same-SHA JavaScript stages for both the head and immutable base. The base at `1f11272a6c93a552eb3b0a47243e524a5fb27663` then failed to compile with `E0308` in the JWT and terminal constructors. The archived log records those errors at lines 909–1061, followed by exit code 101 at line 1081. The benchmark workflow now reports the failing base SHA explicitly and collects the head result after a base failure, while preserving the failed comparison status. A successful comparison requires a compilable base. [Benchmark run](https://github.com/link-assistant/router/actions/runs/46009357128), [failing job](https://github.com/link-assistant/router/actions/runs/46009357128/job/140573099042).
+
+## Cargo tool advisories
+
+The published archives for seven Cargo tools were downloaded from crates.io and matched to the registry SHA-256. OSV scanned the bundled locks before any changes. Each original installed version, latest registry version, upstream dependency constraint and advisory identifier is in the inventory. Advisory counts can include aliases and optional or development dependencies. [Published inventory A](cargo-tools-published-a.tsv), [published inventory B](cargo-tools-published-b.tsv).
+
+| Published tool | Published advisory IDs | Refreshed advisory IDs | Upstream investigation |
+| --- | ---: | ---: | --- |
+| `cargo-audit` 0.23.0 | 14 | 9 | [RustSec #1787](https://github.com/rustsec/rustsec/issues/1787) |
+| `cargo-semver-checks` 0.51.0 | 22 | 9 | [cargo-semver-checks #1839](https://github.com/obi1kenobi/cargo-semver-checks/issues/1839) |
+| `cargo-cyclonedx` 0.5.10 | 7 | 0 | [CycloneDX #903](https://github.com/CycloneDX/cyclonedx-rust-cargo/issues/903) |
+| `cargo-fuzz` 0.13.2 | 3 | 0 | [cargo-fuzz #454](https://github.com/rust-fuzz/cargo-fuzz/issues/454) |
+| `cargo-mutants` 27.1.0 | 7 | 0 | [Existing patch #671](https://github.com/sourcefrog/cargo-mutants/issues/671), [atty discussion #614](https://github.com/sourcefrog/cargo-mutants/issues/614) |
+| `rust-script` 0.36.0 | 3 | 0 | [rust-script #164](https://github.com/fornwall/rust-script/issues/164) |
+| `cargo-llvm-cov` 0.9.2 | 0 | 0 | Published lock retained. |
+
+Hosted Cargo 1.100.0 resolved six replacement locks after all four JavaScript stages passed at `83bf7874b7abb079a8ae307654c763bf4330c825`. The downloaded ZIP SHA-256 matched `9bddf838cb4d9fa1f0759231d5b772b62464e5533fc872148562d79fa2273f50`, and every resolved registry entry matched the crates.io index checksum. The installer verifies the published source checksum before installing against the committed lock. The local installer and Linux verifier smoke cases passed with stub commands. The final hosted run still has to execute the real installs and consumers. [Hosted resolution job](https://github.com/link-assistant/router/actions/runs/46018551544/job/140578495046), [artifact](https://github.com/link-assistant/router/actions/runs/46018551544/artifacts/15210316443), [refreshed inventory A](cargo-tools-refreshed-a.tsv), [refreshed inventory B](cargo-tools-refreshed-b.tsv).
+
+The nine remaining IDs are `RUSTSEC-2026-0574` through `RUSTSEC-2026-0582`, all attached to `heapless` 0.8.0 through `faster-hex` 0.10.1. The fixed 0.9.4 release falls outside `faster-hex`'s `^0.8` requirement. The Gitoxide versions allowed by both Cargo tool manifests still require `faster-hex` 0.10.x in `gix-hash`. Updating these release graphs to remove that edge requires new compatible releases upstream. The counts describe lockfile matches. Reachability would require a separate CLI call-path analysis. [RustSec heapless advisories](https://rustsec.org/packages/heapless.html), [faster-hex registry record](https://index.crates.io/fa/st/faster-hex).
 
 ## Maven plugin advisories
 

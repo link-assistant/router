@@ -64,7 +64,7 @@ jobs:
       # cargo-fuzz's locked dependencies do not build on nightly, so install
       # it with the pinned stable toolchain; only the fuzz build needs nightly.
       - name: Install cargo-fuzz
-        run: cargo +1.100.0 install cargo-fuzz --version 0.13.2 --locked
+        run: RUSTUP_TOOLCHAIN=1.100.0 bash scripts/install-ci-cargo-tool.sh cargo-fuzz
 
       - name: Setup Rust nightly
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable

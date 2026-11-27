@@ -93,7 +93,7 @@ jobs:
           toolchain: 1.100.0
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Detect changes
         id: changes
@@ -124,7 +124,7 @@ jobs:
           toolchain: 1.100.0
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Check for changelog fragments
         env:
@@ -150,7 +150,7 @@ jobs:
           toolchain: 1.100.0
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Check for manual version changes
         env:
@@ -211,6 +211,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Check dependency bootstrap scripts
+        run: |
+          bash experiments/issue-810/check-cargo-tool-install.sh
+          bash experiments/issue-810/check-linux-verifier-runtime.sh
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
@@ -218,7 +223,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       # Compilation-level cache, complementing the artifact cache below.
       # `actions/cache` is keyed on `Cargo.lock`, so a single dependency bump
@@ -408,7 +413,7 @@ jobs:
             ${{ runner.os }}-cargo-audit-
 
       - name: Install cargo-audit
-        run: cargo install cargo-audit --version 0.23.0 --locked --force
+        run: bash scripts/install-ci-cargo-tool.sh cargo-audit --force
 
       - name: Audit Rust dependencies
         run: |
@@ -417,6 +422,12 @@ jobs:
             cargo audit --file "$lock" || status=1
           done
           exit "$status"
+
+      - name: Check pinned release SBOM tool
+        if: ${{ !cancelled() }}
+        run: |
+          bash scripts/install-ci-cargo-tool.sh cargo-cyclonedx
+          cargo cyclonedx --version
 
       - name: Setup Node
         id: audit-node
@@ -743,10 +754,10 @@ jobs:
 
       - name: Install coverage tools
         run: |
-          if ! cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.9.1'; then
+          if ! cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.9.2'; then
             cargo install cargo-llvm-cov --version 0.9.2 --locked --force
           fi
-          command -v rust-script >/dev/null || cargo install rust-script --version 0.36.0 --locked
+          command -v rust-script >/dev/null || bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Test coverage gate behavior
         run: rust-script --test scripts/check-coverage.rs
@@ -880,7 +891,7 @@ jobs:
           toolchain: 1.100.0
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Configure git
         run: rust-script scripts/git-config.rs
@@ -942,7 +953,7 @@ jobs:
           toolchain: 1.100.0
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Configure git
         run: rust-script scripts/git-config.rs
@@ -1127,8 +1138,21 @@ jobs:
         with:
           toolchain: 1.100.0
 
+      # Tool locks belong to the workflow commit. The release checkout stays at the tag.
+      - name: Check out pinned release tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: .router-ci-tools
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/install-ci-cargo-tool.sh
+            scripts/ci/cargo-tools/releases.tsv
+            scripts/ci/cargo-tools/rust-script/Cargo.lock
+          sparse-checkout-cone-mode: false
+
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash .router-ci-tools/scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
@@ -1307,8 +1331,21 @@ jobs:
         with:
           toolchain: 1.100.0
 
+      # Tool locks belong to the workflow commit. The release checkout stays at the tag.
+      - name: Check out pinned release tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: .router-ci-tools
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/install-ci-cargo-tool.sh
+            scripts/ci/cargo-tools/releases.tsv
+            scripts/ci/cargo-tools/rust-script/Cargo.lock
+          sparse-checkout-cone-mode: false
+
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash .router-ci-tools/scripts/install-ci-cargo-tool.sh rust-script
 
       # Surface orphan tags left by earlier runs *before* anything is published, so the
       # log names them while they can still be fixed without a half-finished release.
@@ -1400,8 +1437,22 @@ jobs:
 
       # Each job starts on a fresh runner: without this step the upload below
       # exits 127 and the release ships no binaries (issue #648, v1.15.0).
+      # Tool locks belong to the workflow commit. The release checkout stays at the tag.
+      - name: Check out pinned release tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: .router-ci-tools
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/install-ci-cargo-tool.sh
+            scripts/ci/cargo-tools/releases.tsv
+            scripts/ci/cargo-tools/rust-script/Cargo.lock
+            scripts/ci/cargo-tools/cargo-cyclonedx/Cargo.lock
+          sparse-checkout-cone-mode: false
+
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash .router-ci-tools/scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Verify tag and package version
         shell: bash
@@ -1415,7 +1466,7 @@ jobs:
         run: cargo build --locked --release --bins --target ${{ matrix.target }}
 
       - name: Install pinned CycloneDX generator
-        run: cargo install cargo-cyclonedx --version 0.5.10 --locked
+        run: bash .router-ci-tools/scripts/install-ci-cargo-tool.sh cargo-cyclonedx
 
       - name: Package binaries, checksums, and CycloneDX SBOM
         shell: bash
@@ -1575,7 +1626,7 @@ jobs:
           toolchain: 1.100.0
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
@@ -1759,7 +1810,7 @@ jobs:
         with:
           toolchain: 1.100.0
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
       - name: Reverify existing assets and image provenance without rebuilding
         env:
@@ -1881,7 +1932,7 @@ jobs:
         with:
           toolchain: 1.100.0
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
       # crates.io trusted publishing (issue #797): exchange the job's OIDC token
       # for a short-lived crates.io token. Both the normal release and the
       # retry-registries path publish through this job. The long-lived secrets
@@ -1928,7 +1979,7 @@ jobs:
           toolchain: 1.100.0
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Create changelog fragment
         env:

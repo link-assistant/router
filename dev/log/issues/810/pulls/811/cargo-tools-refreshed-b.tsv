@@ -1,0 +1,663 @@
+tool_version	dependency	published_versions	router_locked_version	registry_latest_stable	upstream_parent_requirements	remaining_advisories	registry
+cargo-mutants-27.1.0	hashbrown	0.12.3, 0.17.1	0.17.2	0.17.2			https://index.crates.io/ha/sh/hashbrown
+cargo-mutants-27.1.0	heck	0.5.0	0.5.0	0.5.0			https://index.crates.io/he/ck/heck
+cargo-mutants-27.1.0	hermit-abi	0.1.19, 0.3.9	0.5.3	0.5.3			https://index.crates.io/he/rm/hermit-abi
+cargo-mutants-27.1.0	ignore	0.4.23	0.4.35	0.4.35			https://index.crates.io/ig/no/ignore
+cargo-mutants-27.1.0	indexmap	1.9.3, 2.14.0	2.14.2	2.14.2			https://index.crates.io/in/de/indexmap
+cargo-mutants-27.1.0	indoc	2.0.0	2.0.8	2.0.8			https://index.crates.io/in/do/indoc
+cargo-mutants-27.1.0	insta	1.12.0	1.49.0	1.49.0			https://index.crates.io/in/st/insta
+cargo-mutants-27.1.0	is_terminal_polyfill	1.70.1	1.70.2	1.70.2			https://index.crates.io/is/_t/is_terminal_polyfill
+cargo-mutants-27.1.0	itertools	0.13.0	0.13.0	0.15.0	cargo-mutants@27.1.0 [^0.13]		https://index.crates.io/it/er/itertools
+cargo-mutants-27.1.0	itoa	1.0.14	1.0.19	1.0.19			https://index.crates.io/it/oa/itoa
+cargo-mutants-27.1.0	jiff	0.1.29	0.1.29	1.0.3	cargo-mutants@27.1.0 [^0.1]		https://index.crates.io/ji/ff/jiff
+cargo-mutants-27.1.0	jobserver	0.1.0	0.1.35	0.1.35			https://index.crates.io/jo/bs/jobserver
+cargo-mutants-27.1.0	js-sys	0.3.77	0.3.107	0.3.107			https://index.crates.io/js/-s/js-sys
+cargo-mutants-27.1.0	lazy_static	1.4.0	1.5.1	1.5.1			https://index.crates.io/la/zy/lazy_static
+cargo-mutants-27.1.0	libc	0.2.174	0.2.191	0.2.191			https://index.crates.io/li/bc/libc
+cargo-mutants-27.1.0	libredox	0.1.3	0.1.25	0.2.2	whoami@1.6.1 [^0.1.1]		https://index.crates.io/li/br/libredox
+cargo-mutants-27.1.0	linux-raw-sys	0.11.0, 0.4.15	0.12.1	0.12.1			https://index.crates.io/li/nu/linux-raw-sys
+cargo-mutants-27.1.0	log	0.4.25	0.4.35	0.4.35			https://index.crates.io/3/l/log
+cargo-mutants-27.1.0	matchers	0.2.0	0.2.0	0.2.0			https://index.crates.io/ma/tc/matchers
+cargo-mutants-27.1.0	memchr	2.7.4	2.8.3	2.8.3			https://index.crates.io/me/mc/memchr
+cargo-mutants-27.1.0	minimal-lexical	0.2.1	0.2.1	0.2.1			https://index.crates.io/mi/ni/minimal-lexical
+cargo-mutants-27.1.0	mutants	0.0.3	0.0.3	0.0.4	cargo-mutants@27.1.0 [^0.0.3]		https://index.crates.io/mu/ta/mutants
+cargo-mutants-27.1.0	nextest-metadata	0.12.1	0.12.3	0.15.0	cargo-mutants@27.1.0 [^0.12.1]		https://index.crates.io/ne/xt/nextest-metadata
+cargo-mutants-27.1.0	nextest-workspace-hack	0.1.0	0.1.0	0.1.0			https://index.crates.io/ne/xt/nextest-workspace-hack
+cargo-mutants-27.1.0	nix	0.30.1	0.30.1	0.32.0	cargo-mutants@27.1.0 [^0.30]		https://index.crates.io/3/n/nix
+cargo-mutants-27.1.0	nix	0.30.1	0.32.0	0.32.0			https://index.crates.io/3/n/nix
+cargo-mutants-27.1.0	nom	7.1.3	7.1.3	8.0.0	color-print-proc-macro@0.3.7 [^7.1]		https://index.crates.io/3/n/nom
+cargo-mutants-27.1.0	normalize-line-endings	0.3.0	0.3.0	0.3.0			https://index.crates.io/no/rm/normalize-line-endings
+cargo-mutants-27.1.0	nu-ansi-term	0.50.1	0.50.3	0.50.3			https://index.crates.io/nu/-a/nu-ansi-term
+cargo-mutants-27.1.0	num-traits	0.2.19	0.2.19	0.2.19			https://index.crates.io/nu/m-/num-traits
+cargo-mutants-27.1.0	num_cpus	1.16.0	1.17.0	1.17.0			https://index.crates.io/nu/m_/num_cpus
+cargo-mutants-27.1.0	nutmeg	0.1.6	0.1.7	0.1.7			https://index.crates.io/nu/tm/nutmeg
+cargo-mutants-27.1.0	objc2		0.6.5	0.6.5			https://index.crates.io/ob/jc/objc2
+cargo-mutants-27.1.0	objc2-encode		4.1.0	4.1.0			https://index.crates.io/ob/jc/objc2-encode
+cargo-mutants-27.1.0	once_cell	1.20.3	1.21.4	1.21.4			https://index.crates.io/on/ce/once_cell
+cargo-mutants-27.1.0	once_cell_polyfill		1.70.2	1.70.2			https://index.crates.io/on/ce/once_cell_polyfill
+cargo-mutants-27.1.0	path-slash	0.2.0	0.2.1	0.2.1			https://index.crates.io/pa/th/path-slash
+cargo-mutants-27.1.0	pin-project-lite	0.2.16	0.2.18	0.2.18			https://index.crates.io/pi/n-/pin-project-lite
+cargo-mutants-27.1.0	plain		0.2.3	0.2.3			https://index.crates.io/pl/ai/plain
+cargo-mutants-27.1.0	portable-atomic	1.11.1	1.15.0	1.15.0			https://index.crates.io/po/rt/portable-atomic
+cargo-mutants-27.1.0	portable-atomic-util	0.2.4	0.2.8	0.2.8			https://index.crates.io/po/rt/portable-atomic-util
+cargo-mutants-27.1.0	predicates	3.1.3	3.1.4	3.1.4			https://index.crates.io/pr/ed/predicates
+cargo-mutants-27.1.0	predicates-core	1.0.9	1.0.10	1.0.10			https://index.crates.io/pr/ed/predicates-core
+cargo-mutants-27.1.0	predicates-tree	1.0.12	1.0.13	1.0.13			https://index.crates.io/pr/ed/predicates-tree
+cargo-mutants-27.1.0	pretty_assertions	1.4.1	1.4.1	1.4.1			https://index.crates.io/pr/et/pretty_assertions
+cargo-mutants-27.1.0	proc-macro2	1.0.95	1.0.107	1.0.107			https://index.crates.io/pr/oc/proc-macro2
+cargo-mutants-27.1.0	quick-error	1.2.3	1.2.3	2.0.1	rusty-fork@0.3.1 [^1.2]		https://index.crates.io/qu/ic/quick-error
+cargo-mutants-27.1.0	quote	1.0.35	1.0.47	1.0.47			https://index.crates.io/qu/ot/quote
+cargo-mutants-27.1.0	r-efi	5.3.0	6.0.0	7.2.0	getrandom@0.4.3 [^6]		https://index.crates.io/r-/ef/r-efi
+cargo-mutants-27.1.0	redox_syscall	0.4.1, 0.5.8	0.9.5	0.10.0	libredox@0.1.25 [^0.9.2]		https://index.crates.io/re/do/redox_syscall
+cargo-mutants-27.1.0	ref-cast	1.0.24	1.0.27	1.0.27			https://index.crates.io/re/f-/ref-cast
+cargo-mutants-27.1.0	ref-cast-impl	1.0.24	1.0.27	1.0.27			https://index.crates.io/re/f-/ref-cast-impl
+cargo-mutants-27.1.0	reflink	0.1.3	0.1.3	0.1.3			https://index.crates.io/re/fl/reflink
+cargo-mutants-27.1.0	regex	1.10.0	1.13.2	1.13.2			https://index.crates.io/re/ge/regex
+cargo-mutants-27.1.0	regex-automata	0.4.9	0.4.19	0.4.19			https://index.crates.io/re/ge/regex-automata
+cargo-mutants-27.1.0	regex-syntax	0.8.5	0.8.12	0.8.12			https://index.crates.io/re/ge/regex-syntax
+cargo-mutants-27.1.0	rustix	0.38.44, 1.1.2	1.1.6	1.1.6			https://index.crates.io/ru/st/rustix
+cargo-mutants-27.1.0	rustversion	1.0.19	1.0.23	1.0.23			https://index.crates.io/ru/st/rustversion
+cargo-mutants-27.1.0	rusty-fork	0.3.1	0.3.1	0.3.1			https://index.crates.io/ru/st/rusty-fork
+cargo-mutants-27.1.0	same-file	1.0.6	1.0.6	1.0.6			https://index.crates.io/sa/me/same-file
+cargo-mutants-27.1.0	schemars	0.9.0	0.9.0	1.2.3	cargo-mutants@27.1.0 [^0.9]		https://index.crates.io/sc/he/schemars
+cargo-mutants-27.1.0	schemars_derive	0.9.0	0.9.0	1.2.3	schemars@0.9.0 [=0.9.0]		https://index.crates.io/sc/he/schemars_derive
+cargo-mutants-27.1.0	semver	1.0.27	1.0.28	1.0.28			https://index.crates.io/se/mv/semver
+cargo-mutants-27.1.0	serde	1.0.228	1.0.229	1.0.229			https://index.crates.io/se/rd/serde
+cargo-mutants-27.1.0	serde_core	1.0.228	1.0.229	1.0.229			https://index.crates.io/se/rd/serde_core
+cargo-mutants-27.1.0	serde_derive	1.0.228	1.0.229	1.0.229			https://index.crates.io/se/rd/serde_derive
+cargo-mutants-27.1.0	serde_derive_internals	0.29.1	0.29.1	0.30.0	schemars_derive@0.9.0 [^0.29]		https://index.crates.io/se/rd/serde_derive_internals
+cargo-mutants-27.1.0	serde_json	1.0.149	1.0.154	1.0.154			https://index.crates.io/se/rd/serde_json
+cargo-mutants-27.1.0	serde_spanned	1.1.1	1.1.3	1.1.3			https://index.crates.io/se/rd/serde_spanned
+cargo-mutants-27.1.0	sharded-slab	0.1.7	0.1.7	0.1.7			https://index.crates.io/sh/ar/sharded-slab
+cargo-mutants-27.1.0	similar	2.1.0	2.7.0	3.2.1	cargo-mutants@27.1.0 [^2.1]; insta@1.49.0 [^2.1.0]		https://index.crates.io/si/mi/similar
+cargo-mutants-27.1.0	slab		0.4.12	0.4.12			https://index.crates.io/sl/ab/slab
+cargo-mutants-27.1.0	smallvec	1.13.2	1.16.6	1.16.6			https://index.crates.io/sm/al/smallvec
+cargo-mutants-27.1.0	smol_str	0.3.2	0.3.7	0.3.7			https://index.crates.io/sm/ol/smol_str
+cargo-mutants-27.1.0	strsim	0.11.1	0.11.1	0.11.1			https://index.crates.io/st/rs/strsim
+cargo-mutants-27.1.0	strum	0.26.0	0.26.3	0.28.0	cargo-mutants@27.1.0 [^0.26]		https://index.crates.io/st/ru/strum
+cargo-mutants-27.1.0	strum_macros	0.26.4	0.26.4	0.28.0	strum@0.26.3 [^0.26, ^0.26.3]		https://index.crates.io/st/ru/strum_macros
+cargo-mutants-27.1.0	syn	2.0.104	2.0.119	3.0.10	cargo-mutants@27.1.0 [^2.0.104]; color-print-proc-macro@0.3.7 [^2.0]; schemars_derive@0.9.0 [^2.0]; serde_derive_internals@0.29.1 [^2.0.46]; strum_macros@0.26.4 [^2.0]; test-log-core@0.2.21 [^2.0]; test-log-macros@0.2.21 [^2.0]; tracing-attributes@0.1.31 [^2.0]		https://index.crates.io/3/s/syn
+cargo-mutants-27.1.0	syn	2.0.104	3.0.10	3.0.10			https://index.crates.io/3/s/syn
+cargo-mutants-27.1.0	target-lexicon	0.12.16	0.13.5	0.13.6	cfg-expr@0.20.11 [=0.13.5]; target-spec@3.8.0 [^0.13.5]		https://index.crates.io/ta/rg/target-lexicon
+cargo-mutants-27.1.0	target-spec	3.2.2	3.8.0	3.8.0			https://index.crates.io/ta/rg/target-spec
+cargo-mutants-27.1.0	tempfile	3.22.0	3.27.0	3.27.0			https://index.crates.io/te/mp/tempfile
+cargo-mutants-27.1.0	terminal_size	0.1.17, 0.4.1	0.4.4	0.4.4			https://index.crates.io/te/rm/terminal_size
+cargo-mutants-27.1.0	termtree	0.5.1	0.5.1	1.0.0	predicates-tree@1.0.13 [^0.5.0]		https://index.crates.io/te/rm/termtree
+cargo-mutants-27.1.0	test-log	0.2.16	0.2.21	0.2.21			https://index.crates.io/te/st/test-log
+cargo-mutants-27.1.0	test-log-core		0.2.21	0.2.21			https://index.crates.io/te/st/test-log-core
+cargo-mutants-27.1.0	test-log-macros	0.2.17	0.2.21	0.2.21			https://index.crates.io/te/st/test-log-macros
+cargo-mutants-27.1.0	thiserror	2.0.17	2.0.21	2.0.21			https://index.crates.io/th/is/thiserror
+cargo-mutants-27.1.0	thiserror-impl	2.0.17	2.0.21	2.0.21			https://index.crates.io/th/is/thiserror-impl
+cargo-mutants-27.1.0	thread_local	1.1.8	1.1.10	1.1.10			https://index.crates.io/th/re/thread_local
+cargo-mutants-27.1.0	toml	1.1.2+spec-1.1.0	1.2.3+spec-1.1.0	1.2.3+spec-1.1.0			https://index.crates.io/to/ml/toml
+cargo-mutants-27.1.0	toml_datetime	1.1.1+spec-1.1.0	1.1.3+spec-1.1.0	1.1.3+spec-1.1.0			https://index.crates.io/to/ml/toml_datetime
+cargo-mutants-27.1.0	toml_parser	1.1.2+spec-1.1.0	1.1.7+spec-1.1.0	1.1.7+spec-1.1.0			https://index.crates.io/to/ml/toml_parser
+cargo-mutants-27.1.0	toml_writer	1.1.1+spec-1.1.0	1.2.0+spec-1.1.0	1.2.0+spec-1.1.0			https://index.crates.io/to/ml/toml_writer
+cargo-mutants-27.1.0	tracing	0.1.41	0.1.44	0.1.44			https://index.crates.io/tr/ac/tracing
+cargo-mutants-27.1.0	tracing-attributes	0.1.28	0.1.31	0.1.31			https://index.crates.io/tr/ac/tracing-attributes
+cargo-mutants-27.1.0	tracing-core	0.1.33	0.1.36	0.1.36			https://index.crates.io/tr/ac/tracing-core
+cargo-mutants-27.1.0	tracing-log	0.2.0	0.2.0	0.2.0			https://index.crates.io/tr/ac/tracing-log
+cargo-mutants-27.1.0	tracing-subscriber	0.3.20	0.3.23	0.3.23			https://index.crates.io/tr/ac/tracing-subscriber
+cargo-mutants-27.1.0	unicode-ident	1.0.16	1.0.27	1.0.27			https://index.crates.io/un/ic/unicode-ident
+cargo-mutants-27.1.0	unicode-width	0.1.14	0.2.3	0.2.3			https://index.crates.io/un/ic/unicode-width
+cargo-mutants-27.1.0	utf8parse	0.2.2	0.2.2	0.2.2			https://index.crates.io/ut/f8/utf8parse
+cargo-mutants-27.1.0	valuable	0.1.1	0.1.1	0.1.1			https://index.crates.io/va/lu/valuable
+cargo-mutants-27.1.0	wait-timeout	0.2.1	0.2.1	0.2.1			https://index.crates.io/wa/it/wait-timeout
+cargo-mutants-27.1.0	walkdir	2.5.0	2.5.1	2.5.1			https://index.crates.io/wa/lk/walkdir
+cargo-mutants-27.1.0	wasite	0.1.0	0.1.0	1.0.2	whoami@1.6.1 [^0.1]		https://index.crates.io/wa/si/wasite
+cargo-mutants-27.1.0	wasm-bindgen	0.2.100	0.2.130	0.2.130			https://index.crates.io/wa/sm/wasm-bindgen
+cargo-mutants-27.1.0	wasm-bindgen-macro	0.2.100	0.2.130	0.2.130			https://index.crates.io/wa/sm/wasm-bindgen-macro
+cargo-mutants-27.1.0	wasm-bindgen-macro-support	0.2.100	0.2.130	0.2.130			https://index.crates.io/wa/sm/wasm-bindgen-macro-support
+cargo-mutants-27.1.0	wasm-bindgen-shared	0.2.100	0.2.130	0.2.130			https://index.crates.io/wa/sm/wasm-bindgen-shared
+cargo-mutants-27.1.0	web-sys	0.3.77	0.3.107	0.3.107			https://index.crates.io/we/b-/web-sys
+cargo-mutants-27.1.0	whoami	1.5.0	1.6.1	2.1.3	cargo-mutants@27.1.0 [^1.5]		https://index.crates.io/wh/oa/whoami
+cargo-mutants-27.1.0	winapi	0.2.8, 0.3.9	0.3.9	0.3.9			https://index.crates.io/wi/na/winapi
+cargo-mutants-27.1.0	winapi-i686-pc-windows-gnu	0.4.0	0.4.0	0.4.0			https://index.crates.io/wi/na/winapi-i686-pc-windows-gnu
+cargo-mutants-27.1.0	winapi-util	0.1.9	0.1.11	0.1.11			https://index.crates.io/wi/na/winapi-util
+cargo-mutants-27.1.0	winapi-x86_64-pc-windows-gnu	0.4.0	0.4.0	0.4.0			https://index.crates.io/wi/na/winapi-x86_64-pc-windows-gnu
+cargo-mutants-27.1.0	windows-link		0.2.1	0.100.0	windows-sys@0.61.2 [^0.2.1]		https://index.crates.io/wi/nd/windows-link
+cargo-mutants-27.1.0	windows-sys	0.52.0, 0.59.0	0.59.0	0.61.2	console@0.15.11 [^0.59]		https://index.crates.io/wi/nd/windows-sys
+cargo-mutants-27.1.0	windows-sys	0.52.0, 0.59.0	0.61.2	0.61.2			https://index.crates.io/wi/nd/windows-sys
+cargo-mutants-27.1.0	windows-targets	0.52.6	0.52.6	0.53.5	windows-sys@0.59.0 [^0.52.6]		https://index.crates.io/wi/nd/windows-targets
+cargo-mutants-27.1.0	windows_aarch64_gnullvm	0.52.6	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_aarch64_gnullvm
+cargo-mutants-27.1.0	windows_aarch64_msvc	0.52.6	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_aarch64_msvc
+cargo-mutants-27.1.0	windows_i686_gnu	0.52.6	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_i686_gnu
+cargo-mutants-27.1.0	windows_i686_gnullvm	0.52.6	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_i686_gnullvm
+cargo-mutants-27.1.0	windows_i686_msvc	0.52.6	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_i686_msvc
+cargo-mutants-27.1.0	windows_x86_64_gnu	0.52.6	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_x86_64_gnu
+cargo-mutants-27.1.0	windows_x86_64_gnullvm	0.52.6	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_x86_64_gnullvm
+cargo-mutants-27.1.0	windows_x86_64_msvc	0.52.6	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_x86_64_msvc
+cargo-mutants-27.1.0	winnow	1.0.3	1.0.5	1.0.5			https://index.crates.io/wi/nn/winnow
+cargo-mutants-27.1.0	yansi	0.5.1, 1.0.1	0.5.1	1.0.1	nutmeg@0.1.7 [^0.5]		https://index.crates.io/ya/ns/yansi
+cargo-mutants-27.1.0	yansi	0.5.1, 1.0.1	1.0.1	1.0.1			https://index.crates.io/ya/ns/yansi
+cargo-mutants-27.1.0	zmij	1.0.21	1.0.23	1.0.23			https://index.crates.io/zm/ij/zmij
+cargo-mutants-27.1.0	atty	0.2.14	removed				https://index.crates.io/at/ty/atty
+cargo-mutants-27.1.0	doc-comment	0.3.3	removed				https://index.crates.io/do/c-/doc-comment
+cargo-mutants-27.1.0	fuchsia-cprng	0.1.1	removed				https://index.crates.io/fu/ch/fuchsia-cprng
+cargo-mutants-27.1.0	kernel32-sys	0.2.2	removed				https://index.crates.io/ke/rn/kernel32-sys
+cargo-mutants-27.1.0	linked-hash-map	0.5.6	removed				https://index.crates.io/li/nk/linked-hash-map
+cargo-mutants-27.1.0	rand	0.3.23, 0.4.6	removed				https://index.crates.io/ra/nd/rand
+cargo-mutants-27.1.0	rand_core	0.3.1, 0.4.2	removed				https://index.crates.io/ra/nd/rand_core
+cargo-mutants-27.1.0	rdrand	0.4.0	removed				https://index.crates.io/rd/ra/rdrand
+cargo-mutants-27.1.0	ryu	1.0.19	removed				https://index.crates.io/3/r/ryu
+cargo-mutants-27.1.0	serde_yaml	0.8.26	removed				https://index.crates.io/se/rd/serde_yaml
+cargo-mutants-27.1.0	wasi	0.14.7+wasi-0.2.4	removed				https://index.crates.io/wa/si/wasi
+cargo-mutants-27.1.0	wasip2	1.0.1+wasi-0.2.4	removed				https://index.crates.io/wa/si/wasip2
+cargo-mutants-27.1.0	wasm-bindgen-backend	0.2.100	removed				https://index.crates.io/wa/sm/wasm-bindgen-backend
+cargo-mutants-27.1.0	winapi-build	0.1.1	removed				https://index.crates.io/wi/na/winapi-build
+cargo-mutants-27.1.0	wit-bindgen	0.46.0	removed				https://index.crates.io/wi/t-/wit-bindgen
+cargo-mutants-27.1.0	yaml-rust	0.4.5	removed				https://index.crates.io/ya/ml/yaml-rust
+cargo-semver-checks-0.51.0	addr2line	0.25.1	0.27.1	0.27.1			https://index.crates.io/ad/dr/addr2line
+cargo-semver-checks-0.51.0	adler2	2.0.1	2.0.1	2.0.1			https://index.crates.io/ad/le/adler2
+cargo-semver-checks-0.51.0	aho-corasick	1.1.5	1.1.5	1.1.5			https://index.crates.io/ah/o-/aho-corasick
+cargo-semver-checks-0.51.0	allocator-api2	0.2.21	0.2.22	0.4.0	hashbrown@0.16.1 [^0.2.9]; hashbrown@0.17.2 [^0.2.9]		https://index.crates.io/al/lo/allocator-api2
+cargo-semver-checks-0.51.0	anstream	1.0.0	1.0.0	1.0.0			https://index.crates.io/an/st/anstream
+cargo-semver-checks-0.51.0	anstyle	1.0.14	1.0.14	1.0.14			https://index.crates.io/an/st/anstyle
+cargo-semver-checks-0.51.0	anstyle-parse	1.0.0	1.0.0	1.0.0			https://index.crates.io/an/st/anstyle-parse
+cargo-semver-checks-0.51.0	anstyle-query	1.1.5	1.1.5	1.1.5			https://index.crates.io/an/st/anstyle-query
+cargo-semver-checks-0.51.0	anstyle-wincon	3.0.11	3.0.11	3.0.11			https://index.crates.io/an/st/anstyle-wincon
+cargo-semver-checks-0.51.0	anyhow	1.0.104	1.0.105	1.0.105			https://index.crates.io/an/yh/anyhow
+cargo-semver-checks-0.51.0	ar_archive_writer		0.5.5	0.5.5			https://index.crates.io/ar/_a/ar_archive_writer
+cargo-semver-checks-0.51.0	arc-swap	1.9.2	1.9.5	1.9.5			https://index.crates.io/ar/c-/arc-swap
+cargo-semver-checks-0.51.0	arrayvec	0.7.8	0.7.8	0.7.8			https://index.crates.io/ar/ra/arrayvec
+cargo-semver-checks-0.51.0	assert_cmd	2.2.2	2.2.2	2.2.2			https://index.crates.io/as/se/assert_cmd
+cargo-semver-checks-0.51.0	async-compression	0.4.48	0.4.54	0.4.54			https://index.crates.io/as/yn/async-compression
+cargo-semver-checks-0.51.0	async-graphql-parser	7.2.1	7.2.1	7.2.1			https://index.crates.io/as/yn/async-graphql-parser
+cargo-semver-checks-0.51.0	async-graphql-value	7.2.1	7.2.1	7.2.1			https://index.crates.io/as/yn/async-graphql-value
+cargo-semver-checks-0.51.0	atomic-waker	1.1.2	1.1.2	1.1.2			https://index.crates.io/at/om/atomic-waker
+cargo-semver-checks-0.51.0	autocfg	1.5.1	1.5.1	1.5.1			https://index.crates.io/au/to/autocfg
+cargo-semver-checks-0.51.0	backtrace	0.3.76	0.3.77	0.3.77			https://index.crates.io/ba/ck/backtrace
+cargo-semver-checks-0.51.0	base64	0.23.1	0.23.1	0.23.1			https://index.crates.io/ba/se/base64
+cargo-semver-checks-0.51.0	bitflags	1.3.2, 2.13.2	1.3.2	2.13.2	defmt@1.2.0 [^1]		https://index.crates.io/bi/tf/bitflags
+cargo-semver-checks-0.51.0	bitflags	1.3.2, 2.13.2	2.13.2	2.13.2			https://index.crates.io/bi/tf/bitflags
+cargo-semver-checks-0.51.0	block-buffer	0.10.4, 0.12.1	0.10.4	0.12.1	digest@0.10.7 [^0.10]		https://index.crates.io/bl/oc/block-buffer
+cargo-semver-checks-0.51.0	block-buffer	0.10.4, 0.12.1	0.12.1	0.12.1			https://index.crates.io/bl/oc/block-buffer
+cargo-semver-checks-0.51.0	borsh	1.8.1	1.8.1	1.8.1			https://index.crates.io/bo/rs/borsh
+cargo-semver-checks-0.51.0	bstr	1.13.1	1.14.0	1.14.0			https://index.crates.io/bs/tr/bstr
+cargo-semver-checks-0.51.0	bugreport	0.6.0	0.6.0	0.6.0			https://index.crates.io/bu/gr/bugreport
+cargo-semver-checks-0.51.0	bumpalo	3.20.3	3.20.4	3.20.4			https://index.crates.io/bu/mp/bumpalo
+cargo-semver-checks-0.51.0	byteorder	1.5.0	1.5.0	1.5.0			https://index.crates.io/by/te/byteorder
+cargo-semver-checks-0.51.0	bytes	1.12.1	1.12.2	1.12.2			https://index.crates.io/by/te/bytes
+cargo-semver-checks-0.51.0	camino	1.2.6	1.2.6	1.2.6			https://index.crates.io/ca/mi/camino
+cargo-semver-checks-0.51.0	cargo-config2	0.1.45	0.1.45	0.1.45			https://index.crates.io/ca/rg/cargo-config2
+cargo-semver-checks-0.51.0	cargo-platform	0.3.3	0.3.3	0.3.3			https://index.crates.io/ca/rg/cargo-platform
+cargo-semver-checks-0.51.0	cargo_metadata	0.23.1	0.23.1	0.23.1			https://index.crates.io/ca/rg/cargo_metadata
+cargo-semver-checks-0.51.0	cargo_toml	1.0.1	1.0.1	1.0.1			https://index.crates.io/ca/rg/cargo_toml
+cargo-semver-checks-0.51.0	cc	1.5.1	1.12.0	1.12.0			https://index.crates.io/2/cc
+cargo-semver-checks-0.51.0	cfg-if	1.0.5	1.0.5	1.0.5			https://index.crates.io/cf/g-/cfg-if
+cargo-semver-checks-0.51.0	cfg_aliases	0.2.2	0.2.2	0.2.2			https://index.crates.io/cf/g_/cfg_aliases
+cargo-semver-checks-0.51.0	chacha20	0.10.2	0.10.2	0.10.2			https://index.crates.io/ch/ac/chacha20
+cargo-semver-checks-0.51.0	clap	4.6.7	4.6.10	4.6.10			https://index.crates.io/cl/ap/clap
+cargo-semver-checks-0.51.0	clap-cargo	0.18.3	0.18.3	0.19.1	cargo-semver-checks@0.51.0 [^0.18.0]		https://index.crates.io/cl/ap/clap-cargo
+cargo-semver-checks-0.51.0	clap-verbosity-flag	3.0.4	3.0.4	3.0.4			https://index.crates.io/cl/ap/clap-verbosity-flag
+cargo-semver-checks-0.51.0	clap_builder	4.6.7	4.6.10	4.6.10			https://index.crates.io/cl/ap/clap_builder
+cargo-semver-checks-0.51.0	clap_derive	4.6.7	4.6.9	4.6.9			https://index.crates.io/cl/ap/clap_derive
+cargo-semver-checks-0.51.0	clap_lex	1.1.1	1.1.2	1.1.2			https://index.crates.io/cl/ap/clap_lex
+cargo-semver-checks-0.51.0	clru	0.6.3	0.6.3	0.6.3			https://index.crates.io/cl/ru/clru
+cargo-semver-checks-0.51.0	colorchoice	1.0.5	1.0.5	1.0.5			https://index.crates.io/co/lo/colorchoice
+cargo-semver-checks-0.51.0	combine	4.6.8	4.6.9	4.6.9			https://index.crates.io/co/mb/combine
+cargo-semver-checks-0.51.0	compression-codecs	0.4.43	0.4.49	0.4.49			https://index.crates.io/co/mp/compression-codecs
+cargo-semver-checks-0.51.0	compression-core	0.4.33	0.4.34	0.4.34			https://index.crates.io/co/mp/compression-core
+cargo-semver-checks-0.51.0	console	0.16.6	0.16.6	0.16.6			https://index.crates.io/co/ns/console
+cargo-semver-checks-0.51.0	const-oid	0.10.2	0.10.3	0.10.3			https://index.crates.io/co/ns/const-oid
+cargo-semver-checks-0.51.0	core-foundation	0.10.1, 0.9.4	0.9.4	0.10.1	system-configuration@0.7.0 [^0.9]		https://index.crates.io/co/re/core-foundation
+cargo-semver-checks-0.51.0	core-foundation	0.10.1, 0.9.4	0.10.1	0.10.1			https://index.crates.io/co/re/core-foundation
+cargo-semver-checks-0.51.0	core-foundation-sys	0.8.7	0.8.7	0.8.7			https://index.crates.io/co/re/core-foundation-sys
+cargo-semver-checks-0.51.0	core_detect	1.0.0	1.0.0	1.0.0			https://index.crates.io/co/re/core_detect
+cargo-semver-checks-0.51.0	cpufeatures	0.2.17, 0.3.1	0.2.17	0.3.1	sha1@0.10.7 [^0.2]		https://index.crates.io/cp/uf/cpufeatures
+cargo-semver-checks-0.51.0	cpufeatures	0.2.17, 0.3.1	0.3.1	0.3.1			https://index.crates.io/cp/uf/cpufeatures
+cargo-semver-checks-0.51.0	crc32fast	1.5.2	1.5.6	1.5.6			https://index.crates.io/cr/c3/crc32fast
+cargo-semver-checks-0.51.0	crossbeam-channel	0.5.17	0.5.17	0.5.17			https://index.crates.io/cr/os/crossbeam-channel
+cargo-semver-checks-0.51.0	crossbeam-deque	0.8.8	0.8.8	0.8.8			https://index.crates.io/cr/os/crossbeam-deque
+cargo-semver-checks-0.51.0	crossbeam-epoch	0.9.21	0.9.21	0.9.21			https://index.crates.io/cr/os/crossbeam-epoch
+cargo-semver-checks-0.51.0	crossbeam-utils	0.8.23	0.8.23	0.8.23			https://index.crates.io/cr/os/crossbeam-utils
+cargo-semver-checks-0.51.0	crypto-common	0.1.7, 0.2.2	0.1.7	0.2.2	digest@0.10.7 [^0.1.3]		https://index.crates.io/cr/yp/crypto-common
+cargo-semver-checks-0.51.0	crypto-common	0.1.7, 0.2.2	0.2.2	0.2.2			https://index.crates.io/cr/yp/crypto-common
+cargo-semver-checks-0.51.0	darling	0.20.11	0.20.11	0.24.1	derive_builder_core@0.20.2 [^0.20.10]		https://index.crates.io/da/rl/darling
+cargo-semver-checks-0.51.0	darling_core	0.20.11	0.20.11	0.24.1	darling@0.20.11 [=0.20.11]; darling_macro@0.20.11 [=0.20.11]		https://index.crates.io/da/rl/darling_core
+cargo-semver-checks-0.51.0	darling_macro	0.20.11	0.20.11	0.24.1	darling@0.20.11 [=0.20.11]		https://index.crates.io/da/rl/darling_macro
+cargo-semver-checks-0.51.0	defmt	0.3.100, 1.1.1	0.3.101	1.2.0	faster-hex@0.10.1 [^0.3]		https://index.crates.io/de/fm/defmt
+cargo-semver-checks-0.51.0	defmt	0.3.100, 1.1.1	1.2.0	1.2.0			https://index.crates.io/de/fm/defmt
+cargo-semver-checks-0.51.0	defmt-macros	1.1.1	1.2.0	1.2.0			https://index.crates.io/de/fm/defmt-macros
+cargo-semver-checks-0.51.0	defmt-parser	1.0.0	1.1.0	1.1.0			https://index.crates.io/de/fm/defmt-parser
+cargo-semver-checks-0.51.0	derive_builder	0.20.2	0.20.2	0.20.2			https://index.crates.io/de/ri/derive_builder
+cargo-semver-checks-0.51.0	derive_builder_core	0.20.2	0.20.2	0.20.2			https://index.crates.io/de/ri/derive_builder_core
+cargo-semver-checks-0.51.0	derive_builder_macro	0.20.2	0.20.2	0.20.2			https://index.crates.io/de/ri/derive_builder_macro
+cargo-semver-checks-0.51.0	difflib	0.4.0	0.4.0	0.4.0			https://index.crates.io/di/ff/difflib
+cargo-semver-checks-0.51.0	digest	0.10.7, 0.11.3	0.10.7	0.11.3	sha1-checked@0.10.0 [^0.10.7]; sha1@0.10.7 [^0.10.7]		https://index.crates.io/di/ge/digest
+cargo-semver-checks-0.51.0	digest	0.10.7, 0.11.3	0.11.3	0.11.3			https://index.crates.io/di/ge/digest
+cargo-semver-checks-0.51.0	directories	6.0.0	6.0.0	6.0.0			https://index.crates.io/di/re/directories
+cargo-semver-checks-0.51.0	dirs-sys	0.5.0	0.5.0	0.5.0			https://index.crates.io/di/rs/dirs-sys
+cargo-semver-checks-0.51.0	displaydoc	0.2.7	0.2.7	0.2.7			https://index.crates.io/di/sp/displaydoc
+cargo-semver-checks-0.51.0	dunce	1.0.5	1.0.5	1.0.5			https://index.crates.io/du/nc/dunce
+cargo-semver-checks-0.51.0	either	1.18.0	1.19.0	1.19.0			https://index.crates.io/ei/th/either
+cargo-semver-checks-0.51.0	encode_unicode	1.0.0	1.0.0	1.0.0			https://index.crates.io/en/co/encode_unicode
+cargo-semver-checks-0.51.0	encoding_rs	0.8.42	0.8.44	0.8.44			https://index.crates.io/en/co/encoding_rs
+cargo-semver-checks-0.51.0	equivalent	1.0.2	1.0.3	1.0.3			https://index.crates.io/eq/ui/equivalent
+cargo-semver-checks-0.51.0	errno	0.3.14	0.3.15	0.3.15			https://index.crates.io/er/rn/errno
+cargo-semver-checks-0.51.0	faster-hex	0.10.1	0.10.1	2.1.0	gix-hash@0.25.1 [^0.10.0]; gix-packetline@0.21.5 [^0.10.0]		https://index.crates.io/fa/st/faster-hex
+cargo-semver-checks-0.51.0	fastrand	2.5.0	2.5.0	2.5.0			https://index.crates.io/fa/st/fastrand
+cargo-semver-checks-0.51.0	filetime	0.2.29	0.2.30	0.2.30			https://index.crates.io/fi/le/filetime
+cargo-semver-checks-0.51.0	find-msvc-tools	0.1.14	0.1.16	0.1.16			https://index.crates.io/fi/nd/find-msvc-tools
+cargo-semver-checks-0.51.0	flate2	1.1.10	1.1.11	1.1.11			https://index.crates.io/fl/at/flate2
+cargo-semver-checks-0.51.0	float-cmp	0.10.0	0.10.0	0.10.0			https://index.crates.io/fl/oa/float-cmp
+cargo-semver-checks-0.51.0	fnv	1.0.7	1.0.7	1.0.7			https://index.crates.io/3/f/fnv
+cargo-semver-checks-0.51.0	foldhash	0.2.0	0.2.0	0.2.0			https://index.crates.io/fo/ld/foldhash
+cargo-semver-checks-0.51.0	form_urlencoded	1.2.2	1.2.3	1.2.3			https://index.crates.io/fo/rm/form_urlencoded
+cargo-semver-checks-0.51.0	fs-err	3.3.1	3.3.2	3.3.2			https://index.crates.io/fs/-e/fs-err
+cargo-semver-checks-0.51.0	futures-channel	0.3.34	0.3.34	0.3.34			https://index.crates.io/fu/tu/futures-channel
+cargo-semver-checks-0.51.0	futures-core	0.3.34	0.3.34	0.3.34			https://index.crates.io/fu/tu/futures-core
+cargo-semver-checks-0.51.0	futures-io	0.3.34	0.3.34	0.3.34			https://index.crates.io/fu/tu/futures-io
+cargo-semver-checks-0.51.0	futures-sink	0.3.34	0.3.34	0.3.34			https://index.crates.io/fu/tu/futures-sink
+cargo-semver-checks-0.51.0	futures-task	0.3.34	0.3.34	0.3.34			https://index.crates.io/fu/tu/futures-task
+cargo-semver-checks-0.51.0	futures-util	0.3.34	0.3.34	0.3.34			https://index.crates.io/fu/tu/futures-util
+cargo-semver-checks-0.51.0	generic-array	0.14.7	0.14.7	1.4.5	block-buffer@0.10.4 [^0.14]; crypto-common@0.1.7 [=0.14.7]		https://index.crates.io/ge/ne/generic-array
+cargo-semver-checks-0.51.0	getrandom	0.2.17, 0.4.3	0.2.17	0.4.3	ring@0.17.14 [^0.2.10]		https://index.crates.io/ge/tr/getrandom
+cargo-semver-checks-0.51.0	getrandom	0.2.17, 0.4.3	0.4.3	0.4.3			https://index.crates.io/ge/tr/getrandom
+cargo-semver-checks-0.51.0	gimli	0.32.3	0.34.0	0.34.0			https://index.crates.io/gi/ml/gimli
+cargo-semver-checks-0.51.0	git-version	0.3.9	0.3.9	0.3.9			https://index.crates.io/gi/t-/git-version
+cargo-semver-checks-0.51.0	git-version-macro	0.3.9	0.3.9	0.3.9			https://index.crates.io/gi/t-/git-version-macro
+cargo-semver-checks-0.51.0	gix	0.85.0	0.85.0	0.91.0	cargo-semver-checks@0.51.0 [^0.85.0]		https://index.crates.io/3/g/gix
+cargo-semver-checks-0.51.0	gix-actor	0.41.2	0.41.2	0.45.0	gix-object@0.62.0 [^0.41.1]; gix-ref@0.65.0 [^0.41.1]; gix@0.85.0 [^0.41.1]		https://index.crates.io/gi/x-/gix-actor
+cargo-semver-checks-0.51.0	gix-attributes	0.33.2	0.33.2	0.38.0	gix-filter@0.32.0 [^0.33.2]; gix-worktree-stream@0.34.0 [^0.33.2]		https://index.crates.io/gi/x-/gix-attributes
+cargo-semver-checks-0.51.0	gix-bitmap	0.3.3	0.3.3	0.6.2	gix-index@0.53.0 [^0.3.2]		https://index.crates.io/gi/x-/gix-bitmap
+cargo-semver-checks-0.51.0	gix-chunk	0.7.3	0.7.3	0.10.2	gix-commitgraph@0.37.1 [^0.7.2]; gix-pack@0.72.0 [^0.7.2]		https://index.crates.io/gi/x-/gix-chunk
+cargo-semver-checks-0.51.0	gix-command	0.9.2	0.9.2	0.12.2	gix-filter@0.32.0 [^0.9.1]; gix-transport@0.57.2 [^0.9.1]		https://index.crates.io/gi/x-/gix-command
+cargo-semver-checks-0.51.0	gix-commitgraph	0.37.1	0.37.1	0.43.0	gix-revision@0.47.0 [^0.37.1]; gix-revwalk@0.33.0 [^0.37.1]; gix-traverse@0.59.0 [^0.37.1]; gix@0.85.0 [^0.37.1]		https://index.crates.io/gi/x-/gix-commitgraph
+cargo-semver-checks-0.51.0	gix-config	0.58.0	0.58.0	0.63.0	gix@0.85.0 [^0.58.0]		https://index.crates.io/gi/x-/gix-config
+cargo-semver-checks-0.51.0	gix-config-value	0.18.1	0.18.1	0.21.2	gix-config@0.58.0 [^0.18.1]		https://index.crates.io/gi/x-/gix-config-value
+cargo-semver-checks-0.51.0	gix-date	0.15.6	0.15.6	0.19.0	gix-actor@0.41.2 [^0.15.6]; gix-object@0.62.0 [^0.15.5]; gix-protocol@0.63.0 [^0.15.5]; gix-revision@0.47.0 [^0.15.5]; gix-revwalk@0.33.0 [^0.15.5]; gix-traverse@0.59.0 [^0.15.5]; gix@0.85.0 [^0.15.5]		https://index.crates.io/gi/x-/gix-date
+cargo-semver-checks-0.51.0	gix-diff	0.65.0	0.65.0	0.71.0	gix@0.85.0 [^0.65.0]		https://index.crates.io/gi/x-/gix-diff
+cargo-semver-checks-0.51.0	gix-discover	0.53.0	0.53.0	0.58.0	gix@0.85.0 [^0.53.0]		https://index.crates.io/gi/x-/gix-discover
+cargo-semver-checks-0.51.0	gix-error	0.2.5	0.2.5	0.5.3	gix-actor@0.41.2 [^0.2.5]; gix-bitmap@0.3.3 [^0.2.5]; gix-chunk@0.7.3 [^0.2.5]; gix-commitgraph@0.37.1 [^0.2.4]; gix-date@0.15.6 [^0.2.5]; gix-pack@0.72.0 [^0.2.4]; gix-quote@0.7.2 [^0.2.4]; gix-refspec@0.43.0 [^0.2.4]; gix-revision@0.47.0 [^0.2.4]; gix-revwalk@0.33.0 [^0.2.4]; gix-worktree-stream@0.34.0 [^0.2.4]; gix@0.85.0 [^0.2.4]		https://index.crates.io/gi/x-/gix-error
+cargo-semver-checks-0.51.0	gix-features	0.48.1	0.48.1	0.50.0	gix-config@0.58.0 [^0.48.1]; gix-fs@0.21.2 [^0.48.1]; gix-glob@0.26.1 [^0.48.1]; gix-hash@0.25.1 [^0.48.1]; gix-index@0.53.0 [^0.48.1]; gix-object@0.62.0 [^0.48.1]; gix-odb@0.82.0 [^0.48.1]; gix-pack@0.72.0 [^0.48.1]; gix-protocol@0.63.0 [^0.48.1]; gix-ref@0.65.0 [^0.48.1]; gix-transport@0.57.2 [^0.48.1]; gix-worktree-stream@0.34.0 [^0.48.1]; gix@0.85.0 [^0.48.1]		https://index.crates.io/gi/x-/gix-features
+cargo-semver-checks-0.51.0	gix-filter	0.32.0	0.32.0	0.37.0	gix-worktree-stream@0.34.0 [^0.32.0]		https://index.crates.io/gi/x-/gix-filter
+cargo-semver-checks-0.51.0	gix-fs	0.21.2	0.21.2	1.0.0	gix-discover@0.53.0 [^0.21.2]; gix-index@0.53.0 [^0.21.2]; gix-odb@0.82.0 [^0.21.2]; gix-ref@0.65.0 [^0.21.2]; gix-tempfile@23.0.2 [^0.21.2]; gix-worktree-stream@0.34.0 [^0.21.2]; gix@0.85.0 [^0.21.2]		https://index.crates.io/gi/x-/gix-fs
+cargo-semver-checks-0.51.0	gix-glob	0.26.1	0.26.1	0.30.0	gix-attributes@0.33.2 [^0.26.1]; gix-config@0.58.0 [^0.26.1]; gix-refspec@0.43.0 [^0.26.1]; gix@0.85.0 [^0.26.1]		https://index.crates.io/gi/x-/gix-glob
+cargo-semver-checks-0.51.0	gix-hash	0.25.1	0.25.1	0.29.0	gix-commitgraph@0.37.1 [^0.25.1]; gix-diff@0.65.0 [^0.25.1]; gix-filter@0.32.0 [^0.25.1]; gix-hashtable@0.15.2 [^0.25.1]; gix-index@0.53.0 [^0.25.1]; gix-object@0.62.0 [^0.25.1]; gix-odb@0.82.0 [^0.25.1]; gix-pack@0.72.0 [^0.25.1]; gix-protocol@0.63.0 [^0.25.1]; gix-ref@0.65.0 [^0.25.1]; gix-refspec@0.43.0 [^0.25.1]; gix-revision@0.47.0 [^0.25.1]; gix-revwalk@0.33.0 [^0.25.1]; gix-shallow@0.12.1 [^0.25.1]; gix-traverse@0.59.0 [^0.25.1]; gix-worktree-stream@0.34.0 [^0.25.1]; gix@0.85.0 [^0.25.1]		https://index.crates.io/gi/x-/gix-hash
+cargo-semver-checks-0.51.0	gix-hashtable	0.15.2	0.15.2	0.19.0	gix-object@0.62.0 [^0.15.2]; gix-odb@0.82.0 [^0.15.2]; gix-pack@0.72.0 [^0.15.2]; gix-revision@0.47.0 [^0.15.2]; gix-revwalk@0.33.0 [^0.15.2]; gix-traverse@0.59.0 [^0.15.2]; gix@0.85.0 [^0.15.2]		https://index.crates.io/gi/x-/gix-hashtable
+cargo-semver-checks-0.51.0	gix-index	0.53.0	0.53.0	0.59.0	gix@0.85.0 [^0.53.0]		https://index.crates.io/gi/x-/gix-index
+cargo-semver-checks-0.51.0	gix-lock	23.0.1	23.0.1	27.0.0	gix-index@0.53.0 [^23.0.0]; gix-ref@0.65.0 [^23.0.0]; gix-shallow@0.12.1 [^23.0.0]; gix@0.85.0 [^23.0.0]		https://index.crates.io/gi/x-/gix-lock
+cargo-semver-checks-0.51.0	gix-object	0.62.0	0.62.0	0.67.0	gix-diff@0.65.0 [^0.62.0]; gix-filter@0.32.0 [^0.62.0]; gix-index@0.53.0 [^0.62.0]; gix-odb@0.82.0 [^0.62.0]; gix-pack@0.72.0 [^0.62.0]; gix-ref@0.65.0 [^0.62.0]; gix-revision@0.47.0 [^0.62.0]; gix-revwalk@0.33.0 [^0.62.0]; gix-traverse@0.59.0 [^0.62.0]; gix-worktree-stream@0.34.0 [^0.62.0]; gix@0.85.0 [^0.62.0]		https://index.crates.io/gi/x-/gix-object
+cargo-semver-checks-0.51.0	gix-odb	0.82.0	0.82.0	0.88.0	gix@0.85.0 [^0.82.0]		https://index.crates.io/gi/x-/gix-odb
+cargo-semver-checks-0.51.0	gix-pack	0.72.0	0.72.0	0.78.0	gix-odb@0.82.0 [^0.72.0]; gix@0.85.0 [^0.72.0]		https://index.crates.io/gi/x-/gix-pack
+cargo-semver-checks-0.51.0	gix-packetline	0.21.5	0.21.5	0.24.2	gix-filter@0.32.0 [^0.21.5]; gix-transport@0.57.2 [^0.21.5]		https://index.crates.io/gi/x-/gix-packetline
+cargo-semver-checks-0.51.0	gix-path	0.12.6	0.12.6	0.14.2	gix-attributes@0.33.2 [^0.12.1]; gix-command@0.9.2 [^0.12.4]; gix-config-value@0.18.1 [^0.12.1]; gix-config@0.58.0 [^0.12.1]; gix-discover@0.53.0 [^0.12.1]; gix-features@0.48.1 [^0.12.1]; gix-filter@0.32.0 [^0.12.1]; gix-fs@0.21.2 [^0.12.1]; gix-glob@0.26.1 [^0.12.1]; gix-odb@0.82.0 [^0.12.1]; gix-pack@0.72.0 [^0.12.1]; gix-ref@0.65.0 [^0.12.1]; gix-sec@0.14.2 [^0.12.3]; gix-url@0.36.2 [^0.12.2]; gix-worktree-stream@0.34.0 [^0.12.1]; gix@0.85.0 [^0.12.1]		https://index.crates.io/gi/x-/gix-path
+cargo-semver-checks-0.51.0	gix-protocol	0.63.0	0.63.0	0.69.0	gix@0.85.0 [^0.63.0]		https://index.crates.io/gi/x-/gix-protocol
+cargo-semver-checks-0.51.0	gix-quote	0.7.2	0.7.2	0.10.2	gix-attributes@0.33.2 [^0.7.2]; gix-command@0.9.2 [^0.7.2]; gix-filter@0.32.0 [^0.7.2]; gix-odb@0.82.0 [^0.7.2]; gix-transport@0.57.2 [^0.7.2]		https://index.crates.io/gi/x-/gix-quote
+cargo-semver-checks-0.51.0	gix-ref	0.65.0	0.65.0	0.70.0	gix-config@0.58.0 [^0.65.0]; gix-discover@0.53.0 [^0.65.0]; gix-protocol@0.63.0 [^0.65.0]; gix@0.85.0 [^0.65.0]		https://index.crates.io/gi/x-/gix-ref
+cargo-semver-checks-0.51.0	gix-refspec	0.43.0	0.43.0	0.48.0	gix@0.85.0 [^0.43.0]		https://index.crates.io/gi/x-/gix-refspec
+cargo-semver-checks-0.51.0	gix-revision	0.47.0	0.47.0	0.53.0	gix-refspec@0.43.0 [^0.47.0]; gix@0.85.0 [^0.47.0]		https://index.crates.io/gi/x-/gix-revision
+cargo-semver-checks-0.51.0	gix-revwalk	0.33.0	0.33.0	0.39.0	gix-revision@0.47.0 [^0.33.0]; gix-traverse@0.59.0 [^0.33.0]; gix@0.85.0 [^0.33.0]		https://index.crates.io/gi/x-/gix-revwalk
+cargo-semver-checks-0.51.0	gix-sec	0.14.2	0.14.2	0.17.0	gix-config@0.58.0 [^0.14.1]; gix-discover@0.53.0 [^0.14.1]; gix-transport@0.57.2 [^0.14.1]; gix@0.85.0 [^0.14.1]		https://index.crates.io/gi/x-/gix-sec
+cargo-semver-checks-0.51.0	gix-shallow	0.12.1	0.12.1	0.16.0	gix-protocol@0.63.0 [^0.12.1]; gix@0.85.0 [^0.12.1]		https://index.crates.io/gi/x-/gix-shallow
+cargo-semver-checks-0.51.0	gix-tempfile	23.0.2	23.0.2	27.0.0	gix-lock@23.0.1 [^23.0.0]; gix-ref@0.65.0 [^23.0.0]; gix@0.85.0 [^23.0.0]		https://index.crates.io/gi/x-/gix-tempfile
+cargo-semver-checks-0.51.0	gix-trace	0.1.21	0.1.21	0.3.2	gix-attributes@0.33.2 [^0.1.20]; gix-command@0.9.2 [^0.1.20]; gix-features@0.48.1 [^0.1.20]; gix-filter@0.32.0 [^0.1.20]; gix-packetline@0.21.5 [^0.1.20]; gix-path@0.12.6 [^0.1.21]; gix-revision@0.47.0 [^0.1.20]; gix@0.85.0 [^0.1.20]		https://index.crates.io/gi/x-/gix-trace
+cargo-semver-checks-0.51.0	gix-transport	0.57.2	0.57.2	0.63.0	gix-protocol@0.63.0 [^0.57.2]		https://index.crates.io/gi/x-/gix-transport
+cargo-semver-checks-0.51.0	gix-traverse	0.59.0	0.59.0	0.65.0	gix-index@0.53.0 [^0.59.0]; gix-worktree-stream@0.34.0 [^0.59.0]; gix@0.85.0 [^0.59.0]		https://index.crates.io/gi/x-/gix-traverse
+cargo-semver-checks-0.51.0	gix-url	0.36.2	0.36.2	0.41.0	gix-transport@0.57.2 [^0.36.1]; gix@0.85.0 [^0.36.1]		https://index.crates.io/gi/x-/gix-url
+cargo-semver-checks-0.51.0	gix-utils	0.3.6	0.3.6	0.5.3	gix-features@0.48.1 [^0.3.3]; gix-filter@0.32.0 [^0.3.3]; gix-fs@0.21.2 [^0.3.3]; gix-index@0.53.0 [^0.3.3]; gix-lock@23.0.1 [^0.3.3]; gix-object@0.62.0 [^0.3.3]; gix-protocol@0.63.0 [^0.3.3]; gix-quote@0.7.2 [^0.3.3]; gix-ref@0.65.0 [^0.3.3]; gix@0.85.0 [^0.3.3]		https://index.crates.io/gi/x-/gix-utils
+cargo-semver-checks-0.51.0	gix-validate	0.11.4	0.11.4	0.13.2	gix-index@0.53.0 [^0.11.2]; gix-object@0.62.0 [^0.11.2]; gix-path@0.12.6 [^0.11.4]; gix-ref@0.65.0 [^0.11.2]; gix-refspec@0.43.0 [^0.11.2]; gix@0.85.0 [^0.11.2]		https://index.crates.io/gi/x-/gix-validate
+cargo-semver-checks-0.51.0	gix-worktree-stream	0.34.0	0.34.0	0.40.0	gix@0.85.0 [^0.34.0]		https://index.crates.io/gi/x-/gix-worktree-stream
+cargo-semver-checks-0.51.0	globset	0.4.20	0.4.22	0.4.22			https://index.crates.io/gl/ob/globset
+cargo-semver-checks-0.51.0	h2	0.4.19	0.4.21	0.4.21			https://index.crates.io/2/h2
+cargo-semver-checks-0.51.0	handlebars	6.4.4	6.4.4	6.4.4			https://index.crates.io/ha/nd/handlebars
+cargo-semver-checks-0.51.0	hash32	0.3.1	0.3.1	1.0.0	heapless@0.8.0 [^0.3.0]		https://index.crates.io/ha/sh/hash32
+cargo-semver-checks-0.51.0	hashbrown	0.16.1, 0.17.1	0.16.1	0.17.2	clru@0.6.3 [^0.16]		https://index.crates.io/ha/sh/hashbrown
+cargo-semver-checks-0.51.0	hashbrown	0.16.1, 0.17.1	0.17.2	0.17.2			https://index.crates.io/ha/sh/hashbrown
+cargo-semver-checks-0.51.0	heapless	0.8.0	0.8.0	0.9.4	faster-hex@0.10.1 [^0.8]	RUSTSEC-2026-0574, RUSTSEC-2026-0575, RUSTSEC-2026-0576, RUSTSEC-2026-0577, RUSTSEC-2026-0578, RUSTSEC-2026-0579, RUSTSEC-2026-0580, RUSTSEC-2026-0581, RUSTSEC-2026-0582	https://index.crates.io/he/ap/heapless
+cargo-semver-checks-0.51.0	heck	0.5.0	0.5.0	0.5.0			https://index.crates.io/he/ck/heck
+cargo-semver-checks-0.51.0	http	1.5.0	1.5.0	1.5.0			https://index.crates.io/ht/tp/http
+cargo-semver-checks-0.51.0	http-body	1.1.0	1.1.0	1.1.0			https://index.crates.io/ht/tp/http-body
+cargo-semver-checks-0.51.0	http-body-util	0.1.5	0.1.5	0.1.5			https://index.crates.io/ht/tp/http-body-util
+cargo-semver-checks-0.51.0	httparse	1.10.1	1.10.1	1.10.1			https://index.crates.io/ht/tp/httparse
+cargo-semver-checks-0.51.0	human-panic	2.0.8	2.0.8	2.0.8			https://index.crates.io/hu/ma/human-panic
+cargo-semver-checks-0.51.0	hybrid-array	0.4.15	0.4.15	0.4.15			https://index.crates.io/hy/br/hybrid-array
+cargo-semver-checks-0.51.0	hyper	1.11.1	1.13.0	1.13.0			https://index.crates.io/hy/pe/hyper
+cargo-semver-checks-0.51.0	hyper-rustls	0.27.10	0.27.10	0.27.10			https://index.crates.io/hy/pe/hyper-rustls
+cargo-semver-checks-0.51.0	hyper-util	0.1.21	0.1.21	0.1.21			https://index.crates.io/hy/pe/hyper-util
+cargo-semver-checks-0.51.0	icu_collections	2.3.0	2.4.0	2.4.0			https://index.crates.io/ic/u_/icu_collections
+cargo-semver-checks-0.51.0	icu_locale_core	2.3.0	2.4.0	2.4.0			https://index.crates.io/ic/u_/icu_locale_core
+cargo-semver-checks-0.51.0	icu_normalizer	2.3.0	2.4.0	2.4.0			https://index.crates.io/ic/u_/icu_normalizer
+cargo-semver-checks-0.51.0	icu_normalizer_data	2.3.0	2.4.0	2.4.0			https://index.crates.io/ic/u_/icu_normalizer_data
+cargo-semver-checks-0.51.0	icu_properties	2.3.0	2.4.0	2.4.0			https://index.crates.io/ic/u_/icu_properties
+cargo-semver-checks-0.51.0	icu_properties_data	2.3.0	2.4.0	2.4.0			https://index.crates.io/ic/u_/icu_properties_data
+cargo-semver-checks-0.51.0	icu_provider	2.3.1	2.4.0	2.4.0			https://index.crates.io/ic/u_/icu_provider
+cargo-semver-checks-0.51.0	ident_case	1.0.1	1.0.1	1.0.1			https://index.crates.io/id/en/ident_case
+cargo-semver-checks-0.51.0	idna	1.1.0	1.1.0	1.1.0			https://index.crates.io/id/na/idna
+cargo-semver-checks-0.51.0	idna_adapter	1.2.2	1.2.2	1.2.2			https://index.crates.io/id/na/idna_adapter
+cargo-semver-checks-0.51.0	ignore	0.4.33	0.4.35	0.4.35			https://index.crates.io/ig/no/ignore
+cargo-semver-checks-0.51.0	indexmap	2.14.2	2.14.2	2.14.2			https://index.crates.io/in/de/indexmap
+cargo-semver-checks-0.51.0	insta	1.48.0	1.49.0	1.49.0			https://index.crates.io/in/st/insta
+cargo-semver-checks-0.51.0	insta-cmd	0.7.0	0.7.0	0.7.0			https://index.crates.io/in/st/insta-cmd
+cargo-semver-checks-0.51.0	ipnet	2.12.2	2.12.2	2.12.2			https://index.crates.io/ip/ne/ipnet
+cargo-semver-checks-0.51.0	is_terminal_polyfill	1.70.2	1.70.2	1.70.2			https://index.crates.io/is/_t/is_terminal_polyfill
+cargo-semver-checks-0.51.0	itertools	0.13.0, 0.15.0	0.15.0	0.15.0			https://index.crates.io/it/er/itertools
+cargo-semver-checks-0.51.0	itoa	1.0.18	1.0.19	1.0.19			https://index.crates.io/it/oa/itoa
+cargo-semver-checks-0.51.0	jiff	0.2.37	0.2.46	1.0.3	gix-date@0.15.6 [^0.2.25]		https://index.crates.io/ji/ff/jiff
+cargo-semver-checks-0.51.0	jiff-core	0.1.1	0.1.8	1.0.2	jiff-static@0.2.46 [^0.1.8]; jiff@0.2.46 [^0.1.8]		https://index.crates.io/ji/ff/jiff-core
+cargo-semver-checks-0.51.0	jiff-static	0.2.37	0.2.46	1.0.3	jiff@0.2.46 [=0.2.46, ^0.2]		https://index.crates.io/ji/ff/jiff-static
+cargo-semver-checks-0.51.0	jiff-tzdb	0.1.8	0.1.10	1.0.0	jiff-tzdb-platform@0.1.3 [^0.1.4]		https://index.crates.io/ji/ff/jiff-tzdb
+cargo-semver-checks-0.51.0	jiff-tzdb-platform	0.1.3	0.1.3	1.0.0	jiff@0.2.46 [^0.1.3]		https://index.crates.io/ji/ff/jiff-tzdb-platform
+cargo-semver-checks-0.51.0	jni	0.22.4	0.22.4	0.22.4			https://index.crates.io/3/j/jni
+cargo-semver-checks-0.51.0	jni-macros	0.22.4	0.22.4	0.22.4			https://index.crates.io/jn/i-/jni-macros
+cargo-semver-checks-0.51.0	jni-sys	0.4.1	0.4.1	0.4.1			https://index.crates.io/jn/i-/jni-sys
+cargo-semver-checks-0.51.0	jni-sys-macros	0.4.1	0.4.1	0.4.1			https://index.crates.io/jn/i-/jni-sys-macros
+cargo-semver-checks-0.51.0	js-sys	0.3.106	0.3.107	0.3.107			https://index.crates.io/js/-s/js-sys
+cargo-semver-checks-0.51.0	kstring	2.0.2	2.0.2	2.0.5	gix-attributes@0.33.2 [^2.0.0]		https://index.crates.io/ks/tr/kstring
+cargo-semver-checks-0.51.0	libc	0.2.189	0.2.191	0.2.191			https://index.crates.io/li/bc/libc
+cargo-semver-checks-0.51.0	libredox	0.1.25	0.1.25	0.2.2	redox_users@0.5.3 [^0.1.3]		https://index.crates.io/li/br/libredox
+cargo-semver-checks-0.51.0	linux-raw-sys	0.12.1	0.12.1	0.12.1			https://index.crates.io/li/nu/linux-raw-sys
+cargo-semver-checks-0.51.0	litemap	0.8.3	0.8.3	0.8.3			https://index.crates.io/li/te/litemap
+cargo-semver-checks-0.51.0	lock_api	0.4.14	0.4.14	0.5.0	parking_lot@0.12.5 [^0.4.14]		https://index.crates.io/lo/ck/lock_api
+cargo-semver-checks-0.51.0	log	0.4.34	0.4.35	0.4.35			https://index.crates.io/3/l/log
+cargo-semver-checks-0.51.0	maplit	1.0.2	1.0.2	1.0.2			https://index.crates.io/ma/pl/maplit
+cargo-semver-checks-0.51.0	maybe-async	0.2.11	0.2.11	0.2.11			https://index.crates.io/ma/yb/maybe-async
+cargo-semver-checks-0.51.0	memchr	2.8.3	2.8.3	2.8.3			https://index.crates.io/me/mc/memchr
+cargo-semver-checks-0.51.0	memmap2	0.9.11	0.9.12	0.9.12			https://index.crates.io/me/mm/memmap2
+cargo-semver-checks-0.51.0	miniz_oxide	0.8.9, 0.9.1	0.9.1	0.9.1			https://index.crates.io/mi/ni/miniz_oxide
+cargo-semver-checks-0.51.0	mio	1.2.3	1.2.5	1.2.5			https://index.crates.io/3/m/mio
+cargo-semver-checks-0.51.0	multiversion_no_op	1.0.0	1.0.0	1.0.0			https://index.crates.io/mu/lt/multiversion_no_op
+cargo-semver-checks-0.51.0	nonempty	0.12.0	0.12.0	0.12.0			https://index.crates.io/no/ne/nonempty
+cargo-semver-checks-0.51.0	normalize-line-endings	0.3.0	0.3.0	0.3.0			https://index.crates.io/no/rm/normalize-line-endings
+cargo-semver-checks-0.51.0	ntapi	0.4.3	0.4.3	0.4.3			https://index.crates.io/nt/ap/ntapi
+cargo-semver-checks-0.51.0	num-modular	0.6.5	0.6.5	0.7.0	num-order@1.2.0 [^0.6.1]		https://index.crates.io/nu/m-/num-modular
+cargo-semver-checks-0.51.0	num-order	1.2.0	1.2.0	1.2.0			https://index.crates.io/nu/m-/num-order
+cargo-semver-checks-0.51.0	num-traits	0.2.19	0.2.19	0.2.19			https://index.crates.io/nu/m-/num-traits
+cargo-semver-checks-0.51.0	objc2-core-foundation	0.3.2	0.3.2	0.3.2			https://index.crates.io/ob/jc/objc2-core-foundation
+cargo-semver-checks-0.51.0	objc2-io-kit	0.3.2	0.3.2	0.3.2			https://index.crates.io/ob/jc/objc2-io-kit
+cargo-semver-checks-0.51.0	object	0.37.3	0.39.1	0.41.0	ar_archive_writer@0.5.5 [^0.39]		https://index.crates.io/ob/je/object
+cargo-semver-checks-0.51.0	object	0.37.3	0.40.0	0.41.0	backtrace@0.3.77 [^0.40.0]		https://index.crates.io/ob/je/object
+cargo-semver-checks-0.51.0	once_cell	1.21.4	1.21.4	1.21.4			https://index.crates.io/on/ce/once_cell
+cargo-semver-checks-0.51.0	once_cell_polyfill	1.70.2	1.70.2	1.70.2			https://index.crates.io/on/ce/once_cell_polyfill
+cargo-semver-checks-0.51.0	openssl-probe	0.2.1	0.2.2	0.2.2			https://index.crates.io/op/en/openssl-probe
+cargo-semver-checks-0.51.0	option-ext	0.2.0	0.2.0	0.2.0			https://index.crates.io/op/ti/option-ext
+cargo-semver-checks-0.51.0	parking_lot	0.12.5	0.12.5	0.13.0	gix-features@0.48.1 [^0.12.4]; gix-hashtable@0.15.2 [^0.12.4]; gix-odb@0.82.0 [^0.12.4]; gix-tempfile@23.0.2 [^0.12.4]; gix-worktree-stream@0.34.0 [^0.12.4]; prodash@31.0.1 [^0.12.1]		https://index.crates.io/pa/rk/parking_lot
+cargo-semver-checks-0.51.0	parking_lot_core	0.9.12	0.9.12	0.10.0	parking_lot@0.12.5 [^0.9.12]		https://index.crates.io/pa/rk/parking_lot_core
+cargo-semver-checks-0.51.0	percent-encoding	2.3.2	2.3.2	2.3.2			https://index.crates.io/pe/rc/percent-encoding
+cargo-semver-checks-0.51.0	pest	2.9.2	2.9.7	2.9.7			https://index.crates.io/pe/st/pest
+cargo-semver-checks-0.51.0	pest_derive	2.9.2	2.9.7	2.9.7			https://index.crates.io/pe/st/pest_derive
+cargo-semver-checks-0.51.0	pest_generator	2.9.2	2.9.7	2.9.7			https://index.crates.io/pe/st/pest_generator
+cargo-semver-checks-0.51.0	pest_meta	2.9.2	2.9.7	2.9.7			https://index.crates.io/pe/st/pest_meta
+cargo-semver-checks-0.51.0	pest_stack_guard		1.0.1	1.0.1			https://index.crates.io/pe/st/pest_stack_guard
+cargo-semver-checks-0.51.0	pin-project-lite	0.2.17	0.2.18	0.2.18			https://index.crates.io/pi/n-/pin-project-lite
+cargo-semver-checks-0.51.0	portable-atomic	1.15.0	1.15.0	1.15.0			https://index.crates.io/po/rt/portable-atomic
+cargo-semver-checks-0.51.0	portable-atomic-util	0.2.8	0.2.8	0.2.8			https://index.crates.io/po/rt/portable-atomic-util
+cargo-semver-checks-0.51.0	potential_utf	0.1.6	0.1.6	0.1.6			https://index.crates.io/po/te/potential_utf
+cargo-semver-checks-0.51.0	predicates	3.1.4	3.1.4	3.1.4			https://index.crates.io/pr/ed/predicates
+cargo-semver-checks-0.51.0	predicates-core	1.0.10	1.0.10	1.0.10			https://index.crates.io/pr/ed/predicates-core
+cargo-semver-checks-0.51.0	predicates-tree	1.0.13	1.0.13	1.0.13			https://index.crates.io/pr/ed/predicates-tree
+cargo-semver-checks-0.51.0	proc-macro2	1.0.107	1.0.107	1.0.107			https://index.crates.io/pr/oc/proc-macro2
+cargo-semver-checks-0.51.0	prodash	31.0.0	31.0.1	31.0.1			https://index.crates.io/pr/od/prodash
+cargo-semver-checks-0.51.0	psm		0.1.32	0.1.32			https://index.crates.io/3/p/psm
+cargo-semver-checks-0.51.0	quote	1.0.47	1.0.47	1.0.47			https://index.crates.io/qu/ot/quote
+cargo-semver-checks-0.51.0	r-efi	6.0.0	6.0.0	7.2.0	getrandom@0.4.3 [^6]		https://index.crates.io/r-/ef/r-efi
+cargo-semver-checks-0.51.0	rand	0.10.3	0.10.4	0.10.4			https://index.crates.io/ra/nd/rand
+cargo-semver-checks-0.51.0	rand_core	0.10.1	0.10.1	0.10.1			https://index.crates.io/ra/nd/rand_core
+cargo-semver-checks-0.51.0	rayon	1.12.0	1.12.0	1.12.0			https://index.crates.io/ra/yo/rayon
+cargo-semver-checks-0.51.0	rayon-core	1.13.0	1.13.0	1.13.0			https://index.crates.io/ra/yo/rayon-core
+cargo-semver-checks-0.51.0	redox_syscall	0.5.18	0.5.18	0.10.0	parking_lot_core@0.9.12 [^0.5]		https://index.crates.io/re/do/redox_syscall
+cargo-semver-checks-0.51.0	redox_users	0.5.3	0.5.3	0.5.3			https://index.crates.io/re/do/redox_users
+cargo-semver-checks-0.51.0	regex	1.13.1	1.13.2	1.13.2			https://index.crates.io/re/ge/regex
+cargo-semver-checks-0.51.0	regex-automata	0.4.18	0.4.19	0.4.19			https://index.crates.io/re/ge/regex-automata
+cargo-semver-checks-0.51.0	regex-syntax	0.8.11	0.8.12	0.8.12			https://index.crates.io/re/ge/regex-syntax
+cargo-semver-checks-0.51.0	reqwest	0.13.5	0.13.5	0.13.5			https://index.crates.io/re/qw/reqwest
+cargo-semver-checks-0.51.0	ring	0.17.14	0.17.14	0.17.14			https://index.crates.io/ri/ng/ring
+cargo-semver-checks-0.51.0	ron	0.12.2	0.12.3	0.12.3			https://index.crates.io/3/r/ron
+cargo-semver-checks-0.51.0	rustc-demangle	0.1.28	0.1.28	0.1.28			https://index.crates.io/ru/st/rustc-demangle
+cargo-semver-checks-0.51.0	rustc-hash	2.1.3	2.1.3	2.1.3			https://index.crates.io/ru/st/rustc-hash
+cargo-semver-checks-0.51.0	rustc-stable-hash	0.1.2	0.1.2	0.1.2			https://index.crates.io/ru/st/rustc-stable-hash
+cargo-semver-checks-0.51.0	rustc_version	0.4.1	0.4.1	0.4.1			https://index.crates.io/ru/st/rustc_version
+cargo-semver-checks-0.51.0	rustdoc-types	0.57.4, 0.60.0, 0.61.0	0.57.4	0.61.0	trustfall-rustdoc-adapter@57.1.5 [^0.57.0]		https://index.crates.io/ru/st/rustdoc-types
+cargo-semver-checks-0.51.0	rustdoc-types	0.57.4, 0.60.0, 0.61.0	0.60.0	0.61.0	trustfall-rustdoc-adapter@60.0.5 [^0.60.0]		https://index.crates.io/ru/st/rustdoc-types
+cargo-semver-checks-0.51.0	rustdoc-types	0.57.4, 0.60.0, 0.61.0	0.61.0	0.61.0			https://index.crates.io/ru/st/rustdoc-types
+cargo-semver-checks-0.51.0	rustix	1.1.5	1.1.6	1.1.6			https://index.crates.io/ru/st/rustix
+cargo-semver-checks-0.51.0	rustls	0.23.45	0.23.46	0.23.46			https://index.crates.io/ru/st/rustls
+cargo-semver-checks-0.51.0	rustls-native-certs	0.8.4	0.8.5	0.8.5			https://index.crates.io/ru/st/rustls-native-certs
+cargo-semver-checks-0.51.0	rustls-pki-types	1.15.1	1.16.0	1.16.0			https://index.crates.io/ru/st/rustls-pki-types
+cargo-semver-checks-0.51.0	rustls-platform-verifier	0.7.1	0.7.1	0.7.1			https://index.crates.io/ru/st/rustls-platform-verifier
+cargo-semver-checks-0.51.0	rustls-platform-verifier-android	0.2.0	0.2.0	0.2.0			https://index.crates.io/ru/st/rustls-platform-verifier-android
+cargo-semver-checks-0.51.0	rustls-webpki	0.103.15	0.103.17	0.103.17			https://index.crates.io/ru/st/rustls-webpki
+cargo-semver-checks-0.51.0	rustversion	1.0.23	1.0.23	1.0.23			https://index.crates.io/ru/st/rustversion
+cargo-semver-checks-0.51.0	same-file	1.0.6	1.0.6	1.0.6			https://index.crates.io/sa/me/same-file
+cargo-semver-checks-0.51.0	schannel	0.1.29	0.1.30	0.1.30			https://index.crates.io/sc/ha/schannel
+cargo-semver-checks-0.51.0	scopeguard	1.2.0	1.2.0	1.2.0			https://index.crates.io/sc/op/scopeguard
+cargo-semver-checks-0.51.0	security-framework	3.7.0	3.7.0	3.7.0			https://index.crates.io/se/cu/security-framework
+cargo-semver-checks-0.51.0	security-framework-sys	2.17.0	2.17.0	2.17.0			https://index.crates.io/se/cu/security-framework-sys
+cargo-semver-checks-0.51.0	semver	1.0.28	1.0.28	1.0.28			https://index.crates.io/se/mv/semver
+cargo-semver-checks-0.51.0	serde	1.0.229	1.0.229	1.0.229			https://index.crates.io/se/rd/serde
+cargo-semver-checks-0.51.0	serde_core	1.0.229	1.0.229	1.0.229			https://index.crates.io/se/rd/serde_core
+cargo-semver-checks-0.51.0	serde_derive	1.0.229	1.0.229	1.0.229			https://index.crates.io/se/rd/serde_derive
+cargo-semver-checks-0.51.0	serde_json	1.0.151	1.0.154	1.0.154			https://index.crates.io/se/rd/serde_json
+cargo-semver-checks-0.51.0	serde_spanned	1.1.1	1.1.3	1.1.3			https://index.crates.io/se/rd/serde_spanned
+cargo-semver-checks-0.51.0	sha1	0.10.7	0.10.7	0.11.0	sha1-checked@0.10.0 [^0.10.6]		https://index.crates.io/sh/a1/sha1
+cargo-semver-checks-0.51.0	sha1-checked	0.10.0	0.10.0	0.10.0			https://index.crates.io/sh/a1/sha1-checked
+cargo-semver-checks-0.51.0	sha2	0.11.0	0.11.2	0.11.2			https://index.crates.io/sh/a2/sha2
+cargo-semver-checks-0.51.0	shell-escape	0.1.5	0.1.5	0.1.5			https://index.crates.io/sh/el/shell-escape
+cargo-semver-checks-0.51.0	shell-words	1.1.1	1.1.1	1.1.1			https://index.crates.io/sh/el/shell-words
+cargo-semver-checks-0.51.0	shlex	2.0.1	2.0.1	2.0.1			https://index.crates.io/sh/le/shlex
+cargo-semver-checks-0.51.0	simd-adler32	0.3.10	0.3.10	0.3.10			https://index.crates.io/si/md/simd-adler32
+cargo-semver-checks-0.51.0	simd_cesu8	1.2.0	1.2.0	1.2.0			https://index.crates.io/si/md/simd_cesu8
+cargo-semver-checks-0.51.0	simdutf8	0.1.5	0.1.5	0.1.5			https://index.crates.io/si/md/simdutf8
+cargo-semver-checks-0.51.0	similar	2.7.0, 3.2.0	2.7.0	3.2.1	insta@1.49.0 [^2.1.0]		https://index.crates.io/si/mi/similar
+cargo-semver-checks-0.51.0	similar	2.7.0, 3.2.0	3.2.1	3.2.1			https://index.crates.io/si/mi/similar
+cargo-semver-checks-0.51.0	similar-asserts	2.0.0	2.0.0	2.0.0			https://index.crates.io/si/mi/similar-asserts
+cargo-semver-checks-0.51.0	slab	0.4.12	0.4.12	0.4.12			https://index.crates.io/sl/ab/slab
+cargo-semver-checks-0.51.0	smallvec	1.16.2	1.16.6	1.16.6			https://index.crates.io/sm/al/smallvec
+cargo-semver-checks-0.51.0	smol_str	0.3.6	0.3.7	0.3.7			https://index.crates.io/sm/ol/smol_str
+cargo-semver-checks-0.51.0	socket2	0.6.5	0.6.5	0.6.5			https://index.crates.io/so/ck/socket2
+cargo-semver-checks-0.51.0	stable_deref_trait	1.2.1	1.2.1	1.2.1			https://index.crates.io/st/ab/stable_deref_trait
+cargo-semver-checks-0.51.0	stacker		0.1.25	0.1.25			https://index.crates.io/st/ac/stacker
+cargo-semver-checks-0.51.0	static_assertions	1.1.0	1.1.0	1.1.0			https://index.crates.io/st/at/static_assertions
+cargo-semver-checks-0.51.0	strip-ansi-escapes	0.2.1	0.2.1	0.2.1			https://index.crates.io/st/ri/strip-ansi-escapes
+cargo-semver-checks-0.51.0	strsim	0.11.1	0.11.1	0.11.1			https://index.crates.io/st/rs/strsim
+cargo-semver-checks-0.51.0	subtle	2.6.1	2.6.1	2.6.1			https://index.crates.io/su/bt/subtle
+cargo-semver-checks-0.51.0	syn	2.0.119, 3.0.6	2.0.119	3.0.10	darling_core@0.20.11 [^2.0.15]; darling_macro@0.20.11 [^2.0.15]; derive_builder_core@0.20.2 [^2.0.15]; derive_builder_macro@0.20.2 [^2.0.15]; git-version-macro@0.3.9 [^2.0]; jiff-static@0.2.46 [^2.0.98]; jni-macros@0.22.4 [^2.0]; jni-sys-macros@0.4.1 [^2]; maybe-async@0.2.11 [^2.0]; trustfall_derive@0.3.1 [^2.0]; windows-implement@0.57.0 [^2.0]; windows-implement@0.60.2 [^2.0]; windows-interface@0.57.0 [^2.0]; windows-interface@0.59.3 [^2.0]		https://index.crates.io/3/s/syn
+cargo-semver-checks-0.51.0	syn	2.0.119, 3.0.6	3.0.10	3.0.10			https://index.crates.io/3/s/syn
+cargo-semver-checks-0.51.0	sync_wrapper	1.0.2	1.0.2	1.0.2			https://index.crates.io/sy/nc/sync_wrapper
+cargo-semver-checks-0.51.0	synstructure	0.13.2, 0.14.0	0.14.0	0.14.0			https://index.crates.io/sy/ns/synstructure
+cargo-semver-checks-0.51.0	sysinfo	0.33.1, 0.38.4	0.33.1	0.40.4	bugreport@0.6.0 [^0.33.1]		https://index.crates.io/sy/si/sysinfo
+cargo-semver-checks-0.51.0	sysinfo	0.33.1, 0.38.4	0.38.4	0.40.4	human-panic@2.0.8 [^0.38.3]		https://index.crates.io/sy/si/sysinfo
+cargo-semver-checks-0.51.0	system-configuration	0.7.0	0.7.0	0.8.0	hyper-util@0.1.21 [^0.7]		https://index.crates.io/sy/st/system-configuration
+cargo-semver-checks-0.51.0	system-configuration-sys	0.6.0	0.6.0	0.6.0			https://index.crates.io/sy/st/system-configuration-sys
+cargo-semver-checks-0.51.0	tame-index	0.26.3	0.26.3	0.28.0	cargo-semver-checks@0.51.0 [^0.26]		https://index.crates.io/ta/me/tame-index
+cargo-semver-checks-0.51.0	tempfile	3.27.0	3.27.0	3.27.0			https://index.crates.io/te/mp/tempfile
+cargo-semver-checks-0.51.0	termtree	0.5.1	0.5.1	1.0.0	predicates-tree@1.0.13 [^0.5.0]		https://index.crates.io/te/rm/termtree
+cargo-semver-checks-0.51.0	thiserror	1.0.69, 2.0.21	2.0.21	2.0.21			https://index.crates.io/th/is/thiserror
+cargo-semver-checks-0.51.0	thiserror-impl	1.0.69, 2.0.21	2.0.21	2.0.21			https://index.crates.io/th/is/thiserror-impl
+cargo-semver-checks-0.51.0	tinystr	0.8.4	0.8.5	0.8.5			https://index.crates.io/ti/ny/tinystr
+cargo-semver-checks-0.51.0	tinyvec	1.13.3	1.13.3	1.13.3			https://index.crates.io/ti/ny/tinyvec
+cargo-semver-checks-0.51.0	tokio	1.53.1	1.54.1	1.54.1			https://index.crates.io/to/ki/tokio
+cargo-semver-checks-0.51.0	tokio-rustls	0.26.5	0.26.6	0.26.6			https://index.crates.io/to/ki/tokio-rustls
+cargo-semver-checks-0.51.0	tokio-util	0.7.19	0.7.20	0.7.20			https://index.crates.io/to/ki/tokio-util
+cargo-semver-checks-0.51.0	toml	1.1.6+spec-1.1.0	1.2.3+spec-1.1.0	1.2.3+spec-1.1.0			https://index.crates.io/to/ml/toml
+cargo-semver-checks-0.51.0	toml-span	0.7.1	0.7.2	0.7.2			https://index.crates.io/to/ml/toml-span
+cargo-semver-checks-0.51.0	toml_datetime	1.1.1+spec-1.1.0	1.1.3+spec-1.1.0	1.1.3+spec-1.1.0			https://index.crates.io/to/ml/toml_datetime
+cargo-semver-checks-0.51.0	toml_edit	0.25.15+spec-1.1.0	0.25.21+spec-1.1.0	0.25.21+spec-1.1.0			https://index.crates.io/to/ml/toml_edit
+cargo-semver-checks-0.51.0	toml_parser	1.1.3+spec-1.1.0	1.1.7+spec-1.1.0	1.1.7+spec-1.1.0			https://index.crates.io/to/ml/toml_parser
+cargo-semver-checks-0.51.0	toml_writer	1.1.2+spec-1.1.0	1.2.0+spec-1.1.0	1.2.0+spec-1.1.0			https://index.crates.io/to/ml/toml_writer
+cargo-semver-checks-0.51.0	tower	0.5.3	0.5.3	0.5.3			https://index.crates.io/to/we/tower
+cargo-semver-checks-0.51.0	tower-http	0.6.11	0.6.11	0.7.1	reqwest@0.13.5 [^0.6.8]		https://index.crates.io/to/we/tower-http
+cargo-semver-checks-0.51.0	tower-layer	0.3.3	0.3.3	0.3.3			https://index.crates.io/to/we/tower-layer
+cargo-semver-checks-0.51.0	tower-service	0.3.3	0.3.3	0.3.3			https://index.crates.io/to/we/tower-service
+cargo-semver-checks-0.51.0	tracing	0.1.44	0.1.44	0.1.44			https://index.crates.io/tr/ac/tracing
+cargo-semver-checks-0.51.0	tracing-core	0.1.36	0.1.36	0.1.36			https://index.crates.io/tr/ac/tracing-core
+cargo-semver-checks-0.51.0	trustfall	0.8.1	0.8.2	0.8.2			https://index.crates.io/tr/us/trustfall
+cargo-semver-checks-0.51.0	trustfall-rustdoc-adapter	57.1.2, 60.0.2, 61.0.2	57.1.5	61.0.5	trustfall_rustdoc@0.41.0 [>=57.1.0, <57.2.0, >=60.0.0, <60.1.0, >=61.0.0, <61.1.0]		https://index.crates.io/tr/us/trustfall-rustdoc-adapter
+cargo-semver-checks-0.51.0	trustfall-rustdoc-adapter	57.1.2, 60.0.2, 61.0.2	60.0.5	61.0.5	trustfall_rustdoc@0.41.0 [>=57.1.0, <57.2.0, >=60.0.0, <60.1.0, >=61.0.0, <61.1.0]		https://index.crates.io/tr/us/trustfall-rustdoc-adapter
+cargo-semver-checks-0.51.0	trustfall-rustdoc-adapter	57.1.2, 60.0.2, 61.0.2	61.0.5	61.0.5			https://index.crates.io/tr/us/trustfall-rustdoc-adapter
+cargo-semver-checks-0.51.0	trustfall_core	0.8.1	0.8.2	0.8.2			https://index.crates.io/tr/us/trustfall_core
+cargo-semver-checks-0.51.0	trustfall_derive	0.3.1	0.3.1	0.3.1			https://index.crates.io/tr/us/trustfall_derive
+cargo-semver-checks-0.51.0	trustfall_rustdoc	0.41.0	0.41.0	0.41.0			https://index.crates.io/tr/us/trustfall_rustdoc
+cargo-semver-checks-0.51.0	try-lock	0.2.5	0.2.5	0.2.5			https://index.crates.io/tr/y-/try-lock
+cargo-semver-checks-0.51.0	twox-hash	2.1.4	2.1.5	2.1.5			https://index.crates.io/tw/ox/twox-hash
+cargo-semver-checks-0.51.0	typeid	1.0.3	1.0.3	1.0.3			https://index.crates.io/ty/pe/typeid
+cargo-semver-checks-0.51.0	typenum	1.20.1	1.20.1	1.20.1			https://index.crates.io/ty/pe/typenum
+cargo-semver-checks-0.51.0	ucd-trie	0.1.7	0.1.8	0.1.8			https://index.crates.io/uc/d-/ucd-trie
+cargo-semver-checks-0.51.0	uluru	3.1.0	3.1.0	3.1.0			https://index.crates.io/ul/ur/uluru
+cargo-semver-checks-0.51.0	unicode-bom	2.0.3	2.0.3	2.0.3			https://index.crates.io/un/ic/unicode-bom
+cargo-semver-checks-0.51.0	unicode-ident	1.0.26	1.0.27	1.0.27			https://index.crates.io/un/ic/unicode-ident
+cargo-semver-checks-0.51.0	unicode-normalization	0.1.25	0.1.26	0.1.26			https://index.crates.io/un/ic/unicode-normalization
+cargo-semver-checks-0.51.0	unicode-segmentation	1.13.3	1.13.3	1.13.3			https://index.crates.io/un/ic/unicode-segmentation
+cargo-semver-checks-0.51.0	untrusted	0.9.0	0.9.0	0.9.0			https://index.crates.io/un/tr/untrusted
+cargo-semver-checks-0.51.0	url	2.5.8	2.5.9	2.5.9			https://index.crates.io/3/u/url
+cargo-semver-checks-0.51.0	urlencoding	2.1.3	2.1.3	2.1.3			https://index.crates.io/ur/le/urlencoding
+cargo-semver-checks-0.51.0	utf8_iter	1.0.4	1.1.0	1.1.0			https://index.crates.io/ut/f8/utf8_iter
+cargo-semver-checks-0.51.0	utf8parse	0.2.2	0.2.2	0.2.2			https://index.crates.io/ut/f8/utf8parse
+cargo-semver-checks-0.51.0	utf_types		1.0.0	1.0.0			https://index.crates.io/ut/f_/utf_types
+cargo-semver-checks-0.51.0	uuid	1.26.1	1.29.3	1.29.3			https://index.crates.io/uu/id/uuid
+cargo-semver-checks-0.51.0	version_check	0.9.5	0.9.5	0.9.5			https://index.crates.io/ve/rs/version_check
+cargo-semver-checks-0.51.0	vte	0.14.1	0.14.1	0.15.0	strip-ansi-escapes@0.2.1 [^0.14]		https://index.crates.io/3/v/vte
+cargo-semver-checks-0.51.0	wait-timeout	0.2.1	0.2.1	0.2.1			https://index.crates.io/wa/it/wait-timeout
+cargo-semver-checks-0.51.0	walkdir	2.5.0	2.5.1	2.5.1			https://index.crates.io/wa/lk/walkdir
+cargo-semver-checks-0.51.0	want	0.3.1	0.3.2	0.3.2			https://index.crates.io/wa/nt/want
+cargo-semver-checks-0.51.0	wasi	0.11.1+wasi-snapshot-preview1	0.11.1+wasi-snapshot-preview1	0.14.7+wasi-0.2.4	getrandom@0.2.17 [^0.11]; mio@1.2.5 [^0.11.0]		https://index.crates.io/wa/si/wasi
+cargo-semver-checks-0.51.0	wasm-bindgen	0.2.129	0.2.130	0.2.130			https://index.crates.io/wa/sm/wasm-bindgen
+cargo-semver-checks-0.51.0	wasm-bindgen-futures	0.4.79	0.4.80	0.4.80			https://index.crates.io/wa/sm/wasm-bindgen-futures
+cargo-semver-checks-0.51.0	wasm-bindgen-macro	0.2.129	0.2.130	0.2.130			https://index.crates.io/wa/sm/wasm-bindgen-macro
+cargo-semver-checks-0.51.0	wasm-bindgen-macro-support	0.2.129	0.2.130	0.2.130			https://index.crates.io/wa/sm/wasm-bindgen-macro-support
+cargo-semver-checks-0.51.0	wasm-bindgen-shared	0.2.129	0.2.130	0.2.130			https://index.crates.io/wa/sm/wasm-bindgen-shared
+cargo-semver-checks-0.51.0	web-sys	0.3.106	0.3.107	0.3.107			https://index.crates.io/we/b-/web-sys
+cargo-semver-checks-0.51.0	webpki-root-certs	1.0.9	1.0.12	1.0.12			https://index.crates.io/we/bp/webpki-root-certs
+cargo-semver-checks-0.51.0	winapi	0.3.9	0.3.9	0.3.9			https://index.crates.io/wi/na/winapi
+cargo-semver-checks-0.51.0	winapi-i686-pc-windows-gnu	0.4.0	0.4.0	0.4.0			https://index.crates.io/wi/na/winapi-i686-pc-windows-gnu
+cargo-semver-checks-0.51.0	winapi-util	0.1.11	0.1.11	0.1.11			https://index.crates.io/wi/na/winapi-util
+cargo-semver-checks-0.51.0	winapi-x86_64-pc-windows-gnu	0.4.0	0.4.0	0.4.0			https://index.crates.io/wi/na/winapi-x86_64-pc-windows-gnu
+cargo-semver-checks-0.51.0	windows	0.57.0, 0.62.2	0.57.0	0.62.2	sysinfo@0.33.1 [>=0.54, <=0.57]		https://index.crates.io/wi/nd/windows
+cargo-semver-checks-0.51.0	windows	0.57.0, 0.62.2	0.62.2	0.62.2			https://index.crates.io/wi/nd/windows
+cargo-semver-checks-0.51.0	windows-collections	0.3.2	0.3.2	0.100.0	windows@0.62.2 [^0.3.2]		https://index.crates.io/wi/nd/windows-collections
+cargo-semver-checks-0.51.0	windows-core	0.57.0, 0.62.2	0.57.0	0.100.0	windows@0.57.0 [^0.57.0]		https://index.crates.io/wi/nd/windows-core
+cargo-semver-checks-0.51.0	windows-core	0.57.0, 0.62.2	0.62.2	0.100.0	windows-collections@0.3.2 [^0.62.2]; windows-future@0.3.2 [^0.62.2]; windows-numerics@0.3.1 [^0.62.2]; windows@0.62.2 [^0.62.2]		https://index.crates.io/wi/nd/windows-core
+cargo-semver-checks-0.51.0	windows-future	0.3.2	0.3.2	0.100.0	windows@0.62.2 [^0.3.2]		https://index.crates.io/wi/nd/windows-future
+cargo-semver-checks-0.51.0	windows-implement	0.57.0, 0.60.2	0.57.0	0.100.0	windows-core@0.57.0 [^0.57.0]		https://index.crates.io/wi/nd/windows-implement
+cargo-semver-checks-0.51.0	windows-implement	0.57.0, 0.60.2	0.60.2	0.100.0	windows-core@0.62.2 [^0.60.2]		https://index.crates.io/wi/nd/windows-implement
+cargo-semver-checks-0.51.0	windows-interface	0.57.0, 0.59.3	0.57.0	0.100.0	windows-core@0.57.0 [^0.57.0]		https://index.crates.io/wi/nd/windows-interface
+cargo-semver-checks-0.51.0	windows-interface	0.57.0, 0.59.3	0.59.3	0.100.0	windows-core@0.62.2 [^0.59.3]		https://index.crates.io/wi/nd/windows-interface
+cargo-semver-checks-0.51.0	windows-link	0.2.1	0.2.1	0.100.0	backtrace@0.3.77 [^0.2]; jiff@0.2.46 [^0.2.1]; jni@0.22.4 [^0.2]; parking_lot_core@0.9.12 [^0.2.0]; windows-core@0.62.2 [^0.2.1]; windows-future@0.3.2 [^0.2.1]; windows-numerics@0.3.1 [^0.2.1]; windows-registry@0.6.1 [^0.2.1]; windows-result@0.4.1 [^0.2.1]; windows-strings@0.5.1 [^0.2.1]; windows-sys@0.61.2 [^0.2.1]; windows-threading@0.2.1 [^0.2.1]		https://index.crates.io/wi/nd/windows-link
+cargo-semver-checks-0.51.0	windows-numerics	0.3.1	0.3.1	0.100.0	windows@0.62.2 [^0.3.1]		https://index.crates.io/wi/nd/windows-numerics
+cargo-semver-checks-0.51.0	windows-registry	0.6.1	0.6.1	0.100.0	hyper-util@0.1.21 [>=0.3, <0.7]		https://index.crates.io/wi/nd/windows-registry
+cargo-semver-checks-0.51.0	windows-result	0.1.2, 0.4.1	0.1.2	0.100.0	windows-core@0.57.0 [^0.1.1]		https://index.crates.io/wi/nd/windows-result
+cargo-semver-checks-0.51.0	windows-result	0.1.2, 0.4.1	0.4.1	0.100.0	windows-core@0.62.2 [^0.4.1]; windows-registry@0.6.1 [^0.4.1]		https://index.crates.io/wi/nd/windows-result
+cargo-semver-checks-0.51.0	windows-strings	0.5.1	0.5.1	0.100.0	windows-core@0.62.2 [^0.5.1]; windows-registry@0.6.1 [^0.5.1]		https://index.crates.io/wi/nd/windows-strings
+cargo-semver-checks-0.51.0	windows-sys	0.52.0, 0.61.2	0.52.0	0.61.2	ring@0.17.14 [^0.52]		https://index.crates.io/wi/nd/windows-sys
+cargo-semver-checks-0.51.0	windows-sys	0.52.0, 0.61.2	0.61.2	0.61.2			https://index.crates.io/wi/nd/windows-sys
+cargo-semver-checks-0.51.0	windows-targets	0.52.6	0.52.6	0.53.5	windows-core@0.57.0 [^0.52.5]; windows-result@0.1.2 [^0.52.5]; windows-sys@0.52.0 [^0.52.0]; windows@0.57.0 [^0.52.5]		https://index.crates.io/wi/nd/windows-targets
+cargo-semver-checks-0.51.0	windows-threading	0.2.1	0.2.1	0.100.0	windows-future@0.3.2 [^0.2.1]		https://index.crates.io/wi/nd/windows-threading
+cargo-semver-checks-0.51.0	windows_aarch64_gnullvm	0.52.6	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_aarch64_gnullvm
+cargo-semver-checks-0.51.0	windows_aarch64_msvc	0.52.6	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_aarch64_msvc
+cargo-semver-checks-0.51.0	windows_i686_gnu	0.52.6	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_i686_gnu
+cargo-semver-checks-0.51.0	windows_i686_gnullvm	0.52.6	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_i686_gnullvm
+cargo-semver-checks-0.51.0	windows_i686_msvc	0.52.6	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_i686_msvc
+cargo-semver-checks-0.51.0	windows_x86_64_gnu	0.52.6	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_x86_64_gnu
+cargo-semver-checks-0.51.0	windows_x86_64_gnullvm	0.52.6	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_x86_64_gnullvm
+cargo-semver-checks-0.51.0	windows_x86_64_msvc	0.52.6	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_x86_64_msvc
+cargo-semver-checks-0.51.0	winnow	1.0.4	1.0.5	1.0.5			https://index.crates.io/wi/nn/winnow
+cargo-semver-checks-0.51.0	writeable	0.6.4	0.6.4	0.6.4			https://index.crates.io/wr/it/writeable
+cargo-semver-checks-0.51.0	yoke	0.8.3	0.8.4	0.8.4			https://index.crates.io/yo/ke/yoke
+cargo-semver-checks-0.51.0	yoke-derive	0.8.2	0.8.4	0.8.4			https://index.crates.io/yo/ke/yoke-derive
+cargo-semver-checks-0.51.0	zerofrom	0.1.8	0.1.8	0.1.8			https://index.crates.io/ze/ro/zerofrom
+cargo-semver-checks-0.51.0	zerofrom-derive	0.1.8	0.1.8	0.1.8			https://index.crates.io/ze/ro/zerofrom-derive
+cargo-semver-checks-0.51.0	zeroize	1.9.0	1.9.2	1.9.2			https://index.crates.io/ze/ro/zeroize
+cargo-semver-checks-0.51.0	zerotrie	0.2.5	0.2.5	0.2.5			https://index.crates.io/ze/ro/zerotrie
+cargo-semver-checks-0.51.0	zerovec	0.11.8	0.11.9	0.11.9			https://index.crates.io/ze/ro/zerovec
+cargo-semver-checks-0.51.0	zerovec-derive	0.11.6	0.11.7	0.11.7			https://index.crates.io/ze/ro/zerovec-derive
+cargo-semver-checks-0.51.0	zlib-rs	0.6.8	0.6.9	0.6.9			https://index.crates.io/zl/ib/zlib-rs
+cargo-semver-checks-0.51.0	zmij	1.0.23	1.0.23	1.0.23			https://index.crates.io/zm/ij/zmij
+rust-script-0.36.0	aho-corasick	1.1.3	1.1.5	1.1.5			https://index.crates.io/ah/o-/aho-corasick
+rust-script-0.36.0	anstream	0.6.20	1.0.0	1.0.0			https://index.crates.io/an/st/anstream
+rust-script-0.36.0	anstyle	1.0.11	1.0.14	1.0.14			https://index.crates.io/an/st/anstyle
+rust-script-0.36.0	anstyle-parse	0.2.7	1.0.0	1.0.0			https://index.crates.io/an/st/anstyle-parse
+rust-script-0.36.0	anstyle-query	1.1.4	1.1.5	1.1.5			https://index.crates.io/an/st/anstyle-query
+rust-script-0.36.0	anstyle-wincon	3.0.10	3.0.11	3.0.11			https://index.crates.io/an/st/anstyle-wincon
+rust-script-0.36.0	bitflags	2.9.1	2.13.2	2.13.2			https://index.crates.io/bi/tf/bitflags
+rust-script-0.36.0	block-buffer	0.10.4	0.10.4	0.12.1	digest@0.10.7 [^0.10]		https://index.crates.io/bl/oc/block-buffer
+rust-script-0.36.0	cfg-if	1.0.1	1.0.5	1.0.5			https://index.crates.io/cf/g-/cfg-if
+rust-script-0.36.0	clap	4.5.45	4.6.10	4.6.10			https://index.crates.io/cl/ap/clap
+rust-script-0.36.0	clap_builder	4.5.44	4.6.10	4.6.10			https://index.crates.io/cl/ap/clap_builder
+rust-script-0.36.0	clap_lex	0.7.5	1.1.2	1.1.2			https://index.crates.io/cl/ap/clap_lex
+rust-script-0.36.0	colorchoice	1.0.4	1.0.5	1.0.5			https://index.crates.io/co/lo/colorchoice
+rust-script-0.36.0	cpufeatures	0.2.17	0.2.17	0.3.1	sha1@0.10.7 [^0.2]		https://index.crates.io/cp/uf/cpufeatures
+rust-script-0.36.0	crypto-common	0.1.6	0.1.7	0.2.2	digest@0.10.7 [^0.1.3]		https://index.crates.io/cr/yp/crypto-common
+rust-script-0.36.0	digest	0.10.7	0.10.7	0.11.3	sha1@0.10.7 [^0.10.7]		https://index.crates.io/di/ge/digest
+rust-script-0.36.0	dirs	6.0.0	6.0.0	7.0.0	rust-script@0.36.0 [^6]		https://index.crates.io/di/rs/dirs
+rust-script-0.36.0	dirs-sys	0.5.0	0.5.0	0.5.0			https://index.crates.io/di/rs/dirs-sys
+rust-script-0.36.0	env_filter	0.1.3	2.1.0	2.1.0			https://index.crates.io/en/v_/env_filter
+rust-script-0.36.0	env_logger	0.11.8	0.11.12	0.11.12			https://index.crates.io/en/v_/env_logger
+rust-script-0.36.0	equivalent	1.0.2	1.0.3	1.0.3			https://index.crates.io/eq/ui/equivalent
+rust-script-0.36.0	errno	0.3.13	0.3.15	0.3.15			https://index.crates.io/er/rn/errno
+rust-script-0.36.0	fastrand	2.3.0	2.5.0	2.5.0			https://index.crates.io/fa/st/fastrand
+rust-script-0.36.0	generic-array	0.14.7	0.14.7	1.4.5	block-buffer@0.10.4 [^0.14]; crypto-common@0.1.7 [=0.14.7]		https://index.crates.io/ge/ne/generic-array
+rust-script-0.36.0	getopts	0.2.23	0.2.24	0.2.24			https://index.crates.io/ge/to/getopts
+rust-script-0.36.0	getrandom	0.2.16, 0.3.3	0.4.3	0.4.3			https://index.crates.io/ge/tr/getrandom
+rust-script-0.36.0	hashbrown	0.15.5	0.17.2	0.17.2			https://index.crates.io/ha/sh/hashbrown
+rust-script-0.36.0	indexmap	2.10.0	2.14.2	2.14.2			https://index.crates.io/in/de/indexmap
+rust-script-0.36.0	is_terminal_polyfill	1.70.1	1.70.2	1.70.2			https://index.crates.io/is/_t/is_terminal_polyfill
+rust-script-0.36.0	itertools	0.4.19	0.4.19	0.15.0	scan-rules@0.2.0 [^0.4.0]		https://index.crates.io/it/er/itertools
+rust-script-0.36.0	jiff	0.2.15	1.0.3	1.0.3			https://index.crates.io/ji/ff/jiff
+rust-script-0.36.0	jiff-core		1.0.2	1.0.2			https://index.crates.io/ji/ff/jiff-core
+rust-script-0.36.0	jiff-static	0.2.15	1.0.3	1.0.3			https://index.crates.io/ji/ff/jiff-static
+rust-script-0.36.0	lazy_static	0.1.16, 1.5.0	0.1.16	1.5.1	scan-rules@0.2.0 [^0.1.14]		https://index.crates.io/la/zy/lazy_static
+rust-script-0.36.0	lazy_static	0.1.16, 1.5.0	1.5.1	1.5.1			https://index.crates.io/la/zy/lazy_static
+rust-script-0.36.0	libc	0.2.175	0.2.191	0.2.191			https://index.crates.io/li/bc/libc
+rust-script-0.36.0	libredox	0.1.9	0.1.25	0.2.2	redox_users@0.5.3 [^0.1.3]		https://index.crates.io/li/br/libredox
+rust-script-0.36.0	linux-raw-sys	0.9.4	0.12.1	0.12.1			https://index.crates.io/li/nu/linux-raw-sys
+rust-script-0.36.0	log	0.4.27	0.4.35	0.4.35			https://index.crates.io/3/l/log
+rust-script-0.36.0	memchr	2.7.5	2.8.3	2.8.3			https://index.crates.io/me/mc/memchr
+rust-script-0.36.0	once_cell	1.21.3	1.21.4	1.21.4			https://index.crates.io/on/ce/once_cell
+rust-script-0.36.0	once_cell_polyfill	1.70.1	1.70.2	1.70.2			https://index.crates.io/on/ce/once_cell_polyfill
+rust-script-0.36.0	option-ext	0.2.0	0.2.0	0.2.0			https://index.crates.io/op/ti/option-ext
+rust-script-0.36.0	portable-atomic	1.11.1	1.15.0	1.15.0			https://index.crates.io/po/rt/portable-atomic
+rust-script-0.36.0	portable-atomic-util	0.2.4	0.2.8	0.2.8			https://index.crates.io/po/rt/portable-atomic-util
+rust-script-0.36.0	proc-macro2	1.0.97	1.0.107	1.0.107			https://index.crates.io/pr/oc/proc-macro2
+rust-script-0.36.0	pulldown-cmark	0.13.0	0.13.6	0.13.6			https://index.crates.io/pu/ll/pulldown-cmark
+rust-script-0.36.0	pulldown-cmark-escape	0.11.0	0.11.0	0.11.0			https://index.crates.io/pu/ll/pulldown-cmark-escape
+rust-script-0.36.0	quote	1.0.40	1.0.47	1.0.47			https://index.crates.io/qu/ot/quote
+rust-script-0.36.0	r-efi	5.3.0	6.0.0	7.2.0	getrandom@0.4.3 [^6]		https://index.crates.io/r-/ef/r-efi
+rust-script-0.36.0	redox_users	0.5.2	0.5.3	0.5.3			https://index.crates.io/re/do/redox_users
+rust-script-0.36.0	regex	1.11.1	1.13.2	1.13.2			https://index.crates.io/re/ge/regex
+rust-script-0.36.0	regex-automata	0.4.9	0.4.19	0.4.19			https://index.crates.io/re/ge/regex-automata
+rust-script-0.36.0	regex-syntax	0.8.5	0.8.12	0.8.12			https://index.crates.io/re/ge/regex-syntax
+rust-script-0.36.0	rustc_version	0.1.7	0.1.7	0.4.1	scan-rules@0.2.0 [^0.1.4]; strcursor@0.2.5 [^0.1.4]		https://index.crates.io/ru/st/rustc_version
+rust-script-0.36.0	rustix	1.0.8	1.1.6	1.1.6			https://index.crates.io/ru/st/rustix
+rust-script-0.36.0	scan-rules	0.2.0	0.2.0	0.2.0			https://index.crates.io/sc/an/scan-rules
+rust-script-0.36.0	semver	0.1.20	0.1.20	1.0.28	rustc_version@0.1.7 [^0.1]		https://index.crates.io/se/mv/semver
+rust-script-0.36.0	serde_core		1.0.229	1.0.229			https://index.crates.io/se/rd/serde_core
+rust-script-0.36.0	serde_derive	1.0.219	1.0.229	1.0.229			https://index.crates.io/se/rd/serde_derive
+rust-script-0.36.0	serde_spanned	1.0.0	1.1.3	1.1.3			https://index.crates.io/se/rd/serde_spanned
+rust-script-0.36.0	sha1	0.10.6	0.10.7	0.11.0	rust-script@0.36.0 [^0.10]		https://index.crates.io/sh/a1/sha1
+rust-script-0.36.0	shell-words	1.1.0	1.1.1	1.1.1			https://index.crates.io/sh/el/shell-words
+rust-script-0.36.0	strcursor	0.2.5	0.2.5	0.2.5			https://index.crates.io/st/rc/strcursor
+rust-script-0.36.0	strsim	0.11.1	0.11.1	0.11.1			https://index.crates.io/st/rs/strsim
+rust-script-0.36.0	syn	2.0.106	3.0.10	3.0.10			https://index.crates.io/3/s/syn
+rust-script-0.36.0	tempfile	3.20.0	3.27.0	3.27.0			https://index.crates.io/te/mp/tempfile
+rust-script-0.36.0	thiserror	2.0.14	2.0.21	2.0.21			https://index.crates.io/th/is/thiserror
+rust-script-0.36.0	thiserror-impl	2.0.14	2.0.21	2.0.21			https://index.crates.io/th/is/thiserror-impl
+rust-script-0.36.0	toml	0.9.5	0.9.12+spec-1.1.0	1.2.3+spec-1.1.0	rust-script@0.36.0 [^0.9]		https://index.crates.io/to/ml/toml
+rust-script-0.36.0	toml_datetime	0.7.0	0.7.5+spec-1.1.0	1.1.3+spec-1.1.0	toml@0.9.12+spec-1.1.0 [^0.7.5]		https://index.crates.io/to/ml/toml_datetime
+rust-script-0.36.0	toml_parser	1.0.2	1.1.7+spec-1.1.0	1.1.7+spec-1.1.0			https://index.crates.io/to/ml/toml_parser
+rust-script-0.36.0	toml_writer	1.0.2	1.2.0+spec-1.1.0	1.2.0+spec-1.1.0			https://index.crates.io/to/ml/toml_writer
+rust-script-0.36.0	typenum	1.18.0	1.20.1	1.20.1			https://index.crates.io/ty/pe/typenum
+rust-script-0.36.0	unicase	2.8.1	2.10.0	2.10.0			https://index.crates.io/un/ic/unicase
+rust-script-0.36.0	unicode-ident	1.0.18	1.0.27	1.0.27			https://index.crates.io/un/ic/unicode-ident
+rust-script-0.36.0	unicode-segmentation	0.1.2	0.1.2	1.13.3	strcursor@0.2.5 [^0.1.0, < 0.1.3]		https://index.crates.io/un/ic/unicode-segmentation
+rust-script-0.36.0	unicode-width	0.2.1	0.2.3	0.2.3			https://index.crates.io/un/ic/unicode-width
+rust-script-0.36.0	utf8parse	0.2.2	0.2.2	0.2.2			https://index.crates.io/ut/f8/utf8parse
+rust-script-0.36.0	version_check	0.9.5	0.9.5	0.9.5			https://index.crates.io/ve/rs/version_check
+rust-script-0.36.0	windows-link	0.1.3	0.2.1	0.100.0	windows-sys@0.61.2 [^0.2.1]		https://index.crates.io/wi/nd/windows-link
+rust-script-0.36.0	windows-sys	0.59.0, 0.60.2	0.59.0	0.61.2	winreg@0.55.0 [^0.59]		https://index.crates.io/wi/nd/windows-sys
+rust-script-0.36.0	windows-sys	0.59.0, 0.60.2	0.61.2	0.61.2			https://index.crates.io/wi/nd/windows-sys
+rust-script-0.36.0	windows-targets	0.52.6, 0.53.3	0.52.6	0.53.5	windows-sys@0.59.0 [^0.52.6]		https://index.crates.io/wi/nd/windows-targets
+rust-script-0.36.0	windows_aarch64_gnullvm	0.52.6, 0.53.0	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_aarch64_gnullvm
+rust-script-0.36.0	windows_aarch64_msvc	0.52.6, 0.53.0	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_aarch64_msvc
+rust-script-0.36.0	windows_i686_gnu	0.52.6, 0.53.0	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_i686_gnu
+rust-script-0.36.0	windows_i686_gnullvm	0.52.6, 0.53.0	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_i686_gnullvm
+rust-script-0.36.0	windows_i686_msvc	0.52.6, 0.53.0	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_i686_msvc
+rust-script-0.36.0	windows_x86_64_gnu	0.52.6, 0.53.0	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_x86_64_gnu
+rust-script-0.36.0	windows_x86_64_gnullvm	0.52.6, 0.53.0	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_x86_64_gnullvm
+rust-script-0.36.0	windows_x86_64_msvc	0.52.6, 0.53.0	0.52.6	0.53.1	windows-targets@0.52.6 [^0.52.6]		https://index.crates.io/wi/nd/windows_x86_64_msvc
+rust-script-0.36.0	winnow	0.7.12	0.7.15	1.0.5	toml@0.9.12+spec-1.1.0 [^0.7.13]		https://index.crates.io/wi/nn/winnow
+rust-script-0.36.0	winnow	0.7.12	1.0.5	1.0.5			https://index.crates.io/wi/nn/winnow
+rust-script-0.36.0	winreg	0.55.0	0.55.0	0.56.0	rust-script@0.36.0 [^0.55]		https://index.crates.io/wi/nr/winreg
+rust-script-0.36.0	serde	1.0.219	removed				https://index.crates.io/se/rd/serde
+rust-script-0.36.0	wasi	0.11.1+wasi-snapshot-preview1, 0.14.2+wasi-0.2.4	removed				https://index.crates.io/wa/si/wasi
+rust-script-0.36.0	wit-bindgen-rt	0.39.0	removed				https://index.crates.io/wi/t-/wit-bindgen-rt

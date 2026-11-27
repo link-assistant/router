@@ -91,7 +91,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca
         with:
           toolchain: 1.100.0
-      - run: cargo install cargo-semver-checks --version 0.51.0 --locked
+      - run: bash scripts/install-ci-cargo-tool.sh cargo-semver-checks
       - name: Check documented minor API changes against PR base
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}

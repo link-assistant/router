@@ -56,7 +56,7 @@ jobs:
           toolchain: 1.100.0
 
       - name: Install Router verification runner
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -129,7 +129,7 @@ jobs:
           toolchain: 1.100.0
 
       - name: Install Router verification runner
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -185,7 +185,7 @@ jobs:
           toolchain: 1.100.0
 
       - name: Install Router verification runner
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0

@@ -103,7 +103,7 @@ jobs:
             ${{ runner.os }}-bench-cargo-
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Benchmark base
         id: base
@@ -124,10 +124,14 @@ jobs:
           echo "present=true" >> "$GITHUB_OUTPUT"
           # One target directory, so Criterion keeps both baselines side by side.
           cd "$RUNNER_TEMP/base"
-          CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target" \
-            cargo bench --locked --bench hot_paths -- --save-baseline pr-base
+          if ! CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target" \
+            cargo bench --locked --bench hot_paths -- --save-baseline pr-base; then
+            echo "::error::Benchmark base $base failed. Repair the base ref before rerunning the comparison."
+            exit 1
+          fi
 
       - name: Benchmark head
+        if: ${{ !cancelled() && (success() || steps.base.outcome == 'failure') }}
         run: cargo bench --locked --bench hot_paths -- --save-baseline pr-head
 
       - name: Compare

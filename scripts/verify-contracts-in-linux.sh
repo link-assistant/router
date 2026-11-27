@@ -141,8 +141,31 @@ docker run --rm --init \
         export DEBIAN_FRONTEND=noninteractive
         apt-get update >/dev/null
         # procps provides the pgrep and ps that client lifecycle checks run.
-        apt-get install -y --no-install-recommends ca-certificates curl git pkg-config libssl-dev nodejs npm procps >/dev/null
+        apt-get install -y --no-install-recommends ca-certificates curl git pkg-config libssl-dev procps xz-utils >/dev/null
+        node_version=26.13.1
+        npm_version=12.2.3
+        case "$(dpkg --print-architecture)" in
+            amd64) node_arch=x64; node_sha=5c063e46bab0fbc1c17cc445d7ff129cbdcd0471be6ed83b6ab864f8143bc864 ;;
+            arm64) node_arch=arm64; node_sha=89e1853138db51e8b82d3e98ba9c0d3f2956a28e5e55ea1b7e12d25aae92d5dd ;;
+            ppc64el) node_arch=ppc64le; node_sha=06d5638602a919cb9a559eb92520862a387b4a0b170fed8883930b1eb392ec73 ;;
+            s390x) node_arch=s390x; node_sha=2d65ece78005320dd13cccf15eeb30636a7352c18b92727f4b7c079de7d6969f ;;
+            *) node_arch= ;;
+        esac
+        if [ -n "${node_arch}" ]; then
+            node_archive="node-v${node_version}-linux-${node_arch}.tar.xz"
+            curl --fail --silent --show-error --location --retry 3 --proto "=https" \
+                "https://nodejs.org/dist/v${node_version}/${node_archive}" --output "/tmp/${node_archive}"
+            printf "%s  %s\n" "${node_sha}" "/tmp/${node_archive}" | sha256sum --check --status
+            tar --extract --xz --file "/tmp/${node_archive}" --strip-components=1 --no-same-owner --directory /usr/local
+            rm "/tmp/${node_archive}"
+        else
+            # The Rust base also supports Debian architectures without a Node 26 archive.
+            apt-get install -y --no-install-recommends nodejs npm >/dev/null
+            npm_version=11.21.3
+        fi
+        npm install --global --ignore-scripts "npm@${npm_version}"
         npm install --global --silent \
+            --allow-scripts=@anthropic-ai/claude-code,opencode-ai \
             "@anthropic-ai/claude-code@${ROUTER_REAL_CLIENT_CLAUDE_VERSION}" \
             "@openai/codex@${ROUTER_REAL_CLIENT_CODEX_VERSION}" \
             "opencode-ai@${ROUTER_REAL_CLIENT_OPENCODE_VERSION}"
@@ -157,7 +180,7 @@ docker run --rm --init \
         if [ "$(stat -c %u /output)" != "${uid}" ]; then chown verifier /output; fi
         exec runuser -u verifier -- env HOME=/home/verifier CARGO_HOME=/home/verifier/.cargo \
             PATH="/home/verifier/.cargo/bin:${PATH}" bash -euo pipefail -c "
-            cargo install rust-script --version 0.36.0 --locked --quiet
+            bash /source/scripts/install-ci-cargo-tool.sh rust-script --quiet
             git config --global init.defaultBranch main
             tar -C /source --exclude=./target --exclude=./ui/node_modules \
                 --exclude='./packages/*/node_modules' --exclude=./experiments/issue-697/venv \

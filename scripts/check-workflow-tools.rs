@@ -60,6 +60,11 @@ const TOOLS: &[Tool] = &[
         installs: &["cargo install cargo-mutants"],
     },
     Tool {
+        name: "cargo-semver-checks",
+        uses: &["cargo semver-checks"],
+        installs: &["cargo install cargo-semver-checks"],
+    },
+    Tool {
         name: "sccache",
         uses: &["RUSTC_WRAPPER=sccache", "RUSTC_WRAPPER: sccache"],
         installs: &["mozilla-actions/sccache-action@"],
@@ -111,6 +116,12 @@ fn missing_installs(job: &Job) -> Vec<String> {
     for tool in TOOLS {
         let installs_on = |line: &str| {
             tool.installs.iter().any(|marker| line.contains(marker))
+                || line
+                    .split_whitespace()
+                    .zip(line.split_whitespace().skip(1))
+                    .any(|(command, package)| {
+                        command.ends_with("/install-ci-cargo-tool.sh") && package == tool.name
+                    })
                 || line.trim_start().strip_prefix("tool:").is_some_and(|tools| {
                     tools
                         .split(',')
@@ -262,8 +273,18 @@ jobs:
     }
 
     #[test]
+    fn verified_installers_match_the_requested_tool() {
+        let workflow = "jobs:\n  release:\n    steps:\n      - run: bash .router-ci-tools/scripts/install-ci-cargo-tool.sh cargo-cyclonedx\n      - run: cargo cyclonedx\n      - run: cargo semver-checks\n  semver:\n    steps:\n      - run: bash scripts/install-ci-cargo-tool.sh cargo-semver-checks\n      - run: cargo semver-checks\n";
+        let jobs = jobs(workflow);
+        let problems = missing_installs(&jobs[0]);
+        assert_eq!(problems.len(), 1, "{problems:?}");
+        assert!(problems[0].contains("runs cargo-semver-checks"));
+        assert!(missing_installs(&jobs[1]).is_empty());
+    }
+
+    #[test]
     fn a_version_probe_before_the_install_is_not_a_use() {
-        let workflow = "jobs:\n  coverage:\n    steps:\n      - run: |\n          if ! cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.9.1'; then\n            cargo install cargo-llvm-cov --version 0.9.2 --locked --force\n          fi\n          cargo llvm-cov --workspace\n";
+        let workflow = "jobs:\n  coverage:\n    steps:\n      - run: |\n          if ! cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.9.2'; then\n            cargo install cargo-llvm-cov --version 0.9.2 --locked --force\n          fi\n          cargo llvm-cov --workspace\n";
         assert!(missing_installs(&jobs(workflow)[0]).is_empty());
     }
 

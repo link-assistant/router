@@ -64,7 +64,7 @@ jobs:
       - run: npm install --global npm@12.2.3 --ignore-scripts
 
       - name: Install Router verification runner
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       # The same pinned client the reviewed capture range covers, so a live
       # result is attributable to a known client version.

@@ -89,7 +89,7 @@ jobs:
             ${{ runner.os }}-mutants-cargo-
 
       - name: Install cargo-mutants
-        run: cargo install cargo-mutants --version 27.1.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh cargo-mutants
 
       - name: Run cargo mutants
         env:
