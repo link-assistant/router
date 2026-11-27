@@ -27,10 +27,7 @@ fn every_private_codex_control_plane_route_is_opaque_and_uses_its_template() {
     }
 
     let websocket = "/api/services/codex/backend-api/wham/remote/control/server";
-    assert_eq!(
-        opaque_route(&Method::GET, websocket),
-        Some(websocket)
-    );
+    assert_eq!(opaque_route(&Method::GET, websocket), Some(websocket));
     assert_eq!(
         opaque_route(
             &Method::GET,

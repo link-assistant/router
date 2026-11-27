@@ -178,12 +178,7 @@ fn compile_rule(
                 Step::Key(key)
                     if matches!(
                         key.as_str(),
-                        "model"
-                            | "modelId"
-                            | "stream"
-                            | "type"
-                            | "stream_id"
-                            | "conversation"
+                        "model" | "modelId" | "stream" | "type" | "stream_id" | "conversation"
                     ) =>
                 {
                     return Err("payload rule changes a protected routing or transport field");

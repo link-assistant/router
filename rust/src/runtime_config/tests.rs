@@ -248,7 +248,9 @@ async fn writer_is_scoped_and_can_replace_merge_and_edit_pointers() {
     );
     let destination = json!({"cli": {"upstream-base-url": "https://another-provider.example"}});
     assert_eq!(
-        call(&app, "PATCH", ROOT, &writer, Some(destination)).await.0,
+        call(&app, "PATCH", ROOT, &writer, Some(destination))
+            .await
+            .0,
         StatusCode::BAD_REQUEST
     );
     let audit = std::fs::read_to_string(root.path().join("runtime-config-audit.jsonl")).unwrap();

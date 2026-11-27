@@ -33,9 +33,9 @@ use sha2::{Digest as _, Sha256};
 use crate::app_state::AppState;
 use owner_only::{append_owner_only, ensure_owner_only_dir, write_owner_only};
 pub use redaction::BINARY_BODY_KEY;
-pub(crate) use redaction::{is_jwt, is_secret_name};
 #[cfg(test)]
 use redaction::partially_redact;
+pub(crate) use redaction::{is_jwt, is_secret_name};
 use redaction::{redact_value, redacted_uri};
 pub use redaction::{redacted_body, redacted_headers};
 
