@@ -9,6 +9,7 @@ on:
       - 'Cargo.toml'
       - 'Cargo.lock'
       - 'rust/**'
+      - 'tools/translation/**/*.rs'
       - '.github/workflows/nix.yml'
   workflow_dispatch:
 

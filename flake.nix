@@ -34,14 +34,23 @@
       # Only the inputs the Rust build actually reads. Keeping the source
       # filtered this way means editing docs or CI configuration does not
       # invalidate the build.
+      packageFiles = nixpkgs.lib.fileset.unions [
+        ./Cargo.toml
+        ./Cargo.lock
+        # View the crate's copy of the shared assets under ./rust.
+        ./rust
+        ./README.md
+      ];
       src = nixpkgs.lib.fileset.toSource {
         root = ./.;
+        fileset = packageFiles;
+      };
+      formatSrc = nixpkgs.lib.fileset.toSource {
+        root = ./.;
         fileset = nixpkgs.lib.fileset.unions [
-          ./Cargo.toml
-          ./Cargo.lock
-          # View the crate's copy of the shared assets under ./rust.
-          ./rust
-          ./README.md
+          packageFiles
+          # Cargo fmt follows the test crate's explicit paths to Rust fixtures.
+          (nixpkgs.lib.fileset.fileFilter (file: file.hasExt "rs") ./tools/translation)
         ];
       };
 
@@ -143,7 +152,7 @@
             {
               nativeBuildInputs = [ (rustToolchain pkgs) ];
             } ''
-            cd ${src}
+            cd ${formatSrc}
             cargo fmt --all --check
             touch $out
           '';
