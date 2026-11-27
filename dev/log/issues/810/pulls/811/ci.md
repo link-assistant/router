@@ -155,6 +155,17 @@ The PR head `f14c6c2f55c833e1b4f87464b98152fd2f920728` and hosted merge candidat
 
 The release workflow reported the lint and coverage failures listed above. Both are prerequisites for Build Package, which the workflow skipped. [Package job](https://github.com/link-assistant/router/actions/runs/46051595390/job/140709135772).
 
+### Coverage on the same toolchain
+
+The historical diagnostic at `8d927df0` passed all four JavaScript stages for both revisions. The full instrumented suite ran against `9446a388`, whose Rust sources and tests match the exact starting base `1f11272a`. Their Git diff contains only `Cargo.lock` and `rust/Cargo.toml`. The diagnostic passed 2,370 library cases and the deployment service test that failed in the earlier attempt. The archived job log records those results at lines 7032 and 7756, and the coverage totals at lines 12443–12445. [Historical job](https://github.com/link-assistant/router/actions/runs/46059421741/job/140726179120), [historical reports](https://github.com/link-assistant/router/actions/runs/46059421741/artifacts/15230119939).
+
+| Revision measured with Rust 1.100.0 and cargo-llvm-cov 0.9.2 | Covered lines | Measured lines | Coverage |
+| --- | ---: | ---: | ---: |
+| Historical parent `9446a388` | 86,167 | 99,742 | 86.38988591% |
+| Fully instrumented candidate `f14c6c2f` | 86,144 | 99,715 | 86.39021210% |
+
+The candidate gained 0.00032620 percentage points on the same coverage toolchain, within the existing 0.01-point tolerance. The 359 byte-identical files account for 74,730 measured lines in both reports and show one more covered line on the candidate. The candidate's other 70 covered files account for the 27-line change in the denominator. This comparison supports recalibrating the older compiler's baseline after confirming the exact release report for `8d927df0`. [Candidate reports](https://github.com/link-assistant/router/actions/runs/46051595390/artifacts/15227890349), [exact-head release workflow](https://github.com/link-assistant/router/actions/runs/46059428864).
+
 ## Cargo tool advisories
 
 The published archives for seven Cargo tools were downloaded from crates.io and matched to the registry SHA-256. OSV scanned the bundled locks before any changes. Each original installed version, latest registry version, upstream dependency constraint and advisory identifier is in the inventory. Advisory counts can include aliases and optional or development dependencies. [Published inventory A](cargo-tools-published-a.tsv), [published inventory B](cargo-tools-published-b.tsv).
