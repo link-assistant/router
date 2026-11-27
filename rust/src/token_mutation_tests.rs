@@ -155,7 +155,7 @@ fn a_token_with_one_binding_and_no_record_is_refused() {
     let bound = manager.validate_token(&token).unwrap();
     assert!(manager.store().delete(&bound.sub).unwrap());
 
-    let key = EncodingKey::from_secret(b"token-mutation-test-secret");
+    let key = EncodingKey::from_secret(b"token-mutation-test-secret").unwrap();
     for keep_client_kind in [true, false] {
         let mut claims = bound.clone();
         if keep_client_kind {

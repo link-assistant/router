@@ -58,7 +58,7 @@ fn client_token(secret: &str) -> String {
     let jwt = jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),
         &claims,
-        &jsonwebtoken::EncodingKey::from_secret(secret.as_bytes()),
+        &jsonwebtoken::EncodingKey::from_secret(secret.as_bytes()).unwrap(),
     )
     .unwrap();
     format!("{}{jwt}", link_assistant_router::token::TOKEN_PREFIX)
@@ -72,7 +72,7 @@ fn authorized(runner: &FakeRunner, root: &Path, token: &str) -> bool {
         token
             .strip_prefix(link_assistant_router::token::TOKEN_PREFIX)
             .unwrap(),
-        &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()),
+        &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()).unwrap(),
         &jsonwebtoken::Validation::default(),
     )
     .is_ok()

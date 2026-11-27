@@ -62,8 +62,16 @@ jobs:
       - id: source
         env:
           BASE_REF: ${{ github.event.pull_request.base.sha || inputs.base || 'main' }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           sha="$(git rev-parse --verify --quiet "origin/$BASE_REF^{commit}" || git rev-parse --verify "$BASE_REF^{commit}")"
+          if [ "$EVENT_NAME" = pull_request ] && [ "$sha" = 1f11272a6c93a552eb3b0a47243e524a5fb27663 ]; then
+            # PR #809's dependency merge cannot compile the benchmark. Use
+            # its first parent as the baseline for that exact broken PR base.
+            parent="$(git rev-parse --verify "$sha^1")"
+            echo "PR base $sha has the dependency compilation failure from #809. Comparing against its first parent $parent." >> "$GITHUB_STEP_SUMMARY"
+            sha="$parent"
+          fi
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
 
   base-javascript:
