@@ -203,6 +203,17 @@ impl AuditLog {
     }
 }
 
+pub(crate) fn write_runtime_config_event(
+    path: &std::path::Path,
+    event: &serde_json::Value,
+) -> std::io::Result<()> {
+    let parent = path.parent().ok_or_else(|| std::io::Error::other("missing audit directory"))?;
+    std::fs::create_dir_all(parent)?;
+    let mut file = open_append_only(path)?;
+    writeln!(file, "{event}")?;
+    file.sync_data()
+}
+
 fn open_append_only(path: &std::path::Path) -> std::io::Result<std::fs::File> {
     let mut options = OpenOptions::new();
     options.create(true).append(true);

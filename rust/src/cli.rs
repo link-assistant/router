@@ -78,6 +78,10 @@ pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Command>,
 
+    /// Runtime document initialized by the serving argument adapter.
+    #[arg(skip)]
+    pub runtime_config: Option<std::sync::Arc<crate::runtime_config::RuntimeConfig>>,
+
     /// IP address or network alias to resolve once and bind (legacy --host).
     #[arg(long, env = "ROUTER_HOST", default_value = "0.0.0.0", global = true)]
     pub host: String,

@@ -153,6 +153,7 @@ pub mod responses;
 pub mod responses_lifecycle;
 pub mod responses_websocket;
 pub mod route_contract;
+pub mod runtime_config;
 pub mod routing_api;
 pub mod runtime;
 mod safety_identifier;

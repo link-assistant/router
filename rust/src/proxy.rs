@@ -175,6 +175,11 @@ pub async fn health(State(state): State<AppState>) -> Response {
 /// Thin HTTP wrapper over [`crate::admin_auth::admin_access_granted`], which
 /// documents and tests the rule itself.
 pub(crate) fn is_admin_authorised(state: &AppState, headers: &HeaderMap) -> bool {
+    is_explicit_admin(state, headers) || state.allow_anonymous_admin
+}
+
+/// Check a provisioned administrator credential without the anonymous opt-in.
+pub(crate) fn is_explicit_admin(state: &AppState, headers: &HeaderMap) -> bool {
     let provided = extract_bearer_token(headers);
     // A credential claimed through the admin UI (see [`crate::admin`]) is an
     // admin credential everywhere, not only on the admin port.
@@ -185,7 +190,7 @@ pub(crate) fn is_admin_authorised(state: &AppState, headers: &HeaderMap) -> bool
         &state.token_manager,
         provided,
         state.admin_key.as_deref(),
-        state.allow_anonymous_admin,
+        false,
     )
 }
 

@@ -134,7 +134,9 @@ impl ForgeFedTaskProvider {
 impl TaskProvider for ForgeFedTaskProvider {
     async fn submit_task(&self, request: &CraterTaskRequest) -> Result<String, CraterError> {
         let inbox = self.config.inbox()?;
-        let activity = build_offer_activity(request, &self.config)?;
+        let mut activity = build_offer_activity(request, &self.config)?;
+        crate::runtime_config::egress::forgefed(&request.model, &mut activity)
+            .map_err(|reason| CraterError::Upstream(reason.to_owned()))?;
         let response = self
             .client
             .post(inbox)
@@ -555,16 +557,23 @@ pub async fn forward_chat_completions(
         Err(error) => return provider_error(&error),
     };
 
+    let model = request.model.clone();
+    let completion = crate::runtime_config::egress::forgefed_scope(
+        state,
+        headers,
+        &claims,
+        async move { provider.complete_task(request).await },
+    );
     if stream_requested {
         return stream_chat_completion(
-            provider,
-            request,
+            completion,
+            model,
             Arc::clone(&state.metrics),
             reservation.take(),
         );
     }
 
-    match provider.complete_task(request).await {
+    match completion.await {
         Ok(result) => {
             reservation
                 .take()
@@ -590,15 +599,16 @@ pub async fn forward_chat_completions(
 }
 
 fn stream_chat_completion(
-    provider: Arc<dyn TaskProvider>,
-    request: CraterTaskRequest,
+    completion: impl std::future::Future<Output = Result<CraterTaskResult, CraterError>>
+        + Send
+        + 'static,
+    model: String,
     metrics: Arc<crate::metrics::Metrics>,
     reservation: crate::usage::ReservationGuard,
 ) -> Response {
     let (tx, rx) = tokio::sync::mpsc::channel::<Result<Bytes, std::io::Error>>(4);
     tokio::spawn(async move {
-        let model = request.model.clone();
-        let frames = match provider.complete_task(request).await {
+        let frames = match completion.await {
             Ok(result) => {
                 reservation.settle(crate::usage::token_count(&result.raw).unwrap_or(0));
                 metrics.record_request(crate::metrics::Surface::OpenAIChat, 200, None);

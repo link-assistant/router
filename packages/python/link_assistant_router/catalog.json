@@ -64604,6 +64604,126 @@
       "method": "POST",
       "name": "CooldownReset",
       "path": "/api/management/routing/cooldown/reset"
+    },
+    {
+      "auth": "ConfigRead",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "GET",
+      "name": "RuntimeConfig",
+      "path": "/api/management/config"
+    },
+    {
+      "auth": "ConfigWrite",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "PUT",
+      "name": "RuntimeConfig",
+      "path": "/api/management/config"
+    },
+    {
+      "auth": "ConfigWrite",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "PATCH",
+      "name": "RuntimeConfig",
+      "path": "/api/management/config"
+    },
+    {
+      "auth": "ConfigRead",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "GET",
+      "name": "RuntimeConfigYaml",
+      "path": "/api/management/config.yaml"
+    },
+    {
+      "auth": "ConfigRead",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "GET",
+      "name": "RuntimeConfigSchema",
+      "path": "/api/management/config/schema"
+    },
+    {
+      "auth": "ConfigRead",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "GET",
+      "name": "RuntimeConfigStatus",
+      "path": "/api/management/config/status"
+    },
+    {
+      "auth": "ConfigWrite",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "POST",
+      "name": "RuntimeConfigReload",
+      "path": "/api/management/config/reload"
+    },
+    {
+      "auth": "ConfigRead",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "GET",
+      "name": "RuntimeConfigPointer",
+      "path": "/api/management/config/{*pointer}"
+    },
+    {
+      "auth": "ConfigWrite",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "PUT",
+      "name": "RuntimeConfigPointer",
+      "path": "/api/management/config/{*pointer}"
+    },
+    {
+      "auth": "ConfigWrite",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "DELETE",
+      "name": "RuntimeConfigPointer",
+      "path": "/api/management/config/{*pointer}"
     }
   ],
   "schema": "link-assistant-router/operation-catalog/v1",

@@ -266,6 +266,7 @@ pub async fn send(
                 }
                 last_response = Some(response);
             }
+            Err(error @ UpstreamSendError::PayloadRule(_)) => return Err(error),
             Err(error) => {
                 if !retry || attempt == max_attempts || context.pinned_account.is_some() {
                     return last_response.ok_or(error);

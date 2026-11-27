@@ -7,9 +7,9 @@ use serde_json::Value;
 use tokio_tungstenite::tungstenite;
 
 use super::{
-    AppState, MAX_CONNECTION_AGE, MAX_NAMED_STREAMS, Surface, TurnTracking, UpstreamTarget,
+    AppState, MAX_CONNECTION_AGE, MAX_NAMED_STREAMS, Surface, UpstreamTarget,
     downstream_to_upstream, fail_and_close, reserve_turn, target_state, thinking_controls,
-    upstream_to_downstream, validate_stream_id, websocket_error,
+    session::payload_rule_error, tracking::TurnTracking, upstream_to_downstream, validate_stream_id, websocket_error,
 };
 
 #[allow(clippy::too_many_arguments)]
@@ -17,6 +17,7 @@ pub(super) async fn relay<S>(
     state: &AppState,
     headers: &HeaderMap,
     initial_claims: &crate::token::TokenClaims,
+    correlation: &str,
     path: &str,
     target: &UpstreamTarget,
     named_streams: &mut HashSet<String>,
@@ -68,6 +69,14 @@ pub(super) async fn relay<S>(
                         break;
                     }
                     message = filtered;
+                }
+                if matches!(message, Message::Binary(_))
+                    && state.request_log.runtime_config().is_some_and(|config| !config.rules().is_empty())
+                {
+                    let error = payload_rule_error("runtime payload rules require JSON events", None);
+                    fail_and_close(&mut downstream, error, 1003).await;
+                    let _ = upstream.close(None).await;
+                    break;
                 }
                 if let Message::Text(text) = &message {
                     let bytes = text.as_bytes();
@@ -225,6 +234,17 @@ pub(super) async fn relay<S>(
                             Ok(true) => message = Message::Text(value.to_string().into()),
                             Ok(false) => {},
                             Err(error) => {
+                                let _ = downstream.send(Message::Text(error.to_string().into())).await;
+                                continue;
+                            }
+                        }
+                        match crate::runtime_config::egress::websocket(
+                            state, correlation, headers, &claims, target.provider, &mut value,
+                        ) {
+                            Ok(true) => message = Message::Text(value.to_string().into()),
+                            Ok(false) => {},
+                            Err(reason) => {
+                                let error = payload_rule_error(reason, lane.as_deref());
                                 let _ = downstream.send(Message::Text(error.to_string().into())).await;
                                 continue;
                             }

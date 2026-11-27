@@ -65,6 +65,27 @@ pub async fn upgrade_websocket(
     let (mut parts, _) = request.into_parts();
     let privacy = parts.extensions.remove::<crate::sensitive_data::WebSocketPrivacy>();
     let share_geolocation = crate::geolocation::shares_geolocation(&parts.headers);
+    let rules = if usage_identity.is_some()
+        && matches!(parts.uri.path(), "/api/services/openai/v1/realtime" | "/api/services/codex/v1/realtime")
+    {
+        let protocol = if parts.uri.path().starts_with("/api/services/codex/") {
+            "codex"
+        } else {
+            "openai"
+        };
+        let claims = match crate::proxy::authenticate_client_error(&state, &parts.headers) {
+            Ok(claims) => claims,
+            Err(error) => return error.render(crate::api_error::ApiDialect::OpenAi),
+        };
+        Some(crate::runtime_config::egress::NativeContext::new(
+            &state,
+            &parts.headers,
+            claims,
+            protocol,
+        ))
+    } else {
+        None
+    };
     let upgrade = match WebSocketUpgrade::from_request_parts(&mut parts, &state).await {
         Ok(upgrade) => upgrade,
         Err(rejection) => return rejection.into_response(),
@@ -88,6 +109,7 @@ pub async fn upgrade_websocket(
                 metrics,
                 share_geolocation,
                 privacy,
+                rules,
             )
         });
     for (name, value) in upstream_headers {
@@ -157,6 +179,7 @@ fn websocket_http_failure(upstream: http::Response<Option<Vec<u8>>>) -> Response
     response
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn websocket_session(
     mut downstream: WebSocket,
     mut upstream: UpstreamWebSocket,
@@ -165,6 +188,7 @@ async fn websocket_session(
     metrics: Arc<crate::metrics::Metrics>,
     share_geolocation: bool,
     mut privacy: Option<crate::sensitive_data::WebSocketPrivacy>,
+    rules: Option<crate::runtime_config::egress::NativeContext>,
 ) {
     let mut completed_responses = std::collections::HashSet::new();
     loop {
@@ -237,6 +261,20 @@ async fn websocket_session(
                         break;
                     };
                     message = filtered;
+                }
+                if let (Some(rules), Message::Text(text)) = (&rules, &message) {
+                    match rules.realtime(text.as_bytes()) {
+                        Ok(Some(bytes)) => {
+                            let text = String::from_utf8(bytes.to_vec()).expect("JSON is UTF-8");
+                            message = Message::Text(text.into());
+                        }
+                        Ok(None) => {},
+                        Err(reason) => {
+                            close(&mut downstream, 1008, reason).await;
+                            let _ = upstream.close(None).await;
+                            break;
+                        }
+                    }
                 }
                 let closes = matches!(message, Message::Close(_));
                 if upstream.send(downstream_message(message)).await.is_err() || closes {

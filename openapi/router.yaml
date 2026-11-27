@@ -5361,6 +5361,11 @@
         "scheme": "bearer",
         "type": "http"
       },
+      "ConfigWriteBearer": {
+        "description": "Router JWT with config:write scope",
+        "scheme": "bearer",
+        "type": "http"
+      },
       "RouterApiKey": {
         "in": "header",
         "name": "x-api-key",
@@ -6466,6 +6471,939 @@
           "method": "GET",
           "name": "CredentialStatus",
           "path": "/api/management/auth/status"
+        }
+      }
+    },
+    "/api/management/config": {
+      "get": {
+        "operationId": "get_api_management_config",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "See GET /api/management/config/schema for the active CLI-derived schema.",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          },
+          {
+            "ConfigWriteBearer": []
+          }
+        ],
+        "summary": "RuntimeConfig",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "ConfigRead",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "RuntimeConfig",
+          "path": "/api/management/config"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_config",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          },
+          {
+            "ConfigWriteBearer": []
+          }
+        ],
+        "summary": "RuntimeConfig",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "ConfigRead",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "RuntimeConfig",
+          "path": "/api/management/config"
+        }
+      },
+      "patch": {
+        "operationId": "patch_api_management_config",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "See GET /api/management/config/schema for the active CLI-derived schema.",
+                "type": "object"
+              }
+            },
+            "application/merge-patch+json": {
+              "schema": {
+                "description": "See GET /api/management/config/schema for the active CLI-derived schema.",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "overridden": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "reload_error": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "restart_required": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "restart_required",
+                    "overridden",
+                    "reload_error"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "ConfigWriteBearer": []
+          }
+        ],
+        "summary": "RuntimeConfig",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "ConfigWrite",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "PATCH",
+          "name": "RuntimeConfig",
+          "path": "/api/management/config"
+        }
+      },
+      "put": {
+        "operationId": "put_api_management_config",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "See GET /api/management/config/schema for the active CLI-derived schema.",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "overridden": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "reload_error": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "restart_required": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "restart_required",
+                    "overridden",
+                    "reload_error"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "ConfigWriteBearer": []
+          }
+        ],
+        "summary": "RuntimeConfig",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "ConfigWrite",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "PUT",
+          "name": "RuntimeConfig",
+          "path": "/api/management/config"
+        }
+      }
+    },
+    "/api/management/config.yaml": {
+      "get": {
+        "operationId": "get_api_management_config_yaml",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          },
+          {
+            "ConfigWriteBearer": []
+          }
+        ],
+        "summary": "RuntimeConfigYaml",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "ConfigRead",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "RuntimeConfigYaml",
+          "path": "/api/management/config.yaml"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_config_yaml",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          },
+          {
+            "ConfigWriteBearer": []
+          }
+        ],
+        "summary": "RuntimeConfigYaml",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "ConfigRead",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "RuntimeConfigYaml",
+          "path": "/api/management/config.yaml"
+        }
+      }
+    },
+    "/api/management/config/reload": {
+      "post": {
+        "operationId": "post_api_management_config_reload",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "overridden": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "reload_error": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "restart_required": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "restart_required",
+                    "overridden",
+                    "reload_error"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "ConfigWriteBearer": []
+          }
+        ],
+        "summary": "RuntimeConfigReload",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "ConfigWrite",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "POST",
+          "name": "RuntimeConfigReload",
+          "path": "/api/management/config/reload"
+        }
+      }
+    },
+    "/api/management/config/schema": {
+      "get": {
+        "operationId": "get_api_management_config_schema",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "See GET /api/management/config/schema for the active CLI-derived schema.",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          },
+          {
+            "ConfigWriteBearer": []
+          }
+        ],
+        "summary": "RuntimeConfigSchema",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "ConfigRead",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "RuntimeConfigSchema",
+          "path": "/api/management/config/schema"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_config_schema",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          },
+          {
+            "ConfigWriteBearer": []
+          }
+        ],
+        "summary": "RuntimeConfigSchema",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "ConfigRead",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "RuntimeConfigSchema",
+          "path": "/api/management/config/schema"
+        }
+      }
+    },
+    "/api/management/config/status": {
+      "get": {
+        "operationId": "get_api_management_config_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "overridden": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "reload_error": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "restart_required": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "restart_required",
+                    "overridden",
+                    "reload_error"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          },
+          {
+            "ConfigWriteBearer": []
+          }
+        ],
+        "summary": "RuntimeConfigStatus",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "ConfigRead",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "RuntimeConfigStatus",
+          "path": "/api/management/config/status"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_config_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          },
+          {
+            "ConfigWriteBearer": []
+          }
+        ],
+        "summary": "RuntimeConfigStatus",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "ConfigRead",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "RuntimeConfigStatus",
+          "path": "/api/management/config/status"
+        }
+      }
+    },
+    "/api/management/config/{pointer}": {
+      "delete": {
+        "operationId": "delete_api_management_config_pointer",
+        "parameters": [
+          {
+            "description": "Wildcard path segments",
+            "in": "path",
+            "name": "pointer",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "overridden": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "reload_error": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "restart_required": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "restart_required",
+                    "overridden",
+                    "reload_error"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "ConfigWriteBearer": []
+          }
+        ],
+        "summary": "RuntimeConfigPointer",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "ConfigWrite",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "DELETE",
+          "name": "RuntimeConfigPointer",
+          "path": "/api/management/config/{*pointer}"
+        }
+      },
+      "get": {
+        "operationId": "get_api_management_config_pointer",
+        "parameters": [
+          {
+            "description": "Wildcard path segments",
+            "in": "path",
+            "name": "pointer",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          },
+          {
+            "ConfigWriteBearer": []
+          }
+        ],
+        "summary": "RuntimeConfigPointer",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "ConfigRead",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "RuntimeConfigPointer",
+          "path": "/api/management/config/{*pointer}"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_config_pointer",
+        "parameters": [
+          {
+            "description": "Wildcard path segments",
+            "in": "path",
+            "name": "pointer",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          },
+          {
+            "ConfigWriteBearer": []
+          }
+        ],
+        "summary": "RuntimeConfigPointer",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "ConfigRead",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "RuntimeConfigPointer",
+          "path": "/api/management/config/{*pointer}"
+        }
+      },
+      "put": {
+        "operationId": "put_api_management_config_pointer",
+        "parameters": [
+          {
+            "description": "Wildcard path segments",
+            "in": "path",
+            "name": "pointer",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "overridden": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "reload_error": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "restart_required": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "restart_required",
+                    "overridden",
+                    "reload_error"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "ConfigWriteBearer": []
+          }
+        ],
+        "summary": "RuntimeConfigPointer",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "ConfigWrite",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "PUT",
+          "name": "RuntimeConfigPointer",
+          "path": "/api/management/config/{*pointer}"
         }
       }
     },

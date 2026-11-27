@@ -44,6 +44,13 @@ pub async fn issue_token(
     let ttl = req.ttl_hours.unwrap_or(24);
     let label = req.label.unwrap_or_default();
     let scope = req.scope.unwrap_or_default();
+    if scope == crate::token::CONFIG_WRITE_SCOPE && !crate::proxy::is_explicit_admin(&state, &headers) {
+        return error_response(
+            StatusCode::FORBIDDEN,
+            "permission_error",
+            "an administrator credential is required to issue config:write tokens",
+        );
+    }
 
     let request = IssueRequest {
         ttl_hours: ttl,

@@ -7,7 +7,9 @@ use axum::routing::get;
 use futures_util::{SinkExt, StreamExt};
 use serde_json::{Value, json};
 use tokio_tungstenite::tungstenite;
+use tokio_tungstenite::tungstenite::client::IntoClientRequest as _;
 
+use super::{session::websocket_request, thinking_controls::parse_create_event};
 use super::*;
 use crate::clients::ClientKind;
 use crate::token::IssueRequest;
@@ -126,6 +128,10 @@ async fn upstream_websocket(upgrade: WebSocketUpgrade) -> Response {
                     if let Some(stream_id) = request.get("stream_id").and_then(Value::as_str) {
                         response["stream_id"] = Value::String(stream_id.to_string());
                     }
+                    if request["metadata"]["payload_rule_probe"] == true {
+                        response["response"]["tools"] = request["tools"].clone();
+                        response["response"]["service_tier"] = request["service_tier"].clone();
+                    }
                     if socket
                         .send(Message::Text(response.to_string().into()))
                         .await
@@ -231,6 +237,90 @@ where
             _ => {}
         }
     }
+}
+
+#[tokio::test]
+async fn payload_rules_filter_first_and_following_responses_websocket_turns() {
+    let upstream = Router::new()
+        .route(
+            "/v1/models",
+            get(|| async { axum::Json(json!({"data":[{"id":"gpt-unit"}]})) }),
+        )
+        .route("/v1/responses", get(upstream_websocket))
+        .route("/responses", get(upstream_websocket));
+    let (upstream_origin, upstream_task) = spawn(upstream).await;
+    let data = tempfile::tempdir().unwrap();
+    let payload = json!({
+        "override": [{"models": [{"name": "gpt-unit", "from-protocol": "responses"}],
+            "params": {"service_tier": "priority"}}],
+        "filter": [{"models": [{"name": "gpt-unit"}],
+            "params": [r#"tools.#(type=="image_generation")#"#]}]
+    });
+    std::fs::write(
+        data.path().join("runtime.toml"),
+        format!("payload-json = '{}'\n", payload),
+    )
+    .unwrap();
+    let cli = crate::cli::try_parse_arguments(vec![
+        "router".into(),
+        "--data-dir".into(),
+        data.path().as_os_str().into(),
+        "--token-secret".into(),
+        "runtime-config-test-signing-fixture".into(),
+    ])
+    .unwrap();
+    let mut state = AppState::for_tests(data.path());
+    state.upstream_provider = UpstreamProvider::OpenAICompatible;
+    state.openai_compatible.base_url = format!("{upstream_origin}/v1");
+    state.openai_compatible.api_key = Some("upstream-unit-key".into());
+    state.openai_compatible.models = vec!["gpt-unit".into()];
+    state.openai_compatible.supported_clients = vec!["codex".into()];
+    state
+        .request_log
+        .install_runtime_config(cli.runtime_config.unwrap());
+    let token = bound_codex_token(&state);
+    let app = Router::new()
+        .route(namespace_path(Namespace::OpenAi), get(openai))
+        .with_state(state.clone())
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            crate::request_log::log_http_exchange,
+        ));
+    let (origin, router_task) = spawn(app).await;
+    let (mut socket, handshake) = tokio_tungstenite::connect_async(client_request(
+        &origin,
+        namespace_path(Namespace::OpenAi),
+        Some(&token),
+    ))
+    .await
+    .unwrap();
+    let id = handshake.headers()["x-router-request-id"].to_str().unwrap();
+    for lane in ["first", "following"] {
+        let event = json!({
+            "type": "response.create", "stream_id": lane, "model": "gpt-unit",
+            "metadata": {"payload_rule_probe": true},
+            "tools": [{"type": "image_generation"}, {"type": "function", "name": "keep"},
+                {"type": "image_generation"}]
+        });
+        socket
+            .send(tungstenite::Message::Text(event.to_string().into()))
+            .await
+            .unwrap();
+        let response = tokio::time::timeout(std::time::Duration::from_secs(5), next_json(&mut socket))
+            .await
+            .unwrap();
+        assert_eq!(response["stream_id"], lane);
+        assert_eq!(response["response"]["tools"], json!([{"type":"function","name":"keep"}]));
+        assert_eq!(response["response"]["service_tier"], "priority");
+    }
+    let records = state.request_log.lookup(id).unwrap();
+    assert_eq!(
+        records.iter().filter(|entry| entry["phase"] == "payload_rules_applied").count(),
+        2
+    );
+    socket.close(None).await.unwrap();
+    router_task.abort();
+    upstream_task.abort();
 }
 
 #[tokio::test]

@@ -83,9 +83,6 @@ pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
     }
 
     let verbose = cli.verbose;
-    let request_log = cli.request_log.clone();
-    let request_log_max_bytes = cli.request_log_max_bytes;
-    let request_log_max_total_bytes = cli.request_log_max_total_bytes;
 
     let logger = link_assistant_router::logging::build_lazy(verbose);
 
@@ -131,15 +128,7 @@ pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
     }
 
     match cli.command.as_ref() {
-        None | Some(Command::Serve) => match run_server(
-            config,
-            logger,
-            request_log.as_deref(),
-            request_log_max_bytes,
-            request_log_max_total_bytes,
-        )
-        .await
-        {
+        None | Some(Command::Serve) => match run_server(config, &cli, logger).await {
             Ok(()) => ExitCode::SUCCESS,
             Err(e) => {
                 // Startup failures must reach the terminal even when normal
@@ -279,10 +268,8 @@ fn announce_admin_access(config: &Config, token_manager: &TokenManager) {
 
 async fn run_server(
     config: Config,
+    cli: &crate::cli::Cli,
     logger: LogLazy,
-    request_log: Option<&std::path::Path>,
-    request_log_max_bytes: u64,
-    request_log_max_total_bytes: u64,
 ) -> Result<(), Box<dyn std::error::Error>> {
     link_assistant_router::management_config::ManagementConfig::validate_secrets(
         &config.token_secret,
@@ -426,9 +413,9 @@ async fn run_server(
         )),
         request_log: link_assistant_router::logging::request_log(
             &config.data_dir,
-            request_log,
-            request_log_max_bytes,
-            request_log_max_total_bytes,
+            cli.request_log.as_deref(),
+            cli.request_log_max_bytes,
+            cli.request_log_max_total_bytes,
         ),
         crater: crater_provider,
         openai_compatible: config.openai_compatible.clone(),
@@ -487,6 +474,10 @@ async fn run_server(
         .collect::<Vec<_>>();
     if let Some(router) = state.account_router.as_ref() {
         catalog_readers.extend(router.subscription_readers());
+    }
+    if let Some(document) = &cli.runtime_config {
+        state.request_log.install_runtime_config(Arc::clone(document));
+        document.watch();
     }
     let (catalog_refresh, source_refresh) = tokio::join!(
         link_assistant_router::model_catalog::refresh_catalogs_from_startup(

@@ -373,6 +373,7 @@ need:
 | [chatgpt-in-claude-code.md](docs/use-cases/chatgpt-in-claude-code.md) | Historical subscription bridge defaults superseded; API-key adapters remain separate |
 | [zai-coding-plan.md](docs/use-cases/zai-coding-plan.md) | Experimental, subscriber-bound z.ai GLM Coding Plan routing with explicit policy acknowledgements |
 | [lefine.md](docs/use-cases/lefine.md) | Lefine API-key provider with native Chat Completions/SSE, live exact IDs, and atomic credential acceptance |
+| [Runtime configuration](docs/use-cases/runtime-configuration.md) | TOML, scoped management API, live payload rules and CORS |
 | [cli-claude-code.md](docs/use-cases/cli-claude-code.md) | Claude Code configuration |
 | [cli-codex.md](docs/use-cases/cli-codex.md) | Codex CLI configuration |
 | [cli-qwen-code.md](docs/use-cases/cli-qwen-code.md) | Qwen Code configuration |

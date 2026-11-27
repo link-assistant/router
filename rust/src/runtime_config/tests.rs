@@ -1,0 +1,308 @@
+use std::net::SocketAddr;
+
+use axum::Router;
+use axum::body::{Body, to_bytes};
+use axum::extract::ConnectInfo;
+use axum::http::{Request, StatusCode, header};
+use serde_json::{Value, json};
+use tower::ServiceExt as _;
+
+use super::{payload, redaction, schema, storage};
+use crate::app_state::AppState;
+use crate::token::{ADMIN_SCOPE, CONFIG_WRITE_SCOPE, IssueRequest};
+
+const ROOT: &str = "/api/management/config";
+
+fn cli(root: &std::path::Path, extra: &[&str]) -> crate::cli::Cli {
+    let mut args = vec![
+        "router".into(),
+        "--data-dir".into(),
+        root.as_os_str().into(),
+        "--token-secret".into(),
+        "runtime-config-test-signing-fixture".into(),
+    ];
+    args.extend(extra.iter().copied().map(std::ffi::OsString::from));
+    crate::cli::try_parse_arguments(args).expect("valid runtime configuration")
+}
+
+fn state(root: &std::path::Path) -> AppState {
+    let mut state = AppState::for_tests(root);
+    state.admin_key = Some("runtime-test-admin-key".into());
+    state
+        .request_log
+        .install_runtime_config(cli(root, &[]).runtime_config.unwrap());
+    state
+}
+
+fn issue(state: &AppState, scope: &str) -> String {
+    state
+        .token_manager
+        .issue(&IssueRequest {
+            label: "test-runtime-operator",
+            ttl_hours: 1,
+            scope,
+            ..IssueRequest::default()
+        })
+        .unwrap()
+}
+
+async fn call(
+    app: &Router,
+    method: &str,
+    path: &str,
+    token: &str,
+    value: Option<Value>,
+) -> (StatusCode, Value) {
+    let mut request = Request::builder()
+        .method(method)
+        .uri(path)
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .extension(ConnectInfo(SocketAddr::from(([127, 0, 0, 1], 25000))));
+    if value.is_some() {
+        request = request.header(
+            header::CONTENT_TYPE,
+            if method == "PATCH" {
+                "application/merge-patch+json"
+            } else {
+                "application/json"
+            },
+        );
+    }
+    let request = request
+        .body(value.map_or_else(Body::empty, |value| Body::from(value.to_string())))
+        .unwrap();
+    let response = app.clone().oneshot(request).await.unwrap();
+    let status = response.status();
+    let bytes = to_bytes(response.into_body(), storage::MAX_BYTES * 2)
+        .await
+        .unwrap();
+    (status, serde_json::from_slice(&bytes).unwrap())
+}
+
+#[test]
+fn schema_tracks_clap_and_toml_round_trips_edits() {
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("runtime.toml");
+    let original = "# operator note\n[cli]\nport = 9081 # chosen service port\nverbose = true\n";
+    std::fs::write(&path, original).unwrap();
+    let parsed = cli(root.path(), &["--port", "9082"]);
+    assert_eq!(parsed.port, 9082);
+    assert!(parsed.verbose);
+    let store = parsed.runtime_config.unwrap();
+    assert_eq!(store.status()["overridden"], json!(["port"]));
+    let (toml, mut document) = storage::decode(original).unwrap();
+    assert!(jsonschema::validator_for(schema()).unwrap().is_valid(&document));
+    document["cli"]["port"] = json!(9083);
+    document["payload"] = json!({
+        "override": [{"models": [{"name": "*"}], "params": {"empty": null}}]
+    });
+    let edited = storage::encode(toml, &document).unwrap();
+    assert!(edited.contains("# operator note"));
+    assert!(edited.contains("port = 9083 # chosen service port"));
+    assert_eq!(storage::decode(&edited).unwrap().1, document);
+}
+
+#[test]
+fn every_clap_secret_and_nested_payload_secret_is_redacted() {
+    let options = schema()["properties"]["cli"]["properties"].as_object().unwrap();
+    let secrets = options
+        .iter()
+        .filter(|(_, schema)| schema["writeOnly"] == true)
+        .map(|(key, _)| (key.clone(), json!("secret-test-fixture")))
+        .collect::<serde_json::Map<_, _>>();
+    assert!(secrets.contains_key("token-secret"));
+    assert!(secrets.contains_key("admin-key"));
+    let document = json!({
+        "cli": secrets,
+        "payload": {
+            "override-raw": [{
+                "params": {
+                    "metadata": "{\"access_token\":\"secret-test-fixture\"}",
+                    "/headers/authorization": "secret-test-fixture",
+                    "upstream": "https://user:secret-test-fixture@example.test",
+                    "max_tokens": "200"
+                }
+            }]
+        }
+    });
+    let rendered = redaction::view(&document);
+    assert!(!rendered.to_string().contains("secret-test-fixture"));
+    assert_eq!(rendered["payload"]["override-raw"][0]["params"]["max_tokens"], "200");
+    assert!(!redaction::diff(&json!({}), &document).to_string().contains("secret-test-fixture"));
+}
+
+#[tokio::test]
+async fn writer_is_scoped_and_can_replace_merge_and_edit_pointers() {
+    let root = tempfile::tempdir().unwrap();
+    let state = state(root.path());
+    let admin = issue(&state, ADMIN_SCOPE);
+    let writer = issue(&state, CONFIG_WRITE_SCOPE);
+    let app = crate::admin_api::router(state.clone());
+    assert_eq!(
+        call(&app, "PUT", ROOT, &admin, Some(json!({}))).await.0,
+        StatusCode::FORBIDDEN
+    );
+    assert_eq!(
+        call(&app, "POST", &format!("{ROOT}/reload"), "runtime-test-admin-key", None)
+            .await
+            .0,
+        StatusCode::FORBIDDEN
+    );
+    assert_eq!(
+        call(&app, "GET", "/api/management/tokens", &writer, None).await.0,
+        StatusCode::UNAUTHORIZED
+    );
+    assert!(state.token_manager.authenticate_incoming(&writer, &axum::http::HeaderMap::new()).is_err());
+
+    let document = json!({
+        "cli": {"port": 9084, "verbose": true},
+        "cors": {"origins": ["https://first.example", "https://second.example"]},
+        "payload": {"override": [{"models": [{"name": "*"}], "params": {"metadata.a/b": 1}}]}
+    });
+    assert_eq!(call(&app, "PUT", ROOT, &writer, Some(document)).await.0, StatusCode::OK);
+    let patch = json!({"cli": {"verbose": null}, "cors": {"origins": ["https://third.example"]}});
+    let (status, update) = call(&app, "PATCH", ROOT, &writer, Some(patch)).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(update["restart_required"], json!(["port"]));
+
+    let pointer = format!("{ROOT}/payload/override/0/params/metadata.a~1b");
+    assert_eq!(call(&app, "GET", &pointer, &admin, None).await, (StatusCode::OK, json!(1)));
+    assert_eq!(call(&app, "PUT", &pointer, &writer, Some(json!(2))).await.0, StatusCode::OK);
+    assert_eq!(call(&app, "GET", &pointer, &admin, None).await.1, 2);
+    let list_item = format!("{ROOT}/cors/origins/0");
+    assert_eq!(call(&app, "DELETE", &list_item, &writer, None).await.0, StatusCode::OK);
+    let document = call(&app, "GET", ROOT, &admin, None).await.1;
+    assert_eq!(document["cors"]["origins"], json!([]));
+    assert!(document["cli"].get("verbose").is_none());
+
+    let forbidden = json!({"cli": {"allow-subscription-bridge": ["codex:claude"]}});
+    assert_eq!(call(&app, "PATCH", ROOT, &writer, Some(forbidden)).await.0, StatusCode::BAD_REQUEST);
+    let trust = json!({"cli": {"token-secret": "another-signing-key"}});
+    assert_eq!(call(&app, "PATCH", ROOT, &writer, Some(trust)).await.0, StatusCode::BAD_REQUEST);
+    let audit = std::fs::read_to_string(root.path().join("runtime-config-audit.jsonl")).unwrap();
+    assert!(audit.contains("\"action\":\"put_pointer\""));
+    assert!(audit.contains("\"port\""));
+    assert!(!audit.contains(&writer));
+    let id = state.token_manager.validate_token(&writer).unwrap().sub;
+    state.token_manager.revoke_token(&id).unwrap();
+    assert_eq!(call(&app, "PATCH", ROOT, &writer, Some(json!({}))).await.0, StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn watcher_and_explicit_reload_activate_cors_and_keep_the_last_valid_snapshot() {
+    let root = tempfile::tempdir().unwrap();
+    let state = state(root.path());
+    let store = state.request_log.runtime_config().unwrap();
+    let app = crate::admin_api::router(state.clone());
+    let writer = issue(&state, CONFIG_WRITE_SCOPE);
+    let path = root.path().join("runtime.toml");
+    std::fs::write(
+        &path,
+        "[cli]\nport = 9089\n[cors]\norigins = ['https://console.example']\nmethods = ['PATCH']\nheaders = ['authorization']\ncredentials = true\n",
+    )
+    .unwrap();
+    store.watch();
+    tokio::time::timeout(std::time::Duration::from_secs(5), async {
+        while store.cors().is_none() {
+            tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+        }
+    })
+    .await
+    .expect("the watcher loaded CORS");
+    let reload = format!("{ROOT}/reload");
+    assert_eq!(call(&app, "POST", &reload, &writer, None).await.1["restart_required"], json!(["port"]));
+    std::fs::write(&path, "[cors]\norigins = ['*']\ncredentials = true\n").unwrap();
+    assert_eq!(call(&app, "POST", &reload, &writer, None).await.0, StatusCode::CONFLICT);
+    let preflight = Request::builder()
+        .method("OPTIONS")
+        .uri(ROOT)
+        .header(header::ORIGIN, "https://console.example")
+        .header(header::ACCESS_CONTROL_REQUEST_METHOD, "PATCH")
+        .header(header::ACCESS_CONTROL_REQUEST_HEADERS, "authorization")
+        .body(Body::empty())
+        .unwrap();
+    let response = app.oneshot(preflight).await.unwrap();
+    assert!(response.status().is_success());
+    assert_eq!(response.headers()[header::ACCESS_CONTROL_ALLOW_ORIGIN], "https://console.example");
+    assert_eq!(response.headers()[header::ACCESS_CONTROL_ALLOW_METHODS], "PATCH");
+    assert_eq!(response.headers()[header::ACCESS_CONTROL_ALLOW_CREDENTIALS], "true");
+}
+
+#[tokio::test]
+async fn http_final_barrier_records_final_values_and_rejects_before_any_send() {
+    let root = tempfile::tempdir().unwrap();
+    let state = state(root.path());
+    let store = state.request_log.runtime_config().unwrap();
+    let document = json!({
+        "payload": {
+            "override": [{"models": [{"name": "claude-*", "protocol": "claude"}], "params": {"temperature": 0.1}}],
+            "override-raw": [{"models": [{"name": "*"}], "params": {"max_tokens": "200"}}],
+            "filter": [{"models": [{"name": "*", "exist": ["system"]}], "params": ["system", "tools.#(type==\"image_generation\")#"]}]
+        }
+    });
+    store.edit(super::Edit::Replace(document), "test").unwrap();
+    let upstream = Router::new().route(
+        "/v1/messages",
+        axum::routing::post(|axum::Json(value): axum::Json<Value>| async move { axum::Json(value) }),
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move { axum::serve(listener, upstream).await.unwrap() });
+    let client = reqwest::Client::new();
+    let url = format!("http://{address}/v1/messages");
+    let send = |id: &'static str, body: Value| {
+        state.request_log.send_upstream(id, &client, client.post(&url).json(&body))
+    };
+    let body = json!({
+        "model": "claude-opus", "system": "late injection",
+        "tools": [{"type": "image_generation"}, {"type": "function"}, {"type": "image_generation"}]
+    });
+    let final_body: Value = send("barrier-success", body).await.unwrap().json().await.unwrap();
+    assert_eq!(final_body["temperature"], 0.1);
+    assert_eq!(final_body["max_tokens"], 200);
+    assert_eq!(final_body["tools"], json!([{"type": "function"}]));
+    assert!(final_body.get("system").is_none());
+    let records = state.request_log.lookup("barrier-success").unwrap();
+    let evidence = records.iter().find(|record| record["phase"] == "payload_rules_applied").unwrap();
+    assert!(evidence["changes"].as_array().unwrap().iter().any(|change| {
+        change["path"] == "/max_tokens" && change["value"] == 200
+    }));
+    let error = send("barrier-failure", json!({"model": "claude-opus", "top_p": 0.5}))
+        .await
+        .unwrap_err();
+    assert!(matches!(error, crate::upstream_client::UpstreamSendError::PayloadRule(_)));
+    let records = state.request_log.lookup("barrier-failure").unwrap();
+    assert!(records.iter().any(|record| record["phase"] == "payload_rules_rejected"));
+    assert!(records.iter().all(|record| record["phase"] != "upstream_request"));
+    server.abort();
+}
+
+#[test]
+fn conditions_and_token_scopes_use_the_destination_payload() {
+    let rules = serde_json::from_value::<payload::Payload>(json!({
+        "default": [{"models": [{"name": "*"}], "params": {"metadata.score": 1}}],
+        "override": [{
+            "models": [{"name": "gpt-*", "protocol": "codex", "token": "resume-app",
+                "match": [{"metadata.score": 1}], "not-match": [{"metadata.mode": "off"}],
+                "exist": ["input"], "not-exist": ["disabled"]}],
+            "params": {"metadata.score": 2}
+        }]
+    }))
+    .unwrap()
+    .compile()
+    .unwrap();
+    let context = payload::Context {
+        protocol: "codex",
+        from_protocol: "responses",
+        model: "gpt-test",
+        token_id: Some("token-id"),
+        token_label: Some("resume-app"),
+    };
+    let mut body = json!({"input": [], "metadata": {}});
+    assert_eq!(rules.apply(&mut body, &context).unwrap().len(), 2);
+    assert_eq!(body["metadata"]["score"], 2);
+    let mut body = json!({"input": [], "metadata": {}});
+    let other = payload::Context { token_label: Some("other"), ..context };
+    assert_eq!(rules.apply(&mut body, &other).unwrap().len(), 1);
+    assert_eq!(body["metadata"]["score"], 1);
+}

@@ -48,7 +48,7 @@ pub fn try_parse_arguments(arguments: Vec<std::ffi::OsString>) -> Result<Cli, cl
             |name| name.to_string_lossy().into_owned(),
         );
     command = substitute_usage_name(command, &invoked);
-    let matches = command.try_get_matches_from(arguments)?;
+    let matches = command.clone().try_get_matches_from(&arguments)?;
     let mut cli = Cli::from_arg_matches(&matches)?;
     // A propagated global default is not a deploy override of --config (#688).
     if let Some(Command::Deploy(deploy)) = &mut cli.command
@@ -58,6 +58,10 @@ pub fn try_parse_arguments(arguments: Vec<std::ffi::OsString>) -> Result<Cli, cl
             == Some(clap::parser::ValueSource::DefaultValue)
     {
         deploy.port = None;
+    }
+    if matches!(cli.command, None | Some(Command::Serve)) {
+        return crate::runtime_config::RuntimeConfig::load(cli, command, arguments, &matches)
+            .map_err(|error| clap::Error::raw(clap::error::ErrorKind::ValueValidation, error));
     }
     Ok(cli)
 }
