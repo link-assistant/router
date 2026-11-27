@@ -132,8 +132,12 @@ jobs:
         run: |
           cargo install cargo-llvm-cov --version "$LLVM_COV_VERSION" --locked --force
           cd "$RUNNER_TEMP/base"
+          export CARGO_LLVM_COV_TARGET_DIR="$RUNNER_TEMP/base-coverage-target"
           cargo llvm-cov clean --workspace
-          cargo llvm-cov --locked --all-features --workspace --no-report
+          # The historical host consumer accepts an explicit executable path.
+          # Cargo 1.100 runs its harness outside the CLI's output directory.
+          ROUTER_BIN="$CARGO_LLVM_COV_TARGET_DIR/debug/router" \
+            cargo llvm-cov --locked --all-features --workspace --no-report
           cargo llvm-cov report --json --summary-only --output-path "$RUNNER_TEMP/base-coverage.json"
           cargo llvm-cov report --lcov --output-path "$RUNNER_TEMP/base-lcov.info"
           jq '.data[0].totals.lines' "$RUNNER_TEMP/base-coverage.json" | tee -a "$GITHUB_STEP_SUMMARY"

@@ -110,6 +110,8 @@ Rust's hybrid HIR coverage span change updates how the compiler selects measurab
 
 The optional coverage measurement keeps the benchmark's normal PR triggers, the immutable comparison base, the existing test commands, and both same-SHA JavaScript gates. The focused policy suite passed all nine cases, including refusal of a default-on or ungated measurement.
 
+The historical host consumer supports an explicit `ROUTER_BIN`. The diagnostic supplies the CLI built by the instrumented Cargo invocation through that interface, so Cargo 1.100's separate harness directory does not prevent the complete baseline suite from running. The detached base source is unchanged. [Coverage tool target-directory option](https://github.com/taiki-e/cargo-llvm-cov/tree/v0.9.2#environment-variables).
+
 The previous Intel macOS Nix build installed Nix 2.35.6 and reached Router's release compilation. Its last build output is at line 2695, about 17 minutes before GitHub stopped the job at the 45-minute deadline. The flake now uses thin LTO with 16 codegen units for the Intel macOS package only. Both CLI probes and the deadline stay in place. Nix 2.36.0 parsed the revised package expression. The `f1093db4` Linux Nix jobs reached formatting and found the same three assertion wraps as the main formatter. Commit `eff7e35cd` includes those exact changes. [Intel job](https://github.com/link-assistant/router/actions/runs/46030971590/job/140622480479), [Linux x86-64 job](https://github.com/link-assistant/router/actions/runs/46033084518/job/140646345812), [Linux arm64 job](https://github.com/link-assistant/router/actions/runs/46033084518/job/140646345739), [Cargo release profiles](https://doc.rust-lang.org/cargo/reference/profiles.html#lto).
 
 ## Cargo tool advisories
