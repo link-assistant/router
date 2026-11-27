@@ -463,7 +463,7 @@ impl TokenManager {
         let jwt = encode(
             &Header::default(),
             &claims,
-            &EncodingKey::from_secret(self.secret.as_bytes()),
+            &EncodingKey::from_secret(self.secret.as_bytes())?,
         )?;
         // Persist a record so list/revoke survive restarts. Storage failures
         // are logged but do not block token issuance for in-memory tests.
@@ -675,7 +675,7 @@ impl TokenManager {
         };
         decode::<TokenClaims>(
             jwt,
-            &DecodingKey::from_secret(self.secret.as_bytes()),
+            &DecodingKey::from_secret(self.secret.as_bytes()).ok()?,
             &validation,
         )
         .ok()
@@ -706,17 +706,7 @@ impl TokenManager {
     /// were stale. The signature is still verified, so a forged token cannot
     /// drive this (issue #355).
     fn expiry_facts(&self, jwt: &str) -> Option<ExpiryFacts> {
-        let validation = Validation {
-            validate_exp: false,
-            ..Validation::default()
-        };
-        let claims = decode::<TokenClaims>(
-            jwt,
-            &DecodingKey::from_secret(self.secret.as_bytes()),
-            &validation,
-        )
-        .ok()?
-        .claims;
+        let claims = self.decode_ignoring_expiry(jwt)?.claims;
         let expires_at = claims.exp;
         let issued_at = self
             .store

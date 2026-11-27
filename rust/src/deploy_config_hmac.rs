@@ -15,9 +15,12 @@ const VALUE_CONTEXT: &[u8] = b"link-assistant-router/deploy/provider-key-fingerp
 /// HMAC-SHA256 of `message` keyed by `key`, hex encoded.
 #[must_use]
 pub fn hmac_sha256_hex(key: &[u8], message: &[u8]) -> String {
-    let signature =
-        jsonwebtoken::crypto::sign(message, &EncodingKey::from_secret(key), Algorithm::HS256)
-            .expect("HMAC-SHA256 accepts any key");
+    // HMAC pads short keys with zeros, so one zero byte preserves the empty
+    // key digest even though the JWT key constructor rejects an empty slice.
+    let key = if key.is_empty() { &[0] } else { key };
+    let key = EncodingKey::from_secret(key).expect("HMAC key is nonempty");
+    let signature = jsonwebtoken::crypto::sign(message, &key, Algorithm::HS256)
+        .expect("HMAC-SHA256 accepts any nonempty key");
     let bytes = crate::translation_core::base64_url_no_pad_decode_owned_text(signature)
         .expect("jsonwebtoken returns base64url");
     hex::encode(bytes)

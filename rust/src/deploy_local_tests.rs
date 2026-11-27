@@ -446,7 +446,7 @@ fn exec(
             token
                 .strip_prefix(link_assistant_router::token::TOKEN_PREFIX)
                 .unwrap(),
-            &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()),
+            &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()).unwrap(),
             &jsonwebtoken::Validation::default(),
         )
         .is_ok();

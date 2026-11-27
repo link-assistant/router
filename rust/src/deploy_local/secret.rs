@@ -10,8 +10,8 @@
 //! token signed with the running deployment's secret before it receives
 //! traffic. Neither the secret nor the probe token reaches argv or output.
 
-use base64::Engine as _;
-use jsonwebtoken::{Algorithm, EncodingKey, Header};
+use jsonwebtoken::{EncodingKey, Header};
+use link_assistant_router::deploy_config::hmac_sha256_hex;
 use link_assistant_router::storage::TokenRecord;
 
 use super::{Coordinator, LABEL_KEY};
@@ -23,20 +23,11 @@ pub(super) const PROBE_ENV: &crate::translation_core::Str = "ROUTER_DEPLOY_PROBE
 const FINGERPRINT_CONTEXT: &[u8] = b"link-assistant-router/deploy/token-secret-fingerprint/v1";
 const PROBE_SCRIPT: &crate::translation_core::Str = "const r=await fetch('http://127.0.0.1:8080/api/models',{signal:AbortSignal.timeout(5000),headers:{authorization:'Bearer '+process.env.ROUTER_DEPLOY_PROBE_TOKEN}});console.log(r.status)";
 
-fn hmac_sha256(key: &[u8], message: &[u8]) -> Vec<u8> {
-    let signature =
-        jsonwebtoken::crypto::sign(message, &EncodingKey::from_secret(key), Algorithm::HS256)
-            .expect("HMAC-SHA256 accepts any key");
-    base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(signature)
-        .expect("jsonwebtoken returns base64url")
-}
-
 /// A keyed, truncated digest that identifies a secret without revealing it:
 /// HMAC-SHA256 keyed by the secret over a fixed context, first 128 bits.
 pub(super) fn fingerprint(secret: &crate::translation_core::Str) -> crate::translation_core::Text {
-    let digest = hmac_sha256(secret.as_bytes(), FINGERPRINT_CONTEXT);
-    crate::translation_core::format!("hmac-sha256:{}", hex::encode(&digest[..16]))
+    let digest = hmac_sha256_hex(secret.as_bytes(), FINGERPRINT_CONTEXT);
+    crate::translation_core::format!("hmac-sha256:{}", &digest[..32])
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -194,12 +185,9 @@ impl Coordinator<'_> {
             client_kind: None,
             principal_id: None,
         };
-        let jwt = jsonwebtoken::encode(
-            &Header::default(),
-            &claims,
-            &EncodingKey::from_secret(self.token_secret.as_bytes()),
-        )
-        .map_err(|error| format!("could not sign the token probe: {error}"))?;
+        let jwt = EncodingKey::from_secret(self.token_secret.as_bytes())
+            .and_then(|key| jsonwebtoken::encode(&Header::default(), &claims, &key))
+            .map_err(|error| format!("could not sign the token probe: {error}"))?;
         Ok(format!(
             "{}{jwt}",
             link_assistant_router::token::TOKEN_PREFIX
@@ -215,7 +203,7 @@ mod tests {
     #[test]
     fn hmac_matches_the_published_vector() {
         assert_eq!(
-            hex::encode(hmac_sha256(b"Jefe", b"what do ya want for nothing?")),
+            hmac_sha256_hex(b"Jefe", b"what do ya want for nothing?"),
             "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843"
         );
     }

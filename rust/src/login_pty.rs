@@ -23,6 +23,7 @@
 //! `tokio::task::spawn_blocking`.
 
 use std::io::{Read, Write};
+use std::num::NonZeroU16;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -121,7 +122,11 @@ impl PtySession {
         let output = Arc::new(Mutex::new(Output {
             bytes: Vec::new(),
             last_write: Instant::now(),
-            screen: vt100::Parser::new(PTY_ROWS, PTY_COLS, 0),
+            screen: vt100::Parser::new(
+                NonZeroU16::new(PTY_ROWS).expect("nonzero terminal height"),
+                NonZeroU16::new(PTY_COLS).expect("nonzero terminal width"),
+                0,
+            ),
         }));
         let eof = Arc::new(AtomicBool::new(false));
 
