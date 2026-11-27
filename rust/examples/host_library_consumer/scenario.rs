@@ -17,7 +17,7 @@ impl Drop for HostGuard {
 }
 
 #[tokio::main]
-pub(crate) async fn run(default_executable: impl FnOnce() -> std::path::PathBuf) {
+pub async fn run(default_executable: impl FnOnce() -> std::path::PathBuf) {
     // This application does not implement Router's CLI. A mistaken launch
     // with `serve` or `--version` must fail rather than accidentally recurse.
     if std::env::args_os().len() != 1 {
