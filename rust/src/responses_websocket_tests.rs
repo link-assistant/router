@@ -9,8 +9,8 @@ use serde_json::{Value, json};
 use tokio_tungstenite::tungstenite;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest as _;
 
-use super::{session::websocket_request, thinking_controls::parse_create_event};
 use super::*;
+use super::{session::websocket_request, thinking_controls::parse_create_event};
 use crate::clients::ClientKind;
 use crate::token::IssueRequest;
 
@@ -306,16 +306,23 @@ async fn payload_rules_filter_first_and_following_responses_websocket_turns() {
             .send(tungstenite::Message::Text(event.to_string().into()))
             .await
             .unwrap();
-        let response = tokio::time::timeout(std::time::Duration::from_secs(5), next_json(&mut socket))
-            .await
-            .unwrap();
+        let response =
+            tokio::time::timeout(std::time::Duration::from_secs(5), next_json(&mut socket))
+                .await
+                .unwrap();
         assert_eq!(response["stream_id"], lane);
-        assert_eq!(response["response"]["tools"], json!([{"type":"function","name":"keep"}]));
+        assert_eq!(
+            response["response"]["tools"],
+            json!([{"type":"function","name":"keep"}])
+        );
         assert_eq!(response["response"]["service_tier"], "priority");
     }
     let records = state.request_log.lookup(id).unwrap();
     assert_eq!(
-        records.iter().filter(|entry| entry["phase"] == "payload_rules_applied").count(),
+        records
+            .iter()
+            .filter(|entry| entry["phase"] == "payload_rules_applied")
+            .count(),
         2
     );
     socket.close(None).await.unwrap();

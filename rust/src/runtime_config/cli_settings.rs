@@ -23,7 +23,8 @@ fn document_flag(flag: &str) -> bool {
 }
 
 fn flag(arg: &Arg) -> Option<&str> {
-    arg.get_long().filter(|name| arg.is_global_set() && document_flag(name))
+    arg.get_long()
+        .filter(|name| arg.is_global_set() && document_flag(name))
 }
 
 pub(super) fn schema() -> Value {
@@ -118,11 +119,16 @@ impl Input {
         let mut overridden = BTreeSet::new();
         for arg in Cli::command().get_arguments() {
             if let Some(name) = flag(arg) {
-                if arg.get_env().is_some_and(|env| crate::operation_context::var_os(env).is_some()) {
+                if arg
+                    .get_env()
+                    .is_some_and(|env| crate::operation_context::var_os(env).is_some())
+                {
                     environment.insert(name.to_owned());
                     overridden.insert(name.to_owned());
                 }
-                if matches.value_source(arg.get_id().as_str()) == Some(clap::parser::ValueSource::CommandLine) {
+                if matches.value_source(arg.get_id().as_str())
+                    == Some(clap::parser::ValueSource::CommandLine)
+                {
                     overridden.insert(name.to_owned());
                 }
             }
@@ -133,7 +139,12 @@ impl Input {
             environment.insert("token-secret".to_owned());
             overridden.insert("token-secret".to_owned());
         }
-        Self { command, arguments, environment, overridden }
+        Self {
+            command,
+            arguments,
+            environment,
+            overridden,
+        }
     }
 
     pub(super) fn resolve(&self, document: &Value) -> Result<Cli, &'static str> {
@@ -147,12 +158,15 @@ impl Input {
                     && let Some(value) = values.get(name)
                 {
                     standalone = standalone.arg(default(
-                        arg.clone().global(false).env(clap::builder::Resettable::Reset),
+                        arg.clone()
+                            .global(false)
+                            .env(clap::builder::Resettable::Reset),
                         value,
                     ));
                 }
             }
-            standalone.try_get_matches_from(["router-config"])
+            standalone
+                .try_get_matches_from(["router-config"])
                 .map_err(|_| "a runtime configuration CLI setting has an invalid value")?;
 
             command = command.mut_args(|arg| {
@@ -165,7 +179,8 @@ impl Input {
                 arg
             });
         }
-        let matches = command.try_get_matches_from(self.arguments.iter())
+        let matches = command
+            .try_get_matches_from(self.arguments.iter())
             .map_err(|_| "runtime configuration conflicts with the server arguments")?;
         Cli::from_arg_matches(&matches)
             .map_err(|_| "runtime configuration could not be parsed by the CLI")
@@ -174,7 +189,9 @@ impl Input {
 
 fn default(arg: Arg, value: &Value) -> Arg {
     fn scalar(value: &Value) -> String {
-        value.as_str().map_or_else(|| value.to_string(), ToOwned::to_owned)
+        value
+            .as_str()
+            .map_or_else(|| value.to_string(), ToOwned::to_owned)
     }
     if let Some(values) = value.as_array() {
         arg.default_values(values.iter().map(scalar))

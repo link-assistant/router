@@ -19,7 +19,10 @@ pub(crate) struct Writer(pub String);
 
 pub(crate) fn routes() -> Router<AppState> {
     Router::new()
-        .route(route_template(RouteId::RuntimeConfig), get(document).put(replace).patch(merge))
+        .route(
+            route_template(RouteId::RuntimeConfig),
+            get(document).put(replace).patch(merge),
+        )
         .route(route_template(RouteId::RuntimeConfigYaml), get(yaml))
         .route(route_template(RouteId::RuntimeConfigSchema), get(schema))
         .route(route_template(RouteId::RuntimeConfigStatus), get(status))
@@ -52,7 +55,10 @@ async fn schema() -> Json<&'static Value> {
 }
 
 async fn status(State(state): State<AppState>) -> Response {
-    config(&state).map_or_else(|response| response, |config| Json(config.status()).into_response())
+    config(&state).map_or_else(
+        |response| response,
+        |config| Json(config.status()).into_response(),
+    )
 }
 
 async fn replace(
@@ -115,7 +121,11 @@ fn split_pointer(path: &str) -> Result<Vec<String>, Response> {
 
 fn config(state: &AppState) -> Result<&std::sync::Arc<RuntimeConfig>, Response> {
     state.request_log.runtime_config().ok_or_else(|| {
-        error_response(StatusCode::SERVICE_UNAVAILABLE, "api_error", "runtime configuration is unavailable")
+        error_response(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "api_error",
+            "runtime configuration is unavailable",
+        )
     })
 }
 
@@ -141,10 +151,18 @@ fn complete(result: Result<Result<Value, Failure>, tokio::task::JoinError>) -> R
 
 fn failure(error: Failure) -> Response {
     let (status, kind, message) = match error {
-        Failure::Missing => (StatusCode::NOT_FOUND, "not_found_error", "configuration path does not exist"),
+        Failure::Missing => (
+            StatusCode::NOT_FOUND,
+            "not_found_error",
+            "configuration path does not exist",
+        ),
         Failure::Invalid(message) => (StatusCode::BAD_REQUEST, "invalid_request_error", message),
         Failure::Conflict(message) => (StatusCode::CONFLICT, "invalid_request_error", message),
-        Failure::Io => (StatusCode::INTERNAL_SERVER_ERROR, "api_error", "runtime configuration or audit write failed"),
+        Failure::Io => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "api_error",
+            "runtime configuration or audit write failed",
+        ),
     };
     error_response(status, kind, message)
 }

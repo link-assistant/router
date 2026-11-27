@@ -28,35 +28,37 @@ impl TokenManager {
         let key = DecodingKey::from_secret(self.secret.as_bytes())
             .map_err(|error| TokenError::Invalid(error.to_string()))?;
         let token_data = decode::<TokenClaims>(jwt, &key, &validation)
-        .and_then(|data| {
-            if injected_time
-                .is_some_and(|now| data.claims.exp < now.timestamp().saturating_sub(leeway))
-            {
-                Err(jsonwebtoken::errors::ErrorKind::ExpiredSignature.into())
-            } else {
-                Ok(data)
-            }
-        })
-        .or_else(|e| match e.kind() {
-            // The decoder enforces the `exp` the token was signed with, which
-            // a sliding token outgrows: the store holds the extended expiry,
-            // and the signature says nothing about it. So a stale signature
-            // is re-checked against the record before it is a rejection
-            // (issue #354).
-            jsonwebtoken::errors::ErrorKind::ExpiredSignature => self
-                .decode_ignoring_expiry(jwt)
-                .filter(|data| self.expiry_slid_past(&data.claims.sub))
-                .ok_or_else(|| {
-                    // The decoder knows only that the signature is stale; the
-                    // record knows when it was issued and when it lapsed
-                    // (issue #355).
-                    TokenError::Expired(self.expiry_facts(jwt))
-                }),
-            // Minted under another issuer secret: a different repair from a
-            // corrupt token, so it is told apart (issue #644).
-            jsonwebtoken::errors::ErrorKind::InvalidSignature => Err(TokenError::SignatureInvalid),
-            _ => Err(TokenError::Invalid(e.to_string())),
-        })?;
+            .and_then(|data| {
+                if injected_time
+                    .is_some_and(|now| data.claims.exp < now.timestamp().saturating_sub(leeway))
+                {
+                    Err(jsonwebtoken::errors::ErrorKind::ExpiredSignature.into())
+                } else {
+                    Ok(data)
+                }
+            })
+            .or_else(|e| match e.kind() {
+                // The decoder enforces the `exp` the token was signed with, which
+                // a sliding token outgrows: the store holds the extended expiry,
+                // and the signature says nothing about it. So a stale signature
+                // is re-checked against the record before it is a rejection
+                // (issue #354).
+                jsonwebtoken::errors::ErrorKind::ExpiredSignature => self
+                    .decode_ignoring_expiry(jwt)
+                    .filter(|data| self.expiry_slid_past(&data.claims.sub))
+                    .ok_or_else(|| {
+                        // The decoder knows only that the signature is stale; the
+                        // record knows when it was issued and when it lapsed
+                        // (issue #355).
+                        TokenError::Expired(self.expiry_facts(jwt))
+                    }),
+                // Minted under another issuer secret: a different repair from a
+                // corrupt token, so it is told apart (issue #644).
+                jsonwebtoken::errors::ErrorKind::InvalidSignature => {
+                    Err(TokenError::SignatureInvalid)
+                }
+                _ => Err(TokenError::Invalid(e.to_string())),
+            })?;
 
         let stored = self
             .store
@@ -95,7 +97,10 @@ impl TokenManager {
         headers: &HeaderMap,
     ) -> Result<TokenClaims, TokenError> {
         let verdict = self.validate_token(token);
-        if verdict.as_ref().is_ok_and(|claims| claims.scope == super::CONFIG_WRITE_SCOPE) {
+        if verdict
+            .as_ref()
+            .is_ok_and(|claims| claims.scope == super::CONFIG_WRITE_SCOPE)
+        {
             return Err(TokenError::InsufficientScope);
         }
         let count = crate::auth_diagnostics::first_outcome_in_request();

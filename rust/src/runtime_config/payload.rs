@@ -175,10 +175,19 @@ fn compile_rule(
                 {
                     return Err("payload rules may only remove a continuation ID");
                 }
-                Step::Key(key) if matches!(
-                    key.as_str(),
-                    "model" | "modelId" | "stream" | "type" | "stream_id" | "conversation"
-                ) => return Err("payload rule changes a protected routing or transport field"),
+                Step::Key(key)
+                    if matches!(
+                        key.as_str(),
+                        "model"
+                            | "modelId"
+                            | "stream"
+                            | "type"
+                            | "stream_id"
+                            | "conversation"
+                    ) =>
+                {
+                    return Err("payload rule changes a protected routing or transport field");
+                }
                 Step::Query { .. } => return Err("payload rule must start at an object member"),
                 Step::Key(_) => {}
             }
@@ -233,8 +242,7 @@ impl CompiledSelector {
     }
 
     fn selects_scope(&self, context: &Context<'_>) -> bool {
-        (self.protocol.is_empty()
-                || canonical_protocol(&self.protocol) == context.protocol)
+        (self.protocol.is_empty() || canonical_protocol(&self.protocol) == context.protocol)
             && (self.from_protocol.is_empty()
                 || canonical_protocol(&self.from_protocol) == context.from_protocol)
             && (self.token.is_empty()
@@ -313,11 +321,24 @@ impl Rules {
         context: &Context<'_>,
     ) -> Result<Vec<Applied>, &'static str> {
         let protected = |root: &Value| {
-            ["/request/model", "/request/modelId", "/request/stream", "/object/model",
-                "/response/model", "/session/model", "/object/context", "/object/attributedTo", "/object/type", "/actor", "/target",
-                "/response/previous_response_id", "/response/conversation",
-                "/@context", "/id"]
-                .map(|path| root.pointer(path).cloned())
+            [
+                "/request/model",
+                "/request/modelId",
+                "/request/stream",
+                "/object/model",
+                "/response/model",
+                "/session/model",
+                "/object/context",
+                "/object/attributedTo",
+                "/object/type",
+                "/actor",
+                "/target",
+                "/response/previous_response_id",
+                "/response/conversation",
+                "/@context",
+                "/id",
+            ]
+            .map(|path| root.pointer(path).cloned())
         };
         let original = protected(body);
         let mut applied = Vec::new();
@@ -359,7 +380,9 @@ impl Rules {
                     applied.push(Applied {
                         stage: rule.stage.name(),
                         path: render_pointer(&path),
-                        value: value.as_ref().map(|value| super::redaction::applied(&path, value)),
+                        value: value
+                            .as_ref()
+                            .map(|value| super::redaction::applied(&path, value)),
                     });
                 }
             }
@@ -396,22 +419,32 @@ fn parse_path(path: &str) -> Result<Vec<Step>, &'static str> {
     if parts.is_empty() || parts.len() > MAX_PATH_STEPS || parts.iter().any(String::is_empty) {
         return Err("invalid payload path");
     }
-    parts.into_iter().map(|part| {
-        if let Some(query) = part.strip_prefix("#(") {
-            let all = query.ends_with('#');
-            let query = query.strip_suffix('#').unwrap_or(query);
-            let (key, literal) = query.strip_suffix(')').and_then(|query| query.split_once("=="))
-                .ok_or("invalid payload array selector")?;
-            let key: Vec<_> = key.split('.').map(str::trim).map(ToOwned::to_owned).collect();
-            if key.iter().any(String::is_empty) {
-                return Err("invalid payload array selector");
+    parts
+        .into_iter()
+        .map(|part| {
+            if let Some(query) = part.strip_prefix("#(") {
+                let all = query.ends_with('#');
+                let query = query.strip_suffix('#').unwrap_or(query);
+                let (key, literal) = query
+                    .strip_suffix(')')
+                    .and_then(|query| query.split_once("=="))
+                    .ok_or("invalid payload array selector")?;
+                let key: Vec<_> = key
+                    .split('.')
+                    .map(str::trim)
+                    .map(ToOwned::to_owned)
+                    .collect();
+                if key.iter().any(String::is_empty) {
+                    return Err("invalid payload array selector");
+                }
+                let expected = serde_json::from_str(literal.trim())
+                    .map_err(|_| "invalid payload array selector")?;
+                Ok(Step::Query { key, expected, all })
+            } else {
+                Ok(Step::Key(part))
             }
-            let expected = serde_json::from_str(literal.trim()).map_err(|_| "invalid payload array selector")?;
-            Ok(Step::Query { key, expected, all })
-        } else {
-            Ok(Step::Key(part))
-        }
-    }).collect()
+        })
+        .collect()
 }
 
 fn split_path(path: &str) -> Result<Vec<String>, &'static str> {
@@ -445,10 +478,7 @@ fn split_path(path: &str) -> Result<Vec<String>, &'static str> {
     Ok(parts)
 }
 
-fn resolve(
-    body: &Value,
-    steps: &[Step],
-) -> Result<Vec<Vec<String>>, &'static str> {
+fn resolve(body: &Value, steps: &[Step]) -> Result<Vec<Vec<String>>, &'static str> {
     fn visit(
         value: Option<&Value>,
         steps: &[Step],
@@ -465,7 +495,12 @@ fn resolve(
         match step {
             Step::Key(key) => {
                 path.push(key.clone());
-                visit(value.and_then(|value| pointer::child(value, key)), tail, path, output)?;
+                visit(
+                    value.and_then(|value| pointer::child(value, key)),
+                    tail,
+                    path,
+                    output,
+                )?;
                 path.pop();
             }
             Step::Query { key, expected, all } => {

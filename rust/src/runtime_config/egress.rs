@@ -24,7 +24,10 @@ struct Source {
 
 pub(crate) async fn scope(State(state): State<AppState>, request: Request, next: Next) -> Response {
     let path = request.uri().path();
-    let protocol = match path.strip_prefix("/api/services/").and_then(|path| path.split('/').next()) {
+    let protocol = match path
+        .strip_prefix("/api/services/")
+        .and_then(|path| path.split('/').next())
+    {
         Some("anthropic") => "claude",
         Some("gemini") => "gemini",
         Some("vertex") if path.contains("/publishers/anthropic/") => "claude",
@@ -105,13 +108,19 @@ pub(crate) async fn http(
     correlation: &str,
     request: &mut reqwest::Request,
 ) -> Result<(), UpstreamSendError> {
-    let Some(config) = log.runtime_config() else { return Ok(()) };
+    let Some(config) = log.runtime_config() else {
+        return Ok(());
+    };
     let rules = config.rules();
     if rules.is_empty() {
         return Ok(());
     }
-    let Some(protocol) = target_protocol(request.method(), request.url()) else { return Ok(()) };
-    let protocol = DESTINATION.try_with(|protocol| *protocol).unwrap_or(protocol);
+    let Some(protocol) = target_protocol(request.method(), request.url()) else {
+        return Ok(());
+    };
+    let protocol = DESTINATION
+        .try_with(|protocol| *protocol)
+        .unwrap_or(protocol);
     let (token_id, token_label) = log.runtime_identity(correlation);
     let (from_protocol, share_geolocation, limit) = SOURCE
         .try_with(|source| (source.protocol, source.share_geolocation, source.limit))
@@ -142,11 +151,18 @@ pub(crate) async fn http(
         .map_err(|_| fail(FAILURE))?;
         (parsed.value, Some(parsed.native))
     } else {
-        (serde_json::from_slice(bytes).map_err(|_| fail(FAILURE))?, None)
+        (
+            serde_json::from_slice(bytes).map_err(|_| fail(FAILURE))?,
+            None,
+        )
     };
-    let model = body["model"].as_str().or_else(|| body["modelId"].as_str())
-        .or_else(|| body["request"]["model"].as_str()).filter(|model| !model.is_empty())
-        .unwrap_or_else(|| target_model(request.url())).to_owned();
+    let model = body["model"]
+        .as_str()
+        .or_else(|| body["modelId"].as_str())
+        .or_else(|| body["request"]["model"].as_str())
+        .filter(|model| !model.is_empty())
+        .unwrap_or_else(|| target_model(request.url()))
+        .to_owned();
     context.model = &model;
     let applied = apply(&rules, &mut body, &context, share_geolocation).map_err(fail)?;
     if applied.is_empty() {
@@ -166,7 +182,11 @@ pub(crate) async fn http(
     }
     *request.body_mut() = Some(bytes.into());
     request.headers_mut().remove(header::CONTENT_LENGTH);
-    log.record(correlation, "payload_rules_applied", json!({"protocol": protocol, "changes": applied}));
+    log.record(
+        correlation,
+        "payload_rules_applied",
+        json!({"protocol": protocol, "changes": applied}),
+    );
     Ok(())
 }
 
@@ -192,7 +212,9 @@ pub(crate) fn websocket(
     body: &mut Value,
 ) -> Result<bool, &'static str> {
     let log = &state.request_log;
-    let Some(config) = log.runtime_config() else { return Ok(false) };
+    let Some(config) = log.runtime_config() else {
+        return Ok(false);
+    };
     let rules = config.rules();
     if rules.is_empty() {
         return Ok(false);
@@ -204,28 +226,46 @@ pub(crate) fn websocket(
     };
     let model = body["model"].as_str().unwrap_or_default().to_owned();
     let context = Context {
-        protocol, from_protocol: "responses", model: &model,
-        token_id: Some(&claims.sub), token_label: Some(&claims.label),
+        protocol,
+        from_protocol: "responses",
+        model: &model,
+        token_id: Some(&claims.sub),
+        token_label: Some(&claims.label),
     };
-    let result = apply(&rules, body, &context, crate::geolocation::shares_geolocation(headers))
-        .and_then(|applied| {
-            if !applied.is_empty()
-                && serde_json::to_vec(body).map_err(|_| FAILURE)?.len() > state.max_proxy_request_bytes
-            {
-                return Err(FAILURE);
-            }
-            Ok(applied)
-        });
+    let result = apply(
+        &rules,
+        body,
+        &context,
+        crate::geolocation::shares_geolocation(headers),
+    )
+    .and_then(|applied| {
+        if !applied.is_empty()
+            && serde_json::to_vec(body).map_err(|_| FAILURE)?.len() > state.max_proxy_request_bytes
+        {
+            return Err(FAILURE);
+        }
+        Ok(applied)
+    });
     match result {
         Ok(applied) if applied.is_empty() => Ok(false),
         Ok(applied) => {
-            log.record_payload_rules(correlation, headers, claims, "payload_rules_applied",
-                json!({"protocol": protocol, "changes": applied}));
+            log.record_payload_rules(
+                correlation,
+                headers,
+                claims,
+                "payload_rules_applied",
+                json!({"protocol": protocol, "changes": applied}),
+            );
             Ok(true)
         }
         Err(reason) => {
-            log.record_payload_rules(correlation, headers, claims, "payload_rules_rejected",
-                json!({"protocol": protocol, "error": reason}));
+            log.record_payload_rules(
+                correlation,
+                headers,
+                claims,
+                "payload_rules_rejected",
+                json!({"protocol": protocol, "error": reason}),
+            );
             Err(reason)
         }
     }
@@ -262,47 +302,49 @@ pub(crate) fn forgefed_scope<F: std::future::Future>(
 }
 
 pub(crate) fn forgefed(model: &str, activity: &mut Value) -> Result<(), &'static str> {
-    FORGEFED.try_with(|request| {
-        let Some(config) = request.log.runtime_config() else {
-            return Ok(());
-        };
-        let rules = config.rules();
-        if rules.is_empty() {
-            return Ok(());
-        }
-        let context = Context {
-            protocol: "forgefed",
-            from_protocol: "openai",
-            model,
-            token_id: Some(&request.token_id),
-            token_label: Some(&request.token_label),
-        };
-        let applied = apply(&rules, activity, &context, request.share_geolocation)
-            .and_then(|applied| {
-                if !applied.is_empty()
-                    && serde_json::to_vec(activity).map_err(|_| FAILURE)?.len() > request.limit
-                {
-                    return Err(FAILURE);
-                }
-                Ok(applied)
-            })
-            .inspect_err(|reason| {
-                request.log.record(
-                    &request.correlation,
-                    "payload_rules_rejected",
-                    json!({"protocol": "forgefed", "error": reason}),
-                );
-            })?;
-        if applied.is_empty() {
-            return Ok(());
-        }
-        request.log.record(
-            &request.correlation,
-            "payload_rules_applied",
-            json!({"protocol": "forgefed", "changes": applied}),
-        );
-        Ok(())
-    }).unwrap_or(Ok(()))
+    FORGEFED
+        .try_with(|request| {
+            let Some(config) = request.log.runtime_config() else {
+                return Ok(());
+            };
+            let rules = config.rules();
+            if rules.is_empty() {
+                return Ok(());
+            }
+            let context = Context {
+                protocol: "forgefed",
+                from_protocol: "openai",
+                model,
+                token_id: Some(&request.token_id),
+                token_label: Some(&request.token_label),
+            };
+            let applied = apply(&rules, activity, &context, request.share_geolocation)
+                .and_then(|applied| {
+                    if !applied.is_empty()
+                        && serde_json::to_vec(activity).map_err(|_| FAILURE)?.len() > request.limit
+                    {
+                        return Err(FAILURE);
+                    }
+                    Ok(applied)
+                })
+                .inspect_err(|reason| {
+                    request.log.record(
+                        &request.correlation,
+                        "payload_rules_rejected",
+                        json!({"protocol": "forgefed", "error": reason}),
+                    );
+                })?;
+            if applied.is_empty() {
+                return Ok(());
+            }
+            request.log.record(
+                &request.correlation,
+                "payload_rules_applied",
+                json!({"protocol": "forgefed", "changes": applied}),
+            );
+            Ok(())
+        })
+        .unwrap_or(Ok(()))
 }
 
 pub(crate) struct NativeContext {
@@ -365,7 +407,9 @@ impl NativeContext {
             .unwrap_or(&self.default_model)
             .to_owned();
         apply(
-            rules, body, &self.context(source, &model),
+            rules,
+            body,
+            &self.context(source, &model),
             crate::geolocation::shares_geolocation(&self.headers),
         )
     }
@@ -388,7 +432,10 @@ impl NativeContext {
             .ok_or("applicable runtime payload rules require a native JSON payload")?;
         let mut changes = Vec::new();
         if batch {
-            let requests = body.get_mut("requests").and_then(Value::as_array_mut).ok_or(FAILURE)?;
+            let requests = body
+                .get_mut("requests")
+                .and_then(Value::as_array_mut)
+                .ok_or(FAILURE)?;
             for (index, request) in requests.iter_mut().enumerate() {
                 let params = request.get_mut("params").ok_or(FAILURE)?;
                 let applied = self.changes(&rules, self.protocol, params)?;
@@ -397,8 +444,11 @@ impl NativeContext {
                 }
             }
         } else {
-            changes = self.changes(&rules, self.protocol, &mut body)?.into_iter()
-                .map(|change| json!(change)).collect();
+            changes = self
+                .changes(&rules, self.protocol, &mut body)?
+                .into_iter()
+                .map(|change| json!(change))
+                .collect();
         }
         self.encoded(&body, changes)
     }
@@ -412,11 +462,17 @@ impl NativeContext {
             return Ok(None);
         }
         let mut body: Value = serde_json::from_slice(bytes).map_err(|_| FAILURE)?;
-        if !matches!(body["type"].as_str(), Some("response.create" | "session.update")) {
+        if !matches!(
+            body["type"].as_str(),
+            Some("response.create" | "session.update")
+        ) {
             return Ok(None);
         }
         let applied = self.changes(&rules, "realtime", &mut body)?;
-        self.encoded(&body, applied.into_iter().map(|change| json!(change)).collect())
+        self.encoded(
+            &body,
+            applied.into_iter().map(|change| json!(change)).collect(),
+        )
     }
 
     fn encoded(&self, body: &Value, changes: Vec<Value>) -> Result<Option<Bytes>, &'static str> {
@@ -427,15 +483,27 @@ impl NativeContext {
         if bytes.len() > self.limit {
             return Err(FAILURE);
         }
-        self.record("payload_rules_applied", json!({"protocol": self.protocol, "changes": changes}));
+        self.record(
+            "payload_rules_applied",
+            json!({"protocol": self.protocol, "changes": changes}),
+        );
         Ok(Some(bytes.into()))
     }
 
     pub(crate) fn rejected(&self, reason: &str) {
-        self.record("payload_rules_rejected", json!({"protocol": self.protocol, "error": reason}));
+        self.record(
+            "payload_rules_rejected",
+            json!({"protocol": self.protocol, "error": reason}),
+        );
     }
 
     fn record(&self, phase: &str, fields: Value) {
-        self.log.record_payload_rules(&self.correlation, &self.headers, &self.claims, phase, fields);
+        self.log.record_payload_rules(
+            &self.correlation,
+            &self.headers,
+            &self.claims,
+            phase,
+            fields,
+        );
     }
 }

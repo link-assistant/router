@@ -8,8 +8,9 @@ use tokio_tungstenite::tungstenite;
 
 use super::{
     AppState, MAX_CONNECTION_AGE, MAX_NAMED_STREAMS, Surface, UpstreamTarget,
-    downstream_to_upstream, fail_and_close, reserve_turn, target_state, thinking_controls,
-    session::payload_rule_error, tracking::TurnTracking, upstream_to_downstream, validate_stream_id, websocket_error,
+    downstream_to_upstream, fail_and_close, reserve_turn, session::payload_rule_error,
+    target_state, thinking_controls, tracking::TurnTracking, upstream_to_downstream,
+    validate_stream_id, websocket_error,
 };
 
 #[allow(clippy::too_many_arguments)]

@@ -558,12 +558,10 @@ pub async fn forward_chat_completions(
     };
 
     let model = request.model.clone();
-    let completion = crate::runtime_config::egress::forgefed_scope(
-        state,
-        headers,
-        &claims,
-        async move { provider.complete_task(request).await },
-    );
+    let completion =
+        crate::runtime_config::egress::forgefed_scope(state, headers, &claims, async move {
+            provider.complete_task(request).await
+        });
     if stream_requested {
         return stream_chat_completion(
             completion,
@@ -600,8 +598,8 @@ pub async fn forward_chat_completions(
 
 fn stream_chat_completion(
     completion: impl std::future::Future<Output = Result<CraterTaskResult, CraterError>>
-        + Send
-        + 'static,
+    + Send
+    + 'static,
     model: String,
     metrics: Arc<crate::metrics::Metrics>,
     reservation: crate::usage::ReservationGuard,

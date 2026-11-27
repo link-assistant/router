@@ -21,23 +21,37 @@ fn secret_string(text: &str) -> bool {
     text.starts_with(crate::token::TOKEN_PREFIX)
         || text.starts_with(crate::admin::ADMIN_TOKEN_PREFIX)
         || text.starts_with("sk-")
-        || text.get(..7).is_some_and(|prefix| prefix.eq_ignore_ascii_case("bearer "))
-        || crate::request_log::is_jwt(text.strip_prefix(crate::token::CODEX_TOKEN_PREFIX).unwrap_or(text))
-        || (text.contains("://") && url::Url::parse(text).is_ok_and(|url| {
-            !url.username().is_empty()
-                || url.password().is_some()
-                || url.query_pairs().any(|(key, _)| secret_key(&key))
-        }))
+        || text
+            .get(..7)
+            .is_some_and(|prefix| prefix.eq_ignore_ascii_case("bearer "))
+        || crate::request_log::is_jwt(
+            text.strip_prefix(crate::token::CODEX_TOKEN_PREFIX)
+                .unwrap_or(text),
+        )
+        || (text.contains("://")
+            && url::Url::parse(text).is_ok_and(|url| {
+                !url.username().is_empty()
+                    || url.password().is_some()
+                    || url.query_pairs().any(|(key, _)| secret_key(&key))
+            }))
         || ((text.starts_with('{') || text.starts_with('['))
             && serde_json::from_str::<Value>(text).is_ok_and(|value| view(&value) != value))
 }
 
 pub(super) fn view(value: &Value) -> Value {
     match value {
-        Value::Object(map) => Value::Object(map.iter().map(|(key, child)| {
-            let result = if secret_key(key) { json!(MASK) } else { view(child) };
-            (key.clone(), result)
-        }).collect()),
+        Value::Object(map) => Value::Object(
+            map.iter()
+                .map(|(key, child)| {
+                    let result = if secret_key(key) {
+                        json!(MASK)
+                    } else {
+                        view(child)
+                    };
+                    (key.clone(), result)
+                })
+                .collect(),
+        ),
         Value::Array(list) => Value::Array(list.iter().map(view).collect()),
         Value::String(text) if secret_string(text) => json!(MASK),
         _ => value.clone(),
@@ -90,19 +104,33 @@ pub(super) fn diff(before: &Value, after: &Value) -> Value {
         let right = &after[section];
         if section == "cli" {
             let mut options = Map::new();
-            for key in left.as_object().into_iter().flatten().map(|(key, _)| key)
+            for key in left
+                .as_object()
+                .into_iter()
+                .flatten()
+                .map(|(key, _)| key)
                 .chain(right.as_object().into_iter().flatten().map(|(key, _)| key))
             {
                 if changed(left, right, key) {
                     let show = |value: &Value| {
-                        if value.is_null() { Value::Null } else { applied(std::slice::from_ref(key), value) }
+                        if value.is_null() {
+                            Value::Null
+                        } else {
+                            applied(std::slice::from_ref(key), value)
+                        }
                     };
-                    options.insert(key.clone(), json!({"before": show(&left[key]), "after": show(&right[key])}));
+                    options.insert(
+                        key.clone(),
+                        json!({"before": show(&left[key]), "after": show(&right[key])}),
+                    );
                 }
             }
             output.insert(section.to_owned(), Value::Object(options));
         } else {
-            output.insert(section.to_owned(), json!({"before": view(left), "after": view(right)}));
+            output.insert(
+                section.to_owned(),
+                json!({"before": view(left), "after": view(right)}),
+            );
         }
     }
     Value::Object(output)

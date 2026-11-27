@@ -7,13 +7,13 @@ use serde_json::Value;
 use tokio_tungstenite::tungstenite;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 
+use super::thinking_controls::parse_create_event;
 use super::{
     AppState, CONNECT_TIMEOUT, Namespace, Surface, UpstreamProvider, UpstreamTarget,
     WebSocketPrivacy, connect_upstream, fail_and_close, namespace_path, prepare_target,
     relay_session::relay, reserve_turn, target_state, thinking_controls, tracking::TurnTracking,
     validate_stream_id, websocket_error,
 };
-use super::thinking_controls::parse_create_event;
 
 pub(super) async fn run(
     state: AppState,

@@ -32,9 +32,7 @@ impl Default for Cors {
 impl Cors {
     pub(super) fn layer(self) -> Result<Option<CorsLayer>, &'static str> {
         for values in [&self.origins, &self.methods, &self.headers] {
-            if values.iter().any(|value| value == "*")
-                && (values.len() != 1 || self.credentials)
-            {
+            if values.iter().any(|value| value == "*") && (values.len() != 1 || self.credentials) {
                 return Err("CORS wildcard requires a single value and no credentials");
             }
         }
@@ -42,44 +40,55 @@ impl Cors {
             AllowOrigin::any()
         } else {
             AllowOrigin::list(
-                self.origins.iter().map(|origin| {
-                    let parsed = url::Url::parse(origin).map_err(|_| "invalid CORS origin")?;
-                    if !matches!(parsed.scheme(), "http" | "https")
-                        || parsed.origin().ascii_serialization() != *origin
-                    {
-                        return Err("invalid CORS origin");
-                    }
-                    HeaderValue::from_str(origin).map_err(|_| "invalid CORS origin")
-                }).collect::<Result<Vec<_>, _>>()?,
+                self.origins
+                    .iter()
+                    .map(|origin| {
+                        let parsed = url::Url::parse(origin).map_err(|_| "invalid CORS origin")?;
+                        if !matches!(parsed.scheme(), "http" | "https")
+                            || parsed.origin().ascii_serialization() != *origin
+                        {
+                            return Err("invalid CORS origin");
+                        }
+                        HeaderValue::from_str(origin).map_err(|_| "invalid CORS origin")
+                    })
+                    .collect::<Result<Vec<_>, _>>()?,
             )
         };
         let methods = if self.methods == ["*"] {
             AllowMethods::any()
         } else {
             AllowMethods::list(
-                self.methods.iter().map(|method| {
-                    Method::from_bytes(method.as_bytes()).map_err(|_| "invalid CORS method")
-                }).collect::<Result<Vec<_>, _>>()?,
+                self.methods
+                    .iter()
+                    .map(|method| {
+                        Method::from_bytes(method.as_bytes()).map_err(|_| "invalid CORS method")
+                    })
+                    .collect::<Result<Vec<_>, _>>()?,
             )
         };
         let headers = if self.headers == ["*"] {
             AllowHeaders::any()
         } else {
             AllowHeaders::list(
-                self.headers.iter().map(|header| {
-                    HeaderName::from_bytes(header.as_bytes()).map_err(|_| "invalid CORS header")
-                }).collect::<Result<Vec<_>, _>>()?,
+                self.headers
+                    .iter()
+                    .map(|header| {
+                        HeaderName::from_bytes(header.as_bytes()).map_err(|_| "invalid CORS header")
+                    })
+                    .collect::<Result<Vec<_>, _>>()?,
             )
         };
         if self.origins.is_empty() {
             return Ok(None);
         }
-        Ok(Some(CorsLayer::new()
-            .allow_origin(origins)
-            .allow_methods(methods)
-            .allow_headers(headers)
-        .expose_headers([HeaderName::from_static("x-router-request-id")])
-            .allow_credentials(self.credentials)))
+        Ok(Some(
+            CorsLayer::new()
+                .allow_origin(origins)
+                .allow_methods(methods)
+                .allow_headers(headers)
+                .expose_headers([HeaderName::from_static("x-router-request-id")])
+                .allow_credentials(self.credentials),
+        ))
     }
 }
 
@@ -88,7 +97,10 @@ pub(crate) async fn middleware(
     request: Request,
     next: Next,
 ) -> Response {
-    let layer = state.request_log.runtime_config().and_then(|config| config.cors());
+    let layer = state
+        .request_log
+        .runtime_config()
+        .and_then(|config| config.cors());
     if let Some(layer) = layer {
         match layer.layer(next).oneshot(request).await {
             Ok(response) => response,

@@ -138,7 +138,9 @@ fn upgrade_response(
     upgrade
         .max_message_size(limit)
         .max_frame_size(limit)
-        .on_upgrade(move |socket| session::run(state, headers, socket, namespace, privacy, correlation))
+        .on_upgrade(move |socket| {
+            session::run(state, headers, socket, namespace, privacy, correlation)
+        })
 }
 
 async fn prepare_target(

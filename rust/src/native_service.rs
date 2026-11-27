@@ -321,13 +321,17 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
     }
     let body = if method == Method::POST
         && (tracks_native_usage(service, path)
-            || matches!(path,
+            || matches!(
+                path,
                 "/api/services/anthropic/v1/messages/batches"
                     | "/api/services/codex/v1/realtime/calls"
                     | "/api/services/codex/v1/live"
                     | "/api/services/openai/v1/realtime/calls"
             ))
-        && state.request_log.runtime_config().is_some_and(|config| !config.rules().is_empty())
+        && state
+            .request_log
+            .runtime_config()
+            .is_some_and(|config| !config.rules().is_empty())
     {
         let protocol = match service {
             Service::Anthropic => "claude",
@@ -335,7 +339,11 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
             Service::Codex | Service::CodexBackend => "codex",
         };
         let rules = crate::runtime_config::egress::NativeContext::new(
-            &state, &headers, claims.clone(), protocol, &target.url,
+            &state,
+            &headers,
+            claims.clone(),
+            protocol,
+            &target.url,
         );
         match rules.http(body.routing_bytes(), service == Service::Anthropic) {
             Ok(Some(bytes)) => {

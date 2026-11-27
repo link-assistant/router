@@ -35,11 +35,39 @@ pub(super) const ROUTES: &[RouteSpec] = &[
     config(RouteId::RuntimeConfig, RouteMethod::Get, CONFIG_ROOT),
     config(RouteId::RuntimeConfig, RouteMethod::Put, CONFIG_ROOT),
     config(RouteId::RuntimeConfig, RouteMethod::Patch, CONFIG_ROOT),
-    config(RouteId::RuntimeConfigYaml, RouteMethod::Get, "/api/management/config.yaml"),
-    config(RouteId::RuntimeConfigSchema, RouteMethod::Get, "/api/management/config/schema"),
-    config(RouteId::RuntimeConfigStatus, RouteMethod::Get, "/api/management/config/status"),
-    config(RouteId::RuntimeConfigReload, RouteMethod::Post, "/api/management/config/reload"),
-    config(RouteId::RuntimeConfigPointer, RouteMethod::Get, CONFIG_POINTER),
-    config(RouteId::RuntimeConfigPointer, RouteMethod::Put, CONFIG_POINTER),
-    config(RouteId::RuntimeConfigPointer, RouteMethod::Delete, CONFIG_POINTER),
+    config(
+        RouteId::RuntimeConfigYaml,
+        RouteMethod::Get,
+        "/api/management/config.yaml",
+    ),
+    config(
+        RouteId::RuntimeConfigSchema,
+        RouteMethod::Get,
+        "/api/management/config/schema",
+    ),
+    config(
+        RouteId::RuntimeConfigStatus,
+        RouteMethod::Get,
+        "/api/management/config/status",
+    ),
+    config(
+        RouteId::RuntimeConfigReload,
+        RouteMethod::Post,
+        "/api/management/config/reload",
+    ),
+    config(
+        RouteId::RuntimeConfigPointer,
+        RouteMethod::Get,
+        CONFIG_POINTER,
+    ),
+    config(
+        RouteId::RuntimeConfigPointer,
+        RouteMethod::Put,
+        CONFIG_POINTER,
+    ),
+    config(
+        RouteId::RuntimeConfigPointer,
+        RouteMethod::Delete,
+        CONFIG_POINTER,
+    ),
 ];

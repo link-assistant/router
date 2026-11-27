@@ -52,7 +52,8 @@ pub(super) fn child<'a>(value: &'a Value, key: &str) -> Option<&'a Value> {
 }
 
 pub(super) fn get<'a>(document: &'a Value, path: &[String]) -> Option<&'a Value> {
-    path.iter().try_fold(document, |parent, key| child(parent, key))
+    path.iter()
+        .try_fold(document, |parent, key| child(parent, key))
 }
 
 pub(super) fn edit(

@@ -476,7 +476,9 @@ async fn run_server(
         catalog_readers.extend(router.subscription_readers());
     }
     if let Some(document) = &cli.runtime_config {
-        state.request_log.install_runtime_config(Arc::clone(document));
+        state
+            .request_log
+            .install_runtime_config(Arc::clone(document));
         document.watch();
     }
     let (catalog_refresh, source_refresh) = tokio::join!(

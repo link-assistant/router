@@ -10,7 +10,10 @@ use crate::runtime_config::RuntimeConfig;
 impl RequestLog {
     /// Attach the shared configuration selected when the server started.
     pub(crate) fn install_runtime_config(&self, config: Arc<RuntimeConfig>) {
-        assert!(self.runtime_config.set(config).is_ok(), "runtime configuration already installed");
+        assert!(
+            self.runtime_config.set(config).is_ok(),
+            "runtime configuration already installed"
+        );
     }
 
     pub(crate) fn runtime_config(&self) -> Option<&Arc<RuntimeConfig>> {
@@ -36,7 +39,7 @@ impl RequestLog {
                 hash: token_log_key(token),
                 id: Some(claims.sub.clone()),
                 label: Some(claims.label.clone()),
-            }
+            },
         );
         self.record_for(correlation, phase, fields, &identity);
     }
@@ -73,9 +76,14 @@ impl RequestLog {
         client: &reqwest::Client,
         mut request: reqwest::Request,
     ) -> Result<reqwest::Response, crate::upstream_client::UpstreamSendError> {
-        if let Err(error) = crate::runtime_config::egress::http(self, correlation_id, &mut request).await
+        if let Err(error) =
+            crate::runtime_config::egress::http(self, correlation_id, &mut request).await
         {
-            self.record(correlation_id, "payload_rules_rejected", json!({"error": error.to_string()}));
+            self.record(
+                correlation_id,
+                "payload_rules_rejected",
+                json!({"error": error.to_string()}),
+            );
             return Err(error);
         }
         self.begin_upstream(correlation_id);
@@ -120,5 +128,4 @@ impl RequestLog {
             None => response,
         })
     }
-
 }

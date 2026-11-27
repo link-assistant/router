@@ -616,7 +616,8 @@ fn opaque_route(method: &axum::http::Method, path: &str) -> Option<&'static str>
     let route = crate::route_contract::route_for_path(method, path)?;
     if matches!(
         route.auth,
-        crate::route_contract::RouteAuth::ConfigRead | crate::route_contract::RouteAuth::ConfigWrite
+        crate::route_contract::RouteAuth::ConfigRead
+            | crate::route_contract::RouteAuth::ConfigWrite
     ) {
         return Some(route.template);
     }
@@ -643,8 +644,7 @@ fn upstream_request_id(headers: &HeaderMap) -> Option<&str> {
 /// routes retain their path and generically redacted query.
 #[must_use]
 pub fn safe_http_uri(method: &axum::http::Method, uri: &axum::http::Uri) -> String {
-    opaque_route(method, uri.path())
-        .map_or_else(|| redacted_uri(&uri.to_string()), str::to_string)
+    opaque_route(method, uri.path()).map_or_else(|| redacted_uri(&uri.to_string()), str::to_string)
 }
 
 impl Drop for ClientRequestCapture {

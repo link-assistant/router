@@ -78,7 +78,9 @@ pub struct RuntimeConfig {
 
 impl std::fmt::Debug for RuntimeConfig {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter.debug_struct("RuntimeConfig").finish_non_exhaustive()
+        formatter
+            .debug_struct("RuntimeConfig")
+            .finish_non_exhaustive()
     }
 }
 
@@ -126,7 +128,10 @@ impl RuntimeConfig {
         arguments: Vec<OsString>,
         matches: &ArgMatches,
     ) -> Result<Cli, &'static str> {
-        let data_dir = base.data_dir.clone().unwrap_or_else(crate::config::default_data_dir);
+        let data_dir = base
+            .data_dir
+            .clone()
+            .unwrap_or_else(crate::config::default_data_dir);
         let path = crate::operation_context::var_os("ROUTER_RUNTIME_CONFIG")
             .filter(|path| !path.is_empty())
             .map_or_else(|| data_dir.join("runtime.toml"), PathBuf::from);
@@ -135,7 +140,8 @@ impl RuntimeConfig {
         if path == audit_path || base.audit_log.as_ref().is_some_and(|audit| *audit == path) {
             return Err("runtime configuration and audit log require different paths");
         }
-        let bytes = storage::read(&path).map_err(|_| "could not read runtime configuration file")?;
+        let bytes =
+            storage::read(&path).map_err(|_| "could not read runtime configuration file")?;
         let input = cli_settings::Input::new(command, arguments, matches);
         let (mut cli, document, live) = if let Some(bytes) = &bytes {
             let (_, document) = storage::decode(bytes)?;
@@ -151,7 +157,11 @@ impl RuntimeConfig {
             input,
             operation: crate::operation_context::current(),
             boot: document.clone(),
-            disk: Mutex::new(Disk { seen: bytes, document, error: None }),
+            disk: Mutex::new(Disk {
+                seen: bytes,
+                document,
+                error: None,
+            }),
             live: RwLock::new(live),
         }));
         Ok(cli)
@@ -166,7 +176,9 @@ impl RuntimeConfig {
                 let Some(config) = store.upgrade() else { break };
                 if let Err(error) = tokio::task::spawn_blocking(move || {
                     let _result = config.reload_as("file");
-                }).await {
+                })
+                .await
+                {
                     tracing::warn!("runtime configuration watcher failed: {error}");
                     break;
                 }
@@ -175,31 +187,55 @@ impl RuntimeConfig {
     }
 
     pub(crate) fn rules(&self) -> Arc<payload::Rules> {
-        Arc::clone(&self.live.read().unwrap_or_else(std::sync::PoisonError::into_inner).rules)
+        Arc::clone(
+            &self
+                .live
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .rules,
+        )
     }
 
     pub(crate) fn cors(&self) -> Option<CorsLayer> {
-        self.live.read().unwrap_or_else(std::sync::PoisonError::into_inner).cors.clone()
+        self.live
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .cors
+            .clone()
     }
 
     fn document(&self, path: &[String]) -> Result<Value, Failure> {
-        let disk = self.disk.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        let disk = self
+            .disk
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         // Redact the whole tree first so pointers into protected values have
         // the same visibility as the full document.
-        pointer::get(&redaction::view(&disk.document), path).cloned().ok_or(Failure::Missing)
+        pointer::get(&redaction::view(&disk.document), path)
+            .cloned()
+            .ok_or(Failure::Missing)
     }
 
     fn status(&self) -> Value {
-        let disk = self.disk.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        let disk = self
+            .disk
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         self.status_for(&disk)
     }
 
     fn status_for(&self, disk: &Disk) -> Value {
         let boot = self.boot["cli"].as_object().into_iter().flat_map(Map::keys);
-        let desired = disk.document["cli"].as_object().into_iter().flat_map(Map::keys);
+        let desired = disk.document["cli"]
+            .as_object()
+            .into_iter()
+            .flat_map(Map::keys);
         let mut restart_required = Vec::new();
         let mut overridden = Vec::new();
-        for key in boot.chain(desired).collect::<std::collections::BTreeSet<_>>() {
+        for key in boot
+            .chain(desired)
+            .collect::<std::collections::BTreeSet<_>>()
+        {
             if self.input.overridden.contains(key) {
                 if disk.document["cli"].get(key).is_some() {
                     overridden.push(key);
@@ -216,7 +252,10 @@ impl RuntimeConfig {
     }
 
     fn reload_as(&self, actor: &str) -> Result<Value, Failure> {
-        let mut disk = self.disk.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut disk = self
+            .disk
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         self.refresh(&mut disk, actor)?;
         Ok(self.status_for(&disk))
     }
@@ -255,7 +294,10 @@ impl RuntimeConfig {
     }
 
     fn edit_locked(&self, edit: Edit, actor: &str) -> Result<Value, Failure> {
-        let mut disk = self.disk.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut disk = self
+            .disk
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         self.refresh(&mut disk, "file")?;
         let mut next = disk.document.clone();
         let action = match edit {
@@ -280,10 +322,13 @@ impl RuntimeConfig {
         cli_settings::require_local_changes(&disk.document, &next).map_err(Failure::Invalid)?;
         let live = self.validate(&next).map_err(Failure::Invalid)?;
         let toml = storage::decode(disk.seen.as_deref().unwrap_or_default())
-            .map_err(Failure::Invalid)?.0;
+            .map_err(Failure::Invalid)?
+            .0;
         let bytes = storage::encode(toml, &next).map_err(Failure::Invalid)?;
         if storage::read(&self.path).map_err(|_| Failure::Io)? != disk.seen {
-            return Err(Failure::Conflict("configuration file changed during the edit"));
+            return Err(Failure::Conflict(
+                "configuration file changed during the edit",
+            ));
         }
         self.audit(actor, action, &disk.document, &next)?;
         crate::durable_file::atomic_write_owner_only(&self.path, bytes.as_bytes())
@@ -292,14 +337,24 @@ impl RuntimeConfig {
         Ok(self.status_for(&disk))
     }
 
-    fn audit(&self, actor: &str, action: &str, before: &Value, after: &Value) -> Result<(), Failure> {
-        crate::audit::write_runtime_config_event(&self.audit_path, &json!({
-            "phase": "runtime_config_change",
-            "time": crate::operation_context::now().to_rfc3339(),
-            "actor": actor,
-            "action": action,
-            "diff": redaction::diff(before, after)
-        })).map_err(|_| Failure::Io)
+    fn audit(
+        &self,
+        actor: &str,
+        action: &str,
+        before: &Value,
+        after: &Value,
+    ) -> Result<(), Failure> {
+        crate::audit::write_runtime_config_event(
+            &self.audit_path,
+            &json!({
+                "phase": "runtime_config_change",
+                "time": crate::operation_context::now().to_rfc3339(),
+                "actor": actor,
+                "action": action,
+                "diff": redaction::diff(before, after)
+            }),
+        )
+        .map_err(|_| Failure::Io)
     }
 
     fn read_candidate(&self, bytes: Option<&str>) -> Result<(Value, Live), &'static str> {
@@ -317,17 +372,30 @@ impl RuntimeConfig {
         );
         let config = result.map_err(|_| "runtime configuration is invalid for this server")?;
         crate::management_config::ManagementConfig::validate_secrets(
-            &config.token_secret, config.admin_key.as_deref(),
-        ).map_err(|_| "runtime configuration includes a published example credential")?;
-        if config.audit_log.as_deref().is_some_and(|audit| Path::new(audit) == self.path) {
+            &config.token_secret,
+            config.admin_key.as_deref(),
+        )
+        .map_err(|_| "runtime configuration includes a published example credential")?;
+        if config
+            .audit_log
+            .as_deref()
+            .is_some_and(|audit| Path::new(audit) == self.path)
+        {
             return Err("runtime configuration and audit log require different paths");
         }
         Ok(live)
     }
 
     fn apply(&self, disk: &mut Disk, bytes: Option<String>, document: Value, live: Live) {
-        *self.live.write().unwrap_or_else(std::sync::PoisonError::into_inner) = live;
-        *disk = Disk { seen: bytes, document, error: None };
+        *self
+            .live
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = live;
+        *disk = Disk {
+            seen: bytes,
+            document,
+            error: None,
+        };
     }
 }
 
@@ -335,7 +403,8 @@ fn absolute(path: PathBuf) -> Result<PathBuf, &'static str> {
     if path.is_absolute() {
         Ok(path)
     } else {
-        crate::operation_context::current_dir().map(|current| current.join(path))
+        crate::operation_context::current_dir()
+            .map(|current| current.join(path))
             .map_err(|_| "could not resolve runtime configuration path")
     }
 }
