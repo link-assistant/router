@@ -11,6 +11,9 @@ use super::{payload, redaction, schema, storage};
 use crate::app_state::AppState;
 use crate::token::{ADMIN_SCOPE, CONFIG_WRITE_SCOPE, IssueRequest};
 
+#[path = "boundary_tests.rs"]
+mod boundaries;
+
 const ROOT: &str = "/api/management/config";
 
 fn cli(root: &std::path::Path, extra: &[&str]) -> crate::cli::Cli {
