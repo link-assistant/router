@@ -141,9 +141,9 @@ jobs:
           # this workspace. Keep the instrumented target in the detached base.
           export CARGO_LLVM_COV_TARGET_DIR="$PWD/target/llvm-cov-target"
           cargo llvm-cov clean --workspace
-          # The historical host consumer accepts an explicit executable path.
-          # Cargo 1.100 runs its harness outside the CLI's output directory.
-          ROUTER_BIN="$CARGO_LLVM_COV_TARGET_DIR/debug/router" \
+          # Cargo 1.100 places the host consumer harness outside the CLI output
+          # directory. Use the same binary as the historical deployment tests.
+          ROUTER_BIN="$CARGO_LLVM_COV_TARGET_DIR/debug/link-assistant-router" \
             cargo llvm-cov --locked --all-features --workspace --no-report
           cargo llvm-cov report --json --summary-only --output-path "$RUNNER_TEMP/base-coverage.json"
           cargo llvm-cov report --lcov --output-path "$RUNNER_TEMP/base-lcov.info"
