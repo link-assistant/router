@@ -69,10 +69,18 @@ pub(super) async fn relay(
     let response_headers = relay_response_headers(upstream_resp.headers());
 
     let codex = provider == SubscriptionProvider::Codex;
+    let capped_native = native_protocol && status.is_success() && emulated_output_limit.is_some();
+    if capped_native && !crate::request_log::body_is_inspectable(&response_headers) {
+        return error_response(
+            StatusCode::BAD_GATEWAY,
+            "api_error",
+            "cannot enforce the configured output cap on an encoded upstream response",
+        );
+    }
     if stream_requested || ((!codex || native_protocol) && is_event_stream(&content_type)) {
         // The Codex backend streams SSE but labels it `application/json`; re-label
         // so SSE-aware clients treat the body as the stream it is.
-        let stream_content_type = if codex && !native_protocol {
+        let stream_content_type = if codex && (!native_protocol || capped_native) {
             HeaderValue::from_static("text/event-stream")
         } else {
             content_type
@@ -90,16 +98,19 @@ pub(super) async fn relay(
             .with_include_usage(include_usage)
             .with_stop_sequences(stop_sequences)
             .with_output_token_limit(emulated_output_limit);
-        let rewriter = crate::output_limit::ResponsesStreamRewriter::new(
-            requested_model,
-            emulated_output_limit,
-        )
-        .with_model_policy(&model_policy)
-        .with_selector_kind(selector_kind);
-        // Native responses remain byte-transparent. Translated streams are
+        let rewriter =
+            crate::output_limit::ResponsesStreamRewriter::new(requested_model, emulated_output_limit);
+        let rewriter = if native_protocol {
+            rewriter
+        } else {
+            rewriter
+                .with_model_policy(&model_policy)
+                .with_selector_kind(selector_kind)
+        };
+        // Native responses are byte-transparent unless a rule set a cap. Translated streams are
         // inspected before content so the first concrete identity is truthful
         // and later identity drift terminates the stream.
-        let rewrite_passthrough = !native_protocol
+        let rewrite_passthrough = (!native_protocol || capped_native)
             && response_shape == SubscriptionResponseShape::Passthrough
             && rewriter.active();
         let response_log = std::sync::Arc::clone(&state.request_log);
@@ -231,9 +242,29 @@ pub(super) async fn relay(
     }
 
     if native_protocol {
-        let mut response = Response::new(Body::from(upstream_body));
+        let body = if let Some(limit) = emulated_output_limit.filter(|_| status.is_success()) {
+            let collapsed = codex_sse_to_response_json(&upstream_body);
+            let body = collapsed.as_deref().unwrap_or(upstream_body.as_ref());
+            let Ok(mut body) = serde_json::from_slice::<serde_json::Value>(body) else {
+                return error_response(
+                    StatusCode::BAD_GATEWAY,
+                    "api_error",
+                    "cannot enforce the configured output cap on an invalid upstream response",
+                );
+            };
+            crate::output_limit::enforce_response_limit(&mut body, limit);
+            Body::from(body.to_string())
+        } else {
+            Body::from(upstream_body)
+        };
+        let mut response = Response::new(body);
         *response.status_mut() = status;
         *response.headers_mut() = response_headers;
+        if capped_native {
+            response
+                .headers_mut()
+                .insert("content-type", HeaderValue::from_static("application/json"));
+        }
         return response;
     }
 

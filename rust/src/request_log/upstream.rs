@@ -76,16 +76,18 @@ impl RequestLog {
         client: &reqwest::Client,
         mut request: reqwest::Request,
     ) -> Result<reqwest::Response, crate::upstream_client::UpstreamSendError> {
-        if let Err(error) =
-            crate::runtime_config::egress::http(self, correlation_id, &mut request).await
-        {
-            self.record(
-                correlation_id,
-                "payload_rules_rejected",
-                json!({"error": error.to_string()}),
-            );
-            return Err(error);
-        }
+        let output_limit =
+            match crate::runtime_config::egress::http(self, correlation_id, &mut request).await {
+                Ok(output_limit) => output_limit,
+                Err(error) => {
+                    self.record(
+                        correlation_id,
+                        "payload_rules_rejected",
+                        json!({"error": error.to_string()}),
+                    );
+                    return Err(error);
+                }
+            };
         self.begin_upstream(correlation_id);
         self.record(
             correlation_id,
@@ -123,9 +125,15 @@ impl RequestLog {
                 }),
             ),
         }
-        result.map(|response| match &self.error_log {
-            Some(log) => log.wrap(correlation_id, response),
-            None => response,
+        result.map(|response| {
+            let mut response = match &self.error_log {
+                Some(log) => log.wrap(correlation_id, response),
+                None => response,
+            };
+            if let Some(limit) = output_limit {
+                response.extensions_mut().insert(limit);
+            }
+            response
         })
     }
 }

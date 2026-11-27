@@ -29,6 +29,10 @@ params = { temperature = 0.1, max_tokens = 200 }
 [[payload.filter]]
 models = [{ name = "claude-*", protocol = "claude", token = "resume-app" }]
 params = ["top_p"]
+
+[[payload.override]]
+models = [{ name = "gpt-*", protocol = "codex", token = "resume-app" }]
+params = { max_output_tokens = 200 }
 ```
 
 Use a unique client token label or the token's exact ID for the `token`
@@ -106,7 +110,15 @@ Paths support dotted keys, numeric array indices, JSON Pointer, and array
 equality queries such as `tools.#(type=="image_generation")#`. A query's
 trailing `#` selects all matching items. An applicable override that cannot
 be written, or whose final Claude request would have incompatible sampling
-settings, fails before sending that inference request.
+settings, fails before sending that inference request. Final token limits
+set by rules must be positive integers.
+
+For ChatGPT Codex subscriptions, Router enforces a rule-applied
+`max_output_tokens` cap on visible output and records the applied cap under
+the request ID. The local limiter estimates tokens from text length. It
+cannot count hidden reasoning. The ChatGPT Codex backend rejects configured
+`temperature` and `top_p`. Router returns an error before sending the
+request when an applicable rule leaves one of these parameters set.
 
 Use the response's `x-router-request-id` with
 `GET /api/management/logs/requests/{id}` to see the `payload_rules_applied` record.

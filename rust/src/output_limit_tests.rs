@@ -137,6 +137,46 @@ fn stream_rewriter_stops_the_stream_once_the_cap_is_exhausted() {
 }
 
 #[test]
+fn websocket_output_limits_are_independent_and_stop_after_length() {
+    let mut limited = ResponsesEventLimit::new(Some(1));
+    let mut other_turn = ResponsesEventLimit::new(None);
+    let mut created = json!({
+        "type": "response.created", "stream_id": "limited",
+        "response": {"id": "resp_1", "model": "gpt-live"}
+    });
+    assert!(matches!(
+        limited.apply(&mut created),
+        ResponsesFrame::Forward
+    ));
+    let mut delta = json!({
+        "type": "response.output_text.delta", "stream_id": "limited", "delta": "0123456789"
+    });
+    let ResponsesFrame::Exhausted {
+        delta: true,
+        incomplete,
+    } = limited.apply(&mut delta)
+    else {
+        panic!("the bounded lane must end with a partial delta and incomplete response");
+    };
+    assert_eq!(delta["delta"], "0123");
+    assert_eq!(incomplete["stream_id"], "limited");
+    assert_eq!(incomplete["response"]["id"], "resp_1");
+    assert_eq!(
+        incomplete["response"]["incomplete_details"]["reason"],
+        "max_output_tokens"
+    );
+    let mut done = json!({
+        "type": "response.completed", "stream_id": "limited",
+        "response": {"id": "resp_1", "output": []}
+    });
+    assert!(matches!(limited.apply(&mut done), ResponsesFrame::Omit));
+    assert!(matches!(
+        other_turn.apply(&mut done),
+        ResponsesFrame::Forward
+    ));
+}
+
+#[test]
 fn stream_rewriter_handles_events_split_across_chunks() {
     let mut rewriter = ResponsesStreamRewriter::new("gpt-5.4-mini", None);
     let mut out = rewriter.push(b"event: response.output_text.delta\ndata: {\"type\":\"resp");

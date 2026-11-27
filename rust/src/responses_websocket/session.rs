@@ -109,22 +109,26 @@ pub(super) async fn run(
         };
         first_event = protected;
     }
-    if let Err(reason) = crate::runtime_config::egress::websocket(
+    let first_limit = match crate::runtime_config::egress::websocket(
         &state,
         &correlation,
         &headers,
         &claims,
         target.provider,
+        &target.url,
         &mut first_event,
     ) {
-        fail_and_close(
-            &mut downstream,
-            payload_rule_error(reason, first_lane.as_deref()),
-            1008,
-        )
-        .await;
-        return;
-    }
+        Ok((_, limit)) => limit,
+        Err(reason) => {
+            fail_and_close(
+                &mut downstream,
+                payload_rule_error(reason, first_lane.as_deref()),
+                1008,
+            )
+            .await;
+            return;
+        }
+    };
     let first_bytes = serde_json::to_vec(&first_event).expect("JSON values always serialize");
     let first_tracker = match reserve_turn(&state, &claims, &first_event) {
         Ok(tracker) => tracker,
@@ -247,7 +251,7 @@ pub(super) async fn run(
         named_streams.insert(lane);
     }
     let mut tracking = TurnTracking::new();
-    tracking.push(first_lane, first_tracker, &target, &first_event);
+    tracking.push(first_lane, first_tracker, &target, &first_event, first_limit);
     relay(
         &state,
         &headers,

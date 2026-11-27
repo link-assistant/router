@@ -12,6 +12,7 @@ use super::{
     target_state, thinking_controls, tracking::TurnTracking, upstream_to_downstream,
     validate_stream_id, websocket_error,
 };
+use crate::output_limit::ResponsesFrame;
 
 #[allow(clippy::too_many_arguments)]
 pub(super) async fn relay<S>(
@@ -239,17 +240,21 @@ pub(super) async fn relay<S>(
                                 continue;
                             }
                         }
-                        match crate::runtime_config::egress::websocket(
-                            state, correlation, headers, &claims, target.provider, &mut value,
+                        let output_limit = match crate::runtime_config::egress::websocket(
+                            state, correlation, headers, &claims, target.provider, &target.url, &mut value,
                         ) {
-                            Ok(true) => message = Message::Text(value.to_string().into()),
-                            Ok(false) => {},
+                            Ok((changed, limit)) => {
+                                if changed {
+                                    message = Message::Text(value.to_string().into());
+                                }
+                                limit
+                            }
                             Err(reason) => {
                                 let error = payload_rule_error(reason, lane.as_deref());
                                 let _ = downstream.send(Message::Text(error.to_string().into())).await;
                                 continue;
                             }
-                        }
+                        };
                         let tracker = match reserve_turn(state, &claims, &value) {
                             Ok(tracker) => tracker,
                             Err(error) => {
@@ -268,7 +273,7 @@ pub(super) async fn relay<S>(
                         if let Some(lane_name) = lane.as_ref() {
                             named_streams.insert(lane_name.clone());
                         }
-                        tracking.push(lane, tracker, target, &value);
+                        tracking.push(lane, tracker, target, &value, output_limit);
                     }
                 }
                 let closes = matches!(message, Message::Close(_));
@@ -282,7 +287,7 @@ pub(super) async fn relay<S>(
                     let _ = downstream.send(Message::Close(Some(CloseFrame { code: 1011, reason: "upstream disconnected".into() }))).await;
                     break;
                 };
-                let message = match upstream_message {
+                let mut message = match upstream_message {
                     Ok(message) => message,
                     Err(error) => {
                         let event = websocket_error(
@@ -298,10 +303,25 @@ pub(super) async fn relay<S>(
                         break;
                     }
                 };
+                let mut terminal = None;
                 if let tungstenite::Message::Text(text) = &message
-                    && let Ok(value) = serde_json::from_slice::<Value>(text.as_bytes())
+                    && let Ok(mut value) = serde_json::from_slice::<Value>(text.as_bytes())
                 {
-                    tracking.feed_terminal(&value, text.as_bytes());
+                    match tracking.observe(&mut value, text.as_bytes()) {
+                        ResponsesFrame::Forward => {}
+                        ResponsesFrame::Omit => continue,
+                        ResponsesFrame::Rewrite => {
+                            message = tungstenite::Message::Text(value.to_string().into());
+                        }
+                        ResponsesFrame::Exhausted { delta, incomplete } => {
+                            if delta {
+                                message = tungstenite::Message::Text(value.to_string().into());
+                                terminal = Some(incomplete);
+                            } else {
+                                message = tungstenite::Message::Text(incomplete.to_string().into());
+                            }
+                        }
+                    }
                 }
                 let closes = matches!(message, tungstenite::Message::Close(_));
                 let message = match (message, &mut privacy) {
@@ -312,6 +332,17 @@ pub(super) async fn relay<S>(
                 };
                 if downstream.send(message).await.is_err() || closes {
                     break;
+                }
+                if let Some(terminal) = terminal {
+                    let text = terminal.to_string();
+                    let text = if let Some(policy) = &mut privacy {
+                        policy.restore_event(&text)
+                    } else {
+                        text
+                    };
+                    if downstream.send(Message::Text(text.into())).await.is_err() {
+                        break;
+                    }
                 }
             }
         }

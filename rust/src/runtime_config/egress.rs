@@ -50,14 +50,56 @@ pub(crate) async fn scope(State(state): State<AppState>, request: Request, next:
 }
 
 tokio::task_local! {
-    static DESTINATION: &'static str;
+    static DESTINATION: Destination;
+}
+
+#[derive(Clone, Copy)]
+struct Destination {
+    protocol: &'static str,
+    emulated_output_limit: Option<u64>,
 }
 
 pub(crate) async fn destination<T>(
     protocol: &'static str,
+    emulated_output_limit: Option<u64>,
     future: impl std::future::Future<Output = T>,
 ) -> T {
-    DESTINATION.scope(protocol, future).await
+    DESTINATION
+        .scope(
+            Destination {
+                protocol,
+                emulated_output_limit,
+            },
+            future,
+        )
+        .await
+}
+
+/// The effective cap for the response to an individual upstream attempt.
+/// A filter can clear a cap inherited from the original client request.
+#[derive(Clone, Copy)]
+pub(crate) struct CodexOutputLimit(pub Option<u64>);
+
+fn canonical_codex(url: &url::Url) -> bool {
+    url.host_str() == Some("chatgpt.com") && url.path().starts_with("/backend-api/codex/")
+}
+
+fn check_codex_sampling(body: &Value, applied: &[Applied]) -> Result<(), &'static str> {
+    if [("temperature", "/temperature"), ("top_p", "/top_p")]
+        .iter()
+        .any(|(field, path)| {
+            body.get(*field).is_some() && applied.iter().any(|change| change.affects(path))
+        })
+    {
+        return Err("the Codex subscription backend does not support configured sampling parameters");
+    }
+    Ok(())
+}
+
+fn take_output_limit(body: &mut Value) -> Option<u64> {
+    body.as_object_mut()
+        .and_then(|object| object.remove("max_output_tokens"))
+        .and_then(|value| value.as_u64())
 }
 
 fn target_protocol(method: &Method, url: &url::Url) -> Option<&'static str> {
@@ -107,20 +149,19 @@ pub(crate) async fn http(
     log: &RequestLog,
     correlation: &str,
     request: &mut reqwest::Request,
-) -> Result<(), UpstreamSendError> {
+) -> Result<Option<CodexOutputLimit>, UpstreamSendError> {
     let Some(config) = log.runtime_config() else {
-        return Ok(());
+        return Ok(None);
     };
     let rules = config.rules();
     if rules.is_empty() {
-        return Ok(());
+        return Ok(None);
     }
     let Some(protocol) = target_protocol(request.method(), request.url()) else {
-        return Ok(());
+        return Ok(None);
     };
-    let protocol = DESTINATION
-        .try_with(|protocol| *protocol)
-        .unwrap_or(protocol);
+    let destination = DESTINATION.try_with(|destination| *destination).ok();
+    let protocol = destination.map_or(protocol, |destination| destination.protocol);
     let (token_id, token_label) = log.runtime_identity(correlation);
     let (from_protocol, share_geolocation, limit) = SOURCE
         .try_with(|source| (source.protocol, source.share_geolocation, source.limit))
@@ -133,7 +174,7 @@ pub(crate) async fn http(
         token_label: token_label.as_deref(),
     };
     if !rules.could_apply(&context) {
-        return Ok(());
+        return Ok(None);
     }
     let fail = UpstreamSendError::PayloadRule;
     let Some(bytes) = request.body().and_then(reqwest::Body::as_bytes) else {
@@ -156,6 +197,16 @@ pub(crate) async fn http(
             None,
         )
     };
+    let codex = destination.filter(|destination| destination.protocol == "codex");
+    let virtual_limit = if let Some(limit) = codex.and_then(|target| target.emulated_output_limit)
+        && let Some(object) = body.as_object_mut()
+        && !object.contains_key("max_output_tokens")
+    {
+        object.insert("max_output_tokens".into(), json!(limit));
+        true
+    } else {
+        false
+    };
     let model = body["model"]
         .as_str()
         .or_else(|| body["modelId"].as_str())
@@ -166,8 +217,21 @@ pub(crate) async fn http(
     context.model = &model;
     let applied = apply(&rules, &mut body, &context, share_geolocation).map_err(fail)?;
     if applied.is_empty() {
-        return Ok(());
+        return Ok(None);
     }
+    if codex.is_some() && canonical_codex(request.url()) {
+        check_codex_sampling(&body, &applied).map_err(fail)?;
+    }
+    let changed_limit = codex.is_some()
+        && applied
+            .iter()
+            .any(|change| change.affects("/max_output_tokens"));
+    let output_limit = if virtual_limit || changed_limit {
+        let limit = take_output_limit(&mut body);
+        changed_limit.then_some(CodexOutputLimit(limit))
+    } else {
+        None
+    };
     let bytes = serde_json::to_vec(&body).map_err(|_| fail(FAILURE))?;
     if bytes.len() > limit {
         return Err(fail(FAILURE));
@@ -187,7 +251,7 @@ pub(crate) async fn http(
         "payload_rules_applied",
         json!({"protocol": protocol, "changes": applied}),
     );
-    Ok(())
+    Ok(output_limit)
 }
 
 fn apply(
@@ -209,15 +273,16 @@ pub(crate) fn websocket(
     headers: &HeaderMap,
     claims: &TokenClaims,
     provider: crate::config::UpstreamProvider,
+    url: &str,
     body: &mut Value,
-) -> Result<bool, &'static str> {
+) -> Result<(bool, Option<u64>), &'static str> {
     let log = &state.request_log;
     let Some(config) = log.runtime_config() else {
-        return Ok(false);
+        return Ok((false, None));
     };
     let rules = config.rules();
     if rules.is_empty() {
-        return Ok(false);
+        return Ok((false, None));
     }
     let protocol = if provider == crate::config::UpstreamProvider::Codex {
         "codex"
@@ -239,16 +304,27 @@ pub(crate) fn websocket(
         crate::geolocation::shares_geolocation(headers),
     )
     .and_then(|applied| {
-        if !applied.is_empty()
-            && serde_json::to_vec(body).map_err(|_| FAILURE)?.len() > state.max_proxy_request_bytes
-        {
+        if applied.is_empty() {
+            return Ok((applied, None));
+        }
+        let mut output_limit = None;
+        if protocol == "codex" && url::Url::parse(url).as_ref().is_ok_and(canonical_codex) {
+            check_codex_sampling(body, &applied)?;
+            if applied
+                .iter()
+                .any(|change| change.affects("/max_output_tokens"))
+            {
+                output_limit = take_output_limit(body);
+            }
+        }
+        if serde_json::to_vec(body).map_err(|_| FAILURE)?.len() > state.max_proxy_request_bytes {
             return Err(FAILURE);
         }
-        Ok(applied)
+        Ok((applied, output_limit))
     });
     match result {
-        Ok(applied) if applied.is_empty() => Ok(false),
-        Ok(applied) => {
+        Ok((applied, _)) if applied.is_empty() => Ok((false, None)),
+        Ok((applied, output_limit)) => {
             log.record_payload_rules(
                 correlation,
                 headers,
@@ -256,7 +332,7 @@ pub(crate) fn websocket(
                 "payload_rules_applied",
                 json!({"protocol": protocol, "changes": applied}),
             );
-            Ok(true)
+            Ok((true, output_limit))
         }
         Err(reason) => {
             log.record_payload_rules(

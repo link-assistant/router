@@ -41,6 +41,7 @@ pub(super) struct CodexDispatch<'a> {
     pub native_protocol: bool,
     pub from_thinking_suffix: bool,
     pub responses_mode: CodexResponsesMode,
+    pub emulated_output_limit: Option<u64>,
     pub validated: Option<&'a crate::model_routing::ValidatedSubscription>,
     pub context: RoutingContext,
     pub correlation_id: &'a str,
@@ -53,6 +54,7 @@ pub(super) struct Dispatched {
     pub account: String,
     pub base_url: String,
     pub bytes_sent: u64,
+    pub emulated_output_limit: Option<u64>,
 }
 
 /// A selection failure: the response for a first attempt, the reason for a
@@ -219,9 +221,14 @@ pub(super) async fn dispatch(request: CodexDispatch<'_>) -> Result<Dispatched, R
         let attempt_outcome = async {
             let response = crate::runtime_config::egress::destination(
                 request.provider.as_str(),
+                request.emulated_output_limit,
                 send_attempt(&request, &account, token, &base_url, body),
             )
             .await?;
+            let emulated_output_limit = response
+                .extensions()
+                .get::<crate::runtime_config::egress::CodexOutputLimit>()
+                .map_or(request.emulated_output_limit, |limit| limit.0);
             let probe = failover
                 && response.status().is_success()
                 && (request.provider == SubscriptionProvider::Codex
@@ -230,9 +237,10 @@ pub(super) async fn dispatch(request: CodexDispatch<'_>) -> Result<Dispatched, R
                         .get("content-type")
                         .and_then(|value| value.to_str().ok())
                         .is_some_and(|value| value.contains("text/event-stream")));
-            crate::pool_response::PoolResponse::prepare(response, probe)
+            let (response, prefix) = crate::pool_response::PoolResponse::prepare(response, probe)
                 .await
-                .map_err(UpstreamSendError::Egress)
+                .map_err(UpstreamSendError::Egress)?;
+            Ok::<_, UpstreamSendError>((response, prefix, emulated_output_limit))
         };
         let outcome = if failover && attempt > 1 {
             let bounded =
@@ -246,7 +254,7 @@ pub(super) async fn dispatch(request: CodexDispatch<'_>) -> Result<Dispatched, R
         } else {
             attempt_outcome.await
         };
-        let (mut response, peeked) = match outcome {
+        let (mut response, peeked, emulated_output_limit) = match outcome {
             Ok(response) => response,
             Err(UpstreamSendError::PayloadRule(reason)) => {
                 return Err(transport_error(&request, Some(&account), reason));
@@ -303,6 +311,7 @@ pub(super) async fn dispatch(request: CodexDispatch<'_>) -> Result<Dispatched, R
             account,
             base_url,
             bytes_sent,
+            emulated_output_limit,
         };
         match classify_status(status) {
             Some(reason) if failover && attempt < max_attempts => {

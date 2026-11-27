@@ -118,6 +118,16 @@ pub(crate) struct Applied {
     value: Option<Value>,
 }
 
+impl Applied {
+    pub(super) fn affects(&self, path: &str) -> bool {
+        self.path == path
+            || self
+                .path
+                .strip_prefix(path)
+                .is_some_and(|suffix| suffix.starts_with('/'))
+    }
+}
+
 impl Payload {
     pub(super) fn compile(self) -> Result<Rules, &'static str> {
         let mut rules = Vec::new();
@@ -391,6 +401,23 @@ impl Rules {
             && !body["top_p"].is_null()
         {
             return Err("runtime payload rules left incompatible Claude sampling parameters");
+        }
+        if matches!(
+            context.protocol,
+            "claude" | "bedrock" | "vertex" | "openai" | "codex"
+        ) {
+            for (field, path) in [
+                ("max_tokens", "/max_tokens"),
+                ("max_output_tokens", "/max_output_tokens"),
+            ] {
+                if applied.iter().any(|change| change.affects(path))
+                    && body
+                        .get(field)
+                        .is_some_and(|value| value.as_u64().is_none_or(|limit| limit == 0))
+                {
+                    return Err("runtime payload token limits must be positive integers");
+                }
+            }
         }
         Ok(applied)
     }

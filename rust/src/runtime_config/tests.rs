@@ -424,6 +424,181 @@ async fn http_final_barrier_records_final_values_and_rejects_before_any_send() {
 }
 
 #[tokio::test]
+async fn native_codex_request_records_scoped_rules_and_enforces_the_output_cap() {
+    let root = tempfile::tempdir().unwrap();
+    let codex_home = tempfile::tempdir().unwrap();
+    std::fs::write(
+        codex_home.path().join("auth.json"),
+        r#"{"tokens":{"access_token":"codex-upstream","account_id":"account-42"}}"#,
+    )
+    .unwrap();
+    let reader = crate::subscription::SubscriptionReader::new(
+        crate::subscription::SubscriptionProvider::Codex,
+        codex_home.path(),
+    );
+    let mut state = state(root.path());
+    state.upstream_provider = crate::config::UpstreamProvider::Codex;
+    state.subscription_reader = Some(reader.clone());
+    state.subscription_readers = vec![reader];
+
+    let captured = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let upstream_captured = captured.clone();
+    let upstream = Router::new().fallback(move |axum::Json(body): axum::Json<Value>| {
+        let captured = upstream_captured.clone();
+        async move {
+            captured.lock().unwrap().push(body);
+            axum::Json(json!({
+                "id": "resp_fixture",
+                "model": "gpt-live",
+                "status": "completed",
+                "output": [{"type": "message", "role": "assistant",
+                    "content": [{"type": "output_text", "text": "0123456789"}]}]
+            }))
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    state.subscription_base_url = Some(format!("http://{}", listener.local_addr().unwrap()));
+    let server = tokio::spawn(async move { axum::serve(listener, upstream).await.unwrap() });
+    let issue_token = || {
+        crate::model_routing::tests::bound_client_token(
+            &state,
+            crate::clients::ClientKind::Codex,
+            None,
+        )
+    };
+    let scoped_token = issue_token();
+    let unscoped_token = issue_token();
+    let scoped_id = state.token_manager.validate_token(&scoped_token).unwrap().sub;
+    state
+        .request_log
+        .runtime_config()
+        .unwrap()
+        .edit(
+            super::Edit::Replace(json!({
+                "payload": {"override": [{
+                    "models": [{"name": "gpt-live", "protocol": "codex", "token": scoped_id}],
+                    "params": {"temperature": 0.1, "max_output_tokens": 1}
+                }]}
+            })),
+            "test",
+        )
+        .unwrap();
+    let path = "/api/services/codex/v1/responses";
+    let app = Router::new()
+        .route(path, axum::routing::post(crate::proxy::openai_responses_native))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            super::egress::scope,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            crate::request_log::log_http_exchange,
+        ))
+        .with_state(state.clone());
+    for (token, scoped) in [(scoped_token, true), (unscoped_token, false)] {
+        let request = Request::post(path)
+            .header(header::AUTHORIZATION, format!("Bearer {token}"))
+            .header(header::USER_AGENT, "codex_exec/0.154.0")
+            .header("originator", "codex_exec")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(
+                json!({"model": "gpt-live", "input": "hi", "store": false}).to_string(),
+            ))
+            .unwrap();
+        let response = app.clone().oneshot(request).await.unwrap();
+        let correlation = response.headers()["x-router-request-id"]
+            .to_str()
+            .unwrap()
+            .to_owned();
+        let status = response.status();
+        let bytes = to_bytes(response.into_body(), 16_384).await.unwrap();
+        assert_eq!(status, StatusCode::OK, "{}", String::from_utf8_lossy(&bytes));
+        let body: Value = serde_json::from_slice(&bytes).unwrap();
+        let text = body.pointer("/output/0/content/0/text").unwrap();
+        let entries = state.request_log.lookup(&correlation).unwrap();
+        let applied = entries
+            .iter()
+            .find(|row| row["phase"] == "payload_rules_applied");
+        if scoped {
+            assert_eq!(text, "0123");
+            assert_eq!(body["status"], "incomplete");
+            assert_eq!(body["incomplete_details"]["reason"], "max_output_tokens");
+            assert_eq!(
+                applied.unwrap()["changes"],
+                json!([
+                    {"path": "/max_output_tokens", "stage": "override", "value": 1},
+                    {"path": "/temperature", "stage": "override", "value": 0.1}
+                ])
+            );
+        } else {
+            assert_eq!(text, "0123456789");
+            assert!(applied.is_none());
+        }
+    }
+    let captured = captured.lock().unwrap();
+    assert_eq!(captured.len(), 2);
+    assert_eq!(captured[0]["temperature"], 0.1);
+    assert!(captured[0].get("max_output_tokens").is_none());
+    assert!(captured[1].get("temperature").is_none());
+    server.abort();
+}
+
+#[tokio::test]
+async fn canonical_codex_refuses_sampling_and_uses_a_local_websocket_cap() {
+    let root = tempfile::tempdir().unwrap();
+    let state = state(root.path());
+    let store = state.request_log.runtime_config().unwrap();
+    let model = json!([{"name": "gpt-live", "protocol": "codex"}]);
+    let rules = |params: Value| {
+        super::Edit::Replace(json!({
+            "payload": {"override": [{"models": model, "params": params}]}
+        }))
+    };
+    store
+        .edit(rules(json!({"temperature": 0.1, "max_output_tokens": 1})), "test")
+        .unwrap();
+    let url = "https://chatgpt.com/backend-api/codex/responses";
+    let mut request = reqwest::Client::new()
+        .post(url)
+        .json(&json!({"model": "gpt-live", "input": "hi"}))
+        .build()
+        .unwrap();
+    let outcome = super::egress::destination(
+        "codex",
+        None,
+        super::egress::http(&state.request_log, "official-codex", &mut request),
+    )
+    .await;
+    assert!(
+        matches!(outcome, Err(crate::upstream_client::UpstreamSendError::PayloadRule(reason))
+            if reason.contains("does not support configured sampling"))
+    );
+
+    let token = issue(&state, ADMIN_SCOPE);
+    let claims = state.token_manager.validate_token(&token).unwrap();
+    let headers = axum::http::HeaderMap::new();
+    let websocket = |body: &mut Value| {
+        super::egress::websocket(
+            &state,
+            "codex-socket",
+            &headers,
+            &claims,
+            crate::config::UpstreamProvider::Codex,
+            "wss://chatgpt.com/backend-api/codex/responses",
+            body,
+        )
+    };
+    let create = json!({"type": "response.create", "model": "gpt-live", "input": "hi"});
+    assert!(websocket(&mut create.clone()).is_err());
+    store
+        .edit(rules(json!({"max_output_tokens": 1})), "test")
+        .unwrap();
+    let mut upstream = create.clone();
+    assert_eq!(websocket(&mut upstream), Ok((true, Some(1))));
+    assert_eq!(upstream, create);
+}
+
+#[tokio::test]
 async fn rebuilt_attempts_and_url_selected_models_share_the_final_barrier() {
     let root = tempfile::tempdir().unwrap();
     let state = state(root.path());

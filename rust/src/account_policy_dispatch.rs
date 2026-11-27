@@ -183,6 +183,7 @@ pub async fn send(
                     .is_some_and(|value| value.contains("text/event-stream"));
             let version = response.version();
             let url = response.url().clone();
+            let extensions = response.extensions().clone();
             let (prepared, prefix) = crate::pool_response::PoolResponse::prepare(response, probe)
                 .await
                 .map_err(UpstreamSendError::Egress)?;
@@ -194,6 +195,7 @@ pub async fn send(
                 .body(reqwest::Body::wrap_stream(prepared.bytes_stream()))
                 .expect("valid upstream status");
             *response.headers_mut() = response_headers;
+            response.extensions_mut().extend(extensions);
             // The prepared stream preserves every inspected byte and transport error.
             Ok::<(reqwest::Response, Bytes), UpstreamSendError>((
                 response.into(),
@@ -450,6 +452,7 @@ async fn peek(response: reqwest::Response, deadline: Instant) -> (reqwest::Respo
     let headers = response.headers().clone();
     let version = response.version();
     let url = response.url().clone();
+    let extensions = response.extensions().clone();
     let mut stream = response.bytes_stream().boxed();
     let mut prefix = BytesMut::new();
     let mut rest = Vec::new();
@@ -487,5 +490,6 @@ async fn peek(response: reqwest::Response, deadline: Instant) -> (reqwest::Respo
         .body(body)
         .expect("valid upstream status");
     *response.headers_mut() = headers;
+    response.extensions_mut().extend(extensions);
     (response.into(), prefix)
 }
