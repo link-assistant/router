@@ -327,7 +327,8 @@ async fn http_final_barrier_records_final_values_and_rejects_before_any_send() {
         "payload": {
             "override": [{"models": [{"name": "claude-*", "protocol": "claude"}], "params": {"temperature": 0.1}}],
             "override-raw": [{"models": [{"name": "*"}], "params": {"max_tokens": "200"}}],
-            "filter": [{"models": [{"name": "*", "exist": ["system"]}], "params": ["system", "tools.#(type==\"image_generation\")#"]}]
+            "filter": [{"models": [{"name": "*", "exist": ["system"]}],
+                "params": ["system", "messages.0", "tools.#(type==\"image_generation\")#"]}]
         }
     });
     store.edit(super::Edit::Replace(document), "test").unwrap();
@@ -349,6 +350,7 @@ async fn http_final_barrier_records_final_values_and_rejects_before_any_send() {
     };
     let body = json!({
         "model": "claude-opus", "system": "late injection",
+        "messages": ["first", "second", "third"],
         "tools": [{"type": "image_generation"}, {"type": "function"}, {"type": "image_generation"}]
     });
     let final_body: Value = send("barrier-success", body)
@@ -359,10 +361,23 @@ async fn http_final_barrier_records_final_values_and_rejects_before_any_send() {
         .unwrap();
     assert_eq!(final_body["temperature"], 0.1);
     assert_eq!(final_body["max_tokens"], 200);
+    assert_eq!(final_body["messages"], json!(["second", "third"]));
     assert_eq!(final_body["tools"], json!([{"type": "function"}]));
     assert!(final_body.get("system").is_none());
-    let records = state.request_log.lookup("barrier-success").unwrap();
-    let evidence = records
+    let admin = issue(&state, ADMIN_SCOPE);
+    let management = crate::admin_api::router(state.clone());
+    let (status, evidence) = call(
+        &management,
+        "GET",
+        "/api/management/logs/requests/barrier-success",
+        &admin,
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    let evidence = evidence["records"]
+        .as_array()
+        .unwrap()
         .iter()
         .find(|record| record["phase"] == "payload_rules_applied")
         .unwrap();
@@ -383,7 +398,16 @@ async fn http_final_barrier_records_final_values_and_rejects_before_any_send() {
         error,
         crate::upstream_client::UpstreamSendError::PayloadRule(_)
     ));
-    let records = state.request_log.lookup("barrier-failure").unwrap();
+    let (status, evidence) = call(
+        &management,
+        "GET",
+        "/api/management/logs/requests/barrier-failure",
+        &admin,
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    let records = evidence["records"].as_array().unwrap();
     assert!(
         records
             .iter()
