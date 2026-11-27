@@ -72,10 +72,15 @@ pub(super) fn edit(
                 let offset = index(part, array.len()).ok_or(PathError::Missing)?;
                 &mut array[offset]
             }
-            Value::Object(object) if create_parents => object
-                .entry(part)
-                .or_insert_with(|| Value::Object(Map::new())),
-            Value::Object(object) => object.get_mut(part).ok_or(PathError::Missing)?,
+            Value::Object(object) => {
+                if create_parents {
+                    object
+                        .entry(part)
+                        .or_insert_with(|| Value::Object(Map::new()))
+                } else {
+                    object.get_mut(part).ok_or(PathError::Missing)?
+                }
+            }
             _ => return Err(PathError::Invalid),
         };
     }

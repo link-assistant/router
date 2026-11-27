@@ -24,7 +24,6 @@ mod upstream;
 use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::{HeaderMap, HeaderValue};
-#[cfg(test)]
 use axum::middleware::Next;
 use axum::response::Response;
 use futures_util::StreamExt as _;
@@ -606,7 +605,7 @@ fn eagerly_capture_json(headers: &HeaderMap) -> bool {
     json && bounded_length
 }
 
-/// Return the public route template for byte-transparent native services.
+/// Return the public template for routes that use opaque logging.
 ///
 /// Their provider-owned payloads can contain uploads, workspace data, account
 /// state, and future fields Router cannot safely classify. Templates also
@@ -640,8 +639,8 @@ fn upstream_request_id(headers: &HeaderMap) -> Option<&str> {
 
 /// URI safe for process diagnostics and HTTP tracing.
 ///
-/// Native vendor and runtime configuration routes are reduced to their static route template; ordinary
-/// routes retain their path and generically redacted query.
+/// Native vendor and runtime configuration routes are reduced to their static
+/// template. Other routes retain their path and generically redacted query.
 #[must_use]
 pub fn safe_http_uri(method: &axum::http::Method, uri: &axum::http::Uri) -> String {
     opaque_route(method, uri.path()).map_or_else(|| redacted_uri(&uri.to_string()), str::to_string)

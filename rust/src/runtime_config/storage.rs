@@ -248,7 +248,7 @@ fn clear_positions(table: &mut Table) {
         if let Some(table) = item.as_table_mut() {
             clear_positions(table);
         } else if let Some(tables) = item.as_array_of_tables_mut() {
-            for table in tables {
+            for table in tables.iter_mut() {
                 clear_positions(table);
             }
         }

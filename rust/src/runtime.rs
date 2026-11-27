@@ -182,7 +182,7 @@ pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
         Some(Command::Deploy(args)) => deploy_cli::run(&config, args),
         Some(Command::Doctor { .. }) => bin_doctor::run_doctor(&config).await,
         Some(Command::Tls { op }) => link_assistant_router::tls_cli::run(&config, op),
-        Some(Command::Logs { op }) => logs_cli::run(&config, request_log.as_deref(), op),
+        Some(Command::Logs { op }) => logs_cli::run(&config, cli.request_log.as_deref(), op),
     }
 }
 
