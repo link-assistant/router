@@ -25,6 +25,10 @@ on:
       threshold:
         description: Percent slowdown that fails the run
         default: '25'
+      measure_base_coverage:
+        description: Measure full coverage of the selected base with the current toolchain
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -82,6 +86,8 @@ jobs:
     name: Compare against base
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    env:
+      MEASURE_BASE_COVERAGE: ${{ github.event_name == 'workflow_dispatch' && inputs.measure_base_coverage }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -91,6 +97,7 @@ jobs:
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
           toolchain: 1.100.0
+          components: ${{ env.MEASURE_BASE_COVERAGE == 'true' && 'llvm-tools-preview' || '' }}
 
       - name: Cache cargo
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -103,18 +110,50 @@ jobs:
             ${{ runner.os }}-bench-cargo-
 
       - name: Install rust-script
+        if: env.MEASURE_BASE_COVERAGE != 'true'
         run: bash scripts/install-ci-cargo-tool.sh rust-script
 
-      - name: Benchmark base
-        id: base
+      - name: Check out the gated base
         env:
           BASE_REF: ${{ needs.resolve-base.outputs.sha }}
         run: |
           # Detached, so a base that is also the checked-out branch (a manual
           # run on main) is accepted; a branch name resolves to its remote tip.
-          base="$(git rev-parse --verify --quiet "origin/$BASE_REF^{commit}" \
-            || git rev-parse --verify "$BASE_REF^{commit}")"
-          git worktree add --detach "$RUNNER_TEMP/base" "$base"
+          git worktree add --detach "$RUNNER_TEMP/base" "$BASE_REF"
+
+      # A Rust coverage instrumentation change can move the percentage for the
+      # same source. Measure the exact gated revision with the release lane's
+      # current compiler, tool and full workspace test command.
+      - name: Measure base coverage with current Rust
+        if: env.MEASURE_BASE_COVERAGE == 'true'
+        env:
+          LLVM_COV_VERSION: '0.9.2'
+          RUSTFLAGS: -Dwarnings
+        run: |
+          cargo install cargo-llvm-cov --version "$LLVM_COV_VERSION" --locked --force
+          cd "$RUNNER_TEMP/base"
+          cargo llvm-cov clean --workspace
+          cargo llvm-cov --locked --all-features --workspace --no-report
+          cargo llvm-cov report --json --summary-only --output-path "$RUNNER_TEMP/base-coverage.json"
+          cargo llvm-cov report --lcov --output-path "$RUNNER_TEMP/base-lcov.info"
+          jq '.data[0].totals.lines' "$RUNNER_TEMP/base-coverage.json" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload base coverage
+        if: ${{ !cancelled() && env.MEASURE_BASE_COVERAGE == 'true' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: base-coverage
+          path: |
+            ${{ runner.temp }}/base-coverage.json
+            ${{ runner.temp }}/base-lcov.info
+          if-no-files-found: error
+
+      - name: Benchmark base
+        if: env.MEASURE_BASE_COVERAGE != 'true'
+        id: base
+        env:
+          BASE_REF: ${{ needs.resolve-base.outputs.sha }}
+        run: |
           if [ ! -f "$RUNNER_TEMP/base/rust/benches/hot_paths.rs" ] && [ ! -f "$RUNNER_TEMP/base/benches/hot_paths.rs" ]; then
             echo "Base $BASE_REF has no Rust hot_paths benchmark; nothing to compare against." \
               | tee -a "$GITHUB_STEP_SUMMARY"
@@ -126,12 +165,12 @@ jobs:
           cd "$RUNNER_TEMP/base"
           if ! CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target" \
             cargo bench --locked --bench hot_paths -- --save-baseline pr-base; then
-            echo "::error::Benchmark base $base failed. Repair the base ref before rerunning the comparison."
+            echo "::error::Benchmark base $BASE_REF failed. Repair the base ref before rerunning the comparison."
             exit 1
           fi
 
       - name: Benchmark head
-        if: ${{ !cancelled() && (success() || steps.base.outcome == 'failure') }}
+        if: ${{ !cancelled() && env.MEASURE_BASE_COVERAGE != 'true' && (success() || steps.base.outcome == 'failure') }}
         run: cargo bench --locked --bench hot_paths -- --save-baseline pr-head
 
       - name: Compare
@@ -141,7 +180,7 @@ jobs:
         run: rust-script scripts/compare-benchmarks.rs pr-base pr-head --threshold "$THRESHOLD"
 
       - name: Upload Criterion data
-        if: always()
+        if: ${{ always() && env.MEASURE_BASE_COVERAGE != 'true' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: criterion

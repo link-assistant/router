@@ -91,6 +91,17 @@ test('every caller retains its same-SHA Rust admission guard, original dependenc
   assert.ok(mutation('javascript-first.yml', doc => { doc.jobs.parity.steps = [{ run: 'true' }]; }).length);
 });
 
+test('base coverage is an explicit manual diagnostic and requires the gated base', { timeout: 30_000 }, () => {
+  for (const change of [
+    doc => { doc.on.workflow_dispatch.inputs.measure_base_coverage.default = true; },
+    doc => { delete doc.on.workflow_dispatch.inputs.measure_base_coverage; },
+    doc => { doc.on.pull_request.types.push('labeled'); },
+    doc => { doc.jobs.compare.env.MEASURE_BASE_COVERAGE = "${{ inputs.measure_base_coverage }}"; },
+    doc => { doc.jobs.compare.needs = ['javascript', 'resolve-base']; },
+    doc => { doc.jobs['base-javascript'].with.sha = 'main'; },
+  ]) assert.ok(mutation('benchmarks.yml', change).length);
+});
+
 test('lane-introduced lint checks always run on the caller commit and elsewhere only when present', { timeout: 30_000 }, () => {
   const jobs = parse(sources[MANUAL_WORKFLOW]).jobs;
   for (const [command, file] of Object.entries(LANE_FILES)) {

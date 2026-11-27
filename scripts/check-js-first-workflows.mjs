@@ -20,9 +20,28 @@ function exact(a,b,depth=0){if(Object.is(a,b))return true;if(depth>=64||!a||!b||
 const reviewedDraftSupplementals=new Map(readFixedNineDraftWorkflowSources().files.filter(row=>draftSupplementNames.has(path.basename(row.path))).map(row=>{
  const document=parseDocument(row.after,{uniqueKeys:true,version:'1.2'});if(document.errors.length)throw TypeError('Fixed-nine reviewed workflow grammar differs');return [path.basename(row.path),document.toJS()];
 }));
+const manualBaseCoverageInput = {
+  description: 'Measure full coverage of the selected base with the current toolchain',
+  type: 'boolean',
+  default: false,
+};
+
+function reviewedSupplementTrigger(name, workflow, reviewed) {
+  if (name !== 'benchmarks.yml') return exact(workflow.on, reviewed.on);
+  const coverageMode = workflow.jobs?.compare?.env?.MEASURE_BASE_COVERAGE;
+  const dispatchInputs = workflow.on?.workflow_dispatch?.inputs ?? {};
+  if (!Object.hasOwn(dispatchInputs, 'measure_base_coverage')) {
+    return exact(workflow.on, reviewed.on) && coverageMode === undefined;
+  }
+  const expected = structuredClone(reviewed.on);
+  expected.workflow_dispatch.inputs.measure_base_coverage = manualBaseCoverageInput;
+  return exact(workflow.on, expected) &&
+    coverageMode === "${{ github.event_name == 'workflow_dispatch' && inputs.measure_base_coverage }}";
+}
+
 function auditDraftSupplement(name,workflow,errors){
  const reviewed=reviewedDraftSupplementals.get(name),trigger=workflow.on?.pull_request;
- if(!exact(trigger?.types,DRAFT_SUPPLEMENT_PR_TYPES)||!exact(workflow.on,reviewed.on))errors.push(`${name}: fixed-nine reviewed PR activities/paths and other triggers differ`);
+ if(!exact(trigger?.types,DRAFT_SUPPLEMENT_PR_TYPES)||!reviewedSupplementTrigger(name,workflow,reviewed))errors.push(`${name}: fixed-nine reviewed PR activities/paths and other triggers differ`);
  if(workflow.jobs?.javascript?.if!==DRAFT_SUPPLEMENT_CONDITION||!exact(workflow.jobs?.javascript,reviewed.jobs.javascript))errors.push(`${name}/javascript: exact fixed-nine draft caller gate missing`);
 }
 
