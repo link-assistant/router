@@ -96,11 +96,10 @@ tower = { version = "0.5.3", features = ["util"] }
 wait-timeout = "0.2.1"
 criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support"] }
 
-# This is an importing application, run as its own process rather than a
-# libtest harness. It rejects Router CLI arguments to detect wrong launches.
-[[example]]
+# Run the importing application as its own process. The integration target
+# receives Cargo's absolute path to the built Router CLI.
+[[test]]
 name = "host_library_consumer"
-test = true
 harness = false
 
 # Hot-path benchmarks (issue #672); the Benchmarks workflow compares a pull
