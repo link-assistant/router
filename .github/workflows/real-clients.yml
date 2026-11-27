@@ -49,9 +49,6 @@ jobs:
         with:
           toolchain: 1.98.1
 
-      - name: Install Router verification runner
-        run: cargo install rust-script --version 0.36.0 --locked
-
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -74,7 +71,7 @@ jobs:
           ROUTER_REAL_CLIENT_CLAUDE_VERSION: '2.1.265'
           ROUTER_REAL_CLIENT_CODEX_VERSION: '0.154.0'
           ROUTER_REAL_CLIENT_OPENCODE_VERSION: '1.18.29'
-        run: rust-script scripts/verify-contracts.rs --area real-clients
+        run: cargo run --locked --bin router -- verify -- --area real-clients
 
       - name: Preserve verification diagnostics
         if: always()
@@ -124,9 +121,6 @@ jobs:
         with:
           toolchain: 1.98.1
 
-      - name: Install Router verification runner
-        run: cargo install rust-script --version 0.36.0 --locked
-
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -145,7 +139,7 @@ jobs:
       - name: Capture native Claude requests against the offline mock
         env:
           ROUTER_REAL_CLIENT_TESTS: '1'
-        run: rust-script scripts/verify-contracts.rs --area real-clients --client claude
+        run: cargo run --locked --bin router -- verify -- --area real-clients --client claude
 
       - name: Preserve verification diagnostics
         if: always()
@@ -179,9 +173,6 @@ jobs:
         with:
           toolchain: 1.98.1
 
-      - name: Install Router verification runner
-        run: cargo install rust-script --version 0.36.0 --locked
-
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -200,7 +191,7 @@ jobs:
       - name: Capture native Codex requests against the offline mock
         env:
           ROUTER_REAL_CLIENT_TESTS: '1'
-        run: rust-script scripts/verify-contracts.rs --area real-clients --client codex
+        run: cargo run --locked --bin router -- verify -- --area real-clients --client codex
 
       - name: Preserve verification diagnostics
         if: always()
