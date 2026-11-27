@@ -15,6 +15,9 @@ use super::{ROOT, call, issue, state};
 #[tokio::test]
 async fn configuration_writers_cannot_change_host_authority() {
     let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("runtime.toml");
+    let original = "[cli]\nport = 9084\n";
+    std::fs::write(&path, original).unwrap();
     let state = state(root.path());
     let app = crate::admin_api::router(state.clone());
     let writer = issue(&state, CONFIG_WRITE_SCOPE);
@@ -29,18 +32,18 @@ async fn configuration_writers_cannot_change_host_authority() {
         ("admin-host", json!("0.0.0.0")),
         ("admin-port", json!(9000)),
     ] {
-        let path = format!("{ROOT}/cli/{key}");
+        let pointer = format!("{ROOT}/cli/{key}");
         let patch = json!({"cli": {(key): value.clone()}});
-        for (method, uri, body) in [("PATCH", ROOT, patch), ("PUT", path.as_str(), value)] {
+        for (method, uri, body) in [("PATCH", ROOT, patch), ("PUT", pointer.as_str(), value)] {
             let (status, response) = call(&app, method, uri, &writer, Some(body)).await;
-            assert_eq!(status, StatusCode::BAD_REQUEST);
+            assert_eq!(status, StatusCode::BAD_REQUEST, "{method} {uri}: {response}");
             assert_eq!(
                 response["error"]["message"],
                 "this CLI setting may only be changed in the local TOML file"
             );
         }
     }
-    assert!(!root.path().join("runtime.toml").exists());
+    assert_eq!(std::fs::read_to_string(path).unwrap(), original);
     assert!(!root.path().join("runtime-config-audit.jsonl").exists());
 }
 
