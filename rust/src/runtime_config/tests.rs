@@ -485,7 +485,7 @@ async fn native_codex_request_records_scoped_rules_and_enforces_the_output_cap()
         .unwrap();
     let path = "/api/services/codex/v1/responses";
     let app = Router::new()
-        .route(path, axum::routing::post(crate::proxy::openai_responses_native))
+        .route(path, axum::routing::post(crate::proxy::openai_responses_route))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             super::egress::scope,
