@@ -3,13 +3,15 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # Nixpkgs stopped supporting Intel macOS after the 26.05 release.
+    nixpkgs-darwin-intel.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, rust-overlay }:
+  outputs = { self, nixpkgs, nixpkgs-darwin-intel, rust-overlay }:
     let
       # The platforms Nix support is claimed for. Everything below is derived
       # per system so a single definition serves all of them.
@@ -21,10 +23,13 @@
       ];
 
       forEachSystem = f:
-        nixpkgs.lib.genAttrs systems (system: f (import nixpkgs {
-          inherit system;
-          overlays = [ rust-overlay.overlays.default ];
-        }));
+        nixpkgs.lib.genAttrs systems (system:
+          let
+            packages = if system == "x86_64-darwin" then nixpkgs-darwin-intel else nixpkgs;
+          in f (import packages {
+            inherit system;
+            overlays = [ rust-overlay.overlays.default ];
+          }));
 
       cargoToml = builtins.fromTOML (builtins.readFile ./rust/Cargo.toml);
       rustToolchain = pkgs: pkgs.rust-bin.stable.${cargoToml.package.rust-version}.default.override {

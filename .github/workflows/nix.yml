@@ -53,7 +53,16 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
       - uses: cachix/install-nix-action@382a9ed9481c7c1f94f68b72ef105b3417c73877 # v32.1.0
+        if: matrix.system != 'x86_64-darwin'
         with:
+          enable_kvm: false
+          set_as_trusted_user: false
+      - uses: cachix/install-nix-action@382a9ed9481c7c1f94f68b72ef105b3417c73877 # v32.1.0
+        if: matrix.system == 'x86_64-darwin'
+        with:
+          # Nix 2.36 no longer publishes an Intel macOS binary.
+          install_url: https://releases.nixos.org/nix/nix-2.35.6/install
+          install_sha256: 6f7bf206efb54cd4941fb274930dbc74fdfc16fcb06757ef261c8d7d69cfd60e
           enable_kvm: false
           set_as_trusted_user: false
       - name: Build and check the locked flake

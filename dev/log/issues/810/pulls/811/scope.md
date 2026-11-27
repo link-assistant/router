@@ -18,4 +18,6 @@ The isolated Linux verifier uses the same Node 26.13.1 and npm 12.2.3 pins as th
 
 The archived strict CI lane remains suspended under the maintainer instruction in #785. Its old fixed-gate source inventory and neutral compiler profiles need a separate qualification against the currently retained sharded workflow. Changes here keep the original stage partitions and commands. Dynamic Debian and Alpine packages continue to come from the pinned distributions' supported repositories so the image build receives their security updates.
 
+Intel macOS uses the final Nix release series with an official installer and the maintained Nixpkgs 26.05 Darwin channel. The current Nix 2.36 installer and Nixpkgs unstable dropped native Intel macOS support. Both Linux architectures and Apple Silicon use the current Nix release and unstable channel. [Upstream removal](https://github.com/NixOS/nix/pull/16293), [26.05 Darwin platform list](https://github.com/NixOS/nixpkgs/blob/b79fb186802610f5363769394ba4a4b921ea15c9/lib/systems/flake-systems.nix).
+
 The initial dependency table includes immutable incident captures and standalone probes. The active tables and checks cover package managers with maintained install roots. Publication credentials, live vendor accounts and default-branch release jobs remain controlled by their existing GitHub environments.
