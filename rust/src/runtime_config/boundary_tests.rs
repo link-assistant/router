@@ -13,6 +13,35 @@ use super::super::{Edit, egress, payload, storage};
 use super::{ROOT, call, issue, state};
 
 #[tokio::test]
+async fn configuration_writers_cannot_change_host_authority() {
+    let root = tempfile::tempdir().unwrap();
+    let state = state(root.path());
+    let app = crate::admin_api::router(state.clone());
+    let writer = issue(&state, CONFIG_WRITE_SCOPE);
+    for (key, value) in [
+        ("account-egress-proxy", json!("primary=env:ACCOUNT_PROXY")),
+        ("model-catalog-sources", json!(["catalog.json"])),
+        ("crater-forgefed-inbox", json!("https://forge.example/inbox")),
+        ("listener", json!(["127.0.0.1:9000=admin"])),
+        ("admin-host", json!("0.0.0.0")),
+        ("admin-port", json!(9000)),
+    ] {
+        let path = format!("{ROOT}/cli/{key}");
+        let patch = json!({"cli": {(key): value.clone()}});
+        for (method, uri, body) in [("PATCH", ROOT, patch), ("PUT", path.as_str(), value)] {
+            let (status, response) = call(&app, method, uri, &writer, Some(body)).await;
+            assert_eq!(status, StatusCode::BAD_REQUEST);
+            assert_eq!(
+                response["error"]["message"],
+                "this CLI setting may only be changed in the local TOML file"
+            );
+        }
+    }
+    assert!(!root.path().join("runtime.toml").exists());
+    assert!(!root.path().join("runtime-config-audit.jsonl").exists());
+}
+
+#[tokio::test]
 async fn management_export_and_pointer_errors_preserve_secrets() {
     let root = tempfile::tempdir().unwrap();
     let path = root.path().join("runtime.toml");

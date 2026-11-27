@@ -76,12 +76,12 @@ values that TOML cannot represent, such as null inside a rule, use a
 stores the same JSON document.
 
 Reads mask secrets with `[REDACTED]`. Sending a masked value back preserves
-the stored value. Local TOML also supports the signing and administrator keys,
-credential-bearing upstream destinations, account credential directories,
-external CLI commands, audit and request log paths, and management admission
-and lockout settings. Change those fields on the host. Subscription bridge
-eligibility and proxy-client trust still require
-their explicit command-line or environment opt-ins.
+the stored value. Use local TOML to change the signing and administrator keys,
+credential-bearing upstream destinations, the ForgeFed inbox, account egress
+proxies, account credential directories, model catalog sources, external CLI
+commands, audit and request log paths, and management listener, admission, and
+lockout settings. Subscription bridge eligibility and proxy-client trust
+require their explicit command-line or environment opt-ins.
 
 The file watcher picks up valid changes automatically. Payload and CORS
 settings take effect on the next relevant request or WebSocket turn.
