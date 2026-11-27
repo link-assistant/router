@@ -22,10 +22,13 @@
         "aarch64-darwin"
       ];
 
+      intelMac = "x86_64-darwin";
+      isIntelMac = pkgs: pkgs.stdenv.hostPlatform.system == intelMac;
+
       forEachSystem = f:
         nixpkgs.lib.genAttrs systems (system:
           let
-            packages = if system == "x86_64-darwin" then nixpkgs-darwin-intel else nixpkgs;
+            packages = if system == intelMac then nixpkgs-darwin-intel else nixpkgs;
           in f (import packages {
             inherit system;
             overlays = [ rust-overlay.overlays.default ];
@@ -59,9 +62,9 @@
         ];
       };
 
-      # `aws-lc-sys` (through rustls) builds C and generates bindings; `ring`,
-      # `zstd`, `brotli` and `flate2` need a C compiler. `openssl` is here for
-      # the crates that probe for it via pkg-config.
+      # The current Nixpkgs Cargo hook selects packaged AWS-LC and Zstandard.
+      # The Intel macOS channel still carries AWS-LC 1.x, so on that platform
+      # aws-lc-sys builds the compatible bundled library with CMake.
       nativeDeps = pkgs: {
         nativeBuildInputs = [
           pkgs.pkg-config
@@ -69,7 +72,7 @@
           pkgs.perl
           pkgs.rustPlatform.bindgenHook
         ];
-        buildInputs = [ pkgs.openssl ];
+        buildInputs = [ pkgs.zstd ] ++ pkgs.lib.optional (!isIntelMac pkgs) pkgs.aws-lc;
       };
 
       routerPackage = pkgs:
@@ -85,6 +88,9 @@
           cargoLock.lockFile = ./Cargo.lock;
 
           inherit (deps) nativeBuildInputs buildInputs;
+          env = pkgs.lib.optionalAttrs (isIntelMac pkgs) {
+            AWS_LC_SYS_CMAKE_BUILDER = "1";
+          };
 
           # The test suite starts servers, binds ports and reaches out to real
           # Anthropic endpoints, none of which work in the Nix sandbox. Tests
