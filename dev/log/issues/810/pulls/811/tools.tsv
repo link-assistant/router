@@ -1,5 +1,5 @@
 Tool or image	Initial pin	Active pin	Current upstream release/reference	Publisher
-Rust stable	1.98.1 in workflows; 1.99.1 in Docker	1.100.0	1.100.0	https://static.rust-lang.org/dist/channel-rust-stable.toml
+Rust stable	1.98.1 in workflows; 1.99.1 in Docker	1.100.1 in hosted workflows; 1.100.0 in Docker and Nix pending publisher updates	1.100.1	https://static.rust-lang.org/dist/channel-rust-stable.toml
 Rust nightly	nightly	nightly-2026-11-26	nightly-2026-11-26 complete manifest at inventory time	https://static.rust-lang.org/dist/2026-11-26/channel-rust-nightly.toml
 Node	20 in development; 20 and 24 binding matrix	26.13.1; 20.20.2 for the TypeScript stage; 20 and 24 binding compatibility	26.13.1	https://nodejs.org/dist/index.json
 npm	Toolchain bundled	12.2.3 on Node 24 and 26; 11.21.3 on Node 20	12.2.3; 11.21.3 latest with Node 20 support	https://registry.npmjs.org/npm/latest

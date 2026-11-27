@@ -90,7 +90,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
 
       - name: Install rust-script
         run: bash scripts/install-ci-cargo-tool.sh rust-script
@@ -121,7 +121,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
 
       - name: Install rust-script
         run: bash scripts/install-ci-cargo-tool.sh rust-script
@@ -147,7 +147,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
 
       - name: Install rust-script
         run: bash scripts/install-ci-cargo-tool.sh rust-script
@@ -219,7 +219,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
           components: rustfmt, clippy
 
       - name: Install rust-script
@@ -383,7 +383,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
 
       # Compilation-level cache, complementing the artifact cache below.
       # `actions/cache` is keyed on `Cargo.lock`, so a single dependency bump
@@ -483,7 +483,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
 
       # Compilation-level cache, complementing the artifact cache below.
       # `actions/cache` is keyed on `Cargo.lock`, so a single dependency bump
@@ -722,7 +722,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
           components: llvm-tools-preview
 
       - name: Cache coverage tools
@@ -817,7 +817,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
 
       # Compilation-level cache, complementing the artifact cache below.
       # `actions/cache` is keyed on `Cargo.lock`, so a single dependency bump
@@ -876,7 +876,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
 
       - name: Install rust-script
         run: bash scripts/install-ci-cargo-tool.sh rust-script
@@ -938,7 +938,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
 
       - name: Install rust-script
         run: bash scripts/install-ci-cargo-tool.sh rust-script
@@ -1124,7 +1124,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
 
       # Tool locks belong to the workflow commit. The release checkout stays at the tag.
       - name: Check out pinned release tools
@@ -1317,7 +1317,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
 
       # Tool locks belong to the workflow commit. The release checkout stays at the tag.
       - name: Check out pinned release tools
@@ -1420,7 +1420,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
           targets: ${{ matrix.target }}
 
       # Each job starts on a fresh runner: without this step the upload below
@@ -1560,7 +1560,7 @@ jobs:
           ref: ${{ needs.resolve-release-source.outputs.sha }}
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: '26.13.1'
@@ -1611,7 +1611,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
 
       - name: Install rust-script
         run: bash scripts/install-ci-cargo-tool.sh rust-script
@@ -1716,7 +1716,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
 
       - name: Download and verify the published darwin-arm64 asset
         shell: bash
@@ -1796,7 +1796,7 @@ jobs:
         run: python3 scripts/prepare-registry-retry.py --repository "${{ github.repository }}" --version "$RELEASE_VERSION" --source-run "$SOURCE_RUN" --output "$GITHUB_OUTPUT"
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
       - name: Install rust-script
         run: bash scripts/install-ci-cargo-tool.sh rust-script
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
@@ -1918,7 +1918,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
       - name: Install rust-script
         run: bash scripts/install-ci-cargo-tool.sh rust-script
       # crates.io trusted publishing (issue #797): exchange the job's OIDC token
@@ -1964,7 +1964,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.100.0
+          toolchain: 1.100.1
 
       - name: Install rust-script
         run: bash scripts/install-ci-cargo-tool.sh rust-script
