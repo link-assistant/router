@@ -48,18 +48,17 @@ pub(super) fn mutations(world: &World) -> Vec<Vec<String>> {
 }
 
 fn state_files(root: &Path) -> Vec<(String, Vec<u8>)> {
-    let mut files = std::fs::read_dir(root.join("state"))
-        .map_or_default(|entries| {
-            entries
-                .map(|entry| {
-                    let entry = entry.unwrap();
-                    (
-                        entry.file_name().to_string_lossy().into_owned(),
-                        std::fs::read(entry.path()).unwrap_or_default(),
-                    )
-                })
-                .collect::<Vec<_>>()
-        });
+    let mut files = std::fs::read_dir(root.join("state")).map_or_default(|entries| {
+        entries
+            .map(|entry| {
+                let entry = entry.unwrap();
+                (
+                    entry.file_name().to_string_lossy().into_owned(),
+                    std::fs::read(entry.path()).unwrap_or_default(),
+                )
+            })
+            .collect::<Vec<_>>()
+    });
     files.sort();
     files
 }

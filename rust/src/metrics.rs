@@ -173,14 +173,8 @@ pub fn usage_snapshot(m: &Metrics) -> UsageSnapshot {
         anthropic_messages: m.anthropic_messages.load(Ordering::Relaxed),
         tokens_issued: m.tokens_issued.load(Ordering::Relaxed),
         tokens_revoked: m.tokens_revoked.load(Ordering::Relaxed),
-        status_counts: m
-            .status_counts
-            .lock()
-            .map_or_default(|g| g.clone()),
-        account_calls: m
-            .account_calls
-            .lock()
-            .map_or_default(|g| g.clone()),
+        status_counts: m.status_counts.lock().map_or_default(|g| g.clone()),
+        account_calls: m.account_calls.lock().map_or_default(|g| g.clone()),
         token_calls: m.token_calls.lock().map_or_default(|g| g.clone()),
     }
 }

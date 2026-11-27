@@ -452,7 +452,11 @@ fn qwen_uses_positional_prompts_and_preserves_explicit_vendor_arguments() {
         assert!(launch.note.is_none());
     }
 
-    let launch = plan(&args(ClientKind::QwenCode, &["sessions", "list"]), None, false);
+    let launch = plan(
+        &args(ClientKind::QwenCode, &["sessions", "list"]),
+        None,
+        false,
+    );
     assert_eq!(rendered(&launch), vec!["sessions", "list"]);
     assert!(!launch.one_shot);
 }

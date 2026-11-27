@@ -134,10 +134,7 @@ impl AuthDiagnostics {
     #[must_use]
     pub fn snapshot(&self) -> AuthDiagnosticsSnapshot {
         AuthDiagnosticsSnapshot {
-            failures_by_reason: self
-                .counts
-                .lock()
-                .map_or_default(|counts| counts.clone()),
+            failures_by_reason: self.counts.lock().map_or_default(|counts| counts.clone()),
             recent_failures: self
                 .recent
                 .lock()

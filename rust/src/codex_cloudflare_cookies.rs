@@ -282,7 +282,10 @@ mod tests {
         assert!(applicable.contains("__cflb=old"));
         assert!(!applicable.contains("_cfuvid=host"));
         assert!(!get(&store, &url("https://a.chatgpt.com/other")).contains("cf_chl_path"));
-        assert_eq!(get(&store, &url("http://a.chatgpt.com/backend-api/codex")).len(), 0);
+        assert_eq!(
+            get(&store, &url("http://a.chatgpt.com/backend-api/codex")).len(),
+            0
+        );
 
         set(
             &store,

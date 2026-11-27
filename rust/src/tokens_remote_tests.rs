@@ -133,7 +133,10 @@ fn records_are_read_from_the_data_array() {
     assert_eq!(records_in(&answer).len(), 2);
 
     assert_eq!(records_in(&serde_json::json!({})).len(), 0);
-    assert_eq!(records_in(&serde_json::json!({"data": "not an array"})).len(), 0);
+    assert_eq!(
+        records_in(&serde_json::json!({"data": "not an array"})).len(),
+        0
+    );
 }
 
 /// The target flags never leak into the request body.

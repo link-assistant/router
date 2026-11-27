@@ -194,7 +194,10 @@ fn an_unparseable_listing_yields_no_candidates() {
     assert_eq!(parse_published_ports("").len(), 0);
     assert_eq!(parse_published_ports("   ").len(), 0);
     assert_eq!(parse_published_ports("nonsense").len(), 0);
-    assert_eq!(parse_published_ports("127.0.0.1:notaport->8080/tcp").len(), 0);
+    assert_eq!(
+        parse_published_ports("127.0.0.1:notaport->8080/tcp").len(),
+        0
+    );
     assert_eq!(parse_published_ports("127.0.0.1:0->8080/tcp").len(), 0);
 }
 

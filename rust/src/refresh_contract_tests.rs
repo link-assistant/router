@@ -75,7 +75,10 @@ fn refresh_fixture_versions_and_contracts_are_current() {
 fn version_components(version: &str) -> [u64; 3] {
     version
         .split('.')
-        .map(|part| part.parse::<u64>().expect("numeric client version component"))
+        .map(|part| {
+            part.parse::<u64>()
+                .expect("numeric client version component")
+        })
         .collect::<Vec<_>>()
         .try_into()
         .expect("three client version components")
