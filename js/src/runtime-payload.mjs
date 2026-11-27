@@ -135,6 +135,7 @@ export function applyPayloadRules(rules, body, context) {
   if (!isObject(body)) throw new Error('payload rules require a JSON object');
   const result = structuredClone(body);
   const applied = [];
+  const changed = new Set();
   for (const stage of stages) {
     for (const rule of applicable(stage)) {
       if (!rule.models.some((selector) => select(selector, context) && matchesConditions(result, selector))) continue;
@@ -154,13 +155,32 @@ export function applyPayloadRules(rules, body, context) {
           const value = stage.endsWith('-raw') && typeof input === 'string' ? JSON.parse(input) : structuredClone(input);
           write(result, resolved, value, filter);
           applied.push({ stage, path, ...(filter ? {} : { value }) });
+          changed.add(resolved[0]);
         }
       }
     }
   }
-  if (['claude', 'bedrock', 'vertex'].includes(context.protocol) && applied.some(({ path }) => path === 'temperature' || path === 'top_p' || path === '/temperature' || path === '/top_p')
+  if (['claude', 'bedrock', 'vertex'].includes(context.protocol) && (changed.has('temperature') || changed.has('top_p'))
     && result.temperature != null && result.top_p != null) {
     throw new Error('payload rules left incompatible sampling parameters');
   }
+  if (['claude', 'bedrock', 'vertex', 'openai', 'codex'].includes(context.protocol)) {
+    for (const key of ['max_tokens', 'max_output_tokens']) {
+      if (changed.has(key) && Object.hasOwn(result, key) && (!Number.isSafeInteger(result[key]) || result[key] < 1)) {
+        throw new Error(`payload rule ${key} requires a positive integer`);
+      }
+    }
+  }
   return { body: result, applied };
+}
+
+export function applyCodexSubscriptionPayloadRules(rules, body, context, outputLimit) {
+  const virtualLimit = outputLimit !== undefined && isObject(body) && !Object.hasOwn(body, 'max_output_tokens');
+  const candidate = virtualLimit ? { ...body, max_output_tokens: outputLimit } : body;
+  const result = applyPayloadRules(rules, candidate, context);
+  if (!result.applied.length) return { ...result, body, outputLimit };
+  const changed = result.applied.some(({ path }) => pathParts(path)[0] === 'max_output_tokens');
+  const effectiveLimit = changed ? result.body.max_output_tokens : outputLimit;
+  if (virtualLimit || changed) delete result.body.max_output_tokens;
+  return { ...result, outputLimit: effectiveLimit };
 }

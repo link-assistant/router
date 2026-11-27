@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { configPointer, mergeConfigPatch } from '../src/runtime-config.mjs';
-import { applyPayloadRules } from '../src/runtime-payload.mjs';
+import { applyCodexSubscriptionPayloadRules, applyPayloadRules } from '../src/runtime-payload.mjs';
 
 test('RFC 7396 replaces arrays, merges objects and deletes null-valued fields', { timeout: 1000 }, () => {
   assert.deepEqual(
@@ -51,6 +51,25 @@ test('matched rules fail closed on incompatible sampling, protected fields and s
   assert.throws(() => applyPayloadRules(rules({ temperature: 0.1 }), { top_p: 0.8 }, context), /incompatible sampling/u);
   assert.throws(() => applyPayloadRules(rules({ 'metadata.nested': 1 }), { metadata: 'text' }, context), /scalar/u);
   assert.throws(() => applyPayloadRules(rules({ model: 'another' }), {}, context), /protected field/u);
+  assert.throws(() => applyPayloadRules(rules({ max_tokens: 0 }), {}, context), /positive integer/u);
+});
+
+test('a Codex subscription output cap is auditable and stays off the wire', { timeout: 1000 }, () => {
+  const models = [{ name: 'gpt-*', protocol: 'codex', token: 'resume-app' }];
+  const body = { model: 'gpt-test', input: 'hello' };
+  const context = { model: body.model, protocol: 'codex', tokenLabel: 'resume-app' };
+  const rules = { override: [{ models, params: { temperature: 0.1, max_output_tokens: 64 } }] };
+  const outcome = applyCodexSubscriptionPayloadRules(rules, body, context, 128);
+  assert.deepEqual(outcome.body, { ...body, temperature: 0.1 });
+  assert.equal(outcome.outputLimit, 64);
+  assert.equal(outcome.applied.find(({ path }) => path === 'max_output_tokens').value, 64);
+  const defaults = { default: [{ models, params: { max_output_tokens: 32 } }] };
+  assert.equal(applyCodexSubscriptionPayloadRules(defaults, body, context, 128).outputLimit, 128);
+  assert.equal(applyCodexSubscriptionPayloadRules(defaults, body, context).outputLimit, 32);
+  const removed = applyCodexSubscriptionPayloadRules({ filter: [{ models, params: ['/max_output_tokens'] }] }, body, context, 128);
+  assert.deepEqual(removed.body, body);
+  assert.equal(removed.outputLimit, undefined);
+  assert.deepEqual(applyCodexSubscriptionPayloadRules(rules, body, { ...context, tokenLabel: 'another-app' }, 128), { body, outputLimit: 128, applied: [] });
 });
 
 test('a final filter can clear a continuation without permitting a different response ID', { timeout: 1000 }, () => {
