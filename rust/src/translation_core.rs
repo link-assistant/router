@@ -51,7 +51,7 @@ pub use crate::__router_translation_core_json as json;
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __router_translation_core_vec {
-    ($($arguments:tt)*) => { ::std::vec!($($arguments)*) };
+    ($($arguments:tt)*) => { ::std::vec![$($arguments)*] };
 }
 
 /// Construct a vector through Rust; translation checks the bounded comma-list subset.

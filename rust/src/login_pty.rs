@@ -163,8 +163,7 @@ impl PtySession {
         let bytes = self
             .output
             .lock()
-            .map(|guard| guard.bytes.clone())
-            .unwrap_or_default();
+            .map_or_default(|guard| guard.bytes.clone());
         strip_ansi(&String::from_utf8_lossy(&bytes))
     }
 
@@ -211,8 +210,7 @@ impl PtySession {
     pub fn screen(&self) -> String {
         self.output
             .lock()
-            .map(|output| output.screen.screen().contents())
-            .unwrap_or_default()
+            .map_or_default(|output| output.screen.screen().contents())
     }
 
     /// Wait for a settled visible screen, without matching obsolete repaint history.

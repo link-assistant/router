@@ -91,7 +91,7 @@ fn provider_contracts_track_supported_official_clients() {
         refresh_config(SubscriptionProvider::Gemini).client_id,
         GEMINI_CLIENT_ID
     );
-    assert!(!GEMINI_CLIENT_SECRET.is_empty());
+    assert_ne!(GEMINI_CLIENT_SECRET, "");
     assert_eq!(
         refresh_config(SubscriptionProvider::Qwen).style,
         BodyStyle::Form

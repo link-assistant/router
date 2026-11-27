@@ -617,10 +617,11 @@ async fn expired_credential_stays_routable_without_an_upstream_rejection() {
 
     // An observed upstream 401/403 is the evidence that does drop it.
     cache.record_credential_rejected(SubscriptionProvider::Gemini);
-    assert!(
+    assert_eq!(
         healthy_providers(&reqwest::Client::new(), &readers, &cache, 2000)
             .await
-            .is_empty()
+            .len(),
+        0,
     );
 }
 
@@ -639,10 +640,11 @@ async fn rejected_credential_is_unhealthy_even_without_an_expiry_timestamp() {
     let cache = crate::refresh::TokenCache::new();
     cache.record_credential_rejected(SubscriptionProvider::Codex);
 
-    assert!(
+    assert_eq!(
         healthy_providers(&reqwest::Client::new(), &readers, &cache, 2000)
             .await
-            .is_empty()
+            .len(),
+        0,
     );
 }
 

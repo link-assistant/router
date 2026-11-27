@@ -50,7 +50,7 @@ fn missing_model_authority_fails_closed() {
         .unwrap_err();
     assert_eq!(denied.code, "model_policy_unavailable");
     assert_eq!(denied.requested_model, "provider/model-a");
-    assert!(denied.allowed_models.is_empty());
+    assert_eq!(denied.allowed_models.len(), 0);
 }
 
 #[test]

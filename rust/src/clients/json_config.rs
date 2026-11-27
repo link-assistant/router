@@ -34,8 +34,7 @@ impl ClientManager {
             .as_ref()
             .and_then(|marker| marker.get("managed_model_ids"))
             .and_then(Value::as_array)
-            .map(|ids| ids.iter().filter_map(Value::as_str).collect::<Vec<_>>())
-            .unwrap_or_default();
+            .map_or_default(|ids| ids.iter().filter_map(Value::as_str).collect::<Vec<_>>());
         let root = document
             .as_object_mut()
             .expect("parse_json_object always returns an object");

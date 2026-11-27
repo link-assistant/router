@@ -830,7 +830,7 @@ fn every_refresh_error_variant_renders_a_message() {
     .collect();
 
     for message in &rendered {
-        assert!(!message.is_empty());
+        assert_ne!(message, "");
         // None of these are terminal, so none may advise re-authentication.
         assert!(!message.contains("re-authenticate"), "{message}");
     }

@@ -36,7 +36,7 @@ fn serving(secret: SecretMatch, converged: bool, secret_unknown: bool) -> Plan {
 #[test]
 fn an_unsupplied_secret_leaves_a_serving_host_unknown_without_a_plan() {
     let plan = serving(SecretMatch::NotSupplied, false, true);
-    assert!(plan.steps(18_080).is_empty());
+    assert_eq!(plan.steps(18_080).len(), 0);
     let line = plan.convergence();
     assert!(line.starts_with("converged=unknown reason="), "{line}");
     assert!(line.contains("TOKEN_SECRET was not supplied"), "{line}");
@@ -45,7 +45,7 @@ fn an_unsupplied_secret_leaves_a_serving_host_unknown_without_a_plan() {
 #[test]
 fn a_known_state_keeps_its_boolean_and_plan() {
     let converged = serving(SecretMatch::Matches, true, false);
-    assert!(converged.steps(18_080).is_empty());
+    assert_eq!(converged.steps(18_080).len(), 0);
     assert_eq!(converged.convergence(), "converged=true");
     let mut stopped = serving(SecretMatch::NotSupplied, false, false);
     stopped.record_serving = false;

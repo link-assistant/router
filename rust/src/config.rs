@@ -472,12 +472,10 @@ impl Config {
                 .filter(|s| !s.is_empty()),
             models: crate::operation_context::var("OPENAI_COMPATIBLE_MODELS")
                 .ok()
-                .map(|raw| parse_csv(&raw))
-                .unwrap_or_default(),
+                .map_or_default(|raw| parse_csv(&raw)),
             supported_clients: crate::operation_context::var("OPENAI_COMPATIBLE_SUPPORTED_CLIENTS")
                 .ok()
-                .map(|raw| parse_csv(&raw))
-                .unwrap_or_default(),
+                .map_or_default(|raw| parse_csv(&raw)),
         };
         let activitypub_public_key_pem =
             crate::operation_context::var("ACTIVITYPUB_PUBLIC_KEY_PEM")
@@ -497,24 +495,22 @@ impl Config {
             .is_ok_and(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "on" | "ON"));
         let listeners = crate::operation_context::var("LISTENERS")
             .ok()
-            .map(|raw| {
+            .map_or_default(|raw| {
                 raw.split(';')
                     .map(str::trim)
                     .filter(|value| !value.is_empty())
                     .map(str::to_string)
                     .collect()
-            })
-            .unwrap_or_default();
+            });
         let additional_account_dirs = crate::operation_context::var("ADDITIONAL_ACCOUNT_DIRS")
             .ok()
-            .map(|raw| {
+            .map_or_default(|raw| {
                 raw.split(',')
                     .map(str::trim)
                     .filter(|s| !s.is_empty())
                     .map(PathBuf::from)
                     .collect()
-            })
-            .unwrap_or_default();
+            });
         let account_routing_strategy =
             match crate::operation_context::var("ACCOUNT_ROUTING_STRATEGY") {
                 Ok(value) => SelectionStrategy::from_str_opt(&value)
@@ -534,12 +530,10 @@ impl Config {
         let subscription_bridge_overrides =
             crate::operation_context::var("SUBSCRIPTION_BRIDGE_OVERRIDES")
                 .ok()
-                .map(|raw| parse_csv(&raw))
-                .unwrap_or_default();
+                .map_or_default(|raw| parse_csv(&raw));
         let proxied_client_overrides = crate::operation_context::var("PROXIED_CLIENT_OVERRIDES")
             .ok()
-            .map(|raw| parse_csv(&raw))
-            .unwrap_or_default();
+            .map_or_default(|raw| parse_csv(&raw));
         let admin_key = crate::operation_context::var("TOKEN_ADMIN_KEY")
             .ok()
             .filter(|s| !s.is_empty());

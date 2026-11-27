@@ -137,13 +137,11 @@ impl AuthDiagnostics {
             failures_by_reason: self
                 .counts
                 .lock()
-                .map(|counts| counts.clone())
-                .unwrap_or_default(),
+                .map_or_default(|counts| counts.clone()),
             recent_failures: self
                 .recent
                 .lock()
-                .map(|recent| recent.iter().rev().cloned().collect())
-                .unwrap_or_default(),
+                .map_or_default(|recent| recent.iter().rev().cloned().collect()),
         }
     }
 

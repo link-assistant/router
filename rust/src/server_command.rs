@@ -11,7 +11,6 @@ use crate::managed_server::{
 
 type AnyError = Box<dyn std::error::Error + Send + Sync>;
 
-#[must_use]
 pub async fn run(op: &ServerOp) -> ExitCode {
     let result = match op {
         ServerOp::Use {

@@ -106,7 +106,7 @@ fn recovery_reports_that_the_lost_administrator_is_still_live() {
     // Recovery alone *adds* an administrator. Whoever holds the lost token
     // still has access, and an operator who is not told that will not act on it.
     assert_eq!(recovery.retained_admins, 1);
-    assert!(recovery.revoked.is_empty());
+    assert_eq!(recovery.revoked.len(), 0);
 }
 
 #[test]

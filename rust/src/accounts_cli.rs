@@ -16,7 +16,6 @@ use crate::cli::AccountOp;
 /// account is unhealthy without running `doctor`, which was the contradiction
 /// issue #242 reported: `accounts list` said `healthy true` while `doctor`
 /// said EXPIRED and every request returned 401.
-#[must_use]
 pub fn run(
     router: &AccountRouter,
     refreshes: crate::translation_core::Maybe<&crate::refresh::TokenCache>,

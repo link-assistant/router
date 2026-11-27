@@ -20,7 +20,6 @@ const STACK_BYTES: usize = 16 * 1024 * 1024;
 ///
 /// Propagates a panic from the entry point, so a failure surfaces exactly as
 /// it would have on the main thread.
-#[must_use]
 pub fn run_on_a_deep_stack<F, Fut>(entry: F) -> ExitCode
 where
     F: FnOnce() -> Fut + Send + 'static,

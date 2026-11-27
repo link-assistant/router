@@ -810,13 +810,14 @@ fn creating_a_branch_needs_no_ancestry_check() {
     ]
     .concat();
 
-    assert!(
+    assert_eq!(
         updates_needing_ancestry(
             &parse_ref_updates(&body),
             &crate::github_proxy::GitHubPolicy::default(),
             "acme/demo",
         )
-        .is_empty()
+        .len(),
+        0,
     );
 }
 

@@ -657,7 +657,7 @@ fn every_error_renders_its_message() {
 
     for error in errors {
         let rendered = error.to_string();
-        assert!(!rendered.is_empty());
+        assert_ne!(rendered, "");
         assert!(
             !rendered.contains("SubscriptionError"),
             "the variant name leaked into the message: {rendered}"

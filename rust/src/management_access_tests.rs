@@ -180,10 +180,10 @@ fn diagnostic_snapshot_has_no_credentials_and_expires_with_injected_clock() {
         }
         // Loading claims to run doctor must not overwrite the serving snapshot.
         let _ = crate::admin::AdminClaim::load(None, dir.path(), Duration::from_secs(60));
-        assert!(!doctor_report(&[dir.path().to_path_buf()]).is_empty());
+        assert_ne!(doctor_report(&[dir.path().to_path_buf()]), "");
     });
     context.now = chrono::DateTime::from_timestamp(110, 0);
-    context.scope(|| assert!(doctor_report(&[dir.path().to_path_buf()]).is_empty()));
+    context.scope(|| assert_eq!(doctor_report(&[dir.path().to_path_buf()]), ""));
     let fresh = ManagementAccess::new(dir.path());
     fresh.configure(ManagementConfig::default());
     assert!(!dir.path().join(SNAPSHOT).exists());

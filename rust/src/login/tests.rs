@@ -2,7 +2,7 @@ use super::*;
 
 #[test]
 fn login_config_defaults_to_bare_tui() {
-    assert!(LoginConfig::default().args.is_empty());
+    assert_eq!(LoginConfig::default().args.len(), 0);
 }
 
 fn settled_session(id: &str, status: LoginStatus, age: chrono::Duration) -> Arc<Session> {

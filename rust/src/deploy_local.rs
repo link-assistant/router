@@ -429,21 +429,17 @@ impl Coordinator<'_> {
     }
 
     fn no_op(&self, active: &Active) -> Result<bool, String> {
-        if self.build.is_some()
-            || active.image_ref != self.image
-            || active.port != self.port
-            || self.claude_label(&active.backend) != self.claude.label()
-            || self.state.current()?.as_deref() != Some(&active.backend)
-            || !self.docker.owned(&active.backend, self.root, "backend")
-            || self.secret_match(&active.backend) != secret::SecretMatch::Matches
-            || !runtime_env::matches(
+        Ok(self.build.is_none()
+            && active.image_ref == self.image
+            && active.port == self.port
+            && self.claude_label(&active.backend) == self.claude.label()
+            && self.state.current()?.as_deref() == Some(&active.backend)
+            && self.docker.owned(&active.backend, self.root, "backend")
+            && self.secret_match(&active.backend) == secret::SecretMatch::Matches
+            && runtime_env::matches(
                 self.runtime_env_label(&active.backend).as_deref(),
                 self.token_secret,
-            )
-        {
-            return Ok(false);
-        }
-        Ok(true)
+            ))
     }
 
     fn restore_topology(&self, active: &Active) -> Result<bool, String> {
@@ -633,7 +629,6 @@ impl Coordinator<'_> {
     }
 }
 
-#[must_use]
 pub fn run(
     args: &DeployArgs,
     root: &Path,

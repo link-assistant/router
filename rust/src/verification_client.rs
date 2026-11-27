@@ -209,12 +209,12 @@ mod tests {
             |_| Ok(output("0.158.0", 0)),
         );
         assert_eq!(report[0]["status"], "failed");
-        assert!(variables.is_empty());
+        assert_eq!(variables.len(), 0);
         for (version, status) in [("", 0), ("unknown", 0), ("0.158.0", 256)] {
             let (report, variables) =
                 prepare_using(&["claude"], |_| None, |_| Ok(output(version, status)));
             assert_eq!(report[0]["status"], "failed");
-            assert!(variables.is_empty());
+            assert_eq!(variables.len(), 0);
         }
         for (kind, status) in [
             (std::io::ErrorKind::NotFound, "not-proven"),
@@ -225,7 +225,7 @@ mod tests {
                 prepare_using(&[], |_| None, |_| Err(std::io::Error::from(kind)));
             assert_eq!(report.len(), 3);
             assert!(report.iter().all(|row| row["status"] == status));
-            assert!(variables.is_empty());
+            assert_eq!(variables.len(), 0);
         }
     }
 

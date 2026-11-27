@@ -176,14 +176,12 @@ pub fn usage_snapshot(m: &Metrics) -> UsageSnapshot {
         status_counts: m
             .status_counts
             .lock()
-            .map(|g| g.clone())
-            .unwrap_or_default(),
+            .map_or_default(|g| g.clone()),
         account_calls: m
             .account_calls
             .lock()
-            .map(|g| g.clone())
-            .unwrap_or_default(),
-        token_calls: m.token_calls.lock().map(|g| g.clone()).unwrap_or_default(),
+            .map_or_default(|g| g.clone()),
+        token_calls: m.token_calls.lock().map_or_default(|g| g.clone()),
     }
 }
 
@@ -363,7 +361,7 @@ mod tests {
     /// rather than an empty `# TYPE` header a scraper has to skip.
     #[test]
     fn no_configured_subscription_renders_nothing() {
-        assert!(render_subscription_health(&[]).is_empty());
+        assert_eq!(render_subscription_health(&[]), "");
     }
 
     /// One gauge per subscription, in a stable order, carrying the vendor name

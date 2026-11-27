@@ -204,8 +204,7 @@ pub fn anthropic_text_and_annotations(
     let mut annotations = Vec::new();
     for block in content
         .and_then(Value::as_array)
-        .map(Vec::as_slice)
-        .unwrap_or_default()
+        .map_or_default(Vec::as_slice)
     {
         if block.get("type").and_then(Value::as_str) != Some("text") {
             continue;
@@ -219,8 +218,7 @@ pub fn anthropic_text_and_annotations(
         for citation in block
             .get("citations")
             .and_then(Value::as_array)
-            .map(Vec::as_slice)
-            .unwrap_or_default()
+            .map_or_default(Vec::as_slice)
         {
             let Some(url) = citation_url(citation) else {
                 continue;

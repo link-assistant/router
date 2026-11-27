@@ -160,7 +160,7 @@ fn a_foreign_owner_is_not_substituted() {
     ];
     assert_eq!(select_model(ClientKind::ClaudeCode, &catalog), None);
     // Nothing is written into a client config either, so the two agree.
-    assert!(usable_models(ClientKind::ClaudeCode, &catalog).is_empty());
+    assert_eq!(usable_models(ClientKind::ClaudeCode, &catalog).len(), 0);
 }
 
 /// The case the original fallback defends: with no owner declared, the router
@@ -243,7 +243,7 @@ fn credential_probe_server(
             let mut bytes = [0_u8; 4096];
             let count = stream.read(&mut bytes).expect("read probe");
             let request = String::from_utf8_lossy(&bytes[..count]).into_owned();
-            seen.push(request.clone());
+            seen.push(request);
             let (status, body) = if index == 0 {
                 (management_status, r#"{"error":"not exposed"}"#)
             } else {

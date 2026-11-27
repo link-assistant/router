@@ -125,7 +125,7 @@ pub async fn account_pause_endpoint(
     let Some(router) = state.account_router.as_ref() else {
         return no_pool();
     };
-    let body = body.map(|axum::Json(body)| body).unwrap_or_default();
+    let body = body.map_or_default(|axum::Json(body)| body);
     let until_unix = body.get("until_unix").and_then(serde_json::Value::as_u64);
     let reason = body
         .get("reason")

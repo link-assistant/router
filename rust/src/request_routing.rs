@@ -3,7 +3,7 @@
 use std::time::Duration;
 
 /// Maximum operational cooldown accepted from an untrusted upstream hint.
-pub const MAX_RETRY_AFTER: Duration = Duration::from_secs(24 * 60 * 60);
+pub const MAX_RETRY_AFTER: Duration = Duration::from_hours(24);
 
 #[must_use]
 pub fn bounded_retry_after(duration: Duration) -> Duration {

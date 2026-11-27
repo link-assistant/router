@@ -138,8 +138,7 @@ impl OpenAiStreamTranslator {
         let candidates = response
             .get("candidates")
             .and_then(Value::as_array)
-            .map(Vec::as_slice)
-            .unwrap_or_default();
+            .map_or_default(Vec::as_slice);
         if !candidates.is_empty() && !self.role_emitted {
             self.push_chunk(output, 0, &json!({"role": "assistant"}), &Value::Null, None);
             self.role_emitted = true;

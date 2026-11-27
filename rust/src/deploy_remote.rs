@@ -428,8 +428,7 @@ fn run_with_ssh(
     }
     let collected = collected
         .lock()
-        .map(|mut collected| std::mem::take(&mut *collected))
-        .unwrap_or_default();
+        .map_or_default(|mut collected| std::mem::take(&mut *collected));
     let seeded = seeding::settle(&prepared.seeds, target, &collected.events);
     if args.json {
         let exit_code = exit_number(code);
@@ -465,7 +464,6 @@ fn exit_number(code: ExitCode) -> u8 {
 }
 
 /// Run the target-side deployment agent and preserve transport/lease identity.
-#[must_use]
 pub fn run(
     args: &DeployArgs,
     token_secret: &crate::translation_core::Str,

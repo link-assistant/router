@@ -382,8 +382,7 @@ fn critical_conflicts(
         .flatten()
         .as_deref()
         .and_then(|path| super::claude_marker(path).ok().flatten())
-        .map(|(_, _, entries)| entries)
-        .unwrap_or_default();
+        .map_or_default(|(_, _, entries)| entries);
     let claude_user_keys = manager
         .ownership_marker_path(client)
         .filter(|_| client == ClientKind::ClaudeCode)
@@ -391,15 +390,14 @@ fn critical_conflicts(
         .unwrap_or_default();
     if client == ClientKind::ClaudeCode {
         let environment = manager.environment_path(client);
-        for (key, expected) in [("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1")] {
-            if read_environment_value(&environment, key)
-                .ok()
-                .flatten()
-                .as_deref()
-                != Some(expected)
-            {
-                conflicts.push(format!("managed-environment:{key}"));
-            }
+        let (key, expected) = ("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1");
+        if read_environment_value(&environment, key)
+            .ok()
+            .flatten()
+            .as_deref()
+            != Some(expected)
+        {
+            conflicts.push(format!("managed-environment:{key}"));
         }
         if read_environment_value(&environment, "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
             .ok()
@@ -436,13 +434,12 @@ fn critical_conflicts(
                 conflicts.push(format!("ambient:{key}"));
             }
         }
-        for (key, wanted) in [("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1")] {
-            if manager
-                .environment_var(key)
-                .is_some_and(|value| !value.is_empty() && value != wanted)
-            {
-                conflicts.push(format!("ambient:{key}"));
-            }
+        let (key, wanted) = ("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1");
+        if manager
+            .environment_var(key)
+            .is_some_and(|value| !value.is_empty() && value != wanted)
+        {
+            conflicts.push(format!("ambient:{key}"));
         }
         if manager
             .environment_var("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
@@ -530,10 +527,9 @@ fn claude_conflicts(
             conflicts.push(format!("public-config:{key}"));
         }
     }
-    for (key, wanted) in [("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1")] {
-        if env.get(key).and_then(Value::as_str) != Some(wanted) {
-            conflicts.push(format!("public-config:{key}"));
-        }
+    let (key, wanted) = ("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1");
+    if env.get(key).and_then(Value::as_str) != Some(wanted) {
+        conflicts.push(format!("public-config:{key}"));
     }
     if marker_entries.is_empty() && env.contains_key("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC") {
         conflicts.push("public-config:CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC".to_string());

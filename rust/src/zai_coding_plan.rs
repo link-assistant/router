@@ -24,7 +24,7 @@ pub const HEALTH_PATH: &crate::translation_core::Str = "/api/monitor/usage/quota
 /// Authenticated non-inference catalog used as the model source of truth.
 pub const CATALOG_PATH: &crate::translation_core::Str = "/api/anthropic/v1/models";
 
-const CATALOG_TTL: Duration = Duration::from_secs(5 * 60);
+const CATALOG_TTL: Duration = Duration::from_mins(5);
 const FAILED_REFRESH_RETRY: Duration = Duration::from_secs(15);
 const MAX_CATALOG_BODY: usize = 1024 * 1024;
 
