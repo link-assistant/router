@@ -86,6 +86,20 @@ At `f1de77c3`, the x86_64 Linux format check reached completion and the package 
 
 The Docker runtime, fuzz, and real-client capture workflows passed on `d6cbd45f`. The Docker log records the cache-target regression at lines 408–426, the CLI smoke checks at lines 1873–1884, and HTTP 200 on both hostname and loopback for the two long-name cases at lines 2022–2023. [Docker runtime](https://github.com/link-assistant/router/actions/runs/46025676543/job/140599539562), [fuzz](https://github.com/link-assistant/router/actions/runs/46025676812), [real client capture](https://github.com/link-assistant/router/actions/runs/46025676624).
 
+### Verification at `f1093db4`
+
+The pull request merge candidate `edc83c01d5d3bee212c7f1607b41b2200155af24` has the same tree as `f1093db4dc831aa745ee86f50e537ceb60a6f298`. All four JavaScript stages passed on the candidate before the hosted Rust jobs started. [Gate result](https://github.com/link-assistant/router/actions/runs/46033084675/job/140637145938).
+
+| Check | Result |
+| --- | --- |
+| Downstream operations and contracts | Six binding jobs, generated Go, Java and PHP clients, and 200 applicable Rust API compatibility checks passed. [Run](https://github.com/link-assistant/router/actions/runs/46033084509) |
+| Mutation and fuzz | All eight mutation shards and both fuzz targets passed. [Mutation](https://github.com/link-assistant/router/actions/runs/46033084458), [fuzz](https://github.com/link-assistant/router/actions/runs/46033084505) |
+| Docker and upgrade matrix | Complete AMD64 runtime, shipped commands, DNS and relay probes and the upgrade matrix passed. [Docker](https://github.com/link-assistant/router/actions/runs/46033084514), [upgrades](https://github.com/link-assistant/router/actions/runs/46033084689) |
+| Keychain and real clients | macOS Keychain and all capture jobs passed. The job with all five current vendor pins recorded 15 passing cases. One live credentialed lifecycle case requires opt-in. [Keychain](https://github.com/link-assistant/router/actions/runs/46033084585), [capture evidence](https://github.com/link-assistant/router/actions/runs/46033084759/artifacts/15219110542) |
+| Dependency audit | The root, fuzz and test-sharder Cargo scans passed, the pinned CycloneDX tool installed, and all four npm scans reported zero vulnerabilities. The archived log records the Cargo scans at lines 1214–1225, tool version at line 1403, and the four npm results at lines 1482–1484 and 1516. [Audit job](https://github.com/link-assistant/router/actions/runs/46033084675/job/140638254392) |
+| Pull request benchmark | The immutable base failed with the same JWT and terminal type errors at lines 1888–2059. The workflow identified the broken base SHA at line 2060 and uploaded the completed head benchmark. [Comparison job](https://github.com/link-assistant/router/actions/runs/46033084577/job/140634166120), [head results](https://github.com/link-assistant/router/actions/runs/46033084577/artifacts/15218027851) |
+| Supplemental benchmark | The explicit base `9446a388d17e3d30774b578c50ea572aa98505de` is the parent of the dependency merge. Both JavaScript gates passed. The 12-case comparison stayed within the unchanged 25% threshold, with a maximum median slowdown of 5.2%. The archived report is at lines 2564–2583. [Comparison job](https://github.com/link-assistant/router/actions/runs/46034296509/job/140633677917) |
+
 ## Cargo tool advisories
 
 The published archives for seven Cargo tools were downloaded from crates.io and matched to the registry SHA-256. OSV scanned the bundled locks before any changes. Each original installed version, latest registry version, upstream dependency constraint and advisory identifier is in the inventory. Advisory counts can include aliases and optional or development dependencies. [Published inventory A](cargo-tools-published-a.tsv), [published inventory B](cargo-tools-published-b.tsv).
