@@ -450,21 +450,7 @@ jobs:
       - name: Audit admin console dependencies
         if: ${{ !cancelled() }}
         working-directory: ui
-        env:
-          # The unpatched advisory affects a build-only matcher of repository
-          # globs. Keep the default-branch audit red with remediation details.
-          ROUTER_ALLOW_REVIEWED_UI_AUDIT: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 794 }}
-        run: |
-          if npm audit --audit-level=low; then
-            exit 0
-          fi
-          report="$(mktemp)"
-          trap 'rm -f -- "$report"' EXIT
-          if npm audit --audit-level=low --json > "$report"; then
-            exit 0
-          fi
-          node --test ../experiments/issue-781/admin-ui-audit.test.mjs
-          node ../scripts/check-admin-ui-audit.mjs "$report" package-lock.json
+        run: npm audit --audit-level=low
 
   # === TEST ===
   # Test runs independently of changelog check
