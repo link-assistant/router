@@ -63,6 +63,9 @@ test('a Codex subscription output cap is auditable and stays off the wire', { ti
   assert.deepEqual(outcome.body, { ...body, temperature: 0.1 });
   assert.equal(outcome.outputLimit, 64);
   assert.equal(outcome.applied.find(({ path }) => path === 'max_output_tokens').value, 64);
+  assert.throws(() => applyCodexSubscriptionPayloadRules(rules, body, context, 128, false), /does not support configured sampling/u);
+  const omitSampling = { ...rules, filter: [{ models, params: ['temperature'] }] };
+  assert.equal(applyCodexSubscriptionPayloadRules(omitSampling, body, context, 128, false).outputLimit, 64);
   const defaults = { default: [{ models, params: { max_output_tokens: 32 } }] };
   assert.equal(applyCodexSubscriptionPayloadRules(defaults, body, context, 128).outputLimit, 128);
   assert.equal(applyCodexSubscriptionPayloadRules(defaults, body, context).outputLimit, 32);

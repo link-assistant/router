@@ -174,12 +174,16 @@ export function applyPayloadRules(rules, body, context) {
   return { body: result, applied };
 }
 
-export function applyCodexSubscriptionPayloadRules(rules, body, context, outputLimit) {
+export function applyCodexSubscriptionPayloadRules(rules, body, context, outputLimit, supportsSampling = true) {
   const virtualLimit = outputLimit !== undefined && isObject(body) && !Object.hasOwn(body, 'max_output_tokens');
   const candidate = virtualLimit ? { ...body, max_output_tokens: outputLimit } : body;
   const result = applyPayloadRules(rules, candidate, context);
   if (!result.applied.length) return { ...result, body, outputLimit };
-  const changed = result.applied.some(({ path }) => pathParts(path)[0] === 'max_output_tokens');
+  const affected = (field) => result.applied.some(({ path }) => pathParts(path)[0] === field);
+  if (!supportsSampling && ['temperature', 'top_p'].some((field) => affected(field) && Object.hasOwn(result.body, field))) {
+    throw new Error('the Codex subscription backend does not support configured sampling parameters');
+  }
+  const changed = affected('max_output_tokens');
   const effectiveLimit = changed ? result.body.max_output_tokens : outputLimit;
   if (virtualLimit || changed) delete result.body.max_output_tokens;
   return { ...result, outputLimit: effectiveLimit };
