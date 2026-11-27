@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=77"]
+requires = ["setuptools>=84.2.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,12 +7,15 @@ name = "link-assistant-router"
 version = "1.25.6"
 description = "Official typed Router operations and testing helpers"
 requires-python = ">=3.10"
-dependencies = ["jsonschema>=4.23,<5"]
+dependencies = ["jsonschema>=4.26.0,<5"]
 license = "Unlicense"
 
 [project.urls]
 Repository = "https://github.com/link-assistant/router"
 Documentation = "https://github.com/link-assistant/router/blob/main/docs/integration/downstream.md"
+
+[dependency-groups]
+dev = ["build==1.6.1", "pip-audit==2.10.1"]
 
 [tool.setuptools.package-data]
 link_assistant_router = ["catalog.json", "schemas/*.json", "py.typed", "*.pyi"]

@@ -116,7 +116,7 @@ impl HostRuntime for FakeHost {
             .is_some_and(|jwt| {
                 jsonwebtoken::decode::<link_assistant_router::token::TokenClaims>(
                     jwt,
-                    &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()),
+                    &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()).unwrap(),
                     &jsonwebtoken::Validation::default(),
                 )
                 .is_ok()

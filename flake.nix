@@ -31,8 +31,7 @@
           ./Cargo.lock
           ./rust
           ./README.md
-          # RustEmbed compiles the committed admin UI bundle into the binary,
-          # so the build fails without it (see rust/src/admin_ui.rs).
+          # View the crate's copy of the shared assets under ./rust.
         ];
       };
 
@@ -67,7 +66,8 @@
           doCheck = false;
 
           meta = with pkgs.lib; {
-            inherit (cargoToml.package) description homepage;
+            inherit (cargoToml.package) description;
+            homepage = cargoToml.package.repository;
             license = licenses.unlicense;
             mainProgram = "router";
             platforms = systems;

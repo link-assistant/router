@@ -249,7 +249,7 @@ jobs:
 
     #[test]
     fn a_use_before_the_install_is_reported() {
-        let workflow = "jobs:\n  late:\n    steps:\n      - run: cargo cyclonedx --format json\n      - run: cargo install cargo-cyclonedx --version 0.5.9 --locked\n";
+        let workflow = "jobs:\n  late:\n    steps:\n      - run: cargo cyclonedx --format json\n      - run: cargo install cargo-cyclonedx --version 0.5.10 --locked\n";
         let problems = missing_installs(&jobs(workflow)[0]);
         assert_eq!(problems.len(), 1, "{problems:?}");
         assert!(problems[0].contains("before installing it on line 5"));
@@ -263,7 +263,7 @@ jobs:
 
     #[test]
     fn a_version_probe_before_the_install_is_not_a_use() {
-        let workflow = "jobs:\n  coverage:\n    steps:\n      - run: |\n          if ! cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.9.1'; then\n            cargo install cargo-llvm-cov --version 0.9.1 --locked --force\n          fi\n          cargo llvm-cov --workspace\n";
+        let workflow = "jobs:\n  coverage:\n    steps:\n      - run: |\n          if ! cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.9.1'; then\n            cargo install cargo-llvm-cov --version 0.9.2 --locked --force\n          fi\n          cargo llvm-cov --workspace\n";
         assert!(missing_installs(&jobs(workflow)[0]).is_empty());
     }
 

@@ -2,7 +2,7 @@
 # Pin and verify the generator; generate full HTTP clients without hand lists.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
-version=7.25.0
+version=7.28.0
 artifact="openapi-generator-cli-$version.jar"
 artifact_path="org/openapitools/openapi-generator-cli/$version/$artifact"
 tool="$root/target/http-clients/openapi-generator-$version.jar"
@@ -25,7 +25,7 @@ with open(sys.argv[1], 'rb') as jar:
     digest = hashlib.sha256()
     for chunk in iter(lambda: jar.read(1024 * 1024), b''):
         digest.update(chunk)
-if digest.hexdigest() != '41ce4f6b07f196676439d710759fa1ced7a08066d06ff1bf314681470289efae':
+if digest.hexdigest() != '5790e99b92fb0d3c423aebe524222fbb7b835e7088bafcc4f241f93f73845b00':
     sys.exit('Generator checksum mismatch')
 PY
 if [[ "$candidate" != "$tool" ]]; then

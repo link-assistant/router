@@ -8,4 +8,4 @@ publish = false
 
 [dependencies]
 proc-macro2 = { version = "=1.0.107", features = ["span-locations"] }
-syn = { version = "=2.0.119", features = ["full", "visit"] }
+syn = { version = "=3.0.10", features = ["full", "visit"] }

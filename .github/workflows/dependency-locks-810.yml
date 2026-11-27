@@ -1,0 +1,47 @@
+name: Resolve dependency locks for issue 810
+
+on:
+  push:
+    branches: [issue-810-987988cb60a3]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-locks-810-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  javascript:
+    name: JavaScript first (same commit)
+    uses: ./.github/workflows/javascript-manual-development.yml
+    with:
+      sha: ${{ github.sha }}
+    permissions:
+      contents: read
+
+  cargo-locks:
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
+    needs: [javascript]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+        with:
+          toolchain: 1.100.0
+      - run: |
+          cargo update --manifest-path Cargo.toml
+          cargo update --manifest-path rust/fuzz/Cargo.toml
+          cargo update --manifest-path experiments/issue-725/test-sharder/Cargo.toml
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cargo-lockfiles-${{ github.sha }}
+          path: |
+            Cargo.lock
+            rust/fuzz/Cargo.lock
+            experiments/issue-725/test-sharder/Cargo.lock
+          if-no-files-found: error
+          retention-days: 7

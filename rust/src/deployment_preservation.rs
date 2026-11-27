@@ -64,13 +64,10 @@ pub fn probe_token(
         client_kind: record.client_kind.clone(),
         principal_id: record.principal_id.clone(),
     };
-    jsonwebtoken::encode(
-        &Header::default(),
-        &claims,
-        &EncodingKey::from_secret(secret.as_bytes()),
-    )
-    .map(|jwt| crate::translation_core::format!("{TOKEN_PREFIX}{jwt}"))
-    .map_err(|_| "could not sign issued-token continuity probe".into())
+    EncodingKey::from_secret(secret.as_bytes())
+        .and_then(|key| jsonwebtoken::encode(&Header::default(), &claims, &key))
+        .map(|jwt| crate::translation_core::format!("{TOKEN_PREFIX}{jwt}"))
+        .map_err(|_| "could not sign issued-token continuity probe".into())
 }
 
 /// Expired/revoked and unbound legacy tokens make no usable catalog claim.

@@ -88,6 +88,22 @@ export const MATRIX_DRAFT_REPOSITORY_RULES=Object.freeze([
  {id:'reverse-files:independent-node-process-trees',before:'  reverse-translation:\n    runs-on: ubuntu-24.04\n'+shardStrategy,after:'  reverse-translation:\n    runs-on: ubuntu-24.04\n'+isolatedNodeStrategy},
  {id:'reverse-files:one-worker-per-complete-shard',before:reverseNode.replace('scripts/run-node-tests.mjs','scripts/run-node-test-shard.mjs').replace('--test-concurrency=2','--whole-file-shard=${{ matrix.shard }}/8 --test-concurrency=2'),after:reverseNode.replace('scripts/run-node-tests.mjs','scripts/run-node-test-shard.mjs').replace('--test-concurrency=2','--whole-file-shard=${{ matrix.shard }}/16 --test-concurrency=1')},
 ]);
+// Apply current dependency pins after the rules that match archived source.
+const workflowPins = [
+  ['actions/setup-node@820762786026740c76f36085b0efc47a31fe5020', 'actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1', 12],
+  ['actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a', 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9', 7],
+  ["bun-version: '1.4.3'", "bun-version: '1.4.5'", 8],
+];
+function replaceWorkflowPins(source, inverse = false) {
+  for (const [oldPin, newPin, count] of workflowPins) {
+    const [before, after] = inverse ? [newPin, oldPin] : [oldPin, newPin];
+    if (source.split(before).length !== count + 1 || source.includes(after)) {
+      throw TypeError(`Complete matrix workflow pin count differs: ${before}`);
+    }
+    source = source.replaceAll(before, after);
+  }
+  return source;
+}
 function concrete(source){
  const document=parseDocument(source,{version:'1.2',uniqueKeys:true});if(document.errors.length)throw TypeError('Complete matrix workflow grammar differs');
  const meta=JSON.stringify({source,tokens:[...new Parser().parse(source)]}),parsed=JSON.parse(meta);
@@ -99,10 +115,14 @@ export function proposeMatrixDraftWorkflow(){
  let source=original;
  for(const [phase,rules]of [['language',MATRIX_DRAFT_LANGUAGE_RULES],['repository',MATRIX_DRAFT_REPOSITORY_RULES]]){
   const before=source,beforeMeta=concrete(before);
-  source=createRulePipeline([{phase:'language',rules:phase==='language'?rules.map(row=>exactLiteralSubstitutionRule(row.id,row.before,row.after,'Complete historical matrix workflow changed')):[]},{phase:'repository',rules:phase==='repository'?rules.map(row=>exactLiteralSubstitutionRule(row.id,row.before,row.after,'Complete historical matrix workflow changed')):[]}]).run(source).value;
+  const substitutions=rules.map(row=>exactLiteralSubstitutionRule(row.id,row.before,row.after,'Complete historical matrix workflow changed'));
+  source=createRulePipeline([
+   {phase:'language',rules:phase==='language'?substitutions:[]},
+   {phase:'repository',rules:phase==='repository'?[...substitutions,{id:'matrix-custody:refresh-reviewed-dependency-pins',apply:source=>replaceWorkflowPins(source)}]:[]},
+  ]).run(source).value;
   stages.push({phase,before,after:source,beforeMeta,afterMeta:concrete(source)});
  }
- let inverse=source;
+ let inverse=replaceWorkflowPins(source,true);
  for(const row of [...rows].reverse()){if(inverse.split(row.after).length!==2)throw TypeError('Complete matrix workflow inverse differs');inverse=inverse.replace(row.after,()=>row.before);}
  if(inverse!==original||concrete(inverse)!==concrete(original))throw TypeError('Complete matrix custody workflow inverse differs');
  return {schema:'matrix-draft-workflow-source-equations-v1',before:original,after:source,inverse,stages,semanticAuthority:false,gateSuccessObserved:false};
