@@ -90,6 +90,11 @@
           inherit (deps) nativeBuildInputs buildInputs;
           env = pkgs.lib.optionalAttrs (isIntelMac pkgs) {
             AWS_LC_SYS_CMAKE_BUILDER = "1";
+            # The four-core Intel runner reached the job deadline compiling
+            # Router with full LTO and one codegen unit. Thin LTO and parallel
+            # codegen keep the native package build within the same budget.
+            CARGO_PROFILE_RELEASE_LTO = "thin";
+            CARGO_PROFILE_RELEASE_CODEGEN_UNITS = "16";
           };
 
           # The test suite starts servers, binds ports and reaches out to real
