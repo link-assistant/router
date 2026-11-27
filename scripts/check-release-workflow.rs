@@ -9,6 +9,8 @@ fn main() {
         .expect("failed to read .github/workflows/release.yml");
     let reconciliation = fs::read_to_string(".github/workflows/verify-releases.yml")
         .expect("failed to read .github/workflows/verify-releases.yml");
+    let cargo_tool_installer = fs::read_to_string("scripts/install-ci-cargo-tool.sh")
+        .expect("failed to read scripts/install-ci-cargo-tool.sh");
 
     let required_snippets = [
         "auto-release:",
@@ -20,7 +22,8 @@ fn main() {
         "DOCKERHUB_IMAGE: konard/link-assistant-router",
         "rust-script scripts/wait-for-crate.rs",
         "bash scripts/install-ci-cargo-tool.sh rust-script",
-        "bash scripts/install-ci-cargo-tool.sh cargo-audit --force",
+        "bash scripts/install-ci-cargo-tool.sh cargo-audit",
+        "bash scripts/install-ci-cargo-tool.sh cargo-cyclonedx",
         "bash .router-ci-tools/scripts/install-ci-cargo-tool.sh cargo-cyclonedx",
         "cargo cyclonedx --format json --all-features --all --spec-version 1.5",
         "--manifest-path rust/Cargo.toml",
@@ -94,6 +97,9 @@ fn main() {
                 "missing required release workflow snippet: {snippet}"
             ));
         }
+    }
+    if !cargo_tool_installer.contains("--locked --force") {
+        failures.push("Cargo tools must replace cached binaries from the reviewed lock".to_string());
     }
 
     if count_occurrences(&workflow, "packages: write") < 2 {
