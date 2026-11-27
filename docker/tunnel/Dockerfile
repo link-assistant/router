@@ -1,6 +1,7 @@
 FROM alpine:3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
 
-RUN apk add --no-cache autossh openssh-client \
+RUN apk upgrade --no-cache \
+    && apk add --no-cache autossh openssh-client \
     && adduser -D -s /sbin/nologin tunnel \
     && install -d -m 0700 -o tunnel -g tunnel /home/tunnel/.ssh \
     && install -m 0600 -o tunnel -g tunnel /dev/null /home/tunnel/.ssh/known_hosts \

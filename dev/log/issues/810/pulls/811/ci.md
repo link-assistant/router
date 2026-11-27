@@ -30,6 +30,8 @@ The source changes cover blank and placeholder issuer secrets, a raw HMAC with a
 | Released-binary interoperability | Router v1.25.6 passed 11 JavaScript binding cases, 10 Python binding cases and the generated Go, Java and PHP round trips. The unchanged catalog generated all 368 operations in each language. |
 | Composer advisories | Zero from Packagist for the committed lock |
 | Generated Go and Java advisory scan | OSV found zero advisories across the probe modules, effective Java classpath and declared Java build plugins |
+| Generated Maven build | Maven 3.10.2 resolved the plugins and completed the test lifecycle against the generated artifact. The released-binary HTTP probe exercised its API calls separately. |
+| Container package and advisory checks | The tunnel image built and passed missing-configuration and argument smoke tests. The Debian runtime and Rust builder package layers built independently. See the distribution advisory results below. |
 | Rust lockfile advisory cross-check | OSV scanned all three regenerated Cargo locks. Its only result was the informational `chrono` maintenance advisory. Hosted `cargo audit` is pending. |
 | Pre-commit hooks | Ran the hook commands directly using pre-commit-hooks v6.0.0 because the pre-commit runner is absent. No Git hook bypass flags were used. |
 
@@ -39,4 +41,22 @@ Hosted run 46002025243 at `f1298e12efc10aca87a68d28ab83c4f906d0db63` passed lint
 
 At `14dbdea882511262c90889ef18e044332d6b9b8d`, all four hosted JavaScript stages passed and the same-commit gate authorized hosted Cargo. Cargo 1.100.0 resolved the root, fuzz and active sharder locks. The root and fuzz locks now both resolve rustls 0.23.46. The artifact's SHA-256 is `c911f8b7801778a69205edad294e513a88436e96a49af6d23ac7276b8b2db425`. [Hosted lock run](https://github.com/link-assistant/router/actions/runs/46007063014), [Cargo job](https://github.com/link-assistant/router/actions/runs/46007063014/job/140537373394).
 
+The release workflow at the same checkpoint reported one `cargo fmt` difference at line 725 of its lint log. The token validator now includes the exact formatting emitted by the runner. That checkpoint still carried the older fuzz lock and reported 14 advisories and 12 denied warnings at audit log lines 1124–1521. Every affected package is patched in the committed replacement lock, including `cookie`, `ctutils`, `rustix`, `rustls`, `rustls-webpki`, `tokio`, `url`, the two WebPKI root bundles and the three Zstandard crates. The updated locks need their own hosted audit. [Formatting job](https://github.com/link-assistant/router/actions/runs/46007074272/job/140541864640), [audit job](https://github.com/link-assistant/router/actions/runs/46007074272/job/140541864635).
+
 The current Chrono release is 0.4.45. The maintenance advisory assigns no CVSS score and lists no fixed release. Router exposes Chrono in its public operation context, while current Log Lazy depends on it and Schemars supplies the existing date-time schema. Fully removing it requires a public API migration and replacement of those dependency edges. [RustSec advisory](https://rustsec.org/advisories/RUSTSEC-2026-0543.html), [upstream maintenance discussion](https://github.com/chronotope/chrono/issues/1768).
+
+## Distribution advisories
+
+The Debian and Alpine build stages now apply the updates published by their pinned distribution releases before installing their stage-specific packages. The Alpine tunnel image upgraded OpenSSL and zlib, while the Debian stages upgraded libzstd1, login.defs and passwd. The [container package inventory](container-packages.tsv) records the versions in the pinned images and the built layers.
+
+| Image or stage | Distinct advisory IDs reported by OSV |
+| --- | --- |
+| Pinned Alpine 3.24 base | 6 |
+| Built tunnel image | 0 |
+| Pinned Debian 13 runtime base | 94 |
+| Runtime layer with the distribution upgrades and CA certificates | 90 |
+| Pinned Rust builder base | 163 |
+| Builder layer with the distribution upgrades and build packages | 193 |
+| Pinned Bun donor image | 111 |
+
+The builder includes additional binutils, Expat and Python packages. Its OS packages stay in the builder. The Bun stage copies only the Bun executable into the Debian runtime. None of the [remaining Debian findings](container-advisories.tsv) lists a fixed release for the Debian 13 source package in the OSV feed. Debian marks each recorded range as unimportant or has yet to assign urgency. The distribution must publish a patched build to close those entries on the supported Debian release. The Docker workflow still needs to verify the complete runtime with the Rust binaries. [Debian Security Tracker](https://security-tracker.debian.org/tracker/), [Alpine security database](https://secdb.alpinelinux.org/).
