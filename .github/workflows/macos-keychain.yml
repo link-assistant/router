@@ -125,12 +125,13 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '26.13.1'
+      - run: npm install --global npm@12.2.3 --ignore-scripts
 
       # Smoke only: the pinned Claude Code installs and starts beside the
       # seeded keychain. It is never given the fake credential to use.
       - name: Claude Code smoke
         run: |
-          npm install --global @anthropic-ai/claude-code@2.1.332
+          npm install --global --allow-scripts=@anthropic-ai/claude-code @anthropic-ai/claude-code@2.1.332
           claude --version
 
       - name: Delete throwaway keychain

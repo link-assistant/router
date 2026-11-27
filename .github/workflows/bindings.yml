@@ -27,7 +27,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, macos-15]
-        node: ['20', '24', '26.13.1']
+        node: ['20.20.2', '24.22.3', '26.13.1']
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     steps:
@@ -42,6 +42,9 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: npm
           cache-dependency-path: js/package-lock.json
+      - run: npm install --global "npm@$NPM_VERSION" --ignore-scripts
+        env:
+          NPM_VERSION: ${{ matrix.node == '20.20.2' && '11.21.3' || '12.2.3' }}
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
         with:
           python-version: ${{ matrix.node == '26.13.1' && '3.15.2' || '3.10' }}
@@ -133,7 +136,10 @@ jobs:
           version=3.10.2
           artifact="apache-maven-$version-bin.tar.gz"
           cd "$RUNNER_TEMP"
-          curl -fsSLO --proto '=https' "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/$version/$artifact"
+          artifact_path="org/apache/maven/apache-maven/$version/$artifact"
+          if ! curl -fsSL --proto '=https' "https://maven-central.storage-download.googleapis.com/maven2/$artifact_path" -o "$artifact"; then
+            curl -fsSL --proto '=https' "https://repo.maven.apache.org/maven2/$artifact_path" -o "$artifact"
+          fi
           printf '%s  %s\n' 57d2db6b37e7582119137ade544557bba741b29e62109ef81539a2bdfd6d0e641fdd5d8edb014af1816d0510deac6fac8f347433b3a1aa36316ba85aa77b8119 "$artifact" | sha512sum --check --strict
           tar -xzf "$artifact"
           printf '%s/apache-maven-%s/bin\n' "$RUNNER_TEMP" "$version" >> "$GITHUB_PATH"

@@ -44,6 +44,8 @@ jobs:
     env:
       ROUTER_REAL_CLIENT_CLAUDE_VERSION: '2.1.332'
       ROUTER_REAL_CLIENT_CODEX_VERSION: '0.172.0'
+      ROUTER_REAL_CLIENT_GEMINI_VERSION: '0.71.1'
+      ROUTER_REAL_CLIENT_QWEN_VERSION: '0.28.7'
       ROUTER_REAL_CLIENT_OPENCODE_VERSION: '1.19.6'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -62,14 +64,16 @@ jobs:
           node-version: '26.13.1'
           cache: npm
           cache-dependency-path: ui/package-lock.json
+      - run: npm install --global npm@12.2.3 --ignore-scripts
 
       - name: Install pinned real clients
         run: |
           npm install --global \
+            --allow-scripts=@anthropic-ai/claude-code,@github/keytar@7.10.6,node-pty@1.0.0,@qwen-code/audio-capture@0.28.7,opencode-ai \
             "@anthropic-ai/claude-code@$ROUTER_REAL_CLIENT_CLAUDE_VERSION" \
             "@openai/codex@$ROUTER_REAL_CLIENT_CODEX_VERSION" \
-            @google/gemini-cli@0.71.1 \
-            @qwen-code/qwen-code@0.23.1 \
+            "@google/gemini-cli@$ROUTER_REAL_CLIENT_GEMINI_VERSION" \
+            "@qwen-code/qwen-code@$ROUTER_REAL_CLIENT_QWEN_VERSION" \
             "opencode-ai@$ROUTER_REAL_CLIENT_OPENCODE_VERSION"
 
       - name: Capture native requests against the offline mock
@@ -133,13 +137,14 @@ jobs:
           node-version: '26.13.1'
           cache: npm
           cache-dependency-path: ui/package-lock.json
+      - run: npm install --global npm@12.2.3 --ignore-scripts
 
       - name: Install Claude Code ${{ matrix.claude }}
         env:
           CLAUDE_TAG: ${{ matrix.claude }}
         run: |
           version="$(npm view "@anthropic-ai/claude-code@${CLAUDE_TAG}" version)"
-          npm install --global "@anthropic-ai/claude-code@${version}"
+          npm install --global --allow-scripts=@anthropic-ai/claude-code "@anthropic-ai/claude-code@${version}"
           echo "ROUTER_REAL_CLIENT_CLAUDE_VERSION=${version}" >> "$GITHUB_ENV"
 
       - name: Capture native Claude requests against the offline mock
@@ -188,6 +193,7 @@ jobs:
           node-version: '26.13.1'
           cache: npm
           cache-dependency-path: ui/package-lock.json
+      - run: npm install --global npm@12.2.3 --ignore-scripts
 
       - name: Install Codex ${{ matrix.codex }}
         env:

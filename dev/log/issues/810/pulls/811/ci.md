@@ -17,6 +17,7 @@ The source changes cover blank and placeholder issuer secrets, a raw HMAC with a
 | Focused Node regression and workflow-policy tests | 30 passed |
 | Focused Node and Bun native tests with the Linux subreaper wrapper | 6 Node cases and 32 Bun cases passed |
 | Complete active local JavaScript gate at `14dbdea8` | All four stages passed with the Linux subreaper wrapper. Node and Bun each passed 405 cases, and the TypeScript stage included all 10 Node deadline cases. |
+| Complete active local JavaScript gate with updated npm | All four stages passed with npm 12.2.3 on Node 26.13.1 and npm 11.21.3 on Node 20.20.2. The gate covered 405 cases each on Node and Bun, 10 Node deadline cases, both public declaration checks, 188 native TypeScript sources and the Vite build. This local run used the npm upgrade draft before finalizing the Qwen planner and Maven mirror. |
 | Public and native TypeScript checks | Both passed with TypeScript 7.0.2 |
 | Admin UI production build and Rust asset synchronization | Passed with Vite 8.4 |
 | Browser admin smoke test | Chromium loaded all four built chunks with HTTP 200, then signed in and out against a mock API without an uncaught page error. |
@@ -24,6 +25,7 @@ The source changes cover blank and placeholder issuer secrets, a raw HMAC with a
 | Archived fixed parallel workflow generator | Reproduced its source inverse failure on both the starting main source and the proposed source. The archived workflow has sharded custody while the source auditor expects both fixed matrices. |
 | Archived strict workflow tests run in isolation | 30 passed and 9 failed. The archived suite includes assertions for the old gate and strict runner commands. |
 | npm advisories | Zero across `js`, `ts`, `ui` and `scripts/ci` |
+| Real-client install and advisories | The npm 12 install launched all five pinned clients. Gemini's keychain addon and terminal addon loaded. The final installed Linux x64 npm graph returned zero OSV advisories. |
 | Universal Python lock and Python advisories | uv lock check passed. `pip-audit` found zero advisories in the installed tool environment. The complete updated universal lock returned zero advisories in OSV. |
 | Python distribution | Wheel and source distribution built |
 | Python minimum supported runtime | The same 10 released-binary tests passed under Python 3.10. |
@@ -45,6 +47,14 @@ At `14dbdea882511262c90889ef18e044332d6b9b8d`, all four hosted JavaScript stages
 The release workflow at the same checkpoint reported one `cargo fmt` difference at line 725 of its lint log. The token validator now includes the exact formatting emitted by the runner. That checkpoint still carried the older fuzz lock and reported 14 advisories and 12 denied warnings at audit log lines 1124–1521. Every affected package is patched in the committed replacement lock, including `cookie`, `ctutils`, `rustix`, `rustls`, `rustls-webpki`, `tokio`, `url`, the two WebPKI root bundles and the three Zstandard crates. The updated locks need their own hosted audit. [Formatting job](https://github.com/link-assistant/router/actions/runs/46007074272/job/140541864640), [audit job](https://github.com/link-assistant/router/actions/runs/46007074272/job/140541864635).
 
 The current Chrono release is 0.4.45. The maintenance advisory assigns no CVSS score and lists no fixed release. Router exposes Chrono in its public operation context, while current Log Lazy depends on it and Schemars supplies the existing date-time schema. Fully removing it requires a public API migration and replacement of those dependency edges. [RustSec advisory](https://rustsec.org/advisories/RUSTSEC-2026-0543.html), [upstream maintenance discussion](https://github.com/chronotope/chrono/issues/1768).
+
+The root and fuzz locks resolve `rsa` 0.10.0 and `crypto-bigint` 0.7.11. Both versions meet the applicable RustSec fixed-version boundaries. The audit configuration drops the two corresponding exceptions so hosted CI can detect any regression to affected versions. [RSA advisory](https://rustsec.org/advisories/RUSTSEC-2023-0071.html), [crypto-bigint advisory](https://rustsec.org/advisories/RUSTSEC-2026-0387.html).
+
+## Hosted client failures and regressions
+
+The downstream check at `2f0e32b1f8dc4f0eaf57c0a708fed8c7a76642dc` passed the JavaScript gate, the semver contract and all six binding jobs. The generated HTTP job reached JDK and PHP setup, then stopped at its Maven distribution download. The archived log records HTTP 429 at line 597. Both Google’s Maven Central mirror and Apache Maven Central supplied Maven 3.10.2 locally with the pinned SHA-512. The setup now tries the mirror first with Central as fallback and verifies the distribution digest before extracting it. [Downstream run](https://github.com/link-assistant/router/actions/runs/46009357161), [generated HTTP job](https://github.com/link-assistant/router/actions/runs/46009357161/job/140552598231).
+
+The initial real-client scan found two advisories in the Sharp 0.35.3 package pinned by Qwen Code 0.23.1. Qwen Code 0.28.7 pins Sharp 0.35.5, which includes both upstream fixes. The final installed graph scan reported zero findings. A loopback mock with an isolated Qwen configuration received one `/v1/chat/completions` request and returned the expected response for the updated positional prompt. The launch regression covers inferred positional prompts, explicit legacy flags and the `sessions` subcommand. [Real-client inventory](real-clients.tsv), [libheif advisory](https://github.com/advisories/GHSA-rgj7-g3m4-5g8c), [librsvg advisory](https://github.com/advisories/GHSA-wq5f-xc86-pv6w).
 
 ## Maven plugin advisories
 

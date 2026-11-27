@@ -151,11 +151,11 @@ pub struct ClientIntegration {
     /// own `-p` was not recognised as the `--print` it is and both ended up on
     /// the command line (issue #297).
     pub non_interactive_aliases: &'static [&'static str],
-    /// Whether the mode argument takes the prompt as its value.
+    /// Whether inferred one-shot mode takes a prompt argument.
     ///
-    /// `-p` for gemini, grok and qwen and `--prompt` for agent do; `--print`
-    /// and the `exec`/`run` subcommands do not. Injecting one immediately
-    /// before a user's *flag* put that flag where the prompt value belongs,
+    /// Gemini and Grok take `-p`, Agent takes `--prompt`, and Qwen takes a
+    /// positional prompt. Injecting a prompt flag immediately before a user's
+    /// *flag* put that flag where the prompt value belongs,
     /// which is a silent change of meaning rather than an error (issue #297).
     pub non_interactive_arg_takes_a_value: bool,
     pub isolation: ClientIsolation,
@@ -331,8 +331,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         strict_owner: false,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
-        non_interactive_arg: Some("-p"),
-        non_interactive_aliases: &["--prompt"],
+        non_interactive_arg: None,
+        non_interactive_aliases: &["-p", "--prompt"],
         non_interactive_arg_takes_a_value: true,
         isolation: ClientIsolation::Home,
         setup_limitation: None,

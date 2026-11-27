@@ -167,7 +167,25 @@ const fn native_commands(client: ClientKind) -> &'static [&'static crate::transl
             "hook",
             "gemma",
         ],
-        ClientKind::QwenCode => &["mcp", "extensions"],
+        ClientKind::QwenCode => &[
+            "agents",
+            "attach",
+            "autofix-pr",
+            "auth",
+            "batch",
+            "board",
+            "channel",
+            "extensions",
+            "hooks",
+            "mcp",
+            "memory",
+            "review",
+            "sandbox",
+            "serve",
+            "daemon",
+            "sessions",
+            "update",
+        ],
         ClientKind::GrokCli => &["git", "mcp"],
         ClientKind::Agent => &["auth"],
         ClientKind::Cursor => &[],
@@ -392,16 +410,10 @@ pub fn plan(
         result.extend(model);
     }
     let mut note = note;
-    if !command_mode
-        && non_interactive
-        && !has_mode
-        && let Some(mode) = mode
-    {
-        // For four clients the mode argument takes the prompt as its value, and
-        // it was inserted immediately before whatever the user passed. With a
-        // flag there, that flag landed where the prompt belongs: Claude Code
-        // fails loudly, these four risk having the next argument read as the
-        // prompt text — a silent change of meaning (issue #297).
+    if !command_mode && non_interactive && !has_mode {
+        // Prompt-taking clients need a prompt before a one-shot flag can be
+        // inserted. Qwen uses a positional prompt and still accepts explicit
+        // legacy flags (issue #810).
         if integration.non_interactive_arg_takes_a_value
             && !carries_a_prompt(args.client, &forwarded)
         {
@@ -409,7 +421,7 @@ pub fn plan(
                 "note: this client's one-shot mode takes the prompt as an argument and none was \
                  given, so it is launched as an ordinary session",
             );
-        } else {
+        } else if let Some(mode) = mode {
             result.push(mode.into());
         }
     }
@@ -428,11 +440,10 @@ pub fn plan(
 /// is, so both ended up on the command line (issue #297).
 fn contains_native_mode(client: ClientKind, arguments: &[OsString]) -> bool {
     let integration = client.integration();
-    let Some(mode) = integration.non_interactive_arg else {
-        return false;
-    };
     let spellings = |argument: &OsString| {
-        argument == mode
+        integration
+            .non_interactive_arg
+            .is_some_and(|mode| argument == mode)
             || integration
                 .non_interactive_aliases
                 .iter()

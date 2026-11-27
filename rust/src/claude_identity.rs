@@ -7,7 +7,7 @@ use serde_json::{Value, json};
 pub const CLAUDE_CODE_SYSTEM_PROMPT: &crate::translation_core::Str =
     "You are Claude Code, Anthropic's official CLI for Claude.";
 
-/// Claude Code version installed by the real-client release gate.
+/// Claude Code version recorded in the OAuth contract fixture.
 pub const DEFAULT_CLIENT_VERSION: &crate::translation_core::Str = "2.1.265";
 
 /// The supported Claude Code version, with an operator override for staged

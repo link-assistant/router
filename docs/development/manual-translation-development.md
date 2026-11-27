@@ -12,10 +12,11 @@ complete strict workflow and its original tests remain checked in.
 ## Active development checks
 
 `.github/workflows/javascript-manual-development.yml` checks the exact immutable
-SHA supplied by each caller, with pinned Node 20, Bun 1.4.3 and locked dependency
-installation. Every active stage must succeed; skipped, cancelled and failed
-stages fail the aggregate. The existing `JavaScript fully green` check name now
-describes **only these temporary active development stages**:
+SHA supplied by each caller. Lint and the Node and Bun test stages use Node
+26.13.1 with npm 12.2.3. The TypeScript stage uses Node 20.20.2 with npm 11.21.3
+for the compiler's native binding checks. Stages that use Bun pin 1.4.5. Every
+active stage must succeed. The aggregate rejects skipped, cancelled and failed
+stages. `JavaScript fully green` covers these temporary development stages:
 
 | Stage | Complete checks retained |
 | --- | --- |
@@ -24,10 +25,9 @@ describes **only these temporary active development stages**:
 | bun-tests | Every existing `js/test/native-*.test.*` file under Bun |
 | typescript | Original Node deadline-auditor regression file and deadline; public and native strict declaration tests; strict compilation of the existing native TypeScript tree; translation compiler declaration checks; UI production build |
 
-No test files or original deadlines are shortened. TypeScript uses the installed
-lockfile compiler (currently 5.9.3), with the existing strict options. Existing
-native TypeScript is compiled as checked in; this lane does not regenerate it.
-All original public/native runtime contracts and testing tiers remain in place.
+The two declaration checks use TypeScript 7.0.2. The translation compiler uses
+the locked TypeScript 5.9.3 JavaScript API with its existing strict options. The
+lane compiles the checked-in native TypeScript with the original deadlines.
 
 Four lint commands came with this lane: the workflow policy regression file, the
 workflow audit, and the Node and Bun runs of the pipe trace regression file. On
@@ -40,9 +40,11 @@ caller's commit, which has already passed both audits. `LANE_FILES` in
 `scripts/manual-development-policy.mjs` lists these commands, and the policy test
 rejects any other conditional step.
 
-Install dependencies and run the same active commands sequentially:
+For the sequential local runner, use Node 20.20.2 so the compiler's native
+binding checks can run in the same process environment as the other stages:
 
 ```bash
+npm install --global npm@11.21.3 --ignore-scripts
 npm ci --prefix scripts/ci --ignore-scripts
 npm ci --prefix js --ignore-scripts
 npm ci --prefix ui --ignore-scripts

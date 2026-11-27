@@ -2,7 +2,7 @@ Tool or image	Initial pin	Active pin	Current upstream release/reference	Publishe
 Rust stable	1.98.1 in workflows; 1.99.1 in Docker	1.100.0	1.100.0	https://static.rust-lang.org/dist/channel-rust-stable.toml
 Rust nightly	nightly	nightly-2026-11-26	nightly-2026-11-26 complete manifest at inventory time	https://static.rust-lang.org/dist/2026-11-26/channel-rust-nightly.toml
 Node	20 in development; 20 and 24 binding matrix	26.13.1; 20.20.2 for the TypeScript stage; 20 and 24 binding compatibility	26.13.1	https://nodejs.org/dist/index.json
-npm	Toolchain bundled	Toolchain bundled; Node 26 provides npm 11.20.0	12.2.3	https://registry.npmjs.org/npm/latest
+npm	Toolchain bundled	12.2.3 on Node 24 and 26; 11.21.3 on Node 20	12.2.3; 11.21.3 latest with Node 20 support	https://registry.npmjs.org/npm/latest
 Bun	1.4.3; Docker tag 1	1.4.5	1.4.5	https://github.com/oven-sh/bun/releases/tag/bun-v1.4.5
 CPython	3.10	3.15.2; 3.10 binding compatibility	3.15.2	https://www.python.org/downloads/release/python-3152/
 uv	—	0.13.10	0.13.10	https://pypi.org/pypi/uv/0.13.10/json
@@ -22,7 +22,7 @@ rust-script	0.36.0	0.36.0	0.36.0	https://index.crates.io/ru/st/rust-script
 Claude Code	2.1.265	2.1.332	2.1.332	https://registry.npmjs.org/@anthropic-ai%2fclaude-code/latest
 Codex	0.154.0	0.172.0	0.172.0	https://registry.npmjs.org/@openai%2fcodex/latest
 Gemini CLI	0.59.0	0.71.1	0.71.1	https://registry.npmjs.org/@google%2fgemini-cli/latest
-Qwen Code	0.23.1	0.23.1	0.23.1	https://registry.npmjs.org/@qwen-code%2fqwen-code/latest
+Qwen Code	0.23.1	0.28.7	0.28.7	https://registry.npmjs.org/@qwen-code%2fqwen-code/latest
 OpenCode	1.18.29	1.19.6	1.19.6	https://registry.npmjs.org/opencode-ai/latest
 rust slim-trixie builder	1.99.1 at f6c4a35d21dbb3c89d7a8d056c193e94fc09037f2b58dd858b09c39a47dd02d7	1.100.0 at 3b199fd6db7d709274df56565b8f4003f9e30d7bfcff9d53148c86053b7855e2	1.100.0-slim-trixie	https://hub.docker.com/_/rust/tags
 oven/bun base	1 at ec06c3b6cea04192ae6770c434f668ca41d343ad19fa6472216c7b48be39c598	1.4.5 at 3aa040e5445efa09d75bb428a64ba50db13e2b3ac9b6b0c7f145615f62b2ee18	1.4.5	https://hub.docker.com/r/oven/bun/tags

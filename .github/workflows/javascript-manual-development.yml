@@ -36,6 +36,7 @@ jobs:
             const expected = process.env.EXPECTED_SHA;
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
+      - run: npm install --global npm@12.2.3 --ignore-scripts
       - run: npm ci --prefix scripts/ci --ignore-scripts
       - run: npm ci --prefix js --ignore-scripts
       - run: node scripts/sync-rust-assets.mjs --check
@@ -67,6 +68,7 @@ jobs:
             const expected = process.env.EXPECTED_SHA;
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
+      - run: npm install --global npm@12.2.3 --ignore-scripts
       - run: npm ci --prefix js --ignore-scripts
       - run: npm run native:test --prefix js
   bun-tests:
@@ -91,6 +93,7 @@ jobs:
             const expected = process.env.EXPECTED_SHA;
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
+      - run: npm install --global npm@12.2.3 --ignore-scripts
       - run: npm ci --prefix js --ignore-scripts
       - run: npm run native:test:bun --prefix js
   typescript:
@@ -115,6 +118,7 @@ jobs:
             const expected = process.env.EXPECTED_SHA;
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
+      - run: npm install --global npm@11.21.3 --ignore-scripts
       - run: npm ci --prefix js --ignore-scripts
       - run: npm ci --prefix ui --ignore-scripts
       - run: node scripts/run-node-tests.mjs --outer-timeout-ms=180000 scripts/test/node-case-deadlines.test.mjs

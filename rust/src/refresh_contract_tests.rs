@@ -35,20 +35,50 @@ fn refresh_fixture_versions_and_contracts_are_current() {
     assert_eq!(fixture["qwen"]["client_version"], QWEN_CODE_VERSION);
 
     let workflow = include_str!("../../.github/workflows/real-clients.yml");
-    for (package, version) in [
+    for (package, pin_variable, recorded_version) in [
         (
             "@anthropic-ai/claude-code",
+            "ROUTER_REAL_CLIENT_CLAUDE_VERSION",
             crate::claude_identity::DEFAULT_CLIENT_VERSION,
         ),
         (
             "@openai/codex",
+            "ROUTER_REAL_CLIENT_CODEX_VERSION",
             crate::codex_identity::DEFAULT_CLIENT_VERSION,
         ),
-        ("@google/gemini-cli", GEMINI_CLI_VERSION),
-        ("@qwen-code/qwen-code", QWEN_CODE_VERSION),
+        (
+            "@google/gemini-cli",
+            "ROUTER_REAL_CLIENT_GEMINI_VERSION",
+            GEMINI_CLI_VERSION,
+        ),
+        (
+            "@qwen-code/qwen-code",
+            "ROUTER_REAL_CLIENT_QWEN_VERSION",
+            QWEN_CODE_VERSION,
+        ),
     ] {
-        assert!(workflow.contains(&format!("{package}@{version}")));
+        let key = format!("{pin_variable}:");
+        let installed_version = workflow
+            .lines()
+            .find_map(|line| line.trim().strip_prefix(key.as_str()))
+            .expect("real-client workflow version pin")
+            .trim()
+            .trim_matches('\'');
+        assert!(workflow.contains(&format!("\"{package}@${pin_variable}\"")));
+        assert!(
+            version_components(installed_version) >= version_components(recorded_version),
+            "{package} {installed_version} predates the OAuth fixture {recorded_version}"
+        );
     }
+}
+
+fn version_components(version: &str) -> [u64; 3] {
+    version
+        .split('.')
+        .map(|part| part.parse::<u64>().expect("numeric client version component"))
+        .collect::<Vec<_>>()
+        .try_into()
+        .expect("three client version components")
 }
 
 #[test]

@@ -61,6 +61,7 @@ jobs:
           node-version: '26.13.1'
           cache: npm
           cache-dependency-path: ui/package-lock.json
+      - run: npm install --global npm@12.2.3 --ignore-scripts
 
       - name: Install Router verification runner
         run: cargo install rust-script --version 0.36.0 --locked
@@ -69,7 +70,7 @@ jobs:
       # result is attributable to a known client version.
       - name: Install the pinned real client
         run: |
-          npm install --global "@anthropic-ai/claude-code@$ROUTER_REAL_CLIENT_CLAUDE_VERSION"
+          npm install --global --allow-scripts=@anthropic-ai/claude-code "@anthropic-ai/claude-code@$ROUTER_REAL_CLIENT_CLAUDE_VERSION"
 
       - name: Prepare the installed client before Cargo
         run: |
@@ -105,7 +106,7 @@ jobs:
       # machine-readable result is kept with the run.
       - name: Install the pinned clients for zai-only-entitlements
         run: |
-          npm install --global "@openai/codex@$ROUTER_REAL_CLIENT_CODEX_VERSION" "opencode-ai@$ROUTER_REAL_CLIENT_OPENCODE_VERSION"
+          npm install --global --allow-scripts=opencode-ai "@openai/codex@$ROUTER_REAL_CLIENT_CODEX_VERSION" "opencode-ai@$ROUTER_REAL_CLIENT_OPENCODE_VERSION"
 
       - name: Verify zai-only-entitlements
         env:

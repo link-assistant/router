@@ -280,6 +280,8 @@ jobs:
           node-version: '26.13.1'
           cache: npm
           cache-dependency-path: ui/package-lock.json
+      - run: npm install --global npm@12.2.3 --ignore-scripts
+        if: ${{ !cancelled() && steps.privacy-node.outcome == 'success' }}
 
       - name: Test the published sensitive data sanitizer integration
         if: ${{ !cancelled() && steps.privacy-node.outcome == 'success' }}
@@ -417,10 +419,13 @@ jobs:
           exit "$status"
 
       - name: Setup Node
+        id: audit-node
         if: ${{ !cancelled() }}
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '26.13.1'
+      - run: npm install --global npm@12.2.3 --ignore-scripts
+        if: ${{ !cancelled() && steps.audit-node.outcome == 'success' }}
 
       - name: Audit JavaScript and TypeScript dependencies
         if: ${{ !cancelled() }}
@@ -658,10 +663,13 @@ jobs:
       # util.types.isProxy prints without a name, and the translator guards that
       # pin native function text reject it ("original source operations changed").
       - name: Setup Node for native profile source orchestration
+        id: native-profile-node
         if: ${{ always() && !cancelled() }}
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
-          node-version: '26.13.1'
+          node-version: '20.20.2'
+      - run: npm install --global npm@11.21.3 --ignore-scripts
+        if: ${{ always() && !cancelled() && steps.native-profile-node.outcome == 'success' }}
 
       - name: Install locked native profile source dependencies
         if: ${{ always() && !cancelled() }}
@@ -1517,6 +1525,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: '26.13.1'
+      - run: npm install --global npm@12.2.3 --ignore-scripts
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
         with:
           python-version: '3.15.2'
@@ -1787,6 +1796,7 @@ jobs:
         with:
           node-version: '26.13.1'
           registry-url: https://registry.npmjs.org
+      - run: npm install --global npm@12.2.3 --ignore-scripts
       - name: Download and verify exact tagged package
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

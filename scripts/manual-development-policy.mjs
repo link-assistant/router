@@ -82,6 +82,7 @@ export function manualJobs() {
       { uses: 'actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1', with: { 'node-version': id === 'typescript' ? '20.20.2' : '26.13.1' } },
       ...(['lint', 'bun-tests', 'typescript'].includes(id) ? [{ uses: 'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6', with: { 'bun-version': '1.4.5' } }] : []),
       { name: 'Verify immutable source commit', env: { EXPECTED_SHA: '${{ inputs.sha }}' }, run: SHA_VERIFIER },
+      { run: `npm install --global npm@${id === 'typescript' ? '11.21.3' : '12.2.3'} --ignore-scripts` },
       ...[...INSTALLS[id], ...commands].map(run => (LANE_FILES[run] ? { if: laneFileCondition(LANE_FILES[run]), run } : { run })),
       ...(id === 'typescript' ? [{
         name: 'Preserve complete Node deadline audit and raw streams',
