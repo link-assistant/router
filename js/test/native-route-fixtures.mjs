@@ -101,7 +101,7 @@ function assertSuccess(contract,data,{core,issued,cancelled}) {
 export async function runParityFixtures() {
   const spec=JSON.parse(await readFile(new URL('../../openapi/router.yaml',import.meta.url),'utf8'));
   const canonical=new Set(Object.entries(spec.paths).flatMap(([path,operations])=>Object.keys(operations).filter(method=>methods.has(method)).map(method=>`${method.toUpperCase()} ${path}`)));
-  assert.equal(nativeRouteOutcomes.length,368); assert.deepEqual(new Set(nativeRouteOutcomes.map(row=>row.route)),canonical);
+  assert.equal(nativeRouteOutcomes.length,383); assert.deepEqual(new Set(nativeRouteOutcomes.map(row=>row.route)),canonical);
   const evidence=new Map(),failures=[],root=await realpath(await mkdtemp(join(tmpdir(),'router-route-census-'))),hits=[];let active;
   const upstream=createServer(async(request,response)=>{
     const chunks=[];for await(const chunk of request)chunks.push(chunk);
