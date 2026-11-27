@@ -21,7 +21,10 @@ async fn configuration_writers_cannot_change_host_authority() {
     for (key, value) in [
         ("account-egress-proxy", json!("primary=env:ACCOUNT_PROXY")),
         ("model-catalog-sources", json!(["catalog.json"])),
-        ("crater-forgefed-inbox", json!("https://forge.example/inbox")),
+        (
+            "crater-forgefed-inbox",
+            json!("https://forge.example/inbox"),
+        ),
         ("listener", json!(["127.0.0.1:9000=admin"])),
         ("admin-host", json!("0.0.0.0")),
         ("admin-port", json!(9000)),
