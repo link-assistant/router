@@ -22,6 +22,17 @@ def prepare_java(directory):
     pinned.find(PROJECT_VERSION).text = generated_version
     pinned.write(path, encoding='utf-8', xml_declaration=True)
 
+    # The okhttp-gson generator still calls the deprecated Gson setter in both
+    # deserialize overloads. Keep the same leniency with the current Gson API.
+    json_path = directory / 'src/main/java/router/client/JSON.java'
+    source = json_path.read_text(encoding='utf-8')
+    deprecated_call = 'jsonReader.setLenient(true);'
+    current_call = 'jsonReader.setStrictness(com.google.gson.Strictness.LENIENT);'
+    if deprecated_call in source:
+        if source.count(deprecated_call) != 2 or current_call in source:
+            raise ValueError(f'Unexpected Gson leniency calls in {json_path}')
+        json_path.write_text(source.replace(deprecated_call, current_call), encoding='utf-8')
+
 
 if __name__ == '__main__':
     language, destination = argv[1:]
