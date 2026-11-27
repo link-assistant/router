@@ -9,7 +9,7 @@ use crate::runtime_config::RuntimeConfig;
 
 impl RequestLog {
     /// Attach the shared configuration selected when the server started.
-    pub fn install_runtime_config(&self, config: Arc<RuntimeConfig>) {
+    pub(crate) fn install_runtime_config(&self, config: Arc<RuntimeConfig>) {
         assert!(self.runtime_config.set(config).is_ok(), "runtime configuration already installed");
     }
 
@@ -22,11 +22,12 @@ impl RequestLog {
         (identity.id, identity.label)
     }
 
-    pub(crate) fn record_websocket_rules(
+    pub(crate) fn record_payload_rules(
         &self,
         correlation: &str,
         headers: &HeaderMap,
         claims: &crate::token::TokenClaims,
+        phase: &str,
         fields: Value,
     ) {
         let identity = crate::proxy::extract_client_token(headers).map_or_else(
@@ -37,7 +38,7 @@ impl RequestLog {
                 label: Some(claims.label.clone()),
             }
         );
-        self.record_for(correlation, "payload_rules_applied", fields, &identity);
+        self.record_for(correlation, phase, fields, &identity);
     }
 
     /// Send a prepared upstream request while recording the exact request and

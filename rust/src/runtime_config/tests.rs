@@ -103,6 +103,25 @@ fn schema_tracks_clap_and_toml_round_trips_edits() {
 }
 
 #[test]
+fn removing_a_rule_keeps_comments_on_surviving_toml_tables() {
+    let original = r#"
+[[payload.filter]]
+models = [{ name = "*" }]
+params = ["remove"] # deleted rule
+
+[[payload.filter]]
+models = [{ name = "*" }]
+params = ["keep"] # surviving rule
+"#;
+    let (toml, mut document) = storage::decode(original).unwrap();
+    document["payload"]["filter"].as_array_mut().unwrap().remove(0);
+    let edited = storage::encode(toml, &document).unwrap();
+    assert!(edited.contains("# surviving rule"));
+    assert!(!edited.contains("# deleted rule"));
+    assert_eq!(storage::decode(&edited).unwrap().1, document);
+}
+
+#[test]
 fn every_clap_secret_and_nested_payload_secret_is_redacted() {
     let options = schema()["properties"]["cli"]["properties"].as_object().unwrap();
     let secrets = options
@@ -274,6 +293,60 @@ async fn http_final_barrier_records_final_values_and_rejects_before_any_send() {
     let records = state.request_log.lookup("barrier-failure").unwrap();
     assert!(records.iter().any(|record| record["phase"] == "payload_rules_rejected"));
     assert!(records.iter().all(|record| record["phase"] != "upstream_request"));
+    server.abort();
+}
+
+#[tokio::test]
+async fn rebuilt_attempts_and_url_selected_models_share_the_final_barrier() {
+    let root = tempfile::tempdir().unwrap();
+    let state = state(root.path());
+    let store = state.request_log.runtime_config().unwrap();
+    store.edit(super::Edit::Replace(json!({
+        "payload": {
+            "override": [
+                {"models": [{"name": "gemini-*", "protocol": "gemini"}],
+                 "params": {"generationConfig.temperature": 0.1}},
+                {"models": [{"name": "gpt-*", "protocol": "codex"}],
+                 "params": {"service_tier": "priority"}}
+            ],
+            "filter": [{"models": [{"name": "*", "protocol": "codex"}],
+                "params": ["tools.#(type==\"image_generation\")#"]}]
+        }
+    })), "test").unwrap();
+
+    let upstream = Router::new().fallback(
+        |axum::Json(value): axum::Json<Value>| async move { axum::Json(value) },
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move { axum::serve(listener, upstream).await.unwrap() });
+    let client = reqwest::Client::new();
+    let send = |id: &'static str, path: &str, body: &Value| {
+        state.request_log.send_upstream(
+            id, &client, client.post(format!("http://{address}{path}")).json(body),
+        )
+    };
+    let original = json!({
+        "model": "gpt-example", "service_tier": "auto",
+        "tools": [{"type": "function"}, {"type": "image_generation"}]
+    });
+    for id in ["codex-first", "codex-rebuilt"] {
+        let received: Value = send(id, "/backend-api/codex/responses", &original)
+            .await.unwrap().json().await.unwrap();
+        assert_eq!(received["service_tier"], "priority");
+        assert_eq!(received["tools"], json!([{"type": "function"}]));
+        let entries = state.request_log.lookup(id).unwrap();
+        let applied = entries.iter().find(|row| row["phase"] == "payload_rules_applied").unwrap();
+        assert_eq!(applied["changes"].as_array().unwrap().len(), 2);
+    }
+    let body = json!({"contents": [], "generationConfig": {}});
+    let gemini: Value = send("gemini", "/v1beta/models/gemini-test:generateContent", &body)
+        .await.unwrap().json().await.unwrap();
+    assert_eq!(gemini["generationConfig"]["temperature"], 0.1);
+    assert!(gemini.get("service_tier").is_none());
+    let openai: Value = send("openai", "/v1/responses", &original)
+        .await.unwrap().json().await.unwrap();
+    assert_eq!(openai, original);
     server.abort();
 }
 

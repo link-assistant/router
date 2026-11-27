@@ -3,7 +3,8 @@ use serde_json::{Map, Value, json};
 const MASK: &str = "[REDACTED]";
 
 fn secret_key(key: &str) -> bool {
-    crate::request_log::is_secret_name(key)
+    super::schema()["properties"]["cli"]["properties"][key]["writeOnly"] == true
+        || crate::request_log::is_secret_name(key)
         || crate::contracts::secret_option(&key.replace('-', "_"))
         || key.split(['.', '/', '~']).any(|part| {
             crate::request_log::is_secret_name(part)

@@ -1,9 +1,12 @@
+use std::collections::{BTreeMap, VecDeque};
 use std::fs::File;
 use std::io::{self, Read as _};
 use std::path::Path;
 
 use serde_json::{Map, Value};
-use toml_edit::{Array, DocumentMut, InlineTable, Item, TableLike, Value as TomlValue};
+use toml_edit::{
+    Array, ArrayOfTables, DocumentMut, InlineTable, Item, Table, TableLike, Value as TomlValue,
+};
 
 pub(super) const MAX_BYTES: usize = 256 * 1024;
 const JSON_SECTIONS: [&str; 3] = ["cli-json", "cors-json", "payload-json"];
@@ -107,6 +110,9 @@ pub(super) fn encode(mut toml: DocumentMut, document: &Value) -> Result<String, 
     if text.len() > MAX_BYTES {
         return Err("runtime configuration TOML exceeds limit");
     }
+    if decode(&text)?.1 != *document {
+        return Err("TOML edit did not preserve the proposed configuration");
+    }
     Ok(text)
 }
 
@@ -136,12 +142,10 @@ fn reconcile_item(item: &mut Item, desired: &Value) -> Result<(), &'static str> 
     }
     if let Some(values) = desired.as_array() {
         if let Some(tables) = item.as_array_of_tables_mut()
-            && tables.len() == values.len() && values.iter().all(Value::is_object)
+            && !values.is_empty()
+            && values.iter().all(Value::is_object)
         {
-            for (table, value) in tables.iter_mut().zip(values) {
-                reconcile_table(table, value.as_object().expect("checked object"))?;
-            }
-            return Ok(());
+            return reconcile_tables(tables, values);
         }
         if let Some(array) = item.as_array_mut() {
             while array.len() > values.len() {
@@ -165,4 +169,44 @@ fn reconcile_item(item: &mut Item, desired: &Value) -> Result<(), &'static str> 
     }
     *item = Item::Value(replacement);
     Ok(())
+}
+
+fn reconcile_tables(tables: &mut ArrayOfTables, desired: &[Value]) -> Result<(), &'static str> {
+    if tables.len() == desired.len() {
+        for (table, value) in tables.iter_mut().zip(desired) {
+            reconcile_table(table, value.as_object().expect("checked object"))?;
+        }
+        return Ok(());
+    }
+
+    // A pointer deletion shifts indexes. Keep the original table, including
+    // its comments, with each surviving value instead of with its old index.
+    let mut previous = BTreeMap::<String, VecDeque<Table>>::new();
+    for table in std::mem::take(tables) {
+        let key = Value::Object(table_to_json(&table)?).to_string();
+        previous.entry(key).or_default().push_back(table);
+    }
+    for value in desired {
+        let mut table = previous
+            .get_mut(&value.to_string())
+            .and_then(VecDeque::pop_front)
+            .unwrap_or_default();
+        reconcile_table(&mut table, value.as_object().expect("checked object"))?;
+        clear_positions(&mut table);
+        tables.push(table);
+    }
+    Ok(())
+}
+
+fn clear_positions(table: &mut Table) {
+    table.set_position(None);
+    for (_, item) in table.iter_mut() {
+        if let Some(table) = item.as_table_mut() {
+            clear_positions(table);
+        } else if let Some(tables) = item.as_array_of_tables_mut() {
+            for table in tables {
+                clear_positions(table);
+            }
+        }
+    }
 }

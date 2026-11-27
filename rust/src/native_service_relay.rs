@@ -270,6 +270,7 @@ async fn websocket_session(
                         }
                         Ok(None) => {},
                         Err(reason) => {
+                            rules.rejected(reason);
                             close(&mut downstream, 1008, reason).await;
                             let _ = upstream.close(None).await;
                             break;

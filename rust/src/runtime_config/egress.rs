@@ -1,5 +1,5 @@
 use axum::body::Bytes;
-use axum::extract::Request;
+use axum::extract::{Request, State};
 use axum::http::{HeaderMap, Method, header};
 use axum::middleware::Next;
 use axum::response::Response;
@@ -19,21 +19,29 @@ tokio::task_local! {
 struct Source {
     protocol: &'static str,
     share_geolocation: bool,
+    limit: usize,
 }
 
-pub(crate) async fn scope(request: Request, next: Next) -> Response {
+pub(crate) async fn scope(State(state): State<AppState>, request: Request, next: Next) -> Response {
     let path = request.uri().path();
     let protocol = match path.strip_prefix("/api/services/").and_then(|path| path.split('/').next()) {
         Some("anthropic") => "claude",
-        Some("gemini" | "vertex") => "gemini",
+        Some("gemini") => "gemini",
+        Some("vertex") if path.contains("/publishers/anthropic/") => "claude",
+        Some("vertex") => "gemini",
         Some("bedrock") => "bedrock",
-        Some("openai" | "codex" | "qwen") if path.ends_with("/responses") => "responses",
+        Some("openai" | "codex" | "qwen")
+            if path.ends_with("/responses") || path.ends_with("/responses/compact") =>
+        {
+            "responses"
+        }
         Some("openai" | "codex" | "qwen") => "openai",
         _ => "",
     };
     let source = Source {
         protocol,
         share_geolocation: crate::geolocation::shares_geolocation(request.headers()),
+        limit: state.max_proxy_request_bytes,
     };
     SOURCE.scope(source, next.run(request)).await
 }
@@ -56,7 +64,11 @@ fn target_protocol(method: &Method, url: &url::Url) -> Option<&'static str> {
     let path = url.path().trim_end_matches('/');
     if path.ends_with("/messages") {
         Some("claude")
-    } else if path.ends_with(":generateContent") || path.ends_with(":streamGenerateContent") {
+    } else if path.ends_with(":generateContent")
+        || path.ends_with(":streamGenerateContent")
+        || path.ends_with(":embedContent")
+        || path.ends_with(":batchEmbedContents")
+    {
         Some("gemini")
     } else if path.ends_with("/invoke") || path.ends_with("/invoke-with-response-stream") {
         Some("bedrock")
@@ -79,7 +91,11 @@ fn target_protocol(method: &Method, url: &url::Url) -> Option<&'static str> {
 }
 
 fn target_model(url: &url::Url) -> &str {
-    url.path().rsplit_once("/models/").map_or("", |(_, model)| {
+    let path = url.path();
+    if let Some((_, invoke)) = path.rsplit_once("/model/") {
+        return invoke.split_once('/').map_or("", |(model, _)| model);
+    }
+    path.rsplit_once("/models/").map_or("", |(_, model)| {
         model.split_once(':').map_or(model, |(model, _)| model)
     })
 }
@@ -97,11 +113,23 @@ pub(crate) async fn http(
     let Some(protocol) = target_protocol(request.method(), request.url()) else { return Ok(()) };
     let protocol = DESTINATION.try_with(|protocol| *protocol).unwrap_or(protocol);
     let (token_id, token_label) = log.runtime_identity(correlation);
+    let (from_protocol, share_geolocation, limit) = SOURCE
+        .try_with(|source| (source.protocol, source.share_geolocation, source.limit))
+        .unwrap_or(("", false, crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES));
+    let mut context = Context {
+        protocol,
+        from_protocol,
+        model: "",
+        token_id: token_id.as_deref(),
+        token_label: token_label.as_deref(),
+    };
+    if !rules.could_apply(&context) {
+        return Ok(());
+    }
     let fail = UpstreamSendError::PayloadRule;
     let Some(bytes) = request.body().and_then(reqwest::Body::as_bytes) else {
         return Err(fail(FAILURE));
     };
-    let limit = crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES;
     let encoded = request.headers().contains_key(header::CONTENT_ENCODING);
     let (mut body, native) = if encoded {
         let parsed = crate::encoded_request_body::read_native_json(
@@ -119,13 +147,7 @@ pub(crate) async fn http(
     let model = body["model"].as_str().or_else(|| body["modelId"].as_str())
         .or_else(|| body["request"]["model"].as_str()).filter(|model| !model.is_empty())
         .unwrap_or_else(|| target_model(request.url())).to_owned();
-    let (from_protocol, share_geolocation) = SOURCE.try_with(|source| {
-        (source.protocol, source.share_geolocation)
-    }).unwrap_or_default();
-    let context = Context {
-        protocol, from_protocol, model: &model,
-        token_id: token_id.as_deref(), token_label: token_label.as_deref(),
-    };
+    context.model = &model;
     let applied = apply(&rules, &mut body, &context, share_geolocation).map_err(fail)?;
     if applied.is_empty() {
         return Ok(());
@@ -185,17 +207,28 @@ pub(crate) fn websocket(
         protocol, from_protocol: "responses", model: &model,
         token_id: Some(&claims.sub), token_label: Some(&claims.label),
     };
-    let applied = apply(&rules, body, &context, crate::geolocation::shares_geolocation(headers))?;
-    if applied.is_empty() {
-        return Ok(false);
+    let result = apply(&rules, body, &context, crate::geolocation::shares_geolocation(headers))
+        .and_then(|applied| {
+            if !applied.is_empty()
+                && serde_json::to_vec(body).map_err(|_| FAILURE)?.len() > state.max_proxy_request_bytes
+            {
+                return Err(FAILURE);
+            }
+            Ok(applied)
+        });
+    match result {
+        Ok(applied) if applied.is_empty() => Ok(false),
+        Ok(applied) => {
+            log.record_payload_rules(correlation, headers, claims, "payload_rules_applied",
+                json!({"protocol": protocol, "changes": applied}));
+            Ok(true)
+        }
+        Err(reason) => {
+            log.record_payload_rules(correlation, headers, claims, "payload_rules_rejected",
+                json!({"protocol": protocol, "error": reason}));
+            Err(reason)
+        }
     }
-    if serde_json::to_vec(body).map_err(|_| FAILURE)?.len() > state.max_proxy_request_bytes {
-        return Err(FAILURE);
-    }
-    log.record_websocket_rules(correlation, headers, claims, json!({
-        "protocol": protocol, "changes": applied
-    }));
-    Ok(true)
 }
 
 struct ForgeFed {
@@ -204,6 +237,7 @@ struct ForgeFed {
     token_id: String,
     token_label: String,
     share_geolocation: bool,
+    limit: usize,
 }
 
 tokio::task_local! {
@@ -222,6 +256,7 @@ pub(crate) fn forgefed_scope<F: std::future::Future>(
         token_id: claims.sub.clone(),
         token_label: claims.label.clone(),
         share_geolocation: crate::geolocation::shares_geolocation(headers),
+        limit: state.max_proxy_request_bytes,
     };
     FORGEFED.scope(context, future)
 }
@@ -242,19 +277,24 @@ pub(crate) fn forgefed(model: &str, activity: &mut Value) -> Result<(), &'static
             token_id: Some(&request.token_id),
             token_label: Some(&request.token_label),
         };
-        let applied = apply(&rules, activity, &context, request.share_geolocation)?;
-        if serde_json::to_vec(activity).map_err(|_| FAILURE)?.len()
-            > crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES
-        {
-            return Err(FAILURE);
-        }
-        if !applied.is_empty() {
+        let applied = apply(&rules, activity, &context, request.share_geolocation).inspect_err(|reason| {
             request.log.record(
                 &request.correlation,
-                "payload_rules_applied",
-                json!({"protocol": "forgefed", "changes": applied}),
+                "payload_rules_rejected",
+                json!({"protocol": "forgefed", "error": reason}),
             );
+        })?;
+        if applied.is_empty() {
+            return Ok(());
         }
+        if serde_json::to_vec(activity).map_err(|_| FAILURE)?.len() > request.limit {
+            return Err(FAILURE);
+        }
+        request.log.record(
+            &request.correlation,
+            "payload_rules_applied",
+            json!({"protocol": "forgefed", "changes": applied}),
+        );
         Ok(())
     }).unwrap_or(Ok(()))
 }
@@ -367,9 +407,15 @@ impl NativeContext {
         if bytes.len() > self.limit {
             return Err(FAILURE);
         }
-        self.log.record_websocket_rules(&self.correlation, &self.headers, &self.claims, json!({
-            "protocol": self.protocol, "changes": changes
-        }));
+        self.record("payload_rules_applied", json!({"protocol": self.protocol, "changes": changes}));
         Ok(Some(bytes.into()))
+    }
+
+    pub(crate) fn rejected(&self, reason: &str) {
+        self.record("payload_rules_rejected", json!({"protocol": self.protocol, "error": reason}));
+    }
+
+    fn record(&self, phase: &str, fields: Value) {
+        self.log.record_payload_rules(&self.correlation, &self.headers, &self.claims, phase, fields);
     }
 }

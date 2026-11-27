@@ -343,7 +343,10 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
                 NativeRequestBody::Memory(bytes)
             }
             Ok(None) => body,
-            Err(reason) => return error(StatusCode::BAD_GATEWAY, "api_error", reason),
+            Err(reason) => {
+                rules.rejected(reason);
+                return error(StatusCode::BAD_GATEWAY, "api_error", reason);
+            }
         }
     } else {
         body

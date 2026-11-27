@@ -37,13 +37,15 @@ pub(super) fn schema() -> Value {
             json!({"type": "boolean"})
         } else {
             macro_rules! integer {
-                ($type:ty) => {{
+                ($type:ty, $maximum:expr) => {{
                     let parser: clap::builder::ValueParser = clap::value_parser!($type).into();
-                    (arg.get_value_parser().type_id() == parser.type_id()).then_some(<$type>::MAX as u64)
+                    (arg.get_value_parser().type_id() == parser.type_id()).then_some($maximum)
                 }};
             }
-            if let Some(maximum) = integer!(u8).or_else(|| integer!(u16)).or_else(|| integer!(u32))
-                .or_else(|| integer!(u64)).or_else(|| integer!(usize))
+            if let Some(maximum) = integer!(u16, u64::from(u16::MAX))
+                .or_else(|| integer!(u32, u64::from(u32::MAX)))
+                .or_else(|| integer!(u64, u64::MAX))
+                .or_else(|| integer!(usize, usize::MAX as u64))
             {
                 json!({"type": "integer", "minimum": 0, "maximum": maximum})
             } else {
@@ -118,6 +120,12 @@ impl Input {
                     overridden.insert(name.to_owned());
                 }
             }
+        }
+        if crate::operation_context::var_os(crate::token_secret::FILE_ENV)
+            .is_some_and(|path| !path.is_empty())
+        {
+            environment.insert("token-secret".to_owned());
+            overridden.insert("token-secret".to_owned());
         }
         Self { command, arguments, environment, overridden }
     }

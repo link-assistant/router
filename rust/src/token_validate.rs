@@ -25,8 +25,9 @@ impl TokenManager {
         // The decoder has no injectable clock. Keep signature/claim validation,
         // and enforce its same inclusive expiry leeway against the caller's time.
         validation.validate_exp = injected_time.is_none();
-        let token_data = DecodingKey::from_secret(self.secret.as_bytes())
-            .and_then(|key| decode::<TokenClaims>(jwt, &key, &validation))
+        let key = DecodingKey::from_secret(self.secret.as_bytes())
+            .map_err(|error| TokenError::Invalid(error.to_string()))?;
+        let token_data = decode::<TokenClaims>(jwt, &key, &validation)
         .and_then(|data| {
             if injected_time
                 .is_some_and(|now| data.claims.exp < now.timestamp().saturating_sub(leeway))

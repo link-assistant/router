@@ -70,6 +70,7 @@ pub struct RuntimeConfig {
     path: PathBuf,
     audit_path: PathBuf,
     input: cli_settings::Input,
+    operation: Option<crate::operation_context::OperationContext>,
     boot: Value,
     disk: Mutex<Disk>,
     live: RwLock<Live>,
@@ -101,6 +102,12 @@ pub(super) enum Failure {
     Missing,
     Conflict(&'static str),
     Io,
+}
+
+impl From<std::io::Error> for Failure {
+    fn from(_: std::io::Error) -> Self {
+        Self::Io
+    }
 }
 
 impl From<pointer::PathError> for Failure {
@@ -142,6 +149,7 @@ impl RuntimeConfig {
             path,
             audit_path,
             input,
+            operation: crate::operation_context::current(),
             boot: document.clone(),
             disk: Mutex::new(Disk { seen: bytes, document, error: None }),
             live: RwLock::new(live),
@@ -150,7 +158,7 @@ impl RuntimeConfig {
     }
 
     /// Start the file watcher. Its weak reference lets it stop with the server.
-    pub fn watch(self: &Arc<Self>) {
+    pub(crate) fn watch(self: &Arc<Self>) {
         let store = Arc::downgrade(self);
         tokio::spawn(async move {
             loop {
@@ -240,6 +248,13 @@ impl RuntimeConfig {
     }
 
     fn edit(&self, edit: Edit, actor: &str) -> Result<Value, Failure> {
+        let mut name = self.path.file_name().ok_or(Failure::Io)?.to_os_string();
+        name.push(".lock");
+        let lock = self.path.with_file_name(name);
+        crate::durable_file::with_exclusive_lock(&lock, || self.edit_locked(edit, actor))
+    }
+
+    fn edit_locked(&self, edit: Edit, actor: &str) -> Result<Value, Failure> {
         let mut disk = self.disk.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         self.refresh(&mut disk, "file")?;
         let mut next = disk.document.clone();
@@ -267,10 +282,10 @@ impl RuntimeConfig {
         let toml = storage::decode(disk.seen.as_deref().unwrap_or_default())
             .map_err(Failure::Invalid)?.0;
         let bytes = storage::encode(toml, &next).map_err(Failure::Invalid)?;
-        self.audit(actor, action, &disk.document, &next)?;
         if storage::read(&self.path).map_err(|_| Failure::Io)? != disk.seen {
             return Err(Failure::Conflict("configuration file changed during the edit"));
         }
+        self.audit(actor, action, &disk.document, &next)?;
         crate::durable_file::atomic_write_owner_only(&self.path, bytes.as_bytes())
             .map_err(|_| Failure::Io)?;
         self.apply(&mut disk, Some(bytes), next, live);
@@ -296,7 +311,11 @@ impl RuntimeConfig {
     fn validate(&self, document: &Value) -> Result<Live, &'static str> {
         let live = Live::from_document(document)?;
         let cli = self.input.resolve(document)?;
-        let config = cli.into_config().map_err(|_| "runtime configuration is invalid for this server")?;
+        let result = self.operation.as_ref().map_or_else(
+            || cli.into_config(),
+            |context| context.scope(|| cli.into_config()),
+        );
+        let config = result.map_err(|_| "runtime configuration is invalid for this server")?;
         crate::management_config::ManagementConfig::validate_secrets(
             &config.token_secret, config.admin_key.as_deref(),
         ).map_err(|_| "runtime configuration includes a published example credential")?;
