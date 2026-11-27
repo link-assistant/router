@@ -54,7 +54,9 @@ impl TokenManager {
                     }),
                 // Minted under another issuer secret: a different repair from a
                 // corrupt token, so it is told apart (issue #644).
-                jsonwebtoken::errors::ErrorKind::InvalidSignature => Err(TokenError::SignatureInvalid),
+                jsonwebtoken::errors::ErrorKind::InvalidSignature => {
+                    Err(TokenError::SignatureInvalid)
+                }
                 _ => Err(TokenError::Invalid(e.to_string())),
             })?;
 
