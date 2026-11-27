@@ -18,3 +18,5 @@ Issue #810 requests a repository-wide dependency refresh and remediation of the 
 | Follow the dependency-update practices and finish in PR #811 | Preserve chronological commits, a changelog fragment, current main ancestry, closing reference, passing CI and review coverage | [Dependency update practices](https://github.com/link-assistant/hive-mind/blob/main/docs/DEPENDENCY-UPDATE-BEST-PRACTICES.md) |
 
 Registry tables record the starting manifest and lockfile versions and the upstream versions observed during this update. The most recent release of a crate can belong to a different semver series from the series its consumer requires.
+
+[Implementation options](options.md) records the alternative approaches, library and tooling choices, and plans for the outstanding verification criteria.
