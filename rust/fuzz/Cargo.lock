@@ -1926,9 +1926,9 @@ dependencies = [
 
 [[package]]
 name = "link-cli"
-version = "3.2.1"
+version = "3.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df500e4df2cf13abfb78d19117bc4d06685fe8d6637d3c13d72e85f282a4d6e7"
+checksum = "2dca0556091ecdcdabdc4e310ebaa7bbc254208411aa4cdd1231daef8a05e9f2"
 dependencies = [
  "anyhow",
  "ctrlc",
