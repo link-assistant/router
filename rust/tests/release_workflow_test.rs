@@ -222,8 +222,7 @@ fn release_workflow_reuses_current_cached_coverage_tools() {
         ),
         "the coverage job should reuse a cached rust-script binary from the approved lock"
     );
-    let lock_identity =
-        "hashFiles('scripts/ci/cargo-tools/rust-script/Cargo.lock', 'scripts/ci/cargo-tools/releases.tsv')";
+    let lock_identity = "hashFiles('scripts/ci/cargo-tools/rust-script/Cargo.lock', 'scripts/ci/cargo-tools/releases.tsv')";
     for cache_prefix in coverage
         .lines()
         .filter(|line| line.contains("-cargo-coverage-"))
@@ -393,7 +392,11 @@ fn release_workflows_pin_actions_tools_and_artifact_identity() {
             .find(|line| line.split('\t').next() == Some(tool))
             .expect("a release tool must have a verified crates.io source");
         let fields: Vec<_> = row.split('\t').collect();
-        assert_eq!(fields.len(), 3, "tool release {tool} must have three fields");
+        assert_eq!(
+            fields.len(),
+            3,
+            "tool release {tool} must have three fields"
+        );
         let version = fields[1];
         assert!(
             version.split('.').count() == 3
@@ -551,11 +554,15 @@ fn coverage_tool_install_is_idempotent_after_cache_restore() {
 
     assert!(coverage.contains("LLVM_COV_VERSION: '0.9.2'"));
     assert!(
-        coverage.contains(r#"cargo llvm-cov --version 2>/dev/null | grep -Fqx "cargo-llvm-cov $LLVM_COV_VERSION""#),
+        coverage.contains(
+            r#"cargo llvm-cov --version 2>/dev/null | grep -Fqx "cargo-llvm-cov $LLVM_COV_VERSION""#
+        ),
         "a restored coverage binary at the pinned version should be reused"
     );
     assert!(
-        coverage.contains(r#"cargo install cargo-llvm-cov --version "$LLVM_COV_VERSION" --locked --force"#),
+        coverage.contains(
+            r#"cargo install cargo-llvm-cov --version "$LLVM_COV_VERSION" --locked --force"#
+        ),
         "a stale cached coverage binary should be replaced using the same pin"
     );
 }
