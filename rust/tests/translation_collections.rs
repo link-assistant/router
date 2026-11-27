@@ -44,7 +44,10 @@ fn filter_map_visits_each_input_once_and_preserves_survivor_order() {
 #[test]
 fn empty_collections_do_not_invoke_callbacks() {
     assert_eq!(json_map(&[], |_| panic!("empty map callback")).len(), 0);
-    assert_eq!(json_filter_map(&[], |_| panic!("empty filter callback")).len(), 0);
+    assert_eq!(
+        json_filter_map(&[], |_| panic!("empty filter callback")).len(),
+        0
+    );
 }
 
 #[test]
