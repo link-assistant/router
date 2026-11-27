@@ -6,11 +6,11 @@ Go	gopkg.in/validator.v2	—	v2.0.1	v2.0.1	https://proxy.golang.org/gopkg.in/val
 Java	com.diffplug.spotless:spotless-maven-plugin	2.43.0	3.12.0	3.12.0	https://repo.maven.apache.org/maven2/com/diffplug/spotless/spotless-maven-plugin/maven-metadata.xml
 Java	com.google.code.findbugs:jsr305	3.0.2	3.0.2	3.0.2	https://repo.maven.apache.org/maven2/com/google/code/findbugs/jsr305/maven-metadata.xml
 Java	com.google.code.gson:gson	2.10.1	2.15.0	2.15.0	https://repo.maven.apache.org/maven2/com/google/code/gson/gson/maven-metadata.xml
-Java	com.google.errorprone:error_prone_annotations	—	2.50.0	2.53.0	https://repo.maven.apache.org/maven2/com/google/errorprone/error_prone_annotations/maven-metadata.xml
+Java	com.google.errorprone:error_prone_annotations	—	2.53.0	2.53.0	https://repo.maven.apache.org/maven2/com/google/errorprone/error_prone_annotations/maven-metadata.xml
 Java	com.google.googlejavaformat:google-java-format	—	2.0.0	2.0.0	https://repo.maven.apache.org/maven2/com/google/googlejavaformat/google-java-format/maven-metadata.xml
 Java	com.squareup.okhttp3:logging-interceptor	4.12.0	5.5.1	5.5.1	https://repo.maven.apache.org/maven2/com/squareup/okhttp3/logging-interceptor/maven-metadata.xml
 Java	com.squareup.okhttp3:okhttp-jvm	—	5.5.1	5.5.1	https://repo.maven.apache.org/maven2/com/squareup/okhttp3/okhttp-jvm/maven-metadata.xml
-Java	com.squareup.okio:okio-jvm	—	3.18.1	3.18.2	https://repo.maven.apache.org/maven2/com/squareup/okio/okio-jvm/maven-metadata.xml
+Java	com.squareup.okio:okio-jvm	—	3.18.2	3.18.2	https://repo.maven.apache.org/maven2/com/squareup/okio/okio-jvm/maven-metadata.xml
 Java	io.gsonfire:gson-fire	1.9.0	1.9.0	1.9.0	https://repo.maven.apache.org/maven2/io/gsonfire/gson-fire/maven-metadata.xml
 Java	jakarta.annotation:jakarta.annotation-api	1.3.5	3.0.0	3.0.0	https://repo.maven.apache.org/maven2/jakarta/annotation/jakarta.annotation-api/maven-metadata.xml
 Java	jakarta.ws.rs:jakarta.ws.rs-api	2.1.6	4.0.0	4.0.0	https://repo.maven.apache.org/maven2/jakarta/ws/rs/jakarta.ws.rs-api/maven-metadata.xml
@@ -25,9 +25,9 @@ Java	org.apache.maven.plugins:maven-source-plugin	3.3.0	3.4.0	3.4.0	https://repo
 Java	org.apache.maven.plugins:maven-surefire-plugin	2.22.2	3.6.1	3.6.1	https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-surefire-plugin/maven-metadata.xml
 Java	org.apiguardian:apiguardian-api	—	1.1.2	1.1.2	https://repo.maven.apache.org/maven2/org/apiguardian/apiguardian-api/maven-metadata.xml
 Java	org.codehaus.mojo:build-helper-maven-plugin	3.5.0	3.8.0	3.8.0	https://repo.maven.apache.org/maven2/org/codehaus/mojo/build-helper-maven-plugin/maven-metadata.xml
-Java	org.jetbrains.kotlin:kotlin-stdlib	—	2.1.21	2.4.21	https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/maven-metadata.xml
-Java	org.jetbrains:annotations	—	13.0	26.1.0	https://repo.maven.apache.org/maven2/org/jetbrains/annotations/maven-metadata.xml
-Java	org.jspecify:jspecify	—	1.0.0	1.0.1	https://repo.maven.apache.org/maven2/org/jspecify/jspecify/maven-metadata.xml
+Java	org.jetbrains.kotlin:kotlin-stdlib	—	2.4.21	2.4.21	https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/maven-metadata.xml
+Java	org.jetbrains:annotations	—	26.1.0	26.1.0	https://repo.maven.apache.org/maven2/org/jetbrains/annotations/maven-metadata.xml
+Java	org.jspecify:jspecify	—	1.0.1	1.0.1	https://repo.maven.apache.org/maven2/org/jspecify/jspecify/maven-metadata.xml
 Java	org.junit.jupiter:junit-jupiter-api	—	6.1.3	6.1.3	https://repo.maven.apache.org/maven2/org/junit/jupiter/junit-jupiter-api/maven-metadata.xml
 Java	org.junit.jupiter:junit-jupiter-engine	5.10.3	6.1.3	6.1.3	https://repo.maven.apache.org/maven2/org/junit/jupiter/junit-jupiter-engine/maven-metadata.xml
 Java	org.junit.platform:junit-platform-commons	—	6.1.3	6.1.3	https://repo.maven.apache.org/maven2/org/junit/platform/junit-platform-commons/maven-metadata.xml

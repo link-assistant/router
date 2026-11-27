@@ -1,7 +1,7 @@
 Tool or image	Initial pin	Active pin	Current upstream release/reference	Publisher
 Rust stable	1.98.1 in workflows; 1.99.1 in Docker	1.100.0	1.100.0	https://static.rust-lang.org/dist/channel-rust-stable.toml
 Rust nightly	nightly	nightly-2026-11-26	nightly-2026-11-26 complete manifest at inventory time	https://static.rust-lang.org/dist/2026-11-26/channel-rust-nightly.toml
-Node	20 in development; 20 and 24 binding matrix	26.13.1; 20 and 24 binding compatibility	26.13.1	https://nodejs.org/dist/index.json
+Node	20 in development; 20 and 24 binding matrix	26.13.1; 20.20.2 for the TypeScript stage; 20 and 24 binding compatibility	26.13.1	https://nodejs.org/dist/index.json
 npm	Toolchain bundled	Toolchain bundled; Node 26 provides npm 11.20.0	12.2.3	https://registry.npmjs.org/npm/latest
 Bun	1.4.3; Docker tag 1	1.4.5	1.4.5	https://github.com/oven-sh/bun/releases/tag/bun-v1.4.5
 CPython	3.10	3.15.2; 3.10 binding compatibility	3.15.2	https://www.python.org/downloads/release/python-3152/

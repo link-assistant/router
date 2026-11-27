@@ -46,6 +46,10 @@ updates:
     directory: /experiments/issue-697/http-clients
     schedule:
       interval: weekly
+  - package-ecosystem: maven
+    directory: /experiments/issue-697/http-clients
+    schedule:
+      interval: weekly
   - package-ecosystem: composer
     directory: /experiments/issue-697/http-clients
     schedule:

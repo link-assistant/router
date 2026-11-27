@@ -1,14 +1,14 @@
 Dependency	Published version	Runtime requirement or registry error	Registry metadata	Original versions by file	Active lock or Rust script pins by file
 adler2	2.0.1		https://index.crates.io/ad/le/adler2	Cargo.lock: 2.0.1; rust/fuzz/Cargo.lock: 2.0.1	Cargo.lock: 2.0.1; rust/fuzz/Cargo.lock: 2.0.1
 aead	0.6.1	1.85	https://index.crates.io/ae/ad/aead	Cargo.lock: 0.6.1; rust/fuzz/Cargo.lock: 0.6.1	Cargo.lock: 0.6.1; rust/fuzz/Cargo.lock: 0.6.1
-aes	0.9.4	1.89	https://index.crates.io/3/a/aes	Cargo.lock: 0.9.3; rust/fuzz/Cargo.lock: 0.9.3	Cargo.lock: 0.9.3; rust/fuzz/Cargo.lock: 0.9.3
+aes	0.9.4	1.89	https://index.crates.io/3/a/aes	Cargo.lock: 0.9.3; rust/fuzz/Cargo.lock: 0.9.3	Cargo.lock: 0.9.4; rust/fuzz/Cargo.lock: 0.9.4
 aes-gcm	0.11.1	1.85	https://index.crates.io/ae/s-/aes-gcm	Cargo.lock: 0.11.1; rust/Cargo.toml: 0.11; rust/fuzz/Cargo.lock: 0.11.1	Cargo.lock: 0.11.1; rust/fuzz/Cargo.lock: 0.11.1
-ahash	0.8.14	1.60.0	https://index.crates.io/ah/as/ahash	Cargo.lock: 0.8.12	Cargo.lock: 0.8.12
+ahash	0.8.14	1.60.0	https://index.crates.io/ah/as/ahash	Cargo.lock: 0.8.12	Cargo.lock: 0.8.14; rust/fuzz/Cargo.lock: 0.8.14
 aho-corasick	1.1.5	1.60.0	https://index.crates.io/ah/o-/aho-corasick	Cargo.lock: 1.1.5; rust/fuzz/Cargo.lock: 1.1.5	Cargo.lock: 1.1.5; rust/fuzz/Cargo.lock: 1.1.5
 alloc-no-stdlib	3.0.0		https://index.crates.io/al/lo/alloc-no-stdlib	Cargo.lock: 3.0.0; rust/fuzz/Cargo.lock: 3.0.0	Cargo.lock: 3.0.0; rust/fuzz/Cargo.lock: 3.0.0
 alloc-stdlib	0.3.0		https://index.crates.io/al/lo/alloc-stdlib	Cargo.lock: 0.3.0; rust/fuzz/Cargo.lock: 0.3.0	Cargo.lock: 0.3.0; rust/fuzz/Cargo.lock: 0.3.0
 alloca	0.4.0		https://index.crates.io/al/lo/alloca	Cargo.lock: 0.4.0	Cargo.lock: 0.4.0
-allocator-api2	0.4.0	1.64.0	https://index.crates.io/al/lo/allocator-api2	Cargo.lock: 0.2.21, 0.4.0; experiments/issue-372/Cargo.lock: 0.4.0; rust/fuzz/Cargo.lock: 0.4.0	Cargo.lock: 0.2.21, 0.4.0; rust/fuzz/Cargo.lock: 0.4.0
+allocator-api2	0.4.0	1.64.0	https://index.crates.io/al/lo/allocator-api2	Cargo.lock: 0.2.21, 0.4.0; experiments/issue-372/Cargo.lock: 0.4.0; rust/fuzz/Cargo.lock: 0.4.0	Cargo.lock: 0.2.22, 0.4.0; rust/fuzz/Cargo.lock: 0.2.22, 0.4.0
 android_system_properties	0.1.6		https://index.crates.io/an/dr/android_system_properties	Cargo.lock: 0.1.6; rust/fuzz/Cargo.lock: 0.1.6	Cargo.lock: 0.1.6; rust/fuzz/Cargo.lock: 0.1.6
 anes	0.2.1		https://index.crates.io/an/es/anes	Cargo.lock: 0.1.6	Cargo.lock: 0.1.6
 anstream	1.0.0	1.66.0	https://index.crates.io/an/st/anstream	Cargo.lock: 1.0.0; experiments/issue-372/Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 1.0.0	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 1.0.0
@@ -16,42 +16,43 @@ anstyle	1.0.14	1.66.0	https://index.crates.io/an/st/anstyle	Cargo.lock: 1.0.14; 
 anstyle-parse	1.0.0	1.66.0	https://index.crates.io/an/st/anstyle-parse	Cargo.lock: 1.0.0; experiments/issue-372/Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 1.0.0	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 1.0.0
 anstyle-query	1.1.5	1.66.0	https://index.crates.io/an/st/anstyle-query	Cargo.lock: 1.1.5; experiments/issue-372/Cargo.lock: 1.1.5; rust/fuzz/Cargo.lock: 1.1.5	Cargo.lock: 1.1.5; rust/fuzz/Cargo.lock: 1.1.5
 anstyle-wincon	3.0.11	1.66.0	https://index.crates.io/an/st/anstyle-wincon	Cargo.lock: 3.0.11; experiments/issue-372/Cargo.lock: 3.0.11; rust/fuzz/Cargo.lock: 3.0.11	Cargo.lock: 3.0.11; rust/fuzz/Cargo.lock: 3.0.11
-anyhow	1.0.105	1.68	https://index.crates.io/an/yh/anyhow	Cargo.lock: 1.0.104; docs/case-studies/issue-759/raw/sources/link-cli/files/rust/Cargo.toml: 1.0.104; experiments/issue-372/Cargo.lock: 1.0.104; rust/fuzz/Cargo.lock: 1.0.104	Cargo.lock: 1.0.104; rust/fuzz/Cargo.lock: 1.0.104
-arbitrary	1.5.0	1.71.0	https://index.crates.io/ar/bi/arbitrary	rust/fuzz/Cargo.lock: 1.4.2	rust/fuzz/Cargo.lock: 1.4.2
-arc-swap	1.9.5		https://index.crates.io/ar/c-/arc-swap	Cargo.lock: 1.9.2; rust/fuzz/Cargo.lock: 1.9.2	Cargo.lock: 1.9.2; rust/fuzz/Cargo.lock: 1.9.2
-arrayvec	0.7.8	1.51	https://index.crates.io/ar/ra/arrayvec	Cargo.lock: 0.7.8	Cargo.lock: 0.7.8
+anyhow	1.0.105	1.68	https://index.crates.io/an/yh/anyhow	Cargo.lock: 1.0.104; docs/case-studies/issue-759/raw/sources/link-cli/files/rust/Cargo.toml: 1.0.104; experiments/issue-372/Cargo.lock: 1.0.104; rust/fuzz/Cargo.lock: 1.0.104	Cargo.lock: 1.0.105; rust/fuzz/Cargo.lock: 1.0.105
+arbitrary	1.5.0	1.71.0	https://index.crates.io/ar/bi/arbitrary	rust/fuzz/Cargo.lock: 1.4.2	rust/fuzz/Cargo.lock: 1.5.0
+arc-swap	1.9.5		https://index.crates.io/ar/c-/arc-swap	Cargo.lock: 1.9.2; rust/fuzz/Cargo.lock: 1.9.2	Cargo.lock: 1.9.5; rust/fuzz/Cargo.lock: 1.9.5
+archery	1.2.3	1.85.0	https://index.crates.io/ar/ch/archery		Cargo.lock: 1.2.3; rust/fuzz/Cargo.lock: 1.2.3
+arrayvec	0.7.8	1.51	https://index.crates.io/ar/ra/arrayvec	Cargo.lock: 0.7.8	Cargo.lock: 0.7.8; rust/fuzz/Cargo.lock: 0.7.8
 asn1-rs	0.7.2	1.68	https://index.crates.io/as/n1/asn1-rs	Cargo.lock: 0.7.2; rust/fuzz/Cargo.lock: 0.7.2	Cargo.lock: 0.7.2; rust/fuzz/Cargo.lock: 0.7.2
 asn1-rs-derive	0.7.0		https://index.crates.io/as/n1/asn1-rs-derive	Cargo.lock: 0.6.0; rust/fuzz/Cargo.lock: 0.6.0	Cargo.lock: 0.6.0; rust/fuzz/Cargo.lock: 0.6.0
 asn1-rs-impl	0.3.0		https://index.crates.io/as/n1/asn1-rs-impl	Cargo.lock: 0.2.0; rust/fuzz/Cargo.lock: 0.2.0	Cargo.lock: 0.2.0; rust/fuzz/Cargo.lock: 0.2.0
 async-trait	0.1.92	1.71	https://index.crates.io/as/yn/async-trait	Cargo.lock: 0.1.92; rust/Cargo.toml: 0.1; rust/fuzz/Cargo.lock: 0.1.92	Cargo.lock: 0.1.92; rust/fuzz/Cargo.lock: 0.1.92
 atomic-waker	1.1.2	1.36	https://index.crates.io/at/om/atomic-waker	Cargo.lock: 1.1.2; rust/fuzz/Cargo.lock: 1.1.2	Cargo.lock: 1.1.2; rust/fuzz/Cargo.lock: 1.1.2
 autocfg	1.5.1	1.0	https://index.crates.io/au/to/autocfg	Cargo.lock: 1.5.1; experiments/issue-372/Cargo.lock: 1.5.1; rust/fuzz/Cargo.lock: 1.5.1	Cargo.lock: 1.5.1; rust/fuzz/Cargo.lock: 1.5.1
-aws-lc-rs	1.19.0	1.71.0	https://index.crates.io/aw/s-/aws-lc-rs	Cargo.lock: 1.18.1; rust/fuzz/Cargo.lock: 1.18.1	Cargo.lock: 1.18.1; rust/fuzz/Cargo.lock: 1.18.1
-aws-lc-sys	0.47.0	1.71.0	https://index.crates.io/aw/s-/aws-lc-sys	Cargo.lock: 0.45.0; rust/fuzz/Cargo.lock: 0.45.0	Cargo.lock: 0.45.0; rust/fuzz/Cargo.lock: 0.45.0
+aws-lc-rs	1.19.0	1.71.0	https://index.crates.io/aw/s-/aws-lc-rs	Cargo.lock: 1.18.1; rust/fuzz/Cargo.lock: 1.18.1	Cargo.lock: 1.19.0; rust/fuzz/Cargo.lock: 1.19.0
+aws-lc-sys	0.47.0	1.71.0	https://index.crates.io/aw/s-/aws-lc-sys	Cargo.lock: 0.45.0; rust/fuzz/Cargo.lock: 0.45.0	Cargo.lock: 0.47.0; rust/fuzz/Cargo.lock: 0.47.0
 axum	0.8.9	1.80	https://index.crates.io/ax/um/axum	Cargo.lock: 0.8.9; rust/Cargo.toml: 0.8; rust/fuzz/Cargo.lock: 0.8.9	Cargo.lock: 0.8.9; rust/fuzz/Cargo.lock: 0.8.9
 axum-core	0.5.6	1.78	https://index.crates.io/ax/um/axum-core	Cargo.lock: 0.5.6; rust/fuzz/Cargo.lock: 0.5.6	Cargo.lock: 0.5.6; rust/fuzz/Cargo.lock: 0.5.6
 axum-macros	0.5.1	1.80	https://index.crates.io/ax/um/axum-macros	Cargo.lock: 0.5.1; rust/fuzz/Cargo.lock: 0.5.1	Cargo.lock: 0.5.1; rust/fuzz/Cargo.lock: 0.5.1
-axum-server	0.9.2	1.82	https://index.crates.io/ax/um/axum-server	Cargo.lock: 0.9.2; rust/Cargo.toml: 0.9.2; rust/fuzz/Cargo.lock: 0.8.0	Cargo.lock: 0.9.2; rust/fuzz/Cargo.lock: 0.8.0
-base16ct	1.0.0	1.85	https://index.crates.io/ba/se/base16ct	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 0.2.0	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 0.2.0
+axum-server	0.9.2	1.82	https://index.crates.io/ax/um/axum-server	Cargo.lock: 0.9.2; rust/Cargo.toml: 0.9.2; rust/fuzz/Cargo.lock: 0.8.0	Cargo.lock: 0.9.2; rust/fuzz/Cargo.lock: 0.9.2
+base16ct	1.0.0	1.85	https://index.crates.io/ba/se/base16ct	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 0.2.0	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 1.0.0
 base64	0.23.1	1.71.0	https://index.crates.io/ba/se/base64	Cargo.lock: 0.22.1, 0.23.1; docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml: 0.22; rust/Cargo.toml: 0.23; rust/fuzz/Cargo.lock: 0.22.1, 0.23.1	Cargo.lock: 0.22.1, 0.23.1; rust/fuzz/Cargo.lock: 0.22.1, 0.23.1
 base64ct	1.8.3	1.85	https://index.crates.io/ba/se/base64ct	Cargo.lock: 1.8.3; rust/fuzz/Cargo.lock: 1.8.3	Cargo.lock: 1.8.3; rust/fuzz/Cargo.lock: 1.8.3
 beef	0.5.2		https://index.crates.io/be/ef/beef	Cargo.lock: 0.5.2; experiments/issue-372/Cargo.lock: 0.5.2; rust/fuzz/Cargo.lock: 0.5.2	Cargo.lock: 0.5.2; rust/fuzz/Cargo.lock: 0.5.2
-bit-set	0.11.1	1.85.0	https://index.crates.io/bi/t-/bit-set	Cargo.lock: 0.11.1, 0.8.0	Cargo.lock: 0.11.1, 0.8.0
-bit-vec	0.10.2	1.85.0	https://index.crates.io/bi/t-/bit-vec	Cargo.lock: 0.10.2, 0.8.0, 0.9.1; rust/fuzz/Cargo.lock: 0.9.1	Cargo.lock: 0.10.2, 0.8.0, 0.9.1; rust/fuzz/Cargo.lock: 0.9.1
-bitflags	2.13.2	1.56.0	https://index.crates.io/bi/tf/bitflags	Cargo.lock: 1.3.2, 2.13.1; experiments/issue-372/Cargo.lock: 2.13.1; rust/fuzz/Cargo.lock: 1.3.2, 2.13.2	Cargo.lock: 1.3.2, 2.13.1; rust/fuzz/Cargo.lock: 1.3.2, 2.13.2
+bit-set	0.11.1	1.85.0	https://index.crates.io/bi/t-/bit-set	Cargo.lock: 0.11.1, 0.8.0	Cargo.lock: 0.11.1, 0.8.0; rust/fuzz/Cargo.lock: 0.8.0
+bit-vec	0.10.2	1.85.0	https://index.crates.io/bi/t-/bit-vec	Cargo.lock: 0.10.2, 0.8.0, 0.9.1; rust/fuzz/Cargo.lock: 0.9.1	Cargo.lock: 0.10.2, 0.8.0, 0.9.1; rust/fuzz/Cargo.lock: 0.8.0, 0.9.1
+bitflags	2.13.2	1.56.0	https://index.crates.io/bi/tf/bitflags	Cargo.lock: 1.3.2, 2.13.1; experiments/issue-372/Cargo.lock: 2.13.1; rust/fuzz/Cargo.lock: 1.3.2, 2.13.2	Cargo.lock: 1.3.2, 2.13.2; rust/fuzz/Cargo.lock: 1.3.2, 2.13.2
 block-buffer	0.12.1	1.85	https://index.crates.io/bl/oc/block-buffer	Cargo.lock: 0.10.4, 0.12.1; rust/fuzz/Cargo.lock: 0.10.4, 0.12.1	Cargo.lock: 0.10.4, 0.12.1; rust/fuzz/Cargo.lock: 0.10.4, 0.12.1
 block2	0.6.2	1.71	https://index.crates.io/bl/oc/block2	Cargo.lock: 0.6.2; rust/fuzz/Cargo.lock: 0.6.2	Cargo.lock: 0.6.2; rust/fuzz/Cargo.lock: 0.6.2
-borrow-or-share	0.2.4	1.65	https://index.crates.io/bo/rr/borrow-or-share	Cargo.lock: 0.2.4	Cargo.lock: 0.2.4
+borrow-or-share	0.2.4	1.65	https://index.crates.io/bo/rr/borrow-or-share	Cargo.lock: 0.2.4	Cargo.lock: 0.2.4; rust/fuzz/Cargo.lock: 0.2.4
 borsh	1.8.1	1.77.0	https://index.crates.io/bo/rs/borsh	Cargo.lock: 1.8.1	Cargo.lock: 1.8.1
 borsh-derive	1.8.1	1.77.0	https://index.crates.io/bo/rs/borsh-derive	Cargo.lock: 1.8.1	Cargo.lock: 1.8.1
-brotli	9.1.3	1.59.0	https://index.crates.io/br/ot/brotli	Cargo.lock: 9.1.3; rust/Cargo.toml: 9.0.0; rust/fuzz/Cargo.lock: 9.0.0	Cargo.lock: 9.1.3; rust/fuzz/Cargo.lock: 9.0.0
-brotli-decompressor	6.4.0		https://index.crates.io/br/ot/brotli-decompressor	Cargo.lock: 6.4.0; rust/fuzz/Cargo.lock: 6.0.1	Cargo.lock: 6.4.0; rust/fuzz/Cargo.lock: 6.0.1
-bumpalo	3.20.4	1.71.1	https://index.crates.io/bu/mp/bumpalo	Cargo.lock: 3.20.3; rust/fuzz/Cargo.lock: 3.20.3	Cargo.lock: 3.20.3; rust/fuzz/Cargo.lock: 3.20.3
-bytecount	0.6.9		https://index.crates.io/by/te/bytecount	Cargo.lock: 0.6.9	Cargo.lock: 0.6.9
-bytes	1.12.2	1.57	https://index.crates.io/by/te/bytes	Cargo.lock: 1.12.2; rust/Cargo.toml: 1.12; rust/fuzz/Cargo.lock: 1.12.1	Cargo.lock: 1.12.2; rust/fuzz/Cargo.lock: 1.12.1
+brotli	9.1.3	1.59.0	https://index.crates.io/br/ot/brotli	Cargo.lock: 9.1.3; rust/Cargo.toml: 9.0.0; rust/fuzz/Cargo.lock: 9.0.0	Cargo.lock: 9.1.3; rust/fuzz/Cargo.lock: 9.1.3
+brotli-decompressor	6.4.0		https://index.crates.io/br/ot/brotli-decompressor	Cargo.lock: 6.4.0; rust/fuzz/Cargo.lock: 6.0.1	Cargo.lock: 6.4.0; rust/fuzz/Cargo.lock: 6.4.0
+bumpalo	3.20.4	1.71.1	https://index.crates.io/bu/mp/bumpalo	Cargo.lock: 3.20.3; rust/fuzz/Cargo.lock: 3.20.3	Cargo.lock: 3.20.4; rust/fuzz/Cargo.lock: 3.20.4
+bytecount	0.6.9		https://index.crates.io/by/te/bytecount	Cargo.lock: 0.6.9	Cargo.lock: 0.6.9; rust/fuzz/Cargo.lock: 0.6.9
+bytes	1.12.2	1.57	https://index.crates.io/by/te/bytes	Cargo.lock: 1.12.2; rust/Cargo.toml: 1.12; rust/fuzz/Cargo.lock: 1.12.1	Cargo.lock: 1.12.2; rust/fuzz/Cargo.lock: 1.12.2
 cast	0.3.0		https://index.crates.io/ca/st/cast	Cargo.lock: 0.3.0	Cargo.lock: 0.3.0
-cc	1.12.0	1.65.0	https://index.crates.io/2/cc	Cargo.lock: 1.4.5; rust/fuzz/Cargo.lock: 1.6.0	Cargo.lock: 1.4.5; rust/fuzz/Cargo.lock: 1.6.0
-cfg-if	1.0.5	1.32	https://index.crates.io/cf/g-/cfg-if	Cargo.lock: 1.0.4; experiments/issue-372/Cargo.lock: 1.0.4; rust/fuzz/Cargo.lock: 1.0.5	Cargo.lock: 1.0.4; rust/fuzz/Cargo.lock: 1.0.5
+cc	1.12.0	1.65.0	https://index.crates.io/2/cc	Cargo.lock: 1.4.5; rust/fuzz/Cargo.lock: 1.6.0	Cargo.lock: 1.12.0; rust/fuzz/Cargo.lock: 1.12.0
+cfg-if	1.0.5	1.32	https://index.crates.io/cf/g-/cfg-if	Cargo.lock: 1.0.4; experiments/issue-372/Cargo.lock: 1.0.4; rust/fuzz/Cargo.lock: 1.0.5	Cargo.lock: 1.0.5; rust/fuzz/Cargo.lock: 1.0.5
 cfg_aliases	0.2.2		https://index.crates.io/cf/g_/cfg_aliases	Cargo.lock: 0.1.1, 0.2.2; rust/fuzz/Cargo.lock: 0.1.1, 0.2.2	Cargo.lock: 0.1.1, 0.2.2; rust/fuzz/Cargo.lock: 0.1.1, 0.2.2
 chacha20	0.10.2	1.85	https://index.crates.io/ch/ac/chacha20	Cargo.lock: 0.10.2; rust/fuzz/Cargo.lock: 0.10.2	Cargo.lock: 0.10.2; rust/fuzz/Cargo.lock: 0.10.2
 chrono	0.4.45	1.62.0	https://index.crates.io/ch/ro/chrono	Cargo.lock: 0.4.45; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.4; docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml: 0.4; rust/Cargo.toml: 0.4; rust/fuzz/Cargo.lock: 0.4.45	Cargo.lock: 0.4.45; rust/fuzz/Cargo.lock: 0.4.45; scripts/collect-changelog.rs: 0.4.45; scripts/create-changelog-fragment.rs: 0.4.45; scripts/version-and-commit.rs: 0.4.45
@@ -59,74 +60,75 @@ ciborium	0.2.2	1.58	https://index.crates.io/ci/bo/ciborium	Cargo.lock: 0.2.2	Car
 ciborium-io	0.2.2	1.58	https://index.crates.io/ci/bo/ciborium-io	Cargo.lock: 0.2.2	Cargo.lock: 0.2.2
 ciborium-ll	0.2.2	1.58	https://index.crates.io/ci/bo/ciborium-ll	Cargo.lock: 0.2.2	Cargo.lock: 0.2.2
 cipher	0.5.2	1.85	https://index.crates.io/ci/ph/cipher	Cargo.lock: 0.5.2; rust/fuzz/Cargo.lock: 0.5.2	Cargo.lock: 0.5.2; rust/fuzz/Cargo.lock: 0.5.2
-clap	4.6.10	1.85	https://index.crates.io/cl/ap/clap	Cargo.lock: 4.6.9; docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/Cargo.toml: 4.4; experiments/issue-372/Cargo.lock: 4.6.6; rust/Cargo.toml: 4; rust/fuzz/Cargo.lock: 4.6.7	Cargo.lock: 4.6.9; rust/fuzz/Cargo.lock: 4.6.7
-clap_builder	4.6.10	1.85	https://index.crates.io/cl/ap/clap_builder	Cargo.lock: 4.6.7; experiments/issue-372/Cargo.lock: 4.6.6; rust/fuzz/Cargo.lock: 4.6.7	Cargo.lock: 4.6.7; rust/fuzz/Cargo.lock: 4.6.7
-clap_derive	4.6.9	1.85	https://index.crates.io/cl/ap/clap_derive	Cargo.lock: 4.6.9; experiments/issue-372/Cargo.lock: 4.6.4; rust/fuzz/Cargo.lock: 4.6.7	Cargo.lock: 4.6.9; rust/fuzz/Cargo.lock: 4.6.7
-clap_lex	1.1.2	1.85	https://index.crates.io/cl/ap/clap_lex	Cargo.lock: 1.1.0; experiments/issue-372/Cargo.lock: 1.1.0; rust/fuzz/Cargo.lock: 1.1.1	Cargo.lock: 1.1.0; rust/fuzz/Cargo.lock: 1.1.1
+clap	4.6.10	1.85	https://index.crates.io/cl/ap/clap	Cargo.lock: 4.6.9; docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/Cargo.toml: 4.4; experiments/issue-372/Cargo.lock: 4.6.6; rust/Cargo.toml: 4; rust/fuzz/Cargo.lock: 4.6.7	Cargo.lock: 4.6.10; rust/fuzz/Cargo.lock: 4.6.10
+clap_builder	4.6.10	1.85	https://index.crates.io/cl/ap/clap_builder	Cargo.lock: 4.6.7; experiments/issue-372/Cargo.lock: 4.6.6; rust/fuzz/Cargo.lock: 4.6.7	Cargo.lock: 4.6.10; rust/fuzz/Cargo.lock: 4.6.10
+clap_derive	4.6.9	1.85	https://index.crates.io/cl/ap/clap_derive	Cargo.lock: 4.6.9; experiments/issue-372/Cargo.lock: 4.6.4; rust/fuzz/Cargo.lock: 4.6.7	Cargo.lock: 4.6.9; rust/fuzz/Cargo.lock: 4.6.9
+clap_lex	1.1.2	1.85	https://index.crates.io/cl/ap/clap_lex	Cargo.lock: 1.1.0; experiments/issue-372/Cargo.lock: 1.1.0; rust/fuzz/Cargo.lock: 1.1.1	Cargo.lock: 1.1.2; rust/fuzz/Cargo.lock: 1.1.2
 cmake	0.1.58	1.65	https://index.crates.io/cm/ak/cmake	Cargo.lock: 0.1.58; rust/fuzz/Cargo.lock: 0.1.58	Cargo.lock: 0.1.58; rust/fuzz/Cargo.lock: 0.1.58
 cmov	0.5.4	1.85	https://index.crates.io/cm/ov/cmov	Cargo.lock: 0.5.4; rust/fuzz/Cargo.lock: 0.5.4	Cargo.lock: 0.5.4; rust/fuzz/Cargo.lock: 0.5.4
 colorchoice	1.0.5	1.66.0	https://index.crates.io/co/lo/colorchoice	Cargo.lock: 1.0.5; experiments/issue-372/Cargo.lock: 1.0.5; rust/fuzz/Cargo.lock: 1.0.5	Cargo.lock: 1.0.5; rust/fuzz/Cargo.lock: 1.0.5
-combine	4.6.9		https://index.crates.io/co/mb/combine	Cargo.lock: 4.6.8; rust/fuzz/Cargo.lock: 4.6.8	Cargo.lock: 4.6.8; rust/fuzz/Cargo.lock: 4.6.8
+combine	4.6.9		https://index.crates.io/co/mb/combine	Cargo.lock: 4.6.8; rust/fuzz/Cargo.lock: 4.6.8	Cargo.lock: 4.6.9; rust/fuzz/Cargo.lock: 4.6.9
 console_error_panic_hook	0.1.7		https://index.crates.io/co/ns/console_error_panic_hook	docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.1	—
-const-oid	0.10.3	1.85	https://index.crates.io/co/ns/const-oid	Cargo.lock: 0.10.2; rust/fuzz/Cargo.lock: 0.10.2, 0.9.6	Cargo.lock: 0.10.2; rust/fuzz/Cargo.lock: 0.10.2, 0.9.6
-cookie	0.18.3	1.56	https://index.crates.io/co/ok/cookie	Cargo.lock: 0.18.3; rust/fuzz/Cargo.lock: 0.18.2	Cargo.lock: 0.18.3; rust/fuzz/Cargo.lock: 0.18.2
+const-oid	0.10.3	1.85	https://index.crates.io/co/ns/const-oid	Cargo.lock: 0.10.2; rust/fuzz/Cargo.lock: 0.10.2, 0.9.6	Cargo.lock: 0.10.3; rust/fuzz/Cargo.lock: 0.10.3
+cookie	0.18.3	1.56	https://index.crates.io/co/ok/cookie	Cargo.lock: 0.18.3; rust/fuzz/Cargo.lock: 0.18.2	Cargo.lock: 0.18.3; rust/fuzz/Cargo.lock: 0.18.3
 cookie_store	0.22.1	1.88.0	https://index.crates.io/co/ok/cookie_store	Cargo.lock: 0.22.1; rust/Cargo.toml: 0.22.1; rust/fuzz/Cargo.lock: 0.22.1	Cargo.lock: 0.22.1; rust/fuzz/Cargo.lock: 0.22.1
 core-foundation	0.10.1	1.65	https://index.crates.io/co/re/core-foundation	Cargo.lock: 0.10.1, 0.9.4; rust/fuzz/Cargo.lock: 0.10.1, 0.9.4	Cargo.lock: 0.10.1, 0.9.4; rust/fuzz/Cargo.lock: 0.10.1, 0.9.4
 core-foundation-sys	0.8.7		https://index.crates.io/co/re/core-foundation-sys	Cargo.lock: 0.8.7; rust/fuzz/Cargo.lock: 0.8.7	Cargo.lock: 0.8.7; rust/fuzz/Cargo.lock: 0.8.7
 core_detect	1.0.0		https://index.crates.io/co/re/core_detect	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 1.0.0	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 1.0.0
 cpubits	0.1.1	1.85	https://index.crates.io/cp/ub/cpubits	Cargo.lock: 0.1.1; rust/fuzz/Cargo.lock: 0.1.1	Cargo.lock: 0.1.1; rust/fuzz/Cargo.lock: 0.1.1
 cpufeatures	0.3.1	1.85	https://index.crates.io/cp/uf/cpufeatures	Cargo.lock: 0.2.17, 0.3.1; rust/fuzz/Cargo.lock: 0.2.17, 0.3.1	Cargo.lock: 0.2.17, 0.3.1; rust/fuzz/Cargo.lock: 0.2.17, 0.3.1
-crc32fast	1.5.6	1.63	https://index.crates.io/cr/c3/crc32fast	Cargo.lock: 1.5.1; rust/fuzz/Cargo.lock: 1.5.2	Cargo.lock: 1.5.1; rust/fuzz/Cargo.lock: 1.5.2
+crc32fast	1.5.6	1.63	https://index.crates.io/cr/c3/crc32fast	Cargo.lock: 1.5.1; rust/fuzz/Cargo.lock: 1.5.2	Cargo.lock: 1.5.6; rust/fuzz/Cargo.lock: 1.5.6
 criterion	0.8.2	1.86	https://index.crates.io/cr/it/criterion	Cargo.lock: 0.8.2; rust/Cargo.toml: 0.8	Cargo.lock: 0.8.2
 criterion-plot	0.8.2		https://index.crates.io/cr/it/criterion-plot	Cargo.lock: 0.8.2	Cargo.lock: 0.8.2
 crunchy	0.2.4		https://index.crates.io/cr/un/crunchy	Cargo.lock: 0.2.4	Cargo.lock: 0.2.4
-crypto-bigint	0.7.11	1.87	https://index.crates.io/cr/yp/crypto-bigint	Cargo.lock: 0.7.11; rust/fuzz/Cargo.lock: 0.5.5	Cargo.lock: 0.7.11; rust/fuzz/Cargo.lock: 0.5.5
-crypto-common	0.2.2	1.85	https://index.crates.io/cr/yp/crypto-common	Cargo.lock: 0.1.6, 0.2.2; rust/fuzz/Cargo.lock: 0.1.6, 0.2.2	Cargo.lock: 0.1.6, 0.2.2; rust/fuzz/Cargo.lock: 0.1.6, 0.2.2
-crypto-primes	0.7.2	1.85	https://index.crates.io/cr/yp/crypto-primes	Cargo.lock: 0.7.2	Cargo.lock: 0.7.2
-ctor	1.0.14	1.60	https://index.crates.io/ct/or/ctor	Cargo.lock: 0.4.3, 1.0.14; experiments/issue-372/Cargo.lock: 0.4.3; rust/fuzz/Cargo.lock: 0.4.3	Cargo.lock: 0.4.3, 1.0.14; rust/fuzz/Cargo.lock: 0.4.3
-ctor-proc-macro	0.0.13		https://index.crates.io/ct/or/ctor-proc-macro	Cargo.lock: 0.0.6; experiments/issue-372/Cargo.lock: 0.0.6; rust/fuzz/Cargo.lock: 0.0.6	Cargo.lock: 0.0.6; rust/fuzz/Cargo.lock: 0.0.6
+crypto-bigint	0.7.11	1.87	https://index.crates.io/cr/yp/crypto-bigint	Cargo.lock: 0.7.11; rust/fuzz/Cargo.lock: 0.5.5	Cargo.lock: 0.7.11; rust/fuzz/Cargo.lock: 0.7.11
+crypto-common	0.2.2	1.85	https://index.crates.io/cr/yp/crypto-common	Cargo.lock: 0.1.6, 0.2.2; rust/fuzz/Cargo.lock: 0.1.6, 0.2.2	Cargo.lock: 0.1.7, 0.2.2; rust/fuzz/Cargo.lock: 0.1.7, 0.2.2
+crypto-primes	0.7.2	1.85	https://index.crates.io/cr/yp/crypto-primes	Cargo.lock: 0.7.2	Cargo.lock: 0.7.2; rust/fuzz/Cargo.lock: 0.7.2
+ctor	1.0.14	1.60	https://index.crates.io/ct/or/ctor	Cargo.lock: 0.4.3, 1.0.14; experiments/issue-372/Cargo.lock: 0.4.3; rust/fuzz/Cargo.lock: 0.4.3	Cargo.lock: 1.0.14; rust/fuzz/Cargo.lock: 1.0.14
+ctor-proc-macro	0.0.13		https://index.crates.io/ct/or/ctor-proc-macro	Cargo.lock: 0.0.6; experiments/issue-372/Cargo.lock: 0.0.6; rust/fuzz/Cargo.lock: 0.0.6	—
 ctr	0.10.1	1.85	https://index.crates.io/3/c/ctr	Cargo.lock: 0.10.1; rust/fuzz/Cargo.lock: 0.10.1	Cargo.lock: 0.10.1; rust/fuzz/Cargo.lock: 0.10.1
-ctutils	0.4.8	1.87	https://index.crates.io/ct/ut/ctutils	Cargo.lock: 0.4.8; rust/fuzz/Cargo.lock: 0.4.2	Cargo.lock: 0.4.8; rust/fuzz/Cargo.lock: 0.4.2
-curve25519-dalek	5.0.0	1.85.0	https://index.crates.io/cu/rv/curve25519-dalek	Cargo.lock: 5.0.0; rust/fuzz/Cargo.lock: 4.1.3	Cargo.lock: 5.0.0; rust/fuzz/Cargo.lock: 4.1.3
+ctrlc	3.5.3	1.71	https://index.crates.io/ct/rl/ctrlc		Cargo.lock: 3.5.3; rust/fuzz/Cargo.lock: 3.5.3
+ctutils	0.4.8	1.87	https://index.crates.io/ct/ut/ctutils	Cargo.lock: 0.4.8; rust/fuzz/Cargo.lock: 0.4.2	Cargo.lock: 0.4.8; rust/fuzz/Cargo.lock: 0.4.8
+curve25519-dalek	5.0.0	1.85.0	https://index.crates.io/cu/rv/curve25519-dalek	Cargo.lock: 5.0.0; rust/fuzz/Cargo.lock: 4.1.3	Cargo.lock: 5.0.0; rust/fuzz/Cargo.lock: 5.0.0
 curve25519-dalek-derive	0.1.1		https://index.crates.io/cu/rv/curve25519-dalek-derive	Cargo.lock: 0.1.1; rust/fuzz/Cargo.lock: 0.1.1	Cargo.lock: 0.1.1; rust/fuzz/Cargo.lock: 0.1.1
 data-encoding	2.11.1	1.48	https://index.crates.io/da/ta/data-encoding	Cargo.lock: 2.11.1; rust/fuzz/Cargo.lock: 2.11.1	Cargo.lock: 2.11.1; rust/fuzz/Cargo.lock: 2.11.1
-der	0.8.3	1.85	https://index.crates.io/3/d/der	Cargo.lock: 0.8.3; rust/fuzz/Cargo.lock: 0.7.10	Cargo.lock: 0.8.3; rust/fuzz/Cargo.lock: 0.7.10
+der	0.8.3	1.85	https://index.crates.io/3/d/der	Cargo.lock: 0.8.3; rust/fuzz/Cargo.lock: 0.7.10	Cargo.lock: 0.8.3; rust/fuzz/Cargo.lock: 0.8.3
 der-parser	10.0.0	1.63	https://index.crates.io/de/r-/der-parser	Cargo.lock: 10.0.0; rust/fuzz/Cargo.lock: 10.0.0	Cargo.lock: 10.0.0; rust/fuzz/Cargo.lock: 10.0.0
-deranged	0.5.9	1.85.0	https://index.crates.io/de/ra/deranged	Cargo.lock: 0.5.8; rust/fuzz/Cargo.lock: 0.5.8	Cargo.lock: 0.5.8; rust/fuzz/Cargo.lock: 0.5.8
+deranged	0.5.9	1.85.0	https://index.crates.io/de/ra/deranged	Cargo.lock: 0.5.8; rust/fuzz/Cargo.lock: 0.5.8	Cargo.lock: 0.5.9; rust/fuzz/Cargo.lock: 0.5.9
 digest	0.11.3	1.85	https://index.crates.io/di/ge/digest	Cargo.lock: 0.10.7, 0.11.3; rust/fuzz/Cargo.lock: 0.10.7, 0.11.3	Cargo.lock: 0.10.7, 0.11.3; rust/fuzz/Cargo.lock: 0.10.7, 0.11.3
 dirs	7.0.0		https://index.crates.io/di/rs/dirs	docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml: 6	—
 dispatch2	0.3.1	1.71	https://index.crates.io/di/sp/dispatch2	Cargo.lock: 0.3.1; rust/fuzz/Cargo.lock: 0.3.1	Cargo.lock: 0.3.1; rust/fuzz/Cargo.lock: 0.3.1
 displaydoc	0.2.7	1.71.0	https://index.crates.io/di/sp/displaydoc	Cargo.lock: 0.2.7; rust/fuzz/Cargo.lock: 0.2.7	Cargo.lock: 0.2.7; rust/fuzz/Cargo.lock: 0.2.7
 document-features	0.2.12	1.56	https://index.crates.io/do/cu/document-features	Cargo.lock: 0.2.12; rust/fuzz/Cargo.lock: 0.2.12	Cargo.lock: 0.2.12; rust/fuzz/Cargo.lock: 0.2.12
 dotenvy	0.15.7	1.56.1	https://index.crates.io/do/te/dotenvy	Cargo.lock: 0.15.7; experiments/issue-372/Cargo.lock: 0.15.7; rust/fuzz/Cargo.lock: 0.15.7	Cargo.lock: 0.15.7; rust/fuzz/Cargo.lock: 0.15.7
-doublets	0.21.0	1.85	https://index.crates.io/do/ub/doublets	Cargo.lock: 0.5.0, 0.9.0; docs/case-studies/issue-759/raw/sources/link-cli/files/rust/Cargo.toml: 0.5.0; experiments/issue-372/Cargo.lock: 0.5.0; experiments/issue-372/Cargo.toml: 0.5.0; rust/Cargo.toml: 0.9.0; rust/fuzz/Cargo.lock: 0.5.0	Cargo.lock: 0.5.0, 0.9.0; rust/fuzz/Cargo.lock: 0.5.0
+doublets	0.21.0	1.85	https://index.crates.io/do/ub/doublets	Cargo.lock: 0.5.0, 0.9.0; docs/case-studies/issue-759/raw/sources/link-cli/files/rust/Cargo.toml: 0.5.0; experiments/issue-372/Cargo.lock: 0.5.0; experiments/issue-372/Cargo.toml: 0.5.0; rust/Cargo.toml: 0.9.0; rust/fuzz/Cargo.lock: 0.5.0	Cargo.lock: 0.21.0; rust/fuzz/Cargo.lock: 0.21.0
 downcast-rs	2.0.2	1.56	https://index.crates.io/do/wn/downcast-rs	Cargo.lock: 1.2.1; rust/fuzz/Cargo.lock: 1.2.1	Cargo.lock: 1.2.1; rust/fuzz/Cargo.lock: 1.2.1
-dtor	1.0.7	1.60	https://index.crates.io/dt/or/dtor	Cargo.lock: 0.0.6; experiments/issue-372/Cargo.lock: 0.0.6; rust/fuzz/Cargo.lock: 0.0.6	Cargo.lock: 0.0.6; rust/fuzz/Cargo.lock: 0.0.6
-dtor-proc-macro	0.0.13		https://index.crates.io/dt/or/dtor-proc-macro	Cargo.lock: 0.0.5; experiments/issue-372/Cargo.lock: 0.0.5; rust/fuzz/Cargo.lock: 0.0.5	Cargo.lock: 0.0.5; rust/fuzz/Cargo.lock: 0.0.5
+dtor	1.0.7	1.60	https://index.crates.io/dt/or/dtor	Cargo.lock: 0.0.6; experiments/issue-372/Cargo.lock: 0.0.6; rust/fuzz/Cargo.lock: 0.0.6	—
+dtor-proc-macro	0.0.13		https://index.crates.io/dt/or/dtor-proc-macro	Cargo.lock: 0.0.5; experiments/issue-372/Cargo.lock: 0.0.5; rust/fuzz/Cargo.lock: 0.0.5	—
 dunce	1.0.5		https://index.crates.io/du/nc/dunce	Cargo.lock: 1.0.5; rust/fuzz/Cargo.lock: 1.0.5	Cargo.lock: 1.0.5; rust/fuzz/Cargo.lock: 1.0.5
-dyn-clone	1.0.20	1.60	https://index.crates.io/dy/n-/dyn-clone	Cargo.lock: 1.0.20	Cargo.lock: 1.0.20
-ecdsa	0.17.0	1.85	https://index.crates.io/ec/ds/ecdsa	Cargo.lock: 0.17.0; rust/fuzz/Cargo.lock: 0.16.9	Cargo.lock: 0.17.0; rust/fuzz/Cargo.lock: 0.16.9
-ed25519	3.0.0	1.85	https://index.crates.io/ed/25/ed25519	Cargo.lock: 3.0.0; rust/fuzz/Cargo.lock: 2.2.3	Cargo.lock: 3.0.0; rust/fuzz/Cargo.lock: 2.2.3
-ed25519-dalek	3.0.0	1.85	https://index.crates.io/ed/25/ed25519-dalek	Cargo.lock: 3.0.0; rust/fuzz/Cargo.lock: 2.2.0	Cargo.lock: 3.0.0; rust/fuzz/Cargo.lock: 2.2.0
-either	1.19.0	1.63.0	https://index.crates.io/ei/th/either	Cargo.lock: 1.18.0; rust/fuzz/Cargo.lock: 1.18.0	Cargo.lock: 1.18.0; rust/fuzz/Cargo.lock: 1.18.0
-elliptic-curve	0.14.3	1.87	https://index.crates.io/el/li/elliptic-curve	Cargo.lock: 0.14.3; rust/fuzz/Cargo.lock: 0.13.8	Cargo.lock: 0.14.3; rust/fuzz/Cargo.lock: 0.13.8
-email_address	0.2.10		https://index.crates.io/em/ai/email_address	Cargo.lock: 0.2.9	Cargo.lock: 0.2.9
-encoding_rs	0.8.44	1.88	https://index.crates.io/en/co/encoding_rs	Cargo.lock: 0.8.40; rust/fuzz/Cargo.lock: 0.8.42	Cargo.lock: 0.8.40; rust/fuzz/Cargo.lock: 0.8.42
-equivalent	1.0.3	1.6	https://index.crates.io/eq/ui/equivalent	Cargo.lock: 1.0.2; rust/fuzz/Cargo.lock: 1.0.2	Cargo.lock: 1.0.2; rust/fuzz/Cargo.lock: 1.0.2
-errno	0.3.15	1.56	https://index.crates.io/er/rn/errno	Cargo.lock: 0.3.14; experiments/issue-372/Cargo.lock: 0.3.14; rust/fuzz/Cargo.lock: 0.3.14	Cargo.lock: 0.3.14; rust/fuzz/Cargo.lock: 0.3.14
-fancy-regex	0.20.2	1.66	https://index.crates.io/fa/nc/fancy-regex	Cargo.lock: 0.20.2	Cargo.lock: 0.20.2
+dyn-clone	1.0.20	1.60	https://index.crates.io/dy/n-/dyn-clone	Cargo.lock: 1.0.20	Cargo.lock: 1.0.20; rust/fuzz/Cargo.lock: 1.0.20
+ecdsa	0.17.0	1.85	https://index.crates.io/ec/ds/ecdsa	Cargo.lock: 0.17.0; rust/fuzz/Cargo.lock: 0.16.9	Cargo.lock: 0.17.0; rust/fuzz/Cargo.lock: 0.17.0
+ed25519	3.0.0	1.85	https://index.crates.io/ed/25/ed25519	Cargo.lock: 3.0.0; rust/fuzz/Cargo.lock: 2.2.3	Cargo.lock: 3.0.0; rust/fuzz/Cargo.lock: 3.0.0
+ed25519-dalek	3.0.0	1.85	https://index.crates.io/ed/25/ed25519-dalek	Cargo.lock: 3.0.0; rust/fuzz/Cargo.lock: 2.2.0	Cargo.lock: 3.0.0; rust/fuzz/Cargo.lock: 3.0.0
+either	1.19.0	1.63.0	https://index.crates.io/ei/th/either	Cargo.lock: 1.18.0; rust/fuzz/Cargo.lock: 1.18.0	Cargo.lock: 1.19.0; rust/fuzz/Cargo.lock: 1.19.0
+elliptic-curve	0.14.3	1.87	https://index.crates.io/el/li/elliptic-curve	Cargo.lock: 0.14.3; rust/fuzz/Cargo.lock: 0.13.8	Cargo.lock: 0.14.3; rust/fuzz/Cargo.lock: 0.14.3
+email_address	0.2.10		https://index.crates.io/em/ai/email_address	Cargo.lock: 0.2.9	Cargo.lock: 0.2.10; rust/fuzz/Cargo.lock: 0.2.10
+encoding_rs	0.8.44	1.88	https://index.crates.io/en/co/encoding_rs	Cargo.lock: 0.8.40; rust/fuzz/Cargo.lock: 0.8.42	Cargo.lock: 0.8.44; rust/fuzz/Cargo.lock: 0.8.44
+equivalent	1.0.3	1.6	https://index.crates.io/eq/ui/equivalent	Cargo.lock: 1.0.2; rust/fuzz/Cargo.lock: 1.0.2	Cargo.lock: 1.0.3; rust/fuzz/Cargo.lock: 1.0.3
+errno	0.3.15	1.56	https://index.crates.io/er/rn/errno	Cargo.lock: 0.3.14; experiments/issue-372/Cargo.lock: 0.3.14; rust/fuzz/Cargo.lock: 0.3.14	Cargo.lock: 0.3.15; rust/fuzz/Cargo.lock: 0.3.15
+fancy-regex	0.20.2	1.66	https://index.crates.io/fa/nc/fancy-regex	Cargo.lock: 0.20.2	Cargo.lock: 0.20.2; rust/fuzz/Cargo.lock: 0.20.2
 fastrand	2.5.0	1.63	https://index.crates.io/fa/st/fastrand	Cargo.lock: 2.5.0; experiments/issue-372/Cargo.lock: 2.5.0; rust/fuzz/Cargo.lock: 2.5.0	Cargo.lock: 2.5.0; rust/fuzz/Cargo.lock: 2.5.0
-ff	0.14.0	1.85	https://index.crates.io/2/ff	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.13.1	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.13.1
-fiat-crypto	0.3.0	1.83.0	https://index.crates.io/fi/at/fiat-crypto	Cargo.lock: 0.3.0; rust/fuzz/Cargo.lock: 0.2.9	Cargo.lock: 0.3.0; rust/fuzz/Cargo.lock: 0.2.9
+ff	0.14.0	1.85	https://index.crates.io/2/ff	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.13.1	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.14.0
+fiat-crypto	0.3.0	1.83.0	https://index.crates.io/fi/at/fiat-crypto	Cargo.lock: 0.3.0; rust/fuzz/Cargo.lock: 0.2.9	Cargo.lock: 0.3.0; rust/fuzz/Cargo.lock: 0.3.0
 filedescriptor	0.8.3		https://index.crates.io/fi/le/filedescriptor	Cargo.lock: 0.8.3; rust/fuzz/Cargo.lock: 0.8.3	Cargo.lock: 0.8.3; rust/fuzz/Cargo.lock: 0.8.3
-find-msvc-tools	0.1.16	1.65.0	https://index.crates.io/fi/nd/find-msvc-tools	Cargo.lock: 0.1.12; rust/fuzz/Cargo.lock: 0.1.14	Cargo.lock: 0.1.12; rust/fuzz/Cargo.lock: 0.1.14
-flate2	1.1.11	1.67.0	https://index.crates.io/fl/at/flate2	Cargo.lock: 1.1.11; rust/Cargo.toml: 1.1.10; rust/fuzz/Cargo.lock: 1.1.10	Cargo.lock: 1.1.11; rust/fuzz/Cargo.lock: 1.1.10
-fluent-uri	0.4.1	1.68	https://index.crates.io/fl/ue/fluent-uri	Cargo.lock: 0.4.1	Cargo.lock: 0.4.1
+find-msvc-tools	0.1.16	1.65.0	https://index.crates.io/fi/nd/find-msvc-tools	Cargo.lock: 0.1.12; rust/fuzz/Cargo.lock: 0.1.14	Cargo.lock: 0.1.16; rust/fuzz/Cargo.lock: 0.1.16
+flate2	1.1.11	1.67.0	https://index.crates.io/fl/at/flate2	Cargo.lock: 1.1.11; rust/Cargo.toml: 1.1.10; rust/fuzz/Cargo.lock: 1.1.10	Cargo.lock: 1.1.11; rust/fuzz/Cargo.lock: 1.1.11
+fluent-uri	0.4.1	1.68	https://index.crates.io/fl/ue/fluent-uri	Cargo.lock: 0.4.1	Cargo.lock: 0.4.1; rust/fuzz/Cargo.lock: 0.4.1
 fnv	1.0.7		https://index.crates.io/3/f/fnv	Cargo.lock: 1.0.7; rust/fuzz/Cargo.lock: 1.0.7	Cargo.lock: 1.0.7; rust/fuzz/Cargo.lock: 1.0.7
-foldhash	0.2.0	1.60	https://index.crates.io/fo/ld/foldhash	Cargo.lock: 0.2.0	Cargo.lock: 0.2.0
-form_urlencoded	1.2.3	1.51	https://index.crates.io/fo/rm/form_urlencoded	Cargo.lock: 1.2.3; rust/fuzz/Cargo.lock: 1.2.2	Cargo.lock: 1.2.3; rust/fuzz/Cargo.lock: 1.2.2
-fraction	0.17.0	1.70	https://index.crates.io/fr/ac/fraction	Cargo.lock: 0.17.0	Cargo.lock: 0.17.0
-fs-err	3.3.2		https://index.crates.io/fs/-e/fs-err	Cargo.lock: 3.3.1; rust/fuzz/Cargo.lock: 3.3.2	Cargo.lock: 3.3.1; rust/fuzz/Cargo.lock: 3.3.2
+foldhash	0.2.0	1.60	https://index.crates.io/fo/ld/foldhash	Cargo.lock: 0.2.0	Cargo.lock: 0.2.0; rust/fuzz/Cargo.lock: 0.2.0
+form_urlencoded	1.2.3	1.51	https://index.crates.io/fo/rm/form_urlencoded	Cargo.lock: 1.2.3; rust/fuzz/Cargo.lock: 1.2.2	Cargo.lock: 1.2.3; rust/fuzz/Cargo.lock: 1.2.3
+fraction	0.17.0	1.70	https://index.crates.io/fr/ac/fraction	Cargo.lock: 0.17.0	Cargo.lock: 0.17.0; rust/fuzz/Cargo.lock: 0.17.0
+fs-err	3.3.2		https://index.crates.io/fs/-e/fs-err	Cargo.lock: 3.3.1; rust/fuzz/Cargo.lock: 3.3.2	Cargo.lock: 3.3.2; rust/fuzz/Cargo.lock: 3.3.2
 fs2	0.4.3		https://index.crates.io/3/f/fs2	Cargo.lock: 0.4.3; rust/Cargo.toml: 0.4; rust/fuzz/Cargo.lock: 0.4.3	Cargo.lock: 0.4.3; rust/fuzz/Cargo.lock: 0.4.3
 fs_extra	1.3.0		https://index.crates.io/fs/_e/fs_extra	Cargo.lock: 1.3.0; rust/fuzz/Cargo.lock: 1.3.0	Cargo.lock: 1.3.0; rust/fuzz/Cargo.lock: 1.3.0
 futures-channel	0.3.34	1.71	https://index.crates.io/fu/tu/futures-channel	Cargo.lock: 0.3.34; rust/fuzz/Cargo.lock: 0.3.34	Cargo.lock: 0.3.34; rust/fuzz/Cargo.lock: 0.3.34
@@ -136,100 +138,101 @@ futures-macro	0.3.34	1.71	https://index.crates.io/fu/tu/futures-macro	Cargo.lock
 futures-sink	0.3.34	1.36	https://index.crates.io/fu/tu/futures-sink	Cargo.lock: 0.3.34; rust/fuzz/Cargo.lock: 0.3.34	Cargo.lock: 0.3.34; rust/fuzz/Cargo.lock: 0.3.34
 futures-task	0.3.34	1.71	https://index.crates.io/fu/tu/futures-task	Cargo.lock: 0.3.34; rust/fuzz/Cargo.lock: 0.3.34	Cargo.lock: 0.3.34; rust/fuzz/Cargo.lock: 0.3.34
 futures-util	0.3.34	1.71	https://index.crates.io/fu/tu/futures-util	Cargo.lock: 0.3.34; rust/Cargo.toml: 0.3; rust/fuzz/Cargo.lock: 0.3.34	Cargo.lock: 0.3.34; rust/fuzz/Cargo.lock: 0.3.34
-generic-array	1.4.5	1.65	https://index.crates.io/ge/ne/generic-array	Cargo.lock: 0.14.9; rust/fuzz/Cargo.lock: 0.14.9	Cargo.lock: 0.14.9; rust/fuzz/Cargo.lock: 0.14.9
+generic-array	1.4.5	1.65	https://index.crates.io/ge/ne/generic-array	Cargo.lock: 0.14.9; rust/fuzz/Cargo.lock: 0.14.9	Cargo.lock: 0.14.7; rust/fuzz/Cargo.lock: 0.14.7
 getrandom	0.4.3	1.85	https://index.crates.io/ge/tr/getrandom	Cargo.lock: 0.2.17, 0.3.4, 0.4.3; experiments/issue-372/Cargo.lock: 0.4.3; rust/Cargo.toml: 0.4; rust/fuzz/Cargo.lock: 0.2.17, 0.3.4, 0.4.3	Cargo.lock: 0.2.17, 0.3.4, 0.4.3; rust/fuzz/Cargo.lock: 0.2.17, 0.3.4, 0.4.3
 ghash	0.6.0	1.85	https://index.crates.io/gh/as/ghash	Cargo.lock: 0.6.0; rust/fuzz/Cargo.lock: 0.6.0	Cargo.lock: 0.6.0; rust/fuzz/Cargo.lock: 0.6.0
-group	0.14.0	1.85	https://index.crates.io/gr/ou/group	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.13.0	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.13.0
-h2	0.4.21	1.63	https://index.crates.io/2/h2	Cargo.lock: 0.4.19; rust/fuzz/Cargo.lock: 0.4.19	Cargo.lock: 0.4.19; rust/fuzz/Cargo.lock: 0.4.19
+group	0.14.0	1.85	https://index.crates.io/gr/ou/group	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.13.0	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.14.0
+h2	0.4.21	1.63	https://index.crates.io/2/h2	Cargo.lock: 0.4.19; rust/fuzz/Cargo.lock: 0.4.19	Cargo.lock: 0.4.21; rust/fuzz/Cargo.lock: 0.4.21
 half	2.7.1	1.81	https://index.crates.io/ha/lf/half	Cargo.lock: 2.7.1	Cargo.lock: 2.7.1
-hashbrown	0.17.2	1.85.0	https://index.crates.io/ha/sh/hashbrown	Cargo.lock: 0.17.1; rust/fuzz/Cargo.lock: 0.17.1	Cargo.lock: 0.17.1; rust/fuzz/Cargo.lock: 0.17.1
+hashbrown	0.17.2	1.85.0	https://index.crates.io/ha/sh/hashbrown	Cargo.lock: 0.17.1; rust/fuzz/Cargo.lock: 0.17.1	Cargo.lock: 0.17.2; rust/fuzz/Cargo.lock: 0.17.2
 heck	0.5.0	1.56	https://index.crates.io/he/ck/heck	Cargo.lock: 0.5.0; experiments/issue-372/Cargo.lock: 0.5.0; rust/fuzz/Cargo.lock: 0.5.0	Cargo.lock: 0.5.0; rust/fuzz/Cargo.lock: 0.5.0
 hex	0.4.3		https://index.crates.io/3/h/hex	Cargo.lock: 0.4.3; rust/Cargo.toml: 0.4; rust/fuzz/Cargo.lock: 0.4.3	Cargo.lock: 0.4.3; rust/fuzz/Cargo.lock: 0.4.3
-hkdf	0.13.0	1.85	https://index.crates.io/hk/df/hkdf	rust/fuzz/Cargo.lock: 0.12.4	rust/fuzz/Cargo.lock: 0.12.4
-hmac	0.13.0	1.85	https://index.crates.io/hm/ac/hmac	Cargo.lock: 0.13.0; rust/fuzz/Cargo.lock: 0.12.1	Cargo.lock: 0.13.0; rust/fuzz/Cargo.lock: 0.12.1
+hkdf	0.13.0	1.85	https://index.crates.io/hk/df/hkdf	rust/fuzz/Cargo.lock: 0.12.4	—
+hmac	0.13.0	1.85	https://index.crates.io/hm/ac/hmac	Cargo.lock: 0.13.0; rust/fuzz/Cargo.lock: 0.12.1	Cargo.lock: 0.13.0; rust/fuzz/Cargo.lock: 0.13.0
 http	1.5.0	1.57.0	https://index.crates.io/ht/tp/http	Cargo.lock: 1.5.0; rust/Cargo.toml: 1.5; rust/fuzz/Cargo.lock: 1.5.0	Cargo.lock: 1.5.0; rust/fuzz/Cargo.lock: 1.5.0
 http-body	1.1.0	1.61	https://index.crates.io/ht/tp/http-body	Cargo.lock: 1.1.0; rust/fuzz/Cargo.lock: 1.1.0	Cargo.lock: 1.1.0; rust/fuzz/Cargo.lock: 1.1.0
 http-body-util	0.1.5	1.61	https://index.crates.io/ht/tp/http-body-util	Cargo.lock: 0.1.5; rust/Cargo.toml: 0.1; rust/fuzz/Cargo.lock: 0.1.5	Cargo.lock: 0.1.5; rust/fuzz/Cargo.lock: 0.1.5
 httparse	1.10.1		https://index.crates.io/ht/tp/httparse	Cargo.lock: 1.10.1; rust/fuzz/Cargo.lock: 1.10.1	Cargo.lock: 1.10.1; rust/fuzz/Cargo.lock: 1.10.1
 httpdate	1.0.3	1.56	https://index.crates.io/ht/tp/httpdate	Cargo.lock: 1.0.3; rust/fuzz/Cargo.lock: 1.0.3	Cargo.lock: 1.0.3; rust/fuzz/Cargo.lock: 1.0.3
 hybrid-array	0.4.15	1.85	https://index.crates.io/hy/br/hybrid-array	Cargo.lock: 0.4.15; rust/fuzz/Cargo.lock: 0.4.15	Cargo.lock: 0.4.15; rust/fuzz/Cargo.lock: 0.4.15
-hyper	1.13.0	1.63	https://index.crates.io/hy/pe/hyper	Cargo.lock: 1.13.0; rust/Cargo.toml: 1.11; rust/fuzz/Cargo.lock: 1.11.1	Cargo.lock: 1.13.0; rust/fuzz/Cargo.lock: 1.11.1
-hyper-rustls	0.27.10	1.85	https://index.crates.io/hy/pe/hyper-rustls	Cargo.lock: 0.27.9; rust/fuzz/Cargo.lock: 0.27.10	Cargo.lock: 0.27.9; rust/fuzz/Cargo.lock: 0.27.10
+hyper	1.13.0	1.63	https://index.crates.io/hy/pe/hyper	Cargo.lock: 1.13.0; rust/Cargo.toml: 1.11; rust/fuzz/Cargo.lock: 1.11.1	Cargo.lock: 1.13.0; rust/fuzz/Cargo.lock: 1.13.0
+hyper-rustls	0.27.10	1.85	https://index.crates.io/hy/pe/hyper-rustls	Cargo.lock: 0.27.9; rust/fuzz/Cargo.lock: 0.27.10	Cargo.lock: 0.27.10; rust/fuzz/Cargo.lock: 0.27.10
 hyper-util	0.1.21	1.85	https://index.crates.io/hy/pe/hyper-util	Cargo.lock: 0.1.21; rust/Cargo.toml: 0.1; rust/fuzz/Cargo.lock: 0.1.21	Cargo.lock: 0.1.21; rust/fuzz/Cargo.lock: 0.1.21
 iana-time-zone	0.1.65	1.62.0	https://index.crates.io/ia/na/iana-time-zone	Cargo.lock: 0.1.65; rust/fuzz/Cargo.lock: 0.1.65	Cargo.lock: 0.1.65; rust/fuzz/Cargo.lock: 0.1.65
 iana-time-zone-haiku	0.1.2		https://index.crates.io/ia/na/iana-time-zone-haiku	Cargo.lock: 0.1.2; rust/fuzz/Cargo.lock: 0.1.2	Cargo.lock: 0.1.2; rust/fuzz/Cargo.lock: 0.1.2
-icu_collections	2.4.0	1.88	https://index.crates.io/ic/u_/icu_collections	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0
-icu_locale_core	2.4.0	1.88	https://index.crates.io/ic/u_/icu_locale_core	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0
-icu_normalizer	2.4.0	1.88	https://index.crates.io/ic/u_/icu_normalizer	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0
-icu_normalizer_data	2.4.0	1.88	https://index.crates.io/ic/u_/icu_normalizer_data	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0
-icu_properties	2.4.0	1.88	https://index.crates.io/ic/u_/icu_properties	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0
-icu_properties_data	2.4.0	1.88	https://index.crates.io/ic/u_/icu_properties_data	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0
-icu_provider	2.4.0	1.88	https://index.crates.io/ic/u_/icu_provider	Cargo.lock: 2.3.1; rust/fuzz/Cargo.lock: 2.3.1	Cargo.lock: 2.3.1; rust/fuzz/Cargo.lock: 2.3.1
+icu_collections	2.4.0	1.88	https://index.crates.io/ic/u_/icu_collections	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0	Cargo.lock: 2.4.0; rust/fuzz/Cargo.lock: 2.4.0
+icu_locale_core	2.4.0	1.88	https://index.crates.io/ic/u_/icu_locale_core	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0	Cargo.lock: 2.4.0; rust/fuzz/Cargo.lock: 2.4.0
+icu_normalizer	2.4.0	1.88	https://index.crates.io/ic/u_/icu_normalizer	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0	Cargo.lock: 2.4.0; rust/fuzz/Cargo.lock: 2.4.0
+icu_normalizer_data	2.4.0	1.88	https://index.crates.io/ic/u_/icu_normalizer_data	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0	Cargo.lock: 2.4.0; rust/fuzz/Cargo.lock: 2.4.0
+icu_properties	2.4.0	1.88	https://index.crates.io/ic/u_/icu_properties	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0	Cargo.lock: 2.4.0; rust/fuzz/Cargo.lock: 2.4.0
+icu_properties_data	2.4.0	1.88	https://index.crates.io/ic/u_/icu_properties_data	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0	Cargo.lock: 2.4.0; rust/fuzz/Cargo.lock: 2.4.0
+icu_provider	2.4.0	1.88	https://index.crates.io/ic/u_/icu_provider	Cargo.lock: 2.3.1; rust/fuzz/Cargo.lock: 2.3.1	Cargo.lock: 2.4.0; rust/fuzz/Cargo.lock: 2.4.0
 idna	1.1.0	1.57	https://index.crates.io/id/na/idna	Cargo.lock: 1.1.0; rust/fuzz/Cargo.lock: 1.1.0	Cargo.lock: 1.1.0; rust/fuzz/Cargo.lock: 1.1.0
 idna_adapter	1.2.2	1.86	https://index.crates.io/id/na/idna_adapter	Cargo.lock: 1.2.2; rust/fuzz/Cargo.lock: 1.2.2	Cargo.lock: 1.2.2; rust/fuzz/Cargo.lock: 1.2.2
 indexmap	2.14.2	1.85	https://index.crates.io/in/de/indexmap	Cargo.lock: 2.14.2; rust/fuzz/Cargo.lock: 2.14.2	Cargo.lock: 2.14.2; rust/fuzz/Cargo.lock: 2.14.2
-inout	0.2.6	1.85	https://index.crates.io/in/ou/inout	Cargo.lock: 0.2.2; rust/fuzz/Cargo.lock: 0.2.2	Cargo.lock: 0.2.2; rust/fuzz/Cargo.lock: 0.2.2
+inout	0.2.6	1.85	https://index.crates.io/in/ou/inout	Cargo.lock: 0.2.2; rust/fuzz/Cargo.lock: 0.2.2	Cargo.lock: 0.2.6; rust/fuzz/Cargo.lock: 0.2.6
 ipnet	2.12.2		https://index.crates.io/ip/ne/ipnet	Cargo.lock: 2.12.2; rust/fuzz/Cargo.lock: 2.12.2	Cargo.lock: 2.12.2; rust/fuzz/Cargo.lock: 2.12.2
 is_terminal_polyfill	1.70.2	1.70.0	https://index.crates.io/is/_t/is_terminal_polyfill	Cargo.lock: 1.70.2; experiments/issue-372/Cargo.lock: 1.70.2; rust/fuzz/Cargo.lock: 1.70.2	Cargo.lock: 1.70.2; rust/fuzz/Cargo.lock: 1.70.2
 itertools	0.15.0	1.63.0	https://index.crates.io/it/er/itertools	Cargo.lock: 0.13.0	Cargo.lock: 0.13.0
-itoa	1.0.19	1.68	https://index.crates.io/it/oa/itoa	Cargo.lock: 1.0.18; rust/fuzz/Cargo.lock: 1.0.18	Cargo.lock: 1.0.18; rust/fuzz/Cargo.lock: 1.0.18
+itoa	1.0.19	1.68	https://index.crates.io/it/oa/itoa	Cargo.lock: 1.0.18; rust/fuzz/Cargo.lock: 1.0.18	Cargo.lock: 1.0.19; rust/fuzz/Cargo.lock: 1.0.19
 jni	0.22.4	1.85.0	https://index.crates.io/3/j/jni	Cargo.lock: 0.22.4; rust/fuzz/Cargo.lock: 0.22.4	Cargo.lock: 0.22.4; rust/fuzz/Cargo.lock: 0.22.4
 jni-macros	0.22.4		https://index.crates.io/jn/i-/jni-macros	Cargo.lock: 0.22.4; rust/fuzz/Cargo.lock: 0.22.4	Cargo.lock: 0.22.4; rust/fuzz/Cargo.lock: 0.22.4
 jni-sys	0.4.1	1.76.0	https://index.crates.io/jn/i-/jni-sys	Cargo.lock: 0.4.1; rust/fuzz/Cargo.lock: 0.4.1	Cargo.lock: 0.4.1; rust/fuzz/Cargo.lock: 0.4.1
 jni-sys-macros	0.4.1		https://index.crates.io/jn/i-/jni-sys-macros	Cargo.lock: 0.4.1; rust/fuzz/Cargo.lock: 0.4.1	Cargo.lock: 0.4.1; rust/fuzz/Cargo.lock: 0.4.1
 jobserver	0.1.35	1.85	https://index.crates.io/jo/bs/jobserver	Cargo.lock: 0.1.35; rust/fuzz/Cargo.lock: 0.1.35	Cargo.lock: 0.1.35; rust/fuzz/Cargo.lock: 0.1.35
-js-sys	0.3.107	1.81	https://index.crates.io/js/-s/js-sys	Cargo.lock: 0.3.105; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.3; rust/fuzz/Cargo.lock: 0.3.106	Cargo.lock: 0.3.105; rust/fuzz/Cargo.lock: 0.3.106
-jsonschema	0.63.2	1.85.0	https://index.crates.io/js/on/jsonschema	Cargo.lock: 0.63.1; rust/Cargo.toml: 0.63	Cargo.lock: 0.63.1
-jsonschema-regex	0.63.2	1.85.0	https://index.crates.io/js/on/jsonschema-regex	Cargo.lock: 0.63.2	Cargo.lock: 0.63.2
-jsonschema-value	0.63.2	1.85.0	https://index.crates.io/js/on/jsonschema-value	Cargo.lock: 0.63.2	Cargo.lock: 0.63.2
-jsonwebtoken	12.0.0	1.88.0	https://index.crates.io/js/on/jsonwebtoken	Cargo.lock: 12.0.0; rust/Cargo.toml: 12.0; rust/fuzz/Cargo.lock: 11.1.0	Cargo.lock: 12.0.0; rust/fuzz/Cargo.lock: 11.1.0
-lazy_static	1.5.1		https://index.crates.io/la/zy/lazy_static	Cargo.lock: 1.5.0; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 1.4; rust/fuzz/Cargo.lock: 1.5.1	Cargo.lock: 1.5.0; rust/fuzz/Cargo.lock: 1.5.1
+js-sys	0.3.107	1.81	https://index.crates.io/js/-s/js-sys	Cargo.lock: 0.3.105; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.3; rust/fuzz/Cargo.lock: 0.3.106	Cargo.lock: 0.3.107; rust/fuzz/Cargo.lock: 0.3.107
+jsonschema	0.63.2	1.85.0	https://index.crates.io/js/on/jsonschema	Cargo.lock: 0.63.1; rust/Cargo.toml: 0.63	Cargo.lock: 0.63.2; rust/fuzz/Cargo.lock: 0.63.2
+jsonschema-regex	0.63.2	1.85.0	https://index.crates.io/js/on/jsonschema-regex	Cargo.lock: 0.63.2	Cargo.lock: 0.63.2; rust/fuzz/Cargo.lock: 0.63.2
+jsonschema-value	0.63.2	1.85.0	https://index.crates.io/js/on/jsonschema-value	Cargo.lock: 0.63.2	Cargo.lock: 0.63.2; rust/fuzz/Cargo.lock: 0.63.2
+jsonwebtoken	12.0.0	1.88.0	https://index.crates.io/js/on/jsonwebtoken	Cargo.lock: 12.0.0; rust/Cargo.toml: 12.0; rust/fuzz/Cargo.lock: 11.1.0	Cargo.lock: 12.0.0; rust/fuzz/Cargo.lock: 12.0.0
+lazy_static	1.5.1		https://index.crates.io/la/zy/lazy_static	Cargo.lock: 1.5.0; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 1.4; rust/fuzz/Cargo.lock: 1.5.1	Cargo.lock: 1.5.1; rust/fuzz/Cargo.lock: 1.5.1
 leak_slice	0.2.0		https://index.crates.io/le/ak/leak_slice	Cargo.lock: 0.2.0; experiments/issue-372/Cargo.lock: 0.2.0; rust/fuzz/Cargo.lock: 0.2.0	Cargo.lock: 0.2.0; rust/fuzz/Cargo.lock: 0.2.0
-libc	0.2.191	1.65	https://index.crates.io/li/bc/libc	Cargo.lock: 0.2.189; docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml: 0.2; experiments/issue-372/Cargo.lock: 0.2.189; rust/fuzz/Cargo.lock: 0.2.190	Cargo.lock: 0.2.189; rust/fuzz/Cargo.lock: 0.2.190
+libc	0.2.191	1.65	https://index.crates.io/li/bc/libc	Cargo.lock: 0.2.189; docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml: 0.2; experiments/issue-372/Cargo.lock: 0.2.189; rust/fuzz/Cargo.lock: 0.2.190	Cargo.lock: 0.2.191; rust/fuzz/Cargo.lock: 0.2.191
 libfuzzer-sys	0.4.13		https://index.crates.io/li/bf/libfuzzer-sys	rust/fuzz/Cargo.lock: 0.4.13; rust/fuzz/Cargo.toml: 0.4	rust/fuzz/Cargo.lock: 0.4.13
-libm	0.2.16	1.63	https://index.crates.io/li/bm/libm	rust/fuzz/Cargo.lock: 0.2.16	rust/fuzz/Cargo.lock: 0.2.16
-link-cli	3.2.1	1.89	https://index.crates.io/li/nk/link-cli	Cargo.lock: 1.0.0; experiments/issue-372/Cargo.lock: 0.2.10; experiments/issue-372/Cargo.toml: 0.2.10; rust/Cargo.toml: 1.0.0; rust/fuzz/Cargo.lock: 0.2.11	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 0.2.11
-link-section	0.19.4	1.85	https://index.crates.io/li/nk/link-section	Cargo.lock: 0.19.4	Cargo.lock: 0.19.4
-links-notation	0.32.0	1.87	https://index.crates.io/li/nk/links-notation	Cargo.lock: 0.23.0; docs/case-studies/issue-759/raw/sources/link-cli/files/rust/Cargo.toml: 0.23.0; experiments/issue-372/Cargo.lock: 0.16.1; rust/Cargo.toml: 0.23.0; rust/fuzz/Cargo.lock: 0.16.1, 0.22.0	Cargo.lock: 0.23.0; rust/fuzz/Cargo.lock: 0.16.1, 0.22.0
-links-notation-macro	0.1.2	1.87	https://index.crates.io/li/nk/links-notation-macro	Cargo.lock: 0.1.0; experiments/issue-372/Cargo.lock: 0.1.0; rust/fuzz/Cargo.lock: 0.1.0	Cargo.lock: 0.1.0; rust/fuzz/Cargo.lock: 0.1.0
-linktime-proc-macro	0.2.3		https://index.crates.io/li/nk/linktime-proc-macro	Cargo.lock: 0.2.3	Cargo.lock: 0.2.3
-lino-arguments	0.5.0		https://index.crates.io/li/no/lino-arguments	Cargo.lock: 0.3.0, 0.5.0; docs/case-studies/issue-759/raw/sources/link-cli/files/rust/Cargo.toml: 0.3.0; docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/Cargo.toml: 0.3; experiments/issue-372/Cargo.lock: 0.3.0; rust/Cargo.toml: 0.5; rust/fuzz/Cargo.lock: 0.3.0	Cargo.lock: 0.3.0, 0.5.0; rust/fuzz/Cargo.lock: 0.3.0
+libm	0.2.16	1.63	https://index.crates.io/li/bm/libm	rust/fuzz/Cargo.lock: 0.2.16	—
+link-cli	3.2.1	1.89	https://index.crates.io/li/nk/link-cli	Cargo.lock: 1.0.0; experiments/issue-372/Cargo.lock: 0.2.10; experiments/issue-372/Cargo.toml: 0.2.10; rust/Cargo.toml: 1.0.0; rust/fuzz/Cargo.lock: 0.2.11	Cargo.lock: 3.2.1; rust/fuzz/Cargo.lock: 3.2.1
+link-section	0.19.4	1.85	https://index.crates.io/li/nk/link-section	Cargo.lock: 0.19.4	Cargo.lock: 0.19.4; rust/fuzz/Cargo.lock: 0.19.4
+links-notation	0.32.0	1.87	https://index.crates.io/li/nk/links-notation	Cargo.lock: 0.23.0; docs/case-studies/issue-759/raw/sources/link-cli/files/rust/Cargo.toml: 0.23.0; experiments/issue-372/Cargo.lock: 0.16.1; rust/Cargo.toml: 0.23.0; rust/fuzz/Cargo.lock: 0.16.1, 0.22.0	Cargo.lock: 0.31.8, 0.32.0; rust/fuzz/Cargo.lock: 0.31.8, 0.32.0
+links-notation-macro	0.1.2	1.87	https://index.crates.io/li/nk/links-notation-macro	Cargo.lock: 0.1.0; experiments/issue-372/Cargo.lock: 0.1.0; rust/fuzz/Cargo.lock: 0.1.0	Cargo.lock: 0.1.2; rust/fuzz/Cargo.lock: 0.1.2
+linktime-proc-macro	0.2.3		https://index.crates.io/li/nk/linktime-proc-macro	Cargo.lock: 0.2.3	Cargo.lock: 0.2.3; rust/fuzz/Cargo.lock: 0.2.3
+lino-arguments	0.5.0		https://index.crates.io/li/no/lino-arguments	Cargo.lock: 0.3.0, 0.5.0; docs/case-studies/issue-759/raw/sources/link-cli/files/rust/Cargo.toml: 0.3.0; docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/Cargo.toml: 0.3; experiments/issue-372/Cargo.lock: 0.3.0; rust/Cargo.toml: 0.5; rust/fuzz/Cargo.lock: 0.3.0	Cargo.lock: 0.5.0; rust/fuzz/Cargo.lock: 0.5.0
 lino-env	0.1.0	1.70	https://index.crates.io/li/no/lino-env	Cargo.lock: 0.1.0; experiments/issue-372/Cargo.lock: 0.1.0; rust/fuzz/Cargo.lock: 0.1.0	Cargo.lock: 0.1.0; rust/fuzz/Cargo.lock: 0.1.0
-lino-objects-codec	1.1.0	1.100	https://index.crates.io/li/no/lino-objects-codec	Cargo.lock: 0.8.0; docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml: 0.2.1; rust/Cargo.toml: 0.8.0; rust/fuzz/Cargo.lock: 0.7.0	Cargo.lock: 0.8.0; rust/fuzz/Cargo.lock: 0.7.0
+lino-objects-codec	1.1.0	1.100	https://index.crates.io/li/no/lino-objects-codec	Cargo.lock: 0.8.0; docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml: 0.2.1; rust/Cargo.toml: 0.8.0; rust/fuzz/Cargo.lock: 0.7.0	Cargo.lock: 1.1.0; rust/fuzz/Cargo.lock: 1.1.0
 linux-raw-sys	0.12.1	1.63	https://index.crates.io/li/nu/linux-raw-sys	Cargo.lock: 0.12.1; experiments/issue-372/Cargo.lock: 0.12.1; rust/fuzz/Cargo.lock: 0.12.1	Cargo.lock: 0.12.1; rust/fuzz/Cargo.lock: 0.12.1
 litemap	0.8.3	1.82	https://index.crates.io/li/te/litemap	Cargo.lock: 0.8.3; rust/fuzz/Cargo.lock: 0.8.3	Cargo.lock: 0.8.3; rust/fuzz/Cargo.lock: 0.8.3
-litrs	1.1.0	1.56	https://index.crates.io/li/tr/litrs	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 1.0.0	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 1.0.0
-lock_api	0.5.0	1.95	https://index.crates.io/lo/ck/lock_api	Cargo.lock: 0.4.14	Cargo.lock: 0.4.14
-log	0.4.35	1.71.0	https://index.crates.io/3/l/log	Cargo.lock: 0.4.34; rust/fuzz/Cargo.lock: 0.4.34	Cargo.lock: 0.4.34; rust/fuzz/Cargo.lock: 0.4.34
-log-lazy	0.2.1	1.70	https://index.crates.io/lo/g-/log-lazy	Cargo.lock: 0.2.1; rust/Cargo.toml: 0.2; rust/fuzz/Cargo.lock: 0.2.0	Cargo.lock: 0.2.1; rust/fuzz/Cargo.lock: 0.2.0
-lru-slab	0.1.3		https://index.crates.io/lr/u-/lru-slab	Cargo.lock: 0.1.2; rust/fuzz/Cargo.lock: 0.1.3	Cargo.lock: 0.1.2; rust/fuzz/Cargo.lock: 0.1.3
+litrs	1.1.0	1.56	https://index.crates.io/li/tr/litrs	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 1.0.0	Cargo.lock: 1.1.0; rust/fuzz/Cargo.lock: 1.1.0
+lock_api	0.5.0	1.95	https://index.crates.io/lo/ck/lock_api	Cargo.lock: 0.4.14	Cargo.lock: 0.4.14; rust/fuzz/Cargo.lock: 0.4.14
+log	0.4.35	1.71.0	https://index.crates.io/3/l/log	Cargo.lock: 0.4.34; rust/fuzz/Cargo.lock: 0.4.34	Cargo.lock: 0.4.35; rust/fuzz/Cargo.lock: 0.4.35
+log-lazy	0.2.1	1.70	https://index.crates.io/lo/g-/log-lazy	Cargo.lock: 0.2.1; rust/Cargo.toml: 0.2; rust/fuzz/Cargo.lock: 0.2.0	Cargo.lock: 0.2.1; rust/fuzz/Cargo.lock: 0.2.1
+lru	0.19.2	1.85.0	https://index.crates.io/3/l/lru		Cargo.lock: 0.19.2; rust/fuzz/Cargo.lock: 0.19.2
+lru-slab	0.1.3		https://index.crates.io/lr/u-/lru-slab	Cargo.lock: 0.1.2; rust/fuzz/Cargo.lock: 0.1.3	Cargo.lock: 0.1.3; rust/fuzz/Cargo.lock: 0.1.3
 matchers	0.2.0		https://index.crates.io/ma/tc/matchers	Cargo.lock: 0.2.0; rust/fuzz/Cargo.lock: 0.2.0	Cargo.lock: 0.2.0; rust/fuzz/Cargo.lock: 0.2.0
 matchit	0.9.2	1.66	https://index.crates.io/ma/tc/matchit	Cargo.lock: 0.8.4; rust/fuzz/Cargo.lock: 0.8.4	Cargo.lock: 0.8.4; rust/fuzz/Cargo.lock: 0.8.4
 memchr	2.8.3	1.61	https://index.crates.io/me/mc/memchr	Cargo.lock: 2.8.3; experiments/issue-372/Cargo.lock: 2.8.3; rust/fuzz/Cargo.lock: 2.8.3	Cargo.lock: 2.8.3; rust/fuzz/Cargo.lock: 2.8.3
-memmap2	0.9.12	1.65	https://index.crates.io/me/mm/memmap2	Cargo.lock: 0.9.11; experiments/issue-372/Cargo.lock: 0.9.11; rust/fuzz/Cargo.lock: 0.9.11	Cargo.lock: 0.9.11; rust/fuzz/Cargo.lock: 0.9.11
-micromap	0.3.0	1.79	https://index.crates.io/mi/cr/micromap	Cargo.lock: 0.3.0	Cargo.lock: 0.3.0
-mime	0.3.18		https://index.crates.io/mi/me/mime	Cargo.lock: 0.3.17; rust/fuzz/Cargo.lock: 0.3.17	Cargo.lock: 0.3.17; rust/fuzz/Cargo.lock: 0.3.17
+memmap2	0.9.12	1.65	https://index.crates.io/me/mm/memmap2	Cargo.lock: 0.9.11; experiments/issue-372/Cargo.lock: 0.9.11; rust/fuzz/Cargo.lock: 0.9.11	Cargo.lock: 0.9.12; rust/fuzz/Cargo.lock: 0.9.12
+micromap	0.3.0	1.79	https://index.crates.io/mi/cr/micromap	Cargo.lock: 0.3.0	Cargo.lock: 0.3.0; rust/fuzz/Cargo.lock: 0.3.0
+mime	0.3.18		https://index.crates.io/mi/me/mime	Cargo.lock: 0.3.17; rust/fuzz/Cargo.lock: 0.3.17	Cargo.lock: 0.3.18; rust/fuzz/Cargo.lock: 0.3.18
 mime_guess	2.0.5		https://index.crates.io/mi/me/mime_guess	Cargo.lock: 2.0.5; rust/fuzz/Cargo.lock: 2.0.5	Cargo.lock: 2.0.5; rust/fuzz/Cargo.lock: 2.0.5
 minimal-lexical	0.2.1		https://index.crates.io/mi/ni/minimal-lexical	Cargo.lock: 0.2.1; rust/fuzz/Cargo.lock: 0.2.1	Cargo.lock: 0.2.1; rust/fuzz/Cargo.lock: 0.2.1
 miniz_oxide	0.9.1		https://index.crates.io/mi/ni/miniz_oxide	Cargo.lock: 0.9.1; rust/fuzz/Cargo.lock: 0.9.1	Cargo.lock: 0.9.1; rust/fuzz/Cargo.lock: 0.9.1
-mio	1.2.5	1.71	https://index.crates.io/3/m/mio	Cargo.lock: 1.2.3; rust/fuzz/Cargo.lock: 1.2.4	Cargo.lock: 1.2.3; rust/fuzz/Cargo.lock: 1.2.4
-multiversion	0.9.2	1.86	https://index.crates.io/mu/lt/multiversion	Cargo.lock: 0.8.0	Cargo.lock: 0.8.0
-multiversion-macros	0.9.2	1.86	https://index.crates.io/mu/lt/multiversion-macros	Cargo.lock: 0.8.0	Cargo.lock: 0.8.0
+mio	1.2.5	1.71	https://index.crates.io/3/m/mio	Cargo.lock: 1.2.3; rust/fuzz/Cargo.lock: 1.2.4	Cargo.lock: 1.2.5; rust/fuzz/Cargo.lock: 1.2.5
+multiversion	0.9.2	1.86	https://index.crates.io/mu/lt/multiversion	Cargo.lock: 0.8.0	—
+multiversion-macros	0.9.2	1.86	https://index.crates.io/mu/lt/multiversion-macros	Cargo.lock: 0.8.0	—
 multiversion_no_op	1.0.0	1.56	https://index.crates.io/mu/lt/multiversion_no_op	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 1.0.0	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 1.0.0
-nix	0.32.0	1.69	https://index.crates.io/3/n/nix	Cargo.lock: 0.28.0, 0.31.3, 0.32.0; rust/fuzz/Cargo.lock: 0.28.0, 0.31.3	Cargo.lock: 0.28.0, 0.31.3, 0.32.0; rust/fuzz/Cargo.lock: 0.28.0, 0.31.3
+nix	0.32.0	1.69	https://index.crates.io/3/n/nix	Cargo.lock: 0.28.0, 0.31.3, 0.32.0; rust/fuzz/Cargo.lock: 0.28.0, 0.31.3	Cargo.lock: 0.28.0, 0.31.4, 0.32.0; rust/fuzz/Cargo.lock: 0.28.0, 0.31.4, 0.32.0
 nom	8.0.0	1.65.0	https://index.crates.io/3/n/nom	Cargo.lock: 7.1.3, 8.0.0; experiments/issue-372/Cargo.lock: 8.0.0; rust/fuzz/Cargo.lock: 7.1.3, 8.0.0	Cargo.lock: 7.1.3, 8.0.0; rust/fuzz/Cargo.lock: 7.1.3, 8.0.0
 nu-ansi-term	0.50.3	1.62.1	https://index.crates.io/nu/-a/nu-ansi-term	Cargo.lock: 0.50.3; rust/fuzz/Cargo.lock: 0.50.3	Cargo.lock: 0.50.3; rust/fuzz/Cargo.lock: 0.50.3
-num	0.4.3	1.60	https://index.crates.io/3/n/num	Cargo.lock: 0.4.3	Cargo.lock: 0.4.3
+num	0.4.3	1.60	https://index.crates.io/3/n/num	Cargo.lock: 0.4.3	Cargo.lock: 0.4.3; rust/fuzz/Cargo.lock: 0.4.3
 num-bigint	0.5.1	1.60	https://index.crates.io/nu/m-/num-bigint	Cargo.lock: 0.4.8; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.5; rust/fuzz/Cargo.lock: 0.4.8	Cargo.lock: 0.4.8; rust/fuzz/Cargo.lock: 0.4.8
-num-bigint-dig	0.9.1	1.65	https://index.crates.io/nu/m-/num-bigint-dig	rust/fuzz/Cargo.lock: 0.8.6	rust/fuzz/Cargo.lock: 0.8.6
-num-cmp	0.1.0		https://index.crates.io/nu/m-/num-cmp	Cargo.lock: 0.1.0	Cargo.lock: 0.1.0
-num-complex	0.4.6	1.60	https://index.crates.io/nu/m-/num-complex	Cargo.lock: 0.4.6	Cargo.lock: 0.4.6
+num-bigint-dig	0.9.1	1.65	https://index.crates.io/nu/m-/num-bigint-dig	rust/fuzz/Cargo.lock: 0.8.6	—
+num-cmp	0.1.0		https://index.crates.io/nu/m-/num-cmp	Cargo.lock: 0.1.0	Cargo.lock: 0.1.0; rust/fuzz/Cargo.lock: 0.1.0
+num-complex	0.4.6	1.60	https://index.crates.io/nu/m-/num-complex	Cargo.lock: 0.4.6	Cargo.lock: 0.4.6; rust/fuzz/Cargo.lock: 0.4.6
 num-conv	0.2.2	1.57.0	https://index.crates.io/nu/m-/num-conv	Cargo.lock: 0.2.2; rust/fuzz/Cargo.lock: 0.2.2	Cargo.lock: 0.2.2; rust/fuzz/Cargo.lock: 0.2.2
 num-integer	0.1.47	1.31	https://index.crates.io/nu/m-/num-integer	Cargo.lock: 0.1.47; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.1; rust/fuzz/Cargo.lock: 0.1.47	Cargo.lock: 0.1.47; rust/fuzz/Cargo.lock: 0.1.47
 num-iter	0.1.46	1.31	https://index.crates.io/nu/m-/num-iter	Cargo.lock: 0.1.46; rust/fuzz/Cargo.lock: 0.1.46	Cargo.lock: 0.1.46; rust/fuzz/Cargo.lock: 0.1.46
-num-rational	0.4.2	1.60	https://index.crates.io/nu/m-/num-rational	Cargo.lock: 0.4.2; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.4	Cargo.lock: 0.4.2
+num-rational	0.4.2	1.60	https://index.crates.io/nu/m-/num-rational	Cargo.lock: 0.4.2; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.4	Cargo.lock: 0.4.2; rust/fuzz/Cargo.lock: 0.4.2
 num-traits	0.2.19	1.60	https://index.crates.io/nu/m-/num-traits	Cargo.lock: 0.2.19; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.2; experiments/issue-372/Cargo.lock: 0.2.19; rust/fuzz/Cargo.lock: 0.2.19	Cargo.lock: 0.2.19; rust/fuzz/Cargo.lock: 0.2.19
-objc2	0.6.5	1.71	https://index.crates.io/ob/jc/objc2	Cargo.lock: 0.6.4; rust/fuzz/Cargo.lock: 0.6.4	Cargo.lock: 0.6.4; rust/fuzz/Cargo.lock: 0.6.4
+objc2	0.6.5	1.71	https://index.crates.io/ob/jc/objc2	Cargo.lock: 0.6.4; rust/fuzz/Cargo.lock: 0.6.4	Cargo.lock: 0.6.5; rust/fuzz/Cargo.lock: 0.6.5
 objc2-cloud-kit	0.3.2	1.71	https://index.crates.io/ob/jc/objc2-cloud-kit	Cargo.lock: 0.3.2; rust/fuzz/Cargo.lock: 0.3.2	Cargo.lock: 0.3.2; rust/fuzz/Cargo.lock: 0.3.2
 objc2-core-data	0.3.2	1.71	https://index.crates.io/ob/jc/objc2-core-data	Cargo.lock: 0.3.2; rust/fuzz/Cargo.lock: 0.3.2	Cargo.lock: 0.3.2; rust/fuzz/Cargo.lock: 0.3.2
 objc2-core-foundation	0.3.2	1.71	https://index.crates.io/ob/jc/objc2-core-foundation	Cargo.lock: 0.3.2; rust/fuzz/Cargo.lock: 0.3.2	Cargo.lock: 0.3.2; rust/fuzz/Cargo.lock: 0.3.2
@@ -247,85 +250,87 @@ oid-registry	0.8.1	1.63	https://index.crates.io/oi/d-/oid-registry	Cargo.lock: 0
 once_cell	1.21.4	1.65	https://index.crates.io/on/ce/once_cell	Cargo.lock: 1.21.4; experiments/issue-372/Cargo.lock: 1.21.4; rust/fuzz/Cargo.lock: 1.21.4	Cargo.lock: 1.21.4; rust/fuzz/Cargo.lock: 1.21.4
 once_cell_polyfill	1.70.2	1.70.0	https://index.crates.io/on/ce/once_cell_polyfill	Cargo.lock: 1.70.2; experiments/issue-372/Cargo.lock: 1.70.2; rust/fuzz/Cargo.lock: 1.70.2	Cargo.lock: 1.70.2; rust/fuzz/Cargo.lock: 1.70.2
 oorandom	11.1.5		https://index.crates.io/oo/ra/oorandom	Cargo.lock: 11.1.5	Cargo.lock: 11.1.5
-openssl-probe	0.2.2	1.60.0	https://index.crates.io/op/en/openssl-probe	Cargo.lock: 0.2.1; rust/fuzz/Cargo.lock: 0.2.1	Cargo.lock: 0.2.1; rust/fuzz/Cargo.lock: 0.2.1
+openssl-probe	0.2.2	1.60.0	https://index.crates.io/op/en/openssl-probe	Cargo.lock: 0.2.1; rust/fuzz/Cargo.lock: 0.2.1	Cargo.lock: 0.2.2; rust/fuzz/Cargo.lock: 0.2.2
 os_info	3.15.0	1.60	https://index.crates.io/os/_i/os_info	Cargo.lock: 3.15.0; rust/Cargo.toml: 3.15.0; rust/fuzz/Cargo.lock: 3.15.0	Cargo.lock: 3.15.0; rust/fuzz/Cargo.lock: 3.15.0
-outref	0.5.2	1.63.0	https://index.crates.io/ou/tr/outref	Cargo.lock: 0.5.2	Cargo.lock: 0.5.2
-p256	0.14.0	1.85	https://index.crates.io/p2/56/p256	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.13.2	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.13.2
-p384	0.14.0	1.85	https://index.crates.io/p3/84/p384	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.13.1	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.13.1
+outref	0.5.2	1.63.0	https://index.crates.io/ou/tr/outref	Cargo.lock: 0.5.2	Cargo.lock: 0.5.2; rust/fuzz/Cargo.lock: 0.5.2
+p256	0.14.0	1.85	https://index.crates.io/p2/56/p256	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.13.2	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.14.0
+p384	0.14.0	1.85	https://index.crates.io/p3/84/p384	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.13.1	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.14.0
 page_size	0.6.0		https://index.crates.io/pa/ge/page_size	Cargo.lock: 0.6.0	Cargo.lock: 0.6.0
-parking_lot	0.13.0	1.95	https://index.crates.io/pa/rk/parking_lot	Cargo.lock: 0.12.5	Cargo.lock: 0.12.5
-parking_lot_core	0.10.0	1.95	https://index.crates.io/pa/rk/parking_lot_core	Cargo.lock: 0.9.12	Cargo.lock: 0.9.12
+parking_lot	0.13.0	1.95	https://index.crates.io/pa/rk/parking_lot	Cargo.lock: 0.12.5	Cargo.lock: 0.12.5; rust/fuzz/Cargo.lock: 0.12.5
+parking_lot_core	0.10.0	1.95	https://index.crates.io/pa/rk/parking_lot_core	Cargo.lock: 0.9.12	Cargo.lock: 0.9.12; rust/fuzz/Cargo.lock: 0.9.12
 pem	4.0.0	1.71.0	https://index.crates.io/3/p/pem	Cargo.lock: 4.0.0; rust/fuzz/Cargo.lock: 4.0.0	Cargo.lock: 4.0.0; rust/fuzz/Cargo.lock: 4.0.0
-pem-rfc7468	1.0.0	1.85	https://index.crates.io/pe/m-/pem-rfc7468	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 0.7.0	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 0.7.0
+pem-rfc7468	1.0.0	1.85	https://index.crates.io/pe/m-/pem-rfc7468	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 0.7.0	Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 1.0.0
 percent-encoding	2.3.2	1.51	https://index.crates.io/pe/rc/percent-encoding	Cargo.lock: 2.3.2; rust/fuzz/Cargo.lock: 2.3.2	Cargo.lock: 2.3.2; rust/fuzz/Cargo.lock: 2.3.2
-pin-project-lite	0.2.18	1.37	https://index.crates.io/pi/n-/pin-project-lite	Cargo.lock: 0.2.17; rust/fuzz/Cargo.lock: 0.2.17	Cargo.lock: 0.2.17; rust/fuzz/Cargo.lock: 0.2.17
-pkcs1	0.8.0	1.85	https://index.crates.io/pk/cs/pkcs1	Cargo.lock: 0.8.0; rust/fuzz/Cargo.lock: 0.7.5	Cargo.lock: 0.8.0; rust/fuzz/Cargo.lock: 0.7.5
-pkcs8	0.11.0	1.85	https://index.crates.io/pk/cs/pkcs8	Cargo.lock: 0.11.0; rust/fuzz/Cargo.lock: 0.10.2	Cargo.lock: 0.11.0; rust/fuzz/Cargo.lock: 0.10.2
+pin-project-lite	0.2.18	1.37	https://index.crates.io/pi/n-/pin-project-lite	Cargo.lock: 0.2.17; rust/fuzz/Cargo.lock: 0.2.17	Cargo.lock: 0.2.18; rust/fuzz/Cargo.lock: 0.2.18
+pkcs1	0.8.0	1.85	https://index.crates.io/pk/cs/pkcs1	Cargo.lock: 0.8.0; rust/fuzz/Cargo.lock: 0.7.5	Cargo.lock: 0.8.0; rust/fuzz/Cargo.lock: 0.8.0
+pkcs8	0.11.0	1.85	https://index.crates.io/pk/cs/pkcs8	Cargo.lock: 0.11.0; rust/fuzz/Cargo.lock: 0.10.2	Cargo.lock: 0.11.0; rust/fuzz/Cargo.lock: 0.11.0
 pkg-config	0.3.34	1.63	https://index.crates.io/pk/g-/pkg-config	Cargo.lock: 0.3.34; rust/fuzz/Cargo.lock: 0.3.34	Cargo.lock: 0.3.34; rust/fuzz/Cargo.lock: 0.3.34
 platform-data	3.0.0	1.85	https://index.crates.io/pl/at/platform-data	Cargo.lock: 2.0.0; experiments/issue-372/Cargo.lock: 2.0.0; rust/fuzz/Cargo.lock: 2.0.0	Cargo.lock: 2.0.0; rust/fuzz/Cargo.lock: 2.0.0
-platform-mem	0.4.0	1.85	https://index.crates.io/pl/at/platform-mem	Cargo.lock: 0.3.0; experiments/issue-372/Cargo.lock: 0.3.0; rust/fuzz/Cargo.lock: 0.3.0	Cargo.lock: 0.3.0; rust/fuzz/Cargo.lock: 0.3.0
+platform-mem	0.4.0	1.85	https://index.crates.io/pl/at/platform-mem	Cargo.lock: 0.3.0; experiments/issue-372/Cargo.lock: 0.3.0; rust/fuzz/Cargo.lock: 0.3.0	Cargo.lock: 0.4.0; rust/fuzz/Cargo.lock: 0.4.0
 platform-num	0.8.0	1.85	https://index.crates.io/pl/at/platform-num	Cargo.lock: 0.8.0; experiments/issue-372/Cargo.lock: 0.8.0; rust/fuzz/Cargo.lock: 0.8.0	Cargo.lock: 0.8.0; rust/fuzz/Cargo.lock: 0.8.0
-platform-trees	0.3.5	1.85	https://index.crates.io/pl/at/platform-trees	Cargo.lock: 0.3.4; experiments/issue-372/Cargo.lock: 0.3.4; rust/fuzz/Cargo.lock: 0.3.4	Cargo.lock: 0.3.4; rust/fuzz/Cargo.lock: 0.3.4
+platform-trees	0.3.5	1.85	https://index.crates.io/pl/at/platform-trees	Cargo.lock: 0.3.4; experiments/issue-372/Cargo.lock: 0.3.4; rust/fuzz/Cargo.lock: 0.3.4	Cargo.lock: 0.3.5; rust/fuzz/Cargo.lock: 0.3.5
 polyval	0.7.3	1.85	https://index.crates.io/po/ly/polyval	Cargo.lock: 0.7.3; rust/fuzz/Cargo.lock: 0.7.3	Cargo.lock: 0.7.3; rust/fuzz/Cargo.lock: 0.7.3
 portable-pty	0.9.0		https://index.crates.io/po/rt/portable-pty	Cargo.lock: 0.9.0; rust/Cargo.toml: 0.9; rust/fuzz/Cargo.lock: 0.9.0	Cargo.lock: 0.9.0; rust/fuzz/Cargo.lock: 0.9.0
 potential_utf	0.1.6	1.82	https://index.crates.io/po/te/potential_utf	Cargo.lock: 0.1.6; rust/fuzz/Cargo.lock: 0.1.6	Cargo.lock: 0.1.6; rust/fuzz/Cargo.lock: 0.1.6
-powerfmt	0.2.1	1.79.0	https://index.crates.io/po/we/powerfmt	Cargo.lock: 0.2.0; rust/fuzz/Cargo.lock: 0.2.0	Cargo.lock: 0.2.0; rust/fuzz/Cargo.lock: 0.2.0
+powerfmt	0.2.1	1.79.0	https://index.crates.io/po/we/powerfmt	Cargo.lock: 0.2.0; rust/fuzz/Cargo.lock: 0.2.0	Cargo.lock: 0.2.1; rust/fuzz/Cargo.lock: 0.2.1
 ppv-lite86	0.2.21	1.61	https://index.crates.io/pp/v-/ppv-lite86	Cargo.lock: 0.2.21; rust/fuzz/Cargo.lock: 0.2.21	Cargo.lock: 0.2.21; rust/fuzz/Cargo.lock: 0.2.21
-primefield	0.14.0	1.85	https://index.crates.io/pr/im/primefield	Cargo.lock: 0.14.0	Cargo.lock: 0.14.0
-primeorder	0.14.0	1.85	https://index.crates.io/pr/im/primeorder	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.13.6	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.13.6
+primefield	0.14.0	1.85	https://index.crates.io/pr/im/primefield	Cargo.lock: 0.14.0	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.14.0
+primeorder	0.14.0	1.85	https://index.crates.io/pr/im/primeorder	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.13.6	Cargo.lock: 0.14.0; rust/fuzz/Cargo.lock: 0.14.0
 proc-macro-crate	3.5.0	1.82.0	https://index.crates.io/pr/oc/proc-macro-crate	Cargo.lock: 3.5.0	Cargo.lock: 3.5.0
 proc-macro2	1.0.107	1.71	https://index.crates.io/pr/oc/proc-macro2	Cargo.lock: 1.0.107; docs/case-studies/issue-759/raw/ci/local-incident/experiments/issue-725/test-sharder/Cargo.lock: 1.0.107; docs/case-studies/issue-759/raw/ci/local-incident/experiments/issue-725/test-sharder/Cargo.toml: =1.0.107; experiments/issue-372/Cargo.lock: 1.0.107; experiments/issue-725/test-sharder/Cargo.lock: 1.0.107; experiments/issue-725/test-sharder/Cargo.toml: =1.0.107; rust/fuzz/Cargo.lock: 1.0.107	Cargo.lock: 1.0.107; experiments/issue-725/test-sharder/Cargo.lock: 1.0.107; rust/fuzz/Cargo.lock: 1.0.107
-process-wrap	11.0.0	1.88.0	https://index.crates.io/pr/oc/process-wrap	Cargo.lock: 11.0.0; rust/Cargo.toml: 11.0.0; rust/fuzz/Cargo.lock: 10.0.1	Cargo.lock: 11.0.0; rust/fuzz/Cargo.lock: 10.0.1
+process-wrap	11.0.0	1.88.0	https://index.crates.io/pr/oc/process-wrap	Cargo.lock: 11.0.0; rust/Cargo.toml: 11.0.0; rust/fuzz/Cargo.lock: 10.0.1	Cargo.lock: 11.0.0; rust/fuzz/Cargo.lock: 11.0.0
 proptest	1.12.0	1.88	https://index.crates.io/pr/op/proptest	Cargo.lock: 1.12.0; rust/Cargo.toml: 1	Cargo.lock: 1.12.0
 psl-types	2.0.11		https://index.crates.io/ps/l-/psl-types	Cargo.lock: 2.0.11; rust/fuzz/Cargo.lock: 2.0.11	Cargo.lock: 2.0.11; rust/fuzz/Cargo.lock: 2.0.11
 publicsuffix	2.3.0		https://index.crates.io/pu/bl/publicsuffix	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0	Cargo.lock: 2.3.0; rust/fuzz/Cargo.lock: 2.3.0
 quick-error	2.0.1		https://index.crates.io/qu/ic/quick-error	Cargo.lock: 1.2.3	Cargo.lock: 1.2.3
-quinn	0.11.12	1.85	https://index.crates.io/qu/in/quinn	Cargo.lock: 0.11.11; rust/fuzz/Cargo.lock: 0.11.12	Cargo.lock: 0.11.11; rust/fuzz/Cargo.lock: 0.11.12
+quinn	0.11.12	1.85	https://index.crates.io/qu/in/quinn	Cargo.lock: 0.11.11; rust/fuzz/Cargo.lock: 0.11.12	Cargo.lock: 0.11.12; rust/fuzz/Cargo.lock: 0.11.12
 quinn-proto	0.11.19	1.85	https://index.crates.io/qu/in/quinn-proto	Cargo.lock: 0.11.19; rust/fuzz/Cargo.lock: 0.11.19	Cargo.lock: 0.11.19; rust/fuzz/Cargo.lock: 0.11.19
 quinn-udp	0.6.3	1.88.0	https://index.crates.io/qu/in/quinn-udp	Cargo.lock: 0.5.16; rust/fuzz/Cargo.lock: 0.5.16	Cargo.lock: 0.5.16; rust/fuzz/Cargo.lock: 0.5.16
 quote	1.0.47	1.71	https://index.crates.io/qu/ot/quote	Cargo.lock: 1.0.47; docs/case-studies/issue-759/raw/ci/local-incident/experiments/issue-725/test-sharder/Cargo.lock: 1.0.47; experiments/issue-372/Cargo.lock: 1.0.47; experiments/issue-725/test-sharder/Cargo.lock: 1.0.47; rust/fuzz/Cargo.lock: 1.0.47	Cargo.lock: 1.0.47; experiments/issue-725/test-sharder/Cargo.lock: 1.0.47; rust/fuzz/Cargo.lock: 1.0.47
 r-efi	7.2.0	1.68	https://index.crates.io/r-/ef/r-efi	Cargo.lock: 5.3.0, 6.0.0; experiments/issue-372/Cargo.lock: 6.0.0; rust/fuzz/Cargo.lock: 5.3.0, 6.0.0	Cargo.lock: 5.3.0, 6.0.0; rust/fuzz/Cargo.lock: 5.3.0, 6.0.0
-rand	0.10.4	1.85	https://index.crates.io/ra/nd/rand	Cargo.lock: 0.10.2, 0.9.5; rust/fuzz/Cargo.lock: 0.10.3, 0.8.8, 0.9.5	Cargo.lock: 0.10.2, 0.9.5; rust/fuzz/Cargo.lock: 0.10.3, 0.8.8, 0.9.5
-rand_chacha	0.10.0	1.85	https://index.crates.io/ra/nd/rand_chacha	Cargo.lock: 0.9.0; rust/fuzz/Cargo.lock: 0.3.1, 0.9.0	Cargo.lock: 0.9.0; rust/fuzz/Cargo.lock: 0.3.1, 0.9.0
-rand_core	0.10.1	1.85	https://index.crates.io/ra/nd/rand_core	Cargo.lock: 0.10.1, 0.9.5; rust/fuzz/Cargo.lock: 0.10.1, 0.6.4, 0.9.5	Cargo.lock: 0.10.1, 0.9.5; rust/fuzz/Cargo.lock: 0.10.1, 0.6.4, 0.9.5
-rand_pcg	0.10.3	1.85	https://index.crates.io/ra/nd/rand_pcg	Cargo.lock: 0.10.2; rust/fuzz/Cargo.lock: 0.10.2	Cargo.lock: 0.10.2; rust/fuzz/Cargo.lock: 0.10.2
+rand	0.10.4	1.85	https://index.crates.io/ra/nd/rand	Cargo.lock: 0.10.2, 0.9.5; rust/fuzz/Cargo.lock: 0.10.3, 0.8.8, 0.9.5	Cargo.lock: 0.10.4, 0.9.5; rust/fuzz/Cargo.lock: 0.10.4, 0.9.5
+rand_chacha	0.10.0	1.85	https://index.crates.io/ra/nd/rand_chacha	Cargo.lock: 0.9.0; rust/fuzz/Cargo.lock: 0.3.1, 0.9.0	Cargo.lock: 0.9.0; rust/fuzz/Cargo.lock: 0.9.0
+rand_core	0.10.1	1.85	https://index.crates.io/ra/nd/rand_core	Cargo.lock: 0.10.1, 0.9.5; rust/fuzz/Cargo.lock: 0.10.1, 0.6.4, 0.9.5	Cargo.lock: 0.10.1, 0.9.5; rust/fuzz/Cargo.lock: 0.10.1, 0.9.5
+rand_pcg	0.10.3	1.85	https://index.crates.io/ra/nd/rand_pcg	Cargo.lock: 0.10.2; rust/fuzz/Cargo.lock: 0.10.2	Cargo.lock: 0.10.3; rust/fuzz/Cargo.lock: 0.10.3
 rand_xorshift	0.5.0	1.85	https://index.crates.io/ra/nd/rand_xorshift	Cargo.lock: 0.5.0	Cargo.lock: 0.5.0
 rcgen	0.14.10	1.88	https://index.crates.io/rc/ge/rcgen	Cargo.lock: 0.14.10; rust/Cargo.toml: 0.14.9; rust/fuzz/Cargo.lock: 0.14.10	Cargo.lock: 0.14.10; rust/fuzz/Cargo.lock: 0.14.10
-redox_syscall	0.10.0		https://index.crates.io/re/do/redox_syscall	Cargo.lock: 0.5.18	Cargo.lock: 0.5.18
-ref-cast	1.0.27	1.71	https://index.crates.io/re/f-/ref-cast	Cargo.lock: 1.0.27	Cargo.lock: 1.0.27
-ref-cast-impl	1.0.27	1.71	https://index.crates.io/re/f-/ref-cast-impl	Cargo.lock: 1.0.27	Cargo.lock: 1.0.27
-referencing	0.63.2	1.85.0	https://index.crates.io/re/fe/referencing	Cargo.lock: 0.63.2	Cargo.lock: 0.63.2
-reflink-copy	0.1.33		https://index.crates.io/re/fl/reflink-copy	Cargo.lock: 0.1.33; rust/Cargo.toml: 0.1.30; rust/fuzz/Cargo.lock: 0.1.30	Cargo.lock: 0.1.33; rust/fuzz/Cargo.lock: 0.1.30
-regex	1.13.2	1.65	https://index.crates.io/re/ge/regex	Cargo.lock: 1.13.2; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 1.10; docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/Cargo.toml: 1; docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml: 1	Cargo.lock: 1.13.2; scripts/bump-version.rs: 1.13.2; scripts/check-release-needed.rs: 1.13.2; scripts/check-version-modification.rs: 1.13.2; scripts/collect-changelog.rs: 1.13.2; scripts/create-github-release.rs: 1.13.2; scripts/get-bump-type.rs: 1.13.2; scripts/get-version.rs: 1.13.2; scripts/publish-crate.rs: 1.13.2; scripts/version-and-commit.rs: 1.13.2; scripts/wait-for-crate.rs: 1.13.2
-regex-automata	0.4.19	1.65	https://index.crates.io/re/ge/regex-automata	Cargo.lock: 0.4.19; rust/fuzz/Cargo.lock: 0.4.18	Cargo.lock: 0.4.19; rust/fuzz/Cargo.lock: 0.4.18
-regex-syntax	0.8.12	1.65	https://index.crates.io/re/ge/regex-syntax	Cargo.lock: 0.8.12; rust/fuzz/Cargo.lock: 0.8.11	Cargo.lock: 0.8.12; rust/fuzz/Cargo.lock: 0.8.11
+redox_syscall	0.10.0		https://index.crates.io/re/do/redox_syscall	Cargo.lock: 0.5.18	Cargo.lock: 0.5.18; rust/fuzz/Cargo.lock: 0.5.18
+ref-cast	1.0.27	1.71	https://index.crates.io/re/f-/ref-cast	Cargo.lock: 1.0.27	Cargo.lock: 1.0.27; rust/fuzz/Cargo.lock: 1.0.27
+ref-cast-impl	1.0.27	1.71	https://index.crates.io/re/f-/ref-cast-impl	Cargo.lock: 1.0.27	Cargo.lock: 1.0.27; rust/fuzz/Cargo.lock: 1.0.27
+referencing	0.63.2	1.85.0	https://index.crates.io/re/fe/referencing	Cargo.lock: 0.63.2	Cargo.lock: 0.63.2; rust/fuzz/Cargo.lock: 0.63.2
+reflink-copy	0.1.33		https://index.crates.io/re/fl/reflink-copy	Cargo.lock: 0.1.33; rust/Cargo.toml: 0.1.30; rust/fuzz/Cargo.lock: 0.1.30	Cargo.lock: 0.1.33; rust/fuzz/Cargo.lock: 0.1.33
+regex	1.13.2	1.65	https://index.crates.io/re/ge/regex	Cargo.lock: 1.13.2; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 1.10; docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/Cargo.toml: 1; docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml: 1	Cargo.lock: 1.13.2; rust/fuzz/Cargo.lock: 1.13.2; scripts/bump-version.rs: 1.13.2; scripts/check-release-needed.rs: 1.13.2; scripts/check-version-modification.rs: 1.13.2; scripts/collect-changelog.rs: 1.13.2; scripts/create-github-release.rs: 1.13.2; scripts/get-bump-type.rs: 1.13.2; scripts/get-version.rs: 1.13.2; scripts/publish-crate.rs: 1.13.2; scripts/version-and-commit.rs: 1.13.2; scripts/wait-for-crate.rs: 1.13.2
+regex-automata	0.4.19	1.65	https://index.crates.io/re/ge/regex-automata	Cargo.lock: 0.4.19; rust/fuzz/Cargo.lock: 0.4.18	Cargo.lock: 0.4.19; rust/fuzz/Cargo.lock: 0.4.19
+regex-lite	0.1.9	1.65	https://index.crates.io/re/ge/regex-lite		Cargo.lock: 0.1.9; rust/fuzz/Cargo.lock: 0.1.9
+regex-syntax	0.8.12	1.65	https://index.crates.io/re/ge/regex-syntax	Cargo.lock: 0.8.12; rust/fuzz/Cargo.lock: 0.8.11	Cargo.lock: 0.8.12; rust/fuzz/Cargo.lock: 0.8.12
 reqwest	0.13.5	1.85.0	https://index.crates.io/re/qw/reqwest	Cargo.lock: 0.13.5; rust/Cargo.toml: 0.13; rust/fuzz/Cargo.lock: 0.13.5	Cargo.lock: 0.13.5; rust/fuzz/Cargo.lock: 0.13.5
-rfc6979	0.6.0	1.85	https://index.crates.io/rf/c6/rfc6979	Cargo.lock: 0.6.0; rust/fuzz/Cargo.lock: 0.4.0	Cargo.lock: 0.6.0; rust/fuzz/Cargo.lock: 0.4.0
+rfc6979	0.6.0	1.85	https://index.crates.io/rf/c6/rfc6979	Cargo.lock: 0.6.0; rust/fuzz/Cargo.lock: 0.4.0	Cargo.lock: 0.6.0; rust/fuzz/Cargo.lock: 0.6.0
 ring	0.17.14	1.66.0	https://index.crates.io/ri/ng/ring	Cargo.lock: 0.17.14; rust/fuzz/Cargo.lock: 0.17.14	Cargo.lock: 0.17.14; rust/fuzz/Cargo.lock: 0.17.14
-rsa	0.10.0	1.87	https://index.crates.io/3/r/rsa	Cargo.lock: 0.10.0; rust/fuzz/Cargo.lock: 0.9.10	Cargo.lock: 0.10.0; rust/fuzz/Cargo.lock: 0.9.10
-rust-embed	8.14.0	1.80.0	https://index.crates.io/ru/st/rust-embed	Cargo.lock: 8.14.0; rust/Cargo.toml: 8.12.0; rust/fuzz/Cargo.lock: 8.12.0	Cargo.lock: 8.14.0; rust/fuzz/Cargo.lock: 8.12.0
-rust-embed-impl	8.14.0		https://index.crates.io/ru/st/rust-embed-impl	Cargo.lock: 8.14.0; rust/fuzz/Cargo.lock: 8.12.0	Cargo.lock: 8.14.0; rust/fuzz/Cargo.lock: 8.12.0
-rust-embed-utils	8.14.0		https://index.crates.io/ru/st/rust-embed-utils	Cargo.lock: 8.14.0; rust/fuzz/Cargo.lock: 8.12.0	Cargo.lock: 8.14.0; rust/fuzz/Cargo.lock: 8.12.0
+rpds	1.2.1	1.85.0	https://index.crates.io/rp/ds/rpds		Cargo.lock: 1.2.1; rust/fuzz/Cargo.lock: 1.2.1
+rsa	0.10.0	1.87	https://index.crates.io/3/r/rsa	Cargo.lock: 0.10.0; rust/fuzz/Cargo.lock: 0.9.10	Cargo.lock: 0.10.0; rust/fuzz/Cargo.lock: 0.10.0
+rust-embed	8.14.0	1.80.0	https://index.crates.io/ru/st/rust-embed	Cargo.lock: 8.14.0; rust/Cargo.toml: 8.12.0; rust/fuzz/Cargo.lock: 8.12.0	Cargo.lock: 8.14.0; rust/fuzz/Cargo.lock: 8.14.0
+rust-embed-impl	8.14.0		https://index.crates.io/ru/st/rust-embed-impl	Cargo.lock: 8.14.0; rust/fuzz/Cargo.lock: 8.12.0	Cargo.lock: 8.14.0; rust/fuzz/Cargo.lock: 8.14.0
+rust-embed-utils	8.14.0		https://index.crates.io/ru/st/rust-embed-utils	Cargo.lock: 8.14.0; rust/fuzz/Cargo.lock: 8.12.0	Cargo.lock: 8.14.0; rust/fuzz/Cargo.lock: 8.14.0
 rust_decimal	1.43.0	1.67.1	https://index.crates.io/ru/st/rust_decimal	docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 1.33	—
 rustc-hash	2.1.3	1.77	https://index.crates.io/ru/st/rustc-hash	Cargo.lock: 2.1.3; rust/fuzz/Cargo.lock: 2.1.3	Cargo.lock: 2.1.3; rust/fuzz/Cargo.lock: 2.1.3
 rustc_version	0.4.1	1.32	https://index.crates.io/ru/st/rustc_version	Cargo.lock: 0.4.1; rust/fuzz/Cargo.lock: 0.4.1	Cargo.lock: 0.4.1; rust/fuzz/Cargo.lock: 0.4.1
 rusticata-macros	5.0.0	1.65	https://index.crates.io/ru/st/rusticata-macros	Cargo.lock: 4.1.0; rust/fuzz/Cargo.lock: 4.1.0	Cargo.lock: 4.1.0; rust/fuzz/Cargo.lock: 4.1.0
-rustix	1.1.6	1.65	https://index.crates.io/ru/st/rustix	Cargo.lock: 1.1.6; experiments/issue-372/Cargo.lock: 1.1.4; rust/fuzz/Cargo.lock: 1.1.5	Cargo.lock: 1.1.6; rust/fuzz/Cargo.lock: 1.1.5
-rustls	0.23.46	1.71	https://index.crates.io/ru/st/rustls	Cargo.lock: 0.23.46; rust/fuzz/Cargo.lock: 0.23.45	Cargo.lock: 0.23.46; rust/fuzz/Cargo.lock: 0.23.45
-rustls-native-certs	0.8.5	1.71	https://index.crates.io/ru/st/rustls-native-certs	Cargo.lock: 0.8.4; rust/fuzz/Cargo.lock: 0.8.4	Cargo.lock: 0.8.4; rust/fuzz/Cargo.lock: 0.8.4
-rustls-pki-types	1.16.0	1.60	https://index.crates.io/ru/st/rustls-pki-types	Cargo.lock: 1.15.1; rust/fuzz/Cargo.lock: 1.15.1	Cargo.lock: 1.15.1; rust/fuzz/Cargo.lock: 1.15.1
-rustls-platform-verifier	0.7.1	1.85	https://index.crates.io/ru/st/rustls-platform-verifier	Cargo.lock: 0.7.0; rust/fuzz/Cargo.lock: 0.7.1	Cargo.lock: 0.7.0; rust/fuzz/Cargo.lock: 0.7.1
-rustls-platform-verifier-android	0.2.0		https://index.crates.io/ru/st/rustls-platform-verifier-android	Cargo.lock: 0.1.1; rust/fuzz/Cargo.lock: 0.2.0	Cargo.lock: 0.1.1; rust/fuzz/Cargo.lock: 0.2.0
-rustls-webpki	0.103.17	1.71	https://index.crates.io/ru/st/rustls-webpki	Cargo.lock: 0.103.17; rust/fuzz/Cargo.lock: 0.103.15	Cargo.lock: 0.103.17; rust/fuzz/Cargo.lock: 0.103.15
+rustix	1.1.6	1.65	https://index.crates.io/ru/st/rustix	Cargo.lock: 1.1.6; experiments/issue-372/Cargo.lock: 1.1.4; rust/fuzz/Cargo.lock: 1.1.5	Cargo.lock: 1.1.6; rust/fuzz/Cargo.lock: 1.1.6
+rustls	0.23.46	1.71	https://index.crates.io/ru/st/rustls	Cargo.lock: 0.23.46; rust/fuzz/Cargo.lock: 0.23.45	Cargo.lock: 0.23.46; rust/fuzz/Cargo.lock: 0.23.46
+rustls-native-certs	0.8.5	1.71	https://index.crates.io/ru/st/rustls-native-certs	Cargo.lock: 0.8.4; rust/fuzz/Cargo.lock: 0.8.4	Cargo.lock: 0.8.5; rust/fuzz/Cargo.lock: 0.8.5
+rustls-pki-types	1.16.0	1.60	https://index.crates.io/ru/st/rustls-pki-types	Cargo.lock: 1.15.1; rust/fuzz/Cargo.lock: 1.15.1	Cargo.lock: 1.16.0; rust/fuzz/Cargo.lock: 1.16.0
+rustls-platform-verifier	0.7.1	1.85	https://index.crates.io/ru/st/rustls-platform-verifier	Cargo.lock: 0.7.0; rust/fuzz/Cargo.lock: 0.7.1	Cargo.lock: 0.7.1; rust/fuzz/Cargo.lock: 0.7.1
+rustls-platform-verifier-android	0.2.0		https://index.crates.io/ru/st/rustls-platform-verifier-android	Cargo.lock: 0.1.1; rust/fuzz/Cargo.lock: 0.2.0	Cargo.lock: 0.2.0; rust/fuzz/Cargo.lock: 0.2.0
+rustls-webpki	0.103.17	1.71	https://index.crates.io/ru/st/rustls-webpki	Cargo.lock: 0.103.17; rust/fuzz/Cargo.lock: 0.103.15	Cargo.lock: 0.103.17; rust/fuzz/Cargo.lock: 0.103.17
 rustversion	1.0.23	1.31	https://index.crates.io/ru/st/rustversion	Cargo.lock: 1.0.23; rust/fuzz/Cargo.lock: 1.0.23	Cargo.lock: 1.0.23; rust/fuzz/Cargo.lock: 1.0.23
 rusty-fork	0.3.1		https://index.crates.io/ru/st/rusty-fork	Cargo.lock: 0.3.1	Cargo.lock: 0.3.1
 ryu	1.0.23	1.71	https://index.crates.io/3/r/ryu	Cargo.lock: 1.0.23; rust/fuzz/Cargo.lock: 1.0.23	Cargo.lock: 1.0.23; rust/fuzz/Cargo.lock: 1.0.23
 same-file	1.0.6		https://index.crates.io/sa/me/same-file	Cargo.lock: 1.0.6; rust/fuzz/Cargo.lock: 1.0.6	Cargo.lock: 1.0.6; rust/fuzz/Cargo.lock: 1.0.6
-schannel	0.1.30	1.71.0	https://index.crates.io/sc/ha/schannel	Cargo.lock: 0.1.29; rust/fuzz/Cargo.lock: 0.1.29	Cargo.lock: 0.1.29; rust/fuzz/Cargo.lock: 0.1.29
-schemars	1.2.3	1.74	https://index.crates.io/sc/he/schemars	Cargo.lock: 1.2.3; rust/Cargo.toml: 1.2	Cargo.lock: 1.2.3
-schemars_derive	1.2.3	1.74	https://index.crates.io/sc/he/schemars_derive	Cargo.lock: 1.2.3	Cargo.lock: 1.2.3
+schannel	0.1.30	1.71.0	https://index.crates.io/sc/ha/schannel	Cargo.lock: 0.1.29; rust/fuzz/Cargo.lock: 0.1.29	Cargo.lock: 0.1.30; rust/fuzz/Cargo.lock: 0.1.30
+schemars	1.2.3	1.74	https://index.crates.io/sc/he/schemars	Cargo.lock: 1.2.3; rust/Cargo.toml: 1.2	Cargo.lock: 1.2.3; rust/fuzz/Cargo.lock: 1.2.3
+schemars_derive	1.2.3	1.74	https://index.crates.io/sc/he/schemars_derive	Cargo.lock: 1.2.3	Cargo.lock: 1.2.3; rust/fuzz/Cargo.lock: 1.2.3
 scopeguard	1.2.0		https://index.crates.io/sc/op/scopeguard	Cargo.lock: 1.2.0; rust/fuzz/Cargo.lock: 1.2.0	Cargo.lock: 1.2.0; rust/fuzz/Cargo.lock: 1.2.0
-sec1	0.8.1	1.85	https://index.crates.io/se/c1/sec1	Cargo.lock: 0.8.1; rust/fuzz/Cargo.lock: 0.7.3	Cargo.lock: 0.8.1; rust/fuzz/Cargo.lock: 0.7.3
+sec1	0.8.1	1.85	https://index.crates.io/se/c1/sec1	Cargo.lock: 0.8.1; rust/fuzz/Cargo.lock: 0.7.3	Cargo.lock: 0.8.1; rust/fuzz/Cargo.lock: 0.8.1
 security-framework	3.7.0	1.85	https://index.crates.io/se/cu/security-framework	Cargo.lock: 3.7.0; rust/fuzz/Cargo.lock: 3.7.0	Cargo.lock: 3.7.0; rust/fuzz/Cargo.lock: 3.7.0
 security-framework-sys	2.17.0	1.70	https://index.crates.io/se/cu/security-framework-sys	Cargo.lock: 2.17.0; rust/fuzz/Cargo.lock: 2.17.0	Cargo.lock: 2.17.0; rust/fuzz/Cargo.lock: 2.17.0
 semver	1.0.28	1.68	https://index.crates.io/se/mv/semver	Cargo.lock: 1.0.28; rust/fuzz/Cargo.lock: 1.0.28	Cargo.lock: 1.0.28; rust/fuzz/Cargo.lock: 1.0.28
@@ -333,40 +338,40 @@ serde	1.0.229	1.56	https://index.crates.io/se/rd/serde	Cargo.lock: 1.0.229; docs
 serde-wasm-bindgen	0.6.5		https://index.crates.io/se/rd/serde-wasm-bindgen	docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.6	—
 serde_core	1.0.229	1.56	https://index.crates.io/se/rd/serde_core	Cargo.lock: 1.0.229; experiments/issue-372/Cargo.lock: 1.0.229; rust/fuzz/Cargo.lock: 1.0.229	Cargo.lock: 1.0.229; rust/fuzz/Cargo.lock: 1.0.229
 serde_derive	1.0.229	1.71	https://index.crates.io/se/rd/serde_derive	Cargo.lock: 1.0.229; experiments/issue-372/Cargo.lock: 1.0.229; rust/fuzz/Cargo.lock: 1.0.229	Cargo.lock: 1.0.229; rust/fuzz/Cargo.lock: 1.0.229
-serde_derive_internals	0.30.0	1.71	https://index.crates.io/se/rd/serde_derive_internals	Cargo.lock: 0.30.0	Cargo.lock: 0.30.0
-serde_json	1.0.154	1.71	https://index.crates.io/se/rd/serde_json	Cargo.lock: 1.0.154; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 1.0; docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/Cargo.toml: 1; docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml: 1; rust/Cargo.toml: 1.0; rust/fuzz/Cargo.lock: 1.0.151; rust/fuzz/Cargo.toml: 1	Cargo.lock: 1.0.154; rust/fuzz/Cargo.lock: 1.0.151; scripts/check-coverage.rs: 1.0.154; scripts/check-delivery.rs: 1.0.154; scripts/check-docker-platforms.rs: 1.0.154; scripts/check-release-needed.rs: 1.0.154; scripts/check-release-provenance.rs: 1.0.154; scripts/compare-benchmarks.rs: 1.0.154; scripts/create-github-release.rs: 1.0.154; scripts/record-vendor-fixtures.rs: 1.0.154; scripts/upload-release-assets.rs: 1.0.154
+serde_derive_internals	0.30.0	1.71	https://index.crates.io/se/rd/serde_derive_internals	Cargo.lock: 0.30.0	Cargo.lock: 0.30.0; rust/fuzz/Cargo.lock: 0.30.0
+serde_json	1.0.154	1.71	https://index.crates.io/se/rd/serde_json	Cargo.lock: 1.0.154; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 1.0; docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/Cargo.toml: 1; docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml: 1; rust/Cargo.toml: 1.0; rust/fuzz/Cargo.lock: 1.0.151; rust/fuzz/Cargo.toml: 1	Cargo.lock: 1.0.154; rust/fuzz/Cargo.lock: 1.0.154; scripts/check-coverage.rs: 1.0.154; scripts/check-delivery.rs: 1.0.154; scripts/check-docker-platforms.rs: 1.0.154; scripts/check-release-needed.rs: 1.0.154; scripts/check-release-provenance.rs: 1.0.154; scripts/compare-benchmarks.rs: 1.0.154; scripts/create-github-release.rs: 1.0.154; scripts/record-vendor-fixtures.rs: 1.0.154; scripts/upload-release-assets.rs: 1.0.154
 serde_path_to_error	0.1.20	1.61	https://index.crates.io/se/rd/serde_path_to_error	Cargo.lock: 0.1.20; rust/fuzz/Cargo.lock: 0.1.20	Cargo.lock: 0.1.20; rust/fuzz/Cargo.lock: 0.1.20
 serde_urlencoded	0.7.1		https://index.crates.io/se/rd/serde_urlencoded	Cargo.lock: 0.7.1; rust/fuzz/Cargo.lock: 0.7.1	Cargo.lock: 0.7.1; rust/fuzz/Cargo.lock: 0.7.1
-serdect	0.4.3	1.85	https://index.crates.io/se/rd/serdect	Cargo.lock: 0.4.3	Cargo.lock: 0.4.3
-serial2	0.2.39	1.63	https://index.crates.io/se/ri/serial2	Cargo.lock: 0.2.38; rust/fuzz/Cargo.lock: 0.2.38	Cargo.lock: 0.2.38; rust/fuzz/Cargo.lock: 0.2.38
+serdect	0.4.3	1.85	https://index.crates.io/se/rd/serdect	Cargo.lock: 0.4.3	Cargo.lock: 0.4.3; rust/fuzz/Cargo.lock: 0.4.3
+serial2	0.2.39	1.63	https://index.crates.io/se/ri/serial2	Cargo.lock: 0.2.38; rust/fuzz/Cargo.lock: 0.2.38	Cargo.lock: 0.2.39; rust/fuzz/Cargo.lock: 0.2.39
 sha1	0.11.0	1.85	https://index.crates.io/sh/a1/sha1	Cargo.lock: 0.10.7, 0.11.0; rust/fuzz/Cargo.lock: 0.10.7, 0.11.0	Cargo.lock: 0.10.7, 0.11.0; rust/fuzz/Cargo.lock: 0.10.7, 0.11.0
-sha2	0.11.2	1.88	https://index.crates.io/sh/a2/sha2	Cargo.lock: 0.11.1; rust/Cargo.toml: 0.11; rust/fuzz/Cargo.lock: 0.10.9, 0.11.0	Cargo.lock: 0.11.1; rust/fuzz/Cargo.lock: 0.10.9, 0.11.0
+sha2	0.11.2	1.88	https://index.crates.io/sh/a2/sha2	Cargo.lock: 0.11.1; rust/Cargo.toml: 0.11; rust/fuzz/Cargo.lock: 0.10.9, 0.11.0	Cargo.lock: 0.11.2; rust/fuzz/Cargo.lock: 0.11.2
 sharded-slab	0.1.7	1.42.0	https://index.crates.io/sh/ar/sharded-slab	Cargo.lock: 0.1.7; rust/fuzz/Cargo.lock: 0.1.7	Cargo.lock: 0.1.7; rust/fuzz/Cargo.lock: 0.1.7
 shared_library	0.1.9		https://index.crates.io/sh/ar/shared_library	Cargo.lock: 0.1.9; rust/fuzz/Cargo.lock: 0.1.9	Cargo.lock: 0.1.9; rust/fuzz/Cargo.lock: 0.1.9
 shell-words	1.1.1		https://index.crates.io/sh/el/shell-words	Cargo.lock: 1.1.1; rust/fuzz/Cargo.lock: 1.1.1	Cargo.lock: 1.1.1; rust/fuzz/Cargo.lock: 1.1.1
 shlex	2.0.1	1.46.0	https://index.crates.io/sh/le/shlex	Cargo.lock: 2.0.1; rust/fuzz/Cargo.lock: 2.0.1	Cargo.lock: 2.0.1; rust/fuzz/Cargo.lock: 2.0.1
 signal-hook-registry	1.4.8	1.26	https://index.crates.io/si/gn/signal-hook-registry	Cargo.lock: 1.4.8; rust/fuzz/Cargo.lock: 1.4.8	Cargo.lock: 1.4.8; rust/fuzz/Cargo.lock: 1.4.8
-signature	3.0.0	1.85	https://index.crates.io/si/gn/signature	Cargo.lock: 3.0.0; rust/fuzz/Cargo.lock: 2.2.0	Cargo.lock: 3.0.0; rust/fuzz/Cargo.lock: 2.2.0
+signature	3.0.0	1.85	https://index.crates.io/si/gn/signature	Cargo.lock: 3.0.0; rust/fuzz/Cargo.lock: 2.2.0	Cargo.lock: 3.0.0; rust/fuzz/Cargo.lock: 3.0.0
 simd-adler32	0.3.10		https://index.crates.io/si/md/simd-adler32	Cargo.lock: 0.3.10; rust/fuzz/Cargo.lock: 0.3.10	Cargo.lock: 0.3.10; rust/fuzz/Cargo.lock: 0.3.10
 simd_cesu8	1.2.0	1.85.0	https://index.crates.io/si/md/simd_cesu8	Cargo.lock: 1.2.0; rust/fuzz/Cargo.lock: 1.2.0	Cargo.lock: 1.2.0; rust/fuzz/Cargo.lock: 1.2.0
 simdutf8	0.1.5		https://index.crates.io/si/md/simdutf8	Cargo.lock: 0.1.5; rust/fuzz/Cargo.lock: 0.1.5	Cargo.lock: 0.1.5; rust/fuzz/Cargo.lock: 0.1.5
 slab	0.4.12	1.51	https://index.crates.io/sl/ab/slab	Cargo.lock: 0.4.12; rust/fuzz/Cargo.lock: 0.4.12	Cargo.lock: 0.4.12; rust/fuzz/Cargo.lock: 0.4.12
-smallvec	1.16.6		https://index.crates.io/sm/al/smallvec	Cargo.lock: 1.16.0; rust/fuzz/Cargo.lock: 1.16.2	Cargo.lock: 1.16.0; rust/fuzz/Cargo.lock: 1.16.2
+smallvec	1.16.6		https://index.crates.io/sm/al/smallvec	Cargo.lock: 1.16.0; rust/fuzz/Cargo.lock: 1.16.2	Cargo.lock: 1.16.6; rust/fuzz/Cargo.lock: 1.16.6
 socket2	0.6.5	1.70	https://index.crates.io/so/ck/socket2	Cargo.lock: 0.6.5; rust/fuzz/Cargo.lock: 0.6.5	Cargo.lock: 0.6.5; rust/fuzz/Cargo.lock: 0.6.5
-spin	0.12.3	1.71	https://index.crates.io/sp/in/spin	rust/fuzz/Cargo.lock: 0.9.9	rust/fuzz/Cargo.lock: 0.9.9
-spki	0.8.1	1.85	https://index.crates.io/sp/ki/spki	Cargo.lock: 0.8.1; rust/fuzz/Cargo.lock: 0.7.3	Cargo.lock: 0.8.1; rust/fuzz/Cargo.lock: 0.7.3
+spin	0.12.3	1.71	https://index.crates.io/sp/in/spin	rust/fuzz/Cargo.lock: 0.9.9	—
+spki	0.8.1	1.85	https://index.crates.io/sp/ki/spki	Cargo.lock: 0.8.1; rust/fuzz/Cargo.lock: 0.7.3	Cargo.lock: 0.8.1; rust/fuzz/Cargo.lock: 0.8.1
 stable_deref_trait	1.2.1		https://index.crates.io/st/ab/stable_deref_trait	Cargo.lock: 1.2.1; rust/fuzz/Cargo.lock: 1.2.1	Cargo.lock: 1.2.1; rust/fuzz/Cargo.lock: 1.2.1
 strsim	0.11.1	1.56	https://index.crates.io/st/rs/strsim	Cargo.lock: 0.11.1; experiments/issue-372/Cargo.lock: 0.11.1; rust/fuzz/Cargo.lock: 0.11.1	Cargo.lock: 0.11.1; rust/fuzz/Cargo.lock: 0.11.1
-strum	0.28.0	1.71	https://index.crates.io/st/ru/strum	Cargo.lock: 0.28.0	Cargo.lock: 0.28.0
-strum_macros	0.28.0	1.71	https://index.crates.io/st/ru/strum_macros	Cargo.lock: 0.28.0	Cargo.lock: 0.28.0
+strum	0.28.0	1.71	https://index.crates.io/st/ru/strum	Cargo.lock: 0.28.0	Cargo.lock: 0.28.0; rust/fuzz/Cargo.lock: 0.28.0
+strum_macros	0.28.0	1.71	https://index.crates.io/st/ru/strum_macros	Cargo.lock: 0.28.0	Cargo.lock: 0.28.0; rust/fuzz/Cargo.lock: 0.28.0
 subtle	2.6.1		https://index.crates.io/su/bt/subtle	Cargo.lock: 2.6.1; rust/fuzz/Cargo.lock: 2.6.1	Cargo.lock: 2.6.1; rust/fuzz/Cargo.lock: 2.6.1
-syn	3.0.10	1.71	https://index.crates.io/3/s/syn	Cargo.lock: 2.0.119, 3.0.10; docs/case-studies/issue-759/raw/ci/local-incident/experiments/issue-725/test-sharder/Cargo.lock: 2.0.119; docs/case-studies/issue-759/raw/ci/local-incident/experiments/issue-725/test-sharder/Cargo.toml: =2.0.119; experiments/issue-372/Cargo.lock: 2.0.119, 3.0.5; experiments/issue-725/test-sharder/Cargo.lock: 2.0.119; experiments/issue-725/test-sharder/Cargo.toml: =2.0.119; rust/fuzz/Cargo.lock: 2.0.119, 3.0.6	Cargo.lock: 2.0.119, 3.0.10; experiments/issue-725/test-sharder/Cargo.lock: 2.0.119; rust/fuzz/Cargo.lock: 2.0.119, 3.0.6
+syn	3.0.10	1.71	https://index.crates.io/3/s/syn	Cargo.lock: 2.0.119, 3.0.10; docs/case-studies/issue-759/raw/ci/local-incident/experiments/issue-725/test-sharder/Cargo.lock: 2.0.119; docs/case-studies/issue-759/raw/ci/local-incident/experiments/issue-725/test-sharder/Cargo.toml: =2.0.119; experiments/issue-372/Cargo.lock: 2.0.119, 3.0.5; experiments/issue-725/test-sharder/Cargo.lock: 2.0.119; experiments/issue-725/test-sharder/Cargo.toml: =2.0.119; rust/fuzz/Cargo.lock: 2.0.119, 3.0.6	Cargo.lock: 2.0.119, 3.0.10; experiments/issue-725/test-sharder/Cargo.lock: 3.0.10; rust/fuzz/Cargo.lock: 2.0.119, 3.0.10
 sync_wrapper	1.0.2		https://index.crates.io/sy/nc/sync_wrapper	Cargo.lock: 1.0.2; rust/fuzz/Cargo.lock: 1.0.2	Cargo.lock: 1.0.2; rust/fuzz/Cargo.lock: 1.0.2
-synstructure	0.14.0	1.71	https://index.crates.io/sy/ns/synstructure	Cargo.lock: 0.13.2; rust/fuzz/Cargo.lock: 0.13.2, 0.14.0	Cargo.lock: 0.13.2; rust/fuzz/Cargo.lock: 0.13.2, 0.14.0
+synstructure	0.14.0	1.71	https://index.crates.io/sy/ns/synstructure	Cargo.lock: 0.13.2; rust/fuzz/Cargo.lock: 0.13.2, 0.14.0	Cargo.lock: 0.13.2, 0.14.0; rust/fuzz/Cargo.lock: 0.13.2, 0.14.0
 system-configuration	0.8.0	1.64.0	https://index.crates.io/sy/st/system-configuration	Cargo.lock: 0.7.0; rust/fuzz/Cargo.lock: 0.7.0	Cargo.lock: 0.7.0; rust/fuzz/Cargo.lock: 0.7.0
 system-configuration-sys	0.6.0		https://index.crates.io/sy/st/system-configuration-sys	Cargo.lock: 0.6.0; rust/fuzz/Cargo.lock: 0.6.0	Cargo.lock: 0.6.0; rust/fuzz/Cargo.lock: 0.6.0
 tap	1.0.1		https://index.crates.io/3/t/tap	Cargo.lock: 1.0.1; experiments/issue-372/Cargo.lock: 1.0.1; rust/fuzz/Cargo.lock: 1.0.1	Cargo.lock: 1.0.1; rust/fuzz/Cargo.lock: 1.0.1
-target-features	0.2.0	1.82	https://index.crates.io/ta/rg/target-features	Cargo.lock: 0.1.6	Cargo.lock: 0.1.6
+target-features	0.2.0	1.82	https://index.crates.io/ta/rg/target-features	Cargo.lock: 0.1.6	—
 tempfile	3.27.0	1.63	https://index.crates.io/te/mp/tempfile	Cargo.lock: 3.27.0; docs/case-studies/issue-759/raw/sources/link-cli/files/rust/Cargo.toml: 3.27.0; docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml: 3; experiments/issue-372/Cargo.lock: 3.27.0; rust/Cargo.toml: 3; rust/fuzz/Cargo.lock: 3.27.0	Cargo.lock: 3.27.0; rust/fuzz/Cargo.lock: 3.27.0; scripts/check-delivery.rs: 3.27.0
 thiserror	2.0.21	1.77	https://index.crates.io/th/is/thiserror	Cargo.lock: 1.0.69, 2.0.21; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 2.0; docs/case-studies/issue-759/raw/sources/link-cli/files/rust/Cargo.toml: 2.0.21; experiments/issue-372/Cargo.lock: 1.0.69, 2.0.20; rust/fuzz/Cargo.lock: 1.0.69, 2.0.21	Cargo.lock: 1.0.69, 2.0.21; rust/fuzz/Cargo.lock: 1.0.69, 2.0.21
 thiserror-impl	2.0.21	1.77	https://index.crates.io/th/is/thiserror-impl	Cargo.lock: 1.0.69, 2.0.21; experiments/issue-372/Cargo.lock: 1.0.69, 2.0.20; rust/fuzz/Cargo.lock: 1.0.69, 2.0.21	Cargo.lock: 1.0.69, 2.0.21; rust/fuzz/Cargo.lock: 1.0.69, 2.0.21
@@ -374,21 +379,21 @@ thread_local	1.1.10	1.63	https://index.crates.io/th/re/thread_local	Cargo.lock: 
 time	0.3.55	1.88.0	https://index.crates.io/ti/me/time	Cargo.lock: 0.3.55; rust/fuzz/Cargo.lock: 0.3.55	Cargo.lock: 0.3.55; rust/fuzz/Cargo.lock: 0.3.55
 time-core	0.1.9	1.88.0	https://index.crates.io/ti/me/time-core	Cargo.lock: 0.1.9; rust/fuzz/Cargo.lock: 0.1.9	Cargo.lock: 0.1.9; rust/fuzz/Cargo.lock: 0.1.9
 time-macros	0.2.32	1.88.0	https://index.crates.io/ti/me/time-macros	Cargo.lock: 0.2.32; rust/fuzz/Cargo.lock: 0.2.32	Cargo.lock: 0.2.32; rust/fuzz/Cargo.lock: 0.2.32
-tinystr	0.8.5	1.82	https://index.crates.io/ti/ny/tinystr	Cargo.lock: 0.8.4; rust/fuzz/Cargo.lock: 0.8.4	Cargo.lock: 0.8.4; rust/fuzz/Cargo.lock: 0.8.4
+tinystr	0.8.5	1.82	https://index.crates.io/ti/ny/tinystr	Cargo.lock: 0.8.4; rust/fuzz/Cargo.lock: 0.8.4	Cargo.lock: 0.8.5; rust/fuzz/Cargo.lock: 0.8.5
 tinytemplate	1.2.1		https://index.crates.io/ti/ny/tinytemplate	Cargo.lock: 1.2.1	Cargo.lock: 1.2.1
-tinyvec	1.13.3		https://index.crates.io/ti/ny/tinyvec	Cargo.lock: 1.13.2; rust/fuzz/Cargo.lock: 1.13.3	Cargo.lock: 1.13.2; rust/fuzz/Cargo.lock: 1.13.3
-tinyvec_macros	0.1.1		https://index.crates.io/ti/ny/tinyvec_macros	Cargo.lock: 0.1.1	Cargo.lock: 0.1.1
-tokio	1.54.1	1.85	https://index.crates.io/to/ki/tokio	Cargo.lock: 1.54.1; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 1.0; rust/Cargo.toml: 1.53; rust/fuzz/Cargo.lock: 1.53.2	Cargo.lock: 1.54.1; rust/fuzz/Cargo.lock: 1.53.2
+tinyvec	1.13.3		https://index.crates.io/ti/ny/tinyvec	Cargo.lock: 1.13.2; rust/fuzz/Cargo.lock: 1.13.3	Cargo.lock: 1.13.3; rust/fuzz/Cargo.lock: 1.13.3
+tinyvec_macros	0.1.1		https://index.crates.io/ti/ny/tinyvec_macros	Cargo.lock: 0.1.1	—
+tokio	1.54.1	1.85	https://index.crates.io/to/ki/tokio	Cargo.lock: 1.54.1; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 1.0; rust/Cargo.toml: 1.53; rust/fuzz/Cargo.lock: 1.53.2	Cargo.lock: 1.54.1; rust/fuzz/Cargo.lock: 1.54.1
 tokio-macros	2.7.2	1.71	https://index.crates.io/to/ki/tokio-macros	Cargo.lock: 2.7.2; rust/fuzz/Cargo.lock: 2.7.2	Cargo.lock: 2.7.2; rust/fuzz/Cargo.lock: 2.7.2
-tokio-rustls	0.26.6	1.71	https://index.crates.io/to/ki/tokio-rustls	Cargo.lock: 0.26.5; rust/fuzz/Cargo.lock: 0.26.6	Cargo.lock: 0.26.5; rust/fuzz/Cargo.lock: 0.26.6
+tokio-rustls	0.26.6	1.71	https://index.crates.io/to/ki/tokio-rustls	Cargo.lock: 0.26.5; rust/fuzz/Cargo.lock: 0.26.6	Cargo.lock: 0.26.6; rust/fuzz/Cargo.lock: 0.26.6
 tokio-stream	0.1.19	1.71	https://index.crates.io/to/ki/tokio-stream	Cargo.lock: 0.1.19	Cargo.lock: 0.1.19
 tokio-test	0.4.6	1.71	https://index.crates.io/to/ki/tokio-test	Cargo.lock: 0.4.6; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.4; rust/Cargo.toml: 0.4	Cargo.lock: 0.4.6
 tokio-tungstenite	0.30.0	1.85	https://index.crates.io/to/ki/tokio-tungstenite	Cargo.lock: 0.29.0, 0.30.0; rust/Cargo.toml: 0.30; rust/fuzz/Cargo.lock: 0.29.0, 0.30.0	Cargo.lock: 0.29.0, 0.30.0; rust/fuzz/Cargo.lock: 0.29.0, 0.30.0
-tokio-util	0.7.20	1.85	https://index.crates.io/to/ki/tokio-util	Cargo.lock: 0.7.19; rust/fuzz/Cargo.lock: 0.7.19	Cargo.lock: 0.7.19; rust/fuzz/Cargo.lock: 0.7.19
-toml_datetime	1.1.3+spec-1.1.0	1.85	https://index.crates.io/to/ml/toml_datetime	Cargo.lock: 1.1.3+spec-1.1.0; rust/fuzz/Cargo.lock: 1.1.1+spec-1.1.0	Cargo.lock: 1.1.3+spec-1.1.0; rust/fuzz/Cargo.lock: 1.1.1+spec-1.1.0
-toml_edit	0.25.21+spec-1.1.0	1.85	https://index.crates.io/to/ml/toml_edit	Cargo.lock: 0.25.20+spec-1.1.0; rust/Cargo.toml: 0.25; rust/fuzz/Cargo.lock: 0.25.15+spec-1.1.0	Cargo.lock: 0.25.20+spec-1.1.0; rust/fuzz/Cargo.lock: 0.25.15+spec-1.1.0
-toml_parser	1.1.7+spec-1.1.0	1.85	https://index.crates.io/to/ml/toml_parser	Cargo.lock: 1.1.7+spec-1.1.0; rust/fuzz/Cargo.lock: 1.1.3+spec-1.1.0	Cargo.lock: 1.1.7+spec-1.1.0; rust/fuzz/Cargo.lock: 1.1.3+spec-1.1.0
-toml_writer	1.2.0+spec-1.1.0	1.85	https://index.crates.io/to/ml/toml_writer	Cargo.lock: 1.2.0+spec-1.1.0; rust/fuzz/Cargo.lock: 1.1.2+spec-1.1.0	Cargo.lock: 1.2.0+spec-1.1.0; rust/fuzz/Cargo.lock: 1.1.2+spec-1.1.0
+tokio-util	0.7.20	1.85	https://index.crates.io/to/ki/tokio-util	Cargo.lock: 0.7.19; rust/fuzz/Cargo.lock: 0.7.19	Cargo.lock: 0.7.20; rust/fuzz/Cargo.lock: 0.7.20
+toml_datetime	1.1.3+spec-1.1.0	1.85	https://index.crates.io/to/ml/toml_datetime	Cargo.lock: 1.1.3+spec-1.1.0; rust/fuzz/Cargo.lock: 1.1.1+spec-1.1.0	Cargo.lock: 1.1.3+spec-1.1.0; rust/fuzz/Cargo.lock: 1.1.3+spec-1.1.0
+toml_edit	0.25.21+spec-1.1.0	1.85	https://index.crates.io/to/ml/toml_edit	Cargo.lock: 0.25.20+spec-1.1.0; rust/Cargo.toml: 0.25; rust/fuzz/Cargo.lock: 0.25.15+spec-1.1.0	Cargo.lock: 0.25.21+spec-1.1.0; rust/fuzz/Cargo.lock: 0.25.21+spec-1.1.0
+toml_parser	1.1.7+spec-1.1.0	1.85	https://index.crates.io/to/ml/toml_parser	Cargo.lock: 1.1.7+spec-1.1.0; rust/fuzz/Cargo.lock: 1.1.3+spec-1.1.0	Cargo.lock: 1.1.7+spec-1.1.0; rust/fuzz/Cargo.lock: 1.1.7+spec-1.1.0
+toml_writer	1.2.0+spec-1.1.0	1.85	https://index.crates.io/to/ml/toml_writer	Cargo.lock: 1.2.0+spec-1.1.0; rust/fuzz/Cargo.lock: 1.1.2+spec-1.1.0	Cargo.lock: 1.2.0+spec-1.1.0; rust/fuzz/Cargo.lock: 1.2.0+spec-1.1.0
 tower	0.5.3	1.64.0	https://index.crates.io/to/we/tower	Cargo.lock: 0.5.3; rust/Cargo.toml: 0.5; rust/fuzz/Cargo.lock: 0.5.3	Cargo.lock: 0.5.3; rust/fuzz/Cargo.lock: 0.5.3
 tower-http	0.7.1	1.65	https://index.crates.io/to/we/tower-http	Cargo.lock: 0.6.11, 0.7.1; rust/Cargo.toml: 0.7; rust/fuzz/Cargo.lock: 0.6.11, 0.7.1	Cargo.lock: 0.6.11, 0.7.1; rust/fuzz/Cargo.lock: 0.6.11, 0.7.1
 tower-layer	0.3.3		https://index.crates.io/to/we/tower-layer	Cargo.lock: 0.3.3; rust/fuzz/Cargo.lock: 0.3.3	Cargo.lock: 0.3.3; rust/fuzz/Cargo.lock: 0.3.3
@@ -399,43 +404,45 @@ tracing-core	0.1.36	1.65.0	https://index.crates.io/tr/ac/tracing-core	Cargo.lock
 tracing-log	0.2.0	1.56.0	https://index.crates.io/tr/ac/tracing-log	Cargo.lock: 0.2.0; rust/fuzz/Cargo.lock: 0.2.0	Cargo.lock: 0.2.0; rust/fuzz/Cargo.lock: 0.2.0
 tracing-serde	0.2.0	1.63.0	https://index.crates.io/tr/ac/tracing-serde	Cargo.lock: 0.2.0; rust/fuzz/Cargo.lock: 0.2.0	Cargo.lock: 0.2.0; rust/fuzz/Cargo.lock: 0.2.0
 tracing-subscriber	0.3.23	1.65.0	https://index.crates.io/tr/ac/tracing-subscriber	Cargo.lock: 0.3.23; rust/Cargo.toml: 0.3; rust/fuzz/Cargo.lock: 0.3.23	Cargo.lock: 0.3.23; rust/fuzz/Cargo.lock: 0.3.23
+triomphe	0.1.17	1.85	https://index.crates.io/tr/io/triomphe		Cargo.lock: 0.1.17; rust/fuzz/Cargo.lock: 0.1.17
 try-lock	0.2.5		https://index.crates.io/tr/y-/try-lock	Cargo.lock: 0.2.5; rust/fuzz/Cargo.lock: 0.2.5	Cargo.lock: 0.2.5; rust/fuzz/Cargo.lock: 0.2.5
 tungstenite	0.30.0	1.85	https://index.crates.io/tu/ng/tungstenite	Cargo.lock: 0.29.0, 0.30.0; rust/fuzz/Cargo.lock: 0.29.0, 0.30.0	Cargo.lock: 0.29.0, 0.30.0; rust/fuzz/Cargo.lock: 0.29.0, 0.30.0
 typenum	1.20.1	1.41.0	https://index.crates.io/ty/pe/typenum	Cargo.lock: 1.20.1; rust/fuzz/Cargo.lock: 1.20.1	Cargo.lock: 1.20.1; rust/fuzz/Cargo.lock: 1.20.1
 unarray	0.1.4		https://index.crates.io/un/ar/unarray	Cargo.lock: 0.1.4	Cargo.lock: 0.1.4
-unicase	2.10.0		https://index.crates.io/un/ic/unicase	Cargo.lock: 2.9.0; rust/fuzz/Cargo.lock: 2.9.0	Cargo.lock: 2.9.0; rust/fuzz/Cargo.lock: 2.9.0
-unicode-general-category	1.1.0		https://index.crates.io/un/ic/unicode-general-category	Cargo.lock: 1.1.0	Cargo.lock: 1.1.0
-unicode-ident	1.0.27	1.71	https://index.crates.io/un/ic/unicode-ident	Cargo.lock: 1.0.24; docs/case-studies/issue-759/raw/ci/local-incident/experiments/issue-725/test-sharder/Cargo.lock: 1.0.24; experiments/issue-372/Cargo.lock: 1.0.24; experiments/issue-725/test-sharder/Cargo.lock: 1.0.24; rust/fuzz/Cargo.lock: 1.0.26	Cargo.lock: 1.0.24; experiments/issue-725/test-sharder/Cargo.lock: 1.0.24; rust/fuzz/Cargo.lock: 1.0.26
-unicode-width	0.2.3	1.66	https://index.crates.io/un/ic/unicode-width	Cargo.lock: 0.2.2	Cargo.lock: 0.2.2
+unicase	2.10.0		https://index.crates.io/un/ic/unicase	Cargo.lock: 2.9.0; rust/fuzz/Cargo.lock: 2.9.0	Cargo.lock: 2.10.0; rust/fuzz/Cargo.lock: 2.10.0
+unicode-general-category	1.1.0		https://index.crates.io/un/ic/unicode-general-category	Cargo.lock: 1.1.0	Cargo.lock: 1.1.0; rust/fuzz/Cargo.lock: 1.1.0
+unicode-ident	1.0.27	1.71	https://index.crates.io/un/ic/unicode-ident	Cargo.lock: 1.0.24; docs/case-studies/issue-759/raw/ci/local-incident/experiments/issue-725/test-sharder/Cargo.lock: 1.0.24; experiments/issue-372/Cargo.lock: 1.0.24; experiments/issue-725/test-sharder/Cargo.lock: 1.0.24; rust/fuzz/Cargo.lock: 1.0.26	Cargo.lock: 1.0.27; experiments/issue-725/test-sharder/Cargo.lock: 1.0.27; rust/fuzz/Cargo.lock: 1.0.27
+unicode-width	0.2.3	1.66	https://index.crates.io/un/ic/unicode-width	Cargo.lock: 0.2.2	Cargo.lock: 0.2.3; rust/fuzz/Cargo.lock: 0.2.3
 universal-hash	0.6.1	1.85	https://index.crates.io/un/iv/universal-hash	Cargo.lock: 0.6.1; rust/fuzz/Cargo.lock: 0.6.1	Cargo.lock: 0.6.1; rust/fuzz/Cargo.lock: 0.6.1
 untrusted	0.9.0		https://index.crates.io/un/tr/untrusted	Cargo.lock: 0.9.0; rust/fuzz/Cargo.lock: 0.9.0	Cargo.lock: 0.9.0; rust/fuzz/Cargo.lock: 0.9.0
 ureq	3.5.2	1.85	https://index.crates.io/ur/eq/ureq		scripts/check-release-needed.rs: 3.5.2; scripts/record-vendor-fixtures.rs: 3.5.2; scripts/wait-for-crate.rs: 3.5.2
-url	2.5.9	1.63	https://index.crates.io/3/u/url	Cargo.lock: 2.5.9; rust/Cargo.toml: 2.5; rust/fuzz/Cargo.lock: 2.5.8	Cargo.lock: 2.5.9; rust/fuzz/Cargo.lock: 2.5.8
-utf8_iter	1.1.0	1.83	https://index.crates.io/ut/f8/utf8_iter	Cargo.lock: 1.0.4; rust/fuzz/Cargo.lock: 1.0.4	Cargo.lock: 1.0.4; rust/fuzz/Cargo.lock: 1.0.4
+url	2.5.9	1.63	https://index.crates.io/3/u/url	Cargo.lock: 2.5.9; rust/Cargo.toml: 2.5; rust/fuzz/Cargo.lock: 2.5.8	Cargo.lock: 2.5.9; rust/fuzz/Cargo.lock: 2.5.9
+utf8_iter	1.1.0	1.83	https://index.crates.io/ut/f8/utf8_iter	Cargo.lock: 1.0.4; rust/fuzz/Cargo.lock: 1.0.4	Cargo.lock: 1.1.0; rust/fuzz/Cargo.lock: 1.1.0
 utf8parse	0.2.2		https://index.crates.io/ut/f8/utf8parse	Cargo.lock: 0.2.2; experiments/issue-372/Cargo.lock: 0.2.2; rust/fuzz/Cargo.lock: 0.2.2	Cargo.lock: 0.2.2; rust/fuzz/Cargo.lock: 0.2.2
-uuid	1.29.3	1.89.0	https://index.crates.io/uu/id/uuid	Cargo.lock: 1.29.3; docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml: 1; rust/Cargo.toml: 1.26; rust/fuzz/Cargo.lock: 1.27.0	Cargo.lock: 1.29.3; rust/fuzz/Cargo.lock: 1.27.0
-uuid-simd	0.8.0	1.63	https://index.crates.io/uu/id/uuid-simd	Cargo.lock: 0.8.0	Cargo.lock: 0.8.0
+utf_types	1.0.0	1.83	https://index.crates.io/ut/f_/utf_types		Cargo.lock: 1.0.0; rust/fuzz/Cargo.lock: 1.0.0
+uuid	1.29.3	1.89.0	https://index.crates.io/uu/id/uuid	Cargo.lock: 1.29.3; docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml: 1; rust/Cargo.toml: 1.26; rust/fuzz/Cargo.lock: 1.27.0	Cargo.lock: 1.29.3; rust/fuzz/Cargo.lock: 1.29.3
+uuid-simd	0.8.0	1.63	https://index.crates.io/uu/id/uuid-simd	Cargo.lock: 0.8.0	Cargo.lock: 0.8.0; rust/fuzz/Cargo.lock: 0.8.0
 valuable	0.1.1	1.56	https://index.crates.io/va/lu/valuable	Cargo.lock: 0.1.1; rust/fuzz/Cargo.lock: 0.1.1	Cargo.lock: 0.1.1; rust/fuzz/Cargo.lock: 0.1.1
 version_check	0.9.5		https://index.crates.io/ve/rs/version_check	Cargo.lock: 0.9.5; rust/fuzz/Cargo.lock: 0.9.5	Cargo.lock: 0.9.5; rust/fuzz/Cargo.lock: 0.9.5
-vsimd	0.8.0	1.63	https://index.crates.io/vs/im/vsimd	Cargo.lock: 0.8.0	Cargo.lock: 0.8.0
-vt100	0.18.1	1.85	https://index.crates.io/vt/10/vt100	Cargo.lock: 0.18.1; rust/Cargo.toml: 0.18	Cargo.lock: 0.18.1
-vte	0.15.0	1.62.1	https://index.crates.io/3/v/vte	Cargo.lock: 0.15.0	Cargo.lock: 0.15.0
+vsimd	0.8.0	1.63	https://index.crates.io/vs/im/vsimd	Cargo.lock: 0.8.0	Cargo.lock: 0.8.0; rust/fuzz/Cargo.lock: 0.8.0
+vt100	0.18.1	1.85	https://index.crates.io/vt/10/vt100	Cargo.lock: 0.18.1; rust/Cargo.toml: 0.18	Cargo.lock: 0.18.1; rust/fuzz/Cargo.lock: 0.18.1
+vte	0.15.0	1.62.1	https://index.crates.io/3/v/vte	Cargo.lock: 0.15.0	Cargo.lock: 0.15.0; rust/fuzz/Cargo.lock: 0.15.0
 wait-timeout	0.2.1		https://index.crates.io/wa/it/wait-timeout	Cargo.lock: 0.2.1; rust/Cargo.toml: 0.2	Cargo.lock: 0.2.1
-walkdir	2.5.1		https://index.crates.io/wa/lk/walkdir	Cargo.lock: 2.5.0; docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/Cargo.toml: 2; rust/fuzz/Cargo.lock: 2.5.0	Cargo.lock: 2.5.0; rust/fuzz/Cargo.lock: 2.5.0; scripts/check-file-size.rs: 2.5.1; scripts/check-terminology.rs: 2.5.1
-want	0.3.2		https://index.crates.io/wa/nt/want	Cargo.lock: 0.3.2; rust/fuzz/Cargo.lock: 0.3.1	Cargo.lock: 0.3.2; rust/fuzz/Cargo.lock: 0.3.1
+walkdir	2.5.1		https://index.crates.io/wa/lk/walkdir	Cargo.lock: 2.5.0; docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/Cargo.toml: 2; rust/fuzz/Cargo.lock: 2.5.0	Cargo.lock: 2.5.1; rust/fuzz/Cargo.lock: 2.5.1; scripts/check-file-size.rs: 2.5.1; scripts/check-terminology.rs: 2.5.1
+want	0.3.2		https://index.crates.io/wa/nt/want	Cargo.lock: 0.3.2; rust/fuzz/Cargo.lock: 0.3.1	Cargo.lock: 0.3.2; rust/fuzz/Cargo.lock: 0.3.2
 wasi	0.14.7+wasi-0.2.4	1.82.0	https://index.crates.io/wa/si/wasi	Cargo.lock: 0.11.1+wasi-snapshot-preview1; rust/fuzz/Cargo.lock: 0.11.1+wasi-snapshot-preview1	Cargo.lock: 0.11.1+wasi-snapshot-preview1; rust/fuzz/Cargo.lock: 0.11.1+wasi-snapshot-preview1
 wasip2	2.0.1+wasi-0.2.12	1.87.0	https://index.crates.io/wa/si/wasip2	Cargo.lock: 1.0.4+wasi-0.2.12; rust/fuzz/Cargo.lock: 1.0.4+wasi-0.2.12	Cargo.lock: 1.0.4+wasi-0.2.12; rust/fuzz/Cargo.lock: 1.0.4+wasi-0.2.12
-wasm-bindgen	0.2.130	1.81	https://index.crates.io/wa/sm/wasm-bindgen	Cargo.lock: 0.2.128; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.2; rust/fuzz/Cargo.lock: 0.2.129	Cargo.lock: 0.2.128; rust/fuzz/Cargo.lock: 0.2.129
-wasm-bindgen-futures	0.4.80	1.81	https://index.crates.io/wa/sm/wasm-bindgen-futures	Cargo.lock: 0.4.78; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.4; rust/fuzz/Cargo.lock: 0.4.79	Cargo.lock: 0.4.78; rust/fuzz/Cargo.lock: 0.4.79
-wasm-bindgen-macro	0.2.130	1.81	https://index.crates.io/wa/sm/wasm-bindgen-macro	Cargo.lock: 0.2.128; rust/fuzz/Cargo.lock: 0.2.129	Cargo.lock: 0.2.128; rust/fuzz/Cargo.lock: 0.2.129
-wasm-bindgen-macro-support	0.2.130	1.81	https://index.crates.io/wa/sm/wasm-bindgen-macro-support	Cargo.lock: 0.2.128; rust/fuzz/Cargo.lock: 0.2.129	Cargo.lock: 0.2.128; rust/fuzz/Cargo.lock: 0.2.129
-wasm-bindgen-shared	0.2.130	1.81	https://index.crates.io/wa/sm/wasm-bindgen-shared	Cargo.lock: 0.2.128; rust/fuzz/Cargo.lock: 0.2.129	Cargo.lock: 0.2.128; rust/fuzz/Cargo.lock: 0.2.129
+wasm-bindgen	0.2.130	1.81	https://index.crates.io/wa/sm/wasm-bindgen	Cargo.lock: 0.2.128; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.2; rust/fuzz/Cargo.lock: 0.2.129	Cargo.lock: 0.2.130; rust/fuzz/Cargo.lock: 0.2.130
+wasm-bindgen-futures	0.4.80	1.81	https://index.crates.io/wa/sm/wasm-bindgen-futures	Cargo.lock: 0.4.78; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.4; rust/fuzz/Cargo.lock: 0.4.79	Cargo.lock: 0.4.80; rust/fuzz/Cargo.lock: 0.4.80
+wasm-bindgen-macro	0.2.130	1.81	https://index.crates.io/wa/sm/wasm-bindgen-macro	Cargo.lock: 0.2.128; rust/fuzz/Cargo.lock: 0.2.129	Cargo.lock: 0.2.130; rust/fuzz/Cargo.lock: 0.2.130
+wasm-bindgen-macro-support	0.2.130	1.81	https://index.crates.io/wa/sm/wasm-bindgen-macro-support	Cargo.lock: 0.2.128; rust/fuzz/Cargo.lock: 0.2.129	Cargo.lock: 0.2.130; rust/fuzz/Cargo.lock: 0.2.130
+wasm-bindgen-shared	0.2.130	1.81	https://index.crates.io/wa/sm/wasm-bindgen-shared	Cargo.lock: 0.2.128; rust/fuzz/Cargo.lock: 0.2.129	Cargo.lock: 0.2.130; rust/fuzz/Cargo.lock: 0.2.130
 wasm-bindgen-test	0.3.80	1.81	https://index.crates.io/wa/sm/wasm-bindgen-test	docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.3	—
 wasm-streams	0.7.1	1.88	https://index.crates.io/wa/sm/wasm-streams	Cargo.lock: 0.5.0; rust/fuzz/Cargo.lock: 0.5.0	Cargo.lock: 0.5.0; rust/fuzz/Cargo.lock: 0.5.0
-web-sys	0.3.107	1.81	https://index.crates.io/we/b-/web-sys	Cargo.lock: 0.3.105; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.3; rust/fuzz/Cargo.lock: 0.3.106	Cargo.lock: 0.3.105; rust/fuzz/Cargo.lock: 0.3.106
+web-sys	0.3.107	1.81	https://index.crates.io/we/b-/web-sys	Cargo.lock: 0.3.105; docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml: 0.3; rust/fuzz/Cargo.lock: 0.3.106	Cargo.lock: 0.3.107; rust/fuzz/Cargo.lock: 0.3.107
 web-time	1.1.0	1.60	https://index.crates.io/we/b-/web-time	Cargo.lock: 1.1.0; rust/fuzz/Cargo.lock: 1.1.0	Cargo.lock: 1.1.0; rust/fuzz/Cargo.lock: 1.1.0
-webpki-root-certs	1.0.12	1.71	https://index.crates.io/we/bp/webpki-root-certs	Cargo.lock: 1.0.12; rust/fuzz/Cargo.lock: 1.0.9	Cargo.lock: 1.0.12; rust/fuzz/Cargo.lock: 1.0.9
-webpki-roots	1.0.12	1.71	https://index.crates.io/we/bp/webpki-roots	Cargo.lock: 0.26.11, 1.0.12; rust/fuzz/Cargo.lock: 0.26.11, 1.0.9	Cargo.lock: 0.26.11, 1.0.12; rust/fuzz/Cargo.lock: 0.26.11, 1.0.9
+webpki-root-certs	1.0.12	1.71	https://index.crates.io/we/bp/webpki-root-certs	Cargo.lock: 1.0.12; rust/fuzz/Cargo.lock: 1.0.9	Cargo.lock: 1.0.12; rust/fuzz/Cargo.lock: 1.0.12
+webpki-roots	1.0.12	1.71	https://index.crates.io/we/bp/webpki-roots	Cargo.lock: 0.26.11, 1.0.12; rust/fuzz/Cargo.lock: 0.26.11, 1.0.9	Cargo.lock: 0.26.11, 1.0.12; rust/fuzz/Cargo.lock: 0.26.11, 1.0.12
 winapi	0.3.9		https://index.crates.io/wi/na/winapi	Cargo.lock: 0.3.9; rust/fuzz/Cargo.lock: 0.3.9	Cargo.lock: 0.3.9; rust/fuzz/Cargo.lock: 0.3.9
 winapi-i686-pc-windows-gnu	0.4.0		https://index.crates.io/wi/na/winapi-i686-pc-windows-gnu	Cargo.lock: 0.4.0; rust/fuzz/Cargo.lock: 0.4.0	Cargo.lock: 0.4.0; rust/fuzz/Cargo.lock: 0.4.0
 winapi-util	0.1.11		https://index.crates.io/wi/na/winapi-util	Cargo.lock: 0.1.11; rust/fuzz/Cargo.lock: 0.1.11	Cargo.lock: 0.1.11; rust/fuzz/Cargo.lock: 0.1.11
@@ -462,26 +469,26 @@ windows_i686_msvc	0.53.1	1.60	https://index.crates.io/wi/nd/windows_i686_msvc	Ca
 windows_x86_64_gnu	0.53.1	1.60	https://index.crates.io/wi/nd/windows_x86_64_gnu	Cargo.lock: 0.52.6; rust/fuzz/Cargo.lock: 0.52.6	Cargo.lock: 0.52.6; rust/fuzz/Cargo.lock: 0.52.6
 windows_x86_64_gnullvm	0.53.1	1.60	https://index.crates.io/wi/nd/windows_x86_64_gnullvm	Cargo.lock: 0.52.6; rust/fuzz/Cargo.lock: 0.52.6	Cargo.lock: 0.52.6; rust/fuzz/Cargo.lock: 0.52.6
 windows_x86_64_msvc	0.53.1	1.60	https://index.crates.io/wi/nd/windows_x86_64_msvc	Cargo.lock: 0.52.6; rust/fuzz/Cargo.lock: 0.52.6	Cargo.lock: 0.52.6; rust/fuzz/Cargo.lock: 0.52.6
-winnow	1.0.5	1.65.0	https://index.crates.io/wi/nn/winnow	Cargo.lock: 1.0.4; rust/fuzz/Cargo.lock: 1.0.4	Cargo.lock: 1.0.4; rust/fuzz/Cargo.lock: 1.0.4
+winnow	1.0.5	1.65.0	https://index.crates.io/wi/nn/winnow	Cargo.lock: 1.0.4; rust/fuzz/Cargo.lock: 1.0.4	Cargo.lock: 1.0.5; rust/fuzz/Cargo.lock: 1.0.5
 winreg	0.56.0	1.60	https://index.crates.io/wi/nr/winreg	Cargo.lock: 0.10.1; rust/fuzz/Cargo.lock: 0.10.1	Cargo.lock: 0.10.1; rust/fuzz/Cargo.lock: 0.10.1
 wit-bindgen	0.63.0		https://index.crates.io/wi/t-/wit-bindgen	Cargo.lock: 0.57.1; rust/fuzz/Cargo.lock: 0.57.1	Cargo.lock: 0.57.1; rust/fuzz/Cargo.lock: 0.57.1
-wnaf	0.14.1	1.85	https://index.crates.io/wn/af/wnaf	Cargo.lock: 0.14.1	Cargo.lock: 0.14.1
+wnaf	0.14.1	1.85	https://index.crates.io/wn/af/wnaf	Cargo.lock: 0.14.1	Cargo.lock: 0.14.1; rust/fuzz/Cargo.lock: 0.14.1
 writeable	0.6.4	1.82	https://index.crates.io/wr/it/writeable	Cargo.lock: 0.6.4; rust/fuzz/Cargo.lock: 0.6.4	Cargo.lock: 0.6.4; rust/fuzz/Cargo.lock: 0.6.4
 x509-parser	0.18.1	1.67.1	https://index.crates.io/x5/09/x509-parser	Cargo.lock: 0.18.1; rust/fuzz/Cargo.lock: 0.18.1	Cargo.lock: 0.18.1; rust/fuzz/Cargo.lock: 0.18.1
 yasna	0.6.0	1.60	https://index.crates.io/ya/sn/yasna	Cargo.lock: 0.6.0; rust/fuzz/Cargo.lock: 0.6.0	Cargo.lock: 0.6.0; rust/fuzz/Cargo.lock: 0.6.0
-yoke	0.8.4	1.82	https://index.crates.io/yo/ke/yoke	Cargo.lock: 0.8.3; rust/fuzz/Cargo.lock: 0.8.3	Cargo.lock: 0.8.3; rust/fuzz/Cargo.lock: 0.8.3
-yoke-derive	0.8.4	1.82	https://index.crates.io/yo/ke/yoke-derive	Cargo.lock: 0.8.2; rust/fuzz/Cargo.lock: 0.8.4	Cargo.lock: 0.8.2; rust/fuzz/Cargo.lock: 0.8.4
-zerocopy	0.8.66	1.56.0	https://index.crates.io/ze/ro/zerocopy	Cargo.lock: 0.8.57; rust/fuzz/Cargo.lock: 0.8.59	Cargo.lock: 0.8.57; rust/fuzz/Cargo.lock: 0.8.59
-zerocopy-derive	0.8.66		https://index.crates.io/ze/ro/zerocopy-derive	Cargo.lock: 0.8.57; rust/fuzz/Cargo.lock: 0.8.59	Cargo.lock: 0.8.57; rust/fuzz/Cargo.lock: 0.8.59
+yoke	0.8.4	1.82	https://index.crates.io/yo/ke/yoke	Cargo.lock: 0.8.3; rust/fuzz/Cargo.lock: 0.8.3	Cargo.lock: 0.8.4; rust/fuzz/Cargo.lock: 0.8.4
+yoke-derive	0.8.4	1.82	https://index.crates.io/yo/ke/yoke-derive	Cargo.lock: 0.8.2; rust/fuzz/Cargo.lock: 0.8.4	Cargo.lock: 0.8.4; rust/fuzz/Cargo.lock: 0.8.4
+zerocopy	0.8.66	1.56.0	https://index.crates.io/ze/ro/zerocopy	Cargo.lock: 0.8.57; rust/fuzz/Cargo.lock: 0.8.59	Cargo.lock: 0.8.66; rust/fuzz/Cargo.lock: 0.8.66
+zerocopy-derive	0.8.66		https://index.crates.io/ze/ro/zerocopy-derive	Cargo.lock: 0.8.57; rust/fuzz/Cargo.lock: 0.8.59	Cargo.lock: 0.8.66; rust/fuzz/Cargo.lock: 0.8.66
 zerofrom	0.1.8	1.71.1	https://index.crates.io/ze/ro/zerofrom	Cargo.lock: 0.1.8; rust/fuzz/Cargo.lock: 0.1.8	Cargo.lock: 0.1.8; rust/fuzz/Cargo.lock: 0.1.8
-zerofrom-derive	0.1.8	1.71.1	https://index.crates.io/ze/ro/zerofrom-derive	Cargo.lock: 0.1.7; rust/fuzz/Cargo.lock: 0.1.8	Cargo.lock: 0.1.7; rust/fuzz/Cargo.lock: 0.1.8
-zeroize	1.9.2	1.85	https://index.crates.io/ze/ro/zeroize	Cargo.lock: 1.9.0; rust/fuzz/Cargo.lock: 1.9.0	Cargo.lock: 1.9.0; rust/fuzz/Cargo.lock: 1.9.0
+zerofrom-derive	0.1.8	1.71.1	https://index.crates.io/ze/ro/zerofrom-derive	Cargo.lock: 0.1.7; rust/fuzz/Cargo.lock: 0.1.8	Cargo.lock: 0.1.8; rust/fuzz/Cargo.lock: 0.1.8
+zeroize	1.9.2	1.85	https://index.crates.io/ze/ro/zeroize	Cargo.lock: 1.9.0; rust/fuzz/Cargo.lock: 1.9.0	Cargo.lock: 1.9.2; rust/fuzz/Cargo.lock: 1.9.2
 zeroize_derive	1.5.0	1.85	https://index.crates.io/ze/ro/zeroize_derive	Cargo.lock: 1.5.0; rust/fuzz/Cargo.lock: 1.5.0	Cargo.lock: 1.5.0; rust/fuzz/Cargo.lock: 1.5.0
 zerotrie	0.2.5	1.82	https://index.crates.io/ze/ro/zerotrie	Cargo.lock: 0.2.5; rust/fuzz/Cargo.lock: 0.2.5	Cargo.lock: 0.2.5; rust/fuzz/Cargo.lock: 0.2.5
-zerovec	0.11.9	1.83	https://index.crates.io/ze/ro/zerovec	Cargo.lock: 0.11.8; rust/fuzz/Cargo.lock: 0.11.8	Cargo.lock: 0.11.8; rust/fuzz/Cargo.lock: 0.11.8
-zerovec-derive	0.11.7	1.83	https://index.crates.io/ze/ro/zerovec-derive	Cargo.lock: 0.11.6; rust/fuzz/Cargo.lock: 0.11.6	Cargo.lock: 0.11.6; rust/fuzz/Cargo.lock: 0.11.6
-zlib-rs	0.6.9	1.75	https://index.crates.io/zl/ib/zlib-rs	Cargo.lock: 0.6.7; rust/fuzz/Cargo.lock: 0.6.8	Cargo.lock: 0.6.7; rust/fuzz/Cargo.lock: 0.6.8
+zerovec	0.11.9	1.83	https://index.crates.io/ze/ro/zerovec	Cargo.lock: 0.11.8; rust/fuzz/Cargo.lock: 0.11.8	Cargo.lock: 0.11.9; rust/fuzz/Cargo.lock: 0.11.9
+zerovec-derive	0.11.7	1.83	https://index.crates.io/ze/ro/zerovec-derive	Cargo.lock: 0.11.6; rust/fuzz/Cargo.lock: 0.11.6	Cargo.lock: 0.11.7; rust/fuzz/Cargo.lock: 0.11.7
+zlib-rs	0.6.9	1.75	https://index.crates.io/zl/ib/zlib-rs	Cargo.lock: 0.6.7; rust/fuzz/Cargo.lock: 0.6.8	Cargo.lock: 0.6.9; rust/fuzz/Cargo.lock: 0.6.9
 zmij	1.0.23	1.71	https://index.crates.io/zm/ij/zmij	Cargo.lock: 1.0.23; rust/fuzz/Cargo.lock: 1.0.23	Cargo.lock: 1.0.23; rust/fuzz/Cargo.lock: 1.0.23
-zstd	0.14.5	1.64	https://index.crates.io/zs/td/zstd	Cargo.lock: 0.14.4; rust/Cargo.toml: 0.14.0; rust/fuzz/Cargo.lock: 0.14.0	Cargo.lock: 0.14.4; rust/fuzz/Cargo.lock: 0.14.0
-zstd-safe	8.4.0	1.64	https://index.crates.io/zs/td/zstd-safe	Cargo.lock: 8.3.0; rust/fuzz/Cargo.lock: 8.0.0	Cargo.lock: 8.3.0; rust/fuzz/Cargo.lock: 8.0.0
-zstd-sys	2.2.0+zstd.1.6.0	1.64	https://index.crates.io/zs/td/zstd-sys	Cargo.lock: 2.1.3+zstd.1.5.7; rust/fuzz/Cargo.lock: 2.1.0+zstd.1.5.7	Cargo.lock: 2.1.3+zstd.1.5.7; rust/fuzz/Cargo.lock: 2.1.0+zstd.1.5.7
+zstd	0.14.5	1.64	https://index.crates.io/zs/td/zstd	Cargo.lock: 0.14.4; rust/Cargo.toml: 0.14.0; rust/fuzz/Cargo.lock: 0.14.0	Cargo.lock: 0.14.5; rust/fuzz/Cargo.lock: 0.14.5
+zstd-safe	8.4.0	1.64	https://index.crates.io/zs/td/zstd-safe	Cargo.lock: 8.3.0; rust/fuzz/Cargo.lock: 8.0.0	Cargo.lock: 8.4.0; rust/fuzz/Cargo.lock: 8.4.0
+zstd-sys	2.2.0+zstd.1.6.0	1.64	https://index.crates.io/zs/td/zstd-sys	Cargo.lock: 2.1.3+zstd.1.5.7; rust/fuzz/Cargo.lock: 2.1.0+zstd.1.5.7	Cargo.lock: 2.2.0+zstd.1.6.0; rust/fuzz/Cargo.lock: 2.2.0+zstd.1.6.0
