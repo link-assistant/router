@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { configPointer, mergeConfigPatch } from '../src/runtime-config.mjs';
+import { assertConfigWriterCanEdit, configPointer, mergeConfigPatch } from '../src/runtime-config.mjs';
 import { applyCodexSubscriptionPayloadRules, applyPayloadRules } from '../src/runtime-payload.mjs';
 
 test('RFC 7396 replaces arrays, merges objects and deletes null-valued fields', { timeout: 1000 }, () => {
@@ -18,6 +18,24 @@ test('JSON Pointer handles escapes, lookup, appending, replacement and deletion'
   assert.deepEqual(configPointer(document, '/a~1b/~0/0', 'delete'), { 'a/b': { '~': [2] } });
   assert.throws(() => configPointer(document, '/a~2b'));
   assert.throws(() => configPointer(document, '/a~1b/~0/01'));
+});
+
+test('configuration writers can keep host settings but cannot change their authority', { timeout: 1000 }, () => {
+  const local = {
+    'account-egress-proxy': 'primary=env:ACCOUNT_PROXY',
+    'model-catalog-sources': ['catalog.json'],
+    'crater-forgefed-inbox': 'https://forge.example/inbox',
+    listener: ['127.0.0.1:9000=admin'],
+    'admin-host': '127.0.0.1',
+    'admin-port': 9000,
+  };
+  const current = { cli: { ...local, port: 8080 } };
+  const next = mergeConfigPatch(current, { cli: { port: 8081 } });
+  assert.doesNotThrow(() => assertConfigWriterCanEdit(current, next));
+  for (const [key, value] of Object.entries(local)) {
+    assert.throws(() => assertConfigWriterCanEdit({}, { cli: { [key]: value } }), /local TOML/u);
+    assert.throws(() => assertConfigWriterCanEdit(current, configPointer(current, `/cli/${key}`, 'delete')), /local TOML/u);
+  }
 });
 
 test('the Claude final barrier preserves defaulted values, applies raw overrides and removes injected fields once', { timeout: 1000 }, () => {

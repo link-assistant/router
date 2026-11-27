@@ -1,5 +1,25 @@
 // Transport-independent JSON configuration operations for the runtime document.
 
+import { isDeepStrictEqual } from 'node:util';
+
+const localCliSettings = [
+  'token-secret', 'admin-key', 'upstream-base-url', 'openai-compatible-base-url',
+  'openai-compatible-api-key-env', 'gonka-source-url', 'crater-forgefed-inbox',
+  'account-egress-proxy', 'model-catalog-sources', 'claude-code-home',
+  'additional-account-dirs', 'login-cli-command', 'login-cli-args', 'claude-cli-bin',
+  'codex-cli-bin', 'audit-log', 'request-log', 'listener', 'admin-host', 'admin-port',
+  'management-allow-remote', 'management-lockout-failures', 'management-lockout-secs',
+  'management-lockout-exempt-loopback',
+];
+
+export function assertConfigWriterCanEdit(before, after) {
+  for (const key of localCliSettings) {
+    if (!isDeepStrictEqual(before?.cli?.[key], after?.cli?.[key])) {
+      throw new Error('this CLI setting may only be changed in the local TOML file');
+    }
+  }
+}
+
 export function pointerSegments(pointer) {
   if (pointer === '') return [];
   if (!pointer.startsWith('/')) throw new Error('JSON Pointer must start with /');
