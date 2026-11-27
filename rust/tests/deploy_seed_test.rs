@@ -69,16 +69,16 @@ impl Harness {
         )
         .unwrap();
         let ssh = root.join("bin/ssh");
+        let fixture = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/fake-ssh.sh");
         std::fs::write(
-            &ssh,
-            "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$0.arguments\"\ncat > \"$0.input\"\n\
-             ROUTER_DEPLOY_PAYLOAD=$(sed -n 2p \"$0.input\")\nexport ROUTER_DEPLOY_PAYLOAD\n\
+            ssh.with_extension("body"),
+            "ROUTER_DEPLOY_PAYLOAD=$(sed -n 2p \"$0.input\")\nexport ROUTER_DEPLOY_PAYLOAD\n\
              if [ \"$DELIVER\" = 0 ]; then\n\
                sh \"$HARNESS/target.sh\" >/dev/null 2>&1; exit 255\nfi\n\
              exec sh \"$HARNESS/target.sh\"\n",
         )
         .unwrap();
-        std::fs::set_permissions(&ssh, std::fs::Permissions::from_mode(0o700)).unwrap();
+        std::os::unix::fs::symlink(fixture, &ssh).unwrap();
         Self { directory }
     }
 

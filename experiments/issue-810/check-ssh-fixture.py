@@ -1,23 +1,18 @@
 """Check the Linux SSH test fixture against a held writable descriptor."""
 
-import ast
 import errno
+import os
 from pathlib import Path
-import re
 import subprocess
 import tempfile
 
 
 root = Path(__file__).resolve().parents[2]
-source = (root / 'rust/src/deploy_remote.rs').read_text()
-fixture = source.split('fn fake_ssh(', 1)[1].split('    #[cfg(unix)]', 1)[0]
-literal = re.search(r'\.arg\(format!\(\s*("[^"\\]*(?:\\.[^"\\]*)*")', fixture)
-assert literal is not None, 'could not find the shell program in the SSH fixture'
-script = ast.literal_eval(literal.group(1))
+fixture = root / 'rust/tests/fixtures/fake-ssh.sh'
 
 with tempfile.TemporaryDirectory() as directory:
     stub = Path(directory) / 'ssh'
-    stub.write_text('#!/bin/sh\n' + script.format(exit=0))
+    stub.write_text('#!/bin/sh\nexit 0\n')
     stub.chmod(0o700)
 
     # Linux refuses to execute a file that another process can still write.
@@ -29,16 +24,21 @@ with tempfile.TemporaryDirectory() as directory:
         else:
             raise AssertionError('the old fixture should fail with ETXTBSY')
 
-        arguments = ['-o', 'BatchMode=yes', 'deploy@example.test', 'remote status']
-        payload = b'\nagent\n'
-        for status in (0, 9, 255):
-            result = subprocess.run(
-                ['/bin/sh', '-c', script.format(exit=status), stub, *arguments],
-                input=payload,
-                check=False,
-            )
-            assert result.returncode == status
-            assert stub.with_suffix('.arguments').read_text().splitlines() == arguments
-            assert stub.with_suffix('.input').read_bytes() == payload
+    stub.unlink()
+    stub.symlink_to(fixture)
+    arguments = ['-o', 'BatchMode=yes', 'deploy@example.test', 'remote status']
+    payload = b'\nagent\n'
+    body = stub.with_suffix('.body')
+    environment = {**os.environ, 'PATH': os.pathsep.join((directory, os.defpath))}
+    for status in (0, 9, 255):
+        body.write_text(f'exit {status}\n')
+        with body.open('ab'):
+            for executable in (str(stub), 'ssh'):
+                result = subprocess.run(
+                    [executable, *arguments], input=payload, env=environment, check=False
+                )
+                assert result.returncode == status
+                assert stub.with_suffix('.arguments').read_text().splitlines() == arguments
+                assert stub.with_suffix('.input').read_bytes() == payload
 
-print('The shell fixture preserves argv, stdin and exit status with a writable descriptor held.')
+print('The shared SSH fixture preserves argv, stdin and exit status while its body is open for writing.')
