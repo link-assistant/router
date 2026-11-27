@@ -258,7 +258,7 @@ async fn payload_rules_filter_first_and_following_responses_websocket_turns() {
     });
     std::fs::write(
         data.path().join("runtime.toml"),
-        format!("payload-json = '{}'\n", payload),
+        format!("payload-json = '{payload}'\n"),
     )
     .unwrap();
     let cli = crate::cli::try_parse_arguments(vec![

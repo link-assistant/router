@@ -92,11 +92,7 @@ impl Cors {
     }
 }
 
-pub(crate) async fn middleware(
-    State(state): State<AppState>,
-    request: Request,
-    next: Next,
-) -> Response {
+pub async fn middleware(State(state): State<AppState>, request: Request, next: Next) -> Response {
     let layer = state
         .request_log
         .runtime_config()

@@ -15,9 +15,9 @@ use crate::route_contract::{RouteId, route_template};
 use super::{Edit, Failure, RuntimeConfig, pointer, storage};
 
 #[derive(Clone)]
-pub(crate) struct Writer(pub String);
+pub struct Writer(pub String);
 
-pub(crate) fn routes() -> Router<AppState> {
+pub fn routes() -> Router<AppState> {
     Router::new()
         .route(
             route_template(RouteId::RuntimeConfig),

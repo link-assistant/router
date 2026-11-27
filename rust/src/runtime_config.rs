@@ -98,7 +98,7 @@ pub(super) enum Edit {
     Delete(Vec<String>),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub(super) enum Failure {
     Invalid(&'static str),
     Missing,
@@ -232,10 +232,9 @@ impl RuntimeConfig {
             .flat_map(Map::keys);
         let mut restart_required = Vec::new();
         let mut overridden = Vec::new();
-        for key in boot
-            .chain(desired)
-            .collect::<std::collections::BTreeSet<_>>()
-        {
+        let mut keys: std::collections::BTreeSet<_> = boot.collect();
+        keys.extend(desired);
+        for key in keys {
             if self.input.overridden.contains(key) {
                 if disk.document["cli"].get(key).is_some() {
                     overridden.push(key);
@@ -276,11 +275,11 @@ impl RuntimeConfig {
                 return Err(Failure::Conflict(error));
             }
         };
-        if document != disk.document {
-            if let Err(error) = self.audit(actor, "reload", &disk.document, &document) {
-                note_error(disk, "could not audit runtime configuration reload");
-                return Err(error);
-            }
+        if document != disk.document
+            && let Err(error) = self.audit(actor, "reload", &disk.document, &document)
+        {
+            note_error(disk, "could not audit runtime configuration reload");
+            return Err(error);
         }
         self.apply(disk, bytes, document, live);
         Ok(())
@@ -334,7 +333,9 @@ impl RuntimeConfig {
         crate::durable_file::atomic_write_owner_only(&self.path, bytes.as_bytes())
             .map_err(|_| Failure::Io)?;
         self.apply(&mut disk, Some(bytes), next, live);
-        Ok(self.status_for(&disk))
+        let status = self.status_for(&disk);
+        drop(disk);
+        Ok(status)
     }
 
     fn audit(

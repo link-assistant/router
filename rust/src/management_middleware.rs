@@ -2,6 +2,7 @@
 use crate::app_state::AppState;
 use crate::management_access::normalize_ip;
 use crate::proxy::error_response;
+use crate::route_contract::RouteAuth;
 use axum::extract::{ConnectInfo, Request, State};
 use axum::http::{HeaderValue, StatusCode};
 use axum::middleware::Next;
@@ -64,7 +65,6 @@ pub async fn authenticate(
         .extensions()
         .get::<ManagementPeer>()
         .map(|peer| peer.0);
-    use crate::route_contract::RouteAuth;
     let auth = crate::route_contract::route_for_path(request.method(), request.uri().path())
         .map(|route| route.auth);
     let config = matches!(auth, Some(RouteAuth::ConfigRead | RouteAuth::ConfigWrite));

@@ -9,7 +9,7 @@ use super::pointer;
 const MAX_PATH_STEPS: usize = 32;
 const MAX_TARGETS: usize = 1024;
 const MAX_RULES: usize = 256;
-pub(crate) const FAILURE: &str = "an applicable runtime payload rule could not be applied";
+pub(super) const FAILURE: &str = "an applicable runtime payload rule could not be applied";
 
 #[derive(Clone, Debug, Default, Deserialize, JsonSchema)]
 #[serde(default, deny_unknown_fields, rename_all = "kebab-case")]
@@ -81,7 +81,7 @@ impl Stage {
 }
 
 #[derive(Debug, Default)]
-pub(crate) struct Rules {
+pub struct Rules {
     rules: Vec<CompiledRule>,
 }
 
@@ -102,7 +102,7 @@ struct CompiledSelector {
     presence: Vec<(Vec<Step>, bool)>,
 }
 
-pub(crate) struct Context<'a> {
+pub(super) struct Context<'a> {
     pub protocol: &'a str,
     pub from_protocol: &'a str,
     pub model: &'a str,
@@ -111,7 +111,7 @@ pub(crate) struct Context<'a> {
 }
 
 #[derive(Debug, Serialize)]
-pub(crate) struct Applied {
+pub(super) struct Applied {
     stage: &'static str,
     path: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -304,7 +304,7 @@ fn glob(pattern: &str, value: &str) -> bool {
 }
 
 impl Rules {
-    pub(crate) fn is_empty(&self) -> bool {
+    pub(crate) const fn is_empty(&self) -> bool {
         self.rules.is_empty()
     }
 
@@ -320,7 +320,7 @@ impl Rules {
         })
     }
 
-    pub(crate) fn apply(
+    pub(super) fn apply(
         &self,
         body: &mut Value,
         context: &Context<'_>,
@@ -349,14 +349,14 @@ impl Rules {
         let mut applied = Vec::new();
         let mut sampling = false;
         for rule in &self.rules {
-            let mut applies = false;
+            let mut matched = false;
             for selector in &rule.models {
                 if selector.selects(context) && selector.conditions_match(body)? {
-                    applies = true;
+                    matched = true;
                     break;
                 }
             }
-            if !applies {
+            if !matched {
                 continue;
             }
             if !body.is_object() {

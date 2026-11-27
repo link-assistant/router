@@ -43,20 +43,25 @@ pub(super) fn schema() -> Value {
                     (arg.get_value_parser().type_id() == parser.type_id()).then_some($maximum)
                 }};
             }
-            if let Some(maximum) = integer!(u16, u64::from(u16::MAX))
+            integer!(u16, u64::from(u16::MAX))
                 .or_else(|| integer!(u32, u64::from(u32::MAX)))
                 .or_else(|| integer!(u64, u64::MAX))
                 .or_else(|| integer!(usize, usize::MAX as u64))
-            {
-                json!({"type": "integer", "minimum": 0, "maximum": maximum})
-            } else {
-                let possible = arg.get_possible_values();
-                if possible.is_empty() {
-                    json!({"type": "string"})
-                } else {
-                    json!({"type": "string", "enum": possible.iter().map(clap::builder::PossibleValue::get_name).collect::<Vec<_>>()})
-                }
-            }
+                .map_or_else(
+                    || {
+                        let possible = arg.get_possible_values();
+                        if possible.is_empty() {
+                            json!({"type": "string"})
+                        } else {
+                            let values: Vec<_> = possible
+                                .iter()
+                                .map(clap::builder::PossibleValue::get_name)
+                                .collect();
+                            json!({"type": "string", "enum": values})
+                        }
+                    },
+                    |maximum| json!({"type": "integer", "minimum": 0, "maximum": maximum}),
+                )
         };
         if matches!(arg.get_action(), ArgAction::Append) {
             property = json!({"type": "array", "items": property});

@@ -22,16 +22,15 @@ struct Source {
     limit: usize,
 }
 
-pub(crate) async fn scope(State(state): State<AppState>, request: Request, next: Next) -> Response {
+pub async fn scope(State(state): State<AppState>, request: Request, next: Next) -> Response {
     let path = request.uri().path();
     let protocol = match path
         .strip_prefix("/api/services/")
         .and_then(|path| path.split('/').next())
     {
         Some("anthropic") => "claude",
-        Some("gemini") => "gemini",
         Some("vertex") if path.contains("/publishers/anthropic/") => "claude",
-        Some("vertex") => "gemini",
+        Some("gemini" | "vertex") => "gemini",
         Some("bedrock") => "bedrock",
         Some("openai" | "codex" | "qwen")
             if path.ends_with("/responses") || path.ends_with("/responses/compact") =>
@@ -59,7 +58,7 @@ struct Destination {
     emulated_output_limit: Option<u64>,
 }
 
-pub(crate) async fn destination<T>(
+pub async fn destination<T>(
     protocol: &'static str,
     emulated_output_limit: Option<u64>,
     future: impl std::future::Future<Output = T>,
@@ -78,7 +77,7 @@ pub(crate) async fn destination<T>(
 /// The effective cap for the response to an individual upstream attempt.
 /// A filter can clear a cap inherited from the original client request.
 #[derive(Clone, Copy)]
-pub(crate) struct CodexOutputLimit(pub Option<u64>);
+pub struct CodexOutputLimit(pub Option<u64>);
 
 fn canonical_codex(url: &url::Url) -> bool {
     url.host_str() == Some("chatgpt.com") && url.path().starts_with("/backend-api/codex/")
@@ -145,7 +144,7 @@ fn target_model(url: &url::Url) -> &str {
     })
 }
 
-pub(crate) async fn http(
+pub async fn http(
     log: &RequestLog,
     correlation: &str,
     request: &mut reqwest::Request,
@@ -267,7 +266,7 @@ fn apply(
     Ok(applied)
 }
 
-pub(crate) fn websocket(
+pub fn websocket(
     state: &AppState,
     correlation: &str,
     headers: &HeaderMap,
@@ -360,7 +359,7 @@ tokio::task_local! {
     static FORGEFED: ForgeFed;
 }
 
-pub(crate) fn forgefed_scope<F: std::future::Future>(
+pub fn forgefed_scope<F: std::future::Future>(
     state: &AppState,
     headers: &HeaderMap,
     claims: &TokenClaims,
@@ -377,7 +376,7 @@ pub(crate) fn forgefed_scope<F: std::future::Future>(
     FORGEFED.scope(context, future)
 }
 
-pub(crate) fn forgefed(model: &str, activity: &mut Value) -> Result<(), &'static str> {
+pub fn forgefed(model: &str, activity: &mut Value) -> Result<(), &'static str> {
     FORGEFED
         .try_with(|request| {
             let Some(config) = request.log.runtime_config() else {
@@ -423,7 +422,7 @@ pub(crate) fn forgefed(model: &str, activity: &mut Value) -> Result<(), &'static
         .unwrap_or(Ok(()))
 }
 
-pub(crate) struct NativeContext {
+pub struct NativeContext {
     log: std::sync::Arc<RequestLog>,
     limit: usize,
     correlation: String,
@@ -526,7 +525,7 @@ impl NativeContext {
                 .map(|change| json!(change))
                 .collect();
         }
-        self.encoded(&body, changes)
+        self.encoded(&body, &changes)
     }
 
     pub(crate) fn realtime(&self, bytes: &[u8]) -> Result<Option<Bytes>, &'static str> {
@@ -545,13 +544,11 @@ impl NativeContext {
             return Ok(None);
         }
         let applied = self.changes(&rules, "realtime", &mut body)?;
-        self.encoded(
-            &body,
-            applied.into_iter().map(|change| json!(change)).collect(),
-        )
+        let changes: Vec<_> = applied.into_iter().map(|change| json!(change)).collect();
+        self.encoded(&body, &changes)
     }
 
-    fn encoded(&self, body: &Value, changes: Vec<Value>) -> Result<Option<Bytes>, &'static str> {
+    fn encoded(&self, body: &Value, changes: &[Value]) -> Result<Option<Bytes>, &'static str> {
         if changes.is_empty() {
             return Ok(None);
         }

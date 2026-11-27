@@ -334,12 +334,10 @@ pub(super) async fn relay<S>(
                     break;
                 }
                 if let Some(terminal) = terminal {
-                    let text = terminal.to_string();
-                    let text = if let Some(policy) = &mut privacy {
-                        policy.restore_event(&text)
-                    } else {
-                        text
-                    };
+                    let mut text = terminal.to_string();
+                    if let Some(policy) = &mut privacy {
+                        text = policy.restore_event(&text);
+                    }
                     if downstream.send(Message::Text(text.into())).await.is_err() {
                         break;
                     }
