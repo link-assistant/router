@@ -436,26 +436,26 @@
     {
       "source": "ui/dist/assets/app.js",
       "target": "rust/ui/dist/assets/app.js",
-      "bytes": 16471,
-      "sha256": "60450cb9d2c8e52b7964e2adb5670f47e7e695dce9936dbfc0ea98fb2bcde66f"
+      "bytes": 16473,
+      "sha256": "d1efaaf07027fdc7f25287eef64de5215366fa19f26f39c09f8b2eb32c34bc4c"
     },
     {
       "source": "ui/dist/assets/react.js",
       "target": "rust/ui/dist/assets/react.js",
-      "bytes": 220981,
-      "sha256": "73e85984904d151433d181a3c7de579f2e77e6132471ec1bae77e4acd3185d33"
+      "bytes": 220895,
+      "sha256": "f267eef521695fe1b11cb0e66ad1467885851858c75addf414c392735ecdae84"
     },
     {
       "source": "ui/dist/assets/rolldown-runtime.js",
       "target": "rust/ui/dist/assets/rolldown-runtime.js",
-      "bytes": 589,
-      "sha256": "bbf7c5086ae414dc3f33777e3eebf16ea8631325b8bb4690d25091c03567f31a"
+      "bytes": 599,
+      "sha256": "2629f2ad3cb75a57d98de697127f5af7d777ef572bbcdfa6e3ce8f438cd4527e"
     },
     {
       "source": "ui/dist/assets/ui-vendor.js",
       "target": "rust/ui/dist/assets/ui-vendor.js",
-      "bytes": 331247,
-      "sha256": "881d21a46007374c8dc046889e1006c547ec88f68397d4f9b895314fb314b74c"
+      "bytes": 339206,
+      "sha256": "f81975c27494a7be23f3b8dab79533a68a918c721887933c901d11ad80fc0d61"
     },
     {
       "source": "ui/dist/index.html",
@@ -470,6 +470,6 @@
       "sha256": "de89757aa04d2dabb248a08079e7cd70b979becc9e8eda39d2dff5717b481a97"
     }
   ],
-  "bytes": 3499265,
+  "bytes": 3507150,
   "semanticAuthority": false
 }
