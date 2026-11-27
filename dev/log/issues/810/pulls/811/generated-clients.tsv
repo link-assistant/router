@@ -88,8 +88,8 @@ PHP	symfony/console	v8.1.12	v8.1.12	v8.1.12	https://repo.packagist.org/p2/symfon
 PHP	symfony/deprecation-contracts	v3.8.1	v3.8.1	v3.8.1	https://repo.packagist.org/p2/symfony/deprecation-contracts.json
 PHP	symfony/event-dispatcher	v8.1.5	v8.1.5	v8.1.5	https://repo.packagist.org/p2/symfony/event-dispatcher.json
 PHP	symfony/event-dispatcher-contracts	v3.8.1	v3.8.1	v3.8.1	https://repo.packagist.org/p2/symfony/event-dispatcher-contracts.json
-PHP	symfony/filesystem	v8.1.12	v8.1.12	v8.1.12	https://repo.packagist.org/p2/symfony/filesystem.json
-PHP	symfony/finder	v8.1.12	v8.1.12	v8.1.12	https://repo.packagist.org/p2/symfony/finder.json
+PHP	symfony/filesystem	v8.1.12	v8.1.13	v8.1.13	https://repo.packagist.org/p2/symfony/filesystem.json
+PHP	symfony/finder	v8.1.12	v8.1.13	v8.1.13	https://repo.packagist.org/p2/symfony/finder.json
 PHP	symfony/options-resolver	v8.1.10	v8.1.10	v8.1.10	https://repo.packagist.org/p2/symfony/options-resolver.json
 PHP	symfony/polyfill-ctype	v1.37.0	v1.37.0	v1.37.0	https://repo.packagist.org/p2/symfony/polyfill-ctype.json
 PHP	symfony/polyfill-intl-grapheme	v1.43.3	v1.43.3	v1.43.3	https://repo.packagist.org/p2/symfony/polyfill-intl-grapheme.json
@@ -102,5 +102,5 @@ PHP	symfony/polyfill-php84	v1.43.0	v1.43.0	v1.43.0	https://repo.packagist.org/p2
 PHP	symfony/polyfill-php85	v1.44.0	v1.44.0	v1.44.0	https://repo.packagist.org/p2/symfony/polyfill-php85.json
 PHP	symfony/process	v8.1.12	v8.1.12	v8.1.12	https://repo.packagist.org/p2/symfony/process.json
 PHP	symfony/service-contracts	v3.8.1	v3.8.1	v3.8.1	https://repo.packagist.org/p2/symfony/service-contracts.json
-PHP	symfony/stopwatch	v8.1.12	v8.1.12	v8.1.12	https://repo.packagist.org/p2/symfony/stopwatch.json
-PHP	symfony/string	v8.1.12	v8.1.12	v8.1.12	https://repo.packagist.org/p2/symfony/string.json
+PHP	symfony/stopwatch	v8.1.12	v8.1.13	v8.1.13	https://repo.packagist.org/p2/symfony/stopwatch.json
+PHP	symfony/string	v8.1.12	v8.1.13	v8.1.13	https://repo.packagist.org/p2/symfony/string.json

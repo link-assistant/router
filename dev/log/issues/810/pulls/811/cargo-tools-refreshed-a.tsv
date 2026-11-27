@@ -365,8 +365,8 @@ cargo-audit-0.23.0	zerovec	0.11.8	0.11.9	0.11.9			https://index.crates.io/ze/ro/
 cargo-audit-0.23.0	zerovec-derive	0.11.6	0.11.7	0.11.7			https://index.crates.io/ze/ro/zerovec-derive
 cargo-audit-0.23.0	zlib-rs	0.6.8	0.6.9	0.6.9			https://index.crates.io/zl/ib/zlib-rs
 cargo-audit-0.23.0	zmij	1.0.23	1.0.23	1.0.23			https://index.crates.io/zm/ij/zmij
-cargo-audit-0.23.0	multiversion	0.9.0	removed				https://index.crates.io/mu/lt/multiversion
-cargo-audit-0.23.0	multiversion-macros	0.9.0	removed				https://index.crates.io/mu/lt/multiversion-macros
+cargo-audit-0.23.0	multiversion	0.9.0	removed	0.9.2			https://index.crates.io/mu/lt/multiversion
+cargo-audit-0.23.0	multiversion-macros	0.9.0	removed	0.9.2			https://index.crates.io/mu/lt/multiversion-macros
 cargo-cyclonedx-0.5.10	aho-corasick	1.1.2	1.1.5	1.1.5			https://index.crates.io/ah/o-/aho-corasick
 cargo-cyclonedx-0.5.10	anstream	0.6.20	1.0.0	1.0.0			https://index.crates.io/an/st/anstream
 cargo-cyclonedx-0.5.10	anstyle	1.0.14	1.0.14	1.0.14			https://index.crates.io/an/st/anstyle
@@ -482,7 +482,7 @@ cargo-cyclonedx-0.5.10	serde_spanned	1.1.0	1.1.3	1.1.3			https://index.crates.io
 cargo-cyclonedx-0.5.10	siphasher	0.3.11	1.0.4	1.0.4			https://index.crates.io/si/ph/siphasher
 cargo-cyclonedx-0.5.10	slab		0.4.12	0.4.12			https://index.crates.io/sl/ab/slab
 cargo-cyclonedx-0.5.10	smallvec	1.15.1	1.16.6	1.16.6			https://index.crates.io/sm/al/smallvec
-cargo-cyclonedx-0.5.10	spdx	0.13.2	0.13.6	0.13.6			https://index.crates.io/sp/dx/spdx
+cargo-cyclonedx-0.5.10	spdx	0.13.2	0.13.7	0.13.7			https://index.crates.io/sp/dx/spdx
 cargo-cyclonedx-0.5.10	stable_deref_trait	1.2.0	1.2.1	1.2.1			https://index.crates.io/st/ab/stable_deref_trait
 cargo-cyclonedx-0.5.10	strsim	0.10.0	0.11.1	0.11.1			https://index.crates.io/st/rs/strsim
 cargo-cyclonedx-0.5.10	strum	0.28.0	0.28.0	0.28.0			https://index.crates.io/st/ru/strum
@@ -530,35 +530,35 @@ cargo-cyclonedx-0.5.10	zerotrie		0.2.5	0.2.5			https://index.crates.io/ze/ro/zer
 cargo-cyclonedx-0.5.10	zerovec	0.10.4	0.11.9	0.11.9			https://index.crates.io/ze/ro/zerovec
 cargo-cyclonedx-0.5.10	zerovec-derive	0.10.3	0.11.7	0.11.7			https://index.crates.io/ze/ro/zerovec-derive
 cargo-cyclonedx-0.5.10	zmij		1.0.23	1.0.23			https://index.crates.io/zm/ij/zmij
-cargo-cyclonedx-0.5.10	doc-comment	0.3.3	removed				https://index.crates.io/do/c-/doc-comment
-cargo-cyclonedx-0.5.10	either	1.9.0	removed				https://index.crates.io/ei/th/either
-cargo-cyclonedx-0.5.10	fnv	1.0.7	removed				https://index.crates.io/3/f/fnv
-cargo-cyclonedx-0.5.10	humantime	2.1.0	removed				https://index.crates.io/hu/ma/humantime
-cargo-cyclonedx-0.5.10	icu_locid	1.5.0	removed				https://index.crates.io/ic/u_/icu_locid
-cargo-cyclonedx-0.5.10	icu_locid_transform	1.5.0	removed				https://index.crates.io/ic/u_/icu_locid_transform
-cargo-cyclonedx-0.5.10	icu_locid_transform_data	1.5.0	removed				https://index.crates.io/ic/u_/icu_locid_transform_data
-cargo-cyclonedx-0.5.10	icu_provider_macros	1.5.0	removed				https://index.crates.io/ic/u_/icu_provider_macros
-cargo-cyclonedx-0.5.10	itertools	0.11.0	removed				https://index.crates.io/it/er/itertools
-cargo-cyclonedx-0.5.10	lazy_static	1.4.0	removed				https://index.crates.io/la/zy/lazy_static
-cargo-cyclonedx-0.5.10	redox_syscall	0.4.1	removed				https://index.crates.io/re/do/redox_syscall
-cargo-cyclonedx-0.5.10	ryu	1.0.15	removed				https://index.crates.io/3/r/ryu
-cargo-cyclonedx-0.5.10	thread_local	1.1.7	removed				https://index.crates.io/th/re/thread_local
-cargo-cyclonedx-0.5.10	utf16_iter	1.0.5	removed				https://index.crates.io/ut/f1/utf16_iter
-cargo-cyclonedx-0.5.10	version_check	0.9.4	removed				https://index.crates.io/ve/rs/version_check
-cargo-cyclonedx-0.5.10	wasi	0.11.0+wasi-snapshot-preview1	removed				https://index.crates.io/wa/si/wasi
-cargo-cyclonedx-0.5.10	winapi	0.3.9	removed				https://index.crates.io/wi/na/winapi
-cargo-cyclonedx-0.5.10	winapi-i686-pc-windows-gnu	0.4.0	removed				https://index.crates.io/wi/na/winapi-i686-pc-windows-gnu
-cargo-cyclonedx-0.5.10	winapi-x86_64-pc-windows-gnu	0.4.0	removed				https://index.crates.io/wi/na/winapi-x86_64-pc-windows-gnu
-cargo-cyclonedx-0.5.10	windows-targets	0.48.5, 0.53.3	removed				https://index.crates.io/wi/nd/windows-targets
-cargo-cyclonedx-0.5.10	windows_aarch64_gnullvm	0.48.5, 0.53.0	removed				https://index.crates.io/wi/nd/windows_aarch64_gnullvm
-cargo-cyclonedx-0.5.10	windows_aarch64_msvc	0.48.5, 0.53.0	removed				https://index.crates.io/wi/nd/windows_aarch64_msvc
-cargo-cyclonedx-0.5.10	windows_i686_gnu	0.48.5, 0.53.0	removed				https://index.crates.io/wi/nd/windows_i686_gnu
-cargo-cyclonedx-0.5.10	windows_i686_gnullvm	0.53.0	removed				https://index.crates.io/wi/nd/windows_i686_gnullvm
-cargo-cyclonedx-0.5.10	windows_i686_msvc	0.48.5, 0.53.0	removed				https://index.crates.io/wi/nd/windows_i686_msvc
-cargo-cyclonedx-0.5.10	windows_x86_64_gnu	0.48.5, 0.53.0	removed				https://index.crates.io/wi/nd/windows_x86_64_gnu
-cargo-cyclonedx-0.5.10	windows_x86_64_gnullvm	0.48.5, 0.53.0	removed				https://index.crates.io/wi/nd/windows_x86_64_gnullvm
-cargo-cyclonedx-0.5.10	windows_x86_64_msvc	0.48.5, 0.53.0	removed				https://index.crates.io/wi/nd/windows_x86_64_msvc
-cargo-cyclonedx-0.5.10	write16	1.0.0	removed				https://index.crates.io/wr/it/write16
+cargo-cyclonedx-0.5.10	doc-comment	0.3.3	removed	0.3.4			https://index.crates.io/do/c-/doc-comment
+cargo-cyclonedx-0.5.10	either	1.9.0	removed	1.19.0			https://index.crates.io/ei/th/either
+cargo-cyclonedx-0.5.10	fnv	1.0.7	removed	1.0.7			https://index.crates.io/3/f/fnv
+cargo-cyclonedx-0.5.10	humantime	2.1.0	removed	2.4.0			https://index.crates.io/hu/ma/humantime
+cargo-cyclonedx-0.5.10	icu_locid	1.5.0	removed	2.0.0			https://index.crates.io/ic/u_/icu_locid
+cargo-cyclonedx-0.5.10	icu_locid_transform	1.5.0	removed	2.0.0			https://index.crates.io/ic/u_/icu_locid_transform
+cargo-cyclonedx-0.5.10	icu_locid_transform_data	1.5.0	removed	1.5.1			https://index.crates.io/ic/u_/icu_locid_transform_data
+cargo-cyclonedx-0.5.10	icu_provider_macros	1.5.0	removed	1.5.0			https://index.crates.io/ic/u_/icu_provider_macros
+cargo-cyclonedx-0.5.10	itertools	0.11.0	removed	0.15.0			https://index.crates.io/it/er/itertools
+cargo-cyclonedx-0.5.10	lazy_static	1.4.0	removed	1.5.1			https://index.crates.io/la/zy/lazy_static
+cargo-cyclonedx-0.5.10	redox_syscall	0.4.1	removed	0.10.0			https://index.crates.io/re/do/redox_syscall
+cargo-cyclonedx-0.5.10	ryu	1.0.15	removed	1.0.23			https://index.crates.io/3/r/ryu
+cargo-cyclonedx-0.5.10	thread_local	1.1.7	removed	1.1.10			https://index.crates.io/th/re/thread_local
+cargo-cyclonedx-0.5.10	utf16_iter	1.0.5	removed	1.1.0			https://index.crates.io/ut/f1/utf16_iter
+cargo-cyclonedx-0.5.10	version_check	0.9.4	removed	0.9.5			https://index.crates.io/ve/rs/version_check
+cargo-cyclonedx-0.5.10	wasi	0.11.0+wasi-snapshot-preview1	removed	0.14.7+wasi-0.2.4			https://index.crates.io/wa/si/wasi
+cargo-cyclonedx-0.5.10	winapi	0.3.9	removed	0.3.9			https://index.crates.io/wi/na/winapi
+cargo-cyclonedx-0.5.10	winapi-i686-pc-windows-gnu	0.4.0	removed	0.4.0			https://index.crates.io/wi/na/winapi-i686-pc-windows-gnu
+cargo-cyclonedx-0.5.10	winapi-x86_64-pc-windows-gnu	0.4.0	removed	0.4.0			https://index.crates.io/wi/na/winapi-x86_64-pc-windows-gnu
+cargo-cyclonedx-0.5.10	windows-targets	0.48.5, 0.53.3	removed	0.53.5			https://index.crates.io/wi/nd/windows-targets
+cargo-cyclonedx-0.5.10	windows_aarch64_gnullvm	0.48.5, 0.53.0	removed	0.53.1			https://index.crates.io/wi/nd/windows_aarch64_gnullvm
+cargo-cyclonedx-0.5.10	windows_aarch64_msvc	0.48.5, 0.53.0	removed	0.53.1			https://index.crates.io/wi/nd/windows_aarch64_msvc
+cargo-cyclonedx-0.5.10	windows_i686_gnu	0.48.5, 0.53.0	removed	0.53.1			https://index.crates.io/wi/nd/windows_i686_gnu
+cargo-cyclonedx-0.5.10	windows_i686_gnullvm	0.53.0	removed	0.53.1			https://index.crates.io/wi/nd/windows_i686_gnullvm
+cargo-cyclonedx-0.5.10	windows_i686_msvc	0.48.5, 0.53.0	removed	0.53.1			https://index.crates.io/wi/nd/windows_i686_msvc
+cargo-cyclonedx-0.5.10	windows_x86_64_gnu	0.48.5, 0.53.0	removed	0.53.1			https://index.crates.io/wi/nd/windows_x86_64_gnu
+cargo-cyclonedx-0.5.10	windows_x86_64_gnullvm	0.48.5, 0.53.0	removed	0.53.1			https://index.crates.io/wi/nd/windows_x86_64_gnullvm
+cargo-cyclonedx-0.5.10	windows_x86_64_msvc	0.48.5, 0.53.0	removed	0.53.1			https://index.crates.io/wi/nd/windows_x86_64_msvc
+cargo-cyclonedx-0.5.10	write16	1.0.0	removed	1.0.0			https://index.crates.io/wr/it/write16
 cargo-fuzz-0.13.2	aho-corasick	1.1.4	1.1.5	1.1.5			https://index.crates.io/ah/o-/aho-corasick
 cargo-fuzz-0.13.2	anstream	1.0.0	1.0.0	1.0.0			https://index.crates.io/an/st/anstream
 cargo-fuzz-0.13.2	anstyle	1.0.14	1.0.14	1.0.14			https://index.crates.io/an/st/anstyle
@@ -640,23 +640,23 @@ cargo-fuzz-0.13.2	windows-link	0.2.1	0.2.1	0.100.0	windows-sys@0.61.2 [^0.2.1]		
 cargo-fuzz-0.13.2	windows-sys	0.61.2	0.61.2	0.61.2			https://index.crates.io/wi/nd/windows-sys
 cargo-fuzz-0.13.2	winnow	1.0.3	1.0.5	1.0.5			https://index.crates.io/wi/nn/winnow
 cargo-fuzz-0.13.2	zmij	1.0.21	1.0.23	1.0.23			https://index.crates.io/zm/ij/zmij
-cargo-fuzz-0.13.2	foldhash	0.1.5	removed				https://index.crates.io/fo/ld/foldhash
-cargo-fuzz-0.13.2	id-arena	2.3.0	removed				https://index.crates.io/id/-a/id-arena
-cargo-fuzz-0.13.2	leb128fmt	0.1.0	removed				https://index.crates.io/le/b1/leb128fmt
-cargo-fuzz-0.13.2	log	0.4.29	removed				https://index.crates.io/3/l/log
-cargo-fuzz-0.13.2	prettyplease	0.2.37	removed				https://index.crates.io/pr/et/prettyplease
-cargo-fuzz-0.13.2	unicode-xid	0.2.6	removed				https://index.crates.io/un/ic/unicode-xid
-cargo-fuzz-0.13.2	wasip2	1.0.3+wasi-0.2.9	removed				https://index.crates.io/wa/si/wasip2
-cargo-fuzz-0.13.2	wasip3	0.4.0+wasi-0.3.0-rc-2026-01-06	removed				https://index.crates.io/wa/si/wasip3
-cargo-fuzz-0.13.2	wasm-encoder	0.244.0	removed				https://index.crates.io/wa/sm/wasm-encoder
-cargo-fuzz-0.13.2	wasm-metadata	0.244.0	removed				https://index.crates.io/wa/sm/wasm-metadata
-cargo-fuzz-0.13.2	wasmparser	0.244.0	removed				https://index.crates.io/wa/sm/wasmparser
-cargo-fuzz-0.13.2	wit-bindgen	0.51.0, 0.57.1	removed				https://index.crates.io/wi/t-/wit-bindgen
-cargo-fuzz-0.13.2	wit-bindgen-core	0.51.0	removed				https://index.crates.io/wi/t-/wit-bindgen-core
-cargo-fuzz-0.13.2	wit-bindgen-rust	0.51.0	removed				https://index.crates.io/wi/t-/wit-bindgen-rust
-cargo-fuzz-0.13.2	wit-bindgen-rust-macro	0.51.0	removed				https://index.crates.io/wi/t-/wit-bindgen-rust-macro
-cargo-fuzz-0.13.2	wit-component	0.244.0	removed				https://index.crates.io/wi/t-/wit-component
-cargo-fuzz-0.13.2	wit-parser	0.244.0	removed				https://index.crates.io/wi/t-/wit-parser
+cargo-fuzz-0.13.2	foldhash	0.1.5	removed	0.2.0			https://index.crates.io/fo/ld/foldhash
+cargo-fuzz-0.13.2	id-arena	2.3.0	removed	2.3.0			https://index.crates.io/id/-a/id-arena
+cargo-fuzz-0.13.2	leb128fmt	0.1.0	removed	0.1.0			https://index.crates.io/le/b1/leb128fmt
+cargo-fuzz-0.13.2	log	0.4.29	removed	0.4.35			https://index.crates.io/3/l/log
+cargo-fuzz-0.13.2	prettyplease	0.2.37	removed	0.3.0			https://index.crates.io/pr/et/prettyplease
+cargo-fuzz-0.13.2	unicode-xid	0.2.6	removed	0.2.6			https://index.crates.io/un/ic/unicode-xid
+cargo-fuzz-0.13.2	wasip2	1.0.3+wasi-0.2.9	removed	2.0.1+wasi-0.2.12			https://index.crates.io/wa/si/wasip2
+cargo-fuzz-0.13.2	wasip3	0.4.0+wasi-0.3.0-rc-2026-01-06	removed	0.10.0+wasi-0.3.2			https://index.crates.io/wa/si/wasip3
+cargo-fuzz-0.13.2	wasm-encoder	0.244.0	removed	0.263.0			https://index.crates.io/wa/sm/wasm-encoder
+cargo-fuzz-0.13.2	wasm-metadata	0.244.0	removed	0.263.0			https://index.crates.io/wa/sm/wasm-metadata
+cargo-fuzz-0.13.2	wasmparser	0.244.0	removed	0.263.0			https://index.crates.io/wa/sm/wasmparser
+cargo-fuzz-0.13.2	wit-bindgen	0.51.0, 0.57.1	removed	0.63.0			https://index.crates.io/wi/t-/wit-bindgen
+cargo-fuzz-0.13.2	wit-bindgen-core	0.51.0	removed	0.63.0			https://index.crates.io/wi/t-/wit-bindgen-core
+cargo-fuzz-0.13.2	wit-bindgen-rust	0.51.0	removed	0.63.0			https://index.crates.io/wi/t-/wit-bindgen-rust
+cargo-fuzz-0.13.2	wit-bindgen-rust-macro	0.51.0	removed	0.63.0			https://index.crates.io/wi/t-/wit-bindgen-rust-macro
+cargo-fuzz-0.13.2	wit-component	0.244.0	removed	0.263.0			https://index.crates.io/wi/t-/wit-component
+cargo-fuzz-0.13.2	wit-parser	0.244.0	removed	0.263.0			https://index.crates.io/wi/t-/wit-parser
 cargo-mutants-27.1.0	aho-corasick	1.1.3	1.1.5	1.1.5			https://index.crates.io/ah/o-/aho-corasick
 cargo-mutants-27.1.0	anstream	0.6.18	1.0.0	1.0.0			https://index.crates.io/an/st/anstream
 cargo-mutants-27.1.0	anstyle	1.0.10	1.0.14	1.0.14			https://index.crates.io/an/st/anstyle

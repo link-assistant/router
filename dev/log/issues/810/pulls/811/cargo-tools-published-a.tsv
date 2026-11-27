@@ -471,7 +471,7 @@ cargo-cyclonedx-0.5.10	serde_json	1.0.143	1.0.154	cargo-cyclonedx@0.5.10; cargo_
 cargo-cyclonedx-0.5.10	serde_spanned	1.1.0	1.1.3	toml@0.9.12+spec-1.1.0 ^1.0.4		https://index.crates.io/se/rd/serde_spanned
 cargo-cyclonedx-0.5.10	siphasher	0.3.11	1.0.4	phf_shared@0.11.2 ^0.3		https://index.crates.io/si/ph/siphasher
 cargo-cyclonedx-0.5.10	smallvec	1.15.1	1.16.6	icu_normalizer@1.5.0 ^1.10.0; idna@1.0.3 ^1.13.1; spdx@0.13.2 ^1.15		https://index.crates.io/sm/al/smallvec
-cargo-cyclonedx-0.5.10	spdx	0.13.2	0.13.6	cyclonedx-bom@0.9.0 ^0.13.0		https://index.crates.io/sp/dx/spdx
+cargo-cyclonedx-0.5.10	spdx	0.13.2	0.13.7	cyclonedx-bom@0.9.0 ^0.13.0		https://index.crates.io/sp/dx/spdx
 cargo-cyclonedx-0.5.10	stable_deref_trait	1.2.0	1.2.1	icu_provider@1.5.0 ^1.2.0; yoke@0.7.5 ^1.2.0		https://index.crates.io/st/ab/stable_deref_trait
 cargo-cyclonedx-0.5.10	strsim	0.10.0	0.11.1	clap_builder@4.4.11 ^0.10.0		https://index.crates.io/st/rs/strsim
 cargo-cyclonedx-0.5.10	strum	0.28.0	0.28.0			https://index.crates.io/st/ru/strum
