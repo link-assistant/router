@@ -748,14 +748,16 @@ jobs:
             ~/.cargo/bin
             ~/.cargo/.crates.toml
             ~/.cargo/.crates2.json
-          key: ${{ runner.os }}-cargo-coverage-v2-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-coverage-v3-${{ hashFiles('scripts/ci/cargo-tools/rust-script/Cargo.lock', 'scripts/ci/cargo-tools/releases.tsv') }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-coverage-v2-
+            ${{ runner.os }}-cargo-coverage-v3-${{ hashFiles('scripts/ci/cargo-tools/rust-script/Cargo.lock', 'scripts/ci/cargo-tools/releases.tsv') }}-
 
       - name: Install coverage tools
+        env:
+          LLVM_COV_VERSION: '0.9.2'
         run: |
-          if ! cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.9.2'; then
-            cargo install cargo-llvm-cov --version 0.9.2 --locked --force
+          if ! cargo llvm-cov --version 2>/dev/null | grep -Fqx "cargo-llvm-cov $LLVM_COV_VERSION"; then
+            cargo install cargo-llvm-cov --version "$LLVM_COV_VERSION" --locked --force
           fi
           command -v rust-script >/dev/null || bash scripts/install-ci-cargo-tool.sh rust-script
 

@@ -201,7 +201,7 @@ fn release_workflow_refreshes_cached_cargo_audit_binary() {
     let workflow = read_lf(".github/workflows/release.yml");
 
     assert!(
-        workflow.contains("cargo install cargo-audit --version 0.22.2 --locked --force"),
+        workflow.contains("bash scripts/install-ci-cargo-tool.sh cargo-audit --force"),
         "the audit job should overwrite a cargo-audit binary restored from its cache"
     );
 }
@@ -217,9 +217,23 @@ fn release_workflow_reuses_current_cached_coverage_tools() {
         .expect("coverage must precede the build job")
         .0;
     assert!(
-        coverage.contains("command -v rust-script >/dev/null || cargo install rust-script"),
-        "the coverage job should reuse a cached rust-script binary when it is available"
+        coverage.contains(
+            "command -v rust-script >/dev/null || bash scripts/install-ci-cargo-tool.sh rust-script"
+        ),
+        "the coverage job should reuse a cached rust-script binary from the approved lock"
     );
+    let lock_identity =
+        "hashFiles('scripts/ci/cargo-tools/rust-script/Cargo.lock', 'scripts/ci/cargo-tools/releases.tsv')";
+    for cache_prefix in coverage
+        .lines()
+        .filter(|line| line.contains("-cargo-coverage-"))
+    {
+        assert!(
+            cache_prefix.contains(lock_identity),
+            "each coverage cache key must include the rust-script lock and release manifest"
+        );
+    }
+    assert_eq!(coverage.matches(lock_identity).count(), 2);
 }
 
 #[test]
@@ -273,10 +287,11 @@ fn release_workflow_uses_supported_action_runtimes() {
     // it (see "Native profile oracle step: BLOCKED" in
     // docs/case-studies/issue-759/current/continuation-772.md).
     let native_profile_node = "      - name: Setup Node for native profile source orchestration
+        id: native-profile-node
         if: ${{ always() && !cancelled() }}
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
-          node-version: '20'
+          node-version: '20.20.2'
 ";
     assert_eq!(
         workflow.matches(native_profile_node).count(),
@@ -289,7 +304,6 @@ fn release_workflow_uses_supported_action_runtimes() {
         "actions/checkout@v4",
         "actions/cache@v4",
         "actions/setup-node@v4",
-        "node-version: '20'",
     ] {
         assert!(
             !workflow.contains(obsolete),
@@ -299,14 +313,21 @@ fn release_workflow_uses_supported_action_runtimes() {
     for supported in [
         "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
         "actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
-        "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
-        "node-version: '24'",
+        "actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1",
+        "node-version: '26.13.1'",
     ] {
         assert!(
             workflow.contains(supported),
             "CI should use supported runtime configuration `{supported}`"
         );
     }
+    assert!(
+        workflow
+            .lines()
+            .filter_map(|line| line.trim().strip_prefix("node-version: "))
+            .all(|version| version == "'26.13.1'"),
+        "every general release step must use the current Node pin"
+    );
 }
 
 #[test]
@@ -356,9 +377,36 @@ fn release_workflows_pin_actions_tools_and_artifact_identity() {
             .count(),
         "a SHA-pinned rust-toolchain action needs an explicit numeric toolchain"
     );
-    assert!(!release.contains("cargo install rust-script\n"));
-    assert!(release.contains("cargo install rust-script --version 0.36.0 --locked"));
-    assert!(release.contains("cargo install cargo-cyclonedx --version 0.5.9 --locked"));
+    for workflow in [&release, &verify] {
+        assert!(!workflow.contains("cargo install rust-script"));
+        assert!(workflow.contains("bash scripts/install-ci-cargo-tool.sh rust-script"));
+    }
+    assert!(!release.contains("cargo install cargo-cyclonedx"));
+    assert!(
+        release.contains("bash .router-ci-tools/scripts/install-ci-cargo-tool.sh cargo-cyclonedx"),
+        "the release SBOM must use the installer from the verified workflow revision"
+    );
+    let tool_releases = read_lf("scripts/ci/cargo-tools/releases.tsv");
+    for tool in ["cargo-audit", "cargo-cyclonedx", "rust-script"] {
+        let row = tool_releases
+            .lines()
+            .find(|line| line.split('\t').next() == Some(tool))
+            .expect("a release tool must have a verified crates.io source");
+        let fields: Vec<_> = row.split('\t').collect();
+        assert_eq!(fields.len(), 3, "tool release {tool} must have three fields");
+        let version = fields[1];
+        assert!(
+            version.split('.').count() == 3
+                && version.split('.').all(|part| {
+                    !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit())
+                }),
+            "tool {tool} must pin an exact release"
+        );
+        assert_eq!(fields[2].len(), 64, "tool {tool} must pin a SHA-256 digest");
+        assert!(fields[2].bytes().all(|byte| byte.is_ascii_hexdigit()));
+        let lock = read_lf(&format!("scripts/ci/cargo-tools/{tool}/Cargo.lock"));
+        assert_eq!(lockfile_package_version(&lock, tool), Some(version));
+    }
     assert!(
         release.contains("cargo cyclonedx --format json --all-features --all --spec-version 1.5")
     );
@@ -501,14 +549,14 @@ fn coverage_tool_install_is_idempotent_after_cache_restore() {
         .expect("coverage must run before the build job")
         .0;
 
+    assert!(coverage.contains("LLVM_COV_VERSION: '0.9.2'"));
     assert!(
-        coverage
-            .contains("cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.9.1'"),
-        "a restored coverage binary at the pinned version should not be reinstalled"
+        coverage.contains(r#"cargo llvm-cov --version 2>/dev/null | grep -Fqx "cargo-llvm-cov $LLVM_COV_VERSION""#),
+        "a restored coverage binary at the pinned version should be reused"
     );
     assert!(
-        coverage.contains("cargo install cargo-llvm-cov --version 0.9.1 --locked --force"),
-        "a stale cached coverage binary should be replaced"
+        coverage.contains(r#"cargo install cargo-llvm-cov --version "$LLVM_COV_VERSION" --locked --force"#),
+        "a stale cached coverage binary should be replaced using the same pin"
     );
 }
 
