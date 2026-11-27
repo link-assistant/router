@@ -51,7 +51,7 @@ const TOOLS: &[Tool] = &[
     },
     Tool {
         name: "cargo-fuzz",
-        uses: &["cargo +nightly fuzz", "cargo fuzz"],
+        uses: &["cargo +nightly fuzz", "cargo \"+$ROUTER_RUST_NIGHTLY\" fuzz", "cargo fuzz"],
         installs: &["cargo install cargo-fuzz", "install cargo-fuzz"],
     },
     Tool {

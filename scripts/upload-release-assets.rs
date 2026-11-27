@@ -2,10 +2,10 @@
 //! Upload only missing release assets; retries never overwrite published bytes.
 //! ```cargo
 //! [dependencies]
-//! serde_json = "1"
-//! tracing = "0.1"
+//! serde_json = "1.0.154"
+//! tracing = "0.1.44"
 //! [target.'cfg(windows)'.dependencies]
-//! process-wrap = { version = "10.0.1", default-features = false, features = ["std", "job-object"] }
+//! process-wrap = { version = "11.0.0", default-features = false, features = ["std", "job-object"] }
 //! ```
 
 #[path = "../rust/src/bounded_process.rs"]

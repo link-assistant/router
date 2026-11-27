@@ -3,9 +3,13 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs, rust-overlay }:
     let
       # The platforms Nix support is claimed for. Everything below is derived
       # per system so a single definition serves all of them.
@@ -17,9 +21,15 @@
       ];
 
       forEachSystem = f:
-        nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
+        nixpkgs.lib.genAttrs systems (system: f (import nixpkgs {
+          inherit system;
+          overlays = [ rust-overlay.overlays.default ];
+        }));
 
       cargoToml = builtins.fromTOML (builtins.readFile ./rust/Cargo.toml);
+      rustToolchain = pkgs: pkgs.rust-bin.stable.${cargoToml.package.rust-version}.default.override {
+        extensions = [ "rust-src" ];
+      };
 
       # Only the inputs the Rust build actually reads. Keeping the source
       # filtered this way means editing docs or CI configuration does not
@@ -29,9 +39,9 @@
         fileset = nixpkgs.lib.fileset.unions [
           ./Cargo.toml
           ./Cargo.lock
+          # View the crate's copy of the shared assets under ./rust.
           ./rust
           ./README.md
-          # View the crate's copy of the shared assets under ./rust.
         ];
       };
 
@@ -49,8 +59,11 @@
       };
 
       routerPackage = pkgs:
-        let deps = nativeDeps pkgs;
-        in pkgs.rustPlatform.buildRustPackage {
+        let
+          deps = nativeDeps pkgs;
+          toolchain = rustToolchain pkgs;
+          platform = pkgs.makeRustPlatform { cargo = toolchain; rustc = toolchain; };
+        in platform.buildRustPackage {
           pname = "link-assistant-router";
           inherit (cargoToml.package) version;
           inherit src;
@@ -95,25 +108,21 @@
       });
 
       devShells = forEachSystem (pkgs:
-        let deps = nativeDeps pkgs;
+        let
+          deps = nativeDeps pkgs;
+          toolchain = rustToolchain pkgs;
         in {
           default = pkgs.mkShell {
             nativeBuildInputs = deps.nativeBuildInputs ++ [
-              # `cargo build`, `cargo test`, `cargo fmt` and `cargo clippy` all
-              # come from this one toolchain, which nixpkgs keeps at or above
-              # the project's MSRV (Cargo.toml `rust-version`).
-              pkgs.cargo
-              pkgs.rustc
-              pkgs.rustfmt
-              pkgs.clippy
+              toolchain
               pkgs.rust-analyzer
               # The admin UI bundle in ui/dist is rebuilt with these.
-              pkgs.nodejs
+              pkgs.nodejs_26
               pkgs.git
             ];
             inherit (deps) buildInputs;
 
-            RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+            RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
 
             shellHook = ''
               echo "Router dev shell — rustc $(rustc --version | cut -d' ' -f2) (MSRV ${cargoToml.package.rust-version})"
@@ -132,7 +141,7 @@
           # flake does not fork the CI configuration.
           fmt = pkgs.runCommand "check-cargo-fmt"
             {
-              nativeBuildInputs = [ pkgs.cargo pkgs.rustfmt ];
+              nativeBuildInputs = [ (rustToolchain pkgs) ];
             } ''
             cd ${src}
             cargo fmt --all --check
@@ -140,6 +149,6 @@
           '';
         });
 
-      formatter = forEachSystem (pkgs: pkgs.nixpkgs-fmt);
+      formatter = forEachSystem (pkgs: pkgs.nixfmt);
     };
 }

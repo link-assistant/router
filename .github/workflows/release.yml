@@ -409,26 +409,42 @@ jobs:
         run: cargo install cargo-audit --version 0.23.0 --locked --force
 
       - name: Audit Rust dependencies
-        run: cargo audit
+        run: |
+          status=0
+          for lock in Cargo.lock rust/fuzz/Cargo.lock experiments/issue-725/test-sharder/Cargo.lock; do
+            cargo audit --file "$lock" || status=1
+          done
+          exit "$status"
 
       - name: Setup Node
+        if: ${{ !cancelled() }}
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '26.13.1'
 
+      - name: Audit JavaScript and TypeScript dependencies
+        if: ${{ !cancelled() }}
+        run: |
+          status=0
+          for project in js ts scripts/ci; do
+            npm audit --prefix "$project" || status=1
+          done
+          exit "$status"
+
       - name: Audit admin console dependencies
+        if: ${{ !cancelled() }}
         working-directory: ui
         env:
           # The unpatched advisory affects a build-only matcher of repository
           # globs. Keep the default-branch audit red with remediation details.
           ROUTER_ALLOW_REVIEWED_UI_AUDIT: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 794 }}
         run: |
-          if npm audit --audit-level=high; then
+          if npm audit --audit-level=low; then
             exit 0
           fi
           report="$(mktemp)"
           trap 'rm -f -- "$report"' EXIT
-          if npm audit --audit-level=high --json > "$report"; then
+          if npm audit --audit-level=low --json > "$report"; then
             exit 0
           fi
           node --test ../experiments/issue-781/admin-ui-audit.test.mjs

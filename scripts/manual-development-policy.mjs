@@ -78,7 +78,8 @@ export function manualJobs() {
     'timeout-minutes': id === 'typescript' ? 25 : 15,
     steps: [
       { uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1', with: { ref: '${{ inputs.sha }}' } },
-      { uses: 'actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1', with: { 'node-version': '26.13.1' } },
+      // The native compiler guards require Node's named isProxy binding.
+      { uses: 'actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1', with: { 'node-version': id === 'typescript' ? '20.20.2' : '26.13.1' } },
       ...(['lint', 'bun-tests', 'typescript'].includes(id) ? [{ uses: 'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6', with: { 'bun-version': '1.4.5' } }] : []),
       { name: 'Verify immutable source commit', env: { EXPECTED_SHA: '${{ inputs.sha }}' }, run: SHA_VERIFIER },
       ...[...INSTALLS[id], ...commands].map(run => (LANE_FILES[run] ? { if: laneFileCondition(LANE_FILES[run]), run } : { run })),

@@ -26,7 +26,7 @@ set -euo pipefail
 
 repository="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 output="${repository}/target/verification-linux"
-image="${ROUTER_VERIFY_LINUX_IMAGE:-rust:1.98.1-slim-trixie}"
+image="${ROUTER_VERIFY_LINUX_IMAGE:-rust:1.100.0-slim-trixie@sha256:3b199fd6db7d709274df56565b8f4003f9e30d7bfcff9d53148c86053b7855e2}"
 policy=installed
 arguments=()
 while [ "$#" -gt 0 ]; do
@@ -70,7 +70,7 @@ discover_version() {
 forwarded=(--env ROUTER_REAL_CLIENT_TESTS=1
     --env "ROUTER_VERIFY_HOST_UID=$(id -u)")
 clients=(claude codex opencode)
-pins=(2.1.265 0.154.0 1.18.29)
+pins=(2.1.332 0.172.0 1.19.6)
 variables=(ROUTER_REAL_CLIENT_CLAUDE ROUTER_REAL_CLIENT_CODEX ROUTER_REAL_CLIENT_OPENCODE)
 for index in 0 1 2; do
     client="${clients[$index]}"

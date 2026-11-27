@@ -9,4 +9,25 @@
 
 ## Verification for PR #811
 
-Source changes to JWT handling, deployment fingerprints and terminal dimensions have been drafted. A JavaScript case and Rust cases cover blank and placeholder issuer secrets and a raw HMAC with an empty key. No Rust tools run locally. The four-stage manual JavaScript workflow is required for the exact SHA before Rust CI starts. This lane provides no strict translation or parity result.
+The source changes cover blank and placeholder issuer secrets, a raw HMAC with an empty key, deployment fingerprint compatibility and terminal sizing. The PR retains storage reopen coverage. The four-stage manual JavaScript workflow is required for the exact SHA before Rust CI starts. All Rust build, Clippy, test and advisory evidence must come from hosted CI.
+
+| Local check | Result |
+| --- | --- |
+| Focused Node regression and workflow-policy tests | 30 passed |
+| Focused Node and Bun native tests with the Linux subreaper wrapper | 6 Node cases and 32 Bun cases passed |
+| Public and native TypeScript checks | Both passed with TypeScript 7.0.2 |
+| Admin UI production build and Rust asset synchronization | Passed with Vite 8.4 |
+| Active workflow policy and retained matrix-draft generator | Passed |
+| Archived fixed parallel workflow generator | Reproduced its source inverse failure on both the starting main source and the proposed source. The archived workflow has sharded custody while the source auditor expects both fixed matrices. |
+| Archived strict workflow tests run in isolation | 30 passed and 9 failed. The archived suite includes assertions for the old gate and strict runner commands. |
+| npm advisories | Zero across `js`, `ts`, `ui` and `scripts/ci` |
+| Universal Python lock and Python advisories | uv lock check passed. `pip-audit` found zero advisories in the installed tool environment. The complete updated universal lock returned zero advisories in OSV. |
+| Python distribution | Wheel and source distribution built |
+| Released-binary interoperability | Router v1.25.6 passed 11 JavaScript binding cases, 10 Python binding cases and the generated Go, Java and PHP round trips. The unchanged catalog generated all 368 operations in each language. |
+| Composer advisories | Zero from Packagist for the committed lock |
+| Generated Go and Java advisory scan | OSV found zero advisories across the probe modules, effective Java classpath and declared Java build plugins |
+| Pre-commit hooks | Ran the hook commands directly using pre-commit-hooks v6.0.0 because the pre-commit runner is absent. No Git hook bypass flags were used. |
+
+The initial complete local manual-gate attempt hit process cleanup failures under a container PID 1 that leaves children as zombies. The focused recheck ran with [a Linux subreaper wrapper](../../../../../../experiments/issue-810/reap-test-descendants.py), which leaves the original tests and deadlines intact.
+
+Hosted run 46002025243 at `f1298e12efc10aca87a68d28ab83c4f906d0db63` passed lint, Node and Bun. The TypeScript stage passed the deadline suite and both public declaration checks, then failed in the private compiler's source-integrity check. The downloaded job log records `Original file token context: original source operations changed` at line 374. The same failure reproduces under local Node 26.13.1 and 24.22.3. The Node 22.23.5 probe also shows that its `isProxy` function has the anonymous native representation. Under Node 20.20.2, the two pristine-source guards pass and strict compilation covers all 188 files with TypeScript 5.9.3. The TypeScript stage now pins that runtime. The three other stages retain the current Node release. [Hosted check 46002025243](https://github.com/link-assistant/router/actions/runs/46002025243).

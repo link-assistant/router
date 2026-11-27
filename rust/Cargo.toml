@@ -9,7 +9,7 @@ keywords = ["proxy", "anthropic", "claude", "gateway", "oauth"]
 categories = ["web-programming::http-server"]
 repository = "https://github.com/link-assistant/router"
 documentation = "https://docs.rs/link-assistant-router"
-rust-version = "1.100"
+rust-version = "1.100.0"
 exclude = ["dev/log/**"]
 
 [lib]

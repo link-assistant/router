@@ -43,6 +43,10 @@ jobs:
     name: Real providers through real clients
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    env:
+      ROUTER_REAL_CLIENT_CLAUDE_VERSION: '2.1.332'
+      ROUTER_REAL_CLIENT_CODEX_VERSION: '0.172.0'
+      ROUTER_REAL_CLIENT_OPENCODE_VERSION: '1.19.6'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -65,11 +69,9 @@ jobs:
       # result is attributable to a known client version.
       - name: Install the pinned real client
         run: |
-          npm install --global @anthropic-ai/claude-code@2.1.265
+          npm install --global "@anthropic-ai/claude-code@$ROUTER_REAL_CLIENT_CLAUDE_VERSION"
 
       - name: Prepare the installed client before Cargo
-        env:
-          ROUTER_REAL_CLIENT_CLAUDE_VERSION: '2.1.265'
         run: |
           rust-script scripts/verify-contracts.rs --prepare-clients --client claude
           python3 - <<'PY'
@@ -103,14 +105,11 @@ jobs:
       # machine-readable result is kept with the run.
       - name: Install the pinned clients for zai-only-entitlements
         run: |
-          npm install --global @openai/codex@0.154.0 opencode-ai@1.18.29
+          npm install --global "@openai/codex@$ROUTER_REAL_CLIENT_CODEX_VERSION" "opencode-ai@$ROUTER_REAL_CLIENT_OPENCODE_VERSION"
 
       - name: Verify zai-only-entitlements
         env:
           ROUTER_LIVE_ZAI_API_KEY: ${{ secrets.ROUTER_LIVE_ZAI_API_KEY }}
-          ROUTER_REAL_CLIENT_CLAUDE_VERSION: '2.1.265'
-          ROUTER_REAL_CLIENT_CODEX_VERSION: '0.154.0'
-          ROUTER_REAL_CLIENT_OPENCODE_VERSION: '1.18.29'
         run: |
           rust-script scripts/verify-contracts.rs --area zai-only-entitlements \
             --output target/verification/zai-only-entitlements.json

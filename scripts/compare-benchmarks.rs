@@ -15,7 +15,7 @@
 //!
 //! ```cargo
 //! [dependencies]
-//! serde_json = "1"
+//! serde_json = "1.0.154"
 //! ```
 
 use std::collections::BTreeMap;

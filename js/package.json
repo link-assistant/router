@@ -34,10 +34,10 @@
   ],
   "scripts": {
     "test": "node --test test/*.test.js",
-    "typecheck": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext test/types.ts",
+    "typecheck": "node node_modules/typescript-native/bin/tsc --noEmit --strict --module nodenext --moduleResolution nodenext test/types.ts",
     "native:test": "node --test test/native-*.test.*",
     "native:test:bun": "bun test test/native-*.test.*",
-    "native:typecheck": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext test/native-types.ts"
+    "native:typecheck": "node node_modules/typescript-native/bin/tsc --noEmit --strict --module nodenext --moduleResolution nodenext test/native-types.ts"
   },
   "dependencies": {
     "@iarna/toml": "3.0.0",
@@ -45,7 +45,8 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.11",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "typescript-native": "npm:typescript@7.0.2"
   },
   "repository": {
     "type": "git",
