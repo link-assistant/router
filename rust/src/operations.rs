@@ -10,6 +10,7 @@
 //! ```
 use crate::cli::{Cli, Command};
 use crate::operation_context::{CapturedOutput, OperationContext};
+use crate::runtime::dispatch_invocation;
 use crate::runtime_config::RuntimeConfig;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -109,10 +110,7 @@ async fn execute_invocation(
     force_json(&mut cli.command);
     let sink = context.output.clone();
     let code = crate::operation_context::ACTIVE
-        .scope(
-            context,
-            Box::pin(crate::runtime::dispatch_invocation(cli, runtime_config)),
-        )
+        .scope(context, Box::pin(dispatch_invocation(cli, runtime_config)))
         .await;
     let captured = std::mem::take(&mut *sink.lock().expect("operation output lock"));
     let mut result = result(operation, code, captured);
@@ -221,7 +219,7 @@ pub async fn run_arguments(arguments: Vec<OsString>) -> ExitCode {
         quiet,
         async move {
             if !json {
-                return Box::pin(crate::runtime::dispatch_invocation(cli, runtime_config)).await;
+                return Box::pin(dispatch_invocation(cli, runtime_config)).await;
             }
             let mut context = OperationContext::default();
             if matches!(cli.command, Some(Command::Verify(_))) {

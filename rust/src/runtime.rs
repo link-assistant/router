@@ -49,7 +49,7 @@ pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
 
 pub(crate) async fn dispatch_invocation(
     cli: crate::cli::Cli,
-    runtime_config: Option<Arc<RuntimeConfig>>,
+    document: Option<Arc<RuntimeConfig>>,
 ) -> ExitCode {
     // The wrapper and managed-server commands do not start a router and must
     // not require server-only configuration or pollute client stdout with
@@ -136,7 +136,7 @@ pub(crate) async fn dispatch_invocation(
     }
 
     match cli.command.as_ref() {
-        None | Some(Command::Serve) => match run_server(config, &cli, logger, runtime_config).await {
+        None | Some(Command::Serve) => match run_server(config, &cli, logger, document).await {
             Ok(()) => ExitCode::SUCCESS,
             Err(e) => {
                 // Startup failures must reach the terminal even when normal
