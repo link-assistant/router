@@ -227,6 +227,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.25.7] - 2026-11-28
+
+### Fixed
+- Retry PyPI exact-version metadata while a successful upload propagates before verifying the release.
+
+### Fixed
+
+- Restore Router builds with the current JWT and terminal libraries while preserving existing tokens, deployment fingerprints, and terminal dimensions.
+- Keep mapped token storage compatible across dependency resolution and run real-client captures with the workspace lockfile.
+
 ## [1.25.6] - 2026-11-26
 
 ### Fixed
