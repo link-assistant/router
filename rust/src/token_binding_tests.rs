@@ -98,6 +98,36 @@ fn a_store_binding_that_disagrees_with_the_signed_claim_fails_closed() {
 }
 
 #[test]
+fn a_config_writer_requires_a_matching_store_record() {
+    let manager = TokenManager::new("writer-binding-secret");
+    let (token, id) = manager
+        .issue_with_id(&IssueRequest {
+            ttl_hours: 1,
+            label: "config-writer",
+            scope: CONFIG_WRITE_SCOPE,
+            ..IssueRequest::default()
+        })
+        .expect("issue config writer");
+    let claims = manager.validate_token(&token).expect("validate writer");
+    assert_eq!(claims.scope, CONFIG_WRITE_SCOPE);
+
+    let store = manager.store();
+    let mut record = store.get(&id).unwrap().unwrap();
+    record.scope.clear();
+    store.put(record).expect("replace record");
+    assert!(matches!(
+        manager.validate_token(&token),
+        Err(TokenError::BindingMismatch)
+    ));
+
+    assert!(store.delete(&id).expect("delete record"));
+    assert!(matches!(
+        manager.validate_token(&token),
+        Err(TokenError::MissingRecord)
+    ));
+}
+
+#[test]
 fn incomplete_or_unknown_client_bindings_are_rejected_at_issue_time() {
     let manager = TokenManager::new("invalid-binding-secret");
     for request in [
